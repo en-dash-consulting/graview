@@ -6,7 +6,7 @@ import { Store, type AnySchema, type GraviewApp } from "@graview/core";
 import { compileDocument } from "@graview/core/check";
 import { act, type ReactElement } from "react";
 import { createRoot } from "react-dom/client";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { AppBar, barPlaces, type BarFaces, type BarPlace } from "../../src/index.js";
 
 /**
@@ -16,9 +16,10 @@ import { AppBar, barPlaces, type BarFaces, type BarPlace } from "../../src/index
  * Nick, on 0.1.16 at a desk: "the new nav kinda sucks, and i don't see a way
  * to go to the scene vs pages anymore". The scene had become "Overview", one
  * of seven equal tabs, and the tabs grew with the app until the bar wrapped.
- * The bar is one row of one height now: the app, a switch between the scene
- * and the pages, the place you are on as one control that opens every
- * place — the home first, then Lists and Pictures — and the tools.
+ * The bar is one row of one height now: the app, with its menu holding the
+ * switch between the scene and the pages, the place you are on as one
+ * control that opens every place — the home first, then Lists and
+ * Pictures — and the tools.
  */
 let host: HTMLDivElement | undefined;
 afterEach(() => {
@@ -39,6 +40,21 @@ function faces(pages: boolean, said: string[]): BarFaces {
   };
 }
 
+async function settled(holds: () => void): Promise<void> {
+  for (const end = Date.now() + 4000; ; ) {
+    await act(async () => {
+      await vi.dynamicImportSettled();
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    });
+    try {
+      holds();
+      return;
+    } catch (error) {
+      if (Date.now() > end) throw error;
+    }
+  }
+}
+
 function drawn(element: ReactElement) {
   host = document.createElement("div");
   document.body.append(host);
@@ -47,18 +63,31 @@ function drawn(element: ReactElement) {
   return { root, host };
 }
 
-describe("the bar's switch (FR-137)", () => {
-  it("is a group of two pressed-or-not buttons, Scene and Pages, the one drawn pressed, each naming itself in words", () => {
+describe("the switch between the scene and the pages (FR-137)", () => {
+  it("is a group of two pressed-or-not buttons in the app menu, Scene and Pages, the one drawn pressed, each naming itself in words", async () => {
     const said: string[] = [];
     const { root, host: at } = drawn(<AppBar brand={undefined} name="Farm Bureau POM Workshop" home={{ go: () => undefined, current: false }} faces={faces(true, said)} places={many} current="kind:k1" reach={{}} tools={null} find={false} />);
-    const group = at.querySelector('[data-testid="app-faces"]')!;
-    expect(group.getAttribute("role")).toBe("group");
-    const scene = at.querySelector<HTMLButtonElement>('[data-testid="app-face-scene"]')!;
-    const pages = at.querySelector<HTMLButtonElement>('[data-testid="app-face-pages"]')!;
-    expect([scene.textContent, pages.textContent]).toEqual(["Scene", "Pages"]);
-    expect([scene.getAttribute("aria-pressed"), pages.getAttribute("aria-pressed")]).toEqual(["false", "true"]);
-    act(() => scene.click());
-    act(() => pages.click());
+    // Not on the row: behind the chevron beside the app's name.
+    expect(at.querySelector('[data-testid="app-faces"]')).toBeNull();
+    const menu = at.querySelector<HTMLButtonElement>('[data-testid="app-menu-open"]')!;
+    expect(menu.getAttribute("aria-label")).toBe("Farm Bureau POM Workshop — app menu");
+    const opened = async () => {
+      act(() => menu.click());
+      await settled(() => expect(at.querySelector('[data-testid="app-faces"]')).not.toBeNull());
+      return {
+        scene: at.querySelector<HTMLButtonElement>('[data-testid="app-face-scene"]')!,
+        pages: at.querySelector<HTMLButtonElement>('[data-testid="app-face-pages"]')!,
+      };
+    };
+    const first = await opened();
+    expect(at.querySelector('[data-testid="app-faces"]')!.getAttribute("role")).toBe("group");
+    expect([first.scene.textContent, first.pages.textContent]).toEqual(["Scene", "Pages"]);
+    expect([first.scene.getAttribute("aria-pressed"), first.pages.getAttribute("aria-pressed")]).toEqual(["false", "true"]);
+    act(() => first.scene.click());
+    // Pressing a face puts the menu away.
+    expect(at.querySelector('[data-testid="app-menu"]')!.hasAttribute("hidden")).toBe(true);
+    const again = await opened();
+    act(() => again.pages.click());
     // The face already drawn is not asked for again.
     expect(said).toEqual(["scene"]);
     // Nothing on the bar says "overview" for the scene.

@@ -168,6 +168,26 @@ export interface AwaySummary {
   readonly agreed?: number;
 }
 
+/**
+ * ONE OF A HOST'S NOTIFICATIONS, IN THE INBOX'S "FOR YOU" (Roadmap
+ * f-app-bar-calm): what the host tells this person — an invitation, a
+ * digest, a mention — said in a line, with a line under it where the host
+ * gives one, when it came, and where it goes: a link (`href`, `target`) or
+ * a press (`onSelect`). Counted on the bell until it is `read`.
+ */
+export interface HostNotification {
+  readonly id: string;
+  readonly title: string;
+  readonly body?: string;
+  /** When it came, ISO. */
+  readonly at?: string;
+  readonly href?: string;
+  readonly target?: string;
+  readonly onSelect?: () => void;
+  /** Already read: listed, and not counted on the bell. */
+  readonly read?: boolean;
+}
+
 export interface GraviewContextValue<S extends AnySchema> {
   /**
    * The app as this seat is served it (`store.seenBy(seat)`): what its sight
@@ -300,6 +320,10 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly dismissals?: DismissalStore | undefined;
   /** WHAT THE APP'S OWN ACTOR DID WHILE THE READER WAS AWAY: the host's `whileAway`. */
   readonly whileAway?: AwaySummary | undefined;
+  /** THE HOST'S NOTIFICATIONS, in the inbox's "For you": the host's `notifications`, else the provider's around it. */
+  readonly notifications?: readonly HostNotification[] | undefined;
+  /** Told the ids of the unread notifications a person has just been shown in "For you": the host's `onNotificationsSeen`, else the provider's around it. */
+  readonly onNotificationsSeen?: ((ids: readonly string[]) => void) | undefined;
   /** HOW EACH WORKFLOW'S LAST RUN WENT: the host's `workflowRuns`, else the provider's around it. */
   readonly workflowRuns?: WorkflowRuns | undefined;
   /**
@@ -698,6 +722,16 @@ export interface GraviewProviderProps<S extends AnySchema> {
    */
   readonly whileAway?: AwaySummary | undefined;
   /**
+   * WHAT THE HOST TELLS THIS PERSON (Roadmap f-app-bar-calm): an
+   * invitation, a digest, a mention — listed first in the inbox's "For
+   * you", beside what tidying suggests and what people propose, and
+   * counted on the bell until each is `read`. Unsaid, the provider's around
+   * it, else none.
+   */
+  readonly notifications?: readonly HostNotification[] | undefined;
+  /** Told the ids of the unread notifications a person has just been shown, when "For you" is opened: mark them read and hand them back. */
+  readonly onNotificationsSeen?: ((ids: readonly string[]) => void) | undefined;
+  /**
    * HOW EACH WORKFLOW'S LAST RUN WENT (Roadmap f-jobs-declared): the host's
    * log of runs (`WorkflowLog` from `@graview/tools/workflows`, or anything
    * with its `last(name)`). Given, each workflow standing on the Scene's
@@ -804,6 +838,8 @@ export function GraviewProvider<S extends AnySchema>({
   subscriptions: hostSubscriptions,
   dismissals,
   whileAway,
+  notifications: hostNotifications,
+  onNotificationsSeen: hostNotificationsSeen,
   workflowRuns: hostWorkflowRuns,
   signIn: hostSignIn,
   view,
@@ -817,6 +853,8 @@ export function GraviewProvider<S extends AnySchema>({
   const workflowRuns = hostWorkflowRuns ?? around?.workflowRuns;
   const keptViews = hostKeptViews ?? around?.keptViews;
   const onExport = hostOnExport ?? around?.onExport;
+  const notifications = hostNotifications ?? around?.notifications;
+  const onNotificationsSeen = hostNotificationsSeen ?? around?.onNotificationsSeen;
   /* Who is at the keyboard: see "WHO IS AT THE KEYBOARD" below. */
   const [seated, setSeated] = useState<Principal | null>(null);
   const seatNow = seated ?? principal ?? seats[0]?.principal ?? ANONYMOUS;
@@ -1260,6 +1298,8 @@ export function GraviewProvider<S extends AnySchema>({
       subscriptions,
       dismissals,
       whileAway,
+      ...(notifications ? { notifications } : {}),
+      ...(onNotificationsSeen ? { onNotificationsSeen } : {}),
       ...(workflowRuns ? { workflowRuns } : {}),
       signIn,
       linkedReads,
@@ -1323,6 +1363,8 @@ export function GraviewProvider<S extends AnySchema>({
       subscriptions,
       dismissals,
       whileAway,
+      notifications,
+      onNotificationsSeen,
       workflowRuns,
       signIn,
       linkedReads,

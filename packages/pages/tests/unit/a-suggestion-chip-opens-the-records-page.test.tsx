@@ -64,8 +64,8 @@ describe("a record chip in the Suggested tray, on the routed face", () => {
     const root = createRoot(host);
     await act(async () => root.render(<PagesApp context={{ store, principal: nina, views: createViews(schema) }} initialPath="/items" />));
     unmount = () => act(async () => root.unmount());
-    await settled(() => expect(host.querySelector('[data-graview-app-bar] [data-testid="suggested-button"]')).not.toBeNull());
-    await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="suggested-button"]')!.click());
+    await settled(() => expect(host.querySelector('[data-graview-app-bar] [data-testid="inbox-button"]')).not.toBeNull());
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="inbox-button"]')!.click());
     await settled(() => expect(document.querySelectorAll('[data-testid="suggested"] [data-testid="suggestion-record"]').length).toBe(2));
 
     const tray = document.querySelector('[data-testid="suggested"]')!;

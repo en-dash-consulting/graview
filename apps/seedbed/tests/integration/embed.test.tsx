@@ -32,6 +32,22 @@ const seatOf = (chapter: (typeof CHAPTERS)[number], id: string) => chapter.seats
  * exists for, was a type error, and this file got past it with `as never` on
  * both sides. They are gone; `pnpm typecheck` is the criterion.
  */
+/**
+ * The scene and the pages are the app menu's rows (Roadmap f-app-bar-calm),
+ * fetched when it first opens and drawn only while it is: the menu is
+ * opened, and its rows waited for, as a person reaches for them.
+ */
+async function appMenu(element: HTMLElement): Promise<HTMLElement> {
+  const button = element.querySelector<HTMLElement>('[data-testid="app-menu-open"]');
+  if (!button) throw new Error("the bar holds no app menu");
+  if (button.getAttribute("aria-expanded") !== "true") button.click();
+  const faces = () => element.querySelector<HTMLElement>('[data-testid="app-menu"] [data-testid="app-faces"]');
+  for (let waited = 0; waited < 3000 && !faces(); waited += 10) await new Promise((done) => setTimeout(done, 10));
+  return element.querySelector<HTMLElement>('[data-testid="app-menu"]')!;
+}
+const facePressed = async (element: HTMLElement, which: "scene" | "pages") => (await appMenu(element)).querySelector(`[data-testid="app-face-${which}"]`)?.getAttribute("aria-pressed");
+const pressFace = async (element: HTMLElement, which: "scene" | "pages") => (await appMenu(element)).querySelector<HTMLElement>(`[data-testid="app-face-${which}"]`)?.click();
+
 describe("a chapter, embedded", () => {
   const chapter = CHAPTERS[10]!; // what grows where: four kinds, two lenses, a policy
   const into = () => {
@@ -40,7 +56,7 @@ describe("a chapter, embedded", () => {
     return element;
   };
 
-  it("mounts from altitude, themed within the element, and the districts are there", () => {
+  it("mounts from altitude, themed within the element, and the districts are there", async () => {
     const element = into();
     const handle = mount(element, {
       app: chapter.app,
@@ -56,9 +72,9 @@ describe("a chapter, embedded", () => {
     // the document element for the whole browser, so a scoped stylesheet asks
     // about it and applies inside its own box — which owns nothing outside.
     expect(style).not.toContain(":root {");
-    // The switch says the scene is drawn (FR-137), and nothing on the bar calls it the overview.
-    expect(element.querySelector('[data-testid="app-face-scene"]')?.getAttribute("aria-pressed")).toBe("true");
-    expect(element.querySelector('[data-testid="app-face-pages"]')?.getAttribute("aria-pressed")).toBe("false");
+    // The app menu says the scene is drawn (FR-137), and nothing on the bar calls it the overview.
+    expect(await facePressed(element, "scene")).toBe("true");
+    expect(await facePressed(element, "pages")).toBe("false");
     expect(element.querySelector('[data-testid="app-bar"]')?.textContent?.toLowerCase()).not.toContain("overview");
     expect(element.querySelector('[data-testid="standing"]')?.getAttribute("aria-label")).toContain("Everything is in order");
     handle.unmount();
@@ -124,7 +140,7 @@ describe("a chapter, embedded", () => {
     handle.unmount();
   });
 
-  it("lists the lenses among the places, each a place of its own, and the scene one press on the switch away (FR-137, FR-138)", async () => {
+  it("lists the lenses among the places, each a place of its own, and the scene one choice in the app menu away (FR-137, FR-138)", async () => {
     const element = into();
     const handle = mount(element, {
       app: chapter.app,
@@ -136,8 +152,9 @@ describe("a chapter, embedded", () => {
     });
     const entry = (key: string) => element.querySelector<HTMLElement>(`[data-testid="app-place-${key}"]`);
     const face = () => element.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed");
-    // On the scene the switch is pressed at Scene, and the bar names the picture the scene shows (FR-144).
-    expect(element.querySelector('[data-testid="app-face-scene"]')?.getAttribute("aria-pressed")).toBe("true");
+    // On the scene the app menu says Scene, and the bar names the picture the scene shows (FR-144).
+    expect(await facePressed(element, "scene")).toBe("true");
+    element.querySelector<HTMLElement>('[data-testid="app-menu-open"]')?.click();
     expect(element.querySelector('[data-testid="app-place-current"]')?.textContent).toBe("Who tends what");
     // Two presses change it, and the scene's view says so: still the scene, the other picture in view.
     element.querySelector<HTMLElement>('[data-testid="app-places-open"]')?.click();
@@ -146,7 +163,7 @@ describe("a chapter, embedded", () => {
     expect(face()).toBe("scene");
     expect(handle.where().stop).toContain("in.view=what-grows-where");
     expect(element.querySelector('[data-testid="app-place-current"]')?.textContent).toBe("What grows where");
-    element.querySelector<HTMLElement>('[data-testid="app-face-pages"]')?.click();
+    await pressFace(element, "pages");
     await Promise.resolve();
     expect(face()).toBe("pages");
     // Two presses: the place control, then the lens.
@@ -161,8 +178,8 @@ describe("a chapter, embedded", () => {
     expect(title()).toBe("Who tends what");
     expect(element.querySelector('[data-testid="app-place-current"]')?.textContent).toBe("Who tends what");
     expect(entry("place:gardener:who-tends-what")?.getAttribute("aria-current")).toBe("page");
-    // And the scene is one press back, on the switch.
-    element.querySelector<HTMLElement>('[data-testid="app-face-scene"]')?.click();
+    // And the scene is one choice back, in the app menu.
+    await pressFace(element, "scene");
     await new Promise((done) => setTimeout(done, 30));
     expect(face()).toBe("scene");
     handle.unmount();

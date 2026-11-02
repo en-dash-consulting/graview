@@ -17,6 +17,7 @@ import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { pressPlace } from "./lib/places.mjs";
+import { openActivity } from "./lib/bar.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -205,7 +206,7 @@ const APPS = {
       await p.waitForTimeout(300);
       await p.locator('[data-testid="context-menu"] [data-testid="affordances"] button', { hasText: "Finish it" }).first().click();
       await p.waitForTimeout(400);
-      await p.click('[data-testid="activity-button"]');
+      await openActivity(p);
       await p.waitForTimeout(400);
     },
     /*
@@ -292,7 +293,7 @@ const APPS = {
      * them. One narrow screen puts every criterion here at that width.
      */
     narrow: { viewport: { width: 390, height: 620 }, go: async (p) => {
-      await p.click('[data-testid="activity-button"]');
+      await openActivity(p);
       await p.waitForTimeout(300);
       await p.click('[data-testid="agent-starter"]');
       await p.waitForTimeout(1600);
@@ -345,7 +346,7 @@ const APPS = {
     },
     invited: async (p) => { await p.click('[data-graview-view="kind:gardener"]'); },
     planted: async (p) => {
-      await p.click('[data-testid="activity-button"]');
+      await openActivity(p);
       await p.waitForTimeout(300);
       await p.click('[data-testid="agent-starter"]');
       await p.waitForTimeout(1600);
@@ -368,7 +369,7 @@ const APPS = {
      * been on screen beside the pill that names it.
      */
     lens: async (p) => {
-      await p.click('[data-testid="activity-button"]');
+      await openActivity(p);
       await p.waitForTimeout(300);
       await p.click('[data-testid="agent-starter"]');
       await p.waitForTimeout(1600);
@@ -392,7 +393,7 @@ const APPS = {
  * leads to rather than for a guessed time.
  */
 async function askTheGardener(p) {
-  await p.click('[data-testid="activity-button"]');
+  await openActivity(p);
   await p.click('[data-testid="agent-starter"]');
   await p.waitForSelector('[data-testid="open-gardener"]', { state: "attached" });
   await p.keyboard.press("Escape");
@@ -547,7 +548,8 @@ const audit = () => {
    * trustworthy here.
    */
   const painted = [];
-  if (document.querySelector('[data-testid="standing"]')?.textContent?.match(/\d+ problem/)) {
+  // The broken-rule count is Standing's badge beside its dot, drawn only while a rule is broken.
+  if (/\d/.test(document.querySelector('[data-testid="standing-count"]')?.textContent ?? "")) {
     for (const host of views) {
       if (!visible(host)) continue;
       const plane = Number(host.dataset.graviewPlane);

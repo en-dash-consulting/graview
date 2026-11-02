@@ -29,6 +29,7 @@ import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
 import { at, portFor } from "./lib/ports.mjs";
+import { openActivity } from "./lib/bar.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -357,7 +358,7 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
         await page.waitForTimeout(1200);
         repaired = !(await page.locator('[data-testid="problems"] button', { hasText: "leads Hands-on: Planning the Next Ten Years" }).count());
         // Taken back, so the walk after it meets the seed as it was.
-        await page.click('[data-testid="activity-button"]');
+        await openActivity(page);
         await page.waitForTimeout(800);
         const undo = page.locator('[data-testid="undo-turn"]');
         if ((await undo.count()) > 0) await undo.first().click();
@@ -497,7 +498,7 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
   });
 
   if (act) await reach(page, where, "the turn taken back from the activity", async () => {
-    await page.click('[data-testid="activity-button"]');
+    await openActivity(page);
     await page.waitForTimeout(800);
     const undo = page.locator('[data-testid="undo-turn"]');
     if (!pressed || (await undo.count()) === 0) {

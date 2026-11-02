@@ -11,9 +11,11 @@ import type { FirstLookAnchor, FirstLookEnd, FirstLookHintsProps, FirstLookStep 
 
 /** Where each named control is drawn: the framework's own test ids, on every face's bar. */
 const FOUND: Record<FirstLookAnchor, string> = {
-  faces: '[data-testid="app-faces"]',
+  // The scene and the pages are in the app menu (Roadmap f-app-bar-calm): its hint stands by the control that opens it.
+  faces: '[data-testid="app-menu-open"][data-scene]',
   problems: '[data-testid="standing"], [data-testid="standing-link"]',
-  activity: '[data-testid="activity-button"]',
+  // What has happened is in the one inbox (Roadmap f-app-bar-calm).
+  activity: '[data-testid="inbox-button"]',
   // The quick ask has no control of its own until ⌘K opens it: its hint stands by Find, where a quick ask is drawn.
   ask: '[data-testid="app-find"], [data-testid="app-find-open"]',
   find: '[data-testid="app-find"], [data-testid="app-find-open"]',
@@ -46,12 +48,12 @@ export function firstLookAnchor(root: Element | null, anchor: FirstLookAnchor): 
 /** The framework's own hints, in the words of the app they are drawn in. */
 function frameworkSteps(root: Element): FirstLookStep[] {
   const said = (selector: string, attribute: string, otherwise: string) => root.querySelector(selector)?.getAttribute(attribute)?.trim() || otherwise;
-  const scene = said('[data-testid="app-face-scene"]', "title", "Scene");
-  const pages = said('[data-testid="app-face-pages"]', "title", "Pages");
+  const scene = said('[data-testid="app-menu-open"]', "data-scene", "Scene");
+  const pages = said('[data-testid="app-menu-open"]', "data-pages", "Pages");
   return [
-    { anchor: "faces", title: `${scene} or ${pages}`, words: `One app, two ways to see it: ${scene} draws every record as one picture, ${pages} as lists and pages to read and change.` },
+    { anchor: "faces", title: `${scene} or ${pages}`, words: `One app, two ways to see it, in the app menu: ${scene} draws every record as one picture, ${pages} as lists and pages to read and change.` },
     { anchor: "problems", title: "Whether all is in order", words: "The dot is green while every rule holds. When one is broken it counts what is wrong, and pressing it shows each one and where." },
-    { anchor: "activity", title: "Activity", words: "What has happened here and who did it, each change with its way back." },
+    { anchor: "activity", title: "Inbox", words: "What waits for you, what has happened here and who did it — each change with its way back — and what you asked." },
     { anchor: "ask", title: "Tell Graview", words: "Press ⌘K (Ctrl+K) to tell Graview what to do about what you have selected, or right-click it and type. The answer stands beside it, and a change it proposes waits for you to accept it." },
   ];
 }
@@ -169,7 +171,7 @@ export function FirstLookHints({ root, steps, onEnd }: FirstLookHintsProps) {
       });
     };
     const watch = new MutationObserver(check);
-    watch.observe(at, { childList: true, subtree: true, attributes: true, attributeFilter: ["hidden", "class", "data-switch-drawn"] });
+    watch.observe(at, { childList: true, subtree: true, attributes: true, attributeFilter: ["hidden", "class"] });
     return () => {
       cancelAnimationFrame(frame);
       watch.disconnect();

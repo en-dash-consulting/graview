@@ -264,9 +264,9 @@ const hintNow = (page) =>
     if (!hint) return null;
     const anchor = hint.getAttribute("data-first-look-anchor");
     const found = {
-      faces: '[data-testid="app-faces"]',
+      faces: '[data-testid="app-menu-open"]',
       problems: '[data-testid="standing"], [data-testid="standing-link"]',
-      activity: '[data-testid="activity-button"]',
+      activity: '[data-testid="inbox-button"]',
       ask: '[data-testid="app-find"], [data-testid="app-find-open"]',
       find: '[data-testid="app-find"], [data-testid="app-find-open"]',
       profile: '[data-testid="profile-button"]',

@@ -20,12 +20,16 @@ export const POPOVERS = {
   places: { trigger: "app-places-open", pane: "app-places", opens: "press", focus: "into", drawn: ["embed"] },
   /** Who else is here, and where each one is, from the bar (FR-155). */
   here: { trigger: "here-open", pane: "here-list", opens: "press", focus: "into", drawn: ["shell", "embed", "pages"] },
-  /** What tidying suggests and has not made, from the bar beside Activity, when anything waits. */
-  suggested: { trigger: "suggested-button", pane: "suggested", opens: "press", focus: "into", drawn: ["shell", "embed", "pages"] },
+  /** The app menu, from the chevron beside the app's name (Roadmap f-app-bar-calm): the scene or the pages, a host's rows, the scheme. */
+  "app-menu": { trigger: "app-menu-open", pane: "app-menu", opens: "press", focus: "into", drawn: ["shell", "embed", "pages"] },
+  /** One inbox (Roadmap f-app-bar-calm): what waits for you, what has happened and what you asked, from the bell. */
+  inbox: { trigger: "inbox-button", pane: "inbox", opens: "press", focus: "into", drawn: ["shell", "embed", "pages"] },
+  /** Who can open the app, in a sentence, from a host's Share beside the people (Roadmap f-app-bar-calm). */
+  share: { trigger: "app-share-open", pane: "app-share", opens: "press", focus: "into", drawn: ["embed"] },
   /** The host's own buttons, from the one control they fold into on a narrow bar (FR-227). */
   "host-actions": { trigger: "host-bar-actions-open", pane: "host-bar-actions", opens: "press", focus: "into", drawn: ["shell", "embed"] },
-  /** What has happened, from the bar. */
-  activity: { trigger: "activity-button", pane: "activity", opens: "press", focus: "into", drawn: ["shell", "embed", "pages"] },
+  /** What has happened, from the studio's own bar; the app bar holds it in the inbox. */
+  activity: { trigger: "activity-button", pane: "activity", opens: "press", focus: "into", drawn: ["studio"] },
   /** What the words find, under the Find box. */
   find: { trigger: "find-box", pane: "find-strip", opens: "typing", focus: "stays", drawn: ["shell"] },
   /** The districts the row could not hold, from "+N more" on the ground. */

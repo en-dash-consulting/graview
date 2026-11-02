@@ -8,6 +8,7 @@ import { act } from "react";
 import { beforeAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mount, type EmbedError, type EmbedErrorWhere, type EmbedHandle, type EmbedOptions, preload } from "../../src/index.js";
 import { mount as mountPages } from "@graview/embed/pages";
+import { pressFace } from "../support/the-app-menu.js";
 
 // Every face fetched before the first mount, so each draws in the commit `mount` makes (FR-57).
 beforeAll(() => preload());
@@ -87,7 +88,7 @@ describe("an error inside a face", () => {
     expect(said, "the face says it could not draw").not.toBeNull();
     expect(said?.textContent).not.toContain("Post the letter");
     expect(host.querySelector("[data-testid=app-bar]"), "the bar").not.toBeNull();
-    await act(async () => host.querySelector<HTMLButtonElement>("[data-testid=app-face-scene]")!.click());
+    await pressFace(host, "scene");
     expect(host.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed")).toBe("scene");
     expect(host.querySelector("[data-graview-face-error]")).toBeNull();
   });

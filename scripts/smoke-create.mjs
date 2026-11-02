@@ -31,6 +31,7 @@ import { engineName, launchEngine } from "./lib/engine.mjs";
 import { packTarballs, pinToTarballs } from "./lib/tarballs.mjs";
 import { portFor } from "./lib/ports.mjs";
 import { vacant } from "./lib/serve.mjs";
+import { chooseScheme, openActivity } from "./lib/bar.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "..");
@@ -220,7 +221,8 @@ try {
       await page.waitForTimeout(500);
     };
     const districtText = (page) => page.locator('[data-graview-view="kind:note"]').first().textContent();
-    const standing = (page) => page.locator('[data-testid="standing"]').first().textContent();
+    // Standing says itself in its name ("Everything is in order"); its count is a badge beside the dot.
+    const standing = async (page) => (await page.locator('[data-testid="standing"]').first().getAttribute("aria-label")) ?? "";
 
     const page = watch(await browser.newPage({ viewport: { width: 1280, height: 800 } }));
     const b = report.browser;
@@ -235,7 +237,7 @@ try {
     b.axeEmptyLight = await axe(page);
 
     /* ---- the seat at zero: starter data, proposed from the declaration */
-    await page.click('[data-testid="activity-button"]');
+    await openActivity(page);
     await page.waitForTimeout(300);
     b.seatOffered = (await page.locator('[data-testid="agent-starter"]').textContent()).trim();
     await page.click('[data-testid="agent-starter"]');
@@ -299,11 +301,9 @@ try {
     await page.waitForTimeout(400);
     b.escape.pressed = await escapeState();
     b.axeAfterDark = await (async () => {
-      /* The scheme lives in the profile now, with the reader's own
-         settings — the bar's toggle was a second control for one setting. */
-      await page.click('[data-testid="profile-button"]');
-      await page.waitForTimeout(300);
-      await page.click('[data-testid="profile-scheme-dark"]');
+      /* The scheme lives in the app menu, beside the scene and the pages
+         (Roadmap f-app-bar-calm) — Light or Dark on the Shell. */
+      await chooseScheme(page, "dark");
       await page.waitForTimeout(300);
       return axe(page);
     })();
@@ -313,7 +313,7 @@ try {
     await ready(page);
     b.afterReload = (await districtText(page)).trim();
     b.survivedAReload = !b.afterReload.includes("none yet");
-    await page.click('[data-testid="activity-button"]');
+    await openActivity(page);
     await page.waitForTimeout(300);
     b.saysRemembered = (await page.locator('[data-testid="remembered"]').textContent().catch(() => "")).trim();
     b.offersStartFresh = (await page.locator('[data-testid="start-fresh"]').count()) > 0;

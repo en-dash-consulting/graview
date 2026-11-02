@@ -159,7 +159,7 @@ const faces = (pages: boolean): BarFaces => ({
 });
 
 describe("the scene's place control (FR-144)", () => {
-  it("names what is in view after the switch, and opens the whole thing and every picture, grouped as on Pages", () => {
+  it("names what is in view after the app menu, and opens the whole thing and every picture, grouped as on Pages", () => {
     const went: string[] = [];
     const scene = scenePlacesOf({ places: [{ kind: "deliverable", title: "Email to Todd", as: "email-to-todd" }], hidden: new Set(), view: EMPTY_VIEW, schema: NO_SCHEMA });
     const { root, at } = drawn(
@@ -168,8 +168,8 @@ describe("the scene's place control (FR-144)", () => {
     const open = at.querySelector<HTMLButtonElement>('[data-testid="app-places-open"]')!;
     expect(open.textContent).toBe("Everything");
     expect(open.getAttribute("aria-label")).toBe("Everything — what the scene shows");
-    // After the switch.
-    expect(at.querySelector('[data-testid="app-faces"]')!.compareDocumentPosition(open) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // After the app menu, which holds the scene and the pages (Roadmap f-app-bar-calm).
+    expect(at.querySelector('[data-testid="app-menu-open"]')!.compareDocumentPosition(open) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     act(() => open.click());
     const list = at.querySelector('[data-testid="app-places"]')!;
     expect(list.closest("nav")?.getAttribute("aria-label")).toBe("What the scene shows");
@@ -209,7 +209,7 @@ describe("the places standing on the row (FR-145)", () => {
     vi.spyOn(window, "getComputedStyle").mockImplementation(((element: Element) => ({ minWidth: element.matches(".graview-bar-find") ? "120px" : "0px", lineHeight: "19px", fontSize: "14px", flexBasis: "144px" })) as never);
   }
   const bar = (current: string | null, reach = {}) => (
-    <AppBar brand={undefined} name="Farm Bureau POM Workshop" home={{ go: () => undefined, current: false }} faces={faces(true)} switch="icons" places={workshop} current={current} reach={reach} tools={null} />
+    <AppBar brand={undefined} name="Farm Bureau POM Workshop" home={{ go: () => undefined, current: false }} faces={faces(true)} places={workshop} current={current} reach={reach} tools={null} />
   );
 
   it("stand as words in their order, the primary ones only, the one you are on marked and saying so, the rest in More", () => {
@@ -262,12 +262,12 @@ describe("the places standing on the row (FR-145)", () => {
     const standing = (at: HTMLElement) => [...at.querySelectorAll('[data-testid="app-places-standing"] > [data-place-path]')].length;
     const person = <button type="button" data-testid="person">P</button>;
     layOut(1280);
-    const fits = drawn(<AppBar brand={undefined} name="Farm Bureau POM Workshop" home={{ go: () => undefined, current: false }} faces={faces(true)} switch="icons" places={workshop} current="home" reach={{}} tools={person} />);
+    const fits = drawn(<AppBar brand={undefined} name="Farm Bureau POM Workshop" home={{ go: () => undefined, current: false }} faces={faces(true)} places={workshop} current="home" reach={{}} tools={person} />);
     const room = standing(fits.at);
     act(() => fits.root.unmount());
     vi.restoreAllMocks();
     layOut(1280, 0, 160);
-    const over = drawn(<AppBar brand={undefined} name="Farm Bureau POM Workshop" home={{ go: () => undefined, current: false }} faces={faces(true)} switch="icons" places={workshop} current="home" reach={{}} tools={person} />);
+    const over = drawn(<AppBar brand={undefined} name="Farm Bureau POM Workshop" home={{ go: () => undefined, current: false }} faces={faces(true)} places={workshop} current="home" reach={{}} tools={person} />);
     expect(room).toBeGreaterThanOrEqual(2);
     expect(standing(over.at)).toBeLessThan(room);
     act(() => over.root.unmount());

@@ -6,6 +6,7 @@ import { act } from "react";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { faceAtAddress, faceOf, mount, preload, type EmbedHandle, type EmbedOptions } from "../../src/index.js";
 import { mount as mountPages, type PagesEmbedHandle, type PagesEmbedOptions } from "../../src/pages.js";
+import { facePressed, pressFace } from "../support/the-app-menu.js";
 
 /**
  * A HOST THAT OWNS THE PAGE GIVES THE ROUTED FACE THE ADDRESS BAR (FR-106).
@@ -191,21 +192,21 @@ describe("address routing under a base path", () => {
     expect(heading(again.host)).toBe("Post the letter");
   });
 
-  it("keeps the scene at its address with its stop in the fragment, and the switch is an entry Back undoes (FR-132, FR-137)", async () => {
+  it("keeps the scene at its address with its stop in the fragment, and the app menu's face is an entry Back undoes (FR-132, FR-137)", async () => {
     const { host } = await at("/apps/a1/", { routing: "address", basePath: "/apps/a1", face: "graview" });
     expect(face(host)).toBe("graview");
     // Arriving is not traveling: the scene tidies its own address in place — to its place's.
     expect(window.location.pathname).toBe("/apps/a1/places/overview");
     expect(window.location.href.includes("#")).toBe(false);
-    expect(host.querySelector('[data-testid="app-face-scene"]')?.getAttribute("aria-pressed")).toBe("true");
+    expect(await facePressed(host, "scene")).toBe("true");
     const length = window.history.length;
-    await click(host.querySelector('[data-testid="app-face-pages"]'));
+    await pressFace(host, "pages");
     await settle();
     expect(face(host)).toBe("pages");
     expect(window.location.pathname.replace(/\/$/, "")).toBe("/apps/a1");
     expect(window.location.href.includes("#")).toBe(false);
     expect(window.history.length).toBe(length + 1);
-    expect(host.querySelector('[data-testid="app-face-pages"]')?.getAttribute("aria-pressed")).toBe("true");
+    expect(await facePressed(host, "pages")).toBe("true");
     await back();
     expect(face(host)).not.toBe("pages");
     expect(window.location.pathname).toBe("/apps/a1/places/overview");
@@ -213,10 +214,10 @@ describe("address routing under a base path", () => {
     expect(window.history.length).toBe(length + 1);
   });
 
-  it("goes from a page to the scene with one press on the switch, at its address, and Back returns to the page", async () => {
+  it("goes from a page to the scene with the app menu's Scene, at its address, and Back returns to the page", async () => {
     const { host } = await at("/apps/a1/tasks", { routing: "address", basePath: "/apps/a1", face: "pages" });
     expect(heading(host)).toBe("Tasks");
-    await click(host.querySelector('[data-testid="app-face-scene"]'));
+    await pressFace(host, "scene");
     await settle();
     // The list holds nothing in the scene, so the scene is where it opens: at altitude (FR-157).
     expect(face(host)).toBe("graview");
@@ -249,7 +250,7 @@ describe("address routing under a base path", () => {
     });
     await settle();
     expect(face(host)).not.toBe("pages");
-    await click(host.querySelector('[data-testid="app-face-pages"]'));
+    await pressFace(host, "pages");
     await settle();
     expect(face(host)).toBe("pages");
     expect(window.location.pathname).toBe("/apps/a1/tasks");
@@ -266,18 +267,18 @@ describe("address routing under a base path", () => {
   it("lands where the scene opens from an address nothing lives at, never on the empty view (FR-157)", async () => {
     const { host } = await at("/apps/a1/tasks/nobody", { routing: "address", basePath: "/apps/a1", face: "graview" });
     expect(heading(host)).toBe("Nothing lives at this address.");
-    await click(host.querySelector('[data-testid="app-face-scene"]'));
+    await pressFace(host, "scene");
     await settle();
     expect(face(host)).toBe("graview");
     expect(window.location.pathname).toBe("/apps/a1/places/overview");
     expect(window.location.href.includes("#")).toBe(false);
-    expect(host.querySelector('[data-testid="app-face-scene"]')?.getAttribute("aria-pressed")).toBe("true");
+    expect(await facePressed(host, "scene")).toBe("true");
   });
 
   it("lands where the declaration says the app opens, when it says (FR-157)", async () => {
     const opening = defineApp({ name: "Errands", schema: createSchema([task]), mutations: [], pages: { first: "tasks" } });
     const { host } = await at("/apps/a1/tasks/nobody", { app: opening, routing: "address", basePath: "/apps/a1", face: "graview" });
-    await click(host.querySelector('[data-testid="app-face-scene"]'));
+    await pressFace(host, "scene");
     await settle();
     expect(face(host)).toBe("scene");
     expect(window.location.pathname).toBe("/apps/a1/places/overview");
@@ -298,7 +299,7 @@ describe("address routing under a base path", () => {
     for (const asked of ["pages", "scene", "graview"] as const) {
       const { host, handle, done } = await at("/apps/a1/places/overview", { routing: "address", basePath: "/apps/a1", face: asked });
       expect(face(host)).toBe("graview");
-      expect(host.querySelector('[data-testid="app-face-scene"]')?.getAttribute("aria-pressed")).toBe("true");
+      expect(await facePressed(host, "scene")).toBe("true");
       expect(handle.where()).toMatchObject({ face: "graview", path: "/places/overview", stop: "#overview=1" });
       expect(window.location.pathname).toBe("/apps/a1/places/overview");
       expect(window.location.href.includes("#")).toBe(false);
@@ -328,7 +329,7 @@ describe("address routing under a base path", () => {
 
   it("goes back to the bare overview's address at altitude (FR-154)", async () => {
     const { host } = await at("/apps/a1/places/overview", { routing: "address", basePath: "/apps/a1", face: "graview" });
-    await click(host.querySelector('[data-testid="app-face-pages"]'));
+    await pressFace(host, "pages");
     await settle();
     expect(face(host)).toBe("pages");
     await back();

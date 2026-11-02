@@ -11,7 +11,7 @@ import { createNoticeBoard, frameworkVoice, NoticeBoardContext, Notices, sceneRe
 import { DraftDoor } from "./draft-door.js";
 import { appKeyOf } from "./reader-lenses.js";
 import { registerReaderLenses } from "./declared-lens-doors.js";
-import { AppBar, type BarAction, type BarFind } from "./app-bar.js";
+import { AppBar, type AppMenuRow, type BarAction, type BarFind, type BarShare } from "./app-bar.js";
 import { SceneSkips } from "./scene-skips.js";
 import { useScenePlaces } from "./scene-places.js";
 import { SceneBarTools, SceneTrail, useCallLog } from "./scene-bar.js";
@@ -94,6 +94,10 @@ export interface ShellProps {
    * folded into one control on a narrow bar. A host's, never the app's.
    */
   readonly barActions?: readonly BarAction[];
+  /** THE HOST'S ROWS IN THE APP MENU (Roadmap f-app-bar-calm), after the scene and the pages. */
+  readonly appMenu?: readonly AppMenuRow[];
+  /** A HOST'S SHARE beside the people (Roadmap f-app-bar-calm): who can open the app, in a sentence, and where that changes. */
+  readonly share?: BarShare;
   /**
    * THE HOST'S "REPORT THIS" (FR-237): given, every warning or error toast
    * the framework raises itself carries a button that hands the host the
@@ -187,6 +191,8 @@ function ShellFace<S extends AnySchema>({
   studio,
   hostActions,
   barActions,
+  appMenu,
+  share,
   onReport,
   signature = false,
   quickAsk = true,
@@ -271,6 +277,10 @@ function ShellFace<S extends AnySchema>({
         onFind={setBarFind}
         skips={<SceneSkips />}
         {...(barActions ? { actions: barActions } : {})}
+        {...(appMenu ? { appMenu } : {})}
+        {...(share ? { share } : {})}
+        // The scheme, in the app menu: light or dark, which the Shell's host keeps.
+        scheme={{ value: scheme, onChoose: (chosen) => (chosen === "system" ? undefined : onScheme(chosen)), offers: ["light", "dark"] }}
         tools={
           <>
             <Standing clean={standing} />
@@ -282,8 +292,6 @@ function ShellFace<S extends AnySchema>({
               * it too, with the other things only the keeper can use.
               */}
             <Profile<S>
-              scheme={scheme}
-              onScheme={onScheme}
               {...(profileHref ? { profileHref } : {})}
               {...(hostActions ? { hostActions } : {})}
               signature={signature}

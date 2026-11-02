@@ -51,6 +51,7 @@ import { serving, vacant } from "./lib/serve.mjs";
 import { graviewSources } from "./lib/graview-sources.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { deadline } from "./lib/deadline.mjs";
+import { openActivity } from "./lib/bar.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -1389,7 +1390,7 @@ try {
     const handed = await on.evaluate(() => ({ picked: window.__fastPicked.slice(), saw: window.__thinkingSaw.at(-1) ?? null }));
     await on.click('[data-testid="quick-ask"] [data-testid="ghost-close"], [data-testid="quick-ask-close"]').catch(() => undefined);
     await on.keyboard.press("Escape").catch(() => undefined);
-    await on.click('[data-testid="activity-button"]:visible').catch(() => undefined);
+    await openActivity(on, { timeout: 8_000 }).catch(() => undefined);
     await on.waitForSelector('[data-testid="interaction-context"]', { timeout: 8_000 }).catch(() => undefined);
     const said = await on.evaluate(() => {
       const row = document.querySelector('[data-testid="interaction-context"]');
@@ -1457,7 +1458,7 @@ try {
     await on.waitForTimeout(400);
     const onTheCard = await wordsOf('[data-testid="quick-ask"]');
     await on.click('[data-testid="quick-ask-close"]').catch(() => undefined);
-    await on.click('[data-testid="activity-button"]:visible').catch(() => undefined);
+    await openActivity(on, { timeout: 8_000 }).catch(() => undefined);
     await on.waitForSelector('[data-testid="activity-interaction"]', { timeout: 8_000 }).catch(() => undefined);
     const inActivity = await on.evaluate(() => [...document.querySelectorAll('[data-testid="activity-interaction"]')].map((one) => one.querySelector("[data-graview-activity-words]")?.textContent ?? "").join(" | "));
     const asks = (words) => /\bask(s|ed|ing)?\b/i.test(words ?? "");
@@ -1817,7 +1818,7 @@ try {
     };
     await on.click('[data-testid="quick-ask-close"]').catch(() => undefined);
     await on.keyboard.press("Escape").catch(() => undefined);
-    await on.click('[data-testid="activity-button"]:visible').catch(() => undefined);
+    await openActivity(on, { timeout: 8_000 }).catch(() => undefined);
     await on.waitForSelector('[data-testid="interaction-stages"]', { timeout: 8_000 }).catch(() => undefined);
     const stages = await on.evaluate(() => {
       const details = document.querySelector('[data-testid="interaction-stages"]');

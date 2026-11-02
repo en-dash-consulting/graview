@@ -32,13 +32,14 @@ the project's `pnpm typecheck` covers the embed from day one.
    the fragment the app writes — `#overview=1`, `#focus=agg:plot`,
    `#view=the-week` — so a link you copied from the app is an embed's
    starting point. `face` follows the stop unless you name one.
-2. **Pick the face for the page.** One app bar: the name, the switch
-   (Scene, Pages), the place you are on opening the rest (on a wide row
-   they stand, the rest under More), Find, the standing, the person. Name no `face` and an
+2. **Pick the face for the page.** One app bar: the name and its app
+   menu (Scene, Pages), the place you are on opening the rest (on a wide
+   row they stand, the rest under More), Find, one inbox, the people, the
+   standing, the person. Name no `face` and an
    app with a home view opens on it, else the scene; `"scene"`,
    `"graview"`, `"pages"` (on `path`); `"picture"` is ONE lens alone
-   (`stop: "#view=the-week"`), no bar. `bar: false` drops the bar;
-   `switch: "icons"` keeps the switch to its marks. Under a product's own
+   (`stop: "#view=the-week"`), no bar. `bar: false` drops the bar.
+   Under a product's own
    bar, `bar: { faces: false, name: false }` (and `heading: false`) keeps
    the places, Find, the standing and the person, never CSS hiding them.
 3. **Name it.** Two embeds on one page carry the same landmarks — the

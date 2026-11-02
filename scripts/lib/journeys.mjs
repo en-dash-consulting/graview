@@ -1596,7 +1596,7 @@ export const JOBS = {
        * FROM THE KEYBOARD, THE KEY THE PAGE SAYS TAKES IT BACK. The offer
        * that comes with a change says ⌘Z or Ctrl+Z on its Take back
        * (`aria-keyshortcuts`); a keyboard person who reads it presses the
-       * key, where the walk opened Activity at the far end of the bar — eight
+       * key, where the walk opened the inbox at the far end of the bar — eight
        * to ten keys for the pointer's two. Not from inside a text field,
        * where the key is the field's own undo.
        */
@@ -1618,8 +1618,13 @@ export const JOBS = {
           if (taken) return { via: "the key the offer says" };
         }
       }
-      const opener = page.getByRole("button", { name: /^Activity$/ }).or(page.locator('[data-testid="activity-button"]')).locator("visible=true").first();
-      if (ctx.face === "scene" && (await opener.isVisible().catch(() => false))) await person.press(opener, "Activity");
+      // What has happened is the inbox's Activity tab (Roadmap f-app-bar-calm): the bell, then the tab where the inbox opened on For you.
+      const opener = page.locator('[data-testid="inbox-button"]').or(page.getByRole("button", { name: /^Inbox\b/ })).locator("visible=true").first();
+      if (ctx.face === "scene" && (await opener.isVisible().catch(() => false))) {
+        await person.press(opener, "Inbox");
+        const tab = page.locator('[data-testid="inbox-tab-activity"]').locator("visible=true").first();
+        if ((await appears(tab)) && (await tab.getAttribute("aria-selected")) !== "true") await person.press(tab, "Activity");
+      }
       const undo = page
         .locator('[data-testid="undo-turn"]')
         .or(page.getByRole("button", { name: /^(undo|take (it |this )?back)/i }))

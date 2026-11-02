@@ -1,5 +1,5 @@
 import type { AnySchema, Brand, Person, Principal, Store } from "@graview/core";
-import { createPartsWatch, ErrorReportContext, GraviewProvider, PartsWatchContext, type AwaySummary, type Scheme } from "@graview/react/provider";
+import { createPartsWatch, ErrorReportContext, GraviewProvider, PartsWatchContext, type AwaySummary, type HostNotification, type Scheme } from "@graview/react/provider";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDrawnSignal } from "./drawn.js";
 import { draftWaits, fetchDraftHost, Settling, useDraft, type EmbedDraftView } from "./draft.js";
@@ -14,9 +14,9 @@ const pagesViews = <S extends AnySchema>(schema: S, specs: Parameters<typeof reg
   registerViewSpecs(registerDefaultViews(schema, createViews(schema)), schema, specs) as unknown as ReactViewRegistry<S>;
 import { flushSync } from "react-dom";
 import { createNoticeBoard, frameworkVoice, NoticeBoardContext, type Notice, type NoticeHandle } from "@graview/primitives/frame";
-import { barLeaves, FaceBoundary, FrameBar, FrameFirstLook, FrameNotices, placeOfPath, providerProps, storeOf, titleBelow, useErrorReport, useFrame, useIntrinsicHeight, useReady, useSteering, useViews, type EmbedHostContext, type FrameOptions } from "./frame.js";
+import { barLeaves, FaceBoundary, FrameBar, FrameFirstLook, FrameNotices, hostBarOf, hostBarProps, type HostBar, placeOfPath, providerProps, storeOf, titleBelow, useErrorReport, useFrame, useIntrinsicHeight, useReady, useSteering, useViews, type EmbedHostContext, type FrameOptions } from "./frame.js";
 import { addressOf, pathWithin } from "@graview/core";
-import { appKeyOf, BarFindContext, type BarFind } from "@graview/primitives/frame";
+import { appKeyOf, BarFindContext, type AppMenuRow, type BarFind, type BarScheme, type BarShare } from "@graview/primitives/frame";
 
 /**
  * THE PAGES AND NOTHING ELSE (FR-19). `@graview/embed/pages` mounts the
@@ -118,6 +118,9 @@ function PagesDrawing<S extends AnySchema>(props: PagesEmbedProps<S>) {
                   standing={standing}
                   hostActions={props.hostActions}
                   barActions={props.barActions}
+                  appMenu={props.appMenu}
+                  schemeChoice={props.schemeChoice}
+                  share={props.share}
                   onFind={setBarFind}
                 />
               </FaceBoundary>
@@ -159,6 +162,14 @@ export interface PagesEmbedHandle {
   setHostActions(actions: PagesEmbedOptions["hostActions"]): void;
   /** The host's buttons on the bar (FR-227), now; `undefined` takes them off. */
   setBarActions(actions: PagesEmbedOptions["barActions"]): void;
+  /** The host's rows in the app menu (Roadmap f-app-bar-calm), now; `undefined` takes them off. */
+  setAppMenu(rows: readonly AppMenuRow[] | undefined): void;
+  /** The host's Share beside the people (Roadmap f-app-bar-calm), now: who can open the app changed, say; `undefined` takes it off. */
+  setShare(share: BarShare | undefined): void;
+  /** The scheme the app menu offers (Roadmap f-scheme-choice-mount), now: the person's choice as the host keeps it; `undefined` takes it off. */
+  setSchemeChoice(choice: BarScheme | undefined): void;
+  /** The host's notifications in the inbox (Roadmap f-app-bar-calm), now; `undefined` takes them off. */
+  setNotifications(notifications: readonly HostNotification[] | undefined): void;
   /** Another view proposed and not kept, or none (FR-187), swapped in place: `data-graview-drawn` comes off and returns once it has drawn. */
   setDraftView(draft: EmbedDraftView | null): void;
   /** Says something in the app's own notices (FR-75): a toast, or a banner that stays until it is cleared. */
@@ -186,6 +197,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
     label(label: string): void;
     hostActions(actions: PagesEmbedOptions["hostActions"]): void;
     barActions(actions: PagesEmbedOptions["barActions"]): void;
+    hostBar(bar: HostBar): void;
     draft(draft: EmbedDraftView | null): void;
   } | null = null;
   function Host() {
@@ -200,8 +212,9 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
     const [label, setLabel] = useState<string | undefined>(options.label);
     const [hostActions, setHostActions] = useState<PagesEmbedOptions["hostActions"]>(options.hostActions);
     const [barActions, setBarActions] = useState<PagesEmbedOptions["barActions"]>(options.barActions);
+    const [hostBar, setHostBar] = useState<HostBar>(() => hostBarOf(options));
     const [draft, setDraft] = useState<EmbedDraftView | null | undefined>(options.draftView);
-    set = { path: setPath, scheme: setScheme, seat: setSeat, seats: setSeats, people: setPeople, hostContext: setHostContext, brand: setBrand, whileAway: setWhileAway, label: setLabel, hostActions: setHostActions, barActions: setBarActions, draft: setDraft };
+    set = { path: setPath, scheme: setScheme, seat: setSeat, seats: setSeats, people: setPeople, hostContext: setHostContext, brand: setBrand, whileAway: setWhileAway, label: setLabel, hostActions: setHostActions, barActions: setBarActions, hostBar: (bar) => setHostBar((held) => ({ ...held, ...bar })), draft: setDraft };
     return (
       <PagesEmbed<S>
         {...options}
@@ -217,6 +230,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
         label={label}
         hostActions={hostActions}
         barActions={barActions}
+        {...hostBarProps(hostBar)}
         draftView={draft}
         scheme={scheme}
         onSeat={setSeat}
@@ -238,6 +252,10 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
     setLabel: (label) => flushSync(() => set?.label(label)),
     setHostActions: (actions) => flushSync(() => set?.hostActions(actions)),
     setBarActions: (actions) => flushSync(() => set?.barActions(actions)),
+    setAppMenu: (appMenu) => flushSync(() => set?.hostBar({ appMenu })),
+    setShare: (share) => flushSync(() => set?.hostBar({ share })),
+    setSchemeChoice: (schemeChoice) => flushSync(() => set?.hostBar({ schemeChoice })),
+    setNotifications: (notifications) => flushSync(() => set?.hostBar({ notifications })),
     setDraftView: (draft) => flushSync(() => set?.draft(draft)),
     notify: (notice) => {
       let said: NoticeHandle | undefined;

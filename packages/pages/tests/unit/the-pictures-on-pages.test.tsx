@@ -112,7 +112,7 @@ describe("the pictures on pages", () => {
     expect(html).toContain('data-graview-pick="t1"');
     expect(html).toContain('data-testid="place-as-list"');
     expect(html).toContain("All tasks as a list");
-    // The page does not repeat the places: no sibling pictures, no way to the scene under the title (the switch is that).
+    // The page does not repeat the places: no sibling pictures, no way to the scene under the title (the app menu is that).
     const page = html.slice(html.indexOf("<main"));
     expect(page).not.toContain('data-testid="sibling-pictures"');
     expect(page).not.toContain('data-testid="place-stop"');
@@ -124,13 +124,12 @@ describe("the pictures on pages", () => {
     expect(draw("/places/the-year")).toContain("No picture is called that");
   });
 
-  it("has the switch and the place you are on on the one bar, and every place in the list it opens: the home, the Lists, the Pictures (FR-137, FR-138)", () => {
+  it("has the app menu and the place you are on on the one bar, and every place in the list it opens: the home, the Lists, the Pictures (FR-137, FR-138)", () => {
     const html = draw("/");
     const bar = html.slice(html.indexOf('data-testid="app-bar"'), html.indexOf("</header>"));
-    expect(bar).toMatch(/data-testid="app-face-scene"[^>]*aria-pressed="false"/);
-    expect(bar).toMatch(/data-testid="app-face-pages"[^>]*aria-pressed="true"/);
-    expect(bar).toContain(">Scene<");
-    expect(bar).toContain(">Pages<");
+    // The scene and the pages are the app menu's rows, fetched when it opens; the bar holds its control.
+    expect(bar).toMatch(/data-testid="app-menu-open"[^>]*aria-label="[^"]* — app menu"/);
+    expect(bar).not.toContain("graview-bar-faces");
     expect(bar.toLowerCase()).not.toContain("overview");
     expect(bar).toMatch(/data-testid="app-place-current"[^>]*>Home</);
     const list = html.slice(html.indexOf('data-testid="app-places"'), html.indexOf("</nav>"));

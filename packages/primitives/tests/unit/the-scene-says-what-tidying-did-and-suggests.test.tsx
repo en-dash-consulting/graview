@@ -17,8 +17,8 @@ beforeAll(() => fetchInspector());
  * the app's own, `automated` — links two tasks it is sure of and suggests
  * a third it is not. On the scene's bar, Activity folds its run into one
  * row, "Tidied 2 things today", which opens to each change with its
- * lineage and its own undo; beside it a quiet Suggested tray holds the
- * third, which a person accepts or declines there. A record a person said
+ * lineage and its own undo; in the same inbox, under For you, a quiet
+ * Suggested tray holds the third, which a person accepts or declines there. A record a person said
  * to leave alone says so where its acts are.
  */
 const task = defineNode("task", {
@@ -106,8 +106,10 @@ const $ = (selector: string) => document.querySelector<HTMLElement>(selector);
 describe("the scene's bar, after the app's own actor tidied", () => {
   it("folds the actor's two links into one digest row that opens to each with its lineage and its own undo", async () => {
     const host = await scene(tidied());
-    await settled(() => expect(host.querySelector('[data-testid="activity-button"]')).not.toBeNull());
-    await act(async () => $('[data-testid="activity-button"]')!.click());
+    await settled(() => expect(host.querySelector('[data-testid="inbox-button"]')).not.toBeNull());
+    await act(async () => $('[data-testid="inbox-button"]')!.click());
+    await settled(() => expect($('[data-testid="inbox-tab-activity"]')).not.toBeNull());
+    await act(async () => $('[data-testid="inbox-tab-activity"]')!.click());
     const digest = $('[data-testid="activity-digest"]')!;
     expect(digest.textContent).toContain("Graview, tidying");
     expect(digest.textContent).toContain("Tidied 2 things today");
@@ -119,36 +121,42 @@ describe("the scene's bar, after the app's own actor tidied", () => {
     expect(each.every((row) => row.querySelector('[data-testid="undo-turn"]') !== null)).toBe(true);
   });
 
-  it("holds the third in a quiet Suggested tray beside Activity, which a person declines there, and the actor is refused it next time", async () => {
+  it("holds the third in a quiet Suggested tray in the inbox's For you, apart from Activity, which a person declines there, and the actor is refused it next time", async () => {
     const store = tidied();
     const host = await scene(store);
-    await settled(() => expect(host.querySelector('[data-graview-app-bar] [data-testid="suggested-button"]')).not.toBeNull());
-    expect($('[data-testid="suggested-button"]')!.textContent).toContain("1");
-    await act(async () => $('[data-testid="suggested-button"]')!.click());
+    await settled(() => expect(host.querySelector('[data-graview-app-bar] [data-testid="inbox-button"]')?.getAttribute("aria-label")).toMatch(/^Inbox — 1 waiting for you\b/));
+    await act(async () => $('[data-testid="inbox-button"]')!.click());
+    await settled(() => expect($('[data-testid="inbox-tab-for-you"]')?.getAttribute("aria-selected")).toBe("true"));
+    expect($('[data-testid="inbox-tab-for-you"] .graview-inbox-tab-count')?.textContent).toBe("1");
+    await settled(() => expect($('[data-testid="suggested"] [data-testid="suggestion"]')).not.toBeNull());
+    // The suggestion is For you's, not a row in Activity.
+    expect($('[data-testid="inbox-panel-for-you"] [data-testid="diff-log"]')).toBeNull();
     const row = $('[data-testid="suggestion"]')!;
     expect(row.textContent).toContain("Graview, tidying suggests “Hand back the keys” waits for “Move the piano”");
     expect(row.textContent).toContain("based on “The piano goes out before the keys go back” · 42% sure");
     expect(store.graph.allEdges()).toHaveLength(2);
     await act(async () => row.querySelector<HTMLButtonElement>('[data-testid="suggestion-decline"]')!.click());
-    await settled(() => expect($('[data-testid="suggested-button"]')).toBeNull());
+    await settled(() => expect($('[data-testid="suggestion"]')).toBeNull());
     expect(store.graph.allEdges()).toHaveLength(2);
     expect(declined(store, [{ name: "wait-for", args: { taskId: "keys", blockerId: "piano" } }])?.author).toMatchObject(nora);
     expect(() => suggest(store, [{ name: "wait-for", args: { taskId: "keys", blockerId: "piano" } }], { author: actor, lineage: { basis: "Again" } })).toThrow(/declined/);
-    // The keyboard went to Activity with the tray, never to <body>.
-    expect(document.activeElement?.getAttribute("data-testid")).toBe("activity-button");
+    // The keyboard went to the inbox's Activity with the tray, never to <body>.
+    await settled(() => expect(document.activeElement?.getAttribute("data-testid")).toBe("inbox-tab-activity"));
+    expect($('[data-testid="inbox-tab-activity"]')?.getAttribute("aria-selected")).toBe("true");
   });
 
   it("accepts a suggestion as the person, carrying its lineage", async () => {
     const store = tidied();
     await scene(store);
-    await settled(() => expect($('[data-testid="suggested-button"]')).not.toBeNull());
-    await act(async () => $('[data-testid="suggested-button"]')!.click());
+    await settled(() => expect($('[data-testid="inbox-button"]')).not.toBeNull());
+    await act(async () => $('[data-testid="inbox-button"]')!.click());
+    await settled(() => expect($('[data-testid="suggestion-accept"]')).not.toBeNull());
     await act(async () => $('[data-testid="suggestion-accept"]')!.click());
     const made = store.log.all().at(-1)!;
     expect(made.author).toMatchObject(nora);
     expect(made.lineage?.basis).toBe("The piano goes out before the keys go back");
     expect(store.graph.allEdges()).toHaveLength(3);
-    await settled(() => expect($('[data-testid="suggested-button"]')).toBeNull());
+    await settled(() => expect($('[data-testid="suggestion"]')).toBeNull());
   });
 });
 

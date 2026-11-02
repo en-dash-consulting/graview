@@ -31,6 +31,7 @@ import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { deadline } from "./lib/deadline.mjs";
+import { openActivity } from "./lib/bar.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -134,10 +135,9 @@ const ghostSays = (page) =>
     };
   });
 
-/** Activity, opened: its interactions and its change rows. */
+/** Activity — the inbox's tab — opened: its interactions and its change rows. */
 async function activitySays(page) {
-  if (!(await page.$('[data-testid="activity"]'))) await page.click('[data-testid="activity-button"]');
-  await page.waitForSelector('[data-testid="activity"]', { timeout: 10_000 });
+  await openActivity(page);
   await page.waitForTimeout(300);
   return page.evaluate(() => {
     const pane = document.querySelector('[data-testid="activity"]');
@@ -396,7 +396,7 @@ try {
   host.on("pageerror", (error) => errors.push(error.message));
   await host.goto(`${at("todo")}/?${DAY}`, { waitUntil: "load", timeout: 90_000 });
   await ready(host);
-  await host.click('[data-testid="activity-button"]');
+  await openActivity(host);
   await host.waitForSelector('[data-interaction="ai-stored-1"]', { timeout: 10_000 }).catch(() => undefined);
   const storedShown = await activitySays(host);
   await host.keyboard.press("Escape");
@@ -669,9 +669,10 @@ try {
   await host.waitForTimeout(400);
   const sceneOff = await host.evaluate(() => ({ section: document.querySelector('[data-menu-section="inline-ai"]') !== null, seat: document.querySelector('[data-graview-quick-ask], [data-testid="seat-field"]') !== null }));
   await putAway(host);
-  await host.click('[data-testid="activity-button"]').catch(() => undefined);
+  await openActivity(host).catch(() => undefined);
   await host.waitForTimeout(400);
-  const activityOff = await host.evaluate(() => ({ filter: document.querySelector('[data-testid="activity-filter"]') !== null, interactions: document.querySelectorAll('[data-testid="activity-interaction"]').length }));
+  // Where the host says AI is off the inbox draws no "Your asks" tab either.
+  const activityOff = await host.evaluate(() => ({ filter: document.querySelector('[data-testid="activity-filter"]') !== null, interactions: document.querySelectorAll('[data-testid="activity-interaction"]').length, asks: document.querySelector('[data-testid="inbox-tab-asks"]') !== null }));
   await host.keyboard.press("Escape");
   await host.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}&hostOff=1`, { waitUntil: "load", timeout: 90_000 });
   await host.waitForSelector(HEADING, { timeout: 60_000 });
@@ -689,7 +690,7 @@ try {
     sceneOff,
     activityOff,
     pagesOff,
-    ok: !sceneOff.section && !sceneOff.seat && !activityOff.filter && activityOff.interactions === 0 && !pagesOff.section && !pagesOff.seat && !pagesOff.record,
+    ok: !sceneOff.section && !sceneOff.seat && !activityOff.filter && activityOff.interactions === 0 && !activityOff.asks && !pagesOff.section && !pagesOff.seat && !pagesOff.record,
   };
   await hosted.close();
 

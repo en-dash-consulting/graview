@@ -57,7 +57,7 @@ describe("the places list as it opens (FR-158)", () => {
     host = document.createElement("div");
     document.body.append(host);
     const root = createRoot(host);
-    const bar = (name: string) => <AppBar brand={undefined} name={name} home={{ go: () => undefined, current: false }} faces={faces} switch="icons" places={workshop} current="home" reach={{}} tools={null} />;
+    const bar = (name: string) => <AppBar brand={undefined} name={name} home={{ go: () => undefined, current: false }} faces={faces} places={workshop} current="home" reach={{}} tools={null} />;
     act(() => root.render(bar("Farm Bureau POM Workshop")));
     const entries = () => [...host!.querySelectorAll('[data-testid="app-places"] [data-place-path]')];
     const before = entries();
@@ -77,7 +77,7 @@ describe("the places list as it opens (FR-158)", () => {
     document.body.append(host);
     const root = createRoot(host);
     const went: string[] = [];
-    const bar = (name: string) => <AppBar brand={undefined} name={name} home={{ go: () => undefined, current: false }} faces={faces} switch="icons" places={workshop} current="home" reach={{ go: (place) => went.push(place.path) }} tools={null} />;
+    const bar = (name: string) => <AppBar brand={undefined} name={name} home={{ go: () => undefined, current: false }} faces={faces} places={workshop} current="home" reach={{ go: (place) => went.push(place.path) }} tools={null} />;
     act(() => root.render(bar("Farm Bureau POM Workshop")));
     const entries = () => [...host!.querySelectorAll('[data-testid="app-places"] [data-place-path]')];
     const more = host.querySelector<HTMLButtonElement>('[data-testid="app-places-open"]')!;

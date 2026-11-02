@@ -97,14 +97,14 @@ const openQuickAsk = async (host: Element) => {
 };
 
 describe("the quick ask is a region, not a landmark inside one", () => {
-  it("in the Shell, with the quick ask, the key, the profile and the activity all open", async () => {
+  it("in the Shell, with the quick ask, the key, the profile and the inbox all open", async () => {
     await rendered(
       <GraviewProvider store={store()} views={views()} initialView={{ ...EMPTY_VIEW, focusId: aggregateId("duty"), overview: true }} initialSelection={["ana"]} brand={{ name: "Field notes" } as never} ai={ai}>
         <Shell<typeof schema> scheme="light" onScheme={() => {}} remembers />
       </GraviewProvider>,
       async (host) => {
         expect(await click(host, "profile-button")).toBe(true);
-        expect(await click(host, "activity-button")).toBe(true);
+        expect(await click(host, "inbox-button")).toBe(true);
         expect(await click(host, "lines-key")).toBe(true);
         expect(await openQuickAsk(host)).toBe(true);
         const asking = host.querySelector('[data-testid="quick-ask"]');

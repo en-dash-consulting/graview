@@ -13,6 +13,7 @@ import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
 import { at, portFor } from "./lib/ports.mjs";
+import { openActivity } from "./lib/bar.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -52,10 +53,10 @@ try {
        * one is an ordinary attributed change. Close it before the button
        * seat runs, so the two exchanges don't share a surface.
        */
-      // The seat lives in the Activity popover now; open it the way a person
+      // The seat lives in Activity, the inbox's tab; open it the way a person
       // would. Clicks inside the popover keep it open, so one open serves
       // the whole exchange.
-      await page.click('[data-testid="activity-button"]');
+      await openActivity(page);
       await page.waitForTimeout(300);
 
       const read = () => page.evaluate((id) => {
@@ -64,7 +65,8 @@ try {
           label: b?.textContent.trim() ?? null,
           disabled: b?.disabled ?? null,
           problems: document.querySelector('[data-testid="standing"]')?.textContent.trim() ?? null,
-          activity: document.querySelector('[data-testid="activity-button"]')?.textContent.trim() ?? "",
+          // The bell's name says its count in words: "Inbox — 4 changes".
+          activity: document.querySelector('[data-testid="inbox-button"]')?.getAttribute("aria-label") ?? "",
         };
       }, seat.testId);
 
@@ -363,7 +365,7 @@ const openProfile = async (page) => {
       await choice.click();
       await seven.waitForTimeout(500);
     }
-    await seven.click('[data-testid="activity-button"]');
+    await openActivity(seven);
     await seven.waitForTimeout(600);
     const turns = await seven.evaluate(
       () => document.querySelectorAll('[data-testid="diff-log"] li').length,
@@ -421,8 +423,8 @@ const openProfile = async (page) => {
       await page.goto(`${at("todo")}/?theme=light&today=2026-09-01&fresh=1&chat=1&as=${as}`, { waitUntil: "load" });
       await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
       await page.waitForTimeout(900);
-      // The conversation lives in Activity, beside the tidy seat: open it the way a person would.
-      await page.click('[data-testid="activity-button"]');
+      // The conversation lives in Activity, the inbox's tab, beside the tidy seat: open it the way a person would.
+      await openActivity(page);
       await page.waitForSelector('[data-testid="chat-draft"]', { timeout: 10_000 });
       await page.fill('[data-testid="chat-draft"]', "we also need who's driving");
       await page.click('[data-testid="chat-send"]');
