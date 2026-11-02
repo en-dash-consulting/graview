@@ -170,6 +170,42 @@ describe("a draft read against the page it replaces", () => {
     expect(drawnFindings(before, before)).toEqual([]);
   });
 
+  /* What each record's row said, and the heading it sat under: the facts a draft must keep unless asked. */
+  const row = (label: string, top: number, facts: string[], under: string) => ({ ...card(label, top, 0), facts, row: [label, ...facts].join(" "), under });
+  const tasks: DrawnRead = {
+    headings: ["Tasks", "This week", "Today"],
+    records: [row("Write the brief", 100, ["Todo", "Sep 3, 2026"], "This week"), row("Book the hall", 140, ["Doing", "Sep 5, 2026"], "This week"), row("Pay the deposit", 200, ["Doing"], "Today")],
+    text: "Tasks This week Write the brief Todo Sep 3, 2026 Book the hall Doing Sep 5, 2026 Today Pay the deposit Doing",
+  };
+
+  it("fails a draft whose cards dropped what each row said — its status, its date — unless that was asked", () => {
+    const titles: DrawnRead = {
+      headings: tasks.headings,
+      records: tasks.records.map((one) => ({ ...one, facts: [], row: one.label })),
+      text: "Tasks This week Write the brief Book the hall Today Pay the deposit",
+    };
+    const found = drawnFindings(tasks, titles);
+    expect(found.some((one) => one.includes("“Todo” on “Write the brief”") && one.includes("“Sep 3, 2026” on “Write the brief”"))).toBe(true);
+    expect(drawnFindings(tasks, titles, { asked: "just the names, nothing else" })).toEqual([]);
+    // Hiding the dates excuses the dates and nothing else.
+    const dated = drawnFindings(tasks, titles, { asked: "hide the dates" });
+    expect(dated.some((one) => one.includes("“Todo”") && !one.includes("Sep 3"))).toBe(true);
+    // Said in other words, or by the heading it now sits under, a fact is kept.
+    const reworded: DrawnRead = {
+      ...tasks,
+      headings: ["Tasks", "This week", "Today", "Doing"],
+      records: [row("Write the brief", 100, [], "This week"), row("Book the hall", 140, [], "This week"), row("Pay the deposit", 200, [], "Today")].map((one, at) => ({ ...one, row: [`${one.label} · to do · due 3 September`, `${one.label} doing, due Sep 5`, `${one.label} Doing`][at]! })),
+    };
+    expect(drawnFindings(tasks, reworded).filter((one) => one.includes("no longer says"))).toEqual([]);
+  });
+
+  it("fails a draft that moved a record under another heading, unless a regrouping was asked", () => {
+    const regrouped: DrawnRead = { ...tasks, records: tasks.records.map((one) => (one.label === "Book the hall" ? { ...one, under: "Today" } : one)) };
+    const found = drawnFindings(tasks, regrouped);
+    expect(found.some((one) => one.includes("“Book the hall” is under “Today”, and was under “This week”"))).toBe(true);
+    expect(drawnFindings(tasks, regrouped, { asked: "group these by status" })).toEqual([]);
+  });
+
   it("says what changed from the readings, never the model's words", () => {
     const after: DrawnRead = { headings: ["Lists", "Someday"], records: [card("Book the hall", 100, 0, 20), card("Write the brief", 100, 300, 20)], text: before.text };
     expect(describeChange("Lists", before, after)).toBe("Lists now show side by side, two to a line, in bigger type and in a new order.");

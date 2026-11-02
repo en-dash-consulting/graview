@@ -1,6 +1,6 @@
 {
   "budget": "every face",
   "minified": 0,
-  "gzipped": 20800,
-  "note": "Raised when a built-in page came to be made better (Roadmap f-make-any-page-better): the menu laid out field first with Chat and Better UI and Suggested (`menu-suggested.ts`), and the page's parts, the Better UI card and its bar, the cover while Graview redesigns, the judging of a draft against the page (`draft-check.ts`) and the drafts themselves (`@graview/tools/section`'s `draftPageSpec`, `draftPageView`) are chunks of their own, fetched with the first right-click on a page and the first card; this budget counts every chunk. Measured at 2_762_617 / 1_003_349, with More… handing the keyboard to what waited behind it against 982_617 gzipped before; a few bytes over for the measure's run-to-run difference."
+  "gzipped": 23000,
+  "note": "Raised when a built-in page came to be made better (Roadmap f-make-any-page-better): the menu laid out field first with Chat and Better UI and Suggested (`menu-suggested.ts`), and the page's parts, the Better UI card and its bar, the cover while Graview redesigns, the judging of a draft against the page (`draft-check.ts`) and the drafts themselves (`@graview/tools/section`'s `draftPageSpec`, `draftPageView`) are chunks of their own, fetched with the first right-click on a page and the first card; this budget counts every chunk. Measured at 2_767_976 / 1_005_482, with More… handing the keyboard to what waited behind it, Suggested filling in its acts, and a draft judged by what each record said and where it sat against 982_617 gzipped before; a few bytes over for the measure's run-to-run difference."
 }

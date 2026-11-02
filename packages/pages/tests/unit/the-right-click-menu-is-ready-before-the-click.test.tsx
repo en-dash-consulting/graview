@@ -21,7 +21,7 @@ import { PagesApp, type PageContext } from "../../src/index.js";
  * per record until it changes. Hovering asks no model at all.
  */
 const task = defineNode("task", {
-  fields: z.object({ label: z.string().min(1), done: z.boolean().default(false) }),
+  fields: z.object({ label: z.string().min(1), done: z.boolean().default(false), flagged: z.boolean().default(false) }),
   plural: "Tasks",
   label: (node) => node.label,
 });
@@ -33,6 +33,14 @@ const finish = defineMutation("finish", {
   writes: ["done"],
   input: z.object({ taskId: nodeRef(["task"]) }),
   apply: (ctx, args) => void ctx.patchNode(args.taskId, { done: true }),
+});
+// Offered done or not: what Suggested still has to say of a record once it changed.
+const flag = defineMutation("flag", {
+  title: "Flag it",
+  subject: { kinds: ["task"], arg: "taskId" },
+  writes: ["flagged"],
+  input: z.object({ taskId: nodeRef(["task"]) }),
+  apply: (ctx, args) => void ctx.patchNode(args.taskId, { flagged: true }),
 });
 const TASKS = [
   { id: "book", kind: "task", label: "Book the hall", done: false },
@@ -66,7 +74,7 @@ afterEach(async () => {
 });
 
 async function rendered(also: { ai?: HostAi; menuSections?: readonly MenuSectionSource[] } = {}) {
-  const store = new Store({ schema, mutations: [finish], snapshot: { nodes: TASKS as never, edges: [] } });
+  const store = new Store({ schema, mutations: [finish, flag], snapshot: { nodes: TASKS as never, edges: [] } });
   const context: PageContext<typeof schema> = { store, views: createViews(schema), ...(also.ai ? { ai: also.ai } : {}), ...(also.menuSections ? { menuSections: also.menuSections } : {}) };
   const host = document.createElement("div");
   document.body.appendChild(host);

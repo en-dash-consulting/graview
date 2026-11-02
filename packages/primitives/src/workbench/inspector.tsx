@@ -1,4 +1,4 @@
-import { InvalidArguments, isLeftAlone, layer, nounOf, signInInstead, withArticle, type AnySchema, type Store } from "@graview/core";
+import { choiceWords, InvalidArguments, isLeftAlone, layer, nounOf, signInInstead, withArticle, type AnySchema, type Store } from "@graview/core";
 import { edgeWords } from "@graview/core/words";
 import { failureWords } from "@graview/core/words";
 import { linkProvenance, provenanceWords } from "@graview/core/provenance";
@@ -13,7 +13,7 @@ import { menuMatches } from "../menu-words.js";
 import { MENU_RANK_FLOOR, MENU_RANK_REST_MS, useFastRank } from "../menu-rank.js";
 import { TOLD_SUGGESTED_MOST, useToldSuggestions } from "../menu-told-door.js";
 import { openQuickAsk, preloadQuickAsk, useQuickAskDrawn, whereMenuStands } from "../quick-ask-desk.js";
-import { useSuggested, type MenuSuggestion } from "../menu-suggested.js";
+import { filledActs, notARow, useSuggested, type MenuSuggestion } from "../menu-suggested.js";
 import type { InspectorPlacement } from "./inspector-door.js";
 import "../frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
@@ -354,12 +354,12 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
     if (menuAt === null || modes.length === 0) return [];
     const nudges = (better?.nudges?.() ?? []).map((label, at): MenuSuggestion => ({ key: `nudge:${at}`, label, mode: "better", source: "nudge" }));
     const told = toldLike.slice(0, 2).map((one): MenuSuggestion => ({ key: one.key, label: one.label, mode: "chat", source: "told" }));
-    const acts = affordances
-      .filter((one) => !one.destructive && !one.ties && one.provider !== "invariant")
-      .slice(0, 2)
-      .map((one): MenuSuggestion => ({ key: `act:${one.id}`, label: one.label, mode: "chat", source: "act" }));
-    return asks ? [...nudges, ...told, ...acts] : nudges;
-  }, [menuAt, modes.length, better, toldLike, affordances, asks]);
+    // An act with its answer filled in, never the bare act a row below already offers.
+    const on = menuAt.on ?? (selection.length === 1 ? selection[0] : undefined);
+    const record = on !== undefined ? (store.graph.getNode(on) as (Record<string, unknown> & { kind: string }) | undefined) : undefined;
+    const acts = filledActs(affordances, record, record ? choiceWords(store.schema, [record.kind])[record.kind] : undefined, record ? nameOf(store, record.id as string) : undefined).slice(0, 2);
+    return notARow(asks ? [...nudges, ...told, ...acts] : nudges, [...affordances, ...struck].map((one) => one.label));
+  }, [menuAt, modes.length, better, toldLike, affordances, struck, asks, store, selection]);
   /* What the answer depends on: the record the menu is on (a new object whenever it changes), else the graph as it stands. */
   const dependsOn = useMemo(() => (menuAt?.on !== undefined ? (store.graph.getNode(menuAt.on) as object | undefined) : undefined) ?? graphStamp(store), [menuAt, store, affordances]);
   const suggested = useSuggested(ai, suggestCandidates, { name: menuAt?.title ?? (selection.length === 1 ? nameOf(store, selection[0]!) : "this"), opened: menuAt, better: better !== undefined, depends: dependsOn }, onRow);
@@ -624,7 +624,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
   const behindMore = new Set(folded ? shown.slice(fits).map((entry) => entry.id) : []);
   /* What this seat may not do waits behind More… only where the first acts fill the room; a seat offered little is told at once what is not theirs. */
   const withheldFolded = folded && arranged.length >= fits;
-  const moreWaits = folded && (arranged.length > fits || (withheldFolded && withheld.length > 0) || beside.end.some((section) => (section.items?.length ?? 0) > 0 || section.render));
+  const moreWaits = folded && (arranged.length > fits || (withheldFolded && withheld.length > 0) || observations.length > 0 || beside.end.some((section) => (section.items?.length ?? 0) > 0 || section.render));
   /* What the words are asked about, said in the Ask row: the menu's title, the one record, else "this". */
   const askedAbout = menuAt?.title ?? (selection.length === 1 ? nameOf(store, selection[0]!) : selection.length > 1 ? `${selection.length} selected` : "this");
   const askRow = atPointer && words !== "" && modes.length > 0;
@@ -1160,11 +1160,13 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
       {/* What is true about it. The pane has the room to say the whole
           sentence; anything beyond the first two stays a count with the
           full list in the tooltip. */}
+      {/* At the pointer, what is true about it is read after More… with the rest, never between Suggested and the acts. */}
       {said.length > 0 ? (
         <div
           data-testid="observations"
           title={said.map((observation) => observation.text).join("\n")}
-          style={{ display: "grid", gap: 3 }}
+          hidden={folded}
+          style={{ display: folded ? "none" : "grid", gap: 3 }}
         >
           {said.slice(0, 2).map((observation) => (
             <p

@@ -29,37 +29,94 @@ function shownText(root: ParentNode): string {
   return [...(root as ParentNode).children].map((one) => (one instanceof HTMLElement ? (one.innerText ?? one.textContent ?? "") : (one.textContent ?? ""))).join(" ");
 }
 
+/** Words a row says that are its controls or its marks, not what it tells of the record. */
+const NOT_A_FACT = /^[\s·•|,:;–—\-+…✓✔×↓↑▸▾☆★⋯]*$/u;
+
+/**
+ * WHAT A RECORD'S ROW OR CARD SAYS BESIDE ITS NAME: each bit of words drawn
+ * apart in it ("Todo", "Sep 3, 2026", "3 tasks"), not its name, not a
+ * control's label, nothing hidden — the facts a draft must still say.
+ */
+function factsOf(row: Element, name: Element): string[] {
+  const facts: string[] = [];
+  const walker = (row.ownerDocument ?? document).createTreeWalker(row, NodeFilter.SHOW_TEXT);
+  const byParent = new Map<Element, string>();
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const parent = node.parentElement;
+    // A link goes somewhere (the trail, "In the scene", another record): where it goes is not what the row says of the record.
+    if (!parent || name.contains(parent) || parent.closest("button, input, select, textarea, [role='button'], nav, [hidden], [aria-hidden='true'], script, style")) continue;
+    const link = parent.closest("a[href]");
+    if (link && !link.contains(name)) continue;
+    byParent.set(parent, (byParent.get(parent) ?? "") + (node.textContent ?? ""));
+  }
+  for (const [parent, text] of byParent) {
+    const said = words(text);
+    // Words or a number: a mark alone ("⚠", "·") says nothing a draft must keep.
+    if (!said || said.length > 40 || NOT_A_FACT.test(said) || !/[\p{L}\p{N}]/u.test(said) || parent.getClientRects().length === 0) continue;
+    if (!facts.includes(said)) facts.push(said);
+    if (facts.length >= 6) break;
+  }
+  return facts;
+}
+
 /**
  * A DRAWING READ FOR JUDGING: its headings in order, each record a label
  * names — the innermost element that says it, where it stands and how big
- * its type is — and all its words, through each worker view's drawing.
+ * its type is, what its row or card says beside its name and the heading
+ * it sits under — and all its words, through each worker view's drawing.
  */
 export function readDrawn(root: Element | null | undefined, labels: readonly string[]): DrawnRead {
   if (!root?.isConnected) return { headings: [], records: [], text: "" };
   const roots = rootsOf(root);
   const headings: string[] = [];
+  const headingAt: { element: Element; said: string }[] = [];
   for (const one of roots)
     for (const heading of one.querySelectorAll("h1, h2, h3, [role='heading']")) {
       if (heading.closest("[data-graview-popover], [hidden], [aria-hidden='true'], nav")) continue;
       const copy = heading.cloneNode(true) as Element;
       for (const span of copy.querySelectorAll("span")) if (/^[\s·\d]+$/.test(span.textContent ?? "")) span.remove();
       const said = words(copy.textContent).replace(/^[▸▾]\s*/, "");
-      if (said) headings.push(said);
+      if (said) {
+        headings.push(said);
+        headingAt.push({ element: heading, said });
+      }
     }
-  const records: DrawnRead["records"][number][] = [];
+  const named = new Map<string, Element>();
   for (const label of labels) {
     const want = words(label).toLowerCase();
-    if (!want) continue;
+    if (!want || named.has(label)) continue;
     let best: Element | undefined;
     for (const one of roots)
       for (const element of one.querySelectorAll("a, li, p, span, h2, h3, h4, strong, div, button, td")) {
         if (words(element.textContent).toLowerCase() !== want) continue;
         if (!best || best.contains(element)) best = element;
       }
-    if (!best) continue;
+    if (best) named.set(label, best);
+  }
+  const names = [...named.values()];
+  const records: DrawnRead["records"][number][] = [];
+  for (const [label, best] of named) {
+    // Its row or card: the widest box around its name that holds no other record's name.
+    let row: Element = best;
+    for (let up = best.parentElement; up && up !== root && !(up instanceof HTMLBodyElement); up = up.parentElement) {
+      if (names.some((other) => other !== best && up.contains(other))) break;
+      if (up.matches("main, section, ul, ol, table, tbody, [data-graview-page]")) break;
+      row = up;
+    }
+    // The heading it sits under: the last one before it in the same drawing that is not in its own row.
+    let under: string | undefined;
+    // A heading that is a record's own name (a list's card titled "This week") heads that record, not a group.
+    const ownNames = new Set(labels.map((one) => words(one).toLowerCase()));
+    for (const one of headingAt) {
+      if (one.element.getRootNode() !== best.getRootNode() || row.contains(one.element) || one.element.contains(best) || ownNames.has(one.said.toLowerCase())) continue;
+      if (one.element.compareDocumentPosition(best) & Node.DOCUMENT_POSITION_FOLLOWING) under = one.said;
+    }
     const box = best.getBoundingClientRect();
     const size = Number.parseFloat(getComputedStyle(best).fontSize) || 16;
-    records.push({ label, top: Math.round(box.top), left: Math.round(box.left), size });
+    const rowText = row instanceof HTMLElement ? (row.innerText ?? row.textContent ?? "") : (row.textContent ?? "");
+    // A record that is the page itself (its title) has the page for its row: what it says is the page's headings and records, judged as those.
+    const isPage = best.matches("h1, [data-graview-page-title]") || best.closest("h1, [data-graview-page-title]") !== null;
+    records.push({ label, top: Math.round(box.top), left: Math.round(box.left), size, facts: isPage ? [] : factsOf(row, best), row: words(rowText), ...(under ? { under } : {}) });
   }
   records.sort((a, b) => a.top - b.top || a.left - b.left);
   return { headings, records, text: roots.map(shownText).join(" ") };

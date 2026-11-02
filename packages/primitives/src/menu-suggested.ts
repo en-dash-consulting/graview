@@ -22,6 +22,62 @@ export interface MenuSuggestion {
   readonly source: "told" | "act" | "nudge";
 }
 
+/** An act as the menu's rows offer it: its label, what it still asks, and what it was asked of. */
+interface ActOffered {
+  readonly id: string;
+  readonly label: string;
+  readonly destructive?: boolean;
+  readonly setsAside?: true;
+  readonly ties?: boolean;
+  readonly provider: string;
+  readonly open: readonly { readonly name: string; readonly optional?: boolean; readonly shape?: { readonly type: string; readonly options?: readonly string[] } }[];
+}
+
+/** A label as a row says it, folded to compare: no "…", no case, no spare spaces. */
+const folded = (label: string) => label.replace(/\s*…\s*$/u, "").replace(/\s+/g, " ").trim().toLowerCase();
+
+/**
+ * AN ACT FILLED IN, NEVER THE ROW AGAIN. A suggestion that says "Set the
+ * status" over a row that says "Set the status …" offers nothing the rows
+ * do not; a suggestion is the act with its answer in it — "Set the status
+ * to Doing", the next of a choice after the one the record holds — or an
+ * act that asks nothing said of the record by its name ("Mark “Book the
+ * hall” done" for "Mark it done", "Finish “Book the van”"). An act whose answer cannot be guessed
+ * (a name, a date, another record) is left to its row, as is one that
+ * sets the record aside or loses it.
+ */
+export function filledActs(acts: readonly ActOffered[], record: Readonly<Record<string, unknown>> | undefined, optionWords: Readonly<Record<string, Readonly<Record<string, string>>>> = {}, name?: string): MenuSuggestion[] {
+  if (!record) return [];
+  const out: MenuSuggestion[] = [];
+  const named: MenuSuggestion[] = [];
+  for (const act of acts) {
+    // A rule's repair is among the likeliest ("Finish “Pay the deposit”" where it is overdue); what loses or sets aside the record is not.
+    if (act.destructive || act.setsAside || act.ties) continue;
+    const asks = act.open.filter((one) => !one.optional);
+    if (asks.length === 0 && act.open.length === 0 && name) {
+      // "it", "this" or "this one" in the act's words is the record, by its name; else the name follows the act ("Finish “Book the van”").
+      const said = act.label.replace(/\b(it|this one|this)\b/u, `“${name}”`);
+      named.push({ key: `act:${act.id}`, label: said !== act.label ? said : `${act.label} “${name}”`, mode: "chat", source: "act" });
+      continue;
+    }
+    const one = asks[0];
+    if (asks.length !== 1 || one?.shape?.type !== "choice" || !one.shape.options || one.shape.options.length < 2) continue;
+    const options = one.shape.options;
+    const now = options.indexOf(String(record[one.name] ?? ""));
+    const next = now >= 0 ? options[now + 1] : undefined;
+    if (next === undefined) continue;
+    const word = optionWords[one.name]?.[next] ?? next.replace(/[-_]+/g, " ").replace(/^./u, (first) => first.toUpperCase());
+    out.push({ key: `act:${act.id}:${next}`, label: `${act.label.replace(/\s*…\s*$/u, "")} to ${word}`, mode: "chat", source: "act" });
+  }
+  return [...out, ...named];
+}
+
+/** What a suggestion would say that a row under it already says as it is: dropped. */
+export function notARow(candidates: readonly MenuSuggestion[], rows: readonly string[]): MenuSuggestion[] {
+  const said = new Set(rows.map(folded));
+  return candidates.filter((one) => !said.has(folded(one.label)));
+}
+
 /** How many are shown: at most three, and the room for them held from the menu's first frame. */
 export const SUGGESTED_MOST = 3;
 

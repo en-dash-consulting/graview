@@ -436,7 +436,7 @@ export async function reviseSection(options: ReviseSectionOptions): Promise<Revi
   return { ok: false, refused: COULD_NOT, findings, stages };
 }
 
-export { cssFindings, describeChange, drawnFindings } from "./draft-check.js";
+export { cssFindings, describeChange, drawnFindings, rowSays } from "./draft-check.js";
 export type { DrawnRead } from "./draft-check.js";
 export { aboutTheLook, COULD_NOT, repairTries, OWN_VIEW_WHEN_SURE, draftPageSpec, draftPageView, forkManifest, notTheSpec, PAGE_SPEC_OPS, PAGE_SPEC_SYSTEM, PAGE_VIEW_SYSTEM, pageSpecPrompt, pageViewPrompt, readPageSpecReply, readPageViewReply, specCanSay } from "./page-better.js";
 export type { DraftPageSpecOptions, DraftPageSpecResult, DraftPageViewOptions, DraftPageViewResult, ForkManifest, PagePartSaid, PageViewKeeps } from "./page-better.js";

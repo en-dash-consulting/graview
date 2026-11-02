@@ -16,11 +16,14 @@
  *   theFieldIsFirstAndFocused
  *   theTwoWaysAreButtonsWithNamesUnderTheField
  *   suggestedFillsWithoutMovingTheMenusTop
+ *   suggestedSaysWhatTheRowsDoNot
  *   moreRevealsTheRest
  *   theMenuOffersBetterUiOnTheHeadingATasksPageAndHome
  *   theLitWayFollowsTheFastSlotOnTypedWords
  *   aSettingsDraftIsShownUncoveredKeptAsOneChangeAndUndone
  *   aBrokenDraftIsNeverShown
+ *   aDraftThatDropsWhatEachRecordSaidIsNeverShown
+ *   aDraftThatMovesARecordToAnotherGroupIsNeverShown
  *   aNewDesignIsRepairedUnderCoverThenGivenThePage
  *   beforeAndAfterToggleTheOriginalInPlace
  *   iteratingMakesASecondStepAndStepBackRestoresTheFirst
@@ -77,8 +80,11 @@ const SEED = {
  * picks the last candidate first and tags "Show …"/"Sort …"/"Make …" as the
  * look's — after a beat, as a real model would. The light slot drafts the
  * row's settings with the due date in it, and writes the page as a new
- * design of cards as `window.__viewScenario` says: "good", "broken-first"
- * (the first try loses a record, the repair keeps it) or "always-broken".
+ * design of cards as `window.__viewScenario` says: "good" (each card says
+ * its status and its date in words, under the heading it was under),
+ * "broken-first" (the first try loses a record, the repair keeps it),
+ * "always-broken", "always-titles" (the cards say only their names) or
+ * "always-regroup" (a record moved under another group's heading).
  */
 const FAKE_AI = () => {
   const asked = (window.__pageAsked = []);
@@ -100,14 +106,29 @@ const FAKE_AI = () => {
     }
     return { answers, usage: { inputTokens: 10, outputTokens: 2 } };
   };
-  const view = ({ lose, small, card }) =>
-    [
-      `graview.style(\`.pg { display: grid; gap: 12px; } .pb-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; } .pb-card { display: block; padding: 16px; font-size: ${small ? "0.875rem" : "1.375rem"}; border: 1px solid var(--graview-edge); border-radius: var(--graview-radius); background: var(--graview-panel); }\`);`,
+  const view = ({ lose, small, titles, regroup, says }) => {
+    // The heading each record sat under, as the page said it; one moved to the first group's where a regroup is asked of the fake.
+    const under = Object.fromEntries(Object.entries(says ?? {}).flatMap(([label, one]) => (one.under ? [[label, one.under]] : [])));
+    const groups = [...new Set(Object.values(under))];
+    if (regroup && groups.length > 1) for (const label of Object.keys(under)) if (under[label] !== groups[0]) { under[label] = groups[0]; break; }
+    return [
+      `graview.style(\`.pg { display: grid; gap: 12px; } .pb-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; } .pb-card { display: grid; gap: 4px; padding: 16px; font-size: ${small ? "0.875rem" : "1.375rem"}; border: 1px solid var(--graview-edge); border-radius: var(--graview-radius); background: var(--graview-panel); } .pb-meta { font-size: 0.8125rem; color: var(--graview-ink-muted); }\`);`,
+      `const UNDER = ${JSON.stringify(under)};`,
+      `const GROUPS = ${JSON.stringify(groups)};`,
       "graview.onProps((props) => {",
       `  const tasks = props.nodes.filter((node) => node.kind === 'task')${lose ? ".slice(1)" : ""};`,
-      `  graview.render(graview.html\`<div class="pg"><div class="pb-grid">\${tasks.map((task) => graview.html\`<a class="pb-card" data-key="\${task.id}" data-record="\${task.id}">\${task.label}</a>\`)}</div></div>\`);`,
+      "  const day = (iso) => (iso ? new Date(`${iso}T00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '');",
+      "  const status = (task) => props.choices?.task?.status?.[task.status] ?? '';",
+      titles
+        ? "  const card = (task) => graview.html`<a class=\"pb-card\" data-key=\"${task.id}\" data-record=\"${task.id}\"><span>${task.label}</span></a>`;"
+        : "  const card = (task) => graview.html`<a class=\"pb-card\" data-key=\"${task.id}\" data-record=\"${task.id}\"><span>${task.label}</span><span class=\"pb-meta\">${status(task)}</span><span class=\"pb-meta\">${day(task.due)}</span></a>`;",
+      "  const grid = (list) => graview.html`<div class=\"pb-grid\">${list.map(card)}</div>`;",
+      "  graview.render(GROUPS.length > 0",
+      "    ? graview.html`<div class=\"pg\">${GROUPS.map((heading, at) => graview.html`<section aria-labelledby=\"pb-g${at}\"><h2 id=\"pb-g${at}\">${heading}</h2>${grid(tasks.filter((task) => UNDER[task.label] === heading))}</section>`)}</div>`",
+      "    : graview.html`<div class=\"pg\">${grid(tasks)}</div>`);",
       "});",
-    ].join("\n") + (card ? "" : "");
+    ].join("\n");
+  };
   const think = (slot) => async ({ prompt }) => {
     let parsed;
     try {
@@ -121,7 +142,8 @@ const FAKE_AI = () => {
       const scenario = window.__viewScenario;
       const repairing = Array.isArray(parsed.what_broke);
       const lose = scenario === "always-broken" || (scenario === "broken-first" && !repairing);
-      return { text: JSON.stringify({ source: view({ lose, small: Boolean(parsed.your_view_so_far) }), said: "Clean cards, a friendly intro, looks modern." }) };
+      const says = parsed.each_record_still_shows_this_and_stays_under_its_heading;
+      return { text: JSON.stringify({ source: view({ lose, small: Boolean(parsed.your_view_so_far), titles: scenario === "always-titles", regroup: scenario === "always-regroup", says }), said: "Clean cards, a friendly intro, looks modern." }) };
     }
     return { text: "{}" };
   };
@@ -144,7 +166,10 @@ async function serveHost() {
         const compiled = compileDocumentWithoutCheck(tasks, { today: () => "2026-09-01" });
         if (!compiled.ok) throw new Error("the document did not compile");
         const storeOver = (app, records) => new Store({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], ...(app.policy ? { policy: app.policy } : {}), snapshot: records });
-        let current = { app: compiled.app, document: tasks, store: storeOver(compiled.app, ${JSON.stringify(SEED)}) };
+        // ?grouped=1: the tasks open grouped by their status, as a person may have kept them.
+        const grouped = new URLSearchParams(location.search).get("grouped") === "1" ? composeAppChange({ document: tasks, edits: [{ op: "arrange-pages", group: { task: "status" } }] }) : null;
+        if (grouped && !grouped.ok) throw new Error(grouped.refused);
+        let current = { app: grouped ? grouped.app : compiled.app, document: grouped ? grouped.document : tasks, store: storeOver(grouped ? grouped.app : compiled.app, ${JSON.stringify(SEED)}) };
         const changes = (window.__changes = { drafts: 0, applied: 0, undone: 0, document: () => current.document });
         const changed = (edits) => {
           const composed = composeAppChange({ document: current.document, edits });
@@ -371,6 +396,26 @@ try {
     };
   }
 
+  reach("suggestedSaysWhatTheRowsDoNot");
+  {
+    // Every row the menu has, folded or not, and anything drawn between Suggested and the acts.
+    const seen = await page.evaluate(() => {
+      const menu = document.querySelector('[data-testid="context-menu"]');
+      const fold = (text) => text.replace(/[✦💬✨]|\((Chat|Better UI)\)/gu, "").replace(/\s*…\s*$/u, "").replace(/\s+/g, " ").trim().toLowerCase();
+      const rows = [...(menu?.querySelectorAll("[data-affordance]") ?? [])].map((one) => fold(one.textContent ?? ""));
+      const suggested = [...(menu?.querySelectorAll('[data-menu-section="suggested"] [data-menu-item]') ?? [])].map((one) => fold(one.textContent ?? ""));
+      const section = menu?.querySelector('[data-menu-section="suggested"]');
+      const acts = menu?.querySelector('[data-testid="affordances"]');
+      const between = [];
+      for (let one = section?.nextElementSibling; one && one !== acts; one = one.nextElementSibling) if (one.getClientRects().length > 0 && (one.textContent ?? "").trim()) between.push((one.textContent ?? "").trim());
+      return { rows, suggested, between, observationsShown: [...(menu?.querySelectorAll('[data-testid="observations"]') ?? [])].some((one) => one.getClientRects().length > 0) };
+    });
+    report.checks.suggestedSaysWhatTheRowsDoNot = {
+      ...seen,
+      ok: seen.suggested.length >= 2 && seen.suggested.every((one) => !seen.rows.includes(one)) && seen.suggested.some((one) => / to /.test(one) || /^(show|sort|make)\b/.test(one)) && seen.between.length === 0 && !seen.observationsShown,
+    };
+  }
+
   reach("moreRevealsTheRest");
   {
     const before = await menuSays(page);
@@ -492,6 +537,76 @@ try {
       ok: uncovered === 0 && refused === "I couldn't make a version that looks right." && !left.region && left.listed === 0 && tries.join() === "light,light,thinking" && !JARGON.test(`${question} ${words}`) && (await page.$('[data-testid="section-iterate"]')) !== null,
     };
     await page.click('[data-testid="section-close"]');
+  }
+
+  /** Asks for a new design of the Tasks list in words, with the cards a fake scenario draws, and says what came of it. */
+  const designedAs = async (on, scenario, words) => {
+    await on.evaluate((scenario) => ((window.__viewScenario = scenario), (window.__pageAsked.length = 0)), scenario);
+    await menuOn(on, ROW);
+    await on.click(`${MENU} [data-menu-mode="better"]`);
+    await on.waitForSelector(`${CARD}[data-section-phase="choose"]`, { timeout: 10_000 });
+    await on.click('[data-testid="section-describe"]');
+    await on.waitForSelector(`${CARD}[data-section-phase="asking"]`, { timeout: 10_000 });
+    await on.keyboard.type(words);
+    await on.keyboard.press("Enter");
+    await on.waitForSelector(`${CARD}[data-section-phase="design"]`, { timeout: 30_000 });
+    await watchUncovered(on);
+    await on.click('[data-testid="section-own-yes"]');
+    await on.waitForSelector(`${CARD}[data-section-phase="refused"], ${BAR}[data-section-phase="view"]`, { timeout: 60_000 });
+    const uncovered = await seenBroken(on);
+    const phase = await on.getAttribute(`${CARD}[data-section-phase]`, "data-section-phase").catch(() => null);
+    const refused = await on.textContent('[data-testid="section-status"]').catch(() => null);
+    const asked = await on.evaluate(() => window.__pageAsked.filter((one) => one.as_it_stands !== undefined).map((one) => ({ slot: one.slot, broke: one.what_broke ?? [], keep: one.each_record_still_shows_this_and_stays_under_its_heading ?? null })));
+    const left = await on.evaluate(() => ({ region: document.querySelector('[data-worker-view="task-list"]') !== null, listed: window.__keeper.forked().length }));
+    return { uncovered, phase, refused, tries: asked.map((one) => one.slot), broke: asked.flatMap((one) => one.broke), told: asked[0]?.keep ?? null, left };
+  };
+
+  reach("aDraftThatDropsWhatEachRecordSaidIsNeverShown");
+  {
+    const seen = await designedAs(page, "always-titles", "make the cards bigger and side by side");
+    await shot(page, "lossy-refused");
+    report.checks.aDraftThatDropsWhatEachRecordSaidIsNeverShown = {
+      ...seen,
+      ok:
+        seen.uncovered === 0 &&
+        seen.refused === "I couldn't make a version that looks right." &&
+        !seen.left.region &&
+        seen.left.listed === 0 &&
+        seen.tries.join() === "light,light,thinking" &&
+        seen.broke.some((one) => /“Todo” on “Write the brief”/.test(one) && /“Sep 3, 2026” on “Write the brief”/.test(one)) &&
+        // The prompt told the model what each record said, before any draft.
+        JSON.stringify(seen.told ?? {}).includes("Sep 3, 2026"),
+    };
+    await page.click('[data-testid="section-close"]');
+    await page.evaluate(() => (window.__viewScenario = "good"));
+  }
+
+  reach("aDraftThatMovesARecordToAnotherGroupIsNeverShown");
+  {
+    const grouped = await context.newPage();
+    grouped.on("pageerror", (error) => errors.push(`grouped: ${error.message}`));
+    await ready(grouped, "/tasks", "?grouped=1");
+    const headings = await grouped.evaluate(() => [...document.querySelectorAll("[data-graview-page-main] h2, [data-graview-page-main] h3")].map((one) => one.textContent.trim()));
+    const moved = await designedAs(grouped, "always-regroup", "make the cards bigger and side by side");
+    await shot(grouped, "regroup-refused");
+    await grouped.click('[data-testid="section-close"]');
+    // The same draft with every record where it was is shown: the check is about the move, not the groups.
+    const kept = await designedAs(grouped, "good", "make the cards bigger and side by side");
+    await shot(grouped, "grouped-design-draft");
+    await grouped.click('[data-testid="section-discard"]').catch(() => {});
+    report.checks.aDraftThatMovesARecordToAnotherGroupIsNeverShown = {
+      headings,
+      moved,
+      kept: { phase: kept.phase, uncovered: kept.uncovered, broke: kept.broke },
+      ok:
+        moved.uncovered === 0 &&
+        moved.refused === "I couldn't make a version that looks right." &&
+        !moved.left.region &&
+        moved.broke.some((one) => /is under “[^”]+”, and was under “[^”]+”/.test(one)) &&
+        kept.uncovered === 0 &&
+        kept.phase === "view",
+    };
+    await grouped.close();
   }
 
   reach("aNewDesignIsRepairedUnderCoverThenGivenThePage");

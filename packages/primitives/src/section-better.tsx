@@ -295,7 +295,7 @@ export function SectionCard({ ask, close }: SectionCardProps) {
           if (failed) return [`The view did not draw: ${failed}`];
           await new Promise((settled) => requestAnimationFrame(() => requestAnimationFrame(settled)));
           const root = drawn.drawing().root;
-          return [...judged(view, original.current!, liveDrawing, liveRefused, drawn, source).findings, ...drawnFindings(before.current!, readDrawn(root?.parentElement ?? root, before.current!.records.map((one) => one.label)))];
+          return [...judged(view, original.current!, liveDrawing, liveRefused, drawn, source).findings, ...drawnFindings(before.current!, readDrawn(root?.parentElement ?? root, before.current!.records.map((one) => one.label)), said ? { asked: said } : {})];
         },
       });
       if (!result.ok) {

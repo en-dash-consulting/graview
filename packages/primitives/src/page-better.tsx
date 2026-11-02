@@ -2,7 +2,7 @@ import { type AnySchema, type ViewForkKept, type ViewReviseAnswer } from "@gravi
 import type { AiInteraction, AiStage, AiUsage } from "@graview/core/catalog";
 import { useGraview, type ProposeChangeAnswer, type ReshapeProposal } from "@graview/react/provider";
 import { viewPlaceOf, type ViewPlaceHandle } from "@graview/react/drawing";
-import { COULD_NOT, describeChange, draftPageSpec, draftPageView, drawnFindings, forkManifest, mayChangeDeclaration, specCanSay, type DrawnRead, type ForkManifest, type PagePartSaid, type SectionStage } from "@graview/tools/section";
+import { COULD_NOT, describeChange, draftPageSpec, draftPageView, drawnFindings, forkManifest, mayChangeDeclaration, specCanSay, type DrawnRead, type ForkManifest, type PageViewKeeps, type PagePartSaid, type SectionStage } from "@graview/tools/section";
 import { interactionId } from "@graview/tools/inline-ai";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { PagePart } from "./page-parts.js";
@@ -351,7 +351,7 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
         await frame();
         now = drawnSignature(mainNow());
       }
-      const findings = now === was ? ["nothing changed"] : drawnFindings(original(), drawnNow(), { fields: fieldsOf(here, part) });
+      const findings = now === was ? ["nothing changed"] : drawnFindings(original(), drawnNow(), { fields: fieldsOf(here, part), ...(asked.words ? { asked: asked.words } : {}) });
       if (findings.length > 0) {
         await (held.steps.length > 0 ? show(held.steps.at(-1)!) : backFromDraft());
         aiDesk.record({ ...entry, outcome: "failed", failed: findings.join(" ") });
@@ -392,7 +392,7 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
           if (refused.length > 0) return refused;
           await frame();
           await frame();
-          return drawnFindings(was, drawnNow(), { fields });
+          return drawnFindings(was, drawnNow(), { fields, ...(asked.words ? { asked: asked.words } : {}) });
         },
       });
       if (!drafted.ok) {
@@ -644,9 +644,12 @@ function proposalOf(edits: readonly unknown[], said: string, model: string | und
 }
 
 /** What a new design must keep of the page: the title the page draws above it (never again), its other headings, the records it showed. */
-function keepsOf(was: DrawnRead, main: Element | null, name: string): { title: string; headings: string[]; records: string[] } {
+function keepsOf(was: DrawnRead, main: Element | null, name: string): PageViewKeeps {
   const title = words(main?.querySelector("[data-graview-page-title], h1")?.textContent) || name;
-  return { title, headings: was.headings.filter((one) => one !== title), records: was.records.map((one) => one.label) };
+  const says = Object.fromEntries(
+    was.records.flatMap((one) => (one.facts?.length || (one.under && one.under !== title) ? [[one.label, { ...(one.facts?.length ? { shows: one.facts } : {}), ...(one.under && one.under !== title ? { under: one.under } : {}) }]] : [])),
+  );
+  return { title, headings: was.headings.filter((one) => one !== title), records: was.records.map((one) => one.label), ...(Object.keys(says).length > 0 ? { says } : {}) };
 }
 
 /** The page's own region, found again where the draft drew the page anew. */

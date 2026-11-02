@@ -12,10 +12,24 @@ import { styleStringsOf } from "./section.js";
  * hands plain data here.
  */
 
-/** A drawing read for judging: its headings in order, the records it shows in order with where and how big, and all its words. */
+/**
+ * A drawing read for judging: its headings in order, the records it shows
+ * in order with where and how big, and all its words. Each record carries
+ * what its row or card says beside its name (`facts`: "Todo", "Sep 3,
+ * 2026", "3 tasks"), the words of that row or card whole (`row`), and the
+ * heading it sits under (`under`).
+ */
 export interface DrawnRead {
   readonly headings: readonly string[];
-  readonly records: readonly { readonly label: string; readonly top: number; readonly left: number; readonly size: number }[];
+  readonly records: readonly {
+    readonly label: string;
+    readonly top: number;
+    readonly left: number;
+    readonly size: number;
+    readonly facts?: readonly string[];
+    readonly row?: string;
+    readonly under?: string;
+  }[];
   readonly text: string;
 }
 
@@ -63,17 +77,78 @@ const ISO_DAY = /\b\d{4}-\d{2}-\d{2}(?:T[\d:.]+Z?)?\b/;
 const MARKUP = /<\/?[a-z][a-z0-9-]*(?:\s[^<>]*)?>/i;
 const RAW = /\b(undefined|null|NaN|\[object Object\]|true|false)\b/;
 
+const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+const DAY_SAID = /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})\b|\b(\d{1,2})\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b/;
+const WEEKDAY = /\b(mon|tue|wed|thu|fri|sat|sun)[a-z]*\b|\b(today|tomorrow|yesterday)\b/;
+
+/**
+ * WHETHER A ROW STILL SAYS A FACT IT SAID, in other words if it likes: the
+ * same words, or the same day of the same month ("Sep 3, 2026" as "3
+ * September" or "Sep 3"), or the same number where the fact was one.
+ */
+export function rowSays(row: string, fact: string): boolean {
+  const said = norm(row);
+  const wanted = norm(fact);
+  if (!wanted) return true;
+  if (said.includes(wanted)) return true;
+  // "To do" for "Todo", "in-progress" for "In progress": the same letters, spaced or joined.
+  const squashed = (text: string) => text.replace(/[^\p{L}\p{N}]+/gu, "");
+  if (squashed(wanted).length >= 3 && squashed(said).includes(squashed(wanted))) return true;
+  const day = DAY_SAID.exec(wanted);
+  if (day) {
+    const month = (day[1] ?? day[4])!;
+    const date = Number(day[2] ?? day[3]);
+    for (const one of said.matchAll(new RegExp(DAY_SAID.source, "g"))) if ((one[1] ?? one[4]) === month && Number(one[2] ?? one[3]) === date) return true;
+    // A day said by its weekday or as "today" stands for it where the draft says no month at all.
+    return MONTHS.every((name) => !said.includes(name)) && WEEKDAY.test(said);
+  }
+  const number = /^\D*(\d+(?:[.,]\d+)?)\D*$/.exec(wanted);
+  if (number) return new RegExp(`(^|\\D)${number[1]!.replace(/[.,]/g, "[.,]")}(\\D|$)`).test(said);
+  return false;
+}
+
+/** Words that ask for something a page showed to go: "hide the dates", "just the names", "without the status". */
+const TAKE_AWAY = /\b(hide|hides|hiding|remove|drop|without|no more|less|fewer|only|just|minimal|simpler|declutter|strip)\b/i;
+/** Words that ask for records to be grouped or moved differently. */
+const REGROUP = /\b(group|groups|grouped|regroup|section|sections|categor\w*|split|move|moved|bucket\w*|by (status|date|day|list|owner|person))\b/i;
+
+/** Whether the words asked a fact like this one to go: a dates' fact by "dates", a status by "status", anything by "just the names". */
+function askedAway(asked: string | undefined, fact: string): boolean {
+  if (!asked || !TAKE_AWAY.test(asked)) return false;
+  const words = asked.toLowerCase();
+  if (/\b(only|just)\b[^.]*\b(name|names|title|titles|label|labels)\b/.test(words)) return true;
+  if (DAY_SAID.test(norm(fact)) || WEEKDAY.test(norm(fact))) return /\b(date|dates|due|day|days|when|deadline|deadlines)\b/.test(words);
+  if (/^\D*\d/.test(fact)) return /\b(count|counts|number|numbers|how many|total|totals)\b/.test(words);
+  return /\b(status|statuses|state|tag|tags|chip|chips|badge|badges|label|labels|pill|pills|meta|details)\b/.test(words) || words.includes(norm(fact));
+}
+
 /**
  * WHAT A DRAFT BROKE, against what the page showed: a record or a heading
- * it no longer shows, a heading drawn twice, and words no person was shown
- * before — a field's own name, a date as the computer keeps it, `true`,
- * `undefined`. Empty when the draft may be shown.
+ * it no longer shows, a fact a record's row said that its card no longer
+ * says (its status, its date, a count), a record moved under another
+ * heading, a heading drawn twice, and words no person was shown before — a
+ * field's own name, a date as the computer keeps it, `true`, `undefined`.
+ * A fact or a group the person asked to change (`asked`: "hide the dates",
+ * "group by status") is theirs to change. Empty when the draft may be shown.
  */
-export function drawnFindings(before: DrawnRead, after: DrawnRead, options: { readonly fields?: readonly string[] } = {}): string[] {
+export function drawnFindings(before: DrawnRead, after: DrawnRead, options: { readonly fields?: readonly string[]; readonly asked?: string } = {}): string[] {
   const findings: string[] = [];
   const text = norm(after.text);
   const lost = before.records.map((one) => one.label).filter((label) => label && !text.includes(norm(label)));
   if (lost.length > 0) findings.push(`It no longer shows ${lost.slice(0, 4).map((one) => `“${one}”`).join(", ")}${lost.length > 4 ? ` and ${lost.length - 4} more` : ""}: show every record the page showed.`);
+  // What each record's row said, said still: each fact by the record it was about, in words or as the same day.
+  const factsLost: string[] = [];
+  const moved: string[] = [];
+  for (const was of before.records) {
+    const now = after.records.find((one) => norm(one.label) === norm(was.label));
+    if (!now) continue;
+    // A fact said by the heading it now sits under ("Doing" over a column of what is doing) is said still.
+    const row = `${now.row ?? ""} ${now.under ?? ""}`;
+    for (const fact of was.facts ?? []) if (!rowSays(row, fact) && !askedAway(options.asked, fact)) factsLost.push(`“${fact}” on “${was.label}”`);
+    if (was.under && now.under && norm(was.under) !== norm(now.under) && after.headings.some((one) => norm(one) === norm(was.under!)) && !(options.asked && REGROUP.test(options.asked))) moved.push(`“${was.label}” is under “${now.under}”, and was under “${was.under}”`);
+  }
+  if (factsLost.length > 0) findings.push(`A record no longer says what it said: ${factsLost.slice(0, 4).join(", ")}${factsLost.length > 4 ? ` and ${factsLost.length - 4} more` : ""}. Show on each record what the page showed on it (its status, its dates, its counts), in words.`);
+  if (moved.length > 0) findings.push(`A record moved to another group: ${moved.slice(0, 3).join("; ")}${moved.length > 3 ? ` and ${moved.length - 3} more` : ""}. Keep each record under the heading it was under.`);
   const headingsLost = before.headings.filter((heading) => heading && !text.includes(norm(heading)));
   if (headingsLost.length > 0) findings.push(`It no longer shows the heading${headingsLost.length > 1 ? "s" : ""} ${headingsLost.map((one) => `“${one}”`).join(", ")}: keep each heading the page had.`);
   const seen = new Map<string, number>();

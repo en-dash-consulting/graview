@@ -294,7 +294,7 @@ export const PAGE_VIEW_SYSTEM = [
   "The global: graview.style(css) a stylesheet; graview.onProps((props) => …) on every push of what it is shown; graview.render(graview.html`…`) draws markup, every ${value} escaped; graview.html`` nests: a list is ${items.map((one) => graview.html`<li>…</li>`)}. Never build HTML as a string or with join(): a string is drawn as its words.",
   "props.nodes holds the records a view of many is drawn for and those it reads; props.node the record a view of one is drawn for. A record is plain data: id, kind, label, and each field by name. props.edges are {kind, from, to}. props.choices[kind][field][option] is a choice's label.",
   'Link to a record with <a data-record="${node.id}">…</a>. Give repeated rows data-key="${node.id}". Name each part a person would name with a heading inside a <section aria-labelledby="x-h"> whose heading has id="x-h"; never aria-label.',
-  "The page draws its own title above your view: never draw the page's title again. Draw each other heading the page had, with the same words, and every record the page showed.",
+  "The page draws its own title above your view: never draw the page's title again. Draw each other heading the page had, with the same words, and every record the page showed: each record still says what its row said (its status, its dates, its counts, in words) and stays under the heading it was under, unless what was asked changes that.",
   "Say things in words a person reads: a date as the page said it (“Sep 3”, built with new Date(value).toLocaleDateString(props.locale, { month: \"short\", day: \"numeric\" })), never as stored (2026-09-03); never show a field's own name (order, done, holds), an id, true, false, null or undefined. Leave out a value the page did not show unless asked for it.",
   "CSS the host keeps: plain rules on your own classes and elements, one level, and @media. Give your outer element a class (class=\"pg\") and style that: never :host, ::slotted or ::part, no url(), @import, @font-face, @keyframes or nesting. Colors, type and corners only through var(--graview-ink), var(--graview-ink-muted), var(--graview-panel), var(--graview-edge), var(--graview-accent), var(--graview-ground), var(--graview-radius). position may be static, relative, absolute or sticky. Set no height; lay it out well at a phone's width and at a desk's.",
   "Never write the words import, export or require, nor <script>, <style>, or on…= attributes.",
@@ -310,7 +310,7 @@ export function pageViewPrompt(ask: { readonly part: PagePartSaid; readonly mani
     asked,
     ...(ask.highlighted?.length ? { pointed_at: ask.highlighted } : {}),
     as_it_stands: ask.outline.slice(0, 4000),
-    ...(ask.keep ? { the_page_draws_its_title: ask.keep.title, keep_these_headings: ask.keep.headings, show_each_of_these_records: ask.keep.records } : {}),
+    ...(ask.keep ? { the_page_draws_its_title: ask.keep.title, keep_these_headings: ask.keep.headings, show_each_of_these_records: ask.keep.records, ...(ask.keep.says ? { each_record_still_shows_this_and_stays_under_its_heading: ask.keep.says } : {}) } : {}),
     ...(ask.current ? { your_view_so_far: ask.current.slice(0, 8000), change: "Change your view so far as asked; keep everything else of it." } : {}),
     data: ask.data,
     ...(ask.findings?.length ? { your_last_answer: ask.last, what_broke: ask.findings, repair: "Your last answer broke as said in what_broke. Answer again, fixing each one." } : {}),
@@ -332,6 +332,8 @@ export interface PageViewKeeps {
   readonly title: string;
   readonly headings: readonly string[];
   readonly records: readonly string[];
+  /** What each record's row said beside its name (its status, its dates, its counts) and the heading it sat under, by its name. */
+  readonly says?: Readonly<Record<string, { readonly shows?: readonly string[]; readonly under?: string }>>;
 }
 
 export interface DraftPageViewOptions {
