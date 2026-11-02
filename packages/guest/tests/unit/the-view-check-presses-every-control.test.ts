@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { BROKEN_JS, ECONOMICS_JS, ECONOMICS_MANIFEST, kit, placementApp, placementSeed } from "../../../../scripts/fixtures/placement-app.js";
 import { runWorkerViewHeadless, type HeadlessDescribed } from "../../src/headless/index.js";
 import { nodeIsolate } from "../../src/headless/node.js";
+import { checkPresses } from "../../src/headless/presses.js";
 import type { WorkerViewManifest } from "../../src/host/manifest.js";
 
 /**
@@ -19,7 +20,7 @@ const store = () => new Store({ schema: placementApp.schema, mutations: placemen
 const manifest = ECONOMICS_MANIFEST as unknown as WorkerViewManifest;
 const run = nodeIsolate();
 const checked = async (source: string, record = "placement:rhea", at = store()) => {
-  const result = await runWorkerViewHeadless({ manifest, source, store: at, principal: kit, run, input: { node: { id: record } }, presses: true });
+  const result = await runWorkerViewHeadless({ manifest, source, store: at, principal: kit, run, input: { node: { id: record } }, presses: checkPresses });
   if (!result.ok) throw new Error(`${result.reason}: ${result.detail}`);
   return result as HeadlessDescribed;
 };

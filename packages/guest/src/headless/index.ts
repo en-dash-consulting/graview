@@ -38,7 +38,7 @@ import type { WorkerViewLimits } from "../host/view.js";
 import type { GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
 import { judgeTranscript } from "./judge.js";
 import { judgeHeadlessPress, type HeadlessPress } from "./press.js";
-import type { PressCheck } from "./presses.js";
+import type { PressCheck, PressCheckContext } from "./presses.js";
 import { HEADLESS_ENTRY, HEADLESS_VIEW, type HeadlessFailureReason, type HeadlessInput, type HeadlessTranscript } from "./protocol.js";
 import { HEADLESS_RUNTIME } from "./runtime.generated.js";
 
@@ -49,8 +49,10 @@ export type { DrawnTranscript } from "./draw.js";
 export { judgeTranscript, sayRefusal } from "./judge.js";
 export { judgeHeadlessPress } from "./press.js";
 export type { HeadlessPress, HeadlessPressContext } from "./press.js";
-export { checkPresses } from "./presses.js";
 export type { PressCheck, PressCheckContext, PressFinding, PressRun } from "./presses.js";
+
+/** What presses every control: `checkPresses` from `@graview/guest/headless/presses`, handed in so a host that never asks carries none of it. */
+export type PressChecker = <S extends AnySchema>(context: PressCheckContext<S>) => Promise<PressCheck>;
 export type { Judged } from "./judge.js";
 export { PICTURE_STAND_IN } from "../host/pictures.js";
 export type { ImageHost } from "../host/open-judge.js";
@@ -197,8 +199,11 @@ export interface RunWorkerViewHeadlessOptions<S extends AnySchema> {
    * nowhere, throws or is refused is a problem with a plain finding
    * (`HeadlessDescribed.presses`). Nothing is applied. What a view is kept
    * on: `graview view check` presses every one, and so may a host's gate.
+   * Handed the checker — `checkPresses` from
+   * `@graview/guest/headless/presses`, an entry of its own — so a host's
+   * bundle that never presses carries none of it.
    */
-  readonly presses?: boolean | { readonly maxRuns?: number };
+  readonly presses?: PressChecker | { readonly check: PressChecker; readonly maxRuns?: number };
 }
 
 /** What a headless run drew: its tree, with the host's marks, and the elements in it the view hears a click on. */
@@ -473,7 +478,7 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
   if (options.presses) {
     /* What it drew before any press: `judged` is of that already. */
     const drawn = judged.drawn;
-    const { checkPresses } = await import("./presses.js");
+    const checkPresses = typeof options.presses === "function" ? options.presses : options.presses.check;
     presses = await checkPresses({
       store,
       principal,

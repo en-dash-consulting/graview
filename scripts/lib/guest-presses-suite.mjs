@@ -61,11 +61,12 @@ export async function pressesSuite({ repoRoot, build, browser, claim, report, HO
 import { Store } from "@graview/core";
 import { runWorkerViewHeadless } from "@graview/guest/headless";
 import { nodeIsolate } from "@graview/guest/headless/node";
+import { checkPresses } from "@graview/guest/headless/presses";
 import { BROKEN_JS, ECONOMICS_JS, ECONOMICS_MANIFEST, kit, placementApp, placementSeed } from ${JSON.stringify(fixture)};
 export async function check(which) {
   const store = new Store({ schema: placementApp.schema, mutations: placementApp.mutations, policy: placementApp.policy, snapshot: structuredClone(placementSeed) });
   const source = which === "economics" ? ECONOMICS_JS : BROKEN_JS[which];
-  const result = await runWorkerViewHeadless({ manifest: ECONOMICS_MANIFEST, source, store, principal: kit, run: nodeIsolate(), input: { node: { id: "placement:rhea" } }, presses: true });
+  const result = await runWorkerViewHeadless({ manifest: ECONOMICS_MANIFEST, source, store, principal: kit, run: nodeIsolate(), input: { node: { id: "placement:rhea" } }, presses: checkPresses });
   return result.ok ? { ok: result.presses.ok, problems: result.presses.problems.map((one) => one.says), controls: result.presses.controls.length } : { failed: result.reason, detail: result.detail };
 }
 `,

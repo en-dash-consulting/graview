@@ -45,6 +45,10 @@
       "types": "./dist/headless/index.d.ts",
       "default": "./dist/headless/index.js"
     },
+    "./headless/presses": {
+      "types": "./dist/headless/presses.d.ts",
+      "default": "./dist/headless/presses.js"
+    },
     "./headless/node": {
       "types": "./dist/headless/node.d.ts",
       "default": "./dist/headless/node.js"

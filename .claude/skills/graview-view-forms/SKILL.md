@@ -145,7 +145,7 @@ by the host, saved as they are typed, "Saving…" on `input` and "Saved" on
    link; each button its code hears, in a run of its own. One that does
    nothing, throws, or is refused fails, said by name (`“Save economics”
    is refused: “fixedFee” expects a number.`); `runWorkerViewHeadless(…,
-   { presses: true })` is the same for a host's gate. To look at one,
+   { presses: checkPresses })` (`@graview/guest/headless/presses`) is the same for a host's gate. To look at one,
    press it: `--press "<selector>"` (with `--type note="…"` for
    what the person typed), or `runWorkerViewHeadless(…, { press: {
    selector, typed } })`, the first element the selector matches; it

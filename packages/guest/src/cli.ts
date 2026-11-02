@@ -120,7 +120,7 @@ export async function view(argv: readonly string[]): Promise<number> {
     ...(auditing ? { audit: true } : {}),
     ...(inBrowser ? { drawing: true } : {}),
     /* Every control, pressed (Roadmap f-views-work-end-to-end): a view whose Save does nothing is not one to keep. */
-    ...(argv.includes("--no-presses") ? {} : { presses: true }),
+    ...(argv.includes("--no-presses") ? {} : { presses: (await import("./headless/presses.js")).checkPresses }),
   });
   let audit = result.ok ? result.audit : undefined;
   if (inBrowser && result.ok && result.drawing) {
