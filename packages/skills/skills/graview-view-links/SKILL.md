@@ -126,6 +126,18 @@ field the kind lacks, or a choice it lacks, goes nowhere and says why
 to the list narrowed rather than to a lens per filter; a lens kept only
 as a link target can be hidden (set-lens-hidden, `graview-pages`).
 
+## A jump, what is in sight, and a file
+
+`<a href="#eras">` jumps to an element of the view's own: the host scrolls
+it to the top, below its own sticky bar, gives it the keyboard and leaves
+the address alone. A scroll margin on it (scroll-margin-top) clears a
+sticky header you draw. The elements jumps name, and any with `data-sight`, are watched
+as the page scrolls: the one in sight is `data-in-sight`, its jumps
+`aria-current="location"`, and the view hears `sight` on it
+(`graview.on("sight", "section", …)`). `<a data-file="${node.id}"
+data-field="contract">` opens a record's file in a tab of its own;
+`data-download` downloads it under its own name.
+
 ## A column the menu knows
 
 Mark a region that holds one value of a field `data-column="status:doing"`
@@ -141,8 +153,9 @@ status board's column, offers "Add a task in Doing" — the add act with
 2. `graview view check view.js --app <app> --manifest manifest.json --seed
    <seed.json> --roles <role>` says every `data-record` or `data-place`
    that names nothing the seat was shown and no place, and every filter
-   that goes nowhere. `--press ".card h3"` presses there and says where the
-   host would go, or that the press is a button's of its own.
+   that goes nowhere, and presses each link, jump and file link: one that
+   goes nowhere fails. `--press ".card h3"` presses there and says where
+   the host would go, or that the press is a button's of its own.
    `--audit` holds what it drew to the keyboard and screen-reader rules,
    as the host draws it: a `<div>` heard only by `graview.on("click")`, a
    control or link with no name, a toggle with no state, a button inside a

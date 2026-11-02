@@ -161,7 +161,7 @@ describe("the region's own rules", () => {
 
   it("reset a link the host made the same way, and say only a link out opens a new tab", () => {
     expect(REGION_CSS).toContain(":where([data-graview-view-root]) :where(a[data-graview-link]) { color: inherit; text-decoration: none; }");
-    expect(REGION_CSS).toMatch(/a\[href\]:not\(\[data-graview-link\]\)::after/);
+    expect(REGION_CSS).toMatch(/a\[href\]:not\(\[data-graview-link\], \[href\^="#"\], \[data-file\]\[download\]\)::after/);
   });
 
   it("let a ring at the region's edge paint whole while the keyboard is in it, and nothing else past it", () => {

@@ -18,7 +18,7 @@ HTML's sectioning, headings, text, lists, tables, `details`/`summary`,
 `clipPath`, `mask`, `marker`, `pattern`, `symbol`, `use href="#id"`, `filter`
 and its `fe*`. Attributes: `id`, `class`, `style`, `title`, `role`, `aria-*`, `data-*`, and
 each element's own. CSS for layout, grid, flex, color, type, `mask-image`,
-`-webkit-text-stroke`, transitions, `@keyframes`, `animation-timeline`,
+`-webkit-text-stroke`, scroll margins, transitions, `@keyframes`, `animation-timeline`,
 `@media`, `@supports` and `@container`; reduced motion holds motion still. Each
 `graview.style(css)` adds a sheet after the last (a shared design system's,
 then the view's own), each judged alone; a sheet given again is not added
@@ -184,8 +184,8 @@ against its size.
 3. Open the place and read the view's `refused` (`WorkerView.refused`, or
    `graview.refused` in its console): every element, attribute and
    address the host left out, and why.
-4. Toggle the app to dark, and change the brand where you can. Does the
-   view follow, logo and all?
+4. Toggle the app to dark; change the brand. Does the view follow, logo
+   and all?
 5. As a member who may see fewer records, are the pictures on the records
    they may not see absent — not merely hidden?
 

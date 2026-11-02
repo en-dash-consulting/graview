@@ -1,9 +1,10 @@
-import { PermissionDeniedError, type AnySchema, type Principal, type Store } from "@graview/core";
+import { InvalidArguments, PermissionDeniedError, type AnySchema, type Principal, type Store } from "@graview/core";
 import { judgeDestination, type Arrival, type GuestList } from "../host/links.js";
 import { placeNamed, unsureOfViews, whereOfWords, type Destination, type NamedPlace } from "../host/links-words.js";
 import type { WorkerViewManifest } from "../host/manifest.js";
 import { isEntry, isPress, linkPressed, notPressable, opensOnPress } from "../host/pressable.js";
 import { judgePress, prefillOf } from "../host/press.js";
+import { argumentsRefused } from "../host/session.js";
 import type { Press, PressedField } from "../host/writes.js";
 import type { GuestRefusal } from "../protocol.js";
 import type { DrawnTranscript } from "./draw.js";
@@ -88,7 +89,7 @@ const named = (element: TreeElement) => {
 const textOf = (element: TreeElement): string => element.childNodes.map((child) => (child instanceof TreeElement ? textOf(child) : child.nodeType === 3 ? child.textContent : "")).join("");
 
 /** The fields in a press's scope as the host would read them: typed where `typed` says, and the view's, or the host's prefill, everywhere else. */
-function fieldsOf<S extends AnySchema>(scope: TreeElement, record: string | undefined, context: HeadlessPressContext<S>): PressedField[] {
+export function fieldsOf<S extends AnySchema>(scope: TreeElement, record: string | undefined, context: HeadlessPressContext<S>): PressedField[] {
   const typed = context.typed ?? {};
   const fields: PressedField[] = [];
   const acts = [...below(scope)].filter((one) => one.getAttribute("data-act") !== null).map((one) => one.getAttribute("data-act")!);
@@ -181,7 +182,12 @@ export function judgeHeadlessPress<S extends AnySchema>(pressed: NonNullable<Hea
           const rehearsed = context.store.previewAll([{ name: judged.name, args: judged.args }], { author: context.principal, via: `view:${context.manifest.name}` });
           out.act = { as, ok: true, name: judged.name, args: judged.args, intent: rehearsed.intent, changes: rehearsed.ops.length > 0 };
         } catch (error) {
-          out.act = error instanceof PermissionDeniedError ? { as, ok: false, reason: "refused", message: error.refusal.message } : { as, ok: false, reason: "failed", message: "The act could not be applied." };
+          out.act =
+            error instanceof PermissionDeniedError
+              ? { as, ok: false, reason: "refused", message: error.refusal.message }
+              : error instanceof InvalidArguments
+                ? { as, ok: false, reason: "failed", message: argumentsRefused(error) }
+                : { as, ok: false, reason: "failed", message: "The act could not be applied." };
         }
       }
       const act = out.act!;

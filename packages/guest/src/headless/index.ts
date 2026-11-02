@@ -38,6 +38,7 @@ import type { WorkerViewLimits } from "../host/view.js";
 import type { GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
 import { judgeTranscript } from "./judge.js";
 import { judgeHeadlessPress, type HeadlessPress } from "./press.js";
+import type { PressCheck } from "./presses.js";
 import { HEADLESS_ENTRY, HEADLESS_VIEW, type HeadlessFailureReason, type HeadlessInput, type HeadlessTranscript } from "./protocol.js";
 import { HEADLESS_RUNTIME } from "./runtime.generated.js";
 
@@ -48,6 +49,8 @@ export type { DrawnTranscript } from "./draw.js";
 export { judgeTranscript, sayRefusal } from "./judge.js";
 export { judgeHeadlessPress } from "./press.js";
 export type { HeadlessPress, HeadlessPressContext } from "./press.js";
+export { checkPresses } from "./presses.js";
+export type { PressCheck, PressCheckContext, PressFinding, PressRun } from "./presses.js";
 export type { Judged } from "./judge.js";
 export { PICTURE_STAND_IN } from "../host/pictures.js";
 export type { ImageHost } from "../host/open-judge.js";
@@ -186,6 +189,16 @@ export interface RunWorkerViewHeadlessOptions<S extends AnySchema> {
    * as markup with `markupOf`).
    */
   readonly drawing?: boolean;
+  /**
+   * PRESS EVERY CONTROL (Roadmap f-views-work-end-to-end): once it has
+   * drawn, every bound act, field that saves, link, jump, file link and
+   * control it drew is pressed as the live host would take it — a control
+   * only its own code hears in a run of its own — and one that goes
+   * nowhere, throws or is refused is a problem with a plain finding
+   * (`HeadlessDescribed.presses`). Nothing is applied. What a view is kept
+   * on: `graview view check` presses every one, and so may a host's gate.
+   */
+  readonly presses?: boolean | { readonly maxRuns?: number };
 }
 
 /** What a headless run drew: its tree, with the host's marks, and the elements in it the view hears a click on. */
@@ -220,6 +233,8 @@ export interface HeadlessDescribed {
   readonly audit?: ViewAudit;
   /** What it drew, as markup, when `options.drawing` asked with `options.audit`. */
   readonly drawing?: HeadlessDrawing;
+  /** Every control it drew, pressed, when `options.presses` asked: each failing one is among the description's problems too. */
+  readonly presses?: PressCheck;
 }
 
 export type HeadlessResult = HeadlessDescribed | HeadlessFailure;
@@ -396,34 +411,39 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
   };
 
   /* The isolate, the host's: past `runMs` it is stopped, whatever its runner does. */
-  let text: string;
-  let stop: ReturnType<typeof setTimeout> | undefined;
-  try {
-    const ran = options.run({ script: headlessScript(source), entry: HEADLESS_ENTRY, input: JSON.stringify(input), timeoutMs: limits.runMs });
-    const late = new Promise<never>((_, reject) => {
-      stop = setTimeout(() => reject(Object.assign(new Error("past runMs"), { reason: "slow" })), limits.runMs + 1_000);
-    });
-    text = await Promise.race([ran, late]);
-  } catch (error) {
-    if (isRecord(error) && error["reason"] === "slow") return failed("slow", `It ran longer than the ${limits.runMs.toLocaleString("en-US")} ms a headless run may take.`);
-    return failed("isolate", `The isolate could not run it: ${error instanceof Error ? error.message : String(error)}`);
-  } finally {
-    if (stop !== undefined) clearTimeout(stop);
-  }
-
-  let outcome: unknown;
-  try {
-    outcome = JSON.parse(String(text));
-  } catch {
-    return failed("isolate", "The isolate answered with something that is not an outcome.");
-  }
-  if (!isRecord(outcome)) return failed("isolate", "The isolate answered with something that is not an outcome.");
-  const transcript = transcriptOf(outcome["transcript"]);
-  if (outcome["ok"] !== true) {
-    const reason = REASONS.includes(outcome["reason"] as HeadlessFailureReason) ? (outcome["reason"] as HeadlessFailureReason) : "isolate";
-    return failed(reason, typeof outcome["detail"] === "string" ? outcome["detail"].slice(0, 2_000) : "It failed, and the isolate did not say why.", transcript);
-  }
-  if (!transcript) return failed("isolate", "The isolate answered without what the view sent.");
+  const runIsolate = async (given: HeadlessInput): Promise<HeadlessFailure | { readonly ok: true; readonly transcript: HeadlessTranscript }> => {
+    let text: string;
+    let stop: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const ran = options.run({ script: headlessScript(source), entry: HEADLESS_ENTRY, input: JSON.stringify(given), timeoutMs: limits.runMs });
+      const late = new Promise<never>((_, reject) => {
+        stop = setTimeout(() => reject(Object.assign(new Error("past runMs"), { reason: "slow" })), limits.runMs + 1_000);
+      });
+      text = await Promise.race([ran, late]);
+    } catch (error) {
+      if (isRecord(error) && error["reason"] === "slow") return failed("slow", `It ran longer than the ${limits.runMs.toLocaleString("en-US")} ms a headless run may take.`);
+      return failed("isolate", `The isolate could not run it: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      if (stop !== undefined) clearTimeout(stop);
+    }
+    let outcome: unknown;
+    try {
+      outcome = JSON.parse(String(text));
+    } catch {
+      return failed("isolate", "The isolate answered with something that is not an outcome.");
+    }
+    if (!isRecord(outcome)) return failed("isolate", "The isolate answered with something that is not an outcome.");
+    const transcript = transcriptOf(outcome["transcript"]);
+    if (outcome["ok"] !== true) {
+      const reason = REASONS.includes(outcome["reason"] as HeadlessFailureReason) ? (outcome["reason"] as HeadlessFailureReason) : "isolate";
+      return failed(reason, typeof outcome["detail"] === "string" ? outcome["detail"].slice(0, 2_000) : "It failed, and the isolate did not say why.", transcript);
+    }
+    if (!transcript) return failed("isolate", "The isolate answered without what the view sent.");
+    return { ok: true, transcript };
+  };
+  const first = await runIsolate(input);
+  if (!first.ok) return first;
+  const transcript = first.transcript;
 
   /* Judged again here, from the transcript alone — what it drew before a press it was asked for, and every act it asked for. */
   const pressedAt = options.press !== undefined ? transcript.pressed : undefined;
@@ -448,7 +468,30 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
   const pressed = pressedAt ? judgeHeadlessPress(pressedAt, judged.drawn, transcript, { store, principal, manifest, shown: shownIds, places, lists, ...(placesUnsure ? { placesUnsure: true } : {}), ...typed }) : undefined;
   /* A press that lands on nothing, or in a link that goes nowhere, is a problem with the view; one the seat is refused is the answer asked for. */
   const pressProblems = pressed && (!pressed.element || pressed.lost) ? [{ at: `press "${pressed.selector}"`, says: pressed.lost ?? pressed.says }] : [];
-  const problems = [...handed.left.map((says) => ({ at: "pictures", says })), ...judged.problems, ...narrowing, ...gestureProblems(manifest, transcript), ...pressProblems];
+  /* Every control, pressed (Roadmap f-views-work-end-to-end): a control only the view's code hears is pressed in a run of its own. */
+  let presses: PressCheck | undefined;
+  if (options.presses) {
+    /* What it drew before any press: `judged` is of that already. */
+    const drawn = judged.drawn;
+    const { checkPresses } = await import("./presses.js");
+    presses = await checkPresses({
+      store,
+      principal,
+      manifest,
+      shown: shownIds,
+      places,
+      lists,
+      ...(placesUnsure ? { placesUnsure: true } : {}),
+      drawn,
+      clicks: transcript.clicks ?? [],
+      ...(typeof options.presses === "object" && options.presses.maxRuns !== undefined ? { maxRuns: options.presses.maxRuns } : {}),
+      rerun: async (target) => {
+        const ran = await runIsolate({ ...input, press: { selector: `[data-graview-check="${target}"]`, target } });
+        return ran.ok ? ran : { ok: false, reason: ran.reason, detail: ran.detail };
+      },
+    });
+  }
+  const problems = [...handed.left.map((says) => ({ at: "pictures", says })), ...judged.problems, ...narrowing, ...gestureProblems(manifest, transcript), ...pressProblems, ...(presses?.problems ?? []).map((one) => ({ at: `press ${one.control}`, says: one.says }))];
   const title = manifest.title ?? manifest.name;
   const slug = manifest.title ? slugOf(manifest.title) : manifest.name;
   const kind = manifest.attach === "home" ? null : manifest.attach;
@@ -472,5 +515,5 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
     /* After the audit, which gave the tree the host's marks: what a page would hold. */
     if (options.drawing === true) drawing = { root: judged.drawn.root as unknown as TreeElement, clicked: clicked as unknown as TreeElement[] };
   }
-  return { ok: true, description: { ...description, text: placeText(description) }, props, transcript, css: judged.drawn.css, ...(pressed ? { pressed } : {}), ...(audit ? { audit } : {}), ...(drawing ? { drawing } : {}) };
+  return { ok: true, description: { ...description, text: placeText(description) }, props, transcript, css: judged.drawn.css, ...(pressed ? { pressed } : {}), ...(audit ? { audit } : {}), ...(drawing ? { drawing } : {}), ...(presses ? { presses } : {}) };
 }

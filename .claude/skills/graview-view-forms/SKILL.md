@@ -29,7 +29,11 @@ arguments and typed by the person:
 ```
 
 A field the view filled (`value="…"`) is the view's until the person
-empties it, and a press carrying it is refused. A radio or a select is the
+empties it, and a press carrying it is refused — unless it says nothing the
+view read: `0`, `false`, the argument's declared default, or what the bound
+record holds in that field now. A field the act cannot take blank — a
+number emptied, a date never picked — is left out of the call, never sent
+as `""`. A radio or a select is the
 person's pick, not their words: its value goes only if it is one the act
 declares (an enum's option) or a record the view was shown. A view may
 empty a field after a press. A press on an act the seat may not run there
@@ -114,7 +118,10 @@ graview.on("acted", "textarea", (e) => draw(e.pressed.ok ? "Saved" : e.pressed.m
 ```
 
 Say the refusal's `message` as it is: it is the policy's sentence, or the
-host's. `examples/a-call-sheet.js` is a whole one: a call's notes, filled
+host's (`Not applied: “fixedFee” expects a number.`). A view that does not
+hear `acted` on a control is not left silent: the host says a refusal
+beside it in a note of its own, gone on the next press. Hearing `acted`
+there takes it over. `examples/a-call-sheet.js` is a whole one: a call's notes, filled
 by the host, saved as they are typed, "Saving…" on `input` and "Saved" on
 `acted`.
 
@@ -132,10 +139,17 @@ by the host, saved as they are typed, "Saving…" on `input` and "Saved" on
    other than `input` or `change`, a `data-debounce` it does not read, or
    a `data-save` on what is not a field, or a `data-act` on what can never
    be pressed.
-3. Press it headless: `--press "<selector>"` (with `--type note="…"` for
+3. `graview view check` presses every control it drew, as the host
+   would: each `data-act` and saving field, with its fields as drawn,
+   then filled in, then with each filled optional field emptied; each
+   link; each button its code hears, in a run of its own. One that does
+   nothing, throws, or is refused fails, said by name (`“Save economics”
+   is refused: “fixedFee” expects a number.`); `runWorkerViewHeadless(…,
+   { presses: true })` is the same for a host's gate. To look at one,
+   press it: `--press "<selector>"` (with `--type note="…"` for
    what the person typed), or `runWorkerViewHeadless(…, { press: {
-   selector, typed } })`. It presses the first element the selector
-   matches and says what the host would do: the act and the arguments it
+   selector, typed } })`, the first element the selector matches; it
+   says what the host would do: the act and the arguments it
    carries, and whether this seat may (rehearsed, never applied), or the
    refusal the view would hear; the link it follows; and what the view's
    code did on the click.
