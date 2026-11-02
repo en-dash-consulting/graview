@@ -82,9 +82,11 @@ export { backendFrom, holdBackend, preview, serve, SERVE_USAGE, shots, connectio
 export { heldBy, holdFileOf, holdStore, sayHeld } from "./store-hold.js";
 export type { StoreHold, StoreHolder } from "./store-hold.js";
 export type { PreviewPage } from "./cli.js";
-export { PREVIEW_APP_PATH, previewPrincipal, servePreview } from "./serve-preview.js";
+export { OPENING_SCREEN_PATH, PREVIEW_APP_PATH, previewPrincipal, servePreview } from "./serve-preview.js";
+export { OPENING_SCREEN_SETTLED, shootOpeningScreen } from "./shots.js";
+export type { OpeningScreenOptions, ScreenMotion } from "./shots.js";
 export { bundleAppForPage, findBundler, NO_BUNDLER } from "./preview-app.js";
-export type { Preview, PreviewOptions } from "./serve-preview.js";
+export type { Preview, PreviewOptions, SplashPageRenderer } from "./serve-preview.js";
 export type { StoreBackend } from "./cli.js";
 export {
   assertPhotoFits,

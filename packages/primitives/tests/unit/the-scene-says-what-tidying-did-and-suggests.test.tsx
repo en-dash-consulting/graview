@@ -115,7 +115,7 @@ describe("the scene's bar, after the app's own actor tidied", () => {
     expect($('[data-testid="diff-log"]')!.textContent).not.toContain("Hand back the keys");
     await act(async () => digest.querySelector<HTMLButtonElement>('[data-testid="digest-toggle"]')!.click());
     const each = [...document.querySelectorAll('[data-testid="digest-change"]')];
-    expect(each.map((row) => row.querySelector("[data-graview-lineage]")?.textContent)).toEqual([" · based on “The shelves cover the wall” · 91% sure", " · based on “Booking needs the quote” · 94% sure"]);
+    expect(each.map((row) => row.querySelector("[data-graview-lineage]")?.textContent)).toEqual([" · The shelves cover the wall · 91% sure", " · Booking needs the quote · 94% sure"]);
     expect(each.every((row) => row.querySelector('[data-testid="undo-turn"]') !== null)).toBe(true);
   });
 
@@ -127,7 +127,7 @@ describe("the scene's bar, after the app's own actor tidied", () => {
     await act(async () => $('[data-testid="suggested-button"]')!.click());
     const row = $('[data-testid="suggestion"]')!;
     expect(row.textContent).toContain("Graview, tidying suggests “Hand back the keys” waits for “Move the piano”");
-    expect(row.textContent).toContain("based on “The piano goes out before the keys go back” · 42% sure");
+    expect(row.textContent).toContain("The piano goes out before the keys go back · 42% sure");
     expect(store.graph.allEdges()).toHaveLength(2);
     await act(async () => row.querySelector<HTMLButtonElement>('[data-testid="suggestion-decline"]')!.click());
     await settled(() => expect($('[data-testid="suggested-button"]')).toBeNull());

@@ -737,7 +737,7 @@ try {
       await page.close();
       const ok =
         tray !== null && tray.count === "1" && tray.rows.length === 1 && /suggests/.test(tray.rows[0]) && /The post is redirected from the day notice is given/.test(tray.rows[0]) && /45% sure/.test(tray.rows[0]) &&
-        digest !== null && /Graview, tidying/.test(digest.said) && /Tidied 2 things today/.test(digest.said) && digest.each.length === 2 && digest.each.every((one) => /based on/.test(one)) && digest.undoes === 2 &&
+        digest !== null && /Graview, tidying/.test(digest.said) && /Tidied 2 things today/.test(digest.said) && digest.each.length === 2 && digest.each.every((one) => /\d+% sure/.test(one)) && digest.undoes === 2 &&
         declined.trayGone && declined.unchanged && declined.declinedBy === "user-nora" && declined.keyboard !== "BODY";
       tidying[face] = { tray, digest, declined, ok };
     }

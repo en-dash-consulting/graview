@@ -1,4 +1,4 @@
-import { actTitle, fieldWords, humanizeField, labelOf, nodeRefKinds, type AnySchema, type NodeOfSchema } from "@graview/core";
+import { actTitle, fieldInPassing, humanizeField, labelOf, nodeRefKinds, type AnySchema, type NodeOfSchema } from "@graview/core";
 import type { Affordance, AffordanceProvider, Observation } from "../types.js";
 
 const SHARED_SCORE = 70;
@@ -139,7 +139,7 @@ export function structureProvider<S extends AnySchema>(): AffordanceProvider<S> 
         const definitionOf = (kind: string) => store.schema.definitions.find((definition) => definition.kind === kind);
         for (const field of [...fields].sort()) {
           const definition = definitionOf(nodes[0]!.kind as string);
-          const words = fieldWords(definition, field).toLowerCase();
+          const words = fieldInPassing(definition, field);
           // The value as the card shows it: the declared format, else the stored value quoted.
           const format = definition?.display?.format?.[field];
           const said = (key: string): string => {

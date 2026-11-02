@@ -1,11 +1,8 @@
 import { LEFT_ALONE } from "../graph/archived.js";
 import type { Primitive } from "../graph/primitives.js";
-import { spellingOf } from "../mutations/act-spelling.js";
-import { derivedActOf } from "../mutations/derived-names.js";
 import type { MutationCall } from "../mutations/types.js";
 import { labelOf, pluralOf } from "../schema/define-node.js";
 import type { AnySchema } from "../schema/schema.js";
-import { undoneIn } from "./log.js";
 import type { Author, Operation } from "./types.js";
 
 /*
@@ -52,12 +49,6 @@ export function tidyingOf(schema: AnySchema, kind: string, relation?: string): "
   return relation === undefined ? definition?.tidying : definition?.edges?.[relation]?.tidying;
 }
 
-/** A value written out with every object's keys in order: two spellings of one set of arguments are one key. */
-const sortedKey = (value: unknown): string => JSON.stringify(value, (_, inner) => (inner && typeof inner === "object" && !Array.isArray(inner) ? Object.fromEntries(Object.entries(inner).sort()) : inner));
-
-/** WHO A SUGGESTION IS, whoever made it and on whatever basis: its calls, in order, each its act and arguments, keys in order. */
-export const suggestionKey = (calls: readonly MutationCall[]): string => sortedKey(calls.map((call) => [call.name, call.args]));
-
 /**
  * WHAT THE APP KNOWS OF ITS ACTS, for reading what a call means rather than
  * how it was spelled (`meaningKey`): the act a name says, however it is
@@ -75,70 +66,35 @@ export interface ActMeanings {
   readonly has: (id: string) => boolean;
 }
 
-/** The acts said of one record alone: set aside, brought back, removed, left alone, let be tidied. */
-const ON_ONE = /^(archive|unarchive|remove|leave-alone|allow-tidying)$/;
-
-/** What one call means, as what a key is written from. */
-function meaningOf(call: MutationCall, meanings: ActMeanings | undefined): unknown {
-  const name = spellingOf(call.name);
-  const act = meanings?.act(call.name);
-  const args = (call.args ?? {}) as Record<string, unknown>;
-  // The act's own word on what it is; a bare name is read as one only when nothing knows the act.
-  const derived: { readonly act: string; readonly relation?: string } | undefined = act ? act.derived : derivedActOf(name);
-  const { id } = args;
-  if (derived && typeof id === "string") {
-    if (ON_ONE.test(derived.act)) return [derived.act, id];
-    // A pair merged, whichever of the two went into the other.
-    if (derived.act === "merge") return ["merge", ...[id, args["into"]].sort()];
-    if (derived.relation) return [derived.act, derived.relation, id, args["to"]];
-  }
-  // A declared act that makes one relation between its subject and one other record is that link, as its relation's own act would make it.
-  const subject = act?.subject?.arg ?? "id";
-  const [other, more] = Object.keys(args).filter((key) => key !== subject);
-  if (act?.connects?.length === 1 && other && !more && meanings!.has(args[subject] as string) && meanings!.has(args[other] as string)) return ["connect", act.connects[0], args[subject], args[other]];
-  // Anything else is its act and arguments, less the id of a record it would make: minted afresh each time it is asked.
-  return [name, act?.creates?.length && typeof id === "string" && !meanings!.has(id) ? { ...args, id: 0 } : args];
+/**
+ * A DECLINE A CHECKPOINT KEPT (`Epoch.declines`): the op that said it — the
+ * undo, or the unlink — gone to the archive since, as who said it and when.
+ */
+export interface KeptDecline {
+  readonly id: string;
+  readonly at: string;
+  readonly author: Author;
+  readonly undoes?: string;
 }
+
+/** A decline: the op in the log that said it, or what a checkpoint kept of one archived since. */
+export type Decline = Operation | KeptDecline;
 
 /**
- * WHAT A SUGGESTION MEANS, however its calls were spelled: a link between
- * two records by its relation, whichever act asks for it; a merge of a
- * pair, whichever way round; a record archived, removed or left alone; and
- * anything else its act, in any spelling of it, and its arguments, less the
- * minted id of a record it would make. Worked out from the calls whenever
- * it is asked, so a decline already in a log matches by it too.
+ * WHAT A PERSON DECLINED, JUDGED OFF THE PAGE. Which ops decline what, and
+ * what a call means, are `./declines.ts`'s, taught to the store when
+ * `@graview/core/tidying` is loaded — as every host that runs the app's
+ * own actor does (`dream`, `suggest`, a workflow, `@graview/ship`'s
+ * server) — so a page, where the actor never runs, carries none of it.
+ * Shared through the global registry, so two copies of this module agree.
  */
-export const meaningKey = (calls: readonly MutationCall[], meanings?: ActMeanings): string => `≈${sortedKey(calls.map((call) => meaningOf(call, meanings)))}`;
-
-/**
- * THE OP THAT DECLINED THESE CALLS — the whole suggestion, or any one of
- * them on its own, asked exactly as it was or meaning the same
- * (`meaningKey`) — or undefined: a live undo of a suggestion, or of a
- * change made with a lineage (an actor's confident change a person took
- * back). "Do not make this again."
- */
-export function declinedIn(ops: readonly Operation[], calls: readonly MutationCall[], meanings?: ActMeanings): Operation | undefined {
-  const declines = declinesIn(ops, meanings);
-  return [calls, ...calls.map((call) => [call])].map((asked) => declines.get(meaningKey(asked, meanings))).find(Boolean);
+export interface DeclinesHeld {
+  /** The decline that answers these calls, or undefined (`declinedIn`). */
+  declined?: (ops: readonly Operation[], calls: readonly MutationCall[], meanings: ActMeanings | undefined, kept: Readonly<Record<string, KeptDecline>> | undefined) => Decline | undefined;
+  /** What a checkpoint keeps of a log's declines (`Epoch.declines`). */
+  kept?: (ops: readonly Operation[], meanings: ActMeanings | undefined, kept: Readonly<Record<string, KeptDecline>> | undefined) => Record<string, KeptDecline>;
 }
-
-/** Every decline in a log, keyed by what the whole suggestion means and what each of its calls alone means (`meaningKey`): calls asked exactly alike always mean the same. */
-export function declinesIn(ops: readonly Operation[], meanings?: ActMeanings): ReadonlyMap<string, Operation> {
-  const undone = undoneIn(ops);
-  const byId = new Map(ops.map((op) => [op.id, op]));
-  const declines = new Map<string, Operation>();
-  // The calls of a suggestion a person accepted one by one before declining the rest: those were said yes to (Roadmap f-job-approvals).
-  const took = new Map<string, number[]>();
-  for (const op of ops) if (op.lineage?.suggestion !== undefined && op.lineage.items) took.set(op.lineage.suggestion, [...(took.get(op.lineage.suggestion) ?? []), ...op.lineage.items]);
-  for (const op of ops) {
-    const target = op.undoes !== undefined && !undone.has(op.id) && !op.withheld ? byId.get(op.undoes) : undefined;
-    // A suggestion its own maker took back was withdrawn, not declined: nobody said no to it (`withdrawSuggestion`).
-    if (target?.suggests && target.author.kind === op.author.kind && target.author.id === op.author.id) continue;
-    const calls = target?.suggests ? target.suggests.filter((_, at) => !took.get(target.id)?.includes(at)) : target?.mutation && (target.lineage || op.undoneLineage) ? [target.mutation] : [];
-    if (calls.length > 0) for (const asked of [calls, ...calls.map((call) => [call])]) declines.set(meaningKey(asked, meanings), op);
-  }
-  return declines;
-}
+export const DECLINES: DeclinesHeld = ((globalThis as Record<symbol, DeclinesHeld | undefined>)[Symbol.for("@graview/core:declines")] ??= {});
 
 /**
  * WHY THE APP'S OWN ACTOR MAY NOT MAKE THESE PRIMITIVES, in a sentence, or

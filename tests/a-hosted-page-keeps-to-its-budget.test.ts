@@ -201,7 +201,8 @@ describe("a hosted page", () => {
     // 1082 KB since a menu at the pointer keeps its top as it narrows and its card opens where it stood (Roadmap f-menu-type-anything): the scene face measured 1_107_683 B, 1_442 more.
     // 1083 KB since a right-click inside a worker view came to name the menu for the section under it and offer "Make this better" (Roadmap f-make-this-section-better): only what a view's place lends and the fetch of the section finder and the menu's rows on the first right-click inside a view are here; the scene face measured 1_108_954 B, 1_271 more than the menu at the pointer alone (1_107_683).
     // 1086 KB with the menu (f-menu-type-anything, f-menu-learns, f-make-this-section-better) and the phone's sheet and drive-in together in batch/0-1-65: 1_107_735 + 4_114 = 1_111_849 B; the scene face measured 1_111_845 B.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1086 * 1024);
+    // 1087 KB since tidying came to hold the actor to every change a person took back (Roadmap f-declines-a-person-meant): what a person declined is judged off the page, by `@graview/core/tidying` (`DECLINES`), so up front is 734 B smaller, but the scene fetches that entry for Activity's digest before it draws, and it now carries a person's undo of any change and a person's unlink as declines, and what a checkpoint keeps of them: the scene face measured 1_113_013 B, 1_168 more than main after 0.1.65 (1_111_845).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1087 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

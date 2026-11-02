@@ -98,7 +98,11 @@ pnpm build && npx graview check ./dist/domain/app.js
 `brand-mark` and `brand-logo` say which mark, where and why. Then **look at
 it in both schemes** — `?theme=light` and `?theme=dark` — on the bar and in
 the design's own shell: the dark one in the dark, or the light one inverted
-only where the brand asked.
+only where the brand asked. And look at the opening screen, which every
+picture of a place is taken after: `graview shots app.json --opening-screen
+--scheme both` pictures it once it settles, moving and under reduced
+motion. A host picturing it in its own browser loads `splashPage(brand)`
+(`@graview/pages/splash`) and waits on `SPLASH_SETTLED`.
 
 ## What the check cannot see
 

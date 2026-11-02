@@ -98,10 +98,10 @@ describe("a classify step with a model", () => {
     const store = storeOf(app);
     await runReal(app, store, memoryWorkflowLog(), judge());
     const op = store.log.all().find((one) => one.primitives.some((p) => p.op === "patch-node" && p.id === "f-buy" && "category" in p.after))!;
-    expect(op.lineage).toMatchObject({ basis: "Jev: 95% sure “Buy cheap watches” is spam", confidence: 0.95, model: "jev-test", actor: "workflow:triage" });
+    expect(op.lineage).toMatchObject({ basis: "Reads as spam", confidence: 0.95, model: "jev-test", actor: "workflow:triage" });
     expect(op.lineage?.run).toMatch(/^workflow:triage:/);
     expect(op.author).toMatchObject({ id: "workflow:triage", automated: true });
-    expect(lineageWords(op.lineage!)).toBe("based on “Jev: 95% sure “Buy cheap watches” is spam” · 95% sure · jev-test");
+    expect(lineageWords(op.lineage!)).toBe("Reads as spam · 95% sure · jev-test");
   });
 
   it("asks a person before a label it is told to confirm, even when the rest applies", async () => {

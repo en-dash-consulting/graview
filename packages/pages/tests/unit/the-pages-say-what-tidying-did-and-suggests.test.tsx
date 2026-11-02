@@ -112,7 +112,7 @@ describe("the routed face's bar, after the app's own actor tidied", () => {
     await settled(() => expect($('[data-testid="activity-digest"]')).not.toBeNull());
     expect($('[data-testid="activity-digest"]')!.textContent).toContain("Graview, tidying Tidied 2 things today");
     await act(async () => $('[data-testid="digest-toggle"]')!.click());
-    expect([...document.querySelectorAll('[data-testid="digest-change"] [data-graview-lineage]')].map((one) => one.textContent)).toEqual([" · based on “The shelves cover the wall” · 91% sure", " · based on “Booking needs the quote” · 94% sure"]);
+    expect([...document.querySelectorAll('[data-testid="digest-change"] [data-graview-lineage]')].map((one) => one.textContent)).toEqual([" · The shelves cover the wall · 91% sure", " · Booking needs the quote · 94% sure"]);
   });
 
   it("draws the Suggested tray beside it, where the third waits and is declined, and is refused to the actor next time", async () => {

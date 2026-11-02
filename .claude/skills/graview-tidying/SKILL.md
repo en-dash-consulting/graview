@@ -38,7 +38,9 @@ opens in and how its cards read are `graview-lists`.
    (`declineSuggestion`); `declined(store, calls)` says so, and the actor is
    refused the same change again — matched by what it means
    (`meaningKey`): the same link by any act that makes the relation, a
-   record made again under a new id, a merged pair either way round. Its
+   record made again under a new id, a merged pair either way round. So
+   is a person's undo of any change, or unlinking a link; a checkpoint
+   keeps declines (`Epoch.declines`). Its
    run of changes is one Activity row, "Tidied 6 things overnight". Give a
    night's work one `lineage.run`, name the judge in `lineage.actor` and
    the records it rests on in `lineage.evidence`; give a suggestion an
@@ -83,10 +85,11 @@ opens in and how its cards read are `graview-lists`.
    and empty choices; the host's System One model (`ai.fast`, Jev) does
    the judging, one request per candidate; code routes each answer by how
    much the change would undo (`BANDS`) — made, suggested with its basis
-   ("Jev: 0.93 that …"), or dropped. Without a model, or when it fails or
-   the budget runs out, the floor is the judges' own rules: a shared name
-   or email, a link the record's text names, a finished record unchanged
-   for 30 days. It skips what was declined, what waits, what is left alone
+   ("Same vendor, entered twice"), or dropped. Without a model, or when it
+   fails or the budget runs out, the floor is the judges' own rules: a
+   shared name or email, a link the record's text names, a finished record
+   unchanged for 30 days. A placeholder name ("—", "Untitled") is no
+   name; records a one-link relation points apart are never paired. It skips what was declined, what waits, what is left alone
    or changed in the last day, and applies nothing unless the host passes
    `applyAtLeast`. A host's schedule runs it (`graview dream <entry> --data
    ./data --model jev-latest --cache ./cache.json`), or reaches the store

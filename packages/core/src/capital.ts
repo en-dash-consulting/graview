@@ -11,3 +11,12 @@ export const lowerFirst = (text: string): string => (/^.\p{Lu}/u.test(text) ? te
 
 /** "A", "A and B", "A, B and C" — or with "or": the one place this package says a list in words. */
 export const listed = (items: readonly string[], word = "and"): string => (items.length > 1 ? `${items.slice(0, -1).join(", ")} ${word} ${items.at(-1)}` : (items[0] ?? ""));
+
+/**
+ * A NAME AS A SENTENCE SAYS IT IN PASSING: lowered as a word is ("Due
+ * date" → "due date", "Source URL" → "source URL"), unless it is written
+ * as a name — a capital inside a word or opening a later one ("Apple
+ * Music", "TikTok"), kept as written rather than half lowered ("apple
+ * Music").
+ */
+export const nameInPassing = (text: string): string => (/^\S*\p{Ll}\p{Lu}|\s\p{Lu}\p{Ll}/u.test(text) ? text : lowerFirst(text));

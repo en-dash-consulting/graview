@@ -77,6 +77,6 @@ describe("light through water", () => {
     expect(drawn.script).toContain('caustics:"');
     // Its loop is bounded, as WebGL 1 needs, and it reads the image, the tint and the scheme's light as the others do.
     expect(drawn.script).toMatch(/caustics:"[^"]*for\(int n=0;n<4;n\+\+\)[^"]*pic\(uv[^"]*u_tint[^"]*u_light/);
-    expect(drawn.script).toContain("function loop(frame){if(still){frame(0);return}");
+    expect(drawn.script).toContain("function loop(frame){if(still){frame(SET);return}");
   });
 });

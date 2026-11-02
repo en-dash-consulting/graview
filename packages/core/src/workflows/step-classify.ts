@@ -9,7 +9,7 @@ import type { WorkflowWorld } from "./world.js";
  * per record — "which of these options fits it, and how sure" — asked of
  * the host's System One model one record at a time within the run's
  * budget, and set through the kind's own act with the reason on its
- * lineage ("Jev: 90% sure “Buy now” is spam"). Where no model answers —
+ * lineage ("Reads as spam", 90% sure, by Jev). Where no model answers —
  * none lent, it failed, the budget ran out — the step's `floor` decides
  * deterministically (links counted in the record's text, blocklisted
  * words, a rule), and a record no floor rule matches is left for a

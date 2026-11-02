@@ -107,6 +107,12 @@ export interface SplashOptions {
   readonly kicker?: string;
   /** Whether the screen fades as it goes (320 ms). It does unless `false`, a reader asks for less motion, or automation drives the browser. */
   readonly fade?: boolean;
+  /**
+   * KEPT UP, FOR A PICTURE OF IT (`splashPage`): the script never takes the
+   * screen away — no place will draw under it — and says when it has
+   * reached its settled frame (`SPLASH_SETTLED`).
+   */
+  readonly hold?: boolean;
 }
 
 /** The screen as a host inlines it: the markup, its stylesheet and the script that takes it away. */
@@ -199,7 +205,7 @@ export function splashHtml(brand: SplashBrand, options: SplashOptions = {}): Spl
   const images = spec.style === "plain" ? (markLight === markDark ? mark(markLight, "light").replace(' data-scheme="light"', "") : mark(markLight, "light") + mark(markDark, "dark")) : mark(picture, "light").replace(' data-scheme="light"', "");
   // The ascii title types itself on; a reader hears the whole of it once, in the screen's name, not letter by letter.
   const words = `${kicker ? `<p class="graview-splash-kicker">${escape(kicker)}</p>` : ""}<p class="graview-splash-title"${spec.style === "ascii" ? ` data-types="${escape(title)}" aria-hidden="true"` : ""}>${spec.style === "ascii" ? "" : escape(title)}</p>`;
-  const html = `<div id="${SPLASH_ID}" popover="manual" data-style="${spec.style}" data-scheme="${scheme}"${shader ? ` data-shader="${shader}"` : ""} data-tint-light="${rgb(tintLight)}" data-tint-dark="${rgb(tintDark)}"${options.fade === false ? " data-fade=\"off\"" : ""} role="status" aria-label="${escape(title)}">${images}${spec.style === "ascii" ? '<pre class="graview-splash-ascii" aria-hidden="true"></pre>' : ""}${spec.style === "shader" ? '<canvas class="graview-splash-canvas" aria-hidden="true"></canvas>' : ""}<div class="graview-splash-words">${words}</div></div>`;
+  const html = `<div id="${SPLASH_ID}" popover="manual" data-style="${spec.style}" data-scheme="${scheme}"${shader ? ` data-shader="${shader}"` : ""} data-tint-light="${rgb(tintLight)}" data-tint-dark="${rgb(tintDark)}"${options.fade === false ? " data-fade=\"off\"" : ""}${options.hold ? " data-hold" : ""} role="status" aria-label="${escape(title)}">${images}${spec.style === "ascii" ? '<pre class="graview-splash-ascii" aria-hidden="true"></pre>' : ""}${spec.style === "shader" ? '<canvas class="graview-splash-canvas" aria-hidden="true"></canvas>' : ""}<div class="graview-splash-words">${words}</div></div>`;
 
   const id = `#${SPLASH_ID}`;
   const darkRules = `--gs-ground:${dark};--gs-ink:${inkDark};--gs-tint:${tintDark};--gs-light:0`;
@@ -233,6 +239,31 @@ export function splashHtml(brand: SplashBrand, options: SplashOptions = {}): Spl
 }
 
 /**
+ * WHETHER THE SCREEN HAS REACHED ITS SETTLED FRAME, as a host's browser
+ * asks it (`waitForFunction`): its image loaded, the ascii field filled in
+ * and its title typed, the shader's reveal done — at once under reduced
+ * motion, which draws that frame and no other. The script marks the screen
+ * `data-settled`; a picture taken then is the screen as a reader sees it
+ * once it stops moving, the same at every run.
+ */
+export const SPLASH_SETTLED = `document.querySelector("#${SPLASH_ID}[data-settled]") !== null`;
+
+/**
+ * THE OPENING SCREEN AS A PAGE OF ITS OWN, held (`hold`), for a picture of
+ * it: what `graview shots --opening-screen` photographs, and what a host
+ * that pictures an app's places in its own browser loads to picture the
+ * screen — at a width, in the reader's scheme (its `colorScheme`) and with
+ * motion or without (`reducedMotion: "reduce"`), waiting on
+ * `SPLASH_SETTLED`. An empty string for a brand with no screen.
+ */
+export function splashPage(brand: SplashBrand, options: SplashOptions = {}): string {
+  const drawn = splashHtml(brand, { ...options, hold: true });
+  if (drawn.html === "") return "";
+  const title = escape(options.title ?? brand.splash?.title ?? brand.name ?? options.name ?? "");
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><title>${title}</title><style>html,body{margin:0;height:100%}${drawn.css}</style></head><body>${drawn.html}<script>${drawn.script}</script></body></html>`;
+}
+
+/**
  * ONE SCRIPT FOR EVERY STYLE, plain ES5 so it parses anywhere: it takes the
  * screen away when the place has drawn, and draws the ascii field or runs
  * the named shader meanwhile. Reduced motion draws one still frame.
@@ -243,17 +274,19 @@ if(s.showPopover){try{s.showPopover()}catch(e){}}
 var mq=window.matchMedia?matchMedia("(prefers-reduced-motion: reduce)"):null,still=!!(mq&&mq.matches),quick=still||navigator.webdriver===true||s.getAttribute("data-fade")==="off";
 var dark=s.getAttribute("data-scheme")==="dark"||(s.getAttribute("data-scheme")==="auto"&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches);
 var tint=(s.getAttribute(dark?"data-tint-dark":"data-tint-light")||"0,0,0").split(",").map(Number);
-var stop=null,gone=false,t0=Date.now();
+var stop=null,gone=false,t0=Date.now(),hold=s.hasAttribute("data-hold"),SET=2.4;
+function settle(){s.setAttribute("data-settled","")}
 function go(){if(gone)return;gone=true;ob.disconnect();clearTimeout(most);if(stop)stop();if(quick){if(s.parentNode)s.parentNode.removeChild(s);return}
 s.setAttribute("data-gone","");setTimeout(function(){if(s.parentNode)s.parentNode.removeChild(s)},320)}
 function drawn(){return !!document.querySelector("[data-graview-drawn],[role=alert]")}
-var ob=new MutationObserver(function(){if(drawn())go()});
-ob.observe(document.documentElement,{attributes:true,childList:true,subtree:true,attributeFilter:["data-graview-drawn","role"]});
-var most=setTimeout(go,15000);
-if(drawn()){go();return}
+var ob=new MutationObserver(function(){if(drawn())go()}),most;
+if(!hold){ob.observe(document.documentElement,{attributes:true,childList:true,subtree:true,attributeFilter:["data-graview-drawn","role"]});
+most=setTimeout(go,15000);
+if(drawn()){go();return}}
 var style=s.getAttribute("data-style"),img=s.querySelector(".graview-splash-image");
 function ready(fn){if(!img){fn(null);return}if(img.complete&&img.naturalWidth)fn(img);else{img.addEventListener("load",function(){fn(img)});img.addEventListener("error",function(){fn(null)})}}
-function loop(frame){if(still){frame(0);return}var on=true,last=0;function tick(now){if(!on)return;if(now-last>66){last=now;frame((Date.now()-t0)/1000)}requestAnimationFrame(tick)}requestAnimationFrame(tick);stop=function(){on=false}}
+function loop(frame){if(still){frame(SET);return}var on=true,last=0;function tick(now){if(!on)return;if(now-last>66){last=now;frame((Date.now()-t0)/1000)}requestAnimationFrame(tick)}requestAnimationFrame(tick);stop=function(){on=false}}
+if(style==="plain"||style==="editorial")ready(settle);
 if(style==="ascii"){
 var pre=s.querySelector(".graview-splash-ascii"),title=s.querySelector(".graview-splash-title"),words=title?title.getAttribute("data-types")||"":"";
 var ramp=dark?" .:-=+*#%@":"@%#*+=-:. ";
@@ -261,9 +294,10 @@ var cv=document.createElement("canvas"),cx=cv.getContext("2d",{willReadFrequentl
 ready(function(im){var cols=Math.ceil(s.clientWidth/7.2),rows=Math.ceil(s.clientHeight/14);cv.width=cols;cv.height=rows;
 var px=null;if(im&&cx){try{var r=Math.max(cols/im.naturalWidth,rows/im.naturalHeight),w=im.naturalWidth*r,h=im.naturalHeight*r;cx.drawImage(im,(cols-w)/2,(rows-h)/2,w,h);px=cx.getImageData(0,0,cols,rows).data}catch(e){px=null}}
 loop(function(t){var out="",p=Math.min(1,t/1.6);for(var y=0;y<rows;y++){for(var x=0;x<cols;x++){var v;if(px){var i=(y*cols+x)*4;v=(px[i]*.3+px[i+1]*.59+px[i+2]*.11)/255}else{v=.5+.5*Math.sin(x*.11+t*.6)*Math.cos(y*.19-t*.4)}
-if(dark)v=v*p;else v=1-(1-v)*p;out+=ramp.charAt(Math.max(0,Math.min(ramp.length-1,Math.floor(v*(ramp.length-1)))))}out+="\n"}pre.textContent=out});
+if(dark)v=v*p;else v=1-(1-v)*p;out+=ramp.charAt(Math.max(0,Math.min(ramp.length-1,Math.floor(v*(ramp.length-1)))))}out+="\n"}pre.textContent=out;if(p>=1&&(!title||title.textContent===words))settle()});
 });
 if(title&&words){if(still)title.textContent=words;else{var n=0,ty=setInterval(function(){n++;title.textContent=words.slice(0,n);if(n>=words.length)clearInterval(ty)},Math.max(30,Math.min(90,1200/words.length)));var before=stop;stop=function(){clearInterval(ty);if(before)before()}}}
+if(still)ready(settle);
 }
 if(style==="shader"){
 var canvas=s.querySelector(".graview-splash-canvas"),gl=canvas&&(canvas.getContext("webgl",{premultipliedAlpha:false})||canvas.getContext("experimental-webgl"));
@@ -288,9 +322,9 @@ var tex=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,tex);gl.texParameteri(gl
 gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array([0,0,0,255]));
 var g=getComputedStyle(s).backgroundColor.match(/[\d.]+/g)||[0,0,0];
 gl.uniform3f(U("u_tint"),tint[0],tint[1],tint[2]);gl.uniform3f(U("u_ground"),g[0]/255,g[1]/255,g[2]/255);gl.uniform1f(U("u_light"),dark?0:1);gl.uniform1f(U("u_has"),0);gl.uniform2f(U("u_size"),1,1);
-ready(function(im){if(!im)return;try{gl.bindTexture(gl.TEXTURE_2D,tex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,im);gl.uniform1f(U("u_has"),1);gl.uniform2f(U("u_size"),im.naturalWidth,im.naturalHeight)}catch(e){}});
-loop(function(t){var w=s.clientWidth,h=s.clientHeight,dpr=Math.min(2,window.devicePixelRatio||1);if(canvas.width!==(w*dpr|0)||canvas.height!==(h*dpr|0)){canvas.width=w*dpr;canvas.height=h*dpr;gl.viewport(0,0,canvas.width,canvas.height)}
-gl.uniform1f(U("u_time"),t);gl.uniform1f(U("u_progress"),Math.min(1,t/2.4));gl.uniform2f(U("u_resolution"),canvas.width,canvas.height);gl.drawArrays(gl.TRIANGLES,0,3)});
-}else if(canvas)canvas.remove()}else if(canvas)canvas.remove();
+var pictured=false,paint=null;ready(function(im){pictured=true;if(im){try{gl.bindTexture(gl.TEXTURE_2D,tex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,im);gl.uniform1f(U("u_has"),1);gl.uniform2f(U("u_size"),im.naturalWidth,im.naturalHeight)}catch(e){}}if(still&&paint)paint(SET)});
+loop(paint=function(t){var w=s.clientWidth,h=s.clientHeight,dpr=Math.min(2,window.devicePixelRatio||1);if(canvas.width!==(w*dpr|0)||canvas.height!==(h*dpr|0)){canvas.width=w*dpr;canvas.height=h*dpr;gl.viewport(0,0,canvas.width,canvas.height)}
+gl.uniform1f(U("u_time"),t);gl.uniform1f(U("u_progress"),Math.min(1,t/SET));gl.uniform2f(U("u_resolution"),canvas.width,canvas.height);gl.drawArrays(gl.TRIANGLES,0,3);if(t>=SET&&(!img||pictured))settle()});
+}else{if(canvas)canvas.remove();ready(settle)}}else{if(canvas)canvas.remove();ready(settle)}
 }
 })();`;

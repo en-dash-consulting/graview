@@ -73,8 +73,8 @@ describe("an op's lineage", () => {
   });
 
   it("is said in words", () => {
-    expect(lineageWords(sure)).toBe("based on “Both name 12 Harbor Street” · 60% sure · jev-1");
-    expect(lineageWords({ basis: "Same address" })).toBe("based on “Same address”");
+    expect(lineageWords(sure)).toBe("Both name 12 Harbor Street · 60% sure · jev-1");
+    expect(lineageWords({ basis: "Same address" })).toBe("Same address");
   });
 
   it("is checked before anything is kept: a confidence from 0 to 1, a basis of words and a bounded length", () => {

@@ -471,11 +471,15 @@ function argsOf(act: ActSpec, effects: readonly ActEffect[], document: GraviewDo
       }
       if (effect.as) created.set(effect.as, effect.create);
     } else if ("connect" in effect || "sever" in effect) {
-      const edge = edges.get("connect" in effect ? effect.connect : effect.sever);
+      const relation = "connect" in effect ? effect.connect : effect.sever;
+      const edge = edges.get(relation);
+      // From the subject, the far end is what the subject's own kinds declare it reaches, not every declaring kind's targets.
+      const own = refName(effect.from) === "subject" && subjectKinds.length > 0 ? subjectKinds.map((kind) => localEdges(document.kinds[kind]?.edges)[relation]?.to) : [];
+      const reached = own.length > 0 && own.every(Boolean) ? (own.includes("*") ? "*" : [...new Set(own.flat() as string[])]) : undefined;
       for (const [end, value] of [["from", effect.from], ["to", effect.to]] as const) {
         const arg = refName(value);
         if (!arg) continue;
-        const kinds = end === "to" ? edge?.to ?? "*" : edge?.from ?? "*";
+        const kinds = end === "to" ? reached ?? edge?.to ?? "*" : edge?.from ?? "*";
         if (kinds !== "*" && !named.has(arg)) named.set(arg, kinds);
         note(arg, () => ({ ref: kinds, required: true }));
       }

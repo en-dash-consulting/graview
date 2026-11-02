@@ -15,13 +15,13 @@ import { seatOf } from "./seat-of.js";
  * never a click or a selector:
  *
  *   search-miss   words searched for that found nothing (and the kind's list they were typed into)
- *   unanswered    a question the seat or an agent could not answer (and the place it was asked on)
+ *   unanswered    a question the seat or an agent could not answer (and the place it was asked on, and what the app lacks for it, where the seat could say)
  *   refused       an act the person pressed and was refused, with the refusal's code
  *   tool-invalid  a tool call an agent made that was refused as `invalid`, and the form of the next call of it that worked
  */
 export type FrictionDraft =
   | { readonly type: "search-miss"; readonly words: string; readonly kind?: string }
-  | { readonly type: "unanswered"; readonly question: string; readonly place?: string; readonly kind?: string }
+  | { readonly type: "unanswered"; readonly question: string; readonly place?: string; readonly kind?: string; readonly lacks?: string }
   | { readonly type: "refused"; readonly act: string; readonly code: RefusalReason; readonly kind?: string }
   | { readonly type: "tool-invalid"; readonly tool: string; readonly act?: string; readonly message: string; readonly then?: string; readonly kind?: string };
 

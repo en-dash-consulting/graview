@@ -1,9 +1,9 @@
-import { humanizeField, nameKey, type AnySchema, type SearchRanker } from "@graview/core";
+import { nameKey, type AnySchema, type SearchRanker } from "@graview/core";
 import { formFields } from "@graview/core/forms";
 import { fold } from "@graview/core/search";
 import { tidyingOf } from "@graview/core/tidying";
 import { questionsForKind } from "../questions.js";
-import { actNamed, connectOf, fieldsOf, finishedOf, KEY_FIELD, keeperOf, lastMoved, mayTouch, named, type JudgeContext } from "./judges.js";
+import { actNamed, connectOf, fieldInWords, fieldsOf, finishedOf, KEY_FIELD, keeperOf, lastMoved, linkedApart, mayTouch, named, placeholderName, type JudgeContext } from "./judges.js";
 
 /*
  * BLOCKING: WHAT IS WORTH ASKING A MODEL ABOUT, FOUND IN CODE. Far wider
@@ -161,7 +161,8 @@ async function pairsOf(context: JudgeContext, options: BlockingOptions): Promise
     const label = labelField(schema, kind);
     const byPair = new Map<string, { a: Node; b: Node; strength: number; evidence: string[]; keys: Set<string> }>();
     const pair = (a: Node, b: Node, strength: number, evidence: string, key?: string) => {
-      if (a.id === b.id) return;
+      // Two records a one-link relation points at different records are two, whatever else they share.
+      if (a.id === b.id || linkedApart(store, a, b)) return;
       const [first, second] = a.id < b.id ? [a, b] : [b, a];
       const id = `${first.id}\u0000${second.id}`;
       const was = byPair.get(id) ?? { a: first, b: second, strength: 0, evidence: [], keys: new Set<string>() };
@@ -176,7 +177,8 @@ async function pairsOf(context: JudgeContext, options: BlockingOptions): Promise
     for (const node of records) {
       // A key value (an email, a code) is one word, whole: its domain alone says nothing.
       const keys = fieldsOf(schema, kind).filter((field) => KEY_FIELD.test(field) && typeof node[field] === "string" && String(node[field]).trim()).map((field) => nameKey(String(node[field])));
-      const words = new Set([...wordsOf(named(schema, node)), ...keys]);
+      // A placeholder name ("—", "Untitled") is no evidence.
+      const words = new Set([...(placeholderName(named(schema, node), kind) ? [] : wordsOf(named(schema, node))), ...keys]);
       wordSets.set(node.id, words);
       for (const word of words) index.set(word, [...(index.get(word) ?? []), node]);
     }
@@ -208,7 +210,7 @@ async function pairsOf(context: JudgeContext, options: BlockingOptions): Promise
     }
     // The host's ranker, asked of each record's name over the rest of its kind.
     if (options.near) {
-      for (const node of records.slice(0, 50)) {
+      for (const node of records.filter((one) => !placeholderName(named(schema, one), kind)).slice(0, 50)) {
         const others = records.filter((one) => one.id !== node.id).map((one) => ({ id: one.id, kind, label: named(schema, one), texts: textsOf(schema, one).map(({ field, text }) => ({ field, reading: field, text })) }));
         let scores: readonly { id: string; score: number }[] = [];
         try {
@@ -259,7 +261,7 @@ async function targetsOf(context: JudgeContext, node: Node, targets: readonly No
     // Its whole name in the record's text.
     const whole = said.find(({ text }) => holds(text, name));
     if (whole) {
-      put(far, `its ${humanizeField(whole.field).toLowerCase()} says “${named(schema, far)}”`, 3, true);
+      put(far, `“${named(schema, far)}” appears in its ${fieldInWords(schema, node.kind, whole.field)}`, 3, true);
       continue;
     }
     // One of its key values, whole, in the record's text: an email, a code.
@@ -269,14 +271,14 @@ async function targetsOf(context: JudgeContext, node: Node, targets: readonly No
       .filter((value) => value.replace(/ /g, "").length >= 3);
     const key = keys.find((value) => said.some(({ text }) => holds(text, value)));
     if (key) {
-      put(far, `its text says “${key}”`, 2, true);
+      put(far, `“${key}” appears in its text`, 2, true);
       continue;
     }
     // Its telling words in the record's text: one for a short name, two for a name of three words or more.
     const words = [...new Set(wordsOf(named(schema, far)))].filter(telling).filter((word) => said.some(({ text }) => holds(text, word)));
     const needed = name.split(" ").length >= 3 ? 2 : 1;
     if (words.length >= needed) {
-      put(far, `its text says ${words.slice(0, 2).map((word) => `“${word}”`).join(" and ")}`, 2, true);
+      put(far, `${words.slice(0, 2).map((word) => `“${word}”`).join(" and ")} ${words.length > 1 ? "appear" : "appears"} in its text`, 2, true);
       continue;
     }
     if (!missing) continue;
@@ -293,7 +295,7 @@ async function targetsOf(context: JudgeContext, node: Node, targets: readonly No
       );
       for (const score of scores) {
         const far = targets.find((one) => one.id === score.id);
-        if (far && score.score >= 0.5) put(far, "the host's search calls it near", score.score, false);
+        if (far && score.score >= 0.5) put(far, "Search ranks it close", score.score, false);
       }
     } catch {
       // A ranker that fails puts nothing forward.

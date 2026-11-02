@@ -15,8 +15,8 @@ import { serveStore } from "./serve.js";
 import { SERVE_KEY } from "./seat-headers.js";
 import type { GraphSnapshot } from "./snapshot.js";
 import { sayStep } from "./steps.js";
-import { keyedAddress, LOOPBACK, previewPrincipal, servePreview, type SplashRenderer } from "./serve-preview.js";
-import { findPlaywright, NO_PLAYWRIGHT, shoot, shotsOf } from "./shots.js";
+import { keyedAddress, LOOPBACK, OPENING_SCREEN_PATH, previewPrincipal, servePreview, type SplashPageRenderer, type SplashRenderer } from "./serve-preview.js";
+import { findPlaywright, NO_PLAYWRIGHT, shoot, shootOpeningScreen, shotsOf } from "./shots.js";
 import { bundleAppForPage } from "./preview-app.js";
 import { applySteps, sayRefusals, seedRefusals, seedSteps } from "./sync-seed.js";
 import { runConnections } from "./connections.js";
@@ -95,7 +95,7 @@ export const SERVE_USAGE = `  graview serve <entry> [--data <dir>] [--port <n>] 
 
   graview shots <document.json | app module> [--seed <file>] [--places a,b] [--out <dir>]
                 [--scheme light|dark|both] [--width <px>[,<px>]] [--faces pages,scene]
-                [--view <view.js> --manifest <manifest.json>]
+                [--view <view.js> --manifest <manifest.json>] [--opening-screen]
       Photographs places headless to PNGs, <place>-<scheme>-<width>.png in
       <dir> (default ./shots): each place by its address word or title (the
       home, overview, a lens's name, a kind's plural) or a path such as
@@ -103,6 +103,10 @@ export const SERVE_USAGE = `  graview serve <entry> [--data <dir>] [--port <n>] 
       install beside the project (npm i -D playwright, then npx playwright
       install chromium). --view and --manifest picture a proposed view
       before it is kept: name its place by its title, as a kept view's.
+      --opening-screen photographs the app's opening screen (its brand's
+      splash) once it settles and under reduced motion, as
+      opening-screen[-reduced-motion]-<scheme>-<width>.png: alone, or beside
+      the places --places names.
 `;
 
 /** The same store, whichever command asked: parsed from the flags every store command shares. */
@@ -483,6 +487,8 @@ export interface PreviewPage {
   readonly page: string;
   /** The opening screen's renderer (`@graview/pages/splash`), which the tool carries beside the page (Roadmap f-splash-in-document). */
   readonly splash?: SplashRenderer;
+  /** The same screen alone, held, as a page of its own (`splashPage`): what `graview shots --opening-screen` photographs. */
+  readonly splashPage?: SplashPageRenderer;
 }
 
 /**
@@ -553,7 +559,7 @@ async function said<T>(command: string, step: () => Promise<T>): Promise<T | und
  * `graview preview` — the store and Graview's own faces over a document,
  * for somebody with no product (`./serve-preview.ts`).
  */
-export async function preview(argv: readonly string[], { page, splash }: PreviewPage): Promise<number> {
+export async function preview(argv: readonly string[], { page, splash, splashPage }: PreviewPage): Promise<number> {
   const input = await previewInput(argv, "preview");
   if (typeof input === "number") return input;
   const draft = draftOf(argv, "preview");
@@ -578,6 +584,7 @@ export async function preview(argv: readonly string[], { page, splash }: Preview
       ...previewed(input),
       page,
       ...(splash ? { splash } : {}),
+      ...(splashPage ? { splashPage } : {}),
       ...draft,
       ...(backend.seed ? { seed: backend.seed } : {}),
       ...(keeps ? { adapter: backend.adapter, where: backend.where } : {}),
@@ -611,6 +618,8 @@ export async function preview(argv: readonly string[], { page, splash }: Preview
       `  Pages: ${at("/")}   the scene: ${at("/places/overview")}\n` +
       // Each form for a visitor at its own address, answered as a visitor minted per page (Roadmap f-public-forms).
       (app.forms && Object.keys(app.forms).length > 0 ? `  forms: ${Object.keys(app.forms).map((name) => at(`/forms/${name}`)).join("   ")}\n` : "") +
+      // The opening screen alone, held, where the brand has one: what a picture of the first second is taken of.
+      (splashPage && hasSplash(input.document) ? `  opening screen: ${at(OPENING_SCREEN_PATH)}\n` : "") +
       `  data: ${keeps ? `${backend.where}  (${backend.adapter.name}), held by this preview: other writers are refused until it stops` : "in memory, gone when the preview stops"}\n` +
       `  sits as ${principal.name ?? principal.id}${principal.roles?.length ? `, holding ${principal.roles.join(", ")}` : ""}\n` +
       `  ${served.store.graph.allNodes().length} nodes. Ctrl-C stops it.\n`,
@@ -622,7 +631,7 @@ export async function preview(argv: readonly string[], { page, splash }: Preview
  * `graview shots` — named places photographed headless over the same
  * preview, on a free port of its own, into PNGs (`./shots.ts`).
  */
-export async function shots(argv: readonly string[], { page }: PreviewPage): Promise<number> {
+export async function shots(argv: readonly string[], { page, splash, splashPage }: PreviewPage): Promise<number> {
   const input = await previewInput(argv, "shots");
   if (typeof input === "number") return input;
   const draft = draftOf(argv, "shots");
@@ -652,7 +661,7 @@ export async function shots(argv: readonly string[], { page }: PreviewPage): Pro
   let opened;
   try {
     // On loopback, as every shots run is, with this run's key: the pages it opens trade it for a cookie.
-    opened = await servePreview({ ...previewed(input), page, ...draft, ...(backend.seed ? { seed: backend.seed } : {}), port: Number(flag(argv, "--port") ?? 0), key: serveKey() });
+    opened = await servePreview({ ...previewed(input), page, ...(splash ? { splash } : {}), ...(splashPage ? { splashPage } : {}), ...draft, ...(backend.seed ? { seed: backend.seed } : {}), port: Number(flag(argv, "--port") ?? 0), key: serveKey() });
   } catch (error) {
     process.stderr.write(`graview shots: ${error instanceof Error ? error.message : String(error)}\n`);
     return 1;
@@ -660,7 +669,14 @@ export async function shots(argv: readonly string[], { page }: PreviewPage): Pro
   try {
     // A draft's place by its title too, as a kept view's (W-243).
     const drafted = draft.draftView?.manifest;
-    const { shots: taken, unknown } = shotsOf(opened.app, listOf(flag(argv, "--places")), faces as ("pages" | "scene")[], drafted);
+    // The opening screen (Roadmap f-framework-small-fixes-0-1-66): alone when no place is named, beside the places when some are.
+    const screen = argv.includes("--opening-screen");
+    if (screen && !(splashPage && hasSplash(input.document))) {
+      process.stderr.write(`graview shots: ${opened.app.name} has no opening screen to photograph: its document's brand says no splash.\n`);
+      return 2;
+    }
+    const places = listOf(flag(argv, "--places"));
+    const { shots: taken, unknown } = screen && places.length === 0 ? { shots: [], unknown: [] } : shotsOf(opened.app, places, faces as ("pages" | "scene")[], drafted);
     if (unknown.length > 0) {
       const known = shotsOf(opened.app, [], ["pages"], drafted).shots.map((shot) => shot.name).join(", ");
       process.stderr.write(`graview shots: ${opened.app.name} has no place called ${unknown.map((one) => JSON.stringify(one)).join(", ")}. Its places: ${known}, or a path such as /places/overview.\n`);
@@ -668,17 +684,24 @@ export async function shots(argv: readonly string[], { page }: PreviewPage): Pro
     }
     const out = resolve(process.cwd(), flag(argv, "--out") ?? "shots");
     try {
-      const files = await shoot({
-        url: opened.url,
-        ...(opened.key !== undefined ? { key: opened.key } : {}),
-        shots: taken,
-        out,
-        schemes: scheme === "both" ? ["light", "dark"] : [scheme as "light" | "dark"],
-        widths,
-        engine,
-        // A picture that holds less than the whole place says so, and names what it left out (Roadmap f-revisions-say-what-broke).
-        onShot: (file, coverage) => process.stdout.write(`  ${file}\n${coverage && !coverage.whole ? `    ${coverage.said}\n` : ""}`),
-      });
+      const schemes: ("light" | "dark")[] = scheme === "both" ? ["light", "dark"] : [scheme as "light" | "dark"];
+      const keyed = opened.key !== undefined ? { key: opened.key } : {};
+      const files = [
+        ...(screen ? await shootOpeningScreen({ url: opened.url, ...keyed, out, schemes, widths, engine, onShot: (file) => process.stdout.write(`  ${file}\n`) }) : []),
+        ...(taken.length > 0
+          ? await shoot({
+              url: opened.url,
+              ...keyed,
+              shots: taken,
+              out,
+              schemes,
+              widths,
+              engine,
+              // A picture that holds less than the whole place says so, and names what it left out (Roadmap f-revisions-say-what-broke).
+              onShot: (file, coverage) => process.stdout.write(`  ${file}\n${coverage && !coverage.whole ? `    ${coverage.said}\n` : ""}`),
+            })
+          : []),
+      ];
       process.stdout.write(`graview shots: ${files.length} picture${files.length === 1 ? "" : "s"} of ${opened.app.name} in ${out}\n`);
       return 0;
     } catch (error) {
@@ -712,3 +735,9 @@ async function sqliteAdapter(file: string) {
   return createSqliteAdapter({ database: new Database(file), createTables: true });
 }
 
+
+/** Whether a document's brand declares an opening screen. */
+function hasSplash(document: unknown): boolean {
+  const brand = typeof document === "object" && document !== null ? (document as { brand?: { splash?: unknown } }).brand : undefined;
+  return typeof brand?.splash === "object" && brand.splash !== null;
+}

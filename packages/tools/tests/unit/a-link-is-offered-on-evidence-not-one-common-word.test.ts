@@ -45,29 +45,29 @@ describe("what the app's own actor puts forward as a link", () => {
   });
 
   it("is the far record whose telling word the note says, when its name is short", async () => {
-    expect(await offered([...goals("Harbor Catering"), noteSaying("Call harbor about the menu")])).toEqual([{ note: "note:1", to: "goal:1", evidence: "its text says “harbor”" }]);
+    expect(await offered([...goals("Harbor Catering"), noteSaying("Call harbor about the menu")])).toEqual([{ note: "note:1", to: "goal:1", evidence: "“harbor” appears in its text" }]);
   });
 
   it("is the far record two of whose telling words the note says, when its name is long", async () => {
-    expect(await offered([...goals("Acme Harbor Catering Ltd"), noteSaying("Harbor catering is booked for the offsite")])).toEqual([{ note: "note:1", to: "goal:1", evidence: "its text says “harbor” and “catering”" }]);
+    expect(await offered([...goals("Acme Harbor Catering Ltd"), noteSaying("Harbor catering is booked for the offsite")])).toEqual([{ note: "note:1", to: "goal:1", evidence: "“harbor” and “catering” appear in its text" }]);
     expect(await offered([...goals("Acme Harbor Catering Ltd"), noteSaying("The harbor is cold in March")])).toEqual([]);
   });
 
   it("is the far record whose whole name the note says, however common its words", async () => {
     expect(await offered([...goals("Why am I doing this, and for whom?"), noteSaying("Reread “Why am I doing this, and for whom?” before planning.")])).toEqual([
-      { note: "note:1", to: "goal:1", evidence: "its text says “Why am I doing this, and for whom?”" },
+      { note: "note:1", to: "goal:1", evidence: "“Why am I doing this, and for whom?” appears in its text" },
     ]);
   });
 
   it("is the far record whose key value the note says", async () => {
     const coded = goals("Just ship it, today").map((one) => ({ ...one, code: "GL-7731" }));
-    expect(await offered([...coded, noteSaying("See GL-7731 before Friday")])).toEqual([{ note: "note:1", to: "goal:1", evidence: "its text says “gl 7731”" }]);
+    expect(await offered([...coded, noteSaying("See GL-7731 before Friday")])).toEqual([{ note: "note:1", to: "goal:1", evidence: "“gl 7731” appears in its text" }]);
   });
 
   it("counts no word that most of the kind's names hold", async () => {
     expect(await offered([...goals("Weekly review", "Weekly budget", "Weekly standup", "Weekly plan", "Weekly reading"), noteSaying("Move the weekly to Tuesday")])).toEqual([]);
     expect(await offered([...goals("Weekly review", "Weekly budget", "Weekly standup", "Weekly plan", "Weekly reading"), noteSaying("Move the standup to Tuesday")])).toEqual([
-      { note: "note:1", to: "goal:3", evidence: "its text says “standup”" },
+      { note: "note:1", to: "goal:3", evidence: "“standup” appears in its text" },
     ]);
   });
 });
