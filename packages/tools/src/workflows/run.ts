@@ -100,7 +100,7 @@ export async function runWorkflow<S extends AnySchema>(options: RunWorkflowOptio
   };
 
   const finish = (outcome: WorkflowOutcome, dry: boolean, through: number): WorkflowRun => {
-    const run: WorkflowRun = { id, workflow: workflow.name, trigger, started, finished: new Date(Math.max(now, Date.now())).toISOString(), outcome, dry, made: [...made], changed: [...changed], archived: [...archived], suggested, heldBack, through, specHash, notes, spent: spentOf(), chain };
+    const run: WorkflowRun = { id, workflow: workflow.name, trigger, started, finished: new Date(options.now === undefined ? Math.max(now, Date.now()) : now).toISOString(), outcome, dry, made: [...made], changed: [...changed], archived: [...archived], suggested, heldBack, through, specHash, notes, spent: spentOf(), chain };
     options.log.add(run);
     return run;
   };

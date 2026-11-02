@@ -451,15 +451,21 @@ try {
       const box = card.getBoundingClientRect();
       card.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, button: 2, clientX: box.left + box.width / 2, clientY: box.top + box.height / 2 }));
       await new Promise((done) => requestAnimationFrame(() => done()));
+      /*
+       * The menu opens on its field and the two ways to ask under it, then
+       * Suggested — what the AI offers on opening, one Fast call that orders
+       * and tags it (Roadmap f-make-any-page-better) — then the acts. The AI's
+       * own section waits behind More….
+       */
       const menu = document.querySelector('[data-testid="context-menu"]');
-      const section = menu?.querySelector('[data-menu-section="inline-ai"]');
+      const section = menu?.querySelector('[data-menu-section="suggested"]');
       return {
         menu: menu !== null,
         acts: menu?.querySelectorAll("[data-affordance]").length ?? 0,
         section: Boolean(section),
-        ask: Boolean(section?.querySelector('[data-menu-item="ai-ask"]')),
-        offers: section?.querySelectorAll("[data-ai-offer]").length ?? 0,
-        thinking: Boolean(section?.querySelector('[data-testid="inline-ai-thinking"]')),
+        ask: Boolean(menu?.querySelector('[data-testid="menu-type"]')) && Boolean(menu?.querySelector('[data-testid="menu-modes"] [data-menu-mode]')),
+        offers: section?.querySelectorAll('[data-menu-item^="suggested-"]').length ?? 0,
+        thinking: Boolean(menu?.querySelector('[data-testid="inline-ai-thinking"]')),
         missing: Boolean(menu?.querySelector('[data-testid="lazy-part-missing"]')),
       };
     }, id);
@@ -473,7 +479,9 @@ try {
   await rested.hover('[data-graview-pick="t-deposit"]');
   await rested.waitForTimeout(500);
   const restedFrame = await firstFrame("t-deposit");
-  await aiSection(rested);
+  // Suggested's one Fast call, answered.
+  await rested.waitForFunction(() => window.__calls.fast >= 1, undefined, { timeout: 10_000 }).catch(() => undefined);
+  await rested.waitForTimeout(300);
   const afterOpen = await calls();
   await putAway(rested);
   report.checks.aRestedOnMenuDrawsCompleteInItsFirstFrame = {
@@ -498,12 +506,16 @@ try {
   await rested.goto(`${at("todo")}/?${DAY}&thinkingOnly=1`, { waitUntil: "load", timeout: 90_000 });
   await ready(rested);
   await rested.click('[data-graview-pick="t-deposit"]', { button: "right" });
+  await rested.waitForSelector(MENU, { timeout: 10_000 }).catch(() => undefined);
+  await unfold(rested);
   await rested.waitForSelector(`${AI} [data-menu-item="ai-suggest"]`, { timeout: 10_000 }).catch(() => undefined);
   await rested.waitForTimeout(500);
   const openedAndClosed = await calls();
   const suggestRow = (await rested.$(`${AI} [data-menu-item="ai-suggest"]`)) !== null;
   await putAway(rested);
   await rested.click('[data-graview-pick="t-deposit"]', { button: "right" });
+  await rested.waitForSelector(MENU, { timeout: 10_000 }).catch(() => undefined);
+  await unfold(rested);
   await rested.waitForSelector(`${AI} [data-menu-item="ai-suggest"]`, { timeout: 10_000 }).catch(() => undefined);
   await rested.click(`${AI} [data-menu-item="ai-suggest"]`).catch(() => undefined);
   await rested.waitForSelector(`${AI} [data-ai-offer]`, { timeout: 10_000 }).catch(() => undefined);
@@ -537,6 +549,7 @@ try {
     const decide = async (_state, questions) => {
       window.__calls.fast += 1;
       await new Promise((done) => setTimeout(done, 100 + Math.random() * 150));
+      window.__answeredAt = performance.now();
       return {
         answers: Object.fromEntries(Object.entries(questions).map(([key, question]) => {
           const names = Object.keys(question.criteria);
@@ -569,11 +582,13 @@ try {
         card.dispatchEvent(new PointerEvent("pointerover", { bubbles: true, pointerType: "mouse", ...at }));
         await new Promise((done) => setTimeout(done, 200));
         const start = performance.now();
+        window.__answeredAt = 0;
         card.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, button: 2, ...at }));
+        // Filled in: the Fast slot's answer drawn as Suggested (a frame after it came).
         const drawn = await new Promise((done) => {
           const look = () => {
-            const section = document.querySelector('[data-testid="context-menu"] [data-menu-section="inline-ai"]');
-            if (section?.querySelector("[data-ai-offer]")) return done(performance.now() - start);
+            const section = document.querySelector('[data-testid="context-menu"] [data-menu-section="suggested"]');
+            if (window.__answeredAt > start && performance.now() > window.__answeredAt && section?.querySelector('[data-menu-item^="suggested-"]')) return done(performance.now() - start);
             if (performance.now() - start > 5000) return done(null);
             requestAnimationFrame(look);
           };

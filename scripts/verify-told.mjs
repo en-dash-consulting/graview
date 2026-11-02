@@ -274,7 +274,8 @@ try {
       rows: [...document.querySelectorAll('[data-testid="context-menu"] [data-menu-item], [data-testid="context-menu"] [data-affordance]')].map((row) => (row.textContent ?? "").replace(/[…↵]/g, "").trim()),
     }));
     const fold = (text) => text.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
-    const narrowed = after.rows.filter((row) => !/^Tell Graview/.test(row));
+    // The field and the two ways to ask under it (Chat, Better UI) are not rows a word narrows.
+    const narrowed = after.rows.filter((row) => !/^Tell Graview/.test(row) && !/^(💬 )?Chat\b|^(✨ )?Better UI\b/u.test(row));
     report.checks.typingFiltersBeforeAnythingLoads = {
       before,
       after,

@@ -622,7 +622,9 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
   const endSections = narrowed(beside.end).filter((section) => (section.items?.length ?? 0) > 0 || section.render);
   /* Which acts wait behind More…: past the first few, while folded. Drawn, and hidden — no stop for the keyboard, nothing a screen reader is told — until More… is pressed. */
   const behindMore = new Set(folded ? shown.slice(fits).map((entry) => entry.id) : []);
-  const moreWaits = folded && (arranged.length > fits || withheld.length > 0 || beside.end.some((section) => (section.items?.length ?? 0) > 0 || section.render));
+  /* What this seat may not do waits behind More… only where the first acts fill the room; a seat offered little is told at once what is not theirs. */
+  const withheldFolded = folded && arranged.length >= fits;
+  const moreWaits = folded && (arranged.length > fits || (withheldFolded && withheld.length > 0) || beside.end.some((section) => (section.items?.length ?? 0) > 0 || section.render));
   /* What the words are asked about, said in the Ask row: the menu's title, the one record, else "this". */
   const askedAbout = menuAt?.title ?? (selection.length === 1 ? nameOf(store, selection[0]!) : selection.length > 1 ? `${selection.length} selected` : "this");
   const askRow = atPointer && words !== "" && modes.length > 0;
@@ -1013,6 +1015,10 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
             } else if (event.key === "ArrowDown") {
               event.preventDefault();
               (litRow() ?? walkable()[0])?.focus();
+            } else if (event.key === "ArrowUp") {
+              // Round to the last row, as a menu's arrows go: More… where the rest wait behind it.
+              event.preventDefault();
+              walkable().at(-1)?.focus();
             } else if (event.key === "Enter" && !litRow() && modeLit) {
               event.preventDefault();
               runMode(modeLit);
@@ -1517,13 +1523,13 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
       ) : null}
       {withheldShown.length > 0 ? (
         <ul
-          hidden={folded}
+          hidden={withheldFolded}
           data-testid="withheld"
           style={{
             margin: 0,
             padding: 0,
             listStyle: "none",
-            display: folded ? "none" : "flex",
+            display: withheldFolded ? "none" : "flex",
             flexDirection: "column",
             flexWrap: "nowrap",
             gap: 2,
@@ -1592,7 +1598,23 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
       ) : null}
 
       {moreWaits ? (
-        <button type="button" data-menu-item="more" onClick={() => setExpanded(true)} style={{ ...ROW_STYLE, color: "var(--graview-ink-muted)" }}>
+        <button
+          type="button"
+          data-menu-item="more"
+          onClick={(event) => {
+            /* The keyboard goes on to the first of what was waiting, where a person reading down would be next. */
+            const menu = event.currentTarget.parentElement;
+            const waiting = [...(menu?.querySelectorAll<HTMLElement>("li[hidden], [data-menu-more][hidden]") ?? [])];
+            setExpanded(true);
+            requestAnimationFrame(() => {
+              for (const one of waiting) {
+                const to = one.querySelector<HTMLElement>("button:not([disabled]), a[href], input");
+                if (to && to.getClientRects().length > 0) return to.focus();
+              }
+            });
+          }}
+          style={{ ...ROW_STYLE, color: "var(--graview-ink-muted)" }}
+        >
           More…
         </button>
       ) : null}

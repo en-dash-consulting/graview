@@ -23,6 +23,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
+import { unfold } from "./lib/menu-more.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -804,7 +805,9 @@ async function theActThatRemovesWhereYouStand(page) {
     // The destructive act by its own row, in the menu the acts key opens on the card.
     await page.evaluate((id) => document.querySelector(`[data-graview-view="${CSS.escape(id)}"]`)?.focus(), victim);
     await page.keyboard.press("a");
-    await page.waitForSelector('[data-testid="context-menu"] [data-pin-for="drop"]', { timeout: 10_000 }).catch(() => {});
+    await page.waitForSelector('[data-testid="context-menu"] [data-pin-for="drop"]', { state: "attached", timeout: 10_000 }).catch(() => {});
+    // The acts past the first few wait behind More…, as a person finds them.
+    await unfold(page);
     await page
       .locator('[data-testid="context-menu"] li:has([data-pin-for="drop"]) button[data-affordance]')
       .first()

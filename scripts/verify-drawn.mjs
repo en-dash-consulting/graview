@@ -75,6 +75,7 @@ import { ENGINES, launchEngine } from "./lib/engine.mjs";
 import { graviewSources } from "./lib/graview-sources.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { vacant } from "./lib/serve.mjs";
+import { unfold } from "./lib/menu-more.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const asked = process.argv.find((arg) => arg.startsWith("--engine="))?.slice("--engine=".length);
@@ -582,6 +583,9 @@ try {
         const stands = (await standing.count()) > 0 && (await standing.first().isVisible());
         await (stands ? standing.first() : page.locator('[data-testid="app-places-open"]').first()).click({ button: "right" });
         const row = page.locator(`[data-testid="context-menu"] [data-menu-item="${tidied.item}"]`);
+        // The face's own rows wait behind More…, as a person finds them.
+        await page.locator('[data-testid="context-menu"]').waitFor({ timeout: 10_000 }).catch(() => {});
+        await unfold(page);
         const offered = await row.waitFor({ timeout: 10_000 }).then(() => true, () => false);
         let left = false;
         let still = null;

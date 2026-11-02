@@ -23,6 +23,7 @@
  *
  * Writes docs/gauntlet.json.
  */
+import { unfold } from "./lib/menu-more.mjs";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -390,6 +391,8 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
     await showActs(page, RECORDS.submittedTalk);
     const asks = page.locator('[data-testid="affordances"] [data-affordance]:not([disabled])', { hasText: /Add a presenter|Say what it is about|Give it a slot/ });
     if ((await asks.count()) === 0) return { reached: false, detail: "this seat is offered no act that asks" };
+    // Past the menu's first few acts, the rest wait behind More…, as a person finds them.
+    if (!(await asks.first().isVisible().catch(() => false))) await unfold(page);
     await asks.first().focus();
     await page.keyboard.press("Enter");
     await page.waitForTimeout(900);
