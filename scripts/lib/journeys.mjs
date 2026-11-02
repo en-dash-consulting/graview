@@ -992,7 +992,7 @@ async function openKindPage(person, plural) {
   // "Tasks 10" is often "Tasks" and "10" with nothing between: the name ends where its letters do.
   const link = page.locator("a[href]").filter({ hasText: new RegExp(`^\\s*${plural}(?!\\p{L})`, "u") });
   if (!(await link.first().isVisible().catch(() => false))) {
-    const menu = page.getByRole("button", { name: /every place|more (place|picture)|menu|sections|kinds|navigation/i }).first();
+    const menu = page.getByRole("button", { name: /every place|more (place|picture)|(?<!app )menu|sections|kinds|navigation/i }).first();
     if (await menu.isVisible().catch(() => false)) await person.press(menu, "the menu");
   }
   const visible = link.locator("visible=true");

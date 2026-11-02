@@ -419,7 +419,7 @@ const BAR_CSS = `
 .graview-bar-home{gap:8px;min-width:auto;min-height:30px;padding:0;letter-spacing:-.005em}
 .graview-bar-app-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal;word-break:normal}
 .graview-bar-said{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-.graview-bar-menu-open{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;box-sizing:border-box;width:22px;height:30px;margin:0;padding:0;border:1px solid transparent;border-radius:6px;background:none;box-shadow:none;color:var(--graview-ink-muted);cursor:pointer}
+.graview-bar-menu-open{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;box-sizing:border-box;width:24px;height:30px;margin:0;padding:0;border:1px solid transparent;border-radius:6px;background:none;box-shadow:none;color:var(--graview-ink-muted);cursor:pointer}
 .graview-bar-menu-open:is(:hover,[aria-expanded=true]){border-color:var(--graview-edge);color:var(--graview-ink)}
 .graview-bar-tool{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:0 0 auto;box-sizing:border-box;min-width:${TOOL}px;height:${TOOL}px;margin:0;padding:0;border-radius:8px;border:1px solid transparent;background:none;box-shadow:none;font:inherit;font-size:.875rem;font-weight:500;letter-spacing:normal;text-transform:none;white-space:nowrap;color:var(--graview-ink-muted);cursor:pointer;text-decoration:none}
 .graview-bar-tool:is(:hover,[aria-expanded=true]){border-color:var(--graview-edge);color:var(--graview-ink)}

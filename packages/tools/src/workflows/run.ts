@@ -69,6 +69,7 @@ export async function runWorkflow<S extends AnySchema>(options: RunWorkflowOptio
   const via = options.via ?? (`workflow:${workflow.name}` as never);
   const now = options.now === undefined ? Date.now() : new Date(options.now).getTime();
   const started = new Date(now).toISOString();
+  // A run asked to run as if at another moment (`now`) finishes at it too, never at the wall clock's: listed later "as if", it says how long ago it ran on that clock.
   const id = `workflow:${workflow.name}:${started}`.slice(0, 120);
   const trigger = options.trigger ?? { kind: "byHand" as const };
   const specHash = workflowSpecHash(declared);
@@ -100,7 +101,7 @@ export async function runWorkflow<S extends AnySchema>(options: RunWorkflowOptio
   };
 
   const finish = (outcome: WorkflowOutcome, dry: boolean, through: number): WorkflowRun => {
-    const run: WorkflowRun = { id, workflow: workflow.name, trigger, started, finished: new Date(Math.max(now, Date.now())).toISOString(), outcome, dry, made: [...made], changed: [...changed], archived: [...archived], suggested, heldBack, through, specHash, notes, spent: spentOf(), chain };
+    const run: WorkflowRun = { id, workflow: workflow.name, trigger, started, finished: new Date(options.now === undefined ? Math.max(now, Date.now()) : now).toISOString(), outcome, dry, made: [...made], changed: [...changed], archived: [...archived], suggested, heldBack, through, specHash, notes, spent: spentOf(), chain };
     options.log.add(run);
     return run;
   };
