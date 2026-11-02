@@ -56,7 +56,10 @@ type Phase =
   | { readonly at: "keeping" }
   | { readonly at: "kept"; readonly note?: string; readonly undo?: () => void | Promise<void> }
   | { readonly at: "undone" }
-  | { readonly at: "refused"; readonly said: string; readonly asked?: Asked };
+  | { readonly at: "refused"; readonly said: string; readonly asked?: Asked; readonly harder?: Harder }
+  | { readonly at: "harder"; readonly asked: Asked; readonly since: number; readonly from: Harder; readonly said: string };
+/** Where Try harder starts: the last try the light model made and what broke in it. */
+type Harder = { readonly source: string; readonly findings: readonly string[] };
 
 const words = (text: string | null | undefined) => (text ?? "").replace(/\s+/g, " ").trim();
 const frame = () => new Promise<void>((done) => requestAnimationFrame(() => done()));
@@ -169,12 +172,16 @@ interface CardHeld {
   putBack: (() => void | Promise<void>) | null;
   began: boolean;
   original: DrawnRead | null;
+  /** The page as it was drawn, its markup, for a new design to start from. */
+  markup: string | null;
+  /** Try harder's cancel, while it thinks. */
+  cancel: AbortController | null;
   readonly heard: Set<() => void>;
 }
 const CARDS = /* @__PURE__ */ new Map<number, CardHeld>();
 const cardOf = (at: number, first: () => Phase): CardHeld => {
   let held = CARDS.get(at);
-  if (!held) CARDS.set(at, (held = { phase: first(), steps: [], before: false, putBack: null, began: false, original: null, heard: new Set() }));
+  if (!held) CARDS.set(at, (held = { phase: first(), steps: [], before: false, putBack: null, began: false, original: null, markup: null, cancel: null, heard: new Set() }));
   return held;
 };
 
@@ -272,11 +279,11 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
     if (held.original) return held.original;
     const main = mainNow();
     const text = (main as HTMLElement | null)?.innerText ?? "";
-    held.original = readDrawn(main, labelsShown(here, part, text));
+    held.original = readDrawn(regionOf(main), labelsShown(here, part, text));
     return held.original;
   }, [held, mainNow, here, part]);
   /** The page now, read as the original was. */
-  const drawnNow = useCallback(() => readDrawn(mainNow(), original().records.map((one) => one.label)), [mainNow, original]);
+  const drawnNow = useCallback(() => readDrawn(regionOf(mainNow()), original().records.map((one) => one.label)), [mainNow, original]);
 
   /** Where the settings cannot say it: a new design, offered — or said plainly, where this page cannot have one. */
   const offerDesign = useCallback(
@@ -364,15 +371,28 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
     [ai, aiDesk, app, backFromDraft, composeChange, entryOf, held, here, mainNow, onDraftChange, offerDesign, original, drawnNow, part, said, setPhase, show, specHost],
   );
 
-  /** A NEW DESIGN: seeded from the page as it stands, changed as asked, drawn under cover in its place and judged there. */
+  /**
+   * A NEW DESIGN: seeded from the page as it stands, its markup and a
+   * checklist of what each record shows, changed as asked, drawn under
+   * cover in its place and judged there — the light model's tries within
+   * 30 s. Where none passes the card says what it could not keep and
+   * offers Try harder: the full model once, from the last try, with its
+   * progress shown and a Cancel that puts the page back at once.
+   */
   const design = useCallback(
-    async (asked: Asked, after?: Extract<Step, { kind: "view" }>) => {
+    async (asked: Asked, after?: Extract<Step, { kind: "view" }>, harder?: Harder) => {
       if (!manifest || !keptViews?.draftFork) return;
       const askedSaid = asked.mode === "just" ? `Draw “${part.name}” anew` : `Draw “${part.name}” anew: ${asked.words}`;
       const was = original();
-      setPhase({ at: "working" });
+      held.markup ??= markupOf(mainNow());
+      const cancel = harder ? new AbortController() : null;
+      held.cancel = cancel;
+      const refusedSaid = held.phase.at === "refused" ? held.phase.said : COULD_NOT;
+      setPhase(harder && cancel ? { at: "harder", asked, since: Date.now(), from: harder, said: refusedSaid } : { at: "working" });
       const fields = fieldsOf(here, part);
       const drafted = await draftPageView({
+        ...(harder && cancel ? { harder: true, from: harder, signal: cancel.signal } : {}),
+        ...(held.markup && !harder ? { markup: held.markup } : {}),
         ai,
         part: said,
         manifest,
@@ -381,7 +401,7 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
         ...(asked.pointed ? { highlighted: [asked.pointed.name, ...asked.pointed.lines] } : {}),
         ...(after ? { current: after.source } : {}),
         outline: outlineOf(mainNow()),
-        keep: keepsOf(was, mainNow(), part.name),
+        keep: keepsOf(was, mainNow(), part.name, here, part),
         data: dataOf(here, part),
         judge: async (source) => {
           keptViews.draftFork!(forkOf(source));
@@ -395,10 +415,14 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
           return drawnFindings(was, drawnNow(), { fields, ...(asked.words ? { asked: asked.words } : {}) });
         },
       });
+      // Canceled: the page was put back and the card said so when Cancel was pressed; nothing more of it.
+      if (cancel && held.cancel !== cancel) return;
+      held.cancel = null;
       if (!drafted.ok) {
         await (held.steps.length > 0 ? show(held.steps.at(-1)!) : backFromDraft());
         aiDesk.record(entryOf(askedSaid, "failed", drafted.stages, { failed: drafted.findings.join(" ") || drafted.refused }));
-        return setPhase({ at: "refused", said: drafted.refused, asked });
+        // What the light model could not keep, said plainly, with where Try harder starts — once; after Try harder there is only other words.
+        return setPhase({ at: "refused", said: drafted.refused, asked, ...(!harder && drafted.last ? { harder: { source: drafted.last, findings: drafted.findings } } : {}) });
       }
       const entry = entryOf(askedSaid, "offered", drafted.stages);
       held.steps.push({ kind: "view", source: drafted.source, said: describeChange(part.name, was, drawnNow()) ?? `${part.name} has a new design. Compare Before and After.`, entry });
@@ -407,6 +431,24 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
     },
     [ai, aiDesk, backFromDraft, entryOf, held, here, keptViews, mainNow, manifest, original, drawnNow, part, said, setPhase, show, forkOf],
   );
+
+  /** Cancel Try harder: at once, the page as it was before it began, and the card back where it was. */
+  const cancelHarder = useCallback(() => {
+    if (held.phase.at !== "harder") return;
+    const was = held.phase;
+    held.cancel?.abort();
+    held.cancel = null;
+    void (held.steps.length > 0 ? show(held.steps.at(-1)!) : backFromDraft());
+    setPhase({ at: "refused", said: was.said, asked: was.asked, harder: was.from });
+  }, [backFromDraft, held, setPhase, show]);
+
+  /* Try harder's time, said as it runs: a minute or two is long, and it shows it is still going. */
+  const [, tick] = useState(0);
+  useEffect(() => {
+    if (phase.at !== "harder") return;
+    const timer = setInterval(() => tick((one) => one + 1), 1000);
+    return () => clearInterval(timer);
+  }, [phase.at]);
 
   /* Just do it, and words typed in the menu: at once. */
   useEffect(() => {
@@ -605,13 +647,16 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
   return (
     <>
       {phase.at === "working" ? <Redesigning over={mainNow()} name={part.name} /> : null}
+      {phase.at === "harder" ? <Redesigning over={mainNow()} name={part.name} said={`Graview is thinking harder about “${part.name}”… this can take a minute or two`} /> : null}
       <DraftBar
         phase={phase.at === "draft" ? (current?.kind === "view" ? "view" : "spec") : phase.at}
         name={part.name}
-        busy={phase.at === "working" || phase.at === "keeping"}
+        busy={phase.at === "working" || phase.at === "keeping" || phase.at === "harder"}
         said={
           phase.at === "working"
             ? `Graview is redesigning “${part.name}”…`
+            : phase.at === "harder"
+              ? `Graview is thinking harder about “${part.name}”… this can take a minute or two · ${elapsed(Date.now() - phase.since)}`
             : phase.at === "keeping"
               ? "Keeping it…"
               : phase.at === "draft"
@@ -629,6 +674,8 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
         {...(phase.at === "draft" ? { compare: { before: held.before, toggle: (before: boolean) => void compare(before) }, iterate, keep: () => void keep(), discard, step: { at: held.steps.length, of: held.steps.length, ...(held.steps.length > 1 ? { back: () => void stepBack() } : {}) } } : {})}
         {...(phase.at === "working" ? { discard: putAway } : {})}
         {...(phase.at === "refused" && phase.asked ? { retry: (more: string) => void (held.steps.length > 0 ? iterate(more) : run({ mode: "describe", words: more })) } : {})}
+        {...(phase.at === "refused" && phase.asked && phase.harder ? { tryHarder: () => void design(phase.asked!, held.steps.at(-1)?.kind === "view" ? (held.steps.at(-1) as Extract<Step, { kind: "view" }>) : undefined, phase.harder) } : {})}
+        {...(phase.at === "harder" ? { cancel: cancelHarder } : {})}
         {...(phase.at === "kept" && phase.undo ? { undo: () => void undo() } : {})}
         {...(phase.at === "kept" || phase.at === "undone" || phase.at === "refused" ? { close: putAway } : {})}
       />
@@ -644,12 +691,80 @@ function proposalOf(edits: readonly unknown[], said: string, model: string | und
 }
 
 /** What a new design must keep of the page: the title the page draws above it (never again), its other headings, the records it showed. */
-function keepsOf(was: DrawnRead, main: Element | null, name: string): PageViewKeeps {
-  const title = words(main?.querySelector("[data-graview-page-title], h1")?.textContent) || name;
+function keepsOf(was: DrawnRead, main: Element | null, name: string, here: ReturnType<typeof useGraview<AnySchema>>, part: PagePart): PageViewKeeps {
+  // The page's own title, never the app's name in the bar above it: the page draws it, so a draft never does.
+  const page = regionOf(main);
+  // The home's body is all a new design replaces: what is drawn over it — the app's name in the bar — is its title.
+  const above = part.slot === "home" ? [...(main?.querySelectorAll("h1") ?? [])].find((one) => page !== main && !page?.contains(one)) : undefined;
+  const title = words(above?.textContent) || words(page?.querySelector("[data-graview-page-title]")?.textContent) || (part.slot === "home" ? "" : words(page?.querySelector("h1")?.textContent)) || (part.record ? words(String((here.store.graph.getNode(part.record) as Record<string, unknown> | undefined)?.["label"] ?? "")) : "") || name;
+  const ids = idsOf(here, part, was);
   const says = Object.fromEntries(
-    was.records.flatMap((one) => (one.facts?.length || (one.under && one.under !== title) ? [[one.label, { ...(one.facts?.length ? { shows: one.facts } : {}), ...(one.under && one.under !== title ? { under: one.under } : {}) }]] : [])),
+    was.records.flatMap((one) => (one.facts?.length || (one.under && one.under !== title) ? [[one.label, { ...(ids[one.label] ? { id: ids[one.label] } : {}), ...(one.facts?.length ? { shows: one.facts } : {}), ...(one.under && one.under !== title ? { under: one.under } : {}) }]] : [])),
   );
-  return { title, headings: was.headings.filter((one) => one !== title), records: was.records.map((one) => one.label), ...(Object.keys(says).length > 0 ? { says } : {}) };
+  const grouping = groupingOf(here, was, ids, title);
+  return { title, headings: was.headings.filter((one) => one !== title), records: was.records.map((one) => one.label), ...(Object.keys(says).length > 0 ? { says } : {}), ...(grouping ? { grouping } : {}) };
+}
+
+/** Each record the page showed, by its words: its id, for the checklist a draft is held to. */
+function idsOf(here: ReturnType<typeof useGraview<AnySchema>>, part: PagePart, was: DrawnRead): Record<string, string> {
+  const { store } = here;
+  const nodes = part.record ? [store.graph.getNode(part.record)].filter((one) => one !== undefined) : part.kind ? store.graph.nodesOfKind(part.kind) : store.schema.kinds.flatMap((kind) => store.graph.nodesOfKind(kind));
+  const out: Record<string, string> = {};
+  for (const one of was.records) {
+    const node = nodes.find((each) => words(String((each as Record<string, unknown>)["label"] ?? "")) === words(one.label));
+    if (node) out[one.label] = node.id;
+  }
+  return out;
+}
+
+/**
+ * HOW THE PAGE GROUPED ITS RECORDS, read from the graph: each record sits
+ * under the heading that is the name of a record it is linked to (a task
+ * under its list's name) — the link's kind, the kind of the record named,
+ * and which end the grouped record is. Undefined where no one link says it
+ * for most of them: the checklist's headings stand alone then.
+ */
+function groupingOf(here: ReturnType<typeof useGraview<AnySchema>>, was: DrawnRead, ids: Readonly<Record<string, string>>, title: string): PageViewKeeps["grouping"] {
+  const { store } = here;
+  const grouped = was.records.filter((one) => one.under && one.under !== title && ids[one.label]);
+  if (grouped.length < 2) return undefined;
+  const edges = store.graph.allEdges();
+  const count = new Map<string, number>();
+  for (const one of grouped) {
+    const id = ids[one.label]!;
+    for (const edge of edges) {
+      const other = edge.from === id ? edge.to : edge.to === id ? edge.from : undefined;
+      const named = other !== undefined ? store.graph.getNode(other) : undefined;
+      if (!named || words(String((named as Record<string, unknown>)["label"] ?? "")) !== words(one.under!)) continue;
+      const key = `${edge.kind}\u0000${named.kind}\u0000${edge.from === id ? "from" : "to"}`;
+      count.set(key, (count.get(key) ?? 0) + 1);
+    }
+  }
+  const best = [...count].sort((a, b) => b[1] - a[1])[0];
+  if (!best || best[1] < grouped.length / 2) return undefined;
+  const [edge, kind, end] = best[0].split("\u0000") as [string, string, "from" | "to"];
+  return { edge, kind, record: end };
+}
+
+/** The page's own region inside the face: its <main>, never the app's bar and footer around it. */
+const regionOf = (face: Element | null): Element | null => face?.querySelector("main") ?? face;
+
+/** Minutes and seconds: "0:42". */
+const elapsed = (ms: number) => `${Math.floor(ms / 60_000)}:${String(Math.floor((ms % 60_000) / 1000)).padStart(2, "0")}`;
+
+/**
+ * THE PAGE AS IT WAS DRAWN, its markup for a new design to start from:
+ * elements and their words, the classes and data a person never reads
+ * left out, what is hidden and what draws no words left out, kept short.
+ */
+function markupOf(main: Element | null): string | null {
+  if (!main?.isConnected) return null;
+  // The page's own region, not the app's bar and footer around it.
+  const copy = (main.querySelector("main") ?? main).cloneNode(true) as Element;
+  for (const gone of copy.querySelectorAll("script, style, svg, button, input, select, textarea, [hidden], [aria-hidden='true'], [data-graview-popover]")) gone.remove();
+  for (const element of [copy, ...copy.querySelectorAll("*")]) for (const name of [...element.getAttributeNames()]) element.removeAttribute(name);
+  const html = copy.outerHTML.replace(/\s+/g, " ").replace(/<(div|span)>\s*<\/\1>/g, "").trim();
+  return html.length > 6000 ? html.slice(0, 6000) : html;
 }
 
 /** The page's own region, found again where the draft drew the page anew. */

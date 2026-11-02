@@ -105,10 +105,10 @@ describe("revising a section", () => {
     expect(heard).toHaveLength(1);
   });
 
-  it("asks the light model again, then the full one, where an answer cannot be read", async () => {
-    const ai: HostAi = { light: slot("light", ["Sure! Here you go.", "Still prose."]), thinking: slot("full", [JSON.stringify(WEEK)]) };
+  it("asks the light model again where an answer cannot be read, never the full one", async () => {
+    const ai: HostAi = { light: slot("light", ["Sure! Here you go.", "Still prose.", JSON.stringify(WEEK)]), thinking: slot("full", [JSON.stringify(WEEK)]) };
     const result = await reviseSection({ ai, source: before, section: "This week", mode: "just", judge: async () => [] });
-    expect(result.ok && result.stages.map((one) => one.stage)).toEqual(["light", "light", "thinking"]);
+    expect(result.ok && result.stages.map((one) => one.stage)).toEqual(["light", "light", "light"]);
   });
 
   it("hands what broke back once, with the findings, and offers the repair", async () => {
@@ -121,12 +121,16 @@ describe("revising a section", () => {
     expect(JSON.parse(heard[1]!).what_broke).toEqual(["The class “hf-days” is still drawn and no rule styles it now."]);
   });
 
-  it("refuses plainly what still breaks after the light model's repair and the full model's, keeping the findings off the card", async () => {
+  it("refuses plainly what still breaks after the light model's two repairs, keeping the findings off the card and the last try for Try harder", async () => {
     const broken = JSON.stringify({ ...WEEK, css: "" });
-    const ai: HostAi = { light: slot("light", [broken, broken]), thinking: slot("full", [broken]) };
-    const result = await reviseSection({ ai, source: before, section: "This week", mode: "just", judge: async () => ["“This week” is not drawn any more."] });
+    const ai: HostAi = { light: slot("light", [broken, broken, broken]), thinking: slot("full", [JSON.stringify(WEEK)]) };
+    const judge = async (source: string) => (source.includes(".hf-days {") ? [] : ["“This week” is not drawn any more."]);
+    const result = await reviseSection({ ai, source: before, section: "This week", mode: "just", judge });
     expect(result).toMatchObject({ ok: false, refused: "I couldn't make a version that looks right.", findings: ["“This week” is not drawn any more."] });
-    expect(result.stages.map((one) => one.stage)).toEqual(["light", "light", "thinking"]);
+    expect(result.stages.map((one) => one.stage)).toEqual(["light", "light", "light"]);
+    if (result.ok || !result.last) throw new Error("no last try");
+    const harder = await reviseSection({ ai, source: before, section: "This week", mode: "just", harder: true, from: { last: result.last, findings: result.findings ?? [] }, judge });
+    expect(harder.ok && harder.stages.map((one) => one.stage)).toEqual(["thinking"]);
   });
 
   it("repairs a stylesheet the host would strip before the section is drawn at all", async () => {

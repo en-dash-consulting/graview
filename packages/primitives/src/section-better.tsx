@@ -3,7 +3,7 @@ import type { AiInteraction, AiStage, AiUsage } from "@graview/core/catalog";
 import { compareViewRevision } from "@graview/core/revisions";
 import { useGraview, type MenuViewSection, type ViewPlaceDraft, type ViewPlaceHandle } from "@graview/react/provider";
 import { sectionUnderNow, viewPlaceOf } from "@graview/react/drawing";
-import { describeChange, drawnFindings, reviseSection, type DrawnRead, type SectionStage } from "@graview/tools/section";
+import { describeChange, drawnFindings, reviseSection, type DrawnRead, type SectionRevised, type SectionStage } from "@graview/tools/section";
 import { interactionId } from "@graview/tools/inline-ai";
 import type { Telling, TellingOutcome, ToldStore } from "@graview/core/told";
 import { retryingImport } from "@graview/core/retry";
@@ -83,7 +83,10 @@ type Phase =
   | { readonly at: "keeping" }
   | { readonly at: "kept"; readonly source: string; readonly note?: string; readonly answer: ViewReviseAnswer; readonly entry: AiInteraction }
   | { readonly at: "undone" }
-  | { readonly at: "refused"; readonly said: string; readonly retry?: boolean };
+  | { readonly at: "refused"; readonly said: string; readonly retry?: boolean; readonly harder?: SectionHarder }
+  | { readonly at: "harder"; readonly since: number; readonly said: string; readonly from: SectionHarder };
+/** Where Try harder starts: what was asked, the light model's last try and what broke in it. */
+type SectionHarder = { readonly mode: SectionAsk["mode"]; readonly words: string; readonly last: SectionRevised; readonly findings: readonly string[] };
 
 const WIDTH = 360;
 const GAP = 12;
@@ -190,6 +193,8 @@ export function SectionCard({ ask, close }: SectionCardProps) {
   const original = useRef<string | undefined>(undefined);
   const before = useRef<DrawnRead | null>(null);
   const steps = useRef<{ readonly source: string; readonly said: string; readonly entry: AiInteraction }[]>([]);
+  /** Try harder's cancel, while it thinks. */
+  const canceling = useRef<AbortController | null>(null);
   const [comparing, setComparing] = useState(false);
   const [, setTick] = useState(0);
   /* The telling of the revision on offer, kept with the host's door (`ai.told`), and how it ended. */
@@ -264,11 +269,13 @@ export function SectionCard({ ask, close }: SectionCardProps) {
 
   /** Revise the section: asked, composed whole, drawn under cover in the view's place and judged there, shown only once it passed. */
   const revise = useCallback(
-    async (mode: SectionAsk["mode"], said: string, pointed?: { readonly name: string; readonly lines: readonly string[] }, on: MenuViewSection = section) => {
+    async (mode: SectionAsk["mode"], said: string, pointed?: { readonly name: string; readonly lines: readonly string[] }, on: MenuViewSection = section, harder?: { readonly from: SectionHarder; readonly refused: string }) => {
       const view = handle.current;
       const asked = mode === "just" || mode === "choose" ? `Make “${on.name}” better` : `Make “${on.name}” better: ${said}`;
       if (!view) return setPhase({ at: "refused", said: "This view isn't on the page any more." });
-      setPhase({ at: "working", ...(pointed ? { pointed } : {}) });
+      const cancel = harder ? new AbortController() : null;
+      canceling.current = cancel;
+      setPhase(harder ? { at: "harder", since: Date.now(), said: harder.refused, from: harder.from } : { at: "working", ...(pointed ? { pointed } : {}) });
       const live = await view.source();
       if (live === undefined) return setPhase({ at: "refused", said: "This view can't be changed here." });
       original.current ??= live;
@@ -287,6 +294,7 @@ export function SectionCard({ ask, close }: SectionCardProps) {
         ...(pointed ? { highlighted: [pointed.name, ...pointed.lines] } : {}),
         theme,
         shows: shownBy(on.elements),
+        ...(harder && cancel ? { harder: true, from: { last: harder.from.last, findings: harder.from.findings }, signal: cancel.signal } : {}),
         judge: async (source) => {
           const refused = await view.check(source);
           if (refused.length > 0) return refused;
@@ -298,6 +306,9 @@ export function SectionCard({ ask, close }: SectionCardProps) {
           return [...judged(view, original.current!, liveDrawing, liveRefused, drawn, source).findings, ...drawnFindings(before.current!, readDrawn(root?.parentElement ?? root, before.current!.records.map((one) => one.label)), said ? { asked: said } : {})];
         },
       });
+      // Canceled: the section was put back when Cancel was pressed.
+      if (cancel && canceling.current !== cancel) return;
+      canceling.current = null;
       if (!result.ok) {
         const last = steps.current.at(-1);
         if (last) await drawDraft(last.source);
@@ -308,7 +319,7 @@ export function SectionCard({ ask, close }: SectionCardProps) {
         const failed = entryOf(asked, "failed", result.stages, { failed: (result.findings ?? []).join(" ") || result.refused });
         aiDesk.record(failed);
         tell(said || asked, on, true, result.stages, Date.now() - started, failed.id);
-        return setPhase({ at: "refused", said: result.refused, retry: true });
+        return setPhase({ at: "refused", said: result.refused, retry: true, ...(!harder && result.last ? { harder: { mode, words: said, last: result.last, findings: result.findings ?? [] } } : {}) });
       }
       const root = draft.current?.drawing().root;
       const now = readDrawn(root?.parentElement ?? root, before.current!.records.map((one) => one.label));
@@ -320,6 +331,26 @@ export function SectionCard({ ask, close }: SectionCardProps) {
     },
     [ai, aiDesk, entryOf, section, tell, drawDraft, place],
   );
+
+  /** Cancel Try harder: at once, the section as it was before it began, and the card back where it was. */
+  const cancelHarder = useCallback(() => {
+    if (phase.at !== "harder") return;
+    canceling.current?.abort();
+    canceling.current = null;
+    const last = steps.current.at(-1);
+    if (last) void drawDraft(last.source);
+    else {
+      draft.current?.dispose();
+      draft.current = null;
+    }
+    setPhase({ at: "refused", said: phase.said, retry: true, harder: phase.from });
+  }, [phase, drawDraft]);
+  const [, tick] = useState(0);
+  useEffect(() => {
+    if (phase.at !== "harder") return;
+    const timer = setInterval(() => tick((one) => one + 1), 1000);
+    return () => clearInterval(timer);
+  }, [phase.at]);
 
   /* Just do it: at once — and words typed in the menu about the look, asked at once too. */
   const began = useRef(false);
@@ -501,13 +532,16 @@ export function SectionCard({ ask, close }: SectionCardProps) {
   return (
     <>
       {phase.at === "working" ? <Redesigning over={place} name={section.name} /> : null}
+      {phase.at === "harder" ? <Redesigning over={place} name={section.name} said={`Graview is thinking harder about “${section.name}”… this can take a minute or two`} /> : null}
       <DraftBar
         phase={phase.at}
         name={section.name}
-        busy={phase.at === "working" || phase.at === "keeping"}
+        busy={phase.at === "working" || phase.at === "keeping" || phase.at === "harder"}
         said={
           phase.at === "working"
             ? `Graview is redesigning “${section.name}”…`
+            : phase.at === "harder"
+              ? `Graview is thinking harder about “${section.name}”… this can take a minute or two · ${Math.floor((Date.now() - phase.since) / 60_000)}:${String(Math.floor(((Date.now() - phase.since) % 60_000) / 1000)).padStart(2, "0")}`
             : phase.at === "keeping"
               ? "Keeping it…"
               : phase.at === "draft"
@@ -532,11 +566,13 @@ export function SectionCard({ ask, close }: SectionCardProps) {
           : {})}
         {...(phase.at === "working" ? { discard } : {})}
         {...(phase.at === "refused" && phase.retry ? { retry: (more: string) => void revise("describe", more) } : {})}
+        {...(phase.at === "refused" && phase.harder ? { tryHarder: () => void revise(phase.harder!.mode, phase.harder!.words, undefined, section, { from: phase.harder!, refused: phase.said }) } : {})}
+        {...(phase.at === "harder" ? { cancel: cancelHarder } : {})}
         {...(phase.at === "kept" ? { undo: () => void undo() } : {})}
         {...(phase.at === "kept" || phase.at === "undone" || phase.at === "refused" ? { close } : {})}
       >
         {/* 👍 and 👎 on what it answered, kept with its telling (Roadmap f-menu-learns). */}
-        {telling && ai.told && phase.at !== "working" ? <Rate told={ai.told} telling={telling} /> : null}
+        {telling && ai.told && phase.at !== "working" && phase.at !== "harder" ? <Rate told={ai.told} telling={telling} /> : null}
       </DraftBar>
     </>
   );

@@ -154,7 +154,9 @@ export function drawnFindings(before: DrawnRead, after: DrawnRead, options: { re
   const seen = new Map<string, number>();
   for (const heading of after.headings) if (heading.trim()) seen.set(norm(heading), (seen.get(norm(heading)) ?? 0) + 1);
   const twice = [...seen].filter(([, n]) => n > 1).map(([heading]) => after.headings.find((one) => norm(one) === heading)!);
-  if (twice.length > 0) findings.push(`The heading${twice.length > 1 ? "s" : ""} ${twice.map((one) => `“${one}”`).join(", ")} ${twice.length > 1 ? "are" : "is"} drawn twice: the page already draws its title above the view, so leave it out.`);
+  // Said with what to keep: a model told only to leave the title out drops every heading with it.
+  const others = before.headings.filter((one) => !twice.some((title) => norm(title) === norm(one)));
+  if (twice.length > 0) findings.push(`The heading${twice.length > 1 ? "s" : ""} ${twice.map((one) => `“${one}”`).join(", ")} ${twice.length > 1 ? "are" : "is"} drawn twice: the page already draws its title above the view, so leave it out${others.length > 0 ? ` — and keep every other heading as it was: ${others.map((one) => `“${one}”`).join(", ")}` : ""}.`);
   const markup = MARKUP.exec(after.text);
   if (markup && !MARKUP.test(before.text)) findings.push(`It shows its own markup as words (“${markup[0].slice(0, 40)}”): build it with graview.html\`…\`, nesting graview.html for each list, never a string of HTML.`);
   const iso = ISO_DAY.exec(after.text);
@@ -171,6 +173,41 @@ export function drawnFindings(before: DrawnRead, after: DrawnRead, options: { re
     }
   }
   return findings;
+}
+
+/**
+ * WHAT A NEW DESIGN COULD NOT KEEP, said plainly from what broke: "I
+ * couldn't keep the dates and statuses in a new design." — the facts by
+ * what they are (a day is a date, a number a count, other words a
+ * status), a record or a heading lost, a record moved out of its group,
+ * words shown as the computer keeps them. Plain `COULD_NOT` where what
+ * broke is none of those (the view did not draw, the answer was not one).
+ */
+export function couldNotKeep(findings: readonly string[]): string {
+  const things: string[] = [];
+  const add = (thing: string) => void (things.includes(thing) || things.push(thing));
+  for (const finding of findings) {
+    const facts = /no longer says what it said: (.*?)(?: and \d+ more)?\. Show/.exec(finding);
+    if (facts) {
+      for (const one of facts[1]!.matchAll(/“([^”]+)” on “/g)) {
+        const fact = norm(one[1]!);
+        add(DAY_SAID.test(fact) || WEEKDAY.test(fact) ? "dates" : /^\D*\d/.test(fact) ? "counts" : "statuses");
+      }
+      continue;
+    }
+    if (/^It no longer shows “/.test(finding)) add("every record");
+    else if (/no longer shows the heading/.test(finding)) add("headings");
+    else if (/moved to another group/.test(finding)) add("each record in its group");
+    else if (/drawn twice/.test(finding)) add("the title once");
+    else if (/markup as words|a date as “|as the computer keeps it|a field's name/.test(finding)) add("the words as the page said them");
+  }
+  if (things.length === 0) return "I couldn't make a version that looks right.";
+  const order = ["dates", "statuses", "counts", "headings"];
+  const facts = order.filter((one) => things.includes(one));
+  const rest = things.filter((one) => !order.includes(one));
+  const and = (list: readonly string[]) => (list.length < 2 ? (list[0] ?? "") : `${list.slice(0, -1).join(", ")} and ${list.at(-1)}`);
+  const said = [...(facts.length > 0 ? [`the ${and(facts)}`] : []), ...rest];
+  return `I couldn't keep ${and(said)} in a new design.`;
 }
 
 /** How the records stand: the most side by side on one line. */

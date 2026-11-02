@@ -24,6 +24,9 @@
  *   aBrokenDraftIsNeverShown
  *   aDraftThatDropsWhatEachRecordSaidIsNeverShown
  *   aDraftThatMovesARecordToAnotherGroupIsNeverShown
+ *   theStopComesWithinTheCapAndSaysWhatItCouldNotKeep
+ *   tryHarderShowsProgressAndCancelPutsThePageBack
+ *   aTryHarderThatPassesShowsTheDraft
  *   aNewDesignIsRepairedUnderCoverThenGivenThePage
  *   beforeAndAfterToggleTheOriginalInPlace
  *   iteratingMakesASecondStepAndStepBackRestoresTheFirst
@@ -139,10 +142,13 @@ const FAKE_AI = () => {
     asked.push({ slot, ...parsed });
     if (parsed.now !== undefined) return { text: JSON.stringify({ edits: [{ op: "set-view", kind: "task", slot: "row", blocks: [{ title: "{label}" }, { badge: "{status}" }, { field: "due", as: "date", label: "Due" }] }], said: "Each row looks modern and friendly now." }) };
     if (parsed.as_it_stands !== undefined) {
-      const scenario = window.__viewScenario;
+      // As slow as the scenario says: the light slot by `__lightDelay`, the full one (Try harder) by `__thinkingDelay`.
+      await new Promise((done) => setTimeout(done, (slot === "light" ? window.__lightDelay : window.__thinkingDelay) ?? 0));
+      // The full model, asked only by Try harder, keeps the page; the scenarios break the light one.
+      const scenario = slot === "light" ? window.__viewScenario : "good";
       const repairing = Array.isArray(parsed.what_broke);
       const lose = scenario === "always-broken" || (scenario === "broken-first" && !repairing);
-      const says = parsed.each_record_still_shows_this_and_stays_under_its_heading;
+      const says = Object.fromEntries((parsed.checklist ?? []).map((one) => [one.record, { shows: one.must_show, under: one.under }]));
       return { text: JSON.stringify({ source: view({ lose, small: Boolean(parsed.your_view_so_far), titles: scenario === "always-titles", regroup: scenario === "always-regroup", says }), said: "Clean cards, a friendly intro, looks modern." }) };
     }
     return { text: "{}" };
@@ -534,7 +540,7 @@ try {
       refused,
       left,
       tries,
-      ok: uncovered === 0 && refused === "I couldn't make a version that looks right." && !left.region && left.listed === 0 && tries.join() === "light,light,thinking" && !JARGON.test(`${question} ${words}`) && (await page.$('[data-testid="section-iterate"]')) !== null,
+      ok: uncovered === 0 && refused === "I couldn't keep every record in a new design." && !left.region && left.listed === 0 && tries.join() === "light,light,light" && !JARGON.test(`${question} ${words}`) && (await page.$('[data-testid="section-iterate"]')) !== null && (await page.$('[data-testid="section-try-harder"]')) !== null,
     };
     await page.click('[data-testid="section-close"]');
   }
@@ -556,7 +562,7 @@ try {
     const uncovered = await seenBroken(on);
     const phase = await on.getAttribute(`${CARD}[data-section-phase]`, "data-section-phase").catch(() => null);
     const refused = await on.textContent('[data-testid="section-status"]').catch(() => null);
-    const asked = await on.evaluate(() => window.__pageAsked.filter((one) => one.as_it_stands !== undefined).map((one) => ({ slot: one.slot, broke: one.what_broke ?? [], keep: one.each_record_still_shows_this_and_stays_under_its_heading ?? null })));
+    const asked = await on.evaluate(() => window.__pageAsked.filter((one) => one.as_it_stands !== undefined).map((one) => ({ slot: one.slot, broke: one.what_broke ?? [], keep: one.checklist ?? null })));
     const left = await on.evaluate(() => ({ region: document.querySelector('[data-worker-view="task-list"]') !== null, listed: window.__keeper.forked().length }));
     return { uncovered, phase, refused, tries: asked.map((one) => one.slot), broke: asked.flatMap((one) => one.broke), told: asked[0]?.keep ?? null, left };
   };
@@ -569,10 +575,10 @@ try {
       ...seen,
       ok:
         seen.uncovered === 0 &&
-        seen.refused === "I couldn't make a version that looks right." &&
+        seen.refused === "I couldn't keep the dates and statuses in a new design." &&
         !seen.left.region &&
         seen.left.listed === 0 &&
-        seen.tries.join() === "light,light,thinking" &&
+        seen.tries.join() === "light,light,light" &&
         seen.broke.some((one) => /“Todo” on “Write the brief”/.test(one) && /“Sep 3, 2026” on “Write the brief”/.test(one)) &&
         // The prompt told the model what each record said, before any draft.
         JSON.stringify(seen.told ?? {}).includes("Sep 3, 2026"),
@@ -600,13 +606,93 @@ try {
       kept: { phase: kept.phase, uncovered: kept.uncovered, broke: kept.broke },
       ok:
         moved.uncovered === 0 &&
-        moved.refused === "I couldn't make a version that looks right." &&
+        moved.refused === "I couldn't keep each record in its group in a new design." &&
         !moved.left.region &&
         moved.broke.some((one) => /is under “[^”]+”, and was under “[^”]+”/.test(one)) &&
         kept.uncovered === 0 &&
         kept.phase === "view",
     };
     await grouped.close();
+  }
+
+  reach("theStopComesWithinTheCapAndSaysWhatItCouldNotKeep");
+  {
+    // A light model that takes 12 s a try and never keeps the dates: three tries would be 36 s; the card stops by 30 s.
+    await page.evaluate(() => (window.__lightDelay = 12_000));
+    const began = Date.now();
+    const seen = await designedAs(page, "always-titles", "make the cards bigger and side by side");
+    const took = Date.now() - began;
+    const offered = await page.evaluate(() => ({
+      harder: document.querySelector('[data-testid="section-try-harder"]')?.textContent?.trim() ?? null,
+      differently: document.querySelector('[data-testid="section-say-differently"]')?.textContent?.trim() ?? null,
+    }));
+    await page.click('[data-testid="section-say-differently"]');
+    const focused = await page.evaluate(() => document.activeElement?.getAttribute("data-testid") ?? null);
+    await shot(page, "stopped-in-time");
+    report.checks.theStopComesWithinTheCapAndSaysWhatItCouldNotKeep = {
+      took,
+      ...seen,
+      offered,
+      focused,
+      ok: took <= 34_000 && seen.phase === "refused" && seen.refused === "I couldn't keep the dates and statuses in a new design." && seen.uncovered === 0 && !seen.left.region && !seen.tries.includes("thinking") && offered.harder === "Try harder" && offered.differently === "Say it differently" && focused === "section-iterate",
+    };
+    await page.evaluate(() => (window.__lightDelay = 0));
+  }
+
+  reach("tryHarderShowsProgressAndCancelPutsThePageBack");
+  {
+    // Try harder on the full model, slow: its progress shown and counting, and Cancel putting the page back at once.
+    const rowsBefore = await page.evaluate(() => document.querySelectorAll("[data-graview-page-main] [data-graview-record], [data-graview-page-main] [data-graview-listed]").length);
+    await page.evaluate(() => ((window.__thinkingDelay = 120_000), (window.__pageAsked.length = 0)));
+    await page.click('[data-testid="section-try-harder"]');
+    await page.waitForSelector(`${BAR}[data-section-phase="harder"]`, { timeout: 10_000 });
+    const cover = await page.textContent('[data-testid="redesigning"]');
+    const first = await page.textContent('[data-testid="section-status"]');
+    await page.waitForTimeout(2_200);
+    const later = await page.textContent('[data-testid="section-status"]');
+    const asked = await page.evaluate(() => window.__pageAsked.filter((one) => one.as_it_stands !== undefined).map((one) => ({ slot: one.slot, from: Boolean(one.your_last_answer), broke: (one.what_broke ?? []).length })));
+    await shot(page, "trying-harder");
+    const pressed = Date.now();
+    await page.click('[data-testid="section-cancel"]');
+    await page.waitForSelector(`${CARD}[data-section-phase="refused"]`, { timeout: 2_000 });
+    const back = Date.now() - pressed;
+    const left = await page.evaluate(() => ({ region: document.querySelector('[data-worker-view="task-list"]') !== null, cover: document.querySelector('[data-testid="redesigning"]') !== null, rows: document.querySelectorAll("[data-graview-page-main] [data-graview-record], [data-graview-page-main] [data-graview-listed]").length }));
+    report.checks.tryHarderShowsProgressAndCancelPutsThePageBack = {
+      cover,
+      first,
+      later,
+      asked,
+      back,
+      left,
+      ok:
+        /Graview is thinking harder about “Tasks”… this can take a minute or two/.test(cover ?? "") &&
+        /· 0:0\d$/.test(first ?? "") &&
+        first !== later &&
+        asked.length === 1 && asked[0].slot === "thinking" && asked[0].from && asked[0].broke > 0 &&
+        back < 1_000 &&
+        !left.region && !left.cover && left.rows === rowsBefore,
+    };
+  }
+
+  reach("aTryHarderThatPassesShowsTheDraft");
+  {
+    await page.evaluate(() => ((window.__thinkingDelay = 1_500), (window.__pageAsked.length = 0)));
+    await watchUncovered(page);
+    await page.click('[data-testid="section-try-harder"]');
+    await page.waitForSelector(`${BAR}[data-section-phase="view"]`, { timeout: 30_000 });
+    const uncovered = await seenBroken(page);
+    const said = await page.textContent('[data-testid="section-status"]');
+    const cards = await page.evaluate(() => [...(document.querySelector('[data-worker-view="task-list"]')?.shadowRoot?.querySelectorAll(".pb-card") ?? [])].map((one) => one.innerText.replace(/\s+/g, " ").trim()));
+    await shot(page, "tried-harder-draft");
+    report.checks.aTryHarderThatPassesShowsTheDraft = {
+      uncovered,
+      said,
+      cards,
+      ok: uncovered === 0 && cards.length === 3 && cards.some((one) => /Write the brief/.test(one) && /Todo/.test(one) && /Sep 3, 2026/.test(one)) && /^Tasks now show/.test(said ?? ""),
+    };
+    await page.click('[data-testid="section-discard"]');
+    await page.waitForTimeout(300);
+    await page.evaluate(() => ((window.__thinkingDelay = 0), (window.__viewScenario = "good")));
   }
 
   reach("aNewDesignIsRepairedUnderCoverThenGivenThePage");

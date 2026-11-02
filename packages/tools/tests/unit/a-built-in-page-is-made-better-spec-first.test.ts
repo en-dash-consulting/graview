@@ -3,7 +3,7 @@ import { composeAppChange } from "@graview/core/compose";
 import type { GraviewDocument } from "@graview/core/document";
 import { describe, expect, it } from "vitest";
 import type { HostAi } from "../../src/ai.js";
-import { aboutTheLook, cssFindings, describeChange, draftPageSpec, draftPageView, drawnFindings, forkManifest, notTheSpec, readPageViewReply, specCanSay, type DrawnRead } from "../../src/section.js";
+import { aboutTheLook, couldNotKeep, cssFindings, describeChange, draftPageSpec, draftPageView, drawnFindings, forkManifest, notTheSpec, readPageViewReply, specCanSay, type DrawnRead } from "../../src/section.js";
 
 /**
  * MAKE ANY PAGE BETTER (Roadmap f-make-any-page-better): words typed in the
@@ -79,14 +79,14 @@ describe("a draft over the view spec", () => {
     expect(notTheSpec([{ op: "set-glance", kind: "task", fields: ["due"] }])).toEqual([]);
   });
 
-  it("is offered only once the checker compiles it, the full model repairing what it refused", async () => {
-    const { ai, asked } = slots([JSON.stringify({ edits: [{ op: "set-glance", kind: "task", fields: ["deadline"] }], said: "Shows the deadline." })], [JSON.stringify({ edits: [{ op: "set-glance", kind: "task", fields: ["due"] }], said: "Shows the due date on each row." })]);
+  it("is offered only once the checker compiles it, the light model repairing what it refused — never the full one", async () => {
+    const { ai, asked } = slots([JSON.stringify({ edits: [{ op: "set-glance", kind: "task", fields: ["deadline"] }], said: "Shows the deadline." }), JSON.stringify({ edits: [{ op: "set-glance", kind: "task", fields: ["due"] }], said: "Shows the due date on each row." })], []);
     const drafted = await draftPageSpec({ ai, document, part, mode: "describe", words: "show the due date on each row", judge: judgeByTheChecker });
     expect(drafted.ok).toBe(true);
     if (!drafted.ok) return;
     expect(drafted.repaired).toBe(true);
     expect(drafted.edits).toEqual([{ op: "set-glance", kind: "task", fields: ["due"] }]);
-    expect(asked.map((one) => one.slot)).toEqual(["light", "full"]);
+    expect(asked.map((one) => one.slot)).toEqual(["light", "light"]);
     expect(asked[1]!.prompt["what_broke"]).toBeDefined();
   });
 
@@ -131,13 +131,45 @@ describe("a page made its own view", () => {
     expect(asked[1]!.prompt["what_broke"]).toEqual(["It no longer shows the heading “Someday”."]);
   });
 
-  it("goes to the full model once after the light one's repair, then says plainly it could not, showing nothing", async () => {
+  it("asks the light model at most twice more, never the full one, then says plainly what it could not keep, showing nothing", async () => {
     const broken = JSON.stringify({ source: "graview.onProps(() => graview.render(graview.html`<p>x</p>`));", said: "Looks modern." });
-    const { ai, asked } = slots([broken, broken], [broken]);
+    const { ai, asked } = slots([broken, broken, broken], [broken]);
     const manifest = forkManifest(part, { kinds: [], edges: [] })!;
     const drafted = await draftPageView({ ai, part, manifest, mode: "just", outline: "# Tasks", data: {}, judge: async () => ["It no longer shows “Write the brief”."] });
-    expect(drafted).toMatchObject({ ok: false, refused: "I couldn't make a version that looks right." });
-    expect(asked.map((one) => one.slot)).toEqual(["light", "light", "full"]);
+    expect(drafted).toMatchObject({ ok: false, refused: "I couldn't keep every record in a new design.", last: expect.stringContaining("graview.render") });
+    expect(asked.map((one) => one.slot)).toEqual(["light", "light", "light"]);
+  });
+
+  it("stops within its time, a try still out answered by what broke before it", async () => {
+    const broken = JSON.stringify({ source: "graview.onProps(() => graview.render(graview.html`<p>x</p>`));", said: "Looks modern." });
+    const slow = (text: string) => ({ model: "slow-light", think: () => new Promise<{ text: string }>((done) => setTimeout(() => done({ text }), 60)) });
+    const manifest = forkManifest(part, { kinds: [], edges: [] })!;
+    const began = Date.now();
+    const drafted = await draftPageView({ ai: { light: slow(broken) as never }, part, manifest, mode: "just", outline: "# Tasks", data: {}, within: 100, judge: async () => ["A record no longer says what it said: “Sep 3” on “Write the brief”. Show on each record what the page showed on it (its status, its dates, its counts), in words."] });
+    expect(Date.now() - began).toBeLessThan(400);
+    expect(drafted).toMatchObject({ ok: false, late: true, refused: "I couldn't keep the dates in a new design." });
+  });
+
+  it("tries harder with the full model once, from the last try and what broke, and is canceled at once", async () => {
+    const good = JSON.stringify({ source: "graview.onProps(() => graview.render(graview.html`<p>Write the brief</p>`));", said: "Kept." });
+    const { ai, asked } = slots([], [good]);
+    const manifest = forkManifest(part, { kinds: [], edges: [] })!;
+    const from = { source: "graview.onProps(() => graview.render(graview.html`<p>x</p>`));", findings: ["It no longer shows “Write the brief”."] };
+    const drafted = await draftPageView({ ai, part, manifest, mode: "just", outline: "# Tasks", data: {}, harder: true, from, judge: async () => [] });
+    expect(drafted).toMatchObject({ ok: true, repaired: true });
+    expect(asked.map((one) => one.slot)).toEqual(["full"]);
+    expect(asked[0]!.prompt["what_broke"]).toEqual(from.findings);
+    const never = { model: "never", think: () => new Promise<{ text: string }>(() => undefined) };
+    const stop = new AbortController();
+    const waiting = draftPageView({ ai: { thinking: never as never }, part, manifest, mode: "just", outline: "# Tasks", data: {}, harder: true, from, signal: stop.signal, judge: async () => [] });
+    stop.abort();
+    expect(await waiting).toMatchObject({ ok: false, canceled: true });
+  });
+
+  it("says what it could not keep in plain words, from what broke", () => {
+    expect(couldNotKeep(["A record no longer says what it said: “Todo” on “Write the brief”, “Sep 3, 2026” on “Write the brief”. Show on each record what the page showed on it (its status, its dates, its counts), in words."])).toBe("I couldn't keep the dates and statuses in a new design.");
+    expect(couldNotKeep(["A record moved to another group: “Book the hall” is under “Todo”, and was under “Doing”. Keep each record under the heading it was under."])).toBe("I couldn't keep each record in its group in a new design.");
+    expect(couldNotKeep(["The view did not draw: it threw."])).toBe("I couldn't make a version that looks right.");
   });
 
   it("repairs a stylesheet the host would strip before drawing it, and iterates on the draft so far", async () => {

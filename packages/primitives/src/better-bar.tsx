@@ -209,6 +209,10 @@ export interface DraftBarProps {
   readonly close?: () => void;
   /** Words that try again, where nothing passed. */
   readonly retry?: (words: string) => void;
+  /** Try harder: the full model, once, where the light one could not keep the page. */
+  readonly tryHarder?: () => void;
+  /** Cancel what is thinking: at once, the page as it was. */
+  readonly cancel?: () => void;
   readonly busy?: boolean;
   readonly children?: ReactNode;
 }
@@ -288,6 +292,21 @@ export function DraftBar(props: DraftBarProps) {
           </form>
         ) : null}
         <span style={{ display: "inline-flex", gap: 6, marginLeft: "auto" }}>
+          {props.tryHarder ? (
+            <button type="button" data-first="" data-testid="section-try-harder" onClick={props.tryHarder} style={PRIMARY}>
+              Try harder
+            </button>
+          ) : null}
+          {props.retry && !props.iterate ? (
+            <button type="button" {...(props.tryHarder ? {} : { "data-first": "" })} data-testid="section-say-differently" onClick={() => bar.current?.querySelector<HTMLInputElement>('[data-testid="section-iterate"]')?.focus()} style={QUIET}>
+              Say it differently
+            </button>
+          ) : null}
+          {props.cancel ? (
+            <button type="button" data-first="" data-testid="section-cancel" onClick={props.cancel} style={QUIET}>
+              Cancel
+            </button>
+          ) : null}
           {props.keep ? (
             <button type="button" data-first="" data-testid="section-keep" disabled={props.busy} onClick={props.keep} style={PRIMARY}>
               Keep
@@ -304,7 +323,7 @@ export function DraftBar(props: DraftBarProps) {
             </button>
           ) : null}
           {props.close ? (
-            <button type="button" {...(props.keep || props.undo ? {} : { "data-first": "" })} data-testid="section-close" onClick={props.close} style={QUIET}>
+            <button type="button" {...(props.keep || props.undo || props.tryHarder || props.retry ? {} : { "data-first": "" })} data-testid="section-close" onClick={props.close} style={QUIET}>
               Close
             </button>
           ) : null}

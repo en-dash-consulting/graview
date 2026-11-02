@@ -1,6 +1,7 @@
 import { execFile, spawn } from "node:child_process";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
+import { request as httpsRequest } from "node:https";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -626,9 +627,34 @@ function promptContent(prompt: string, images: unknown): string | readonly unkno
   return [...pictures.map((image) => ({ type: "image", source: { type: "base64", media_type: image.mediaType, data: image.data } })), { type: "text", text: prompt }];
 }
 
+/**
+ * A REQUEST THAT WAITS AS LONG AS THE MODEL THINKS. `fetch` gives up on an
+ * answer whose headers take five minutes (undici's headers timeout), and a
+ * reasoning model asked to draw a whole page — Try harder — can take that
+ * long: the request was dropped as "fetch failed" at exactly 300 s. The
+ * dev server's own request is the person's to cancel; this one has no
+ * clock of its own.
+ */
+function patientFetch(input: string, init: { method: string; headers: Record<string, string>; body: string }): Promise<{ status: number; text(): Promise<string> }> {
+  return new Promise((resolve, reject) => {
+    const sent = httpsRequest(input, { method: init.method, headers: { ...init.headers, "content-length": String(Buffer.byteLength(init.body)) } }, (answer) => {
+      const chunks: Buffer[] = [];
+      answer.on("data", (chunk: Buffer) => chunks.push(chunk));
+      answer.on("error", reject);
+      answer.on("end", () => {
+        const body = Buffer.concat(chunks).toString("utf8");
+        resolve({ status: answer.statusCode ?? 0, text: async () => body });
+      });
+    });
+    sent.setTimeout(0);
+    sent.on("error", reject);
+    sent.end(init.body);
+  });
+}
+
 export function aiDevProxyHandler(options: AiDevProxyOptions = {}) {
   const env = options.env ?? process.env;
-  const call = options.fetch ?? (globalThis.fetch as NonNullable<AiDevProxyOptions["fetch"]>);
+  const call = options.fetch ?? patientFetch;
   const modelOf = (provider: AiDevProvider) => env["GRAVIEW_AI_MODEL"]?.trim() || options.model || PROVIDERS[provider].model;
   const fastModelOf = (provider: AiDevProvider) => env["GRAVIEW_AI_FAST_MODEL"]?.trim() || options.fastModel || PROVIDERS[provider].fast;
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
