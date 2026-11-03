@@ -457,7 +457,9 @@ export async function reviseSection(options: ReviseSectionOptions): Promise<Revi
   return stopped();
 }
 
+export { checkSaid, DESIGN_AGENT_STEPS, DESIGN_AGENT_SYSTEM, designAgentPrompt, lookOf, readAgentReply, runDesignAgent } from "./design-agent.js";
+export type { DesignAgentEvent, DesignAgentHost, DesignAgentMove, DesignAgentOptions, DesignAgentResult, DesignAgentStep, DesignTalk } from "./design-agent.js";
 export { couldNotKeep, cssFindings, describeChange, drawnFindings, rowSays } from "./draft-check.js";
 export type { DrawnRead } from "./draft-check.js";
-export { aboutTheLook, checklistOf, COULD_NOT, DRAFT_WITHIN_MS, inTime, repairTries, OWN_VIEW_WHEN_SURE, draftPageSpec, draftPageView, forkManifest, notTheSpec, PAGE_SPEC_OPS, PAGE_SPEC_SYSTEM, PAGE_VIEW_SYSTEM, pageSpecPrompt, pageViewPrompt, readPageSpecReply, readPageViewReply, specCanSay } from "./page-better.js";
+export { aboutTheLook, checklistOf, COULD_NOT, DRAFT_WITHIN_MS, groupingRule, inTime, repairTries, OWN_VIEW_WHEN_SURE, draftPageSpec, draftPageView, forkManifest, notTheSpec, PAGE_SPEC_OPS, PAGE_SPEC_SYSTEM, PAGE_VIEW_SYSTEM, pageSpecPrompt, pageViewPrompt, readPageSpecReply, readPageViewReply, specCanSay } from "./page-better.js";
 export type { DraftPageSpecOptions, DraftPageSpecResult, DraftPageViewOptions, DraftPageViewResult, ForkManifest, PagePartSaid, PageViewKeeps } from "./page-better.js";

@@ -9,8 +9,10 @@
  * `setApp`), the host's views kept in memory (`withMemoryRevisions`, which
  * lends `fork`), and a fake host AI: a Fast slot that says whether words
  * are about the look and whether the view spec can say them, a light slot
- * that drafts view-spec edits, and a full one that writes a page as a view
- * of its own from the page as it stands.
+ * that drafts view-spec edits, and a full one that is Graview's agent: a
+ * scripted conversation that looks at the page, drafts, is told what the
+ * checks found, and drafts again (`window.__agentScenario`: "fix" drafts
+ * names only first; `window.__agentDelay` slows each step).
  *
  * Claims (docs/page-better.json):
  *   theFieldIsFirstAndFocused
@@ -20,19 +22,15 @@
  *   moreRevealsTheRest
  *   theMenuOffersBetterUiOnTheHeadingATasksPageAndHome
  *   theLitWayFollowsTheFastSlotOnTypedWords
- *   aSettingsDraftIsShownUncoveredKeptAsOneChangeAndUndone
- *   aBrokenDraftIsNeverShown
- *   aDraftThatDropsWhatEachRecordSaidIsNeverShown
- *   aDraftThatMovesARecordToAnotherGroupIsNeverShown
- *   theStopComesWithinTheCapAndSaysWhatItCouldNotKeep
- *   tryHarderShowsProgressAndCancelPutsThePageBack
- *   aTryHarderThatPassesShowsTheDraft
- *   aNewDesignIsRepairedUnderCoverThenGivenThePage
- *   beforeAndAfterToggleTheOriginalInPlace
- *   iteratingMakesASecondStepAndStepBackRestoresTheFirst
+ *   aSettingsDraftLandsInSecondsWithoutTheAgentKeptAndUndone
+ *   thePanelOpensBesideThePartAndItsStepsShowAsItWorks
+ *   aCheckFindingIsFedBackAndTheNextDraftFixesIt
+ *   stopPutsThePageBackAtOnce
  *   keepMakesItThePageAndOneUndoTakesItAway
- *   aBetterUiSuggestionOpensItsCardWithADraft
- *   onAPhoneTheSameLayoutFitsAsASheet
+ *   aFollowUpTurnRevisesTheKeptDesign
+ *   aBetterUiSuggestionOpensThePanelWithADraft
+ *   onAPhoneThePanelIsASheetBelowThePage
+ *   thePanelSpeaksPlainly
  *   aSeatThatMayNotChangeTheAppIsNotOffered
  */
 import { createServer } from "node:http";
@@ -115,7 +113,7 @@ const FAKE_AI = () => {
     const groups = [...new Set(Object.values(under))];
     if (regroup && groups.length > 1) for (const label of Object.keys(under)) if (under[label] !== groups[0]) { under[label] = groups[0]; break; }
     return [
-      `graview.style(\`.pg { display: grid; gap: 12px; } .pb-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; } .pb-card { display: grid; gap: 4px; padding: 16px; font-size: ${small ? "0.875rem" : "1.375rem"}; border: 1px solid var(--graview-edge); border-radius: var(--graview-radius); background: var(--graview-panel); } .pb-meta { font-size: 0.8125rem; color: var(--graview-ink-muted); }\`);`,
+      `graview.style(\`.pg { display: grid; gap: 12px; } .pb-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; } .pb-card { display: grid; gap: 4px; padding: 16px; font-size: ${small ? "0.875rem" : "1.375rem"}; border: 1px solid var(--graview-edge); border-radius: var(--graview-radius); background: var(--graview-panel); } .pb-meta { font-size: ${small ? "0.6875rem" : "0.8125rem"}; color: var(--graview-ink-muted); }\`);`,
       `const UNDER = ${JSON.stringify(under)};`,
       `const GROUPS = ${JSON.stringify(groups)};`,
       "graview.onProps((props) => {",
@@ -140,6 +138,25 @@ const FAKE_AI = () => {
       return { text: "I can only answer about this page." };
     }
     asked.push({ slot, ...parsed });
+    if (parsed.your_steps !== undefined) {
+      // GRAVIEW'S AGENT, scripted: it looks, drafts, reads what the checks found, drafts again, and says it is done.
+      (window.__agentPrompts ??= []).push(parsed);
+      await new Promise((done) => setTimeout(done, window.__agentDelay ?? 0));
+      const steps = parsed.your_steps;
+      const person = (parsed.conversation ?? []).flatMap((one) => (one.person ? [one.person] : []));
+      const small = /smaller/.test(person.at(-1) ?? "");
+      const says = Object.fromEntries((parsed.records ?? []).map((one) => [one.record, { shows: one.must_show, under: one.under }]));
+      const drafts = steps.filter((one) => one.did === "draft");
+      const last = steps.at(-1);
+      const answer = (one) => ({ text: JSON.stringify(one) });
+      if (!last || last.did === "look") {
+        const titles = window.__agentScenario === "fix" && drafts.length === 0;
+        return answer({ say: small ? "The dates are smaller now." : "Tasks are cards now, side by side, each with its status and date.", do: "draft", source: view({ titles, says, small }) });
+      }
+      if (last.did === "draft" && (last.result?.findings ?? []).length > 0) return answer({ say: small ? "The dates are smaller now." : "Tasks are cards now, side by side, each with its status and date.", do: "draft", source: view({ says, small }) });
+      if (last.did === "draft") return answer({ say: small ? "The dates are smaller now." : "Tasks are cards now, side by side, each with its status and date.", do: "done" });
+      return answer({ say: "Done.", do: "done" });
+    }
     if (parsed.now !== undefined) return { text: JSON.stringify({ edits: [{ op: "set-view", kind: "task", slot: "row", blocks: [{ title: "{label}" }, { badge: "{status}" }, { field: "due", as: "date", label: "Due" }] }], said: "Each row looks modern and friendly now." }) };
     if (parsed.as_it_stands !== undefined) {
       // As slow as the scenario says: the light slot by `__lightDelay`, the full one (Try harder) by `__thinkingDelay`.
@@ -311,6 +328,40 @@ const menuSays = (page) =>
 const offersBetter = (seen) => seen.modes.some((one) => one.mode === "better" && one.tag === "BUTTON" && one.name === "Better UI") && seen.modes.some((one) => one.mode === "chat" && one.name === "Chat");
 const settled = (page, phase) => page.waitForSelector(`${CARD}[data-section-phase="${phase}"]`, { timeout: 30_000 });
 
+const PANEL = '[data-testid="better-panel"]';
+/** Waits for the panel at a phase. */
+const panelAt = (page, phase) => page.waitForSelector(`${PANEL}[data-better-phase="${phase}"]`, { timeout: 30_000 });
+/** Every word the panel and the cover say. */
+const panelWords = (page) => page.evaluate(() => [...document.querySelectorAll('[data-testid="better-panel"], [data-testid="redesigning"]')].map((one) => one.innerText).join(" | "));
+/** Whether the panel stands clear of the page it changes: beside it on a desk, a sheet below it on a phone with the page given room above it. */
+const panelClear = (page) =>
+  page.evaluate(() => {
+    const panel = document.querySelector('[data-testid="better-panel"]')?.getBoundingClientRect();
+    const part = (document.querySelector('[data-worker-view="task-list"]') ?? document.querySelector('[data-testid="list-view"]') ?? document.querySelector('[data-testid="records"]') ?? document.querySelector("[data-graview-page-main]"))?.getBoundingClientRect();
+    if (!panel || !part) return { panel: Boolean(panel), part: Boolean(part), clear: false };
+    const meet = panel.left < part.right && panel.right > part.left && panel.top < part.bottom && panel.bottom > part.top;
+    const width = document.documentElement.clientWidth;
+    return {
+      panel: { left: Math.round(panel.left), right: Math.round(panel.right), top: Math.round(panel.top), bottom: Math.round(panel.bottom) },
+      part: { left: Math.round(part.left), right: Math.round(part.right) },
+      clear: !meet,
+      side: panel.right <= width && panel.left > part.right - 1,
+      sheet: Math.round(panel.bottom) === innerHeight && Math.round(panel.width) === width,
+      roomBelow: (parseFloat(document.body.style.paddingBottom) || 0) >= Math.round(panel.height),
+    };
+  });
+/** Watches, every frame, for a design on the page that drops what each task said while nothing covers it: read back with `seenBroken`. */
+const watchBroken = (page) =>
+  page.evaluate(() => {
+    window.__broken = 0;
+    const look = () => {
+      const cards = [...(document.querySelector('[data-worker-view="task-list"]')?.shadowRoot?.querySelectorAll(".pb-card") ?? [])];
+      const covered = document.querySelector("[data-graview-redesigning]");
+      if (!covered && cards.length > 0 && cards.some((one) => !/Todo|Doing/.test(one.textContent ?? ""))) window.__broken += 1;
+      window.__watching = requestAnimationFrame(look);
+    };
+    look();
+  });
 /** Types words into the menu's field, waits for the Fast slot, and says which way is lit. */
 async function typeInMenu(page, words) {
   await page.focus(`${MENU} [data-testid="menu-type"]`);
@@ -350,7 +401,7 @@ const watchUncovered = (page) =>
     };
     look();
   });
-const seenBroken = (page) => page.evaluate(() => (cancelAnimationFrame(window.__watching), window.__uncovered.length));
+const seenBroken = (page) => page.evaluate(() => (cancelAnimationFrame(window.__watching), window.__broken ?? window.__uncovered?.length ?? 0));
 
 try {
   host = await serveHost();
@@ -361,6 +412,9 @@ try {
   page.on("pageerror", (error) => errors.push(error.message));
   page.on("console", (message) => message.type() === "error" && consoled.push(message.text().slice(0, 300)));
   await ready(page, "/tasks");
+
+  /** Every word the panel said along the way, held to plain words at the end. */
+  const panelSaid = [];
 
   reach("theFieldIsFirstAndFocused");
   {
@@ -453,15 +507,16 @@ try {
     await page.waitForSelector(MENU, { timeout: 10_000 });
     const home = await menuSays(page);
     await page.click(`${MENU} [data-menu-mode="better"]`);
-    await settled(page, "choose");
-    const card = await page.evaluate(() => document.querySelector('[data-testid="section-card"]')?.innerText ?? "");
+    await page.waitForSelector(PANEL, { timeout: 10_000 });
+    const card = await page.evaluate(() => document.querySelector('[data-testid="better-panel"]')?.innerText ?? "");
     await page.keyboard.press("Escape");
+    await page.waitForSelector(PANEL, { state: "detached", timeout: 5_000 }).catch(() => {});
     report.checks.theMenuOffersBetterUiOnTheHeadingATasksPageAndHome = {
       heading: heading.modes,
       record: record.modes,
       home: home.modes,
       card,
-      ok: offersBetter(heading) && offersBetter(record) && offersBetter(home) && /Change how “Home” looks/.test(card) && /Just do it/.test(card) && /Describe changes/.test(card) && /Highlight area/.test(card),
+      ok: offersBetter(heading) && offersBetter(record) && offersBetter(home) && /Change how “Home” looks/.test(card) && /Make it easier to read/.test(card) && /Point at a part/.test(card),
     };
   }
 
@@ -482,359 +537,235 @@ try {
     report.checks.theLitWayFollowsTheFastSlotOnTypedWords = { recordsLit, lookLit, recordsWent, ok: recordsLit === "chat" && lookLit === "better" && recordsWent.quickAsk && !recordsWent.card };
   }
 
-  reach("aSettingsDraftIsShownUncoveredKeptAsOneChangeAndUndone");
+  reach("aSettingsDraftLandsInSecondsWithoutTheAgentKeptAndUndone");
   {
     const rowsBefore = await rows(page);
+    const began = Date.now();
     await page.keyboard.press("Enter");
-    await page.waitForSelector(`${CARD}[data-page-card], ${BAR}`, { timeout: 15_000 });
-    await settled(page, "spec");
+    await page.waitForSelector(PANEL, { timeout: 15_000 });
+    await panelAt(page, "draft");
+    const took = Date.now() - began;
     const drafted = await rows(page);
-    const said = await page.textContent('[data-testid="section-status"]');
-    const clear = await barClear(page);
-    const words = await cardWords(page);
+    const said = await page.textContent('[data-testid="better-changed"]');
+    const clear = await panelClear(page);
+    const agentAsked = await page.evaluate(() => (window.__agentPrompts ?? []).length);
     const during = await page.evaluate(() => ({ drafts: window.__changes.drafts, applied: window.__changes.applied }));
     await shot(page, "settings-draft");
-    await page.click('[data-testid="section-keep"]');
-    await settled(page, "kept");
+    await page.click('[data-testid="better-keep"]');
+    await panelAt(page, "kept");
     const kept = await page.evaluate(() => ({ applied: window.__changes.applied, row: window.__changes.document().views?.task?.row ?? null }));
-    await page.click('[data-testid="section-undo"]');
-    await settled(page, "undone");
+    await page.click('[data-testid="better-undo"]');
+    await panelAt(page, "undone");
     await page.waitForTimeout(300);
     const back = await page.evaluate(() => ({ undone: window.__changes.undone, row: window.__changes.document().views?.task?.row ?? null }));
     const backRows = await rows(page);
-    report.checks.aSettingsDraftIsShownUncoveredKeptAsOneChangeAndUndone = {
+    panelSaid.push(await panelWords(page));
+    report.checks.aSettingsDraftLandsInSecondsWithoutTheAgentKeptAndUndone = {
+      took,
       said,
       clear,
+      agentAsked,
       during,
       kept,
       back,
-      ok: during.drafts >= 1 && during.applied === 0 && drafted.join("|") !== rowsBefore.join("|") && !/modern and friendly/.test(said ?? "") && clear.clear && kept.applied === 1 && Array.isArray(kept.row) && back.undone === 1 && back.row === null && backRows.join("|") === rowsBefore.join("|") && !JARGON.test(words),
+      ok: took < 10_000 && agentAsked === 0 && during.drafts >= 1 && during.applied === 0 && drafted.join("|") !== rowsBefore.join("|") && !/modern and friendly/.test(said ?? "") && clear.clear && kept.applied === 1 && Array.isArray(kept.row) && back.undone === 1 && back.row === null && backRows.join("|") === rowsBefore.join("|"),
     };
-    await page.click('[data-testid="section-close"]').catch(() => page.keyboard.press("Escape"));
+    await page.click('[data-testid="better-close"]');
+    await page.waitForSelector(PANEL, { state: "detached", timeout: 5_000 }).catch(() => {});
   }
 
-  reach("aBrokenDraftIsNeverShown");
+  reach("thePanelOpensBesideThePartAndItsStepsShowAsItWorks");
   {
-    await page.evaluate(() => (window.__viewScenario = "always-broken"));
+    await page.evaluate(() => ((window.__agentScenario = "fix"), (window.__agentDelay = 500), (window.__agentPrompts = [])));
     await menuOn(page, ROW);
     await page.click(`${MENU} [data-menu-mode="better"]`);
-    await settled(page, "choose");
-    await page.click('[data-testid="section-describe"]');
-    await settled(page, "asking");
-    await page.keyboard.type("make the cards bigger and side by side");
-    await page.keyboard.press("Enter");
-    await settled(page, "design");
-    const question = await page.textContent('[data-testid="section-own-view"]');
-    await watchUncovered(page);
-    await page.click('[data-testid="section-own-yes"]');
-    await settled(page, "refused");
-    const uncovered = await seenBroken(page);
-    const refused = await page.textContent('[data-testid="section-status"]');
-    const left = await page.evaluate(() => ({ region: document.querySelector('[data-worker-view="task-list"]') !== null, listed: window.__keeper.forked().length }));
-    const tries = await page.evaluate(() => window.__pageAsked.filter((one) => one.as_it_stands !== undefined).map((one) => one.slot));
-    const words = await cardWords(page);
-    await shot(page, "broken-refused");
-    report.checks.aBrokenDraftIsNeverShown = {
-      question,
-      uncovered,
-      refused,
-      left,
-      tries,
-      ok: uncovered === 0 && refused === "I couldn't keep every record in a new design." && !left.region && left.listed === 0 && tries.join() === "light,light,light" && !JARGON.test(`${question} ${words}`) && (await page.$('[data-testid="section-iterate"]')) !== null && (await page.$('[data-testid="section-try-harder"]')) !== null,
-    };
-    await page.click('[data-testid="section-close"]');
-  }
-
-  /** Asks for a new design of the Tasks list in words, with the cards a fake scenario draws, and says what came of it. */
-  const designedAs = async (on, scenario, words) => {
-    await on.evaluate((scenario) => ((window.__viewScenario = scenario), (window.__pageAsked.length = 0)), scenario);
-    await menuOn(on, ROW);
-    await on.click(`${MENU} [data-menu-mode="better"]`);
-    await on.waitForSelector(`${CARD}[data-section-phase="choose"]`, { timeout: 10_000 });
-    await on.click('[data-testid="section-describe"]');
-    await on.waitForSelector(`${CARD}[data-section-phase="asking"]`, { timeout: 10_000 });
-    await on.keyboard.type(words);
-    await on.keyboard.press("Enter");
-    await on.waitForSelector(`${CARD}[data-section-phase="design"]`, { timeout: 30_000 });
-    await watchUncovered(on);
-    await on.click('[data-testid="section-own-yes"]');
-    await on.waitForSelector(`${CARD}[data-section-phase="refused"], ${BAR}[data-section-phase="view"]`, { timeout: 60_000 });
-    const uncovered = await seenBroken(on);
-    const phase = await on.getAttribute(`${CARD}[data-section-phase]`, "data-section-phase").catch(() => null);
-    const refused = await on.textContent('[data-testid="section-status"]').catch(() => null);
-    const asked = await on.evaluate(() => window.__pageAsked.filter((one) => one.as_it_stands !== undefined).map((one) => ({ slot: one.slot, broke: one.what_broke ?? [], keep: one.checklist ?? null })));
-    const left = await on.evaluate(() => ({ region: document.querySelector('[data-worker-view="task-list"]') !== null, listed: window.__keeper.forked().length }));
-    return { uncovered, phase, refused, tries: asked.map((one) => one.slot), broke: asked.flatMap((one) => one.broke), told: asked[0]?.keep ?? null, left };
-  };
-
-  reach("aDraftThatDropsWhatEachRecordSaidIsNeverShown");
-  {
-    const seen = await designedAs(page, "always-titles", "make the cards bigger and side by side");
-    await shot(page, "lossy-refused");
-    report.checks.aDraftThatDropsWhatEachRecordSaidIsNeverShown = {
-      ...seen,
+    await page.waitForSelector(PANEL, { timeout: 10_000 });
+    const opened = await panelClear(page);
+    await shot(page, "panel-open");
+    await watchBroken(page);
+    await page.fill('[data-testid="better-words"]', "make the tasks cards side by side");
+    await page.click('[data-testid="better-send"]');
+    // The steps as they come: read every 150 ms until a draft is offered.
+    const seen = [];
+    let mid = false;
+    for (const until = Date.now() + 30_000; Date.now() < until; ) {
+      const now = await page.evaluate(() => ({ phase: document.querySelector('[data-testid="better-panel"]')?.getAttribute("data-better-phase"), steps: [...document.querySelectorAll('[data-testid="better-step"]')].map((one) => one.lastElementChild?.textContent?.trim() ?? ""), time: document.querySelector('[data-testid="better-time"]')?.textContent ?? null }));
+      seen.push(now);
+      if (!mid && now.steps.length >= 2) {
+        await shot(page, "panel-working");
+        mid = true;
+      }
+      if (now.phase === "draft") break;
+      await page.waitForTimeout(150);
+    }
+    const final = seen.at(-1);
+    const counted = [...new Set(seen.map((one) => one.steps.length))];
+    report.checks.thePanelOpensBesideThePartAndItsStepsShowAsItWorks = {
+      opened,
+      steps: final?.steps ?? [],
+      counted,
+      times: [...new Set(seen.map((one) => one.time).filter(Boolean))].slice(0, 5),
       ok:
-        seen.uncovered === 0 &&
-        seen.refused === "I couldn't keep the dates and statuses in a new design." &&
-        !seen.left.region &&
-        seen.left.listed === 0 &&
-        seen.tries.join() === "light,light,light" &&
-        seen.broke.some((one) => /“Todo” on “Write the brief”/.test(one) && /“Sep 3, 2026” on “Write the brief”/.test(one)) &&
-        // The prompt told the model what each record said, before any draft.
-        JSON.stringify(seen.told ?? {}).includes("Sep 3, 2026"),
+        opened.clear &&
+        opened.side &&
+        final?.phase === "draft" &&
+        counted.length >= 3 &&
+        final.steps.some((one) => /^Looking at Tasks/.test(one)) &&
+        final.steps.filter((one) => /^Drafting/.test(one)).length === 2 &&
+        final.steps.some((one) => /^Check: .* — fixing$/.test(one)) &&
+        final.steps.some((one) => /^Check: nothing lost/.test(one)) &&
+        seen.some((one) => /^0:0\d$/.test(one.time ?? "")),
     };
-    await page.click('[data-testid="section-close"]');
-    await page.evaluate(() => (window.__viewScenario = "good"));
   }
 
-  reach("aDraftThatMovesARecordToAnotherGroupIsNeverShown");
+  reach("aCheckFindingIsFedBackAndTheNextDraftFixesIt");
   {
-    const grouped = await context.newPage();
-    grouped.on("pageerror", (error) => errors.push(`grouped: ${error.message}`));
-    await ready(grouped, "/tasks", "?grouped=1");
-    const headings = await grouped.evaluate(() => [...document.querySelectorAll("[data-graview-page-main] h2, [data-graview-page-main] h3")].map((one) => one.textContent.trim()));
-    const moved = await designedAs(grouped, "always-regroup", "make the cards bigger and side by side");
-    await shot(grouped, "regroup-refused");
-    await grouped.click('[data-testid="section-close"]');
-    // The same draft with every record where it was is shown: the check is about the move, not the groups.
-    const kept = await designedAs(grouped, "good", "make the cards bigger and side by side");
-    await shot(grouped, "grouped-design-draft");
-    await grouped.click('[data-testid="section-discard"]').catch(() => {});
-    report.checks.aDraftThatMovesARecordToAnotherGroupIsNeverShown = {
-      headings,
-      moved,
-      kept: { phase: kept.phase, uncovered: kept.uncovered, broke: kept.broke },
+    const broken = await seenBroken(page);
+    const prompts = await page.evaluate(() => window.__agentPrompts.map((one) => ({ steps: one.your_steps.map((step) => ({ did: step.did, findings: step.result?.findings ?? null })) })));
+    const fedBack = prompts.flatMap((one) => one.steps).find((one) => one.did === "draft" && (one.findings ?? []).length > 0)?.findings ?? [];
+    const cards = await page.evaluate(() => [...(document.querySelector('[data-worker-view="task-list"]')?.shadowRoot?.querySelectorAll(".pb-card") ?? [])].map((one) => one.innerText.replace(/\s+/g, " ").trim()));
+    const talk = await page.evaluate(() => [...document.querySelectorAll('[data-testid="better-message"]')].map((one) => `${one.getAttribute("data-who")}: ${one.textContent.trim()}`));
+    const changed = await page.textContent('[data-testid="better-changed"]');
+    await shot(page, "design-draft");
+    panelSaid.push(await panelWords(page));
+    report.checks.aCheckFindingIsFedBackAndTheNextDraftFixesIt = {
+      broken,
+      fedBack,
+      cards,
+      talk,
+      changed,
       ok:
-        moved.uncovered === 0 &&
-        moved.refused === "I couldn't keep each record in its group in a new design." &&
-        !moved.left.region &&
-        moved.broke.some((one) => /is under “[^”]+”, and was under “[^”]+”/.test(one)) &&
-        kept.uncovered === 0 &&
-        kept.phase === "view",
+        broken === 0 &&
+        fedBack.some((one) => /“Todo” on “Write the brief”/.test(one) && /“Sep 3, 2026” on “Write the brief”/.test(one)) &&
+        cards.length === 3 &&
+        cards.some((one) => /Write the brief/.test(one) && /Todo/.test(one) && /Sep 3, 2026/.test(one)) &&
+        talk.at(-1) === "graview: Tasks are cards now, side by side, each with its status and date." &&
+        /^Tasks now show/.test(changed ?? ""),
     };
-    await grouped.close();
   }
 
-  reach("theStopComesWithinTheCapAndSaysWhatItCouldNotKeep");
+  reach("stopPutsThePageBackAtOnce");
   {
-    // A light model that takes 12 s a try and never keeps the dates: three tries would be 36 s; the card stops by 30 s.
-    await page.evaluate(() => (window.__lightDelay = 12_000));
-    const began = Date.now();
-    const seen = await designedAs(page, "always-titles", "make the cards bigger and side by side");
-    const took = Date.now() - began;
-    const offered = await page.evaluate(() => ({
-      harder: document.querySelector('[data-testid="section-try-harder"]')?.textContent?.trim() ?? null,
-      differently: document.querySelector('[data-testid="section-say-differently"]')?.textContent?.trim() ?? null,
-    }));
-    await page.click('[data-testid="section-say-differently"]');
-    const focused = await page.evaluate(() => document.activeElement?.getAttribute("data-testid") ?? null);
-    await shot(page, "stopped-in-time");
-    report.checks.theStopComesWithinTheCapAndSaysWhatItCouldNotKeep = {
-      took,
-      ...seen,
-      offered,
-      focused,
-      ok: took <= 34_000 && seen.phase === "refused" && seen.refused === "I couldn't keep the dates and statuses in a new design." && seen.uncovered === 0 && !seen.left.region && !seen.tries.includes("thinking") && offered.harder === "Try harder" && offered.differently === "Say it differently" && focused === "section-iterate",
-    };
-    await page.evaluate(() => (window.__lightDelay = 0));
-  }
-
-  reach("tryHarderShowsProgressAndCancelPutsThePageBack");
-  {
-    // Try harder on the full model, slow: its progress shown and counting, and Cancel putting the page back at once.
-    const rowsBefore = await page.evaluate(() => document.querySelectorAll("[data-graview-page-main] [data-graview-record], [data-graview-page-main] [data-graview-listed]").length);
-    await page.evaluate(() => ((window.__thinkingDelay = 120_000), (window.__pageAsked.length = 0)));
-    await page.click('[data-testid="section-try-harder"]');
-    await page.waitForSelector(`${BAR}[data-section-phase="harder"]`, { timeout: 10_000 });
-    const cover = await page.textContent('[data-testid="redesigning"]');
-    const first = await page.textContent('[data-testid="section-status"]');
-    await page.waitForTimeout(2_200);
-    const later = await page.textContent('[data-testid="section-status"]');
-    const asked = await page.evaluate(() => window.__pageAsked.filter((one) => one.as_it_stands !== undefined).map((one) => ({ slot: one.slot, from: Boolean(one.your_last_answer), broke: (one.what_broke ?? []).length })));
-    await shot(page, "trying-harder");
+    await page.click('[data-testid="better-discard"]');
+    await panelAt(page, "open");
+    const rowsBefore = await rows(page);
+    await page.evaluate(() => ((window.__agentScenario = "good"), (window.__agentDelay = 20_000)));
+    await page.fill('[data-testid="better-words"]', "make the tasks cards side by side");
+    await page.click('[data-testid="better-send"]');
+    await page.waitForSelector('[data-testid="better-stop"]', { timeout: 10_000 });
+    await page.waitForTimeout(800);
     const pressed = Date.now();
-    await page.click('[data-testid="section-cancel"]');
-    await page.waitForSelector(`${CARD}[data-section-phase="refused"]`, { timeout: 2_000 });
+    await page.click('[data-testid="better-stop"]');
+    await panelAt(page, "open");
     const back = Date.now() - pressed;
-    const left = await page.evaluate(() => ({ region: document.querySelector('[data-worker-view="task-list"]') !== null, cover: document.querySelector('[data-testid="redesigning"]') !== null, rows: document.querySelectorAll("[data-graview-page-main] [data-graview-record], [data-graview-page-main] [data-graview-listed]").length }));
-    report.checks.tryHarderShowsProgressAndCancelPutsThePageBack = {
-      cover,
-      first,
-      later,
-      asked,
+    await page.waitForTimeout(300);
+    const left = await page.evaluate(() => ({ region: document.querySelector('[data-worker-view="task-list"]') !== null, cover: document.querySelector("[data-graview-redesigning]") !== null, said: [...document.querySelectorAll('[data-testid="better-message"]')].at(-1)?.textContent?.trim() ?? null }));
+    const rowsAfter = await rows(page);
+    report.checks.stopPutsThePageBackAtOnce = {
       back,
       left,
-      ok:
-        /Graview is thinking harder about “Tasks”… this can take a minute or two/.test(cover ?? "") &&
-        /· 0:0\d$/.test(first ?? "") &&
-        first !== later &&
-        asked.length === 1 && asked[0].slot === "thinking" && asked[0].from && asked[0].broke > 0 &&
-        back < 1_000 &&
-        !left.region && !left.cover && left.rows === rowsBefore,
+      ok: back < 1_000 && !left.region && !left.cover && left.said === "Stopped. The page is as it was." && rowsAfter.join("|") === rowsBefore.join("|"),
     };
-  }
-
-  reach("aTryHarderThatPassesShowsTheDraft");
-  {
-    await page.evaluate(() => ((window.__thinkingDelay = 1_500), (window.__pageAsked.length = 0)));
-    await watchUncovered(page);
-    await page.click('[data-testid="section-try-harder"]');
-    await page.waitForSelector(`${BAR}[data-section-phase="view"]`, { timeout: 30_000 });
-    const uncovered = await seenBroken(page);
-    const said = await page.textContent('[data-testid="section-status"]');
-    const cards = await page.evaluate(() => [...(document.querySelector('[data-worker-view="task-list"]')?.shadowRoot?.querySelectorAll(".pb-card") ?? [])].map((one) => one.innerText.replace(/\s+/g, " ").trim()));
-    await shot(page, "tried-harder-draft");
-    report.checks.aTryHarderThatPassesShowsTheDraft = {
-      uncovered,
-      said,
-      cards,
-      ok: uncovered === 0 && cards.length === 3 && cards.some((one) => /Write the brief/.test(one) && /Todo/.test(one) && /Sep 3, 2026/.test(one)) && /^Tasks now show/.test(said ?? ""),
-    };
-    await page.click('[data-testid="section-discard"]');
-    await page.waitForTimeout(300);
-    await page.evaluate(() => ((window.__thinkingDelay = 0), (window.__viewScenario = "good")));
-  }
-
-  reach("aNewDesignIsRepairedUnderCoverThenGivenThePage");
-  {
-    await page.evaluate(() => ((window.__viewScenario = "broken-first"), (window.__pageAsked.length = 0)));
-    await menuOn(page, ROW);
-    await page.click(`${MENU} [data-menu-mode="better"]`);
-    await settled(page, "choose");
-    await page.click('[data-testid="section-describe"]');
-    await settled(page, "asking");
-    await page.keyboard.type("make the cards bigger and side by side");
-    await page.keyboard.press("Enter");
-    await settled(page, "design");
-    await watchUncovered(page);
-    await page.click('[data-testid="section-own-yes"]');
-    await page.waitForSelector('[data-testid="redesigning"]', { timeout: 10_000 });
-    const cover = await page.textContent('[data-testid="redesigning"]');
-    await shot(page, "redesigning");
-    await settled(page, "view");
-    const uncovered = await seenBroken(page);
-    const said = await page.textContent('[data-testid="section-status"]');
-    const clear = await barClear(page);
-    const words = await cardWords(page);
-    const drawn = await page.evaluate(() => document.querySelector('[data-worker-view="task-list"]')?.shadowRoot?.querySelectorAll(".pb-card").length ?? 0);
-    await shot(page, "design-draft");
-    report.checks.aNewDesignIsRepairedUnderCoverThenGivenThePage = {
-      cover,
-      uncovered,
-      said,
-      clear,
-      drawn,
-      ok: /Graview is redesigning “Tasks”/.test(cover ?? "") && uncovered === 0 && drawn === 3 && /^Tasks now show/.test(said ?? "") && !/modern|friendly/.test(said ?? "") && clear.clear && clear.inWindow && !JARGON.test(words),
-    };
-  }
-
-  reach("beforeAndAfterToggleTheOriginalInPlace");
-  {
-    await page.click('[data-testid="section-before"]');
-    await page.waitForTimeout(400);
-    const before = await page.evaluate(() => ({ view: document.querySelector('[data-worker-view="task-list"]') !== null, rows: document.querySelectorAll("[data-graview-page-main] [data-graview-record], [data-graview-page-main] [data-graview-listed]").length, pressed: document.querySelector('[data-testid="section-before"]')?.getAttribute("aria-pressed") }));
-    await shot(page, "before");
-    await page.click('[data-testid="section-after"]');
-    await page.waitForFunction(() => document.querySelector('[data-worker-view="task-list"]')?.shadowRoot?.querySelector(".pb-card"), null, { timeout: 10_000 });
-    const after = await page.evaluate(() => ({ view: document.querySelector('[data-worker-view="task-list"]') !== null, pressed: document.querySelector('[data-testid="section-after"]')?.getAttribute("aria-pressed") }));
-    report.checks.beforeAndAfterToggleTheOriginalInPlace = { before, after, ok: !before.view && before.rows === 3 && before.pressed === "true" && after.view && after.pressed === "true" };
-  }
-
-  reach("iteratingMakesASecondStepAndStepBackRestoresTheFirst");
-  {
-    const size = () => page.evaluate(() => Number.parseFloat(getComputedStyle(document.querySelector('[data-worker-view="task-list"]').shadowRoot.querySelector(".pb-card")).fontSize));
-    const first = await size();
-    await page.fill('[data-testid="section-iterate"]', "make them smaller");
-    await page.press('[data-testid="section-iterate"]', "Enter");
-    await page.waitForFunction(() => document.querySelector('[data-testid="section-step"]')?.textContent === "Step 2 of 2", null, { timeout: 20_000 });
-    await page.waitForTimeout(300);
-    const second = await size();
-    const said = await page.textContent('[data-testid="section-status"]');
-    await shot(page, "second-step");
-    await page.click('[data-testid="section-step-back"]');
-    await page.waitForFunction(() => !document.querySelector('[data-testid="section-step"]'), null, { timeout: 10_000 });
-    await page.waitForTimeout(400);
-    const back = await size();
-    report.checks.iteratingMakesASecondStepAndStepBackRestoresTheFirst = { first, second, back, said, ok: second < first && back === first };
   }
 
   reach("keepMakesItThePageAndOneUndoTakesItAway");
   {
-    await page.click('[data-testid="section-keep"]');
-    await settled(page, "kept");
-    await page.waitForTimeout(300);
-    const kept = await page.evaluate(() => ({ listed: window.__keeper.forked().map((one) => ({ name: one.manifest.name, draft: one.draft === true })), view: document.querySelector('[data-testid="list-view"] [data-worker-view="task-list"]') !== null, original: document.querySelector('[data-testid="built-in-list"]')?.textContent ?? null }));
-    const words = await cardWords(page);
+    await page.evaluate(() => ((window.__agentDelay = 0), (window.__agentScenario = "good")));
+    await page.fill('[data-testid="better-words"]', "make the tasks cards side by side");
+    await page.click('[data-testid="better-send"]');
+    await panelAt(page, "draft");
+    await page.click('[data-testid="better-before"]');
+    await page.waitForTimeout(400);
+    const before = await page.evaluate(() => ({ region: document.querySelector('[data-worker-view="task-list"]') !== null, pressed: document.querySelector('[data-testid="better-before"]')?.getAttribute("aria-pressed") }));
+    await page.click('[data-testid="better-after"]');
+    await page.waitForFunction(() => document.querySelector('[data-worker-view="task-list"]')?.shadowRoot?.querySelector(".pb-card"), null, { timeout: 10_000 });
+    await page.click('[data-testid="better-keep"]');
+    await panelAt(page, "kept");
+    await page.waitForTimeout(400);
+    const kept = await page.evaluate(() => ({ listed: window.__keeper.forked().length, region: document.querySelector('[data-worker-view="task-list"]') !== null }));
     await shot(page, "kept");
-    await page.click('[data-testid="built-in-list"]');
-    await page.waitForFunction(() => location.search.includes("drawn=built-in"), null, { timeout: 10_000 });
-    await page.waitForTimeout(300);
-    const original = { rows: (await rows(page)).length, view: await page.evaluate(() => document.querySelector('[data-worker-view="task-list"]') !== null) };
-    await page.goBack();
-    await page.waitForTimeout(300);
-    await page.click('[data-testid="section-undo"]');
-    await settled(page, "undone");
-    await page.waitForTimeout(300);
-    const undone = await page.evaluate(() => ({ listed: window.__keeper.forked().length, view: document.querySelector('[data-worker-view="task-list"]') !== null }));
-    report.checks.keepMakesItThePageAndOneUndoTakesItAway = {
-      kept,
-      original,
-      undone,
-      ok: kept.listed.length === 1 && !kept.listed[0].draft && kept.view && kept.original === "Original" && original.rows === 3 && !original.view && undone.listed === 0 && !undone.view && !JARGON.test(words),
-    };
-    await page.click('[data-testid="section-close"]').catch(() => page.keyboard.press("Escape"));
+    await page.click('[data-testid="better-undo"]');
+    await panelAt(page, "undone");
+    await page.waitForTimeout(400);
+    const undone = await page.evaluate(() => ({ listed: window.__keeper.forked().length, region: document.querySelector('[data-worker-view="task-list"]') !== null }));
+    report.checks.keepMakesItThePageAndOneUndoTakesItAway = { before, kept, undone, ok: !before.region && before.pressed === "true" && kept.listed === 1 && kept.region && undone.listed === 0 && !undone.region };
   }
 
-  reach("aBetterUiSuggestionOpensItsCardWithADraft");
+  reach("aFollowUpTurnRevisesTheKeptDesign");
   {
-    await page.evaluate(() => (window.__viewScenario = "good"));
+    await page.fill('[data-testid="better-words"]', "make the tasks cards side by side");
+    await page.click('[data-testid="better-send"]');
+    await panelAt(page, "draft");
+    await page.click('[data-testid="better-keep"]');
+    await panelAt(page, "kept");
+    const keptSource = await page.evaluate(() => window.__keeper.forked()[0]?.source ?? null);
+    await page.evaluate(() => (window.__agentPrompts = []));
+    await page.fill('[data-testid="better-words"]', "make the dates smaller");
+    await page.click('[data-testid="better-send"]');
+    await panelAt(page, "draft");
+    const asked = await page.evaluate(() => ({ current: window.__agentPrompts[0]?.your_draft_on_the_page ?? null, conversation: window.__agentPrompts[0]?.conversation ?? [] }));
+    const meta = await page.evaluate(() => getComputedStyle(document.querySelector('[data-worker-view="task-list"]')?.shadowRoot?.querySelector(".pb-meta") ?? document.body).fontSize);
+    const talk = await page.evaluate(() => [...document.querySelectorAll('[data-testid="better-message"]')].map((one) => one.textContent.trim()));
+    await shot(page, "follow-up-draft");
+    report.checks.aFollowUpTurnRevisesTheKeptDesign = {
+      asked: { current: Boolean(asked.current), sameAsKept: asked.current === keptSource, people: asked.conversation.filter((one) => one.person).length },
+      meta,
+      talk: talk.slice(-2),
+      ok: asked.current !== null && asked.current === keptSource && asked.conversation.filter((one) => one.person).length >= 2 && meta === "11px" && talk.at(-1) === "The dates are smaller now.",
+    };
+    await page.click('[data-testid="better-discard"]');
+    await panelAt(page, "open");
+    await page.click('[data-testid="better-close"]');
+    await page.waitForSelector(PANEL, { state: "detached", timeout: 5_000 }).catch(() => {});
+  }
+
+  reach("aBetterUiSuggestionOpensThePanelWithADraft");
+  {
+    await ready(page, "/tasks");
+    await page.evaluate(() => ((window.__agentScenario = "good"), (window.__agentDelay = 0)));
     await menuOn(page, ROW);
     await page.waitForFunction(() => document.querySelector('[data-menu-section="suggested"] [data-suggested-mode="better"]'), null, { timeout: 10_000 });
     const label = await page.textContent('[data-menu-section="suggested"] [data-suggested-mode="better"]');
     await page.click('[data-menu-section="suggested"] [data-suggested-mode="better"]');
-    await page.waitForSelector(`${BAR}:is([data-section-phase="spec"],[data-section-phase="view"]), ${CARD}[data-section-phase="design"]`, { timeout: 30_000 });
-    const phase = await page.getAttribute(CARD, "data-section-phase");
-    if (phase === "design") {
-      await page.click('[data-testid="section-own-yes"]');
-      await page.waitForSelector(`${BAR}[data-section-phase="view"]`, { timeout: 30_000 });
-    }
-    const drafted = await page.getAttribute(CARD, "data-section-phase");
+    await page.waitForSelector(PANEL, { timeout: 10_000 });
+    await panelAt(page, "draft");
+    const first = await page.evaluate(() => document.querySelector('[data-testid="better-message"]')?.textContent?.trim() ?? null);
     await shot(page, "suggestion-draft");
-    report.checks.aBetterUiSuggestionOpensItsCardWithADraft = { label, phase, drafted, ok: drafted === "spec" || drafted === "view" };
-    await page.click('[data-testid="section-discard"]').catch(() => page.keyboard.press("Escape"));
-    await page.waitForTimeout(300);
+    report.checks.aBetterUiSuggestionOpensThePanelWithADraft = { label, first, ok: Boolean(first) && label.includes(first.replace(/ \(.*\)$/, "").slice(0, 12)) };
+    await page.click('[data-testid="better-discard"]');
+    await page.click('[data-testid="better-close"]');
+    await page.waitForSelector(PANEL, { state: "detached", timeout: 5_000 }).catch(() => {});
   }
 
-  reach("onAPhoneTheSameLayoutFitsAsASheet");
+  reach("onAPhoneThePanelIsASheetBelowThePage");
   {
     const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
     await phone.addInitScript(FAKE_AI);
     const on = await phone.newPage();
     on.on("pageerror", (error) => errors.push(`phone: ${error.message}`));
     await ready(on, "/tasks");
+    await on.evaluate(() => ((window.__agentScenario = "good"), (window.__agentDelay = 0)));
     await menuOn(on, ROW);
     const seen = await menuSays(on);
     await shot(on, "phone-menu");
     await on.click(`${MENU} [data-menu-mode="better"]`);
-    await on.waitForSelector(`${CARD}[data-section-phase="choose"]`, { timeout: 10_000 });
-    await on.click('[data-testid="section-describe"]');
-    await on.waitForSelector(`${CARD}[data-section-phase="asking"]`);
-    await on.fill('[data-testid="section-words"]', "make the cards bigger and side by side");
-    await on.press('[data-testid="section-words"]', "Enter");
-    await on.waitForSelector(`${CARD}[data-section-phase="design"]`, { timeout: 15_000 });
-    await on.click('[data-testid="section-own-yes"]');
-    await on.waitForSelector(`${BAR}[data-section-phase="view"]`, { timeout: 30_000 });
-    const clear = await barClear(on);
+    await on.waitForSelector(PANEL, { timeout: 10_000 });
+    await on.fill('[data-testid="better-words"]', "make the tasks cards side by side");
+    await on.click('[data-testid="better-send"]');
+    await on.waitForSelector(`${PANEL}[data-better-phase="draft"]`, { timeout: 30_000 });
+    const sheet = await panelClear(on);
     await shot(on, "phone-design-draft");
-    await on.click('[data-testid="section-discard"]');
-    report.checks.onAPhoneTheSameLayoutFitsAsASheet = {
+    await on.click('[data-testid="better-discard"]');
+    report.checks.onAPhoneThePanelIsASheetBelowThePage = {
       order: seen.order,
-      box: seen.box,
-      clear,
-      ok: seen.order[0] === "menu-type" && seen.order[1] === "menu-modes" && offersBetter(seen) && seen.box !== null && seen.box.left >= 0 && seen.box.right <= 390 && clear.clear && clear.inWindow,
+      sheet,
+      ok: seen.order[0] === "menu-type" && offersBetter(seen) && sheet.sheet && sheet.roomBelow,
     };
     await phone.close();
   }
+
+  reach("thePanelSpeaksPlainly");
+  report.checks.thePanelSpeaksPlainly = { words: panelSaid.join(" | ").slice(0, 2000), ok: panelSaid.length >= 2 && !JARGON.test(panelSaid.join(" ")) };
 
   reach("aSeatThatMayNotChangeTheAppIsNotOffered");
   {

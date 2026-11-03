@@ -37,6 +37,8 @@ interface Held {
   readonly heard: Set<() => void>;
 }
 const HELD = /* @__PURE__ */ new WeakMap<AiDesk, Held>();
+/* The helds with a door drawn now: where a page's card goes when the door it was in is drawn again elsewhere. */
+const OPEN = /* @__PURE__ */ new Set<Held>();
 const heldOf = (desk: AiDesk): Held => {
   let held = HELD.get(desk);
   if (!held) HELD.set(desk, (held = { ask: null, doors: [], heard: new Set() }));
@@ -54,7 +56,8 @@ let asked = 0;
  * its Undo.
  */
 let carried: { readonly ask: SectionAsk; readonly at: number } | null = null;
-const CARRIED_MS = 5_000;
+/* A conversation may draw the page again many times, each a moment apart, while a model thinks for minutes. */
+const CARRIED_MS = 60_000;
 
 /** Opens the section's card on this app's desk; null puts it away. */
 export function askSection(desk: AiDesk, ask: DistributiveOmit<SectionAsk, "at"> | null): void {
@@ -129,12 +132,23 @@ export function SectionDoor() {
   );
   useEffect(() => {
     held.doors.push(id);
+    OPEN.add(held);
     if (!held.ask && carried && carried.ask.part && Date.now() - carried.at < CARRIED_MS) held.ask = carried.ask;
     carried = null;
     tell(held);
     return () => {
       held.doors.splice(held.doors.indexOf(id), 1);
-      if (held.doors.length === 0 && held.ask?.part) carried = { ask: held.ask, at: Date.now() };
+      if (held.doors.length === 0) {
+        OPEN.delete(held);
+        if (held.ask?.part) {
+          // Carried to a door already drawn again on another desk — the page drawn anew before this one went — else to the next one drawn.
+          const next = [...OPEN].find((one) => !one.ask);
+          if (next) {
+            next.ask = held.ask;
+            tell(next);
+          } else carried = { ask: held.ask, at: Date.now() };
+        }
+      }
       tell(held);
     };
   }, [held, id]);
