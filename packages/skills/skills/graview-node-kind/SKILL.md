@@ -60,6 +60,12 @@ others that they show, is `graview-view-specs`.
    relations camelCase (`pickedFor`). A choice that takes several of its
    options at once is `{ "type": "enum", "multiple": true, "options": [...] }`
    (`z.array(z.enum([...]))`): checkboxes in forms, filtered by one option.
+   **The type is the control.** A record draws and changes each field by
+   its type: a boolean is a switch, a date says its weekday and how far
+   off it is, an enum of up to four short options is those options side
+   by side (more, a menu), and a relation is a row of chips — one held
+   alone (`cardinality: "one"`, or set by an act that also severs it) a
+   chip with its own picker. A `"yes"`/`"no"` string is a text box.
    Every key, lens and block is in
    `node_modules/@graview/core/dist/document.schema.json` (its `$schema`).
 

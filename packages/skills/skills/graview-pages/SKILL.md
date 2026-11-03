@@ -99,9 +99,12 @@ under its routes:
 Everything a page shows is a derivation the scene uses too: `recordFacts`,
 `deriveAffordances`, `store.permits`. **A page never decides what an act is
 or who may take it** — it strikes through what the seat may not, and says why.
-A record's facts, `computed` ones too, read in declared order or as
-`display.page` groups them; prose keeps its paragraphs. A blank the seat's
-act writes is a slot ("Add Role"); one nothing writes stays unsaid.
+A record's facts are one sheet, each changed by its type — a switch, a
+day and how far off, a choice's options, a relation's chips with a picker
+— in declared order or as `display.page` groups them. A blank the seat's
+act writes says how to fill it ("Pick a day"); one nothing writes stays
+unsaid. An act whose whole effect is one drawn fact is done there, not
+under What can be done (`actsBeyondFacts`; draw `FactSheet` on yours).
 
 **Typed together.** Over a served store, hand the face `typing`
 (`openRemote`'s `remote.typing`; an embed passes it) and prose is edited
