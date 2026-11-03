@@ -1,11 +1,8 @@
-import { labelOf, type AnySchema, type Store } from "@graview/core";
-import { tellApart } from "@graview/core/words";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /*
- * THE RECORDS A RELATION'S ROW MAY TIE, fetched the first time a chip's
- * picker opens (Roadmap f-facts-by-type): a page that nobody changes a
- * relation on carries none of it.
+ * THE RECORDS A RELATION'S ROW MAY TIE, opened from a chip (Roadmap
+ * f-facts-by-type), named by the sheet that opens it.
  *
  * Drawn in place, under the row — it pushes what is below it down rather
  * than covering it — with a search where there are more than a handful.
@@ -13,14 +10,22 @@ import { useEffect, useMemo, useRef, useState } from "react";
  * that opened it.
  */
 
-export interface RelationPickerProps<S extends AnySchema> {
-  readonly store: Store<S>;
+/** One record the picker may name: its name, and what tells it from another of the same name. */
+export interface PickerRecord {
+  readonly id: string;
+  readonly label: string;
+  readonly apart?: string | undefined;
+}
+
+export interface RelationPickerProps {
   /** What the picker is for, in the act's words: "Move it to another list". */
   readonly label: string;
-  /** The records it may name, as the derivation narrowed them. */
-  readonly candidates: readonly string[];
-  /** The records already tied: not offered again. */
-  readonly tied: readonly string[];
+  /**
+   * The records it may name, as the derivation narrowed them, less those
+   * already tied, by name — named by the sheet, so this chunk carries
+   * nothing of the framework's own and splits nothing a page loads first.
+   */
+  readonly offered: readonly PickerRecord[];
   readonly onPick: (id: string) => void;
   readonly onClose: () => void;
 }
@@ -30,22 +35,10 @@ const SEARCH_PAST = 7;
 /** At most this many are listed at once; the search narrows the rest. */
 const LISTED = 40;
 
-export default function RelationPicker<S extends AnySchema>({ store, label, candidates, tied, onPick, onClose }: RelationPickerProps<S>) {
+export default function RelationPicker({ label, offered, onPick, onClose }: RelationPickerProps) {
   const [query, setQuery] = useState("");
   const box = useRef<HTMLDivElement | null>(null);
   const search = useRef<HTMLInputElement | null>(null);
-  const offered = useMemo(() => {
-    const nodes = candidates
-      .filter((id) => !tied.includes(id))
-      .flatMap((id) => {
-        const node = store.graph.getNode(id) as ({ id: string; kind: string } & Record<string, unknown>) | undefined;
-        return node ? [node] : [];
-      });
-    const apart = tellApart(nodes, (kind) => store.schema.tryDefinition(kind));
-    return nodes
-      .map((node) => ({ id: node.id, label: labelOf(store.schema.tryDefinition(node.kind), node), apart: apart.get(node.id) }))
-      .sort((a, b) => a.label.localeCompare(b.label));
-  }, [store, candidates, tied]);
   const searching = offered.length > SEARCH_PAST;
   const words = query.trim().toLowerCase();
   const matching = words === "" ? offered : offered.filter((one) => `${one.label} ${one.apart ?? ""}`.toLowerCase().includes(words));

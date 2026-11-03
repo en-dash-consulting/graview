@@ -1,7 +1,7 @@
-import { defOf, type AnySchema, type ReadableField } from "@graview/core";
-import { pageSections, failureWords } from "@graview/core/words";
+import { defOf, labelOf, type AnySchema, type ReadableField } from "@graview/core";
+import { pageSections, failureWords, tellApart } from "@graview/core/words";
 import { linkProvenance } from "@graview/core/provenance";
-import { lazy, Suspense, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import type { RecordFacts } from "./facts.js";
 import type { RelationFact } from "./fact-sheet-model.js";
@@ -9,6 +9,8 @@ import type { PageContext } from "./page-context.js";
 import { ProvisionalMark } from "./page-provisional.js";
 import { KindMark, h2, link, Onward, onward, pluralOf, quiet } from "./page-typography.js";
 import { RecordField } from "./record-field.js";
+// Drawn with the sheet, not fetched behind a door: a door of its own split a chunk a hosted page loads first (one more up front), for under 2 KB.
+import RelationPicker from "./relation-picker.js";
 import { pluralSlug, recordPath } from "./registry.js";
 
 /*
@@ -22,7 +24,6 @@ import { pluralSlug, recordPath } from "./registry.js";
  * found, so it is judged, kept in the history, and can be taken back.
  */
 
-const RelationPicker = lazy(() => import("./relation-picker.js"));
 
 export interface FactSheetProps<S extends AnySchema> {
   readonly context: PageContext<S>;
@@ -100,6 +101,16 @@ export function FactSheet<S extends AnySchema>({ context, id, facts, fields, rel
       ) : null}
     </section>
   );
+}
+
+/** The records a relation's picker may name, less those already tied, each by its name and what tells it from a namesake, in order. */
+function pickable<S extends AnySchema>(store: PageContext<S>["store"], candidates: readonly string[], tied: readonly string[]) {
+  const nodes = candidates.filter((id) => !tied.includes(id)).flatMap((id) => {
+    const node = store.graph.getNode(id) as ({ id: string; kind: string } & Record<string, unknown>) | undefined;
+    return node ? [node] : [];
+  });
+  const apart = tellApart(nodes, (kind) => store.schema.tryDefinition(kind));
+  return nodes.map((node) => ({ id: node.id, label: labelOf(store.schema.tryDefinition(node.kind), node), apart: apart.get(node.id) })).sort((a, b) => a.label.localeCompare(b.label));
 }
 
 /** Whether a declared field must hold a value: not optional, nullable or defaulted. */
@@ -214,12 +225,9 @@ function RelationRow<S extends AnySchema>({ context, id, relation, inPlace }: { 
           ) : null}
         </span>
         {picking && set ? (
-          <Suspense fallback={null}>
             <RelationPicker
-              store={store as never}
               label={set.affordance.label}
-              candidates={set.candidates}
-              tied={relation.targets.map((target) => target.id)}
+              offered={pickable(store, set.candidates, relation.targets.map((target) => target.id))}
               onPick={(picked) => {
                 setPicking(false);
                 run({ name: set.affordance.mutation, args: { ...set.affordance.args, [set.arg]: picked } });
@@ -230,7 +238,6 @@ function RelationRow<S extends AnySchema>({ context, id, relation, inPlace }: { 
                 settle();
               }}
             />
-          </Suspense>
         ) : null}
         {/* THE OTHER WAY ROUND: the far kind's list, narrowed to this record — not for a relation that holds one. */}
         {!relation.one && relation.targets.length > 0
