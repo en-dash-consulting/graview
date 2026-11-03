@@ -71,7 +71,11 @@ export const CSS_PROPERTIES: readonly string[] = [
   "view-timeline", "view-timeline-name", "view-timeline-axis", "view-timeline-inset", "timeline-scope",
   // interaction
   "cursor", "pointer-events", "user-select", "-webkit-user-select", "touch-action", "resize", "scroll-behavior", "overscroll-behavior", "overscroll-behavior-x", "overscroll-behavior-y",
-  "scroll-snap-type", "scroll-snap-align", "scroll-snap-stop", "scroll-margin", "scroll-padding", "scrollbar-width", "scrollbar-color", "scrollbar-gutter",
+  "scroll-snap-type", "scroll-snap-align", "scroll-snap-stop", "scroll-margin", "scroll-padding",
+  /* Where a jump lands (Roadmap f-views-scroll-and-anchors): a section held clear of a sticky header the view draws. */
+  "scroll-margin-top", "scroll-margin-right", "scroll-margin-bottom", "scroll-margin-left", "scroll-margin-block", "scroll-margin-block-start", "scroll-margin-block-end",
+  "scroll-margin-inline", "scroll-margin-inline-start", "scroll-margin-inline-end", "scroll-padding-top", "scroll-padding-right", "scroll-padding-bottom", "scroll-padding-left",
+  "scroll-padding-block", "scroll-padding-block-start", "scroll-padding-block-end", "scroll-padding-inline", "scroll-padding-inline-start", "scroll-padding-inline-end", "scrollbar-width", "scrollbar-color", "scrollbar-gutter",
   // SVG
   "fill", "fill-opacity", "fill-rule", "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin", "stroke-dasharray", "stroke-dashoffset", "stroke-opacity", "stroke-miterlimit",
   "stop-color", "stop-opacity", "clip-rule", "marker", "marker-start", "marker-mid", "marker-end", "paint-order", "vector-effect", "shape-rendering", "text-anchor",

@@ -21,6 +21,8 @@ import type { GuestPictureHand } from "./pictures.js";
 import type { GuestMedia } from "./media.js";
 import type { GuestDrops } from "./drop.js";
 import type { GuestGestures } from "./gestures.js";
+import type { GuestSections } from "./sections.js";
+import type { RefusalNotes } from "./refused-note.js";
 import { createGuestLogo, readTheme, themeWithBrand, watchTheme, type GuestBrand } from "./theme.js";
 
 import { codeOf, type WorkerViewCode, type WorkerViewLoad } from "./code-of.js";
@@ -44,6 +46,12 @@ const dropChunk = retryingImport(() => import("./drop.js"));
 const gesturesChunk = retryingImport(() => import("./gestures.js"));
 /* A record's computed values (Roadmap f-computed-in-views), fetched only for a view whose kinds have them, before it starts. */
 const computedChunk = retryingImport(() => import("./computed.js"));
+/* A jump, what is in sight and a record's file (Roadmap f-views-scroll-and-anchors), fetched with the first view that draws one. */
+const sectionsChunk = retryingImport(() => import("./sections.js"));
+/* Why a press was refused, said beside it (Roadmap f-views-work-end-to-end), fetched with the first refusal no view said itself. */
+const refusedChunk = retryingImport(() => import("./refused-note.js"));
+/** What `sections.ts` does something with: worth fetching it once one is drawn. */
+const WANTS_SECTIONS = 'a[href^="#"], [data-sight], [data-file]';
 
 export type WorkerViewFailure =
   /** Its manifest names a kind, an edge or an act the app does not declare (FR-91): it was never started. */
@@ -394,9 +402,16 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   let timing = 0;
   /* What the person typed into a field saved as it is typed and not yet saved (FR-191, press.ts): saved as the view goes. */
   let flushSaves = () => {};
+  /* A jump, what is in sight and a record's file (sections.ts); why a press was refused, beside it (refused-note.ts). */
+  let sections: GuestSections | undefined;
+  let sectionsAsked: Promise<GuestSections | undefined> | undefined;
+  let notes: RefusalNotes | undefined;
+  /* Where the view hears `acted`: a refused press there is its own to say. */
+  let actedAt: readonly string[] = [];
   const stop = () => {
     flushSaves();
     flushSaves = () => {};
+    sections?.dispose();
     tally();
     session?.dispose();
     session = undefined;
@@ -729,6 +744,30 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     }
     return undefined;
   };
+  /* Fetched with the first jump, section to watch or file link the view draws, and looked at again after each batch it draws. */
+  const wantSections = (): Promise<GuestSections | undefined> =>
+    (sectionsAsked ??= sectionsChunk().then(
+      ({ createGuestSections }) => {
+        if (failed) return undefined;
+        sections = createGuestSections(window, {
+          shadow,
+          idOf: (one) => drawing?.renderer.idOf(one),
+          send,
+          record: (id) => (shown.has(id) ? (options.store.seenBy(options.principal).graph.getNode(id) as Readonly<Record<string, unknown>> | undefined) : undefined),
+          ...(options.file ? { file: options.file } : {}),
+          onProblem: (said) => {
+            port?.postMessage({ type: "notice", text: said });
+            options.onProblem?.(said);
+          },
+        });
+        sections.refresh();
+        return sections;
+      },
+      () => {
+        options.onProblem?.(`The view "${manifest.title ?? manifest.name}" draws a jump or a file link, and the host's part of it could not be loaded.`);
+        return undefined;
+      },
+    ));
   const marksMedia = (element: Element) => {
     if (element.localName === "graview-video") return wantMedia();
     if (!element.hasAttribute("data-lightbox")) return;
@@ -739,10 +778,33 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   void Promise.all([openDrawChunk(), pressChunk()]).then(([{ createOpenDrawing, handedLinks, judgeLink, linkRefusedWords }, { createPressReader, createSaver, fillPrefills, judgePress, markPresses, prefillOf, quietPictures }]) => {
     if (failed) return;
     const reader = createPressReader();
-    /* The view hears what became of an act a press or a save asked for as `acted` on the element bound to it (FR-191). */
+    /* Whether the view hears `acted` on this control, or on something around it: then what became of it is the view's to say. */
+    const hearsActed = (bound: Element) =>
+      actedAt.some((selector) => {
+        try {
+          for (let at: Element | null = bound; at && at.getRootNode() === shadow && !at.hasAttribute("data-graview-view-root"); at = at.parentElement) if (at.matches(selector)) return true;
+        } catch {
+          /* A selector the page cannot read hears nothing. */
+        }
+        return false;
+      });
+    /*
+     * The view hears what became of an act a press or a save asked for as `acted` on the element bound to it (FR-191);
+     * one refused where the view does not listen is said beside the control by the host (Roadmap f-views-work-end-to-end).
+     */
     const acted = (bound: Element, pressed: NonNullable<GuestDomEvent["pressed"]>) => {
       const target = drawing?.renderer.idOf(bound);
       if (target !== undefined) send({ type: "dom-event", target, event: "acted", pressed });
+      if (pressed.ok) return notes?.clear(bound);
+      if (hearsActed(bound)) return;
+      void refusedChunk().then(
+        ({ createRefusalNotes }) => {
+          if (failed || !bound.isConnected) return;
+          notes ??= createRefusalNotes(shadow);
+          notes.say(bound, pressed.message ?? "That was not applied.");
+        },
+        () => options.onProblem?.(`A press in the view "${manifest.title ?? manifest.name}" was refused: ${pressed.message ?? pressed.reason ?? "not applied"}`),
+      );
     };
     /* A field saved as the person types (FR-191): judged and applied as a press is. */
     const saver = createSaver({
@@ -769,6 +831,9 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       fillPrefills(shadow, reader, prefilled, (asked) => prefillOf(options.store, options.principal, manifest, shown, asked));
       media?.refresh(shadow);
       drops?.refresh();
+      notes?.refresh();
+      if (sections) sections.refresh();
+      else if (shadow.querySelector(WANTS_SECTIONS)) void wantSections();
     };
     /* The addresses a link out may go to: what the records the view was last shown hold, worked out once a push. */
     let handedFor: GuestProps | undefined;
@@ -837,9 +902,17 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         }
         /* A tap on a drop target on a phone, or Enter on one, opens the host's picker (FR-193): the host's, not the view's. */
         if (drops?.before(event, at, root)) return false;
+        /* A jump within the view (`<a href="#eras">`, Roadmap f-views-scroll-and-anchors): the host scrolls there, and the page's address stays; the view hears the click. */
+        const jump = event.type === "click" && event.isTrusted ? at.closest('a[href^="#"]') : null;
+        if (jump && root.contains(jump)) {
+          event.preventDefault();
+          if (sections) sections.jump(at, root);
+          else void wantSections().then((loaded) => loaded?.jump(at, root));
+        }
         const press = reader.press(event, at, root);
         if (!press || !session) return;
         event.stopPropagation();
+        notes?.clear(at.closest("[data-act]")!);
         /* Space on a press is the press, never the page scrolling under it. */
         if (event.type === "keydown") event.preventDefault();
         const outcome = session.pressed(judgePress(options.store, manifest, shown, press));
@@ -919,7 +992,10 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         /* Where it listens for a gesture (0.1.42): heard only where its manifest says gestures. */
         onGestures: bindGestures,
         /* Where it hears a click (0.1.48), kept on the region for an audit of the page to read. */
-        onClicks: (selectors) => keepClicked(region, selectors),
+        onClicks: (selectors, acted) => {
+          keepClicked(region, selectors);
+          actedAt = acted;
+        },
         onRender: (records) => {
           drew = true;
           draw(["render", records]);

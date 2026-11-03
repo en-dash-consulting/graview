@@ -26,7 +26,7 @@ import type { ViewAudit } from "./audit/rules.js";
 export const VIEW_USAGE = `  graview view check <view.js> --app <app> --manifest <manifest.json>
                      [--seed <file>] [--record <id>] [--as <id>] [--roles a,b]
                      [--width <px>] [--press <selector> [--type name=value]…]
-                     [--audit [--browser]] [--json]
+                     [--audit [--browser]] [--no-presses] [--json]
       run a worker view once, headless, with no network, seated as one
       member (the system, unless --as or --roles say who), and say what it
       drew, or why it will not do; a view of one record is run over the
@@ -34,6 +34,9 @@ export const VIEW_USAGE = `  graview view check <view.js> --app <app> --manifest
       --press presses what the selector matches and says what the host
       would do — the link it follows, the act it asks for and whether the
       seat may — with --type's words typed into the fields they name;
+      every control it drew is pressed too, as the host would take each
+      press, and one that goes nowhere, throws or is refused fails the
+      check with what came of it (--no-presses leaves them unpressed);
       --audit holds what it drew to the accessibility rules a drawing alone
       can be held to (@graview/guest/audit: keyboard, role, name, toggle
       state, nested controls, images, SVG, scroll boxes), says the rules
@@ -116,6 +119,8 @@ export async function view(argv: readonly string[]): Promise<number> {
     ...(pressAt ? { press: { selector: pressAt, typed } } : {}),
     ...(auditing ? { audit: true } : {}),
     ...(inBrowser ? { drawing: true } : {}),
+    /* Every control, pressed (Roadmap f-views-work-end-to-end): a view whose Save does nothing is not one to keep. */
+    ...(argv.includes("--no-presses") ? {} : { presses: (await import("./headless/presses.js")).checkPresses }),
   });
   let audit = result.ok ? result.audit : undefined;
   if (inBrowser && result.ok && result.drawing) {
@@ -138,15 +143,15 @@ export async function view(argv: readonly string[]): Promise<number> {
   /* The view's to fix: a problem the framework fixes on a page is said, and fails nothing. */
   const owed = audit ? audit.problems.filter((one) => !one.automatic) : [];
   if (argv.includes("--json")) {
-    process.stdout.write(`${JSON.stringify(result.ok ? { ...result.description, ...(result.pressed ? { pressed: result.pressed } : {}), ...(audit ? { audit } : {}) } : { reason: result.reason, detail: result.detail }, null, 2)}\n`);
-    return result.ok && owed.length === 0 ? 0 : 1;
+    process.stdout.write(`${JSON.stringify(result.ok ? { ...result.description, ...(result.pressed ? { pressed: result.pressed } : {}), ...(result.presses ? { presses: result.presses } : {}), ...(audit ? { audit } : {}) } : { reason: result.reason, detail: result.detail }, null, 2)}\n`);
+    return result.ok && owed.length === 0 && result.presses?.ok !== false ? 0 : 1;
   }
   if (!result.ok) {
     process.stdout.write(`${file} will not do (${result.reason}): ${result.detail}\n`);
     return 1;
   }
-  process.stdout.write(`${over}${result.description.text}\n${result.pressed ? `\n${result.pressed.says}\n` : ""}${audit ? `\n${auditText(audit)}` : ""}`);
-  return owed.length === 0 ? 0 : 1;
+  process.stdout.write(`${over}${result.description.text}\n${result.pressed ? `\n${result.pressed.says}\n` : ""}${result.presses ? `\n${result.presses.text}` : ""}${audit ? `\n${auditText(audit)}` : ""}`);
+  return owed.length === 0 && result.presses?.ok !== false ? 0 : 1;
 }
 
 /** An audit in words: the rules it ran and did not, then each problem with its fix. */

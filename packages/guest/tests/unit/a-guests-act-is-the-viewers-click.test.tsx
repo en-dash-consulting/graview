@@ -61,11 +61,11 @@ describe("an act a guest asks for", () => {
     }
   });
 
-  it("says no more than that an act failed when the act itself throws", () => {
+  it("says which argument the act's own schema refused and what it expects, and nothing the act read (Roadmap f-views-work-end-to-end)", () => {
     const store = showroom();
     const { said, send } = inbox();
     createGuestHost({ store, principal: staff, view: "card", nonce: "n", send }).receive({ type: "act", nonce: "n", id: 2, name: "retire-car", args: { carId: 42 } });
-    expect(answers(said)).toEqual([{ type: "answer", id: 2, ok: false, reason: "failed", message: "The act could not be applied." }]);
+    expect(answers(said)).toEqual([{ type: "answer", id: 2, ok: false, reason: "failed", message: "Not applied: “carId” expects text." }]);
   });
 });
 

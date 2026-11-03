@@ -363,6 +363,18 @@ export function judgePress<S extends AnySchema>(store: Store<S>, manifest: Worke
     if (!declared.has(field.name) || field.name in args) continue;
     if (seen.has(field.name)) return refuse("malformed", `Two fields here are called “${field.name}”.`);
     seen.add(field.name);
+    const arg = shape[field.name];
+    /*
+     * A BLANK THAT IS NO VALUE OF THE ARGUMENT (Roadmap f-views-work-end-to-end):
+     * a number field emptied, a date never picked. Sent as "", it was refused
+     * by the act's own schema and the press said nothing; it is left out, or
+     * sent as null to clear the field where the host filled it from the
+     * record and the argument takes null.
+     */
+    if (!field.chosen && field.value === "" && !accepts(arg, "")) {
+      if (field.typed && field.from && accepts(arg, null)) args[field.name] = null;
+      continue;
+    }
     if (field.typed && field.chosen) {
       /* The viewer picked it; the view wrote it. It goes only as one of the app's own values, or a record the view was shown. */
       const value = declaredValues(shape[field.name])?.find((one) => String(one) === String(field.value));
@@ -376,9 +388,56 @@ export function judgePress<S extends AnySchema>(store: Store<S>, manifest: Worke
       /* Filled and untouched since: the record's value as it is now, never the copy it was filled with, which another seat may have changed since. */
       args[field.name] = (store.graph.getNode(field.from.record) as Record<string, unknown> | undefined)?.[field.name] ?? field.value;
     else if (field.typed) args[field.name] = field.value;
-    else if (!field.empty) return refuse("untyped", `“${field.name}” was filled in by the view, not typed by you, so it was not sent.`);
+    else if (!field.empty) {
+      /* A default the view wrote (value="0"): sent where it can carry nothing the view read (`viewDefault`). */
+      if (viewDefault(store, arg, field.value, press.record !== undefined && writesBack(store, entry, press.record, field.name) ? press.record : undefined, field.name)) args[field.name] = field.value;
+      else return refuse("untyped", `“${field.name}” was filled in by the view, not typed by you, so it was not sent.`);
+    }
   }
   return { ok: true, name: entry.act, args };
+}
+
+/** Whether an argument's own schema takes this value. */
+export function accepts(schema: unknown, value: unknown): boolean {
+  const parse = (schema as { safeParse?: (value: unknown) => { success: boolean } } | undefined)?.safeParse;
+  return typeof parse === "function" ? parse.call(schema, value).success : false;
+}
+
+/** The default an argument declares (`.default(x)`), through `optional()` and the like. */
+function declaredDefault(schema: unknown): { readonly value: unknown } | undefined {
+  let at = schema as { _zod?: { def?: Record<string, unknown> } } | undefined;
+  for (let depth = 0; depth < 8 && at?._zod?.def; depth += 1) {
+    const def = at._zod.def;
+    if (def["type"] === "default" || def["type"] === "prefault") {
+      const value = def["defaultValue"];
+      return { value: typeof value === "function" ? (value as () => unknown)() : value };
+    }
+    if (!("innerType" in def)) return undefined;
+    at = def["innerType"] as typeof at;
+  }
+  return undefined;
+}
+
+/*
+ * A DEFAULT THE VIEW WROTE INTO A FIELD (Roadmap f-views-work-end-to-end).
+ * A field the view filled is the view's, and a press carrying it is refused
+ * where some members may not see some records, so its words cannot be put
+ * in the person's mouth. But a form that offers `<input type="number"
+ * value="0">` was refused for the 0. It is sent when it can carry nothing
+ * the view read: where it is a zero or false, the value that says nothing,
+ * or the argument's own declared default; or where it is what the bound
+ * record holds in that field now, for an act that writes it back there.
+ * The argument's schema must take it, as ever. Any other words the view
+ * wrote stay the view's, and a press carrying them is refused.
+ */
+function viewDefault<S extends AnySchema>(store: Store<S>, arg: unknown, value: string | number | boolean, record: string | undefined, name: string): boolean {
+  if (!accepts(arg, value)) return false;
+  if (value === 0 || value === false || value === "0") return true;
+  const declared = declaredDefault(arg);
+  if (declared && Object.is(declared.value, value)) return true;
+  if (record === undefined) return false;
+  const held = (store.graph.getNode(record) as Record<string, unknown> | undefined)?.[name];
+  return held !== undefined && held !== null && String(held) === String(value);
 }
 
 /*
