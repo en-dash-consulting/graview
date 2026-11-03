@@ -11,6 +11,7 @@ type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K>
 import { Suspense, useEffect, useId, useMemo, useRef, useSyncExternalStore, type ComponentType } from "react";
 import type { SectionDrawnProps } from "./section-better.js";
 import { SectionOutline } from "./section-outline.js";
+import { FACE_EVENT } from "./face-event.js";
 
 /*
  * MAKE THIS SECTION BETTER (Roadmap f-make-this-section-better): the menu's
@@ -144,7 +145,9 @@ export function sectionFor(target: MenuTarget, here: SectionHere): MenuSection |
   const section = target.section;
   const returnTo = target.element ?? null;
   if (!section && target.face === "scene") {
-    const pages = typeof document === "undefined" ? null : document.querySelector<HTMLElement>('[data-testid="app-face-pages"]');
+    // The pages are a row of the app menu (Roadmap f-app-bar-calm), drawn only while it is open: its control says the bar holds them, and is asked to go there.
+    const door = typeof document === "undefined" ? null : document.querySelector<HTMLElement>('[data-testid="app-menu-open"][data-pages]');
+    const pages = door ? { click: () => door.dispatchEvent(new CustomEvent(FACE_EVENT, { detail: "pages" })) } : null;
     const scene = scenePartOf(target, here);
     if (!pages || !scene || !pageMayChange(scene.part, here)) return null;
     const open = (words?: string) => {

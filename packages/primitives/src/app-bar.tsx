@@ -5,6 +5,7 @@ import { createContext, Suspense, useCallback, useContext, useEffect, useId, use
 import { AppMark } from "./app-title.js";
 import { useMarkup } from "./markup.js";
 import { barPanes } from "./bar-panes-door.js";
+import { FACE_EVENT } from "./face-event.js";
 /* The places' foot, Hidden and Recently deleted (Roadmap f-place-menu-views): fetched with the panes, and the tidying with it, once there is something to list and the list is open. */
 const TidyFoot = barPanes.part((panes, props: { readonly id: string; readonly scene: boolean; readonly reach: BarGo; readonly done: () => void }) => <panes.TidyFoot {...props} />, { quiet: true });
 
@@ -870,6 +871,22 @@ const NO_ROWS: readonly AppMenuRow[] = [];
 function AppMenu({ name, faces, rows, scheme }: { readonly name: string; readonly faces?: BarFaces | undefined; readonly rows: readonly AppMenuRow[]; readonly scheme?: BarScheme | undefined }) {
   const popover = usePopover("app-menu", { align: "start" });
   const reach = () => barPanes.prefetch();
+  /* A part asked to go to the other face (`FACE_EVENT`, face-event.ts): gone to as the menu's row would, without opening the menu. */
+  const opener = useRef<HTMLElement | null>(null);
+  const held = useRef(faces);
+  held.current = faces;
+  useEffect(() => {
+    const element = opener.current;
+    if (!element) return;
+    const go = (event: Event) => {
+      const one = held.current?.[(event as CustomEvent<"scene" | "pages">).detail];
+      if (!one || one.current) return;
+      one.reach?.();
+      one.go();
+    };
+    element.addEventListener(FACE_EVENT, go);
+    return () => element.removeEventListener(FACE_EVENT, go);
+  }, []);
   return (
     <>
       <button
@@ -877,6 +894,10 @@ function AppMenu({ name, faces, rows, scheme }: { readonly name: string; readonl
         className="graview-bar-menu-open"
         data-testid="app-menu-open"
         {...popover.trigger}
+        ref={(element: HTMLElement | null) => {
+          popover.trigger.ref(element);
+          opener.current = element;
+        }}
         onClick={popover.toggle}
         onPointerEnter={reach}
         onFocus={reach}
