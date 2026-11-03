@@ -21,6 +21,16 @@ import type { SectionStage } from "./section.js";
 /** What the agent may do in one step. */
 export type DesignAgentMove = "look" | "read" | "draft" | "done" | "ask";
 
+/** An act a press may ask for on the records drawn. */
+export interface ActToBind {
+  readonly act: string;
+  readonly title: string;
+  /** The argument the record goes in (`data-record` fills it). */
+  readonly record: string;
+  /** What it marks on or off, where it is a toggle ("done"). */
+  readonly toggle?: string;
+}
+
 /** A step the agent took and what came of it, as the next request tells it back. */
 export interface DesignAgentStep {
   readonly said: string;
@@ -83,6 +93,10 @@ export interface DesignAgentOptions {
   readonly section?: string;
   /** What the person is talking about, by its name ("Someday"), and what they pointed at, a line each: said beside their words, never in them. */
   readonly about?: { readonly name: string; readonly lines?: readonly string[] };
+  /** The acts a press may ask for on these records (`data-act`), each with its title, the argument the record goes in, and whether it marks one thing on or off. */
+  readonly acts?: readonly ActToBind[];
+  /** What pressing every control of the draft on the page came to, a line each — where the person said it does not work. */
+  readonly pressed?: readonly string[];
 }
 
 export type DesignAgentResult = {
@@ -112,17 +126,20 @@ export const DESIGN_AGENT_SYSTEM = [
   "- draft: your whole script, drawn where only you see it, with \"say\" one sentence of what it does, as the person will read it once it is on the page (\"Tasks are cards now, side by side, each with its status and date.\"). You are told what the checks found (records, headings, dates, statuses or groups it lost; words it shows as the computer keeps them; styles the page will not keep) and what it drew. A draft the checks pass is shown to the person on the page, and your turn ends there.",
   "- done: you have finished this request; say in one sentence what you changed. Only once a draft passed, unless you must ask.",
   "- ask: ask the person one short question, and wait for their answer.",
+  "A control that changes a record is a press bound to one of the app's acts (acts_a_press_may_ask_for): <button data-act=\"finish\" data-record=\"${task.id}\">Done</button> — the host runs the act for that record when it is pressed. A field the person types into is named for the act's argument, inside a fieldset with the press; data-prefill=\"field\" fills it with the record's own text; data-save on a field saves it as it is typed. Never a checkbox, a toggle or a button bound to nothing, and never graview.act from your own click handler: it is refused. Every control on a record the page let a person press (marking it done, opening it) is kept, bound to the same act. A press that marks a record (an act with `marks`) shows what it marked from the record's own field: a record already marked says so and offers the act that undoes it (reopen), so a person sees the press land. The code presses every control headless and tells you what each one did.",
   "Keep everything the page showed unless the person asked otherwise: every record, every heading, each record's words (its status, its dates, its counts) and its group. Fix what the checks found and draft again; keep going until a draft passes. Write to a person, never about code: no words like view, script, spec, host, CSS or stylesheet in what you say.",
 ].join("\n");
 
 /** What one request tells the agent: the page, the conversation, the steps it took this turn and what came of each. */
-export function designAgentPrompt(options: Pick<DesignAgentOptions, "part" | "manifest" | "talk" | "keep" | "markup" | "current" | "section" | "about"> & { readonly seen?: { readonly look: unknown; readonly read: unknown } }, steps: readonly DesignAgentStep[]): string {
+export function designAgentPrompt(options: Pick<DesignAgentOptions, "part" | "manifest" | "talk" | "keep" | "markup" | "current" | "section" | "about" | "acts" | "pressed"> & { readonly seen?: { readonly look: unknown; readonly read: unknown } }, steps: readonly DesignAgentStep[]): string {
   const keep = options.keep;
   return JSON.stringify({
     page: options.part.name,
     view: { attach: options.manifest.attach, cardinality: options.manifest.cardinality, reads: options.manifest.reads ?? {} },
     conversation: options.talk.map((one) => ({ [one.who === "person" ? "person" : "you"]: one.said })),
     ...(options.about && options.about.name !== options.part.name ? { about: options.about.name, ...(options.about.lines?.length ? { pointed_at: options.about.lines } : {}) } : {}),
+    ...(options.acts?.length ? { acts_a_press_may_ask_for: options.acts.map((one) => ({ act: one.act, title: one.title, record_goes_in: one.record, ...(one.toggle ? { marks: one.toggle } : {}) })) } : {}),
+    ...(options.pressed?.length ? { the_controls_as_pressed: options.pressed, then: "The person says something does not work. This is what pressing every control of your draft found: fix what failed, with controls bound to acts." } : {}),
     ...(options.section ? { only_change: `Change only the part “${options.section}” of your_draft_on_the_page; keep every other part of the script as it is, byte for byte.` } : {}),
     ...(keep ? { ...(keep.title ? { the_page_draws_its_title: keep.title } : {}), keep_these_headings: keep.headings, records: checklistOf(keep), ...(keep.grouping ? { grouping: groupingRule(keep.grouping) } : {}) } : {}),
     ...(options.markup && !options.current ? { the_page_as_html: options.markup.slice(0, 5000) } : {}),

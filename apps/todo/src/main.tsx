@@ -5,6 +5,10 @@ import { createRoot } from "react-dom/client";
 import { useMemo, useState, type ReactNode } from "react";
 import type { DevApp, DevAppChanges } from "./dev-change.js";
 import { PagesApp } from "@graview/pages";
+import { lendViewPressing } from "@graview/guest/host/pressing";
+
+// A draft's controls are pressed before anybody sees it: a page that draws PagesApp itself, not the embed, lends the headless run as the embed does.
+lendViewPressing(() => import("@graview/guest/headless/pressed-here"));
 import { aiThroughDevServer, type HostAi } from "@graview/tools";
 import { filesAt } from "@graview/ship/browser";
 import { memorySubscriptions, type SubscriptionMatch } from "@graview/core";

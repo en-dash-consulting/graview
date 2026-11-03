@@ -29,6 +29,9 @@ export interface DrawnRead {
     readonly facts?: readonly string[];
     readonly row?: string;
     readonly under?: string;
+    /** Whether its row offered a control to press (a circle that finishes it, a toggle), and whether its name opened it. */
+    readonly presses?: boolean;
+    readonly opens?: boolean;
   }[];
   readonly text: string;
 }
@@ -251,3 +254,61 @@ export function describeChange(name: string, before: DrawnRead, after: DrawnRead
   const plural = /s$/i.test(name.trim());
   return `${name} now ${plural ? "show" : "shows"} ${said.length === 1 ? said[0] : `${said.slice(0, -1).join(", ")} and ${said.at(-1)}`}.`;
 }
+
+/** One control a press check pressed, and what came of it. */
+export interface PressSaid {
+  readonly control: string;
+  readonly element: string;
+  readonly does: string;
+  readonly ok: boolean;
+  readonly says: string;
+}
+
+const attribute = (element: string, name: string) => new RegExp(`\\s${name}="([^"]*)"`).exec(element)?.[1];
+
+/**
+ * WHAT A PERSON CAN DO ON EACH RECORD, KEPT (Roadmap f-make-any-page-better):
+ * every control the draft drew, pressed headless with nothing applied —
+ * one that does nothing, throws, or is refused is a finding in its own
+ * words — and each record whose row the page let a person press (a circle
+ * that finishes it) or open by its name must still be: a press bound to
+ * one of the toggles (`data-act`, `data-record` its id) that the check
+ * found the app accepts, and a link to it.
+ */
+export function pressFindings(presses: { readonly controls: readonly PressSaid[]; readonly problems: readonly PressSaid[] }, wanted: readonly { readonly label: string; readonly id: string; readonly presses?: boolean; readonly opens?: boolean }[], toggles: readonly string[], noun = "record"): string[] {
+  const findings = presses.problems.slice(0, 5).map((one) => `${one.control}: ${one.says}`);
+  const bound = (id: string) => presses.controls.some((one) => one.ok && one.does === "act" && attribute(one.element, "data-record") === id && toggles.includes(attribute(one.element, "data-act") ?? ""));
+  const linked = (id: string) => presses.controls.some((one) => one.ok && one.does === "link" && attribute(one.element, "data-record") === id);
+  const unpressable = toggles.length > 0 ? wanted.filter((one) => one.presses && !bound(one.id)) : [];
+  if (unpressable.length > 0)
+    findings.push(
+      `${unpressable.slice(0, 3).map((one) => `“${one.label}”`).join(", ")}${unpressable.length > 3 ? ` and ${unpressable.length - 3} more` : ""} can no longer be marked as the page let a person mark ${unpressable.length === 1 ? "it" : "them"}: give each ${noun} a press bound to ${toggles.map((one) => `“${one}”`).join(" or ")}, e.g. <button data-act="${toggles[0]}" data-record="${unpressable[0]!.id}">…</button>.`,
+    );
+  const closed = wanted.filter((one) => one.opens && !linked(one.id));
+  if (closed.length > 0) findings.push(`${closed.slice(0, 3).map((one) => `“${one.label}”`).join(", ")}${closed.length > 3 ? ` and ${closed.length - 3} more` : ""} no longer ${closed.length === 1 ? "opens its" : "open their"} page: link each with data-record="its id".`);
+  return findings;
+}
+
+/**
+ * WHAT THE CONTROLS DO, SAID BY THE PRESS CHECK: "Pressing it checked:
+ * “Done” marks each of the 3 tasks done, and each opens its page." Only
+ * what was pressed and accepted is said; undefined where it found nothing
+ * to say. The agent's own account of its controls is never said for it.
+ */
+export function pressSaid(presses: { readonly controls: readonly PressSaid[] }, acts: readonly { readonly act: string; readonly title: string; readonly toggle?: string }[], noun = "records"): string | undefined {
+  const said: string[] = [];
+  for (const act of acts) {
+    const on = new Set(presses.controls.filter((one) => one.ok && one.does === "act" && attribute(one.element, "data-act") === act.act).map((one) => attribute(one.element, "data-record") ?? one.control));
+    if (on.size > 0) said.push(`${act.title.replace(/[.…]+$/, "")} works on ${on.size === 1 ? "one of the" : `${on.size}`} ${noun}`);
+  }
+  const opens = new Set(presses.controls.filter((one) => one.ok && one.does === "link" && attribute(one.element, "data-record")).map((one) => attribute(one.element, "data-record")));
+  if (opens.size > 0) said.push(`${opens.size} open${opens.size === 1 ? "s its" : " their"} page${opens.size === 1 ? "" : "s"}`);
+  if (said.length === 0) return undefined;
+  return `Pressing each control checked it: ${said.length < 2 ? said[0] : `${said.slice(0, -1).join(", ")} and ${said.at(-1)}`}.`;
+}
+
+/** Words that say what a control does: a sentence of the model's with one is not said for it — the press check says what was checked. */
+export const CONTROL_WORDS = /\b(check ?box(es)?|button|click|tap|press|toggle|mark(ed|s|ing)?|complet(e|ed|ing)|finish(ed|es|ing)?|persist|sav(e|es|ed|ing)|updat(e|es|ed|ing)|works?|working|data)\b/i;
+
+/** Words of a person who says a control does not work. */
+export const IT_DOES_NOT_WORK = /\b(does(n'?t| not)|did(n'?t| not)|can'?t|cannot|won'?t|not)\s+(work|working|persist|save|stick|change|update|do anything|mark|finish|complete|click|press)|\bfake\b|\bbroken\b|\bstill (broken|not)\b/i;

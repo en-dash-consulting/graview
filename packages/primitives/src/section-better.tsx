@@ -3,7 +3,7 @@ import type { AiInteraction, AiStage, AiUsage } from "@graview/core/catalog";
 import { compareViewRevision } from "@graview/core/revisions";
 import { useGraview, type MenuViewSection, type ViewPlaceDraft, type ViewPlaceHandle } from "@graview/react/provider";
 import { sectionUnderNow, viewPlaceOf } from "@graview/react/drawing";
-import { describeChange, drawnFindings, lookOf, runDesignAgent, type DesignTalk, type DrawnRead, type SectionStage } from "@graview/tools/section";
+import { CONTROL_WORDS, describeChange, drawnFindings, lookOf, runDesignAgent, type DesignTalk, type DrawnRead, type SectionStage } from "@graview/tools/section";
 import { interactionId } from "@graview/tools/inline-ai";
 import type { Telling, TellingOutcome, ToldStore } from "@graview/core/told";
 import { retryingImport } from "@graview/core/retry";
@@ -342,7 +342,9 @@ export function SectionCard({ ask, close }: SectionCardProps) {
               await new Promise((settled) => requestAnimationFrame(() => requestAnimationFrame(settled)));
               const root = drawn.drawing().root;
               const now = readDrawn(root?.parentElement ?? root, was.records.map((one) => one.label));
-              const findings = [...judged(view, original.current!, liveDrawing, liveRefused, drawn, source).findings, ...drawnFindings(was, now, { asked: askedWords() })];
+              // And every control it draws pressed, headless and nothing applied: one that does nothing, throws or is refused goes back to the agent.
+              const pressed = view.presses ? await view.presses(source).catch(() => undefined) : undefined;
+              const findings = [...judged(view, original.current!, liveDrawing, liveRefused, drawn, source).findings, ...drawnFindings(was, now, { asked: askedWords() }), ...(pressed?.problems ?? []).slice(0, 5).map((one) => `${one.control}: ${one.says}`)];
               if (findings.length > 0) await showLatest();
               else {
                 steps.current.push({ source, said: describeChange(section.name, was, now) ?? `“${section.name}” has changed. Compare Before and After.`, entry: entryOf(`Make “${section.name}” better: ${askedWords()}`, "offered", []) });
@@ -369,7 +371,8 @@ export function SectionCard({ ask, close }: SectionCardProps) {
       const entry = entryOf(`Make “${section.name}” better: ${askedWords()}`, offered ? "offered" : "failed", result.stages, offered ? {} : { failed: result.last?.findings.join(" ") ?? result.said });
       aiDesk.record(entry);
       tell(askedWords(), section, !offered, result.stages, Date.now() - started, entry.id);
-      say("graview", result.said);
+      // What a control does is the press check's to say, never the model's.
+      say("graview", result.passed && CONTROL_WORDS.test(result.said) ? "Here it is on the page." : result.said);
       setPhase(steps.current.length > 0 ? { at: "draft" } : { at: "open" });
     },
     [ai, aiDesk, drawDraft, entryOf, phase.at, place, redraw, say, section, showLatest, tell],

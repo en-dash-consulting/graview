@@ -34,6 +34,11 @@
  *   thePanelSpeaksPlainly
  *   thePanelIsPartOfThePageAtEveryWidthInLightAndDark
  *   thePersonsWordsStayAsTypedAndThePartIsNamedBesideThem
+ *   aDraftWithACheckboxBoundToNothingIsNeverShown
+ *   aKeptRedesignFinishesATaskAndUndoPutsItBack
+ *   whatAControlDoesIsSaidOnlyAsThePressCheckFoundIt
+ *   itDoesntWorkMakesGraviewPressEveryControl
+ *   theConversationsFirstMessageIsWhollyVisible
  *   aSeatThatMayNotChangeTheAppIsNotOffered
  */
 import { createServer } from "node:http";
@@ -66,13 +71,22 @@ const reach = deadline({
   },
 });
 
-const TASKS = resolve(repoRoot, "packages/core/tests/document/fixtures/tasks.gdd.json");
+/* The tasks, with a yes-or-no "done" and the acts that mark it — as the todo example finishes a task — written beside the harness's bundle. */
+const TASKS = (() => {
+  const document = JSON.parse(readFileSync(resolve(repoRoot, "packages/core/tests/document/fixtures/tasks.gdd.json"), "utf8"));
+  document.kinds.task.fields.done = { type: "boolean", default: false };
+  document.acts.finish = { title: "Mark it done", on: "task", description: "Say a task is done.", sets: { done: true } };
+  document.acts.reopen = { title: "Open it again", on: "task", description: "Say a task is not done after all.", sets: { done: false } };
+  const at = join(mkdtempSync(join(tmpdir(), "graview-page-better-tasks-")), "tasks.gdd.json");
+  writeFileSync(at, JSON.stringify(document));
+  return at;
+})();
 const BASE = "/better";
 const SEED = {
   nodes: [
-    { id: "t1", kind: "task", label: "Write the brief", status: "todo", due: "2026-09-03" },
-    { id: "t2", kind: "task", label: "Book the hall", status: "doing", due: "2026-09-05" },
-    { id: "t3", kind: "task", label: "Print the flyers", status: "doing" },
+    { id: "t1", kind: "task", label: "Write the brief", status: "todo", due: "2026-09-03", done: false },
+    { id: "t2", kind: "task", label: "Book the hall", status: "doing", due: "2026-09-05", done: false },
+    { id: "t3", kind: "task", label: "Print the flyers", status: "doing", done: false },
   ],
   edges: [],
 };
@@ -110,7 +124,7 @@ const FAKE_AI = () => {
     }
     return { answers, usage: { inputTokens: 10, outputTokens: 2 } };
   };
-  const view = ({ lose, small, titles, regroup, says }) => {
+  const view = ({ lose, small, titles, regroup, says, checkbox }) => {
     // The heading each record sat under, as the page said it; one moved to the first group's where a regroup is asked of the fake.
     const under = Object.fromEntries(Object.entries(says ?? {}).flatMap(([label, one]) => (one.under ? [[label, one.under]] : [])));
     const groups = [...new Set(Object.values(under))];
@@ -125,7 +139,9 @@ const FAKE_AI = () => {
       "  const status = (task) => props.choices?.task?.status?.[task.status] ?? '';",
       titles
         ? "  const card = (task) => graview.html`<a class=\"pb-card\" data-key=\"${task.id}\" data-record=\"${task.id}\"><span>${task.label}</span></a>`;"
-        : "  const card = (task) => graview.html`<a class=\"pb-card\" data-key=\"${task.id}\" data-record=\"${task.id}\"><span>${task.label}</span><span class=\"pb-meta\">${status(task)}</span><span class=\"pb-meta\">${day(task.due)}</span></a>`;",
+        : checkbox
+          ? "  const card = (task) => graview.html`<div class=\"pb-card\" data-key=\"${task.id}\"><a data-record=\"${task.id}\">${task.label}</a><span class=\"pb-meta\">${status(task)}</span><span class=\"pb-meta\">${day(task.due)}</span><span class=\"pb-meta\">Done: ${task.done ? \"yes\" : \"no\"}</span><label><input type=\"checkbox\"> Done</label></div>`;"
+          : "  const card = (task) => graview.html`<div class=\"pb-card\" data-key=\"${task.id}\"><a data-record=\"${task.id}\">${task.label}</a><span class=\"pb-meta\">${status(task)}</span><span class=\"pb-meta\">${day(task.due)}</span><span class=\"pb-meta\">Done: ${task.done ? \"yes\" : \"no\"}</span><button class=\"pb-done\" data-act=\"${task.done ? \"reopen\" : \"finish\"}\" data-record=\"${task.id}\">${task.done ? \"Open again\" : \"Done\"}</button></div>`;",
       "  const grid = (list) => graview.html`<div class=\"pb-grid\">${list.map(card)}</div>`;",
       "  graview.render(GROUPS.length > 0",
       "    ? graview.html`<div class=\"pg\">${GROUPS.map((heading, at) => graview.html`<section aria-labelledby=\"pb-g${at}\"><h2 id=\"pb-g${at}\">${heading}</h2>${grid(tasks.filter((task) => UNDER[task.label] === heading))}</section>`)}</div>`",
@@ -152,11 +168,14 @@ const FAKE_AI = () => {
       const drafts = steps.filter((one) => one.did === "draft");
       const last = steps.at(-1);
       const answer = (one) => ({ text: JSON.stringify(one) });
+      const claims = window.__agentScenario === "checkbox" || window.__agentScenario === "claims";
+      const said = small ? "The dates are smaller now." : claims ? "Each task card now has a checkbox so you can mark tasks complete, and it saves." : "Tasks are cards now, side by side, each with its status and date.";
       if (!last || last.did === "look") {
         const titles = window.__agentScenario === "fix" && drafts.length === 0;
-        return answer({ say: small ? "The dates are smaller now." : "Tasks are cards now, side by side, each with its status and date.", do: "draft", source: view({ titles, says, small }) });
+        const checkbox = window.__agentScenario === "checkbox" && drafts.length === 0;
+        return answer({ say: said, do: "draft", source: view({ titles, says, small, checkbox }) });
       }
-      if (last.did === "draft" && (last.result?.findings ?? []).length > 0) return answer({ say: small ? "The dates are smaller now." : "Tasks are cards now, side by side, each with its status and date.", do: "draft", source: view({ says, small }) });
+      if (last.did === "draft" && (last.result?.findings ?? []).length > 0) return answer({ say: said, do: "draft", source: view({ says, small }) });
       if (last.did === "draft") return answer({ say: small ? "The dates are smaller now." : "Tasks are cards now, side by side, each with its status and date.", do: "done" });
       return answer({ say: "Done.", do: "done" });
     }
@@ -208,6 +227,7 @@ async function serveHost() {
         const grouped = new URLSearchParams(location.search).get("grouped") === "1" ? composeAppChange({ document: tasks, edits: [{ op: "arrange-pages", group: { task: "status" } }] }) : null;
         if (grouped && !grouped.ok) throw new Error(grouped.refused);
         let current = { app: grouped ? grouped.app : compiled.app, document: grouped ? grouped.document : tasks, store: storeOver(grouped ? grouped.app : compiled.app, ${JSON.stringify(SEED)}) };
+        window.__store = () => current.store;
         const changes = (window.__changes = { drafts: 0, applied: 0, undone: 0, document: () => current.document });
         const changed = (edits) => {
           const composed = composeAppChange({ document: current.document, edits });
@@ -374,6 +394,17 @@ const watchBroken = (page) =>
       const covered = document.querySelector("[data-graview-redesigning]");
       if (!covered && cards.length > 0 && cards.some((one) => !/Todo|Doing/.test(one.textContent ?? ""))) window.__broken += 1;
       window.__watching = requestAnimationFrame(look);
+    };
+    look();
+  });
+/** Watches, every frame, for a design on the page drawing a checkbox where nothing covers it: read back as `window.__boxes`. */
+const watchCheckboxes = (page) =>
+  page.evaluate(() => {
+    window.__boxes = 0;
+    const look = () => {
+      const box = document.querySelector('[data-worker-view="task-list"]')?.shadowRoot?.querySelector('input[type="checkbox"]');
+      if (box && !document.querySelector("[data-graview-redesigning]")) window.__boxes += 1;
+      window.__boxWatch = requestAnimationFrame(look);
     };
     look();
   });
@@ -672,7 +703,7 @@ try {
         fedBack.some((one) => /“Todo” on “Write the brief”/.test(one) && /“Sep 3, 2026” on “Write the brief”/.test(one)) &&
         cards.length === 3 &&
         cards.some((one) => /Write the brief/.test(one) && /Todo/.test(one) && /Sep 3, 2026/.test(one)) &&
-        talk.at(-1) === "graview: Tasks are cards now, side by side, each with its status and date." &&
+        (talk.at(-1) ?? "").startsWith("graview: Tasks are cards now, side by side, each with its status and date.") &&
         /^Tasks now show/.test(changed ?? ""),
     };
   }
@@ -744,7 +775,7 @@ try {
       asked: { current: Boolean(asked.current), sameAsKept: asked.current === keptSource, people: asked.conversation.filter((one) => one.person).length },
       meta,
       talk: talk.slice(-2),
-      ok: asked.current !== null && asked.current === keptSource && asked.conversation.filter((one) => one.person).length >= 2 && meta === "11px" && talk.at(-1) === "The dates are smaller now.",
+      ok: asked.current !== null && asked.current === keptSource && asked.conversation.filter((one) => one.person).length >= 2 && meta === "11px" && (talk.at(-1) ?? "").startsWith("The dates are smaller now."),
     };
     await page.click('[data-testid="better-discard"]');
     await panelAt(page, "open");
@@ -895,6 +926,94 @@ try {
       ok: before === "About: Tasks" && /^About: Doing$/.test(about ?? "") && said.length === 1 && said[0] === words && told.person.length === 1 && told.person[0] === words && told.about === "Doing",
     };
     await page.click('[data-testid="better-discard"]');
+    await page.click('[data-testid="better-close"]');
+  }
+
+  reach("aDraftWithACheckboxBoundToNothingIsNeverShown");
+  {
+    await ready(page, "/tasks");
+    await page.evaluate(() => ((window.__agentScenario = "checkbox"), (window.__agentDelay = 0), (window.__agentPrompts = [])));
+    await menuOn(page, ROW);
+    await page.click(`${MENU} [data-menu-mode="better"]`);
+    await page.waitForSelector(PANEL, { timeout: 10_000 });
+    await watchCheckboxes(page);
+    await page.fill('[data-testid="better-words"]', "I can't mark them complete");
+    await page.click('[data-testid="better-send"]');
+    await page.waitForSelector(`${PANEL}[data-better-phase="draft"]`, { timeout: 30_000 });
+    const seenCheckbox = await page.evaluate(() => (cancelAnimationFrame(window.__boxWatch), window.__boxes));
+    const fedBack = await page.evaluate(() => window.__agentPrompts.flatMap((one) => one.your_steps.flatMap((step) => step.result?.findings ?? [])));
+    const actsTold = await page.evaluate(() => (window.__agentPrompts[0]?.acts_a_press_may_ask_for ?? []).map((one) => one.act));
+    const buttons = await page.evaluate(() => [...(document.querySelector('[data-worker-view="task-list"]')?.shadowRoot?.querySelectorAll("button[data-act]") ?? [])].map((one) => `${one.getAttribute("data-act")}:${one.getAttribute("data-record")}`));
+    report.checks.aDraftWithACheckboxBoundToNothingIsNeverShown = {
+      seenCheckbox,
+      fedBack: fedBack.slice(0, 4),
+      actsTold,
+      buttons,
+      ok: seenCheckbox === 0 && fedBack.some((one) => /checkbox|mark|finish/i.test(one)) && actsTold.includes("finish") && buttons.length === 3 && buttons.every((one) => /^finish:t\d$/.test(one)),
+    };
+  }
+
+  reach("whatAControlDoesIsSaidOnlyAsThePressCheckFoundIt");
+  {
+    // The agent said "a checkbox … and it saves"; the panel says what pressing found, and not the agent's claim.
+    const reply = await page.evaluate(() => [...document.querySelectorAll('[data-testid="better-message"][data-who="graview"]')].at(-1)?.textContent ?? null);
+    report.checks.whatAControlDoesIsSaidOnlyAsThePressCheckFoundIt = {
+      reply,
+      ok: reply !== null && !/checkbox|saves/i.test(reply) && /^Pressing each control checked it: Mark it done works on 3 tasks and 3 open their pages\.$/.test(reply),
+    };
+  }
+
+  reach("aKeptRedesignFinishesATaskAndUndoPutsItBack");
+  {
+    await page.click('[data-testid="better-keep"]');
+    await page.waitForSelector(`${PANEL}[data-better-phase="kept"]`, { timeout: 15_000 });
+    await page.waitForFunction(() => document.querySelector('[data-worker-view="task-list"]')?.shadowRoot?.querySelector('button[data-act="finish"][data-record="t1"]'), null, { timeout: 15_000 });
+    const before = await page.evaluate(() => window.__store().graph.getNode("t1")?.done ?? null);
+    // A real press: the host takes only a trusted one.
+    await page.click('[data-worker-view="task-list"] button[data-act="finish"][data-record="t1"]');
+    await page.waitForFunction(() => window.__store().graph.getNode("t1")?.done === true, null, { timeout: 10_000 }).catch(() => {});
+    const after = await page.evaluate(() => {
+      const store = window.__store();
+      const batch = [...store.batches()].reverse().find((one) => !one.undone && one.ops.some((op) => op.writes.includes("t1")));
+      return { done: store.graph.getNode("t1")?.done ?? null, batch: batch?.id ?? null, batches: store.batches().length };
+    });
+    if (after.batch) await page.evaluate((batch) => window.__store().undo(batch, { author: { kind: "human", id: "p1", roles: ["owner"] } }), after.batch);
+    await page.waitForTimeout(300);
+    const undone = await page.evaluate(() => window.__store().graph.getNode("t1")?.done ?? null);
+    report.checks.aKeptRedesignFinishesATaskAndUndoPutsItBack = { before, after: after.done, batches: after.batches, undone, ok: before === false && after.done === true && undone === false };
+  }
+
+  reach("itDoesntWorkMakesGraviewPressEveryControl");
+  {
+    await page.evaluate(() => ((window.__agentScenario = "good"), (window.__agentPrompts = [])));
+    await page.fill('[data-testid="better-words"]', "it doesn't work");
+    await page.click('[data-testid="better-send"]');
+    await page.waitForFunction(() => document.querySelector('[data-testid="better-panel"]')?.getAttribute("data-better-phase") !== "working", null, { timeout: 30_000 });
+    const steps = await page.evaluate(() => [...document.querySelectorAll('[data-testid="better-step"]')].map((one) => one.lastElementChild?.textContent?.trim() ?? ""));
+    const said = await page.evaluate(() => [...document.querySelectorAll('[data-testid="better-message"][data-who="graview"]')].map((one) => one.textContent));
+    const told = await page.evaluate(() => window.__agentPrompts[0]?.the_controls_as_pressed ?? null);
+    report.checks.itDoesntWorkMakesGraviewPressEveryControl = {
+      steps,
+      said: said.slice(-2),
+      told: told?.slice(0, 3) ?? null,
+      ok: steps[0] === "Pressing every control on the page" && said.some((one) => /^I pressed every control\./.test(one) && /Mark it done works on/.test(one)) && Array.isArray(told) && told.length > 0,
+    };
+  }
+
+  reach("theConversationsFirstMessageIsWhollyVisible");
+  {
+    await page.evaluate(() => {
+      const list = document.querySelector('[data-testid="better-talk"]');
+      if (list) list.scrollTop = 0;
+    });
+    const first = await page.evaluate(() => {
+      const list = document.querySelector('[data-testid="better-talk"]').getBoundingClientRect();
+      const one = document.querySelector('[data-testid="better-message"]').getBoundingClientRect();
+      const head = document.querySelector('[data-testid="better-about"]')?.getBoundingClientRect() ?? document.querySelector('[data-testid="better-scope"]').getBoundingClientRect();
+      return { listTop: Math.round(list.top), top: Math.round(one.top), bottom: Math.round(one.bottom), listBottom: Math.round(list.bottom), headBottom: Math.round(head.bottom) };
+    });
+    await shot(page, "conversation-top");
+    report.checks.theConversationsFirstMessageIsWhollyVisible = { first, ok: first.top >= first.listTop && first.top >= first.headBottom && first.bottom <= first.listBottom };
     await page.click('[data-testid="better-close"]');
   }
 

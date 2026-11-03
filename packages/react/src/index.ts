@@ -3,7 +3,7 @@ export { GoToContext, useGoTo } from "./go.js";
 export { MenuSections, useMenuPrepare, useMenuSections } from "./menu-sections.js";
 export type { MenuColumn, MenuItem, MenuMode, MenuPage, MenuSection, MenuSectionSource, MenuTarget } from "./menu-types.js";
 export { alsoWhenSectionsArrive, partsWanted, sectionsArrive, sectionsWanted, sectionUnderNow, setViewPlace, viewPlaceOf } from "./view-places.js";
-export type { MenuViewSection, ViewPlaceDraft, ViewPlaceDrawing, ViewPlaceHandle } from "./view-places.js";
+export type { MenuViewSection, ViewPlaceDraft, ViewPlaceDrawing, ViewPlaceHandle, ViewPresses } from "./view-places.js";
 export { BesideTheMap } from "./beside-the-map.js";
 export { HostAssetsContext, HostFilesContext, useHostAssets, useHostFiles } from "./files.js";
 export type { GoTo, GoToAlso, GoToTarget } from "./go.js";

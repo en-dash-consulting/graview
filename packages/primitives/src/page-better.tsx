@@ -1,8 +1,8 @@
 import { type AnySchema, type ViewForkKept, type ViewReviseAnswer } from "@graview/core";
 import type { AiInteraction, AiStage, AiUsage } from "@graview/core/catalog";
 import { useGraview, type ProposeChangeAnswer, type ReshapeProposal } from "@graview/react/provider";
-import { viewPlaceOf, type ViewPlaceHandle } from "@graview/react/drawing";
-import { describeChange, draftPageSpec, drawnFindings, forkManifest, lookOf, mayChangeDeclaration, runDesignAgent, specCanSay, type DesignTalk, type DrawnRead, type ForkManifest, type PageViewKeeps, type PagePartSaid, type SectionStage } from "@graview/tools/section";
+import { viewPlaceOf, type ViewPlaceHandle, type ViewPresses } from "@graview/react/drawing";
+import { CONTROL_WORDS, describeChange, draftPageSpec, drawnFindings, forkManifest, IT_DOES_NOT_WORK, lookOf, mayChangeDeclaration, pressFindings, pressSaid, runDesignAgent, specCanSay, type ActToBind, type DesignTalk, type DrawnRead, type ForkManifest, type PageViewKeeps, type PagePartSaid, type SectionStage } from "@graview/tools/section";
 import { interactionId } from "@graview/tools/inline-ai";
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 import type { PagePart } from "./page-parts.js";
@@ -183,6 +183,8 @@ interface CardHeld {
   about: Pointed | null;
   /** The design kept in this card, for a later turn to change again. */
   kept: string | null;
+  /** What pressing every control of the newest design came to. */
+  pressed: ViewPresses | null;
   version: number;
   readonly heard: Set<() => void>;
 }
@@ -190,7 +192,7 @@ const CARDS = /* @__PURE__ */ new Map<number, CardHeld>();
 const cardOf = (at: number, first: () => Phase): CardHeld => {
   let held = CARDS.get(at);
   if (!held)
-    CARDS.set(at, (held = { phase: first(), steps: [], before: false, putBack: null, began: false, original: null, markup: null, talk: [], events: [], since: Date.now(), stop: null, covering: false, pointed: null, about: null, kept: null, version: 0, heard: new Set() }));
+    CARDS.set(at, (held = { phase: first(), steps: [], before: false, putBack: null, began: false, original: null, markup: null, talk: [], events: [], since: Date.now(), stop: null, covering: false, pointed: null, about: null, kept: null, pressed: null, version: 0, heard: new Set() }));
   return held;
 };
 
@@ -269,7 +271,8 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
 
   /* What this seat may do here: change the app's settings through the host, and give the page a new design. */
   const specHost = onProposeChange !== undefined && composeChange !== undefined && mayChangeDeclaration(store, principal);
-  const manifest: ForkManifest | undefined = forkManifest(said, linksOf(here, part));
+  const acts = useMemo(() => actsOf(here, part), [here, part]);
+  const manifest: ForkManifest | undefined = forkManifest(said, linksOf(here, part), acts.map((one) => one.act));
   const forkHost = manifest !== undefined && typeof keptViews?.fork === "function" && typeof keptViews.draftFork === "function" && keptViews.current().may.views === true;
   const from: ViewForkKept["from"] = part.slot === "record" ? { page: "record", kind: part.kind! } : part.slot === "home" ? { page: "home" } : { page: "list", kind: part.kind ?? "" };
   const forkOf = useCallback((source: string): ViewForkKept => ({ manifest: manifest!, source, from, said: "" }), [manifest, from]);
@@ -436,6 +439,12 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
             // Read where the draft was drawn: the page's region holding that place, whatever the page drew again meanwhile.
             const region = drawn.element.closest("[data-graview-page-main], main") ?? regionOf(mainNow());
             findings = drawnFindings(was, readDrawn(region, was.records.map((one) => one.label)), { fields: fieldsOf(here, part), asked: askedWords() });
+            // Every control it drew pressed, headless and nothing applied, and what a person could do on each record kept.
+            const pressed = drawn.handle.presses ? await drawn.handle.presses(source).catch(() => undefined) : undefined;
+            if (pressed) {
+              held.pressed = pressed;
+              findings = [...findings, ...pressFindings(pressed, wantedOf(was, idsOf(here, part, was)), acts.filter((one) => one.toggle).map((one) => one.act), nounOf(part))];
+            }
           }
         }
         const drew = lookOf(drawnNow());
@@ -455,7 +464,7 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
   );
 
   /** One turn of the agent, from the person's last words: it looks, reads, drafts, is told what the checks found, and drafts again. */
-  const agentTurn = useCallback(async () => {
+  const agentTurn = useCallback(async (pressedLines: readonly string[] = []) => {
     if (!manifest || !forkHost) {
       say("graview", "Its settings can't do that, and a new design can't be drawn for it here.");
       return;
@@ -476,7 +485,9 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
       host: { look: () => lookOf(drawnNow()), read: () => dataOf(here, part), draft: judgeDraft },
       onEvent: (event) => step(event),
       ...(held.about ? { about: held.about } : {}),
-      noun: part.slot === "list" || part.slot === "group" ? part.name.toLowerCase() : part.slot === "record" ? "parts" : "records",
+      acts,
+      ...(pressedLines.length > 0 ? { pressed: pressedLines } : {}),
+      noun: nounOf(part),
       signal: stop.signal,
     });
     // Stopped: the page was put back when Stop was pressed; nothing more of this turn.
@@ -484,9 +495,42 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
     held.stop = null;
     if (held.events.at(-1)?.kind === "streaming") held.events.pop();
     aiDesk.record(entryOf(`Draw “${part.name}” anew: ${askedWords()}`, held.steps.length > stepsBefore ? "offered" : "failed", result.stages, held.steps.length > stepsBefore ? {} : { failed: result.last?.findings.join(" ") ?? result.said }));
-    say("graview", result.said);
+    /*
+     * NEVER A CLAIM NOBODY CHECKED: what the controls of a draft do is said by
+     * the press check — what was pressed and accepted — and a sentence of
+     * the model's that says what a control does is not said for it.
+     */
+    if (result.passed) {
+      const checked = held.pressed ? pressSaid(held.pressed, acts, nounOf(part)) : undefined;
+      const own = CONTROL_WORDS.test(result.said) ? undefined : result.said;
+      say("graview", [own ?? (checked ? undefined : "Here it is on the page."), checked].filter(Boolean).join(" "));
+    } else say("graview", result.said);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ai, aiDesk, drawnNow, entryOf, forkHost, held, here, judgeDraft, mainNow, manifest, original, part, said, say, step]);
+  }, [ai, aiDesk, acts, drawnNow, entryOf, forkHost, held, here, judgeDraft, mainNow, manifest, original, part, said, say, step]);
+
+  /**
+   * "IT DOESN'T WORK": the design on the page — the newest draft, or the
+   * one kept — has every control pressed, headless and nothing applied,
+   * and what came of it is said to the person and handed to the agent,
+   * before it says anything of its own.
+   */
+  const pressTheDesign = useCallback(async (): Promise<readonly string[]> => {
+    const latest = [...held.steps].reverse().find((one) => one.kind === "view") as Extract<Step, { kind: "view" }> | undefined;
+    const source = latest?.source ?? held.kept;
+    if (!source || !manifest) return [];
+    step({ kind: "look", text: "Pressing every control on the page" });
+    const drawn = await placeOfView(manifest.name);
+    if ("failed" in drawn || !drawn.handle.presses) return [];
+    const pressed = await drawn.handle.presses(source).catch(() => undefined);
+    if (!pressed) return [];
+    held.pressed = pressed;
+    const was = original();
+    const broken = pressFindings(pressed, wantedOf(was, idsOf(here, part, was)), acts.filter((one) => one.toggle).map((one) => one.act), nounOf(part));
+    const lines = broken.length > 0 ? broken : pressed.controls.slice(0, 8).map((one) => `${one.control}: ${one.says}`);
+    step(broken.length > 0 ? { kind: "check", text: `Check: ${broken.length} ${broken.length === 1 ? "control doesn't" : "controls don't"} work — fixing` } : { kind: "passed", text: "Check: every control works" });
+    say("graview", broken.length > 0 ? `I pressed every control: ${broken.join(" ")}` : `I pressed every control. ${pressSaid(pressed, acts, nounOf(part)) ?? "Each one did what it says."}`);
+    return lines;
+  }, [acts, held, here, manifest, original, part, say, step]);
 
   /** The person's words: the settings where they can say it, else the agent — one turn. */
   const askFor = useCallback(
@@ -503,11 +547,14 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
       setPhase({ at: "working" });
       original();
       held.markup ??= markupOf(mainNow());
-      const quick = await bySettings(asked).catch(() => false);
-      if (!quick) await agentTurn();
+      // Told a control does not work, the design on the page is pressed first, and what was found goes to the agent.
+      const complaint = IT_DOES_NOT_WORK.test(words) ? await pressTheDesign().catch(() => []) : [];
+      // A control that does not work is never a setting: those words go to the agent, with the press check behind them.
+      const quick = !IT_DOES_NOT_WORK.test(words) && (await bySettings(asked).catch(() => false));
+      if (!quick) await agentTurn(complaint);
       if ((held.phase as Phase).at === "working") setPhase(held.steps.length > 0 ? { at: "draft" } : { at: "open" });
     },
-    [agentTurn, bySettings, held, mainNow, original, say, setPhase],
+    [agentTurn, bySettings, held, mainNow, original, pressTheDesign, say, setPhase],
   );
 
   /** Stop: at once — the turn's drafts gone, the page as it was before it began. */
@@ -734,6 +781,40 @@ function markupOf(main: Element | null): string | null {
   for (const element of [copy, ...copy.querySelectorAll("*")]) for (const name of [...element.getAttributeNames()]) element.removeAttribute(name);
   const html = copy.outerHTML.replace(/\s+/g, " ").replace(/<(div|span)>\s*<\/\1>/g, "").trim();
   return html.length > 6000 ? html.slice(0, 6000) : html;
+}
+
+/** What the records of the part are called in the agent's steps: "tasks". */
+const nounOf = (part: PagePart) => (part.slot === "list" || part.slot === "group" ? part.name.toLowerCase() : part.slot === "record" ? "parts" : "records");
+
+/** Each record the page showed, with its id and what a person could do on it there. */
+function wantedOf(was: DrawnRead, ids: Readonly<Record<string, string>>): { label: string; id: string; presses?: boolean; opens?: boolean }[] {
+  return was.records.flatMap((one) => (ids[one.label] ? [{ label: one.label, id: ids[one.label]!, ...(one.presses ? { presses: true } : {}), ...(one.opens ? { opens: true } : {}) }] : []));
+}
+
+/**
+ * THE ACTS A PRESS MAY ASK FOR ON THE PART'S RECORDS: each act whose
+ * subject is the kind (none that makes a record), its title, the argument
+ * the record goes in, and — where it writes one yes-or-no field — what it
+ * marks ("done"), so a new design can finish a task as the page did.
+ */
+function actsOf(here: ReturnType<typeof useGraview<AnySchema>>, part: PagePart): ActToBind[] {
+  const { store } = here;
+  const kinds = part.kind ? [part.kind] : store.schema.kinds;
+  const shapeOf = (kind: string) => ((store.schema.tryDefinition(kind) as { fields?: { shape?: Record<string, unknown> } } | undefined)?.fields?.shape ?? {}) as Record<string, unknown>;
+  const yesOrNo = (field: unknown): boolean => {
+    let def = (field as { _zod?: { def?: { type?: string; innerType?: unknown } } } | undefined)?._zod?.def;
+    for (let depth = 0; depth < 6 && def && def.type !== "boolean" && def.innerType !== undefined; depth++) def = (def.innerType as { _zod?: { def?: { type?: string; innerType?: unknown } } })._zod?.def;
+    return def?.type === "boolean";
+  };
+  return store.allMutations().flatMap((mutation): ActToBind[] => {
+    const subject = mutation.subject as { kinds: readonly string[] | "*"; arg: string } | undefined;
+    if (!subject || (mutation as { creates?: readonly string[] }).creates?.length) return [];
+    const kind = kinds.find((one) => subject.kinds === "*" || subject.kinds.includes(one));
+    if (!kind) return [];
+    const writes = (mutation as { writes?: readonly string[] }).writes ?? [];
+    const toggle = writes.length === 1 && yesOrNo(shapeOf(kind)[writes[0]!]) ? writes[0] : undefined;
+    return [{ act: mutation.name, title: String((mutation as { title?: unknown }).title ?? mutation.name), record: subject.arg, ...(toggle ? { toggle } : {}) }];
+  }).slice(0, 24);
 }
 
 /** The page's own region, found again where the draft drew the page anew. */

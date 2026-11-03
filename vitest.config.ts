@@ -116,6 +116,8 @@ export default defineConfig({
       "@graview/guest/host/frame": fileURLToPath(new URL("./packages/guest/src/host/frame.ts", import.meta.url)),
       "@graview/guest/host/worker": fileURLToPath(new URL("./packages/guest/src/host/worker.ts", import.meta.url)),
       "@graview/guest/host/views": fileURLToPath(new URL("./packages/guest/src/host/views.ts", import.meta.url)),
+      "@graview/guest/host/pressing": fileURLToPath(new URL("./packages/guest/src/host/pressing.ts", import.meta.url)),
+      "@graview/guest/headless/pressed-here": fileURLToPath(new URL("./packages/guest/src/headless/pressed-here.ts", import.meta.url)),
       "@graview/guest/headless/node": fileURLToPath(new URL("./packages/guest/src/headless/node.ts", import.meta.url)),
       "@graview/guest/headless": fileURLToPath(new URL("./packages/guest/src/headless/index.ts", import.meta.url)),
       "@graview/guest/cli": fileURLToPath(new URL("./packages/guest/src/cli.ts", import.meta.url)),

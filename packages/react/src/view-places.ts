@@ -34,6 +34,13 @@ export interface ViewPlaceDrawing {
   readonly height: number | undefined;
 }
 
+/** What pressing every control a view drew came to: each control by its name, what it does, and whether it worked, in a sentence. */
+export interface ViewPresses {
+  readonly ok: boolean;
+  readonly controls: readonly { readonly control: string; readonly element: string; readonly does: string; readonly ok: boolean; readonly says: string }[];
+  readonly problems: readonly { readonly control: string; readonly element: string; readonly does: string; readonly ok: boolean; readonly says: string }[];
+}
+
 /** A draft drawn in the view's place: drawn (or why not), what it drew, and put away. */
 export interface ViewPlaceDraft {
   /** Resolves once the draft drew, or failed, or was given up on: `failed` says why, in a sentence. */
@@ -62,6 +69,14 @@ export interface ViewPlaceHandle {
   refused(): readonly string[];
   /** What in this code keeps the host from running it, in sentences: empty when it may run. */
   check(source: string): Promise<readonly string[]>;
+  /**
+   * EVERY CONTROL IT WOULD DRAW, PRESSED (Roadmap f-views-work-end-to-end):
+   * this code run headless for this seat, each bound act rehearsed with
+   * nothing applied, each link followed, each control its own code hears
+   * pressed in a run of its own — what each does, and which fail. Optional:
+   * a host that cannot run a view headless lends none.
+   */
+  presses?(source: string): Promise<ViewPresses>;
   /** Draws this code in the view's place over the view, which is hidden until the draft is put away. */
   draft(source: string): ViewPlaceDraft;
   /** Draws this code from now on in this page (a revision kept); undefined goes back to the view's own. */

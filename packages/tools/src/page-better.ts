@@ -270,6 +270,8 @@ export interface ForkManifest {
   readonly cardinality: "one" | "many";
   readonly replaces?: "page";
   readonly reads?: { readonly kinds?: readonly string[]; readonly edges?: readonly string[] };
+  /** The acts its presses may ask for (`data-act`): the kind's own, so a new design can finish a task as the page did. */
+  readonly acts?: readonly string[];
 }
 
 const slug = (words: string) => words.toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "page";
@@ -281,9 +283,9 @@ const slug = (words: string) => words.toLowerCase().normalize("NFKD").replace(/[
  * relations the kind is linked by — untitled, so it is that page and not a
  * place of its own beside it. Undefined for a place, which a lens draws.
  */
-export function forkManifest(part: PagePartSaid, links: { readonly kinds: readonly string[]; readonly edges: readonly string[] }): ForkManifest | undefined {
+export function forkManifest(part: PagePartSaid, links: { readonly kinds: readonly string[]; readonly edges: readonly string[] }, acts: readonly string[] = []): ForkManifest | undefined {
   const reads = { ...(links.kinds.length ? { kinds: [...links.kinds] } : {}), ...(links.edges.length ? { edges: [...links.edges] } : {}) };
-  const read = Object.keys(reads).length > 0 ? { reads } : {};
+  const read = { ...(Object.keys(reads).length > 0 ? { reads } : {}), ...(acts.length > 0 ? { acts: [...acts] } : {}) };
   if ((part.slot === "list" || part.slot === "group") && part.kind) return { name: `${slug(part.kind)}-list`, attach: part.kind, cardinality: "many", replaces: "page", ...read };
   if (part.slot === "record" && part.kind) return { name: `${slug(part.kind)}-page`, attach: part.kind, cardinality: "one", replaces: "page", ...read };
   if (part.slot === "home") return { name: "home-page", attach: "home", cardinality: "many", ...read };

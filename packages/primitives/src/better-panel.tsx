@@ -145,7 +145,8 @@ export function BetterPanel(props: BetterPanelProps) {
   }, [props.working]);
   /* The newest line in view, and the keyboard in the words field once it is the person's turn. */
   useEffect(() => {
-    list.current?.lastElementChild?.scrollIntoView?.({ block: "nearest" });
+    // Within the conversation only: scrolling the newest line into view must never move the panel, nor hide the first line under its head.
+    if (list.current) list.current.scrollTop = list.current.scrollHeight;
   }, [props.talk.length, props.steps.length]);
   useEffect(() => {
     if (!props.working) field.current?.focus({ preventScroll: true });
@@ -220,7 +221,7 @@ export function BetterPanel(props: BetterPanelProps) {
         </div>
       ) : null}
       {props.draft && !props.working ? (
-        <div data-testid="better-draft" style={{ display: "grid", gap: 6 }}>
+        <div data-testid="better-draft" style={{ flexShrink: 0, display: "grid", gap: 6 }}>
           <p data-testid="better-changed" style={{ margin: 0 }}>
             {props.draft.said}
           </p>
@@ -279,7 +280,7 @@ export function BetterPanel(props: BetterPanelProps) {
           props.ask(typed.trim());
           setTyped("");
         }}
-        style={{ display: "flex", gap: 6 }}
+        style={{ flexShrink: 0, display: "flex", gap: 6 }}
       >
         <label htmlFor="graview-better-panel-words" style={VISUALLY_HIDDEN}>
           Tell Graview what to change
@@ -316,19 +317,20 @@ const BASE: CSSProperties = {
   lineHeight: 1.45,
   color: "var(--graview-ink)",
   background: "var(--graview-panel)",
+  overflow: "hidden",
 };
 const SIDE: CSSProperties = { ...BASE, top: 0, right: 0, bottom: 0, width: WIDE, borderLeft: "1px solid var(--graview-edge)" };
 const DRAWER_STYLE: CSSProperties = { ...SIDE, width: `min(${WIDE}px, 86vw)`, boxShadow: "var(--graview-lift-high, -12px 0 32px rgba(0,0,0,0.18))" };
 const SHEET: CSSProperties = { ...BASE, left: 0, right: 0, bottom: 0, maxHeight: "55vh", borderTop: "1px solid var(--graview-edge)", borderRadius: "14px 14px 0 0", boxShadow: "var(--graview-lift-high, 0 -12px 32px rgba(0,0,0,0.18))" };
-const CHIP: CSSProperties = { margin: 0, justifySelf: "start", alignSelf: "flex-start", padding: "2px 10px", borderRadius: 999, fontSize: "0.8125rem", color: "var(--graview-ink)", background: "var(--graview-ground)", border: "1px solid var(--graview-edge)" };
-const HEAD: CSSProperties = { display: "flex", alignItems: "center", gap: 8, justifyContent: "space-between" };
-const QUIET_LINE: CSSProperties = { margin: 0, fontSize: "0.8125rem", color: "var(--graview-ink-muted)" };
-const TALK: CSSProperties = { margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 8, alignContent: "start", overflowY: "auto", flex: "1 1 auto", minHeight: 60 };
-const BUBBLE: CSSProperties = { padding: "7px 10px", borderRadius: 10, maxWidth: "88%", whiteSpace: "pre-wrap" };
-const MINE: CSSProperties = { ...BUBBLE, justifySelf: "end", background: "color-mix(in srgb, var(--graview-accent) 12%, var(--graview-panel))" };
-const THEIRS: CSSProperties = { ...BUBBLE, justifySelf: "start", background: "var(--graview-ground)" };
-const STEPS: CSSProperties = { padding: "6px 10px", borderRadius: 10, border: "1px dashed var(--graview-edge)", fontSize: "0.8125rem" };
-const ROW: CSSProperties = { display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6 };
+const CHIP: CSSProperties = { flexShrink: 0, margin: 0, justifySelf: "start", alignSelf: "flex-start", padding: "2px 10px", borderRadius: 999, fontSize: "0.8125rem", color: "var(--graview-ink)", background: "var(--graview-ground)", border: "1px solid var(--graview-edge)" };
+const HEAD: CSSProperties = { flexShrink: 0, display: "flex", alignItems: "center", gap: 8, justifyContent: "space-between" };
+const QUIET_LINE: CSSProperties = { flexShrink: 0, margin: 0, fontSize: "0.8125rem", color: "var(--graview-ink-muted)" };
+const TALK: CSSProperties = { margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8, overflowY: "auto", flex: "1 1 0", minHeight: 0 };
+const BUBBLE: CSSProperties = { padding: "7px 10px", borderRadius: 10, maxWidth: "88%", whiteSpace: "pre-wrap", flex: "none" };
+const MINE: CSSProperties = { ...BUBBLE, alignSelf: "flex-end", background: "color-mix(in srgb, var(--graview-accent) 12%, var(--graview-panel))" };
+const THEIRS: CSSProperties = { ...BUBBLE, alignSelf: "flex-start", background: "var(--graview-ground)" };
+const STEPS: CSSProperties = { flex: "none", padding: "6px 10px", borderRadius: 10, border: "1px dashed var(--graview-edge)", fontSize: "0.8125rem" };
+const ROW: CSSProperties = { flexShrink: 0, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6 };
 const BUTTON: CSSProperties = { minHeight: 32, padding: "0 12px", borderRadius: 8, fontSize: "0.8125rem", cursor: "pointer" };
 const PRIMARY: CSSProperties = { ...BUTTON, color: "var(--graview-accent-ink, #fff)", background: "var(--graview-accent)", border: "1px solid var(--graview-accent)" };
 const QUIET: CSSProperties = { ...BUTTON, color: "var(--graview-ink)", background: "transparent", border: "1px solid var(--graview-edge)" };

@@ -26,6 +26,8 @@
  */
 import { HOME_SLUG, OVERVIEW_SLUG, type AnySchema, type BrandViews, type GraviewApp, type Principal, type Store } from "@graview/core";
 import type { PlaceDescription } from "@graview/core/describe";
+// Static, not fetched: the headless run is itself fetched where a page presses a draft, and a door to the seat's file from there split the page's first chunk.
+import { placesFrom, placesOf, viewPlaceOf } from "@graview/core/seat";
 import { checkManifest, manifestActs, readsComputed, workerViewProps, type WorkerViewManifest } from "../host/manifest.js";
 import { PICTURE_STAND_IN, standInPictures } from "../host/pictures.js";
 import { judgeDestination, listsOf, placeVocabulary } from "../host/links.js";
@@ -331,7 +333,6 @@ async function withKinds<S extends AnySchema>(
   };
   const missing = handed.filter((one) => kindless(one) && ![undefined, HOME_SLUG, OVERVIEW_SLUG].includes(wordOf(one as object)));
   if (missing.length === 0) return handed;
-  const { placesFrom, placesOf, viewPlaceOf } = await import("@graview/core/seat");
   const known = from.app ? placesOf(from.app, { views: from.views }) : placesFrom(from.schema, from.views.flatMap((view) => viewPlaceOf(view) ?? []));
   const kindOf = (one: object) => known.find((each) => each.slug === wordOf(one) && each.kind !== null);
   const unknown = missing.filter((one) => !kindOf(one as object)).map((one) => `"${wordOf(one as object)}"`);
@@ -376,7 +377,6 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
 
   /* A guest's places or an app's as `placesOf` lists them: each by its slug and title, never "undefined" (2026-10-15). */
   /* And each titled view's place — the host's kept views', and this view's own — by the slug the router gives it (`viewPlaceOf`). */
-  const { viewPlaceOf } = await import("@graview/core/seat");
   const viewPlaces = [...(options.views ?? []), manifest].flatMap((view) => viewPlaceOf(view) ?? []).map((place) => ({ as: place.as, title: place.title, kind: place.kind }));
   /* Read through the one vocabulary (FR-235) — the Scene, the home, each kind's list the seat sees, each titled place — as the live host reads them, so the check and the page agree. */
   const kept = new Set([...store.kindsKeptFrom(principal), ...store.modules.disabledKinds]);

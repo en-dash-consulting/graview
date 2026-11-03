@@ -49,7 +49,8 @@ function factsOf(row: Element, name: Element): string[] {
     if (link && !link.contains(name)) continue;
     byParent.set(parent, (byParent.get(parent) ?? "") + (node.textContent ?? ""));
   }
-  for (const [parent, text] of byParent) {
+  // Facts a row says together ("Sep 3, 2026 · Done: no") are each a fact of their own.
+  for (const [parent, text] of [...byParent].flatMap(([parent, text]) => text.split(/\s+·\s+/).map((one) => [parent, one] as const))) {
     const said = words(text);
     // Words or a number: a mark alone ("⚠", "·") says nothing a draft must keep.
     if (!said || said.length > 40 || NOT_A_FACT.test(said) || !/[\p{L}\p{N}]/u.test(said) || parent.getClientRects().length === 0) continue;
@@ -116,7 +117,10 @@ export function readDrawn(root: Element | null | undefined, labels: readonly str
     const rowText = row instanceof HTMLElement ? (row.innerText ?? row.textContent ?? "") : (row.textContent ?? "");
     // A record that is the page itself (its title) has the page for its row: what it says is the page's headings and records, judged as those.
     const isPage = best.matches("h1, [data-graview-page-title]") || best.closest("h1, [data-graview-page-title]") !== null;
-    records.push({ label, top: Math.round(box.top), left: Math.round(box.left), size, facts: isPage ? [] : factsOf(row, best), row: words(rowText), ...(under ? { under } : {}) });
+    // What a person could do on it there: press a control in its row (a circle that finishes it), and open it by its name.
+    const presses = !isPage && row !== best && [...row.querySelectorAll("button, [role='button'], [role='checkbox'], [aria-pressed], input[type='checkbox'], [data-act]")].some((one) => !one.contains(best) && !best.contains(one));
+    const opens = !isPage && best.closest("a[href], [data-record]") !== null;
+    records.push({ label, top: Math.round(box.top), left: Math.round(box.left), size, facts: isPage ? [] : factsOf(row, best), row: words(rowText), ...(under ? { under } : {}), ...(presses ? { presses } : {}), ...(opens ? { opens } : {}) });
   }
   records.sort((a, b) => a.top - b.top || a.left - b.left);
   return { headings, records, text: roots.map(shownText).join(" ") };

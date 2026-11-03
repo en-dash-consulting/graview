@@ -22,7 +22,7 @@ export { GoToContext, useGoTo } from "./go.js";
 // Sections of the context menu beside its acts: a host's are the provider's `menuSections`; a face adds its own with `MenuSections` (`./drawing`).
 export type { MenuColumn, MenuItem, MenuMode, MenuPage, MenuSection, MenuSectionSource, MenuTarget } from "./menu-types.js";
 // A section of a view under the cursor (Roadmap f-make-this-section-better); finding one and what a view's place lends are `./drawing`'s.
-export type { MenuViewSection, ViewPlaceDraft, ViewPlaceDrawing, ViewPlaceHandle } from "./view-places.js";
+export type { MenuViewSection, ViewPlaceDraft, ViewPlaceDrawing, ViewPlaceHandle, ViewPresses } from "./view-places.js";
 // Whether a panel beside the map lists a district opened from altitude.
 export { BesideTheMap } from "./beside-the-map.js";
 // The host's files (FR-163), where a file field's editor finds them.
