@@ -13,7 +13,7 @@ import { PagesApp } from "../../src/index.js";
  * THE PAGES SAY WHAT TIDYING DID, AND WHAT IT SUGGESTS, as the scene does.
  * A test actor links two tasks it is sure of and suggests a third: the
  * routed face's bar draws Activity with the actor's run folded into one
- * digest row, and the Suggested tray beside it, where the third is
+ * digest row, and its suggestions in the same inbox, where the third is
  * declined; a seat that may not see what a suggestion names is not shown
  * it; and a record's page sets and clears "leave this one alone", which
  * the actor is then refused.
@@ -107,22 +107,28 @@ const $ = (selector: string) => document.querySelector<HTMLElement>(selector);
 describe("the routed face's bar, after the app's own actor tidied", () => {
   it("draws Activity with the actor's two links folded into one digest row, each with its lineage", async () => {
     await open(tidied(), "/tasks");
-    await settled(() => expect($('[data-graview-app-bar] [data-testid="activity-button"]')).not.toBeNull());
-    await act(async () => $('[data-testid="activity-button"]')!.click());
+    await settled(() => expect($('[data-graview-app-bar] [data-testid="inbox-button"]')).not.toBeNull());
+    await act(async () => $('[data-testid="inbox-button"]')!.click());
+    await settled(() => expect($('[data-testid="inbox-tab-activity"]')).not.toBeNull());
+    await act(async () => $('[data-testid="inbox-tab-activity"]')!.click());
     await settled(() => expect($('[data-testid="activity-digest"]')).not.toBeNull());
     expect($('[data-testid="activity-digest"]')!.textContent).toContain("Graview, tidying Tidied 2 things today");
     await act(async () => $('[data-testid="digest-toggle"]')!.click());
     expect([...document.querySelectorAll('[data-testid="digest-change"] [data-graview-lineage]')].map((one) => one.textContent)).toEqual([" · The shelves cover the wall · 91% sure", " · Booking needs the quote · 94% sure"]);
   });
 
-  it("draws the Suggested tray beside it, where the third waits and is declined, and is refused to the actor next time", async () => {
+  it("draws the suggestions in the inbox beside it, where the third waits and is declined, and is refused to the actor next time", async () => {
     const store = tidied();
     await open(store, "/tasks");
-    await settled(() => expect($('[data-graview-app-bar] [data-testid="suggested-button"]')).not.toBeNull());
-    await act(async () => $('[data-testid="suggested-button"]')!.click());
+    await settled(() => expect($('[data-graview-app-bar] [data-testid="inbox-button"]')?.getAttribute("aria-label")).toContain("1 waiting for you"));
+    await act(async () => $('[data-testid="inbox-button"]')!.click());
+    // What waits for you is where the inbox opens.
+    await settled(() => expect($('[data-testid="suggestion"]')).not.toBeNull());
+    expect($('[data-testid="inbox-tab-for-you"]')!.getAttribute("aria-selected")).toBe("true");
     expect($('[data-testid="suggestion"]')!.textContent).toContain("“Hand back the keys” waits for “Move the piano”");
     await act(async () => $('[data-testid="suggestion-decline"]')!.click());
-    await settled(() => expect($('[data-testid="suggested-button"]')).toBeNull());
+    await settled(() => expect($('[data-testid="suggestion"]')).toBeNull());
+    await settled(() => expect($('[data-testid="inbox-button"]')?.getAttribute("aria-label") ?? "").not.toContain("waiting for you"));
     expect(suggestions(store)).toEqual([]);
     expect(() => suggest(store, [{ name: "wait-for", args: { taskId: "keys", blockerId: "piano" } }], { author: actor, lineage: { basis: "Again" } })).toThrow(/declined/);
   });
@@ -139,9 +145,10 @@ describe("the routed face's bar, after the app's own actor tidied", () => {
     const store = tidied(policy);
     suggest(store, [{ name: "pin-note", args: { id: "memo", task: "book" } }], { author: actor, lineage: { basis: "The note names the van" } });
     await open(store, "/tasks", { kind: "human", id: "gus", roles: ["guest"] });
-    await settled(() => expect($('[data-testid="suggested-button"]')).not.toBeNull());
-    expect($('[data-testid="suggested-button"]')!.textContent).toContain("1");
-    await act(async () => $('[data-testid="suggested-button"]')!.click());
+    await settled(() => expect($('[data-testid="inbox-button"]')?.getAttribute("aria-label")).toContain("1 waiting for you"));
+    await act(async () => $('[data-testid="inbox-button"]')!.click());
+    await settled(() => expect($('[data-testid="suggested"] [data-testid="suggestion"]')).not.toBeNull());
+    expect(document.querySelectorAll('[data-testid="suggested"] [data-testid="suggestion"]')).toHaveLength(1);
     expect($('[data-testid="suggested"]')!.textContent).not.toContain("Ask Sam");
   });
 });

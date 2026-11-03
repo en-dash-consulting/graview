@@ -17,7 +17,7 @@ import { retryingImport } from "@graview/core/retry";
 
 /* The AI's rows and its filter, fetched with the first entry there is to draw (Roadmap f-activity-ai-entries). */
 const aiRows = /* @__PURE__ */ lazyModule(retryingImport(() => import("./ai-entries.js")));
-const InteractionRow = /* @__PURE__ */ aiRows.part((module, props: { readonly entry: AiInteraction; readonly undo: (batch: string) => ReactNode }) => <module.InteractionRow {...props} />, { quiet: true, as: "li" });
+export const InteractionRow = /* @__PURE__ */ aiRows.part((module, props: { readonly entry: AiInteraction; readonly undo: (batch: string) => ReactNode }) => <module.InteractionRow {...props} />, { quiet: true, as: "li" });
 const ActivityFilter = /* @__PURE__ */ aiRows.part((module, props: ComponentProps<typeof import("./ai-entries.js").ActivityFilter>) => <module.ActivityFilter {...props} />, { quiet: true, as: "div" });
 
 
@@ -439,10 +439,12 @@ export function StartFresh() {
   );
 }
 
-export function ActivityRail({
+export function ActivityFeed({
   calls,
   seat,
   remembers = false,
+  close,
+  headed = true,
 }: {
   readonly calls: readonly ToolCall[];
   /**
@@ -460,6 +462,10 @@ export function ActivityRail({
    * decision on the PRD task "Decide where the agent seat lives".
    */
   readonly seat?: ReactNode;
+  /** Puts away what the feed is drawn in, as the reader goes to a record it names. */
+  readonly close: () => void;
+  /** Whether it says its own heading: the inbox's tab says it there. */
+  readonly headed?: boolean;
 }) {
   const recent = useRecentChanges();
   const { store: shown, principal, seats, people } = useGraview<AnySchema>();
@@ -482,9 +488,6 @@ export function ActivityRail({
   ].sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
   /* Named from now's records, whichever moment the face draws (Roadmap f-playback). */
   const store = useLiveStore(shown, principal);
-  const running = calls.some((call) => call.phase === "running");
-  // Somebody told of changes has Activity to open, though nothing has changed yet.
-  const notified = useNotifiedCount();
 
   /*
    * A POPOVER FROM THE BAR, not a rail pinned over the scene.
@@ -496,14 +499,246 @@ export function ActivityRail({
    * visible without opening anything is that an agent is mid-turn, and that
    * is a dot on the button.
    */
-  const popover = usePopover("activity");
-  const open = popover.open;
   const goTo = useGoTo();
   const playback = usePlayback();
   /* Only a record still in the graph goes anywhere; the popover closes behind the reader as they go, and going there is going to it now, not as it was. */
-  const goes = (id: string) => (store.graph.has(id) ? (to: string) => { popover.setOpen(false); if (playback?.past) playback.show(null); goTo.record(to); } : null);
+  const goes = (id: string) => (store.graph.has(id) ? (to: string) => { close(); if (playback?.past) playback.show(null); goTo.record(to); } : null);
 
-  if (seat === undefined && calls.length === 0 && recent.length === 0 && interactions.length === 0 && !remembers && notified === 0) return null;
+  return (
+    <>
+    {/* A heading for the region (FR-25), named as its landmark is. */}
+    {headed ? <h2 style={{ ...VISUALLY_HIDDEN, margin: 0 }}>Activity</h2> : null}
+    {seat !== undefined ? (
+      <div
+        data-testid="agent-seat-row"
+        style={{
+          display: "grid",
+          gap: 5,
+          paddingBottom: calls.length > 0 || feed.length > 0 ? 9 : 0,
+          ...(calls.length > 0 || feed.length > 0
+            ? { borderBottom: "1px solid var(--graview-edge)" }
+            : {}),
+        }}
+      >
+        <span
+          style={{
+            fontSize: "0.75rem",
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            color: "var(--graview-ink-faint)",
+          }}
+        >
+          The agent's seat
+        </span>
+        {seat}
+      </div>
+    ) : null}
+    {calls.length > 0 ? (
+      <ol style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 7 }}>
+        {calls.slice(0, 6).map((call, index) => (
+          <li
+            key={`${call.at}:${index}`}
+            style={{ ...ACTIVITY_ROW, gap: 2, fontSize: "0.8125rem" }}
+          >
+            <div data-graview-activity-head="" style={ACTIVITY_HEAD}>
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: 999,
+                  flex: "0 0 auto",
+                  background:
+                    call.phase === "running"
+                      ? "var(--graview-accent)"
+                      : call.phase === "failed"
+                        ? "var(--graview-warn)"
+                        : "var(--graview-edge-bright)",
+                }}
+              />
+              {/*
+                * THE ACT'S OWN TITLE, not the name it is registered
+                * under. "changed · close-item" is the tool surface's
+                * identifier read out in the one place a person looks
+                * to see what an agent just did — the same smell as a
+                * card named by its node id. A call that names no
+                * declared mutation (a read tool) is still humanized
+                * rather than printed raw.
+                */}
+              <span data-graview-activity-words="" style={{ ...ACTIVITY_WORDS, color: "var(--graview-ink)" }}>
+                {call.mutating ? "changed" : "read"} ·{" "}
+                {store.allMutations().find((mutation) => mutation.name === call.name)?.title ??
+                  humanizeField(call.name)}
+              </span>
+            </div>
+            {/*
+              * WHAT A READ LOOKED AT, where it said: a search names
+              * records, and its query is words, not a thing to point
+              * at. A change, or a read that reports nothing, shows the
+              * ids it was handed.
+              */}
+            {!call.mutating && call.reads && call.reads.length > 0 ? (
+              <div data-testid="activity-reads" style={{ display: "flex", flexWrap: "wrap", gap: 4, paddingLeft: 12 }}>
+                {/* Once each: a neighborhood read lists a node joined to it twice twice. */}
+                {[...new Set(call.reads)].slice(0, 3).map((id) => (
+                  <NamedRecord key={id} id={id} label={nameOf(store, id)} go={goes(id)} testId="activity-record" />
+                ))}
+                {new Set(call.reads).size > 3 ? <span style={{ color: "var(--graview-ink-muted)" }}>+{new Set(call.reads).size - 3}</span> : null}
+              </div>
+            ) : Object.values(call.args).some((value) => typeof value === "string") ? (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 4, paddingLeft: 12 }}>
+                {/*
+                  * Keyed by the ARGUMENT, not by what it says: a piece
+                  * of kit with the id `trailer` and the type `trailer`
+                  * hands one call the same word twice.
+                  */}
+                {Object.entries(call.args)
+                  .filter((entry): entry is [string, string] => typeof entry[1] === "string")
+                  .slice(0, 3)
+                  .map(([name, value]) => (
+                    <NamedRecord key={name} id={value} label={nameOf(store, value)} go={goes(value)} testId="activity-record" />
+                  ))}
+              </div>
+            ) : null}
+            {call.error ? (
+              <div style={{ paddingLeft: 12, color: "var(--graview-warn)" }}>{call.error}</div>
+            ) : null}
+          </li>
+        ))}
+      </ol>
+    ) : null}
+
+    {interactions.length > 0 ? (
+      <Suspense fallback={null}>
+        <ActivityFilter shows={shows} onShows={setShows} mine={mine} onMine={setMine} />
+      </Suspense>
+    ) : null}
+    {feed.length > 0 ? (
+      <ol
+        data-testid="diff-log"
+        style={{
+          margin: 0,
+          padding: 0,
+          listStyle: "none",
+          display: "grid",
+          gap: 6,
+          fontSize: "0.8125rem",
+        }}
+      >
+        {feed.map(({ change, entry }, index) =>
+          entry !== undefined ? (
+            <Suspense key={`ai:${entry.id}`} fallback={null}>
+              <InteractionRow entry={entry} undo={(batch) => <UndoTurn batch={batch} />} />
+            </Suspense>
+          ) : change.digest ? (
+            <DigestRow key={`digest:${change.digest[0]?.batch ?? index}`} change={change} goes={goes} />
+          ) : change.withheld ? (
+            /* SOMETHING YOU CANNOT SEE HAPPENED: said, and nothing more — not who, not what, no undo (FR-16). */
+            <li key={`change:${index}`} data-testid="withheld-change" style={ACTIVITY_ROW}>
+              <span data-touched="" style={{ ...ACTIVITY_WORDS, color: "var(--graview-ink-muted)", fontStyle: "italic" }}>
+                {change.intent}
+              </span>
+            </li>
+          ) : (
+          <li key={`change:${index}`} data-batch={change.batch} style={ACTIVITY_ROW}>
+            <div data-graview-activity-head="" style={ACTIVITY_HEAD}>
+              <span data-graview-activity-words="" style={ACTIVITY_WORDS}>
+                <strong style={{ fontWeight: 600 }}>
+                  {/*
+                    * WHO, by its own id. "claude" was hardcoded for
+                    * every agent, so the chat seat's turn wore
+                    * another seat's name — and a system author (a
+                    * calendar sync) would have read as "you".
+                    */}
+                  {/* "you" is the person at the keyboard, not any
+                      human: two seats on one store read each other's
+                      work as their own. */}
+                  {change.author === "human" && change.by?.onBehalfOf === undefined && (change.authorId === undefined || principal.id === undefined || change.authorId === principal.id)
+                    ? "you"
+                    : nameOfAuthor(change.by ?? { kind: change.author as never, id: change.authorId }, { graph: store.graph as never, schema: store.schema, seats, people })}
+                  {viaSaid(change.via) ? <span style={{ fontWeight: 400, color: "var(--graview-ink-muted)" }}>, {viaSaid(change.via)}</span> : null}
+                </strong>{" "}
+                <span style={{ color: "var(--graview-ink-muted)" }}>{change.intent}</span>
+                {change.basis ? <span data-graview-lineage="" style={{ color: "var(--graview-ink-faint)" }}> · {change.basis}</span> : null}
+              </span>
+              {change.batch ? <ShowAsItWas seq={change.seq} intent={change.intent} /> : null}
+              {change.batch ? <UndoTurn batch={change.batches && change.batches.length > 0 ? (change.batches.length === 1 ? change.batches[0]! : change.batches) : change.batch} /> : null}
+            </div>
+            <div data-touched={change.touched.join(" ")} style={ACTIVITY_CHIPS}>
+              {change.touched.slice(0, 4).map((id) => (
+                <NamedRecord key={id} id={id} label={store.graph.has(id) ? nameOf(store, id) : (change.named?.[id] ?? nameOf(store, id))} go={goes(id)} testId="activity-record" />
+              ))}
+            </div>
+          </li>
+          ),
+        )}
+      </ol>
+    ) : null}
+    {/* WHAT THE READER IS TOLD OF (Roadmap f-notify-subscriptions), each with one press to stop. */}
+    <NotifiedDoor style={{ paddingTop: 8, borderTop: "1px solid var(--graview-edge)" }} />
+    {remembers ? (
+      <div
+        data-testid="remembered"
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "space-between",
+          gap: 10,
+          paddingTop: 8,
+          borderTop: "1px solid var(--graview-edge)",
+          fontSize: "0.8125rem",
+          color: "var(--graview-ink-faint)",
+        }}
+      >
+        <span>Remembered in this browser</span>
+        <StartFresh />
+      </div>
+    ) : null}
+    </>
+  );
+}
+
+/**
+ * WHETHER ACTIVITY HAS ANYTHING TO SAY: a seat, a call, a change, an AI
+ * entry, a browser that remembers, or somebody told of changes.
+ */
+export function useActivityHas({ calls, seat, remembers = false }: { readonly calls: readonly ToolCall[]; readonly seat?: ReactNode; readonly remembers?: boolean }): { readonly has: boolean; readonly recent: number; readonly running: boolean } {
+  const recent = useRecentChanges();
+  const interactions = useInteractions();
+  const notified = useNotifiedCount();
+  return { has: !(seat === undefined && calls.length === 0 && recent.length === 0 && interactions.length === 0 && !remembers && notified === 0), recent: recent.length, running: calls.some((call) => call.phase === "running") };
+}
+
+/**
+ * ACTIVITY ON A BAR OF ITS OWN: the studio's. The app bar holds the same
+ * feed in its inbox (`Inbox`, Roadmap f-app-bar-calm).
+ */
+export function ActivityRail({
+  calls,
+  seat,
+  remembers = false,
+}: {
+  readonly calls: readonly ToolCall[];
+  /**
+   * Whether this browser is remembering the edits. When it is, the popover
+   * says so and carries the way back to the example — history is where you
+   * would look for the way out of it.
+   */
+  readonly remembers?: boolean;
+  /**
+   * The agent seat, if the app gives one. It lives HERE, not in the bar:
+   * Activity is "what has happened, and what is happening", which is the
+   * agent's own surface and where you would be looking to watch a turn —
+   * and a run-a-turn control that is disabled most of the time was a
+   * permanently-visible ghost in prime bar space. See the recorded
+   * decision on the PRD task "Decide where the agent seat lives".
+   */
+  readonly seat?: ReactNode;
+}) {
+  const { has, recent, running } = useActivityHas({ calls, seat, remembers });
+  const popover = usePopover("activity");
+  const open = popover.open;
+  if (!has) return null;
 
   return (
     <div style={{ position: "relative" }}>
@@ -530,7 +765,7 @@ export function ActivityRail({
         }}
       >
         {running ? <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: 999, background: "var(--graview-accent)" }} /> : null}
-        {recent.length > 0 ? recent.length : ""}
+        {recent > 0 ? recent : ""}
         {/* On a phone's bar the word gives its room and the mark stands for it; the word stays its name. */}
         <svg className="graview-activity-mark" width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" focusable="false" style={{ display: "var(--graview-activity-mark, none)" }}>
           <circle cx="8" cy="8" r="5.75" fill="none" stroke="currentColor" strokeWidth="1.4" />
@@ -574,194 +809,7 @@ export function ActivityRail({
             boxShadow: "var(--graview-lift-high)",
           }}
         >
-          {/* A heading for the region (FR-25), named as its landmark is. */}
-          <h2 style={{ ...VISUALLY_HIDDEN, margin: 0 }}>Activity</h2>
-          {seat !== undefined ? (
-            <div
-              data-testid="agent-seat-row"
-              style={{
-                display: "grid",
-                gap: 5,
-                paddingBottom: calls.length > 0 || feed.length > 0 ? 9 : 0,
-                ...(calls.length > 0 || feed.length > 0
-                  ? { borderBottom: "1px solid var(--graview-edge)" }
-                  : {}),
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "0.75rem",
-                  letterSpacing: "0.14em",
-                  textTransform: "uppercase",
-                  color: "var(--graview-ink-faint)",
-                }}
-              >
-                The agent's seat
-              </span>
-              {seat}
-            </div>
-          ) : null}
-          {calls.length > 0 ? (
-            <ol style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 7 }}>
-              {calls.slice(0, 6).map((call, index) => (
-                <li
-                  key={`${call.at}:${index}`}
-                  style={{ ...ACTIVITY_ROW, gap: 2, fontSize: "0.8125rem" }}
-                >
-                  <div data-graview-activity-head="" style={ACTIVITY_HEAD}>
-                    <span
-                      aria-hidden="true"
-                      style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: 999,
-                        flex: "0 0 auto",
-                        background:
-                          call.phase === "running"
-                            ? "var(--graview-accent)"
-                            : call.phase === "failed"
-                              ? "var(--graview-warn)"
-                              : "var(--graview-edge-bright)",
-                      }}
-                    />
-                    {/*
-                      * THE ACT'S OWN TITLE, not the name it is registered
-                      * under. "changed · close-item" is the tool surface's
-                      * identifier read out in the one place a person looks
-                      * to see what an agent just did — the same smell as a
-                      * card named by its node id. A call that names no
-                      * declared mutation (a read tool) is still humanized
-                      * rather than printed raw.
-                      */}
-                    <span data-graview-activity-words="" style={{ ...ACTIVITY_WORDS, color: "var(--graview-ink)" }}>
-                      {call.mutating ? "changed" : "read"} ·{" "}
-                      {store.allMutations().find((mutation) => mutation.name === call.name)?.title ??
-                        humanizeField(call.name)}
-                    </span>
-                  </div>
-                  {/*
-                    * WHAT A READ LOOKED AT, where it said: a search names
-                    * records, and its query is words, not a thing to point
-                    * at. A change, or a read that reports nothing, shows the
-                    * ids it was handed.
-                    */}
-                  {!call.mutating && call.reads && call.reads.length > 0 ? (
-                    <div data-testid="activity-reads" style={{ display: "flex", flexWrap: "wrap", gap: 4, paddingLeft: 12 }}>
-                      {/* Once each: a neighborhood read lists a node joined to it twice twice. */}
-                      {[...new Set(call.reads)].slice(0, 3).map((id) => (
-                        <NamedRecord key={id} id={id} label={nameOf(store, id)} go={goes(id)} testId="activity-record" />
-                      ))}
-                      {new Set(call.reads).size > 3 ? <span style={{ color: "var(--graview-ink-muted)" }}>+{new Set(call.reads).size - 3}</span> : null}
-                    </div>
-                  ) : Object.values(call.args).some((value) => typeof value === "string") ? (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4, paddingLeft: 12 }}>
-                      {/*
-                        * Keyed by the ARGUMENT, not by what it says: a piece
-                        * of kit with the id `trailer` and the type `trailer`
-                        * hands one call the same word twice.
-                        */}
-                      {Object.entries(call.args)
-                        .filter((entry): entry is [string, string] => typeof entry[1] === "string")
-                        .slice(0, 3)
-                        .map(([name, value]) => (
-                          <NamedRecord key={name} id={value} label={nameOf(store, value)} go={goes(value)} testId="activity-record" />
-                        ))}
-                    </div>
-                  ) : null}
-                  {call.error ? (
-                    <div style={{ paddingLeft: 12, color: "var(--graview-warn)" }}>{call.error}</div>
-                  ) : null}
-                </li>
-              ))}
-            </ol>
-          ) : null}
-
-          {interactions.length > 0 ? (
-            <Suspense fallback={null}>
-              <ActivityFilter shows={shows} onShows={setShows} mine={mine} onMine={setMine} />
-            </Suspense>
-          ) : null}
-          {feed.length > 0 ? (
-            <ol
-              data-testid="diff-log"
-              style={{
-                margin: 0,
-                padding: 0,
-                listStyle: "none",
-                display: "grid",
-                gap: 6,
-                fontSize: "0.8125rem",
-              }}
-            >
-              {feed.map(({ change, entry }, index) =>
-                entry !== undefined ? (
-                  <Suspense key={`ai:${entry.id}`} fallback={null}>
-                    <InteractionRow entry={entry} undo={(batch) => <UndoTurn batch={batch} />} />
-                  </Suspense>
-                ) : change.digest ? (
-                  <DigestRow key={`digest:${change.digest[0]?.batch ?? index}`} change={change} goes={goes} />
-                ) : change.withheld ? (
-                  /* SOMETHING YOU CANNOT SEE HAPPENED: said, and nothing more — not who, not what, no undo (FR-16). */
-                  <li key={`change:${index}`} data-testid="withheld-change" style={ACTIVITY_ROW}>
-                    <span data-touched="" style={{ ...ACTIVITY_WORDS, color: "var(--graview-ink-muted)", fontStyle: "italic" }}>
-                      {change.intent}
-                    </span>
-                  </li>
-                ) : (
-                <li key={`change:${index}`} data-batch={change.batch} style={ACTIVITY_ROW}>
-                  <div data-graview-activity-head="" style={ACTIVITY_HEAD}>
-                    <span data-graview-activity-words="" style={ACTIVITY_WORDS}>
-                      <strong style={{ fontWeight: 600 }}>
-                        {/*
-                          * WHO, by its own id. "claude" was hardcoded for
-                          * every agent, so the chat seat's turn wore
-                          * another seat's name — and a system author (a
-                          * calendar sync) would have read as "you".
-                          */}
-                        {/* "you" is the person at the keyboard, not any
-                            human: two seats on one store read each other's
-                            work as their own. */}
-                        {change.author === "human" && change.by?.onBehalfOf === undefined && (change.authorId === undefined || principal.id === undefined || change.authorId === principal.id)
-                          ? "you"
-                          : nameOfAuthor(change.by ?? { kind: change.author as never, id: change.authorId }, { graph: store.graph as never, schema: store.schema, seats, people })}
-                        {viaSaid(change.via) ? <span style={{ fontWeight: 400, color: "var(--graview-ink-muted)" }}>, {viaSaid(change.via)}</span> : null}
-                      </strong>{" "}
-                      <span style={{ color: "var(--graview-ink-muted)" }}>{change.intent}</span>
-                      {change.basis ? <span data-graview-lineage="" style={{ color: "var(--graview-ink-faint)" }}> · {change.basis}</span> : null}
-                    </span>
-                    {change.batch ? <ShowAsItWas seq={change.seq} intent={change.intent} /> : null}
-                    {change.batch ? <UndoTurn batch={change.batches && change.batches.length > 0 ? (change.batches.length === 1 ? change.batches[0]! : change.batches) : change.batch} /> : null}
-                  </div>
-                  <div data-touched={change.touched.join(" ")} style={ACTIVITY_CHIPS}>
-                    {change.touched.slice(0, 4).map((id) => (
-                      <NamedRecord key={id} id={id} label={store.graph.has(id) ? nameOf(store, id) : (change.named?.[id] ?? nameOf(store, id))} go={goes(id)} testId="activity-record" />
-                    ))}
-                  </div>
-                </li>
-                ),
-              )}
-            </ol>
-          ) : null}
-          {/* WHAT THE READER IS TOLD OF (Roadmap f-notify-subscriptions), each with one press to stop. */}
-          <NotifiedDoor style={{ paddingTop: 8, borderTop: "1px solid var(--graview-edge)" }} />
-          {remembers ? (
-            <div
-              data-testid="remembered"
-              style={{
-                display: "flex",
-                alignItems: "baseline",
-                justifyContent: "space-between",
-                gap: 10,
-                paddingTop: 8,
-                borderTop: "1px solid var(--graview-edge)",
-                fontSize: "0.8125rem",
-                color: "var(--graview-ink-faint)",
-              }}
-            >
-              <span>Remembered in this browser</span>
-              <StartFresh />
-            </div>
-          ) : null}
+          <ActivityFeed calls={calls} remembers={remembers} close={() => popover.setOpen(false)} {...(seat !== undefined ? { seat } : {})} />
         </section>
       ) : null}
     </div>

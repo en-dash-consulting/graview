@@ -14,7 +14,7 @@ import { mount as mountPages, type PagesEmbedOptions } from "../../src/pages.js"
  * page has drawn; the option was read once, at `mount`, so the host had to
  * hold the whole page back to say one line on the tray. `handle.setWhileAway`
  * hands it over afterwards — on the embed and on the pages alone — and a
- * React host's changed `whileAway` prop does the same: the Suggested tray
+ * React host's changed `whileAway` prop does the same: the inbox's For you
  * says it from then on, and nothing again once it is taken away.
  */
 (Element.prototype as { scrollTo?: unknown }).scrollTo ??= () => {};
@@ -32,7 +32,7 @@ const addTask = defineMutation("add-task", {
   },
 });
 const app = defineApp({ name: "Errands", schema, mutations: [addTask] });
-/** A store the app's own actor has been at: something was done in it, so a face has Activity to draw beside the tray. */
+/** A store the app's own actor has been at: something was done in it, so a face has an inbox to draw before anything waits. */
 function tidiedStore() {
   const store = new Store({ schema, mutations: [addTask], invariants: [], snapshot: { nodes: [], edges: [] } });
   store.apply({ name: "add-task", args: { label: "Buy stamps" } }, { author: { kind: "system", id: "tidying", name: "Graview, tidying", automated: true } });
@@ -62,8 +62,21 @@ async function until(check: () => boolean, ms = 4000): Promise<boolean> {
   }
   return check();
 }
-const tray = () => host!.querySelector<HTMLElement>('[data-testid="suggested-button"]');
+const inbox = () => host!.querySelector<HTMLElement>('[data-testid="inbox-button"]');
 const appBar = () => host!.querySelector("[data-graview-app-bar]");
+/** What the inbox's For you says of the time away, its line read with the inbox open; null where it says nothing. */
+const away = () => document.querySelector('[data-testid="while-away"]')?.textContent ?? null;
+const forYou = () => document.querySelector('[data-testid="inbox-tab-for-you"]')?.getAttribute("aria-selected");
+const opened = () => document.querySelector('[data-testid="inbox"]') !== null;
+async function openInbox(): Promise<void> {
+  expect(await until(() => inbox() !== null)).toBe(true);
+  if (!opened()) await act(async () => inbox()!.click());
+  expect(await until(opened)).toBe(true);
+}
+async function closeInbox(): Promise<void> {
+  if (opened()) await act(async () => inbox()!.click());
+  expect(await until(() => !opened())).toBe(true);
+}
 
 type Handle = { setWhileAway(away: AwaySummary | undefined): void; unmount(): void };
 const faces: [string, (element: HTMLElement) => Handle][] = [
@@ -72,7 +85,7 @@ const faces: [string, (element: HTMLElement) => Handle][] = [
 ];
 
 describe.each(faces)("on %s", (_name, mountOne) => {
-  it("the tray says what the handle hands it after the first draw, and nothing once it is taken away", async () => {
+  it("the inbox says what the handle hands it after the first draw, and nothing once it is taken away", async () => {
     host = document.createElement("div");
     document.body.appendChild(host);
     let handle!: Handle;
@@ -81,17 +94,21 @@ describe.each(faces)("on %s", (_name, mountOne) => {
     });
     unmount = () => handle.unmount();
     expect(await until(() => appBar() !== null)).toBe(true);
-    expect(tray()).toBeNull();
+    await openInbox();
+    expect(away()).toBeNull();
+    await closeInbox();
     await act(async () => handle.setWhileAway({ tidied: 3, waiting: 0 }));
-    expect(await until(() => tray() !== null)).toBe(true);
-    expect(tray()!.getAttribute("aria-label")).toBe("Suggested: Tidied 3 things while you were away");
+    await openInbox();
+    expect(await until(() => away() !== null)).toBe(true);
+    expect(forYou()).toBe("true");
+    expect(away()).toBe("Tidied 3 things while you were away.");
     await act(async () => handle.setWhileAway(undefined));
-    expect(await until(() => tray() === null)).toBe(true);
+    expect(await until(() => away() === null)).toBe(true);
   });
 });
 
 describe("a React host", () => {
-  it("hands a changed whileAway prop to the tray without a remount", async () => {
+  it("hands a changed whileAway prop to the inbox without a remount", async () => {
     host = document.createElement("div");
     document.body.appendChild(host);
     const root = createRoot(host);
@@ -99,9 +116,12 @@ describe("a React host", () => {
     const props = { app, store: tidiedStore() as never, fonts: false, studio: false, face: "pages" } as EmbedOptions;
     await act(async () => root.render(<Embed {...props} />));
     expect(await until(() => appBar() !== null)).toBe(true);
-    expect(tray()).toBeNull();
+    await openInbox();
+    expect(away()).toBeNull();
+    await closeInbox();
     await act(async () => root.render(<Embed {...props} whileAway={{ tidied: 12, waiting: 0 }} />));
-    expect(await until(() => tray() !== null)).toBe(true);
-    expect(tray()!.getAttribute("aria-label")).toBe("Suggested: Tidied 12 things while you were away");
+    await openInbox();
+    expect(await until(() => away() !== null)).toBe(true);
+    expect(away()).toBe("Tidied 12 things while you were away.");
   });
 });

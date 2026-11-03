@@ -52,7 +52,8 @@ export function Standing({
       {/*
         * ONE OF THE BAR'S TOOLS (FR-131): a dot in the tone of the rules —
         * good, or the warning's, or the bad's when a rule could not even be
-        * judged — and a number only when one is broken. The words are its
+        * judged — and a number only when one is broken, as a badge, as every
+        * count on the bar is (Roadmap f-app-bar-calm). The words are its
         * name and its hover; it stays reachable when all is well, so a reader
         * moving by keyboard hears that too.
         */}
@@ -66,10 +67,14 @@ export function Standing({
         onPointerEnter={count === 0 ? undefined : fetchRows}
         onFocus={count === 0 ? undefined : fetchRows}
         title={said}
-        style={{ ...toolStyle, padding: count === 0 ? 0 : "0 8px", cursor: count === 0 ? "default" : "pointer", color: count === 0 ? "var(--graview-ink-muted)" : tone(violations), fontVariantNumeric: "tabular-nums", fontWeight: 600 }}
+        style={{ ...toolStyle, position: "relative", cursor: count === 0 ? "default" : "pointer", color: count === 0 ? "var(--graview-ink-muted)" : tone(violations) }}
       >
         <StandingDot tone={count === 0 ? "var(--graview-good)" : tone(violations)} />
-        {count > 0 ? <span aria-hidden="true">{count}</span> : null}
+        {count > 0 ? (
+          <span className="graview-bar-badge" data-testid="standing-count" aria-hidden="true" style={{ background: tone(violations) }}>
+            {count > 99 ? "99+" : count}
+          </span>
+        ) : null}
       </button>
 
       {open ? (

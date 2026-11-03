@@ -33,7 +33,7 @@ opens in and how its cards read are `graview-lists`.
    applies with `lineage: { basis, confidence }`; what it is not it
    suggests: `suggest(store, calls, { author, lineage })` (from
    `@graview/core/tidying`) keeps the calls in the log, changes nothing,
-   and they wait in the Suggested tray beside Activity until a person
+   and they wait in the inbox's For you, beside Activity, until a person
    accepts (`acceptSuggestion`, made as them) or declines them
    (`declineSuggestion`); `declined(store, calls)` says so, and the actor is
    refused the same change again — matched by what it means

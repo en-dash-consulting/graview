@@ -54,6 +54,7 @@ import { engineName, launchEngine } from "./lib/engine.mjs";
 import { admit, keyedFetch as fetch, scrub } from "./lib/serve-key.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { vacant } from "./lib/serve.mjs";
+import { faceShown } from "./lib/bar.mjs";
 import { seatHeaders } from "../packages/ship/dist/index.js";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -117,7 +118,8 @@ try {
     const home = await page.evaluate(() => ({
       failed: window.__graviewFailed ?? null,
       title: document.title,
-      bar: document.querySelector('[data-testid="app-face-scene"]') !== null,
+      // The one app bar, whose app menu holds the scene and the pages (Roadmap f-app-bar-calm).
+      bar: document.querySelector('[data-testid="app-menu-open"]')?.hasAttribute("data-scene") === true,
       text: document.body.innerText,
     }));
     await page.close();
@@ -131,12 +133,14 @@ try {
   /* ---- the scene: the overview's address draws the districts, and a reload stays */
   {
     const page = await open("/places/overview");
-    const drawn = () =>
-      page.evaluate(() => ({
-        sceneOn: document.querySelector('[data-testid="app-face-scene"]')?.getAttribute("aria-pressed") === "true",
+    const drawn = async () => ({
+      // Scene is the app menu's row drawn checked.
+      sceneOn: (await faceShown(page)) === "scene",
+      ...(await page.evaluate(() => ({
         districts: document.querySelectorAll(".graview-ground *").length,
         path: location.pathname,
-      }));
+      }))),
+    });
     const first = await drawn();
     await page.reload({ waitUntil: "load" });
     await page.waitForFunction(() => window.__graviewReady === true, null, { timeout: 60_000 });

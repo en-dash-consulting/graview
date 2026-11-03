@@ -20,6 +20,7 @@ import { serving } from "./lib/serve.mjs";
 import { stored } from "./lib/stored.mjs";
 import { arrangeByKeyboard, chooseOnTheLine, endClearsTheFoot, FIRST_RECORD_WITHIN, listHead } from "./lib/arranging-line.mjs";
 import { at, portFor } from "./lib/ports.mjs";
+import { closeAppMenu, openAppMenu } from "./lib/bar.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "..");
@@ -673,13 +674,15 @@ async function aDerivedFormApplies(phone) {
 async function theTwoFacesCrossLink(desk) {
   await desk.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
   await desk.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
-  // The scene's bar is the one app bar: its switch offers the pages, and the app's name is the way to their front page.
+  // The scene's bar is the one app bar: its app menu offers the pages, Scene drawn checked, and the app's name is the way to their front page.
+  await openAppMenu(desk);
   report.checks.sceneOffersThePages = await desk.evaluate(
     () =>
       document.querySelector('[data-testid="app-face-pages"]') !== null &&
       document.querySelector('[data-testid="app-face-scene"]')?.getAttribute("aria-pressed") === "true" &&
       document.querySelector('[data-testid="app-home"]')?.getAttribute("href") === "/pages",
   );
+  await closeAppMenu(desk);
   await desk.goto(`${at("todo")}/pages/tasks/t-deposit?today=2026-09-01`, { waitUntil: "networkidle" });
   await desk.waitForTimeout(400);
   const spatial = await desk.evaluate(

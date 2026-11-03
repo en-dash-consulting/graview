@@ -62,10 +62,10 @@ async function settled(holds: () => void): Promise<void> {
 const page = (host: Element) => host.querySelector("[data-embed-content]")?.textContent ?? "";
 const click = (element: Element | null | undefined) => act(async () => (element as HTMLElement).click());
 
-/** Open Activity and show the app as it was after its oldest change listed. */
+/** Open the inbox, on Activity, and show the app as it was after its oldest change listed. */
 async function lookBack(host: Element) {
-  await settled(() => expect(host.querySelector('[data-testid="activity-button"]')).not.toBeNull());
-  await click(host.querySelector('[data-testid="activity-button"]'));
+  await settled(() => expect(host.querySelector('[data-testid="inbox-button"]')).not.toBeNull());
+  await click(host.querySelector('[data-testid="inbox-button"]'));
   await settled(() => expect(document.querySelectorAll('[data-testid="show-past"]').length).toBe(3));
   // Newest first: the last row is the first note added.
   await click([...document.querySelectorAll('[data-testid="show-past"]')].at(-1));

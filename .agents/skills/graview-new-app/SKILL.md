@@ -88,11 +88,11 @@ In a framework checkout, `pnpm graview:link` puts `graview` on PATH.
    - `subject: { kinds, arg }` on every mutation that acts on a thing.
 
 5. **Take the shell.** `Shell` from `@graview/primitives` is everything
-   not about your domain: the one app bar an embed wears too (the name, the
-   Scene and Pages switch, the scene's pictures, Find, Activity, the
-   standing, the person), the scene, its key, the quick ask (⌘K, where
+   not about your domain: the one app bar an embed wears too (the name and
+   its app menu, the scene's pictures, Find, the inbox, the standing, the
+   person), the scene, its key, the quick ask (⌘K, where
    the host gives a model) and the acts at the pointer.
-   Its parts (`AppBar`, `Inspector`, `Standing`, `ActivityRail`, `Trail`,
+   Its parts (`AppBar`, `Inspector`, `Standing`, `Inbox`, `Trail`,
    `OverviewButton`) are exported for a shell of your own; one is about
    eighty lines, and a longer one is probably rebuilding something derived.
    `firstLook` on `Shell` and `PagesApp` (`true` or `{ seen, onDone,

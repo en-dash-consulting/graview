@@ -123,14 +123,15 @@ export {
 export type { SeatAnswer, SeatOutcome, SeatTurn } from "./seat.js";
 export { GraviewMark } from "./graview-mark.js";
 export { AppMark, AppTitle, useFavicon, useThemeColor } from "./app-title.js";
-export { BarActivity } from "./bar-activity.js";
+export { BarInbox, useInboxWanted } from "./bar-activity.js";
+export { badgeCount, Inbox, inboxWords, type InboxProps, type InboxTab } from "./inbox.js";
 export { AppBar, BarFindContext, barPlaceAt, barPlaces, BAR_HEIGHT, BAR_PHONE, FEWEST_STANDING, HOME_KEY, HOME_PATH, PLACE_GAP, placesThatStand, TOOL, toolStyle, useBarFind } from "./app-bar.js";
 export { scenePlacesOf, useScenePlaces, WHOLE_KEY, WHOLE_LABEL, type ScenePlaces } from "./scene-places.js";
 export { SceneBarTools, SceneTrail, useCallLog } from "./scene-bar.js";
 export { SceneWayBack } from "./scene-way-back.js";
 export { freshChangeOf, isTakeBackKey, lastChangeOf, takeBackLast, takeBackWords, WAY_BACK_MS } from "./way-back.js";
 export type { LastChange } from "./way-back.js";
-export type { BarAction, BarFace, BarFaces, BarFind, BarGo, BarPlace, BarPlaceGroup, BarSwitch } from "./app-bar.js";
+export type { AppMenuRow, BarAction, BarFace, BarFaces, BarFind, BarGo, BarPlace, BarPlaceGroup, BarScheme, BarShare, SchemeChoice } from "./app-bar.js";
 // The ways past what stands before the work (WCAG 2.4.1), and the groups that are one Tab stop.
 export { focusInto, SkipLinks } from "./skip-links.js";
 export type { SkipTo } from "./skip-links.js";

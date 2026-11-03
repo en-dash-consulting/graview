@@ -23,6 +23,7 @@ import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { deadline } from "./lib/deadline.mjs";
+import { openActivity } from "./lib/bar.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -90,10 +91,9 @@ async function subscribeFromTheMenu(page, rightClick) {
   return { row, said, othersOnly, presses, keyboard: await keyboard(page) };
 }
 
-/** What Activity lists the reader is told of. */
+/** What Activity — the inbox's tab — lists the reader is told of. */
 async function notifiedInActivity(page) {
-  if (!(await page.$('[data-testid="activity"]'))) await page.click('[data-testid="activity-button"]');
-  await page.waitForSelector('[data-testid="activity"]', { timeout: 10_000 });
+  await openActivity(page);
   await page.waitForTimeout(400);
   return page.evaluate(() => [...document.querySelectorAll('[data-testid="activity"] [data-testid="notified"] li')].map((one) => (one.textContent ?? "").replace(/Stop$/, "").trim()));
 }

@@ -22,7 +22,7 @@
  *   what the live regions say when somebody else, in another tab sharing
  *   the store, changes a record.
  *
- * The stops: the bar; the Pages and Scene switch; a list; a record page; a
+ * The stops: the bar; the app menu's Pages and Scene; a list; a record page; a
  * columns lens, a card on it moved by the keyboard, its menu and a drag; a blocks lens; an act's form; the quick ask (⌘K); and a change
  * from someone else, with the two shown to each other and with presence
  * off, as a served store's change arrives. Over two apps: the Roadmap (a document mounted as
@@ -424,7 +424,7 @@ try {
       report.stops.bar = order.said.map((one) => one.line);
       check("the bar: every control is named in words", unnamed(order).length === 0, { unnamed: unnamed(order) });
       check(
-        "the bar: the app's name is said first, as the page's heading, then the switch, the places and the search",
+        "the bar: the app's name is said first, as the page's heading, then the app menu, the places and the search",
         order.headings[0]?.name === "A Roadmap" && order.headings[0]?.level === 1,
         { headings: order.headings },
       );
@@ -439,12 +439,18 @@ try {
       report.stops.barTabs = tabs;
     }
 
-    /* ── 2. THE PAGES AND SCENE SWITCH ── */
-    reach("the switch");
+    /* ── 2. THE APP MENU: PAGES AND SCENE ── */
+    reach("the app menu");
     {
-      const here = stop("Roadmap", "The Pages and Scene switch", "Pressed from the keyboard: Scene, then Pages again.");
-      const switcher = ada.getByRole("group", { name: "Scene or Pages" });
-      here.read("The switch", await readingOrder(ada, cdp, { selector: '[role="group"][aria-label="Scene or Pages"]' }));
+      const here = stop("Roadmap", "The app menu: Pages and Scene", "Opened from the keyboard on the chevron beside the app's name: Scene, then Pages again.");
+      const opener = ada.getByRole("button", { name: /— app menu$/ });
+      const faces = async () => {
+        await press(opener);
+        await ada.getByRole("group", { name: "Scene or Pages" }).waitFor({ timeout: 10_000 }).catch(() => undefined);
+        return ada.getByRole("group", { name: "Scene or Pages" });
+      };
+      const switcher = await faces();
+      here.read("The app menu", await readingOrder(ada, cdp, { selector: '[data-testid="app-menu"]' }));
       await press(switcher.getByRole("button", { name: "Scene" }));
       await ada.waitForFunction(() => document.querySelector("[data-graview-face='graview'], .graview-scene, [data-graview-scene]") !== null, undefined, { timeout: 30_000 }).catch(() => undefined);
       await ada.waitForTimeout(1200);
@@ -452,13 +458,17 @@ try {
       here.focus("pressing Scene", onScene);
       const scene = await readingOrder(ada, cdp, { selector: "#app", skip: [BAR, ASK], items: 2 });
       here.read("The scene, under the bar (lists cut to two items)", { said: scene.said.slice(0, 40) });
-      check("the switch: the keyboard stays on the switch after Scene is pressed", !onScene.lost && /Scene/.test(onScene.name ?? "") && /pressed/.test(onScene.line), { focus: onScene.line });
+      check("the app menu: the keyboard goes back to its control after Scene is pressed", !onScene.lost && /app menu/.test(onScene.name ?? ""), { focus: onScene.line });
       check("the scene: every control is named in words", unnamed(scene).length === 0, { unnamed: unnamed(scene).slice(0, 12) });
+      const sceneSaid = await readingOrder(ada, cdp, { selector: '[role="group"][aria-label="Scene or Pages"]' }).catch(() => null);
+      await faces();
+      const pressedScene = await readingOrder(ada, cdp, { selector: '[role="group"][aria-label="Scene or Pages"]' });
+      check("the app menu: Scene is said pressed once it is drawn", pressedScene.said.some((one) => /Scene/.test(one.line) && /\bpressed/.test(one.line) && !/not pressed/.test(one.line)), { said: pressedScene.said.map((one) => one.line), before: sceneSaid?.said?.length ?? null });
       await press(ada.getByRole("group", { name: "Scene or Pages" }).getByRole("button", { name: "Pages" }));
       await ada.waitForTimeout(1200);
       const onPages = await focusSaid(ada, cdp);
       here.focus("pressing Pages", onPages);
-      check("the switch: the keyboard stays on the switch after Pages is pressed", !onPages.lost && /Pages/.test(onPages.name ?? "") && /pressed/.test(onPages.line), { focus: onPages.line });
+      check("the app menu: the keyboard goes back to its control after Pages is pressed", !onPages.lost && /app menu/.test(onPages.name ?? ""), { focus: onPages.line });
     }
 
     /* ── 3. A LIST ── */

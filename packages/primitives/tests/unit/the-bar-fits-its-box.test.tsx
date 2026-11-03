@@ -76,7 +76,8 @@ describe("the bar's own rules", () => {
     const shrink = (rule: string) => Number(new RegExp(`\\.${rule}\\{[^}]*flex:[\\d.]+ ([\\d.]+)`).exec(css)?.[1]);
     expect(shrink("graview-bar-find")).toBeGreaterThan(shrink("graview-bar-app"));
     expect(shrink("graview-bar-mid")).toBeGreaterThan(shrink("graview-bar-app"));
-    expect(shrink("graview-bar-faces")).toBe(0);
+    // The scene and the pages are in the app menu now (Roadmap f-app-bar-calm): nothing of them stands on the row to give.
+    expect(css).not.toContain(".graview-bar-faces");
     // Find gives down to a box that still says "Find"; the place keeps room for its words.
     expect(css).toMatch(/\.graview-bar-find\{[^}]*min-width:\d/);
     expect(css).toMatch(/\.graview-bar-mid\[data-place\]\{min-width:\d+em;/);
@@ -113,24 +114,14 @@ describe("Find on the bar", () => {
   });
 });
 
-describe("the switch as its marks alone", () => {
-  it("is asked for by `switch: \"icons\"`, and keeps its words as its buttons' names and titles", () => {
-    const { root, at } = drawn(<AppBar brand={undefined} name="Seedbed" home={{ go: () => undefined, current: false }} faces={faces} places={places} current="home" reach={{}} tools={null} find={false} switch="icons" />);
-    const group = at.querySelector('[data-testid="app-faces"]')!;
-    expect(group.getAttribute("data-switch")).toBe("icons");
-    const buttons = [...group.querySelectorAll("button")];
-    expect(buttons.map((button) => button.textContent)).toEqual(["Scene", "Pages"]);
-    expect(buttons.map((button) => button.getAttribute("title"))).toEqual(["Scene", "Pages"]);
-    expect(group.getAttribute("data-switch-drawn")).toBe("icons");
-    expect(sheet(at)).toMatch(/\[data-switch-drawn=icons\] \.graview-bar-face span\{[^}]*clip/);
-    act(() => root.unmount());
-  });
-
-  it("says its words by default, and goes to its marks on its own when they do not fit or the bar is a phone's", () => {
-    const { root, at } = drawn(<AppBar brand={undefined} name="Seedbed" home={{ go: () => undefined, current: false }} faces={faces} places={places} current="home" reach={{}} tools={null} find={false} />);
-    expect(at.querySelector('[data-testid="app-faces"]')?.getAttribute("data-switch")).toBe("words");
-    // What is drawn is weighed in a browser (`roomForWords`; jsdom lays nothing out, so its bar is a phone's, drawn as marks).
-    expect(at.querySelector('[data-testid="app-faces"]')?.getAttribute("data-switch-drawn")).toBe("icons");
+describe("Find, folded sooner (Roadmap f-app-bar-calm)", () => {
+  it("is the magnifier below the bar's own 900 px, not only a phone's, and opens its box over the row there", () => {
+    const { root, at } = drawn(<AppBar brand={undefined} name="Seedbed" home={{ go: () => undefined, current: false }} faces={faces} places={places} current="home" reach={{}} tools={null} />);
+    const css = sheet(at);
+    expect(css).toMatch(/@container graview-bar \(max-width: 899px\)\{\s*\.graview-bar-find\{display:none\}\s*\.graview-bar-find-open\{display:inline-flex\}/);
+    // Opened there, the box takes the row: the app and its places step aside rather than the row growing.
+    expect(css).toContain(".graview-bar[data-finding] :is(.graview-bar-app,.graview-bar-mid,.graview-bar-find-open){display:none}");
+    expect(at.querySelector('[data-testid="app-find-open"]')?.getAttribute("aria-label")).toBe("Find");
     act(() => root.unmount());
   });
 });

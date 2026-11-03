@@ -1,11 +1,10 @@
 import { layer, type AnySchema } from "@graview/core";
 import type { ToolCall } from "@graview/tools";
-import { Suspense, useCallback, useState, type ReactNode } from "react";
-import { BarSuggested } from "./bar-suggested.js";
+import { useCallback, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import type { BarFind } from "./app-bar.js";
 import { FindBox } from "./find.js";
-import { ActivityRail } from "./workbench/activity.js";
+import { Inbox } from "./inbox.js";
 import { FollowingLine } from "./workbench/following.js";
 import { Trail } from "./workbench/trail.js";
 
@@ -45,7 +44,7 @@ export function useCallLog(): readonly [readonly ToolCall[], (call: ToolCall) =>
 
 /**
  * THE SCENE'S PART OF THE BAR: its Find in the bar's place for Find, and its
- * Activity in the bar's place for the face's own tool. Nothing until the bar
+ * inbox in the bar's place for the face's own tool. Nothing until the bar
  * has said where (`BarFind`).
  */
 export function SceneBarTools<S extends AnySchema>({
@@ -65,18 +64,8 @@ export function SceneBarTools<S extends AnySchema>({
   return (
     <>
       {createPortal(<FindBox<S> compact={find.compact} />, find.slot)}
-      {/* What tidying suggests waits beside Activity, quietly, only while something does. */}
-      {find.own
-        ? createPortal(
-            <>
-              <Suspense fallback={null}>
-                <BarSuggested />
-              </Suspense>
-              <ActivityRail calls={calls} remembers={remembers} {...(seat !== undefined ? { seat } : {})} />
-            </>,
-            find.own,
-          )
-        : null}
+      {/* One inbox (Roadmap f-app-bar-calm): what waits for you, what has happened, what you asked. */}
+      {find.own ? createPortal(<Inbox calls={calls} remembers={remembers} {...(seat !== undefined ? { seat } : {})} />, find.own) : null}
     </>
   );
 }

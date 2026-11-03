@@ -491,7 +491,7 @@ for (const { app, port, states, chosen = [], ground = [], record, focused = [], 
       const tab = page.getByRole("link", { name: place, exact: true }).first();
       if (!(await tab.isVisible().catch(() => false))) {
         // A narrow bar folds its places into a menu.
-        await page.locator('[data-testid="app-places-open"], [data-testid="app-menu"]').first().click({ timeout: 4000 }).catch(() => {});
+        await page.locator('[data-testid="app-places-open"]:visible').first().click({ timeout: 4000 }).catch(() => {});
         await page.waitForTimeout(400);
       }
       const press = (locator) => locator.first().click({ timeout: 4000 }).then(() => true, () => false);

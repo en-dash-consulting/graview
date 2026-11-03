@@ -89,9 +89,11 @@ async function scene(store: Store<typeof schema>, principal: Principal) {
 }
 const $ = (selector: string) => document.querySelector<HTMLElement>(selector);
 const open = async () => {
-  await settled(() => expect($('[data-graview-app-bar] [data-testid="suggested-button"]')).not.toBeNull());
-  await act(async () => $('[data-testid="suggested-button"]')!.click());
-  await settled(() => expect($('[data-testid="suggestion"]')).not.toBeNull());
+  await settled(() => expect($('[data-graview-app-bar] [data-testid="inbox-button"]')).not.toBeNull());
+  await act(async () => $('[data-testid="inbox-button"]')!.click());
+  // The inbox opens on For you, where what waits for this person is.
+  await settled(() => expect($('[data-testid="inbox-tab-for-you"]')?.getAttribute("aria-selected")).toBe("true"));
+  await settled(() => expect($('[data-testid="suggested"] [data-testid="suggestion"]')).not.toBeNull());
 };
 
 describe("a reader at the Suggested tray", () => {
@@ -146,7 +148,8 @@ describe("a keeper at the Suggested tray", () => {
     await settled(() => expect($('[data-testid="suggestion-tally"]')?.textContent).toBe("1 for, 1 against"));
     // Accept makes it, as ever.
     await act(async () => $('[data-testid="suggestion-accept"]')!.click());
-    await settled(() => expect($('[data-testid="suggested-button"]')).toBeNull());
+    await settled(() => expect($('[data-testid="suggestion"]')).toBeNull());
+    await settled(() => expect($('[data-testid="inbox-tab-activity"]')?.getAttribute("aria-selected")).toBe("true"));
     expect(store.graph.allEdges()).toHaveLength(1);
   });
 

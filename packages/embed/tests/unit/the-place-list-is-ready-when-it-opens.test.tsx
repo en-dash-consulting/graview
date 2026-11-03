@@ -4,6 +4,7 @@ import { createSchema, defineApp, defineNode, z } from "@graview/core";
 import { act } from "react";
 import { describe, expect, it } from "vitest";
 import { mount } from "../../src/index.js";
+import { openAppMenu, pressFace } from "../support/the-app-menu.js";
 
 /**
  * THE PLACE LIST IS READY WHEN IT OPENS (FR-140). Graview Cloud, on a desk,
@@ -40,9 +41,10 @@ describe("a pick from the place list", () => {
       ["kind:bed", "beds"],
       ["kind:plot", "plots"],
     ] as const) {
-      // Pages, the list, the entry: no pause between them.
+      // Pages, the list, the entry: no pause between them (the app menu opened first, as a hand reaches for Pages).
+      const menu = await openAppMenu(host);
       await act(async () => {
-        host.querySelector<HTMLButtonElement>('[data-testid="app-face-pages"]')!.click();
+        menu.querySelector<HTMLButtonElement>('[data-testid="app-face-pages"]')!.click();
       });
       await act(async () => {
         host.querySelector<HTMLButtonElement>('[data-testid="app-places-open"]')!.click();
@@ -52,9 +54,7 @@ describe("a pick from the place list", () => {
       for (let tries = 0; tries < 60 && heading(host).length === 0; tries++) await settle();
       await settle();
       expect(heading(host), `${host.querySelector("[data-testid=app-place-current]")?.textContent} :: ${[...host.querySelectorAll("[data-embed-content] h1, [data-embed-content] h2, [data-embed-content] h3, [aria-busy]")].map((one) => one.tagName + one.textContent?.slice(0, 40)).join(" / ")}`).toContain(said);
-      await act(async () => {
-        host.querySelector<HTMLButtonElement>('[data-testid="app-face-scene"]')!.click();
-      });
+      await pressFace(host, "scene");
       await settle();
     }
     await act(async () => handle!.unmount());

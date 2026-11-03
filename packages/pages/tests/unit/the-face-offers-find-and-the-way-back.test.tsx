@@ -219,15 +219,15 @@ describe("the routed face's way back", () => {
 /*
  * A SHELL WITH A RAIL OF ITS OWN KEEPS THE BAR WITHOUT ITS PLACES. n-dx's
  * face lists its places in a rail; `without: ["bar"]` was the only way to
- * stop the bar saying them again, and it took the switch, Find, the
+ * stop the bar saying them again, and it took the app menu, Find, the
  * standing and the person with it.
  */
 describe("a shell that goes without the bar's places", () => {
-  it("keeps the bar — the switch, Find, the standing — and the bar names no place", async () => {
+  it("keeps the bar — the app menu, Find, the standing — and the bar names no place", async () => {
     const host = await face(fresh(), designed(BareShell, { without: ["places"] }));
     const bar = host.querySelector('[data-testid="app-bar"]')!;
     expect(bar).not.toBeNull();
-    expect(bar.querySelector('[data-testid="app-faces"]')).not.toBeNull();
+    expect(bar.querySelector('[data-testid="app-menu-open"]')).not.toBeNull();
     expect(bar.querySelector('[data-testid="standing-link"]')).not.toBeNull();
     expect(findBoxes(host)).toHaveLength(1);
     expect(host.querySelector('[data-testid="app-places-open"]')).toBeNull();

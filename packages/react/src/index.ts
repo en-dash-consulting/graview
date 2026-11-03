@@ -17,7 +17,7 @@ export type { Placed } from "./placement.js";
 export type { OccupantsProps } from "./occupants.js";
 export { foldRobots, participantOf, standingFor, VISIT_EACH_UP_TO } from "./robot.js";
 export type { RobotEvent, RobotMode, RobotState, SeatNote } from "./robot.js";
-export type { ActsDoor, AdministeredModule, AwaySummary, DrawnBox, GraviewContextValue, GraviewProviderProps, OnExport, PointerMenu, SceneHandle, Scheme, Seat, ViewMode, WorkflowRuns } from "./context.js";
+export type { ActsDoor, AdministeredModule, AwaySummary, DrawnBox, GraviewContextValue, GraviewProviderProps, HostNotification, OnExport, PointerMenu, SceneHandle, Scheme, Seat, ViewMode, WorkflowRuns } from "./context.js";
 export { createPointerStore } from "./pointer.js";
 export type { PointerStore, ScenePoint } from "./pointer.js";
 export { applySettings, honorSetting, loadSetting, rememberSetting } from "./settings.js";

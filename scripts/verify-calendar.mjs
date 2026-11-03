@@ -23,6 +23,7 @@ import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
 import { at, portFor } from "./lib/ports.mjs";
+import { openActivity } from "./lib/bar.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -187,7 +188,7 @@ try {
   );
   // The rail only offers a turn to take back once there IS one, so it is
   // opened after the drop rather than before.
-  await page.click('[data-testid="activity-button"]');
+  await openActivity(page, { timeout: 20_000 });
   await page.waitForSelector('[data-testid="undo-turn"]', { timeout: 20_000 });
   await page.locator('[data-testid="undo-turn"]').first().click();
   await page.waitForTimeout(900);

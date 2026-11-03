@@ -54,34 +54,33 @@ function household(): { entry: string; data: string; seed: string } {
 describe("graview workflow", () => {
   it("lists each workflow in a sentence, whether it is paused, when it next runs on the app's clock (6 PM in New York, the Sunday the clocks fall back), and dreaming as built in", async () => {
     const { entry } = household();
-    const listed = await run([entry, "--now", "2037-10-28T12:00:00Z"]);
+    const listed = await run([entry, "--now", "2026-10-28T12:00:00Z"]);
     expect(listed.code).toBe(0);
-    expect(listed.out).toContain("next-weeks-events — Every Sunday at 6 PM: fill out next week's events\n    next 2037-11-01T23:00:00.000Z · Has not run yet");
+    expect(listed.out).toContain("next-weeks-events — Every Sunday at 6 PM: fill out next week's events\n    next 2026-11-01T23:00:00.000Z · Has not run yet");
     expect(listed.out).toContain("set-aside-done-lists — Every day at 3 AM: set aside done grocery lists\n    paused · Has not run yet");
     expect(listed.out).toContain("keep-events-in-step — When a plan item's name and date changes: keep events in step with plan items\n    runs on a change or by hand");
     expect(listed.out).toContain("dreaming (built in) — Every day at 3 AM: tidy the app overnight");
-    const json = await run([entry, "--now", "2037-10-28T12:00:00Z", "--json"]);
+    const json = await run([entry, "--now", "2026-10-28T12:00:00Z", "--json"]);
     expect(JSON.parse(json.out).workflows.map((one: { name: string }) => one.name)).toEqual(["next-weeks-events", "keep-events-in-step", "set-aside-done-lists", "dreaming"]);
   });
 
   it("runs one against the store: dry the first time after a change, kept the next, nothing new the third — and says its last run when listed", async () => {
     const { entry, data, seed } = household();
     const base = [entry, "next-weeks-events", "--data", data, "--seed", seed];
-    // In 2037, a year whose calendar is 2026's: a run finishes no earlier than the wall clock, so a day already past read "just now".
-    const first = await run([...base, "--now", "2037-11-01T18:00:00Z"]);
+    const first = await run([...base, "--now", "2026-11-01T18:00:00Z"]);
     expect(first.code).toBe(0);
     expect(JSON.parse(first.out)).toMatchObject({ workflow: "next-weeks-events", dry: true, made: ["event:wf.next-weeks-events.r1", "event:wf.next-weeks-events.r2"] });
     expect(first.err).toContain("“next-weeks-events” ok (a dry run: nothing was kept)");
 
-    const kept = await run([...base, "--now", "2037-11-01T18:01:00Z"]);
+    const kept = await run([...base, "--now", "2026-11-01T18:01:00Z"]);
     expect(JSON.parse(kept.out)).toMatchObject({ dry: false, outcome: "ok", made: ["event:wf.next-weeks-events.r1", "event:wf.next-weeks-events.r2"] });
-    const again = await run([...base, "--now", "2037-11-01T18:02:00Z"]);
+    const again = await run([...base, "--now", "2026-11-01T18:02:00Z"]);
     expect(JSON.parse(again.out)).toMatchObject({ dry: false, outcome: "nothing-new", made: [] });
 
     const runs = JSON.parse(readFileSync(join(data, "The household", "workflow-runs.json"), "utf8")).runs["next-weeks-events"];
     expect(runs).toHaveLength(3);
-    const listed = await run([entry, "--data", data, "--now", "2037-11-01T20:02:00Z"]);
-    expect(listed.out).toContain("next 2037-11-01T23:00:00.000Z · Last ran 2 hours ago: nothing new");
+    const listed = await run([entry, "--data", data, "--now", "2026-11-01T20:02:00Z"]);
+    expect(listed.out).toContain("next 2026-11-01T23:00:00.000Z · Last ran 2 hours ago: nothing new");
   });
 
   it("keeps nothing when a dry run is asked for", async () => {

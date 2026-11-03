@@ -74,8 +74,8 @@
  * on the same with thirty places, at 1000, 1024, 1280 (also at twice the
  * pixels) and 1440 px and on a phone: one row of at most 48 px, every
  * control on its middle line and none at the top edge; right after the
- * app's name a switch that says Scene and Pages and marks the one drawn,
- * reached from the keyboard; on Pages the place you are on as one control
+ * app's name the app menu's control, reached from the keyboard, whose menu
+ * holds Scene and Pages and marks the one drawn (Roadmap f-app-bar-calm); on Pages the place you are on as one control
  * — on a phone, the page's first line — whose list holds every place, each
  * two presses away by pointer and by keyboard, Escape giving the keyboard
  * back to the control; nothing calling the scene "the overview"; a
@@ -108,7 +108,7 @@
  * (and ⌘Z still takes the change back), it stands while the pointer is on
  * it and goes after it leaves, and it goes with a move to another page. On
  * the scene, at altitude and Down in a district: the act is offered back on
- * the board, Activity is in the bar and lists the change with its undo,
+ * the board, Activity is in the bar's inbox and lists the change with its undo,
  * and the change is taken back by the offer's own Take back and by Ctrl+Z;
  * the offer goes on its own, and stands while the pointer is on it.
  *
@@ -140,7 +140,7 @@
  * places and on Pages, at every 4 px from 900 to 2100 and back down in Chromium (every 12 in WebKit and Firefox)
  * between them (every 12 with `--quick`): once settled, the bar is
  * watched for 600 ms of frames, and whether the places stand, which
- * stand, how the switch is drawn and the name's lines never change; the
+ * stand, whether Find is its box or its magnifier and the name's lines never change; the
  * name is on two lines beside standing places only when it is wider on
  * one line than its room.
  *
@@ -159,6 +159,7 @@ import { ENGINES, launchEngine } from "./lib/engine.mjs";
 import { graviewSources } from "./lib/graview-sources.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { vacant } from "./lib/serve.mjs";
+import { closeAppMenu, faceShown, openAppMenu, toFace } from "./lib/bar.mjs";
 import { arrangeByKeyboard, endClearsTheFoot, FIRST_RECORD_WITHIN, listHead } from "./lib/arranging-line.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -321,7 +322,6 @@ async function buildHost() {
           fonts: false,
           studio: false,
           bar: true,
-          ...(asked.get("switch") ? { switch: asked.get("switch") } : {}),
         });
         window.__handle.drawn().then(() => { window.__ready = true; });`,
       resolveDir: resolve(repoRoot, "packages/embed"),
@@ -478,10 +478,10 @@ function measure() {
 }
 
 /* The bar's measures, defined in every page the harness opens, for `theBar` and `theRow` to share. */
-const BAR_HELPERS = `${[barControls, linesOf, theSwitch, saysOverview, placesSaid].map(String).join("\n")}\nObject.assign(window, { barControls, linesOf, theSwitch, saysOverview, placesSaid });`;
+const BAR_HELPERS = `${[barControls, linesOf, theMenuControl, saysOverview, placesSaid].map(String).join("\n")}\nObject.assign(window, { barControls, linesOf, theMenuControl, saysOverview, placesSaid });`;
 const host = await buildHost();
 const errors = [];
-const results = { steady: [], standing: [], standingResized: [], emptyKinds: [], railed: [], standingPresses: [], heldAcross: [], quickPicks: [], boxes: [], boxSwitches: [], firstFrames: [], screens: [], tiles: [], skillRows: [], boards: [], marquees: [], problemCounts: [], problemsByKeyboard: [], notices: [], bars: [], switchPresses: [], deskBars: [], twoPresses: [], repeats: [], homes: [], workshopLists: [], wayBack: [] };
+const results = { steady: [], standing: [], standingResized: [], emptyKinds: [], railed: [], standingPresses: [], heldAcross: [], quickPicks: [], boxes: [], boxMenus: [], firstFrames: [], screens: [], tiles: [], skillRows: [], boards: [], marquees: [], problemCounts: [], problemsByKeyboard: [], notices: [], bars: [], switchPresses: [], deskBars: [], twoPresses: [], repeats: [], homes: [], workshopLists: [], wayBack: [] };
 let browser;
 try {
   for (const engine of engines) {
@@ -566,14 +566,13 @@ try {
             await close();
           }
           /*
-           * FR-158, as Cloud met it: the scene reached by the switch from Pages, its places opened at once and the
+           * FR-158, as Cloud met it: the scene reached by the app menu from Pages, its places opened at once and the
            * held entry pressed — on a phone and at 1024, where the scene's pictures fold into More.
            */
           if (face === "graview") {
             for (const viewport of [PHONE, { width: 1024, height: 800 }]) {
               const { page, close } = await open(`doc=workshop&face=pages&heading=1`, viewport);
-              await page.locator('[data-testid="app-face-scene"]').click();
-              await page.waitForFunction(() => document.querySelector('[data-testid="app-face-scene"]')?.getAttribute("aria-pressed") === "true", null, { timeout: 10_000 });
+              await toScene(page);
               results.heldAcross.push({ engine, scheme, face: "scene, from pages", where: `a ${viewport.width} px page`, ...(await heldAcrossTheOpen(page)) });
               await close();
             }
@@ -616,7 +615,7 @@ try {
                 const bar = document.querySelector('[data-testid="app-bar"]');
                 return {
                   bar: Boolean(bar),
-                  switch: Boolean(bar?.querySelector('[data-testid="app-faces"]')),
+                  menu: Boolean(bar?.querySelector('[data-testid="app-menu-open"]')),
                   find: Boolean(bar?.querySelector('[data-testid="app-find"] input')),
                   standing: Boolean(bar?.querySelector('[data-testid="standing"]')),
                   person: Boolean(bar?.querySelector('[data-testid="profile-button"]')),
@@ -654,8 +653,7 @@ try {
         for (let trial = 0; trial < PICK_PAGES; trial++) {
           const { page, close } = await open("doc=vendors&face=graview", DESK);
           results.quickPicks.push({ engine, trial, first: true, ...(await pickAtOnce(page, "kind:vendor", "Vendors")) });
-          await page.locator('[data-testid="app-face-scene"]').click();
-          await page.waitForFunction(() => document.querySelector('[data-testid="app-face-scene"]')?.getAttribute("aria-pressed") === "true");
+          await toScene(page);
           results.quickPicks.push({ engine, trial, first: false, ...(await pickAtOnce(page, "home", "Home")) });
           await close();
         }
@@ -711,11 +709,11 @@ try {
           results.firstFrames.push({ engine, scheme, box, frames, past });
           await context.close();
         }
-        /* The switch as marks alone, asked for by the host: on a desk's whole page and in a box, its words its names. */
+        /* The faces are the app menu's, not the row's (Roadmap f-app-bar-calm): on a desk's whole page and in a box, its control named. */
         for (const face of ["graview", "pages"]) {
           for (const box of [0, 720]) {
-            const { page, close } = await open(`doc=workshop&face=${face}&heading=1&switch=icons${box ? `&box=${box}` : ""}`, BOX_DESK);
-            results.boxSwitches.push({ engine, scheme, face, where: box ? `a ${box} px box` : `a ${BOX_DESK.width} px page`, ...(await page.evaluate(theSwitchsWords)) });
+            const { page, close } = await open(`doc=workshop&face=${face}&heading=1${box ? `&box=${box}` : ""}`, BOX_DESK);
+            results.boxMenus.push({ engine, scheme, face, where: box ? `a ${box} px box` : `a ${BOX_DESK.width} px page`, ...(await page.evaluate(theFacesOffTheRow)) });
             await close();
           }
         }
@@ -907,12 +905,12 @@ try {
           for (const doc of ["vendors", "org"]) {
             const { page, close } = await open(`doc=${doc}&face=${face}&heading=1`, viewport);
             if (SHOTS) await page.screenshot({ path: join(SHOTS, `bar-${doc}-${face}-${viewport.width}-${scheme}-${engine}.png`) });
-            results.bars.push({ engine, scheme, doc, face, viewport: `${viewport.width}×${viewport.height}`, phone: viewport === PHONE, ...(await page.evaluate(theBar)) });
+            results.bars.push({ engine, scheme, doc, face, viewport: `${viewport.width}×${viewport.height}`, phone: viewport === PHONE, ...(await withTheMenu(page, await page.evaluate(theBar))) });
             await close();
           }
         }
       }
-      /* ---- FR-137: the scene and a list are one press on the switch apart, from the pointer and the keyboard */
+      /* ---- FR-137: the scene and a list are two presses apart through the app menu, from the pointer and the keyboard */
       for (const viewport of [DESK, PHONE]) {
         const { page, close } = await open("doc=vendors&face=pages", viewport);
         results.switchPresses.push({ engine, scheme, viewport: `${viewport.width}×${viewport.height}`, ...(await sceneAndBack(page)) });
@@ -926,7 +924,7 @@ try {
               const query = `doc=workshop${many ? "&many=1" : ""}&face=${face}&heading=1${face === "pages" ? `&path=${encodeURIComponent("/places/email-to-todd")}` : ""}`;
               const { page, close } = await open(query, viewport, { deviceScaleFactor: dpr });
               const phone = viewport === PHONE;
-              results.deskBars.push({ engine, scheme, places: many ? 30 : 7, face, viewport: `${viewport.width}×${viewport.height}`, dpr, phone, ...(await page.evaluate(theRow)) });
+              results.deskBars.push({ engine, scheme, places: many ? 30 : 7, face, viewport: `${viewport.width}×${viewport.height}`, dpr, phone, ...(await withTheMenu(page, await page.evaluate(theRow))) });
               if (SHOTS && dpr === 1 && (engine === "chromium" || engine === "webkit")) await page.screenshot({ path: join(SHOTS, `desk-bar-${many ? "thirty" : "workshop"}-${face}-${viewport.width}-${scheme}-${engine}.png`) });
               if (face === "pages" && dpr === 1 && (viewport.width === 1280 || phone)) {
                 /* Every place, two presses each, by the pointer; then by the keyboard. */
@@ -1015,10 +1013,20 @@ try {
     seen: results.bars.map(({ engine, scheme, doc, face, viewport, tools }) => ({ engine, scheme, doc, face, viewport, tools })),
     ok: results.bars.length > 0 && results.bars.every((one) => one.tools.length >= 3 && one.tools.every((tool) => tool.height >= 28 && tool.height <= 32 && tool.named)),
   };
-  const switchSays = (one) => one.switch !== null && one.switch.scene.name === "Scene" && one.switch.pages.name === "Pages" && one.switch.scene.pressed === (one.face !== "pages") && one.switch.pages.pressed === (one.face === "pages") && one.switch.rightAfterTheName && (one.phone || (one.switch.width >= 110 && one.switch.width <= 190));
-  report.checks.theSwitchSaysSceneAndPagesAndMarksTheOneDrawn = {
+  const menuSays = (one) =>
+    one.switch !== null &&
+    one.switch.opened &&
+    one.switch.says.scene === "Scene" &&
+    one.switch.says.pages === "Pages" &&
+    one.switch.scene.name === "Scene" &&
+    one.switch.pages.name === "Pages" &&
+    one.switch.scene.pressed === (one.face !== "pages") &&
+    one.switch.pages.pressed === (one.face === "pages") &&
+    one.switch.rightAfterTheName &&
+    /— app menu$/.test(one.switch.name ?? "");
+  report.checks.theAppMenuSaysSceneAndPagesAndMarksTheOneDrawn = {
     seen: [...results.bars, ...results.deskBars].map(({ engine, scheme, doc, places, face, viewport, dpr, switch: said }) => ({ engine, scheme, doc: doc ?? `workshop, ${places} places`, face, viewport, ...(dpr ? { dpr } : {}), switch: said })),
-    ok: results.bars.length > 0 && results.deskBars.length > 0 && [...results.bars, ...results.deskBars].every(switchSays),
+    ok: results.bars.length > 0 && results.deskBars.length > 0 && [...results.bars, ...results.deskBars].every(menuSays),
   };
   report.checks.nothingCallsTheSceneTheOverview = {
     seen: [...results.bars, ...results.deskBars].filter((one) => one.saysOverview.length > 0).map(({ engine, scheme, doc, places, face, viewport, saysOverview }) => ({ engine, scheme, doc: doc ?? `workshop, ${places} places`, face, viewport, saysOverview })),
@@ -1028,7 +1036,7 @@ try {
     seen: results.quickPicks,
     ok: results.quickPicks.length === engines.length * PICK_PAGES * 2 && results.quickPicks.every((one) => one.landed),
   };
-  report.checks.theSceneAndAListAreOnePressOnTheSwitchApart = {
+  report.checks.theSceneAndAListAreTwoPressesApartThroughTheAppMenu = {
     seen: results.switchPresses,
     ok: results.switchPresses.length === engines.length * SCHEMES.length * 2 && results.switchPresses.every((one) => one.toList && one.toScene && one.sceneMarked && one.backToTheList && one.pagesMarked && one.byKeyboard && !one.onBody),
   };
@@ -1137,7 +1145,7 @@ try {
     },
     /*
      * A SHELL WITH A RAIL OF ITS OWN KEEPS THE BAR WITHOUT ITS PLACES
-     * (`without: ["places"]`): the switch, Find, the standing and the person
+     * (`without: ["places"]`): the app menu, Find, the standing and the person
      * on both faces, and no place of the pages named on the bar; the scene's
      * pictures are the scene's, and stay.
      */
@@ -1145,7 +1153,7 @@ try {
       seen: results.railed,
       ok:
         results.railed.length === engines.length * 2 &&
-        results.railed.every((one) => one.bar && one.switch && one.find && one.standing && one.person && (one.face === "pages" ? one.places === 0 : one.places > 0)),
+        results.railed.every((one) => one.bar && one.menu && one.find && one.standing && one.person && (one.face === "pages" ? one.places === 0 : one.places > 0)),
     },
     aPictureChosenFromTheBarIsWhatTheSceneShows: {
       seen: results.standingPresses.filter((one) => one.face !== "pages").map(({ engine, scheme, where, inView }) => ({ engine, scheme, where, inView })),
@@ -1255,9 +1263,9 @@ try {
       seen: results.firstFrames,
       ok: results.firstFrames.length === engines.length * SCHEMES.length * 2 && results.firstFrames.every((one) => one.frames > 0 && one.past <= 2),
     },
-    theSwitchAskedForAsMarksSaysItsWordsAsNames: {
-      seen: results.boxSwitches,
-      ok: results.boxSwitches.length === engines.length * SCHEMES.length * 4 && results.boxSwitches.every((one) => one.names.join() === "Scene,Pages" && one.titles.join() === "Scene,Pages" && one.wordsDrawn === 0 && one.asked === "icons"),
+    theFacesAreInTheAppMenuNotOnTheRowAndItsControlIsNamed: {
+      seen: results.boxMenus,
+      ok: results.boxMenus.length === engines.length * SCHEMES.length * 4 && results.boxMenus.every((one) => one.control && /— app menu$/.test(one.name ?? "") && one.says.join() === "Scene,Pages" && one.onTheRow.length === 0),
     },
   };
   if (!ONLY_NOTICES) Object.assign(report.checks, BOX_CHECKS);
@@ -1273,8 +1281,8 @@ try {
   /*
    * THE BAR HOLDS STILL AT EVERY WIDTH. At each width, swept up and back
    * down, once the bar has settled: across the frames it is watched, the
-   * places stand or fold the same way, the same ones stand, the switch is
-   * drawn the same and the app's name keeps its lines. And the name is on
+   * places stand or fold the same way, the same ones stand, Find is drawn
+   * the same (its box or its magnifier) and the app's name keeps its lines. And the name is on
    * two lines while places stand only when it is wider on one line than
    * its room (the places never squeeze it there).
    */
@@ -1395,7 +1403,7 @@ function theBar() {
   /* Find boxes of the app's own — a lens may carry a box for its own words, which is the picture's, not the bar's. */
   const findBoxes = [...document.querySelectorAll('input[type="search"]')].filter((one) => shown(one) && (header?.contains(one) || /^(Find anything|Narrow this list)$/.test(one.getAttribute("aria-label") ?? ""))).length + (shown(header?.querySelector('[data-testid="app-find-open"]')) ? 1 : 0);
   const tools = header ? [...header.querySelectorAll(".graview-bar-tools > *")].flatMap((one) => (one.matches("button, a, input") ? [one] : [...one.querySelectorAll("button, a, input")])).filter(shown).map((one) => ({ name: one.getAttribute("aria-label") ?? one.textContent.trim(), height: Math.round(one.getBoundingClientRect().height), named: Boolean((one.getAttribute("aria-label") ?? "").trim()) })) : [];
-  return { rows: lines, placeLineUnderTheBar, bars: header ? 1 + others.length : others.length, contentUnderTheBar, headings, name, repeated, findBoxes, tools, switch: theSwitch(header), saysOverview: saysOverview(root) };
+  return { rows: lines, placeLineUnderTheBar, bars: header ? 1 + others.length : others.length, contentUnderTheBar, headings, name, repeated, findBoxes, tools, switch: theMenuControl(header), saysOverview: saysOverview(root) };
 }
 
 /** The bar's controls on its row — not the place list, which opens over the page — each with its box. */
@@ -1424,19 +1432,53 @@ function linesOf(boxes) {
   return lines;
 }
 
-/** The switch (FR-137): its two buttons' accessible names and states, its width, and whether it stands right after the app's name. */
-function theSwitch(header) {
-  const group = header?.querySelector('[data-testid="app-faces"]');
-  if (!group) return null;
-  const face = (which) => {
-    const button = group.querySelector(`[data-testid="app-face-${which}"]`);
-    /* The accessible name: the words, which a phone draws for a reader's ear alone. */
-    const name = (button?.getAttribute("aria-label") ?? button?.textContent ?? "").trim();
-    return { name, pressed: button?.getAttribute("aria-pressed") === "true", button: button?.tagName.toLowerCase() ?? null };
-  };
+/**
+ * THE APP MENU'S CONTROL (FR-137, Roadmap f-app-bar-calm): the chevron
+ * right after the app's name — its accessible name, the faces it says the
+ * menu holds before it is opened (`data-scene`, `data-pages`), its width,
+ * and whether it stands right after the name, in the app's own part of the
+ * row. What the menu marks drawn is read by opening it (`facesInTheMenu`).
+ */
+function theMenuControl(header) {
+  const button = header?.querySelector('[data-testid="app-menu-open"]');
+  if (!button) return null;
   const app = header.querySelector(".graview-bar-app");
-  const between = app && group ? group.getBoundingClientRect().left - app.getBoundingClientRect().right : null;
-  return { role: group.getAttribute("role"), label: group.getAttribute("aria-label"), scene: face("scene"), pages: face("pages"), width: Math.round(group.getBoundingClientRect().width), rightAfterTheName: between !== null && between >= 0 && between <= 24 && app.nextElementSibling === group };
+  const name = header.querySelector(".graview-bar-name");
+  const between = name ? button.getBoundingClientRect().left - name.getBoundingClientRect().right : null;
+  return {
+    name: button.getAttribute("aria-label"),
+    says: { scene: button.getAttribute("data-scene"), pages: button.getAttribute("data-pages") },
+    width: Math.round(button.getBoundingClientRect().width),
+    rightAfterTheName: Boolean(app?.contains(button)) && between !== null && between >= -1 && between <= 24,
+  };
+}
+
+/** The app menu opened (Roadmap f-app-bar-calm): its Scene and Pages rows, their names and which is drawn checked; put away again. */
+async function facesInTheMenu(page) {
+  const within = "[data-graview-embed]";
+  const opened = await openAppMenu(page, { within, timeout: 5_000 }).then(() => true, () => false);
+  if (!opened) return { opened };
+  const faces = await page.evaluate(() => {
+    const group = document.querySelector('[data-testid="app-menu"] [data-testid="app-faces"]');
+    const face = (which) => {
+      const button = group?.querySelector(`[data-testid="app-face-${which}"]`);
+      return { name: (button?.getAttribute("aria-label") ?? button?.textContent ?? "").trim(), pressed: button?.getAttribute("aria-pressed") === "true", button: button?.tagName.toLowerCase() ?? null };
+    };
+    return group ? { role: group.getAttribute("role"), label: group.getAttribute("aria-label"), scene: face("scene"), pages: face("pages") } : { scene: face("scene"), pages: face("pages") };
+  });
+  await closeAppMenu(page, { within });
+  return { opened, ...faces };
+}
+
+/** A bar read in the page, with what its app menu holds read by opening it: under `switch`, the key the claims have always read. */
+async function withTheMenu(page, seen) {
+  return { ...seen, switch: seen.switch ? { ...seen.switch, ...(await facesInTheMenu(page)) } : null };
+}
+
+/** To the scene by the app menu's Scene, and wait until the embed draws it. */
+async function toScene(page) {
+  await toFace(page, "scene", { within: "[data-graview-embed]" });
+  await page.waitForFunction(() => document.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed") !== "pages", null, { timeout: 10_000 });
 }
 
 /** Every word on the screen, and every control's name, that calls the scene "the overview" (FR-137). */
@@ -1463,7 +1505,7 @@ function saysOverview(root) {
  * THE ROW, MEASURED CONTROL BY CONTROL (FR-138): the bar's height, rule
  * included; the lines its controls' middles stand on; each control that
  * stands off the row's middle, and how near the top edge the nearest
- * comes; the place control's words and where it stands; and the switch.
+ * comes; the place control's words and where it stands; and the app menu's control.
  */
 function theRow() {
   const root = document.querySelector("[data-graview-embed]");
@@ -1480,7 +1522,7 @@ function theRow() {
     off,
     nearestTheTop: Math.round(Math.min(...controls.map((one) => one.box.top - bar.top)) * 10) / 10,
     place: placesSaid(root, header),
-    switch: theSwitch(header),
+    switch: theMenuControl(header),
     saysOverview: saysOverview(root),
   };
 }
@@ -1517,7 +1559,7 @@ function placesSaid(root, header) {
  * let settle — the same drawing for six frames running, or half a second —
  * then read on every frame for `ms`. Each distinct drawing seen: whether the
  * places stand ("standing"), are the one control or are none; which stand;
- * how the switch is drawn; how many lines the app's name is on. And the
+ * whether Find is its box or its magnifier; how many lines the app's name is on. And the
  * name's width on one line (its mark, its gap and its words unwrapped, read
  * off a copy of it) against its room, the app's `max-width`.
  */
@@ -1531,7 +1573,10 @@ async function theBarAtRest(ms) {
     return {
       places: mid?.getAttribute("data-places") ?? (mid?.hasAttribute("data-place") ? "one control" : "none"),
       standing: standing.join(" "),
-      drawn: header?.querySelector('[data-testid="app-faces"]')?.getAttribute("data-switch-drawn") ?? null,
+      find: (() => {
+        const opener = header?.querySelector('[data-testid="app-find-open"]');
+        return opener ? (getComputedStyle(opener).display === "none" ? "box" : "magnifier") : null;
+      })(),
       lines: name ? Math.round(name.getBoundingClientRect().height / parseFloat(getComputedStyle(name).lineHeight)) : 0,
     };
   };
@@ -1566,7 +1611,7 @@ async function theBarAtRest(ms) {
     cap = max.endsWith("%") ? Math.round(((inner * parseFloat(max)) / 100) * 10) / 10 : max === "none" ? null : parseFloat(max);
   }
   const box = (selector) => { const one = header?.querySelector(selector); if (!one) return null; const r = one.getBoundingClientRect(); return [Math.round(r.left * 10) / 10, Math.round(r.width * 10) / 10]; };
-  const geometry = { app: box(".graview-bar-app"), home: box(".graview-bar-home"), name: box(".graview-bar-app-name"), probe: box(".graview-bar-name-probe"), faces: box(".graview-bar-faces"), mid: box(".graview-bar-mid"), find: box(".graview-bar-find"), row: box(".graview-bar-row") };
+  const geometry = { app: box(".graview-bar-app"), home: box(".graview-bar-home"), name: box(".graview-bar-app-name"), probe: box(".graview-bar-name-probe"), menu: box(".graview-bar-menu-open"), mid: box(".graview-bar-mid"), find: box(".graview-bar-find"), row: box(".graview-bar-row") };
   return { states: [...states].map((one) => JSON.parse(one)), frames, natural, cap, geometry };
 }
 
@@ -1584,13 +1629,13 @@ async function pressPlace(page, selector) {
 }
 
 /**
- * A PICK MADE AT ONCE (FR-140): Pages, the place list and an entry pressed
+ * A PICK MADE AT ONCE (FR-140): Pages (from the app menu), the place list and an entry pressed
  * one after another with no pause, then the routed face waited for — not a
  * timer, its own page: the place's heading (a list's) or the bar saying the
  * place with no list's heading under it (the home) — for up to 5 s.
  */
 async function pickAtOnce(page, key, label) {
-  await page.locator('[data-testid="app-face-pages"]').click();
+  await toFace(page, "pages", { within: "[data-graview-embed]" });
   await pressPlace(page, `[data-testid="app-place-${key}"]`);
   const landed = await page
     .waitForFunction(
@@ -1713,51 +1758,57 @@ async function findInEveryForm(page) {
   return { byTab, byShortcut, typed };
 }
 
-/** The switch asked for as marks: its buttons' names and titles, how many draw their words, and what the bar says was asked. */
-function theSwitchsWords() {
-  const group = document.querySelector('[data-testid="app-faces"]');
-  const buttons = [...(group?.querySelectorAll("button") ?? [])];
-  const wordsDrawn = buttons.filter((button) => [...button.querySelectorAll("span")].some((span) => span.textContent.trim() && span.getBoundingClientRect().width > 4)).length;
-  return {
-    names: buttons.map((button) => (button.getAttribute("aria-label") ?? button.textContent ?? "").trim()),
-    titles: buttons.map((button) => button.getAttribute("title")),
-    wordsDrawn,
-    asked: group?.getAttribute("data-switch") ?? null,
-  };
+/** The faces off the row (Roadmap f-app-bar-calm): the app menu's control and its name, what it says the menu holds, and any control standing on the row itself that says "Scene" or "Pages". */
+function theFacesOffTheRow() {
+  const header = document.querySelector("[data-graview-embed] [data-graview-app-bar]");
+  const control = header?.querySelector('[data-testid="app-menu-open"]');
+  const row = header?.querySelector(".graview-bar-row");
+  const onTheRow = [...(row?.querySelectorAll("a, button") ?? [])]
+    .filter((one) => !one.closest('[hidden], [data-testid="app-menu"], .graview-bar-list') && one.getBoundingClientRect().width > 1)
+    .map((one) => (one.getAttribute("aria-label") ?? one.textContent ?? "").trim())
+    .filter((said) => /^(Scene|Pages)$/.test(said));
+  return { control: Boolean(control), name: control?.getAttribute("aria-label") ?? null, says: [control?.getAttribute("data-scene"), control?.getAttribute("data-pages")], onTheRow };
 }
 
 /**
  * FROM A LIST TO THE SCENE AND BACK (FR-137): a list by the place control,
- * the scene by the switch — drawn under the same bar, Scene pressed — and
- * Pages again, back on the same list. Then by keyboard: Tab to Scene, Enter.
+ * the scene by the app menu's Scene — drawn under the same bar, Scene
+ * marked in the menu — and its Pages again, back on the same list. Then by
+ * keyboard: Tab to the app menu's control, Enter, on to Scene, Enter.
  */
 async function sceneAndBack(page) {
+  const within = "[data-graview-embed]";
   const face = () => page.evaluate(() => document.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed"));
-  const pressed = (which) => page.evaluate((which) => document.querySelector(`[data-testid="app-face-${which}"]`)?.getAttribute("aria-pressed") === "true", which);
+  const shown = () => faceShown(page, { within }).catch(() => null);
   const heading = () => page.locator("main h2, [data-embed-content] h2").first().textContent().catch(() => "").then((text) => (text ?? "").trim().toLowerCase());
   const settle = () => page.waitForTimeout(1200);
   await pressPlace(page, '[data-testid="app-place-kind:vendor"]');
   await settle();
   const toList = (await face()) === "pages" && (await heading()) === "vendors";
-  await page.locator('[data-testid="app-face-scene"]').click();
+  await toFace(page, "scene", { within });
   await settle();
   const toScene = ["scene", "graview"].includes(await face());
-  const sceneMarked = (await pressed("scene")) && !(await pressed("pages"));
-  await page.locator('[data-testid="app-face-pages"]').click();
+  const sceneMarked = (await shown()) === "scene";
+  await toFace(page, "pages", { within });
   await settle();
   const backToTheList = (await face()) === "pages" && (await heading()) === "vendors";
-  const pagesMarked = await pressed("pages");
-  /* By keyboard: from the list, Tab from the app's name to Scene, and Enter. */
+  const pagesMarked = (await shown()) === "pages";
+  /* By keyboard: from the list, Tab from the app's name to the app menu's control, Enter; on to Scene, and Enter. */
   let byKeyboard = false;
+  const active = () => page.evaluate(() => document.activeElement?.getAttribute("data-testid") ?? null);
   await page.locator('[data-testid="app-home"]').focus();
   for (let step = 0; step < 6; step++) {
     await page.keyboard.press("Tab");
-    if (await page.evaluate(() => document.activeElement?.getAttribute("data-testid") === "app-face-scene")) {
+    if ((await active()) !== "app-menu-open") continue;
+    await page.keyboard.press("Enter");
+    await page.locator('[data-testid="app-face-scene"]').waitFor({ state: "visible", timeout: 5_000 }).catch(() => undefined);
+    for (let into = 0; into < 6 && (await active()) !== "app-face-scene"; into++) await page.keyboard.press("Tab");
+    if ((await active()) === "app-face-scene") {
       await page.keyboard.press("Enter");
       await settle();
       byKeyboard = ["scene", "graview"].includes(await face());
-      break;
     }
+    break;
   }
   const onBody = await page.evaluate(() => document.activeElement === document.body);
   return { toList, toScene, sceneMarked, backToTheList, pagesMarked, byKeyboard, onBody };
@@ -1769,7 +1820,7 @@ async function sceneAndBack(page) {
  * pressed as a harness reaches it (`pressPlace`), each landing on its place
  * with the bar saying its name; on the scene (FR-144), with the scene's
  * `in.view` the picture's own, and none for the whole thing. Then by
- * keyboard: Tab from the app's name reaches the switch, every place
+ * keyboard: Tab from the app's name reaches the app menu's control, every place
  * standing and the control that opens the rest; Enter opens the list with
  * the keyboard in it; Escape gives it back to the control; Tab walks every
  * entry; Enter on one goes there, and the keyboard is never left on the body.
@@ -1817,13 +1868,13 @@ async function everyPlaceInTwoPresses(page, shot, scene = false) {
   /* By keyboard. */
   const active = () => page.evaluate(() => document.activeElement?.getAttribute("data-testid") ?? (document.activeElement === document.body ? "<body>" : document.activeElement?.tagName.toLowerCase()));
   const opener = await page.evaluate(() => document.querySelector('[data-testid="app-places-open"]') !== null);
-  const keyboard = { opener, switchReached: false, controlReached: !opener, into: !opener, escapeBack: !opener, entriesByTab: 0, went: false, onBody: false };
+  const keyboard = { opener, menuReached: false, controlReached: !opener, into: !opener, escapeBack: !opener, entriesByTab: 0, went: false, onBody: false };
   const seen = new Set();
   await page.locator('[data-testid="app-home"]').focus();
   for (let step = 0; step < entries.length + 10; step++) {
     await page.keyboard.press("Tab");
     const at = await active();
-    if (at === "app-face-scene" || at === "app-face-pages") keyboard.switchReached = true;
+    if (at === "app-menu-open") keyboard.menuReached = true;
     if (at?.startsWith("app-place-") && at !== "app-place-current") seen.add(at);
     if (at === "app-places-open") keyboard.controlReached = true;
     if (opener ? keyboard.controlReached : seen.size === entries.length) break;
@@ -1913,7 +1964,7 @@ function twoPressesHeld(one) {
     one.groups.join() === (one.face === "graview" ? "home,pictures" : "home,lists,pictures") &&
     one.reached.length === one.places &&
     one.missed.length === 0 &&
-    one.keyboard.switchReached &&
+    one.keyboard.menuReached &&
     one.keyboard.controlReached &&
     one.keyboard.into &&
     one.keyboard.escapeBack &&
@@ -2263,18 +2314,20 @@ function offerSays(page) {
   });
 }
 
-/** Activity, from the scene's bar: there, it opens, and it lists the change with its undo. */
+/** Activity, from the scene's bar — the inbox's tab (Roadmap f-app-bar-calm): there, it opens, and it lists the change with its undo. */
 async function activityReaches(page, name) {
-  const button = page.locator('[data-graview-app-bar] [data-testid="activity-button"]').first();
+  const button = page.locator('[data-graview-app-bar] [data-testid="inbox-button"]').first();
   const inTheBar = await button.isVisible().catch(() => false);
   if (!inTheBar) return { inTheBar, opens: false, listsTheChange: false, offersItsUndo: false };
   await button.click();
+  const tab = page.locator('[data-testid="inbox-tab-activity"]').first();
+  if ((await tab.getAttribute("aria-selected", { timeout: 3_000 }).catch(() => null)) !== "true") await tab.click().catch(() => undefined);
   await page.waitForTimeout(400);
   const seen = await page.evaluate((name) => {
     const pane = document.querySelector('[data-testid="activity"]');
     return { opens: pane !== null && pane.getBoundingClientRect().height > 1, listsTheChange: (pane?.textContent ?? "").includes(name), offersItsUndo: Boolean(pane?.querySelector('[data-testid="undo-turn"]')) };
   }, name);
-  // Closed as it was opened, by its button (Escape on the scene also backs the picture out to home).
+  // Closed as it was opened, by its bell (Escape on the scene also backs the picture out to home).
   await button.click();
   await page.waitForTimeout(300);
   await park(page);
