@@ -522,8 +522,8 @@ export function SceneViewHost({
          * and returns without selecting, which opened a menu about nothing
          * (and quietly raised People on the way).
          */
-        // Beside the targets, the record the part around the pointer is about (a list's column), else the card's own.
-        const holder = picked && picked !== node.id ? null : holderFrom(event.target, event.currentTarget, (from, to) => hostStore.graph.neighbors(from).some((one) => one.id === to), node.id);
+        // On a picture of many (the lists), beside its targets: the record the part around the pointer is about (a list's column), else the picture's own. A record's own card stays about the record.
+        const holder = (picked && picked !== node.id) || !node.aggregate ? null : holderFrom(event.target, event.currentTarget, (from, to) => hostStore.graph.neighbors(from).some((one) => one.id === to), node.id);
         const on = picked && picked !== node.id ? picked : (holder ?? node.id);
         onPick(on, false, (on === picked ? joinedFrom(event.target) : null) ?? undefined);
         /*
