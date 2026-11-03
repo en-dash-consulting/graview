@@ -10,7 +10,7 @@ import { Highlighter, readPart } from "./section-better.js";
 import { readDrawn, Redesigning } from "./better-bar.js";
 import { BetterPanel } from "./better-panel.js";
 import type { SectionAsk } from "./section-menu.js";
-import { nameParts, partLines } from "./section-words.js";
+import { aboutOf, nameParts, partLines } from "./section-words.js";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /**
@@ -179,6 +179,8 @@ interface CardHeld {
   /** A draft is being drawn under a cover, to be judged. */
   covering: boolean;
   pointed: Pointed | null;
+  /** What the conversation is about, where the person pointed at a part of the page. */
+  about: Pointed | null;
   /** The design kept in this card, for a later turn to change again. */
   kept: string | null;
   version: number;
@@ -188,7 +190,7 @@ const CARDS = /* @__PURE__ */ new Map<number, CardHeld>();
 const cardOf = (at: number, first: () => Phase): CardHeld => {
   let held = CARDS.get(at);
   if (!held)
-    CARDS.set(at, (held = { phase: first(), steps: [], before: false, putBack: null, began: false, original: null, markup: null, talk: [], events: [], since: Date.now(), stop: null, covering: false, pointed: null, kept: null, version: 0, heard: new Set() }));
+    CARDS.set(at, (held = { phase: first(), steps: [], before: false, putBack: null, began: false, original: null, markup: null, talk: [], events: [], since: Date.now(), stop: null, covering: false, pointed: null, about: null, kept: null, version: 0, heard: new Set() }));
   return held;
 };
 
@@ -473,6 +475,7 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
       ...(latest ? { current: latest.source } : held.kept ? { current: held.kept } : {}),
       host: { look: () => lookOf(drawnNow()), read: () => dataOf(here, part), draft: judgeDraft },
       onEvent: (event) => step(event),
+      ...(held.about ? { about: held.about } : {}),
       noun: part.slot === "list" || part.slot === "group" ? part.name.toLowerCase() : part.slot === "record" ? "parts" : "records",
       signal: stop.signal,
     });
@@ -492,7 +495,9 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
       const pointed = held.pointed;
       held.pointed = null;
       const asked: Asked = { mode, words, ...(pointed ? { pointed } : {}) };
-      say("person", pointed ? `${words} (${pointed.name})` : words);
+      // The person's words as they typed them: what they are about is said beside them, never glued on.
+      held.about = pointed ?? held.about;
+      say("person", words);
       held.events = [];
       held.since = Date.now();
       setPhase({ at: "working" });
@@ -615,7 +620,7 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
         wholeSaid="The whole page"
         cancel={() => setPhase({ at: "open" })}
         chose={(elements) => {
-          held.pointed = { name: nameParts(elements.map(readPart)), lines: partLines(elements.map(readPart)) };
+          held.pointed = { name: aboutOf(elements) ?? nameParts(elements.map(readPart)), lines: partLines(elements.map(readPart)) };
           setPhase({ at: "open" });
         }}
       />
@@ -636,7 +641,7 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
         working={phase.at === "working" || phase.at === "keeping"}
         {...(latest && phase.at === "draft" ? { draft: { said: latest.said, before: held.before } } : {})}
         {...(phase.at === "kept" ? { kept: { ...(phase.note ? { note: phase.note } : {}), ...(phase.undo ? { undo: () => void undo() } : {}) } } : {})}
-        {...(held.pointed ? { pointed: held.pointed.name } : {})}
+        about={(held.pointed ?? held.about)?.name ?? part.name}
         ask={(words) => void askFor(words)}
         just={() => void askFor("Make it easier to read at a glance", "just")}
         point={() => setPhase({ at: "highlighting" })}

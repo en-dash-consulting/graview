@@ -32,6 +32,8 @@
  *   aBetterUiSuggestionOpensThePanelWithADraft
  *   onAPhoneThePanelIsASheetBelowThePage
  *   thePanelSpeaksPlainly
+ *   thePanelIsPartOfThePageAtEveryWidthInLightAndDark
+ *   thePersonsWordsStayAsTypedAndThePartIsNamedBesideThem
  *   aSeatThatMayNotChangeTheAppIsNotOffered
  */
 import { createServer } from "node:http";
@@ -99,7 +101,7 @@ const FAKE_AI = () => {
     for (const [key, question] of Object.entries(questions)) {
       const words = String(state.typed ?? state.asked ?? "");
       if (key === "about") answers[key] = choice(/look|bigger|smaller|show|cards|rows|nicer/.test(words) ? "look" : "records");
-      else if (key === "can") answers[key] = choice(/bigger|side by side|colou?r|smaller/.test(words) ? "drawing" : "spec");
+      else if (key === "can") answers[key] = choice(/bigger|side by side|colou?r|smaller|ugly|creative/.test(words) ? "drawing" : "spec");
       else if (key === "pick") {
         const keys = Object.keys(question.criteria);
         answers[key] = { type: "choice", choice: keys.at(-1), confidence: 0.6, probabilities: Object.fromEntries(keys.map((one, at) => [one, (at + 1) / keys.length])) };
@@ -797,6 +799,104 @@ try {
 
   reach("thePanelSpeaksPlainly");
   report.checks.thePanelSpeaksPlainly = { words: panelSaid.join(" | ").slice(0, 2000), ok: panelSaid.length >= 2 && !JARGON.test(panelSaid.join(" ")) };
+
+  reach("thePanelIsPartOfThePageAtEveryWidthInLightAndDark");
+  {
+    /*
+     * At four widths and in both schemes: the app's bar spans the window with
+     * the panel open, the panel stands flush under it down to the window's
+     * foot (beside the page on a desk, a drawer over it where narrow, a sheet
+     * on a phone), the page gives up the width beside it and nothing scrolls
+     * sideways.
+     */
+    const seen = [];
+    for (const width of [2000, 1440, 1024, 390]) {
+      for (const colorScheme of ["light", "dark"]) {
+        const sized = await browser.newContext({ viewport: { width, height: width === 390 ? 844 : 1000 }, colorScheme, ...(width === 390 ? { deviceScaleFactor: 2 } : {}) });
+        await sized.addInitScript(FAKE_AI);
+        const on = await sized.newPage();
+        on.on("pageerror", (error) => errors.push(`${width} ${colorScheme}: ${error.message}`));
+        await ready(on, "/tasks");
+        await on.evaluate(() => ((window.__agentScenario = "good"), (window.__agentDelay = 0)));
+        await menuOn(on, ROW);
+        await on.click(`${MENU} [data-menu-mode="better"]`);
+        await on.waitForSelector(PANEL, { timeout: 10_000 });
+        await on.fill('[data-testid="better-words"]', "make the tasks cards side by side");
+        await on.click('[data-testid="better-send"]');
+        await on.waitForSelector(`${PANEL}[data-better-phase="draft"]`, { timeout: 30_000 });
+        await on.waitForTimeout(300);
+        const one = await on.evaluate(() => {
+          const panel = document.querySelector('[data-testid="better-panel"]');
+          const box = panel.getBoundingClientRect();
+          const bar = (document.querySelector('[data-testid="app-bar"]') ?? document.querySelector("header"))?.getBoundingClientRect();
+          const page = (document.querySelector('[data-worker-view="task-list"]') ?? document.querySelector("[data-graview-page-main]"))?.getBoundingClientRect();
+          const width = document.documentElement.clientWidth;
+          return {
+            dock: panel.getAttribute("data-better-dock"),
+            bar: bar ? { left: Math.round(bar.left), right: Math.round(bar.right), bottom: Math.round(bar.bottom) } : null,
+            panel: { left: Math.round(box.left), right: Math.round(box.right), top: Math.round(box.top), bottom: Math.round(box.bottom) },
+            page: page ? { left: Math.round(page.left), right: Math.round(page.right) } : null,
+            width,
+            height: innerHeight,
+            sideways: document.documentElement.scrollWidth > width,
+            radius: getComputedStyle(panel).borderTopLeftRadius,
+            background: getComputedStyle(panel).backgroundColor,
+          };
+        });
+        await shot(on, `panel-${width}-${colorScheme}`);
+        const wantDock = width >= 1100 ? "side" : width >= 640 ? "drawer" : "sheet";
+        const fits =
+          one.dock === wantDock &&
+          !one.sideways &&
+          one.bar !== null &&
+          one.bar.left <= 0 &&
+          one.bar.right >= one.width &&
+          (wantDock === "sheet"
+            ? one.panel.bottom === one.height && one.panel.left === 0 && one.panel.right === one.width
+            : Math.abs(one.panel.top - one.bar.bottom) <= 1 && one.panel.bottom === one.height && one.panel.right === one.width && one.radius === "0px" && (wantDock === "drawer" || (one.page !== null && one.page.right <= one.panel.left)));
+        seen.push({ width, colorScheme, ...one, fits });
+        await sized.close();
+      }
+    }
+    report.checks.thePanelIsPartOfThePageAtEveryWidthInLightAndDark = { seen, ok: seen.length === 8 && seen.every((one) => one.fits) && seen.some((one) => one.colorScheme === "dark" && one.background !== seen.find((other) => other.width === one.width && other.colorScheme === "light")?.background) };
+  }
+
+  reach("thePersonsWordsStayAsTypedAndThePartIsNamedBesideThem");
+  {
+    // A group of the list pointed at with the point tool: the chip says "About: …" by its own name, and the person's words are left as typed.
+    await ready(page, "/tasks", "?grouped=1");
+    await page.evaluate(() => ((window.__agentScenario = "good"), (window.__agentDelay = 0), (window.__agentPrompts = [])));
+    await menuOn(page, ROW);
+    await page.click(`${MENU} [data-menu-mode="better"]`);
+    await page.waitForSelector(PANEL, { timeout: 10_000 });
+    const before = await page.textContent('[data-testid="better-about"]');
+    await page.click('[data-testid="better-point"]');
+    await page.waitForSelector('[data-testid="section-highlighter"]', { timeout: 10_000 });
+    const group = await page.evaluate(() => {
+      const heading = [...document.querySelectorAll("[data-graview-page-main] h2, [data-graview-page-main] h3")].find((one) => /Doing/.test(one.textContent ?? ""));
+      const box = (heading?.closest('[data-testid="list-group"]') ?? heading)?.getBoundingClientRect();
+      return box ? { x: Math.round(box.left + 8), y: Math.round(box.top + 6) } : null;
+    });
+    if (group) await page.mouse.click(group.x, group.y);
+    await page.waitForTimeout(300);
+    const about = await page.textContent('[data-testid="better-about"]');
+    const words = "this is ugly and not creative enough";
+    await page.fill('[data-testid="better-words"]', words);
+    await page.click('[data-testid="better-send"]');
+    await page.waitForSelector(`${PANEL}[data-better-phase="draft"]`, { timeout: 30_000 });
+    const said = await page.evaluate(() => [...document.querySelectorAll('[data-testid="better-message"][data-who="person"]')].map((one) => one.textContent));
+    const told = await page.evaluate(() => ({ about: window.__agentPrompts[0]?.about ?? null, person: (window.__agentPrompts[0]?.conversation ?? []).flatMap((one) => (one.person ? [one.person] : [])) }));
+    await shot(page, "about-chip");
+    report.checks.thePersonsWordsStayAsTypedAndThePartIsNamedBesideThem = {
+      before,
+      about,
+      said,
+      told,
+      ok: before === "About: Tasks" && /^About: Doing$/.test(about ?? "") && said.length === 1 && said[0] === words && told.person.length === 1 && told.person[0] === words && told.about === "Doing",
+    };
+    await page.click('[data-testid="better-discard"]');
+    await page.click('[data-testid="better-close"]');
+  }
 
   reach("aSeatThatMayNotChangeTheAppIsNotOffered");
   {

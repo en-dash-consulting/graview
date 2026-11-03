@@ -15,7 +15,7 @@ import { readDrawn, Redesigning } from "./better-bar.js";
 import { BetterPanel } from "./better-panel.js";
 
 export { SectionOutline };
-import { nameParts, partLines, placeOfSection, type PartRead } from "./section-words.js";
+import { aboutOf, nameParts, partLines, placeOfSection, type PartRead } from "./section-words.js";
 /*
  * WHAT WAS TOLD (Roadmap f-menu-learns): each revision offered is kept as a
  * telling — the words, the view's section it was said on, the slot that
@@ -190,6 +190,8 @@ export function SectionCard({ ask, close }: SectionCardProps) {
   const since = useRef(Date.now());
   const stopping = useRef<AbortController | null>(null);
   const pointedAt = useRef<{ readonly name: string; readonly lines: readonly string[] } | null>(null);
+  /** What the conversation is about, where the person pointed at a part of the section. */
+  const aboutNow = useRef<{ readonly name: string; readonly lines: readonly string[] } | null>(null);
   const [covering, setCovering] = useState(false);
   const [comparing, setComparing] = useState(false);
   const [, setTick] = useState(0);
@@ -290,7 +292,9 @@ export function SectionCard({ ask, close }: SectionCardProps) {
       if (!view || phase.at === "working") return;
       const pointed = pointedAt.current;
       pointedAt.current = null;
-      say("person", pointed ? `${words} (${pointed.name})` : words);
+      // The person's words as they typed them: what they are about is said beside them, never glued on.
+      if (pointed) aboutNow.current = pointed;
+      say("person", words);
       events.current = [];
       since.current = Date.now();
       setPhase({ at: "working" });
@@ -317,6 +321,7 @@ export function SectionCard({ ask, close }: SectionCardProps) {
         current: steps.current.at(-1)?.source ?? live,
         section: section.name,
         noun: "records",
+        ...(aboutNow.current ? { about: aboutNow.current } : {}),
         host: {
           look: () => lookOf(readDrawn(view.drawing().root?.parentElement ?? place, was.records.map((one) => one.label))),
           read: () => ({ shows: shownBy(section.elements) }),
@@ -483,7 +488,7 @@ export function SectionCard({ ask, close }: SectionCardProps) {
           const first = elements[0];
           const under = first ? sectionUnderNow(first) : undefined;
           setSection(under ?? section);
-          pointedAt.current = { name: nameParts(elements.map(readPart)), lines: partLines(elements.map(readPart)) };
+          pointedAt.current = { name: aboutOf(elements) ?? nameParts(elements.map(readPart)), lines: partLines(elements.map(readPart)) };
           setPhase({ at: "open" });
         }}
       />
@@ -504,7 +509,7 @@ export function SectionCard({ ask, close }: SectionCardProps) {
         working={phase.at === "working" || phase.at === "keeping"}
         {...(current && phase.at === "draft" ? { draft: { said: current.said, before: comparing } } : {})}
         {...(phase.at === "kept" ? { kept: { ...(phase.note ? { note: phase.note } : {}), undo: () => void undo() } } : {})}
-        {...(pointedAt.current ? { pointed: pointedAt.current.name } : {})}
+        about={(pointedAt.current ?? aboutNow.current)?.name ?? section.name}
         ask={(words) => void askFor(words)}
         just={() => void askFor("Make it easier to read at a glance")}
         point={() => setPhase({ at: "highlighting" })}

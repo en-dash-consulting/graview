@@ -106,7 +106,9 @@ const FAKE_AI = () => {
     const steps = asked.your_steps ?? [];
     const name = /“([^”]+)”/.exec(asked.only_change ?? "")?.[1] ?? "Doing";
     const cls = CLASS[name];
-    const words = (asked.conversation ?? []).flatMap((one) => (one.person ? [one.person] : [])).at(-1) ?? "";
+    const said = (asked.conversation ?? []).flatMap((one) => (one.person ? [one.person] : [])).at(-1) ?? "";
+    // What the person pointed at comes beside their words: the fake draws both, as it would mean them together.
+    const words = asked.about ? `${said} (${asked.about})` : said;
     const source = String(asked.your_draft_on_the_page ?? "");
     const styled = (text, rule) => text.replace("\n`);", `\n  ${rule}\n\`);`);
     const dropped = (text) => text.split("\n").filter((line) => !line.trimStart().startsWith(`.${cls} `)).join("\n");
@@ -369,18 +371,22 @@ try {
     await page.mouse.move(days.right + 4, days.bottom + 4, { steps: 4 });
     await shot(page, "highlight-drag");
     await page.mouse.up();
-    await page.waitForSelector('[data-testid="better-pointed"]', { timeout: 10_000 });
-    const pointed = await page.textContent('[data-testid="better-pointed"]');
+    await page.waitForFunction(() => /^About: /.test(document.querySelector('[data-testid="better-about"]')?.textContent ?? "") && !/This week$/.test(document.querySelector('[data-testid="better-about"]')?.textContent ?? ""), null, { timeout: 10_000 });
+    const pointed = await page.textContent('[data-testid="better-about"]');
     await shot(page, "highlight-card");
     await tellIt(page, "make them taller");
     await panelAt(page, "draft");
     const asked = await page.evaluate(() => window.__sectionPrompts.at(-1));
     const after = await read(page);
+    const said = await page.evaluate(() => [...document.querySelectorAll('[data-testid="better-message"][data-who="person"]')].at(-1)?.textContent ?? null);
     report.checks.aHighlightedAreaNamesWhatItCovers = {
       pointed,
-      askedAbout: (asked?.conversation ?? []).at(-1) ?? null,
+      said,
+      askedAbout: asked?.about ?? null,
+      lastWords: (asked?.conversation ?? []).at(-1) ?? null,
       drawn: after.draft?.This?.html?.includes("the three day columns") ?? false,
-      ok: pointed === "You pointed at the three day columns." && (asked?.conversation ?? []).some((one) => one.person === "make them taller (the three day columns)") && /“This week”/.test(asked?.only_change ?? "") && (after.draft?.This?.html?.includes("the three day columns") ?? false),
+      // The chip names what was pointed at; the person's words stay as they typed them, and the agent is told what they are about beside them.
+      ok: pointed === "About: the three day columns" && said === "make them taller" && asked?.about === "the three day columns" && (asked?.conversation ?? []).some((one) => one.person === "make them taller") && /“This week”/.test(asked?.only_change ?? "") && (after.draft?.This?.html?.includes("the three day columns") ?? false),
     };
     await page.click('[data-testid="better-discard"]');
     await closePanel(page);

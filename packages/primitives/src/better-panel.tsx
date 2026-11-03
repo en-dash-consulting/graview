@@ -44,6 +44,8 @@ export interface BetterPanelProps {
   readonly kept?: { readonly note?: string; readonly undo?: () => void };
   /** What the person pointed at, said. */
   readonly pointed?: string;
+  /** What the conversation is about, by its name: the part right-clicked ("Tasks"), or the one pointed at ("Someday"). */
+  readonly about?: string;
   readonly ask: (words: string) => void;
   readonly just: () => void;
   readonly point: () => void;
@@ -59,28 +61,70 @@ export interface BetterPanelProps {
 const PHONE = 640;
 const WIDE = 372;
 
-/** Room beside the page for the panel — or below it on a phone — so it never stands over what it changes. */
-function useRoomFor(panel: React.RefObject<HTMLElement | null>) {
+const DRAWER = 1100;
+
+/** How the panel stands: docked beside the page, a drawer over its right side where the window is narrow, a sheet from the bottom on a phone. */
+type Dock = "side" | "drawer" | "sheet";
+const dockOf = (): Dock => (typeof innerWidth !== "number" || innerWidth >= DRAWER ? "side" : innerWidth >= PHONE ? "drawer" : "sheet");
+
+/** The app's bar along the top of the window: the shell's, else a header that spans it. */
+function barOf(): Element | null {
+  const named = document.querySelector('[data-testid="app-bar"]');
+  if (named) return named;
+  return [...document.querySelectorAll("header")].find((one) => {
+    const box = one.getBoundingClientRect();
+    return box.top <= 1 && box.width >= innerWidth * 0.8 && box.height > 0;
+  }) ?? null;
+}
+
+/** What holds the page under the bar: the widest box around the page's own region that is not around the bar too. */
+function contentOf(bar: Element | null): HTMLElement | null {
+  let at = document.querySelector<HTMLElement>("[data-graview-page-main], main");
+  while (at?.parentElement && at.parentElement !== document.body && !(bar && at.parentElement.contains(bar))) at = at.parentElement;
+  return at;
+}
+
+/**
+ * THE PANEL IS PART OF THE PAGE. Beside it, it is docked flush under the
+ * app's bar, at the right, down to the window's foot, and what holds the
+ * page gives up its width — the bar spans the window as always, and
+ * nothing behind the panel shows. Where the window is narrow it is a
+ * drawer over the page's right side, and on a phone a sheet from the
+ * bottom with room left below the page. Followed each frame: a bar that
+ * scrolls away leaves the panel the window's full height.
+ */
+function useDock(panel: React.RefObject<HTMLElement | null>): Dock {
+  const [dock, setDock] = useState<Dock>(dockOf);
   useLayoutEffect(() => {
     const body = document.body.style;
-    const before = { right: body.paddingRight, bottom: body.paddingBottom };
-    const room = () => {
-      const phone = innerWidth < PHONE;
-      const box = panel.current?.getBoundingClientRect();
-      body.paddingRight = phone ? before.right : `${WIDE + 24}px`;
-      body.paddingBottom = phone ? `${Math.round((box?.height ?? 0) + 16)}px` : before.bottom;
+    const bottom = body.paddingBottom;
+    let content: HTMLElement | null = null;
+    let right = "";
+    let frame = 0;
+    const give = (to: HTMLElement | null, wide: boolean) => {
+      if (content && content !== to) content.style.paddingRight = right;
+      if (to && to !== content) right = to.style.paddingRight;
+      content = to;
+      if (content) content.style.paddingRight = wide ? `${WIDE}px` : right;
     };
-    room();
-    const watch = typeof ResizeObserver === "function" && panel.current ? new ResizeObserver(room) : null;
-    if (watch && panel.current) watch.observe(panel.current);
-    addEventListener("resize", room);
+    const place = () => {
+      const now = dockOf();
+      setDock(now);
+      const bar = barOf();
+      const top = Math.max(0, Math.round(bar?.getBoundingClientRect().bottom ?? 0));
+      if (panel.current && now !== "sheet") panel.current.style.top = `${top}px`;
+      give(contentOf(bar), now === "side");
+      body.paddingBottom = now === "sheet" ? `${Math.round((panel.current?.getBoundingClientRect().height ?? 0) + 16)}px` : bottom;
+      frame = requestAnimationFrame(place);
+    };
+    place();
     return () => {
-      watch?.disconnect();
-      removeEventListener("resize", room);
-      body.paddingRight = before.right;
-      body.paddingBottom = before.bottom;
+      cancelAnimationFrame(frame);
+      give(null, false);
+      body.paddingBottom = bottom;
     };
   }, [panel]);
+  return dock;
 }
 
 /** Minutes and seconds: "0:42". */
@@ -92,7 +136,7 @@ export function BetterPanel(props: BetterPanelProps) {
   const field = useRef<HTMLInputElement>(null);
   const [typed, setTyped] = useState("");
   const [, tick] = useState(0);
-  useRoomFor(panel);
+  const dock = useDock(panel);
   /* The running time, while it works. */
   useEffect(() => {
     if (!props.working) return;
@@ -125,7 +169,6 @@ export function BetterPanel(props: BetterPanelProps) {
         </ol>
       </li>
     ) : null;
-  const phone = typeof innerWidth === "number" && innerWidth < PHONE;
   const empty = props.talk.length === 0;
   return (
     <aside
@@ -134,8 +177,9 @@ export function BetterPanel(props: BetterPanelProps) {
       aria-label={`Change how “${props.name}” looks`}
       data-testid="better-panel"
       data-better-phase={props.phase}
+      data-better-dock={dock}
       data-graview-popover=""
-      style={phone ? SHEET : SIDE}
+      style={dock === "sheet" ? SHEET : dock === "drawer" ? DRAWER_STYLE : SIDE}
     >
       <header style={HEAD}>
         <p style={{ margin: 0, fontWeight: 600 }}>
@@ -148,6 +192,11 @@ export function BetterPanel(props: BetterPanelProps) {
       <p data-testid="better-scope" style={QUIET_LINE}>
         {props.scope}
       </p>
+      {props.about ? (
+        <p data-testid="better-about" style={CHIP}>
+          About: {props.about}
+        </p>
+      ) : null}
       <ol ref={list} data-testid="better-talk" style={TALK}>
         {props.talk.map((line, at) => (
           <Fragment key={`t${at}`}>
@@ -253,6 +302,7 @@ export function BetterPanel(props: BetterPanelProps) {
   );
 }
 
+/* The shell's own surface, one line from the page: part of the app, in its light and dark alike. */
 const BASE: CSSProperties = {
   position: "fixed",
   zIndex: layer("popover"),
@@ -261,15 +311,16 @@ const BASE: CSSProperties = {
   flexDirection: "column",
   gap: 10,
   padding: 14,
+  margin: 0,
   fontSize: "0.875rem",
   lineHeight: 1.45,
   color: "var(--graview-ink)",
-  background: "var(--graview-float, var(--graview-panel))",
-  border: "1px solid var(--graview-edge)",
-  boxShadow: "var(--graview-lift-high, 0 12px 32px rgba(0,0,0,0.14))",
+  background: "var(--graview-panel)",
 };
-const SIDE: CSSProperties = { ...BASE, top: 64, right: 12, bottom: 12, width: WIDE, borderRadius: 14 };
-const SHEET: CSSProperties = { ...BASE, left: 0, right: 0, bottom: 0, maxHeight: "55vh", borderRadius: "14px 14px 0 0" };
+const SIDE: CSSProperties = { ...BASE, top: 0, right: 0, bottom: 0, width: WIDE, borderLeft: "1px solid var(--graview-edge)" };
+const DRAWER_STYLE: CSSProperties = { ...SIDE, width: `min(${WIDE}px, 86vw)`, boxShadow: "var(--graview-lift-high, -12px 0 32px rgba(0,0,0,0.18))" };
+const SHEET: CSSProperties = { ...BASE, left: 0, right: 0, bottom: 0, maxHeight: "55vh", borderTop: "1px solid var(--graview-edge)", borderRadius: "14px 14px 0 0", boxShadow: "var(--graview-lift-high, 0 -12px 32px rgba(0,0,0,0.18))" };
+const CHIP: CSSProperties = { margin: 0, justifySelf: "start", alignSelf: "flex-start", padding: "2px 10px", borderRadius: 999, fontSize: "0.8125rem", color: "var(--graview-ink)", background: "var(--graview-ground)", border: "1px solid var(--graview-edge)" };
 const HEAD: CSSProperties = { display: "flex", alignItems: "center", gap: 8, justifyContent: "space-between" };
 const QUIET_LINE: CSSProperties = { margin: 0, fontSize: "0.8125rem", color: "var(--graview-ink-muted)" };
 const TALK: CSSProperties = { margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 8, alignContent: "start", overflowY: "auto", flex: "1 1 auto", minHeight: 60 };

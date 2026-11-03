@@ -81,6 +81,8 @@ export interface DesignAgentOptions {
   readonly noun?: string;
   /** A part of a view the person is changing: only it changes, every other part of the script kept as it is. */
   readonly section?: string;
+  /** What the person is talking about, by its name ("Someday"), and what they pointed at, a line each: said beside their words, never in them. */
+  readonly about?: { readonly name: string; readonly lines?: readonly string[] };
 }
 
 export type DesignAgentResult = {
@@ -114,12 +116,13 @@ export const DESIGN_AGENT_SYSTEM = [
 ].join("\n");
 
 /** What one request tells the agent: the page, the conversation, the steps it took this turn and what came of each. */
-export function designAgentPrompt(options: Pick<DesignAgentOptions, "part" | "manifest" | "talk" | "keep" | "markup" | "current" | "section"> & { readonly seen?: { readonly look: unknown; readonly read: unknown } }, steps: readonly DesignAgentStep[]): string {
+export function designAgentPrompt(options: Pick<DesignAgentOptions, "part" | "manifest" | "talk" | "keep" | "markup" | "current" | "section" | "about"> & { readonly seen?: { readonly look: unknown; readonly read: unknown } }, steps: readonly DesignAgentStep[]): string {
   const keep = options.keep;
   return JSON.stringify({
     page: options.part.name,
     view: { attach: options.manifest.attach, cardinality: options.manifest.cardinality, reads: options.manifest.reads ?? {} },
     conversation: options.talk.map((one) => ({ [one.who === "person" ? "person" : "you"]: one.said })),
+    ...(options.about && options.about.name !== options.part.name ? { about: options.about.name, ...(options.about.lines?.length ? { pointed_at: options.about.lines } : {}) } : {}),
     ...(options.section ? { only_change: `Change only the part “${options.section}” of your_draft_on_the_page; keep every other part of the script as it is, byte for byte.` } : {}),
     ...(keep ? { ...(keep.title ? { the_page_draws_its_title: keep.title } : {}), keep_these_headings: keep.headings, records: checklistOf(keep), ...(keep.grouping ? { grouping: groupingRule(keep.grouping) } : {}) } : {}),
     ...(options.markup && !options.current ? { the_page_as_html: options.markup.slice(0, 5000) } : {}),
