@@ -60,4 +60,25 @@ describe("the dev server's host for a plan", () => {
     expect(report.said).toEqual([]);
     expect(report).toMatchObject({ ok: true, claims: { composes: true, appliedAsOneChange: true, saidAsTheAi: true, linksEveryRecord: true, undoTakesItAllBack: true } });
   });
+
+  it("anActDoneOnAChangedAppIsKeptInThePagesOwnStore: finishing a task on a page drawn with a change reaches the store the page remembers, and stays when the change is taken back", () => {
+    const { shown, host, store } = start();
+    const document = documentOf(todoApp)!;
+    const task = store.graph.allNodes().find((node) => node.kind === "task" && !(node as { done?: boolean }).done)!.id;
+    const drafted = host.onDraftChange({ edits: [{ op: "set-view", kind: "task", slot: "row", blocks: [{ title: "{label}" }] }] } as never) as { undo: () => void };
+    expect(shown().store).not.toBe(store);
+    shown().store.apply({ name: "finish", args: { taskId: task } }, { author: nora });
+    // The page's own store, the one the browser remembers, has it as the same op.
+    expect((store.graph.getNode(task) as { done?: boolean }).done).toBe(true);
+    expect(store.log.all().at(-1)?.id).toBe(shown().store.log.all().at(-1)?.id);
+    // Taken back on the changed page, it is taken back underneath too.
+    const batch = shown().store.log.all().at(-1)!.batch;
+    shown().store.undo(batch, { author: nora });
+    expect((store.graph.getNode(task) as { done?: boolean }).done).not.toBe(true);
+    shown().store.apply({ name: "finish", args: { taskId: task } }, { author: nora });
+    drafted.undo();
+    expect(shown().store).toBe(store);
+    expect((store.graph.getNode(task) as { done?: boolean }).done).toBe(true);
+    void document;
+  });
 });

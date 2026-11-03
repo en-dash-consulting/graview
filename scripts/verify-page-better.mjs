@@ -36,6 +36,9 @@
  *   thePersonsWordsStayAsTypedAndThePartIsNamedBesideThem
  *   aDraftWithACheckboxBoundToNothingIsNeverShown
  *   aKeptRedesignFinishesATaskAndUndoPutsItBack
+ *   aPressThatDrawsNothingNewIsFedBackAndTheNextDraftShowsIt
+ *   aPressThatChangesNothingWhereItStandsIsFedBackNamingTheActThatWould
+ *   aFinishFromAKeptRedesignIsStillDoneAfterAReload
  *   whatAControlDoesIsSaidOnlyAsThePressCheckFoundIt
  *   itDoesntWorkMakesGraviewPressEveryControl
  *   theConversationsFirstMessageIsWhollyVisible
@@ -124,7 +127,7 @@ const FAKE_AI = () => {
     }
     return { answers, usage: { inputTokens: 10, outputTokens: 2 } };
   };
-  const view = ({ lose, small, titles, regroup, says, checkbox }) => {
+  const view = ({ lose, small, titles, regroup, says, checkbox, stale, alwaysFinish }) => {
     // The heading each record sat under, as the page said it; one moved to the first group's where a regroup is asked of the fake.
     const under = Object.fromEntries(Object.entries(says ?? {}).flatMap(([label, one]) => (one.under ? [[label, one.under]] : [])));
     const groups = [...new Set(Object.values(under))];
@@ -139,6 +142,10 @@ const FAKE_AI = () => {
       "  const status = (task) => props.choices?.task?.status?.[task.status] ?? '';",
       titles
         ? "  const card = (task) => graview.html`<a class=\"pb-card\" data-key=\"${task.id}\" data-record=\"${task.id}\"><span>${task.label}</span></a>`;"
+        : stale
+          ? "  const card = (task) => graview.html`<div class=\"pb-card\" data-key=\"${task.id}\"><a data-record=\"${task.id}\">${task.label}</a><span class=\"pb-meta\">${status(task)}</span><span class=\"pb-meta\">${day(task.due)}</span><span class=\"pb-meta\">Done: no</span><button class=\"pb-done\" data-act=\"finish\" data-record=\"${task.id}\">Mark done</button></div>`;"
+        : alwaysFinish
+          ? "  const card = (task) => graview.html`<div class=\"pb-card\" data-key=\"${task.id}\"><a data-record=\"${task.id}\">${task.label}</a><span class=\"pb-meta\">${status(task)}</span><span class=\"pb-meta\">${day(task.due)}</span><span class=\"pb-meta\">Done: ${task.done ? \"yes\" : \"no\"}</span><button class=\"pb-done\" data-act=\"finish\" data-record=\"${task.id}\">Done</button></div>`;"
         : checkbox
           ? "  const card = (task) => graview.html`<div class=\"pb-card\" data-key=\"${task.id}\"><a data-record=\"${task.id}\">${task.label}</a><span class=\"pb-meta\">${status(task)}</span><span class=\"pb-meta\">${day(task.due)}</span><span class=\"pb-meta\">Done: ${task.done ? \"yes\" : \"no\"}</span><label><input type=\"checkbox\"> Done</label></div>`;"
           : "  const card = (task) => graview.html`<div class=\"pb-card\" data-key=\"${task.id}\"><a data-record=\"${task.id}\">${task.label}</a><span class=\"pb-meta\">${status(task)}</span><span class=\"pb-meta\">${day(task.due)}</span><span class=\"pb-meta\">Done: ${task.done ? \"yes\" : \"no\"}</span><button class=\"pb-done\" data-act=\"${task.done ? \"reopen\" : \"finish\"}\" data-record=\"${task.id}\">${task.done ? \"Open again\" : \"Done\"}</button></div>`;",
@@ -173,7 +180,9 @@ const FAKE_AI = () => {
       if (!last || last.did === "look") {
         const titles = window.__agentScenario === "fix" && drafts.length === 0;
         const checkbox = window.__agentScenario === "checkbox" && drafts.length === 0;
-        return answer({ say: said, do: "draft", source: view({ titles, says, small, checkbox }) });
+        const stale = window.__agentScenario === "stale" && drafts.length === 0;
+        const alwaysFinish = window.__agentScenario === "always-finish" && drafts.length === 0;
+        return answer({ say: said, do: "draft", source: view({ titles, says, small, checkbox, stale, alwaysFinish }) });
       }
       if (last.did === "draft" && (last.result?.findings ?? []).length > 0) return answer({ say: said, do: "draft", source: view({ says, small }) });
       if (last.did === "draft") return answer({ say: small ? "The dates are smaller now." : "Tasks are cards now, side by side, each with its status and date.", do: "done" });
@@ -226,7 +235,25 @@ async function serveHost() {
         // ?grouped=1: the tasks open grouped by their status, as a person may have kept them.
         const grouped = new URLSearchParams(location.search).get("grouped") === "1" ? composeAppChange({ document: tasks, edits: [{ op: "arrange-pages", group: { task: "status" } }] }) : null;
         if (grouped && !grouped.ok) throw new Error(grouped.refused);
-        let current = { app: grouped ? grouped.app : compiled.app, document: grouped ? grouped.document : tasks, store: storeOver(grouped ? grouped.app : compiled.app, ${JSON.stringify(SEED)}) };
+        const asked = new URLSearchParams(location.search);
+        const seeded = ${JSON.stringify(SEED)};
+        for (const id of (asked.get("done") ?? "").split(",").filter(Boolean)) seeded.nodes.find((one) => one.id === id).done = true;
+        const remember = asked.get("remember") === "1";
+        let saved = null;
+        try { saved = remember ? JSON.parse(localStorage.getItem("pb-records") ?? "null") : null; } catch {}
+        let current = { app: grouped ? grouped.app : compiled.app, document: grouped ? grouped.document : tasks, store: storeOver(grouped ? grouped.app : compiled.app, saved ?? seeded) };
+        if (remember) current.store.subscribe(() => localStorage.setItem("pb-records", JSON.stringify(current.base.graph.snapshot())));
+        current.base = current.store;
+        // What is done in a store made over the page's records reaches the store under it, as Things' dev host does (apps/todo/src/dev-change.ts, forwardActs).
+        const handDown = (over, under) => {
+          const knows = new Set(under.allMutations().map((one) => one.name));
+          over.subscribe((_diff, ops) => {
+            const held = new Set(under.log.all().map((op) => op.id));
+            const fits = ops.filter((op) => (op.mutation ? knows.has(op.mutation.name) : op.undoes !== undefined && held.has(op.undoes)));
+            if (fits.length > 0) under.receive(fits);
+          });
+          return over;
+        };
         window.__store = () => current.store;
         const changes = (window.__changes = { drafts: 0, applied: 0, undone: 0, document: () => current.document });
         const changed = (edits) => {
@@ -246,13 +273,13 @@ async function serveHost() {
           onDraftChange: (proposal) => {
             const composed = changed(proposal.edits ?? []);
             changes.drafts += 1;
-            window.__handle.setApp(composed.app, storeOver(composed.app, current.store.graph.snapshot()));
+            window.__handle.setApp(composed.app, handDown(storeOver(composed.app, current.store.graph.snapshot()), current.store));
             return { undo: () => window.__handle.setApp(current.app, current.store) };
           },
           onProposeChange: (proposal) => {
             const before = current;
             const composed = changed(proposal.edits ?? []);
-            current = { app: composed.app, document: composed.document, store: storeOver(composed.app, before.store.graph.snapshot()) };
+            current = { app: composed.app, document: composed.document, base: before.base, store: handDown(storeOver(composed.app, before.store.graph.snapshot()), before.store) };
             changes.applied += 1;
             window.__handle.setApp(current.app, current.store);
             return { applied: true, note: "Kept until this page reloads.", undo: () => { current = before; changes.undone += 1; window.__handle.setApp(current.app, current.store); } };
@@ -1015,6 +1042,81 @@ try {
     await shot(page, "conversation-top");
     report.checks.theConversationsFirstMessageIsWhollyVisible = { first, ok: first.top >= first.listTop && first.top >= first.headBottom && first.bottom <= first.listBottom };
     await page.click('[data-testid="better-close"]');
+  }
+
+  reach("aPressThatDrawsNothingNewIsFedBackAndTheNextDraftShowsIt");
+  {
+    await ready(page, "/tasks");
+    await page.evaluate(() => ((window.__agentScenario = "stale"), (window.__agentDelay = 0), (window.__agentPrompts = [])));
+    await menuOn(page, ROW);
+    await page.click(`${MENU} [data-menu-mode="better"]`);
+    await page.waitForSelector(PANEL, { timeout: 10_000 });
+    await page.fill('[data-testid="better-words"]', "make them cards side by side");
+    await page.click('[data-testid="better-send"]');
+    await page.waitForSelector(`${PANEL}[data-better-phase="draft"]`, { timeout: 60_000 });
+    const fedBack = await page.evaluate(() => window.__agentPrompts.flatMap((one) => one.your_steps.flatMap((step) => step.result?.findings ?? [])));
+    const buttons = await page.evaluate(() => [...(document.querySelector('[data-worker-view="task-list"]')?.shadowRoot?.querySelectorAll("button[data-act]") ?? [])].map((one) => one.textContent.trim()));
+    report.checks.aPressThatDrawsNothingNewIsFedBackAndTheNextDraftShowsIt = {
+      fedBack: fedBack.filter((one) => /just as before/.test(one)).slice(0, 2),
+      buttons,
+      ok: fedBack.some((one) => /^“Mark done”: Pressed on “Write the brief”, it lands, and the design draws “Write the brief” just as before it/.test(one)) && buttons.length === 3 && !buttons.includes("Mark done"),
+    };
+    await page.click('[data-testid="better-discard"]').catch(() => {});
+    await page.click('[data-testid="better-close"]').catch(() => {});
+  }
+
+  reach("aPressThatChangesNothingWhereItStandsIsFedBackNamingTheActThatWould");
+  {
+    await ready(page, "/tasks", "?done=t3");
+    await page.evaluate(() => ((window.__agentScenario = "always-finish"), (window.__agentDelay = 0), (window.__agentPrompts = [])));
+    await menuOn(page, ROW);
+    await page.click(`${MENU} [data-menu-mode="better"]`);
+    await page.waitForSelector(PANEL, { timeout: 10_000 });
+    await page.fill('[data-testid="better-words"]', "make them cards side by side");
+    await page.click('[data-testid="better-send"]');
+    await page.waitForSelector(`${PANEL}[data-better-phase="draft"]`, { timeout: 60_000 });
+    const fedBack = await page.evaluate(() => window.__agentPrompts.flatMap((one) => one.your_steps.flatMap((step) => step.result?.findings ?? [])));
+    const buttons = await page.evaluate(() => [...(document.querySelector('[data-worker-view="task-list"]')?.shadowRoot?.querySelectorAll("button[data-act]") ?? [])].map((one) => `${one.getAttribute("data-act")}:${one.getAttribute("data-record")}`));
+    report.checks.aPressThatChangesNothingWhereItStandsIsFedBackNamingTheActThatWould = {
+      fedBack: fedBack.filter((one) => /changes nothing there/.test(one)).slice(0, 2),
+      buttons,
+      ok: fedBack.some((one) => /^“Done”: On “Print the flyers” it asks for “finish”, which changes nothing there: it is so already\. Bind its press there to “reopen” instead/.test(one)) && buttons.includes("reopen:t3") && buttons.includes("finish:t1"),
+    };
+    await page.click('[data-testid="better-discard"]').catch(() => {});
+    await page.click('[data-testid="better-close"]').catch(() => {});
+  }
+
+  reach("aFinishFromAKeptRedesignIsStillDoneAfterAReload");
+  {
+    await ready(page, "/tasks", "?remember=1");
+    await page.evaluate(() => localStorage.removeItem("pb-records"));
+    await ready(page, "/tasks", "?remember=1");
+    await page.evaluate(() => ((window.__agentScenario = "good"), (window.__agentDelay = 0), (window.__agentPrompts = [])));
+    await menuOn(page, ROW);
+    await page.click(`${MENU} [data-menu-mode="better"]`);
+    await page.waitForSelector(PANEL, { timeout: 10_000 });
+    // First the settings' way, which draws the page over a store of its own, then a new design over it, kept.
+    await page.fill('[data-testid="better-words"]', "show the due date on each row");
+    await page.click('[data-testid="better-send"]');
+    await page.waitForSelector(`${PANEL}[data-better-phase="draft"]`, { timeout: 60_000 });
+    const overlaid = await page.evaluate(() => window.__changes.drafts > 0);
+    await page.fill('[data-testid="better-words"]', "make them cards side by side");
+    await page.click('[data-testid="better-send"]');
+    await page.waitForFunction(() => document.querySelector('[data-worker-view="task-list"]')?.shadowRoot?.querySelector('button[data-act="finish"]'), null, { timeout: 60_000 });
+    await page.waitForSelector(`${PANEL}[data-better-phase="draft"]`, { timeout: 60_000 });
+    await page.click('[data-testid="better-keep"]');
+    await page.waitForSelector(`${PANEL}[data-better-phase="kept"]`, { timeout: 15_000 });
+    await page.waitForFunction(() => document.querySelector('[data-worker-view="task-list"]')?.shadowRoot?.querySelector('button[data-act="finish"][data-record="t1"]'), null, { timeout: 15_000 });
+    const rowOf = () => page.evaluate(() => document.querySelector('[data-worker-view="task-list"]').shadowRoot.querySelector('button[data-record="t1"]').closest(".pb-card").textContent.replace(/\s+/g, " ").trim());
+    const rowBefore = await rowOf();
+    await page.click('[data-worker-view="task-list"] button[data-act="finish"][data-record="t1"]');
+    await page.waitForFunction(() => document.querySelector('[data-worker-view="task-list"]').shadowRoot.querySelector('button[data-act="reopen"][data-record="t1"]'), null, { timeout: 10_000 }).catch(() => {});
+    const rowAfter = await rowOf();
+    await shot(page, "kept-pressed");
+    await ready(page, "/tasks", "?remember=1");
+    const reloaded = await page.evaluate(() => window.__store().graph.getNode("t1")?.done ?? null);
+    await page.evaluate(() => localStorage.removeItem("pb-records"));
+    report.checks.aFinishFromAKeptRedesignIsStillDoneAfterAReload = { overlaid, rowBefore, rowAfter, reloaded, ok: overlaid && rowBefore !== rowAfter && /Done: yes/.test(rowAfter) && reloaded === true };
   }
 
   reach("aSeatThatMayNotChangeTheAppIsNotOffered");

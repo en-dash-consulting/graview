@@ -88,6 +88,31 @@ function storeOver(app: GraviewApp<AnySchema>, records: Store<AnySchema>): Store
 }
 
 /**
+ * WHAT A PERSON DOES ON A CHANGED APP IS KEPT (Roadmap f-make-any-page-better).
+ * A store made over the page's records is the change's own and forgotten on
+ * reload — only the change to the app is "kept until this page reloads". So
+ * every act done in it that the store under it knows (finishing a task from
+ * a kept design, and taking it back) reaches that store too, as the same op,
+ * and from there what the page remembers in this browser. The change's own
+ * records, made by acts only the change brings, stay with the change, and
+ * its undo takes them away.
+ */
+export function forwardActs(over: Store<AnySchema>, under: Store<AnySchema>): Store<AnySchema> {
+  const knows = new Set(under.allMutations().map((mutation) => mutation.name));
+  over.subscribe((_diff, ops) => {
+    const held = new Set(under.log.all().map((op) => op.id));
+    const fits = ops.filter((op) => (op.mutation ? knows.has(op.mutation.name) : op.undoes !== undefined && held.has(op.undoes)));
+    if (fits.length === 0) return;
+    try {
+      under.receive(fits);
+    } catch (error) {
+      console.warn("A change made over the page's records could not be kept under them:", error);
+    }
+  });
+  return over;
+}
+
+/**
  * The dev host over `start`: `swap` puts an app and its store on the page in
  * place; the records are applied as `principal`. A changed app's store is
  * made as the app says — its policy and modules with its schema, acts and
@@ -123,7 +148,7 @@ export function devAppChanges(start: DevApp, swap: (next: DevApp) => void, optio
     const app = laidOver(before.app, composed.app);
     rememberDocument(app, composed.document);
     documents.set(app, composed.document);
-    const store = storeOver(app, before.store);
+    const store = forwardActs(storeOver(app, before.store), before.store);
     // The plan's records, as one change, said as the AI's.
     if (proposal.records && proposal.records.length > 0) store.applyAll(proposal.records, { ...(options.principal ? { author: options.principal } : {}), ...(proposal.via ? { via: proposal.via as never } : {}) });
     current = { app, store };
@@ -146,7 +171,7 @@ export function devAppChanges(start: DevApp, swap: (next: DevApp) => void, optio
     rememberDocument(app, composed.document);
     documents.set(app, composed.document);
     // Its own store over the same records, as the changed app says it (a glance is the schema's); the page's records are put back on undo.
-    swap({ app, store: storeOver(app, before.store) });
+    swap({ app, store: forwardActs(storeOver(app, before.store), before.store) });
     return { undo: () => swap(current) };
   };
   return { composeChange, onProposeChange, onDraftChange, current: () => current };
