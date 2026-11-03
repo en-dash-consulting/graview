@@ -494,8 +494,24 @@ async function aDistrictsNameIsNotMovedByHand() {
     });
   await unmoved.goto(`${at("todo")}/?today=2026-09-01#overview=1`, { waitUntil: "load" });
   await unmoved.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
-  await unmoved.waitForTimeout(1500);
-  const resting = await nameAgainstPlot();
+  /*
+   * Where the name rests once it has stopped moving, not after a fixed
+   * wait: on the GPU path in software (the Nightly's SwiftShader, taken from
+   * Chrome 157) the opening still moved the name 1.5 s in, read 156 px
+   * above where it came to rest.
+   */
+  const settledName = async (least) => {
+    await unmoved.waitForTimeout(least);
+    let last = await nameAgainstPlot();
+    for (const end = Date.now() + 10_000; Date.now() < end; ) {
+      await unmoved.waitForTimeout(250);
+      const now = await nameAgainstPlot();
+      if (JSON.stringify(now) === JSON.stringify(last)) return now;
+      last = now;
+    }
+    return last;
+  };
+  const resting = await settledName(1500);
   const grab = await unmoved.evaluate(() => {
     const face = document.querySelector('[data-graview-view="kind:task"] .graview-kind-face');
     const box = face?.getBoundingClientRect();
@@ -525,8 +541,7 @@ async function aDistrictsNameIsNotMovedByHand() {
   }
   // And a pin an old bookmark carries for a district is ignored.
   await unmoved.goto(`${at("todo")}/?today=2026-09-01#overview=1&pin.kind%3Atask=40,40`, { waitUntil: "load" });
-  await unmoved.waitForTimeout(1800);
-  const bookmarked = await nameAgainstPlot();
+  const bookmarked = await settledName(1800);
   report.districtName = { resting, dragged, bookmarked };
   await unmoved.close();
 }
