@@ -201,10 +201,13 @@ try {
   await pages.goto(`${at("todo")}/pages/tasks/t-book?${DAY}&fresh=1`, { waitUntil: "load", timeout: 90_000 });
   await pages.waitForSelector('[data-testid="record-actions"] [data-affordance]', { timeout: 60_000 });
   await ready(pages);
-  // The first act: done at once when it asks nothing, else through its form, sent as it is filled in.
-  await pages.click('[data-testid="record-actions"] [data-affordance] >> nth=0');
-  const asks = await pages.waitForSelector('[data-testid="record-actions"] form button[type="submit"]', { timeout: 2_000 }).then(() => true, () => false);
-  if (asks) await pages.click('[data-testid="record-actions"] form button[type="submit"]');
+  // An act beyond the facts, through its form: "Note why this is here", its reason typed ("Mark it done" is the Finished switch now, Roadmap f-facts-by-type).
+  await pages.click('[data-testid="record-actions"] [data-graview-act="explain"]');
+  const asks = await pages.waitForSelector('[data-testid="record-actions"] form button[type="submit"]', { timeout: 5_000 }).then(() => true, () => false);
+  if (asks) {
+    await pages.locator('[data-testid="record-actions"] form textarea, [data-testid="record-actions"] form input[type="text"]').first().fill("The van is cheaper on a weekday");
+    await pages.click('[data-testid="record-actions"] form button[type="submit"]');
+  }
   const offered = await pages.waitForSelector('[data-testid="notify-after-act"]', { timeout: 10_000 }).then(() => true, () => false);
   const offeredSays = offered ? ((await pages.textContent('[data-testid="notify-after-act"]')) ?? "").trim() : null;
   report.checks.offeredAfterAnAct = { offered, says: offeredSays, ok: offered && /someone else does this/.test(offeredSays ?? "") };

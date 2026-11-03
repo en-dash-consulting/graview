@@ -95,7 +95,8 @@ function tieOf<S extends AnySchema>(store: Store<S>, id: string, affordance: Aff
     relation,
     direction,
     verb: connects.includes(relation) ? "set" : "remove",
-    moves: connects.includes(relation) && severs.includes(relation),
+    // A move holds ONE at the subject's end: "Move it to another list" on the task, never on the list it takes tasks onto.
+    moves: connects.includes(relation) && severs.includes(relation) && subjectIsRecord,
     act: { affordance, arg: far.name, candidates: far.candidates ?? [] },
     farKinds: far.kinds as readonly string[],
   };

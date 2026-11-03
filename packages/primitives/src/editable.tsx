@@ -151,7 +151,9 @@ export function EditableValue<S extends AnySchema>({
   const declared = (definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape?.[field];
   const formatted = definition?.display?.format?.[field];
   const yesNo = typeof kept === "boolean" || ((kept === undefined || kept === null) && baseTypeOf(declared) === "boolean");
-  const when = formatted === undefined && !blank && typeof kept === "string" ? whenSaid(kept, todayOf(store)) : undefined;
+  // A date that repeats says how, and the next one ("Every Tuesday, next Oct 27"): its own words, kept.
+  const repeats = record?.[`${field}Repeat`] !== undefined || Object.hasOwn((definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape ?? {}, `${field}Repeat`);
+  const when = formatted === undefined && !blank && !repeats && typeof kept === "string" ? whenSaid(kept, todayOf(store)) : undefined;
   const shown = when ? when.words : value;
   const lateStyle = late && when?.past ? { color: "var(--graview-warn)" } : {};
   const worked = definition?.computed !== undefined && Object.hasOwn(definition.computed, field);

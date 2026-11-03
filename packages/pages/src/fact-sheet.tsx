@@ -135,6 +135,9 @@ function RelationRow<S extends AnySchema>({ context, id, relation, inPlace }: { 
   /** Where the keyboard goes once the row has changed: the press that changes it again, else its first record. */
   const settle = () =>
     requestAnimationFrame(() => {
+      // Only where the keyboard was lost with what it pressed: a press made since keeps it.
+      const active = document.activeElement;
+      if (active && active !== document.body && active.isConnected) return;
       const here = row.current;
       (here?.querySelector<HTMLElement>("[data-graview-relation-set]") ?? here?.querySelector<HTMLElement>("a, button"))?.focus();
     });
@@ -215,8 +218,8 @@ function RelationRow<S extends AnySchema>({ context, id, relation, inPlace }: { 
               </span>
             );
           })}
-          {/* None yet, or room for another: the way to add one, quiet beside what is there. */}
-          {set && (empty || !relation.one) ? opener(empty ? (relation.one ? "Choose…" : "Add one") : "Add", empty ? `${set.affordance.label}: ${relation.one ? "choose" : "add one"}` : `${set.affordance.label}: add`) : null}
+          {/* None yet, or room for another: the way to add one, quiet beside what is there, named for the row it adds to. */}
+          {set && (empty || !relation.one) ? opener(empty ? (relation.one ? "Choose…" : "Add one") : "Add", empty ? `${relation.label}: ${relation.one ? "choose" : "add one"}` : `${relation.label}: add`) : null}
           {empty && !set ? <span style={{ color: "var(--graview-ink-faint)" }}>None</span> : null}
           {refused ? (
             <span role="status" data-graview-refused={relation.edgeKind} style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
@@ -275,11 +278,13 @@ export const ACT: CSSProperties = { font: "inherit", fontSize: "var(--graview-te
 /*
  * The sheet's columns: one label column every section shares, so the
  * labels line up down the page; each row's label and value sit on the same
- * line (a subgrid of the sheet), prose and files the value column's width.
+ * line (a subgrid of the sheet). Prose and files are read, not glanced at:
+ * they span the sheet under their label (FR-147), as they did.
  * A phone stacks each label over its value.
  */
 const SHEET_CSS = `[data-graview-sheet]{margin:0;display:grid;grid-template-columns:minmax(0,10rem) minmax(0,1fr);column-gap:28px;row-gap:12px;align-items:baseline;min-width:0}
 [data-graview-sheet]>*{display:grid!important;grid-column:1/-1!important;grid-template-columns:subgrid;column-gap:28px!important;row-gap:4px!important;align-items:baseline;min-width:0}
 [data-graview-sheet]>*>dt{grid-column:1}[data-graview-sheet]>*>dd{grid-column:2;margin:0}
+[data-graview-sheet]>[data-graview-long]>dt,[data-graview-sheet]>[data-graview-long]>dd,[data-graview-sheet]>[data-graview-files]>dt,[data-graview-sheet]>[data-graview-files]>dd{grid-column:1/-1}
 [data-graview-chip] a:hover{text-decoration:underline}[data-graview-chip] button:hover,[data-graview-relation-set]:hover{color:var(--graview-ink)}
 @media (max-width:560px){[data-graview-sheet]{grid-template-columns:minmax(0,1fr)}[data-graview-sheet]>*>dt,[data-graview-sheet]>*>dd{grid-column:1}}`;
