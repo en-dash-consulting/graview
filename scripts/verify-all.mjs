@@ -123,8 +123,10 @@ const CHAIN = [
   ["workflows", "verify-workflows.mjs"],
   // A phone drawn as a tel: link grouped for its reader, a place as a link to the reader's maps app, a duration said "1 h 30 min", typed as words and summed, on both faces at desk width, in three engines.
   ["field-types", "verify-field-types.mjs"],
-  // A blank fact an act the seat may run writes is an empty slot on the record's page — "Add Allocation", reached by the keyboard, filled by the same editor — while a blank no act writes stays unsaid and a reader is offered none, in three engines.
+  // A blank fact an act the seat may run writes is an empty slot on the record's page — "Add allocation", reached by the keyboard, filled by the same editor — while a blank no act writes stays unsaid and a reader is offered none, in three engines.
   ["blank-facts", "verify-blank-facts.mjs"],
+  // A record's facts, each by its type: a yes or no a switch taken back with Undo, an empty date picked and a note added where they stand, a choice's options, the list a task is on a chip with its own picker, the heading renamed, a refusal said beside its field, What can be done holding no act a fact already does, labels beside values at a desk and above them on a phone, light and dark, in three engines (Roadmap f-facts-by-type).
+  ["facts", "verify-facts.mjs"],
   // A host whose page is the app hands the routed face the address bar, in three engines; an article's embed never touches it (FR-106).
   ["address", "verify-address.mjs"],
   // An app fills the phone after it turns, at the screen's height on both faces and in the Shell, in Chromium and WebKit (FR-165).

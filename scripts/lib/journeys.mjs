@@ -1553,8 +1553,19 @@ export const JOBS = {
          * as if its submit were the act, pressed empty, and then answered.
          */
         if (!(await form.first().isVisible().catch(() => false))) await pressAct(person, job.act, job.title);
-        if (!(await appears(form))) throw new DeadEnd(`"${job.title}" opens no form`);
-        await fillForm(person, form, { choose: [prep.other.label] });
+        /*
+         * OR A RELATION'S OWN PICKER, where the record's facts hold the tie as a
+         * row (Roadmap f-facts-by-type): the records it may name, searched
+         * where there are many, the one meant pressed.
+         */
+        const picker = page.locator("[data-graview-relation-picker]");
+        if (await appears(form.or(picker).first())) {
+          if (await picker.first().isVisible().catch(() => false)) {
+            const search = picker.locator('input[type="search"]');
+            if (await search.first().isVisible().catch(() => false)) await person.fill(search, prep.other.label, "the search");
+            await person.press(picker.locator("[data-graview-candidate]").filter({ hasText: prep.other.label }).first(), `"${prep.other.label}"`);
+          } else await fillForm(person, form, { choose: [prep.other.label] });
+        } else throw new DeadEnd(`"${job.title}" opens no form`);
       }
       await until(page, ctx.kinds, (store, { act, before }) => {
         const batches = store.batches();

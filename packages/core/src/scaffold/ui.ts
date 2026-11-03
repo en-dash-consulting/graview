@@ -252,21 +252,24 @@ export function pagesTsx(ids: Ids): string {
 import { Begin, EditableValue } from "@graview/primitives";
 import { useGraviewIfAny } from "@graview/react";
 import {
+  actsBeyondFacts,
+  blankWritable,
   createPageRegistry,
   DefaultHomePage,
   DerivedForm,
+  FactSheet,
   PageMain,
   pageStyles,
   recordFacts,
-  recordPath,
-  RecordField,
+  relationFacts,
   Repairs,
   spatialHref,
+  titleFieldOf,
   useStoreTick,
   type PageComponent,
   type PageContext,
 } from "@graview/pages";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { ${ids.schemaVar}, type ${ids.SchemaType} } from "../domain/schema.js";
 
 type S = ${ids.SchemaType};
@@ -290,6 +293,8 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
   const facts = recordFacts(store, id, {
     ...(principal ? { principal } : {}),
     ...(invariantContext ? { context: invariantContext } : {}),
+    // A blank this seat may fill says how to fill it ("Pick a day"), where values are changed in place.
+    ...(inPlace ? { blanks: blankWritable(store, id, principal) } : {}),
   });
   const node = store.graph.getNode(id);
   if (!facts || !node) {
@@ -309,6 +314,11 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
    * edge, which is the first thing every project does.
    */
   const ties = facts.links;
+  // Each relation as a row of the facts, with the act that ties and unties it.
+  const relations = relationFacts(store, id, facts);
+  // The name is the heading's: the field that holds it, where this seat may change it, is changed there and not said again.
+  const titleField = inPlace ? titleFieldOf(store, id, facts.label, principal) : undefined;
+  const fields = facts.fields.filter((field) => field.key !== titleField);
   /*
    * THE ACTS AS THE DERIVATION OFFERS THEM, not as the declaration lists
    * them. Reaching for a mutation by name gets an act that is always there;
@@ -324,7 +334,13 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
    * what takes the record away comes last.
    */
   const away = (affordance: { destructive?: boolean; setsAside?: boolean }) => (affordance.destructive || affordance.setsAside ? 1 : 0);
-  const offered = facts.actions.affordances.filter((affordance) => affordance.provider !== "invariant").sort((a, b) => away(a) - away(b));
+  /*
+   * AND NOT ONE A FACT ALREADY DOES: an act whose whole effect is one field
+   * or one relation drawn above — a switch, a date, the heading, a chip —
+   * is done there (\`actsBeyondFacts\`), where values are changed in place.
+   */
+  const beyond = inPlace ? actsBeyondFacts(store, id, facts.actions, { fields: [...fields.map((field) => field.key), ...(titleField ? [titleField] : [])], relations, ...(principal ? { principal } : {}) }) : facts.actions;
+  const offered = beyond.affordances.filter((affordance) => affordance.provider !== "invariant").sort((a, b) => away(a) - away(b));
 
   return (
     <PageMain context={context} data-testid="${ids.kind}-page">
@@ -336,7 +352,7 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
           */}
         <p style={pageStyles.eyebrow}>{withArticle(nounOf(store.schema.tryDefinition(node.kind), node.kind)).replace(/^./, (first) => first.toUpperCase())} in ${escapeJsxText(ids.name)}</p>
         {/* The name, pressed, is the field that changes it — as on the derived page. */}
-        <h1 style={pageStyles.h1}>{inPlace && node["label"] === facts.label ? <EditableValue<S> nodeId={id} field="label" value={facts.label} said={facts.label} /> : facts.label}</h1>
+        <h1 style={pageStyles.h1}>{titleField ? <EditableValue<S> nodeId={id} field={titleField} value={facts.label} said={facts.label} /> : facts.label}</h1>
         {/*
           * WHERE IT IS ON THE HORIZON, asked of the declaration's own
           * lifecycle rather than of a status word written here: rename the
@@ -368,46 +384,16 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
       ) : null}
       {/*
         * THE FACTS, as the derivation reads them — every field that is not
-        * the name, formatted as the declaration says. A page that dropped
-        * them looked finished on the one-kind scaffold, where the only
-        * field is the name, and hid the price of every vehicle a day later.
-        * Each is drawn as the derived record page draws it (\`RecordField\`):
-        * a picture or a video plays, prose keeps its paragraphs, a date is
-        * changed by the date editor where it stands. Drawn here as text, a
-        * trailer was a file name and a time took "Change" (the twelfth walk).
+        * the name, formatted as the declaration says, and every relation as
+        * a row of chips. A page that dropped them looked finished on the
+        * one-kind scaffold, where the only field is the name, and hid the
+        * price of every vehicle a day later. Drawn as the derived record page
+        * draws them (\`FactSheet\`): a yes or no is a switch, a date is said
+        * with its weekday and changed by the date editor, a choice is its
+        * options, a relation's chip opens its record and its picker changes
+        * it — each through the act the declaration says does it.
         */}
-      {facts.fields.length > 0 ? (
-        <dl style={{ ...pageStyles.rule, margin: 0, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "14px 24px" }} data-testid="record-fields">
-          {facts.fields.map((field) => (
-            <RecordField<S> key={field.key} nodeId={id} node={node} field={field} inPlace={inPlace} />
-          ))}
-        </dl>
-      ) : null}
-      {ties.length > 0 ? (
-        <section style={{ ...pageStyles.rule, display: "grid", gap: 14 }} data-testid="record-ties">
-          {ties.map((group) => (
-            <div key={\`\${group.edgeKind}|\${group.direction}\`} style={{ display: "grid", gap: 6 }}>
-              {/* The edge's own words for THIS end — its description read
-                  from the end that declared it, its inverse read from the
-                  other. */}
-              <h2 style={pageStyles.h2}>
-                {(group.description ?? group.edgeKind).replace(/^./, (first) => first.toUpperCase())}
-              </h2>
-              {/* Each a link, and two of one name told apart (\`apart\`): a list of words cannot be followed. */}
-              <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 4 }}>
-                {group.targets.map((target) => (
-                  <li key={target.id}>
-                    <Link to={recordPath(${ids.schemaVar}, target.kind, target.id)} style={pageStyles.link}>
-                      {target.label}
-                      {target.apart ? <span style={pageStyles.quiet}> · {target.apart}</span> : null}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </section>
-      ) : null}
+      <FactSheet<S> context={context} id={id} facts={facts} fields={fields} relations={relations} inPlace={inPlace} style={pageStyles.rule} />
       {/*
         * WITHHELD, NOT HIDDEN. The affordances above are what this seat may
         * do; an act the policy refuses is in withheld, carrying the policy's

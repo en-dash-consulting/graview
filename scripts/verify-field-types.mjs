@@ -208,9 +208,15 @@ try {
       /* A SEASON: its rehearsals' durations added up, and what is left of the time it planned. */
       await attempt(seen.season, "/seasons/autumn", "face=pages", async (page) => {
         await until(page, () => textOf(page, facts).then((said) => said.includes("Time rehearsed")));
-        const facts_ = await page.evaluate((facts) => Object.fromEntries([...document.querySelectorAll(`${facts} dt`)].map((dt) => [dt.textContent, dt.nextElementSibling?.textContent ?? ""])), facts);
+        // Each value as it is said, less the quiet "worked out" a computed one carries beside it (Roadmap f-facts-by-type).
+        const facts_ = await page.evaluate((facts) => Object.fromEntries([...document.querySelectorAll(`${facts} dt`)].map((dt) => {
+          const value = dt.nextElementSibling?.cloneNode(true);
+          value?.querySelectorAll?.("[data-graview-worked-out]").forEach((mark) => mark.remove());
+          return [dt.textContent, value?.textContent ?? ""];
+        })), facts);
+        const workedOut = await page.evaluate((facts) => [...document.querySelectorAll(`${facts} [data-graview-worked-out]`)].length, facts);
         await shot(page, "season");
-        return { facts: facts_ };
+        return { facts: facts_, workedOut };
       });
 
       /* CHANGED IN PLACE: typed as a person says it, kept as minutes. */
@@ -296,7 +302,7 @@ report.checks.aDurationIsSaidInHoursAndMinutes = {
 };
 report.checks.aSumOfDurationsIsSaidAsADuration = {
   seen: seen.season,
-  ok: all(seen.season, (one) => one.facts["Time rehearsed"] === "2 h 15 min" && one.facts["Time to spare"] === "7 h 45 min" && one.facts["Time planned"]?.includes("10 h") && one.facts["Rehearsals"] === "2"),
+  ok: all(seen.season, (one) => one.facts["Time rehearsed"] === "2 h 15 min" && one.facts["Time to spare"] === "7 h 45 min" && one.facts["Time planned"]?.includes("10 h") && one.facts["Rehearsals"] === "2" && one.workedOut >= 3),
 };
 report.checks.aDurationChangedInPlaceIsTypedAsWordsAndKeptAsMinutes = {
   seen: seen.changed,

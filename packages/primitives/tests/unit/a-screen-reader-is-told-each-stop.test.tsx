@@ -117,9 +117,10 @@ describe("a value changed where it stands", () => {
       </>,
       { store, views: declaredViews(app) as never },
     );
-    const stage = drawn.querySelector('button[data-graview-field="stage"]')!;
-    expect(stage.textContent).toBe("Shipped");
-    expect(nameOf(stage)).toBe("Stage: Shipped");
+    // A choice of a few is its options, named for the fact, the one it holds pressed: "Stage", "Shipped, pressed" (Roadmap f-facts-by-type).
+    const stage = drawn.querySelector('[role="group"][data-graview-field="stage"]')!;
+    expect(nameOf(stage)).toBe("Stage");
+    expect([...stage.querySelectorAll('button[aria-pressed="true"]')].map((option) => option.textContent)).toEqual(["Shipped"]);
     expect(nameOf(drawn.querySelector("h1")!)).toBe(feature.name);
   });
 });

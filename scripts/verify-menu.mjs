@@ -641,14 +641,15 @@ try {
     await on.waitForTimeout(300);
     const editing = await on.evaluate(() => {
       const active = document.activeElement;
-      return { tag: active?.tagName.toLowerCase() ?? null, inTheFacts: active?.closest('[data-testid="record-fields"]') !== null, menuGone: !document.querySelector('[data-testid="context-menu"]') };
+      // A yes or no is a switch that keeps the keyboard as it is pressed (Roadmap f-facts-by-type).
+      return { tag: active?.tagName.toLowerCase() ?? null, role: active?.getAttribute("role") ?? null, inTheFacts: active?.closest('[data-testid="record-fields"]') !== null, menuGone: !document.querySelector('[data-testid="context-menu"]') };
     });
     await on.keyboard.press("Escape");
     await on.waitForTimeout(200);
     report.checks[`pagesFieldOffersItsChange_${size}`] = {
       field,
       editing,
-      ok: field !== null && field.rows[0] === "change-field" && field.acts.includes("Finish it") && editing.menuGone && editing.inTheFacts && ["input", "select", "textarea"].includes(editing.tag ?? ""),
+      ok: field !== null && field.rows[0] === "change-field" && field.acts.includes("Finish it") && editing.menuGone && editing.inTheFacts && (["input", "select", "textarea"].includes(editing.tag ?? "") || editing.role === "switch"),
     };
 
     /* ------------------------------------------------- a picture's mark, and its ground */

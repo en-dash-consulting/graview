@@ -11,8 +11,9 @@
  * sources (`scripts/fixtures/blank-facts/staffing-app.ts`). At desk width, in
  * three engines, it asks:
  *
- *   sat down as staffing, a placement's blank allocation and role are each
- *   its label and a dim "add" named "Add Allocation", reached by Tab,
+ *   sat down as staffing, a placement's blank allocation is its label and a
+ *   dim "Add allocation", its blank role its options with none chosen
+ *   (Roadmap f-facts-by-type); the allocation reached by Tab,
  *   opened by Enter into the same editor a value opens, and the allocation
  *   typed there is kept and said as the fact;
  *   a blank no act writes (`source`, fixed) is not said at all;
@@ -188,7 +189,12 @@ try {
           said = await page.evaluate(() => document.querySelector('[data-testid="record-fields"] [data-graview-field="allocation"]')?.textContent ?? "");
         }
       }
-      return { slots, reached, opened, said, stillASlot };
+      // A blank choice of a few is its options, none pressed (Roadmap f-facts-by-type).
+      const roleChoice = await page.evaluate(() => ({
+        name: document.querySelector('[data-graview-blank-fact="role"] [role="group"]')?.getAttribute("aria-label") ?? null,
+        pressed: document.querySelectorAll('[data-graview-blank-fact="role"] [aria-pressed="true"]').length,
+      }));
+      return { slots, reached, opened, said, stillASlot, roleChoice };
     });
 
     /* STAFFING: a blank no act writes is not said. */
@@ -233,8 +239,8 @@ report.checks.aBlankFieldAnActWritesIsAnEmptySlot = {
     const allocation = one.slots.find((slot) => slot.field === "allocation");
     const role = one.slots.find((slot) => slot.field === "role");
     return (
-      allocation?.label === "Allocation" && allocation.words === "add" && allocation.name === "Add Allocation" && allocation.width >= 24 && allocation.height >= 24 &&
-      role?.name === "Add Role" &&
+      allocation?.label === "Allocation" && allocation.words === "Add allocation" && allocation.name === "Add allocation" && allocation.width >= 24 && allocation.height >= 24 &&
+      role?.words === null && one.roleChoice.name === "Role" && one.roleChoice.pressed === 0 &&
       one.reached && one.opened && one.said === "60" && !one.stillASlot
     );
   }),

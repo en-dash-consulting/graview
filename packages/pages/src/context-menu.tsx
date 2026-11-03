@@ -430,7 +430,18 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
       const value = target.element?.closest("[data-graview-field]") ?? root.current?.querySelector(`[data-graview-field="${CSS.escape(target.field)}"]`);
       if (!node || !(value instanceof HTMLElement) || !value.hasAttribute("data-graview-editable")) return null;
       const words = fieldWords(schema.tryDefinition(node.kind), target.field);
-      return { id: "field", at: "start", items: [{ id: "change-field", label: `Change “${words}”`, run: () => value.click() }] };
+      /*
+       * A value that is its own control (Roadmap f-facts-by-type) is handed the
+       * keyboard: a switch is pressed and keeps it, a choice's options or its
+       * menu take it to change. A value that opens an editor is pressed.
+       */
+      const run = () => {
+        const own = value.matches("select") ? value : value.getAttribute("role") === "group" ? value.querySelector<HTMLElement>('button[aria-pressed="true"], button') : null;
+        if (own) return own.focus();
+        value.click();
+        if (value.getAttribute("role") === "switch") value.focus();
+      };
+      return { id: "field", at: "start", items: [{ id: "change-field", label: `Change “${words}”`, run }] };
     },
     [store, schema, root],
   );

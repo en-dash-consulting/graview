@@ -241,7 +241,10 @@ const named = (name) => /[\p{L}\p{N}]/u.test(name ?? "");
 async function factsSaid(page) {
   const said = await page.evaluate(() =>
     [...document.querySelectorAll("dt")].flatMap((term) => {
-      const value = term.nextElementSibling?.querySelector("button");
+      // A relation's row names its records and the acts on them (Roadmap f-facts-by-type); a value's control names its fact.
+      if (term.parentElement?.hasAttribute("data-graview-relation")) return [];
+      // A choice of a few is a group named for its fact, a choice of many a menu, a yes or no a switch: the control's own name.
+      const value = term.nextElementSibling?.querySelector('[role="group"][aria-label], select, [role="switch"], button');
       return value ? [{ term: term.textContent.trim(), name: value.getAttribute("aria-label") ?? value.textContent.trim() }] : [];
     }),
   );
@@ -698,16 +701,18 @@ try {
       await ada.waitForTimeout(1500);
       const shownHere = await ada.locator('[data-testid="here"]').count();
       // Ada's keyboard on a fact, as a person reading the page would leave it.
-      await ada.locator('dd button[data-graview-field="layer"], dd button[data-graview-field]').first().focus();
+      await ada.locator('dd [data-graview-field="layer"] button, dd button[data-graview-field="layer"], dd button[data-graview-field]').first().focus();
       const before = await focusSaid(ada, cdp);
       const since = Date.now();
-      const stage = ben.locator('dd button[data-graview-field="stage"]').first();
-      await stage.click();
-      const choice = ben.locator('select').first();
-      const now = await choice.inputValue();
-      const options = await choice.locator("option").evaluateAll((all) => all.map((one) => one.value).filter(Boolean));
-      await choice.selectOption(options.find((one) => one !== now) ?? options[0]);
-      await choice.press("Enter").catch(() => undefined);
+      // The stage, a choice of a few, is its options side by side: Ben presses another (Roadmap f-facts-by-type); of many, it is a menu.
+      const options = ben.locator('dd [role="group"][data-graview-field="stage"] button[aria-pressed="false"]');
+      if ((await options.count()) > 0) await options.first().click();
+      else {
+        const choice = ben.locator('dd select[data-graview-field="stage"]').first();
+        const now = await choice.inputValue();
+        const values = await choice.locator("option").evaluateAll((all) => all.map((one) => one.value).filter(Boolean));
+        await choice.selectOption(values.find((one) => one !== now) ?? values[0]);
+      }
       await ada.waitForTimeout(2500);
       const heard = await heardSince(ada, since);
       here.heard("on Ada's page when Ben changed the stage", heard);
@@ -761,8 +766,9 @@ try {
       const facts = await factsSaid(todo);
       check("todo · a record page: each fact changed in place says which fact it is", facts.said.length > 0 && facts.bare.length === 0, facts);
 
-      const form = stop("Things (todo)", "An act's form", "“Rename …” on the record page: opened, sent, and the keyboard after.");
-      const opener = todo.getByRole("main").getByRole("button", { name: /^Rename/ }).first();
+      // "Rename" is the heading itself now (Roadmap f-facts-by-type); an act beyond the facts opens a form.
+      const form = stop("Things (todo)", "An act's form", "“Note why this is here …” on the record page: opened, sent, and the keyboard after.");
+      const opener = todo.getByRole("main").getByRole("button", { name: /^Note why this is here/ }).first();
       await press(opener);
       await todo.waitForTimeout(600);
       const inForm = await focusSaid(todo, tcdp);
@@ -772,7 +778,7 @@ try {
       const since = Date.now();
       await todo.locator('main form input[type="text"], main form textarea').first().focus();
       await todo.keyboard.press("ControlOrMeta+a");
-      await todo.keyboard.type("Pay the deposit today");
+      await todo.keyboard.type("The landlord asked for it by Friday");
       await todo.keyboard.press("Enter");
       await todo.waitForTimeout(1200);
       const afterSend = await focusSaid(todo, tcdp);
