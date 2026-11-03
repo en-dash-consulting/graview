@@ -216,7 +216,7 @@ function RelationRow<S extends AnySchema>({ context, id, relation, inPlace }: { 
         {picking && set ? (
           <Suspense fallback={null}>
             <RelationPicker
-              store={store}
+              store={store as never}
               label={set.affordance.label}
               candidates={set.candidates}
               tied={relation.targets.map((target) => target.id)}

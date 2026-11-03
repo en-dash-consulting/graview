@@ -54,12 +54,17 @@ const stopWaiting = defineMutation("stop-waiting", { title: "It no longer has to
 // Makes a record and ties it: never a fact's.
 const explain = defineMutation("explain", { title: "Note why this is here", subject: { kinds: ["task"], arg: "taskId" }, creates: ["list"], connects: ["holds"], writes: [], input: z.object({ taskId: nodeRef(["task"]), label: z.string().min(1) }), apply: (ctx, args) => { const id = ctx.freshId(args.label, "list"); ctx.addNode({ id, kind: "list", label: args.label }); ctx.addEdge({ kind: "holds", from: id, to: args.taskId }); } });
 
+/** The picker is fetched the first time one opens: wait for its records rather than a fixed time. */
+async function picked(host: HTMLElement) {
+  for (let tries = 0; tries < 100 && !host.querySelector("[data-graview-candidate]"); tries++) await new Promise((resolve) => setTimeout(resolve, 20));
+}
+
 const KEEPER: Principal = { kind: "human", id: "user-kim", roles: ["keeper"] };
 
 function todo() {
   return new Store({
     schema,
-    mutations: [finish, reopen, reschedule, renameAndNote, relabel, planIt, moveToList, waitFor, stopWaiting, explain],
+    mutations: [finish, reopen, reschedule, relabel, renameAndNote, planIt, moveToList, waitFor, stopWaiting, explain],
     snapshot: {
       nodes: [
         { id: "home", kind: "list", label: "Home" },
@@ -167,7 +172,7 @@ describe("on the record's page", () => {
     expect(caret.getAttribute("aria-label")).toBe("Move it to another list");
     await act(async () => {
       caret.click();
-      await new Promise((resolve) => setTimeout(resolve, 20));
+      await picked(host);
     });
     const candidates = [...row.querySelectorAll<HTMLButtonElement>("[data-graview-candidate]")];
     expect(candidates.map((one) => one.textContent)).toEqual(["Home"]);
@@ -188,7 +193,7 @@ describe("on the record's page", () => {
     expect(add.textContent).toBe("Add one");
     await act(async () => {
       add.click();
-      await new Promise((resolve) => setTimeout(resolve, 20));
+      await picked(host);
     });
     const tape = [...row().querySelectorAll<HTMLButtonElement>("[data-graview-candidate]")].find((one) => one.textContent === "Tape the edges")!;
     await act(async () => tape.click());
