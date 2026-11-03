@@ -76,8 +76,8 @@ describe("the judges", () => {
       { name: "merge-vendor", args: { id: "vendor:acme-2", into: "vendor:acme" } },
     ]);
     expect(found.map((one) => [one.basis, one.confidence])).toEqual([
-      ["Both have the email hi@bloom.example", 0.95],
-      ["Same name as “Acme Supply” (another vendor)", 0.9],
+      ["Same email: hi@bloom.example", 0.95],
+      ["Same name", 0.9],
     ]);
   });
 
@@ -88,15 +88,15 @@ describe("the judges", () => {
       { name: "connect-task-vendor", args: { id: "task:call", to: "vendor:harbor" } },
     ]);
     expect(found.map((one) => [one.basis, one.confidence])).toEqual([
-      ["Its supplier is “Harbor Catering”, the name of a vendor", 0.85],
-      ["Its notes names “Harbor Catering”", 0.5],
+      ["Its supplier is “Harbor Catering”", 0.85],
+      ["“Harbor Catering” appears in its notes", 0.5],
     ]);
   });
 
   it("find a record its kind says is finished, unchanged for longer than the run allows, to set aside", () => {
     const found = archive.judge(contextOf(storeOf()));
     expect(callsOf(found)).toEqual([{ name: "archive-task", args: { id: "task:old" } }]);
-    expect(found[0]!.basis).toBe("Finished — its status is “done” — and unchanged for 113 days");
+    expect(found[0]!.basis).toBe("Its status is “done”, unchanged for 113 days");
   });
 
   it("leave a record a person changed lately for now", () => {
@@ -161,9 +161,9 @@ describe("a dream", () => {
     expect(store.graph.allEdges()).toEqual([]);
     const waiting = suggestions(store);
     expect(waiting.map((one) => [one.author.id, one.lineage?.basis])).toEqual([
-      ["tidying", "Both have the email hi@bloom.example"],
-      ["tidying", "Same name as “Acme Supply” (another vendor)"],
-      ["tidying", "Its supplier is “Harbor Catering”, the name of a vendor"],
+      ["tidying", "Same email: hi@bloom.example"],
+      ["tidying", "Same name"],
+      ["tidying", "Its supplier is “Harbor Catering”"],
     ]);
     // Run again: what waits is not asked twice.
     const again = await dream(store, { now: NOW, limit: 3 });
@@ -187,7 +187,7 @@ describe("a dream", () => {
     expect(report.outcomes.map((one) => one.outcome)).toEqual(["applied", "suggested"]);
     const made = store.log.all().find((op) => op.primitives.length > 0)!;
     expect(made.author).toEqual(actor);
-    expect(made.lineage).toEqual({ basis: "Its supplier is “Harbor Catering”, the name of a vendor", confidence: 0.85, actor: "links", run: expect.any(String), read: ["task:order#supplier", "task:order#label", "vendor:harbor#label"] });
+    expect(made.lineage).toEqual({ basis: "Its supplier is “Harbor Catering”", confidence: 0.85, actor: "links", run: expect.any(String), read: ["task:order#supplier", "task:order#label", "vendor:harbor#label"] });
   });
 
 

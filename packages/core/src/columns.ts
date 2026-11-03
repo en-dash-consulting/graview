@@ -2,7 +2,7 @@ import { compileMutation } from "./mutations/define-mutation.js";
 import { fieldsWrittenBy, subjectKindsOf } from "./mutations/derive-edits.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
 import type { Principal } from "./permissions/types.js";
-import { fieldWords, nounOf } from "./schema/define-node.js";
+import { fieldInPassing, nounOf } from "./schema/define-node.js";
 import { valueWords } from "./schema/value-words.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { Store } from "./store.js";
@@ -61,7 +61,7 @@ export function statusColumns(schema: AnySchema, kind: string, field: string): r
   if (!choice) return [];
   const definition = schema.tryDefinition(kind);
   const columns: StatusColumn[] = choice.values.map((value) => ({ value, label: valueWords(definition, field, value) }));
-  if (choice.empty) columns.push({ value: null, label: `No ${fieldWords(definition, field).toLowerCase()}` });
+  if (choice.empty) columns.push({ value: null, label: `No ${fieldInPassing(definition, field)}` });
   return columns;
 }
 

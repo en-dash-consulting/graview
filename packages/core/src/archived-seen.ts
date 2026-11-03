@@ -176,7 +176,7 @@ function servedAlone<S extends AnySchema>(store: Store<S>, epoch: Epoch, princip
     now: inside.now,
   });
   // What only the store judges by is never the seat's, whether or not its view is kept from anything (FR-199).
-  const { removed: _removed, writers: _writers, ...served } = unmarked(alone.seenBy(principal).log.epochs()[0]!);
+  const { removed: _removed, writers: _writers, declines: _declines, ...served } = unmarked(alone.seenBy(principal).log.epochs()[0]!);
   return served;
 }
 
@@ -255,7 +255,7 @@ export function archiveFrom<S extends AnySchema>(store: Store<S>, archive: Archi
   // Where the archive begins is its own beginning: the epoch that keeps all it must, or the app before anything was made.
   const beginning = (): Epoch => {
     if (begins > 0) return whole.log.epochs()[0]!;
-    const { creators: _creators, removed: _removed, writers: _writers, ...start } = whole.log.checkpointAt(whole.schema, 0, { validate: (store as unknown as Opened<S>).validate });
+    const { creators: _creators, removed: _removed, writers: _writers, declines: _declines, ...start } = whole.log.checkpointAt(whole.schema, 0, { validate: (store as unknown as Opened<S>).validate });
     return { ...start, removed: {} };
   };
   const epoch = (seq > begins ? whole.checkpoint({ seq }) : undefined) ?? beginning();

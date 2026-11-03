@@ -137,9 +137,14 @@ graview serve <entry> [--data <dir>] [--port <n>] [--seed <file>] [--sqlite <fil
 
 ```text
 graview shots <document.json | app module> [--seed <file>] [--places a,b] [--out <dir>]
+
+    --opening-screen photographs the app's opening screen (its brand's
+    splash) once it settles and under reduced motion, as
+    opening-screen[-reduced-motion]-<scheme>-<width>.png: alone, or beside
+    the places --places names.
 ```
 
-[--scheme light|dark|both] [--width <px>[,<px>]] [--faces pages,scene] [--view <view.js> --manifest <manifest.json>] Photographs places headless to PNGs, <place>-<scheme>-<width>.png in <dir> (default ./shots): each place by its address word or title (the home, overview, a lens's name, a kind's plural) or a path such as /tasks/t1; every place when none is named. Needs Playwright, which you install beside the project (npm i -D playwright, then npx playwright install chromium). --view and --manifest picture a proposed view before it is kept: name its place by its title, as a kept view's.
+[--scheme light|dark|both] [--width <px>[,<px>]] [--faces pages,scene] [--view <view.js> --manifest <manifest.json>] [--opening-screen] Photographs places headless to PNGs, <place>-<scheme>-<width>.png in <dir> (default ./shots): each place by its address word or title (the home, overview, a lens's name, a kind's plural) or a path such as /tasks/t1; every place when none is named. Needs Playwright, which you install beside the project (npm i -D playwright, then npx playwright install chromium). --view and --manifest picture a proposed view before it is kept: name its place by its title, as a kept view's.
 
 ## graview skills
 

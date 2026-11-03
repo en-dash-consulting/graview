@@ -40,7 +40,8 @@ import { permittedMutations, proposes, subjectKinds } from "./permissions/policy
 import type { Policy } from "./permissions/types.js";
 import type { AnyMutationDefinition } from "./mutations/types.js";
 import { expired, suggestionsIn, votesIn, type Dismissal, type Suggestion } from "./ops/suggestions.js";
-import { declinedIn, isAutomated, meaningKey, type ActMeanings } from "./ops/tidying.js";
+import { DECLINES, isAutomated, type ActMeanings, type Decline } from "./ops/tidying.js";
+import { declinedIn, declinesIn, keptDeclines, meaningKey } from "./ops/declines.js";
 import type { Author, Operation, Via } from "./ops/types.js";
 import type { Principal } from "./permissions/types.js";
 import type { AnySchema } from "./schema/schema.js";
@@ -50,7 +51,9 @@ import { EMPTY_DIFF } from "./graph/diff.js";
 import { ARCHIVED } from "./graph/archived.js";
 import { nounOf, pluralOf } from "./schema/define-node.js";
 
-export { declinedIn, declinesIn, meaningKey, suggestionKey, tidyingOf, tidyingRefusal } from "./ops/tidying.js";
+export { tidyingOf, tidyingRefusal } from "./ops/tidying.js";
+export { declinedIn, declinesIn, keptDeclines, meaningKey, suggestionKey } from "./ops/declines.js";
+export type { Decline, KeptDecline } from "./ops/tidying.js";
 export type { ActMeanings } from "./ops/tidying.js";
 export { isDismissed, suggestionsIn, takenIn, tallyOf, votesIn } from "./ops/suggestions.js";
 export type { Dismissal, DismissalStore, Suggestion, SuggestionItem, SuggestionTally, WaitingOptions } from "./ops/suggestions.js";
@@ -100,6 +103,14 @@ interface Kept<S extends AnySchema> {
   refuseDeclined(calls: readonly MutationCall[], author: Author | Principal): void;
   actMeanings(): ActMeanings;
 }
+/*
+ * WHAT PEOPLE DECLINED, TAUGHT TO THE STORE (`DECLINES`): loaded, this module
+ * holds the app's own actor to every decline in the log and in the
+ * checkpoint it begins at, and a checkpoint keeps them (`Epoch.declines`).
+ */
+DECLINES.declined = declinedIn;
+DECLINES.kept = (ops, meanings, kept) => keptDeclines(declinesIn(ops, meanings, kept));
+
 const keptOf = <S extends AnySchema>(store: Store<S>) => store as unknown as Kept<S>;
 const given = <K extends string, V>(key: K, value: V | undefined) => (value === undefined ? {} : { [key]: value }) as { readonly [P in K]?: V };
 
@@ -328,9 +339,9 @@ export function withdrawSuggestion<S extends AnySchema>(store: Store<S>, id: str
  * them on its own, as asked or meaning the same (`meaningKey`) — or
  * undefined: what an actor asks before it suggests.
  */
-export function declined(store: Pick<Store<AnySchema>, "log">, calls: readonly MutationCall[]): Operation | undefined {
+export function declined(store: Pick<Store<AnySchema>, "log">, calls: readonly MutationCall[]): Decline | undefined {
   const kept = store as unknown as Partial<Kept<AnySchema>>;
-  return declinedIn(store.log.all(), calls, typeof kept.actMeanings === "function" ? kept.actMeanings() : undefined);
+  return declinedIn(store.log.all(), calls, typeof kept.actMeanings === "function" ? kept.actMeanings() : undefined, store.log.horizonEpoch()?.declines);
 }
 
 /** The app's own actor, when a suggestion's maker is not one: who makes a suggestion that reached `autoAcceptAt`. */

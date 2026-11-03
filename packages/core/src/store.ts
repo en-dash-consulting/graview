@@ -33,7 +33,7 @@ import { KEEP_LINK, keepLinkMutation, keepLinkVia } from "./mutations/keep-link.
 import { advisoryVoterOf, signedOutSeat, SIGN_IN_TO_VOTE, VOTE_SUGGESTION, VOTING, voteSuggestionMutation, type AppTidying, type VotesOptions } from "./mutations/vote-suggestion.js";
 import { TYPE_TEXT, TYPING } from "./text/typing-hook.js";
 import type { FieldRevision } from "./ops/revisions.js";
-import { declinedIn, isAutomated, tidyingRefusal, type ActMeanings } from "./ops/tidying.js";
+import { DECLINES, isAutomated, tidyingRefusal, type ActMeanings } from "./ops/tidying.js";
 import { nameOfAuthor } from "./who.js";
 import { actingAs, grantsTo, isSystem, permits, permittedMutations, proposes, subjectKinds, type PolicyWords } from "./permissions/policy.js";
 import { MOST_PROPOSED, PROPOSE_CHANGES, proposeChangesMutation } from "./mutations/propose-changes.js";
@@ -2428,9 +2428,13 @@ export class Store<S extends AnySchema> {
     return { act: (name) => this.mutations.get(this.spelled(name)) as never, has: (id) => this.graph.has(id) };
   }
 
-  /** A change a person declined is not made or suggested again: refused, in a sentence. */
+  /**
+   * A change a person declined is not made or suggested again: refused, in a sentence. Judged by `@graview/core/tidying`
+   * (`DECLINES`), which every host that runs the actor loads — `dream`, `suggest`, a workflow, `@graview/ship`'s server.
+   * A page that never loads it (where the actor does not run) judges no declines.
+   */
   private refuseDeclined(calls: readonly MutationCall[], author: Author | Principal): void {
-    const declined = declinedIn(this.log.all(), calls, this.actMeanings());
+    const declined = DECLINES.declined?.(this.log.all(), calls, this.actMeanings(), this.log.horizonEpoch()?.declines);
     if (declined) this.refuse({ mutation: calls[0]!.name, message: `${this.authorName(author)} may not make this again: a person declined it on ${declined.at.slice(0, 10)}.`, wouldNeed: [] }, author.id);
   }
 
@@ -2793,7 +2797,7 @@ export class Store<S extends AnySchema> {
   private epochAt(seq: number): Epoch {
     const ops = this.log.all();
     // What the store keeps of who made what and what was removed is written here, from the log, never carried over from an epoch.
-    const { creators: _creators, removed: _removed, writers: _writers, published: _published, ...checkpoint } = this.log.checkpointAt(this.schema, seq, { validate: this.validate });
+    const { creators: _creators, removed: _removed, writers: _writers, published: _published, declines: _declines, ...checkpoint } = this.log.checkpointAt(this.schema, seq, { validate: this.validate });
     /*
      * Who made each record behind it, so a store opened on it still knows (an `own` sight reads the log for it);
      * what each record removed behind it was, so a field naming one is still judged as naming it; and who wrote
@@ -2804,6 +2808,9 @@ export class Store<S extends AnySchema> {
     const records = recordsOf(this.log);
     const writers = writersBehind(this.log, seq, checkpoint.base.nodes, (value) => namesUnseen(value, (id) => !base.has(id) && records.kindOf(id) === undefined));
     const kept = (map: object | undefined) => map && Object.keys(map).length > 0;
+    // What people declined, so the undo or unlink that said it can go to the archive and the actor still not make it again.
+    const carried = this.log.horizonEpoch()?.declines;
+    const declines = DECLINES.kept ? DECLINES.kept(ops, this.actMeanings(), carried) : carried;
     /*
      * The modules on at its seq and how far readers were served there, which the ops before it said and which go to the
      * archive with them: so a module off stays off (FR-12) and a store whose publish ops were archived still knows what
@@ -2814,6 +2821,7 @@ export class Store<S extends AnySchema> {
       ...(kept(creators) && { creators }),
       ...(removed && { removed }),
       ...(kept(writers) && { writers }),
+      ...(kept(declines) && { declines }),
       ...given("enabledModules", ops.slice(0, seq - this.log.horizon).reverse().find((op) => op.enabledModules)?.enabledModules ?? this.log.horizonEpoch()?.enabledModules),
       ...given("publishedThrough", PUBLISHING.seq?.(this, seq)),
     };

@@ -54,7 +54,7 @@ describe("a suggestion whose basis read a field a seat keeps", () => {
     const store = make();
     await dream(store, { now: NOW });
     const tray = suggestions(store, admin);
-    expect(tray.map((one) => one.lineage?.basis)).toEqual(expect.arrayContaining([expect.stringContaining(CODE.toLowerCase()), expect.stringContaining("Its notes")]));
+    expect(tray.map((one) => one.lineage?.basis)).toEqual(expect.arrayContaining([expect.stringContaining(CODE.toLowerCase()), expect.stringContaining("appears in its notes")]));
   });
 
   it("is not in the tray of a seat that keeps the field, nor its value in the log that seat is served", async () => {

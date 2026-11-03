@@ -29,8 +29,8 @@ describe("a record page", () => {
   it("marks a link made unsure, says its basis, and says each change's basis on the history line and what the record was made on", () => {
     const markup = renderToStaticMarkup(<PagesApp context={{ store: storeOf() }} initialPath="/leases/lease" />);
     expect(markup).toContain("data-graview-provisional");
-    expect(markup).toContain("Not yet kept by a person. Graview, tidying made it, based on “Both name 12 Harbor Street” · 60% sure · jev-1.");
-    expect(markup).toContain("based on “Attached to the March email” · 90% sure");
+    expect(markup).toContain("Not yet kept by a person. Graview, tidying made it: Both name 12 Harbor Street · 60% sure · jev-1.");
+    expect(markup).toContain("Attached to the March email · 90% sure");
     expect(markup).toContain('data-testid="record-lineage"');
   });
 

@@ -1,4 +1,3 @@
-import { lowerFirst } from "../capital.js";
 import * as z from "../schema/zod.js";
 import { filesOf } from "../schema/files.js";
 import { amountOf } from "../schema/amount-mark.js";
@@ -7,7 +6,7 @@ import { DATE_VALUE, dayAsRead, ISO_MOMENT, momentAsRead } from "../days.js";
 import { typedFieldOf } from "../schema/typed-field-of.js";
 import { labelOf } from "../schema/define-node.js";
 import { LEFT_ALONE } from "../graph/archived.js";
-import { fieldWords, humanizeValue, nounOf } from "../schema/define-node.js";
+import { fieldInPassing, humanizeValue, nounOf } from "../schema/define-node.js";
 import { linkedRelationOf } from "../schema/linked.js";
 import { repeatedBy } from "../repeat.js";
 import type { AnySchema } from "../schema/schema.js";
@@ -191,7 +190,7 @@ export function deriveEditMutations<S extends AnySchema>(
     const writtenBy = Object.fromEntries(settableFields(definition).flatMap((field) => (!fields.includes(field) && writers?.get(field)?.length ? [[field, writers.get(field)!]] : [])));
     const shape = definition.fields.shape as unknown as Record<string, z.ZodMiniType>;
     const noun = nounOf(definition, kind);
-    const said = fields.map((field) => fieldWords(definition, field).toLowerCase());
+    const said = fields.map((field) => fieldInPassing(definition, field));
     derived.push({
       name,
       derived: { kind, act: "edit" },
@@ -251,8 +250,7 @@ function editSaid(definition: AnyNodeDefinition, shape: Record<string, unknown>,
       // A date's repeat is said by the date it repeats: "the due date to repeat every week".
       const date = repeatedBy(field);
       const repeat = date !== undefined && date in shape;
-      const word = fieldWords(definition, repeat ? date : field);
-      const named = word === word.toUpperCase() ? word : lowerFirst(word);
+      const named = fieldInPassing(definition, repeat ? date : field);
       return `the ${named}${at === 0 ? ` of ${label}` : ""} to ${repeat ? (value ? `repeat ${everySaid(value as never)}` : "stop repeating") : valueSaid(definition, shape[field], field, value)}`;
     });
   return said.length === 0 ? `Changed nothing on ${label}` : `Changed ${said.length > 1 ? `${said.slice(0, -1).join(", ")} and ${said.at(-1)}` : said[0]}`;

@@ -92,10 +92,24 @@ export interface PreviewOptions {
    * Absent, or for an app in code, the page opens as it did.
    */
   readonly splash?: SplashRenderer;
+  /**
+   * THE OPENING SCREEN AS A PAGE OF ITS OWN, held for a picture
+   * (`@graview/pages/splash`'s `splashPage`): served at
+   * `OPENING_SCREEN_PATH`, which `graview shots --opening-screen`
+   * photographs. Absent, or for an app with no screen, that address
+   * answers 404.
+   */
+  readonly splashPage?: SplashPageRenderer;
 }
 
 /** `splashHtml` of `@graview/pages/splash`, as the tool hands it to a preview. */
 export type SplashRenderer = (brand: Record<string, unknown>, options?: { readonly name?: string }) => { readonly html: string; readonly css: string; readonly script: string };
+
+/** `splashPage` of `@graview/pages/splash`, as the tool hands it to a preview: the screen alone, held, as a whole page; "" for a brand with none. */
+export type SplashPageRenderer = (brand: Record<string, unknown>, options?: { readonly name?: string }) => string;
+
+/** Where a preview serves the app's opening screen alone, held for a picture of it. */
+export const OPENING_SCREEN_PATH = "/graview/opening-screen";
 
 export interface Preview {
   readonly app: GraviewApp<AnySchema>;
@@ -223,6 +237,13 @@ export async function servePreview(options: PreviewOptions): Promise<Preview> {
     return html;
   };
 
+  /** The opening screen alone, held for a picture, when the document's brand has one and the tool handed its renderer. */
+  const openingScreen = (): string | undefined => {
+    const brand = typeof document === "object" && document !== null ? (document as { brand?: Record<string, unknown> }).brand : undefined;
+    if (!options.splashPage || !brand || typeof brand["splash"] !== "object" || brand["splash"] === null) return undefined;
+    return options.splashPage(brand, { name: (document as { name?: string }).name ?? app.name }) || undefined;
+  };
+
   /*
    * THE STORE'S STATE, HANDED WITH THE DOCUMENT. The page asked for the
    * document, built the app, and only then asked the store for its state:
@@ -285,6 +306,10 @@ export async function servePreview(options: PreviewOptions): Promise<Preview> {
       return new Response(more === "" ? handed : `${handed.slice(0, -1)}${more}}`, { headers: { "content-type": "application/json", "cache-control": "no-store" } });
     }
     if (code && path === PREVIEW_APP_PATH) return new Response(code.bundle, { headers: { "content-type": TYPES[".js"]!, "cache-control": "no-store" } });
+    if (path === OPENING_SCREEN_PATH) {
+      const screen = openingScreen();
+      return screen ? new Response(screen, { headers: { "content-type": TYPES[".html"]!, "cache-control": "no-store" } }) : new Response(`${app.name} has no opening screen: its document's brand says no splash.\n`, { status: 404, headers: { "content-type": "text/plain; charset=utf-8" } });
+    }
     if (path.startsWith("/graview/")) return undefined;
     const file = normalize(join(root, path));
     const served = file.startsWith(root + sep) && extname(file) !== "" && existsSync(file) && statSync(file).isFile() ? file : index;

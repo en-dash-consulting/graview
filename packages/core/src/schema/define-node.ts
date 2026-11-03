@@ -1,6 +1,6 @@
 import type { z } from "zod";
 import { isoToday, numberAsRead } from "../days.js";
-import { capitalize } from "../capital.js";
+import { capitalize, nameInPassing } from "../capital.js";
 import { humanizeField, humanizeValue } from "./humanize.js";
 import type { FileValue } from "./files.js";
 import type { LinkedRecordRef, LinkedRelation } from "./linked.js";
@@ -227,6 +227,14 @@ export function fieldWords(
   // A kind's `label` is its name: the log said "Change Woodworking: label → …" of a shelf renamed (W-184).
   return definition?.display?.labels?.[key] ?? (typeof computed === "object" ? computed.label : undefined) ?? (key === "label" ? "Name" : humanizeField(key));
 }
+
+/**
+ * A FIELD AS A SENTENCE NAMES IT IN PASSING — "Changed the apple music of
+ * Blue", "the Apple Music of Blue" where the app labels it so: its words
+ * (`fieldWords`), lowered as a word is unless written as a name
+ * (`nameInPassing`), never half lowered ("apple Music").
+ */
+export const fieldInPassing = (definition: Parameters<typeof fieldWords>[0], key: string): string => nameInPassing(fieldWords(definition, key));
 
 /*
  * "a item" is the sound of generated prose.

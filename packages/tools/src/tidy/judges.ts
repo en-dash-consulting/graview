@@ -1,4 +1,4 @@
-import { isArchived, isCurrent, isLeftAlone, labelOf, nameKey, nodeRefArgs, nounOf, type AnySchema, type MutationCall, type Store } from "@graview/core";
+import { fieldInPassing, isArchived, isCurrent, isLeftAlone, labelOf, nameKey, nodeRefArgs, nounOf, type AnySchema, type MutationCall, type Store } from "@graview/core";
 import { districtState } from "@graview/core/city";
 import { fold } from "@graview/core/search";
 import { tidyingOf } from "@graview/core/tidying";
@@ -97,6 +97,10 @@ export function nameRead(schema: AnySchema, node: Node): string[] {
 /** Every field a record holds a value in, `<id>#<field>`: what a basis that read the whole record read. */
 export const wholeRead = (node: Node): string[] => Object.keys(node).filter((field) => field !== "id" && field !== "kind" && node[field] !== undefined && node[field] !== null && node[field] !== "").map((field) => fieldRead(node, field));
 export const noun = (schema: AnySchema, kind: string): string => nounOf(schema.tryDefinition(kind), kind);
+/** A field as a sentence names it in passing: its declared label, else its id in words ("its supplier", "its apple music", "its Apple Music"). */
+export const fieldInWords = (schema: AnySchema, kind: string, field: string): string => fieldInPassing(schema.tryDefinition(kind) as never, field);
+/** A sentence's first letter made a capital. */
+export const capitalized = (text: string): string => text.charAt(0).toUpperCase() + text.slice(1);
 export const fieldsOf = (schema: AnySchema, kind: string): string[] => Object.keys((schema.tryDefinition(kind)?.fields.shape ?? {}) as Record<string, unknown>);
 
 /** Fields whose value names one thing and only that thing: two records that share one are the same. */
@@ -122,6 +126,41 @@ export function keeperOf(store: Store<AnySchema>, nodes: readonly Node[], touche
   const madeAt = (node: Node) => made.get(node.id)?.at ?? Number.NEGATIVE_INFINITY;
   const weight = (node: Node) => store.graph.out(node.id).length + store.graph.in(node.id).length;
   return [...nodes].sort((a, b) => madeAt(a) - madeAt(b) || weight(b) - weight(a) || (touched.get(a.id) ?? 0) - (touched.get(b.id) ?? 0) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))[0]!;
+}
+
+/** Words that stand in for a name nobody gave yet: "Untitled", "TBD", "N/A", "New". */
+const STAND_INS = new Set(["untitled", "unnamed", "no name", "no title", "nameless", "tbd", "tba", "tbc", "to be decided", "to be determined", "to be confirmed", "n a", "na", "none", "null", "undefined", "unknown", "placeholder", "new", "todo", "blank", "empty", "x", "xx", "xxx"]);
+
+/**
+ * WHETHER A NAME IS A PLACEHOLDER: blank, dashes or punctuation alone ("—",
+ * "— · —", what a label drawn from empty fields reads), or a word that
+ * stands in for one ("Untitled", "Untitled placement 3", "TBD", "N/A"). It
+ * says nothing of which record it is, so two records that share it are no
+ * duplicate.
+ */
+export function placeholderName(name: string, kind?: string): boolean {
+  const noun = new Set(kind ? fold(kind).split(" ") : []);
+  const left = fold(name)
+    .split(" ")
+    .filter((word) => word && !/^\d+$/.test(word) && !noun.has(word))
+    .join(" ");
+  return left === "" || STAND_INS.has(left);
+}
+
+/**
+ * WHETHER TWO RECORDS ARE KEPT APART BY A LINK: a one-link relation of
+ * their kind that each fills, with different records — two placements of
+ * two people, two Ada Lovelaces on two teams. They are two, whatever they
+ * are called.
+ */
+export function linkedApart(store: Store<AnySchema>, a: Node, b: Node): boolean {
+  const edges = (store.schema.tryDefinition(a.kind)?.edges ?? {}) as Record<string, { readonly cardinality?: string }>;
+  return Object.entries(edges).some(([relation, edge]) => {
+    if (edge.cardinality !== "one") return false;
+    const ours = store.graph.out(a.id, relation as never).map((one) => one.id);
+    const theirs = store.graph.out(b.id, relation as never).map((one) => one.id);
+    return ours.length > 0 && theirs.length > 0 && !ours.some((id) => theirs.includes(id));
+  });
 }
 
 /** Who made a record, `<kind>:<id>`, or undefined for one from before the log. */
@@ -162,15 +201,17 @@ export const duplicates: Judge = {
         }
       };
       for (const field of keys) {
-        group((node) => (typeof node[field] === "string" && node[field].trim() ? nameKey(node[field]) : undefined), (_keeper, value) => `Both have the ${field} ${value}`, 0.95, field);
+        group((node) => (typeof node[field] === "string" && node[field].trim() ? nameKey(node[field]) : undefined), (_keeper, value) => `Same ${fieldInWords(schema, kind, field)}: ${value}`, 0.95, field);
       }
-      group((node) => nameKey(named(schema, node)) || undefined, (keeper) => `Same name as “${named(schema, keeper)}” (another ${noun(schema, kind)})`, 0.9);
-      group((node) => fold(named(schema, node)).replace(/ /g, "") || undefined, (keeper) => `Nearly the same name as “${named(schema, keeper)}”, punctuation and spacing aside`, 0.75);
+      // A placeholder name ("—", "Untitled") says nothing of which record it is.
+      const name = (node: Node) => (placeholderName(named(schema, node), kind) ? undefined : named(schema, node));
+      group((node) => (name(node) ? nameKey(name(node)!) : undefined), () => "Same name", 0.9);
+      group((node) => (name(node) ? fold(name(node)!).replace(/ /g, "") || undefined : undefined), () => "Same name, punctuation aside", 0.75);
       for (const { nodes, basis, confidence, field } of groups) {
         const keeper = keeperOf(store, nodes, context.touched, context.made);
         if (!mayTouch(context, keeper)) continue;
         for (const node of nodes) {
-          if (node.id === keeper.id || !mayTouch(context, node)) continue;
+          if (node.id === keeper.id || !mayTouch(context, node) || linkedApart(store, node, keeper)) continue;
           // A shared key read both records' key; a shared name, both names.
           const read = field !== undefined ? [fieldRead(node, field), fieldRead(keeper, field)] : [...nameRead(schema, node), ...nameRead(schema, keeper)];
           out.push({ judge: "duplicates", calls: [{ name: `merge-${kind}`, args: { id: node.id, into: keeper.id } }], basis: basis(keeper), confidence, about: [node.id, keeper.id], read });
@@ -254,11 +295,10 @@ export const links: Judge = {
           const picked = edge.cardinality === "one" ? (ranked.length === 1 || (ranked[0]?.exact && !ranked[1]?.exact) ? ranked.slice(0, 1) : []) : ranked;
           for (const { far, field, exact } of picked) {
             if (!mayTouch(context, far)) continue;
-            const farNoun = noun(schema, far.kind);
             out.push({
               judge: "links",
               calls: [{ name: act.name, args: { id: node.id, [act.to]: far.id } }],
-              basis: exact ? `Its ${field} is “${named(schema, far)}”, the name of ${/^[aeiou]/i.test(farNoun) ? "an" : "a"} ${farNoun}` : `Its ${field} names “${named(schema, far)}”`,
+              basis: exact ? `Its ${fieldInWords(schema, kind, field)} is “${named(schema, far)}”` : `“${named(schema, far)}” appears in its ${fieldInWords(schema, kind, field)}`,
               confidence: exact ? 0.85 : 0.5,
               about: [node.id, far.id],
               // What the record's field says, and the names it was matched against.
@@ -356,7 +396,7 @@ export const archive: Judge = {
         out.push({
           judge: "archive",
           calls: [{ name: `archive-${kind}`, args: { id: node.id } }],
-          basis: `Finished — ${why} — and unchanged for ${days} days`,
+          basis: `${capitalized(why)}, unchanged for ${days} days`,
           // Older is surer, never certain: a person may still be reading it.
           confidence: Math.min(0.8, 0.6 + days / 365),
           about: [node.id],

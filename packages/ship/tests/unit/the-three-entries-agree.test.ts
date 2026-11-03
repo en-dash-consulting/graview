@@ -97,6 +97,13 @@ const NOT_ON_THE_RUNTIME: Readonly<Record<string, string>> = {
   Preview: "node:http",
   PreviewOptions: "node:http",
   PREVIEW_APP_PATH: "the CLI",
+  // The opening screen photographed: a preview's address for it, and Playwright found on disk.
+  OPENING_SCREEN_PATH: "the CLI",
+  SplashPageRenderer: "node:http",
+  OPENING_SCREEN_SETTLED: "the CLI",
+  shootOpeningScreen: "node:fs",
+  OpeningScreenOptions: "node:fs",
+  ScreenMotion: "the CLI",
   // An app in code bundled for the preview's page: esbuild, found on disk.
   bundleAppForPage: "node:module",
   findBundler: "node:module",
