@@ -170,12 +170,14 @@ export function editableFields<S extends AnySchema>(
 
   /*
    * One control per field. A writer that takes the value is the natural
-   * control and comes first; among equals, declaration order holds, so
-   * which mutation edits a field is stable rather than registration luck.
-   * The rest ride along as alternatives, for a control that offers acts.
+   * control and comes first — one that asks nothing else before one that
+   * does, since the control can give it everything it needs (Roadmap
+   * f-facts-by-type); among equals, declaration order holds, so which
+   * mutation edits a field is stable rather than registration luck. The
+   * rest ride along as alternatives, for a control that offers acts.
    */
   return [...candidates.values()].map((writers) => {
-    const ordered = [...writers.filter((w) => w.takesValue), ...writers.filter((w) => !w.takesValue)];
+    const ordered = [...writers.filter((w) => w.takesValue && w.open.length === 0), ...writers.filter((w) => w.takesValue && w.open.length > 0), ...writers.filter((w) => !w.takesValue)];
     const [first, ...rest] = ordered;
     return { ...first!, alternatives: rest };
   });

@@ -1,5 +1,5 @@
-import { fieldWords, humanizeField as humanize, TYPE_TEXT, type AnySchema } from "@graview/core";
-import { valueWords } from "@graview/core/words";
+import { defOf, fieldWords, humanizeField as humanize, TYPE_TEXT, type AnySchema } from "@graview/core";
+import { failureWords, valueWords } from "@graview/core/words";
 import { amountBox, amountInBox, endAfterStartMoved, pageSections, parseDuration, readableFields, readAmount, startAndEndOf } from "@graview/core/words";
 import { fileFieldsOf } from "@graview/core/blocks";
 import { useEditableFields } from "@graview/react/drawing";
@@ -12,6 +12,7 @@ import { AppLink } from "./app-link-door.js";
 import { LinkedRecordView } from "./linked-record-door.js";
 import { RepeatEditor } from "./repeat-picker-door.js";
 import { prefetchWhenInput, WhenInput } from "./when-input-door.js";
+import { todayOf, whenSaid } from "./when-words.js";
 
 /**
  * One field's value, changeable where it is shown when something can change
@@ -34,6 +35,7 @@ export function EditableValue<S extends AnySchema>({
   stored = value,
   said,
   blank = false,
+  late = false,
 }: {
   readonly nodeId: string;
   readonly field: string;
@@ -55,8 +57,15 @@ export function EditableValue<S extends AnySchema>({
    * `said` names it ("Add Allocation").
    */
   readonly blank?: boolean;
+  /**
+   * A DATE A RULE SAYS IS LATE (Roadmap f-facts-by-type): drawn in the
+   * warning color. Said by the page from its problems — a repair that asks
+   * for this field again — never guessed from the date alone: a talk given
+   * in 2017 is past, not late.
+   */
+  readonly late?: boolean;
 }) {
-  const { fields, commit } = useEditableFields<S>(nodeId);
+  const { fields, commit: send } = useEditableFields<S>(nodeId);
   const editable = fields.find((candidate) => candidate.field === field);
   // The field as the declaration says it: a tooltip read "changes "plannedAt"".
   const { store, principal } = useGraview<S>();
@@ -64,7 +73,11 @@ export function EditableValue<S extends AnySchema>({
   const definition = store.schema.definitions.find((one) => one.kind === kind);
   const fact = fieldWords(definition, field);
   const words = fact.toLowerCase();
-  const named = said ?? `${fact.charAt(0).toUpperCase()}${fact.slice(1)}: ${value}`;
+  // An empty slot is named by what it does, with the fact where its words do not say it: "Add notes", "Due: pick a day".
+  const emptied = blank && editable ? blankWords(editable, fact) : undefined;
+  const named = emptied !== undefined
+    ? emptied.toLowerCase().includes(words) ? emptied : `${fact.charAt(0).toUpperCase()}${fact.slice(1)}: ${emptied.charAt(0).toLowerCase()}${emptied.slice(1)}`
+    : said ?? `${fact.charAt(0).toUpperCase()}${fact.slice(1)}: ${value}`;
   const [editing, setEditing] = useState(false);
   // An amount is edited as it is said, less its symbol: "10,000" beside "$", never a bare 10000 (money said as money).
   const amount = editable?.shape.type === "number" ? editable.shape.amount : undefined;
@@ -87,6 +100,21 @@ export function EditableValue<S extends AnySchema>({
   const comeBack = useRef(false);
   /* What emptying a field it cannot be without said, beside the value it kept (Roadmap f-clear-date-in-place). */
   const [refused, setRefused] = useState<string | undefined>(undefined);
+  /*
+   * A CHANGE THE STORE REFUSES IS SAID BESIDE ITS VALUE (Roadmap
+   * f-facts-by-type): a length past its longest, a rule's own refusal, in
+   * the words a form would say it — never a page error with the value
+   * quietly as it was.
+   */
+  const refusing = (run: () => void) => {
+    try {
+      run();
+      setRefused(undefined);
+    } catch (error) {
+      setRefused(failureWords(store.schema, store.allMutations(), error));
+    }
+  };
+  const commit = (writer: EditableField, next: unknown) => refusing(() => send(writer, next));
   const close = (keepTheKeyboard: boolean) => {
     comeBack.current = keepTheKeyboard;
     setEditing(false);
@@ -111,6 +139,62 @@ export function EditableValue<S extends AnySchema>({
     }
   }, [editing]);
 
+  /*
+   * EACH VALUE BY ITS TYPE (Roadmap f-facts-by-type). A yes or no is a
+   * switch, a day is said with its weekday and how far it is, a choice of a
+   * few is its options side by side and of many a menu — each still the one
+   * act the framework found, so the change is in the history and can be
+   * taken back. The scene's card and the record's page draw the same.
+   */
+  const record = store.graph.getNode(nodeId) as Record<string, unknown> | undefined;
+  const kept = record?.[field];
+  const declared = (definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape?.[field];
+  const formatted = definition?.display?.format?.[field];
+  const yesNo = typeof kept === "boolean" || ((kept === undefined || kept === null) && baseTypeOf(declared) === "boolean");
+  const when = formatted === undefined && !blank && typeof kept === "string" ? whenSaid(kept, todayOf(store)) : undefined;
+  const shown = when ? when.words : value;
+  const lateStyle = late && when?.past ? { color: "var(--graview-warn)" } : {};
+  const worked = definition?.computed !== undefined && Object.hasOwn(definition.computed, field);
+  const refusal = refused ? (
+    <span role="status" data-graview-refused={field} style={{ marginLeft: 6, fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
+      {refused}
+    </span>
+  ) : null;
+
+  if (editable && yesNo) {
+    const on = kept === true;
+    const writers = [editable, ...editable.alternatives];
+    const byValue = writers.find((one) => one.takesValue && one.shape.type === "boolean");
+    // A writer that takes the value is sent the other one; acts that take none, the one that would change it ("Mark it done", or "Put it back").
+    const call = byValue ? byValue.call(!on) : writers.map((one) => one.call(undefined)).find((one) => store.wouldChange(one, principal));
+    if (call) {
+      const words = value || (formatted ? formatted(on) : on ? "Yes" : "No");
+      const act = writers.find((one) => one.mutation === call.name) ?? editable;
+      return (
+        <span style={{ display: "inline-flex", alignItems: "center", flexWrap: "wrap", gap: 6, maxWidth: "100%" }}>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={on}
+            aria-label={`${fact.charAt(0).toUpperCase()}${fact.slice(1)}`}
+            data-graview-field={field}
+            data-graview-editable={act.mutation}
+            data-graview-switch=""
+            title={`${act.title} — changes the ${fact.toLowerCase()}, and can be undone`}
+            onClick={() => refusing(() => store.apply(call, { author: principal }))}
+            style={SWITCH}
+          >
+            <span aria-hidden="true" data-graview-track="" style={{ ...TRACK, background: on ? "var(--graview-accent)" : "color-mix(in oklab, var(--graview-ink) 24%, transparent)" }}>
+              <span style={{ ...KNOB, transform: on ? "translateX(12px)" : "none", background: on ? "var(--graview-accent-ink, #fff)" : "var(--graview-ground)" }} />
+            </span>
+            <span aria-hidden="true">{words}</span>
+          </button>
+          {refusal}
+        </span>
+      );
+    }
+  }
+
   if (!editable) {
     return (
       <span
@@ -119,9 +203,78 @@ export function EditableValue<S extends AnySchema>({
         // Said, not merely implied: a value that ignores a click looks broken.
         title={`Read-only — nothing this app declares changes the ${words}`}
         // An address, a VIN, a URL has nowhere to break: it breaks anywhere rather than run into the next column.
-        style={{ color: "var(--graview-ink)", cursor: "default", overflowWrap: "anywhere" }}
+        style={{ color: "var(--graview-ink)", cursor: "default", overflowWrap: "anywhere", ...lateStyle }}
       >
-        {value}
+        {shown}
+        {/* Worked out from other facts, quietly said so: it changes when they do. */}
+        {worked ? (
+          <span data-graview-worked-out="" title="Worked out from the other facts; it changes when they do" style={{ marginLeft: 8, fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>
+            worked out
+          </span>
+        ) : null}
+      </span>
+    );
+  }
+
+  /*
+   * A CHOICE IS ITS OPTIONS (Roadmap f-facts-by-type): a few, side by side,
+   * the one chosen pressed — one press to change; many, a menu that opens
+   * at the first press. Before, the value opened a menu that then had to be
+   * opened again.
+   */
+  if (!editing && editable.takesValue && editable.shape.type === "choice" && editable.open.length === 0) {
+    const options = editable.shape.options;
+    const chosen = typeof kept === "string" ? kept : "";
+    const name = `${fact.charAt(0).toUpperCase()}${fact.slice(1)}`;
+    const few = options.length <= 4 && options.every((option) => valueWords(definition, field, option).length <= 14);
+    const pick = (next: string) => {
+      if (next === chosen) return;
+      if (next === "") {
+        if (editable.clearable) commit(editable, null);
+        return;
+      }
+      commit(editable, next);
+    };
+    return (
+      <span style={{ display: "inline-flex", alignItems: "center", flexWrap: "wrap", gap: 6, maxWidth: "100%" }}>
+        {few ? (
+          <span role="group" aria-label={name} data-graview-field={field} data-graview-editable={editable.mutation} data-graview-choices={field} style={SEGMENTS}>
+            {options.map((option) => {
+              const pressed = option === chosen;
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  aria-pressed={pressed}
+                  data-graview-option={option}
+                  title={`${editable.title} — changes the ${words}, and can be undone`}
+                  onClick={() => pick(option)}
+                  style={{ ...SEGMENT, ...(pressed ? SEGMENT_ON : {}) }}
+                >
+                  {valueWords(definition, field, option)}
+                </button>
+              );
+            })}
+          </span>
+        ) : (
+          <select
+            aria-label={name}
+            data-graview-field={field}
+            data-graview-editable={editable.mutation}
+            title={`${editable.title} — changes the ${words}, and can be undone`}
+            value={chosen}
+            onChange={(event) => pick(event.target.value)}
+            style={MENU}
+          >
+            {chosen === "" || editable.clearable ? <option value="">{chosen === "" && !editable.clearable ? "Choose…" : "None"}</option> : null}
+            {options.map((option) => (
+              <option key={option} value={option}>
+                {valueWords(definition, field, option)}
+              </option>
+            ))}
+          </select>
+        )}
+        {refusal}
       </span>
     );
   }
@@ -166,20 +319,21 @@ export function EditableValue<S extends AnySchema>({
           overflowWrap: "anywhere",
           paddingBottom: 1,
           borderBottom: "1px dashed var(--graview-edge-bright)",
-          // An empty slot says "add", dim beside the values that are there.
+          // An empty slot says what pressing it does, dim beside the values that are there.
           color: blank ? "var(--graview-ink-muted)" : "var(--graview-ink)",
+          ...lateStyle,
         }}
       >
-        {blank ? "add" : value}
+        {blank ? blankWords(editable, fact) : shown}
+        {/* A value changed by acts that take none opens onto those acts: it says it opens. */}
+        {!blank && !editable.takesValue ? <span aria-hidden="true" style={{ marginLeft: 4, fontSize: "0.75em", color: "var(--graview-ink-faint)" }}>▾</span> : null}
       </button>
     );
     if (!refused) return button;
     return (
       <>
         {button}
-        <span role="status" data-graview-refused={field} style={{ marginLeft: 6, fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
-          {refused}
-        </span>
+        {refusal}
       </>
     );
   }
@@ -199,6 +353,17 @@ export function EditableValue<S extends AnySchema>({
       if (editable.clearable) commit(editable, null);
       else setRefused(`${fact.charAt(0).toUpperCase()}${fact.slice(1)} can't be empty; it keeps ${value}.`);
       return;
+    }
+    /*
+     * A NUMBER PAST ITS RANGE IS SAID SO, IN WORDS, BESIDE IT (Roadmap
+     * f-facts-by-type): the box's own range stopped Enter in silence on one
+     * engine and in a bubble that left on another.
+     */
+    if (editable.shape.type === "number" && typeof next === "number" && Number.isFinite(next)) {
+      const { min, max } = editable.shape;
+      const Fact = `${fact.charAt(0).toUpperCase()}${fact.slice(1)}`;
+      if (max !== undefined && next > max) return void setRefused(`${Fact} is at most ${max}; it keeps ${value}.`);
+      if (min !== undefined && next < min) return void setRefused(`${Fact} is at least ${min}; it keeps ${value}.`);
     }
     if (editable.shape.type === "date" && typeof next === "string" && withItsEnd(next)) return;
     commit(editable, next);
@@ -223,9 +388,11 @@ export function EditableValue<S extends AnySchema>({
     if (moved === undefined || moved === end) return false;
     const starting = editable.call(next);
     const following = ending.call(moved);
-    store.applyAll(
-      starting.name === following.name ? [{ name: starting.name, args: { ...starting.args, ...following.args } }] : [starting, following],
-      { author: principal },
+    refusing(() =>
+      store.applyAll(
+        starting.name === following.name ? [{ name: starting.name, args: { ...starting.args, ...following.args } }] : [starting, following],
+        { author: principal },
+      ),
     );
     return true;
   };
@@ -322,6 +489,8 @@ export function EditableValue<S extends AnySchema>({
 
   return (
     <form
+      // The range is said in words beside the value when it is passed (`done`), never stopped in silence by the box.
+      noValidate
       style={{ display: "inline-flex", flexWrap: "wrap", gap: 4, maxWidth: "100%" }}
       onSubmit={(event) => {
         event.preventDefault();
@@ -765,3 +934,33 @@ export function EditableTitle<S extends AnySchema>({
   // A heading's words, said as they are: the heading says what it is.
   return <EditableValue<S> nodeId={nodeId} field={writable.field} value={children} said={children} />;
 }
+
+/** What a declared field holds under optional, default and nullable: "boolean", "string", "enum". */
+function baseTypeOf(schema: unknown): string | undefined {
+  const def = defOf(schema) as { type?: string; innerType?: unknown } | undefined;
+  if (!def) return undefined;
+  return def.type === "optional" || def.type === "nullable" || def.type === "default" ? baseTypeOf(def.innerType) : def.type;
+}
+
+/**
+ * WHAT AN EMPTY SLOT SAYS PRESSING IT DOES (Roadmap f-facts-by-type): "Pick
+ * a day" beside "Due", "Choose…" beside a choice, "Add notes" beside
+ * "Notes" — not a bare "add" that names nothing.
+ */
+function blankWords(editable: EditableField, fact: string): string {
+  const shape = editable.shape;
+  if (shape.type === "date") return shape.time ? "Pick a day and time" : "Pick a day";
+  if (shape.type === "choice" || (shape.type === "several" && shape.of.type === "choice")) return "Choose…";
+  return `Add ${fact.toLowerCase()}`;
+}
+
+/* A yes or no: a switch with its word beside it, at least 24 pixels tall like every target here. */
+const SWITCH: CSSProperties = { all: "unset", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8, minHeight: 24, minWidth: 24, color: "var(--graview-ink)" };
+const TRACK: CSSProperties = { position: "relative", display: "inline-block", width: 28, height: 16, borderRadius: 8, flex: "none", transition: "background 120ms" };
+const KNOB: CSSProperties = { position: "absolute", top: 2, left: 2, width: 12, height: 12, borderRadius: 6, background: "var(--graview-ground)", transition: "transform 120ms" };
+/* A choice of a few: its options side by side, the chosen one filled — one hairline round them, no box per option. */
+const SEGMENTS: CSSProperties = { display: "inline-flex", flexWrap: "wrap", gap: 2, padding: 2, borderRadius: 8, border: "1px solid var(--graview-edge)", maxWidth: "100%" };
+const SEGMENT: CSSProperties = { all: "unset", cursor: "pointer", minHeight: 24, minWidth: 24, padding: "0 10px", display: "inline-flex", alignItems: "center", borderRadius: 6, fontSize: "0.875em", color: "var(--graview-ink-muted)" };
+const SEGMENT_ON: CSSProperties = { background: "var(--graview-accent)", color: "var(--graview-accent-ink, #fff)" };
+/* A choice of many: the menu itself, as quiet as a value, open at a press. */
+const MENU: CSSProperties = { font: "inherit", fontSize: "inherit", color: "var(--graview-ink)", background: "transparent", border: 0, borderBottom: "1px dashed var(--graview-edge-bright)", borderRadius: 0, padding: "0 2px", minHeight: 24, maxWidth: "100%", cursor: "pointer" };

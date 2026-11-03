@@ -14,6 +14,10 @@ export interface RecordFieldProps {
   readonly inPlace: boolean;
   /** The label's look; the derived page's eyebrow unless a page sets its own. */
   readonly labelStyle?: CSSProperties;
+  /** A date a rule with this record says is late: drawn in the warning color (Roadmap f-facts-by-type). */
+  readonly late?: boolean;
+  /** Blank, and the kind cannot be without it: said so beside the way to fill it. */
+  readonly required?: boolean;
 }
 
 /**
@@ -27,13 +31,20 @@ export interface RecordFieldProps {
  * A page of a project's own draws its facts with this and cannot drift
  * from the derived page's.
  */
-export function RecordField<S extends AnySchema>({ nodeId, node, field, inPlace, labelStyle = eyebrow }: RecordFieldProps): ReactNode {
+export function RecordField<S extends AnySchema>({ nodeId, node, field, inPlace, labelStyle = eyebrow, late = false, required = false }: RecordFieldProps): ReactNode {
   if (field.blank) {
-    // A blank an act this seat may run writes: its label, and a dim "add" that opens the same editor a value would.
+    // A blank an act this seat may run writes: its label, and a dim way to fill it that opens the same editor a value would.
     return (
-      <div style={{ display: "grid", gap: 2, minWidth: 0, alignContent: "start" }} data-graview-blank-fact={field.key}>
+      <div style={{ display: "grid", gap: 2, minWidth: 0, alignContent: "start" }} data-graview-blank-fact={field.key} data-graview-fact={field.key}>
         <dt style={labelStyle}>{field.label}</dt>
-        <dd style={{ margin: 0, minWidth: 0 }}>{inPlace ? <EditableValue<S> nodeId={nodeId} field={field.key} value="" said={`Add ${field.label}`} blank /> : null}</dd>
+        <dd style={{ margin: 0, minWidth: 0 }}>
+          {inPlace ? <EditableValue<S> nodeId={nodeId} field={field.key} value="" said={`${field.label}: add`} blank /> : null}
+          {required ? (
+            <span data-graview-needed={field.key} style={{ marginLeft: 8, fontSize: "0.75rem", color: "var(--graview-warn)" }}>
+              Needed
+            </span>
+          ) : null}
+        </dd>
       </div>
     );
   }
@@ -55,7 +66,7 @@ export function RecordField<S extends AnySchema>({ nodeId, node, field, inPlace,
     );
   }
   return (
-    <div style={{ display: "grid", gap: 2, minWidth: 0, alignContent: "start" }}>
+    <div style={{ display: "grid", gap: 2, minWidth: 0, alignContent: "start" }} data-graview-fact={field.key}>
       <dt style={labelStyle}>{field.label}</dt>
       <dd style={{ margin: 0, overflowWrap: "anywhere", minWidth: 0 }}>
         {field.linked ? (
@@ -69,7 +80,7 @@ export function RecordField<S extends AnySchema>({ nodeId, node, field, inPlace,
           <FieldLink<S> href={field.href} field={field.key} value={field.value} stored={field.stored} {...(inPlace ? { nodeId } : {})} />
         ) : inPlace ? (
           <>
-            <EditableValue<S> nodeId={nodeId} field={field.key} value={field.value} stored={field.stored} />
+            <EditableValue<S> nodeId={nodeId} field={field.key} value={field.value} stored={field.stored} late={late} />
             {/* How a date repeats, changed beside it. */}
             {field.repeats ? <RepeatEditor nodeId={nodeId} field={field.key} start={node?.[field.key]} value={node?.[`${field.key}Repeat`]} label={`${field.label} repeats`} /> : null}
           </>

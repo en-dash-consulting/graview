@@ -41,7 +41,8 @@ describe("a record's acts", () => {
     const root = createRoot(host);
     await act(async () => root.render(<PagesApp context={context} initialPath="/songs/s" />));
     const offered = () => [...host.querySelectorAll<HTMLButtonElement>("[data-testid='record-actions'] [data-affordance]")].map((button) => button.getAttribute("data-affordance"));
-    expect(offered()).toEqual(["schema:transpose", "schema:edit-song"]);
+    // "Change the song" sets its title alone, and the title is the heading's own control: it is done there (Roadmap f-facts-by-type).
+    expect(offered()).toEqual(["schema:transpose"]);
     const more = host.querySelector<HTMLButtonElement>("[data-testid='record-actions-more']")!;
     // And leaving it alone, which is about the record rather than its own work, waits with them.
     expect(more.textContent).toBe("Show 4 more");
@@ -49,7 +50,7 @@ describe("a record's acts", () => {
       more.click();
       await new Promise((done) => requestAnimationFrame(() => done(undefined)));
     });
-    expect(offered()).toEqual(["schema:transpose", "schema:edit-song", "schema:archive-song", "schema:leave-alone-song", "schema:merge-song", "schema:remove-song"]);
+    expect(offered()).toEqual(["schema:transpose", "schema:archive-song", "schema:leave-alone-song", "schema:merge-song", "schema:remove-song"]);
     expect(document.activeElement?.getAttribute("data-affordance")).toBe("schema:archive-song");
     await act(async () => root.unmount());
     host.remove();

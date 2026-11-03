@@ -1,4 +1,5 @@
 import {
+  defOf,
   pluralLabel,
   labelOf,
   violationsTouching,
@@ -73,16 +74,29 @@ export function blankWritable<S extends AnySchema>(store: Store<S>, id: string, 
   const node = store.graph.getNode(id) as Record<string, unknown> | undefined;
   if (!node) return [];
   const seat = principal ?? (store as { readonly seenFor?: Principal }).seenFor;
-  const files = new Set(fileFieldsOf(store.schema.tryDefinition(node["kind"] as string)));
+  const definition = store.schema.tryDefinition(node["kind"] as string);
+  const files = new Set(fileFieldsOf(definition));
+  const shapeOf = (definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape;
   // The same acts the in-place editor on a filled value offers this seat: those its grants let it run.
   return editableFields(store, id, ...(seat ? [{ principal: seat }] : []))
     .filter((field) => {
       const value = node[field.field];
       const blank = value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0);
       const shape = field.shape.type === "several" ? (field.shape.of.type === "choice" ? "several" : "") : field.shape.type;
-      return blank && field.takesValue && field.open.length === 0 && SLOT_SHAPES.has(shape) && !files.has(field.field);
+      // A yes or no not yet said is a switch that is off, whether its act takes the value or is the act that says yes (Roadmap f-facts-by-type).
+      const yesNo = field.open.length === 0 && (field.takesValue ? shape === "boolean" : declaredBoolean(shapeOf?.[field.field]));
+      // A field the declaration says in its own words (`display.format`: minutes said as "09:30") is typed as it is kept, which is not what a person reads: no slot asks for it.
+      if (definition?.display?.format?.[field.field] !== undefined) return false;
+      return blank && !files.has(field.field) && (yesNo || (field.takesValue && field.open.length === 0 && SLOT_SHAPES.has(shape)));
     })
     .map((field) => field.field);
+}
+
+/** Whether a declared field holds a yes or no, under optional, default and nullable. */
+function declaredBoolean(schema: unknown): boolean {
+  const def = defOf(schema) as { type?: string; innerType?: unknown } | undefined;
+  if (!def) return false;
+  return def.type === "optional" || def.type === "nullable" || def.type === "default" ? declaredBoolean(def.innerType) : def.type === "boolean";
 }
 
 export function recordFacts<S extends AnySchema>(

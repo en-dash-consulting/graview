@@ -14,7 +14,7 @@ import { PagesApp, type PageContext } from "../../src/index.js";
  * A placement made without its allocation or its role had nowhere on its own
  * page to be given them: a blank fact was not drawn, and `edit-placement`
  * surfaces only as the editor on a fact. Now each blank a seat may fill is
- * its label and a dim "add" — "Add Allocation" — that opens the same editor;
+ * its label and a dim "Add allocation" that says what it does and opens the same editor;
  * a blank nothing writes stays unsaid, and a reader is offered no slot.
  */
 const placement = defineNode("placement", {
@@ -59,10 +59,12 @@ describe("a blank fact on a record's page", () => {
     const { store, host, done } = await opened(STAFFER);
     const slot = host.querySelector<HTMLButtonElement>('[data-graview-blank-fact="allocation"] button[data-graview-blank]');
     expect(slot).not.toBeNull();
-    expect(slot!.getAttribute("aria-label")).toBe("Add Allocation");
-    expect(slot!.textContent).toBe("add");
+    expect(slot!.getAttribute("aria-label")).toBe("Add allocation");
+    expect(slot!.textContent).toBe("Add allocation");
     expect(host.querySelector('[data-graview-blank-fact="allocation"] dt')?.textContent).toBe("Allocation");
-    expect(host.querySelector('[data-graview-blank-fact="role"] button')?.getAttribute("aria-label")).toBe("Add Role");
+    // A blank choice of a few is its options, none of them pressed (Roadmap f-facts-by-type).
+    expect(host.querySelector('[data-graview-blank-fact="role"] [role="group"]')?.getAttribute("aria-label")).toBe("Role");
+    expect(host.querySelectorAll('[data-graview-blank-fact="role"] button[aria-pressed="true"]')).toHaveLength(0);
     await act(async () => slot!.click());
     const box = host.querySelector<HTMLInputElement>('[data-graview-blank-fact="allocation"] input')!;
     expect(box).not.toBeNull();
