@@ -42,7 +42,7 @@ export interface HeadlessInput {
   readonly lists?: readonly string[];
   readonly limits: { readonly maxNodes: number; readonly messages: number; readonly pushMs: number };
   /** Press what this selector matches, once it has drawn: the view hears the click as it would on a page (0.1.45). */
-  readonly press?: { readonly selector: string };
+  readonly press?: { readonly selector: string; readonly target?: string };
 }
 
 /** What the view said, in order: every message the host would have heard. */

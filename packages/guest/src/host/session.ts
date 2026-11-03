@@ -1,4 +1,4 @@
-import { choiceWords, localeFor, PermissionDeniedError, timeZoneFor, type AnySchema, type Principal, type Store } from "@graview/core";
+import { choiceWords, InvalidArguments, localeFor, PermissionDeniedError, timeZoneFor, type AnySchema, type Principal, type Store } from "@graview/core";
 import type { GuestPictureLimits } from "./pictures.js";
 import type { Arrival, Destination } from "./links.js";
 /* The links' judging — a filter held to the kind's fields — fetched with the first navigate, so a frame's host carries none of it before. */
@@ -135,7 +135,7 @@ export interface GuestHostOptions<S extends AnySchema> {
   /** A worker view said where it listens for a wheel, a drag or a pinch (0.1.42): the first 32, as it said them, for the host's gestures to read (gestures.ts). Without it, a `gestures` is dropped unread. */
   readonly onGestures?: (bound: readonly unknown[]) => void;
   /** Where a worker view hears a click, every selector, each time it moves (0.1.48). */
-  readonly onClicks?: (selectors: readonly string[]) => void;
+  readonly onClicks?: (selectors: readonly string[], acted: readonly string[]) => void;
   readonly limits?: GuestLimits;
   /**
    * The frame's limiter, when the frame outlives this session: a guest
@@ -372,6 +372,8 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
       return { ok: true, intent: result.intent };
     } catch (error) {
       if (error instanceof PermissionDeniedError) return refused("refused", error.refusal.message);
+      /* Arguments the act's own schema refused name only what was sent, never what was read: said, so a press that sent the wrong thing says what (Roadmap f-views-work-end-to-end). */
+      if (error instanceof InvalidArguments) return refused("failed", argumentsRefused(error));
       /* An act's own error can name what it read; the guest is told only that it did not happen. */
       return refused("failed", "The act could not be applied.");
     }
@@ -442,7 +444,8 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
         return;
       }
       if (data.type === "clicks" && Array.isArray(data.selectors)) {
-        options.onClicks?.(data.selectors.filter((one): one is string => typeof one === "string" && one.length <= 500).slice(0, 200));
+        const said = (list: unknown) => (Array.isArray(list) ? list : []).filter((one): one is string => typeof one === "string" && one.length <= 500).slice(0, 200);
+        options.onClicks?.(said(data.selectors), said((data as { acted?: unknown }).acted));
         return;
       }
       if (data.type === "gestures" && Array.isArray(data.bound) && options.onGestures) {
@@ -480,4 +483,30 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
       off();
     },
   };
+}
+
+/** A JavaScript type as a sentence says it: "a number", "a string". */
+const typeWords = (type: string) => ({ number: "a number", string: "text", boolean: "yes or no", date: "a date", array: "a list", object: "a set of values" } as Record<string, string>)[type.toLowerCase()] ?? `a ${type}`;
+
+/**
+ * WHY AN ACT'S OWN SCHEMA REFUSED WHAT A PRESS SENT (Roadmap
+ * f-views-work-end-to-end), in a sentence a view's author and its person
+ * can read: `Not applied: “fixedFee” expects a number.` Each issue names an
+ * argument and what it expects, never a value the act read, so it is said
+ * where "The act could not be applied." said nothing.
+ */
+export function argumentsRefused(error: { readonly issues: readonly { readonly path: readonly PropertyKey[]; readonly message: string }[] }): string {
+  return `Not applied: ${argumentsSaid(error)}.`;
+}
+
+/** What an act's schema refused, as a clause: `“fixedFee” expects a number`. */
+export function argumentsSaid(error: { readonly issues: readonly { readonly path: readonly PropertyKey[]; readonly message: string }[] }): string {
+  const said = error.issues.slice(0, 4).map((issue) => {
+    const name = issue.path.map(String).join(".");
+    const expected = /expected (\w+)/i.exec(issue.message)?.[1];
+    if (!name) return issue.message;
+    if (expected && /^invalid (input|type)/i.test(issue.message)) return `“${name}” expects ${typeWords(expected)}`;
+    return `“${name}”: ${issue.message.charAt(0).toLowerCase()}${issue.message.slice(1)}`;
+  });
+  return said.join("; ") || "its arguments did not fit";
 }

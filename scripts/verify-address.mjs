@@ -1620,10 +1620,10 @@ try {
     seen: fittedSeen,
     ok: fittedHold(({ fallback }) => fallback.drawn && fallback.left === fallback.columnLeft && fallback.width === fallback.column && !fallback.sideScroll),
   };
-  /* Roadmap f-place-header-repeats-view-title: a view that draws its own heading is titled once, by itself; the way to the list stays; any other place keeps its title and count. */
+  /* Roadmap f-place-header-repeats-view-title, f-views-work-end-to-end: a view that draws its own heading is titled once, by itself, with nothing drawn above it — no count, no list link; any other place keeps its title and count. */
   report.checks.aCustomPageViewsHeadingIsSaidOnce = {
     seen: fittedSeen,
-    ok: fittedHold(({ heading, edgeTitled }) => heading.title === "The wide" && heading.titleDrawn === false && heading.own === "The wide" && !heading.count && heading.asList && edgeTitled.titleDrawn === true && edgeTitled.count),
+    ok: fittedHold(({ heading, edgeTitled }) => heading.title === "The wide" && heading.titleDrawn === false && heading.own === "The wide" && !heading.count && !heading.asList && edgeTitled.titleDrawn === true && edgeTitled.count),
   };
   /* Roadmap f-seen-in-phone-length: each place one link, none to the scene beside it; on a phone the first three and a button for the rest, which opens them with the keyboard on the first; at a desk, all. */
   report.checks.seenInNamesEachPlaceOnceOnAPhone = {

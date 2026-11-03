@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { readdirSync, readFileSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -15,6 +15,8 @@ const root = resolve(import.meta.dirname, "..");
 /** Modules that run only in Node, and the scaffold's text: their subpath imports never reach an app's bundle. */
 const NODE_ONLY = /(^|\/)(cli|dev|door|serve|file-adapter|sqlite)[^/]*\.ts$|\/cli\/|\/scaffold\/|\/packages\/(graview|create-graview)\//;
 
+const isDirectory = (path: string) => statSync(path, { throwIfNoEntry: false })?.isDirectory() ?? false;
+
 function importedSubpaths(): Set<string> {
   const found = new Set<string>();
   const walk = (dir: string) => {
@@ -26,13 +28,14 @@ function importedSubpaths(): Set<string> {
       }
     }
   };
-  for (const pkg of readdirSync(resolve(root, "packages"))) walk(resolve(root, "packages", pkg, "src"));
+  // A folder of its own, not a file a desktop leaves beside them (.DS_Store).
+  for (const pkg of readdirSync(resolve(root, "packages"))) if (isDirectory(resolve(root, "packages", pkg, "src"))) walk(resolve(root, "packages", pkg, "src"));
   return found;
 }
 
 describe("an app aliases what the framework imports", () => {
   const subpaths = [...importedSubpaths()].sort();
-  const configs = readdirSync(resolve(root, "apps")).flatMap((app) =>
+  const configs = readdirSync(resolve(root, "apps")).filter((app) => isDirectory(resolve(root, "apps", app))).flatMap((app) =>
     readdirSync(resolve(root, "apps", app))
       .filter((file) => /^vite.*\.config\.ts$/.test(file))
       .map((file) => ({ name: `apps/${app}/${file}`, text: readFileSync(resolve(root, "apps", app, file), "utf8") })),

@@ -2449,7 +2449,7 @@ Source: https://graview.dev/docs/packages/guest.html
 pnpm add @graview/guest
 ```
 
-Entry points: `@graview/guest`, `@graview/guest/react`, `@graview/guest/host`, `@graview/guest/host/frame`, `@graview/guest/host/worker`, `@graview/guest/host/views`, `@graview/guest/headless`, `@graview/guest/headless/node`, `@graview/guest/worker`, `@graview/guest/worker/view`, `@graview/guest/audit`, `@graview/guest/build`, `@graview/guest/cli`, `@graview/guest/client`, `@graview/guest/client.js`
+Entry points: `@graview/guest`, `@graview/guest/react`, `@graview/guest/host`, `@graview/guest/host/frame`, `@graview/guest/host/worker`, `@graview/guest/host/views`, `@graview/guest/headless`, `@graview/guest/headless/presses`, `@graview/guest/headless/node`, `@graview/guest/worker`, `@graview/guest/worker/view`, `@graview/guest/audit`, `@graview/guest/build`, `@graview/guest/cli`, `@graview/guest/client`, `@graview/guest/client.js`
 
 ## What it is
 
@@ -4891,7 +4891,7 @@ The app bar, one row over any shell (`barAbove`): the name, the switch (Scene, P
 
 **Hand it `views`** (the scene's registry, plus `settings`/`presence`) — `graview create` does — and the face puts the scene's provider under its routes:
 
-- `/places`, `/places/<as>` — every named lens as a page (fullscreen, over the kind's members, the beginning acts beneath unless the lens says `create: false`). A kind's page lists its pictures; a pick in a lens travels to the record. A kind's own row (one × glyph) is each line of its list, and its own page view (one × full) heads its record. A script view that draws its own heading says `heading: "own"` in its manifest: its place then draws no title or count over it.
+- `/places`, `/places/<as>` — every named lens as a page (fullscreen, over the kind's members, the beginning acts beneath unless the lens says `create: false`). A kind's page lists its pictures; a pick in a lens travels to the record. A kind's own row (one × glyph) is each line of its list, and its own page view (one × full) heads its record. A script view that draws its own heading says `heading: "own"` in its manifest: its place then draws nothing over it.
 - `/map` — `kindMap(store)`: every declared relation in its words with its live count, also a section on the home page. A kind's list says what it relates to, arranged in the shared words (`?sort=due:desc`, `?filter=done:false`, `?group=due:month`, `?q=tape`) a lens carries in its fragment, so an arrangement is a link; `?by=`, `?<edge>=<id>`, `?with=` and `?past=1` still land. A record links back.
 - `/search?q=` — the Find box's matcher: hits by kind, each with why; a nav box narrows a list, else lands here. Find and the way back ("Take back “…”", ⌘Z) are on every face: a shell places `<PageFind>` or `<PageUndo>` where it wants them, else they are drawn around it (`without: ["find"]` goes without; at a bar's height, `graview-pages-design`).
 - **The quick ask** (⌘K, where `ai` gives a model): a bar and answer card by the page's heading, the ROUTE what "this" means. `context.quickAsk: false` draws none.
@@ -5662,7 +5662,7 @@ A worker view (`graview-worker-view`: its manifest, its global, its writes and i
 
 ### What it may draw
 
-HTML's sectioning, headings, text, lists, tables, `details`/`summary`, `button`, `input`, `select`, `textarea`, `label`, `fieldset`, `meter`, `progress` and `img`. SVG's `svg`, `g`, shapes, `path`, `text`, gradients, `clipPath`, `mask`, `marker`, `pattern`, `symbol`, `use href="#id"`, `filter` and its `fe*`. Attributes: `id`, `class`, `style`, `title`, `role`, `aria-*`, `data-*`, and each element's own. CSS for layout, grid, flex, color, type, `mask-image`, `-webkit-text-stroke`, transitions, `@keyframes`, `animation-timeline`, `@media`, `@supports` and `@container`; reduced motion holds motion still. Each `graview.style(css)` adds a sheet after the last (a shared design system's, then the view's own), each judged alone; a sheet given again is not added twice: say what changes per push in a class or `style`.
+HTML's sectioning, headings, text, lists, tables, `details`/`summary`, `button`, `input`, `select`, `textarea`, `label`, `fieldset`, `meter`, `progress` and `img`. SVG's `svg`, `g`, shapes, `path`, `text`, gradients, `clipPath`, `mask`, `marker`, `pattern`, `symbol`, `use href="#id"`, `filter` and its `fe*`. Attributes: `id`, `class`, `style`, `title`, `role`, `aria-*`, `data-*`, and each element's own. CSS for layout, grid, flex, color, type, `mask-image`, `-webkit-text-stroke`, scroll margins, transitions, `@keyframes`, `animation-timeline`, `@media`, `@supports` and `@container`; reduced motion holds motion still. Each `graview.style(css)` adds a sheet after the last (a shared design system's, then the view's own), each judged alone; a sheet given again is not added twice: say what changes per push in a class or `style`.
 
 Never drawn: `script`, `iframe`, `object`, `embed`, `link`, `meta`, `base`, `style`, `form`, `video` (place a `graview-video`, below), `canvas`, SVG `image`, `feImage`, `foreignObject` and SMIL; any `srcset` or `on*` attribute; `href` but a link out (`graview-view-links`); `src` on anything but `img`, and on `img` any address but the ones below. In CSS: `url()` except `url(#id)` on `fill`, `stroke`, `clip-path`, `marker` or `filter`; `@import`; `@font-face`; `@property`; `image-set()`, `attr()` and other unlisted functions; `position: fixed`; `:host`. `position: sticky` is kept — a header held in place sticks within the view, whose region is painted contained — and `all` takes its keywords (`all: unset` takes a button's chrome off). What the host leaves out it lists in `refused` (below).
 
@@ -5727,7 +5727,7 @@ graview.on("drop", "[data-drop]", (event) => {
 1. `graview check` the app, and `checkManifest(manifest, store)` from `@graview/guest/host/views`: it says what is wrong with `pictures`.
 2. `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>` says what it drew. Headless, a picture comes with a stand-in `src`, so its `<img>` is drawn and judged; one the page would leave out comes with `left`, said among the problems.
 3. Open the place and read the view's `refused` (`WorkerView.refused`, or `graview.refused` in its console): every element, attribute and address the host left out, and why.
-4. Toggle the app to dark, and change the brand where you can. Does the view follow, logo and all?
+4. Toggle the app to dark; change the brand. Does the view follow, logo and all?
 5. As a member who may see fewer records, are the pictures on the records they may not see absent — not merely hidden?
 
 ### What the check cannot see
@@ -5767,7 +5767,7 @@ An element with `data-act` is a press. Its arguments come only from three places
 </fieldset>
 ```
 
-A field the view filled (`value="…"`) is the view's until the person empties it, and a press carrying it is refused. A radio or a select is the person's pick, not their words: its value goes only if it is one the act declares (an enum's option) or a record the view was shown. A view may empty a field after a press. A press on an act the seat may not run there is refused, and the view hears why.
+A field the view filled (`value="…"`) is the view's until the person empties it, and a press carrying it is refused — unless it says nothing the view read: `0`, `false`, the argument's declared default, or what the bound record holds in that field now. A field the act cannot take blank — a number emptied, a date never picked — is left out of the call, never sent as `""`. A radio or a select is the person's pick, not their words: its value goes only if it is one the act declares (an enum's option) or a record the view was shown. A view may empty a field after a press. A press on an act the seat may not run there is refused, and the view hears why.
 
 ### What can be pressed
 
@@ -5807,13 +5807,13 @@ graview.on("input", "textarea", () => draw("Saving…"));
 graview.on("acted", "textarea", (e) => draw(e.pressed.ok ? "Saved" : e.pressed.message));
 ```
 
-Say the refusal's `message` as it is: it is the policy's sentence, or the host's. `examples/a-call-sheet.js` is a whole one: a call's notes, filled by the host, saved as they are typed, "Saving…" on `input` and "Saved" on `acted`.
+Say the refusal's `message` as it is: it is the policy's sentence, or the host's (`Not applied: “fixedFee” expects a number.`). A view that does not hear `acted` on a control is not left silent: the host says a refusal beside it in a note of its own, gone on the next press. Hearing `acted` there takes it over. `examples/a-call-sheet.js` is a whole one: a call's notes, filled by the host, saved as they are typed, "Saving…" on `input` and "Saved" on `acted`.
 
 ### Then find out whether it worked
 
 1. `graview check` the app the view writes to: a form is only as sound as the acts it asks for. `checkManifest(manifest, store)` from `@graview/guest/host/views` must say nothing; it refuses an act the app does not declare.
 2. Run it headless as a member who may see less than you: `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>`. It reports `act` for an act its manifest does not name, and says when a field's `data-save` would save nothing: no `data-act` or `name`, no fieldset bound to a record, a `data-save` other than `input` or `change`, a `data-debounce` it does not read, or a `data-save` on what is not a field, or a `data-act` on what can never be pressed.
-3. Press it headless: `--press "<selector>"` (with `--type note="…"` for what the person typed), or `runWorkerViewHeadless(…, { press: { selector, typed } })`. It presses the first element the selector matches and says what the host would do: the act and the arguments it carries, and whether this seat may (rehearsed, never applied), or the refusal the view would hear; the link it follows; and what the view's code did on the click.
+3. `graview view check` presses every control it drew, as the host would: each `data-act` and saving field, with its fields as drawn, then filled in, then with each filled optional field emptied; each link; each button its code hears, in a run of its own. One that does nothing, throws, or is refused fails, said by name (`“Save economics” is refused: “fixedFee” expects a number.`); `runWorkerViewHeadless(…, { presses: checkPresses })` (`@graview/guest/headless/presses`) is the same for a host's gate. To look at one, press it: `--press "<selector>"` (with `--type note="…"` for what the person typed), or `runWorkerViewHeadless(…, { press: { selector, typed } })`, the first element the selector matches; it says what the host would do: the act and the arguments it carries, and whether this seat may (rehearsed, never applied), or the refusal the view would hear; the link it follows; and what the view's code did on the click.
 4. Open it on both faces as that member, and on a phone. Press each with typed words, then again with a field the view filled. The first applies and the second is refused. A prefilled field is filled only for a seat that may write it: open it as one who may not, and it is empty.
 5. Type into a field that saves, stop, and see "Saved"; type again and leave it at once, and see the save land without the pause.
 
@@ -5882,6 +5882,10 @@ A phone makes a tap a `click` on what the finger landed on; iOS does so only on 
 
 A list or a lens may be gone to **narrowed**: `where: { stage: "building" }` in navigate, `data-filter="stage:building"` on a link — the words the list's own arranging line writes, so the address is `/features?filter= stage%3Abuilding` and can be shared. A lens narrows the records it is handed; a blocks lens lists what its own `where` says. Any destination may take a **section**, a heading's words or an element's id (`section: "Every feature"`, `data-section`): the page scrolls there and gives it the keyboard (`#every-feature`). On the scene a list is the kind's stop narrowed (`in.filter`); a section is looked for there too. A filter on a field the kind lacks, or a choice it lacks, goes nowhere and says why (`Features have no field "stag" to filter by; they filter by …`), so link to the list narrowed rather than to a lens per filter; a lens kept only as a link target can be hidden (set-lens-hidden, `graview-pages`).
 
+### A jump, what is in sight, and a file
+
+`<a href="#eras">` jumps to an element of the view's own: the host scrolls it to the top, below its own sticky bar, gives it the keyboard and leaves the address alone. A scroll margin on it (scroll-margin-top) clears a sticky header you draw. The elements jumps name, and any with `data-sight`, are watched as the page scrolls: the one in sight is `data-in-sight`, its jumps `aria-current="location"`, and the view hears `sight` on it (`graview.on("sight", "section", …)`). `<a data-file="${node.id}" data-field="contract">` opens a record's file in a tab of its own; `data-download` downloads it under its own name.
+
 ### A column the menu knows
 
 Mark a region that holds one value of a field `data-column="status:doing"` (and `data-column-kind="task"` where the place is not that kind's; a heading's words in `data-column-label`). A right-click there, as on a status board's column, offers "Add a task in Doing" — the add act with `status` given — and "Show only Doing", the place narrowed as above.
@@ -5889,7 +5893,7 @@ Mark a region that holds one value of a field `data-column="status:doing"` (and 
 ### Then find out whether it worked
 
 1. `graview check` the app the view links into: a link is only as sound as the records and places it names.
-2. `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>` says every `data-record` or `data-place` that names nothing the seat was shown and no place, and every filter that goes nowhere. `--press ".card h3"` presses there and says where the host would go, or that the press is a button's of its own. `--audit` holds what it drew to the keyboard and screen-reader rules, as the host draws it: a `<div>` heard only by `graview.on("click")`, a control or link with no name, a toggle with no state, a button inside a card that opens, an `<img>` with no alt. Each comes with its WCAG criterion and a one-line fix, and the check fails on what the view must fix. Contrast, the ring and a keyboard trap need a browser: add `--browser` (the project's Playwright and its Chromium) to run them.
+2. `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>` says every `data-record` or `data-place` that names nothing the seat was shown and no place, and every filter that goes nowhere, and presses each link, jump and file link: one that goes nowhere fails. `--press ".card h3"` presses there and says where the host would go, or that the press is a button's of its own. `--audit` holds what it drew to the keyboard and screen-reader rules, as the host draws it: a `<div>` heard only by `graview.on("click")`, a control or link with no name, a toggle with no state, a button inside a card that opens, an `<img>` with no alt. Each comes with its WCAG criterion and a one-line fix, and the check fails on what the view must fix. Contrast, the ring and a keyboard trap need a browser: add `--browser` (the project's Playwright and its Chromium) to run them.
 3. Open it on a phone, 390 pixels wide with touch: tap a card's heading and a badge inside it, and see the record's page; tap a toggle inside it, and see it toggle and stay. On a desk, Tab through the view: every link and button is reached, with a ring; Enter on a card opens it, and Cmd-click on an `<a data-record>` opens it in a new tab.
 4. Follow each link narrowed and to a section, and see it land where it says.
 
@@ -6143,7 +6147,7 @@ A view with `attach: "home"` given to `registerWorkerView` is the home's own vie
 ### Then find out whether it worked
 
 1. `graview check` the app the view names. `checkManifest(manifest, store)` and `checkViewSource(source)` from `@graview/guest/host/views` must both say nothing.
-2. Run it headless, with no network, as a member who may see less than you, over a seed: `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>`. It prints what the view drew, said as `graview describe` says a place, or why it will not do: `error` (what it threw), `nodes`, `flood`, `slow`, `act` (an act its manifest does not name), `manifest` or `source`. A view of one record runs over the first of its kind the seat sees, or the one `--record <id>` names. In code, `runWorkerViewHeadless` from `@graview/guest/headless` does the same in an isolate you supply.
+2. Run it headless, with no network, as a member who may see less than you, over a seed: `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>`. It prints what the view drew, said as `graview describe` says a place, or why it will not do: `error` (what it threw), `nodes`, `flood`, `slow`, `act` (an act its manifest does not name), `manifest` or `source`. A view of one record runs over the first of its kind the seat sees, or the one `--record <id>` names. It presses each control (`graview-view-forms`). So does `runWorkerViewHeadless` (`guest/headless`).
 3. Open the place on both faces as that member. Is anything shown that they should not see? Does the region carry no `data-worker-view-failed`? `start` there means it never ran: the note under the plain face names what the page's Content-Security-Policy lacks (`worker-src blob:`).
 4. Toggle to dark: does it restyle?
 5. Follow each link, and tap each card on a phone, as `graview-view-links` says. A view that writes is pressed as `graview-view-forms` says.
@@ -7851,7 +7855,7 @@ Source: https://graview.dev/docs/site.html
 
 # This site is a Graview app
 
-graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 480 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
+graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 481 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
 
 ## The site, running
 
@@ -7867,7 +7871,7 @@ This is that declaration, compiled in your browser by the same compiler `graview
 | --- | --- | --- |
 | `page` | An address graview.dev serves: a web page, the Markdown twin beside it, or a file for crawlers and models. | 71 |
 | `package` | An npm package Graview ships, read off its package.json, its README.md and its barrel. | 14 |
-| `entry` | One subpath a package exports, as a product imports it. | 117 |
+| `entry` | One subpath a package exports, as a product imports it. | 118 |
 | `skill` | An authoring skill an assistant reads before it changes a Graview app, read off its SKILL.md. | 31 |
 | `check` | A thing graview check can say, read out of the checker's source. | 127 |
 | `command` | A graview subcommand, read off the help the CLI prints. | 13 |

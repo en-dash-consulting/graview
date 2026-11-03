@@ -12,7 +12,7 @@ A worker view (`graview-worker-view`: its manifest, its global, its writes and i
 
 ### What it may draw
 
-HTML's sectioning, headings, text, lists, tables, `details`/`summary`, `button`, `input`, `select`, `textarea`, `label`, `fieldset`, `meter`, `progress` and `img`. SVG's `svg`, `g`, shapes, `path`, `text`, gradients, `clipPath`, `mask`, `marker`, `pattern`, `symbol`, `use href="#id"`, `filter` and its `fe*`. Attributes: `id`, `class`, `style`, `title`, `role`, `aria-*`, `data-*`, and each element's own. CSS for layout, grid, flex, color, type, `mask-image`, `-webkit-text-stroke`, transitions, `@keyframes`, `animation-timeline`, `@media`, `@supports` and `@container`; reduced motion holds motion still. Each `graview.style(css)` adds a sheet after the last (a shared design system's, then the view's own), each judged alone; a sheet given again is not added twice: say what changes per push in a class or `style`.
+HTML's sectioning, headings, text, lists, tables, `details`/`summary`, `button`, `input`, `select`, `textarea`, `label`, `fieldset`, `meter`, `progress` and `img`. SVG's `svg`, `g`, shapes, `path`, `text`, gradients, `clipPath`, `mask`, `marker`, `pattern`, `symbol`, `use href="#id"`, `filter` and its `fe*`. Attributes: `id`, `class`, `style`, `title`, `role`, `aria-*`, `data-*`, and each element's own. CSS for layout, grid, flex, color, type, `mask-image`, `-webkit-text-stroke`, scroll margins, transitions, `@keyframes`, `animation-timeline`, `@media`, `@supports` and `@container`; reduced motion holds motion still. Each `graview.style(css)` adds a sheet after the last (a shared design system's, then the view's own), each judged alone; a sheet given again is not added twice: say what changes per push in a class or `style`.
 
 Never drawn: `script`, `iframe`, `object`, `embed`, `link`, `meta`, `base`, `style`, `form`, `video` (place a `graview-video`, below), `canvas`, SVG `image`, `feImage`, `foreignObject` and SMIL; any `srcset` or `on*` attribute; `href` but a link out (`graview-view-links`); `src` on anything but `img`, and on `img` any address but the ones below. In CSS: `url()` except `url(#id)` on `fill`, `stroke`, `clip-path`, `marker` or `filter`; `@import`; `@font-face`; `@property`; `image-set()`, `attr()` and other unlisted functions; `position: fixed`; `:host`. `position: sticky` is kept — a header held in place sticks within the view, whose region is painted contained — and `all` takes its keywords (`all: unset` takes a button's chrome off). What the host leaves out it lists in `refused` (below).
 
@@ -77,7 +77,7 @@ graview.on("drop", "[data-drop]", (event) => {
 1. `graview check` the app, and `checkManifest(manifest, store)` from `@graview/guest/host/views`: it says what is wrong with `pictures`.
 2. `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>` says what it drew. Headless, a picture comes with a stand-in `src`, so its `<img>` is drawn and judged; one the page would leave out comes with `left`, said among the problems.
 3. Open the place and read the view's `refused` (`WorkerView.refused`, or `graview.refused` in its console): every element, attribute and address the host left out, and why.
-4. Toggle the app to dark, and change the brand where you can. Does the view follow, logo and all?
+4. Toggle the app to dark; change the brand. Does the view follow, logo and all?
 5. As a member who may see fewer records, are the pictures on the records they may not see absent — not merely hidden?
 
 ### What the check cannot see

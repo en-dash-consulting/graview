@@ -394,18 +394,21 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
    * the view hears a click on without being told (`auditView`, which reads
    * it off the region).
    */
-  let clicksSaid = "[]";
+  let clicksSaid = "[[],[]]";
   let clicksDue = false;
   const sayClicks = () => {
     if (clicksDue) return;
     clicksDue = true;
     io.microtask(() => {
       clicksDue = false;
-      const selectors = [...new Set([...delegated].filter((one) => one.type === "click" && typeof one.selector === "string").map((one) => one.selector))].sort().slice(0, 200);
-      const said = JSON.stringify(selectors);
+      const of = (type: string) => [...new Set([...delegated].filter((one) => one.type === type && typeof one.selector === "string").map((one) => one.selector))].sort().slice(0, 200);
+      const selectors = of("click");
+      /* And where it hears `acted` (Roadmap f-views-work-end-to-end): a refused press there is the view's to say; anywhere else the host says it beside the control. */
+      const acted = of("acted");
+      const said = JSON.stringify([selectors, acted]);
       if (said === clicksSaid) return;
       clicksSaid = said;
-      io.send({ type: "clicks", selectors });
+      io.send({ type: "clicks", selectors, ...(acted.length > 0 ? { acted } : {}) });
     });
   };
 
@@ -434,11 +437,11 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
         io.send({ type: "hears", events: [type] });
       }
       if (gestures.has(type)) sayGestures();
-      if (type === "click") sayClicks();
+      if (type === "click" || type === "acted") sayClicks();
       return () => {
         delegated.delete(one);
         if (gestures.has(type)) sayGestures();
-        if (type === "click") sayClicks();
+        if (type === "click" || type === "acted") sayClicks();
       };
     },
     act: (name: string, args: ActArgs = {}) => io.act(name, args),

@@ -124,7 +124,9 @@ export const takesRole = (element: PressedElement): boolean => !element.hasAttri
 /** A press landing here is its own, not a link's around it: a control, a field, a bound act, a viewer, a drop target. */
 export function ownPress(element: PressedElement): boolean {
   if (isHtml(element, "button", "input", "select", "textarea", "label", "summary", "option")) return true;
-  if (element.hasAttribute("data-act") || element.hasAttribute("data-lightbox") || element.hasAttribute("data-drop")) return true;
+  if (element.hasAttribute("data-act") || element.hasAttribute("data-lightbox") || element.hasAttribute("data-drop") || element.hasAttribute("data-file")) return true;
+  /* A link of its own — out, a jump within the view — goes where it says, never where the card around it does. */
+  if (element.localName === "a" && element.hasAttribute("href") && !element.hasAttribute("data-record") && !element.hasAttribute("data-place")) return true;
   return CONTROL_ROLES.has(element.getAttribute("role") ?? "");
 }
 

@@ -69,14 +69,15 @@ describe("a view's place on Pages", () => {
     expect(shown(host.querySelector("[data-graview-page-title]"))).toBe(true);
     expect(host.querySelector("[data-graview-page-title]")?.textContent).toBe("Mind map");
     expect(host.querySelector('[data-testid="place-lede"]')).not.toBeNull();
+    expect(host.querySelector('[data-testid="place-as-list"]')).not.toBeNull();
   });
-  it('says the title only to a screen reader over a view that draws its own, with no count, and keeps the way to the list', async () => {
+  it("says the title only to a screen reader over a view that draws its own, with no count and no link to the list above it", async () => {
     const host = await place({ ...map, heading: "own" });
     const title = host.querySelector<HTMLElement>("[data-graview-page-title]");
     expect(title?.textContent).toBe("Mind map");
     expect(shown(title)).toBe(false);
     expect(host.querySelector('[data-testid="place-lede"]')).toBeNull();
-    expect(host.querySelector('[data-testid="place-as-list"]')).not.toBeNull();
+    expect(host.querySelector('[data-testid="place-as-list"]')).toBeNull();
     expect(host.querySelector('[data-worker-view-place="mind-map"]')).not.toBeNull();
   });
 });

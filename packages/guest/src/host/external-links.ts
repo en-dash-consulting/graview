@@ -24,6 +24,9 @@ import type { GuestProps } from "../protocol.js";
  * framework's.
  */
 
+/** A jump within the view: `#` and an id, as an element of the view's may have one. */
+export const isJump = (value: string): boolean => typeof value === "string" && /^#[A-Za-z_][A-Za-z0-9_.:-]{0,199}$/.test(value);
+
 /** The schemes a view's link out may have. */
 export const LINK_SCHEMES: readonly string[] = ["https:", "mailto:", "tel:"];
 
@@ -79,6 +82,8 @@ export interface LinkHost {
 
 /** The address the host draws for a view's `href`, or undefined where it draws none. */
 export function judgeLink(value: string, host: LinkHost): string | undefined {
+  /* A jump to an element of the view's own (`#eras`, Roadmap f-views-scroll-and-anchors): it names no address, and the host follows it within the view. */
+  if (isJump(value)) return value;
   const address = linkAddress(value);
   if (!address) return undefined;
   if (host.handed.has(address)) return address;

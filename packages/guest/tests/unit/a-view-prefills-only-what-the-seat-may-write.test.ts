@@ -155,14 +155,14 @@ describe("a field the host filled", () => {
     expect(view.last()).toMatchObject({ ok: true });
   });
 
-  it("is the view's once the view writes into it, and a press carrying it is refused", () => {
+  it("is the view's once the view writes into it: a press carries none of the view's words, only what the record holds there now", () => {
     const s = store();
     const view = region(s);
     const textareaId = (view.form.children[0] as { id: string }).id;
     view.draw([[INSERT, textareaId, text(" and our margin"), 0]]);
     view.press();
-    expect(view.last()).toMatchObject({ ok: false, reason: "untyped" });
     expect(draftOf(s)).toBe(EMAIL_DRAFT);
+    expect(draftOf(s)).not.toContain("our margin");
   });
 
   it("is never filled from a record the seat may not see, whatever the view binds it to", () => {
