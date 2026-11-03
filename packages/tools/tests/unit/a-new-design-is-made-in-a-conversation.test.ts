@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { HostAi } from "../../src/ai.js";
-import { checkSaid, readAgentReply, runDesignAgent, type DesignAgentEvent, type DesignAgentHost } from "../../src/section.js";
+import { checkSaid, readAgentReply, runDesignAgent, writingSaid, type DesignAgentEvent, type DesignAgentHost } from "../../src/section.js";
 
 /*
  * BETTER UI AS A CONVERSATION (Roadmap f-make-any-page-better): Graview's
@@ -81,6 +81,31 @@ describe("Graview's agent", () => {
     await runDesignAgent({ ai, part, manifest, talk: [{ who: "person", said: "cards" }, { who: "graview", said: "Done." }, { who: "person", said: "make the dates smaller" }], current: GOOD, section: "This week", host: host() });
     expect(prompts[0]).toMatchObject({ your_draft_on_the_page: GOOD, conversation: [{ person: "cards" }, { you: "Done." }, { person: "make the dates smaller" }] });
     expect(String(prompts[0]!["only_change"])).toContain("“This week”");
+  });
+
+  it("asks the design slot first, and shows its words as it writes them where it streams", async () => {
+    const answer = JSON.stringify({ say: "Tasks are cards now.", do: "draft", source: GOOD });
+    const asked: string[] = [];
+    const ai = {
+      thinking: { model: "full", think: async () => (asked.push("full"), { text: answer }) },
+      design: {
+        model: "design",
+        think: async () => (asked.push("design"), { text: answer }),
+        stream: async (_request: unknown, onText: (soFar: string) => void) => {
+          asked.push("design-stream");
+          onText(answer.slice(0, 26));
+          onText(answer);
+          return { text: answer };
+        },
+      },
+    } as unknown as HostAi;
+    const events: DesignAgentEvent[] = [];
+    const result = await runDesignAgent({ ai, part, manifest, talk: [{ who: "person", said: "cards" }], host: host(), onEvent: (one) => events.push(one) });
+    expect(asked).toEqual(["design-stream"]);
+    expect(result).toMatchObject({ ended: "done", passed: { source: GOOD } });
+    expect(events.filter((one) => one.kind === "streaming").map((one) => one.text)).toEqual(["Tasks are cards no", "Tasks are cards now."]);
+    expect(writingSaid('{"say": "Cards side by side.", "do": "draft", "source": "graview.style(`a`);\\ngraview.onProps(')).toBe("Cards side by side — writing it, 2 lines so far");
+    expect(writingSaid('{"so')).toBe("Thinking…");
   });
 
   it("reads an answer as one step, and says what the checks found in a few plain words", () => {

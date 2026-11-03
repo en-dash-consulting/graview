@@ -457,7 +457,7 @@ export async function reviseSection(options: ReviseSectionOptions): Promise<Revi
   return stopped();
 }
 
-export { checkSaid, DESIGN_AGENT_STEPS, DESIGN_AGENT_SYSTEM, designAgentPrompt, lookOf, readAgentReply, runDesignAgent } from "./design-agent.js";
+export { checkSaid, DESIGN_AGENT_STEPS, DESIGN_AGENT_SYSTEM, designAgentPrompt, lookOf, readAgentReply, runDesignAgent, writingSaid } from "./design-agent.js";
 export type { DesignAgentEvent, DesignAgentHost, DesignAgentMove, DesignAgentOptions, DesignAgentResult, DesignAgentStep, DesignTalk } from "./design-agent.js";
 export { couldNotKeep, cssFindings, describeChange, drawnFindings, rowSays } from "./draft-check.js";
 export type { DrawnRead } from "./draft-check.js";

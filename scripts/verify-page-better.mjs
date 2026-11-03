@@ -24,6 +24,7 @@
  *   theLitWayFollowsTheFastSlotOnTypedWords
  *   aSettingsDraftLandsInSecondsWithoutTheAgentKeptAndUndone
  *   thePanelOpensBesideThePartAndItsStepsShowAsItWorks
+ *   theAgentsWordsShowAsTheModelWritesThem
  *   aCheckFindingIsFedBackAndTheNextDraftFixesIt
  *   stopPutsThePageBackAtOnce
  *   keepMakesItThePageAndOneUndoTakesItAway
@@ -170,7 +171,19 @@ const FAKE_AI = () => {
     }
     return { text: "{}" };
   };
-  window.__pageAi = { name: "fake", fast: { model: "fake-fast", decide }, light: { model: "fake-light", think: think("light") }, thinking: { model: "fake-full", think: think("thinking") } };
+  /* The design slot streams: the agent's answer told in four pieces, a beat apart, as a model writes it. */
+  const design = think("design");
+  const stream = async (request, onText) => {
+    const reply = await design(request);
+    const pieces = 4;
+    const size = Math.ceil(reply.text.length / pieces);
+    for (let at = 1; at <= pieces; at++) {
+      await new Promise((done) => setTimeout(done, 250));
+      onText(reply.text.slice(0, at * size));
+    }
+    return reply;
+  };
+  window.__pageAi = { name: "fake", fast: { model: "fake-fast", decide }, light: { model: "fake-light", think: think("light") }, thinking: { model: "fake-full", think: think("thinking") }, design: { model: "fake-design", think: design, stream } };
 };
 
 async function serveHost() {
@@ -506,6 +519,12 @@ try {
     await page.mouse.click(Math.round(box.x + 24), Math.round(box.y + 24), { button: "right" });
     await page.waitForSelector(MENU, { timeout: 10_000 });
     const home = await menuSays(page);
+    // Inside the home's body, not only at its edge: a right-click in its middle offers it too.
+    await page.keyboard.press("Escape");
+    await page.waitForSelector(MENU, { state: "detached" }).catch(() => {});
+    await page.mouse.click(Math.round(box.x + box.width / 2), Math.round(box.y + Math.min(box.height / 2, 220)), { button: "right" });
+    await page.waitForSelector(MENU, { timeout: 10_000 });
+    const homeBody = await menuSays(page);
     await page.click(`${MENU} [data-menu-mode="better"]`);
     await page.waitForSelector(PANEL, { timeout: 10_000 });
     const card = await page.evaluate(() => document.querySelector('[data-testid="better-panel"]')?.innerText ?? "");
@@ -515,8 +534,9 @@ try {
       heading: heading.modes,
       record: record.modes,
       home: home.modes,
+      homeBody: homeBody.modes,
       card,
-      ok: offersBetter(heading) && offersBetter(record) && offersBetter(home) && /Change how “Home” looks/.test(card) && /Make it easier to read/.test(card) && /Point at a part/.test(card),
+      ok: offersBetter(heading) && offersBetter(record) && offersBetter(home) && offersBetter(homeBody) && /Change how “Home” looks/.test(card) && /Make it easier to read/.test(card) && /Point at a part/.test(card),
     };
   }
 
@@ -589,7 +609,7 @@ try {
     const seen = [];
     let mid = false;
     for (const until = Date.now() + 30_000; Date.now() < until; ) {
-      const now = await page.evaluate(() => ({ phase: document.querySelector('[data-testid="better-panel"]')?.getAttribute("data-better-phase"), steps: [...document.querySelectorAll('[data-testid="better-step"]')].map((one) => one.lastElementChild?.textContent?.trim() ?? ""), time: document.querySelector('[data-testid="better-time"]')?.textContent ?? null }));
+      const now = await page.evaluate(() => ({ phase: document.querySelector('[data-testid="better-panel"]')?.getAttribute("data-better-phase"), steps: [...document.querySelectorAll('[data-testid="better-step"]:not([data-step-kind="streaming"])')].map((one) => one.lastElementChild?.textContent?.trim() ?? ""), streaming: document.querySelector('[data-testid="better-step"][data-step-kind="streaming"]')?.lastElementChild?.textContent?.trim() ?? null, time: document.querySelector('[data-testid="better-time"]')?.textContent ?? null }));
       seen.push(now);
       if (!mid && now.steps.length >= 2) {
         await shot(page, "panel-working");
@@ -601,6 +621,7 @@ try {
     const final = seen.at(-1);
     const counted = [...new Set(seen.map((one) => one.steps.length))];
     report.checks.thePanelOpensBesideThePartAndItsStepsShowAsItWorks = {
+      seen: seen.map(({ streaming }) => ({ streaming })),
       opened,
       steps: final?.steps ?? [],
       counted,
@@ -615,6 +636,16 @@ try {
         final.steps.some((one) => /^Check: .* — fixing$/.test(one)) &&
         final.steps.some((one) => /^Check: nothing lost/.test(one)) &&
         seen.some((one) => /^0:0\d$/.test(one.time ?? "")),
+    };
+  }
+
+  reach("theAgentsWordsShowAsTheModelWritesThem");
+  {
+    // What the panel showed of each answer while the model was still writing it: its sentence growing, then how far into the design it is.
+    const streamed = [...new Set((report.checks.thePanelOpensBesideThePartAndItsStepsShowAsItWorks.seen ?? []).flatMap((one) => (one.streaming ? [one.streaming] : [])))];
+    report.checks.theAgentsWordsShowAsTheModelWritesThem = {
+      streamed,
+      ok: streamed.length >= 2 && streamed.some((one) => /^Tasks are cards/.test(one)) && streamed.some((one) => /writing it, \d+ lines so far$/.test(one)) && !streamed.some((one) => /graview\.|\{|\}/.test(one)),
     };
   }
 

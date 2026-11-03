@@ -87,8 +87,15 @@ export interface AiBridgeAsk {
   readonly prompt: string;
   readonly system?: string;
   readonly images?: readonly { readonly mediaType: string; readonly data: string }[];
-  /** `"fast"`: asked of the small quick model the dev server lends the Fast slot (`GRAVIEW_AI_FAST_MODEL`), not the Thinking one. */
-  readonly tier?: "fast";
+  /**
+   * `"fast"`: asked of the small quick model the dev server lends the Fast
+   * slot (`GRAVIEW_AI_FAST_MODEL`), not the Thinking one. `"design"`: asked
+   * of the model Better UI's agent draws a new design with
+   * (`GRAVIEW_AI_DESIGN_MODEL`), quick enough to talk with.
+   */
+  readonly tier?: "fast" | "design";
+  /** Answered as it is written: a line of JSON per piece (`{ "delta": "…" }`), then the whole (`{ "text", "usage" }`). */
+  readonly stream?: boolean;
 }
 
 /** What comes back: the model's text and what the call used, or why there is none. Never the key. */

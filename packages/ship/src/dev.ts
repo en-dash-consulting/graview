@@ -538,6 +538,8 @@ export interface AiDevProxyOptions {
   readonly model?: string;
   /** The small, quick model a page's Fast slot is lent when `GRAVIEW_AI_FAST_MODEL` is unset (Roadmap f-menu-type-anything). */
   readonly fastModel?: string;
+  /** The model Better UI's agent draws with when `GRAVIEW_AI_DESIGN_MODEL` is unset (Roadmap f-make-any-page-better). */
+  readonly designModel?: string;
   /** The provider's endpoint. Its real one unless a test says otherwise. */
   readonly endpoint?: string;
   /** The most one answer may be, in tokens. */
@@ -566,10 +568,11 @@ export type AiDevProvider = "anthropic" | "xai" | "openai";
  * (Roadmap f-menu-type-anything). xAI and OpenAI take the same chat
  * completions; Anthropic its Messages API.
  */
-const PROVIDERS: Readonly<Record<AiDevProvider, { readonly key: string; readonly endpoint: string; readonly model: string; readonly fast: string; readonly name: string }>> = {
-  anthropic: { key: "ANTHROPIC_API_KEY", endpoint: "https://api.anthropic.com/v1/messages", model: "claude-sonnet-5-5", fast: "claude-haiku-5-5", name: "claude" },
-  xai: { key: "XAI_API_KEY", endpoint: "https://api.x.ai/v1/chat/completions", model: "grok-4.7", fast: "grok-4.20-0309-non-reasoning", name: "grok" },
-  openai: { key: "OPENAI_API_KEY", endpoint: "https://api.openai.com/v1/chat/completions", model: "gpt-5.4", fast: "gpt-5.4-mini", name: "openai" },
+/* `design`: the model Better UI's agent draws a new design with, a step at a time while a person waits (Roadmap f-make-any-page-better). */
+const PROVIDERS: Readonly<Record<AiDevProvider, { readonly key: string; readonly endpoint: string; readonly model: string; readonly fast: string; readonly design: string; readonly name: string }>> = {
+  anthropic: { key: "ANTHROPIC_API_KEY", endpoint: "https://api.anthropic.com/v1/messages", model: "claude-sonnet-5-5", fast: "claude-haiku-5-5", design: "claude-sonnet-5-5", name: "claude" },
+  xai: { key: "XAI_API_KEY", endpoint: "https://api.x.ai/v1/chat/completions", model: "grok-4.7", fast: "grok-4.20-0309-non-reasoning", design: "grok-4.20-0309-reasoning", name: "grok" },
+  openai: { key: "OPENAI_API_KEY", endpoint: "https://api.openai.com/v1/chat/completions", model: "gpt-5.4", fast: "gpt-5.4-mini", design: "gpt-5.4", name: "openai" },
 };
 const PROVIDER_ORDER: readonly AiDevProvider[] = ["anthropic", "xai", "openai"];
 
@@ -657,6 +660,7 @@ export function aiDevProxyHandler(options: AiDevProxyOptions = {}) {
   const call = options.fetch ?? patientFetch;
   const modelOf = (provider: AiDevProvider) => env["GRAVIEW_AI_MODEL"]?.trim() || options.model || PROVIDERS[provider].model;
   const fastModelOf = (provider: AiDevProvider) => env["GRAVIEW_AI_FAST_MODEL"]?.trim() || options.fastModel || PROVIDERS[provider].fast;
+  const designModelOf = (provider: AiDevProvider) => env["GRAVIEW_AI_DESIGN_MODEL"]?.trim() || options.designModel || PROVIDERS[provider].design;
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     if (!fromThisApp(req)) {
       // The page's probe, opened without the key: no model here until it is opened from the printed address.
@@ -670,7 +674,7 @@ export function aiDevProxyHandler(options: AiDevProxyOptions = {}) {
         res,
         200,
         chosen
-          ? { configured: true, provider: chosen.provider, model: modelOf(chosen.provider), fast: fastModelOf(chosen.provider), name: PROVIDERS[chosen.provider].name, turns: chosen.provider === "anthropic" }
+          ? { configured: true, provider: chosen.provider, model: modelOf(chosen.provider), fast: fastModelOf(chosen.provider), design: designModelOf(chosen.provider), streams: !options.fetch, name: PROVIDERS[chosen.provider].name, turns: chosen.provider === "anthropic" }
           : { configured: false, howTo: AI_HOW_TO },
       );
       return;
@@ -686,7 +690,7 @@ export function aiDevProxyHandler(options: AiDevProxyOptions = {}) {
     const { provider, key } = chosen;
     const refused = `The model refused the key in ${PROVIDERS[provider].key}.`;
     try {
-      const ask = JSON.parse(await readBody(req, options.limitBytes ?? AI_DEFAULTS.limitBytes, "prompt")) as { prompt?: unknown; system?: unknown; images?: unknown; messages?: unknown; tools?: unknown; tool_choice?: unknown; tier?: unknown };
+      const ask = JSON.parse(await readBody(req, options.limitBytes ?? AI_DEFAULTS.limitBytes, "prompt")) as { prompt?: unknown; system?: unknown; images?: unknown; messages?: unknown; tools?: unknown; tool_choice?: unknown; tier?: unknown; stream?: unknown };
       /* The Fast slot's stand-in: a prompt asked of the small model, never a turn. */
       const quick = ask.tier === "fast";
       /* A turn's step: the conversation so far, the seat's read tools, and its framing. */
@@ -695,7 +699,12 @@ export function aiDevProxyHandler(options: AiDevProxyOptions = {}) {
         sendJson(res, 400, { error: "A request is { prompt, system?, images? }, or a turn's { system, messages, tools }." });
         return;
       }
-      const asked = quick ? fastModelOf(provider) : modelOf(provider);
+      const asked = quick ? fastModelOf(provider) : ask.tier === "design" ? designModelOf(provider) : modelOf(provider);
+      /* Answered as it is written, where the page asked so: a line of JSON per piece, then the whole. */
+      if (ask.stream === true && !step && !options.fetch) {
+        await streamAnswer(res, { provider, key, model: asked, endpoint: options.endpoint ?? PROVIDERS[provider].endpoint, maxTokens: quick ? AI_DEFAULTS.fastMaxTokens : (options.maxTokens ?? AI_DEFAULTS.maxTokens), prompt: ask.prompt as string, ...(typeof ask.system === "string" && ask.system.length > 0 ? { system: ask.system } : {}), images: ask.images, refused });
+        return;
+      }
       if (provider !== "anthropic") {
         /* xAI and OpenAI: one chat completion, the framing as a system message, the words (and pictures) as the person's. */
         if (step) {
@@ -790,9 +799,96 @@ export function aiDevProxyHandler(options: AiDevProxyOptions = {}) {
       sendJson(res, 200, { text, ...(typeof used?.input_tokens === "number" && typeof used.output_tokens === "number" ? { usage: { inputTokens: used.input_tokens, outputTokens: used.output_tokens } } : {}) });
     } catch (error) {
       const said = error instanceof Error ? error.message : String(error);
-      sendJson(res, 500, { error: said.split(key).join("…") });
+      if (res.headersSent) res.end(`${JSON.stringify({ error: said.split(key).join("…") })}\n`);
+      else sendJson(res, 500, { error: said.split(key).join("…") });
     }
   };
+}
+
+/**
+ * ONE ANSWER, AS IT IS WRITTEN: the provider asked to stream (chat
+ * completions' and the Messages API's server-sent events), each piece of
+ * text passed on as a line of JSON (`{ "delta": "…" }`) the moment it
+ * arrives, and the whole said last (`{ "text", "usage" }`). An answer the
+ * provider refuses is said as one, never with the key.
+ */
+function streamAnswer(
+  res: ServerResponse,
+  ask: { readonly provider: AiDevProvider; readonly key: string; readonly model: string; readonly endpoint: string; readonly maxTokens: number; readonly prompt: string; readonly system?: string; readonly images?: unknown; readonly refused: string },
+): Promise<void> {
+  const chat = ask.provider !== "anthropic";
+  const body = JSON.stringify(
+    chat
+      ? { model: ask.model, stream: true, stream_options: { include_usage: true }, messages: [...(ask.system ? [{ role: "system", content: ask.system }] : []), { role: "user", content: chatContent(ask.prompt, ask.images) }] }
+      : { model: ask.model, stream: true, max_tokens: ask.maxTokens, ...(ask.system ? { system: ask.system } : {}), messages: [{ role: "user", content: promptContent(ask.prompt, ask.images) }] },
+  );
+  const headers: Record<string, string> = chat
+    ? { "content-type": "application/json", authorization: `Bearer ${ask.key}` }
+    : { "content-type": "application/json", "x-api-key": ask.key, "anthropic-version": "2023-06-01" };
+  return new Promise<void>((done, fail) => {
+    const sent = httpsRequest(ask.endpoint, { method: "POST", headers: { ...headers, "content-length": String(Buffer.byteLength(body)) } }, (answer) => {
+      answer.setEncoding("utf8");
+      const status = answer.statusCode ?? 0;
+      if (status < 200 || status >= 300) {
+        let raw = "";
+        answer.on("data", (chunk: string) => (raw += chunk));
+        answer.on("end", () => {
+          let said = `The model answered ${status}.`;
+          try {
+            const reply = JSON.parse(raw) as { error?: string | { message?: string } };
+            said = (typeof reply.error === "string" ? reply.error : reply.error?.message) ?? said;
+          } catch {
+            // Not JSON: said by its status.
+          }
+          sendJson(res, status, { error: (status === 401 || status === 403 ? ask.refused : said).split(ask.key).join("…") });
+          done();
+        });
+        return;
+      }
+      res.writeHead(200, { "content-type": "application/x-ndjson", "cache-control": "no-cache" });
+      let text = "";
+      let buffer = "";
+      let inputTokens: number | undefined;
+      let outputTokens: number | undefined;
+      answer.on("data", (chunk: string) => {
+        buffer += chunk;
+        for (let at = buffer.indexOf("\n"); at >= 0; at = buffer.indexOf("\n")) {
+          const line = buffer.slice(0, at).trim();
+          buffer = buffer.slice(at + 1);
+          if (!line.startsWith("data:")) continue;
+          const data = line.slice(5).trim();
+          if (!data || data === "[DONE]") continue;
+          try {
+            const event = JSON.parse(data) as {
+              type?: string;
+              choices?: { delta?: { content?: string } }[];
+              usage?: { prompt_tokens?: number; completion_tokens?: number; output_tokens?: number };
+              delta?: { type?: string; text?: string };
+              message?: { usage?: { input_tokens?: number } };
+            };
+            if (chat && event.usage) [inputTokens, outputTokens] = [event.usage.prompt_tokens, event.usage.completion_tokens];
+            if (!chat && event.type === "message_start") inputTokens = event.message?.usage?.input_tokens;
+            if (!chat && event.type === "message_delta") outputTokens = event.usage?.output_tokens;
+            const delta = chat ? event.choices?.[0]?.delta?.content : event.type === "content_block_delta" && event.delta?.type === "text_delta" ? event.delta.text : undefined;
+            if (typeof delta === "string" && delta.length > 0) {
+              text += delta;
+              res.write(`${JSON.stringify({ delta })}\n`);
+            }
+          } catch {
+            // A line that is not JSON: passed over.
+          }
+        }
+      });
+      answer.on("error", fail);
+      answer.on("end", () => {
+        res.end(`${JSON.stringify({ text, ...(typeof inputTokens === "number" && typeof outputTokens === "number" ? { usage: { inputTokens, outputTokens } } : {}) })}\n`);
+        done();
+      });
+    });
+    sent.setTimeout(0);
+    sent.on("error", fail);
+    sent.end(body);
+  });
 }
 
 /** The Vite plugin. One path; GET is the probe, POST is the ask. Never in a build. */

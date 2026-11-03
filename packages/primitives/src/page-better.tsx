@@ -136,12 +136,15 @@ const FELL_BACK: Readonly<Record<string, string>> = {
 };
 
 /** The view's place on the page, once the host has drawn the view of this name there: its handle — or why it fell back. */
-async function placeOfView(name: string, ms = 15000): Promise<{ readonly element: Element; readonly handle: ViewPlaceHandle } | { readonly failed: string }> {
+async function placeOfView(name: string, source?: string, ms = 15000): Promise<{ readonly element: Element; readonly handle: ViewPlaceHandle } | { readonly failed: string }> {
   const until = Date.now() + ms;
   while (Date.now() < until) {
     for (const element of document.querySelectorAll("[data-worker-view-place]")) {
       const handle = viewPlaceOf(element);
-      if (handle?.name === name && handle.drawing().root) return { element, handle };
+      // The place drawn now, with something in it: never one the page is tearing down, nor one not yet drawn after the page was drawn again.
+      const drawn = handle?.name === name ? handle.drawing().root : undefined;
+      // And the draft itself, where one was asked for: a design kept under the same name is not it.
+      if (handle && element.isConnected && drawn?.isConnected && drawn.childElementCount > 0 && (source === undefined || (await handle.source()) === source)) return { element, handle };
     }
     const fell = document.querySelector(`[data-worker-view-fell-back="${CSS.escape(name)}"]`);
     if (fell) return { failed: FELL_BACK[fell.getAttribute("data-worker-view-failed") ?? ""] ?? FELL_BACK["error"]! };
@@ -321,6 +324,8 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
   );
   const step = useCallback(
     (event: { readonly kind: string; readonly text: string }) => {
+      // The words as the model writes them stand in for the step it is on, and give way to the step once it is said.
+      if (held.events.at(-1)?.kind === "streaming") held.events.pop();
       held.events.push(event);
       tell();
     },
@@ -417,7 +422,7 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
       try {
         keptViews.draftFork(forkOf(source));
         held.putBack = () => keptViews.draftFork!(null);
-        const drawn = await placeOfView(manifest.name);
+        const drawn = await placeOfView(manifest.name, source);
         let findings: readonly string[];
         if ("failed" in drawn) findings = [drawn.failed];
         else {
@@ -426,7 +431,9 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
           else {
             await frame();
             await frame();
-            findings = drawnFindings(was, drawnNow(), { fields: fieldsOf(here, part), asked: askedWords() });
+            // Read where the draft was drawn: the page's region holding that place, whatever the page drew again meanwhile.
+            const region = drawn.element.closest("[data-graview-page-main], main") ?? regionOf(mainNow());
+            findings = drawnFindings(was, readDrawn(region, was.records.map((one) => one.label)), { fields: fieldsOf(here, part), asked: askedWords() });
           }
         }
         const drew = lookOf(drawnNow());
@@ -472,6 +479,7 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
     // Stopped: the page was put back when Stop was pressed; nothing more of this turn.
     if (held.stop !== stop) return;
     held.stop = null;
+    if (held.events.at(-1)?.kind === "streaming") held.events.pop();
     aiDesk.record(entryOf(`Draw “${part.name}” anew: ${askedWords()}`, held.steps.length > stepsBefore ? "offered" : "failed", result.stages, held.steps.length > stepsBefore ? {} : { failed: result.last?.findings.join(" ") ?? result.said }));
     say("graview", result.said);
     // eslint-disable-next-line react-hooks/exhaustive-deps

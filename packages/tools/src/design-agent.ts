@@ -51,7 +51,8 @@ export interface DesignAgentHost {
 
 /** Told as the agent works: a step to show in the panel. */
 export interface DesignAgentEvent {
-  readonly kind: "look" | "read" | "draft" | "check" | "passed" | "said";
+  /** `streaming`: the agent's words so far, as the model writes them — replaced by the next, and gone when the step is said. */
+  readonly kind: "look" | "read" | "draft" | "check" | "passed" | "said" | "streaming";
   /** In plain words, for the panel: "Looking at Tasks", "Check: dates lost on 3 tasks — fixing". */
   readonly text: string;
 }
@@ -170,7 +171,7 @@ export function checkSaid(findings: readonly string[], noun = "records"): string
       const count = [...lost[1]!.matchAll(/“/g)].length + Number(lost[2] ?? 0);
       said.push(`${count === 1 ? `one of the ${noun}` : `${count} ${noun}`} missing`);
     } else if (/no longer shows the heading/.test(finding)) said.push("headings missing");
-    else if (/moved to another group/.test(finding)) said.push(`${noun} in the wrong group`);
+    else if (/moved to another group|more often than the page did/.test(finding)) said.push(`${noun} in the wrong group`);
     else if (/drawn twice/.test(finding)) said.push("the title drawn twice");
     else if (/markup as words|a date as “|as the computer keeps it|a field's name/.test(finding)) said.push("words shown as the computer keeps them");
     else if (/did not draw|not drawn|threw/.test(finding)) said.push("it didn't draw");
@@ -205,7 +206,7 @@ async function unlessStopped<T>(answer: Promise<T>, signal: AbortSignal | undefi
 export async function runDesignAgent(options: DesignAgentOptions): Promise<DesignAgentResult> {
   const stages: SectionStage[] = [];
   const steps: DesignAgentStep[] = [];
-  const model: ThinkingProvider | undefined = options.ai.off ? undefined : (thinkingOf(options.ai) ?? options.ai.light);
+  const model: ThinkingProvider | undefined = options.ai.off ? undefined : (options.ai.design ?? thinkingOf(options.ai) ?? options.ai.light);
   if (!model) return { ended: "no-model", said: options.ai.withoutModel ?? "Changing how a page looks needs AI, and none is on here.", steps, stages };
   const tell = (event: DesignAgentEvent) => options.onEvent?.(event);
   const noun = options.noun ?? (options.part.slot === "record" ? "parts" : "records");
@@ -219,7 +220,10 @@ export async function runDesignAgent(options: DesignAgentOptions): Promise<Desig
   for (let at = 0; at < most; at++) {
     const began = Date.now();
     const asked = await unlessStopped(
-      model.think({ system: DESIGN_AGENT_SYSTEM, prompt: designAgentPrompt({ ...options, seen }, steps), state: {} as never, catalog: { candidates: [] } as never }).then(
+      (model.stream
+        ? model.stream({ system: DESIGN_AGENT_SYSTEM, prompt: designAgentPrompt({ ...options, seen }, steps), state: {} as never, catalog: { candidates: [] } as never }, (soFar) => tell({ kind: "streaming", text: writingSaid(soFar) }), options.signal)
+        : model.think({ system: DESIGN_AGENT_SYSTEM, prompt: designAgentPrompt({ ...options, seen }, steps), state: {} as never, catalog: { candidates: [] } as never })
+      ).then(
         (reply) => {
           stages.push({ stage: "thinking", model: model.model, ms: Date.now() - began, ...(reply.usage ? { usage: reply.usage } : {}) });
           return reply.text as string | undefined;
@@ -275,6 +279,29 @@ export async function runDesignAgent(options: DesignAgentOptions): Promise<Desig
     }
   }
   return { ended: "steps", said: passed ? "Here is where it got to." : "I haven't got it right yet. Tell me more, or ask me to keep going.", ...(passed ? { passed } : {}), ...(last ? { last } : {}), steps, stages };
+}
+
+/**
+ * WHAT THE AGENT IS WRITING, SAID AS IT WRITES IT: the sentence it is
+ * saying (its `say`, as far as it has got), then how far into the design
+ * it is — never its code.
+ */
+export function writingSaid(soFar: string): string {
+  const said = /"say"\s*:\s*"((?:[^"\\]|\\.)*)/.exec(soFar)?.[1];
+  let say = "";
+  if (said !== undefined) {
+    try {
+      say = JSON.parse(`"${said.replace(/\\$/, "")}"`) as string;
+    } catch {
+      say = said;
+    }
+  }
+  const source = soFar.indexOf('"source"');
+  const lines = source >= 0 ? soFar.slice(source).split("\\n").length : 0;
+  const writing = lines > 1 ? `writing it, ${lines} lines so far` : "";
+  if (say && writing) return `${say.replace(/\.$/, "")} — ${writing}`;
+  if (say) return say;
+  return writing ? `Writing the design, ${lines} lines so far` : "Thinking…";
 }
 
 /** What the page draws, read for the agent: headings, and each record with what it says, where it sits and how it stands. */

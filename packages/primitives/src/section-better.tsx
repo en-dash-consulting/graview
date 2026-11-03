@@ -350,6 +350,8 @@ export function SectionCard({ ask, close }: SectionCardProps) {
           },
         },
         onEvent: (event) => {
+          // The words as the model writes them stand in for the step it is on, and give way to the step once it is said.
+          if (events.current.at(-1)?.kind === "streaming") events.current.pop();
           events.current.push(event);
           redraw();
         },
@@ -357,6 +359,7 @@ export function SectionCard({ ask, close }: SectionCardProps) {
       });
       if (stopping.current !== stop) return;
       stopping.current = null;
+      if (events.current.at(-1)?.kind === "streaming") events.current.pop();
       const offered = steps.current.length > turnBegan;
       const entry = entryOf(`Make “${section.name}” better: ${askedWords()}`, offered ? "offered" : "failed", result.stages, offered ? {} : { failed: result.last?.findings.join(" ") ?? result.said });
       aiDesk.record(entry);

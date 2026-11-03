@@ -136,6 +136,11 @@ export function drawnFindings(before: DrawnRead, after: DrawnRead, options: { re
   const text = norm(after.text);
   const lost = before.records.map((one) => one.label).filter((label) => label && !text.includes(norm(label)));
   if (lost.length > 0) findings.push(`It no longer shows ${lost.slice(0, 4).map((one) => `“${one}”`).join(", ")}${lost.length > 4 ? ` and ${lost.length - 4} more` : ""}: show every record the page showed.`);
+  // A record shown more times than the page showed it: put under a group it is not in, as well as its own.
+  const times = (words: string, label: string) => words.split(norm(label)).length - 1;
+  const shownBefore = norm(before.text);
+  const twiceOver = before.records.map((one) => one.label).filter((label) => label && times(text, label) > times(shownBefore, label));
+  if (twiceOver.length > 0 && !(options.asked && REGROUP.test(options.asked))) findings.push(`It shows ${twiceOver.slice(0, 4).map((one) => `“${one}”`).join(", ")}${twiceOver.length > 4 ? ` and ${twiceOver.length - 4} more` : ""} more often than the page did: show each record where the page showed it, and nowhere else.`);
   // What each record's row said, said still: each fact by the record it was about, in words or as the same day.
   const factsLost: string[] = [];
   const moved: string[] = [];
