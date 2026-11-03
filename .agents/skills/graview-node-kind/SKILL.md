@@ -65,7 +65,9 @@ others that they show, is `graview-view-specs`.
    off it is, an enum of up to four short options is those options side
    by side (more, a menu), and a relation is a row of chips — one held
    alone (`cardinality: "one"`, or set by an act that also severs it) a
-   chip with its own picker. A `"yes"`/`"no"` string is a text box.
+   chip with its own picker. A `"yes"`/`"no"` string is a text box. A
+   blank the seat's act writes says how to fill it ("Pick a day"); one
+   nothing writes stays unsaid.
    Every key, lens and block is in
    `node_modules/@graview/core/dist/document.schema.json` (its `$schema`).
 
