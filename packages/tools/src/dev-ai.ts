@@ -81,7 +81,7 @@ async function throughTheModelDoor(options: { readonly path?: string; readonly f
   const path = options.path ?? AI_BRIDGE_PATH;
   const call = options.fetch ?? (globalThis.fetch as unknown as Fetch | undefined);
   if (!call) return NO_AI;
-  let status: { configured?: unknown; name?: unknown; howTo?: unknown; fast?: unknown; turns?: unknown };
+  let status: { configured?: unknown; name?: unknown; howTo?: unknown; fast?: unknown; design?: unknown; streams?: unknown; turns?: unknown };
   try {
     const probe = await call(path, { method: "GET" });
     if (!probe.ok) return NO_AI;
@@ -105,8 +105,63 @@ async function throughTheModelDoor(options: { readonly path?: string; readonly f
      * a dev server only, since a build has no door.
      */
     const fastModel = typeof status.fast === "string" && status.fast.length > 0 ? status.fast : undefined;
+    const designModel = typeof status.design === "string" && status.design.length > 0 ? status.design : undefined;
+    const usageOf = (usage: unknown) => {
+      const used = usage as { inputTokens?: unknown; outputTokens?: unknown } | undefined;
+      return typeof used?.inputTokens === "number" && typeof used.outputTokens === "number" ? { usage: { inputTokens: used.inputTokens, outputTokens: used.outputTokens } } : {};
+    };
+    /*
+     * THE DESIGN SLOT, STREAMED (Roadmap f-make-any-page-better): Better UI's
+     * agent asks the door's design model (`tier: "design"`), and where the door
+     * streams, reads its answer a line at a time, telling the page the text so
+     * far — so a person sees its words as it writes them.
+     */
+    const streams = status.streams === true && !options.fetch && typeof globalThis.fetch === "function";
+    const design = designModel
+      ? {
+          model: designModel,
+          think: async ({ system, prompt }: { system: string; prompt: string }) => {
+            const body = await post({ prompt, ...(system ? { system } : {}), tier: "design" } satisfies AiBridgeAsk);
+            if (typeof body.text !== "string") throw new Error("The model door answered with no text.");
+            return { text: body.text, ...usageOf(body.usage) };
+          },
+          ...(streams
+            ? {
+                stream: async ({ system, prompt }: { system: string; prompt: string }, onText: (soFar: string) => void, signal?: AbortSignal) => {
+                  const answer = await globalThis.fetch(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ prompt, ...(system ? { system } : {}), tier: "design", stream: true } satisfies AiBridgeAsk), ...(signal ? { signal } : {}) });
+                  if (!answer.ok || !answer.body) {
+                    const failed = (await answer.json().catch(() => ({}))) as { error?: unknown };
+                    throw new Error(typeof failed.error === "string" ? failed.error : `The model door answered ${answer.status}.`);
+                  }
+                  const reader = answer.body.pipeThrough(new TextDecoderStream()).getReader();
+                  let soFar = "";
+                  let buffer = "";
+                  let whole: { text?: unknown; usage?: unknown; error?: unknown } | undefined;
+                  for (;;) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    buffer += value;
+                    for (let at = buffer.indexOf("\n"); at >= 0; at = buffer.indexOf("\n")) {
+                      const line = buffer.slice(0, at).trim();
+                      buffer = buffer.slice(at + 1);
+                      if (!line) continue;
+                      const piece = JSON.parse(line) as { delta?: unknown; text?: unknown; usage?: unknown; error?: unknown };
+                      if (typeof piece.delta === "string") {
+                        soFar += piece.delta;
+                        onText(soFar);
+                      } else whole = piece;
+                    }
+                  }
+                  if (whole && typeof whole.error === "string") throw new Error(whole.error);
+                  return { text: typeof whole?.text === "string" ? whole.text : soFar, ...usageOf(whole?.usage) };
+                },
+              }
+            : {}),
+        }
+      : undefined;
     return {
       name: typeof status.name === "string" ? status.name : "model",
+      ...(design ? { design } : {}),
       ...(fastModel
         ? {
             /* The light model: the same quick one, writing the few words a plan over the graph could not decide. */

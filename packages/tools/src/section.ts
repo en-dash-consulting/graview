@@ -1,6 +1,10 @@
 import type { HostAi, ThinkingProvider, ThinkingReply } from "./ai.js";
 import { thinkingOf } from "./inline-ai.js";
 
+export { mayChangeDeclaration } from "./agent/declaration.js";
+import { DRAFT_WITHIN_MS, inTime, repairTries } from "./page-better.js";
+import { couldNotKeep, cssFindings } from "./draft-check.js";
+
 /*
  * `@graview/tools/section` — MAKE THIS SECTION BETTER (Roadmap
  * f-make-this-section-better).
@@ -376,28 +380,40 @@ export interface ReviseSectionOptions {
    * the host's own checks, compared with what it replaces.
    */
   readonly judge: (source: string) => Promise<readonly string[]>;
+  /** Told each time a try failed and is handed back, with what broke. */
+  readonly repairing?: (findings: readonly string[]) => void;
+  /** How long the light model's tries may take together, in ms (30 s). */
+  readonly within?: number;
+  /** TRY HARDER: the full model once, from the last try and what broke (`from`), until `signal` cancels it. */
+  readonly harder?: boolean;
+  readonly from?: { readonly last: SectionRevised; readonly findings: readonly string[] };
+  readonly signal?: AbortSignal;
 }
 
 export type ReviseSectionResult =
   | { readonly ok: true; readonly source: string; readonly said: string; readonly located: LocatedSection; readonly repaired: boolean; readonly stages: readonly SectionStage[] }
-  | { readonly ok: false; readonly refused: string; readonly stages: readonly SectionStage[] };
+  | { readonly ok: false; readonly refused: string; readonly findings?: readonly string[]; readonly last?: SectionRevised; readonly canceled?: true; readonly late?: true; readonly stages: readonly SectionStage[] };
 
 /**
- * REVISE A SECTION: the light model first — the full one where the light
- * one's answer cannot be read — composed whole and judged; what fails is
- * handed back once, with the findings, to the full model; what fails again
- * is refused in words. Nothing is kept here: the page offers what passes.
+ * REVISE A SECTION: the light model first, composed whole and judged
+ * where nobody sees it — its stylesheet read by the host's own sanitizer
+ * before it is drawn; what fails is handed back to the light model at most
+ * twice with the findings, all within `within` (30 s); what never passes
+ * stops there and says what it could not keep, with the last try for Try
+ * harder (`harder`: the full model once, from `from`, until `signal`
+ * cancels it). Nothing is kept here: the page offers what passes.
  */
 export async function reviseSection(options: ReviseSectionOptions): Promise<ReviseSectionResult> {
   const stages: SectionStage[] = [];
   const located = locateSection(options.source, options.section);
-  if (!located) return { ok: false, refused: `“${options.section}” could not be found in the view's code, so it cannot be revised on its own.`, stages };
+  if (!located) return { ok: false, refused: `“${options.section}” could not be found in the view's code, so it cannot be changed on its own.`, stages };
   const light = options.ai.off ? undefined : options.ai.light;
   const full = thinkingOf(options.ai);
-  const first = light ?? full;
-  if (!first) return { ok: false, refused: options.ai.withoutModel ?? "Revising a section needs AI, and none is on here.", stages };
-  const ask = async (provider: ThinkingProvider, stage: SectionStage["stage"], prompt: string): Promise<SectionRevised | undefined> => {
+  const tries = repairTries(light, full, options.harder ? { harder: true } : {});
+  if (tries.length === 0) return { ok: false, refused: options.ai.withoutModel ?? "Changing a section needs AI, and none is on here.", stages };
+  const ask = async (provider: ThinkingProvider, prompt: string): Promise<SectionRevised | undefined> => {
     const began = Date.now();
+    const stage: SectionStage["stage"] = provider === light ? "light" : "thinking";
     try {
       const reply = await provider.think({ system: SECTION_SYSTEM, prompt, state: {} as never, catalog: { candidates: [] } as never });
       stages.push({ stage, model: provider.model, ms: Date.now() - began, ...(reply.usage ? { usage: reply.usage } : {}) });
@@ -408,20 +424,43 @@ export async function reviseSection(options: ReviseSectionOptions): Promise<Revi
     }
   };
   const base = { located, mode: options.mode, ...(options.words ? { words: options.words } : {}), ...(options.highlighted ? { highlighted: options.highlighted } : {}), ...(options.theme ? { theme: options.theme } : {}), ...(options.shows ? { shows: options.shows } : {}) };
-  const firstStage = light ? "light" : "thinking";
-  let revised = await ask(first, firstStage, sectionPrompt(base));
-  // The light model's answer could not be read: the full one, once.
-  if (!revised && light && full && full !== light) revised = await ask(full, "thinking", sectionPrompt(base));
-  if (!revised) return { ok: false, refused: "The model did not answer with a revision of this section.", stages };
-  let source = composeSection(options.source, located, revised);
-  let findings = await options.judge(source);
-  if (findings.length === 0) return { ok: true, source, said: revised.said, located, repaired: false, stages };
-  /* Once, with what broke: the full model where there is one. */
-  const repairer = full ?? first;
-  const again = await ask(repairer, repairer === light ? "light" : "thinking", sectionPrompt({ ...base, findings, last: revised }));
-  if (!again) return { ok: false, refused: `It could not be revised without breaking the view: ${findings.join(" ")}`, stages };
-  source = composeSection(options.source, located, again);
-  findings = await options.judge(source);
-  if (findings.length > 0) return { ok: false, refused: `It could not be revised without breaking the view: ${findings.join(" ")}`, stages };
-  return { ok: true, source, said: again.said, located, repaired: true, stages };
+  /* The light model, again with what broke, within one wait; the stylesheet read by the host's own sanitizer before the section is drawn at all. */
+  const began = Date.now();
+  const within = options.harder ? undefined : (options.within ?? DRAFT_WITHIN_MS);
+  let findings: readonly string[] = options.from?.findings ?? [];
+  let last: SectionRevised | undefined = options.from?.last;
+  const stopped = (extra: { readonly canceled?: true; readonly late?: true } = {}): ReviseSectionResult => ({ ok: false, refused: couldNotKeep(findings), findings, ...(last ? { last } : {}), ...extra, stages });
+  for (let at = 0; at < tries.length; at++) {
+    const left = within === undefined ? undefined : within - (Date.now() - began);
+    if (left !== undefined && at > 0 && left < 3_000) return stopped({ late: true });
+    if (at > 0 || options.from) options.repairing?.(findings);
+    const answered = await inTime(ask(tries[at]!, sectionPrompt(findings.length === 0 || !last ? base : { ...base, findings, last })), left, options.signal);
+    if (answered === "canceled") return stopped({ canceled: true });
+    if (answered === "late") return stopped({ late: true });
+    const revised = answered.value;
+    if (!revised) {
+      findings = ["The answer was not one JSON object with the section's markup, its css and a sentence."];
+      continue;
+    }
+    last = revised;
+    const source = composeSection(options.source, located, revised);
+    const stripped = cssFindings(source);
+    if (stripped.length > 0) findings = stripped;
+    else {
+      const judged = await inTime(options.judge(source), within === undefined ? undefined : within - (Date.now() - began), options.signal);
+      if (judged === "canceled") return stopped({ canceled: true });
+      if (judged === "late") return stopped({ late: true });
+      findings = judged.value;
+    }
+    if (findings.length === 0) return { ok: true, source, said: revised.said, located, repaired: at > 0 || Boolean(options.from), stages };
+  }
+  return stopped();
 }
+
+export { checkSaid, DESIGN_AGENT_STEPS, DESIGN_AGENT_SYSTEM, designAgentPrompt, lookOf, readAgentReply, runDesignAgent, writingSaid } from "./design-agent.js";
+export type { ActToBind, DesignAgentEvent, DesignAgentHost, DesignAgentMove, DesignAgentOptions, DesignAgentResult, DesignAgentStep, DesignTalk } from "./design-agent.js";
+export { CONTROL_WORDS, couldNotKeep, cssFindings, describeChange, drawnFindings, IT_DOES_NOT_WORK, pressFindings, pressSaid, rowSays } from "./draft-check.js";
+export type { PressSaid } from "./draft-check.js";
+export type { DrawnRead } from "./draft-check.js";
+export { aboutTheLook, checklistOf, COULD_NOT, DRAFT_WITHIN_MS, groupingRule, inTime, repairTries, OWN_VIEW_WHEN_SURE, draftPageSpec, draftPageView, forkManifest, notTheSpec, PAGE_SPEC_OPS, PAGE_SPEC_SYSTEM, PAGE_VIEW_SYSTEM, pageSpecPrompt, pageViewPrompt, readPageSpecReply, readPageViewReply, specCanSay } from "./page-better.js";
+export type { DraftPageSpecOptions, DraftPageSpecResult, DraftPageViewOptions, DraftPageViewResult, ForkManifest, PagePartSaid, PageViewKeeps } from "./page-better.js";

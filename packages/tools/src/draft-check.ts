@@ -1,0 +1,314 @@
+import { sanitizeStylesheet, type CssRefusal } from "@graview/core/css";
+import { styleStringsOf } from "./section.js";
+
+/*
+ * A DRAFT IS JUDGED BEFORE ANYBODY SEES IT (Roadmap f-make-any-page-better):
+ * what a page or a section showed, read before the draft and read again
+ * from the draft as it was drawn — its headings, its records, its words,
+ * where each record stands — and compared by code. What breaks is handed
+ * back to the model in words it can fix; what changed is said to the
+ * person in the code's own words, never the model's account of itself.
+ * Pure: the page reads the drawing (`draft-read.ts` in primitives) and
+ * hands plain data here.
+ */
+
+/**
+ * A drawing read for judging: its headings in order, the records it shows
+ * in order with where and how big, and all its words. Each record carries
+ * what its row or card says beside its name (`facts`: "Todo", "Sep 3,
+ * 2026", "3 tasks"), the words of that row or card whole (`row`), and the
+ * heading it sits under (`under`).
+ */
+export interface DrawnRead {
+  readonly headings: readonly string[];
+  readonly records: readonly {
+    readonly label: string;
+    readonly top: number;
+    readonly left: number;
+    readonly size: number;
+    readonly facts?: readonly string[];
+    readonly row?: string;
+    readonly under?: string;
+    /** Whether its row offered a control to press (a circle that finishes it, a toggle), and whether its name opened it. */
+    readonly presses?: boolean;
+    readonly opens?: boolean;
+  }[];
+  readonly text: string;
+}
+
+const norm = (words: string) => words.replace(/\s+/g, " ").trim().toLowerCase();
+const counted = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+
+/** What a refused stylesheet rule needs, in words a model can act on. */
+function refusalWords(refusal: CssRefusal): string {
+  const name = refusal.name ? `“${refusal.name}”` : "";
+  switch (refusal.reason) {
+    case "selector":
+      return `The selector “${/^(host|host-context)$/.test(refusal.name ?? "") ? ":" : /^(slotted|part)$/.test(refusal.name ?? "") ? "::" : ""}${refusal.name ?? ""}” reaches outside the view and is removed with its rule: give the view's outer element a class and style that instead.`;
+    case "at-rule":
+      return `${name || "An at-rule"} is not allowed and is removed with what it holds: use plain rules and @media only.`;
+    case "property":
+      return `The property ${name} is not allowed and is removed: use ordinary layout, color and type properties.`;
+    case "function":
+      return `The function ${name}() is not allowed and is removed: use var(--graview-…), calc(), min(), max(), clamp() or repeat().`;
+    case "url":
+      return "url() is not allowed and is removed: draw nothing from an address.";
+    case "value":
+      return `A value of ${name || "a property"} is not allowed and is removed (position may be static, relative, absolute or sticky).`;
+    case "size":
+      return "The stylesheet is too long and is removed whole: keep it short.";
+    default:
+      return `A rule ${name ? `near ${name} ` : ""}could not be read and is removed: write plain CSS, one rule at a time, no nesting.`;
+  }
+}
+
+/**
+ * WHAT THE HOST WOULD STRIP FROM A SCRIPT'S STYLESHEETS, before it is
+ * drawn: each `graview.style` string read by the framework's own
+ * sanitizer, and what it refuses said as what to do instead.
+ */
+export function cssFindings(source: string): string[] {
+  const findings = new Set<string>();
+  for (const sheet of styleStringsOf(source)) {
+    const css = source.slice(sheet.start, sheet.end).replace(/\$\{(?:[^{}]|\{[^{}]*\})*\}/g, "0");
+    for (const refusal of sanitizeStylesheet(css).refused) findings.add(refusalWords(refusal));
+  }
+  return [...findings];
+}
+
+const ISO_DAY = /\b\d{4}-\d{2}-\d{2}(?:T[\d:.]+Z?)?\b/;
+const MARKUP = /<\/?[a-z][a-z0-9-]*(?:\s[^<>]*)?>/i;
+const RAW = /\b(undefined|null|NaN|\[object Object\]|true|false)\b/;
+
+const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+const DAY_SAID = /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})\b|\b(\d{1,2})\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b/;
+const WEEKDAY = /\b(mon|tue|wed|thu|fri|sat|sun)[a-z]*\b|\b(today|tomorrow|yesterday)\b/;
+
+/**
+ * WHETHER A ROW STILL SAYS A FACT IT SAID, in other words if it likes: the
+ * same words, or the same day of the same month ("Sep 3, 2026" as "3
+ * September" or "Sep 3"), or the same number where the fact was one.
+ */
+export function rowSays(row: string, fact: string): boolean {
+  const said = norm(row);
+  const wanted = norm(fact);
+  if (!wanted) return true;
+  if (said.includes(wanted)) return true;
+  // "To do" for "Todo", "in-progress" for "In progress": the same letters, spaced or joined.
+  const squashed = (text: string) => text.replace(/[^\p{L}\p{N}]+/gu, "");
+  if (squashed(wanted).length >= 3 && squashed(said).includes(squashed(wanted))) return true;
+  const day = DAY_SAID.exec(wanted);
+  if (day) {
+    const month = (day[1] ?? day[4])!;
+    const date = Number(day[2] ?? day[3]);
+    for (const one of said.matchAll(new RegExp(DAY_SAID.source, "g"))) if ((one[1] ?? one[4]) === month && Number(one[2] ?? one[3]) === date) return true;
+    // A day said by its weekday or as "today" stands for it where the draft says no month at all.
+    return MONTHS.every((name) => !said.includes(name)) && WEEKDAY.test(said);
+  }
+  const number = /^\D*(\d+(?:[.,]\d+)?)\D*$/.exec(wanted);
+  if (number) return new RegExp(`(^|\\D)${number[1]!.replace(/[.,]/g, "[.,]")}(\\D|$)`).test(said);
+  return false;
+}
+
+/** Words that ask for something a page showed to go: "hide the dates", "just the names", "without the status". */
+const TAKE_AWAY = /\b(hide|hides|hiding|remove|drop|without|no more|less|fewer|only|just|minimal|simpler|declutter|strip)\b/i;
+/** Words that ask for records to be grouped or moved differently. */
+const REGROUP = /\b(group|groups|grouped|regroup|section|sections|categor\w*|split|move|moved|bucket\w*|by (status|date|day|list|owner|person))\b/i;
+
+/** Whether the words asked a fact like this one to go: a dates' fact by "dates", a status by "status", anything by "just the names". */
+function askedAway(asked: string | undefined, fact: string): boolean {
+  if (!asked || !TAKE_AWAY.test(asked)) return false;
+  const words = asked.toLowerCase();
+  if (/\b(only|just)\b[^.]*\b(name|names|title|titles|label|labels)\b/.test(words)) return true;
+  if (DAY_SAID.test(norm(fact)) || WEEKDAY.test(norm(fact))) return /\b(date|dates|due|day|days|when|deadline|deadlines)\b/.test(words);
+  if (/^\D*\d/.test(fact)) return /\b(count|counts|number|numbers|how many|total|totals)\b/.test(words);
+  return /\b(status|statuses|state|tag|tags|chip|chips|badge|badges|label|labels|pill|pills|meta|details)\b/.test(words) || words.includes(norm(fact));
+}
+
+/**
+ * WHAT A DRAFT BROKE, against what the page showed: a record or a heading
+ * it no longer shows, a fact a record's row said that its card no longer
+ * says (its status, its date, a count), a record moved under another
+ * heading, a heading drawn twice, and words no person was shown before — a
+ * field's own name, a date as the computer keeps it, `true`, `undefined`.
+ * A fact or a group the person asked to change (`asked`: "hide the dates",
+ * "group by status") is theirs to change. Empty when the draft may be shown.
+ */
+export function drawnFindings(before: DrawnRead, after: DrawnRead, options: { readonly fields?: readonly string[]; readonly asked?: string } = {}): string[] {
+  const findings: string[] = [];
+  const text = norm(after.text);
+  const lost = before.records.map((one) => one.label).filter((label) => label && !text.includes(norm(label)));
+  if (lost.length > 0) findings.push(`It no longer shows ${lost.slice(0, 4).map((one) => `“${one}”`).join(", ")}${lost.length > 4 ? ` and ${lost.length - 4} more` : ""}: show every record the page showed.`);
+  // A record shown more times than the page showed it: put under a group it is not in, as well as its own.
+  const times = (words: string, label: string) => words.split(norm(label)).length - 1;
+  const shownBefore = norm(before.text);
+  const twiceOver = before.records.map((one) => one.label).filter((label) => label && times(text, label) > times(shownBefore, label));
+  if (twiceOver.length > 0 && !(options.asked && REGROUP.test(options.asked))) findings.push(`It shows ${twiceOver.slice(0, 4).map((one) => `“${one}”`).join(", ")}${twiceOver.length > 4 ? ` and ${twiceOver.length - 4} more` : ""} more often than the page did: show each record where the page showed it, and nowhere else.`);
+  // What each record's row said, said still: each fact by the record it was about, in words or as the same day.
+  const factsLost: string[] = [];
+  const moved: string[] = [];
+  for (const was of before.records) {
+    const now = after.records.find((one) => norm(one.label) === norm(was.label));
+    if (!now) continue;
+    // A fact said by the heading it now sits under ("Doing" over a column of what is doing) is said still.
+    const row = `${now.row ?? ""} ${now.under ?? ""}`;
+    for (const fact of was.facts ?? []) if (!rowSays(row, fact) && !askedAway(options.asked, fact)) factsLost.push(`“${fact}” on “${was.label}”`);
+    if (was.under && now.under && norm(was.under) !== norm(now.under) && after.headings.some((one) => norm(one) === norm(was.under!)) && !(options.asked && REGROUP.test(options.asked))) moved.push(`“${was.label}” is under “${now.under}”, and was under “${was.under}”`);
+  }
+  if (factsLost.length > 0) findings.push(`A record no longer says what it said: ${factsLost.slice(0, 4).join(", ")}${factsLost.length > 4 ? ` and ${factsLost.length - 4} more` : ""}. Show on each record what the page showed on it (its status, its dates, its counts), in words.`);
+  if (moved.length > 0) findings.push(`A record moved to another group: ${moved.slice(0, 3).join("; ")}${moved.length > 3 ? ` and ${moved.length - 3} more` : ""}. Keep each record under the heading it was under.`);
+  const headingsLost = before.headings.filter((heading) => heading && !text.includes(norm(heading)));
+  if (headingsLost.length > 0) findings.push(`It no longer shows the heading${headingsLost.length > 1 ? "s" : ""} ${headingsLost.map((one) => `“${one}”`).join(", ")}: keep each heading the page had.`);
+  const seen = new Map<string, number>();
+  for (const heading of after.headings) if (heading.trim()) seen.set(norm(heading), (seen.get(norm(heading)) ?? 0) + 1);
+  const twice = [...seen].filter(([, n]) => n > 1).map(([heading]) => after.headings.find((one) => norm(one) === heading)!);
+  // Said with what to keep: a model told only to leave the title out drops every heading with it.
+  const others = before.headings.filter((one) => !twice.some((title) => norm(title) === norm(one)));
+  if (twice.length > 0) findings.push(`The heading${twice.length > 1 ? "s" : ""} ${twice.map((one) => `“${one}”`).join(", ")} ${twice.length > 1 ? "are" : "is"} drawn twice: the page already draws its title above the view, so leave it out${others.length > 0 ? ` — and keep every other heading as it was: ${others.map((one) => `“${one}”`).join(", ")}` : ""}.`);
+  const markup = MARKUP.exec(after.text);
+  if (markup && !MARKUP.test(before.text)) findings.push(`It shows its own markup as words (“${markup[0].slice(0, 40)}”): build it with graview.html\`…\`, nesting graview.html for each list, never a string of HTML.`);
+  const iso = ISO_DAY.exec(after.text);
+  if (iso && !ISO_DAY.test(before.text)) findings.push(`It shows a date as “${iso[0]}”: say dates in words, as the page did (“Sep 3”).`);
+  const raw = RAW.exec(after.text);
+  if (raw && !new RegExp(`\\b${raw[1]!.replace(/[[\]]/g, "\\$&")}\\b`).test(before.text)) findings.push(`It shows “${raw[1]}”, which is a value as the computer keeps it, not words for a person: say it in words or leave it out.`);
+  for (const field of options.fields ?? []) {
+    if (field.length < 3 || ["label", "name", "title"].includes(field)) continue;
+    // As the computer keeps it: a camelCase key anywhere, or a lowercase one with a value after it ("order 2", "done: true") — never a label a person wrote ("Due Sep 3").
+    const named = /[A-Z]/.test(field) ? new RegExp(`\\b${field}\\b`) : new RegExp(`(?:^|[^\\w])${field}(?:\\s*[:=]|\\s+(?:\\d|true|false|null))`);
+    if (named.test(after.text) && !named.test(before.text)) {
+      findings.push(`It shows “${field}”, a field's name, not words for a person: say what it means, or leave it out.`);
+      break;
+    }
+  }
+  return findings;
+}
+
+/**
+ * WHAT A NEW DESIGN COULD NOT KEEP, said plainly from what broke: "I
+ * couldn't keep the dates and statuses in a new design." — the facts by
+ * what they are (a day is a date, a number a count, other words a
+ * status), a record or a heading lost, a record moved out of its group,
+ * words shown as the computer keeps them. Plain `COULD_NOT` where what
+ * broke is none of those (the view did not draw, the answer was not one).
+ */
+export function couldNotKeep(findings: readonly string[]): string {
+  const things: string[] = [];
+  const add = (thing: string) => void (things.includes(thing) || things.push(thing));
+  for (const finding of findings) {
+    const facts = /no longer says what it said: (.*?)(?: and \d+ more)?\. Show/.exec(finding);
+    if (facts) {
+      for (const one of facts[1]!.matchAll(/“([^”]+)” on “/g)) {
+        const fact = norm(one[1]!);
+        add(DAY_SAID.test(fact) || WEEKDAY.test(fact) ? "dates" : /^\D*\d/.test(fact) ? "counts" : "statuses");
+      }
+      continue;
+    }
+    if (/^It no longer shows “/.test(finding)) add("every record");
+    else if (/no longer shows the heading/.test(finding)) add("headings");
+    else if (/moved to another group/.test(finding)) add("each record in its group");
+    else if (/drawn twice/.test(finding)) add("the title once");
+    else if (/markup as words|a date as “|as the computer keeps it|a field's name/.test(finding)) add("the words as the page said them");
+  }
+  if (things.length === 0) return "I couldn't make a version that looks right.";
+  const order = ["dates", "statuses", "counts", "headings"];
+  const facts = order.filter((one) => things.includes(one));
+  const rest = things.filter((one) => !order.includes(one));
+  const and = (list: readonly string[]) => (list.length < 2 ? (list[0] ?? "") : `${list.slice(0, -1).join(", ")} and ${list.at(-1)}`);
+  const said = [...(facts.length > 0 ? [`the ${and(facts)}`] : []), ...rest];
+  return `I couldn't keep ${and(said)} in a new design.`;
+}
+
+/** How the records stand: the most side by side on one line. */
+function perLine(records: DrawnRead["records"]): number {
+  const lines = new Map<number, number>();
+  for (const one of records) {
+    const line = [...lines.keys()].find((top) => Math.abs(top - one.top) <= 6) ?? one.top;
+    lines.set(line, (lines.get(line) ?? 0) + 1);
+  }
+  return Math.max(0, ...lines.values());
+}
+
+/**
+ * WHAT CHANGED, SAID BY CODE from the two readings: how the records stand
+ * (side by side, how many to a line), how big they are, their order, and
+ * headings it adds. Undefined where nothing measurable moved, for the card
+ * to say so plainly rather than echo the model.
+ */
+export function describeChange(name: string, before: DrawnRead, after: DrawnRead): string | undefined {
+  const said: string[] = [];
+  const was = perLine(before.records);
+  const now = perLine(after.records);
+  if (now > 1 && now !== was) said.push(`side by side, ${counted[now] ?? now} to a line`);
+  else if (now === 1 && was > 1) said.push("one under another");
+  const size = (records: DrawnRead["records"]) => (records.length ? records.reduce((sum, one) => sum + one.size, 0) / records.length : 0);
+  const ratio = size(before.records) > 0 ? size(after.records) / size(before.records) : 1;
+  if (ratio >= 1.12) said.push("in bigger type");
+  else if (ratio <= 0.89) said.push("in smaller type");
+  const order = (records: DrawnRead["records"], keep: Set<string>) => records.map((one) => norm(one.label)).filter((one) => keep.has(one));
+  const common = new Set(before.records.map((one) => norm(one.label)).filter((label) => after.records.some((one) => norm(one.label) === label)));
+  if (order(before.records, common).join("|") !== order(after.records, common).join("|")) said.push("in a new order");
+  const labels = new Set(before.records.map((one) => norm(one.label)));
+  const added = after.headings.filter((heading) => heading.trim() && !before.headings.some((one) => norm(one) === norm(heading)) && norm(heading) !== norm(name) && !labels.has(norm(heading)));
+  if (added.length > 0) said.push(`under ${added.length === 1 ? "a new heading" : "new headings"}: ${added.slice(0, 3).map((one) => `“${one}”`).join(", ")}`);
+  if (said.length === 0) return undefined;
+  const plural = /s$/i.test(name.trim());
+  return `${name} now ${plural ? "show" : "shows"} ${said.length === 1 ? said[0] : `${said.slice(0, -1).join(", ")} and ${said.at(-1)}`}.`;
+}
+
+/** One control a press check pressed, and what came of it. */
+export interface PressSaid {
+  readonly control: string;
+  readonly element: string;
+  readonly does: string;
+  readonly ok: boolean;
+  readonly says: string;
+}
+
+const attribute = (element: string, name: string) => new RegExp(`\\s${name}="([^"]*)"`).exec(element)?.[1];
+
+/**
+ * WHAT A PERSON CAN DO ON EACH RECORD, KEPT (Roadmap f-make-any-page-better):
+ * every control the draft drew, pressed headless with nothing applied —
+ * one that does nothing, throws, or is refused is a finding in its own
+ * words — and each record whose row the page let a person press (a circle
+ * that finishes it) or open by its name must still be: a press bound to
+ * one of the toggles (`data-act`, `data-record` its id) that the check
+ * found the app accepts, and a link to it.
+ */
+export function pressFindings(presses: { readonly controls: readonly PressSaid[]; readonly problems: readonly PressSaid[] }, wanted: readonly { readonly label: string; readonly id: string; readonly presses?: boolean; readonly opens?: boolean }[], toggles: readonly string[], noun = "record"): string[] {
+  const findings = presses.problems.slice(0, 5).map((one) => `${one.control}: ${one.says}`);
+  const bound = (id: string) => presses.controls.some((one) => one.ok && one.does === "act" && attribute(one.element, "data-record") === id && toggles.includes(attribute(one.element, "data-act") ?? ""));
+  const linked = (id: string) => presses.controls.some((one) => one.ok && one.does === "link" && attribute(one.element, "data-record") === id);
+  const unpressable = toggles.length > 0 ? wanted.filter((one) => one.presses && !bound(one.id)) : [];
+  if (unpressable.length > 0)
+    findings.push(
+      `${unpressable.slice(0, 3).map((one) => `“${one.label}”`).join(", ")}${unpressable.length > 3 ? ` and ${unpressable.length - 3} more` : ""} can no longer be marked as the page let a person mark ${unpressable.length === 1 ? "it" : "them"}: give each ${noun} a press bound to ${toggles.map((one) => `“${one}”`).join(" or ")}, e.g. <button data-act="${toggles[0]}" data-record="${unpressable[0]!.id}">…</button>.`,
+    );
+  const closed = wanted.filter((one) => one.opens && !linked(one.id));
+  if (closed.length > 0) findings.push(`${closed.slice(0, 3).map((one) => `“${one.label}”`).join(", ")}${closed.length > 3 ? ` and ${closed.length - 3} more` : ""} no longer ${closed.length === 1 ? "opens its" : "open their"} page: link each with data-record="its id".`);
+  return findings;
+}
+
+/**
+ * WHAT THE CONTROLS DO, SAID BY THE PRESS CHECK: "Pressing it checked:
+ * “Done” marks each of the 3 tasks done, and each opens its page." Only
+ * what was pressed and accepted is said; undefined where it found nothing
+ * to say. The agent's own account of its controls is never said for it.
+ */
+export function pressSaid(presses: { readonly controls: readonly PressSaid[] }, acts: readonly { readonly act: string; readonly title: string; readonly toggle?: string }[], noun = "records"): string | undefined {
+  const said: string[] = [];
+  for (const act of acts) {
+    const on = new Set(presses.controls.filter((one) => one.ok && one.does === "act" && attribute(one.element, "data-act") === act.act).map((one) => attribute(one.element, "data-record") ?? one.control));
+    if (on.size > 0) said.push(`${act.title.replace(/[.…]+$/, "")} works on ${on.size === 1 ? "one of the" : `${on.size}`} ${noun}`);
+  }
+  const opens = new Set(presses.controls.filter((one) => one.ok && one.does === "link" && attribute(one.element, "data-record")).map((one) => attribute(one.element, "data-record")));
+  if (opens.size > 0) said.push(`${opens.size} open${opens.size === 1 ? "s its" : " their"} page${opens.size === 1 ? "" : "s"}`);
+  if (said.length === 0) return undefined;
+  return `Pressing each control checked it: ${said.length < 2 ? said[0] : `${said.slice(0, -1).join(", ")} and ${said.at(-1)}`}.`;
+}
+
+/** Words that say what a control does: a sentence of the model's with one is not said for it — the press check says what was checked. */
+export const CONTROL_WORDS = /\b(check ?box(es)?|button|click|tap|press|toggle|mark(ed|s|ing)?|complet(e|ed|ing)|finish(ed|es|ing)?|persist|sav(e|es|ed|ing)|updat(e|es|ed|ing)|works?|working|data)\b/i;
+
+/** Words of a person who says a control does not work. */
+export const IT_DOES_NOT_WORK = /\b(does(n'?t| not)|did(n'?t| not)|can'?t|cannot|won'?t|not)\s+(work|working|persist|save|stick|change|update|do anything|mark|finish|complete|click|press)|\bfake\b|\bbroken\b|\bstill (broken|not)\b/i;

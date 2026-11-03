@@ -12,6 +12,7 @@ import {
 import type { ActivityMark } from "./activity.js";
 import { useGraview } from "./context.js";
 import { joinedFrom, pickedFrom, usePickTargets } from "./picking.js";
+import { holderFrom } from "./picked.js";
 import { sectionsArrive, sectionsWanted, sectionUnderNow, type MenuViewSection } from "./view-places.js";
 import { WHO } from "./where-drawn.js";
 import { cssTransform, planeShadow } from "./scene-helpers.js";
@@ -521,7 +522,9 @@ export function SceneViewHost({
          * and returns without selecting, which opened a menu about nothing
          * (and quietly raised People on the way).
          */
-        const on = picked && picked !== node.id ? picked : node.id;
+        // Beside the targets, the record the part around the pointer is about (a list's column), else the card's own.
+        const holder = picked && picked !== node.id ? null : holderFrom(event.target, event.currentTarget, (from, to) => hostStore.graph.neighbors(from).some((one) => one.id === to), node.id);
+        const on = picked && picked !== node.id ? picked : (holder ?? node.id);
         onPick(on, false, (on === picked ? joinedFrom(event.target) : null) ?? undefined);
         /*
          * The menu is about THIS, and says so. Without the name the

@@ -49,6 +49,14 @@
       "types": "./dist/headless/presses.d.ts",
       "default": "./dist/headless/presses.js"
     },
+    "./host/pressing": {
+      "types": "./dist/host/pressing.d.ts",
+      "default": "./dist/host/pressing.js"
+    },
+    "./headless/pressed-here": {
+      "types": "./dist/headless/pressed-here.d.ts",
+      "default": "./dist/headless/pressed-here.js"
+    },
     "./headless/node": {
       "types": "./dist/headless/node.d.ts",
       "default": "./dist/headless/node.js"

@@ -7,21 +7,22 @@
  * embed on the pages, at its own address under a base — with a worker view
  * of three named sections ("This week", "Doing", "Notes"), the host's views
  * kept in memory with revisions (`withMemoryRevisions(memoryViews())`), and a
- * fake host AI whose light and full slots answer each revision from the
- * prompt they were handed. A right-click inside a section names the menu
- * and outlines it; "Make “Doing” better" offers Just do it, Describe
- * changes… and Highlight area…; each revises that section alone into a
- * draft shown in place; a revision that drops styles is handed back once
- * and offered, or refused; Keep goes through the host's view door and one
- * Undo puts the view back; and a seat the host says may not change views is
- * offered none of it.
+ * fake host AI whose full slot is Graview's agent, scripted: it looks,
+ * drafts the whole script with that section changed, is told what the
+ * checks found, and drafts again. A right-click inside a section names the
+ * menu and outlines it; ✨ Better UI opens the conversation beside the
+ * page, with "Make it easier to read" and "Point at a part…"; each turn
+ * revises that section alone into a draft shown in place; a revision that
+ * drops styles is fed back and fixed, and one that never holds is never
+ * shown; Keep goes through the host's view door and one Undo puts the view
+ * back; and a seat the host says may not change views is offered none of it.
  *
  * Claims (docs/section.json):
  *   aSectionUnderTheCursorNamesTheMenuAndIsOutlined
  *   justDoItRevisesOnlyThatSectionAndShowsADraft
  *   describedChangesReviseThatSection
  *   aHighlightedAreaNamesWhatItCovers
- *   aRevisionThatDropsStylesIsRepairedOrRefused
+ *   aRevisionThatDropsStylesIsFedBackAndFixed
  *   keepThenOneUndoRestoresTheView
  *   aSeatThatMayNotChangeViewsIsNotOffered
  *   aRevisionIsToldWithHowItEndedAndCanBeRated
@@ -88,31 +89,37 @@ const SEED = {
 };
 
 /*
- * THE FAKE HOST AI: a light slot and a full one, each answering from the
- * section it is handed — a class added and styled for Just do it, the
- * person's words drawn for Describe, what was pointed at drawn for
- * Highlight; "drop" answers first with the section's rules gone (the full
- * slot repairs it), and "break" never stops dropping them.
+ * THE FAKE HOST AI: Graview's agent, scripted on the full slot. It looks
+ * first, then drafts the whole script with only the section asked about
+ * changed — a class added and styled for "Make it easier to read", the
+ * person's words drawn into it otherwise; "drop" drafts first with the
+ * section's rules gone (and puts them back once told), and "break" never
+ * stops dropping them, and asks the person after three drafts.
  */
 const FAKE_AI = () => {
   const prompts = (window.__sectionPrompts = []);
-  const answer = (slot) => async ({ prompt }) => {
+  const CLASS = { "This week": "tk-week", Doing: "tk-doing", Notes: "tk-notes" };
+  const agent = async ({ prompt }) => {
     const asked = JSON.parse(prompt);
-    prompts.push({ slot, ...asked });
-    const markup = String(asked.markup);
-    const rules = (asked.rules ?? []).join("\n");
-    const said = String(asked.asked ?? "");
-    const open = markup.indexOf(">") + 1;
-    const close = markup.lastIndexOf("</");
-    const drawIn = (extra) => markup.slice(0, open) + extra + markup.slice(open, close) + markup.slice(close);
-    const repairing = Array.isArray(asked.what_broke);
-    if (/\bbreak\b/.test(said) || (/\bdrop\b/.test(said) && !repairing))
-      return { text: JSON.stringify({ markup: drawIn('<p class="tk-dropped">dropped</p>'), css: ".tk-dropped { font-weight: 600; }", said: "Dropped the old rules." }) };
-    if (asked.pointed_at) return { text: JSON.stringify({ markup: drawIn(`<p class="tk-pointed">${asked.pointed_at[0]}</p>`), css: `${rules}\n.tk-pointed { font-style: italic; }`, said: `Changed ${asked.pointed_at[0]}.` }) };
-    if (said.startsWith("Make this section better")) return { text: JSON.stringify({ markup: markup.replace(/class="(tk-[a-z]+)"/, 'class="$1 tk-better"'), css: `${rules}\n.tk-better { box-shadow: 0 0 0 2px var(--graview-accent); }`, said: "Gave it a clearer edge." }) };
-    return { text: JSON.stringify({ markup: drawIn(`<p class="tk-said">${said}</p>`), css: `${rules}\n.tk-said { font-weight: 600; }`, said: `Said “${said}” in it.` }) };
+    prompts.push(asked);
+    const say = (one) => ({ text: JSON.stringify(one) });
+    const steps = asked.your_steps ?? [];
+    const name = /“([^”]+)”/.exec(asked.only_change ?? "")?.[1] ?? "Doing";
+    const cls = CLASS[name];
+    const said = (asked.conversation ?? []).flatMap((one) => (one.person ? [one.person] : [])).at(-1) ?? "";
+    // What the person pointed at comes beside their words: the fake draws both, as it would mean them together.
+    const words = asked.about ? `${said} (${asked.about})` : said;
+    const source = String(asked.your_draft_on_the_page ?? "");
+    const styled = (text, rule) => text.replace("\n`);", `\n  ${rule}\n\`);`);
+    const dropped = (text) => text.split("\n").filter((line) => !line.trimStart().startsWith(`.${cls} `)).join("\n");
+    const drafts = steps.filter((one) => one.did === "draft");
+    if (/\bbreak\b/.test(words) && drafts.length >= 3) return say({ say: `I couldn't keep “${name}” looking right that way. Shall I try a different look?`, do: "ask" });
+    const broken = /\bbreak\b/.test(words) || (/\bdrop\b/.test(words) && drafts.length === 0);
+    if (/^Make it easier to read/.test(words)) return say({ say: `“${name}” has a clearer edge now.`, do: "draft", source: styled(source.replace(`class="${cls}"`, `class="${cls} tk-better"`), ".tk-better { box-shadow: 0 0 0 2px var(--graview-accent); }") });
+    const drawn = source.replace(`>${name}</h2>`, `>${name}</h2><p class="tk-said">${words.replace(/[<>&"]/g, "")}</p>`);
+    return say({ say: `“${name}” now says “${words}”.`, do: "draft", source: styled(broken ? dropped(drawn) : drawn, ".tk-said { font-weight: 600; }") });
   };
-  window.__sectionAi = { name: "fake", light: { model: "fake-light", think: answer("light") }, thinking: { model: "fake-full", think: answer("thinking") } };
+  window.__sectionAi = { name: "fake", thinking: { model: "fake-full", think: agent } };
 };
 
 async function serveHost() {
@@ -235,13 +242,28 @@ async function ready(page, query = "") {
   await page.waitForFunction(() => document.querySelector('[data-worker-view-place="week"] > [data-worker-view="week"]')?.shadowRoot?.querySelector("h2"), null, { timeout: 30_000 });
 }
 
-/** Opens "Make “<heading>” better" and presses one of its rows. */
-async function choose(page, heading, item) {
+const PANEL = '[data-testid="better-panel"]';
+/** Opens ✨ Better UI on the section under "<heading>": the conversation beside the page. */
+async function openPanel(page, heading) {
   await openMenuOn(page, heading);
-  await page.click(`${MENU} [data-menu-item="${item}"]`);
+  await page.click(`${MENU} [data-menu-mode="better"]`);
+  await page.waitForSelector(PANEL, { timeout: 10_000 });
 }
+/** Says words to it. */
+async function tellIt(page, words) {
+  await page.fill('[data-testid="better-words"]', words);
+  await page.click('[data-testid="better-send"]');
+}
+/** Waits for the panel at a phase. */
+const panelAt = (page, phase) => page.waitForSelector(`${PANEL}[data-better-phase="${phase}"]`, { timeout: 30_000 });
+/** Puts the panel away. */
+async function closePanel(page) {
+  await page.click('[data-testid="better-close"]');
+  await page.waitForSelector(PANEL, { state: "detached", timeout: 5_000 });
+}
+/* Words no person should read on the card or the bar. */
+const JARGON = /own view|\bhost\b|stylesheet|\bspec\b|also as|worker|\bcss\b|manifest/i;
 
-const settled = (page, phase) => page.waitForSelector(`${CARD}[data-section-phase="${phase}"]`, { timeout: 30_000 });
 
 try {
   host = await serveHost();
@@ -264,8 +286,8 @@ try {
       const box = outline?.getBoundingClientRect();
       return {
         title: menu?.querySelector("strong")?.textContent ?? null,
-        heading: menu?.querySelector('[data-menu-section="make-better"]')?.textContent ?? null,
-        rows: [...(menu?.querySelectorAll('[data-menu-section="make-better"] [data-menu-item]') ?? [])].map((row) => row.getAttribute("data-menu-item")),
+        modes: [...(menu?.querySelectorAll("[data-menu-mode]") ?? [])].map((one) => one.getAttribute("data-menu-mode")),
+        field: menu?.querySelector('[data-testid="menu-type"]')?.getAttribute("placeholder") ?? null,
         outline: box ? { left: Math.round(box.left), top: Math.round(box.top), width: Math.round(box.width), height: Math.round(box.height) } : null,
         section: { left: Math.round(section.left), top: Math.round(section.top), width: Math.round(section.width), height: Math.round(section.height) },
       };
@@ -274,7 +296,7 @@ try {
     const around = seen.outline && Math.abs(seen.outline.left - (seen.section.left - 3)) <= 2 && Math.abs(seen.outline.width - (seen.section.width + 6)) <= 2 && Math.abs(seen.outline.height - (seen.section.height + 6)) <= 2;
     report.checks.aSectionUnderTheCursorNamesTheMenuAndIsOutlined = {
       ...seen,
-      ok: seen.title === "Doing" && /Make “Doing” better/.test(seen.heading ?? "") && seen.rows.join() === "section-just-do-it,section-describe,section-highlight" && around === true,
+      ok: seen.title === "Doing" && seen.modes.join() === "chat,better" && seen.field === "Tell Graview what you want…" && around === true,
     };
     await page.keyboard.press("Escape");
   }
@@ -282,55 +304,61 @@ try {
   reach("justDoItRevisesOnlyThatSectionAndShowsADraft");
   {
     const before = await read(page);
-    await choose(page, "Doing", "section-just-do-it");
-    await settled(page, "draft");
+    await openPanel(page, "Doing");
+    await page.click('[data-testid="better-just"]');
+    await panelAt(page, "draft");
     const after = await read(page);
     const asked = await page.evaluate(() => window.__sectionPrompts.at(-1));
     await shot(page, "just-do-it-draft");
-    const card = await page.textContent(CARD);
+    const card = await page.textContent(PANEL);
     const others = ["This", "Notes"].every((name) => after.draft?.[name]?.html === before.live?.[name]?.html && after.draft?.[name]?.classes === before.live?.[name]?.classes);
     report.checks.justDoItRevisesOnlyThatSectionAndShowsADraft = {
-      slot: asked?.slot,
-      askedOnlyTheSection: asked?.markup?.startsWith('<section class="tk-doing"') && !asked.markup.includes("tk-notes"),
+      ...(await page.evaluate(() => {
+        const panel = document.querySelector('[data-testid="better-panel"]')?.getBoundingClientRect();
+        const place = document.querySelector('[data-worker-view-place="week"] [data-graview-section-draft]')?.getBoundingClientRect();
+        return { panelClear: Boolean(panel && place && !(panel.left < place.right && panel.right > place.left && panel.top < place.bottom && panel.bottom > place.top)) };
+      })),
+      onlyThatSection: asked?.only_change ?? null,
       draftDoing: after.draft?.Doing?.classes,
       othersUnchanged: others,
       liveHiddenUnderTheDraft: after.liveShown === false,
       card,
-      ok: asked?.slot === "light" && asked.markup.startsWith('<section class="tk-doing"') && !asked.markup.includes("tk-notes") && after.draft?.Doing?.classes === "tk-doing tk-better" && others && after.liveShown === false && /Draft/.test(card ?? "") && /Keep/.test(card ?? ""),
+      ok: /“Doing”/.test(asked?.only_change ?? "") && after.draft?.Doing?.classes === "tk-doing tk-better" && others && after.liveShown === false && /Keep/.test(card ?? "") && /Before/.test(card ?? "") && /After/.test(card ?? "") && !JARGON.test(card ?? ""),
     };
-    await page.click('[data-testid="section-discard"]');
-    await page.waitForSelector(CARD, { state: "detached" });
+    report.checks.justDoItRevisesOnlyThatSectionAndShowsADraft.ok &&= report.checks.justDoItRevisesOnlyThatSectionAndShowsADraft.panelClear;
+    await page.click('[data-testid="better-discard"]');
+    await panelAt(page, "open");
     const discarded = await read(page);
     report.checks.justDoItRevisesOnlyThatSectionAndShowsADraft.discardPutsItAway = discarded.draft === null && discarded.liveShown === true;
     report.checks.justDoItRevisesOnlyThatSectionAndShowsADraft.ok &&= discarded.draft === null && discarded.liveShown === true;
+    await closePanel(page);
   }
 
   reach("describedChangesReviseThatSection");
   {
-    await choose(page, "Notes", "section-describe");
-    await settled(page, "asking");
-    const placeholder = await page.getAttribute('[data-testid="section-words"]', "placeholder");
+    await openPanel(page, "Notes");
+    const placeholder = await page.getAttribute('[data-testid="better-words"]', "placeholder");
     const focused = await page.evaluate(() => document.activeElement?.getAttribute("data-testid"));
-    await page.keyboard.type("say how many are done");
-    await page.keyboard.press("Enter");
-    await settled(page, "draft");
+    await tellIt(page, "say how many are done");
+    await panelAt(page, "draft");
     const after = await read(page);
     const asked = await page.evaluate(() => window.__sectionPrompts.at(-1));
     await shot(page, "described-draft");
     report.checks.describedChangesReviseThatSection = {
       placeholder,
       focused,
-      asked: asked?.asked,
+      asked: asked?.conversation ?? null,
       drawn: after.draft?.Notes?.html ?? null,
-      ok: placeholder === "What should change?" && focused === "section-words" && asked?.asked === "say how many are done" && asked?.section === "Notes" && /tk-said[^>]*>say how many are done/.test(after.draft?.Notes?.html ?? "") && after.draft?.Doing?.html === after.live?.Doing?.html,
+      ok: placeholder === "What should change?" && focused === "better-words" && (asked?.conversation ?? []).some((one) => one.person === "say how many are done") && /“Notes”/.test(asked?.only_change ?? "") && /tk-said[^>]*>say how many are done/.test(after.draft?.Notes?.html ?? "") && after.draft?.Doing?.html === after.live?.Doing?.html,
     };
-    await page.click('[data-testid="section-discard"]');
-    await page.waitForSelector(CARD, { state: "detached" });
+    await page.click('[data-testid="better-discard"]');
+    await closePanel(page);
   }
 
   reach("aHighlightedAreaNamesWhatItCovers");
   {
-    await choose(page, "This week", "section-highlight");
+    await openPanel(page, "This week");
+    await page.click('[data-testid="better-point"]');
     await page.waitForSelector('[data-testid="section-highlighter"]', { timeout: 10_000 });
     const days = await page.evaluate(() => {
       const region = document.querySelector('[data-worker-view-place="week"] > [data-worker-view="week"]');
@@ -343,82 +371,74 @@ try {
     await page.mouse.move(days.right + 4, days.bottom + 4, { steps: 4 });
     await shot(page, "highlight-drag");
     await page.mouse.up();
-    await settled(page, "asking");
-    const pointed = await page.textContent('[data-testid="section-pointed"]');
-    const placeholder = await page.getAttribute('[data-testid="section-words"]', "placeholder");
+    await page.waitForFunction(() => /^About: /.test(document.querySelector('[data-testid="better-about"]')?.textContent ?? "") && !/This week$/.test(document.querySelector('[data-testid="better-about"]')?.textContent ?? ""), null, { timeout: 10_000 });
+    const pointed = await page.textContent('[data-testid="better-about"]');
     await shot(page, "highlight-card");
-    await page.keyboard.type("make them taller");
-    await page.keyboard.press("Enter");
-    await settled(page, "draft");
+    await tellIt(page, "make them taller");
+    await panelAt(page, "draft");
     const asked = await page.evaluate(() => window.__sectionPrompts.at(-1));
     const after = await read(page);
+    const said = await page.evaluate(() => [...document.querySelectorAll('[data-testid="better-message"][data-who="person"]')].at(-1)?.textContent ?? null);
     report.checks.aHighlightedAreaNamesWhatItCovers = {
       pointed,
-      placeholder,
-      askedAbout: asked?.pointed_at,
-      drawn: after.draft?.This?.html?.includes("tk-pointed") ?? false,
-      ok: pointed === "You pointed at the three day columns." && placeholder === "What should change here?" && asked?.pointed_at?.[0] === "the three day columns" && asked?.section === "This week" && (after.draft?.This?.html?.includes("tk-pointed") ?? false),
+      said,
+      askedAbout: asked?.about ?? null,
+      lastWords: (asked?.conversation ?? []).at(-1) ?? null,
+      drawn: after.draft?.This?.html?.includes("the three day columns") ?? false,
+      // The chip names what was pointed at; the person's words stay as they typed them, and the agent is told what they are about beside them.
+      ok: pointed === "About: the three day columns" && said === "make them taller" && asked?.about === "the three day columns" && (asked?.conversation ?? []).some((one) => one.person === "make them taller") && /“This week”/.test(asked?.only_change ?? "") && (after.draft?.This?.html?.includes("the three day columns") ?? false),
     };
-    await page.click('[data-testid="section-discard"]');
-    await page.waitForSelector(CARD, { state: "detached" });
+    await page.click('[data-testid="better-discard"]');
+    await closePanel(page);
   }
 
-  reach("aRevisionThatDropsStylesIsRepairedOrRefused");
+  reach("aRevisionThatDropsStylesIsFedBackAndFixed");
   {
     const from = await page.evaluate(() => window.__sectionPrompts.length);
-    await choose(page, "Doing", "section-describe");
-    await settled(page, "asking");
-    await page.keyboard.type("drop the old look");
-    await page.keyboard.press("Enter");
-    await settled(page, "draft");
-    const repaired = await page.evaluate((from) => window.__sectionPrompts.slice(from), from);
-    const notes = await page.$$eval('[data-testid="section-note"]', (all) => all.map((one) => one.textContent));
-    await page.click('[data-testid="section-discard"]');
-    await page.waitForSelector(CARD, { state: "detached" });
-    const from2 = await page.evaluate(() => window.__sectionPrompts.length);
-    await choose(page, "Doing", "section-describe");
-    await settled(page, "asking");
-    await page.keyboard.type("break it");
-    await page.keyboard.press("Enter");
-    await settled(page, "refused");
-    const refused = await page.textContent('[data-testid="section-status"]');
-    const tries = await page.evaluate((from) => window.__sectionPrompts.slice(from).length, from2);
+    await openPanel(page, "Doing");
+    await tellIt(page, "drop the old look");
+    await panelAt(page, "draft");
+    const fixed = await page.evaluate((from) => window.__sectionPrompts.slice(from).map((one) => (one.your_steps ?? []).map((step) => ({ did: step.did, findings: step.result?.findings ?? null }))), from);
+    const fedBack = fixed.flat().find((one) => one.did === "draft" && (one.findings ?? []).length > 0)?.findings ?? [];
+    const steps = await page.evaluate(() => [...document.querySelectorAll('[data-testid="better-step"]')].map((one) => one.lastElementChild?.textContent?.trim() ?? ""));
+    await page.click('[data-testid="better-discard"]');
+    await panelAt(page, "open");
+    await tellIt(page, "break it");
+    await panelAt(page, "open");
+    const asked = await page.evaluate(() => [...document.querySelectorAll('[data-testid="better-message"]')].at(-1)?.textContent?.trim() ?? null);
     const left = await read(page);
-    await shot(page, "refused");
-    report.checks.aRevisionThatDropsStylesIsRepairedOrRefused = {
-      repairedBy: repaired.map((one) => one.slot),
-      handedBack: repaired[1]?.what_broke ?? null,
-      notes,
-      refused,
-      tries,
+    await shot(page, "never-held");
+    report.checks.aRevisionThatDropsStylesIsFedBackAndFixed = {
+      fedBack,
+      steps,
+      asked,
       noDraftLeft: left.draft === null && left.liveShown === true,
       ok:
-        repaired.map((one) => one.slot).join() === "light,thinking" &&
-        (repaired[1]?.what_broke ?? []).some((one) => /tk-doing/.test(one) && /no rule styles it/.test(one)) &&
-        notes.some((note) => /Repaired once/.test(note)) &&
-        /^It could not be revised without breaking the view: .*tk-doing/.test(refused ?? "") &&
-        tries === 2 &&
+        fedBack.some((one) => /tk-doing/.test(one) && /no rule styles it/.test(one)) &&
+        steps.some((one) => /^Check: .* — fixing$/.test(one)) &&
+        steps.some((one) => /^Check: nothing lost/.test(one)) &&
+        asked === "I couldn't keep “Doing” looking right that way. Shall I try a different look?" &&
         left.draft === null &&
         left.liveShown === true,
     };
-    await page.keyboard.press("Escape");
-    await page.waitForSelector(CARD, { state: "detached" });
+    await closePanel(page);
   }
 
   reach("keepThenOneUndoRestoresTheView");
   {
     const before = await read(page);
-    await choose(page, "Doing", "section-just-do-it");
-    await settled(page, "draft");
-    await page.click('[data-testid="section-keep"]');
-    await settled(page, "kept");
+    await openPanel(page, "Doing");
+    await page.click('[data-testid="better-just"]');
+    await panelAt(page, "draft");
+    await page.click('[data-testid="better-keep"]');
+    await panelAt(page, "kept");
     await page.waitForFunction(() => document.querySelector('[data-worker-view-place="week"] > [data-worker-view="week"]')?.shadowRoot?.querySelector(".tk-better"), null, { timeout: 10_000 });
     const kept = await read(page);
-    const said = await page.textContent('[data-testid="section-status"]');
+    const said = await page.textContent('[data-testid="better-kept"] p');
     const keeper = await page.evaluate(() => window.__keeper.revised("week") ?? null);
     await shot(page, "kept");
-    await page.click('[data-testid="section-undo"]');
-    await settled(page, "undone");
+    await page.click('[data-testid="better-undo"]');
+    await panelAt(page, "undone");
     await page.waitForFunction(() => {
       const shadow = document.querySelector('[data-worker-view-place="week"] > [data-worker-view="week"]')?.shadowRoot;
       return shadow?.querySelector(".tk-doing") && !shadow.querySelector(".tk-better");
@@ -441,25 +461,26 @@ try {
         back.live?.Doing?.html === before.live?.Doing?.html &&
         keeperAfter === null,
     };
-    await page.keyboard.press("Escape");
+    await closePanel(page);
   }
 
   reach("aRevisionIsToldWithHowItEndedAndCanBeRated");
   {
     const tellings = () => page.evaluate(() => window.__told.list().map((one) => ({ words: one.words, decided: one.decided, outcome: one.outcome, rating: one.rating ?? null, target: one.target, slot: one.slot ?? null })));
     const before = (await tellings()).length;
-    await choose(page, "Notes", "section-just-do-it");
-    await settled(page, "draft");
-    await page.waitForSelector(`${CARD} [aria-label="This was right"]`, { timeout: 10_000 });
+    await openPanel(page, "Notes");
+    await page.click('[data-testid="better-just"]');
+    await panelAt(page, "draft");
+    await page.waitForSelector(`${PANEL} [aria-label="This was right"]`, { timeout: 10_000 });
     const offered = (await tellings()).at(-1);
-    await page.click(`${CARD} [aria-label="This was right"]`);
+    await page.click(`${PANEL} [aria-label="This was right"]`);
     await page.waitForFunction(() => window.__told.list().at(-1)?.rating === "up", null, { timeout: 5_000 });
     await shot(page, "rated");
-    await page.click('[data-testid="section-discard"]');
-    await page.waitForSelector(CARD, { state: "detached" });
+    await page.click('[data-testid="better-discard"]');
     await page.waitForFunction(() => window.__told.list().at(-1)?.outcome === "declined", null, { timeout: 5_000 });
+    await closePanel(page);
     const all = await tellings();
-    // The kept-then-undone revision of the claim before, and the refused one, were kept too.
+    // The kept-then-undone revision of the claim before, and the one that never held, were kept too.
     const outcomes = all.map((one) => one.outcome);
     report.checks.aRevisionIsToldWithHowItEndedAndCanBeRated = {
       offered,
@@ -472,7 +493,7 @@ try {
         offered?.decided?.section === "Notes" &&
         offered?.target?.on === "place" &&
         offered?.target?.place === "week" &&
-        offered?.slot === "light" &&
+        offered?.slot === "full" &&
         all.at(-1)?.rating === "up" &&
         all.at(-1)?.outcome === "declined" &&
         outcomes.includes("undone") &&
@@ -488,7 +509,7 @@ try {
     await openMenuOn(visitor, "Doing");
     const seen = await visitor.evaluate(() => {
       const menu = document.querySelector('[data-testid="context-menu"]');
-      return { title: menu?.querySelector("strong")?.textContent ?? null, offered: menu?.querySelector('[data-menu-section="make-better"]') !== null, rows: [...(menu?.querySelectorAll("[data-menu-item]") ?? [])].map((row) => row.getAttribute("data-menu-item")) };
+      return { title: menu?.querySelector("strong")?.textContent ?? null, offered: menu?.querySelector('[data-menu-mode="better"]') !== null, rows: [...(menu?.querySelectorAll("[data-menu-item]") ?? [])].map((row) => row.getAttribute("data-menu-item")) };
     });
     await shot(visitor, "visitor-menu");
     report.checks.aSeatThatMayNotChangeViewsIsNotOffered = { ...seen, ok: seen.title === "Doing" && seen.offered === false && !seen.rows.some((row) => row?.startsWith("section-")) };

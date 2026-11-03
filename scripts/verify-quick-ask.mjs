@@ -18,6 +18,7 @@
  *
  *   node scripts/verify-quick-ask.mjs [--engine=chromium|webkit|firefox]   (all three by default)
  */
+import { unfold } from "./lib/menu-more.mjs";
 import { writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -266,6 +267,8 @@ async function drive(engine, checks, errors) {
   await page.goto(`${at("todo")}/?${DAY}&ai=stub`, { waitUntil: "load", timeout: 90_000 });
   await ready(page);
   await page.click('[data-graview-pick="t-book"]', { button: "right" });
+  await page.waitForSelector('[data-testid="context-menu"]', { timeout: 15_000 });
+  await unfold(page);
   await page.waitForSelector('[data-menu-item="ai-ask"]', { timeout: 15_000 });
   await page.click('[data-menu-item="ai-ask"]');
   await page.waitForSelector(CARD, { timeout: 15_000 });

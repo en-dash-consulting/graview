@@ -100,3 +100,24 @@ export function nameParts(parts: readonly PartRead[]): string {
 export function partLines(parts: readonly PartRead[]): string[] {
   return parts.map((part) => `<${part.tag}${part.classes.length ? ` class="${part.classes.join(" ")}"` : ""}> ${words(part.text).slice(0, 60)}`.trim());
 }
+
+/**
+ * WHAT A PART IS CALLED, BY ITS OWN HEADING: "Someday" for a group pointed
+ * at, never its words run together ("Someday 4Find someone who moves
+ * pianos⚠…"). The heading a part is, or the first one in it, without a
+ * count or a disclosure's arrow; undefined where it has none, for the
+ * part's description to name it instead.
+ */
+export function aboutOf(elements: readonly Element[]): string | undefined {
+  // Several parts pointed at together ("the three day columns") are named by what they are, not by the first one's heading.
+  if (elements.length !== 1) return undefined;
+  for (const element of elements) {
+    const heading = element.matches("h1, h2, h3, h4, [role='heading']") ? element : element.querySelector("h1, h2, h3, h4, [role='heading']");
+    if (!heading) continue;
+    const copy = heading.cloneNode(true) as Element;
+    for (const span of copy.querySelectorAll("span")) if (/^[\s·\d]+$/.test(span.textContent ?? "")) span.remove();
+    const said = (copy.textContent ?? "").replace(/\s+/g, " ").trim().replace(/^[▸▾]\s*/, "").replace(/\s*\d+$/, "");
+    if (said) return said.length > 60 ? `${said.slice(0, 57)}…` : said;
+  }
+  return undefined;
+}

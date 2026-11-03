@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 200,
+  "note": "Raised when a built-in page came to be made better (Roadmap f-make-any-page-better): `withMemoryRevisions` on @graview/core keeps the views made of a built-in page (`fork`, `draftFork`, `forked`) beside its revisions, which the worker reaches through the main entry. Measured at 2_529_689, 99 over 2_529_590; a little over for what the measure differs by run to run."
+}

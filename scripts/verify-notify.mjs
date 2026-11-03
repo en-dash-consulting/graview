@@ -16,6 +16,7 @@
  *
  *   node scripts/verify-notify.mjs [--engine=chromium|webkit|firefox]
  */
+import { unfold } from "./lib/menu-more.mjs";
 import { writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -77,6 +78,8 @@ const keyboard = (page) => page.evaluate(() => ({ body: document.activeElement =
 async function subscribeFromTheMenu(page, rightClick) {
   let presses = 0;
   await rightClick();
+  await page.waitForSelector(MENU, { timeout: 10_000 });
+  await unfold(page);
   await page.waitForSelector(NOTIFY_ROW, { timeout: 10_000 });
   const row = ((await page.textContent(NOTIFY_ROW)) ?? "").trim();
   await page.click(NOTIFY_ROW);

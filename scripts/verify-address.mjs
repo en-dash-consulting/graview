@@ -86,6 +86,7 @@
  *
  *   node scripts/verify-address.mjs [--engine=chromium|webkit|firefox]   (all three by default)
  */
+import { unfold } from "./lib/menu-more.mjs";
 import { createServer } from "node:http";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -655,6 +656,8 @@ try {
           }
           await tab.waitForSelector('[data-testid="context-menu"]', { timeout: 10_000 });
           await tab.waitForTimeout(400);
+          // Open in a new tab and Move to… wait behind More…, as a person would find them.
+          await unfold(tab);
           return tab.evaluate(() => {
             const menu = document.querySelector('[data-testid="context-menu"]');
             return {

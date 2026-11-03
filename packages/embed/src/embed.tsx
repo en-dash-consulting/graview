@@ -11,6 +11,7 @@ import type { EmbedWhere } from "./where.js";
 import { useDrawnSignal } from "./drawn.js";
 import { draftWaits, fetchDraftHost, Settling, useDraft, type EmbedDraftView } from "./draft.js";
 import { createRoot, type Root } from "react-dom/client";
+import { lendViewPressing } from "@graview/guest/host/pressing";
 import { flushSync } from "react-dom";
 import {
   AUTO_SCENE_HEIGHT,
@@ -86,6 +87,8 @@ const SceneFace = scene.Face;
 const SceneKeeping = sceneKeeping.Face;
 const PagesContent = pages.Face;
 const PictureFace = picture.Face;
+// Pressing a draft's controls before anybody sees it (Roadmap f-make-any-page-better): fetched only when a draft is pressed, and lent here, where the framework it reads with is already up front.
+lendViewPressing(retryingImport(() => import("@graview/guest/headless/pressed-here")));
 
 /**
  * FETCH A FACE BEFORE IT IS DRAWN (FR-57). A host that knows which face it

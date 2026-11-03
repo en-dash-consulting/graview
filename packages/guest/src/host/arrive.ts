@@ -40,3 +40,22 @@ export function untilItArrives<M>(load: () => Promise<M>, then: (module: M) => v
     window.removeEventListener("online", again);
   };
 }
+
+/*
+ * WHAT PRESSES A DRAFT'S CONTROLS, LENT BY THE PAGE (Roadmap
+ * f-make-any-page-better; `@graview/guest/host/pressing`). Here, beside the
+ * doors the host fetches its halves by, because every page that draws a
+ * worker view has this file up front: a file of its own was a chunk of its
+ * own before the page drew.
+ */
+let pressing: (() => Promise<typeof import("../headless/pressed-here.js")>) | undefined;
+
+/** Lends what fetches the headless press run (`@graview/guest/headless/pressed-here`). */
+export function lendViewPressing(load: () => Promise<typeof import("../headless/pressed-here.js")>): void {
+  pressing = load;
+}
+
+/** What fetches the headless press run, when the page lent it. */
+export function viewPressing(): (() => Promise<typeof import("../headless/pressed-here.js")>) | undefined {
+  return pressing;
+}

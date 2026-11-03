@@ -86,3 +86,24 @@ export function toldSuggestionsFrom(tellings: readonly Telling[], store: Store<A
     return label ? [{ key: `told:${telling.id}`, telling, label }] : [];
   });
 }
+
+/**
+ * WHAT WORKED HERE BEFORE, WITH NOTHING TYPED (Roadmap f-make-any-page-better):
+ * tellings rated up or kept, about this kind of thing, re-aimed at what the
+ * menu is on — the menu's Suggested picks from them. The act alone, never
+ * "like last time".
+ */
+export function toldForHere(tellings: readonly Telling[], store: Store<AnySchema>, principal: Principal, on: string | undefined, most = 3): readonly ToldSuggestion[] {
+  const seen = new Set<string>();
+  const out: ToldSuggestion[] = [];
+  for (const telling of [...tellings].reverse()) {
+    if (out.length >= most) break;
+    if (!(telling.rating === "up" || telling.outcome === "accepted")) continue;
+    if (telling.by !== undefined && principal.id !== undefined && (telling.by as { id?: string }).id !== undefined && (telling.by as { id?: string }).id !== principal.id) continue;
+    const label = reaimed(store, telling, on);
+    if (!label || seen.has(label.toLowerCase())) continue;
+    seen.add(label.toLowerCase());
+    out.push({ key: `told:${telling.id}`, telling, label });
+  }
+  return out;
+}

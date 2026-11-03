@@ -143,6 +143,18 @@ export type ProposeChangeAnswer = "applied" | "declined" | { readonly applied: t
 export type ProposeChangeHost = (proposal: ReshapeProposal) => ProposeChangeAnswer | Promise<ProposeChangeAnswer>;
 
 /**
+ * A CHANGE TO THE APP SHOWN ON THIS PAGE ONLY, NOT KEPT (Roadmap
+ * f-make-any-page-better): "Make “Tasks” better" drafts edits over the
+ * view spec, and the page is drawn with them applied before anybody keeps
+ * them. The host lays the changed app over this page alone — nothing is
+ * written, nobody else sees it — and answers the way to put the page back
+ * (`undo`), which the card calls on Discard and before Keep hands the same
+ * change to `onProposeChange`. Unsaid, the card says what would change
+ * without drawing it.
+ */
+export type DraftChangeHost = (proposal: ReshapeProposal) => { readonly undo: () => void | Promise<void> } | Promise<{ readonly undo: () => void | Promise<void> }>;
+
+/**
  * THE HOST'S COMPOSER, LENT TO A PAGE (Roadmap f-menu-type-anything): a
  * plan's edits (or a reshape's traits) applied to the app's document and
  * judged by the checker — the changed document, the app it compiles to and

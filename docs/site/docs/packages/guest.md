@@ -6,7 +6,7 @@
 pnpm add @graview/guest
 ```
 
-Entry points: `@graview/guest`, `@graview/guest/react`, `@graview/guest/host`, `@graview/guest/host/frame`, `@graview/guest/host/worker`, `@graview/guest/host/views`, `@graview/guest/headless`, `@graview/guest/headless/presses`, `@graview/guest/headless/node`, `@graview/guest/worker`, `@graview/guest/worker/view`, `@graview/guest/audit`, `@graview/guest/build`, `@graview/guest/cli`, `@graview/guest/client`, `@graview/guest/client.js`
+Entry points: `@graview/guest`, `@graview/guest/react`, `@graview/guest/host`, `@graview/guest/host/frame`, `@graview/guest/host/worker`, `@graview/guest/host/views`, `@graview/guest/headless`, `@graview/guest/headless/presses`, `@graview/guest/host/pressing`, `@graview/guest/headless/pressed-here`, `@graview/guest/headless/node`, `@graview/guest/worker`, `@graview/guest/worker/view`, `@graview/guest/audit`, `@graview/guest/build`, `@graview/guest/cli`, `@graview/guest/client`, `@graview/guest/client.js`
 
 ## What it is
 

@@ -113,6 +113,13 @@ export interface HostAi {
    */
   readonly light?: ThinkingProvider;
   /**
+   * THE DESIGN SLOT (Roadmap f-make-any-page-better): the model Better UI's
+   * agent draws a new design with, step after step while a person waits —
+   * quick enough to talk with, good enough to keep what a page shows.
+   * Unsaid, the Thinking slot serves it.
+   */
+  readonly design?: ThinkingProvider;
+  /**
    * WHETHER A CONTEXT MENU ASKS FOR SUGGESTIONS AS IT OPENS (FR-185). Only
    * ever the Fast slot's: with no Fast slot a menu never asks on its own,
    * and offers a "Suggest…" row that asks — the Thinking slot then — when
@@ -226,6 +233,12 @@ export interface ThinkingReply {
 export interface ThinkingProvider {
   readonly model: string;
   think(request: ThinkingRequest): Promise<ThinkingReply>;
+  /**
+   * The same answer as it is written: `onText` is told the text so far, each
+   * time more arrives, so a person sees the words while the model writes.
+   * Optional; where a provider does not stream, `think` answers whole.
+   */
+  stream?(request: ThinkingRequest, onText: (soFar: string) => void, signal?: AbortSignal): Promise<ThinkingReply>;
   readonly price?: AiPrice;
 }
 

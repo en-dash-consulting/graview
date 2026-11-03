@@ -779,6 +779,21 @@ async function revealActs(person, wanted) {
   await wanted.first().waitFor({ state: "visible", timeout: 700 }).catch(() => {});
   if (await wanted.first().isVisible().catch(() => false)) return;
   await openActs(person);
+  await wanted.first().waitFor({ state: "visible", timeout: 700 }).catch(() => {});
+  if (!(await wanted.first().isVisible().catch(() => false))) await pressMore(person);
+}
+
+/**
+ * THE REST OF THE MENU IS BEHIND MORE… (Roadmap f-make-any-page-better).
+ * The menu opens on its field, the two ways to ask, Suggested and the first
+ * few acts; the other acts and what this seat may not do wait behind More…,
+ * and a person who does not see the act they want presses it.
+ */
+async function pressMore(person) {
+  const more = person.page.locator('[data-testid="context-menu"] [data-menu-item="more"]').locator("visible=true").first();
+  if (!(await more.isVisible().catch(() => false))) return;
+  await person.press(more, "More…");
+  await person.settle(120);
 }
 
 /** An act's control, by the id the derivation gave it or else by its title. */
@@ -1828,6 +1843,8 @@ export const JOBS = {
         return said();
       };
       if (await saidSoon(3_000)) return;
+      await pressMore(person);
+      if (await saidSoon(1_000)) return;
       const more = page.locator('[data-testid="withheld-more"]').locator("visible=true").first();
       if (await appears(more, 3_000)) {
         await person.press(more, "what is withheld");
@@ -1998,6 +2015,7 @@ export const KEYBOARD_WHY = {
   make: "a form is answered field by field: the pointer goes straight to each field it needs, and the keyboard passes the ones it does not, and crosses the bar to the act that opens it",
   "find/pages": "Find on the pages answers on a page of its own: the keyboard goes on from the box past the bar's tools to the row, where the pointer presses the row it reads",
   "seedbed relate/pages": "the garden's plot page draws every act's form open, as its chapter shows: the caretaker's choice is a field among the sowing's above it, Tabbed past in turn, where the pointer presses the one it wants",
+  "relate/scene": "the menu opens on its field, the two ways to ask and the first few acts, and an act that ties a record to another waits behind More…: the keyboard Tabs from the field past the ways to ask to More…, then walks to the act, where the pointer presses More… and the act",
   "discography relate/pages": "two of a song's acts begin with P (\"Place it in an era\", \"Put it on a release\"), so the letter is pressed twice among its one stop of acts, and a choice is sent by its button: one key over twice the pointer's four",
   narrow: "a kind's list is a place on the bar, reached across it, and its \"Filter\" stands after the list's own chips; the pointer presses each where it is drawn",
   "several/pages": "a kind's list is a place on the bar, reached across it; into the records is one skip, and the boxes are one stop",
