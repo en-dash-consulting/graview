@@ -1,4 +1,4 @@
-import { choiceWords, InvalidArguments, isLeftAlone, layer, nounOf, signInInstead, withArticle, type AnySchema, type Store } from "@graview/core";
+import { choiceWords, InvalidArguments, isLeftAlone, layer, nounOf, pluralLabel, signInInstead, withArticle, type AnySchema, type Store } from "@graview/core";
 import { edgeWords } from "@graview/core/words";
 import { failureWords } from "@graview/core/words";
 import { linkProvenance, provenanceWords } from "@graview/core/provenance";
@@ -90,6 +90,30 @@ function ChosenActs() {
       Acts…
     </button>
   );
+}
+
+/**
+ * WHY NOTHING IS OFFERED, IN TRUE WORDS (Roadmap f-make-any-page-better).
+ * "Nothing this app declares acts on it" was said of the lists in the
+ * scene — whose app renames a list, notes why it is there and adds a task
+ * to it — because the menu was on all the lists at once, and every act is
+ * done to one. So: what is done to one is said as such ("Right-click one
+ * list to see what you can do with it"); only where nothing in the app is
+ * done to the kind at all is that said, and never in the declaration's
+ * words.
+ */
+function emptyWords(store: Store<AnySchema>, kinds: readonly string[], selection: readonly string[]): string {
+  const noun = (kind: string) => nounOf(store.schema.tryDefinition(kind), kind);
+  const plural = (kind: string) => pluralLabel(store.schema, kind).toLowerCase();
+  const doneTo = kinds.filter((kind) => store.allMutations().some((mutation) => {
+    const subject = (mutation as { subject?: { kinds?: readonly string[] | "*" } }).subject;
+    return subject?.kinds === "*" || (subject?.kinds ?? []).includes(kind);
+  }));
+  const many = selection.length !== 1 || selection.some((id) => id.startsWith("aggregate:"));
+  if (doneTo.length > 0 && many)
+    return kinds.length === 1 ? `Nothing here is done to all the ${plural(kinds[0]!)} at once. Right-click one ${noun(kinds[0]!)} to see what you can do with it.` : "Nothing here is done to all of these at once. Right-click one of them to see what you can do with it.";
+  if (doneTo.length > 0) return `There is nothing you can do with ${kinds.length === 1 ? withArticle(noun(kinds[0]!)) : "these"} here right now.`;
+  return kinds.length === 1 ? `There is nothing to do with ${withArticle(noun(kinds[0]!))} in this app yet.` : "There is nothing to do with these in this app yet.";
 }
 
 /** Whether the picture has room for a rail beside it: the scene's own box, not the window's. */
@@ -1271,10 +1295,8 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
                     : "this mix of kinds"
               } — ${withheld.length} action${withheld.length === 1 ? "" : "s"} withheld.`
             : edge
-              ? `Nothing can be done with this line yet — nothing this app declares makes or breaks “${edgeWords(store.schema, store.graph.getNode(edge.from)?.kind ?? "", edge.kind, "out")}”.`
-              : `Nothing can be done with ${
-                  subjectKinds.length === 1 ? withArticle(nounOf(store.schema.tryDefinition(subjectKinds[0]!), subjectKinds[0]!)) : "this mix of kinds"
-                } yet — nothing this app declares acts on ${subjectKinds.length === 1 ? "it" : "them"}.`}
+              ? `There is nothing to do with this line here: nothing in this app makes or breaks “${edgeWords(store.schema, store.graph.getNode(edge.from)?.kind ?? "", edge.kind, "out")}”.`
+              : emptyWords(store, subjectKinds, selection)}
         </p>
       ) : (
         <ol

@@ -251,7 +251,7 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
 
   const said: PagePartSaid = { name: part.name, slot: part.slot, ...(part.kind ? { kind: part.kind } : {}), ...(part.group ? { group: part.group } : {}) };
   const placeName = part.place ?? (part.kind ? `${part.kind}-${part.slot}` : "home");
-  const scope = `This changes how ${part.name} looks for everyone in this app.`;
+  const scope = ask.fromScene ? `From the scene: Better UI changes how “${part.name}” looks on its page here, for everyone in this app.` : `This changes how ${part.name} looks for everyone in this app.`;
   const entryOf = useCallback(
     (asked: string, outcome: AiInteraction["outcome"], stages: readonly SectionStage[], extra: Partial<AiInteraction> = {}): AiInteraction => ({
       id: interactionId(),

@@ -117,7 +117,7 @@ export function EditableValue<S extends AnySchema>({
         data-graview-field={field}
         data-graview-readonly=""
         // Said, not merely implied: a value that ignores a click looks broken.
-        title={`Read-only — nothing this app declares changes the ${words}`}
+        title={`Read-only — nothing in this app changes the ${words}`}
         // An address, a VIN, a URL has nowhere to break: it breaks anywhere rather than run into the next column.
         style={{ color: "var(--graview-ink)", cursor: "default", overflowWrap: "anywhere" }}
       >
@@ -702,7 +702,7 @@ function EditableProse<S extends AnySchema>({ nodeId, field, label, value, label
         ) : (
           <div
             data-graview-field={field}
-            {...(editable ? {} : { "data-graview-readonly": "", title: `Read-only — nothing this app declares changes the ${words}` })}
+            {...(editable ? {} : { "data-graview-readonly": "", title: `Read-only — nothing in this app changes the ${words}` })}
             // The words open it too, for a pointer; the keyboard's way in is the button by the label.
             {...(editable ? { onClick: () => setEditing(true) } : {})}
             style={{ cursor: editable ? "text" : "default", minWidth: 0 }}

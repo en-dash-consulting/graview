@@ -4,10 +4,11 @@ import { viewPlaceOf } from "@graview/react/drawing";
 import { placeOfSection } from "./section-words.js";
 import { nudgesFor, pageMayChange, pagePartOf, PARTS, type PagePart } from "./page-parts.js";
 import { aboutTheLook } from "@graview/tools/section";
-import { lazyModule, useGraview, type AiDesk, type GraviewContextValue, type MenuSection, type MenuTarget, type MenuViewSection } from "@graview/react/provider";
+import { lazyModule, useGoTo, useGraview, type AiDesk, type GraviewContextValue, type MenuPage, type MenuSection, type MenuTarget, type MenuViewSection } from "@graview/react/provider";
+import { pluralLabel } from "@graview/core";
 
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
-import { Suspense, useEffect, useId, useMemo, useSyncExternalStore, type ComponentType } from "react";
+import { Suspense, useEffect, useId, useMemo, useRef, useSyncExternalStore, type ComponentType } from "react";
 import type { SectionDrawnProps } from "./section-better.js";
 import { SectionOutline } from "./section-outline.js";
 
@@ -26,6 +27,8 @@ export type SectionMode = "just" | "describe" | "highlight" | "choose";
 export type SectionAsk = ({ readonly section: MenuViewSection; readonly part?: undefined } | { readonly part: PagePart; readonly section?: undefined }) & {
   readonly mode: SectionMode;
   readonly words?: string;
+  /** Asked with a right-click in the scene, and opened on the part's page: the card says so. */
+  readonly fromScene?: boolean;
   readonly at: number;
   readonly returnTo?: HTMLElement | null;
 };
@@ -97,11 +100,63 @@ const betterMode = (here: SectionHere, name: string, open: (words?: string) => v
   prepare,
 });
 
+/*
+ * ✨ BETTER UI IN THE SCENE (Roadmap f-make-any-page-better). A right-click
+ * on a place or a record in the scene offered Chat alone: Better UI came
+ * only from the routed face's page parts. The scene draws a place and a
+ * kind's records with the same declaration the pages draw them with, and a
+ * new design is made and judged on a page, so the scene offers Better UI
+ * for what is under the pointer — the place ("The lists"), or the kind's
+ * list a record is on ("Tasks") — and opens it on that page: the pages are
+ * switched to, the page gone to, and the card opened there, saying it came
+ * from the scene. Carried across the switch in this tab's session, which a
+ * host that draws the pages at their own address reloads into.
+ */
+const CARRY = "graview.better.from-scene";
+/** How long a Better UI asked in the scene waits for its page to be drawn. */
+const CARRY_MS = 30_000;
+interface Carried {
+  readonly to: { readonly list: string } | { readonly place: string };
+  readonly mode: SectionMode;
+  readonly words?: string;
+  readonly at: number;
+}
+
+/** The part of the pages a right-click in the scene is about: a place by its title, or the list of the kind it is on. */
+function scenePartOf(target: MenuTarget, here: SectionHere): { readonly name: string; readonly to: Carried["to"]; readonly part: PagePart } | undefined {
+  const schema = here.store.schema;
+  const places = here.views.places?.() ?? [];
+  const placed = (as: string) => places.find((one) => one.as === as);
+  const one = target.on ?? (target.about.length === 1 ? target.about[0] : undefined);
+  const aggregate = one?.startsWith("aggregate:") ? one.slice("aggregate:".length) : undefined;
+  const node = one && !aggregate ? here.store.graph.getNode(one) : undefined;
+  const place = target.place !== undefined ? placed(target.place) : aggregate && !aggregate.includes("+") ? places.find((each) => each.kind === aggregate) : undefined;
+  if (place) return { name: place.title, to: { place: place.as }, part: { name: place.title, slot: "place", kind: place.kind, place: place.as, elements: [], main: null } };
+  const kind = aggregate && !aggregate.includes("+") && schema.tryDefinition(aggregate) ? aggregate : node?.kind;
+  if (!kind) return undefined;
+  const name = pluralLabel(schema, kind);
+  return { name, to: { list: kind }, part: { name, slot: "list", kind, elements: [], main: null } };
+}
+
 /** ✨ Better UI for a menu opened on a section of a view or on a page's part, or nothing where it is not this seat's to offer. */
 export function sectionFor(target: MenuTarget, here: SectionHere): MenuSection | null {
   const { aiDesk, keptViews } = here;
   const section = target.section;
   const returnTo = target.element ?? null;
+  if (!section && target.face === "scene") {
+    const pages = typeof document === "undefined" ? null : document.querySelector<HTMLElement>('[data-testid="app-face-pages"]');
+    const scene = scenePartOf(target, here);
+    if (!pages || !scene || !pageMayChange(scene.part, here)) return null;
+    const open = (words?: string) => {
+      try {
+        sessionStorage.setItem(CARRY, JSON.stringify({ to: scene.to, mode: words ? "describe" : "choose", ...(words ? { words } : {}), at: Date.now() } satisfies Carried));
+      } catch {
+        return;
+      }
+      pages.click();
+    };
+    return betterMode(here, scene.name, open, () => [`Make “${scene.name}” easier to read at a glance`], () => drawn.prefetch());
+  }
   if (section) {
     // Asked as the menu opens: the host says who may change views now, and the view's place must lend a revision.
     if (!keptViews?.revise || keptViews.current().may.views !== true || !viewPlaceOf(placeOfSection(section))) return null;
@@ -120,7 +175,48 @@ const outlinedPart = (page: NonNullable<MenuTarget["page"]>): readonly Element[]
 
 /** Where the outline and the card are drawn: nothing at all until a menu is open on a section or a card is asked for. */
 export function SectionDoor() {
-  const { aiDesk, menuAt } = useGraview<AnySchema>();
+  const here = useGraview<AnySchema>();
+  const { aiDesk, menuAt } = here;
+  const goTo = useGoTo();
+  const latest = useRef({ here, goTo });
+  latest.current = { here, goTo };
+  /* A Better UI asked in the scene: once the pages are drawn here, its page is gone to and its card opened on it. */
+  useEffect(() => {
+    let carried: Carried | null = null;
+    try {
+      carried = JSON.parse(sessionStorage.getItem(CARRY) ?? "null") as Carried | null;
+    } catch {
+      return;
+    }
+    if (!carried || Date.now() - carried.at > CARRY_MS) return;
+    const to = carried.to;
+    try {
+      sessionStorage.removeItem(CARRY);
+    } catch {
+      // Kept or not, it is taken now.
+    }
+    // The page asked for, gone to at once; the card opened on it once it is drawn.
+    if ("list" in to) latest.current.goTo.list(to.list);
+    else latest.current.goTo.place(to.place);
+    let tries = 0;
+    const timer = setInterval(() => {
+      tries += 1;
+      // A page drawn: its own region, else the region around its title (a product's own design marks no region).
+      const title = document.querySelector("[data-graview-page-title]");
+      const pages = document.querySelector("[data-graview-page-main]") ?? title?.closest("main") ?? title?.parentElement?.parentElement ?? null;
+      if (!pages || tries < 4) {
+        if (tries > 150) clearInterval(timer);
+        return;
+      }
+      clearInterval(timer);
+      const page: MenuPage = "place" in to ? { at: pages, place: to.place } : { at: pages, about: [`aggregate:${to.list}`] };
+      const part = pagePartOf(page, latest.current.here);
+      if (!part || !pageMayChange(part, latest.current.here)) return;
+      PARTS.set(pages, part);
+      askSection(latest.current.here.aiDesk, carried!.words ? { part, mode: "describe", words: carried!.words, fromScene: true } : { part, mode: carried!.mode, fromScene: true });
+    }, 120);
+    return () => clearInterval(timer);
+  }, []);
   const held = heldOf(aiDesk);
   const id = useId();
   const subscribe = useMemo(

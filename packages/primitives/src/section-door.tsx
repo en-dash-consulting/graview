@@ -2,7 +2,7 @@ import type { AnySchema } from "@graview/core";
 import { alsoWhenSectionsArrive, MenuSections } from "@graview/react/drawing";
 import { useGraview, type MenuSectionSource, type MenuTarget } from "@graview/react/provider";
 import { inlineAiOn } from "@graview/tools/frame";
-import { useMemo, useRef, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useSyncExternalStore, type ReactNode } from "react";
 
 /**
  * MAKE THIS SECTION BETTER (Roadmap f-make-this-section-better): the door,
@@ -53,7 +53,28 @@ export function useSectionBetterSection(): MenuSectionSource | null {
   const pages = (onProposeChange !== undefined && composeChange !== undefined) || typeof keptViews?.fork === "function";
   const on = inlineAiOn(ai) && (typeof keptViews?.revise === "function" || pages);
   if (on) alsoWhenSectionsArrive(load);
-  return useMemo<MenuSectionSource | null>(() => (on ? (target: MenuTarget) => ((target.section || target.page) && menu ? menu.sectionFor(target, held.current) : null) : null), [on]);
+  /*
+   * In the scene, a right-click on a place or a record offers Better UI for
+   * its page: the menu's section is fetched with the first one, and the
+   * menu draws it once it is here.
+   */
+  const loaded = useSyncExternalStore(hear, () => menu !== undefined, () => false);
+  return useMemo<MenuSectionSource | null>(
+    () =>
+      on
+        ? (target: MenuTarget) => {
+            const asks = target.section || target.page || (target.face === "scene" && pages && (target.on !== undefined || target.place !== undefined || target.about.length === 1));
+            if (!asks) return null;
+            if (!menu) {
+              void load();
+              return null;
+            }
+            return menu.sectionFor(target, held.current);
+          }
+        : null,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [on, pages, loaded],
+  );
 }
 
 const NONE: readonly MenuSectionSource[] = [];
@@ -68,5 +89,13 @@ export function SectionBetterSections({ children }: { readonly children: ReactNo
 /** Where the outline and the card are drawn, once the first right-click inside a view has fetched them. */
 export function SectionBetterDoor() {
   const Door = useSyncExternalStore(hear, () => menu?.SectionDoor, () => undefined);
+  // A Better UI asked in the scene, carried to the pages: what opens it is fetched at once.
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem("graview.better.from-scene")) void load();
+    } catch {
+      // No session to carry it in: nothing was carried.
+    }
+  }, []);
   return Door ? <Door /> : null;
 }
