@@ -150,11 +150,11 @@ function RelationRow<S extends AnySchema>({ context, id, relation, inPlace }: { 
     }
   };
   const empty = relation.targets.length === 0;
-  const opener = (text: string, aria: string) => (
+  // The way to add one says it in the act's own words ("This has to happen first", "Add a presenter"): what pressing it does, named as the app named it.
+  const opener = (text: string) => (
     <button
       type="button"
       data-graview-relation-set={set!.affordance.mutation}
-      aria-label={aria}
       aria-expanded={picking}
       title={`${set!.affordance.label} — an act, so it is in the history and can be taken back`}
       onClick={() => {
@@ -218,8 +218,8 @@ function RelationRow<S extends AnySchema>({ context, id, relation, inPlace }: { 
               </span>
             );
           })}
-          {/* None yet, or room for another: the way to add one, quiet beside what is there, named for the row it adds to. */}
-          {set && (empty || !relation.one) ? opener(empty ? (relation.one ? "Choose…" : "Add one") : "Add", empty ? `${relation.label}: ${relation.one ? "choose" : "add one"}` : `${relation.label}: add`) : null}
+          {/* None yet, or room for another: the way to add one, quiet beside what is there, in the act's own words. */}
+          {set && (empty || !relation.one) ? opener(set.affordance.label) : null}
           {empty && !set ? <span style={{ color: "var(--graview-ink-faint)" }}>None</span> : null}
           {refused ? (
             <span role="status" data-graview-refused={relation.edgeKind} style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>

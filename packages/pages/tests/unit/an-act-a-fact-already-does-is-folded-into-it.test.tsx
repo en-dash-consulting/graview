@@ -182,7 +182,7 @@ describe("on the record's page", () => {
     await act(async () => remove.click());
     expect(store.graph.out("paint", "waits-for")).toEqual([]);
     const add = row().querySelector<HTMLButtonElement>("[data-graview-relation-set]")!;
-    expect(add.textContent).toBe("Add one");
+    expect(add.textContent).toBe("This has to happen first");
     await act(async () => add.click());
     const tape = [...row().querySelectorAll<HTMLButtonElement>("[data-graview-candidate]")].find((one) => one.textContent === "Tape the edges")!;
     await act(async () => tape.click());
