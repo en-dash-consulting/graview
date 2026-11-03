@@ -756,8 +756,9 @@ try {
       const facts = await factsSaid(todo);
       check("todo · a record page: each fact changed in place says which fact it is", facts.said.length > 0 && facts.bare.length === 0, facts);
 
-      const form = stop("Things (todo)", "An act's form", "“Rename …” on the record page: opened, sent, and the keyboard after.");
-      const opener = todo.getByRole("main").getByRole("button", { name: /^Rename/ }).first();
+      // "Rename" is the heading itself now (Roadmap f-facts-by-type); an act beyond the facts opens a form.
+      const form = stop("Things (todo)", "An act's form", "“Note why this is here …” on the record page: opened, sent, and the keyboard after.");
+      const opener = todo.getByRole("main").getByRole("button", { name: /^Note why this is here/ }).first();
       await press(opener);
       await todo.waitForTimeout(600);
       const inForm = await focusSaid(todo, tcdp);
@@ -767,7 +768,7 @@ try {
       const since = Date.now();
       await todo.locator('main form input[type="text"], main form textarea').first().focus();
       await todo.keyboard.press("ControlOrMeta+a");
-      await todo.keyboard.type("Pay the deposit today");
+      await todo.keyboard.type("The landlord asked for it by Friday");
       await todo.keyboard.press("Enter");
       await todo.waitForTimeout(1200);
       const afterSend = await focusSaid(todo, tcdp);
