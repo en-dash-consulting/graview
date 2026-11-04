@@ -69,7 +69,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.65
 
-Published October 30, 2026 · the current version
+Published October 30, 2026
 
 Type in the right-click menu and Graview works out what you mean, says what it will do and does it on Yes; what people tell it is kept, rated and suggested back; a section of a written view can be made better in place; a revision says what it broke; and on a phone the sheet leaves the city where it stood.
 

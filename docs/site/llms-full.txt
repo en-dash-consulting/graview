@@ -6,7 +6,7 @@
 - Start a product: `npm create graview@latest my-app` (Node 22 or later)
 - License: Elastic License 2.0 — source-available, free to build with and to ship products on
 - Source: https://github.com/en-dash-consulting/graview
-- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.1.65)
+- npm: https://www.npmjs.com/package/graview — 14 packages, one version ()
 - Hosted: Graview Cloud, https://graview.cloud (private alpha, invite-only)
 
 ## Questions, answered plainly
@@ -952,7 +952,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.65
 
-Published October 30, 2026 · the current version
+Published October 30, 2026
 
 Type in the right-click menu and Graview works out what you mean, says what it will do and does it on Yes; what people tell it is kept, rated and suggested back; a section of a written view can be made better in place; a revision says what it broke; and on a phone the sheet leaves the city where it stood.
 
