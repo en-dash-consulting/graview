@@ -320,7 +320,11 @@ async function verifyAltitudeCut() {
       const control = document.querySelector('[data-testid="overview"]');
       const wing = control?.querySelector(".graview-altitude-mark-wing");
       return {
-        grid: getComputedStyle(ground, "::before").opacity,
+        // The fine measure is an element of its own on the ground since 2026-10-24 (`.graview-measure`, where the ground's ::before was): read there, the ::before is always 1.
+        grid: (() => {
+          const measure = ground.querySelector(":scope > .graview-measure");
+          return measure ? getComputedStyle(measure).opacity : "missing";
+        })(),
         altitude: getComputedStyle(ground).getPropertyValue("--graview-altitude").trim(),
         overview: document.querySelector("[data-graview-altitude]") !== null,
         markWing: wing ? getComputedStyle(wing).opacity : "missing",
