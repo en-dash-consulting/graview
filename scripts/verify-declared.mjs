@@ -73,6 +73,7 @@ import { engineName, launchEngine } from "./lib/engine.mjs";
 import { graviewSources } from "./lib/graview-sources.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { vacant } from "./lib/serve.mjs";
+import { faceShown } from "./lib/bar.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -325,7 +326,9 @@ try {
   /* ---- FR-80 on the scene: it opens on the place pages.first names; FR-79: each place's stop draws its lens */
   {
     const page = await open("face=scene");
-    const opened = await page.evaluate(() => ({ stop: window.__handle.where().stop, scenePressed: document.querySelector('[data-testid="app-face-scene"]')?.getAttribute("aria-pressed") === "true" }));
+    const stop = await page.evaluate(() => window.__handle.where().stop);
+    // The face is said in the app menu (Roadmap f-app-bar-calm): Scene is the row drawn checked.
+    const opened = { stop, scenePressed: (await faceShown(page)) === "scene" };
     report.checks.theSceneOpensOnTheFirstPlace = { ...opened, ok: opened.stop.includes("view=the-floor") && opened.scenePressed };
     const drawn = {};
     for (const title of TITLES) {

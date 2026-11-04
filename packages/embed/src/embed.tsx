@@ -1,16 +1,17 @@
 import { retryingImport } from "@graview/core/retry";
 import { addressOf, OVERVIEW_PATH, pagesTitle, pathWithin, sceneTitle, type AnySchema, type Brand, type GraviewApp, type Person, type Place, type Principal, type Store } from "@graview/core";
 import { EMPTY_VIEW, fromUrl, toUrl, withFocus, withOverview, type ViewState } from "@graview/layout/view";
-import { appKeyOf, BarFindContext, descentTarget, fetchFrameworkViews, fetchNotices, frameworkViewDoors, frameworkVoice, NoticeBoardContext, sceneReportWhere, useWidth, type BarFind } from "@graview/primitives/frame";
+import { appKeyOf, BarFindContext, descentTarget, fetchFrameworkViews, fetchNotices, frameworkViewDoors, frameworkVoice, NoticeBoardContext, sceneReportWhere, useWidth, type AppMenuRow, type BarFind, type BarScheme, type BarShare } from "@graview/primitives/frame";
 import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } from "@graview/studio";
 import { createNoticeBoard, quickAskOf, type Notice, type NoticeHandle } from "@graview/primitives/frame";
-import { afterFirstDraw, createPartsWatch, ErrorReportContext, GraviewProvider, lazyModule, markLanded, openingView, PageDoorContext, PartsWatchContext, useNavigation, type AwaySummary, type ErrorReport, type PageDoor, type PartsWatch, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
+import { afterFirstDraw, createPartsWatch, ErrorReportContext, GraviewProvider, lazyModule, markLanded, openingView, PageDoorContext, PartsWatchContext, useNavigation, type AwaySummary, type ErrorReport, type HostNotification, type PageDoor, type PartsWatch, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
 import { AddressBar, atTheBareHome, faceAtAddress, holdsNothing, landing, placed, stopAtAddress, whereTheSceneOpens } from "./address.js";
 import { createContext, createElement, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import type { EmbedWhere } from "./where.js";
 import { useDrawnSignal } from "./drawn.js";
 import { draftWaits, fetchDraftHost, Settling, useDraft, type EmbedDraftView } from "./draft.js";
 import { createRoot, type Root } from "react-dom/client";
+import { lendViewPressing } from "@graview/guest/host/pressing";
 import { flushSync } from "react-dom";
 import {
   AUTO_SCENE_HEIGHT,
@@ -19,6 +20,9 @@ import {
   FrameBar,
   FrameFirstLook,
   FrameNotices,
+  hostBarOf,
+  hostBarProps,
+  type HostBar,
   placeOfPath,
   providerProps,
   storeOf,
@@ -83,6 +87,8 @@ const SceneFace = scene.Face;
 const SceneKeeping = sceneKeeping.Face;
 const PagesContent = pages.Face;
 const PictureFace = picture.Face;
+// Pressing a draft's controls before anybody sees it (Roadmap f-make-any-page-better): fetched only when a draft is pressed, and lent here, where the framework it reads with is already up front.
+lendViewPressing(retryingImport(() => import("@graview/guest/headless/pressed-here")));
 
 /**
  * FETCH A FACE BEFORE IT IS DRAWN (FR-57). A host that knows which face it
@@ -664,9 +670,11 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
               standing={standing}
               hostActions={props.hostActions}
               barActions={props.barActions}
+              appMenu={props.appMenu}
+              schemeChoice={props.schemeChoice}
+              share={props.share}
               keeping={onPages ? undefined : <Keeping app={app} studio={props.studio} report={report} />}
               onFind={setBarFind}
-              switch={props.switch}
             />
           </FaceBoundary>
         ) : null}
@@ -874,6 +882,14 @@ export interface EmbedHandle {
   setHostActions(actions: EmbedOptions["hostActions"]): void;
   /** The host's buttons on the bar (FR-227), now: given, they are drawn from the next render; `undefined` takes them off. */
   setBarActions(actions: EmbedOptions["barActions"]): void;
+  /** The host's rows in the app menu (Roadmap f-app-bar-calm), now; `undefined` takes them off. */
+  setAppMenu(rows: readonly AppMenuRow[] | undefined): void;
+  /** The host's Share beside the people (Roadmap f-app-bar-calm), now: who can open the app changed, say; `undefined` takes it off. */
+  setShare(share: BarShare | undefined): void;
+  /** The scheme the app menu offers (Roadmap f-scheme-choice-mount), now: the person's choice as the host keeps it; `undefined` takes it off. */
+  setSchemeChoice(choice: BarScheme | undefined): void;
+  /** The host's notifications in the inbox (Roadmap f-app-bar-calm), now; `undefined` takes them off. */
+  setNotifications(notifications: readonly HostNotification[] | undefined): void;
   setFace(face: EmbedFace): void;
   setStop(stop: string): void;
   /**
@@ -944,6 +960,7 @@ interface Setters {
   label(label: string | undefined): void;
   hostActions(actions: EmbedOptions["hostActions"]): void;
   barActions(actions: EmbedOptions["barActions"]): void;
+  hostBar(bar: HostBar): void;
   draft(draft: EmbedDraftView | null): void;
 }
 
@@ -1005,6 +1022,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
     const [called, setCalled] = useState<string | undefined>(options.label);
     const [hostActions, setHostActions] = useState<EmbedOptions["hostActions"]>(options.hostActions);
     const [barActions, setBarActions] = useState<EmbedOptions["barActions"]>(options.barActions);
+    const [hostBar, setHostBar] = useState<HostBar>(() => hostBarOf(options));
     const [swap, setSwap] = useState<Swap | undefined>(undefined);
     const [draft, setDraft] = useState<EmbedDraftView | null | undefined>(options.draftView);
     setters = {
@@ -1013,7 +1031,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
         setPath(undefined);
         setStop(undefined);
       },
-      face: setFace, stop: setStop, path: setPath, scheme: setScheme, seat: setSeat, seats: setSeats, quickAsk: setQuickAsk, people: setPeople, hostContext: setHostContext, brand: setBrand, whileAway: setWhileAway, label: setCalled, hostActions: setHostActions, barActions: setBarActions, draft: setDraft };
+      face: setFace, stop: setStop, path: setPath, scheme: setScheme, seat: setSeat, seats: setSeats, quickAsk: setQuickAsk, people: setPeople, hostContext: setHostContext, brand: setBrand, whileAway: setWhileAway, label: setCalled, hostActions: setHostActions, barActions: setBarActions, hostBar: (bar) => setHostBar((held) => ({ ...held, ...bar })), draft: setDraft };
     return (
       <Whereabouts.Provider value={here}>
       <Embed<S>
@@ -1037,6 +1055,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
         label={called}
         hostActions={hostActions}
         barActions={barActions}
+        {...hostBarProps(hostBar)}
         draftView={draft}
         scheme={scheme}
         onFace={(next) => {
@@ -1116,6 +1135,10 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
     },
     setHostActions: (actions) => flushSync(() => setters?.hostActions(actions)),
     setBarActions: (actions) => flushSync(() => setters?.barActions(actions)),
+    setAppMenu: (appMenu) => flushSync(() => setters?.hostBar({ appMenu })),
+    setShare: (share) => flushSync(() => setters?.hostBar({ share })),
+    setSchemeChoice: (schemeChoice) => flushSync(() => setters?.hostBar({ schemeChoice })),
+    setNotifications: (notifications) => flushSync(() => setters?.hostBar({ notifications })),
     /* Drawn is the face asked for — below `pagesBelow`, drawn as the pages that stand in for it. */
     drawn: () => swapping.then(() => (drawnFace === asked ? undefined : new Promise<void>((resolve) => waiting.push(resolve)))),
     notify: (notice) => {

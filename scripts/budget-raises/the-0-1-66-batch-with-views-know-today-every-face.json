@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 7200,
+  "gzipped": 3700,
+  "note": "Raised when a worker view reading today from graview (f-views-know-today, #511) joined the 0.1.66 batch in batch/0-1-66: its own raise held it on main, and beside the batch's five the bundle spent that and 7_054 more minified, 3_577 more gzipped. Raised 7_200 / 3_700 to hold it. Measured at 3_022_237 / 1_095_503 against 3_015_183 / 1_091_926."
+}

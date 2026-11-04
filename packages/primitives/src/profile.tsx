@@ -24,7 +24,6 @@ import { barPanes as panes } from "./bar-panes-door.js";
  *   your settings — drawn from the DECLARATION. Nothing here knows what
  *                 "text size" means; it renders what the app declared and
  *                 the provider has already carried the answer to the root.
- *   the scheme  — light or dark, which was on the bar alone.
  *   keeping it — and, for the seat that keeps this installation ONLY, the
  *                ways into it: its own districts, and its declaration.
  *
@@ -41,8 +40,6 @@ import { barPanes as panes } from "./bar-panes-door.js";
  * not them.
  */
 export function Profile<S extends AnySchema>({
-  scheme,
-  onScheme,
   /** Where a person's own record lives on the routed face, if there is one. */
   profileHref,
   /**
@@ -58,14 +55,6 @@ export function Profile<S extends AnySchema>({
   hostActions = NO_HOST_ACTIONS,
   signature = false,
 }: {
-  /**
-   * The scheme, where this surface owns it. An embed wears the scheme its
-   * host chose and has no business offering to change it, so both are
-   * optional and the block is simply absent — a control that cannot act is
-   * worse than no control.
-   */
-  readonly scheme?: "light" | "dark";
-  readonly onScheme?: (scheme: "light" | "dark") => void;
   readonly profileHref?: (userId: string) => string;
   readonly keeping?: ReactNode;
   /** The host's own ways out and about: its links, drawn under who you are (FR-72). */
@@ -232,7 +221,7 @@ export function Profile<S extends AnySchema>({
 
           {everOpened ? (
             <Suspense fallback={null}>
-              <ProfileRest part="rest"name={name} me={me} scheme={scheme} onScheme={onScheme} hostActions={hostActions} signature={signature} close={() => popover.setOpen(false)} />
+              <ProfileRest part="rest"name={name} me={me} hostActions={hostActions} signature={signature} close={() => popover.setOpen(false)} />
             </Suspense>
           ) : null}
         </section>

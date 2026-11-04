@@ -176,10 +176,13 @@ describe("the keyboard's cost", () => {
   const jobs = (id: string, runs: Record<string, Run & { firstBox?: { presses: number; skip: string | null } }>) => ({ apps: { todo: { jobs: { [id]: { says: id, runs } } } } });
 
   it("holds every job to twice the pointer's presses, and lets one through only where the verdict says why", () => {
-    const held = keyboardChecks(jobs("relate", { "scene/1440/pointer": run(true, 5), "scene/1440/keyboard": run(true, 10) }));
+    const held = keyboardChecks(jobs("rename", { "scene/1440/pointer": run(true, 5), "scene/1440/keyboard": run(true, 10) }));
     expect(held.theKeyboardCostsAtMostTwiceThePointer).toMatchObject({ ok: true, within: 1, unnamed: [] });
-    const over = keyboardChecks(jobs("relate", { "scene/1440/pointer": run(true, 5), "scene/1440/keyboard": run(true, 11) }));
-    expect(over.theKeyboardCostsAtMostTwiceThePointer).toMatchObject({ ok: false, unnamed: ["todo relate scene/1440: 11 by keyboard, 5 by pointer"] });
+    const over = keyboardChecks(jobs("rename", { "scene/1440/pointer": run(true, 5), "scene/1440/keyboard": run(true, 11) }));
+    expect(over.theKeyboardCostsAtMostTwiceThePointer).toMatchObject({ ok: false, unnamed: ["todo rename scene/1440: 11 by keyboard, 5 by pointer"] });
+    // A tie to another record waits behind the menu's More…, and the verdict says so.
+    const tied = keyboardChecks(jobs("relate", { "scene/1440/pointer": run(true, 6), "scene/1440/keyboard": run(true, 13) }));
+    expect(tied.theKeyboardCostsAtMostTwiceThePointer.named).toEqual([{ why: keyboardWhy("relate", "scene", "todo"), runs: ["todo relate scene/1440: 13 by keyboard, 6 by pointer"] }]);
     // Where a job's reason is one app's own design, it is named for that app and no other.
     const garden = { apps: { seedbed: jobs("relate", { "pages/1440/pointer": run(true, 3), "pages/1440/keyboard": run(true, 11) }).apps.todo } };
     const named = keyboardChecks(garden);
@@ -188,7 +191,7 @@ describe("the keyboard's cost", () => {
     const elsewhere = keyboardChecks(jobs("relate", { "pages/1440/pointer": run(true, 4), "pages/1440/keyboard": run(true, 12) }));
     expect(elsewhere.theKeyboardCostsAtMostTwiceThePointer).toMatchObject({ ok: false, unnamed: ["todo relate pages/1440: 12 by keyboard, 4 by pointer"] });
     expect(keyboardWhy("relate", "pages", "todo")).toBeNull();
-    expect(keyboardWhy("relate", "scene")).toBeNull();
+    expect(keyboardWhy("rename", "scene")).toBeNull();
     // Taken back by the key the offer says, undo on the scene has no reason left.
     expect(keyboardWhy("undo", "scene")).toBeNull();
     expect(keyboardWhy("make-task", "scene")).toBe(keyboardWhy("make-plot", "pages"));

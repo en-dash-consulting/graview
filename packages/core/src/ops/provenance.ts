@@ -15,7 +15,7 @@ import type { Author, Operation } from "./types.js";
  */
 export function lineageWords(lineage: Lineage): string {
   return [
-    `based on “${lineage.basis}”`,
+    lineage.basis,
     ...(lineage.confidence !== undefined ? [`${Math.round(lineage.confidence * 100)}% sure`] : []),
     ...(lineage.model ? [lineage.model] : []),
   ].join(" · ");
@@ -40,7 +40,7 @@ export interface LinkProvenance {
 
 /** A provisional link said in a sentence, the same on every face: who made it, and what it was based on. */
 export const provenanceWords = (link: LinkProvenance): string =>
-  `Not yet kept by a person. ${link.by.name ?? link.by.id ?? "Something"} made it${link.lineage ? `, ${lineageWords(link.lineage)}` : ""}.`;
+  `Not yet kept by a person. ${link.by.name ?? link.by.id ?? "Something"} made it${link.lineage ? `: ${lineageWords(link.lineage)}` : ""}.`;
 
 /** A link as provenance asks about it: its kind and its two ends. */
 export type LinkRef = { readonly kind: string; readonly from: string; readonly to: string };

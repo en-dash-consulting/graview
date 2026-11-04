@@ -198,6 +198,20 @@ try {
     const gpuPath = await pathOf(gpu.page, "gpu");
     report.gpu.path = gpuPath;
     report.gpu.browser = executablePath ?? "the bundled Chromium";
+    /*
+     * WHAT THE ADAPTER IS. The Nightly's runner has no GPU: its Chrome draws
+     * WebGPU on SwiftShader, in software. Until Chrome 157 its element
+     * capture hit-tested where a view is laid out, so the page stayed on the
+     * DOM path there and none of the GPU's claims were asked; from 157 the
+     * GPU path is taken, and a software adapter may fail a frame while the
+     * picture moves and fall back for good, as the page is meant to.
+     */
+    report.gpu.adapter = await gpu.page.evaluate(async () => {
+      const adapter = await navigator.gpu?.requestAdapter();
+      if (!adapter) return null;
+      const info = adapter.info ?? {};
+      return { vendor: info.vendor ?? "", architecture: info.architecture ?? "", device: info.device ?? "", description: info.description ?? "", fallback: Boolean(adapter.isFallbackAdapter ?? info.isFallbackAdapter) };
+    }).catch(() => null);
     // Chrome 155's capture build (`layoutSubtree`) ignores a reported geometry, so a press misses what was drawn: it is held to the DOM path.
     report.gpu.hitsWhereLaidOut = await gpu.page.evaluate(() => "layoutSubtree" in HTMLCanvasElement.prototype);
     if (gpuPath.renderer !== "gpu") {
@@ -283,11 +297,16 @@ try {
 }
 
 const gpuDrew = report.gpu.path?.renderer === "gpu";
+/* An adapter with no hardware of its own: staying on the GPU while the picture moves is not demanded of it, and the verdict says why. */
+const adapter = report.gpu.adapter;
+const software = Boolean(adapter && (adapter.fallback || /swiftshader|llvmpipe|lavapipe|softpipe|\bwarp\b|basic render/i.test([adapter.vendor, adapter.architecture, adapter.device, adapter.description].join(" "))));
+if (gpuDrew && software && !report.gpu.stillOnGpuAfterMoving)
+  report.gpu.afterMovingNotDemanded = `the adapter is software (${[adapter.vendor, adapter.architecture, adapter.description].filter(Boolean).join(", ") || "a fallback adapter"}), with no GPU of its own: the page fell back to the DOM path while the picture moved, as it does where a GPU cannot keep up, so staying on the GPU after moving is not asked of it`;
 const sameBudget = (blurred, unblurred) => blurred && unblurred && blurred.p95 <= Math.max(FRAME_MS, unblurred.p95 + SAME_BUDGET_SLACK_MS);
 report.claims = {
   ...(gpuDrew
     ? {
-        aChromiumThatCanCaptureDrawsOnTheGpuByDefault: report.gpu.path.inCanvas > 0 && report.gpu.said.length === 0 && report.gpu.stillOnGpuAfterMoving,
+        aChromiumThatCanCaptureDrawsOnTheGpuByDefault: report.gpu.path.inCanvas > 0 && report.gpu.said.length === 0 && (report.gpu.stillOnGpuAfterMoving || software),
         theAccessibilityTreeIsTheSameOnBothPaths: report.tree.same,
         theTwoPathsDrawTheSamePicture: report.picture.share <= 0.01,
         onTheGpuTheFocusedPlaneIsSharp: report.gpu.focusedPlane.share === 0,
@@ -308,5 +327,6 @@ mkdirSync(resolve(repoRoot, "docs"), { recursive: true });
 writeFileSync(resolve(repoRoot, "docs/renderer.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8");
 for (const [name, ok] of Object.entries(report.claims)) console.log(`${ok ? "ok  " : "FAIL"} ${name}`);
 if (!gpuDrew) console.log(`the GPU path was not measured: ${report.gpu.unavailable}`);
+if (report.gpu.afterMovingNotDemanded) console.log(`after moving, not asked: ${report.gpu.afterMovingNotDemanded}`);
 console.log(failed.length === 0 ? `both paths hold (${gpuDrew ? "GPU and DOM" : "DOM only here"})` : `${failed.length} claim(s) failed: ${failed.join(", ")}`);
 process.exit(failed.length === 0 ? 0 : 1);

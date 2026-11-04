@@ -18,6 +18,7 @@
  *
  *   node scripts/verify-quick-ask.mjs [--engine=chromium|webkit|firefox]   (all three by default)
  */
+import { unfold } from "./lib/menu-more.mjs";
 import { writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -25,6 +26,7 @@ import { ENGINES, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { deadline } from "./lib/deadline.mjs";
+import { openActivity } from "./lib/bar.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const asked = process.argv.find((arg) => arg.startsWith("--engine="))?.slice("--engine=".length);
@@ -236,8 +238,7 @@ async function drive(engine, checks, errors) {
 
   /* ------------------------------------------- Activity keeps each ask, once */
   reach("activityKeepsEachAskOnce");
-  await page.click('[data-testid="activity-button"]');
-  await page.waitForSelector('[data-testid="activity"]', { timeout: 10_000 });
+  await openActivity(page);
   await page.waitForFunction(() => [...document.querySelectorAll('[data-testid="activity-interaction"]')].filter((one) => /answer “|told Graview “/.test(one.textContent ?? "")).length >= 2, undefined, { timeout: 10_000 }).catch(() => undefined);
   const asks = await page.evaluate(() => [...document.querySelectorAll('[data-testid="activity-interaction"]')].map((one) => (one.textContent ?? "").replace(/\s+/g, " ").trim()).filter((text) => /answer “|told Graview “/.test(text)));
   checks.activityKeepsEachAskOnce = { asks, ok: asks.length === 2 && asks.some((text) => text.includes("what is left to do here?")) && asks.some((text) => text.includes("and after that?")) };
@@ -266,6 +267,8 @@ async function drive(engine, checks, errors) {
   await page.goto(`${at("todo")}/?${DAY}&ai=stub`, { waitUntil: "load", timeout: 90_000 });
   await ready(page);
   await page.click('[data-graview-pick="t-book"]', { button: "right" });
+  await page.waitForSelector('[data-testid="context-menu"]', { timeout: 15_000 });
+  await unfold(page);
   await page.waitForSelector('[data-menu-item="ai-ask"]', { timeout: 15_000 });
   await page.click('[data-menu-item="ai-ask"]');
   await page.waitForSelector(CARD, { timeout: 15_000 });

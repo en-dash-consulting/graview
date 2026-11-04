@@ -55,7 +55,7 @@ describe("the model door", () => {
   it("with a key, says which model, never the key", async () => {
     const { sent, res } = respond();
     await aiDevProxyHandler({ env: { ANTHROPIC_API_KEY: KEY } })(request("GET"), res);
-    expect(JSON.parse(sent.body!)).toEqual({ configured: true, provider: "anthropic", model: "claude-sonnet-5-5", fast: "claude-haiku-5-5", name: "claude", turns: true });
+    expect(JSON.parse(sent.body!)).toEqual({ configured: true, provider: "anthropic", model: "claude-sonnet-5-5", fast: "claude-haiku-5-5", design: "claude-sonnet-5-5", streams: true, name: "claude", turns: true });
     expect(sent.body).not.toContain(KEY);
     const other = respond();
     await aiDevProxyHandler({ env: { ANTHROPIC_API_KEY: KEY, GRAVIEW_AI_MODEL: "claude-opus-5-5" } })(request("GET"), other.res);
@@ -174,16 +174,17 @@ describe("the model door", () => {
       text: async () => JSON.stringify(error ? { error: { message: error } } : { choices: [{ message: { role: "assistant", content }, finish_reason: "stop" }], usage: { prompt_tokens: 21, completion_tokens: 5 } }),
     }));
 
-  for (const [provider, variable, endpoint, model, fast, name] of [
-    ["xai", "XAI_API_KEY", "https://api.x.ai/v1/chat/completions", "grok-4.7", "grok-4.20-0309-non-reasoning", "grok"],
-    ["openai", "OPENAI_API_KEY", "https://api.openai.com/v1/chat/completions", "gpt-5.4", "gpt-5.4-mini", "openai"],
+  for (const [provider, variable, endpoint, model, fast, name, design] of [
+    ["xai", "XAI_API_KEY", "https://api.x.ai/v1/chat/completions", "grok-4.7", "grok-4.20-0309-non-reasoning", "grok", "grok-4.20-0309-reasoning"],
+    ["openai", "OPENAI_API_KEY", "https://api.openai.com/v1/chat/completions", "gpt-5.4", "gpt-5.4-mini", "openai", "gpt-5.4"],
   ] as const) {
     describe(`with ${variable}`, () => {
       const SECRET = `sk-${provider}-test-key`;
       it("says which provider and models, never the key, and that a turn's tools are not its", async () => {
         const { sent, res } = respond();
         await aiDevProxyHandler({ env: { [variable]: SECRET } })(request("GET"), res);
-        expect(JSON.parse(sent.body!)).toEqual({ configured: true, provider, model, fast, name, turns: false });
+        // The design model Better UI's agent draws with, and whether the door streams (it does, but for a fetch a test hands it).
+        expect(JSON.parse(sent.body!)).toEqual({ configured: true, provider, model, fast, design, streams: true, name, turns: false });
         expect(sent.body).not.toContain(SECRET);
       });
 
@@ -203,6 +204,14 @@ describe("the model door", () => {
           ],
         });
         expect(JSON.parse(sent.body!)).toEqual({ text: "Ada is on Thursday.", usage: { inputTokens: 21, outputTokens: 5 } });
+      });
+
+      it("asks Better UI's agent's prompt of its design model, or the one GRAVIEW_AI_DESIGN_MODEL names", async () => {
+        const upstream = chat('{"say": "Cards.", "do": "look"}');
+        await aiDevProxyHandler({ env: { [variable]: SECRET }, fetch: upstream })(request("POST", JSON.stringify({ prompt: "redesign", tier: "design" })), respond().res);
+        expect(JSON.parse(upstream.mock.calls[0]![1].body)).toMatchObject({ model: design });
+        await aiDevProxyHandler({ env: { [variable]: SECRET, GRAVIEW_AI_DESIGN_MODEL: "a-quicker-one" }, fetch: upstream })(request("POST", JSON.stringify({ prompt: "redesign", tier: "design" })), respond().res);
+        expect(JSON.parse(upstream.mock.calls[1]![1].body)).toMatchObject({ model: "a-quicker-one" });
       });
 
       it("asks a Fast slot's prompt of its small quick model", async () => {

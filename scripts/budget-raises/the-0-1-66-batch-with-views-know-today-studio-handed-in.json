@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 0,
+  "gzipped": 400,
+  "note": "Raised when a worker view reading today from graview (f-views-know-today, #511) joined the 0.1.66 batch in batch/0-1-66: beside the batch's five the bundle went 325 over gzipped. 325 more gzipped, raised 400 to hold it; the minified within the budget's room. Measured at 1_899_739 / 664_214 against 2_003_166 / 663_889."
+}

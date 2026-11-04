@@ -1,11 +1,12 @@
 import type { HistoryHost } from "@graview/core/history";
 import { assetSrc, faviconHref, type Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type KeptViews, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal, type SignIn, type SubscriptionStore, type DismissalStore } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
-import { AppBar, appKeyOf, barPlaceAt, barPlaces, FirstLookDoor, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useThemeColor, useViewportHeight, type BarAction, type BarFaces, type BarFind, type BarGo, type BarSwitch, type FirstLook, type HostAction, type NoticeBoard, type NoticeReport, type NoticeReporting } from "@graview/primitives/frame";
-import { layerViews, useGraph, useTidiedViews, useGraview, useTheKeyboardLandsSomewhere, type AwaySummary, type ErrorReport, type FieldTyping, type KeepLensHost, type ProposeChangeHost, type ComposeChangeHost, type MenuSectionSource, type OnExport, type ReactViewRegistry, type ReaderMemory, type Scheme, type WorkflowRuns } from "@graview/react/provider";
+import { AppBar, appKeyOf, barPlaceAt, barPlaces, FirstLookDoor, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useThemeColor, useViewportHeight, type AppMenuRow, type BarAction, type BarFaces, type BarFind, type BarGo, type BarScheme, type BarShare, type FirstLook, type HostAction, type NoticeBoard, type NoticeReport, type NoticeReporting } from "@graview/primitives/frame";
+import { layerViews, useGraph, useTidiedViews, useGraview, useTheKeyboardLandsSomewhere, type AwaySummary, type ErrorReport, type FieldTyping, type KeepLensHost, type ProposeChangeHost, type ComposeChangeHost, type DraftChangeHost, type MenuSectionSource, type OnExport, type HostNotification, type ReactViewRegistry, type ReaderMemory, type Scheme, type WorkflowRuns } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { fontsLink } from "./fonts.js";
+import { useForkedViews } from "./draft.js";
 import { storeOf, useHostScheme } from "./frame-light.js";
 
 /*
@@ -227,16 +228,6 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    */
   readonly bar?: boolean | EmbedBar;
   /**
-   * HOW THE BAR'S SWITCH BETWEEN THE SCENE AND THE PAGES IS DRAWN (FR-137).
-   * `"words"`, the default, says "Scene" and "Pages" beside their marks
-   * where the bar has room, and draws the marks alone where the bar is
-   * narrow — by the bar's own width, the box the host gives it, never the
-   * screen's. `"icons"` draws the marks alone at every width, for a host
-   * whose box is small or whose own page already says what the faces are.
-   * Either way the words are the buttons' names and their titles.
-   */
-  readonly switch?: BarSwitch;
-  /**
    * THE PAGE'S ICON (FR-124): `true` when the host's page IS the app (a
    * hosted app on its own address), so the page wears the brand's
    * favicon while the embed is mounted. Off by default: an embed on
@@ -285,6 +276,41 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    */
   readonly barActions?: readonly BarAction[];
   /**
+   * THE HOST'S ROWS IN THE APP MENU (Roadmap f-app-bar-calm): the app's
+   * name opens a menu that holds the scene and the pages, then these —
+   * Graview Cloud's "App settings", "Connections" — each a link or a press
+   * with a mark beside its words where the host gives one. Set again with
+   * `setAppMenu`.
+   */
+  readonly appMenu?: readonly AppMenuRow[];
+  /**
+   * THE SCHEME, CHOSEN IN THE APP MENU (Roadmap f-scheme-choice-mount):
+   * `{ value, onChoose }`, the person's choice of System, Light or Dark as
+   * the host keeps it (`offers` narrows them). The menu asks; the host
+   * keeps the choice and hands the embed its scheme (`setScheme`). Unsaid,
+   * the menu offers none: an embed wears the scheme its host chose. Set
+   * again with `setSchemeChoice`.
+   */
+  readonly schemeChoice?: BarScheme;
+  /**
+   * A HOST'S SHARE, BESIDE THE PEOPLE (Roadmap f-app-bar-calm,
+   * f-bar-status-item): `{ label?, mark?, description, link? }` — a button
+   * with a lock or a globe and a word ("Share" unless said), whose sentence
+   * says who can open the app on hover, to a screen reader and in the
+   * popover a press opens, with the link to where that changes. Set again
+   * with `setShare` when sharing changes, without a reload.
+   */
+  readonly share?: BarShare;
+  /**
+   * THE HOST'S NOTIFICATIONS (Roadmap f-app-bar-calm): what the host tells
+   * this person, first in the inbox's "For you" and counted on its bell
+   * until each is `read`. `onNotificationsSeen` is told the ids of the
+   * unread ones a person has just been shown. Set again with
+   * `setNotifications`.
+   */
+  readonly notifications?: readonly HostNotification[];
+  readonly onNotificationsSeen?: (ids: readonly string[]) => void;
+  /**
    * THE HOST'S "REPORT THIS" (FR-237). Given, every warning or error toast
    * the framework raises itself — a tidying the host refused, a take-back
    * that failed — carries a native button, "Report this", named for the
@@ -327,6 +353,15 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
   readonly onProposeChange?: ProposeChangeHost;
   /** The host's composer and checker for a change to the app: what lets the quick ask offer a missing capability as one plan (`composeAppChange` from `@graview/core/compose`). */
   readonly composeChange?: ComposeChangeHost;
+  /**
+   * WHERE A CHANGE TO THE APP IS SHOWN BEFORE IT IS KEPT (Roadmap
+   * f-make-any-page-better): "Make “Tasks” better" hands its drafted
+   * view-spec edits here, and the host draws this page with them — nothing
+   * written, nobody else shown — answering how to put the page back
+   * (`setApp` with the changed app, then the app before). Unsaid, the card
+   * says what would change without drawing it.
+   */
+  readonly onDraftChange?: DraftChangeHost;
   /**
    * THE AI THE SEAT MAY USE, decided by the host and never by a reader:
    * `{ complete }` (the host's model: prompt in, text out) for open
@@ -524,8 +559,10 @@ export function useViews<S extends AnySchema>(
     registerReaderLenses(views, app.schema, appKeyOf(props.brand ?? app.brand, app.schema));
     return (draft ? draft.register(views as never) : views) as ReactViewRegistry<S>;
   }, [props.views, app.schema, app.viewSpecs, app.lenses, app.pages, app.home, draft]);
+  // The pages the host made views of their own (Roadmap f-make-any-page-better), and the one shown as a draft.
+  const forked = useForkedViews(views, props.keptViews, app.schema);
   // What the host lists as hidden or deleted (Roadmap f-place-menu-views), tidied out of every face at once.
-  return useTidiedViews(views, props.keptViews);
+  return useTidiedViews(forked, props.keptViews);
 }
 
 /**
@@ -753,6 +790,7 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
     onKeepLens: props.onKeepLens,
     onProposeChange: props.onProposeChange,
     composeChange: props.composeChange,
+    onDraftChange: props.onDraftChange,
     ai: props.ai,
     files: props.files,
     assetsAt: props.assetsAt,
@@ -762,6 +800,8 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
     subscriptions: props.subscriptions,
     dismissals: props.dismissals,
     whileAway: props.whileAway,
+    notifications: props.notifications,
+    onNotificationsSeen: props.onNotificationsSeen,
     workflowRuns: props.workflowRuns,
     keptViews: props.keptViews,
     onExport: props.onExport,
@@ -793,9 +833,11 @@ export function FrameBar({
   standing,
   hostActions,
   barActions,
+  appMenu,
+  schemeChoice,
+  share,
   keeping,
   onFind,
-  switch: switchForm,
   named = true,
 }: {
   readonly name: string;
@@ -815,11 +857,15 @@ export function FrameBar({
   readonly hostActions?: readonly HostAction[] | undefined;
   /** The host's buttons on the bar (FR-227). */
   readonly barActions?: readonly BarAction[] | undefined;
+  /** The host's rows in the app menu (Roadmap f-app-bar-calm). */
+  readonly appMenu?: readonly AppMenuRow[] | undefined;
+  /** The scheme the app menu offers (Roadmap f-scheme-choice-mount). */
+  readonly schemeChoice?: BarScheme | undefined;
+  /** The host's Share beside the people (Roadmap f-app-bar-calm). */
+  readonly share?: BarShare | undefined;
   /** The ways into the app, for the seat that keeps it. */
   readonly keeping?: ReactNode;
   readonly onFind: (find: BarFind | null) => void;
-  /** How the switch is drawn (`FrameOptions["switch"]`). */
-  readonly switch?: BarSwitch | undefined;
 }) {
   const { brand, store, principal, views } = useGraview();
   // Drawn again as the graph changes: a kind's first record brings it back to the row (`barPlaces`).
@@ -840,9 +886,11 @@ export function FrameBar({
       current={at === null ? null : barPlaceAt(places, at)}
       reach={reach}
       onFind={onFind}
-      {...(switchForm ? { switch: switchForm } : {})}
       {...(faces || at === null ? { scenePlaces: scene } : {})}
       {...(barActions ? { actions: barActions } : {})}
+      {...(appMenu ? { appMenu } : {})}
+      {...(schemeChoice ? { scheme: schemeChoice } : {})}
+      {...(share ? { share } : {})}
       tools={
         <>
           <Standing clean={standing} />
@@ -851,6 +899,22 @@ export function FrameBar({
       }
     />
   );
+}
+
+/** WHAT A HOST SETS ON THE BAR AFTER MOUNTING (Roadmap f-app-bar-calm): its app menu rows, its Share, the scheme choice and its notifications. */
+export interface HostBar {
+  readonly appMenu?: readonly AppMenuRow[] | undefined;
+  readonly share?: BarShare | undefined;
+  readonly schemeChoice?: BarScheme | undefined;
+  readonly notifications?: readonly HostNotification[] | undefined;
+}
+
+/** What the host gave on the bar when it mounted. */
+export const hostBarOf = (options: Pick<FrameOptions, "appMenu" | "share" | "schemeChoice" | "notifications">): HostBar => ({ appMenu: options.appMenu, share: options.share, schemeChoice: options.schemeChoice, notifications: options.notifications });
+
+/** The bar's host settings as the frame's props: what is unset is left out, never set to undefined. */
+export function hostBarProps(bar: HostBar): Pick<FrameOptions, "appMenu" | "share" | "schemeChoice" | "notifications"> {
+  return { ...(bar.appMenu ? { appMenu: bar.appMenu } : {}), ...(bar.share ? { share: bar.share } : {}), ...(bar.schemeChoice ? { schemeChoice: bar.schemeChoice } : {}), ...(bar.notifications ? { notifications: bar.notifications } : {}) };
 }
 
 /** The level a page's own title is said at: one below the app's name on the bar, or 2 when the host's own heading says the name (FR-131). */

@@ -18,6 +18,7 @@ import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
 import { at, portFor } from "./lib/ports.mjs";
+import { openActivity } from "./lib/bar.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const { PRESENCE_TTL_MS, REMOTE_PRESENCE_TTL_MS } = await import(resolve(repoRoot, "packages/core/dist/index.js"));
@@ -144,7 +145,7 @@ try {
   };
 
   /* ------------------------------------- A's robot, on B, captioned as hers */
-  await a.click('[data-testid="activity-button"]').catch(() => {});
+  await openActivity(a).catch(() => {});
   await a.waitForTimeout(300);
   const seat = await a.$('[data-testid="agent-tidy"]');
   const enabled = seat ? !(await seat.isDisabled()) : false;

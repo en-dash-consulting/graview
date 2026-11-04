@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 9127,
+  "note": "Raised when a headless run of a worker view came to say a view that pins today (Roadmap f-views-know-today): `runWorkerViewHeadless` reads the view's source with `datesPinned` from `@graview/core/revisions` (a date given to a name that means today, day words beside a written date, a written date gone by) and says each against the app's today, and the headless describer says a row's title once. The worker had 18 bytes of room under 2_529_590. Measured at 2_538_699 B against 2_529_572."
+}

@@ -69,9 +69,11 @@ describe("what a project starts with passes its own checks", () => {
     // journeys could not rename a callout there at either width.
     const pages = file("Field Notes", "src/ui/pages.tsx");
     expect(pages).not.toContain("affordance.ties === true");
-    expect(pages).toContain('facts.actions.affordances.filter((affordance) => affordance.provider !== "invariant")');
+    // Every act the derivation offers, less those a fact's own control already does (Roadmap f-facts-by-type).
+    expect(pages).toContain("actsBeyondFacts(store, id, facts.actions");
+    expect(pages).toContain('beyond.affordances.filter((affordance) => affordance.provider !== "invariant")');
     expect(pages).toContain("offered.map((affordance) =>");
-    expect(pages).toMatch(/<EditableValue<S> nodeId=\{id\} field="label" value=\{facts\.label\} said=\{facts\.label\} \/>/);
+    expect(pages).toMatch(/<EditableValue<S> nodeId=\{id\} field=\{titleField\} value=\{facts\.label\} said=\{facts\.label\} \/>/);
   });
 
   it("takes every act in its own test as somebody holding every declared role, so a policy does not turn it red (the eleventh walk)", () => {
@@ -94,7 +96,8 @@ describe("what a project starts with passes its own checks", () => {
     // to press found "Change the animal" instead — one more press, and the
     // discography's song page, copied from it, said the same.
     const derived = readFileSync(fileURLToPath(new URL("../../../pages/src/page-record.tsx", import.meta.url)), "utf8");
-    const heading = /<EditableValue<S> nodeId=\{id\} field="label" value=\{facts\.label\}([^/]*)\/>/;
+    // The field the heading is, whichever field holds the name (`titleFieldOf`, Roadmap f-facts-by-type).
+    const heading = /<EditableValue<S> nodeId=\{id\} field=\{titleField\} value=\{facts\.label\}([^/]*)\/>/;
     const theirs = derived.match(heading)?.[1]?.trim();
     expect(theirs).toBe("said={facts.label}");
     expect(file("Field Notes", "src/ui/pages.tsx").match(heading)?.[1]?.trim()).toBe(theirs);
@@ -105,7 +108,8 @@ describe("what a project starts with passes its own checks", () => {
     // file name and a screening's time as text, the date editor reached only
     // through "Change the screening"; the derived page plays one and edits the other.
     const derived = readFileSync(fileURLToPath(new URL("../../../pages/src/page-record.tsx", import.meta.url)), "utf8");
-    const drawn = /\.fields\.map\(\(field\) => \(\s*<RecordField<S> key=\{field\.key\} nodeId=\{id\}/;
+    // One sheet, each fact by its type and each relation a row of chips (Roadmap f-facts-by-type).
+    const drawn = /<FactSheet<S> context=\{context\} id=\{id\} facts=\{facts\} fields=\{fields\} relations=\{relations\} inPlace=\{inPlace\}/;
     expect(derived).toMatch(drawn);
     const pages = file("Field Notes", "src/ui/pages.tsx");
     expect(pages).toMatch(drawn);
@@ -179,7 +183,7 @@ describe("what a project starts with", () => {
    */
   it("takes the act it offers from the derivation, with the candidates the derivation narrowed", () => {
     const pages = file("Field Notes", "src/ui/pages.tsx");
-    expect(pages).toContain("facts.actions.affordances.filter(");
+    expect(pages).toContain("beyond.affordances.filter(");
     expect(pages).toContain("open={affordance.open}");
     expect(pages).toContain("prefilled={affordance.args}");
     // Never the raw lookup as the thing that decides whether to offer it.
@@ -222,9 +226,9 @@ describe("what a project starts with", () => {
     // A vehicle's page on the scaffold's own record page had no price and listed
     // "…Check engine light on, …Check engine light on" as words nobody could follow.
     const pages = file("Field Notes", "src/ui/pages.tsx");
-    expect(pages).toContain("facts.fields.map");
-    expect(pages).toContain("recordPath(");
-    expect(pages).toContain("target.apart");
+    // Drawn by the derived page's own sheet: its chips link each record and tell two of one name apart.
+    expect(pages).toContain("<FactSheet<S>");
+    expect(pages).toContain("relationFacts(store, id, facts)");
     expect(pages).not.toContain('.join(", ")');
   });
 

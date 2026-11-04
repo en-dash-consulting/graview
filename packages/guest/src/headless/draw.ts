@@ -22,6 +22,8 @@ export interface DrawnTranscript {
   readonly css: string;
   /** The element drawn for a view's id: what a press the run made landed on (0.1.45). */
   elementOf(id: string): TreeElement | undefined;
+  /** The view's id for an element drawn: what a press the check makes asks the run to land on (Roadmap f-views-work-end-to-end). */
+  idOf(element: TreeElement): string | undefined;
 }
 
 export interface DrawTranscriptOptions {
@@ -56,5 +58,5 @@ export function drawTranscript(renders: readonly unknown[], sheets: readonly str
   }
   const dressed = options.theme ? sanitizeStylesheet(options.theme).css : "";
   const css = dressed && kept ? `${dressed}\n${kept}` : dressed || kept;
-  return { root, refused, size: renderer.size, over, css, elementOf: (id) => renderer.elementOf(id) as unknown as TreeElement | undefined };
+  return { root, refused, size: renderer.size, over, css, elementOf: (id) => renderer.elementOf(id) as unknown as TreeElement | undefined, idOf: (element) => renderer.idOf(element as unknown as Node) };
 }

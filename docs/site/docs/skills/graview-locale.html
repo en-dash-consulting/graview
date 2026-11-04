@@ -1821,10 +1821,14 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
 <ol>
 <li><strong>Say them in templates.</strong> <code>{at | time}</code> ("10:47 AM"), <code>{at | datetime}</code> ("Oct 16, 2026, 10:47 AM EDT"), <code>{at | date}</code> and <code>relative</code> (an instant's day counted on the app's clock); a field block takes <code>as: "time"</code>, <code>as: "datetime"</code> and <code>as: "money"</code>.</li>
 </ol>
+<ol>
+<li><strong>Read today; never write it.</strong> A worker view is handed the app's today, the day its rules read, on the app's clock: <code>graview.today</code> ("2026-11-04", also <code>props.today</code>). Say a day against it with <code>graview.fromToday(node.due)</code> — "today", "tomorrow", "in 3 days", "2 weeks ago", and with <code>{ due: true }</code> a day gone by is "overdue". A view that writes <code>TODAY = "2026-11-01"</code> or "Tomorrow · Mon 2 Nov" is right for one day: a headless run (<code>graview view check</code>) says it as a problem, "Home may be out of date: …", and so does <code>datesPinned</code> (<code>@graview/core/revisions</code>).</li>
+</ol>
 <h3>Then find out whether it worked</h3>
 <div class="code" data-scroller><pre><code class="language-sh">pnpm build &amp;&amp; npx graview check ./dist/domain/app.js
 npx graview check --document app.json   # a document</code></pre></div>
 <p>It refuses what it cannot write — a currency that is not a three-letter code (<code>brand-currency</code>), a locale it does not know (<code>brand-locale</code>), a zone the runtime does not know or an offset (<code>brand-time-zone</code>) — and warns <code>money-currency</code> where a money field has neither its own unit nor the app's currency. Report what it said. Then open a record holding a sum and an instant with your machine's clock set elsewhere: the sum carries its symbol, and the time is on the declared clock, not the machine's.</p>
+<p>After an act adds or changes records, look at the places that draw them before saying it is done: <code>placesTouched(app, ops, { views, today })</code> (<code>@graview/core/revisions</code>) names them ("These appear on Home and Tasks") and the views among them that write their own dates; read each with <code>describe_place</code>.</p>
 <h3>What the check cannot see</h3>
 <ul>
 <li>Whether the zone is the one the people work in. A team across two zones wants each reader's zone passed by the host, not one declared for all.</li>

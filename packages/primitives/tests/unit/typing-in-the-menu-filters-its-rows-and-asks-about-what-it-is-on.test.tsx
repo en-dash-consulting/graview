@@ -126,10 +126,16 @@ describe("a word typed in the menu", () => {
 });
 
 describe("typing in the menu", () => {
-  it("opens with the keyboard on its first row, and a letter typed there goes into the field", async () => {
+  it("opens with the field first, saying to tell Graview what you want, and Chat under it; a letter typed on a row goes into the field", async () => {
     await mount(AI);
     expect(field()).not.toBeNull();
-    expect(focused().hasAttribute("data-affordance")).toBe(true);
+    expect(field()!.placeholder).toBe("Tell Graview what you want…");
+    const order = [...menu()!.querySelectorAll('[data-testid="menu-type"], [data-testid="menu-modes"], [data-testid="affordances"]')].map((one) => one.getAttribute("data-testid"));
+    expect(order).toEqual(["menu-type", "menu-modes", "affordances"]);
+    const chat = menu()!.querySelector<HTMLButtonElement>('[data-menu-mode="chat"]')!;
+    expect(chat.textContent).toContain("Chat");
+    expect(chat.getAttribute("aria-pressed")).toBe("true");
+    menu()!.querySelector<HTMLElement>("[data-affordance]")!.focus();
     await typeKeys("h");
     expect(focused()).toBe(field());
     expect(field()!.value).toBe("h");
@@ -140,9 +146,8 @@ describe("typing in the menu", () => {
     await typeKeys("ha");
     expect(shownActs()).toEqual(["Hand it on"]);
     expect(lit()).toBe("Hand it on");
-    // The words asked about what the menu is on are the last row, whatever else fits.
-    expect(rows().at(-1)).toBe("ask-typed");
-    expect(menu()!.querySelector('[data-menu-item="ask-typed"]')!.textContent).toBe("Tell Graview “ha”");
+    // Chat stands under the field, ready to ask the words about what the menu is on; a row that fits is lit first.
+    expect(menu()!.querySelector('[data-menu-item="ask-typed"]')!.getAttribute("aria-label")).toBe("Chat: ha");
     await press(field()!, "Enter");
     await settle();
     expect(store.graph.getNode("t1")?.["label"]).toBe("Handed on");
@@ -151,6 +156,7 @@ describe("typing in the menu", () => {
 
   it("walks from the field to the rows with the arrows, and back up to the field", async () => {
     await mount(AI);
+    field()!.focus();
     await typeKeys("p");
     await press(field()!, "ArrowDown");
     expect(focused().textContent).toContain("Put it off");
@@ -171,7 +177,7 @@ describe("typing in the menu", () => {
     watching.observe(document.body, { childList: true, subtree: true });
     await typeKeys("what is left?");
     expect(shownActs()).toEqual([]);
-    expect(lit()).toBe("Tell Graview “what is left?”");
+    expect(lit()).toBe("💬 Chat");
     await press(field()!, "Enter");
     await until(() => document.querySelector('[data-testid="quick-answer-text"]')?.textContent?.startsWith("About") === true);
     watching.disconnect();
@@ -190,6 +196,7 @@ describe("typing in the menu", () => {
 
   it("only filters where the host lent no model: no Ask row, and words that fit nothing say so", async () => {
     await mount(undefined);
+    field()!.focus();
     await typeKeys("fin");
     expect(shownActs()).toEqual(["Finish it"]);
     expect(rows()).not.toContain("ask-typed");
@@ -261,6 +268,8 @@ describe("suggestions arriving", () => {
       },
     };
     await mount({ fast: slow, thinking: stubThinking() });
+    // The AI's own section stands behind More…: pressed, it asks for its suggestions as it is drawn.
+    await act(async () => menu()!.querySelector<HTMLButtonElement>('[data-menu-item="more"]')!.click());
     await until(() => document.querySelector('[data-testid="inline-ai-room"]') !== null && answer !== undefined);
     const slots = () => document.querySelectorAll('[data-testid="inline-ai-room"] > li').length;
     const before = slots();

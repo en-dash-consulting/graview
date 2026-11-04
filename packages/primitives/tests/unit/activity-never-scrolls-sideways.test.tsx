@@ -99,17 +99,21 @@ describe("Activity, after a change to a record whose name is 120 characters and 
       ),
     );
     unmount = () => act(async () => root.unmount());
-    await settled(() => expect(document.querySelector('[data-testid="activity-button"]')).not.toBeNull());
-    await act(async () => document.querySelector<HTMLElement>('[data-testid="activity-button"]')!.click());
+    await settled(() => expect(document.querySelector('[data-testid="inbox-button"]')).not.toBeNull());
+    await act(async () => document.querySelector<HTMLElement>('[data-testid="inbox-button"]')!.click());
+    await settled(() => expect(document.querySelector('[data-testid="inbox-tab-activity"]')).not.toBeNull());
+    await act(async () => document.querySelector<HTMLElement>('[data-testid="inbox-tab-activity"]')!.click());
     await settled(() => expect(document.querySelector('[data-testid="activity"] [data-testid="digest-toggle"]')).not.toBeNull());
     await act(async () => document.querySelector<HTMLElement>('[data-testid="digest-toggle"]')!.click());
     await settled(() => expect(document.querySelectorAll('[data-testid="digest-change"]').length).toBe(3));
 
+    // jsdom rewrites the calc: what is held is that the inbox Activity is in is the lesser of 360px and the page less its gutter.
+    const inbox = document.querySelector<HTMLElement>('[data-testid="inbox"]')!;
+    expect(inbox.style.width).toMatch(/^min\(360px, .*100vw.*\)$/);
+    expect(inbox.style.overflowX).toBe("hidden");
+    expect(inbox.style.overflowY).toBe("auto");
     const panel = document.querySelector<HTMLElement>('[data-testid="activity"]')!;
-    // jsdom rewrites the calc: what is held is that the panel is the lesser of 300px and the page less its gutter.
-    expect(panel.style.width).toMatch(/^min\(300px, .*100vw.*\)$/);
-    expect(panel.style.overflowX).toBe("hidden");
-    expect(panel.style.overflowY).toBe("auto");
+    expect(panel.style.minWidth).toBe("0px");
     const rows = [...panel.querySelectorAll<HTMLElement>('[data-testid="diff-log"] > li, [data-testid="digest-change"]')];
     expect(rows.length).toBeGreaterThanOrEqual(5);
     expect(rows.filter((row) => row.textContent?.includes(LONG)).length).toBeGreaterThanOrEqual(4);

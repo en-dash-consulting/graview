@@ -139,10 +139,16 @@ async function run(text: string): Promise<string> {
    * the host's to judge, from the transcript.
    */
   if (input.press && typeof input.press.selector === "string" && !failure) {
-    const target = runtime.find(input.press.selector);
+    /* By the view's own id for it, where the host's check names the one it means (Roadmap f-views-work-end-to-end); else the first the selector matches. */
+    const target = typeof input.press.target === "string" ? input.press.target : runtime.find(input.press.selector);
     transcript.pressed = { selector: input.press.selector.slice(0, 200), ...(target !== undefined ? { target } : {}), asked: transcript.asked.length, went: transcript.went.length, renders: transcript.renders.length };
     if (target !== undefined) {
-      runtime.hear({ type: "dom-event", target, event: "click" });
+      /* What its own handler throws is the press's answer, as a page's console would say it (Roadmap f-views-work-end-to-end). */
+      try {
+        runtime.hear({ type: "dom-event", target, event: "click" });
+      } catch (error) {
+        fail("error", `It threw: ${say(error)}`);
+      }
       for (let turn = 0; turn < 64 && !failure; turn += 1) await new Promise<void>((resolve) => microtask(resolve));
     }
   }

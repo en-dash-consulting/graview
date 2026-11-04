@@ -11,8 +11,12 @@ import { ownSentence, problemTitle, RuleLineView, useLined } from "./rule-line.j
 
 /* Who else is here (FR-155), fetched with the panes once somebody is. */
 export { Here, sayTheirChange } from "./here.js";
-/* What has happened, on the routed face's bar (FR-152): `BarActivity`. */
-export { ActivityRail } from "./workbench/activity.js";
+/* One inbox, on the routed face's bar (FR-152, Roadmap f-app-bar-calm): `BarInbox`. */
+export { Inbox } from "./inbox.js";
+/* What the inbox opens to, its tabs and what each holds (Roadmap f-app-bar-calm), fetched as the bell is first pressed. */
+export { InboxPane } from "./inbox-pane.js";
+/* The app menu's rows, fetched when it is first opened (Roadmap f-app-bar-calm). */
+export { AppMenuPane } from "./app-menu.js";
 /*
  * The places' foot, Hidden and Recently deleted (Roadmap f-place-menu-views),
  * fetched with the tidying when it is first drawn: the panes are fetched
@@ -113,15 +117,13 @@ export function ProblemRows({ violations, pick }: { readonly violations: readonl
 /**
  * WHAT IS BEHIND THE PERSON ON THE BAR (FR-131): who you are, the host's own
  * actions, the ways into the app for whoever keeps it, the seats, which rung
- * answers, your own settings and the scheme. Fetched when the person is
+ * answers, and your own settings. Fetched when the person is
  * first reached for — the bar draws the person at once, and a page that is
  * never asked who is signed in never carries the answer's furniture.
  */
 export function ProfilePane<S extends AnySchema>({
   name,
   me,
-  scheme,
-  onScheme,
   profileHref,
   hostActions,
   close,
@@ -130,8 +132,6 @@ export function ProfilePane<S extends AnySchema>({
 }: {
   readonly name: string;
   readonly me: AnyGraphNode | undefined;
-  readonly scheme?: "light" | "dark" | undefined;
-  readonly onScheme?: ((scheme: "light" | "dark") => void) | undefined;
   readonly profileHref?: ((userId: string) => string) | undefined;
   readonly hostActions: readonly HostAction[];
   readonly close: () => void;
@@ -286,26 +286,6 @@ export function ProfilePane<S extends AnySchema>({
             <Suspense fallback={null}>
               <ChipsSwitch legend={eyebrow} style={ruled} choice={choiceStyle} />
             </Suspense>
-          ) : null}
-
-          {scheme !== undefined && onScheme !== undefined ? (
-          <div style={{ display: "grid", gap: 5, ...ruled }}>
-            <span style={eyebrow}>Scheme</span>
-            <div style={{ display: "flex", gap: 4 }}>
-              {(["light", "dark"] as const).map((candidate) => (
-                <button
-                  key={candidate}
-                  type="button"
-                  aria-pressed={scheme === candidate}
-                  data-testid={`profile-scheme-${candidate}`}
-                  onClick={() => onScheme(candidate)}
-                  style={choiceStyle(scheme === candidate)}
-                >
-                  {candidate === "light" ? "☀ Light" : "☾ Dark"}
-                </button>
-              ))}
-            </div>
-          </div>
           ) : null}
 
           {/*

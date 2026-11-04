@@ -25,9 +25,9 @@ import { Suspense, useCallback, useRef, useState, type ComponentType } from "rea
  * found however the bar draws them. A host's step names one of these; what
  * each one is in the page is the framework's business, not the host's.
  *
- * - `faces` — the switch between the scene and the pages
+ * - `faces` — the app menu, which holds the scene and the pages
  * - `problems` — the dot that says whether everything is in order, and counts what is not
- * - `activity` — what has happened, and the way to take it back
+ * - `activity` — the inbox: what has happened, and the way to take it back
  * - `ask` — the quick ask (⌘K), where the app is asked in words; pointed at beside Find, and only where a quick ask is drawn
  * - `find` — Find
  * - `profile` — who you are, and your own settings

@@ -50,7 +50,7 @@ export function useMenuSections(target: MenuTarget | null): { readonly start: re
   const sections = sources.flatMap((source) => {
     try {
       const section = source(target);
-      return section && ((section.items?.length ?? 0) > 0 || section.render) ? [section] : [];
+      return section && ((section.items?.length ?? 0) > 0 || section.render || section.mode) ? [section] : [];
     } catch {
       // A host's section that throws is left out, never the menu.
       return [];

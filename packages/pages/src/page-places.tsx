@@ -659,14 +659,20 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
             </Link>
           </p>
         ) : null}
-        {/* What belongs to the picture alone: its kind as a list. The other places are the bar's (FR-138). */}
-        <p style={{ ...quiet, margin: 0, display: "flex", flexWrap: "wrap", gap: "4px 16px" }}>
-          {kindsOfPlace(context, place).filter((kind) => !(isTheList && kind === place.kind)).map((kind, index) => (
-            <Link key={kind} to={`/${pluralSlug(store.schema, kind)}`} style={{ ...onward, ...quiet }} {...(index === 0 ? { "data-testid": "place-as-list" } : {})}>
-              <Onward>All {(kind === place.kind ? plural : pluralOf(store, kind)).toLowerCase()} as a list</Onward>
-            </Link>
-          ))}
-        </p>
+        {/*
+          * What belongs to the picture alone: its kind as a list. The other places are the bar's (FR-138).
+          * A view that draws its own heading draws what is above it too (Roadmap f-views-work-end-to-end):
+          * "All playlists as a list →" over a view that says "Playlists" and its own links said it twice.
+          */}
+        {ownHeading ? null : (
+          <p style={{ ...quiet, margin: 0, display: "flex", flexWrap: "wrap", gap: "4px 16px" }}>
+            {kindsOfPlace(context, place).filter((kind) => !(isTheList && kind === place.kind)).map((kind, index) => (
+              <Link key={kind} to={`/${pluralSlug(store.schema, kind)}`} style={{ ...onward, ...quiet }} {...(index === 0 ? { "data-testid": "place-as-list" } : {})}>
+                <Onward>All {(kind === place.kind ? plural : pluralOf(store, kind)).toLowerCase()} as a list</Onward>
+              </Link>
+            ))}
+          </p>
+        )}
       </header>
       {/*
         * The lens's own region: as wide as the column and most of the window

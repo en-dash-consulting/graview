@@ -9,7 +9,9 @@
  * page a picture held and the sections it left out (`MEASURE_PICTURED_PAGE`,
  * `picturedCoverage`); the rules that held and fail, and the view problems
  * new, with the act that repairs each (`problemsMade`); and the records and
- * links an act changed beyond what it was asked (`beyondAsked`). Each is
+ * links an act changed beyond what it was asked (`beyondAsked`); what a
+ * view's source pins a day to (`datesPinned`), and the places that draw
+ * what a commit touched, with the views to look at (`placesTouched`). Each is
  * pure, judges nothing on its own, and is a host's: no page imports it.
  */
 export { compareViewRevision, namesInSelector, selectorsOfStylesheet, stringsOfSource } from "./revisions/view.js";
@@ -20,5 +22,9 @@ export { MEASURE_PICTURED_PAGE, picturedCoverage } from "./revisions/pictured.js
 export type { PageMeasure, PictureCoverage, PlacedSection } from "./revisions/pictured.js";
 export { problemsMade, viewProblemKey } from "./revisions/problems.js";
 export type { ChangedProblem, ProblemSet, ProblemsMade, ViewProblem } from "./revisions/problems.js";
+export { datesPinned } from "./revisions/pinned-dates.js";
+export type { DatesPinnedOptions, PinnedDate } from "./revisions/pinned-dates.js";
+export { placesTouched } from "./revisions/touched.js";
+export type { PlacesTouched, PlacesTouchedOptions, TouchedPlace, TouchedView } from "./revisions/touched.js";
 export { beyondAsked } from "./revisions/beyond.js";
 export type { ActReach, BeyondAskedOptions, BeyondChange } from "./revisions/beyond.js";

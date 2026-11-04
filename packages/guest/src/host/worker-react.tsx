@@ -6,7 +6,7 @@ import type { GuestPlace } from "../protocol.js";
 import type { WorkerViewManifest } from "./manifest.js";
 import type { GuestViewInput } from "./session.js";
 import type { GuestBrand } from "./theme.js";
-import { untilItArrives, workerChunk } from "./arrive.js";
+import { untilItArrives, viewPressing, workerChunk } from "./arrive.js";
 import type { WorkerView, WorkerViewFailure, WorkerViewLimits } from "./view.js";
 import { codeOf, type WorkerViewCode, type WorkerViewLoad } from "./code-of.js";
 
@@ -180,7 +180,7 @@ function WorkerViewMount({ definition: given, store, principal, input, goTo, pla
     const stop = untilItArrives(workerChunk, (module) => {
       mounted.current = module.mountWorkerView(element, optionsFor(definition.worker));
       /* What the view's place lends its revision (Roadmap f-make-this-section-better), made with the worker's host. */
-      setViewPlace(element, module.viewPlaceHandle({ element, definition, mounted: () => mounted.current, optionsFor, draw: (source) => drawInstead(given, source), mount: module.mountWorkerView }));
+      setViewPlace(element, module.viewPlaceHandle({ element, definition, mounted: () => mounted.current, optionsFor, draw: (source) => drawInstead(given, source), mount: module.mountWorkerView, pressing: viewPressing }));
     });
     return () => {
       stop();

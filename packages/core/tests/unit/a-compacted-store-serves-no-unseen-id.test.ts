@@ -65,7 +65,7 @@ describe("a compacted store serves no unseen id", () => {
       const id = leaked(served, unseen);
       if (id !== undefined) leaking.push(`seed ${seed} serves unseen ${id}`);
       // What a seat kept from anything is served of an epoch is its graph and its makers: never the store's own record of what was behind it.
-      if (w.sights) for (const epoch of served.epochs) for (const kept of ["removed", "writers"]) expect(Object.keys(epoch), `seed ${seed}`).not.toContain(kept);
+      if (w.sights) for (const epoch of served.epochs) for (const kept of ["removed", "writers", "declines"]) expect(Object.keys(epoch), `seed ${seed}`).not.toContain(kept);
       // The same view the never-compacted store serves the seat: its graph, and its log from the horizon on.
       if (canonical(served.snapshot) !== canonical(whole.seenBy(w.viewer).snapshot())) differing.push(`seed ${seed}: the seat's graph`);
       else if (!isDeepStrictEqual(served.log, logSeenBy(whole, w.viewer).slice(horizon))) differing.push(`seed ${seed}: the seat's log`);

@@ -53,7 +53,7 @@ const OFF_THE_PAGE = {
   // Roadmap f-view-export-csv: a place's list written as a spreadsheet, fetched when somebody presses "Export CSV".
   "@graview/core/csv": { from: csv, names: ["CSV_BOM", "csvCell", "csvFileName", "csvSafe", "listCsv", "listCsvRows", "saveShownList", "switchExport", "toCsv"] },
   // Roadmap f-revisions-say-what-broke: what a revised view, a picture or an act broke, said with the change — a host's, on no page.
-  "@graview/core/revisions": { from: revisions, names: ["beyondAsked", "compareViewRevision", "MEASURE_PICTURED_PAGE", "namesInSelector", "picturedCoverage", "problemsMade", "sectionsOfDrawing", "selectorsOfStylesheet", "stringsOfSource", "viewProblemKey"] },
+  "@graview/core/revisions": { from: revisions, names: ["beyondAsked", "compareViewRevision", "datesPinned", "MEASURE_PICTURED_PAGE", "namesInSelector", "picturedCoverage", "placesTouched", "problemsMade", "sectionsOfDrawing", "selectorsOfStylesheet", "stringsOfSource", "viewProblemKey"] },
   // Roadmap f-app-wide-view-theme: the one CSS sanitizer — the guest host's as it first draws on the open kit, and the checker's for a document's `brand.views.css`.
   "@graview/core/css": { from: css, names: ["CSS_AT_RULES", "CSS_DRAWN_AS", "CSS_FRAGMENT_PROPERTIES", "CSS_FUNCTIONS", "CSS_KEYWORD_PROPERTIES", "CSS_PREFIXED_SELECTORS", "CSS_PROPERTIES", "CSS_REFUSED_SELECTORS", "OPEN_MAX_STYLESHEET", "sanitizeDeclarations", "sanitizeStylesheet", "sanitizeStylesheets", "sanitizeValue", "serializeIdent", "serializeString", "serializeValues", "tokenize"] },
   // Roadmap f-navigate-filters: where a view's navigate goes, as an address — the worker view's host and the routed face's alone.
@@ -106,7 +106,7 @@ const OFF_THE_PAGE = {
   // The app's own actor's suggestions — made, accepted, declined — and what reads it back: the suggestions and declines in a store or a log, what the declaration lets it tidy, and Activity's digest.
   "@graview/core/tidying": {
     from: tidying,
-    names: ["acceptSuggestion", "advisoryVoterOf", "declined", "declinedIn", "declineSuggestion", "declinesIn", "digestWords", "foldDigests", "isDismissed", "isProposal", "isSuggestionBatch", "LEFT_ALONE", "mayDecide", "meaningKey", "propose", "proposedMutations", "proposalWords", "SIGN_IN_TO_VOTE", "signedOutSeat", "suggest", "suggestionKey", "suggestions", "suggestionsIn", "takenIn", "tallyOf", "tidyingOf", "tidyingRefusal", "typedRowWords", "voteSuggestion", "votesIn", "withdrawSuggestion"],
+    names: ["acceptSuggestion", "advisoryVoterOf", "declined", "declinedIn", "declineSuggestion", "declinesIn", "digestWords", "foldDigests", "isDismissed", "isProposal", "isSuggestionBatch", "keptDeclines", "LEFT_ALONE", "mayDecide", "meaningKey", "propose", "proposedMutations", "proposalWords", "SIGN_IN_TO_VOTE", "signedOutSeat", "suggest", "suggestionKey", "suggestions", "suggestionsIn", "takenIn", "tallyOf", "tidyingOf", "tidyingRefusal", "typedRowWords", "voteSuggestion", "votesIn", "withdrawSuggestion"],
   },
 } as const;
 

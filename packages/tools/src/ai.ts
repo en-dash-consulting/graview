@@ -1,5 +1,5 @@
 import type { SearchRanker } from "@graview/core";
-import type { AiCatalog, AiContextState, AiInteraction, AiTarget, AiUsage } from "@graview/core/catalog";
+import type { AiCatalog, AiContextState, AiInteraction, AiTarget, AiUsage, PlanNeed } from "@graview/core/catalog";
 import type { ToldStore } from "@graview/core/told";
 import type { ToolDefinition } from "./agent/tool-definition.js";
 import type { Completion } from "./intelligence.js";
@@ -113,6 +113,13 @@ export interface HostAi {
    */
   readonly light?: ThinkingProvider;
   /**
+   * THE DESIGN SLOT (Roadmap f-make-any-page-better): the model Better UI's
+   * agent draws a new design with, step after step while a person waits —
+   * quick enough to talk with, good enough to keep what a page shows.
+   * Unsaid, the Thinking slot serves it.
+   */
+  readonly design?: ThinkingProvider;
+  /**
    * WHETHER A CONTEXT MENU ASKS FOR SUGGESTIONS AS IT OPENS (FR-185). Only
    * ever the Fast slot's: with no Fast slot a menu never asks on its own,
    * and offers a "Suggest…" row that asks — the Thinking slot then — when
@@ -163,6 +170,30 @@ export interface HostAi {
   readonly told?: ToldStore;
   /** Told of every call to a model, with the interaction it served: tier, model, tokens and cost, for a host that meters. */
   readonly meter?: (usage: AiUsage & { readonly interaction: string }) => void;
+  /**
+   * WHEN THE QUICK ASK FINDS NOTHING (Roadmap f-quick-ask-friction-hint):
+   * `true`, or a callback told of each. The framework asks the model, in its
+   * own words, to say of words nothing in the app answers what the app
+   * does not keep ("This app keeps no budgets.") and what field or link
+   * would, rather than that it found nothing; the card says it, the
+   * friction log learns it (`unanswered`, with `lacks`), and the callback
+   * hears the words, the sentence and the need. Unsaid, the quick ask is
+   * asked as it was.
+   */
+  readonly couldNotFind?: boolean | ((missed: CouldNotFind) => void);
+}
+
+/** What a quick ask could not find, as `HostAi.couldNotFind` is told it. */
+export interface CouldNotFind {
+  /** The words asked. */
+  readonly said: string;
+  /** What the app lacks for them, in a sentence to the person. */
+  readonly lacks: string;
+  /** The field or link that would hold it, where the model could say. */
+  readonly need?: PlanNeed;
+  /** The place or the kind's list it was asked on. */
+  readonly place?: string;
+  readonly kind?: string;
 }
 
 /** What a model of either slot costs, per million tokens, in US dollars: the interaction's cost is read from it when the provider does not say. */
@@ -202,6 +233,12 @@ export interface ThinkingReply {
 export interface ThinkingProvider {
   readonly model: string;
   think(request: ThinkingRequest): Promise<ThinkingReply>;
+  /**
+   * The same answer as it is written: `onText` is told the text so far, each
+   * time more arrives, so a person sees the words while the model writes.
+   * Optional; where a provider does not stream, `think` answers whole.
+   */
+  stream?(request: ThinkingRequest, onText: (soFar: string) => void, signal?: AbortSignal): Promise<ThinkingReply>;
   readonly price?: AiPrice;
 }
 

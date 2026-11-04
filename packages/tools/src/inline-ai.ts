@@ -575,6 +575,10 @@ const ANSWER_SYSTEM =
   'Where "members" are given and the person asks for something done to them, answer "each": {"act": the name of one of "member_acts", "args": every value it asks for, by name, dates as YYYY-MM-DD counted from "today"; the facts already say each day against today, so trust those} — one act over every member, as one change. Judge an act by what it does ("does"), not only its title: "close", "complete", "check off", "tick" and "finish" are an act that marks something done; "delete" one that removes; "push", "move" and "postpone" one that changes a date or a place. Where "fast_leaned_to" names an act, it is likely the one: fill its values. When the person tells it to do something, answer "each" (with a short "answer" saying what it will do): nothing is done until they accept, so never say in words that it is done, and never ask them to confirm ("Move it to Friday?"): the card asks them, so answer "each". Where "people" maps a word like "her" or "me" to a name, that is who they mean. ' +
   'Only where no act among "member_acts" or the candidates does what they ask, because the app has no field or link for it, answer "lacks": one whole sentence to the person saying what the app is missing (never an id, never a note to yourself), and "need": what it would need — {"link": {"on": the kind of the records, "called": what the link is called in their words, like "assigned to", "to": the kind it points to, or a noun for one the app lacks}} or {"field": {"on": the kind, "called": its name in their words, "type": "string", "number", "date" or "boolean"}} — with "who": the name of the record their words name (for a link) or "value": the value they give (for a field). When they ask for a change the app has no field or link for ("make these urgent", "give these a priority"), answer "lacks" and "need", never only "answer". A question is answered in "answer", never with "each" or "lacks"; so is "undo that", which the app\'s own Undo does.';
 
+/** What a model is told when the host asked that a question nothing here answers be said as what the app lacks (`HostAi.couldNotFind`). */
+const NOT_FOUND =
+  'Where nothing in "facts" or "state" answers the words — the app keeps no such thing — do not answer only that you found nothing: answer "lacks", one whole sentence to the person saying what this app does not keep ("This app keeps no budgets."), and "need" where one field or link on these records would hold it. This holds for a question too.';
+
 /**
  * WORDS ASKED ABOUT WHAT THE PERSON IS ON (the quick ask): answered in a
  * few sentences, with the catalog's candidates that act on the answer —
@@ -706,6 +710,8 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
           // Everyone in the app, by name — not who is linked to this record: an answer never says someone is not in the app while they are.
           everyone_in_the_app: peopleKinds(ask.store).flatMap((kind) => ask.store.graph.allNodes().filter((node) => node.kind === kind)).slice(0, 40).map((node) => labelOf(ask.store.schema.tryDefinition(node.kind), node as never)),
           ...(todayOf(ask.store) ? { today: todayWords(todayOf(ask.store)!) } : {}),
+          // The host asked that what nothing here answers be said as what the app lacks (`HostAi.couldNotFind`).
+          ...(ai.couldNotFind ? { not_found: NOT_FOUND } : {}),
         });
       promptOf = prompt;
       type Parsed = { answer?: unknown; pick?: unknown; each?: unknown; lacks?: unknown; need?: unknown; who?: unknown; value?: unknown } | undefined;
@@ -791,6 +797,19 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
     each = undefined;
     picked = [];
     text = outsideWords(ask.store, said, ask.target.on === "record" ? ask.target.id : undefined);
+  }
+  // What the app lacks, where the host asked to hear it (`HostAi.couldNotFind`): kept in the friction log with the words, and told to the host.
+  if (missing && ai.couldNotFind) {
+    const place = ask.target.on === "place" || ask.target.on === "lens" ? ask.target.place : undefined;
+    const kind = ask.target.on === "list" ? ask.target.kind : ask.target.on === "lens" ? ask.target.kind : undefined;
+    recordFriction(ask.store, { type: "unanswered", question: said, ...(place ? { place } : {}), ...(kind ? { kind } : {}), lacks: missing.said }, ask.principal);
+    if (typeof ai.couldNotFind === "function") {
+      try {
+        ai.couldNotFind({ said, lacks: missing.said, ...(missing.need ? { need: missing.need } : {}), ...(place ? { place } : {}), ...(kind ? { kind } : {}) });
+      } catch {
+        // The host's ear is never why an answer fails.
+      }
+    }
   }
   const changed = Boolean(each) || picked.some(({ candidate }) => proposalOf(candidate) !== undefined);
   if (!isQuestion() && !changed && !missing && text && saysDone(text)) text = CANNOT_DO_IT;

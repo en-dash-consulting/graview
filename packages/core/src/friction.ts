@@ -55,6 +55,8 @@ export interface Unanswered extends FrictionBase {
   readonly type: "unanswered";
   readonly question: string;
   readonly place?: string;
+  /** What the app lacks for it, in a sentence, where the seat could say ("This app keeps no budgets."; `HostAi.couldNotFind`). */
+  readonly lacks?: string;
 }
 export interface RefusedAct extends FrictionBase {
   readonly type: "refused";
@@ -124,7 +126,8 @@ export function frictionEvent(draft: FrictionDraft, by: Author, options: { reado
     case "unanswered": {
       const question = textOf(asked["question"], FRICTION_LIMITS.question);
       const place = asked["place"] === undefined ? undefined : nameOf(asked["place"]);
-      return question ? { ...base, type: "unanswered", question, ...(place ? { place } : {}) } : undefined;
+      const lacks = asked["lacks"] === undefined ? undefined : textOf(asked["lacks"], FRICTION_LIMITS.message);
+      return question ? { ...base, type: "unanswered", question, ...(place ? { place } : {}), ...(lacks ? { lacks } : {}) } : undefined;
     }
     case "refused": {
       const act = nameOf(asked["act"]);
@@ -239,7 +242,7 @@ export interface FrictionSummary {
   readonly people: number;
   readonly byType: Readonly<Record<FrictionType, { readonly events: number; readonly people: number }>>;
   readonly searches: readonly (FrictionCount & { readonly words: string })[];
-  readonly questions: readonly (FrictionCount & { readonly question: string })[];
+  readonly questions: readonly (FrictionCount & { readonly question: string; readonly lacks?: string })[];
   readonly words: readonly (FrictionCount & { readonly word: string })[];
   readonly refusals: readonly (FrictionCount & { readonly act: string; readonly code: RefusalReason })[];
   readonly tools: readonly (FrictionCount & { readonly tool: string; readonly act?: string; readonly then?: string })[];
@@ -309,7 +312,7 @@ export function frictionOf(events: readonly FrictionEvent[], options: FrictionOp
     people: new Set(kept.map((event) => personOf(event.by))).size,
     byType,
     searches: grouped(kept, (event) => (event.type === "search-miss" ? foldWords(event.words) || undefined : undefined), (_event, words) => ({ words }), minPeople, most),
-    questions: grouped(kept, (event) => (event.type === "unanswered" ? foldWords(event.question) || undefined : undefined), (_event, question) => ({ question }), minPeople, most),
+    questions: grouped(kept, (event) => (event.type === "unanswered" ? foldWords(event.question) || undefined : undefined), (event, question) => ({ question, ...((event as Unanswered).lacks ? { lacks: (event as Unanswered).lacks } : {}) }), minPeople, most),
     words: grouped(tokens, (event) => tokenOf.get(event), (_event, word) => ({ word }), minPeople, most),
     refusals: grouped(kept, (event) => (event.type === "refused" ? `${event.act}|${event.code}` : undefined), (event) => ({ act: (event as RefusedAct).act, code: (event as RefusedAct).code }), minPeople, most),
     tools: grouped(
@@ -336,7 +339,7 @@ export function frictionOf(events: readonly FrictionEvent[], options: FrictionOp
 export interface FrictionDigest {
   readonly said: string;
   readonly unknownWords: readonly { readonly words: string; readonly people: number }[];
-  readonly questions: readonly { readonly question: string; readonly people: number }[];
+  readonly questions: readonly { readonly question: string; readonly people: number; readonly lacks?: string }[];
   readonly toolMistakes: readonly { readonly tool: string; readonly act?: string; readonly then?: string; readonly times: number }[];
 }
 
@@ -370,12 +373,12 @@ export function frictionDigest(events: readonly FrictionEvent[], schema: AnySche
   const unknownWords = summary.searches
     .filter((search) => !search.words.split(/[^\p{L}\p{N}]+/u).some((word) => word.length > 0 && names.has(stem(word))))
     .map((search) => ({ words: search.words, people: search.people }));
-  const questions = summary.questions.map((question) => ({ question: question.question, people: question.people }));
+  const questions = summary.questions.map((question) => ({ question: question.question, people: question.people, ...(question.lacks ? { lacks: question.lacks } : {}) }));
   const toolMistakes = summary.tools.map((tool) => ({ tool: tool.tool, ...(tool.act ? { act: tool.act } : {}), ...(tool.then ? { then: tool.then } : {}), times: tool.times }));
   const people = (count: number) => `${count} ${count === 1 ? "person" : "people"}`;
   const lines = [
     ...(unknownWords.length > 0 ? [`Searched for, found nothing, and nothing here is called it: ${unknownWords.map((one) => `“${one.words}” (${people(one.people)})`).join(", ")}.`] : []),
-    ...(questions.length > 0 ? [`Asked and not answered: ${questions.map((one) => `“${one.question}” (${people(one.people)})`).join(", ")}.`] : []),
+    ...(questions.length > 0 ? [`Asked and not answered: ${questions.map((one) => `“${one.question}” (${people(one.people)}${one.lacks ? `; ${one.lacks.replace(/[.!]$/, "")}` : ""})`).join(", ")}.`] : []),
     ...(toolMistakes.length > 0
       ? [`Tool calls refused as invalid: ${toolMistakes.map((one) => `${one.tool}${one.act ? ` (${one.act})` : ""} ${one.times === 1 ? "once" : `${one.times} times`}${one.then ? `, then worked as ${one.then}` : ""}`).join("; ")}.`]
       : []),

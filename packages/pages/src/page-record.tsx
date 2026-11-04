@@ -1,39 +1,33 @@
-import { humanizeField, isArchived, isLeftAlone, isWithheld, labelOf, type AnySchema, type Place, type Principal, type Violation } from "@graview/core";
-import { describeNode, keptInStepWith, pageSections } from "@graview/core/words";
-import { lineageWords, linkProvenance } from "@graview/core/provenance";
+import { isArchived, isLeftAlone, isWithheld, labelOf, type AnySchema, type Place, type Principal, type Violation } from "@graview/core";
+import { describeNode, keptInStepWith } from "@graview/core/words";
+import { lineageWords } from "@graview/core/provenance";
 import { DefaultViewElsewhere, RecordInteractionsDoor, EditableValue, Files, NotifyButton, pageSays, ROVING_ITEM, useLined, useRoving } from "@graview/primitives/pages";
 import { bleeds, isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useRef, useState } from "react";
 import { blankWritable, rankedRepairs, recordFacts } from "./facts.js";
 import { fileFieldsOf } from "@graview/core/blocks";
 import { DerivedForm } from "./form.js";
 import { WithheldActs } from "./withheld-acts.js";
-import { pluralSlug, recordPath } from "./registry.js";
+import { recordPath } from "./registry.js";
 import { SceneLink, type PageContext, useStoreTick } from "./page-context.js";
 import { pathOfPlace, placeKey, placesOf } from "./page-places.js";
 import { ProblemSaid, Repairs } from "./page-problems.js";
-import { ProvisionalMark } from "./page-provisional.js";
-import { RecordField } from "./record-field.js";
+import { FactSheet, LABEL, QUIET_PRESS, ACT } from "./fact-sheet.js";
+import { actsBeyondFacts, relationFacts, titleFieldOf } from "./fact-sheet-model.js";
 import {
-  KindMark,
   button,
-  eyebrow,
   h2,
   lede,
   link,
-  listed,
-  Onward,
   onward,
-  pluralOf,
   quiet,
   rule,
   whoDid,
 } from "./page-typography.js";
 import { Bleed, PageMain, PageTitle } from "./page-shell.js";
 import { HeadTrail } from "./place-here.js";
-import { capitalize } from "./page-typography.js";
 
 
 /**
@@ -52,6 +46,8 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
   // A value is changed where it stands where the face provides the store its edits run through (a face handed views).
   const inPlace = useGraviewIfAny<S>() !== null;
   const params = useParams();
+  /* The page the app draws by itself, though a view replaces it, reached under "Also as" (Roadmap f-make-any-page-better). */
+  const builtIn = useSearchParams()[0].get("drawn") === "built-in";
   const id = decodeURIComponent(params["id"] ?? "");
   const facts = recordFacts(store, id, {
     ...(principal ? { principal } : {}),
@@ -111,15 +107,6 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
    */
   const asking = principal ?? (store as { readonly seenFor?: Principal }).seenFor;
   const proposable = asking ? facts.actions.withheld.filter((affordance) => affordance.provider !== "invariant" && store.mayPropose({ name: affordance.mutation, args: { ...affordance.args } }, asking)) : [];
-  const offered = [...facts.actions.affordances.filter((affordance) => affordance.provider !== "invariant"), ...proposable];
-  /*
-   * WHAT TAKES A RECORD AWAY WAITS ONE PRESS BEHIND THE REST (FR-173):
-   * archive, merge and remove, the tail of the ranked list, behind "Show N
-   * more". Drawn beside the record's own acts they stood between "Change
-   * the song" and its form, and every keyboard walk to either crossed them.
-   */
-  const aside = offered.filter((affordance) => affordance.destructive || affordance.setsAside);
-  const shown = more || aside.length < 2 ? offered : offered.filter((affordance) => !aside.includes(affordance));
   /*
    * THE KIND'S OWN PAGE VIEW, AT THE HEAD (FR-35). A view the app gave the
    * kind at one × full — a component, or a spec's `page` — is drawn under
@@ -128,7 +115,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
    * (`DefaultView`) draws only what it adds to it here.
    */
   const ownPage = context.views?.lookup(facts.kind, { cardinality: "one", fidelity: "full" });
-  const PageView = ownPage !== undefined && !isDefaultView(ownPage) ? (ownPage as ComponentType<ViewProps<S>>) : undefined;
+  const PageView = ownPage !== undefined && !isDefaultView(ownPage) && !(builtIn && replacesPage(ownPage)) ? (ownPage as ComponentType<ViewProps<S>>) : undefined;
   /*
    * WHAT THE PAGE VIEW ALREADY SAYS IS NOT SAID AGAIN (FR-141). A kind's
    * declared page heads this record, and the facts and the related records
@@ -137,13 +124,44 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
    * nothing to list has no heading.
    */
   const said = PageView && node ? pageSays(ownPage, node as never, store.graph as never) : undefined;
-  const fields = said ? facts.fields.filter((field) => !said.fields.has(field.key)) : facts.fields;
-  const links = said
-    ? facts.links.flatMap((group) => {
-        const targets = group.targets.filter((target) => !said.records.has(target.id));
-        return targets.length > 0 ? [{ ...group, targets }] : [];
-      })
-    : facts.links;
+  /*
+   * THE HEADING IS THE NAME, AND RENAMED WHERE IT STANDS (Roadmap
+   * f-rename-in-place, f-facts-by-type): the field that holds the name —
+   * `label`, a talk's `title` — is the heading's control where this seat may
+   * change it, and is not said again among the facts.
+   */
+  const titleField = inPlace ? titleFieldOf(store, id, facts.label, principal) : undefined;
+  const fields = facts.fields.filter((field) => !said?.fields.has(field.key) && field.key !== titleField);
+  /*
+   * EACH RELATION AS A ROW OF THE FACTS (Roadmap f-facts-by-type): the ones
+   * it has, and the ones an act here could give it, each with the act that
+   * ties and unties it. What a view above already listed is left out; a
+   * relation left with nothing to list and no way to add one is not drawn.
+   */
+  const relations = relationFacts(store, id, facts).flatMap((relation) => {
+    if (!said) return [relation];
+    const targets = relation.targets.filter((target) => !said.records.has(target.id));
+    return targets.length > 0 || (relation.targets.length === 0 && relation.set) ? [{ ...relation, targets }] : [];
+  });
+  /*
+   * WHAT CAN BE DONE BEYOND THE FACTS. An act whose whole effect is one
+   * fact's control — "Mark it done" is the switch, "Move the date" the
+   * date, "Rename" the heading, "Move it to another list" the list's chip —
+   * is done there and not offered again below (`foldedActs`) — where the
+   * face changes values in place; a face that only reads them offers every
+   * act here.
+   */
+  const beyond = !inPlace ? facts.actions : actsBeyondFacts(store, id, facts.actions, { fields: [...fields.map((field) => field.key), ...(titleField ? [titleField] : [])], relations, ...(principal ? { principal } : {}) });
+  const offered = [...beyond.affordances.filter((affordance) => affordance.provider !== "invariant"), ...proposable];
+  /*
+   * WHAT TAKES A RECORD AWAY WAITS ONE PRESS BEHIND THE REST (FR-173):
+   * archive, merge and remove, the tail of the ranked list, behind "Show N
+   * more". Drawn beside the record's own acts they stood between "Change
+   * the song" and its form, and every keyboard walk to either crossed them.
+   */
+  const aside = offered.filter((affordance) => affordance.destructive || affordance.setsAside);
+  // Nothing else left to offer, they are not held back behind a press that hides everything.
+  const shown = more || aside.length < 2 || aside.length === offered.length ? offered : offered.filter((affordance) => !aside.includes(affordance));
   /*
    * A view that says it IS the record's page (FR-149: a worker view whose
    * manifest says `replaces: "page"`) is drawn alone under the heading,
@@ -169,7 +187,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
         {/* Where it is (Roadmap gv-pages-where-am-i): its section, if the app named one, and its kind's list, over its name. */}
         <HeadTrail context={context} />
         {/* The name is changed where it stands, as the scene's record changes it: a shelf renamed on its page took "Change the category" (W-181). */}
-        <PageTitle context={context}>{inPlace && node?.["label"] === facts.label ? <EditableValue<S> nodeId={id} field="label" value={facts.label} said={facts.label} /> : facts.label}</PageTitle>
+        <PageTitle context={context}>{titleField ? <EditableValue<S> nodeId={id} field={titleField} value={facts.label} said={facts.label} /> : facts.label}</PageTitle>
         {described && described !== facts.label ? <p style={lede}>{described}</p> : null}
         {/* WHAT IT WAS MADE ON (FR-172): the record's own beginning, when its maker said what it was based on. */}
         {madeOn?.lineage ? (
@@ -177,16 +195,19 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
             Made by {whoDid(madeOn, principal, { graph: store.graph as never, schema: store.schema, ...(context.seats ? { seats: context.seats } : {}), ...(context.people ? { people: context.people } : {}) })}, {lineageWords(madeOn.lineage)}
           </p>
         ) : null}
-        <SceneLink context={context} stop={`#focus=${encodeURIComponent(id)}`} style={{ ...onward, ...quiet }} data-testid="spatial-link" />
-        {/* NOTIFY ME (Roadmap f-notify-subscriptions): told when somebody else changes it, or does something to it. */}
-        {inPlace && node ? (
-          <NotifyButton
-            choices={[{ on: "changed", record: id }, { on: "act", record: id }, { on: "reaches", kind: facts.kind, condition: "", record: id }]}
-            label="Notify me when this changes"
-            testId="record-notify"
-            style={{ ...button, ...quiet, justifySelf: "start" }}
-          />
-        ) : null}
+        {/* Where it stands in the scene, and being told when it changes: quiet, beside each other, under the name — the name is the one thing to look at (Roadmap f-facts-by-type). */}
+        <div style={{ ...quiet, display: "flex", flexWrap: "wrap", alignItems: "center", gap: "4px 20px" }} data-graview-record-asides="">
+          <SceneLink context={context} stop={`#focus=${encodeURIComponent(id)}`} style={{ ...onward, ...quiet }} data-testid="spatial-link" />
+          {/* NOTIFY ME (Roadmap f-notify-subscriptions): told when somebody else changes it, or does something to it. */}
+          {inPlace && node ? (
+            <NotifyButton
+              choices={[{ on: "changed", record: id }, { on: "act", record: id }, { on: "reaches", kind: facts.kind, condition: "", record: id }]}
+              label="Notify me when this changes"
+              testId="record-notify"
+              style={QUIET_PRESS}
+            />
+          ) : null}
+        </div>
         {seenIn.length > 0 ? <SeenIn context={context} places={seenIn} /> : null}
         {kept ? (
           <p style={{ ...quiet, margin: 0 }} data-testid="record-kept-in-step" data-graview-system={kept.system}>
@@ -214,6 +235,13 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
               <PageView node={node as never} cardinality="one" fidelity="full" mode="fullscreen" selected={false} {...(facts.violations.length > 0 ? { flagged: [id] } : {})} />
             </Bleed>
           </DefaultViewElsewhere>
+          {whole ? (
+            <p style={{ margin: "8px 0 0", color: "var(--graview-ink-muted)", fontSize: "0.875rem" }} data-testid="record-original">
+              <Link to={`${recordPath(store.schema, facts.kind, id)}?drawn=built-in`} style={{ color: "inherit" }} data-testid="built-in-page" aria-label="The original page">
+                Original
+              </Link>
+            </p>
+          ) : null}
         </section>
       ) : null}
 
@@ -248,121 +276,23 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
         </section>
       ) : null}
 
-      {!whole && (fields.length > 0 || unfilled) ? (
-        <section style={{ ...rule, display: "grid", gap: 14 }} data-testid="record-fields">
-          <h2 style={h2}>The facts</h2>
-          {/*
-            * IN THE SECTIONS THE KIND'S PAGE DECLARES (FR-148) — its first
-            * fields, each group under its title, the rest under "Details" —
-            * or, unsaid, in declared order. Each value is changed where it
-            * stands, as the scene's record changes it; prose spans the page
-            * under its label, its paragraphs kept (FR-146, FR-147).
-            */}
-          {pageSections(definition, fields).map((section, index) => {
-            const list = (
-              <dl
-                style={{
-                  margin: 0,
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-                  gap: "14px 24px",
-                }}
-              >
-                {section.fields.map((field) => (
-                  <RecordField<S> key={field.key} nodeId={id} node={node as Record<string, unknown> | undefined} field={field} inPlace={inPlace} />
-                ))}
-              </dl>
-            );
-            return section.title ? (
-              <section key={index} style={{ display: "grid", gap: 10, minWidth: 0 }}>
-                <h3 data-graview-field-group={section.title} style={{ ...h2, fontSize: "inherit" }}>
-                  {section.title}
-                </h3>
-                {list}
-              </section>
-            ) : (
-              <div key={index}>{list}</div>
-            );
-          })}
-          {unfilled ? <Files as="unfilled" nodeId={id} skip={[...(said?.fields ?? [])]} labelStyle={eyebrow} style={{ gap: 4 }} /> : null}
-        </section>
+      {/*
+        * THE FACTS, AS ONE SHEET (Roadmap f-facts-by-type): each field drawn
+        * and changed by its type, in the sections the kind's page declares
+        * (FR-148), and each relation a row of chips — the ones it has, and
+        * the ones an act here could give it.
+        */}
+      {!whole && (fields.length > 0 || unfilled || relations.length > 0) ? (
+        <FactSheet<S> context={context} id={id} facts={facts} fields={fields} relations={relations} inPlace={inPlace} style={rule}>
+          {unfilled ? <Files as="unfilled" nodeId={id} skip={[...(said?.fields ?? [])]} labelStyle={LABEL} style={{ gap: 4 }} /> : null}
+        </FactSheet>
       ) : null}
-
-      {(whole ? [] : links).map((group) => (
-        <section key={`${group.edgeKind}|${group.direction}|${group.description ?? ""}`} style={{ ...rule, display: "grid", gap: 10 }}>
-          {/*
-            * THE EYEBROW SAYS WHAT IS LISTED, NOT WHICH WAY THE EDGE WAS
-            * DECLARED.
-            *
-            * It used to be the edge kind — so an owner's record read
-            * "Assigned to" over "What they are seeing to", which is the
-            * reading `graview check` warns about by name
-            * (`edge-without-inverse`: "from an owner it is captioned
-            * 'assigned to', which is the wrong way round"). And where the
-            * declaration had no words for this direction, the eyebrow and the
-            * heading under it were the same string twice.
-            *
-            * The kinds on the far end are true from either end, and say
-            * something the heading does not.
-            */}
-          <p style={eyebrow}>{listed(store, group)}</p>
-          {/* Where the declaration has no words for this end, the arrow says which way it points, and the heading's name says the words (FR-142). */}
-          {group.description ? (
-            <h2 style={h2}>{capitalize(group.description)}</h2>
-          ) : (
-            <h2 style={h2} aria-label={humanizeField(group.edgeKind)}>
-              {group.direction === "in" ? "← " : "→ "}
-              {humanizeField(group.edgeKind)}
-            </h2>
-          )}
-          <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexWrap: "wrap", gap: "6px 18px" }}>
-            {group.targets.map((target) => {
-              // A link made less than sure and not yet kept by a person is marked as such (FR-172).
-              const provenance = linkProvenance(store, group.direction === "in" ? { kind: group.edgeKind, from: target.id, to: id } : { kind: group.edgeKind, from: id, to: target.id });
-              return (
-                <li key={target.id} style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                  <KindMark kind={target.kind} brand={brand} schema={store.schema} size={7} />
-                  <Link to={recordPath(store.schema, target.kind, target.id)} style={link}>
-                    {target.label}
-                    {target.apart ? <span style={quiet}> · {target.apart}</span> : null}
-                  </Link>
-                  {provenance?.provisional ? <ProvisionalMark store={store} link={provenance} {...(principal ? { principal } : {})} /> : null}
-                </li>
-              );
-            })}
-          </ul>
-          {/* THE OTHER WAY ROUND: the far kind's list, narrowed to this record — the same relation read as a pile.
-              Not for a relation that holds ONE by declaration — a deal's buyer, a vehicle's lot: sorting and
-              filtering a list that can only ever hold one thing is a link to the same name again. */}
-          {(group.direction === "out" && store.schema.edge(group.edgeKind)?.cardinality === "one"
-            ? []
-            : [...new Set(group.targets.map((target) => target.kind))]
-          ).map((farKind) => (
-            <Link
-              key={farKind}
-              to={`/${pluralSlug(store.schema, farKind)}?${encodeURIComponent(group.edgeKind)}=${encodeURIComponent(id)}`}
-              style={{ ...onward, ...quiet }}
-              data-testid="related-all"
-            >
-              {/*
-                * The relation in THIS end's words, not the edge's name: "All
-                * artists by Blue Hour", "All songs tracks Blue Hour" and "All
-                * eras spans Blue Hour" were the edge kind read as a verb from
-                * whichever end it happened to fit.
-                */}
-              <Onward>
-                Sort and filter {group.description ?? `these ${pluralOf(store, farKind).toLowerCase()}`}
-                {group.targets.some((target) => target.kind !== farKind) ? ` (${pluralOf(store, farKind).toLowerCase()})` : ""}
-              </Onward>
-            </Link>
-          ))}
-        </section>
-      ))}
 
       {!whole && (offered.length > 0 || facts.actions.withheld.length > 0) ? (
         <section style={{ ...rule, display: "grid", gap: 14 }} data-testid="record-actions">
           <h2 style={h2} ref={actsHeading} tabIndex={-1}>What can be done</h2>
-          <div role="toolbar" aria-label="What can be done" {...roving} style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {/* A QUIET LIST, NOT A WALL OF BUTTONS (Roadmap f-facts-by-type): what the facts cannot say, one under another. */}
+          <div role="toolbar" aria-label="What can be done" aria-orientation="vertical" {...roving} style={{ display: "grid", justifyItems: "start", gap: 2 }}>
             {shown.map((affordance) => {
               const opened = open === affordance.id;
               return (
@@ -385,19 +315,14 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                   autoFocus={more && affordance === aside[0]}
                   aria-expanded={opened}
                   onClick={() => setOpen(opened ? null : affordance.id)}
-                  style={{
-                    ...button,
-                    ...(opened
-                      ? { borderColor: "var(--graview-accent)", color: "var(--graview-accent)" }
-                      : {}),
-                  }}
+                  style={{ ...ACT, ...(opened ? { color: "var(--graview-accent)" } : {}) }}
                 >
                   {affordance.label}
                 </button>
               );
             })}
             {shown.length < offered.length ? (
-              <button type="button" aria-expanded={false} onClick={() => setMore(true)} style={{ ...button, ...quiet }} data-testid="record-actions-more" {...{ [ROVING_ITEM]: "" }}>
+              <button type="button" aria-expanded={false} onClick={() => setMore(true)} style={{ ...ACT, ...quiet }} data-testid="record-actions-more" {...{ [ROVING_ITEM]: "" }}>
                 Show {offered.length - shown.length} more
               </button>
             ) : null}
@@ -597,3 +522,4 @@ function ArchivedSaid<S extends AnySchema>({ context, id, kind }: { context: Pag
     </section>
   );
 }
+

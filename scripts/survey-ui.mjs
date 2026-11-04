@@ -19,6 +19,7 @@ import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { pressPlace } from "./lib/places.mjs";
+import { openActivity } from "./lib/bar.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -123,7 +124,7 @@ const APPS = {
         await page.waitForTimeout(400);
       },
       tidied: async (page) => {
-        await page.click('[data-testid="activity-button"]');
+        await openActivity(page);
         await page.click('[data-testid="agent-tidy"]');
         await page.waitForTimeout(1400);
         // Photograph the tidied SCENE, not the popover the turn ran from.
@@ -156,7 +157,7 @@ const APPS = {
     },
     invited: async (p) => { await p.click('[data-graview-view="kind:gardener"]'); },
     planted: async (p) => {
-      await p.click('[data-testid="activity-button"]');
+      await openActivity(p);
       await p.waitForTimeout(300);
       await p.click('[data-testid="agent-starter"]');
       await p.waitForTimeout(1600);

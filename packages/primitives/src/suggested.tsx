@@ -1,7 +1,7 @@
 import { actingAs, nameOfAuthor, VOTE_SUGGESTION, type AnySchema, type DismissalStore, type Suggestion } from "@graview/core";
 import { lineageWords } from "@graview/core/provenance";
 import { acceptSuggestion, declineSuggestion, isProposal, mayDecide, suggestions, voteSuggestion, withdrawSuggestion } from "@graview/core/tidying";
-import { POPOVER_STYLE, useGoTo, useGraph, useGraview, usePopover } from "@graview/react/provider";
+import { useGoTo, useGraph, useGraview } from "@graview/react/provider";
 import { useEffect, useId, useMemo, useReducer, useState } from "react";
 import { dismissalsOf, tomorrow } from "./dismissals.js";
 import { VISUALLY_HIDDEN } from "./primitives/index.js";
@@ -25,19 +25,41 @@ export function awayWords(waiting: number, tidied: number, agreed = 0): string |
   return parts.length > 0 ? parts.join(" · ").replace(/^./, (first) => first.toUpperCase()) : undefined;
 }
 
+/** What still waits for this person: the suggestions their "Not now" has not put out of sight. */
+function useWaiting() {
+  const { store, principal, dismissals: host, app } = useGraview<AnySchema>();
+  const nodes = useGraph();
+  const notNow = useMemo(() => dismissalsOf(host, app?.name ?? "app", principal), [host, app?.name, principal]);
+  const [said, changed] = useReducer((count: number) => count + 1, 0);
+  useEffect(() => notNow.onChange?.(changed), [notNow]);
+  // A vote changes no record, so the graph says nothing of it: the tally is read again when one lands (Roadmap f-suggestion-votes).
+  useEffect(() => store.subscribe((_, ops) => ops.some((op) => op.vote !== undefined) && changed()), [store]);
+  const waiting = useMemo(() => suggestions(store, principal, { dismissed: notNow.list() }), [store, principal, nodes, notNow, said]);
+  return { waiting, notNow };
+}
+
 /**
- * THE SUGGESTED TRAY: what the app's own actor proposed and did not make
- * (`suggest`, `@graview/core/tidying`), waiting for a person — quietly, on the bar beside
- * Activity, never in the way of anything. Each says what it would do, who
- * suggested it, what it was based on and how sure, and the records it
- * names; Accept makes it as the person, carrying its lineage, Decline
+ * HOW MANY WAIT FOR THIS PERSON, told to the inbox's bell (Roadmap
+ * f-app-bar-calm): fetched with the tray, once the log holds a
+ * suggestion, so a page with none carries none of it. Draws nothing.
+ */
+export function SuggestedCount({ onCount }: { readonly onCount: (count: number) => void }) {
+  const { waiting } = useWaiting();
+  useEffect(() => onCount(waiting.length), [onCount, waiting.length]);
+  return null;
+}
+
+/**
+ * WHAT TIDYING SUGGESTS, IN THE INBOX'S "FOR YOU" (Roadmap f-app-bar-calm):
+ * what the app's own actor proposed and did not make (`suggest`,
+ * `@graview/core/tidying`), waiting for a person. Each says what it would
+ * do, who suggested it, what it was based on and how sure, and the records
+ * it names; Accept makes it as the person, carrying its lineage, Decline
  * keeps the decline in the log, so it is never suggested again, and Not now
  * puts it out of this person's sight until tomorrow — kept where the host
  * keeps their own state (`dismissals`), so nobody else is told and the
- * actor is held to nothing. Fetched when the log holds a suggestion, or
- * the host said what was done while the person was away (`BarSuggested`),
- * so a page with neither carries none of it; drawn while one still waits
- * for this person, or there is something to say of their time away.
+ * actor is held to nothing. And what was done while the person was away,
+ * in a line, when the host said (`whileAway`).
  *
  * A reader who may see a suggestion and may not make its change is not
  * refused (Roadmap f-suggestion-votes): their Accept and Decline are a
@@ -53,33 +75,30 @@ export function awayWords(waiting: number, tidied: number, agreed = 0): string |
  * may make it as the app's own suggestions are — and its proposer, who may
  * not, is offered Withdraw in their place.
  */
-export function SuggestedTray() {
-  const { store, principal, dismissals: host, whileAway, app } = useGraview<AnySchema>();
-  const nodes = useGraph();
-  const notNow = useMemo(() => dismissalsOf(host, app?.name ?? "app", principal), [host, app?.name, principal]);
-  const [said, changed] = useReducer((count: number) => count + 1, 0);
-  useEffect(() => notNow.onChange?.(changed), [notNow]);
-  // A vote changes no record, so the graph says nothing of it: the tally is read again when one lands (Roadmap f-suggestion-votes).
-  useEffect(() => store.subscribe((_, ops) => ops.some((op) => op.vote !== undefined) && changed()), [store]);
-  const waiting = useMemo(() => suggestions(store, principal, { dismissed: notNow.list() }), [store, principal, nodes, notNow, said]);
+export function SuggestedList({ close, done }: {
+  /** Puts the inbox away, as the reader goes to a record a suggestion names. */
+  readonly close: () => void;
+  /** The last one settled: the inbox takes the keyboard to what was just made. */
+  readonly done: () => void;
+}) {
+  const { store, whileAway } = useGraview<AnySchema>();
+  const { waiting, notNow } = useWaiting();
   const [heard, hear] = useState("");
-  const popover = usePopover("suggested");
   const goTo = useGoTo();
-  /* A record a suggestion names goes somewhere while it is still here: the tray closes behind the reader as they go (FR-225). */
+  /* A record a suggestion names goes somewhere while it is still here: the inbox closes behind the reader as they go (FR-225). */
   const goes = (id: string) =>
     store.graph.has(id)
       ? (to: string) => {
-          popover.setOpen(false);
+          close();
           goTo.record(to);
         }
       : null;
   const tidied = whileAway?.tidied ?? 0;
   const away = whileAway ? awayWords(waiting.length, tidied, whileAway.agreed) : undefined;
-  if (waiting.length === 0 && tidied === 0) return null;
   /*
-   * A ROW SETTLED, THE KEYBOARD STAYS IN THE TRAY: on the next row's first
-   * button. The last one settled, the tray closes, and the keyboard goes to
-   * Activity, where what was just made is — never to <body>.
+   * A ROW SETTLED, THE KEYBOARD STAYS IN THE LIST: on the next row's first
+   * button. The last one settled, the inbox says what was made, in
+   * Activity — never <body>.
    */
   const settled = (word: string) => {
     hear(word);
@@ -87,98 +106,39 @@ export function SuggestedTray() {
       requestAnimationFrame(() => (document.querySelector('[data-testid="suggested"] [data-testid="suggestion-accept"]') as HTMLElement | null)?.focus());
       return;
     }
-    popover.setOpen(false);
-    // Activity, else, where nothing has been made yet, the bar's next control.
-    (document.querySelector<HTMLElement>('[data-testid="activity-button"]') ?? document.querySelector<HTMLElement>('[data-graview-app-bar] button:not([data-testid="suggested-button"])'))?.focus();
+    done();
   };
+  const status = (
+    <span role="status" data-testid="suggestion-heard" style={VISUALLY_HIDDEN}>
+      {heard}
+    </span>
+  );
+  if (waiting.length === 0 && !away) return status;
   return (
-    <div style={{ position: "relative" }}>
-      <button
-        type="button"
-        data-testid="suggested-button"
-        {...popover.trigger}
-        onClick={popover.toggle}
-        title={away ?? "What tidying suggests, waiting for you"}
-        {...(away ? { "aria-label": `Suggested: ${away}` } : {})}
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 6,
-          minHeight: 30,
-          padding: "0 8px",
-          borderRadius: 8,
-          border: "1px solid transparent",
-          background: "transparent",
-          boxShadow: "none",
-          fontSize: "0.875rem",
-          whiteSpace: "nowrap",
-          color: "var(--graview-ink-muted)",
-        }}
-      >
-        {waiting.length > 0 ? waiting.length : `Tidied ${tidied}`}
-        {/* On a phone's bar the word gives its room and the mark stands for it, as Activity's does. */}
-        <svg className="graview-activity-mark" width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" focusable="false" style={{ display: "var(--graview-activity-mark, none)" }}>
-          <path d="M3 4.5 H13 M3 8 H10 M3 11.5 H8" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-          <circle cx="12.25" cy="11.5" r="1.6" fill="none" stroke="currentColor" strokeWidth="1.3" />
-        </svg>
-        {waiting.length > 0 ? <span className="graview-activity-word"> Suggested</span> : null}
-      </button>
-      {popover.open ? (
-        <section
-          {...popover.pane}
-          aria-label="Suggested"
-          data-testid="suggested"
-          data-graview-offstage=""
-          style={{
-            ...POPOVER_STYLE,
-            /*
-             * NEVER SIDEWAYS: never wider than the page, and what it holds wraps
-             * rather than widening it. Seventeen suggestions naming
-             * "@tanstack/react-router" ran their sentences, their basis and their
-             * chips past the right edge, and the panel scrolled sideways.
-             */
-            width: "min(320px, calc(100vw - 16px))",
-            maxHeight: "min(52cqh, 460px)",
-            overflowX: "hidden",
-            overflowY: "auto",
-            display: "flex",
-            flexDirection: "column",
-            gap: 9,
-            padding: 12,
-            borderRadius: 10,
-            border: "1px solid var(--graview-edge)",
-            background: "var(--graview-float)",
-            boxShadow: "var(--graview-lift-high)",
-          }}
-        >
-          <h2 style={{ ...VISUALLY_HIDDEN, margin: 0 }}>Suggested</h2>
-          {away ? (
-            <p data-testid="while-away" style={{ margin: 0, fontSize: "0.8125rem", lineHeight: 1.45, color: "var(--graview-ink-muted)" }}>
-              {away}.
-            </p>
-          ) : null}
-          <p style={{ margin: 0, fontSize: "0.75rem", lineHeight: 1.45, color: "var(--graview-ink-faint)" }}>{waiting.length > 0 ? "Not made yet: each waits for you." : "What it did is in Activity."}</p>
-          {/* A person's proposals apart from the app's own suggestions, and first: somebody is waiting on an answer. */}
-          {[waiting.filter(isProposal), waiting.filter((one) => !isProposal(one))].map((some, at) =>
-            some.length === 0 ? null : (
-              <div key={at} style={{ display: "grid", gap: 6, minWidth: 0 }}>
-                {waiting.some(isProposal) ? (
-                  <h3 style={{ margin: 0, fontSize: "0.75rem", fontWeight: 600, color: "var(--graview-ink-muted)" }}>{at === 0 ? "Proposed" : "Suggested by the app"}</h3>
-                ) : null}
-                <ol data-testid={at === 0 ? "proposals" : "suggestions"} style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 10, fontSize: "0.8125rem", minWidth: 0 }}>
-                  {some.map((one) => (
-                    <SuggestionRow key={one.id} suggestion={one} notNow={notNow} settled={settled} heard={hear} goes={goes} />
-                  ))}
-                </ol>
-              </div>
-            ),
-          )}
-          {/* What the last press did, said to a screen reader: the row it was on is gone. */}
-          <span role="status" data-testid="suggestion-heard" style={VISUALLY_HIDDEN}>
-            {heard}
-          </span>
-        </section>
+    <div data-testid="suggested" style={{ display: "flex", flexDirection: "column", gap: 9, minWidth: 0 }}>
+      {away ? (
+        <p data-testid="while-away" style={{ margin: 0, fontSize: "0.8125rem", lineHeight: 1.45, color: "var(--graview-ink-muted)" }}>
+          {away}.
+        </p>
       ) : null}
+      {waiting.length > 0 ? <p style={{ margin: 0, fontSize: "0.75rem", lineHeight: 1.45, color: "var(--graview-ink-faint)" }}>Not made yet: each waits for you.</p> : <p style={{ margin: 0, fontSize: "0.75rem", lineHeight: 1.45, color: "var(--graview-ink-faint)" }}>What it did is in Activity.</p>}
+      {/* A person's proposals apart from the app's own suggestions, and first: somebody is waiting on an answer. */}
+      {[waiting.filter(isProposal), waiting.filter((one) => !isProposal(one))].map((some, at) =>
+        some.length === 0 ? null : (
+          <div key={at} style={{ display: "grid", gap: 6, minWidth: 0 }}>
+            {waiting.some(isProposal) ? (
+              <h3 style={{ margin: 0, fontSize: "0.75rem", fontWeight: 600, color: "var(--graview-ink-muted)" }}>{at === 0 ? "Proposed" : "Suggested by the app"}</h3>
+            ) : null}
+            <ol data-testid={at === 0 ? "proposals" : "suggestions"} style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 10, fontSize: "0.8125rem", minWidth: 0 }}>
+              {some.map((one) => (
+                <SuggestionRow key={one.id} suggestion={one} notNow={notNow} settled={settled} heard={hear} goes={goes} />
+              ))}
+            </ol>
+          </div>
+        ),
+      )}
+      {/* What the last press did, said to a screen reader: the row it was on is gone. */}
+      {status}
     </div>
   );
 }

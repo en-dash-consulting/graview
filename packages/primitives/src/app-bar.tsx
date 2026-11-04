@@ -1,12 +1,15 @@
 import { allLabel, arrangedEntries, hueFor, isInlineSvg, kindPath, MOST_STANDING, offeredPlaces, onePerPicture, OVERVIEW_SLUG, placeLabel, placePath, pluralLabel, primaryOf, samePicture, sharesItsName, supportingKinds, type AnySchema, type Brand, type PagesArrangement, type Place, type Principal, type Store } from "@graview/core";
 import { POPOVER_STYLE, useGraviewIfAny, usePopover } from "@graview/react/provider";
 import { useQuickAskDrawn } from "./quick-ask-desk.js";
-import { createContext, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type PointerEvent, type ReactNode } from "react";
+import { createContext, Suspense, useCallback, useContext, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type PointerEvent, type ReactNode } from "react";
 import { AppMark } from "./app-title.js";
 import { useMarkup } from "./markup.js";
 import { barPanes } from "./bar-panes-door.js";
 /* The places' foot, Hidden and Recently deleted (Roadmap f-place-menu-views): fetched with the panes, and the tidying with it, once there is something to list and the list is open. */
 const TidyFoot = barPanes.part((panes, props: { readonly id: string; readonly scene: boolean; readonly reach: BarGo; readonly done: () => void }) => <panes.TidyFoot {...props} />, { quiet: true });
+
+/* The app menu's rows (Roadmap f-app-bar-calm): fetched with the panes when it is first reached for. */
+const AppMenuRows = barPanes.part((panes, props: { readonly faces?: BarFaces | undefined; readonly rows: readonly AppMenuRow[]; readonly scheme?: BarScheme | undefined; readonly close: () => void }) => <panes.AppMenuPane {...props} />, { what: "The app menu" });
 
 /* Who else is here (FR-155): drawn once somebody is, so a reader alone never fetches it. */
 const Here = barPanes.part((panes, props: { readonly scene: boolean; readonly compact: boolean }) => <panes.Here {...props} />, { quiet: true });
@@ -65,6 +68,16 @@ function TheirChanges() {
  * always among them — stand on the row as words, the one you are on
  * underlined, and the rest fold into "More". When too few would stand, the
  * one control comes back. The row stays one row; a phone keeps the control.
+ *
+ * AND THE BAR CALMER (Roadmap f-app-bar-calm): ten things in seven shapes
+ * on Homeflow's bar — the name, a Scene | Pages pill, the pages, Find, "25
+ * Suggested", "4 Activity", a host's words, the people and the person. Now
+ * the app and its pages on the left — the name opens the app menu, which
+ * holds the scene and the pages, a host's rows and the scheme — and on the
+ * right Find, one inbox (a bell, one count), the host's tools, the people
+ * and a host's Share, and you: every tool the bar's one size, every count a
+ * badge, nothing drawn as a primary button. Find stays a box where the bar
+ * has room and is the magnifier sooner, below `BAR_FIND_FOLDS`.
  */
 
 /** Which of the places a place is: the home, a kind's list, or a picture. */
@@ -240,9 +253,6 @@ export interface BarFaces {
   readonly pages: BarFace;
 }
 
-/** How the switch is drawn: its words beside its marks where there is room, or its marks alone (the words its names). */
-export type BarSwitch = "words" | "icons";
-
 /**
  * ONE OF A HOST'S BUTTONS ON THE BAR (FR-227, Roadmap
  * f-host-buttons-in-the-app-bar): a press, named by its label, with a mark
@@ -254,7 +264,62 @@ export type BarSwitch = "words" | "icons";
 export interface BarAction {
   readonly label: string;
   readonly icon?: string;
+  /**
+   * THE MARK ALONE (Roadmap f-app-bar-calm): drawn as one of the bar's
+   * tools, its label the button's name and its tooltip — Graview Cloud's
+   * "Send feedback" as a speech bubble. Needs an `icon`; without one the
+   * label is drawn. Folded into the list on a narrow bar, the label is said
+   * beside the mark.
+   */
+  readonly iconOnly?: boolean;
   readonly onSelect: () => void;
+}
+
+/**
+ * ONE OF A HOST'S ROWS IN THE APP MENU (Roadmap f-app-bar-calm): Graview
+ * Cloud's "App settings", "Connections". A link (`href`, and `target` if it
+ * opens elsewhere) or a press (`onSelect`), with a mark beside its words
+ * where the host gives one — an emoji, a glyph or an inline `<svg>`.
+ */
+export interface AppMenuRow {
+  readonly label: string;
+  readonly icon?: string;
+  readonly href?: string;
+  readonly target?: string;
+  readonly onSelect?: () => void;
+}
+
+/** One of the schemes a person may choose: the system's, or light or dark whatever it says. */
+export type SchemeChoice = "system" | "light" | "dark";
+
+/**
+ * THE SCHEME, CHOSEN IN THE APP MENU (Roadmap f-scheme-choice-mount): the
+ * one chosen and the way to choose another. `offers` narrows the choices —
+ * the Shell, which owns no system setting of its own, offers light and
+ * dark. The host keeps the choice and applies it; the menu only asks.
+ */
+export interface BarScheme {
+  readonly value: SchemeChoice;
+  readonly onChoose: (value: SchemeChoice) => void;
+  readonly offers?: readonly SchemeChoice[];
+}
+
+/**
+ * A HOST'S SHARE, BESIDE THE PEOPLE (Roadmap f-app-bar-calm, which takes in
+ * f-bar-status-item): a button with a small mark and a word — "Share" unless
+ * the host says other — whose popover says in a sentence who can open the
+ * app, with a link to where that changes. The sentence is the button's
+ * description too: said on hover and to a screen reader.
+ */
+export interface BarShare {
+  /** The button's word: "Share" when unsaid. */
+  readonly label?: string;
+  /** The mark: `"lock"` (only some people), `"globe"` (anyone), `"people"`, or the host's own glyph or inline `<svg>`. A lock when unsaid. */
+  readonly mark?: "lock" | "globe" | "people" | (string & {});
+  /** Who can open the app, in a sentence. */
+  readonly description: string;
+  /** Where that changes: a link (`href`, `target`) or a press (`onSelect`). */
+  readonly link?: { readonly label: string; readonly href?: string; readonly target?: string; readonly onSelect?: () => void };
 }
 
 /** One size for every tool on the bar (FR-131). */
@@ -262,8 +327,10 @@ export const TOOL = 30;
 /** The bar's one row, its rule under it included, on a desk and a phone alike (FR-138). */
 export const BAR_HEIGHT = 48;
 
-/** Below this width of its own the bar is a phone's: the place is the page's first line, and Find a magnifier that opens the box over the row. */
+/** Below this width of its own the bar is a phone's: the place is the page's first line. */
 export const BAR_PHONE = 640;
+/** Below this width of its own Find is the magnifier, which opens the box over the row (Roadmap f-app-bar-calm): sooner than a phone's. */
+export const BAR_FIND_FOLDS = 900;
 
 /** The room between two places standing on the row (FR-145). */
 export const PLACE_GAP = 4;
@@ -323,17 +390,15 @@ export function placesThatStand(input: {
  * short, Find gives first (a small box that says its shortcut, drawn wide
  * while it is used), then the place down to 9em of its name (whole in its
  * title), then the app's name, which wraps between its words onto a second
- * line and never inside one; the switch keeps its size, and draws its marks
- * alone when its words do not fit (`roomForWords`). Whether the places stand
- * and the words fit is weighed with the name as it would stand on one line
+ * line and never inside one; the app menu's chevron keeps its size. Whether
+ * the places stand is weighed with the name as it would stand on one line
  * (`nameGiven`), never as it is drawn now: the name drawn on two lines because
  * the places stood would fold them, and the name back on one would stand
  * them again, frame after frame.
  *
  * Where the places stand on the row (FR-145), Find gives first — down to
  * its least — then the places fold into "More", then into the one control,
- * which gives as above. The places are weighed with the switch's words
- * kept: the words are worth more than a third place on the row.
+ * which gives as above.
  *
  * The order is the shrink factors: Find 600, the place 100, the app 1. A
  * factor under 1 would not do — the free space is scaled by the factors
@@ -347,23 +412,31 @@ export function placesThatStand(input: {
 const BAR_CSS = `
 .graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px solid var(--graview-edge);color:var(--graview-ink);font-family:var(--graview-font-body,system-ui)}
 .graview-bar-row{display:flex;flex-wrap:nowrap;align-items:center;gap:16px;height:${BAR_HEIGHT - 1}px;margin:0;padding:0 16px}
-.graview-bar-home,.graview-bar-face,.graview-bar-place,.graview-bar-item,.graview-bar-at{display:inline-flex;align-items:center;box-sizing:border-box;min-width:0;margin:0;border:0;background:none;box-shadow:none;font:inherit;letter-spacing:normal;text-transform:none;text-decoration:none;color:var(--graview-ink);cursor:pointer;text-align:left}
-.graview-bar-app{display:flex;flex:0 1 auto;max-width:50%}
+.graview-bar-home,.graview-bar-place,.graview-bar-item,.graview-bar-at{display:inline-flex;align-items:center;box-sizing:border-box;min-width:0;margin:0;border:0;background:none;box-shadow:none;font:inherit;letter-spacing:normal;text-transform:none;text-decoration:none;color:var(--graview-ink);cursor:pointer;text-align:left}
+.graview-bar-app{display:flex;align-items:center;gap:2px;flex:0 1 auto;max-width:50%}
 .graview-bar-app::after{content:"";flex:0 100000 auto;width:2px;min-width:0}
 .graview-bar-name{margin:0;display:flex;font-family:var(--graview-font-display,var(--graview-font-body,system-ui));font-size:.9375rem;font-weight:600;line-height:1.25}
 .graview-bar-home{gap:8px;min-width:auto;min-height:30px;padding:0;letter-spacing:-.005em}
 .graview-bar-app-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal;word-break:normal}
-.graview-bar-faces{display:inline-flex;flex:0 0 auto;box-sizing:border-box;height:30px;margin:0;padding:2px;gap:2px;border:1px solid var(--graview-edge);border-radius:8px}
-.graview-bar-face{gap:6px;padding:0 10px;border-radius:6px;font-size:.8125rem;white-space:nowrap;color:var(--graview-ink-muted)}
-.graview-bar-face span{min-width:0;max-width:11em;overflow:hidden;text-overflow:ellipsis}
-.graview-bar-face[aria-pressed=true]{color:var(--graview-ink);font-weight:600;background:color-mix(in srgb,var(--graview-accent) 16%,transparent)}
-[data-switch-drawn=icons] .graview-bar-face{padding:0 8px}
-.graview-bar-said,[data-switch-drawn=icons] .graview-bar-face span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.graview-bar-said{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.graview-bar-menu-open{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;box-sizing:border-box;width:24px;height:30px;margin:0;padding:0;border:1px solid transparent;border-radius:6px;background:none;box-shadow:none;color:var(--graview-ink-muted);cursor:pointer}
+.graview-bar-menu-open:is(:hover,[aria-expanded=true]){border-color:var(--graview-edge);color:var(--graview-ink)}
+.graview-bar-tool{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:0 0 auto;box-sizing:border-box;min-width:${TOOL}px;height:${TOOL}px;margin:0;padding:0;border-radius:8px;border:1px solid transparent;background:none;box-shadow:none;font:inherit;font-size:.875rem;font-weight:500;letter-spacing:normal;text-transform:none;white-space:nowrap;color:var(--graview-ink-muted);cursor:pointer;text-decoration:none}
+.graview-bar-tool:is(:hover,[aria-expanded=true]){border-color:var(--graview-edge);color:var(--graview-ink)}
+.graview-bar-tool[data-running]{color:var(--graview-accent)}
+.graview-bar-badge{position:absolute;top:-3px;right:-5px;box-sizing:border-box;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--graview-accent);color:var(--graview-accent-ink);font-size:.625rem;font-weight:700;line-height:16px;text-align:center;font-variant-numeric:tabular-nums;box-shadow:0 0 0 2px var(--graview-bar);pointer-events:none}
+.graview-bar-badge[data-dot]{min-width:8px;width:8px;height:8px;padding:0;top:2px;right:2px}
+.graview-bar-badge[data-tone=warn]{background:var(--graview-warn)}
+.graview-bar-share{gap:6px;padding:0 10px}
+.graview-bar-share-pane{display:grid;gap:10px;width:min(300px,calc(100vw - 24px));padding:14px;border-radius:10px;border:1px solid var(--graview-edge);background:var(--graview-float);box-shadow:var(--graview-lift-high);color:var(--graview-ink);font-size:.875rem;line-height:1.45}
+.graview-bar-share-pane[hidden]{display:none}
+.graview-bar-share-pane p{margin:0}
+.graview-bar-share-pane a,.graview-bar-share-pane button{justify-self:start;display:inline-flex;align-items:center;min-height:28px;padding:0;border:0;background:none;box-shadow:none;font:inherit;font-weight:600;color:var(--graview-accent);text-decoration:none;cursor:pointer}
 .graview-bar-mid{display:flex;flex:1 100 0;min-width:0}
 .graview-bar-mid[data-place]{min-width:9em;flex-basis:auto}
 .graview-bar-place-at{position:relative;display:inline-flex;min-width:0;max-width:100%}
 .graview-bar-place{gap:6px;height:30px;max-width:100%;padding:0 8px;border:1px solid transparent;border-radius:8px;font-size:.875rem;font-weight:600}
-.graview-bar-face:hover,.graview-bar-place:hover{border-color:var(--graview-edge);color:var(--graview-ink)}
+.graview-bar-place:hover{border-color:var(--graview-edge);color:var(--graview-ink)}
 .graview-bar-place-words{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .graview-bar-mid[data-places=standing]{flex:0 0 auto}
 .graview-bar-places{display:flex;align-items:center;gap:${PLACE_GAP}px;min-width:0;margin:0;padding:0}
@@ -390,10 +463,11 @@ const BAR_CSS = `
 .graview-bar-host{display:flex;align-items:center;gap:2px;flex:0 0 auto}
 .graview-bar-host-action{display:inline-flex;align-items:center;gap:6px;box-sizing:border-box;min-width:${TOOL}px;height:${TOOL}px;margin:0;padding:0 10px;border-radius:8px;border:1px solid transparent;background:none;box-shadow:none;font:inherit;font-size:.875rem;font-weight:500;letter-spacing:normal;text-transform:none;white-space:nowrap;color:var(--graview-ink-muted);cursor:pointer}
 .graview-bar-host-action:is(:hover,[aria-expanded=true]){border-color:var(--graview-edge);color:var(--graview-ink)}
-.graview-bar-host-action[data-folded]{padding:0}
+.graview-bar-host-action:is([data-folded],[data-icon-only]){padding:0;justify-content:center}
 .graview-bar-host-mark{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:16px;height:16px;font-size:.9375rem;line-height:1}
 .graview-bar-host-mark svg{width:16px;height:16px}
 .graview-bar-list .graview-bar-host-action{width:100%;justify-content:flex-start;white-space:normal;overflow-wrap:anywhere}
+.graview-bar-host-action[data-icon-only]>.graview-bar-host-words{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .graview-bar-find{position:relative;display:flex;min-width:7.5rem;flex:0 600 9rem;--graview-bar-find-end:3.25em}
 .graview-bar-find-slot{display:flex;flex:1;min-width:0}
 .graview-bar-find-keys{position:absolute;right:10px;line-height:30px;pointer-events:none;font-size:.75rem;color:var(--graview-ink-faint)}
@@ -403,16 +477,21 @@ const BAR_CSS = `
 .graview-bar-line .graview-bar-place{height:auto;min-height:32px}
 .graview-bar-line .graview-bar-place-words{white-space:normal}
 @media (pointer:coarse){.graview-bar-find-keys{display:none}}
+@container graview-bar (max-width: ${BAR_FIND_FOLDS - 1}px){
+.graview-bar-find{display:none}
+.graview-bar-find-open{display:inline-flex}
+.graview-bar-tools>.graview-bar-find-open{margin-left:auto}
+.graview-bar[data-finding] :is(.graview-bar-app,.graview-bar-mid,.graview-bar-find-open){display:none}
+.graview-bar[data-finding] .graview-bar-find{display:flex;flex:1 1 auto;min-width:0;margin-left:0}
+}
 @container graview-bar (max-width: ${BAR_PHONE - 1}px){
 .graview-bar-row{gap:10px;padding:0 12px}
-.graview-bar-app,.graview-bar-home{max-width:none;flex:1 1 auto;min-width:28px}
+.graview-bar-app{max-width:none;flex:1 1 auto;min-width:28px}
+.graview-bar-home{min-width:28px}
 .graview-bar-name,.graview-bar-app-name{min-width:0}
-.graview-bar-mid,.graview-bar-find{display:none}
-.graview-bar-find-open{display:inline-flex}
-.graview-bar-own{--graview-activity-mark:inline}
-.graview-bar-own .graview-activity-word{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.graview-bar[data-finding] :is(.graview-bar-app,.graview-bar-faces,.graview-bar-find-open){display:none}
-.graview-bar[data-finding] .graview-bar-find{display:flex;flex:1 1 auto;min-width:0}
+.graview-bar-mid{display:none}
+.graview-bar-share{padding:0}
+.graview-bar-share>.graview-bar-share-words{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 }
 @container graview-bar (max-width: 300px){
 .graview-bar-row{gap:4px;padding:0 10px}
@@ -440,10 +519,11 @@ export const toolStyle: CSSProperties = {
 
 /**
  * THE BAR. The app at the left — its mark, its name as the page's heading,
- * the way home — then the switch between the scene and the pages (FR-137),
- * then, on Pages, the place you are on (FR-138), and the tools at the
- * right: the Find a face puts in it, then `tools` (the standing and the
- * person). One row of one height on a desk and a phone; on a phone the
+ * the way home — and the app menu beside it, which holds the scene and the
+ * pages (FR-137, Roadmap f-app-bar-calm), then, on Pages, the place you are
+ * on (FR-138), and the tools at the right: the Find a face puts in it, the
+ * inbox, a host's buttons, the people and a host's Share, then `tools` (the
+ * standing and the person). One row of one height on a desk and a phone; on a phone the
  * place is the page's first line, under the bar.
  */
 export function AppBar({
@@ -460,11 +540,13 @@ export function AppBar({
   description,
   findBox,
   onFind,
-  switch: switchForm = "words",
   scenePlaces,
   skips,
   named = true,
   actions,
+  appMenu = NO_ROWS,
+  scheme,
+  share,
 }: {
   readonly brand: Brand | undefined;
   readonly name: string;
@@ -491,13 +573,6 @@ export function AppBar({
   /** Told where the bar keeps the Find box, for the face under it (`BarFindContext`). */
   readonly onFind?: (find: BarFind | null) => void;
   /**
-   * How the switch is drawn: `"words"` (the default) says "Scene" and
-   * "Pages" beside their marks where the bar has room and draws the marks
-   * alone where it is narrow; `"icons"` draws the marks alone at every
-   * width. Either way the words are the buttons' names and their titles.
-   */
-  readonly switch?: BarSwitch;
-  /**
    * On the scene, what it can show (FR-144): the whole thing and each
    * picture, the one in view, and the way to each (`useScenePlaces`). None,
    * and the scene's bar names no place.
@@ -511,6 +586,12 @@ export function AppBar({
    * control that lists them where it does not. None, and nothing is drawn.
    */
   readonly actions?: readonly BarAction[] | undefined;
+  /** THE HOST'S ROWS IN THE APP MENU (Roadmap f-app-bar-calm), after the scene and the pages. */
+  readonly appMenu?: readonly AppMenuRow[] | undefined;
+  /** THE SCHEME, CHOSEN IN THE APP MENU (Roadmap f-scheme-choice-mount); none, and the menu offers none. */
+  readonly scheme?: BarScheme | undefined;
+  /** A HOST'S SHARE, after the people (Roadmap f-app-bar-calm); none, and nothing is drawn. */
+  readonly share?: BarShare | undefined;
 }) {
   const bar = useRef<HTMLElement>(null);
   // Anybody else here, by the provider's presence (FR-155); none where no provider is.
@@ -518,9 +599,9 @@ export function AppBar({
   const [slot, setSlot] = useState<HTMLElement | null>(null);
   const [own, setOwn] = useState<HTMLElement | null>(null);
   const [compact, setCompact] = useState(false);
+  // Whether Find is the magnifier (below `BAR_FIND_FOLDS`), which opens the box over the row.
+  const [folded, setFolded] = useState(false);
   const [finding, setFinding] = useState(false);
-  // Whether the switch's words fit beside everything else the row holds (`roomForWords`).
-  const [roomy, setRoomy] = useState(true);
   // Which places stand on the row, by their place in the list ("0,1,2"); null, the one control (FR-145).
   const [standing, setStanding] = useState<string | null>(null);
   // Whether the host's buttons stand on the row (FR-227): where the bar has their width over a phone's; folded where it does not.
@@ -537,26 +618,24 @@ export function AppBar({
   const shown = from && { ...from, places: offeredPlaces(from.places), here: from.places.find((place) => place.key === from.current)?.label };
   const list = shown && shown.places.length > 0 ? shown : null;
   const currentAt = list ? list.places.findIndex((place) => place.key === list.current) : -1;
-  const wordsAsked = Boolean(faces) && switchForm === "words";
   // Which places may stand, as one word for the weighing to depend on ("110010…").
   const ranks = list ? list.places.map((place) => (place.primary === false ? "0" : "1")).join("") : "";
   const weigh = useCallback(() => {
     const element = bar.current;
     if (!element) return;
-    const stand = standsIn(element, currentAt, wordsAsked, ranks);
+    const stand = standsIn(element, currentAt, ranks);
     if (stand !== undefined) setStanding(stand);
-    // Standing places were weighed with the switch's words kept.
-    const room = stand ? true : roomForWords(element);
-    if (room !== null) setRoomy(room);
-  }, [currentAt, wordsAsked, ranks]);
+  }, [currentAt, ranks]);
   useLayoutEffect(() => {
     const element = bar.current;
     if (!element) return;
     const read = () => {
       const width = element.getBoundingClientRect().width;
       setCompact(width < BAR_PHONE);
+      setFolded(width < BAR_FIND_FOLDS);
       // The host's buttons as they would stand, off their ruler: they stand where the bar has their width over a phone's.
       const host = element.querySelector<HTMLElement>("[data-graview-bar-host-ruler]");
+      // Two of the bar's tools drawn as marks alone stand at every width, as the bar's own do.
       setHostStands(width >= BAR_PHONE + (host?.getBoundingClientRect().width ?? 0));
       // What hangs from the bar as wide as it (a phone's Find sheet) is told the bar's width, not the screen's.
       element.style.setProperty("--graview-bar-width", `${Math.round(width)}px`);
@@ -587,8 +666,8 @@ export function AppBar({
   const told = useRef(onFind);
   told.current = onFind;
   useLayoutEffect(() => {
-    told.current?.(find && slot ? { slot, compact, own } : null);
-  }, [find, slot, compact, own]);
+    told.current?.(find && slot ? { slot, compact: folded, own } : null);
+  }, [find, slot, folded, own]);
   useLayoutEffect(() => () => told.current?.(null), []);
   const openFind = useCallback(() => {
     setFinding(true);
@@ -606,6 +685,43 @@ export function AppBar({
     escaping.current = false;
     requestAnimationFrame(() => opener.current?.focus());
   }, []);
+  /*
+   * HEARD ON THE ELEMENT ITSELF, not through React: the face's box is a
+   * portal from the face drawn under the bar, so its keys and its blur
+   * bubble through the face's tree and never reach a handler written here.
+   * Put away when folded (`BAR_FIND_FOLDS`) as the keyboard leaves it with
+   * nothing typed, or by Escape once its words are gone.
+   */
+  const findAt = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const at = findAt.current;
+    if (!at || !folded) return;
+    const typed = () => Boolean(at.querySelector<HTMLInputElement>("input")?.value);
+    const left = (event: FocusEvent) => {
+      const next = event.relatedTarget;
+      if (next instanceof Node && at.contains(next)) return;
+      if (!typed()) putAway();
+    };
+    const marked = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") escaping.current = true;
+    };
+    const escaped = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      // The scene's Find takes Escape for its words first; an empty box is put away. Weighed once the face's own handler (React's, at its root, after this one) has had the key.
+      queueMicrotask(() => {
+        if (!event.defaultPrevented || !typed()) putAway();
+        else escaping.current = false;
+      });
+    };
+    at.addEventListener("focusout", left);
+    at.addEventListener("keydown", marked, true);
+    at.addEventListener("keydown", escaped);
+    return () => {
+      at.removeEventListener("focusout", left);
+      at.removeEventListener("keydown", marked, true);
+      at.removeEventListener("keydown", escaped);
+    };
+  }, [folded, putAway]);
   const Heading = heading === false ? "span" : (`h${heading}` as const);
   const Home = (home.href !== undefined ? "a" : "button") as "a";
   const press = (go: (() => void) | undefined) => (event: MouseEvent) => {
@@ -624,9 +740,9 @@ export function AppBar({
   const placeControl = list ? <Places places={list.places} current={list.current} here={list.here} reach={list.reach} scene={scene} stands={stands} /> : null;
   const said = list ? list.places.map((place) => place.label).join("\n") : "";
   // What the row holds changed — the name, the places, the face, the brand — so the places and the words may fit now, or no longer.
-  useLayoutEffect(weigh, [weigh, name, brand, said, list?.current, onPages, compact, switchForm, find]);
-  // The marks alone on a phone's bar, when asked, or when the words do not fit.
-  const drawn: BarSwitch = switchForm === "icons" || !roomy || compact ? "icons" : "words";
+  useLayoutEffect(weigh, [weigh, name, brand, said, list?.current, onPages, compact, folded, find]);
+  // The app menu: the scene and the pages, the host's rows, the scheme — drawn where it holds anything.
+  const menuHolds = Boolean(faces) || appMenu.length > 0 || Boolean(scheme);
   return (
     <>
       <header
@@ -634,7 +750,7 @@ export function AppBar({
         className="graview-bar"
         data-testid="app-bar"
         data-graview-app-bar=""
-        {...(finding && compact ? { "data-finding": "" } : {})}
+        {...(finding && folded ? { "data-finding": "" } : {})}
       >
         <style>{BAR_CSS}</style>
         {skips}
@@ -655,8 +771,8 @@ export function AppBar({
                 </span>
               </Home>
             </Heading>
-          </div> : null}
-          {faces ? <FaceSwitch faces={faces} form={switchForm} drawn={drawn} /> : null}
+            {menuHolds ? <AppMenu name={name} faces={faces} rows={appMenu} scheme={scheme} /> : null}
+          </div> : menuHolds ? <AppMenu name={name} faces={faces} rows={appMenu} scheme={scheme} /> : null}
           <div className="graview-bar-mid" {...(stands ? { "data-places": "standing" } : !compact && placeControl ? { "data-place": "" } : {})}>
             {compact ? null : placeControl}
           </div>
@@ -679,9 +795,9 @@ export function AppBar({
             <span className="graview-bar-ruler" aria-hidden="true" data-graview-bar-host-ruler="">
               <span className="graview-bar-host">
                 {actions.map((action) => (
-                  <span key={action.label} className="graview-bar-host-action">
+                  <span key={action.label} className="graview-bar-host-action" {...(action.iconOnly && action.icon ? { "data-icon-only": "" } : {})}>
                     {action.icon ? <HostMark icon={action.icon} /> : null}
-                    <span>{action.label}</span>
+                    <span className="graview-bar-host-words">{action.label}</span>
                   </span>
                 ))}
               </span>
@@ -708,25 +824,7 @@ export function AppBar({
                 >
                   <FindMark />
                 </button>
-                <div
-                  className="graview-bar-find"
-                  data-testid="app-find"
-                  onBlur={(event) => {
-                    // Put away on a phone when the keyboard leaves it with nothing typed.
-                    const next = event.relatedTarget;
-                    if (next instanceof Node && event.currentTarget.contains(next)) return;
-                    if (!event.currentTarget.querySelector<HTMLInputElement>("input")?.value) putAway();
-                  }}
-                  onKeyDownCapture={(event) => {
-                    if (event.key === "Escape" && compact) escaping.current = true;
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key !== "Escape" || !compact) return;
-                    // The scene's Find takes Escape for its words first; an empty box is put away.
-                    if (!event.defaultPrevented || !event.currentTarget.querySelector<HTMLInputElement>("input")?.value) putAway();
-                    else escaping.current = false;
-                  }}
-                >
+                <div ref={findAt} className="graview-bar-find" data-testid="app-find">
                   {/* The face's box goes here; the shortcut is said over its end until it is used. */}
                   <div ref={setSlot} className="graview-bar-find-slot">
                     {findBox}
@@ -735,16 +833,18 @@ export function AppBar({
                 </div>
               </>
             ) : null}
-            {/* The face's own tool (`BarFind.own`): the scene's Activity, when something has happened. */}
+            {/* The face's own tool (`BarFind.own`): the one inbox, when it holds anything (Roadmap f-app-bar-calm). */}
             <div ref={setOwn} className="graview-bar-own" data-graview-bar-own="" />
+            {/* The host's own buttons (FR-227), before the people: standing, or behind one control on a narrow bar. */}
+            {actions && actions.length > 0 ? <HostButtons actions={actions} folded={!(actions.length <= 2 && actions.every((action) => action.iconOnly && action.icon)) && (compact || !hostStands)} /> : null}
             {company ? (
               <Suspense fallback={null}>
                 <Here scene={!onPages} compact={compact} />
               </Suspense>
             ) : null}
+            {/* A host's Share, beside the people: who can open the app, in a sentence (Roadmap f-app-bar-calm). */}
+            {share ? <ShareSlot share={share} /> : null}
             <TheirChanges />
-            {/* The host's own buttons (FR-227), before the app's tools: standing, or behind one control on a narrow bar. */}
-            {actions && actions.length > 0 ? <HostButtons actions={actions} folded={compact || !hostStands} /> : null}
             {tools}
           </div>
         </div>
@@ -759,74 +859,156 @@ export function AppBar({
   );
 }
 
+const NO_ROWS: readonly AppMenuRow[] = [];
+
 /**
- * THE SWITCH (FR-137): the scene and the pages, side by side, an icon and a
- * word each — the words the accessible names alone on a phone — the one
- * drawn pressed. Choosing the scene draws it under the bar; choosing the
- * pages goes back to the page you were on.
+ * THE APP MENU'S CONTROL (Roadmap f-app-bar-calm): a chevron beside the
+ * app's name — the name stays the way home, the page's heading — that opens
+ * the menu: the scene and the pages, a host's rows, the scheme. Its rows
+ * are fetched with the bar's panes when a hand first reaches for it.
  */
-function FaceSwitch({ faces, form, drawn }: { readonly faces: BarFaces; readonly form: BarSwitch; readonly drawn: BarSwitch }) {
-  const face = (which: "scene" | "pages") => {
-    const one = faces[which];
-    return (
+/**
+ * GOING TO THE OTHER FACE WITHOUT A BUTTON ON THE ROW (Roadmap
+ * f-app-bar-calm, f-make-any-page-better). The scene and the pages are rows
+ * of the app menu, drawn only while it is open, so a part that must switch
+ * faces — Better UI asked in the scene, opened on its page — cannot press
+ * them. It dispatches this on the app menu's control
+ * (`[data-testid="app-menu-open"]`, which says `data-pages` where the bar
+ * holds both faces), with the face as its detail, and the bar goes there as
+ * the menu's row would.
+ */
+export const FACE_EVENT = "graview:go-to-face";
+
+function AppMenu({ name, faces, rows, scheme }: { readonly name: string; readonly faces?: BarFaces | undefined; readonly rows: readonly AppMenuRow[]; readonly scheme?: BarScheme | undefined }) {
+  const popover = usePopover("app-menu", { align: "start" });
+  const reach = () => barPanes.prefetch();
+  /* A part asked to go to the other face (`FACE_EVENT`): gone to as the menu's row would, without opening the menu. */
+  const opener = useRef<HTMLElement | null>(null);
+  const held = useRef(faces);
+  held.current = faces;
+  useEffect(() => {
+    const element = opener.current;
+    if (!element) return;
+    const go = (event: Event) => {
+      const one = held.current?.[(event as CustomEvent<"scene" | "pages">).detail];
+      if (!one || one.current) return;
+      one.reach?.();
+      one.go();
+    };
+    element.addEventListener(FACE_EVENT, go);
+    return () => element.removeEventListener(FACE_EVENT, go);
+  }, []);
+  return (
+    <>
       <button
         type="button"
-        className="graview-bar-face"
-        data-testid={`app-face-${which}`}
-        aria-pressed={one.current}
-        title={one.label}
-        {...(one.reach && !one.current ? { onPointerEnter: one.reach, onPointerDown: one.reach, onFocus: one.reach } : {})}
-        onClick={() => {
-          if (!one.current) one.go();
+        className="graview-bar-menu-open"
+        data-testid="app-menu-open"
+        {...popover.trigger}
+        ref={(element: HTMLElement | null) => {
+          popover.trigger.ref(element);
+          opener.current = element;
         }}
+        onClick={popover.toggle}
+        onPointerEnter={reach}
+        onFocus={reach}
+        aria-label={`${name} — app menu`}
+        title="App menu"
+        // What the scene and the pages are called here, for a first look's hint before the menu has been opened.
+        {...(faces ? { "data-scene": faces.scene.label, "data-pages": faces.pages.label } : {})}
       >
-        {which === "scene" ? <SceneMark /> : <PagesMark />}
-        <span>{one.label}</span>
+        <Chevron />
       </button>
-    );
-  };
-  return (
-    <div className="graview-bar-faces" role="group" aria-label={`${faces.scene.label} or ${faces.pages.label}`} data-testid="app-faces" data-switch={form} data-switch-drawn={drawn}>
-      {face("scene")}
-      {face("pages")}
-    </div>
+      <div {...popover.pane} data-testid="app-menu" hidden={!popover.open} className="graview-bar-list graview-app-menu" style={POPOVER_STYLE} aria-label={`${name} — app menu`} role="group">
+        {popover.open ? (
+          <Suspense fallback={null}>
+            <AppMenuRows faces={faces} rows={rows} scheme={scheme} close={() => popover.setOpen(false)} />
+          </Suspense>
+        ) : null}
+      </div>
+    </>
   );
 }
 
+/** Share's marks: a lock, a globe, two people. */
+function ShareMark({ mark = "lock" }: { readonly mark?: BarShare["mark"] }) {
+  if (mark === "lock")
+    return (
+      <Mark size={14}>
+        <rect x="2.75" y="6.25" width="8.5" height="6" rx="1.25" fill="none" stroke="currentColor" strokeWidth="1.3" />
+        <path d="M4.75 6.25 V4.5 a2.25 2.25 0 0 1 4.5 0 V6.25" fill="none" stroke="currentColor" strokeWidth="1.3" />
+      </Mark>
+    );
+  if (mark === "globe")
+    return (
+      <Mark size={14}>
+        <circle cx="7" cy="7" r="5.25" fill="none" stroke="currentColor" strokeWidth="1.3" />
+        <path d="M1.75 7 H12.25 M7 1.75 C4.75 4.5 4.75 9.5 7 12.25 M7 1.75 C9.25 4.5 9.25 9.5 7 12.25" fill="none" stroke="currentColor" strokeWidth="1.1" />
+      </Mark>
+    );
+  if (mark === "people")
+    return (
+      <Mark size={14}>
+        <circle cx="5" cy="5" r="2" fill="none" stroke="currentColor" strokeWidth="1.3" />
+        <path d="M1.5 12 a3.5 3.5 0 0 1 7 0" fill="none" stroke="currentColor" strokeWidth="1.3" />
+        <circle cx="10" cy="5.5" r="1.6" fill="none" stroke="currentColor" strokeWidth="1.2" />
+        <path d="M9.5 9 a3 3 0 0 1 3.5 3" fill="none" stroke="currentColor" strokeWidth="1.2" />
+      </Mark>
+    );
+  return <HostMark icon={mark} />;
+}
+
 /**
- * WHETHER THE SWITCH'S WORDS FIT (the switch left to say its words where
- * there is room). The row is weighed as it is drawn: the room the middle
- * has past what the place wants (its words, up to 14em; none on the
- * scene), less what Find has given up and what the app's name has given
- * (`nameGiven`); none when the name is wider on one line than its room. The
- * words fit when that room holds them — the words
- * drawn already, or their width to come when the marks are drawn alone —
- * so the switch never flips back and forth at one width. Not weighed while
- * Find is in use (it is drawn wide then), on a phone's bar (the marks
- * alone), or where nothing is laid out (null).
+ * A HOST'S SHARE (Roadmap f-app-bar-calm, f-bar-status-item): its mark and
+ * its word, the sentence its description — on hover and to a screen reader —
+ * and, pressed, the sentence again with the link to where it changes. One
+ * of the bar's family of popovers.
  */
-function roomForWords(header: HTMLElement): boolean | null {
-  const faces = header.querySelector<HTMLElement>(".graview-bar-faces");
-  const mid = header.querySelector<HTMLElement>(".graview-bar-mid");
-  const find = header.querySelector<HTMLElement>(".graview-bar-find");
-  if (!faces || !mid || find?.matches(":focus-within")) return null;
-  const row = header.getBoundingClientRect().width;
-  if (row < BAR_PHONE) return null;
-  // The words to come, beside each mark: the word, the gap before it, and the button's wider padding.
-  const words = wordsOf(faces);
-  const place = mid.querySelector<HTMLElement>(".graview-bar-place-words");
-  const em = place ? parseFloat(getComputedStyle(place).fontSize) || 14 : 0;
-  // The place's words, its chevron, its gap, padding and frame: up to 14em of them.
-  const wanted = place ? Math.min(place.scrollWidth + 34, 14 * em) : 0;
-  const given = nameGiven(header);
-  // The app's name on two lines whatever stands beside it has given its room already: no room for the words.
-  if (given === null) return false;
-  let spare = mid.getBoundingClientRect().width - wanted - given - overrun(header);
-  if (find && find.getBoundingClientRect().width > 0) {
-    const basis = parseFloat(getComputedStyle(find).flexBasis);
-    if (isFinite(basis)) spare -= Math.max(0, basis - find.getBoundingClientRect().width);
-  }
-  return faces.getAttribute("data-switch-drawn") === "icons" ? spare >= words + 2 : spare >= -1;
+function ShareSlot({ share }: { readonly share: BarShare }) {
+  const popover = usePopover("share");
+  const said = `graview-share-said-${useId().replace(/:/g, "")}`;
+  const label = share.label ?? "Share";
+  const link = share.link;
+  return (
+    <div className="graview-bar-share-at">
+      <button type="button" className="graview-bar-tool graview-bar-share" data-testid="app-share-open" {...popover.trigger} onClick={popover.toggle} aria-describedby={said} title={share.description}>
+        <ShareMark mark={share.mark} />
+        <span className="graview-bar-share-words">{label}</span>
+      </button>
+      <span id={said} className="graview-bar-said">
+        {share.description}
+      </span>
+      <div {...popover.pane} data-testid="app-share" hidden={!popover.open} className="graview-bar-share-pane" style={POPOVER_STYLE} role="group" aria-label={label}>
+        <p data-testid="app-share-said">{share.description}</p>
+        {link ? (
+          link.href !== undefined ? (
+            <a
+              href={link.href}
+              data-testid="app-share-link"
+              {...(link.target ? { target: link.target, rel: "noopener" } : {})}
+              onClick={() => {
+                link.onSelect?.();
+                popover.setOpen(false);
+              }}
+            >
+              {link.label}
+            </a>
+          ) : (
+            <button
+              type="button"
+              data-testid="app-share-link"
+              onClick={() => {
+                popover.setOpen(false);
+                link.onSelect?.();
+              }}
+            >
+              {link.label}
+            </button>
+          )
+        ) : null}
+      </div>
+    </div>
+  );
 }
 
 /**
@@ -837,7 +1019,7 @@ function roomForWords(header: HTMLElement): boolean | null {
  * Activity arriving after the places were weighed, an iPad's 1024 px with
  * five places standing), Find's end went past the row with them, the room
  * read as enough, and the person stood off the screen. What runs over is
- * room the places and the switch's words do not have.
+ * room the places do not have.
  */
 function overrun(header: HTMLElement): number {
   const row = header.querySelector<HTMLElement>(".graview-bar-row");
@@ -913,16 +1095,6 @@ function SceneMark() {
   );
 }
 
-/** The pages' mark: a page of lines. */
-function PagesMark() {
-  return (
-    <Mark size={14}>
-      <rect x="2.25" y="1.75" width="9.5" height="10.5" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.3" />
-      <path d="M4.5 5 H9.5 M4.5 7.25 H9.5 M4.5 9.5 H7.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-    </Mark>
-  );
-}
-
 /** The way a menu opens: a chevron drawn, not a glyph a face may draw as a dot. */
 function Chevron() {
   return (
@@ -991,13 +1163,14 @@ function HostButtons({ actions, folded }: { readonly actions: readonly BarAction
         type="button"
         className={folded ? "graview-bar-host-action graview-bar-item" : "graview-bar-host-action"}
         data-testid="host-bar-action"
+        {...(!folded && action.iconOnly && action.icon ? { "data-icon-only": "", title: action.label } : {})}
         onClick={() => {
           done();
           action.onSelect();
         }}
       >
         {action.icon ? <HostMark icon={action.icon} /> : null}
-        <span>{action.label}</span>
+        <span className="graview-bar-host-words">{action.label}</span>
       </button>
     ));
   if (!folded) {
@@ -1212,8 +1385,7 @@ function usePlaceGestures(places: readonly BarPlace[], current: string | null, s
  * WHICH PLACES STAND ON THE ROW, WEIGHED FROM THE ROW AS DRAWN (FR-145):
  * the places' widths read off the ruler (each at its weight as the place
  * you are on, so marking one never moves the others), and the room from
- * where the places begin to where Find ends, less Find at its least, less
- * the switch's words when they are asked for. The same answer whichever way
+ * where the places begin to where Find ends, less Find at its least. The same answer whichever way
  * the places are drawn, so the row never flips between the two at one
  * width. The places begin where they would with the app's name on one
  * line (`nameGiven`), so they stand only where they leave it there, and the
@@ -1222,7 +1394,7 @@ function usePlaceGestures(places: readonly BarPlace[], current: string | null, s
  * name is wider on one line than its room, or where nothing is laid out
  * (null).
  */
-function standsIn(header: HTMLElement, current: number, wordsAsked: boolean, ranks: string): string | null | undefined {
+function standsIn(header: HTMLElement, current: number, ranks: string): string | null | undefined {
   const ruler = header.querySelector<HTMLElement>("[data-graview-bar-ruler]");
   const mid = header.querySelector<HTMLElement>(".graview-bar-mid");
   if (!ruler || !mid) return null;
@@ -1233,11 +1405,8 @@ function standsIn(header: HTMLElement, current: number, wordsAsked: boolean, ran
   if (given === null) return null;
   const widths = [...ruler.children].map((one) => one.getBoundingClientRect().width);
   const more = widths.pop() ?? 0;
-  const faces = header.querySelector<HTMLElement>(".graview-bar-faces");
-  const words = faces && wordsAsked ? wordsOf(faces) : 0;
-  const drawnWords = faces?.getAttribute("data-switch-drawn") === "words" ? words : 0;
   const from = mid.getBoundingClientRect().left + given;
-  const end = find?.getBoundingClientRect();
+  const end = find && getComputedStyle(find).display !== "none" ? find.getBoundingClientRect() : undefined;
   /*
    * To Find's end, less Find at its least and the room between them — the
    * row's whole gap: Find stands at `margin-left:auto`, which is nothing
@@ -1247,10 +1416,5 @@ function standsIn(header: HTMLElement, current: number, wordsAsked: boolean, ran
    */
   const room = (end && end.width > 0 ? end.right - from - (parseFloat(getComputedStyle(find!).minWidth) || 0) - 16 : mid.getBoundingClientRect().width - given) - overrun(header);
   const primary = [...ranks].map((rank) => rank !== "0");
-  return placesThatStand({ widths, current, room: Math.floor(room + drawnWords - words), more, primary })?.join(",") ?? null;
-}
-
-/** The switch's words, beside each mark: the word, the gap before it, and the button's wider padding. */
-function wordsOf(faces: HTMLElement): number {
-  return [...faces.querySelectorAll<HTMLElement>(".graview-bar-face span")].reduce((sum, span) => sum + span.scrollWidth + 10, 0);
+  return placesThatStand({ widths, current, room: Math.floor(room), more, primary })?.join(",") ?? null;
 }

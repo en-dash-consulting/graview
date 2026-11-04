@@ -68,7 +68,7 @@ export function NotifySheet({ ask, close }: NotifySheetProps) {
     close();
     requestAnimationFrame(() => {
       if (back?.isConnected) back.focus();
-      else document.querySelector<HTMLElement>("[data-graview-page-title], main h1, [data-testid='activity-button']")?.focus();
+      else document.querySelector<HTMLElement>("[data-graview-page-title], main h1, [data-testid='inbox-button']")?.focus();
     });
   };
 
@@ -191,7 +191,7 @@ export function NotifiedList({ style }: { readonly style?: CSSProperties }) {
                 // The keyboard stays in the list: on the next Stop, else Activity's own button.
                 const item = event.currentTarget.closest("li");
                 const next = (item?.nextElementSibling ?? item?.previousElementSibling)?.querySelector<HTMLElement>("button");
-                void Promise.resolve(subscriptions.remove(one.id)).then(() => (next ?? document.querySelector<HTMLElement>("[data-testid='activity-button']"))?.focus());
+                void Promise.resolve(subscriptions.remove(one.id)).then(() => (next ?? document.querySelector<HTMLElement>("[data-testid='inbox-button']"))?.focus());
               }}
               style={{ padding: "1px 8px", fontSize: "0.8125rem" }}
             >

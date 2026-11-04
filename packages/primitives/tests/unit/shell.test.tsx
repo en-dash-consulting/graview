@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { AgentSeat, registerDefaultViews, Shell } from "../../src/index.js";
 import { ProfilePane } from "../../src/bar-panes.js";
+import { AppMenuPane } from "../../src/app-menu.js";
 
 /**
  * The shell is the one file every app used to write and get slightly wrong.
@@ -37,7 +38,7 @@ const render = (props: Partial<Parameters<typeof Shell<typeof schema>>[0]> = {})
 const pane = (part: "top" | "rest") =>
   renderToStaticMarkup(
     <GraviewProvider store={store()} views={registerDefaultViews(schema, createViews(schema))} initialView={{ ...EMPTY_VIEW, overview: true }}>
-      <ProfilePane part={part} name="Somebody" me={undefined} scheme="light" onScheme={() => {}} hostActions={[]} close={() => {}} />
+      <ProfilePane part={part} name="Somebody" me={undefined} hostActions={[]} close={() => {}} />
     </GraviewProvider>,
   );
 
@@ -52,10 +53,12 @@ describe("the shell", () => {
 
   it("carries the parts the harnesses drive, under the ids they use", () => {
     const html = render({ seat: () => <button type="button" data-testid="agent-x">seat</button> });
-    // The one app bar, as an embed's scene face wears it (FR-131, FR-137); Find and Activity are put in it once it has drawn.
-    for (const id of ["app-bar", "app-home", "app-face-scene", "app-face-pages", "standing", "overview", "profile-button"]) {
+    // The one app bar, as an embed's scene face wears it (FR-131, FR-137); Find and the inbox are put in it once it has drawn.
+    for (const id of ["app-bar", "app-home", "app-menu-open", "standing", "overview", "profile-button"]) {
       expect(html, id).toContain(`data-testid="${id}"`);
     }
+    // The scene and the pages are the app menu's, fetched when it is first opened; its control says what they are called.
+    expect(html).toMatch(/data-testid="app-menu-open"[^>]*data-scene="[^"]+"[^>]*data-pages="[^"]+"/);
     // The way home is the app's front page on the pages, as an embed's is.
     expect(html).toMatch(/href="\/pages"[^>]*data-testid="app-home"/);
   });
@@ -67,13 +70,18 @@ describe("the shell", () => {
    * scheme buttons — two controls for one setting. It also carried "Show
    * the installation" and "Studio" beside the places, where every reader
    * met two controls only a keeper can use, in the same row as the app's
-   * own pictures.
+   * own pictures. The scheme is the app menu's now (Roadmap
+   * f-app-bar-calm), and only there.
    */
-  it("keeps the scheme, the installation and the studio behind the profile rather than on the bar", () => {
+  it("keeps the scheme in the app menu, and the installation and the studio behind the profile, rather than on the bar", () => {
     const html = render({ studio: <button type="button" data-testid="studio-place">Studio</button> });
-    // One scheme control, and it is the pair inside the pane — fetched when the person is first reached for (FR-131).
+    // One scheme control, and it is the pair inside the app menu — fetched when the menu is first reached for.
     expect(html).not.toContain('data-testid="scheme"');
-    expect(pane("rest")).toContain('data-testid="profile-scheme-light"');
+    expect(pane("rest")).not.toContain('data-testid="profile-scheme-');
+    const menu = renderToStaticMarkup(<AppMenuPane rows={[]} scheme={{ value: "light", onChoose: () => {}, offers: ["light", "dark"] }} close={() => {}} />);
+    expect(menu).toMatch(/data-testid="app-menu-scheme-light"[^>]*aria-pressed="true"/);
+    expect(menu).toMatch(/data-testid="app-menu-scheme-dark"[^>]*aria-pressed="false"/);
+    expect(menu).not.toContain('data-testid="app-menu-scheme-system"');
     // The keeper's ways in are in the pane, which is mounted and hidden.
     expect(html).toContain('data-testid="profile-keeping"');
     expect(html).toContain('data-testid="studio-place"');

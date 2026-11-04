@@ -116,8 +116,10 @@ async function scene(store: Store<typeof schema>, host: { readonly principal?: P
 }
 const $ = (selector: string) => document.querySelector<HTMLElement>(selector);
 const open = async () => {
-  await settled(() => expect($('[data-graview-app-bar] [data-testid="suggested-button"]')).not.toBeNull());
-  await act(async () => $('[data-testid="suggested-button"]')!.click());
+  await settled(() => expect($('[data-graview-app-bar] [data-testid="inbox-button"]')).not.toBeNull());
+  await act(async () => $('[data-testid="inbox-button"]')!.click());
+  // The inbox opens on For you, where what waits for this person is.
+  await settled(() => expect($('[data-testid="inbox-tab-for-you"]')?.getAttribute("aria-selected")).toBe("true"));
 };
 
 describe("Not now, in the Suggested tray", () => {
@@ -134,7 +136,7 @@ describe("Not now, in the Suggested tray", () => {
     const ops = store.log.length;
     const before = Date.now();
     await act(async () => button.click());
-    await settled(() => expect($('[data-testid="suggested-button"]')).toBeNull());
+    await settled(() => expect($('[data-testid="suggestion"]')).toBeNull());
     expect(store.log.length).toBe(ops);
     expect(kept.held).toHaveLength(1);
     expect(kept.held[0]!.suggestion).toBe(suggestions(store)[0]!.id);
@@ -144,8 +146,8 @@ describe("Not now, in the Suggested tray", () => {
     // Still waiting, for Sam and for the app's own actor alike: Not now is no decline.
     expect(suggestions(store, sam)).toHaveLength(1);
     expect(suggestions(store, nora, { dismissed: kept.held })).toHaveLength(0);
-    // Nothing made yet, so no Activity: the keyboard went to the bar with the tray, never to <body>.
-    expect(document.activeElement?.closest("[data-graview-app-bar]")).not.toBeNull();
+    // The last one settled, the inbox turns to Activity and the keyboard goes with it, never to <body>.
+    await settled(() => expect(document.activeElement?.getAttribute("data-testid")).toBe("inbox-tab-activity"));
   });
 
   it("shows it again once the time the person said has passed", async () => {
@@ -174,30 +176,27 @@ describe("Not now, in the Suggested tray", () => {
     await scene(store, { principal: keeper });
     await open();
     expect([...document.querySelectorAll('[data-testid="suggestion"]')].map((row) => row.getAttribute("data-suggestion"))).toEqual([second!.id]);
-    expect($('[data-testid="suggested-button"]')!.textContent).toContain("1");
+    expect($('[data-testid="inbox-tab-for-you"] .graview-inbox-tab-count')?.textContent).toBe("1");
   });
 });
 
 describe("what was done while the person was away", () => {
   it("is said in a line on the tray, beside what waits", async () => {
     await scene(storeWith(1), { whileAway: { tidied: 12, waiting: 1 } });
-    await settled(() => expect($('[data-testid="suggested-button"]')).not.toBeNull());
-    expect($('[data-testid="suggested-button"]')!.getAttribute("aria-label")).toBe("Suggested: One suggestion waiting · tidied 12 things while you were away");
-    await act(async () => $('[data-testid="suggested-button"]')!.click());
+    await settled(() => expect($('[data-testid="inbox-button"]')?.getAttribute("aria-label")).toMatch(/^Inbox — 1 waiting for you\b/));
+    await open();
     expect($('[data-testid="while-away"]')?.textContent).toBe("One suggestion waiting · tidied 12 things while you were away.");
   });
 
   it("is drawn though nothing waits, when the actor did something, and not at all when it did nothing", async () => {
     await scene(storeWith(0), { whileAway: { tidied: 3, waiting: 0 } });
-    await settled(() => expect($('[data-testid="suggested-button"]')).not.toBeNull());
-    expect($('[data-testid="suggested-button"]')!.textContent).toContain("Tidied 3");
-    await act(async () => $('[data-testid="suggested-button"]')!.click());
+    await open();
     expect($('[data-testid="while-away"]')?.textContent).toBe("Tidied 3 things while you were away.");
     await unmount!();
     document.body.innerHTML = "";
     await scene(storeWith(0), { whileAway: { tidied: 0, waiting: 0 } });
     await settled(() => expect($("[data-graview-app-bar]")).not.toBeNull());
-    expect($('[data-testid="suggested-button"]')).toBeNull();
+    expect($('[data-testid="inbox-button"]')).toBeNull();
   });
 
   it("counts what waits as this person sees it, and says one thing and many as a person would", () => {

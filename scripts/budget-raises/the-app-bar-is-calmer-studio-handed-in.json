@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 0,
+  "gzipped": 2560,
+  "note": "Raised when the app bar came to be calmer (Roadmap f-app-bar-calm): the app menu's control beside the name, a host's Share with its sentence and its popover, the inbox's bell with its one count in place of Suggested and Activity, icon-only host buttons and a count as a badge, and the frame and both handles carrying appMenu, schemeChoice, share and notifications up front; the inbox's tabs and the menu's rows are fetched with the bar's panes when first opened. 2_505 more gzipped, raised 2_560 to hold it; the minified within the budget's room. Measured at 1_876_936 / 656_907 against 2_001_566 / 654_402."
+}

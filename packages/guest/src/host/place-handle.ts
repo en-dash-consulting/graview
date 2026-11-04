@@ -36,9 +36,11 @@ export interface ViewPlaceHandleOptions {
   /** Draws this code from now on (a revision kept); undefined goes back to the view's own. */
   readonly draw: (source: string | undefined) => void;
   readonly mount: (element: HTMLElement, options: MountWorkerViewOptions<AnySchema>) => WorkerView;
+  /** What fetches the headless press run, as the page lent it (`lendViewPressing`); unlent, the place presses nothing. */
+  readonly pressing?: () => (() => Promise<typeof import("../headless/pressed-here.js")>) | undefined;
 }
 
-export function viewPlaceHandle({ element, definition, mounted, optionsFor, draw, mount }: ViewPlaceHandleOptions): ViewPlaceHandle {
+export function viewPlaceHandle({ element, definition, mounted, optionsFor, draw, mount, pressing }: ViewPlaceHandleOptions): ViewPlaceHandle {
   return {
     name: definition.manifest.name,
     title: definition.manifest.title ?? definition.manifest.name,
@@ -53,6 +55,32 @@ export function viewPlaceHandle({ element, definition, mounted, optionsFor, draw
     drawing: () => drawingOf(mounted()),
     refused: () => refusedOf(mounted()),
     check: async (source) => checkViewSource(source),
+    /*
+     * Every control the code would draw, pressed headless for this seat in
+     * a worker of the page's own, nothing applied: fetched the first time a
+     * draft is pressed, by what the page lent (`lendViewPressing`), so a
+     * page that never asks — and a guest host alone — carries none of it.
+     */
+    presses: async (source) => {
+      const lent = pressing?.();
+      if (!lent) throw new Error("This page cannot press a view's controls.");
+      const { pressedHere } = await lent();
+      const options = optionsFor({ source });
+      const ran = await pressedHere({
+        manifest: options.manifest,
+        source,
+        store: options.store,
+        principal: options.principal,
+        ...(options.input ? { input: options.input() } : {}),
+        ...(options.places ? { places: options.places() } : {}),
+      });
+      if (!ran.ok) {
+        const problem = { control: "the view", element: "", does: "nothing", ok: false, says: ran.detail };
+        return { ok: false, controls: [problem], problems: [problem] };
+      }
+      const pressed = ran.presses;
+      return pressed ? { ok: pressed.ok, controls: pressed.controls, problems: pressed.problems } : { ok: true, controls: [], problems: [] };
+    },
     draft: (source) => {
       const live = mounted()?.element;
       const holder = element.ownerDocument.createElement("div");

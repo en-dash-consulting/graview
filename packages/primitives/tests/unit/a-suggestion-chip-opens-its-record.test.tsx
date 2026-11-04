@@ -96,8 +96,8 @@ async function drawn(store: Store<typeof schema>, options: { readonly onViewChan
     ),
   );
   unmount = () => act(async () => root.unmount());
-  await settled(() => expect(document.querySelector('[data-testid="suggested-button"]')).not.toBeNull());
-  await act(async () => document.querySelector<HTMLElement>('[data-testid="suggested-button"]')!.click());
+  await settled(() => expect(document.querySelector('[data-testid="inbox-button"]')).not.toBeNull());
+  await act(async () => document.querySelector<HTMLElement>('[data-testid="inbox-button"]')!.click());
   await settled(() => expect(document.querySelector('[data-testid="suggested"] [data-testid="suggestion-record"]')).not.toBeNull());
   return host;
 }

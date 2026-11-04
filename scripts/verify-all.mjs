@@ -71,6 +71,10 @@ const CHAIN = [
   ["menu", "verify-menu.mjs"],
   // Make this section better: a right-click inside a worker view names the menu for its section and outlines it; Just do it, Describe changes and Highlight area revise that section alone into a draft in place, judged first — a revision that drops styles handed back once, or refused — kept through the host's view door with one Undo, and offered to nobody who may not change views.
   ["section", "verify-section.mjs"],
+  // Make any page better: a right-click anywhere on a built-in page — a row, the heading, a task's page, the home — offers "Make “Tasks” better"; words about the look typed in the menu go there and record words to the quick ask; the view spec is tried first, drawn as a draft and kept as one change with one Undo; what it cannot say is offered as the page's own view, kept with the built-in page under Also as; and nobody who may not change the app is offered it.
+  ["page-better", "verify-page-better.mjs"],
+  // The scene's menu on a place and in a list's column: a right-click between a list's tasks is about that list and offers its acts; on the place itself Better UI is offered and opens on the place's page, and the empty menu never says the app declares nothing.
+  ["scene-menu", "verify-scene-menu.mjs"],
   // The inline AI: suggestions from the catalog in the context menu, a ghost accepted in part as one batch with its undo, a panel kept as a lens, each interaction once in Activity and on its record's page, a host's stored entries, and nothing of it with AI off — on both faces.
   ["inline-ai", "verify-inline-ai.mjs"],
   // Notify me in two presses: from a right-click on a record in the scene, a kind's list and an act on the routed face, listed in Activity with one press to stop, somebody else's change told once and the reader's own not, and offered after an act's form.
@@ -123,8 +127,10 @@ const CHAIN = [
   ["workflows", "verify-workflows.mjs"],
   // A phone drawn as a tel: link grouped for its reader, a place as a link to the reader's maps app, a duration said "1 h 30 min", typed as words and summed, on both faces at desk width, in three engines.
   ["field-types", "verify-field-types.mjs"],
-  // A blank fact an act the seat may run writes is an empty slot on the record's page — "Add Allocation", reached by the keyboard, filled by the same editor — while a blank no act writes stays unsaid and a reader is offered none, in three engines.
+  // A blank fact an act the seat may run writes is an empty slot on the record's page — "Add allocation", reached by the keyboard, filled by the same editor — while a blank no act writes stays unsaid and a reader is offered none, in three engines.
   ["blank-facts", "verify-blank-facts.mjs"],
+  // A record's facts, each by its type: a yes or no a switch taken back with Undo, an empty date picked and a note added where they stand, a choice's options, the list a task is on a chip with its own picker, the heading renamed, a refusal said beside its field, What can be done holding no act a fact already does, labels beside values at a desk and above them on a phone, light and dark, in three engines (Roadmap f-facts-by-type).
+  ["facts", "verify-facts.mjs"],
   // A host whose page is the app hands the routed face the address bar, in three engines; an article's embed never touches it (FR-106).
   ["address", "verify-address.mjs"],
   // An app fills the phone after it turns, at the screen's height on both faces and in the Shell, in Chromium and WebKit (FR-165).

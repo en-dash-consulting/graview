@@ -366,7 +366,7 @@ function CommandBar({
         {/* The desk has no sign-in, and says so rather than pretending —
             what it does have is the reader's own text size and motion,
             which belong on every app in the repository including this one. */}
-        <Profile<S> scheme={scheme} onScheme={onScheme} />
+        <Profile<S> />
       </div>
     </header>
   );

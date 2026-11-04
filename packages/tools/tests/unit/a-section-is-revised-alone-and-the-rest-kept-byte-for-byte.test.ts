@@ -105,33 +105,49 @@ describe("revising a section", () => {
     expect(heard).toHaveLength(1);
   });
 
-  it("asks the full model where the light one's answer cannot be read", async () => {
-    const ai: HostAi = { light: slot("light", ["Sure! Here you go."]), thinking: slot("full", [JSON.stringify(WEEK)]) };
+  it("asks the light model again where an answer cannot be read, never the full one", async () => {
+    const ai: HostAi = { light: slot("light", ["Sure! Here you go.", "Still prose.", JSON.stringify(WEEK)]), thinking: slot("full", [JSON.stringify(WEEK)]) };
     const result = await reviseSection({ ai, source: before, section: "This week", mode: "just", judge: async () => [] });
-    expect(result.ok && result.stages.map((one) => one.stage)).toEqual(["light", "thinking"]);
+    expect(result.ok && result.stages.map((one) => one.stage)).toEqual(["light", "light", "light"]);
   });
 
   it("hands what broke back once, with the findings, and offers the repair", async () => {
     const heard: string[] = [];
     const broken = { ...WEEK, css: ".hf-week { display: grid; }" };
-    const ai: HostAi = { light: slot("light", [JSON.stringify(broken)]), thinking: slot("full", [JSON.stringify(WEEK)], heard) };
+    const ai: HostAi = { light: slot("light", [JSON.stringify(broken), JSON.stringify(WEEK)], heard), thinking: slot("full", []) };
     const judge = async (source: string) => (source.includes(".hf-days {") ? [] : ["The class “hf-days” is still drawn and no rule styles it now."]);
     const result = await reviseSection({ ai, source: before, section: "This week", mode: "describe", words: "wrap on a phone", judge });
     expect(result.ok && result.repaired).toBe(true);
-    expect(JSON.parse(heard[0]!).what_broke).toEqual(["The class “hf-days” is still drawn and no rule styles it now."]);
+    expect(JSON.parse(heard[1]!).what_broke).toEqual(["The class “hf-days” is still drawn and no rule styles it now."]);
   });
 
-  it("refuses in words what still breaks the view after its one repair", async () => {
+  it("refuses plainly what still breaks after the light model's two repairs, keeping the findings off the card and the last try for Try harder", async () => {
     const broken = JSON.stringify({ ...WEEK, css: "" });
-    const ai: HostAi = { light: slot("light", [broken]), thinking: slot("full", [broken]) };
-    const result = await reviseSection({ ai, source: before, section: "This week", mode: "just", judge: async () => ["“This week” is not drawn any more."] });
-    expect(result).toMatchObject({ ok: false, refused: "It could not be revised without breaking the view: “This week” is not drawn any more." });
+    const ai: HostAi = { light: slot("light", [broken, broken, broken]), thinking: slot("full", [JSON.stringify(WEEK)]) };
+    const judge = async (source: string) => (source.includes(".hf-days {") ? [] : ["“This week” is not drawn any more."]);
+    const result = await reviseSection({ ai, source: before, section: "This week", mode: "just", judge });
+    expect(result).toMatchObject({ ok: false, refused: "I couldn't make a version that looks right.", findings: ["“This week” is not drawn any more."] });
+    expect(result.stages.map((one) => one.stage)).toEqual(["light", "light", "light"]);
+    if (result.ok || !result.last) throw new Error("no last try");
+    const harder = await reviseSection({ ai, source: before, section: "This week", mode: "just", harder: true, from: { last: result.last, findings: result.findings ?? [] }, judge });
+    expect(harder.ok && harder.stages.map((one) => one.stage)).toEqual(["thinking"]);
+  });
+
+  it("repairs a stylesheet the host would strip before the section is drawn at all", async () => {
+    const heard: string[] = [];
+    const hosted = { ...WEEK, css: `:host { display: block; }\n${WEEK.css}` };
+    let drawn = 0;
+    const ai: HostAi = { light: slot("light", [JSON.stringify(hosted), JSON.stringify(WEEK)], heard) };
+    const result = await reviseSection({ ai, source: before, section: "This week", mode: "just", judge: async () => (drawn++, []) });
+    expect(result.ok).toBe(true);
+    expect(drawn).toBe(1);
+    expect(JSON.parse(heard[1]!).what_broke[0]).toContain(":host");
   });
 
   it("refuses a section the script does not draw, asking no model", async () => {
     const heard: string[] = [];
     const result = await reviseSection({ ai: { light: slot("light", [], heard) }, source: before, section: "Breakfast", mode: "just", judge: async () => [] });
-    expect(result).toMatchObject({ ok: false, refused: "“Breakfast” could not be found in the view's code, so it cannot be revised on its own." });
+    expect(result).toMatchObject({ ok: false, refused: "“Breakfast” could not be found in the view's code, so it cannot be changed on its own." });
     expect(heard).toEqual([]);
   });
 });

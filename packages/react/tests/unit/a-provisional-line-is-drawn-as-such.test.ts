@@ -24,7 +24,7 @@ const storeOf = () => {
 
 describe("a provisional line", () => {
   it("is known by the id the line is picked by, with what its hover says", () => {
-    expect(provisionalLines(storeOf())).toEqual(new Map([[edgeSelectionId("about", "lease", "harbor"), "Not yet kept by a person. Graview, tidying made it, based on “Both name 12 Harbor Street” · 60% sure."]]));
+    expect(provisionalLines(storeOf())).toEqual(new Map([[edgeSelectionId("about", "lease", "harbor"), "Not yet kept by a person. Graview, tidying made it: Both name 12 Harbor Street · 60% sure."]]));
   });
 
   it("is ordinary once a person keeps it, and the lines are handed nothing", () => {

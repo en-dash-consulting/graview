@@ -295,7 +295,8 @@ export { excerpt } from "./excerpt.js";
 // A grid lens's order and a coverage with nothing to cross, said once for the lens and describePlace (2026-10-15).
 export { gridSortOf, gridSortProblem, sortForGrid, type GridSort } from "./grid-sort.js";
 export { coverageUnlinkedWords } from "./coverage-words.js";
-export { actTitle, allLabel, article, counted, pluralLabel, pluralOf, fieldWords, humanizeField, humanizeValue, nounOf, summarize, withArticle } from "./schema/define-node.js";
+export { nameInPassing } from "./capital.js";
+export { actTitle, allLabel, article, counted, pluralLabel, pluralOf, fieldInPassing, fieldWords, humanizeField, humanizeValue, nounOf, summarize, withArticle } from "./schema/define-node.js";
 // What each option of a kind's choices is called, for a view handed records as they are kept (Roadmap f-option-labels).
 export { choiceWords } from "./schema/choice-words.js";
 // Days, times and numbers as a person reads them, in the reader's or the app's locale (FR-178), and instants on the person's or the app's clock (Roadmap f-app-time-zone).
@@ -395,7 +396,7 @@ export type { Tick } from "./clock.js";
 // Views — the cardinality x fidelity matrix.
 // The views a person tidies from the place menu (Roadmap f-place-menu-views): the host's seam and a memory keeper; the registry as it leaves it is `useTidiedViews` on `@graview/react`.
 export { memoryViews, withMemoryRevisions, NO_KEPT_VIEWS, placeTidying, REMOVED_VIEW_DAYS, removedLensName } from "./views/kept.js";
-export type { KeptViews, KeptViewsMay, KeptViewsState, LensTidyEdit, MemoryViewsOptions, RemovedView, ViewReviseAnswer, ViewRevisionKept } from "./views/kept.js";
+export type { ForkedPage, KeptViews, KeptViewsMay, KeptViewsState, LensTidyEdit, MemoryViewsOptions, RemovedView, ViewForkKept, ViewReviseAnswer, ViewRevisionKept } from "./views/kept.js";
 export { createViewRegistry, FIDELITIES, kindPath, offeredPlaces, onePerPicture, placeLabel, placePath, placeSlug, recordPath, samePicture, sharesItsName } from "./views/types.js";
 // Declared lenses that draw (FR-79), the arrangement (FR-80) and every place an app has.
 export {

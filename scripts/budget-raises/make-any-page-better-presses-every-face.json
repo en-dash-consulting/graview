@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 188000,
+  "gzipped": 66000,
+  "note": "Raised when a new design came to have every control pressed before it is shown (Roadmap f-make-any-page-better, the press check of #507): the headless run, the worker view's runtime it draws with, the press check and a worker of the page's own are one chunk, fetched only when a draft is pressed and on no page that never asks; this budget counts every chunk. Measured at 2_971_124 / 1_078_016 against 2_783_746 / 1_012_373 minified and gzipped."
+}

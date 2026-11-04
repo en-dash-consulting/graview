@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 0,
+  "gzipped": 410,
+  "note": "Raised when a built-in page came to be made better (Roadmap f-make-any-page-better): the frame's `onDraftChange` and `useForkedViews`, and both faces' menus laid out field first, waiting for Better UI on a page's parts. Measured at 1_870_347 / 654_793 against 654_402 gzipped before."
+}

@@ -20,6 +20,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
 import { portFor } from "./lib/ports.mjs";
+import { openActivity } from "./lib/bar.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "..");
@@ -145,12 +146,12 @@ try {
       if (chapter.drive === "activity") {
         if (chapter.seat && scheme === "light" && chapter.seed.nodes.length === 0) {
           // The seat plants the starter garden: the picture is what it did.
-          await page.click('[data-testid="activity-button"]');
+          await openActivity(page);
           await page.waitForTimeout(300);
           await page.click('[data-testid="agent-starter"]');
           await page.waitForTimeout(2200);
         } else {
-          await page.click('[data-testid="activity-button"]');
+          await openActivity(page);
           await page.waitForTimeout(400);
         }
       }

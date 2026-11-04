@@ -46,7 +46,8 @@ describe.skipIf(!key)("a dream judged by Jev, live", () => {
     for (const one of judged) {
       expect(one.confidence).toBeGreaterThanOrEqual(0);
       expect(one.confidence).toBeLessThanOrEqual(1);
-      expect(one.basis).toMatch(/^Jev: /);
+      expect(one.basis.length).toBeGreaterThan(0);
+      expect(one.model).toMatch(/^jev/i);
       expect(["suggested", "applied", "dropped", "waiting", "declined", "refused"]).toContain(one.outcome);
     }
   }, 120_000);

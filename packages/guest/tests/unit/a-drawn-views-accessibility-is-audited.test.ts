@@ -134,7 +134,7 @@ describe("a headless run asked to audit", () => {
   });
 
   it("flags a div the view only hears a click on", async () => {
-    const source = `graview.render(graview.html\`<div class="go">Go</div>\`); graview.on("click", ".go", () => {});`;
+    const source = `graview.render(graview.html\`<div class="go">Go</div>\`); graview.on("click", ".go", () => graview.render("Gone"));`;
     const result = (await runWorkerViewHeadless({ manifest: WATCH_MANIFEST as unknown as WorkerViewManifest, source, store: store(), principal: sam, run, audit: true })) as HeadlessDescribed;
     expect(result.audit?.problems).toEqual([expect.objectContaining({ rule: "keyboard", at: "div.go", automatic: false })]);
   });
@@ -159,7 +159,7 @@ describe("graview view check --audit", () => {
       write.mockRestore();
     }
   }
-  const UNREACHED = `graview.render(graview.html\`<div class="go">Go</div>\`); graview.on("click", ".go", () => {});`;
+  const UNREACHED = `graview.render(graview.html\`<div class="go">Go</div>\`); graview.on("click", ".go", () => graview.render("Gone"));`;
 
   it("fails on a problem the view must fix, says it with its fix, and says the rules it did not run", async () => {
     const { code, text } = await said(UNREACHED, "--audit");
@@ -179,7 +179,7 @@ describe("graview view check --audit", () => {
   });
 
   it("passes a view whose controls are reached and named", async () => {
-    const { code, text } = await said(`graview.render(graview.html\`<button type="button" class="go">Go</button>\`); graview.on("click", ".go", () => {});`, "--audit");
+    const { code, text } = await said(`graview.render(graview.html\`<button type="button" class="go">Go</button>\`); graview.on("click", ".go", () => graview.render("Gone"));`, "--audit");
     expect(text).toContain("Accessibility: no problems");
     expect(code).toBe(0);
   });

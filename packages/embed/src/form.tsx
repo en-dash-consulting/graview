@@ -2,6 +2,7 @@ import type { AnySchema, Brand, GraviewApp, Principal, Scheme, Store } from "@gr
 import { formVisitor } from "@graview/core/forms";
 import { themeBaseCss } from "@graview/primitives/form";
 import { VisitorFormPage } from "@graview/pages/visitor-form";
+import { HostAssetsContext } from "@graview/react/provider";
 import { useEffect, useId, useMemo, useState } from "react";
 import { flushSync } from "react-dom";
 import { createRoot, type Root } from "react-dom/client";
@@ -57,6 +58,13 @@ export interface FormEmbedOptions<S extends AnySchema = AnySchema> {
   readonly heading?: 1 | 2 | 3 | 4 | 5 | 6;
   /** Told once the answer is received; a host that allows another answer mounts again with a new visitor. */
   readonly onSubmitted?: (form: string) => void;
+  /**
+   * WHERE THE HOST SERVES THE APP'S OWN IMAGES, as every other mount takes
+   * it (Roadmap f-brand-marks-under-app-base): `assetsAt(path)` for a path
+   * under `/graview/assets/`, so a host serving each app under a base
+   * answers `base + path`. Unsaid, every path as the document names it.
+   */
+  readonly assetsAt?: (path: string) => string;
 }
 
 export function FormEmbed<S extends AnySchema>(props: FormEmbedOptions<S>) {
@@ -87,7 +95,9 @@ export function FormEmbed<S extends AnySchema>(props: FormEmbedOptions<S>) {
       style={{ position: "relative", isolation: "isolate", ...(height === undefined ? {} : { minHeight: height }), background: "var(--graview-ground)", color: "var(--graview-ink)", fontFamily: "var(--graview-font-body, system-ui)" }}
     >
       <style>{css}</style>
-      <VisitorFormPage<S> app={app} store={store} form={form} principal={principal} heading={props.heading ?? 1} {...(props.onSubmitted ? { onSubmitted: props.onSubmitted } : {})} />
+      <HostAssetsContext.Provider value={props.assetsAt}>
+        <VisitorFormPage<S> app={app} store={store} form={form} principal={principal} heading={props.heading ?? 1} {...(props.onSubmitted ? { onSubmitted: props.onSubmitted } : {})} />
+      </HostAssetsContext.Provider>
     </section>
   );
 }

@@ -33,8 +33,26 @@ export interface MenuTarget {
   readonly column?: MenuColumn | undefined;
   /** The section of a worker view it landed in — "This week" — when it landed in one (`sectionUnder`). */
   readonly section?: MenuViewSection | undefined;
+  /** The routed face's page it landed on, outside a worker view: what the page is about, and the element itself under the gesture. */
+  readonly page?: MenuPage | undefined;
   /** The element it was opened from, which the keyboard goes back to. */
   readonly element?: HTMLElement | null | undefined;
+}
+
+/**
+ * THE PAGE A MENU WAS OPENED ON, ON THE ROUTED FACE (Roadmap
+ * f-make-any-page-better): what the page itself is about — a record's page
+ * (`on`), a kind's list (`about`, its group), a place, else the home — and
+ * the element itself the gesture landed on, from which "Make “Tasks”
+ * better" names the part a person would call it.
+ */
+export interface MenuPage {
+  readonly on?: string | undefined;
+  readonly about?: readonly string[] | undefined;
+  readonly place?: string | undefined;
+  /** The page is the home. */
+  readonly home?: boolean | undefined;
+  readonly at: Element;
 }
 
 /**
@@ -84,6 +102,32 @@ export interface MenuSection {
    * its first frame. Never a model call, nor a change: nothing is shown.
    */
   readonly prepare?: () => void;
+  /**
+   * A WAY TO ASK, beside Chat under the menu's field (Roadmap
+   * f-make-any-page-better): ✨ Better UI on a part of a page. A section
+   * that is a mode draws no rows; the menu draws its button.
+   */
+  readonly mode?: MenuMode;
+}
+
+/**
+ * A WAY TO ASK UNDER THE MENU'S FIELD (Roadmap f-make-any-page-better): its
+ * name and mark ("✨ Better UI"), whether typed words are its own — asked
+ * of the Fast slot as they are typed, lighting its button — the card it
+ * opens, with the words asked at once or with nothing typed to choose how,
+ * and the nudges it suggests here.
+ */
+export interface MenuMode {
+  /** Unique in the menu; carried as `data-menu-mode`. */
+  readonly id: string;
+  readonly label: string;
+  readonly mark: string;
+  /** Whether these words are this mode's ("make the cards bigger"). */
+  readonly claims: (words: string) => Promise<boolean>;
+  /** Opens its card: with words, asked at once; without, to choose. */
+  readonly open: (words?: string) => void;
+  /** What is worth suggesting here in this mode, in words: the act alone. */
+  readonly nudges?: () => readonly string[];
 }
 
 /** A host's or a face's contribution: told what the menu is opened on, it answers a section or nothing. */

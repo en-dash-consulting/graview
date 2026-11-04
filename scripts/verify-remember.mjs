@@ -22,6 +22,7 @@ import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
 import { stored } from "./lib/stored.mjs";
 import { at, portFor } from "./lib/ports.mjs";
+import { openActivity } from "./lib/bar.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -78,7 +79,7 @@ const rename = async (page, to) => {
   await page.waitForTimeout(400);
 };
 const activity = async (page) => {
-  await page.click('[data-testid="activity-button"]');
+  await openActivity(page);
   await page.waitForTimeout(300);
   return page.evaluate(() => ({
     log: [...document.querySelectorAll('[data-testid="diff-log"] li')].map((li) =>
@@ -121,7 +122,7 @@ try {
   // Edit again, so there is something to forget; then start fresh through
   // the control, and check the flag did not stick to the address.
   await rename(page, "Pay the deposit, again");
-  await page.click('[data-testid="activity-button"]');
+  await openActivity(page);
   await page.waitForTimeout(300);
   await page.click('[data-testid="start-fresh"]');
   await page.waitForTimeout(500);

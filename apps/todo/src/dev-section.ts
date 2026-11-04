@@ -1,5 +1,7 @@
-import { memoryViews, withMemoryRevisions, type AnySchema, type KeptViews } from "@graview/core";
-import type { ReactViewRegistry } from "@graview/react";
+import { memoryViews, withMemoryRevisions, type AnySchema, type KeptViews, type ViewForkKept } from "@graview/core";
+import { createViews, layerViews, type ReactViewRegistry } from "@graview/react";
+import { useEffect, useMemo, useState } from "react";
+import { todoSchema } from "./domain/schema.js";
 import { registerWorkerView, type WorkerViewDefinition } from "@graview/guest/host/views";
 
 /*
@@ -69,4 +71,27 @@ export function withAtAGlance<S extends AnySchema>(views: ReactViewRegistry<S>):
 /** The dev page's views host: revisions kept in memory, for whoever sits down (every seat may change views here). */
 export function devKeptViews(): KeptViews {
   return withMemoryRevisions(memoryViews({ may: { views: true, lenses: false } }));
+}
+
+/*
+ * MAKE ANY PAGE BETTER, IN DEVELOPMENT (Roadmap f-make-any-page-better): a
+ * built-in page made its own view is kept with the dev page's views
+ * (`KeptViews.fork`), and the one shown as a draft beside them; each is
+ * registered over Things' views as the page it was made of, until the page
+ * reloads.
+ */
+/* A draft is drawn as the page's view would be: the card that asked for it says it is a draft. */
+export function useForked<S extends AnySchema>(views: ReactViewRegistry<S>, keeper: KeptViews): ReactViewRegistry<S> {
+  const [forks, setForks] = useState<readonly ViewForkKept[]>(() => keeper.forked?.() ?? []);
+  useEffect(() => {
+    const heard = () => setForks(keeper.forked?.() ?? []);
+    heard();
+    return keeper.onChange?.(heard);
+  }, [keeper]);
+  return useMemo(() => {
+    if (forks.length === 0) return views;
+    let over = layerViews(createViews(todoSchema as never) as unknown as ReactViewRegistry<S>, views);
+    for (const fork of forks) over = registerWorkerView(over, { manifest: fork.manifest as never, worker: { source: fork.source } });
+    return over;
+  }, [views, forks]);
 }

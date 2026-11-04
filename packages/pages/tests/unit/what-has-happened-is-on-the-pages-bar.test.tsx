@@ -14,7 +14,7 @@ import type { ReactNode } from "react";
  * change in its Activity, each with its way back; the routed face offered
  * the last one for ten seconds and then nothing a mouse could reach, so a
  * person on Pages could not take back a change once its notice had gone.
- * The bar draws the same Activity on Pages, fetched once there is a change.
+ * The bar draws the same Activity on Pages, in its inbox, fetched once there is a change.
  */
 const item = defineNode("item", { fields: z.object({ label: z.string() }), plural: "Items" });
 const schema = createSchema([item]);
@@ -62,12 +62,12 @@ describe("what has happened, on the routed face's bar", () => {
     const root = createRoot(host);
     await act(async () => root.render(<PagesApp context={{ store, principal: nina, views: createViews(schema) }} initialPath="/items" />));
     unmount = () => act(async () => root.unmount());
-    expect(host.querySelector('[data-testid="activity-button"]')).toBeNull();
+    expect(host.querySelector('[data-testid="inbox-button"]')).toBeNull();
 
     await act(async () => void store.apply({ name: "rename-item", args: { id: "i1", label: "Pay the venue" } }, { author: nina }));
 
-    await settled(() => expect(host.querySelector('[data-graview-app-bar] [data-testid="activity-button"]')).not.toBeNull());
-    await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="activity-button"]')!.click());
+    await settled(() => expect(host.querySelector('[data-graview-app-bar] [data-testid="inbox-button"]')).not.toBeNull());
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="inbox-button"]')!.click());
     await settled(() => expect(document.querySelector('[data-testid="activity"]')?.textContent ?? "").toContain("Pay the venue"));
   });
 
@@ -89,8 +89,8 @@ describe("what has happened, on the routed face's bar", () => {
     unmount = () => act(async () => root.unmount());
     await act(async () => void store.apply({ name: "rename-item", args: { id: "i1", label: "Pay the venue" } }, { author: nina }));
     await act(async () => void store.apply({ name: "remove-item", args: { id: "i2" } }, { author: nina }));
-    await settled(() => expect(host.querySelector('[data-testid="activity-button"]')).not.toBeNull());
-    await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="activity-button"]')!.click());
+    await settled(() => expect(host.querySelector('[data-testid="inbox-button"]')).not.toBeNull());
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="inbox-button"]')!.click());
     await settled(() => expect(document.querySelectorAll('[data-testid="activity-record"]').length).toBe(1));
 
     const activity = document.querySelector('[data-testid="activity"]')!;
@@ -133,8 +133,8 @@ describe("what has happened, on the routed face's bar", () => {
     unmount = () => act(async () => root.unmount());
     await act(async () => void store.apply({ name: "add-item", args: { label: "Hire the caterer" } }, { author: nina }));
     await act(async () => void store.apply({ name: "remove-item", args: { id: "item:hire-the-caterer" } }, { author: nina }));
-    await settled(() => expect(host.querySelector('[data-testid="activity-button"]')).not.toBeNull());
-    await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="activity-button"]')!.click());
+    await settled(() => expect(host.querySelector('[data-testid="inbox-button"]')).not.toBeNull());
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="inbox-button"]')!.click());
     await settled(() => expect(document.querySelectorAll('[data-testid="diff-log"] > li').length).toBe(2));
 
     const log = document.querySelector('[data-testid="diff-log"]')!;
@@ -153,7 +153,7 @@ describe("what has happened, on the routed face's bar", () => {
     await act(async () => root.render(<PagesApp context={{ store, principal: nina, views: createViews(schema) }} registry={registry as never} initialPath="/items" />));
     unmount = () => act(async () => root.unmount());
     await act(async () => void store.apply({ name: "rename-item", args: { id: "i1", label: "Pay the venue" } }, { author: nina }));
-    await settled(() => expect(host.querySelectorAll('[data-graview-app-bar] [data-testid="activity-button"]').length).toBeGreaterThan(0));
-    await settled(() => expect(host.querySelectorAll('[data-testid="activity-button"]')).toHaveLength(1));
+    await settled(() => expect(host.querySelectorAll('[data-graview-app-bar] [data-testid="inbox-button"]').length).toBeGreaterThan(0));
+    await settled(() => expect(host.querySelectorAll('[data-testid="inbox-button"]')).toHaveLength(1));
   });
 });

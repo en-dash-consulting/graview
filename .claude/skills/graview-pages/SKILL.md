@@ -80,7 +80,7 @@ under its routes:
   travels to the record. A kind's own row (one × glyph) is each line of its
   list, and its own page view (one × full) heads its record. A script
   view that draws its own heading says `heading: "own"` in its manifest:
-  its place then draws no title or count over it.
+  its place then draws nothing over it.
 - `/map` — `kindMap(store)`: every declared relation in its words with
   its live count, also a section on the home page. A kind's list says what
   it relates to, arranged in the shared words (`?sort=due:desc`,
@@ -99,9 +99,9 @@ under its routes:
 Everything a page shows is a derivation the scene uses too: `recordFacts`,
 `deriveAffordances`, `store.permits`. **A page never decides what an act is
 or who may take it** — it strikes through what the seat may not, and says why.
-A record's facts, `computed` ones too, read in declared order or as
-`display.page` groups them; prose keeps its paragraphs. A blank the seat's
-act writes is a slot ("Add Role"); one nothing writes stays unsaid.
+A record's facts are one sheet, each by its type (graview-node-kind), as
+`display.page` groups them; an act that is one fact's control leaves
+What can be done (`actsBeyondFacts`, `FactSheet`).
 
 **Typed together.** Over a served store, hand the face `typing`
 (`openRemote`'s `remote.typing`; an embed passes it) and prose is edited

@@ -5,7 +5,7 @@ import { pathToFileURL } from "node:url";
 import { placePath, placeSlug, type AnySchema, type AppPlace, type GraviewApp } from "@graview/core";
 import { MEASURE_PICTURED_PAGE, picturedCoverage, type PageMeasure, type PictureCoverage } from "@graview/core/revisions";
 import { placesOf } from "@graview/core/seat";
-import { keyedAddress } from "./serve-preview.js";
+import { keyedAddress, OPENING_SCREEN_PATH } from "./serve-preview.js";
 
 /**
  * THE PLACES A `graview shots` RUN PHOTOGRAPHS, by what was asked.
@@ -68,7 +68,7 @@ function draftPlace(manifest: unknown): AppPlace | undefined {
 /** What a Playwright module offers that this needs. */
 interface Engine {
   launch(options?: { headless?: boolean }): Promise<{
-    newPage(options: { viewport: { width: number; height: number }; colorScheme: "light" | "dark"; deviceScaleFactor?: number }): Promise<{
+    newPage(options: { viewport: { width: number; height: number }; colorScheme: "light" | "dark"; deviceScaleFactor?: number; reducedMotion?: "reduce" | "no-preference" }): Promise<{
       goto(url: string, options?: { waitUntil?: "load" }): Promise<unknown>;
       waitForFunction(fn: string, arg?: unknown, options?: { timeout?: number }): Promise<unknown>;
       waitForTimeout(ms: number): Promise<void>;
@@ -205,6 +205,56 @@ export async function shoot(options: ShootOptions): Promise<string[]> {
             await page.screenshot({ path: file, fullPage: !shot.scene });
             written.push(file);
             options.onShot?.(file, coverage);
+          } finally {
+            await page.close();
+          }
+        }
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+  return written;
+}
+
+/** Whether the opening screen has reached its settled frame: `SPLASH_SETTLED` of `@graview/pages/splash`, said here so this package depends on no face. */
+export const OPENING_SCREEN_SETTLED = `document.querySelector("#graview-splash[data-settled]") !== null`;
+
+/** How an opening screen is pictured: moving, at its settled frame, and as a reader who asks for less motion sees it. */
+export type ScreenMotion = "moving" | "reduced";
+
+export interface OpeningScreenOptions extends Omit<ShootOptions, "shots" | "onShot"> {
+  /** Both unless said: the screen once it settles, and under reduced motion. */
+  readonly motions?: readonly ScreenMotion[];
+  readonly onShot?: (file: string) => void;
+}
+
+/**
+ * THE APP'S OPENING SCREEN, PHOTOGRAPHED (`graview shots --opening-screen`):
+ * the screen alone, held (`OPENING_SCREEN_PATH`), at each scheme and width,
+ * once it has reached its settled frame (`OPENING_SCREEN_SETTLED`) — moving,
+ * and as a reader who asks for less motion sees it — into `out` as
+ * `opening-screen-<scheme>-<width>.png` and
+ * `opening-screen-reduced-motion-<scheme>-<width>.png`. The pictures of the
+ * places are taken after the screen has gone; this is the first second a
+ * reader sees.
+ */
+export async function shootOpeningScreen(options: OpeningScreenOptions): Promise<string[]> {
+  mkdirSync(options.out, { recursive: true });
+  const written: string[] = [];
+  const browser = await options.engine.chromium.launch({ headless: true });
+  try {
+    for (const motion of options.motions ?? ["moving", "reduced"]) {
+      for (const scheme of options.schemes) {
+        for (const width of options.widths) {
+          const page = await browser.newPage({ viewport: { width, height: width < 600 ? 844 : 900 }, colorScheme: scheme, deviceScaleFactor: 1, reducedMotion: motion === "reduced" ? "reduce" : "no-preference" });
+          try {
+            await page.goto(keyedAddress(`${options.url}${OPENING_SCREEN_PATH}`, options.key), { waitUntil: "load" });
+            await page.waitForFunction(OPENING_SCREEN_SETTLED, undefined, { timeout: 30_000 });
+            const file = resolve(options.out, `opening-screen-${motion === "reduced" ? "reduced-motion-" : ""}${scheme}-${width}.png`);
+            await page.screenshot({ path: file });
+            written.push(file);
+            options.onShot?.(file);
           } finally {
             await page.close();
           }

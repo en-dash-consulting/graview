@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 5604,
+  "note": "Raised when a view's every control came to do what it says (Roadmap f-views-work-end-to-end, f-views-scroll-and-anchors), for the parts a headless run must judge as the live host does: a press leaves out a blank number or date and sends a default the view wrote that carries nothing it read (host/press.ts), a press the act's schema refuses says which argument and what it expects (host/session.ts), a jump within the view is a link the kit draws (host/external-links.ts, the open kit's tables in the headless runtime), a file link or a link out inside a card is a press of its own (host/pressable.ts), and a run presses an element by the view's own id and runs again for each control its code hears (headless/index.ts, runtime.ts). The press check itself is `@graview/guest/headless/presses`, an entry of its own handed to a run (`presses: checkPresses`), so the worker carries none of it unless it gates a view with it. Measured at 2_535_194 B against 2_529_590: 5_604 more."
+}

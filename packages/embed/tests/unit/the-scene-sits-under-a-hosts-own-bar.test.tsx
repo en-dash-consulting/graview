@@ -6,13 +6,14 @@ import { createRoot } from "react-dom/client";
 import { beforeAll, describe, expect, it } from "vitest";
 import { Embed, preload, type EmbedBar } from "../../src/index.js";
 import { PagesEmbed } from "../../src/pages.js";
+import { openAppMenu } from "../support/the-app-menu.js";
 
 beforeAll(() => preload());
 
 /**
  * THE SCENE UNDER A HOST'S OWN BAR. A product with its own shell wants the
  * scene in it; `bar: true` drew the app's name a second time under the
- * host's, and a Scene | Pages switch whose Pages were Graview's derived
+ * host's, and a Scene | Pages choice whose Pages were Graview's derived
  * pages, not the host's — the product hid both with CSS. `bar: { faces:
  * false, name: false }` draws the bar without either: the scene's places,
  * Find, the standing and the person stay.
@@ -29,9 +30,11 @@ async function drawn(element: (host: HTMLElement) => React.ReactElement) {
   await act(async () => root.render(element(host)));
   await act(async () => new Promise((resolve) => setTimeout(resolve, 20)));
   const has = (id: string) => host.querySelector(`[data-testid="${id}"]`) !== null;
+  // The scene and the pages are the app menu's rows, drawn once it is open.
+  if (has("app-menu-open")) await openAppMenu(host);
   const said = {
     bar: has("app-bar"),
-    switch: has("app-faces"),
+    faces: has("app-faces"),
     name: has("app-name") || has("app-home"),
     find: has("app-find-open"),
     person: has("profile-button"),
@@ -46,22 +49,22 @@ async function drawn(element: (host: HTMLElement) => React.ReactElement) {
 const embed = (face: "scene" | "graview" | "pages", bar: boolean | EmbedBar) => () => <Embed app={app} seed={seed} face={face} fonts={false} bar={bar} />;
 
 describe("a host's own bar over the scene", () => {
-  it("draws the bar without the switch or the app's name when the host says so, its places, Find and the person kept", async () => {
+  it("draws the bar without the scene and pages or the app's name when the host says so, its places, Find and the person kept", async () => {
     const said = await drawn(embed("graview", { faces: false, name: false }));
-    expect(said).toMatchObject({ bar: true, switch: false, name: false, find: true, person: true, places: true, named: false });
+    expect(said).toMatchObject({ bar: true, faces: false, name: false, find: true, person: true, places: true, named: false });
   });
 
-  it("leaves out the switch alone, or the name alone", async () => {
-    expect(await drawn(embed("scene", { faces: false }))).toMatchObject({ switch: false, name: true, find: true });
-    expect(await drawn(embed("pages", { name: false }))).toMatchObject({ switch: true, name: false, find: true });
+  it("leaves out the scene and pages alone, or the name alone", async () => {
+    expect(await drawn(embed("scene", { faces: false }))).toMatchObject({ faces: false, name: true, find: true });
+    expect(await drawn(embed("pages", { name: false }))).toMatchObject({ faces: true, name: false, find: true });
   });
 
   it("draws the whole bar as before when `bar` is true", async () => {
-    expect(await drawn(embed("graview", true))).toMatchObject({ bar: true, switch: true, name: true, find: true });
+    expect(await drawn(embed("graview", true))).toMatchObject({ bar: true, faces: true, name: true, find: true });
   });
 
   it("is the same on the pages alone: the name left out, Find kept", async () => {
     const said = await drawn(() => <PagesEmbed app={app} seed={seed} fonts={false} bar={{ name: false }} />);
-    expect(said).toMatchObject({ bar: true, switch: false, name: false, find: true });
+    expect(said).toMatchObject({ bar: true, faces: false, name: false, find: true });
   });
 });

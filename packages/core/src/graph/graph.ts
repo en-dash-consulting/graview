@@ -564,13 +564,11 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
     }
     if (this.validate && !held && !this.schema.edgeAllowed(edge.kind, from.kind, to.kind)) {
       const declared = this.schema.edge(edge.kind);
+      // Each declaring kind's own targets, this one's first: the union of them all allows pairs no one kind does, and said so of the pair it refused.
+      const kinds = declared ? [from.kind, ...declared.from].filter((kind, at, all) => declared.from.includes(kind) && all.indexOf(kind) === at) : [];
       throw new GraphError(
         `Edge "${edge.kind}" is not declared from ${from.kind} to ${to.kind}`,
-        declared
-          ? `Declared: ${declared.from.join("|")} -> ${
-              declared.to === "*" ? "*" : declared.to.join("|")
-            }`
-          : `No edge kind "${edge.kind}" is declared in this schema`,
+        declared ? `Declared: ${kinds.map((kind) => `${kind} -> ${[(this.schema.tryDefinition(kind)!.edges as Record<string, { to: unknown }>)[edge.kind]!.to].flat().join("|")}`).join("; ")}` : `No edge kind "${edge.kind}" is declared in this schema`,
       );
     }
     const id = edgeId(edge);

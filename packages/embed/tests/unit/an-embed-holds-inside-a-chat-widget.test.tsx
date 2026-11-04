@@ -5,6 +5,7 @@ import { createStoreHandler, openRemote } from "@graview/ship/runtime";
 import { act } from "react";
 import { beforeAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 import { mount, type EmbedHandle, type EmbedOptions, preload } from "../../src/index.js";
+import { facePressed, pressFace } from "../support/the-app-menu.js";
 
 // Every face fetched before the first mount, so each draws in the commit `mount` makes (FR-57).
 beforeAll(() => preload());
@@ -211,23 +212,23 @@ describe("an embed narrower than its scene", () => {
     window.history.replaceState(null, "", "/");
   });
 
-  it("draws the scene there when the reader asks for it on the switch (FR-132, FR-137)", async () => {
+  it("draws the scene there when the reader asks for it in the app menu (FR-132, FR-137)", async () => {
     geometry.width = 360;
     const { root } = await mounting({ seed, face: "graview", pagesBelow: 560 });
     expect(root.getAttribute("data-graview-embed")).toBe("pages");
-    await act(async () => root.querySelector<HTMLElement>("[data-testid='app-face-scene']")!.click());
+    await pressFace(root, "scene");
     expect(root.getAttribute("data-graview-embed")).toBe("graview");
   });
 
-  it("goes back to the pages there on the switch, and keeps the host's face for when there is room (FR-137)", async () => {
+  it("goes back to the pages there from the app menu, and keeps the host's face for when there is room (FR-137)", async () => {
     geometry.width = 360;
     const told: string[] = [];
     const { root, handle } = await mounting({ seed, face: "graview", pagesBelow: 560, onNavigate: (path) => told.push(path) });
-    await act(async () => root.querySelector<HTMLElement>("[data-testid='app-face-scene']")!.click());
+    await pressFace(root, "scene");
     expect(root.getAttribute("data-graview-embed")).toBe("graview");
-    await act(async () => root.querySelector<HTMLElement>("[data-testid='app-face-pages']")!.click());
+    await pressFace(root, "pages");
     expect(root.getAttribute("data-graview-embed")).toBe("pages");
-    expect(root.querySelector("[data-testid='app-face-pages']")!.getAttribute("aria-pressed")).toBe("true");
+    expect(await facePressed(root, "pages")).toBe("true");
     // The pages stood in for the scene; the host asked for the Graview, and gets it back with room.
     expect(handle.where().face).toBe("graview");
     geometry.width = 900;

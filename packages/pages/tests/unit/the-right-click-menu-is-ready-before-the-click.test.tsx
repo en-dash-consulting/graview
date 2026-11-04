@@ -21,7 +21,7 @@ import { PagesApp, type PageContext } from "../../src/index.js";
  * per record until it changes. Hovering asks no model at all.
  */
 const task = defineNode("task", {
-  fields: z.object({ label: z.string().min(1), done: z.boolean().default(false) }),
+  fields: z.object({ label: z.string().min(1), done: z.boolean().default(false), flagged: z.boolean().default(false) }),
   plural: "Tasks",
   label: (node) => node.label,
 });
@@ -33,6 +33,14 @@ const finish = defineMutation("finish", {
   writes: ["done"],
   input: z.object({ taskId: nodeRef(["task"]) }),
   apply: (ctx, args) => void ctx.patchNode(args.taskId, { done: true }),
+});
+// Offered done or not: what Suggested still has to say of a record once it changed.
+const flag = defineMutation("flag", {
+  title: "Flag it",
+  subject: { kinds: ["task"], arg: "taskId" },
+  writes: ["flagged"],
+  input: z.object({ taskId: nodeRef(["task"]) }),
+  apply: (ctx, args) => void ctx.patchNode(args.taskId, { flagged: true }),
 });
 const TASKS = [
   { id: "book", kind: "task", label: "Book the hall", done: false },
@@ -66,7 +74,7 @@ afterEach(async () => {
 });
 
 async function rendered(also: { ai?: HostAi; menuSections?: readonly MenuSectionSource[] } = {}) {
-  const store = new Store({ schema, mutations: [finish], snapshot: { nodes: TASKS as never, edges: [] } });
+  const store = new Store({ schema, mutations: [finish, flag], snapshot: { nodes: TASKS as never, edges: [] } });
   const context: PageContext<typeof schema> = { store, views: createViews(schema), ...(also.ai ? { ai: also.ai } : {}), ...(also.menuSections ? { menuSections: also.menuSections } : {}) };
   const host = document.createElement("div");
   document.body.appendChild(host);
@@ -107,7 +115,8 @@ const close = async () => {
 };
 const menu = () => document.querySelector<HTMLElement>(MENU);
 const acts = () => [...(menu()?.querySelectorAll<HTMLElement>("[data-affordance]:not([disabled])") ?? [])].map((button) => button.textContent!.replace(/ …$/, ""));
-const offers = () => menu()?.querySelectorAll("[data-ai-offer]").length ?? 0;
+/* What the menu suggests as it opens: its Suggested rows (the Fast slot's picks, drawn at once in their first order). */
+const offers = () => menu()?.querySelectorAll('[data-menu-section="suggested"] [data-menu-item]').length ?? 0;
 
 describe("the right-click menu is ready before the click", () => {
   it("a menu opened on a row the pointer rested on draws complete in its first frame", async () => {
@@ -118,9 +127,10 @@ describe("the right-click menu is ready before the click", () => {
     rightClickFirstFrame(row(host, "book"));
     expect(menu()).not.toBeNull();
     expect(acts()).toContain("Mark it done");
-    // The AI section, fetched while the pointer rested: drawn with the menu, not after it.
-    expect(menu()!.querySelector('[data-testid="inline-ai"]')).not.toBeNull();
-    expect(menu()!.querySelector('[data-menu-item="ai-ask"]')).not.toBeNull();
+    // The field and the ways to ask under it, drawn with the menu, not after it; the AI's own section waits behind More….
+    expect(menu()!.querySelector('[data-testid="menu-type"]')).not.toBeNull();
+    expect(menu()!.querySelector('[data-menu-mode="chat"]')).not.toBeNull();
+    expect(menu()!.querySelector('[data-menu-item="more"]')).not.toBeNull();
   });
 
   it("a pass-over readies nothing; a rest of a moment readies the menu once", async () => {

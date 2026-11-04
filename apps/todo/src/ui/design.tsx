@@ -1,6 +1,9 @@
 import { dayAsRead, dayOfMonthAsRead, fieldWords, humanizeField, labelOf, logoOf, type Arrangement, type Principal, type Violation } from "@graview/core";
 import { KindFigure, NotifyButton, RecordInteractionsDoor, ROVING_ITEM, useMarkup, useRoving } from "@graview/primitives";
 import {
+  DefaultHomePage,
+  DefaultListPage,
+  DefaultRecordPage,
   DerivedForm,
   ListPage,
   PageFind,
@@ -9,6 +12,10 @@ import {
   placePath,
   rankedRepairs,
   recordFacts,
+  FactSheet,
+  actsBeyondFacts,
+  blankWritable,
+  relationFacts,
   recordPath,
   SceneLink,
   type PageComponent,
@@ -17,8 +24,10 @@ import {
 } from "@graview/pages";
 import { editableFields, type Affordance, type AffordanceSet, type EditableField } from "@graview/tools";
 import { useMemo, useRef, useState, type ReactNode } from "react";
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
+import { replacesPage } from "@graview/react";
 import type { TodoSchema } from "../domain/schema.js";
+import { todoApp } from "../domain/app.js";
 import { today } from "./when.js";
 
 type S = TodoSchema;
@@ -111,7 +120,7 @@ const CSS = `
  */
 .th-section { margin-top: 2.2rem; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.9rem; min-width: 0; }
 .th-section > header { display: flex; align-items: baseline; gap: 0.8rem; flex-wrap: wrap; min-width: 0; }
-.th-list > li, .th-row, .th-card, .th-facts > div { min-width: 0; }
+.th-list > li, .th-row, .th-card { min-width: 0; }
 
 .th-list { display: grid; gap: 0.4rem; margin: 0; padding: 0; list-style: none; }
 .th-row {
@@ -180,13 +189,11 @@ const CSS = `
 .th-empty { display: grid; gap: 0.5rem; padding: 1.6rem; border-radius: 0.85rem; border: 1px dashed var(--th-line); text-align: center; }
 .th-empty b { font-family: var(--graview-font-display); font-size: 1.05rem; font-weight: 600; }
 
-.th-facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: 0.9rem 1.4rem; margin: 0; }
-/* Muted rather than faint, for the same reason the rail's counts are: an
-   11px label on the paper ground measures 4.09:1 with the faint token, and
-   a field's own name is not decoration. */
-.th-facts dt { font-size: 0.6875rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--graview-ink-muted); }
-.th-facts dd { margin: 0; font-size: 1rem; overflow-wrap: anywhere; }
-.th-facts .th-btn { width: 100%; text-align: left; }
+/* A record's acts, beyond its facts: a quiet list, one under another — the facts above are the page, not a wall of buttons under them. */
+.th-acts { display: grid; justify-items: start; gap: 0.1rem; }
+.th-acts .th-btn { border: 0; background: none; border-radius: 0.35rem; padding: 0.3rem 0; min-height: 2rem; font-size: 0.95rem; color: var(--graview-ink); text-decoration: underline; text-decoration-color: var(--th-line); text-underline-offset: 0.25em; }
+.th-acts .th-btn.on { color: var(--graview-accent); background: none; }
+.th-acts .th-btn.th-quiet { color: var(--graview-ink-muted); font-size: 0.85rem; }
 
 @media (max-width: 52rem) {
   .th { grid-template-columns: minmax(0, 1fr); }
@@ -441,12 +448,15 @@ function KindList({ context, kind }: { context: Ctx; kind: string }) {
     kind === "task"
       ? { group: { by: "holds" }, filter: [{ key: "done", value: "false" }], sort: { by: "label", direction: "asc" } }
       : { sort: { by: "label", direction: "asc" } };
+  /* How the declaration says the list opens wins over Things' own once it changes from what Things' code says (a change kept in development, `arrange-pages`): a change to it draws here. */
+  const said = (app: { readonly pages?: { readonly lists?: Readonly<Record<string, unknown>> } } | undefined) => JSON.stringify(app?.pages?.lists?.[kind] ?? null);
+  const declared = context.app !== undefined && said(context.app as never) !== said(todoApp as never);
   return (
     <ListPage
       context={context}
       kind={kind}
       bare
-      opening={opening}
+      {...(declared ? {} : { opening })}
       row={(node, facts) =>
         kind === "task" ? (
           <TaskRow task={node as unknown as TaskNode} context={context} flagged={flagged} now={now} />
@@ -471,6 +481,8 @@ function KindRecord({ context, kind }: { context: Ctx; kind: string }) {
   const facts = recordFacts(store, id, {
     ...(principal ? { principal } : {}),
     ...(context.invariantContext ? { context: context.invariantContext } : {}),
+    // An empty fact this seat may fill is a quiet way to fill it ("Pick a day" beside "Due"), not left out.
+    blanks: blankWritable(store, id, principal),
   });
   if (!facts) {
     return (
@@ -482,6 +494,8 @@ function KindRecord({ context, kind }: { context: Ctx; kind: string }) {
       </>
     );
   }
+  // Each relation as a row of the facts, with the act that ties and unties it.
+  const relations = relationFacts(store, id, facts);
   return (
     <>
       <header>
@@ -501,19 +515,20 @@ function KindRecord({ context, kind }: { context: Ctx; kind: string }) {
         <h1 className="th-h1">
           <InPlace context={context} nodeId={id} field="label" value={facts.label} plain />
         </h1>
-        {/* Where it stands in the scene: a plain link under the name, through the embed's own way when there is one. */}
-        <p className="th-lede">
-          <SceneLink context={context} stop={`#focus=${encodeURIComponent(id)}`} data-testid="spatial-link" style={{ display: "inline-flex", alignItems: "center", minHeight: 24, color: "inherit", fontSize: "0.9rem", textDecoration: "underline", textUnderlineOffset: "0.2em", textDecorationColor: "var(--th-line)" }} />
-        </p>
-        {/* NOTIFY ME (Roadmap f-notify-subscriptions): told when somebody else changes it — the framework's own press, in Things' clothes. */}
-        <p className="th-lede">
+        {/*
+          * Where it stands in the scene, and being told when it changes
+          * (Roadmap f-notify-subscriptions): two quiet presses side by side
+          * under the name, which is the one thing to look at.
+          */}
+        <div className="th-lede" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "0.25rem 1.25rem" }}>
+          <SceneLink context={context} stop={`#focus=${encodeURIComponent(id)}`} data-testid="spatial-link" style={QUIET_PRESS} />
           <NotifyButton
             choices={[{ on: "changed", record: id }, { on: "act", record: id }, { on: "reaches", kind, condition: "", record: id }]}
             label="Notify me when this changes"
             testId="record-notify"
-            className="th-btn th-quiet"
+            style={QUIET_PRESS}
           />
-        </p>
+        </div>
       </header>
 
       {facts.violations.length > 0 ? (
@@ -530,41 +545,29 @@ function KindRecord({ context, kind }: { context: Ctx; kind: string }) {
         </section>
       ) : null}
 
-      <section className="th-section" data-testid="record-fields">
-        <header>
-          <h2 className="th-h2">The facts</h2>
-          <span className="th-quiet">Change one where you can.</span>
-        </header>
-        <dl className="th-facts">
-          {facts.fields.map((field) => (
-            <div key={field.key}>
-              <dt>{field.label}</dt>
-              <dd>
-                <InPlace context={context} nodeId={id} field={field.key} value={field.value} stored={field.stored} />
-              </dd>
-            </div>
-          ))}
-        </dl>
-      </section>
-
-      {facts.links.map((group) => (
-        <section key={`${group.edgeKind}:${group.direction}`} className="th-section">
+      {/*
+        * THE FACTS, EACH BY ITS TYPE (Roadmap f-facts-by-type): the
+        * framework's sheet — "Finished" a switch, "Due" a day and how far
+        * off, the list it is on a chip that moves it — under Things' own
+        * heading. The name is the heading's, so it is not said again.
+        */}
+      <FactSheet
+        context={context}
+        id={id}
+        facts={facts}
+        fields={facts.fields}
+        relations={relations}
+        inPlace
+        className="th-section"
+        heading={
           <header>
-            <h2 className="th-h2">{capitalize(group.description ?? humanizeField(group.edgeKind))}</h2>
+            <h2 className="th-h2">The facts</h2>
           </header>
-          <ul className="th-list">
-            {group.targets.map((target) => (
-              <li key={target.id}>
-                <Link className="th-row" to={recordPath(store.schema, target.kind, target.id)}>
-                  <span className="name">{target.label}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))}
+        }
+      />
 
-      <Acts title="What can be done" actions={facts.actions} context={context} about={id} />
+      {/* What can be done beyond the facts: an act a fact's own control does — "Mark it done", "Move the date", "Rename" — is done there. */}
+      <Acts title="What can be done" actions={actsBeyondFacts(store, id, facts.actions, { fields: [...facts.fields.map((field) => field.key), "label"], relations, ...(principal ? { principal } : {}) })} context={context} about={id} list />
       {/* What AI was asked about it and what came of it, the framework's own entries: none where AI is off. */}
       <RecordInteractionsDoor id={id} className="th-section" />
     </>
@@ -874,6 +877,7 @@ function Acts({
   context,
   openFirst = false,
   about,
+  list = false,
 }: {
   /** The section's heading; a list page says none — its acts are named by their own buttons. */
   title?: string;
@@ -889,6 +893,8 @@ function Acts({
    * nearly the room of the list, so it is one press away instead.
    */
   readonly openFirst?: boolean;
+  /** A record's acts beyond its facts: a quiet list, one under another, not a row of buttons. */
+  readonly list?: boolean;
 }) {
   const { store, principal } = context;
   const [open, setOpen] = useState<string | null>(
@@ -924,9 +930,10 @@ function Acts({
         </header>
       ) : null}
       <div
-        className="th-controls"
+        className={list ? "th-controls th-acts" : "th-controls"}
         role="toolbar"
         aria-label={title ?? "What can be done"}
+        {...(list ? { "aria-orientation": "vertical" as const } : {})}
         ref={(element) => {
           controls.current = element;
           roving.ref.current = element;
@@ -1136,8 +1143,6 @@ const pluralSlugOf = (store: Ctx["store"], kind: string): string =>
   plural(store, kind).toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
 
-const capitalize = (text: string): string => text.charAt(0).toUpperCase() + text.slice(1);
-
 function subjectArgOf(store: Ctx["store"], mutation: string): string {
   return store.allMutations().find((candidate) => candidate.name === mutation)?.subject?.arg ?? "id";
 }
@@ -1148,6 +1153,25 @@ const longDate = (day: string): string => dayAsRead(day);
 
 /* ------------------------------------------------------------ the design */
 
+/*
+ * A PAGE MADE ITS OWN VIEW (Roadmap f-make-any-page-better): where the host
+ * keeps a view that replaces a kind's list, a task's page or the home, the
+ * framework's page draws it — Things' own stays under "Also as"
+ * (`?drawn=built-in`).
+ */
+function OwnOrThings({ context, kind, which }: { context: Ctx; kind: string; which: "list" | "record" }) {
+  const builtIn = useSearchParams()[0].get("drawn") === "built-in";
+  const own = context.views?.lookup(kind as never, { cardinality: which === "list" ? "many" : "one", fidelity: "full" });
+  if (own !== undefined && replacesPage(own) && !builtIn) return which === "list" ? <DefaultListPage context={context} /> : <DefaultRecordPage context={context} />;
+  return which === "list" ? <KindList context={context} kind={kind} /> : <KindRecord context={context} kind={kind} />;
+}
+
+function HomeOrOwn({ context }: { context: Ctx }) {
+  const builtIn = useSearchParams()[0].get("drawn") === "built-in";
+  const hosts = context.views?.homes?.().at(-1)?.name !== undefined;
+  return hosts && !builtIn ? <DefaultHomePage context={context} /> : <Home context={context} />;
+}
+
 /**
  * Every surface replaced, over the same derivations.
  *
@@ -1157,13 +1181,10 @@ const longDate = (day: string): string => dayAsRead(day);
  */
 export function thingsDesign(schema: S) {
   const page = (component: (props: { context: Ctx }) => ReactNode) => component as PageComponent<S>;
-  const forKind = (kind: string, which: "list" | "record") =>
-    page(({ context }: { context: Ctx }) =>
-      which === "list" ? <KindList context={context} kind={kind} /> : <KindRecord context={context} kind={kind} />,
-    );
+  const forKind = (kind: string, which: "list" | "record") => page(({ context }: { context: Ctx }) => <OwnOrThings context={context} kind={kind} which={which} />);
   let registry = createPageRegistry<S, PageComponent<S>>(schema)
     .surface("shell", Shell)
-    .surface("home", page(Home))
+    .surface("home", page(HomeOrOwn))
     .surface("problems", page(Problems));
   for (const kind of ["task", "list", "rule", "reason"] as const) {
     registry = registry
@@ -1174,3 +1195,6 @@ export function thingsDesign(schema: S) {
 }
 
 export type { Principal };
+
+/* A secondary press under a record's name: quiet words with a hairline under them, never a second button beside the heading. */
+const QUIET_PRESS = { display: "inline-flex", alignItems: "center", minHeight: 24, padding: 0, border: 0, background: "none", font: "inherit", fontSize: "0.9rem", color: "inherit", cursor: "pointer", textDecoration: "underline", textUnderlineOffset: "0.2em", textDecorationColor: "var(--th-line)" } as const;

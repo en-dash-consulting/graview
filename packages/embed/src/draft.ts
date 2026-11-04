@@ -1,6 +1,7 @@
 import { retryingImport } from "@graview/core/retry";
 import type { WorkerViewDefinition } from "@graview/guest/host/views";
-import { partArriving } from "@graview/react/provider";
+import type { AnySchema, KeptViews, ViewForkKept } from "@graview/core";
+import { createViews, layerViews, partArriving, type ReactViewRegistry } from "@graview/react/provider";
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import type { DraftOver } from "./frame.js";
 
@@ -63,4 +64,27 @@ export function useDraft(draft: EmbedDraftView | null | undefined): { readonly o
     return { name: draft.manifest.name, home: draft.manifest.attach === "home", register: (registry) => views.registerWorkerView(registry, definition) } satisfies DraftOver;
   }, [draft, host]);
   return { over, n };
+}
+
+/*
+ * A BUILT-IN PAGE MADE ITS OWN VIEW, DRAWN (Roadmap f-make-any-page-better):
+ * the views the host's `KeptViews.forked` lists — kept, and the one draft —
+ * registered over a copy of the app's, each as the page it was made of,
+ * with the worker's host a draft is drawn with, fetched the first time the
+ * host lists one; a draft drawn as the view would be, since the card that
+ * asked for it says it is one. The registry itself while it lists none.
+ */
+const NO_FORKS: readonly ViewForkKept[] = [];
+export function useForkedViews<S extends AnySchema>(views: ReactViewRegistry<S>, keeper: KeptViews | undefined, schema: S): ReactViewRegistry<S> {
+  const [forks, setForks] = useState(NO_FORKS);
+  useEffect(() => {
+    const heard = () => void fetchDraftHost().then(() => setForks(keeper!.forked!()));
+    if (!keeper?.forked) return;
+    if (keeper.forked().length > 0) heard();
+    return keeper.onChange?.(heard);
+  }, [keeper]);
+  return useMemo(
+    () => (forks.length > 0 && draftHost ? forks.reduce((over, fork) => draftHost!.registerWorkerView(over, { manifest: fork.manifest as never, worker: { source: fork.source } }), layerViews(createViews(schema), views)) : views),
+    [views, forks, schema],
+  );
 }

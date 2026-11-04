@@ -16,6 +16,7 @@
  *
  *   node scripts/verify-notify.mjs [--engine=chromium|webkit|firefox]
  */
+import { unfold } from "./lib/menu-more.mjs";
 import { writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -23,6 +24,7 @@ import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { deadline } from "./lib/deadline.mjs";
+import { openActivity } from "./lib/bar.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -76,6 +78,8 @@ const keyboard = (page) => page.evaluate(() => ({ body: document.activeElement =
 async function subscribeFromTheMenu(page, rightClick) {
   let presses = 0;
   await rightClick();
+  await page.waitForSelector(MENU, { timeout: 10_000 });
+  await unfold(page);
   await page.waitForSelector(NOTIFY_ROW, { timeout: 10_000 });
   const row = ((await page.textContent(NOTIFY_ROW)) ?? "").trim();
   await page.click(NOTIFY_ROW);
@@ -90,10 +94,9 @@ async function subscribeFromTheMenu(page, rightClick) {
   return { row, said, othersOnly, presses, keyboard: await keyboard(page) };
 }
 
-/** What Activity lists the reader is told of. */
+/** What Activity — the inbox's tab — lists the reader is told of. */
 async function notifiedInActivity(page) {
-  if (!(await page.$('[data-testid="activity"]'))) await page.click('[data-testid="activity-button"]');
-  await page.waitForSelector('[data-testid="activity"]', { timeout: 10_000 });
+  await openActivity(page);
   await page.waitForTimeout(400);
   return page.evaluate(() => [...document.querySelectorAll('[data-testid="activity"] [data-testid="notified"] li')].map((one) => (one.textContent ?? "").replace(/Stop$/, "").trim()));
 }
@@ -201,10 +204,13 @@ try {
   await pages.goto(`${at("todo")}/pages/tasks/t-book?${DAY}&fresh=1`, { waitUntil: "load", timeout: 90_000 });
   await pages.waitForSelector('[data-testid="record-actions"] [data-affordance]', { timeout: 60_000 });
   await ready(pages);
-  // The first act: done at once when it asks nothing, else through its form, sent as it is filled in.
-  await pages.click('[data-testid="record-actions"] [data-affordance] >> nth=0');
-  const asks = await pages.waitForSelector('[data-testid="record-actions"] form button[type="submit"]', { timeout: 2_000 }).then(() => true, () => false);
-  if (asks) await pages.click('[data-testid="record-actions"] form button[type="submit"]');
+  // An act beyond the facts, through its form: "Note why this is here", its reason typed ("Mark it done" is the Finished switch now, Roadmap f-facts-by-type).
+  await pages.click('[data-testid="record-actions"] [data-graview-act="explain"]');
+  const asks = await pages.waitForSelector('[data-testid="record-actions"] form button[type="submit"]', { timeout: 5_000 }).then(() => true, () => false);
+  if (asks) {
+    await pages.locator('[data-testid="record-actions"] form textarea, [data-testid="record-actions"] form input[type="text"]').first().fill("The van is cheaper on a weekday");
+    await pages.click('[data-testid="record-actions"] form button[type="submit"]');
+  }
   const offered = await pages.waitForSelector('[data-testid="notify-after-act"]', { timeout: 10_000 }).then(() => true, () => false);
   const offeredSays = offered ? ((await pages.textContent('[data-testid="notify-after-act"]')) ?? "").trim() : null;
   report.checks.offeredAfterAnAct = { offered, says: offeredSays, ok: offered && /someone else does this/.test(offeredSays ?? "") };

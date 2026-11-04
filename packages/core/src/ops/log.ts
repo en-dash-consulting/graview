@@ -4,6 +4,7 @@ import { Graph } from "../graph/graph.js";
 import type { GraphSnapshot } from "../graph/types.js";
 import type { AnySchema, NodeOfSchema } from "../schema/schema.js";
 import type { Batch, Operation } from "./types.js";
+import type { KeptDecline } from "./tidying.js";
 
 /**
  * A POINT THE LOG CAN BE FOLDED FROM (FR-27): the graph as it stood, and
@@ -74,6 +75,17 @@ export interface Epoch {
    * checkpoint without it serves such a field cleared, whoever wrote it.
    */
   readonly writers?: Readonly<Record<string, Readonly<Record<string, string>>>>;
+  /**
+   * WHAT PEOPLE DECLINED BEHIND IT, on a checkpoint (`horizon`): what each
+   * decline means (`meaningKey`) to who said it and when (`KeptDecline`,
+   * `declinesIn` on `@graview/core/tidying`). The undo or the unlink that
+   * said it goes to the archive with the change it took back, and without
+   * this the app's own actor would make that change again the next night.
+   * Written by `store.checkpoint` when there is one, carried from the
+   * checkpoint before; never served to a seat. Absent (none, or written
+   * before it existed), a store knows the declines its tail holds, as it did.
+   */
+  readonly declines?: Readonly<Record<string, KeptDecline>>;
   /**
    * THE MODULES ON AT ITS SEQ, on a checkpoint (`horizon`, FR-12): the set
    * the last op before it to say one left (`enabledModules`), or the one

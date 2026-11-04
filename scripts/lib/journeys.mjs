@@ -779,6 +779,21 @@ async function revealActs(person, wanted) {
   await wanted.first().waitFor({ state: "visible", timeout: 700 }).catch(() => {});
   if (await wanted.first().isVisible().catch(() => false)) return;
   await openActs(person);
+  await wanted.first().waitFor({ state: "visible", timeout: 700 }).catch(() => {});
+  if (!(await wanted.first().isVisible().catch(() => false))) await pressMore(person);
+}
+
+/**
+ * THE REST OF THE MENU IS BEHIND MORE… (Roadmap f-make-any-page-better).
+ * The menu opens on its field, the two ways to ask, Suggested and the first
+ * few acts; the other acts and what this seat may not do wait behind More…,
+ * and a person who does not see the act they want presses it.
+ */
+async function pressMore(person) {
+  const more = person.page.locator('[data-testid="context-menu"] [data-menu-item="more"]').locator("visible=true").first();
+  if (!(await more.isVisible().catch(() => false))) return;
+  await person.press(more, "More…");
+  await person.settle(120);
 }
 
 /** An act's control, by the id the derivation gave it or else by its title. */
@@ -992,7 +1007,7 @@ async function openKindPage(person, plural) {
   // "Tasks 10" is often "Tasks" and "10" with nothing between: the name ends where its letters do.
   const link = page.locator("a[href]").filter({ hasText: new RegExp(`^\\s*${plural}(?!\\p{L})`, "u") });
   if (!(await link.first().isVisible().catch(() => false))) {
-    const menu = page.getByRole("button", { name: /every place|more (place|picture)|menu|sections|kinds|navigation/i }).first();
+    const menu = page.getByRole("button", { name: /every place|more (place|picture)|(?<!app )menu|sections|kinds|navigation/i }).first();
     if (await menu.isVisible().catch(() => false)) await person.press(menu, "the menu");
   }
   const visible = link.locator("visible=true");
@@ -1553,8 +1568,19 @@ export const JOBS = {
          * as if its submit were the act, pressed empty, and then answered.
          */
         if (!(await form.first().isVisible().catch(() => false))) await pressAct(person, job.act, job.title);
-        if (!(await appears(form))) throw new DeadEnd(`"${job.title}" opens no form`);
-        await fillForm(person, form, { choose: [prep.other.label] });
+        /*
+         * OR A RELATION'S OWN PICKER, where the record's facts hold the tie as a
+         * row (Roadmap f-facts-by-type): the records it may name, searched
+         * where there are many, the one meant pressed.
+         */
+        const picker = page.locator("[data-graview-relation-picker]");
+        if (await appears(form.or(picker).first())) {
+          if (await picker.first().isVisible().catch(() => false)) {
+            const search = picker.locator('input[type="search"]');
+            if (await search.first().isVisible().catch(() => false)) await person.fill(search, prep.other.label, "the search");
+            await person.press(picker.locator("[data-graview-candidate]").filter({ hasText: prep.other.label }).first(), `"${prep.other.label}"`);
+          } else await fillForm(person, form, { choose: [prep.other.label] });
+        } else throw new DeadEnd(`"${job.title}" opens no form`);
       }
       await until(page, ctx.kinds, (store, { act, before }) => {
         const batches = store.batches();
@@ -1596,7 +1622,7 @@ export const JOBS = {
        * FROM THE KEYBOARD, THE KEY THE PAGE SAYS TAKES IT BACK. The offer
        * that comes with a change says ⌘Z or Ctrl+Z on its Take back
        * (`aria-keyshortcuts`); a keyboard person who reads it presses the
-       * key, where the walk opened Activity at the far end of the bar — eight
+       * key, where the walk opened the inbox at the far end of the bar — eight
        * to ten keys for the pointer's two. Not from inside a text field,
        * where the key is the field's own undo.
        */
@@ -1618,8 +1644,13 @@ export const JOBS = {
           if (taken) return { via: "the key the offer says" };
         }
       }
-      const opener = page.getByRole("button", { name: /^Activity$/ }).or(page.locator('[data-testid="activity-button"]')).locator("visible=true").first();
-      if (ctx.face === "scene" && (await opener.isVisible().catch(() => false))) await person.press(opener, "Activity");
+      // What has happened is the inbox's Activity tab (Roadmap f-app-bar-calm): the bell, then the tab where the inbox opened on For you.
+      const opener = page.locator('[data-testid="inbox-button"]').or(page.getByRole("button", { name: /^Inbox\b/ })).locator("visible=true").first();
+      if (ctx.face === "scene" && (await opener.isVisible().catch(() => false))) {
+        await person.press(opener, "Inbox");
+        const tab = page.locator('[data-testid="inbox-tab-activity"]').locator("visible=true").first();
+        if ((await appears(tab)) && (await tab.getAttribute("aria-selected")) !== "true") await person.press(tab, "Activity");
+      }
       const undo = page
         .locator('[data-testid="undo-turn"]')
         .or(page.getByRole("button", { name: /^(undo|take (it |this )?back)/i }))
@@ -1812,6 +1843,8 @@ export const JOBS = {
         return said();
       };
       if (await saidSoon(3_000)) return;
+      await pressMore(person);
+      if (await saidSoon(1_000)) return;
       const more = page.locator('[data-testid="withheld-more"]').locator("visible=true").first();
       if (await appears(more, 3_000)) {
         await person.press(more, "what is withheld");
@@ -1982,6 +2015,7 @@ export const KEYBOARD_WHY = {
   make: "a form is answered field by field: the pointer goes straight to each field it needs, and the keyboard passes the ones it does not, and crosses the bar to the act that opens it",
   "find/pages": "Find on the pages answers on a page of its own: the keyboard goes on from the box past the bar's tools to the row, where the pointer presses the row it reads",
   "seedbed relate/pages": "the garden's plot page draws every act's form open, as its chapter shows: the caretaker's choice is a field among the sowing's above it, Tabbed past in turn, where the pointer presses the one it wants",
+  "relate/scene": "the menu opens on its field, the two ways to ask and the first few acts, and an act that ties a record to another waits behind More…: the keyboard Tabs from the field past the ways to ask to More…, then walks to the act, where the pointer presses More… and the act",
   "discography relate/pages": "two of a song's acts begin with P (\"Place it in an era\", \"Put it on a release\"), so the letter is pressed twice among its one stop of acts, and a choice is sent by its button: one key over twice the pointer's four",
   narrow: "a kind's list is a place on the bar, reached across it, and its \"Filter\" stands after the list's own chips; the pointer presses each where it is drawn",
   "several/pages": "a kind's list is a place on the bar, reached across it; into the records is one skip, and the boxes are one stop",

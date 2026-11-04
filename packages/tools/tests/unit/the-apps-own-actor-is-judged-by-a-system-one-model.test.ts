@@ -97,7 +97,7 @@ describe("a dream judged by a System One model", () => {
     await dream(store, { now: NOW, model, cache: false });
     const merge = suggestions(store).find((one) => one.calls[0]!.name === "merge-vendor")!;
     expect(merge.calls[0]!.args).toEqual({ id: "vendor:acme-2", into: "vendor:acme" });
-    expect(merge.lineage).toEqual({ basis: "Jev: 0.96 that “ACME Corporation” and “Acme Corp” are the same vendor", confidence: 0.96, model: "jev-latest", actor: "duplicates", run: expect.any(String), read: ["vendor:acme-2#label", "vendor:acme-2#tier", "vendor:acme#label", "vendor:acme#tier"] });
+    expect(merge.lineage).toEqual({ basis: "Same vendor, entered twice", confidence: 0.96, model: "jev-latest", actor: "duplicates", run: expect.any(String), read: ["vendor:acme-2#label", "vendor:acme-2#tier", "vendor:acme#label", "vendor:acme#tier"] });
   });
 
   it("links a record to the candidate the model chose among several, through the relation the app declares", async () => {
@@ -123,7 +123,7 @@ describe("a dream judged by a System One model", () => {
     const { model } = fakeSystemOne(FIXTURES);
     const report = await dream(store, { now: NOW, model, cache: false, applyAtLeast: 0.85 });
     expect(store.graph.getNode("vendor:quill")).toMatchObject({ tier: "backup" });
-    expect(report.outcomes.find((one) => one.judge === "categorize" && one.outcome === "applied")).toMatchObject({ basis: "Jev: 0.90 that the tier of “Quill Stationers” is “backup”", model: "jev-latest" });
+    expect(report.outcomes.find((one) => one.judge === "categorize" && one.outcome === "applied")).toMatchObject({ basis: "Reads as “backup”", model: "jev-latest" });
   });
 
   it("holds a merge to more than a link: as sure of each, the link is made and the merge is asked", async () => {
@@ -181,7 +181,7 @@ describe("a dream judged by a System One model", () => {
     const report = await dream(store, { now: NOW, model, cache: false });
     expect(report.model).toMatchObject({ name: "jev-latest", answered: false, error: expect.stringMatching(/rate-limiting/) });
     expect(waitingCalls(store)).toEqual([{ name: "archive-task", args: { id: "task:old" } }]);
-    expect(suggestions(store)[0]!.lineage).toEqual({ basis: "Finished — its status is “done” — and unchanged for 113 days", confidence: 0.8, actor: "archive", run: expect.any(String), read: ["task:old#status", "task:old#closedOn"] });
+    expect(suggestions(store)[0]!.lineage).toEqual({ basis: "Its status is “done”, unchanged for 113 days", confidence: 0.8, actor: "archive", run: expect.any(String), read: ["task:old#status", "task:old#closedOn"] });
   });
 
   it("is asked through the host's Fast slot, and not at all when the host says AI is off", async () => {

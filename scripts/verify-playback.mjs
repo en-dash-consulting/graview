@@ -32,6 +32,7 @@ import { fileURLToPath } from "node:url";
 import { arriveWithoutWebfonts, ENGINES, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
 import { at, portFor } from "./lib/ports.mjs";
+import { openActivity } from "./lib/bar.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const asked = process.argv.find((arg) => arg.startsWith("--engine="))?.slice("--engine=".length);
@@ -161,7 +162,7 @@ const scrub = async (page, index) => {
 
 /** Open Activity and press "Show the app as it was here" on its oldest row. */
 const showOldest = async (page) => {
-  await page.click('[data-testid="activity-button"]');
+  await openActivity(page, { timeout: 20_000 });
   await page.waitForSelector('[data-testid="show-past"]', { timeout: 20_000 });
   const rows = await page.locator('[data-testid="show-past"]').count();
   await page.locator('[data-testid="show-past"]').nth(rows - 1).click();

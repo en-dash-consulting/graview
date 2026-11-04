@@ -21,7 +21,7 @@ import type {
 import { memorySubscriptions, openingOf, sayIn, tellTheWatchWhatIsUnseen, type DismissalStore, type Place, type KeptViews, type PagesArrangement, type SubscriptionStore } from "@graview/core";
 import { NO_AI, type AffordanceProvider, type HostAi } from "@graview/tools/frame";
 import { honorSetting, loadSetting, rememberSetting, type ReaderMemory } from "./settings.js";
-import { createSeatTalk, type ComposeChangeHost, type KeepLensHost, type ProposeChangeHost, type SeatTalk } from "./seat-talk.js";
+import { createSeatTalk, type ComposeChangeHost, type DraftChangeHost, type KeepLensHost, type ProposeChangeHost, type SeatTalk } from "./seat-talk.js";
 import { createAiDesk, type AiDesk } from "./ai-desk.js";
 import { PRESENCE_SETTINGS, tabSession, usePresenceState, type AiPresence } from "./presence.js";
 import { useActivityState, type ActivityMark, type Attention } from "./activity.js";
@@ -42,7 +42,7 @@ import {
 import { createPointerStore, type PointerStore, type ScenePoint } from "./pointer.js";
 import { HostAssetsContext, HostFilesContext } from "./files.js";
 import { useLinkedReads } from "./linked-reads.js";
-import type { MenuColumn, MenuSectionSource } from "./menu-types.js";
+import type { MenuColumn, MenuPage, MenuSectionSource } from "./menu-types.js";
 import type { MenuViewSection } from "./view-places.js";
 
 import { createMotionStore, type MotionStore } from "./motion-store.js";
@@ -126,6 +126,8 @@ export interface PointerMenu {
   readonly column?: MenuColumn | undefined;
   /** The section of a worker view it was opened in (`MenuTarget.section`): the menu is headed with its name. */
   readonly section?: MenuViewSection | undefined;
+  /** The routed face's page it was opened on (`MenuTarget.page`). */
+  readonly page?: MenuPage | undefined;
   /**
    * AN ACT TO BEGIN AT ONCE, its form open under it with these values
    * already given — "Add a task in Doing" from a column's menu: the add act,
@@ -166,6 +168,26 @@ export interface AwaySummary {
    * tray's line, "3 readers agree with one that waits". `whileAway` counts it.
    */
   readonly agreed?: number;
+}
+
+/**
+ * ONE OF A HOST'S NOTIFICATIONS, IN THE INBOX'S "FOR YOU" (Roadmap
+ * f-app-bar-calm): what the host tells this person — an invitation, a
+ * digest, a mention — said in a line, with a line under it where the host
+ * gives one, when it came, and where it goes: a link (`href`, `target`) or
+ * a press (`onSelect`). Counted on the bell until it is `read`.
+ */
+export interface HostNotification {
+  readonly id: string;
+  readonly title: string;
+  readonly body?: string;
+  /** When it came, ISO. */
+  readonly at?: string;
+  readonly href?: string;
+  readonly target?: string;
+  readonly onSelect?: () => void;
+  /** Already read: listed, and not counted on the bell. */
+  readonly read?: boolean;
 }
 
 export interface GraviewContextValue<S extends AnySchema> {
@@ -300,6 +322,10 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly dismissals?: DismissalStore | undefined;
   /** WHAT THE APP'S OWN ACTOR DID WHILE THE READER WAS AWAY: the host's `whileAway`. */
   readonly whileAway?: AwaySummary | undefined;
+  /** THE HOST'S NOTIFICATIONS, in the inbox's "For you": the host's `notifications`, else the provider's around it. */
+  readonly notifications?: readonly HostNotification[] | undefined;
+  /** Told the ids of the unread notifications a person has just been shown in "For you": the host's `onNotificationsSeen`, else the provider's around it. */
+  readonly onNotificationsSeen?: ((ids: readonly string[]) => void) | undefined;
   /** HOW EACH WORKFLOW'S LAST RUN WENT: the host's `workflowRuns`, else the provider's around it. */
   readonly workflowRuns?: WorkflowRuns | undefined;
   /**
@@ -407,6 +433,8 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly onProposeChange?: ProposeChangeHost;
   /** The host's composer and checker for a change to the app (`GraviewProviderProps.composeChange`). */
   readonly composeChange?: ComposeChangeHost;
+  /** Where a change to the app is shown on this page only, not kept (`GraviewProviderProps.onDraftChange`). */
+  readonly onDraftChange?: DraftChangeHost;
   /** The app this is mounted with (`GraviewProviderProps.app`), or the one it is drawn inside. */
   readonly app?: GraviewApp<S> | undefined;
   /** The reader's locale the host passed (`GraviewProviderProps.locale`, FR-178), or the one it is drawn inside. */
@@ -582,6 +610,14 @@ export interface GraviewProviderProps<S extends AnySchema> {
    * could add it, with no plan.
    */
   readonly composeChange?: ComposeChangeHost | undefined;
+  /**
+   * A CHANGE TO THE APP SHOWN ON THIS PAGE ONLY (`DraftChangeHost`, Roadmap
+   * f-make-any-page-better): "Make “Tasks” better" draws the page with
+   * drafted view-spec edits before they are kept; the host lays the changed
+   * app over this page alone and answers how to put it back. Unsaid, the
+   * card says what would change without drawing it.
+   */
+  readonly onDraftChange?: DraftChangeHost | undefined;
   /** Extra or replacement affordance providers (e.g. an LLM intelligence). */
   readonly providers?: readonly AffordanceProvider<S>[];
   /**
@@ -698,6 +734,16 @@ export interface GraviewProviderProps<S extends AnySchema> {
    */
   readonly whileAway?: AwaySummary | undefined;
   /**
+   * WHAT THE HOST TELLS THIS PERSON (Roadmap f-app-bar-calm): an
+   * invitation, a digest, a mention — listed first in the inbox's "For
+   * you", beside what tidying suggests and what people propose, and
+   * counted on the bell until each is `read`. Unsaid, the provider's around
+   * it, else none.
+   */
+  readonly notifications?: readonly HostNotification[] | undefined;
+  /** Told the ids of the unread notifications a person has just been shown, when "For you" is opened: mark them read and hand them back. */
+  readonly onNotificationsSeen?: ((ids: readonly string[]) => void) | undefined;
+  /**
    * HOW EACH WORKFLOW'S LAST RUN WENT (Roadmap f-jobs-declared): the host's
    * log of runs (`WorkflowLog` from `@graview/tools/workflows`, or anything
    * with its `last(name)`). Given, each workflow standing on the Scene's
@@ -791,6 +837,7 @@ export function GraviewProvider<S extends AnySchema>({
   onKeepLens,
   onProposeChange,
   composeChange,
+  onDraftChange,
   providers,
   ai: handedAi,
   files,
@@ -804,6 +851,8 @@ export function GraviewProvider<S extends AnySchema>({
   subscriptions: hostSubscriptions,
   dismissals,
   whileAway,
+  notifications: hostNotifications,
+  onNotificationsSeen: hostNotificationsSeen,
   workflowRuns: hostWorkflowRuns,
   signIn: hostSignIn,
   view,
@@ -817,6 +866,8 @@ export function GraviewProvider<S extends AnySchema>({
   const workflowRuns = hostWorkflowRuns ?? around?.workflowRuns;
   const keptViews = hostKeptViews ?? around?.keptViews;
   const onExport = hostOnExport ?? around?.onExport;
+  const notifications = hostNotifications ?? around?.notifications;
+  const onNotificationsSeen = hostNotificationsSeen ?? around?.onNotificationsSeen;
   /* Who is at the keyboard: see "WHO IS AT THE KEYBOARD" below. */
   const [seated, setSeated] = useState<Principal | null>(null);
   const seatNow = seated ?? principal ?? seats[0]?.principal ?? ANONYMOUS;
@@ -887,6 +938,7 @@ export function GraviewProvider<S extends AnySchema>({
   /* The host that applies a change to the app: this provider's, else the one it is drawn inside. */
   const proposeChange = onProposeChange ?? outer?.onProposeChange;
   const composeAppChange = composeChange ?? outer?.composeChange;
+  const draftChange = onDraftChange ?? outer?.onDraftChange;
   const app = mountedApp ?? (outer?.app as GraviewApp<S> | undefined);
   /*
    * WHAT DAYS, TIMES AND NUMBERS ARE SAID IN (FR-178): the reader's a host
@@ -1260,6 +1312,8 @@ export function GraviewProvider<S extends AnySchema>({
       subscriptions,
       dismissals,
       whileAway,
+      ...(notifications ? { notifications } : {}),
+      ...(onNotificationsSeen ? { onNotificationsSeen } : {}),
       ...(workflowRuns ? { workflowRuns } : {}),
       signIn,
       linkedReads,
@@ -1283,6 +1337,7 @@ export function GraviewProvider<S extends AnySchema>({
       ...(keepLens ? { onKeepLens: keepLens } : {}),
       ...(proposeChange ? { onProposeChange: proposeChange } : {}),
       ...(composeAppChange ? { composeChange: composeAppChange } : {}),
+      ...(draftChange ? { onDraftChange: draftChange } : {}),
       app,
       ...(locale ? { locale } : {}),
       ...(timeZone ? { timeZone } : {}),
@@ -1323,6 +1378,8 @@ export function GraviewProvider<S extends AnySchema>({
       subscriptions,
       dismissals,
       whileAway,
+      notifications,
+      onNotificationsSeen,
       workflowRuns,
       signIn,
       linkedReads,

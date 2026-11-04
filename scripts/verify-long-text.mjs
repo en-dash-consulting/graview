@@ -107,10 +107,11 @@ const BULLETED = LISTED(/^[-*]\s/).reduce((count, block) => count + block.split(
  * name, which is its heading and the control that renames it; the routed
  * page lists it among the facts.
  */
-const DECLARED = { pages: ["Due", "Name", "Status", "Summary", "Subject line", "Draft"], graview: ["Due", "Status", "Summary", "Subject line", "Draft"] };
+// The name is the heading, renamed where it stands, and not said again among the facts (Roadmap f-facts-by-type) — on both faces now.
+const DECLARED = { pages: ["Due", "Status", "Summary", "Subject line", "Draft"], graview: ["Due", "Status", "Summary", "Subject line", "Draft"] };
 /** The page the `page=1` variant declares: the subject and the draft first, the dates under "Schedule", the rest under "Details". */
 const PAGE = { fields: ["subject", "draft"], groups: [{ title: "Schedule", fields: ["due", "status"] }] };
-const PAGED = { pages: ["Subject line", "Draft", "Schedule", "Due", "Status", "Details", "Name", "Summary"], graview: ["Subject line", "Draft", "Schedule", "Due", "Status", "Details", "Summary"] };
+const PAGED = { pages: ["Subject line", "Draft", "Schedule", "Due", "Status", "Details", "Summary"], graview: ["Subject line", "Draft", "Schedule", "Due", "Status", "Details", "Summary"] };
 const ADDED = "P.S. I will bring the drainage district's maps on the thirtieth.";
 
 const SCREENS = [

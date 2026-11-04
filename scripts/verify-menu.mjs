@@ -40,6 +40,7 @@
  *
  *   node scripts/verify-menu.mjs [--engine=chromium|webkit|firefox]
  */
+import { unfold } from "./lib/menu-more.mjs";
 import { createServer } from "node:http";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -51,6 +52,7 @@ import { serving, vacant } from "./lib/serve.mjs";
 import { graviewSources } from "./lib/graview-sources.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { deadline } from "./lib/deadline.mjs";
+import { openActivity } from "./lib/bar.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -578,6 +580,7 @@ try {
   const pagesMenu = async (on, selector, options = {}) => {
     await on.click(selector, { button: "right", ...options });
     await on.waitForSelector(MENU, { timeout: 10_000 }).catch(() => undefined);
+    await unfold(on);
     await on.waitForTimeout(200);
     return menuSays(on);
   };
@@ -640,14 +643,15 @@ try {
     await on.waitForTimeout(300);
     const editing = await on.evaluate(() => {
       const active = document.activeElement;
-      return { tag: active?.tagName.toLowerCase() ?? null, inTheFacts: active?.closest('[data-testid="record-fields"]') !== null, menuGone: !document.querySelector('[data-testid="context-menu"]') };
+      // A yes or no is a switch that keeps the keyboard as it is pressed (Roadmap f-facts-by-type).
+      return { tag: active?.tagName.toLowerCase() ?? null, role: active?.getAttribute("role") ?? null, inTheFacts: active?.closest('[data-testid="record-fields"]') !== null, menuGone: !document.querySelector('[data-testid="context-menu"]') };
     });
     await on.keyboard.press("Escape");
     await on.waitForTimeout(200);
     report.checks[`pagesFieldOffersItsChange_${size}`] = {
       field,
       editing,
-      ok: field !== null && field.rows[0] === "change-field" && field.acts.includes("Finish it") && editing.menuGone && editing.inTheFacts && ["input", "select", "textarea"].includes(editing.tag ?? ""),
+      ok: field !== null && field.rows[0] === "change-field" && field.acts.includes("Finish it") && editing.menuGone && editing.inTheFacts && (["input", "select", "textarea"].includes(editing.tag ?? "") || editing.role === "switch"),
     };
 
     /* ------------------------------------------------- a picture's mark, and its ground */
@@ -691,6 +695,7 @@ try {
       await on.focus(opener);
       await on.keyboard.press(key);
       await on.waitForSelector(MENU, { timeout: 10_000 }).catch(() => undefined);
+      await unfold(on);
       await on.waitForTimeout(200);
       const said = await menuSays(on);
       await on.keyboard.press("Escape");
@@ -795,6 +800,7 @@ try {
     });
     const elsewhere = await prevented('[data-graview-record="t-deposit"]', false);
     await on.waitForSelector(MENU, { timeout: 10_000 }).catch(() => undefined);
+    await unfold(on);
     await on.waitForTimeout(200);
     const withSelection = await menuSays(on);
     await on.click(`${MENU} [data-menu-item="copy-selection"]`).catch(() => undefined);
@@ -904,6 +910,7 @@ try {
     const rightAt = async (point) => {
       await on.mouse.click(point.x, point.y, { button: "right" });
       await on.waitForSelector(MENU, { timeout: 10_000 }).catch(() => undefined);
+      await unfold(on);
       await on.waitForTimeout(250);
       return said();
     };
@@ -1014,6 +1021,7 @@ try {
       await on.mouse.click(point.x, point.y, { button: "right" });
       for (const key of modifiers) await on.keyboard.up(key);
       await on.waitForSelector(MENU, { timeout: 3_000 }).catch(() => undefined);
+      await unfold(on);
       await on.waitForTimeout(250);
       const said = await heard();
       await putAway(on);
@@ -1131,6 +1139,11 @@ try {
               // "Everything that's already ticked off" read as everything, sure of it — the misreading the code must catch.
               const misreadAll = /\beverything that'?s\b/i.test(said);
               answers[key] = misread ? sure(question, "itself", 0.55) : misreadAll ? sure(question, "held", 0.95) : names.includes("done") && /\b(done|finished|ticked|completed)\b/i.test(said) ? sure(question, "done") : names.includes("open") && /\b(open|remaining|outstanding)\b/i.test(said) ? sure(question, "open") : sure(question, /\b(these|all|them|each|everything|tasks|ones)\b/i.test(said) ? "held" : "itself", plain ? 0.92 : 0.7);
+              continue;
+            }
+            // Words about how the page looks are "Make … better"'s (Roadmap f-make-any-page-better); the asks here are about the records.
+            if (question.type === "choice" && key === "about") {
+              answers[key] = sure(question, /\b(look|layout|bigger|smaller|style)\b/i.test(String(state.typed ?? "")) ? "look" : "records");
               continue;
             }
             if (question.type === "choice" && key === "mood") {
@@ -1265,14 +1278,15 @@ try {
 
     /* Typing filters every row: the acts, Open, Copy link, Show in the scene, Inspect. */
     await opened(on, face, "");
-    const firstStop = await on.evaluate(() => document.activeElement?.closest('[data-testid="context-menu"]') !== null && document.activeElement?.getAttribute("data-testid") !== "menu-type");
+    // The field first, the keyboard in it: the aim is to type what you want (Roadmap f-make-any-page-better).
+    const firstStop = await on.evaluate(() => document.activeElement?.getAttribute("data-testid") === "menu-type");
     const before = await typedSays(on);
     const fin = await typeIn(on, "fin");
     await on.keyboard.press("Escape");
     await on.waitForTimeout(150);
     const cleared = await typedSays(on);
     // A row that is not an act, found by its first word: Copy link on the pages, whatever the scene's own rows begin with.
-    const other = before?.rows.find((row) => (face === "pages" ? row.id === "copy-link" : !row.id.startsWith("ai-") && row.id !== "ask-typed")) ?? null;
+    const other = before?.rows.find((row) => (face === "pages" ? row.id === "copy-link" : !/^(ai-|suggested-|more$|ask-typed$)/.test(row.id))) ?? null;
     const word = (other?.text ?? "").split(/\s+/)[0]?.toLowerCase() ?? "";
     const copy = word ? await typeIn(on, word) : null;
     // The Fast slot, once the typing rests: "complete" begins no row's words, and finds "Finish it".
@@ -1289,7 +1303,7 @@ try {
       before !== null && before.acts.length > 1 &&
       fin !== null && fin.keyboardInTheField && fin.typed === "fin" && fin.acts.includes("Finish it") && fin.acts.length < before.acts.length && allFit(fin, "fin") && fin.lit === "Finish it" &&
       cleared?.typed === "" &&
-      copy !== null && allFit(copy, copy.typed) && copy.rows.some((row) => row.id === other.id) && copy.rows.at(-1)?.id === "ask-typed" &&
+      copy !== null && allFit(copy, copy.typed) && copy.rows.some((row) => row.id === other.id) && copy.rows.some((row) => row.id === "ask-typed") &&
       fastRefines.atOnce !== null && !fastRefines.atOnce.includes("Finish it") && (fastRefines.rested ?? []).includes("Finish it") && fastRefines.lit === "Finish it";
     await on.keyboard.press("Escape");
     await on.keyboard.press("Escape");
@@ -1340,9 +1354,9 @@ try {
       const card = document.querySelector('[data-testid="quick-ask"]');
       return card ? { beside: card.getAttribute("data-quick-ask-beside"), asked: card.querySelector('[data-testid="quick-answer-asked"]')?.textContent ?? null } : null;
     });
-    typing.asks[face] = { askRow: askRow?.rows.at(-1) ?? null, lit: askRow?.lit, thinking, card, menuGone: !(await on.$(MENU)) };
+    typing.asks[face] = { askRow: askRow?.rows.find((row) => row.id === "ask-typed") ?? null, lit: askRow?.lit, thinking, card, menuGone: !(await on.$(MENU)) };
     typing.asks[face].ok =
-      askRow !== null && askRow.acts.length === 0 && askRow.rows.at(-1)?.id === "ask-typed" && askRow.lit === `Tell Graview “${asking}”` &&
+      askRow !== null && askRow.acts.length === 0 && askRow.rows.some((row) => row.id === "ask-typed") && askRow.lit === "💬 Chat" &&
       thinking !== null && thinking.on === "t-deposit" && thinking.anchorIs === "t-deposit" && thinking.role === "status" && thinking.said.includes("Pay the deposit") && thinking.visible && thinking.onIt && !thinking.modal &&
       card !== null && card.beside === "t-deposit" && card.asked === `“${asking}”` && typing.asks[face].menuGone;
 
@@ -1389,7 +1403,7 @@ try {
     const handed = await on.evaluate(() => ({ picked: window.__fastPicked.slice(), saw: window.__thinkingSaw.at(-1) ?? null }));
     await on.click('[data-testid="quick-ask"] [data-testid="ghost-close"], [data-testid="quick-ask-close"]').catch(() => undefined);
     await on.keyboard.press("Escape").catch(() => undefined);
-    await on.click('[data-testid="activity-button"]:visible').catch(() => undefined);
+    await openActivity(on, { timeout: 8_000 }).catch(() => undefined);
     await on.waitForSelector('[data-testid="interaction-context"]', { timeout: 8_000 }).catch(() => undefined);
     const said = await on.evaluate(() => {
       const row = document.querySelector('[data-testid="interaction-context"]');
@@ -1457,7 +1471,7 @@ try {
     await on.waitForTimeout(400);
     const onTheCard = await wordsOf('[data-testid="quick-ask"]');
     await on.click('[data-testid="quick-ask-close"]').catch(() => undefined);
-    await on.click('[data-testid="activity-button"]:visible').catch(() => undefined);
+    await openActivity(on, { timeout: 8_000 }).catch(() => undefined);
     await on.waitForSelector('[data-testid="activity-interaction"]', { timeout: 8_000 }).catch(() => undefined);
     const inActivity = await on.evaluate(() => [...document.querySelectorAll('[data-testid="activity-interaction"]')].map((one) => one.querySelector("[data-graview-activity-words]")?.textContent ?? "").join(" | "));
     const asks = (words) => /\bask(s|ed|ing)?\b/i.test(words ?? "");
@@ -1531,6 +1545,7 @@ try {
       await on.waitForSelector('[data-graview-record="t1"]', { timeout: 30_000 });
       await on.click(":is([data-graview-page-title], main h1, main h2) >> nth=0", { button: "right" });
       await on.waitForSelector(MENU, { timeout: 10_000 });
+      await unfold(on);
       await on.waitForTimeout(250);
     };
     const storeSays = () =>
@@ -1680,6 +1695,7 @@ try {
       // A Ctrl+click as a Mac trackpad sends it: a contextmenu from the primary button, ctrlKey held.
       await said(faces[face].target, { button: 0, ctrlKey: true });
       await on.waitForSelector(MENU, { timeout: 5_000 }).catch(() => undefined);
+      await unfold(on);
       await on.waitForTimeout(200);
       ctrl[face] = await heard();
       await putAway(on);
@@ -1716,6 +1732,7 @@ try {
     await on.waitForSelector('[data-graview-record="t1"]', { timeout: 30_000 });
     await on.click('[data-graview-record="t1"]', { button: "right" });
     await on.waitForSelector(MENU, { timeout: 10_000 });
+    await unfold(on);
     const FOOT = `${MENU} [data-menu-item="send-feedback"]`;
     await on.waitForSelector(FOOT, { timeout: 10_000 });
     const boxOf = () => on.evaluate((selector) => {
@@ -1773,6 +1790,7 @@ try {
       await on.waitForTimeout(500);
       await on.click(":is([data-graview-page-title], main h1) >> nth=0", { button: "right" });
       await on.waitForSelector(MENU, { timeout: 10_000 });
+      await unfold(on);
       await on.waitForTimeout(250);
     };
     const cardSays = () =>
@@ -1817,7 +1835,7 @@ try {
     };
     await on.click('[data-testid="quick-ask-close"]').catch(() => undefined);
     await on.keyboard.press("Escape").catch(() => undefined);
-    await on.click('[data-testid="activity-button"]:visible').catch(() => undefined);
+    await openActivity(on, { timeout: 8_000 }).catch(() => undefined);
     await on.waitForSelector('[data-testid="interaction-stages"]', { timeout: 8_000 }).catch(() => undefined);
     const stages = await on.evaluate(() => {
       const details = document.querySelector('[data-testid="interaction-stages"]');

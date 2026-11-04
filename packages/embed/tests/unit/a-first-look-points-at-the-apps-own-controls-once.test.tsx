@@ -17,8 +17,8 @@ beforeAll(() => preload());
  *
  * A brand-new app is a bar of controls nobody has met. A host could point
  * at them only by their selectors, which are not a surface it may hold the
- * framework to; the framework points at its own, by name — the switch, the
- * problems count, Activity, the Ask box — one hint at a time, beside the
+ * framework to; the framework points at its own, by name — the app menu, the
+ * problems count, the inbox, the Ask box — one hint at a time, beside the
  * control and never over it, skipping what is not drawn, on either face,
  * and only once.
  */
@@ -44,10 +44,10 @@ const store = () => new Store({ schema, mutations: [addNote], invariants: [], sn
  * hint's place is read against it.
  */
 const BOXES: Record<string, { left: number; top: number; width: number; height: number }> = {
-  "app-faces": { left: 400, top: 9, width: 160, height: 30 },
+  "app-menu-open": { left: 180, top: 9, width: 24, height: 30 },
   standing: { left: 900, top: 9, width: 30, height: 30 },
   "standing-link": { left: 900, top: 9, width: 30, height: 30 },
-  "activity-button": { left: 840, top: 9, width: 80, height: 30 },
+  "inbox-button": { left: 860, top: 9, width: 30, height: 30 },
   "seat-field": { left: 16, top: 700, width: 360, height: 40 },
   "profile-button": { left: 950, top: 9, width: 30, height: 30 },
 };
@@ -104,7 +104,7 @@ async function walk(host: Element): Promise<{ anchor: string; title: string; cov
     const shown = await hintArrives(host);
     if (!shown) break;
     const anchor = shown.getAttribute("data-first-look-anchor")!;
-    const control = host.querySelector<HTMLElement>(`[data-testid="${anchor === "faces" ? "app-faces" : anchor === "problems" ? "standing" : anchor === "activity" ? "activity-button" : anchor === "ask" ? "app-find" : "profile-button"}"], [data-testid="standing-link"]`);
+    const control = host.querySelector<HTMLElement>(`[data-testid="${anchor === "faces" ? "app-menu-open" : anchor === "problems" ? "standing" : anchor === "activity" ? "inbox-button" : anchor === "ask" ? "app-find" : "profile-button"}"], [data-testid="standing-link"]`);
     const box = control?.getBoundingClientRect();
     const top = parseFloat(shown.style.top);
     // Under its control, or over it: never on it.
@@ -178,8 +178,8 @@ describe("a first look points at the app's own controls, once", { timeout: 60_00
     await whole.done();
   });
 
-  it("skips the hint of a control that is not drawn, and shows Activity's once there is any", async () => {
-    // No quick ask (no model was given), and nothing has happened: no Activity.
+  it("skips the hint of a control that is not drawn, and shows the inbox's once there is anything in it", async () => {
+    // No quick ask (no model was given), and nothing has happened: no inbox.
     const quiet = await embed({ firstLook: { seen: false } });
     const first = await hintArrives(quiet.host);
     expect(first?.querySelector('[data-testid="first-look-count"]')?.textContent).toBe("1 of 2");

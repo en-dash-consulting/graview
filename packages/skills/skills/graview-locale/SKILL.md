@@ -47,6 +47,16 @@ brand, the name, mark, typeface and palette, is `graview-brand`.
    instant's day counted on the app's clock); a field block takes
    `as: "time"`, `as: "datetime"` and `as: "money"`.
 
+6. **Read today; never write it.** A worker view is handed the app's
+   today, the day its rules read, on the app's clock: `graview.today`
+   ("2026-11-04", also `props.today`). Say a day against it with
+   `graview.fromToday(node.due)` — "today", "tomorrow", "in 3 days", "2
+   weeks ago", and with `{ due: true }` a day gone by is "overdue". A view
+   that writes `TODAY = "2026-11-01"` or "Tomorrow · Mon 2 Nov" is right
+   for one day: a headless run (`graview view check`) says it as a
+   problem, "Home may be out of date: …", and so does `datesPinned`
+   (`@graview/core/revisions`).
+
 ## Then find out whether it worked
 
 ```sh
@@ -61,6 +71,12 @@ the runtime does not know or an offset (`brand-time-zone`) — and warns
 app's currency. Report what it said. Then open a record holding a sum and
 an instant with your machine's clock set elsewhere: the sum carries its
 symbol, and the time is on the declared clock, not the machine's.
+
+After an act adds or changes records, look at the places that draw them
+before saying it is done: `placesTouched(app, ops, { views, today })`
+(`@graview/core/revisions`) names them ("These appear on Home and
+Tasks") and the views among them that write their own dates; read each
+with `describe_place`.
 
 ## What the check cannot see
 

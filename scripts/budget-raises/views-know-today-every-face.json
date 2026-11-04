@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 1282,
+  "gzipped": 550,
+  "note": "Raised when a worker view came to read today from graview (Roadmap f-views-know-today): the worker's runtime, which every face carries as text, gains `graview.today` and `graview.fromToday` (today, tomorrow, in 3 days, overdue, an instant's day on the app's clock), and a view's props carry the app's today. Measured at 2_707_320 / 982_958 against 2_706_038 / 982_408 minified and gzipped."
+}

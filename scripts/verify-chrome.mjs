@@ -47,6 +47,7 @@ import { engineName, launchEngine } from "./lib/engine.mjs";
 import { graviewSources } from "./lib/graview-sources.mjs";
 import { serving, vacant } from "./lib/serve.mjs";
 import { at, portFor } from "./lib/ports.mjs";
+import { unfold } from "./lib/menu-more.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -140,10 +141,41 @@ async function buildHost() {
           // A host's buttons on the bar itself (FR-227): Cloud's "Send feedback", one tap from the reader.
           barActions: [
             { label: "Send feedback", icon: "✉", onSelect: () => { window.__feedback = (window.__feedback ?? 0) + 1; } },
-            { label: "Share", onSelect: () => {} },
+            { label: "Print", onSelect: () => {} },
           ],
+          // A host's Share beside the people (f-app-bar-calm): who can open the app, in a sentence, and where that changes.
+          share: { mark: "lock", description: "Only people in the Okafor household can open this app.", link: { label: "People & sharing", href: "#people-and-sharing" } },
+          /*
+           * The calm bar as Graview Cloud fills it, when the page asks (f-app-bar-calm): its rows in the app menu, the scheme choice,
+           * its notifications in the inbox, and "Send feedback" as its mark alone.
+           */
+          ...(asked.get("calm")
+            ? {
+                appMenu: [{ label: "App settings", href: "#app-settings" }, { label: "Connections", href: "#connections" }],
+                schemeChoice: { value: "system", onChoose: (value) => { window.__schemeChosen = value; } },
+                notifications: [{ id: "n-invite", title: "Sam invited you to Things", at: "2026-11-01T09:00:00Z" }, { id: "n-digest", title: "Your weekly digest is ready", at: "2026-10-31T09:00:00Z", read: true }],
+                onNotificationsSeen: (ids) => { (window.__seen ??= []).push(...ids); },
+                barActions: [{ label: "Send feedback", icon: '<svg viewBox="0 0 16 16"><path d="M2.5 3.5h11v7h-6l-3 2.5v-2.5h-2z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>', iconOnly: true, onSelect: () => { window.__feedback = (window.__feedback ?? 0) + 1; } }],
+              }
+            : {}),
         };
         window.__handle = mount(document.getElementById("app"), options);
+        /*
+         * The one inbox (f-app-bar-calm), opened on a tab as a person opens it: the bell, then the tab where it did not land on it.
+         * Resolves to the bell, or null where the bar draws none.
+         */
+        window.__inbox = async (tab) => {
+          const pause = (ms) => new Promise((done) => setTimeout(done, ms));
+          const bell = () => document.querySelector('[data-testid="app-bar"] [data-testid="inbox-button"]');
+          for (let turn = 0; turn < 100 && !bell(); turn++) await pause(50);
+          if (!bell()) return null;
+          if (!document.querySelector('[data-testid="inbox"]')) bell().click();
+          for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="inbox"] [role="tab"]'); turn++) await pause(50);
+          const chosen = document.querySelector('[data-testid="inbox-tab-' + tab + '"]');
+          if (chosen && chosen.getAttribute("aria-selected") !== "true") chosen.click();
+          await pause(60);
+          return bell();
+        };
         // What reads the suggestions back, for the claims that ask the store what a person declined, and casts a vote as somebody else.
         window.__tidying = { acceptSuggestion, declined, suggestions, voteSuggestion };
         // The framework's version, as a host's Report this is handed it (FR-237).
@@ -693,20 +725,19 @@ try {
       page.on("pageerror", (error) => errors.push(error.message));
       await page.goto(`${at("chrome-host")}/?face=${face}&tidy=1`, { waitUntil: "load" });
       await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
-      await page.waitForSelector('[data-testid="app-bar"] [data-testid="suggested-button"]', { timeout: 30_000 }).catch(() => {});
-      // The tray: one suggestion, what it would do and what it was based on, waiting.
+      await page.waitForSelector('[data-testid="app-bar"] [data-testid="inbox-button"]', { timeout: 30_000 }).catch(() => {});
+      // The inbox's For you: one suggestion, what it would do and what it was based on, waiting.
       const tray = await page.evaluate(async () => {
-        const button = document.querySelector('[data-testid="app-bar"] [data-testid="suggested-button"]');
+        const button = await window.__inbox("for-you");
         if (!button) return null;
-        button.click();
         for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="suggestion"]'); turn++) await new Promise((done) => setTimeout(done, 50));
         const rows = [...document.querySelectorAll('[data-testid="suggestion"]')].map((row) => row.textContent ?? "");
-        return { count: button.textContent?.trim().charAt(0), rows, edges: window.__handle.store.graph.allEdges().length };
+        return { count: document.querySelector('[data-testid="inbox-tab-for-you"] .graview-inbox-tab-count')?.textContent ?? null, rows, edges: window.__handle.store.graph.allEdges().length };
       });
       await page.keyboard.press("Escape");
       // Activity: the actor's two links, one digest row that opens to each with its lineage and its own undo.
       const digest = await page.evaluate(async () => {
-        document.querySelector('[data-testid="activity-button"]')?.click();
+        await window.__inbox("activity");
         for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="activity-digest"]'); turn++) await new Promise((done) => setTimeout(done, 50));
         const row = document.querySelector('[data-testid="activity-digest"]');
         if (!row) return null;
@@ -726,18 +757,18 @@ try {
        * same suggestion next time (asked, not tried: a refusal here would be an act the watch saw refused).
        */
       const declined = await page.evaluate(async () => {
-        document.querySelector('[data-testid="suggested-button"]')?.click();
+        await window.__inbox("for-you");
         for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="suggestion-decline"]'); turn++) await new Promise((done) => setTimeout(done, 50));
         const before = window.__handle.store.graph.allEdges().length;
         document.querySelector('[data-testid="suggestion-decline"]')?.click();
         await new Promise((done) => setTimeout(done, 200));
         const declinedBy = window.__tidying.declined(window.__handle.store, [{ name: "wait-for", args: { taskId: "t-post", blockerId: "t-notice" } }])?.author.id ?? null;
-        return { trayGone: document.querySelector('[data-testid="suggested-button"]') === null, unchanged: window.__handle.store.graph.allEdges().length === before, declinedBy, keyboard: document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName };
+        return { trayGone: document.querySelector('[data-testid="suggestion"]') === null && !document.querySelector('[data-testid="inbox-tab-for-you"] .graview-inbox-tab-count'), unchanged: window.__handle.store.graph.allEdges().length === before, declinedBy, keyboard: document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName };
       });
       await page.close();
       const ok =
         tray !== null && tray.count === "1" && tray.rows.length === 1 && /suggests/.test(tray.rows[0]) && /The post is redirected from the day notice is given/.test(tray.rows[0]) && /45% sure/.test(tray.rows[0]) &&
-        digest !== null && /Graview, tidying/.test(digest.said) && /Tidied 2 things today/.test(digest.said) && digest.each.length === 2 && digest.each.every((one) => /based on/.test(one)) && digest.undoes === 2 &&
+        digest !== null && /Graview, tidying/.test(digest.said) && /Tidied 2 things today/.test(digest.said) && digest.each.length === 2 && digest.each.every((one) => /\d+% sure/.test(one)) && digest.undoes === 2 &&
         declined.trayGone && declined.unchanged && declined.declinedBy === "user-nora" && declined.keyboard !== "BODY";
       tidying[face] = { tray, digest, declined, ok };
     }
@@ -756,11 +787,10 @@ try {
       asReader.on("pageerror", (error) => errors.push(error.message));
       await asReader.goto(`${at("chrome-host")}/?face=${face}&tidy=1&reader=1`, { waitUntil: "load" });
       await asReader.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
-      await asReader.waitForSelector('[data-testid="app-bar"] [data-testid="suggested-button"]', { timeout: 30_000 }).catch(() => {});
+      await asReader.waitForSelector('[data-testid="app-bar"] [data-testid="inbox-button"]', { timeout: 30_000 }).catch(() => {});
       const reader = await asReader.evaluate(async () => {
-        const button = document.querySelector('[data-testid="app-bar"] [data-testid="suggested-button"]');
+        const button = await window.__inbox("for-you");
         if (!button) return null;
-        button.click();
         for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="suggestion-accept"]'); turn++) await new Promise((done) => setTimeout(done, 50));
         const store = window.__handle.store;
         const before = store.graph.allEdges().length;
@@ -786,11 +816,10 @@ try {
       asKeeper.on("pageerror", (error) => errors.push(error.message));
       await asKeeper.goto(`${at("chrome-host")}/?face=${face}&tidy=1&vote=1`, { waitUntil: "load" });
       await asKeeper.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
-      await asKeeper.waitForSelector('[data-testid="app-bar"] [data-testid="suggested-button"]', { timeout: 30_000 }).catch(() => {});
+      await asKeeper.waitForSelector('[data-testid="app-bar"] [data-testid="inbox-button"]', { timeout: 30_000 }).catch(() => {});
       const keeper = await asKeeper.evaluate(async () => {
-        const button = document.querySelector('[data-testid="app-bar"] [data-testid="suggested-button"]');
+        const button = await window.__inbox("for-you");
         if (!button) return null;
-        button.click();
         for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="suggestion-accept"]'); turn++) await new Promise((done) => setTimeout(done, 50));
         return {
           tally: document.querySelector('[data-testid="suggestion-tally"]')?.textContent ?? null,
@@ -831,7 +860,7 @@ try {
       await form.locator("input").first().fill("Paint the hall");
       await form.locator('[data-graview-part="submit"]').click();
       await page.waitForFunction(() => window.__tidying.suggestions(window.__handle.store).length > 0, null, { timeout: 10_000 }).catch(() => {});
-      await page.locator('[data-testid="app-bar"] [data-testid="suggested-button"]').click({ timeout: 10_000 }).catch(() => {});
+      await page.evaluate(() => window.__inbox("for-you")).catch(() => {});
       await page.waitForSelector('[data-testid="proposals"] [data-testid="suggestion"]', { timeout: 10_000 }).catch(() => {});
       proposed = await page.evaluate(() => {
         const store = window.__handle.store;
@@ -865,11 +894,10 @@ try {
       page.on("pageerror", (error) => errors.push(error.message));
       await page.goto(`${at("chrome-host")}/?face=${face}&run=1`, { waitUntil: "load" });
       await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
-      await page.waitForSelector('[data-testid="app-bar"] [data-testid="suggested-button"]', { timeout: 30_000 }).catch(() => {});
+      await page.waitForSelector('[data-testid="app-bar"] [data-testid="inbox-button"]', { timeout: 30_000 }).catch(() => {});
       const run = await page.evaluate(async () => {
-        const button = document.querySelector('[data-testid="app-bar"] [data-testid="suggested-button"]');
+        const button = await window.__inbox("for-you");
         if (!button) return null;
-        button.click();
         for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="suggestion-items"]'); turn++) await new Promise((done) => setTimeout(done, 50));
         const words = document.querySelector("[data-graview-suggestion-words]")?.textContent ?? "";
         const all = document.querySelector('[data-testid="suggestion-accept"]')?.textContent ?? null;
@@ -917,11 +945,10 @@ try {
       page.on("pageerror", (error) => errors.push(error.message));
       await page.goto(`${at("chrome-host")}/?face=${face}&tidy=1&signedOut=1`, { waitUntil: "load" });
       await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
-      await page.waitForSelector('[data-testid="app-bar"] [data-testid="suggested-button"]', { timeout: 30_000 }).catch(() => {});
+      await page.waitForSelector('[data-testid="app-bar"] [data-testid="inbox-button"]', { timeout: 30_000 }).catch(() => {});
       const visitor = await page.evaluate(async () => {
-        const button = document.querySelector('[data-testid="app-bar"] [data-testid="suggested-button"]');
+        const button = await window.__inbox("for-you");
         if (!button) return null;
-        button.click();
         for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="suggestion"]'); turn++) await new Promise((done) => setTimeout(done, 50));
         const store = window.__handle.store;
         const signIn = document.querySelector('[data-testid="suggestion-sign-in"]');
@@ -954,12 +981,11 @@ try {
       page.on("pageerror", (error) => errors.push(error.message));
       await page.goto(`${at("chrome-host")}/?face=${face}&tidy=1&away=1`, { waitUntil: "load" });
       await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
-      await page.waitForSelector('[data-testid="app-bar"] [data-testid="suggested-button"]', { timeout: 30_000 }).catch(() => {});
+      await page.waitForSelector('[data-testid="app-bar"] [data-testid="inbox-button"]', { timeout: 30_000 }).catch(() => {});
       const said = await page.evaluate(async () => {
-        const button = document.querySelector('[data-testid="app-bar"] [data-testid="suggested-button"]');
+        const button = await window.__inbox("for-you");
         if (!button) return null;
         const label = button.getAttribute("aria-label");
-        button.click();
         for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="suggestion-not-now"]'); turn++) await new Promise((done) => setTimeout(done, 50));
         const away = document.querySelector('[data-testid="while-away"]')?.textContent ?? null;
         const later = document.querySelector('[data-testid="suggestion-not-now"]');
@@ -978,14 +1004,14 @@ try {
           stillWaitsForEveryone: window.__tidying.suggestions(store).length,
           kept: key ? JSON.parse(localStorage.getItem(key) ?? "[]").length : 0,
           rows: document.querySelectorAll('[data-testid="suggestion"]').length,
-          button: document.querySelector('[data-testid="app-bar"] [data-testid="suggested-button"]')?.textContent?.trim() ?? null,
+          button: document.querySelector('[data-testid="app-bar"] [data-testid="inbox-button"]')?.getAttribute("aria-label") ?? null,
           keyboard: document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName,
         };
       });
       await page.close();
       const ok =
         said !== null &&
-        said.label === "Suggested: One suggestion waiting · tidied 2 things while you were away" &&
+        /^Inbox — 1 waiting for you\b/.test(said.label ?? "") &&
         said.away === "One suggestion waiting · tidied 2 things while you were away." &&
         /until tomorrow/.test(said.hint ?? "") &&
         said.focused === "suggestion-not-now" &&
@@ -993,7 +1019,8 @@ try {
         after.stillWaitsForEveryone === 1 &&
         after.kept === 1 &&
         after.rows === 0 &&
-        /Tidied 2/.test(after.button ?? "") &&
+        // Put out of this reader's sight, it no longer waits for them: the bell counts it no more.
+        !/waiting for you/.test(after.button ?? "") &&
         after.keyboard !== "BODY";
       notNow[face] = { said, after, ok };
     }
@@ -1012,11 +1039,10 @@ try {
       page.on("pageerror", (error) => errors.push(error.message));
       await page.goto(`${at("chrome-host")}/?face=${face}&crowd=1`, { waitUntil: "load" });
       await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
-      await page.waitForSelector('[data-testid="app-bar"] [data-testid="suggested-button"]', { timeout: 30_000 }).catch(() => {});
+      await page.waitForSelector('[data-testid="app-bar"] [data-testid="inbox-button"]', { timeout: 30_000 }).catch(() => {});
       const said = await page.evaluate(async () => {
-        const button = document.querySelector('[data-testid="app-bar"] [data-testid="suggested-button"]');
+        const button = await window.__inbox("for-you");
         if (!button) return null;
-        button.click();
         for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="suggestion"]'); turn++) await new Promise((done) => setTimeout(done, 50));
         await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
         const panel = document.querySelector('[data-testid="suggested"]');
@@ -1060,11 +1086,10 @@ try {
       page.on("pageerror", (error) => errors.push(error.message));
       await page.goto(`${at("chrome-host")}/?face=${face}&crowd=1`, { waitUntil: "load" });
       await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
-      await page.waitForSelector('[data-testid="app-bar"] [data-testid="activity-button"]', { timeout: 30_000 }).catch(() => {});
+      await page.waitForSelector('[data-testid="app-bar"] [data-testid="inbox-button"]', { timeout: 30_000 }).catch(() => {});
       const said = await page.evaluate(async () => {
-        const button = document.querySelector('[data-testid="app-bar"] [data-testid="activity-button"]');
+        const button = await window.__inbox("activity");
         if (!button) return null;
-        button.click();
         for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="diff-log"] > li'); turn++) await new Promise((done) => setTimeout(done, 50));
         await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
         const panel = document.querySelector('[data-testid="activity"]');
@@ -1136,6 +1161,9 @@ try {
       const stands = (await standing.count()) > 0 && (await standing.first().isVisible());
       await (stands ? standing.first() : page.locator('[data-testid="app-places-open"]').first()).click({ button: "right" });
       const row = page.locator('[data-testid="context-menu"] [data-menu-item="hide-list"]');
+      // The face's own rows wait behind More…, as a person finds them.
+      await page.locator('[data-testid="context-menu"]').waitFor({ timeout: 10_000 }).catch(() => {});
+      await unfold(page);
       const offered = await row.waitFor({ timeout: 10_000 }).then(() => true, () => false);
       if (offered) await row.click();
       const toast = page.locator('[data-testid="notices-toasts"] [data-testid="notice"][data-tone="bad"]');
@@ -1224,12 +1252,15 @@ try {
           // The places stand or fold by the room and by the one you are on; the rest of the bar is the same bar.
           // And the ways past the bar (`skip-*`) are the face's, not the bar's: the Shell's scene says where they go, an embed's host page has its own.
           // Nor are the host's own buttons (FR-227): this host gives the embed two, and the Shell's todo none.
-          ids: ids.filter((id) => !id.startsWith("app-place") && id !== "activity-button" && !id.startsWith("skip-") && !id.startsWith("host-bar-action")),
+          // Nor is a host's Share (f-app-bar-calm): this host gives one, the Shell's todo none.
+          ids: ids.filter((id) => !id.startsWith("app-place") && !id.startsWith("inbox-") && !id.startsWith("skip-") && !id.startsWith("host-bar-action") && !id.startsWith("app-share")),
           places: [...document.querySelectorAll('[data-testid^="app-place-scene:"]')].map((el) => el.getAttribute("data-place-path")).sort(),
-          activity: bar.querySelector('[data-testid="activity-button"]') !== null,
-          activityBeforeStanding: (() => {
+          inbox: bar.querySelector('[data-testid="inbox-button"]') !== null,
+          // One inbox, and none of the two words it took the place of (f-app-bar-calm).
+          noSuggestedOrActivity: bar.querySelector('[data-testid="suggested-button"], [data-testid="activity-button"]') === null,
+          inboxBeforeStanding: (() => {
             const all = [...bar.querySelectorAll("[data-testid]")].map((el) => el.getAttribute("data-testid"));
-            return !all.includes("activity-button") || all.indexOf("activity-button") < all.indexOf("standing");
+            return !all.includes("inbox-button") || all.indexOf("inbox-button") < all.indexOf("standing");
           })(),
           height: Math.round(row.height),
           oneRow: parts.every((el) => { const box = el.getBoundingClientRect(); return box.top >= row.top - 1 && box.bottom <= row.bottom + 1; }),
@@ -1254,11 +1285,279 @@ try {
         bars[`${size.width}×${size.height} ${colorScheme}`] = {
           shell,
           embed,
-          ok: same && [shell, embed].every((one) => one.height <= 48 && one.oneRow && one.oldBar.length === 0 && one.activityBeforeStanding && one.places.length > 0),
+          ok: same && [shell, embed].every((one) => one.height <= 48 && one.oneRow && one.oldBar.length === 0 && one.inboxBeforeStanding && one.noSuggestedOrActivity && one.places.length > 0),
         };
       }
     }
     report.checks.theShellAndAnEmbedWearOneBarOnTheScene = { ...bars, ok: Object.values(bars).every((one) => one.ok) };
+  }
+  /*
+   * ---- The bar, calmer (f-app-bar-calm), on both faces of the hosted todo — filled as Graview Cloud fills it (`calm=1`) — and on the
+   * whole-page Shell and the routed face of the todo example, at a desk's, a laptop's, a tablet's and a phone's width, in both schemes:
+   * the app's name opens an app menu that holds the scene and the pages, the host's rows and the scheme choice; one inbox, a bell with
+   * one count, opens on three tabs; the host's Share says in a sentence who can open the app, with the way to change it; a host's
+   * button drawn as its mark alone is named by its label; Find is a box where there is room and the magnifier sooner; and the bar
+   * holds still, one row, nothing on it over anything else and nothing past its end.
+   */
+  {
+    const WIDTHS = QUICK ? [1440, 390] : [1440, 1024, 768, 390];
+    const SCHEMES = QUICK ? ["light"] : ["light", "dark"];
+    /** The bar as drawn: each control on its row, where it is, and whether any stands over another or past the bar's end. */
+    const geometry = (page) =>
+      page.evaluate(() => {
+        const bar = document.querySelector('[data-testid="app-bar"]');
+        if (!bar) return null;
+        const box = bar.getBoundingClientRect();
+        const row = bar.querySelector(".graview-bar-row").getBoundingClientRect();
+        const away = '[data-testid="app-menu"], [data-testid="app-places"], [data-testid="here-list"], [data-testid="host-bar-actions"], [data-testid="app-share"], [data-testid="inbox"], [data-testid="profile"], [data-testid="problems"], .graview-bar-ruler, [hidden]';
+        const controls = [...bar.querySelectorAll(".graview-bar-row :is(button, a, input)")].filter((el) => {
+          if (el.closest(away) || (el.getAttribute("data-testid") ?? "").startsWith("skip-")) return false;
+          const at = el.getBoundingClientRect();
+          return at.width > 1 && at.height > 1 && getComputedStyle(el).visibility !== "hidden";
+        });
+        const named = (el) => el.getAttribute("data-testid") ?? el.getAttribute("aria-label") ?? el.tagName.toLowerCase();
+        const rects = controls.map((el) => ({ el, at: el.getBoundingClientRect() }));
+        const overlaps = [];
+        for (let a = 0; a < rects.length; a++)
+          for (let b = a + 1; b < rects.length; b++) {
+            const [one, two] = [rects[a], rects[b]];
+            if (one.el.contains(two.el) || two.el.contains(one.el)) continue;
+            const x = Math.min(one.at.right, two.at.right) - Math.max(one.at.left, two.at.left);
+            const y = Math.min(one.at.bottom, two.at.bottom) - Math.max(one.at.top, two.at.top);
+            if (x > 1 && y > 1) overlaps.push(`${named(one.el)} × ${named(two.el)}`);
+          }
+        const outside = rects.filter(({ at }) => at.top < row.top - 1 || at.bottom > row.bottom + 1 || at.left < box.left - 1 || at.right > box.right + 1).map(({ el }) => named(el));
+        const shown = (id) => {
+          const el = bar.querySelector(`[data-testid="${id}"]`);
+          return el !== null && el.getBoundingClientRect().width > 1;
+        };
+        return {
+          height: Math.round(bar.getBoundingClientRect().height),
+          controls: rects.map(({ el, at }) => `${named(el)}@${Math.round(at.left)},${Math.round(at.width)}`),
+          overlaps,
+          outside,
+          findBox: shown("app-find"),
+          magnifier: shown("app-find-open"),
+          inbox: shown("inbox-button"),
+          appMenu: shown("app-menu-open"),
+        };
+      });
+    /** A popover's pane, said against the viewport: inside it, and whether the keyboard went in. */
+    const paneSaid = (page, testid) =>
+      page.evaluate((id) => {
+        const pane = document.querySelector(`[data-testid="${id}"]`);
+        if (!pane || pane.hidden) return null;
+        const at = pane.getBoundingClientRect();
+        return { inTheViewport: at.left >= -1 && at.top >= -1 && at.right <= document.documentElement.clientWidth + 1 && at.bottom <= innerHeight + 1, keyboardIn: pane.contains(document.activeElement), width: Math.round(at.width) };
+      }, testid);
+    const stillness = {};
+    const menus = {};
+    const inboxes = {};
+    const shares = {};
+    const iconOnly = {};
+    const finds = {};
+    for (const width of WIDTHS) {
+      const height = width < 500 ? 844 : 900;
+      for (const colorScheme of SCHEMES) {
+        const where = [
+          ...["graview", "pages"].map((face) => ({ name: `the embed's ${face === "graview" ? "Graview" : "pages"}`, hosted: true, face, url: `${at("chrome-host")}/?face=${face}&calm=1&tidy=1&company=1`, ready: (page) => page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 }) })),
+          { name: "the Shell", hosted: false, url: `${at("todo")}/?today=2026-09-01&fresh=1&theme=${colorScheme}`, ready: (page) => page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 }) },
+          { name: "the routed face", hosted: false, url: `${at("todo")}/pages/?today=2026-09-01&fresh=1&theme=${colorScheme}`, ready: (page) => page.waitForSelector('[data-testid="app-bar"]', { timeout: 60_000 }) },
+        ];
+        for (const place of where) {
+          const key = `${place.name} ${width} ${colorScheme}`;
+          const page = await browser.newPage({ viewport: { width, height }, colorScheme });
+          page.on("pageerror", (error) => errors.push(error.message));
+          await page.goto(place.url, { waitUntil: "load" });
+          await place.ready(page);
+          await page.waitForTimeout(1200);
+          /* The bar holds still: drawn the same a moment later, one row of at most 48 px, nothing over anything, nothing past its end. */
+          const first = await geometry(page);
+          await page.waitForTimeout(700);
+          const again = await geometry(page);
+          stillness[key] = {
+            first,
+            still: first !== null && again !== null && JSON.stringify(first.controls) === JSON.stringify(again.controls),
+            ok: first !== null && again !== null && JSON.stringify(first.controls) === JSON.stringify(again.controls) && first.height <= 48 && first.overlaps.length === 0 && first.outside.length === 0,
+          };
+          /* Find: a box where the bar has room, the magnifier below 900 px of it, which opens the box over the row and gives the keyboard back. */
+          if (place.hosted || place.name === "the Shell") {
+            const folded = width < 900;
+            let opened = null;
+            if (folded && first?.magnifier) {
+              await page.locator('[data-testid="app-find-open"]:visible').first().click();
+              await page.waitForTimeout(300);
+              opened = await page.evaluate(() => ({
+                finding: document.querySelector('[data-testid="app-bar"]')?.hasAttribute("data-finding") ?? false,
+                typing: document.activeElement?.tagName === "INPUT",
+                wide: Math.round(document.querySelector('[data-testid="app-find"]')?.getBoundingClientRect().width ?? 0),
+              }));
+              const over = await geometry(page);
+              opened.overlaps = over?.overlaps ?? null;
+              await page.keyboard.press("Escape");
+              await page.keyboard.press("Escape");
+              await page.waitForTimeout(300);
+              opened.back = await page.evaluate(() => document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName);
+              opened.closed = await page.evaluate(() => !document.querySelector('[data-testid="app-bar"]')?.hasAttribute("data-finding"));
+            }
+            finds[key] = {
+              folded,
+              findBox: first?.findBox ?? null,
+              magnifier: first?.magnifier ?? null,
+              opened,
+              ok: first !== null && (folded ? first.magnifier && !first.findBox && opened !== null && opened.finding && opened.typing && opened.wide >= Math.min(200, width - 120) && opened.overlaps?.length === 0 && opened.closed && opened.back === "app-find-open" : first.findBox && !first.magnifier),
+            };
+          }
+          if (place.hosted) {
+            /* The app menu, reached by the keyboard: Scene and Pages, the one drawn pressed; the host's rows; the scheme, System chosen. */
+            await page.locator('[data-testid="app-menu-open"]').focus();
+            await page.keyboard.press("Enter");
+            await page.waitForSelector('[data-testid="app-menu"] [data-testid="app-face-scene"]', { timeout: 10_000 }).catch(() => {});
+            const menu = await page.evaluate(() => {
+              const pane = document.querySelector('[data-testid="app-menu"]');
+              if (!pane || pane.hidden) return null;
+              return {
+                name: document.querySelector('[data-testid="app-menu-open"]')?.getAttribute("aria-label") ?? null,
+                faces: [...pane.querySelectorAll('[data-testid^="app-face-"]')].map((one) => `${one.textContent}${one.getAttribute("aria-pressed") === "true" ? " (pressed)" : ""}`),
+                rows: [...pane.querySelectorAll('[data-testid="app-menu-row"]')].map((one) => one.textContent),
+                scheme: [...pane.querySelectorAll('[data-testid^="app-menu-scheme-"]')].map((one) => `${one.textContent}${one.getAttribute("aria-pressed") === "true" ? " (pressed)" : ""}`),
+              };
+            });
+            const pane = await paneSaid(page, "app-menu");
+            await page.locator('[data-testid="app-menu-scheme-dark"]').click().catch(() => {});
+            const chosen = await page.evaluate(() => window.__schemeChosen ?? null);
+            /* And the other face is one press from it. */
+            let switched = null;
+            if (width === 1440 && colorScheme === "light") {
+              const other = place.face === "pages" ? "scene" : "pages";
+              if (!(await page.locator('[data-testid="app-menu"]:not([hidden])').count())) await page.locator('[data-testid="app-menu-open"]').click();
+              await page.waitForSelector(`[data-testid="app-face-${other}"]`, { timeout: 10_000 }).catch(() => {});
+              await page.locator(`[data-testid="app-face-${other}"]`).click().catch(() => {});
+              await page.waitForTimeout(1500);
+              await page.locator('[data-testid="app-menu-open"]').click();
+              await page.waitForSelector(`[data-testid="app-face-${other}"]`, { timeout: 10_000 }).catch(() => {});
+              switched = await page.evaluate((one) => document.querySelector(`[data-testid="app-face-${one}"]`)?.getAttribute("aria-pressed") === "true", other);
+            }
+            await closeAll(page);
+            const current = place.face === "pages" ? "Pages (pressed)" : "Scene (pressed)";
+            menus[key] = {
+              menu,
+              pane,
+              chosen,
+              switched,
+              ok:
+                menu !== null && menu.name === "Things — app menu" && menu.faces.length === 2 && menu.faces.includes(current) &&
+                JSON.stringify(menu.rows) === JSON.stringify(["App settings", "Connections"]) &&
+                JSON.stringify(menu.scheme) === JSON.stringify(["System (pressed)", "Light", "Dark"]) &&
+                pane !== null && pane.inTheViewport && pane.keyboardIn && chosen === "dark" && switched !== false,
+            };
+            if (switched !== null) {
+              // Back where the rest of this place's claims were read.
+              await page.goto(place.url, { waitUntil: "load" });
+              await place.ready(page);
+              await page.waitForTimeout(1200);
+            }
+            /* One inbox: one bell, one count, three tabs, landing on what waits for you — the host's notification and the suggestion. */
+            const inbox = await page.evaluate(async () => {
+              const bar = document.querySelector('[data-testid="app-bar"]');
+              const before = {
+                bells: bar.querySelectorAll('[data-testid="inbox-button"]').length,
+                badges: bar.querySelectorAll('[data-testid="inbox-button"] .graview-bar-badge').length,
+                old: bar.querySelectorAll('[data-testid="suggested-button"], [data-testid="activity-button"]').length,
+              };
+              const bell = await window.__inbox("for-you");
+              if (!bell) return { before };
+              const count = Number(bell.getAttribute("data-count"));
+              const label = bell.getAttribute("aria-label");
+              const tabs = [...document.querySelectorAll('[data-testid="inbox"] [role="tab"]')];
+              const tabCount = (tab) => Number(tab?.querySelector(".graview-inbox-tab-count")?.textContent ?? 0);
+              const forYou = document.querySelector('[data-testid="inbox-tab-for-you"]');
+              const activity = document.querySelector('[data-testid="inbox-tab-activity"]');
+              for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="inbox"] [data-testid="suggestion"]'); turn++) await new Promise((done) => setTimeout(done, 50));
+              return {
+                before,
+                label,
+                count,
+                tabs: tabs.map((tab) => `${tab.textContent}${tab.getAttribute("aria-selected") === "true" ? " (selected)" : ""}`),
+                sum: tabCount(forYou) + tabCount(activity),
+                notifications: [...document.querySelectorAll('[data-testid="inbox-notification"]')].map((one) => `${one.textContent}${one.hasAttribute("data-unread") ? " (unread)" : ""}`),
+                suggestions: document.querySelectorAll('[data-testid="inbox"] [data-testid="suggestion"]').length,
+                seen: window.__seen ?? [],
+              };
+            });
+            const inboxPane = await paneSaid(page, "inbox");
+            await closeAll(page);
+            inboxes[key] = {
+              inbox,
+              pane: inboxPane,
+              ok:
+                inbox.before.bells === 1 && inbox.before.badges === 1 && inbox.before.old === 0 &&
+                inbox.count > 0 && inbox.count === inbox.sum && /^Inbox — 2 waiting for you/.test(inbox.label ?? "") &&
+                inbox.tabs.length === 3 && /^For you/.test(inbox.tabs[0]) && inbox.tabs[0].endsWith("(selected)") && /^Activity/.test(inbox.tabs[1]) && /^Your asks/.test(inbox.tabs[2]) &&
+                inbox.notifications.length === 2 && inbox.notifications[0].endsWith("(unread)") && inbox.suggestions === 1 && inbox.seen.includes("n-invite") &&
+                inboxPane !== null && inboxPane.inTheViewport && inboxPane.keyboardIn,
+            };
+            /* Share: named "Share", its sentence its description and its hover; pressed, the sentence and the way to change it. */
+            const share = await page.evaluate(() => {
+              const button = document.querySelector('[data-testid="app-share-open"]');
+              if (!button) return null;
+              const at = button.getBoundingClientRect();
+              return {
+                name: (button.getAttribute("aria-label") ?? button.textContent ?? "").trim(),
+                description: document.getElementById(button.getAttribute("aria-describedby") ?? "")?.textContent ?? null,
+                title: button.getAttribute("title"),
+                drawn: at.width > 1,
+                afterThePeople: (() => {
+                  const ids = [...document.querySelectorAll('[data-testid="app-bar"] [data-testid]')].map((one) => one.getAttribute("data-testid"));
+                  return ids.indexOf("here-open") < ids.indexOf("app-share-open") && ids.indexOf("app-share-open") < ids.indexOf("profile-button");
+                })(),
+              };
+            });
+            await page.locator('[data-testid="app-share-open"]').focus();
+            await page.keyboard.press("Enter");
+            await page.waitForSelector('[data-testid="app-share"]:not([hidden])', { timeout: 5000 }).catch(() => {});
+            const sharePane = await paneSaid(page, "app-share");
+            const said = await page.evaluate(() => ({
+              sentence: document.querySelector('[data-testid="app-share-said"]')?.textContent ?? null,
+              link: document.querySelector('[data-testid="app-share-link"]')?.getAttribute("href") ?? null,
+              linkWords: document.querySelector('[data-testid="app-share-link"]')?.textContent ?? null,
+            }));
+            await closeAll(page);
+            const sentence = "Only people in the Okafor household can open this app.";
+            shares[key] = {
+              share,
+              said,
+              pane: sharePane,
+              ok: share !== null && share.drawn && share.name === "Share" && share.description === sentence && share.title === sentence && share.afterThePeople && said.sentence === sentence && said.link === "#people-and-sharing" && said.linkWords === "People & sharing" && sharePane !== null && sharePane.inTheViewport && sharePane.keyboardIn,
+            };
+            /* "Send feedback" as its mark alone: on the row at every width, named by its label, its label its hover, no words drawn. */
+            const named = page.getByRole("button", { name: "Send feedback", exact: true });
+            const mark = await page.evaluate(() => {
+              const button = document.querySelector('[data-testid="host-bar-action"][data-icon-only]');
+              if (!button) return null;
+              const words = button.querySelector(".graview-bar-host-words");
+              return { title: button.getAttribute("title"), wordsWidth: Math.round(words?.getBoundingClientRect().width ?? 0), width: Math.round(button.getBoundingClientRect().width), folded: document.querySelector('[data-testid="host-bar-actions-open"]') !== null };
+            });
+            const reachable = (await named.count()) > 0 && (await named.first().isVisible());
+            if (reachable) {
+              await named.first().focus();
+              await page.keyboard.press("Enter");
+              await page.waitForTimeout(150);
+            }
+            const ran = await page.evaluate(() => window.__feedback ?? 0);
+            iconOnly[key] = { mark, reachable, ran, ok: mark !== null && mark.title === "Send feedback" && mark.wordsWidth <= 1 && mark.width <= 32 && !mark.folded && reachable && ran === 1 };
+          }
+          await page.close();
+        }
+      }
+    }
+    const all = (one) => Object.values(one).every((said) => said.ok);
+    report.checks.theBarHoldsStillAndNothingOnItOverlapsAtEveryWidth = { ...stillness, ok: all(stillness) };
+    report.checks.findIsABoxWhereThereIsRoomAndTheMagnifierSooner = { ...finds, ok: all(finds) };
+    report.checks.theAppMenuHoldsTheScenePagesTheHostsRowsAndTheScheme = { ...menus, ok: all(menus) };
+    report.checks.oneInboxIsOneBellWithOneCountAndThreeTabs = { ...inboxes, ok: all(inboxes) };
+    report.checks.aHostsShareSaysInASentenceWhoCanOpenTheApp = { ...shares, ok: all(shares) };
+    report.checks.aHostsButtonDrawnAsItsMarkIsNamedByItsLabel = { ...iconOnly, ok: all(iconOnly) };
   }
   /*
    * ---- A host's buttons stand on the bar, or fold into one control (FR-227, Roadmap f-host-buttons-in-the-app-bar): on both faces,
@@ -1315,7 +1614,7 @@ try {
         const stands = size.width >= 640;
         const ok =
           drawn.onTheRow && drawn.beforeTheTools && reached && after.ran === 1 && after.listClosed && after.keyboard !== "body" &&
-          (stands ? JSON.stringify(drawn.standing) === JSON.stringify(["✉Send feedback", "Share"]) && drawn.folded === null : drawn.standing === null && drawn.folded === "More — Send feedback, Share");
+          (stands ? JSON.stringify(drawn.standing) === JSON.stringify(["✉Send feedback", "Print"]) && drawn.folded === null : drawn.standing === null && drawn.folded === "More — Send feedback, Print");
         buttons[`${face} ${size.width}×${size.height}`] = { ...drawn, reached, after, ok };
       }
     }

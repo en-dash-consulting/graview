@@ -7,5 +7,5 @@ import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, pa
  * request, and no piece of it on a page that never tells Graview anything.
  */
 export { changeTelling, examplesHere, keepTelling, RateTelling, seenOnThisPage, tellingDraftOf, toldListed, watchTelling } from "./told-card.js";
-export { readToldHere, toldSuggestionsFrom } from "./menu-told.js";
+export { readToldHere, toldForHere, toldSuggestionsFrom } from "./menu-told.js";
 export { ToldPanel } from "./told-panel.js";

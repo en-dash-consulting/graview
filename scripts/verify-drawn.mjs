@@ -16,7 +16,9 @@
  *
  *   the root says it once the home has drawn; when it does, the slow font
  *   has loaded, the view has drawn its words and its image has come; and
- *   nothing on the page moves after it, for a second and a half;
+ *   nothing on the page moves after it, for a second and a half; and the
+ *   view, reading today from graview rather than writing one, draws the
+ *   app's today and says it "today", and a due day gone by "overdue";
  *
  *   a move to another place takes it off before that place has drawn, and
  *   the place puts it back, its path the value, once it settles;
@@ -75,6 +77,7 @@ import { ENGINES, launchEngine } from "./lib/engine.mjs";
 import { graviewSources } from "./lib/graview-sources.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { vacant } from "./lib/serve.mjs";
+import { unfold } from "./lib/menu-more.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const asked = process.argv.find((arg) => arg.startsWith("--engine="))?.slice("--engine=".length);
@@ -113,6 +116,7 @@ const HOME_SOURCE = `graview.style(".lead{font-size:1.5rem;margin:0 0 8px} img{d
 graview.onProps((props) => graview.render(graview.html\`<h2 class="lead">What we are making</h2>
 <img id="picture" src="${IMAGE_PATH}" alt="The roadmap, drawn">
 <ul id="features">\${props.nodes.map((node) => graview.html\`<li>\${node.label}</li>\`)}</ul>
+<p id="when">\${graview.today} · \${graview.fromToday(graview.today)} · \${graview.fromToday("2000-01-01", { due: true })}</p>
 <p><a id="to-features" data-place="features">Every feature</a></p>\`));`;
 /* A view of the features that draws past what it may (here, ten things) and is stopped: counted as settled, with what is drawn in its place. */
 const BROKEN_MANIFEST = { name: "broken-board", title: "Broken board", attach: "feature", cardinality: "many", reads: { kinds: ["feature"] } };
@@ -354,6 +358,7 @@ function instrument() {
       lateFace: document.fonts ? [...document.fonts].some((face) => face.family.replace(/"/g, "") === "Late Face" && face.status === "loaded") : null,
       busy: Boolean(root?.querySelector('[aria-busy="true"]')),
       viewWords: region?.shadowRoot?.querySelector("#features")?.textContent ?? null,
+      when: region?.shadowRoot?.querySelector("#when")?.textContent ?? null,
       picture: picture ? { complete: picture.complete, width: picture.naturalWidth } : null,
       failures: [...(window.__failures ?? [])],
       brokenStillDrawn: Boolean(root?.querySelector('[data-worker-view-place="broken-board"]')),
@@ -582,6 +587,9 @@ try {
         const stands = (await standing.count()) > 0 && (await standing.first().isVisible());
         await (stands ? standing.first() : page.locator('[data-testid="app-places-open"]').first()).click({ button: "right" });
         const row = page.locator(`[data-testid="context-menu"] [data-menu-item="${tidied.item}"]`);
+        // The face's own rows wait behind More…, as a person finds them.
+        await page.locator('[data-testid="context-menu"]').waitFor({ timeout: 10_000 }).catch(() => {});
+        await unfold(page);
         const offered = await row.waitFor({ timeout: 10_000 }).then(() => true, () => false);
         let left = false;
         let still = null;
@@ -625,6 +633,12 @@ report.checks.theRootSaysDrawnOnceThePlaceSettles = {
 report.checks.whenItIsSaidTheLateFontTheViewsWordsAndItsLateImageAreThere = {
   seen: seen.home.map(({ engine, screen, seen: at }) => ({ engine, screen, ...at })),
   ok: every(seen.home, (one) => one.seen && one.seen.fonts === "loaded" && one.seen.lateFace === true && !one.seen.busy && /Printable boards/.test(one.seen.viewWords ?? "") && one.seen.picture?.complete === true && one.seen.picture.width === 360),
+};
+/* The app's today as the page reads it (Roadmap f-views-know-today): the roadmap declares no zone, so the UTC date. */
+const todayNow = () => new Date().toISOString().slice(0, 10);
+report.checks.aViewReadingTodayDrawsTheRightRelativeDay = {
+  seen: seen.home.map(({ engine, screen, seen: at }) => ({ engine, screen, when: at?.when ?? null })),
+  ok: every(seen.home, (one) => one.seen?.when === `${todayNow()} · today · overdue`),
 };
 report.checks.nothingMovesAfterItIsSaid = {
   seen: seen.still,

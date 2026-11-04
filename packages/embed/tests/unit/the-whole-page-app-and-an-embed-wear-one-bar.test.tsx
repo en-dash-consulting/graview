@@ -8,6 +8,7 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { beforeAll, describe, expect, it } from "vitest";
 import { mount, preload, type EmbedHandle, type EmbedOptions } from "../../src/index.js";
+import { facePressed, openAppMenu } from "../support/the-app-menu.js";
 
 beforeAll(() => preload());
 
@@ -19,7 +20,7 @@ beforeAll(() => preload());
  * standing, Activity and the person — while an embed's scene face wore the
  * one `AppBar`. The same app looked like two apps, and on a phone the
  * Shell's bar wrapped to three rows. Now both draw the `AppBar` with the
- * same parts under the same test ids, the scene's Find and Activity put in
+ * same parts under the same test ids, the scene's Find and inbox put in
  * it the same way, and what the picture is doing on the picture.
  */
 const note = defineNode("note", { fields: z.object({ label: z.string() }), plural: "Notes" });
@@ -80,8 +81,14 @@ describe("the whole-page app and an embed wear one bar on the scene", () => {
     try {
       const said = barIds(whole.host);
       expect(said).toEqual(barIds(inEmbed.host));
-      for (const id of ["app-home", "app-name", "app-faces", "app-face-scene", "app-face-pages", "app-find", "standing", "profile-button"]) expect(said, id).toContain(id);
-      expect(whole.host.querySelector('[data-testid="app-face-scene"]')?.getAttribute("aria-pressed")).toBe("true");
+      for (const id of ["app-home", "app-name", "app-menu-open", "app-find", "standing", "profile-button"]) expect(said, id).toContain(id);
+      // The scene and the pages are the app menu's rows, on both bars, the scene the one drawn.
+      for (const { host } of [whole, inEmbed]) {
+        const menu = await openAppMenu(host);
+        for (const id of ["app-faces", "app-face-scene", "app-face-pages"]) expect(menu.querySelector(`[data-testid="${id}"]`), id).not.toBeNull();
+      }
+      expect(await facePressed(whole.host, "scene")).toBe("true");
+      expect(await facePressed(inEmbed.host, "scene")).toBe("true");
       // The Find box is the scene's own, in the bar's place for it.
       expect(whole.host.querySelector('[data-testid="app-find"] [data-testid="find-box"], [data-testid="app-find"] input')).not.toBeNull();
       for (const gone of ["wordmark", "backtrack", "pages-link", "places"]) expect(whole.host.querySelector(`[data-testid="${gone}"]`), gone).toBeNull();
@@ -93,22 +100,22 @@ describe("the whole-page app and an embed wear one bar on the scene", () => {
     }
   });
 
-  it("puts Activity on both bars once something has happened, before the standing", async () => {
+  it("puts the inbox on both bars once something has happened, before the standing", async () => {
     const one = store();
     const two = store();
     const whole = await shell(one);
     const inEmbed = await embed(two);
     try {
-      expect(whole.host.querySelector('[data-testid="activity-button"]')).toBeNull();
-      expect(inEmbed.host.querySelector('[data-testid="activity-button"]')).toBeNull();
+      expect(whole.host.querySelector('[data-testid="inbox-button"]')).toBeNull();
+      expect(inEmbed.host.querySelector('[data-testid="inbox-button"]')).toBeNull();
       await act(async () => {
         one.apply({ name: "add-note", args: { label: "Second" } });
         two.apply({ name: "add-note", args: { label: "Second" } });
       });
       for (const host of [whole.host, inEmbed.host]) {
         const ids = barIds(host);
-        expect(ids).toContain("activity-button");
-        expect(ids.indexOf("activity-button")).toBeLessThan(ids.indexOf("standing"));
+        expect(ids).toContain("inbox-button");
+        expect(ids.indexOf("inbox-button")).toBeLessThan(ids.indexOf("standing"));
       }
       expect(barIds(whole.host)).toEqual(barIds(inEmbed.host));
     } finally {

@@ -1,10 +1,10 @@
-import { humanizeField, nounOf, pluralOf, withArticle, type AnySchema, type MutationCall, type Store } from "@graview/core";
+import { fieldInPassing, humanizeField, nounOf, pluralOf, withArticle, type AnySchema, type MutationCall, type Store } from "@graview/core";
 import { districtState } from "@graview/core/city";
 import { nodeState, type Question } from "../questions.js";
 import type { Blocks, PairBlock, RecordBlock } from "./blocking.js";
-import { named, noun, type Candidate } from "./judges.js";
+import { capitalized, named, noun, type Candidate } from "./judges.js";
 import type { Severity } from "./policy.js";
-import { choiceOf, modelWord, noulOf, scoreOf, type SystemOneAnswer } from "./system-one.js";
+import { choiceOf, noulOf, scoreOf, type SystemOneAnswer } from "./system-one.js";
 
 /*
  * THE MODEL JUDGES; CODE ASKS, AND READS. Every candidate blocking found
@@ -47,7 +47,6 @@ export interface Ask {
 }
 
 const quote = (text: string) => `“${text}”`;
-const two = (value: number) => value.toFixed(2);
 
 /** A record as the model reads it: its kind, its name, its fields as the actor may see them, what it is joined to. No id. */
 function recordState(store: Store<AnySchema>, node: Node): Record<string, unknown> {
@@ -63,10 +62,10 @@ function kindState(schema: AnySchema, kind: string): Record<string, unknown> {
   const lifecycle = definition?.lifecycle;
   const finishedWhen = lifecycle
     ? lifecycle.retired === "date"
-      ? `once its ${humanizeField(lifecycle.field).toLowerCase()} has passed`
-      : `when its ${humanizeField(lifecycle.field).toLowerCase()} retires it`
+      ? `once its ${fieldInPassing(definition, lifecycle.field)} has passed`
+      : `when its ${fieldInPassing(definition, lifecycle.field)} retires it`
     : done.length > 0
-      ? `when its ${humanizeField(state!.field).toLowerCase()} is ${done.map(quote).join(" or ")}`
+      ? `when its ${fieldInPassing(definition, state!.field)} is ${done.map(quote).join(" or ")}`
       : undefined;
   return {
     name: nounOf(definition, kind),
@@ -101,8 +100,6 @@ export function pairAsk(store: Store<AnySchema>, pair: PairBlock): Ask {
   const schema = store.schema;
   const one = noun(schema, pair.kind);
   const many = pluralOf(schema, pair.kind);
-  const first = named(schema, pair.other);
-  const second = named(schema, pair.keeper);
   const questions: Record<string, Question> = {
     same_thing: {
       type: "score",
@@ -118,8 +115,8 @@ export function pairAsk(store: Store<AnySchema>, pair: PairBlock): Ask {
   for (const field of pair.keys) {
     questions[keyOf("same", field)] = {
       type: "noul",
-      instructions: `Do “first” and “second” have the same ${humanizeField(field).toLowerCase()}, perhaps written two ways?`,
-      criteria: { true: `One ${humanizeField(field).toLowerCase()}.`, false: `Two different ${humanizeField(field).toLowerCase()} values.` },
+      instructions: `Do “first” and “second” have the same ${fieldInPassing(schema.tryDefinition(pair.kind), field)}, perhaps written two ways?`,
+      criteria: { true: `One ${fieldInPassing(schema.tryDefinition(pair.kind), field)}.`, false: `Two different ${fieldInPassing(schema.tryDefinition(pair.kind), field)} values.` },
     };
   }
   return {
@@ -137,12 +134,9 @@ export function pairAsk(store: Store<AnySchema>, pair: PairBlock): Ask {
       const differs = keys.find((one) => one.p < 0.2);
       if (differs) confidence = Math.min(confidence, 0.5);
       confidence = Math.round(confidence * 100) / 100;
-      const agreed = keys.filter((one) => one.p >= 0.8).map((one) => `the same ${humanizeField(one.field).toLowerCase()}`);
-      const basis = [
-        `${modelWord(model)}: ${two(confidence)} that ${quote(first)} and ${quote(second)} are the same ${one}`,
-        agreed.length > 0 ? ` (${agreed.join(", ")})` : "",
-        differs ? `, though their ${humanizeField(differs.field).toLowerCase()} differs` : "",
-      ].join("");
+      const agreed = keys.filter((one) => one.p >= 0.8).map((one) => fieldInPassing(schema.tryDefinition(pair.kind), one.field));
+      // The change names both records, and the lineage how sure and which model: the basis is the one reason.
+      const basis = [`Same ${one}, entered twice`, agreed.length > 0 ? `, with the same ${agreed.join(" and ")}` : "", differs ? `, but the ${fieldInPassing(schema.tryDefinition(pair.kind), differs.field)} differs` : ""].join("");
       return [{ judge: "duplicates", severity: "merge", model, calls: [{ name: `merge-${pair.kind}`, args: { id: pair.other.id, into: pair.keeper.id } }], basis, confidence, about: [pair.other.id, pair.keeper.id] }];
     },
   };
@@ -160,7 +154,6 @@ export function recordAsk(store: Store<AnySchema>, block: RecordBlock): Ask {
   const schema = store.schema;
   const node = block.node;
   const one = noun(schema, node.kind);
-  const name = named(schema, node);
   const questions: Record<string, Question> = {};
   const state: Record<string, unknown> = { kind: kindState(schema, node.kind), record: recordState(store, node) };
   const covers: string[] = [];
@@ -186,7 +179,7 @@ export function recordAsk(store: Store<AnySchema>, block: RecordBlock): Ask {
         severity: "archive",
         model,
         calls: [{ name: `archive-${node.kind}`, args: { id: node.id } }],
-        basis: `${modelWord(model)}: ${two(p)} that ${quote(name)} is finished or no longer relevant (${why ? `${why}, ` : ""}unchanged for ${days} days)`,
+        basis: `${why ? capitalized(why) : "Finished"}, unchanged for ${days} days`,
         confidence: p,
         about: [node.id],
       };
@@ -196,7 +189,7 @@ export function recordAsk(store: Store<AnySchema>, block: RecordBlock): Ask {
   for (const fill of block.fills) {
     covers.push(`categorize:${node.id}:${fill.field}`);
     const key = keyOf("fill", fill.field);
-    const words = humanizeField(fill.field).toLowerCase();
+    const words = fieldInPassing(schema.tryDefinition(node.kind), fill.field);
     const criteria: Record<string, string | null> = {};
     for (const option of fill.options) criteria[option] = null;
     criteria[NONE_FITS] = `No ${words} plainly fits; leave it empty.`;
@@ -214,7 +207,7 @@ export function recordAsk(store: Store<AnySchema>, block: RecordBlock): Ask {
         severity: "categorize",
         model,
         calls: none ? [] : [{ name: fill.writes.mutation, args: { [fill.writes.subjectArg]: node.id, [fill.writes.arg]: chosen.choice } }],
-        basis: none ? `${modelWord(model)}: no ${words} plainly fits ${quote(name)} (${two(chosen.confidence)})` : `${modelWord(model)}: ${two(chosen.confidence)} that the ${words} of ${quote(name)} is ${quote(chosen.choice)}`,
+        basis: none ? `No ${words} fits` : `Reads as ${quote(chosen.choice)}`,
         confidence: chosen.confidence,
         about: [node.id],
         split: chosen.margin < 0.15,
@@ -252,9 +245,7 @@ export function recordAsk(store: Store<AnySchema>, block: RecordBlock): Ask {
         severity: "link",
         model,
         calls,
-        basis: target
-          ? `${modelWord(model)}: ${two(chosen.confidence)} that the ${words} of ${quote(name)} is ${quote(named(schema, target.node))} (${target.evidence})`
-          : `${modelWord(model)}: none of the candidates is the ${words} of ${quote(name)} (${two(chosen.confidence)})`,
+        basis: target ? capitalized(target.evidence) : `None of the candidates is its ${words}`,
         confidence: chosen.confidence,
         about: target ? [node.id, target.node.id] : [node.id],
         split: chosen.margin < 0.15,

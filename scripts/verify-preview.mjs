@@ -45,7 +45,7 @@
  * Writes docs/preview.json.
  */
 import { spawn, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -54,6 +54,7 @@ import { engineName, launchEngine } from "./lib/engine.mjs";
 import { admit, keyedFetch as fetch, scrub } from "./lib/serve-key.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { vacant } from "./lib/serve.mjs";
+import { faceShown } from "./lib/bar.mjs";
 import { seatHeaders } from "../packages/ship/dist/index.js";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -117,7 +118,8 @@ try {
     const home = await page.evaluate(() => ({
       failed: window.__graviewFailed ?? null,
       title: document.title,
-      bar: document.querySelector('[data-testid="app-face-scene"]') !== null,
+      // The one app bar, whose app menu holds the scene and the pages (Roadmap f-app-bar-calm).
+      bar: document.querySelector('[data-testid="app-menu-open"]')?.hasAttribute("data-scene") === true,
       text: document.body.innerText,
     }));
     await page.close();
@@ -131,12 +133,14 @@ try {
   /* ---- the scene: the overview's address draws the districts, and a reload stays */
   {
     const page = await open("/places/overview");
-    const drawn = () =>
-      page.evaluate(() => ({
-        sceneOn: document.querySelector('[data-testid="app-face-scene"]')?.getAttribute("aria-pressed") === "true",
+    const drawn = async () => ({
+      // Scene is the app menu's row drawn checked.
+      sceneOn: (await faceShown(page)) === "scene",
+      ...(await page.evaluate(() => ({
         districts: document.querySelectorAll(".graview-ground *").length,
         path: location.pathname,
-      }));
+      }))),
+    });
     const first = await drawn();
     await page.reload({ waitUntil: "load" });
     await page.waitForFunction(() => window.__graviewReady === true, null, { timeout: 60_000 });
@@ -532,6 +536,39 @@ try {
     }
     rmSync(dir, { recursive: true, force: true });
     report.checks.anOpeningScreenCoversThePageUntilItsPlaceHasDrawn = { styles, ok: Object.values(styles).every((one) => one.ok) };
+  }
+
+  /*
+   * ---- the opening screen photographed (Roadmap f-framework-small-fixes-0-1-66): `graview shots --opening-screen`
+   * pictures the screen alone, held, light and dark, once it has settled and under reduced motion — the first second a
+   * reader sees, which every picture of a place is taken after. An app with no screen is refused by name.
+   */
+  {
+    const dir = mkdtempSync(join(tmpdir(), "graview-opening-"));
+    const SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 9"><rect width="16" height="9" fill="#0f6e5c"/><circle cx="12" cy="3" r="2" fill="#f7f7f2"/></svg>';
+    const declared = JSON.parse(readFileSync(resolve(repoRoot, DOCUMENT), "utf8"));
+    declared.brand = { ...(declared.brand ?? {}), splash: { style: "ascii", image: SVG, kicker: "Who does what" } };
+    const file = join(dir, "org-opening.gdd.json");
+    writeFileSync(file, JSON.stringify(declared));
+    const out = join(dir, "shots");
+    const taken = spawnSync(process.execPath, [CLI, "shots", file, "--seed", SEED, "--opening-screen", "--scheme", "both", "--out", out, "--port", String(portFor("preview-shots"))], { cwd: repoRoot, encoding: "utf8", timeout: 180_000 });
+    const names = ["opening-screen-light-1280", "opening-screen-dark-1280", "opening-screen-reduced-motion-light-1280", "opening-screen-reduced-motion-dark-1280"];
+    const pngs = Object.fromEntries(names.map((name) => [name, existsSync(join(out, `${name}.png`)) && readFileSync(join(out, `${name}.png`)).subarray(1, 4).toString() === "PNG"]));
+    const bytes = (name) => (existsSync(join(out, `${name}.png`)) ? readFileSync(join(out, `${name}.png`)) : Buffer.alloc(0));
+    // Light and dark are two pictures, and nothing of a place was taken alongside.
+    const differ = !bytes(names[0]).equals(bytes(names[1]));
+    const onlyTheScreen = existsSync(out) && readdirSync(out).every((one) => one.startsWith("opening-screen-"));
+    const refused = spawnSync(process.execPath, [CLI, "shots", DOCUMENT, "--seed", SEED, "--opening-screen", "--out", out, "--port", String(portFor("preview-shots"))], { cwd: repoRoot, encoding: "utf8", timeout: 180_000 });
+    report.checks.shotsPicturesTheOpeningScreenSettledLightAndDark = {
+      status: taken.status,
+      said: (taken.stdout.trim().split("\n").at(-1) ?? "") + taken.stderr.trim(),
+      pngs,
+      differ,
+      onlyTheScreen,
+      refused: { status: refused.status, said: refused.stderr.trim() },
+      ok: taken.status === 0 && Object.values(pngs).every(Boolean) && differ && onlyTheScreen && refused.status === 2 && refused.stderr.includes("no opening screen"),
+    };
+    rmSync(dir, { recursive: true, force: true });
   }
 
   /*

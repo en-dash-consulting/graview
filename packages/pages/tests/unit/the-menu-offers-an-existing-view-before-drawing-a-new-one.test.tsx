@@ -92,6 +92,9 @@ async function settle(ms = 30, until?: () => boolean) {
 async function openTheMenuOnTheHeading(host: HTMLElement) {
   const heading = host.querySelector("[data-graview-page-title]") ?? host.querySelector("main h1")!;
   await act(async () => void heading.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, button: 2, clientX: 40, clientY: 60 })));
+  // The AI's own section stands behind More…, with what else the menu holds.
+  await settle(30, () => document.querySelector('[data-menu-item="more"]') !== null);
+  await act(async () => document.querySelector<HTMLElement>('[data-menu-item="more"]')!.click());
   await settle(30, () => document.querySelector(`${AI} [data-menu-item="ai-panel"]`) !== null);
 }
 

@@ -31,7 +31,7 @@ describe("a provisional line", () => {
     const derived = deriveAffordances(store, [], { edgeSelection: [edge] });
     const keep = derived.affordances[0]!;
     expect(keep).toMatchObject({ label: "Keep this link", mutation: KEEP_LINK, args: edge, open: [] });
-    expect(keep.why).toBe("Not yet kept by a person. Graview, tidying made it, based on “Both name 12 Harbor Street” · 60% sure.");
+    expect(keep.why).toBe("Not yet kept by a person. Graview, tidying made it: Both name 12 Harbor Street · 60% sure.");
   });
 
   it("is ordinary once a person keeps it, and offers it no more", () => {

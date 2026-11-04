@@ -1,9 +1,9 @@
-import { isLeftAlone, labelOf, nounOf, pluralOf, withArticle, type AnyGraphNode, type AnySchema, type MutationCall, type Principal, type Store } from "@graview/core";
+import { isLeftAlone, nounOf, pluralOf, withArticle, type AnyGraphNode, type AnySchema, type MutationCall, type Principal, type Store } from "@graview/core";
 import { classifyApplies, classifyAsks, floorLabel, recordsOver, type ClassifyStep } from "@graview/core/workflows";
 import { nodeState, questionsForKind, type Question } from "../questions.js";
 import { askAll } from "../tidy/asking.js";
 import { NONE_FITS } from "../tidy/judging.js";
-import { choiceOf, modelWord, systemOneOf } from "../tidy/system-one.js";
+import { choiceOf, systemOneOf } from "../tidy/system-one.js";
 import type { StepContext, StepRunner } from "./types.js";
 
 /*
@@ -16,7 +16,7 @@ import type { StepContext, StepRunner } from "./types.js";
  * within the step's budget, answers kept by what was asked — with one
  * Choice: which option fits, or none. Its answer is a label with how sure,
  * set through the act that writes the field, the reason on the lineage
- * ("Jev: 90% sure “Buy now” is spam"). Where no model answered — none
+ * ("Reads as spam", 90% sure, by Jev). Where no model answered — none
  * lent, it failed, the budget ran out — the floor decides, sure (1), and
  * says which rule did; a record neither labels is labeled the step's
  * `otherwise`, when it says one, else left for a person, and the run says
@@ -101,7 +101,7 @@ export const runClassifyStep: StepRunner<ClassifyStep> = {
         const chosen = choiceOf(answers?.["label"]);
         if (!chosen || !options.includes(chosen.choice)) return;
         const node = nodes[at]!;
-        judged.set(node.id, { option: chosen.choice, confidence: chosen.confidence, split: chosen.margin < 0.15, basis: `${modelWord(named!)}: ${Math.round(chosen.confidence * 100)}% sure “${labelOf(definition, node)}” is ${chosen.choice}` });
+        judged.set(node.id, { option: chosen.choice, confidence: chosen.confidence, split: chosen.margin < 0.15, basis: `Reads as ${chosen.choice}` });
       });
     } else if (step.floor) context.note(`Step ${context.index + 1}: no model was lent, so the floor decided.`);
     else return context.skipped("no model was lent and the step has no floor, so nothing was labeled.");

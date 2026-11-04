@@ -23,12 +23,14 @@
  *
  * Writes docs/gauntlet.json.
  */
+import { unfold } from "./lib/menu-more.mjs";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
 import { at, portFor } from "./lib/ports.mjs";
+import { openActivity } from "./lib/bar.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -357,7 +359,7 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
         await page.waitForTimeout(1200);
         repaired = !(await page.locator('[data-testid="problems"] button', { hasText: "leads Hands-on: Planning the Next Ten Years" }).count());
         // Taken back, so the walk after it meets the seed as it was.
-        await page.click('[data-testid="activity-button"]');
+        await openActivity(page);
         await page.waitForTimeout(800);
         const undo = page.locator('[data-testid="undo-turn"]');
         if ((await undo.count()) > 0) await undo.first().click();
@@ -390,6 +392,8 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
     await showActs(page, RECORDS.submittedTalk);
     const asks = page.locator('[data-testid="affordances"] [data-affordance]:not([disabled])', { hasText: /Add a presenter|Say what it is about|Give it a slot/ });
     if ((await asks.count()) === 0) return { reached: false, detail: "this seat is offered no act that asks" };
+    // Past the menu's first few acts, the rest wait behind More…, as a person finds them.
+    if (!(await asks.first().isVisible().catch(() => false))) await unfold(page);
     await asks.first().focus();
     await page.keyboard.press("Enter");
     await page.waitForTimeout(900);
@@ -497,7 +501,7 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
   });
 
   if (act) await reach(page, where, "the turn taken back from the activity", async () => {
-    await page.click('[data-testid="activity-button"]');
+    await openActivity(page);
     await page.waitForTimeout(800);
     const undo = page.locator('[data-testid="undo-turn"]');
     if (!pressed || (await undo.count()) === 0) {

@@ -16,16 +16,16 @@
  *   Back returns to the list, and to the place before it;
  *   a reload stays on the record;
  *   a deep link to a record opens it;
- *   the switch's Scene is a step Back undoes, the scene at its own address
+ *   the app menu's Scene is a step Back undoes, the scene at its own address
  *   (`<base>/places/overview`, FR-132) with its stop in the fragment, a
- *   reload of the scene stays on the scene, and the switch's Pages goes
+ *   reload of the scene stays on the scene, and the app menu's Pages goes
  *   back to the page the reader was on (FR-137); a picture of the scene's
  *   chosen from the bar moves the scene's `in.view` and its address
  *   together, a step Back undoes (FR-144);
  *   from Up, a lens double-clicked on its district goes down into it — the
  *   kind in focus, that picture `in.view`, the address saying so — and Back
  *   returns to Up;
- *   from an address nothing lives at, the switch's Scene lands where the
+ *   from an address nothing lives at, the app menu's Scene lands where the
  *   scene opens — at altitude, or where the declaration says — never on the
  *   empty view (FR-157);
  *   a link to a stop at the bare address still opens the scene, tidied to
@@ -86,6 +86,7 @@
  *
  *   node scripts/verify-address.mjs [--engine=chromium|webkit|firefox]   (all three by default)
  */
+import { unfold } from "./lib/menu-more.mjs";
 import { createServer } from "node:http";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -96,6 +97,7 @@ import { ENGINES, launchEngine } from "./lib/engine.mjs";
 import { graviewSources } from "./lib/graview-sources.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { vacant } from "./lib/serve.mjs";
+import { faceShown, toFace } from "./lib/bar.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const asked = process.argv.find((arg) => arg.startsWith("--engine="))?.slice("--engine=".length);
@@ -434,8 +436,8 @@ try {
         await tab.goto(`${at("address-host")}${path}`, { waitUntil: "load" });
         await ready();
       };
-      const state = () =>
-        tab.evaluate(() => ({
+      const state = async () => ({
+        ...(await tab.evaluate(() => ({
           path: location.pathname,
           hash: location.hash,
           fragment: location.href.includes("#"),
@@ -445,9 +447,11 @@ try {
           face: document.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed") ?? null,
           heading: (document.querySelector("[data-graview-face=pages] [data-graview-page-title]") ?? document.querySelector("[data-graview-face=pages] :is(h1, h2, h3, h4)"))?.textContent?.trim() ?? null,
           place: document.querySelector('[data-testid="place-lens"]') !== null,
-          scenePressed: document.querySelector('[data-testid="app-face-scene"]')?.getAttribute("aria-pressed") === "true",
           homeView: document.querySelector('[data-testid="home-view"]') !== null,
-        }));
+        }))),
+        // Scene is the app menu's row drawn checked (Roadmap f-app-bar-calm), read by opening the menu and putting it away.
+        scenePressed: (await faceShown(tab, { timeout: 3_000 }).catch(() => null)) === "scene",
+      });
       const settled = async () => {
         await tab.waitForTimeout(600);
         return state();
@@ -512,10 +516,10 @@ try {
         // A deep link to a record.
         await go(`${BASE}/tasks/t2`);
         one.deep = await state();
-        // The switch's Scene, from the place: the scene at its own address, its stop in the fragment, and Back (FR-132, FR-137).
+        // The app menu's Scene, from the place: the scene at its own address, its stop in the fragment, and Back (FR-132, FR-137).
         await go(`${BASE}/places/the-board`);
         one.beforeToggle = await state();
-        await press('[data-testid="app-face-scene"]');
+        await toFace(tab, "scene");
         one.toScene = await settled();
         await reload();
         one.sceneReloaded = await state();
@@ -532,13 +536,13 @@ try {
         one.pictureUndone = { ...(await settled()), said: await tab.evaluate(() => document.querySelector('[data-testid="app-place-current"]')?.textContent.trim() ?? null) };
         await tab.goForward();
         await settled();
-        // The switch's Pages: back to the page the reader was on (FR-137).
-        await press('[data-testid="app-face-pages"]');
+        // The app menu's Pages: back to the page the reader was on (FR-137).
+        await toFace(tab, "pages");
         one.backToPages = await settled();
-        // FR-157: the switch's Scene from an address nothing lives at lands where the scene opens, never on the empty view.
+        // FR-157: the app menu's Scene from an address nothing lives at lands where the scene opens, never on the empty view.
         await go(`${BASE}/tasks/nobody`);
         one.nowhere = await state();
-        await press('[data-testid="app-face-scene"]');
+        await toFace(tab, "scene");
         one.sceneFromNowhere = { ...(await settled()), up: await tab.evaluate(() => document.querySelector('[data-testid="overview"]')?.getAttribute("aria-pressed") === "true") };
         // A link to a stop at the bare address, written before the scene was a place, still opens it.
         await go(`${BASE}#focus=t2`);
@@ -599,7 +603,7 @@ try {
          * and no entry is pushed whose Back lands on an address this seat
          * cannot see.
          */
-        await press('[data-testid="app-face-scene"]');
+        await toFace(tab, "scene");
         await settled();
         await tab.evaluate(() => (location.hash = "#focus=t1"));
         one.seatBefore = await settled();
@@ -652,6 +656,8 @@ try {
           }
           await tab.waitForSelector('[data-testid="context-menu"]', { timeout: 10_000 });
           await tab.waitForTimeout(400);
+          // Open in a new tab and Move to… wait behind More…, as a person would find them.
+          await unfold(tab);
           return tab.evaluate(() => {
             const menu = document.querySelector('[data-testid="context-menu"]');
             return {
@@ -1094,13 +1100,13 @@ try {
         await reader.click('[data-graview-face=pages] a[href="/tasks/t1"]', { timeout: 10_000 });
         await reader.waitForTimeout(400);
         quiet.onRecord = await where();
-        await reader.click('[data-testid="app-face-scene"]');
+        await toFace(reader, "scene");
         await reader.waitForTimeout(800);
         await reader.click('[data-testid="app-home"]');
         await reader.waitForTimeout(600);
         quiet.after = await where();
         // A seat change on the scene, in the article: still the article's history, never written.
-        await reader.click('[data-testid="app-face-scene"]');
+        await toFace(reader, "scene");
         await reader.waitForTimeout(800);
         await reader.evaluate(() => window.__handle.setSeat({ kind: "human", id: "p9", roles: ["viewer"] }));
         await reader.waitForTimeout(600);
@@ -1302,7 +1308,7 @@ try {
     seen: Object.fromEntries(Object.entries(pick("toScene")).map(([name, seen]) => [name, { scene: seen, reloaded: results[name].sceneReloaded }])),
     ok: every(({ toScene, sceneReloaded }) => toScene.path === `${BASE}/places/overview` && toScene.fragment && sceneReloaded.path === `${BASE}/places/overview` && sceneReloaded.face !== "pages" && sceneReloaded.scenePressed),
   };
-  /* FR-157: from a page that is nothing, the switch's Scene lands where the declaration says the app opens (`pages.first`: the board), not on the empty view. */
+  /* FR-157: from a page that is nothing, the app menu's Scene lands where the declaration says the app opens (`pages.first`: the board), not on the empty view. */
   report.checks.theSceneFromAnAddressNothingLivesAtLandsWhereTheSceneOpens = {
     seen: Object.fromEntries(Object.entries(pick("sceneFromNowhere")).map(([name, seen]) => [name, { page: results[name].nowhere, scene: seen }])),
     ok: every(
@@ -1617,10 +1623,10 @@ try {
     seen: fittedSeen,
     ok: fittedHold(({ fallback }) => fallback.drawn && fallback.left === fallback.columnLeft && fallback.width === fallback.column && !fallback.sideScroll),
   };
-  /* Roadmap f-place-header-repeats-view-title: a view that draws its own heading is titled once, by itself; the way to the list stays; any other place keeps its title and count. */
+  /* Roadmap f-place-header-repeats-view-title, f-views-work-end-to-end: a view that draws its own heading is titled once, by itself, with nothing drawn above it — no count, no list link; any other place keeps its title and count. */
   report.checks.aCustomPageViewsHeadingIsSaidOnce = {
     seen: fittedSeen,
-    ok: fittedHold(({ heading, edgeTitled }) => heading.title === "The wide" && heading.titleDrawn === false && heading.own === "The wide" && !heading.count && heading.asList && edgeTitled.titleDrawn === true && edgeTitled.count),
+    ok: fittedHold(({ heading, edgeTitled }) => heading.title === "The wide" && heading.titleDrawn === false && heading.own === "The wide" && !heading.count && !heading.asList && edgeTitled.titleDrawn === true && edgeTitled.count),
   };
   /* Roadmap f-seen-in-phone-length: each place one link, none to the scene beside it; on a phone the first three and a button for the rest, which opens them with the keyboard on the first; at a desk, all. */
   report.checks.seenInNamesEachPlaceOnceOnAPhone = {

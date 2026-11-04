@@ -85,9 +85,11 @@ async function scene(store: Store<typeof schema>, principal: Principal) {
 }
 const $ = (selector: string) => document.querySelector<HTMLElement>(selector);
 const open = async () => {
-  await settled(() => expect($('[data-graview-app-bar] [data-testid="suggested-button"]')).not.toBeNull());
-  await act(async () => $('[data-testid="suggested-button"]')!.click());
-  await settled(() => expect($('[data-testid="suggestion"]')).not.toBeNull());
+  await settled(() => expect($('[data-graview-app-bar] [data-testid="inbox-button"]')).not.toBeNull());
+  await act(async () => $('[data-testid="inbox-button"]')!.click());
+  // The inbox opens on For you, where what waits for this person is.
+  await settled(() => expect($('[data-testid="inbox-tab-for-you"]')?.getAttribute("aria-selected")).toBe("true"));
+  await settled(() => expect($('[data-testid="suggested"] [data-testid="suggestion"]')).not.toBeNull());
 };
 
 describe("a person's proposal at the Suggested tray", () => {

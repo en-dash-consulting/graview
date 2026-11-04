@@ -30,8 +30,8 @@
  *   two quiet seconds on the main thread, from the useful paint on);
  *   list → record — a press on a list's first row until the record's page
  *   is painted, and until it is settled (its last long task over);
- *   pages → scene — a press on the bar's Scene until the scene's ground is
- *   painted, and settled.
+ *   pages → scene — a press on Scene in the app menu (opened first, untimed)
+ *   until the scene's ground is painted, and settled.
  *
  * A switch is pressed once the page is interactive and has been quiet two
  * seconds, as a reader who has looked at it would press it.
@@ -59,6 +59,7 @@ import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import { createMemoryAdapter } from "../packages/core/dist/index.js";
 import { servePreview } from "../packages/ship/dist/index.js";
+import { openAppMenu } from "./lib/bar.mjs";
 import { portFor } from "./lib/ports.mjs";
 import { secureFront } from "./lib/secure-front.mjs";
 
@@ -308,7 +309,9 @@ async function measure(browser, app, profile, errors) {
       const { context, page } = await contextFor(browser, profile);
       cold.push(await openCold(page, `${base}/`, errors));
       for (const one of cold.at(-1).late) late.add(`/ ${one}`);
-      // Pages → Scene, from the home just opened.
+      // Pages → Scene, from the home just opened: the app menu opened, then its Scene timed from the press.
+      await openAppMenu(page);
+      await page.locator('[data-testid="app-face-scene"]').waitFor({ state: "visible", timeout: 30_000 });
       const pressed = await pressUntil(page, '[data-testid="app-face-scene"]', { selector: ".graview-ground *", least: 3 });
       const settled = await settledAfter(page, pressed.painted);
       scene.push({ painted: pressed.painted - pressed.start, settled: Math.max(settled, pressed.painted) - pressed.start });

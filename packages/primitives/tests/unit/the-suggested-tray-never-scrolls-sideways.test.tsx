@@ -92,11 +92,15 @@ describe("the Suggested tray, with seventeen suggestions on a record whose name 
       ),
     );
     unmount = () => act(async () => root.unmount());
-    await settled(() => expect(document.querySelector('[data-testid="suggested-button"]')).not.toBeNull());
-    await act(async () => document.querySelector<HTMLElement>('[data-testid="suggested-button"]')!.click());
+    await settled(() => expect(document.querySelector('[data-testid="inbox-button"]')).not.toBeNull());
+    await act(async () => document.querySelector<HTMLElement>('[data-testid="inbox-button"]')!.click());
+    await settled(() => expect(document.querySelector('[data-testid="inbox"] [data-testid="suggested"]')).not.toBeNull());
+    // The inbox the tray is in scrolls down, never sideways; the tray inside it is never wider than it.
+    const inbox = document.querySelector<HTMLElement>('[data-testid="inbox"]')!;
+    expect(inbox.style.overflowX).toBe("hidden");
+    expect(inbox.style.overflowY).toBe("auto");
     const panel = document.querySelector<HTMLElement>('[data-testid="suggested"]')!;
-    expect(panel.style.overflowX).toBe("hidden");
-    expect(panel.style.overflowY).toBe("auto");
+    expect(panel.style.minWidth).toBe("0px");
     const rows = [...panel.querySelectorAll<HTMLElement>('[data-testid="suggestion"]')];
     expect(rows).toHaveLength(17);
     for (const row of rows) {

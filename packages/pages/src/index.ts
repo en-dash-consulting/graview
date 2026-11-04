@@ -3,6 +3,11 @@ export type { RouteRegistration } from "./registry.js";
 export type { PageRegistry, PageRegistration, PageSection, PageType, ShellComponent, ShellOptions, SurfaceType } from "./registry.js";
 export { blankWritable, kindFacts, kindMap, rankedRepairs, recordFacts } from "./facts.js";
 export type { KindFacts, KindMap, KindRelation, RecordFacts, RecordLinkGroup, FactsOptions } from "./facts.js";
+// The facts as one sheet, each drawn and changed by its type, and what can be done beyond them (Roadmap f-facts-by-type).
+export { FactSheet } from "./fact-sheet.js";
+export type { FactSheetProps } from "./fact-sheet.js";
+export { actsBeyondFacts, foldedActs, relationFacts, titleFieldOf } from "./fact-sheet-model.js";
+export type { FoldOptions, RelationAct, RelationFact } from "./fact-sheet-model.js";
 export { DerivedForm } from "./form.js";
 export { RecordField } from "./record-field.js";
 export type { RecordFieldProps } from "./record-field.js";

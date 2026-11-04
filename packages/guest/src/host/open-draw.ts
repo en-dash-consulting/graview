@@ -57,7 +57,7 @@ export const REGION_CSS = `
 [data-graview-view-root] :focus-visible { outline: max(2px, var(--graview-focus-width, 2px)) solid var(--graview-focus-color, var(--graview-accent, Highlight)) !important; outline-offset: var(--graview-focus-offset, 2px) !important; }
 [data-graview-view-root] [data-graview-ring-inside]:focus-visible { outline-offset: calc(-1 * max(2px, var(--graview-focus-width, 2px))) !important; }
 [data-graview-view-root] .graview-sr { position: absolute !important; width: 1px !important; height: 1px !important; margin: -1px !important; padding: 0 !important; border: 0 !important; overflow: hidden !important; clip-path: inset(50%) !important; white-space: nowrap !important; }
-[data-graview-view-root] a[href]:not([data-graview-link])::after { content: " ↗" !important; content: " ↗" / " (opens in a new tab)" !important; }
+[data-graview-view-root] a[href]:not([data-graview-link], [href^="#"], [data-file][download])::after { content: " ↗" !important; content: " ↗" / " (opens in a new tab)" !important; }
 [data-graview-view-root][data-graview-motion="fade"] { transition: opacity ${FADE_MS}ms ease; }
 [data-graview-view-root][data-graview-fade] { opacity: 0; }
 @layer graview-motion { @media (prefers-reduced-motion: reduce) { [data-graview-view-root], [data-graview-view-root] *, [data-graview-view-root] ::before, [data-graview-view-root] ::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; animation-timeline: auto !important; transition-duration: 1ms !important; scroll-behavior: auto !important; } } }

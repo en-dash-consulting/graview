@@ -49,7 +49,7 @@
  * it, and a drop the host has stored.
  *
  *   guest → host     { type: "hears", nonce, events }                (over the port: the events its `graview.on` listens for, each once)
- *   guest → host     { type: "clicks", nonce, selectors }           (over the port: where its `graview.on("click", …)` listens, all of it, again whenever it moves)
+ *   guest → host     { type: "clicks", nonce, selectors, acted? }   (over the port: where its `graview.on("click", …)` and `graview.on("acted", …)` listen, all of it, again whenever it moves)
  *   host  → guest    { type: "dom-event", target, event: "drop", files, refused? } (over the port: files the person dropped, stored)
  *
  * And an act may be asked for several times as one change, one undo:
@@ -243,6 +243,13 @@ export interface GuestProps {
    */
   readonly locale?: string;
   readonly timeZone?: string;
+  /**
+   * THE APP'S TODAY (Roadmap f-views-know-today), `YYYY-MM-DD`: the day the
+   * app's rules read as today() — a pinned day where the store is pinned,
+   * else the date in the app's own zone. A view says a day against it
+   * (`graview.fromToday(day)`) and never pins one of its own.
+   */
+  readonly today?: string;
   /**
    * WHAT EACH OPTION OF A CHOICE IS CALLED (Roadmap f-option-labels), for
    * the kinds of the records handed: kind → field → option → its label,
@@ -469,7 +476,7 @@ export type GuestRequest =
   /** The events a worker view's `graview.on` listens for, each said once (FR-193): a view that hears `drop` is left the drop. */
   | { readonly type: "hears"; readonly nonce: string; readonly events: readonly string[] }
   /** Where a worker view's `graview.on("click", selector, …)` listens, all of it, again whenever it moves (0.1.48): what an audit of the page holds to the keyboard. */
-  | { readonly type: "clicks"; readonly nonce: string; readonly selectors: readonly string[] }
+  | { readonly type: "clicks"; readonly nonce: string; readonly selectors: readonly string[]; readonly acted?: readonly string[] }
   | { readonly type: "navigate"; readonly nonce: string; readonly to: string; readonly where?: GuestWhere; readonly section?: string }
   /**
    * Go to a named place or a kind's list of this app, by its slug (FR-93): a
