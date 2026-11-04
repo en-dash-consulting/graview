@@ -103,6 +103,55 @@ function textOf(node: TreeNode): string {
   return node.childNodes.map(textOf).join(node.localName === "td" || node.localName === "th" ? " " : "");
 }
 
+/** Where a line's runs part: a dot, a bar or a dash between spaces ("Ann · Buy milk"). */
+const RUNS = /(\s+[·•|—–-]\s+)/;
+
+/**
+ * A line with a record's title taken out where it stands as words of its
+ * own: a run that is the title alone ("Ann · Buy milk" is "Ann"), or the
+ * title beside a few words ("Buy milk Ann" is "Ann", "Open Buy milk" is
+ * "Open"). A sentence that names it ("3–1 vs Riverside Rockets, Sat") keeps it.
+ */
+function withoutTitle(text: string, title: string): string {
+  if (!title || !text.includes(title)) return text;
+  const few = (words: string) => words.length > 0 && words.split(" ").length <= 3;
+  const pieces = squash(text).split(RUNS);
+  const kept: string[] = [];
+  for (let at = 0; at < pieces.length; at += 2) {
+    const run = pieces[at]!;
+    const before = run.startsWith(`${title} `) ? run.slice(title.length + 1) : undefined;
+    const after = run.endsWith(` ${title}`) ? run.slice(0, -title.length - 1) : undefined;
+    const rest = run === title ? "" : before !== undefined && few(before) ? before : after !== undefined && few(after) ? after : run;
+    if (rest) kept.push(...(kept.length > 0 ? [pieces[at - 1]!] : []), rest);
+  }
+  return kept.join("");
+}
+
+/**
+ * A ROW'S PARTS WITHOUT ITS TITLE SAID AGAIN. A row titled "Buy milk" said
+ * "Buy milk", then "Buy milk Ann" (its first line), then a link to the same
+ * record whose button said "Open Buy milk": three times, which made a
+ * correct drawing read as a broken one. A link inside the row to the row's
+ * own record is the row, so its words join the row's; and a line that
+ * repeats the title keeps only what else it says.
+ */
+function unrepeated(parts: readonly DescribedPart[], id: string, title: string): DescribedPart[] {
+  const out: DescribedPart[] = [];
+  for (const part of parts) {
+    if (part.t === "list" && part.groups.every((group) => group.items.every((one) => one.id === id && one.title === title))) {
+      out.push(...unrepeated(part.groups.flatMap((group) => group.items.flatMap((one) => one.parts)), id, title));
+      continue;
+    }
+    if (part.t === "text") {
+      const text = withoutTitle(part.text, title);
+      if (text) out.push(text === part.text ? part : { ...part, text });
+      continue;
+    }
+    out.push(part);
+  }
+  return out;
+}
+
 /** Every element under one, in order. */
 function* elementsUnder(element: TreeElement): Generator<TreeElement> {
   for (const child of element.childNodes) {
@@ -222,10 +271,8 @@ export function describeDrawing(root: TreeElement, context: DescribeDrawingConte
       candidates.find((one) => one.localName === "a" && one.getAttribute("data-record") === id) ??
       candidates.find((one) => one.localName === "strong" || one.localName === "b");
     const title = squash(titled ? textOf(titled) : "") || node?.label || id;
-    const parts = blocks(element, titled);
-    /* With no element of its own for the title, its first line was the title. */
-    if (!titled && parts[0]?.t === "text" && squash(parts[0].text) === title) parts.shift();
-    return { id, kind, title, parts };
+    /* Said once: never again through its first line, an owner beside it, a button to it or a link inside it (Roadmap f-views-know-today). */
+    return { id, kind, title, parts: unrepeated(blocks(element, titled), id, title) };
   };
 
   /** One table's body rows as items: the first cell their title, the rest their fields under the head's labels. */

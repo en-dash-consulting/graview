@@ -207,7 +207,8 @@ export function instructionsFor(app: Pick<GraviewApp, "name">, principal: Princi
     `Find a thing by name with search_graph before reaching for get_graph; read with get_node and get_violations; ask get_affordances what is legal on a selection; ` +
     `change the graph only through the named mutation tools, which are every write there is. preview_mutation first when unsure; ` +
     `undo_batch takes a batch back. An act that creates a kind takes an optional id for the node it makes; remove-<kind> takes one out. ` +
-    `Every change is judged under this seat's principal, logged with your name, and shown to everyone else within a second.`
+    `Every change is judged under this seat's principal, logged with your name, and shown to everyone else within a second. ` +
+    `After changing records, read the home with describe_place before saying it is done: a view may draw days or words that no act changes.`
   );
 }
 

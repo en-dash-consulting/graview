@@ -28,6 +28,7 @@ import { HOME_SLUG, OVERVIEW_SLUG, type AnySchema, type BrandViews, type Graview
 import type { PlaceDescription } from "@graview/core/describe";
 // Static, not fetched: the headless run is itself fetched where a page presses a draft, and a door to the seat's file from there split the page's first chunk.
 import { placesFrom, placesOf, viewPlaceOf } from "@graview/core/seat";
+import { datesPinned } from "@graview/core/revisions";
 import { checkManifest, manifestActs, readsComputed, workerViewProps, type WorkerViewManifest } from "../host/manifest.js";
 import { PICTURE_STAND_IN, standInPictures } from "../host/pictures.js";
 import { judgeDestination, listsOf, placeVocabulary } from "../host/links.js";
@@ -496,8 +497,10 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
       },
     });
   }
-  const problems = [...handed.left.map((says) => ({ at: "pictures", says })), ...judged.problems, ...narrowing, ...gestureProblems(manifest, transcript), ...pressProblems, ...(presses?.problems ?? []).map((one) => ({ at: `press ${one.control}`, says: one.says }))];
   const title = manifest.title ?? manifest.name;
+  /* A day the source pins — `TODAY = "2026-11-01"`, "Tomorrow · Mon 2 Nov" — said against the app's today, so a view frozen on the day it was written is caught (Roadmap f-views-know-today). */
+  const pinned = props.today ? datesPinned(source, { today: props.today, title: manifest.attach === "home" ? "Home" : title, ...(props.locale ? { locale: props.locale } : {}) }) : [];
+  const problems = [...handed.left.map((says) => ({ at: "pictures", says })), ...judged.problems, ...narrowing, ...gestureProblems(manifest, transcript), ...pressProblems, ...(presses?.problems ?? []).map((one) => ({ at: `press ${one.control}`, says: one.says })), ...pinned.map(({ at, says }) => ({ at, says }))];
   const slug = manifest.title ? slugOf(manifest.title) : manifest.name;
   const kind = manifest.attach === "home" ? null : manifest.attach;
   const description: Omit<PlaceDescription, "text"> = {

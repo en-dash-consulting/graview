@@ -17,6 +17,7 @@ import { RemoteRootElement, remoteId, updateRemoteElementAttribute } from "@remo
 import type { Unsent } from "../channel.js";
 import { HTML_ELEMENTS, UNNAMED_ELEMENTS, openAttribute, svgElementName } from "../open-kit.js";
 import { GUEST_GESTURES, navigateRequest, type GuestAnswer, type GuestDomEvent, type GuestDroppedFile, type GuestGesture, type GuestNavigateTo, type GuestPressed, type GuestProps, type HostMessage } from "../protocol.js";
+import { dayIn, fromToday } from "../from-today.js";
 import type { Hardening } from "./harden.js";
 import { createListenerLedger } from "./listeners.js";
 
@@ -104,6 +105,10 @@ export interface GraviewView {
   /** Go to a record, a place or a kind's list — narrowed (`where`) and to a `section`, as `GuestNavigateTo` says. */
   navigate(to: GuestNavigateTo): void;
   html(strings: TemplateStringsArray, ...values: unknown[]): Html;
+  /** The app's today, `YYYY-MM-DD`, on the app's clock (`props.today`): never a day the view pins. */
+  readonly today: string;
+  /** A day or a moment said against today: "today", "tomorrow", "in 3 days", "2 weeks ago"; with `{ due: true }`, a past day is "overdue". */
+  fromToday(day: string, options?: { readonly due?: boolean }): string;
   /** What the host will not draw of the last render, as the open kit says it: an author's early word, not the host's judgment. */
   readonly refused: readonly string[];
   readonly hardening: Hardening;
@@ -452,6 +457,14 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
     },
     html(strings: TemplateStringsArray, ...values: unknown[]) {
       return markup(strings.reduce((out, text, index) => out + text + (index < values.length ? piece(values[index]) : ""), ""));
+    },
+    get today() {
+      /* Before the first push, the UTC date: a view draws from its props, which carry the app's. */
+      return current?.today ?? new Date().toISOString().slice(0, 10);
+    },
+    fromToday(day: string, options?: { readonly due?: boolean }) {
+      const on = dayIn(day, current?.timeZone);
+      return on === undefined ? "" : fromToday(on, view.today, options);
     },
     get refused() {
       return refusedLast;

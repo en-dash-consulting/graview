@@ -62,8 +62,8 @@ option: `props.choices.actor.motive[node.motive]`. Then `edges`
 title }`, those the viewer may run), `places` (`{ as, title }`), and `theme`
 (`scheme`, `accent`, `ink`, `radius` …, the app's `name` and `logo`), and `locale` and `timeZone`:
 say a kept instant with `new Intl.DateTimeFormat(props.locale, { timeZone:
-props.timeZone, hour: "numeric", minute: "2-digit" })`, the clock the rest
-of the app says it on, never a zone of your own. `render` keeps what it
+props.timeZone, hour: "numeric", minute: "2-digit" })`, never your own zone or
+today (`graview.today`, `graview-locale`). `render` keeps what it
 can, by element and by `data-key` or `id`, so give repeated rows a
 `data-key`: a field being typed in keeps its text across a push. An event
 carries `value`, `checked`, `key`, `pressed` for a bound press, and

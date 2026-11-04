@@ -1,4 +1,4 @@
-import { localeFor, timeZoneFor, type AnySchema, type FileKind, type Principal, type Store } from "@graview/core";
+import { isoToday, localeFor, timeZoneFor, type AnySchema, type FileKind, type Principal, type Store } from "@graview/core";
 import { fileFieldKind } from "./marks.js";
 import type { GuestAct, GuestEdge, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
 import type { GuestPictures } from "./pictures.js";
@@ -411,6 +411,8 @@ export function workerViewProps<S extends AnySchema>(store: Store<S>, principal:
     // The locale and the clock every other surface says a day and a time in (Roadmap f-app-time-zone).
     locale: localeFor(),
     timeZone: timeZoneFor(),
+    // The app's today, as its rules read it: a view never pins one (Roadmap f-views-know-today).
+    today: store.today() ?? isoToday(),
     // Each option of the handed records' choices, by its label (Roadmap f-option-labels).
     ...choicesOf(store.schema, [...own, ...listed.values()]),
     // A link names a place by its slug, so each slug once: a picture over several kinds is one place to a view.
