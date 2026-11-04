@@ -125,7 +125,7 @@ export { GraviewMark } from "./graview-mark.js";
 export { AppMark, AppTitle, useFavicon, useThemeColor } from "./app-title.js";
 export { BarInbox, useInboxWanted } from "./bar-activity.js";
 export { badgeCount, Inbox, inboxWords, type InboxProps, type InboxTab } from "./inbox.js";
-export { AppBar, BarFindContext, barPlaceAt, barPlaces, BAR_HEIGHT, BAR_PHONE, FEWEST_STANDING, HOME_KEY, HOME_PATH, PLACE_GAP, placesThatStand, TOOL, toolStyle, useBarFind } from "./app-bar.js";
+export { AppBar, BarFindContext, barPlaceAt, barPlaces, BAR_HEIGHT, BAR_PHONE, FACE_EVENT, FEWEST_STANDING, HOME_KEY, HOME_PATH, PLACE_GAP, placesThatStand, TOOL, toolStyle, useBarFind } from "./app-bar.js";
 export { scenePlacesOf, useScenePlaces, WHOLE_KEY, WHOLE_LABEL, type ScenePlaces } from "./scene-places.js";
 export { SceneBarTools, SceneTrail, useCallLog } from "./scene-bar.js";
 export { SceneWayBack } from "./scene-way-back.js";

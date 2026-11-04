@@ -11,7 +11,7 @@ type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K>
 import { Suspense, useEffect, useId, useMemo, useRef, useSyncExternalStore, type ComponentType } from "react";
 import type { SectionDrawnProps } from "./section-better.js";
 import { SectionOutline } from "./section-outline.js";
-import { FACE_EVENT } from "./face-event.js";
+import { FACE_EVENT } from "./frame.js";
 
 /*
  * MAKE THIS SECTION BETTER (Roadmap f-make-this-section-better): the menu's

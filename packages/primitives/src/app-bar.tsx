@@ -5,7 +5,6 @@ import { createContext, Suspense, useCallback, useContext, useEffect, useId, use
 import { AppMark } from "./app-title.js";
 import { useMarkup } from "./markup.js";
 import { barPanes } from "./bar-panes-door.js";
-import { FACE_EVENT } from "./face-event.js";
 /* The places' foot, Hidden and Recently deleted (Roadmap f-place-menu-views): fetched with the panes, and the tidying with it, once there is something to list and the list is open. */
 const TidyFoot = barPanes.part((panes, props: { readonly id: string; readonly scene: boolean; readonly reach: BarGo; readonly done: () => void }) => <panes.TidyFoot {...props} />, { quiet: true });
 
@@ -868,10 +867,22 @@ const NO_ROWS: readonly AppMenuRow[] = [];
  * the menu: the scene and the pages, a host's rows, the scheme. Its rows
  * are fetched with the bar's panes when a hand first reaches for it.
  */
+/**
+ * GOING TO THE OTHER FACE WITHOUT A BUTTON ON THE ROW (Roadmap
+ * f-app-bar-calm, f-make-any-page-better). The scene and the pages are rows
+ * of the app menu, drawn only while it is open, so a part that must switch
+ * faces — Better UI asked in the scene, opened on its page — cannot press
+ * them. It dispatches this on the app menu's control
+ * (`[data-testid="app-menu-open"]`, which says `data-pages` where the bar
+ * holds both faces), with the face as its detail, and the bar goes there as
+ * the menu's row would.
+ */
+export const FACE_EVENT = "graview:go-to-face";
+
 function AppMenu({ name, faces, rows, scheme }: { readonly name: string; readonly faces?: BarFaces | undefined; readonly rows: readonly AppMenuRow[]; readonly scheme?: BarScheme | undefined }) {
   const popover = usePopover("app-menu", { align: "start" });
   const reach = () => barPanes.prefetch();
-  /* A part asked to go to the other face (`FACE_EVENT`, face-event.ts): gone to as the menu's row would, without opening the menu. */
+  /* A part asked to go to the other face (`FACE_EVENT`): gone to as the menu's row would, without opening the menu. */
   const opener = useRef<HTMLElement | null>(null);
   const held = useRef(faces);
   held.current = faces;

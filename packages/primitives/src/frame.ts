@@ -37,7 +37,7 @@ export { Profile } from "./profile.js";
 // The quick ask's setting, read from what a host stored for the Ask box it replaced.
 export { quickAskOf } from "./quick-ask-setting.js";
 export { AppMark, AppTitle, useFavicon, useThemeColor } from "./app-title.js";
-export { AppBar, BarFindContext, barPlaceAt, barPlaces, BAR_HEIGHT, BAR_PHONE, FEWEST_STANDING, HOME_KEY, HOME_PATH, PLACE_GAP, placesThatStand, TOOL, toolStyle, useBarFind } from "./app-bar.js";
+export { AppBar, BarFindContext, barPlaceAt, barPlaces, BAR_HEIGHT, BAR_PHONE, FACE_EVENT, FEWEST_STANDING, HOME_KEY, HOME_PATH, PLACE_GAP, placesThatStand, TOOL, toolStyle, useBarFind } from "./app-bar.js";
 export { scenePlacesOf, useScenePlaces, WHOLE_KEY, WHOLE_LABEL, type ScenePlaces } from "./scene-places.js";
 export type { AppMenuRow, BarAction, BarFace, BarFaces, BarFind, BarGo, BarPlace, BarPlaceGroup, BarScheme, BarShare, SchemeChoice } from "./app-bar.js";
 export type { HostAction } from "./profile.js";

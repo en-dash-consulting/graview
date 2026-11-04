@@ -4,7 +4,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it } from "vitest";
 import { AppBar, type BarFaces } from "../../src/index.js";
-import { FACE_EVENT } from "../../src/face-event.js";
+import { FACE_EVENT } from "../../src/frame.js";
 
 /**
  * BETTER UI ASKED IN THE SCENE, OPENED ON ITS PAGE (Roadmap

@@ -1,6 +1,6 @@
 {
   "budget": "every face",
-  "minified": 34500,
-  "gzipped": 0,
-  "note": "Raised when the 0.1.66 batch put tidying's declines (f-declines-a-person-meant), views working end to end, the calmer app bar (f-app-bar-calm), the facts by type (f-facts-by-type) and Better UI on any page (f-make-any-page-better) together in batch/0-1-66: each fit the minified room alone, and the five together spent it and 34_376 more. 34_376 more minified, raised 34_500 to hold it; the gzipped within the budget's room. Measured at 3_013_277 / 1_091_087 against 2_978_901 / 1_091_276."
+  "minified": 35000,
+  "gzipped": 100,
+  "note": "Raised when the 0.1.66 batch put tidying's declines (f-declines-a-person-meant), views working end to end, the calmer app bar (f-app-bar-calm), the facts by type (f-facts-by-type) and Better UI on any page and in the scene's menu (f-make-any-page-better) together in batch/0-1-66, with the app menu's control going to the pages when Better UI asks it: each fit the room alone, and the five together spent it and 34_792 more minified, 18 more gzipped. Raised 35_000 / 100 to hold it. Measured at 3_013_693 / 1_091_294 against 2_978_901 / 1_091_276."
 }
