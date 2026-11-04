@@ -26,6 +26,7 @@
  */
 import { HOME_SLUG, OVERVIEW_SLUG, type AnySchema, type BrandViews, type GraviewApp, type Principal, type Store } from "@graview/core";
 import type { PlaceDescription } from "@graview/core/describe";
+import { datesPinned } from "@graview/core/revisions";
 import { checkManifest, manifestActs, readsComputed, workerViewProps, type WorkerViewManifest } from "../host/manifest.js";
 import { PICTURE_STAND_IN, standInPictures } from "../host/pictures.js";
 import { judgeDestination, listsOf, placeVocabulary } from "../host/links.js";
@@ -448,8 +449,10 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
   const pressed = pressedAt ? judgeHeadlessPress(pressedAt, judged.drawn, transcript, { store, principal, manifest, shown: shownIds, places, lists, ...(placesUnsure ? { placesUnsure: true } : {}), ...typed }) : undefined;
   /* A press that lands on nothing, or in a link that goes nowhere, is a problem with the view; one the seat is refused is the answer asked for. */
   const pressProblems = pressed && (!pressed.element || pressed.lost) ? [{ at: `press "${pressed.selector}"`, says: pressed.lost ?? pressed.says }] : [];
-  const problems = [...handed.left.map((says) => ({ at: "pictures", says })), ...judged.problems, ...narrowing, ...gestureProblems(manifest, transcript), ...pressProblems];
   const title = manifest.title ?? manifest.name;
+  /* A day the source pins — `TODAY = "2026-11-01"`, "Tomorrow · Mon 2 Nov" — said against the app's today, so a view frozen on the day it was written is caught (Roadmap f-views-know-today). */
+  const pinned = props.today ? datesPinned(source, { today: props.today, title: manifest.attach === "home" ? "Home" : title, ...(props.locale ? { locale: props.locale } : {}) }) : [];
+  const problems = [...handed.left.map((says) => ({ at: "pictures", says })), ...judged.problems, ...narrowing, ...gestureProblems(manifest, transcript), ...pressProblems, ...pinned.map(({ at, says }) => ({ at, says }))];
   const slug = manifest.title ? slugOf(manifest.title) : manifest.name;
   const kind = manifest.attach === "home" ? null : manifest.attach;
   const description: Omit<PlaceDescription, "text"> = {

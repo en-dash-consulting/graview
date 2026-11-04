@@ -244,6 +244,13 @@ export interface GuestProps {
   readonly locale?: string;
   readonly timeZone?: string;
   /**
+   * THE APP'S TODAY (Roadmap f-views-know-today), `YYYY-MM-DD`: the day the
+   * app's rules read as today() — a pinned day where the store is pinned,
+   * else the date in the app's own zone. A view says a day against it
+   * (`graview.fromToday(day)`) and never pins one of its own.
+   */
+  readonly today?: string;
+  /**
    * WHAT EACH OPTION OF A CHOICE IS CALLED (Roadmap f-option-labels), for
    * the kinds of the records handed: kind → field → option → its label,
    * as every other face says it. A record keeps the option's id

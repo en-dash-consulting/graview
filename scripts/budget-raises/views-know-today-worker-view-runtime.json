@@ -1,0 +1,6 @@
+{
+  "budget": "a worker view's runtime",
+  "minified": 1218,
+  "gzipped": 548,
+  "note": "Raised when a worker view came to read today from graview (Roadmap f-views-know-today): the runtime gains `graview.today`, the app's today from its props, and `graview.fromToday`, which says a day or an instant against it in the words a record's page says it in (today, tomorrow, in 3 days, 2 weeks ago) and a due day gone by as overdue, so a view never writes a day of its own. Measured at 64_822 / 22_512 against 63_604 / 21_964 minified and gzipped."
+}

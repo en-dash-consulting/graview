@@ -22,6 +22,8 @@ A sum with no currency is a bare number, a date in somebody else's order is a mi
 
 1. **Say them in templates.** `{at | time}` ("10:47 AM"), `{at | datetime}` ("Oct 16, 2026, 10:47 AM EDT"), `{at | date}` and `relative` (an instant's day counted on the app's clock); a field block takes `as: "time"`, `as: "datetime"` and `as: "money"`.
 
+1. **Read today; never write it.** A worker view is handed the app's today, the day its rules read, on the app's clock: `graview.today` ("2026-11-04", also `props.today`). Say a day against it with `graview.fromToday(node.due)` — "today", "tomorrow", "in 3 days", "2 weeks ago", and with `{ due: true }` a day gone by is "overdue". A view that writes `TODAY = "2026-11-01"` or "Tomorrow · Mon 2 Nov" is right for one day: a headless run (`graview view check`) says it as a problem, "Home may be out of date: …", and so does `datesPinned` (`@graview/core/revisions`).
+
 ### Then find out whether it worked
 
 ```sh
@@ -30,6 +32,8 @@ npx graview check --document app.json   # a document
 ```
 
 It refuses what it cannot write — a currency that is not a three-letter code (`brand-currency`), a locale it does not know (`brand-locale`), a zone the runtime does not know or an offset (`brand-time-zone`) — and warns `money-currency` where a money field has neither its own unit nor the app's currency. Report what it said. Then open a record holding a sum and an instant with your machine's clock set elsewhere: the sum carries its symbol, and the time is on the declared clock, not the machine's.
+
+After an act adds or changes records, look at the places that draw them before saying it is done: `placesTouched(app, ops, { views, today })` (`@graview/core/revisions`) names them ("These appear on Home and Tasks") and the views among them that write their own dates; read each with `describe_place`.
 
 ### What the check cannot see
 

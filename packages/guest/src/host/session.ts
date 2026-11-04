@@ -1,4 +1,4 @@
-import { choiceWords, localeFor, PermissionDeniedError, timeZoneFor, type AnySchema, type Principal, type Store } from "@graview/core";
+import { choiceWords, isoToday, localeFor, PermissionDeniedError, timeZoneFor, type AnySchema, type Principal, type Store } from "@graview/core";
 import type { GuestPictureLimits } from "./pictures.js";
 import type { Arrival, Destination } from "./links.js";
 /* The links' judging — a filter held to the kind's fields — fetched with the first navigate, so a frame's host carries none of it before. */
@@ -301,6 +301,8 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
       // The locale and the clock every other surface says a day and a time in (Roadmap f-app-time-zone).
       locale: localeFor(),
       timeZone: timeZoneFor(),
+      // The app's today, as its rules read it: a view never pins one (Roadmap f-views-know-today).
+      today: options.store.today() ?? isoToday(),
       // Each option of the handed records' choices, by its label (Roadmap f-option-labels).
       ...choicesOf(options.store.schema, [...(node ? [node] : []), ...(listed ?? [])]),
       ...(options.placesShown ?{ places: options.placesShown().map(({ as, title, kind }) => ({ as, title, kind })) } : {}),

@@ -100,6 +100,8 @@ describe("MCP over stdio, against a folder", () => {
     const [init, tools, added, read, taken, unknown] = c.replies();
     expect(init!.result).toMatchObject({ protocolVersion: "2025-03-26", serverInfo: { name: "lists", version: "1" } });
     expect(String(init!.result!["instructions"])).toMatch(/cursor, roles keeper/);
+    // Roadmap f-views-know-today: an agent that changed records looks at the home before it says it is done.
+    expect(String(init!.result!["instructions"])).toMatch(/After changing records, read the home with describe_place before saying it is done/);
     const names = (tools!.result!["tools"] as { name: string }[]).map((t) => t.name);
     expect(names).toEqual(expect.arrayContaining(["get_graph", "preview_mutation", "undo_batch", "add-task", "finish", "remove-task"]));
     expect(added!.result).not.toHaveProperty("isError");
