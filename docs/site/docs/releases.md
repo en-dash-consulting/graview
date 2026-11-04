@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.66`](https://graview.dev/docs/releases.html#v0-1-66)
 - [`0.1.65`](https://graview.dev/docs/releases.html#v0-1-65)
 - [`0.1.64`](https://graview.dev/docs/releases.html#v0-1-64)
 - [`0.1.63`](https://graview.dev/docs/releases.html#v0-1-63)
@@ -66,6 +67,24 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.3`](https://graview.dev/docs/releases.html#v0-1-3)
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
+
+## 0.1.66
+
+Published November 4, 2026 · the current version
+
+Right-click any page for Better UI, a design agent that keeps every control the page had and presses each one before you see it; a record's facts are drawn by their type; the app bar is calmer; a view reads today, jumps to its own sections and hears which is in sight; and the app's own actor never makes again what a person took back.
+
+- **Make any page better.** The right-click menu opens with its field first, "Tell Graview what you want…", over two buttons, Chat and Better UI, and the Fast slot lights the one your words belong to. Better UI, on any page the app draws by itself or from the Scene, is a conversation with a design agent in a side panel: it drafts, checks the draft, fixes what it found and shows each step. Every control the page offered is kept and bound to the same act, and each is pressed on a throwaway copy before the draft is shown, so a draft never shows a button that does nothing. What it says a control does comes from that press, not from the model. Keep, Discard and Undo; a kept page holds through a reload.
+- **Every control of a view is pressed before it is kept.** `checkPresses` presses each act, field, link and jump a view drew as the live host would take it, nothing applied, and a press that is refused says why beside it.
+- **Facts by type.** A record's facts are one sheet: a yes or no is a switch that runs its act, a choice of a few is a row of options, a relation is a row of chips with its own picker or ×, the heading renames in place, and What can be done holds only what no fact's control does.
+- **A calmer app bar.** The app and its pages on the left, with Scene, Pages, a host's rows and the scheme in a menu on the app's name; Find, one inbox (For you, Activity, Asks), a host's tools, the people, Share and you on the right.
+- **Views.** A view reads `graview.today` and says a day with `graview.fromToday`; a view that writes today into its source is said as a problem, and a change names the places that show it. `<a href="#id">` jumps to a section of the view, the one in sight is marked and heard (`sight`), and a record's files link from a view.
+- **Tidying.** A person's undo of any change, or a link they broke, is a decline the app's own actor never makes again, kept through a checkpoint; each suggestion says its one reason, short.
+- **Smaller.** A quick ask that finds nothing says what the app does not keep; the opening screen can be photographed; a change names a field by its label; an edge refused says each kind's own targets; a visitor form takes `assetsAt`; a workflow run at a moment finishes at it.
+
+**Before you upgrade:** Removed outright (pre-1.0): the bar's Scene | Pages switch (the embed's `switch`, `BarSwitch`), `BarActivity`, `BarSuggested`, `SuggestedTray` and the profile pane's `scheme` / `onScheme`; the app bar's `suggested-button` and `activity-button`, now inside the app menu and the inbox; `MenuSection.takesWords`, replaced by `MenuSection.mode`. New: `appMenu`, `schemeChoice`, `share` and `notifications` on the mounts and the Shell, `Inbox`, `FACE_EVENT`; `@graview/guest/headless/presses` (`checkPresses`), `./host/pressing` and `./headless/pressed-here`; `KeptViews.fork`, `draftFork` and `forked`, `checkViewForkHost`, `onDraftChange`; the design agent on `@graview/tools/section` (`runDesignAgent` and the rest), `HostAi.design`, `HostAi.couldNotFind`, `ThinkingProvider.stream`, `AiBridgeAsk`'s `tier: "design"`; `FactSheet` and `actsBeyondFacts`; `GuestProps.today`, `graview.today` and `graview.fromToday`, the view event `sight`; `datesPinned` and `placesTouched` on `@graview/core/revisions`; `declinesIn` and `Epoch.declines` (optional within format 1); `fieldInPassing`, `nameInPassing`; `splashPage` and `/graview/opening-screen` in a preview; `assetsAt` on `@graview/embed/form`. Changed: a record page's facts and the app bar have new markup; a person's undo or removal of a link now declines it to an `automated` author; a view's `clicks` message carries `acted`, and a press the act's schema refuses answers `failed`; a declared act's record argument names only the kinds its subject reaches. Ops, stored formats in the graph and derived tool names are otherwise unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.66) · [The full changelog for 0.1.66](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0166)
 
 ## 0.1.65
 
