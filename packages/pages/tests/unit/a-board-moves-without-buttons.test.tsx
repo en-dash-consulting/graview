@@ -208,6 +208,8 @@ describe("a board's options", () => {
 
   it("stands its filters as chips", async () => {
     const { host } = await board({ filters: ["status"] });
+    // The chips come with the arrange bar, which on a loaded runner can draw after the board's first settle.
+    for (let turn = 0; turn < 50 && !host.querySelector('[data-testid="arrange-chips"], [data-testid="arrange-chip"]'); turn += 1) await settle(1, 50);
     expect(host.querySelector('[data-testid="arrange-chips"], [data-testid="arrange-chip"]')).not.toBeNull();
   });
 
