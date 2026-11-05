@@ -319,7 +319,17 @@ export interface BarShare {
   /** Who can open the app, in a sentence. */
   readonly description: string;
   /** Where that changes: a link (`href`, `target`) or a press (`onSelect`). */
-  readonly link?: { readonly label: string; readonly href?: string; readonly target?: string; readonly onSelect?: () => void };
+  readonly link?: BarShareLink;
+  /** A second link drawn beside the first — "Copy link" beside "Sharing settings" — the same shape. */
+  readonly secondLink?: BarShareLink;
+}
+
+/** One link in Share's popover: a link (`href`, `target`) or a press (`onSelect`). */
+export interface BarShareLink {
+  readonly label: string;
+  readonly href?: string;
+  readonly target?: string;
+  readonly onSelect?: () => void;
 }
 
 /** One size for every tool on the bar (FR-131). */
@@ -431,6 +441,7 @@ const BAR_CSS = `
 .graview-bar-share-pane{display:grid;gap:10px;width:min(300px,calc(100vw - 24px));padding:14px;border-radius:10px;border:1px solid var(--graview-edge);background:var(--graview-float);box-shadow:var(--graview-lift-high);color:var(--graview-ink);font-size:.875rem;line-height:1.45}
 .graview-bar-share-pane[hidden]{display:none}
 .graview-bar-share-pane p{margin:0}
+.graview-bar-share-links{display:flex;flex-wrap:wrap;gap:4px 16px}
 .graview-bar-share-pane a,.graview-bar-share-pane button{justify-self:start;display:inline-flex;align-items:center;min-height:28px;padding:0;border:0;background:none;box-shadow:none;font:inherit;font-weight:600;color:var(--graview-accent);text-decoration:none;cursor:pointer}
 .graview-bar-mid{display:flex;flex:1 100 0;min-width:0}
 .graview-bar-mid[data-place]{min-width:9em;flex-basis:auto}
@@ -980,34 +991,42 @@ function ShareSlot({ share }: { readonly share: BarShare }) {
       </span>
       <div {...popover.pane} data-testid="app-share" hidden={!popover.open} className="graview-bar-share-pane" style={POPOVER_STYLE} role="group" aria-label={label}>
         <p data-testid="app-share-said">{share.description}</p>
-        {link ? (
-          link.href !== undefined ? (
-            <a
-              href={link.href}
-              data-testid="app-share-link"
-              {...(link.target ? { target: link.target, rel: "noopener" } : {})}
-              onClick={() => {
-                link.onSelect?.();
-                popover.setOpen(false);
-              }}
-            >
-              {link.label}
-            </a>
-          ) : (
-            <button
-              type="button"
-              data-testid="app-share-link"
-              onClick={() => {
-                popover.setOpen(false);
-                link.onSelect?.();
-              }}
-            >
-              {link.label}
-            </button>
-          )
+        {link || share.secondLink ? (
+          <div className="graview-bar-share-links">
+            {link ? <ShareLink link={link} testId="app-share-link" close={() => popover.setOpen(false)} /> : null}
+            {share.secondLink ? <ShareLink link={share.secondLink} testId="app-share-second-link" close={() => popover.setOpen(false)} /> : null}
+          </div>
         ) : null}
       </div>
     </div>
+  );
+}
+
+/** One of Share's links: an anchor where it has an `href`, else a button; either closes the popover. */
+function ShareLink({ link, testId, close }: { readonly link: BarShareLink; readonly testId: string; readonly close: () => void }) {
+  return link.href !== undefined ? (
+    <a
+      href={link.href}
+      data-testid={testId}
+      {...(link.target ? { target: link.target, rel: "noopener" } : {})}
+      onClick={() => {
+        link.onSelect?.();
+        close();
+      }}
+    >
+      {link.label}
+    </a>
+  ) : (
+    <button
+      type="button"
+      data-testid={testId}
+      onClick={() => {
+        close();
+        link.onSelect?.();
+      }}
+    >
+      {link.label}
+    </button>
   );
 }
 
