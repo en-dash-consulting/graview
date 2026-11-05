@@ -1,7 +1,7 @@
 import type { HistoryHost } from "@graview/core/history";
 import { assetSrc, faviconHref, type Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type KeptViews, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal, type SignIn, type SubscriptionStore, type DismissalStore } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
-import { AppBar, appKeyOf, barPlaceAt, barPlaces, FirstLookDoor, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useThemeColor, useViewportHeight, type AppMenuRow, type BarAction, type BarFaces, type BarFind, type BarGo, type BarScheme, type BarShare, type FirstLook, type HostAction, type NoticeBoard, type NoticeReport, type NoticeReporting } from "@graview/primitives/frame";
+import { AppBar, appKeyOf, barPlaceAt, barPlaces, FirstLookDoor, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useThemeColor, useViewportHeight, type AppMenuRow, type BarAction, type BarFaces, type BarFind, type BarGo, type BarScheme, type BarShare, type BarStatus, type FirstLook, type HostAction, type NoticeBoard, type NoticeReport, type NoticeReporting } from "@graview/primitives/frame";
 import { layerViews, useGraph, useTidiedViews, useGraview, useTheKeyboardLandsSomewhere, type AwaySummary, type ErrorReport, type FieldTyping, type KeepLensHost, type ProposeChangeHost, type ComposeChangeHost, type DraftChangeHost, type MenuSectionSource, type OnExport, type HostNotification, type ReactViewRegistry, type ReaderMemory, type Scheme, type WorkflowRuns } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
@@ -301,6 +301,14 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    * with `setShare` when sharing changes, without a reload.
    */
   readonly share?: BarShare;
+  /**
+   * A HOST'S STATUS ON THE BAR (Roadmap f-bar-status-item): `{ label, icon?,
+   * description, href?, target? }` — one quiet item beside the host's tools,
+   * "Only you" with a lock, its sentence said on hover and as its accessible
+   * description, a link where it has an `href`. Folded to its mark on a
+   * phone's bar. Set again with `setStatus` without a reload.
+   */
+  readonly status?: BarStatus;
   /**
    * THE HOST'S NOTIFICATIONS (Roadmap f-app-bar-calm): what the host tells
    * this person, first in the inbox's "For you" and counted on its bell
@@ -836,6 +844,7 @@ export function FrameBar({
   appMenu,
   schemeChoice,
   share,
+  status,
   keeping,
   onFind,
   named = true,
@@ -863,6 +872,8 @@ export function FrameBar({
   readonly schemeChoice?: BarScheme | undefined;
   /** The host's Share beside the people (Roadmap f-app-bar-calm). */
   readonly share?: BarShare | undefined;
+  /** The host's status beside its tools (Roadmap f-bar-status-item). */
+  readonly status?: BarStatus | undefined;
   /** The ways into the app, for the seat that keeps it. */
   readonly keeping?: ReactNode;
   readonly onFind: (find: BarFind | null) => void;
@@ -891,6 +902,7 @@ export function FrameBar({
       {...(appMenu ? { appMenu } : {})}
       {...(schemeChoice ? { scheme: schemeChoice } : {})}
       {...(share ? { share } : {})}
+      {...(status ? { status } : {})}
       tools={
         <>
           <Standing clean={standing} />
@@ -901,20 +913,21 @@ export function FrameBar({
   );
 }
 
-/** WHAT A HOST SETS ON THE BAR AFTER MOUNTING (Roadmap f-app-bar-calm): its app menu rows, its Share, the scheme choice and its notifications. */
+/** WHAT A HOST SETS ON THE BAR AFTER MOUNTING (Roadmap f-app-bar-calm): its app menu rows, its Share, its status, the scheme choice and its notifications. */
 export interface HostBar {
   readonly appMenu?: readonly AppMenuRow[] | undefined;
   readonly share?: BarShare | undefined;
+  readonly status?: BarStatus | undefined;
   readonly schemeChoice?: BarScheme | undefined;
   readonly notifications?: readonly HostNotification[] | undefined;
 }
 
 /** What the host gave on the bar when it mounted. */
-export const hostBarOf = (options: Pick<FrameOptions, "appMenu" | "share" | "schemeChoice" | "notifications">): HostBar => ({ appMenu: options.appMenu, share: options.share, schemeChoice: options.schemeChoice, notifications: options.notifications });
+export const hostBarOf = (options: Pick<FrameOptions, "appMenu" | "share" | "status" | "schemeChoice" | "notifications">): HostBar => ({ appMenu: options.appMenu, share: options.share, status: options.status, schemeChoice: options.schemeChoice, notifications: options.notifications });
 
 /** The bar's host settings as the frame's props: what is unset is left out, never set to undefined. */
-export function hostBarProps(bar: HostBar): Pick<FrameOptions, "appMenu" | "share" | "schemeChoice" | "notifications"> {
-  return { ...(bar.appMenu ? { appMenu: bar.appMenu } : {}), ...(bar.share ? { share: bar.share } : {}), ...(bar.schemeChoice ? { schemeChoice: bar.schemeChoice } : {}), ...(bar.notifications ? { notifications: bar.notifications } : {}) };
+export function hostBarProps(bar: HostBar): Pick<FrameOptions, "appMenu" | "share" | "status" | "schemeChoice" | "notifications"> {
+  return { ...(bar.appMenu ? { appMenu: bar.appMenu } : {}), ...(bar.share ? { share: bar.share } : {}), ...(bar.status ? { status: bar.status } : {}), ...(bar.schemeChoice ? { schemeChoice: bar.schemeChoice } : {}), ...(bar.notifications ? { notifications: bar.notifications } : {}) };
 }
 
 /** The level a page's own title is said at: one below the app's name on the bar, or 2 when the host's own heading says the name (FR-131). */

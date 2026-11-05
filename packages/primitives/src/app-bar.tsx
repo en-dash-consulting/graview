@@ -324,6 +324,27 @@ export interface BarShare {
   readonly secondLink?: BarShareLink;
 }
 
+/**
+ * A HOST'S STATUS ON THE BAR (Roadmap f-bar-status-item): one quiet item
+ * beside the host's tools that says something about the app — Graview
+ * Cloud's who can open it, "Only you", "Workspace", "Public" — with its
+ * explanation on hover and as its accessible description, never only on a
+ * press. A link where it has an `href`, else words a keyboard can reach. On
+ * a phone's bar its word folds away behind its mark, the description still
+ * its name's companion. Set again with `setStatus` without a reload.
+ */
+export interface BarStatus {
+  /** The word on the bar: "Only you". */
+  readonly label: string;
+  /** The mark: `"lock"`, `"globe"`, `"people"`, or the host's own emoji, glyph or inline `<svg>`. None, and the word stays on a phone's bar too. */
+  readonly icon?: "lock" | "globe" | "people" | (string & {});
+  /** What it means, in a sentence: said on hover and to a screen reader. */
+  readonly description: string;
+  /** Where to go to change it, if anywhere. */
+  readonly href?: string;
+  readonly target?: string;
+}
+
 /** One link in Share's popover: a link (`href`, `target`) or a press (`onSelect`). */
 export interface BarShareLink {
   readonly label: string;
@@ -443,6 +464,8 @@ const BAR_CSS = `
 .graview-bar-share-pane p{margin:0}
 .graview-bar-share-links{display:flex;flex-wrap:wrap;gap:4px 16px}
 .graview-bar-share-pane a,.graview-bar-share-pane button{justify-self:start;display:inline-flex;align-items:center;min-height:28px;padding:0;border:0;background:none;box-shadow:none;font:inherit;font-weight:600;color:var(--graview-accent);text-decoration:none;cursor:pointer}
+.graview-bar-status{gap:6px;padding:0 8px;cursor:default;font-weight:400}
+a.graview-bar-status{cursor:pointer}
 .graview-bar-mid{display:flex;flex:1 100 0;min-width:0}
 .graview-bar-mid[data-place]{min-width:9em;flex-basis:auto}
 .graview-bar-place-at{position:relative;display:inline-flex;min-width:0;max-width:100%}
@@ -503,6 +526,8 @@ const BAR_CSS = `
 .graview-bar-mid{display:none}
 .graview-bar-share{padding:0}
 .graview-bar-share>.graview-bar-share-words{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.graview-bar-status[data-icon]{padding:0}
+.graview-bar-status[data-icon]>.graview-bar-status-words{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 }
 @container graview-bar (max-width: 300px){
 .graview-bar-row{gap:4px;padding:0 10px}
@@ -558,6 +583,7 @@ export function AppBar({
   appMenu = NO_ROWS,
   scheme,
   share,
+  status,
 }: {
   readonly brand: Brand | undefined;
   readonly name: string;
@@ -603,6 +629,8 @@ export function AppBar({
   readonly scheme?: BarScheme | undefined;
   /** A HOST'S SHARE, after the people (Roadmap f-app-bar-calm); none, and nothing is drawn. */
   readonly share?: BarShare | undefined;
+  /** A HOST'S STATUS beside its tools (Roadmap f-bar-status-item); none, and nothing is drawn. */
+  readonly status?: BarStatus | undefined;
 }) {
   const bar = useRef<HTMLElement>(null);
   // Anybody else here, by the provider's presence (FR-155); none where no provider is.
@@ -848,6 +876,7 @@ export function AppBar({
             <div ref={setOwn} className="graview-bar-own" data-graview-bar-own="" />
             {/* The host's own buttons (FR-227), before the people: standing, or behind one control on a narrow bar. */}
             {actions && actions.length > 0 ? <HostButtons actions={actions} folded={!(actions.length <= 2 && actions.every((action) => action.iconOnly && action.icon)) && (compact || !hostStands)} /> : null}
+            {status ? <StatusItem status={status} /> : null}
             {company ? (
               <Suspense fallback={null}>
                 <Here scene={!onPages} compact={compact} />
@@ -999,6 +1028,34 @@ function ShareSlot({ share }: { readonly share: BarShare }) {
         ) : null}
       </div>
     </div>
+  );
+}
+
+/** A host's status: its mark and its word, the sentence on hover and as its description; a link where it has an `href`. */
+function StatusItem({ status }: { readonly status: BarStatus }) {
+  const said = `graview-status-said-${useId().replace(/:/g, "")}`;
+  const inner = (
+    <>
+      {status.icon ? <ShareMark mark={status.icon} /> : null}
+      <span className="graview-bar-status-words">{status.label}</span>
+    </>
+  );
+  const common = { className: "graview-bar-tool graview-bar-status", "data-testid": "app-status", title: status.description, "aria-describedby": said, ...(status.icon ? { "data-icon": "" } : {}) };
+  return (
+    <>
+      {status.href !== undefined ? (
+        <a {...common} href={status.href} {...(status.target ? { target: status.target, rel: "noopener" } : {})}>
+          {inner}
+        </a>
+      ) : (
+        <span {...common} tabIndex={0}>
+          {inner}
+        </span>
+      )}
+      <span id={said} className="graview-bar-said">
+        {status.description}
+      </span>
+    </>
   );
 }
 

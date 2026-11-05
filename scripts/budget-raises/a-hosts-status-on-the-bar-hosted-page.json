@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 1166,
+  "gzipped": 220,
+  "changeset": "a-hosts-status-stands-on-the-app-bar.md",
+  "note": "Raised when a host's status came to stand on the app bar beside its tools (Roadmap f-bar-status-item): `BarStatus` — its mark and its word, its sentence on hover and as its accessible description, a link where it has an `href`, folded to its mark on a phone's bar — handed through the frame, the Shell and both mounts with `setStatus`. Measured at 669_185 / 231_418 against 668_019 / 231_198 minified and gzipped."
+}

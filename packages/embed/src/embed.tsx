@@ -1,7 +1,7 @@
 import { retryingImport } from "@graview/core/retry";
 import { addressOf, OVERVIEW_PATH, pagesTitle, pathWithin, sceneTitle, type AnySchema, type Brand, type GraviewApp, type Person, type Place, type Principal, type Store } from "@graview/core";
 import { EMPTY_VIEW, fromUrl, toUrl, withFocus, withOverview, type ViewState } from "@graview/layout/view";
-import { appKeyOf, BarFindContext, descentTarget, fetchFrameworkViews, fetchNotices, frameworkViewDoors, frameworkVoice, NoticeBoardContext, sceneReportWhere, useWidth, type AppMenuRow, type BarFind, type BarScheme, type BarShare } from "@graview/primitives/frame";
+import { appKeyOf, BarFindContext, descentTarget, fetchFrameworkViews, fetchNotices, frameworkViewDoors, frameworkVoice, NoticeBoardContext, sceneReportWhere, useWidth, type AppMenuRow, type BarFind, type BarScheme, type BarShare, type BarStatus } from "@graview/primitives/frame";
 import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } from "@graview/studio";
 import { createNoticeBoard, quickAskOf, type Notice, type NoticeHandle } from "@graview/primitives/frame";
 import { afterFirstDraw, createPartsWatch, ErrorReportContext, GraviewProvider, lazyModule, markLanded, openingView, PageDoorContext, PartsWatchContext, useNavigation, type AwaySummary, type ErrorReport, type HostNotification, type PageDoor, type PartsWatch, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
@@ -673,6 +673,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
               appMenu={props.appMenu}
               schemeChoice={props.schemeChoice}
               share={props.share}
+              status={props.status}
               keeping={onPages ? undefined : <Keeping app={app} studio={props.studio} report={report} />}
               onFind={setBarFind}
             />
@@ -886,6 +887,8 @@ export interface EmbedHandle {
   setAppMenu(rows: readonly AppMenuRow[] | undefined): void;
   /** The host's Share beside the people (Roadmap f-app-bar-calm), now: who can open the app changed, say; `undefined` takes it off. */
   setShare(share: BarShare | undefined): void;
+  /** The host's status beside its tools (Roadmap f-bar-status-item), now: who can open the app changed, say; `undefined` takes it off. */
+  setStatus(status: BarStatus | undefined): void;
   /** The scheme the app menu offers (Roadmap f-scheme-choice-mount), now: the person's choice as the host keeps it; `undefined` takes it off. */
   setSchemeChoice(choice: BarScheme | undefined): void;
   /** The host's notifications in the inbox (Roadmap f-app-bar-calm), now; `undefined` takes them off. */
@@ -1137,6 +1140,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
     setBarActions: (actions) => flushSync(() => setters?.barActions(actions)),
     setAppMenu: (appMenu) => flushSync(() => setters?.hostBar({ appMenu })),
     setShare: (share) => flushSync(() => setters?.hostBar({ share })),
+    setStatus: (status) => flushSync(() => setters?.hostBar({ status })),
     setSchemeChoice: (schemeChoice) => flushSync(() => setters?.hostBar({ schemeChoice })),
     setNotifications: (notifications) => flushSync(() => setters?.hostBar({ notifications })),
     /* Drawn is the face asked for — below `pagesBelow`, drawn as the pages that stand in for it. */
