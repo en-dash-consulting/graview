@@ -1,3 +1,5 @@
+import type { FarAppResolver } from "./far.js";
+
 /*
  * WHERE AN EDIT FINDS THE WORKFLOW CHECKER. `editDocument` is on a page,
  * and the checker — the shapes of every step kind, the schedule reader, the
@@ -17,7 +19,8 @@ export interface WorkflowJudged {
 }
 
 export interface WorkflowJudging {
-  judge?: (name: string, workflow: unknown, document: unknown) => WorkflowJudged;
+  /** `options.resolveFarApp`: what the host knows of another app a step names (`EditOptions.resolveFarApp`). */
+  judge?: (name: string, workflow: unknown, document: unknown, options?: { readonly resolveFarApp?: FarAppResolver }) => WorkflowJudged;
 }
 
 export const WORKFLOW_JUDGING: WorkflowJudging = ((globalThis as Record<symbol, WorkflowJudging | undefined>)[Symbol.for("@graview/core:workflow-judging")] ??= {});

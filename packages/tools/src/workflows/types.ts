@@ -1,5 +1,5 @@
-import type { AnySchema, Author, GraviewApp, MutationCall, Operation, Store, Via } from "@graview/core";
-import type { WorkflowApproval, WorkflowOrigin, WorkflowPolicy, WorkflowStep } from "@graview/core/workflows";
+import type { AnySchema, Author, GraviewApp, Lineage, LinkedRecord, MutationCall, Operation, Store, Via } from "@graview/core";
+import type { FarAppShape, WorkflowApproval, WorkflowOrigin, WorkflowPolicy, WorkflowStep } from "@graview/core/workflows";
 import type { HostAi } from "../ai.js";
 import type { Severity } from "../tidy/policy.js";
 
@@ -91,6 +91,109 @@ export interface WorkflowRun {
    * is held and says so.
    */
   readonly chain: readonly string[];
+  /**
+   * WHAT IT DID, OR WOULD DO, IN OTHER APPS (Roadmap
+   * f-workflow-steps-in-another-app): each act it ran there through the
+   * host's `FarApps` — previewed in a dry run, applied, suggested there, or
+   * refused there — naming the app. Absent when no step reached one.
+   */
+  readonly far?: readonly FarWrite[];
+}
+
+/** One act a run ran, or would run, in another app: which step, which app, which act with what, and what became of it there. */
+export interface FarWrite {
+  readonly step: number;
+  /** The other app's address, as the step names it: `@self/graview-public`. */
+  readonly app: string;
+  /** What that app is called, as its host says it. */
+  readonly name?: string;
+  readonly act: string;
+  readonly args: Readonly<Record<string, unknown>>;
+  /** Previewed (a dry run: nothing kept there), applied there, put in that app's Suggested tray, or refused there in its words. */
+  readonly as: "previewed" | "applied" | "suggested" | "refused";
+  /** The records it made and changed there, as that app's host says them. */
+  readonly made?: readonly string[];
+  readonly changed?: readonly string[];
+  /** The op that holds it there, applied or suggested, where that host says it. */
+  readonly op?: string;
+  /** Why that app refused it, in its words. */
+  readonly error?: string;
+  /** The step's stable key for it (an act step's `key`), as that app was handed it on the lineage. */
+  readonly key?: string;
+}
+
+/** Which run reaches another app: the workflow, its run and step, and the actor it runs as — what a host grants by, and keeps the far change under. */
+export interface FarOrigin {
+  readonly workflow: string;
+  readonly title: string;
+  /** The run's id, `workflow:<name>:<started>`: `lineage.run` on everything it changes there too. */
+  readonly run: string;
+  readonly step: number;
+  /** The workflow's own actor: an automated system author, `workflow:<name>`. */
+  readonly author: Author;
+  /** A dry run: the app is only asked to preview. */
+  readonly dry: boolean;
+}
+
+/**
+ * ONE ACT RUN IN ANOTHER APP, as the run hands it to that app's host. The
+ * host runs it there AS `author` — the workflow's own actor, under whatever
+ * grant the host keeps for it — with `lineage` on the op it makes, so that
+ * app's Activity says it, and `workflowOrigin` reads it, as from this
+ * workflow's run. Never written into that app's store by the runner.
+ */
+export interface FarActCall {
+  readonly act: string;
+  readonly args: Readonly<Record<string, unknown>>;
+  /** "preview": say what it would do and keep nothing (a dry run); "apply": make it; "suggest": put it in that app's Suggested tray for a person there. */
+  readonly as: "preview" | "apply" | "suggest";
+  readonly author: Author;
+  /** `basis`, `run`, `actor` (`workflow:<name>`), and `confidence`, `model` and `key` where the step says them. */
+  readonly lineage: Lineage;
+  readonly origin: FarOrigin;
+}
+
+/** What another app's host says became of a far act: made or previewed (and what it made and changed), suggested, nothing to change, or refused in that app's words. */
+export type FarActAnswer =
+  | { readonly as: "applied" | "previewed"; readonly made?: readonly string[]; readonly changed?: readonly string[]; readonly op?: string }
+  | { readonly as: "suggested"; readonly op?: string }
+  | { readonly as: "unchanged" }
+  | { readonly as: "refused"; readonly error: string };
+
+/** Another app, as a workflow's run reaches it through its host. */
+export interface FarApp {
+  /** What the host says of it: its name, its kinds, its acts with their input schemas — the agent step's tool surface for its acts. */
+  readonly shape: FarAppShape;
+  /** Records of one of its kinds as the run's actor may see them there: at most `limit`; denied when it may not read that app. */
+  read(kind: string, options: { readonly limit: number }): Promise<readonly LinkedRecord[] | { readonly denied: true }>;
+  /** Run one act there (or preview it, or suggest it), as `call.author`, with `call.lineage` on what it makes. A throw is taken as refused. */
+  act(call: FarActCall): Promise<FarActAnswer>;
+}
+
+/**
+ * THE HOST'S HOOK FOR A WORKFLOW THAT REACHES ANOTHER APP (Roadmap
+ * f-workflow-steps-in-another-app): the app at an address, as this run's
+ * actor reaches it, or undefined when this host does not let this
+ * workflow reach that app. Handed to `runWorkflow` as `farApps`; without
+ * it a step that names another app's kind or act is refused, in words.
+ * `farAppsOver` is this host over stores it holds in memory.
+ */
+export interface FarApps {
+  otherApp(address: string, origin: FarOrigin): FarApp | undefined | Promise<FarApp | undefined>;
+}
+
+/** One change a step would make in another app, before what `approve` makes of it. */
+export interface FarStepChange {
+  /** The other app's address, and the app as the run reached it (`StepContext.otherApp`). */
+  readonly address: string;
+  readonly app: FarApp;
+  readonly act: string;
+  readonly args: Readonly<Record<string, unknown>>;
+  readonly basis: string;
+  readonly confidence?: number;
+  readonly severity?: Severity;
+  readonly model?: string;
+  readonly key?: string;
 }
 
 /** The host's log of runs: the last of a workflow's, all of them newest first, and keeping one. */
@@ -123,6 +226,8 @@ export interface RunWorkflowOptions<S extends AnySchema = AnySchema> {
   readonly via?: Via;
   /** How deep a chain of workflows started by each other's changes may go before a run is held (`MOST_CHAIN`, 3, when unsaid). */
   readonly chainLimit?: number;
+  /** The host's way into other apps, for a step that names another app's kind or act (`@<address>/<name>`). Without it such a step is refused, in words. */
+  readonly farApps?: FarApps;
 }
 
 /** One change a step would make, before what `approve` makes of it. */
@@ -199,6 +304,15 @@ export interface StepContext<S extends AnySchema = AnySchema> {
   skipped(why: string): void;
   /** What a model call of this step spent, counted on the run's `spent`. */
   spent(usage: SpendSaid): void;
+  /** Another app, reached through the host's `FarApps` as the run's actor — or why it cannot be, in words. Asked once a run for each app. */
+  otherApp(address: string): Promise<FarApp | { readonly refused: string }>;
+  /**
+   * THE DOOR TO ANOTHER APP: an act run there through its host — previewed
+   * in a dry run; else made, suggested there or let go by `approve` and the
+   * confidence, as `change` routes one here — with the run's lineage, and
+   * kept on the run's `far`.
+   */
+  changeFar(change: FarStepChange): Promise<FarActAnswer | { readonly as: "dropped" }>;
 }
 
 /** One kind of step, run: keyed as `STEP_KINDS` is. */

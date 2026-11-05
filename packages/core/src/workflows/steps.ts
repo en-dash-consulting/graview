@@ -8,6 +8,10 @@ import { generateStep } from "./step-generate.js";
 import { archiveStep } from "./step-archive.js";
 import { classifyStep } from "./step-classify.js";
 import type { WorkflowWorld } from "./world.js";
+import type { FarAppResolver } from "./far.js";
+
+/** A name of this app's, or anything beginning "@" and something — another app's, whose form `farReferenceOf` judges. */
+const FAR_OR_NAME = new RegExp(`^(?:@\\S.*|${NAME.source.slice(1, -1)})$`);
 
 /*
  * THE KINDS OF STEP A WORKFLOW TAKES: a closed set, each told apart by its
@@ -40,6 +44,8 @@ export interface StepCheck {
   readonly said: string;
   /** The workflow's own declaration, for an edit that fixes it whole (`set-workflow`). */
   readonly declared: Readonly<Record<string, unknown>>;
+  /** What the host knows of another app a step names (`@<address>/<name>`); without it, such a name is held to its shape alone. */
+  readonly resolveFarApp?: FarAppResolver;
 }
 
 /** The helpers a step kind's shape is built with: the same words the document's shape uses. */
@@ -47,6 +53,8 @@ export interface StepShapes {
   readonly str: (min: number, max: number) => z.ZodMiniType<string>;
   /** A kebab-case name: a kind's, an act's. */
   readonly name: (what: string) => z.ZodMiniType<string>;
+  /** A kebab-case name of this app's, or another app's written `@<address>/<name>` (judged by `farReferenceFindings`). */
+  readonly ref: (what: string) => z.ZodMiniType<string>;
   /** A line of the rule language. */
   readonly expression: z.ZodMiniType<string>;
   /** A value a step hands an act: a literal, `$subject`, `$now`, `$today`, or `{ expr }`. */
@@ -102,6 +110,7 @@ export function stepShapes(): StepShapes {
   return {
     str,
     name: (what) => z.string().check(z.regex(NAME, `${what} names are kebab-case, lower-case words joined by hyphens like "add-event"`)),
+    ref: (what) => z.string().check(z.maxLength(300), z.regex(FAR_OR_NAME, `${what} names are kebab-case, lower-case words joined by hyphens like "add-event", or another app's: "@", its address, "/" and the name`)),
     expression,
     value: z.union([z.string(), z.number(), z.boolean(), z.null(), z.array(z.unknown()), z.strictObject({ expr: expression })]),
     approve: z.enum(["apply", "suggest", "ask"], 'approve is "apply", "suggest" or "ask"'),
