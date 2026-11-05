@@ -18,30 +18,47 @@
  *     declares nothing; and Better UI opens its panel on the place's page,
  *     saying it came from the scene.
  *
- *   node scripts/verify-scene-menu.mjs [--engine=chromium|webkit|firefox]
+ * And Nick, in Safari, right-clicked "Give notice on the flat" on the same
+ * place: the menu opened at the window's bottom left, all but its title
+ * under the edge, where Chrome opened it at the pointer.
+ *
+ *   theMenuOpensAtThePointerInEveryEngine — a right-click on a task's card
+ *     in the scene, on the scene's ground, and on a task on the place's
+ *     page opens the menu with its corner within a few pixels of the
+ *     pointer (or turned over above it, or held off the window's edge) and
+ *     wholly inside the window, in Chromium and WebKit (and Firefox, but for
+ *     --quick); --engine= runs the one engine asked.
+ *
+ *   node scripts/verify-scene-menu.mjs [--engine=chromium|webkit|firefox] [--quick]
  *   GRAVIEW_SCENE_MENU_SHOTS=<dir> to keep pictures of each.
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { engineName, launchEngine } from "./lib/engine.mjs";
+import { ENGINES, engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { deadline } from "./lib/deadline.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
+const ASKED = process.argv.some((arg) => arg.startsWith("--engine=")) || process.env["GRAVIEW_ENGINE"] !== undefined;
+const QUICK = process.argv.includes("--quick") || process.env["GRAVIEW_QUICK"] === "1";
+/* WebKit always, but for an engine asked: Safari is where the menu left the pointer. */
+const POINTER_ENGINES = ASKED ? [ENGINE] : QUICK ? ["chromium", "webkit"] : ENGINES;
 const SHOTS = process.env.GRAVIEW_SCENE_MENU_SHOTS;
 const VERDICT = resolve(repoRoot, "docs/scene-menu.json");
 const MENU = '[data-testid="context-menu"]';
 const report = { at: new Date().toISOString(), engine: ENGINE, checks: {} };
 let app;
 let browser;
+let another;
 const reach = deadline({
   verdict: VERDICT,
   report,
   cleanup: async () => {
     await browser?.close();
+    await another?.close();
     app?.stop();
   },
 });
@@ -143,6 +160,72 @@ try {
     };
   }
 
+  reach("theMenuOpensAtThePointerInEveryEngine");
+  {
+    await browser.close();
+    browser = undefined;
+    /** Where the menu stands against the pointer: its corner at it, turned over above it, or held off the window's edge — and wholly in the window. */
+    const judged = (point, box, view) => {
+      if (!box) return { ok: false, why: "no menu" };
+      const across = Math.abs(box.left - point.x) <= 4 || (box.left < point.x && box.right >= view.width - 12 && box.right <= view.width);
+      const down = box.top - point.y >= 0 && box.top - point.y <= 12;
+      const over = point.y - box.bottom >= 0 && point.y - box.bottom <= 12;
+      const held = box.top >= 0 && box.top <= 12 && box.bottom <= view.height;
+      const inside = box.left >= 0 && box.top >= 0 && box.right <= view.width + 0.5 && box.bottom <= view.height + 0.5;
+      return { ok: across && (down || over || held) && inside, across, down, over, held, inside };
+    };
+    const textAt = (page, text) =>
+      page.evaluate((text) => {
+        const one = [...document.querySelectorAll("*")].find((each) => each.children.length === 0 && each.textContent?.trim() === text);
+        if (!one) return null;
+        const box = one.getBoundingClientRect();
+        return { x: Math.round(box.left + Math.min(40, box.width / 2)), y: Math.round(box.top + box.height / 2) };
+      }, text);
+    const opened = async (page, point) => {
+      await page.mouse.click(point.x, point.y, { button: "right" });
+      await page.waitForSelector(MENU, { timeout: 10_000 }).catch(() => undefined);
+      await page.waitForTimeout(500);
+      const box = await page.evaluate((menu) => {
+        const one = document.querySelector(menu)?.getBoundingClientRect();
+        return one ? { left: Math.round(one.left), top: Math.round(one.top), right: Math.round(one.right), bottom: Math.round(one.bottom) } : null;
+      }, MENU);
+      const view = await page.evaluate(() => ({ width: document.documentElement.clientWidth, height: innerHeight }));
+      return { point, box, ...judged(point, box, view) };
+    };
+    const engines = {};
+    for (const engine of POINTER_ENGINES) {
+      another = await launchEngine(engine, { headless: !process.argv.includes("--headed") });
+      const context = await another.newContext({ viewport: { width: 1440, height: 900 }, colorScheme: "dark" });
+      await context.addInitScript(QUIET_AI);
+      const page = await context.newPage();
+      page.setDefaultNavigationTimeout(120_000);
+      page.on("pageerror", (error) => errors.push(`${engine}: ${error.message}`));
+      const spots = {};
+      await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
+      await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 120_000 });
+      await page.waitForFunction(() => [...document.querySelectorAll("*")].some((one) => one.children.length === 0 && one.textContent?.trim() === "Give notice on the flat"), null, { timeout: 60_000 });
+      await page.waitForTimeout(800);
+      const card = await textAt(page, "Give notice on the flat");
+      spots.card = card ? await opened(page, card) : { ok: false, why: "no card" };
+      if (SHOTS) await page.screenshot({ path: join(SHOTS, `${engine}-at-the-pointer-card.png`) }).catch(() => undefined);
+      await page.keyboard.press("Escape");
+      await page.waitForTimeout(300);
+      // The ground above the place, under the bar: nothing on it but the ground.
+      spots.ground = await opened(page, { x: 300, y: 200 });
+      await page.keyboard.press("Escape");
+      await page.waitForTimeout(300);
+      await page.goto(`${at("todo")}/pages/places/the-lists?today=2026-09-01&fresh=1`, { waitUntil: "load" });
+      await page.waitForFunction(() => [...document.querySelectorAll("*")].some((one) => one.children.length === 0 && one.textContent?.trim() === "Give notice on the flat"), null, { timeout: 60_000 });
+      await page.waitForTimeout(800);
+      const row = await textAt(page, "Give notice on the flat");
+      spots.pages = row ? await opened(page, row) : { ok: false, why: "no task on the place's page" };
+      await another.close();
+      another = undefined;
+      engines[engine] = { ...spots, ok: Object.values(spots).every((spot) => spot.ok) };
+    }
+    report.checks.theMenuOpensAtThePointerInEveryEngine = { engines, ok: Object.values(engines).every((one) => one.ok) };
+  }
+
   reach.done();
   report.pageErrors = errors;
   report.passed = Object.values(report.checks).every((check) => check.ok) && errors.length === 0;
@@ -155,6 +238,7 @@ try {
   report.passed = false;
 } finally {
   await browser?.close();
+  await another?.close();
   app?.stop();
 }
 

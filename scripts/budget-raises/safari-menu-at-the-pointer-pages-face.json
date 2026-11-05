@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 207,
+  "gzipped": 77,
+  "note": "Raised when a pane in the top layer came to be read back once placed, so Safari draws it where its left and top say: a right-click on a card in the scene opened the menu at the window's bottom left in Safari 18.0, where WebKit had kept the box it laid out before the pane went into the top layer, and its position changed and changed back has the engine lay it out again. 207 / 77 more. Measured at 749_101 / 271_772 against 748_894 / 271_695."
+}

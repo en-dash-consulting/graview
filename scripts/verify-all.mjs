@@ -73,7 +73,7 @@ const CHAIN = [
   ["section", "verify-section.mjs"],
   // Make any page better: a right-click anywhere on a built-in page — a row, the heading, a task's page, the home — offers "Make “Tasks” better"; words about the look typed in the menu go there and record words to the quick ask; the view spec is tried first, drawn as a draft and kept as one change with one Undo; what it cannot say is offered as the page's own view, kept with the built-in page under Also as; and nobody who may not change the app is offered it.
   ["page-better", "verify-page-better.mjs"],
-  // The scene's menu on a place and in a list's column: a right-click between a list's tasks is about that list and offers its acts; on the place itself Better UI is offered and opens on the place's page, and the empty menu never says the app declares nothing.
+  // The scene's menu on a place and in a list's column: a right-click between a list's tasks is about that list and offers its acts; on the place itself Better UI is offered and opens on the place's page, and the empty menu never says the app declares nothing; and the menu opens at the pointer, inside the window, on a card, the ground and a task on the place's page, in three engines.
   ["scene-menu", "verify-scene-menu.mjs"],
   // The inline AI: suggestions from the catalog in the context menu, a ghost accepted in part as one batch with its undo, a panel kept as a lens, each interaction once in Activity and on its record's page, a host's stored entries, and nothing of it with AI off — on both faces.
   ["inline-ai", "verify-inline-ai.mjs"],
