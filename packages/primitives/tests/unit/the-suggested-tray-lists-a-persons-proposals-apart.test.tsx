@@ -103,7 +103,8 @@ describe("a person's proposal at the Suggested tray", () => {
     expect(proposals.querySelector('[data-testid="proposed-by"]')?.textContent).toBe("Proposed by Ria:");
     expect(proposals.textContent).toContain("The piano is tuned once the keys are back");
     expect($('[data-testid="suggestions"]')?.previousElementSibling?.textContent).toBe("Suggested by the app");
-    expect($('[data-testid="suggestions"]')?.textContent).toContain("Graview, tidying");
+    // The app's own, said as what it would do, not who suggests it (Roadmap f-suggestion-card-one-line).
+    expect($('[data-testid="suggestions"] [data-graview-suggestion-words]')?.textContent).toBe("Should “Keys” wait for Piano?");
     const id = suggestions(store).find((one) => one.lineage?.proposedBy === "ria")!.id;
     await act(async () => proposals.querySelector<HTMLElement>('[data-testid="suggestion-accept"]')!.click());
     await settled(() => expect(store.graph.allEdges()).toHaveLength(1));

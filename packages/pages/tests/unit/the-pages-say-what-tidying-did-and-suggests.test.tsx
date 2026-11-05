@@ -125,7 +125,7 @@ describe("the routed face's bar, after the app's own actor tidied", () => {
     // What waits for you is where the inbox opens.
     await settled(() => expect($('[data-testid="suggestion"]')).not.toBeNull());
     expect($('[data-testid="inbox-tab-for-you"]')!.getAttribute("aria-selected")).toBe("true");
-    expect($('[data-testid="suggestion"]')!.textContent).toContain("“Hand back the keys” waits for “Move the piano”");
+    expect($('[data-testid="suggestion"] [data-graview-suggestion-words]')!.textContent).toBe("Should “Hand back the keys” wait for Move the piano?");
     await act(async () => $('[data-testid="suggestion-decline"]')!.click());
     await settled(() => expect($('[data-testid="suggestion"]')).toBeNull());
     await settled(() => expect($('[data-testid="inbox-button"]')?.getAttribute("aria-label") ?? "").not.toContain("waiting for you"));

@@ -111,6 +111,6 @@ describe("a run's suggestion in the tray", () => {
     await open();
     expect($$('[data-testid="suggestion-item"]')).toHaveLength(3);
     expect($('[data-testid="suggestion-item-accept"]')).toBeNull();
-    expect($('[data-testid="suggestion-accept"]')?.textContent).toBe("Accept");
+    expect($('[data-testid="suggestion-accept"]')?.textContent).toBe("Yes");
   });
 });

@@ -1,6 +1,6 @@
 import { actingAs, nameOfAuthor, VOTE_SUGGESTION, type AnySchema, type DismissalStore, type Suggestion } from "@graview/core";
-import { lineageWords } from "@graview/core/provenance";
 import { acceptSuggestion, declineSuggestion, isProposal, mayDecide, suggestions, voteSuggestion, withdrawSuggestion } from "@graview/core/tidying";
+import { suggestionGroups, suggestionSentence, whyWords, type SentencePart } from "./suggestion-sentence.js";
 import { useGoTo, useGraph, useGraview } from "@graview/react/provider";
 import { useEffect, useId, useMemo, useReducer, useState } from "react";
 import { dismissalsOf, tomorrow } from "./dismissals.js";
@@ -121,7 +121,7 @@ export function SuggestedList({ close, done }: {
           {away}.
         </p>
       ) : null}
-      {waiting.length > 0 ? <p style={{ margin: 0, fontSize: "0.75rem", lineHeight: 1.45, color: "var(--graview-ink-faint)" }}>Not made yet: each waits for you.</p> : <p style={{ margin: 0, fontSize: "0.75rem", lineHeight: 1.45, color: "var(--graview-ink-faint)" }}>What it did is in Activity.</p>}
+      {waiting.length === 0 ? <p style={{ margin: 0, fontSize: "0.75rem", lineHeight: 1.45, color: "var(--graview-ink-faint)" }}>What it did is in Activity.</p> : null}
       {/* A person's proposals apart from the app's own suggestions, and first: somebody is waiting on an answer. */}
       {[waiting.filter(isProposal), waiting.filter((one) => !isProposal(one))].map((some, at) =>
         some.length === 0 ? null : (
@@ -129,10 +129,22 @@ export function SuggestedList({ close, done }: {
             {waiting.some(isProposal) ? (
               <h3 style={{ margin: 0, fontSize: "0.75rem", fontWeight: 600, color: "var(--graview-ink-muted)" }}>{at === 0 ? "Proposed" : "Suggested by the app"}</h3>
             ) : null}
-            <ol data-testid={at === 0 ? "proposals" : "suggestions"} style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 10, fontSize: "0.8125rem", minWidth: 0 }}>
-              {some.map((one) => (
-                <SuggestionRow key={one.id} suggestion={one} notNow={notNow} settled={settled} heard={hear} goes={goes} />
-              ))}
+            <ol data-testid={at === 0 ? "proposals" : "suggestions"} style={LIST}>
+              {/* Several alike under one line, "3 notes to put in chapters", each a row of its own. */}
+              {suggestionGroups(store, some).map((group) =>
+                group.words ? (
+                  <li key={group.suggestions[0]!.id} data-testid="suggestion-group" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 6, minWidth: 0 }}>
+                    <span style={{ ...WRAPS, fontSize: "0.75rem", fontWeight: 600, color: "var(--graview-ink-muted)" }}>{group.words}</span>
+                    <ol style={LIST}>
+                      {group.suggestions.map((one) => (
+                        <SuggestionRow key={one.id} suggestion={one} notNow={notNow} settled={settled} heard={hear} goes={goes} />
+                      ))}
+                    </ol>
+                  </li>
+                ) : (
+                  group.suggestions.map((one) => <SuggestionRow key={one.id} suggestion={one} notNow={notNow} settled={settled} heard={hear} goes={goes} />)
+                ),
+              )}
             </ol>
           </div>
         ),
@@ -145,6 +157,42 @@ export function SuggestedList({ close, done }: {
 
 /** A line of the tray's that breaks anywhere rather than widen it: a record's name may be one unbroken word longer than the panel. */
 const WRAPS = { minWidth: 0, overflowWrap: "anywhere" } as const;
+
+/** A list of the tray's rows, one under another. */
+const LIST = { margin: 0, padding: 0, listStyle: "none", display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 10, fontSize: "0.8125rem", minWidth: 0 } as const;
+
+/** A button of a row's: small, beside its sentence. */
+const BUTTON = { minHeight: 24, padding: "1px 10px", fontSize: "0.75rem" } as const;
+/** One quieter than Yes and No: Later, Why?, Withdraw vote. */
+const QUIET = { ...BUTTON, border: "1px solid transparent", background: "transparent", boxShadow: "none", color: "var(--graview-ink-muted)" } as const;
+
+/**
+ * A RECORD NAMED IN A SUGGESTION'S SENTENCE, as a link that goes to it
+ * (FR-225): a long name cut with an ellipsis where it stands, its whole
+ * name its text and its title, so a hover and a screen reader have all of
+ * it. One since removed is its name, plain.
+ */
+function SentenceRecord({ part, go }: { readonly part: Exclude<SentencePart, string>; readonly go: ((id: string) => void) | null }) {
+  const clipped = { display: "inline-block", maxWidth: "min(24ch, 100%)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", verticalAlign: "bottom" } as const;
+  const name = go ? (
+    <button
+      type="button"
+      data-testid="suggestion-record"
+      data-record={part.record}
+      title={`Go to ${part.label}`}
+      onClick={() => go(part.record)}
+      className="graview-activity-record"
+      style={{ all: "unset", ...clipped, cursor: "pointer", fontWeight: 600, color: "var(--graview-ink)", textDecoration: "underline", textDecorationColor: "color-mix(in srgb, var(--graview-ink) 35%, transparent)", textUnderlineOffset: 2 }}
+    >
+      {part.label}
+    </button>
+  ) : (
+    <span title={part.label} style={{ ...clipped, fontWeight: 600 }}>
+      {part.label}
+    </span>
+  );
+  return part.quoted ? <>“{name}”</> : name;
+}
 
 /** What each answer to a suggestion is said as, once the row it was on is gone. */
 const HEARD = { accept: "Accepted.", decline: "Declined: it will not be suggested again.", later: "Hidden from you until tomorrow.", withdraw: "Withdrawn." } as const;
@@ -227,103 +275,115 @@ function SuggestionRow({ suggestion, notNow, settled, heard, goes }: { readonly 
       setRefused(error instanceof Error ? error.message : String(error));
     }
   };
+  /*
+   * ONE SENTENCE, READ AT A GLANCE (Roadmap f-suggestion-card-one-line):
+   * "Put “What I steer by” in 09 · Without a Map?", its records links in it,
+   * then Yes, No and Later. Who suggested it, how sure and which model are
+   * not said; why is behind "Why?", in the maker's words alone. A run of
+   * several changes says its headline, opened to each below.
+   */
+  const several = suggestion.items.length > 1;
+  const sentence = useMemo(() => suggestionSentence(store, suggestion), [store, suggestion]);
+  const named = new Set(sentence.parts.flatMap((part) => (typeof part === "string" ? [] : [part.record])));
+  // A proposal's basis is the person's own words, when they gave any: "Proposed by Ada" is said once, in the sentence.
+  const reason = suggestion.lineage && !(proposal && suggestion.lineage.basis.startsWith("Proposed by ")) ? whyWords(suggestion.lineage) : undefined;
+  const [why, setWhy] = useState(false);
+  const words = useId();
+  const because = useId();
   return (
-    <li data-testid="suggestion" data-suggestion={suggestion.id} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 5, lineHeight: 1.45, minWidth: 0 }}>
-      <span data-graview-suggestion-words="" style={WRAPS}>
-        {proposal ? (
-          <>
-            <span data-testid="proposed-by" style={{ color: "var(--graview-ink-muted)" }}>
-              Proposed by <strong style={{ fontWeight: 600, color: "var(--graview-ink)" }}>{mine ? "you" : by}</strong>:
-            </span>{" "}
-          </>
-        ) : (
-          <>
-            <strong style={{ fontWeight: 600 }}>{by}</strong> <span style={{ color: "var(--graview-ink-muted)" }}>suggests</span>{" "}
-          </>
-        )}
-        {suggestion.items.length > 1 ? headlineAfter(by, suggestion.headline ?? suggestion.intent) : suggestion.intent}
-      </span>
-      <SuggestionItems suggestion={suggestion} decides={decides} heard={heard} />
-      {/* A proposal's basis is the person's own words, when they gave any: "Proposed by Ada" is said once, above. */}
-      {suggestion.lineage && !(proposal && suggestion.lineage.basis.startsWith("Proposed by ")) ? (
-        <span data-graview-lineage="" style={{ ...WRAPS, color: "var(--graview-ink-faint)" }}>
-          {lineageWords(suggestion.lineage)}
+    <li data-testid="suggestion" data-suggestion={suggestion.id} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 4, lineHeight: 1.45, minWidth: 0 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 10, rowGap: 4, minWidth: 0 }}>
+        <span id={words} data-graview-suggestion-words="" style={{ ...WRAPS, flex: "1 1 14em" }}>
+          {proposal ? (
+            <>
+              <span data-testid="proposed-by" style={{ color: "var(--graview-ink-muted)" }}>
+                Proposed by <strong style={{ fontWeight: 600, color: "var(--graview-ink)" }}>{mine ? "you" : by}</strong>:
+              </span>{" "}
+            </>
+          ) : several ? (
+            <>
+              <strong style={{ fontWeight: 600 }}>{by}</strong> <span style={{ color: "var(--graview-ink-muted)" }}>suggests</span>{" "}
+            </>
+          ) : null}
+          {several ? headlineAfter(by, suggestion.headline ?? suggestion.intent) : sentence.parts.map((part, at) => (typeof part === "string" ? part : <SentenceRecord key={at} part={part} go={goes(part.record)} />))}
         </span>
-      ) : null}
-      {suggestion.about.length > 0 ? (
-        <div data-graview-suggestion-records="" style={{ display: "flex", flexWrap: "wrap", gap: 4, minWidth: 0 }}>
-          {/* Each a button that goes to the record (FR-225); one still too wide for the row is cut with an ellipsis, its whole name in its title (Chip). */}
-          {suggestion.about.slice(0, 4).map((id) => (
-            <NamedRecord key={id} id={id} label={nameOf(store, id)} go={goes(id)} testId="suggestion-record" />
-          ))}
-        </div>
-      ) : null}
-      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6, minWidth: 0 }}>
-        {mine ? (
-          <button type="button" data-testid="proposal-withdraw" onClick={() => void settle("withdraw")} style={{ minHeight: 24, padding: "1px 10px", fontSize: "0.75rem" }}>
-            Withdraw
+        <span style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4, marginInlineStart: "auto", minWidth: 0 }}>
+          {reason ? (
+            <button type="button" data-testid="suggestion-why" aria-expanded={why} aria-controls={because} onClick={() => setWhy((open) => !open)} style={{ ...QUIET, padding: "1px 6px" }}>
+              Why?
+            </button>
+          ) : null}
+          {mine ? (
+            <button type="button" data-testid="proposal-withdraw" onClick={() => void settle("withdraw")} style={BUTTON}>
+              Withdraw
+            </button>
+          ) : votes ? (
+            <button
+              type="button"
+              data-testid="suggestion-accept"
+              onClick={() => void settle("accept")}
+              {...(decides ? { "aria-describedby": words } : { "aria-pressed": tally.mine === "for", "aria-describedby": voting })}
+              style={BUTTON}
+            >
+              {decides && several ? "Accept all" : "Yes"}
+            </button>
+          ) : signIn ? (
+            <button type="button" data-testid="suggestion-sign-in" onClick={() => signIn.run()} style={BUTTON}>
+              Sign in to vote
+            </button>
+          ) : null}
+          {votes && !mine ? (
+            <button
+              type="button"
+              data-testid="suggestion-decline"
+              onClick={() => void settle("decline")}
+              {...(decides ? { "aria-describedby": words } : { "aria-pressed": tally.mine === "against", "aria-describedby": voting })}
+              style={BUTTON}
+            >
+              No
+            </button>
+          ) : null}
+          {!decides && votes && !mine && tally.mine !== undefined ? (
+            <button type="button" data-testid="suggestion-withdraw-vote" onClick={() => void settle("unvote")} style={QUIET}>
+              Withdraw vote
+            </button>
+          ) : null}
+          <button type="button" data-testid="suggestion-not-now" onClick={() => void settle("later")} title="Hide it from you until tomorrow. It still waits for everyone else." aria-describedby={hint} style={QUIET}>
+            Later
           </button>
-        ) : votes ? (
-          <button
-            type="button"
-            data-testid="suggestion-accept"
-            onClick={() => void settle("accept")}
-            {...(decides ? {} : { "aria-pressed": tally.mine === "for", "aria-describedby": voting })}
-            style={{ minHeight: 24, padding: "1px 10px", fontSize: "0.75rem" }}
-          >
-            {decides && suggestion.items.length > 1 ? "Accept all" : "Accept"}
-          </button>
-        ) : signIn ? (
-          <button type="button" data-testid="suggestion-sign-in" onClick={() => signIn.run()} style={{ minHeight: 24, padding: "1px 10px", fontSize: "0.75rem" }}>
-            Sign in to vote
-          </button>
-        ) : null}
-        {/* The votes so far, to whoever may decide: a voter is told their own, not everyone's. */}
-        {decides && tally.for + tally.against + (tally.advisory ? tally.advisory.for + tally.advisory.against : 0) > 0 ? (
-          <span data-testid="suggestion-tally" style={{ ...WRAPS, fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
-            {tallyWords(tally)}
-          </span>
-        ) : null}
-        {votes && !mine ? (
-          <button
-            type="button"
-            data-testid="suggestion-decline"
-            onClick={() => void settle("decline")}
-            {...(decides ? {} : { "aria-pressed": tally.mine === "against", "aria-describedby": voting })}
-            style={{ minHeight: 24, padding: "1px 10px", fontSize: "0.75rem" }}
-          >
-            Decline
-          </button>
-        ) : null}
-        {!decides && votes && !mine ? (
-          <span id={voting} style={VISUALLY_HIDDEN}>
-            Counts as your vote; somebody who may make it decides.
-          </span>
-        ) : null}
-        {!decides && votes && !mine && tally.mine !== undefined ? (
-          <button
-            type="button"
-            data-testid="suggestion-withdraw-vote"
-            onClick={() => void settle("unvote")}
-            style={{ minHeight: 24, padding: "1px 10px", fontSize: "0.75rem", border: "1px solid transparent", background: "transparent", boxShadow: "none", color: "var(--graview-ink-muted)" }}
-          >
-            Withdraw vote
-          </button>
-        ) : null}
-        <button
-          type="button"
-          data-testid="suggestion-not-now"
-          onClick={() => void settle("later")}
-          title="Hide it from you until tomorrow. It still waits for everyone else."
-          aria-describedby={hint}
-          style={{ minHeight: 24, padding: "1px 10px", fontSize: "0.75rem", marginInlineStart: "auto", border: "1px solid transparent", background: "transparent", boxShadow: "none", color: "var(--graview-ink-muted)" }}
-        >
-          Not now
-        </button>
-        <span id={hint} style={VISUALLY_HIDDEN}>
-          Hides it from you until tomorrow; it still waits for everyone else.
         </span>
       </div>
+      <span id={hint} style={VISUALLY_HIDDEN}>
+        Hides it from you until tomorrow; it still waits for everyone else.
+      </span>
+      {!decides && votes && !mine ? (
+        <span id={voting} style={VISUALLY_HIDDEN}>
+          Counts as your vote; somebody who may make it decides.
+        </span>
+      ) : null}
+      {reason ? (
+        <span id={because} data-graview-lineage="" hidden={!why} style={{ ...WRAPS, fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
+          {reason}
+        </span>
+      ) : null}
+      {several ? <SuggestionItems suggestion={suggestion} decides={decides} heard={heard} /> : null}
+      {/* Records its sentence does not name — an act said in its own words — as links below it. */}
+      {suggestion.about.some((id) => !named.has(id)) && (several || named.size === 0) ? (
+        <div data-graview-suggestion-records="" style={{ display: "flex", flexWrap: "wrap", gap: 4, minWidth: 0 }}>
+          {suggestion.about
+            .filter((id) => !named.has(id))
+            .slice(0, 4)
+            .map((id) => (
+              <NamedRecord key={id} id={id} label={nameOf(store, id)} go={goes(id)} testId="suggestion-record" />
+            ))}
+        </div>
+      ) : null}
+      {/* The votes so far, to whoever may decide: a voter is told their own, not everyone's. */}
+      {decides && tally.for + tally.against + (tally.advisory ? tally.advisory.for + tally.advisory.against : 0) > 0 ? (
+        <span data-testid="suggestion-tally" style={{ ...WRAPS, fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
+          {tallyWords(tally)}
+        </span>
+      ) : null}
       {voted ? (
         <span data-testid="suggestion-voted" role="status" style={{ ...WRAPS, fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
           {voted}
