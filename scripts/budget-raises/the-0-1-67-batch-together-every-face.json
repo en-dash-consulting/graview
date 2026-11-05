@@ -1,6 +1,6 @@
 {
   "budget": "every face",
   "minified": 1000,
-  "gzipped": 100,
-  "note": "Raised when the 0.1.67 batch put its changes together in batch/0-1-67, each of which fit the room alone: first the Answer slot's couldNotFind and Share's second link (f-answer-slot-could-not-find), Better UI's checks reading what the page draws (f-better-ui-draws-first-time), a calendar entry that wraps its name, and a district's name captured under its plot on the GPU path, which spent the room and 88 more minified, 65 more gzipped; then a host's status on the bar and the kept note's words, Better UI's small edits and workflow steps that reach another app, which together spent it and 288 more minified. Raised 1_000 / 100 to hold both."
+  "gzipped": 200,
+  "note": "Raised when the 0.1.67 batch put its changes together in batch/0-1-67, each of which fit the room alone: first the Answer slot's couldNotFind and Share's second link (f-answer-slot-could-not-find), Better UI's checks reading what the page draws (f-better-ui-draws-first-time), a calendar entry that wraps its name, and a district's name captured under its plot on the GPU path, which spent the room and 88 more minified, 65 more gzipped; then a host's status on the bar and the kept note's words, Better UI's small edits and workflow steps that reach another app, which together spent it and 288 more minified. then a suggestion said as one line, which went 7 more gzipped. Raised 1_000 / 200 to hold all three."
 }
