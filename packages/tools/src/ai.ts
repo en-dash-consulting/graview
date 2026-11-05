@@ -252,6 +252,13 @@ export interface AnswerRequest {
   readonly catalog: AiCatalog;
   /** The ask this one follows on the same card, and what it was answered: one step back, never a thread. */
   readonly follows?: { readonly said: string; readonly answer: string };
+  /**
+   * Where the host asked to hear what a quick ask could not find
+   * (`HostAi.couldNotFind`): the framework's instruction, in words a model
+   * reads, to answer what this app does not keep as `lacks` (and `need`)
+   * rather than only that nothing was found. Unsaid otherwise.
+   */
+  readonly couldNotFind?: string;
 }
 
 /** What the answer provider says: the answer in words, and the catalog's candidates that act on it, best first. */
@@ -259,6 +266,15 @@ export interface AnswerReply {
   readonly text: string;
   /** Candidate ids from the request's catalog; any other id is dropped. A change among them waits as a ghost. */
   readonly pick?: readonly string[];
+  /**
+   * What the app does not keep for these words, in one whole sentence to the
+   * person ("This app keeps no budgets."): said on the card in place of
+   * `text`, and — with `HostAi.couldNotFind` — kept in the friction log
+   * (`unanswered`, with `lacks`) and told to the host's callback.
+   */
+  readonly lacks?: string;
+  /** The field or link that would hold it, where the answer can say. */
+  readonly need?: PlanNeed;
   readonly usage?: { readonly inputTokens?: number; readonly outputTokens?: number; readonly costUsd?: number };
 }
 

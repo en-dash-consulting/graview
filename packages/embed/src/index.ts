@@ -5,7 +5,7 @@ export { DRAWN_ATTRIBUTE } from "./drawn.js";
 export { faceAtAddress } from "./address.js";
 export type { EmbedWhere } from "./where.js";
 export type { EmbedBar, EmbedError, EmbedErrorWhere, EmbedFace, EmbedHostContext, EmbedReady, EmbedRemote, FrameOptions } from "./frame.js";
-export type { AppMenuRow, BarAction, BarScheme, BarShare, HostAction, SchemeChoice } from "@graview/primitives/frame";
+export type { AppMenuRow, BarAction, BarScheme, BarShare, BarShareLink, HostAction, SchemeChoice } from "@graview/primitives/frame";
 export type { HostNotification } from "@graview/react/provider";
 export { createNoticeBoard, FIRST_LOOK_ANCHORS, quickAskOf } from "@graview/primitives/frame";
 export type { FirstLook, FirstLookAnchor, FirstLookEnd, FirstLookOptions, FirstLookStep } from "@graview/primitives/frame";

@@ -575,6 +575,10 @@ const ANSWER_SYSTEM =
   'Where "members" are given and the person asks for something done to them, answer "each": {"act": the name of one of "member_acts", "args": every value it asks for, by name, dates as YYYY-MM-DD counted from "today"; the facts already say each day against today, so trust those} — one act over every member, as one change. Judge an act by what it does ("does"), not only its title: "close", "complete", "check off", "tick" and "finish" are an act that marks something done; "delete" one that removes; "push", "move" and "postpone" one that changes a date or a place. Where "fast_leaned_to" names an act, it is likely the one: fill its values. When the person tells it to do something, answer "each" (with a short "answer" saying what it will do): nothing is done until they accept, so never say in words that it is done, and never ask them to confirm ("Move it to Friday?"): the card asks them, so answer "each". Where "people" maps a word like "her" or "me" to a name, that is who they mean. ' +
   'Only where no act among "member_acts" or the candidates does what they ask, because the app has no field or link for it, answer "lacks": one whole sentence to the person saying what the app is missing (never an id, never a note to yourself), and "need": what it would need — {"link": {"on": the kind of the records, "called": what the link is called in their words, like "assigned to", "to": the kind it points to, or a noun for one the app lacks}} or {"field": {"on": the kind, "called": its name in their words, "type": "string", "number", "date" or "boolean"}} — with "who": the name of the record their words name (for a link) or "value": the value they give (for a field). When they ask for a change the app has no field or link for ("make these urgent", "give these a priority"), answer "lacks" and "need", never only "answer". A question is answered in "answer", never with "each" or "lacks"; so is "undo that", which the app\'s own Undo does.';
 
+/** The same instruction for the host's Answer slot, whose reply carries `lacks` and `need` as fields (`AnswerReply`). */
+const NOT_FOUND_ANSWER =
+  'Where nothing in the state or the catalog answers the words — the app keeps no such thing — do not answer only that you found nothing: reply with "lacks", one whole sentence to the person saying what this app does not keep ("This app keeps no budgets."), and "need" where one field or link on these records would hold it ({"field": {"on": kind, "called": name, "type": "string" | "number" | "date" | "boolean"}} or {"link": {"on": kind, "called": name, "to": kind}}). This holds for a question too.';
+
 /** What a model is told when the host asked that a question nothing here answers be said as what the app lacks (`HostAi.couldNotFind`). */
 const NOT_FOUND =
   'Where nothing in "facts" or "state" answers the words — the app keeps no such thing — do not answer only that you found nothing: answer "lacks", one whole sentence to the person saying what this app does not keep ("This app keeps no budgets."), and "need" where one field or link on these records would hold it. This holds for a question too.';
@@ -685,13 +689,20 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
   const pickedOf = (ids: readonly unknown[]) => ids.flatMap((id) => choices.filter((candidate) => candidate.id === id)).slice(0, 3).map((candidate) => ({ candidate }));
   try {
     if (host) {
-      const reply: AnswerReply = await host.answer({ said, target: ask.target, targetLabel: asked.entry.targetLabel, state: asked.state, catalog: { target: asked.catalog.target, candidates: choices }, ...(ask.follows ? { follows: ask.follows } : {}) });
+      const reply: AnswerReply = await host.answer({ said, target: ask.target, targetLabel: asked.entry.targetLabel, state: asked.state, catalog: { target: asked.catalog.target, candidates: choices }, ...(ask.follows ? { follows: ask.follows } : {}), ...(ai.couldNotFind ? { couldNotFind: NOT_FOUND_ANSWER } : {}) });
       const inputTokens = reply.usage?.inputTokens;
       const outputTokens = reply.usage?.outputTokens;
       const cost = reply.usage?.costUsd ?? (inputTokens !== undefined ? costOf(host.price, inputTokens, outputTokens ?? 0) : undefined);
       asked.meter({ tier: "thinking", model: host.model, ...(inputTokens !== undefined ? { inputTokens } : {}), ...(outputTokens !== undefined ? { outputTokens } : {}), ...(cost !== undefined ? { costUsd: cost } : {}) });
       text = typeof reply.text === "string" ? reply.text.trim() : "";
       picked = pickedOf(reply.pick ?? []);
+      // What the app lacks, as the host's answer says it: said by code from the need where it is not a sentence for the person.
+      if (typeof reply.lacks === "string" && reply.lacks.trim()) {
+        const need = needOf(reply.need);
+        const lacks = reply.lacks.trim();
+        missing = { said: forThePerson(lacks) ? lacks : need ? lacksOf(ask.store.schema as AnySchema, need) : COULD_NOT_WORK_OUT, ...(need ? { need } : {}) };
+        text = "";
+      }
     } else if (thinking) {
       const prompt = JSON.stringify({
           ask: said,
