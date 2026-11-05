@@ -106,8 +106,8 @@ describe("the checker, with the host's resolver", () => {
   });
 
   it("refuses an argument the far act does not take, and one it requires left out (workflow-far-args)", () => {
-    const found = documentWorkflowFindings(withSteps([{ act: "@self/graview-public/set-ticket-status", args: { status: "done", colour: "red" } }]) as unknown as GraviewDocument, { resolveFarApp });
-    expect(found.map((f) => `${f.code} @ ${f.path}`)).toEqual(["workflow-far-args @ workflows.w.steps.0.args.colour", "workflow-far-args @ workflows.w.steps.0.args"]);
+    const found = documentWorkflowFindings(withSteps([{ act: "@self/graview-public/set-ticket-status", args: { status: "done", shade: "red" } }]) as unknown as GraviewDocument, { resolveFarApp });
+    expect(found.map((f) => `${f.code} @ ${f.path}`)).toEqual(["workflow-far-args @ workflows.w.steps.0.args.shade", "workflow-far-args @ workflows.w.steps.0.args"]);
     expect(found[1]!.message).toContain('"title"');
   });
 
