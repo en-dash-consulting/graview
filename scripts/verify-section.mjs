@@ -117,6 +117,10 @@ const FAKE_AI = () => {
     const styled = (text, rule) => text.replace("\n`);", `\n  ${rule}\n\`);`);
     const dropped = (text) => text.split("\n").filter((line) => !line.trimStart().startsWith(`.${cls} `)).join("\n");
     const drafts = steps.filter((one) => one.did === "draft");
+    // A small change is an edit: one declaration found and replaced, the code applying it to the script on the page.
+    if (/\bsquare corners\b/.test(words)) return say({ say: `The days in “${name}” have square corners now.`, do: "edit", edits: [{ find: ".tk-day { border: 1px solid var(--graview-edge); border-radius: 8px;", replace: ".tk-day { border: 1px solid var(--graview-edge); border-radius: 0;" }] });
+    // A style the page will not keep, drafted first; told which rule and why, it drafts the script as it was.
+    if (/\bzoom\b/.test(words)) return say(steps.some((one) => (one.result?.findings ?? []).length > 0) ? { say: `“${name}” is as it was.`, do: "draft", source } : { say: `“${name}” is bigger now.`, do: "draft", source: styled(source, ".tk-doing { zoom: 2; color: var(--graview-ink); }") });
     // The script as it is, drafted again; and the heading's words alone changed, where that is asked.
     if (/\bas it is\b/.test(words)) return say({ say: `“${name}” is as it was.`, do: "draft", source });
     if (/\breword\b/.test(words)) return say({ say: `“${name}” is now “In progress”.`, do: "draft", source: source.replace(`>${name}</h2>`, ">In progress</h2>") });
@@ -440,6 +444,54 @@ try {
       // The draft's sections by their heading's first word: "In progress" is "In".
       drawn: after.draft?.["In"]?.html ?? null,
       ok: findings.length === 0 && !(first.keep_these_headings ?? []).includes("Doing") && /“Doing”/.test(first.you_may_reword ?? "") && /In progress/.test(after.draft?.["In"]?.html ?? ""),
+    };
+    await page.click('[data-testid="better-discard"]');
+    await closePanel(page);
+  }
+
+  /*
+   * A SMALL CHANGE IS AN EDIT (f-better-ui-small-edits): "square corners"
+   * is one declaration found and replaced in the script on the page — shown
+   * whole to the agent — applied by the code, drawn and judged as a draft
+   * is, and on the page from the first step with every part as it was.
+   */
+  reach("aSmallChangeIsOneEditOnThePageFromTheFirstStep");
+  {
+    const before = await read(page);
+    const from = await page.evaluate(() => window.__sectionPrompts.length);
+    await openPanel(page, "This week");
+    await tellIt(page, "square corners on the days");
+    await panelAt(page, "draft");
+    const asked = await page.evaluate((from) => window.__sectionPrompts.slice(from), from);
+    const after = await read(page);
+    const steps = await page.evaluate(() => [...document.querySelectorAll('[data-testid="better-step"]')].map((one) => one.lastElementChild?.textContent?.trim() ?? ""));
+    const square = /\.tk-day\s*\{[^}]*border-radius:\s*0[;\s}]/.test(after.draftCss ?? "");
+    const same = ["This", "Doing", "Notes"].every((name) => after.draft?.[name]?.html === before.live?.[name]?.html);
+    report.checks.aSmallChangeIsOneEditOnThePageFromTheFirstStep = {
+      requests: asked.length,
+      shownWhole: asked[0]?.your_draft_on_the_page === WEEK_SOURCE,
+      steps,
+      square,
+      partsAsTheyWere: same,
+      ok: asked.length === 1 && asked[0]?.your_draft_on_the_page === WEEK_SOURCE && steps.some((one) => /^Changing: /.test(one)) && steps.some((one) => /^Check: nothing lost/.test(one)) && square && same,
+    };
+    await page.click('[data-testid="better-discard"]');
+    await closePanel(page);
+  }
+
+  /* A style the page will not keep is said by its rule — which, what of it was kept, what is not allowed — never only "styles the page won't keep". */
+  reach("aRefusedStyleIsSaidByItsRule");
+  {
+    const from = await page.evaluate(() => window.__sectionPrompts.length);
+    await openPanel(page, "Doing");
+    await tellIt(page, "zoom the list");
+    await panelAt(page, "draft");
+    const fedBack = await page.evaluate((from) => window.__sectionPrompts.slice(from).flatMap((one) => (one.your_steps ?? []).flatMap((step) => step.result?.findings ?? [])), from);
+    const steps = await page.evaluate(() => [...document.querySelectorAll('[data-testid="better-step"]')].map((one) => one.lastElementChild?.textContent?.trim() ?? ""));
+    report.checks.aRefusedStyleIsSaidByItsRule = {
+      fedBack,
+      steps,
+      ok: fedBack.some((one) => /^In “\.tk-doing”, the property “zoom” is not allowed and is removed \(color is kept\)/.test(one)) && steps.includes("Check: “.tk-doing” keeps color; zoom isn't allowed — fixing") && !steps.some((one) => /won't keep/.test(one)) && steps.some((one) => /^Check: nothing lost/.test(one)),
     };
     await page.click('[data-testid="better-discard"]');
     await closePanel(page);

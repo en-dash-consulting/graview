@@ -18,8 +18,62 @@ import type { SectionStage } from "./section.js";
  * object a step — what it says, what it does — and the page runs the step.
  */
 
+/**
+ * WHAT THE AGENT MAY DO IN ONE STEP, the whole set: look at the page
+ * again, read its records again, edit the script in place (exact find and
+ * replace pairs the code applies — a small change), draft the whole script
+ * (a redesign), say it is done, or ask the person.
+ */
+export const DESIGN_AGENT_MOVES = ["look", "read", "edit", "draft", "done", "ask"] as const;
+
 /** What the agent may do in one step. */
-export type DesignAgentMove = "look" | "read" | "draft" | "done" | "ask";
+export type DesignAgentMove = (typeof DESIGN_AGENT_MOVES)[number];
+
+/** One change of an edit: text found exactly once in the script, and what stands there instead. */
+export interface ScriptEdit {
+  readonly find: string;
+  readonly replace: string;
+}
+
+/** How much of a script the agent is shown whole, to quote from: far past any view a chat writes. */
+const SCRIPT_SHOWN = 64_000;
+
+/** Text quoted back to the agent: whole when short, its start when long. */
+const quotedBack = (text: string) => (text.length > 80 ? `${text.slice(0, 79)}…` : text);
+
+/**
+ * AN EDIT APPLIED BY THE CODE, NEVER BY THE MODEL (Roadmap
+ * f-better-ui-small-edits): each find looked for in the script as it stands
+ * after the edits before it, and replaced where it is there exactly once.
+ * One that is not there, or is there more than once, is said back in words
+ * the agent can act on ("appears 3 times …: quote more of the text around
+ * the place you mean") and nothing is applied. `where` names the script
+ * in those words ("the script on the page", "your last draft").
+ */
+export function applyEdits(source: string, edits: readonly ScriptEdit[], where: string): { readonly source: string } | { readonly findings: readonly string[] } {
+  const findings: string[] = [];
+  let edited = source;
+  edits.forEach((edit, at) => {
+    const said = `Edit ${at + 1}: “${quotedBack(edit.find)}”`;
+    if (!edit.find) return void findings.push(`${said} is no text to find: quote the text to change, exactly as it stands in ${where}.`);
+    let times = 0;
+    for (let from = edited.indexOf(edit.find); from >= 0 && times < 2; from = edited.indexOf(edit.find, from + edit.find.length)) times += 1;
+    if (times === 0) {
+      const squashed = (text: string) => text.replace(/\s+/g, "");
+      const spaced = squashed(edit.find).length > 0 && squashed(edited).includes(squashed(edit.find));
+      return void findings.push(`${said} is not in ${where}${spaced ? " as written, but is there with other spacing" : ""}: quote it exactly as it stands there, spaces and quotes included.`);
+    }
+    if (times > 1) {
+      const count = edited.split(edit.find).length - 1;
+      return void findings.push(`${said} appears ${count} times in ${where}: quote more of the text around the place you mean, so it appears once.`);
+    }
+    const index = edited.indexOf(edit.find);
+    edited = `${edited.slice(0, index)}${edit.replace}${edited.slice(index + edit.find.length)}`;
+  });
+  if (findings.length > 0) return { findings };
+  if (edited === source) return { findings: [`Your edits change nothing in ${where}: replace the text with something else, or say you are done.`] };
+  return { source: edited };
+}
 
 /** An act a press may ask for on the records drawn. */
 export interface ActToBind {
@@ -35,7 +89,9 @@ export interface ActToBind {
 export interface DesignAgentStep {
   readonly said: string;
   readonly did: DesignAgentMove;
-  /** What came of it: what the page shows (look), the records (read), the checks' findings and what the draft drew (draft). */
+  /** With an edit: the changes it asked for, as it gave them. */
+  readonly edits?: readonly ScriptEdit[];
+  /** What came of it: what the page shows (look), the records (read), the checks' findings and what the draft drew (draft, edit). */
   readonly result?: unknown;
 }
 
@@ -62,7 +118,7 @@ export interface DesignAgentHost {
 /** Told as the agent works: a step to show in the panel. */
 export interface DesignAgentEvent {
   /** `streaming`: the agent's words so far, as the model writes them — replaced by the next, and gone when the step is said. */
-  readonly kind: "look" | "read" | "draft" | "check" | "passed" | "said" | "streaming" | "stuck";
+  readonly kind: "look" | "read" | "edit" | "draft" | "check" | "passed" | "said" | "streaming" | "stuck";
   /** In plain words, for the panel: "Looking at Tasks", "Check: dates lost on 3 tasks — fixing". */
   readonly text: string;
   /** With a check, and where it is stuck: what the checks found, each whole with its kind, as the agent was handed them. */
@@ -125,19 +181,24 @@ export const DESIGN_AGENT_SYSTEM = [
   PAGE_VIEW_SYSTEM.split("\n").filter((line) => !line.startsWith("Answer with one JSON object")).join("\n"),
   "",
   "You are Graview, redesigning one page of an app with the person who is looking at it. You work in steps, and each answer is ONE JSON object and nothing else:",
-  '{"say": "<one short plain sentence the person reads: what you are doing or what you found>", "do": "look" | "read" | "draft" | "done" | "ask", "source": "<the whole script, only with draft>"}',
-  "You are shown, before your first step, what the page draws now (what_the_page_draws: its headings, each record's words and the heading it sits under, how they stand) and the records your view is handed (records_it_is_handed): draft first.",
+  '{"say": "<one short plain sentence the person reads: what you are doing or what you found>", "do": "look" | "read" | "edit" | "draft" | "done" | "ask", "edits": [{"find": "<text copied exactly from the script, there once>", "replace": "<what stands there instead>"}], "in": "page" | "draft", "source": "<the whole script>"}',
+  "edits (and, if you like, in) only with edit; source only with draft.",
+  "You are shown, before your first step, what the page draws now (what_the_page_draws: its headings, each record's words and the heading it sits under, how they stand) and the records your view is handed (records_it_is_handed): edit or draft first.",
   "- look: see what the page draws now again, as it stands.",
   "- read: the records and fields your view is handed, again.",
-  "- draft: your whole script, drawn where only you see it, with \"say\" one sentence of what it does, as the person will read it once it is on the page (\"Tasks are cards now, side by side, each with its status and date.\"). You are told what the checks found (records, headings, dates, statuses or groups it lost; words it shows as the computer keeps them; styles the page will not keep) and what it drew. A draft the checks pass is shown to the person on the page, and your turn ends there.",
-  "- done: you have finished this request; say in one sentence what you changed. Only once a draft passed, unless you must ask.",
+  "- edit: change the script in place. Each find is text copied exactly from your_draft_on_the_page — or, with \"in\": \"draft\", from your_last_draft — long enough to be there once; replace is what stands there instead (\"\" takes it out). The code applies them in order, then draws and checks the result exactly as it does a draft; a find that is not there once is handed back to you. For a small change — a color, a corner, a size, a word, one rule, one part — answer with an edit, never the whole script again: \"no rounded corners on the logo\" is one edit of one declaration.",
+  "- draft: for a redesign, or where there is no script on the page yet, your whole script, drawn where only you see it. You are told what the checks found (records, headings, dates, statuses or groups it lost; words it shows as the computer keeps them; a style the page will not keep, by its rule) and what it drew.",
+  "With an edit or a draft, \"say\" is one sentence of what it does, as the person will read it once it is on the page (\"Tasks are cards now, side by side, each with its status and date.\"). One the checks pass is shown to the person on the page, and your turn ends there.",
+  "- done: you have finished this request; say in one sentence what you changed. Only once an edit or a draft passed, unless you must ask.",
   "- ask: ask the person one short question, and wait for their answer.",
   "A control that changes a record is a press bound to one of the app's acts (acts_a_press_may_ask_for): <button data-act=\"finish\" data-record=\"${task.id}\">Done</button> — the host runs the act for that record when it is pressed. A field the person types into is named for the act's argument, inside a fieldset with the press; data-prefill=\"field\" fills it with the record's own text; data-save on a field saves it as it is typed. Never a checkbox, a toggle or a button bound to nothing, and never graview.act from your own click handler: it is refused. Every control on a record the page let a person press (marking it done, opening it) is kept, bound to the same act. A press that marks a record (an act with `marks`) shows what it marked from the record's own field: a record already marked says so and offers the act that undoes it (reopen), so a person sees the press land. The code presses every control headless and tells you what each one did.",
-  "Keep everything the page showed unless the person asked otherwise: every record, every heading, each record's words (its status, its dates, its counts) and its group. Fix what the checks found and draft again; keep going until a draft passes. Write to a person, never about code: no words like view, script, spec, host, CSS or stylesheet in what you say.",
+  "Keep everything the page showed unless the person asked otherwise: every record, every heading, each record's words (its status, its dates, its counts) and its group. Fix what the checks found — with an edit where the fix is small — and keep going until one passes. Write to a person, never about code: no words like view, script, spec, host, CSS or stylesheet in what you say.",
 ].join("\n");
 
 /** What one request tells the agent: the page, the conversation, the steps it took this turn and what came of each. */
-export function designAgentPrompt(options: Pick<DesignAgentOptions, "part" | "manifest" | "talk" | "keep" | "markup" | "current" | "section" | "about" | "acts" | "pressed" | "rewordable"> & { readonly seen?: { readonly look: unknown; readonly read: unknown } }, steps: readonly DesignAgentStep[]): string {
+export function designAgentPrompt(options: Pick<DesignAgentOptions, "part" | "manifest" | "talk" | "keep" | "markup" | "current" | "section" | "about" | "acts" | "pressed" | "rewordable"> & { readonly seen?: { readonly look: unknown; readonly read: unknown }; readonly lastDraft?: string }, steps: readonly DesignAgentStep[]): string {
+  // A script is shown whole, to be quoted from exactly: one cut short is said to be.
+  const whole = (script: string) => (script.length > SCRIPT_SHOWN ? `${script.slice(0, SCRIPT_SHOWN)}\n/* … the script goes on: quote only what you see */` : script);
   // A heading the person asked to reword is theirs to change, where it stands: never one they are told to keep as it was.
   const reword = asksToReword(options.talk.filter((one) => one.who === "person").map((one) => one.said).join(" "));
   const rewordable = reword ? (options.rewordable ?? []) : [];
@@ -155,16 +216,43 @@ export function designAgentPrompt(options: Pick<DesignAgentOptions, "part" | "ma
       ? { you_may_reword: rewordable.length > 0 ? `The person asked for a heading's words to change: ${rewordable.map((one) => `“${one}”`).join(", ")} may say new words, in the same place. Keep every other heading as it was.` : "The person asked for a heading's words to change: the heading they mean may say new words, in the same place. Keep every other heading as it was." }
       : {}),
     ...(options.markup && !options.current ? { the_page_as_html: options.markup.slice(0, 5000) } : {}),
-    ...(options.current ? { your_draft_on_the_page: options.current.slice(0, 9000) } : {}),
-    // The steps so far this turn, each with what came of it; only the last draft's script whole, the earlier ones said by what came of them.
-    your_steps: steps.map((one, at) => ({ said: one.said, did: one.did, ...(one.result !== undefined ? { result: one.result } : {}), ...(at < steps.length - 1 && one.did === "draft" ? { note: "an earlier draft" } : {}) })),
+    ...(options.current ? { your_draft_on_the_page: whole(options.current) } : {}),
+    // The last draft of this turn, which did not pass, whole: what an edit "in": "draft" quotes from.
+    ...(options.lastDraft !== undefined && options.lastDraft !== options.current ? { your_last_draft: whole(options.lastDraft) } : {}),
+    // The steps so far this turn, each with what came of it; the earlier drafts said by what came of them.
+    your_steps: steps.map((one, at) => ({ said: one.said, did: one.did, ...(one.edits ? { edits: one.edits } : {}), ...(one.result !== undefined ? { result: one.result } : {}), ...(at < steps.length - 1 && (one.did === "draft" || one.did === "edit") ? { note: one.did === "edit" ? "an earlier edit" : "an earlier draft" } : {}) })),
     ...(steps.length === 0 && options.seen ? { what_the_page_draws: options.seen.look, records_it_is_handed: options.seen.read } : {}),
-    next: steps.length === 0 ? "Draft first, as one JSON object." : "Your next step, as one JSON object.",
+    next: steps.length === 0 ? (options.current ? "Edit or draft first, as one JSON object." : "Draft first, as one JSON object.") : "Your next step, as one JSON object.",
   });
 }
 
-/** One answer of the agent read: what it said and did, with its script for a draft; undefined where it is not one. */
-export function readAgentReply(text: string): { readonly say: string; readonly do: DesignAgentMove; readonly source?: string } | undefined {
+/** One answer of the agent, read. */
+export interface AgentReply {
+  readonly say: string;
+  readonly do: DesignAgentMove;
+  /** With a draft: the whole script. */
+  readonly source?: string;
+  /** With an edit: its changes, in order. */
+  readonly edits?: readonly ScriptEdit[];
+  /** With an edit: the script it changes — the one on the page (the default) or its own last draft. */
+  readonly in?: "page" | "draft";
+}
+
+/** The changes of an edit as the agent gave them: each a find with text and a replace; undefined where any is not. */
+function editsOf(given: unknown): ScriptEdit[] | undefined {
+  if (!Array.isArray(given) || given.length === 0) return undefined;
+  const edits: ScriptEdit[] = [];
+  for (const one of given as unknown[]) {
+    const find = (one as { find?: unknown } | null)?.find;
+    const replace = (one as { replace?: unknown } | null)?.replace;
+    if (typeof find !== "string" || find.length === 0 || typeof replace !== "string") return undefined;
+    edits.push({ find, replace });
+  }
+  return edits;
+}
+
+/** One answer of the agent read: what it said and did, with its script for a draft and its changes for an edit; undefined where it is not one. */
+export function readAgentReply(text: string): AgentReply | undefined {
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
   if (start < 0 || end <= start) return undefined;
@@ -174,12 +262,38 @@ export function readAgentReply(text: string): { readonly say: string; readonly d
   } catch {
     return undefined;
   }
-  const move = parsed["do"];
-  if (move !== "look" && move !== "read" && move !== "draft" && move !== "done" && move !== "ask") return undefined;
+  const move = DESIGN_AGENT_MOVES.find((one) => one === parsed["do"]);
+  if (!move) return undefined;
   const say = typeof parsed["say"] === "string" ? parsed["say"].trim() : "";
+  if (move === "edit") {
+    const edits = editsOf(parsed["edits"]);
+    const into = parsed["in"] === "draft" || parsed["in"] === "page" ? parsed["in"] : undefined;
+    return edits ? { say, do: "edit", ...(into ? { in: into } : {}), edits } : undefined;
+  }
   if (move !== "draft") return { say, do: move };
   const view = readPageViewReply(JSON.stringify({ source: parsed["source"], said: say }));
   return view ? { say, do: "draft", source: view.source } : undefined;
+}
+
+/**
+ * A STYLE REFUSED, SAID BY ITS RULE (Roadmap f-better-ui-small-edits): which
+ * rule, what of it was kept and what is not allowed — "“.home .lg” keeps
+ * border-radius; image-rendering isn't allowed" — never only "styles the
+ * page won't keep", which is what is said where the words name no rule.
+ */
+function styleSaid(finding: string): { readonly short: string; readonly still: string } {
+  const rule = /^In “(.+?)”, /.exec(finding)?.[1];
+  const kept = /\((.+?) (?:is|are) kept\)/.exec(finding)?.[1];
+  const named = /the (?:property|function) “([^”]+)”/i.exec(finding)?.[1];
+  const what = named ? (/the function/i.test(finding) ? `${named}()` : named) : /url\(\) is not allowed/.test(finding) ? "url()" : /a value of “([^”]+)”/i.test(finding) ? `that value of ${/a value of “([^”]+)”/i.exec(finding)![1]}` : undefined;
+  const selector = /^The selector “([^”]+)” reaches outside/.exec(finding)?.[1];
+  if (selector) return { short: `the selector “${selector}” reaches outside the page`, still: `uses the selector “${selector}”, which reaches outside the page` };
+  const at = /^“(@[\w-]+)” is not allowed/.exec(finding)?.[1];
+  if (at) return { short: `${at} isn't allowed`, still: `uses ${at}, which isn't allowed` };
+  if (/^The stylesheet is too long/.test(finding)) return { short: "the styles are too long to keep", still: "has styles too long to keep" };
+  if (!what) return { short: "styles the page won't keep", still: "uses styles the page won't keep" };
+  const where = rule ? ` in “${rule}”` : "";
+  return { short: rule && kept ? `“${rule}” keeps ${kept}; ${what} isn't allowed` : `${what}${where} isn't allowed`, still: `uses ${what}${where}, which isn't allowed` };
 }
 
 /** A finding said two ways: in a few words for the panel's step ("dates lost on 3 tasks"), and as what a draft still does ("loses the dates on 3 tasks"). */
@@ -214,7 +328,13 @@ function phrased(finding: string, noun: string): { readonly short: string; reado
     case "did-not-draw":
       return { short: "it didn't draw", still: "doesn't draw" };
     case "style-refused":
-      return { short: "styles the page won't keep", still: "uses styles the page won't keep" };
+      return styleSaid(finding);
+    case "edit-missed": {
+      if (/^There is no script to edit/.test(finding)) return { short: "nothing to edit yet", still: "has nothing to edit" };
+      if (/^Your edits change nothing/.test(finding)) return { short: "the edit changes nothing", still: "changes nothing" };
+      const times = /appears (\d+) times/.exec(finding)?.[1];
+      return times ? { short: `an edit's text appears ${times} times`, still: `quotes text that appears ${times} times` } : { short: "an edit's text isn't in the script", still: "quotes text that isn't in the script" };
+    }
     case "unstyled":
       return { short: "a part left without its style", still: "leaves a part without its style" };
     case "control":
@@ -298,8 +418,8 @@ export async function runDesignAgent(options: DesignAgentOptions): Promise<Desig
     const began = Date.now();
     const asked = await unlessStopped(
       (model.stream
-        ? model.stream({ system: DESIGN_AGENT_SYSTEM, prompt: designAgentPrompt({ ...options, seen }, steps), state: {} as never, catalog: { candidates: [] } as never }, (soFar) => tell({ kind: "streaming", text: writingSaid(soFar) }), options.signal)
-        : model.think({ system: DESIGN_AGENT_SYSTEM, prompt: designAgentPrompt({ ...options, seen }, steps), state: {} as never, catalog: { candidates: [] } as never })
+        ? model.stream({ system: DESIGN_AGENT_SYSTEM, prompt: designAgentPrompt({ ...options, seen, ...(last ? { lastDraft: last.source } : {}) }, steps), state: {} as never, catalog: { candidates: [] } as never }, (soFar) => tell({ kind: "streaming", text: writingSaid(soFar) }), options.signal)
+        : model.think({ system: DESIGN_AGENT_SYSTEM, prompt: designAgentPrompt({ ...options, seen, ...(last ? { lastDraft: last.source } : {}) }, steps), state: {} as never, catalog: { candidates: [] } as never })
       ).then(
         (reply) => {
           stages.push({ stage: "thinking", model: model.model, ms: Date.now() - began, ...(reply.usage ? { usage: reply.usage } : {}) });
@@ -319,7 +439,7 @@ export async function runDesignAgent(options: DesignAgentOptions): Promise<Desig
     if (!move) {
       unreadable += 1;
       if (unreadable >= 3) break;
-      steps.push({ said: "", did: "look", result: { error: "Your answer was not one JSON object with say and do (and the whole script in source for a draft). Answer again." } });
+      steps.push({ said: "", did: "look", result: { error: "Your answer was not one JSON object with say and do (with edits for an edit, the whole script in source for a draft). Answer again." } });
       continue;
     }
     if (move.do === "look") {
@@ -328,14 +448,31 @@ export async function runDesignAgent(options: DesignAgentOptions): Promise<Desig
     } else if (move.do === "read") {
       tell({ kind: "read", text: `Reading what ${options.part.name} shows` });
       steps.push({ said: move.say, did: "read", result: options.host.read() });
-    } else if (move.do === "draft") {
-      tell({ kind: "draft", text: move.say ? `Drafting: ${move.say.replace(/\.$/, "")}` : "Drafting" });
-      const stripped = cssFindings(move.source!);
+    } else if (move.do === "draft" || move.do === "edit") {
+      let source = move.source;
+      const edits = move.edits ?? [];
+      if (move.do === "edit") {
+        tell({ kind: "edit", text: move.say ? `Changing: ${move.say.replace(/\.$/, "")}` : "Changing it" });
+        // The script it edits: its own last draft where it says so, the one on the page otherwise — or its last draft where the page has none.
+        const base = move.in === "draft" ? (last ? { script: last.source, where: "your last draft" } : undefined) : options.current !== undefined ? { script: options.current, where: "the script on the page" } : last ? { script: last.source, where: "your last draft" } : undefined;
+        const applied = base ? applyEdits(base.script, edits, base.where) : { findings: [move.in === "draft" ? "There is no script to edit yet: you have made no draft this turn, so edit the script on the page or draft the whole script." : "There is no script to edit yet: draft the whole script."] };
+        if ("findings" in applied) {
+          // Nothing was drawn: said back in words, and never counted as a draft that failed.
+          tell({ kind: "check", text: `Check: ${checkSaid(applied.findings, noun)} — fixing`, findings: findingsOf(applied.findings) });
+          steps.push({ said: move.say, did: "edit", edits, result: { findings: applied.findings } });
+          continue;
+        }
+        source = applied.source;
+      } else tell({ kind: "draft", text: move.say ? `Drafting: ${move.say.replace(/\.$/, "")}` : "Drafting" });
+      const did = move.do;
+      const tried = { said: move.say, did, ...(did === "edit" ? { edits } : {}) };
+      // A refused style the page's own script had too is no finding: the page draws without it now.
+      const stripped = cssFindings(source!, options.current !== undefined ? { already: options.current } : {});
       // Judging that threw is said as what went wrong, to the agent and the host alike — never a draft that "didn't draw".
-      const judging = options.host.draft(move.source!).catch((error: unknown) => ({ findings: [`The draft could not be judged: ${String(error instanceof Error ? error.message : error).replace(/[.\s]+$/, "")}.`], drew: undefined }));
-      const drawn = stripped.length > 0 ? { findings: stripped, drew: undefined } : await unlessStopped(judging, options.signal).then((one) => (typeof one === "string" ? undefined : one.value));
+      const judging = () => options.host.draft(source!).catch((error: unknown) => ({ findings: [`The draft could not be judged: ${String(error instanceof Error ? error.message : error).replace(/[.\s]+$/, "")}.`], drew: undefined }));
+      const drawn = stripped.length > 0 ? { findings: stripped, drew: undefined } : await unlessStopped(judging(), options.signal).then((one) => (typeof one === "string" ? undefined : one.value));
       if (!drawn) return { ended: "stopped", said: "Stopped.", ...(passed ? { passed } : {}), ...(last ? { last } : {}), steps, stages };
-      last = { source: move.source!, findings: drawn.findings };
+      last = { source: source!, findings: drawn.findings };
       drafts += 1;
       const found = findingsOf(drawn.findings);
       try {
@@ -351,25 +488,25 @@ export async function runDesignAgent(options: DesignAgentOptions): Promise<Desig
         const said = stuckSaid(again, keepable, noun);
         // The step says what failed again; the sentence and the choice are the turn's answer.
         tell({ kind: "stuck", text: `Check: ${checkSaid([again], noun)}, again`, findings: found });
-        steps.push({ said: move.say, did: "draft", result: { findings: drawn.findings, drew: drawn.drew } });
+        steps.push({ ...tried, result: { findings: drawn.findings, drew: drawn.drew } });
         return { ended: "stuck", said, keepable, ...(passed ? { passed } : {}), last, steps, stages };
       }
       if (drawn.findings.length === 0) {
-        passed = { source: move.source! };
+        passed = { source: source! };
         tell({ kind: "passed", text: "Check: nothing lost — it's on the page" });
-        steps.push({ said: move.say, did: "draft", result: { findings: [], drew: drawn.drew, shown: "It passed and is on the page now." } });
+        steps.push({ ...tried, result: { findings: [], drew: drawn.drew, shown: "It passed and is on the page now." } });
         // A draft that passed ends the turn: the person sees it, and says what next.
         return { ended: "done", said: move.say || "Here it is.", passed, last, steps, stages };
       } else {
         tell({ kind: "check", text: `Check: ${checkSaid(drawn.findings, noun)} — fixing`, findings: found });
-        steps.push({ said: move.say, did: "draft", result: { findings: drawn.findings, drew: drawn.drew } });
+        steps.push({ ...tried, result: { findings: drawn.findings, drew: drawn.drew } });
       }
     } else if (move.do === "ask") {
       return { ended: "ask", said: move.say || "What would you like it to look like?", ...(passed ? { passed } : {}), ...(last ? { last } : {}), steps, stages };
     } else {
       if (!passed && last && last.findings.length > 0 && at < most - 2) {
         // Done is only done once a draft passed: told so once, it fixes what is left or asks.
-        steps.push({ said: move.say, did: "done", result: { not_yet: "No draft has passed the checks yet. Fix what the last check found and draft again, or ask the person." } });
+        steps.push({ said: move.say, did: "done", result: { not_yet: "No draft has passed the checks yet. Fix what the last check found with an edit or a draft, or ask the person." } });
         continue;
       }
       return { ended: "done", said: move.say || (passed ? "Done." : "I stopped here."), ...(passed ? { passed } : {}), ...(last ? { last } : {}), steps, stages };

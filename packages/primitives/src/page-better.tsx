@@ -445,7 +445,8 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
         let findings: readonly string[];
         if ("failed" in drawn) findings = [drawn.failed];
         else {
-          const refused = [...(await drawn.handle.check(source)), ...drawn.handle.refused()];
+          // The stylesheet was judged before it was drawn, rule by rule and against the page's own script (`cssFindings`): what the drawing refused of it is not said again, as "a rule of the stylesheet".
+          const refused = [...(await drawn.handle.check(source)), ...drawn.handle.refused().filter((one) => !/^Refused a rule of the stylesheet\b/.test(one))];
           if (refused.length > 0) findings = refused;
           else {
             await frame();

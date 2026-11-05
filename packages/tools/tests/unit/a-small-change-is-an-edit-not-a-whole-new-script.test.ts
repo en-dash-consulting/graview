@@ -16,7 +16,7 @@ const part = { name: "Home", slot: "home" as const };
 const manifest = { name: "home", attach: "view", cardinality: "many" as const, replaces: "page" as const };
 
 const SECTIONS = ["Who we are", "What we build", "How we work", "Who we build with", "What people say", "Where to find us"];
-const CARDS = SECTIONS.map((section, at) => Array.from({ length: 6 }, (_, one) => `${section.split(" ").at(-1)} card ${at * 6 + one + 1}`));
+const CARDS = SECTIONS.map((section, at) => Array.from({ length: 7 }, (_, one) => `${section.split(" ").at(-1)} card ${at * 7 + one + 1}`));
 
 /** A home view as a chat writes one: a hero with the logo, and cards in headed sections, under a long stylesheet. */
 function homeView(): string {
