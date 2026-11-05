@@ -208,7 +208,8 @@ describe("a hosted page", () => {
     // 1088 KB since a right-click in the scene came to offer Better UI on a place and a record, and to be about the list whose column it is in (Roadmap f-make-any-page-better): the scene face measured 1_113_430 B, 844 more than with Better UI on the pages alone (1_112_586).
     // 1102 KB with tidying's declines (f-declines-a-person-meant), the calm app bar (f-app-bar-calm), the facts by type (f-facts-by-type), Better UI on any page and in the scene's menu (f-make-any-page-better) and a worker view reading today from graview (f-views-know-today) together in batch/0-1-66: 1_111_845 + 1_168 + 6_691 + 5_750 + 1_585 = 1_127_039 B from the first four branches; the scene face measured 1_127_557 B, with the app menu's control going to the pages when the scene's Better UI asks it and #511's 286 B.
     // 1104 KB since a district's name came to stand under its plot on the GPU path, and its name and landmark to be captured whole there: a plot's two lengths handed to the host on both paths, the host measuring what it draws past its box and growing its box to hold it, and the capture path drawing that box with the layout's where it was: the scene face measured 1_129_858 B, 2_301 more than main after 0.1.66 (1_127_557).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1104 * 1024);
+    // 1105 KB since a host's status came to stand on the app bar beside its tools (Roadmap f-bar-status-item): its mark and its word, its sentence on hover and as its description, a link where it has an `href`: the scene face measured 1_131_353 B, 1_495 more than batch/0-1-67 (1_129_858).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1105 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {
