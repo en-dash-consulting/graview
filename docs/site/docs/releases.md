@@ -70,7 +70,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.66
 
-Published November 4, 2026 · the current version
+Published November 4, 2026
 
 Right-click any page for Better UI, a design agent that keeps every control the page had and presses each one before you see it; a record's facts are drawn by their type; the app bar is calmer; a view reads today, jumps to its own sections and hears which is in sight; and the app's own actor never makes again what a person took back.
 

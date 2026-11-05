@@ -1,5 +1,35 @@
 # @graview/react
 
+## 0.1.67
+
+### Patch Changes
+
+- daf3c02: A district's name stands under its plot on the GPU path, and its name and landmark are captured whole there. When Google Chrome stable became 157, the first stable whose element capture the scene draws with, the Nightly's GPU shard went red at an unchanged commit: from altitude every district's name was drawn at the top of its plot, over its own buildings, where the DOM path draws it under the plot. Chrome Canary 159 on Metal drew it the same, so the fault was the framework's and not the browser's. The plot's two lengths (`--graview-front-y`, where the plot's front vertex lies, and `--graview-center-y`, where its center lies) were handed to a view's host on the DOM path only. On the GPU path the name's `top: calc(var(--graview-front-y) + 4px)` was therefore invalid and fell to the top of the box, and the showings and the landmark lost their places the same way.
+  
+  Both paths now hand the host those lengths. Handing them on was not enough by itself, because the capture takes an element's box and nothing outside it: once placed, the name hanging under the plot was cut off and the landmark lost its head. So on the GPU path a district's host measures how far what it draws reaches past its layout box on each side, and grows its box by that much. It grows as padding, so nothing inside moves, and it says how much in `data-graview-outset`. The capture path reads that outset onto the view it plans (`PlannedView.outset`) and draws the bigger box with the layout's box where it was, so its texture, its reported geometry and its placement are the box the browser rasterizes, and its connectors still run from the layout box's center. Only a district on its plot is measured. A focused record's kind tag, which sits across its panel's edge, is still cut at that edge on the GPU path.
+  
+  `@graview/render` exports `OUTSET_ATTRIBUTE`, `outsetText` and the `Outset` type. The Nightly's GPU shard moves its pin from Chrome for Testing 156.0.8078.79 to 157.0.8103.38. Tests: `a view that draws past its box` (render's frame plan); a new `renderer` harness claim, `theTwoPathsDrawTheSameCityFromAltitude`, which on Chrome 157 failed at 1.4% of the city's pixels before this change and holds at 0.2% after it; and `aDistrictsNameDoesNotMoveWhenDragged` (navigation), which now also holds that the name is under its plot and not over it. The scene face before it draws grows by 2.2 KB, and every face by 2.4 KB (0.8 KB gzipped), under raises of those budgets (`scripts/budget-raises/a-district-name-captured-under-its-plot-*.json`).
+  
+  Compatibility: ops and primitives are unchanged. Stored formats are unchanged. The wire is unchanged. The declaration and the check finding codes are unchanged. Derived tool names and input schemas are unchanged.
+- ead985b: The menu at the pointer opens at the pointer in Safari. A right-click on a task's card in the scene, or on the scene's ground, opened the menu in Safari 18.0 almost wholly under the window's bottom edge at its left, with only its title showing, where Chrome opened it at the pointer. The pane's left and top were written and computed where they belonged (544px, 343px), but its box stood at (0, 852): where the pane falls in the page's flow, under the scene, which is where WebKit stands a box in the top layer that has no left or top. The menu's pane is inside the scene's box, a size container, and the engine had not laid it out again after the pane went into the top layer; writing its left and top again, or hiding and showing it, did not move it either (WebKit bug 285534, "popover is still dirty after layout"). On the routed face the menu is outside that box, and Safari opened it at the pointer there.
+  
+  `placePane` now reads the pane back once it is placed. Where a pane in the top layer is not drawn where its left and top say, its position is changed and changed back, so the engine lays it out again at the place written; the keyboard stays where it was. Every popover in the family is placed by it, so each is held to the same.
+  
+  Playwright's pinned WebKit lays the box out and so never showed the fault; it was reproduced, and the change seen to mend it on the scene's card and its ground, in the macOS system WebKit that Safari 18.0.1 runs, driven through a `WKWebView`. The `scene-menu` harness gains `theMenuOpensAtThePointerInEveryEngine`: a right-click on a task's card in the scene, on the scene's ground and on a task on the place's page opens the menu with its corner within a few pixels of the pointer and wholly inside the window, in Chromium, WebKit and Firefox. Test: `a pane in the top layer is drawn where it was placed` (react). The pages face alone grows by 207 B (77 B gzipped), the embed with the studio handed in by 207 B (110 B) and every face by 207 B (235 B) under raises of those budgets (`scripts/budget-raises/safari-menu-at-the-pointer-*.json`).
+  
+  Compatibility: ops and primitives are unchanged in shape; the look changes only in Safari, where a popover in the top layer now stands where it was placed. Stored formats are unchanged. The wire is unchanged. The declaration and the check finding codes are unchanged. Derived tool names and input schemas are unchanged.
+- Updated dependencies [daf3c02]
+- Updated dependencies [c1b5755]
+- Updated dependencies [4fc856f]
+- Updated dependencies [29b8e03]
+- Updated dependencies [0532aaa]
+- Updated dependencies [bb7e4d7]
+- Updated dependencies [755d603]
+  - @graview/render@0.1.67
+  - @graview/core@0.1.67
+  - @graview/tools@0.1.67
+  - @graview/layout@0.1.67
+
 ## 0.1.66
 
 ### Patch Changes
