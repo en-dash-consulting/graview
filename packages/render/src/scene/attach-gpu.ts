@@ -9,6 +9,7 @@ import type { Scheme } from "./plane.js";
 import { FRAME_BUDGET_MS } from "./renderer-choice.js";
 import { Compositor, type CompositedFrame, type CompositorOptions, type SceneView, type VgpuLike } from "./compositor.js";
 import { fromLayout } from "./from-layout.js";
+import { OUTSET_ATTRIBUTE, outsetFrom } from "./frame-plan.js";
 
 /**
  * What a host hands the capture path each time its picture changes — the
@@ -122,6 +123,7 @@ class Session {
   private firstFrames: number[] | null = [];
   private gone = false;
   private readonly observer: MutationObserver | null;
+  private readonly outsets: MutationObserver | null;
   private readonly onPaint = (event: Event) => this.paint(event);
 
   constructor(
@@ -129,15 +131,17 @@ class Session {
     private readonly options: AttachGpuOptions,
   ) {
     // A host moving between the canvas and the DOM path is a new set of
-    // views to reconcile, whether or not the picture changed.
-    this.observer =
-      typeof MutationObserver === "undefined"
-        ? null
-        : new MutationObserver(() => {
-            this.stale = true;
-            requestPaint(this.canvas);
-          });
+    // views to reconcile, whether or not the picture changed — and so is a
+    // host whose box grew or shrank to hold what it draws (its outset).
+    const reconcile = () => {
+      this.stale = true;
+      requestPaint(this.canvas);
+    };
+    this.observer = typeof MutationObserver === "undefined" ? null : new MutationObserver(reconcile);
     this.observer?.observe(canvas, { childList: true });
+    // The outset alone, wherever a host says it: a view's own DOM changing is the paint event's to report, not a reconcile.
+    this.outsets = typeof MutationObserver === "undefined" ? null : new MutationObserver(reconcile);
+    this.outsets?.observe(canvas, { subtree: true, attributeFilter: [OUTSET_ATTRIBUTE] });
     void this.start();
   }
 
@@ -287,7 +291,8 @@ class Session {
       present.add(view.id);
       const element = inCanvas.get(view.id) ?? scene.hostOf(view.id);
       if (!element) continue;
-      views.push({ ...view, element, ...(element.parentElement === this.canvas ? {} : { dom: true }) });
+      const outset = outsetFrom(element.getAttribute(OUTSET_ATTRIBUTE));
+      views.push({ ...view, element, ...(outset ? { outset } : {}), ...(element.parentElement === this.canvas ? {} : { dom: true }) });
     }
     // A view that left the picture leaves the DOM path's set with it.
     let left = false;
@@ -305,6 +310,7 @@ class Session {
     if (this.waiting) clearTimeout(this.waiting);
     this.waiting = null;
     this.observer?.disconnect();
+    this.outsets?.disconnect();
     this.canvas.removeEventListener("paint", this.onPaint);
     this.compositor?.dispose();
     this.compositor = null;

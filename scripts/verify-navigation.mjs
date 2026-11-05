@@ -494,8 +494,40 @@ async function aDistrictsNameIsNotMovedByHand() {
     });
   await unmoved.goto(`${at("todo")}/?today=2026-09-01#overview=1`, { waitUntil: "load" });
   await unmoved.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
-  await unmoved.waitForTimeout(1500);
-  const resting = await nameAgainstPlot();
+  /*
+   * Where the name rests once the picture has its first frame, not after a
+   * fixed wait. On the GPU path a captured view's box stands at the
+   * canvas's origin until the compositor first says where it drew it, and
+   * on a software adapter (the Nightly's SwiftShader, Chrome 157) that first
+   * frame comes two to three seconds after the page is ready: read at 1.5 s
+   * the name was at the origin, 401 px off its plot, and there was nothing
+   * under the hand to drag. Where it settles is held by the claim (under its
+   * plot, dy >= 0), so waiting cannot hide a name drawn in the wrong place.
+   * So: the district's box standing on its plot, and then the name still.
+   */
+  const settledName = async (least) => {
+    await unmoved.waitForTimeout(least);
+    await unmoved
+      .waitForFunction(
+        () => {
+          const view = document.querySelector('[data-graview-view="kind:task"]')?.getBoundingClientRect();
+          const tile = document.querySelector('[data-graview-plot="kind:task"] .graview-plot-tile')?.getBoundingClientRect();
+          return Boolean(view && tile) && view.left <= tile.left + 1 && view.right >= tile.right - 1 && view.top <= tile.top + 1 && view.bottom >= tile.bottom - 1;
+        },
+        undefined,
+        { timeout: 15_000 },
+      )
+      .catch(() => {});
+    let last = await nameAgainstPlot();
+    for (const end = Date.now() + 10_000; Date.now() < end; ) {
+      await unmoved.waitForTimeout(400);
+      const now = await nameAgainstPlot();
+      if (JSON.stringify(now) === JSON.stringify(last)) return now;
+      last = now;
+    }
+    return last;
+  };
+  const resting = await settledName(1500);
   const grab = await unmoved.evaluate(() => {
     const face = document.querySelector('[data-graview-view="kind:task"] .graview-kind-face');
     const box = face?.getBoundingClientRect();
@@ -520,13 +552,11 @@ async function aDistrictsNameIsNotMovedByHand() {
       await unmoved.waitForTimeout(16);
     }
     await unmoved.mouse.up();
-    await unmoved.waitForTimeout(600);
-    dragged = await nameAgainstPlot();
+    dragged = await settledName(600);
   }
   // And a pin an old bookmark carries for a district is ignored.
   await unmoved.goto(`${at("todo")}/?today=2026-09-01#overview=1&pin.kind%3Atask=40,40`, { waitUntil: "load" });
-  await unmoved.waitForTimeout(1800);
-  const bookmarked = await nameAgainstPlot();
+  const bookmarked = await settledName(1800);
   report.districtName = { resting, dragged, bookmarked };
   await unmoved.close();
 }
@@ -1685,6 +1715,8 @@ const theVerdict = () => ({
   aDistrictsNameDoesNotMoveWhenDragged:
     report.districtName?.resting !== null &&
     report.districtName?.dragged !== null &&
+    // Under its plot, not over its buildings (the GPU path drew it at the plot's top on Chrome 157).
+    report.districtName.resting.dy >= 0 &&
     // The name stands where it stood under its plot, and the city went with the hand.
     report.districtName.dragged.dx === report.districtName.resting.dx &&
     report.districtName.dragged.dy === report.districtName.resting.dy &&
