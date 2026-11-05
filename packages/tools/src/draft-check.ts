@@ -39,40 +39,118 @@ export interface DrawnRead {
 const norm = (words: string) => words.replace(/\s+/g, " ").trim().toLowerCase();
 const counted = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
 
-/** What a refused stylesheet rule needs, in words a model can act on. */
-function refusalWords(refusal: CssRefusal): string {
+/** A list said in words: "a", "a and b", "a, b and c". */
+const listed = (list: readonly string[]) => (list.length < 2 ? (list[0] ?? "") : `${list.slice(0, -1).join(", ")} and ${list.at(-1)}`);
+
+/** One refusal of a stylesheet, with the rule it was in (its selector, or its at-rule's head) and what of that rule was kept. */
+interface StyleRefusal {
+  readonly refusal: CssRefusal;
+  readonly rule?: string;
+  readonly kept?: readonly string[];
+}
+
+/**
+ * What a refused stylesheet rule needs, in words a model can act on — and,
+ * where it was in a rule, which rule and what of it was kept: "In “.home
+ * .lg”, the property “image-rendering” is not allowed and is removed
+ * (border-radius is kept): …".
+ */
+function refusalWords({ refusal, rule, kept }: StyleRefusal): string {
   const name = refusal.name ? `“${refusal.name}”` : "";
+  const where = rule ? `In “${rule}”, ` : "";
+  const keeps = kept && kept.length > 0 ? ` (${listed(kept)} ${kept.length === 1 ? "is" : "are"} kept)` : "";
+  const begun = (words: string) => (where ? `${where}${words}` : words.charAt(0).toUpperCase() + words.slice(1));
   switch (refusal.reason) {
     case "selector":
       return `The selector “${/^(host|host-context)$/.test(refusal.name ?? "") ? ":" : /^(slotted|part)$/.test(refusal.name ?? "") ? "::" : ""}${refusal.name ?? ""}” reaches outside the view and is removed with its rule: give the view's outer element a class and style that instead.`;
     case "at-rule":
       return `${name || "An at-rule"} is not allowed and is removed with what it holds: use plain rules and @media only.`;
     case "property":
-      return `The property ${name} is not allowed and is removed: use ordinary layout, color and type properties.`;
+      return `${begun(`the property ${name}`)} is not allowed and is removed${keeps}: use ordinary layout, color and type properties.`;
     case "function":
-      return `The function ${name}() is not allowed and is removed: use var(--graview-…), calc(), min(), max(), clamp() or repeat().`;
+      return `${begun(`the function ${name}()`)} is not allowed and is removed${keeps}: use var(--graview-…), calc(), min(), max(), clamp() or repeat().`;
     case "url":
-      return "url() is not allowed and is removed: draw nothing from an address.";
+      return `${begun("url()")} is not allowed and is removed${keeps}: draw nothing from an address.`;
     case "value":
-      return `A value of ${name || "a property"} is not allowed and is removed (position may be static, relative, absolute or sticky).`;
+      return `${begun(`a value of ${name || "a property"}`)} is not allowed and is removed${keeps} (position may be static, relative, absolute or sticky).`;
     case "size":
       return "The stylesheet is too long and is removed whole: keep it short.";
     default:
-      return `A rule ${name ? `near ${name} ` : ""}could not be read and is removed: write plain CSS, one rule at a time, no nesting.`;
+      return `${begun(`a rule ${name ? `near ${name} ` : ""}`)}could not be read and is removed: write plain CSS, one rule at a time, no nesting.`;
   }
 }
+
+/** The rules of a stylesheet at its top level, each with its head (a selector, or an at-rule's prelude) and its whole text. */
+function topRules(css: string): { readonly head: string; readonly text: string }[] {
+  const rules: { head: string; text: string }[] = [];
+  const bare = css.replace(/\/\*[\s\S]*?\*\//g, (comment) => " ".repeat(comment.length));
+  let at = 0;
+  while (at < bare.length) {
+    const open = bare.indexOf("{", at);
+    if (open < 0) break;
+    let depth = 0;
+    let close = open;
+    for (; close < bare.length; close++) {
+      if (bare[close] === "{") depth += 1;
+      else if (bare[close] === "}" && --depth === 0) break;
+    }
+    rules.push({ head: bare.slice(at, open).replace(/\s+/g, " ").trim(), text: bare.slice(at, close + 1) });
+    at = close + 1;
+  }
+  return rules;
+}
+
+/** The properties a sanitized rule kept, in order: each declaration's name in `selector { name: value; … }` — none for an at-rule's. */
+function keptOf(css: string): string[] {
+  const open = css.indexOf("{");
+  if (open < 0 || css.trimStart().startsWith("@")) return [];
+  return [...new Set([...css.slice(open + 1).matchAll(/(?:^|;)\s*(-{0,2}[a-zA-Z][\w-]*)\s*:/g)].map((one) => one[1]!))];
+}
+
+/** What the host's sanitizer refuses of a script's stylesheets, each with the rule it was in and what of that rule was kept. */
+function styleRefusalsOf(source: string): StyleRefusal[] {
+  const found: StyleRefusal[] = [];
+  for (const sheet of styleStringsOf(source)) {
+    const css = source.slice(sheet.start, sheet.end).replace(/\$\{(?:[^{}]|\{[^{}]*\})*\}/g, "0");
+    const whole = sanitizeStylesheet(css).refused;
+    if (whole.length === 0) continue;
+    if (whole.some((one) => one.reason === "size")) {
+      found.push({ refusal: { reason: "size" } });
+      continue;
+    }
+    // Each rule judged alone, as the sanitizer judges it among the rest, so what it refuses is said with its own selector.
+    const left = [...whole];
+    for (const rule of topRules(css)) {
+      const judged = sanitizeStylesheet(rule.text);
+      const kept = keptOf(judged.css);
+      for (const refusal of judged.refused) {
+        const at = left.findIndex((one) => one.reason === refusal.reason && one.name === refusal.name);
+        if (at < 0) continue;
+        left.splice(at, 1);
+        found.push({ refusal, ...(rule.head ? { rule: rule.head } : {}), ...(kept.length > 0 ? { kept } : {}) });
+      }
+    }
+    // What no one rule accounts for is said as the sheet's.
+    found.push(...left.map((refusal) => ({ refusal })));
+  }
+  return found;
+}
+
+/** What makes two refusals the same: what was refused, why, and in which rule — never what else of the rule was kept. */
+const refusalKey = (one: StyleRefusal) => `${one.refusal.reason}|${one.refusal.name ?? ""}|${(one.rule ?? "").replace(/\s+/g, "")}`;
 
 /**
  * WHAT THE HOST WOULD STRIP FROM A SCRIPT'S STYLESHEETS, before it is
  * drawn: each `graview.style` string read by the framework's own
- * sanitizer, and what it refuses said as what to do instead.
+ * sanitizer, and what it refuses said by its rule — which rule, what of it
+ * was kept, why the rest is not — and what to do instead. With `already`
+ * (the script on the page), a refusal that script had too is left out: the
+ * page draws without it now, and a draft that keeps it changes nothing.
  */
-export function cssFindings(source: string): string[] {
+export function cssFindings(source: string, options: { readonly already?: string } = {}): string[] {
+  const before = options.already === undefined ? new Set<string>() : new Set(styleRefusalsOf(options.already).map(refusalKey));
   const findings = new Set<string>();
-  for (const sheet of styleStringsOf(source)) {
-    const css = source.slice(sheet.start, sheet.end).replace(/\$\{(?:[^{}]|\{[^{}]*\})*\}/g, "0");
-    for (const refusal of sanitizeStylesheet(css).refused) findings.add(refusalWords(refusal));
-  }
+  for (const one of styleRefusalsOf(source)) if (!before.has(refusalKey(one))) findings.add(refusalWords(one));
   return [...findings];
 }
 
@@ -171,10 +249,11 @@ export function lostUnlessReworded(lost: readonly string[], before: readonly str
  * fact a record no longer says, a record in another group, a heading or a
  * part no longer drawn, the title drawn twice, words shown as the computer
  * keeps them, a style the page will not keep, a class left unstyled, a
- * control that does not work, a draft that did not draw — and `other`,
- * said in its own words.
+ * control that does not work, a draft that did not draw, an edit whose
+ * text is not in the script once (`edit-missed`) — and `other`, said in
+ * its own words.
  */
-export type FindingKind = "record-lost" | "record-twice" | "fact-lost" | "record-moved" | "heading-lost" | "section-lost" | "title-twice" | "computer-words" | "style-refused" | "unstyled" | "control" | "did-not-draw" | "other";
+export type FindingKind = "record-lost" | "record-twice" | "fact-lost" | "record-moved" | "heading-lost" | "section-lost" | "title-twice" | "computer-words" | "style-refused" | "unstyled" | "control" | "did-not-draw" | "edit-missed" | "other";
 
 /** A finding with what it is: what a host logs, and what the panel says it by. */
 export interface DraftFinding {
@@ -184,6 +263,7 @@ export interface DraftFinding {
 
 /** What one finding is, read from its words. */
 export function findingKind(finding: string): FindingKind {
+  if (/^Edit \d+: “|^There is no script to edit|^Your edits change nothing/.test(finding)) return "edit-missed";
   if (/no longer says what it said/.test(finding)) return "fact-lost";
   if (/^It no longer shows “/.test(finding)) return "record-lost";
   if (/more often than the page did/.test(finding)) return "record-twice";
