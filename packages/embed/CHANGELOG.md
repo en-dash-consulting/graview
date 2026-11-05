@@ -1,5 +1,43 @@
 # @graview/embed
 
+## 0.1.67
+
+### Patch Changes
+
+- c1b5755: A host's status stands on the app bar beside its tools. Graview Cloud says who can open an app — "Only you", "Workspace", "Anyone with the link", "Public" — and could only put it on the bar as a `barActions` press, so what it meant was said only once pressed. `status: { label, icon?, description, href?, target? }` on `mount`, the pages embed, the frame and the Shell draws one quiet item beside the host's tools: its mark (`"lock"`, `"globe"`, `"people"`, or the host's own emoji, glyph or inline `<svg>`) and its word, its sentence on hover and as its accessible description, reachable from the keyboard, and a link where it has an `href`. On a phone's bar its word folds away behind its mark, as Share's does; with no mark the word stays. `setStatus` on both mounts' handles says it again without a reload, and `undefined` takes it off. The type `BarStatus` is from `@graview/primitives`, `/frame`, `/pages` and `@graview/embed`.
+  
+  The unit tests `a-hosts-status-says-itself-on-hover-and-folds-to-its-mark-on-a-phone` and `a-hosts-status-is-on-the-app-bar-and-changes-without-a-reload` hold it on the bar of the embed's pages, its scene and the pages alone. A hosted page spends 1.1 KB more up front (1_166 bytes minified, 220 gzipped), every face 1_078 bytes more minified.
+  
+  Compatibility: the look — new, only where a host gives a status: `app-status` (`.graview-bar-status`) beside the host's tools. The JavaScript API — new, optional: `status` on the mounts, the frame and the Shell, `setStatus` on `EmbedHandle` and `PagesEmbedHandle`, and the type `BarStatus`. Ops and primitives — unchanged. Stored formats — unchanged. The wire — unchanged. The declaration and check finding codes — unchanged. Derived tool names and input schemas — unchanged.
+  
+  What Graview Cloud does: give `status: { label: "Only you", icon: "lock", description: "Only you can open this app.", href: "/sharing" }` in place of the `barActions` press, and `setStatus` when sharing changes.
+- 0532aaa: A host's Share holds a second link beside the first. Share's popover held one link — Graview Cloud's Copy link, with nowhere for "Sharing settings" — so `BarShare` takes `secondLink`, the same shape as `link` (`label`, and `href` and `target` or `onSelect`), drawn beside it in one row; either closes the popover. Both are now the type `BarShareLink`, from `@graview/primitives`, `/frame` and `@graview/embed`. Unsaid, Share draws as it did.
+  
+  The unit test `the-app-bar-is-calm` holds the second link beside the first, its press closing the popover, and none drawn when the host gives none; verify-chrome holds `aHostsShareSaysInASentenceWhoCanOpenTheApp` as before. Every face spends 856 bytes more minified, none gzipped.
+  
+  Compatibility: the look — Share's links stand in a row (`.graview-bar-share-links`); new `app-share-second-link`. The JavaScript API — new, optional: `BarShare.secondLink` and the type `BarShareLink`. Ops and primitives — unchanged. Stored formats — unchanged. The wire — unchanged. The declaration and check finding codes — unchanged. Derived tool names and input schemas — unchanged.
+  
+  What Graview Cloud does: give Share `link: { label: "Copy link", onSelect }` and `secondLink: { label: "Sharing settings", href }`.
+- Updated dependencies [11a0de2]
+- Updated dependencies [daf3c02]
+- Updated dependencies [c1b5755]
+- Updated dependencies [c1b5755]
+- Updated dependencies [4fc856f]
+- Updated dependencies [29b8e03]
+- Updated dependencies [0532aaa]
+- Updated dependencies [bb7e4d7]
+- Updated dependencies [755d603]
+- Updated dependencies [ead985b]
+- Updated dependencies [0532aaa]
+  - @graview/primitives@0.1.67
+  - @graview/react@0.1.67
+  - @graview/core@0.1.67
+  - @graview/tools@0.1.67
+  - @graview/pages@0.1.67
+  - @graview/studio@0.1.67
+  - @graview/guest@0.1.67
+  - @graview/layout@0.1.67
+
 ## 0.1.66
 
 ### Patch Changes

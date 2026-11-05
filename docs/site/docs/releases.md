@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.67`](https://graview.dev/docs/releases.html#v0-1-67)
 - [`0.1.66`](https://graview.dev/docs/releases.html#v0-1-66)
 - [`0.1.65`](https://graview.dev/docs/releases.html#v0-1-65)
 - [`0.1.64`](https://graview.dev/docs/releases.html#v0-1-64)
@@ -68,9 +69,25 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
+## 0.1.67
+
+Published November 5, 2026 · the current version
+
+Better UI keeps a correct draft the first time and makes a small change as a small edit; a tidying suggestion is one plain question; a workflow step can reach another app; the right-click menu opens at the pointer in Safari; and a district's name stands under its plot on Chrome 157.
+
+- **Better UI, right the first time.** Its checks read what the page draws: a record is named by its label or its link, not a card's words run together, so an unchanged draft passes; a heading a person asked to reword may change; and a built-in list page's records are read, so a draft that drops them fails. A small change is an edit the framework applies to the script (one changed declaration, not the whole page again), the agent sees the whole script, and a refused style is named by its rule. After two failures on the same thing it says so in a sentence and offers Keep anyway or Stop; a host can log each check (`HostAi.onDraftChecked`); Kept is said once.
+- **A suggestion is one question.** "Put “What I steer by” in 09 · Without a Map?" with Yes, No and Later, its records as links, why behind "Why?" in words, several alike under one line; a placement is no longer suggested on one shared word.
+- **Workflows reach another app.** A step's `reads` and `acts` may name another app's kind or act (`@<address>/<name>`), checked by shape and, with a host's resolver, by what that app has; the step runs only through the host's `FarApps`, a dry run lists the far writes, and each carries lineage the other app can show.
+- **Hosts.** The Answer slot says what the app lacks (`couldNotFind`, `lacks`); Share holds a second link; a status item on the app bar with its sentence on hover (`status`, `setStatus`); a kept 👎 note says where it went (`keptSays`).
+- **Fixes.** The right-click menu opens at the pointer in Safari, which drew it at the page's foot; a district's name and landmark stand under its plot on the GPU path (Chrome 157); a calendar entry wraps its name rather than cutting it.
+
+**Before you upgrade:** New: `@<address>/<name>` in a workflow step's `reads`, `acts` and `act`, with the codes `workflow-far-reference`, `workflow-far-app-unknown` and `workflow-far-args`, `resolveFarApp` on `compileDocument`, `editDocument` and the workflow findings, `FarApps` on `runWorkflow` and `seatWorkflows`, `WorkflowRun.far` (optional), `farAppsOver` and `farAppShapeOf`; `HostAi.onDraftChecked`, `applyEdits`, `DESIGN_AGENT_MOVES`, `ScriptEdit`, the `edit` and `stuck` steps and the `edit-missed` finding kind; `AnswerRequest.couldNotFind`, `AnswerReply.lacks` and `need`; `BarShare.secondLink`; `status`, `setStatus` and `BarStatus`; `ToldStore.keptSays`; `OUTSET_ATTRIBUTE` and `PlannedView.outset` on the GPU path. Changed: a suggestion card's markup (`suggestion-record` in its sentence, new `suggestion-why` and `suggestion-group`, Yes, No and Later keeping the accept, decline and not-now test ids); a refused style's finding reads "is not allowed and is removed"; a calendar entry wraps; an older build refuses a far workflow reference as `workflow-shape`. Ops, stored formats in the graph, the wire and derived tool names are otherwise unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.67) · [The full changelog for 0.1.67](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0167)
+
 ## 0.1.66
 
-Published November 4, 2026 · the current version
+Published November 4, 2026
 
 Right-click any page for Better UI, a design agent that keeps every control the page had and presses each one before you see it; a record's facts are drawn by their type; the app bar is calmer; a view reads today, jumps to its own sections and hears which is in sight; and the app's own actor never makes again what a person took back.
 
