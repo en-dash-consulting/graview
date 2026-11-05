@@ -42,12 +42,13 @@ export {
 export type { PlaneIndex, PlaneStyle, Scheme, TreatedView, Treatment } from "./scene/plane.js";
 
 // The frame, as data: what captures, what draws, and where it lands.
-export { CAPTURE_BUDGET, planFrame } from "./scene/frame-plan.js";
+export { CAPTURE_BUDGET, OUTSET_ATTRIBUTE, outsetText, planFrame } from "./scene/frame-plan.js";
 export type {
   CaptureCommand,
   ConnectorDraw,
   FramePlan,
   GeometryReport,
+  Outset,
   PlanOptions,
   PlannedConnector,
   PlannedView,

@@ -1,9 +1,9 @@
-import { layer, type AnySchema, type ViewReviseAnswer } from "@graview/core";
+import { labelOf, layer, type AnySchema, type ViewReviseAnswer } from "@graview/core";
 import type { AiInteraction, AiStage, AiUsage } from "@graview/core/catalog";
-import { compareViewRevision } from "@graview/core/revisions";
+import { compareViewRevision, sectionsOfDrawing } from "@graview/core/revisions";
 import { useGraview, type MenuViewSection, type ViewPlaceDraft, type ViewPlaceHandle } from "@graview/react/provider";
 import { sectionUnderNow, viewPlaceOf } from "@graview/react/drawing";
-import { CONTROL_WORDS, describeChange, drawnFindings, lookOf, runDesignAgent, type DesignTalk, type DrawnRead, type SectionStage } from "@graview/tools/section";
+import { CONTROL_WORDS, describeChange, drawnFindings, lookOf, lostUnlessReworded, runDesignAgent, type DesignTalk, type DrawnRead, type SectionStage } from "@graview/tools/section";
 import { interactionId } from "@graview/tools/inline-ai";
 import type { Telling, TellingOutcome, ToldStore } from "@graview/core/told";
 import { retryingImport } from "@graview/core/retry";
@@ -11,7 +11,7 @@ import { lazyModule } from "@graview/react/provider";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import type { SectionAsk } from "./section-menu.js";
 import { boxOf, SectionOutline } from "./section-outline.js";
-import { readDrawn, Redesigning } from "./better-bar.js";
+import { headingsOf, readDrawn, recordLabelsOf, Redesigning } from "./better-bar.js";
 import { BetterPanel } from "./better-panel.js";
 
 export { SectionOutline };
@@ -81,7 +81,9 @@ type Phase =
   | { readonly at: "draft" }
   | { readonly at: "keeping" }
   | { readonly at: "kept"; readonly source: string; readonly note?: string; readonly answer: ViewReviseAnswer; readonly entry: AiInteraction }
-  | { readonly at: "undone" };
+  | { readonly at: "undone" }
+  /* Two drafts failed the same way: said plainly, the last one there to keep anyway where it drew. */
+  | { readonly at: "stuck"; readonly source?: string };
 
 const WIDTH = 360;
 const GAP = 12;
@@ -153,29 +155,43 @@ function partsIn(root: Element, rect: { left: number; top: number; right: number
   return outermost;
 }
 
-/** The words of a revision's findings that keep it from being offered, and the notes said with it. */
-function judged(handle: ViewPlaceHandle, before: string, live: ReturnType<ViewPlaceHandle["drawing"]>, liveRefused: readonly string[], draft: ViewPlaceDraft, source: string): { findings: string[]; notes: string[] } {
-  const after = draft.drawing();
-  const revision = compareViewRevision({ source: before, css: live.css, ...(live.root ? { drawing: live.root } : {}), ...(live.height !== undefined ? { height: live.height } : {}) }, { source, css: after.css, ...(after.root ? { drawing: after.root } : {}), ...(after.height !== undefined ? { height: after.height } : {}) });
-  const findings: string[] = [];
-  for (const one of revision.unstyled) findings.push(`The class “${one.class}” is still drawn and no rule styles it now.`);
-  for (const one of revision.sectionsMissing) findings.push(`“${one.name}” is not drawn any more.`);
-  for (const refused of draft.refused()) if (!liveRefused.includes(refused)) findings.push(refused);
-  const notes: string[] = [];
-  const height = revision.height;
-  if (height && Math.abs(height.ratio) >= 0.1) notes.push(`The view is ${Math.abs(Math.round(height.change))} px ${height.change > 0 ? "taller" : "shorter"} (${Math.round(height.before)} → ${Math.round(height.after)}).`);
-  void handle;
-  return { findings, notes };
+/** One side of a view's revision as it was drawn: its code, its stylesheet, its drawing and how tall it stood. */
+export interface DrawingSide {
+  readonly source: string;
+  readonly css: string;
+  readonly root?: Element | undefined;
+  readonly height?: number | undefined;
 }
 
-/** The labels a view's drawing shows for its records: each keyed row's words. */
-function keyedLabels(root: ParentNode | null | undefined): string[] {
-  if (!root) return [];
-  return [...new Set([...root.querySelectorAll("[data-key]")].map((one) => (one.textContent ?? "").replace(/\s+/g, " ").trim()).filter((label) => label.length > 1 && label.length < 80))].slice(0, 40);
+/**
+ * WHAT A REVISION OF A VIEW BROKE IN ITS DRAWING: a class still drawn that
+ * lost every rule styling it, and a part drawn before and not now. A part
+ * is found by where it stands, not by its words (Roadmap
+ * f-better-ui-draws-first-time): one whose heading was reworded in place
+ * is the same part, and is the person's to reword where they asked it of
+ * the part being changed (`mayReword`, its headings).
+ */
+export function drawingFindings(before: DrawingSide, after: DrawingSide, options: { readonly mayReword?: readonly string[]; readonly asked?: string } = {}): string[] {
+  const side = (one: DrawingSide) => ({ source: one.source, css: one.css, ...(one.root ? { drawing: one.root } : {}), ...(one.height !== undefined ? { height: one.height } : {}) });
+  const revision = compareViewRevision(side(before), side(after));
+  const findings: string[] = [];
+  for (const one of revision.unstyled) findings.push(`The class “${one.class}” is still drawn and no rule styles it now.`);
+  const names = (one: DrawingSide) => (one.root ? sectionsOfDrawing(one.root).map((section) => section.name) : []);
+  const missing = before.root && after.root ? lostUnlessReworded(revision.sectionsMissing.map((one) => one.name), names(before), names(after), options) : revision.sectionsMissing.map((one) => one.name);
+  for (const name of missing) findings.push(`“${name}” is not drawn any more.`);
+  return findings;
+}
+
+/** The words of a revision's findings that keep it from being offered. */
+function judged(before: string, live: ReturnType<ViewPlaceHandle["drawing"]>, liveRefused: readonly string[], draft: ViewPlaceDraft, source: string, options: { readonly mayReword?: readonly string[]; readonly asked?: string }): string[] {
+  const after = draft.drawing();
+  const findings = drawingFindings({ source: before, css: live.css, root: live.root, height: live.height }, { source, css: after.css, root: after.root, height: after.height }, options);
+  for (const refused of draft.refused()) if (!liveRefused.includes(refused)) findings.push(refused);
+  return findings;
 }
 
 export function SectionCard({ ask, close }: SectionCardProps) {
-  const { ai, aiDesk, aiHere, session, principal, keptViews } = useGraview<AnySchema>();
+  const { ai, aiDesk, aiHere, session, principal, keptViews, store } = useGraview<AnySchema>();
   const [section, setSection] = useState<MenuViewSection>(ask.section);
   const place = placeOfSection(ask.section);
   const handle = useRef<ViewPlaceHandle | undefined>(viewPlaceOf(place));
@@ -184,6 +200,8 @@ export function SectionCard({ ask, close }: SectionCardProps) {
   /* The view's code before any step, the page as it was read, the drafts that passed, the conversation and this turn's steps. */
   const original = useRef<string | undefined>(undefined);
   const before = useRef<DrawnRead | null>(null);
+  /* The headings of the part being changed, read where it stood before any step: the ones a person may ask to reword. */
+  const partHeadings = useRef<readonly string[] | null>(null);
   const steps = useRef<{ readonly source: string; readonly said: string; readonly entry: AiInteraction }[]>([]);
   const talk = useRef<DesignTalk[]>([]);
   const events = useRef<{ readonly kind: string; readonly text: string }[]>([]);
@@ -306,8 +324,15 @@ export function SectionCard({ ask, close }: SectionCardProps) {
       original.current ??= live;
       const liveDrawing = view.drawing();
       const liveRefused = view.refused();
-      before.current ??= readDrawn(liveDrawing.root?.parentElement ?? liveDrawing.root ?? place, keyedLabels(liveDrawing.root));
+      // Each record by the name its kind gives it, or its link's own words: never a card's words run together.
+      const named = (id: string) => {
+        const node = store.graph.getNode(id);
+        return node ? labelOf(store.schema.tryDefinition(node.kind), node as never) : undefined;
+      };
+      before.current ??= readDrawn(liveDrawing.root?.parentElement ?? liveDrawing.root ?? place, recordLabelsOf(liveDrawing.root, named));
+      partHeadings.current ??= headingsOf(section.elements);
       const was = before.current;
+      const mayReword = partHeadings.current;
       const stop = new AbortController();
       stopping.current = stop;
       const started = Date.now();
@@ -320,6 +345,7 @@ export function SectionCard({ ask, close }: SectionCardProps) {
         keep: { title: "", headings: was.headings, records: was.records.map((one) => one.label), says: Object.fromEntries(was.records.flatMap((one) => (one.facts?.length || one.under ? [[one.label, { ...(one.facts?.length ? { shows: one.facts } : {}), ...(one.under ? { under: one.under } : {}) }]] : []))) },
         current: steps.current.at(-1)?.source ?? live,
         section: section.name,
+        rewordable: mayReword,
         noun: "records",
         ...(aboutNow.current ? { about: aboutNow.current } : {}),
         host: {
@@ -344,7 +370,8 @@ export function SectionCard({ ask, close }: SectionCardProps) {
               const now = readDrawn(root?.parentElement ?? root, was.records.map((one) => one.label));
               // And every control it draws pressed, headless and nothing applied: one that does nothing, throws or is refused goes back to the agent.
               const pressed = view.presses ? await view.presses(source).catch(() => undefined) : undefined;
-              const findings = [...judged(view, original.current!, liveDrawing, liveRefused, drawn, source).findings, ...drawnFindings(was, now, { asked: askedWords() }), ...(pressed?.problems ?? []).slice(0, 5).map((one) => `${one.control}: ${one.says}`)];
+              const asked = { asked: askedWords(), mayReword };
+              const findings = [...judged(original.current!, liveDrawing, liveRefused, drawn, source, asked), ...drawnFindings(was, now, asked), ...(pressed?.problems ?? []).slice(0, 5).map((one) => `${one.control}: ${one.says}`)];
               if (findings.length > 0) await showLatest();
               else {
                 steps.current.push({ source, said: describeChange(section.name, was, now) ?? `“${section.name}” has changed. Compare Before and After.`, entry: entryOf(`Make “${section.name}” better: ${askedWords()}`, "offered", []) });
@@ -373,9 +400,11 @@ export function SectionCard({ ask, close }: SectionCardProps) {
       tell(askedWords(), section, !offered, result.stages, Date.now() - started, entry.id);
       // What a control does is the press check's to say, never the model's.
       say("graview", result.passed && CONTROL_WORDS.test(result.said) ? "Here it is on the page." : result.said);
+      // Two drafts failed the same way: the person chooses — keep the last one anyway, where it drew, or stop.
+      if (result.ended === "stuck" && !offered) return setPhase({ at: "stuck", ...(result.keepable && result.last ? { source: result.last.source } : {}) });
       setPhase(steps.current.length > 0 ? { at: "draft" } : { at: "open" });
     },
-    [ai, aiDesk, drawDraft, entryOf, phase.at, place, redraw, say, section, showLatest, tell],
+    [ai, aiDesk, drawDraft, entryOf, phase.at, place, redraw, say, section, showLatest, store, tell],
   );
 
   /** Stop: at once — the turn's drafts gone, the view as it was before it began. */
@@ -413,9 +442,11 @@ export function SectionCard({ ask, close }: SectionCardProps) {
     [current, comparing, drawDraft],
   );
 
-  const keep = useCallback(async () => {
+  const keep = useCallback(async (anyway?: string) => {
+    // Kept anyway: the last draft of a turn that failed the same way twice, as the person chose.
+    if (anyway !== undefined && phase.at === "stuck") steps.current.push({ source: anyway, said: `“${section.name}” kept as it was last drafted.`, entry: entryOf(`Make “${section.name}” better: ${askedWords()}`, "offered", []) });
     const latest = steps.current.at(-1);
-    if (phase.at !== "draft" || !latest || !keptViews?.revise || !handle.current) return;
+    if ((phase.at !== "draft" && !(anyway !== undefined && phase.at === "stuck")) || !latest || !keptViews?.revise || !handle.current) return;
     const view = handle.current;
     const was = (await view.source()) ?? "";
     setPhase({ at: "keeping" });
@@ -430,9 +461,20 @@ export function SectionCard({ ask, close }: SectionCardProps) {
       setPhase({ at: "kept", source: was, ...(answer && answer.note ? { note: answer.note } : {}), answer, entry: latest.entry });
     } catch {
       say("graview", "It couldn't be kept.");
+      if (anyway !== undefined) {
+        steps.current.pop();
+        return setPhase(steps.current.length > 0 ? { at: "draft" } : { at: "open" });
+      }
       setPhase({ at: "draft" });
     }
-  }, [phase, keptViews, aiDesk, section.name, ended, say]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, keptViews, aiDesk, section.name, ended, say, entryOf]);
+
+  /** Stop, where two drafts failed the same way: nothing kept, the view as it was. */
+  const stopStuck = useCallback(() => {
+    say("graview", "Stopped. The view is as it was.");
+    setPhase(steps.current.length > 0 ? { at: "draft" } : { at: "open" });
+  }, [say]);
 
   const discard = useCallback(() => {
     draft.current?.dispose();
@@ -512,6 +554,7 @@ export function SectionCard({ ask, close }: SectionCardProps) {
         working={phase.at === "working" || phase.at === "keeping"}
         {...(current && phase.at === "draft" ? { draft: { said: current.said, before: comparing } } : {})}
         {...(phase.at === "kept" ? { kept: { ...(phase.note ? { note: phase.note } : {}), undo: () => void undo() } } : {})}
+        {...(phase.at === "stuck" ? { stuck: { ...(phase.source !== undefined ? { keepAnyway: () => void keep(phase.source) } : {}), stop: stopStuck } } : {})}
         about={(pointedAt.current ?? aboutNow.current)?.name ?? section.name}
         ask={(words) => void askFor(words)}
         just={() => void askFor("Make it easier to read at a glance")}

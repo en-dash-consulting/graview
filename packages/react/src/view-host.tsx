@@ -1,5 +1,5 @@
 import { counted, labelOf, nounOf, SCENE_LAYERS } from "@graview/core";
-import { recededOpacity, transformFor, treatmentOf, hueFor } from "@graview/render";
+import { recededOpacity, transformFor, treatmentOf, hueFor, OUTSET_ATTRIBUTE, outsetText } from "@graview/render";
 import {
   useEffect,
   useRef,
@@ -12,6 +12,7 @@ import {
 import type { ActivityMark } from "./activity.js";
 import { useGraview } from "./context.js";
 import { joinedFrom, pickedFrom, usePickTargets } from "./picking.js";
+import { useCapturedOutset } from "./captured-outset.js";
 import { holderFrom } from "./picked.js";
 import { sectionsArrive, sectionsWanted, sectionUnderNow, type MenuViewSection } from "./view-places.js";
 import { WHO } from "./where-drawn.js";
@@ -203,6 +204,8 @@ export function SceneViewHost({
   const blur = blurs ? treatment.blur : 0;
   const ref = useRef<HTMLDivElement | null>(null);
   usePickTargets(ref);
+  // A district on its plot draws past its box; captured, its box is grown to hold it (captured-outset.ts).
+  const outset = useCapturedOutset(ref, !useDom && frontY !== undefined);
 
   /*
    * A view drawn smaller than it was designed for is SCALED, not re-solved.
@@ -276,6 +279,19 @@ export function SceneViewHost({
     };
   }, [screen, onDrawnHeight, node.id]);
 
+  /*
+   * WHERE ON ITS PLOT A DISTRICT'S NAME AND LANDMARK STAND, on BOTH paths.
+   * They are lengths in the host's own box, which the GPU path lays out as
+   * the DOM path does. Handed to the DOM path alone, the name's
+   * `top: calc(var(--graview-front-y) + 4px)` was invalid on the GPU path
+   * and fell to the top of the box: every district's name was drawn over
+   * its own buildings there, which the Nightly first saw when Chrome 157
+   * became the first stable whose capture the scene draws with.
+   */
+  const onPlot: CSSProperties = {
+    ...(frontY !== undefined ? { ["--graview-front-y" as string]: `${frontY.toFixed(1)}px` } : {}),
+    ...(centerY !== undefined ? { ["--graview-center-y" as string]: `${centerY.toFixed(1)}px` } : {}),
+  };
   const domOnly: CSSProperties = useDom
     ? {
         transform: cssTransform(transform),
@@ -296,8 +312,7 @@ export function SceneViewHost({
          * built on `Panel` gets it without knowing planes exist.
          */
         ["--graview-lift-low" as string]: planeShadow(style.shadow, scheme),
-        ...(frontY !== undefined ? { ["--graview-front-y" as string]: `${frontY.toFixed(1)}px` } : {}),
-        ...(centerY !== undefined ? { ["--graview-center-y" as string]: `${centerY.toFixed(1)}px` } : {}),
+        ...onPlot,
       }
     : // The GPU path does NOT fade the host: the shader owns opacity there,
       // and applying it in both places made an entering view fade as
@@ -305,7 +320,7 @@ export function SceneViewHost({
       // renderers disagreed about the same transition. It also meant a view
       // captured mid-fade baked its own transparency into the texture.
       // The plane's shadow is the panel's own on both paths, so it is captured with it.
-      { ["--graview-lift-low" as string]: planeShadow(style.shadow, scheme) };
+      { ["--graview-lift-low" as string]: planeShadow(style.shadow, scheme), ...onPlot };
 
   return (
     <div
@@ -313,6 +328,7 @@ export function SceneViewHost({
       data-graview-view={node.id}
       // What the capture path draws: Chromium 158 takes only a canvas child that says so.
       {...(useDom ? {} : { drawable: "" })}
+      {...(outset ? { [OUTSET_ATTRIBUTE]: outsetText(outset) } : {})}
       data-graview-plane={Math.round(node.plane)}
       data-graview-selected={selected || undefined}
       data-graview-touched={touched || undefined}
@@ -594,14 +610,17 @@ export function SceneViewHost({
         // beside it, and a chip half-hidden behind the live view is a chip
         // nobody can press.
         zIndex: node.opened ? SCENE_LAYERS.opened : SCENE_LAYERS.card - Math.round(node.plane),
-        left: useDom ? 0 : Math.round(node.x),
-        top: useDom ? 0 : Math.round(node.y),
+        left: useDom ? 0 : Math.round(node.x) - (outset?.left ?? 0),
+        top: useDom ? 0 : Math.round(node.y) - (outset?.top ?? 0),
         // Whole pixels, matching what the renderer allocates a texture for.
         // A host of height 399.4 rasterizes into 400 rows; a texture sized
         // from the rounded 399 rejects the copy, and the view keeps whatever
         // was in the texture before — silently.
-        width: Math.round(node.width),
-        height: Math.round(node.height),
+        // An outset grows the box as padding: the layout's box is the content
+        // box, where it was, and what is drawn past it is inside the capture.
+        width: Math.round(node.width) + (outset ? outset.left + outset.right : 0),
+        height: Math.round(node.height) + (outset ? outset.top + outset.bottom : 0),
+        ...(outset ? { padding: `${outset.top}px ${outset.right}px ${outset.bottom}px ${outset.left}px` } : {}),
         boxSizing: "border-box",
         // A view that sizes to its content is centered in the box the layout
         // gave it, rather than pinned to the top with the remainder left as
@@ -625,8 +644,9 @@ export function SceneViewHost({
           data-graview-natural={`${Math.round(natural.width)}x${Math.round(natural.height)}`}
           style={{
             position: "absolute",
-            left: "50%",
-            top: "50%",
+            // The middle of the layout's box, which an outset leaves off the padding box's middle.
+            left: outset ? `calc(50% + ${(outset.left - outset.right) / 2}px)` : "50%",
+            top: outset ? `calc(50% + ${(outset.top - outset.bottom) / 2}px)` : "50%",
             width: natural.width,
             height: natural.height,
             transform: `translate(-50%, -50%) scale(${shrink})`,

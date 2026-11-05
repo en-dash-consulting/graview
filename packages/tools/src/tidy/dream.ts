@@ -152,6 +152,9 @@ export function touchedIn(store: Pick<Store<AnySchema>, "log">): Map<string, num
 
 const plural = (count: number, one: string) => `${count === 1 ? "one" : count} ${one}${count === 1 ? "" : "s"}`;
 
+/** A link's basis that rests on one word the two records share, as blocking said it before one word stopped being evidence: "(they share the word “what”)". */
+const ONE_SHARED_WORD = /\bthey share the word “[^”]*”\)?\s*$/i;
+
 type Weighed = Candidate & { readonly severity: Severity; readonly model?: string; readonly split?: boolean; readonly none?: boolean };
 
 /**
@@ -229,7 +232,9 @@ export async function dream<S extends AnySchema>(store: Store<S>, options: Dream
     const confidence = one.lineage?.confidence;
     const severity = judge !== undefined ? severities.get(judge) : undefined;
     if (one.author.kind !== principal.kind || one.author.id !== principal.id || severity === undefined || typeof confidence !== "number") continue;
-    if (routeOf(confidence, severity, options.bands) !== "drop") continue;
+    // A link it suggested on one word the two records shared, before one word stopped being evidence (Roadmap f-suggestion-card-one-line).
+    const oneWord = (judge === "links" || judge === "missing-links") && ONE_SHARED_WORD.test(one.lineage?.basis ?? "");
+    if (!oneWord && routeOf(confidence, severity, options.bands) !== "drop") continue;
     const candidate: Weighed = { judge: judge!, calls: one.calls, basis: one.lineage?.basis ?? "", confidence, about: one.about, severity, ...(one.lineage?.model ? { model: one.lineage.model } : {}) };
     try {
       withdrawSuggestion(whole, one.id, { author: principal, ...(options.via ? { via: options.via } : {}) });

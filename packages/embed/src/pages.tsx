@@ -16,7 +16,7 @@ import { flushSync } from "react-dom";
 import { createNoticeBoard, frameworkVoice, NoticeBoardContext, type Notice, type NoticeHandle } from "@graview/primitives/frame";
 import { barLeaves, FaceBoundary, FrameBar, FrameFirstLook, FrameNotices, hostBarOf, hostBarProps, type HostBar, placeOfPath, providerProps, storeOf, titleBelow, useErrorReport, useFrame, useIntrinsicHeight, useReady, useSteering, useViews, type EmbedHostContext, type FrameOptions } from "./frame.js";
 import { addressOf, pathWithin } from "@graview/core";
-import { appKeyOf, BarFindContext, type AppMenuRow, type BarFind, type BarScheme, type BarShare } from "@graview/primitives/frame";
+import { appKeyOf, BarFindContext, type AppMenuRow, type BarFind, type BarScheme, type BarShare, type BarStatus } from "@graview/primitives/frame";
 
 /**
  * THE PAGES AND NOTHING ELSE (FR-19). `@graview/embed/pages` mounts the
@@ -121,6 +121,7 @@ function PagesDrawing<S extends AnySchema>(props: PagesEmbedProps<S>) {
                   appMenu={props.appMenu}
                   schemeChoice={props.schemeChoice}
                   share={props.share}
+                  status={props.status}
                   onFind={setBarFind}
                 />
               </FaceBoundary>
@@ -166,6 +167,8 @@ export interface PagesEmbedHandle {
   setAppMenu(rows: readonly AppMenuRow[] | undefined): void;
   /** The host's Share beside the people (Roadmap f-app-bar-calm), now: who can open the app changed, say; `undefined` takes it off. */
   setShare(share: BarShare | undefined): void;
+  /** The host's status beside its tools (Roadmap f-bar-status-item), now: who can open the app changed, say; `undefined` takes it off. */
+  setStatus(status: BarStatus | undefined): void;
   /** The scheme the app menu offers (Roadmap f-scheme-choice-mount), now: the person's choice as the host keeps it; `undefined` takes it off. */
   setSchemeChoice(choice: BarScheme | undefined): void;
   /** The host's notifications in the inbox (Roadmap f-app-bar-calm), now; `undefined` takes them off. */
@@ -254,6 +257,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
     setBarActions: (actions) => flushSync(() => set?.barActions(actions)),
     setAppMenu: (appMenu) => flushSync(() => set?.hostBar({ appMenu })),
     setShare: (share) => flushSync(() => set?.hostBar({ share })),
+    setStatus: (status) => flushSync(() => set?.hostBar({ status })),
     setSchemeChoice: (schemeChoice) => flushSync(() => set?.hostBar({ schemeChoice })),
     setNotifications: (notifications) => flushSync(() => set?.hostBar({ notifications })),
     setDraftView: (draft) => flushSync(() => set?.draft(draft)),

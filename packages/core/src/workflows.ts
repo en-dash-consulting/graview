@@ -30,5 +30,6 @@ export { scheduleOf, scheduleOfCron, scheduleOfWords, scheduleWords, SCHEDULE_WO
 export { nextOf, nextRunAt } from "./workflows/next.js";
 export { triggerWords, workflowWords } from "./workflows/words.js";
 export { triggeredBy, workflowOrigin, type FiredTrigger, type WorkflowCommit, type WorkflowOrigin } from "./workflows/triggered.js";
-export { documentWorkflowFindings, workflowFindings, workflowFindingsOf } from "./workflows/findings.js";
+export { documentWorkflowFindings, workflowFindings, workflowFindingsOf, type WorkflowCheckOptions } from "./workflows/findings.js";
+export { farArgsFindings, farNamesOf, farReachOf, farReferenceFindings, farReferenceOf, farWords, isFarReference, type FarActShape, type FarAppResolver, type FarAppShape, type FarCheck, type FarReach, type FarReference } from "./workflows/far.js";
 export { keyedId, recordsOver, workflowKey, workflowSpecHash, workflowValue } from "./workflows/values.js";

@@ -3,7 +3,7 @@ import { declaredWorkflows } from "@graview/core/workflows";
 import type { HostAi } from "../ai.js";
 import type { WorkflowTools } from "../agent/workflow-tools.js";
 import { runWorkflow } from "./run.js";
-import type { WorkflowLog } from "./types.js";
+import type { FarApps, WorkflowLog } from "./types.js";
 
 /**
  * WHAT A HOST HANDS AN OWNER'S SEAT (Roadmap f-jobs-declared): a way to run
@@ -18,6 +18,8 @@ export function seatWorkflows<S extends AnySchema>(options: {
   readonly store: Store<S>;
   readonly log: WorkflowLog;
   readonly ai?: HostAi;
+  /** The host's way into other apps, for a step that names another app's kind or act. */
+  readonly farApps?: FarApps;
   readonly edit?: WorkflowTools["edit"];
 }): WorkflowTools {
   return {
@@ -32,6 +34,7 @@ export function seatWorkflows<S extends AnySchema>(options: {
         trigger: { kind: "byHand", ...(who !== undefined ? { who } : {}) },
         ...(dryRun ? { dryRun: true } : {}),
         ...(options.ai ? { ai: options.ai } : {}),
+        ...(options.farApps ? { farApps: options.farApps } : {}),
       }),
     ...(options.edit ? { edit: options.edit } : {}),
   };

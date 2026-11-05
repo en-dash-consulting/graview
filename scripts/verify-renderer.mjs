@@ -241,6 +241,22 @@ try {
       const clip = { x: scene.x, y: scene.y, width: scene.width, height: scene.height };
       report.picture = await compare(scratch, await gpu.page.screenshot({ clip }), await dom.page.screenshot({ clip }));
 
+      /*
+       * THE SAME CITY FROM ALTITUDE. A district draws past its box there —
+       * its name hung under its plot, its landmark standing over it — and
+       * the capture takes a box and nothing outside it: on Chrome 157 the
+       * GPU path drew every name over its own buildings, then (once placed)
+       * cut it off, and the landmark lost its head (captured-outset.ts).
+       */
+      const cityOnGpu = await open(capturing, `${home}#overview=1`);
+      const cityOnDom = await open(capturing, `${home}&renderer=dom#overview=1`);
+      report.city = { gpu: await pathOf(cityOnGpu.page, "gpu"), dom: await pathOf(cityOnDom.page, "dom") };
+      const ground = await cityOnGpu.page.locator(".graview-ground").boundingBox();
+      const cityClip = { x: ground.x, y: ground.y, width: ground.width, height: ground.height };
+      report.city.picture = await compare(scratch, await cityOnGpu.page.screenshot({ clip: cityClip }), await cityOnDom.page.screenshot({ clip: cityClip }));
+      await cityOnGpu.page.close();
+      await cityOnDom.page.close();
+
       // THE BLUR ON THE GPU: the focused plane sharp, a receded one blurred.
       const where = await rects(gpu.page);
       report.gpu.rects = where;
@@ -309,6 +325,7 @@ report.claims = {
         aChromiumThatCanCaptureDrawsOnTheGpuByDefault: report.gpu.path.inCanvas > 0 && report.gpu.said.length === 0 && (report.gpu.stillOnGpuAfterMoving || software),
         theAccessibilityTreeIsTheSameOnBothPaths: report.tree.same,
         theTwoPathsDrawTheSamePicture: report.picture.share <= 0.01,
+        theTwoPathsDrawTheSameCityFromAltitude: report.city.picture.share <= 0.01,
         onTheGpuTheFocusedPlaneIsSharp: report.gpu.focusedPlane.share === 0,
         onTheGpuTheRecededPlanesAreBlurred: report.gpu.recededPlane.share > 0,
         onTheGpuBlurHoldsTheBudgetItHoldsWithout: Boolean(sameBudget(report.gpu.framesBlurred, report.gpu.framesUnblurred)),

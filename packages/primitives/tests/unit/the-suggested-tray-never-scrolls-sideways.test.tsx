@@ -111,13 +111,15 @@ describe("the Suggested tray, with seventeen suggestions on a record whose name 
       expect(words.textContent).toContain(LONG);
       expect(basis.textContent).toContain(LONG);
       for (const line of [words, basis]) expect(line.style.overflowWrap).toBe("anywhere");
-      const chips = row.querySelector<HTMLElement>("[data-graview-suggestion-records]")!;
-      expect(chips.style.flexWrap).toBe("wrap");
-      expect(chips.style.minWidth).toBe("0px");
-      const chip = [...chips.querySelectorAll<HTMLElement>('[data-graview-primitive="chip"]')].find((one) => one.textContent === LONG)!;
-      expect(chip.title).toBe(LONG);
-      expect(chip.style.maxWidth).toBe("min(28ch, 100%)");
-      expect(chip.style.overflow).toBe("hidden");
+      // The record is named in the sentence, cut where it stands, its whole name its title (Roadmap f-suggestion-card-one-line).
+      const name = [...words.querySelectorAll<HTMLElement>('[data-testid="suggestion-record"]')].find((one) => one.textContent === LONG)!;
+      expect(name.title).toBe(`Go to ${LONG}`);
+      expect(name.style.maxWidth).toBe("min(24ch, 100%)");
+      expect(name.style.overflow).toBe("hidden");
+      expect(name.style.textOverflow).toBe("ellipsis");
+      // Its buttons wrap below it rather than widen the row.
+      expect(words.parentElement!.style.flexWrap).toBe("wrap");
+      expect(words.parentElement!.style.minWidth).toBe("0px");
     }
   });
 });

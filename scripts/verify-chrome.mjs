@@ -731,8 +731,14 @@ try {
         const button = await window.__inbox("for-you");
         if (!button) return null;
         for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="suggestion"]'); turn++) await new Promise((done) => setTimeout(done, 50));
-        const rows = [...document.querySelectorAll('[data-testid="suggestion"]')].map((row) => row.textContent ?? "");
-        return { count: document.querySelector('[data-testid="inbox-tab-for-you"] .graview-inbox-tab-count')?.textContent ?? null, rows, edges: window.__handle.store.graph.allEdges().length };
+        const rows = [...document.querySelectorAll('[data-testid="suggestion"]')].map((row) => row.querySelector("[data-graview-suggestion-words]")?.textContent ?? "");
+        // Why it was suggested waits behind "Why?" (Roadmap f-suggestion-card-one-line): hidden until pressed, then the maker's words alone.
+        const why = document.querySelector('[data-testid="suggestion-why"]');
+        const because = document.getElementById(why?.getAttribute("aria-controls") ?? "");
+        const hiddenAtFirst = because?.hidden ?? null;
+        why?.click();
+        await new Promise((done) => setTimeout(done, 50));
+        return { count: document.querySelector('[data-testid="inbox-tab-for-you"] .graview-inbox-tab-count')?.textContent ?? null, rows, hiddenAtFirst, why: because && !because.hidden ? because.textContent : null, buttons: [...document.querySelectorAll('[data-testid="suggestion"] button')].map((one) => one.textContent), edges: window.__handle.store.graph.allEdges().length };
       });
       await page.keyboard.press("Escape");
       // Activity: the actor's two links, one digest row that opens to each with its lineage and its own undo.
@@ -767,12 +773,30 @@ try {
       });
       await page.close();
       const ok =
-        tray !== null && tray.count === "1" && tray.rows.length === 1 && /suggests/.test(tray.rows[0]) && /The post is redirected from the day notice is given/.test(tray.rows[0]) && /45% sure/.test(tray.rows[0]) &&
+        tray !== null && tray.count === "1" && tray.rows.length === 1 && tray.rows[0] === "Should “Redirect the post” wait for Give notice on the flat?" &&
+        tray.hiddenAtFirst === true && tray.why === "The post is redirected from the day notice is given." && JSON.stringify(tray.buttons.slice(-4)) === JSON.stringify(["Why?", "Yes", "No", "Later"]) &&
         digest !== null && /Graview, tidying/.test(digest.said) && /Tidied 2 things today/.test(digest.said) && digest.each.length === 2 && digest.each.every((one) => /\d+% sure/.test(one)) && digest.undoes === 2 &&
         declined.trayGone && declined.unchanged && declined.declinedBy === "user-nora" && declined.keyboard !== "BODY";
       tidying[face] = { tray, digest, declined, ok };
     }
     report.checks.whatTidyingDidAndSuggestsIsSaidOnTheTodoExample = { ...tidying, ok: Object.values(tidying).every((one) => one.ok) };
+    // The suggestion card photographed at a desk's width and a phone's, where GRAVIEW_SHOTS names a folder: what a person reads, not a claim.
+    const shots = process.env.GRAVIEW_SHOTS;
+    if (shots) {
+      mkdirSync(shots, { recursive: true });
+      for (const [name, viewport, asked] of [["desk", { width: 1440, height: 900 }, "tidy=1"], ["phone", { width: 390, height: 844 }, "tidy=1"], ["crowded-desk", { width: 1440, height: 900 }, "crowd=1"], ["crowded-phone", { width: 390, height: 844 }, "crowd=1"]]) {
+        const page = await browser.newPage({ viewport });
+        page.on("pageerror", (error) => errors.push(error.message));
+        await page.goto(`${at("chrome-host")}/?face=pages&${asked}`, { waitUntil: "load" });
+        await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+        await page.evaluate(async () => {
+          await window.__inbox("for-you");
+          for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="suggestion"]'); turn++) await new Promise((done) => setTimeout(done, 50));
+        });
+        await page.locator('[data-testid="inbox"]').screenshot({ path: join(shots, `suggestion-card-${name}.png`) });
+        await page.close();
+      }
+    }
   }
   /*
    * ---- A suggestion takes a vote from someone who may not accept it (f-suggestion-votes), on both faces: a reader — the list's grant
@@ -1050,12 +1074,13 @@ try {
         const wide = (one) => one.scrollWidth > one.clientWidth;
         const rows = [...panel.querySelectorAll('[data-testid="suggestion"]')];
         const box = panel.getBoundingClientRect();
-        const long = [...panel.querySelectorAll('[data-graview-primitive="chip"]')].find((chip) => (chip.textContent ?? "").startsWith("@tanstack/"));
+        // The long name, cut where it stands in the sentence and whole in its title (Roadmap f-suggestion-card-one-line).
+        const long = [...panel.querySelectorAll('[data-testid="suggestion-record"]')].find((one) => (one.textContent ?? "").startsWith("@tanstack/"));
         return {
           rows: rows.length,
           panel: { scrollWidth: panel.scrollWidth, clientWidth: panel.clientWidth, left: Math.round(box.left), right: Math.round(box.right), page: innerWidth },
           wideRows: rows.filter(wide).map((row) => ({ scrollWidth: row.scrollWidth, clientWidth: row.clientWidth })),
-          chip: long ? { title: long.getAttribute("title"), width: Math.round(long.getBoundingClientRect().width), cut: long.scrollWidth >= long.clientWidth } : null,
+          chip: long ? { title: long.getAttribute("title"), whole: long.textContent, width: Math.round(long.getBoundingClientRect().width), cut: long.scrollWidth >= long.clientWidth } : null,
         };
       });
       await page.close();
@@ -1067,7 +1092,7 @@ try {
         said.panel.left >= 0 &&
         said.panel.right <= said.panel.page &&
         said.chip !== null &&
-        said.chip.title?.length === 120 &&
+        said.chip.whole?.length === 120 && said.chip.title === `Go to ${said.chip.whole}` &&
         said.chip.width <= said.panel.clientWidth;
       crowded[face] = { said, ok };
     }

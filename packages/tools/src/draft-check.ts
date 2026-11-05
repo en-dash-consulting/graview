@@ -39,40 +39,118 @@ export interface DrawnRead {
 const norm = (words: string) => words.replace(/\s+/g, " ").trim().toLowerCase();
 const counted = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
 
-/** What a refused stylesheet rule needs, in words a model can act on. */
-function refusalWords(refusal: CssRefusal): string {
+/** A list said in words: "a", "a and b", "a, b and c". */
+const listed = (list: readonly string[]) => (list.length < 2 ? (list[0] ?? "") : `${list.slice(0, -1).join(", ")} and ${list.at(-1)}`);
+
+/** One refusal of a stylesheet, with the rule it was in (its selector, or its at-rule's head) and what of that rule was kept. */
+interface StyleRefusal {
+  readonly refusal: CssRefusal;
+  readonly rule?: string;
+  readonly kept?: readonly string[];
+}
+
+/**
+ * What a refused stylesheet rule needs, in words a model can act on — and,
+ * where it was in a rule, which rule and what of it was kept: "In “.home
+ * .lg”, the property “image-rendering” is not allowed and is removed
+ * (border-radius is kept): …".
+ */
+function refusalWords({ refusal, rule, kept }: StyleRefusal): string {
   const name = refusal.name ? `“${refusal.name}”` : "";
+  const where = rule ? `In “${rule}”, ` : "";
+  const keeps = kept && kept.length > 0 ? ` (${listed(kept)} ${kept.length === 1 ? "is" : "are"} kept)` : "";
+  const begun = (words: string) => (where ? `${where}${words}` : words.charAt(0).toUpperCase() + words.slice(1));
   switch (refusal.reason) {
     case "selector":
       return `The selector “${/^(host|host-context)$/.test(refusal.name ?? "") ? ":" : /^(slotted|part)$/.test(refusal.name ?? "") ? "::" : ""}${refusal.name ?? ""}” reaches outside the view and is removed with its rule: give the view's outer element a class and style that instead.`;
     case "at-rule":
       return `${name || "An at-rule"} is not allowed and is removed with what it holds: use plain rules and @media only.`;
     case "property":
-      return `The property ${name} is not allowed and is removed: use ordinary layout, color and type properties.`;
+      return `${begun(`the property ${name}`)} is not allowed and is removed${keeps}: use ordinary layout, color and type properties.`;
     case "function":
-      return `The function ${name}() is not allowed and is removed: use var(--graview-…), calc(), min(), max(), clamp() or repeat().`;
+      return `${begun(`the function ${name}()`)} is not allowed and is removed${keeps}: use var(--graview-…), calc(), min(), max(), clamp() or repeat().`;
     case "url":
-      return "url() is not allowed and is removed: draw nothing from an address.";
+      return `${begun("url()")} is not allowed and is removed${keeps}: draw nothing from an address.`;
     case "value":
-      return `A value of ${name || "a property"} is not allowed and is removed (position may be static, relative, absolute or sticky).`;
+      return `${begun(`a value of ${name || "a property"}`)} is not allowed and is removed${keeps} (position may be static, relative, absolute or sticky).`;
     case "size":
       return "The stylesheet is too long and is removed whole: keep it short.";
     default:
-      return `A rule ${name ? `near ${name} ` : ""}could not be read and is removed: write plain CSS, one rule at a time, no nesting.`;
+      return `${begun(`a rule ${name ? `near ${name} ` : ""}`)}could not be read and is removed: write plain CSS, one rule at a time, no nesting.`;
   }
 }
+
+/** The rules of a stylesheet at its top level, each with its head (a selector, or an at-rule's prelude) and its whole text. */
+function topRules(css: string): { readonly head: string; readonly text: string }[] {
+  const rules: { head: string; text: string }[] = [];
+  const bare = css.replace(/\/\*[\s\S]*?\*\//g, (comment) => " ".repeat(comment.length));
+  let at = 0;
+  while (at < bare.length) {
+    const open = bare.indexOf("{", at);
+    if (open < 0) break;
+    let depth = 0;
+    let close = open;
+    for (; close < bare.length; close++) {
+      if (bare[close] === "{") depth += 1;
+      else if (bare[close] === "}" && --depth === 0) break;
+    }
+    rules.push({ head: bare.slice(at, open).replace(/\s+/g, " ").trim(), text: bare.slice(at, close + 1) });
+    at = close + 1;
+  }
+  return rules;
+}
+
+/** The properties a sanitized rule kept, in order: each declaration's name in `selector { name: value; … }` — none for an at-rule's. */
+function keptOf(css: string): string[] {
+  const open = css.indexOf("{");
+  if (open < 0 || css.trimStart().startsWith("@")) return [];
+  return [...new Set([...css.slice(open + 1).matchAll(/(?:^|;)\s*(-{0,2}[a-zA-Z][\w-]*)\s*:/g)].map((one) => one[1]!))];
+}
+
+/** What the host's sanitizer refuses of a script's stylesheets, each with the rule it was in and what of that rule was kept. */
+function styleRefusalsOf(source: string): StyleRefusal[] {
+  const found: StyleRefusal[] = [];
+  for (const sheet of styleStringsOf(source)) {
+    const css = source.slice(sheet.start, sheet.end).replace(/\$\{(?:[^{}]|\{[^{}]*\})*\}/g, "0");
+    const whole = sanitizeStylesheet(css).refused;
+    if (whole.length === 0) continue;
+    if (whole.some((one) => one.reason === "size")) {
+      found.push({ refusal: { reason: "size" } });
+      continue;
+    }
+    // Each rule judged alone, as the sanitizer judges it among the rest, so what it refuses is said with its own selector.
+    const left = [...whole];
+    for (const rule of topRules(css)) {
+      const judged = sanitizeStylesheet(rule.text);
+      const kept = keptOf(judged.css);
+      for (const refusal of judged.refused) {
+        const at = left.findIndex((one) => one.reason === refusal.reason && one.name === refusal.name);
+        if (at < 0) continue;
+        left.splice(at, 1);
+        found.push({ refusal, ...(rule.head ? { rule: rule.head } : {}), ...(kept.length > 0 ? { kept } : {}) });
+      }
+    }
+    // What no one rule accounts for is said as the sheet's.
+    found.push(...left.map((refusal) => ({ refusal })));
+  }
+  return found;
+}
+
+/** What makes two refusals the same: what was refused, why, and in which rule — never what else of the rule was kept. */
+const refusalKey = (one: StyleRefusal) => `${one.refusal.reason}|${one.refusal.name ?? ""}|${(one.rule ?? "").replace(/\s+/g, "")}`;
 
 /**
  * WHAT THE HOST WOULD STRIP FROM A SCRIPT'S STYLESHEETS, before it is
  * drawn: each `graview.style` string read by the framework's own
- * sanitizer, and what it refuses said as what to do instead.
+ * sanitizer, and what it refuses said by its rule — which rule, what of it
+ * was kept, why the rest is not — and what to do instead. With `already`
+ * (the script on the page), a refusal that script had too is left out: the
+ * page draws without it now, and a draft that keeps it changes nothing.
  */
-export function cssFindings(source: string): string[] {
+export function cssFindings(source: string, options: { readonly already?: string } = {}): string[] {
+  const before = options.already === undefined ? new Set<string>() : new Set(styleRefusalsOf(options.already).map(refusalKey));
   const findings = new Set<string>();
-  for (const sheet of styleStringsOf(source)) {
-    const css = source.slice(sheet.start, sheet.end).replace(/\$\{(?:[^{}]|\{[^{}]*\})*\}/g, "0");
-    for (const refusal of sanitizeStylesheet(css).refused) findings.add(refusalWords(refusal));
-  }
+  for (const one of styleRefusalsOf(source)) if (!before.has(refusalKey(one))) findings.add(refusalWords(one));
   return [...findings];
 }
 
@@ -125,6 +203,97 @@ function askedAway(asked: string | undefined, fact: string): boolean {
   return /\b(status|statuses|state|tag|tags|chip|chips|badge|badges|label|labels|pill|pills|meta|details)\b/.test(words) || words.includes(norm(fact));
 }
 
+/** Words that ask for a heading's words to change: "reword the top heading", "a shorter title", "rename this section". */
+const REWORD_VERB = /\b(re-?word\w*|re-?name\w*|re-?title\w*|re-?phrase\w*|rewrite|shorten|shorter|longer|wording|words|call it|say|says)\b/i;
+const A_HEADING = /\b(heading|headings|title|titles|header|headers|headline|headlines)\b/i;
+
+/** Whether the person's words ask for a heading's words to change. */
+export function asksToReword(asked: string | undefined): boolean {
+  return Boolean(asked && REWORD_VERB.test(asked) && A_HEADING.test(asked));
+}
+
+/**
+ * WHAT A DRAFT CHANGED THE WORDS OF, IN PLACE: each name of `before` that
+ * stands where a new name now stands — the same number of names, the one
+ * at that place no longer among them and the new one never among them
+ * before — by its old name. A part is found by where it stands, not by
+ * its words: a heading reworded is the same heading.
+ */
+export function renamedInPlace(before: readonly string[], after: readonly string[]): ReadonlyMap<string, string> {
+  const renamed = new Map<string, string>();
+  if (before.length !== after.length) return renamed;
+  const was = new Set(before.map(norm));
+  const now = new Set(after.map(norm));
+  before.forEach((name, at) => {
+    const next = after[at]!;
+    if (norm(name) !== norm(next) && !now.has(norm(name)) && !was.has(norm(next))) renamed.set(name, next);
+  });
+  return renamed;
+}
+
+/**
+ * THE NAMES A DRAFT NO LONGER DRAWS that it may not have changed: of
+ * `lost`, each but those reworded in place (`renamedInPlace`) where the
+ * person asked for a heading's words to change — and, where the part being
+ * changed is named (`mayReword`, its own headings), only that part's.
+ */
+export function lostUnlessReworded(lost: readonly string[], before: readonly string[], after: readonly string[], options: { readonly mayReword?: readonly string[]; readonly asked?: string }): string[] {
+  if (!asksToReword(options.asked)) return [...lost];
+  const renamed = renamedInPlace(before, after);
+  const theirs = (name: string) => !options.mayReword || options.mayReword.some((one) => norm(one) === norm(name));
+  return lost.filter((name) => !(renamed.has(name) && theirs(name)));
+}
+
+/**
+ * WHAT A CHECK FOUND, BY WHAT IT IS: a record left out or shown twice, a
+ * fact a record no longer says, a record in another group, a heading or a
+ * part no longer drawn, the title drawn twice, words shown as the computer
+ * keeps them, a style the page will not keep, a class left unstyled, a
+ * control that does not work, a draft that did not draw, an edit whose
+ * text is not in the script once (`edit-missed`) — and `other`, said in
+ * its own words.
+ */
+export type FindingKind = "record-lost" | "record-twice" | "fact-lost" | "record-moved" | "heading-lost" | "section-lost" | "title-twice" | "computer-words" | "style-refused" | "unstyled" | "control" | "did-not-draw" | "edit-missed" | "other";
+
+/** A finding with what it is: what a host logs, and what the panel says it by. */
+export interface DraftFinding {
+  readonly kind: FindingKind;
+  readonly words: string;
+}
+
+/** What one finding is, read from its words. */
+export function findingKind(finding: string): FindingKind {
+  if (/^Edit \d+: “|^There is no script to edit|^Your edits change nothing/.test(finding)) return "edit-missed";
+  if (/no longer says what it said/.test(finding)) return "fact-lost";
+  if (/^It no longer shows “/.test(finding)) return "record-lost";
+  if (/more often than the page did/.test(finding)) return "record-twice";
+  if (/moved to another group/.test(finding)) return "record-moved";
+  if (/no longer shows the heading/.test(finding)) return "heading-lost";
+  if (/” is not drawn any more\.?$/.test(finding)) return "section-lost";
+  if (/drawn twice/.test(finding)) return "title-twice";
+  if (/markup as words|a date as “|as the computer keeps it|a field's name/.test(finding)) return "computer-words";
+  if (/is still drawn and no rule styles it/.test(finding)) return "unstyled";
+  if (/can no longer be marked|no longer opens? (its|their) page/.test(finding)) return "control";
+  if (/did not draw|did not start|threw while drawing|could not start/.test(finding)) return "did-not-draw";
+  if (/not allowed|is removed|reaches outside/.test(finding)) return "style-refused";
+  return "other";
+}
+
+/**
+ * ONE DRAFT AS BETTER UI'S CHECKS JUDGED IT, told to the host
+ * (`HostAi.onDraftChecked`): the part it was for, which draft of the turn
+ * it was, whether it passed, and each finding whole with its kind.
+ */
+export interface DraftChecked {
+  readonly part: string;
+  readonly draft: number;
+  readonly passed: boolean;
+  readonly findings: readonly DraftFinding[];
+}
+
+/** Each finding with its kind. */
+export const findingsOf = (findings: readonly string[]): DraftFinding[] => findings.map((words) => ({ kind: findingKind(words), words }));
+
 /**
  * WHAT A DRAFT BROKE, against what the page showed: a record or a heading
  * it no longer shows, a fact a record's row said that its card no longer
@@ -132,9 +301,11 @@ function askedAway(asked: string | undefined, fact: string): boolean {
  * heading, a heading drawn twice, and words no person was shown before — a
  * field's own name, a date as the computer keeps it, `true`, `undefined`.
  * A fact or a group the person asked to change (`asked`: "hide the dates",
- * "group by status") is theirs to change. Empty when the draft may be shown.
+ * "group by status") is theirs to change, and so is a heading's wording
+ * they asked for — in its place, and only the part's being changed
+ * (`mayReword`) where one is. Empty when the draft may be shown.
  */
-export function drawnFindings(before: DrawnRead, after: DrawnRead, options: { readonly fields?: readonly string[]; readonly asked?: string } = {}): string[] {
+export function drawnFindings(before: DrawnRead, after: DrawnRead, options: { readonly fields?: readonly string[]; readonly asked?: string; readonly mayReword?: readonly string[] } = {}): string[] {
   const findings: string[] = [];
   const text = norm(after.text);
   const lost = before.records.map((one) => one.label).filter((label) => label && !text.includes(norm(label)));
@@ -157,7 +328,12 @@ export function drawnFindings(before: DrawnRead, after: DrawnRead, options: { re
   }
   if (factsLost.length > 0) findings.push(`A record no longer says what it said: ${factsLost.slice(0, 4).join(", ")}${factsLost.length > 4 ? ` and ${factsLost.length - 4} more` : ""}. Show on each record what the page showed on it (its status, its dates, its counts), in words.`);
   if (moved.length > 0) findings.push(`A record moved to another group: ${moved.slice(0, 3).join("; ")}${moved.length > 3 ? ` and ${moved.length - 3} more` : ""}. Keep each record under the heading it was under.`);
-  const headingsLost = before.headings.filter((heading) => heading && !text.includes(norm(heading)));
+  const headingsLost = lostUnlessReworded(
+    before.headings.filter((heading) => heading && !text.includes(norm(heading))),
+    before.headings,
+    after.headings,
+    options,
+  );
   if (headingsLost.length > 0) findings.push(`It no longer shows the heading${headingsLost.length > 1 ? "s" : ""} ${headingsLost.map((one) => `“${one}”`).join(", ")}: keep each heading the page had.`);
   const seen = new Map<string, number>();
   for (const heading of after.headings) if (heading.trim()) seen.set(norm(heading), (seen.get(norm(heading)) ?? 0) + 1);

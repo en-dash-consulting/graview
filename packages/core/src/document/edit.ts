@@ -1,3 +1,4 @@
+import type { FarAppResolver } from "../workflows/far.js";
 import { DERIVED_ACTS, derivedActOf, derivedActsOf, givenWhenNeverArchived, givenWhenNeverTidied, RELATION_ACTS, relationActName, relationActsOf } from "../mutations/derived-names.js";
 import { documentRelations, givesRelationAct, renamedRelationAct } from "./relation-acts.js";
 import * as z from "zod";
@@ -113,6 +114,14 @@ export interface EditOptions {
    * `view:<name>` names one, taken on the host's word.
    */
   readonly views?: readonly HostView[];
+  /**
+   * What the host knows of another app a workflow's step names
+   * (`@<address>/<kind or act>`, `FarAppResolver` on `@graview/core/workflows`):
+   * an `add-workflow` or `set-workflow` is then refused for an app, a kind,
+   * an act or an argument that app lacks, as `compileDocument(…, { resolveFarApp })`
+   * refuses it. Unsaid, such a name is held to its shape alone.
+   */
+  readonly resolveFarApp?: FarAppResolver;
 }
 
 /** The ops, for tool schemas and the guide. */
@@ -1301,7 +1310,7 @@ class Editor {
     const shaped = typeof workflow.title === "string" && Array.isArray(workflow.when) && workflow.when.length > 0 && Array.isArray(workflow.steps) && workflow.steps.length > 0;
     if (!shaped) return this.fail(i, "workflow", "a workflow is { title, when: [...], steps: [...] }, each list with at least one", `{"op": "${how}-workflow", "name": "${name}", "workflow": {"title": "…", "when": [{"every": "day 03:00"}], "steps": [{"act": "…"}]}}`);
     // Judged as `graview check` judges it, where the checker is loaded; else kept as shaped, and the check says the rest.
-    const judged = WORKFLOW_JUDGING.judge?.(name, workflow, { ...this.doc, workflows });
+    const judged = WORKFLOW_JUDGING.judge?.(name, workflow, { ...this.doc, workflows }, this.options.resolveFarApp ? { resolveFarApp: this.options.resolveFarApp } : undefined);
     for (const finding of judged?.errors ?? []) this.failAs(finding.code, i, `workflow${finding.path ? `.${finding.path}` : ""}`, finding.message, finding.fix);
     if (judged && judged.errors.length > 0) return;
     workflows[name] = workflow;

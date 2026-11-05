@@ -60,6 +60,59 @@ function factsOf(row: Element, name: Element): string[] {
   return facts;
 }
 
+/** The runs of words a person reads in an element, each apart: never its controls, nothing hidden. */
+function runsOf(element: Element): string[] {
+  const runs: string[] = [];
+  const walker = (element.ownerDocument ?? document).createTreeWalker(element, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const said = words(node.textContent);
+    if (said && !node.parentElement?.closest("button, script, style, [hidden], [aria-hidden='true']")) runs.push(said);
+  }
+  return runs;
+}
+
+/**
+ * THE RECORDS A VIEW'S DRAWING SHOWS, BY NAME (Roadmap
+ * f-better-ui-draws-first-time): each keyed row or card (`data-key`) and
+ * each record it links to (`data-record`), named as its record is — the
+ * label its kind gives it (`labelOf`, by its id) where the row says it,
+ * else a link's own words — never a row's words run together, which glue a
+ * tag to the name beside it ("bookedThe Velvet Notes"). A row of several
+ * runs of words and no link names nothing it could be sure of.
+ */
+export function recordLabelsOf(root: ParentNode | null | undefined, labelOf?: (id: string) => string | undefined): string[] {
+  if (!root) return [];
+  const labels: string[] = [];
+  const add = (label: string | undefined) => {
+    const said = words(label);
+    if (said.length > 1 && said.length < 80 && !labels.some((one) => one.toLowerCase() === said.toLowerCase())) labels.push(said);
+  };
+  for (const row of root.querySelectorAll("[data-key], [data-record]")) {
+    const id = row.getAttribute("data-record") ?? row.getAttribute("data-key") ?? "";
+    const runs = runsOf(row);
+    const own = id && labelOf ? labelOf(id) : undefined;
+    if (own && runs.join(" ").toLowerCase().includes(words(own).toLowerCase())) add(own);
+    // A keyed row with a link in it is named by the link, read on its own.
+    else if (!row.hasAttribute("data-record") && row.querySelector("[data-record]")) continue;
+    else if (runs.length === 1) add(runs[0]);
+  }
+  return labels.slice(0, 40);
+}
+
+/** The headings of a part, each in its own words: what may be reworded where a person asks it of that part. */
+export function headingsOf(elements: readonly Element[]): string[] {
+  const out: string[] = [];
+  for (const element of elements)
+    for (const heading of [element, ...element.querySelectorAll("*")]) {
+      if (!heading.matches("h1, h2, h3, h4, h5, h6, [role='heading']")) continue;
+      const copy = heading.cloneNode(true) as Element;
+      for (const span of copy.querySelectorAll("span")) if (/^[\s·\d]+$/.test(span.textContent ?? "")) span.remove();
+      const said = words(copy.textContent).replace(/^[▸▾]\s*/, "");
+      if (said && !out.includes(said)) out.push(said);
+    }
+  return out;
+}
+
 /**
  * A DRAWING READ FOR JUDGING: its headings in order, each record a label
  * names — the innermost element that says it, where it stands and how big

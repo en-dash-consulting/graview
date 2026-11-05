@@ -229,7 +229,7 @@ export function RateTelling({ told, telling }: { readonly told: ToldStore; reado
           />
           {kept ? (
             <span role="status" data-testid="quick-ask-should-kept" style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
-              Kept, to learn from.
+              {told.keptSays?.trim() || "Kept, to learn from."}
             </span>
           ) : null}
         </div>

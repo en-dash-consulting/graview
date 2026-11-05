@@ -11,7 +11,7 @@ import { createNoticeBoard, frameworkVoice, NoticeBoardContext, Notices, sceneRe
 import { DraftDoor } from "./draft-door.js";
 import { appKeyOf } from "./reader-lenses.js";
 import { registerReaderLenses } from "./declared-lens-doors.js";
-import { AppBar, type AppMenuRow, type BarAction, type BarFind, type BarShare } from "./app-bar.js";
+import { AppBar, type AppMenuRow, type BarAction, type BarFind, type BarShare, type BarStatus } from "./app-bar.js";
 import { SceneSkips } from "./scene-skips.js";
 import { useScenePlaces } from "./scene-places.js";
 import { SceneBarTools, SceneTrail, useCallLog } from "./scene-bar.js";
@@ -98,6 +98,8 @@ export interface ShellProps {
   readonly appMenu?: readonly AppMenuRow[];
   /** A HOST'S SHARE beside the people (Roadmap f-app-bar-calm): who can open the app, in a sentence, and where that changes. */
   readonly share?: BarShare;
+  /** A HOST'S STATUS beside its tools (Roadmap f-bar-status-item): a word and a mark, its sentence on hover and as its description. */
+  readonly status?: BarStatus;
   /**
    * THE HOST'S "REPORT THIS" (FR-237): given, every warning or error toast
    * the framework raises itself carries a button that hands the host the
@@ -193,6 +195,7 @@ function ShellFace<S extends AnySchema>({
   barActions,
   appMenu,
   share,
+  status,
   onReport,
   signature = false,
   quickAsk = true,
@@ -279,6 +282,7 @@ function ShellFace<S extends AnySchema>({
         {...(barActions ? { actions: barActions } : {})}
         {...(appMenu ? { appMenu } : {})}
         {...(share ? { share } : {})}
+        {...(status ? { status } : {})}
         // The scheme, in the app menu: light or dark, which the Shell's host keeps.
         scheme={{ value: scheme, onChoose: (chosen) => (chosen === "system" ? undefined : onScheme(chosen)), offers: ["light", "dark"] }}
         tools={

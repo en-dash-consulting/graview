@@ -4,7 +4,7 @@ import { declaredWorkflows, policiesOf, resolveWorkflow, workflowAuthor, workflo
 import { routeOf } from "../tidy/policy.js";
 import { askedOf } from "./ask.js";
 import { stepRunnerOf } from "./steps.js";
-import { MOST_CHAIN, type ChangeOutcome, type RunWorkflowOptions, type SpendSaid, type StepChange, type StepContext, type StepSpend, type WorkflowOutcome, type WorkflowRun, type WorkflowSpend } from "./types.js";
+import { MOST_CHAIN, type ChangeOutcome, type FarActAnswer, type FarApp, type FarOrigin, type FarStepChange, type FarWrite, type RunWorkflowOptions, type SpendSaid, type StepChange, type StepContext, type StepSpend, type WorkflowOutcome, type WorkflowRun, type WorkflowSpend } from "./types.js";
 
 /*
  * RUNNING ONE WORKFLOW (Roadmap f-jobs-declared, f-job-idempotency,
@@ -56,6 +56,25 @@ const dayIn = (at: number, zone: string | undefined): string => {
   }
 };
 
+/** What a run did in other apps, said app by app: "In Graview Public (@self/graview-public) it would run 2 acts; nothing was kept there." */
+function farNotes(far: readonly FarWrite[]): string[] {
+  const apps = [...new Set(far.map((one) => one.app))];
+  return apps.flatMap((app) => {
+    const there = far.filter((one) => one.app === app);
+    const named = there.find((one) => one.name)?.name;
+    const where = named ? `${named} (${app})` : app;
+    const count = (as: FarWrite["as"]) => there.filter((one) => one.as === as).length;
+    const acts = (n: number) => (n === 1 ? "1 act" : `${n} acts`);
+    const parts = [
+      ...(count("previewed") > 0 ? [`it would run ${acts(count("previewed"))}; nothing was kept there`] : []),
+      ...(count("applied") > 0 ? [`it ran ${acts(count("applied"))}`] : []),
+      ...(count("suggested") > 0 ? [`it suggested ${acts(count("suggested"))} for a person there to approve`] : []),
+      ...(count("refused") > 0 ? [`${acts(count("refused"))} ${count("refused") === 1 ? "was" : "were"} refused there`] : []),
+    ];
+    return parts.length > 0 ? [`In ${where} ${parts.join("; ")}.`] : [];
+  });
+}
+
 /** RUN ONE WORKFLOW ONCE, and keep the run in the host's log. */
 export async function runWorkflow<S extends AnySchema>(options: RunWorkflowOptions<S>): Promise<WorkflowRun> {
   const store = options.store as unknown as Store<AnySchema>;
@@ -86,6 +105,8 @@ export async function runWorkflow<S extends AnySchema>(options: RunWorkflowOptio
   let skipped = false;
   let refused = false;
   const spends = new Map<number, { calls: number; inputTokens: number; outputTokens: number; costUsd?: number; model?: string }>();
+  const far: FarWrite[] = [];
+  const reached = new Map<string, Promise<FarApp | { readonly refused: string }>>();
 
   // The chain behind a run another workflow's change started: the starting run's own, and it.
   const by = trigger.kind === "made" || trigger.kind === "changed" ? trigger.by : undefined;
@@ -101,7 +122,7 @@ export async function runWorkflow<S extends AnySchema>(options: RunWorkflowOptio
   };
 
   const finish = (outcome: WorkflowOutcome, dry: boolean, through: number): WorkflowRun => {
-    const run: WorkflowRun = { id, workflow: workflow.name, trigger, started, finished: new Date(options.now === undefined ? Math.max(now, Date.now()) : now).toISOString(), outcome, dry, made: [...made], changed: [...changed], archived: [...archived], suggested, heldBack, through, specHash, notes, spent: spentOf(), chain };
+    const run: WorkflowRun = { id, workflow: workflow.name, trigger, started, finished: new Date(options.now === undefined ? Math.max(now, Date.now()) : now).toISOString(), outcome, dry, made: [...made], changed: [...changed], archived: [...archived], suggested, heldBack, through, specHash, notes, spent: spentOf(), chain, ...(far.length > 0 ? { far } : {}) };
     options.log.add(run);
     return run;
   };
@@ -214,6 +235,61 @@ export async function runWorkflow<S extends AnySchema>(options: RunWorkflowOptio
           skipped = true;
           heldBack.push({ step: index, why: `${at}: ${why}` });
         },
+        otherApp(address) {
+          const hook = options.farApps;
+          if (!hook) return Promise.resolve({ refused: `this host does not let workflows reach other apps, so it could not reach ${address}` });
+          const asked = reached.get(`${index}|${address}`);
+          if (asked) return asked;
+          const origin: FarOrigin = { workflow: workflow.name, title: workflow.title, run: id, step: index, author: principal, dry };
+          const reaching = (async () => {
+            try {
+              return (await hook.otherApp(address, origin)) ?? { refused: `this host does not let “${workflow.title}” reach ${address}` };
+            } catch (error) {
+              return { refused: `${address} could not be reached: ${said(error)}` };
+            }
+          })();
+          reached.set(`${index}|${address}`, reaching);
+          return reaching;
+        },
+        async changeFar(change: FarStepChange) {
+          const lineage = {
+            basis: change.basis.slice(0, 500),
+            run: id,
+            actor: `workflow:${workflow.name}`.slice(0, 120),
+            ...(change.confidence !== undefined ? { confidence: change.confidence } : {}),
+            ...(change.model ? { model: change.model.slice(0, 120) } : {}),
+            ...(change.key ? { key: change.key } : {}),
+          } as Lineage;
+          // Routed as a change here is: a dry run previews; "ask" and an unsure "suggest" go to that app's own Suggested tray.
+          const route = dry ? "preview" : approve === "apply" ? "apply" : approve === "ask" ? "suggest" : ({ act: "apply", ask: "suggest", drop: "drop" } as const)[routeOf(change.confidence ?? 1, change.severity ?? "categorize")];
+          if (route === "drop") return { as: "dropped" as const };
+          const origin: FarOrigin = { workflow: workflow.name, title: workflow.title, run: id, step: index, author: principal, dry };
+          let answer: FarActAnswer;
+          try {
+            answer = await change.app.act({ act: change.act, args: change.args, as: route, author: principal, lineage, origin });
+          } catch (error) {
+            answer = { as: "refused", error: said(error) };
+          }
+          if (answer.as === "unchanged") return answer;
+          const name = change.app.shape.name;
+          if (answer.as === "refused") {
+            refused = true;
+            heldBack.push({ step: index, why: `${at}: ${name ? `${name} (${change.address})` : change.address} refused “${change.act}”: ${answer.error}` });
+          }
+          far.push({
+            step: index,
+            app: change.address,
+            ...(name ? { name } : {}),
+            act: change.act,
+            args: change.args,
+            as: answer.as,
+            ...(answer.as === "applied" || answer.as === "previewed" ? { ...(answer.made ? { made: [...answer.made] } : {}), ...(answer.changed ? { changed: [...answer.changed] } : {}) } : {}),
+            ...(answer.as !== "refused" && answer.op ? { op: answer.op } : {}),
+            ...(answer.as === "refused" ? { error: answer.error } : {}),
+            ...(change.key ? { key: change.key } : {}),
+          });
+          return answer;
+        },
         spent(usage: SpendSaid) {
           const one = spends.get(index) ?? { calls: 0, inputTokens: 0, outputTokens: 0 };
           const count = (value: number | undefined) => (value !== undefined && Number.isFinite(value) && value > 0 ? value : 0);
@@ -234,8 +310,9 @@ export async function runWorkflow<S extends AnySchema>(options: RunWorkflowOptio
   const closed = asked?.close();
   if (closed) suggested.push(closed);
 
+  notes.push(...farNotes(far));
   if (!outcome) {
-    const didSomething = made.size + changed.size + archived.size + suggested.length > 0;
+    const didSomething = made.size + changed.size + archived.size + suggested.length + far.filter((one) => one.as !== "refused").length > 0;
     outcome = skipped || refused ? "partial" : didSomething ? "ok" : "nothing-new";
     if (outcome === "nothing-new") notes.push("Nothing new: everything it would do was done already.");
   }

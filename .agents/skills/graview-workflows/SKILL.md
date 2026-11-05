@@ -107,6 +107,19 @@ at least that sure without asking, and asks below it. An option in
 `confirm` is always asked. An option the field lacks, or a number past 0
 to 1, is a `workflow-classify-*` finding.
 
+**Reaching another app.** An agent step's `reads` and `acts`, and an act
+step's `act`, may name another app's kind or act the way a relation to
+another app does: `"@self/graview-public/ticket"`,
+`"@self/graview-public/set-ticket-status"` — `@`, the app's address, `/`,
+the name. The run reaches it only through the host's `farApps`
+(`FarApps.otherApp(address, origin)` → `{ shape, read, act }`), as the
+workflow's actor; a dry run lists each far act in `run.far`, naming the
+app, and keeps nothing there; a real one runs it there with the run's
+lineage, so that app's log says which run made it. A host with none
+refuses the step: "this host does not let workflows reach other apps".
+`farAppsOver({ "@self/graview-public": { store, name } })` is that host
+over stores in memory.
+
 **Say it in TypeScript** the same way: `defineApp({ workflows })` takes the
 same objects.
 
@@ -122,8 +135,12 @@ npx graview workflow ./app.json next-weeks-events --data ./data --dry --now 2026
 `workflow-kind-unknown`, `workflow-field-unknown`,
 `workflow-connection-unknown`, `workflow-key-field-unknown` — a rule it
 cannot read (`workflow-where-invalid`), a clock it cannot read
-(`workflow-schedule-invalid`, naming what it can), and a step list or an
-agent's acts left empty. Each says the edit that fixes it.
+(`workflow-schedule-invalid`, naming what it can), a step list or an
+agent's acts left empty, and another app's name that is not
+`@<address>/<name>` (`workflow-far-reference`). Whether that app has the
+kind or act is only known to a host that passes `resolveFarApp`
+(`workflow-far-app-unknown`, `workflow-far-args`). Each says the edit that
+fixes it.
 
 The dry run prints what the run **would** make, change, set aside and
 suggest, and keeps nothing. Read it against the sentence: next week's

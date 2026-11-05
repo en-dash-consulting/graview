@@ -145,9 +145,34 @@ export function placePane(pane: HTMLElement, anchor: PopoverAnchor, options: Pla
   }
   // A sheet the viewport's width (a phone's) stands from its left edge; anything narrower keeps a margin.
   const left = width >= view.width - 2 * MARGIN ? Math.max(0, (view.width - width) / 2) : Math.max(MARGIN, Math.min(wanted, view.width - MARGIN - width));
-  const top = down ? at.bottom + GAP : Math.max(MARGIN, at.top - GAP - height);
+  const top = Math.round(down ? at.bottom + GAP : Math.max(MARGIN, at.top - GAP - height));
   pane.style.left = `${Math.round(left)}px`;
-  pane.style.top = `${Math.round(top)}px`;
+  pane.style.top = `${top}px`;
+  /*
+   * SAFARI DRAWS IT WHERE IT WAS PLACED. A right-click on a card in the
+   * scene, or on its ground, opened the menu in Safari 18.0 almost wholly
+   * under the window's bottom edge at its left: its left and top were
+   * written and computed (544px, 343px), and its box stood at (0, 852) —
+   * where the pane falls in the page's flow, under the scene, which is
+   * where WebKit stands a box in the top layer that has no left or top. The
+   * menu's pane is inside the scene's box, a size container, and the engine
+   * had not laid it out again after it went into the top layer; writing its
+   * left and top again, or hiding and showing it, did not either
+   * (bugs.webkit.org 285534, "popover is still dirty after layout"). Chrome
+   * laid it out, and on Pages, outside that box, so did Safari.
+   *
+   * Read back once placed: where the box is not where its left and top say,
+   * its position is changed and changed back, which has the engine lay it
+   * out whole, at the place written — and, unlike hiding it, leaves the
+   * keyboard where it was.
+   */
+  const drawn = pane.getBoundingClientRect();
+  if (inTopLayer(pane) && (Math.abs(drawn.left - Math.round(left)) > 2 || Math.abs(drawn.top - top) > 2)) {
+    const position = pane.style.position;
+    pane.style.position = position === "absolute" ? "fixed" : "absolute";
+    void pane.offsetWidth;
+    pane.style.position = position;
+  }
 }
 
 /**

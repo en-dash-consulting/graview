@@ -314,6 +314,12 @@ export interface ToldStore {
   change(id: string, change: TellingChange): void | Promise<void>;
   remove(id: string): void | Promise<void>;
   list(): readonly Telling[] | Promise<readonly Telling[]>;
+  /**
+   * The sentence the answer card says once a 👎 note is kept, naming where
+   * it went ("Sent to Graview. You'll find it with your feedback."). Left
+   * out, the card says "Kept, to learn from."
+   */
+  readonly keptSays?: string;
 }
 
 /** A store that answers at once: memory, a file. */
@@ -365,7 +371,7 @@ export const TOLD_PATH = "/graview/told";
  * keeps none (404, 410) is never asked again. `url` is the store's address
  * (`TOLD_PATH` is added) or, with `path`, the door's own.
  */
-export function toldOver(url: string, options: { readonly headers?: Readonly<Record<string, string>>; readonly fetch?: typeof fetch; readonly path?: string } = {}): ToldStore {
+export function toldOver(url: string, options: { readonly headers?: Readonly<Record<string, string>>; readonly fetch?: typeof fetch; readonly path?: string; readonly keptSays?: string } = {}): ToldStore {
   const doFetch = options.fetch ?? ((...args: Parameters<typeof fetch>) => fetch(...args));
   const at = `${url.replace(/\/$/, "")}${options.path ?? TOLD_PATH}`;
   const headers = { "content-type": "application/json", ...options.headers };
@@ -380,6 +386,7 @@ export function toldOver(url: string, options: { readonly headers?: Readonly<Rec
     }
   };
   return {
+    ...(options.keptSays ? { keptSays: options.keptSays } : {}),
     add: (telling) => send("", "POST", { telling }),
     change: (id, change) => send(`/${encodeURIComponent(id)}`, "PATCH", { change }),
     remove: (id) => send(`/${encodeURIComponent(id)}`, "DELETE"),

@@ -34,11 +34,11 @@ Capture costs about 0.22 ms a view on Chromium 158, so retaking every live view 
 
 The compositor, the WGSL and the `html-in-canvas` platform bindings move with the browser feature they are built on.
 
-## What it exports (34)
+## What it exports (36)
 
 Read off the package's own barrel, so this is what is there today.
 
-`CAPTURE_BUDGET`, `chooseRenderer`, `CONNECTOR_DASH`, `connectorStroke`, `connectorStyle`, `connectorWidth`, `distinguishable`, `FRAME_BUDGET_MS`, `framesHeld`, `fromLayout`, `gpuCapturePresent`, `hitTest`, `hueFor`, `IDENTITY`, `invertPlaneTransform`, `isAffine`, `LIGHT_PLANE_STYLES`, `mixStyles`, `perspectiveProbeMatrix`, `PLANE_STYLES`, `planeBlurOn`, `PLANES`, `planeTransform`, `planFrame`, `PointerRouter`, `PROVISIONAL_DASH`, `PROVISIONAL_OPACITY`, `recededOpacity`, `rendererAsked`, `styleFor`, `toDOMMatrix`, `toLocal`, `transformFor`, `treatmentOf`
+`CAPTURE_BUDGET`, `chooseRenderer`, `CONNECTOR_DASH`, `connectorStroke`, `connectorStyle`, `connectorWidth`, `distinguishable`, `FRAME_BUDGET_MS`, `framesHeld`, `fromLayout`, `gpuCapturePresent`, `hitTest`, `hueFor`, `IDENTITY`, `invertPlaneTransform`, `isAffine`, `LIGHT_PLANE_STYLES`, `mixStyles`, `OUTSET_ATTRIBUTE`, `outsetText`, `perspectiveProbeMatrix`, `PLANE_STYLES`, `planeBlurOn`, `PLANES`, `planeTransform`, `planFrame`, `PointerRouter`, `PROVISIONAL_DASH`, `PROVISIONAL_OPACITY`, `recededOpacity`, `rendererAsked`, `styleFor`, `toDOMMatrix`, `toLocal`, `transformFor`, `treatmentOf`
 
 ---
 

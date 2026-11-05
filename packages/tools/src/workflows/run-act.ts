@@ -1,5 +1,5 @@
 import { pluralOf, type AnyGraphNode, type AnySchema, type MutationCall, type Operation, type Principal, type Store } from "@graview/core";
-import { keyedId, recordsOver, workflowKey, workflowValue, type ActStep } from "@graview/core/workflows";
+import { farReferenceOf, isFarReference, keyedId, recordsOver, workflowKey, workflowValue, type ActStep } from "@graview/core/workflows";
 import type { StepContext, StepRunner } from "./types.js";
 
 /*
@@ -102,9 +102,38 @@ function keyed(call: MutationCall, key: string, context: StepContext, basis: str
   context.change({ calls: [takesId ? asked : call], basis, key });
 }
 
+/*
+ * AN ACT OF ANOTHER APP (`@self/graview-public/set-ticket-status`, Roadmap
+ * f-workflow-steps-in-another-app): run through the host's `FarApps`, once
+ * or once per record `over` picks here, its arguments read on that record;
+ * never written into that app's store from here. The step's `key` goes to
+ * that app on the lineage, for its host to make a rerun an update.
+ */
+async function runFarAct(step: ActStep, context: StepContext): Promise<void> {
+  const ref = farReferenceOf(step.act);
+  if (!ref) return context.skipped(`“${step.act}” names no act of another app.`);
+  const app = await context.otherApp(ref.address);
+  if ("refused" in app) return context.skipped(`${app.refused}.`);
+  const where = app.shape.name ? `${app.shape.name} (${ref.address})` : ref.address;
+  if (!Object.hasOwn(app.shape.acts, ref.name)) return context.skipped(`${where} has no act “${ref.name}”.`);
+  const store = context.store;
+  const now = { at: new Date(context.now).toISOString(), today: context.today };
+  const ids = step.over ? recordsOver(store, step.over, context.principal as Principal) : [undefined];
+  if (step.over && ids.length === 0) context.note(`Step ${context.index + 1}: no ${pluralOf(store.schema, step.over.kind).toLowerCase()} to run over.`);
+  for (const id of ids) {
+    const record = id === undefined ? undefined : (store.graph.getNode(id) as AnyGraphNode | undefined);
+    const args: Record<string, unknown> = {};
+    for (const [name, value] of Object.entries(step.args ?? {})) args[name] = workflowValue(value, record, store, now);
+    const basis = `“${context.workflow.title}”${record ? ` for ${String((record as Record<string, unknown>)["name"] ?? (record as Record<string, unknown>)["title"] ?? record.id)}` : ""}`;
+    const key = step.key !== undefined ? workflowKey(step.key, { ...(record ?? {}), ...args }) : undefined;
+    await context.changeFar({ address: ref.address, app, act: ref.name, args, basis, ...(key !== undefined ? { key } : {}) });
+  }
+}
+
 export const runActStep: StepRunner<ActStep> = {
   key: "act",
   async run(step, context) {
+    if (isFarReference(step.act)) return runFarAct(step, context);
     const store = context.store;
     const now = { at: new Date(context.now).toISOString(), today: context.today };
     let subjectArg: string | undefined;

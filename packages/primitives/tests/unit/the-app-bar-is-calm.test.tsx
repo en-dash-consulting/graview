@@ -144,6 +144,35 @@ describe("a host's Share, beside the people (Roadmap f-app-bar-calm, f-bar-statu
   });
 });
 
+describe("a host's Share holds a second link beside the first", () => {
+  it("draws the second link beside the first, each a link or a press that closes the popover", async () => {
+    barAs(1440);
+    const copied = vi.fn();
+    const at = bar({ share: { description: "Anyone with the link can open this app.", link: { label: "Copy link", onSelect: copied }, secondLink: { label: "Sharing settings", href: "/sharing" } } });
+    act(() => at.querySelector<HTMLButtonElement>('[data-testid="app-share-open"]')!.click());
+    const pane = $('[data-testid="app-share"]')!;
+    const first = pane.querySelector<HTMLButtonElement>('[data-testid="app-share-link"]')!;
+    const second = pane.querySelector<HTMLAnchorElement>('[data-testid="app-share-second-link"]')!;
+    expect(first.textContent).toBe("Copy link");
+    expect(second.textContent).toBe("Sharing settings");
+    expect(second.getAttribute("href")).toBe("/sharing");
+    // Beside each other, in one row.
+    expect(first.parentElement).toBe(second.parentElement);
+    const result = await axe.run(at, { rules: { region: { enabled: false } } });
+    expect(result.violations.map((violation) => violation.id)).toEqual([]);
+    act(() => first.click());
+    expect(copied).toHaveBeenCalledTimes(1);
+    expect(pane.hidden).toBe(true);
+  });
+
+  it("draws no second link when the host gives none", () => {
+    barAs(1440);
+    const at = bar({ share: { description: "Only you can open this app.", link: { label: "Copy link", onSelect: () => {} } } });
+    act(() => at.querySelector<HTMLButtonElement>('[data-testid="app-share-open"]')!.click());
+    expect($('[data-testid="app-share-second-link"]')).toBeNull();
+  });
+});
+
 describe("a host's button as its mark alone (Roadmap f-app-bar-calm)", () => {
   it("is named by its label and says it on hover, with no words drawn, and stands on a phone's bar too", async () => {
     const feedback = vi.fn();

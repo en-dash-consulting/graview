@@ -1,5 +1,6 @@
 import * as z from "../schema/zod.js";
 import type { AgentStep } from "../workflow-shape.js";
+import { farReferenceFindings, farReferenceOf, isFarReference } from "./far.js";
 import type { StepCheck, StepKind, StepShapes, WorkflowFinding } from "./steps.js";
 import type { WorkflowWorld } from "./world.js";
 
@@ -9,9 +10,22 @@ import type { WorkflowWorld } from "./world.js";
  * any other. Built on dreaming's runner in `@graview/tools/workflows`: what
  * it proposes is applied, suggested or let go by `approve` and how sure it
  * is. With no model lent, the step is skipped and the run says so.
+ *
+ * A kind it reads and an act it proposes may be another app's
+ * (`@self/graview-public/ticket`, Roadmap f-workflow-steps-in-another-app):
+ * held to its shape here, to what the app has where the host's resolver
+ * says it (`./far.ts`), and read and run through the host
+ * (`FarApps`, `@graview/tools/workflows`).
  */
 
 const quoted = (names: Iterable<string>): string => [...names].map((name) => `"${name}"`).join(", ") || "none";
+
+/** A kind or an act as the step's sentence says it: this app's by its noun, another app's with the app. */
+const nameWords = (name: string, noun: (kind: string) => string, kind: boolean): string => {
+  const far = farReferenceOf(name);
+  if (far) return kind ? `${noun(far.name)} in ${far.address}` : `“${far.name}” in ${far.address}`;
+  return kind ? noun(name) : `“${name}”`;
+};
 
 export const agentStep: StepKind<AgentStep> = {
   key: "agent",
@@ -19,8 +33,8 @@ export const agentStep: StepKind<AgentStep> = {
   shape: (s: StepShapes) =>
     z.strictObject({
       agent: s.str(1, 2000),
-      reads: z.array(s.name("kind")).check(z.maxLength(40)),
-      acts: z.array(s.str(1, 120)).check(z.maxLength(60)),
+      reads: z.array(s.ref("kind")).check(z.maxLength(40)),
+      acts: z.array(s.ref("act")).check(z.maxLength(60)),
       model: z.optional(s.str(1, 120)),
       budget: z.optional(z.strictObject({ calls: z.optional(z.number().check(z.int(), z.minimum(1), z.maximum(1000))), tokens: z.optional(z.number().check(z.int(), z.minimum(1), z.maximum(10_000_000))) })),
       approve: z.optional(s.approve),
@@ -30,7 +44,8 @@ export const agentStep: StepKind<AgentStep> = {
     const at = `steps.${index}`;
     const out: WorkflowFinding[] = [];
     step.reads.forEach((kind, i) => {
-      if (!world.kinds.has(kind)) out.push({ code: "workflow-kind-unknown", severity: "error", path: `${at}.reads.${i}`, message: `${said} reads "${kind}" records, and "${kind}" is not a kind of this app.`, fix: `Name one of its kinds: ${quoted(world.kinds.keys())}.` });
+      if (isFarReference(kind)) out.push(...farReferenceFindings(kind, "kind", `${at}.reads.${i}`, said, "reads", check));
+      else if (!world.kinds.has(kind)) out.push({ code: "workflow-kind-unknown", severity: "error", path: `${at}.reads.${i}`, message: `${said} reads "${kind}" records, and "${kind}" is not a kind of this app.`, fix: `Name one of its kinds: ${quoted(world.kinds.keys())}, or another app's as "@<its address>/<kind>".` });
     });
     if (step.acts.length === 0) {
       const over = world.acts.filter((act) => (world.actOn(act) ?? []).some((kind) => step.reads.includes(kind)));
@@ -45,15 +60,18 @@ export const agentStep: StepKind<AgentStep> = {
       });
     }
     step.acts.forEach((act, i) => {
-      if (!world.acts.includes(act)) out.push({ code: "workflow-act-unknown", severity: "error", path: `${at}.acts.${i}`, message: `${said} lets a model propose "${act}", which is not an act of this app.`, fix: "Name one of the app's acts, declared or derived." });
+      if (isFarReference(act)) out.push(...farReferenceFindings(act, "act", `${at}.acts.${i}`, said, "lets a model propose", check));
+      else if (!world.acts.includes(act)) out.push({ code: "workflow-act-unknown", severity: "error", path: `${at}.acts.${i}`, message: `${said} lets a model propose "${act}", which is not an act of this app.`, fix: 'Name one of the app\'s acts, declared or derived, or another app\'s as "@<its address>/<act>".' });
     });
     return out;
   },
   words(step, noun) {
-    const reads = step.reads.length > 0 ? ` reading ${step.reads.map(noun).join(", ")}` : "";
-    return `Ask a model to ${step.agent.replace(/^./, (first) => first.toLowerCase()).replace(/[.!]$/, "")}${reads}, proposing ${step.acts.map((act) => `“${act}”`).join(", ") || "nothing"}`;
+    const reads = step.reads.length > 0 ? ` reading ${step.reads.map((kind) => nameWords(kind, noun, true)).join(", ")}` : "";
+    return `Ask a model to ${step.agent.replace(/^./, (first) => first.toLowerCase()).replace(/[.!]$/, "")}${reads}, proposing ${step.acts.map((act) => nameWords(act, noun, false)).join(", ") || "nothing"}`;
   },
+  // This app's kinds only: what it reaches in another app is `farReachOf`'s.
   touches(step, world: WorkflowWorld) {
-    return { reads: [...step.reads], writes: [...new Set(step.acts.flatMap((act) => [...(world.actOn(act) ?? []), ...(world.actMakes(act) ?? [])]))] };
+    const acts = step.acts.filter((act) => !isFarReference(act));
+    return { reads: step.reads.filter((kind) => !isFarReference(kind)), writes: [...new Set(acts.flatMap((act) => [...(world.actOn(act) ?? []), ...(world.actMakes(act) ?? [])]))] };
   },
 };

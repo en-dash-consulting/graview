@@ -2,6 +2,7 @@ import * as z from "../schema/zod.js";
 import { conditionProblems } from "../job-findings.js";
 import { nearestAct } from "../mutations/act-spelling.js";
 import type { ActStep } from "../workflow-shape.js";
+import { farArgsFindings, farReferenceFindings, farWords, isFarReference } from "./far.js";
 import type { StepCheck, StepKind, StepShapes, WorkflowFinding } from "./steps.js";
 import type { WorkflowWorld } from "./world.js";
 
@@ -25,7 +26,7 @@ export const actStep: StepKind<ActStep> = {
   title: "Run an act",
   shape: (s: StepShapes) =>
     z.strictObject({
-      act: s.name("act"),
+      act: s.ref("act"),
       over: z.optional(z.strictObject({ kind: s.name("kind"), where: z.optional(s.expression), limit: z.optional(z.number().check(z.int(), z.minimum(1), z.maximum(10_000))) })),
       args: z.optional(z.record(z.string(), s.value)),
       key: z.optional(s.str(1, 300)),
@@ -35,7 +36,11 @@ export const actStep: StepKind<ActStep> = {
     const { world, said, index } = check;
     const out: WorkflowFinding[] = [];
     const at = `steps.${index}`;
-    if (!world.acts.includes(step.act)) {
+    // Another app's act: held to its shape, and to what that app takes where the host's resolver says it.
+    if (isFarReference(step.act)) {
+      const found = farReferenceFindings(step.act, "act", `${at}.act`, said, "runs", check);
+      out.push(...found, ...(found.length === 0 ? farArgsFindings(step.act, step.args, `${at}.args`, said, check) : []));
+    } else if (!world.acts.includes(step.act)) {
       const near = nearestAct(step.act, world.acts);
       const steps = (check.declared["steps"] as readonly Record<string, unknown>[] | undefined) ?? [];
       out.push({
@@ -76,9 +81,11 @@ export const actStep: StepKind<ActStep> = {
   },
   words(step, noun) {
     const over = step.over ? ` for each ${noun(step.over.kind)}${step.over.where ? ` where ${step.over.where}` : ""}${step.over.limit ? ` (at most ${step.over.limit})` : ""}` : "";
-    return `Run “${step.act}”${over}`;
+    return `Run ${farWords(step.act)}${over}`;
   },
+  // This app's kinds only: an act of another app writes there (`farReachOf`).
   touches(step, world: WorkflowWorld) {
+    if (isFarReference(step.act)) return { reads: step.over ? [step.over.kind] : [], writes: [] };
     return { reads: step.over ? [step.over.kind] : [], writes: [...new Set([...(world.actOn(step.act) ?? []), ...(world.actMakes(step.act) ?? [])])] };
   },
 };

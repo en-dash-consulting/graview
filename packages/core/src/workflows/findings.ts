@@ -9,6 +9,7 @@ import { STEP_KINDS, stepKindOf, stepShapes, type WorkflowFinding } from "./step
 import { WORKFLOW_JUDGING } from "./judging.js";
 import { resolveWorkflow, workflowReach } from "./resolve.js";
 import { workflowWorldOfDocument, type WorkflowWorld } from "./world.js";
+import type { FarAppResolver } from "./far.js";
 
 /*
  * A DECLARATION'S WORKFLOWS, JUDGED (Roadmap f-jobs-declared), in one
@@ -26,8 +27,22 @@ import { workflowWorldOfDocument, type WorkflowWorld } from "./world.js";
  *   workflow-agent-acts-empty     a model's step that may propose nothing (error)
  *   workflow-sends-out-unasked    `approve: "apply"` said of a step that writes to another system (warning)
  *   workflow-follows-unknown      `follows` names no kind (error)
+ *   workflow-far-reference        a name beginning "@" that names no kind or act of another app (error)
+ *   workflow-far-app-unknown      another app the host's resolver does not know (error; only with `resolveFarApp`)
+ *   workflow-far-args             what an act step hands another app's act that it does not take, or leaves out what it requires (error; only with `resolveFarApp`)
  *   workflow-shape                anything else not shaped as a workflow (error)
+ *
+ * Another app's kind or act a step names (`@<address>/<name>`, `./far.ts`)
+ * is held to its shape; whether that app has it is the host's to say, by
+ * the resolver handed in `options.resolveFarApp` — then a kind or act it
+ * lacks is `workflow-kind-unknown` or `workflow-act-unknown`, as here.
  */
+
+/** What the checker is told beyond the declaration. */
+export interface WorkflowCheckOptions {
+  /** What the host knows of another app a step names; without it, such a name is held to its shape alone. */
+  readonly resolveFarApp?: FarAppResolver;
+}
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
 const quoted = (names: Iterable<string>): string => [...names].map((name) => `"${name}"`).join(", ") || "none";
@@ -40,7 +55,7 @@ function shapeIssues(spec: { safeParse(value: unknown): { success: boolean; erro
 }
 
 /** Every finding about one workflow. */
-export function workflowFindingsOf(name: string, raw: unknown, world: WorkflowWorld): WorkflowFinding[] {
+export function workflowFindingsOf(name: string, raw: unknown, world: WorkflowWorld, options: WorkflowCheckOptions = {}): WorkflowFinding[] {
   const out: WorkflowFinding[] = [];
   const said = `The workflow “${name}”`;
   if (!isRecord(raw)) return [{ code: "workflow-shape", severity: "error", path: "", message: `${said} is not a workflow: it is { title, when, steps }.`, fix: "Say its title, what starts it and its steps." }];
@@ -62,7 +77,7 @@ export function workflowFindingsOf(name: string, raw: unknown, world: WorkflowWo
     for (const issue of issues) out.push({ code: "workflow-shape", severity: "error", path: issue.path, message: `Step ${index + 1} of “${name}”: ${issue.message}.`, fix: `${kind.title}: say only the keys that kind of step takes.` });
     if (issues.length === 0) stepsOk.push(step as WorkflowStep);
     else return;
-    out.push(...kind.findings(step as never, { world, workflow: name, index, said: `Step ${index + 1} of “${name}”`, declared: raw }));
+    out.push(...kind.findings(step as never, { world, workflow: name, index, said: `Step ${index + 1} of “${name}”`, declared: raw, ...(options.resolveFarApp ? { resolveFarApp: options.resolveFarApp } : {}) }));
   });
   if (shaped.length > 0) return out;
 
@@ -116,31 +131,31 @@ export function workflowFindingsOf(name: string, raw: unknown, world: WorkflowWo
 }
 
 /** Every finding about an app's workflows, by name, at paths under `workflows`. */
-export function workflowFindings(workflows: unknown, world: WorkflowWorld): (WorkflowFinding & { readonly workflow: string })[] {
+export function workflowFindings(workflows: unknown, world: WorkflowWorld, options: WorkflowCheckOptions = {}): (WorkflowFinding & { readonly workflow: string })[] {
   if (workflows === undefined) return [];
   if (!isRecord(workflows)) return [{ workflow: "", code: "workflow-shape", severity: "error", path: "", message: "workflows is the app's workflows by name.", fix: 'Write { "<name>": { title, when, steps } }.' }];
   const out: (WorkflowFinding & { readonly workflow: string })[] = [];
   if (Object.keys(workflows).length > MOST_WORKFLOWS) out.push({ workflow: "", code: "workflow-shape", severity: "error", path: "", message: `The app declares ${Object.keys(workflows).length} workflows; at most ${MOST_WORKFLOWS}.`, fix: "Fold some into others." });
   for (const [name, raw] of Object.entries(workflows)) {
     if (!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(name)) out.push({ workflow: name, code: "workflow-shape", severity: "error", path: "", message: `“${name}” is not a workflow's name: kebab-case, like "next-weeks-events".`, fix: "Rename it in kebab-case." });
-    for (const finding of workflowFindingsOf(name, raw, world)) out.push({ ...finding, workflow: name });
+    for (const finding of workflowFindingsOf(name, raw, world, options)) out.push({ ...finding, workflow: name });
   }
   return out;
 }
 
 /** A document's workflows, judged with its own sentences at its own paths (`workflows.<name>.steps.0.act`): what `compileDocument` and `graview check` say of them. */
-export function documentWorkflowFindings(document: GraviewDocument): Finding[] {
+export function documentWorkflowFindings(document: GraviewDocument, options: WorkflowCheckOptions = {}): Finding[] {
   if (document.workflows === undefined) return [];
-  return workflowFindings(document.workflows, workflowWorldOfDocument(document)).map((finding) => {
+  return workflowFindings(document.workflows, workflowWorldOfDocument(document), options).map((finding) => {
     const path = ["workflows", finding.workflow, finding.path].filter(Boolean).join(".");
     return finding.severity === "warning" ? warning(finding.code, path, finding.message, finding.fix, finding.edits) : error(finding.code, path, finding.message, finding.fix, finding.edits ? { edits: finding.edits } : undefined);
   });
 }
 
 // An edit asks this checker when it is loaded (`./judging.ts`).
-WORKFLOW_JUDGING.judge = (name, workflow, document) => {
+WORKFLOW_JUDGING.judge = (name, workflow, document, options) => {
   const world = workflowWorldOfDocument(document as GraviewDocument);
-  const found = workflowFindingsOf(name, workflow, world);
+  const found = workflowFindingsOf(name, workflow, world, options);
   const errors = found.filter((finding) => finding.severity === "error");
   if (errors.length > 0) return { errors, warnings: [], said: "" };
   const resolved = resolveWorkflow(name, workflow as never, world);

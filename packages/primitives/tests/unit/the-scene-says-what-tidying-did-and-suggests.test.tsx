@@ -132,8 +132,10 @@ describe("the scene's bar, after the app's own actor tidied", () => {
     // The suggestion is For you's, not a row in Activity.
     expect($('[data-testid="inbox-panel-for-you"] [data-testid="diff-log"]')).toBeNull();
     const row = $('[data-testid="suggestion"]')!;
-    expect(row.textContent).toContain("Graview, tidying suggests “Hand back the keys” waits for “Move the piano”");
-    expect(row.textContent).toContain("The piano goes out before the keys go back · 42% sure");
+    // One question, and why behind "Why?", in words alone (Roadmap f-suggestion-card-one-line).
+    expect(row.querySelector("[data-graview-suggestion-words]")!.textContent).toBe("Should “Hand back the keys” wait for Move the piano?");
+    expect(row.querySelector<HTMLElement>("[data-graview-lineage]")!.hidden).toBe(true);
+    expect(row.querySelector("[data-graview-lineage]")!.textContent).toBe("The piano goes out before the keys go back.");
     expect(store.graph.allEdges()).toHaveLength(2);
     await act(async () => row.querySelector<HTMLButtonElement>('[data-testid="suggestion-decline"]')!.click());
     await settled(() => expect($('[data-testid="suggestion"]')).toBeNull());
