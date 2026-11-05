@@ -411,9 +411,13 @@ function Entry({
         fontSize: "0.75rem",
         lineHeight: 1.35,
         borderRadius: spanning ? (opens ? "5px 0 0 5px" : closes ? "0 5px 5px 0" : 0) : 5,
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap",
+        // A name wraps rather than trailing off: a month's day on a phone is
+        // a few letters wide, and "Sugar & Sp…" is a different vendor. It
+        // breaks between words first, and inside one only where a word is
+        // wider than the day.
+        whiteSpace: "normal",
+        overflowWrap: "anywhere",
+        hyphens: "auto",
         // Done reads as done: struck and receded, still there, still
         // selectable. Removing it would be answering a different question.
         textDecoration: entry.done ? "line-through" : "none",
