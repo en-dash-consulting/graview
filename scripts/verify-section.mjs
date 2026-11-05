@@ -13,8 +13,8 @@
  * menu and outlines it; ✨ Better UI opens the conversation beside the
  * page, with "Make it easier to read" and "Point at a part…"; each turn
  * revises that section alone into a draft shown in place; a revision that
- * drops styles is fed back and fixed, and one that never holds is never
- * shown; Keep goes through the host's view door and one Undo puts the view
+ * drops styles is fed back and fixed, and one that fails the same way twice
+ * is never shown, the turn ending on Keep anyway or Stop; Keep goes through the host's view door and one Undo puts the view
  * back; and a seat the host says may not change views is offered none of it.
  *
  * Claims (docs/section.json):
@@ -22,7 +22,10 @@
  *   justDoItRevisesOnlyThatSectionAndShowsADraft
  *   describedChangesReviseThatSection
  *   aHighlightedAreaNamesWhatItCovers
+ *   aDraftThatChangesNothingPasses
+ *   aHeadingRewordedAsAskedPasses
  *   aRevisionThatDropsStylesIsFedBackAndFixed
+ *   aDraftThatFailsTheSameWayTwiceOffersKeepAnywayOrStop
  *   keepThenOneUndoRestoresTheView
  *   aSeatThatMayNotChangeViewsIsNotOffered
  *   aRevisionIsToldWithHowItEndedAndCanBeRated
@@ -64,7 +67,8 @@ const WEEK_SOURCE = `graview.style(\`
   .tk-days { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .tk-day { border: 1px solid var(--graview-edge); border-radius: 8px; padding: 8px; min-height: 60px; }
   .tk-doing { padding: 8px; border-left: 3px solid var(--graview-accent); }
-  .tk-doing li { margin: 2px 0; }
+  .tk-doing li { margin: 2px 0; display: grid; grid-template-columns: auto 1fr; gap: 6px; }
+  .tk-tag { font-size: 0.75rem; }
   .tk-notes { padding: 8px; color: var(--graview-ink-muted); }
 \`);
 graview.onProps((props) => {
@@ -74,7 +78,7 @@ graview.onProps((props) => {
       <div class="tk-days"><div class="tk-day"><h3>Mon</h3></div><div class="tk-day"><h3>Tue</h3></div><div class="tk-day"><h3>Wed</h3></div></div>
     </section>
     <section class="tk-doing" aria-labelledby="tk-doing-h"><h2 id="tk-doing-h">Doing</h2>
-      <ul>\${tasks.filter((task) => task.status === "doing").map((task) => graview.html\`<li data-key="\${task.id}">\${task.label}</li>\`)}</ul>
+      <ul>\${tasks.filter((task) => task.status === "doing").map((task) => graview.html\`<li data-key="\${task.id}"><span class="tk-tag">\${task.status}</span><a data-record="\${task.id}">\${task.label}</a></li>\`)}</ul>
     </section>
     <section class="tk-notes" aria-labelledby="tk-notes-h"><h2 id="tk-notes-h">Notes</h2><p>\${tasks.length} tasks in all.</p></section>
   </div>\`);
@@ -94,7 +98,7 @@ const SEED = {
  * changed — a class added and styled for "Make it easier to read", the
  * person's words drawn into it otherwise; "drop" drafts first with the
  * section's rules gone (and puts them back once told), and "break" never
- * stops dropping them, and asks the person after three drafts.
+ * stops dropping them (the checks end its turn after two drafts).
  */
 const FAKE_AI = () => {
   const prompts = (window.__sectionPrompts = []);
@@ -113,7 +117,9 @@ const FAKE_AI = () => {
     const styled = (text, rule) => text.replace("\n`);", `\n  ${rule}\n\`);`);
     const dropped = (text) => text.split("\n").filter((line) => !line.trimStart().startsWith(`.${cls} `)).join("\n");
     const drafts = steps.filter((one) => one.did === "draft");
-    if (/\bbreak\b/.test(words) && drafts.length >= 3) return say({ say: `I couldn't keep “${name}” looking right that way. Shall I try a different look?`, do: "ask" });
+    // The script as it is, drafted again; and the heading's words alone changed, where that is asked.
+    if (/\bas it is\b/.test(words)) return say({ say: `“${name}” is as it was.`, do: "draft", source });
+    if (/\breword\b/.test(words)) return say({ say: `“${name}” is now “In progress”.`, do: "draft", source: source.replace(`>${name}</h2>`, ">In progress</h2>") });
     const broken = /\bbreak\b/.test(words) || (/\bdrop\b/.test(words) && drafts.length === 0);
     if (/^Make it easier to read/.test(words)) return say({ say: `“${name}” has a clearer edge now.`, do: "draft", source: styled(source.replace(`class="${cls}"`, `class="${cls} tk-better"`), ".tk-better { box-shadow: 0 0 0 2px var(--graview-accent); }") });
     const drawn = source.replace(`>${name}</h2>`, `>${name}</h2><p class="tk-said">${words.replace(/[<>&"]/g, "")}</p>`);
@@ -392,6 +398,53 @@ try {
     await closePanel(page);
   }
 
+  /*
+   * Graview Cloud's repro (f-better-ui-draws-first-time): each task in
+   * "Doing" is a card, its status tag before its link. The script already
+   * on the page, drafted again, passes — no record read as "doingBook the
+   * hall" — and asked to reword the heading, a draft that changes only its
+   * words passes too: the part is found by where it stands.
+   */
+  reach("aDraftThatChangesNothingPasses");
+  {
+    const from = await page.evaluate(() => window.__sectionPrompts.length);
+    await openPanel(page, "Doing");
+    await tellIt(page, "keep it as it is");
+    await panelAt(page, "draft");
+    const findings = await page.evaluate((from) => window.__sectionPrompts.slice(from).flatMap((one) => (one.your_steps ?? []).flatMap((step) => step.result?.findings ?? [])), from);
+    const told = await page.evaluate((from) => window.__sectionPrompts[from]?.records ?? null, from);
+    const steps = await page.evaluate(() => [...document.querySelectorAll('[data-testid="better-step"]')].map((one) => one.lastElementChild?.textContent?.trim() ?? ""));
+    report.checks.aDraftThatChangesNothingPasses = {
+      findings,
+      told,
+      steps,
+      ok: findings.length === 0 && steps.some((one) => /^Check: nothing lost/.test(one)) && JSON.stringify(told ?? []).includes("Book the hall") && !JSON.stringify(told ?? []).includes("doingBook"),
+    };
+    await page.click('[data-testid="better-discard"]');
+    await closePanel(page);
+  }
+
+  reach("aHeadingRewordedAsAskedPasses");
+  {
+    const from = await page.evaluate(() => window.__sectionPrompts.length);
+    await openPanel(page, "Doing");
+    await tellIt(page, "reword the heading");
+    await panelAt(page, "draft");
+    const findings = await page.evaluate((from) => window.__sectionPrompts.slice(from).flatMap((one) => (one.your_steps ?? []).flatMap((step) => step.result?.findings ?? [])), from);
+    const first = await page.evaluate((from) => window.__sectionPrompts[from] ?? {}, from);
+    const after = await read(page);
+    report.checks.aHeadingRewordedAsAskedPasses = {
+      findings,
+      keep: first.keep_these_headings ?? null,
+      reword: first.you_may_reword ?? null,
+      // The draft's sections by their heading's first word: "In progress" is "In".
+      drawn: after.draft?.["In"]?.html ?? null,
+      ok: findings.length === 0 && !(first.keep_these_headings ?? []).includes("Doing") && /“Doing”/.test(first.you_may_reword ?? "") && /In progress/.test(after.draft?.["In"]?.html ?? ""),
+    };
+    await page.click('[data-testid="better-discard"]');
+    await closePanel(page);
+  }
+
   reach("aRevisionThatDropsStylesIsFedBackAndFixed");
   {
     const from = await page.evaluate(() => window.__sectionPrompts.length);
@@ -403,21 +456,40 @@ try {
     const steps = await page.evaluate(() => [...document.querySelectorAll('[data-testid="better-step"]')].map((one) => one.lastElementChild?.textContent?.trim() ?? ""));
     await page.click('[data-testid="better-discard"]');
     await panelAt(page, "open");
-    await tellIt(page, "break it");
-    await panelAt(page, "open");
-    const asked = await page.evaluate(() => [...document.querySelectorAll('[data-testid="better-message"]')].at(-1)?.textContent?.trim() ?? null);
-    const left = await read(page);
-    await shot(page, "never-held");
     report.checks.aRevisionThatDropsStylesIsFedBackAndFixed = {
       fedBack,
       steps,
+      ok: fedBack.some((one) => /tk-doing/.test(one) && /no rule styles it/.test(one)) && steps.some((one) => /^Check: .* — fixing$/.test(one)) && steps.some((one) => /^Check: nothing lost/.test(one)),
+    };
+  }
+
+  reach("aDraftThatFailsTheSameWayTwiceOffersKeepAnywayOrStop");
+  {
+    // "break" never puts the rules back: the second draft fails as the first did, and the turn ends on a choice.
+    await tellIt(page, "break it");
+    await panelAt(page, "stuck");
+    const asked = await page.evaluate(() => [...document.querySelectorAll('[data-testid="better-message"]')].at(-1)?.textContent?.trim() ?? null);
+    const steps = await page.evaluate(() => [...document.querySelectorAll('[data-testid="better-step"]')].map((one) => one.lastElementChild?.textContent?.trim() ?? ""));
+    const offered = await page.evaluate(() => [...document.querySelectorAll('[data-testid="better-stuck"] button')].map((one) => one.textContent?.trim()));
+    const held = await read(page);
+    await shot(page, "stuck");
+    await page.click('[data-testid="better-stuck-stop"]');
+    await panelAt(page, "open");
+    const stopped = await page.evaluate(() => [...document.querySelectorAll('[data-testid="better-message"]')].at(-1)?.textContent?.trim() ?? null);
+    const left = await read(page);
+    report.checks.aDraftThatFailsTheSameWayTwiceOffersKeepAnywayOrStop = {
       asked,
-      noDraftLeft: left.draft === null && left.liveShown === true,
+      steps,
+      offered,
+      stopped,
+      noDraftShown: held.draft === null && left.draft === null && left.liveShown === true,
       ok:
-        fedBack.some((one) => /tk-doing/.test(one) && /no rule styles it/.test(one)) &&
-        steps.some((one) => /^Check: .* — fixing$/.test(one)) &&
-        steps.some((one) => /^Check: nothing lost/.test(one)) &&
-        asked === "I couldn't keep “Doing” looking right that way. Shall I try a different look?" &&
+        asked === "I tried twice, and the new design still leaves a part without its style. Keep it anyway, or stop?" &&
+        steps.filter((one) => /— fixing$/.test(one)).length === 1 &&
+        steps.at(-1) === "Check: a part left without its style, again" &&
+        JSON.stringify(offered) === JSON.stringify(["Keep anyway", "Stop"]) &&
+        stopped === "Stopped. The view is as it was." &&
+        held.draft === null &&
         left.draft === null &&
         left.liveShown === true,
     };
@@ -454,7 +526,8 @@ try {
       ok:
         kept.live?.Doing?.classes === "tk-doing tk-better" &&
         kept.draft === null &&
-        said === "Kept. Kept until this page reloads." &&
+        // Said once: the host's note already says it was kept.
+        said === "Kept until this page reloads." &&
         typeof keeper === "string" &&
         keeper.includes("tk-better") &&
         back.live?.Doing?.classes === "tk-doing" &&

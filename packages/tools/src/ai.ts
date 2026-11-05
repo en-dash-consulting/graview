@@ -4,6 +4,7 @@ import type { ToldStore } from "@graview/core/told";
 import type { ToolDefinition } from "./agent/tool-definition.js";
 import type { Completion } from "./intelligence.js";
 import type { Decide } from "./fast.js";
+import type { DraftChecked } from "./draft-check.js";
 
 /**
  * THE AI A SEAT MAY USE, AS THE HOST DECIDED IT — once, in code.
@@ -119,6 +120,15 @@ export interface HostAi {
    * Unsaid, the Thinking slot serves it.
    */
   readonly design?: ThinkingProvider;
+  /**
+   * TOLD OF EACH DRAFT BETTER UI'S CHECKS JUDGED (Roadmap
+   * f-better-ui-draws-first-time): the part, which draft of the turn it
+   * was, whether it passed, and every finding whole with its kind
+   * (`record-lost`, `fact-lost`, `section-lost`, `did-not-draw` …) — what
+   * the agent was handed, for a host that logs why a draft failed. Never
+   * shown to a reader; a throw here is ignored.
+   */
+  readonly onDraftChecked?: (checked: DraftChecked) => void;
   /**
    * WHETHER A CONTEXT MENU ASKS FOR SUGGESTIONS AS IT OPENS (FR-185). Only
    * ever the Fast slot's: with no Fast slot a menu never asks on its own,

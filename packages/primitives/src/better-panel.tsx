@@ -42,6 +42,8 @@ export interface BetterPanelProps {
   readonly draft?: { readonly said: string; readonly before: boolean };
   /** Kept: what the host said, and Undo. */
   readonly kept?: { readonly note?: string; readonly undo?: () => void };
+  /** Two drafts failed the same way (said in the conversation): Keep anyway, where the last one drew, or Stop. */
+  readonly stuck?: { readonly keepAnyway?: () => void; readonly stop: () => void };
   /** What the person pointed at, said. */
   readonly pointed?: string;
   /** What the conversation is about, by its name: the part right-clicked ("Tasks"), or the one pointed at ("Someday"). */
@@ -160,8 +162,8 @@ export function BetterPanel(props: BetterPanelProps) {
             const now = props.working && at === props.steps.length - 1;
             return (
               <li key={`s${at}`} data-testid="better-step" data-step-kind={step.kind} style={{ display: "flex", gap: 6, alignItems: "baseline", color: now ? "var(--graview-ink)" : "var(--graview-ink-muted)" }}>
-                <span aria-hidden="true" style={{ width: 14, flex: "none", color: step.kind === "check" ? "var(--graview-warn)" : "var(--graview-accent)" }}>
-                  {now ? "…" : step.kind === "check" ? "!" : "✓"}
+                <span aria-hidden="true" style={{ width: 14, flex: "none", color: step.kind === "check" || step.kind === "stuck" ? "var(--graview-warn)" : "var(--graview-accent)" }}>
+                  {now ? "…" : step.kind === "check" || step.kind === "stuck" ? "!" : "✓"}
                 </span>
                 <span>{step.text}</span>
               </li>
@@ -247,10 +249,23 @@ export function BetterPanel(props: BetterPanelProps) {
           </div>
         </div>
       ) : null}
+      {props.stuck && !props.working ? (
+        <div data-testid="better-stuck" style={ROW}>
+          {props.stuck.keepAnyway ? (
+            <button type="button" data-testid="better-keep-anyway" onClick={props.stuck.keepAnyway} style={QUIET}>
+              Keep anyway
+            </button>
+          ) : null}
+          <button type="button" data-testid="better-stuck-stop" onClick={props.stuck.stop} style={QUIET}>
+            Stop
+          </button>
+        </div>
+      ) : null}
       {props.children}
       {props.kept && !props.working ? (
         <div data-testid="better-kept" style={ROW}>
-          <p style={{ margin: 0, flex: 1 }}>Kept.{props.kept.note ? ` ${props.kept.note}` : ""}</p>
+          {/* Said once: a host's note that already says it was kept ("Kept until this page reloads.") is not said after "Kept." again. */}
+          <p style={{ margin: 0, flex: 1 }}>{props.kept.note ? (/^kept\b/i.test(props.kept.note.trim()) ? props.kept.note.trim() : `Kept. ${props.kept.note}`) : "Kept."}</p>
           {props.kept.undo ? (
             <button type="button" data-testid="better-undo" onClick={props.kept.undo} style={QUIET}>
               Undo

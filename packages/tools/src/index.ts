@@ -83,6 +83,7 @@ export type { LocalStatus } from "./local.js";
 export { aiOff, aiTalks, ANSWERED_WITH_AI, fastGiven, HOVER_CHIP_CONFIDENCE, hoverChipsOn, inlineAiOn, NO_AI, NO_AI_SAID, suggestsOnOpen } from "./ai.js";
 export { aiVia } from "./local.js";
 export type { AiInteractionHost, AiPrice, AnswerProvider, AnswerReply, AnswerRequest, CouldNotFind, FastProvider, HostAi, HostTurn, ThinkingProvider, ThinkingReply, ThinkingRequest, TurnMessage } from "./ai.js";
+export type { DraftChecked, DraftFinding, FindingKind } from "./draft-check.js";
 // The tool loop a host's `turn` runs over one Messages API request at a time (FR-160).
 export { TURN_STEPS, turnThroughMessages } from "./turn.js";
 export type { MessagesBlock, MessagesStepReply, MessagesStepRequest } from "./turn.js";

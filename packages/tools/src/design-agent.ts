@@ -1,5 +1,5 @@
 import type { HostAi, ThinkingProvider } from "./ai.js";
-import { cssFindings, type DrawnRead } from "./draft-check.js";
+import { asksToReword, cssFindings, findingKind, findingsOf, type DraftFinding, type DrawnRead } from "./draft-check.js";
 import { thinkingOf } from "./inline-ai.js";
 import { checklistOf, groupingRule, PAGE_VIEW_SYSTEM, readPageViewReply, type ForkManifest, type PagePartSaid, type PageViewKeeps } from "./page-better.js";
 import type { SectionStage } from "./section.js";
@@ -62,9 +62,11 @@ export interface DesignAgentHost {
 /** Told as the agent works: a step to show in the panel. */
 export interface DesignAgentEvent {
   /** `streaming`: the agent's words so far, as the model writes them — replaced by the next, and gone when the step is said. */
-  readonly kind: "look" | "read" | "draft" | "check" | "passed" | "said" | "streaming";
+  readonly kind: "look" | "read" | "draft" | "check" | "passed" | "said" | "streaming" | "stuck";
   /** In plain words, for the panel: "Looking at Tasks", "Check: dates lost on 3 tasks — fixing". */
   readonly text: string;
+  /** With a check, and where it is stuck: what the checks found, each whole with its kind, as the agent was handed them. */
+  readonly findings?: readonly DraftFinding[];
 }
 
 export interface DesignAgentOptions {
@@ -91,6 +93,8 @@ export interface DesignAgentOptions {
   readonly noun?: string;
   /** A part of a view the person is changing: only it changes, every other part of the script kept as it is. */
   readonly section?: string;
+  /** The headings of the part being changed: where the person asks for a heading's words to change, these may change, in their place. */
+  readonly rewordable?: readonly string[];
   /** What the person is talking about, by its name ("Someday"), and what they pointed at, a line each: said beside their words, never in them. */
   readonly about?: { readonly name: string; readonly lines?: readonly string[] };
   /** The acts a press may ask for on these records (`data-act`), each with its title, the argument the record goes in, and whether it marks one thing on or off. */
@@ -100,8 +104,10 @@ export interface DesignAgentOptions {
 }
 
 export type DesignAgentResult = {
-  /** How the turn ended: the agent said it was done, asked the person something, ran out of steps, or was stopped. */
-  readonly ended: "done" | "ask" | "steps" | "stopped" | "no-model";
+  /** How the turn ended: the agent said it was done, asked the person something, ran out of steps, was stopped — or two drafts in a row failed the same way (`stuck`, said plainly in `said`). */
+  readonly ended: "done" | "ask" | "steps" | "stopped" | "no-model" | "stuck";
+  /** Stuck: whether the last draft drew, so a person may keep it anyway. */
+  readonly keepable?: boolean;
   /** Its last words to the person. */
   readonly said: string;
   /** The last draft that passed this turn, shown on the page: none where nothing passed. */
@@ -131,8 +137,11 @@ export const DESIGN_AGENT_SYSTEM = [
 ].join("\n");
 
 /** What one request tells the agent: the page, the conversation, the steps it took this turn and what came of each. */
-export function designAgentPrompt(options: Pick<DesignAgentOptions, "part" | "manifest" | "talk" | "keep" | "markup" | "current" | "section" | "about" | "acts" | "pressed"> & { readonly seen?: { readonly look: unknown; readonly read: unknown } }, steps: readonly DesignAgentStep[]): string {
-  const keep = options.keep;
+export function designAgentPrompt(options: Pick<DesignAgentOptions, "part" | "manifest" | "talk" | "keep" | "markup" | "current" | "section" | "about" | "acts" | "pressed" | "rewordable"> & { readonly seen?: { readonly look: unknown; readonly read: unknown } }, steps: readonly DesignAgentStep[]): string {
+  // A heading the person asked to reword is theirs to change, where it stands: never one they are told to keep as it was.
+  const reword = asksToReword(options.talk.filter((one) => one.who === "person").map((one) => one.said).join(" "));
+  const rewordable = reword ? (options.rewordable ?? []) : [];
+  const keep = options.keep && rewordable.length > 0 ? { ...options.keep, headings: options.keep.headings.filter((one) => !rewordable.some((own) => own.trim().toLowerCase() === one.trim().toLowerCase())) } : options.keep;
   return JSON.stringify({
     page: options.part.name,
     view: { attach: options.manifest.attach, cardinality: options.manifest.cardinality, reads: options.manifest.reads ?? {} },
@@ -142,6 +151,9 @@ export function designAgentPrompt(options: Pick<DesignAgentOptions, "part" | "ma
     ...(options.pressed?.length ? { the_controls_as_pressed: options.pressed, then: "The person says something does not work. This is what pressing every control of your draft found: fix what failed, with controls bound to acts." } : {}),
     ...(options.section ? { only_change: `Change only the part “${options.section}” of your_draft_on_the_page; keep every other part of the script as it is, byte for byte.` } : {}),
     ...(keep ? { ...(keep.title ? { the_page_draws_its_title: keep.title } : {}), keep_these_headings: keep.headings, records: checklistOf(keep), ...(keep.grouping ? { grouping: groupingRule(keep.grouping) } : {}) } : {}),
+    ...(reword
+      ? { you_may_reword: rewordable.length > 0 ? `The person asked for a heading's words to change: ${rewordable.map((one) => `“${one}”`).join(", ")} may say new words, in the same place. Keep every other heading as it was.` : "The person asked for a heading's words to change: the heading they mean may say new words, in the same place. Keep every other heading as it was." }
+      : {}),
     ...(options.markup && !options.current ? { the_page_as_html: options.markup.slice(0, 5000) } : {}),
     ...(options.current ? { your_draft_on_the_page: options.current.slice(0, 9000) } : {}),
     // The steps so far this turn, each with what came of it; only the last draft's script whole, the earlier ones said by what came of them.
@@ -170,36 +182,78 @@ export function readAgentReply(text: string): { readonly say: string; readonly d
   return view ? { say, do: "draft", source: view.source } : undefined;
 }
 
+/** A finding said two ways: in a few words for the panel's step ("dates lost on 3 tasks"), and as what a draft still does ("loses the dates on 3 tasks"). */
+function phrased(finding: string, noun: string): { readonly short: string; readonly still: string } {
+  const who = (count: number) => (count === 1 ? `one of the ${noun}` : `${count} ${noun}`);
+  switch (findingKind(finding)) {
+    case "fact-lost": {
+      const facts = /no longer says what it said: (.*?)(?: and (\d+) more)?\. Show/.exec(finding);
+      const on = new Set([...(facts?.[1] ?? "").matchAll(/” on “([^”]+)”/g)].map((one) => one[1]));
+      const days = [...(facts?.[1] ?? "").matchAll(/“([^”]+)” on “/g)].some((one) => /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d|\d{1,2}\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i.test(one[1]!));
+      const count = Math.max(1, on.size + Number(facts?.[2] ?? 0));
+      return { short: `${days ? "dates" : "details"} lost on ${who(count)}`, still: `loses ${days ? "the dates" : "details"} on ${who(count)}` };
+    }
+    case "record-lost": {
+      const lost = /^It no longer shows (.*?)(?: and (\d+) more)?: show every record/.exec(finding);
+      const count = Math.max(1, [...(lost?.[1] ?? "").matchAll(/“/g)].length + Number(lost?.[2] ?? 0));
+      return { short: `${who(count)} missing`, still: `leaves out ${who(count)}` };
+    }
+    case "record-twice":
+    case "record-moved":
+      return { short: `${noun} in the wrong group`, still: `puts ${noun} in the wrong group` };
+    case "heading-lost":
+      return { short: "headings missing", still: "drops headings the page had" };
+    case "section-lost": {
+      const name = /^“(.*)” is not drawn any more/.exec(finding)?.[1] ?? "";
+      return { short: `the part “${name}” missing`, still: `drops the part “${name}”` };
+    }
+    case "title-twice":
+      return { short: "the title drawn twice", still: "draws the title twice" };
+    case "computer-words":
+      return { short: "words shown as the computer keeps them", still: "shows words as the computer keeps them" };
+    case "did-not-draw":
+      return { short: "it didn't draw", still: "doesn't draw" };
+    case "style-refused":
+      return { short: "styles the page won't keep", still: "uses styles the page won't keep" };
+    case "unstyled":
+      return { short: "a part left without its style", still: "leaves a part without its style" };
+    case "control":
+      return { short: "a control that doesn't work", still: "has a control that doesn't work" };
+    default: {
+      // Said in its own words: its first sentence, as the agent was told it.
+      const own = (/^(.*?[.!?])(\s|$)/.exec(finding.trim())?.[1] ?? finding.trim()).replace(/[.!?]+$/, "");
+      const short = own.length > 120 ? `${own.slice(0, 119)}…` : own;
+      return { short, still: `fails a check: ${short}` };
+    }
+  }
+}
+
 /**
  * WHAT THE CHECKS FOUND, IN A FEW WORDS for the panel: "dates lost on 3
- * tasks", "2 tasks missing", "a task moved to another group". The agent
- * is told the findings whole; the person sees this.
+ * tasks", "2 tasks missing", "the part “This week” missing" — each by what
+ * it is (`findingKind`), and one with no name of its own in its own words,
+ * never a generic "it didn't draw". The agent is told the findings whole.
  */
 export function checkSaid(findings: readonly string[], noun = "records"): string {
-  const said: string[] = [];
-  for (const finding of findings) {
-    const facts = /no longer says what it said: (.*?)(?: and (\d+) more)?\. Show/.exec(finding);
-    if (facts) {
-      const on = new Set([...facts[1]!.matchAll(/” on “([^”]+)”/g)].map((one) => one[1]));
-      const days = [...facts[1]!.matchAll(/“([^”]+)” on “/g)].some((one) => /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d|\d{1,2}\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i.test(one[1]!));
-      const count = on.size + Number(facts[2] ?? 0);
-      said.push(`${days ? "dates" : "details"} lost on ${count === 1 ? `one of the ${noun}` : `${count} ${noun}`}`);
-      continue;
-    }
-    const lost = /^It no longer shows (.*?)(?: and (\d+) more)?: show every record/.exec(finding);
-    if (lost) {
-      const count = [...lost[1]!.matchAll(/“/g)].length + Number(lost[2] ?? 0);
-      said.push(`${count === 1 ? `one of the ${noun}` : `${count} ${noun}`} missing`);
-    } else if (/no longer shows the heading/.test(finding)) said.push("headings missing");
-    else if (/moved to another group|more often than the page did/.test(finding)) said.push(`${noun} in the wrong group`);
-    else if (/drawn twice/.test(finding)) said.push("the title drawn twice");
-    else if (/markup as words|a date as “|as the computer keeps it|a field's name/.test(finding)) said.push("words shown as the computer keeps them");
-    else if (/did not draw|not drawn|threw/.test(finding)) said.push("it didn't draw");
-    else if (/not allowed|removed|reaches outside/.test(finding)) said.push("styles the page won't keep");
-  }
-  const unique = [...new Set(said)];
-  return unique.length > 0 ? unique.slice(0, 3).join(", ") : "something didn't draw right";
+  const unique = [...new Set(findings.map((finding) => phrased(finding, noun).short))];
+  return unique.slice(0, 3).join(", ");
 }
+
+/**
+ * WHERE A TURN IS STUCK, SAID PLAINLY: two drafts in a row failed the same
+ * way. "I tried twice, and the new design still loses details on 3 tasks.
+ * Keep it anyway, or stop?" — and, where the draft never drew, not offered
+ * to keep.
+ */
+export function stuckSaid(finding: string, keepable: boolean, noun = "records"): string {
+  return `I tried twice, and the new design still ${phrased(finding, noun).still}. ${keepable ? "Keep it anyway, or stop?" : "Say it another way, or stop?"}`;
+}
+
+/** What makes two findings the same: their kind, or the words of one with no kind of its own. */
+const sameAs = (finding: string) => {
+  const kind = findingKind(finding);
+  return kind === "other" ? `other:${finding}` : kind;
+};
 
 /** A model's answer, or "stopped" the moment the signal says so — or "late" past `ms`. */
 async function unlessStopped<T>(answer: Promise<T>, signal: AbortSignal | undefined, ms?: number): Promise<{ readonly value: T } | "stopped" | "late"> {
@@ -233,6 +287,9 @@ export async function runDesignAgent(options: DesignAgentOptions): Promise<Desig
   let passed: { readonly source: string } | undefined;
   let last: { readonly source: string; readonly findings: readonly string[] } | undefined;
   let unreadable = 0;
+  let drafts = 0;
+  /* What the last failed draft failed on, each by what makes two findings the same. */
+  let failedBefore = new Set<string>();
   const most = Math.max(2, options.steps ?? DESIGN_AGENT_STEPS);
   /* What the page draws and what the view is handed, looked at once before the first request: one request less for the person to wait on. */
   tell({ kind: "look", text: `Looking at ${options.part.name}` });
@@ -274,9 +331,29 @@ export async function runDesignAgent(options: DesignAgentOptions): Promise<Desig
     } else if (move.do === "draft") {
       tell({ kind: "draft", text: move.say ? `Drafting: ${move.say.replace(/\.$/, "")}` : "Drafting" });
       const stripped = cssFindings(move.source!);
-      const drawn = stripped.length > 0 ? { findings: stripped, drew: undefined } : await unlessStopped(options.host.draft(move.source!), options.signal).then((one) => (typeof one === "string" ? undefined : one.value));
+      // Judging that threw is said as what went wrong, to the agent and the host alike — never a draft that "didn't draw".
+      const judging = options.host.draft(move.source!).catch((error: unknown) => ({ findings: [`The draft could not be judged: ${String(error instanceof Error ? error.message : error).replace(/[.\s]+$/, "")}.`], drew: undefined }));
+      const drawn = stripped.length > 0 ? { findings: stripped, drew: undefined } : await unlessStopped(judging, options.signal).then((one) => (typeof one === "string" ? undefined : one.value));
       if (!drawn) return { ended: "stopped", said: "Stopped.", ...(passed ? { passed } : {}), ...(last ? { last } : {}), steps, stages };
       last = { source: move.source!, findings: drawn.findings };
+      drafts += 1;
+      const found = findingsOf(drawn.findings);
+      try {
+        options.ai.onDraftChecked?.({ part: options.part.name, draft: drafts, passed: found.length === 0, findings: found });
+      } catch {
+        // The host's log is its own: a throw there never stops the turn.
+      }
+      // The same finding as the draft before: said plainly, with a choice, rather than another "— fixing".
+      const again = drawn.findings.find((one) => failedBefore.has(sameAs(one)));
+      failedBefore = new Set(drawn.findings.map(sameAs));
+      if (again !== undefined) {
+        const keepable = !drawn.findings.some((one) => findingKind(one) === "did-not-draw");
+        const said = stuckSaid(again, keepable, noun);
+        // The step says what failed again; the sentence and the choice are the turn's answer.
+        tell({ kind: "stuck", text: `Check: ${checkSaid([again], noun)}, again`, findings: found });
+        steps.push({ said: move.say, did: "draft", result: { findings: drawn.findings, drew: drawn.drew } });
+        return { ended: "stuck", said, keepable, ...(passed ? { passed } : {}), last, steps, stages };
+      }
       if (drawn.findings.length === 0) {
         passed = { source: move.source! };
         tell({ kind: "passed", text: "Check: nothing lost — it's on the page" });
@@ -284,7 +361,7 @@ export async function runDesignAgent(options: DesignAgentOptions): Promise<Desig
         // A draft that passed ends the turn: the person sees it, and says what next.
         return { ended: "done", said: move.say || "Here it is.", passed, last, steps, stages };
       } else {
-        tell({ kind: "check", text: `Check: ${checkSaid(drawn.findings, noun)} — fixing` });
+        tell({ kind: "check", text: `Check: ${checkSaid(drawn.findings, noun)} — fixing`, findings: found });
         steps.push({ said: move.say, did: "draft", result: { findings: drawn.findings, drew: drawn.drew } });
       }
     } else if (move.do === "ask") {

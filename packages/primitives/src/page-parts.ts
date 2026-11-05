@@ -1,4 +1,4 @@
-import { fieldWords, nounOf, pluralLabel, type AnySchema } from "@graview/core";
+import { fieldWords, labelOf, nounOf, pluralLabel, type AnySchema } from "@graview/core";
 import type { GraviewContextValue, MenuPage } from "@graview/react/provider";
 import { mayChangeDeclaration } from "@graview/tools/section";
 
@@ -111,7 +111,8 @@ export function nudgesFor(part: PagePart, here: PartHere): string[] {
   if ((part.slot === "list" || part.slot === "group") && part.kind) {
     const definition = store.schema.tryDefinition(part.kind);
     const fields = Object.keys(((definition as { fields?: { shape?: object } } | undefined)?.fields?.shape ?? {}) as object).filter((field) => !["label", "name", "title"].includes(field));
-    const shown = store.graph.nodesOfKind(part.kind).filter((node) => text.includes(String((node as Record<string, unknown>)["label"] ?? "").toLowerCase())).slice(0, 6);
+    // Each record by the name its kind gives it: a vendor's is its `name`, never a `label` it does not have.
+    const shown = store.graph.nodesOfKind(part.kind).filter((node) => text.includes(labelOf(definition, node as never).toLowerCase())).slice(0, 6);
     const words = (field: string) => fieldWords(definition, field).toLowerCase();
     const dated = fields.find((field) => shown.some((node) => typeof (node as Record<string, unknown>)[field] === "string" && ISO.test(String((node as Record<string, unknown>)[field]))));
     const missing = fields.find((field) => {
