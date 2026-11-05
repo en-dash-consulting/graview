@@ -57,9 +57,10 @@ jobs:
   # is its own machine, so its ports and its CPU are its own; within a
   # shard the harnesses run one at a time.
   #
-  # THE GPU LEG IS ONE SHARD. On the runner's Chrome stable the scene draws
+  # THE GPU LEG IS ONE SHARD. On the runner's Chrome before 157 the scene drew
   # on the DOM path (docs/renderer.json says so: its capture hit-tests where
-  # a view was laid out), so running every shard again there ran the same
+  # a view was laid out); from 157 it draws on the GPU on SwiftShader and may
+  # fall back while the picture moves. Running every shard again there ran the same
   # DOM checks in a slower Chrome on a busier machine: twice the runners,
   # 26 minutes on its slowest shard, and every flake of 0.1.34's merge. What
   # only that leg can hold is that such a browser falls back and still
@@ -124,20 +125,24 @@ jobs:
       # The GPU path's Chromium: Google Chrome, which has element capture
       # behind its flag; engine.mjs switches it on with SwiftShader.
       #
-      # PINNED to Chrome for Testing 156.0.8078.79, as Playwright is pinned
-      # at 1.49.1 for macOS: the browser must not change under a Nightly.
-      # The shard installed whatever Google Chrome stable was current, and on
-      # 2026-11-03 stable became 157 at an unchanged commit of main: its
-      # capture takes the GPU path on SwiftShader, and there
-      # `aDistrictsNameDoesNotMoveWhenDragged` (verify-navigation) fails — a
-      # district's name from altitude is drawn at the top of its plot, not
-      # under it (Chrome Canary 159 on Metal draws it the same). Retest that
-      # claim on the newer Chrome before moving the pin. The harnesses read
-      # the browser from GRAVIEW_BROWSER (engine.mjs's gpuChromium).
-      - name: Google Chrome 156, for the GPU path
+      # PINNED to Chrome for Testing, as Playwright is pinned at 1.49.1 for
+      # macOS: the browser must not change under a Nightly. The shard
+      # installed whatever Google Chrome stable was current, and on
+      # 2026-11-03 stable became 157 at an unchanged commit of main: 157 is
+      # the first stable whose capture the scene draws with (on SwiftShader
+      # here), and `aDistrictsNameDoesNotMoveWhenDragged` (verify-navigation)
+      # failed — a district's name from altitude was drawn at the top of its
+      # plot. The fault was the framework's: the plot's lengths reached the
+      # host on the DOM path only, and the capture took the host's box and
+      # nothing it drew past it. Fixed, and held by `theTwoPathsDrawTheSameCityFromAltitude`
+      # (verify-renderer), the pin moved from 156.0.8078.79 to 157. Run this
+      # shard on the newer Chrome (`gh workflow run nightly.yml --ref <branch>`)
+      # before moving it again. The harnesses read the browser from
+      # GRAVIEW_BROWSER (engine.mjs's gpuChromium).
+      - name: Google Chrome 157, for the GPU path
         if: matrix.renderer == 'gpu'
         env:
-          CHROME_PIN: "156.0.8078.79"
+          CHROME_PIN: "157.0.8103.38"
         run: |
           npx playwright install-deps chromium
           curl -fsSL -o "$RUNNER_TEMP/chrome.zip" "https://storage.googleapis.com/chrome-for-testing-public/$CHROME_PIN/linux64/chrome-linux64.zip"

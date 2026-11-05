@@ -25,6 +25,46 @@ export interface PlannedView {
   readonly depth?: number;
   /** A district on its plot, from altitude: treated as the focus. */
   readonly onPlot?: boolean;
+  /**
+   * How far the element captured for this view reaches past its layout box,
+   * on each side, in its own pixels. The capture takes an element's box and
+   * nothing outside it, so a view that draws past its box — a district's
+   * name hung under its plot, its landmark standing over it — is given a
+   * box that holds what it draws, and the layout box stays where it was.
+   */
+  readonly outset?: Outset;
+}
+
+/** A margin on each side of a box, in its own pixels. */
+export interface Outset {
+  readonly top: number;
+  readonly right: number;
+  readonly bottom: number;
+  readonly left: number;
+}
+
+/** Where a host says its outset, as "top right bottom left" in whole pixels: written by the host, read by the capture path. */
+export const OUTSET_ATTRIBUTE = "data-graview-outset";
+
+/** An outset as its host writes it. */
+export function outsetText(outset: Outset): string {
+  return `${outset.top} ${outset.right} ${outset.bottom} ${outset.left}`;
+}
+
+/** An outset as its host wrote it; none for no attribute, or one that does not say four lengths. */
+export function outsetFrom(text: string | null): Outset | undefined {
+  if (!text) return undefined;
+  const [top, right, bottom, left, ...rest] = text.trim().split(/\s+/).map(Number);
+  if (rest.length > 0 || [top, right, bottom, left].some((length) => length === undefined || !Number.isFinite(length) || length < 0)) return undefined;
+  return { top: top!, right: right!, bottom: bottom!, left: left! };
+}
+
+/** The box the browser rasterizes for a view: its layout box and its outset. */
+export function capturedSize(view: PlannedView): { readonly width: number; readonly height: number } {
+  const outset = view.outset;
+  return outset
+    ? { width: view.width + outset.left + outset.right, height: view.height + outset.top + outset.bottom }
+    : { width: view.width, height: view.height };
 }
 
 export interface PlannedConnector {
@@ -184,18 +224,23 @@ export function planFrame(
 
   for (const view of ordered) {
     const { style, blur } = treatmentOf(view, options.scheme);
+    // The captured box's corner, so the layout box inside it lands where it would without one.
+    const outsetLeft = view.outset?.left ?? 0;
+    const outsetTop = view.outset?.top ?? 0;
     const transform = transformFor(
       style,
-      view.x,
-      view.y,
+      view.x - outsetLeft * style.scale,
+      view.y - outsetTop * style.scale,
       options.canvasWidth,
       options.canvasHeight,
     );
-    const width = view.width * style.scale;
-    const height = view.height * style.scale;
+    const box = capturedSize(view);
+    const width = box.width * style.scale;
+    const height = box.height * style.scale;
+    // A connector runs from the layout box's center, outset or not.
     centers.set(view.id, {
-      x: transform[12] + width / 2,
-      y: transform[13] + height / 2,
+      x: view.x + (view.width * style.scale) / 2,
+      y: view.y + (view.height * style.scale) / 2,
     });
 
     // IN VIEW, or nothing: a view wholly off the canvas costs no capture and
@@ -211,8 +256,8 @@ export function planFrame(
     placements.push({
       viewId: view.id,
       transform,
-      width: view.width,
-      height: view.height,
+      width: box.width,
+      height: box.height,
       depth: view.plane,
     });
     if (view.dom) continue;

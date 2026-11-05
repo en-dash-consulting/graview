@@ -30,6 +30,7 @@ import type { ConnectorStyle } from "./connectors.js";
 import type { Scheme } from "./plane.js";
 import {
   CAPTURE_BUDGET,
+  capturedSize,
   planFrame,
   type FramePlan,
   type PlannedConnector,
@@ -210,7 +211,8 @@ export class Compositor {
       // box, or a different opacity. Moving a view does not — and marking a
       // move dirty put every plane-1 view back into the per-frame capture
       // budget for the whole of every transition.
-      const resized = existing.width !== view.width || existing.height !== view.height;
+      const [was, now] = [capturedSize(existing), capturedSize(view)];
+      const resized = was.width !== now.width || was.height !== now.height;
       const replaced = existing.element !== view.element || (existing.dom ?? false) !== (view.dom ?? false);
       if (replaced) this.track(view);
       const faded = (existing.opacity ?? 1) !== (view.opacity ?? 1);
@@ -507,8 +509,9 @@ export class Compositor {
     // 400 rows, and a 399-row texture makes the copy fail validation — which
     // it does silently, leaving the view with whatever was in the texture
     // before, or nothing at all. Allocate at least what can arrive.
-    const width = Math.max(1, Math.ceil(view.width));
-    const height = Math.max(1, Math.ceil(view.height));
+    const box = capturedSize(view);
+    const width = Math.max(1, Math.ceil(box.width));
+    const height = Math.max(1, Math.ceil(box.height));
     const existing = this.resources.get(view.id);
     if (existing && existing.width === width && existing.height === height) {
       return existing;

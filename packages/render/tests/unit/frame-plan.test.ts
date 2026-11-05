@@ -14,11 +14,14 @@ import {
   distinguishable,
   fromLayout,
   isAffine,
+  outsetText,
   planFrame,
   PLANE_STYLES,
   type PlannedConnector,
   type PlannedView,
 } from "../../src/index.js";
+// What the compositor and the capture path read of an outset, inside the package.
+import { capturedSize, outsetFrom } from "../../src/scene/frame-plan.js";
 // The capture path is a separate entry: its declarations name WebGPU
 // globals, and the main one should not make every consumer install those.
 import { packUniform } from "../../src/gpu.js";
@@ -240,8 +243,47 @@ describe("plane treatment", () => {
   });
 });
 
+describe("a view that draws past its box", () => {
+  const outset = { top: 60, right: 0, bottom: 120, left: 10 };
+
+  it("draws its outset with the layout box where it would be without one", () => {
+    for (const plane of [0, 1, 2]) {
+      const bare = planFrame([view("a", plane)], [], CANVAS).draws[0]!;
+      const grown = planFrame([view("a", plane, { outset })], [], CANVAS).draws[0]!;
+      const scale = bare.transform[0];
+      // The layout box's corner is the outset box's corner moved in by the outset, at the plane's scale.
+      expect(grown.transform[12] + outset.left * scale).toBeCloseTo(bare.transform[12]);
+      expect(grown.transform[13] + outset.top * scale).toBeCloseTo(bare.transform[13]);
+      expect(grown.width).toBeCloseTo((400 + outset.left + outset.right) * scale);
+      expect(grown.height).toBeCloseTo((240 + outset.top + outset.bottom) * scale);
+    }
+  });
+
+  it("is captured, placed and reported as the box the browser rasterizes", () => {
+    const plan = planFrame([view("a", 1, { outset })], [], CANVAS);
+    expect(capturedSize(view("a", 1, { outset }))).toEqual({ width: 410, height: 420 });
+    expect([plan.placements[0]!.width, plan.placements[0]!.height]).toEqual([410, 420]);
+    expect(plan.geometry[0]!.transform).toEqual(plan.draws[0]!.transform);
+  });
+
+  it("keeps its connectors on the layout box's center", () => {
+    const connectors = [{ id: "e", kind: "k", from: "a", to: "b" }];
+    const bare = planFrame([view("a", 0), view("b", 0, { x: 500 })], connectors, CANVAS).connectors[0]!;
+    const grown = planFrame([view("a", 0, { outset }), view("b", 0, { x: 500 })], connectors, CANVAS).connectors[0]!;
+    expect(grown).toEqual(bare);
+  });
+
+  it("is said by its host in four lengths and read back the same, or not at all", () => {
+    expect(outsetFrom(outsetText(outset))).toEqual(outset);
+    expect(outsetFrom(null)).toBeUndefined();
+    expect(outsetFrom("4 4 4")).toBeUndefined();
+    expect(outsetFrom("4 4 4 -1")).toBeUndefined();
+    expect(outsetFrom("4 4 4 4 4")).toBeUndefined();
+  });
+});
+
 describe("connectors carry meaning", () => {
-  const connector = (id: string, kind: string, from: string, to: string): PlannedConnector => ({
+  const connector =(id: string, kind: string, from: string, to: string): PlannedConnector => ({
     id,
     kind,
     from,

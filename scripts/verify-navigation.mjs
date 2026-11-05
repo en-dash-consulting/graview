@@ -1685,6 +1685,8 @@ const theVerdict = () => ({
   aDistrictsNameDoesNotMoveWhenDragged:
     report.districtName?.resting !== null &&
     report.districtName?.dragged !== null &&
+    // Under its plot, not over its buildings (the GPU path drew it at the plot's top on Chrome 157).
+    report.districtName.resting.dy >= 0 &&
     // The name stands where it stood under its plot, and the city went with the hand.
     report.districtName.dragged.dx === report.districtName.resting.dx &&
     report.districtName.dragged.dy === report.districtName.resting.dy &&
