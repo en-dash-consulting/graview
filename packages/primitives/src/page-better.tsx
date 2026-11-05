@@ -1,4 +1,4 @@
-import { type AnySchema, type ViewForkKept, type ViewReviseAnswer } from "@graview/core";
+import { labelOf, type AnyGraphNode, type AnySchema, type ViewForkKept, type ViewReviseAnswer } from "@graview/core";
 import type { AiInteraction, AiStage, AiUsage } from "@graview/core/catalog";
 import { useGraview, type ProposeChangeAnswer, type ReshapeProposal } from "@graview/react/provider";
 import { viewPlaceOf, type ViewPlaceHandle, type ViewPresses } from "@graview/react/drawing";
@@ -52,7 +52,9 @@ type Phase =
   | { readonly at: "draft" }
   | { readonly at: "keeping" }
   | { readonly at: "kept"; readonly note?: string; readonly undo?: () => void | Promise<void> }
-  | { readonly at: "undone" };
+  | { readonly at: "undone" }
+  /* Two drafts failed the same way: said plainly, the last one there to keep anyway where it drew. */
+  | { readonly at: "stuck"; readonly source?: string };
 
 const words = (text: string | null | undefined) => (text ?? "").replace(/\s+/g, " ").trim();
 const frame = () => new Promise<void>((done) => requestAnimationFrame(() => done()));
@@ -196,13 +198,25 @@ const cardOf = (at: number, first: () => Phase): CardHeld => {
   return held;
 };
 
-/** The labels of the records the page showed: what a draft must still show. */
-function labelsShown(here: ReturnType<typeof useGraview<AnySchema>>, part: PagePart, text: string): string[] {
-  const { store } = here;
-  const nodes = part.record ? [store.graph.getNode(part.record)].filter(Boolean) : part.kind ? store.graph.nodesOfKind(part.kind) : store.schema.kinds.flatMap((kind) => store.graph.nodesOfKind(kind));
+type PageStore = ReturnType<typeof useGraview<AnySchema>>["store"];
+
+/** The records a part could show: its record, its kind's, or every kind's on the home. */
+function nodesOfPart(store: PageStore, part: Pick<PagePart, "record" | "kind">): AnyGraphNode[] {
+  return part.record ? [store.graph.getNode(part.record)].filter((one): one is AnyGraphNode => one !== undefined) : part.kind ? store.graph.nodesOfKind(part.kind) : store.schema.kinds.flatMap((kind) => store.graph.nodesOfKind(kind));
+}
+
+/** A record's name, as its kind says it is named (`name`, a template, a function) — never a field that may not be there. */
+const nameOf = (store: PageStore, node: AnyGraphNode | undefined): string => (node ? labelOf(store.schema.tryDefinition(node.kind), node as never) : "");
+
+/**
+ * THE LABELS OF THE RECORDS THE PAGE SHOWED, what a draft must still show
+ * (Roadmap f-better-ui-draws-first-time): each record of the part named as
+ * its kind names it, where the page's words say it.
+ */
+export function labelsShown(store: PageStore, part: Pick<PagePart, "record" | "kind">, text: string): string[] {
   const read = words(text).toLowerCase();
-  return nodes
-    .map((node) => String((node as Record<string, unknown>)["label"] ?? ""))
+  return nodesOfPart(store, part)
+    .map((node) => nameOf(store, node))
     .filter((label) => label.length > 1 && read.includes(words(label).toLowerCase()))
     .slice(0, 40);
 }
@@ -292,7 +306,7 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
     if (held.original) return held.original;
     const main = mainNow();
     const text = (main as HTMLElement | null)?.innerText ?? "";
-    held.original = readDrawn(regionOf(main), labelsShown(here, part, text));
+    held.original = readDrawn(regionOf(main), labelsShown(here.store, part, text || (main?.textContent ?? "")));
     return held.original;
   }, [held, mainNow, here, part]);
   /** The page now, read as the original was. */
@@ -505,8 +519,10 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
       const own = CONTROL_WORDS.test(result.said) ? undefined : result.said;
       say("graview", [own ?? (checked ? undefined : "Here it is on the page."), checked].filter(Boolean).join(" "));
     } else say("graview", result.said);
+    // Two drafts failed the same way: the person chooses — keep the last one anyway, where it drew, or stop.
+    if (result.ended === "stuck") setPhase({ at: "stuck", ...(result.keepable && result.last ? { source: result.last.source } : {}) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ai, aiDesk, acts, drawnNow, entryOf, forkHost, held, here, judgeDraft, mainNow, manifest, original, part, said, say, step]);
+  }, [ai, aiDesk, acts, drawnNow, entryOf, forkHost, held, here, judgeDraft, mainNow, manifest, original, part, said, say, setPhase, step]);
 
   /**
    * "IT DOESN'T WORK": the design on the page — the newest draft, or the
@@ -614,6 +630,29 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
     }
   }, [held, setPhase, backFromDraft, onProposeChange, ai.name, keptViews, forkOf, aiDesk, say]);
 
+  /** Keep anyway, where two drafts failed the same way: the last one kept as the person chose, one Undo after. */
+  const keepAnyway = useCallback(
+    async (source: string) => {
+      if (held.phase.at !== "stuck") return;
+      const step: Step = { kind: "view", source, said: `${part.name} kept as it was last drafted.`, entry: entryOf(`Draw “${part.name}” anew: ${askedWords()}`, "offered", []) };
+      held.steps.push(step);
+      held.phase = { at: "draft" };
+      await keep();
+      // Not kept: the draft goes again, and the page stands as it was.
+      if (held.steps.at(-1) === step) {
+        held.steps.pop();
+        setPhase(held.steps.length > 0 ? { at: "draft" } : { at: "open" });
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [held, part.name, entryOf, keep, setPhase],
+  );
+  /** Stop, where two drafts failed the same way: nothing kept, the page as it was. */
+  const stopStuck = useCallback(() => {
+    say("graview", "Stopped. The page is as it was.");
+    setPhase(held.steps.length > 0 ? { at: "draft" } : { at: "open" });
+  }, [held, say, setPhase]);
+
   const discard = useCallback(() => {
     const latest = held.steps.at(-1);
     if (latest) aiDesk.record({ ...latest.entry, outcome: "dismissed" });
@@ -688,6 +727,7 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
         working={phase.at === "working" || phase.at === "keeping"}
         {...(latest && phase.at === "draft" ? { draft: { said: latest.said, before: held.before } } : {})}
         {...(phase.at === "kept" ? { kept: { ...(phase.note ? { note: phase.note } : {}), ...(phase.undo ? { undo: () => void undo() } : {}) } } : {})}
+        {...(phase.at === "stuck" ? { stuck: { ...(phase.source !== undefined ? { keepAnyway: () => void keepAnyway(phase.source!) } : {}), stop: stopStuck } } : {})}
         about={(held.pointed ?? held.about)?.name ?? part.name}
         ask={(words) => void askFor(words)}
         just={() => void askFor("Make it easier to read at a glance", "just")}
@@ -715,7 +755,7 @@ function keepsOf(was: DrawnRead, main: Element | null, name: string, here: Retur
   const page = regionOf(main);
   // The home's body is all a new design replaces: what is drawn over it — the app's name in the bar — is its title.
   const above = part.slot === "home" ? [...(main?.querySelectorAll("h1") ?? [])].find((one) => page !== main && !page?.contains(one)) : undefined;
-  const title = words(above?.textContent) || words(page?.querySelector("[data-graview-page-title]")?.textContent) || (part.slot === "home" ? "" : words(page?.querySelector("h1")?.textContent)) || (part.record ? words(String((here.store.graph.getNode(part.record) as Record<string, unknown> | undefined)?.["label"] ?? "")) : "") || name;
+  const title = words(above?.textContent) || words(page?.querySelector("[data-graview-page-title]")?.textContent) || (part.slot === "home" ? "" : words(page?.querySelector("h1")?.textContent)) || (part.record ? words(nameOf(here.store, here.store.graph.getNode(part.record))) : "") || name;
   const ids = idsOf(here, part, was);
   const says = Object.fromEntries(
     was.records.flatMap((one) => (one.facts?.length || (one.under && one.under !== title) ? [[one.label, { ...(ids[one.label] ? { id: ids[one.label] } : {}), ...(one.facts?.length ? { shows: one.facts } : {}), ...(one.under && one.under !== title ? { under: one.under } : {}) }]] : [])),
@@ -725,16 +765,16 @@ function keepsOf(was: DrawnRead, main: Element | null, name: string, here: Retur
 }
 
 /** Each record the page showed, by its words: its id, for the checklist a draft is held to. */
-function idsOf(here: ReturnType<typeof useGraview<AnySchema>>, part: PagePart, was: DrawnRead): Record<string, string> {
-  const { store } = here;
-  const nodes = part.record ? [store.graph.getNode(part.record)].filter((one) => one !== undefined) : part.kind ? store.graph.nodesOfKind(part.kind) : store.schema.kinds.flatMap((kind) => store.graph.nodesOfKind(kind));
+export function recordIdsOf(store: PageStore, part: Pick<PagePart, "record" | "kind">, was: DrawnRead): Record<string, string> {
+  const nodes = nodesOfPart(store, part);
   const out: Record<string, string> = {};
   for (const one of was.records) {
-    const node = nodes.find((each) => words(String((each as Record<string, unknown>)["label"] ?? "")) === words(one.label));
+    const node = nodes.find((each) => words(nameOf(store, each)) === words(one.label));
     if (node) out[one.label] = node.id;
   }
   return out;
 }
+const idsOf = (here: ReturnType<typeof useGraview<AnySchema>>, part: PagePart, was: DrawnRead) => recordIdsOf(here.store, part, was);
 
 /**
  * HOW THE PAGE GROUPED ITS RECORDS, read from the graph: each record sits
@@ -754,7 +794,7 @@ function groupingOf(here: ReturnType<typeof useGraview<AnySchema>>, was: DrawnRe
     for (const edge of edges) {
       const other = edge.from === id ? edge.to : edge.to === id ? edge.from : undefined;
       const named = other !== undefined ? store.graph.getNode(other) : undefined;
-      if (!named || words(String((named as Record<string, unknown>)["label"] ?? "")) !== words(one.under!)) continue;
+      if (!named || words(nameOf(store, named)) !== words(one.under!)) continue;
       const key = `${edge.kind}\u0000${named.kind}\u0000${edge.from === id ? "from" : "to"}`;
       count.set(key, (count.get(key) ?? 0) + 1);
     }
