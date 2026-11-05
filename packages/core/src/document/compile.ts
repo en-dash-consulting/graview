@@ -1,3 +1,4 @@
+import type { FarAppResolver } from "../workflows/far.js";
 import type { HostView } from "../views/types.js";
 import { derivedActOf } from "../mutations/derived-names.js";
 import { documentRelationActOf } from "./relation-acts.js";
@@ -87,6 +88,13 @@ export interface CompileOptions {
    * names is a note, drawn once the host registers it.
    */
   readonly views?: readonly HostView[];
+  /**
+   * What the host knows of another app a workflow's step names
+   * (`@<address>/<kind or act>`, `FarAppResolver` on `@graview/core/workflows`):
+   * read by the checked compile, which then refuses an app, a kind, an act
+   * or an argument that app lacks. Unsaid, such a name is held to its shape.
+   */
+  readonly resolveFarApp?: FarAppResolver;
 }
 
 const BUILTIN_REFS = new Set(["subject", "now", "today", "me"]);

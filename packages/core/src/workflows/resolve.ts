@@ -4,6 +4,7 @@ import type { Author } from "../ops/types.js";
 import { documentOf } from "../document/remembered.js";
 import type { AppWorkflows, WorkflowApproval, WorkflowDeclaration, WorkflowStep, WorkflowTrigger } from "../workflow-shape.js";
 import { stepKindOf } from "./steps.js";
+import { farReachOf, type FarReach } from "./far.js";
 import { workflowWorldOfApp, type WorkflowWorld } from "./world.js";
 import { workflowWords } from "./words.js";
 
@@ -34,6 +35,8 @@ export interface ResolvedWorkflow {
   readonly writes: readonly string[];
   /** Whether a step writes to another system through a connection: what makes "ask" the default. */
   readonly sendsOut: boolean;
+  /** The other apps its steps read and run acts in (`@<address>/<name>`), when any: none of their kinds is among `reads` and `writes`. */
+  readonly reaches?: readonly FarReach[];
   /** Dreaming: the framework's, not the declaration's. */
   readonly builtIn?: true;
 }
@@ -61,7 +64,8 @@ export function workflowReach(steps: readonly WorkflowStep[], world: WorkflowWor
 export function resolveWorkflow(name: string, declared: WorkflowDeclaration, world: WorkflowWorld): ResolvedWorkflow {
   const reach = workflowReach(declared.steps ?? [], world);
   const resolved = { name, title: declared.title, when: declared.when ?? [], status: declared.status ?? "active", approve: declared.approve ?? (reach.sendsOut ? "ask" : "apply"), steps: declared.steps ?? [] } as const;
-  return { ...resolved, words: workflowWords(resolved, world.noun), ...reach };
+  const reaches = farReachOf(resolved.steps);
+  return { ...resolved, words: workflowWords(resolved, world.noun), ...reach, ...(reaches.length > 0 ? { reaches } : {}) };
 }
 
 /**

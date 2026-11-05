@@ -20,6 +20,7 @@ export { runArchiveStep } from "./workflows/run-archive.js";
 export { askedOf, type Asked, type AskedOptions } from "./workflows/ask.js";
 export { runClassifyStep } from "./workflows/run-classify.js";
 export { MOST_CHAIN } from "./workflows/types.js";
-export type { ChangeOutcome, RunWorkflowOptions, SpendSaid, StepChange, StepContext, StepRunner, StepSpend, WorkflowLog, WorkflowOutcome, WorkflowRun, WorkflowRunTrigger, WorkflowSpend } from "./workflows/types.js";
+export type { ChangeOutcome, FarActAnswer, FarActCall, FarApp, FarApps, FarOrigin, FarStepChange, FarWrite, RunWorkflowOptions, SpendSaid, StepChange, StepContext, StepRunner, StepSpend, WorkflowLog, WorkflowOutcome, WorkflowRun, WorkflowRunTrigger, WorkflowSpend } from "./workflows/types.js";
+export { farAppShapeOf, farAppsOver, type FarHome } from "./workflows/far.js";
 export { seatWorkflows } from "./workflows/seat.js";
 export type { WorkflowTools } from "./agent/workflow-tools.js";
