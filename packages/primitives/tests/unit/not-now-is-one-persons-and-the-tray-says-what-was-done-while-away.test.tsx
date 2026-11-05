@@ -130,7 +130,7 @@ describe("Not now, in the Suggested tray", () => {
     await open();
     const row = $('[data-testid="suggestion"]')!;
     const button = row.querySelector<HTMLButtonElement>('[data-testid="suggestion-not-now"]')!;
-    expect(button.textContent).toBe("Not now");
+    expect(button.textContent).toBe("Later");
     // What it does is said to a screen reader, not only on hover.
     expect(document.getElementById(button.getAttribute("aria-describedby")!)?.textContent).toBe("Hides it from you until tomorrow; it still waits for everyone else.");
     const ops = store.log.length;

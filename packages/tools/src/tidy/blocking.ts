@@ -33,7 +33,7 @@ export interface PairBlock {
 /** A far record a relation might point to, and why it was put forward. */
 export interface TargetBlock {
   readonly node: Node;
-  /** "its notes say “Harbor Catering”", "they share the word “harbor”", "the host's search calls it near". */
+  /** "its notes say “Harbor Catering”", "they share the words “harbor” and “menu”", "the host's search calls it near". */
   readonly evidence: string;
   /** Whether the record's own text names it. */
   readonly mentioned: boolean;
@@ -282,10 +282,15 @@ async function targetsOf(context: JudgeContext, node: Node, targets: readonly No
       continue;
     }
     if (!missing) continue;
-    // For an empty one-link relation, a telling word or a value the two share is enough to ask.
-    const farWords = wordsOf([named(schema, far), ...textsOf(schema, far).map(({ text }) => text)].join(" "));
-    const shared = farWords.find((word) => ownWords.has(word) && telling(word));
-    if (shared) put(far, `they share the word “${shared}”`, 1, false);
+    /*
+     * For an empty one-link relation, two telling words the two records
+     * share. ONE IS NO EVIDENCE (Roadmap f-suggestion-card-one-line): a note
+     * and a chapter that both said "opening" were suggested as one placed in
+     * the other, and a model judged it at 0.95.
+     */
+    const farWords = [...new Set(wordsOf([named(schema, far), ...textsOf(schema, far).map(({ text }) => text)].join(" ")))];
+    const shared = farWords.filter((word) => ownWords.has(word) && telling(word));
+    if (shared.length >= 2) put(far, `they share the words “${shared[0]}” and “${shared[1]}”`, 1, false);
   }
   if (missing && options.near && out.size < (options.maxTargets ?? 8)) {
     try {
