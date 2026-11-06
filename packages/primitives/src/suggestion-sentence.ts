@@ -41,6 +41,10 @@ export interface SuggestionSentence {
   readonly group: string;
   /** Several alike, said together: "3 notes to put in chapters". */
   readonly many: (count: number) => string;
+  /** The record it is about, when the sentence names one: what several about it stand under. */
+  readonly subject?: { readonly record: string; readonly label: string };
+  /** The sentence said under that record, without it: "Put in 09 · Without a Map?", "Set aside?". */
+  readonly alone: readonly SentencePart[];
 }
 
 type Reads = { readonly schema: AnySchema; readonly graph: { getNode(id: string): unknown }; allMutations(): readonly AnyMutationDefinition<AnySchema>[] };
@@ -65,11 +69,12 @@ export function suggestionSentence(store: Reads, suggestion: Pick<Suggestion, "c
   const schema = store.schema;
   const node = (id: unknown): Node | undefined => (typeof id === "string" ? (store.graph.getNode(id) as Node | undefined) : undefined);
   const record = (one: Node, quoted = false): SentencePart => ({ record: one.id, label: labelOf(schema.tryDefinition(one.kind), one), ...(quoted ? { quoted: true } : {}) });
-  const said = (parts: SentencePart[], group: string, many: (count: number) => string): SuggestionSentence => ({
+  const said = (parts: SentencePart[], group: string, many: (count: number) => string, about?: Node, alone?: SentencePart[]): SuggestionSentence => ({
     parts,
     text: parts.map((part) => (typeof part === "string" ? part : part.quoted ? `“${part.label}”` : part.label)).join(""),
     group,
     many,
+    ...(about && alone ? { subject: { record: about.id, label: labelOf(schema.tryDefinition(about.kind), about) }, alone } : { alone: parts }),
   });
   const asItWas = said([suggestion.intent], `intent:${suggestion.intent}`, (count) => `${count} suggestions`);
   if (suggestion.calls.length !== 1) return asItWas;
@@ -88,9 +93,9 @@ export function suggestionSentence(store: Reads, suggestion: Pick<Suggestion, "c
 
   // A merge: "Merge “Acme” into Acme Supply?"
   const into = node(args["into"]);
-  if (call.name === `merge-${subject.kind}` && into) return said(["Merge ", record(subject, true), " into ", record(into), "?"], group("merge"), (count) => `${kinds(count)} to merge`);
+  if (call.name === `merge-${subject.kind}` && into) return said(["Merge ", record(subject, true), " into ", record(into), "?"], group("merge"), (count) => `${kinds(count)} to merge`, subject, ["Merge into ", record(into), "?"]);
   // Set aside: "Set “Q3 offsite” aside?"
-  if (call.name === `archive-${subject.kind}`) return said(["Set ", record(subject, true), " aside?"], group("archive"), (count) => `${kinds(count)} to set aside`);
+  if (call.name === `archive-${subject.kind}`) return said(["Set ", record(subject, true), " aside?"], group("archive"), (count) => `${kinds(count)} to set aside`, subject, ["Set aside?"]);
 
   // A link, through the relation the act connects.
   const far = farOf();
@@ -101,41 +106,60 @@ export function suggestionSentence(store: Reads, suggestion: Pick<Suggestion, "c
     const [first, second] = words;
     const farMany = lower(pluralOf(schema, far.kind));
     // "in chapter": put it there.
-    if (first && PUT.has(first)) return said(["Put ", record(subject, true), ` ${first} `, record(far), "?"], group(`put:${first}`), (count) => `${kinds(count)} to put ${first} ${farMany}`);
+    if (first && PUT.has(first)) return said(["Put ", record(subject, true), ` ${first} `, record(far), "?"], group(`put:${first}`), (count) => `${kinds(count)} to put ${first} ${farMany}`, subject, [`Put ${first} `, record(far), "?"]);
     // "waits for": a verb.
-    if (first && second && AFTER_VERB.has(second) && /[^s]s$/.test(first))
-      return said(["Should ", record(subject, true), ` ${[base(first), ...words.slice(1)].join(" ")} `, record(far), "?"], group("verb"), (count) => `${kinds(count)} to link`);
+    if (first && second && AFTER_VERB.has(second) && /[^s]s$/.test(first)) {
+      const verb = [base(first), ...words.slice(1)].join(" ");
+      return said(["Should ", record(subject, true), ` ${verb} `, record(far), "?"], group("verb"), (count) => `${kinds(count)} to link`, subject, [`${verb.charAt(0).toUpperCase()}${verb.slice(1)} `, record(far), "?"]);
+    }
     // "venue", one: "Make Harbor Hall the venue of “Dinner”?"
     const noun = words.join(" ");
-    if (edge.cardinality === "one") return said(["Make ", record(far), ` the ${noun} of `, record(subject, true), "?"], group("one"), (count) => `${kinds(count)} to give ${/^[aeiou]/i.test(noun) ? "an" : "a"} ${noun}`);
-    return said(["Add ", record(far), ` to the ${noun} of `, record(subject, true), "?"], group("many"), (count) => `${kinds(count)} to link`);
+    if (edge.cardinality === "one") return said(["Make ", record(far), ` the ${noun} of `, record(subject, true), "?"], group("one"), (count) => `${kinds(count)} to give ${/^[aeiou]/i.test(noun) ? "an" : "a"} ${noun}`, subject, ["Make ", record(far), ` the ${noun}?`]);
+    return said(["Add ", record(far), ` to the ${noun} of `, record(subject, true), "?"], group("many"), (count) => `${kinds(count)} to link`, subject, ["Add ", record(far), ` to the ${noun}?`]);
   }
 
   // A choice filled in: "Mark “Fix the roof” as Urgent?"
   const values = Object.entries(args).filter(([name, value]) => name !== subjectArg && typeof value === "string" && !node(value));
-  if (suggestion.lineage?.actor === "categorize" && values.length === 1) return said(["Mark ", record(subject, true), ` as ${humanizeValue(String(values[0]![1]))}?`], group("mark"), (count) => `${kinds(count)} to mark`);
+  if (suggestion.lineage?.actor === "categorize" && values.length === 1) {
+    const value = humanizeValue(String(values[0]![1]));
+    return said(["Mark ", record(subject, true), ` as ${value}?`], group("mark"), (count) => `${kinds(count)} to mark`, subject, [`Mark as ${value}?`]);
+  }
   return asItWas;
 }
 
-/** A group of suggestions said alike: the words that head it when there are several, and each of them. */
+/**
+ * A group of suggestions: the record several are about, named once to head
+ * them (each then said without it), or the words that head several alike;
+ * and each of them. One alone has neither.
+ */
 export interface SuggestionGroup<T> {
+  readonly record?: { readonly record: string; readonly label: string };
   readonly words?: string;
   readonly suggestions: readonly T[];
 }
 
 /**
- * Several suggestions of the same act, said the same way, together under
- * one line — "3 notes to put in chapters" — in the order the first of each
- * came; one alone is a group of one, with no line of its own.
+ * Several suggestions about the same record together under its name
+ * (Roadmap f-suggestions-grouped-by-record) — put this note in a chapter,
+ * link it to another, set it aside — and of the rest, several of the same
+ * act said the same way together under one line, "3 notes to put in
+ * chapters": a record two or more are about wins, since its name said
+ * once is what each card repeated. In the order the first of each came;
+ * one alone is a group of one, with no line of its own.
  */
 export function suggestionGroups<T extends Pick<Suggestion, "calls" | "intent" | "lineage">>(store: Reads, suggestions: readonly T[]): readonly SuggestionGroup<T>[] {
-  const groups = new Map<string, { sentence: SuggestionSentence; suggestions: T[] }>();
-  for (const one of suggestions) {
-    const sentence = suggestionSentence(store, one);
-    const key = one.calls.length === 1 ? sentence.group : `one:${groups.size}`;
+  const said = suggestions.map((one) => ({ one, sentence: suggestionSentence(store, one) }));
+  const about = new Map<string, number>();
+  for (const { sentence } of said) if (sentence.subject) about.set(sentence.subject.record, (about.get(sentence.subject.record) ?? 0) + 1);
+  const groups = new Map<string, { sentence: SuggestionSentence; byRecord: boolean; suggestions: T[] }>();
+  for (const { one, sentence } of said) {
+    const byRecord = sentence.subject !== undefined && about.get(sentence.subject.record)! > 1;
+    const key = byRecord ? `record:${sentence.subject!.record}` : one.calls.length === 1 ? sentence.group : `one:${groups.size}`;
     const was = groups.get(key);
     if (was) was.suggestions.push(one);
-    else groups.set(key, { sentence, suggestions: [one] });
+    else groups.set(key, { sentence, byRecord, suggestions: [one] });
   }
-  return [...groups.values()].map(({ sentence, suggestions: some }) => (some.length > 1 ? { words: sentence.many(some.length), suggestions: some } : { suggestions: some }));
+  return [...groups.values()].map(({ sentence, byRecord, suggestions: some }) =>
+    byRecord ? { record: sentence.subject!, suggestions: some } : some.length > 1 ? { words: sentence.many(some.length), suggestions: some } : { suggestions: some },
+  );
 }

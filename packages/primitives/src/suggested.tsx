@@ -2,7 +2,7 @@ import { actingAs, nameOfAuthor, VOTE_SUGGESTION, type AnySchema, type Dismissal
 import { acceptSuggestion, declineSuggestion, isProposal, mayDecide, suggestions, voteSuggestion, withdrawSuggestion } from "@graview/core/tidying";
 import { suggestionGroups, suggestionSentence, whyWords, type SentencePart } from "./suggestion-sentence.js";
 import { useGoTo, useGraph, useGraview } from "@graview/react/provider";
-import { useEffect, useId, useMemo, useReducer, useState } from "react";
+import { useEffect, useId, useMemo, useReducer, useState, type ReactNode } from "react";
 import { dismissalsOf, tomorrow } from "./dismissals.js";
 import { VISUALLY_HIDDEN } from "./primitives/index.js";
 import { nameOf } from "./workbench/answer-args.js";
@@ -130,9 +130,16 @@ export function SuggestedList({ close, done }: {
               <h3 style={{ margin: 0, fontSize: "0.75rem", fontWeight: 600, color: "var(--graview-ink-muted)" }}>{at === 0 ? "Proposed" : "Suggested by the app"}</h3>
             ) : null}
             <ol data-testid={at === 0 ? "proposals" : "suggestions"} style={LIST}>
-              {/* Several alike under one line, "3 notes to put in chapters", each a row of its own. */}
+              {/*
+               * Several about one record under its name, said once as a link (Roadmap f-suggestions-grouped-by-record), each row
+               * saying only what differs; of the rest, several alike under one line, "3 notes to put in chapters", each a row of its own.
+               */}
               {suggestionGroups(store, some).map((group) =>
-                group.words ? (
+                group.record ? (
+                  <RecordGroup key={group.suggestions[0]!.id} record={group.record} level={waiting.some(isProposal) ? 4 : 3} go={goes(group.record.record)}>
+                    {(under) => group.suggestions.map((one) => <SuggestionRow key={one.id} suggestion={one} notNow={notNow} settled={settled} heard={hear} goes={goes} under={under} />)}
+                  </RecordGroup>
+                ) : group.words ? (
                   <li key={group.suggestions[0]!.id} data-testid="suggestion-group" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 6, minWidth: 0 }}>
                     <span style={{ ...WRAPS, fontSize: "0.75rem", fontWeight: 600, color: "var(--graview-ink-muted)" }}>{group.words}</span>
                     <ol style={LIST}>
@@ -152,6 +159,26 @@ export function SuggestedList({ close, done }: {
       {/* What the last press did, said to a screen reader: the row it was on is gone. */}
       {status}
     </div>
+  );
+}
+
+/**
+ * SEVERAL SUGGESTIONS ABOUT ONE RECORD (Roadmap
+ * f-suggestions-grouped-by-record): the record named once, a link heading
+ * the list of them, and each row under it said without it. Spacing, not a
+ * box: the rows sit a step in from the name they hang from.
+ */
+function RecordGroup({ record, level, go, children }: { readonly record: { readonly record: string; readonly label: string }; readonly level: 3 | 4; readonly go: ((id: string) => void) | null; readonly children: (under: string) => ReactNode }) {
+  const heading = useId();
+  return (
+    <li data-testid="suggestion-record-group" data-record={record.record} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 4, minWidth: 0 }}>
+      <span id={heading} role="heading" aria-level={level} data-testid="suggestion-record-heading" style={{ ...WRAPS, display: "block", fontSize: "0.8125rem", lineHeight: 1.45 }}>
+        <SentenceRecord part={record} go={go} />
+      </span>
+      <ol aria-labelledby={heading} style={{ ...LIST, gap: 6, paddingInlineStart: 12 }}>
+        {children(heading)}
+      </ol>
+    </li>
   );
 }
 
@@ -230,7 +257,15 @@ export function advisoryWords(advisory: Suggestion["tally"]["advisory"]): string
  * (Roadmap f-suggestion-votes): the row stays, says so, and offers to
  * withdraw it; whoever may decide reads the tally beside Accept.
  */
-function SuggestionRow({ suggestion, notNow, settled, heard, goes }: { readonly suggestion: Suggestion; readonly notNow: DismissalStore; readonly settled: (heard: string) => void; readonly heard: (word: string) => void; readonly goes: (id: string) => ((id: string) => void) | null }) {
+function SuggestionRow({ suggestion, notNow, settled, heard, goes, under }: {
+  readonly suggestion: Suggestion;
+  readonly notNow: DismissalStore;
+  readonly settled: (heard: string) => void;
+  readonly heard: (word: string) => void;
+  readonly goes: (id: string) => ((id: string) => void) | null;
+  /** The heading of the record it stands under, when several are about one: the row says the rest, and is described with the name. */
+  readonly under?: string;
+}) {
   const { store, principal, seats, people, signIn } = useGraview<AnySchema>();
   const [refused, setRefused] = useState<string | null>(null);
   const [voted, setVoted] = useState<string | null>(null);
@@ -284,11 +319,13 @@ function SuggestionRow({ suggestion, notNow, settled, heard, goes }: { readonly 
    */
   const several = suggestion.items.length > 1;
   const sentence = useMemo(() => suggestionSentence(store, suggestion), [store, suggestion]);
+  const words = useId();
+  const parts = under ? sentence.alone : sentence.parts;
+  const described = under ? `${under} ${words}` : words;
   const named = new Set(sentence.parts.flatMap((part) => (typeof part === "string" ? [] : [part.record])));
   // A proposal's basis is the person's own words, when they gave any: "Proposed by Ada" is said once, in the sentence.
   const reason = suggestion.lineage && !(proposal && suggestion.lineage.basis.startsWith("Proposed by ")) ? whyWords(suggestion.lineage) : undefined;
   const [why, setWhy] = useState(false);
-  const words = useId();
   const because = useId();
   return (
     <li data-testid="suggestion" data-suggestion={suggestion.id} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 4, lineHeight: 1.45, minWidth: 0 }}>
@@ -305,7 +342,7 @@ function SuggestionRow({ suggestion, notNow, settled, heard, goes }: { readonly 
               <strong style={{ fontWeight: 600 }}>{by}</strong> <span style={{ color: "var(--graview-ink-muted)" }}>suggests</span>{" "}
             </>
           ) : null}
-          {several ? headlineAfter(by, suggestion.headline ?? suggestion.intent) : sentence.parts.map((part, at) => (typeof part === "string" ? part : <SentenceRecord key={at} part={part} go={goes(part.record)} />))}
+          {several ? headlineAfter(by, suggestion.headline ?? suggestion.intent) : parts.map((part, at) => (typeof part === "string" ? part : <SentenceRecord key={at} part={part} go={goes(part.record)} />))}
         </span>
         <span style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4, marginInlineStart: "auto", minWidth: 0 }}>
           {reason ? (
@@ -322,7 +359,7 @@ function SuggestionRow({ suggestion, notNow, settled, heard, goes }: { readonly 
               type="button"
               data-testid="suggestion-accept"
               onClick={() => void settle("accept")}
-              {...(decides ? { "aria-describedby": words } : { "aria-pressed": tally.mine === "for", "aria-describedby": voting })}
+              {...(decides ? { "aria-describedby": described } : { "aria-pressed": tally.mine === "for", "aria-describedby": voting })}
               style={BUTTON}
             >
               {decides && several ? "Accept all" : "Yes"}
@@ -337,7 +374,7 @@ function SuggestionRow({ suggestion, notNow, settled, heard, goes }: { readonly 
               type="button"
               data-testid="suggestion-decline"
               onClick={() => void settle("decline")}
-              {...(decides ? { "aria-describedby": words } : { "aria-pressed": tally.mine === "against", "aria-describedby": voting })}
+              {...(decides ? { "aria-describedby": described } : { "aria-pressed": tally.mine === "against", "aria-describedby": voting })}
               style={BUTTON}
             >
               No
