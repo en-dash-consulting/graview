@@ -221,10 +221,25 @@ export function labelsShown(store: PageStore, part: Pick<PagePart, "record" | "k
     .slice(0, 40);
 }
 
-/** The fields of the part's kind, by name: words a draft must not show as they are kept. */
-function fieldsOf(here: ReturnType<typeof useGraview<AnySchema>>, part: PagePart): string[] {
-  const kinds = part.kind ? [part.kind] : here.store.schema.kinds;
-  return kinds.flatMap((kind) => Object.keys(((here.store.schema.tryDefinition(kind) as { fields?: { shape?: object } } | undefined)?.fields?.shape ?? {}) as object));
+/**
+ * THE FIELDS OF THE PART'S KIND, by name, and what its records keep in
+ * each: a field's name beside its own value is shown as the computer keeps
+ * it ("status: candidate"), and a word a record's own text says ("true")
+ * is the person's, not the computer's (Roadmap
+ * f-better-ui-computer-words-false-alarms).
+ */
+export function fieldsShownOf(store: PageStore, part: Pick<PagePart, "record" | "kind">): { fields: string[]; values: Record<string, unknown[]> } {
+  const kinds = part.kind ? [part.kind] : store.schema.kinds;
+  const fields = [...new Set(kinds.flatMap((kind) => Object.keys(((store.schema.tryDefinition(kind) as { fields?: { shape?: object } } | undefined)?.fields?.shape ?? {}) as object)))];
+  const values: Record<string, unknown[]> = {};
+  for (const node of nodesOfPart(store, part).slice(0, 400))
+    for (const field of fields) {
+      const value = (node as unknown as Record<string, unknown>)[field];
+      if (value === undefined || value === null || typeof value === "object") continue;
+      const kept = (values[field] ??= []);
+      if (kept.length < 60 && !kept.includes(value)) kept.push(value);
+    }
+  return { fields, values };
 }
 
 export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { part: object }>; readonly close: () => void }) {
@@ -403,7 +418,7 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
           await frame();
           now = drawnSignature(mainNow());
         }
-        const findings = now === was ? ["nothing changed"] : drawnFindings(original(), drawnNow(), { fields: fieldsOf(here, part), asked: askedWords() });
+        const findings = now === was ? ["nothing changed"] : drawnFindings(original(), drawnNow(), { ...fieldsShownOf(here.store, part), asked: askedWords() });
         if (findings.length > 0) {
           await showLatest();
           aiDesk.record({ ...entry, outcome: "failed", failed: findings.join(" ") });
@@ -453,7 +468,7 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
             await frame();
             // Read where the draft was drawn: the page's region holding that place, whatever the page drew again meanwhile.
             const region = drawn.element.closest("[data-graview-page-main], main") ?? regionOf(mainNow());
-            findings = drawnFindings(was, readDrawn(region, was.records.map((one) => one.label)), { fields: fieldsOf(here, part), asked: askedWords() });
+            findings = drawnFindings(was, readDrawn(region, was.records.map((one) => one.label)), { ...fieldsShownOf(here.store, part), asked: askedWords() });
             // Every control it drew pressed, headless and nothing applied, and what a person could do on each record kept.
             const pressed = drawn.handle.presses ? await drawn.handle.presses(source).catch(() => undefined) : undefined;
             if (pressed) {
@@ -813,13 +828,22 @@ const regionOf = (face: Element | null): Element | null => face?.querySelector("
  * THE PAGE AS IT WAS DRAWN, its markup for a new design to start from:
  * elements and their words, the classes and data a person never reads
  * left out, what is hidden and what draws no words left out, kept short.
+ * Each record's link keeps its name and its record (`<a data-record="c2">02
+ * · Who Drew the Map</a>`): a card's link is drawn empty over it, named
+ * only for a screen reader, and a model shown `<a></a>` can tell the rows
+ * apart only by the checklist.
  */
-function markupOf(main: Element | null): string | null {
+export function markupOf(main: Element | null): string | null {
   if (!main?.isConnected) return null;
   // The page's own region, not the app's bar and footer around it.
   const copy = (main.querySelector("main") ?? main).cloneNode(true) as Element;
+  for (const item of copy.querySelectorAll("[data-graview-listed], [data-graview-record]")) {
+    const link = item.querySelector("a[href]");
+    if (link) link.setAttribute("data-record", item.getAttribute("data-graview-listed") ?? item.getAttribute("data-graview-record") ?? "");
+  }
+  for (const link of copy.querySelectorAll("a[aria-label]")) if (!words(link.textContent)) link.textContent = link.getAttribute("aria-label");
   for (const gone of copy.querySelectorAll("script, style, svg, button, input, select, textarea, [hidden], [aria-hidden='true'], [data-graview-popover]")) gone.remove();
-  for (const element of [copy, ...copy.querySelectorAll("*")]) for (const name of [...element.getAttributeNames()]) element.removeAttribute(name);
+  for (const element of [copy, ...copy.querySelectorAll("*")]) for (const name of [...element.getAttributeNames()]) if (!(name === "data-record" && element.localName === "a")) element.removeAttribute(name);
   const html = copy.outerHTML.replace(/\s+/g, " ").replace(/<(div|span)>\s*<\/\1>/g, "").trim();
   return html.length > 6000 ? html.slice(0, 6000) : html;
 }

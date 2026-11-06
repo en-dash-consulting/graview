@@ -16,8 +16,9 @@ import { styleStringsOf } from "./section.js";
  * A drawing read for judging: its headings in order, the records it shows
  * in order with where and how big, and all its words. Each record carries
  * what its row or card says beside its name (`facts`: "Todo", "Sep 3,
- * 2026", "3 tasks"), the words of that row or card whole (`row`), and the
- * heading it sits under (`under`).
+ * 2026", "3 tasks"; never a nested record's), the words of the block that
+ * holds it and no other record (`row`: a tag one box over from its link is
+ * still its), and the heading it sits under (`under`).
  */
 export interface DrawnRead {
   readonly headings: readonly string[];
@@ -156,7 +157,7 @@ export function cssFindings(source: string, options: { readonly already?: string
 
 const ISO_DAY = /\b\d{4}-\d{2}-\d{2}(?:T[\d:.]+Z?)?\b/;
 const MARKUP = /<\/?[a-z][a-z0-9-]*(?:\s[^<>]*)?>/i;
-const RAW = /\b(undefined|null|NaN|\[object Object\]|true|false)\b/;
+const RAW = /(?<![\w])(undefined|null|NaN|\[object Object\]|true|false)(?![\w])/g;
 
 const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
 const DAY_SAID = /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})\b|\b(\d{1,2})\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b/;
@@ -183,8 +184,14 @@ export function rowSays(row: string, fact: string): boolean {
     // A day said by its weekday or as "today" stands for it where the draft says no month at all.
     return MONTHS.every((name) => !said.includes(name)) && WEEKDAY.test(said);
   }
+  // A count is held by its number, said in figures or in words: "0 stories" as "no stories", "1 chapters" as "one chapter".
   const number = /^\D*(\d+(?:[.,]\d+)?)\D*$/.exec(wanted);
-  if (number) return new RegExp(`(^|\\D)${number[1]!.replace(/[.,]/g, "[.,]")}(\\D|$)`).test(said);
+  if (number) {
+    if (new RegExp(`(^|\\D)${number[1]!.replace(/[.,]/g, "[.,]")}(\\D|$)`).test(said)) return true;
+    const count = Number(number[1]);
+    if (count === 0) return /\b(no|none|zero|nothing|not any)\b/.test(said);
+    return Number.isInteger(count) && count < counted.length && new RegExp(`\\b${counted[count]}\\b`).test(said);
+  }
   return false;
 }
 
@@ -299,13 +306,15 @@ export const findingsOf = (findings: readonly string[]): DraftFinding[] => findi
  * it no longer shows, a fact a record's row said that its card no longer
  * says (its status, its date, a count), a record moved under another
  * heading, a heading drawn twice, and words no person was shown before — a
- * field's own name, a date as the computer keeps it, `true`, `undefined`.
- * A fact or a group the person asked to change (`asked`: "hide the dates",
+ * field's own name with its value as kept beside it, a date as the
+ * computer keeps it, `true`, `undefined` where no record's own words
+ * (`values`, each field's values as kept) say it. A count is held by its
+ * number ("0 stories" may be "no stories"). A fact or a group the person asked to change (`asked`: "hide the dates",
  * "group by status") is theirs to change, and so is a heading's wording
  * they asked for — in its place, and only the part's being changed
  * (`mayReword`) where one is. Empty when the draft may be shown.
  */
-export function drawnFindings(before: DrawnRead, after: DrawnRead, options: { readonly fields?: readonly string[]; readonly asked?: string; readonly mayReword?: readonly string[] } = {}): string[] {
+export function drawnFindings(before: DrawnRead, after: DrawnRead, options: { readonly fields?: readonly string[]; readonly values?: Readonly<Record<string, readonly unknown[]>>; readonly asked?: string; readonly mayReword?: readonly string[] } = {}): string[] {
   const findings: string[] = [];
   const text = norm(after.text);
   const lost = before.records.map((one) => one.label).filter((label) => label && !text.includes(norm(label)));
@@ -345,13 +354,37 @@ export function drawnFindings(before: DrawnRead, after: DrawnRead, options: { re
   if (markup && !MARKUP.test(before.text)) findings.push(`It shows its own markup as words (“${markup[0].slice(0, 40)}”): build it with graview.html\`…\`, nesting graview.html for each list, never a string of HTML.`);
   const iso = ISO_DAY.exec(after.text);
   if (iso && !ISO_DAY.test(before.text)) findings.push(`It shows a date as “${iso[0]}”: say dates in words, as the page did (“Sep 3”).`);
-  const raw = RAW.exec(after.text);
-  if (raw && !new RegExp(`\\b${raw[1]!.replace(/[[\]]/g, "\\$&")}\\b`).test(before.text)) findings.push(`It shows “${raw[1]}”, which is a value as the computer keeps it, not words for a person: say it in words or leave it out.`);
+  // A word a record's own text says ("it was true") is the person's, not the computer's.
+  const theirs = Object.values(options.values ?? {})
+    .flat()
+    .filter((one): one is string => typeof one === "string")
+    .join("\n");
+  const shownRaw = [...after.text.matchAll(RAW)].map((one) => one[1]!);
+  const raw = shownRaw.find((word) => {
+    const said = new RegExp(`(^|[^\\w])${word.replace(/[[\]]/g, "\\$&")}([^\\w]|$)`);
+    return !said.test(before.text) && (word === "[object Object]" || !said.test(theirs));
+  });
+  if (raw) findings.push(`It shows “${raw}”, which is a value as the computer keeps it, not words for a person: say it in words or leave it out.`);
+  const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   for (const field of options.fields ?? []) {
     if (field.length < 3 || ["label", "name", "title"].includes(field)) continue;
-    // As the computer keeps it: a camelCase key anywhere, or a lowercase one with a value after it ("order 2", "done: true") — never a label a person wrote ("Due Sep 3").
-    const named = /[A-Z]/.test(field) ? new RegExp(`\\b${field}\\b`) : new RegExp(`(?:^|[^\\w])${field}(?:\\s*[:=]|\\s+(?:\\d|true|false|null))`);
-    if (named.test(after.text) && !named.test(before.text)) {
+    /*
+     * As the computer keeps it: a camelCase key anywhere, or a lowercase one
+     * with its own value as kept after it ("order 2", "status: candidate",
+     * "done: true") — never ordinary words that happen to be a field's name
+     * ("draft 3 · revising 0", "story 2"), nor a label a person wrote ("Due
+     * Sep 3"). Where its values are not known, only a key and a raw value
+     * written as code is ("done: true", "order=2").
+     */
+    const kept = (options.values?.[field] ?? []).map((one) => escape(String(one))).filter((one) => one.length > 0 && one.length <= 40);
+    const named = /[A-Z]/.test(field)
+      ? new RegExp(`\\b${field}\\b`)
+      : options.values
+        ? kept.length > 0
+          ? new RegExp(`(?:^|[^\\w])${field}(?:\\s*[:=]\\s*|\\s+)(?:${kept.join("|")})(?![\\w])`)
+          : undefined
+        : new RegExp(`(?:^|[^\\w])${field}\\s*[:=]\\s*(?:\\d|true\\b|false\\b|null\\b|undefined\\b)`);
+    if (named && named.test(after.text) && !named.test(before.text)) {
       findings.push(`It shows “${field}”, a field's name, not words for a person: say what it means, or leave it out.`);
       break;
     }

@@ -192,7 +192,7 @@ describe("a draft read against the page it replaces", () => {
 
   it("finds what a draft lost, drew twice, or said as the computer keeps it", () => {
     const after: DrawnRead = { headings: ["Lists", "Lists", "Someday"], records: [card("Write the brief", 100, 0)], text: "Lists Lists Someday Write the brief 2026-09-03 order 2 true" };
-    const found = drawnFindings(before, after, { fields: ["order", "due"] });
+    const found = drawnFindings(before, after, { fields: ["order", "due"], values: { order: [1, 2], due: ["2026-09-03"] } });
     expect(found.some((one) => one.includes("“Book the hall”"))).toBe(true);
     expect(found.some((one) => one.includes("drawn twice"))).toBe(true);
     expect(found.some((one) => one.includes("2026-09-03"))).toBe(true);

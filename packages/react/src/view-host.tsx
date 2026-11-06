@@ -1,5 +1,5 @@
 import { counted, labelOf, nounOf, SCENE_LAYERS } from "@graview/core";
-import { recededOpacity, transformFor, treatmentOf, hueFor, OUTSET_ATTRIBUTE, outsetText } from "@graview/render";
+import { recededOpacity, transformFor, treatmentOf, hueFor, OUTSET_ATTRIBUTE, outsetText, type Outset } from "@graview/render";
 import {
   useEffect,
   useRef,
@@ -12,7 +12,7 @@ import {
 import type { ActivityMark } from "./activity.js";
 import { useGraview } from "./context.js";
 import { joinedFrom, pickedFrom, usePickTargets } from "./picking.js";
-import { useCapturedOutset } from "./captured-outset.js";
+import { kindTagOutset, useCapturedOutset, type TagAt } from "./captured-outset.js";
 import { holderFrom } from "./picked.js";
 import { sectionsArrive, sectionsWanted, sectionUnderNow, type MenuViewSection } from "./view-places.js";
 import { WHO } from "./where-drawn.js";
@@ -123,7 +123,13 @@ export function SceneViewHost({
    * open ground above the card it names — measured against the drawn
    * child instead, the same lesson every measured surface here learned.
    */
-  const [tagAt, setTagAt] = useState<{ top: number; right: number } | null>(null);
+  /*
+   * Against the LAYOUT's box, not the host's box as an outset grows it: the
+   * outset is taken from where the tag stands (`kindTagOutset`), so a place
+   * measured inside the grown box would move the tag by its own outset.
+   */
+  const [tagAt, setTagAt] = useState<TagAt | null>(null);
+  const tagPad = useRef<Outset | null>(null);
   const tagged = Math.round(node.plane) === 0 && !node.aggregate;
   /*
    * Measured when the panel's SIZE changes, not on every render — from the
@@ -166,9 +172,10 @@ export function SceneViewHost({
       const hostBox = host.getBoundingClientRect();
       const childBox = child.getBoundingClientRect();
       const scale = host.offsetWidth > 0 ? hostBox.width / host.offsetWidth : 1;
+      const pad = tagPad.current;
       const next = {
-        top: Math.round((childBox.top - hostBox.top) / scale) - 9,
-        right: Math.round((hostBox.right - childBox.right) / scale) + 14,
+        top: Math.round((childBox.top - hostBox.top) / scale) - (pad?.top ?? 0) - 9,
+        right: Math.round((hostBox.right - childBox.right) / scale) - (pad?.right ?? 0) + 14,
       };
       setTagAt((current) =>
         current && current.top === next.top && current.right === next.right ? current : next,
@@ -205,7 +212,15 @@ export function SceneViewHost({
   const ref = useRef<HTMLDivElement | null>(null);
   usePickTargets(ref);
   // A district on its plot draws past its box; captured, its box is grown to hold it (captured-outset.ts).
-  const outset = useCapturedOutset(ref, !useDom && frontY !== undefined);
+  const measured = useCapturedOutset(ref, !useDom && frontY !== undefined);
+  /*
+   * So does a focused record: its kind tag stands astride the panel's top
+   * edge. Where it stands is known (`tagAt`), so its overhang is taken from
+   * that, not measured — a district stands on plane 2 and a tagged record on
+   * plane 0, so at most one of the two applies.
+   */
+  const outset = measured ?? (useDom || !tagged ? null : kindTagOutset(tagAt));
+  tagPad.current = outset;
 
   /*
    * A view drawn smaller than it was designed for is SCALED, not re-solved.
@@ -674,7 +689,8 @@ export function SceneViewHost({
           className="graview-kind-tag"
           aria-hidden="true"
           style={{
-            ...(tagAt ?? {}),
+            // Where it stands on the layout's box, carried into the box an outset grew.
+            ...(tagAt ? { top: tagAt.top + (outset?.top ?? 0), right: tagAt.right + (outset?.right ?? 0) } : {}),
             ["--graview-hue" as string]: Math.round(
               hueFor(node.kind, hostBrand?.accents),
             ),
