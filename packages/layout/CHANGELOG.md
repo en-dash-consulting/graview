@@ -1,5 +1,11 @@
 # @graview/layout
 
+## 0.1.68
+
+### Patch Changes
+
+- @graview/core@0.1.68
+
 ## 0.1.67
 
 ### Patch Changes

@@ -71,7 +71,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.67
 
-Published November 5, 2026 · the current version
+Published November 5, 2026
 
 Better UI keeps a correct draft the first time and makes a small change as a small edit; a tidying suggestion is one plain question; a workflow step can reach another app; the right-click menu opens at the pointer in Safari; and a district's name stands under its plot on Chrome 157.
 
