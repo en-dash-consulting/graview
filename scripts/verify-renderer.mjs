@@ -277,7 +277,15 @@ try {
        * THE KIND TAG DRAWN WHOLE. A focused record's kind tag stands astride
        * its panel's top edge, and a captured view draws only its host's box:
        * on Chrome 157 the GPU path cut the tag at that edge. Its host's box
-       * must hold it, and the picture around it must be the DOM path's.
+       * must hold it, and above the edge the GPU must draw the tag as the
+       * DOM path does.
+       *
+       * Each path is held against ITSELF, the tag shown and then hidden:
+       * what hiding it takes away above the panel's edge is what of the tag
+       * is drawn there. A tag cut at the edge has nothing there to take away.
+       * Held across the two paths pixel for pixel instead, a texture sampled
+       * at a fractional pixel moves a glyph's antialiasing, and SwiftShader's
+       * moves it further, by as much as a cut costs a tag this small.
        */
       const recordOnGpu = await open(capturing, `${home}#focus=t-deposit`);
       const recordOnDom = await open(capturing, `${home}&renderer=dom#focus=t-deposit`);
@@ -290,21 +298,18 @@ try {
         const { host, tag } = tagOnGpu;
         report.kindTag.insideItsCapturedBox = tag.y >= host.y - 0.5 && tag.x >= host.x - 0.5 && tag.y + tag.height <= host.y + host.height + 0.5 && tag.x + tag.width <= host.x + host.width + 0.5;
         report.kindTag.wherePathsAgree = Math.abs(tag.y - tagOnDom.tag.y) <= 1 && Math.abs(tag.x - tagOnDom.tag.x) <= 1;
-        /*
-         * Compared at a tolerance of 64, not 24: a captured texture sampled
-         * at a fractional pixel moves a glyph's antialiasing by more than 24
-         * and less than 64, while a tag cut at the edge loses its words and
-         * border outright (Chrome 157 on Metal: 3% of the strip above the
-         * edge cut, 0.2% drawn whole).
-         */
-        const around = { x: Math.max(0, Math.floor(tag.x) - 4), y: Math.max(0, Math.floor(tag.y) - 4), width: Math.ceil(tag.width) + 8, height: Math.ceil(tag.height) + 8 };
-        report.kindTag.picture = await compare(scratch, await recordOnGpu.page.screenshot({ clip: around }), await recordOnDom.page.screenshot({ clip: around }), 64);
         // The part a capture of the layout's box alone would cut: above the panel's edge.
-        const edge = Math.floor(tagOnDom.host.y);
-        if (edge > around.y) {
-          const above = { ...around, height: edge - around.y };
-          report.kindTag.aboveTheEdge = await compare(scratch, await recordOnGpu.page.screenshot({ clip: above }), await recordOnDom.page.screenshot({ clip: above }), 64);
-        }
+        const top = Math.max(0, Math.floor(tag.y) - 2);
+        const above = { x: Math.max(0, Math.floor(tag.x) - 2), y: top, width: Math.ceil(tag.width) + 4, height: Math.max(1, Math.floor(tagOnDom.host.y) - top) };
+        const shown = { gpu: await recordOnGpu.page.screenshot({ clip: above }), dom: await recordOnDom.page.screenshot({ clip: above }) };
+        for (const one of [recordOnGpu.page, recordOnDom.page]) await one.addStyleTag({ content: ".graview-kind-tag { visibility: hidden !important; }" });
+        // Time for the capture to be retaken.
+        await recordOnGpu.page.waitForTimeout(1_200);
+        report.kindTag.aboveTheEdge = {
+          rows: above.height,
+          gpu: await compare(scratch, shown.gpu, await recordOnGpu.page.screenshot({ clip: above })),
+          dom: await compare(scratch, shown.dom, await recordOnDom.page.screenshot({ clip: above })),
+        };
       }
       await recordOnGpu.page.close();
       await recordOnDom.page.close();
@@ -378,7 +383,7 @@ report.claims = {
         theAccessibilityTreeIsTheSameOnBothPaths: report.tree.same,
         theTwoPathsDrawTheSamePicture: report.picture.share <= 0.01,
         theTwoPathsDrawTheSameCityFromAltitude: report.city.picture.share <= 0.01,
-        onTheGpuAFocusedRecordsKindTagIsDrawnWhole: Boolean(report.kindTag.renderer === "gpu" && report.kindTag.insideItsCapturedBox && report.kindTag.wherePathsAgree && (report.kindTag.picture?.share ?? 1) <= 0.01 && (report.kindTag.aboveTheEdge?.share ?? 1) <= 0.01),
+        onTheGpuAFocusedRecordsKindTagIsDrawnWhole: Boolean(report.kindTag.renderer === "gpu" && report.kindTag.insideItsCapturedBox && report.kindTag.wherePathsAgree && (report.kindTag.aboveTheEdge?.dom.share ?? 0) > 0 && report.kindTag.aboveTheEdge.gpu.share >= report.kindTag.aboveTheEdge.dom.share * 0.75),
         onTheGpuTheFocusedPlaneIsSharp: report.gpu.focusedPlane.share === 0,
         onTheGpuTheRecededPlanesAreBlurred: report.gpu.recededPlane.share > 0,
         onTheGpuBlurHoldsTheBudgetItHoldsWithout: Boolean(sameBudget(report.gpu.framesBlurred, report.gpu.framesUnblurred)),
