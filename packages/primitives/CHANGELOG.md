@@ -1,5 +1,31 @@
 # @graview/primitives
 
+## 0.1.68
+
+### Patch Changes
+
+- cc22c49: Better UI's checks hold a draft to what the page showed and no more, so a correct draft of a flagged list or a declared home passes. Graview Cloud reported three more faults. First, on a list where a rule flags a record, the row is drawn "⚠ The Velvet Notes", and Better UI handed the agent every vendor but that one. A record's name is now read without a mark drawn beside it, so every row the page shows is handed over and held. Second, on Book Manuscript's home, a draft that showed every detail failed as "details lost". A record's details now count anywhere in the block that holds it and no other record, so a tag one box over from its link is still its tag, and the hero drawn with no link (its tags, its heading, its thesis) is found by its heading and held to its tags. A count is held by its number: "0 stories" may be said as "no stories", and "1 chapters" as "one chapter". A card is never held to the facts of the rows nested in it, so a goal is no longer held to its chapter's "Draft". The page the model reads (`the_page_as_html`) gives each record's link its name and its record (`<a data-record="c2">02 · Who Drew the Map</a>`) where it used to give `<a></a>`. Third, "words as the computer keeps them" failed ordinary English. A field's name now counts only with its own value as kept beside it ("status: candidate"), or as a camelCase key, so "draft 3 · revising 0" and "story 2" pass. A raw word such as "true" that a record's own text says is the person's, so a story whose text says true passes. `drawnFindings` takes each field's values as kept (`values`), and a built-in page hands them over (`fieldsShownOf`). A draft that drops a record, its status or a count still fails. Tests: `better-ui-holds-a-book-home-draft-to-what-it-showed` and `better-ui-reads-the-records-a-list-page-draws` (pages), and `a-draft-is-held-to-the-words-of-the-computer-and-not-to-ordinary-english` (tools). Every face grows by 1.8 KB (0.6 KB gzipped), under a raise of its budget (`scripts/budget-raises/better-ui-checks-hold-what-is-shown-every-face.json`). A hosted page's first load is unchanged.
+  
+  Compatibility: ops and primitives — unchanged. Stored formats — unchanged. The wire — unchanged. The declaration and check finding codes — unchanged. Derived tool names and input schemas — unchanged. `drawnFindings` takes an optional `values`. Without it, a lowercase field's name counts only as a key with a raw value written as code ("done: true"), and no longer before any number ("order 2").
+  
+  What Graview Cloud does: nothing to change. `scripts/better-ui-book.mjs` should pass with both `every-detail-beside.js` and `every-detail-inside.js`.
+- 7c033b3: Suggestions about the same record stand under its name in the inbox. Placing a note in a chapter, linking it to another and setting it aside were three cards, each saying "What I steer by" again. Now the note is named once, a link heading a list, and each suggestion under it says only what differs: "Put in 09 · Without a Map?", "Wait for First job?", "Set aside?", each with its own Why?, Yes, No and Later and the same test ids. A record two or more suggestions are about wins over the line that groups several alike, which keeps the rest: "2 notes to put in chapters" still stands for placements about different notes, and one suggestion left alone about its record is said whole again. The heading is a heading at the inbox's next level and labels its list; each Yes and No is described by the record's name and the row's words together, so a screen reader still hears the whole question. Spacing sets the rows in from the name, with no box and no chip.
+  
+  The sentence is read off the call as before; `suggestionSentence` now also says which record it is about and the sentence without it, and `suggestionGroups` says the record a group stands under. Both are drawn in the inbox's lazy chunk; every face spends 1,345 bytes more minified, 407 gzipped, and nothing up front.
+  
+  The unit tests `suggestions-about-one-record-stand-under-its-name` and `the-inbox-groups-suggestions-under-the-record-they-share` hold it, and `the-suggested-tray-never-scrolls-sideways` now finds its 120-character name once, in the heading; verify-chrome's new `suggestionsAboutOneRecordStandUnderItsName` opens three suggestions about one task on both faces, reaches the heading's link and the rows under it from the keyboard, and answers one.
+  
+  Compatibility: the look — several suggestions about one record are an `li` with the new `suggestion-record-group` (`data-record` the record's id), its `suggestion-record-heading` (role heading) holding the record's `suggestion-record` link, then an `ol` labeled by it whose `suggestion` rows say the sentence without the record; `suggestion-group` now holds only several alike about different records. The JavaScript API — unchanged; `@graview/primitives` exports nothing new. Ops and primitives — unchanged. Stored formats — unchanged. The wire — unchanged. The declaration and check finding codes — unchanged. Derived tool names and input schemas — unchanged.
+  
+  What Graview Cloud does: nothing to change.
+- Updated dependencies [cc22c49]
+- Updated dependencies [cd45eb9]
+  - @graview/tools@0.1.68
+  - @graview/react@0.1.68
+  - @graview/core@0.1.68
+  - @graview/layout@0.1.68
+  - @graview/render@0.1.68
+
 ## 0.1.67
 
 ### Patch Changes
