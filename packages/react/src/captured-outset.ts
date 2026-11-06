@@ -88,3 +88,27 @@ export function useCapturedOutset(ref: RefObject<HTMLElement | null>, on: boolea
   }, [ref, on]);
   return outset;
 }
+
+/** How far the kind tag stands above its panel's top edge: `top` below is measured to the tag's top. */
+export interface TagAt {
+  readonly top: number;
+  readonly right: number;
+}
+
+/**
+ * WHAT A FOCUSED RECORD'S KIND TAG DRAWS PAST ITS BOX, known rather than
+ * measured.
+ *
+ * The tag sits astride its panel's top edge (`view-host.tsx` places it,
+ * from the panel's own box, against the layout's box), and a captured view
+ * draws only its host's box: on the GPU path the half of the tag above the
+ * edge was cut. Where the tag stands is already known — the host placed it
+ * — so the host grows its box by the tag's overhang above, with room for
+ * its edge, rather than measuring every descendant of a record as a
+ * district's host does. A tag inside the box (a panel the host centered
+ * lower than its top) asks for nothing.
+ */
+export function kindTagOutset(tagAt: TagAt | null): Outset | null {
+  if (!tagAt || !(tagAt.top < 0)) return null;
+  return { top: Math.ceil(-tagAt.top) + SLACK, right: 0, bottom: 0, left: 0 };
+}
