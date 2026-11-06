@@ -103,20 +103,27 @@ describe("the Suggested tray, with seventeen suggestions on a record whose name 
     expect(panel.style.minWidth).toBe("0px");
     const rows = [...panel.querySelectorAll<HTMLElement>('[data-testid="suggestion"]')];
     expect(rows).toHaveLength(17);
+    /*
+     * All seventeen are about the one record, so it heads them, named once (Roadmap f-suggestions-grouped-by-record): cut where it
+     * stands, its whole name its title (Roadmap f-suggestion-card-one-line), and its heading wraps rather than widen the tray.
+     */
+    const heading = panel.querySelector<HTMLElement>('[data-testid="suggestion-record-heading"]')!;
+    expect(heading.style.overflowWrap).toBe("anywhere");
+    expect(heading.style.minWidth).toBe("0px");
+    const name = heading.querySelector<HTMLElement>('[data-testid="suggestion-record"]')!;
+    expect(name.textContent).toBe(LONG);
+    expect(name.title).toBe(`Go to ${LONG}`);
+    expect(name.style.maxWidth).toBe("min(24ch, 100%)");
+    expect(name.style.overflow).toBe("hidden");
+    expect(name.style.textOverflow).toBe("ellipsis");
     for (const row of rows) {
       expect(row.style.minWidth).toBe("0px");
       expect(row.style.gridTemplateColumns).toBe("minmax(0, 1fr)");
       const words = row.querySelector<HTMLElement>("[data-graview-suggestion-words]")!;
       const basis = row.querySelector<HTMLElement>("[data-graview-lineage]")!;
-      expect(words.textContent).toContain(LONG);
+      expect(words.textContent).not.toContain(LONG);
       expect(basis.textContent).toContain(LONG);
       for (const line of [words, basis]) expect(line.style.overflowWrap).toBe("anywhere");
-      // The record is named in the sentence, cut where it stands, its whole name its title (Roadmap f-suggestion-card-one-line).
-      const name = [...words.querySelectorAll<HTMLElement>('[data-testid="suggestion-record"]')].find((one) => one.textContent === LONG)!;
-      expect(name.title).toBe(`Go to ${LONG}`);
-      expect(name.style.maxWidth).toBe("min(24ch, 100%)");
-      expect(name.style.overflow).toBe("hidden");
-      expect(name.style.textOverflow).toBe("ellipsis");
       // Its buttons wrap below it rather than widen the row.
       expect(words.parentElement!.style.flexWrap).toBe("wrap");
       expect(words.parentElement!.style.minWidth).toBe("0px");

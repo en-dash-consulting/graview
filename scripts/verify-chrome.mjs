@@ -203,6 +203,18 @@ async function buildHost() {
           suggest(store, ["t-paint", "t-shelves", "t-broadband"].map((id) => ({ name: "archive-task", args: { id } })), { author: actor, lineage: { basis: "Finished a week ago", run: "workflow:tidy:2026-10-28", actor: "workflow:tidy" }, intent: "Set aside finished tasks: 3 tasks to archive" });
         }
         /*
+         * Three suggestions about one task, when the page asks (f-suggestions-grouped-by-record): wait for notice, wait for the shelves,
+         * set it aside — what the tray says under the task's name, once.
+         */
+        if (asked.get("byrecord")) {
+          const store = window.__handle.store;
+          const actor = { kind: "system", id: "tidying", name: "Graview, tidying", automated: true };
+          const lineage = { basis: "The post is redirected from the day notice is given", confidence: 0.6 };
+          suggest(store, [{ name: "wait-for", args: { taskId: "t-post", blockerId: "t-notice" } }], { author: actor, lineage });
+          suggest(store, [{ name: "wait-for", args: { taskId: "t-post", blockerId: "t-shelves" } }], { author: actor, lineage });
+          suggest(store, [{ name: "archive-task", args: { id: "t-post" } }], { author: actor, lineage: { basis: "Nothing has changed on it in a month", actor: "archive" } });
+        }
+        /*
          * A crowded tray, when the page asks: a task renamed to 120 characters with no space, and a suggestion for each task it could
          * wait for, each based on a sentence that names it — as Threat Watch's seventeen named "@tanstack/react-router".
          */
@@ -956,6 +968,63 @@ try {
       runs[face] = { run, ok };
     }
     report.checks.aRunsSuggestionListsItsChangesAndTakesOneAtATime = { ...runs, ok: Object.values(runs).every((one) => one.ok) };
+  }
+  /*
+   * ---- Suggestions about one record stand under its name (f-suggestions-grouped-by-record), on both faces: the task named once, a
+   * link heading a list the keyboard reaches, each row saying only what differs with its own Yes, No and Later, and one answered
+   * leaving the others under the name — the keyboard never on <body>.
+   */
+  {
+    const grouped = {};
+    for (const face of ["graview", "pages"]) {
+      const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+      page.on("pageerror", (error) => errors.push(error.message));
+      await page.goto(`${at("chrome-host")}/?face=${face}&byrecord=1`, { waitUntil: "load" });
+      await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+      await page.waitForSelector('[data-testid="app-bar"] [data-testid="inbox-button"]', { timeout: 30_000 }).catch(() => {});
+      const said = await page.evaluate(async () => {
+        const button = await window.__inbox("for-you");
+        if (!button) return null;
+        for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="suggestion-record-group"]'); turn++) await new Promise((done) => setTimeout(done, 50));
+        const group = document.querySelector('[data-testid="suggestion-record-group"]');
+        if (!group) return null;
+        const heading = group.querySelector('[data-testid="suggestion-record-heading"]');
+        const link = heading?.querySelector('[data-testid="suggestion-record"]');
+        const list = group.querySelector("ol");
+        const rows = [...group.querySelectorAll('[data-testid="suggestion"]')];
+        return {
+          heading: { role: heading?.getAttribute("role") ?? null, text: heading?.textContent ?? null, record: link?.getAttribute("data-record") ?? null, labels: list?.getAttribute("aria-labelledby") === heading?.id },
+          rows: rows.map((row) => row.querySelector("[data-graview-suggestion-words]")?.textContent ?? ""),
+          buttons: rows.map((row) => ["suggestion-accept", "suggestion-decline", "suggestion-not-now"].every((id) => row.querySelector(`[data-testid="${id}"]`))),
+          named: group.textContent.split("Redirect the post").length - 1,
+        };
+      });
+      // The heading's link is reached from the keyboard, and Tab goes on into the rows under it.
+      await page.focus('[data-testid="suggestion-record-heading"] [data-testid="suggestion-record"]').catch(() => {});
+      const linkFocused = await page.evaluate(() => document.activeElement?.closest('[data-testid="suggestion-record-heading"]') !== null);
+      await page.keyboard.press("Tab");
+      const tabbedInto = await page.evaluate(() => document.activeElement?.closest('[data-testid="suggestion-record-group"] [data-testid="suggestion"]') !== null);
+      const answered = await page.evaluate(async () => {
+        const store = window.__handle.store;
+        const before = store.graph.allEdges().length;
+        document.querySelector('[data-testid="suggestion-record-group"] [data-testid="suggestion-accept"]')?.click();
+        for (let turn = 0; turn < 50 && document.querySelectorAll('[data-testid="suggestion-record-group"] [data-testid="suggestion"]').length !== 2; turn++) await new Promise((done) => setTimeout(done, 50));
+        return {
+          rows: [...document.querySelectorAll('[data-testid="suggestion-record-group"] [data-testid="suggestion"] [data-graview-suggestion-words]')].map((one) => one.textContent),
+          made: store.graph.allEdges().length === before + 1,
+          keyboard: document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName,
+        };
+      });
+      await page.keyboard.press("Escape");
+      await page.close();
+      const ok =
+        said !== null && said.heading.role === "heading" && said.heading.text === "Redirect the post" && said.heading.record === "t-post" && said.heading.labels &&
+        JSON.stringify(said.rows) === JSON.stringify(["Wait for Give notice on the flat?", "Wait for Take down the shelves?", "Set aside?"]) && said.buttons.every(Boolean) && said.named === 1 &&
+        linkFocused && tabbedInto &&
+        JSON.stringify(answered.rows) === JSON.stringify(["Wait for Take down the shelves?", "Set aside?"]) && answered.made && answered.keyboard !== "BODY";
+      grouped[face] = { said, linkFocused, tabbedInto, answered, ok };
+    }
+    report.checks.suggestionsAboutOneRecordStandUnderItsName = { ...grouped, ok: Object.values(grouped).every((one) => one.ok) };
   }
   /*
    * ---- A visitor is offered Sign in rather than a vote (f-votes-shared-seat), on both faces: the host's one shared signed-out seat
