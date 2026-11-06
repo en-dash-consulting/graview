@@ -1,0 +1,9 @@
+---
+"@graview/react": patch
+---
+
+A focused record's kind tag is drawn whole on the GPU path. The tag stands astride its panel's top edge, and a captured view draws only its host's box, so on Chrome 157 the scene cut the tag at that edge: the upper half of its border and words were missing where the DOM path drew them. A district's host already grew its box by what it draws past it (`data-graview-outset`); a focused record's host now does too, on the GPU path only. Where the tag stands is already known — the host places it against the panel — so its overhang is taken from that, not measured: the box grows upward by the tag's reach above the edge and a few pixels for its border, as padding, so nothing inside moves, and a panel centered lower in its box than the tag reaches asks for nothing. The tag is now placed against the layout's box and carried into the box the outset grew, so it does not move by its own outset. No other host is measured.
+
+The `renderer` harness gains `onTheGpuAFocusedRecordsKindTagIsDrawnWhole`: with a task in focus, the tag lies inside the box its host is captured as, stands where the DOM path stands it, and the picture around it and the strip above the panel's edge are the DOM path's to within 1% (at a tolerance that a glyph's antialiasing on a texture does not cross). On Chrome for Testing 157 the strip above the edge differed by 3.1% before the change and by 0.2% after. Test: `a focused record's kind tag is captured whole` (react).
+
+Compatibility: ops and primitives are unchanged in shape; on the GPU path a focused record's host carries `data-graview-outset` and is captured that much taller, with its layout box where it was. The look on the DOM path is unchanged. Stored formats are unchanged. The wire is unchanged. The declaration and the check finding codes are unchanged. Derived tool names and input schemas are unchanged.
