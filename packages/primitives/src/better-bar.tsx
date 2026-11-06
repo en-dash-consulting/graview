@@ -29,6 +29,9 @@ function shownText(root: ParentNode): string {
   return [...(root as ParentNode).children].map((one) => (one instanceof HTMLElement ? (one.innerText ?? one.textContent ?? "") : (one.textContent ?? ""))).join(" ");
 }
 
+/** What a record's own row or card is drawn as, where one is drawn inside another's. */
+const NESTED = "li, tr, article, [data-graview-listed], [data-graview-record], [data-record], [data-key]";
+
 /** Words a row says that are its controls or its marks, not what it tells of the record. */
 const NOT_A_FACT = /^[\s·•|,:;–—\-+…✓✔×↓↑▸▾☆★⋯]*$/u;
 
@@ -37,14 +40,16 @@ const NOT_A_FACT = /^[\s·•|,:;–—\-+…✓✔×↓↑▸▾☆★⋯]*$/u;
  * apart in it ("Todo", "Sep 3, 2026", "3 tasks"), not its name, not a
  * control's label, nothing hidden — the facts a draft must still say.
  */
-function factsOf(row: Element, name: Element): string[] {
+function factsOf(row: Element, name: Element, others: readonly Element[] = []): string[] {
   const facts: string[] = [];
   const walker = (row.ownerDocument ?? document).createTreeWalker(row, NodeFilter.SHOW_TEXT);
   const byParent = new Map<Element, string>();
+  // A row of another record drawn inside this card (a goal's chapters, under it) says that record's facts, not this one's.
+  const nested = [...row.querySelectorAll(NESTED)].filter((item) => !item.contains(name) && others.some((other) => item.contains(other)));
   for (let node = walker.nextNode(); node; node = walker.nextNode()) {
     const parent = node.parentElement;
     // A link goes somewhere (the trail, "In the scene", another record): where it goes is not what the row says of the record.
-    if (!parent || name.contains(parent) || parent.closest("button, input, select, textarea, [role='button'], nav, [hidden], [aria-hidden='true'], script, style")) continue;
+    if (!parent || name.contains(parent) || nested.some((item) => item.contains(parent)) || parent.closest("button, input, select, textarea, [role='button'], nav, [hidden], [aria-hidden='true'], script, style")) continue;
     const link = parent.closest("a[href]");
     if (link && !link.contains(name)) continue;
     byParent.set(parent, (byParent.get(parent) ?? "") + (node.textContent ?? ""));
@@ -59,6 +64,13 @@ function factsOf(row: Element, name: Element): string[] {
   }
   return facts;
 }
+
+/**
+ * A name as a person reads it, without a mark drawn beside it: a row a
+ * rule flags says "⚠ The Velvet Notes", and is The Velvet Notes's row.
+ */
+const MARKS = /^[\s\p{So}\p{Sk}\p{Sm}\uFE0F·•|–—✓✔×▸▾…-]+|[\s\p{So}\p{Sk}\p{Sm}\uFE0F·•|–—✓✔×▸▾…-]+$/gu;
+const nameWords = (text: string | null | undefined) => words(text).replace(MARKS, "").toLowerCase();
 
 /** The runs of words a person reads in an element, each apart: never its controls, nothing hidden. */
 function runsOf(element: Element): string[] {
@@ -136,16 +148,23 @@ export function readDrawn(root: Element | null | undefined, labels: readonly str
       }
     }
   const named = new Map<string, Element>();
+  // Every place each record's name is drawn: a record drawn twice (a chapter in its goal's card and in the outline) is still another record's.
+  const everywhere = new Map<string, Element[]>();
   for (const label of labels) {
-    const want = words(label).toLowerCase();
+    const want = nameWords(label);
     if (!want || named.has(label)) continue;
     let best: Element | undefined;
+    const all: Element[] = [];
     for (const one of roots)
-      for (const element of one.querySelectorAll("a, li, p, span, h2, h3, h4, strong, div, button, td")) {
-        if (words(element.textContent).toLowerCase() !== want) continue;
+      for (const element of one.querySelectorAll("a, li, p, span, h2, h3, h4, h5, h6, strong, div, button, td")) {
+        if (nameWords(element.textContent) !== want) continue;
+        all.push(element);
         if (!best || best.contains(element)) best = element;
       }
-    if (best) named.set(label, best);
+    if (best) {
+      named.set(label, best);
+      everywhere.set(label, all);
+    }
   }
   const names = [...named.values()];
   const records: DrawnRead["records"][number][] = [];
@@ -167,13 +186,24 @@ export function readDrawn(root: Element | null | undefined, labels: readonly str
     }
     const box = best.getBoundingClientRect();
     const size = Number.parseFloat(getComputedStyle(best).fontSize) || 16;
-    const rowText = row instanceof HTMLElement ? (row.innerText ?? row.textContent ?? "") : (row.textContent ?? "");
+    const others = [...everywhere].flatMap(([other, all]) => (other === label ? [] : all));
+    /*
+     * Where a draft may say its facts: the block that holds it and no other
+     * record — a tag one box over from its link, the tags over a heading
+     * drawn with no link — not only its own row.
+     */
+    let block: Element = row;
+    for (let up = row.parentElement; up && up !== root && !(up instanceof HTMLBodyElement); up = up.parentElement) {
+      if (others.some((other) => up.contains(other)) || up.matches("main, [data-graview-page], [data-graview-view-root]")) break;
+      block = up;
+    }
+    const rowText = block instanceof HTMLElement ? (block.innerText ?? block.textContent ?? "") : (block.textContent ?? "");
     // A record that is the page itself (its title) has the page for its row: what it says is the page's headings and records, judged as those.
     const isPage = best.matches("h1, [data-graview-page-title]") || best.closest("h1, [data-graview-page-title]") !== null;
     // What a person could do on it there: press a control in its row (a circle that finishes it), and open it by its name.
     const presses = !isPage && row !== best && [...row.querySelectorAll("button, [role='button'], [role='checkbox'], [aria-pressed], input[type='checkbox'], [data-act]")].some((one) => !one.contains(best) && !best.contains(one));
     const opens = !isPage && best.closest("a[href], [data-record]") !== null;
-    records.push({ label, top: Math.round(box.top), left: Math.round(box.left), size, facts: isPage ? [] : factsOf(row, best), row: words(rowText), ...(under ? { under } : {}), ...(presses ? { presses } : {}), ...(opens ? { opens } : {}) });
+    records.push({ label, top: Math.round(box.top), left: Math.round(box.left), size, facts: isPage ? [] : factsOf(row, best, others), row: words(rowText), ...(under ? { under } : {}), ...(presses ? { presses } : {}), ...(opens ? { opens } : {}) });
   }
   records.sort((a, b) => a.top - b.top || a.left - b.left);
   return { headings, records, text: roots.map(shownText).join(" ") };

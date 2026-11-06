@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /* React's act() wants to know it is in a test environment. */
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-import { createSchema, defineNode, Store, z } from "@graview/core";
+import { bindSchema, createSchema, defineNode, Store, z, type Violation } from "@graview/core";
 import { drawnFindings } from "@graview/tools/section";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
@@ -24,10 +24,19 @@ const vendor = defineNode("vendor", {
   label: (node: { name: string }) => node.name,
 });
 const schema = createSchema([vendor]);
-const store = () =>
+/* A rule that flags the booked vendor, so the list draws it "⚠ The Velvet Notes". */
+const { defineInvariant } = bindSchema(schema);
+const bookedFlagged = defineInvariant("booked-flagged", {
+  scope: { kind: "vendor" },
+  evaluate({ subject }): Violation[] {
+    return subject.status === "booked" ? [{ invariant: "booked-flagged", subjectId: subject.id, label: subject.name, message: `${subject.name} needs a deposit`, nodeIds: [subject.id], repairs: [] }] : [];
+  },
+});
+const store = ({ flagged = false }: { flagged?: boolean } = {}) =>
   new Store({
     schema,
     mutations: [],
+    ...(flagged ? { invariants: [bookedFlagged] } : {}),
     snapshot: {
       nodes: [
         { id: "v1", kind: "vendor", name: "The Velvet Notes", status: "booked" },
@@ -84,6 +93,36 @@ describe("Better UI on a built-in list page", () => {
     document.body.append(draft);
     const findings = drawnFindings(before, readDrawn(draft, labels), { asked: "make it more modern looking" });
     expect(findings.join(" ")).toContain("on “The Velvet Notes”");
+    await act(async () => root.unmount());
+    host.remove();
+    draft.remove();
+  });
+
+  it("reads a row a rule flags by its record's name, so every row the page shows is held", async () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    const kept = store({ flagged: true });
+    await act(async () => root.render(<PagesApp context={{ store: kept }} initialPath="/vendors" />));
+    await act(async () => new Promise<void>((done) => setTimeout(done, 50)));
+    const main = host.querySelector("main")!;
+    // The row is drawn with the rule's mark before its name.
+    expect((main as HTMLElement).innerText).toContain("⚠");
+    const part = { name: "Vendors", slot: "list" as const, kind: "vendor", elements: [], main };
+    const labels = labelsShown(kept as never, part, (main as HTMLElement).innerText);
+    const before = readDrawn(main, labels);
+    expect(before.records.map((one) => one.label).sort()).toEqual(["Crumbs Bakery", "Sugar & Spoon", "The Velvet Notes"]);
+    expect(before.records.find((one) => one.label === "The Velvet Notes")?.facts?.join(" ").toLowerCase()).toContain("booked");
+    expect(recordIdsOf(kept as never, part, before)).toEqual({ "The Velvet Notes": "v1", "Sugar & Spoon": "v2", "Crumbs Bakery": "v3" });
+
+    // A draft that drops the flagged vendor fails by its name; one that keeps it, its mark before it, is read as the page was.
+    const draft = document.createElement("main");
+    const card = (name: string, status: string, mark = "") => `<li><a href="#">${mark}${name.replace("&", "&amp;")}</a> <span>${status}</span></li>`;
+    draft.innerHTML = `<h1>Vendors</h1><ul>${card("Sugar & Spoon", "Researching")}${card("Crumbs Bakery", "Contacted")}</ul>`;
+    document.body.append(draft);
+    expect(drawnFindings(before, readDrawn(draft, labels), { asked: "make it more modern looking" }).join(" ")).toContain("“The Velvet Notes”");
+    draft.innerHTML = `<h1>Vendors</h1><ul>${card("The Velvet Notes", "Booked", "<span>⚠</span> ")}${card("Sugar & Spoon", "Researching")}${card("Crumbs Bakery", "Contacted")}</ul>`;
+    expect(drawnFindings(before, readDrawn(draft, labels), { asked: "make it more modern looking" })).toEqual([]);
     await act(async () => root.unmount());
     host.remove();
     draft.remove();
