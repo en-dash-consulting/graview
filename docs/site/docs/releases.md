@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.68`](https://graview.dev/docs/releases.html#v0-1-68)
 - [`0.1.67`](https://graview.dev/docs/releases.html#v0-1-67)
 - [`0.1.66`](https://graview.dev/docs/releases.html#v0-1-66)
 - [`0.1.65`](https://graview.dev/docs/releases.html#v0-1-65)
@@ -68,6 +69,20 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.3`](https://graview.dev/docs/releases.html#v0-1-3)
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
+
+## 0.1.68
+
+Published November 6, 2026 · the current version
+
+Better UI holds a draft to what the page showed and no more, so a correct redesign of a flagged list or a book's home is kept; suggestions about one record stand under its name; and a focused record's kind tag is drawn whole on Chrome 157.
+
+- **Better UI keeps a correct redesign.** A row a rule flags ("⚠ The Velvet Notes") is read like the others. A record's details count anywhere in the block that holds it and no other record, so a tag one box over from its link is still its tag. A record drawn with no link is found by its heading. A count is held by its number, so "0 stories" may be said as "no stories". A card is not held to the status of a row nested inside it. A field named like an ordinary word (draft, story, type) is not taken for the computer's, nor is "true" when a record says it. The page the agent reads keeps each record's link with its name.
+- **Suggestions about one record stand under it.** Placing a note, linking it and setting it aside name the note once, a heading over a list, each row saying only what differs with its own Why?, Yes, No and Later.
+- **The GPU path draws the kind tag whole.** A focused record's kind tag, which stands across its panel's top edge, was cut at that edge on Chrome 157; the panel is now captured tall enough to hold it.
+
+**Before you upgrade:** Changed: `drawnFindings` takes an optional `values`, and without it a lowercase field's name counts only before a raw value written as code ("done: true"), no longer before any number; several suggestions about one record are a `suggestion-record-group` with a `suggestion-record-heading` over an `ol` of `suggestion` rows, and `suggestion-group` holds only several alike about different records; on the GPU path a focused record's host carries `data-graview-outset`. Ops, stored formats, the wire, the declaration's check codes and derived tool names are unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.68) · [The full changelog for 0.1.68](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0168)
 
 ## 0.1.67
 
