@@ -265,7 +265,7 @@ function buildShapes(): Record<EditOp, z.ZodType> {
         subtitle: z.union([z.boolean(), z.null()]).optional(),
         // The opening screen (Roadmap f-splash-in-document), whole; null for Graview's own.
         splash: z.union([z.object({ style: z.string(), image: z.string().min(1).optional(), title: z.string().min(1).max(80).optional(), kicker: z.string().min(1).max(80).optional(), shader: z.string().min(1).max(40).optional(), scheme: z.enum(["light", "dark", "device"]).optional() }).strict(), z.null()]).optional(),
-        // What every worker view inherits (Roadmap f-app-wide-view-theme): a stylesheet drawn before each view's own (its length the sanitizer's to refuse, in `brandFindings`), and a fade between records; null clears either, or all of it.
+        // What every worker view inherits (Roadmap f-app-wide-view-theme): a stylesheet that wins over each view's own (its length the sanitizer's to refuse, in `brandFindings`), and a fade between records; null clears either, or all of it.
         views: z
           .union([
             z
@@ -739,7 +739,14 @@ class Editor {
         ...(isObject(e.typography) ? { typography: Object.fromEntries(Object.entries(e.typography).filter(([, v]) => typeof v === "string")) as Doc } : {}),
         // The stylesheet every view gets is judged as a page draws it (Roadmap f-app-wide-view-theme): an edit that would leave part of it undrawn is refused, saying which part.
         // And each face it lends them, by the rule the view's host loads it by, so an edit saves nothing a check would refuse (Roadmap f-view-authoring-friction-2026-11).
-        ...(isObject(e.views) && (typeof e.views["css"] === "string" || Array.isArray(e.views["fonts"])) ? { views: { ...(typeof e.views["css"] === "string" ? { css: e.views["css"] } : {}), ...(Array.isArray(e.views["fonts"]) ? { fonts: e.views["fonts"] } : {}) } } : {}),
+        // Stored faces too where it names typography, which may take the name of one already lent.
+        ...((): Doc => {
+          const css = isObject(e.views) && typeof e.views["css"] === "string" ? { css: e.views["css"] } : {};
+          const given = isObject(e.views) ? e.views["fonts"] : undefined;
+          const stored = isObject(e.typography) && given === undefined ? (this.doc.brand?.views as Doc | undefined)?.["fonts"] : undefined;
+          const fonts = Array.isArray(given) ? given : Array.isArray(stored) ? stored : undefined;
+          return Object.keys(css).length > 0 || fonts ? { views: { ...css, ...(fonts ? { fonts } : {}) } } : {};
+        })(),
       },
       { at, ...(this.options.fonts ? { fonts: this.options.fonts } : {}), ...(isObject(this.doc.brand?.typography) ? { typography: this.doc.brand.typography as Record<string, unknown> } : {}) },
     );

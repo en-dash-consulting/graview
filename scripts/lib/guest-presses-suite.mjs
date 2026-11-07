@@ -86,13 +86,14 @@ graview.onProps(() => graview.render(graview.html\`<div class="shelf"><h2>Specim
 
 /* What a view's plain rules and a style attribute try to do to what the host holds. */
 const ROOT_RULES = `
-graview.style("div{display:grid;color:rgb(9,9,9)}*{display:inline;opacity:1}#x{display:block;height:10px;margin:20px 0}");
+graview.style("div{display:grid;color:rgb(9,9,9);font-family:monospace;line-height:9}*{display:inline;opacity:1;font-family:inherit;transition:none}#x{display:block;height:10px;margin:20px 0}");
 graview.onProps(() => graview.render(graview.html\`<p id="x">Margins held</p>\`));
 `;
 const RING = `
-graview.style("button{outline:none !important}#held{transition:outline-color 9999s,outline-width 9999s,outline-offset 9999s;outline-color:transparent}");
-graview.onProps(() => graview.render(graview.html\`<button id="plain">Plain</button><button id="held">Held</button><button id="inline" style="outline:none !important;all:unset !important">Inline</button>\`));
+graview.style("button{outline:none !important}#held{transition:outline-color 9999s,outline-width 9999s,outline-offset 9999s;outline-color:transparent}#accent{--graview-accent:transparent}#far{--graview-focus-offset:-9999px;--graview-focus-width:9999px}#out{--graview-focus-offset:9999px}#word{--graview-focus-width:red;--graview-focus-offset:red}#mine{--graview-focus-color:#0a7f3f}#clear{--graview-focus-color:transparent}");
+graview.onProps(() => graview.render(graview.html\`<button id="plain">Plain</button><button id="held">Held</button><button id="inline" style="outline:none !important;all:unset !important">Inline</button><button id="accent">Accent</button><button id="far">Far</button><button id="out">Out</button><button id="word">Word</button><button id="mine">Mine</button><button id="clear">Clear</button>\`));
 `;
+const DEAD_BESIDE = 'let clicks = 0; const draw = () => graview.render(graview.html`<div><button id="save" aria-pressed="true">Save</button><button id="cancel" aria-pressed="false">Cancel</button></div><p>${clicks}</p>`); graview.onProps(() => draw()); graview.on("click", "#save", () => draw()); graview.on("click", "#cancel", () => { clicks += 1; draw(); });';
 const DEAD_SAVE = 'const draw = () => graview.render(graview.html`<button id="save" aria-pressed="true">Save changes</button>`); graview.onProps(() => draw()); graview.on("click", "#save", () => draw());';
 
 export async function pressesSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, viewScript }) {
@@ -222,7 +223,7 @@ window.__host = {
     return result.ok ? { ok: result.presses.ok, controls: result.presses.controls.map((one) => [one.control, one.ok, one.says]) } : { failed: result.reason, detail: result.detail };
   },
 };
-window.__sources = ${JSON.stringify({ chips: CHIPS, dead: DEAD_SAVE })};
+window.__sources = ${JSON.stringify({ chips: CHIPS, dead: DEAD_SAVE, deadBeside: DEAD_BESIDE })};
 `,
       resolveDir: repoRoot,
       loader: "js",
@@ -335,10 +336,17 @@ window.__handle.drawn().then(() => { window.__ready = true; });
       root.setAttribute("data-graview-fade", "");
       const faded = getComputedStyle(root).opacity;
       root.removeAttribute("data-graview-fade");
-      return { display: getComputedStyle(root).display, faded, height: root.getBoundingClientRect().height };
+      root.setAttribute("data-graview-motion", "fade");
+      const fades = getComputedStyle(root).transitionDuration;
+      root.removeAttribute("data-graview-motion");
+      const region = root.getRootNode().host;
+      const child = root.querySelector("#x");
+      return { display: getComputedStyle(root).display, faded, height: root.getBoundingClientRect().height, fades, color: getComputedStyle(root).color, regionColor: getComputedStyle(region).color, font: getComputedStyle(child).fontFamily, regionFont: getComputedStyle(region).fontFamily, lineHeight: getComputedStyle(root).lineHeight, regionLineHeight: getComputedStyle(region).lineHeight };
     });
     claim("a view's div{display:grid} and *{display:inline} leave its root a flow-root that holds its child's margins", rooted.display === "flow-root" && rooted.height >= 50, rooted);
     claim("and its *{opacity:1} does not hold the root in sight through a fade", rooted.faded === "0", rooted);
+    claim("and its div{color;font-family;line-height} and *{font-family:inherit} leave the root's type the region's", rooted.color === rooted.regionColor && rooted.color !== "rgb(9, 9, 9)" && rooted.font === rooted.regionFont && rooted.lineHeight === rooted.regionLineHeight, rooted);
+    claim("and its *{transition:none} does not make the fade a jump", rooted.fades.startsWith("0.18"), rooted);
 
     // The ring, against a sheet's !important, a style attribute's, and a transition that would hold it at where it began.
     const ringOf = async (id) => {
@@ -349,14 +357,18 @@ window.__handle.drawn().then(() => { window.__ready = true; });
       return tab.evaluate((id) => {
         const button = document.querySelector("#ring [data-worker-view]").shadowRoot.querySelector("#" + id);
         const style = getComputedStyle(button);
-        return { visible: button.matches(":focus-visible"), style: style.outlineStyle, width: parseFloat(style.outlineWidth), color: style.outlineColor };
+        return { visible: button.matches(":focus-visible"), style: style.outlineStyle, width: parseFloat(style.outlineWidth), offset: parseFloat(style.outlineOffset), color: style.outlineColor };
       }, id);
     };
-    const rings = { plain: await ringOf("plain"), held: await ringOf("held"), inline: await ringOf("inline") };
+    const rings = { plain: await ringOf("plain"), held: await ringOf("held"), inline: await ringOf("inline"), accent: await ringOf("accent"), far: await ringOf("far"), out: await ringOf("out"), word: await ringOf("word"), mine: await ringOf("mine"), clear: await ringOf("clear") };
     const ringed = (one) => one.visible && one.style === "solid" && one.width >= 2 && one.color !== "rgba(0, 0, 0, 0)" && one.color !== "transparent";
     claim("the ring stands against a view's outline:none !important in its sheet", ringed(rings.plain), rings);
     claim("and against a transition that would hold it at a transparent start", ringed(rings.held), rings);
     claim("and against outline:none !important and all:unset !important in a style attribute", ringed(rings.inline), rings);
+    claim("and against a view's own --graview-accent:transparent: its color is settled on the region", ringed(rings.accent) && rings.accent.color === rings.plain.color, rings);
+    claim("and its width and offset are held: a width of 9999px comes to 8px, and an offset of 9999px either way to no more than 8px (WebKit draws a ring at the edge inside the control)", ringed(rings.far) && rings.far.width === 8 && Math.abs(rings.far.offset) <= 8 && Math.abs(rings.out.offset) <= 8, rings);
+    claim("and a width and an offset that are no length leave the ring standing", ringed(rings.word), rings);
+    claim("a view restyles the ring with a plain --graview-focus-color, and transparent is refused, so that ring is the app's", rings.mine.color === "rgb(10, 127, 63)" && ringed(rings.clear) && rings.clear.color === rings.plain.color, rings);
 
     // Controls already in their state, pressed by the check in this page's own worker (Roadmap f-view-authoring-friction-2026-11).
     const chips = await tab.evaluate(() => window.__host.pressCheck(window.__sources.chips));
@@ -370,6 +382,9 @@ window.__handle.drawn().then(() => { window.__ready = true; });
     await inView("chips", "#all").click();
     await tab.waitForTimeout(300);
     const dead = await tab.evaluate(() => window.__host.pressCheck(window.__sources.dead));
+    const beside = await tab.evaluate(() => window.__host.pressCheck(window.__sources.deadBeside));
+    const saveBeside = beside.controls?.find(([control]) => control === "“Save”");
+    claim("and fails a dead Save beside a working Cancel: pressing Cancel never takes its state", beside.ok === false && saveBeside?.[1] === false, beside);
     claim("and fails a Save with a dead handler that says aria-pressed=\"true\": a state alone does not excuse it", dead.ok === false && /Save changes/.test(dead.controls?.[0]?.[0] ?? "") && dead.controls?.[0]?.[1] === false, dead);
     claim("pressed on the page, “All” leaves the view as it is and nothing is said of it", (await tab.evaluate(() => window.__host.problems.filter(([name]) => name === "chips").length)) === 0 && (await inView("chips", "#all").getAttribute("aria-pressed")) === "true");
 

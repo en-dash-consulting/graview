@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { GRAVIEW_FACE, isSystemFamily, SYSTEM_FONTS, type AnySchema, type GraviewApp } from "../../src/index.js";
+import { fontProblem, GRAVIEW_FACE, isSystemFamily, SYSTEM_FONTS, type AnySchema, type GraviewApp } from "../../src/index.js";
 import { compileDocument } from "../../src/check.js";
 import { VIEW_FONTS_NOT_NAMED, viewFontProblem, viewFontSource } from "../../src/css.js";
 import { diffDocuments, editDocument, type GraviewDocument } from "../../src/document/index.js";
@@ -47,7 +47,7 @@ describe("a face a brand lends its views", () => {
     expect(findings.map((f) => f.path)).toEqual([0, 1, 2, 3, 4, 5].map((at) => `brand.views.fonts.${at}`));
     expect(findings.every((f) => f.severity === "error")).toBe(true);
     expect(findings[0]!.message).toContain("its src is a file the app holds (/graview/assets/<sha256>.woff2) or an https: address");
-    expect(findings[3]!.message).toContain("letters, digits, spaces and hyphens");
+    expect(findings[3]!.message).toContain("letters, digits and hyphens with single spaces");
     expect(findings[4]!.message).toContain('"serif" is a name CSS keeps for itself');
     expect(findings[0]!.fix).toContain('font-family: "Baloo 2"');
     expect(viewFontProblem(BALOO)).toBeNull();
@@ -65,6 +65,20 @@ describe("a face a brand lends its views", () => {
     expect(compiled(typed).findings.filter((f) => f.code === "brand-views-font").map((f) => f.path)).toEqual(["brand.views.fonts.0"]);
   });
 
+  for (const family of ["Arial ", "Times  New Roman", "Montserrat ", " Arial", "Rock\tFace", "Rock\u00a0Face"]) {
+    it(`is refused for odd whitespace, which an engine may read as the face it spells: ${JSON.stringify(family)}`, () => {
+      expect(viewFontProblem({ family, src: BALOO.src })).toContain("single spaces");
+    });
+  }
+
+  it("is held to the brand's stack whatever whitespace either writes, and a stack's quoted family holds none either", () => {
+    expect(viewFontProblem({ family: "Fraunces ", src: BALOO.src }, ["Fraunces"])).not.toBeNull();
+    expect(fontProblem('"Fraunces "')).toContain("whitespace");
+    expect(fontProblem('" Fraunces"')).toContain("whitespace");
+    expect(fontProblem('"Times  New Roman"')).toContain("whitespace");
+    expect(fontProblem('"Times New Roman", serif')).toBeNull();
+  });
+
   it("is at most eight", () => {
     const many = Array.from({ length: 9 }, (_, at) => ({ ...BALOO, weight: 100 * (at + 1) }));
     expect(compiled(withFonts(many)).findings.some((f) => f.path === "brand.views.fonts" && f.code === "brand-views-font")).toBe(true);
@@ -80,6 +94,16 @@ describe("set-brand", () => {
     const many = editDocument(enDash, [{ op: "set-brand", views: { fonts: nine } }]);
     expect(many.ok).toBe(false);
     expect(many.ok ? [] : many.findings.map((f) => f.path)).toEqual(["edits.0.views.fonts"]);
+  });
+
+  it("refuses a later typography that takes the name of a face already lent, so an edit saves nothing a check would refuse", () => {
+    const lent = editDocument(enDash, [{ op: "set-brand", views: { fonts: [{ family: "Inter", src: BALOO.src }] } }]);
+    if (!lent.ok) throw new Error(JSON.stringify(lent.findings));
+    const taken = editDocument(lent.document, [{ op: "set-brand", typography: { body: "Inter, serif" } }]);
+    expect(taken.ok).toBe(false);
+    expect(taken.ok ? [] : taken.findings.map((f) => [f.code, f.path])).toEqual([["brand-views-font", "edits.0.views.fonts.0"]]);
+    /* Replacing the face in the same edit is what puts it right. */
+    expect(editDocument(lent.document, [{ op: "set-brand", typography: { body: "Inter, serif" }, views: { fonts: [{ family: "Rock Face", src: BALOO.src }] } }]).ok).toBe(true);
   });
 
   it("refuses a face named as a stack the document's brand already sets", () => {

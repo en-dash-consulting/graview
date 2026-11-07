@@ -178,8 +178,8 @@ describe("the region's own rules", () => {
      */
     expect(REGION_CSS).toMatch(/:host \{[^}]*contain: layout paint style;[^}]*overflow: clip;/);
     expect(REGION_CSS).toContain(":host(:focus-within) { overflow-clip-margin: var(--graview-ring-reach, 4px); }");
-    const ring = REGION_CSS.indexOf("[data-graview-view-root] :focus-visible { outline:");
-    const inside = REGION_CSS.indexOf("[data-graview-view-root] [data-graview-ring-inside]:focus-visible { outline-offset: calc(-1 * max(2px, var(--graview-focus-width, 2px))) !important; }");
+    const ring = REGION_CSS.indexOf("[data-graview-view-root] :focus-visible { outline-style:");
+    const inside = REGION_CSS.indexOf("[data-graview-view-root] [data-graview-ring-inside]:focus-visible { outline-offset: calc(-1 * clamp(2px, var(--graview-focus-width, 2px), 8px)) !important; }");
     expect(ring).toBeGreaterThan(0);
     expect(inside).toBeGreaterThan(ring);
   });

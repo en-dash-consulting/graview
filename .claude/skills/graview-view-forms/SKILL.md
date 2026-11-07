@@ -146,15 +146,16 @@ by the host, saved as they are typed, "Saving…" on `input` and "Saved" on
    nothing, throws, or is refused fails, said by name (`“Save economics”
    is refused: “fixedFee” expects a number.`). A control already in the
    state it shows — an "All" chip pressed while nothing is filtered, the
-   open tab — passes though it changes nothing, only as one of a set: it
-   says `aria-pressed="true"`, `aria-selected="true"` (a tab, option or
-   grid cell) or `aria-checked="true"` (a checkable role), and another
-   control beside it, or in its `role` group, says that attribute's
-   `"false"`. `aria-current` is for a link, or a role that names a place
-   (`tab`, `menuitem`, `treeitem`, `option`): beside it, a sibling of the
-   same element and role with no `aria-current`, or `"false"`, is the
-   rest of the pager. A plain button saying it fails, as does a lone
-   Save saying `aria-pressed="true"` and a state in a class alone. `runWorkerViewHeadless(…,
+   open tab — passes though it changes nothing, only where the state can
+   move: it says `aria-pressed="true"`, `aria-selected="true"` (a tab,
+   option or grid cell) or `aria-checked="true"` (a checkable role), and
+   pressing a sibling of the same element and role, beside it or in its
+   `role` group, that says `"false"` takes the state from it, or asks for
+   an act. `aria-current` is for a link, or a role that names a place
+   (`tab`, `menuitem`, `treeitem`, `option`), and a sibling with no
+   `aria-current` that goes somewhere counts as it stands. A dead Save
+   fails whatever stands beside it; a pager of plain buttons says
+   `role="link"`. `runWorkerViewHeadless(…,
    { presses: checkPresses })` (`@graview/guest/headless/presses`) is the same for a host's gate. To look at one,
    press it: `--press "<selector>"` (with `--type note="…"` for
    what the person typed), or `runWorkerViewHeadless(…, { press: {

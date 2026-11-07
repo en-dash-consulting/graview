@@ -83,7 +83,7 @@ export type FaviconSpec = string | { readonly emoji: string };
  */
 export interface BrandViews {
   /**
-   * A stylesheet every worker view's region gets before the view's own,
+   * A stylesheet every worker view's region gets,
    * held to the same sanitizer and the same 64,000 characters a view's is
    * (`@graview/core/css`), in the host's cascade layer after the view's
    * own: its rule wins wherever both style the same element. A view's

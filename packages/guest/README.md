@@ -273,11 +273,13 @@ itself — `role="button"`, `"checkbox"`, `"switch"` or `"tab"`,
 `aria-pressed`, `aria-expanded` — is given the keyboard where it has none,
 and Enter or Space on it is told to the view as the key and then a
 `click`. Whatever has the keyboard shows the host's ring, in the app's
-accent, which a view widens with `--graview-focus-width` (never under 2px)
-and sets off with `--graview-focus-offset`, and cannot take away with
-`outline: none`, in a sheet or a `style` attribute, or hold back with a
-transition (it can still hide the control itself, or push the ring out of
-sight with an offset);
+accent, which a view restyles with `--graview-focus-color` (a plain opaque
+color: a hex or a name, never `transparent`), `--graview-focus-width` (2–8px)
+and `--graview-focus-offset` (-2–8px), and cannot take away with
+`outline: none`, in a sheet or a `style` attribute, or by its own
+`--graview-accent`, or hold back with a transition (it can still hide the
+control itself, and a ring the color of its ground is the view check's to
+say);
 `class="graview-sr"` is words for assistive technology alone; an `<svg>`
 with no role, `aria-label` or `<title>` is hidden from it; and an element
 with a `data-key` keeps the keyboard when the view draws it again

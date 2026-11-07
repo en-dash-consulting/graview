@@ -778,15 +778,43 @@ function judgeValue(property: string | undefined, values: readonly ComponentValu
  * focus ring. An important style attribute outranks every layer, so a style attribute says these, and `all`, which holds both, without it.
  */
 const HELD = /^(animation|transition|scroll-behavior|outline)/;
-/* The ring is drawn in the app's accent, judged against its grounds: a view that could set its color could set it to nothing. Its width (never under 2px) and offset stay the view's. */
+/*
+ * THE RING'S COLOR. It is settled on the region from the app's accent (`--graview-ring-color`, the guest host's open-draw.ts), so no view may
+ * write that, and a view's own (`--graview-focus-color`) is a plain opaque color: a three- or six-digit hex or a name. Not `transparent`, not
+ * `currentcolor`, which a view's `color` could make transparent, and no function or `var()`, either of which could carry either.
+ */
+const RING_COLOR = "--graview-ring-color";
 const FOCUS_COLOR = "--graview-focus-color";
+const plainColor = (values: readonly ComponentValue[]): boolean => {
+  const parts = values.filter((part) => part.type !== "whitespace");
+  const only = parts[0];
+  if (parts.length !== 1 || !only) return false;
+  if (only.type === "hash") return /^(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(only.value);
+  return only.type === "ident" && !["transparent", "currentcolor"].includes(lower(only.value));
+};
+/* What loads, as a selector's function: no selector calls one, and the wrapper over a sheet draws nothing of a sheet that names one (the guest host's cascade.ts). */
+const LOADS = new Set(["url", "src", "image-set", "-webkit-image-set"]);
+const namesWhatLoads = (values: readonly ComponentValue[]): string | undefined => {
+  for (const value of values) {
+    if (value.type === "func" && LOADS.has(lower(value.name))) return lower(value.name);
+    if (value.type === "func" || value.type === "block") {
+      const inner = namesWhatLoads(value.value);
+      if (inner) return inner;
+    }
+  }
+  return undefined;
+};
 
 /** One declaration, judged: kept as text, or refused. `attribute`: it is a style attribute's. */
 function judgeDeclaration(declaration: Declaration, refuse: (refusal: CssRefusal) => void, attribute = false): string | undefined {
   const custom = declaration.name.startsWith("--");
   const name = custom ? declaration.name : propertyName(declaration.name);
-  if (name === FOCUS_COLOR || (!custom && !PROPERTIES.has(name))) {
+  if (name === RING_COLOR || (!custom && !PROPERTIES.has(name))) {
     refuse({ reason: "property", name });
+    return undefined;
+  }
+  if (name === FOCUS_COLOR && !plainColor(declaration.value)) {
+    refuse({ reason: "value", name });
     return undefined;
   }
   const keywords = CSS_KEYWORD_PROPERTIES[name];
@@ -836,6 +864,11 @@ const readsOtherwise = (values: readonly ComponentValue[]): boolean =>
 function judgeSelector(prelude: readonly ComponentValue[], refuse: (refusal: CssRefusal) => void): boolean {
   if (readsOtherwise(prelude)) {
     refuse({ reason: "unreadable", name: "selector" });
+    return false;
+  }
+  const loads = namesWhatLoads(prelude);
+  if (loads) {
+    refuse({ reason: "url", name: loads });
     return false;
   }
   const walk = (values: readonly ComponentValue[]): boolean => {

@@ -34,29 +34,43 @@ const saidOf = async (source: string) => Object.fromEntries(((await checked(sour
 const CHIPS = `
 let filter = "all";
 let tab = "rocks";
+let page = 1;
 const draw = () => graview.render(graview.html\`<div role="group" aria-label="Show">
   <button id="all" aria-pressed="\${filter === "all" ? "true" : "false"}">All</button>
   <button id="igneous" aria-pressed="\${filter === "igneous" ? "true" : "false"}">Igneous</button>
 </div>
 <div role="tablist"><span role="tab" id="rocks" tabindex="0" aria-selected="\${tab === "rocks" ? "true" : "false"}">Rocks</span><span role="tab" id="minerals" tabindex="0" aria-selected="\${tab === "minerals" ? "true" : "false"}">Minerals</span></div>
-<div><a id="here" aria-current="page">Page 1</a><a id="there" aria-current="false">Page 2</a></div>
+<div>\${page === 1 ? graview.html\`<a id="p1" data-key="p1" aria-current="page">Page 1</a><a id="p2" data-key="p2">Page 2</a>\` : graview.html\`<a id="p1" data-key="p1">Page 1</a><a id="p2" data-key="p2" aria-current="page">Page 2</a>\`}</div>
+<div role="radiogroup"><p><span id="r1" role="radio" tabindex="0" aria-checked="\${tab === "rocks" ? "true" : "false"}">Hard</span></p><p><span id="r2" role="radio" tabindex="0" aria-checked="\${tab === "minerals" ? "true" : "false"}">Soft</span></p></div>
 <button id="plain">Shuffle</button>\`);
 graview.onProps(() => draw());
 graview.on("click", "#all", () => { filter = "all"; draw(); });
 graview.on("click", "#igneous", () => { filter = "igneous"; draw(); });
 graview.on("click", "#rocks", () => { tab = "rocks"; draw(); });
 graview.on("click", "#minerals", () => { tab = "minerals"; draw(); });
-graview.on("click", "#here", () => draw());
-graview.on("click", "#there", () => draw());
+graview.on("click", "#r1", () => { tab = "rocks"; draw(); });
+graview.on("click", "#r2", () => { tab = "minerals"; draw(); });
+graview.on("click", "#p1", () => { page = 1; draw(); });
+graview.on("click", "#p2", () => { page = 2; draw(); });
 graview.on("click", "#plain", () => draw());
 `;
 
+/** A view with a control that does nothing when pressed, and `beside` drawn with it, with its own handler. */
+const deadBeside = (markup: string, handler = "") => `
+let clicks = 0;
+const draw = () => graview.render(graview.html\`${markup}<p>\${clicks}</p>\`);
+graview.onProps(() => draw());
+graview.on("click", "#x", () => draw());
+graview.on("click", "#y", () => { ${handler || "clicks += 1; draw();"} });
+`;
+
 describe("the press check, on a control already in its state", () => {
-  it("passes an All chip beside its other chips, an open tab beside another and the page a pager is on beside another, saying the state each shows", async () => {
+  it("passes chips, tabs, radios and a pager that a press moves through, saying the state each shows", async () => {
     const said = await saidOf(CHIPS);
     expect(said["“All”"]).toMatchObject({ ok: true, says: "“All” is already in the state it shows (aria-pressed=\"true\"): pressed, it leaves the view as it is." });
     expect(said["“Rocks”"]).toMatchObject({ ok: true, says: expect.stringContaining('aria-selected="true"') });
     expect(said["“Page 1”"]).toMatchObject({ ok: true, says: expect.stringContaining('aria-current="page"') });
+    expect(said["“Hard”"]).toMatchObject({ ok: true, says: expect.stringContaining('aria-checked="true"') });
     expect(said["“Igneous”"]).toMatchObject({ ok: true, says: "“Igneous”, pressed, draws again." });
   });
 
@@ -65,22 +79,52 @@ describe("the press check, on a control already in its state", () => {
     expect(presses?.problems.map((one) => one.says).filter((one) => one.includes("Shuffle"))).toEqual(["“Shuffle” does nothing when pressed: the view hears the click, and asks for no act, goes nowhere and draws nothing new."]);
   });
 
-  it("finds a set by its group as well as its parent", async () => {
-    const said = await saidOf(dead(`<div role="radiogroup"><p><span id="a" role="radio" tabindex="0" aria-checked="true">Rocks</span></p><p><span id="b" role="radio" tabindex="0" aria-checked="false">Minerals</span></p></div>`, "#a", "#b"));
-    expect(said["“Rocks”"]?.ok).toBe(true);
-  });
-
   for (const [name, markup] of [
-    ["beside links that do not say the attribute, as a pager is written", `<div><a id="x" aria-current="page">Page 1</a><a id="y">Page 2</a></div>`],
-    ["beside a link that says false", `<div><a id="x" aria-current="page">Page 1</a><a id="y" aria-current="false">Page 2</a></div>`],
-    ["with each link in a list item of its own", `<ul><li><a id="x" aria-current="page">Page 1</a></li><li><a id="y">Page 2</a></li></ul>`],
-    ["with a role that names a place in a set", `<div><span id="x" role="link" tabindex="0" aria-current="step">Page 1</span><span id="y" role="link" tabindex="0">Page 2</span></div>`],
+    ["a static pager of links that go somewhere, the others not saying the attribute", `<div><a id="x" aria-current="page">Page 1</a><a id="y" data-place="two">Page 2</a></div>`],
+    ["the others saying false", `<div><a id="x" aria-current="page">Page 1</a><a id="y" data-place="two" aria-current="false">Page 2</a></div>`],
+    ["each link in a list item of its own", `<ul><li><a id="x" aria-current="page">Page 1</a></li><li><a id="y" data-place="two">Page 2</a></li></ul>`],
+    ["a role that names a place, whose press goes somewhere", `<div><span id="x" role="link" tabindex="0" aria-current="step">Page 1</span><span id="y" role="link" tabindex="0" data-place="two">Page 2</span></div>`],
   ] as const) {
-    it(`passes a pager's current link ${name}`, async () => {
-      const said = await saidOf(dead(markup, "#x", "#y"));
+    it(`passes a pager's current link: ${name}`, async () => {
+      const said = await saidOf(dead(markup, "#x"));
       expect(said["“Page 1”"]).toMatchObject({ ok: true, says: expect.stringContaining("aria-current=") });
     });
   }
+
+  it("passes a pager's current link beside a link whose code goes somewhere", async () => {
+    const said = await saidOf(deadBeside(`<div><a id="x" aria-current="page">Page 1</a><a id="y">Page 2</a></div>`, 'graview.navigate("placement:rhea");'));
+    expect(said["“Page 1”"]?.ok).toBe(true);
+  });
+
+  it("passes a chip beside one that asks for an act, since a run applies no act and so cannot see the state move", async () => {
+    const bound = await saidOf(dead(`<div><button id="x" aria-pressed="true">All</button><button id="y" aria-pressed="false" data-act="set-economics">Mine</button></div>`, "#x"));
+    expect(bound["“All”"]?.ok).toBe(true);
+    const coded = await saidOf(deadBeside(`<div><button id="x" aria-pressed="true">All</button><button id="y" aria-pressed="false">Mine</button></div>`, 'graview.act("set-economics", { id: "placement:rhea" });'));
+    expect(coded["“All”"]?.ok).toBe(true);
+  });
+
+  for (const [name, markup, control] of [
+    ["a dead Save beside a working Cancel: pressing Cancel never takes Save's state", `<div><button id="x" aria-pressed="true">Save</button><button id="y" aria-pressed="false">Cancel</button></div>`, "“Save”"],
+    ["a dead Save beside a hidden control", `<div><button id="x" aria-pressed="true">Save</button><button id="y" hidden aria-pressed="false" data-act="set-economics">Other</button></div>`, "“Save”"],
+    ["a dead Save beside a control set out of sight by its style", `<div><button id="x" aria-pressed="true">Save</button><button id="y" style="display: none" aria-pressed="false" data-act="set-economics">Other</button></div>`, "“Save”"],
+    ["a dead Save beside a control under aria-hidden", `<div><button id="x" aria-pressed="true">Save</button><span aria-hidden="true"><button id="y" aria-pressed="false" data-act="set-economics">Other</button></span></div>`, "“Save”"],
+    ["a dead Save beside aria-pressed=\"banana\"", `<div><button id="x" aria-pressed="true">Save</button><button id="y" aria-pressed="banana" data-act="set-economics">Other</button></div>`, "“Save”"],
+    ["a dead Save far from one in its group that a press never moves it for", `<div role="group"><p><button id="x" aria-pressed="true">Save</button></p><section><button id="y" aria-pressed="false">Other</button></section></div>`, "“Save”"],
+    ["a dead Save beside a control of another element that asks for an act", `<div><button id="x" aria-pressed="true">Save</button><a id="y" aria-pressed="false" data-act="set-economics">Other</a></div>`, "“Save”"],
+    ["a current link beside a link that goes nowhere", `<div><a id="x" aria-current="page">Page 1</a><a id="y">Page 2</a></div>`, "“Page 1”"],
+    ["a current link beside a link that goes nowhere, one that says false", `<div><a id="x" aria-current="page">Page 1</a><a id="y" aria-current="false">Page 2</a></div>`, "“Page 1”"],
+    ["a radio that no press in its group moves", `<div role="radiogroup"><p><span id="x" role="radio" tabindex="0" aria-checked="true">Rocks</span></p><p><span id="y" role="radio" tabindex="0" aria-checked="false">Minerals</span></p></div>`, "“Rocks”"],
+  ] as const) {
+    it(`fails ${name}`, async () => {
+      const said = await saidOf(deadBeside(markup));
+      expect(said[control]).toMatchObject({ ok: false, says: expect.stringContaining("does nothing when pressed") });
+    });
+  }
+
+  it("says why without telling an author what to add beside it", async () => {
+    const said = await saidOf(deadBeside(`<div><button id="x" aria-pressed="true">Save</button><button id="y" aria-pressed="false">Cancel</button></div>`));
+    expect(said["“Save”"]?.says).toBe("“Save” does nothing when pressed: it says aria-pressed=\"true\", and no press on this view takes that from it.");
+  });
 
   for (const [name, markup, control] of [
     ["a lone Save that says it is current", `<button id="x" aria-current="page">Save</button>`, "“Save”"],

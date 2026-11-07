@@ -60,14 +60,15 @@ const weightOk = (weight: unknown) => {
 
 /** The families a brand's own stacks name: what a face lent to its views may not be called. */
 export function brandFamilies(typography: { readonly body?: unknown; readonly display?: unknown; readonly mono?: unknown } | undefined): readonly string[] {
-  return [typography?.body, typography?.display, typography?.mono].flatMap((stack) => (typeof stack === "string" ? stack.split(",").map((family) => family.trim().replace(/^["']|["']$/g, "").trim()).filter((family) => family !== "") : []));
+  return [typography?.body, typography?.display, typography?.mono].flatMap((stack) => (typeof stack === "string" ? stack.split(",").map((family) => family.trim().replace(/^["']|["']$/g, "").trim().replace(/\s+/g, " ")).filter((family) => family !== "") : []));
 }
 
 /** Why a brand may not lend its views this face, or null. `taken`: the families the brand's own stacks name. */
 export function viewFontProblem(font: unknown, taken: readonly string[] = []): string | null {
   if (typeof font !== "object" || font === null || Array.isArray(font)) return 'a face is { "family": <its name>, "src": <its file> }';
   const { family, src, weight, style } = font as Record<string, unknown>;
-  if (typeof family !== "string" || !/^[A-Za-z0-9][A-Za-z0-9 -]{0,59}$/.test(family)) return "its family is a name of letters, digits, spaces and hyphens, at most 60 characters";
+  /* Single spaces between words alone: Firefox reads "Arial " as Arial, so any other whitespace would get a name past what follows. */
+  if (typeof family !== "string" || family.length > 60 || !/^[A-Za-z0-9][A-Za-z0-9-]*(?: [A-Za-z0-9-]+)*$/.test(family)) return "its family is words of letters, digits and hyphens with single spaces between them, at most 60 characters";
   if (CSS_WIDE.has(family.toLowerCase())) return `"${family}" is a name CSS keeps for itself`;
   const name = family.toLowerCase();
   if (VIEW_FONTS_NOT_NAMED.includes(name) || name.startsWith("ui-") || taken.some((one) => one.toLowerCase() === name)) return `"${family}" would replace a face the page already draws in: call it something of its own`;

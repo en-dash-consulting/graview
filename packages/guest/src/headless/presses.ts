@@ -7,7 +7,7 @@ import { accepts, judgePress } from "../host/press.js";
 import { argumentsSaid } from "../host/session.js";
 import { judgeCodeAct, type Press } from "../host/writes.js";
 import { storedFilesOf } from "../host/marks.js";
-import type { DrawnTranscript } from "./draw.js";
+import { drawTranscript, type DrawnTranscript } from "./draw.js";
 import { fieldsOf } from "./press.js";
 import type { HeadlessTranscript } from "./protocol.js";
 import { TreeElement } from "./tree.js";
@@ -135,19 +135,25 @@ const isControl = (element: TreeElement) =>
  * page a pager is on. Pressed, it rightly leaves the view as it is. But this
  * check exists because "the Save button doesn't work… this would never be the
  * case. Ever", and `<button aria-pressed="true">Save</button>` with a dead
- * handler says a state too. So a state excuses a press only on a control that
- * is one of a set: another control beside it, or in its group, says the same
- * attribute's other state. And it must be a state its role can say:
- * `aria-selected` on a tab, an option or a grid cell, `aria-checked` on a
- * checkable role.
+ * handler says a state too. So a state excuses a press only where the state
+ * really can move: a sibling of the same element and role, beside it or in its
+ * group, not hidden, that says the attribute's `"false"`, and whose own press
+ * takes the state from this one — pressed in a run of its own, this control
+ * then drawn without it. A dead Save beside a working Cancel is not a choice
+ * between them, and whatever else stands beside it counts for nothing. A
+ * sibling that asks for an act counts, since a run applies no act and so cannot
+ * see what it would do. And it must be a state its role can say: `aria-selected`
+ * on a tab, an option or a grid cell, `aria-checked` on a checkable role.
  *
  * `aria-current` is written differently: a pager or a nav says it on the one
  * link that is current, and the attribute left off the rest is what ARIA means
- * by not current. So a sibling of the same element and role with none, or with
- * `"false"`, is another of the set. What keeps a Save out of that is what says
- * a place: only a link, or a role that names a place in a set, can be where a
- * person already is. `<button aria-current="page">Save</button>` beside any
- * other button is a toolbar, not a pager. `""` and `"undefined"` are no state.
+ * by not current. So a sibling with none, or with `"false"`, counts, and one
+ * that goes somewhere counts as it stands, since a static pager's current page
+ * is changed by going, not by drawing. What keeps a Save out is what says a
+ * place: only a link, or a role that names a place in a set, can be where a
+ * person already is. `<button aria-current="page">Save</button>` is a toolbar's,
+ * not a pager's; a pager of plain buttons says `role="link"`. `""` and
+ * `"undefined"` are no state.
  */
 const SELECTABLE = new Set(["tab", "option", "gridcell"]);
 const CHECKABLE = new Set(["checkbox", "menuitemcheckbox", "menuitemradio", "option", "radio", "switch", "treeitem"]);
@@ -167,20 +173,19 @@ const stateOf = (element: TreeElement): { readonly name: string; readonly value:
   const current = element.getAttribute("aria-current");
   return current !== null && !NO_CURRENT.has(current) && namesAPlace(element) ? { name: "aria-current", value: current } : undefined;
 };
-/** Whether another control beside it, or in its group, says the same attribute's other state, in the same role. */
-const oneOfASet = (element: TreeElement, name: string, root: TreeElement, isControlHere: (one: TreeElement) => boolean): boolean => {
+const outOfSight = (element: TreeElement, root: TreeElement) => up(element, root, (one) => one.hasAttribute("hidden") || one.getAttribute("aria-hidden") === "true" || /(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*hidden)/i.test(one.getAttribute("style") ?? "")) !== undefined;
+/** The siblings a state could move to: the same element and role, beside it or in its group, in sight, saying the attribute's other state. */
+const setMates = (element: TreeElement, name: string, root: TreeElement): readonly TreeElement[] => {
   const role = element.getAttribute("role");
   const parent = element.parentElement;
   const beside = parent ? parent.childNodes.filter((child): child is TreeElement => child instanceof TreeElement) : [];
   /* A nav's links are often each in a list item of their own: the list is their group. */
   const list = parent?.localName === "li" && name === "aria-current" ? (parent.parentElement ?? undefined) : undefined;
   const group = list ?? (parent ? up(parent, root, (one) => SET_ROLES.has(one.getAttribute("role") ?? "")) : undefined);
-  return [...beside, ...(group ? below(group) : [])].some((other) => {
-    if (other === element || !isControlHere(other)) return false;
+  return [...new Set([...beside, ...(group ? below(group) : [])])].filter((other) => {
+    if (other === element || other.localName !== element.localName || other.getAttribute("role") !== role || outOfSight(other, root)) return false;
     const value = other.getAttribute(name);
-    if (name === "aria-current") return (value === null || value === "false") && other.localName === element.localName && other.getAttribute("role") === role;
-    if (value === null || value === "true") return false;
-    return name === "aria-pressed" || other.getAttribute("role") === role;
+    return value === "false" || (name === "aria-current" && value === null);
   });
 };
 /** What the host presses of itself, which the check leaves to the host: a disclosure, a lightbox, a drop, a placed video. */
@@ -352,10 +357,31 @@ export async function checkPresses<S extends AnySchema>(context: PressCheckConte
       if (!judgedTo.ok) wrong.push(`it asks to go nowhere: ${judgedTo.says}`);
     }
     const state = asked.length === 0 && went.length === 0 && !redrew ? stateOf(element) : undefined;
-    const inASet = state !== undefined && oneOfASet(element, state.name, root, (one) => isControl(one) || heardAt(one) || one.hasAttribute("data-record") || one.hasAttribute("data-place") || one.hasAttribute("href"));
+    /* Whether a press on a sibling takes this control's state: asking for an act counts, and for `aria-current` going anywhere does, either of which a run cannot draw the end of. */
+    let inASet = false;
+    if (state) {
+      for (const mate of setMates(element, state.name, root)) {
+        const current = state.name === "aria-current";
+        if (mate.hasAttribute("data-act") || (current && (mate.hasAttribute("data-record") || mate.hasAttribute("data-place") || mate.hasAttribute("href")))) {
+          inASet = true;
+          break;
+        }
+        const mateId = drawn.idOf(mate);
+        if (mateId === undefined || !heardAt(mate) || runs >= maxRuns) continue;
+        runs += 1;
+        const moved = await context.rerun(mateId);
+        const at = moved.ok ? moved.transcript.pressed : undefined;
+        if (!moved.ok || !at || at.target === undefined) continue;
+        const after = drawTranscript(moved.transcript.renders, undefined, { maxNodes: 100_000 }).elementOf(id);
+        if (moved.transcript.asked.length > at.asked || (current && moved.transcript.went.length > at.went) || after?.getAttribute(state.name) !== state.value) {
+          inASet = true;
+          break;
+        }
+      }
+    }
     if (wrong.length > 0) found(element, "code", false, `${nameOf(element)}, pressed: ${wrong.join("; ")}`);
     else if (state && inASet) found(element, "code", true, `${nameOf(element)} is already in the state it shows (${state.name}="${state.value}"): pressed, it leaves the view as it is.`);
-    else if (state) found(element, "code", false, `${nameOf(element)} does nothing when pressed: it says ${state.name}="${state.value}", and no control beside it says the other state, so it is no choice among a set.`);
+    else if (state) found(element, "code", false, `${nameOf(element)} does nothing when pressed: it says ${state.name}="${state.value}", and no press on this view takes that from it.`);
     else if (asked.length === 0 && went.length === 0 && !redrew) found(element, "code", false, `${nameOf(element)} does nothing when pressed: the view hears the click, and asks for no act, goes nowhere and draws nothing new.`);
     else found(element, "code", true, `${nameOf(element)}, pressed, ${[...(asked.length > 0 ? [`asks for ${asked.map((one) => `“${one.name}”`).join(", ")}`] : []), ...(went.length > 0 ? ["goes where it says"] : []), ...(redrew ? ["draws again"] : [])].join(" and ")}.`);
   }

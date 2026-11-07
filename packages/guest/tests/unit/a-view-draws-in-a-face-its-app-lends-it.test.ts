@@ -161,4 +161,36 @@ describe("a view on a page", () => {
     expect(fonts.size).toBe(0);
     stays.dispose();
   });
+
+  it("gives back a face once the brand's own stack takes its name, though the faces it lends did not change", async () => {
+    const until = async (test: () => boolean) => {
+      for (let i = 0; i < 100 && !test(); i += 1) await wait(10);
+    };
+    const said: string[] = [];
+    const lends = { fonts: [FREDOKA] };
+    const brand: { current: { name: string; views: typeof lends; typography?: { display: string } } } = { current: { name: "Cars", views: lends } };
+    const view = mountWorkerView(document.body.appendChild(document.createElement("div")), { manifest: { name: "card", attach: "car", cardinality: "one" }, worker: { script: "/* the view */" }, store: store(), principal: reader, input: () => ({ node: { id: "car:golf" } }), images: { origins: ["https://fonts.gstatic.com"] }, brand: () => brand.current, onProblem: (one) => said.push(one) });
+    FakeWorker.made.at(-1)!.say({ graview: "guest-ready", protocol: GUEST_PROTOCOL });
+    await until(() => fonts.size === 1);
+    brand.current = { name: "Cars", views: lends, typography: { display: "Fredoka, serif" } };
+    view.update();
+    await until(() => fonts.size === 0);
+    expect(fonts.size).toBe(0);
+    expect(said.join(" ")).toContain("would replace");
+    view.dispose();
+  });
+
+  it("says so where the app's stylesheet for its views draws nothing, once", async () => {
+    const until = async (test: () => boolean) => {
+      for (let i = 0; i < 100 && !test(); i += 1) await wait(10);
+    };
+    const said: string[] = [];
+    const view = mountWorkerView(document.body.appendChild(document.createElement("div")), { manifest: { name: "card", attach: "car", cardinality: "one" }, worker: { script: "/* the view */" }, store: store(), principal: reader, input: () => ({ node: { id: "car:golf" } }), brand: () => ({ name: "Cars", views: { css: "@import 'x.css';" } }), onProblem: (one) => said.push(one) });
+    FakeWorker.made.at(-1)!.say({ graview: "guest-ready", protocol: GUEST_PROTOCOL });
+    await until(() => said.length > 0);
+    view.update();
+    await wait(30);
+    expect(said.filter((one) => one.includes("stylesheet"))).toEqual([expect.stringContaining("The app's stylesheet for its views draws nothing")]);
+    view.dispose();
+  });
 });

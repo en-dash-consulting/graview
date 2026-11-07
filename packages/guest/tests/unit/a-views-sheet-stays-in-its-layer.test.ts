@@ -112,9 +112,62 @@ describe("what a view's plain rule cannot do to the host's own", () => {
     expect(sanitizeStylesheet("a { outline: none !important }").css).toContain("!important");
   });
 
-  it("is make the ring invisible by its color: the ring is drawn in the app's accent, and --graview-focus-color is not a view's to set", () => {
-    expect(sanitizeStylesheet("button { --graview-focus-color: transparent; color: red }")).toEqual({ css: "button { color: red; }", refused: [{ reason: "property", name: "--graview-focus-color" }] });
-    expect(sanitizeDeclarations("--graview-focus-color: transparent").refused).toEqual([{ reason: "property", name: "--graview-focus-color" }]);
-    expect(sanitizeStylesheet("button { --graview-focus-width: 5px; --graview-focus-offset: 4px }").refused).toEqual([]);
+  it("is take the ring's color through the accent: the ring reads a color settled on the region, which a view cannot write", () => {
+    expect(REGION_CSS).toMatch(/:host \{[^}]*--graview-ring-color: var\(--graview-accent, Highlight\)/);
+    const rule = REGION_CSS.split("\n").find((line) => line.includes(":focus-visible"))!;
+    expect(rule).toContain("outline-color: var(--graview-focus-color, var(--graview-ring-color, Highlight)) !important");
+    expect(rule).not.toContain("var(--graview-accent");
+    expect(sanitizeStylesheet("button { --graview-ring-color: transparent; --graview-accent: transparent }")).toEqual({ css: "button { --graview-accent: transparent; }", refused: [{ reason: "property", name: "--graview-ring-color" }] });
+    expect(sanitizeDeclarations("--graview-ring-color: red").refused).toEqual([{ reason: "property", name: "--graview-ring-color" }]);
+  });
+
+  it("is hide the ring or flood the region by its width and offset: both are held, and each longhand stands alone, so a value that is no length takes only its own", () => {
+    const rule = REGION_CSS.split("\n").find((line) => line.includes(":focus-visible"))!;
+    expect(rule).toContain("outline-style: solid !important");
+    expect(rule).toContain("outline-width: clamp(2px, var(--graview-focus-width, 2px), 8px) !important");
+    expect(rule).toContain("outline-offset: clamp(-2px, var(--graview-focus-offset, 2px), 8px) !important");
+    expect(rule).not.toMatch(/outline: /);
+  });
+
+  for (const color of ["#0a7", "#00aa77", "tomato", "Highlight"]) {
+    it(`takes a plain color for the ring: ${color}`, () => {
+      expect(sanitizeStylesheet(`button { --graview-focus-color: ${color} }`).refused).toEqual([]);
+    });
+  }
+  for (const color of ["transparent", "TRANSPARENT", "transp\\61rent", "currentcolor", "#0000", "#00aa7700", "rgb(0 0 0 / 0)", "color-mix(in srgb, red, transparent)", "var(--anything)", "red blue"]) {
+    it(`refuses what could take the ring's color away, here or by a var(): ${color}`, () => {
+      expect(sanitizeStylesheet(`button { --graview-focus-color: ${color} }`).refused).toEqual([{ reason: "value", name: "--graview-focus-color" }]);
+      expect(sanitizeDeclarations(`--graview-focus-color: ${color}`).refused).toEqual([{ reason: "value", name: "--graview-focus-color" }]);
+    });
+  }
+
+  it("is reach the root's type: it inherits from the region, whatever a view's div or * says", () => {
+    expect(REGION_CSS).toMatch(/:host \{[^}]*color: var\(--graview-ink, CanvasText\);[^}]*font-family: var\(--graview-font-body, system-ui, sans-serif\);[^}]*line-height: 1\.45;/);
+    expect(REGION_CSS).toMatch(/\[data-graview-view-root\] \{[^}]*color: inherit !important; font-family: inherit !important; line-height: inherit !important;/);
+  });
+
+  it("is make the fade a jump: its transition is !important too", () => {
+    expect(REGION_CSS).toMatch(/\[data-graview-motion="fade"\] \{ transition: opacity \d+ms ease !important; \}/);
+  });
+});
+
+describe("one selector", () => {
+  it("does not take a whole sheet with it: what the sanitizer keeps, the wrapper keeps, so a function that loads is refused in a selector", () => {
+    for (const [given, name] of [['src("y")', "src"], ['url("y")', "url"], ['image-set("y" 1x)', "image-set"], ['-webkit-image-set("y" 1x)', "-webkit-image-set"], ['URL("y")', "url"], [':is(src("y"))', "src"]] as const) {
+      const judged = sanitizeStylesheet(`.x { color: red } ${given} { color: blue }`);
+      expect(judged.refused, given).toEqual([{ reason: "url", name }]);
+      expect(judged.css, given).toBe(".x { color: red; }");
+      expect(inLayer("graview-view", judged.css), given).not.toBe("");
+    }
+  });
+
+  it("is said where the app's stylesheet draws nothing at all: theme() answers whether it drew", () => {
+    const shadow = document.body.appendChild(document.createElement("div")).attachShadow({ mode: "open" });
+    const drawing = createOpenDrawing(shadow, { origin: "https://app.example", send: () => {} });
+    expect(drawing.theme(".x { color: red }")).toBe(true);
+    expect(drawing.theme(undefined)).toBe(true);
+    expect(drawing.theme("@import 'x.css';")).toBe(false);
+    expect(shadow.querySelector("[data-graview-view-theme]")!.textContent).toBe("");
+    drawing.dispose();
   });
 });

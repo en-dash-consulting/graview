@@ -50,7 +50,7 @@ graview.navigate({ place: "features", where: { stage: "building" }, section: "Sh
 
 ### Links and buttons, by default
 
-To go somewhere, `<a data-record>` or `<a data-place>`; to do something, a `<button>` (`data-act` to run an act). Style either freely: the host resets both to the words around them, and your class wins. A `<div>` or `<span>` with only `graview.on("click")` is reached by no keyboard and named nothing; with `role="button"` (checkbox, switch, tab, `aria-pressed`, `aria-expanded`) the host gives it the keyboard and hears Enter or Space as a click. The keyboard shows the host's ring, in the app's accent: widen it with `--graview-focus-width`, never `outline: none`. `class="graview-sr"` is words for a screen reader alone; an `<svg>` with no role, `aria-label` or `<title>` is hidden from one.
+To go somewhere, `<a data-record>` or `<a data-place>`; to do something, a `<button>` (`data-act` to run an act). Style either freely: the host resets both to the words around them, and your class wins. A `<div>` or `<span>` with only `graview.on("click")` is reached by no keyboard and named nothing; with `role="button"` (checkbox, switch, tab, `aria-pressed`, `aria-expanded`) the host gives it the keyboard and hears Enter or Space as a click. The keyboard shows the host's ring: restyle it with `--graview-focus-color` (a hex or a name), never `outline: none`. `class="graview-sr"` is words for a screen reader alone; an `<svg>` with no role, `aria-label` or `<title>` is hidden from one.
 
 ### Gestures
 

@@ -115,7 +115,7 @@ export interface RunWorkerViewHeadlessOptions<S extends AnySchema> {
   /**
    * What every view of the app inherits (`Brand.views`, Roadmap
    * f-app-wide-view-theme), as the live host takes it: its stylesheet is
-   * drawn before the view's own in the run's `css`, so a picture of the
+   * drawn in the layer after the view's own in the run's `css`, so a picture of the
    * view is dressed as the page dresses it. Its refusals are the checker's
    * to say (`brand-views-css`), not this view's.
    */

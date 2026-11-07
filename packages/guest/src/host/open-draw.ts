@@ -23,8 +23,12 @@ export { handedLinks, judgeLink, linkRefusedWords } from "./external-links.js";
  * KEYBOARD AND PLAIN CONTROLS BY DEFAULT (0.1.47). Whatever takes the keyboard shows a ring when it has it — a whole
  * outline at least 2px wide, set off from it, in the app's accent (which the brand is held to against its grounds) — and
  * it is `!important` in the host's early layer, so a view's `outline: none` does not take it away, a style attribute's
- * `!important` is left out on `outline*` (sanitize.ts), and a transition cannot hold it at where it began. A view may widen it
- * with `--graview-focus-width` (never under 2px) and set it off with `--graview-focus-offset`; its color is the app's. A `<button>` and a link the host made are
+ * `!important` is left out on `outline*` (sanitize.ts), and a transition cannot hold it at where it began. Its accent is settled
+ * on the region (`--graview-ring-color`, which no view may write), so a view's `--graview-accent` does not reach it. A view restyles
+ * it with `--graview-focus-color` (a plain opaque color, sanitize.ts), `--graview-focus-width` (2–8px) and `--graview-focus-offset`
+ * (-2–8px, so the widest ring is the 16px the region lets past its edge). Each is a longhand of its own: a value that is no
+ * length or color takes only itself back to the browser's own, and the ring stays. A ring the same color as its ground is the
+ * view check's to say (`focus-visible`, 3:1). A `<button>` and a link the host made are
  * reset to the words around them with no specificity at all (`:where`), so a view's own class always wins and a button
  * is the semantic choice with nothing to undo. `.graview-sr` is said to assistive technology and not drawn. A link out
  * says it opens a new tab; a link the host made, now with an address of the app's, does not.
@@ -53,17 +57,17 @@ export const FADE_MS = 180;
 export const REGION_CSS = `
 ${VIEW_LAYERS}
 @layer graview-region {
-:host { display: block; position: relative; contain: layout paint style; isolation: isolate; overflow: clip; min-width: 0; }
+:host { display: block; position: relative; contain: layout paint style; isolation: isolate; overflow: clip; min-width: 0; color: var(--graview-ink, CanvasText); font-family: var(--graview-font-body, system-ui, sans-serif); line-height: 1.45; --graview-ring-color: var(--graview-accent, Highlight); }
 :host(:focus-within) { overflow-clip-margin: var(--graview-ring-reach, 4px); }
-[data-graview-view-root] { display: flow-root !important; color: var(--graview-ink, CanvasText); font-family: var(--graview-font-body, system-ui, sans-serif); line-height: 1.45; }
+[data-graview-view-root] { display: flow-root !important; color: inherit !important; font-family: inherit !important; line-height: inherit !important; }
 :where([data-graview-view-root]) :where(button) { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; text-align: inherit; appearance: none; cursor: pointer; }
 :where([data-graview-view-root]) :where(a[data-graview-link]) { color: inherit; text-decoration: none; }
 [data-graview-view-root] :is([data-graview-link], [data-graview-press]) { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: rgb(128 128 128 / 0.16); }
-[data-graview-view-root] :focus-visible { outline: max(2px, var(--graview-focus-width, 2px)) solid var(--graview-focus-color, var(--graview-accent, Highlight)) !important; outline-offset: var(--graview-focus-offset, 2px) !important; transition: none !important; }
-[data-graview-view-root] [data-graview-ring-inside]:focus-visible { outline-offset: calc(-1 * max(2px, var(--graview-focus-width, 2px))) !important; }
+[data-graview-view-root] :focus-visible { outline-style: solid !important; outline-width: clamp(2px, var(--graview-focus-width, 2px), 8px) !important; outline-color: var(--graview-focus-color, var(--graview-ring-color, Highlight)) !important; outline-offset: clamp(-2px, var(--graview-focus-offset, 2px), 8px) !important; transition: none !important; }
+[data-graview-view-root] [data-graview-ring-inside]:focus-visible { outline-offset: calc(-1 * clamp(2px, var(--graview-focus-width, 2px), 8px)) !important; }
 [data-graview-view-root] .graview-sr { position: absolute !important; width: 1px !important; height: 1px !important; margin: -1px !important; padding: 0 !important; border: 0 !important; overflow: hidden !important; clip-path: inset(50%) !important; white-space: nowrap !important; }
 [data-graview-view-root] a[href]:not([data-graview-link], [href^="#"], [data-file][download])::after { content: " ↗" !important; content: " ↗" / " (opens in a new tab)" !important; }
-[data-graview-view-root][data-graview-motion="fade"] { transition: opacity ${FADE_MS}ms ease; }
+[data-graview-view-root][data-graview-motion="fade"] { transition: opacity ${FADE_MS}ms ease !important; }
 [data-graview-view-root][data-graview-fade] { opacity: 0 !important; }
 }
 @layer graview-motion { @media (prefers-reduced-motion: reduce) { [data-graview-view-root], [data-graview-view-root] *, [data-graview-view-root] ::before, [data-graview-view-root] ::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; animation-timeline: auto !important; transition-duration: 1ms !important; scroll-behavior: auto !important; } } }
@@ -124,9 +128,10 @@ export interface OpenDrawing {
   style(sheets: readonly string[]): void;
   /**
    * Dress the view in the app's own stylesheet for every view (`brand.views.css`, Roadmap f-app-wide-view-theme),
-   * drawn before the view's own and judged as it is; `undefined` takes it off. What the checker warned of is left out here too.
+   * in the layer that wins over the view's own and judged as it is; `undefined` takes it off. What the checker warned of is left
+   * out here too. False where it was given something and draws nothing of it, for the host to say.
    */
-  theme(css: string | undefined): void;
+  theme(css: string | undefined): boolean;
   /** How the drawing moves between records (`brand.views.motion`): `"fade"` fades out and in, `"none"` swaps at once. */
   motion(kind: "none" | "fade"): void;
   /**
@@ -281,7 +286,9 @@ export function createOpenDrawing(shadow: ShadowRoot, options: OpenDrawingOption
       return done;
     },
     theme(given) {
-      dress.textContent = given ? inLayer("graview-theme", sanitizeStylesheet(given).css) : "";
+      const layered = given ? inLayer("graview-theme", sanitizeStylesheet(given).css) : "";
+      dress.textContent = layered;
+      return !given || given.trim() === "" || layered !== "";
     },
     motion(kind) {
       if (kind === "fade") into.setAttribute("data-graview-motion", "fade");

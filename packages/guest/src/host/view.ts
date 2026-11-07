@@ -502,17 +502,27 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
    * host in the region — never handed to the view — and dressed again on
    * every push, which is how a brand the host changes reaches it.
    */
-  let lent = "[]";
+  let lent = "[[],null]";
+  let toldOfTheme = "";
   let lending = 0;
   let giveFontsBack: (() => void) | undefined;
   const dress = () => {
     const views = options.brand?.()?.views;
-    drawing?.theme(views?.css);
+    /* A stylesheet for its views that draws nothing at all is said once: the part of one the open kit leaves out is the checker's to say (brand-views-css). */
+    if (drawing && !drawing.theme(views?.css) && toldOfTheme !== views?.css) {
+      toldOfTheme = views?.css ?? "";
+      const said = "The app's stylesheet for its views draws nothing: the open kit leaves all of it out, so views are drawn without it. graview check says which part (brand-views-css).";
+      port?.postMessage({ type: "notice", text: said });
+      options.onProblem?.(said);
+    }
     drawing?.motion(views?.motion ?? "none");
     /* The faces the app lends its views (Roadmap f-view-authoring-friction-2026-11), loaded into the page by the host as their brand changes (fonts.ts). */
     const fonts = views?.fonts ?? [];
-    if (JSON.stringify(fonts) === lent) return;
-    lent = JSON.stringify(fonts);
+    /* And as the brand's own stacks change, since a face may not take one of their names. */
+    const typography = options.brand?.()?.typography;
+    const lendingNow = JSON.stringify([fonts, typography ?? null]);
+    if (lendingNow === lent) return;
+    lent = lendingNow;
     lending += 1;
     const asked = lending;
     if (fonts.length === 0) {
@@ -520,7 +530,6 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       giveFontsBack = undefined;
       return;
     }
-    const typography = options.brand?.()?.typography;
     void fontsChunk().then(({ loadViewFonts }) => {
       if (asked !== lending) return;
       /* The new ones first, so a face both brands lend is never let go between them. */
