@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 0,
+  "gzipped": 60,
+  "note": "Raised in the Version packages pull request for 0.1.69: the version named in the bundle and the changelog's new line move what gzip finds, nothing more is carried. Minified is unchanged at 1_908_305; gzipped measured 667_054 to 667_064 across one CI run against 667_035, so 60 bytes covers that jitter."
+}
