@@ -2,7 +2,7 @@ import { spellingOf } from "../mutations/act-spelling.js";
 import { derivedActOf } from "../mutations/derived-names.js";
 import type { MutationCall } from "../mutations/types.js";
 import { undoneIn } from "./log.js";
-import type { ActMeanings, Decline, KeptDecline, KeptStop } from "./tidying.js";
+import { isStopOp, type ActMeanings, type Decline, type KeptDecline, type KeptStop } from "./tidying.js";
 import type { Operation } from "./types.js";
 
 /*
@@ -89,6 +89,11 @@ export function declinedIn(ops: readonly Operation[], calls: readonly MutationCa
   return [calls, ...calls.map((call) => [call])].map((asked) => declines.get(meaningKey(asked, meanings))).find(Boolean);
 }
 
+/** A lift: an undo that changed nothing, of an op the log no longer holds (`isStopOp` says why it is asked). */
+export function isLiftOp(op: Pick<Operation, "lineage" | "undoes" | "mutation" | "primitives">, holds: (id: string) => boolean): boolean {
+  return op.lineage?.liftedStop === true && op.undoes !== undefined && op.mutation === null && op.primitives.length === 0 && !holds(op.undoes);
+}
+
 /**
  * THE STOP THAT ANSWERS THESE CALLS: every one of them of a kind a person
  * said not to suggest (`Lineage.stopsKind`), or undefined. Apart from
@@ -127,7 +132,8 @@ export function declinesIn(ops: readonly Operation[], meanings?: ActMeanings, ke
   const byId = new Map(ops.map((op) => [op.id, op]));
   const declines = new Map<string, Decline>();
   // A stop lifted after its op was archived: the op that lifted it names the archived one, which the log no longer holds to mark undone.
-  const lifted = new Set(ops.filter((op) => op.lineage?.liftedStop === true).map((op) => op.undoes));
+  const heldIds = new Set(ops.map((op) => op.id));
+  const lifted = new Set(ops.filter((op) => isLiftOp(op, (id) => heldIds.has(id)) && !undone.has(op.id)).map((op) => op.undoes));
   for (const [key, one] of Object.entries(kept ?? {})) if (!undone.has(one.id) && !lifted.has(one.id)) declines.set(key, one);
   // The calls of a suggestion a person accepted one by one before declining the rest: those were said yes to (Roadmap f-job-approvals).
   const took = new Map<string, number[]>();
@@ -141,7 +147,7 @@ export function declinesIn(ops: readonly Operation[], meanings?: ActMeanings, ke
     const taken = target?.mutation && target.undoes === undefined && (target.lineage || op.undoneLineage || person);
     const calls = target?.suggests ? target.suggests.filter((_, at) => !took.get(target.id)?.includes(at)) : taken ? [target.mutation!] : [];
     if (calls.length > 0) for (const asked of [calls, ...calls.map((call) => [call])]) declines.set(meaningKey(asked, meanings), op);
-    if (target?.suggests && live && op.lineage?.stopsKind === true) for (const call of calls) declines.set(suggestionKind(call, meanings), op);
+    if (target?.suggests && live && isStopOp(op, target)) for (const call of calls) declines.set(suggestionKind(call, meanings), op);
     // A link a person broke is declined; one a person made again is not.
     if (!live || !person || op.undoes !== undefined) continue;
     for (const primitive of op.primitives) {
@@ -164,7 +170,7 @@ export function keptDeclines(declines: ReadonlyMap<string, Decline>, ops: readon
     const carried = (one as KeptDecline).stop;
     if (carried) return carried;
     const op = one as Partial<Operation>;
-    if (op.lineage?.stopsKind !== true || op.batch === undefined || one.undoes === undefined) return undefined;
+    if (op.batch === undefined || one.undoes === undefined || !isStopOp(op as Operation, byId.get(one.undoes))) return undefined;
     const calls = new Map((byId.get(one.undoes)?.suggests ?? []).map((call) => [suggestionKind(call, meanings), call]));
     return { batch: op.batch, words: op.batchIntent ?? op.intent ?? "", calls: [...calls.values()] };
   };

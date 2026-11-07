@@ -45,6 +45,18 @@ export function isTidyingActor(author: Pick<Author, "kind" | "automated" | "tidy
 }
 
 /**
+ * WHAT A LINEAGE KEY MEANS IS HELD TO THE OP IT IS ON. A log a store opens is
+ * not run back through `lineageOf`, and a build before these keys kept them as
+ * it keeps any it does not know, so a key means something only on the op it
+ * was made for. A stop: an undo that changed nothing, of the app's own actor's
+ * suggestion, or of one the log no longer holds.
+ */
+export function isStopOp(op: Pick<Operation, "lineage" | "undoes" | "mutation" | "primitives">, target: Pick<Operation, "suggests" | "author" | "lineage"> | undefined): boolean {
+  if (op.lineage?.stopsKind !== true || op.undoes === undefined || op.mutation !== null || op.primitives.length > 0) return false;
+  return target === undefined || (target.suggests !== undefined && isTidyingActor(target.author) && target.lineage?.proposedBy === undefined);
+}
+
+/**
  * WHAT A HOST SAYS OF THE STOPS A PAGE'S LOG DOES NOT HOLD (`Store.stopsServed`):
  * those this seat may lift, in words with their batch and kinds, and the kinds
  * of what else is stopped that it holds a suggestion of, with no words.
@@ -134,6 +146,8 @@ export interface DeclinesHeld {
   lift?: (store: object, ids: readonly string[], options: object, author: Author) => object | undefined;
   /** The same asked as `mayUndo` asks: undefined when these batches are no kept stop's, else who may. */
   liftRefusal?: (store: object, ids: readonly string[], author: Author) => { readonly refusal?: Refusal } | undefined;
+  /** Whether a seat is told of a stop lifted behind a checkpoint, which the log cannot vouch for. */
+  liftTold?: (op: Operation, lens: never) => boolean;
   /** What refuses taking these ops back because of a stop among them, or nothing. */
   undoRefusal?: (store: object, ops: readonly Operation[], author: Author) => Refusal | undefined;
 }

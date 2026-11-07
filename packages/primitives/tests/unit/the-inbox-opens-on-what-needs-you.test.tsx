@@ -559,6 +559,13 @@ describe("the way back to a stop", () => {
     expect(suggestionsMayWait(store)).toBe(true);
   });
 
+  it("holds that a lift in the log alone loads the tray too", () => {
+    const store = storeOf([SUGAR]);
+    expect(suggestionsMayWait(store)).toBe(false);
+    store.log.append({ id: "lift", seq: store.log.length, batch: "undo:a:1", author: nora, intent: "Undo: stopped", mutation: null, primitives: [], reads: [], writes: [], at: "2026-11-01T00:00:00.000Z", undoes: "gone", lineage: { basis: "x", liftedStop: true } } as never);
+    expect(suggestionsMayWait(store)).toBe(true);
+  });
+
   it("is listed, and lifted, from what the host says when the page's log no longer holds it", async () => {
     const store = storeOf([SUGAR, { ...CRUMBS, status: "contacted" }]);
     store.stopsServed = { stops: [{ batch: "undo:far:1", words: "Stopped suggesting “Rename”", kinds: [suggestionKind(rename("x", "y"))] }], kinds: [] };

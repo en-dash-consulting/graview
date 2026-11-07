@@ -829,6 +829,13 @@ async function opening<S extends AnySchema>(
     }
     for (const batch of dropping) provisional.delete(batch);
     for (const batch of echoed) tellAnswered(batch, ops);
+    /*
+     * A STOP LIFTED, on this page or another, as ops: what the host said of the
+     * stops this log does not hold no longer stands, so it is asked again. An
+     * undo of an op this log does not hold may be one, while it says any.
+     */
+    const lifted = ops.some((op) => op.lineage?.liftedStop === true || (op.undoes !== undefined && (store.log.get(op.undoes)?.lineage?.stopsKind === true || (store.log.get(op.undoes) === undefined && (store.stopsServed?.stops.length ?? 0) > 0))));
+    if (lifted) resync();
     return landed;
   };
 
@@ -913,8 +920,10 @@ async function opening<S extends AnySchema>(
 
   const since = async (seq: number): Promise<Operation[]> => {
     const response = await reach(`${options.url}/graview/since?seq=${cursorAt(seq)}&opFormat=${FORMATS.op}`, { headers });
-    const answer = (await response.json()) as { ops?: Operation[]; version?: number; build?: string; reset?: boolean };
+    const answer = (await response.json()) as { ops?: Operation[]; version?: number; build?: string; reset?: boolean; stops?: RemoteState["stops"]; stoppedKinds?: RemoteState["stoppedKinds"] };
     if (moved(answer)) return [];
+    // Said on an answer that brings ops: one with none says nothing of stops, and what was said stands.
+    if ((answer.ops?.length ?? 0) > 0) hearStops(answer);
     // The ops cannot catch this client up (behind the horizon, or past where its seat is now served): it takes the state.
     if (answer.reset === true) {
       resync();

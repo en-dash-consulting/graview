@@ -1841,7 +1841,7 @@ export class Store<S extends AnySchema> {
      */
     const automated = isAutomated(author);
     if (automated) this.refuseDeclined(calls, author);
-    if (isTidyingActor(author)) this.refuseStopped(calls, author);
+    if (isTidyingActor(author)) this.refuseStopped(calls, author, this.suggesting);
     if (!this.rehearsing) tellTheWatchOfAnAuthor(author.id);
 
     /* The first record each call made, for a later call that names it (FR-193). */
@@ -2366,7 +2366,7 @@ export class Store<S extends AnySchema> {
   /** What refuses `author` taking these ops back, or nothing: what you may undo is what you may have done. */
   private undoRefusal(ops: readonly Operation[], author: Author | Principal): Refusal | undefined {
     // Asked of `@graview/core/tidying`; a store that has not loaded it offers no way back it cannot judge.
-    const stop = DECLINES.undoRefusal ? DECLINES.undoRefusal(this, ops, author) : ops.some((target) => target.lineage?.stopsKind || target.lineage?.liftedStop) ? { mutation: "undo", wouldNeed: [], message: "This cannot be taken back here yet." } : undefined;
+    const stop = DECLINES.undoRefusal ? DECLINES.undoRefusal(this, ops, author) : ops.some((target) => target.undoes !== undefined && target.mutation === null && (target.lineage?.stopsKind || target.lineage?.liftedStop)) ? { mutation: "undo", wouldNeed: [], message: "This cannot be taken back here yet." } : undefined;
     if (stop) return stop;
     if (this.policy || this.publisher) {
       for (const target of ops) {
@@ -2455,8 +2455,10 @@ export class Store<S extends AnySchema> {
    * (`DECLINES`), which every host that runs the actor loads — `dream`, `suggest`, a workflow, `@graview/ship`'s server.
    * A page that never loads it (where the actor does not run) judges no declines.
    */
-  private refuseStopped(calls: readonly MutationCall[], author: Author | Principal): void {
-    const stopped = DECLINES.stopped?.(this.log.all(), calls, this.actMeanings(), this.log.horizonEpoch()?.declines);
+  /** A suggestion is refused when all of it is stopped, since a person is still asked about the rest; a change it would make, when any of it is. */
+  private refuseStopped(calls: readonly MutationCall[], author: Author | Principal, asking: boolean): void {
+    const ask = (some: readonly MutationCall[]) => DECLINES.stopped?.(this.log.all(), some, this.actMeanings(), this.log.horizonEpoch()?.declines);
+    const stopped = asking ? ask(calls) : calls.map((call) => ask([call])).find(Boolean);
     if (stopped) this.refuse({ mutation: calls[0]!.name, message: `${this.authorName(author)} may not suggest this kind of thing: a person said not to on ${stopped.at.slice(0, 10)}.`, wouldNeed: [] }, author.id);
   }
 

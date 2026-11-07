@@ -794,7 +794,7 @@ export interface Wire<S extends AnySchema> {
    */
   behind(principal: Principal, seq: number): boolean;
   /** `{ servedThrough }` for a seat of an app that publishes, as a cursor (the position after the last op it is served); nothing otherwise. */
-  servedOf(principal: Principal): { servedThrough?: Cursor; stops?: ServedStops["stops"]; stoppedKinds?: ServedStops["kinds"] };
+  servedOf(principal: Principal, stops?: boolean): { servedThrough?: Cursor; stops?: ServedStops["stops"]; stoppedKinds?: ServedStops["kinds"] };
   /** The store as the seat sees it. */
   seenFor(principal: Principal): Store<S>;
   /** The store's log as the seat sees it: every op in place, withheld ones under an opaque batch. */
@@ -989,9 +989,9 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
       return shown(principal, store.log.opsFrom(Math.max(0, Math.floor(seq) + 1)).filter((op) => op.seq < served));
     },
     behind: (principal, seq) => Number.isFinite(seq) && (Math.floor(seq) + 1 < store.log.horizon || (Math.floor(seq) >= servedTo(principal) && servedTo(principal) < store.log.length)),
-    servedOf: (principal) => {
+    servedOf: (principal, stops = true) => {
       // What this seat may be told of the stops standing, which the log it is sent may not hold (`servedStops`).
-      const stopped = servedStops(store, principal);
+      const stopped = stops ? servedStops(store, principal) : undefined;
       return {
         ...(store.publishing?.mode === "on-publish" ? { servedThrough: cursorAt(servedTo(principal) - 1) } : {}),
         ...(stopped?.stops.length ? { stops: stopped.stops } : {}),
@@ -1744,8 +1744,9 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
       const cursor = cursorAt(ops.at(-1)?.seq ?? seq);
       // A client the ops cannot catch up — behind the horizon, or past where it is now served — is told to take the state.
       // (The ops after the horizon still come, so a client that predates `reset` sees the gap and takes the state as it did.)
-      if (wire.behind(asked.seat, seq)) return reply(200, { ops: opsFor(asked.opFormat, ops, served), cursor, reset: true, ...wire.horizonOf(), ...wire.servedOf(asked.seat), ...answering(asked) });
-      return reply(200, { ops: opsFor(asked.opFormat, ops, served), cursor, ...wire.servedOf(asked.seat), ...answering(asked) });
+      if (wire.behind(asked.seat, seq)) return reply(200, { ops: opsFor(asked.opFormat, ops, served), cursor, reset: true, ...wire.horizonOf(), ...wire.servedOf(asked.seat, false), ...answering(asked) });
+      // Nothing new in the log, nothing new of its stops: a poll with no ops does not work them out.
+      return reply(200, { ops: opsFor(asked.opFormat, ops, served), cursor, ...wire.servedOf(asked.seat, ops.length > 0), ...answering(asked) });
     },
     declared(peers) {
       for (const peer of peers) {

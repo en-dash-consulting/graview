@@ -2,7 +2,7 @@ import { bindSchema, createSchema, defineApp, defineNode, Store, type Author, ty
 import { stoppedKind, stoppedSuggestions, suggest, suggestions } from "@graview/core/tidying";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { createStoreHandler, isClientBatch, liveProtocol, openRemote, type LivePeer, type LiveServerMessage } from "../../src/index.js";
+import { createStoreHandler, isClientBatch, liveProtocol, openRemote, type LivePeer, type LiveServerMessage, type LiveSocketLike } from "../../src/index.js";
 
 /**
  * "DON'T SUGGEST THIS KIND OF THING" CROSSES THE WIRE AS AN UNDO WITH A
@@ -164,5 +164,83 @@ describe("a page whose log no longer holds a stop", () => {
     expect(stoppedKind(store, made.suggests!)).toBeUndefined();
     expect(stoppedSuggestions(remote.store, keeper)).toEqual([]);
     remote.close();
+  });
+});
+
+describe("a page and a stop, after a lift", () => {
+  const app = defineApp({ name: "stops", schema, mutations: [touch], policy, version: 1 });
+  /** With `tail`, a page that holds only the last op; else one that holds the whole log, the stop and the suggestion among it. */
+  async function pageOn({ tail = false, socket }: { readonly tail?: boolean; readonly socket?: () => LiveSocketLike } = {}) {
+    const { store, made } = hosted();
+    const stop = store.undo(made.batch, { author: keeper, intent: "Stopped suggesting changes to the note of tasks", lineage: STOP });
+    for (const note of ["One", "Two", "Three"]) store.apply({ name: "edit-task", args: { id: "b", note } }, { author: keeper });
+    const handler = await createStoreHandler({ app, store, seatOf: () => keeper, ...(tail ? { openTail: 1 } : {}) } as never);
+    const fetcher = (async (url: string, init?: RequestInit) => handler.handle(new Request(url, init))) as typeof fetch;
+    const remote = await openRemote({ app, url: "https://store.example", principal: keeper, fetch: fetcher, pollMs: 0, ...(socket ? { live: true, openTimeoutMs: 30, socket } : {}) });
+    return { store, made, stop, remote };
+  }
+
+  it("sees its own Suggest again in its tray, and a second press is not offered", async () => {
+    const { store, stop, remote } = await pageOn();
+    expect(suggestions(remote.store, keeper)).toEqual([]);
+    remote.store.undo(stop.batch, { author: keeper });
+    await remote.settled();
+    expect(suggestions(store)).toHaveLength(1);
+    expect(suggestions(remote.store, keeper)).toHaveLength(1);
+    expect(stoppedSuggestions(remote.store, keeper)).toEqual([]);
+    await remote.pull();
+    expect(suggestions(remote.store, keeper)).toHaveLength(1);
+    expect(stoppedSuggestions(remote.store, keeper)).toEqual([]);
+  });
+
+  it("hears another page's lift when it next asks", async () => {
+    const { store, stop, remote } = await pageOn();
+    expect(suggestions(remote.store, keeper)).toEqual([]);
+    store.undo(stop.batch, { author: keeper });
+    await remote.pull();
+    expect(suggestions(store)).toHaveLength(1);
+    expect(suggestions(remote.store, keeper)).toHaveLength(1);
+    expect(stoppedSuggestions(remote.store, keeper)).toEqual([]);
+  });
+
+  it("no longer lists a stop its log never held, once another page lifts it", async () => {
+    const { store, stop, remote } = await pageOn({ tail: true });
+    expect(stoppedSuggestions(remote.store, keeper).map((one) => one.batch)).toEqual([stop.batch]);
+    store.undo(stop.batch, { author: keeper });
+    await remote.pull();
+    expect(stoppedSuggestions(remote.store, keeper)).toEqual([]);
+  });
+
+  it("hears another page's lift on its socket", async () => {
+    let fake: (LiveSocketLike & { readyState: number }) | undefined;
+    const socket = (): LiveSocketLike => {
+      fake = { readyState: 0, onopen: null, onmessage: null, onclose: null, onerror: null, send: () => {}, close() {} } as never;
+      setTimeout(() => {
+        fake!.readyState = 1;
+        fake!.onopen?.({});
+      }, 0);
+      return fake!;
+    };
+    const { store, stop, remote } = await pageOn({ socket });
+    await new Promise((done) => setTimeout(done, 10));
+    expect(suggestions(remote.store, keeper)).toEqual([]);
+    const lifted = store.undo(stop.batch, { author: keeper });
+    fake!.onmessage?.({ data: JSON.stringify({ t: "ops", seq: "x", ops: lifted.ops }) } as never);
+    await remote.settled();
+    await new Promise((done) => setTimeout(done, 10));
+    expect(suggestions(remote.store, keeper)).toHaveLength(1);
+    expect(stoppedSuggestions(remote.store, keeper)).toEqual([]);
+    remote.close();
+  });
+
+  it("asks the host nothing of stops when a poll brings no ops", () => {
+    const { store, made } = hosted();
+    store.undo(made.batch, { author: keeper, lineage: STOP });
+    const live = liveProtocol({ store });
+    const head = store.log.all().at(-1)!.seq;
+    const quiet = live.since(head, { seat: keeper, via: "web" } as never) as unknown as { body: Record<string, unknown> };
+    expect("stops" in quiet.body).toBe(false);
+    const moved = live.since(head - 1, { seat: keeper, via: "web" } as never) as unknown as { body: Record<string, unknown> };
+    expect("stops" in moved.body).toBe(true);
   });
 });
