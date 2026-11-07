@@ -764,7 +764,7 @@ function judgeValue(property: string | undefined, values: readonly ComponentValu
       out.push({ type: "block", open: value.open, value: inner });
       continue;
     }
-    if (value.type === "at-keyword" || value.type === "CDO" || value.type === "CDC" || value.type === "{" || value.type === "}" || value.type === ";" || (value.type === "delim" && value.value === "\\")) {
+    if (value.type === "at-keyword" || value.type === "CDO" || value.type === "CDC" || value.type === "{" || value.type === "}" || value.type === ";" || value.type === ")" || value.type === "]" || (value.type === "delim" && value.value === "\\")) {
       refuse({ reason: "unreadable", ...(property ? { name: property } : {}) });
       return undefined;
     }
@@ -802,8 +802,37 @@ function judgeDeclaration(declaration: Declaration, refuse: (refusal: CssRefusal
   return `${custom ? `--${serializeName(declaration.name.slice(2))}` : name}: ${said}${declaration.important && !(attribute && MOTION.test(name)) ? " !important" : ""}`;
 }
 
-/** Whether a selector stays in the view's own tree: nothing on `CSS_REFUSED_SELECTORS`, nothing unreadable. */
+/**
+ * WHETHER A PRELUDE COULD MEAN SOMETHING ELSE ELSEWHERE. At the top of a sheet
+ * a stray `}` is junk in a prelude, and the rule goes undrawn; put inside any
+ * block — a cascade layer, a host's own `@media` — it closes that block, and
+ * what follows, judged as a selector, is read as CSS nobody judged. A `;`
+ * ends a rule there too, an at-keyword begins one, `<!--` and `-->` are
+ * ignored only at a sheet's top, a lone backslash escapes what is written
+ * after it, and an unmatched bracket is another reading. A condition and a
+ * selector hold none of them, at any depth, so what is kept reads the same
+ * wherever it is put.
+ */
+const readsOtherwise = (values: readonly ComponentValue[]): boolean =>
+  values.some(
+    (value) =>
+      value.type === "}" ||
+      value.type === ";" ||
+      value.type === ")" ||
+      value.type === "]" ||
+      value.type === "at-keyword" ||
+      value.type === "CDO" ||
+      value.type === "CDC" ||
+      (value.type === "delim" && value.value === "\\") ||
+      ((value.type === "func" || value.type === "block") && readsOtherwise(value.value)),
+  );
+
+/** Whether a selector stays in the view's own tree: nothing on `CSS_REFUSED_SELECTORS`, nothing unreadable, nothing that reads otherwise inside a block. */
 function judgeSelector(prelude: readonly ComponentValue[], refuse: (refusal: CssRefusal) => void): boolean {
+  if (readsOtherwise(prelude)) {
+    refuse({ reason: "unreadable", name: "selector" });
+    return false;
+  }
   const walk = (values: readonly ComponentValue[]): boolean => {
     for (let index = 0; index < values.length; index += 1) {
       const value = values[index]!;
@@ -845,6 +874,10 @@ function judgeBlock(values: readonly ComponentValue[], refuse: (refusal: CssRefu
 
 /** A prelude of `@media`, `@supports` or `@container`: conditions, which fetch nothing, written with no url and no function outside the allowlist (but `selector()` in `@supports`). */
 function judgeCondition(prelude: readonly ComponentValue[], at: string, refuse: (refusal: CssRefusal) => void): string | undefined {
+  if (readsOtherwise(prelude)) {
+    refuse({ reason: "unreadable", name: `@${at}` });
+    return undefined;
+  }
   const walk = (values: readonly ComponentValue[]): boolean =>
     values.every((value) => {
       if (value.type === "url" || value.type === "bad-url" || value.type === "bad-string" || (value.type === "block" && value.open === "{")) {
