@@ -1,6 +1,6 @@
 {
   "budget": "a visitor's form handed a compiled app",
-  "minified": 1700,
-  "gzipped": 530,
-  "note": "Raised when the store came to ask `@graview/core/tidying` about a stop in `undo` and `mayUndo`, to refuse the app's own actor what a person stopped and to refuse the lineage keys only it writes (Roadmap f-inbox-needs-you-first): a few lines up front, the rest off the page. Measured at 353_351 / 128_986 against main's 351_483 / 128_346 at 0.1.69."
+  "minified": 2300,
+  "gzipped": 790,
+  "note": "Raised when the store came to ask `@graview/core/tidying` about a stop in `undo` and `mayUndo`, to refuse the app's own actor what a person stopped, to read a stop's lineage keys only on the op they are for, and to refuse the keys only it writes (Roadmap f-inbox-needs-you-first): a few lines up front, the rest off the page. Measured at 353_925 / 129_236 against main's 351_483 / 128_346 at 0.1.69."
 }
