@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "8c3f387d-df17-44e3-bd0f-a89901df52c1":
+    status: "completed"
+    startedAt: "2026-09-19T06:50:52.606Z"
+    completedAt: "2026-09-19T07:13:27.427Z"
+    endedAt: "2026-09-19T07:13:27.427Z"
+    resolutionType: "code-change"
+    resolutionDetail: "foldRobots + Occupants overlay + one body per participant, follow mode, refusals at the gate, verify-robot/audit/a11y/seat harnesses green"
+    appliedAt: "2026-09-19T07:13:27.427Z"
+    lastModified: "2026-09-19T07:13:27.439Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "259a47ac-17f1-4dcf-8958-f4e323222f99":
+    status: "completed"
+    startedAt: "2026-09-28T22:03:22.811Z"
+    completedAt: "2026-09-28T22:03:23.292Z"
+    endedAt: "2026-09-28T22:03:23.292Z"
+    resolutionType: "code-change"
+    resolutionDetail: "pages/page-search.tsx: DefaultSearchPage at /search (hits grouped by kind, heading → /<plural>?q=, why lines, kind/place/rule hits, honest empty state via describeSearched), beginningsFor + SearchToCreate ('A <kind> called “words”', act title on the button, DerivedForm initial = editable prefill). PageFind in the derived shell's nav (narrows a list via ?q= replace, else /search; exported with narrowsLists for app shells — Things' rail uses it with false). List page: shared matcher incl. q conditions and is:any, WhyLine per row, empty state says what was searched and prefills the beginnings; ArrangeBar query off under the derived shell. registry warns on route('/search'). tools: ChatReply.picks + ChatContext.principal; graphResponder answers a no-act/no-fact message with search hits (not grounded); chat draws picks as presses. Activity rail draws a read call's reads. Todo's tidy seat searches before it repairs. Harnesses: verify-pages theWordsFindItOnAPage, verify-chat noActAndNoFactAnswersWithWhatTheWordsFind, verify-seat 'finds what it changes with search_graph, and the rail shows what it read' (18/18). Tests: pages the-words-find-it-on-a-page, tools conversation fallback."
+    appliedAt: "2026-09-28T22:03:23.292Z"
+    lastModified: "2026-09-28T22:03:23.360Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "1b750f27-d08d-4f10-b3d1-28bfb34eb53d":
+    status: "completed"
+    startedAt: "2026-09-19T05:12:54.940Z"
+    completedAt: "2026-09-19T05:18:52.536Z"
+    endedAt: "2026-09-19T05:18:52.536Z"
+    resolutionType: "code-change"
+    resolutionDetail: "questions.ts in @graview/tools with derived Choice/Noul/Score questions from enums, nodeRefs, booleans, bounded numbers and invariants; nodeRef describe fix in core"
+    appliedAt: "2026-09-19T05:18:52.536Z"
+    lastModified: "2026-09-19T05:18:52.555Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

@@ -1,0 +1,13 @@
+schema: "rex/v2"
+items:
+  "f53296a7-a8f7-4ac1-bce8-62677155112b":
+    status: "completed"
+    startedAt: "2026-09-12T17:00:47.410Z"
+    completedAt: "2026-09-13T04:54:52.357Z"
+    endedAt: "2026-09-13T04:54:52.357Z"
+    failureReason: "The fourth walk added sixteen findings (W-070…W-085), so its own acceptance criterion — \"docs/walkthrough-findings.md gains nothing\" — is not met. All nine stages were walked by a fresh agent in a newly scaffolded app at ../walk4 and every finding is fixed in a framework package with a criterion verified to fail without the fix (11 commits, e277977..2fb10c6). Stages G, H and I added nothing. The two things never walked before, brand.kit and @graview/studio, were exercised; three of the findings are the studio's write-back (an invented far-end argument, disarmed checkout rules and replaced bodies, a dropped far-end reading). The walk must be repeated until the log stays still."
+    resolutionType: "acknowledgment"
+    resolutionDetail: "The fourth walk was walked in full by a fresh agent and every finding (W-070…W-085) fixed with a criterion; W-086…W-089 followed from Nick's own use. The log did not stay still; the criterion is carried by the queued fifth walk (task 2fdf30c2), which runs after the demo features so it walks what they add. Closed so the queue follows the working order."
+    appliedAt: "2026-09-13T04:54:52.357Z"
+    lastModified: "2026-09-13T04:54:52.371Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "9893a227-a8c5-4f50-80cf-01cf3c15375f":
+    status: "completed"
+    startedAt: "2026-09-19T05:19:50.231Z"
+    completedAt: "2026-09-19T05:23:31.740Z"
+    endedAt: "2026-09-19T05:23:31.740Z"
+    resolutionType: "code-change"
+    resolutionDetail: "jevDecide provider in tools + decisionBridge dev door in ship; live-verified"
+    appliedAt: "2026-09-19T05:23:31.740Z"
+    lastModified: "2026-09-19T05:23:31.753Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

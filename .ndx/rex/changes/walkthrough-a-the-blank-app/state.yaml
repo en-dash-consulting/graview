@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "ec0f8101-0c4b-417d-ab86-81c0f28d5017":
+    status: "completed"
+    startedAt: "2026-09-11T16:38:45.362Z"
+    completedAt: "2026-09-12T02:23:00.646Z"
+    endedAt: "2026-09-12T02:23:00.646Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Third walk, stage A: three findings (W-051 an ask drawn off the side of its pane and below a phone's fold; W-052 the activity rail's undo and Start fresh under 24px; W-053 every keyboard act ending at document body), each fixed in packages/primitives with a criterion verified failing first — audit-ui `asking` + `todo/activity`/`seedbed/asked`/`askedNarrow` states, and verify-menu `theKeyboardKeepsItsPlace`. Stage re-run clean: axe 0 across 40 screens, audit clean at both widths, and pnpm test/audit-ui/survey/site/progression/smoke:create/remember/navigation/menu/pages/chat/seat/shrunk all pass."
+    appliedAt: "2026-09-12T02:23:00.646Z"
+    lastModified: "2026-09-12T02:23:00.655Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

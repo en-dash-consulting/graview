@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "f89ca8e2-e7ad-4507-976e-079f44e0794b":
+    status: "completed"
+    startedAt: "2026-08-31T02:50:02.425Z"
+    completedAt: "2026-08-31T02:50:02.425Z"
+    endedAt: "2026-08-31T02:50:02.425Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Right click selects what is under the pointer and opens the same derived affordances there — verified to be the same list the strip renders, arguments included, and to close on Escape."
+    appliedAt: "2026-08-31T02:50:02.425Z"

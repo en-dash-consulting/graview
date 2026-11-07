@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "88355b50-8061-4903-8bd8-c49cefe929ec":
+    status: "completed"
+    startedAt: "2026-08-31T02:20:34.995Z"
+    completedAt: "2026-08-31T02:32:11.416Z"
+    endedAt: "2026-08-31T02:32:11.416Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Activity is derived from the op log into per-node marks held by the provider; the scene resolves them onto whatever is drawn, the theme draws them with animations that run once, and read-only tool calls now report what they looked at. Ten criteria verified in a live browser by scripts/verify-watching.mjs."
+    appliedAt: "2026-08-31T02:32:11.416Z"

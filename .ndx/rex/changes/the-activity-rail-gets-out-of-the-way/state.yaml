@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "3cecf975-aac8-4869-82d8-c2e2ee63a1b1":
+    status: "completed"
+    startedAt: "2026-08-31T02:50:16.615Z"
+    completedAt: "2026-08-31T02:50:16.615Z"
+    endedAt: "2026-08-31T02:50:16.615Z"
+    resolutionType: "code-change"
+    resolutionDetail: "The rail became a popover from the bar rather than a panel pinned over the scene; a dot on its button carries an in-flight agent turn without opening it. Verified quiet by default."
+    appliedAt: "2026-08-31T02:50:16.615Z"

@@ -1,0 +1,16 @@
+---
+id: "72468111-fcfe-430b-bdc6-e306880b3ffd"
+type: "capability"
+title: "A thumbnail reads as a place with no counts (FR-120)"
+slug: "a-thumbnail-reads-as-a-place-with-no"
+statement: "A thumbnail with fit \"content\" and no per-kind counts draws each district as a few blocks, so a live app's tile reads as a place and apps do not all look alike."
+criteria: [{"id":"c1","text":"The system shall ensure that with fit: \"content\" and no counts, each district stands a few blocks (three, seeded by the kind's name) rather than one."},{"id":"c2","text":"The system shall ensure that cloud's twelve templates drawn with no counts at 264x132 look like their counted versions, not like each other."}]
+tags:
+  - "graview-cloud"
+  - "FR-120"
+source: "Graview Cloud, 2026-10-07 (brief after 0.1.14)"
+priority: "low"
+resolution: "Shipped in #124 (0.1.15): fitted without counts, each district stands three blocks on its whole block, cells and heights drawn from the kind's name; Cloud's twelve templates differ from each other and keep the counted map."
+---
+
+Cloud has no per-kind counts for a live app's tile; without them every district draws a single block and every app looks alike.

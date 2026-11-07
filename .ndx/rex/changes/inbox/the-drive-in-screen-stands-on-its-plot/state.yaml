@@ -1,0 +1,13 @@
+schema: "rex/v2"
+items:
+  "f3119731-5385-4318-898b-c59317a6615d":
+    status: "completed"
+    startedAt: "2026-09-20T05:11:06.797Z"
+    completedAt: "2026-09-20T14:03:54.209Z"
+    endedAt: "2026-09-20T14:03:54.209Z"
+    resolutionType: "code-change"
+    resolutionDetail: "The screen is a framed billboard on two posts at the plot's back kerb; the nameplate is a signpost at the front corner; the board hangs under it; the landmark stands in the square; \"shown above\" is gone."
+    appliedAt: "2026-09-20T14:03:54.209Z"
+    needsPlacement: true
+    lastModified: "2026-09-20T14:03:54.220Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

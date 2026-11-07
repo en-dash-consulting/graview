@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "ea8c2cf3-9a30-42fb-a406-eaa0dc637b91":
+    status: "completed"
+    startedAt: "2026-09-01T02:49:04.654Z"
+    completedAt: "2026-09-01T02:49:04.654Z"
+    endedAt: "2026-09-01T02:49:04.654Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Shipped in commit \"Districts stand on solid faces, a refusal says its sentence, and an agreement shows its terms\". Verified end to end in the browser: capping at 30 updates the violation text and the activity log with undo; pressing the cap action on a non-cap agreement prints its refusal in the strip. All harnesses green."
+    appliedAt: "2026-09-01T02:49:04.654Z"

@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "23741b19-b497-4293-a9eb-d157a5aebc52":
+    status: "completed"
+    startedAt: "2026-09-22T13:59:31.133Z"
+    completedAt: "2026-09-22T14:06:44.716Z"
+    endedAt: "2026-09-22T14:06:44.716Z"
+    resolutionType: "code-change"
+    resolutionDetail: "The lede says how much the picture holds and what it is across, instead of the kind's singular description; that description keeps the list page and records."
+    appliedAt: "2026-09-22T14:06:44.716Z"
+    lastModified: "2026-09-22T14:06:44.780Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

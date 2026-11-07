@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "07a1308b-e74e-41ee-87d7-69d0f4822125":
+    status: "completed"
+    startedAt: "2026-08-30T04:22:27.456Z"
+    completedAt: "2026-08-30T04:22:27.456Z"
+    endedAt: "2026-08-30T04:22:27.456Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Question settled, with one criterion unmet by the platform rather than by us. ANSWERED: canvasTransform accepts perspective AND affine, but geometry sync has no observable effect on hit-testing in Chromium 154, so \"accepted\" cannot be upgraded to \"honoured\" — layout stays AFFINE (recorded in docs/platform-findings.md, asserted by isAffine()). Clicks do NOT follow drawn pixels from the platform; PointerRouter supplies it, verified clicking three panels at three depths at their drawn positions. Focus/tab order DO follow (3/3 buttons focusable) since views stay real DOM. Outstanding and NOT done: a screen-reader pass with real assistive technology (VoiceOver) — needs a human at a machine."
+    appliedAt: "2026-08-30T04:22:27.456Z"

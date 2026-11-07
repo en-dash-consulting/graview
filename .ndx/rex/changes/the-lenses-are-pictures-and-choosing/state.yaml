@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "cf910e28-74ca-4477-83b3-db91abcf91fd":
+    status: "completed"
+    startedAt: "2026-09-20T17:36:14.909Z"
+    completedAt: "2026-09-20T18:14:05.036Z"
+    endedAt: "2026-09-20T18:14:05.036Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Thumbnail lenses on the drive-in board, fly-closer on press, full-screen descent, billboard cut to its measured picture; harnesses updated; framework 8828d8a plus Squad and Groundskeeper report commits."
+    appliedAt: "2026-09-20T18:14:05.036Z"
+    lastModified: "2026-09-20T18:14:05.048Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

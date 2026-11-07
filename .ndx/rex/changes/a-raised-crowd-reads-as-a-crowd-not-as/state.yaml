@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "fc10dab0-ebdc-49ad-b33f-0b12c2621dbe":
+    status: "completed"
+    startedAt: "2026-09-01T05:23:38.901Z"
+    completedAt: "2026-09-01T05:32:42.986Z"
+    endedAt: "2026-09-01T05:32:42.986Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Width-driven fidelity degradation in the scene: a plane-1 card narrower than 175px renders its kind's GLYPH instead of a summary (the fidelity axis doing its job), and the host states data-graview-crowded for tooling. The bid-desk example's ten raised requirements verified in-browser: nine crowded hosts render as clean reference chips with warn marks, no wrapped slivers. TDD (binding.test \"a raised crowd\"), 488 tests, 23/23 audit, survey clean, direct 19/19."
+    appliedAt: "2026-09-01T05:32:42.986Z"

@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "a3f10bea-3a14-41f0-9dcd-5fb410de4ed4":
+    status: "completed"
+    startedAt: "2026-09-19T07:50:09.930Z"
+    completedAt: "2026-09-19T08:21:59.623Z"
+    endedAt: "2026-09-19T08:21:59.623Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Presence types + fold in core; BroadcastChannel and served (/graview/here, /who, /leave) channels in ship, folded into openRemote's poll, applyAll/undo now on the wire; usePresenceState/placeOthers/tabSession in react with person figures, audience rows, +n, theirs robots, hover outlines, follow-until-Escape; profile sharing settings and \"Seen by others as\"; embed presence option; scripts/verify-who.mjs 8/8; unit 1326/1326; commit 8acc042."
+    appliedAt: "2026-09-19T08:21:59.623Z"
+    lastModified: "2026-09-19T08:21:59.635Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

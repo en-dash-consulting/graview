@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "41dae4fc-8647-41b9-84b3-160a2a864017":
+    status: "completed"
+    startedAt: "2026-09-11T17:12:40.628Z"
+    completedAt: "2026-09-12T04:14:35.504Z"
+    endedAt: "2026-09-12T04:14:35.504Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Third walk, stage C: a second rule (someone-is-on-it) declared in walk3 with a repair that names hand-item, fills the subject and leaves `handler` to be asked for; it fires on the seed, the standing says \"1 problem\", the problems page and both record faces carry the same words, and repairing from the scene, the pages and the chat seat each leave one attributed op that undo takes back. Three findings, each fixed with a criterion verified failing first — W-057 the seat promising repairs it filters out (packages/tools conversation + conversation.test), W-058 the activity rail naming acts by their registered name (packages/primitives + verify-seat), W-059 a hydrated store restarting its op and batch id counters at zero, so everything done on the second visit was filed under the first turn ever taken (packages/core store + op-log.test ladders + verify-remember aChangeOnTheSecondVisitIsATurnOfItsOwn). Stage re-run clean: axe 0 across 52 screens, audit clean at both widths, and the whole harness list passes including smoke:create."
+    appliedAt: "2026-09-12T04:14:35.504Z"
+    lastModified: "2026-09-12T04:14:35.513Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

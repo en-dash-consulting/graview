@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "5f233f8f-feb9-431e-9515-029d94f7ec49":
+    status: "completed"
+    startedAt: "2026-09-01T00:26:28.156Z"
+    completedAt: "2026-09-01T01:41:01.552Z"
+    endedAt: "2026-09-01T01:41:01.552Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Bands hold ≥12px clear ground with a relation raised (measured 97px at 1560x940; layout test asserts ≥12 at 1280x720). The kinds shelf lies flat (the arc is gone), tucks peek from behind their parent's top edge capped to the parent's slot, the board turns landscape when its room is wider than tall (pitch legible, slots asserted in audit-ui.mjs), the key states one line per distinct sentence naming all implicated codes, panel meta says \"all N filled\", the trail emits no leading separator and no home crumb while standing at home. audit-ui.mjs gained a raised state per app plus board-slot assertions; 23/23 screens clean; test/typecheck/check/survey green. Fault 4 (the seat ghost) resolved by the sibling decision task."
+    appliedAt: "2026-09-01T01:41:01.552Z"

@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "e43520bf-ebdd-41d4-8b38-5318e4bafa14":
+    status: "completed"
+    startedAt: "2026-09-22T14:06:51.468Z"
+    completedAt: "2026-09-22T14:35:15.031Z"
+    endedAt: "2026-09-22T14:35:15.031Z"
+    resolutionType: "code-change"
+    resolutionDetail: "The wheel paints its offset onto the world layers and only settles into state when it stops; zoom settles a live offset first. The harness gained a wheel case whose notches come from inside the page, one per frame, after its own latency was found to be breaking one gesture into several."
+    appliedAt: "2026-09-22T14:35:15.031Z"
+    lastModified: "2026-09-22T14:35:15.096Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

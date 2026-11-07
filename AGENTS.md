@@ -237,7 +237,8 @@ them — but they are the context for what was built and why.
 
 | Path | What it is |
 |------|------------|
-| `.ndx/rex/prd_tree/` | The PRD: one directory per epic/feature/task with an `index.md`; the sole writable PRD surface |
+| `.ndx/rex/product/` | The PRD's product layer (v2): areas, capabilities and constraints, what the product does |
+| `.ndx/rex/changes/` | The PRD's change layer (v2): one directory per change, an `index.md` and a `state.yaml`, placed on the product layer. `release-0-1-NN` records what a release shipped |
 | `.ndx/rex/workflow.md` | Project-specific task-execution rules appended to the n-dx workflow |
 | `.ndx/config.json`, `.ndx/rex/config.json`, `.ndx/hench/config.json` | Tool configuration (model, guard, ports) |
 | `.ndx/hench/runs/*.json` | One record per autonomous run: task, status, summary, token usage |
@@ -254,7 +255,7 @@ which is therefore gitignored.
 
 **Rex MCP tools** — read: `get_prd_status`, `get_next_task`, `get_item`,
 `get_recommendations`, `get_token_usage`, `health`, `facets`,
-`get_capabilities`; write (folder tree only): `claim_task`, `release_task`, `update_task_status`,
+`get_capabilities`, `get_product`; write: `place_change`, `claim_task`, `release_task`, `update_task_status`,
 `add_item`, `edit_item`, `move_item`, `merge_items`, `append_log`,
 `verify_criteria`, `reorganize`, `sync_with_remote`.
 
