@@ -282,7 +282,7 @@ describe("what a project starts with", () => {
     for (const pkg of GRAVIEW_PACKAGES) expect(manifest.dependencies[`@graview/${pkg}`]).toBeDefined();
     expect(manifest.devDependencies["graview"]).toBeDefined();
     expect(manifest.scripts["check"]).toBe("pnpm build:domain && graview check ./dist/domain/app.js");
-    expect(manifest.engines.node).toBe(">=22");
+    expect(manifest.engines.node).toBe(">=22.22.0");
     expect(manifest.pnpm?.onlyBuiltDependencies).toEqual(["esbuild"]);
     const viaNpm = JSON.parse(scaffoldProject({ name: "X", packageManager: "npm" }).files.find((f) => f.path === "package.json")!.contents) as { pnpm?: unknown; scripts: Record<string, string> };
     expect(viaNpm.pnpm).toBeUndefined();

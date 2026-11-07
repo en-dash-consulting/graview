@@ -34,7 +34,8 @@
     "react-router": "^8.5.1"
   },
   "peerDependencies": {
-    "react": ">=19.2.7"
+    "react": ">=19.2.7",
+    "react-dom": ">=19.2.7"
   },
   "devDependencies": {
     "zod": "^4.6.5"
@@ -70,6 +71,6 @@
     "url": "https://github.com/en-dash-consulting/graview/issues"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22.22.0"
   }
 }

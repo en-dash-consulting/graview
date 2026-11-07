@@ -46,8 +46,8 @@
     "@graview/tools": "workspace:*"
   },
   "peerDependencies": {
-    "react": ">=18",
-    "react-dom": ">=18"
+    "react": ">=19.2.7",
+    "react-dom": ">=19.2.7"
   },
   "files": [
     "dist",
@@ -68,6 +68,6 @@
     "url": "https://github.com/en-dash-consulting/graview/issues"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22.22.0"
   }
 }

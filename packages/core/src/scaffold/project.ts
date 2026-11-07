@@ -103,7 +103,7 @@ export function workspaceRoot(ids: Ids, link: string | undefined): string {
       private: true,
       type: "module",
       description: `${ids.name}, on Graview.`,
-      engines: { node: ">=22" },
+      engines: { node: ">=22.22.0" },
       ...(ids.packageManager === "npm" ? { workspaces: ["app"] } : {}),
       scripts: {
         dev: inApp("dev"),
@@ -182,7 +182,7 @@ export function packageJson(ids: Ids, workspace: boolean): string {
     type: "module",
     description: `${ids.name}, on Graview.`,
     // Top-level await in main.tsx, and the framework's own floor.
-    engines: { node: ">=22" },
+    engines: { node: ">=22.22.0" },
     scripts: {
       dev: "vite",
       typecheck: "tsc -p tsconfig.json",

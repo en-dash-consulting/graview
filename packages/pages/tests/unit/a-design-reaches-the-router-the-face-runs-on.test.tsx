@@ -9,9 +9,11 @@ import { createPageRegistry, Link, PagesApp, useLocation, useParams, useSearchPa
  *
  * A product's page read `useParams` from the router package it depended on
  * itself. When that was a second copy, or another major than the one
- * `PagesApp` mounts, the page asked a router that was never set and threw
- * on its first draw. What a design links, reads and moves with comes from
- * `@graview/pages`, so it is always the router the face put above it.
+ * `PagesApp` mounts, the page asked a router that was never set: `useParams`
+ * answered `{}` with no error, so a record page said nothing lives at its
+ * address, and `Link` and `useLocation` threw. What a design links, reads and
+ * moves with comes from `@graview/pages`, so it is always the router the face
+ * put above it, and `graview doctor` names a router of the product's own.
  */
 const plot = defineNode("plot", { fields: z.object({ label: z.string() }), plural: "Plots" });
 const schema = createSchema([plot]);
