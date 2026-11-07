@@ -548,8 +548,8 @@ const audit = () => {
    * trustworthy here.
    */
   const painted = [];
-  // The broken-rule count is Standing's badge beside its dot, drawn only while a rule is broken.
-  if (/\d/.test(document.querySelector('[data-testid="standing-count"]')?.textContent ?? "")) {
+  // A rule broken is said in the bell's name.
+  if (/\d+ rules? broken/.test(document.querySelector('[data-testid="inbox-button"]')?.getAttribute("aria-label") ?? "")) {
     for (const host of views) {
       if (!visible(host)) continue;
       const plane = Number(host.dataset.graviewPlane);

@@ -407,7 +407,7 @@ export function logSeenBy(store: Judged, principal: Principal): readonly Operati
     }
     if (still) {
       // What the old ops read stands: the new ones are judged over it, and what they read is kept with it.
-      const ops = [...held.ops, ...redact(added, pinWith(held.judgments))];
+      const ops = [...held.ops, ...redact(added, pinWith(held.judgments), held.ops)];
       const served: ServedLog = { horizon, off, length, last: all.at(-1), ops, judgments: held.judgments };
       seats.set(key, served);
       return ops;

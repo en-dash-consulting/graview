@@ -3,6 +3,7 @@ import type { Primitive } from "../graph/primitives.js";
 import type { MutationCall } from "../mutations/types.js";
 import { labelOf, pluralOf } from "../schema/define-node.js";
 import type { AnySchema } from "../schema/schema.js";
+import type { Refusal } from "../permissions/types.js";
 import type { Author, Operation } from "./types.js";
 
 /*
@@ -31,6 +32,16 @@ type Reads = { getNode(id: string): unknown };
  */
 export function isAutomated(author: Pick<Author, "kind" | "automated"> | undefined): boolean {
   return author?.automated === true && author.kind !== "human" && author.kind !== "rule";
+}
+
+/**
+ * WHETHER AN AUTHOR IS THE APP'S OWN TIDYING ACTOR: automated, and not a
+ * declared workflow running under its own name (`workflow:<name>`), which a
+ * person set going and only they turn off. What "Don't suggest this kind of
+ * thing" is said to, and all it is said to.
+ */
+export function isTidyingActor(author: Pick<Author, "kind" | "automated" | "id"> | undefined): boolean {
+  return isAutomated(author) && !author?.id?.startsWith("workflow:");
 }
 
 /** Whether a record, as read, carries the leave-alone mark. */
@@ -75,6 +86,18 @@ export interface KeptDecline {
   readonly at: string;
   readonly author: Author;
   readonly undoes?: string;
+  /** A kind of thing stopped (`stopSuggesting`): what is left of it to list and to lift once its op is archived. */
+  readonly stop?: KeptStop;
+}
+
+/** What a checkpoint keeps of a stop, beside the decline it was. */
+export interface KeptStop {
+  /** The batch the stop landed in: what `store.undo` is asked to take back. */
+  readonly batch: string;
+  /** What it stopped, in the words it was stopped with. */
+  readonly words: string;
+  /** One call of each kind it stopped: what whoever lifts it is judged as, and what a seat is kept from by. */
+  readonly calls: readonly MutationCall[];
 }
 
 /** A decline: the op in the log that said it, or what a checkpoint kept of one archived since. */
@@ -93,6 +116,16 @@ export interface DeclinesHeld {
   declined?: (ops: readonly Operation[], calls: readonly MutationCall[], meanings: ActMeanings | undefined, kept: Readonly<Record<string, KeptDecline>> | undefined) => Decline | undefined;
   /** What a checkpoint keeps of a log's declines (`Epoch.declines`). */
   kept?: (ops: readonly Operation[], meanings: ActMeanings | undefined, kept: Readonly<Record<string, KeptDecline>> | undefined) => Record<string, KeptDecline>;
+  /** The stop that answers every one of these calls, or undefined (`stoppedIn`): what the app's own tidying actor is refused. */
+  stopped?: (ops: readonly Operation[], calls: readonly MutationCall[], meanings: ActMeanings | undefined, kept: Readonly<Record<string, KeptDecline>> | undefined) => Decline | undefined;
+  /** Why this seat may not stop what these suggestions' kinds are, in a sentence, or undefined when it may (`stopRefusal`). */
+  stopRefusal?: (store: object, targets: readonly Operation[], author: Author) => string | undefined;
+  /** A stop behind a checkpoint, lifted, when these batches are that one stop's (`undo` of a batch whose op has gone to the archive). */
+  lift?: (store: object, ids: readonly string[], options: object, author: Author) => object | undefined;
+  /** The same asked as `mayUndo` asks: undefined when these batches are no kept stop's, else who may. */
+  liftRefusal?: (store: object, ids: readonly string[], author: Author) => { readonly refusal?: Refusal } | undefined;
+  /** What refuses taking these ops back because of a stop among them, or nothing. */
+  undoRefusal?: (store: object, ops: readonly Operation[], author: Author) => Refusal | undefined;
 }
 export const DECLINES: DeclinesHeld = ((globalThis as Record<symbol, DeclinesHeld | undefined>)[Symbol.for("@graview/core:declines")] ??= {});
 

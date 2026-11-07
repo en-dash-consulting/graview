@@ -208,12 +208,36 @@ export function withhold(op: Operation, seeing: SeatLens | ((id: string) => bool
  * sentence, its author, a field value in a primitive or its inverse
  * (FR-55). One withheld already is withheld again under this seat's lens.
  */
-export function redact(ops: readonly Operation[], seeing: SeatLens | ((id: string) => boolean)): Operation[] {
+export function redact(ops: readonly Operation[], seeing: SeatLens | ((id: string) => boolean), before: readonly Operation[] = []): Operation[] {
   // One reading of the store, whatever its length: every id and record judged once in it.
   const given = lensOf(seeing);
   // A seat from whom nothing is kept is served the log as it is (FR-67).
   if (given.hides?.() === false) return [...ops];
   const lens = given.pin?.() ?? given;
+  return undoesFollow(judged(ops, lens), lens, before);
+}
+
+/**
+ * AN UNDO OF WHAT A SEAT MAY NOT SEE IS WITHHELD WITH IT. Its sentence quotes
+ * what it took back ("Undo: Changed the name of …"), and its reads and writes
+ * cannot always say so: a suggestion names its records only in its calls, and
+ * its decline touches nothing. So an op is judged by what it undoes too, down
+ * the chain, the ops served before these (`before`) among what it may undo.
+ */
+function undoesFollow(served: readonly Operation[], lens: SeatLens, before: readonly Operation[]): Operation[] {
+  const kept = new Set(before.filter(isWithheld).map((op) => op.id));
+  return served.map((op) => {
+    if (op.undoes === undefined || !kept.has(op.undoes)) {
+      if (op.withheld) kept.add(op.id);
+      return op;
+    }
+    kept.add(op.id);
+    return op.withheld ? op : withhold(op, lens, op.primitives);
+  });
+}
+
+/** The ops as this seat is served each on its own. */
+function judged(ops: readonly Operation[], lens: SeatLens): Operation[] {
   if (lens.redact) return lens.redact(ops);
   /*
    * ALONG THE STORE'S HISTORY, when the lens knows it: each primitive judged

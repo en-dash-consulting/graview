@@ -120,7 +120,7 @@ describe("the routed face's bar, after the app's own actor tidied", () => {
   it("draws the suggestions in the inbox beside it, where the third waits and is declined, and is refused to the actor next time", async () => {
     const store = tidied();
     await open(store, "/tasks");
-    await settled(() => expect($('[data-graview-app-bar] [data-testid="inbox-button"]')?.getAttribute("aria-label")).toContain("1 waiting for you"));
+    await settled(() => expect($('[data-graview-app-bar] [data-testid="inbox-button"]')?.getAttribute("aria-label")).toContain("1 needs you"));
     await act(async () => $('[data-testid="inbox-button"]')!.click());
     // What waits for you is where the inbox opens.
     await settled(() => expect($('[data-testid="suggestion"]')).not.toBeNull());
@@ -145,7 +145,7 @@ describe("the routed face's bar, after the app's own actor tidied", () => {
     const store = tidied(policy);
     suggest(store, [{ name: "pin-note", args: { id: "memo", task: "book" } }], { author: actor, lineage: { basis: "The note names the van" } });
     await open(store, "/tasks", { kind: "human", id: "gus", roles: ["guest"] });
-    await settled(() => expect($('[data-testid="inbox-button"]')?.getAttribute("aria-label")).toContain("1 waiting for you"));
+    await settled(() => expect($('[data-testid="inbox-button"]')?.getAttribute("aria-label")).toContain("1 needs you"));
     await act(async () => $('[data-testid="inbox-button"]')!.click());
     await settled(() => expect($('[data-testid="suggested"] [data-testid="suggestion"]')).not.toBeNull());
     expect(document.querySelectorAll('[data-testid="suggested"] [data-testid="suggestion"]')).toHaveLength(1);

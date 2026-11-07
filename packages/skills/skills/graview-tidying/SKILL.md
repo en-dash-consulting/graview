@@ -33,26 +33,26 @@ opens in and how its cards read are `graview-lists`.
    applies with `lineage: { basis, confidence }`; what it is not it
    suggests: `suggest(store, calls, { author, lineage })` (from
    `@graview/core/tidying`) keeps the calls in the log, changes nothing,
-   and they wait in the inbox's For you, beside Activity, until a person
+   and they wait under Needs you until a person
    accepts (`acceptSuggestion`, made as them) or declines them
    (`declineSuggestion`); `declined(store, calls)` says so, and the actor is
    refused the same change again — matched by what it means
    (`meaningKey`): the same link by any act that makes the relation, a
    record made again under a new id, a merged pair either way round. So
    is a person's undo of any change, or unlinking a link; a checkpoint
-   keeps declines (`Epoch.declines`). Its
-   run of changes is one Activity row, "Tidied 6 things overnight". Give a
+   keeps declines (`Epoch.declines`). `stopSuggesting(store, id)`, the
+   tray's "Don't suggest this kind of thing", holds this actor, no
+   workflow, to that act; one undo lifts it. Its run of changes is one Activity row, "Tidied 6 things overnight". Give a
    night's work one `lineage.run`, name the judge in `lineage.actor` and
    the records it rests on in `lineage.evidence`; give a suggestion an
    `expiresAt`, after which it leaves the tray and the next run judges it
    again. A suggestion of several calls (a workflow's run with
    `approve: "ask"`) lists each change; `acceptSuggestion(store, id,
    { items: [0, 2] })` takes some, the rest wait, Decline takes the rest.
-   "Not now" is not a decline: it is the person's own state
-   (`Dismissal`, handed to `suggestions(store, who, { dismissed })`), hides
-   it from them alone and binds the actor to nothing. The tray's Not now
-   keeps it in the host's `dismissals`, else the browser; a seat says it
-   with `withNotNow(runtime, dismissals)`. Someone who may see a suggestion
+   "Not now" is no decline: the person's own state (`Dismissal`, handed to
+   `suggestions(store, who, { dismissed })`), hidden from them alone, the
+   actor bound to nothing, kept in the host's `dismissals`, else the
+   browser; a seat says it with `withNotNow(runtime, dismissals)`. Someone who may see a suggestion
    and may not make its change — a reader, a visitor by link — is not
    refused: their Accept and Decline are a vote, for or against
    (`acceptSuggestion` and `declineSuggestion` answer `voted`;
@@ -62,8 +62,7 @@ opens in and how its cards read are `graview-lists`.
    Say `"tidying": { "autoAcceptAt": 4 }` at the top of the document (the
    edit `{"op": "set-app-tidying", "autoAcceptAt": 4}`, `null` to take it
    away) to have the actor make a suggestion at four votes for, the voters
-   in its `lineage.voters`; `graview check` warns when the app has no policy,
-   since then nobody votes. A seat no one person holds — the host's one
+   in its `lineage.voters`; `graview check` warns with none A seat no one person holds — the host's one
    signed-out seat (`shared: true` on its principal) or a `visitor` — is
    refused a vote ("Sign in to vote on this suggestion"), and the tray
    offers the host's `signIn` instead; `votes: { advisory: "visitors" }` on

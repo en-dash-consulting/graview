@@ -44,10 +44,11 @@ const saidCount = (html: string) => {
 };
 
 describe("one place says how many problems there are (FR-122)", () => {
-  it("says the count once on a standalone face's home: on the bar's standing, and the home points to them without it", () => {
+  it("draws no badge on a standalone face's standing: its link stays, named, and the home points to them", () => {
     const html = renderToStaticMarkup(<PagesApp context={{ store: store() }} initialPath="/" />);
-    expect(saidCount(html)).toBe(1);
+    expect(saidCount(html)).toBe(0);
     expect(html).toContain('data-testid="standing-link"');
+    expect(html).not.toContain('data-testid="standing-count"');
     // Counted as rules, the way the problems are drawn: "2 rules broken in 3 places".
     expect(html).toMatch(/aria-label="\d+ rules? broken/);
     expect(html).toContain("Rules are broken — see what, and what would fix it");

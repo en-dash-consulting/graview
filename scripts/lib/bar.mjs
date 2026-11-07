@@ -70,6 +70,12 @@ export async function openActivity(page, options = {}) {
   await at(page, options.within, '[data-testid="activity"]').waitFor({ state: "attached", timeout: options.timeout ?? 10_000 });
 }
 
+/** Open the inbox on what needs you and wait for the rules broken, in words, under it (`[data-testid="problems"]`). */
+export async function openProblems(page, options = {}) {
+  await openInboxTab(page, "for-you", options);
+  await at(page, options.within, '[data-testid="problems"] li').first().waitFor({ state: "attached", timeout: options.timeout ?? 10_000 });
+}
+
 /** Put the inbox away, by its own bell, where it is open. */
 export async function closeInbox(page, { within } = {}) {
   if ((await at(page, within, '[data-testid="inbox"]').count()) === 0) return;
