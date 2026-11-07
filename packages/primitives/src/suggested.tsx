@@ -1,5 +1,5 @@
 import { actingAs, nameOfAuthor, VOTE_SUGGESTION, type AnySchema, type DismissalStore, type Suggestion } from "@graview/core";
-import { acceptSuggestion, declineSuggestion, isProposal, mayDecide, suggestions, voteSuggestion, withdrawSuggestion } from "@graview/core/tidying";
+import { acceptSuggestion, declineSuggestion, isProposal, mayDecide, stoppedSuggestions, stopSuggesting, suggestions, voteSuggestion, withdrawSuggestion } from "@graview/core/tidying";
 import { suggestionGroups, suggestionSentence, whyWords, type SentencePart } from "./suggestion-sentence.js";
 import { useGoTo, useGraph, useGraview } from "@graview/react/provider";
 import { useEffect, useId, useMemo, useReducer, useState, type ReactNode } from "react";
@@ -58,8 +58,8 @@ export function SuggestedCount({ onCount }: { readonly onCount: (count: number) 
  * keeps the decline in the log, so it is never suggested again, and Not now
  * puts it out of this person's sight until tomorrow — kept where the host
  * keeps their own state (`dismissals`), so nobody else is told and the
- * actor is held to nothing. And what was done while the person was away,
- * in a line, when the host said (`whileAway`).
+ * actor is held to nothing. What was done while the person was away is
+ * under Updates (`SuggestedUpdates`).
  *
  * A reader who may see a suggestion and may not make its change is not
  * refused (Roadmap f-suggestion-votes): their Accept and Decline are a
@@ -69,6 +69,11 @@ export function SuggestedCount({ onCount }: { readonly onCount: (count: number) 
  * signed-out seat whose vote the store would refuse (Roadmap
  * f-votes-shared-seat) is offered the host's "Sign in to vote" in their
  * place, or no vote at all where the host gave no way in.
+ *
+ * "Don't suggest this kind of thing" stands beside No, for whoever may
+ * decide a suggestion of the app's own (Roadmap f-inbox-needs-you-first): it
+ * answers every change of that act, in the log, with its way back in
+ * Activity and under Updates (`SuggestedUpdates`, `stopSuggesting`).
  *
  * What a person proposed (Roadmap f-proposals-for-review) is listed apart,
  * first, under "Proposed": each "Proposed by Ada", answered by whoever
@@ -81,7 +86,7 @@ export function SuggestedList({ close, done }: {
   /** The last one settled: the inbox takes the keyboard to what was just made. */
   readonly done: () => void;
 }) {
-  const { store, whileAway } = useGraview<AnySchema>();
+  const { store } = useGraview<AnySchema>();
   const { waiting, notNow } = useWaiting();
   const [heard, hear] = useState("");
   const goTo = useGoTo();
@@ -93,41 +98,34 @@ export function SuggestedList({ close, done }: {
           goTo.record(to);
         }
       : null;
-  const tidied = whileAway?.tidied ?? 0;
-  const away = whileAway ? awayWords(waiting.length, tidied, whileAway.agreed) : undefined;
   /*
    * A ROW SETTLED, THE KEYBOARD STAYS IN THE LIST: on the next row's first
-   * button. The last one settled, the inbox says what was made, in
+   * button — one press may settle several, stopping a kind — else on what
+   * else needs this person. Nothing left, the inbox says what was made, in
    * Activity — never <body>.
    */
   const settled = (word: string) => {
     hear(word);
-    if (waiting.length > 1) {
-      requestAnimationFrame(() => (document.querySelector('[data-testid="suggested"] [data-testid="suggestion-accept"]') as HTMLElement | null)?.focus());
-      return;
-    }
-    done();
+    requestAnimationFrame(() => {
+      const next = document.querySelector<HTMLElement>('[data-testid="suggested"] [data-testid="suggestion-accept"], [data-testid="inbox-needs-you"] [data-testid="suggestion-accept"], [data-testid="inbox-needs-you"] [data-testid="inbox-problem-words"]:is(button), [data-testid="inbox-needs-you"] [data-testid="inbox-notification"]:is(a, button)');
+      if (next) next.focus();
+      else done();
+    });
   };
   const status = (
     <span role="status" data-testid="suggestion-heard" style={VISUALLY_HIDDEN}>
       {heard}
     </span>
   );
-  if (waiting.length === 0 && !away) return status;
+  if (waiting.length === 0) return status;
   return (
     <div data-testid="suggested" style={{ display: "flex", flexDirection: "column", gap: 9, minWidth: 0 }}>
-      {away ? (
-        <p data-testid="while-away" style={{ margin: 0, fontSize: "0.8125rem", lineHeight: 1.45, color: "var(--graview-ink-muted)" }}>
-          {away}.
-        </p>
-      ) : null}
-      {waiting.length === 0 ? <p style={{ margin: 0, fontSize: "0.75rem", lineHeight: 1.45, color: "var(--graview-ink-faint)" }}>What it did is in Activity.</p> : null}
       {/* A person's proposals apart from the app's own suggestions, and first: somebody is waiting on an answer. */}
       {[waiting.filter(isProposal), waiting.filter((one) => !isProposal(one))].map((some, at) =>
         some.length === 0 ? null : (
           <div key={at} style={{ display: "grid", gap: 6, minWidth: 0 }}>
             {waiting.some(isProposal) ? (
-              <h3 style={{ margin: 0, fontSize: "0.75rem", fontWeight: 600, color: "var(--graview-ink-muted)" }}>{at === 0 ? "Proposed" : "Suggested by the app"}</h3>
+              <h4 style={{ margin: 0, fontSize: "0.75rem", fontWeight: 600, color: "var(--graview-ink-muted)" }}>{at === 0 ? "Proposed" : "Suggested by the app"}</h4>
             ) : null}
             <ol data-testid={at === 0 ? "proposals" : "suggestions"} style={LIST}>
               {/*
@@ -136,7 +134,7 @@ export function SuggestedList({ close, done }: {
                */}
               {suggestionGroups(store, some).map((group) =>
                 group.record ? (
-                  <RecordGroup key={group.suggestions[0]!.id} record={group.record} level={waiting.some(isProposal) ? 4 : 3} go={goes(group.record.record)}>
+                  <RecordGroup key={group.suggestions[0]!.id} record={group.record} level={waiting.some(isProposal) ? 5 : 4} go={goes(group.record.record)}>
                     {(under) => group.suggestions.map((one) => <SuggestionRow key={one.id} suggestion={one} notNow={notNow} settled={settled} heard={hear} goes={goes} under={under} />)}
                   </RecordGroup>
                 ) : group.words ? (
@@ -163,12 +161,77 @@ export function SuggestedList({ close, done }: {
 }
 
 /**
+ * UNDER UPDATES (Roadmap f-inbox-needs-you-first): what the app's own actor
+ * did while the person was away, in a line, when the host said (`whileAway`);
+ * and each kind of thing people said not to suggest, with the way to let it
+ * suggest them again long after Activity has moved on. It says "No updates."
+ * itself where it is `alone`, since only the tray knows it has nothing to say.
+ */
+export function SuggestedUpdates({ alone }: {
+  /** Whether nothing else stands under Updates, so this says when it has nothing either. */
+  readonly alone: boolean;
+}) {
+  const { store, whileAway, principal } = useGraview<AnySchema>();
+  const { waiting } = useWaiting();
+  useGraph();
+  const [refused, setRefused] = useState<string | null>(null);
+  const tidied = whileAway?.tidied ?? 0;
+  const away = whileAway ? awayWords(waiting.length, tidied, whileAway.agreed) : undefined;
+  const stopped = stoppedSuggestions(store);
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 8, minWidth: 0 }}>
+      {away ? (
+        <p data-testid="while-away" style={{ margin: 0, fontSize: "0.8125rem", lineHeight: 1.45, color: "var(--graview-ink-muted)" }}>
+          {away}.
+        </p>
+      ) : null}
+      {stopped.length > 0 ? (
+        <ul data-testid="suggestions-stopped" aria-label="What is not suggested any more" style={{ ...LIST, gap: 6 }}>
+          {stopped.map((one) => (
+            <li key={one.batch} style={{ display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 10, rowGap: 4, minWidth: 0, color: "var(--graview-ink-muted)" }}>
+              <span style={{ ...WRAPS, flex: "1 1 14em" }}>{one.words}</span>
+              <button
+                type="button"
+                data-testid="suggestion-suggest-again"
+                onClick={() => {
+                  setRefused(null);
+                  try {
+                    store.undo(one.batch, { author: principal });
+                  } catch (error) {
+                    setRefused(error instanceof Error ? error.message : String(error));
+                  }
+                  // The row it was on is gone: the keyboard goes back to the tab, never <body>.
+                  requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-testid="inbox"] [aria-selected="true"]')?.focus());
+                }}
+                style={BUTTON}
+              >
+                Suggest again
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {refused ? (
+        <span role="alert" style={{ ...WRAPS, fontSize: "0.75rem", color: "var(--graview-warn)" }}>
+          {refused}
+        </span>
+      ) : null}
+      {alone && !away && stopped.length === 0 ? (
+        <p data-testid="inbox-updates-empty" style={{ margin: 0, fontSize: "0.8125rem", color: "var(--graview-ink-muted)" }}>
+          No updates.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/**
  * SEVERAL SUGGESTIONS ABOUT ONE RECORD (Roadmap
  * f-suggestions-grouped-by-record): the record named once, a link heading
  * the list of them, and each row under it said without it. Spacing, not a
  * box: the rows sit a step in from the name they hang from.
  */
-function RecordGroup({ record, level, go, children }: { readonly record: { readonly record: string; readonly label: string }; readonly level: 3 | 4; readonly go: ((id: string) => void) | null; readonly children: (under: string) => ReactNode }) {
+function RecordGroup({ record, level, go, children }: { readonly record: { readonly record: string; readonly label: string }; readonly level: 4 | 5; readonly go: ((id: string) => void) | null; readonly children: (under: string) => ReactNode }) {
   const heading = useId();
   return (
     <li data-testid="suggestion-record-group" data-record={record.record} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 4, minWidth: 0 }}>
@@ -200,7 +263,8 @@ const QUIET = { ...BUTTON, border: "1px solid transparent", background: "transpa
  * it. One since removed is its name, plain.
  */
 function SentenceRecord({ part, go }: { readonly part: Exclude<SentencePart, string>; readonly go: ((id: string) => void) | null }) {
-  const clipped = { display: "inline-block", maxWidth: "min(24ch, 100%)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", verticalAlign: "bottom" } as const;
+  // A full fingertip tall, as every control beside it is.
+  const clipped = { display: "inline-block", maxWidth: "min(24ch, 100%)", minHeight: 24, lineHeight: "24px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", verticalAlign: "bottom" } as const;
   const name = go ? (
     <button
       type="button"
@@ -222,7 +286,7 @@ function SentenceRecord({ part, go }: { readonly part: Exclude<SentencePart, str
 }
 
 /** What each answer to a suggestion is said as, once the row it was on is gone. */
-const HEARD = { accept: "Accepted.", decline: "Declined: it will not be suggested again.", later: "Hidden from you until tomorrow.", withdraw: "Withdrawn." } as const;
+const HEARD = { accept: "Accepted.", decline: "Declined: it will not be suggested again.", stop: "This kind of thing will not be suggested again. You can undo that in Activity.", later: "Hidden from you until tomorrow.", withdraw: "Withdrawn." } as const;
 
 /** What a vote is said as, to the person who cast it: the row stays, since the suggestion still waits. */
 const VOTED = { recorded: "Your vote was recorded.", withdrawn: "Your vote was withdrawn." } as const;
@@ -289,6 +353,7 @@ function SuggestionRow({ suggestion, notNow, settled, heard, goes, under }: {
     setRefused(null);
     try {
       if (how === "withdraw") withdrawSuggestion(store, suggestion.id, { author: principal });
+      else if (how === "stop") stopSuggesting(store, suggestion.id, { author: principal });
       else if (how === "accept" || how === "decline") {
         const answer = how === "accept" ? acceptSuggestion(store, suggestion.id, { author: principal }) : declineSuggestion(store, suggestion.id, { author: principal });
         // A vote, not the change: the suggestion still waits, so the row stays and says so.
@@ -378,6 +443,11 @@ function SuggestionRow({ suggestion, notNow, settled, heard, goes, under }: {
               style={BUTTON}
             >
               No
+            </button>
+          ) : null}
+          {decides && !proposal ? (
+            <button type="button" data-testid="suggestion-stop-kind" onClick={() => void settle("stop")} style={QUIET}>
+              Don't suggest this kind of thing
             </button>
           ) : null}
           {!decides && votes && !mine && tally.mine !== undefined ? (

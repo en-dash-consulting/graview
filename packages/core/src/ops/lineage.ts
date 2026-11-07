@@ -93,6 +93,13 @@ export interface Lineage {
    * 1–120 characters.
    */
   readonly proposedBy?: string;
+  /**
+   * "DON'T SUGGEST THIS KIND OF THING" (Roadmap f-inbox-needs-you-first), on
+   * the undo that declines a suggestion: the decline answers every change
+   * of the same act, not only this one (`stopSuggesting`,
+   * `@graview/core/tidying`). Undone, it no longer stands.
+   */
+  readonly stopsKind?: true;
 }
 
 /** The longest basis an op keeps: a reason, not a transcript. */
@@ -151,6 +158,7 @@ export function lineageOf(value: unknown): Lineage | undefined {
     else if (key === "evidence") fits &&= Array.isArray(said) && said.length <= LINEAGE_EVIDENCE_LIMIT && said.every(isName);
     else if (key === "read") fits &&= Array.isArray(said) && said.length <= LINEAGE_READ_LIMIT && said.every(isFieldRead);
     else if (key === "items") fits &&= Array.isArray(said) && said.length > 0 && said.length <= LINEAGE_ITEMS_LIMIT && said.every((at) => Number.isInteger(at) && at >= 0);
+    else if (key === "stopsKind") fits &&= said === true;
     else if (key === "voters") fits &&= Array.isArray(said) && said.length <= LINEAGE_VOTERS_LIMIT && said.every(isName);
     else fits &&= key !== "__proto__" && key !== "constructor" && key !== "prototype" && (said = asJson(said)) !== undefined;
     if (fits) kept[key] = said;

@@ -188,6 +188,13 @@ export interface HostNotification {
   readonly onSelect?: () => void;
   /** Already read: listed, and not counted on the bell. */
   readonly read?: boolean;
+  /**
+   * THIS ASKS SOMETHING OF THE PERSON (Roadmap f-inbox-needs-you-first): a
+   * proposal to review, a workflow that failed. Listed under Needs you, for
+   * as long as the host hands it, and counted on the bell while unread;
+   * unsaid, it is an Update, listed and not counted.
+   */
+  readonly needs?: boolean;
 }
 
 export interface GraviewContextValue<S extends AnySchema> {

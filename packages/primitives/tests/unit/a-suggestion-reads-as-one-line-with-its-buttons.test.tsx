@@ -95,7 +95,7 @@ describe("a placement in the inbox", () => {
     const host = await inbox(storeOf(["steer"]));
     const row = $('[data-testid="suggestion"]')!;
     expect($("[data-graview-suggestion-words]", row)!.textContent).toBe(`Put “${STEER}” in 09 · Without a Map?`);
-    expect([...row.querySelectorAll("button")].map((button) => button.textContent)).toEqual([STEER, "09 · Without a Map", "Why?", "Yes", "No", "Later"]);
+    expect([...row.querySelectorAll("button")].map((button) => button.textContent)).toEqual([STEER, "09 · Without a Map", "Why?", "Yes", "No", "Don't suggest this kind of thing", "Later"]);
     // Nothing else is said until Why? is pressed: no maker, no basis, no confidence, no model, no chips.
     expect(shown(row)).not.toMatch(/suggests|Graview, tidying|% sure|0\.95|jev|the in chapter of/i);
     expect($("[data-graview-suggestion-records]", row)).toBeNull();

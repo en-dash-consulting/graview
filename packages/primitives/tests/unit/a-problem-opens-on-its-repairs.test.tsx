@@ -2,12 +2,12 @@
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 import { bindSchema, createSchema, defineNode, nodeRef, Store } from "@graview/core";
 import { EMPTY_VIEW } from "@graview/layout";
-import { GraviewProvider, createViews } from "@graview/react";
+import { GraviewProvider, createViews, useGraview, useSelection } from "@graview/react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { beforeAll, describe, expect, it } from "vitest";
 import { z } from "zod";
-import { fetchInspector, Inspector, Standing, registerDefaultViews } from "../../src/index.js";
+import { fetchInspector, Inspector, registerDefaultViews } from "../../src/index.js";
 
 // The pane is fetched when it is first wanted; here, before anything is drawn.
 beforeAll(() => fetchInspector());
@@ -57,8 +57,24 @@ const onTime = defineInvariant("on-time", {
   },
 });
 
-describe("a problem pressed under the standing", () => {
-  it("opens the acts on what it is about, with its repair in them, and the repair repairs it", async () => {
+/** What a broken rule's fix that asks for something does (`inbox-pane.tsx`): selects what it names and opens the acts on it. */
+function OpenTheActs({ on }: { readonly on: string }) {
+  const { setMenuAt } = useGraview();
+  const { set } = useSelection();
+  return (
+    <button
+      type="button"
+      data-testid="open-the-acts"
+      onClick={() => {
+        set([on]);
+        setMenuAt({ x: 0, y: 0, on });
+      }}
+    />
+  );
+}
+
+describe("the acts opened on what a problem is about", () => {
+  it("have its repair in them, and the repair repairs it", async () => {
     const store = new Store({ schema, mutations: [lend, giveBack], invariants: [onTime] });
     store.apply({ name: "lend", args: { label: "Hammer drill" } });
     const host = document.createElement("div");
@@ -67,14 +83,12 @@ describe("a problem pressed under the standing", () => {
     await act(async () => {
       root.render(
         <GraviewProvider store={store} views={registerDefaultViews(schema, createViews(schema))} initialView={{ ...EMPTY_VIEW, overview: true }}>
-          <Standing />
+          <OpenTheActs on={store.violations()[0]!.subjectId!} />
           <Inspector placement="menu" />
         </GraviewProvider>,
       );
     });
-    await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="standing"]')!.click());
-    for (let tries = 0; tries < 40 && !host.querySelector('[data-testid="problems"] button'); tries += 1) await act(async () => new Promise((wait) => setTimeout(wait, 25)));
-    await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="problems"] button')!.click());
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="open-the-acts"]')!.click());
     const repair = host.querySelector<HTMLButtonElement>('[data-affordance^="invariant:"]');
     expect(repair?.textContent).toContain("Check it back in");
     await act(async () => repair!.click());

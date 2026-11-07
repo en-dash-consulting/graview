@@ -183,7 +183,7 @@ describe("Not now, in the Suggested tray", () => {
 describe("what was done while the person was away", () => {
   it("is said in a line on the tray, beside what waits", async () => {
     await scene(storeWith(1), { whileAway: { tidied: 12, waiting: 1 } });
-    await settled(() => expect($('[data-testid="inbox-button"]')?.getAttribute("aria-label")).toMatch(/^Inbox — 1 waiting for you\b/));
+    await settled(() => expect($('[data-testid="inbox-button"]')?.getAttribute("aria-label")).toMatch(/^Inbox — 1 needs you\b/));
     await open();
     expect($('[data-testid="while-away"]')?.textContent).toBe("One suggestion waiting · tidied 12 things while you were away.");
   });

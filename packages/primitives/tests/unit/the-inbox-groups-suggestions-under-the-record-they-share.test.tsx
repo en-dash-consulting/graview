@@ -116,7 +116,7 @@ describe("suggestions about one record", () => {
     await inbox(storeOf());
     const rows = [...group()!.querySelectorAll<HTMLElement>('[data-testid="suggestion"]')];
     for (const row of rows)
-      expect([...row.querySelectorAll("button")].map((one) => one.getAttribute("data-testid")).filter((id) => id !== "suggestion-record")).toEqual(["suggestion-why", "suggestion-accept", "suggestion-decline", "suggestion-not-now"]);
+      expect([...row.querySelectorAll("button")].map((one) => one.getAttribute("data-testid")).filter((id) => id !== "suggestion-record")).toEqual(["suggestion-why", "suggestion-accept", "suggestion-decline", "suggestion-stop-kind", "suggestion-not-now"]);
     const accept = $('[data-testid="suggestion-accept"]', rows[0])!;
     const described = accept.getAttribute("aria-describedby")!.split(" ").map((id) => document.getElementById(id)!.textContent).join(" ");
     expect(described).toBe(`${STEER} Put in 09 · Without a Map?`);
