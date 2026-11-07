@@ -13,7 +13,7 @@ import type { FirstLookAnchor, FirstLookEnd, FirstLookHintsProps, FirstLookStep 
 const FOUND: Record<FirstLookAnchor, string> = {
   // The scene and the pages are in the app menu (Roadmap f-app-bar-calm): its hint stands by the control that opens it.
   faces: '[data-testid="app-menu-open"][data-scene]',
-  problems: '[data-testid="standing"], [data-testid="standing-link"]',
+  problems: '[data-testid="standing"], [data-testid="standing-link"], [data-testid="inbox-button"]',
   // What has happened is in the one inbox (Roadmap f-app-bar-calm).
   activity: '[data-testid="inbox-button"]',
   // The quick ask has no control of its own until ⌘K opens it: its hint stands by Find, where a quick ask is drawn.
@@ -52,7 +52,7 @@ function frameworkSteps(root: Element): FirstLookStep[] {
   const pages = said('[data-testid="app-menu-open"]', "data-pages", "Pages");
   return [
     { anchor: "faces", title: `${scene} or ${pages}`, words: `One app, two ways to see it, in the app menu: ${scene} draws every record as one picture, ${pages} as lists and pages to read and change.` },
-    { anchor: "problems", title: "Whether all is in order", words: "The dot is green while every rule holds. When one is broken it counts what is wrong, and pressing it shows each one and where." },
+    { anchor: "problems", title: "Whether all is in order", words: "The dot is green while every rule holds. When one is broken the bell counts it, and says what is wrong and how to fix it." },
     { anchor: "activity", title: "Inbox", words: "What waits for you, what has happened here and who did it — each change with its way back — and what you asked." },
     { anchor: "ask", title: "Tell Graview", words: "Press ⌘K (Ctrl+K) to tell Graview what to do about what you have selected, or right-click it and type. The answer stands beside it, and a change it proposes waits for you to accept it." },
   ];

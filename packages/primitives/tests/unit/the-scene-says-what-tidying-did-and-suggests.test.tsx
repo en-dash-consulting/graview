@@ -124,7 +124,7 @@ describe("the scene's bar, after the app's own actor tidied", () => {
   it("holds the third in a quiet Suggested tray in the inbox's For you, apart from Activity, which a person declines there, and the actor is refused it next time", async () => {
     const store = tidied();
     const host = await scene(store);
-    await settled(() => expect(host.querySelector('[data-graview-app-bar] [data-testid="inbox-button"]')?.getAttribute("aria-label")).toMatch(/^Inbox — 1 waiting for you\b/));
+    await settled(() => expect(host.querySelector('[data-graview-app-bar] [data-testid="inbox-button"]')?.getAttribute("aria-label")).toMatch(/^Inbox — 1 needs you\b/));
     await act(async () => $('[data-testid="inbox-button"]')!.click());
     await settled(() => expect($('[data-testid="inbox-tab-for-you"]')?.getAttribute("aria-selected")).toBe("true"));
     expect($('[data-testid="inbox-tab-for-you"] .graview-inbox-tab-count')?.textContent).toBe("1");

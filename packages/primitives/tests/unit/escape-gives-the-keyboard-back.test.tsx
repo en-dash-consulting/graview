@@ -7,7 +7,7 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { ActivityRail, Standing, registerDefaultViews } from "../../src/index.js";
+import { ActivityRail, Inbox, registerDefaultViews } from "../../src/index.js";
 
 /**
  * ESCAPE GIVES THE KEYBOARD BACK TO WHAT OPENED THE POPOVER.
@@ -73,11 +73,11 @@ describe("a popover closed from the keyboard", () => {
     await unmount();
   });
 
-  it("puts the keyboard back on the standing, from inside the problems", async () => {
-    const { host, unmount } = await mount(<Standing clean="All good" />);
-    const button = host.querySelector<HTMLButtonElement>('[data-testid="standing"]')!;
+  it("puts the keyboard back on the bell, from inside the problems", async () => {
+    const { host, unmount } = await mount(<Inbox />);
+    const button = host.querySelector<HTMLButtonElement>('[data-testid="inbox-button"]')!;
     await act(async () => button.click());
-    // The problems are fetched when Standing is first reached for (FR-131).
+    // The problems are fetched when the bell is first reached for (FR-131).
     for (let tries = 0; tries < 40 && !host.querySelector('[data-testid="problems"] button'); tries += 1) await act(async () => new Promise((wait) => setTimeout(wait, 25)));
     const inside = [...host.querySelectorAll<HTMLElement>("button, a")].find((el) => el !== button);
     expect(inside).toBeDefined();

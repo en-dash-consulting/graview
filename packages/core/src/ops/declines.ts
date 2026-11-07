@@ -53,6 +53,20 @@ function meaningOf(call: MutationCall, meanings: ActMeanings | undefined): unkno
  */
 export const meaningKey = (calls: readonly MutationCall[], meanings?: ActMeanings): string => `≈${sortedKey(calls.map((call) => meaningOf(call, meanings)))}`;
 
+/**
+ * THE KIND OF THING A CALL IS, whatever it is about: a link by its relation,
+ * whichever act asks for it, and anything else its act, in any spelling. What
+ * "Don't suggest this kind of thing" stops (`stopSuggesting`).
+ */
+export function suggestionKind(call: MutationCall, meanings?: ActMeanings): string {
+  const act = meanings?.act(call.name);
+  const relation = act?.derived?.relation ?? (act?.connects?.length === 1 ? act.connects[0] : undefined);
+  return `${KIND_MARK}${sortedKey(relation !== undefined ? [act?.derived?.act ?? "connect", relation] : [spellingOf(call.name)])}`;
+}
+
+/** What a kind's key begins with, among a log's declines. */
+export const KIND_MARK = "\u2200";
+
 /** What a link means, as the act that makes it would mean (`meaningKey`): a person breaking it declines it. */
 const linkKey = (edge: { readonly kind: string; readonly from: string; readonly to: string }): string => `≈${sortedKey([["connect", edge.kind, edge.from, edge.to]])}`;
 
@@ -65,7 +79,7 @@ const linkKey = (edge: { readonly kind: string; readonly from: string; readonly 
  */
 export function declinedIn(ops: readonly Operation[], calls: readonly MutationCall[], meanings?: ActMeanings, kept?: Readonly<Record<string, KeptDecline>>): Decline | undefined {
   const declines = declinesIn(ops, meanings, kept);
-  return [calls, ...calls.map((call) => [call])].map((asked) => declines.get(meaningKey(asked, meanings))).find(Boolean);
+  return [calls, ...calls.map((call) => [call])].map((asked) => declines.get(meaningKey(asked, meanings))).find(Boolean) ?? calls.map((call) => declines.get(suggestionKind(call, meanings))).find(Boolean);
 }
 
 /**
@@ -78,7 +92,9 @@ export function declinedIn(ops: readonly Operation[], calls: readonly MutationCa
  *  - a person's live undo of any other change, whoever made it;
  *  - a person breaking a link (a disconnect, or any change of theirs that
  *    removes one), which declines the link — lifted when a person makes
- *    it again.
+ *    it again;
+ *  - a suggestion declined as a kind (`Lineage.stopsKind`), which declines
+ *    the kind of each of its calls too (`suggestionKind`).
  * `kept` is what a checkpoint kept of the declines behind it
  * (`Epoch.declines`), read first; one whose op is undone in the log no
  * longer stands.
@@ -100,6 +116,7 @@ export function declinesIn(ops: readonly Operation[], meanings?: ActMeanings, ke
     const taken = target?.mutation && target.undoes === undefined && (target.lineage || op.undoneLineage || person);
     const calls = target?.suggests ? target.suggests.filter((_, at) => !took.get(target.id)?.includes(at)) : taken ? [target.mutation!] : [];
     if (calls.length > 0) for (const asked of [calls, ...calls.map((call) => [call])]) declines.set(meaningKey(asked, meanings), op);
+    if (target?.suggests && live && op.lineage?.stopsKind === true) for (const call of calls) declines.set(suggestionKind(call, meanings), op);
     // A link a person broke is declined; one a person made again is not.
     if (!live || !person || op.undoes !== undefined) continue;
     for (const primitive of op.primitives) {

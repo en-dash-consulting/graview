@@ -336,12 +336,15 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
    */
   await reach(page, where, "a workshop and two talks chosen through the rule they break", async () => {
     await go(page, "#overview=1", 1500);
-    const standing = page.locator('[data-testid="standing"]').locator("visible=true").first();
-    if ((await standing.count()) === 0) return { reached: false, detail: "no standing on the scene" };
+    const standing = page.locator('[data-testid="inbox-button"]').locator("visible=true").first();
+    if ((await standing.count()) === 0) return { reached: false, detail: "no bell on the scene" };
     await standing.click();
-    await page.waitForTimeout(800);
+    // A seat that may not fix it is told of it under Updates, and the inbox need not open there: For you, then.
+    await page.locator('[data-testid="inbox-tab-for-you"]').click({ timeout: 10_000 }).catch(() => {});
+    // The rows are fetched with the bar's panes, as the bell is first pressed.
+    await page.waitForSelector('[data-testid="problems"] button', { timeout: 10_000 }).catch(() => {});
     const problem = page.locator('[data-testid="problems"] button', { hasText: "leads Hands-on: Planning the Next Ten Years" }).locator("visible=true").first();
-    if ((await problem.count()) === 0) return { reached: false, detail: "the problem is not listed" };
+    if ((await problem.count()) === 0) return { reached: false, detail: `the problem is not listed: bell ${await standing.getAttribute("aria-label")}, inbox ${await page.locator('[data-testid="inbox"]').count()}, rows ${JSON.stringify(await page.locator('[data-testid="problems"] button').allTextContents())}` };
     await problem.click();
     await page.waitForSelector('[data-testid="context-menu"]', { timeout: 10_000 }).catch(() => {});
     await page.waitForTimeout(800);

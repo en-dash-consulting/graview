@@ -10,9 +10,9 @@ import { TYPE_TEXT } from "../text/typing-hook.js";
  * so a page carries it only with the Activity that draws it.
  */
 
-/** Whether a batch is a suggestion, or the declining of one: said in the Suggested tray, not as a row of Activity. */
+/** Whether a batch is a suggestion, or the declining of one: said in the Suggested tray, not as a row of Activity. A kind of thing stopped is a row, with its way back. */
 export function isSuggestionBatch(batch: Pick<Batch, "ops">, find: (id: string) => Operation | undefined): boolean {
-  return batch.ops.length > 0 && batch.ops.every((op) => op.suggests !== undefined || (op.undoes !== undefined && find(op.undoes)?.suggests !== undefined));
+  return batch.ops.length > 0 && batch.ops.every((op) => op.suggests !== undefined || (op.undoes !== undefined && op.lineage?.stopsKind !== true && find(op.undoes)?.suggests !== undefined));
 }
 
 /** One row of Activity: a batch as it is, or a run of one automated author's batches folded into one. */

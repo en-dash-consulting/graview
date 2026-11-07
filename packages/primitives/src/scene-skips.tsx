@@ -38,11 +38,11 @@ export function SceneSkips() {
       testid: "problems",
       opens: true,
       go: () => {
-        // The standing, pressed: its list opens under it, and the next Tab is in it.
-        const standing = document.querySelector<HTMLElement>('[data-testid="standing"]');
-        if (!standing) return;
-        standing.focus();
-        if (standing.getAttribute("aria-expanded") !== "true") standing.click();
+        // The bell, pressed: it opens on what needs you, the rules among it, and the next Tab is in it.
+        const bell = document.querySelector<HTMLElement>('[data-testid="inbox-button"]');
+        if (!bell) return;
+        bell.focus();
+        if (bell.getAttribute("aria-expanded") !== "true") bell.click();
       },
     });
   }

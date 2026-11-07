@@ -1,6 +1,6 @@
-import type { AnySchema } from "@graview/core";
+import { brokenWords, type AnySchema, type Principal, type Store, type Violation } from "@graview/core";
 import type { HostNotification } from "@graview/react/provider";
-import { POPOVER_STYLE, useGraph, useGraview, usePopover } from "@graview/react/provider";
+import { POPOVER_STYLE, useGraph, useGraview, usePopover, useViolations } from "@graview/react/provider";
 import type { ToolCall } from "@graview/tools";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { barPanes } from "./bar-panes-door.js";
@@ -17,19 +17,22 @@ import { useInteractions } from "./workbench/ai-feed.js";
  * are one tool now, the bar's one size — a bell with one count — that opens
  * three tabs:
  *
- *   For you — what waits on this person: what people proposed, what the
- *             app's own actor suggests, what was done while they were away,
- *             and what the host tells them (`notifications`);
+ *   For you — Needs you, what asks something of this person: what people
+ *             proposed, what the app's own actor suggests, the rules broken
+ *             that they may fix, what the host marks as needing them; and
+ *             Updates, the rest (Roadmap f-inbox-needs-you-first);
  *   Activity — what has happened, each change with its way back, and the
  *             agent's seat where the face gives one;
  *   Your asks — what this person asked the app (the quick ask and the
  *             inline AI's kept interactions, `ai.interactions`), each with
  *             what became of it. Not drawn where the host says AI is off.
  *
- * The count is what waits for you and what has happened, as the two words
- * said it; the button's name says the two apart. Nothing is drawn while
- * none of the three has anything. The tabs and what they hold are fetched
- * with the bar's panes as the bell is first pressed (`inbox-pane.tsx`).
+ * The count is what needs this person, and nothing else: Activity asks
+ * nothing of anyone, so its count is on its own tab. It opens on For you
+ * whenever something there needs them, wherever it was left. Nothing is
+ * drawn while none of the three has anything. The tabs and what they hold
+ * are fetched with the bar's panes as the bell is first pressed
+ * (`inbox-pane.tsx`).
  */
 
 export type { InboxTab } from "./inbox-pane.js";
@@ -42,10 +45,34 @@ const NO_NOTIFICATIONS: readonly HostNotification[] = [];
 /** A count as a badge says it: up to 99, then "99+". */
 export const badgeCount = (count: number): string => (count > 99 ? "99+" : String(count));
 
-/** What the bell is called, its count said in words: "Inbox — 2 waiting for you, 4 changes". */
-export function inboxWords(waiting: number, changes: number): string {
-  const parts = [waiting > 0 ? `${waiting} waiting for you` : "", changes > 0 ? `${changes === 1 ? "1 change" : `${changes} changes`}` : ""].filter(Boolean);
-  return parts.length > 0 ? `Inbox — ${parts.join(", ")}` : "Inbox";
+/** What the bell is called, its count said in words, and the rules broken among it: "Inbox — 3 need you: 1 rule broken". */
+export function inboxWords(needs: number, broken: string): string {
+  if (needs === 0) return "Inbox";
+  return `Inbox — ${needs} ${needs === 1 ? "needs" : "need"} you${broken ? `: ${broken}` : ""}`;
+}
+
+/**
+ * THE RULES BROKEN THAT THIS SEAT COULD DO SOMETHING ABOUT, and the others.
+ * A rule asks something of whoever may take one of its fixes; a rule with
+ * none, of whoever may change anything here. Whoever may not reads it under
+ * Updates, and is not told it needs them. Asked as the fix's press would be.
+ */
+export function rulesFor(store: Store<AnySchema>, violations: readonly Violation[], principal: Principal): { readonly yours: readonly Violation[]; readonly others: readonly Violation[] } {
+  const asks = (name: string, args?: Readonly<Record<string, unknown>>): boolean => {
+    try {
+      return store.permits({ name, args: (args ?? {}) as never }, principal).ok;
+    } catch {
+      return false;
+    }
+  };
+  let mayAct: boolean | undefined;
+  const yours: Violation[] = [];
+  const others: Violation[] = [];
+  for (const violation of violations) {
+    const may = violation.repairs.length > 0 ? violation.repairs.some((repair) => asks(repair.mutation, repair.args)) : (mayAct ??= store.allMutations().some((act) => asks(act.name)));
+    (may ? yours : others).push(violation);
+  }
+  return { yours, others };
 }
 
 export interface InboxProps {
@@ -60,6 +87,8 @@ export interface InboxProps {
 export function Inbox({ calls = NO_CALLS, seat, remembers = false }: InboxProps) {
   const { store, principal, whileAway, notifications = NO_NOTIFICATIONS, onNotificationsSeen, ai } = useGraview<AnySchema>();
   const nodes = useGraph();
+  const violations = useViolations<AnySchema>();
+  const rules = useMemo(() => rulesFor(store, violations, principal), [store, violations, principal]);
   const activity = useActivityHas({ calls, seat, remembers });
   const interactions = useInteractions();
   const asksOn = ai.off !== true;
@@ -70,19 +99,28 @@ export function Inbox({ calls = NO_CALLS, seat, remembers = false }: InboxProps)
   const tray = suggests || away;
   const [waiting, setWaiting] = useState(0);
   const unread = notifications.filter((one) => !one.read);
-  const forYou = waiting + unread.length;
-  const count = forYou + activity.recent;
+  // What needs this person: all the bell counts. A host's notice stands under Needs you while it is handed, and is counted while unread.
+  const count = waiting + rules.yours.length + unread.filter((one) => one.needs).length;
+  const needsYou = count > 0 || notifications.some((one) => one.needs);
   const popover = usePopover("inbox");
   const open = popover.open;
-  const [tab, setTab] = useState<InboxTab>("activity");
-  // Each open lands on what waits for you, where anything does; else what has happened.
-  const opened = useRef(false);
-  if (open && !opened.current) {
-    opened.current = true;
-    const first: InboxTab = forYou > 0 || away ? "for-you" : activity.has ? "activity" : asks.length > 0 ? "asks" : "for-you";
-    if (first !== tab) setTab(first);
-  }
-  if (!open) opened.current = false;
+  /*
+   * WHERE IT OPENS IS WORKED OUT, NOT KEPT: on For you while anything there
+   * needs this person or is new to them, else on what has happened, so a tab
+   * left last time is not where it opens next. Worked out until the tray has
+   * said how many wait, which may be just after the press; then it holds, so
+   * that what a person does there, or somebody else does, never moves the
+   * tab from under them.
+   */
+  const [chosen, setChosen] = useState<InboxTab | null>(null);
+  const [heard, setHeard] = useState(false);
+  const landing: InboxTab = needsYou || unread.length > 0 || away ? "for-you" : activity.has ? "activity" : asks.length > 0 ? "asks" : "for-you";
+  const tab: InboxTab = chosen ?? landing;
+  const known = !tray || heard;
+  useEffect(() => {
+    if (!open) setChosen(null);
+    else if (known) setChosen((was) => was ?? landing);
+  }, [open, known, landing]);
   // The host is told which of its notifications this person has now been shown.
   const told = useRef("");
   useEffect(() => {
@@ -93,9 +131,12 @@ export function Inbox({ calls = NO_CALLS, seat, remembers = false }: InboxProps)
     onNotificationsSeen(ids);
   }, [open, tab, unread, onNotificationsSeen]);
   const close = useCallback(() => popover.setOpen(false), [popover]);
-  const counted = useCallback((next: number) => setWaiting(next), []);
-  if (!(activity.has || tray || notifications.length > 0 || asks.length > 0)) return null;
-  const words = inboxWords(forYou, activity.recent);
+  const counted = useCallback((next: number) => {
+    setWaiting(next);
+    setHeard(true);
+  }, []);
+  if (!(activity.has || tray || notifications.length > 0 || asks.length > 0 || violations.length > 0)) return null;
+  const words = inboxWords(count, rules.yours.length > 0 ? brokenWords(rules.yours) : "");
   const reach = () => barPanes.prefetch();
   return (
     <div className="graview-bar-inbox" style={{ position: "relative" }}>
@@ -109,6 +150,7 @@ export function Inbox({ calls = NO_CALLS, seat, remembers = false }: InboxProps)
         className="graview-bar-tool"
         data-testid="inbox-button"
         data-count={count}
+        data-changes={activity.recent}
         {...popover.trigger}
         onClick={popover.toggle}
         onPointerEnter={reach}
@@ -165,13 +207,14 @@ export function Inbox({ calls = NO_CALLS, seat, remembers = false }: InboxProps)
           <Suspense fallback={null}>
             <Pane
               tab={tab}
-              choose={setTab}
+              choose={setChosen}
               asksOn={asksOn}
-              counts={{ "for-you": forYou, activity: activity.recent, asks: asks.length }}
+              counts={{ "for-you": count, activity: activity.recent, asks: asks.length }}
               notifications={notifications}
+              rules={rules}
               asks={asks}
               tray={tray}
-              waits={forYou > 0 || away}
+              waiting={waiting}
               activityHas={activity.has}
               calls={calls}
               remembers={remembers}

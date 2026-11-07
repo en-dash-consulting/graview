@@ -41,7 +41,7 @@ import type { Policy } from "./permissions/types.js";
 import type { AnyMutationDefinition } from "./mutations/types.js";
 import { expired, suggestionsIn, votesIn, type Dismissal, type Suggestion } from "./ops/suggestions.js";
 import { DECLINES, isAutomated, type ActMeanings, type Decline } from "./ops/tidying.js";
-import { declinedIn, declinesIn, keptDeclines, meaningKey } from "./ops/declines.js";
+import { declinedIn, declinesIn, KIND_MARK, keptDeclines, meaningKey, suggestionKind } from "./ops/declines.js";
 import type { Author, Operation, Via } from "./ops/types.js";
 import type { Principal } from "./permissions/types.js";
 import type { AnySchema } from "./schema/schema.js";
@@ -52,7 +52,7 @@ import { ARCHIVED } from "./graph/archived.js";
 import { nounOf, pluralOf } from "./schema/define-node.js";
 
 export { tidyingOf, tidyingRefusal } from "./ops/tidying.js";
-export { declinedIn, declinesIn, keptDeclines, meaningKey, suggestionKey } from "./ops/declines.js";
+export { declinedIn, declinesIn, keptDeclines, meaningKey, suggestionKey, suggestionKind } from "./ops/declines.js";
 export type { Decline, KeptDecline } from "./ops/tidying.js";
 export type { ActMeanings } from "./ops/tidying.js";
 export { isDismissed, suggestionsIn, takenIn, tallyOf, votesIn } from "./ops/suggestions.js";
@@ -186,7 +186,43 @@ export function suggestions<S extends AnySchema>(store: Store<S>, principal?: Pr
   const who = principal ?? seat?.principal;
   // A seat that sees everything is handed the store itself.
   const ops = (who !== undefined ? whole.seenBy(who) : whole).log.all();
-  return suggestionsIn(ops, (id) => whole.graph.has(id), { now: keptOf(whole).now(), dismissed: options.dismissed, voter: who });
+  const waiting = suggestionsIn(ops, (id) => whole.graph.has(id), { now: keptOf(whole).now(), dismissed: options.dismissed, voter: who });
+  // Of a kind a person said not to suggest: gone from every tray, and back if that is undone. A person's proposal is a person's, and still waits.
+  const stops = stoppedKindsOf(whole);
+  if (stops.size === 0) return waiting;
+  const meanings = keptOf(whole).actMeanings();
+  return waiting.filter((one) => isProposal(one) || !one.calls.some((call) => stops.has(suggestionKind(call, meanings))));
+}
+
+/** The kinds of thing people said not to suggest that still stand, each with the decline that said so; looked for only where a log or its checkpoint holds any. */
+function stoppedKindsOf<S extends AnySchema>(whole: Store<S>): ReadonlyMap<string, Decline> {
+  const ops = whole.log.all();
+  const kept = whole.log.horizonEpoch()?.declines;
+  if (!ops.some((op) => op.lineage?.stopsKind === true) && !Object.keys(kept ?? {}).some((key) => key.startsWith(KIND_MARK))) return new Map();
+  return new Map([...declinesIn(ops, keptOf(whole).actMeanings(), kept)].filter(([key]) => key.startsWith(KIND_MARK)));
+}
+
+/** A kind of thing a person said not to suggest, as `stoppedSuggestions` lists it. */
+export interface StoppedSuggestions {
+  /** The batch of the decline that said so: undone, the kind may be suggested again. */
+  readonly batch: string;
+  /** What was stopped, in the words it was stopped with. */
+  readonly words: string;
+}
+
+/**
+ * WHAT PEOPLE SAID NOT TO SUGGEST, and still stands (Roadmap
+ * f-inbox-needs-you-first): each with the batch to take back, so a person who
+ * changes their mind long after Activity has moved on has a way back. One a
+ * checkpoint alone keeps stands, and has no batch left to take back.
+ */
+export function stoppedSuggestions<S extends AnySchema>(store: Store<S>): readonly StoppedSuggestions[] {
+  const found = new Map<string, StoppedSuggestions>();
+  for (const decline of stoppedKindsOf(seatOf(store)?.store ?? store).values()) {
+    const op = decline as Partial<Operation>;
+    if (op.batch !== undefined) found.set(op.batch, { batch: op.batch, words: op.batchIntent ?? "Stopped suggesting a kind of thing" });
+  }
+  return [...found.values()];
 }
 
 /**
@@ -315,6 +351,26 @@ export function declineSuggestion<S extends AnySchema>(store: Store<S>, id: stri
   // A person's proposal is answered in words (Roadmap f-proposals-for-review): "Declined Ada's proposal: …".
   const answered = isProposal(suggestion) && options.intent === undefined ? { intent: `Declined ${possessive(proposerName(suggestion))} proposal: ${suggestion.intent}` } : {};
   return whole.undo(suggestion.batch, { ...options, ...answered, author });
+}
+
+/**
+ * "DON'T SUGGEST THIS KIND OF THING" (Roadmap f-inbox-needs-you-first): a
+ * decline of this suggestion that answers its kind as well
+ * (`suggestionKind`). Whatever else waits of that kind leaves every tray with
+ * it, and the app's own actor is refused it from now on, as `declined(store,
+ * calls)` says — kept in the log, and by a checkpoint, as every decline is.
+ * Undone, all of it waits again and the actor may suggest it. Only whoever
+ * may decide it says so, and of a suggestion, not a person's proposal.
+ */
+export function stopSuggesting<S extends AnySchema>(store: Store<S>, id: string, options: ApplyOptions = {}): ApplyResult<S> {
+  const whole = seatOf(store)?.store ?? store;
+  const author = options.author ?? keptOf(whole).by;
+  const suggestion = waitingFor(whole, id, author);
+  if (isProposal(suggestion)) throw new GraphError("A person proposed this: decline it, and they may propose again.");
+  if (!mayDecide(whole, suggestion, author as Principal)) throw new GraphError("Only somebody who may make this change can say not to suggest it.");
+  const like = suggestion.headline ?? suggestion.intent;
+  const intent = options.intent ?? `Stopped suggesting things like: ${like.length > 120 ? `${like.slice(0, 119)}\u2026` : like}`;
+  return whole.undo(suggestion.batch, { ...options, author, intent, lineage: { basis: "A person said not to suggest this kind of thing", stopsKind: true } });
 }
 
 /**
