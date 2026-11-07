@@ -2374,6 +2374,12 @@ export class Store<S extends AnySchema> {
           }
           continue;
         }
+        // A suggestion is taken back by who made it, or decided by whoever may make its change: a seat that may not has a vote.
+        if (judged.suggests && !isSystem(author as Principal) && (judged.author.kind !== author.kind || judged.author.id !== author.id)) {
+          const no = judged.suggests.map((call) => this.permits(call, author as Principal)).find((verdict) => !verdict.ok);
+          if (no && !no.ok) return { ...no.refusal, message: `Not permitted to undo "${target.intent}": ${no.refusal.message}` };
+          continue;
+        }
         if (!judged.mutation) {
           // A change that changed nothing (a suggestion, an announcement) is anybody's who sees it to take back: declining a suggestion is one.
           if (judged.primitives.length === 0) continue;
