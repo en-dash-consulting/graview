@@ -70,6 +70,43 @@ describe("the press check, on a control already in its state", () => {
     expect(said["“Rocks”"]?.ok).toBe(true);
   });
 
+  for (const [name, markup] of [
+    ["beside links that do not say the attribute, as a pager is written", `<div><a id="x" aria-current="page">Page 1</a><a id="y">Page 2</a></div>`],
+    ["beside a link that says false", `<div><a id="x" aria-current="page">Page 1</a><a id="y" aria-current="false">Page 2</a></div>`],
+    ["with each link in a list item of its own", `<ul><li><a id="x" aria-current="page">Page 1</a></li><li><a id="y">Page 2</a></li></ul>`],
+    ["with a role that names a place in a set", `<div><span id="x" role="link" tabindex="0" aria-current="step">Page 1</span><span id="y" role="link" tabindex="0">Page 2</span></div>`],
+  ] as const) {
+    it(`passes a pager's current link ${name}`, async () => {
+      const said = await saidOf(dead(markup, "#x", "#y"));
+      expect(said["“Page 1”"]).toMatchObject({ ok: true, says: expect.stringContaining("aria-current=") });
+    });
+  }
+
+  for (const [name, markup, control] of [
+    ["a lone Save that says it is current", `<button id="x" aria-current="page">Save</button>`, "“Save”"],
+    ["a Save that says it is current beside an ordinary button: a toolbar is no pager, and a plain button names no place", `<div><button id="x" aria-current="page">Save</button><button id="y">Cancel</button></div>`, "“Save”"],
+    ["a Save that says it is current beside a button that says false", `<div><button id="x" aria-current="page">Save</button><button id="y" aria-current="false">Cancel</button></div>`, "“Save”"],
+    ["a lone link that says it is current", `<a id="x" aria-current="page">Page 1</a>`, "“Page 1”"],
+    ["a current link whose only neighbor is a control of another kind", `<div><a id="x" aria-current="page">Page 1</a><button id="y">Save</button></div>`, "“Page 1”"],
+    ["a current link whose neighbor says aria-current=\"\"", `<div><a id="x" aria-current="page">Page 1</a><a id="y" aria-current="">Page 2</a></div>`, "“Page 1”"],
+    ["a current link whose neighbor is current too", `<div><a id="x" aria-current="page">Page 1</a><a id="y" aria-current="page">Page 2</a></div>`, "“Page 1”"],
+    ["a link whose aria-current is empty, beside another", `<div><a id="x" aria-current="">Page 1</a><a id="y">Page 2</a></div>`, "“Page 1”"],
+    ["a link whose aria-current says undefined, beside another", `<div><a id="x" aria-current="undefined">Page 1</a><a id="y">Page 2</a></div>`, "“Page 1”"],
+  ] as const) {
+    it(`fails ${name}`, async () => {
+      const said = await saidOf(dead(markup, "#x", "#y"));
+      expect(said[control]).toMatchObject({ ok: false, says: expect.stringContaining("does nothing when pressed") });
+    });
+  }
+
+  it("still asks a sibling to state the other value of aria-pressed, aria-selected and aria-checked", async () => {
+    for (const [markup, control] of [
+      [`<div><button id="x" aria-pressed="true">All</button><button id="y">Igneous</button></div>`, "“All”"],
+      [`<div role="tablist"><span id="x" role="tab" tabindex="0" aria-selected="true">Rocks</span><span id="y" role="tab" tabindex="0">Minerals</span></div>`, "“Rocks”"],
+      [`<div role="radiogroup"><span id="x" role="radio" tabindex="0" aria-checked="true">Rocks</span><span id="y" role="radio" tabindex="0">Minerals</span></div>`, "“Rocks”"],
+    ] as const) expect((await saidOf(dead(markup, "#x", "#y")))[control]?.ok, markup).toBe(false);
+  });
+
   for (const [name, markup, control] of [
     ["a Save that says it is pressed", `<button id="x" aria-pressed="true">Save changes</button>`, "“Save changes”"],
     ["a Delete that says it is a switch that is on", `<button id="x" role="switch" aria-checked="true">Delete record</button>`, "“Delete record”"],

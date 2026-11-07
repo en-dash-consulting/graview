@@ -139,12 +139,25 @@ const isControl = (element: TreeElement) =>
  * is one of a set: another control beside it, or in its group, says the same
  * attribute's other state. And it must be a state its role can say:
  * `aria-selected` on a tab, an option or a grid cell, `aria-checked` on a
- * checkable role. `aria-current` of `""` or `"undefined"` is no state at all.
+ * checkable role.
+ *
+ * `aria-current` is written differently: a pager or a nav says it on the one
+ * link that is current, and the attribute left off the rest is what ARIA means
+ * by not current. So a sibling of the same element and role with none, or with
+ * `"false"`, is another of the set. What keeps a Save out of that is what says
+ * a place: only a link, or a role that names a place in a set, can be where a
+ * person already is. `<button aria-current="page">Save</button>` beside any
+ * other button is a toolbar, not a pager. `""` and `"undefined"` are no state.
  */
 const SELECTABLE = new Set(["tab", "option", "gridcell"]);
 const CHECKABLE = new Set(["checkbox", "menuitemcheckbox", "menuitemradio", "option", "radio", "switch", "treeitem"]);
 const SET_ROLES = new Set(["group", "radiogroup", "tablist", "listbox", "menu", "menubar", "toolbar", "grid", "tree"]);
 const NO_CURRENT = new Set(["", "undefined", "false"]);
+const PLACE_ROLES = new Set(["link", "tab", "menuitem", "treeitem", "option"]);
+const namesAPlace = (element: TreeElement) => {
+  const role = element.getAttribute("role");
+  return role === null ? element.localName === "a" : PLACE_ROLES.has(role);
+};
 /** The state a control says of itself, by an attribute its role can say it with. */
 const stateOf = (element: TreeElement): { readonly name: string; readonly value: string } | undefined => {
   const role = element.getAttribute("role") ?? "";
@@ -152,19 +165,22 @@ const stateOf = (element: TreeElement): { readonly name: string; readonly value:
   if (element.getAttribute("aria-selected") === "true" && SELECTABLE.has(role)) return { name: "aria-selected", value: "true" };
   if (element.getAttribute("aria-checked") === "true" && CHECKABLE.has(role)) return { name: "aria-checked", value: "true" };
   const current = element.getAttribute("aria-current");
-  return current !== null && !NO_CURRENT.has(current) ? { name: "aria-current", value: current } : undefined;
+  return current !== null && !NO_CURRENT.has(current) && namesAPlace(element) ? { name: "aria-current", value: current } : undefined;
 };
 /** Whether another control beside it, or in its group, says the same attribute's other state, in the same role. */
 const oneOfASet = (element: TreeElement, name: string, root: TreeElement, isControlHere: (one: TreeElement) => boolean): boolean => {
   const role = element.getAttribute("role");
   const parent = element.parentElement;
   const beside = parent ? parent.childNodes.filter((child): child is TreeElement => child instanceof TreeElement) : [];
-  const group = parent ? up(parent, root, (one) => SET_ROLES.has(one.getAttribute("role") ?? "")) : undefined;
+  /* A nav's links are often each in a list item of their own: the list is their group. */
+  const list = parent?.localName === "li" && name === "aria-current" ? (parent.parentElement ?? undefined) : undefined;
+  const group = list ?? (parent ? up(parent, root, (one) => SET_ROLES.has(one.getAttribute("role") ?? "")) : undefined);
   return [...beside, ...(group ? below(group) : [])].some((other) => {
     if (other === element || !isControlHere(other)) return false;
     const value = other.getAttribute(name);
-    if (value === null || (name === "aria-current" ? !NO_CURRENT.has(value) : value === "true")) return false;
-    return name === "aria-pressed" || name === "aria-current" || other.getAttribute("role") === role;
+    if (name === "aria-current") return (value === null || value === "false") && other.localName === element.localName && other.getAttribute("role") === role;
+    if (value === null || value === "true") return false;
+    return name === "aria-pressed" || other.getAttribute("role") === role;
   });
 };
 /** What the host presses of itself, which the check leaves to the host: a disclosure, a lightbox, a drop, a placed video. */

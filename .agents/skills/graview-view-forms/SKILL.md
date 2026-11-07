@@ -148,10 +148,13 @@ by the host, saved as they are typed, "Saving…" on `input` and "Saved" on
    state it shows — an "All" chip pressed while nothing is filtered, the
    open tab — passes though it changes nothing, only as one of a set: it
    says `aria-pressed="true"`, `aria-selected="true"` (a tab, option or
-   grid cell), `aria-checked="true"` (a checkable role) or `aria-current`,
-   and another control beside it, or in its `role` group, says the same
-   attribute's other state (`"false"`). A lone Save saying
-   `aria-pressed="true"` still fails, as does a state in a class alone. `runWorkerViewHeadless(…,
+   grid cell) or `aria-checked="true"` (a checkable role), and another
+   control beside it, or in its `role` group, says that attribute's
+   `"false"`. `aria-current` is for a link, or a role that names a place
+   (`tab`, `menuitem`, `treeitem`, `option`): beside it, a sibling of the
+   same element and role with no `aria-current`, or `"false"`, is the
+   rest of the pager. A plain button saying it fails, as does a lone
+   Save saying `aria-pressed="true"` and a state in a class alone. `runWorkerViewHeadless(…,
    { presses: checkPresses })` (`@graview/guest/headless/presses`) is the same for a host's gate. To look at one,
    press it: `--press "<selector>"` (with `--type note="…"` for
    what the person typed), or `runWorkerViewHeadless(…, { press: {
