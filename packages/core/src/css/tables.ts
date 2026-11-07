@@ -38,6 +38,8 @@ export const CSS_PROPERTIES: readonly string[] = [
   "grid-area", "grid-column", "grid-row", "grid-column-start", "grid-column-end", "grid-row-start", "grid-row-end",
   "gap", "row-gap", "column-gap", "align-items", "align-content", "align-self", "justify-items", "justify-content", "justify-self", "place-items", "place-content", "place-self",
   "columns", "column-count", "column-width", "column-rule", "column-rule-color", "column-rule-style", "column-rule-width", "column-span", "column-fill",
+  /* Where a box breaks across columns (Roadmap f-view-authoring-friction-2026-11): a card kept whole in a column, a heading kept with what follows it. */
+  "break-inside", "break-before", "break-after", "page-break-inside", "page-break-before", "page-break-after", "orphans", "widows", "box-decoration-break", "-webkit-box-decoration-break",
   // color and surface
   "color", "background", "background-color", "background-image", "background-position", "background-position-x", "background-position-y", "background-size", "background-repeat",
   "background-origin", "background-clip", "background-attachment", "background-blend-mode",

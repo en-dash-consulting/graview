@@ -109,9 +109,9 @@ and the description stays in listings and on the name's hover):
 }
 ```
 
-- **One theme for every view** is `views`: `css`, drawn before each view's
-  own sheet and held to its rules (`brand-views-css`), and `motion: "fade"`
-  between records.
+- **One theme for every view** is `views`: `css`, which wins over a view's
+  own rules (`*{margin:0}` beats every view's margins); `fonts` lent to views
+  (`graview-view-drawing`); `motion: "fade"`.
 
 - **A mark** — the logo, one for each scheme, and the page icon, an emoji
   among them — is `graview-logo`: inline SVG or a path on the app's own

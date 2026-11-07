@@ -764,7 +764,7 @@ function judgeValue(property: string | undefined, values: readonly ComponentValu
       out.push({ type: "block", open: value.open, value: inner });
       continue;
     }
-    if (value.type === "at-keyword" || value.type === "CDO" || value.type === "CDC" || value.type === "{" || value.type === "}" || value.type === ";" || (value.type === "delim" && value.value === "\\")) {
+    if (value.type === "at-keyword" || value.type === "CDO" || value.type === "CDC" || value.type === "{" || value.type === "}" || value.type === ";" || value.type === ")" || value.type === "]" || (value.type === "delim" && value.value === "\\")) {
       refuse({ reason: "unreadable", ...(property ? { name: property } : {}) });
       return undefined;
     }
@@ -773,15 +773,48 @@ function judgeValue(property: string | undefined, values: readonly ComponentValu
   return out;
 }
 
-/* What moves: held still where a person asks for less motion (the guest host's open-draw.ts), so a style attribute, which outranks every sheet, says it without `!important`. */
-const MOTION = /^(animation|transition|scroll-behavior)/;
+/*
+ * What the host holds with `!important` in its first layers (the guest host's open-draw.ts): motion where a person asks for less, and the
+ * focus ring. An important style attribute outranks every layer, so a style attribute says these, and `all`, which holds both, without it.
+ */
+const HELD = /^(animation|transition|scroll-behavior|outline)/;
+/*
+ * THE RING'S COLOR. It is settled on the region from the app's accent (`--graview-ring-color`, the guest host's open-draw.ts), so no view may
+ * write that, and a view's own (`--graview-focus-color`) is a plain opaque color: a three- or six-digit hex or a name. Not `transparent`, not
+ * `currentcolor`, which a view's `color` could make transparent, and no function or `var()`, either of which could carry either.
+ */
+const RING_COLOR = "--graview-ring-color";
+const FOCUS_COLOR = "--graview-focus-color";
+const plainColor = (values: readonly ComponentValue[]): boolean => {
+  const parts = values.filter((part) => part.type !== "whitespace");
+  const only = parts[0];
+  if (parts.length !== 1 || !only) return false;
+  if (only.type === "hash") return /^(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(only.value);
+  return only.type === "ident" && !["transparent", "currentcolor"].includes(lower(only.value));
+};
+/* What loads, as a selector's function: no selector calls one, and the wrapper over a sheet draws nothing of a sheet that names one (the guest host's cascade.ts). */
+const LOADS = new Set(["url", "src", "image-set", "-webkit-image-set"]);
+const namesWhatLoads = (values: readonly ComponentValue[]): string | undefined => {
+  for (const value of values) {
+    if (value.type === "func" && LOADS.has(lower(value.name))) return lower(value.name);
+    if (value.type === "func" || value.type === "block") {
+      const inner = namesWhatLoads(value.value);
+      if (inner) return inner;
+    }
+  }
+  return undefined;
+};
 
 /** One declaration, judged: kept as text, or refused. `attribute`: it is a style attribute's. */
 function judgeDeclaration(declaration: Declaration, refuse: (refusal: CssRefusal) => void, attribute = false): string | undefined {
   const custom = declaration.name.startsWith("--");
   const name = custom ? declaration.name : propertyName(declaration.name);
-  if (!custom && !PROPERTIES.has(name)) {
+  if (name === RING_COLOR || (!custom && !PROPERTIES.has(name))) {
     refuse({ reason: "property", name });
+    return undefined;
+  }
+  if (name === FOCUS_COLOR && !plainColor(declaration.value)) {
+    refuse({ reason: "value", name });
     return undefined;
   }
   const keywords = CSS_KEYWORD_PROPERTIES[name];
@@ -794,16 +827,50 @@ function judgeDeclaration(declaration: Declaration, refuse: (refusal: CssRefusal
       refuse({ reason: "value", name });
       return undefined;
     }
-    return `${name}: ${word}${declaration.important ? " !important" : ""}`;
+    return `${name}: ${word}${declaration.important && !(attribute && name === "all") ? " !important" : ""}`;
   }
   const value = judgeValue(custom ? undefined : name, declaration.value, refuse);
   if (!value) return undefined;
   const said = serializeValues(value).trim();
-  return `${custom ? `--${serializeName(declaration.name.slice(2))}` : name}: ${said}${declaration.important && !(attribute && MOTION.test(name)) ? " !important" : ""}`;
+  return `${custom ? `--${serializeName(declaration.name.slice(2))}` : name}: ${said}${declaration.important && !(attribute && HELD.test(name)) ? " !important" : ""}`;
 }
 
-/** Whether a selector stays in the view's own tree: nothing on `CSS_REFUSED_SELECTORS`, nothing unreadable. */
+/**
+ * WHETHER A PRELUDE COULD MEAN SOMETHING ELSE ELSEWHERE. At the top of a sheet
+ * a stray `}` is junk in a prelude, and the rule goes undrawn; put inside any
+ * block — a cascade layer, a host's own `@media` — it closes that block, and
+ * what follows, judged as a selector, is read as CSS nobody judged. A `;`
+ * ends a rule there too, an at-keyword begins one, `<!--` and `-->` are
+ * ignored only at a sheet's top, a lone backslash escapes what is written
+ * after it, and an unmatched bracket is another reading. A condition and a
+ * selector hold none of them, at any depth, so what is kept reads the same
+ * wherever it is put.
+ */
+const readsOtherwise = (values: readonly ComponentValue[]): boolean =>
+  values.some(
+    (value) =>
+      value.type === "}" ||
+      value.type === ";" ||
+      value.type === ")" ||
+      value.type === "]" ||
+      value.type === "at-keyword" ||
+      value.type === "CDO" ||
+      value.type === "CDC" ||
+      (value.type === "delim" && value.value === "\\") ||
+      ((value.type === "func" || value.type === "block") && readsOtherwise(value.value)),
+  );
+
+/** Whether a selector stays in the view's own tree: nothing on `CSS_REFUSED_SELECTORS`, nothing unreadable, nothing that reads otherwise inside a block. */
 function judgeSelector(prelude: readonly ComponentValue[], refuse: (refusal: CssRefusal) => void): boolean {
+  if (readsOtherwise(prelude)) {
+    refuse({ reason: "unreadable", name: "selector" });
+    return false;
+  }
+  const loads = namesWhatLoads(prelude);
+  if (loads) {
+    refuse({ reason: "url", name: loads });
+    return false;
+  }
   const walk = (values: readonly ComponentValue[]): boolean => {
     for (let index = 0; index < values.length; index += 1) {
       const value = values[index]!;
@@ -845,6 +912,10 @@ function judgeBlock(values: readonly ComponentValue[], refuse: (refusal: CssRefu
 
 /** A prelude of `@media`, `@supports` or `@container`: conditions, which fetch nothing, written with no url and no function outside the allowlist (but `selector()` in `@supports`). */
 function judgeCondition(prelude: readonly ComponentValue[], at: string, refuse: (refusal: CssRefusal) => void): string | undefined {
+  if (readsOtherwise(prelude)) {
+    refuse({ reason: "unreadable", name: `@${at}` });
+    return undefined;
+  }
   const walk = (values: readonly ComponentValue[]): boolean =>
     values.every((value) => {
       if (value.type === "url" || value.type === "bad-url" || value.type === "bad-string" || (value.type === "block" && value.open === "{")) {

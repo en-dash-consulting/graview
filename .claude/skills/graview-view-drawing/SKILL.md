@@ -17,9 +17,11 @@ HTML's sectioning, headings, text, lists, tables, `details`/`summary`,
 `progress` and `img`. SVG's `svg`, `g`, shapes, `path`, `text`, gradients,
 `clipPath`, `mask`, `marker`, `pattern`, `symbol`, `use href="#id"`, `filter`
 and its `fe*`. Attributes: `id`, `class`, `style`, `title`, `role`, `aria-*`, `data-*`, and
-each element's own. CSS for layout, grid, flex, color, type, `mask-image`,
-`-webkit-text-stroke`, scroll margins, transitions, `@keyframes`, `animation-timeline`,
-`@media`, `@supports` and `@container`; reduced motion holds motion still. Each
+each element's own. CSS for layout, grid, flex, columns and `break-inside`,
+color, type, `mask-image`, scroll margins, transitions, `@keyframes`,
+`animation-timeline`, `@media`, `@supports` and `@container`; reduced motion
+holds motion still. Every property kept is in `CSS_PROPERTIES` (functions
+`CSS_FUNCTIONS`, at-rules `CSS_AT_RULES`) on `@graview/core/css`. Each
 `graview.style(css)` adds a sheet after the last (a shared design system's,
 then the view's own), each judged alone; a sheet given again is not added
 twice: say what changes per push in a class or `style`.
@@ -31,10 +33,8 @@ attribute; `href` but a link out (`graview-view-links`); `src` on anything
 but `img`, and on `img` any address but the ones below. In CSS: `url()`
 except `url(#id)` on `fill`, `stroke`, `clip-path`, `marker` or `filter`;
 `@import`; `@font-face`; `@property`; `image-set()`, `attr()` and other
-unlisted functions; `position: fixed`; `:host`. `position: sticky` is kept
-— a header held in place sticks within the view, whose region is painted
-contained — and `all` takes its keywords (`all: unset` takes a button's
-chrome off). What the host leaves out it lists in `refused` (below).
+unlisted functions; `position: fixed`; `:host`. `position: sticky` sticks
+within the view; `all: unset` takes a button's chrome off. What the host leaves out it lists in `refused` (below).
 
 A view never speaks as the app's chrome. `nav`, `header`, `footer`, `aside`
 and `search` are drawn as `div`, and `output` as `span`, each with what it
@@ -57,8 +57,20 @@ toggle: `var(--graview-panel)`, `--graview-ground`, `--graview-ink`,
 `--graview-font-mono`, `--graview-radius`. Presentation attributes do not
 take `var()`; put paints in the stylesheet. `props.theme` says the same
 tokens as values, with `scheme`, `name` and `logo`, pushed again when the
-brand or the toggle changes. Shared rules go in `brand.views.css`
-(`graview-brand`), drawn before each view's own; the view's wins.
+brand or the toggle changes.
+
+Shared rules go in `brand.views.css` (`graview-brand`). **The theme wins**:
+it is in a cascade layer after the view's own sheets, so where both style
+one element its rule wins whatever the view's specificity. A view's
+`!important` and a `style` attribute go past it; a rule on an ancestor is
+only inherited.
+
+**A web face** is the brand's to lend, never the view's to load:
+`views.fonts: [{ family: "Baloo 2", src: "/graview/assets/<sha256>.woff2",
+weight: "400 800" }]`, then `font-family: "Baloo 2", var(--graview-font-body)`.
+The host loads it from a file the app holds where it serves them, or an
+`https:` address on an origin it lists in `images.origins`, and never under a
+system face's name or the brand's own; else it is said and refused.
 
 ## Its box, and the gutter
 
@@ -66,14 +78,13 @@ On Pages a view is drawn in the page's column, which keeps a 20px gutter
 either side on a phone. Nothing the view draws passes its box: a negative
 margin is clipped at its edge, not widened. Say `bleed: true` in the
 manifest and on a phone (680px or less) the box takes the gutter back,
-keeping the safe areas: a hero is the phone's width. At a desk it is the
-column's width.
+keeping the safe areas.
 
 ## The images a view may show
 
 An `img`'s `src` is drawn only when it is one of these; any other address
 — another site, a path of the app's of your own making — is refused, and
-said once in the view's console and the host's problems, with the address:
+said once in its console and the host's problems, with the address:
 
 - **A `data:` image** the view holds: PNG, GIF, JPEG, WebP, AVIF, BMP or
   SVG, at most 512,000 characters as its URL.
@@ -96,8 +107,7 @@ said once in the view's console and the host's problems, with the address:
   on a record the view is handed is then `{ name, type, bytes, width,
   height, caption, src, left }` in its field, never the host's path to it.
   `src` is the address the host made from the bytes, fetched as the reader
-  and made smaller to `width`, and drawn at any size as long as you use
-  it as handed; it is absent on the first push, and a push follows when
+  and made smaller to `width`; it is absent on the first push, and a push follows when
   it is ready. `left` says why a picture will never come: past one
   picture's byte budget or the view's, or what the host answered when it
   was not loaded. A document, and an SVG, has no `src`: show its name,
@@ -114,23 +124,19 @@ Without `pictures`, a record's file comes as the record keeps it: its
 
 ## A record's video, and the full-screen viewer
 
-A view never draws `<video>` or `position: fixed`; it names what it wants
-and **the host draws it**, from the records the view was shown, for a view
-whose manifest says `pictures`:
+A view names it and **the host draws it**, for a manifest that says
+`pictures`:
 
 - **`<graview-video data-record="${node.id}" data-field="clip">`** (and
   `data-index` in a list): the host plays that record's video in it —
-  poster first, the browser's own controls, only its metadata fetched,
-  captions where the value has them. Size the box in your stylesheet
-  (`graview-video { width: 100% }`); nothing inside it is yours to style
-  or hear. The video comes to the view as its facts — `{ name, type,
-  bytes, width, height, caption, duration, poster }` (`poster: true`
-  where it has one) — so draw its length yourself if you like; never a
-  `src`.
+  poster first, the browser's own controls, captions where the value has
+  them. Size the box in your stylesheet (`graview-video { width: 100% }`);
+  nothing inside it is yours to style or hear. The video comes to the view
+  as its facts — `{ name, type, bytes, width, height, caption, duration,
+  poster }` — never a `src`.
 - **`<graview-video autoplay cover …>`**: a hero background — muted,
-  looping, inline, no controls (`autoplay` means all of it), `cover`
-  filling the box you sized; still at its poster where the person asked
-  for less motion. A headless run lists each video with its source and
+  looping, no controls, `cover` filling the box you sized; still at its
+  poster where the person asked for less motion. A headless run lists each video with its source and
   whether it is playable (MP4 or WebM, with a poster): confirm it there.
 - **`<button data-lightbox data-record="${node.id}" data-field="photos"
   data-index="0">`**: the viewer's press opens the host's full-screen
@@ -138,8 +144,7 @@ whose manifest says `pictures`:
   keyboard comes back to the button. Your code cannot open it.
 
 A record the view was not shown, a field with no video, or a view without
-`pictures` draws nothing, and says why in its console and the host's
-problems.
+`pictures` draws nothing, and says why.
 
 ## Files a person drops on it
 
@@ -168,10 +173,8 @@ only as you were handed it; any other `href` is refused. `data-drop-field`
 narrows a target to one field. Every event is `{ type, target, element }`
 and what it carries: `value`/`checked`, `key`, `pressed`, `files`.
 
-**Keep a picture in an `image` field**, which holds the uploaded file
-(what `add_image` stores), never its bytes as words: a `data:` URI in a
-text field is cut at 20,000 characters, and in the view's source it counts
-against its size.
+**Keep a picture in an `image` field** (what `add_image` stores), never its
+bytes as words: a `data:` URI in a text field is cut at 20,000 characters.
 
 ## Then find out whether it worked
 
@@ -179,20 +182,17 @@ against its size.
    `@graview/guest/host/views`: it says what is wrong with `pictures`.
 2. `graview view check view.js --app <app> --manifest manifest.json --seed
    <seed.json> --roles <role>` says what it drew. Headless, a picture comes
-   with a stand-in `src`, so its `<img>` is drawn and judged; one the page
-   would leave out comes with `left`, said among the problems.
+   with a stand-in `src`; one the page would leave out comes with `left`,
+   among the problems.
 3. Open the place and read the view's `refused` (`WorkerView.refused`, or
    `graview.refused` in its console): every element, attribute and
    address the host left out, and why.
-4. Toggle the app to dark; change the brand. Does the view follow, logo
-   and all?
+4. Toggle to dark; change the brand. Does the view follow?
 5. As a member who may see fewer records, are the pictures on the records
    they may not see absent — not merely hidden?
 
 ## What the check cannot see
 
-`graview check` judges the declaration, and `refused` judges the markup;
-neither sees whether the drawing reads. A picture drawn at full width on a
-phone, an image with no `alt`, a token used for a meaning it does not
-carry, a chart whose colors fail in dark: only looking, on both faces, at
-390 and on a desk, in both schemes, sees that.
+`graview check` and `refused` never see whether the drawing reads: an image with no `alt`, a token
+used for a meaning it does not carry, colors that fail in dark. Look, on
+both faces, at 390 and on a desk, in both schemes.

@@ -51,7 +51,7 @@ import { computedOf, validateComputed } from "./computed.js";
 import type { TemplatePart } from "./template.js";
 import { parseTemplate, templateBraces, TemplateError } from "./template-parse.js";
 import { validateViews, VIEW_SLOTS } from "./views.js";
-import { brandFindings, emojiIconSentence, groundWords, splashSentence, subtitleSentence, viewsCssSentence, viewsMotionSentence } from "./brand-check.js";
+import { brandFindings, emojiIconSentence, groundWords, splashSentence, subtitleSentence, viewsCssSentence, viewsFontsSentence, viewsMotionSentence } from "./brand-check.js";
 import { darkLogoSentence, logoParts } from "./logo.js";
 import { emojiOf } from "../theme/marks.js";
 import { canonicalize } from "./canonical.js";
@@ -265,10 +265,17 @@ function buildShapes(): Record<EditOp, z.ZodType> {
         subtitle: z.union([z.boolean(), z.null()]).optional(),
         // The opening screen (Roadmap f-splash-in-document), whole; null for Graview's own.
         splash: z.union([z.object({ style: z.string(), image: z.string().min(1).optional(), title: z.string().min(1).max(80).optional(), kicker: z.string().min(1).max(80).optional(), shader: z.string().min(1).max(40).optional(), scheme: z.enum(["light", "dark", "device"]).optional() }).strict(), z.null()]).optional(),
-        // What every worker view inherits (Roadmap f-app-wide-view-theme): a stylesheet drawn before each view's own (its length the sanitizer's to refuse, in `brandFindings`), and a fade between records; null clears either, or all of it.
+        // What every worker view inherits (Roadmap f-app-wide-view-theme): a stylesheet that wins over each view's own (its length the sanitizer's to refuse, in `brandFindings`), and a fade between records; null clears either, or all of it.
         views: z
           .union([
-            z.object({ css: z.union([z.string().min(1), z.null()]).optional(), motion: z.union([z.enum(["none", "fade"]), z.null()]).optional() }).strict(),
+            z
+              .object({
+                css: z.union([z.string().min(1), z.null()]).optional(),
+                motion: z.union([z.enum(["none", "fade"]), z.null()]).optional(),
+                // The faces it lends its views, whole (Roadmap f-view-authoring-friction-2026-11); judged by `brandFindings` (brand-views-font) as the stylesheet is.
+                fonts: z.union([z.array(z.object({ family: z.string().min(1), src: z.string().min(1), weight: z.union([z.number(), z.string()]).optional(), style: z.enum(["normal", "italic"]).optional() }).strict()), z.null()]).optional(),
+              })
+              .strict(),
             z.null(),
           ])
           .optional(),
@@ -731,9 +738,17 @@ class Editor {
         ...(typeof e.favicon === "string" || isObject(e.favicon) ? { favicon: e.favicon } : {}),
         ...(isObject(e.typography) ? { typography: Object.fromEntries(Object.entries(e.typography).filter(([, v]) => typeof v === "string")) as Doc } : {}),
         // The stylesheet every view gets is judged as a page draws it (Roadmap f-app-wide-view-theme): an edit that would leave part of it undrawn is refused, saying which part.
-        ...(isObject(e.views) && typeof e.views["css"] === "string" ? { views: { css: e.views["css"] } } : {}),
+        // And each face it lends them, by the rule the view's host loads it by, so an edit saves nothing a check would refuse (Roadmap f-view-authoring-friction-2026-11).
+        // Stored faces too where it names typography, which may take the name of one already lent.
+        ...((): Doc => {
+          const css = isObject(e.views) && typeof e.views["css"] === "string" ? { css: e.views["css"] } : {};
+          const given = isObject(e.views) ? e.views["fonts"] : undefined;
+          const stored = isObject(e.typography) && given === undefined ? (this.doc.brand?.views as Doc | undefined)?.["fonts"] : undefined;
+          const fonts = Array.isArray(given) ? given : Array.isArray(stored) ? stored : undefined;
+          return Object.keys(css).length > 0 || fonts ? { views: { ...css, ...(fonts ? { fonts } : {}) } } : {};
+        })(),
       },
-      { at, ...(this.options.fonts ? { fonts: this.options.fonts } : {}) },
+      { at, ...(this.options.fonts ? { fonts: this.options.fonts } : {}), ...(isObject(this.doc.brand?.typography) ? { typography: this.doc.brand.typography as Record<string, unknown> } : {}) },
     );
     if (judged.length > 0) return void this.findings.push(...judged);
     if (e.accent === null) {
@@ -885,6 +900,7 @@ class Editor {
       const had: Record<string, unknown> = brand["views"] ?? {};
       if (had["css"] !== undefined || had["motion"] === undefined) this.said.push(viewsCssSentence(false));
       if (had["motion"] === "fade") this.said.push(viewsMotionSentence(undefined));
+      if (Array.isArray(had["fonts"]) && had["fonts"].length > 0) this.said.push(viewsFontsSentence(undefined));
       delete brand["views"];
     } else if (isObject(e.views)) {
       const into: Record<string, unknown> = { ...(brand["views"] ?? {}) };
@@ -897,6 +913,12 @@ class Editor {
         if (e.views["motion"] === "fade") into["motion"] = "fade";
         else delete into["motion"];
         this.said.push(viewsMotionSentence(e.views["motion"] === "fade" ? "fade" : undefined));
+      }
+      if (e.views["fonts"] !== undefined) {
+        const fonts = e.views["fonts"] as readonly { readonly family: string }[] | null;
+        if (fonts === null || fonts.length === 0) delete into["fonts"];
+        else into["fonts"] = fonts;
+        this.said.push(viewsFontsSentence(fonts ?? undefined));
       }
       if (Object.keys(into).length === 0) delete brand["views"];
       else brand["views"] = into;
