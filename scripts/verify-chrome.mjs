@@ -1446,6 +1446,7 @@ try {
       }, testid);
     const stillness = {};
     const menus = {};
+    const schemes = {};
     const inboxes = {};
     const shares = {};
     const iconOnly = {};
@@ -1518,8 +1519,37 @@ try {
               };
             });
             const pane = await paneSaid(page, "app-menu");
-            await page.locator('[data-testid="app-menu-scheme-dark"]').click().catch(() => {});
+            /*
+             * The scheme, picked by the keyboard alone (f-scheme-choice-mount): Tab from where the menu put the keyboard to Dark, then
+             * Enter, and the host's onChoose hears "dark". The host keeps the choice, so System stays pressed until the host hands the
+             * embed the new one with `setSchemeChoice`, and then Dark is the one pressed.
+             */
+            const reached = [];
+            for (let step = 0; step < 12; step++) {
+              const on = await page.evaluate(() => document.activeElement?.getAttribute("data-testid") ?? null);
+              reached.push(on);
+              if (on === "app-menu-scheme-dark") break;
+              await page.keyboard.press("Tab");
+            }
+            const byKeyboard = reached.at(-1) === "app-menu-scheme-dark";
+            if (byKeyboard) await page.keyboard.press("Enter");
             const chosen = await page.evaluate(() => window.__schemeChosen ?? null);
+            const pressedNow = () =>
+              page.evaluate(() => [...document.querySelectorAll('[data-testid="app-menu"] [data-testid^="app-menu-scheme-"]')].map((one) => `${one.textContent}${one.getAttribute("aria-pressed") === "true" ? " (pressed)" : ""}`));
+            const beforeTheHost = await pressedNow();
+            await page.evaluate(() => window.__handle.setSchemeChoice({ value: window.__schemeChosen, onChoose: (value) => { window.__schemeChosen = value; } }));
+            await page.waitForTimeout(100);
+            const afterTheHost = await pressedNow();
+            schemes[key] = {
+              byKeyboard,
+              chosen,
+              beforeTheHost,
+              afterTheHost,
+              ok:
+                byKeyboard && chosen === "dark" &&
+                JSON.stringify(beforeTheHost) === JSON.stringify(["System (pressed)", "Light", "Dark"]) &&
+                JSON.stringify(afterTheHost) === JSON.stringify(["System", "Light", "Dark (pressed)"]),
+            };
             /* And the other face is one press from it. */
             let switched = null;
             if (width === 1440 && colorScheme === "light") {
@@ -1649,6 +1679,7 @@ try {
     report.checks.theBarHoldsStillAndNothingOnItOverlapsAtEveryWidth = { ...stillness, ok: all(stillness) };
     report.checks.findIsABoxWhereThereIsRoomAndTheMagnifierSooner = { ...finds, ok: all(finds) };
     report.checks.theAppMenuHoldsTheScenePagesTheHostsRowsAndTheScheme = { ...menus, ok: all(menus) };
+    report.checks.aPersonPicksTheSchemeByKeyboardAndTheHostsChoiceMovesThePress = { ...schemes, ok: all(schemes) };
     report.checks.oneInboxIsOneBellWithOneCountAndThreeTabs = { ...inboxes, ok: all(inboxes) };
     report.checks.aHostsShareSaysInASentenceWhoCanOpenTheApp = { ...shares, ok: all(shares) };
     report.checks.aHostsButtonDrawnAsItsMarkIsNamedByItsLabel = { ...iconOnly, ok: all(iconOnly) };

@@ -925,9 +925,15 @@ export interface HostBar {
 /** What the host gave on the bar when it mounted. */
 export const hostBarOf = (options: Pick<FrameOptions, "appMenu" | "share" | "status" | "schemeChoice" | "notifications">): HostBar => ({ appMenu: options.appMenu, share: options.share, status: options.status, schemeChoice: options.schemeChoice, notifications: options.notifications });
 
-/** The bar's host settings as the frame's props: what is unset is left out, never set to undefined. */
+/**
+ * The bar's host settings as the frame's props. Every one is said, an unset
+ * one as undefined: these are spread over the options the host mounted with,
+ * so one left out would leave the mounted value standing, and a host's
+ * `setSchemeChoice(undefined)` (or `setShare`, `setStatus`, …) could not take
+ * back what it handed at mount.
+ */
 export function hostBarProps(bar: HostBar): Pick<FrameOptions, "appMenu" | "share" | "status" | "schemeChoice" | "notifications"> {
-  return { ...(bar.appMenu ? { appMenu: bar.appMenu } : {}), ...(bar.share ? { share: bar.share } : {}), ...(bar.status ? { status: bar.status } : {}), ...(bar.schemeChoice ? { schemeChoice: bar.schemeChoice } : {}), ...(bar.notifications ? { notifications: bar.notifications } : {}) };
+  return { appMenu: bar.appMenu, share: bar.share, status: bar.status, schemeChoice: bar.schemeChoice, notifications: bar.notifications };
 }
 
 /** The level a page's own title is said at: one below the app's name on the bar, or 2 when the host's own heading says the name (FR-131). */
