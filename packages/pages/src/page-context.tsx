@@ -1,5 +1,5 @@
 import type { HistoryHost } from "@graview/core/history";
-import { freshAddress, sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type LinkedRecords, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration, type SignIn, type SubscriptionStore, type DismissalStore, type KeptViews } from "@graview/core";
+import { freshAddress, sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ViewerState, type ResolveApp, type LinkedRecords, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration, type SignIn, type SubscriptionStore, type DismissalStore, type KeptViews } from "@graview/core";
 import { useCallback, useRef, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import type { AwaySummary, FieldTyping, KeepLensHost, ProposeChangeHost, ComposeChangeHost, DraftChangeHost, MenuSectionSource, OnExport, ReactViewRegistry } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
@@ -205,6 +205,8 @@ export interface PageContext<S extends AnySchema> {
    * says, and without one a file field's editor says this host takes none.
    */
   readonly files?: HostFiles;
+  /** Where what a worker view keeps for its viewer goes (`graview.mine`), by the view's name. Unsaid, for the visit. */
+  readonly viewerState?: ViewerState;
   /**
    * WHERE THE HOST SERVES THE APP'S OWN IMAGES (Roadmap
    * f-brand-marks-under-app-base): `assetsAt(path)` for a path under

@@ -6,7 +6,7 @@ import type { Batch, Operation } from "./ops/types.js";
 import type { FieldWriter, Timeline } from "./ops/served.js";
 import { writersOf, type Writers } from "./ops/writers.js";
 import { namesUnseen, redact, type SeatLens } from "./ops/withheld.js";
-import { actingAs, grantsTo, isSystem } from "./permissions/policy.js";
+import { actingAs, grantsTo, isSystem, meOf, profileOf } from "./permissions/policy.js";
 import { FIELD_SIGHT, fieldsJudged, partialSight, recordsOf, sees, type Judged, type Records } from "./permissions/sight.js";
 import type { Principal } from "./permissions/types.js";
 import { diffSnapshots } from "./graph/diff.js";
@@ -445,7 +445,7 @@ const VIEWS = new WeakMap<object, Map<string, unknown>>();
 function seatKey(principal: Principal): string {
   const judged = isSystem(principal) ? principal : actingAs(principal);
   // An agent's own id too: two agents for one person are two seats, and each view answers as its own (`seenFor`, `wouldChange`, `preview`).
-  return `${principal.kind}|${judged.id ?? ""}|${(judged.roles ?? []).join(",")}|${principal.onBehalfOf ? `for:${principal.id ?? ""}` : ""}`;
+  return `${principal.kind}|${judged.id ?? ""}|${(judged.roles ?? []).join(",")}|${principal.onBehalfOf ? `for:${principal.id ?? ""}` : ""}${profileOf(principal) ? `|as:${meOf(principal)}` : ""}`;
 }
 
 /**

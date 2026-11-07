@@ -35,7 +35,7 @@ import { TYPE_TEXT, TYPING } from "./text/typing-hook.js";
 import type { FieldRevision } from "./ops/revisions.js";
 import { DECLINES, isAutomated, tidyingRefusal, type ActMeanings } from "./ops/tidying.js";
 import { nameOfAuthor } from "./who.js";
-import { actingAs, grantsTo, isSystem, permits, permittedMutations, proposes, subjectKinds, type PolicyWords } from "./permissions/policy.js";
+import { actingAs, grantsTo, isSystem, meOf, permits, profileOf, profilePersonId, permittedMutations, proposes, subjectKinds, type PolicyWords } from "./permissions/policy.js";
 import { MOST_PROPOSED, PROPOSE_CHANGES, proposeChangesMutation } from "./mutations/propose-changes.js";
 import { namesUnseen, redact } from "./ops/withheld.js";
 import { writersBehind } from "./ops/writers.js";
@@ -939,7 +939,7 @@ export class Store<S extends AnySchema> {
     if (mutation !== undefined && mutation === this.typer) {
       // Through an act that could run on this record now: its module on, its own rule holding for the record as this principal is served it (`wouldRun`).
       const served = principal === undefined || isSystem(principal) ? this.graph : seenBy(this, principal).graph;
-      const allows = (writer: AnyMutationDefinition<S>) => !this.mutationDisabled(writer) && wouldRun(writer, this.schema, served, call?.args["node"], call?.args["field"], principal && actingAs(principal).id);
+      const allows = (writer: AnyMutationDefinition<S>) => !this.mutationDisabled(writer) && wouldRun(writer, this.schema, served, call?.args["node"], call?.args["field"], principal && meOf(principal));
       return TYPING.via!(this.schema, [...this.mutations.values()] as never, this.subjectKindOf(call!, principal), call?.args["field"], allows as never);
     }
     if (!mutation?.derived) return undefined;
@@ -1049,7 +1049,7 @@ export class Store<S extends AnySchema> {
       typeof id === "string" ? id : undefined,
       this.words,
       () => {
-        const me = actingAs(principal).id;
+        const me = meOf(principal);
         const far = this.namedIn(call, false);
         try {
           for (const one of compileMutation(this.graph, mutation!, call.args, this.sighted(principal)).primitives) if ("edge" in one && one.edge.from !== me && one.edge.to !== me) far.push(one.edge.to);
@@ -1294,7 +1294,7 @@ export class Store<S extends AnySchema> {
   private sighted(author: Principal | undefined): NonNullable<Parameters<typeof compileMutation<S>>[3]> {
     // Who `$me` is: the person, for an agent acting for one (Roadmap f-act-as-me).
     const me = {
-      me: author && actingAs(author).id,
+      me: author && meOf(author),
       everHeld: (id: string) => recordsOf(this.log).kindOf(id) !== undefined,
       keeps: (kind: string, field: string) => mayKeepField(this.policy?.sees, kind, field),
     };
@@ -1855,6 +1855,15 @@ export class Store<S extends AnySchema> {
     const renamed = new Map<string, string>();
     const rename = (value: unknown): unknown => (typeof value === "string" ? (renamed.get(value) ?? value) : Array.isArray(value) ? value.map(rename) : value);
     try {
+      /* A PROFILE'S PERSON, MADE ON FIRST USE: its own op, in this batch, so a refused gesture keeps none of it and a client's optimism is rebased with the rest. */
+      const person = this.personToMake(author, batch, options);
+      if (person) {
+        this.graph.applyPrimitives(person.primitives);
+        this.log.append(person);
+        ops.push(person);
+        allPrimitives.push(...person.primitives);
+        writes.add(person.writes[0]!);
+      }
       for (let at = 0; at < queue.length; at++) {
         const { sent, as, lineage: lined, decided } = queue[at]!;
         const named = at < naming.length ? naming[at]! : namesMade(sent);
@@ -2394,7 +2403,8 @@ export class Store<S extends AnySchema> {
          * the same call by another would have done something else. "Vote for
          * it" is everybody's to run, and undoing Ann's was taking back her vote.
          */
-        const names = (value: unknown) => JSON.stringify(value).includes(JSON.stringify(by));
+        /* What the act wrote as them: the profile's person, where they were one. */
+        const names = (value: unknown) => JSON.stringify(value).includes(JSON.stringify(meOf(judged.author)));
         const verdict =
           by !== undefined && by !== actingAs(author as Principal).id && !isSystem(author as Principal) && !names(judged.mutation.args) && names(judged.primitives)
             ? { ok: false as const, refusal: { mutation: judged.mutation.name, wouldNeed: [], message: "it was done as somebody else." } }
@@ -2410,6 +2420,42 @@ export class Store<S extends AnySchema> {
     let at = op;
     for (let undone = at.undoes === undefined ? undefined : this.log.get(at.undoes); undone !== undefined; undone = at.undoes === undefined ? undefined : this.log.get(at.undoes)) at = undone;
     return at;
+  }
+
+  /**
+   * THE OP THAT MAKES A PROFILE'S PERSON, where a person acts as a profile
+   * that has none here (`meOf`): the record of the people kind, its name in
+   * the kind's name field. As Graview Cloud makes a member's: the id and the
+   * name, and where the kind asks for more, nothing — `$me` says so — since
+   * nobody is there to answer. By the account's own hand, so it is what the
+   * account made (`own`), and no other's.
+   */
+  private personToMake(author: Author | Principal, batch: string, options: ApplyOptions): Operation | undefined {
+    const profile = profileOf(author);
+    const account = actingAs(author as Principal).id;
+    if (!profile || account === undefined) return undefined;
+    const id = profilePersonId(account, profile);
+    const people = this.schema.definitions.find((definition) => definition.people);
+    if (!people || this.graph.has(id)) return undefined;
+    const fields = people.fields as unknown as { readonly shape?: Readonly<Record<string, { safeParse(value: unknown): { readonly success: boolean } }>>; safeParse(value: unknown): { readonly success: boolean } };
+    const shape = fields.shape ?? {};
+    const words = Object.keys(shape).filter((field) => shape[field]!.safeParse("x").success && !shape[field]!.safeParse(1).success);
+    const named = words.includes("name") ? "name" : (words.find((field) => !shape[field]!.safeParse(undefined).success) ?? words[0]);
+    const node = { ...people.defaults, id, kind: people.kind, ...(named ? { [named]: profile.name.slice(0, 200) } : {}) };
+    if (!fields.safeParse(node).success) return undefined;
+    return {
+      id: this.nextId(),
+      seq: this.log.length,
+      batch,
+      author,
+      intent: `${profile.name} joins`,
+      mutation: null,
+      primitives: [normalize({ op: "add-node", node: node as never })],
+      reads: [],
+      writes: [id],
+      at: this.now(),
+      ...given("via", options.via),
+    };
   }
 
   /** Whether the policy grants this principal every act, on every record: what taking back a change no act made asks of anybody but its author. */

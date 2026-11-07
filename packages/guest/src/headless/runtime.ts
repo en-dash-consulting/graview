@@ -27,7 +27,7 @@
  * honest. What it may reach is the page's to hold, as it always is.
  */
 import "@remote-dom/core/polyfill";
-import type { GuestAnswer, GuestProps } from "../protocol.js";
+import { mineRefusal, type GuestAnswer, type GuestProps } from "../protocol.js";
 import { harden, type Hardening } from "../worker/harden.js";
 import { createViewRuntime, type GraviewView } from "../worker/view-global.js";
 import { judgeTranscript } from "./judge.js";
@@ -66,10 +66,19 @@ const log = (text: string) => {
 };
 
 let hardened: Hardening = { removed: [], stuck: [], sealed: false };
+const keeps = new Map<string, string>();
 const runtime = createViewRuntime({
   send(request) {
     transcript.messages += 1;
-    if (request.type === "render") transcript.renders.push(plain(request.records) as unknown[]);
+    /* What a view keeps, held for the run alone: a check never reads nor writes anybody's values. */
+    if (request.type === "mine") {
+      const id = request.id as number;
+      const refused = request.op === "set" ? mineRefusal(request.key, request.value) : undefined;
+      if (refused) log(refused);
+      else if (request.op === "set" && request.value === null) keeps.delete(request.key);
+      else if (request.op === "set") keeps.set(request.key, request.value as string);
+      microtask(() => runtime.hear(refused ? { type: "mine-answer", id, ok: false, sentence: refused } : { type: "mine-answer", id, ok: true, ...(request.op === "get" ? { value: keeps.get(request.key) ?? null } : {}) }));
+    } else if (request.type === "render") transcript.renders.push(plain(request.records) as unknown[]);
     else if (request.type === "style") transcript.sheets = ((plain(request.sheets) as unknown[] | null) ?? []).map(String);
     else if (request.type === "gestures") transcript.gestures = plain(request.bound) as { event: string; selector: string }[];
     else if (request.type === "navigate" && "place" in request)

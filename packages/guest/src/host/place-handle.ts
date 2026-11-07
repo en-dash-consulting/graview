@@ -93,6 +93,8 @@ export function viewPlaceHandle({ element, definition, mounted, optionsFor, draw
       const late = setTimeout(() => settle({ failed: `It did not draw in ${DRAFT_MS / 1000} seconds.` }), DRAFT_MS);
       const view = mount(holder, {
         ...optionsFor({ source }),
+        /* Code proposed and not kept reads and writes nothing a host keeps for its viewer. */
+        viewerState: () => undefined,
         fallback: false,
         onFailure: (reason, detail) => settle({ failed: detail ?? `It failed (${reason}).` }),
         /* Drawn once it stands some height: an empty first measure is the region before the view's first drawing. */

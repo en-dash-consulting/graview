@@ -1,7 +1,8 @@
 import { imageRefusedWords } from "./open-judge.js";
 import { keepClicked } from "./clicked.js";
 import { guestPlacesOf } from "./links-words.js";
-import type { AnySchema, FileValue, HostFiles, PagesArrangement, Principal, Store } from "@graview/core";
+import { meOf, type AnySchema, type FileValue, type HostFiles, type PagesArrangement, type Principal, type Store, type ViewerState } from "@graview/core";
+import { createMine, visitOf } from "./mine.js";
 import { storedFilesOf } from "./marks.js";
 import { retryingImport } from "@graview/core/retry";
 import type { GuestDomEvent, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
@@ -251,6 +252,12 @@ export interface MountWorkerViewOptions<S extends AnySchema> {
    * offered: this host takes no files.
    */
   readonly files?: () => HostFiles | undefined;
+  /**
+   * WHERE WHAT THE VIEW KEEPS FOR ITS VIEWER GOES (`graview.mine`): the
+   * host's, by the view's name. Without it, for the visit, in this page's
+   * memory.
+   */
+  readonly viewerState?: () => ViewerState | undefined;
   /**
    * THE VIEW'S CONTENT HEIGHT (Roadmap f-view-content-height): how tall
    * what it drew is, in CSS pixels, each time that changes — measured by
@@ -932,6 +939,20 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   // The drawing did not arrive (the network away as it was drawn): the plain face says so, and it is asked for again as the view is drawn again (FR-139).
   () => fail("start", "the view's drawing could not be loaded"));
 
+  /*
+   * WHAT IT KEEPS FOR ITS VIEWER (`graview.mine`), read as the worker starts,
+   * so its first draw has it. By its registered name, the host's to say; a
+   * problem says no value. Never the graph's.
+   */
+  const hostState = options.viewerState?.();
+  const mine = createMine({
+    view: manifest.name,
+    state: hostState ?? visitOf(options.store, meOf(options.principal) ?? options.principal.visitorKey ?? ""),
+    onRefused: (sentence) => {
+      options.onProblem?.(sentence);
+      session && port?.postMessage({ type: "notice", text: sentence });
+    },
+  });
   const begin = (source: GuestWorkerSource) => (started = startWorker(window, {
     source,
     name: manifest.name,
@@ -969,8 +990,9 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
           }
           given.postMessage(message);
         },
+        mine,
         props: () => {
-          const props = workerViewProps(options.store, options.principal, { manifest, ...(options.input ? { input: options.input() } : {}), theme: theme(), places: guestPlacesOf(vocabulary()), ...(computed ? { computed } : {}) });
+          const props = { ...workerViewProps(options.store, options.principal, { manifest, ...(options.input ? { input: options.input() } : {}), theme: theme(), places: guestPlacesOf(vocabulary()), ...(computed ? { computed } : {}) }), mine: mine.values() };
           const was = shown;
           shown = new Set([...(props.node ? [props.node.id] : []), ...(props.nodes ?? []).map((node) => node.id)]);
           /* The record it shows changed (Roadmap f-app-wide-view-theme): under the brand's "fade", what is drawn goes before the new one comes. */
@@ -1030,9 +1052,18 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     },
   }));
   /* What the worker waits for before it starts: the pictures' host, and what works out computed values, where the view needs them. */
-  const waits = manifest.pictures !== undefined || readsComputed(options.store, manifest);
+  const waits = manifest.pictures !== undefined || readsComputed(options.store, manifest) || hostState !== undefined;
+  /* A host that is slow to say what the view keeps does not hold its first draw past a second and a half: the view is pushed its values when they come. */
+  const mineOrLate = () => {
+    let late = false;
+    void mine.ready.then(() => {
+      if (late) session?.push();
+    });
+    return Promise.race([mine.ready, new Promise<void>((resolve) => window.setTimeout(() => ((late = true), resolve()), 1_500))]);
+  };
   const ready = (): Promise<unknown> =>
     Promise.all([
+      mineOrLate(),
       picturesReady.catch(() => Promise.reject(new Error("the view's pictures could not be loaded"))),
       computedReady.catch(() => Promise.reject(new Error("the view's computed values could not be worked out"))),
     ]);

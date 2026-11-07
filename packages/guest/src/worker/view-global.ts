@@ -109,6 +109,13 @@ export interface GraviewView {
   readonly today: string;
   /** A day or a moment said against today: "today", "tomorrow", "in 3 days", "2 weeks ago"; with `{ due: true }`, a past day is "overdue". */
   fromToday(day: string, options?: { readonly due?: boolean }): string;
+  /**
+   * WHAT THE VIEW KEEPS FOR WHOEVER IS LOOKING AT IT: strings of at most
+   * 4 KB, by key, its own and no other view's, never the graph's. `props.mine`
+   * holds them at draw time; a `set` the host would not keep rejects with
+   * the sentence saying why.
+   */
+  readonly mine: { get(key: string): Promise<string | null>; set(key: string, value: string | null): Promise<void> };
   /** What the host will not draw of the last render, as the open kit says it: an author's early word, not the host's judgment. */
   readonly refused: readonly string[];
   readonly hardening: Hardening;
@@ -219,7 +226,35 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
     }
   };
 
+  /* What `graview.mine` has asked and not yet heard. */
+  const asked = new Map<number, (answer: Extract<HostMessage, { type: "mine-answer" }>) => void>();
+  let askedLast = 0;
+  const ask = (op: "get" | "set", key: string, value?: string | null) =>
+    new Promise<Extract<HostMessage, { type: "mine-answer" }>>((resolve) => {
+      const id = ++askedLast;
+      asked.set(id, resolve);
+      io.send({ type: "mine", id, op, key, ...(op === "set" ? { value: value ?? null } : {}) });
+    });
+  /* Kept as the runtime found it: a view's code cannot swap what a refusal is said with. */
+  const Refused = Error;
+  const mine = Object.freeze({
+    get: (key: string) => ask("get", key).then((answer) => (typeof answer.value === "string" ? answer.value : null)),
+    set(key: string, value: string | null) {
+      const kept = ask("set", key, value).then((answer) => {
+        if (!answer.ok) throw new Refused(answer.sentence ?? "This value was not kept.");
+      });
+      /* Heard by whoever awaits it; a view that does not is told in its console by the host, and no rejection goes unhandled to stop a run. */
+      kept.catch(() => undefined);
+      return kept;
+    },
+  });
+
   const hear = (message: HostMessage) => {
+    if (message.type === "mine-answer") {
+      const resolve = asked.get(message.id as number);
+      asked.delete(message.id as number);
+      return resolve?.(message);
+    }
     if (message.type === "dom-event" && typeof message.target === "string") return heard(message);
     if (message.type === "notice") return io.warn(message.text);
     if (message.type !== "props") return;
@@ -450,6 +485,7 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
       };
     },
     act: (name: string, args: ActArgs = {}) => io.act(name, args),
+    mine,
     navigate(to: GuestNavigateTo) {
       if (typeof to === "string") return io.navigate(to);
       const request = navigateRequest(to);

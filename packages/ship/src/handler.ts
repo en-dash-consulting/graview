@@ -483,12 +483,17 @@ export function seatFromHeaders(request: Request, { system = false }: { readonly
   const forId = header(SEAT_HEADERS.for);
   const forRoles = list(header(SEAT_HEADERS.forRoles));
   const forName = decoded(header(SEAT_HEADERS.forName));
+  const profile = (id: string, name: string) => {
+    const said = header(id);
+    return said ? { profile: { id: said, name: decoded(header(name)) ?? "" } } : {};
+  };
   return {
     kind: (kind && (system ? KINDS : KINDS_BUT_SYSTEM).has(kind) ? kind : "human") as Principal["kind"],
     ...(id ? { id } : {}),
     ...(roles ? { roles } : {}),
     ...(name ? { name } : {}),
-    ...(forId ? { onBehalfOf: { kind: "human" as const, id: forId, ...(forRoles ? { roles: forRoles } : {}), ...(forName ? { name: forName } : {}) } } : {}),
+    ...profile(SEAT_HEADERS.profile, SEAT_HEADERS.profileName),
+    ...(forId ? { onBehalfOf: { kind: "human" as const, id: forId, ...(forRoles ? { roles: forRoles } : {}), ...(forName ? { name: forName } : {}), ...profile(SEAT_HEADERS.forProfile, SEAT_HEADERS.forProfileName) } } : {}),
   };
 }
 

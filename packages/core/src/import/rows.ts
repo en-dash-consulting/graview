@@ -11,7 +11,7 @@ import { article, counted, fieldWords, labelOf, nounOf, pluralOf } from "../sche
 import { edgeWords, valueWords } from "../schema/value-words.js";
 import type { AnySchema } from "../schema/schema.js";
 import type { AnyNodeDefinition } from "../schema/types.js";
-import { actingAs } from "../permissions/policy.js";
+import { meOf } from "../permissions/policy.js";
 import { FIELD_SIGHT, mayKeepField, quotesKeptField, recordsOf } from "../permissions/sight.js";
 import { seesEveryRecord } from "../seen.js";
 import { problemsMoved, type PlannedChange, type Store } from "../store.js";
@@ -678,7 +678,7 @@ function mint<S extends AnySchema>(store: Store<S>, seen: Store<S>, by: Principa
     seen: (id) => seen.graph.has(id) || taken.has(id) || (!limited && ever(id)),
     held: (id) => store.graph.has(id) || taken.has(id) || ever(id),
     limited,
-    me: actingAs(by).id,
+    me: meOf(by),
   });
 }
 

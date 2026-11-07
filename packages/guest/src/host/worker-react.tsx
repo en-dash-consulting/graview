@@ -1,5 +1,5 @@
 import type { AnySchema, KindOfSchema, PagesArrangement, Principal, Store } from "@graview/core";
-import { DefaultDrawnElsewhere, isDefaultView, markBleeds, markPreviews, markReplacesPage, useGoTo, useGraviewIfAny, useHostAssets, useHostFiles, usePlayback, ViewContentHeight, type GoTo, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
+import { DefaultDrawnElsewhere, isDefaultView, markBleeds, markPreviews, markReplacesPage, useGoTo, useGraviewIfAny, useHostAssets, useHostFiles, useHostViewerState, usePlayback, ViewContentHeight, type GoTo, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { setViewPlace } from "@graview/react/drawing";
 import { useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ComponentType, type ReactNode } from "react";
 import type { GuestPlace } from "../protocol.js";
@@ -139,12 +139,13 @@ function WorkerViewMount({ definition: given, store, principal, input, goTo, pla
   const hostFiles = useHostFiles();
   /* Where the app's own images are served (Roadmap f-brand-marks-under-app-base): the definition's word, else the page's host's. */
   const hostAssets = useHostAssets();
+  const viewerState = useHostViewerState();
   /* Where the face that holds the view to a box hears how tall it drew (the Scene's preview): the host measures, the view never says. */
   const told = useContext(ViewContentHeight);
   // The logo a view is handed is fetched from the page's origin: a path under /graview/assets/ is fetched where the host serves it.
   const served = useMemo(() => brandUnder(brand, hostAssets), [brand, hostAssets]);
-  const latest = useRef({ input, goTo, places, arrangement, onFailure, brand: served, hostFiles, hostAssets, told });
-  latest.current = { input, goTo, places, arrangement, onFailure, brand: served, hostFiles, hostAssets, told };
+  const latest = useRef({ input, goTo, places, arrangement, onFailure, brand: served, hostFiles, hostAssets, viewerState, told });
+  latest.current = { input, goTo, places, arrangement, onFailure, brand: served, hostFiles, hostAssets, viewerState, told };
   useEffect(() => {
     const element = holder.current;
     if (!element) return;
@@ -175,6 +176,8 @@ function WorkerViewMount({ definition: given, store, principal, input, goTo, pla
         ...(definition.links ? { links: definition.links } : {}),
         /* What a file dropped on what the view drew is stored through (FR-193): the page's host's files, as they are now. */
         files: () => latest.current.hostFiles,
+        /* What it keeps for its viewer (`graview.mine`). A draft, proposed and not kept, keeps nothing of anybody's: its values go with the visit. */
+        ...(definition.draft ? {} : { viewerState: () => latest.current.viewerState }),
         onContentHeight: (height) => latest.current.told?.(height),
       });
     const stop = untilItArrives(workerChunk, (module) => {

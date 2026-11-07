@@ -2,6 +2,7 @@ import type { AnyMutationDefinition } from "../mutations/types.js";
 import type { AnySchema } from "../schema/schema.js";
 import { humanizeField, withArticle } from "../schema/define-node.js";
 import { listed } from "../capital.js";
+import type { Author, Operation, SeatProfile } from "../ops/types.js";
 import type { Grant, Policy, Principal, Refusal } from "./types.js";
 
 const matches = (allowed: readonly string[] | "*", value: string): boolean =>
@@ -21,6 +22,60 @@ export function actingAs(principal: Principal): Principal {
   const roles = principal.roles === undefined ? theirs : principal.roles.filter((role) => theirs.includes(role));
   return { ...principal, ...(person.id !== undefined ? { id: person.id } : {}), roles };
 }
+
+const PROFILE_ID = /^[\w-]{1,64}$/;
+
+/**
+ * THE PROFILE A PRINCIPAL ACTS AS, delegation read through: a person's, the
+ * one an agent acts for. A shared seat, a visitor, an agent acting for nobody
+ * and a seat with no id have none, and an id that is not one is none.
+ */
+export function profileOf(principal: Author): SeatProfile | undefined {
+  const person = principal.onBehalfOf ?? principal;
+  const profile = person.profile;
+  return profile && person.kind === "human" && person.id !== undefined && !(person as Principal).shared && typeof profile.id === "string" && PROFILE_ID.test(profile.id) && typeof profile.name === "string" ? profile : undefined;
+}
+
+/**
+ * THE RECORD A PROFILE IS, ON ITS ACCOUNT. Its id is the account's and the
+ * profile's together, so a profile is linked to the account's own by what it
+ * is called, and no host's say of a profile — nor a client's it believed —
+ * reaches a member's record or another account's profile. A profile's id
+ * cannot hold a `~`, so two accounts never make the same one.
+ */
+export const profilePersonId = (account: string, profile: Pick<SeatProfile, "id">): string => `${account}~${profile.id}`;
+
+/**
+ * WHO `$me` IS: the id of the principal's own record of the people kind.
+ * The person's, for an agent acting for one (Roadmap f-act-as-me); the
+ * profile's person, where the seat carries a profile.
+ */
+export function meOf(principal: Author): string | undefined {
+  const account = actingAs(principal as Principal).id;
+  const profile = profileOf(principal);
+  return profile && account !== undefined ? profilePersonId(account, profile) : account;
+}
+
+/**
+ * WHETHER AN ID IS THE PRINCIPAL'S OWN, as `self`, `ownEnd`, `own` and `via`
+ * read it: the account's, always, so a profile narrows nothing, and the
+ * person of the profile it carries, which is the account's own and no other's.
+ */
+export function ownsId(principal: Principal, id: string | undefined): boolean {
+  return id !== undefined && (id === actingAs(principal).id || id === meOf(principal));
+}
+
+/**
+ * THE OP THAT MADE A PROFILE'S PERSON, on first use, in the batch that used
+ * it: no act, the author's own record. It stays when that batch is taken
+ * back — later acts stand on the record — so it is no part of what an undo
+ * reads, and a batch with only it left counts as undone.
+ */
+export const madeOwnPerson = (op: Pick<Operation, "author" | "mutation" | "primitives">): boolean => {
+  if (op.mutation !== null || op.primitives.length !== 1 || !profileOf(op.author)) return false;
+  const [made] = op.primitives;
+  return made!.op === "add-node" && made!.node.id === meOf(op.author);
+};
 
 /**
  * THE HOST'S OWN WORK HAS A SEAT (FR-17). A template's setup, a seed, a
@@ -164,10 +219,10 @@ export function permits(
       if (kind === undefined || !grant.kinds.includes(kind)) continue;
     }
     // "You, on yours": a self grant needs the subject to be the principal.
-    if (grant.self && (subjectId === undefined || principal.id === undefined || subjectId !== principal.id)) continue;
+    if (grant.self && !ownsId(principal, subjectId)) continue;
     // And an own-end grant every record at the far end of the link (Roadmap f-own-end-grants).
     const far = grant.ownEnd ? (ends?.() ?? []) : [principal.id];
-    if (!far.length || far.some((id) => id !== principal.id)) {
+    if (!far.length || far.some((id) => id !== principal.id && !ownsId(principal, id as string))) {
       theirs = true;
       continue;
     }

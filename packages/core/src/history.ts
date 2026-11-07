@@ -164,6 +164,8 @@ export function makerOf(author: Author, me?: Principal): Maker {
   if (kind === "agent") return "agent";
   if (kind !== "human" && kind !== "visitor") return "app";
   if (author.onBehalfOf !== undefined) return "person";
+  // Another profile on the same account is somebody else at the screen: "Mia (Nick)", not "you".
+  if (me?.id !== undefined && author.profile?.id !== me.profile?.id) return "person";
   return author.id === undefined || me?.id === undefined || author.id === me.id ? "you" : "person";
 }
 

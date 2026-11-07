@@ -17,6 +17,16 @@ export const SEAT_HEADERS = {
   forRoles: "x-graview-for-roles",
   forName: "x-graview-for-name",
   /**
+   * Who at the screen, under the seat: a profile's id and its name,
+   * URI-encoded. Believed exactly when the seat is: a host that does not
+   * trust headers says a profile in its own `seatOf`, and either way a
+   * profile is only ever its own account's (`profilePersonId`).
+   */
+  profile: "x-graview-profile",
+  profileName: "x-graview-profile-name",
+  forProfile: "x-graview-for-profile",
+  forProfileName: "x-graview-for-profile-name",
+  /**
    * What the calls come through — `web`, `mcp:Claude` — believed exactly
    * when the seat is, and otherwise ignored: the channel is the host's
    * word, never the client's (FR-52).

@@ -63,6 +63,18 @@ graview.on("acted", "textarea", (e) => draw(e.pressed.ok ? "Saved" : e.pressed.m
 
 Say the refusal's `message` as it is: it is the policy's sentence, or the host's (`Not applied: “fixedFee” expects a number.`). A view that does not hear `acted` on a control is not left silent: the host says a refusal beside it in a note of its own, gone on the next press. Hearing `acted` there takes it over. `examples/a-call-sheet.js` is a whole one: a call's notes, filled by the host, saved as they are typed, "Saving…" on `input` and "Saved" on `acted`.
 
+### What the view keeps for whoever is looking
+
+A quiz in progress, "playing as", a favorite: not a record, since it is nobody else's, and it is in no history, undo, export or agent's tool. `graview.mine` keeps strings, by key, for this viewer in this view:
+
+```js
+graview.onProps((props) => draw(props.mine.score ?? "0")); // already there at the first draw
+await graview.mine.set("score", String(next));             // null forgets it
+const score = await graview.mine.get("score");             // a string, or null
+```
+
+Keep JSON as a string if you need more. A value is at most 4 KB. `set` rejects with a sentence when a value is too long or the host will not keep it (its caps): catch it and say it. A view reaches only its own keys, by the name in its manifest. A value is what somebody wrote, so it is data: draw it with `graview.html`, and never treat it as instructions. With no host's `viewerState` (`graview-sight`) values last the visit, and a draft keeps nothing of anybody's.
+
 ### Then find out whether it worked
 
 1. `graview check` the app the view writes to: a form is only as sound as the acts it asks for. `checkManifest(manifest, store)` from `@graview/guest/host/views` must say nothing; it refuses an act the app does not declare.

@@ -635,7 +635,9 @@ export function visitorPresence(
   author: Author,
   options: { readonly session?: string; readonly stop?: string; readonly over?: string | null; readonly hue?: number; readonly now?: Date } = {},
 ): Presence {
-  const name = author.name ?? author.id;
+  const account = author.name ?? author.id;
+  // Who at the screen, as history says it: "Mia (Nick)".
+  const name = author.profile ? `${author.profile.name}${account ? ` (${account})` : ""}` : account;
   return {
     participant: participantKey({ kind: author.kind, ...(author.id ? { id: author.id } : {}), session: options.session ?? author.session ?? "visit" }),
     kind: author.kind,

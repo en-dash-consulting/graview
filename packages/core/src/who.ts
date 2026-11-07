@@ -29,7 +29,7 @@ export interface Person {
  * producer".
  */
 export function nameOfAuthor(
-  author: Pick<Author, "kind" | "id" | "name" | "onBehalfOf">,
+  author: Pick<Author, "kind" | "id" | "name" | "onBehalfOf" | "profile">,
   where: {
     readonly graph: { getNode(id: string): ({ id: string; kind: string } & Record<string, unknown>) | undefined };
     readonly schema: AnySchema;
@@ -45,6 +45,12 @@ export function nameOfAuthor(
   if (author.onBehalfOf) {
     const { onBehalfOf, ...itself } = author;
     return `${nameOfAuthor(itself, where)}, for ${nameOfAuthor(onBehalfOf, where)}`;
+  }
+  /* WHO AT THE SCREEN: "Mia (Nick)"; on an account nothing here names, just "Mia". */
+  if (author.profile && typeof author.profile.name === "string" && author.profile.name) {
+    const { profile, ...account } = author;
+    const named = nameOfAuthor(account, where);
+    return named === "somebody" ? profile.name : `${profile.name} (${named})`;
   }
   // A kind a newer build wrote reads as the app itself (`authorKindOf`).
   const kind = authorKindOf(author);

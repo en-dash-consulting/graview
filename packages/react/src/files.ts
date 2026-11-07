@@ -1,4 +1,4 @@
-import type { HostFiles } from "@graview/core";
+import type { HostFiles, ViewerState } from "@graview/core";
 import { createContext, useContext } from "react";
 
 /**
@@ -24,3 +24,7 @@ export const HostAssetsContext = createContext<((path: string) => string) | unde
 
 /** Where the host serves an app's own images, or undefined where it serves them as their paths say. */
 export const useHostAssets = (): ((path: string) => string) | undefined => useContext(HostAssetsContext);
+
+/** Where a worker view's `graview.mine` is kept (the host's `viewerState`). Without one, for the visit. */
+export const HostViewerStateContext = createContext<ViewerState | undefined>(undefined);
+export const useHostViewerState = (): ViewerState | undefined => useContext(HostViewerStateContext);
