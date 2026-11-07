@@ -214,6 +214,34 @@ export function redact(ops: readonly Operation[], seeing: SeatLens | ((id: strin
   // A seat from whom nothing is kept is served the log as it is (FR-67).
   if (given.hides?.() === false) return [...ops];
   const lens = given.pin?.() ?? given;
+  return undoesFollow(judgedOps(ops, lens), lens);
+}
+
+/**
+ * AN UNDO OF WHAT A SEAT MAY NOT SEE IS WITHHELD WITH IT: its sentence quotes
+ * what it took back. Asked of the store's own log, down the chain, so a slice
+ * (a socket's push, a poll) answers as the whole log does; one whose target
+ * the log no longer holds cannot be vouched for, so its sentence goes too.
+ */
+function undoesFollow(served: readonly Operation[], lens: SeatLens): Operation[] {
+  let byId: Map<string, Operation> | undefined;
+  const kept = (op: Operation): boolean => {
+    const log = lens.timeline?.log.all();
+    if (!log) return false;
+    byId ??= new Map(log.map((one) => [one.id, one]));
+    for (let at = op.undoes; at !== undefined; ) {
+      const target = byId.get(at);
+      if (!target) return true;
+      if (judgedOps([target], lens)[0]!.withheld) return true;
+      at = target.undoes;
+    }
+    return false;
+  };
+  return served.map((op) => (op.undoes === undefined || op.withheld || !kept(op) ? op : withhold(op, lens, op.primitives)));
+}
+
+/** The ops as this seat is served each on its own. */
+function judgedOps(ops: readonly Operation[], lens: SeatLens): Operation[] {
   if (lens.redact) return lens.redact(ops);
   /*
    * ALONG THE STORE'S HISTORY, when the lens knows it: each primitive judged

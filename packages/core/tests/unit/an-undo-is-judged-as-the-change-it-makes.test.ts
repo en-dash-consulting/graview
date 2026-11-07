@@ -103,12 +103,15 @@ describe("a change that changed nothing", () => {
     suggest(store, [{ name: "publish", args: { id: "n4", label: "Another" } }], { author: actor, lineage: { basis: "a guess", confidence: 0.4 } } as never);
     const waiting = suggestions(store, guest);
     expect(waiting.length).toBe(1);
-    expect(store.mayUndo(waiting[0]!.batch, guest).ok).toBe(true);
+    // Who may not make the change does not decide it for everyone: they have a vote.
+    expect(store.mayUndo(waiting[0]!.batch, guest).ok).toBe(false);
     // A guest who may not make the change is heard rather than refused: their Decline is a vote against it (Roadmap f-suggestion-votes), and it waits on.
     expect(declineSuggestion(store, waiting[0]!.id, { author: guest }).voted).toBe("against");
     expect(suggestions(store, guest).map((one) => one.tally)).toEqual([{ for: 0, against: 1, mine: "against" }]);
-    // The undo itself is still anybody's who sees it: taken back, it waits no longer.
-    store.undo(waiting[0]!.batch, { author: guest });
+    expect(() => store.undo(waiting[0]!.batch, { author: guest })).toThrow();
+    expect(suggestions(store, guest).length).toBe(1);
+    // Its maker takes it back, and it waits no longer.
+    store.undo(waiting[0]!.batch, { author: actor });
     expect(suggestions(store, guest).length).toBe(0);
   });
 });

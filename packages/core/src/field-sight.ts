@@ -154,7 +154,12 @@ function fieldLens(base: SeatLens, store: Judged, principal: Principal): SeatLen
 
 /** Whether an op adds or removes a record some of whose fields the seat may not see, or writes such a field. */
 function touchesKept(op: Operation, lens: SeatLens): boolean {
-  return op.primitives.some((primitive) => {
+  const asks = (op.suggests ?? []).some((call) => {
+    const args = call.args as Record<string, unknown>;
+    const kept = typeof args["id"] === "string" ? keptOf(lens, args["id"]) : undefined;
+    return kept !== undefined && Object.keys(args).some((key) => key !== "id" && kept(key));
+  });
+  return asks || op.primitives.some((primitive) => {
     if (primitive.op === "add-node" || primitive.op === "remove-node") return lens.kept!(primitive.node) !== undefined;
     if (primitive.op !== "patch-node" && primitive.op !== "splice-text") return false;
     const kept = keptOf(lens, primitive.id);
