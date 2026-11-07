@@ -237,6 +237,7 @@ export {
   meOf,
   profileOf,
   profilePersonId,
+  withValidProfile,
   isSystem,
   permits,
   permittedMutations,

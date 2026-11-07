@@ -176,8 +176,8 @@ function WorkerViewMount({ definition: given, store, principal, input, goTo, pla
         ...(definition.links ? { links: definition.links } : {}),
         /* What a file dropped on what the view drew is stored through (FR-193): the page's host's files, as they are now. */
         files: () => latest.current.hostFiles,
-        /* What it keeps for its viewer (`graview.mine`). A draft, proposed and not kept, keeps nothing of anybody's: its values go with the visit. */
-        ...(definition.draft ? {} : { viewerState: () => latest.current.viewerState }),
+        /* What it keeps for its viewer (`graview.mine`). A draft, proposed and not kept, keeps nothing of anybody's. */
+        ...(definition.draft ? { draft: true } : { viewerState: () => latest.current.viewerState }),
         onContentHeight: (height) => latest.current.told?.(height),
       });
     const stop = untilItArrives(workerChunk, (module) => {

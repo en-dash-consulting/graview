@@ -24,36 +24,58 @@ export function actingAs(principal: Principal): Principal {
 }
 
 const PROFILE_ID = /^[\w-]{1,64}$/;
+const MOST_PROFILE_NAME = 200;
 
 /**
  * THE PROFILE A PRINCIPAL ACTS AS, delegation read through: a person's, the
- * one an agent acts for. A shared seat, a visitor, an agent acting for nobody
- * and a seat with no id have none, and an id that is not one is none.
+ * one an agent acts for, its id checked and its name trimmed and held to 200
+ * characters. A shared seat, a visitor, an agent acting for nobody, a seat with
+ * no id or one holding a `~` have none, and a bad id or an empty name is none.
  */
 export function profileOf(principal: Author): SeatProfile | undefined {
   const person = principal.onBehalfOf ?? principal;
   const profile = person.profile;
-  return profile && person.kind === "human" && person.id !== undefined && !(person as Principal).shared && typeof profile.id === "string" && PROFILE_ID.test(profile.id) && typeof profile.name === "string" ? profile : undefined;
+  if (!profile || person.kind !== "human" || person.id === undefined || person.id.includes("~") || (person as Principal).shared) return undefined;
+  if (typeof profile.id !== "string" || !PROFILE_ID.test(profile.id) || typeof profile.name !== "string") return undefined;
+  const name = profile.name.trim().slice(0, MOST_PROFILE_NAME);
+  return name ? { id: profile.id, name } : undefined;
+}
+
+/**
+ * A SEAT WITH ITS PROFILE AS IT IS READ: what `profileOf` says of it and
+ * nothing else a host or a header hung on it, and none where it is none.
+ * What is kept on an op. The seat itself when there is nothing to change.
+ */
+export function withValidProfile<A extends Author>(seat: A): A {
+  const person = seat.onBehalfOf && withValidProfile(seat.onBehalfOf);
+  if (!seat.profile && person === seat.onBehalfOf) return seat;
+  const { profile: _given, ...rest } = seat;
+  const own = person ? undefined : profileOf(seat);
+  return { ...rest, ...(person ? { onBehalfOf: person } : {}), ...(own ? { profile: own } : {}) } as unknown as A;
 }
 
 /**
  * THE RECORD A PROFILE IS, ON ITS ACCOUNT. Its id is the account's and the
  * profile's together, so a profile is linked to the account's own by what it
  * is called, and no host's say of a profile — nor a client's it believed —
- * reaches a member's record or another account's profile. A profile's id
- * cannot hold a `~`, so two accounts never make the same one.
+ * reaches a member's record or another account's profile. An id with a `~` is
+ * this and nothing else: a profile's id cannot hold one, a record cannot be
+ * asked for under one (`compileMutation`), and an account whose id holds one
+ * is nobody's person (`meOf`).
  */
 export const profilePersonId = (account: string, profile: Pick<SeatProfile, "id">): string => `${account}~${profile.id}`;
 
 /**
  * WHO `$me` IS: the id of the principal's own record of the people kind.
  * The person's, for an agent acting for one (Roadmap f-act-as-me); the
- * profile's person, where the seat carries a profile.
+ * profile's person, where the seat carries a profile; nobody, for a seat whose
+ * own id reads as a profile's person.
  */
 export function meOf(principal: Author): string | undefined {
   const account = actingAs(principal as Principal).id;
+  if (account === undefined || account.includes("~")) return undefined;
   const profile = profileOf(principal);
-  return profile && account !== undefined ? profilePersonId(account, profile) : account;
+  return profile ? profilePersonId(account, profile) : account;
 }
 
 /**
@@ -62,7 +84,10 @@ export function meOf(principal: Author): string | undefined {
  * person of the profile it carries, which is the account's own and no other's.
  */
 export function ownsId(principal: Principal, id: string | undefined): boolean {
-  return id !== undefined && (id === actingAs(principal).id || id === meOf(principal));
+  if (id === undefined) return false;
+  const account = actingAs(principal).id;
+  if (account === undefined || account.includes("~")) return false;
+  return id === account || (id.includes("~") && id === meOf(principal));
 }
 
 /**
@@ -221,10 +246,12 @@ export function permits(
     // "You, on yours": a self grant needs the subject to be the principal.
     if (grant.self && !ownsId(principal, subjectId)) continue;
     // And an own-end grant every record at the far end of the link (Roadmap f-own-end-grants).
-    const far = grant.ownEnd ? (ends?.() ?? []) : [principal.id];
-    if (!far.length || far.some((id) => id !== principal.id && !ownsId(principal, id as string))) {
-      theirs = true;
-      continue;
+    if (grant.ownEnd) {
+      const far = ends?.() ?? [];
+      if (!far.length || far.some((id) => !ownsId(principal, id as string))) {
+        theirs = true;
+        continue;
+      }
     }
     return { ok: true };
   }

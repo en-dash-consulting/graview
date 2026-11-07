@@ -226,26 +226,29 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
     }
   };
 
+  /* Kept as the runtime found it: a view's code cannot swap what a refusal is said with. */
+  const Refused = Error;
   /* What `graview.mine` has asked and not yet heard. */
   const asked = new Map<number, (answer: Extract<HostMessage, { type: "mine-answer" }>) => void>();
   let askedLast = 0;
   const ask = (op: "get" | "set", key: string, value?: string | null) =>
-    new Promise<Extract<HostMessage, { type: "mine-answer" }>>((resolve) => {
+    new Promise<Extract<HostMessage, { type: "mine-answer" }>>((resolve, reject) => {
       const id = ++askedLast;
-      asked.set(id, resolve);
-      io.send({ type: "mine", id, op, key, ...(op === "set" ? { value: value ?? null } : {}) });
+      asked.set(id, (answer) => (answer.ok ? resolve(answer) : reject(new Refused(answer.sentence ?? "This value was not kept."))));
+      /* The value as the view gave it, `undefined` too: the host refuses what is not a string or null. */
+      io.send({ type: "mine", id, op, key, ...(op === "set" ? { value: value as string | null } : {}) });
     });
-  /* Kept as the runtime found it: a view's code cannot swap what a refusal is said with. */
-  const Refused = Error;
+  /* Heard by whoever awaits it; a view that does not is told in its console by the host, and no rejection goes unhandled to stop a run. */
+  const said = <T,>(answer: Promise<T>): Promise<T> => {
+    answer.catch(() => undefined);
+    return answer;
+  };
   const mine = Object.freeze({
-    get: (key: string) => ask("get", key).then((answer) => (typeof answer.value === "string" ? answer.value : null)),
+    get(key: string) {
+      return said(ask("get", key).then((answer) => (typeof answer.value === "string" ? answer.value : null)));
+    },
     set(key: string, value: string | null) {
-      const kept = ask("set", key, value).then((answer) => {
-        if (!answer.ok) throw new Refused(answer.sentence ?? "This value was not kept.");
-      });
-      /* Heard by whoever awaits it; a view that does not is told in its console by the host, and no rejection goes unhandled to stop a run. */
-      kept.catch(() => undefined);
-      return kept;
+      return said(ask("set", key, value).then(() => undefined));
     },
   });
 

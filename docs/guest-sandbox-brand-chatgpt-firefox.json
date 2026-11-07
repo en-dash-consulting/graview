@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-24T04:03:10.468Z",
+  "at": "2026-11-07T06:05:44.598Z",
   "transport": "brand",
   "engine": "firefox",
   "policy": {
@@ -19,6 +19,16 @@
         ],
         "viewFont": "Georgia, \"Times New Roman\", serif",
         "viewRadius": "4px",
+        "sheets": [
+          "data-graview-region",
+          "data-graview-view-theme",
+          "data-graview-view-style"
+        ],
+        "themeSheet": ".mast h2 { letter-spacing: 0.25em; padding: 40px; text-transform: uppercase; }",
+        "letterSpacing": "6px",
+        "transform": "uppercase",
+        "padding": "4px",
+        "motion": "fade",
         "radiusSaid": "4px",
         "pushes": 2,
         "appHeadingFont": "Georgia, \"Times New Roman\", serif",
@@ -55,6 +65,25 @@
         "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My"
       }
     },
+    "the view is drawn with the app's stylesheet for every view, a sheet of the host's between the region's rules and the view's own: the heading takes its letter-spacing and its capitals, and the view's own padding wins where both say one": {
+      "ok": true,
+      "detail": {
+        "sheets": [
+          "data-graview-region",
+          "data-graview-view-theme",
+          "data-graview-view-style"
+        ],
+        "letterSpacing": "6px",
+        "transform": "uppercase",
+        "padding": "4px"
+      }
+    },
+    "and, the brand asking for it, its root is set to fade between records": {
+      "ok": true,
+      "detail": {
+        "motion": "fade"
+      }
+    },
     "after the brand changes, the view says \"En Dash Consulting\" in the new display face, as the app's wordmark and headings do": {
       "ok": true,
       "detail": {
@@ -66,6 +95,16 @@
         ],
         "viewFont": "\"Courier New\", Courier, monospace",
         "viewRadius": "16px",
+        "sheets": [
+          "data-graview-region",
+          "data-graview-view-theme",
+          "data-graview-view-style"
+        ],
+        "themeSheet": "",
+        "letterSpacing": "normal",
+        "transform": "none",
+        "padding": "4px",
+        "motion": null,
         "radiusSaid": "16px",
         "pushes": 4,
         "appHeadingFont": "\"Courier New\", Courier, monospace",
@@ -106,6 +145,15 @@
         ]
       }
     },
+    "after the brand changes to one with no stylesheet for its views, the host's sheet is empty, the heading's letter-spacing and capitals are the browser's again, and nothing fades": {
+      "ok": true,
+      "detail": {
+        "themeSheet": "",
+        "letterSpacing": "normal",
+        "transform": "none",
+        "motion": null
+      }
+    },
     "the PNG at the page's own address was fetched once, by the host: the view loaded nothing": {
       "ok": true,
       "detail": {
@@ -116,11 +164,11 @@
         "requests": [
           {
             "type": "fetch",
-            "url": "http://localhost:5793/graview/assets/logo.png"
+            "url": "http://localhost:6093/graview/assets/logo.png"
           },
           {
             "type": "image",
-            "url": "http://localhost:5793/graview/assets/logo.png"
+            "url": "http://localhost:6093/graview/assets/logo.png"
           }
         ],
         "appMarks": 1,

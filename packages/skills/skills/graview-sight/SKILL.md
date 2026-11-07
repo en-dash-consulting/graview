@@ -112,7 +112,9 @@ A host says who at a shared screen on the seat: `principal: { ..., profile: { id
 kind made on her first act, its id `<account>~prf_mia`, so it can only ever be
 that account's. It is a name, not a seat: the roles, grants and `seatOf` stay
 the account's, and everything the account could reach it still reaches. History
-says "Mia (Nick)". Without a profile, nothing changes. The seat headers
+says "Mia (Nick)". Without a profile, nothing changes. A person removed stays
+removed, and a kind that requires more than a name has none for a profile
+(`people-unmakeable`): `$me` then refuses, and the act is not offered. The seat headers
 carry it only where a host trusts them; otherwise it is the host's `seatOf`.
 
 What a view keeps for that viewer (`graview.mine`, `graview-view-forms`) goes

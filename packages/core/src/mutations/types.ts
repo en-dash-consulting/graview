@@ -208,6 +208,8 @@ export interface MutationDefinitionSpec<S extends AnySchema, I extends z.ZodType
    * is believed rather than run.
    */
   allowedOn?(graph: GraphReader<NodeOfSchema<S>>, subject: string): boolean;
+  /** A document act that says `$me`: not offered to a seat with no record to be one, and unable to have one (`Store.permittedMutations`). */
+  readonly doneAsMe?: true;
   /** One-line description of a concrete application, for previews and logs. */
   describe?(args: z.infer<I>, graph: GraphReader<NodeOfSchema<S>>): string;
   apply(context: MutationContext<S>, args: z.infer<I>): void;

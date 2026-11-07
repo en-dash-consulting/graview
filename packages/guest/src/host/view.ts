@@ -2,7 +2,7 @@ import { imageRefusedWords } from "./open-judge.js";
 import { keepClicked } from "./clicked.js";
 import { guestPlacesOf } from "./links-words.js";
 import { meOf, type AnySchema, type FileValue, type HostFiles, type PagesArrangement, type Principal, type Store, type ViewerState } from "@graview/core";
-import { createMine, visitOf } from "./mine.js";
+import { createMine, keptForTheVisit, visitOf } from "./mine.js";
 import { storedFilesOf } from "./marks.js";
 import { retryingImport } from "@graview/core/retry";
 import type { GuestDomEvent, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
@@ -258,6 +258,8 @@ export interface MountWorkerViewOptions<S extends AnySchema> {
    * memory.
    */
   readonly viewerState?: () => ViewerState | undefined;
+  /** Code proposed and not kept (FR-187): what it keeps lasts this drawing, whatever a host keeps and whatever this visit has kept. */
+  readonly draft?: boolean;
   /**
    * THE VIEW'S CONTENT HEIGHT (Roadmap f-view-content-height): how tall
    * what it drew is, in CSS pixels, each time that changes — measured by
@@ -944,14 +946,16 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
    * so its first draw has it. By its registered name, the host's to say; a
    * problem says no value. Never the graph's.
    */
-  const hostState = options.viewerState?.();
+  const hostState = options.draft ? undefined : options.viewerState?.();
   const mine = createMine({
     view: manifest.name,
-    state: hostState ?? visitOf(options.store, meOf(options.principal) ?? options.principal.visitorKey ?? ""),
+    /* A draft's is its own, for as long as it is drawn: nothing the view it would replace keeps is its to read or write. */
+    state: hostState ?? (options.draft ? keptForTheVisit() : visitOf(options.store, meOf(options.principal) ?? options.principal.visitorKey ?? "")),
     onRefused: (sentence) => {
       options.onProblem?.(sentence);
-      session && port?.postMessage({ type: "notice", text: sentence });
+      if (session) port?.postMessage({ type: "notice", text: sentence });
     },
+    onLate: () => session?.push(),
   });
   const begin = (source: GuestWorkerSource) => (started = startWorker(window, {
     source,
@@ -1053,17 +1057,9 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   }));
   /* What the worker waits for before it starts: the pictures' host, and what works out computed values, where the view needs them. */
   const waits = manifest.pictures !== undefined || readsComputed(options.store, manifest) || hostState !== undefined;
-  /* A host that is slow to say what the view keeps does not hold its first draw past a second and a half: the view is pushed its values when they come. */
-  const mineOrLate = () => {
-    let late = false;
-    void mine.ready.then(() => {
-      if (late) session?.push();
-    });
-    return Promise.race([mine.ready, new Promise<void>((resolve) => window.setTimeout(() => ((late = true), resolve()), 1_500))]);
-  };
   const ready = (): Promise<unknown> =>
     Promise.all([
-      mineOrLate(),
+      mine.ready,
       picturesReady.catch(() => Promise.reject(new Error("the view's pictures could not be loaded"))),
       computedReady.catch(() => Promise.reject(new Error("the view's computed values could not be worked out"))),
     ]);

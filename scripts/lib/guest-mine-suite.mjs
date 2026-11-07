@@ -50,12 +50,14 @@ const draw = (props) => graview.render(graview.html\`<div data-root="">
   <button id="keep">Keep</button>
   <button id="big">Big</button>
   <button id="read">Read</button>
+  <button id="wipe">Wipe</button>
   <button id="found" data-act="find-rock" data-record="rock:quartz">Found</button>
 </div>\`);
 graview.onProps(draw);
 const tell = (words) => { said = words; draw(graview.props); };
 graview.on("click", "#keep", () => graview.mine.set("score", "9").then(() => tell("kept"), (refused) => tell(refused.message)));
 graview.on("click", "#big", () => graview.mine.set("score", "x".repeat(5000)).then(() => tell("kept"), (refused) => tell(refused.message)));
+graview.on("click", "#wipe", () => graview.mine.set("score", "wiped").then(() => tell("wiped"), (refused) => tell(refused.message)));
 graview.on("click", "#read", () => graview.mine.get("score").then((value) => tell(String(value))));
 `;
 
@@ -125,6 +127,12 @@ if (asked.get("mode") === "embed") {
   };
   window.__mount("quiz");
   window.__mount("other");
+  window.__draft = () => {
+    const holder = document.getElementById("draft") ?? Object.assign(document.createElement("section"), { id: "draft" });
+    document.querySelector("main").appendChild(holder);
+    window.__drafted?.dispose();
+    window.__drafted = mountWorkerView(holder, { manifest: { name: "quiz", title: "quiz", attach: "rock", cardinality: "many", acts: ["find-rock"] }, worker: { source }, store, principal: nick, draft: true });
+  };
   window.__ready = true;
 }
 `,
@@ -219,6 +227,21 @@ if (asked.get("mode") === "embed") {
     await until("quiz", "score", "9");
     const visited = await text("quiz", "score");
     const other = await text("other", "score");
+    await tab.evaluate(() => window.__draft());
+    const inDraft = (id) => tab.evaluate((at) => document.querySelector("#draft [data-worker-view]")?.shadowRoot?.querySelector(`#${at}`)?.textContent, id);
+    await tab.waitForFunction(() => document.querySelector("#draft [data-worker-view]")?.shadowRoot?.querySelector("#wipe"), null, { timeout: 15_000 });
+    const draftSaw = await inDraft("score");
+    await tab.locator("#draft [data-worker-view]").locator("#wipe").click();
+    await tab.waitForFunction(() => document.querySelector("#draft [data-worker-view]")?.shadowRoot?.querySelector("#said")?.textContent === "wiped", null, { timeout: 8_000 }).catch(() => {});
+    /* Gone before the real view is read: both are drawn under one name. */
+    await tab.evaluate(() => {
+      window.__drafted.dispose();
+      window.__mount("quiz");
+    });
+    await until("quiz", "score", "9");
+    const keptThrough = await text("quiz", "score");
+    claim("a draft with no host reads nothing the real view keeps, and what it writes never reaches the real view", draftSaw === "none" && keptThrough === "9", { draftSaw, keptThrough });
+
     await open("mode=direct&host=none");
     const reloaded = await text("quiz", "score");
     const stored = await tab.evaluate(() => JSON.stringify({ ...localStorage, ...sessionStorage }));

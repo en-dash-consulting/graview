@@ -1,4 +1,5 @@
 import { authorKindOf, type Author } from "./ops/types.js";
+import { profileOf } from "./permissions/policy.js";
 import type { Principal } from "./permissions/types.js";
 import { labelOf } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
@@ -47,8 +48,9 @@ export function nameOfAuthor(
     return `${nameOfAuthor(itself, where)}, for ${nameOfAuthor(onBehalfOf, where)}`;
   }
   /* WHO AT THE SCREEN: "Mia (Nick)"; on an account nothing here names, just "Mia". */
-  if (author.profile && typeof author.profile.name === "string" && author.profile.name) {
-    const { profile, ...account } = author;
+  const profile = author.profile && profileOf(author);
+  if (profile) {
+    const { profile: _said, ...account } = author;
     const named = nameOfAuthor(account, where);
     return named === "somebody" ? profile.name : `${profile.name} (${named})`;
   }

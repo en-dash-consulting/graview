@@ -47,7 +47,7 @@ export function visitOf(store: object, viewer: string): ViewerState {
 }
 
 export interface Mine {
-  /** Once the view's values are here: what its first draw waits for. Never rejects. */
+  /** Once the view's values are here, or `readMs` has gone without them: what its first draw waits for. Never rejects. */
   readonly ready: Promise<void>;
   /** The view's values now: `props.mine`. */
   values(): Readonly<Record<string, string>>;
@@ -61,36 +61,71 @@ export interface MineOptions {
   readonly state: ViewerState;
   /** A value was not kept, or the values could not be read, in a sentence for the host's problems. Never holds a value. */
   readonly onRefused?: (sentence: string) => void;
+  /** The values came after `readMs`, so what was drawn was drawn without them. */
+  readonly onLate?: () => void;
+  /** How long a host has to say what the view keeps, before the view is drawn without it and each ask is answered in a sentence. 1 500 ms by default. */
+  readonly readMs?: number;
+  /** How long a host has to answer one write. 10 000 ms by default. */
+  readonly writeMs?: number;
   /** The clock, for tests. */
   readonly now?: () => number;
+}
+
+const UNREAD = "What this view keeps for you could not be read just now.";
+const UNKEPT = "This value could not be kept just now.";
+
+/* A view's writes in the last minute, per place they go and per view: drawn again, it is the same view. */
+const writesAt = new WeakMap<ViewerState, Map<string, number[]>>();
+function writesOf(state: ViewerState, view: string): number[] {
+  const views = writesAt.get(state) ?? new Map<string, number[]>();
+  writesAt.set(state, views);
+  const times = views.get(view) ?? [];
+  views.set(view, times);
+  return times;
 }
 
 /**
  * ONE VIEW'S VALUES, AS ONE DRAWING OF IT HOLDS THEM: read once from where they
  * are kept, handed at draw time, each write judged, then asked of the host in
  * the order it came, and held here only once the host has kept it. A view asks
- * by key alone: which view it is is said here.
+ * by key alone: which view it is is said here. A host that does not answer
+ * holds nobody up: past its time each ask is answered in a sentence.
  */
-export function createMine({ view, state, onRefused, now = Date.now }: MineOptions): Mine {
+export function createMine({ view, state, onRefused, onLate, readMs = 1_500, writeMs = 10_000, now = Date.now }: MineOptions): Mine {
   let held = new Map<string, string>();
+  let read = false;
+  let waited = false;
   const refused = (sentence: string): ViewerStateAnswer => {
     onRefused?.(sentence);
     return { ok: false, sentence };
   };
-  const ready = (async () => {
+  const reading = (async () => {
     try {
       held = new Map(Object.entries(await state.read(view)).filter(([, value]) => typeof value === "string"));
+      read = true;
+      if (waited) onLate?.();
     } catch {
-      onRefused?.(`What this view keeps for you could not be read just now.`);
+      onRefused?.(UNREAD);
     }
   })();
+  const ready = new Promise<void>((resolve) => {
+    const timer = setTimeout(() => {
+      waited = true;
+      if (!read) onRefused?.(UNREAD);
+      resolve();
+    }, readMs);
+    void reading.then(() => {
+      clearTimeout(timer);
+      resolve();
+    });
+  });
   /* Every write after the one before it, and every read after them: a get after a set sees the set. */
   let queue: Promise<unknown> = ready;
-  const writes: number[] = [];
+  const writes = writesOf(state, view);
   return {
     ready,
     values: () => Object.fromEntries(held),
-    get: (key) => queue.then(() => ({ ok: true as const, value: held.get(key) ?? null })),
+    get: (key) => queue.then((): GuestMineAnswer<string | null> => (read ? { ok: true, value: held.get(key) ?? null } : { ok: false, sentence: UNREAD })),
     set(key, value) {
       const refusal = mineRefusal(key, value);
       if (refusal) return Promise.resolve(refused(refusal));
@@ -99,13 +134,17 @@ export function createMine({ view, state, onRefused, now = Date.now }: MineOptio
       if (writes.length >= MINE_WRITES_A_MINUTE) return Promise.resolve(refused("This view asked to keep too many values at once, so this one was not kept."));
       writes.push(at);
       const answer = queue.then(async (): Promise<ViewerStateAnswer> => {
+        if (!read) return refused(`${UNREAD} So this value was not kept.`);
         let said: ViewerStateAnswer | undefined;
+        let timer: ReturnType<typeof setTimeout> | undefined;
         try {
-          said = await state.write(view, key as string, value as string | null);
+          said = await Promise.race([state.write(view, key as string, value as string | null), new Promise<undefined>((resolve) => (timer = setTimeout(() => resolve(undefined), writeMs)))]);
         } catch {
           // A host's own error can name what it holds: the view is told only that it was not kept.
+        } finally {
+          clearTimeout(timer);
         }
-        if (said?.ok !== true) return refused(said && typeof said.sentence === "string" && said.sentence ? said.sentence : "This value could not be kept just now.");
+        if (said?.ok !== true) return refused(said && typeof said.sentence === "string" && said.sentence ? said.sentence : UNKEPT);
         if (value === null) held.delete(key as string);
         else held.set(key as string, value as string);
         return { ok: true };

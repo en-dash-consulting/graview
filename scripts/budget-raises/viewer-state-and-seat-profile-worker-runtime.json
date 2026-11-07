@@ -1,6 +1,6 @@
 {
   "budget": "a worker view's runtime",
-  "minified": 430,
-  "gzipped": 230,
-  "note": "Raised when a worker view came to keep small values for whoever is looking (`graview.mine`, `props.mine`, the host's `ViewerState`, the visit's memory) and a seat to carry a profile (`meOf`, its person made on first use in the store, the seat headers, \"Mia (Nick)\"; Roadmap f-viewer-state-and-me-framework). 430 / 230 more. Measured at 65359 / 22792."
+  "minified": 447,
+  "gzipped": 251,
+  "note": "Raised when a worker view came to keep small values for whoever is looking (`graview.mine`, `props.mine`, the host's `ViewerState`, the visit's memory) and a seat to carry a profile (`meOf`, its person made on first use in the store, what it may not do, the seat headers, \"Mia (Nick)\"; Roadmap f-viewer-state-and-me-framework). 447 / 251 more. Measured at 65376 / 22813."
 }

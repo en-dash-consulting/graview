@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-24T04:00:44.651Z",
+  "at": "2026-11-07T06:04:55.402Z",
   "transport": "open",
   "engine": "firefox",
   "policy": "the app's own page, with no content security policy",
@@ -70,8 +70,8 @@
     "the progress ring turns: its keyframes are drawn and running": {
       "ok": true,
       "detail": {
-        "before": "matrix(-0.38137, 0.924422, -0.924422, -0.38137, 0, 0)",
-        "after": "matrix(-0.988243, -0.152892, 0.152892, -0.988243, 0, 0)"
+        "before": "matrix(-0.258819, 0.965926, -0.965926, -0.258819, 0, 0)",
+        "after": "matrix(-0.996195, -0.0871557, 0.0871557, -0.996195, 0, 0)"
       }
     },
     "after the app's toggle to dark, the same view takes the dark panel, edge and accent": {
@@ -258,6 +258,7 @@
       "detail": [
         "style",
         "style",
+        "style",
         "div",
         "div",
         "div",
@@ -306,7 +307,7 @@
           "href": null,
           "text": "a link out"
         },
-        "url": "http://127.0.0.1:5792/"
+        "url": "http://127.0.0.1:6092/"
       }
     },
     "srcset is not drawn": {
@@ -325,6 +326,7 @@
       "ok": true,
       "detail": {
         "tags": [
+          "style",
           "style",
           "style",
           "div",
@@ -372,6 +374,7 @@
     "<iframe>, <object>, <embed> and <form> are not drawn, and a press on what was drawn submits nothing": {
       "ok": true,
       "detail": [
+        "style",
         "style",
         "style",
         "div",
@@ -1085,7 +1088,7 @@
           "opener": true,
           "referrer": ""
         },
-        "url": "http://127.0.0.1:5792/"
+        "url": "http://127.0.0.1:6092/"
       }
     },
     "the same view run headless refuses the same two links and says each — no address it was handed, a scheme no link takes — and nothing else": {
@@ -1247,7 +1250,7 @@
     "connections": 0
   },
   "requests": [
-    "http://127.0.0.1:5792/",
+    "http://127.0.0.1:6092/",
     "https://cars.example/golf"
   ],
   "passed": true

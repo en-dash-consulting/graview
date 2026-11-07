@@ -1,12 +1,12 @@
 {
-  "at": "2026-10-24T04:00:27.276Z",
+  "at": "2026-11-07T06:04:49.481Z",
   "transport": "worker",
   "engine": "webkit",
   "policy": {
     "name": "chatgpt",
     "csp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://unpkg.com https://pypi.org https://files.pythonhosted.org https://*.oaiusercontent.com https://oaisdmntpreastus.blob.core.windows.net https://threejs.org; worker-src blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://unpkg.com https://pypi.org https://files.pythonhosted.org https://*.oaiusercontent.com https://oaisdmntpreastus.blob.core.windows.net https://threejs.org; style-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://unpkg.com https://pypi.org https://files.pythonhosted.org https://*.oaiusercontent.com https://oaisdmntpreastus.blob.core.windows.net https://threejs.org; style-src-attr 'unsafe-inline'; img-src 'self' data: https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://unpkg.com https://pypi.org https://files.pythonhosted.org https://*.oaiusercontent.com https://oaisdmntpreastus.blob.core.windows.net https://threejs.org; font-src 'self' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://unpkg.com https://pypi.org https://files.pythonhosted.org https://*.oaiusercontent.com https://oaisdmntpreastus.blob.core.windows.net https://threejs.org; connect-src 'self' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://unpkg.com https://pypi.org https://files.pythonhosted.org https://*.oaiusercontent.com https://oaisdmntpreastus.blob.core.windows.net https://threejs.org; media-src 'self' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://unpkg.com https://pypi.org https://files.pythonhosted.org https://*.oaiusercontent.com https://oaisdmntpreastus.blob.core.windows.net https://threejs.org; object-src 'none'; frame-src 'none'; base-uri 'self'",
     "sandbox": "allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms",
-    "widgetOrigin": "http://localhost:5793"
+    "widgetOrigin": "http://localhost:6093"
   },
   "claims": {
     "the card and the hostile guest, built by buildGuestBundle, are classic scripts with nothing to load at run time": {
@@ -454,25 +454,25 @@
     "a guest that spins after ready is stopped as silent within limits.silentMs (1500 ms) and one interval of it": {
       "ok": true,
       "detail": {
-        "spun": 1600,
+        "spun": 1500,
         "failedAt": {
-          "builder": 558,
-          "spinner": 1687
+          "builder": 414.00000000000006,
+          "spinner": 1563
         },
         "drewAt": {
-          "spinner": 87.00000000000001
+          "spinner": 63
         },
         "pulse": {
-          "last": 5021,
-          "longest": 110,
-          "ticks": 39
+          "last": 5090,
+          "longest": 132.00000000000006,
+          "ticks": 38
         },
         "spinnerStopped": true,
         "busyRunning": true,
         "building": {
-          "last": 5021,
-          "longest": 61,
-          "ticks": 7
+          "last": 5090,
+          "longest": 74.99999999999997,
+          "ticks": 4
         },
         "builderStopped": true
       }
@@ -480,9 +480,9 @@
     "the widget's page kept its own timer while a guest spun, never more than 250 ms between 50 ms ticks": {
       "ok": true,
       "detail": {
-        "last": 5021,
-        "longest": 110,
-        "ticks": 39
+        "last": 5090,
+        "longest": 132.00000000000006,
+        "ticks": 38
       }
     },
     "a guest that is busy but yields, for three times silentMs, is kept": {
@@ -511,9 +511,9 @@
           ]
         ],
         "building": {
-          "last": 5021,
-          "longest": 61,
-          "ticks": 7
+          "last": 5090,
+          "longest": 74.99999999999997,
+          "ticks": 4
         },
         "stopped": true
       }

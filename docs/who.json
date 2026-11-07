@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-15T01:33:20.526Z",
+  "at": "2026-11-07T06:06:24.194Z",
   "engine": "chromium",
   "checks": {
     "bSeesAAtTheTasksPlot": {
@@ -103,16 +103,68 @@
       },
       "ok": true
     },
+    "aProfileIsOfferedWhatItsAccountIsOffered": {
+      "sam": [
+        "09:00",
+        "09:15",
+        "Add notes",
+        "Block time for it …",
+        "Change the task …",
+        "Finish it",
+        "Finish it",
+        "Fri, Aug 28 · 4 days ago",
+        "Give it a new date …",
+        "Give it a new date …",
+        "No",
+        "Note why this is here …",
+        "Notify me when this changes",
+        "Pay the deposit",
+        "Show 5 more",
+        "This has to happen first",
+        "Tue",
+        "▾"
+      ],
+      "mia": [
+        "09:00",
+        "09:15",
+        "Add notes",
+        "Block time for it …",
+        "Change the task …",
+        "Finish it",
+        "Finish it",
+        "Fri, Aug 28 · 4 days ago",
+        "Give it a new date …",
+        "Give it a new date …",
+        "No",
+        "Note why this is here …",
+        "Notify me when this changes",
+        "Pay the deposit",
+        "Show 5 more",
+        "This has to happen first",
+        "Tue",
+        "▾"
+      ],
+      "ok": true
+    },
+    "aProfileIsNamedToTheRoomAsThePersonAtTheScreenAndTheirAccount": {
+      "namesOnA": [
+        "Mia (Sam) is here — who and where",
+        "Who is here",
+        "Sam is here. Press to go where they go",
+        "Mia (Sam) is here. Press to go where they go"
+      ],
+      "ok": true
+    },
     "aClosesAndIsGoneWithinTheTtl": {
       "gone": null,
-      "tookMs": 2138,
+      "tookMs": 2046,
       "promisedMs": 4500,
       "ok": true
     },
     "aloneTheBarDrawsNobodyNotEvenYourOtherTab": {
       "scene": null,
       "pages": null,
-      "tookMs": 2139,
+      "tookMs": 2048,
       "ok": true
     },
     "aReaderOnPagesIsSaidWhereTheyAreOnTheOthersBars": {

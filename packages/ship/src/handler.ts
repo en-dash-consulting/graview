@@ -26,6 +26,7 @@ import {
   type KeptViews,
   type KeptViewsMay,
   type VotesOptions,
+  withValidProfile,
 } from "@graview/core";
 import { judgeWithLines } from "@graview/core/lines";
 import { holdTypingRuns, matchSubscriptions } from "@graview/core/subscriptions";
@@ -487,14 +488,14 @@ export function seatFromHeaders(request: Request, { system = false }: { readonly
     const said = header(id);
     return said ? { profile: { id: said, name: decoded(header(name)) ?? "" } } : {};
   };
-  return {
+  return withValidProfile<Principal>({
     kind: (kind && (system ? KINDS : KINDS_BUT_SYSTEM).has(kind) ? kind : "human") as Principal["kind"],
     ...(id ? { id } : {}),
     ...(roles ? { roles } : {}),
     ...(name ? { name } : {}),
     ...profile(SEAT_HEADERS.profile, SEAT_HEADERS.profileName),
     ...(forId ? { onBehalfOf: { kind: "human" as const, id: forId, ...(forRoles ? { roles: forRoles } : {}), ...(forName ? { name: forName } : {}), ...profile(SEAT_HEADERS.forProfile, SEAT_HEADERS.forProfileName) } } : {}),
-  };
+  });
 }
 
 /** A browser on another origin is the ordinary case for an embed. */

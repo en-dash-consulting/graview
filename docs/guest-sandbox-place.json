@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-24T04:00:53.503Z",
+  "at": "2026-11-07T06:05:00.200Z",
   "transport": "place",
   "engine": "chromium",
   "claims": {
@@ -212,13 +212,13 @@
     "graview.navigate to no record and no place stays, and tells the host's problems why, naming the places": {
       "ok": true,
       "detail": [
-        "\"projections\" is no record this viewer may see and is no place of this app: it goes nowhere. Its places: \"the-packages\" (The packages), \"what-we-heard\" (What we heard). Its lists: \"parties\", \"offers\", \"packages\"."
+        "\"projections\" is no record this viewer may see and is no place of this app: it goes nowhere. Its places: \"home\" (Home), \"overview\" (Scene), \"the-packages\" (The packages), \"what-we-heard\" (What we heard). Its lists: \"parties\", \"offers\", \"packages\"."
       ]
     },
     "and says the same in the view's console": {
       "ok": true,
       "detail": [
-        "\"projections\" is no record this viewer may see and is no place of this app: it goes nowhere. Its places: \"the-packages\" (The packages), \"what-we-heard\" (What we heard). Its lists: \"parties\", \"offers\", \"packages\"."
+        "\"projections\" is no record this viewer may see and is no place of this app: it goes nowhere. Its places: \"home\" (Home), \"overview\" (Scene), \"the-packages\" (The packages), \"what-we-heard\" (What we heard). Its lists: \"parties\", \"offers\", \"packages\"."
       ]
     },
     "an https: image on an origin the host lists for the view's images is drawn, asked for with no referrer": {

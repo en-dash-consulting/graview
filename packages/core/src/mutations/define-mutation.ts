@@ -124,6 +124,8 @@ function requestedId(rawArgs: unknown): string | undefined {
   const id = (rawArgs as Record<string, unknown>)["id"];
   if (id === undefined) return undefined;
   if (!validId(id)) throw new GraphError("An id is 1–200 characters with no space", `Got ${JSON.stringify(id)}.`);
+  // A `~` says a profile's person (`profilePersonId`), which only that profile's first act makes.
+  if (id.includes("~")) throw new GraphError("An id cannot hold a ~", "Leave id out and let the act mint one, or ask for one without it.");
   return id;
 }
 
@@ -429,7 +431,7 @@ export function compileMutation<S extends AnySchema>(
       }
       // A client's own guess at the first id (`hint`): taken when free, else minted as ever — never refused.
       const hint = options.hint;
-      if (requested === undefined && !minted.size && validId(hint) && (!prefix || hint.startsWith(`${prefix}:`)) && mayAsk(hint) && !held(hint)) return minted.add(hint), hint;
+      if (requested === undefined && !minted.size && validId(hint) && !hint.includes("~") && (!prefix || hint.startsWith(`${prefix}:`)) && mayAsk(hint) && !held(hint)) return minted.add(hint), hint;
       // A name that quotes a field some sight keeps from a role — an argument, or the record it was worked out from — is not quoted in the id: the kind's name is.
       if (prefix && options.keeps && [args, from ?? {}].some((fields) => quotesKeptField(label, prefix, fields, options.keeps!))) label = prefix;
       const base = prefix ? `${prefix}:${slug(label)}` : slug(label);

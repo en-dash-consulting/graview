@@ -1,0 +1,108 @@
+{
+  "at": "2026-11-07T06:06:56.736Z",
+  "transport": "mine",
+  "engine": "webkit",
+  "claims": {
+    "a view's first draw has what it keeps, from one read of its own name and no ask of its own": {
+      "ok": true,
+      "detail": {
+        "first": "3",
+        "asks": [
+          "read quiz",
+          "read other"
+        ]
+      }
+    },
+    "a view reads only its own values: another view asking the same key reads nothing, and nobody reads the gradebook's": {
+      "ok": true,
+      "detail": {
+        "elsewhere": "none",
+        "asked": "null",
+        "reads": [
+          "quiz",
+          "other"
+        ]
+      }
+    },
+    "what a view keeps goes to the host by the view's name, and is there at draw time when it is drawn again": {
+      "ok": true,
+      "detail": {
+        "after": {
+          "quiz": {
+            "score": "9"
+          },
+          "gradebook": {
+            "score": "A+"
+          }
+        },
+        "again": "9"
+      }
+    },
+    "a value past 4 KB is refused in a sentence the view hears and the host's problems are told, and what stood stands": {
+      "ok": true,
+      "detail": {
+        "big": "A kept value is at most 4 KB, and this one is longer, so it was not kept.",
+        "bigKept": "9",
+        "problems": [
+          "A kept value is at most 4 KB, and this one is longer, so it was not kept."
+        ]
+      }
+    },
+    "a host's refusal reaches the view as the host's own sentence": {
+      "ok": true
+    },
+    "what a view keeps is in no op and no snapshot": {
+      "ok": true,
+      "detail": {
+        "log": 0,
+        "snapshot": "{\"nodes\":[{\"id\":\"user:nick\",\"kind\":\"explorer\",\"name\":\"Nick\"},{\"id\":\"rock:quartz\",\"kind\":\"rock\",\"title\":\"Quartz\"}],\"edges\":[]}"
+      }
+    },
+    "a draft with no host reads nothing the real view keeps, and what it writes never reaches the real view": {
+      "ok": true,
+      "detail": {
+        "draftSaw": "none",
+        "keptThrough": "9"
+      }
+    },
+    "with no host, a view's values last the visit, per view, and are gone with the page, in no browser storage": {
+      "ok": true,
+      "detail": {
+        "fresh": "none",
+        "visited": "9",
+        "other": "none",
+        "reloaded": "none",
+        "stored": "{}"
+      }
+    },
+    "through mount, a view drawn for a seat with a profile is told who is looking, and hands what it keeps from the host": {
+      "ok": true,
+      "detail": {
+        "me": "Mia",
+        "score": "3"
+      }
+    },
+    "a press on an act done as $me links the profile's person, made once on that first use, and history says Mia (Nick)": {
+      "ok": true,
+      "detail": {
+        "beforePress": false,
+        "made": {
+          "node": {
+            "name": "Mia",
+            "id": "user:nick~prf_mia",
+            "kind": "explorer"
+          },
+          "links": [
+            "user:nick~prf_mia"
+          ],
+          "said": [
+            "Mia (Nick)"
+          ],
+          "makes": 1
+        }
+      }
+    }
+  },
+  "pageErrors": [],
+  "passed": true
+}
