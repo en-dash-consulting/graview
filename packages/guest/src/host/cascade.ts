@@ -23,11 +23,10 @@ import { tokenize } from "@graview/core/css";
  * that sets one on its own element. Neither sheet can write `@layer` itself
  * (the open kit refuses it), so the order is the host's.
  *
- * THE WRAPPER TRUSTS NO JUDGE. A sheet goes inside a block here, so one `}`
- * in it would close the layer and leave the rest as CSS nobody judged, where
- * a stray `}` at a sheet's top is harmless. The sanitizer refuses that
- * (`readsOtherwise`, core); this reads the text again, as a browser would, and
- * draws nothing of a sheet that is not whole rules with nothing that fetches.
+ * THE WRAPPER ASKS FOR ITSELF. A sheet goes inside a block here, so it must
+ * read as whole rules. The sanitizer keeps only that (`readsOtherwise`, core);
+ * this reads the text again, as a browser would, and draws nothing of a sheet
+ * that is not whole rules with nothing that fetches.
  */
 export const VIEW_LAYERS = "@layer graview-motion, graview-region, graview-view, graview-theme;";
 

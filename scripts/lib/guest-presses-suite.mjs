@@ -305,7 +305,7 @@ window.__handle.drawn().then(() => { window.__ready = true; });
 
   try {
     const context = await browser.newContext({ viewport: { width: 1024, height: 800 }, colorScheme: "light", acceptDownloads: true });
-    /* Every request for the attacker's address, from anywhere in this context, recorded and refused. */
+    /* Every request for the sheets' address, from anywhere in this context, recorded and refused. */
     const leaked = [];
     await context.route("https://evil.test/**", (route) => {
       leaked.push(route.request().url());
@@ -326,7 +326,7 @@ window.__handle.drawn().then(() => { window.__ready = true; });
     await tab.evaluate(() => window.__host.control());
     await tab.waitForFunction(() => true);
     for (let i = 0; i < 40 && leaked.length === 0; i += 1) await tab.waitForTimeout(50);
-    claim("and the same text left unjudged in a layer does ask for it here, so this engine would have shown a leak", leaked.length >= 1 && leaked.every((url) => url === "https://evil.test/control?d=SECRET"), { leaked });
+    claim("and the same text left unjudged in a layer does ask for it here, so this engine would have shown one", leaked.length >= 1 && leaked.every((url) => url === "https://evil.test/control?d=SECRET"), { leaked });
     const past = await tab.evaluate(() => getComputedStyle(document.querySelector("#past [data-worker-view]").shadowRoot.querySelector("b")).color);
     claim("a view's }b{color:rgb(9,9,9)} gets no rule past the theme: the element stays the theme's color", past === "rgb(200, 30, 30)", { past });
 

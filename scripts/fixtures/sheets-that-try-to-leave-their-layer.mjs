@@ -1,12 +1,11 @@
 /*
- * STYLESHEETS THAT TRY TO LEAVE WHATEVER HOLDS THEM (Roadmap
- * f-view-authoring-friction-2026-11). Each is harmless where it stands alone
- * — a stray `}` at the top of a sheet is junk in a prelude — and, put inside
- * a block, closes that block, so what follows is CSS nobody judged. Shared by
- * the sanitizer's test, the wrapper's test and the guest harness.
+ * STYLESHEETS A JUDGE REFUSES, AND ONES IT KEEPS (Roadmap
+ * f-view-authoring-friction-2026-11). What it keeps reads the same wherever it
+ * is put. Shared by the sanitizer's test, the wrapper's test and the guest
+ * harness.
  *
- * `fetches` is the address the sheet would ask for if it got out: the harness
- * holds that nothing asks for it, in every engine.
+ * `fetches` is an address in the sheet: the harness holds that nothing asks
+ * for it, in every engine.
  */
 const out = (tag) => `https://evil.test/${tag}?d=SECRET`;
 

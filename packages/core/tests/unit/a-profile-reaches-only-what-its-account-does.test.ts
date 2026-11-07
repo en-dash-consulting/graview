@@ -6,7 +6,7 @@ import { bindSchema, createSchema, defineNode, meOf, nameOfAuthor, profileOf, pr
 
 /**
  * WHAT A PROFILE MAY NOT DO (Roadmap f-viewer-state-and-me-framework). A
- * person made on first use must not be a way past a grant, a record of its
+ * person made on first use is held to the grants too, a record of its
  * id must be nobody else's to make, a profile must not narrow what its
  * account may do, and a seat's profile is a host's word held to its shape.
  */

@@ -5,13 +5,7 @@ import { sanitizeStylesheet, tokenize } from "../../src/css.js";
 import { brandFindings } from "../../src/document/brand-check.js";
 
 /**
- * A JUDGED STYLESHEET CANNOT CLOSE WHAT HOLDS IT. A stray `}` in a prelude is
- * junk at the top of a sheet, so nothing fetched on the page, and the judges
- * let it through: `@media }div{background-image:url("…");z{}}` was kept with
- * nothing refused, its block judged as rules with a long selector. Anything
- * that puts that output inside a block — a cascade layer, a host's own
- * `@media` — has the `}` close its block and the rest read as CSS nobody
- * judged, a fetch of any address among it. What a judge passes must read the
+ * A JUDGED STYLESHEET CANNOT CLOSE WHAT HOLDS IT. What a judge passes reads the
  * same wherever it is put, so a condition and a selector hold no `}`, `;`,
  * at-keyword, `<!--`, `-->`, lone backslash, or unmatched bracket.
  */

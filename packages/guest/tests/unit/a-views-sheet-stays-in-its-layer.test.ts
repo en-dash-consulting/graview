@@ -8,12 +8,10 @@ import { createOpenDrawing, REGION_CSS } from "../../src/host/open-draw.js";
 
 /**
  * A VIEW'S SHEET STAYS IN ITS LAYER. The host writes each sheet inside a
- * cascade layer of its own, and a `}` the sanitizer let through closed the
- * layer: the rest was CSS nobody judged, which fetched any address in
- * Chromium, WebKit and Firefox and could write a rule in the host's first
- * layer. The judges refuse it now (`a-judged-stylesheet-cannot-close-what-
- * holds-it`, core), and the wrapper trusts no judge: `inLayer` reads what it
- * is given, and draws nothing of a sheet that does not read as whole rules.
+ * cascade layer of its own. The judges keep only what reads the same there
+ * (`a-judged-stylesheet-cannot-close-what-holds-it`, core), and the wrapper
+ * asks for itself: `inLayer` reads what it is given, and draws nothing of a
+ * sheet that does not read as whole rules.
  */
 const SHEETS = LEAVING as { name: string; css: string }[];
 
