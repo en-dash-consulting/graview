@@ -121,6 +121,44 @@ describe("the press check, on a control already in its state", () => {
     });
   }
 
+  /** So many controls the view's code hears, each drawing something new, then `then`; `handlers` hears what `then` draws. */
+  const pastTheBudget = (before: number, then: string, handlers: string) => `
+let clicks = 0;
+let filter = "all";
+const draw = () => graview.render(graview.html\`<div>\${Array.from({ length: ${before} }, (_, at) => graview.html\`<button id="b\${at}" class="busy" data-key="b\${at}">Busy \${at}</button>\`)}</div>${then}<p>\${clicks}</p>\`);
+graview.onProps(() => draw());
+graview.on("click", ".busy", () => { clicks += 1; draw(); });
+${handlers}
+`;
+  const CHIPS_AT_THE_LIMIT = `<div><button id="all" aria-pressed="\${filter === "all" ? "true" : "false"}">All</button><button id="igneous" aria-pressed="\${filter === "igneous" ? "true" : "false"}">Igneous</button></div>`;
+  const CHIP_HANDLERS = `graview.on("click", "#all", () => { filter = "all"; draw(); }); graview.on("click", "#igneous", () => { filter = "igneous"; draw(); });`;
+
+  it("reports a real chip as not pressed where the budget leaves it no press to prove its sibling, never as failing", async () => {
+    /* 23 others, then All, the 24th press: it changes nothing, and no press is left for Igneous. */
+    const { presses } = await checked(pastTheBudget(23, CHIPS_AT_THE_LIMIT, CHIP_HANDLERS));
+    const said = Object.fromEntries((presses?.controls ?? []).map((one) => [one.control, one]));
+    expect(said["“All”"]).toMatchObject({ ok: true, says: "“All” was not pressed: the check presses 24 controls the view's code hears, and this is past them." });
+    expect(presses?.ok).toBe(true);
+  });
+
+  it("does the same where the budget runs out between a sibling that moved nothing and the one that would", async () => {
+    const markup = `<div><button id="all" aria-pressed="\${filter === "all" ? "true" : "false"}">All</button><button id="decoy" aria-pressed="false">Decoy</button><button id="igneous" aria-pressed="\${filter === "igneous" ? "true" : "false"}">Igneous</button></div>`;
+    const { presses } = await checked(pastTheBudget(22, markup, `${CHIP_HANDLERS} graview.on("click", "#decoy", () => { clicks += 1; draw(); });`));
+    const all = presses?.controls.find((one) => one.control === "“All”");
+    expect(all).toMatchObject({ ok: true, says: expect.stringContaining("was not pressed") });
+    expect(presses?.problems).toEqual([]);
+  });
+
+  it("still fails a dead Save the budget has no bearing on: no sibling it could have pressed would prove it", async () => {
+    const { presses } = await checked(pastTheBudget(23, `<div><button id="x" aria-pressed="true">Save</button><span id="y">Words</span></div>`, `graview.on("click", "#x", () => draw());`));
+    expect(presses?.controls.find((one) => one.control === "“Save”")).toMatchObject({ ok: false, says: expect.stringContaining("does nothing when pressed") });
+  });
+
+  it("still fails a dead Save within the budget, beside a working Cancel, in a view of many controls", async () => {
+    const { presses } = await checked(pastTheBudget(20, `<div><button id="x" aria-pressed="true">Save</button><button id="y" aria-pressed="false">Cancel</button></div>`, `graview.on("click", "#x", () => draw()); graview.on("click", "#y", () => { clicks += 1; draw(); });`));
+    expect(presses?.controls.find((one) => one.control === "“Save”")?.ok).toBe(false);
+  });
+
   it("says why without telling an author what to add beside it", async () => {
     const said = await saidOf(deadBeside(`<div><button id="x" aria-pressed="true">Save</button><button id="y" aria-pressed="false">Cancel</button></div>`));
     expect(said["“Save”"]?.says).toBe("“Save” does nothing when pressed: it says aria-pressed=\"true\", and no press on this view takes that from it.");

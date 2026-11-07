@@ -359,6 +359,8 @@ export async function checkPresses<S extends AnySchema>(context: PressCheckConte
     const state = asked.length === 0 && went.length === 0 && !redrew ? stateOf(element) : undefined;
     /* Whether a press on a sibling takes this control's state: asking for an act counts, and for `aria-current` going anywhere does, either of which a run cannot draw the end of. */
     let inASet = false;
+    /* The budget ran out with a sibling still to press: unproven either way, so said as any control past the budget is. A view is never refused over a counting limit. */
+    let unproven = false;
     if (state) {
       for (const mate of setMates(element, state.name, root)) {
         const current = state.name === "aria-current";
@@ -367,7 +369,11 @@ export async function checkPresses<S extends AnySchema>(context: PressCheckConte
           break;
         }
         const mateId = drawn.idOf(mate);
-        if (mateId === undefined || !heardAt(mate) || runs >= maxRuns) continue;
+        if (mateId === undefined || !heardAt(mate)) continue;
+        if (runs >= maxRuns) {
+          unproven = true;
+          break;
+        }
         runs += 1;
         const moved = await context.rerun(mateId);
         const at = moved.ok ? moved.transcript.pressed : undefined;
@@ -381,6 +387,7 @@ export async function checkPresses<S extends AnySchema>(context: PressCheckConte
     }
     if (wrong.length > 0) found(element, "code", false, `${nameOf(element)}, pressed: ${wrong.join("; ")}`);
     else if (state && inASet) found(element, "code", true, `${nameOf(element)} is already in the state it shows (${state.name}="${state.value}"): pressed, it leaves the view as it is.`);
+    else if (state && unproven) found(element, "code", true, `${nameOf(element)} was not pressed: the check presses ${maxRuns} controls the view's code hears, and this is past them.`);
     else if (state) found(element, "code", false, `${nameOf(element)} does nothing when pressed: it says ${state.name}="${state.value}", and no press on this view takes that from it.`);
     else if (asked.length === 0 && went.length === 0 && !redrew) found(element, "code", false, `${nameOf(element)} does nothing when pressed: the view hears the click, and asks for no act, goes nowhere and draws nothing new.`);
     else found(element, "code", true, `${nameOf(element)}, pressed, ${[...(asked.length > 0 ? [`asks for ${asked.map((one) => `“${one.name}”`).join(", ")}`] : []), ...(went.length > 0 ? ["goes where it says"] : []), ...(redrew ? ["draws again"] : [])].join(" and ")}.`);
