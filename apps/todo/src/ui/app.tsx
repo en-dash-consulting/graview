@@ -56,13 +56,16 @@ export const SEATS = [
 
 /**
  * Which seat the app opens in. `?as=user-sam` is how a harness, a
- * screenshot or a link sits somebody down somewhere other than the front.
+ * screenshot or a link sits somebody down somewhere other than the front;
+ * `&profile=Mia` under one sign-in, as a host's own switch would say it.
  */
 export function openingSeat(): Principal {
   if (typeof window !== "undefined") {
-    const asked = new URLSearchParams(window.location.search).get("as");
+    const params = new URLSearchParams(window.location.search);
+    const asked = params.get("as");
     const found = SEATS.find((seat) => seat.principal.id === asked);
-    if (found) return found.principal;
+    const profile = params.get("profile");
+    if (found) return profile ? { ...found.principal, profile: { id: `prf_${profile.toLowerCase()}`, name: profile } } : found.principal;
   }
   return SEATS[0].principal;
 }

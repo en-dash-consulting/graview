@@ -1,7 +1,7 @@
 import type { GraphEdge } from "../graph/types.js";
 import type { Epoch, LogReading } from "../ops/log.js";
 import type { Operation } from "../ops/types.js";
-import { actingAs, grantsTo, isSystem } from "./policy.js";
+import { actingAs, grantsTo, isSystem, ownsId } from "./policy.js";
 import type { SeatLens } from "../ops/withheld.js";
 import type { Policy, Principal, Sight } from "./types.js";
 
@@ -294,9 +294,9 @@ export function sees(
     const me = principal.id;
     if (me === undefined) return false;
     // `via` reads the one relation, at either end, and nothing else (Roadmap: visibility scoped by relation).
-    const mine = (other: { readonly id: string }) => other.id === me;
+    const mine = (other: { readonly id: string }) => ownsId(principal, other.id);
     return sight.via
       ? graph.out(node.id, sight.via).some(mine) || graph.in(node.id, sight.via).some(mine)
-      : node.id === me || graph.out(node.id).some(mine) || graph.in(node.id).some(mine) || records?.creatorOf(node.id) === me;
+      : mine(node) || graph.out(node.id).some(mine) || graph.in(node.id).some(mine) || records?.creatorOf(node.id) === me;
   });
 }

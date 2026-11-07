@@ -1,5 +1,6 @@
 import { GraphError } from "../graph/graph.js";
 import type { Primitive } from "../graph/primitives.js";
+import { madeOwnPerson } from "../permissions/policy.js";
 import { PUBLISHING } from "../publish.js";
 import { TYPING } from "../text/typing-hook.js";
 import { inverseOf } from "./inverse.js";
@@ -70,7 +71,7 @@ export function checkUndo(
   const undone = log.undoneIds();
   const ops = log
     .all()
-    .filter((op) => targets.has(op.batch) && !undone.has(op.id));
+    .filter((op) => targets.has(op.batch) && !undone.has(op.id) && !madeOwnPerson(op));
 
   /*
    * NOT BEHIND THE UNDO HORIZON (FR-23). A compacted log holds nothing

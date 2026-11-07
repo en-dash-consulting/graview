@@ -1,5 +1,5 @@
 import type { HistoryHost } from "@graview/core/history";
-import { assetSrc, faviconHref, type Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type KeptViews, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal, type SignIn, type SubscriptionStore, type DismissalStore } from "@graview/core";
+import { assetSrc, faviconHref, type Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type KeptViews, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal, type SignIn, type ViewerState, type SubscriptionStore, type DismissalStore } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
 import { AppBar, appKeyOf, barPlaceAt, barPlaces, FirstLookDoor, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useThemeColor, useViewportHeight, type AppMenuRow, type BarAction, type BarFaces, type BarFind, type BarGo, type BarScheme, type BarShare, type BarStatus, type FirstLook, type HostAction, type NoticeBoard, type NoticeReport, type NoticeReporting } from "@graview/primitives/frame";
 import { layerViews, useGraph, useTidiedViews, useGraview, useTheKeyboardLandsSomewhere, type AwaySummary, type ErrorReport, type FieldTyping, type KeepLensHost, type ProposeChangeHost, type ComposeChangeHost, type DraftChangeHost, type MenuSectionSource, type OnExport, type HostNotification, type ReactViewRegistry, type ReaderMemory, type Scheme, type WorkflowRuns } from "@graview/react/provider";
@@ -386,6 +386,13 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    * says this host takes no files.
    */
   readonly files?: HostFiles;
+  /**
+   * WHERE WHAT A WORKER VIEW KEEPS FOR ITS VIEWER GOES (`graview.mine`): the
+   * host's `{ read(view), write(view, key, value) }`, for the viewer it knows,
+   * the seat's or the profile's. Never in the graph, the log or an export.
+   * Unsaid, values are kept for the visit, in this page's memory.
+   */
+  readonly viewerState?: ViewerState;
   /**
    * WHERE THE HOST SERVES THE APP'S OWN IMAGES (Roadmap
    * f-brand-marks-under-app-base): `assetsAt(path)` for a path under
@@ -801,6 +808,7 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
     onDraftChange: props.onDraftChange,
     ai: props.ai,
     files: props.files,
+    viewerState: props.viewerState,
     assetsAt: props.assetsAt,
     resolveApp: props.resolveApp,
     history: props.history,

@@ -582,6 +582,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
         ...(args.has(SUBJECT_ARG) ? { subject: { kinds: subjectKinds.length > 0 ? subjectKinds : "*", arg: SUBJECT_ARG } } : {}),
         ...(destructive ? { destructive: true } : {}),
         ...(idempotent ? { idempotent: true } : {}),
+        ...(JSON.stringify(act).includes('"$me"') ? { doneAsMe: true as const } : {}),
         ...(creates.length > 0 ? { creates } : {}),
         ...(connects.length > 0 ? { connects } : {}),
         ...(severs.length > 0 ? { severs } : {}),

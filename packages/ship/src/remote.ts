@@ -1965,7 +1965,9 @@ export function seatHeaders(principal: Principal | undefined): Record<string, st
   if (principal.roles?.length) headers[SEAT_HEADERS.roles] = principal.roles.join(",");
   if (principal.kind !== "human") headers[SEAT_HEADERS.kind] = principal.kind;
   if (principal.name) headers[SEAT_HEADERS.name] = encodeURIComponent(principal.name);
+  if (principal.profile) (headers[SEAT_HEADERS.profile] = principal.profile.id), (headers[SEAT_HEADERS.profileName] = encodeURIComponent(principal.profile.name));
   const person = principal.onBehalfOf;
+  if (person?.profile) (headers[SEAT_HEADERS.forProfile] = person.profile.id), (headers[SEAT_HEADERS.forProfileName] = encodeURIComponent(person.profile.name));
   if (person?.id) headers[SEAT_HEADERS.for] = person.id;
   if (person?.roles?.length) headers[SEAT_HEADERS.forRoles] = person.roles.join(",");
   if (person?.name) headers[SEAT_HEADERS.forName] = encodeURIComponent(person.name);

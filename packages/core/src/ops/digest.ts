@@ -85,7 +85,7 @@ export function typedRowWords(row: Omit<TypedRow, "batches">, schema: { tryDefin
 }
 
 /** Who an author is, for folding: the same kind, id and name. */
-const authorKey = (author: Author) => JSON.stringify([author.kind, author.id ?? "", author.name ?? ""]);
+const authorKey = (author: Author) => JSON.stringify([author.kind, author.id ?? "", author.name ?? "", ...(author.profile ? [author.profile.id] : [])]);
 
 /** The run a batch was made in: the first `Lineage.run` its ops say. */
 const runOf = (batch: Batch): string | undefined => batch.ops.find((op) => op.lineage?.run !== undefined)?.lineage?.run;

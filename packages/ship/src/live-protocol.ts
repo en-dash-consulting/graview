@@ -37,6 +37,7 @@ import {
   type WireRefusal,
   type Lineage,
   type SeatLens,
+  profileOf,
 } from "@graview/core";
 // What a seat is served keeps the fields its sight keeps (Roadmap f-field-sight): the protocol judges them.
 import "@graview/core/field-sight";
@@ -581,6 +582,13 @@ export function wireRefusalOf(store: Store<AnySchema>, error: unknown): WireRefu
 const forWhom = (author: Author): Pick<Presence, "onBehalfOf" | "onBehalfOfName"> =>
   author.onBehalfOf?.id ? { onBehalfOf: author.onBehalfOf.id, ...(author.onBehalfOf.name ? { onBehalfOfName: author.onBehalfOf.name } : {}) } : {};
 
+/** Who at the screen, as history says it: "Mia (Nick)", where the seat carries a profile. A name a client claimed that already says so is the account's it claimed, and not said twice. */
+function nameAtTheScreen(author: Author, account: string | undefined): string | undefined {
+  const profile = profileOf(author);
+  if (!profile) return account;
+  return !account || account.startsWith(`${profile.name} (`) ? (account ?? profile.name) : `${profile.name} (${account})`;
+}
+
 /**
  * A PRESENCE AS THE SERVER BUILDS IT. Keyed by the seat — a client cannot
  * claim to be somebody else — with only the session taken from what it
@@ -600,7 +608,7 @@ export function presenceFrom(told: Presence, seat: Principal, now: Date = new Da
   const session = seat.id ? after : (after.split(":").at(-1) ?? "");
   // Always the seat's own namespace: one with no id is `kind::session`, where no identified person stands.
   const key = participant ?? participantKey({ kind: seat.kind, ...(seat.id ? { id: seat.id } : {}), session });
-  const name = seat.name ?? claimedName;
+  const name = nameAtTheScreen(seat, seat.name ?? claimedName);
   return { ...said, participant: key, kind: seat.kind, ...(name ? { name } : {}), ...forWhom(seat), ...(caret ? { caret } : {}), at: now.toISOString() };
 }
 
@@ -635,7 +643,7 @@ export function visitorPresence(
   author: Author,
   options: { readonly session?: string; readonly stop?: string; readonly over?: string | null; readonly hue?: number; readonly now?: Date } = {},
 ): Presence {
-  const name = author.name ?? author.id;
+  const name = nameAtTheScreen(author, author.name ?? author.id);
   return {
     participant: participantKey({ kind: author.kind, ...(author.id ? { id: author.id } : {}), session: options.session ?? author.session ?? "visit" }),
     kind: author.kind,

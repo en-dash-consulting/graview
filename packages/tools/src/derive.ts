@@ -9,7 +9,7 @@
  * tool surface and zod's JSON Schema into that face's first load — some
  * 30 KB the pages face alone never drew with before a reader asked.
  */
-import { askedArguments, inAskedOrder, nodeRefArgs, tellTheWatchOfAPressRefusedByItsInput, type AnySchema, type NodeOfSchema, type Principal, type Store } from "@graview/core";
+import { askedArguments, inAskedOrder, meOf, nodeRefArgs, tellTheWatchOfAPressRefusedByItsInput, type AnySchema, type NodeOfSchema, type Principal, type Store } from "@graview/core";
 import { insightProvider } from "./providers/insight.js";
 import { usageBoost, usageWeights } from "./usage.js";
 import { invariantProvider } from "./providers/invariant.js";
@@ -460,14 +460,16 @@ function narrowed<S extends AnySchema>(store: Store<S>, affordance: Affordance, 
   if (!asked?.candidates) return undefined;
   const on = (id: string) => store.permits({ name: affordance.mutation, args: { ...affordance.args, ...(affordance.batch?.[0] ?? {}), [asked.name]: id } }, asking).ok;
   const permitted = asked.candidates.filter(on);
-  const me = asking.id === undefined ? undefined : store.graph.getNode(asking.id);
+  /* The seat's own record, a profile's person where it carries one (`meOf`). */
+  const own = meOf(asking);
+  const me = own === undefined ? undefined : store.graph.getNode(own);
   if (permitted.length === 0) {
     const kinds = open ? subject.kinds : "*";
     const mine = me !== undefined && (kinds === "*" || (kinds as readonly string[]).includes(me.kind as string)) && on(me.id);
     return mine ? "done" : undefined;
   }
-  if (permitted.length === 1 && permitted[0] === asking.id) {
-    return { ...affordance, args: { ...affordance.args, [asked.name]: asking.id }, open: affordance.open.filter((parameter) => parameter !== asked) };
+  if (permitted.length === 1 && permitted[0] === own) {
+    return { ...affordance, args: { ...affordance.args, [asked.name]: own }, open: affordance.open.filter((parameter) => parameter !== asked) };
   }
   return { ...affordance, open: affordance.open.map((parameter) => (parameter === asked ? { ...parameter, candidates: permitted } : parameter)) };
 }

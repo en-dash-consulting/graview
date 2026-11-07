@@ -5,7 +5,7 @@ export type { MenuColumn, MenuItem, MenuMode, MenuPage, MenuSection, MenuSection
 export { alsoWhenSectionsArrive, partsWanted, sectionsArrive, sectionsWanted, sectionUnderNow, setViewPlace, viewPlaceOf } from "./view-places.js";
 export type { MenuViewSection, ViewPlaceDraft, ViewPlaceDrawing, ViewPlaceHandle, ViewPresses } from "./view-places.js";
 export { BesideTheMap } from "./beside-the-map.js";
-export { HostAssetsContext, HostFilesContext, useHostAssets, useHostFiles } from "./files.js";
+export { HostAssetsContext, HostFilesContext, HostViewerStateContext, useHostAssets, useHostFiles, useHostViewerState } from "./files.js";
 export type { GoTo, GoToAlso, GoToTarget } from "./go.js";
 export { Figure, Occupants, PersonFigure } from "./occupants.js";
 export { TypingContext } from "./typing.js";

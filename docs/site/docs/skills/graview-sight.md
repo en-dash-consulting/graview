@@ -32,6 +32,21 @@ A served store sends a seat only what it sees, withholds the rest of the log in 
 
 1. **What a seat reads beside a record keeps to its sight too.** - An id is served wherever its record is, so it is never minted from a field some sight keeps from a role: a tip whose title the public may not see is `tip:tip-2`, not `tip:secret-merger-plan` — an act, an import, and a day of a series changed apart alike. An act of your own gets the same from `freshId(name, kind, record?)` when the name quotes an argument for such a field, or a field of the record handed third; a name it builds from anything else is yours to keep clean. - A record withheld whole — its required reference names a kind the seat may not see — is refused as one that is not there, whatever the grant says, exactly as an id that names nothing. - The app's own actor's suggestions say why in words that quote fields; a seat whose sight keeps one the basis read is served the suggestion, and the change it made, withheld. - A sight with `hide` or `fields` shows a kind in part, so even a `roles: "*"` one is not total sight for a worker view: the view's own acts need a press the host saw.
 
+### One sign-in, several people at the screen
+
+A host says who at a shared screen on the seat: `principal: { ..., profile: { id: "prf_mia", name: "Mia" } }` (an id of letters, digits, `_` and `-`). `$me`, a sight `via` the people or `own`, and a view's `props.me` then read Mia's person, a record of the people kind made on her first act, its id `<account>~prf_mia`, so it can only ever be that account's. It is a name, not a seat: the roles, grants and `seatOf` stay the account's, and everything the account could reach it still reaches. History says "Mia (Nick)". Without a profile, nothing changes. A person removed stays removed, and a kind that requires more than a name has none for a profile (`people-unmakeable`): `$me` then refuses, and the act is not offered. The seat headers carry it only where a host trusts them; otherwise it is the host's `seatOf`.
+
+What a view keeps for that viewer (`graview.mine`, `graview-view-forms`) goes where the host says, for the viewer it knows, handed to `mount`, `<Embed>` and `PagesApp` as `viewerState`:
+
+```ts
+const viewerState: ViewerState = {
+  read: (view) => fetchMine(view),                    // that view's values, by its name
+  write: (view, key, value) => keepMine(view, key, value), // { ok: true } or { ok: false, sentence }
+};
+```
+
+Keep it out of the record store: it is never history, an export or an agent's.
+
 ### Then find out whether it worked
 
 ```sh

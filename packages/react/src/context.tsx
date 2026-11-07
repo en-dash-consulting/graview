@@ -3,6 +3,7 @@ import type {
   Brand,
   GraviewApp,
   HostFiles,
+  ViewerState,
   ResolveApp,
   LinkedRecords,
   LinkedReads,
@@ -40,7 +41,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPointerStore, type PointerStore, type ScenePoint } from "./pointer.js";
-import { HostAssetsContext, HostFilesContext } from "./files.js";
+import { HostAssetsContext, HostFilesContext, HostViewerStateContext } from "./files.js";
 import { useLinkedReads } from "./linked-reads.js";
 import type { MenuColumn, MenuPage, MenuSectionSource } from "./menu-types.js";
 import type { MenuViewSection } from "./view-places.js";
@@ -644,6 +645,8 @@ export interface GraviewProviderProps<S extends AnySchema> {
    * host takes no files.
    */
   readonly files?: HostFiles | undefined;
+  /** WHERE WHAT A WORKER VIEW KEEPS FOR ITS VIEWER GOES (`graview.mine`): the host's, by the view's name. Unsaid, for the visit, in this page's memory. */
+  readonly viewerState?: ViewerState | undefined;
   /**
    * WHERE THE HOST SERVES AN APP'S OWN IMAGES (Roadmap
    * f-brand-marks-under-app-base): `assetsAt(path)` for a path under
@@ -841,6 +844,7 @@ export function GraviewProvider<S extends AnySchema>({
   providers,
   ai: handedAi,
   files,
+  viewerState,
   assetsAt,
   resolveApp,
   history,
@@ -1409,7 +1413,8 @@ export function GraviewProvider<S extends AnySchema>({
 
   const live = useMemo(() => (typing ? { typing, sayCaret, who: others } : null), [typing, sayCaret, others]);
   const assetsHeld = assetsAt ? <HostAssetsContext.Provider value={assetsAt}>{children}</HostAssetsContext.Provider> : children;
-  const filed = files ? <HostFilesContext.Provider value={files}>{assetsHeld}</HostFilesContext.Provider> : assetsHeld;
+  const filesHeld = files ? <HostFilesContext.Provider value={files}>{assetsHeld}</HostFilesContext.Provider> : assetsHeld;
+  const filed = viewerState ? <HostViewerStateContext.Provider value={viewerState}>{filesHeld}</HostViewerStateContext.Provider> : filesHeld;
   return (
     <GraviewContext.Provider value={value as unknown as GraviewContextValue<AnySchema>}>
       <PlaybackContext.Provider value={playback as unknown as Playback}>
