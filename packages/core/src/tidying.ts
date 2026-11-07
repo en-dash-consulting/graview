@@ -51,7 +51,7 @@ import { EMPTY_DIFF } from "./graph/diff.js";
 import { ARCHIVED } from "./graph/archived.js";
 import { nameInPassing } from "./capital.js";
 import { namesUnseen, type SeatLens } from "./ops/withheld.js";
-import { actingAs, permits as permitsOf } from "./permissions/policy.js";
+import { actingAs, permits as permitsOf, profileOf } from "./permissions/policy.js";
 import { seatLens } from "./seen.js";
 import { fieldInPassing, nounOf, pluralOf } from "./schema/define-node.js";
 import { humanizeField } from "./schema/humanize.js";
@@ -200,8 +200,8 @@ function onceATick<T>(whole: Store<AnySchema>, key: string, work: () => T): T {
   return tick.held.get(key) as T;
 }
 
-/** A seat, as what it may do and see is keyed by. */
-const seatKey = (who: Principal): string => JSON.stringify([who.kind, who.id, who.roles, who.onBehalfOf?.id, who.onBehalfOf?.roles, who.shared]);
+/** A seat, as what it may do and see is keyed by: two profiles of one account are two seats. */
+const seatKey = (who: Principal): string => JSON.stringify([who.kind, who.id, who.roles, who.onBehalfOf?.id, who.onBehalfOf?.roles, who.shared, profileOf(who)?.id]);
 
 /** An id no record has, for asking what a grant says of any record of a kind. */
 const NO_RECORD = "\u0000no-such-record";
