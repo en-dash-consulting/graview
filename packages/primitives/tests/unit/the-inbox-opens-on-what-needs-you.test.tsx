@@ -1,16 +1,17 @@
 // @vitest-environment jsdom
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 import { bindSchema, createSchema, defineNode, nodeRef, Store, type Author, type Principal } from "@graview/core";
-import { suggest, suggestions } from "@graview/core/tidying";
+import { stopSuggesting, suggest, suggestions } from "@graview/core/tidying";
 import { EMPTY_VIEW } from "@graview/layout";
 import { createViews, GraviewProvider, type HostNotification } from "@graview/react";
 import axe from "axe-core";
-import { act } from "react";
+import { act, useState, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { fetchInspector, registerDefaultViews, Shell } from "../../src/index.js";
 import { inboxWords } from "../../src/inbox.js";
+import { problemsShown, useSceneGo } from "../../src/seat-move.js";
 
 beforeAll(() => fetchInspector());
 
@@ -102,7 +103,7 @@ async function settled(holds: () => void): Promise<void> {
   }
 }
 
-async function face(store: Store<typeof schema>, options: { readonly notifications?: readonly HostNotification[]; readonly principal?: Principal } = {}) {
+async function face(store: Store<typeof schema>, options: { readonly notifications?: readonly HostNotification[]; readonly principal?: Principal; readonly more?: ReactNode } = {}) {
   const host = document.createElement("div");
   document.body.appendChild(host);
   const root = createRoot(host);
@@ -110,6 +111,7 @@ async function face(store: Store<typeof schema>, options: { readonly notificatio
     root.render(
       <GraviewProvider store={store} views={registerDefaultViews(schema, createViews(schema))} initialView={{ ...EMPTY_VIEW, overview: true }} principal={options.principal ?? nora} {...(options.notifications ? { notifications: options.notifications } : {})}>
         <Shell<typeof schema> scheme="light" onScheme={() => {}} />
+        {options.more}
       </GraviewProvider>,
     ),
   );
@@ -152,8 +154,9 @@ describe("the bell", () => {
     await settled(() => expect(bell()).not.toBeNull());
     expect(bell()!.getAttribute("data-count")).toBe("0");
     expect($('[data-testid="inbox-count"]')).toBeNull();
-    expect(bell()!.getAttribute("aria-label")).toBe("Inbox");
+    expect(bell()!.getAttribute("aria-label")).toBe("Inbox — 1 new update");
     expect(inboxWords(1, "")).toBe("Inbox — 1 needs you");
+    expect(inboxWords(0, "")).toBe("Inbox");
   });
 });
 
@@ -320,14 +323,14 @@ describe("Don't suggest this kind of thing", () => {
     expect($('[data-testid="suggestion-stop-kind"]')!.textContent).toBe("Don't suggest this kind of thing");
     await act(async () => $('[data-testid="suggestion-stop-kind"]')!.click());
     await settled(() => expect(suggestions(store)).toEqual([]));
-    expect(() => suggest(store, [{ name: "rename-vendor", args: { id: "example-sugar", to: "Other" } }], { author: actor, lineage: { basis: "Shorter" } })).toThrow(/may not make this again/);
+    expect(() => suggest(store, [{ name: "rename-vendor", args: { id: "example-sugar", to: "Other" } }], { author: actor, lineage: { basis: "Shorter" } })).toThrow(/may not suggest this kind of thing/);
     // Nothing is left to answer, so the keyboard goes where the last answer has always gone: to what has happened, said in words, with its way back.
     await settled(() => expect($('[data-testid="inbox"]')!.getAttribute("data-tab")).toBe("activity"));
-    expect($('[data-testid="diff-log"]')!.textContent).toMatch(/Stopped suggesting things like/);
+    expect($('[data-testid="diff-log"]')!.textContent).toMatch(/Stopped suggesting “Rename”/);
     expect($('[data-testid="diff-log"] [data-testid="undo-turn"]')).not.toBeNull();
     // And listed under Updates for as long as it stands, after Activity has moved on.
     await act(async () => $('[data-testid="inbox-tab-for-you"]')!.click());
-    await settled(() => expect($('[data-testid="suggestions-stopped"]')?.textContent).toMatch(/Stopped suggesting things like/));
+    await settled(() => expect($('[data-testid="suggestions-stopped"]')?.textContent).toMatch(/Stopped suggesting “Rename”/));
     await act(async () => $('[data-testid="suggestion-suggest-again"]')!.click());
     await settled(() => expect(suggestions(store)).toHaveLength(2));
   });
@@ -340,5 +343,180 @@ describe("Don't suggest this kind of thing", () => {
     await open();
     await settled(() => expect($('[data-testid="suggestion-accept"]')).not.toBeNull());
     expect($('[data-testid="suggestion-stop-kind"]')).toBeNull();
+  });
+});
+
+describe("what the review of #537 found", () => {
+  const POLICY = { roles: ["keeper", "reader"], grants: [{ roles: ["keeper"], mutations: "*" as const }] };
+  const anonymous: Principal = { kind: "human", id: "anonymous", roles: ["reader"], shared: true };
+  const rename = (id: string, to: string) => suggest(storeHolder.store!, [{ name: "rename-vendor", args: { id, to } }], { author: actor, lineage: { basis: "Shorter" } });
+  const storeHolder: { store?: Store<typeof schema> } = {};
+
+  it("a seat's move to the problems opens them, and says what it said it did", async () => {
+    let go: ReturnType<typeof useSceneGo> | undefined;
+    function Seat() {
+      go = useSceneGo();
+      return null;
+    }
+    await face(storeOf(), { more: <Seat /> });
+    await settled(() => expect(bell()).not.toBeNull());
+    expect($('[data-testid="inbox"]')).toBeNull();
+    await act(async () => go!({ to: "problems", address: "/problems", said: "Went to the problems." } as never));
+    await settled(() => expect($('[data-testid="problems"] [data-testid="inbox-problem"]')).not.toBeNull());
+  });
+
+  it("a seat's move to the problems finds them on For you, for a seat the inbox opens on Activity for", async () => {
+    let go: ReturnType<typeof useSceneGo> | undefined;
+    function Seat() {
+      go = useSceneGo();
+      return null;
+    }
+    const store = storeOf([CRUMBS, SUGAR], { policy: POLICY });
+    store.applyPrimitives([{ op: "patch-node", id: "example-sugar", before: { label: "Sugar & Spoon" }, after: { label: "Sugar" } } as never], { author: { kind: "system", id: "seed" } as never, intent: "Renamed" });
+    await face(store, { principal: reader, more: <Seat /> });
+    await settled(() => expect(bell()).not.toBeNull());
+    await act(async () => go!({ to: "problems", address: "/problems", said: "Went to the problems." } as never));
+    await settled(() => expect($('[data-testid="problems"]')).not.toBeNull());
+    expect($('[data-testid="inbox"]')!.getAttribute("data-tab")).toBe("for-you");
+  });
+
+  it("a person who skipped to the problems has the keyboard on the first of them", async () => {
+    await face(storeOf());
+    await settled(() => expect(bell()).not.toBeNull());
+    await act(async () => problemsShown(true, { into: true }));
+    await settled(() => expect(document.activeElement?.getAttribute("data-testid")).toBe("inbox-problem-words"));
+  });
+
+  it("the bell and Needs you agree on a notice the host says needs you and has been read", async () => {
+    await face(storeOf([SUGAR]), { notifications: [{ ...REVIEW, read: true }, { id: "second", title: "A workflow failed", needs: true }] });
+    await open();
+    expect($('[data-testid="inbox-needs-you"]')!.querySelectorAll('[data-testid="inbox-notification"]').length).toBe(2);
+    expect(bell()!.getAttribute("data-count")).toBe("2");
+  });
+
+  it("keeps counting a needs notice once it has been shown, for a host that marks it read then", async () => {
+    const seen: string[][] = [];
+    function Host() {
+      const [read, setRead] = useState(false);
+      return (
+        <GraviewProvider store={store} views={registerDefaultViews(schema, createViews(schema))} initialView={{ ...EMPTY_VIEW, overview: true }} principal={nora} notifications={[{ ...REVIEW, read }]} onNotificationsSeen={(ids) => (seen.push([...ids]), setRead(true))}>
+          <Shell<typeof schema> scheme="light" onScheme={() => {}} />
+        </GraviewProvider>
+      );
+    }
+    const store = storeOf([SUGAR]);
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    const root = createRoot(host);
+    await act(async () => root.render(<Host />));
+    unmount = async () => act(async () => root.unmount());
+    await open();
+    await settled(() => expect(seen).toEqual([["review"]]));
+    expect(bell()!.getAttribute("data-count")).toBe("1");
+  });
+
+  it("marks an unread plain notice with the dot and no count, and says so in its name", async () => {
+    await face(storeOf([SUGAR]), { notifications: [NEWS] });
+    await settled(() => expect(bell()).not.toBeNull());
+    expect($('[data-testid="inbox-count"]')).toBeNull();
+    expect($('[data-testid="inbox-button"] .graview-bar-badge[data-dot]')).not.toBeNull();
+    expect(bell()!.getAttribute("aria-label")).toBe("Inbox — 1 new update");
+  });
+
+  it("draws no dot once the notice has been read", async () => {
+    await face(storeOf([SUGAR]), { notifications: [{ ...NEWS, read: true }] });
+    await settled(() => expect(bell()).not.toBeNull());
+    expect($('[data-testid="inbox-button"] .graview-bar-badge[data-dot]')).toBeNull();
+  });
+
+  it("counts for a signed-out seat only what it may answer, and stands the rest under Updates", async () => {
+    const store = storeOf([SUGAR, { ...CRUMBS, status: "contacted" }], { policy: POLICY });
+    storeHolder.store = store;
+    rename("example-sugar", "Sweet");
+    rename("example-crumbs", "Crumbs");
+    await face(store, { principal: anonymous });
+    await settled(() => expect(bell()).not.toBeNull());
+    await settled(() => expect(bell()!.getAttribute("data-changes")).toBe("0"));
+    expect(bell()!.getAttribute("data-count")).toBe("0");
+    await act(async () => bell()!.click());
+    await settled(() => expect($('[data-testid="inbox-tab-for-you"]')).not.toBeNull());
+    await act(async () => $('[data-testid="inbox-tab-for-you"]')!.click());
+    await settled(() => expect($('[data-testid="inbox-updates"] [data-testid="suggestion"]')).not.toBeNull());
+    expect($('[data-testid="inbox-needs-you"] [data-testid="suggestion"]')).toBeNull();
+    expect($('[data-testid="inbox-needs-you-empty"]')).not.toBeNull();
+  });
+
+  it("keeps the keyboard on the next row when its only button is Later", async () => {
+    const store = storeOf([SUGAR, { ...CRUMBS, status: "contacted" }], { policy: POLICY });
+    storeHolder.store = store;
+    rename("example-sugar", "Sweet");
+    rename("example-crumbs", "Crumbs");
+    await face(store, { principal: anonymous });
+    await settled(() => expect(bell()).not.toBeNull());
+    await act(async () => bell()!.click());
+    await settled(() => expect($('[data-testid="inbox-tab-for-you"]')).not.toBeNull());
+    await act(async () => $('[data-testid="inbox-tab-for-you"]')!.click());
+    await settled(() => expect(document.querySelectorAll('[data-testid="suggestion-not-now"]').length).toBe(2));
+    await act(async () => $('[data-testid="suggestion-not-now"]')!.click());
+    await settled(() => expect(document.querySelectorAll('[data-testid="suggestion"]').length).toBe(1));
+    await settled(() => expect(document.activeElement?.closest('[data-testid="suggestion"]')).not.toBeNull());
+    expect($('[data-testid="inbox"]')!.getAttribute("data-tab")).toBe("for-you");
+  });
+
+  it("does not offer Suggest again, or the stop, to a seat that may not decide", async () => {
+    const store = storeOf([SUGAR], { policy: POLICY });
+    const made = suggest(store, [{ name: "rename-vendor", args: { id: "example-sugar", to: "Sweet" } }], { author: actor, lineage: { basis: "Shorter" } })!;
+    stopSuggesting(store, made.id, { author: nora });
+    await face(store, { principal: reader });
+    await settled(() => expect(bell()).not.toBeNull());
+    await act(async () => bell()!.click());
+    await settled(() => expect($('[data-testid="inbox-tab-for-you"]')).not.toBeNull());
+    await act(async () => $('[data-testid="inbox-tab-for-you"]')!.click());
+    await settled(() => expect($('[data-testid="inbox-updates"]')).not.toBeNull());
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 100)));
+    expect($('[data-testid="suggestion-suggest-again"]')).toBeNull();
+    expect($('[data-testid="suggestions-stopped"]')).toBeNull();
+  });
+
+  it("says a refused fix in words, not the store's raw text", async () => {
+    const refuses = defineMutation("refuses-outright", { title: "Refuse", subject: { kinds: ["vendor"], arg: "id" }, writes: ["status"], input: z.object({ id: nodeRef(["vendor"]), note: z.string() }), apply() {} });
+    const broken = defineInvariant("always-broken", {
+      label: "Always",
+      description: "Always.",
+      scope: { kind: "vendor" },
+      repairs: ["refuses-outright"],
+      evaluate: ({ subject }) => [{ invariant: "always-broken", subjectId: subject.id, label: "Always", message: `${subject.label} is wrong`, nodeIds: [subject.id], repairs: [{ mutation: "refuses-outright", args: { id: subject.id, note: 5 }, label: "Try it" }] }],
+    });
+    const store = new Store({ schema, mutations: [refuses], invariants: [broken], snapshot: { nodes: [SUGAR], edges: [] } as never });
+    await face(store);
+    await open();
+    await settled(() => expect($('[data-testid="inbox-problem-fix"]')).not.toBeNull());
+    await act(async () => $('[data-testid="inbox-problem-fix"]')!.click());
+    await settled(() => expect($('[data-testid="inbox-problem-refused"]')).not.toBeNull());
+    expect($('[data-testid="inbox-problem-refused"]')!.textContent).not.toMatch(/Invalid arguments|refuses-outright|"path"|invalid_type/);
+  });
+
+  it("says Cloud's example batch, named `examples`, as what it is", async () => {
+    const store = storeOf([]);
+    store.applyPrimitives([{ op: "add-node", node: SUGAR } as never], { author: { kind: "system", id: "template" } as never, batch: "examples", intent: "Example content from the template — undo to remove it" });
+    await face(store);
+    await open();
+    await settled(() => expect($('[data-batch="examples"]')).not.toBeNull());
+    expect($('[data-batch="examples"] [data-graview-activity-words]')!.textContent).toBe("Example records from the template");
+    await settled(() => expect($('[data-batch="examples"] [data-testid="undo-turn"]')?.textContent).toBe("Remove examples"));
+    await act(async () => $('[data-batch="examples"] [data-testid="undo-turn"]')!.click());
+    // What it removes is that batch's records and nothing else.
+    await settled(() => expect(store.graph.allNodes()).toEqual([]));
+  });
+
+  it("removes the examples and leaves what a person added since", async () => {
+    const store = storeOf([{ ...SUGAR, id: "mine", label: "Mine" }]);
+    store.applyPrimitives([{ op: "add-node", node: SUGAR } as never], { author: { kind: "system", id: "template" } as never, batch: "examples", intent: "Example content" });
+    store.apply({ name: "rename-vendor", args: { id: "mine", to: "Still mine" } }, { author: nora });
+    await face(store);
+    await open();
+    await settled(() => expect($('[data-batch="examples"] [data-testid="undo-turn"]')).not.toBeNull());
+    await act(async () => $('[data-batch="examples"] [data-testid="undo-turn"]')!.click());
+    await settled(() => expect(store.graph.allNodes().map((node) => node.id)).toEqual(["mine"]));
   });
 });

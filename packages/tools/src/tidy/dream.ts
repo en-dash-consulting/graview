@@ -1,5 +1,5 @@
 import { isAutomated, type AnySchema, type Author, type Store, type Via } from "@graview/core";
-import { declined, suggest, suggestionKey, suggestions, withdrawSuggestion } from "@graview/core/tidying";
+import { declined, isTidyingActor, stoppedKind, suggest, suggestionKey, suggestions, withdrawSuggestion } from "@graview/core/tidying";
 import type { HostAi } from "../ai.js";
 import { askAll, type DreamBudget, type DreamCache, type DreamUsage } from "./asking.js";
 import { blocksOf } from "./blocking.js";
@@ -84,12 +84,13 @@ export interface DreamOutcome {
   /**
    * suggested: waits for a person; applied: made, with lineage; dropped: not
    * sure enough to ask, or the model chose none; waiting: already
-   * suggested; declined: a person said no before; withdrawn: a suggestion
+   * suggested; declined: a person said no before; stopped: a person said not
+   * to suggest this kind of thing; withdrawn: a suggestion
    * of this actor's that waited, taken back because it is below the band
    * it is now asked at (`id`, the suggestion); refused: the store said no,
    * in `error`.
    */
-  readonly outcome: "suggested" | "applied" | "dropped" | "waiting" | "declined" | "withdrawn" | "refused";
+  readonly outcome: "suggested" | "applied" | "dropped" | "waiting" | "declined" | "stopped" | "withdrawn" | "refused";
   readonly calls: Candidate["calls"];
   readonly basis: string;
   readonly confidence: number;
@@ -256,6 +257,8 @@ export async function dream<S extends AnySchema>(store: Store<S>, options: Dream
     if (seen.has(key)) continue;
     seen.add(key);
     if (declined(whole, candidate.calls)) said(candidate, "declined");
+    // Of a kind a person said not to suggest: said to this actor, and not to a workflow running as itself.
+    else if (isTidyingActor(principal) && stoppedKind(whole, candidate.calls)) said(candidate, "stopped");
     else if (waiting.has(key)) said(candidate, "waiting");
     else {
       const route = routeOf(candidate.confidence, candidate.severity, options.bands, candidate.split === true);

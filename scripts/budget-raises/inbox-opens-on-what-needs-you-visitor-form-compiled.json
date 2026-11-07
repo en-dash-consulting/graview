@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form handed a compiled app",
+  "minified": 150,
+  "gzipped": 80,
+  "note": "Raised when the store came to ask `@graview/core/tidying` about a stop in `undo` and `mayUndo` (Roadmap f-inbox-needs-you-first), and the log to withhold an undo with what it undoes: a few lines up front, the rest off the page. Measured at 351_781 / 128_525 against main's 351_669 / 128_463."
+}

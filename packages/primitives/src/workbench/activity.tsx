@@ -88,8 +88,13 @@ export function batchWords(batch: Pick<Batch, "intent" | "ops">): string {
   return out.length === 0 ? batch.intent : `${batch.intent} — ${out.join("; ")}`;
 }
 
-/** Whether a batch is a template's example content, by the id `graview apply --template --examples` gives it. */
-const isExamples = (batch: Pick<Batch, "id">): boolean => batch.id.startsWith("examples:");
+/**
+ * Whether a batch is a template's example content, by the id its host gives
+ * it: `examples` on Graview Cloud, `examples:<template>:<stamp>` from `graview
+ * apply --template --examples`. Neither is an id a client may name
+ * (`isClientBatch`, `@graview/ship`).
+ */
+const isExamples = (batch: Pick<Batch, "id">): boolean => batch.id === "examples" || batch.id.startsWith("examples:");
 
 /** What a template's example content is called in Activity, and what taking it back is called. */
 const EXAMPLES_WORDS = "Example records from the template";

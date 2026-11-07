@@ -97,9 +97,17 @@ export interface Lineage {
    * "DON'T SUGGEST THIS KIND OF THING" (Roadmap f-inbox-needs-you-first), on
    * the undo that declines a suggestion: the decline answers every change
    * of the same act, not only this one (`stopSuggesting`,
-   * `@graview/core/tidying`). Undone, it no longer stands.
+   * `@graview/core/tidying`). Undone, it no longer stands. The store judges
+   * it wherever it comes from: only whoever may decide every suggestion of
+   * that kind says it.
    */
   readonly stopsKind?: true;
+  /**
+   * THE UNDO OF A STOP WHOSE OWN OP A CHECKPOINT ARCHIVED: what lifts a kept
+   * stop (`KeptDecline.stop`). Its `undoes` names the archived op, and it is
+   * not itself taken back: a person stops the kind again the next time.
+   */
+  readonly liftedStop?: true;
 }
 
 /** The longest basis an op keeps: a reason, not a transcript. */
@@ -158,7 +166,7 @@ export function lineageOf(value: unknown): Lineage | undefined {
     else if (key === "evidence") fits &&= Array.isArray(said) && said.length <= LINEAGE_EVIDENCE_LIMIT && said.every(isName);
     else if (key === "read") fits &&= Array.isArray(said) && said.length <= LINEAGE_READ_LIMIT && said.every(isFieldRead);
     else if (key === "items") fits &&= Array.isArray(said) && said.length > 0 && said.length <= LINEAGE_ITEMS_LIMIT && said.every((at) => Number.isInteger(at) && at >= 0);
-    else if (key === "stopsKind") fits &&= said === true;
+    else if (key === "stopsKind" || key === "liftedStop") fits &&= said === true;
     else if (key === "voters") fits &&= Array.isArray(said) && said.length <= LINEAGE_VOTERS_LIMIT && said.every(isName);
     else fits &&= key !== "__proto__" && key !== "constructor" && key !== "prototype" && (said = asJson(said)) !== undefined;
     if (fits) kept[key] = said;

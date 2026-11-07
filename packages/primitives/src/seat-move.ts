@@ -45,16 +45,32 @@ export function sceneMove(state: ViewState, move: SeatMove): SceneMove {
   }
 }
 
-/** The standing's problems, opened or put away as a press on it would. */
-export function problemsShown(shown: boolean): void {
-  const standing = typeof document === "undefined" ? null : document.querySelector<HTMLButtonElement>('[data-testid="standing"]');
-  if (standing && (standing.getAttribute("aria-expanded") === "true") !== shown) standing.click();
+/**
+ * THE PROBLEMS, OPENED OR PUT AWAY AS A PRESS ON THE BELL WOULD: a rule broken
+ * is the inbox's to say (Roadmap f-inbox-needs-you-first). On For you, where
+ * they stand, which is not where it opens for a seat that may not fix them; its
+ * tabs are fetched as the bell is first pressed, so they are waited for. A
+ * person who skipped here (`into`) has the keyboard on the first of them; a
+ * seat's move leaves it where they were typing.
+ */
+export function problemsShown(shown: boolean, { into = false }: { readonly into?: boolean } = {}): void {
+  const bell = typeof document === "undefined" ? null : document.querySelector<HTMLButtonElement>('[data-testid="inbox-button"]');
+  if (!bell) return;
+  if ((bell.getAttribute("aria-expanded") === "true") !== shown) bell.click();
+  if (shown) onForYou(60, into);
+}
+
+function onForYou(turns: number, into: boolean): void {
+  const tab = document.querySelector<HTMLElement>('[data-testid="inbox-tab-for-you"]');
+  if (tab && tab.getAttribute("aria-selected") !== "true") tab.click();
+  const first = tab ? document.querySelector<HTMLElement>('[data-testid="inbox-problem-words"]') : null;
+  if (first ? into && (first.focus(), false) : turns > 0) setTimeout(() => onForYou(turns - 1, into), 50);
 }
 
 /**
  * THE SCENE MAKES A SEAT'S MOVE: a stop set through the provider (so the
- * address follows it and Back walks out of it), or the problems opened at
- * the standing. A drawn view standing in front of the picture is put away
+ * address follows it and Back walks out of it), or the problems opened in
+ * the inbox. A drawn view standing in front of the picture is put away
  * first: the reader asked to be somewhere else.
  */
 export function useSceneGo(): (move: SeatMove) => void {
@@ -62,7 +78,7 @@ export function useSceneGo(): (move: SeatMove) => void {
   return useCallback(
     (move: SeatMove) => {
       if (seatTalk.get().draft) seatTalk.setDraft(null);
-      // The standing is the scene's list of problems: opened as a press would open it, and put away when the seat goes elsewhere.
+      // The inbox is the scene's list of problems: opened as a press would open it, and put away when the seat goes elsewhere.
       problemsShown(move.to === "problems");
       if (move.to === "problems") return;
       setView((state) => {

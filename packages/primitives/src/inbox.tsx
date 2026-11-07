@@ -45,9 +45,13 @@ const NO_NOTIFICATIONS: readonly HostNotification[] = [];
 /** A count as a badge says it: up to 99, then "99+". */
 export const badgeCount = (count: number): string => (count > 99 ? "99+" : String(count));
 
-/** What the bell is called, its count said in words, and the rules broken among it: "Inbox — 3 need you: 1 rule broken". */
-export function inboxWords(needs: number, broken: string): string {
-  if (needs === 0) return "Inbox";
+/**
+ * What the bell is called, its count said in words, and the rules broken among
+ * it: "Inbox — 3 need you: 1 rule broken". With nothing needing them, and
+ * something new under Updates, what its dot says: "Inbox — 1 new update".
+ */
+export function inboxWords(needs: number, broken: string, updates = 0): string {
+  if (needs === 0) return updates > 0 ? `Inbox — ${updates} new ${updates === 1 ? "update" : "updates"}` : "Inbox";
   return `Inbox — ${needs} ${needs === 1 ? "needs" : "need"} you${broken ? `: ${broken}` : ""}`;
 }
 
@@ -99,9 +103,8 @@ export function Inbox({ calls = NO_CALLS, seat, remembers = false }: InboxProps)
   const tray = suggests || away;
   const [waiting, setWaiting] = useState(0);
   const unread = notifications.filter((one) => !one.read);
-  // What needs this person: all the bell counts. A host's notice stands under Needs you while it is handed, and is counted while unread.
-  const count = waiting + rules.yours.length + unread.filter((one) => one.needs).length;
-  const needsYou = count > 0 || notifications.some((one) => one.needs);
+  // What needs this person: all the bell counts, and all Needs you lists. A host's notice stands there, and is counted, for as long as it is handed: read or not.
+  const count = waiting + rules.yours.length + notifications.filter((one) => one.needs).length;
   const popover = usePopover("inbox");
   const open = popover.open;
   /*
@@ -114,7 +117,7 @@ export function Inbox({ calls = NO_CALLS, seat, remembers = false }: InboxProps)
    */
   const [chosen, setChosen] = useState<InboxTab | null>(null);
   const [heard, setHeard] = useState(false);
-  const landing: InboxTab = needsYou || unread.length > 0 || away ? "for-you" : activity.has ? "activity" : asks.length > 0 ? "asks" : "for-you";
+  const landing: InboxTab = count > 0 || unread.length > 0 || away ? "for-you" : activity.has ? "activity" : asks.length > 0 ? "asks" : "for-you";
   const tab: InboxTab = chosen ?? landing;
   const known = !tray || heard;
   useEffect(() => {
@@ -136,7 +139,7 @@ export function Inbox({ calls = NO_CALLS, seat, remembers = false }: InboxProps)
     setHeard(true);
   }, []);
   if (!(activity.has || tray || notifications.length > 0 || asks.length > 0 || violations.length > 0)) return null;
-  const words = inboxWords(count, rules.yours.length > 0 ? brokenWords(rules.yours) : "");
+  const words = inboxWords(count, rules.yours.length > 0 ? brokenWords(rules.yours) : "", unread.length);
   const reach = () => barPanes.prefetch();
   return (
     <div className="graview-bar-inbox" style={{ position: "relative" }}>
@@ -164,8 +167,8 @@ export function Inbox({ calls = NO_CALLS, seat, remembers = false }: InboxProps)
           <span className="graview-bar-badge" data-testid="inbox-count" aria-hidden="true">
             {badgeCount(count)}
           </span>
-        ) : activity.running ? (
-          <span className="graview-bar-badge" data-dot="" aria-hidden="true" />
+        ) : activity.running || unread.length > 0 ? (
+          <span className="graview-bar-badge" data-dot="" data-testid="inbox-dot" aria-hidden="true" />
         ) : null}
       </button>
       {/*

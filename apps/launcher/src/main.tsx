@@ -1,6 +1,6 @@
 import { aggregateId, EMPTY_VIEW, type ViewState } from "@graview/layout";
 import {
-  ActivityRail,
+  Inbox,
   BackOut,
   Inspector,
   OverviewButton,
@@ -320,7 +320,8 @@ function CommandBar({
 
       <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
         <Standing clean="Every capability is earned" />
-        <ActivityRail calls={calls} />
+        {/* What is broken and what has happened, one bell: `Standing` says only that all is well. */}
+        <Inbox calls={calls} />
         <AuditButton onCall={onCall} />
         {APPS.map((entry) => (
           <button

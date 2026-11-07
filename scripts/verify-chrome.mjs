@@ -75,7 +75,7 @@ async function buildHost() {
       contents: `
         import { mount } from "@graview/embed";
         import { capabilities, memoryViews } from "@graview/core";
-        import { acceptSuggestion, declined, suggest, suggestions, voteSuggestion } from "@graview/core/tidying";
+        import { acceptSuggestion, declined, stoppedKind, suggest, suggestions, voteSuggestion } from "@graview/core/tidying";
         import { todoApp } from ${JSON.stringify(todo)};
         import seed from ${JSON.stringify(seed)};
         const asked = new URLSearchParams(location.search);
@@ -179,7 +179,7 @@ async function buildHost() {
           return bell();
         };
         // What reads the suggestions back, for the claims that ask the store what a person declined, and casts a vote as somebody else.
-        window.__tidying = { acceptSuggestion, declined, suggestions, voteSuggestion };
+        window.__tidying = { acceptSuggestion, declined, stoppedKind, suggestions, voteSuggestion };
         // The framework's version, as a host's Report this is handed it (FR-237).
         window.__version = capabilities().version;
         /*
@@ -1114,7 +1114,7 @@ try {
         const stopped = {
           offered,
           left: window.__tidying.suggestions(store).map((one) => one.calls[0].name),
-          held: Boolean(window.__tidying.declined(store, asked)),
+          held: Boolean(window.__tidying.stoppedKind(store, asked)),
           heard: $('[data-testid="suggestion-heard"]')?.textContent ?? null,
           keyboard: document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName,
           listed: await wait(() => $('[data-testid="suggestions-stopped"]')) ? $('[data-testid="suggestions-stopped"]').textContent : null,
@@ -1129,7 +1129,7 @@ try {
         undo?.click();
         await wait(() => window.__tidying.suggestions(store).length === 3);
         stopped.back = window.__tidying.suggestions(store).length;
-        stopped.heldAfter = Boolean(window.__tidying.declined(store, asked));
+        stopped.heldAfter = Boolean(window.__tidying.stoppedKind(store, asked));
         return { bell, opened, activityTab, parts, rule, left, reopened, fixed, stopped };
       });
       await page.close();
@@ -1146,8 +1146,8 @@ try {
         said.stopped.held &&
         /will not be suggested again/.test(said.stopped.heard ?? "") &&
         said.stopped.keyboard !== "BODY" &&
-        /Stopped suggesting things like/.test(said.stopped.listed ?? "") &&
-        /Stopped suggesting things like/.test(said.stopped.row ?? "") &&
+        /Stopped suggesting /.test(said.stopped.listed ?? "") &&
+        /Stopped suggesting /.test(said.stopped.row ?? "") &&
         said.stopped.undo === "Undo" &&
         said.stopped.asItWas === "As it was" &&
         said.stopped.back === 3 &&

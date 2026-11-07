@@ -41,8 +41,8 @@ opens in and how its cards read are `graview-lists`.
    record made again under a new id, a merged pair either way round. So
    is a person's undo of any change, or unlinking a link; a checkpoint
    keeps declines (`Epoch.declines`). `stopSuggesting(store, id)`, the
-   tray's "Don't suggest this kind of thing", declines every change of that
-   act; one undo lifts it. Its run of changes is one Activity row, "Tidied 6 things overnight". Give a
+   tray's "Don't suggest this kind of thing", holds this actor, no
+   workflow, to that act; one undo lifts it. Its run of changes is one Activity row, "Tidied 6 things overnight". Give a
    night's work one `lineage.run`, name the judge in `lineage.actor` and
    the records it rests on in `lineage.evidence`; give a suggestion an
    `expiresAt`, after which it leaves the tray and the next run judges it
@@ -62,7 +62,7 @@ opens in and how its cards read are `graview-lists`.
    Say `"tidying": { "autoAcceptAt": 4 }` at the top of the document (the
    edit `{"op": "set-app-tidying", "autoAcceptAt": 4}`, `null` to take it
    away) to have the actor make a suggestion at four votes for, the voters
-   in its `lineage.voters`; `graview check` warns with no policy. A seat no one person holds — the host's one
+   in its `lineage.voters`; `graview check` warns with none A seat no one person holds — the host's one
    signed-out seat (`shared: true` on its principal) or a `visitor` — is
    refused a vote ("Sign in to vote on this suggestion"), and the tray
    offers the host's `signIn` instead; `votes: { advisory: "visitors" }` on

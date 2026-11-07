@@ -1,8 +1,9 @@
 import { actingAs, nameOfAuthor, VOTE_SUGGESTION, type AnySchema, type DismissalStore, type Suggestion } from "@graview/core";
-import { acceptSuggestion, declineSuggestion, isProposal, mayDecide, stoppedSuggestions, stopSuggesting, suggestions, voteSuggestion, withdrawSuggestion } from "@graview/core/tidying";
+import { failureWords } from "@graview/core/words";
+import { acceptSuggestion, declineSuggestion, isProposal, mayDecide, mayStopSuggesting, stoppedSuggestions, stopSuggesting, suggestionKindWords, suggestions, voteSuggestion, withdrawSuggestion } from "@graview/core/tidying";
 import { suggestionGroups, suggestionSentence, whyWords, type SentencePart } from "./suggestion-sentence.js";
 import { useGoTo, useGraph, useGraview } from "@graview/react/provider";
-import { useEffect, useId, useMemo, useReducer, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useMemo, useReducer, useState, type ReactNode } from "react";
 import { dismissalsOf, tomorrow } from "./dismissals.js";
 import { VISUALLY_HIDDEN } from "./primitives/index.js";
 import { nameOf } from "./workbench/answer-args.js";
@@ -35,7 +36,15 @@ function useWaiting() {
   // A vote changes no record, so the graph says nothing of it: the tally is read again when one lands (Roadmap f-suggestion-votes).
   useEffect(() => store.subscribe((_, ops) => ops.some((op) => op.vote !== undefined) && changed()), [store]);
   const waiting = useMemo(() => suggestions(store, principal, { dismissed: notNow.list() }), [store, principal, nodes, notNow, said]);
-  return { waiting, notNow };
+  /*
+   * WHAT THIS SEAT CAN ANSWER is what asks something of it: a signed-out seat
+   * with only "Sign in to vote" and "Later" is told of a suggestion, under
+   * Updates, and not counted. The bell and Needs you read this one list.
+   */
+  const answers = useCallback((one: Suggestion) => mayDecide(store, one, principal) || store.permits({ name: VOTE_SUGGESTION, args: { suggestion: one.id, vote: "for" } }, principal).ok, [store, principal]);
+  const answerable = useMemo(() => waiting.filter(answers), [waiting, answers]);
+  const toldOf = useMemo(() => waiting.filter((one) => !answers(one)), [waiting, answers]);
+  return { waiting: answerable, toldOf, notNow };
 }
 
 /**
@@ -86,8 +95,13 @@ export function SuggestedList({ close, done }: {
   /** The last one settled: the inbox takes the keyboard to what was just made. */
   readonly done: () => void;
 }) {
-  const { store } = useGraview<AnySchema>();
   const { waiting, notNow } = useWaiting();
+  return <SuggestionRows waiting={waiting} notNow={notNow} close={close} done={done} />;
+}
+
+/** The suggestions handed it, and a press on any: under Needs you what this seat can answer, under Updates what it can only read. */
+function SuggestionRows({ waiting, notNow, close, done }: { readonly waiting: readonly Suggestion[]; readonly notNow: DismissalStore; readonly close: () => void; readonly done: () => void }) {
+  const { store } = useGraview<AnySchema>();
   const [heard, hear] = useState("");
   const goTo = useGoTo();
   /* A record a suggestion names goes somewhere while it is still here: the inbox closes behind the reader as they go (FR-225). */
@@ -100,14 +114,15 @@ export function SuggestedList({ close, done }: {
       : null;
   /*
    * A ROW SETTLED, THE KEYBOARD STAYS IN THE LIST: on the next row's first
-   * button — one press may settle several, stopping a kind — else on what
-   * else needs this person. Nothing left, the inbox says what was made, in
-   * Activity — never <body>.
+   * answer, or any button of it — a seat may have only Later — one press may
+   * settle several, stopping a kind; else on what else needs this person.
+   * Nothing left, the inbox says what was made, in Activity — never <body>.
    */
   const settled = (word: string) => {
     hear(word);
     requestAnimationFrame(() => {
-      const next = document.querySelector<HTMLElement>('[data-testid="suggested"] [data-testid="suggestion-accept"], [data-testid="inbox-needs-you"] [data-testid="suggestion-accept"], [data-testid="inbox-needs-you"] [data-testid="inbox-problem-words"]:is(button), [data-testid="inbox-needs-you"] [data-testid="inbox-notification"]:is(a, button)');
+      const row = document.querySelector<HTMLElement>('[data-testid="inbox"] [data-testid="suggestion"]');
+      const next = row?.querySelector<HTMLElement>('[data-testid="suggestion-accept"], [data-testid="suggestion-sign-in"], [data-testid="suggestion-not-now"]') ?? row?.querySelector<HTMLElement>("button") ?? document.querySelector<HTMLElement>('[data-testid="inbox-needs-you"] [data-testid="inbox-problem-words"]:is(button), [data-testid="inbox-needs-you"] [data-testid="inbox-notification"]:is(a, button)');
       if (next) next.focus();
       else done();
     });
@@ -167,17 +182,20 @@ export function SuggestedList({ close, done }: {
  * suggest them again long after Activity has moved on. It says "No updates."
  * itself where it is `alone`, since only the tray knows it has nothing to say.
  */
-export function SuggestedUpdates({ alone }: {
+export function SuggestedUpdates({ alone, close, done }: {
   /** Whether nothing else stands under Updates, so this says when it has nothing either. */
   readonly alone: boolean;
+  readonly close: () => void;
+  readonly done: () => void;
 }) {
   const { store, whileAway, principal } = useGraview<AnySchema>();
-  const { waiting } = useWaiting();
+  const { waiting, toldOf, notNow } = useWaiting();
   useGraph();
   const [refused, setRefused] = useState<string | null>(null);
   const tidied = whileAway?.tidied ?? 0;
   const away = whileAway ? awayWords(waiting.length, tidied, whileAway.agreed) : undefined;
-  const stopped = stoppedSuggestions(store);
+  // Only whoever may lift a stop is told of it here: `store.undo` asks the same.
+  const stopped = stoppedSuggestions(store, principal).filter((one) => store.mayUndo(one.batch, principal).ok);
   return (
     <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 8, minWidth: 0 }}>
       {away ? (
@@ -185,6 +203,7 @@ export function SuggestedUpdates({ alone }: {
           {away}.
         </p>
       ) : null}
+      {toldOf.length > 0 ? <SuggestionRows waiting={toldOf} notNow={notNow} close={close} done={done} /> : null}
       {stopped.length > 0 ? (
         <ul data-testid="suggestions-stopped" aria-label="What is not suggested any more" style={{ ...LIST, gap: 6 }}>
           {stopped.map((one) => (
@@ -198,7 +217,7 @@ export function SuggestedUpdates({ alone }: {
                   try {
                     store.undo(one.batch, { author: principal });
                   } catch (error) {
-                    setRefused(error instanceof Error ? error.message : String(error));
+                    setRefused(failureWords(store.schema, store.allMutations(), error));
                   }
                   // The row it was on is gone: the keyboard goes back to the tab, never <body>.
                   requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-testid="inbox"] [aria-selected="true"]')?.focus());
@@ -216,7 +235,7 @@ export function SuggestedUpdates({ alone }: {
           {refused}
         </span>
       ) : null}
-      {alone && !away && stopped.length === 0 ? (
+      {alone && !away && stopped.length === 0 && toldOf.length === 0 ? (
         <p data-testid="inbox-updates-empty" style={{ margin: 0, fontSize: "0.8125rem", color: "var(--graview-ink-muted)" }}>
           No updates.
         </p>
@@ -344,6 +363,7 @@ function SuggestionRow({ suggestion, notNow, settled, heard, goes, under }: {
    * a seat is offered the host's way in, "Sign in to vote", before it
    * presses — or, with none, no vote to press.
    */
+  const stops = useMemo(() => decides && mayStopSuggesting(store, suggestion, principal), [decides, store, suggestion, principal]);
   const votes = useMemo(() => decides || store.permits({ name: VOTE_SUGGESTION, args: { suggestion: suggestion.id, vote: "for" } }, principal).ok, [decides, store, suggestion.id, principal]);
   const { tally } = suggestion;
   // A person's proposal (Roadmap f-proposals-for-review), and whether it is this seat's own: its proposer withdraws it rather than votes on it.
@@ -445,8 +465,8 @@ function SuggestionRow({ suggestion, notNow, settled, heard, goes, under }: {
               No
             </button>
           ) : null}
-          {decides && !proposal ? (
-            <button type="button" data-testid="suggestion-stop-kind" onClick={() => void settle("stop")} style={QUIET}>
+          {stops ? (
+            <button type="button" data-testid="suggestion-stop-kind" onClick={() => void settle("stop")} title={`Stops suggesting ${suggestionKindWords(store, suggestion)}. You can undo it.`} style={QUIET}>
               Don't suggest this kind of thing
             </button>
           ) : null}

@@ -1,5 +1,6 @@
 import type { AnySchema, Repair, Violation } from "@graview/core";
 import type { AiInteraction } from "@graview/core/catalog";
+import { failureWords } from "@graview/core/words";
 import { useGraview, useSelection, type HostNotification } from "@graview/react/provider";
 import type { ToolCall } from "@graview/tools";
 import { Suspense, useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
@@ -168,7 +169,7 @@ function ForYou({ notifications, rules, tray, waiting, close, done }: Pick<Inbox
         {rules.others.length > 0 ? <BrokenRules violations={rules.others} close={close} told /> : null}
         {tray ? (
           <Suspense fallback={null}>
-            <SuggestedUpdates alone={rest.length === 0 && rules.others.length === 0} />
+            <SuggestedUpdates alone={rest.length === 0 && rules.others.length === 0} close={close} done={done} />
           </Suspense>
         ) : null}
         {rest.length === 0 && rules.others.length === 0 && !tray ? (
@@ -220,7 +221,7 @@ function BrokenRules({ violations, close, told = false }: { readonly violations:
         (inbox?.querySelector<HTMLElement>('[data-testid="inbox-problem-fix"]') ?? inbox?.querySelector<HTMLElement>('[aria-selected="true"]'))?.focus();
       });
     } catch (error) {
-      setRefused(error instanceof Error ? error.message : String(error));
+      setRefused(failureWords(store.schema, store.allMutations(), error));
     }
   };
   return (

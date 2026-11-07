@@ -2,7 +2,7 @@ import { spellingOf } from "../mutations/act-spelling.js";
 import { derivedActOf } from "../mutations/derived-names.js";
 import type { MutationCall } from "../mutations/types.js";
 import { undoneIn } from "./log.js";
-import type { ActMeanings, Decline, KeptDecline } from "./tidying.js";
+import type { ActMeanings, Decline, KeptDecline, KeptStop } from "./tidying.js";
 import type { Operation } from "./types.js";
 
 /*
@@ -54,14 +54,21 @@ function meaningOf(call: MutationCall, meanings: ActMeanings | undefined): unkno
 export const meaningKey = (calls: readonly MutationCall[], meanings?: ActMeanings): string => `≈${sortedKey(calls.map((call) => meaningOf(call, meanings)))}`;
 
 /**
- * THE KIND OF THING A CALL IS, whatever it is about: a link by its relation,
- * whichever act asks for it, and anything else its act, in any spelling. What
- * "Don't suggest this kind of thing" stops (`stopSuggesting`).
+ * THE KIND OF THING A CALL IS, whatever record it is about: a link by its
+ * relation, whichever act asks for it; an edit by its act and the fields it
+ * writes, so stopping a change to a task's note does not stop every change to
+ * a task; and anything else its act, in any spelling. What "Don't suggest
+ * this kind of thing" stops (`stopSuggesting`).
  */
 export function suggestionKind(call: MutationCall, meanings?: ActMeanings): string {
   const act = meanings?.act(call.name);
   const relation = act?.derived?.relation ?? (act?.connects?.length === 1 ? act.connects[0] : undefined);
-  return `${KIND_MARK}${sortedKey(relation !== undefined ? [act?.derived?.act ?? "connect", relation] : [spellingOf(call.name)])}`;
+  if (relation !== undefined) return `${KIND_MARK}${sortedKey([act?.derived?.act ?? "connect", relation])}`;
+  const name = spellingOf(call.name);
+  const derived = act?.derived ?? derivedActOf(name);
+  const subject = act?.subject?.arg ?? "id";
+  const fields = derived?.act === "edit" ? Object.keys(call.args ?? {}).filter((key) => key !== subject).sort() : undefined;
+  return `${KIND_MARK}${sortedKey(fields ? [name, fields] : [name])}`;
 }
 
 /** What a kind's key begins with, among a log's declines. */
@@ -79,7 +86,23 @@ const linkKey = (edge: { readonly kind: string; readonly from: string; readonly 
  */
 export function declinedIn(ops: readonly Operation[], calls: readonly MutationCall[], meanings?: ActMeanings, kept?: Readonly<Record<string, KeptDecline>>): Decline | undefined {
   const declines = declinesIn(ops, meanings, kept);
-  return [calls, ...calls.map((call) => [call])].map((asked) => declines.get(meaningKey(asked, meanings))).find(Boolean) ?? calls.map((call) => declines.get(suggestionKind(call, meanings))).find(Boolean);
+  return [calls, ...calls.map((call) => [call])].map((asked) => declines.get(meaningKey(asked, meanings))).find(Boolean);
+}
+
+/**
+ * THE STOP THAT ANSWERS THESE CALLS: every one of them of a kind a person
+ * said not to suggest (`Lineage.stopsKind`), or undefined. Apart from
+ * `declinedIn` on purpose. A decline holds every automated author to one
+ * change a person said no to; a stop is said to the app's own tidying actor
+ * alone, so a declared workflow and a chat agent go on as they were
+ * (`isTidyingActor`). A call of several not stopped leaves the whole
+ * standing: a person is still asked about it.
+ */
+export function stoppedIn(ops: readonly Operation[], calls: readonly MutationCall[], meanings?: ActMeanings, kept?: Readonly<Record<string, KeptDecline>>): Decline | undefined {
+  if (calls.length === 0) return undefined;
+  const declines = declinesIn(ops, meanings, kept);
+  const found = calls.map((call) => declines.get(suggestionKind(call, meanings)));
+  return found.every(Boolean) ? found[0] : undefined;
 }
 
 /**
@@ -103,7 +126,9 @@ export function declinesIn(ops: readonly Operation[], meanings?: ActMeanings, ke
   const undone = undoneIn(ops);
   const byId = new Map(ops.map((op) => [op.id, op]));
   const declines = new Map<string, Decline>();
-  for (const [key, one] of Object.entries(kept ?? {})) if (!undone.has(one.id)) declines.set(key, one);
+  // A stop lifted after its op was archived: the op that lifted it names the archived one, which the log no longer holds to mark undone.
+  const lifted = new Set(ops.filter((op) => op.lineage?.liftedStop === true).map((op) => op.undoes));
+  for (const [key, one] of Object.entries(kept ?? {})) if (!undone.has(one.id) && !lifted.has(one.id)) declines.set(key, one);
   // The calls of a suggestion a person accepted one by one before declining the rest: those were said yes to (Roadmap f-job-approvals).
   const took = new Map<string, number[]>();
   for (const op of ops) if (op.lineage?.suggestion !== undefined && op.lineage.items) took.set(op.lineage.suggestion, [...(took.get(op.lineage.suggestion) ?? []), ...op.lineage.items]);
@@ -127,7 +152,26 @@ export function declinesIn(ops: readonly Operation[], meanings?: ActMeanings, ke
   return declines;
 }
 
-/** What a checkpoint keeps of a log's declines (`Epoch.declines`): each as who said it and when, so the archive can take the op. */
-export function keptDeclines(declines: ReadonlyMap<string, Decline>): Record<string, KeptDecline> {
-  return Object.fromEntries([...declines].map(([key, one]) => [key, { id: one.id, at: one.at, author: one.author, ...(one.undoes !== undefined && { undoes: one.undoes }) }]));
+/**
+ * What a checkpoint keeps of a log's declines (`Epoch.declines`): each as who
+ * said it and when, so the archive can take the op. A stop keeps its batch,
+ * its words and one call of each kind besides (`KeptStop`), or nobody could
+ * find it or take it back once its op has gone.
+ */
+export function keptDeclines(declines: ReadonlyMap<string, Decline>, ops: readonly Operation[] = [], meanings?: ActMeanings): Record<string, KeptDecline> {
+  const byId = new Map(ops.map((op) => [op.id, op]));
+  const stopOf = (one: Decline): KeptStop | undefined => {
+    const carried = (one as KeptDecline).stop;
+    if (carried) return carried;
+    const op = one as Partial<Operation>;
+    if (op.lineage?.stopsKind !== true || op.batch === undefined || one.undoes === undefined) return undefined;
+    const calls = new Map((byId.get(one.undoes)?.suggests ?? []).map((call) => [suggestionKind(call, meanings), call]));
+    return { batch: op.batch, words: op.batchIntent ?? op.intent ?? "", calls: [...calls.values()] };
+  };
+  return Object.fromEntries(
+    [...declines].map(([key, one]) => {
+      const stop = stopOf(one);
+      return [key, { id: one.id, at: one.at, author: one.author, ...(one.undoes !== undefined && { undoes: one.undoes }), ...(stop && { stop }) }];
+    }),
+  );
 }

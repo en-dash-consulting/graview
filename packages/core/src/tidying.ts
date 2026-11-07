@@ -40,8 +40,8 @@ import { permittedMutations, proposes, subjectKinds } from "./permissions/policy
 import type { Policy } from "./permissions/types.js";
 import type { AnyMutationDefinition } from "./mutations/types.js";
 import { expired, suggestionsIn, votesIn, type Dismissal, type Suggestion } from "./ops/suggestions.js";
-import { DECLINES, isAutomated, type ActMeanings, type Decline } from "./ops/tidying.js";
-import { declinedIn, declinesIn, KIND_MARK, keptDeclines, meaningKey, suggestionKind } from "./ops/declines.js";
+import { DECLINES, isAutomated, isTidyingActor, type ActMeanings, type Decline, type KeptDecline, type KeptStop } from "./ops/tidying.js";
+import { declinedIn, declinesIn, KIND_MARK, keptDeclines, meaningKey, stoppedIn, suggestionKind } from "./ops/declines.js";
 import type { Author, Operation, Via } from "./ops/types.js";
 import type { Principal } from "./permissions/types.js";
 import type { AnySchema } from "./schema/schema.js";
@@ -49,11 +49,15 @@ import { seatOf } from "./seat-of.js";
 import type { ApplyOptions, ApplyResult, Store } from "./store.js";
 import { EMPTY_DIFF } from "./graph/diff.js";
 import { ARCHIVED } from "./graph/archived.js";
-import { nounOf, pluralOf } from "./schema/define-node.js";
+import { nameInPassing } from "./capital.js";
+import { fieldInPassing, nounOf, pluralOf } from "./schema/define-node.js";
+import { humanizeField } from "./schema/humanize.js";
+import { derivedActOf } from "./mutations/derived-names.js";
+import { spellingOf } from "./mutations/act-spelling.js";
 
-export { tidyingOf, tidyingRefusal } from "./ops/tidying.js";
-export { declinedIn, declinesIn, keptDeclines, meaningKey, suggestionKey, suggestionKind } from "./ops/declines.js";
-export type { Decline, KeptDecline } from "./ops/tidying.js";
+export { isTidyingActor, tidyingOf, tidyingRefusal } from "./ops/tidying.js";
+export { declinedIn, declinesIn, keptDeclines, meaningKey, stoppedIn, suggestionKey, suggestionKind } from "./ops/declines.js";
+export type { Decline, KeptDecline, KeptStop } from "./ops/tidying.js";
 export type { ActMeanings } from "./ops/tidying.js";
 export { isDismissed, suggestionsIn, takenIn, tallyOf, votesIn } from "./ops/suggestions.js";
 export type { Dismissal, DismissalStore, Suggestion, SuggestionItem, SuggestionTally, WaitingOptions } from "./ops/suggestions.js";
@@ -96,6 +100,9 @@ export interface SuggestionsOptions {
 interface Kept<S extends AnySchema> {
   readonly by: Author | Principal;
   rehearsal(): Kept<S> & { suggesting: boolean; proposing: boolean };
+  refuse(refusal: { readonly mutation: string; readonly message: string; readonly wouldNeed: readonly never[] }, by: string | undefined, told?: boolean): never;
+  authorName(author: Author | Principal): string;
+  moved(before: unknown, after: unknown): object;
   applying(calls: readonly MutationCall[], options: ApplyOptions): ApplyResult<S>;
   nextId(): string;
   mintBatch(kind: "batch" | "undo"): string;
@@ -109,7 +116,96 @@ interface Kept<S extends AnySchema> {
  * checkpoint it begins at, and a checkpoint keeps them (`Epoch.declines`).
  */
 DECLINES.declined = declinedIn;
-DECLINES.kept = (ops, meanings, kept) => keptDeclines(declinesIn(ops, meanings, kept));
+DECLINES.kept = (ops, meanings, kept) => keptDeclines(declinesIn(ops, meanings, kept), ops, meanings);
+DECLINES.stopped = stoppedIn;
+DECLINES.lift = (store, ids, options, author) => {
+  const whole = store as Store<AnySchema>;
+  const stop = keptStopOf(whole, ids);
+  return stop && liftKept(whole, stop, options as ApplyOptions, author);
+};
+DECLINES.liftRefusal = (store, ids, author) => {
+  const whole = store as Store<AnySchema>;
+  const stop = keptStopOf(whole, ids);
+  if (!stop) return undefined;
+  const refusal = liftRefusal(whole, stop.stop.calls, author as Principal);
+  return refusal ? { refusal } : {};
+};
+/*
+ * THE LIFTING OF A STOP BEHIND A CHECKPOINT has nothing left to put back: a
+ * person stops the kind again, the next time it is suggested. And lifting a
+ * stop, or putting one back, is whoever may decide what it was about: what it
+ * took back changed nothing, so nothing else would ask.
+ */
+DECLINES.undoRefusal = (store, ops, author) => {
+  const whole = store as Store<AnySchema>;
+  for (const target of ops) {
+    if (target.lineage?.liftedStop === true) return { mutation: "undo", wouldNeed: [], message: `"${target.intent}" cannot be taken back: it may be suggested again now, and can be stopped again then.` };
+    let root = target;
+    let stops = false;
+    for (let at: Operation | undefined = target; at !== undefined; at = at.undoes === undefined ? undefined : whole.log.get(at.undoes)) {
+      root = at;
+      stops ||= at.lineage?.stopsKind === true;
+    }
+    const why = stops && root.suggests ? liftRefusal(whole, root.suggests, author as Principal) : undefined;
+    if (why) return why;
+  }
+  return undefined;
+};
+
+/** Why this seat may not lift a stop of these calls, or nothing: whoever may make them may. */
+function liftRefusal(whole: Store<AnySchema>, calls: readonly MutationCall[], author: Principal) {
+  if (calls.every((call) => whole.permits(call, author).ok)) return undefined;
+  return { mutation: "undo", wouldNeed: [] as never[], message: "Only somebody who may make these changes can let them be suggested again." };
+}
+
+/** The stop a checkpoint alone keeps, when these batches are that one stop's: its op has gone to the archive, so the log cannot be asked. */
+function keptStopOf(whole: Store<AnySchema>, ids: readonly string[]): (KeptDecline & { readonly stop: KeptStop }) | undefined {
+  const declines = whole.log.horizonEpoch()?.declines;
+  if (!declines || ids.length !== 1) return undefined;
+  const lifted = new Set(whole.log.all().flatMap((op) => (op.undoes !== undefined ? [op.undoes] : [])));
+  return Object.values(declines).find((one): one is KeptDecline & { readonly stop: KeptStop } => one.stop?.batch === ids[0] && !lifted.has(one.id) && whole.log.get(one.id) === undefined);
+}
+
+/**
+ * A STOP LIFTED AFTER ITS OP WAS ARCHIVED: an op that changes nothing and
+ * undoes the archived one (`lineage.liftedStop`), which `declinesIn` reads as
+ * no longer standing, so a client's ordinary undo of the batch it was told does
+ * it, and the next checkpoint leaves it out.
+ */
+function liftKept(whole: Store<AnySchema>, kept: KeptDecline & { readonly stop: KeptStop }, options: ApplyOptions, author: Author | Principal): ApplyResult<AnySchema> {
+  const store = keptOf(whole);
+  const refused = liftRefusal(whole, kept.stop.calls, author as Principal);
+  if (refused) store.refuse(refused, author.id, true);
+  const before = whole.violations();
+  const op: Operation = {
+    id: store.nextId(),
+    seq: whole.log.length,
+    batch: options.batch ?? store.mintBatch("undo"),
+    author,
+    intent: `Undo: ${kept.stop.words}`,
+    ...given("batchIntent", options.intent),
+    mutation: null,
+    primitives: [],
+    reads: [],
+    writes: [],
+    at: store.now(),
+    undoes: kept.id,
+    ...given("via", options.via),
+    lineage: { basis: "A person let this kind of thing be suggested again", liftedStop: true },
+  };
+  whole.log.append(op);
+  whole.notify(EMPTY_DIFF as never, [op]);
+  return { batch: op.batch, ops: [op], diff: EMPTY_DIFF as never, primitives: [], reads: [], writes: [], intent: op.intent, ...store.moved(before, before), violationsAfter: before } as unknown as ApplyResult<AnySchema>;
+}
+DECLINES.stopRefusal = (store, targets, author) => {
+  const whole = store as Store<AnySchema>;
+  if (targets.length === 0 || targets.some((op) => !op.suggests)) return "Only a suggestion can be answered with not suggesting that kind of thing.";
+  for (const op of targets) {
+    const why = stopRefusal(whole, op.suggests!, op.author, op.lineage, author as Principal);
+    if (why) return why;
+  }
+  return undefined;
+};
 
 const keptOf = <S extends AnySchema>(store: Store<S>) => store as unknown as Kept<S>;
 const given = <K extends string, V>(key: K, value: V | undefined) => (value === undefined ? {} : { [key]: value }) as { readonly [P in K]?: V };
@@ -140,6 +236,11 @@ export function suggest<S extends AnySchema>(store: Store<S>, calls: readonly Mu
   const waiting = suggestions(whole).find((one) => meaningKey(one.calls, meanings) === key);
   if (waiting) return whole.log.get(waiting.id);
   kept.refuseDeclined(calls, author);
+  // What a person said not to suggest is said to the app's own tidying actor, not a workflow they set going or a chat agent (`isTidyingActor`).
+  if (isTidyingActor(author)) {
+    const stopped = stoppedIn(whole.log.all(), calls, meanings, whole.log.horizonEpoch()?.declines);
+    if (stopped) kept.refuse({ mutation: calls[0]!.name, message: `${kept.authorName(author)} may not suggest this kind of thing: a person said not to on ${stopped.at.slice(0, 10)}.`, wouldNeed: [] }, author.id);
+  }
   const rehearsal = kept.rehearsal();
   rehearsal.suggesting = true;
   const planned = rehearsal.applying(calls, { author, lineage, ...given("via", options.via) });
@@ -191,7 +292,17 @@ export function suggestions<S extends AnySchema>(store: Store<S>, principal?: Pr
   const stops = stoppedKindsOf(whole);
   if (stops.size === 0) return waiting;
   const meanings = keptOf(whole).actMeanings();
-  return waiting.filter((one) => isProposal(one) || !one.calls.some((call) => stops.has(suggestionKind(call, meanings))));
+  return waiting.filter((one) => !isTidyingActor(one.author) || isProposal(one) || !one.calls.every((call) => stops.has(suggestionKind(call, meanings))));
+}
+
+/**
+ * THE STOP THAT ANSWERS THESE CALLS, every one of them, or undefined (`stoppedIn`):
+ * what the app's own tidying actor asks before it suggests (`dream`, `suggest`).
+ * Not `declined`: a workflow or a chat agent asking that is told nothing of a stop.
+ */
+export function stoppedKind(store: Pick<Store<AnySchema>, "log">, calls: readonly MutationCall[]): Decline | undefined {
+  const kept = store as unknown as Partial<Kept<AnySchema>>;
+  return stoppedIn(store.log.all(), calls, typeof kept.actMeanings === "function" ? kept.actMeanings() : undefined, store.log.horizonEpoch()?.declines);
 }
 
 /** The kinds of thing people said not to suggest that still stand, each with the decline that said so; looked for only where a log or its checkpoint holds any. */
@@ -204,7 +315,7 @@ function stoppedKindsOf<S extends AnySchema>(whole: Store<S>): ReadonlyMap<strin
 
 /** A kind of thing a person said not to suggest, as `stoppedSuggestions` lists it. */
 export interface StoppedSuggestions {
-  /** The batch of the decline that said so: undone, the kind may be suggested again. */
+  /** The batch of the decline that said so: `store.undo` of it lets that kind be suggested again, even after a checkpoint archived it. */
   readonly batch: string;
   /** What was stopped, in the words it was stopped with. */
   readonly words: string;
@@ -212,17 +323,36 @@ export interface StoppedSuggestions {
 
 /**
  * WHAT PEOPLE SAID NOT TO SUGGEST, and still stands (Roadmap
- * f-inbox-needs-you-first): each with the batch to take back, so a person who
- * changes their mind long after Activity has moved on has a way back. One a
- * checkpoint alone keeps stands, and has no batch left to take back.
+ * f-inbox-needs-you-first), each with the batch to take back, so a person who
+ * changes their mind long after Activity has moved on has a way back. Read as
+ * `principal` may, when one is named, or as the seat a seat's view is of: an
+ * op withheld from them is not listed, and neither is a stop a checkpoint
+ * keeps that names what they may not see. A page served by a host is not told
+ * what a checkpoint keeps (`Epoch.declines` is never served), so there it
+ * lists what the log's tail still holds; the host lists the rest.
  */
-export function stoppedSuggestions<S extends AnySchema>(store: Store<S>): readonly StoppedSuggestions[] {
+export function stoppedSuggestions<S extends AnySchema>(store: Store<S>, principal?: Principal): readonly StoppedSuggestions[] {
+  const seat = seatOf(store);
+  const whole = seat?.store ?? store;
+  const who = principal ?? seat?.principal;
+  const seen = who !== undefined ? whole.seenBy(who) : whole;
+  const shown = new Map(seen.log.all().map((op) => [op.id, op]));
   const found = new Map<string, StoppedSuggestions>();
-  for (const decline of stoppedKindsOf(seatOf(store)?.store ?? store).values()) {
-    const op = decline as Partial<Operation>;
-    if (op.batch !== undefined) found.set(op.batch, { batch: op.batch, words: op.batchIntent ?? "Stopped suggesting a kind of thing" });
+  for (const decline of stoppedKindsOf(whole).values()) {
+    const { stop } = decline as KeptDecline;
+    if (stop) {
+      if (who === undefined || !namesWhatIsKept(seen, stop.calls)) found.set(stop.batch, { batch: stop.batch, words: stop.words });
+      continue;
+    }
+    const op = shown.get(decline.id);
+    if (op?.batch !== undefined && !op.withheld) found.set(op.batch, { batch: op.batch, words: op.batchIntent ?? op.intent });
   }
   return [...found.values()];
+}
+
+/** Whether any call names a record the seat is not served. */
+function namesWhatIsKept(seen: { readonly graph: { has(id: string): boolean } }, calls: readonly MutationCall[]): boolean {
+  return calls.some((call) => typeof call.args?.["id"] === "string" && !seen.graph.has(call.args["id"] as string));
 }
 
 /**
@@ -353,23 +483,69 @@ export function declineSuggestion<S extends AnySchema>(store: Store<S>, id: stri
   return whole.undo(suggestion.batch, { ...options, ...answered, author });
 }
 
+/** What one call is, as a kind of thing, in words: no record's name, since a kind is about none. */
+function kindSaid(store: Store<AnySchema>, call: MutationCall, meanings: ActMeanings): string {
+  const act = meanings.act(call.name) as (ReturnType<ActMeanings["act"]> & { readonly title?: string; readonly name?: string }) | undefined;
+  const relation = act?.derived?.relation ?? (act?.connects?.length === 1 ? act.connects[0] : undefined);
+  if (relation !== undefined) return `\u201c${nameInPassing(humanizeField(relation))}\u201d links`;
+  const derived = derivedActOf(spellingOf(act?.name ?? call.name));
+  const definition = derived && (store.schema.tryDefinition(derived.kind) as Parameters<typeof fieldInPassing>[0] | undefined);
+  if (derived && definition) {
+    const plural = pluralOf(store.schema, derived.kind).toLowerCase();
+    if (derived.act === "edit") {
+      const fields = Object.keys(call.args ?? {}).filter((key) => key !== "id").map((field) => fieldInPassing(definition, field));
+      return `changes to the ${fields.length > 0 ? fields.join(" and ") : "details"} of ${plural}`;
+    }
+    const doing: Partial<Record<typeof derived.act, string>> = { archive: `setting ${plural} aside`, unarchive: `bringing ${plural} back`, remove: `removing ${plural}`, merge: `merging ${plural}` };
+    if (doing[derived.act]) return doing[derived.act]!;
+  }
+  return `\u201c${act?.title ?? humanizeField(spellingOf(call.name))}\u201d`;
+}
+
+/** What a suggestion's kinds are, in words: "changes to the note of tasks", "“in chapter” links". */
+export function suggestionKindWords<S extends AnySchema>(store: Store<S>, suggestion: Pick<Suggestion, "calls">): string {
+  const whole = (seatOf(store)?.store ?? store) as unknown as Store<AnySchema>;
+  const meanings = keptOf(whole).actMeanings();
+  return [...new Set(suggestion.calls.map((call) => kindSaid(whole, call, meanings)))].join(", ");
+}
+
+/**
+ * WHY THIS SEAT MAY NOT STOP THESE CALLS' KINDS, or undefined when it may: a
+ * stop is said to the app's own tidying actor, of its own suggestions, by
+ * whoever may decide every suggestion of those kinds now waiting. A seat that
+ * may edit its own record does not get to silence that kind on everyone's.
+ */
+function stopRefusal(whole: Store<AnySchema>, calls: readonly MutationCall[], suggestedBy: Author, lineage: Lineage | undefined, author: Principal): string | undefined {
+  if (lineage?.proposedBy !== undefined) return "A person proposed this: decline it, and they may propose again.";
+  if (!isTidyingActor(suggestedBy)) return "Only what the app's own actor suggests can be stopped this way: decline this one.";
+  const meanings = keptOf(whole).actMeanings();
+  const kinds = new Set(calls.map((call) => suggestionKind(call, meanings)));
+  const waiting = suggestions(whole).filter((one) => isTidyingActor(one.author) && !isProposal(one) && one.calls.some((call) => kinds.has(suggestionKind(call, meanings))));
+  if ([{ calls }, ...waiting].every((one) => mayDecide(whole, one, author))) return undefined;
+  return "Only somebody who may decide every suggestion of this kind can say not to suggest it.";
+}
+
+/** Whether this seat may say "Don't suggest this kind of thing" of this suggestion: what the store would answer (`stopRefusal`). */
+export function mayStopSuggesting<S extends AnySchema>(store: Store<S>, suggestion: Pick<Suggestion, "calls" | "author" | "lineage">, principal?: Principal): boolean {
+  const whole = (seatOf(store)?.store ?? store) as unknown as Store<AnySchema>;
+  return stopRefusal(whole, suggestion.calls, suggestion.author, suggestion.lineage, (principal ?? keptOf(whole).by) as Principal) === undefined;
+}
+
 /**
  * "DON'T SUGGEST THIS KIND OF THING" (Roadmap f-inbox-needs-you-first): a
  * decline of this suggestion that answers its kind as well
- * (`suggestionKind`). Whatever else waits of that kind leaves every tray with
- * it, and the app's own actor is refused it from now on, as `declined(store,
- * calls)` says — kept in the log, and by a checkpoint, as every decline is.
- * Undone, all of it waits again and the actor may suggest it. Only whoever
- * may decide it says so, and of a suggestion, not a person's proposal.
+ * (`suggestionKind`). Whatever else the app's own tidying actor has waiting of
+ * that kind leaves every tray with it, and it is refused that kind from now on
+ * (`stoppedKind`), kept in the log, and by a checkpoint, as every decline is.
+ * A workflow and a chat agent are told nothing of it. Undone, all of it waits
+ * again and the actor may suggest it. The store judges who may say so
+ * (`mayStopSuggesting`), and says the kind in its words.
  */
 export function stopSuggesting<S extends AnySchema>(store: Store<S>, id: string, options: ApplyOptions = {}): ApplyResult<S> {
   const whole = seatOf(store)?.store ?? store;
   const author = options.author ?? keptOf(whole).by;
   const suggestion = waitingFor(whole, id, author);
-  if (isProposal(suggestion)) throw new GraphError("A person proposed this: decline it, and they may propose again.");
-  if (!mayDecide(whole, suggestion, author as Principal)) throw new GraphError("Only somebody who may make this change can say not to suggest it.");
-  const like = suggestion.headline ?? suggestion.intent;
-  const intent = options.intent ?? `Stopped suggesting things like: ${like.length > 120 ? `${like.slice(0, 119)}\u2026` : like}`;
+  const intent = options.intent ?? `Stopped suggesting ${suggestionKindWords(whole, suggestion)}`;
   return whole.undo(suggestion.batch, { ...options, author, intent, lineage: { basis: "A person said not to suggest this kind of thing", stopsKind: true } });
 }
 

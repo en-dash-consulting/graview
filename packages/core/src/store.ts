@@ -2254,6 +2254,8 @@ export class Store<S extends AnySchema> {
     this.stillNow();
     const ids = typeof batchIds === "string" ? [batchIds] : batchIds;
     const author = options.author ?? this.by;
+    const lifted = DECLINES.lift?.(this, ids, options, author);
+    if (lifted) return lifted as ApplyResult<S>;
     /*
      * JUDGED FIRST AS THIS SEAT SEES THE LOG (FR-16, FR-02). A change it
      * may not see is not its to take back, and when one stands in the way
@@ -2289,6 +2291,11 @@ export class Store<S extends AnySchema> {
      */
     const refused = this.undoRefusal(check.ops, author);
     if (refused) this.refuse(refused, author.id, true);
+    // A stop is judged wherever it comes from: the lineage crosses the wire as a client says it, and a store that cannot judge it refuses it.
+    if (lineage?.stopsKind === true) {
+      const why = DECLINES.stopRefusal ? DECLINES.stopRefusal(this, check.ops, author) : "This store cannot be told not to suggest something.";
+      if (why) this.refuse({ mutation: "undo", wouldNeed: [], message: why }, author.id, true);
+    }
 
     const rollback = this.graph.snapshot();
     const before = this.violations();
@@ -2344,6 +2351,8 @@ export class Store<S extends AnySchema> {
    * one the store refuses.
    */
   mayUndo(batchIds: string | readonly string[], principal: Principal = this.by as Principal): { readonly ok: true } | { readonly ok: false; readonly refusal?: Refusal; readonly check?: UndoCheck } {
+    const kept = DECLINES.liftRefusal?.(this, typeof batchIds === "string" ? [batchIds] : batchIds, principal);
+    if (kept) return kept.refusal ? { ok: false, refusal: kept.refusal } : { ok: true };
     const check = this.canUndo(batchIds);
     if (!check.ok) return { ok: false, check };
     const refusal = this.undoRefusal(check.ops, principal);
@@ -2352,6 +2361,8 @@ export class Store<S extends AnySchema> {
 
   /** What refuses `author` taking these ops back, or nothing: what you may undo is what you may have done. */
   private undoRefusal(ops: readonly Operation[], author: Author | Principal): Refusal | undefined {
+    const stop = DECLINES.undoRefusal?.(this, ops, author);
+    if (stop) return stop;
     if (this.policy || this.publisher) {
       for (const target of ops) {
         /*
