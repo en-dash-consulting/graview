@@ -1,7 +1,7 @@
 import { ARCHIVED, freshAddress, humanizeField, isWithheld, labelOf, nameOfAuthor, type AnySchema, type Author, type Batch, type Operation } from "@graview/core";
 import { viaSaid } from "@graview/core/words";
 import { lineageWords } from "@graview/core/provenance";
-import { digestWords, foldDigests, typedRowWords } from "@graview/core/tidying";
+import { digestWords, foldDigests, typedRowWords } from "@graview/core/history";
 import { lazyModule, POPOVER_STYLE, useGoTo, useGraview, useLiveStore, usePlayback, usePopover } from "@graview/react/provider";
 import { prefetchTimeline } from "../past-bar.js";
 import type { ToolCall } from "@graview/tools";
@@ -88,8 +88,13 @@ export function batchWords(batch: Pick<Batch, "intent" | "ops">): string {
   return out.length === 0 ? batch.intent : `${batch.intent} — ${out.join("; ")}`;
 }
 
-/** Whether a batch is a template's example content, by the id `graview apply --template --examples` gives it. */
-const isExamples = (batch: Pick<Batch, "id">): boolean => batch.id.startsWith("examples:");
+/**
+ * Whether a batch is a template's example content, by the id its host gives
+ * it: `examples` on Graview Cloud, `examples:<template>:<stamp>` from `graview
+ * apply --template --examples`. Neither is an id a client may name
+ * (`isClientBatch`, `@graview/ship`).
+ */
+const isExamples = (batch: Pick<Batch, "id">): boolean => batch.id === "examples" || batch.id.startsWith("examples:");
 
 /** What a template's example content is called in Activity, and what taking it back is called. */
 const EXAMPLES_WORDS = "Example records from the template";
@@ -300,7 +305,9 @@ export function UndoTurn({ batch, label = "Undo" }: { readonly batch: string | r
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [store, batch, length, principal, check],
   );
-  if (lookingBack || (!check.ok && check.ops.length === 0) || !may.ok) return null;
+  // Refused, asked again as the row draws: what judges a stop, `@graview/core/tidying`, comes with the tray, which may land after this was first asked.
+  const mayNow = may.ok ? may : store.mayUndo(batch, principal);
+  if (lookingBack || (!check.ok && check.ops.length === 0) || !mayNow.ok) return null;
   const blocked = !check.ok;
   const alsoNeeded = blocked ? check.includeBatches : [];
 

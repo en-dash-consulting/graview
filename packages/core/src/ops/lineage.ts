@@ -97,9 +97,17 @@ export interface Lineage {
    * "DON'T SUGGEST THIS KIND OF THING" (Roadmap f-inbox-needs-you-first), on
    * the undo that declines a suggestion: the decline answers every change
    * of the same act, not only this one (`stopSuggesting`,
-   * `@graview/core/tidying`). Undone, it no longer stands.
+   * `@graview/core/tidying`). Undone, it no longer stands. The store judges
+   * it wherever it comes from: only whoever may decide every suggestion of
+   * that kind says it.
    */
   readonly stopsKind?: true;
+  /**
+   * THE UNDO OF A STOP WHOSE OWN OP A CHECKPOINT ARCHIVED: what lifts a kept
+   * stop (`KeptDecline.stop`). Its `undoes` names the archived op, and it is
+   * not itself taken back: a person stops the kind again the next time.
+   */
+  readonly liftedStop?: true;
 }
 
 /** The longest basis an op keeps: a reason, not a transcript. */
@@ -142,9 +150,12 @@ const asJson = (value: unknown): unknown => {
  * the whole at most 4000 characters written out. Asked before anything is
  * kept; nothing said is no lineage.
  */
-export function lineageOf(value: unknown): Lineage | undefined {
+export function lineageOf(value: unknown, undoing = false): Lineage | undefined {
   if (value === undefined) return undefined;
   const given = (value && typeof value === "object" && !Array.isArray(value) ? value : {}) as Record<string, unknown>;
+  // Two keys are the store's own: what a lift says is written where it lifts, and a stop is said on an undo, where it is judged.
+  if (given["liftedStop"] !== undefined) throw new GraphError("Only the store says it lift a stop: undo the stop's batch.");
+  if (given["stopsKind"] !== undefined && !undoing) throw new GraphError("Saying not to suggest something is an undo of the suggestion, not a change of its own.");
   const basis = typeof given["basis"] === "string" ? given["basis"].trim() : "";
   const kept: Record<string, unknown> = { basis };
   let fits = basis !== "" && basis.length <= LINEAGE_BASIS_LIMIT;

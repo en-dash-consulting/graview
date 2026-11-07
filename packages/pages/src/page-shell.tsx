@@ -161,14 +161,9 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
         }
         tools={
           <>
-            {/* The standing, as the problems' own page: a dot, a badge only when a rule is broken (FR-131). */}
+            {/* The standing, as the problems' own page: a dot and its name, with no count of its own; the bell counts what needs you (Roadmap f-inbox-needs-you-first). */}
             <Link to="/problems" data-testid="standing-link" aria-label={said} title={said} style={{ ...toolStyle, position: "relative", textDecoration: "none", color: problems === 0 ? "var(--graview-ink-muted)" : "var(--graview-warn)" }}>
               <StandingDot tone={problems === 0 ? "var(--graview-good)" : "var(--graview-warn)"} />
-              {problems > 0 ? (
-                <span className="graview-bar-badge" data-tone="warn" data-testid="standing-count" aria-hidden="true">
-                  {problems > 99 ? "99+" : problems}
-                </span>
-              ) : null}
             </Link>
             {/*
               * One inbox — what waits for you, what has happened, what you asked — as the scene's

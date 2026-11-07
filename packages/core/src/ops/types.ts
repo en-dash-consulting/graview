@@ -65,6 +65,13 @@ export interface Author {
    * batches fold into one row of Activity. Ignored on a human author.
    */
   readonly automated?: true;
+  /**
+   * THE APP'S OWN TIDYING ACTOR, of the automated authors (`dream`'s
+   * `TIDYING_ACTOR`, or a host's own), said on purpose: what "Don't suggest
+   * this kind of thing" holds. A workflow, an importer and a host's triage
+   * are automated and not this. Ignored without `automated`.
+   */
+  readonly tidying?: true;
 }
 
 /**

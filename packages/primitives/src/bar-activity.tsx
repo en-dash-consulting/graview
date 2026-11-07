@@ -1,4 +1,4 @@
-import type { AnySchema } from "@graview/core";
+import { suggestionsMayWait, type AnySchema } from "@graview/core";
 import { useAiDeskState, useGraph, useGraview, useViolations } from "@graview/react/provider";
 import { useMemo } from "react";
 import { barPanes } from "./bar-panes-door.js";
@@ -23,7 +23,7 @@ export function useInboxWanted(batches: number): boolean {
   const notified = useNotifiedCount();
   const { entries } = useAiDeskState(aiDesk);
   const broken = useViolations<AnySchema>().length > 0;
-  const suggests = useMemo(() => store.log.all().some((op) => op.suggests !== undefined && !op.withheld), [store, nodes]);
+  const suggests = useMemo(() => suggestionsMayWait(store), [store, nodes, store.log.length, store.stopsServed]);
   return batches > 0 || broken || notified > 0 || suggests || (whileAway?.tidied ?? 0) > 0 || (notifications?.length ?? 0) > 0 || entries.length > 0;
 }
 

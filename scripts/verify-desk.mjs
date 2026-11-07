@@ -208,6 +208,29 @@ try {
     ok: broken.length === 0,
   };
 
+  /*
+   * The desk has no `AppBar`, so its bell brings its own look (Roadmap
+   * f-inbox-needs-you-first): once anything has happened, a bell a fingertip
+   * wide and a mark in its box, not a bare count beside it.
+   */
+  {
+    const bellPage = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+    await bellPage.goto(`${at("launcher")}/?theme=light&app=todo`, { waitUntil: "load" });
+    await bellPage.waitForTimeout(800);
+    // Opened and put away: a change the desk's own log holds, so the bell has something to say.
+    await bellPage.locator('[data-testid="switch-home"]').first().click({ timeout: 8000 }).catch(() => {});
+    await bellPage.waitForSelector('[data-testid="inbox-button"]', { timeout: 8000 }).catch(() => {});
+    const bell = await bellPage.evaluate(() => {
+      const button = document.querySelector('[data-testid="inbox-button"]');
+      if (!button) return null;
+      const style = getComputedStyle(button);
+      const box = button.getBoundingClientRect();
+      return { position: style.position, width: Math.round(box.width), height: Math.round(box.height), styled: [...document.querySelectorAll("style")].some((one) => /\.graview-bar-badge\{position:absolute/.test(one.textContent ?? "")) };
+    });
+    await bellPage.close();
+    report.checks.theDeskDrawsTheBellWithItsOwnLook = { bell, ok: bell !== null && bell.position === "relative" && bell.width >= 24 && bell.height >= 24 && bell.styled };
+  }
+
   /* ---------------------- a capability no demo shows is a problem, with a repair */
   const { createLauncherStore } = await import(
     pathToFileURL(resolve(repoRoot, "apps/launcher/dist/domain/app.js")).href

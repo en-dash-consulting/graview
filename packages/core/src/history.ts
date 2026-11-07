@@ -11,6 +11,8 @@
  * What the log does not hold — a script view's code, an asset's bytes —
  * is the host's, and it hands it through `HistoryHost`.
  */
+export { digestWords, foldDigests, typedRowWords } from "./ops/digest.js";
+export type { ActivityRow, TypedRow } from "./ops/digest.js";
 import { capitalize } from "./capital.js";
 import { humanizeField, nounOf } from "./schema/define-node.js";
 import { nameOfAuthor } from "./who.js";

@@ -512,3 +512,4 @@ export { foldPresence, nextExpiry, parseParticipant, participantKey, PRESENCE_TT
 export type { Participant, Presence, PresenceCaret, PresenceChannel, PresenceRobot } from "./presence.js";
 export { FRESH_KEY, freshAddress } from "./fresh.js";
 export type { FreshStorage } from "./fresh.js";
+export { suggestionsMayWait } from "./suggestions-may-wait.js";

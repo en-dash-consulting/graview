@@ -61,7 +61,7 @@ const OFF_THE_PAGE = {
   // Roadmap f-app-icons-home-screen: an app on a home screen — its head tags, its manifest and the files a host serves; a face's theme-color.
   "@graview/core/head": { from: head, names: ["headHtml", "homeScreenOf", "MANIFEST_PATH", "themeColorsOf"] },
   // Roadmap f-playback: the timeline around the past, fetched with it when somebody opens the past.
-  "@graview/core/history": { from: history, names: ["declarationSentence", "historyInWords", "makerOf", "makerWords", "restoreBatches", "ticksOf", "typedCounts", "typedRun", "typedSpans", "typingSentence", "typingWords", "unpublished"] },
+  "@graview/core/history": { from: history, names: ["declarationSentence", "digestWords", "foldDigests", "typedRowWords", "historyInWords", "makerOf", "makerWords", "restoreBatches", "ticksOf", "typedCounts", "typedRun", "typedSpans", "typingSentence", "typingWords", "unpublished"] },
   // Roadmap f-playback: the past itself — the fold, its kept points and the store it makes — fetched by the provider when somebody first asks to see it.
   "@graview/core/past": { from: past, names: ["askArchived", "askDeclaration", "declarationAt", "keptOf", "pastAt", "pastOf", "seqAt"] },
   "@graview/core/provenance": { from: provenance, names: ["isProvisional", "lineageWords", "linkKey", "linkProvenance", "linkProvenances", "provenanceWords", "provisionalLinks"] },
@@ -106,7 +106,7 @@ const OFF_THE_PAGE = {
   // The app's own actor's suggestions — made, accepted, declined — and what reads it back: the suggestions and declines in a store or a log, what the declaration lets it tidy, and Activity's digest.
   "@graview/core/tidying": {
     from: tidying,
-    names: ["acceptSuggestion", "advisoryVoterOf", "stoppedSuggestions", "stopSuggesting", "suggestionKind", "declined", "declinedIn", "declineSuggestion", "declinesIn", "digestWords", "foldDigests", "isDismissed", "isProposal", "isSuggestionBatch", "keptDeclines", "LEFT_ALONE", "mayDecide", "meaningKey", "propose", "proposedMutations", "proposalWords", "SIGN_IN_TO_VOTE", "signedOutSeat", "suggest", "suggestionKey", "suggestions", "suggestionsIn", "takenIn", "tallyOf", "tidyingOf", "tidyingRefusal", "typedRowWords", "voteSuggestion", "votesIn", "withdrawSuggestion"],
+    names: ["acceptSuggestion", "advisoryVoterOf", "isTidyingActor", "mayStopSuggesting", "servedStops", "stoppedIn", "stoppedKind", "stoppedSuggestions", "stopSuggesting", "suggestionKind", "suggestionKindWords", "declined", "declinedIn", "declineSuggestion", "declinesIn", "digestWords", "foldDigests", "isDismissed", "isProposal", "isSuggestionBatch", "keptDeclines", "LEFT_ALONE", "mayDecide", "meaningKey", "propose", "proposedMutations", "proposalWords", "SIGN_IN_TO_VOTE", "signedOutSeat", "suggest", "suggestionKey", "suggestions", "suggestionsIn", "takenIn", "tallyOf", "tidyingOf", "tidyingRefusal", "typedRowWords", "voteSuggestion", "votesIn", "withdrawSuggestion"],
   },
 } as const;
 

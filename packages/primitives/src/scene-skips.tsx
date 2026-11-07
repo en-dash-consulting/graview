@@ -1,5 +1,6 @@
 import type { AnySchema } from "@graview/core";
 import { useGraview, useSelection, useViolations } from "@graview/react";
+import { problemsShown } from "./seat-move.js";
 import { focusInto, SkipLinks, type SkipTo } from "./skip-links.js";
 import { wordsForChosen } from "./subject.js";
 
@@ -38,11 +39,8 @@ export function SceneSkips() {
       testid: "problems",
       opens: true,
       go: () => {
-        // The bell, pressed: it opens on what needs you, the rules among it, and the next Tab is in it.
-        const bell = document.querySelector<HTMLElement>('[data-testid="inbox-button"]');
-        if (!bell) return;
-        bell.focus();
-        if (bell.getAttribute("aria-expanded") !== "true") bell.click();
+        // The bell, pressed: it opens on what needs you, with the keyboard on the first rule broken.
+        problemsShown(true, { into: true });
       },
     });
   }

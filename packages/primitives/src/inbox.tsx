@@ -1,8 +1,9 @@
-import { brokenWords, type AnySchema, type Principal, type Store, type Violation } from "@graview/core";
+import { brokenWords, suggestionsMayWait, type AnySchema, type Principal, type Store, type Violation } from "@graview/core";
 import type { HostNotification } from "@graview/react/provider";
 import { POPOVER_STYLE, useGraph, useGraview, usePopover, useViolations } from "@graview/react/provider";
 import type { ToolCall } from "@graview/tools";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { TOOL } from "./app-bar.js";
 import { barPanes } from "./bar-panes-door.js";
 import { SuggestedCount } from "./bar-suggested.js";
 import type { InboxPaneProps, InboxTab } from "./inbox-pane.js";
@@ -39,15 +40,27 @@ export type { InboxTab } from "./inbox-pane.js";
 
 const Pane = barPanes.part((panes, props: InboxPaneProps) => <panes.InboxPane {...props} />, { what: "The inbox" });
 
+/** The bell's own look, drawn with it: an inbox may stand where no `AppBar` does, on the desk's bar or a host's. */
+const BELL_CSS = `
+.graview-bar-tool{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:0 0 auto;box-sizing:border-box;min-width:${TOOL}px;height:${TOOL}px;margin:0;padding:0;border-radius:8px;border:1px solid transparent;background:none;box-shadow:none;font:inherit;font-size:.875rem;font-weight:500;letter-spacing:normal;text-transform:none;white-space:nowrap;color:var(--graview-ink-muted);cursor:pointer;text-decoration:none}
+.graview-bar-tool:is(:hover,[aria-expanded=true]){border-color:var(--graview-edge);color:var(--graview-ink)}
+.graview-bar-tool[data-running]{color:var(--graview-accent)}
+.graview-bar-badge{position:absolute;top:-3px;right:-5px;box-sizing:border-box;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--graview-accent);color:var(--graview-accent-ink);font-size:.625rem;font-weight:700;line-height:16px;text-align:center;font-variant-numeric:tabular-nums;box-shadow:0 0 0 2px var(--graview-bar);pointer-events:none}
+.graview-bar-badge[data-dot]{min-width:8px;width:8px;height:8px;padding:0;top:2px;right:2px}`;
+
 const NO_CALLS: readonly ToolCall[] = [];
 const NO_NOTIFICATIONS: readonly HostNotification[] = [];
 
 /** A count as a badge says it: up to 99, then "99+". */
 export const badgeCount = (count: number): string => (count > 99 ? "99+" : String(count));
 
-/** What the bell is called, its count said in words, and the rules broken among it: "Inbox — 3 need you: 1 rule broken". */
-export function inboxWords(needs: number, broken: string): string {
-  if (needs === 0) return "Inbox";
+/**
+ * What the bell is called, its count said in words, and the rules broken among
+ * it: "Inbox — 3 need you: 1 rule broken". With nothing needing them, and
+ * something new under Updates, what its dot says: "Inbox — 1 new update".
+ */
+export function inboxWords(needs: number, broken: string, updates = 0): string {
+  if (needs === 0) return updates > 0 ? `Inbox — ${updates} new ${updates === 1 ? "update" : "updates"}` : "Inbox";
   return `Inbox — ${needs} ${needs === 1 ? "needs" : "need"} you${broken ? `: ${broken}` : ""}`;
 }
 
@@ -93,15 +106,14 @@ export function Inbox({ calls = NO_CALLS, seat, remembers = false }: InboxProps)
   const interactions = useInteractions();
   const asksOn = ai.off !== true;
   const asks = useMemo(() => (principal.id === undefined ? [] : interactions.filter((entry) => entry.by.id === principal.id || entry.by.onBehalfOf?.id === principal.id)), [interactions, principal.id]);
-  // The tray is fetched once the log holds a suggestion, or the host said what was done while the reader was away.
-  const suggests = useMemo(() => store.log.all().some((op) => op.suggests !== undefined && !op.withheld), [store, nodes]);
+  // The tray is fetched once the log holds a suggestion or a stop, a checkpoint or the host keeps a stop, or the host said what was done while the reader was away.
+  const suggests = useMemo(() => suggestionsMayWait(store), [store, nodes, store.log.length, store.stopsServed]);
   const away = (whileAway?.tidied ?? 0) > 0;
   const tray = suggests || away;
   const [waiting, setWaiting] = useState(0);
   const unread = notifications.filter((one) => !one.read);
-  // What needs this person: all the bell counts. A host's notice stands under Needs you while it is handed, and is counted while unread.
-  const count = waiting + rules.yours.length + unread.filter((one) => one.needs).length;
-  const needsYou = count > 0 || notifications.some((one) => one.needs);
+  // What needs this person: all the bell counts, and all Needs you lists. A host's notice stands there, and is counted, for as long as it is handed: read or not.
+  const count = waiting + rules.yours.length + notifications.filter((one) => one.needs).length;
   const popover = usePopover("inbox");
   const open = popover.open;
   /*
@@ -114,7 +126,7 @@ export function Inbox({ calls = NO_CALLS, seat, remembers = false }: InboxProps)
    */
   const [chosen, setChosen] = useState<InboxTab | null>(null);
   const [heard, setHeard] = useState(false);
-  const landing: InboxTab = needsYou || unread.length > 0 || away ? "for-you" : activity.has ? "activity" : asks.length > 0 ? "asks" : "for-you";
+  const landing: InboxTab = count > 0 || unread.length > 0 || away ? "for-you" : activity.has ? "activity" : asks.length > 0 ? "asks" : "for-you";
   const tab: InboxTab = chosen ?? landing;
   const known = !tray || heard;
   useEffect(() => {
@@ -136,10 +148,11 @@ export function Inbox({ calls = NO_CALLS, seat, remembers = false }: InboxProps)
     setHeard(true);
   }, []);
   if (!(activity.has || tray || notifications.length > 0 || asks.length > 0 || violations.length > 0)) return null;
-  const words = inboxWords(count, rules.yours.length > 0 ? brokenWords(rules.yours) : "");
+  const words = inboxWords(count, rules.yours.length > 0 ? brokenWords(rules.yours) : "", unread.length);
   const reach = () => barPanes.prefetch();
   return (
     <div className="graview-bar-inbox" style={{ position: "relative" }}>
+      <style>{BELL_CSS}</style>
       {tray ? (
         <Suspense fallback={null}>
           <SuggestedCount onCount={counted} />
@@ -164,8 +177,8 @@ export function Inbox({ calls = NO_CALLS, seat, remembers = false }: InboxProps)
           <span className="graview-bar-badge" data-testid="inbox-count" aria-hidden="true">
             {badgeCount(count)}
           </span>
-        ) : activity.running ? (
-          <span className="graview-bar-badge" data-dot="" aria-hidden="true" />
+        ) : activity.running || unread.length > 0 ? (
+          <span className="graview-bar-badge" data-dot="" data-testid="inbox-dot" aria-hidden="true" />
         ) : null}
       </button>
       {/*

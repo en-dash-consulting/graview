@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { bindSchema, createSchema, defineNode, nodeRef, Store, z, type Author, type Principal } from "../../src/index.js";
-import { acceptSuggestion, declined, foldDigests, propose, stoppedSuggestions, stopSuggesting, suggest, suggestions } from "../../src/tidying.js";
+import { acceptSuggestion, foldDigests, stoppedKind, propose, stoppedSuggestions, stopSuggesting, suggest, suggestions } from "../../src/tidying.js";
 
 /**
  * "DON'T SUGGEST THIS KIND OF THING" (Roadmap f-inbox-needs-you-first). A
@@ -21,7 +21,7 @@ const pin = defineMutation("pin-note", {
     ctx.patchNode(args.id, { label: "Pinned" });
   },
 });
-const actor: Author = { kind: "system", id: "tidying", name: "Graview, tidying", automated: true };
+const actor: Author = { kind: "system", id: "tidying", name: "Graview, tidying", automated: true, tidying: true };
 const nora: Principal = { kind: "human", id: "nora", name: "Nora" };
 const lineage = { basis: "Both are about direction", confidence: 0.8 };
 const inChapter = (id: string, to = "ch") => ({ name: "connect-note-in-chapter", args: { id, to } });
@@ -50,10 +50,10 @@ describe("stopping a kind of suggestion", () => {
   it("holds the app's own actor to it, for a record and a place it has not suggested before", () => {
     const store = storeOf();
     stopSuggesting(store, suggest(store, [inChapter("a")], { author: actor, lineage })!.id, { author: nora });
-    expect(declined(store, [inChapter("c", "ch2")])).toBeDefined();
-    expect(() => suggest(store, [inChapter("c", "ch2")], { author: actor, lineage })).toThrow(/may not make this again/);
+    expect(stoppedKind(store, [inChapter("c", "ch2")])).toBeDefined();
+    expect(() => suggest(store, [inChapter("c", "ch2")], { author: actor, lineage })).toThrow(/may not suggest this kind of thing/);
     // Asked for under another spelling, it is the same kind of thing.
-    expect(() => suggest(store, [{ name: "connect_note_in_chapter", args: { id: "c", to: "ch" } }], { author: actor, lineage })).toThrow(/may not make this again/);
+    expect(() => suggest(store, [{ name: "connect_note_in_chapter", args: { id: "c", to: "ch" } }], { author: actor, lineage })).toThrow(/may not suggest this kind of thing/);
     // Another kind of thing is still the actor's to suggest.
     expect(suggest(store, [{ name: "archive-note", args: { id: "c" } }], { author: actor, lineage })).toBeDefined();
   });
@@ -64,11 +64,11 @@ describe("stopping a kind of suggestion", () => {
     suggest(store, [inChapter("b")], { author: actor, lineage });
     const stopped = stopSuggesting(store, first.id, { author: nora });
     expect(stoppedSuggestions(store).map((one) => one.batch)).toEqual([stopped.batch]);
-    expect(stoppedSuggestions(store)[0]!.words).toMatch(/^Stopped suggesting things like: /);
+    expect(stoppedSuggestions(store)[0]!.words).toBe("Stopped suggesting “in chapter” links");
     store.undo(stopped.batch, { author: nora });
     expect(suggestions(store)).toHaveLength(2);
     expect(stoppedSuggestions(store)).toEqual([]);
-    expect(declined(store, [inChapter("c", "ch2")])).toBeUndefined();
+    expect(stoppedKind(store, [inChapter("c", "ch2")])).toBeUndefined();
     expect(suggest(store, [inChapter("c", "ch2")], { author: actor, lineage })).toBeDefined();
   });
 
@@ -77,7 +77,7 @@ describe("stopping a kind of suggestion", () => {
     stopSuggesting(store, suggest(store, [inChapter("a")], { author: actor, lineage })!.id, { author: nora });
     const again = new Store({ schema, mutations: [pin], snapshot: SNAPSHOT as never, ops: store.log.all() } as never);
     for (const op of store.log.all()) if (!again.log.get(op.id)) again.log.append(op);
-    expect(() => suggest(again, [inChapter("b")], { author: actor, lineage })).toThrow(/may not make this again/);
+    expect(() => suggest(again, [inChapter("b")], { author: actor, lineage })).toThrow(/may not suggest this kind of thing/);
   });
 
   it("is a row of what has happened, where an ordinary decline is not", () => {

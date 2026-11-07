@@ -42,7 +42,7 @@ import {
 import "@graview/core/field-sight";
 import "@graview/core/publishing";
 // And a vote on a suggestion (Roadmap f-suggestion-votes): the op a vote keeps is made where the log is.
-import "@graview/core/tidying";
+import { servedStops, type ServedStops } from "@graview/core/tidying";
 import { argumentWords } from "@graview/core/words";
 import { cursorAt, seqAt, type Cursor } from "./cursor.js";
 import { bytesOf, conflictSentence, LIVE_WIRE, type Limit, type LimitAnswer, type LimitAsked, type LiveClientMessage, type LiveServerMessage } from "./live.js";
@@ -794,7 +794,7 @@ export interface Wire<S extends AnySchema> {
    */
   behind(principal: Principal, seq: number): boolean;
   /** `{ servedThrough }` for a seat of an app that publishes, as a cursor (the position after the last op it is served); nothing otherwise. */
-  servedOf(principal: Principal): { servedThrough?: Cursor };
+  servedOf(principal: Principal): { servedThrough?: Cursor; stops?: ServedStops["stops"]; stoppedKinds?: ServedStops["kinds"] };
   /** The store as the seat sees it. */
   seenFor(principal: Principal): Store<S>;
   /** The store's log as the seat sees it: every op in place, withheld ones under an opaque batch. */
@@ -989,7 +989,15 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
       return shown(principal, store.log.opsFrom(Math.max(0, Math.floor(seq) + 1)).filter((op) => op.seq < served));
     },
     behind: (principal, seq) => Number.isFinite(seq) && (Math.floor(seq) + 1 < store.log.horizon || (Math.floor(seq) >= servedTo(principal) && servedTo(principal) < store.log.length)),
-    servedOf: (principal) => (store.publishing?.mode === "on-publish" ? { servedThrough: cursorAt(servedTo(principal) - 1) } : {}),
+    servedOf: (principal) => {
+      // What this seat may be told of the stops standing, which the log it is sent may not hold (`servedStops`).
+      const stopped = servedStops(store, principal);
+      return {
+        ...(store.publishing?.mode === "on-publish" ? { servedThrough: cursorAt(servedTo(principal) - 1) } : {}),
+        ...(stopped?.stops.length ? { stops: stopped.stops } : {}),
+        ...(stopped?.kinds.length ? { stoppedKinds: stopped.kinds } : {}),
+      };
+    },
     seenFor: (principal) => seenBy(store, principal),
     seenLog(principal) {
       const log = seenBy(store, principal).log.all();

@@ -25,7 +25,7 @@ beforeAll(() => fetchInspector());
 const chapter = defineNode("chapter", { fields: z.object({ label: z.string() }), plural: "Chapters" });
 const note = defineNode("note", { fields: z.object({ label: z.string() }), plural: "Notes", edges: { "in-chapter": { to: ["chapter"], cardinality: "one" }, "waits-for": { to: ["note"] } } });
 const schema = createSchema([chapter, note]);
-const actor: Author = { kind: "system", id: "tidying", name: "Graview, tidying", automated: true };
+const actor: Author = { kind: "system", id: "tidying", name: "Graview, tidying", automated: true, tidying: true };
 const nora: Principal = { kind: "human", id: "nora", name: "Nora" };
 const STEER = "What I steer by";
 
