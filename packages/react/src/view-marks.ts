@@ -55,7 +55,7 @@ export const BLEEDS: unique symbol = Symbol.for("graview.bleeds");
 
 /** Marks a view as drawn edge to edge on a phone, or across the page's whole width at every width (`"full"`). Returns the same component. */
 export function markBleeds<V extends object>(view: V, how: true | "full" = true): V {
-  Object.defineProperty(view, BLEEDS, { value: how, enumerable: false });
+  Object.defineProperty(view, BLEEDS, { value: how, enumerable: false, configurable: true });
   return view;
 }
 

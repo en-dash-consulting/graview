@@ -5739,7 +5739,7 @@ A control of your own keeps its role and state, and every `aria-*`: `<span role=
 
 ### Its box, and the gutter
 
-On Pages a view is drawn in the page's column (a 20px gutter on a phone), and nothing it draws passes its box (a negative margin is clipped). `bleed: true` in the manifest: on a phone (680px or less) it takes the gutter back, keeping the safe areas. `bleed: "full"`: the window's width at every width; a home (or a place with `heading: "own"`) starts flush under the bar.
+On Pages a view is drawn in the page's column, and nothing it draws passes its box (a negative margin is clipped). `bleed: true` in the manifest: on a phone (680px or less) it takes the gutter back, keeping the safe areas. `bleed: "full"`: the window's width at every width; a home (or a place with `heading: "own"`) starts flush under the bar. A trail keeps its spacing above.
 
 ### The images a view may show
 

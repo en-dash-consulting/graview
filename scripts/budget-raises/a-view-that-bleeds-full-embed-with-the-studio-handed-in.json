@@ -1,6 +1,6 @@
 {
   "budget": "embed with the studio handed in",
-  "minified": 1265,
-  "gzipped": 384,
-  "note": "Raised when a worker view came to span the whole window at every width (`bleed: \"full\"`, Roadmap f-views-bleed-full-width): the pages face's box, rules and readings, drawn with the studio handed in as with every other face. Measured at 1_909_009 / 667_200 against 1_907_744 / 666_816 minified and gzipped."
+  "minified": 1576,
+  "gzipped": 557,
+  "note": "Raised when a worker view came to span the whole window at every width (`bleed: \"full\"`, Roadmap f-views-bleed-full-width): the pages face's box, rules and readings, drawn with the studio handed in as with every other face. Measured at 1_909_320 / 667_373 against 1_907_744 / 666_816 minified and gzipped."
 }
