@@ -58,6 +58,14 @@
  *   aHostsOptionJoinsAfterTheFirstDrawAndHearsTheChoice
  *   aReaderIsOfferedNoOtherWays
  *   onAPhoneTheSwitchFitsAndTheKeyboardStaysOnIt
+ *   aListDrawnAsTheAppDrawsItIsOfferedNoOtherWays
+ *
+ * And on the todo example, whose product design (`thingsDesign`) replaces
+ * its kinds' lists, with its development host (`__todoDevHost`,
+ * apps/todo/src/dev-change.ts) lending the change to the app:
+ *   aListADesignReplacesIsOfferedNoOtherWays
+ *   aPlaceUnderADesignIsStillOfferedAndKeepsThroughTheDevHost
+ *   aListNoDesignReplacesOpensAsItsOptionThroughTheDevHost
  */
 import { createServer } from "node:http";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -66,9 +74,9 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
-import { vacant } from "./lib/serve.mjs";
+import { serving, vacant } from "./lib/serve.mjs";
 import { graviewSources } from "./lib/graview-sources.mjs";
-import { portFor } from "./lib/ports.mjs";
+import { at, portFor } from "./lib/ports.mjs";
 import { deadline } from "./lib/deadline.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -77,6 +85,7 @@ const SHOTS = process.env.GRAVIEW_PAGE_BETTER_SHOTS;
 const report = { at: new Date().toISOString(), engine: ENGINE, checks: {} };
 let browser;
 let host;
+let todo;
 let page;
 const consoled = [];
 const errors = [];
@@ -86,6 +95,7 @@ const reach = deadline({
   cleanup: async () => {
     await browser?.close();
     host?.stop();
+    todo?.stop();
   },
 });
 
@@ -1399,6 +1409,99 @@ try {
     await phone.close();
   }
 
+  /** The rows a menu holds, every one of them: More… pressed, and what typing its words would light. */
+  const rowsOfMenu = async (on, selector) => {
+    if (await on.$(MENU)) {
+      await on.keyboard.press("Escape");
+      await on.waitForSelector(MENU, { state: "detached" }).catch(() => {});
+    }
+    const box = await on.locator(selector).first().boundingBox();
+    await on.mouse.click(Math.round(box.x + Math.min(12, box.width / 2)), Math.round(box.y + box.height / 2), { button: "right" });
+    await on.waitForSelector(MENU, { timeout: 10_000 });
+    await on.waitForTimeout(300);
+    if (await on.$(`${MENU} [data-menu-item="more"]`)) await on.click(`${MENU} [data-menu-item="more"]`);
+    await on.waitForTimeout(60);
+    return on.evaluate(() => [...document.querySelectorAll('[data-testid="context-menu"] [data-menu-item]')].map((one) => one.getAttribute("data-menu-item")));
+  };
+
+  reach("aListDrawnAsTheAppDrawsItIsOfferedNoOtherWays");
+  {
+    // Keeping one would not change an address that asks for the list itself.
+    await ready(page, "/tasks", "?noai=1&drawn=built-in");
+    const rows = await rowsOfMenu(page, `${MAIN} [data-graview-page-title]`);
+    report.checks.aListDrawnAsTheAppDrawsItIsOfferedNoOtherWays = { rows, ok: rows.length > 0 && !rows.includes("other-ways") };
+    await page.keyboard.press("Escape");
+  }
+
+  /*
+   * THE EXAMPLE'S OWN DESIGN AND ITS DEVELOPMENT HOST. The host lends the
+   * change on every page here, so a row withheld on the tasks is withheld
+   * for the design's sake and for no other: the same seat is offered it on
+   * a place and on a list the design left alone, and keeps through
+   * dev-change.ts, which lays the change's lenses over the code app.
+   */
+  todo = await serving("todo", portFor("todo"), repoRoot);
+  const todoContext = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  await todoContext.addInitScript(() => (window.__todoDevHost = true));
+  const things = await todoContext.newPage();
+  things.on("pageerror", (error) => errors.push(`todo: ${error.message}`));
+  const thingsAt = async (path) => {
+    await things.goto(`${at("todo")}/pages${path}?today=2026-09-01&fresh=1`, { waitUntil: "load" });
+    await things.waitForSelector("[data-graview-page-title], main h1", { timeout: 60_000 });
+    await things.waitForTimeout(300);
+  };
+
+  reach("aListADesignReplacesIsOfferedNoOtherWays");
+  {
+    await thingsAt("/tasks");
+    const rows = await rowsOfMenu(things, "[data-graview-page-title], main h1");
+    report.checks.aListADesignReplacesIsOfferedNoOtherWays = { rows, ok: rows.length > 0 && !rows.includes("other-ways") };
+    await things.keyboard.press("Escape");
+  }
+
+  reach("aPlaceUnderADesignIsStillOfferedAndKeepsThroughTheDevHost");
+  {
+    await thingsAt("/places/the-month");
+    const lensOf = () => things.evaluate(() => ({ flows: document.querySelector('[data-testid="place-lens"]')?.hasAttribute("data-flows") ?? null, title: document.querySelector("[data-graview-page-title]")?.textContent, path: location.pathname }));
+    const was = await lensOf();
+    await otherWaysByKeyboard(things);
+    await things.waitForFunction(() => document.querySelector('[data-testid="display-option"][aria-checked="true"]'), null, { timeout: 5000 });
+    const seen = await switchSays(things);
+    await things.click(`${OPTION}:has-text("Cards")`);
+    await things.click('[data-testid="section-keep"]');
+    await things.waitForSelector('[data-section-phase="options-kept"]', { timeout: 15_000 });
+    await things.waitForFunction(() => document.querySelector('[data-testid="place-lens"]')?.hasAttribute("data-flows"), null, { timeout: 15_000 });
+    const kept = await lensOf();
+    const said = await things.evaluate(() => document.querySelector('[data-testid="section-status"]')?.textContent);
+    await shot(things, "other-ways-todo-place-kept");
+    await things.click('[data-testid="section-undo"]');
+    await things.waitForSelector('[data-section-phase="options-undone"]', { timeout: 15_000 });
+    await things.waitForFunction(() => !document.querySelector('[data-testid="place-lens"]')?.hasAttribute("data-flows"), null, { timeout: 15_000 });
+    const back = await lensOf();
+    report.checks.aPlaceUnderADesignIsStillOfferedAndKeepsThroughTheDevHost = { options: seen.options, was, kept, said, back, ok: was.flows === false && kept.flows === true && kept.title === was.title && kept.path === was.path && back.flows === false && /now shows as cards/.test(said ?? "") };
+    await things.keyboard.press("Escape");
+  }
+
+  reach("aListNoDesignReplacesOpensAsItsOptionThroughTheDevHost");
+  {
+    await thingsAt("/people");
+    const before = await things.evaluate(() => ({ title: document.querySelector("[data-graview-page-title], main h1")?.textContent, lens: Boolean(document.querySelector('[data-testid="place-lens"]')) }));
+    await otherWaysByKeyboard(things);
+    await things.waitForFunction(() => document.querySelector('[data-testid="display-option"][aria-checked="true"]'), null, { timeout: 5000 });
+    const seen = await switchSays(things);
+    await things.click(`${OPTION}:has-text("Cards")`);
+    await things.click('[data-testid="section-keep"]');
+    await things.waitForSelector('[data-section-phase="options-kept"]', { timeout: 15_000 });
+    await things.waitForSelector('[data-testid="place-lens"]', { timeout: 15_000 });
+    const kept = await things.evaluate(() => ({ title: document.querySelector("[data-graview-page-title], main h1")?.textContent, toList: document.querySelector('[data-testid="place-as-list"]')?.getAttribute("href"), path: location.pathname }));
+    await shot(things, "other-ways-todo-list-kept");
+    await things.click('[data-testid="section-undo"]');
+    await things.waitForSelector('[data-section-phase="options-undone"]', { timeout: 15_000 });
+    await things.waitForSelector('[data-testid="place-lens"]', { state: "detached", timeout: 15_000 });
+    report.checks.aListNoDesignReplacesOpensAsItsOptionThroughTheDevHost = { options: seen.options, before, kept, ok: before.lens === false && kept.title === before.title && kept.path.endsWith("/people") && /drawn=built-in/.test(kept.toList ?? "") };
+  }
+  await todoContext.close();
+
   reach.done();
   report.pageErrors = errors;
   report.passed = Object.values(report.checks).every((check) => check.ok) && errors.length === 0;
@@ -1415,6 +1518,7 @@ try {
 } finally {
   await browser?.close();
   host?.stop();
+  todo?.stop();
 }
 
 writeFileSync(resolve(repoRoot, "docs/page-better.json"), `${JSON.stringify(report, null, 2)}\n`);

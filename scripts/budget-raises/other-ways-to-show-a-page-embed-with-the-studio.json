@@ -1,6 +1,6 @@
 {
   "budget": "embed with the studio handed in",
-  "minified": 2117,
-  "gzipped": 596,
-  "note": "Raised when an owner could flip between other ways to show a kind's list or a place (Roadmap f-display-options-switch): the host's `displayOptions` handed through and `pages.lists.<kind>.opens` in the document, its edit and its finding, up front. 2117 / 596 more. Measured at 1909861 / 667410, against main's 1907744 / 666814."
+  "minified": 2294,
+  "gzipped": 629,
+  "note": "Raised when an owner could flip between other ways to show a kind's list or a place (Roadmap f-display-options-switch): the host's `displayOptions` handed through and `pages.lists.<kind>.opens` in the document, its edit and its finding, up front. 2294 / 629 more. Measured at 1910038 / 667443, against main's 1907744 / 666814."
 }

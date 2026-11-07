@@ -334,7 +334,7 @@ function FaceRoot<S extends AnySchema>({
     <div ref={root} data-graview-face="pages" style={{ display: "contents" }}>
       <FaceControlsRoot context={context} registry={registry as PageRegistry<S, unknown> | undefined} root={root}>
         {/* The scene's context menu, on what a right-click, the keyboard or a resting finger lands on here. */}
-        <PagesContextMenu context={context} root={root}>
+        <PagesContextMenu context={context} root={root} registry={registry}>
           {children}
         </PagesContextMenu>
       </FaceControlsRoot>

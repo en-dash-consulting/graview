@@ -69,7 +69,9 @@ Kept on a place, the lens is drawn in the place's own title. Kept on a list, it 
 "pages": { "lists": { "task": { "opens": "Tasks by status" } } }
 ```
 
-`arrange-pages` sets it (`"opens": { "task": "Tasks by status" }`, `null` gives the list back). The list's address then draws that place under the list's heading; `?drawn=built-in` is the list itself. `list-opens-no-place` warns of a title that is no lens over the kind. A design that replaces the list page reads `opens` itself (`graview-pages-design`).
+`arrange-pages` sets it (`"opens": { "task": "Tasks by status" }`, `null` gives the list back). The list's address then draws that place under the list's heading; `?drawn=built-in` is the list itself. `list-opens-no-place` warns of a title that is no lens over the kind.
+
+A design that replaces a kind's list page (`graview-pages-design`) is offered no other ways there, since a kept one would not change its page; a place still is. It may read `pages.lists.<kind>.opens` to honor one set elsewhere.
 
 A host adds options and hears the choice with `displayOptions`: `offers(asked)` hands in lenses (`{ id, label, lens: { lens, title, bindings, options }, weight }`), judged like the rest; `chosen()` adds what it remembers; `onChoice(heard)` is told what was kept and when that is undone.
 

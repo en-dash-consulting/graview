@@ -182,14 +182,21 @@ export function sectionFor(target: MenuTarget, here: SectionHere): MenuSection |
  * list or a place a lens draws, for a seat that may change the app where the
  * host lends the change. It needs no model. Nothing on a kind with no
  * records: there would be nothing to show.
+ *
+ * NOR ON A LIST THAT WOULD NOT CHANGE. `listStands` is the face's word for
+ * a kind's list keeping one could not reach: a product design drew its own,
+ * or the address asks for the list the app draws by itself. A page never
+ * says it now shows as something while it draws the same thing. A place is
+ * still offered, whatever the design: its lens is what draws it.
  */
-export function displayOptionsSection(target: MenuTarget, here: SectionHere): MenuSection | null {
+export function displayOptionsSection(target: MenuTarget, here: SectionHere, listStands?: (kind: string) => boolean): MenuSection | null {
   const { aiDesk, app, composeChange, onProposeChange, principal, store } = here;
   if (target.face !== "pages" || target.section || !target.page) return null;
   if (onProposeChange === undefined || composeChange === undefined || !mayChangeDeclaration(store, principal)) return null;
   const part = pagePartOf(target.page, here);
   if (!part?.kind || (part.slot !== "list" && part.slot !== "group" && part.slot !== "place")) return null;
   // A place somebody wrote as a view is not one the declaration can draw another way.
+  if (part.slot !== "place" && listStands?.(part.kind)) return null;
   if (part.slot === "place" && !((app as { readonly lenses?: readonly { readonly title?: string }[] } | undefined)?.lenses ?? []).some((lens) => lens.title === part.name)) return null;
   if (store.graph.nodesOfKind(part.kind).length === 0) return null;
   // A group's heading is on its kind's list: the list is what is shown another way.

@@ -82,11 +82,14 @@ export function useSectionBetterSection(): MenuSectionSource | null {
  * f-display-options-switch), or nothing where it is not this seat's to
  * offer. It needs no model: a host's door to a change to the app is enough,
  * with AI on or off, and the menu's section is fetched as Better UI's is.
+ * `listStands` says which kind's list a kept option could not change.
  */
-export function useDisplayOptionsSection(): MenuSectionSource | null {
+export function useDisplayOptionsSection(listStands?: (kind: string) => boolean): MenuSectionSource | null {
   const here = useGraview<AnySchema>();
   const held = useRef(here);
   held.current = here;
+  const stands = useRef(listStands);
+  stands.current = listStands;
   const on = here.onProposeChange !== undefined && here.composeChange !== undefined;
   if (on) alsoWhenSectionsArrive(load);
   const loaded = useSyncExternalStore(hear, () => menu !== undefined, () => false);
@@ -99,7 +102,7 @@ export function useDisplayOptionsSection(): MenuSectionSource | null {
               void load();
               return null;
             }
-            return menu.displayOptionsSection(target, held.current);
+            return menu.displayOptionsSection(target, held.current, stands.current);
           }
         : null,
     // eslint-disable-next-line react-hooks/exhaustive-deps

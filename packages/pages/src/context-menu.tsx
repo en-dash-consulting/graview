@@ -7,8 +7,8 @@ import { PLACE_MENU_EVENT, useGraview, useGraviewIfAny, type MenuColumn, type Me
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { useHref, useLocation, useNavigate } from "react-router-dom";
 import type { PageContext } from "./page-context.js";
-import { pathOfPlace } from "./page-places.js";
-import { kindOfSlug, pluralSlug, recordPath } from "./registry.js";
+import { BUILT_IN, pathOfPlace } from "./page-places.js";
+import { kindOfSlug, pluralSlug, recordPath, type PageRegistry } from "./registry.js";
 
 /**
  * THE CONTEXT MENU ON THE ROUTED FACE — the scene's own menu (`Inspector`
@@ -121,11 +121,20 @@ function homeOf(element: Element): HTMLElement | null {
 }
 
 /** The routed face's menu, where a provider is drawn under it; else nothing but its pages. */
-export function PagesContextMenu<S extends AnySchema>({ context, root, children }: { readonly context: PageContext<S>; readonly root: RefObject<HTMLElement | null>; readonly children: ReactNode }) {
-  return useGraviewIfAny() === null ? <>{children}</> : <Menu context={context} root={root}>{children}</Menu>;
+export function PagesContextMenu<S extends AnySchema>({ context, root, registry, children }: { readonly context: PageContext<S>; readonly root: RefObject<HTMLElement | null>; readonly registry?: Pick<PageRegistry<S, unknown>, "lookup"> | undefined; readonly children: ReactNode }) {
+  return useGraviewIfAny() === null ? <>{children}</> : <Menu context={context} root={root} registry={registry}>{children}</Menu>;
 }
 
-function Menu<S extends AnySchema>({ context, root, children }: { readonly context: PageContext<S>; readonly root: RefObject<HTMLElement | null>; readonly children: ReactNode }) {
+/**
+ * A KIND'S LIST THAT A KEPT OPTION COULD NOT CHANGE (Roadmap
+ * f-display-options-switch): `pages.lists.<kind>.opens` is drawn by the
+ * framework's list page, so a list a design registered stands as it is, and
+ * so does the address that asks for the list the app draws by itself.
+ */
+export const listStandsAsItIs = (registry: Pick<PageRegistry<never, unknown>, "lookup"> | undefined, search: string) => (kind: string): boolean =>
+  new URLSearchParams(search).get("drawn") === BUILT_IN || registry?.lookup(kind, "list") !== undefined;
+
+function Menu<S extends AnySchema>({ context, root, registry, children }: { readonly context: PageContext<S>; readonly root: RefObject<HTMLElement | null>; readonly registry?: Pick<PageRegistry<S, unknown>, "lookup"> | undefined; readonly children: ReactNode }) {
   const { setMenuAt } = useGraview<S>();
   const { store } = context;
   const schema = store.schema;
@@ -465,7 +474,7 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
   /* "Make “This week” better" on a section of a worker view, for a seat that may change views (Roadmap f-make-this-section-better). */
   const better = useSectionBetterSection();
   /* "Other ways to show this" on a kind's list or a place, for a seat that may change the app, with AI on or off (Roadmap f-display-options-switch). */
-  const otherWays = useDisplayOptionsSection();
+  const otherWays = useDisplayOptionsSection(listStandsAsItIs(registry as never, search));
   const sections = useMemo(() => [copy, change, board, own, ...(tidy ? [tidy] : []), ...(notify ? [notify] : []), ...(better ? [better] : []), ...(otherWays ? [otherWays] : []), ...(inlineAi ? [inlineAi] : [])], [copy, change, board, own, tidy, notify, better, inlineAi]);
 
   return (

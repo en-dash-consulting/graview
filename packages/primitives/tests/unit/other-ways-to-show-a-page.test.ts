@@ -234,6 +234,21 @@ describe("with no model", () => {
     expect(displayOptionsSection(page(), here({ composeChange: undefined }))).toBeNull();
   });
 
+  it("offers nothing on a list a product design replaces, which keeping one would not change, and still offers a place", () => {
+    const designsTasks = (kind: string) => kind === "task";
+    expect(displayOptionsSection(page(), here(), designsTasks)).toBeNull();
+    window.document.body.innerHTML = `<main data-graview-page-main=""><h2 class="graview-group-head">Doing</h2></main>`;
+    const group = { about: ["aggregate:task"], face: "pages", page: { about: ["aggregate:task"], at: window.document.querySelector("h2")! } } as unknown as MenuTarget;
+    expect(displayOptionsSection(group, here(), designsTasks)).toBeNull();
+    // Another kind's list, which the design left alone, is offered.
+    expect(displayOptionsSection(page(), here(), (kind: string) => kind === "person")).not.toBeNull();
+    // A place is drawn by its lens whatever the design: what draws it changes.
+    window.document.body.innerHTML = `<main data-graview-page-main=""><h1>The board</h1></main>`;
+    const place = { about: ["aggregate:task"], place: "the-board", face: "pages", page: { about: ["aggregate:task"], place: "the-board", at: window.document.querySelector("h1")! } } as unknown as MenuTarget;
+    const placed = here({ views: { ...views, places: () => [{ as: "the-board", title: "The board", kind: "task" }] } as never });
+    expect(displayOptionsSection(place, placed, designsTasks)).not.toBeNull();
+  });
+
   it("offers nothing on a kind with no records, nor on a page that shows no list", () => {
     expect(displayOptionsSection(page(), here({ store: storeOf([]) }))).toBeNull();
     window.document.body.innerHTML = `<main data-graview-page-main=""><h1>Home</h1></main>`;
