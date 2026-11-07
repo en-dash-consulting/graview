@@ -1,4 +1,5 @@
 import type { HistoryHost } from "@graview/core/history";
+import type { DisplayOptionsHost } from "@graview/core";
 import { assetSrc, faviconHref, type Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type KeptViews, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal, type SignIn, type SubscriptionStore, type DismissalStore } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
 import { AppBar, appKeyOf, barPlaceAt, barPlaces, FirstLookDoor, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useThemeColor, useViewportHeight, type AppMenuRow, type BarAction, type BarFaces, type BarFind, type BarGo, type BarScheme, type BarShare, type BarStatus, type FirstLook, type HostAction, type NoticeBoard, type NoticeReport, type NoticeReporting } from "@graview/primitives/frame";
@@ -370,6 +371,8 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    * says what would change without drawing it.
    */
   readonly onDraftChange?: DraftChangeHost;
+  /** "Other ways to show this": further options the host hands in, what it remembers being chosen, and where it hears what was kept (`DisplayOptionsHost`). */
+  readonly displayOptions?: DisplayOptionsHost;
   /**
    * THE AI THE SEAT MAY USE, decided by the host and never by a reader:
    * `{ complete }` (the host's model: prompt in, text out) for open
@@ -799,6 +802,7 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
     onProposeChange: props.onProposeChange,
     composeChange: props.composeChange,
     onDraftChange: props.onDraftChange,
+    displayOptions: props.displayOptions,
     ai: props.ai,
     files: props.files,
     assetsAt: props.assetsAt,

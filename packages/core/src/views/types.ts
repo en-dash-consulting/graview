@@ -501,6 +501,12 @@ export interface KindList {
   readonly group?: string | KindListGroup;
   /** `false`: the list offers nobody "Export CSV" (Roadmap f-view-export-csv). On when unsaid. */
   readonly export?: boolean;
+  /**
+   * THE PLACE THIS LIST OPENS AS (Roadmap f-display-options-switch), by its
+   * title: a lens over the kind, drawn under the list's own heading at the
+   * list's own address, with the list the app draws by itself one link away.
+   */
+  readonly opens?: string;
 }
 
 export interface KindListSort {

@@ -758,7 +758,7 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
   );
 }
 
-type Asked = { readonly mode: SectionAsk["mode"]; readonly words: string; readonly pointed?: Pointed };
+type Asked = { readonly mode: Exclude<SectionAsk["mode"], "options">; readonly words: string; readonly pointed?: Pointed };
 
 /** What the host is handed for the settings' edits: the change to the app, said by the checker. */
 function proposalOf(edits: readonly unknown[], said: string, model: string | undefined): ReshapeProposal {

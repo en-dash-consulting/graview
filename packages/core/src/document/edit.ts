@@ -328,6 +328,8 @@ function buildShapes(): Record<EditOp, z.ZodType> {
         sort: z.record(kindName, z.union([listSortShape, z.null()])).optional(),
         // How a kind's list opens grouped: `{ "request": { "by": "status", "order": [...], "closed": ["done"] } }` or a field; null opens it ungrouped.
         group: z.record(kindName, z.union([listGroupShape, z.null()])).optional(),
+        // The place a kind's list opens as, by a lens's title: `{ "task": "Tasks by status" }`; null opens it as a list again.
+        opens: z.record(kindName, z.union([lensTitle, z.null()])).optional(),
         // The scene's word as a chat or a tool written before 0.1.17 sends it (FR-132's key, RESPELLED as `scene`).
         overview: z.union([z.string().min(1).max(40), z.null()]).optional(),
       })
@@ -1476,6 +1478,9 @@ class Editor {
       this.doc.pages.first = e.title;
       follows = "; the app still opens on it";
     }
+    // A kind's list that opens as it follows too, or a new title leaves the list opening as nothing.
+    const opener = retitled ? this.doc.pages?.lists?.[(was["on"] as string | undefined) ?? kindsBound(was)[0] ?? ""] : undefined;
+    if (opener && namesLens(opener["opens"], String(was["title"]))) opener["opens"] = e.title;
     // Drawn in the place of one kept off the lists, it is kept off them too: said, so a lens meant to be seen is shown.
     const stays = lens.hidden === true ? `; it stays off the bar and the page list, as "${String(was["title"])}" was, until set-lens-hidden with "hidden": false shows it` : "";
     this.said.push(retitled ? `The lens "${String(was["title"])}" is now "${e.title}"${where}${follows}${stays}.` : `The lens "${e.title}" changes${where}${stays}.`);
@@ -1697,7 +1702,7 @@ class Editor {
     // `overview` is the scene's word as 0.1.15 and 0.1.16 took it (FR-134): read as `scene`, which wins when both are said.
     const { overview, ...rest } = given;
     const e: Doc = rest.scene === undefined && overview !== undefined ? { ...rest, scene: overview } : rest;
-    if (e.order === undefined && e.hide === undefined && e.first === undefined && e.scene === undefined && e.pages === undefined && e.primary === undefined && e.filters === undefined && e.sort === undefined && e.group === undefined) return this.fail(i, "", 'arrange-pages says at least one of "order", "hide", "first", "primary", "scene", "pages", "filters", "sort" or "group"');
+    if (e.order === undefined && e.hide === undefined && e.first === undefined && e.scene === undefined && e.pages === undefined && e.primary === undefined && e.filters === undefined && e.sort === undefined && e.group === undefined && e.opens === undefined) return this.fail(i, "", 'arrange-pages says at least one of "order", "hide", "first", "primary", "scene", "pages", "filters", "sort", "group" or "opens"');
     // A list's order and grouping are judged as the checker judges them, each refusal its sentence.
     for (const part of ["sort", "group"] as const) {
       for (const [kind, spec] of Object.entries((e[part] ?? {}) as Record<string, unknown>)) {
@@ -1715,6 +1720,12 @@ class Editor {
       }
     }
     const titles = (this.doc.lenses ?? []).flatMap((lens: Doc) => (isObject(lens) && typeof lens["title"] === "string" ? [`"${lens["title"]}"`] : []));
+    for (const [kind, title] of Object.entries((e.opens ?? {}) as Record<string, string | null>)) {
+      if (!this.doc.kinds[kind]) return this.fail(i, `opens.${kind}`, `"${kind}" is not a kind this app has; it has ${Object.keys(this.doc.kinds).join(", ")}`);
+      if (title === null) continue;
+      const over = ((this.doc.lenses ?? []) as Doc[]).some((lens) => isObject(lens) && namesLens(title, String(lens["title"])) && (lens["on"] ?? kindsBound(lens)[0]) === kind);
+      if (!over) return this.fail(i, `opens.${kind}`, `"${title}" is not a place over ${pluralWords(this.doc, kind)}`, `name a lens over them (${titles.join(", ") || "none is declared"})`);
+    }
     const kinds = Object.keys(this.doc.kinds);
     // A host's view is named as `view:<its name>`; by its title or name too where the host says its views (`EditOptions.views`).
     const viewsSaid = this.viewsSaid();
@@ -1801,7 +1812,7 @@ class Editor {
       }
     }
     // Each kind's list keeps what this edit does not say: its filters, its order, its grouping.
-    const listOfKind = (kind: string, part: "filters" | "sort" | "group", value: unknown) => {
+    const listOfKind = (kind: string, part: "filters" | "sort" | "group" | "opens", value: unknown) => {
       const lists = (pages.lists ??= {});
       const list = (lists[kind] ??= {});
       if (value === null) delete list[part];
@@ -1825,6 +1836,10 @@ class Editor {
         if (spec === null) said.push(part === "sort" ? `the list of ${plural} opens in its own order again` : `the list of ${plural} opens ungrouped again`);
         else said.push(`the list of ${plural} opens ${kindListWords({ [part]: spec } as KindList, this.listKeyType(kind))[part]}`);
       }
+    }
+    for (const [kind, title] of Object.entries((e.opens ?? {}) as Record<string, string | null>)) {
+      listOfKind(kind, "opens", title);
+      said.push(title === null ? `the list of ${pluralWords(this.doc, kind)} opens as a list again` : `the list of ${pluralWords(this.doc, kind)} opens as "${title}"`);
     }
     if (Object.keys(pages).length === 0) delete this.doc.pages;
     this.said.push(`${capitalize(listOf(said))}.`);
@@ -3485,6 +3500,15 @@ class Editor {
       delete this.doc.pages.first;
       if (Object.keys(this.doc.pages).length === 0) delete this.doc.pages;
       said += " (the app opens at its home again)";
+    }
+    // A kind's list that opened as it opens as a list again.
+    const over = lens ? ((lens["on"] as string | undefined) ?? kindsBound(lens)[0]) : undefined;
+    const lists = this.doc.pages?.lists as Record<string, Doc> | undefined;
+    if (title && over && lists?.[over] && namesLens(lists[over]["opens"], title)) {
+      delete lists[over]["opens"];
+      if (Object.keys(lists[over]).length === 0) delete lists[over];
+      if (Object.keys(lists).length === 0) delete this.doc.pages.lists;
+      if (Object.keys(this.doc.pages).length === 0) delete this.doc.pages;
     }
     return said;
   }

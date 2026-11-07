@@ -1,9 +1,9 @@
-import { counted, isCurrent, labelOf, onePerPicture, placeLabel, sharesItsName, type AnySchema, type Store, type Place } from "@graview/core";
+import { counted, isCurrent, labelOf, onePerPicture, placeLabel, placeSlug, sharesItsName, type AnySchema, type Store, type Place } from "@graview/core";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { kindFacts } from "./facts.js";
 import { ViewBoundary } from "@graview/react/drawing";
 import { bleeds, isDefaultView, replacesPage, type ViewProps } from "@graview/react/provider";
-import { arrange, parseArrangement } from "@graview/core/arrange";
+import { arrange, arrangeable, formatArrangement, parseArrangement } from "@graview/core/arrange";
 import { useLayoutEffect, useRef, useState, type ComponentType, type RefObject } from "react";
 import { DerivedForm } from "./form.js";
 import { placePath, pluralSlug, recordPath } from "./registry.js";
@@ -32,12 +32,34 @@ import { PlacePageHead, SpecLinks } from "@graview/primitives/pages";
 import { blockContextFor, compileBlocks, resolveBlocks } from "@graview/core/blocks";
 
 
+/** The address word that draws a kind's list or a record's page as the app draws it by itself, though a view or a place replaces it: `?drawn=built-in`. */
+export const BUILT_IN = "built-in";
+
+/**
+ * WHETHER THE ADDRESS ASKS A KIND'S LIST FOR WHAT ONLY THE LIST CAN DO. A list
+ * that opens as a place (`pages.lists.<kind>.opens`) is still that kind's
+ * list: Find writes `?q=`, a link says `?archived=true` or `?<relation>=<id>`,
+ * and a place cannot honor them, so the list is drawn. `filter` a picture
+ * narrows itself by, and says so; a place that flows is its blocks' to say.
+ */
+export function addressAsksForTheList(search: URLSearchParams, edgeKinds: readonly string[], flows: boolean): boolean {
+  return ["q", "archived", "by", "with", "past", "sort", "group", ...edgeKinds].some((word) => search.has(word)) || (flows && search.has("filter"));
+}
+
 /** The app's pictures this seat may see: registered places whose kind is live here. */
 export function placesOf<S extends AnySchema>(context: PageContext<S>): readonly Place[] {
   const views = context.views;
   if (!views) return [];
   const live = new Set(liveKinds(context.store, context.principal));
   return views.places().filter((place) => live.has(place.kind));
+}
+
+/** The place a kind's list opens as (`pages.lists.<kind>.opens`), where there is one, and whether it flows with the page. */
+export function listOpensAs<S extends AnySchema>(context: PageContext<S>, kind: string): { readonly place: Place; readonly flows: boolean } | undefined {
+  const opens = context.views?.arrangement?.()?.lists?.[kind]?.opens;
+  const place = opens === undefined ? undefined : placesOf(context).find((one) => one.kind === kind && one.as === placeSlug(opens));
+  if (!place) return undefined;
+  return { place, flows: (context.views?.resolve(place.kind, { cardinality: "many", fidelity: "full" }, place.as)?.view as { flows?: boolean } | undefined)?.flows === true };
 }
 
 /** Every kind a picture is over that this seat sees: its own, or each kind of one picture over several. */
@@ -113,6 +135,17 @@ function LensOnPage<S extends AnySchema>({ context, place, chosen, filter }: { c
       </Bleed>
     </ViewBoundary>
   );
+}
+
+/** What an address's `filter` comes to for a place's kinds: what it can honor, said in words, and what it cannot. */
+function narrowedFrom<S extends AnySchema>(store: Store<S>, kinds: readonly string[], filter: string | null): { readonly filter: string | null; readonly said: readonly string[]; readonly dropped: readonly string[] } {
+  const conditions = filter ? (parseArrangement({ filter }).filter ?? []) : [];
+  if (conditions.length === 0) return { filter: null, said: [], dropped: [] };
+  const offers = kinds.map((kind) => arrangeable(store.schema, kind));
+  const kept = conditions.filter((condition) => offers.some((offer) => offer.filters.some((one) => one.key === condition.key)));
+  const dropped = conditions.filter((condition) => !kept.includes(condition)).map((condition) => `filter ${condition.key}`);
+  const said = kept.filter((condition) => !(condition.key === "is" && condition.value === "any")).map((condition) => (condition.key === "is" ? `that are ${condition.value}` : `where ${condition.key} is ${condition.value}`));
+  return { filter: kept.length > 0 ? formatArrangement({ filter: kept }).filter ?? null : null, said, dropped };
 }
 
 /**
@@ -565,7 +598,7 @@ function ledeOf<S extends AnySchema>(context: PageContext<S>, opening: unknown):
   return said?.t === "headline" && !said.problem && said.text.trim() !== "" ? said.text : undefined;
 }
 
-export function DefaultPlacePage<S extends AnySchema>({ context }: { context: PageContext<S> }) {
+export function DefaultPlacePage<S extends AnySchema>({ context, asList }: { context: PageContext<S>; /** Drawn at its kind's list's address, which it opens as (`pages.lists.<kind>.opens`): headed as the list. */ asList?: Place }) {
   const { store, principal } = context;
   useStoreTick(store);
   const params = useParams();
@@ -576,9 +609,9 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
   const [chosen, choose] = useState<{ readonly at: string; readonly ids: readonly string[] } | null>(null);
   const of = search.get("of");
   // Narrowed by its address (`?filter=stage:building`), as a list is: what a link or a view's navigate asked for.
-  const narrowedTo = search.get("filter");
+  const askedNarrowed = search.get("filter");
   const places = placesOf(context);
-  const place = places.find((candidate) => candidate.as === asked && (!of || pluralSlug(store.schema, candidate.kind) === of));
+  const place = asList ?? places.find((candidate) => candidate.as === asked && (!of || pluralSlug(store.schema, candidate.kind) === of));
   if (!place) {
     return (
       <PageMain context={context}>
@@ -592,6 +625,13 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
     );
   }
   const plural = pluralOf(store, place.kind);
+  /*
+   * WHAT THE ADDRESS ASKED OF IT THAT IT CAN HONOR. A word it cannot be narrowed
+   * by (`?filter=nonsense:1`) narrows nothing, so it is not said to, and is
+   * named as a list names one. `is:any` only widens: there is nothing to say.
+   */
+  const narrowing = narrowedFrom(store, kindsOfPlace(context, place), askedNarrowed);
+  const narrowedTo = narrowing.filter;
   /*
    * A PLACE OF WORDS AND CARDS FLOWS WITH THE PAGE. A picture — a board, a
    * calendar — fills a frame most of the window tall and scrolls inside it;
@@ -630,7 +670,7 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
       <header style={{ display: "grid", gap: "var(--graview-space-2, 8px)" }}>
         {/* The section the picture is in, when the app named one (Roadmap gv-pages-where-am-i). */}
         <HeadTrail context={context} />
-        <PageTitle context={context} unseen={ownHeading}>{place.title}</PageTitle>
+        <PageTitle context={context} unseen={ownHeading}>{asList ? plural : place.title}</PageTitle>
         {/*
           * WHAT THE PICTURE IS, NOT WHAT ONE OF ITS MEMBERS IS: how much is
           * in it, and — over two kinds — what it is across. The kind's own
@@ -644,12 +684,14 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
           </p>
         )}
         {/* A picture drawn from blocks lists what its blocks say (their own `where`), so it is not said to be narrowed. */}
-        {narrowedTo && !flows ? (
+        {askedNarrowed && !flows && narrowing.dropped.length > 0 ? (
+          <p style={{ ...quiet, margin: 0 }} data-testid="place-dropped">
+            This link asked for {narrowing.dropped.join(", ")}, which {plural.toLowerCase()} cannot be arranged by; the rest is shown.
+          </p>
+        ) : null}
+        {narrowing.said.length > 0 && !flows ? (
           <p style={{ ...quiet, margin: 0 }} data-testid="place-narrowed">
-            {`Only those where ${narrowedTo
-              .split(",")
-              .map((condition) => condition.replace(":", " is "))
-              .join(" and ")}. `}
+            {`Only those ${narrowing.said.join(" and ")}. `}
             <Link to={`?${(() => {
               const rest = new URLSearchParams(search);
               rest.delete("filter");
@@ -667,7 +709,7 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
         {ownHeading ? null : (
           <p style={{ ...quiet, margin: 0, display: "flex", flexWrap: "wrap", gap: "4px 16px" }}>
             {kindsOfPlace(context, place).filter((kind) => !(isTheList && kind === place.kind)).map((kind, index) => (
-              <Link key={kind} to={`/${pluralSlug(store.schema, kind)}`} style={{ ...onward, ...quiet }} {...(index === 0 ? { "data-testid": "place-as-list" } : {})}>
+              <Link key={kind} to={`/${pluralSlug(store.schema, kind)}${context.views?.arrangement?.()?.lists?.[kind]?.opens !== undefined ? `?drawn=${BUILT_IN}${narrowedTo && kind === place.kind ? `&filter=${encodeURIComponent(narrowedTo)}` : ""}` : narrowedTo && kind === place.kind ? `?filter=${encodeURIComponent(narrowedTo)}` : ""}`} style={{ ...onward, ...quiet }} {...(index === 0 ? { "data-testid": "place-as-list" } : {})}>
                 <Onward>All {(kind === place.kind ? plural : pluralOf(store, kind)).toLowerCase()} as a list</Onward>
               </Link>
             ))}

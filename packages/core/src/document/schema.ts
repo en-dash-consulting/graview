@@ -590,6 +590,8 @@ function build() {
           group: z.optional(ListGroupSpec()),
           /* False where the list offers nobody "Export CSV" (Roadmap f-view-export-csv): on when unsaid. */
           export: z.optional(z.boolean()),
+          /* The place this list opens as, by its title (Roadmap f-display-options-switch): its lens is drawn at the list's own address. */
+          opens: z.optional(str(1, 80)),
         }),
       ),
     ),
