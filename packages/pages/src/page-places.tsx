@@ -32,6 +32,9 @@ import { PlacePageHead, SpecLinks } from "@graview/primitives/pages";
 import { blockContextFor, compileBlocks, resolveBlocks } from "@graview/core/blocks";
 
 
+/** The address word that draws a kind's list or a record's page as the app draws it by itself, though a view or a place replaces it: `?drawn=built-in`. */
+export const BUILT_IN = "built-in";
+
 /** The app's pictures this seat may see: registered places whose kind is live here. */
 export function placesOf<S extends AnySchema>(context: PageContext<S>): readonly Place[] {
   const views = context.views;
@@ -565,7 +568,7 @@ function ledeOf<S extends AnySchema>(context: PageContext<S>, opening: unknown):
   return said?.t === "headline" && !said.problem && said.text.trim() !== "" ? said.text : undefined;
 }
 
-export function DefaultPlacePage<S extends AnySchema>({ context }: { context: PageContext<S> }) {
+export function DefaultPlacePage<S extends AnySchema>({ context, asList }: { context: PageContext<S>; /** Drawn at its kind's list's address, which it opens as (`pages.lists.<kind>.opens`): headed as the list. */ asList?: Place }) {
   const { store, principal } = context;
   useStoreTick(store);
   const params = useParams();
@@ -578,7 +581,7 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
   // Narrowed by its address (`?filter=stage:building`), as a list is: what a link or a view's navigate asked for.
   const narrowedTo = search.get("filter");
   const places = placesOf(context);
-  const place = places.find((candidate) => candidate.as === asked && (!of || pluralSlug(store.schema, candidate.kind) === of));
+  const place = asList ?? places.find((candidate) => candidate.as === asked && (!of || pluralSlug(store.schema, candidate.kind) === of));
   if (!place) {
     return (
       <PageMain context={context}>
@@ -630,7 +633,7 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
       <header style={{ display: "grid", gap: "var(--graview-space-2, 8px)" }}>
         {/* The section the picture is in, when the app named one (Roadmap gv-pages-where-am-i). */}
         <HeadTrail context={context} />
-        <PageTitle context={context} unseen={ownHeading}>{place.title}</PageTitle>
+        <PageTitle context={context} unseen={ownHeading}>{asList ? plural : place.title}</PageTitle>
         {/*
           * WHAT THE PICTURE IS, NOT WHAT ONE OF ITS MEMBERS IS: how much is
           * in it, and — over two kinds — what it is across. The kind's own
@@ -667,7 +670,7 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
         {ownHeading ? null : (
           <p style={{ ...quiet, margin: 0, display: "flex", flexWrap: "wrap", gap: "4px 16px" }}>
             {kindsOfPlace(context, place).filter((kind) => !(isTheList && kind === place.kind)).map((kind, index) => (
-              <Link key={kind} to={`/${pluralSlug(store.schema, kind)}`} style={{ ...onward, ...quiet }} {...(index === 0 ? { "data-testid": "place-as-list" } : {})}>
+              <Link key={kind} to={`/${pluralSlug(store.schema, kind)}${asList && kind === place.kind ? `?drawn=${BUILT_IN}` : ""}`} style={{ ...onward, ...quiet }} {...(index === 0 ? { "data-testid": "place-as-list" } : {})}>
                 <Onward>All {(kind === place.kind ? plural : pluralOf(store, kind)).toLowerCase()} as a list</Onward>
               </Link>
             ))}

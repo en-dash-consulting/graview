@@ -133,6 +133,16 @@ export function arrangementFindings<S extends AnySchema>(app: GraviewApp<S>, opt
       });
     }
   });
+  for (const [kind, list] of Object.entries(pages?.lists ?? {})) {
+    if (list.opens === undefined || places.some((place) => place.kind === kind && placeSlug(place.title) === placeSlug(list.opens!))) continue;
+    findings.push({
+      severity: "warning",
+      code: "list-opens-no-place",
+      path: `pages.lists.${kind}.opens`,
+      message: `The ${kind} list opens as "${list.opens}", which is not a place over ${kind}, so it opens as a list.`,
+      fix: `Name a lens over ${kind}, or take "opens" away.`,
+    });
+  }
   (pages.primary ?? []).forEach((word, index) => {
     const opening = openingOf(word, app.schema, places);
     if (opening?.to === "place" && opening.place.hidden) {

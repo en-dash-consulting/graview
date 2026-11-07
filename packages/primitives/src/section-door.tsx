@@ -77,6 +77,36 @@ export function useSectionBetterSection(): MenuSectionSource | null {
   );
 }
 
+/**
+ * "OTHER WAYS TO SHOW THIS" on the context menu (Roadmap
+ * f-display-options-switch), or nothing where it is not this seat's to
+ * offer. It needs no model: a host's door to a change to the app is enough,
+ * with AI on or off, and the menu's section is fetched as Better UI's is.
+ */
+export function useDisplayOptionsSection(): MenuSectionSource | null {
+  const here = useGraview<AnySchema>();
+  const held = useRef(here);
+  held.current = here;
+  const on = here.onProposeChange !== undefined && here.composeChange !== undefined;
+  if (on) alsoWhenSectionsArrive(load);
+  const loaded = useSyncExternalStore(hear, () => menu !== undefined, () => false);
+  return useMemo<MenuSectionSource | null>(
+    () =>
+      on
+        ? (target: MenuTarget) => {
+            if (!target.page || target.face !== "pages") return null;
+            if (!menu) {
+              void load();
+              return null;
+            }
+            return menu.displayOptionsSection(target, held.current);
+          }
+        : null,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [on, loaded],
+  );
+}
+
 const NONE: readonly MenuSectionSource[] = [];
 
 /** The context menu drawn inside, with "Make this better" in it where it is offered. */

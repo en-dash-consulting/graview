@@ -1,7 +1,7 @@
 import { argumentsTaken, fieldWords, humanizeField, layer, nounOf, pluralLabel, withArticle, type AnySchema, type Place } from "@graview/core";
 import { narrowedPath } from "@graview/core/navigate";
 import { aggregateId } from "@graview/layout/view";
-import { GhostDoor, Inspector, NotifyDoor, SectionBetterDoor, useBoardMoveSection, useInlineAiSection, useNotifySection, useSectionBetterSection, useViewTidyingSection } from "@graview/primitives/pages";
+import { GhostDoor, Inspector, NotifyDoor, SectionBetterDoor, useBoardMoveSection, useDisplayOptionsSection, useInlineAiSection, useNotifySection, useSectionBetterSection, useViewTidyingSection } from "@graview/primitives/pages";
 import { MenuSections, partsWanted, sectionsArrive, sectionsWanted, sectionUnderNow } from "@graview/react/drawing";
 import { PLACE_MENU_EVENT, useGraview, useGraviewIfAny, type MenuColumn, type MenuItem, type MenuSectionSource, type MenuTarget, type PointerMenu } from "@graview/react/provider";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
@@ -464,7 +464,9 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
   const tidy = useViewTidyingSection(away);
   /* "Make “This week” better" on a section of a worker view, for a seat that may change views (Roadmap f-make-this-section-better). */
   const better = useSectionBetterSection();
-  const sections = useMemo(() => [copy, change, board, own, ...(tidy ? [tidy] : []), ...(notify ? [notify] : []), ...(better ? [better] : []), ...(inlineAi ? [inlineAi] : [])], [copy, change, board, own, tidy, notify, better, inlineAi]);
+  /* "Other ways to show this" on a kind's list or a place, for a seat that may change the app, with AI on or off (Roadmap f-display-options-switch). */
+  const otherWays = useDisplayOptionsSection();
+  const sections = useMemo(() => [copy, change, board, own, ...(tidy ? [tidy] : []), ...(notify ? [notify] : []), ...(better ? [better] : []), ...(otherWays ? [otherWays] : []), ...(inlineAi ? [inlineAi] : [])], [copy, change, board, own, tidy, notify, better, inlineAi]);
 
   return (
     <MenuSections sections={sections}>

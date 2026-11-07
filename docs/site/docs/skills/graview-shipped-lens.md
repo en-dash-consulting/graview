@@ -59,6 +59,20 @@ The checker holds every titled lens and says, at its path, what it will not draw
 
 `graview describe` lists the places that draw, saying which are hidden. Report the output, then open each place on both faces and look.
 
+### Let the owner choose
+
+A lens need not be chosen in advance. On a routed page, "Other ways to show this" (the page's menu, under More… or by typing) offers whoever may change the app two to four ways to show a kind's list or a place: a board where a choice has values, a calendar where a date has them this month, a grid where a link joins two kinds, cards, rows, and the places the kind already has. They are drawn ahead in real records, so a flip is instant, and nothing is written until Keep, which is one change with one Undo. It needs `onProposeChange` and `composeChange` from the host, and no model.
+
+Kept on a place, the lens is drawn in the place's own title. Kept on a list, it is a lens off the bar and `pages.lists.<kind>.opens`, which you may also declare yourself:
+
+```json
+"pages": { "lists": { "task": { "opens": "Tasks by status" } } }
+```
+
+`arrange-pages` sets it (`"opens": { "task": "Tasks by status" }`, `null` gives the list back). The list's address then draws that place under the list's heading; `?drawn=built-in` is the list itself. `list-opens-no-place` warns of a title that is no lens over the kind. A design that replaces the list page reads `opens` itself (`graview-pages-design`).
+
+A host adds options and hears the choice with `displayOptions`: `offers(asked)` hands in lenses (`{ id, label, lens: { lens, title, bindings, options }, weight }`), judged like the rest; `chosen()` adds what it remembers; `onChoice(heard)` is told what was kept and when that is undone.
+
 ### What the check cannot see
 
 - Whether the place is the right picture. A calendar of what has no date that matters, or a board over a field nobody moves, draws without a finding; open it and ask whether a person would reach for it.

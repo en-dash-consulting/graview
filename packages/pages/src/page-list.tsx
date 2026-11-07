@@ -17,6 +17,7 @@ import {
   type Arrangement,
   type Condition,
   type NodeOfSchema,
+  placeSlug,
 } from "@graview/core";
 import { describeSearched, matchNode, parseQuery } from "@graview/core/search";
 import { readableFields } from "@graview/core/words";
@@ -30,7 +31,7 @@ import { DerivedForm } from "./form.js";
 import { WithheldActs } from "./withheld-acts.js";
 import { kindOfSlug, pluralSlug, recordPath } from "./registry.js";
 import { type PageContext, useStoreTick } from "./page-context.js";
-import { pathOfPlace, placeKey, placesOf } from "./page-places.js";
+import { BUILT_IN, DefaultPlacePage, pathOfPlace, placeKey, placesOf } from "./page-places.js";
 import { beginningsFrom, WhyLine } from "./page-search.js";
 import {
   KindMark,
@@ -122,13 +123,21 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
    * stands in for nothing, and the list is the app's own again.
    */
   const own = context.views?.lookup(kind, { cardinality: "many", fidelity: "full" });
+  /*
+   * A LIST THE DECLARATION OPENS AS A PLACE (`pages.lists.<kind>.opens`,
+   * Roadmap f-display-options-switch): that place's page, under the list's
+   * own heading at the list's own address — its picture, its forms — and
+   * the list the app draws by itself one link away.
+   */
+  const opensAs = builtIn ? undefined : context.views?.arrangement?.()?.lists?.[kind]?.opens;
+  const place = opensAs === undefined ? undefined : placesOf(context).find((one) => one.kind === kind && one.as === placeSlug(opensAs));
+  if (place) return <DefaultPlacePage context={context} asList={place} />;
   /* The list the app draws by itself stays reached under "Also as" (Roadmap f-make-any-page-better): `?drawn=built-in`. */
   if (own !== undefined && replacesPage(own) && !builtIn) return <ListOfView context={context} kind={kind} view={own as ComponentType<ViewProps<S>>} />;
   return <ListPage context={context} kind={kind} />;
 }
 
-/** The address word that draws a kind's list or a record's page as the app draws it by itself, though a view replaces it: `?drawn=built-in`. */
-export const BUILT_IN = "built-in";
+export { BUILT_IN };
 
 /**
  * THE KIND'S LIST PAGE, AS ITS VIEW DRAWS IT (FR-203): the trail and the
