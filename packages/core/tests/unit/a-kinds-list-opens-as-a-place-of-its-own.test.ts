@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { compileDocument } from "@graview/core/check";
 import { diffDocuments, editDocument, type DocumentEdit, type GraviewDocument } from "@graview/core/document";
+import { describeApp } from "../../src/cli/describe.js";
 import tasks from "../document/fixtures/tasks.gdd.json";
 
 /**
@@ -60,6 +61,16 @@ describe("a kind's list opens as a place of its own", () => {
     const refused = editDocument(document, [{ op: "arrange-pages" }]);
     if (refused.ok) throw new Error("refused");
     expect(refused.findings[0]!.message).toMatch(/"opens"/);
+  });
+
+  it("is said by describeApp, so an agent can tell what the list's address shows", () => {
+    const compiled = compileDocument(edited(document, board, { op: "arrange-pages", opens: { task: "Tasks by status" } }).document);
+    if (!compiled.ok) throw new Error("it compiles");
+    const said = describeApp(compiled.app as never);
+    expect(said).toMatch(/\/tasks opens as "Tasks by status"; the list itself is at \/tasks\?drawn=built-in\./);
+    const plain = compileDocument(document);
+    if (!plain.ok) throw new Error("it compiles");
+    expect(describeApp(plain.app as never)).not.toMatch(/opens as/);
   });
 
   it("is warned of by the checker when written by hand to name no place", () => {

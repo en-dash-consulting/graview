@@ -17,7 +17,6 @@ import {
   type Arrangement,
   type Condition,
   type NodeOfSchema,
-  placeSlug,
 } from "@graview/core";
 import { describeSearched, matchNode, parseQuery } from "@graview/core/search";
 import { readableFields } from "@graview/core/words";
@@ -31,7 +30,7 @@ import { DerivedForm } from "./form.js";
 import { WithheldActs } from "./withheld-acts.js";
 import { kindOfSlug, pluralSlug, recordPath } from "./registry.js";
 import { type PageContext, useStoreTick } from "./page-context.js";
-import { addressAsksForTheList, BUILT_IN, DefaultPlacePage, pathOfPlace, placeKey, placesOf } from "./page-places.js";
+import { addressAsksForTheList, BUILT_IN, DefaultPlacePage, listOpensAs, pathOfPlace, placeKey, placesOf } from "./page-places.js";
 import { beginningsFrom, WhyLine } from "./page-search.js";
 import {
   KindMark,
@@ -130,10 +129,9 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
    * own heading at the list's own address — its picture, its forms — and
    * the list the app draws by itself one link away.
    */
-  const opensAs = builtIn ? undefined : context.views?.arrangement?.()?.lists?.[kind]?.opens;
-  const place = opensAs === undefined ? undefined : placesOf(context).find((one) => one.kind === kind && one.as === placeSlug(opensAs));
-  if (place) {
-    const flows = (context.views?.resolve(place.kind, { cardinality: "many", fidelity: "full" }, place.as)?.view as { flows?: boolean } | undefined)?.flows === true;
+  const opened = builtIn ? undefined : listOpensAs(context, kind);
+  if (opened) {
+    const { place, flows } = opened;
     const edges = kindMap(context.store).relations.filter((relation) => relation.from === kind || relation.to === kind).map((relation) => relation.edgeKind);
     if (addressAsksForTheList(address, edges, flows)) return <ListPage context={context} kind={kind} />;
     return <DefaultPlacePage context={context} asList={place} />;

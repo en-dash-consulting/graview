@@ -1,5 +1,6 @@
 import { fieldWords, labelOf, nounOf, pluralLabel, type AnySchema } from "@graview/core";
 import type { GraviewContextValue, MenuPage } from "@graview/react/provider";
+import { parseExpr } from "@graview/core/document";
 import { mayChangeDeclaration } from "@graview/tools/section";
 
 /*
@@ -35,11 +36,23 @@ export interface PagePart {
 /** What the menu reads of the provider for a page's part. */
 export type PartHere = Pick<GraviewContextValue<AnySchema>, "keptViews" | "store" | "principal" | "onProposeChange" | "composeChange" | "views">;
 
+/** Whether an expression is every record of the kind, however it is written: `all('task')`, `all( "task" )`. */
+function listsAllOf(source: string, kind: string): boolean {
+  try {
+    const read = parseExpr(source);
+    return read.t === "call" && read.fn === "all" && read.args.length === 1 && read.args[0]!.t === "lit" && read.args[0]!.value === kind;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * A LENS THAT SAYS MORE THAN ITS KIND'S RECORDS, THE WAY THEY ARE: blocks that
  * keep to some of them (`where`, a `limit`) or say something besides, a board
- * with columns kept off, a calendar kept to a horizon. Drawn another way it
- * would lose that, so a place drawn by one is offered no other ways, and a
+ * with columns kept off or kept to a cap, a calendar kept to a horizon. A
+ * timeline's `extent` is the length of its axis and a calendar's `perCell`
+ * turns the rest into a count: neither keeps a record from a person, so
+ * neither counts. Drawn another way it would lose that, so a place drawn by one is offered no other ways, and a
  * kind's list does not open as one (Roadmap f-display-options-switch).
  */
 export function lensNarrows(lens: { readonly name?: unknown; readonly options?: unknown }, kind: string): boolean {
@@ -48,9 +61,9 @@ export function lensNarrows(lens: { readonly name?: unknown; readonly options?: 
     const blocks = options["blocks"];
     if (!Array.isArray(blocks) || blocks.length !== 1) return true;
     const list = blocks[0] as { readonly list?: unknown; readonly limit?: unknown } | null;
-    return typeof list?.list !== "string" || list.list.replace(/\s+/g, "") !== `all('${kind}')` || list.limit !== undefined;
+    return typeof list?.list !== "string" || !listsAllOf(list.list, kind) || list.limit !== undefined;
   }
-  if (lens.name === "columns") return Array.isArray(options["hidden"]) && options["hidden"].length > 0;
+  if (lens.name === "columns") return options["cap"] !== undefined || (Array.isArray(options["hidden"]) && options["hidden"].length > 0);
   if (lens.name === "calendar") return options["horizon"] !== undefined;
   return false;
 }

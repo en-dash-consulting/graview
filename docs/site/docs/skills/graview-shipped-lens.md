@@ -63,7 +63,7 @@ The checker holds every titled lens and says, at its path, what it will not draw
 
 A lens need not be chosen in advance. On a routed page, "Other ways to show this" (the page's menu, under More… or by typing) offers whoever may change the app two to four ways to show a kind's list or a place: a board where a choice has values, a calendar where a date has them this month, a grid where a link joins two kinds, cards, rows, and the places the kind already has. They are drawn ahead in real records, so a flip is instant, and nothing is written until Keep, which is one change with one Undo. It needs `onProposeChange` and `composeChange` from the host, and no model.
 
-A place that keeps to some records (`where`, a `limit`, hidden columns) or says more than them is offered none. Kept on a place, the lens is drawn in the place's own title. Kept on a list, it is a lens off the bar and `pages.lists.<kind>.opens`, which you may also declare yourself:
+A place that keeps to some records (`where`, a `limit`, hidden columns, a `cap`) or says more than them is offered none. Kept on a place, the lens is drawn in the place's own title. Kept on a list, it is a lens off the bar and `pages.lists.<kind>.opens`, which you may also declare yourself:
 
 ```json
 "pages": { "lists": { "task": { "opens": "Tasks by status" } } }

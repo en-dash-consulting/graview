@@ -180,9 +180,15 @@ const opensAs = (input: OptionsInput, title: string) => ({ op: "arrange-pages", 
  * twice. Keeping never removes a lens, since nothing says who wrote one kept
  * off the lists and an author's may be what the app opens on; so a former
  * keeping's stays, and what a kind can hold of them is what the kind can be
- * drawn as.
+ * drawn as. Only one that draws all the preview does, in the same way.
  */
-const hiddenDrawing = (input: OptionsInput, drawing: string) => lensesOf(input.app).find((one) => one.hidden === true && overKind(one, input.kind) && drawingOf(one) === drawing);
+const hiddenDrawing = (input: OptionsInput, lens: DraftLens) => {
+  if (input.place !== undefined) return undefined;
+  const drawing = drawingOf(lens);
+  const options = JSON.stringify(lens.options ?? {});
+  // The whole of its options, not what `drawingOf` reads: an author's board with a `cap` draws less than a preview of the board without one. A lens a host's option made, narrowed or not, is itself again.
+  return lensesOf(input.app).find((one) => one.hidden === true && overKind(one, input.kind) && drawingOf(one) === drawing && JSON.stringify(one.options ?? {}) === options);
+};
 
 /** Passed the host's composer: a change it would refuse is not offered. */
 function passes(input: OptionsInput, edits: readonly unknown[]): boolean {
@@ -211,7 +217,8 @@ const placeSaysMore = (input: OptionsInput): boolean => {
 function drawingNow(input: OptionsInput): string | undefined {
   const title = input.place ?? opensNow(input);
   const now = title === undefined ? undefined : lensesOf(input.app).find((one) => one.title === title);
-  return now ? drawingOf(now) : undefined;
+  // A list opening as a narrowed lens is not shown whole: drawing it whole is still another way.
+  return now && !lensNarrows(now, input.kind) ? drawingOf(now) : undefined;
 }
 
 /** A lens somebody wrote, judged and checked: a host's, or a model's. */
@@ -223,9 +230,11 @@ function judged(input: OptionsInput, spec: unknown, about: Pick<DisplayOption, "
   const lens: DraftLens = { ...written, on: input.kind, title: freeLensTitle(input.app, written.title) };
   const verdict = judgeLens(input.app as GraviewApp<AnySchema>, lens, input.sight);
   if (!verdict.ok) return undefined;
-  const edits = editsOfLens(input, lens);
+  const again = hiddenDrawing(input, lens);
+  if (again && again.title === opensNow(input)) return undefined;
+  const edits = again ? [opensAs(input, again.title)] : editsOfLens(input, lens);
   if (!passes(input, edits)) return undefined;
-  return { ...about, shape: shapeOfLens(lens), title: lens.title, drawing, drawn: verdict.drawn, edits };
+  return { ...about, shape: shapeOfLens(lens), title: again?.title ?? lens.title, drawing, drawn: verdict.drawn, edits };
 }
 
 /** THE WAYS TO SHOW THIS PAGE, judged and ranked, the page as it stands not among them, and at most `MOST_OPTIONS`: at least one of a host's where it handed any in. */
@@ -252,7 +261,7 @@ export function displayOptionsFor(input: OptionsInput): readonly DisplayOption[]
     if (isDraftFailure(draft)) continue;
     const drawing = drawingOf(draft.lens);
     if (seen.has(drawing)) continue;
-    const again = input.place === undefined ? hiddenDrawing(input, drawing) : undefined;
+    const again = hiddenDrawing(input, draft.lens);
     const edits = again ? [opensAs(input, again.title)] : editsOfLens(input, draft.lens);
     if (!passes(input, edits)) continue;
     seen.add(drawing);

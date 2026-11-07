@@ -130,7 +130,7 @@ They are drawn ahead in real records, so a flip is instant, and nothing is
 written until Keep, which is one change with one Undo. It needs
 `onProposeChange` and `composeChange` from the host, and no model.
 
-A place that keeps to some records (`where`, a `limit`, hidden columns) or says
+A place that keeps to some records (`where`, a `limit`, hidden columns, a `cap`) or says
 more than them is offered none. Kept on a place, the lens is drawn in the
 place's own title. Kept on a list,
 it is a lens off the bar and `pages.lists.<kind>.opens`, which you may also

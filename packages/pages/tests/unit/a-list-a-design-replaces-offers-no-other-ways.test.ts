@@ -58,6 +58,11 @@ describe("a list a design replaces", () => {
     expect(listStandsAsItIs(undefined, "?drawn=nothing")("task")).toBe(false);
   });
 
+  it("does not stand at a filter a kept board narrows itself by, since the board is the page", () => {
+    expect(listStandsAsItIs(undefined, "?filter=status:doing", () => [], () => false)("task")).toBe(false);
+    expect(listStandsAsItIs(undefined, "?filter=status:doing", () => [], () => true)("task")).toBe(true);
+  });
+
   it("stands too at the address that asks for the list the app draws by itself", () => {
     expect(listStandsAsItIs(undefined, "?drawn=built-in")("task")).toBe(true);
   });

@@ -7,7 +7,7 @@ import { PLACE_MENU_EVENT, useGraview, useGraviewIfAny, type MenuColumn, type Me
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { useHref, useLocation, useNavigate } from "react-router-dom";
 import type { PageContext } from "./page-context.js";
-import { addressAsksForTheList, BUILT_IN, pathOfPlace } from "./page-places.js";
+import { addressAsksForTheList, BUILT_IN, listOpensAs, pathOfPlace } from "./page-places.js";
 import { kindMap } from "./facts.js";
 import { kindOfSlug, pluralSlug, recordPath, type PageRegistry } from "./registry.js";
 
@@ -133,9 +133,9 @@ export function PagesContextMenu<S extends AnySchema>({ context, root, registry,
  * so does an address that asks for the list the app draws by itself, or
  * narrows it: the list is drawn there whatever it opens as.
  */
-export const listStandsAsItIs = (registry: Pick<PageRegistry<never, unknown>, "lookup"> | undefined, search: string, edgesOf: (kind: string) => readonly string[] = () => []) => (kind: string): boolean => {
+export const listStandsAsItIs = (registry: Pick<PageRegistry<never, unknown>, "lookup"> | undefined, search: string, edgesOf: (kind: string) => readonly string[] = () => [], flowsOf: (kind: string) => boolean = () => true) => (kind: string): boolean => {
   const address = new URLSearchParams(search);
-  return address.get("drawn") === BUILT_IN || addressAsksForTheList(address, edgesOf(kind), true) || registry?.lookup(kind, "list") !== undefined;
+  return address.get("drawn") === BUILT_IN || addressAsksForTheList(address, edgesOf(kind), flowsOf(kind)) || registry?.lookup(kind, "list") !== undefined;
 };
 
 function Menu<S extends AnySchema>({ context, root, registry, children }: { readonly context: PageContext<S>; readonly root: RefObject<HTMLElement | null>; readonly registry?: Pick<PageRegistry<S, unknown>, "lookup"> | undefined; readonly children: ReactNode }) {
@@ -478,7 +478,7 @@ function Menu<S extends AnySchema>({ context, root, registry, children }: { read
   /* "Make “This week” better" on a section of a worker view, for a seat that may change views (Roadmap f-make-this-section-better). */
   const better = useSectionBetterSection();
   /* "Other ways to show this" on a kind's list or a place, for a seat that may change the app, with AI on or off (Roadmap f-display-options-switch). */
-  const otherWays = useDisplayOptionsSection(listStandsAsItIs(registry as never, search, (kind) => kindMap(store).relations.filter((relation) => relation.from === kind || relation.to === kind).map((relation) => relation.edgeKind)));
+  const otherWays = useDisplayOptionsSection(listStandsAsItIs(registry as never, search, (kind) => kindMap(store).relations.filter((relation) => relation.from === kind || relation.to === kind).map((relation) => relation.edgeKind), (kind) => listOpensAs(context, kind)?.flows ?? true));
   const sections = useMemo(() => [copy, change, board, own, ...(tidy ? [tidy] : []), ...(notify ? [notify] : []), ...(better ? [better] : []), ...(otherWays ? [otherWays] : []), ...(inlineAi ? [inlineAi] : [])], [copy, change, board, own, tidy, notify, better, inlineAi]);
 
   return (

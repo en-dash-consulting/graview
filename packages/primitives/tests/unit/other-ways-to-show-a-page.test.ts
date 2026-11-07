@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { Store, type AnySchema, type GraviewApp } from "@graview/core";
 import { compileDocument } from "@graview/core/check";
+import { catalogOf, existingViewsOf } from "@graview/core/catalog";
 import { composeAppChange } from "@graview/core/compose";
 import type { GraviewDocument } from "@graview/core/document";
 import { createViews } from "@graview/react";
@@ -8,6 +9,7 @@ import type { MenuTarget } from "@graview/react/provider";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import tasks from "../../../core/tests/document/fixtures/tasks.gdd.json";
 import { choicesFrom, createOptionSwitch, displayOptionsFor, forgetChoice, keepChoice, modelOption, offersFrom, optionOfOffer, rankOptions, readChoices, type DisplayOption } from "../../src/display-options.js";
+import { lensNarrows } from "../../src/page-parts.js";
 import { displayOptionsSection, type SectionHere } from "../../src/section-menu.js";
 
 /**
@@ -297,6 +299,95 @@ describe("what keeping one takes away", () => {
     if (!undone.ok) throw new Error(undone.refused);
     const again = displayOptionsFor(input(undefined, { app: undone.app as never, document: undone.document })).find((one) => one.shape === "cards")!;
     expect(again.edits).toEqual([{ op: "arrange-pages", opens: { task: first.title } }]);
+  });
+});
+
+describe("what keeping one opens", () => {
+  const withHidden = (options: Record<string, unknown>, opens?: string) => {
+    const authored = { ...document, lenses: [{ name: "columns", title: "The authors", on: "task", hidden: true, bindings: { task: { column: "status" } }, options }], pages: opens ? { lists: { task: { opens } } } : {} } as unknown as GraviewDocument;
+    const made = compileDocument(authored);
+    if (!made.ok) throw new Error("the fixture compiles");
+    return { app: made.app as never, document: authored };
+  };
+  const boardOf = (options: readonly DisplayOption[]) => options.find((one) => one.shape === "board")!;
+
+  it("is never a hidden lens that shows less than the preview did", () => {
+    for (const options of [{ hidden: ["done"] }, { cap: 1 }]) {
+      const edits = boardOf(displayOptionsFor(input(undefined, withHidden(options)))).edits as readonly { op: string; title?: string }[];
+      expect(edits.map((one) => one.op)).toEqual(["add-lens", "set-lens-hidden", "arrange-pages"]);
+      expect(edits[0]!.title).not.toBe("The authors");
+    }
+  });
+
+  it("is never a hidden lens that draws otherwise than the preview did", () => {
+    const edits = boardOf(displayOptionsFor(input(undefined, withHidden({ sort: "due" })))).edits as readonly { op: string }[];
+    expect(edits[0]!.op).toBe("add-lens");
+  });
+
+  it("offers the whole board where the list opens as a narrowed one", () => {
+    expect(boardOf(displayOptionsFor(input(undefined, withHidden({ cap: 1 }, "The authors"))))).toBeDefined();
+  });
+
+  it("uses again the lens a host's option made, rather than adding another on every keep", () => {
+    const offer = { id: "good", label: "Good", lens: { lens: "blocks", title: "Good", options: { blocks: [{ list: "all('task') where status != 'done'", as: "card" }] } } };
+    const first = optionOfOffer(input(), offer)!;
+    const kept = composeAppChange({ document, edits: first.edits as never });
+    if (!kept.ok) throw new Error(kept.refused);
+    const back = composeAppChange({ document: kept.document, edits: [{ op: "arrange-pages", opens: { task: null } }] });
+    if (!back.ok) throw new Error(back.refused);
+    const again = optionOfOffer(input(undefined, { app: back.app as never, document: back.document }), offer)!;
+    expect(again.edits).toEqual([{ op: "arrange-pages", opens: { task: first.title } }]);
+    expect(again.title).toBe(first.title);
+  });
+
+  it("uses again the lens a model's option made", async () => {
+    const answer = async () => ({ text: JSON.stringify({ lens: "calendar", title: "The month", on: "task", bindings: { task: { start: "due" } } }) });
+    const first = (await modelOption(input(), answer))!;
+    const kept = composeAppChange({ document, edits: first.edits as never });
+    if (!kept.ok) throw new Error(kept.refused);
+    const back = composeAppChange({ document: kept.document, edits: [{ op: "arrange-pages", opens: { task: null } }] });
+    if (!back.ok) throw new Error(back.refused);
+    const again = (await modelOption(input(undefined, { app: back.app as never, document: back.document }), answer))!;
+    expect(again.edits).toEqual([{ op: "arrange-pages", opens: { task: first.title } }]);
+  });
+});
+
+describe("an old keep", () => {
+  it("is never offered as somewhere to go, though a person may be on it", () => {
+    const places = [{ as: "every-task", title: "Every task", kind: "task", hidden: true }, { as: "the-board", title: "The board", kind: "task" }];
+    const store = storeOf();
+    const owner = { kind: "human" as const, id: "p1", roles: ["owner"] };
+    const offered = catalogOf(store, { on: "place" } as never, { principal: owner, places }).candidates.filter((one) => one.type === "place").map((one) => one.label);
+    expect(offered).toContain("The board");
+    expect(offered).not.toContain("Every task");
+    expect(JSON.stringify(existingViewsOf(store, { on: "lens", place: "every-task" } as never, { principal: owner, places, said: "every task" }))).not.toContain("Every task");
+  });
+});
+
+describe("what a lens says of its records", () => {
+  const blocks = (list: string, more: object = {}) => ({ name: "blocks", options: { blocks: [{ list, ...more }] } });
+
+  it("counts a board's cap and hidden columns, and a calendar's horizon, as keeping to some", () => {
+    expect(lensNarrows({ name: "columns", options: { cap: 1 } }, "task")).toBe(true);
+    expect(lensNarrows({ name: "columns", options: { hidden: ["done"] } }, "task")).toBe(true);
+    expect(lensNarrows({ name: "columns", options: { sort: "due" } }, "task")).toBe(false);
+    expect(lensNarrows({ name: "calendar", options: { horizon: 30 } }, "task")).toBe(true);
+  });
+
+  it("does not count what only draws them otherwise: a timeline's extent, a calendar's perCell", () => {
+    expect(lensNarrows({ name: "timeline", options: { extent: 1440 } }, "task")).toBe(false);
+    expect(lensNarrows({ name: "calendar", options: { perCell: 2 } }, "task")).toBe(false);
+  });
+
+  it("reads the expression rather than its quoting", () => {
+    expect(lensNarrows(blocks("all('task')"), "task")).toBe(false);
+    expect(lensNarrows(blocks('all("task")'), "task")).toBe(false);
+    expect(lensNarrows(blocks(" all( 'task' ) "), "task")).toBe(false);
+    expect(lensNarrows(blocks("all('person')"), "task")).toBe(true);
+    expect(lensNarrows(blocks("all('task', true)"), "task")).toBe(true);
+    expect(lensNarrows(blocks("all('task') where status != 'done'"), "task")).toBe(true);
+    expect(lensNarrows(blocks("nonsense ("), "task")).toBe(true);
+    expect(lensNarrows(blocks("all('task')", { limit: 3 }), "task")).toBe(true);
   });
 });
 

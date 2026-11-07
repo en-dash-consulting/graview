@@ -1,6 +1,6 @@
 {
   "budget": "every face",
-  "minified": 27689,
-  "gzipped": 12093,
-  "note": "Raised when an owner could flip between other ways to show a kind's list or a place (Roadmap f-display-options-switch): the switch, what works out its options and the chunks esbuild split out of what it shares with the lenses, all behind a door fetched when the switch is first asked for. 27689 / 12093 more. Measured at 3079081 / 1117437, against main's 3051392 / 1105344."
+  "minified": 29129,
+  "gzipped": 12545,
+  "note": "Raised when an owner could flip between other ways to show a kind's list or a place (Roadmap f-display-options-switch): the switch, what works out its options and the chunks esbuild split out of what it shares with the lenses, all behind a door fetched when the switch is first asked for. 29129 / 12545 more. Measured at 3080521 / 1117889, against main's 3051392 / 1105344."
 }

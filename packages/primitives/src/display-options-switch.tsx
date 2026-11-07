@@ -292,7 +292,7 @@ export function DisplaySwitch({ ask, close }: { readonly ask: Extract<SectionAsk
         {...(choosing && !nothing ? { scope: "Nothing changes until you keep one. Everyone in this app sees the one you keep." } : {})}
         {...(note ? { note } : {})}
         {...(phase === "choosing" && current && may ? { keep: () => void flips.keep() } : {})}
-        {...(phase === "kept" && state.canUndo ? { undo: () => void flips.undo() } : {})}
+        {...(phase === "kept" && state.canUndo && may ? { undo: () => void flips.undo() } : {})}
         {...(phase !== "keeping" ? { close: putAway } : {})}
       >
         {phase === "choosing" && !nothing ? (

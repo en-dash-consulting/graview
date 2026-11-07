@@ -1,6 +1,6 @@
 {
   "budget": "the pages face alone",
-  "minified": 1340,
-  "gzipped": 511,
-  "note": "Raised when an owner could flip between other ways to show a kind's list or a place (Roadmap f-display-options-switch): the menu's hook that asks for the row, the host's `displayOptions` handed through, and a list that opens as a place (`pages.lists.<kind>.opens`) drawn by the place's page. The switch itself and what works out its options are fetched when it is asked for. 1340 / 511 more. Measured at 751500 / 272495, against main's 750160 / 271984."
+  "minified": 2249,
+  "gzipped": 734,
+  "note": "Raised when an owner could flip between other ways to show a kind's list or a place (Roadmap f-display-options-switch): the menu's hook that asks for the row, the host's `displayOptions` handed through, and a list that opens as a place (`pages.lists.<kind>.opens`) drawn by the place's page. The switch itself and what works out its options are fetched when it is asked for. 2249 / 734 more. Measured at 752409 / 272718, against main's 750160 / 271984."
 }
