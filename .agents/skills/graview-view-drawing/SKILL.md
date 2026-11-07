@@ -77,8 +77,7 @@ On Pages a view is drawn in the page's column, and nothing it draws passes
 its box (a negative margin is clipped). `bleed: true` in the manifest: on a
 phone (680px or less) it takes the gutter back, keeping the safe areas.
 `bleed: "full"`: the window's width at every width; a home (or a place with
-`heading: "own"`) starts flush under the bar. A trail keeps its spacing
-above.
+`heading: "own"`) starts flush under the bar, below any trail.
 
 ## The images a view may show
 

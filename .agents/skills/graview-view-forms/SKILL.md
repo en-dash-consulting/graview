@@ -137,7 +137,7 @@ await graview.mine.set("score", String(next));             // null forgets it
 const score = await graview.mine.get("score");             // a string, or null
 ```
 
-Keep JSON as a string if you need more. A value is at most 4 KB. `set`
+A value is at most 4 KB; keep JSON as a string. `set`
 rejects with a sentence when a value is too long, the host will not keep it
 (its caps), or the host has not answered yet: catch it and say it. That last
 one may still land, and the view is pushed `props.mine` when it does; `get`
@@ -170,8 +170,8 @@ nothing of anybody's.
    link; each button its code hears, in a run of its own. One that does
    nothing, throws, or is refused fails, said by name (`“Save economics”
    is refused: “fixedFee” expects a number.`). A control already in the
-   state it shows — an "All" chip pressed while nothing is filtered, the
-   open tab — passes though it changes nothing, only where the state can
+   state it shows — an "All" chip pressed while nothing is filtered —
+   passes though it changes nothing, only where the state can
    move: it says `aria-pressed="true"`, `aria-selected="true"` (a tab,
    option or grid cell) or `aria-checked="true"` (a checkable role), and
    pressing a sibling of the same element and role, beside it or in its
