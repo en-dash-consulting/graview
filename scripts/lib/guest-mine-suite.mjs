@@ -67,7 +67,7 @@ export async function mineSuite({ repoRoot, build, browser, claim, report, HOST,
     stdin: {
       contents: `
 import { mount } from "@graview/embed";
-import { Store } from "@graview/core";
+import { memoryViews, Store, withMemoryRevisions } from "@graview/core";
 import { compileDocument } from "@graview/core/check";
 import { ticksOf, makerWords } from "@graview/core/history";
 import { mountWorkerView } from "@graview/guest/host/worker";
@@ -101,7 +101,20 @@ window.__kept = () => Object.fromEntries([...kept].map(([view, values]) => [view
 window.__calls = calls;
 window.__problems = [];
 const source = window.VIEW;
-if (asked.get("mode") === "embed") {
+if (asked.get("mode") === "fork") {
+  /* A page's own view, proposed and not kept (Make this better on a built-in page): drawn in the page's place, as a host's views say it. */
+  const store = new Store({ schema: app.schema, mutations: app.mutations, policy: app.policy, snapshot: structuredClone(seed) });
+  kept.set("rock-page", new Map([["score", "3"]]));
+  const views = withMemoryRevisions(memoryViews());
+  const fork = { manifest: { name: "rock-page", title: "Rocks", attach: "rock", cardinality: "many", replaces: "page", acts: ["find-rock"] }, source, from: { page: "list", kind: "rock" }, said: "" };
+  views.draftFork(fork);
+  window.__keep = () => views.fork(fork);
+  window.__handle = mount(document.getElementById("app"), {
+    app, store, principal: nick, viewerState, keptViews: views,
+    face: "pages", path: "/rocks", scheme: "light", label: "Rocks", heading: false, height: "100%", fonts: false, studio: false,
+  });
+  window.__handle.drawn().then(() => { window.__ready = true; });
+} else if (asked.get("mode") === "embed") {
   const store = new Store({ schema: app.schema, mutations: app.mutations, policy: app.policy, snapshot: structuredClone(seed) });
   window.__store = store;
   window.__said = () => {
@@ -119,11 +132,11 @@ if (asked.get("mode") === "embed") {
   window.__store = store;
   const mounted = {};
   const hosted = asked.get("host") !== "none";
-  window.__mount = (name) => {
+  window.__mount = (name, as = nick) => {
     mounted[name]?.dispose();
     const holder = document.getElementById(name) ?? Object.assign(document.createElement("section"), { id: name });
     document.querySelector("main").appendChild(holder);
-    mounted[name] = mountWorkerView(holder, { manifest: { name, title: name, attach: "rock", cardinality: "many", acts: ["find-rock"] }, worker: { source }, store, principal: nick, ...(hosted ? { viewerState: () => viewerState } : {}), onProblem: (said) => window.__problems.push(said) });
+    mounted[name] = mountWorkerView(holder, { manifest: { name, title: name, attach: "rock", cardinality: "many", acts: ["find-rock"] }, worker: { source }, store, principal: as, ...(hosted ? { viewerState: () => viewerState } : {}), onProblem: (said) => window.__problems.push(said) });
   };
   window.__mount("quiz");
   window.__mount("other");
@@ -242,10 +255,36 @@ if (asked.get("mode") === "embed") {
     const keptThrough = await text("quiz", "score");
     claim("a draft with no host reads nothing the real view keeps, and what it writes never reaches the real view", draftSaw === "none" && keptThrough === "9", { draftSaw, keptThrough });
 
+    /* A seat whose id holds a `~` has no `$me`, and is still nobody else: it does not share a visit with a seat with no id. */
+    await open("mode=direct&host=none");
+    await tab.evaluate(() => window.__mount("quiz", { kind: "human", id: "user:a~b", roles: ["family"] }));
+    await until("quiz", "said", "");
+    await view("quiz").locator("#keep").click();
+    await until("quiz", "said", "kept");
+    await tab.evaluate(() => window.__mount("quiz", { kind: "human", roles: ["family"] }));
+    await tab.waitForTimeout(400);
+    await until("quiz", "score", "none");
+    const noId = await text("quiz", "score");
+    claim("a seat whose id holds a ~ does not share what it keeps with a seat that has no id", noId === "none", { noId });
+
     await open("mode=direct&host=none");
     const reloaded = await text("quiz", "score");
     const stored = await tab.evaluate(() => JSON.stringify({ ...localStorage, ...sessionStorage }));
     claim("with no host, a view's values last the visit, per view, and are gone with the page, in no browser storage", fresh === "none" && visited === "9" && other === "none" && reloaded === "none" && !stored.includes("score"), { fresh, visited, other, reloaded, stored });
+
+    /* ── a page's own view, drafted, with the host's ViewerState ── */
+    await open("mode=fork");
+    await until("rock-page", "wipe", "Wipe");
+    const forkSaw = await text("rock-page", "score");
+    await view("rock-page").locator("#wipe").click();
+    await until("rock-page", "said", "wiped");
+    const forkSaid = await text("rock-page", "said");
+    const hostAfterFork = await tab.evaluate(() => window.__kept()["rock-page"]);
+    const forkWrites = await tab.evaluate(() => window.__calls.filter((one) => one[1] === "rock-page"));
+    claim("a page's own view, drafted and not kept, reads nothing the host keeps and writes nothing to it", forkSaw === "none" && forkSaid === "wiped" && hostAfterFork?.score === "3" && forkWrites.length === 0, { forkSaw, forkSaid, hostAfterFork, forkWrites });
+    await tab.evaluate(() => window.__keep());
+    await until("rock-page", "score", "3");
+    claim("kept, the same view reads what the host keeps for it", (await text("rock-page", "score")) === "3", await tab.evaluate(() => window.__calls.filter((one) => one[1] === "rock-page")));
 
     /* ── a seat with a profile, through mount, with the host's ViewerState ── */
     await open("mode=embed");

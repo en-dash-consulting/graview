@@ -1,5 +1,5 @@
 {
   "budget": "Cloud's worker",
-  "bytes": 7900,
-  "note": "Raised when a seat came to carry a profile and a view to keep values for whoever is looking (Roadmap f-viewer-state-and-me-framework): `meOf`, `withValidProfile` and a profile's person made in the store, what `graview.mine` and `props.me` add to a view's host and its generated runtimes, and the seat headers. Measured at 2_555_109 B against 2_547_239."
+  "bytes": 9650,
+  "note": "Raised when a seat came to carry a profile and a view to keep values for whoever is looking (Roadmap f-viewer-state-and-me-framework): `meOf`, `withValidProfile` and a profile's person made in the store, what `graview.mine` and `props.me` add to a view's host and its generated runtimes, and the seat headers. Measured at 2_556_825 B against 2_547_239."
 }

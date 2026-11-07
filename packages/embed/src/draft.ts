@@ -84,7 +84,7 @@ export function useForkedViews<S extends AnySchema>(views: ReactViewRegistry<S>,
     return keeper.onChange?.(heard);
   }, [keeper]);
   return useMemo(
-    () => (forks.length > 0 && draftHost ? forks.reduce((over, fork) => draftHost!.registerWorkerView(over, { manifest: fork.manifest as never, worker: { source: fork.source } }), layerViews(createViews(schema), views)) : views),
+    () => (forks.length > 0 && draftHost ? forks.reduce((over, fork) => draftHost!.registerWorkerView(over, { manifest: fork.manifest as never, worker: { source: fork.source }, ...(fork.draft ? { keepsNothing: true } : {}) }), layerViews(createViews(schema), views)) : views),
     [views, forks, schema],
   );
 }

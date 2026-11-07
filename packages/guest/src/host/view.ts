@@ -1,7 +1,7 @@
 import { imageRefusedWords } from "./open-judge.js";
 import { keepClicked } from "./clicked.js";
 import { guestPlacesOf } from "./links-words.js";
-import { meOf, type AnySchema, type FileValue, type HostFiles, type PagesArrangement, type Principal, type Store, type ViewerState } from "@graview/core";
+import { actingAs, meOf, type AnySchema, type FileValue, type HostFiles, type PagesArrangement, type Principal, type Store, type ViewerState } from "@graview/core";
 import { createMine, keptForTheVisit, visitOf } from "./mine.js";
 import { storedFilesOf } from "./marks.js";
 import { retryingImport } from "@graview/core/retry";
@@ -947,10 +947,13 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
    * problem says no value. Never the graph's.
    */
   const hostState = options.draft ? undefined : options.viewerState?.();
+  /* A seat whose id reads as a person's has no `meOf`, and is still nobody else: it never falls to the key of a seat with no id. */
+  const viewer = meOf(options.principal) ?? actingAs(options.principal).id ?? options.principal.visitorKey ?? "";
   const mine = createMine({
     view: manifest.name,
+    viewer,
     /* A draft's is its own, for as long as it is drawn: nothing the view it would replace keeps is its to read or write. */
-    state: hostState ?? (options.draft ? keptForTheVisit() : visitOf(options.store, meOf(options.principal) ?? options.principal.visitorKey ?? "")),
+    state: hostState ?? (options.draft ? keptForTheVisit() : visitOf(options.store, viewer)),
     onRefused: (sentence) => {
       options.onProblem?.(sentence);
       if (session) port?.postMessage({ type: "notice", text: sentence });

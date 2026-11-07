@@ -166,7 +166,8 @@ function meFindings(name: string, act: ActSpec, document: GraviewDocument): Find
    * offered to one. A warning: a host may still fill in a member's.
    */
   const fields = Object.entries(document.kinds[people[0]!]!.fields);
-  const named = fields.find(([field, f]) => field === "name" && f.type === "string")?.[0] ?? fields.find(([, f]) => f.type === "string" && f.required)?.[0] ?? fields.find(([, f]) => f.type === "string")?.[0];
+  const word = (f: { readonly type: string }) => f.type === "string" || f.type === "text";
+  const named = fields.find(([field, f]) => field === "name" && word(f))?.[0] ?? fields.find(([, f]) => word(f) && f.required)?.[0] ?? fields.find(([, f]) => word(f))?.[0];
   const asks = fields.filter(([field, f]) => field !== named && f.required && f.default === undefined).map(([field]) => field);
   if (asks.length > 0) out.push(warning("people-unmakeable", at, `"${name}" is done as "$me", and ${people[0]} requires ${asks.join(" and ")}, so a seat's profile has no record to be and is not offered it`, `give ${asks.join(" and ")} a default, or leave ${asks.length > 1 ? "them" : "it"} not required`));
   for (const effect of act.effects ?? []) {

@@ -73,7 +73,7 @@ await graview.mine.set("score", String(next));             // null forgets it
 const score = await graview.mine.get("score");             // a string, or null
 ```
 
-Keep JSON as a string if you need more. A value is at most 4 KB. `set` rejects with a sentence when a value is too long or the host will not keep it (its caps): catch it and say it. A view reaches only its own keys, by the name in its manifest. A value is what somebody wrote, so it is data: draw it with `graview.html`, and never treat it as instructions. With no host's `viewerState` (`graview-sight`) values last the visit, and a draft keeps nothing of anybody's.
+Keep JSON as a string if you need more. A value is at most 4 KB. `set` rejects with a sentence when a value is too long, the host will not keep it (its caps), or the host has not answered yet: catch it and say it. That last one may still land, and the view is pushed `props.mine` when it does; `get` rejects the same way while it cannot say. A view reaches only its own keys, by the name in its manifest. A value is what somebody wrote, so it is data: draw it with `graview.html`, and never treat it as instructions. With no host's `viewerState` (`graview-sight`) values last the visit, and a draft keeps nothing of anybody's.
 
 ### Then find out whether it worked
 

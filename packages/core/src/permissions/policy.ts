@@ -38,7 +38,8 @@ export function profileOf(principal: Author): SeatProfile | undefined {
   if (!profile || person.kind !== "human" || person.id === undefined || person.id.includes("~") || (person as Principal).shared) return undefined;
   if (typeof profile.id !== "string" || !PROFILE_ID.test(profile.id) || typeof profile.name !== "string") return undefined;
   const name = profile.name.trim().slice(0, MOST_PROFILE_NAME);
-  return name ? { id: profile.id, name } : undefined;
+  // A name somebody could read: spaces, zero-width and control characters alone say nothing.
+  return /[^\s\p{Z}\p{Cf}\p{Cc}]/u.test(name) ? { id: profile.id, name } : undefined;
 }
 
 /**

@@ -58,14 +58,16 @@ export interface Mine {
 export interface MineOptions {
   /** The view's registered name, the host's and never the view's to say: all it can reach. */
   readonly view: string;
+  /** Who is looking, for the write rate: a host may hand one `ViewerState` for every profile at a screen. */
+  readonly viewer?: string;
   readonly state: ViewerState;
   /** A value was not kept, or the values could not be read, in a sentence for the host's problems. Never holds a value. */
   readonly onRefused?: (sentence: string) => void;
-  /** The values came after `readMs`, so what was drawn was drawn without them. */
+  /** Values came after the view was told they had not: what it was drawn with has moved. */
   readonly onLate?: () => void;
   /** How long a host has to say what the view keeps, before the view is drawn without it and each ask is answered in a sentence. 1 500 ms by default. */
   readonly readMs?: number;
-  /** How long a host has to answer one write. 10 000 ms by default. */
+  /** How long a view waits on one write before it is told the value is not kept yet. 10 000 ms by default. */
   readonly writeMs?: number;
   /** The clock, for tests. */
   readonly now?: () => number;
@@ -73,25 +75,46 @@ export interface MineOptions {
 
 const UNREAD = "What this view keeps for you could not be read just now.";
 const UNKEPT = "This value could not be kept just now.";
+const NOT_YET = "The host has not answered yet, so this value is not kept yet.";
+const TOO_MANY = "This view asked to keep too many values at once, so this one was not kept.";
 
-/* A view's writes in the last minute, per place they go and per view: drawn again, it is the same view. */
+/* A viewer's writes to a view in the last minute, per place they go: drawn again, it is the same view. */
 const writesAt = new WeakMap<ViewerState, Map<string, number[]>>();
-function writesOf(state: ViewerState, view: string): number[] {
+function writesOf(state: ViewerState, viewer: string, view: string): number[] {
   const views = writesAt.get(state) ?? new Map<string, number[]>();
   writesAt.set(state, views);
-  const times = views.get(view) ?? [];
-  views.set(view, times);
+  const key = `${viewer}\u0000${view}`;
+  const times = views.get(key) ?? [];
+  views.set(key, times);
   return times;
+}
+
+/** One key's writes: the one under way, whether it is past its time, and the newest waiting to follow it. */
+interface Line {
+  late: boolean;
+  landedLate: boolean;
+  next?: { readonly value: string | null; told: ((answer: ViewerStateAnswer) => void)[] };
+  readonly gets: (() => void)[];
 }
 
 /**
  * ONE VIEW'S VALUES, AS ONE DRAWING OF IT HOLDS THEM: read once from where they
- * are kept, handed at draw time, each write judged, then asked of the host in
- * the order it came, and held here only once the host has kept it. A view asks
- * by key alone: which view it is is said here. A host that does not answer
- * holds nobody up: past its time each ask is answered in a sentence.
+ * are kept, handed at draw time, each write judged, and held here only once the
+ * host has kept it. A view asks by key alone: which view it is is said here.
+ *
+ * ONE WRITE AT A TIME TO A KEY. A write cannot be called back, so one past its
+ * time may still land: the view is told "not kept yet", which stays true, and
+ * nothing is sent to that key until it settles. Only then does the newest value
+ * asked for go, once, so an older write can never land over a newer, and what the
+ * host ends holding is what the view last asked for. Resending the newest as
+ * soon as it is asked and again after a late landing would do the same with two
+ * writes and an interval where the host holds the older one anyway. What it
+ * costs: a host that never answers a write never gets a later value for that
+ * key, which then lasts only as long as this drawing, and the view has been told
+ * so. A host's silence costs a key's asks one `writeMs`, then none: they are
+ * answered at once, and other keys go on as they were.
  */
-export function createMine({ view, state, onRefused, onLate, readMs = 1_500, writeMs = 10_000, now = Date.now }: MineOptions): Mine {
+export function createMine({ view, viewer = "", state, onRefused, onLate, readMs = 1_500, writeMs = 10_000, now = Date.now }: MineOptions): Mine {
   let held = new Map<string, string>();
   let read = false;
   let waited = false;
@@ -119,38 +142,100 @@ export function createMine({ view, state, onRefused, onLate, readMs = 1_500, wri
       resolve();
     });
   });
-  /* Every write after the one before it, and every read after them: a get after a set sees the set. */
-  let queue: Promise<unknown> = ready;
-  const writes = writesOf(state, view);
+  const lines = new Map<string, Line>();
+  const writes = writesOf(state, viewer, view);
+
+  const drain = (line: Line) => {
+    for (const get of line.gets.splice(0)) get();
+  };
+  /** What became of the line once what is under way has settled: the newest waiting goes, or the key is free. */
+  const follow = (key: string, line: Line) => {
+    line.late = false;
+    const next = line.next;
+    line.next = undefined;
+    if (next) return send(key, line, next.value, next.told);
+    lines.delete(key);
+    drain(line);
+    if (line.landedLate) onLate?.();
+  };
+  function send(key: string, line: Line, value: string | null, told: readonly ((answer: ViewerStateAnswer) => void)[]): void {
+    const at = now();
+    while (writes.length > 0 && writes[0]! <= at - 60_000) writes.shift();
+    if (writes.length >= MINE_WRITES_A_MINUTE) {
+      const over = refused(TOO_MANY);
+      for (const one of told) one(over);
+      return follow(key, line);
+    }
+    writes.push(at);
+    let answered = false;
+    const timer = setTimeout(() => {
+      /* Told once, now, and true: what happens later is said by what the view is next handed. */
+      answered = true;
+      line.late = true;
+      const notYet = refused(NOT_YET);
+      for (const one of [...told, ...(line.next?.told ?? [])]) one(notYet);
+      if (line.next) line.next.told = [];
+      drain(line);
+    }, writeMs);
+    void Promise.resolve()
+      .then(() => state.write(view, key, value))
+      .catch(() => undefined) // A host's own error can name what it holds: the view is told only that it was not kept.
+      .then((said) => {
+        clearTimeout(timer);
+        const kept = said?.ok === true;
+        if (kept) {
+          if (value === null) held.delete(key);
+          else held.set(key, value);
+        }
+        const sentence = said && !said.ok && typeof said.sentence === "string" && said.sentence ? said.sentence : UNKEPT;
+        if (answered) {
+          if (kept) line.landedLate = true;
+          else onRefused?.(sentence);
+        } else {
+          const answer: ViewerStateAnswer = kept ? { ok: true } : refused(sentence);
+          for (const one of told) one(answer);
+        }
+        follow(key, line);
+      });
+  }
+
   return {
     ready,
     values: () => Object.fromEntries(held),
-    get: (key) => queue.then((): GuestMineAnswer<string | null> => (read ? { ok: true, value: held.get(key) ?? null } : { ok: false, sentence: UNREAD })),
+    get: (key) =>
+      ready.then(
+        () =>
+          new Promise<GuestMineAnswer<string | null>>((resolve) => {
+            const answer = () => {
+              if (!read) return resolve({ ok: false, sentence: UNREAD });
+              const line = lines.get(key);
+              if (!line) return resolve({ ok: true, value: held.get(key) ?? null });
+              if (line.late) return resolve({ ok: false, sentence: NOT_YET });
+              line.gets.push(answer);
+            };
+            answer();
+          }),
+      ),
     set(key, value) {
       const refusal = mineRefusal(key, value);
       if (refusal) return Promise.resolve(refused(refusal));
-      const at = now();
-      while (writes.length > 0 && writes[0]! <= at - 60_000) writes.shift();
-      if (writes.length >= MINE_WRITES_A_MINUTE) return Promise.resolve(refused("This view asked to keep too many values at once, so this one was not kept."));
-      writes.push(at);
-      const answer = queue.then(async (): Promise<ViewerStateAnswer> => {
-        if (!read) return refused(`${UNREAD} So this value was not kept.`);
-        let said: ViewerStateAnswer | undefined;
-        let timer: ReturnType<typeof setTimeout> | undefined;
-        try {
-          said = await Promise.race([state.write(view, key as string, value as string | null), new Promise<undefined>((resolve) => (timer = setTimeout(() => resolve(undefined), writeMs)))]);
-        } catch {
-          // A host's own error can name what it holds: the view is told only that it was not kept.
-        } finally {
-          clearTimeout(timer);
-        }
-        if (said?.ok !== true) return refused(said && typeof said.sentence === "string" && said.sentence ? said.sentence : UNKEPT);
-        if (value === null) held.delete(key as string);
-        else held.set(key as string, value as string);
-        return { ok: true };
-      });
-      queue = answer;
-      return answer;
+      const asked = key as string;
+      const wanted = value as string | null;
+      return ready.then(
+        () =>
+          new Promise<ViewerStateAnswer>((resolve) => {
+            if (!read) return resolve(refused(`${UNREAD} So this value was not kept.`));
+            const line = lines.get(asked);
+            if (!line) {
+              const opened: Line = { late: false, landedLate: false, gets: [] };
+              lines.set(asked, opened);
+              return send(asked, opened, wanted, [resolve]);
+            }
+            /* The newest waits for what is under way, and anything older that waited with it is answered as the newest is. */
+            line.next = { value: wanted, told: line.late ? [] : [...(line.next?.told ?? []), resolve] };
+            if (line.late) resolve(refused(NOT_YET));
+          }),
+      );
     },
   };
 }

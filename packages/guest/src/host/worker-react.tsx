@@ -51,6 +51,13 @@ export interface WorkerViewDefinition {
    * of the same name stood. Nothing of it is kept anywhere.
    */
   readonly draft?: boolean;
+  /**
+   * Proposed and not kept, and drawn as the page it would be, with no line
+   * over it (a page's own view, as a host's `forked` says it): what it keeps
+   * lasts this drawing, as a `draft`'s does, and nothing a host keeps is its
+   * to read or write.
+   */
+  readonly keepsNothing?: boolean;
 }
 
 /** The brand with its logo's paths under `/graview/assets/` where the host serves them (Roadmap f-brand-marks-under-app-base); as it is with no `assetsAt`. */
@@ -177,7 +184,7 @@ function WorkerViewMount({ definition: given, store, principal, input, goTo, pla
         /* What a file dropped on what the view drew is stored through (FR-193): the page's host's files, as they are now. */
         files: () => latest.current.hostFiles,
         /* What it keeps for its viewer (`graview.mine`). A draft, proposed and not kept, keeps nothing of anybody's. */
-        ...(definition.draft ? { draft: true } : { viewerState: () => latest.current.viewerState }),
+        ...(definition.draft || definition.keepsNothing ? { draft: true } : { viewerState: () => latest.current.viewerState }),
         onContentHeight: (height) => latest.current.told?.(height),
       });
     const stop = untilItArrives(workerChunk, (module) => {

@@ -997,6 +997,24 @@ export class Store<S extends AnySchema> {
     call: MutationCall,
     principal: Principal = HUMAN,
   ): ReturnType<typeof permits> {
+    const verdict = this.judged(call, principal);
+    /*
+     * THE SAME ANSWER `apply` WOULD GIVE, FOR A PERSON NOT MADE YET. What an
+     * own-end grant reads of a call can be worked out only with the record
+     * `$me` will be, so it is rehearsed: nothing is kept, and asking makes nobody.
+     */
+    if (verdict.ok && this.personFor(principal) && this.policy?.grants.some((grant) => grant.ownEnd)) {
+      try {
+        this.rehearsal().applying([call], { author: principal });
+      } catch (error) {
+        if (error instanceof PermissionDeniedError) return { ok: false, refusal: error.refusal } as ReturnType<typeof permits>;
+      }
+    }
+    return verdict;
+  }
+
+  /** What `permits` answers from the grants alone; on an undo, a call already made, so it asks no record of who took it back. */
+  private judged(call: MutationCall, principal: Principal, undoing = false): ReturnType<typeof permits> {
     call = this.spelledCall(call);
     /*
      * The same answer `apply` would give. A declared agent's `may` narrows
@@ -1009,7 +1027,7 @@ export class Store<S extends AnySchema> {
     const narrowed = this.refusesAgent(call, principal) ?? this.namesTurnedOff(call, principal);
     if (narrowed) return { ok: false, refusal: narrowed } as ReturnType<typeof permits>;
     const mutation = this.mutations.get(call.name) ?? (call.name === PUBLISH ? this.publisher : undefined);
-    const nobody = mutation && this.noOneToBe(mutation, principal);
+    const nobody = mutation && !undoing && this.noOneToBe(mutation, principal);
     if (nobody) return { ok: false, refusal: nobody } as ReturnType<typeof permits>;
     // Publishing is the declaration's `publishers`, not a grant's.
     if (mutation && mutation === this.publisher) return PUBLISHING.verdict!(this, principal) as ReturnType<typeof permits>;
@@ -1298,6 +1316,7 @@ export class Store<S extends AnySchema> {
       me: author && meOf(author),
       everHeld: (id: string) => recordsOf(this.log).kindOf(id) !== undefined,
       keeps: (kind: string, field: string) => mayKeepField(this.policy?.sees, kind, field),
+      ...(author && this.hasNoRecord(author) ? { noRecord: true } : {}),
     };
     if (author === undefined || !hidesFrom(this, author)) return me;
     // And a seat that writes a value naming what it may not see has written its own words, though the store held them already.
@@ -1813,7 +1832,7 @@ export class Store<S extends AnySchema> {
     const permitted = (call: MutationCall, as: Author | Principal = author) => {
       // A vote is judged with no policy too: a shared seat's vote is refused whether or not the app says who may do what (Roadmap f-votes-shared-seat).
       const voting = this.voter !== undefined && this.mutations.get(call.name) === this.voter;
-      const verdict = this.policy || (this.publisher && call.name === PUBLISH) || voting || this.mutations.get(call.name) === this.proposer ? this.permits(call, as as Principal) : undefined;
+      const verdict = this.policy || (this.publisher && call.name === PUBLISH) || voting || this.mutations.get(call.name) === this.proposer ? this.judged(call, as as Principal) : undefined;
       // Rehearsing a proposal, an act its author may propose stands as the reviewer's would (Roadmap f-proposals-for-review).
       if (verdict && !verdict.ok && !(this.proposing && this.mayPropose(call, as as Principal))) this.refuse(verdict.refusal, as.id);
     };
@@ -2158,7 +2177,7 @@ export class Store<S extends AnySchema> {
   applyPrimitives(primitives: readonly Primitive[], options: ApplyOptions = {}): ApplyResult<S> {
     this.stillNow();
     const batch = options.batch ?? this.mintBatch("batch");
-    const author = options.author ?? this.by;
+    const author = withValidProfile(options.author ?? this.by);
     const before = this.violations();
     const rollback = this.graph.snapshot();
     const intent = options.intent ?? "Apply a change";
@@ -2418,7 +2437,7 @@ export class Store<S extends AnySchema> {
         const verdict =
           by !== undefined && by !== actingAs(author as Principal).id && !isSystem(author as Principal) && !names(judged.mutation.args) && names(judged.primitives)
             ? { ok: false as const, refusal: { mutation: judged.mutation.name, wouldNeed: [], message: "it was done as somebody else." } }
-            : this.permits(judged.mutation, author as Principal);
+            : this.judged(judged.mutation, author as Principal, true);
         if (!verdict.ok) return { ...verdict.refusal, message: `Not permitted to undo "${target.intent}": ${verdict.refusal.message}` };
       }
     }
@@ -2453,14 +2472,21 @@ export class Store<S extends AnySchema> {
     return fields.safeParse(node).success ? { id, name: profile.name, node } : undefined;
   }
 
+  /** A profile with no person of the people kind, and none to be had: a record of another kind at its id, from a restore or a host's own change, is not one. */
+  private hasNoRecord(author: Author | Principal): boolean {
+    const id = profileOf(author) && meOf(author);
+    if (id === undefined) return false;
+    const kind = this.graph.getNode(id)?.kind as string | undefined;
+    return !(kind !== undefined && this.schema.tryDefinition(kind)?.people) && !this.personFor(author);
+  }
+
   /**
    * WHY AN ACT DONE AS `$me` IS NOT THIS SEAT'S: its profile has no person
    * and can have none. Refused in the words the act would refuse in, and not
    * offered: an act offered and then refused is what nobody should meet.
    */
   private noOneToBe(mutation: AnyMutationDefinition<S>, principal: Principal): Refusal | undefined {
-    if (!mutation.doneAsMe || !profileOf(principal)) return undefined;
-    if (this.graph.has(meOf(principal)!) || this.personFor(principal)) return undefined;
+    if (!mutation.doneAsMe || !this.hasNoRecord(principal)) return undefined;
     return { mutation: mutation.name, wouldNeed: [], message: `"${mutation.title ?? mutation.name}" is done as you, and you have no record here` };
   }
 

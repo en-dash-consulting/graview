@@ -1,4 +1,5 @@
 import { InvalidArguments } from "./invalid-arguments.js";
+import { ActRefusal } from "../refused.js";
 import type { z } from "zod";
 import { ARCHIVED, isArchived } from "../graph/archived.js";
 import type { Graph } from "../graph/graph.js";
@@ -119,13 +120,17 @@ export function numbersSpelled(input: unknown, given: unknown): unknown {
  */
 const validId = (id: unknown): id is string => typeof id === "string" && id.length <= 200 && /^[^\s\p{Cc}]+$/u.test(id);
 
+/** A `~` says a profile's person (`profilePersonId`), which only that profile's first act makes, and not through an act's own hands. */
+function refuseProfileId(id: string): void {
+  if (id.includes("~")) throw new GraphError("An id cannot hold a ~", "Leave id out and let the act mint one, or ask for one without it.");
+}
+
 function requestedId(rawArgs: unknown): string | undefined {
   if (typeof rawArgs !== "object" || rawArgs === null) return undefined;
   const id = (rawArgs as Record<string, unknown>)["id"];
   if (id === undefined) return undefined;
   if (!validId(id)) throw new GraphError("An id is 1–200 characters with no space", `Got ${JSON.stringify(id)}.`);
-  // A `~` says a profile's person (`profilePersonId`), which only that profile's first act makes.
-  if (id.includes("~")) throw new GraphError("An id cannot hold a ~", "Leave id out and let the act mint one, or ask for one without it.");
+  refuseProfileId(id);
   return id;
 }
 
@@ -247,6 +252,8 @@ export function compileMutation<S extends AnySchema>(
      * of the removed record would be taken for the new one's.
      */
     readonly everHeld?: (id: string) => boolean;
+    /** The seat's profile has no person here and can have none: an act that reads `ctx.me` is refused, in words. */
+    readonly noRecord?: boolean;
     /**
      * WHETHER SOME SIGHT MAY KEEP A FIELD OF A KIND FROM SOME ROLE (Roadmap
      * f-field-sight). An id is served wherever its record is, so a name
@@ -333,11 +340,17 @@ export function compileMutation<S extends AnySchema>(
   const context: MutationContext<S> = {
     graph: reader,
     schema: graph.schema,
-    me: options.me,
+    // An act that reads who it is done as, for a seat that can be nobody here, is refused in words before it names a record that is not there.
+    get me() {
+      if (options.noRecord) throw new ActRefusal(`"${definition.title ?? definition.name}" is done as you, and you have no record here`);
+      return options.me;
+    },
     emit(primitive) {
+      if (primitive.op === "add-node") refuseProfileId(primitive.node.id);
       primitives.push(primitive);
     },
     addNode(node) {
+      refuseProfileId(node.id);
       primitives.push({ op: "add-node", node });
     },
     removeNode(id) {
