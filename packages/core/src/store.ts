@@ -35,7 +35,7 @@ import { TYPE_TEXT, TYPING } from "./text/typing-hook.js";
 import type { FieldRevision } from "./ops/revisions.js";
 import { DECLINES, isAutomated, tidyingRefusal, type ActMeanings } from "./ops/tidying.js";
 import { nameOfAuthor } from "./who.js";
-import { actingAs, grantsTo, isSystem, meOf, ownsId, permits, profileOf, withValidProfile, permittedMutations, proposes, subjectKinds, type PolicyWords } from "./permissions/policy.js";
+import { actingAs, grantsTo, isSystem, meIn, meOf, ownsId, permits, profileOf, withValidProfile, permittedMutations, proposes, subjectKinds, type PolicyWords } from "./permissions/policy.js";
 import { MOST_PROPOSED, PROPOSE_CHANGES, proposeChangesMutation } from "./mutations/propose-changes.js";
 import { namesUnseen, redact } from "./ops/withheld.js";
 import { writersBehind } from "./ops/writers.js";
@@ -939,7 +939,7 @@ export class Store<S extends AnySchema> {
     if (mutation !== undefined && mutation === this.typer) {
       // Through an act that could run on this record now: its module on, its own rule holding for the record as this principal is served it (`wouldRun`).
       const served = principal === undefined || isSystem(principal) ? this.graph : seenBy(this, principal).graph;
-      const allows = (writer: AnyMutationDefinition<S>) => !this.mutationDisabled(writer) && wouldRun(writer, this.schema, served, call?.args["node"], call?.args["field"], principal && meOf(principal));
+      const allows = (writer: AnyMutationDefinition<S>) => !this.mutationDisabled(writer) && wouldRun(writer, this.schema, served, call?.args["node"], call?.args["field"], principal && meIn(this.schema, principal));
       return TYPING.via!(this.schema, [...this.mutations.values()] as never, this.subjectKindOf(call!, principal), call?.args["field"], allows as never);
     }
     if (!mutation?.derived) return undefined;
@@ -1313,10 +1313,12 @@ export class Store<S extends AnySchema> {
   private sighted(author: Principal | undefined): NonNullable<Parameters<typeof compileMutation<S>>[3]> {
     // Who `$me` is: the person, for an agent acting for one (Roadmap f-act-as-me).
     const me = {
-      me: author && meOf(author),
+      me: author && meIn(this.schema, author),
       everHeld: (id: string) => recordsOf(this.log).kindOf(id) !== undefined,
       keeps: (kind: string, field: string) => mayKeepField(this.policy?.sees, kind, field),
       ...(author && this.hasNoRecord(author) ? { noRecord: true } : {}),
+      // The host's own may ask for an id a seat may not: it could write the same through `applyPrimitives`.
+      ...(author && isSystem(author) ? { hostsOwn: true } : {}),
     };
     if (author === undefined || !hidesFrom(this, author)) return me;
     // And a seat that writes a value naming what it may not see has written its own words, though the store held them already.
@@ -2472,10 +2474,18 @@ export class Store<S extends AnySchema> {
     return fields.safeParse(node).success ? { id, name: profile.name, node } : undefined;
   }
 
-  /** A profile with no person of the people kind, and none to be had: a record of another kind at its id, from a restore or a host's own change, is not one. */
+  /**
+   * A SEAT THAT CAN BE NOBODY HERE, where a kind is the people: a profile with
+   * no person of that kind and none to be had (a record of another kind at its
+   * id, from a restore or a host's own change, is not one), or an account whose
+   * own id reads as a person's. With no people kind, nobody is asked to be one.
+   */
   private hasNoRecord(author: Author | Principal): boolean {
-    const id = profileOf(author) && meOf(author);
-    if (id === undefined) return false;
+    if (!this.schema.definitions.some((definition) => definition.people)) return false;
+    if (actingAs(author as Principal).id === undefined) return false;
+    const id = meOf(author);
+    if (id === undefined) return true;
+    if (!profileOf(author)) return false;
     const kind = this.graph.getNode(id)?.kind as string | undefined;
     return !(kind !== undefined && this.schema.tryDefinition(kind)?.people) && !this.personFor(author);
   }

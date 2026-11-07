@@ -90,6 +90,10 @@ const viewerState = {
   async write(view, key, value) {
     calls.push(["write", view, key]);
     if (window.__refuse) return { ok: false, sentence: window.__refuse };
+    /* A host slow on the next write alone, and it writes what it was handed when it gets there. */
+    const slow = window.__slowOnce;
+    window.__slowOnce = 0;
+    if (slow) await new Promise((resolve) => setTimeout(resolve, slow));
     const values = kept.get(view) ?? new Map();
     kept.set(view, values);
     if (value === null) values.delete(key);
@@ -222,6 +226,27 @@ if (asked.get("mode") === "fork") {
     const bigKept = await tab.evaluate(() => window.__kept().quiz.score);
     const problems = await tab.evaluate(() => window.__problems);
     claim("a value past 4 KB is refused in a sentence the view hears and the host's problems are told, and what stood stands", /4 KB/.test(big) && bigKept === "9" && problems.some((one) => /4 KB/.test(one)) && !problems.some((one) => one.includes("xxxx")), { big, bigKept, problems });
+
+    /* ── drawn again with a write on its way ── */
+    await tab.evaluate(() => (window.__slowOnce = 400));
+    await view("quiz").locator("#wipe").click();
+    await tab.evaluate(() => window.__mount("quiz"));
+    await until("quiz", "keep", "Keep");
+    const heardBefore = await text("quiz", "score");
+    await until("quiz", "score", "wiped");
+    const heard = await text("quiz", "score");
+    claim("a view drawn again with a write on its way hears the value when it lands", heardBefore === "9" && heard === "wiped", { heardBefore, heard });
+    await tab.evaluate(() => (window.__slowOnce = 400));
+    await view("quiz").locator("#wipe").click();
+    await tab.evaluate(() => window.__mount("quiz"));
+    await until("quiz", "keep", "Keep");
+    await view("quiz").locator("#keep").click();
+    await until("quiz", "said", "kept");
+    await tab.waitForTimeout(500);
+    const held = await tab.evaluate(() => window.__kept().quiz.score);
+    claim("a view drawn again with a write on its way cannot have it land over the next drawing's", held === "9" && (await text("quiz", "said")) === "kept", { held });
+    await tab.evaluate(() => window.__mount("quiz"));
+    await until("quiz", "score", "9");
 
     await tab.evaluate(() => (window.__refuse = "This app keeps 64 KB for you, and that is full."));
     await view("quiz").locator("#keep").click();

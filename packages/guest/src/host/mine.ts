@@ -53,6 +53,8 @@ export interface Mine {
   values(): Readonly<Record<string, string>>;
   get(key: string): Promise<GuestMineAnswer<string | null>>;
   set(key: unknown, value: unknown): Promise<ViewerStateAnswer>;
+  /** This drawing has gone: a write it asked for still lands, and it hears no more. */
+  dispose(): void;
 }
 
 export interface MineOptions {
@@ -77,24 +79,46 @@ const UNREAD = "What this view keeps for you could not be read just now.";
 const UNKEPT = "This value could not be kept just now.";
 const NOT_YET = "The host has not answered yet, so this value is not kept yet.";
 const TOO_MANY = "This view asked to keep too many values at once, so this one was not kept.";
+const TOO_MANY_OPEN = "The host has not answered for too many values, so this one was not kept.";
+/** The most keys a view may have writes open on at once, for a host that never answers: what a host's own caps would stop. */
+const MOST_OPEN = 200;
 
-/* A viewer's writes to a view in the last minute, per place they go: drawn again, it is the same view. */
-const writesAt = new WeakMap<ViewerState, Map<string, number[]>>();
-function writesOf(state: ViewerState, viewer: string, view: string): number[] {
-  const views = writesAt.get(state) ?? new Map<string, number[]>();
-  writesAt.set(state, views);
-  const key = `${viewer}\u0000${view}`;
-  const times = views.get(key) ?? [];
-  views.set(key, times);
-  return times;
+/** One drawing of a view, as what it shares hears of it. */
+interface Drawing {
+  /** A value was kept: it holds it now. */
+  landed(key: string, value: string | null): void;
+  readonly onRefused: ((sentence: string) => void) | undefined;
+  readonly onLate: (() => void) | undefined;
 }
 
-/** One key's writes: the one under way, whether it is past its time, and the newest waiting to follow it. */
+/** Somebody waiting to hear what became of a value: the drawing that asked, and its answer. */
+interface Told {
+  readonly drawing: Drawing;
+  answer(answer: ViewerStateAnswer): void;
+}
+
+/** One key's writes: whether the one under way is past its time, the newest waiting to follow it, and who to tell once it is all settled. */
 interface Line {
   late: boolean;
-  landedLate: boolean;
-  next?: { readonly value: string | null; told: ((answer: ViewerStateAnswer) => void)[] };
+  next?: { readonly value: string | null; told: readonly Told[]; readonly writeMs: number };
   readonly gets: (() => void)[];
+  readonly moved: Set<Drawing>;
+}
+
+/** What every drawing of a view shares, for one viewer, per place it is kept: a view drawn again is the same view. */
+interface Shared {
+  readonly writes: number[];
+  readonly lines: Map<string, Line>;
+  readonly drawings: Set<Drawing>;
+}
+const sharedAt = new WeakMap<ViewerState, Map<string, Shared>>();
+function sharedOf(state: ViewerState, viewer: string, view: string): Shared {
+  const views = sharedAt.get(state) ?? new Map<string, Shared>();
+  sharedAt.set(state, views);
+  const key = `${viewer}\u0000${view}`;
+  const shared = views.get(key) ?? { writes: [], lines: new Map(), drawings: new Set() };
+  views.set(key, shared);
+  return shared;
 }
 
 /**
@@ -102,22 +126,46 @@ interface Line {
  * are kept, handed at draw time, each write judged, and held here only once the
  * host has kept it. A view asks by key alone: which view it is is said here.
  *
- * ONE WRITE AT A TIME TO A KEY. A write cannot be called back, so one past its
- * time may still land: the view is told "not kept yet", which stays true, and
- * nothing is sent to that key until it settles. Only then does the newest value
- * asked for go, once, so an older write can never land over a newer, and what the
- * host ends holding is what the view last asked for. Resending the newest as
- * soon as it is asked and again after a late landing would do the same with two
- * writes and an interval where the host holds the older one anyway. What it
- * costs: a host that never answers a write never gets a later value for that
- * key, which then lasts only as long as this drawing, and the view has been told
- * so. A host's silence costs a key's asks one `writeMs`, then none: they are
- * answered at once, and other keys go on as they were.
+ * ONE WRITE AT A TIME TO A KEY, ON THIS PAGE. A write cannot be called back, so
+ * one past its time may still land: the view is told "not kept yet", which stays
+ * true, and nothing is sent to that key until it settles. Only then does the
+ * newest value asked for go, once, so an older write can never land over a
+ * newer, and what the host ends holding is what the view last asked for. The
+ * line belongs to the view, not the drawing: a page draws a view again when its
+ * definition, its store or its seat moves, with a write of the last drawing
+ * still on its way, and the new drawing joins that line and hears what lands.
+ * Resending the newest as soon as it is asked and again after a late landing
+ * would do the same with two writes and an interval where the host holds the
+ * older one anyway. Another tab is another line: two tabs can only be held
+ * apart by the host, by the order it takes writes in.
+ *
+ * What it costs: a host that never answers a write never gets a later value for
+ * that key. That value is in no drawing's values and `get` rejects: it waits
+ * here, sent if the host ever answers, gone with the page, and the view has been
+ * told it is not kept. A host's silence costs a key's asks one `writeMs`, then
+ * none: they are answered at once, and other keys go on, up to `MOST_OPEN`.
  */
 export function createMine({ view, viewer = "", state, onRefused, onLate, readMs = 1_500, writeMs = 10_000, now = Date.now }: MineOptions): Mine {
   let held = new Map<string, string>();
   let read = false;
   let waited = false;
+  /* What landed while this drawing was still reading: newer than what it will read. */
+  const landedWhileReading = new Map<string, string | null>();
+  const hold = (key: string, value: string | null) => {
+    if (value === null) held.delete(key);
+    else held.set(key, value);
+  };
+  const shared = sharedOf(state, viewer, view);
+  const { writes, lines, drawings } = shared;
+  const drawing: Drawing = {
+    landed(key, value) {
+      if (read) hold(key, value);
+      else landedWhileReading.set(key, value);
+    },
+    onRefused,
+    onLate,
+  };
+  drawings.add(drawing);
   const refused = (sentence: string): ViewerStateAnswer => {
     onRefused?.(sentence);
     return { ok: false, sentence };
@@ -125,6 +173,7 @@ export function createMine({ view, viewer = "", state, onRefused, onLate, readMs
   const reading = (async () => {
     try {
       held = new Map(Object.entries(await state.read(view)).filter(([, value]) => typeof value === "string"));
+      for (const [key, value] of landedWhileReading) hold(key, value);
       read = true;
       if (waited) onLate?.();
     } catch {
@@ -142,63 +191,6 @@ export function createMine({ view, viewer = "", state, onRefused, onLate, readMs
       resolve();
     });
   });
-  const lines = new Map<string, Line>();
-  const writes = writesOf(state, viewer, view);
-
-  const drain = (line: Line) => {
-    for (const get of line.gets.splice(0)) get();
-  };
-  /** What became of the line once what is under way has settled: the newest waiting goes, or the key is free. */
-  const follow = (key: string, line: Line) => {
-    line.late = false;
-    const next = line.next;
-    line.next = undefined;
-    if (next) return send(key, line, next.value, next.told);
-    lines.delete(key);
-    drain(line);
-    if (line.landedLate) onLate?.();
-  };
-  function send(key: string, line: Line, value: string | null, told: readonly ((answer: ViewerStateAnswer) => void)[]): void {
-    const at = now();
-    while (writes.length > 0 && writes[0]! <= at - 60_000) writes.shift();
-    if (writes.length >= MINE_WRITES_A_MINUTE) {
-      const over = refused(TOO_MANY);
-      for (const one of told) one(over);
-      return follow(key, line);
-    }
-    writes.push(at);
-    let answered = false;
-    const timer = setTimeout(() => {
-      /* Told once, now, and true: what happens later is said by what the view is next handed. */
-      answered = true;
-      line.late = true;
-      const notYet = refused(NOT_YET);
-      for (const one of [...told, ...(line.next?.told ?? [])]) one(notYet);
-      if (line.next) line.next.told = [];
-      drain(line);
-    }, writeMs);
-    void Promise.resolve()
-      .then(() => state.write(view, key, value))
-      .catch(() => undefined) // A host's own error can name what it holds: the view is told only that it was not kept.
-      .then((said) => {
-        clearTimeout(timer);
-        const kept = said?.ok === true;
-        if (kept) {
-          if (value === null) held.delete(key);
-          else held.set(key, value);
-        }
-        const sentence = said && !said.ok && typeof said.sentence === "string" && said.sentence ? said.sentence : UNKEPT;
-        if (answered) {
-          if (kept) line.landedLate = true;
-          else onRefused?.(sentence);
-        } else {
-          const answer: ViewerStateAnswer = kept ? { ok: true } : refused(sentence);
-          for (const one of told) one(answer);
-        }
-        follow(key, line);
-      });
-  }
-
   return {
     ready,
     values: () => Object.fromEntries(held),
@@ -225,17 +217,71 @@ export function createMine({ view, viewer = "", state, onRefused, onLate, readMs
         () =>
           new Promise<ViewerStateAnswer>((resolve) => {
             if (!read) return resolve(refused(`${UNREAD} So this value was not kept.`));
+            const told: Told = { drawing, answer: resolve };
             const line = lines.get(asked);
             if (!line) {
-              const opened: Line = { late: false, landedLate: false, gets: [] };
+              if (lines.size >= MOST_OPEN) return resolve(refused(TOO_MANY_OPEN));
+              /* Only what opens a line is held to the rate: what follows was asked for inside it, and the view was told it would go. */
+              const at = now();
+              while (writes.length > 0 && writes[0]! <= at - 60_000) writes.shift();
+              if (writes.length >= MINE_WRITES_A_MINUTE) return resolve(refused(TOO_MANY));
+              writes.push(at);
+              const opened: Line = { late: false, gets: [], moved: new Set() };
               lines.set(asked, opened);
-              return send(asked, opened, wanted, [resolve]);
+              return send(state, view, shared, asked, opened, wanted, [told], writeMs);
             }
             /* The newest waits for what is under way, and anything older that waited with it is answered as the newest is. */
-            line.next = { value: wanted, told: line.late ? [] : [...(line.next?.told ?? []), resolve] };
+            line.next = { value: wanted, told: line.late ? [] : [...(line.next?.told ?? []), told], writeMs };
             if (line.late) resolve(refused(NOT_YET));
           }),
       );
     },
+    dispose() {
+      drawings.delete(drawing);
+    },
   };
+}
+
+/** Say one thing to whoever waits: each answered, each drawing told of a refusal once. */
+function tell(told: readonly Told[], answer: ViewerStateAnswer): void {
+  if (!answer.ok) for (const one of new Set(told.map((waiting) => waiting.drawing))) one.onRefused?.(answer.sentence);
+  for (const waiting of told) waiting.answer(answer);
+}
+
+/** Write one value, and once it has settled, the newest that waited behind it; or free the key, and tell the drawings what moved. */
+function send(state: ViewerState, view: string, shared: Shared, key: string, line: Line, value: string | null, told: readonly Told[], writeMs: number): void {
+  let past = false;
+  const timer = setTimeout(() => {
+    /* Told once, now, and true: what happens later is said by what the view is next handed. */
+    past = true;
+    line.late = true;
+    tell([...told, ...(line.next?.told ?? [])], { ok: false, sentence: NOT_YET });
+    if (line.next) line.next.told = [];
+    for (const get of line.gets.splice(0)) get();
+  }, writeMs);
+  void Promise.resolve()
+    .then(() => state.write(view, key, value))
+    .catch(() => undefined) // A host's own error can name what it holds: the view is told only that it was not kept.
+    .then((said) => {
+      clearTimeout(timer);
+      const kept = said?.ok === true;
+      const sentence = said && !said.ok && typeof said.sentence === "string" && said.sentence ? said.sentence : UNKEPT;
+      if (kept) {
+        /* Every drawing holds it, and is pushed it, but one told just now that it was kept. */
+        const answered = new Set(past ? [] : told.map((waiting) => waiting.drawing));
+        for (const drawing of shared.drawings) {
+          drawing.landed(key, value);
+          if (!answered.has(drawing)) line.moved.add(drawing);
+        }
+      }
+      if (!past) tell(told, kept ? { ok: true } : { ok: false, sentence });
+      else if (!kept) for (const drawing of shared.drawings) drawing.onRefused?.(sentence);
+      line.late = false;
+      const next = line.next;
+      line.next = undefined;
+      if (next) return send(state, view, shared, key, line, next.value, next.told, next.writeMs);
+      shared.lines.delete(key);
+      for (const get of line.gets.splice(0)) get();
+      for (const drawing of line.moved) if (shared.drawings.has(drawing)) drawing.onLate?.();
+    });
 }

@@ -1,6 +1,6 @@
 {
   "budget": "a visitor's form alone",
-  "minified": 2322,
-  "gzipped": 810,
-  "note": "Raised when a worker view came to keep small values for whoever is looking (`graview.mine`, `props.mine`, the host's `ViewerState`, the visit's memory) and a seat to carry a profile (`meOf`, its person made on first use in the store, what it may not do, the seat headers, \"Mia (Nick)\"; Roadmap f-viewer-state-and-me-framework). 2322 / 810 more. Measured at 269785 / 98039."
+  "minified": 2581,
+  "gzipped": 885,
+  "note": "Raised when a worker view came to keep small values for whoever is looking (`graview.mine`, `props.mine`, the host's `ViewerState`, the visit's memory) and a seat to carry a profile (`meOf`, its person made on first use in the store, what it may not do, the seat headers, \"Mia (Nick)\"; Roadmap f-viewer-state-and-me-framework). 2581 / 885 more. Measured at 270044 / 98114."
 }

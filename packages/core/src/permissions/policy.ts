@@ -80,6 +80,15 @@ export function meOf(principal: Author): string | undefined {
 }
 
 /**
+ * WHO AN ACT IS DONE AS, IN THIS APP: `meOf`, where a kind is the people. Where
+ * none is there is no person to be: an act's `ctx.me` is the account's, with a
+ * profile or without, since a profile never changes what its account may do.
+ */
+export function meIn(schema: { readonly definitions: readonly unknown[] }, principal: Author): string | undefined {
+  return schema.definitions.some((definition) => (definition as { readonly people?: boolean }).people) ? meOf(principal) : actingAs(principal as Principal).id;
+}
+
+/**
  * WHETHER AN ID IS THE PRINCIPAL'S OWN, as `self`, `ownEnd`, `own` and `via`
  * read it: the account's, always, so a profile narrows nothing, and the
  * person of the profile it carries, which is the account's own and no other's.

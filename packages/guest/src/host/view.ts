@@ -411,6 +411,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   let timing = 0;
   /* What the person typed into a field saved as it is typed and not yet saved (FR-191, press.ts): saved as the view goes. */
   let flushSaves = () => {};
+  /* This drawing has gone: what it asked the host to keep still lands. */
+  let letGoOfMine = () => {};
   /* A jump, what is in sight and a record's file (sections.ts); why a press was refused, beside it (refused-note.ts). */
   let sections: GuestSections | undefined;
   let sectionsAsked: Promise<GuestSections | undefined> | undefined;
@@ -420,6 +422,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   const stop = () => {
     flushSaves();
     flushSaves = () => {};
+    letGoOfMine();
     sections?.dispose();
     tally();
     session?.dispose();
@@ -960,6 +963,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     },
     onLate: () => session?.push(),
   });
+  letGoOfMine = () => mine.dispose();
   const begin = (source: GuestWorkerSource) => (started = startWorker(window, {
     source,
     name: manifest.name,

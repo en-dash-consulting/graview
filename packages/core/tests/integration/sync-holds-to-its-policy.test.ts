@@ -636,6 +636,23 @@ describe("a record deleted here that the remote edited", () => {
     });
   const deletes = (from: { sent: RemoteWrite[][] }) => from.sent.flat().filter((write) => write.deleted);
 
+  it("makes it again under an id holding a ~, which is a remote's to have and the host's own to ask for", async () => {
+    const store = projected();
+    const from = remote([{ changes: [theirTitle("v2", "Theirs")] }]);
+    const sync = new SyncEngine({
+      store,
+      mapping,
+      remote: from,
+      conflicts: "theirs",
+      applyInbound: ({ localId, fields }) => ({ name: "retitle", args: { id: localId, ...fields } }),
+      createInbound: ({ id, fields }) => ({ name: "add-task", args: { id: `${id}~again`, title: fields["title"], status: fields["status"] } }),
+    });
+    store.apply({ name: "drop-task", args: { id: "t1" } });
+    const report = await sync.run();
+    expect(report.refused).toEqual([]);
+    expect(store.graph.has("t1~again")).toBe(true);
+  });
+
   it("report (the default): is held as a conflict, and the delete is not sent past the edit", async () => {
     const store = projected();
     const from = remote([{ changes: [theirTitle("v2", "Theirs")] }]);

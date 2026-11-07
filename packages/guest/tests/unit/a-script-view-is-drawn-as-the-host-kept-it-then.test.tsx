@@ -19,8 +19,8 @@ import { registerWorkerView } from "../../src/host/worker-react.js";
  */
 const manifest: WorkerViewManifest = { name: "deliverable", attach: "deliverable", cardinality: "one", acts: ["set-draft"] };
 
-function drawnAt(viewAt: HistoryHost["viewAt"]) {
-  const views = registerWorkerView(registerDefaultViews(workshopApp.schema as AnySchema, createViews(workshopApp.schema as AnySchema)), { manifest, worker: { source: "graview.onProps(() => graview.render('now'));" } });
+function drawnAt(viewAt: HistoryHost["viewAt"], also: { readonly keepsNothing?: boolean } = {}) {
+  const views = registerWorkerView(registerDefaultViews(workshopApp.schema as AnySchema, createViews(workshopApp.schema as AnySchema)), { manifest, ...also, worker: { source: "graview.onProps(() => graview.render('now'));" } });
   const store = new Store({ schema: workshopApp.schema, mutations: workshopApp.mutations ?? [], policy: workshopApp.policy!, snapshot: structuredClone(workshopSeed) as never }) as unknown as Store<AnySchema>;
   const past = pastOf(store, 0);
   const asked: [string, number][] = [];
@@ -55,6 +55,12 @@ describe("a script view in the past", () => {
     const { html } = drawnAt(() => null);
     expect(html).not.toContain("data-worker-view-place");
     expect(html).toContain('data-graview-fields="deliverable:email"');
+  });
+
+  it("is the code proposed, for a page's own view drafted and not kept: the host is not asked what stood then", () => {
+    const { html, asked } = drawnAt(() => null, { keepsNothing: true });
+    expect(asked).toEqual([]);
+    expect(html).toContain('data-worker-view-place="deliverable"');
   });
 
   it("is today's where the host does not say", () => {

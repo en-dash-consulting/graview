@@ -234,6 +234,7 @@ export type { Dismissal, DismissalStore, Suggestion, SuggestionTally } from "./o
 export type { ActivityRow } from "./ops/digest.js";
 export {
   actingAs,
+  meIn,
   meOf,
   profileOf,
   profilePersonId,

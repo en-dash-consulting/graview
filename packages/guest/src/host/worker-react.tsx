@@ -114,7 +114,7 @@ function useDefinitionThen(definition: WorkerViewDefinition): WorkerViewDefiniti
   const seq = playback?.past?.seq;
   const viewAt = playback?.host?.viewAt;
   // A draft is the code proposed, at any moment: a kept view of its name is not what it draws.
-  const then = useMemo(() => (seq === undefined || !viewAt || definition.draft ? undefined : viewAt(definition.manifest.name, seq)), [viewAt, seq, definition]);
+  const then = useMemo(() => (seq === undefined || !viewAt || definition.draft || definition.keepsNothing ? undefined : viewAt(definition.manifest.name, seq)), [viewAt, seq, definition]);
   return useMemo(() => (then === null ? null : then === undefined ? definition : { ...definition, worker: then as WorkerViewCode }), [then, definition]);
 }
 
