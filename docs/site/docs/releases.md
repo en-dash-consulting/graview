@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.69`](https://graview.dev/docs/releases.html#v0-1-69)
 - [`0.1.68`](https://graview.dev/docs/releases.html#v0-1-68)
 - [`0.1.67`](https://graview.dev/docs/releases.html#v0-1-67)
 - [`0.1.66`](https://graview.dev/docs/releases.html#v0-1-66)
@@ -70,9 +71,22 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
+## 0.1.69
+
+Published November 7, 2026 · the current version
+
+An undo keeps to what a seat may see, and a suggestion is decided by who may make its change.
+
+- **An undo keeps to what a seat may see.** An undo is served to a seat as what it takes back is served, on a socket's push as on a whole read, and a suggestion is served as the write it asks for would be.
+- **A suggestion is decided by who may make its change.** Its maker, the system, or a seat that may make every change it asks can take it back. A seat that may not still has its vote.
+
+**Before you upgrade:** Nothing changes in stored formats, the declaration or tool schemas. An undo may arrive withheld where it did not, and `undo` of a suggestion is refused for a seat that may not make it.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.69) · [The full changelog for 0.1.69](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0169)
+
 ## 0.1.68
 
-Published November 6, 2026 · the current version
+Published November 6, 2026
 
 Better UI holds a draft to what the page showed and no more, so a correct redesign of a flagged list or a book's home is kept; suggestions about one record stand under its name; and a focused record's kind tag is drawn whole on Chrome 157.
 

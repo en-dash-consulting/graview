@@ -2,6 +2,14 @@
   "about": "The release records of graview.dev: one per version in packages/core/CHANGELOG.md, newest first, written with the Version packages pull request. A version npm never got says which version carried it (shippedIn) and is said inside that version's section. The date is the day npm published it (UTC). tests/the-releases-page-says-what-each-version-brought.test.ts fails while a version in the changelog has no record here.",
   "releases": [
     {
+      "version": "0.1.69",
+      "date": "2026-11-07",
+      "headline": "An undo keeps to what a seat may see, and a suggestion is decided by who may make its change.",
+      "summary": "- **An undo keeps to what a seat may see.** An undo is served to a seat as what it takes back is served, on a socket's push as on a whole read, and a suggestion is served as the write it asks for would be.\n- **A suggestion is decided by who may make its change.** Its maker, the system, or a seat that may make every change it asks can take it back. A seat that may not still has its vote.",
+      "compatibility": "Nothing changes in stored formats, the declaration or tool schemas. An undo may arrive withheld where it did not, and `undo` of a suggestion is refused for a seat that may not make it.",
+      "published": true
+    },
+    {
       "version": "0.1.68",
       "date": "2026-11-06",
       "headline": "Better UI holds a draft to what the page showed and no more, so a correct redesign of a flagged list or a book's home is kept; suggestions about one record stand under its name; and a focused record's kind tag is drawn whole on Chrome 157.",
