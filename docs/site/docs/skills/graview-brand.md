@@ -56,7 +56,7 @@ A document (`graview-document@1`) holds the same brand as data, every key option
 }
 ```
 
-- **One theme for every view** is `views`: `css`, drawn before each view's own sheet and held to its rules (`brand-views-css`), and `motion: "fade"` between records.
+- **One theme for every view** is `views`: `css`, which wins over a view's own sheet; `fonts` lent to views (`graview-view-drawing`); `motion: "fade"`.
 
 - **A mark** — the logo, one for each scheme, and the page icon, an emoji among them — is `graview-logo`: inline SVG or a path on the app's own host, drawn as given, and one that could act refused (`brand-mark`).
 - **A face** is `system-serif`, `system-sans`, `system-mono`, a face every system has (Georgia, Menlo), or a web font on `DOCUMENT_FONTS`; one named by its address is refused (`brand-font`). The host decides where web fonts load from.

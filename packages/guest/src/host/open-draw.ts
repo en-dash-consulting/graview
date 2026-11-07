@@ -2,6 +2,7 @@ import type { GuestDomEvent } from "../protocol.js";
 import { sanitizeStylesheet, sanitizeStylesheets, type CssRefusal } from "./css.js";
 import type { OpenNamespace, OpenRefusal } from "./open-judge.js";
 import { createOpenRenderer, type OpenRenderer } from "./open-render.js";
+import { inLayer, VIEW_LAYERS } from "./cascade.js";
 
 /* A view's link out, judged and said: fetched with the drawing, so a page that draws no open-kit view loads none of it. */
 export { handedLinks, judgeLink, linkRefusedWords } from "./external-links.js";
@@ -37,17 +38,20 @@ export { handedLinks, judgeLink, linkRefusedWords } from "./external-links.js";
  *
  * LESS MOTION, WHERE A PERSON ASKS FOR IT (2026-10-23). Under `prefers-reduced-motion: reduce` every animation in a
  * view runs once in a millisecond, to where it ends, on no scroll (a scroll-driven one included), and every transition
- * is as short. It is `!important` in a layer of the host's: an important declaration in a layer wins over every
- * unlayered one whatever its specificity, and a view's stylesheet can write no `@layer`.
+ * is as short. It is `!important` in the first of the host's layers (cascade.ts): an important declaration in an earlier layer wins
+ * over every later one's whatever its specificity, and a view's stylesheet can write no `@layer`.
  *
  * ONE THEME FOR EVERY VIEW (Roadmap f-app-wide-view-theme). The app's own stylesheet for its views (`brand.views.css`)
- * is a `<style>` of the host's between the region's rules and the view's own sheet, judged by the same sanitizer, so
- * the view's rule wins wherever both say one and nothing in it reaches further than a view's could. Where the brand
+ * is a `<style>` of the host's, judged by the same sanitizer, so nothing in it reaches further than a view's could;
+ * it is in the last of the host's layers, so its rule wins wherever it and the view's own style the same element
+ * (cascade.ts, Roadmap f-view-authoring-friction-2026-11). Where the brand
  * asks for it (`brand.views.motion: "fade"`), the root fades out when the record it shows changes and in again once
  * the view has drawn the new one — the one transition the host itself makes, held to the reduced-motion rule above.
  */
 export const FADE_MS = 180;
 export const REGION_CSS = `
+${VIEW_LAYERS}
+@layer graview-region {
 :host { display: block; position: relative; contain: layout paint style; isolation: isolate; overflow: clip; min-width: 0; }
 :host(:focus-within) { overflow-clip-margin: var(--graview-ring-reach, 4px); }
 [data-graview-view-root] { display: flow-root; color: var(--graview-ink, CanvasText); font-family: var(--graview-font-body, system-ui, sans-serif); line-height: 1.45; }
@@ -60,6 +64,7 @@ export const REGION_CSS = `
 [data-graview-view-root] a[href]:not([data-graview-link], [href^="#"], [data-file][download])::after { content: " ↗" !important; content: " ↗" / " (opens in a new tab)" !important; }
 [data-graview-view-root][data-graview-motion="fade"] { transition: opacity ${FADE_MS}ms ease; }
 [data-graview-view-root][data-graview-fade] { opacity: 0; }
+}
 @layer graview-motion { @media (prefers-reduced-motion: reduce) { [data-graview-view-root], [data-graview-view-root] *, [data-graview-view-root] ::before, [data-graview-view-root] ::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; animation-timeline: auto !important; transition-duration: 1ms !important; scroll-behavior: auto !important; } } }
 `;
 
@@ -143,7 +148,7 @@ export function createOpenDrawing(shadow: ShadowRoot, options: OpenDrawingOption
   const base = document.createElement("style");
   base.setAttribute("data-graview-region", "");
   base.textContent = REGION_CSS;
-  /* The app's stylesheet for every view, before the view's own: the view's rule wins where both say one. */
+  /* The app's stylesheet for every view, in the layer that wins over the view's own (cascade.ts). */
   const dress = document.createElement("style");
   dress.setAttribute("data-graview-view-theme", "");
   const sheet = document.createElement("style");
@@ -275,7 +280,7 @@ export function createOpenDrawing(shadow: ShadowRoot, options: OpenDrawingOption
       return done;
     },
     theme(given) {
-      dress.textContent = given ? sanitizeStylesheet(given).css : "";
+      dress.textContent = given ? inLayer("graview-theme", sanitizeStylesheet(given).css) : "";
     },
     motion(kind) {
       if (kind === "fade") into.setAttribute("data-graview-motion", "fade");
@@ -301,7 +306,7 @@ export function createOpenDrawing(shadow: ShadowRoot, options: OpenDrawingOption
         if (cssRefused.length > 200) cssRefused.shift();
       }
       css = judged.css;
-      sheet.textContent = css;
+      sheet.textContent = inLayer("graview-view", css);
     },
     renderer,
     get refused() {

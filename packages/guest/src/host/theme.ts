@@ -64,7 +64,7 @@ export interface GuestBrand {
   readonly logo?: string | BrandLogo;
   /**
    * What every worker view inherits (Roadmap f-app-wide-view-theme): the
-   * app's stylesheet, drawn in the view's region before its own, and the
+   * app's stylesheet, drawn in the view's region winning over its own, and the
    * fade between records. Never handed to the view: the host draws them.
    */
   readonly views?: BrandViews;

@@ -490,7 +490,7 @@ function build() {
     ),
     /*
      * ONE THEME FOR EVERY VIEW (Roadmap f-app-wide-view-theme): a stylesheet
-     * every worker view is drawn with before its own, and whether a view
+     * every worker view is drawn with, winning over its own, and whether a view
      * fades when the record it shows changes. The sheet is held to the
      * sanitizer and the length a view's own is by the checker
      * (`brand-views-css`, brand-check.ts), not here: the limit is the
@@ -502,6 +502,8 @@ function build() {
       z.strictObject({
         css: z.optional(str(1)),
         motion: z.optional(z.enum(["none", "fade"])),
+        // The faces it lends its views (Roadmap f-view-authoring-friction-2026-11): each judged by the checker (`brand-views-font`), as the sheet is.
+        fonts: z.optional(z.array(z.strictObject({ family: str(1), src: str(1), weight: z.optional(z.union([z.number(), z.string()])), style: z.optional(z.enum(["normal", "italic"])) }))),
       }),
     ),
   });

@@ -29,7 +29,7 @@ import type { PlaceDescription } from "@graview/core/describe";
 // Static, not fetched: the headless run is itself fetched where a page presses a draft, and a door to the seat's file from there split the page's first chunk.
 import { placesFrom, placesOf, viewPlaceOf } from "@graview/core/seat";
 import { datesPinned } from "@graview/core/revisions";
-import { checkManifest, manifestActs, readsComputed, workerViewProps, type WorkerViewManifest } from "../host/manifest.js";
+import { checkManifest, edgesReadWithoutTheirKindsSaid, manifestActs, readsComputed, workerViewProps, type WorkerViewManifest } from "../host/manifest.js";
 import { PICTURE_STAND_IN, standInPictures } from "../host/pictures.js";
 import { judgeDestination, listsOf, placeVocabulary } from "../host/links.js";
 import { guestPlacesOf, placeNamed } from "../host/links-words.js";
@@ -233,7 +233,7 @@ export interface HeadlessDescribed {
   readonly props: GuestProps;
   /** What it sent: every batch it drew, its stylesheet, the acts it asked for and where it asked to go. */
   readonly transcript: HeadlessTranscript;
-  /** Its stylesheets as a page draws them, judged: the app's own for every view first (`brand.views.css`), then the view's in the order it gave them. What a picture of the drawing is styled with. */
+  /** Its stylesheets as a page draws them, judged: the view's in the order it gave them, and the app's own for every view (`brand.views.css`) in the layer that wins over them (host/cascade.ts). What a picture of the drawing is styled with. */
   readonly css: string;
   /** What the press `options.press` asked for would do, judged as the live host would: the description is of what it drew before it. */
   readonly pressed?: HeadlessPress;
@@ -500,7 +500,7 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
   const title = manifest.title ?? manifest.name;
   /* A day the source pins — `TODAY = "2026-11-01"`, "Tomorrow · Mon 2 Nov" — said against the app's today, so a view frozen on the day it was written is caught (Roadmap f-views-know-today). */
   const pinned = props.today ? datesPinned(source, { today: props.today, title: manifest.attach === "home" ? "Home" : title, ...(props.locale ? { locale: props.locale } : {}) }) : [];
-  const problems = [...handed.left.map((says) => ({ at: "pictures", says })), ...judged.problems, ...narrowing, ...gestureProblems(manifest, transcript), ...pressProblems, ...(presses?.problems ?? []).map((one) => ({ at: `press ${one.control}`, says: one.says })), ...pinned.map(({ at, says }) => ({ at, says }))];
+  const problems = [...edgesReadWithoutTheirKindsSaid(store, manifest).map((says) => ({ at: "reads", says })), ...handed.left.map((says) => ({ at: "pictures", says })), ...judged.problems, ...narrowing, ...gestureProblems(manifest, transcript), ...pressProblems, ...(presses?.problems ?? []).map((one) => ({ at: `press ${one.control}`, says: one.says })), ...pinned.map(({ at, says }) => ({ at, says }))];
   const slug = manifest.title ? slugOf(manifest.title) : manifest.name;
   const kind = manifest.attach === "home" ? null : manifest.attach;
   const description: Omit<PlaceDescription, "text"> = {

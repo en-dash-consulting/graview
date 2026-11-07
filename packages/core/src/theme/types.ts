@@ -85,11 +85,34 @@ export interface BrandViews {
   /**
    * A stylesheet every worker view's region gets before the view's own,
    * held to the same sanitizer and the same 64,000 characters a view's is
-   * (`@graview/core/css`): a view's own rule wins where both say one.
+   * (`@graview/core/css`), in the host's cascade layer after the view's
+   * own: its rule wins wherever both style the same element, and only a
+   * view's `!important` overrides it.
    */
   readonly css?: string;
   /** `"fade"`: a view's drawing fades out and in when the record it shows changes. `"none"` (the default) swaps at once. */
   readonly motion?: "none" | "fade";
+  /**
+   * The faces the app lends its views (Roadmap f-view-authoring-friction-2026-11):
+   * each a family and one file, loaded into the page by the view's host from
+   * where it lets a view's images come from — a file the app holds
+   * (`/graview/assets/<sha256>.woff2`) or an `https:` address on an origin
+   * it lists — and named by a view's stylesheet and `css` as any face is.
+   * Judged by `viewFontProblem` on `@graview/core/css`, at most eight.
+   */
+  readonly fonts?: readonly BrandViewFont[];
+}
+
+/** A face the brand lends its views: its family, the one file it is drawn from, and that file's weight and style. */
+export interface BrandViewFont {
+  /** The name a stylesheet calls it by: letters, digits, spaces and hyphens ("Baloo 2"). */
+  readonly family: string;
+  /** A file the app holds (`/graview/assets/<sha256>.woff2`) or an `https:` address of a WOFF2, WOFF, TTF or OTF file. */
+  readonly src: string;
+  /** Its weight, 1–1000, or a variable face's range, "300 700". 400 by default. */
+  readonly weight?: number | string;
+  /** "italic" for an italic file. "normal" by default. */
+  readonly style?: "normal" | "italic";
 }
 
 export interface Brand {
@@ -135,7 +158,7 @@ export interface Brand {
   readonly scheme?: Scheme | "auto";
   /**
    * ONE THEME FOR EVERY VIEW (Roadmap f-app-wide-view-theme): a stylesheet
-   * every worker view of the app is drawn with before its own, and whether
+   * every worker view of the app is drawn with, winning over its own, and whether
    * a view fades when the record it shows changes. A document's
    * `brand.views`.
    */

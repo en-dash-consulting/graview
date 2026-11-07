@@ -51,7 +51,7 @@ import { computedOf, validateComputed } from "./computed.js";
 import type { TemplatePart } from "./template.js";
 import { parseTemplate, templateBraces, TemplateError } from "./template-parse.js";
 import { validateViews, VIEW_SLOTS } from "./views.js";
-import { brandFindings, emojiIconSentence, groundWords, splashSentence, subtitleSentence, viewsCssSentence, viewsMotionSentence } from "./brand-check.js";
+import { brandFindings, emojiIconSentence, groundWords, splashSentence, subtitleSentence, viewsCssSentence, viewsFontsSentence, viewsMotionSentence } from "./brand-check.js";
 import { darkLogoSentence, logoParts } from "./logo.js";
 import { emojiOf } from "../theme/marks.js";
 import { canonicalize } from "./canonical.js";
@@ -268,7 +268,14 @@ function buildShapes(): Record<EditOp, z.ZodType> {
         // What every worker view inherits (Roadmap f-app-wide-view-theme): a stylesheet drawn before each view's own (its length the sanitizer's to refuse, in `brandFindings`), and a fade between records; null clears either, or all of it.
         views: z
           .union([
-            z.object({ css: z.union([z.string().min(1), z.null()]).optional(), motion: z.union([z.enum(["none", "fade"]), z.null()]).optional() }).strict(),
+            z
+              .object({
+                css: z.union([z.string().min(1), z.null()]).optional(),
+                motion: z.union([z.enum(["none", "fade"]), z.null()]).optional(),
+                // The faces it lends its views, whole (Roadmap f-view-authoring-friction-2026-11); judged by `brandFindings` (brand-views-font) as the stylesheet is.
+                fonts: z.union([z.array(z.object({ family: z.string().min(1), src: z.string().min(1), weight: z.union([z.number(), z.string()]).optional(), style: z.enum(["normal", "italic"]).optional() }).strict()), z.null()]).optional(),
+              })
+              .strict(),
             z.null(),
           ])
           .optional(),
@@ -885,6 +892,7 @@ class Editor {
       const had: Record<string, unknown> = brand["views"] ?? {};
       if (had["css"] !== undefined || had["motion"] === undefined) this.said.push(viewsCssSentence(false));
       if (had["motion"] === "fade") this.said.push(viewsMotionSentence(undefined));
+      if (Array.isArray(had["fonts"]) && had["fonts"].length > 0) this.said.push(viewsFontsSentence(undefined));
       delete brand["views"];
     } else if (isObject(e.views)) {
       const into: Record<string, unknown> = { ...(brand["views"] ?? {}) };
@@ -897,6 +905,12 @@ class Editor {
         if (e.views["motion"] === "fade") into["motion"] = "fade";
         else delete into["motion"];
         this.said.push(viewsMotionSentence(e.views["motion"] === "fade" ? "fade" : undefined));
+      }
+      if (e.views["fonts"] !== undefined) {
+        const fonts = e.views["fonts"] as readonly { readonly family: string }[] | null;
+        if (fonts === null || fonts.length === 0) delete into["fonts"];
+        else into["fonts"] = fonts;
+        this.said.push(viewsFontsSentence(fonts ?? undefined));
       }
       if (Object.keys(into).length === 0) delete brand["views"];
       else brand["views"] = into;

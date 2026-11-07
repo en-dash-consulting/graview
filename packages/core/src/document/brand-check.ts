@@ -9,6 +9,7 @@ import { SPLASH_SHADERS, SPLASH_STYLES, type BrandSpec } from "./schema.js";
 import { logoParts } from "./logo.js";
 import { OPEN_MAX_STYLESHEET } from "../css/tables.js";
 import { sanitizeStylesheet, type CssRefusal } from "../css/sanitize.js";
+import { VIEW_FONTS_MOST, viewFontProblem } from "../css/fonts.js";
 
 /*
  * WHAT A DOCUMENT'S BRAND MAY HOLD (FR-124, FR-126), judged where a host
@@ -62,7 +63,14 @@ export const EMOJI_FIX = 'say { "favicon": { "emoji": "🏡" } } with one standa
 
 /** Whether every view is drawn with the app's own stylesheet first (Roadmap f-app-wide-view-theme), said the same by an edit and by the preview of a change. */
 export function viewsCssSentence(given: boolean): string {
-  return given ? "Every view is drawn with the app's own stylesheet before its own." : "Every view is drawn with its own stylesheet alone.";
+  return given ? "Every view is drawn with the app's own stylesheet, whose rules win over its own." : "Every view is drawn with its own stylesheet alone.";
+}
+/** The faces the app lends its views (Roadmap f-view-authoring-friction-2026-11), said the same by an edit and by the preview of a change. */
+export function viewsFontsSentence(fonts: readonly { readonly family: string }[] | undefined): string {
+  const families = [...new Set((fonts ?? []).map((one) => one.family))];
+  if (families.length === 0) return "Views are drawn in the app's faces alone, and lend them none of their own.";
+  const said = families.length === 1 ? families[0]! : `${families.slice(0, -1).join(", ")} and ${families[families.length - 1]}`;
+  return `Views may draw in ${said}.`;
 }
 /** Whether a view fades between records, said the same by an edit and by the preview of a change. */
 export function viewsMotionSentence(motion: "none" | "fade" | undefined): string {
@@ -95,7 +103,9 @@ export function cssRefusalsSaid(refused: readonly CssRefusal[]): string {
   const shown = said.slice(0, 4);
   return said.length > shown.length ? `${shown.join(", ")} and ${said.length - shown.length} more` : shown.join(", ");
 }
-export const VIEWS_CSS_FIX = "a view's stylesheet loads nothing and stays in its own tree: no url() but url(#id) on a paint, no @import or @font-face, no :host; the app's own tokens (var(--graview-accent), --graview-panel, --graview-font-display, …) are there to draw with";
+export const VIEWS_CSS_FIX = "a view's stylesheet loads nothing and stays in its own tree: no url() but url(#id) on a paint, no @import or @font-face (a face for every view is brand.views.fonts), no :host; the app's own tokens (var(--graview-accent), --graview-panel, --graview-font-display, …) are there to draw with";
+
+export const VIEWS_FONT_FIX = 'say { "family": "Baloo 2", "src": "/graview/assets/<sha256>.woff2" } with a font file the app holds by its content address, or an https: address the host lists for a view\'s images; a view\'s own stylesheet then names it as font-family: "Baloo 2"';
 
 export function brandFindings(brand: Partial<BrandSpec> | undefined, options: BrandCheckOptions = {}): Finding[] {
   const out: Finding[] = [];
@@ -147,6 +157,19 @@ export function brandFindings(brand: Partial<BrandSpec> | undefined, options: Br
     const judged = sanitizeStylesheet(brand.views.css);
     if (judged.refused.some((one) => one.reason === "size")) out.push(error("brand-views-css", `${at}.views.css`, `the stylesheet every view gets is longer than the ${OPEN_MAX_STYLESHEET.toLocaleString("en-US")} characters a stylesheet may be, so no view is drawn with it`, "keep to what every view shares, and leave a view's own rules to the view"));
     else if (judged.refused.length > 0) out.push(warning("brand-views-css", `${at}.views.css`, `the stylesheet every view gets has CSS the open kit leaves out (${cssRefusalsSaid(judged.refused)}), so every view is drawn without ${judged.refused.length === 1 ? "it" : "those parts"}`, VIEWS_CSS_FIX));
+  }
+  /*
+   * THE FACES IT LENDS ITS VIEWS (Roadmap f-view-authoring-friction-2026-11),
+   * held to the rule the view's host loads them by (`viewFontProblem`): a
+   * face refused here is never loaded there.
+   */
+  const fonts = brand.views?.fonts;
+  if (Array.isArray(fonts)) {
+    if (fonts.length > VIEW_FONTS_MOST) out.push(error("brand-views-font", `${at}.views.fonts`, `the brand lends its views ${fonts.length} faces, and at most ${VIEW_FONTS_MOST} are loaded`, "keep the faces the views draw in, one file a weight and style"));
+    fonts.forEach((font, index) => {
+      const problem = viewFontProblem(font);
+      if (problem) out.push(error("brand-views-font", `${at}.views.fonts.${index}`, `the face lent to the views cannot be loaded, because ${problem}`, VIEWS_FONT_FIX));
+    });
   }
   // A zone its times could not be said on (Roadmap f-app-time-zone), refused by name.
   const unzoned = typeof brand.timeZone === "string" ? timeZoneProblem(brand.timeZone) : undefined;

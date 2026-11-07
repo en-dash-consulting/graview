@@ -129,6 +129,19 @@ const isControl = (element: TreeElement) =>
   isKeyControl(element) ||
   ["link", "menuitem", "menuitemcheckbox", "menuitemradio", "option"].includes(element.getAttribute("role") ?? "") ||
   (element.localName === "a" && !element.hasAttribute("href") && !element.hasAttribute("data-record") && !element.hasAttribute("data-place") && !element.hasAttribute("data-file"));
+/**
+ * A CONTROL ALREADY IN ITS STATE (Roadmap f-view-authoring-friction-2026-11):
+ * an "All" chip pressed while nothing is filtered, the tab that is open, the
+ * page a pager is on. Pressed, it rightly leaves the view as it is — so it is
+ * no control that does nothing, where it says that state to a person as
+ * well as to the eye: `aria-pressed="true"`, `aria-current`, `aria-selected`
+ * or `aria-checked="true"`. The attribute it says it by, or nothing.
+ */
+const stateShown = (element: TreeElement): string | undefined => {
+  for (const name of ["aria-pressed", "aria-selected", "aria-checked"]) if (element.getAttribute(name) === "true") return `${name}="true"`;
+  const current = element.getAttribute("aria-current");
+  return current !== null && current !== "false" ? `aria-current="${current}"` : undefined;
+};
 /** What the host presses of itself, which the check leaves to the host: a disclosure, a lightbox, a drop, a placed video. */
 const hostOwn = (element: TreeElement) => element.localName === "summary" || element.hasAttribute("data-lightbox") || element.hasAttribute("data-drop") || element.localName === "graview-video";
 
@@ -297,7 +310,9 @@ export async function checkPresses<S extends AnySchema>(context: PressCheckConte
       const judgedTo = judgeDestination(one as Destination, { sees: (to) => context.shown.has(to), places: context.places, lists: context.lists, schema: store.schema });
       if (!judgedTo.ok) wrong.push(`it asks to go nowhere: ${judgedTo.says}`);
     }
+    const state = asked.length === 0 && went.length === 0 && !redrew ? stateShown(element) : undefined;
     if (wrong.length > 0) found(element, "code", false, `${nameOf(element)}, pressed: ${wrong.join("; ")}`);
+    else if (state) found(element, "code", true, `${nameOf(element)} is already in the state it shows (${state}): pressed, it leaves the view as it is.`);
     else if (asked.length === 0 && went.length === 0 && !redrew) found(element, "code", false, `${nameOf(element)} does nothing when pressed: the view hears the click, and asks for no act, goes nowhere and draws nothing new.`);
     else found(element, "code", true, `${nameOf(element)}, pressed, ${[...(asked.length > 0 ? [`asks for ${asked.map((one) => `“${one.name}”`).join(", ")}`] : []), ...(went.length > 0 ? ["goes where it says"] : []), ...(redrew ? ["draws again"] : [])].join(" and ")}.`);
   }

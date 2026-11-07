@@ -23,6 +23,11 @@
  *     jump says (`aria-current`).
  *   · And on the pages face, a titled view that says `heading: "own"` has
  *     nothing drawn above it: no title to see, no count, no list link.
+ *   · A view's controls already in their state — an "All" chip pressed
+ *     while nothing is filtered, the open tab — pass the press check run in
+ *     the page's own worker, and one that shows no state and changes
+ *     nothing still fails; and a view's cards laid in CSS columns are kept
+ *     whole in one (Roadmap f-view-authoring-friction-2026-11).
  */
 import { createServer } from "node:http";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -48,6 +53,30 @@ const draw = () => graview.render(graview.html\`<div class="agenda">
   \${[1, 2, 3, 4, 5].map((n) => graview.html\`<section id="s\${n}" data-key="s\${n}" aria-labelledby="h\${n}"><h2 id="h\${n}">Part \${n}</h2><p>What happens in part \${n}.</p></section>\`)}
 </div>\`);
 graview.onProps(draw);
+`;
+
+/* Chips already in their state (Roadmap f-view-authoring-friction-2026-11): "All" pressed while nothing is filtered leaves the view as it is. */
+const CHIPS = `
+let filter = "all";
+const draw = () => graview.render(graview.html\`<div role="group" aria-label="Show">
+  <button id="all" aria-pressed="\${filter === "all" ? "true" : "false"}">All</button>
+  <button id="igneous" aria-pressed="\${filter === "igneous" ? "true" : "false"}">Igneous</button>
+</div>
+<button id="shuffle">Shuffle</button>\`);
+graview.onProps(() => draw());
+graview.on("click", "#all", () => { filter = "all"; draw(); });
+graview.on("click", "#igneous", () => { filter = "igneous"; draw(); });
+graview.on("click", "#shuffle", () => draw());
+`;
+
+/* Cards in CSS columns, each kept whole in one (Roadmap f-view-authoring-friction-2026-11). */
+const COLUMNS = `
+graview.style(\`
+.shelf { columns: 3; column-gap: 16px; column-rule: 1px solid var(--graview-edge); }
+.card { break-inside: avoid; margin: 0 0 12px; padding: 8px; border: 1px solid var(--graview-edge); }
+.shelf h2 { column-span: all; break-after: avoid; }
+\`);
+graview.onProps(() => graview.render(graview.html\`<div class="shelf"><h2>Specimens</h2>\${["Granite", "Gneiss", "Basalt", "Obsidian", "Chalk", "Slate"].map((name) => graview.html\`<article class="card" data-key="\${name}"><h3>\${name}</h3><p>A rock a child can hold.</p></article>\`)}</div>\`));
 `;
 
 export async function pressesSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, viewScript }) {
@@ -113,14 +142,19 @@ graview.on("acted", "button", (event) => { said = event.pressed.ok ? "Saved" : "
 const draw = () => graview.render(graview.html\`<fieldset data-record="\${graview.props.node.id}"><input name="fixedFee"><button id="go" data-act="set-economics">Save economics</button><p id="said" data-key="said">\${said}</p></fieldset>\`);
 graview.onProps(draw);`,
     agenda: AGENDA,
+    chips: CHIPS,
+    columns: COLUMNS,
   };
-  const records = { economics: "placement:omar", contract: "placement:rhea", zero: "placement:omar", refused: "placement:omar", owned: "placement:omar", agenda: "placement:rhea" };
+  const records = { economics: "placement:omar", contract: "placement:rhea", zero: "placement:omar", refused: "placement:omar", owned: "placement:omar", agenda: "placement:rhea", chips: "placement:rhea", columns: "placement:rhea" };
   const scripts = Object.fromEntries(await Promise.all(Object.entries(codes).map(async ([name, code]) => [name, await viewScript(code)])));
   await build({
     stdin: {
       contents: `
 import { Store } from "@graview/core";
 import { mountWorkerView } from "@graview/guest/host/worker";
+import { runWorkerViewHeadless } from "@graview/guest/headless";
+import { checkPresses } from "@graview/guest/headless/presses";
+import { browserIsolate } from ${JSON.stringify(resolve(repoRoot, "packages/guest/src/headless/browser.ts"))};
 import { ECONOMICS_MANIFEST, kit, placementApp, placementSeed } from ${JSON.stringify(fixture)};
 const store = new Store({ schema: placementApp.schema, mutations: placementApp.mutations, policy: placementApp.policy, snapshot: structuredClone(placementSeed) });
 const records = ${JSON.stringify(records)};
@@ -137,7 +171,14 @@ window.__host = {
   problems,
   log: () => store.log.all().map((op) => ({ author: op.author.id, via: op.via, intent: op.intent })),
   node: (id) => ({ ...store.graph.getNode(id) }),
+  /* The press check, run in this page's own worker as Better UI's is: what each control did. */
+  pressCheck: async (source) => {
+    const checked = new Store({ schema: placementApp.schema, mutations: placementApp.mutations, policy: placementApp.policy, snapshot: structuredClone(placementSeed) });
+    const result = await runWorkerViewHeadless({ manifest: ECONOMICS_MANIFEST, source, store: checked, principal: kit, run: browserIsolate(), input: { node: { id: "placement:rhea" } }, presses: checkPresses });
+    return result.ok ? { ok: result.presses.ok, controls: result.presses.controls.map((one) => [one.control, one.ok, one.says]) } : { failed: result.reason, detail: result.detail };
+  },
 };
+window.__sources = ${JSON.stringify({ chips: CHIPS })};
 `,
       resolveDir: repoRoot,
       loader: "js",
@@ -223,7 +264,40 @@ window.__handle.drawn().then(() => { window.__ready = true; });
     tab.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
     await tab.goto(`${HOST}/views/`, { waitUntil: "load" });
     const inView = (name, selector) => tab.locator(`#${name} [data-worker-view]`).locator(selector);
-    for (const name of Object.keys(codes)) await inView(name, name === "agenda" ? "#s5" : name === "contract" ? "#view-contract" : "button").first().waitFor({ timeout: 20_000 });
+    for (const name of Object.keys(codes)) await inView(name, name === "agenda" ? "#s5" : name === "contract" ? "#view-contract" : name === "columns" ? ".card" : "button").first().waitFor({ timeout: 20_000 });
+
+    // Controls already in their state, pressed by the check in this page's own worker (Roadmap f-view-authoring-friction-2026-11).
+    const chips = await tab.evaluate(() => window.__host.pressCheck(window.__sources.chips));
+    const chip = (name) => chips.controls?.find(([control]) => control === name);
+    claim(
+      "the press check, run in the page's own worker, passes an “All” chip pressed while nothing is filtered: it is already in the state it shows (aria-pressed=\"true\")",
+      chip("“All”")?.[1] === true && /already in the state it shows \(aria-pressed="true"\)/.test(chip("“All”")?.[2] ?? "") && chip("“Igneous”")?.[1] === true,
+      chips,
+    );
+    claim("and still fails a control that shows no state and changes nothing when pressed: “Shuffle” does nothing", chips.ok === false && chip("“Shuffle”")?.[1] === false && /does nothing when pressed/.test(chip("“Shuffle”")?.[2] ?? ""), chips);
+    await inView("chips", "#all").click();
+    await tab.waitForTimeout(300);
+    claim("pressed on the page, “All” leaves the view as it is and nothing is said of it", (await tab.evaluate(() => window.__host.problems.filter(([name]) => name === "chips").length)) === 0 && (await inView("chips", "#all").getAttribute("aria-pressed")) === "true");
+
+    // Cards in CSS columns (Roadmap f-view-authoring-friction-2026-11).
+    const columns = await tab.evaluate(() => {
+      const root = document.querySelector("#columns [data-worker-view]").shadowRoot;
+      const shelf = root.querySelector(".shelf");
+      const cards = [...root.querySelectorAll(".card")];
+      const lefts = [...new Set(cards.map((card) => Math.round(card.getBoundingClientRect().left)))];
+      return {
+        sheet: root.querySelector("style[data-graview-view-style]").textContent,
+        columnCount: getComputedStyle(shelf).columnCount,
+        breakInside: getComputedStyle(cards[0]).breakInside,
+        columns: lefts.length,
+        whole: cards.every((card) => card.getClientRects().length === 1),
+      };
+    });
+    claim(
+      "a view's cards laid in CSS columns are drawn in three columns, each card kept whole in one: columns, column-gap, column-rule, column-span and break-inside are the open kit's",
+      columns.columnCount === "3" && columns.breakInside === "avoid" && columns.columns === 3 && columns.whole && /break-inside: avoid/.test(columns.sheet) && /column-span: all/.test(columns.sheet),
+      { ...columns, sheet: columns.sheet.slice(0, 300) },
+    );
 
     // A blank number left out, the press landing.
     await tab.waitForFunction(() => document.querySelector("#economics [data-worker-view]")?.shadowRoot?.querySelector('input[name="fixedFee"]')?.value === "4000", null, { timeout: 10_000 });

@@ -25,5 +25,7 @@ export {
   CSS_REFUSED_SELECTORS,
   OPEN_MAX_STYLESHEET,
 } from "./css/tables.js";
+export { VIEW_FONTS_MOST, viewFontProblem, viewFontSource } from "./css/fonts.js";
+export type { ViewFont } from "./css/fonts.js";
 export { sanitizeDeclarations, sanitizeStylesheet, sanitizeStylesheets, sanitizeValue, serializeIdent, serializeString, serializeValues, tokenize } from "./css/sanitize.js";
 export type { ComponentValue, CssRefusal, CssRefusalReason, Declaration, Rule, SanitizedCss, Token } from "./css/sanitize.js";

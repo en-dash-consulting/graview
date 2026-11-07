@@ -4,6 +4,7 @@ import { CSS_DRAWN_AS, sanitizeStylesheet } from "@graview/core/css";
 import { afterEach, describe, expect, it } from "vitest";
 import { runWorkerViewHeadless } from "../../src/headless/index.js";
 import { nodeIsolate } from "../../src/headless/node.js";
+import { dressedCss, inLayer } from "../../src/host/cascade.js";
 import { createOpenDrawing, FADE_MS, REGION_CSS } from "../../src/host/open-draw.js";
 import { mountWorkerView, type MountWorkerViewOptions } from "../../src/host/view.js";
 import { HTML_DRAWN_AS } from "../../src/open-kit.js";
@@ -14,9 +15,9 @@ import { GUEST_PROTOCOL, type HostHello } from "../../src/protocol.js";
  * Each custom view carried its own copy of the stylesheet, so a polished
  * home and the record pages drifted apart. The brand now names what every
  * worker view inherits (`Brand.views`): a stylesheet the host draws in the
- * view's region before the view's own — through the one sanitizer, so the
- * view's rule wins where both say one and nothing in it reaches further
- * than a view's could — and `motion: "fade"`, under which the host fades
+ * view's region — through the one sanitizer, so nothing in it reaches
+ * further than a view's could, and in the host's layer that wins over the
+ * view's own (host/cascade.ts) — and `motion: "fade"`, under which the host fades
  * the drawing out when the record it shows changes and in once the view
  * has drawn the new one. The view is never told; the host dresses it, and
  * dresses it again when the brand changes. A headless run draws the same
@@ -43,7 +44,7 @@ const cardOf = (label: string) => [[0, "~", element("div", { class: "card" }, [e
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 describe("the drawing's theme", () => {
-  it("is a stylesheet of the host's between the region's rules and the view's own, judged as the view's is, so the view's rule wins where both say one and nothing that fetches is drawn", () => {
+  it("is a stylesheet of the host's beside the region's rules and the view's own, judged as the view's is, in the layer after the view's so nothing that fetches is drawn and its rule wins where both say one", () => {
     const shadow = document.body.appendChild(document.createElement("div")).attachShadow({ mode: "open" });
     const drawing = createOpenDrawing(shadow, { origin: "https://app.example", send: () => {} });
     drawing.theme(LEAKY);
@@ -51,10 +52,10 @@ describe("the drawing's theme", () => {
     const sheets = [...shadow.querySelectorAll("style")].map((one) => [one.getAttributeNames().find((name) => name.startsWith("data-graview"))!, one.textContent!] as const);
     expect(sheets.map(([name]) => name)).toEqual(["data-graview-region", "data-graview-view-theme", "data-graview-view-style"]);
     const themed = sheets[1]![1];
-    expect(themed).toBe(sanitizeStylesheet(LEAKY).css);
+    expect(themed).toBe(inLayer("graview-theme", sanitizeStylesheet(LEAKY).css));
     expect(themed).toContain("padding: 12px");
     expect(themed).not.toContain("attacker.example");
-    expect(sheets[2]![1]).toContain("padding: 20px");
+    expect(sheets[2]![1]).toBe(inLayer("graview-view", sanitizeStylesheet(OWN).css));
     /* The view's refusals are its own: the theme's were the checker's to say. */
     expect(drawing.refused).toEqual([]);
     drawing.theme(undefined);
@@ -163,10 +164,10 @@ async function onThePage(brand: { current: MountWorkerViewOptions<AnySchema>["br
 }
 
 describe("a worker view on a page", () => {
-  it("is dressed in the brand's stylesheet for every view before its own, and undressed when the brand loses it", async () => {
+  it("is dressed in the brand's stylesheet for every view, and undressed when the brand loses it", async () => {
     const brand = { current: () => ({ name: "Showroom", views: { css: THEME } }) as ReturnType<NonNullable<MountWorkerViewOptions<AnySchema>["brand"]>> };
     const { view, theme, root } = await onThePage(brand, { current: "car:golf" });
-    expect(theme()).toBe(sanitizeStylesheet(THEME).css);
+    expect(theme()).toBe(inLayer("graview-theme", sanitizeStylesheet(THEME).css));
     expect(root().hasAttribute("data-graview-motion")).toBe(false);
     brand.current = () => ({ name: "Showroom" });
     view.update();
@@ -197,11 +198,11 @@ describe("a worker view on a page", () => {
 });
 
 describe("a headless run", () => {
-  it("draws the brand's stylesheet for every view before the view's own in its css, so a picture of the view is dressed as the page dresses it", async () => {
+  it("draws the brand's stylesheet for every view in the layer after the view's own in its css, so a picture of the view is dressed as the page dresses it", async () => {
     const source = `graview.style(${JSON.stringify(OWN)}); graview.onProps((props) => graview.render(graview.html\`<div class="card"><h2>\${props.node.label}</h2></div>\`));`;
     const dressed = await runWorkerViewHeadless({ store: store(), principal: reader, manifest, input: { node: { id: "car:golf" } }, source, run: nodeIsolate(), brand: { views: { css: LEAKY, motion: "fade" } } });
     if (!dressed.ok) throw new Error(dressed.detail);
-    expect(dressed.css).toBe(`${sanitizeStylesheet(LEAKY).css}\n${sanitizeStylesheet(OWN).css}`);
+    expect(dressed.css).toBe(dressedCss(sanitizeStylesheet(LEAKY).css, sanitizeStylesheet(OWN).css));
     expect(dressed.css).not.toContain("attacker.example");
     /* The theme's refusals are the checker's (brand-views-css), never this view's problems. */
     expect(dressed.description.problems).toEqual([]);
