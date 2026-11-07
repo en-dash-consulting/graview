@@ -49,6 +49,11 @@ the project's `pnpm typecheck` covers the embed from day one.
 4. **Let the host decide the look.** `scheme: "auto"` follows the host's
    `data-theme` stamp; `setScheme` follows a host toggle; `fonts: false`
    when the host already loads them; `brand` / `setBrand` to dress it.
+   Where the host keeps a person's Appearance, `schemeChoice: { value:
+   "system" | "light" | "dark", onChoose }` draws the three in the app
+   menu, the host's value pressed. A press only calls `onChoose`: keep the
+   choice, stamp `data-theme`, then `handle.setSchemeChoice({ value,
+   onChoose })` moves the press (`undefined` takes it off).
 5. **Make the policy felt, if the page is about it.** `seats` lists the
    principals a reader may take — each a label and a `Principal` — in the
    person's menu; the acts and the pages narrow the moment one sits down,
