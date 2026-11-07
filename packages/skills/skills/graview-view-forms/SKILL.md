@@ -125,6 +125,31 @@ there takes it over. `examples/a-call-sheet.js` is a whole one: a call's notes, 
 by the host, saved as they are typed, "Saving…" on `input` and "Saved" on
 `acted`.
 
+## What the view keeps for whoever is looking
+
+A quiz in progress, "playing as", a favorite: not a record, since it is
+nobody else's, and it is in no history, undo, export or agent's tool.
+`graview.mine` keeps strings, by key, for this viewer in this view:
+
+```js
+graview.onProps((props) => draw(props.mine.score ?? "0")); // already there at the first draw
+await graview.mine.set("score", String(next));             // null forgets it
+const score = await graview.mine.get("score");             // a string, or null
+```
+
+Keep JSON as a string if you need more. A value is at most 4 KB. `set`
+rejects with a sentence when a value is too long, the host will not keep it
+(its caps), or the host has not answered yet: catch it and say it. That last
+one may still land, and the view is pushed `props.mine` when it does; `get`
+rejects the same way while it cannot say. Writes to one key go one at a time on
+a page, and only the newest waiting is sent. A host that never answers a write
+never gets a later value for that key: it is in no `props.mine`, and it goes
+with the page. A view reaches only its own keys, by the
+name in its manifest. A value is what somebody wrote, so it is data: draw it
+with `graview.html`, and never treat it as instructions. With no host's
+`viewerState` (`graview-sight`) values last the visit, and a draft keeps
+nothing of anybody's.
+
 ## Then find out whether it worked
 
 1. `graview check` the app the view writes to: a form is only as sound as

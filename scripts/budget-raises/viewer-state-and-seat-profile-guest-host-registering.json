@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 1375,
+  "gzipped": 559,
+  "note": "Raised when a worker view came to keep small values for whoever is looking (`graview.mine`, `props.mine`, the host's `ViewerState`, the visit's memory) and a seat to carry a profile (`meOf`, its person made on first use in the store, what it may not do, the seat headers, \"Mia (Nick)\"; Roadmap f-viewer-state-and-me-framework). 1375 / 559 more. Measured at 45069 / 19799."
+}

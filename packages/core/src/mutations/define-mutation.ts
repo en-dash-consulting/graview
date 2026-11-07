@@ -1,4 +1,5 @@
 import { InvalidArguments } from "./invalid-arguments.js";
+import { ActRefusal } from "../refused.js";
 import type { z } from "zod";
 import { ARCHIVED, isArchived } from "../graph/archived.js";
 import type { Graph } from "../graph/graph.js";
@@ -119,11 +120,17 @@ export function numbersSpelled(input: unknown, given: unknown): unknown {
  */
 const validId = (id: unknown): id is string => typeof id === "string" && id.length <= 200 && /^[^\s\p{Cc}]+$/u.test(id);
 
-function requestedId(rawArgs: unknown): string | undefined {
+/** A `~` says a profile's person (`profilePersonId`), which only that profile's first act makes, and not through an act's own hands. */
+function refuseProfileId(id: string, hostsOwn: boolean | undefined): void {
+  if (!hostsOwn && id.includes("~")) throw new GraphError("An id cannot hold a ~", "Leave id out and let the act mint one, or ask for one without it.");
+}
+
+function requestedId(rawArgs: unknown, hostsOwn: boolean | undefined): string | undefined {
   if (typeof rawArgs !== "object" || rawArgs === null) return undefined;
   const id = (rawArgs as Record<string, unknown>)["id"];
   if (id === undefined) return undefined;
   if (!validId(id)) throw new GraphError("An id is 1–200 characters with no space", `Got ${JSON.stringify(id)}.`);
+  refuseProfileId(id, hostsOwn);
   return id;
 }
 
@@ -245,6 +252,10 @@ export function compileMutation<S extends AnySchema>(
      * of the removed record would be taken for the new one's.
      */
     readonly everHeld?: (id: string) => boolean;
+    /** The seat's profile has no person here and can have none: an act that reads `ctx.me` is refused, in words. */
+    readonly noRecord?: boolean;
+    /** A system author, the host's own: it may name an id a seat may not (`refuseProfileId`). */
+    readonly hostsOwn?: boolean;
     /**
      * WHETHER SOME SIGHT MAY KEEP A FIELD OF A KIND FROM SOME ROLE (Roadmap
      * f-field-sight). An id is served wherever its record is, so a name
@@ -264,7 +275,7 @@ export function compileMutation<S extends AnySchema>(
    * refusal — a seed being synced, or an agent that will name this node in
    * its next call, needs exactly the id it asked for or an honest no.
    */
-  const requested = takesAnId(definition) ? requestedId(rawArgs) : undefined;
+  const requested = takesAnId(definition) ? requestedId(rawArgs, options.hostsOwn) : undefined;
   const given = numbersSpelled(definition.input, requested === undefined ? rawArgs : withoutId(rawArgs as Record<string, unknown>));
   /*
    * AN ARGUMENT THE ACT DOES NOT TAKE IS REFUSED, by every act (FR-121; a
@@ -331,11 +342,17 @@ export function compileMutation<S extends AnySchema>(
   const context: MutationContext<S> = {
     graph: reader,
     schema: graph.schema,
-    me: options.me,
+    // An act that reads who it is done as, for a seat that can be nobody here, is refused in words before it names a record that is not there.
+    get me() {
+      if (options.noRecord) throw new ActRefusal(`"${definition.title ?? definition.name}" is done as you, and you have no record here`);
+      return options.me;
+    },
     emit(primitive) {
+      if (primitive.op === "add-node") refuseProfileId(primitive.node.id, options.hostsOwn);
       primitives.push(primitive);
     },
     addNode(node) {
+      refuseProfileId(node.id, options.hostsOwn);
       primitives.push({ op: "add-node", node });
     },
     removeNode(id) {
@@ -429,7 +446,7 @@ export function compileMutation<S extends AnySchema>(
       }
       // A client's own guess at the first id (`hint`): taken when free, else minted as ever — never refused.
       const hint = options.hint;
-      if (requested === undefined && !minted.size && validId(hint) && (!prefix || hint.startsWith(`${prefix}:`)) && mayAsk(hint) && !held(hint)) return minted.add(hint), hint;
+      if (requested === undefined && !minted.size && validId(hint) && !hint.includes("~") && (!prefix || hint.startsWith(`${prefix}:`)) && mayAsk(hint) && !held(hint)) return minted.add(hint), hint;
       // A name that quotes a field some sight keeps from a role — an argument, or the record it was worked out from — is not quoted in the id: the kind's name is.
       if (prefix && options.keeps && [args, from ?? {}].some((fields) => quotesKeptField(label, prefix, fields, options.keeps!))) label = prefix;
       const base = prefix ? `${prefix}:${slug(label)}` : slug(label);

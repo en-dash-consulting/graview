@@ -1,6 +1,7 @@
 import { choiceWords, InvalidArguments, isoToday, localeFor, PermissionDeniedError, timeZoneFor, type AnySchema, type Principal, type Store } from "@graview/core";
 import type { GuestPictureLimits } from "./pictures.js";
 import type { Arrival, Destination } from "./links.js";
+import type { Mine } from "./mine.js";
 /* The links' judging — a filter held to the kind's fields — fetched with the first navigate, so a frame's host carries none of it before. */
 const linksChunk = () => import("./links.js");
 import type { GuestAct, GuestAnswer, GuestEdge, GuestNode, GuestPlace, GuestProps, GuestRefusal, GuestTheme, HostMessage } from "../protocol.js";
@@ -158,6 +159,8 @@ export interface GuestHostOptions<S extends AnySchema> {
    * Its answer names the act to apply and the arguments, or a refusal.
    */
   readonly judgeAct?: (name: string, args: Readonly<Record<string, unknown>>) => { readonly ok: true; readonly name: string; readonly args: Record<string, unknown> } | { readonly ok: false; readonly reason: GuestRefusal; readonly message: string };
+  /** What a worker view keeps for its viewer (`graview.mine`, mine.ts). Without it, a `mine` is dropped unread. */
+  readonly mine?: Pick<Mine, "get" | "set">;
 }
 
 /** How much one frame may still ask: each call spends one, and says whether there was one to spend. */
@@ -431,6 +434,16 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
       if (data.type === "navigate" && typeof data.to === "string") {
         if (seen().graph.has(data.to)) options.onNavigate?.(data.to);
         else stats.dropped += 1;
+        return;
+      }
+      if (data.type === "mine" && (typeof data.id === "string" || typeof data.id === "number") && options.mine) {
+        const id = data.id;
+        const told = (answer: { readonly ok: boolean; readonly value?: string | null; readonly sentence?: string }) => {
+          if (!disposed) options.send({ type: "mine-answer", id, ...answer });
+        };
+        if (data.op === "set") void options.mine.set(data.key, data.value).then(told);
+        else if (typeof data.key === "string") void options.mine.get(data.key).then(told);
+        else told({ ok: true, value: null });
         return;
       }
       if (data.type === "render" && Array.isArray(data.records) && options.onRender) {

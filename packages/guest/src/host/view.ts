@@ -1,7 +1,8 @@
 import { imageRefusedWords } from "./open-judge.js";
 import { keepClicked } from "./clicked.js";
 import { guestPlacesOf } from "./links-words.js";
-import type { AnySchema, FileValue, HostFiles, PagesArrangement, Principal, Store } from "@graview/core";
+import { actingAs, meOf, type AnySchema, type FileValue, type HostFiles, type PagesArrangement, type Principal, type Store, type ViewerState } from "@graview/core";
+import { createMine, keptForTheVisit, visitOf } from "./mine.js";
 import { storedFilesOf } from "./marks.js";
 import { retryingImport } from "@graview/core/retry";
 import type { GuestDomEvent, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
@@ -254,6 +255,14 @@ export interface MountWorkerViewOptions<S extends AnySchema> {
    */
   readonly files?: () => HostFiles | undefined;
   /**
+   * WHERE WHAT THE VIEW KEEPS FOR ITS VIEWER GOES (`graview.mine`): the
+   * host's, by the view's name. Without it, for the visit, in this page's
+   * memory.
+   */
+  readonly viewerState?: () => ViewerState | undefined;
+  /** Code proposed and not kept (FR-187): what it keeps lasts this drawing, whatever a host keeps and whatever this visit has kept. */
+  readonly draft?: boolean;
+  /**
    * THE VIEW'S CONTENT HEIGHT (Roadmap f-view-content-height): how tall
    * what it drew is, in CSS pixels, each time that changes — measured by
    * the host on the drawn root, never said by the view — and `undefined`
@@ -404,6 +413,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   let timing = 0;
   /* What the person typed into a field saved as it is typed and not yet saved (FR-191, press.ts): saved as the view goes. */
   let flushSaves = () => {};
+  /* This drawing has gone: what it asked the host to keep still lands. */
+  let letGoOfMine = () => {};
   /* A jump, what is in sight and a record's file (sections.ts); why a press was refused, beside it (refused-note.ts). */
   let sections: GuestSections | undefined;
   let sectionsAsked: Promise<GuestSections | undefined> | undefined;
@@ -413,6 +424,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   const stop = () => {
     flushSaves();
     flushSaves = () => {};
+    letGoOfMine();
     sections?.dispose();
     tally();
     session?.dispose();
@@ -973,6 +985,26 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   // The drawing did not arrive (the network away as it was drawn): the plain face says so, and it is asked for again as the view is drawn again (FR-139).
   () => fail("start", "the view's drawing could not be loaded"));
 
+  /*
+   * WHAT IT KEEPS FOR ITS VIEWER (`graview.mine`), read as the worker starts,
+   * so its first draw has it. By its registered name, the host's to say; a
+   * problem says no value. Never the graph's.
+   */
+  const hostState = options.draft ? undefined : options.viewerState?.();
+  /* A seat whose id reads as a person's has no `meOf`, and is still nobody else: it never falls to the key of a seat with no id. */
+  const viewer = meOf(options.principal) ?? actingAs(options.principal).id ?? options.principal.visitorKey ?? "";
+  const mine = createMine({
+    view: manifest.name,
+    viewer,
+    /* A draft's is its own, for as long as it is drawn: nothing the view it would replace keeps is its to read or write. */
+    state: hostState ?? (options.draft ? keptForTheVisit() : visitOf(options.store, viewer)),
+    onRefused: (sentence) => {
+      options.onProblem?.(sentence);
+      if (session) port?.postMessage({ type: "notice", text: sentence });
+    },
+    onLate: () => session?.push(),
+  });
+  letGoOfMine = () => mine.dispose();
   const begin = (source: GuestWorkerSource) => (started = startWorker(window, {
     source,
     name: manifest.name,
@@ -1010,8 +1042,9 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
           }
           given.postMessage(message);
         },
+        mine,
         props: () => {
-          const props = workerViewProps(options.store, options.principal, { manifest, ...(options.input ? { input: options.input() } : {}), theme: theme(), places: guestPlacesOf(vocabulary()), ...(computed ? { computed } : {}) });
+          const props = { ...workerViewProps(options.store, options.principal, { manifest, ...(options.input ? { input: options.input() } : {}), theme: theme(), places: guestPlacesOf(vocabulary()), ...(computed ? { computed } : {}) }), mine: mine.values() };
           const was = shown;
           shown = new Set([...(props.node ? [props.node.id] : []), ...(props.nodes ?? []).map((node) => node.id)]);
           /* The record it shows changed (Roadmap f-app-wide-view-theme): under the brand's "fade", what is drawn goes before the new one comes. */
@@ -1071,9 +1104,10 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     },
   }));
   /* What the worker waits for before it starts: the pictures' host, and what works out computed values, where the view needs them. */
-  const waits = manifest.pictures !== undefined || readsComputed(options.store, manifest);
+  const waits = manifest.pictures !== undefined || readsComputed(options.store, manifest) || hostState !== undefined;
   const ready = (): Promise<unknown> =>
     Promise.all([
+      mine.ready,
       picturesReady.catch(() => Promise.reject(new Error("the view's pictures could not be loaded"))),
       computedReady.catch(() => Promise.reject(new Error("the view's computed values could not be worked out"))),
     ]);

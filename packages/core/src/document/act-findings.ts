@@ -160,6 +160,16 @@ function meFindings(name: string, act: ActSpec, document: GraviewDocument): Find
     return [error("people-unsaid", at, `"$me" is the acting person's own record, and no kind says it is the people`, `say "people": true on the kind whose records are the people (a record's id is a member's principal id)`)];
   }
   const out: Finding[] = [];
+  /*
+   * A person a seat's profile can be (`Store`): the id and the name, so a kind
+   * that requires anything more has none for a profile, and the act is not
+   * offered to one. A warning: a host may still fill in a member's.
+   */
+  const fields = Object.entries(document.kinds[people[0]!]!.fields);
+  const word = (f: { readonly type: string }) => f.type === "string" || f.type === "text";
+  const named = fields.find(([field, f]) => field === "name" && word(f))?.[0] ?? fields.find(([, f]) => word(f) && f.required)?.[0] ?? fields.find(([, f]) => word(f))?.[0];
+  const asks = fields.filter(([field, f]) => field !== named && f.required && f.default === undefined).map(([field]) => field);
+  if (asks.length > 0) out.push(warning("people-unmakeable", at, `"${name}" is done as "$me", and ${people[0]} requires ${asks.join(" and ")}, so a seat's profile has no record to be and is not offered it`, `give ${asks.join(" and ")} a default, or leave ${asks.length > 1 ? "them" : "it"} not required`));
   for (const effect of act.effects ?? []) {
     if (!("connect" in effect) && !("sever" in effect)) continue;
     const relation = "connect" in effect ? effect.connect : effect.sever;

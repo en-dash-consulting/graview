@@ -13,6 +13,7 @@
  */
 import { capitalize } from "./capital.js";
 import { humanizeField, nounOf } from "./schema/define-node.js";
+import { profileOf } from "./permissions/policy.js";
 import { nameOfAuthor } from "./who.js";
 import type { Epoch } from "./ops/log.js";
 import { joinRuns, sameTypist, typedRun, typingSentence, typingWords, type TypedRun } from "./text/typing-words.js";
@@ -164,6 +165,8 @@ export function makerOf(author: Author, me?: Principal): Maker {
   if (kind === "agent") return "agent";
   if (kind !== "human" && kind !== "visitor") return "app";
   if (author.onBehalfOf !== undefined) return "person";
+  // Another profile on the same account is somebody else at the screen: "Mia (Nick)", not "you".
+  if (me?.id !== undefined && profileOf(author)?.id !== profileOf(me)?.id) return "person";
   return author.id === undefined || me?.id === undefined || author.id === me.id ? "you" : "person";
 }
 

@@ -22,6 +22,7 @@
  *   graview.navigate(to)     go to a record (its id), else a place by that slug, or a place or a kind's list
  *                            ({ place: slug, where: { stage: "building" }, section: "shipping-soon" })
  *   graview.html``           markup, with every value put in it escaped
+ *   graview.mine.get(key), graview.mine.set(key, value | null)   what it keeps for whoever is looking: its own strings of at most 4 KB
  *
  * The same global, over a transcript rather than a port, is what a
  * headless run hands a view (headless/runtime.ts, FR-95).

@@ -210,7 +210,8 @@ describe("a hosted page", () => {
     // 1104 KB since a district's name came to stand under its plot on the GPU path, and its name and landmark to be captured whole there: a plot's two lengths handed to the host on both paths, the host measuring what it draws past its box and growing its box to hold it, and the capture path drawing that box with the layout's where it was: the scene face measured 1_129_858 B, 2_301 more than main after 0.1.66 (1_127_557).
     // 1105 KB since a host's status came to stand on the app bar beside its tools (Roadmap f-bar-status-item): its mark and its word, its sentence on hover and as its description, a link where it has an `href`: the scene face measured 1_131_353 B, 1_495 more than batch/0-1-67 (1_129_858).
     // 1106 KB with the whole 0.1.67 batch together, the Safari menu's second layout among it (a pane in the top layer drawn where it was placed): the scene face measured 1_131_562 B, 209 more than with the host's status alone (1_131_353).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1106 * 1024);
+    // 1110 KB since a seat came to carry a profile and a view to keep values for whoever is looking (Roadmap f-viewer-state-and-me-framework): `meOf` and a profile's person in the store, the seat headers, and `viewerState` handed through: the scene face measured 1_135_765 B, 4_203 more than with the whole 0.1.67 batch (1_131_562).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1110 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

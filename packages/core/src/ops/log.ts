@@ -3,6 +3,7 @@ import { bareOp } from "./inverse.js";
 import { Graph } from "../graph/graph.js";
 import type { GraphSnapshot } from "../graph/types.js";
 import type { AnySchema, NodeOfSchema } from "../schema/schema.js";
+import { madeOwnPerson } from "../permissions/policy.js";
 import type { Batch, Operation } from "./types.js";
 import type { KeptDecline } from "./tidying.js";
 
@@ -467,15 +468,17 @@ export function batchesOf(ops: readonly Operation[], undone: ReadonlySet<string>
   return order.map((id) => {
     const ops = grouped.get(id) ?? [];
     const first = ops[0]!;
+    // A profile's person made in passing is no part of what the gesture said, nor of what an undo takes back (`madeOwnPerson`).
+    const acted = ops.length > 1 ? ops.filter((op) => !madeOwnPerson(op)) : ops;
     return {
       id,
       author: first.author,
       // What the gesture was for, when its caller said; else its ops' own sentences — every one of a few, the first two and a count of many.
-      intent: first.batchIntent ?? opsSaid(ops),
+      intent: first.batchIntent ?? opsSaid(acted),
       at: first.at,
       ...(first.lineage ? { lineage: first.lineage } : {}),
       ops,
-      undone: ops.every((op) => undone.has(op.id)),
+      undone: acted.every((op) => undone.has(op.id)),
     };
   });
 }

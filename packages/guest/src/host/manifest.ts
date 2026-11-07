@@ -1,4 +1,4 @@
-import { isoToday, localeFor, timeZoneFor, type AnySchema, type FileKind, type Principal, type Store } from "@graview/core";
+import { isSystem, isoToday, localeFor, meOf, profileOf, timeZoneFor, type AnySchema, type FileKind, type Principal, type Store } from "@graview/core";
 import { fileFieldKind } from "./marks.js";
 import type { GuestAct, GuestEdge, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
 import type { GuestPictures } from "./pictures.js";
@@ -467,6 +467,13 @@ export function workerViewProps<S extends AnySchema>(store: Store<S>, principal:
    */
   const computed = given.computed;
   const plain = (one: unknown) => (computed ? { ...plainNode(store, one), ...computed(graph, one) } : plainNode(store, one));
+  /* Who is looking, as `$me` reads them: the profile's person, known by its id before its first act makes it; else the seat's own record, in its sight. */
+  const profile = profileOf(principal);
+  const myId = meOf(principal);
+  const myRecord = !isSystem(principal) && myId !== undefined ? graph.getNode(myId) : undefined;
+  const myKind = myRecord && (store.schema.tryDefinition(myRecord.kind) as { people?: boolean } | undefined)?.people ? myRecord : undefined;
+  const hasPeople = () => store.schema.definitions.some((definition) => (definition as { people?: boolean }).people);
+  const me = profile ? { ...(hasPeople() ? { id: myId! } : {}), name: profile.name } : myKind ? { id: myKind.id, name: plainNode(store, myKind).label ?? myKind.id } : undefined;
   return {
     view: manifest.name,
     ...(own[0] ? { node: plain(own[0]) } : {}),
@@ -480,6 +487,7 @@ export function workerViewProps<S extends AnySchema>(store: Store<S>, principal:
     ...(input.implicated ? { implicated: visible(input.implicated) } : {}),
     ...(input.flagged ? { flagged: visible(input.flagged) } : {}),
     acts,
+    ...(me ? { me } : {}),
     ...(given.theme ? { theme: given.theme } : {}),
     // The locale and the clock every other surface says a day and a time in (Roadmap f-app-time-zone).
     locale: localeFor(),
