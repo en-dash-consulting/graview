@@ -22,9 +22,9 @@ Every view comes with a manifest the host enforces:
 
 - `name` is lower-case letters, digits and hyphens. Acts are recorded `via: "view:<name>"`.
 - `title` makes it a named place on both faces, with the slug `placeSlug(title)` (`"the-packages"`).
-- A view is as tall as it draws, measured by the host: set no height. On Pages it flows with the page. On the Scene it is a card held to its box, no scrolling: a fade and More at its foot where cut, Open to its page. `flows: false` keeps a frame on Pages; `scene: { maxHeight }` holds the card lower (80–4000px).
+- A view is as tall as it draws, measured by the host: set no height. On Pages it flows with the page. On the Scene it is a card held to its box: a fade and More where cut, Open to its page. `flows: false` keeps a frame on Pages; `scene: { maxHeight }` holds the card lower (80–4000px).
 - `attach` is a kind, or `"home"` for the front page's body (cardinality `many`).
-- `reads` lists the other kinds and the edges it is shown. Nothing else is handed to it.
+- `reads` lists the other kinds and the edges it is shown. Nothing else is handed to it. A view of one reading an edge from its kind to its kind (rock `becomes` rock) is handed the records linked to it. An edge to a kind it is not handed brings nothing, and the check says so.
 - `acts` lists the acts it may ask for, by name. An entry with `as` and `constants` is another name for the same act with arguments the view cannot change.
 - A view of one record (`cardinality: "one"`) is drawn above the kind's page blocks and the record's own fields, which stay editable. `replaces: "page"` draws it alone, and the page blocks never (`graview-view-specs`). On a view of many, it is its kind's list page (`/<plural>`).
 - `gestures: true` lets it hear a wheel, a drag and a pinch (below). `bleed: true` draws it edge to edge on a phone (`graview-view-drawing`).
@@ -50,13 +50,13 @@ graview.navigate({ place: "features", where: { stage: "building" }, section: "Sh
 
 ### Links and buttons, by default
 
-To go somewhere, `<a data-record>` or `<a data-place>`; to do something, a `<button>` (`data-act` to run an act). Style either freely: the host resets both to the words around them, and your class wins. A `<div>` or `<span>` with only `graview.on("click")` is reached by no keyboard and named nothing; with `role="button"` (checkbox, switch, tab, `aria-pressed`, `aria-expanded`) the host gives it the keyboard and hears Enter or Space as a click. The keyboard shows the host's ring: restyle it with `--graview-focus-color`, never `outline: none`. `class="graview-sr"` is words for a screen reader alone; an `<svg>` with no role, `aria-label` or `<title>` is hidden from one.
+To go somewhere, `<a data-record>` or `<a data-place>`; to do something, a `<button>` (`data-act` to run an act). Style either freely: the host resets both to the words around them, and your class wins. A `<div>` or `<span>` with only `graview.on("click")` is reached by no keyboard and named nothing; with `role="button"` (checkbox, switch, tab, `aria-pressed`, `aria-expanded`) the host gives it the keyboard and hears Enter or Space as a click. The keyboard shows the host's ring: restyle it with `--graview-focus-color` (a hex or a name), never `outline: none`. `class="graview-sr"` is words for a screen reader alone; an `<svg>` with no role, `aria-label` or `<title>` is hidden from one.
 
 ### Gestures
 
 With `gestures: true`, `graview.on("wheel" | "drag" | "pinch", selector, fn)` hears them over what the selector matches, at most once a frame with the deltas summed. Each carries `x`, `y` from the matched element's top left and its `width`, `height`; a `wheel` adds `deltaX`, `deltaY`, `deltaMode`, `ctrlKey`, `metaKey`, a `drag` `phase`, `pointerId`, `button`, `pressure`, `dx`, `dy`, a `pinch` (a trackpad's Control-wheel too) `phase`, `scale`, `rotation`. The page scrolls everywhere else; say `touch-action: none` on what drags. Without the flag the check says so.
 
-HTML, SVG and stylesheets, drawn with the app's `--graview-*` tokens so light and dark follow the app's toggle; nothing that loads or escapes. What the host keeps, the tokens, and the only images a view may show (the app's logo, the app's own images, the pictures on records) are `graview-view-drawing`. What the host leaves out it lists in `refused`. A `<section aria-labelledby="h">` is named by its own `<h2 id="h">`; `summary::marker` and `::-webkit-details-marker` style a disclosure's triangle.
+HTML, SVG and stylesheets, drawn with the app's `--graview-*` tokens so light and dark follow the app's toggle; nothing that loads or escapes. What the host keeps, the tokens, the images a view may show and a web face are `graview-view-drawing`. What the host leaves out it lists in `refused`. A `<section aria-labelledby="h">` is named by its own `<h2 id="h">`; `summary::marker` and `::-webkit-details-marker` style a disclosure's triangle.
 
 ### Links
 
@@ -72,7 +72,7 @@ An act must be in the manifest. Where every member sees every record, `graview.a
 
 ### Worked examples
 
-`examples/offers-list.js` is a list lens: rows linking to their records, and a note typed and pressed in. `examples/front-page.js` is a home: a headline, a figure, an SVG ring and cards linking to a place. `examples/a-record.js` is a view of one record: a deliverable's draft read off `props.node`, and "Edit draft" prefilled. `examples/a-map-that-pans-and-zooms.js` is an SVG map a wheel and a pinch zoom at the pointer, and a drag pans. Each opens with its manifest.
+`examples/offers-list.js` is a list lens: rows linking to their records, and a note typed and pressed in. `examples/front-page.js` is a home: a headline, a figure, an SVG ring and cards linking to a place. `examples/a-record.js` is a view of one record: a deliverable's draft read off `props.node`, and "Edit draft" prefilled. `examples/a-map-that-pans-and-zooms.js` is an SVG map a wheel and a pinch zoom at the pointer, and a drag pans.
 
 ### Registering it
 
@@ -95,7 +95,7 @@ A view with `attach: "home"` given to `registerWorkerView` is the home's own vie
 
 ### What the check cannot see
 
-`graview check` judges the declaration, not the script. It cannot see a view that throws on an empty graph, draws the wrong number, or takes too long on a big one. Only running it does: `graview view check` on an empty app, a full one, and a member with narrow sight. A headless run is one push, timers unfired, nothing laid out: an animation or a layout that breaks at 390 is the faces' to show. Nor can it see a view that misleads. The host keeps it from reaching or leaking anything, not from arranging what the person may see badly.
+`graview check` judges the declaration, not the script. It cannot see a view that throws on an empty graph, draws the wrong number, or takes too long on a big one. Only running it does: `graview view check` on an empty app, a full one, and a member with narrow sight. A headless run is one push, timers unfired, nothing laid out: an animation or a layout that breaks at 390 is the faces' to show. Nor can it see a view that misleads.
 
 ---
 

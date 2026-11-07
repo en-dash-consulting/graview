@@ -5,7 +5,7 @@ import type { AnySchema, FileValue, HostFiles, PagesArrangement, Principal, Stor
 import { storedFilesOf } from "./marks.js";
 import { retryingImport } from "@graview/core/retry";
 import type { GuestDomEvent, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
-import { checkManifest, readsComputed, workerViewProps, type ComputedOn, type WorkerViewManifest } from "./manifest.js";
+import { checkManifest, edgesReadWithoutTheirKindsSaid, readsComputed, workerViewProps, type ComputedOn, type WorkerViewManifest } from "./manifest.js";
 import type { OpenDrawing, ViewRefusal } from "./open-draw.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestStats, type GuestViewInput } from "./session.js";
 import { startWorker, type GuestWorkerSource, type StartedWorker } from "./worker-start.js";
@@ -40,6 +40,8 @@ const pressChunk = retryingImport(() => import("./press.js"));
 const picturesChunk = retryingImport(() => import("./pictures.js"));
 /* A record's video placed by a view, and the full-screen viewer (0.1.37), fetched with the first view that places one. */
 const mediaChunk = retryingImport(() => import("./media.js"));
+/* The faces the app lends its views, fetched with the first view a brand that lends any dresses. */
+const fontsChunk = retryingImport(() => import("./fonts.js"));
 /* Files dropped on what the view drew (FR-193), fetched with the first `data-drop` a view whose manifest accepts files draws. */
 const dropChunk = retryingImport(() => import("./drop.js"));
 /* A wheel, a drag and a pinch over what the view drew (0.1.42), fetched only for a view whose manifest says gestures and that listens for one. */
@@ -469,6 +471,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     queueMicrotask(() => fail("manifest", findings.join(" ")));
     return handle();
   }
+  /* A relation it reads whose far kind it is never handed (Roadmap f-view-authoring-friction-2026-11): drawn, and said to the host, as `graview view check` says it. */
+  for (const said of edgesReadWithoutTheirKindsSaid(options.store, manifest)) queueMicrotask(() => options.onProblem?.(said));
   /* Its code is longer than it may be, or its own source loads something (FR-96): refused before it runs, with why. */
   const refusedCode = (code: WorkerViewCode): [WorkerViewFailure, string?] | undefined => {
     const bytes = "source" in code ? new TextEncoder().encode(code.source).length : "script" in code ? new TextEncoder().encode(code.script).length : 0;
@@ -498,10 +502,44 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
    * host in the region — never handed to the view — and dressed again on
    * every push, which is how a brand the host changes reaches it.
    */
+  let lent = "[[],null]";
+  let toldOfTheme = "";
+  let lending = 0;
+  let giveFontsBack: (() => void) | undefined;
   const dress = () => {
     const views = options.brand?.()?.views;
-    drawing?.theme(views?.css);
+    /* A stylesheet for its views that draws nothing at all is said once: the part of one the open kit leaves out is the checker's to say (brand-views-css). */
+    if (drawing && !drawing.theme(views?.css) && toldOfTheme !== views?.css) {
+      toldOfTheme = views?.css ?? "";
+      const said = "The app's stylesheet for its views draws nothing: the open kit leaves all of it out, so views are drawn without it. graview check says which part (brand-views-css).";
+      port?.postMessage({ type: "notice", text: said });
+      options.onProblem?.(said);
+    }
     drawing?.motion(views?.motion ?? "none");
+    /* The faces the app lends its views (Roadmap f-view-authoring-friction-2026-11), loaded into the page by the host as their brand changes (fonts.ts). */
+    const fonts = views?.fonts ?? [];
+    /* And as the brand's own stacks change, since a face may not take one of their names. */
+    const typography = options.brand?.()?.typography;
+    const lendingNow = JSON.stringify([fonts, typography ?? null]);
+    if (lendingNow === lent) return;
+    lent = lendingNow;
+    lending += 1;
+    const asked = lending;
+    if (fonts.length === 0) {
+      giveFontsBack?.();
+      giveFontsBack = undefined;
+      return;
+    }
+    void fontsChunk().then(({ loadViewFonts }) => {
+      if (asked !== lending) return;
+      /* The new ones first, so a face both brands lend is never let go between them. */
+      const before = giveFontsBack;
+      giveFontsBack = loadViewFonts(document, fonts, { ...(options.asset ? { asset: options.asset } : {}), ...(options.images ? { origins: options.images.origins } : {}), ...(typography ? { typography } : {}) }, (said) => {
+        port?.postMessage({ type: "notice", text: said });
+        options.onProblem?.(said);
+      });
+      before?.();
+    });
   };
   let pushed = "";
   const push = () => {
@@ -553,6 +591,9 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     media?.dispose();
     drops?.dispose();
     gestures?.dispose();
+    lending += 1;
+    giveFontsBack?.();
+    giveFontsBack = undefined;
   };
 
   let port: MessagePort | undefined;

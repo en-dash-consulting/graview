@@ -10,7 +10,7 @@
  */
 export { registerWorkerView, workerHome, workerView } from "./worker-react.js";
 export type { WorkerHomeContext, WorkerViewDefinition } from "./worker-react.js";
-export { checkManifest, manifestActs, readsComputed, unreadEdges, unreadEdgesSentence, workerViewProps } from "./manifest.js";
+export { checkManifest, edgesReadWithoutTheirKinds, edgesReadWithoutTheirKindsSaid, manifestActs, ownKindRelations, readsComputed, unreadEdges, unreadEdgesSentence, workerViewProps } from "./manifest.js";
 export type { ComputedOn, ManifestAccept, ManifestAct, WorkerViewManifest, WorkerViewPropsInput } from "./manifest.js";
 export { judgeCodeAct, sightIsTotal } from "./writes.js";
 export type { CodeActContext, Judged, Prefilled, Press, PressedField } from "./writes.js";

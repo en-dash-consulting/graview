@@ -144,7 +144,18 @@ by the host, saved as they are typed, "Saving…" on `input` and "Saved" on
    then filled in, then with each filled optional field emptied; each
    link; each button its code hears, in a run of its own. One that does
    nothing, throws, or is refused fails, said by name (`“Save economics”
-   is refused: “fixedFee” expects a number.`); `runWorkerViewHeadless(…,
+   is refused: “fixedFee” expects a number.`). A control already in the
+   state it shows — an "All" chip pressed while nothing is filtered, the
+   open tab — passes though it changes nothing, only where the state can
+   move: it says `aria-pressed="true"`, `aria-selected="true"` (a tab,
+   option or grid cell) or `aria-checked="true"` (a checkable role), and
+   pressing a sibling of the same element and role, beside it or in its
+   `role` group, that says `"false"` takes the state from it, or asks for
+   an act. `aria-current` is for a link, or a role that names a place
+   (`tab`, `menuitem`, `treeitem`, `option`), and a sibling with no
+   `aria-current` that goes somewhere counts as it stands. A dead Save
+   fails whatever stands beside it; a pager of plain buttons says
+   `role="link"`. `runWorkerViewHeadless(…,
    { presses: checkPresses })` (`@graview/guest/headless/presses`) is the same for a host's gate. To look at one,
    press it: `--press "<selector>"` (with `--type note="…"` for
    what the person typed), or `runWorkerViewHeadless(…, { press: {

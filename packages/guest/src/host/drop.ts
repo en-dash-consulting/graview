@@ -77,12 +77,14 @@ export interface GuestDrops {
   dispose(): void;
 }
 
-/** The host's own look for a drop target: over the view's styles, which cannot reach it. */
+/** The host's own look for a drop target: over the view's styles, which cannot reach it — in the host's region layer (cascade.ts), whose `!important` a view's own cannot beat. */
 const DROP_CSS = `
+@layer graview-region {
 [data-graview-drop-over] { outline: 2px dashed var(--graview-accent, Highlight) !important; outline-offset: 2px !important; background-color: color-mix(in srgb, var(--graview-accent, Highlight) 10%, transparent) !important; }
 [data-graview-drop-status], [data-graview-drop-refused] { margin: 4px 0 0; font: 0.8125rem/1.4 var(--graview-font-body, system-ui, sans-serif); color: var(--graview-ink-muted, GrayText); }
 [data-graview-drop-refused] { color: var(--graview-warn, var(--graview-ink, CanvasText)); }
 [data-graview-drop-status]:empty, [data-graview-drop-refused]:empty { display: none; }
+}
 `;
 
 /** What the person reaches for inside a drop target, which a tap on it leaves to them. */

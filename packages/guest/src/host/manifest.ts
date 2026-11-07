@@ -329,6 +329,59 @@ export function unreadEdgesSentence<S extends AnySchema>(store: Pick<Store<S>, "
   )} to its manifest's reads.edges.`;
 }
 
+/**
+ * THE RELATIONS FROM A VIEW'S OWN KIND BACK TO IT THAT IT READS (Roadmap
+ * f-view-authoring-friction-2026-11): a rock's page that reads `becomes`
+ * (rock → rock) is handed the rocks linked to its rock by it, though it
+ * never listed `rock` in `reads.kinds` — the view's own kind is read across
+ * a relation that comes back to it. Only on a view of one record: a view of
+ * many already holds every member it is handed, and is never handed more of
+ * its own kind than the face gave it. None where `reads.kinds` names the
+ * kind, which hands every record of it.
+ */
+export function ownKindRelations<S extends AnySchema>(store: Pick<Store<S>, "schema">, manifest: Pick<WorkerViewManifest, "attach" | "cardinality" | "reads">): readonly string[] {
+  const kind = manifest.attach;
+  if (kind === "home" || manifest.cardinality !== "one" || (manifest.reads?.kinds ?? []).includes(kind)) return [];
+  return (manifest.reads?.edges ?? []).filter((name) => {
+    const edge = store.schema.edge(name);
+    return edge !== undefined && edge.from.includes(kind) && edge.to !== "*" && edge.to.includes(kind);
+  });
+}
+
+/**
+ * THE RELATIONS A VIEW READS AND IS NEVER HANDED (Roadmap
+ * f-view-authoring-friction-2026-11): a relation in `reads.edges` with an
+ * end no kind the view is handed is on — neither its own nor one in
+ * `reads.kinds` — so no link of it ever reaches the view, and nothing said
+ * why its links were missing. Each with the kinds that would hand it; none,
+ * where it goes to any kind (`to: "*"`) and a view of one is handed only its
+ * own record, since which kinds it links to is the author's to say.
+ */
+export function edgesReadWithoutTheirKinds<S extends AnySchema>(store: Pick<Store<S>, "schema">, manifest: Pick<WorkerViewManifest, "attach" | "cardinality" | "reads">): readonly { readonly edge: string; readonly kinds: readonly string[] }[] {
+  const handed = new Set([...(manifest.attach === "home" ? [] : [manifest.attach]), ...(manifest.reads?.kinds ?? [])]);
+  const out: { edge: string; kinds: string[] }[] = [];
+  for (const name of manifest.reads?.edges ?? []) {
+    const edge = store.schema.edge(name);
+    if (!edge) continue;
+    const from = edge.from.some((kind) => handed.has(kind)) ? [] : edge.from;
+    const to = edge.to === "*" || edge.to.some((kind) => handed.has(kind)) ? [] : edge.to;
+    const kinds = [...new Set([...from, ...to])];
+    if (kinds.length > 0) out.push({ edge: name, kinds });
+    else if (edge.to === "*" && manifest.attach !== "home" && manifest.cardinality === "one" && (manifest.reads?.kinds ?? []).length === 0) out.push({ edge: name, kinds: [] });
+  }
+  return out;
+}
+
+/** Each relation a view reads and is never handed, said with what to add to `reads.kinds`; empty when every one can reach it. */
+export function edgesReadWithoutTheirKindsSaid<S extends AnySchema>(store: Pick<Store<S>, "schema">, manifest: Pick<WorkerViewManifest, "name" | "attach" | "cardinality" | "reads">): readonly string[] {
+  return edgesReadWithoutTheirKinds(store, manifest).map(({ edge, kinds }) => {
+    const info = store.schema.edge(edge)!;
+    const ends = `${info.from.join(" or ")} to ${info.to === "*" ? "any kind" : info.to.join(" or ")}`;
+    if (kinds.length === 0) return `"${manifest.name}" reads the relation "${edge}", from ${ends}, and is handed no other kind, so no link of it reaches the view: name the kinds it links to in its manifest's reads.kinds.`;
+    return `"${manifest.name}" reads the relation "${edge}", from ${ends}, and is handed no ${kinds.join(" or ")}, so no link of it reaches the view: add ${kinds.map((kind) => `"${kind}"`).join(" or ")} to its manifest's reads.kinds.`;
+  });
+}
+
 export interface WorkerViewPropsInput {
   readonly manifest: WorkerViewManifest;
   /** Where the view is drawn: the record, or the members, the face hands it. */
@@ -379,10 +432,20 @@ export function workerViewProps<S extends AnySchema>(store: Store<S>, principal:
         : graph.nodesOfKind(attached as never)
       : [];
   /* What it reads across kinds (session.ts's `readAcross`, the frame guest's rule too): a view of many never reads more of its own kind than the face handed it. */
-  const ownIds = new Set([...own, ...members].map((one) => one.id));
+  /* Its own kind across a relation back to it (`ownKindRelations`): the records of its kind linked to its record by one it reads, as the viewer sees them. */
+  const record = own[0];
+  const kin = record
+    ? ownKindRelations(store, manifest).flatMap((edge) =>
+        [...graph.outEdges(record.id, edge).map((one) => one.to), ...graph.inEdges(record.id, edge).map((one) => one.from)].flatMap((id) => {
+          const found = id === record.id ? undefined : graph.getNode(id);
+          return found && found.kind === attached ? [found] : [];
+        }),
+      )
+    : [];
+  const ownIds = new Set([...own, ...members, ...kin].map((one) => one.id));
   const read = readAcross(graph, ownIds, { kinds: (manifest.reads?.kinds ?? []).filter((kind) => kind !== attached || manifest.cardinality === "one"), edges: manifest.reads?.edges ?? [] });
   const listed = new Map<string, unknown>();
-  for (const one of [...members, ...(read.nodes as typeof members)]) if (!own.some((mine) => mine.id === one.id)) listed.set(one.id, one);
+  for (const one of [...members, ...kin, ...(read.nodes as typeof members)]) if (!own.some((mine) => mine.id === one.id)) listed.set(one.id, one);
   const shown = new Set([...own.map((one) => one.id), ...listed.keys()]);
   const edges: GuestEdge[] = [...read.edges];
   const declared = new Set(manifestActs(manifest).map((one) => one.act));
