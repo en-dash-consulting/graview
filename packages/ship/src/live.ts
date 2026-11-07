@@ -1,3 +1,4 @@
+import type { ServedStops } from "@graview/core/tidying";
 import type { Cursor } from "./cursor.js";
 import type { GraphSnapshot } from "./snapshot.js";
 import { WIRE_PROTOCOL, type FieldConflict, type FieldRevision, type Lineage, type MutationCall, type Operation, type Presence, type Principal, type RefusalReason } from "@graview/core";
@@ -151,6 +152,9 @@ export type LiveServerMessage =
       readonly ops: readonly Operation[];
       /** Where the seat is served through, in an app that publishes (Roadmap f-publishing-lifecycle): a cursor, as opaque as `seq`, the position after the last op it is served. Absent in a live app. */
       readonly servedThrough?: Cursor;
+      /** The stops standing that the log it is sent may not hold, as this seat may be told (`servedStops`); absent where there are none. */
+      readonly stops?: ServedStops["stops"];
+      readonly stoppedKinds?: ServedStops["kinds"];
       /** `horizon`: the seq `log` begins at, when the store was compacted (FR-23); absent, 0. */
       readonly state?: { readonly version: number; readonly snapshot: GraphSnapshot; readonly log: readonly Operation[]; readonly migrated: readonly string[]; readonly enabledModules?: readonly string[]; readonly horizon?: number };
     }

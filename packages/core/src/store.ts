@@ -33,7 +33,7 @@ import { KEEP_LINK, keepLinkMutation, keepLinkVia } from "./mutations/keep-link.
 import { advisoryVoterOf, signedOutSeat, SIGN_IN_TO_VOTE, VOTE_SUGGESTION, VOTING, voteSuggestionMutation, type AppTidying, type VotesOptions } from "./mutations/vote-suggestion.js";
 import { TYPE_TEXT, TYPING } from "./text/typing-hook.js";
 import type { FieldRevision } from "./ops/revisions.js";
-import { DECLINES, isAutomated, tidyingRefusal, type ActMeanings } from "./ops/tidying.js";
+import { DECLINES, isAutomated, isTidyingActor, tidyingRefusal, type ActMeanings, type ServedStops } from "./ops/tidying.js";
 import { nameOfAuthor } from "./who.js";
 import { actingAs, grantsTo, isSystem, meIn, meOf, ownsId, permits, profileOf, withValidProfile, permittedMutations, proposes, subjectKinds, type PolicyWords } from "./permissions/policy.js";
 import { MOST_PROPOSED, PROPOSE_CHANGES, proposeChangesMutation } from "./mutations/propose-changes.js";
@@ -1864,6 +1864,7 @@ export class Store<S extends AnySchema> {
      */
     const automated = isAutomated(author);
     if (automated) this.refuseDeclined(calls, author);
+    if (isTidyingActor(author)) this.refuseStopped(calls, author);
     if (!this.rehearsing) tellTheWatchOfAnAuthor(author.id);
 
     /* The first record each call made, for a later call that names it (FR-193). */
@@ -2282,6 +2283,9 @@ export class Store<S extends AnySchema> {
    * agent's turn while keeping your own edits is a dependency check rather
    * than a stack pop.
    */
+  /** What the host says of stops this page's log does not hold (`ServedStops`). Never kept: a checkpoint keeps its own. */
+  stopsServed?: ServedStops;
+
   undo(
     batchIds: string | readonly string[],
     options: ApplyOptions = {},
@@ -2294,6 +2298,8 @@ export class Store<S extends AnySchema> {
     this.stillNow();
     const ids = typeof batchIds === "string" ? [batchIds] : batchIds;
     const author = withValidProfile(options.author ?? this.by);
+    const lifted = DECLINES.lift?.(this, ids, options, author);
+    if (lifted) return lifted as ApplyResult<S>;
     /*
      * JUDGED FIRST AS THIS SEAT SEES THE LOG (FR-16, FR-02). A change it
      * may not see is not its to take back, and when one stands in the way
@@ -2316,7 +2322,7 @@ export class Store<S extends AnySchema> {
     }
 
     const batch = options.batch ?? this.mintBatch("undo");
-    const lineage = lineageOf(options.lineage);
+    const lineage = lineageOf(options.lineage, true);
 
     /*
      * Undo is a CHANGE, and it is judged like one.
@@ -2329,6 +2335,11 @@ export class Store<S extends AnySchema> {
      */
     const refused = this.undoRefusal(check.ops, author);
     if (refused) this.refuse(refused, author.id, true);
+    // A stop is judged wherever it comes from: the lineage crosses the wire as a client says it, and a store that cannot judge it refuses it.
+    if (lineage?.stopsKind === true) {
+      const why = DECLINES.stopRefusal ? DECLINES.stopRefusal(this, check.ops, author) : "This store cannot be told not to suggest something.";
+      if (why) this.refuse({ mutation: "undo", wouldNeed: [], message: why }, author.id, true);
+    }
 
     const rollback = this.graph.snapshot();
     const before = this.violations();
@@ -2384,6 +2395,8 @@ export class Store<S extends AnySchema> {
    * one the store refuses.
    */
   mayUndo(batchIds: string | readonly string[], principal: Principal = this.by as Principal): { readonly ok: true } | { readonly ok: false; readonly refusal?: Refusal; readonly check?: UndoCheck } {
+    const kept = DECLINES.liftRefusal?.(this, typeof batchIds === "string" ? [batchIds] : batchIds, principal);
+    if (kept) return kept.refusal ? { ok: false, refusal: kept.refusal } : { ok: true };
     const check = this.canUndo(batchIds);
     if (!check.ok) return { ok: false, check };
     const refusal = this.undoRefusal(check.ops, principal);
@@ -2392,6 +2405,9 @@ export class Store<S extends AnySchema> {
 
   /** What refuses `author` taking these ops back, or nothing: what you may undo is what you may have done. */
   private undoRefusal(ops: readonly Operation[], author: Author | Principal): Refusal | undefined {
+    // Asked of `@graview/core/tidying`; a store that has not loaded it offers no way back it cannot judge.
+    const stop = DECLINES.undoRefusal ? DECLINES.undoRefusal(this, ops, author) : ops.some((target) => target.lineage?.stopsKind || target.lineage?.liftedStop) ? { mutation: "undo", wouldNeed: [], message: "This cannot be taken back here yet." } : undefined;
+    if (stop) return stop;
     if (this.policy || this.publisher) {
       for (const target of ops) {
         /*
@@ -2546,6 +2562,11 @@ export class Store<S extends AnySchema> {
    * (`DECLINES`), which every host that runs the actor loads — `dream`, `suggest`, a workflow, `@graview/ship`'s server.
    * A page that never loads it (where the actor does not run) judges no declines.
    */
+  private refuseStopped(calls: readonly MutationCall[], author: Author | Principal): void {
+    const stopped = DECLINES.stopped?.(this.log.all(), calls, this.actMeanings(), this.log.horizonEpoch()?.declines);
+    if (stopped) this.refuse({ mutation: calls[0]!.name, message: `${this.authorName(author)} may not suggest this kind of thing: a person said not to on ${stopped.at.slice(0, 10)}.`, wouldNeed: [] }, author.id);
+  }
+
   private refuseDeclined(calls: readonly MutationCall[], author: Author | Principal): void {
     const declined = DECLINES.declined?.(this.log.all(), calls, this.actMeanings(), this.log.horizonEpoch()?.declines);
     if (declined) this.refuse({ mutation: calls[0]!.name, message: `${this.authorName(author)} may not make this again: a person declined it on ${declined.at.slice(0, 10)}.`, wouldNeed: [] }, author.id);

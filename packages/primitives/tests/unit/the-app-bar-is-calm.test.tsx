@@ -228,7 +228,7 @@ function storeWith(): Store<typeof schema> {
 }
 
 describe("one inbox (Roadmap f-app-bar-calm)", () => {
-  it("is one bell with one count — what waits for you and what has happened — that opens three tabs, on what waits first", async () => {
+  it("is one bell with one count — what needs you — that opens three tabs, on what needs you first", async () => {
     const store = storeWith();
     store.apply({ name: "rename", args: { id: "task:a", label: "Paint the hall" } }, { author: nora });
     suggest(store, [{ name: "wait-for", args: { taskId: "task:a", blockerId: "task:b" } }], { author: actor, lineage: { basis: "The shelves cover the wall", confidence: 0.6 } });
@@ -242,8 +242,8 @@ describe("one inbox (Roadmap f-app-bar-calm)", () => {
         <Inbox />
       </GraviewProvider>,
     );
-    // One waiting suggestion, one unread notification, two changes (the rename and the suggestion's own row is not one).
-    await settled(() => expect($('[data-testid="inbox-button"]')?.getAttribute("aria-label")).toMatch(/^Inbox — 2 waiting for you, \d changes?$/));
+    // One waiting suggestion: an unread notification the host did not mark, and the rename, ask nothing of anyone (Roadmap f-inbox-needs-you-first).
+    await settled(() => expect($('[data-testid="inbox-button"]')?.getAttribute("aria-label")).toBe("Inbox — 1 needs you"));
     const bell = $('[data-testid="inbox-button"]')!;
     expect($('[data-testid="inbox-count"]')!.textContent).toBe(bell.getAttribute("data-count"));
     expect(document.querySelectorAll('[data-testid="suggested-button"], [data-testid="activity-button"]')).toHaveLength(0);
@@ -279,9 +279,9 @@ describe("one inbox (Roadmap f-app-bar-calm)", () => {
   });
 
   it("says its count in words", () => {
-    expect(inboxWords(0, 0)).toBe("Inbox");
-    expect(inboxWords(3, 0)).toBe("Inbox — 3 waiting for you");
-    expect(inboxWords(0, 1)).toBe("Inbox — 1 change");
-    expect(inboxWords(25, 4)).toBe("Inbox — 25 waiting for you, 4 changes");
+    expect(inboxWords(0, "")).toBe("Inbox");
+    expect(inboxWords(1, "")).toBe("Inbox — 1 needs you");
+    expect(inboxWords(3, "")).toBe("Inbox — 3 need you");
+    expect(inboxWords(25, "1 rule broken in 3 places")).toBe("Inbox — 25 need you: 1 rule broken in 3 places");
   });
 });

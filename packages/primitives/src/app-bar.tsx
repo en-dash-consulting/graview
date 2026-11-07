@@ -452,12 +452,6 @@ const BAR_CSS = `
 .graview-bar-said{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .graview-bar-menu-open{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;box-sizing:border-box;width:24px;height:30px;margin:0;padding:0;border:1px solid transparent;border-radius:6px;background:none;box-shadow:none;color:var(--graview-ink-muted);cursor:pointer}
 .graview-bar-menu-open:is(:hover,[aria-expanded=true]){border-color:var(--graview-edge);color:var(--graview-ink)}
-.graview-bar-tool{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:0 0 auto;box-sizing:border-box;min-width:${TOOL}px;height:${TOOL}px;margin:0;padding:0;border-radius:8px;border:1px solid transparent;background:none;box-shadow:none;font:inherit;font-size:.875rem;font-weight:500;letter-spacing:normal;text-transform:none;white-space:nowrap;color:var(--graview-ink-muted);cursor:pointer;text-decoration:none}
-.graview-bar-tool:is(:hover,[aria-expanded=true]){border-color:var(--graview-edge);color:var(--graview-ink)}
-.graview-bar-tool[data-running]{color:var(--graview-accent)}
-.graview-bar-badge{position:absolute;top:-3px;right:-5px;box-sizing:border-box;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--graview-accent);color:var(--graview-accent-ink);font-size:.625rem;font-weight:700;line-height:16px;text-align:center;font-variant-numeric:tabular-nums;box-shadow:0 0 0 2px var(--graview-bar);pointer-events:none}
-.graview-bar-badge[data-dot]{min-width:8px;width:8px;height:8px;padding:0;top:2px;right:2px}
-.graview-bar-badge[data-tone=warn]{background:var(--graview-warn)}
 .graview-bar-share{gap:6px;padding:0 10px}
 .graview-bar-share-pane{display:grid;gap:10px;width:min(300px,calc(100vw - 24px));padding:14px;border-radius:10px;border:1px solid var(--graview-edge);background:var(--graview-float);box-shadow:var(--graview-lift-high);color:var(--graview-ink);font-size:.875rem;line-height:1.45}
 .graview-bar-share-pane[hidden]{display:none}

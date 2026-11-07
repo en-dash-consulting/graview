@@ -26,7 +26,9 @@ import {
   type Via,
   type Lineage,
   type WireRefusal,
+  EMPTY_DIFF,
 } from "@graview/core";
+import type { ServedStops } from "@graview/core/tidying";
 import type { StorageLike } from "./browser-adapter.js";
 import { cursorAt } from "./cursor.js";
 import { FRICTION_PATH } from "./remote-friction.js";
@@ -84,6 +86,9 @@ export interface RemoteState {
   readonly enabledModules?: readonly string[];
   /** Where the server's log begins, when it was compacted (FR-23). */
   readonly horizon?: number;
+  /** The stops standing that this log may not hold, as this seat may be told (`servedStops`); absent where there are none, or from a server before them. */
+  readonly stops?: ServedStops["stops"];
+  readonly stoppedKinds?: ServedStops["kinds"];
   /** The host's build (FR-44); absent from a server before it, or a host that says none. */
   readonly build?: string;
   /** The host's hold, in its sentence (FR-66); absent while it takes changes, or from a server before it. */
@@ -837,6 +842,15 @@ async function opening<S extends AnySchema>(
    * leaves the client as it was, and the next answer that cannot land asks
    * again.
    */
+  /** What the host says of the stops this page's log does not hold: for its tray, its bell and its way back. */
+  const hearStops = (said: Pick<RemoteState, "stops" | "stoppedKinds">): void => {
+    const stops = said.stops ?? [];
+    const kinds = said.stoppedKinds ?? [];
+    if (stops.length === 0 && kinds.length === 0 && !store.stopsServed) return;
+    store.stopsServed = stops.length > 0 || kinds.length > 0 ? { stops, kinds } : undefined as never;
+    store.notify(EMPTY_DIFF as never, []);
+  };
+  if (state.stops || state.stoppedKinds) store.stopsServed = { stops: state.stops ?? [], kinds: state.stoppedKinds ?? [] };
   const resync = (): void => {
     if (resyncing) return;
     resyncing = track(
@@ -847,6 +861,7 @@ async function opening<S extends AnySchema>(
             meanwhile = [];
             return;
           }
+          hearStops(next);
           const held = new Set(next.log.map((op) => op.batch));
           const answered = pending.filter((batch) => held.has(batch));
           for (const batch of answered) settle(batch);
@@ -1166,6 +1181,7 @@ async function opening<S extends AnySchema>(
   const hear = (message: LiveServerMessage) => {
     switch (message.t) {
       case "welcome": {
+        hearStops(message);
         noticeBuild(message.build);
         // Back on a server whose declaration moved while this socket was away (FR-43): its ops are not this store's to fold.
         if (typeof message.version === "number" && message.version !== state.version) {

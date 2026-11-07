@@ -211,6 +211,7 @@ describe("a hosted page", () => {
     // 1105 KB since a host's status came to stand on the app bar beside its tools (Roadmap f-bar-status-item): its mark and its word, its sentence on hover and as its description, a link where it has an `href`: the scene face measured 1_131_353 B, 1_495 more than batch/0-1-67 (1_129_858).
     // 1106 KB with the whole 0.1.67 batch together, the Safari menu's second layout among it (a pane in the top layer drawn where it was placed): the scene face measured 1_131_562 B, 209 more than with the host's status alone (1_131_353).
     // 1110 KB since a seat came to carry a profile and a view to keep values for whoever is looking (Roadmap f-viewer-state-and-me-framework): `meOf` and a profile's person in the store, the seat headers, and `viewerState` handed through: the scene face measured 1_135_765 B, 4_203 more than with the whole 0.1.67 batch (1_131_562).
+    // 1102 KB since Activity's digest came from `@graview/core/history`, so `@graview/core/tidying` loads with the tray (Roadmap f-inbox-needs-you-first): the scene face measured 1_128_289 B, 3_273 fewer than the 0.1.67 batch, with the bell counting what needs a person.
     for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1110 * 1024);
   });
 

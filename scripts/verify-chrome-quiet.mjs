@@ -617,7 +617,7 @@ try {
                   bar: Boolean(bar),
                   menu: Boolean(bar?.querySelector('[data-testid="app-menu-open"]')),
                   find: Boolean(bar?.querySelector('[data-testid="app-find"] input')),
-                  standing: Boolean(bar?.querySelector('[data-testid="standing"]')),
+                  standing: Boolean(bar?.querySelector('[data-testid="standing"], [data-testid="inbox-button"]')),
                   person: Boolean(bar?.querySelector('[data-testid="profile-button"]')),
                   places: document.querySelectorAll('[data-place-path], [data-testid="app-places-open"]').length,
                 };
@@ -1322,8 +1322,8 @@ try {
  * or link that leads to them.
  */
 function problemCountSaid() {
-  /* The bar's standing says the number, and names it in words (FR-131): "2 rules broken", or "1 rule broken in 3 places", whose number is the places. */
-  const standing = [...document.querySelectorAll('button[data-testid="standing"]')].find((one) => /\d+ rules? broken/.test(one.getAttribute("aria-label") ?? ""));
+  /* The bell says the number, and names it in words (FR-131): "2 rules broken", or "1 rule broken in 3 places", whose number is the places. */
+  const standing = [...document.querySelectorAll('button[data-testid="inbox-button"]')].find((one) => /\d+ rules? broken/.test(one.getAttribute("aria-label") ?? ""));
   const told = standing?.getAttribute("aria-label")?.match(/(\d+) rules? broken(?: in (\d+) places)?/);
   const count = Number(told?.[2] ?? told?.[1] ?? 0);
   const said = [];
@@ -1343,7 +1343,7 @@ function problemCountSaid() {
     }
     return true;
   };
-  const leadsToProblems = 'a[href$="/problems"], a[href*="/problems?"], button[data-testid="standing"]';
+  const leadsToProblems = 'a[href$="/problems"], a[href*="/problems?"], button[data-testid="inbox-button"]';
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
   for (let node = walker.nextNode(); node; node = walker.nextNode()) {
     const text = node.textContent.trim();
@@ -2001,16 +2001,16 @@ function theHome() {
   return { face, homeView: Boolean(view), width: box ? Math.round(box.width) : null, page: page ? Math.round(page.width) : null, fullWidth, floating, underTheBar, place: root?.querySelector('[data-testid="app-place-current"]')?.textContent.trim() ?? null };
 }
 
-/** The bar's Standing: its accessible name says the count, Tab reaches it, and Enter opens the problems it counts. */
+/** The bell: its accessible name says the count, Tab reaches it, and Enter opens the problems it counts. */
 async function problemsByKeyboard(page) {
   const named = await page.evaluate(() => {
-    const standing = document.querySelector('button[data-testid="standing"]');
-    return standing !== null && /\d+ rules? broken/.test(standing.getAttribute("aria-label") ?? standing.textContent ?? "");
+    const bell = document.querySelector('button[data-testid="inbox-button"]');
+    return bell !== null && /\d+ rules? broken/.test(bell.getAttribute("aria-label") ?? "");
   });
   let reached = false;
   for (let step = 0; step < 60 && !reached; step++) {
     await page.keyboard.press("Tab");
-    reached = await page.evaluate(() => document.activeElement?.getAttribute("data-testid") === "standing");
+    reached = await page.evaluate(() => document.activeElement?.getAttribute("data-testid") === "inbox-button");
   }
   if (reached) await page.keyboard.press("Enter");
   const opened = reached && (await page.waitForSelector('[data-testid="problems"] li', { timeout: 5000 }).then(() => true, () => false));

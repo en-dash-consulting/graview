@@ -1,7 +1,7 @@
 import { ARCHIVED, freshAddress, humanizeField, isWithheld, labelOf, nameOfAuthor, type AnySchema, type Author, type Batch, type Operation } from "@graview/core";
 import { viaSaid } from "@graview/core/words";
 import { lineageWords } from "@graview/core/provenance";
-import { digestWords, foldDigests, typedRowWords } from "@graview/core/tidying";
+import { digestWords, foldDigests, typedRowWords } from "@graview/core/history";
 import { lazyModule, POPOVER_STYLE, useGoTo, useGraview, useLiveStore, usePlayback, usePopover } from "@graview/react/provider";
 import { prefetchTimeline } from "../past-bar.js";
 import type { ToolCall } from "@graview/tools";
@@ -50,6 +50,8 @@ export interface Change {
   readonly at?: string;
   /** The AI interaction it came from (lineage `interaction`), whose entry draws it. */
   readonly interaction?: string;
+  /** A template's example content (`examples:<template>:<stamp>`, `graview apply --template --examples`): said as what it is, and taken back as "Remove examples". */
+  readonly examples?: true;
   /** The moment just after it: `pastOf(store, seq)` shows the app as it was once it was made (Roadmap f-playback). */
   readonly seq: number;
   /**
@@ -86,14 +88,27 @@ export function batchWords(batch: Pick<Batch, "intent" | "ops">): string {
   return out.length === 0 ? batch.intent : `${batch.intent} — ${out.join("; ")}`;
 }
 
+/**
+ * Whether a batch is a template's example content, by the id its host gives
+ * it: `examples` on Graview Cloud, `examples:<template>:<stamp>` from `graview
+ * apply --template --examples`. Neither is an id a client may name
+ * (`isClientBatch`, `@graview/ship`).
+ */
+const isExamples = (batch: Pick<Batch, "id">): boolean => batch.id === "examples" || batch.id.startsWith("examples:");
+
+/** What a template's example content is called in Activity, and what taking it back is called. */
+const EXAMPLES_WORDS = "Example records from the template";
+
 /** One batch as a row of Activity. */
 const changeOf = (store: { readonly schema: AnySchema }, batch: Batch, carried: ReadonlyMap<string, string> = carriedNames(store, [batch])): Change => ({
-  intent: batchWords(batch),
+  intent: isExamples(batch) ? EXAMPLES_WORDS : batchWords(batch),
+  ...(isExamples(batch) ? { examples: true as const } : {}),
   author: batch.author.kind,
   ...(batch.author.id ? { authorId: batch.author.id } : {}),
   by: batch.author,
   ...(batch.ops[0]?.via ? { via: batch.ops[0].via } : {}),
-  ...(batch.lineage ? { basis: lineageWords(batch.lineage) } : {}),
+  // A kind of thing stopped says it in its own words: its basis would say it again.
+  ...(batch.lineage && batch.lineage.stopsKind !== true ? { basis: lineageWords(batch.lineage) } : {}),
   // What a withheld op touched is not said, even the part this seat may see.
   touched: [...new Set(batch.ops.filter((op) => !isWithheld(op)).flatMap((op) => op.writes))],
   ...namesOf(batch.ops.filter((op) => !isWithheld(op)).flatMap((op) => op.writes), carried),
@@ -262,7 +277,7 @@ function DigestRow({ change, goes }: { readonly change: Change; readonly goes: (
  * the button says how many other turns would have to come along, which is
  * what the check already returns.
  */
-export function UndoTurn({ batch }: { readonly batch: string | readonly string[] }) {
+export function UndoTurn({ batch, label = "Undo" }: { readonly batch: string | readonly string[]; /** What taking it back is called, when it is not only "Undo". */ readonly label?: string }) {
   /*
    * WHO IS UNDOING. Undo is a change and the store judges it like one —
    * "what you may undo is what you may have done" — so it has to be told
@@ -290,7 +305,9 @@ export function UndoTurn({ batch }: { readonly batch: string | readonly string[]
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [store, batch, length, principal, check],
   );
-  if (lookingBack || (!check.ok && check.ops.length === 0) || !may.ok) return null;
+  // Refused, asked again as the row draws: what judges a stop, `@graview/core/tidying`, comes with the tray, which may land after this was first asked.
+  const mayNow = may.ok ? may : store.mayUndo(batch, principal);
+  if (lookingBack || (!check.ok && check.ops.length === 0) || !mayNow.ok) return null;
   const blocked = !check.ok;
   const alsoNeeded = blocked ? check.includeBatches : [];
 
@@ -340,7 +357,7 @@ export function UndoTurn({ batch }: { readonly batch: string | readonly string[]
         ...(blocked ? { borderColor: "var(--graview-warn)", color: "var(--graview-warn)" } : {}),
       }}
     >
-      {blocked ? `undo +${alsoNeeded.length}` : "undo"}
+      {blocked ? `Undo ${(typeof batch === "string" ? 1 : batch.length) + alsoNeeded.length} changes` : label}
     </button>
       {refused ? (
         <span
@@ -374,13 +391,14 @@ export function ShowAsItWas({ seq, intent }: { readonly seq: number; readonly in
       onPointerEnter={prefetchTimeline}
       onFocus={prefetchTimeline}
       onClick={() => playback.show(seq)}
-      style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", minHeight: 24, minWidth: 24, padding: "1px 6px", fontSize: "0.75rem", flex: "0 0 auto" }}
+      style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 4, minHeight: 24, minWidth: 24, padding: "1px 6px", fontSize: "0.75rem", whiteSpace: "nowrap", flex: "0 0 auto" }}
     >
       <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
         <path d="M2.5 8 a5.5 5.5 0 1 0 1.6-3.9" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         <path d="M2 2.5 V5.5 H5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         <path d="M8 5 V8 L10 9.25" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
+      As it was
     </button>
   );
 }
@@ -643,6 +661,7 @@ export function ActivityFeed({
           <li key={`change:${index}`} data-batch={change.batch} style={ACTIVITY_ROW}>
             <div data-graview-activity-head="" style={ACTIVITY_HEAD}>
               <span data-graview-activity-words="" style={ACTIVITY_WORDS}>
+                {change.examples ? change.intent : <>
                 <strong style={{ fontWeight: 600 }}>
                   {/*
                     * WHO, by its own id. "claude" was hardcoded for
@@ -660,9 +679,10 @@ export function ActivityFeed({
                 </strong>{" "}
                 <span style={{ color: "var(--graview-ink-muted)" }}>{change.intent}</span>
                 {change.basis ? <span data-graview-lineage="" style={{ color: "var(--graview-ink-faint)" }}> · {change.basis}</span> : null}
+                </>}
               </span>
               {change.batch ? <ShowAsItWas seq={change.seq} intent={change.intent} /> : null}
-              {change.batch ? <UndoTurn batch={change.batches && change.batches.length > 0 ? (change.batches.length === 1 ? change.batches[0]! : change.batches) : change.batch} /> : null}
+              {change.batch ? <UndoTurn batch={change.batches && change.batches.length > 0 ? (change.batches.length === 1 ? change.batches[0]! : change.batches) : change.batch} {...(change.examples ? { label: "Remove examples" } : {})} /> : null}
             </div>
             <div data-touched={change.touched.join(" ")} style={ACTIVITY_CHIPS}>
               {change.touched.slice(0, 4).map((id) => (
