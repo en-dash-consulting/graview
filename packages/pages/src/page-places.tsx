@@ -35,6 +35,17 @@ import { blockContextFor, compileBlocks, resolveBlocks } from "@graview/core/blo
 /** The address word that draws a kind's list or a record's page as the app draws it by itself, though a view or a place replaces it: `?drawn=built-in`. */
 export const BUILT_IN = "built-in";
 
+/**
+ * WHETHER THE ADDRESS ASKS A KIND'S LIST FOR WHAT ONLY THE LIST CAN DO. A list
+ * that opens as a place (`pages.lists.<kind>.opens`) is still that kind's
+ * list: Find writes `?q=`, a link says `?archived=true` or `?<relation>=<id>`,
+ * and a place cannot honor them, so the list is drawn. `filter` a picture
+ * narrows itself by, and says so; a place that flows is its blocks' to say.
+ */
+export function addressAsksForTheList(search: URLSearchParams, edgeKinds: readonly string[], flows: boolean): boolean {
+  return ["q", "archived", "by", "with", "past", "sort", "group", ...edgeKinds].some((word) => search.has(word)) || (flows && search.has("filter"));
+}
+
 /** The app's pictures this seat may see: registered places whose kind is live here. */
 export function placesOf<S extends AnySchema>(context: PageContext<S>): readonly Place[] {
   const views = context.views;
@@ -670,7 +681,7 @@ export function DefaultPlacePage<S extends AnySchema>({ context, asList }: { con
         {ownHeading ? null : (
           <p style={{ ...quiet, margin: 0, display: "flex", flexWrap: "wrap", gap: "4px 16px" }}>
             {kindsOfPlace(context, place).filter((kind) => !(isTheList && kind === place.kind)).map((kind, index) => (
-              <Link key={kind} to={`/${pluralSlug(store.schema, kind)}${asList && kind === place.kind ? `?drawn=${BUILT_IN}` : ""}`} style={{ ...onward, ...quiet }} {...(index === 0 ? { "data-testid": "place-as-list" } : {})}>
+              <Link key={kind} to={`/${pluralSlug(store.schema, kind)}${context.views?.arrangement?.()?.lists?.[kind]?.opens !== undefined ? `?drawn=${BUILT_IN}` : ""}`} style={{ ...onward, ...quiet }} {...(index === 0 ? { "data-testid": "place-as-list" } : {})}>
                 <Onward>All {(kind === place.kind ? plural : pluralOf(store, kind)).toLowerCase()} as a list</Onward>
               </Link>
             ))}

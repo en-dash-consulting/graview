@@ -46,6 +46,22 @@ describe("a kind's list opens as a place of its own", () => {
     expect(renamed.document.pages?.lists?.["task"]?.opens).toBe("The new board");
   });
 
+  it("changes only the list of the kind whose lens it is, when another kind has a lens of that title", () => {
+    const two = edited(document, board, { op: "add-lens", title: "Tasks by status", lens: "blocks", on: "person", options: { blocks: [{ list: "all('person')" }] } }, { op: "arrange-pages", opens: { task: "Tasks by status", person: "Tasks by status" } }).document;
+    const removed = edited(two, { op: "remove-lens", title: "Tasks by status", on: "task" }).document;
+    expect(removed.pages?.lists?.["task"]?.opens).toBeUndefined();
+    expect(removed.pages?.lists?.["person"]?.opens).toBe("Tasks by status");
+    const renamed = edited(two, { ...board, title: "The new board", replace: "Tasks by status" }).document;
+    expect(renamed.pages?.lists?.["task"]?.opens).toBe("The new board");
+    expect(renamed.pages?.lists?.["person"]?.opens).toBe("Tasks by status");
+  });
+
+  it("is named when arrange-pages is asked for nothing", () => {
+    const refused = editDocument(document, [{ op: "arrange-pages" }]);
+    if (refused.ok) throw new Error("refused");
+    expect(refused.findings[0]!.message).toMatch(/"opens"/);
+  });
+
   it("is warned of by the checker when written by hand to name no place", () => {
     const bad = { ...document, pages: { ...(document.pages ?? {}), lists: { task: { opens: "Nowhere" } } } } as GraviewDocument;
     const compiled = compileDocument(bad);

@@ -1,4 +1,4 @@
-import { fieldWords, labelOf, nounOf, type AnySchema, type DisplayChoice, type DisplayChoiceHeard, type DisplayOptionOffer, type DrawnLens, type GraviewApp } from "@graview/core";
+import { fieldWords, labelOf, nounOf, type AnySchema, type DisplayChoice, type DisplayChoiceHeard, type DisplayOptionOffer, type DisplayOptionsAsked, type DisplayOptionsHost, type DrawnLens, type GraviewApp } from "@graview/core";
 import { districtState } from "@graview/core/city";
 import { lowerFirst } from "@graview/core/words";
 import { fieldSpecOf } from "@graview/core/blocks";
@@ -6,6 +6,7 @@ import { draftView, isDraftFailure, judgeLens, lensFromSpec, recipeDraft, type D
 import type { Completion } from "@graview/tools";
 import type { ComposeChangeHost, ProposeChangeAnswer, ReshapeProposal } from "@graview/tools/reshape";
 import { BOARD_AT_MOST, fieldTypeOf, mainDate } from "./kind-shape.js";
+import { lensNarrows } from "./page-parts.js";
 
 /*
  * OTHER WAYS TO SHOW THIS (Roadmap f-display-options-switch), worked out:
@@ -44,6 +45,8 @@ export interface DisplayOption {
   readonly weight?: number;
   /** Its title, as what it draws is called. */
   readonly title: string;
+  /** What it draws, whoever offered it: no two options, nor the page as it stands, draw the same. */
+  readonly drawing: string;
   readonly drawn: DrawnLens;
   /** The change keeping it makes, as one. */
   readonly edits: readonly unknown[];
@@ -167,15 +170,19 @@ function editsOfLens(input: OptionsInput, lens: DraftLens): readonly unknown[] {
     const was = lensesOf(input.app).find((one) => one.title === input.place);
     return [{ op: "add-lens", title: input.place, ...spec, replace: input.place, ...(was?.create === false ? { create: false } : {}) }];
   }
-  return [...takesAwayWhatItOpened(input), { op: "add-lens", title: lens.title, ...spec }, { op: "set-lens-hidden", title: lens.title, on: input.kind, hidden: true }, { op: "arrange-pages", opens: { [input.kind]: lens.title } }];
+  return [{ op: "add-lens", title: lens.title, ...spec }, { op: "set-lens-hidden", title: lens.title, on: input.kind, hidden: true }, opensAs(input, lens.title)];
 }
 
-/** The lens a former keeping made for the list alone: kept off every list, nothing else stands on it once the list opens as another. */
-function takesAwayWhatItOpened(input: OptionsInput): readonly unknown[] {
-  const title = opensNow(input);
-  const was = title === undefined ? undefined : lensesOf(input.app).find((one) => one.title === title);
-  return was?.hidden === true ? [{ op: "remove-lens", title, on: input.kind }] : [];
-}
+const opensAs = (input: OptionsInput, title: string) => ({ op: "arrange-pages", opens: { [input.kind]: title } });
+
+/**
+ * A LENS KEPT OFF THE LISTS THAT DRAWS THE SAME: used again rather than made
+ * twice. Keeping never removes a lens, since nothing says who wrote one kept
+ * off the lists and an author's may be what the app opens on; so a former
+ * keeping's stays, and what a kind can hold of them is what the kind can be
+ * drawn as.
+ */
+const hiddenDrawing = (input: OptionsInput, drawing: string) => lensesOf(input.app).find((one) => one.hidden === true && overKind(one, input.kind) && drawingOf(one) === drawing);
 
 /** Passed the host's composer: a change it would refuse is not offered. */
 function passes(input: OptionsInput, edits: readonly unknown[]): boolean {
@@ -194,6 +201,12 @@ function freeLensTitle(app: OptionsInput["app"], title: string): string {
   for (let n = 2; ; n++) if (!taken.has(`${title} ${n}`)) return `${title} ${n}`;
 }
 
+/** A place drawn by a lens that says more than the records: another way would lose that, and show what keeping it would not be asked to. */
+const placeSaysMore = (input: OptionsInput): boolean => {
+  const now = input.place === undefined ? undefined : lensesOf(input.app).find((one) => one.title === input.place);
+  return now !== undefined && lensNarrows(now, input.kind);
+};
+
 /** What is shown now, as a lens draws: never offered as another way. */
 function drawingNow(input: OptionsInput): string | undefined {
   const title = input.place ?? opensNow(input);
@@ -203,51 +216,93 @@ function drawingNow(input: OptionsInput): string | undefined {
 
 /** A lens somebody wrote, judged and checked: a host's, or a model's. */
 function judged(input: OptionsInput, spec: unknown, about: Pick<DisplayOption, "from" | "label" | "phrase"> & { readonly hostId?: string; readonly weight?: number; readonly key: string }): DisplayOption | undefined {
+  if (placeSaysMore(input)) return undefined;
   const written = lensFromSpec(spec);
+  const drawing = drawingOf(written);
+  if (drawing === drawingNow(input)) return undefined;
   const lens: DraftLens = { ...written, on: input.kind, title: freeLensTitle(input.app, written.title) };
   const verdict = judgeLens(input.app as GraviewApp<AnySchema>, lens, input.sight);
   if (!verdict.ok) return undefined;
   const edits = editsOfLens(input, lens);
   if (!passes(input, edits)) return undefined;
-  return { ...about, shape: shapeOfLens(lens), title: lens.title, drawn: verdict.drawn, edits };
+  return { ...about, shape: shapeOfLens(lens), title: lens.title, drawing, drawn: verdict.drawn, edits };
 }
 
 /** THE WAYS TO SHOW THIS PAGE, judged and ranked, the page as it stands not among them, and at most `MOST_OPTIONS`: at least one of a host's where it handed any in. */
 export function displayOptionsFor(input: OptionsInput): readonly DisplayOption[] {
-  if (input.nodes.length === 0) return [];
+  if (input.nodes.length === 0 || placeSaysMore(input)) return [];
   const now = drawingNow(input);
   const seen = new Set<string>(now ? [now] : []);
   const all: DisplayOption[] = [];
   // The places the kind already has: a kind's list may open as one, with nothing new made.
   if (input.place === undefined) {
     for (const lens of lensesOf(input.app)) {
-      if (lens.title === undefined || lens.hidden === true || !overKind(lens, input.kind) || lens.title === opensNow(input)) continue;
+      if (lens.title === undefined || lens.hidden === true || !overKind(lens, input.kind) || lens.title === opensNow(input) || lensNarrows(lens, input.kind)) continue;
       const verdict = judgeLens({ ...input.app, lenses: lensesOf(input.app).filter((one) => one !== lens) } as never, { ...lens, on: input.kind }, input.sight);
       if (!verdict.ok) continue;
-      const edits = [...takesAwayWhatItOpened(input), { op: "arrange-pages", opens: { [input.kind]: lens.title } }];
+      const edits = [opensAs(input, lens.title)];
       if (!passes(input, edits)) continue;
-      seen.add(drawingOf(lens));
-      all.push({ key: `place:${lens.title}`, label: lens.title, phrase: `“${lens.title}”`, shape: shapeOfLens(lens), from: "place", title: lens.title, drawn: verdict.drawn, edits });
+      const drawing = drawingOf(lens);
+      seen.add(drawing);
+      all.push({ key: `place:${lens.title}`, label: lens.title, phrase: `“${lens.title}”`, shape: shapeOfLens(lens), from: "place", title: lens.title, drawing, drawn: verdict.drawn, edits });
     }
   }
   for (const candidate of candidatesOf(input)) {
     const draft = recipeDraft(candidate.recipe, { app: input.app as GraviewApp<AnySchema>, ...(input.sight ? { sight: input.sight } : {}) });
-    if (isDraftFailure(draft) || seen.has(drawingOf(draft.lens))) continue;
-    const edits = editsOfLens(input, draft.lens);
+    if (isDraftFailure(draft)) continue;
+    const drawing = drawingOf(draft.lens);
+    if (seen.has(drawing)) continue;
+    const again = input.place === undefined ? hiddenDrawing(input, drawing) : undefined;
+    const edits = again ? [opensAs(input, again.title)] : editsOfLens(input, draft.lens);
     if (!passes(input, edits)) continue;
-    seen.add(drawingOf(draft.lens));
-    all.push({ key: `${candidate.shape}:${drawingOf(draft.lens)}`, label: candidate.label, phrase: candidate.phrase, shape: candidate.shape, from: "graview", title: draft.lens.title, drawn: draft.drawn, edits });
+    seen.add(drawing);
+    all.push({ key: `${candidate.shape}:${drawing}`, label: candidate.label, phrase: candidate.phrase, shape: candidate.shape, from: "graview", title: again?.title ?? draft.lens.title, drawing, drawn: draft.drawn, edits });
   }
   for (const offer of input.offers ?? []) {
     const option = optionOfOffer(input, offer);
-    if (option) all.push(option);
+    if (!option || seen.has(option.drawing)) continue;
+    seen.add(option.drawing);
+    all.push(option);
   }
   return chosenFirst(all, input.choices ?? [], input.kind);
 }
 
-/** One option a host handed in, judged and checked, or nothing. */
-export function optionOfOffer(input: OptionsInput, offer: DisplayOptionOffer): DisplayOption | undefined {
-  return judged(input, offer.lens, { key: `host:${offer.id}`, label: offer.label, phrase: lowerFirst(offer.label), from: "host", hostId: offer.id, ...(offer.weight !== undefined ? { weight: offer.weight } : {}) });
+/** Whether what a host said is an offer at all: it says who it is and what it is called. */
+const isOffer = (offer: unknown): offer is DisplayOptionOffer => {
+  const said = offer as { readonly id?: unknown; readonly label?: unknown; readonly lens?: unknown } | null;
+  return typeof said?.id === "string" && said.id !== "" && typeof said.label === "string" && said.label !== "" && typeof said.lens === "object" && said.lens !== null;
+};
+
+/** One option a host handed in, judged and checked, or nothing: what a host says never takes the page down. */
+export function optionOfOffer(input: OptionsInput, offer: unknown): DisplayOption | undefined {
+  if (!isOffer(offer)) return undefined;
+  try {
+    return judged(input, offer.lens, { key: `host:${offer.id}`, label: offer.label, phrase: lowerFirst(offer.label), from: "host", hostId: offer.id, ...(typeof offer.weight === "number" ? { weight: offer.weight } : {}) });
+  } catch {
+    return undefined;
+  }
+}
+
+/** What a host hands in, now or later; what throws or is no list is nothing said. */
+export function offersFrom(host: DisplayOptionsHost | undefined, asked: DisplayOptionsAsked): { readonly now: readonly unknown[]; readonly late?: Promise<readonly unknown[]> } {
+  try {
+    const said: unknown = host?.offers?.(asked);
+    if (Array.isArray(said)) return { now: said };
+    if (typeof (said as { then?: unknown } | null | undefined)?.then === "function") return { now: [], late: Promise.resolve(said).then((late) => (Array.isArray(late) ? late : []), () => []) };
+  } catch {
+    // Nothing said.
+  }
+  return { now: [] };
+}
+
+/** What a host remembers being chosen, the choices that read as choices. */
+export function choicesFrom(host: DisplayOptionsHost | undefined): readonly DisplayChoice[] {
+  try {
+    const said: unknown = host?.chosen?.();
+    return Array.isArray(said) ? said.filter(isChoice) : [];
+  } catch {
+    return [];
+  }
 }
 
 /**
@@ -287,6 +342,10 @@ function chosenFirst(options: readonly DisplayOption[], choices: readonly Displa
 
 // ── what was chosen, in this browser ────────────────────────────────────────
 
+const isChoice = (one: unknown): one is DisplayChoice => {
+  const said = one as Partial<DisplayChoice> | null;
+  return typeof said?.key === "string" && typeof said.shape === "string" && typeof said.kind === "string";
+};
 const CHOICES = (app: string) => `graview:display-choices:${app}`;
 const MOST_REMEMBERED = 40;
 /* A private window, a sandboxed frame: remembered for this page only. */
@@ -296,7 +355,7 @@ const HELD = /* @__PURE__ */ new Map<string, readonly DisplayChoice[]>();
 export function readChoices(app: string): readonly DisplayChoice[] {
   try {
     const kept: unknown = JSON.parse(localStorage.getItem(CHOICES(app)) ?? "null");
-    if (Array.isArray(kept)) return kept.filter((one: DisplayChoice | null) => typeof one?.key === "string" && typeof one.shape === "string" && typeof one.kind === "string");
+    if (Array.isArray(kept)) return kept.filter(isChoice);
   } catch {
     // Read from what this page holds instead.
   }
@@ -400,7 +459,7 @@ export function createOptionSwitch(given: OptionSwitchOptions): OptionSwitch {
     },
     join(options) {
       if (state.phase !== "choosing") return;
-      const fresh = options.filter((one) => !state.options.some((other) => other.key === one.key));
+      const fresh = options.filter((one) => !state.options.some((other) => other.key === one.key || other.drawing === one.drawing));
       if (fresh.length === 0) return;
       // They join at the most an offer shows: what Graview worked out gives way, from the last, and never what is shown.
       const joined = [...state.options, ...fresh];
@@ -432,12 +491,14 @@ export function createOptionSwitch(given: OptionSwitchOptions): OptionSwitch {
     async undo() {
       const back = undoIt;
       if (state.phase !== "kept" || !back) return;
+      // Taken before it is called: a second press finds nothing to undo.
+      undoIt = undefined;
       try {
         await back();
       } catch {
+        undoIt = back;
         return set({ said: "It couldn't be put back." });
       }
-      undoIt = undefined;
       if (kept && given.appKey !== undefined) forgetChoice(given.appKey, kept.key, kept.at);
       hear(true);
       const { note: _note, ...rest } = state;

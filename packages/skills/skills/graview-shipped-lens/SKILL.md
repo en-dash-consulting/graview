@@ -130,7 +130,9 @@ They are drawn ahead in real records, so a flip is instant, and nothing is
 written until Keep, which is one change with one Undo. It needs
 `onProposeChange` and `composeChange` from the host, and no model.
 
-Kept on a place, the lens is drawn in the place's own title. Kept on a list,
+A place that keeps to some records (`where`, a `limit`, hidden columns) or says
+more than them is offered none. Kept on a place, the lens is drawn in the
+place's own title. Kept on a list,
 it is a lens off the bar and `pages.lists.<kind>.opens`, which you may also
 declare yourself:
 
@@ -140,7 +142,8 @@ declare yourself:
 
 `arrange-pages` sets it (`"opens": { "task": "Tasks by status" }`, `null`
 gives the list back). The list's address then draws that place under the
-list's heading; `?drawn=built-in` is the list itself. `list-opens-no-place`
+list's heading; `?drawn=built-in` is the list itself, as is an address that
+narrows it (`?q=`, `?archived=`, a relation). `list-opens-no-place`
 warns of a title that is no lens over the kind.
 
 A design that replaces a kind's list page (`graview-pages-design`) is offered

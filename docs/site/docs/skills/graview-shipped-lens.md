@@ -63,13 +63,13 @@ The checker holds every titled lens and says, at its path, what it will not draw
 
 A lens need not be chosen in advance. On a routed page, "Other ways to show this" (the page's menu, under More… or by typing) offers whoever may change the app two to four ways to show a kind's list or a place: a board where a choice has values, a calendar where a date has them this month, a grid where a link joins two kinds, cards, rows, and the places the kind already has. They are drawn ahead in real records, so a flip is instant, and nothing is written until Keep, which is one change with one Undo. It needs `onProposeChange` and `composeChange` from the host, and no model.
 
-Kept on a place, the lens is drawn in the place's own title. Kept on a list, it is a lens off the bar and `pages.lists.<kind>.opens`, which you may also declare yourself:
+A place that keeps to some records (`where`, a `limit`, hidden columns) or says more than them is offered none. Kept on a place, the lens is drawn in the place's own title. Kept on a list, it is a lens off the bar and `pages.lists.<kind>.opens`, which you may also declare yourself:
 
 ```json
 "pages": { "lists": { "task": { "opens": "Tasks by status" } } }
 ```
 
-`arrange-pages` sets it (`"opens": { "task": "Tasks by status" }`, `null` gives the list back). The list's address then draws that place under the list's heading; `?drawn=built-in` is the list itself. `list-opens-no-place` warns of a title that is no lens over the kind.
+`arrange-pages` sets it (`"opens": { "task": "Tasks by status" }`, `null` gives the list back). The list's address then draws that place under the list's heading; `?drawn=built-in` is the list itself, as is an address that narrows it (`?q=`, `?archived=`, a relation). `list-opens-no-place` warns of a title that is no lens over the kind.
 
 A design that replaces a kind's list page (`graview-pages-design`) is offered no other ways there, since a kept one would not change its page; a place still is. It may read `pages.lists.<kind>.opens` to honor one set elsewhere.
 

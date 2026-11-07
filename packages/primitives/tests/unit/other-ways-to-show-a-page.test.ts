@@ -7,7 +7,7 @@ import { createViews } from "@graview/react";
 import type { MenuTarget } from "@graview/react/provider";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import tasks from "../../../core/tests/document/fixtures/tasks.gdd.json";
-import { createOptionSwitch, displayOptionsFor, forgetChoice, keepChoice, modelOption, rankOptions, readChoices, type DisplayOption } from "../../src/display-options.js";
+import { choicesFrom, createOptionSwitch, displayOptionsFor, forgetChoice, keepChoice, modelOption, offersFrom, optionOfOffer, rankOptions, readChoices, type DisplayOption } from "../../src/display-options.js";
 import { displayOptionsSection, type SectionHere } from "../../src/section-menu.js";
 
 /**
@@ -143,6 +143,22 @@ describe("keeping one", () => {
     expect(failing.get().said).toBe("It couldn't be kept.");
   });
 
+  it("calls the host's undo once, however fast Undo is pressed, and can try again if it failed", async () => {
+    let calls = 0;
+    let fail = true;
+    const flips = switchOf({ propose: (async () => ({ applied: true, undo: async () => { calls += 1; await Promise.resolve(); if (fail) throw new Error("no"); } })) as never });
+    flips.flip(flips.get().options[0]!.key);
+    await flips.keep();
+    await Promise.all([flips.undo(), flips.undo()]);
+    expect(calls).toBe(1);
+    expect(flips.get().phase).toBe("kept");
+    expect(flips.get().said).toBe("It couldn't be put back.");
+    fail = false;
+    await Promise.all([flips.undo(), flips.undo()]);
+    expect(calls).toBe(2);
+    expect(flips.get().phase).toBe("undone");
+  });
+
   it("has nothing to keep on the page as it stands", async () => {
     const asks = propose();
     const flips = switchOf({ propose: asks as never });
@@ -182,7 +198,7 @@ describe("a choice", () => {
 });
 
 describe("a host's options", () => {
-  const offer = { id: "by-who", label: "What others kept", lens: { lens: "columns", title: "Tasks by what others kept", bindings: { task: { column: "status" } } } } as const;
+  const offer = { id: "by-who", label: "What others kept", lens: { lens: "blocks", title: "Tasks others kept", options: { blocks: [{ list: "all('task') where status != 'done'", as: "card" }] } } } as const;
 
   it("join in, judged as the others are, and hear which was kept", async () => {
     const options = displayOptionsFor(input(undefined, { offers: [offer, { id: "broken", label: "Broken", lens: { lens: "calendar", title: "Nope", bindings: { task: { start: "nothing" } } } }] }));
@@ -211,6 +227,101 @@ describe("a host's options", () => {
     expect(flips.get().options.length).toBe(options.length);
     flips.drop(shown);
     expect(flips.get().shown).toBeNull();
+  });
+});
+
+describe("what a host hands in", () => {
+  const good = { id: "good", label: "A good one", lens: { lens: "blocks", title: "Good", options: { blocks: [{ list: "all('task') where status != 'done'", as: "card" }] } } };
+
+  it("takes a malformed offer as none, and keeps the good ones beside it", () => {
+    const bad: unknown[] = [null, 3, "x", {}, { id: 1, label: "No" }, { id: "no-label", lens: good.lens }, { id: "x", label: 7, lens: good.lens }, { id: "y", label: "", lens: good.lens }, { id: "z", label: "No lens" }];
+    const options = displayOptionsFor(input(undefined, { offers: [...bad, good] as never }));
+    expect(options.filter((one) => one.from === "host").map((one) => one.hostId)).toEqual(["good"]);
+    for (const one of bad) expect(optionOfOffer(input(), one as never)).toBeUndefined();
+  });
+
+  it("takes an offers or chosen that throws as nothing said, and a late list that is no list as none", async () => {
+    expect(offersFrom({ offers: () => { throw new Error("down"); } }, { kind: "task", name: "Tasks" })).toEqual({ now: [] });
+    expect(offersFrom({ offers: () => 3 as never }, { kind: "task", name: "Tasks" })).toEqual({ now: [] });
+    expect(offersFrom(undefined, { kind: "task", name: "Tasks" })).toEqual({ now: [] });
+    expect(await offersFrom({ offers: () => Promise.resolve(3 as never) }, { kind: "task", name: "Tasks" }).late).toEqual([]);
+    expect(await offersFrom({ offers: () => Promise.reject(new Error("down")) }, { kind: "task", name: "Tasks" }).late).toEqual([]);
+    expect(choicesFrom({ chosen: () => { throw new Error("down"); } })).toEqual([]);
+    const fine = { key: "k", kind: "task", shape: "cards", from: "host", at: "2026-09-01" };
+    expect(choicesFrom({ chosen: () => [null, { key: 1 }, fine] as never })).toEqual([fine]);
+    expect(choicesFrom({ chosen: () => 3 as never })).toEqual([]);
+  });
+
+  it("is not offered where it draws what the place already shows, or what another option draws", () => {
+    const same = { id: "same", label: "The same", lens: { lens: "columns", title: "Same", bindings: { task: { column: "status" } } } };
+    expect(displayOptionsFor(input(undefined, { place: "The board", offers: [same] })).some((one) => one.hostId === "same")).toBe(false);
+    expect(optionOfOffer(input(undefined, { place: "The board" }), same)).toBeUndefined();
+    // On the list, "The board" is already on offer: the same drawing is not offered twice.
+    expect(displayOptionsFor(input(undefined, { offers: [same] })).some((one) => one.hostId === "same")).toBe(false);
+  });
+
+  it("joins late without doubling what is on offer", () => {
+    const options = displayOptionsFor(input());
+    const flips = createOptionSwitch({ options, name: "Tasks", propose: (async () => "applied") as never });
+    flips.join([{ ...options[0]!, key: "host:twin", from: "host" }]);
+    expect(flips.get().options.length).toBe(options.length);
+  });
+});
+
+describe("what keeping one takes away", () => {
+  const authorsHidden = {
+    ...document,
+    lenses: [...(document.lenses ?? []), { name: "columns", title: "The authors", on: "task", hidden: true, bindings: { task: { column: "status" } } }],
+    pages: { first: "The authors", lists: { task: { opens: "The authors" } } },
+  } as unknown as GraviewDocument;
+  const hiddenCompiled = compileDocument(authorsHidden);
+  if (!hiddenCompiled.ok) throw new Error("the fixture compiles");
+
+  it("never removes a lens an author wrote, and the app still opens where it did", () => {
+    const options = displayOptionsFor(input(undefined, { app: hiddenCompiled.app as never, document: authorsHidden }));
+    expect(options.length).toBeGreaterThan(0);
+    for (const one of options) {
+      expect((one.edits as readonly { op: string }[]).some((edit) => edit.op === "remove-lens")).toBe(false);
+      const composed = composeAppChange({ document: authorsHidden, edits: one.edits as never });
+      if (!composed.ok) throw new Error(composed.refused);
+      expect(composed.document.lenses?.some((lens) => lens.title === "The authors")).toBe(true);
+      expect(composed.document.pages?.first).toBe("The authors");
+    }
+  });
+
+  it("uses again the lens a former keeping made, rather than making another", () => {
+    const first = displayOptionsFor(input()).find((one) => one.shape === "cards")!;
+    const composed = composeAppChange({ document, edits: first.edits as never });
+    if (!composed.ok) throw new Error(composed.refused);
+    const undone = composeAppChange({ document: composed.document, edits: [{ op: "arrange-pages", opens: { task: null } }] });
+    if (!undone.ok) throw new Error(undone.refused);
+    const again = displayOptionsFor(input(undefined, { app: undone.app as never, document: undone.document })).find((one) => one.shape === "cards")!;
+    expect(again.edits).toEqual([{ op: "arrange-pages", opens: { task: first.title } }]);
+  });
+});
+
+describe("a place that says more than its records", () => {
+  const narrowing = { op: "add-lens", title: "Open tasks", lens: "blocks", on: "task", options: { blocks: [{ list: "all('task') where status != 'done'", as: "card" }] } };
+  const composed = composeAppChange({ document, edits: [narrowing as never] });
+  if (!composed.ok) throw new Error(composed.refused);
+  const on = { app: composed.app as never, document: composed.document };
+
+  it("is offered no options, which would widen it", () => {
+    expect(displayOptionsFor(input(undefined, { ...on, place: "Open tasks" }))).toEqual([]);
+    expect(optionOfOffer(input(undefined, { ...on, place: "Open tasks" }), { id: "x", label: "X", lens: { lens: "columns", title: "X", bindings: { task: { column: "status" } } } })).toBeUndefined();
+  });
+
+  it("is not offered to a kind's list to open as, which would keep records from it", () => {
+    expect(displayOptionsFor(input(undefined, on)).some((one) => one.label === "Open tasks")).toBe(false);
+  });
+
+  it("is not on the menu at all", () => {
+    window.document.body.innerHTML = `<main data-graview-page-main=""><h1>Open tasks</h1></main>`;
+    const place = { about: ["aggregate:task"], place: "open-tasks", face: "pages", page: { about: ["aggregate:task"], place: "open-tasks", at: window.document.querySelector("h1")! } } as unknown as MenuTarget;
+    const here = { aiDesk: {}, ai: { off: true }, store: storeOf(), principal: { kind: "human", id: "p1", roles: ["owner"] }, onProposeChange: () => "applied", composeChange: compose, app: composed.app, views: { places: () => [{ as: "open-tasks", title: "Open tasks", kind: "task" }] } } as unknown as SectionHere;
+    expect(displayOptionsSection(place, here)).toBeNull();
+    const plain = { ...here, app: app, views: { places: () => [{ as: "the-board", title: "The board", kind: "task" }] } } as unknown as SectionHere;
+    expect(displayOptionsSection({ ...place, page: { ...place.page!, place: "the-board" } }, plain)).not.toBeNull();
   });
 });
 
@@ -247,6 +358,13 @@ describe("with no model", () => {
     const place = { about: ["aggregate:task"], place: "the-board", face: "pages", page: { about: ["aggregate:task"], place: "the-board", at: window.document.querySelector("h1")! } } as unknown as MenuTarget;
     const placed = here({ views: { ...views, places: () => [{ as: "the-board", title: "The board", kind: "task" }] } as never });
     expect(displayOptionsSection(place, placed, designsTasks)).not.toBeNull();
+  });
+
+  it("offers nothing on a kind whose records are all retired, which would then say there are no other ways", () => {
+    const lived = compileDocument({ ...document, kinds: { ...document.kinds, task: { ...document.kinds["task"], lifecycle: { field: "status", retired: ["done"] } } } } as never);
+    if (!lived.ok) throw new Error("the fixture compiles");
+    const retiredStore = new Store<AnySchema>({ schema: lived.app.schema as AnySchema, mutations: lived.app.mutations ?? [], policy: lived.app.policy!, snapshot: { nodes: [{ id: "t1", kind: "task", label: "Old", status: "done" }], edges: [] } as never });
+    expect(displayOptionsSection(page(), here({ store: retiredStore, app: lived.app as never }))).toBeNull();
   });
 
   it("offers nothing on a kind with no records, nor on a page that shows no list", () => {

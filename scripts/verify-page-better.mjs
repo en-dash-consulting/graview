@@ -59,6 +59,14 @@
  *   aReaderIsOfferedNoOtherWays
  *   onAPhoneTheSwitchFitsAndTheKeyboardStaysOnIt
  *   aListDrawnAsTheAppDrawsItIsOfferedNoOtherWays
+ *   aKeptOptionStillNarrowsByTheAddress
+ *   fromAnotherPlaceTheWayToTheListIsTheList
+ *   escapeDuringKeepLeavesTheChangeWithItsUndo
+ *   aPersonWhoMayNoLongerChangeTheAppHasTheSwitchTaken
+ *   underMemoryRoutingLeavingThePageClosesTheSwitch
+ *   oneEscapeClosesTheMenuOverTheSwitchAndNotTheSwitch
+ *   theKeyboardGoesBackToTheRowOnEscapeAndOnClose
+ *   flippingFastAsItOpensSettlesOnTheLastPressed
  *
  * And on the todo example, whose product design (`thingsDesign`) replaces
  * its kinds' lists, with its development host (`__todoDevHost`,
@@ -301,7 +309,9 @@ async function serveHost() {
             window.__handle.setApp(composed.app, handDown(storeOver(composed.app, current.store.graph.snapshot()), current.store));
             return { undo: () => window.__handle.setApp(current.app, current.store) };
           },
-          onProposeChange: (proposal) => {
+          onProposeChange: async (proposal) => {
+            // ?slowkeep=800: a host that takes its time to answer a Keep.
+            if (asked.get("slowkeep")) await new Promise((done) => setTimeout(done, Number(asked.get("slowkeep"))));
             const before = current;
             const composed = changed(proposal.edits ?? []);
             current = { app: composed.app, document: composed.document, base: before.base, store: handDown(storeOver(composed.app, before.store.graph.snapshot()), before.store) };
@@ -315,14 +325,13 @@ async function serveHost() {
           height: "100%",
           fonts: false,
           studio: false,
-          routing: "address",
-          basePath: "${BASE}/",
+          ...(asked.get("memory") === "1" ? {} : { routing: "address", basePath: "${BASE}/" }),
           ai: asked.get("noai") === "1" ? { off: true } : window.__pageAi,
           // ?offers=1: a host that hands in one more way to show the tasks, late, and hears what was kept.
           ...(asked.get("offers") === "1"
             ? {
                 displayOptions: {
-                  offers: () => new Promise((done) => setTimeout(() => done([{ id: "others-kept", label: "What others kept", weight: 1, lens: { lens: "columns", title: "Tasks others kept", bindings: { task: { column: "status" } } } }]), 300)),
+                  offers: () => new Promise((done) => setTimeout(() => done([{ id: "others-kept", label: "What others kept", weight: 1, lens: { lens: "blocks", title: "Tasks others kept", options: { blocks: [{ list: "all('task') where status != 'done'", as: "card" }] } } }]), 300)),
                   onChoice: (heard) => (window.__heard ??= []).push(heard),
                 },
               }
@@ -1171,12 +1180,12 @@ try {
   const OPTION = '[data-testid="display-option"]';
   const PANE = '[data-testid="display-option-pane"]';
   /** The menu by Shift+F10 on the page's title, the row by its words, and Enter. */
-  const otherWaysByKeyboard = async (on) => {
-    await on.evaluate(() => {
-      const title = document.querySelector("[data-graview-page-title]");
-      title.setAttribute("tabindex", "-1");
+  const otherWaysByKeyboard = async (on, from) => {
+    await on.evaluate((selector) => {
+      const title = document.querySelector(selector ?? "[data-graview-page-title]");
+      if (!selector) title.setAttribute("tabindex", "-1");
       title.focus();
-    });
+    }, from);
     await on.keyboard.press("Shift+F10");
     await on.waitForSelector(MENU, { timeout: 10_000 });
     // A letter typed anywhere in the menu goes into its field, and what it filters to is lit for Enter.
@@ -1431,6 +1440,144 @@ try {
     const rows = await rowsOfMenu(page, `${MAIN} [data-graview-page-title]`);
     report.checks.aListDrawnAsTheAppDrawsItIsOfferedNoOtherWays = { rows, ok: rows.length > 0 && !rows.includes("other-ways") };
     await page.keyboard.press("Escape");
+  }
+
+  const shownOption = (on) => on.waitForFunction(() => document.querySelector('[data-testid="display-option"][aria-checked="true"]:not([data-option="__now__"])'), null, { timeout: 5000 });
+  const barGone = (on, ms = 5000) => on.waitForSelector("[data-better-bar]", { state: "detached", timeout: ms }).then(() => true, () => false);
+  const goTo = async (on, path) => {
+    await on.evaluate((to) => window.__handle.setPath(to), path);
+    await on.waitForTimeout(250);
+  };
+  const listed = (on) => on.evaluate(() => [...document.querySelectorAll('[data-graview-page-main] [data-graview-listed], [data-graview-page-main] [data-graview-record]')].filter((one) => one.getBoundingClientRect().height > 0).length);
+  const inPlace = (on) => on.evaluate(() => Boolean(document.querySelector('[data-testid="place-lens"]')));
+
+  reach("aKeptOptionStillNarrowsByTheAddress");
+  {
+    await ready(page, "/tasks", "?noai=1");
+    await otherWaysByKeyboard(page);
+    await shownOption(page);
+    await page.click(`${OPTION}:has-text("Cards")`);
+    await page.click('[data-testid="section-keep"]');
+    await page.waitForSelector('[data-section-phase="options-kept"]', { timeout: 15_000 });
+    await page.waitForSelector('[data-testid="place-lens"]', { timeout: 15_000 });
+    await page.click('[data-testid="section-close"]');
+    const steps = {};
+    await goTo(page, "/tasks?q=brief");
+    steps.found = { place: await inPlace(page), listed: await listed(page) };
+    await goTo(page, "/tasks?archived=true");
+    steps.archived = { place: await inPlace(page) };
+    await goTo(page, "/tasks?filter=status:doing");
+    steps.filtered = { place: await inPlace(page), listed: await listed(page) };
+    await goTo(page, "/tasks");
+    steps.plain = { place: await inPlace(page) };
+    report.checks.aKeptOptionStillNarrowsByTheAddress = { steps, ok: !steps.found.place && steps.found.listed === 1 && !steps.archived.place && !steps.filtered.place && steps.filtered.listed === 2 && steps.plain.place };
+
+    reach("fromAnotherPlaceTheWayToTheListIsTheList");
+    await goTo(page, "/places/the-board");
+    const toList = await page.evaluate(() => document.querySelector('[data-testid="place-as-list"]')?.getAttribute("href"));
+    report.checks.fromAnotherPlaceTheWayToTheListIsTheList = { toList, ok: /\/tasks\?drawn=built-in$/.test(toList ?? "") };
+    await nowBare(page);
+  }
+
+  reach("escapeDuringKeepLeavesTheChangeWithItsUndo");
+  {
+    await ready(page, "/tasks", "?noai=1&slowkeep=800");
+    await otherWaysByKeyboard(page);
+    await shownOption(page);
+    await page.click(`${OPTION}:has-text("Cards")`);
+    await page.click('[data-testid="section-keep"]');
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(400);
+    const during = await page.evaluate(() => Boolean(document.querySelector("[data-better-bar]")));
+    await page.waitForSelector('[data-section-phase="options-kept"]', { timeout: 15_000 });
+    await page.waitForFunction(() => document.activeElement?.getAttribute("data-testid") === "section-undo", null, { timeout: 5000 });
+    await page.keyboard.press("Enter");
+    await page.waitForSelector('[data-section-phase="options-undone"]', { timeout: 15_000 });
+    const undone = await page.evaluate(() => window.__changes.undone);
+    report.checks.escapeDuringKeepLeavesTheChangeWithItsUndo = { during, undone, ok: during && undone === 1 };
+    await page.keyboard.press("Escape");
+    await nowBare(page);
+  }
+
+  reach("aPersonWhoMayNoLongerChangeTheAppHasTheSwitchTaken");
+  {
+    await ready(page, "/tasks", "?noai=1");
+    await otherWaysByKeyboard(page);
+    await shownOption(page);
+    await page.evaluate(() => window.__handle.setSeat({ kind: "human", id: "v1", roles: ["viewer"] }));
+    const gone = await barGone(page);
+    const left = await page.evaluate(() => ({ stage: Boolean(document.querySelector('[data-testid="display-options-stage"]')), applied: window.__changes.applied, focus: document.activeElement?.tagName }));
+    report.checks.aPersonWhoMayNoLongerChangeTheAppHasTheSwitchTaken = { gone, left, ok: gone && !left.stage && left.applied === 0 && left.focus !== "BODY" };
+  }
+
+  reach("underMemoryRoutingLeavingThePageClosesTheSwitch");
+  {
+    await page.goto(URL_OF("/", "?noai=1&memory=1"));
+    await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+    await goTo(page, "/tasks");
+    await page.waitForSelector(`${MAIN} [data-graview-page-title]`, { timeout: 30_000 });
+    const before = await page.evaluate(() => location.pathname);
+    await otherWaysByKeyboard(page);
+    await shownOption(page);
+    await goTo(page, "/people");
+    const gone = await barGone(page);
+    const after = await page.evaluate(() => ({ path: location.pathname, stage: Boolean(document.querySelector('[data-testid="display-options-stage"]')) }));
+    report.checks.underMemoryRoutingLeavingThePageClosesTheSwitch = { gone, addressStayed: after.path === before, stage: after.stage, ok: gone && after.path === before && !after.stage };
+  }
+
+  reach("oneEscapeClosesTheMenuOverTheSwitchAndNotTheSwitch");
+  {
+    await ready(page, "/tasks", "?noai=1");
+    await otherWaysByKeyboard(page);
+    await shownOption(page);
+    // A right-click within 700 ms of a keyboard gesture is that gesture's own, by the menu's rule.
+    await page.waitForTimeout(800);
+    await menuOn(page, "[data-graview-page-title]");
+    await page.keyboard.press("Escape");
+    await page.waitForSelector(MENU, { state: "detached", timeout: 5000 });
+    await page.waitForTimeout(100);
+    const stayed = await page.evaluate(() => Boolean(document.querySelector("[data-better-bar]")));
+    await page.keyboard.press("Escape");
+    const gone = await barGone(page);
+    report.checks.oneEscapeClosesTheMenuOverTheSwitchAndNotTheSwitch = { stayed, gone, ok: stayed && gone };
+  }
+
+  reach("theKeyboardGoesBackToTheRowOnEscapeAndOnClose");
+  {
+    const ROW_LINK = `${MAIN} [data-graview-listed] a, ${MAIN} [data-graview-record] a`;
+    const isTheRow = () => page.evaluate((selector) => document.activeElement === document.querySelector(selector), ROW_LINK);
+    await ready(page, "/tasks", "?noai=1");
+    await otherWaysByKeyboard(page, ROW_LINK);
+    await shownOption(page);
+    await page.keyboard.press("Escape");
+    await barGone(page);
+    const byEscape = await isTheRow();
+    await otherWaysByKeyboard(page, ROW_LINK);
+    await shownOption(page);
+    await page.click('[data-testid="section-close"]');
+    await barGone(page);
+    const byClose = await isTheRow();
+    report.checks.theKeyboardGoesBackToTheRowOnEscapeAndOnClose = { byEscape, byClose, ok: byEscape && byClose };
+  }
+
+  reach("flippingFastAsItOpensSettlesOnTheLastPressed");
+  {
+    // While a host's late offer is still on its way, as fast as keys can go.
+    await ready(page, "/tasks", "?noai=1&offers=1");
+    await otherWaysByKeyboard(page);
+    for (let press = 0; press < 13; press++) await page.keyboard.press("ArrowRight");
+    await page.waitForSelector(`${OPTION}:has-text("What others kept")`, { timeout: 5000 });
+    for (let press = 0; press < 13; press++) await page.keyboard.press("ArrowRight");
+    await page.waitForTimeout(100);
+    const seen = await page.evaluate(() => ({
+      checked: document.querySelector('[data-testid="display-option"][aria-checked="true"]')?.getAttribute("data-option"),
+      stage: document.querySelector('[data-testid="display-options-stage"]')?.getAttribute("data-display-shown"),
+      shownPanes: [...document.querySelectorAll('[data-testid="display-option-pane"][data-shown]')].map((one) => one.getAttribute("data-display-option")),
+      focusOn: document.activeElement?.getAttribute("aria-checked"),
+    }));
+    report.checks.flippingFastAsItOpensSettlesOnTheLastPressed = { ...seen, ok: seen.checked === seen.stage && seen.focusOn === "true" && (seen.checked === "__now__" ? seen.shownPanes.length === 0 : seen.shownPanes.length === 1 && seen.shownPanes[0] === seen.checked) };
+    await page.keyboard.press("Escape");
+    await nowBare(page);
   }
 
   /*

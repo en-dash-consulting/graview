@@ -1,8 +1,8 @@
 import { retryingImport } from "@graview/core/retry";
-import type { AnySchema } from "@graview/core";
+import { isCurrent, type AnySchema } from "@graview/core";
 import { viewPlaceOf } from "@graview/react/drawing";
 import { placeOfSection } from "./section-words.js";
-import { nudgesFor, pageMayChange, pagePartOf, PARTS, type PagePart } from "./page-parts.js";
+import { lensNarrows, nudgesFor, pageMayChange, pagePartOf, PARTS, type PagePart } from "./page-parts.js";
 import { aboutTheLook, mayChangeDeclaration } from "@graview/tools/section";
 import { lazyModule, useGoTo, useGraview, type AiDesk, type GraviewContextValue, type MenuPage, type MenuSection, type MenuTarget, type MenuViewSection } from "@graview/react/provider";
 import { pluralLabel } from "@graview/core";
@@ -197,8 +197,13 @@ export function displayOptionsSection(target: MenuTarget, here: SectionHere, lis
   if (!part?.kind || (part.slot !== "list" && part.slot !== "group" && part.slot !== "place")) return null;
   // A place somebody wrote as a view is not one the declaration can draw another way.
   if (part.slot !== "place" && listStands?.(part.kind)) return null;
-  if (part.slot === "place" && !((app as { readonly lenses?: readonly { readonly title?: string }[] } | undefined)?.lenses ?? []).some((lens) => lens.title === part.name)) return null;
-  if (store.graph.nodesOfKind(part.kind).length === 0) return null;
+  if (part.slot === "place") {
+    const lens = ((app as { readonly lenses?: readonly { readonly title?: string; readonly name?: unknown; readonly options?: unknown }[] } | undefined)?.lenses ?? []).find((one) => one.title === part.name);
+    if (!lens || lensNarrows(lens, part.kind)) return null;
+  }
+  // The records the page would show: a kind with only retired ones has nothing to show another way.
+  const definition = store.schema.tryDefinition(part.kind);
+  if (!store.graph.nodesOfKind(part.kind).some((node) => isCurrent(definition, node))) return null;
   // A group's heading is on its kind's list: the list is what is shown another way.
   const whole: PagePart = part.slot === "group" ? { name: pluralLabel(store.schema, part.kind), slot: "list", kind: part.kind, elements: part.main ? [part.main] : [], main: part.main } : part;
   const returnTo = target.element ?? null;

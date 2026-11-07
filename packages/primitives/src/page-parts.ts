@@ -35,6 +35,26 @@ export interface PagePart {
 /** What the menu reads of the provider for a page's part. */
 export type PartHere = Pick<GraviewContextValue<AnySchema>, "keptViews" | "store" | "principal" | "onProposeChange" | "composeChange" | "views">;
 
+/**
+ * A LENS THAT SAYS MORE THAN ITS KIND'S RECORDS, THE WAY THEY ARE: blocks that
+ * keep to some of them (`where`, a `limit`) or say something besides, a board
+ * with columns kept off, a calendar kept to a horizon. Drawn another way it
+ * would lose that, so a place drawn by one is offered no other ways, and a
+ * kind's list does not open as one (Roadmap f-display-options-switch).
+ */
+export function lensNarrows(lens: { readonly name?: unknown; readonly options?: unknown }, kind: string): boolean {
+  const options = (lens.options ?? {}) as Readonly<Record<string, unknown>>;
+  if (lens.name === undefined || lens.name === "blocks") {
+    const blocks = options["blocks"];
+    if (!Array.isArray(blocks) || blocks.length !== 1) return true;
+    const list = blocks[0] as { readonly list?: unknown; readonly limit?: unknown } | null;
+    return typeof list?.list !== "string" || list.list.replace(/\s+/g, "") !== `all('${kind}')` || list.limit !== undefined;
+  }
+  if (lens.name === "columns") return Array.isArray(options["hidden"]) && options["hidden"].length > 0;
+  if (lens.name === "calendar") return options["horizon"] !== undefined;
+  return false;
+}
+
 /** Each part offered, by the element the menu was opened at, for the outline while it is open. */
 export const PARTS = /* @__PURE__ */ new WeakMap<Element, PagePart>();
 

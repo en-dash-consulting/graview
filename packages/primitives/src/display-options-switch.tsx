@@ -1,14 +1,14 @@
 import { isCurrent, isoToday, type AnySchema, type DisplayChoice, type GraviewApp } from "@graview/core";
 import { ViewBoundary } from "@graview/react/drawing";
 import { useGraph, useGraview } from "@graview/react/provider";
-import { draftSight } from "@graview/tools/draft";
+import { draftSight, mayChangeDeclaration } from "@graview/tools/draft";
 import { inlineAiOn } from "@graview/tools/frame";
 import { documentOfApp } from "@graview/tools/reshape";
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 import { DraftBar } from "./better-bar.js";
 import { declaredLensView } from "./declared-lenses.js";
-import { createOptionSwitch, displayOptionsFor, modelOption, namesOfRecords, optionOfOffer, readChoices, type DisplayOption, type OptionsInput, type OptionSwitch } from "./display-options.js";
+import { choicesFrom, createOptionSwitch, displayOptionsFor, modelOption, namesOfRecords, offersFrom, optionOfOffer, readChoices, type DisplayOption, type OptionsInput, type OptionSwitch } from "./display-options.js";
 import { appKeyOf } from "./reader-lenses.js";
 import type { SectionAsk } from "./section-menu.js";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
@@ -126,11 +126,11 @@ export function DisplaySwitch({ ask, close }: { readonly ask: Extract<SectionAsk
       linked: (id, edge) => store.graph.outEdges(id).some((one) => one.kind === edge),
       ...(part.slot === "place" ? { place: part.name } : {}),
     };
-    const choices: readonly DisplayChoice[] = [...readChoices(appKey), ...(host?.chosen?.() ?? [])];
+    const choices: readonly DisplayChoice[] = [...readChoices(appKey), ...choicesFrom(host)];
     const asked = { kind, name: part.name, ...(part.slot === "place" ? { place: part.name } : {}) };
-    const offers = host?.offers?.(asked);
+    const offers = offersFrom(host, asked);
     const flips = createOptionSwitch({
-      options: displayOptionsFor({ ...input, choices, ...(Array.isArray(offers) ? { offers: offers as never } : {}) }),
+      options: displayOptionsFor({ ...input, choices, offers: offers.now as never }),
       name: part.name,
       kind,
       appKey,
@@ -138,7 +138,7 @@ export function DisplaySwitch({ ask, close }: { readonly ask: Extract<SectionAsk
       ...(host?.onChoice ? { onKept: host.onChoice } : {}),
     });
     /* What is slower than the first draw joins when it answers, and what is shown does not move: a host's promise, a model the host lent. */
-    if (offers && !Array.isArray(offers)) void (offers as Promise<readonly never[]>).then((late) => flips.join(late.flatMap((offer) => optionOfOffer(input, offer) ?? []))).catch(() => {});
+    void offers.late?.then((late) => flips.join(late.flatMap((offer) => optionOfOffer(input, offer) ?? [])));
     if (inlineAiOn(ai)) {
       const thinking = ai.thinking;
       const complete = thinking ? ((asked: { readonly prompt: string; readonly system?: string }) => thinking.think({ prompt: asked.prompt, system: asked.system ?? "", state: {}, catalog: [] } as never)) : ai.complete;
@@ -208,30 +208,57 @@ export function DisplaySwitch({ ask, close }: { readonly ask: Extract<SectionAsk
     SWITCHES.delete(ask.at);
     close();
   };
-  /* Gone from the page: the switch goes with it, nothing kept. */
+  /*
+   * PUT AWAY BY THE PERSON, THE KEYBOARD BACK WHERE IT WAS. What it came from
+   * is out of sight while an option is shown, and a thing out of sight takes
+   * no focus: the page is given back first, here, not when React gets to it.
+   */
+  const putAway = () => {
+    const region = pageNow(part);
+    for (const child of region?.querySelectorAll(`[${UNDER}]`) ?? []) child.removeAttribute(UNDER);
+    if (stage) stage.style.display = "none";
+    const back = ask.returnTo?.isConnected ? ask.returnTo : document.querySelector<HTMLElement>("[data-graview-page-title], main h1");
+    if (back && !back.hasAttribute("tabindex") && !back.matches("a[href], button, input, select, textarea")) back.setAttribute("tabindex", "-1");
+    back?.focus?.({ preventScroll: true });
+    put();
+  };
+  /*
+   * GONE FROM THE PAGE: the switch goes with it, nothing kept. Under memory
+   * routing the address never moves, so the page says: its stage gone, or
+   * another title. Never while a Keep is on its way: what it answers is what
+   * Undo takes back.
+   */
   useEffect(() => {
-    if (!choosing) return;
+    if (!choosing || !stage) return;
     const was = location.pathname;
+    const titleOf = () => pageNow(part)?.querySelector("[data-graview-page-title]")?.textContent ?? null;
+    const title = titleOf();
     const watching = setInterval(() => {
-      if (location.pathname !== was) put();
+      if (flips.get().phase === "keeping") return;
+      if (location.pathname !== was || !stage.isConnected || titleOf() !== title) put();
     }, 250);
     return () => clearInterval(watching);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [choosing]);
-  /* Escape puts it away, and the keyboard back where it was. */
+  }, [choosing, stage]);
+  /* Escape puts it away, heard first and only where nothing over it has the key: one Escape, one thing. Never while a Keep is on its way. */
+  const latestPutAway = useRef(putAway);
+  latestPutAway.current = putAway;
   useEffect(() => {
     const key = (event: globalThis.KeyboardEvent) => {
-      if (event.key !== "Escape") return;
+      if (event.key !== "Escape" || flips.get().phase === "keeping") return;
+      if (document.querySelector("[data-graview-popover]:not([data-better-bar]):not([hidden]), [data-testid='context-menu']")) return;
       event.preventDefault();
-      put();
-      const back = ask.returnTo?.isConnected ? ask.returnTo : document.querySelector<HTMLElement>("[data-graview-page-title], main h1");
-      if (back && !back.hasAttribute("tabindex") && !back.matches("a[href], button, input, select, textarea")) back.setAttribute("tabindex", "-1");
-      back?.focus?.();
+      latestPutAway.current();
     };
-    document.addEventListener("keydown", key);
-    return () => document.removeEventListener("keydown", key);
+    document.addEventListener("keydown", key, true);
+    return () => document.removeEventListener("keydown", key, true);
+  }, [flips]);
+  /* Asked on every draw, as the page's own card is: a person who may no longer change the app is offered no Keep, and the switch goes. */
+  const may = mayChangeDeclaration(store, principal);
+  useEffect(() => {
+    if (!may && phase === "choosing") putAway();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ask.returnTo]);
+  }, [may, phase]);
 
   /* The keyboard on the option shown, as the switch opens and whenever it is the choosing it comes back to. */
   const group = useRef<HTMLDivElement>(null);
@@ -264,9 +291,9 @@ export function DisplaySwitch({ ask, close }: { readonly ask: Extract<SectionAsk
         said={nothing ? `There are no other ways to show ${part.name} yet.` : line}
         {...(choosing && !nothing ? { scope: "Nothing changes until you keep one. Everyone in this app sees the one you keep." } : {})}
         {...(note ? { note } : {})}
-        {...(phase === "choosing" && current ? { keep: () => void flips.keep() } : {})}
+        {...(phase === "choosing" && current && may ? { keep: () => void flips.keep() } : {})}
         {...(phase === "kept" && state.canUndo ? { undo: () => void flips.undo() } : {})}
-        {...(phase !== "keeping" ? { close: put } : {})}
+        {...(phase !== "keeping" ? { close: putAway } : {})}
       >
         {phase === "choosing" && !nothing ? (
           <div ref={group} role="radiogroup" aria-label={`Ways to show ${part.name}`} data-testid="display-options" onKeyDown={onKey} style={CHOICES}>

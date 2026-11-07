@@ -31,7 +31,7 @@ import { DerivedForm } from "./form.js";
 import { WithheldActs } from "./withheld-acts.js";
 import { kindOfSlug, pluralSlug, recordPath } from "./registry.js";
 import { type PageContext, useStoreTick } from "./page-context.js";
-import { BUILT_IN, DefaultPlacePage, pathOfPlace, placeKey, placesOf } from "./page-places.js";
+import { addressAsksForTheList, BUILT_IN, DefaultPlacePage, pathOfPlace, placeKey, placesOf } from "./page-places.js";
 import { beginningsFrom, WhyLine } from "./page-search.js";
 import {
   KindMark,
@@ -105,7 +105,8 @@ export interface ListPageProps<S extends AnySchema> {
  */
 export function DefaultListPage<S extends AnySchema>({ context }: { context: PageContext<S> }) {
   const params = useParams();
-  const builtIn = useSearchParams()[0].get("drawn") === BUILT_IN;
+  const [address] = useSearchParams();
+  const builtIn = address.get("drawn") === BUILT_IN;
   const kind = kindOfSlug(context.store.schema, params["slug"] ?? "");
   if (!kind) {
     return (
@@ -131,7 +132,12 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
    */
   const opensAs = builtIn ? undefined : context.views?.arrangement?.()?.lists?.[kind]?.opens;
   const place = opensAs === undefined ? undefined : placesOf(context).find((one) => one.kind === kind && one.as === placeSlug(opensAs));
-  if (place) return <DefaultPlacePage context={context} asList={place} />;
+  if (place) {
+    const flows = (context.views?.resolve(place.kind, { cardinality: "many", fidelity: "full" }, place.as)?.view as { flows?: boolean } | undefined)?.flows === true;
+    const edges = kindMap(context.store).relations.filter((relation) => relation.from === kind || relation.to === kind).map((relation) => relation.edgeKind);
+    if (addressAsksForTheList(address, edges, flows)) return <ListPage context={context} kind={kind} />;
+    return <DefaultPlacePage context={context} asList={place} />;
+  }
   /* The list the app draws by itself stays reached under "Also as" (Roadmap f-make-any-page-better): `?drawn=built-in`. */
   if (own !== undefined && replacesPage(own) && !builtIn) return <ListOfView context={context} kind={kind} view={own as ComponentType<ViewProps<S>>} />;
   return <ListPage context={context} kind={kind} />;
