@@ -69,6 +69,7 @@ function laidOver(code: GraviewApp<AnySchema>, compiled: GraviewApp<AnySchema>):
     ...(compiled.viewSpecs ? { viewSpecs: compiled.viewSpecs } : {}),
     ...(compiled.home ? { home: compiled.home } : {}),
     ...(compiled.pages ? { pages: compiled.pages } : {}),
+    ...(compiled.lenses ? { lenses: compiled.lenses } : {}),
     mutations: [...(code.mutations ?? []), ...(compiled.mutations ?? []).filter((mutation) => !named.has(mutation.name))],
     invariants: [...(code.invariants ?? []), ...(compiled.invariants ?? []).filter((invariant) => !ruled.has(invariant.name))],
   } as GraviewApp<AnySchema>;

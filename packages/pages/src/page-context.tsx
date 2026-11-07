@@ -1,4 +1,5 @@
 import type { HistoryHost } from "@graview/core/history";
+import type { DisplayOptionsHost } from "@graview/core";
 import { freshAddress, sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ViewerState, type ResolveApp, type LinkedRecords, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration, type SignIn, type SubscriptionStore, type DismissalStore, type KeptViews } from "@graview/core";
 import { useCallback, useRef, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import type { AwaySummary, FieldTyping, KeepLensHost, ProposeChangeHost, ComposeChangeHost, DraftChangeHost, MenuSectionSource, OnExport, ReactViewRegistry } from "@graview/react/provider";
@@ -133,6 +134,8 @@ export interface PageContext<S extends AnySchema> {
   readonly composeChange?: ComposeChangeHost;
   /** Where a change to the app is shown on this page only before it is kept (`onDraftChange`, Roadmap f-make-any-page-better): "Make “Tasks” better" draws its draft with it. */
   readonly onDraftChange?: DraftChangeHost;
+  /** What the host says of "Other ways to show this" (`DisplayOptionsHost`). */
+  readonly displayOptions?: DisplayOptionsHost;
   /**
    * THE HOST'S VIEWS (`KeptViews`, Roadmap f-make-this-section-better):
    * where it lends `revise`, "Make this better" on a section of a worker

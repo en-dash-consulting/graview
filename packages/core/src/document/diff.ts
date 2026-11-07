@@ -390,6 +390,7 @@ function pagesSentences(before: Arrangement, after: Arrangement, kinds: GraviewD
     const words = kindListWords(after?.lists?.[kind] ?? {}, (key) => (spec?.computed?.[key] !== undefined ? "number" : sortTypeOfDocumentField(spec?.fields?.[key]?.type)));
     if (!same(before?.lists?.[kind]?.sort, after?.lists?.[kind]?.sort)) out.push(words.sort ? `The ${kind} list opens ${words.sort}.` : `The ${kind} list opens in its own order again.`);
     if (!same(before?.lists?.[kind]?.group, after?.lists?.[kind]?.group)) out.push(words.group ? `The ${kind} list opens ${words.group}.` : `The ${kind} list opens ungrouped again.`);
+    if (!same(before?.lists?.[kind]?.opens, after?.lists?.[kind]?.opens)) out.push(after?.lists?.[kind]?.opens ? `The ${kind} list opens as "${after.lists[kind]!.opens}".` : `The ${kind} list opens as a list again.`);
     if ((before?.lists?.[kind]?.export === false) !== (after?.lists?.[kind]?.export === false)) out.push(after?.lists?.[kind]?.export === false ? `The ${kind} list offers Export CSV to nobody.` : `The ${kind} list offers Export CSV again.`);
   }
   if (out.length === 0) out.push("The app's pages change.");

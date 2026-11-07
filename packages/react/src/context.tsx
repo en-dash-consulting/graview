@@ -19,6 +19,7 @@ import type {
   Store,
   ViewRegistry,
 } from "@graview/core";
+import type { DisplayOptionsHost } from "@graview/core";
 import { memorySubscriptions, openingOf, sayIn, tellTheWatchWhatIsUnseen, type DismissalStore, type Place, type KeptViews, type PagesArrangement, type SubscriptionStore } from "@graview/core";
 import { NO_AI, type AffordanceProvider, type HostAi } from "@graview/tools/frame";
 import { honorSetting, loadSetting, rememberSetting, type ReaderMemory } from "./settings.js";
@@ -436,6 +437,8 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly composeChange?: ComposeChangeHost;
   /** Where a change to the app is shown on this page only, not kept (`GraviewProviderProps.onDraftChange`). */
   readonly onDraftChange?: DraftChangeHost;
+  /** What the host says of "Other ways to show this" (`GraviewProviderProps.displayOptions`). */
+  readonly displayOptions?: DisplayOptionsHost;
   /** The app this is mounted with (`GraviewProviderProps.app`), or the one it is drawn inside. */
   readonly app?: GraviewApp<S> | undefined;
   /** The reader's locale the host passed (`GraviewProviderProps.locale`, FR-178), or the one it is drawn inside. */
@@ -619,6 +622,13 @@ export interface GraviewProviderProps<S extends AnySchema> {
    * card says what would change without drawing it.
    */
   readonly onDraftChange?: DraftChangeHost | undefined;
+  /**
+   * "OTHER WAYS TO SHOW THIS" (`DisplayOptionsHost`, Roadmap
+   * f-display-options-switch): further options a host hands in, what it
+   * remembers being chosen, and where it hears what was kept. Unsaid, the
+   * options are the ones the declaration can draw.
+   */
+  readonly displayOptions?: DisplayOptionsHost | undefined;
   /** Extra or replacement affordance providers (e.g. an LLM intelligence). */
   readonly providers?: readonly AffordanceProvider<S>[];
   /**
@@ -841,6 +851,7 @@ export function GraviewProvider<S extends AnySchema>({
   onProposeChange,
   composeChange,
   onDraftChange,
+  displayOptions,
   providers,
   ai: handedAi,
   files,
@@ -943,6 +954,7 @@ export function GraviewProvider<S extends AnySchema>({
   const proposeChange = onProposeChange ?? outer?.onProposeChange;
   const composeAppChange = composeChange ?? outer?.composeChange;
   const draftChange = onDraftChange ?? outer?.onDraftChange;
+  const optionsHost = displayOptions ?? outer?.displayOptions;
   const app = mountedApp ?? (outer?.app as GraviewApp<S> | undefined);
   /*
    * WHAT DAYS, TIMES AND NUMBERS ARE SAID IN (FR-178): the reader's a host
@@ -1342,6 +1354,7 @@ export function GraviewProvider<S extends AnySchema>({
       ...(proposeChange ? { onProposeChange: proposeChange } : {}),
       ...(composeAppChange ? { composeChange: composeAppChange } : {}),
       ...(draftChange ? { onDraftChange: draftChange } : {}),
+      ...(optionsHost ? { displayOptions: optionsHost } : {}),
       app,
       ...(locale ? { locale } : {}),
       ...(timeZone ? { timeZone } : {}),

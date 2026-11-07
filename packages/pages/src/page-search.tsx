@@ -43,7 +43,8 @@ export function DefaultSearchPage<S extends AnySchema>({ context }: { context: P
   const today = typeof invariantContext?.["today"] === "string" ? (invariantContext["today"] as string) : undefined;
   const found = search(store, q, {
     ...(principal ? { principal } : {}),
-    places: placesOf(context),
+    // A place kept off the lists is not one to be found: still at its address, and drawn there, but not offered.
+    places: placesOf(context).filter((place) => !place.hidden),
     flagged: new Set(store.violations(invariantContext).flatMap((violation) => violation.nodeIds)),
     ...(today ? { today } : {}),
     limit: 200,

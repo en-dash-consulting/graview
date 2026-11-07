@@ -403,6 +403,7 @@ export type { Tick } from "./clock.js";
 // The views a person tidies from the place menu (Roadmap f-place-menu-views): the host's seam and a memory keeper; the registry as it leaves it is `useTidiedViews` on `@graview/react`.
 export { memoryViews, withMemoryRevisions, NO_KEPT_VIEWS, placeTidying, REMOVED_VIEW_DAYS, removedLensName } from "./views/kept.js";
 export type { ForkedPage, KeptViews, KeptViewsMay, KeptViewsState, LensTidyEdit, MemoryViewsOptions, RemovedView, ViewForkKept, ViewReviseAnswer, ViewRevisionKept } from "./views/kept.js";
+export type { DisplayChoice, DisplayChoiceHeard, DisplayOptionOffer, DisplayOptionsAsked, DisplayOptionsHost } from "./views/display-options.js";
 export { createViewRegistry, FIDELITIES, kindPath, offeredPlaces, onePerPicture, placeLabel, placePath, placeSlug, recordPath, samePicture, sharesItsName } from "./views/types.js";
 // Declared lenses that draw (FR-79), the arrangement (FR-80) and every place an app has.
 export {

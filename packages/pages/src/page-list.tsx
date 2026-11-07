@@ -30,7 +30,7 @@ import { DerivedForm } from "./form.js";
 import { WithheldActs } from "./withheld-acts.js";
 import { kindOfSlug, pluralSlug, recordPath } from "./registry.js";
 import { type PageContext, useStoreTick } from "./page-context.js";
-import { pathOfPlace, placeKey, placesOf } from "./page-places.js";
+import { addressAsksForTheList, BUILT_IN, DefaultPlacePage, listOpensAs, pathOfPlace, placeKey, placesOf } from "./page-places.js";
 import { beginningsFrom, WhyLine } from "./page-search.js";
 import {
   KindMark,
@@ -104,7 +104,8 @@ export interface ListPageProps<S extends AnySchema> {
  */
 export function DefaultListPage<S extends AnySchema>({ context }: { context: PageContext<S> }) {
   const params = useParams();
-  const builtIn = useSearchParams()[0].get("drawn") === BUILT_IN;
+  const [address] = useSearchParams();
+  const builtIn = address.get("drawn") === BUILT_IN;
   const kind = kindOfSlug(context.store.schema, params["slug"] ?? "");
   if (!kind) {
     return (
@@ -122,13 +123,25 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
    * stands in for nothing, and the list is the app's own again.
    */
   const own = context.views?.lookup(kind, { cardinality: "many", fidelity: "full" });
+  /*
+   * A LIST THE DECLARATION OPENS AS A PLACE (`pages.lists.<kind>.opens`,
+   * Roadmap f-display-options-switch): that place's page, under the list's
+   * own heading at the list's own address — its picture, its forms — and
+   * the list the app draws by itself one link away.
+   */
+  const opened = builtIn ? undefined : listOpensAs(context, kind);
+  if (opened) {
+    const { place, flows } = opened;
+    const edges = kindMap(context.store).relations.filter((relation) => relation.from === kind || relation.to === kind).map((relation) => relation.edgeKind);
+    if (addressAsksForTheList(address, edges, flows)) return <ListPage context={context} kind={kind} />;
+    return <DefaultPlacePage context={context} asList={place} />;
+  }
   /* The list the app draws by itself stays reached under "Also as" (Roadmap f-make-any-page-better): `?drawn=built-in`. */
   if (own !== undefined && replacesPage(own) && !builtIn) return <ListOfView context={context} kind={kind} view={own as ComponentType<ViewProps<S>>} />;
   return <ListPage context={context} kind={kind} />;
 }
 
-/** The address word that draws a kind's list or a record's page as the app draws it by itself, though a view replaces it: `?drawn=built-in`. */
-export const BUILT_IN = "built-in";
+export { BUILT_IN };
 
 /**
  * THE KIND'S LIST PAGE, AS ITS VIEW DRAWS IT (FR-203): the trail and the

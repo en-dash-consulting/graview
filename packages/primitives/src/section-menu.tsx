@@ -1,9 +1,9 @@
 import { retryingImport } from "@graview/core/retry";
-import type { AnySchema } from "@graview/core";
+import { isCurrent, type AnySchema } from "@graview/core";
 import { viewPlaceOf } from "@graview/react/drawing";
 import { placeOfSection } from "./section-words.js";
-import { nudgesFor, pageMayChange, pagePartOf, PARTS, type PagePart } from "./page-parts.js";
-import { aboutTheLook } from "@graview/tools/section";
+import { lensNarrows, nudgesFor, pageMayChange, pagePartOf, PARTS, type PagePart } from "./page-parts.js";
+import { aboutTheLook, mayChangeDeclaration } from "@graview/tools/section";
 import { lazyModule, useGoTo, useGraview, type AiDesk, type GraviewContextValue, type MenuPage, type MenuSection, type MenuTarget, type MenuViewSection } from "@graview/react/provider";
 import { pluralLabel } from "@graview/core";
 
@@ -21,8 +21,8 @@ import { FACE_EVENT } from "./frame.js";
  */
 
 /** How the card was asked for. */
-/** How the card was asked for: at once, in words, by pointing — or opened to choose (Better UI with nothing typed). */
-export type SectionMode = "just" | "describe" | "highlight" | "choose";
+/** How the card was asked for: at once, in words, by pointing — or opened to choose (Better UI with nothing typed); or the switch between other ways to show the page. */
+export type SectionMode = "just" | "describe" | "highlight" | "choose" | "options";
 
 /** The card asked for: on which section of a view, or which part of a built-in page; how; and the words, where the menu was typed in. */
 export type SectionAsk = ({ readonly section: MenuViewSection; readonly part?: undefined } | { readonly part: PagePart; readonly section?: undefined }) & {
@@ -76,6 +76,10 @@ const Drawn = /* @__PURE__ */ drawn.part((module, props: SectionDrawnProps) => {
   const Part = module.SectionDrawn as ComponentType<SectionDrawnProps>;
   return <Part {...props} />;
 }, { what: "Make this better" });
+
+/* The switch between other ways to show a page (Roadmap f-display-options-switch), fetched as the menu is prepared. */
+const optionsSwitch = /* @__PURE__ */ lazyModule(retryingImport(() => import("./display-options-switch.js")));
+const OptionsSwitch = /* @__PURE__ */ optionsSwitch.part((module, props: { readonly ask: Extract<SectionAsk, { part: object }>; readonly close: () => void }) => <module.DisplaySwitch {...props} />, { what: "Other ways to show this" });
 
 /** What the menu's section reads of the provider as it opens: the desk, the host's views and its door to a change to the app. */
 export type SectionHere = Pick<GraviewContextValue<AnySchema>, "aiDesk" | "ai" | "keptViews" | "store" | "principal" | "onProposeChange" | "composeChange" | "app" | "views">;
@@ -173,6 +177,39 @@ export function sectionFor(target: MenuTarget, here: SectionHere): MenuSection |
   return betterMode(here, part.name, open, () => nudgesFor(part, here), () => drawn.prefetch());
 }
 
+/**
+ * "OTHER WAYS TO SHOW THIS" (Roadmap f-display-options-switch): on a kind's
+ * list or a place a lens draws, for a seat that may change the app where the
+ * host lends the change. It needs no model. Nothing on a kind with no
+ * records: there would be nothing to show.
+ *
+ * NOR ON A LIST THAT WOULD NOT CHANGE. `listStands` is the face's word for
+ * a kind's list keeping one could not reach: a product design drew its own,
+ * or the address asks for the list the app draws by itself. A page never
+ * says it now shows as something while it draws the same thing. A place is
+ * still offered, whatever the design: its lens is what draws it.
+ */
+export function displayOptionsSection(target: MenuTarget, here: SectionHere, listStands?: (kind: string) => boolean): MenuSection | null {
+  const { aiDesk, app, composeChange, onProposeChange, principal, store } = here;
+  if (target.face !== "pages" || target.section || !target.page) return null;
+  if (onProposeChange === undefined || composeChange === undefined || !mayChangeDeclaration(store, principal)) return null;
+  const part = pagePartOf(target.page, here);
+  if (!part?.kind || (part.slot !== "list" && part.slot !== "group" && part.slot !== "place")) return null;
+  // A place somebody wrote as a view is not one the declaration can draw another way.
+  if (part.slot !== "place" && listStands?.(part.kind)) return null;
+  if (part.slot === "place") {
+    const lens = ((app as { readonly lenses?: readonly { readonly title?: string; readonly name?: unknown; readonly options?: unknown }[] } | undefined)?.lenses ?? []).find((one) => one.title === part.name);
+    if (!lens || lensNarrows(lens, part.kind)) return null;
+  }
+  // The records the page would show: a kind with only retired ones has nothing to show another way.
+  const definition = store.schema.tryDefinition(part.kind);
+  if (!store.graph.nodesOfKind(part.kind).some((node) => isCurrent(definition, node))) return null;
+  // A group's heading is on its kind's list: the list is what is shown another way.
+  const whole: PagePart = part.slot === "group" ? { name: pluralLabel(store.schema, part.kind), slot: "list", kind: part.kind, elements: part.main ? [part.main] : [], main: part.main } : part;
+  const returnTo = target.element ?? null;
+  return { id: "display-options", items: [{ id: "other-ways", label: "Other ways to show this", run: () => askSection(aiDesk, { part: whole, mode: "options", returnTo }) }], prepare: () => optionsSwitch.prefetch() };
+}
+
 /** The elements of the page's part a menu is open on, where "Make … better" named one. */
 const outlinedPart = (page: NonNullable<MenuTarget["page"]>): readonly Element[] | undefined => PARTS.get(page.at)?.elements;
 
@@ -257,6 +294,13 @@ export function SectionDoor() {
   if (!mine || (!ask && !open)) return null;
   /* The outline at once, over the section or the part a menu is open on; the card fetched when asked for. */
   if (!ask) return <SectionOutline elements={open!} />;
+  if (ask.mode === "options" && ask.part) {
+    return (
+      <Suspense fallback={null}>
+        <OptionsSwitch ask={ask} close={() => askSection(aiDesk, null)} />
+      </Suspense>
+    );
+  }
   return (
     <Suspense fallback={null}>
       <Drawn ask={ask} close={() => askSection(aiDesk, null)} />
