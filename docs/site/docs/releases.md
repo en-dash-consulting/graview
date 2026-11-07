@@ -72,7 +72,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.68
 
-Published November 6, 2026 · the current version
+Published November 6, 2026
 
 Better UI holds a draft to what the page showed and no more, so a correct redesign of a flagged list or a book's home is kept; suggestions about one record stand under its name; and a focused record's kind tag is drawn whole on Chrome 157.
 

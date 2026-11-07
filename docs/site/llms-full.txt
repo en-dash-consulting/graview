@@ -6,7 +6,7 @@
 - Start a product: `npm create graview@latest my-app` (Node 22 or later)
 - License: Elastic License 2.0 — source-available, free to build with and to ship products on
 - Source: https://github.com/en-dash-consulting/graview
-- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.1.68)
+- npm: https://www.npmjs.com/package/graview — 14 packages, one version ()
 - Hosted: Graview Cloud, https://graview.cloud (private alpha, invite-only)
 
 ## Questions, answered plainly
@@ -955,7 +955,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.68
 
-Published November 6, 2026 · the current version
+Published November 6, 2026
 
 Better UI holds a draft to what the page showed and no more, so a correct redesign of a flagged list or a book's home is kept; suggestions about one record stand under its name; and a focused record's kind tag is drawn whole on Chrome 157.
 
