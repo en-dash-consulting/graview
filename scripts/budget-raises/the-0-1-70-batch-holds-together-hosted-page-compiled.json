@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 32,
+  "gzipped": 160,
+  "changeset": "the-0-1-70-batch-holds-together.md",
+  "note": "Raised when the 0.1.70 batch's eight branches were merged (a host's bar setting taken back, the router through `@graview/pages`, a view that bleeds full, the view authoring friction, what a view keeps and a seat's profile, other ways to show a page, the inbox that opens on what needs you, the PRD's move): each measured alone against main, together they came to 126 bytes gzipped (617_394 / 213_723 against a budget of 617_535 / 213_597) over their summed raises, held for a few bytes either side."
+}
