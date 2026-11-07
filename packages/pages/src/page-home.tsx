@@ -1,5 +1,5 @@
 import { counted as countOf, isCurrent, isWithheld, numberAsRead, type AnySchema, type Operation, type Violation } from "@graview/core";
-import { bleeds, type ViewProps } from "@graview/react/provider";
+import { bleeds, bleedsFull, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link, useSearchParams } from "react-router";
 import { HomeLine } from "@graview/primitives/pages";
@@ -138,16 +138,18 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
      * still says how many and opens every one.
      */
     const flagged = [...new Set(violations.flatMap((violation) => violation.nodeIds))];
-    const line = brand?.subtitle && brand.subtitleDrawn !== false ? <p style={{ ...quiet, margin: 0 }} data-testid="app-subtitle">{brand.subtitle}</p> : null;
+    // Across the whole page at every width and from right under the bar, where the view says `bleed: "full"`: the app's line over it is said to a screen reader only (`BLEED_TOP_FULL_CSS`).
+    const full = bleedsFull(HomeView);
+    const line = brand?.subtitle && brand.subtitleDrawn !== false ? <p style={{ ...quiet, margin: 0 }} data-testid="app-subtitle" {...(full ? { "data-graview-line-over-view": "" } : {})}>{brand.subtitle}</p> : null;
     // A home written as blocks says the app's line under its own headline (`HomeLine`); any other home view, over it.
     const placesItsLine = (HomeView as unknown as Record<symbol, unknown>)[Symbol.for("graview.home-blocks")] === true;
     return (
-      <PageMain context={context} style={wide} bleedTop={bleeds(HomeView)}>
+      <PageMain context={context} style={wide} bleedTop={full ? "full" : bleeds(HomeView)} spans={full}>
         <div style={{ display: "grid", gap: 12 }} data-testid="home-view">
           {placesItsLine ? null : line}
           <HomeLine.Provider value={placesItsLine ? line : null}>
-            {/* Edge to edge on a phone, where the view says `bleed` (Bleed). */}
-            <Bleed when={bleeds(HomeView)}>
+            {/* Edge to edge on a phone, where the view says `bleed` (Bleed); across the page at every width, where it says "full". */}
+            <Bleed when={bleeds(HomeView)} full={full}>
               <HomeView cardinality="many" fidelity="full" mode="fullscreen" selected={false} {...(flagged.length > 0 ? { flagged } : {})} />
             </Bleed>
           </HomeLine.Provider>

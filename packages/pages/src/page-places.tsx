@@ -2,7 +2,7 @@ import { counted, isCurrent, labelOf, onePerPicture, placeLabel, sharesItsName, 
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { kindFacts } from "./facts.js";
 import { ViewBoundary } from "@graview/react/drawing";
-import { bleeds, isDefaultView, replacesPage, type ViewProps } from "@graview/react/provider";
+import { bleeds, bleedsFull, isDefaultView, replacesPage, type ViewProps } from "@graview/react/provider";
 import { arrange, parseArrangement } from "@graview/core/arrange";
 import { useLayoutEffect, useRef, useState, type ComponentType, type RefObject } from "react";
 import { DerivedForm } from "./form.js";
@@ -82,7 +82,7 @@ function overOf<S extends AnySchema>(store: Store<S>, kinds: string | readonly s
  * promise every lens makes. Nothing here is a copy of a lens: it is the
  * lens.
  */
-function LensOnPage<S extends AnySchema>({ context, place, chosen, filter }: { context: PageContext<S>; place: Place; chosen?: readonly string[]; filter?: string | null }) {
+function LensOnPage<S extends AnySchema>({ context, place, chosen, filter, bled }: { context: PageContext<S>; place: Place; chosen?: readonly string[]; filter?: string | null; /** The slot around it spans the page already (`bleed: "full"`). */ bled?: boolean }) {
   const { store, views, invariantContext } = context;
   const registration = views?.resolve(place.kind, { cardinality: "many", fidelity: "full" }, place.as);
   const View = registration?.view as ComponentType<ViewProps<S>> | undefined;
@@ -99,7 +99,7 @@ function LensOnPage<S extends AnySchema>({ context, place, chosen, filter }: { c
   return (
     <ViewBoundary kind={place.kind} view={place.title}>
       {/* Edge to edge on a phone, where the view says `bleed`, as on the home and a record's page (Roadmap f-bleed-on-places). */}
-      <Bleed when={bleeds(View)}>
+      <Bleed when={bleeds(View) && !bled}>
         <View
           nodes={members}
           label={place.title}
@@ -603,6 +603,8 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
   const flows = drawnBy?.flows === true;
   /* A view that draws its own heading (Roadmap f-place-header-repeats-view-title): the title is said to a screen reader only, and no count. */
   const ownHeading = drawnBy?.ownHeading === true;
+  /* Across the whole page at every width (Roadmap f-views-bleed-full-width): the lens's region spans it, and a view that says its own heading starts right under the bar. */
+  const full = bleedsFull(drawnBy);
   /*
    * A PLACE THAT IS READ, NOT WRITTEN. Every place ended with the forms
    * that begin its kind; on a summary or a report that is a form nobody
@@ -621,7 +623,7 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
     .map((affordance) => ({ affordance, mutation: store.allMutations().find((m) => m.name === affordance.mutation) }))
     .filter((entry): entry is { affordance: typeof entry.affordance; mutation: NonNullable<typeof entry.mutation> } => entry.mutation !== undefined);
   return (
-    <PageMain context={context} style={{ ...wide, gap: "var(--graview-space-6, 32px)" }}>
+    <PageMain context={context} style={{ ...wide, gap: "var(--graview-space-6, 32px)" }} spans={full} {...(full && ownHeading ? { bleedTop: "full" as const } : {})}>
       {/*
         * No eyebrow over the title: "A PICTURE OF TASKS" said what the title
         * and the line under it say, and linked where "All tasks as a list"
@@ -689,6 +691,8 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
         * already, and two landmarks of one name say nothing apart. A place
         * that flows with the page scrolls with the page.
         */}
+      {/* Across the whole page at every width, frame and all, where the view says `bleed: "full"`. */}
+      <Bleed when={full} full={full}>
       <div
         data-testid="place-lens"
         data-flows={flows ? "" : undefined}
@@ -737,9 +741,10 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
         }}
       >
         <PlacePageHead.Provider value={headline !== undefined ? SAID_ABOVE : UNDER_THE_HEAD}>
-          <LensOnPage context={context} place={place} filter={narrowedTo} {...(chosen?.at === placeKey(place) ? { chosen: chosen.ids } : {})} />
+          <LensOnPage context={context} place={place} filter={narrowedTo} bled={full} {...(chosen?.at === placeKey(place) ? { chosen: chosen.ids } : {})} />
         </PlacePageHead.Provider>
       </div>
+      </Bleed>
       {/* The acts, at a reading width: a form as wide as a gallery is a form nobody can scan. */}
       {creators.length > 0 ? (
         <div style={{ maxWidth: 760, display: "grid", gap: 40 }} data-testid="place-creators">

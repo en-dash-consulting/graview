@@ -2,7 +2,7 @@ import { isArchived, isLeftAlone, isWithheld, labelOf, type AnySchema, type Plac
 import { describeNode, keptInStepWith } from "@graview/core/words";
 import { lineageWords } from "@graview/core/provenance";
 import { DefaultViewElsewhere, RecordInteractionsDoor, EditableValue, Files, NotifyButton, pageSays, ROVING_ITEM, useLined, useRoving } from "@graview/primitives/pages";
-import { bleeds, isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
+import { bleeds, bleedsFull, isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 import { useRef, useState } from "react";
@@ -180,9 +180,11 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
   // THE OTHER SYSTEM IT IS KEPT IN STEP WITH: a Notion data source or a calendar, and where it is there.
   const kept = node ? keptInStepWith(context.app?.connections, facts.kind, id) : undefined;
   const seenIn = placesOf(context).filter((place) => !place.hidden && (place.kind === facts.kind || place.across === facts.kind));
+  // Across the whole page at every width, under the record's own heading, where the view says `bleed: "full"`.
+  const full = PageView !== undefined && node !== undefined && bleedsFull(ownPage);
 
   return (
-    <PageMain context={context}>
+    <PageMain context={context} spans={full}>
       <header style={{ display: "grid", gap: 12 }}>
         {/* Where it is (Roadmap gv-pages-where-am-i): its section, if the app named one, and its kind's list, over its name. */}
         <HeadTrail context={context} />
@@ -231,7 +233,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
         <section data-testid="record-view" style={{ display: "grid", minWidth: 0 }}>
           <DefaultViewElsewhere>
             {/* Edge to edge on a phone, where the view says `bleed` (Bleed). */}
-            <Bleed when={bleeds(ownPage)}>
+            <Bleed when={bleeds(ownPage)} full={full}>
               <PageView node={node as never} cardinality="one" fidelity="full" mode="fullscreen" selected={false} {...(facts.violations.length > 0 ? { flagged: [id] } : {})} />
             </Bleed>
           </DefaultViewElsewhere>

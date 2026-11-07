@@ -230,6 +230,9 @@ function Instead({ view: View, props, fellBack }: { readonly view: ViewComponent
   );
 }
 
+/** The same mark where nothing is drawn in a view's stead: a home with no page of its own to fall back on, in a past before the view existed. */
+const NOTHING_INSTEAD = <div data-worker-view-fallback="" style={{ display: "contents" }} />;
+
 /** The same mark around the home's own page, where the home's view fell back. */
 function FellBack({ name, reason, children }: { readonly name: string; readonly reason: WorkerViewFailure; readonly children: ReactNode }) {
   return (
@@ -260,9 +263,9 @@ export function workerView(definition: WorkerViewDefinition, options: { readonly
     const then = useDefinitionThen(definition);
     if (!graview) return null;
     /* Not made yet at the moment drawn: the kind's own face, as where it fails. */
-    if (then === null) return Fallback && !(elsewhere && isDefaultView(Fallback) && !replaces) ? <Instead view={Fallback} props={props} /> : null;
+    if (then === null) return Fallback && !(elsewhere && isDefaultView(Fallback) && !replaces) ? <Instead view={Fallback} props={props} /> : NOTHING_INSTEAD;
     /* Past its limits, the kind's own face — what the registry drew there before — in its place (FR-94), saying which view fell back and why; nothing, where the surface is that face already. */
-    if (failed && Fallback) return elsewhere && isDefaultView(Fallback) && !replaces ? null : <Instead view={Fallback} props={props} fellBack={{ name: definition.manifest.name, reason: failed }} />;
+    if (failed && Fallback) return elsewhere && isDefaultView(Fallback) && !replaces ? NOTHING_INSTEAD : <Instead view={Fallback} props={props} fellBack={{ name: definition.manifest.name, reason: failed }} />;
     /*
      * BESIDE THE RECORD'S OWN FIELDS (FR-149): what was drawn for the record
      * before, under the view — its fields, editable where an act writes
@@ -293,7 +296,14 @@ export function workerView(definition: WorkerViewDefinition, options: { readonly
     return (
       <div data-worker-view-beside={definition.manifest.name} style={{ display: "grid", gap: 12, minWidth: 0 }}>
         {mount}
-        <Beside {...props} />
+        {/* The view bleeds; what is under it is the record's, and the page's face gives it the column back (`BLEED_FULL_CSS`). */}
+        {definition.manifest.bleed === "full" ? (
+          <div data-worker-view-beside-under="" style={{ minWidth: 0 }}>
+            <Beside {...props} />
+          </div>
+        ) : (
+          <Beside {...props} />
+        )}
       </div>
     );
   }
@@ -329,7 +339,7 @@ export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry
     const home = workerView(definition, declared ? { fallback: declared } : {});
     // Edge to edge on a phone, where its manifest says so: the pages face takes the gutter back for it.
     // By its name, so the host's tidying keeps it undrawn once deleted, whatever registered after it (FR-202); a draft has none.
-    views.home((manifest.bleed === true ? markBleeds(home) : home) as unknown as ViewComponent<S>, definition.draft ? undefined : { name: manifest.name });
+    views.home((manifest.bleed === true || manifest.bleed === "full" ? markBleeds(home, manifest.bleed) : home) as unknown as ViewComponent<S>, definition.draft ? undefined : { name: manifest.name });
     return views;
   }
   const cell = { cardinality: manifest.cardinality, fidelity: "full" } as const;
@@ -353,7 +363,7 @@ export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry
    */
   const says = (before as { says?: unknown } | undefined)?.says;
   if (one && manifest.replaces !== "page" && typeof says === "function") (view as { says?: unknown }).says = says;
-  if (manifest.bleed === true) markBleeds(view);
+  if (manifest.bleed === true || manifest.bleed === "full") markBleeds(view, manifest.bleed);
   /*
    * A VIEW'S PLACE FLOWS WITH THE PAGE (Roadmap f-view-places-flow), as a
    * place drawn from blocks does: it is drawn in the page's column as long
