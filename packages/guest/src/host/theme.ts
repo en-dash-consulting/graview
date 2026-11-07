@@ -68,6 +68,8 @@ export interface GuestBrand {
    * fade between records. Never handed to the view: the host draws them.
    */
   readonly views?: BrandViews;
+  /** The brand's own stacks: a face lent to its views never takes one of their names. */
+  readonly typography?: { readonly body?: string; readonly display?: string; readonly mono?: string };
 }
 
 /**

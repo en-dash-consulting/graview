@@ -132,15 +132,40 @@ const isControl = (element: TreeElement) =>
 /**
  * A CONTROL ALREADY IN ITS STATE (Roadmap f-view-authoring-friction-2026-11):
  * an "All" chip pressed while nothing is filtered, the tab that is open, the
- * page a pager is on. Pressed, it rightly leaves the view as it is — so it is
- * no control that does nothing, where it says that state to a person as
- * well as to the eye: `aria-pressed="true"`, `aria-current`, `aria-selected`
- * or `aria-checked="true"`. The attribute it says it by, or nothing.
+ * page a pager is on. Pressed, it rightly leaves the view as it is. But this
+ * check exists because "the Save button doesn't work… this would never be the
+ * case. Ever", and `<button aria-pressed="true">Save</button>` with a dead
+ * handler says a state too. So a state excuses a press only on a control that
+ * is one of a set: another control beside it, or in its group, says the same
+ * attribute's other state. And it must be a state its role can say:
+ * `aria-selected` on a tab, an option or a grid cell, `aria-checked` on a
+ * checkable role. `aria-current` of `""` or `"undefined"` is no state at all.
  */
-const stateShown = (element: TreeElement): string | undefined => {
-  for (const name of ["aria-pressed", "aria-selected", "aria-checked"]) if (element.getAttribute(name) === "true") return `${name}="true"`;
+const SELECTABLE = new Set(["tab", "option", "gridcell"]);
+const CHECKABLE = new Set(["checkbox", "menuitemcheckbox", "menuitemradio", "option", "radio", "switch", "treeitem"]);
+const SET_ROLES = new Set(["group", "radiogroup", "tablist", "listbox", "menu", "menubar", "toolbar", "grid", "tree"]);
+const NO_CURRENT = new Set(["", "undefined", "false"]);
+/** The state a control says of itself, by an attribute its role can say it with. */
+const stateOf = (element: TreeElement): { readonly name: string; readonly value: string } | undefined => {
+  const role = element.getAttribute("role") ?? "";
+  if (element.getAttribute("aria-pressed") === "true") return { name: "aria-pressed", value: "true" };
+  if (element.getAttribute("aria-selected") === "true" && SELECTABLE.has(role)) return { name: "aria-selected", value: "true" };
+  if (element.getAttribute("aria-checked") === "true" && CHECKABLE.has(role)) return { name: "aria-checked", value: "true" };
   const current = element.getAttribute("aria-current");
-  return current !== null && current !== "false" ? `aria-current="${current}"` : undefined;
+  return current !== null && !NO_CURRENT.has(current) ? { name: "aria-current", value: current } : undefined;
+};
+/** Whether another control beside it, or in its group, says the same attribute's other state, in the same role. */
+const oneOfASet = (element: TreeElement, name: string, root: TreeElement, isControlHere: (one: TreeElement) => boolean): boolean => {
+  const role = element.getAttribute("role");
+  const parent = element.parentElement;
+  const beside = parent ? parent.childNodes.filter((child): child is TreeElement => child instanceof TreeElement) : [];
+  const group = parent ? up(parent, root, (one) => SET_ROLES.has(one.getAttribute("role") ?? "")) : undefined;
+  return [...beside, ...(group ? below(group) : [])].some((other) => {
+    if (other === element || !isControlHere(other)) return false;
+    const value = other.getAttribute(name);
+    if (value === null || (name === "aria-current" ? !NO_CURRENT.has(value) : value === "true")) return false;
+    return name === "aria-pressed" || name === "aria-current" || other.getAttribute("role") === role;
+  });
 };
 /** What the host presses of itself, which the check leaves to the host: a disclosure, a lightbox, a drop, a placed video. */
 const hostOwn = (element: TreeElement) => element.localName === "summary" || element.hasAttribute("data-lightbox") || element.hasAttribute("data-drop") || element.localName === "graview-video";
@@ -310,9 +335,11 @@ export async function checkPresses<S extends AnySchema>(context: PressCheckConte
       const judgedTo = judgeDestination(one as Destination, { sees: (to) => context.shown.has(to), places: context.places, lists: context.lists, schema: store.schema });
       if (!judgedTo.ok) wrong.push(`it asks to go nowhere: ${judgedTo.says}`);
     }
-    const state = asked.length === 0 && went.length === 0 && !redrew ? stateShown(element) : undefined;
+    const state = asked.length === 0 && went.length === 0 && !redrew ? stateOf(element) : undefined;
+    const inASet = state !== undefined && oneOfASet(element, state.name, root, (one) => isControl(one) || heardAt(one) || one.hasAttribute("data-record") || one.hasAttribute("data-place") || one.hasAttribute("href"));
     if (wrong.length > 0) found(element, "code", false, `${nameOf(element)}, pressed: ${wrong.join("; ")}`);
-    else if (state) found(element, "code", true, `${nameOf(element)} is already in the state it shows (${state}): pressed, it leaves the view as it is.`);
+    else if (state && inASet) found(element, "code", true, `${nameOf(element)} is already in the state it shows (${state.name}="${state.value}"): pressed, it leaves the view as it is.`);
+    else if (state) found(element, "code", false, `${nameOf(element)} does nothing when pressed: it says ${state.name}="${state.value}", and no control beside it says the other state, so it is no choice among a set.`);
     else if (asked.length === 0 && went.length === 0 && !redrew) found(element, "code", false, `${nameOf(element)} does nothing when pressed: the view hears the click, and asks for no act, goes nowhere and draws nothing new.`);
     else found(element, "code", true, `${nameOf(element)}, pressed, ${[...(asked.length > 0 ? [`asks for ${asked.map((one) => `“${one.name}”`).join(", ")}`] : []), ...(went.length > 0 ? ["goes where it says"] : []), ...(redrew ? ["draws again"] : [])].join(" and ")}.`);
   }

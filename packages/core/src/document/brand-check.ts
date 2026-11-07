@@ -9,7 +9,7 @@ import { SPLASH_SHADERS, SPLASH_STYLES, type BrandSpec } from "./schema.js";
 import { logoParts } from "./logo.js";
 import { OPEN_MAX_STYLESHEET } from "../css/tables.js";
 import { sanitizeStylesheet, type CssRefusal } from "../css/sanitize.js";
-import { VIEW_FONTS_MOST, viewFontProblem } from "../css/fonts.js";
+import { brandFamilies, VIEW_FONTS_MOST, viewFontProblem } from "../css/fonts.js";
 
 /*
  * WHAT A DOCUMENT'S BRAND MAY HOLD (FR-124, FR-126), judged where a host
@@ -24,6 +24,8 @@ export interface BrandCheckOptions {
   readonly fonts?: readonly string[];
   /** Where the brand sits in what is judged: "brand" in a document, "edits.3" in an edit. */
   readonly at?: string;
+  /** The brand's stacks as they stand where only part of it is judged (an edit): what a face lent to its views may not be called. */
+  readonly typography?: Readonly<Record<string, unknown>>;
 }
 
 /** Said wherever a brand is judged: a fallback beside a dark logo is never drawn. */
@@ -105,7 +107,7 @@ export function cssRefusalsSaid(refused: readonly CssRefusal[]): string {
 }
 export const VIEWS_CSS_FIX = "a view's stylesheet loads nothing and stays in its own tree: no url() but url(#id) on a paint, no @import or @font-face (a face for every view is brand.views.fonts), no :host; the app's own tokens (var(--graview-accent), --graview-panel, --graview-font-display, …) are there to draw with";
 
-export const VIEWS_FONT_FIX = 'say { "family": "Baloo 2", "src": "/graview/assets/<sha256>.woff2" } with a font file the app holds by its content address, or an https: address the host lists for a view\'s images; a view\'s own stylesheet then names it as font-family: "Baloo 2"';
+export const VIEWS_FONT_FIX = 'say { "family": "Baloo 2", "src": "/graview/assets/<sha256>.woff2" } under a name of its own, with a font file the app holds by its content address, or an https: address the host lists for a view\'s images; a view\'s own stylesheet then names it as font-family: "Baloo 2"';
 
 export function brandFindings(brand: Partial<BrandSpec> | undefined, options: BrandCheckOptions = {}): Finding[] {
   const out: Finding[] = [];
@@ -166,8 +168,9 @@ export function brandFindings(brand: Partial<BrandSpec> | undefined, options: Br
   const fonts = brand.views?.fonts;
   if (Array.isArray(fonts)) {
     if (fonts.length > VIEW_FONTS_MOST) out.push(error("brand-views-font", `${at}.views.fonts`, `the brand lends its views ${fonts.length} faces, and at most ${VIEW_FONTS_MOST} are loaded`, "keep the faces the views draw in, one file a weight and style"));
+    const taken = brandFamilies({ ...options.typography, ...brand.typography });
     fonts.forEach((font, index) => {
-      const problem = viewFontProblem(font);
+      const problem = viewFontProblem(font, taken);
       if (problem) out.push(error("brand-views-font", `${at}.views.fonts.${index}`, `the face lent to the views cannot be loaded, because ${problem}`, VIEWS_FONT_FIX));
     });
   }

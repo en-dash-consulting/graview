@@ -14,7 +14,7 @@ import { edgesReadWithoutTheirKinds, edgesReadWithoutTheirKindsSaid, ownKindRela
  * relation it reads with an end it is never handed is said, with the kind
  * to add, by the headless check and to the page's host.
  */
-const rock = defineNode("rock", { fields: z.object({ label: z.string() }), edges: { becomes: { to: ["rock"] }, foundIn: { to: ["place"] }, contains: { to: ["mineral"] } } });
+const rock = defineNode("rock", { fields: z.object({ label: z.string() }), edges: { becomes: { to: ["rock"] }, foundIn: { to: ["place"] }, contains: { to: ["mineral"] }, near: { to: "*" } } });
 const mineral = defineNode("mineral", { fields: z.object({ label: z.string() }) });
 const place = defineNode("place", { fields: z.object({ label: z.string() }) });
 const schema = createSchema([rock, mineral, place]);
@@ -74,6 +74,17 @@ describe("a relation a view reads and is never handed", () => {
       '"rock-page" reads the relation "foundIn", from rock to place, and is handed no place, so no link of it reaches the view: add "place" to its manifest\'s reads.kinds.',
     ]);
     expect(edgesReadWithoutTheirKinds(store(), { ...unread, reads: { kinds: ["mineral", "place"], edges: ["foundIn"] } })).toEqual([]);
+  });
+
+  it("is named too where it goes to any kind and a view of one is handed no other: nothing it could link to reaches the view", () => {
+    const near: WorkerViewManifest = { ...page, reads: { edges: ["near"] } };
+    expect(edgesReadWithoutTheirKinds(store(), near)).toEqual([{ edge: "near", kinds: [] }]);
+    expect(edgesReadWithoutTheirKindsSaid(store(), near)).toEqual([
+      '"rock-page" reads the relation "near", from rock to any kind, and is handed no other kind, so no link of it reaches the view: name the kinds it links to in its manifest\'s reads.kinds.',
+    ]);
+    expect(edgesReadWithoutTheirKinds(store(), { ...near, reads: { kinds: ["place"], edges: ["near"] } })).toEqual([]);
+    /* A view of many holds records that may link to each other. */
+    expect(edgesReadWithoutTheirKinds(store(), { ...near, cardinality: "many" })).toEqual([]);
   });
 
   it("is among a headless check's problems", async () => {

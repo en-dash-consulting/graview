@@ -503,6 +503,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
    * every push, which is how a brand the host changes reaches it.
    */
   let lent = "[]";
+  let lending = 0;
+  let giveFontsBack: (() => void) | undefined;
   const dress = () => {
     const views = options.brand?.()?.views;
     drawing?.theme(views?.css);
@@ -511,13 +513,24 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     const fonts = views?.fonts ?? [];
     if (JSON.stringify(fonts) === lent) return;
     lent = JSON.stringify(fonts);
-    if (fonts.length > 0)
-      void fontsChunk().then(({ loadViewFonts }) =>
-        loadViewFonts(document, fonts, { ...(options.asset ? { asset: options.asset } : {}), ...(options.images ? { origins: options.images.origins } : {}) }, (said) => {
-          port?.postMessage({ type: "notice", text: said });
-          options.onProblem?.(said);
-        }),
-      );
+    lending += 1;
+    const asked = lending;
+    if (fonts.length === 0) {
+      giveFontsBack?.();
+      giveFontsBack = undefined;
+      return;
+    }
+    const typography = options.brand?.()?.typography;
+    void fontsChunk().then(({ loadViewFonts }) => {
+      if (asked !== lending) return;
+      /* The new ones first, so a face both brands lend is never let go between them. */
+      const before = giveFontsBack;
+      giveFontsBack = loadViewFonts(document, fonts, { ...(options.asset ? { asset: options.asset } : {}), ...(options.images ? { origins: options.images.origins } : {}), ...(typography ? { typography } : {}) }, (said) => {
+        port?.postMessage({ type: "notice", text: said });
+        options.onProblem?.(said);
+      });
+      before?.();
+    });
   };
   let pushed = "";
   const push = () => {
@@ -569,6 +582,9 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     media?.dispose();
     drops?.dispose();
     gestures?.dispose();
+    lending += 1;
+    giveFontsBack?.();
+    giveFontsBack = undefined;
   };
 
   let port: MessagePort | undefined;

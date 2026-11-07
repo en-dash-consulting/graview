@@ -28,7 +28,7 @@ Every view comes with a manifest the host enforces:
 - `title` makes it a named place on both faces, with the slug `placeSlug(title)` (`"the-packages"`).
 - A view is as tall as it draws, measured by the host: set no height. On Pages it flows with the page. On the Scene it is a card held to its box: a fade and More where cut, Open to its page. `flows: false` keeps a frame on Pages; `scene: { maxHeight }` holds the card lower (80–4000px).
 - `attach` is a kind, or `"home"` for the front page's body (cardinality `many`).
-- `reads` lists the other kinds and the edges it is shown. Nothing else is handed to it. A view of one reading an edge from its kind to its kind (rock `becomes` rock) is handed the records linked to it. An edge to a kind it is not handed brings nothing, and the check says which to add.
+- `reads` lists the other kinds and the edges it is shown. Nothing else is handed to it. A view of one reading an edge from its kind to its kind (rock `becomes` rock) is handed the records linked to it. An edge to a kind it is not handed brings nothing, and the check says so.
 - `acts` lists the acts it may ask for, by name. An entry with `as` and `constants` is another name for the same act with arguments the view cannot change.
 - A view of one record (`cardinality: "one"`) is drawn above the kind's page blocks and the record's own fields, which stay editable. `replaces: "page"` draws it alone, and the page blocks never (`graview-view-specs`). On a view of many, it is its kind's list page (`/<plural>`).
 - `gestures: true` lets it hear a wheel, a drag and a pinch (below). `bleed: true` draws it edge to edge on a phone (`graview-view-drawing`).
@@ -78,8 +78,8 @@ resets both to the words around them, and your class wins. A `<div>` or
 `<span>` with only `graview.on("click")` is reached by no keyboard and
 named nothing; with `role="button"` (checkbox, switch, tab,
 `aria-pressed`, `aria-expanded`) the host gives it the keyboard and hears
-Enter or Space as a click. The keyboard shows the host's ring: restyle it
-with `--graview-focus-color`, never `outline: none`.
+Enter or Space as a click. The keyboard shows the host's ring, in the app's
+accent: widen it with `--graview-focus-width`, never `outline: none`.
 `class="graview-sr"` is words for a screen reader alone; an `<svg>` with no
 role, `aria-label` or `<title>` is hidden from one.
 

@@ -146,10 +146,12 @@ by the host, saved as they are typed, "Saving…" on `input` and "Saved" on
    nothing, throws, or is refused fails, said by name (`“Save economics”
    is refused: “fixedFee” expects a number.`). A control already in the
    state it shows — an "All" chip pressed while nothing is filtered, the
-   open tab — passes though it changes nothing, where it says so:
-   `aria-pressed="true"`, `aria-selected="true"`, `aria-checked="true"`
-   or `aria-current`. A chip whose state is a class alone fails, and is
-   no control to a screen reader either. `runWorkerViewHeadless(…,
+   open tab — passes though it changes nothing, only as one of a set: it
+   says `aria-pressed="true"`, `aria-selected="true"` (a tab, option or
+   grid cell), `aria-checked="true"` (a checkable role) or `aria-current`,
+   and another control beside it, or in its `role` group, says the same
+   attribute's other state (`"false"`). A lone Save saying
+   `aria-pressed="true"` still fails, as does a state in a class alone. `runWorkerViewHeadless(…,
    { presses: checkPresses })` (`@graview/guest/headless/presses`) is the same for a host's gate. To look at one,
    press it: `--press "<selector>"` (with `--type note="…"` for
    what the person typed), or `runWorkerViewHeadless(…, { press: {

@@ -1846,7 +1846,7 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
   "views": { "motion": "fade" }, "splash": { "style": "editorial" }
 }</code></pre></div>
 <ul>
-<li><strong>One theme for every view</strong> is <code>views</code>: <code>css</code>, which wins over a view's own sheet; <code>fonts</code> lent to views (<code>graview-view-drawing</code>); <code>motion: "fade"</code>.</li>
+<li><strong>One theme for every view</strong> is <code>views</code>: <code>css</code>, which wins over a view's own rules (<code>*{margin:0}</code> beats every view's margins); <code>fonts</code> lent to views (<code>graview-view-drawing</code>); <code>motion: "fade"</code>.</li>
 </ul>
 <ul>
 <li><strong>A mark</strong> — the logo, one for each scheme, and the page icon, an emoji among them — is <code>graview-logo</code>: inline SVG or a path on the app's own host, drawn as given, and one that could act refused (<code>brand-mark</code>).</li>

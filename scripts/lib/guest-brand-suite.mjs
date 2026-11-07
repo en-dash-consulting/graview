@@ -45,7 +45,7 @@ let pushes = 0;
 graview.onProps((props) => {
   pushes += 1;
   const theme = props.theme || {};
-  graview.render(graview.html\`<div class="mast" id="mast" data-pushes="\${pushes}">\${theme.logo ? graview.html\`<img id="logo" alt="" src="\${theme.logo}">\` : ""}<h2 id="name">\${theme.name || ""}</h2><span id="radius">\${theme.radius || ""}</span><small id="lent" class="lent">Granite becomes gneiss</small></div>\`);
+  graview.render(graview.html\`<div class="mast" id="mast" data-pushes="\${pushes}">\${theme.logo ? graview.html\`<img id="logo" alt="" src="\${theme.logo}">\` : ""}<h2 id="name">\${theme.name || ""}</h2><span id="radius">\${theme.radius || ""}</span><small id="lent" class="lent">Granite becomes gneiss</small><small id="baloo" class="baloo">Granite becomes gneiss</small><small id="mono" style="font-family: monospace">Granite becomes gneiss</small></div>\`);
 });
 `;
 
@@ -106,7 +106,7 @@ export async function brandSuite({ repoRoot, build, browser, claim, report, POLI
     logo: SVG_A,
     typography: { display: "Georgia, 'Times New Roman', serif" },
     shape: { radius: 4 },
-    views: { css: `.mast h2 { letter-spacing: 0.25em; padding: 40px; text-transform: uppercase }\n.lent { color: rgb(200, 30, 30); font-family: "Rock Face", serif }`, motion: "fade", ...(lends ? { fonts: [{ family: "Rock Face", src: font.path }] } : {}) },
+    views: { css: `.mast h2 { letter-spacing: 0.25em; padding: 40px; text-transform: uppercase }\n.lent { color: rgb(200, 30, 30); font-family: "Rock Face", serif }\n.baloo { font-family: "Baloo 2", monospace }`, motion: "fade", ...(lends ? { fonts: [{ family: "Rock Face", src: font.path }, { family: "Baloo 2", src: font.path }] } : {}) },
   };
   const second = { name: "En Dash Consulting", logo: secondLogo.logo, typography: { display: "'Courier New', Courier, monospace" }, shape: { radius: 16 } };
   const widgetJs = (
@@ -259,6 +259,9 @@ window.__rebrand = () => window.__handle.setBrand(brands.second);
           lentColor: getComputedStyle(root.querySelector("#lent")).color,
           lentFont: getComputedStyle(root.querySelector("#lent")).fontFamily,
           faces: [...document.fonts].filter((face) => face.family.replace(/["']/g, "") === "Rock Face").map((face) => face.status),
+          balooFaces: [...document.fonts].filter((face) => face.family.replace(/["']/g, "") === "Baloo 2").map((face) => face.status),
+          balooWidth: root.querySelector("#baloo").getBoundingClientRect().width,
+          monoWidth: root.querySelector("#mono").getBoundingClientRect().width,
           motion: root.querySelector("[data-graview-view-root]")?.getAttribute("data-graview-motion") ?? null,
           radiusSaid: root.querySelector("#radius").textContent,
           pushes: Number(root.querySelector("#mast").getAttribute("data-pushes")),
@@ -288,12 +291,18 @@ window.__rebrand = () => window.__handle.setBrand(brands.second);
       { color: before.lentColor },
     );
     if (lends) {
-      await until(() => [...document.fonts].some((face) => face.family.replace(/["']/g, "") === "Rock Face" && face.status === "loaded"), undefined, "the lent face loaded").catch(() => undefined);
+      await until(() => ["Rock Face", "Baloo 2"].every((family) => [...document.fonts].some((face) => face.family.replace(/["']/g, "") === family && face.status === "loaded")), undefined, "the lent faces loaded").catch(() => undefined);
+      await tab.waitForTimeout(200);
       const lent = await read();
       claim(
         "the face the brand lends its views, a file the app holds at its content address, is loaded into the page by the host, and the view's text is drawn in it",
         lent.faces.includes("loaded") && /Rock Face/.test(lent.lentFont) && fontAsked.length >= 1 && fontAsked.every((url) => url === font.path),
         { faces: lent.faces, font: lent.lentFont, served: fontAsked, problems: await app.evaluate(() => window.__problems) },
+      );
+      claim(
+        'a face whose family is no one identifier, "Baloo 2", is loaded in this engine and its text is drawn in it, not in the fallback',
+        lent.balooFaces.length === 1 && lent.balooFaces[0] === "loaded" && lent.balooWidth !== lent.monoWidth,
+        { faces: lent.balooFaces, baloo: lent.balooWidth, mono: lent.monoWidth, problems: await app.evaluate(() => window.__problems) },
       );
     }
     claim("and, the brand asking for it, its root is set to fade between records", before.motion === "fade", { motion: before.motion });
@@ -313,6 +322,7 @@ window.__rebrand = () => window.__handle.setBrand(brands.second);
     claim(`and draws the new logo, byte for byte, at its own size (${secondLogo.width}×${secondLogo.height})`, sameBytes(after.bytes, [...secondLogo.bytes]) && after.natural.join("x") === `${secondLogo.width}x${secondLogo.height}`, { natural: after.natural, scheme: after.scheme, bytes: Array.isArray(after.bytes) ? after.bytes.length : after.bytes });
     claim("it followed the brand by being pushed it, not redrawn: the same region and the same image element, one push more", after.marked && after.pushes > before.pushes, { marked: after.marked, pushes: [before.pushes, after.pushes] });
     claim("after the brand changes to one with no stylesheet for its views, the host's sheet is empty, the heading's letter-spacing and capitals are the browser's again, the view's own rule holds, and nothing fades", after.themeSheet === "" && after.letterSpacing === "normal" && after.transform === "none" && after.lentColor === "rgb(1, 2, 3)" && after.motion === null, { themeSheet: after.themeSheet, letterSpacing: after.letterSpacing, transform: after.transform, lentColor: after.lentColor, motion: after.motion });
+    if (lends) claim("and the faces the brand lent are gone from the page once it lends none", after.faces.length === 0 && after.balooFaces.length === 0, { faces: after.faces, baloo: after.balooFaces });
     if (revoked !== null) claim("the last logo's blob: URL is let go once the new one is drawn", revoked === true, { url: before.src });
     if (secondLogo.logo === PNG_PATH) {
       /*

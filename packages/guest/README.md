@@ -272,9 +272,12 @@ specificity, so a view's own class always wins. A control the view hears
 itself — `role="button"`, `"checkbox"`, `"switch"` or `"tab"`,
 `aria-pressed`, `aria-expanded` — is given the keyboard where it has none,
 and Enter or Space on it is told to the view as the key and then a
-`click`. Whatever has the keyboard shows the host's ring, which a view
-restyles with `--graview-focus-color`, `--graview-focus-width` and
-`--graview-focus-offset` and cannot take away with `outline: none`;
+`click`. Whatever has the keyboard shows the host's ring, in the app's
+accent, which a view widens with `--graview-focus-width` (never under 2px)
+and sets off with `--graview-focus-offset`, and cannot take away with
+`outline: none`, in a sheet or a `style` attribute, or hold back with a
+transition (it can still hide the control itself, or push the ring out of
+sight with an offset);
 `class="graview-sr"` is words for assistive technology alone; an `<svg>`
 with no role, `aria-label` or `<title>` is hidden from it; and an element
 with a `data-key` keeps the keyboard when the view draws it again
@@ -331,18 +334,22 @@ from each engine's accessibility tree with their states.
 Each view carried its own copy of the stylesheet, so a polished home and
 the record pages drifted apart. An app's brand now names what every worker
 view inherits, `brand.views` in a document and `Brand.views` in a
-declaration: `css`, a stylesheet the host draws in each view's region
-before the view's own — the same sanitizer, the same 64,000 characters
-(`@graview/core/css`), so a view's own rule wins where both say one and
-nothing in it reaches further than a view's could — and `motion`, `"fade"`
+declaration: `css`, a stylesheet the host draws in each view's region in a cascade layer
+after the view's own — the same sanitizer, the same 64,000 characters
+(`@graview/core/css`), so nothing in it reaches further than a view's could.
+Its rule wins wherever it and a view's style the same element, whatever the
+specificity; only a view's `!important` and a `style` attribute on the element
+go past it. A reset such as `*{margin:0}` overrides every view's own margins.
+`fonts`, faces lent to views, each a family and one file, loaded into the
+page from where a view's images may come from, and `motion`, `"fade"`
 to fade a view's drawing out and in when the record it shows changes
 (nothing moves where the person asked for less motion; a shared-element
 transition between records is not this). The brand's typeface and scheme
 tokens reach a view as they always did. The view is never told: the host
 dresses it, and dresses it again when the brand changes. `graview check`
 says what of the stylesheet the open kit leaves out (`brand-views-css`),
-and a headless run (`runWorkerViewHeadless`'s `brand`) draws it first in
-its `css`, so a picture of the view is dressed as the page dresses it.
+and a headless run (`runWorkerViewHeadless`'s `brand`) draws it in the same
+layers in its `css`, so a picture of the view is dressed as the page dresses it.
 
 ### A link out goes only where the view was handed
 

@@ -94,7 +94,7 @@ describe("the drawing's theme", () => {
 
   it("is a transition of the root alone, held to the reduced-motion rule like every motion in a view", () => {
     expect(REGION_CSS).toContain(`[data-graview-view-root][data-graview-motion="fade"] { transition: opacity ${FADE_MS}ms ease; }`);
-    expect(REGION_CSS).toContain("[data-graview-view-root][data-graview-fade] { opacity: 0; }");
+    expect(REGION_CSS).toContain("[data-graview-view-root][data-graview-fade] { opacity: 0 !important; }");
     expect(REGION_CSS).toMatch(/prefers-reduced-motion: reduce\) \{ \[data-graview-view-root\], \[data-graview-view-root\] \*/);
   });
 

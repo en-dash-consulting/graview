@@ -1,6 +1,6 @@
 {
   "budget": "the guest host, registering a worker view",
-  "minified": 1112,
-  "gzipped": 359,
-  "note": "Raised when the friction a chat met writing worker views was taken away: a view of one is handed its own kind across a relation back to it and told of a relation it can never be handed (`ownKindRelations`, `edgesReadWithoutTheirKinds`), a press on a control already in its state passes, the break properties join the open kit, a brand lends its views faces (`brand.views.fonts`, `viewFontProblem`, the host's fonts chunk, `set-brand` and the checker's `brand-views-font`), and every sheet in a view's region is in a cascade layer of the host's so the app's theme wins (host/cascade.ts). 1_112 / 359 more. Measured at 44_802 / 19_617 against 43_690 / 19_258."
+  "minified": 1412,
+  "gzipped": 417,
+  "note": "Raised when the friction a chat met writing worker views was taken away: a view of one is handed its own kind across a relation back to it and told of a relation it can never be handed, a press on a control already in its state passes only as one of a set, the break properties join the open kit, a brand lends its views faces (`brand.views.fonts`, `viewFontProblem`, the host's fonts chunk, `set-brand` and the checker's `brand-views-font`), every sheet in a view's region is in a cascade layer of the host's so the app's theme wins, and the wrapper reads a sheet again before it holds it (host/cascade.ts). 1_412 / 417 more. Measured at 45_102 / 19_675 against main's 43_690 / 19_258."
 }

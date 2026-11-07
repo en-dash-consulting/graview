@@ -1,27 +1,67 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from "vitest";
+import { createSchema, defineNode, Store, z, type AnySchema, type Principal } from "@graview/core";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { loadViewFonts, viewFontAddress } from "../../src/host/fonts.js";
+import { mountWorkerView } from "../../src/host/view.js";
+import { GUEST_PROTOCOL } from "../../src/protocol.js";
 
 /**
  * A VIEW DRAWS IN A FACE ITS APP LENDS IT (Roadmap
  * f-view-authoring-friction-2026-11). A view's stylesheet loads nothing, so
  * no `@font-face`; the brand lends its views faces instead
  * (`brand.views.fonts`), and the view's host loads each into the page as a
- * `FontFace` — only from where it lets a view's images come from: a file the
+ * `FontFace`, only from where it lets a view's images come from: a file the
  * app holds, where the host says those are served (`asset`), or an `https:`
- * address on an origin it lists (`images.origins`). Anything else is said
- * and not fetched. That a browser draws the view in it is guest-sandbox's
- * brand claims.
+ * address on an origin it lists (`images.origins`). Anything else is said and
+ * not fetched. A face never takes a name the page already draws in, and goes
+ * when the brand or the view does. That a browser draws the view in it is
+ * guest-sandbox's brand claims.
  */
 const SHA = "b".repeat(64);
 const BALOO = { family: "Baloo 2", src: `/graview/assets/${SHA}.woff2`, weight: "400 800" };
 const FREDOKA = { family: "Fredoka", src: "https://fonts.gstatic.com/s/fredoka.woff2" };
 const asset = (path: string) => `https://app.example/base${path}`;
 
+let made: { family: string; source: string; descriptors: Record<string, string> }[];
+let fonts: Set<unknown>;
+/* As Firefox has it: a family that is not one CSS identifier without its quotes is an error at once, and a face in error is never added. */
+class FakeFontFace {
+  readonly status: string;
+  constructor(readonly family: string, source: string, descriptors: Record<string, string>) {
+    made.push({ family, source, descriptors });
+    this.status = /^[^"].*\s\d/.test(family) ? "error" : "unloaded";
+  }
+  load() {
+    return Promise.resolve(this);
+  }
+}
+beforeEach(() => {
+  made = [];
+  fonts = new Set();
+  Object.assign(window, { FontFace: FakeFontFace });
+  Object.defineProperty(document, "fonts", { value: { add: (face: unknown) => fonts.add(face), delete: (face: unknown) => fonts.delete(face) }, configurable: true });
+});
+
+/* Given back after each test: what the page holds outlives a test's stand-in for its fonts. */
+const backs: (() => void)[] = [];
+const lend = (given: Parameters<typeof loadViewFonts>[1], options: Parameters<typeof loadViewFonts>[2], say: Parameters<typeof loadViewFonts>[3]) => {
+  const back = loadViewFonts(document, given, options, say);
+  backs.push(back);
+  return back;
+};
+afterEach(() => {
+  for (const back of backs.splice(0)) back();
+});
+
 describe("a face lent to a view", () => {
   it("is loaded from a file the app holds where the host serves them, and from an https: origin the host lists for images", () => {
     expect(viewFontAddress(BALOO, { asset })).toEqual({ url: `https://app.example/base/graview/assets/${SHA}.woff2` });
     expect(viewFontAddress(FREDOKA, { origins: ["https://fonts.gstatic.com"] })).toEqual({ url: FREDOKA.src });
+  });
+
+  it("is held to the host's list as an image is: the origin as the URL parser says it, and a list entry that is no https: origin counts for nothing", () => {
+    expect(viewFontAddress(FREDOKA, { origins: ["https://FONTS.gstatic.com:443/"] })).toEqual({ url: FREDOKA.src });
+    expect(viewFontAddress(FREDOKA, { origins: ["fonts.gstatic.com", "http://fonts.gstatic.com"] })).toEqual({ refused: expect.stringContaining("no origin this host lists") });
   });
 
   it("is refused, and said, where the host serves no app files, lists no such origin, or the face breaks the brand's rule", () => {
@@ -30,24 +70,95 @@ describe("a face lent to a view", () => {
     expect(viewFontAddress({ family: "Rock", src: "https://evil.example/steal.css" }, { origins: ["https://evil.example"] })).toEqual({ refused: expect.stringContaining("its src is a file the app holds") });
   });
 
+  it("never takes a name the page already draws in: a system face, Graview's own, or a face of the brand's own stacks", () => {
+    expect(viewFontAddress({ family: "Arial", src: BALOO.src }, { asset })).toEqual({ refused: expect.stringContaining("would replace") });
+    expect(viewFontAddress({ family: "Montserrat", src: BALOO.src }, { asset })).toEqual({ refused: expect.stringContaining("would replace") });
+    expect(viewFontAddress({ family: "Fraunces", src: BALOO.src }, { asset, typography: { display: "Fraunces, serif" } })).toEqual({ refused: expect.stringContaining("would replace") });
+  });
+
   it("is added to the page's fonts once, however often the view is dressed, with its weight and style", () => {
-    const made: { family: string; source: string; descriptors: Record<string, string> }[] = [];
-    class FakeFontFace {
-      constructor(readonly family: string, source: string, descriptors: Record<string, string>) {
-        made.push({ family, source, descriptors });
-      }
-      load() {
-        return Promise.resolve(this);
-      }
-    }
-    const fonts = new Set<unknown>();
-    Object.assign(window, { FontFace: FakeFontFace });
-    Object.defineProperty(document, "fonts", { value: { add: (face: unknown) => fonts.add(face) }, configurable: true });
     const said: string[] = [];
-    loadViewFonts(document, [BALOO, FREDOKA], { asset }, (one) => said.push(one));
-    loadViewFonts(document, [BALOO], { asset }, (one) => said.push(one));
-    expect(made).toEqual([{ family: "Baloo 2", source: `url("https://app.example/base/graview/assets/${SHA}.woff2")`, descriptors: { display: "swap", weight: "400 800" } }]);
+    lend([FREDOKA], { origins: ["https://fonts.gstatic.com"] }, (one) => said.push(one));
+    lend([FREDOKA], { origins: ["https://fonts.gstatic.com"] }, (one) => said.push(one));
+    expect(made).toHaveLength(1);
     expect(fonts.size).toBe(1);
-    expect(said).toEqual([expect.stringContaining('The app\'s face "Fredoka" for its views is not loaded: https://fonts.gstatic.com is no origin')]);
+    expect(said).toEqual([]);
+  });
+
+  it("is built again with its family quoted where the engine takes it for no family at all, as Firefox does \"Baloo 2\"", () => {
+    lend([BALOO], { asset }, () => {});
+    expect(made.map((one) => one.family)).toEqual(["Baloo 2", '"Baloo 2"']);
+    expect([...fonts].map((one) => (one as FakeFontFace).family)).toEqual(['"Baloo 2"']);
+    expect(made[1]!.descriptors).toEqual({ display: "swap", weight: "400 800" });
+  });
+
+  it("is loaded at most eight to a brand, and what was left out is said", () => {
+    const nine = Array.from({ length: 9 }, (_, at) => ({ family: `Rock${"abcdefghi"[at]}`, src: BALOO.src }));
+    const said: string[] = [];
+    lend(nine, { asset }, (one) => said.push(one));
+    expect(fonts.size).toBe(8);
+    expect(said).toEqual([expect.stringMatching(/at most 8.*Rocki/)]);
+  });
+
+  it("goes from the page once no view holds it", () => {
+    const first = lend([FREDOKA], { origins: ["https://fonts.gstatic.com"] }, () => {});
+    const second = lend([FREDOKA], { origins: ["https://fonts.gstatic.com"] }, () => {});
+    first();
+    expect(fonts.size).toBe(1);
+    second();
+    second();
+    expect(fonts.size).toBe(0);
+  });
+});
+
+/* The worker's stand-in: the host's half runs for real. */
+class FakeWorker {
+  static made: FakeWorker[] = [];
+  onmessage: ((event: MessageEvent) => void) | null = null;
+  onerror: ((event: Event) => void) | null = null;
+  constructor(readonly url: string) {
+    FakeWorker.made.push(this);
+  }
+  postMessage() {}
+  terminate() {}
+  say(data: unknown) {
+    this.onmessage?.({ data } as MessageEvent);
+  }
+}
+Object.assign(window, { Worker: FakeWorker });
+Object.assign(window.URL, { createObjectURL: () => "blob:https://host.example/1", revokeObjectURL: () => undefined });
+const car = defineNode("car", { fields: z.object({ label: z.string() }), plural: "Cars", label: (node) => node.label });
+const store = () => new Store<AnySchema>({ schema: createSchema([car]) as AnySchema, mutations: [], policy: { grants: [] }, snapshot: { nodes: [{ id: "car:golf", kind: "car", label: "Golf" }], edges: [] } as never });
+const reader: Principal = { kind: "human", id: "u:reader" };
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+afterEach(() => {
+  FakeWorker.made = [];
+  document.body.replaceChildren();
+});
+
+describe("a view on a page", () => {
+  it("gives back the faces it was lent when it is taken off the page, and when the brand stops lending them", async () => {
+    const until = async (test: () => boolean) => {
+      for (let i = 0; i < 100 && !test(); i += 1) await wait(10);
+    };
+    const brand: { current: { name: string; views?: { fonts: readonly typeof FREDOKA[] } } } = { current: { name: "Cars", views: { fonts: [FREDOKA] } } };
+    const mounted = () => {
+      const view = mountWorkerView(document.body.appendChild(document.createElement("div")), { manifest: { name: "card", attach: "car", cardinality: "one" }, worker: { script: "/* the view */" }, store: store(), principal: reader, input: () => ({ node: { id: "car:golf" } }), images: { origins: ["https://fonts.gstatic.com"] }, brand: () => brand.current });
+      FakeWorker.made.at(-1)!.say({ graview: "guest-ready", protocol: GUEST_PROTOCOL });
+      return view;
+    };
+    const taken = mounted();
+    await until(() => fonts.size === 1);
+    expect(fonts.size).toBe(1);
+    taken.dispose();
+    expect(fonts.size).toBe(0);
+    const stays = mounted();
+    await until(() => fonts.size === 1);
+    expect(fonts.size).toBe(1);
+    brand.current = { name: "Cars" };
+    stays.update();
+    await until(() => fonts.size === 0);
+    expect(fonts.size).toBe(0);
+    stays.dispose();
   });
 });

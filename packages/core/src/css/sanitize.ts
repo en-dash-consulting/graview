@@ -773,14 +773,19 @@ function judgeValue(property: string | undefined, values: readonly ComponentValu
   return out;
 }
 
-/* What moves: held still where a person asks for less motion (the guest host's open-draw.ts), so a style attribute, which outranks every sheet, says it without `!important`. */
-const MOTION = /^(animation|transition|scroll-behavior)/;
+/*
+ * What the host holds with `!important` in its first layers (the guest host's open-draw.ts): motion where a person asks for less, and the
+ * focus ring. An important style attribute outranks every layer, so a style attribute says these, and `all`, which holds both, without it.
+ */
+const HELD = /^(animation|transition|scroll-behavior|outline)/;
+/* The ring is drawn in the app's accent, judged against its grounds: a view that could set its color could set it to nothing. Its width (never under 2px) and offset stay the view's. */
+const FOCUS_COLOR = "--graview-focus-color";
 
 /** One declaration, judged: kept as text, or refused. `attribute`: it is a style attribute's. */
 function judgeDeclaration(declaration: Declaration, refuse: (refusal: CssRefusal) => void, attribute = false): string | undefined {
   const custom = declaration.name.startsWith("--");
   const name = custom ? declaration.name : propertyName(declaration.name);
-  if (!custom && !PROPERTIES.has(name)) {
+  if (name === FOCUS_COLOR || (!custom && !PROPERTIES.has(name))) {
     refuse({ reason: "property", name });
     return undefined;
   }
@@ -794,12 +799,12 @@ function judgeDeclaration(declaration: Declaration, refuse: (refusal: CssRefusal
       refuse({ reason: "value", name });
       return undefined;
     }
-    return `${name}: ${word}${declaration.important ? " !important" : ""}`;
+    return `${name}: ${word}${declaration.important && !(attribute && name === "all") ? " !important" : ""}`;
   }
   const value = judgeValue(custom ? undefined : name, declaration.value, refuse);
   if (!value) return undefined;
   const said = serializeValues(value).trim();
-  return `${custom ? `--${serializeName(declaration.name.slice(2))}` : name}: ${said}${declaration.important && !(attribute && MOTION.test(name)) ? " !important" : ""}`;
+  return `${custom ? `--${serializeName(declaration.name.slice(2))}` : name}: ${said}${declaration.important && !(attribute && HELD.test(name)) ? " !important" : ""}`;
 }
 
 /**

@@ -61,15 +61,16 @@ brand or the toggle changes.
 
 Shared rules go in `brand.views.css` (`graview-brand`). **The theme wins**:
 it is in a cascade layer after the view's own sheets, so where both style
-one element its rule wins whatever the view's specificity; only a view's
-`!important` overrides it. A theme rule on an ancestor is only inherited.
+one element its rule wins whatever the view's specificity. A view's
+`!important` and a `style` attribute go past it; a rule on an ancestor is
+only inherited.
 
 **A web face** is the brand's to lend, never the view's to load:
 `views.fonts: [{ family: "Baloo 2", src: "/graview/assets/<sha256>.woff2",
 weight: "400 800" }]`, then `font-family: "Baloo 2", var(--graview-font-body)`.
 The host loads it from a file the app holds where it serves them, or an
-`https:` address on an origin it lists in `images.origins`; else it is said
-and refused.
+`https:` address on an origin it lists in `images.origins`, and never under a
+system face's name or the brand's own; else it is said and refused.
 
 ## Its box, and the gutter
 
@@ -123,8 +124,8 @@ Without `pictures`, a record's file comes as the record keeps it: its
 
 ## A record's video, and the full-screen viewer
 
-A view names what it wants and **the host draws it**, from the records it
-was shown, for a view whose manifest says `pictures`:
+A view names it and **the host draws it**, for a manifest that says
+`pictures`:
 
 - **`<graview-video data-record="${node.id}" data-field="clip">`** (and
   `data-index` in a list): the host plays that record's video in it —
@@ -186,7 +187,7 @@ bytes as words: a `data:` URI in a text field is cut at 20,000 characters.
 3. Open the place and read the view's `refused` (`WorkerView.refused`, or
    `graview.refused` in its console): every element, attribute and
    address the host left out, and why.
-4. Toggle to dark; change the brand. Does the view follow, logo and all?
+4. Toggle to dark; change the brand. Does the view follow?
 5. As a member who may see fewer records, are the pictures on the records
    they may not see absent — not merely hidden?
 

@@ -343,9 +343,11 @@ export function ownKindRelations<S extends AnySchema>(store: Pick<Store<S>, "sch
  * f-view-authoring-friction-2026-11): a relation in `reads.edges` with an
  * end no kind the view is handed is on — neither its own nor one in
  * `reads.kinds` — so no link of it ever reaches the view, and nothing said
- * why its links were missing. Each with the kinds that would hand it.
+ * why its links were missing. Each with the kinds that would hand it; none,
+ * where it goes to any kind (`to: "*"`) and a view of one is handed only its
+ * own record, since which kinds it links to is the author's to say.
  */
-export function edgesReadWithoutTheirKinds<S extends AnySchema>(store: Pick<Store<S>, "schema">, manifest: Pick<WorkerViewManifest, "attach" | "reads">): readonly { readonly edge: string; readonly kinds: readonly string[] }[] {
+export function edgesReadWithoutTheirKinds<S extends AnySchema>(store: Pick<Store<S>, "schema">, manifest: Pick<WorkerViewManifest, "attach" | "cardinality" | "reads">): readonly { readonly edge: string; readonly kinds: readonly string[] }[] {
   const handed = new Set([...(manifest.attach === "home" ? [] : [manifest.attach]), ...(manifest.reads?.kinds ?? [])]);
   const out: { edge: string; kinds: string[] }[] = [];
   for (const name of manifest.reads?.edges ?? []) {
@@ -355,15 +357,17 @@ export function edgesReadWithoutTheirKinds<S extends AnySchema>(store: Pick<Stor
     const to = edge.to === "*" || edge.to.some((kind) => handed.has(kind)) ? [] : edge.to;
     const kinds = [...new Set([...from, ...to])];
     if (kinds.length > 0) out.push({ edge: name, kinds });
+    else if (edge.to === "*" && manifest.attach !== "home" && manifest.cardinality === "one" && (manifest.reads?.kinds ?? []).length === 0) out.push({ edge: name, kinds: [] });
   }
   return out;
 }
 
 /** Each relation a view reads and is never handed, said with what to add to `reads.kinds`; empty when every one can reach it. */
-export function edgesReadWithoutTheirKindsSaid<S extends AnySchema>(store: Pick<Store<S>, "schema">, manifest: Pick<WorkerViewManifest, "name" | "attach" | "reads">): readonly string[] {
+export function edgesReadWithoutTheirKindsSaid<S extends AnySchema>(store: Pick<Store<S>, "schema">, manifest: Pick<WorkerViewManifest, "name" | "attach" | "cardinality" | "reads">): readonly string[] {
   return edgesReadWithoutTheirKinds(store, manifest).map(({ edge, kinds }) => {
     const info = store.schema.edge(edge)!;
     const ends = `${info.from.join(" or ")} to ${info.to === "*" ? "any kind" : info.to.join(" or ")}`;
+    if (kinds.length === 0) return `"${manifest.name}" reads the relation "${edge}", from ${ends}, and is handed no other kind, so no link of it reaches the view: name the kinds it links to in its manifest's reads.kinds.`;
     return `"${manifest.name}" reads the relation "${edge}", from ${ends}, and is handed no ${kinds.join(" or ")}, so no link of it reaches the view: add ${kinds.map((kind) => `"${kind}"`).join(" or ")} to its manifest's reads.kinds.`;
   });
 }

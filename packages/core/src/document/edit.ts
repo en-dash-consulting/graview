@@ -738,9 +738,10 @@ class Editor {
         ...(typeof e.favicon === "string" || isObject(e.favicon) ? { favicon: e.favicon } : {}),
         ...(isObject(e.typography) ? { typography: Object.fromEntries(Object.entries(e.typography).filter(([, v]) => typeof v === "string")) as Doc } : {}),
         // The stylesheet every view gets is judged as a page draws it (Roadmap f-app-wide-view-theme): an edit that would leave part of it undrawn is refused, saying which part.
-        ...(isObject(e.views) && typeof e.views["css"] === "string" ? { views: { css: e.views["css"] } } : {}),
+        // And each face it lends them, by the rule the view's host loads it by, so an edit saves nothing a check would refuse (Roadmap f-view-authoring-friction-2026-11).
+        ...(isObject(e.views) && (typeof e.views["css"] === "string" || Array.isArray(e.views["fonts"])) ? { views: { ...(typeof e.views["css"] === "string" ? { css: e.views["css"] } : {}), ...(Array.isArray(e.views["fonts"]) ? { fonts: e.views["fonts"] } : {}) } } : {}),
       },
-      { at, ...(this.options.fonts ? { fonts: this.options.fonts } : {}) },
+      { at, ...(this.options.fonts ? { fonts: this.options.fonts } : {}), ...(isObject(this.doc.brand?.typography) ? { typography: this.doc.brand.typography as Record<string, unknown> } : {}) },
     );
     if (judged.length > 0) return void this.findings.push(...judged);
     if (e.accent === null) {

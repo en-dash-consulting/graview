@@ -86,8 +86,8 @@ export interface BrandViews {
    * A stylesheet every worker view's region gets before the view's own,
    * held to the same sanitizer and the same 64,000 characters a view's is
    * (`@graview/core/css`), in the host's cascade layer after the view's
-   * own: its rule wins wherever both style the same element, and only a
-   * view's `!important` overrides it.
+   * own: its rule wins wherever both style the same element. A view's
+   * `!important` and a `style` attribute on the element still go past it.
    */
   readonly css?: string;
   /** `"fade"`: a view's drawing fades out and in when the record it shows changes. `"none"` (the default) swaps at once. */
@@ -98,7 +98,9 @@ export interface BrandViews {
    * where it lets a view's images come from — a file the app holds
    * (`/graview/assets/<sha256>.woff2`) or an `https:` address on an origin
    * it lists — and named by a view's stylesheet and `css` as any face is.
-   * Judged by `viewFontProblem` on `@graview/core/css`, at most eight.
+   * Judged by `viewFontProblem` on `@graview/core/css`, at most eight, none
+   * called what the page already draws in (a system face, Graview's own, one
+   * of `typography`'s), and gone from the page when the brand stops lending it.
    */
   readonly fonts?: readonly BrandViewFont[];
 }
