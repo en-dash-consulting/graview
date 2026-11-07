@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "ed0be859-285b-4cd3-8fb4-4cb8e8a0f4fb":
+    status: "completed"
+    startedAt: "2026-09-19T05:44:49.480Z"
+    completedAt: "2026-09-19T05:47:24.101Z"
+    endedAt: "2026-09-19T05:47:24.101Z"
+    resolutionType: "code-change"
+    resolutionDetail: "runLoop + replyFromLoop in @graview/tools with said stop reasons and onCall announcements"
+    appliedAt: "2026-09-19T05:47:24.101Z"
+    lastModified: "2026-09-19T05:47:24.114Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

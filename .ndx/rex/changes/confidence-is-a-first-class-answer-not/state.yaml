@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "e72ec788-cec5-4825-b09a-99bfe503a7a4":
+    status: "completed"
+    startedAt: "2026-09-19T05:40:05.100Z"
+    completedAt: "2026-09-19T05:44:05.200Z"
+    endedAt: "2026-09-19T05:44:05.200Z"
+    resolutionType: "code-change"
+    resolutionDetail: "PlannedCall.confidence, OfferedQuestion via ChatReply.questions and replyFromRun, chat question at node, PlanReview least-sure-first"
+    appliedAt: "2026-09-19T05:44:05.200Z"
+    lastModified: "2026-09-19T05:44:05.221Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "49216104-1961-405d-99b9-4eaf53796027":
+    status: "completed"
+    startedAt: "2026-09-01T11:07:39.364Z"
+    completedAt: "2026-09-01T11:26:29.914Z"
+    endedAt: "2026-09-01T11:26:29.914Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Edges join the selection model (edge:kind:from:to, URL-carried); single-edge connectors carry their real edge and take clicks via a clipped hit layer above the panels; right-click opens the pointer menu on the relation; inspector states the relation with endpoint chips; connects/severs mutation seam derives edge actions (check-verified); the household example gains add/remove-participant so a Run's Children are editable inline; harness scenario theLineTakesAClick passes. 568 tests + full sweep green."
+    appliedAt: "2026-09-01T11:26:29.914Z"

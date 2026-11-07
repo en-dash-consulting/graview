@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "c8b16164-f9cc-47e6-b942-10e8ac2e604a":
+    status: "completed"
+    startedAt: "2026-09-20T14:03:58.036Z"
+    completedAt: "2026-09-20T14:03:58.036Z"
+    endedAt: "2026-09-20T14:03:58.036Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Up / Down to <place>; chevron quiet until reached for; moved only after a hand's gesture; legend hover lights roads; Escape clears a selection again."
+    appliedAt: "2026-09-20T14:03:58.036Z"
+    lastModified: "2026-09-20T14:03:58.048Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

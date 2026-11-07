@@ -1,0 +1,23 @@
+---
+id: "23348e5b-cec2-4c20-8ef0-9fcc2de400bb"
+type: "change"
+title: "The focused view can take the room it needs"
+slug: "the-focused-view-can-take-the-room-it"
+intent: "The thing you are actually looking at is boxed — the focus is capped around 1040 wide and stops well short of the height, so the densest view on the screen sits with dead ground on either side. And the gesture that should fix it, jacking in, jumps you somewhere else entirely: a modal page that isolates the view from every relation it has.\n\nDirection from Nick (2026-08-31): \"it would consume most of the screen real estate, but maybe not ALL... the highlight views aren't taking up quite enough of the screen.. should be able to easily kinda zoom in and out of them, with the tech we're using.. jacking in shouldn't jump me somewhere else, but rather zoom me into a fuller focus.\" And on the modal: \"the jack-in kinda views are still too isolating.. i was thinking something that would still show some of the relations somehow.\"\n\nSo jack-in BECOMES the in-scene zoom: a view state where the focus fills most of the scene, the kinds shelf and the relation plane recede rather than disappear — still the same picture, still connectors, still a URL and a back-button stop, tweened by the existing interpolation so it reads as zooming in rather than landing somewhere new. The full-page modal goes; what it uniquely offered (a reading column for records, neighbours for places) is preserved by the filled focus having the room to render at full fidelity in place."
+acceptanceCriteria:
+  - "Double-clicking (the go-deeper gesture) zooms the focus to most of the scene — roughly 85-92% of the width and height — rather than opening a fixed modal page over it"
+  - "The kinds shelf and any raised relation RECEDE but stay visible with their connectors: the zoomed stop still reads as a place in the same scene, not an isolated document"
+  - "It is a view state: a URL, a back-button stop, and the existing interpolation tweens in and out of it — entering reads as zooming in, leaving as zooming out"
+  - "Escape (and the trail) backs out of the zoom the way it backs out of everything else"
+  - "The record reading-column and place neighbours survive: a zoomed record renders at full fidelity in a readable column, a zoomed place still names what it touches"
+  - "The plane model and capture pipeline are untouched: the transform stays affine"
+  - "All harnesses that drove the modal (survey jackedIn/placeFull states, navigation, direct, a11y, acceptance) are updated to the zoom and pass"
+touches:
+  - "95eebd39-8c1a-47fc-9b58-818eecb58e85"
+priority: "high"
+tags:
+  - "layout"
+  - "ux"
+  - "lens"
+source: "Session: UI review of the primary surface across all five apps"
+---

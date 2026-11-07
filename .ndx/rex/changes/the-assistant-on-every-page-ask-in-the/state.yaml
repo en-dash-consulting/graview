@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "0046cb01-c472-47c9-903f-2bf85ba7590f":
+    status: "completed"
+    startedAt: "2026-09-22T00:39:00.041Z"
+    completedAt: "2026-09-22T01:36:15.520Z"
+    endedAt: "2026-09-22T01:36:15.520Z"
+    resolutionType: "code-change"
+    resolutionDetail: "PageAsk opens the scene's companion on every route with the route as its subject; grounded chips, proposals through the runtime, open questions in the problems inbox, the rung chosen in the footer."
+    appliedAt: "2026-09-22T01:36:15.520Z"
+    lastModified: "2026-09-22T01:36:15.530Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

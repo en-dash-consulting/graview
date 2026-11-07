@@ -1,0 +1,13 @@
+schema: "rex/v2"
+items:
+  "2e58658a-a3a5-4890-a28f-2fec28f178aa":
+    status: "completed"
+    startedAt: "2026-09-19T06:23:29.553Z"
+    completedAt: "2026-09-19T06:49:55.111Z"
+    endedAt: "2026-09-19T06:49:55.111Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Screen on the plot with screenOf, marquee with one-gesture descent and altitude showing switches, descentTarget drive-ins, pan re-centre, screen: whereIs; navigation/audit/a11y/pages harnesses green, survey altitude clean"
+    appliedAt: "2026-09-19T06:49:55.111Z"
+    needsPlacement: true
+    lastModified: "2026-09-19T06:49:55.123Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

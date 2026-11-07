@@ -1,0 +1,13 @@
+schema: "rex/v2"
+items:
+  "b2d7f4c1-8e5a-4c39-9d6b-1f0e2a3b4c5d":
+    status: "completed"
+    startedAt: "2026-09-28T02:00:00.000Z"
+    completedAt: "2026-09-28T02:30:00.000Z"
+    endedAt: "2026-09-28T02:30:00.000Z"
+    resolutionType: "code-change"
+    resolutionDetail: "apps/seedbed/src/ui/garden-map.tsx: a plot is never narrower than its own name (min-width: max-content) at a legible floor — 11px type, an 18px badge, 13px beds — and its contents take a share of a wide ground above that; the ground has a least width of 340px, past which it scrolls sideways inside its own region rather than shrinking the type. A first cut that scaled the type down with the ground fixed the spill and made the names 9px, which Nick called out as not accessible. Measured at 1280, 700, 390 and 320: no label cut, nothing spills, the page never scrolls sideways, and only the 320 column scrolls the ground. Also in @graview/primitives: a placed board mark is max-content wide, since a token at 82% of a phone-width board shrank to 22px."
+    appliedAt: "2026-09-28T02:30:00.000Z"
+    needsPlacement: true
+    lastModified: "2026-09-28T02:30:00.000Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

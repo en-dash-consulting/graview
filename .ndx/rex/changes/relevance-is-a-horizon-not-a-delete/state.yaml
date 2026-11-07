@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "728589e4-9119-4197-8a06-6f180e78be03":
+    status: "completed"
+    startedAt: "2026-09-01T05:33:44.589Z"
+    completedAt: "2026-09-01T05:52:42.500Z"
+    endedAt: "2026-09-01T05:52:42.500Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Lifecycle declarations + isCurrent in core, current-by-default layout aggregation with advertised retired counts, past as URL view state, judgesPast invariant scoping, the household example adoption, UI affordances (+N past pill, trail chip), full test + harness sweep green."
+    appliedAt: "2026-09-01T05:52:42.500Z"

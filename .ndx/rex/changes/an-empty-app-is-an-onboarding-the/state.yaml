@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "5a35ebdf-b435-4b0e-ae6e-4cc219ebef25":
+    status: "completed"
+    startedAt: "2026-09-01T06:29:04.530Z"
+    completedAt: "2026-09-01T06:43:29.697Z"
+    endedAt: "2026-09-01T06:43:29.697Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Sixth app \"seedbed\" ships with a declared community-garden schema and an empty graph; lands on the overview city of empty districts; creates seam derives each kind's beginnings; agent seat plants a reviewable starter garden that makes the rule fire; horizon works from day one; README is the walkthrough; audit/survey/check/tests all cover it."
+    appliedAt: "2026-09-01T06:43:29.697Z"

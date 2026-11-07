@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "4ccf9d7e-6932-40e7-81e7-c06beb8cd0e2":
+    status: "completed"
+    startedAt: "2026-09-19T07:15:41.198Z"
+    completedAt: "2026-09-19T07:25:26.587Z"
+    endedAt: "2026-09-19T07:25:26.587Z"
+    resolutionType: "code-change"
+    resolutionDetail: "jev provider, four declared runs, asking desk, decision door; proved live on Maple Street"
+    appliedAt: "2026-09-19T07:25:26.587Z"
+    lastModified: "2026-09-19T07:25:26.599Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

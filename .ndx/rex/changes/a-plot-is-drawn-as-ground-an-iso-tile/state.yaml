@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "3ccfe323-8ed8-486e-bc74-6b2deb60e5fa":
+    status: "completed"
+    startedAt: "2026-09-20T04:42:01.235Z"
+    completedAt: "2026-09-20T04:51:21.271Z"
+    endedAt: "2026-09-20T04:51:21.271Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Plots layer draws every district's plot as an iso tile with kerb and shadow, fields darken toward the near edge, the pad is a ground cell; harnesses and unit suite green."
+    appliedAt: "2026-09-20T04:51:21.271Z"
+    lastModified: "2026-09-20T04:51:21.282Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

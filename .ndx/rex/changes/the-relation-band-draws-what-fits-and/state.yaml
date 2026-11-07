@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "b5c001b9-6f4e-47e8-b46c-d73d3e18278b":
+    status: "completed"
+    startedAt: "2026-09-29T07:01:02.939Z"
+    completedAt: "2026-09-29T07:21:36.984Z"
+    endedAt: "2026-09-29T07:21:36.984Z"
+    resolutionType: "code-change"
+    resolutionDetail: "layout/src/band.ts: bandOf (runs by edge kind+direction; small runs whole, others planned: byKind / chooseGrouping over arrangeable groups excluding the relation's edge, coverage ≥ 0.5, never one group of all, ~5 groups preferred / door; biggest groupings fall back to doors when over; leftover to standing members by relevance in natural order or to an opened group), shares (water-filling), chooseGrouping, isBandAggregate. Budget = perRow × max(2, rows at a 26px chip scaled by unit/16) — the first cut (perRow × 2, and a unit mistaken for 1) grouped todo's twelve raised tasks, which verify-navigation caught. Aggregate.opens (place → toggleExpanded; picture → focus aggregate:<kind> with in.filter=<edge>:<focus>). react: BandCard (name, count, first names, lit by hits), band groups selected as themselves, jack-in opens, host name 'Single, 80 albums'; relevance (hits, flagged, touchWeights) passed into LayoutOptions. core: year and decade buckets (row offers them). Hub: 36 hosts, 50 strands (was 1,259 / 2,214); aHubStopIsBounded and everyGroupOpens hold; navigation, menu, lines, shrunk hold. Tests: the-band-draws-what-fits (7), bucket tests."
+    appliedAt: "2026-09-29T07:21:36.984Z"
+    lastModified: "2026-09-29T07:21:37.052Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

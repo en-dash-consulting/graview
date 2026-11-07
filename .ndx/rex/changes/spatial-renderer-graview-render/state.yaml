@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "e0dd64de-6d75-466c-8093-39d411aa529e":
+    status: "completed"
+    startedAt: "2026-08-30T04:35:33.440Z"
+    completedAt: "2026-08-30T04:35:33.440Z"
+    endedAt: "2026-08-30T04:35:33.440Z"
+    resolutionType: "code-change"
+    resolutionDetail: "@graview/render: capture loop through one platform module, plane compositing with per-plane scale/blur/falloff/shadow (verified by screenshot in Chrome Canary), geometry sync for every drawn view every frame, fidelity-driven capture budget (only plane 0 is live), connector stroke derived per edge kind with a distinguishability assertion, and PointerRouter covering the platform's missing hit-test redirection. planFrame makes the whole policy layer pure data, so CI tests it with no GPU and no DOM — 26 tests. Caveat recorded honestly: receded text legibility depends on summary views, which is the primitives work, not the renderer's."
+    appliedAt: "2026-08-30T04:35:33.440Z"

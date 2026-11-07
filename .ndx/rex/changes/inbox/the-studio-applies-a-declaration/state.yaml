@@ -1,0 +1,39 @@
+schema: "rex/v2"
+items:
+  "2bfa7e93-9dd3-4ac9-936c-4b6a42533410":
+    status: "completed"
+    startedAt: "2026-09-23T04:38:24.148Z"
+    completedAt: "2026-09-23T04:38:24.148Z"
+    endedAt: "2026-09-23T04:38:24.148Z"
+    lastModified: "2026-09-23T04:38:24.210Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"
+  "48aa05ff-aacf-4afc-9c89-156a4eee17c5":
+    status: "completed"
+    startedAt: "2026-09-23T04:04:31.537Z"
+    completedAt: "2026-09-23T04:38:24.613Z"
+    endedAt: "2026-09-23T04:38:24.613Z"
+    appliedAt: "2026-09-23T04:38:24.613Z"
+    needsPlacement: true
+    lastModified: "2026-09-23T04:38:24.676Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"
+  "9acc2a15-8718-4870-b747-7805a9ebf216":
+    status: "completed"
+    startedAt: "2026-09-23T04:30:18.964Z"
+    completedAt: "2026-09-23T04:30:18.964Z"
+    endedAt: "2026-09-23T04:30:18.964Z"
+    lastModified: "2026-09-23T04:30:19.029Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"
+  "c20e1f66-53c9-4181-94c4-15bd94f5fcd0":
+    status: "completed"
+    startedAt: "2026-09-23T04:18:39.448Z"
+    completedAt: "2026-09-23T04:18:39.448Z"
+    endedAt: "2026-09-23T04:18:39.448Z"
+    lastModified: "2026-09-23T04:18:39.516Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"
+  "f3983b99-8bd3-443c-9e9d-a39fb15c26c0":
+    status: "completed"
+    startedAt: "2026-09-23T04:26:49.583Z"
+    completedAt: "2026-09-23T04:26:49.583Z"
+    endedAt: "2026-09-23T04:26:49.583Z"
+    lastModified: "2026-09-23T04:26:49.647Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

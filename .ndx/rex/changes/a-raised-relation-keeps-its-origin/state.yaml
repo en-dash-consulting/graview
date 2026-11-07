@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "0e68e9be-34ea-4b0a-afab-19df1e0f42c1":
+    status: "completed"
+    startedAt: "2026-08-31T02:50:10.668Z"
+    completedAt: "2026-08-31T02:50:10.668Z"
+    endedAt: "2026-08-31T02:50:10.668Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Verified in a browser: raising a kind leaves its card exactly where it was, marked, and clicking it again drops the relation — measured as a zero-pixel move."
+    appliedAt: "2026-08-31T02:50:10.668Z"

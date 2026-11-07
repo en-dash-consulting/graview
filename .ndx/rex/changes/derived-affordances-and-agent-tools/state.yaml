@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "2adeebc0-df1c-4ec3-9404-08d3ac1ef04f":
+    status: "completed"
+    startedAt: "2026-08-30T04:31:19.324Z"
+    completedAt: "2026-08-30T04:31:19.324Z"
+    endedAt: "2026-08-30T04:31:19.324Z"
+    resolutionType: "code-change"
+    resolutionDetail: "@graview/tools: five providers (invariant/structure/schema/lens/llm) merging into one ranked set, with no per-selection code. The structure provider produces genuinely unauthored suggestions — odd-one-out field alignment and missing-connection joins — by pairing an observation with whatever declared mutation can write that field. Tool definitions generate once from the schema; MCP and in-app adapters are transports over one runtime. Verified on the household example's real graph that agent and human edits produce byte-identical diffs. Derivation over a whole real graph runs in under one frame. 31 tests."
+    appliedAt: "2026-08-30T04:31:19.324Z"

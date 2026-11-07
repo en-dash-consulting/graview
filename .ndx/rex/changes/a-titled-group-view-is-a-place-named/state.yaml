@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "e5be736d-c421-46c5-ab28-b7c6e6db539e":
+    status: "completed"
+    startedAt: "2026-09-10T14:59:35.518Z"
+    completedAt: "2026-09-10T14:59:35.518Z"
+    endedAt: "2026-09-10T14:59:35.518Z"
+    resolutionType: "code-change"
+    resolutionDetail: "packages/core/src/views/types.ts places(), packages/primitives/src/places.tsx, embed strip; commit a10c8d0"
+    appliedAt: "2026-09-10T14:59:35.518Z"
+    lastModified: "2026-09-10T14:59:35.530Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

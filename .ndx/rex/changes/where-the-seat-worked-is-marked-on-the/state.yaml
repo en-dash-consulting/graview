@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "72f50b3c-7d10-4373-a838-8e9a327acd3d":
+    status: "completed"
+    startedAt: "2026-09-22T00:22:02.721Z"
+    completedAt: "2026-09-22T00:38:50.612Z"
+    endedAt: "2026-09-22T00:38:50.612Z"
+    resolutionType: "code-change"
+    resolutionDetail: "useSeatWork + SeatMarks mark what the seat wrote and pin its questions; the companion logs what it did with a fly-to; undo clears both."
+    appliedAt: "2026-09-22T00:38:50.612Z"
+    lastModified: "2026-09-22T00:38:50.623Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

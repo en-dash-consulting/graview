@@ -1,0 +1,18 @@
+---
+id: "fa66a517-883c-4880-bcb3-397650473e0f"
+type: "capability"
+title: "Views get the whole theme, logo included (FR-127)"
+slug: "views-get-the-whole-theme-logo"
+statement: "Views receive the app's whole theme, including its logo, font tokens, radius and scheme, so a worker view can match the app's brand."
+criteria: [{"id":"c1","text":"GuestTheme and the open kit's custom properties shall include --graview-font-display, --graview-font-body, --graview-radius, the scheme and the logo."},{"id":"c2","text":"The host shall hand the view a blob: URL it made from the brand's logo, so that a same-origin asset reaches the view without the view loading anything, together with the app's name."},{"id":"c3","text":"When a worker view draws <img src=\"${props.theme.logo}\"> and font-family: var(--graview-font-display), the view shall match the app's wordmark and headings and follow a brand change without being redrawn."}]
+tags:
+  - "graview-cloud"
+  - "FR-127"
+  - "chat-authored"
+  - "tier-2"
+source: "Graview Cloud, 2026-10-07 (handoff: brand and theme an app from a chat — docs/framework-handoff-branding.md)"
+priority: "high"
+resolution: "Shipped in #131 (0.1.16), with the logo fetched once by the host in #136: GuestTheme carries fontDisplay, radius, name and logo; a worker view is handed a blob: URL (data: where the page's policy refuses blob:), a frame guest data:, revoked when the next is handed and when the view goes."
+---
+
+Views get colour tokens and fonts in GuestTheme but no logo, and can show images only as data:/blob: of the page's own.

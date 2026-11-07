@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "13abb271-4d49-4e1c-8a8c-407d7dc1e137":
+    status: "completed"
+    startedAt: "2026-09-29T06:52:44.600Z"
+    completedAt: "2026-09-29T07:00:30.185Z"
+    endedAt: "2026-09-29T07:00:30.185Z"
+    resolutionType: "code-change"
+    resolutionDetail: "apps/discography: the Tech N9ne catalogue (MusicBrainz, CC0) as a workspace example (port 5197, preview 5198, build/ for the page, es2022 target for the top-level await), with scripts/musicbrainz to rebuild it; in root typecheck and check, ignored by changesets. scripts/verify-scale.mjs (pnpm verify scale): production build + vite preview, rAF recorder with vsync off (launchEngine now passes Chromium args), long tasks, DOM/hosts/strands per stop, writes docs/scale.json. Baseline committed failing all seven claims: altitude 21,335 elements; hub 1,259 hosts, 2,214 strands, drag p50 986 ms; select/type ~1 s frames; rise worst 4 s. Frame claims held to p95 ≤ 20 ms (idle headless frame ~19 ms) and no frame past the first over 50 ms."
+    appliedAt: "2026-09-29T07:00:30.185Z"
+    lastModified: "2026-09-29T07:00:30.255Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

@@ -1,0 +1,13 @@
+schema: "rex/v2"
+items:
+  "8435440a-5fac-4e1b-9742-cb513ec6c40b":
+    status: "completed"
+    startedAt: "2026-09-21T03:30:59.355Z"
+    completedAt: "2026-09-21T03:52:33.843Z"
+    endedAt: "2026-09-21T03:52:33.843Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Tile-based lattice pinned to the city's origin and cell; interpolate() tweens the city frame and keeps it on descent."
+    appliedAt: "2026-09-21T03:52:33.843Z"
+    needsPlacement: true
+    lastModified: "2026-09-21T03:52:33.855Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

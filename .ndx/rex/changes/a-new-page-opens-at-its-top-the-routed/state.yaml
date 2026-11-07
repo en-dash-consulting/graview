@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "7b6a1f0e-3c2d-4e8f-9a1b-2c3d4e5f6a7b":
+    status: "completed"
+    startedAt: "2026-09-27T07:20:00.000Z"
+    completedAt: "2026-09-27T07:40:00.000Z"
+    endedAt: "2026-09-27T07:40:00.000Z"
+    resolutionType: "code-change"
+    resolutionDetail: "ScrollReset in PagesRoutes: on a non-POP navigation whose pathname changed, scroll the nearest scrolling ancestor (an embed's frame, a shell's region) or else the window to the top. A change of search alone does not reset. verify-pages aNewPageOpensAtItsTop: pressed from the foot of chapter sixteen's gallery, the list opens at 0 and Back returns to where the gallery was left."
+    appliedAt: "2026-09-27T07:40:00.000Z"
+    lastModified: "2026-09-27T07:40:00.000Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

@@ -1,0 +1,13 @@
+schema: "rex/v2"
+items:
+  "5c901c77-690f-46e6-a7bc-de4c93ddb83c":
+    status: "completed"
+    startedAt: "2026-09-22T05:19:11.175Z"
+    completedAt: "2026-09-22T06:01:23.039Z"
+    endedAt: "2026-09-22T06:01:23.039Z"
+    resolutionType: "code-change"
+    resolutionDetail: "The hand moves the picture as a transform on the world layers and only the release writes the pan; the pan is hoisted out of layout(); a view redraws for its picture, not its position. rota/altitude: 169/442 slow and 10.1s blocked, to 0/124 and 0ms. New harness scripts/verify-panning.mjs."
+    appliedAt: "2026-09-22T06:01:23.039Z"
+    needsPlacement: true
+    lastModified: "2026-09-22T06:01:23.050Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

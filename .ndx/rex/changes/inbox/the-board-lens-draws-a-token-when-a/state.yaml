@@ -1,0 +1,13 @@
+schema: "rex/v2"
+items:
+  "9c4e2b7a-5d1f-4a83-b6e0-7f2c8d9a1b3c":
+    status: "completed"
+    startedAt: "2026-09-28T00:10:00.000Z"
+    completedAt: "2026-09-28T01:00:00.000Z"
+    endedAt: "2026-09-28T01:00:00.000Z"
+    resolutionType: "code-change"
+    resolutionDetail: "board.tsx: a board draws discs only when every code is three characters or fewer, otherwise tokens (pill sized to the code, ellipsis past 180px with the full label in the title, occupants inside the mark as a second line, each a target when several). `arrange: \"shelf\"` lays each zone out as a band with a heading row and a flow of marks in the domain's (y, x) order; unzoned slots get a band with no heading; `exact` stays the default. The exact rail's zone names get text-overflow ellipsis and a title. `occupantLabel` removed outright. org-graview's Load map switched to arrange: shelf and dropped occupantLabel. Board tests rewritten for the new marks and the shelf."
+    appliedAt: "2026-09-28T01:00:00.000Z"
+    needsPlacement: true
+    lastModified: "2026-09-28T01:00:00.000Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

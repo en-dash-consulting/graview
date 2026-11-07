@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "aa547494-41a5-4044-8150-4c5fe0e1e2c9":
+    status: "completed"
+    startedAt: "2026-09-21T20:56:06.210Z"
+    completedAt: "2026-09-21T21:07:31.112Z"
+    endedAt: "2026-09-21T21:07:31.112Z"
+    resolutionType: "code-change"
+    resolutionDetail: "kindMap derivation, map page and home section, list group-by and narrowing, record two-way links and seen-in; RelationMark shared with the scene's key."
+    appliedAt: "2026-09-21T21:07:31.112Z"
+    lastModified: "2026-09-21T21:07:31.123Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

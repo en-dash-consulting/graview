@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "ba5b28d8-6bb8-42ad-bdb5-fdc07f4d64cf":
+    status: "completed"
+    startedAt: "2026-09-22T06:01:50.443Z"
+    completedAt: "2026-09-22T06:12:17.464Z"
+    endedAt: "2026-09-22T06:12:17.464Z"
+    resolutionType: "code-change"
+    resolutionDetail: "A rail along the billboard's top edge moves it; the picture still pans. The leash is held in layout() at two city cells, clamped as a radius, so a pasted link is held to the same distance as a hand. Pins on the billboard were being discarded entirely before this."
+    appliedAt: "2026-09-22T06:12:17.464Z"
+    lastModified: "2026-09-22T06:12:17.477Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

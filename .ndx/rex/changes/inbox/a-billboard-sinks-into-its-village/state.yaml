@@ -1,0 +1,13 @@
+schema: "rex/v2"
+items:
+  "d71053b9-3f51-4505-b75f-d45c160303fb":
+    status: "completed"
+    startedAt: "2026-09-21T03:30:58.260Z"
+    completedAt: "2026-09-21T03:52:32.546Z"
+    endedAt: "2026-09-21T03:52:32.546Z"
+    resolutionType: "code-change"
+    resolutionDetail: "standIn() sends a leaving billboard into its kind's card; only the current screen reports its drawn height; navigation harness verdict added."
+    appliedAt: "2026-09-21T03:52:32.546Z"
+    needsPlacement: true
+    lastModified: "2026-09-21T03:52:32.557Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

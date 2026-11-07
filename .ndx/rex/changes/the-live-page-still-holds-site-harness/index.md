@@ -1,0 +1,12 @@
+---
+id: "4411f062-9526-49e2-92a8-c4afb7fb1cb9"
+type: "change"
+title: "The live page still holds: site harness at every width, artifact under 16MB, no console errors per embed"
+slug: "the-live-page-still-holds-site-harness"
+intent: "pnpm site drives the live chapters: every width and both schemes, axe, keyboard order, the face toggle on at least one chapter, and no console errors from any embed. scripts/site-artifact.mjs inlines the bundle and the artifact stays under the 16MB limit (the photographs come out of the page to make room). The README's harness list and the 'What is checked' table say so."
+touches:
+  - "f59ea8e1-68bf-4320-b226-96db703ab81b"
+priority: "medium"
+blockedBy:
+  - "bcd3f8a2-db89-46aa-b1d0-9965ea828ece"
+---
