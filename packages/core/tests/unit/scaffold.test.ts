@@ -253,6 +253,22 @@ describe("what a project starts with", () => {
     }
   });
 
+  it("reaches the router through @graview/pages and never depends on it, so the face and a page it draws share one router", () => {
+    const project = scaffoldProject({ name: "Field Notes" });
+    const manifest = JSON.parse(project.files.find((f) => f.path === "package.json")!.contents) as { dependencies: Record<string, string>; devDependencies: Record<string, string> };
+    for (const name of Object.keys({ ...manifest.dependencies, ...manifest.devDependencies })) expect(name).not.toMatch(/^react-router/);
+    for (const f of project.files) expect(f.contents, f.path).not.toMatch(/from "react-router/);
+    expect(file("Field Notes", "src/ui/pages.tsx")).toMatch(/useParams,\n\} from "@graview\/pages";/);
+    // Its first build says nothing about the router's "use client", installed or linked.
+    for (const link of [undefined, "../framework"]) {
+      const vite = scaffoldProject({ name: "Field Notes", ...(link ? { link } : {}) }).files.find((f) => f.path === "vite.config.ts")!.contents;
+      expect(vite).toContain('warning.code === "MODULE_LEVEL_DIRECTIVE" && warning.message.includes(\'"use client"\')');
+    }
+    // Linked, a test takes the router through vite, so it holds this project's React and not the checkout's.
+    const linked = scaffoldProject({ name: "Field Notes", link: "../framework" }).files.find((f) => f.path === "vite.config.ts")!.contents;
+    expect(linked).toContain('server: { deps: { inline: ["react-router"] } }');
+  });
+
   it("depends on every package, and verifies with the project's own scripts", () => {
     const manifest = JSON.parse(file("Field Notes", "package.json")) as {
       name: string;
@@ -523,7 +539,7 @@ describe("a project can do what its own skills tell it to", () => {
     // And no export is named by hand, so none can be missing.
     expect(vite).not.toMatch(/"@graview\/[a-z-]+(\/[^"]*)?":/);
     // What the linked config kept: one React, the studio's door and the record files.
-    expect(vite).toContain('dedupe: ["react", "react-dom", "react-router-dom"]');
+    expect(vite).toContain('dedupe: ["react", "react-dom"]');
     expect(vite).toContain("plugins: [studioDoor(), devFiles()]");
   });
 

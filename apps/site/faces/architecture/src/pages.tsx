@@ -14,7 +14,7 @@ import {
   type PageContext,
 } from "@graview/pages";
 import type { ReactNode } from "react";
-import { Link, NavLink, useParams } from "react-router-dom";
+import { Link, NavLink, useParams } from "@graview/pages";
 
 type S = AnySchema;
 type Page = PageComponent<S>;

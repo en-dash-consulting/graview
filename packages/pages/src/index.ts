@@ -53,3 +53,6 @@ export { PagesApp, PagesRoutes } from "./router.js";
 export { PageTrail, placeHere, usePlaceHere } from "./place-here.js";
 export type { PlaceHere, PlaceStep } from "./place-here.js";
 export type { NavigationHow, PagesAppProps, PagesSteering, PageComponent } from "./router.js";
+// What a design links, reads its address and moves with, from the router the face runs on — never the router package itself.
+export { Link, MemoryRouter, NavLink, useLocation, useNavigate, useParams, useSearchParams } from "./routing.js";
+export type { LinkProps, NavLinkProps } from "./routing.js";

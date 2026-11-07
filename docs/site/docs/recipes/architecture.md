@@ -72,8 +72,7 @@ What it installs: the framework's packages, React and the router, and Vite. No f
     "@graview/react": "^0.1.41",
     "@graview/ship": "^0.1.41",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "react-router-dom": "^7.1.1"
+    "react-dom": "^19.2.0"
   },
   "devDependencies": {
     "graview": "^0.1.41",
@@ -119,7 +118,7 @@ export default defineConfig({
   define: { "import.meta.env.GRAVIEW_PREVIEW": JSON.stringify(PREVIEW) },
   // main.tsx awaits the store at the top level.
   build: { target: "es2022" },
-  resolve: { dedupe: ["react", "react-dom", "react-router-dom"] },
+  resolve: { dedupe: ["react", "react-dom"] },
   server: {
     port: Number(process.env["PORT"] ?? 5173),
     strictPort: true,
@@ -255,7 +254,7 @@ import {
   type PageContext,
 } from "@graview/pages";
 import type { ReactNode } from "react";
-import { Link, NavLink, useParams } from "react-router-dom";
+import { Link, NavLink, useParams } from "@graview/pages";
 
 type S = AnySchema;
 type Page = PageComponent<S>;

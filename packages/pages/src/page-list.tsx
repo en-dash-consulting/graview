@@ -24,7 +24,7 @@ import { fieldSpecOf, firstPicture, withComputed } from "@graview/core/blocks";
 import { bleeds, isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
 import { ViewBoundary } from "@graview/react/drawing";
 import { useCallback, useId, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router";
 import { kindFacts, kindMap } from "./facts.js";
 import { DerivedForm } from "./form.js";
 import { WithheldActs } from "./withheld-acts.js";

@@ -5,7 +5,7 @@ import { GhostDoor, Inspector, NotifyDoor, SectionBetterDoor, useBoardMoveSectio
 import { MenuSections, partsWanted, sectionsArrive, sectionsWanted, sectionUnderNow } from "@graview/react/drawing";
 import { PLACE_MENU_EVENT, useGraview, useGraviewIfAny, type MenuColumn, type MenuItem, type MenuSectionSource, type MenuTarget, type PointerMenu } from "@graview/react/provider";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
-import { useHref, useLocation, useNavigate } from "react-router-dom";
+import { useHref, useLocation, useNavigate } from "react-router";
 import type { PageContext } from "./page-context.js";
 import { pathOfPlace } from "./page-places.js";
 import { kindOfSlug, pluralSlug, recordPath } from "./registry.js";

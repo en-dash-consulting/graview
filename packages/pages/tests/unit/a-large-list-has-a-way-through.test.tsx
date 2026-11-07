@@ -1,6 +1,6 @@
 import { createSchema, defineNode, isoDate, Store, z } from "@graview/core";
 import { renderToStaticMarkup } from "react-dom/server";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router";
 import { describe, expect, it } from "vitest";
 import { LARGE_LIST, ListPage, PagesApp } from "../../src/index.js";
 
