@@ -1918,7 +1918,7 @@ import { fileURLToPath } from "node:url";
 
 export default defineConfig({
   resolve: {
-    dedupe: ["react", "react-dom", "react-router-dom"],
+    dedupe: ["react", "react-dom"],
     // The sibling checkout; left out, the one this @graview/ship was loaded from.
     alias: sourceAliases(fileURLToPath(new URL("../graview", import.meta.url))),
   },

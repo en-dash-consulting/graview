@@ -1,6 +1,6 @@
 import { createSchema, defineNode, Store } from "@graview/core";
 import { renderToStaticMarkup } from "react-dom/server";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createPageRegistry, PagesApp, type PageComponent, type PageContext } from "../../src/index.js";

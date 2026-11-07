@@ -2,7 +2,7 @@ import { defOf, labelOf, type AnySchema, type ReadableField } from "@graview/cor
 import { pageSections, failureWords, tellApart } from "@graview/core/words";
 import { linkProvenance } from "@graview/core/provenance";
 import { useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import type { RecordFacts } from "./facts.js";
 import type { RelationFact } from "./fact-sheet-model.js";
 import type { PageContext } from "./page-context.js";

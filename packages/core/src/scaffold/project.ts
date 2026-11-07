@@ -103,7 +103,7 @@ export function workspaceRoot(ids: Ids, link: string | undefined): string {
       private: true,
       type: "module",
       description: `${ids.name}, on Graview.`,
-      engines: { node: ">=22" },
+      engines: { node: ">=22.22.0" },
       ...(ids.packageManager === "npm" ? { workspaces: ["app"] } : {}),
       scripts: {
         dev: inApp("dev"),
@@ -182,7 +182,7 @@ export function packageJson(ids: Ids, workspace: boolean): string {
     type: "module",
     description: `${ids.name}, on Graview.`,
     // Top-level await in main.tsx, and the framework's own floor.
-    engines: { node: ">=22" },
+    engines: { node: ">=22.22.0" },
     scripts: {
       dev: "vite",
       typecheck: "tsc -p tsconfig.json",
@@ -216,9 +216,8 @@ export function packageJson(ids: Ids, workspace: boolean): string {
       : {}),
     dependencies: {
       ...graview,
-      react: "^19.2.0",
-      "react-dom": "^19.2.0",
-      "react-router-dom": "^7.1.1",
+      react: "^19.2.7",
+      "react-dom": "^19.2.7",
       /*
        * NO ZOD. A kind's fields are a `z.ZodObject`, and a second copy of
        * zod makes them a nominally different type — which tsc reports by
@@ -342,6 +341,15 @@ export default defineConfig({
     outDir: "build",
     target: "es2022",
     rollupOptions: {
+      /*
+       * The router marks its build "use client" for React's server
+       * components, which this page is not. Rollup says it set the line
+       * aside, on every build; it is right to, so the first build stays quiet.
+       */
+      onwarn(warning, warn) {
+        if (warning.code === "MODULE_LEVEL_DIRECTIVE" && warning.message.includes('"use client"')) return;
+        warn(warning);
+      },
       output: {
         /*
          * Which half a module belongs to, from its path alone: rollup ids
@@ -363,7 +371,7 @@ export default defineConfig({
           if (from === "zod") return "graview";
           // React and the router keep their own, because they change on
           // nobody's schedule but their own.
-          if (from && ["react", "react-dom", "react-router", "react-router-dom", "scheduler"].includes(from)) {
+          if (from && ["react", "react-dom", "react-router", "scheduler"].includes(from)) {
             return "vendor";
           }
           return undefined;
@@ -418,6 +426,15 @@ export default defineConfig({
     outDir: "build",
     target: "es2022",
     rollupOptions: {
+      /*
+       * The router marks its build "use client" for React's server
+       * components, which this page is not. Rollup says it set the line
+       * aside, on every build; it is right to, so the first build stays quiet.
+       */
+      onwarn(warning, warn) {
+        if (warning.code === "MODULE_LEVEL_DIRECTIVE" && warning.message.includes('"use client"')) return;
+        warn(warning);
+      },
       output: {
         /*
          * Which half a module belongs to, from its path alone: rollup ids
@@ -439,7 +456,7 @@ export default defineConfig({
           if (from === "zod") return "graview";
           // React and the router keep their own, because they change on
           // nobody's schedule but their own.
-          if (from && ["react", "react-dom", "react-router", "react-router-dom", "scheduler"].includes(from)) {
+          if (from && ["react", "react-dom", "react-router", "scheduler"].includes(from)) {
             return "vendor";
           }
           return undefined;
@@ -449,14 +466,15 @@ export default defineConfig({
   },
   resolve: {
     /*
-     * React and the router, and NOT zod. Two copies of React break hooks,
+     * React, and NOT zod or the router. Two copies of React break hooks,
      * so they are forced to one — resolved from this project, which has
-     * them. Zod is not this project's dependency at all any more: the
+     * them. The router is "@graview/pages"' own dependency, reached through
+     * it, so there is only ever its copy. Zod is not this project's dependency at all any more: the
      * schemas are built with the copy "@graview/core" re-exports, and
      * listing it here would force the framework's own import to resolve
      * from a place that does not have it.
      */
-    dedupe: ["react", "react-dom", "react-router-dom"],
+    dedupe: ["react", "react-dom"],
     /*
      * One alias per export of every framework package, read from the
      * packages' own \`exports\` in the checkout each time the server starts,
@@ -475,7 +493,16 @@ export default defineConfig({
       allow: [searchForWorkspaceRoot(process.cwd()), framework],
     },
   },
-  test: { environment: "node" },
+  test: {
+    environment: "node",
+    /*
+     * The router is "@graview/pages"' own dependency, in the checkout's
+     * node_modules. A test hands such a package to Node outside vite, where
+     * \`dedupe\` never reaches, and its React would be the checkout's copy,
+     * not this project's: so it is taken through vite like the framework.
+     */
+    server: { deps: { inline: ["react-router"] } },
+  },
 });
 `;
 }

@@ -101,3 +101,38 @@ describe("graview doctor", () => {
     expect(written.join("")).toContain("✗ react 19.2.8 is installed beside react-dom 19.3.0");
   });
 });
+
+/**
+ * A ROUTER OF ITS OWN BESIDE THE FACE'S IS A PAGE THAT STOPS WORKING WITH NO ERROR.
+ *
+ * `@graview/pages` mounts the router and a design reaches it through
+ * `@graview/pages`. A project made before that has `react-router-dom` 7 in its
+ * manifest and `useParams` from it in `src/ui/pages.tsx`: that copy was never
+ * mounted, so `useParams()` answers `{}`, and every record page says nothing
+ * lives at its address, with no build, type or console error.
+ */
+describe("graview doctor on a router of a product's own", () => {
+  const having = (dependencies: Record<string, string>) => {
+    const manifest = ONE["package.json"] as { dependencies: Record<string, string> };
+    return product({ ...ONE, "package.json": { ...manifest, dependencies: { ...manifest.dependencies, ...dependencies } } });
+  };
+
+  it("is a problem with its fix when react-router-dom stands beside @graview/pages", () => {
+    const found = problems(having({ "react-router-dom": "^7.1.1" }));
+    expect(found).toHaveLength(1);
+    expect(found[0]!.says).toContain("react-router-dom");
+    expect(found[0]!.says).toContain("no error");
+    expect(found[0]!.fix).toContain("from @graview/pages");
+    expect(found[0]!.fix).toContain("react-router-dom");
+  });
+
+  it("is a problem when react-router stands beside @graview/pages", () => {
+    expect(problems(having({ "react-router": "^8.5.1" }))[0]!.says).toContain("react-router");
+  });
+
+  it("says nothing of a project with none, and asks nothing of one that does not use the pages", () => {
+    expect(problems(product(ONE))).toEqual([]);
+    const without = product({ "package.json": { dependencies: { "react-router-dom": "^7.1.1" } } });
+    expect(problems(without).filter((finding) => finding.says.includes("react-router"))).toEqual([]);
+  });
+});

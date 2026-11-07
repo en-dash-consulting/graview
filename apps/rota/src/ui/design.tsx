@@ -15,7 +15,7 @@ import {
 } from "@graview/pages";
 import { editableFields, type Affordance, type AffordanceSet, type EditableField } from "@graview/tools";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useParams, useSearchParams } from "@graview/pages";
 import type { RotaSchema } from "../domain/schema.js";
 import { today } from "./when.js";
 

@@ -2,7 +2,7 @@ import type { AnySchema } from "@graview/core";
 import { retryingImport } from "@graview/core/retry";
 import { isTakeBackKey, lastChangeOf, takeBackLast, takeBackWords, type LastChange } from "@graview/primitives/pages";
 import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation } from "react-router";
 import { lazyPart } from "@graview/react/provider";
 import { createPortal } from "react-dom";
 import { useBarFind } from "@graview/primitives/pages";

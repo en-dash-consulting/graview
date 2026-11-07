@@ -2,7 +2,7 @@ import { AppBar, barPlaceAt, barPlaces, focusInto, Profile, SkipLinks, StandingD
 import { PagesInbox } from "./pages-activity.js";
 import { assetSrc, faviconHref, pagesTitle, pluralLabel, sceneTitle } from "@graview/core";
 import type { AnySchema } from "@graview/core";
-import { Link, useHref, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useHref, useLocation, useNavigate, useSearchParams } from "react-router";
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useHostAssets } from "@graview/react/provider";
 import type { BarFind } from "@graview/primitives/pages";
