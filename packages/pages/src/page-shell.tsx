@@ -194,17 +194,27 @@ export function PageMain<S extends AnySchema>({
   context,
   style,
   bleedTop,
+  spans,
   children,
   ...rest
-}: { context: PageContext<S>; style?: React.CSSProperties; /** The page opens on a view that bleeds: on a phone it starts right under the bar (`BLEED_TOP_CSS`). */ bleedTop?: boolean; children?: React.ReactNode } & Record<`data-${string}`, string>) {
+}: {
+  context: PageContext<S>;
+  style?: React.CSSProperties;
+  /** The page opens on a view that bleeds: on a phone it starts right under the bar (`BLEED_TOP_CSS`); `"full"`, at every width (`BLEED_TOP_FULL_CSS`). */
+  bleedTop?: boolean | "full";
+  /** The page holds a view that bleeds full: the page's whole width is what it spans (`SpansThePage`). */
+  spans?: boolean;
+  children?: React.ReactNode;
+} & Record<`data-${string}`, string>) {
   // Somebody above owns the landmark: the host page, or the app's own shell.
   const Tag = (context.embedded || context.framed ? "section" : "main") as "main";
-  return (
+  const main = (
     <Tag style={{ ...column, ...style }} data-graview-page-main="" {...(bleedTop ? { "data-graview-bleed-top": "" } : {})} {...rest}>
-      {bleedTop ? <style>{BLEED_TOP_CSS}</style> : null}
+      {bleedTop ? <style>{bleedTop === "full" ? BLEED_TOP_FULL_CSS : BLEED_TOP_CSS}</style> : null}
       {children}
     </Tag>
   );
+  return spans ? <SpansThePage>{main}</SpansThePage> : main;
 }
 
 /*
@@ -217,6 +227,33 @@ export function PageMain<S extends AnySchema>({
  * width. A view that did not draw keeps it, as it keeps the gutter.
  */
 const BLEED_TOP_CSS = `@media (max-width:680px){[data-graview-bleed-top]:not(:has([data-graview-bleed]>[data-worker-view-fallback])){padding-top:0 !important}}`;
+/*
+ * A VIEW THAT BLEEDS FULL STARTS UNDER THE BAR AT EVERY WIDTH (Roadmap
+ * f-views-bleed-full-width), as it spans the page at every width. A place
+ * whose view says its own heading keeps that heading for a screen reader
+ * only: a header holding nothing else is taken out of the page's flow, and
+ * the gap after it with it. The app's line over a home's view is said the
+ * same way, or it would stand in a gutter above the view's first band. A
+ * view that did not draw keeps the spacing, and the line drawn.
+ */
+const BLEED_TOP_FULL_CSS = `[data-graview-bleed-top]:not(:has([data-graview-bleed=full] [data-worker-view-fallback])){padding-top:0 !important}[data-graview-bleed-top]:not(:has([data-graview-bleed=full] [data-worker-view-fallback]))>header:not(:has(>:not([data-graview-page-title]))){position:absolute}[data-graview-bleed-top]:not(:has([data-graview-bleed=full] [data-worker-view-fallback])) [data-graview-line-over-view]{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}`;
+
+/*
+ * THE PAGE'S WHOLE WIDTH, SAID TO A VIEW THAT BLEEDS FULL (Roadmap
+ * f-views-bleed-full-width). The column is centered in what holds the page,
+ * so a box centered in the column whose sides reach half that width either
+ * way is that width: `calc(50% - 50cqw)` either side. What holds the page
+ * says its width as a container, so it is the face's — the window's on its
+ * own, the element's in an embed, the region a design's shell gives its
+ * pages — never `100vw`, which counts a desk's scrollbar.
+ */
+function SpansThePage({ children }: { readonly children: ReactNode }) {
+  return (
+    <div data-graview-page-spans="" style={{ containerType: "inline-size", minWidth: 0 }}>
+      {children}
+    </div>
+  );
+}
 
 /**
  * A VIEW DRAWN EDGE TO EDGE ON A PHONE (a worker view's `bleed: true`).
@@ -225,19 +262,24 @@ const BLEED_TOP_CSS = `@media (max-width:680px){[data-graview-bleed-top]:not(:ha
  * box takes the gutter back, less the device's safe areas, and is that much
  * wider — what it draws is not clipped short of the edge. Wider than that
  * it is the column's width, as any view is.
+ *
+ * `full` (`bleed: "full"`): across the page's whole width at every width,
+ * less the safe areas, in a page drawn with `PageMain`'s `spans`.
  */
-export function Bleed({ when, children }: { readonly when: boolean; readonly children: ReactNode }) {
-  if (!when) return <>{children}</>;
+export function Bleed({ when, full, children }: { readonly when: boolean; readonly full?: boolean; readonly children: ReactNode }) {
+  if (!when && !full) return <>{children}</>;
   return (
-    <div data-graview-bleed="" style={{ display: "grid", minWidth: 0 }}>
-      <style>{BLEED_CSS}</style>
+    <div data-graview-bleed={full ? "full" : ""} style={{ display: "grid", minWidth: 0 }}>
+      <style>{full ? BLEED_FULL_CSS : BLEED_CSS}</style>
       {children}
     </div>
   );
 }
 
+// A slot that bleeds full may hold a place's frame with the view in it, so what fell back is looked for anywhere in it.
+const BLEED_FULL_CSS = `[data-graview-bleed=full]:not(:has([data-worker-view-fallback])){margin-inline:calc(50% - 50cqw + env(safe-area-inset-left,0px)) calc(50% - 50cqw + env(safe-area-inset-right,0px))}`;
 // What a view that did not draw left in its slot (`data-worker-view-fallback`) keeps the gutter: the bleed was the view's.
-const BLEED_CSS = `@media (max-width:680px){[data-graview-bleed]:not(:has(>[data-worker-view-fallback])){margin-inline:min(0px,calc(env(safe-area-inset-left,0px) - var(--graview-page-gutter,20px))) min(0px,calc(env(safe-area-inset-right,0px) - var(--graview-page-gutter,20px)))}}`;
+const BLEED_CSS = `@media (max-width:680px){[data-graview-bleed=""]:not(:has(>[data-worker-view-fallback])){margin-inline:min(0px,calc(env(safe-area-inset-left,0px) - var(--graview-page-gutter,20px))) min(0px,calc(env(safe-area-inset-right,0px) - var(--graview-page-gutter,20px)))}}`;
 
 const UNSEEN: React.CSSProperties = { position: "absolute", width: 1, height: 1, margin: -1, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap" };
 

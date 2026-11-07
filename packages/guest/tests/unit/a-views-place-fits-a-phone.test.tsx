@@ -100,7 +100,7 @@ describe("what is drawn in the slot of a view that bleeds and did not draw", () 
     // The fallback stands directly in the bleed's box, marked, so the rule that takes the gutter back passes it by.
     expect(bleed!.querySelector(":scope > [data-worker-view-fallback]")).not.toBeNull();
     const rule = bleed!.querySelector("style")?.textContent ?? "";
-    expect(rule).toContain("[data-graview-bleed]:not(:has(>[data-worker-view-fallback]))");
+    expect(rule).toContain("[data-graview-bleed=\"\"]:not(:has(>[data-worker-view-fallback]))");
   });
   it("is not marked where the view drew", async () => {
     const host = await page("/places/the-board", { ...board, bleed: true });

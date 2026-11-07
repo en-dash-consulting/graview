@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 84,
+  "gzipped": 26,
+  "note": "Raised when a worker view came to span the whole window at every width (`bleed: \"full\"`, Roadmap f-views-bleed-full-width): `checkManifest` judges the new value and `registerWorkerView` marks a view with how it bleeds. Measured at 43_774 / 19_284 against 43_690 / 19_258 minified and gzipped."
+}

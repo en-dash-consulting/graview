@@ -82,7 +82,12 @@
  *   place once, past four the first three on a phone with a button for the rest
  *   (Roadmap f-view-place-min-width, f-bleed-on-places,
  *   f-fallback-lens-loses-gutter, f-place-header-repeats-view-title,
- *   f-seen-in-phone-length).
+ *   f-seen-in-phone-length);
+ *   and views that say `bleed: "full"` — the home's, a record's, a place's
+ *   that draws its own heading — span the window less its safe areas at
+ *   390, 1024 and 1440, never scrolling the page sideways, and the home's
+ *   and the place's start right at the bar's bottom while the record's
+ *   stands under its heading (Roadmap f-views-bleed-full-width).
  *
  *   node scripts/verify-address.mjs [--engine=chromium|webkit|firefox]   (all three by default)
  */
@@ -159,6 +164,12 @@ const NEST_SOURCE = `graview.onProps(() => graview.render(graview.html\`<p class
 const STORY = { name: "eagles-story", attach: "home", cardinality: "many" };
 const STORY_SOURCE = `graview.onProps(() => graview.render(graview.html\`<p class="story">The story, deleted this morning</p>\`));`;
 const STORY_REMOVED = { name: "eagles-story", title: "The story", at: "2026-10-22T09:00:00.000Z", until: "2026-11-21T09:00:00.000Z" };
+/** Where the tasks are served with views that bleed full: across the whole window at every width (Roadmap f-views-bleed-full-width). */
+const SPANNING_BASE = "/apps/a7";
+const SPREAD = { name: "spread", attach: "home", cardinality: "many", bleed: "full" };
+const FEATURE = { name: "feature", attach: "task", cardinality: "one", bleed: "full" };
+const BANNER = { name: "banner", title: "The banner", attach: "task", cardinality: "many", heading: "own", bleed: "full" };
+const BAND_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<div class="band" style="height:240px;background:currentColor;opacity:.2"></div>\`));`;
 /*
  * A VISITOR'S FORM AS GRAVIEW CLOUD SERVES IT (FR-201): `@graview/embed/form`
  * over the app its host compiled, read with `appFrom` from
@@ -215,8 +226,9 @@ async function buildHost() {
         const kept = location.pathname.startsWith("${VIEWS_BASE}");
         const fitted = location.pathname.startsWith("${FITTED_BASE}");
         const homes = location.pathname.startsWith("${HOMES_BASE}");
+        const spanning = location.pathname.startsWith("${SPANNING_BASE}");
         const formPage = location.pathname.startsWith("${FORM_BASE}");
-        const compiled = { app: compile(cards ? { ...tasks, lenses: [...tasks.lenses, ${JSON.stringify(BY_STATUS)}] } : kept ? { ...tasks, pages: ${JSON.stringify(VIEWS_PAGES)} } : fitted ? { ...tasks, pages: { first: "home" }, views: ${JSON.stringify(FITTED_VIEWS)} } : homes ? { ...tasks, pages: { first: "home" } } : tasks) };
+        const compiled = { app: compile(cards ? { ...tasks, lenses: [...tasks.lenses, ${JSON.stringify(BY_STATUS)}] } : kept ? { ...tasks, pages: ${JSON.stringify(VIEWS_PAGES)} } : fitted ? { ...tasks, pages: { first: "home" }, views: ${JSON.stringify(FITTED_VIEWS)} } : homes || spanning ? { ...tasks, pages: { first: "home" } } : tasks) };
         const article = location.pathname.startsWith("/article");
         window.__navigated = [];
         /*
@@ -310,7 +322,7 @@ async function buildHost() {
           seed: ${JSON.stringify(SEED)},
           principal: { kind: "human", id: "p1", roles: ["owner"] },
           // As Cloud's shell: the Graview on a desk, the pages on a phone; the kept view's app on the pages at both.
-          face: article || kept || fitted || homes ? "pages" : window.innerWidth < 768 ? "pages" : "graview",
+          face: article || kept || fitted || homes || spanning ? "pages" : window.innerWidth < 768 ? "pages" : "graview",
           // A view the host keeps, registered by its manifest's name as Cloud registers a chat's view.
           ...(kept
             ? {
@@ -327,6 +339,16 @@ async function buildHost() {
                 views: (schema, registry) =>
                   [[${JSON.stringify(HERO)}, ${JSON.stringify(HERO_SOURCE)}], [${JSON.stringify(BRIEF)}, ${JSON.stringify(BRIEF_SOURCE)}], [${JSON.stringify(CARD)}, ${JSON.stringify(CARD_SOURCE)}], [${JSON.stringify(WIDE)}, ${JSON.stringify(WIDE_SOURCE)}], [${JSON.stringify(EDGE)}, ${JSON.stringify(EDGE_SOURCE)}], [${JSON.stringify(BROKEN)}, ${JSON.stringify(EDGE_SOURCE)}], [${JSON.stringify(PLAIN)}, ${JSON.stringify(HERO_SOURCE)}]].reduce(
                     (views, [manifest, source]) => registerWorkerView(views, { manifest, worker: { source } }),
+                    registry,
+                  ),
+              }
+            : {}),
+          // Views that bleed full: the home's, a record's and a place's that draws its own heading (Roadmap f-views-bleed-full-width).
+          ...(spanning
+            ? {
+                views: (schema, registry) =>
+                  [${JSON.stringify(SPREAD)}, ${JSON.stringify(FEATURE)}, ${JSON.stringify(BANNER)}].reduce(
+                    (views, manifest) => registerWorkerView(views, { manifest, worker: { source: ${JSON.stringify(BAND_SOURCE)} } }),
                     registry,
                   ),
               }
@@ -355,7 +377,7 @@ async function buildHost() {
           fonts: false,
           studio: false,
           onNavigate: (path, how) => window.__navigated.push([path, how]),
-          ...(article ? {} : { routing: "address", basePath: cards ? "${CARDS_BASE}/" : kept ? "${VIEWS_BASE}/" : fitted ? "${FITTED_BASE}/" : homes ? "${HOMES_BASE}/" : "${BASE}/" }),
+          ...(article ? {} : { routing: "address", basePath: cards ? "${CARDS_BASE}/" : kept ? "${VIEWS_BASE}/" : fitted ? "${FITTED_BASE}/" : homes ? "${HOMES_BASE}/" : spanning ? "${SPANNING_BASE}/" : "${BASE}/" }),
         });
         window.__handle.drawn().then(() => { window.__ready = true; });
         }`,
@@ -383,7 +405,7 @@ async function buildHost() {
       return;
     }
     // Every address under the base is the one page, as a host that owns the page answers it.
-    if ([BASE, SWAP_BASE, CARDS_BASE, VIEWS_BASE, FITTED_BASE, SHELL_BASE, HOMES_BASE, FORM_BASE].some((base) => path === base || path.startsWith(`${base}/`))) {
+    if ([BASE, SWAP_BASE, CARDS_BASE, VIEWS_BASE, FITTED_BASE, SHELL_BASE, HOMES_BASE, SPANNING_BASE, FORM_BASE].some((base) => path === base || path.startsWith(`${base}/`))) {
       response.writeHead(200, { "content-type": "text/html" });
       response.end(APP_PAGE);
       return;
@@ -1029,6 +1051,54 @@ try {
         one.fittedError = String(error?.message ?? error);
       }
       /*
+       * A VIEW THAT BLEEDS FULL (Roadmap f-views-bleed-full-width): the
+       * region each view draws in against the window less its safe areas,
+       * and its top against the bar's bottom — at this size, and at a desk
+       * at a tablet's 1024 as well.
+       */
+      try {
+        const widths = viewport.width > 1024 ? [viewport.width, 1024] : [viewport.width];
+        const spanned = {};
+        for (const width of widths) {
+          if (width !== viewport.width) await tab.setViewportSize({ width, height: viewport.height });
+          const measured = {};
+          for (const [view, path] of [["spread", "/"], ["feature", "/tasks/t1"], ["banner", "/places/the-banner"]]) {
+            await go(`${SPANNING_BASE}${path}`);
+            await tab.waitForFunction((name) => Boolean(document.querySelector(`[data-worker-view="${name}"]`)?.shadowRoot?.querySelector(".band")), view, { timeout: 20_000 });
+            await tab.waitForTimeout(200);
+            measured[view] = await tab.evaluate((name) => {
+              const region = document.querySelector(`[data-worker-view="${name}"]`);
+              const box = region.getBoundingClientRect();
+              /* The bar's foot: on a phone the place's line is the bar's second row (FR-138). */
+              const bar = (document.querySelector("[data-graview-place-line]") ?? document.querySelector("[data-graview-app-bar]"))?.getBoundingClientRect();
+              /* The safe areas, as the page's own env() reads them. */
+              const probe = document.createElement("div");
+              probe.style.cssText = "position:fixed;left:env(safe-area-inset-left,0px);right:env(safe-area-inset-right,0px);top:0;height:0";
+              document.body.append(probe);
+              const safe = probe.getBoundingClientRect();
+              probe.remove();
+              /* The window less a scrollbar standing in it, where the face scrolls inside the host's element. */
+              const page = region.closest("[data-graview-page-spans]")?.getBoundingClientRect();
+              return {
+                left: Math.round(box.left),
+                right: Math.round(box.right),
+                width: Math.round(box.width),
+                window: window.innerWidth,
+                page: page ? [Math.round(page.left), Math.round(page.right)] : null,
+                safe: [Math.round(safe.left), Math.round(safe.right)],
+                top: bar ? Math.round(box.top - bar.bottom) : null,
+                sideScroll: document.documentElement.scrollWidth > window.innerWidth + 1,
+              };
+            }, view);
+          }
+          spanned[width] = measured;
+        }
+        if (widths.length > 1) await tab.setViewportSize(viewport);
+        one.spanning = spanned;
+      } catch (error) {
+        one.spanningError = String(error?.message ?? error);
+      }
+      /*
        * A DELETED HOME VIEW NEVER DRAWS (FR-202): registered after the live
        * one, and listed by the host as deleted, the home draws the live one.
        */
@@ -1617,6 +1687,36 @@ try {
   report.checks.aPlaceDeclaredBleedDrawsEdgeToEdge = {
     seen: fittedSeen,
     ok: fittedHold(({ edge }, name) => spans(edge, name)),
+  };
+  /*
+   * Roadmap f-views-bleed-full-width: a view that says `bleed: "full"` — the home's, a record's, a place's —
+   * is the page's whole width less its safe areas at 390, 1024 and 1440, the page being the window (less a
+   * scrollbar standing in it), and the page never scrolls sideways.
+   */
+  const spanningSeen = Object.fromEntries(pagesAt.map(([name, one]) => [name, one.spanningError ? { error: one.spanningError } : one.spanning]));
+  const spanningHold = (test) =>
+    pagesAt.length === engines.length * SIZES.length &&
+    pagesAt.every(([, one]) => !one.spanningError && Object.keys(one.spanning ?? {}).length > 0 && Object.values(one.spanning).every((views) => ["spread", "feature", "banner"].every((view) => views[view] && test(views[view], view))));
+  const widthsMeasured = new Set(pagesAt.flatMap(([, one]) => Object.keys(one.spanning ?? {})));
+  report.checks.aViewThatBleedsFullSpansTheWindowAtEveryWidth = {
+    seen: spanningSeen,
+    ok:
+      ["390", "1024", "1440"].every((width) => widthsMeasured.has(width)) &&
+      spanningHold(
+        (box) =>
+          box.page !== null &&
+          box.page[0] === 0 &&
+          box.page[1] <= box.window &&
+          box.page[1] >= box.window - 20 &&
+          box.left === box.page[0] + box.safe[0] &&
+          box.right === box.page[1] - (box.window - box.safe[1]) &&
+          !box.sideScroll,
+      ),
+  };
+  /* Roadmap f-views-bleed-full-width: where the page opens on a view that bleeds full — the home's, a place's that draws its own heading — its first band is flush under the bar at every width; a record's stands under the record's heading. */
+  report.checks.aViewThatBleedsFullStartsFlushUnderTheBar = {
+    seen: spanningSeen,
+    ok: spanningHold((box, view) => box.top !== null && (view === "feature" ? box.top > 0 : box.top === 0)),
   };
   /* Roadmap f-fallback-lens-loses-gutter: where a view that bleeds did not draw, what is drawn in its stead stands in the column, inside the gutter. */
   report.checks.aFallbackPageKeepsItsGutters = {

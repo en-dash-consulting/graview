@@ -329,7 +329,7 @@ export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry
     const home = workerView(definition, declared ? { fallback: declared } : {});
     // Edge to edge on a phone, where its manifest says so: the pages face takes the gutter back for it.
     // By its name, so the host's tidying keeps it undrawn once deleted, whatever registered after it (FR-202); a draft has none.
-    views.home((manifest.bleed === true ? markBleeds(home) : home) as unknown as ViewComponent<S>, definition.draft ? undefined : { name: manifest.name });
+    views.home((manifest.bleed === true || manifest.bleed === "full" ? markBleeds(home, manifest.bleed) : home) as unknown as ViewComponent<S>, definition.draft ? undefined : { name: manifest.name });
     return views;
   }
   const cell = { cardinality: manifest.cardinality, fidelity: "full" } as const;
@@ -353,7 +353,7 @@ export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry
    */
   const says = (before as { says?: unknown } | undefined)?.says;
   if (one && manifest.replaces !== "page" && typeof says === "function") (view as { says?: unknown }).says = says;
-  if (manifest.bleed === true) markBleeds(view);
+  if (manifest.bleed === true || manifest.bleed === "full") markBleeds(view, manifest.bleed);
   /*
    * A VIEW'S PLACE FLOWS WITH THE PAGE (Roadmap f-view-places-flow), as a
    * place drawn from blocks does: it is drawn in the page's column as long
