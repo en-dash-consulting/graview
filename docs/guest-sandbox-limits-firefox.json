@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-07T06:05:28.520Z",
+  "at": "2026-10-24T04:02:33.393Z",
   "transport": "limits",
   "engine": "firefox",
   "claims": {
@@ -9,7 +9,7 @@
         "failure": {
           "reason": "slow",
           "detail": "It took longer than 1,000 ms to draw what it was shown.",
-          "at": 1062
+          "at": 1074
         },
         "running": false,
         "face": [
@@ -29,7 +29,7 @@
         "failure": {
           "reason": "silent",
           "detail": "It stopped answering for 1,500 ms.",
-          "at": 1565
+          "at": 1577
         },
         "running": false,
         "face": [
@@ -49,7 +49,7 @@
         "failure": {
           "reason": "flood",
           "detail": "It sent more than 120 messages in 1,000 ms.",
-          "at": 225
+          "at": 249
         },
         "running": false,
         "face": [
@@ -69,7 +69,7 @@
         "failure": {
           "reason": "nodes",
           "detail": "It drew more than the 5,000 things a view may draw.",
-          "at": 1682
+          "at": 1821
         },
         "running": false,
         "face": [
@@ -109,7 +109,7 @@
         "failure": {
           "reason": "slow",
           "detail": "It took longer than 1,000 ms to draw what it was shown.",
-          "at": 204
+          "at": 215
         },
         "running": false,
         "face": [
@@ -122,8 +122,8 @@
         ],
         "note": "This view was stopped. It took longer than 1,000 ms to draw what it was shown.",
         "pulse": {
-          "last": 2380,
-          "longest": 150,
+          "last": 2439,
+          "longest": 156,
           "ticks": 39
         }
       }
@@ -138,30 +138,9 @@
     "the page's own timer kept time while views spun, never more than 250 ms between 50 ms ticks": {
       "ok": true,
       "detail": {
-        "last": 2380,
-        "longest": 150,
+        "last": 2439,
+        "longest": 156,
         "ticks": 39
-      }
-    },
-    "a page is at one pace, measured once from its first worker's start — 1 where it started fast — every view on it alike, and a view that spins is stopped as slow at that pace times the base 1,000 ms, the sentence naming the budget it was held to": {
-      "ok": true,
-      "detail": {
-        "pace": {
-          "spin": 1,
-          "later": 1,
-          "flood": 1,
-          "nodes": 1,
-          "churn": 1,
-          "long": null,
-          "good": 1
-        },
-        "fitted": 1000,
-        "spin": {
-          "reason": "slow",
-          "detail": "It took longer than 1,000 ms to draw what it was shown.",
-          "at": 1062
-        },
-        "slow": 0
       }
     },
     "the page throws nothing": {
@@ -285,63 +264,6 @@
     "the policy pages throw nothing": {
       "ok": true,
       "detail": []
-    },
-    "a page whose first worker took four times a fast start or longer is at pace 4, every view on it alike, and a view that draws in 300 ms draws, not falls back": {
-      "ok": true,
-      "detail": {
-        "pace": {
-          "steady": 4,
-          "heavy": 4,
-          "spin": 4,
-          "flood": 4
-        },
-        "steady": {
-          "drawn": "6 records",
-          "running": true
-        }
-      }
-    },
-    "on that page a view whose listener takes 1 500 ms a push — past the fixed 1,000 ms — draws, within the four times it was given": {
-      "ok": true,
-      "detail": {
-        "drawn": "6 records",
-        "running": true
-      }
-    },
-    "on that page a view that spins is stopped as slow at 4,000 ms, not 1,000, the sentence naming the budget it was held to, its plain face drawn": {
-      "ok": true,
-      "detail": {
-        "spin": {
-          "reason": "slow",
-          "detail": "It took longer than 4,000 ms to draw what it was shown.",
-          "at": 4423
-        },
-        "running": false,
-        "face": [
-          "A way in",
-          "The whole thing",
-          "Later on",
-          "Team coaching",
-          "AI strategy sprint",
-          "Copernicus build"
-        ],
-        "note": "This view was stopped. It took longer than 4,000 ms to draw what it was shown."
-      }
-    },
-    "on that page a flood is still a flood: a view that floods the host is stopped at the same allowance of 120 messages in 1,000 ms": {
-      "ok": true,
-      "detail": {
-        "flood": {
-          "reason": "flood",
-          "detail": "It sent more than 120 messages in 1,000 ms.",
-          "at": 380
-        },
-        "running": false
-      }
-    },
-    "the paced page throws nothing": {
-      "ok": true,
-      "detail": []
     }
   },
   "pageErrors": [],
@@ -355,27 +277,27 @@
       "churn": {
         "reason": "slow",
         "detail": "It took longer than 1,000 ms to draw what it was shown.",
-        "at": 204
+        "at": 215
       },
       "flood": {
         "reason": "flood",
         "detail": "It sent more than 120 messages in 1,000 ms.",
-        "at": 225
+        "at": 249
       },
       "spin": {
         "reason": "slow",
         "detail": "It took longer than 1,000 ms to draw what it was shown.",
-        "at": 1062
+        "at": 1074
       },
       "later": {
         "reason": "silent",
         "detail": "It stopped answering for 1,500 ms.",
-        "at": 1565
+        "at": 1577
       },
       "nodes": {
         "reason": "nodes",
         "detail": "It drew more than the 5,000 things a view may draw.",
-        "at": 1682
+        "at": 1821
       }
     },
     "running": {
@@ -456,18 +378,9 @@
       "long": null,
       "good": "6 records"
     },
-    "pace": {
-      "spin": 1,
-      "later": 1,
-      "flood": 1,
-      "nodes": 1,
-      "churn": 1,
-      "long": null,
-      "good": 1
-    },
     "pulse": {
-      "last": 2380,
-      "longest": 150,
+      "last": 2439,
+      "longest": 156,
       "ticks": 39
     }
   },
@@ -578,64 +491,6 @@
         "first": null,
         "second": null
       }
-    }
-  },
-  "paced": {
-    "failures": {
-      "flood": {
-        "reason": "flood",
-        "detail": "It sent more than 120 messages in 1,000 ms.",
-        "at": 380
-      },
-      "spin": {
-        "reason": "slow",
-        "detail": "It took longer than 4,000 ms to draw what it was shown.",
-        "at": 4423
-      }
-    },
-    "pace": {
-      "steady": 4,
-      "heavy": 4,
-      "spin": 4,
-      "flood": 4
-    },
-    "running": {
-      "steady": true,
-      "heavy": true,
-      "spin": false,
-      "flood": false
-    },
-    "drawn": {
-      "steady": "6 records",
-      "heavy": "6 records",
-      "spin": null,
-      "flood": null
-    },
-    "faces": {
-      "steady": [],
-      "heavy": [],
-      "spin": [
-        "A way in",
-        "The whole thing",
-        "Later on",
-        "Team coaching",
-        "AI strategy sprint",
-        "Copernicus build"
-      ],
-      "flood": [
-        "A way in",
-        "The whole thing",
-        "Later on",
-        "Team coaching",
-        "AI strategy sprint",
-        "Copernicus build"
-      ]
-    },
-    "notes": {
-      "steady": null,
-      "heavy": null,
-      "spin": "This view was stopped. It took longer than 4,000 ms to draw what it was shown.",
-      "flood": "This view was stopped. It sent more than 120 messages in 1,000 ms."
     }
   },
   "passed": true
