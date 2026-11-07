@@ -1,0 +1,13 @@
+schema: "rex/v2"
+items:
+  "22731804-b2c0-4ce7-b289-9edf459f594e":
+    status: "completed"
+    startedAt: "2026-09-19T05:49:36.777Z"
+    completedAt: "2026-09-19T06:20:48.232Z"
+    endedAt: "2026-09-19T06:20:48.232Z"
+    resolutionType: "code-change"
+    resolutionDetail: "cityMap + placeCity + cameraLimit, plot on nodes and through mix, lattice roads, buildings, whereIs/scenePointer, describe city, plot-overlap check; survey graview overflow carried to the drive-in task"
+    appliedAt: "2026-09-19T06:20:48.232Z"
+    needsPlacement: true
+    lastModified: "2026-09-19T06:20:48.244Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

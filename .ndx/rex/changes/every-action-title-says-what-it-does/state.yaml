@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "d2a9d59a-9ba2-4bff-9d5f-2a7f45a62203":
+    status: "completed"
+    startedAt: "2026-08-31T02:50:19.166Z"
+    completedAt: "2026-08-31T02:50:19.166Z"
+    endedAt: "2026-08-31T02:50:19.166Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Audited all 48 mutation titles; renamed the one opaque survivor (\"Annotate\"). Rewrote the read tool descriptions as instructions, and added graview check rules so an untitled, identifier-titled, ambiguous or undescribed mutation is a build-time finding rather than something noticed in use."
+    appliedAt: "2026-08-31T02:50:19.166Z"

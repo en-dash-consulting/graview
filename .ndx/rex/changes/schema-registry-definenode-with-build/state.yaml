@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "aa5d62c9-4d32-4157-aa3d-61aa93642dde":
+    status: "completed"
+    startedAt: "2026-08-30T04:03:12.715Z"
+    completedAt: "2026-08-30T04:03:12.715Z"
+    endedAt: "2026-08-30T04:03:12.715Z"
+    resolutionType: "code-change"
+    resolutionDetail: "defineNode/createSchema in @graview/core; edge-to-undeclared-kind and view-for-undeclared-kind are typecheck failures; JSON Schema for agent tools generated from the same Zod declaration; `graview check` + `graview docs` CLI. Validated against the household example's real 7 node kinds / 6 edge kinds."
+    appliedAt: "2026-08-30T04:03:12.715Z"

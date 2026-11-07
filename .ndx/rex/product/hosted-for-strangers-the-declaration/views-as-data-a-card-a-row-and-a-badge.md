@@ -1,0 +1,15 @@
+---
+id: "6633d590-603d-48de-8d40-45109246f757"
+type: "capability"
+title: "Views as data: a card, a row and a badge declared rather than written, and drawn by the framework"
+slug: "views-as-data-a-card-a-row-and-a-badge"
+statement: "WHAT IS THERE NOW: a view is a React component registered with createViews, running in-process with the whole store."
+criteria: [{"id":"c1","text":"The system shall ensure that A spec-registered card renders in the workbench and the pages face with no component code."},{"id":"c2","text":"The system shall ensure that graview check refuses a spec naming a field the kind lacks or a tone outside the kit."},{"id":"c3","text":"The system shall ensure that selected Down in its district, a record is drawn by one thing: the kind's declared card (or page) as written, framed, whole, title first, scrolled into view under the bar, with the scene adding only what it lacks; or the built-in card with no declared card behind it; never both."},{"id":"c4","text":"The system shall ensure that A tie the card already lists isn't listed again under the same heading; a heading with nothing under it isn't drawn."},{"id":"c5","text":"The system shall ensure that the selected card never covers its neighbors."},{"id":"c6","text":"The system shall ensure that in the workshop reproduction: the goal once, the four topics once in the card, no empty COVERS, nothing cut off under the bar, nothing overlapping at 1280, 1440 and 1920."},{"id":"c7","text":"The system shall ensure that at altitude every district card has an iso ground tile beneath it, sized from its plot's side on the city cell, in the kind's hue."},{"id":"c8","text":"The system shall ensure that the dashed ring around an opened or showing plot is gone; the tile is the outline."},{"id":"c9","text":"The system shall ensure that the tile rides the card's transform and tween, is absent in the stack, and is aria-hidden."},{"id":"c10","text":"The system shall ensure that the lattice between plots reads as ground (visibly present, fading to the horizon), not as a faint hatch; the robot's pad is a tile in the same ink."},{"id":"c11","text":"The system shall ensure that survey 34/34, audit 39/39, navigation and robot harnesses pass; a screenshot of todo and rota at altitude is committed under docs/survey."}]
+tags:
+  - "graview-cloud"
+  - "FR-03"
+source: "Graview Cloud FR-03, 2026-10-02"
+priority: "medium"
+---
+
+WHAT IS THERE NOW: a view is a React component registered with createViews, running in-process with the whole store. MISSING: a way for someone who cannot write React — or an agent in a chat — to make an app look like their thing, which a host of strangers can accept because it runs no code. POSITION: a view-spec vocabulary (title, text, badge with tone, field with as, progress, group, row, stack, divider, figure) over an allowlisted component kit, bound to fields by path, conditions and tones in the FR-07 language, registered per (kind × cell) like a component view and drawn by @graview/primitives and @graview/pages; tokens only, no raw CSS; checked by graview check.

@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "966667b8-a22a-4da6-8779-4d9d5cfe69e2":
+    status: "completed"
+    startedAt: "2026-09-01T03:12:21.996Z"
+    completedAt: "2026-09-01T03:12:21.996Z"
+    endedAt: "2026-09-01T03:12:21.996Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Shipped in the same commit; verified in the browser (wander to a zoomed record, click the logo, land on the exact opening URL with pins preserved)."
+    appliedAt: "2026-09-01T03:12:21.996Z"

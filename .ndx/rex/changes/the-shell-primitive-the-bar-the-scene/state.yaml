@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "8cefaf06-71bb-4c30-b805-6cea609ee1db":
+    status: "completed"
+    startedAt: "2026-09-10T14:59:33.995Z"
+    completedAt: "2026-09-10T14:59:33.995Z"
+    endedAt: "2026-09-10T14:59:33.995Z"
+    resolutionType: "code-change"
+    resolutionDetail: "packages/primitives/src/shell.tsx; commit 4814c8c"
+    appliedAt: "2026-09-10T14:59:33.995Z"
+    lastModified: "2026-09-10T14:59:34.009Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

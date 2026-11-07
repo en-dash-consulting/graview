@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "88cfdf86-0d4f-44a5-84f7-fc6a9e317d28":
+    status: "completed"
+    startedAt: "2026-09-01T06:14:20.708Z"
+    completedAt: "2026-09-01T06:14:20.708Z"
+    endedAt: "2026-09-01T06:14:20.708Z"
+    resolutionType: "code-change"
+    resolutionDetail: "ViewState.selection + sel URL param + withSelection; context derives selection from view, setView composes functional updates; engine dedupes identical violations; harnesses updated to compare places and assert back restores the selection. 506 tests + full harness sweep green."
+    appliedAt: "2026-09-01T06:14:20.708Z"

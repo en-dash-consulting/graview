@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "e38fd489-8ac8-4ac4-8c27-49742a28c76c":
+    status: "completed"
+    startedAt: "2026-09-10T14:59:37.316Z"
+    completedAt: "2026-09-10T14:59:37.316Z"
+    endedAt: "2026-09-10T14:59:37.316Z"
+    resolutionType: "code-change"
+    resolutionDetail: "packages/layout/src/layout.ts edgeReading, packages/core/src/cli/check.ts edge-without-inverse; commit 08befa1"
+    appliedAt: "2026-09-10T14:59:37.316Z"
+    lastModified: "2026-09-10T14:59:37.330Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

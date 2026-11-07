@@ -1,0 +1,25 @@
+schema: "rex/v2"
+items:
+  "80b0b665-b1ea-4ebe-8a0d-2c84513a3ddf":
+    status: "completed"
+    completedAt: "2026-10-09T07:10:05.000Z"
+    endedAt: "2026-10-09T07:10:05.000Z"
+    metAt: "a82cbc8ccec10b09ba59e4c4a12ed63a12372e3428ff28c8f170153ca8cc97e5"
+    lastModified: "2026-10-09T03:01:47.610Z"
+  "95e83cbe-8d35-4654-a176-8250b5cd9c30":
+    status: "completed"
+    completedAt: "2026-10-09T07:10:05.000Z"
+    endedAt: "2026-10-09T07:10:05.000Z"
+    metAt: "579abf07debf7461a116c73e4a85b301ea0fc875762a0dd22ecef0924f269800"
+    lastModified: "2026-10-09T03:01:47.610Z"
+  "e7d433e2-8130-44d8-a327-c325ace39937":
+    status: "completed"
+    completedAt: "2026-10-09T07:10:05.000Z"
+    endedAt: "2026-10-09T07:10:05.000Z"
+    metAt: "b2b0c3c50070ddd555fc3809450713e080fcc51c6dd56391379e868b208c6422"
+    lastModified: "2026-10-09T03:01:47.610Z"
+  "ee8c1d4e-31a8-4fa3-abab-d56753c73fc0":
+    status: "completed"
+    completedAt: "2026-10-09T07:10:05.000Z"
+    endedAt: "2026-10-09T07:10:05.000Z"
+    lastModified: "2026-10-09T03:01:47.610Z"

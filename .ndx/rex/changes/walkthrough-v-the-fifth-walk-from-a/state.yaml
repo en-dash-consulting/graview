@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "2fdf30c2-f9e5-4498-8841-c846c55a0f37":
+    status: "completed"
+    startedAt: "2026-09-28T23:22:28.029Z"
+    completedAt: "2026-09-29T02:37:54.646Z"
+    endedAt: "2026-09-29T02:37:54.646Z"
+    resolutionType: "acknowledgment"
+    resolutionDetail: "The fifth walk was walked in full by a fresh agent in a Discography domain (../walk5: songs, releases, artists who record, feature on and produce, themes, an era; 35 songs, 4 releases, 2 singles) and added 32 findings, W-090 to W-121, each fixed in a framework package with a criterion. W-118 (a marquee button holding its lens's buttons) was found the same night by CI's progression and shipped in 83a40ed6; the walk's own fix was the same design and is folded into it. Survey's seedbed/rotation places row overflows by 7px — predates this walk. The log did not stay still; the criterion is carried by the sixth walk."
+    appliedAt: "2026-09-29T02:37:54.646Z"
+    lastModified: "2026-09-29T02:37:54.710Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

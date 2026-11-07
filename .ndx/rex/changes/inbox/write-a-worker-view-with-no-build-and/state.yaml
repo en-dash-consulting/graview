@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "d878bb20-a742-4dec-8731-35a3cb3d4168":
+    status: "completed"
+    startedAt: "2026-10-06T03:56:09.000Z"
+    completedAt: "2026-10-06T03:56:09.000Z"
+    endedAt: "2026-10-06T03:56:09.000Z"
+    appliedAt: "2026-10-06T03:56:09.000Z"
+    needsPlacement: true
+    lastModified: "2026-10-06T03:56:09.000Z"

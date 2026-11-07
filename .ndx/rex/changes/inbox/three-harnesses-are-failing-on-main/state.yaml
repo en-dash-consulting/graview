@@ -1,0 +1,13 @@
+schema: "rex/v2"
+items:
+  "61efdb16-34fe-497a-af77-f7926ac614b7":
+    status: "completed"
+    startedAt: "2026-09-22T13:51:58.898Z"
+    completedAt: "2026-09-22T13:51:58.898Z"
+    endedAt: "2026-09-22T13:51:58.898Z"
+    resolutionType: "code-change"
+    resolutionDetail: "pnpm verify runs all eighteen browser harnesses with one verdict — 18 of 18 hold. Four stale harnesses fixed or retired with the reason written where each stood, including one the new chain found that was my own regression from the commit before."
+    appliedAt: "2026-09-22T13:51:58.898Z"
+    needsPlacement: true
+    lastModified: "2026-09-22T13:51:58.957Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

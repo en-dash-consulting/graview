@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "16267bfa-7850-4eb8-ad67-d5b6dd5fb27e":
+    status: "completed"
+    startedAt: "2026-08-30T04:03:23.037Z"
+    completedAt: "2026-08-30T04:03:23.037Z"
+    endedAt: "2026-08-30T04:03:23.037Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Memory and SQLite adapters behind one PersistenceAdapter interface, tested with the same suite. SQLite adapter reads the household example's exact graph_nodes/graph_edges shape (Drizzle-compatible; takes db.$client). The household example's real seeded graphs load and evaluate identically. Whole tier runs headlessly in CI."
+    appliedAt: "2026-08-30T04:03:23.037Z"

@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "82820801-f31e-435b-b1b6-375721ed72b3":
+    status: "completed"
+    startedAt: "2026-09-22T00:21:54.405Z"
+    completedAt: "2026-09-22T00:21:54.405Z"
+    endedAt: "2026-09-22T00:21:54.405Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Companion rail composes the inspector, quick relations, conversation and key about one subject; robot figure, pad, follow mode and the bar's Ask pill retired; verify-companion.mjs replaces verify-robot.mjs."
+    appliedAt: "2026-09-22T00:21:54.405Z"
+    lastModified: "2026-09-22T00:21:54.417Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

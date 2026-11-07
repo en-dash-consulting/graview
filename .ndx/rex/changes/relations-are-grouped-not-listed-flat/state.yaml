@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "838ebd51-71f6-4abd-b3e2-1bf23ded111d":
+    status: "completed"
+    startedAt: "2026-08-31T02:11:06.092Z"
+    completedAt: "2026-08-31T02:20:08.352Z"
+    endedAt: "2026-08-31T02:20:08.352Z"
+    resolutionType: "code-change"
+    resolutionDetail: "New @graview/layout `rankKinds` derives primary/secondary and nesting from the schema alone; the kinds plane draws primaries full size, secondaries smaller and further back in their own slot, and a kind reachable only through another tucked half under that card's bottom edge."
+    appliedAt: "2026-08-31T02:20:08.352Z"

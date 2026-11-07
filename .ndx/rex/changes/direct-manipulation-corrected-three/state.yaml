@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "5c50fbcb-8294-4ba3-8ed2-c3e20ad0b002":
+    status: "completed"
+    startedAt: "2026-09-10T14:59:40.999Z"
+    completedAt: "2026-09-10T14:59:40.999Z"
+    endedAt: "2026-09-10T14:59:40.999Z"
+    resolutionType: "code-change"
+    resolutionDetail: "withJackIn (d7ea1a1), theme hit-area rule (22a4a6d), schema provider rehearsal and AnswerArgs skip (5ba437c)"
+    appliedAt: "2026-09-10T14:59:40.999Z"
+    lastModified: "2026-09-10T14:59:41.011Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

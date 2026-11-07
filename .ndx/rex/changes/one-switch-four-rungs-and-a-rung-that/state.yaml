@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "31b8372d-28d2-4fdd-850d-60ca08a11e65":
+    status: "completed"
+    startedAt: "2026-09-19T05:23:34.342Z"
+    completedAt: "2026-09-19T05:33:08.708Z"
+    endedAt: "2026-09-19T05:33:08.708Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Four-rung ladder with capability table, honesty in ChatReply.say, decideFor, describe ladder, harness check"
+    appliedAt: "2026-09-19T05:33:08.708Z"
+    lastModified: "2026-09-19T05:33:08.750Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

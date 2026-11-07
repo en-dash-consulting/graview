@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "6c1b654a-73ac-47a3-9cae-e1f7fa9004b0":
+    status: "completed"
+    startedAt: "2026-09-21T04:16:46.241Z"
+    completedAt: "2026-09-21T04:30:34.183Z"
+    endedAt: "2026-09-21T04:30:34.183Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Scene zoom with pinch, ctrl+wheel and corner controls; wheel pan; whole-offset clamp; tween keeps its clock on restart."
+    appliedAt: "2026-09-21T04:30:34.183Z"
+    lastModified: "2026-09-21T04:30:34.194Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"
