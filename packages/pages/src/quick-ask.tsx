@@ -3,7 +3,7 @@ import { aggregateId, kindCardId } from "@graview/layout/view";
 import { QuickAskDoor } from "@graview/primitives/pages";
 import { useGraviewIfAny } from "@graview/react/provider";
 import { useEffect, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation } from "react-router";
 import { kindOfSlug } from "./registry.js";
 import type { PageContext } from "./pages.js";
 

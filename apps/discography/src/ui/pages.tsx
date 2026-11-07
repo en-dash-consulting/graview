@@ -14,7 +14,7 @@ import {
   type PageComponent,
   type PageContext,
 } from "@graview/pages";
-import { useParams } from "react-router-dom";
+import { useParams } from "@graview/pages";
 import { discographySchema, type DiscographySchema } from "../domain/schema.js";
 
 type S = DiscographySchema;

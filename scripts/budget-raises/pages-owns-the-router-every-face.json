@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 3228,
+  "gzipped": 0,
+  "note": "Raised when the routed face moved from React Router 7 (`react-router-dom`) to React Router 8 (`react-router`), the router a design now reaches through `@graview/pages`. React Router 8's declarative build is 3_228 bytes larger minified and 401 smaller gzipped. Measured at 3_054_620 / 1_104_941 against 3_051_392 / 1_105_342."
+}

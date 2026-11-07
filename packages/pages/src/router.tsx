@@ -1,5 +1,5 @@
 import { numberAsRead, pluralLabel, type AnySchema, type Store } from "@graview/core";
-import { BrowserRouter, Link, MemoryRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Link, MemoryRouter, Navigate, Route, Routes } from "react-router";
 import { HOME_SLUG, openingOf, OVERVIEW_PATH, OVERVIEW_SLUG, sayIn } from "@graview/core";
 import { narrowedPath } from "@graview/core/navigate";
 import { revealSection } from "./section.js";
@@ -15,7 +15,7 @@ import { PagesContextMenu } from "./context-menu.js";
 import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, DefaultPlacesPage, DefaultProblemsPage, DefaultRecordPage, DefaultSearchPage, DefaultShell, type PageContext } from "./pages.js";
 import { pathOfPlace, placesOf } from "./page-places.js";
 import { createPageRegistry, kindOfSlug, type PageRegistry } from "./registry.js";
-import { useHref, useLocation, useNavigate, useNavigationType, useParams } from "react-router-dom";
+import { useHref, useLocation, useNavigate, useNavigationType, useParams } from "react-router";
 import { appKeyOf, BarFindContext, FirstLookDoor, HeadingsUnder, PastBar, registerReaderLenses, SpecLinks, type BarFind, type FirstLook } from "@graview/primitives/pages";
 
 /** Who reads the face when the host names nobody. */

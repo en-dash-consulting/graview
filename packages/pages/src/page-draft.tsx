@@ -2,7 +2,7 @@ import type { AnySchema } from "@graview/core";
 import { DraftDoor } from "@graview/primitives/pages";
 import { useGraviewIfAny, useSeatTalkState, createSeatTalk } from "@graview/react/provider";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router";
 import { PageMain, PageTitle } from "./page-shell.js";
 import type { PageContext } from "./pages.js";
 import { recordPath } from "./registry.js";

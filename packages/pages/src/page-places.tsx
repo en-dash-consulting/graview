@@ -1,5 +1,5 @@
 import { counted, isCurrent, labelOf, onePerPicture, placeLabel, sharesItsName, type AnySchema, type Store, type Place } from "@graview/core";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { kindFacts } from "./facts.js";
 import { ViewBoundary } from "@graview/react/drawing";
 import { bleeds, isDefaultView, replacesPage, type ViewProps } from "@graview/react/provider";

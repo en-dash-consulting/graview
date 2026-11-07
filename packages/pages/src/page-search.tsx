@@ -14,7 +14,7 @@ import type { Affordance } from "@graview/tools";
 import { useGraviewIfAny, type AiDesk } from "@graview/react/provider";
 import { openQuickAsk, useQuickAskDrawn } from "@graview/primitives/pages";
 import { useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router";
 import { kindFacts } from "./facts.js";
 import { DerivedForm } from "./form.js";
 import { type PageContext, useStoreTick } from "./page-context.js";

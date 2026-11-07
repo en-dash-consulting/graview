@@ -13,7 +13,7 @@ import {
 } from "@graview/pages";
 import type { AffordanceSet } from "@graview/tools";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "@graview/pages";
 import type { SeedbedSchema } from "../domain/schema.js";
 import { GardenMapPicture, initials, readGarden, Sprout, type Garden, type GardenPlot } from "./garden-map.js";
 

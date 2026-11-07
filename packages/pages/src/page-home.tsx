@@ -1,7 +1,7 @@
 import { counted as countOf, isCurrent, isWithheld, numberAsRead, type AnySchema, type Operation, type Violation } from "@graview/core";
 import { bleeds, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router";
 import { HomeLine } from "@graview/primitives/pages";
 import { kindMap } from "./facts.js";
 import { pluralSlug } from "./registry.js";

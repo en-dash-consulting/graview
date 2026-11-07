@@ -1,7 +1,7 @@
 import { counted, labelOf, type AnySchema, type Principal } from "@graview/core";
 import { answerJob, jobsFor, jobsOf, type ResolvedJob } from "@graview/core/jobs";
 import { useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { recordFacts } from "./facts.js";
 import { DerivedForm } from "./form.js";
 import type { PageContext } from "./page-context.js";

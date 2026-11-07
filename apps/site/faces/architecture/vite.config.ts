@@ -27,7 +27,7 @@ export default defineConfig({
   define: { "import.meta.env.GRAVIEW_PREVIEW": JSON.stringify(PREVIEW) },
   // main.tsx awaits the store at the top level.
   build: { target: "es2022" },
-  resolve: { dedupe: ["react", "react-dom", "react-router-dom"] },
+  resolve: { dedupe: ["react", "react-dom"] },
   server: {
     port: Number(process.env["PORT"] ?? 5173),
     strictPort: true,
