@@ -1,5 +1,5 @@
 {
   "budget": "Cloud's worker",
-  "bytes": 1700,
-  "note": "Raised when the 0.1.70 batch's eight branches were merged (a host's bar setting taken back, the router through `@graview/pages`, a view that bleeds full, the view authoring friction, what a view keeps and a seat's profile, other ways to show a page, the inbox that opens on what needs you, the PRD's move): each measured alone against main, together they came to 1_596 bytes (2_591_353 against 2_589_757) over their summed raises, held for a few bytes either side."
+  "bytes": 1536,
+  "note": "Raised when the 0.1.70 batch's eight branches were merged (a host's bar setting taken back, the router through `@graview/pages`, a view that bleeds full, the view authoring friction, what a view keeps and a seat's profile, other ways to show a page, the inbox that opens on what needs you, the PRD's move): each measured alone against main, together they came to 1_505 bytes (2_595_862 against 2_594_357) over their summed raises, held for a few bytes either side."
 }
