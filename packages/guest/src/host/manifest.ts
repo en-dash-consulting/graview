@@ -33,7 +33,9 @@ import { choicesOf, plainNode, readAcross, type GuestViewInput } from "./session
  *                the host's full-screen viewer (`data-lightbox`, media.ts)
  *   bleed        true: on a phone the pages face draws it edge to edge —
  *                the page's 20px side gutter taken back for it, the
- *                safe areas kept — and at a desk the column's width
+ *                safe areas kept — and at a desk the column's width;
+ *                "full": the page's whole width at every width, starting
+ *                right under the bar where the page opens on it
  *   gestures     true: the host forwards a wheel, a drag and a pinch over
  *                what it listens on (`graview.on("wheel" | "drag" |
  *                "pinch", …)`), once a frame, and takes a wheel from the
@@ -129,8 +131,16 @@ export interface WorkerViewManifest {
    * width, as any view is. Left out, the view is drawn inside the gutter,
    * and what it draws past its box is clipped there, a negative margin
    * included.
+   *
+   * ACROSS THE WHOLE PAGE AT EVERY WIDTH: `"full"` (Roadmap
+   * f-views-bleed-full-width). The view's box is the page's whole width —
+   * the window's, less the safe areas — on a desk and a tablet as on a
+   * phone, so a full-bleed editorial home is not a card boxed in the
+   * column. Where the page opens on the view (the home's, a place's that
+   * says `heading: "own"`), its first band starts right under the bar, with
+   * no top gutter; on a record's page it spans under the record's heading.
    */
-  readonly bleed?: boolean;
+  readonly bleed?: boolean | "full";
   /**
    * WHO SAYS ITS TITLE (Roadmap f-place-header-repeats-view-title). Left
    * out, a titled view's place on Pages says its title and how much it is
@@ -267,7 +277,7 @@ export function checkManifest<S extends AnySchema>(manifest: WorkerViewManifest,
   if (manifest.replaces !== undefined && manifest.replaces !== "page") findings.push(`The view's replaces is "${String(manifest.replaces)}": the one thing a view replaces is "page", or leave it out to draw the view above the record's own fields.`);
   else if (manifest.replaces === "page" && manifest.attach === "home") findings.push('The home\'s view is the home already: replaces "page" is for a view of a kind, of one record (its page) or of many (its list).');
   if (manifest.gestures !== undefined && typeof manifest.gestures !== "boolean") findings.push(`The view's gestures is "${String(manifest.gestures)}": it is true, or left out.`);
-  if (manifest.bleed !== undefined && typeof manifest.bleed !== "boolean") findings.push(`The view's bleed is "${String(manifest.bleed)}": it is true, or left out.`);
+  if (manifest.bleed !== undefined && typeof manifest.bleed !== "boolean" && manifest.bleed !== "full") findings.push(`The view's bleed is "${String(manifest.bleed)}": it is true, "full", or left out.`);
   if (manifest.heading !== undefined && (manifest.heading !== "own" || manifest.attach === "home" || manifest.cardinality !== "many" || manifest.title === undefined)) findings.push(`The view's heading is "${String(manifest.heading)}": it is "own" on a view that is a place (a title, cardinality many), or left out.`);
   if (manifest.flows !== undefined && typeof manifest.flows !== "boolean") findings.push(`The view's flows is "${String(manifest.flows)}": it is false for a view that keeps its place's frame, or left out.`);
   else if (manifest.flows === false && (manifest.attach === "home" || manifest.cardinality !== "many" || manifest.title === undefined)) findings.push("Only a view that is a place keeps a frame: flows false needs a title and cardinality many on a kind.");

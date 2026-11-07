@@ -21,7 +21,7 @@ import {
 import { describeSearched, matchNode, parseQuery } from "@graview/core/search";
 import { readableFields } from "@graview/core/words";
 import { fieldSpecOf, firstPicture, withComputed } from "@graview/core/blocks";
-import { bleeds, isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
+import { bleeds, bleedsFull, isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
 import { ViewBoundary } from "@graview/react/drawing";
 import { useCallback, useId, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
@@ -144,7 +144,7 @@ function ListOfView<S extends AnySchema>({ context, kind, view: View }: { readon
   const members = store.graph.nodesOfKind(kind).filter((node) => isCurrent(definition, node));
   const flagged = [...new Set(store.violations(invariantContext).flatMap((violation) => violation.nodeIds))];
   return (
-    <PageMain context={context}>
+    <PageMain context={context} spans={bleedsFull(View)}>
       <header style={{ display: "grid", gap: 4 }}>
         <HeadTrail context={context} />
         <PageTitle context={context}>{plural}</PageTitle>
@@ -157,7 +157,7 @@ function ListOfView<S extends AnySchema>({ context, kind, view: View }: { readon
       <section data-testid="list-view" style={{ display: "grid", minWidth: 0 }}>
         <ViewBoundary kind={kind} view={plural}>
           {/* Edge to edge on a phone, where the view says `bleed`, as on a record's page and a place. */}
-          <Bleed when={bleeds(View)}>
+          <Bleed when={bleeds(View)} full={bleedsFull(View)}>
             <View nodes={members as never} label={plural} fidelity="full" cardinality="many" mode="fullscreen" selected={false} {...(flagged.length > 0 ? { flagged } : {})} />
           </Bleed>
         </ViewBoundary>

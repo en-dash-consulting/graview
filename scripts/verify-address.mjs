@@ -82,7 +82,12 @@
  *   place once, past four the first three on a phone with a button for the rest
  *   (Roadmap f-view-place-min-width, f-bleed-on-places,
  *   f-fallback-lens-loses-gutter, f-place-header-repeats-view-title,
- *   f-seen-in-phone-length).
+ *   f-seen-in-phone-length);
+ *   and views that say `bleed: "full"` — the home's, a record's, a place's
+ *   that draws its own heading — span the window less its safe areas at
+ *   390, 1024 and 1440, never scrolling the page sideways, and the home's
+ *   and the place's start right at the bar's bottom while the record's
+ *   stands under its heading (Roadmap f-views-bleed-full-width).
  *
  *   node scripts/verify-address.mjs [--engine=chromium|webkit|firefox]   (all three by default)
  */
@@ -159,6 +164,22 @@ const NEST_SOURCE = `graview.onProps(() => graview.render(graview.html\`<p class
 const STORY = { name: "eagles-story", attach: "home", cardinality: "many" };
 const STORY_SOURCE = `graview.onProps(() => graview.render(graview.html\`<p class="story">The story, deleted this morning</p>\`));`;
 const STORY_REMOVED = { name: "eagles-story", title: "The story", at: "2026-10-22T09:00:00.000Z", until: "2026-11-21T09:00:00.000Z" };
+/** Where the tasks are served with views that bleed full: across the whole window at every width (Roadmap f-views-bleed-full-width). */
+const SPANNING_BASE = "/apps/a7";
+const SPREAD = { name: "spread", attach: "home", cardinality: "many", bleed: "full" };
+const FEATURE = { name: "feature", attach: "task", cardinality: "one", bleed: "full" };
+const BANNER = { name: "banner", title: "The banner", attach: "task", cardinality: "many", heading: "own", bleed: "full" };
+const BAND_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<div class="band" style="height:240px;background:currentColor;opacity:.2"></div>\`));`;
+/** A place that keeps its frame, and a kind's list drawn by its view, each bleeding full. */
+const FRAMED = { name: "framed", title: "The framed", attach: "task", cardinality: "many", heading: "own", bleed: "full", flows: false };
+const ROLL = { name: "roll", attach: "person", cardinality: "many", replaces: "page", bleed: "full" };
+/** Where a view that bleeds full does not draw: a home refused before it starts, in an app with no home of its own, and a place whose React view throws. */
+const TORN_BASE = "/apps/a8";
+const TORN = { name: "torn", attach: "home", cardinality: "many", bleed: "full", reads: { kinds: ["no-such-kind"] } };
+/** A design's own shell over views that bleed full: a rail beside the page, or the page centered in a grid (`?shell=grid`), and a section, so a place has a trail. */
+const DESIGNED_BASE = "/apps/a9";
+/** A home proposed and not kept that bleeds full (`?draft=spread`), and one refused before it starts (`?draft=torn`). */
+const DRAFTED_BASE = "/apps/b1";
 /*
  * A VISITOR'S FORM AS GRAVIEW CLOUD SERVES IT (FR-201): `@graview/embed/form`
  * over the app its host compiled, read with `appFrom` from
@@ -202,6 +223,9 @@ async function buildHost() {
         import { registerWorkerView } from "@graview/guest/host/views";
         import { compileDocumentWithoutCheck } from "@graview/core/document";
         import { Store } from "@graview/core";
+        import { createPageRegistry } from "@graview/pages";
+        import { markBleeds } from "@graview/react";
+        import { createElement } from "react";
         import tasks from ${JSON.stringify(TASKS)};
         import proposal from ${JSON.stringify(PROPOSAL)};
         import proposalSeed from ${JSON.stringify(PROPOSAL_SEED)};
@@ -215,8 +239,13 @@ async function buildHost() {
         const kept = location.pathname.startsWith("${VIEWS_BASE}");
         const fitted = location.pathname.startsWith("${FITTED_BASE}");
         const homes = location.pathname.startsWith("${HOMES_BASE}");
+        const spanning = location.pathname.startsWith("${SPANNING_BASE}");
+        const torn = location.pathname.startsWith("${TORN_BASE}");
+        const designed = location.pathname.startsWith("${DESIGNED_BASE}");
+        const drafted = location.pathname.startsWith("${DRAFTED_BASE}");
+        const asked = new URLSearchParams(location.search);
         const formPage = location.pathname.startsWith("${FORM_BASE}");
-        const compiled = { app: compile(cards ? { ...tasks, lenses: [...tasks.lenses, ${JSON.stringify(BY_STATUS)}] } : kept ? { ...tasks, pages: ${JSON.stringify(VIEWS_PAGES)} } : fitted ? { ...tasks, pages: { first: "home" }, views: ${JSON.stringify(FITTED_VIEWS)} } : homes ? { ...tasks, pages: { first: "home" } } : tasks) };
+        const compiled = { app: compile(cards ? { ...tasks, lenses: [...tasks.lenses, ${JSON.stringify(BY_STATUS)}] } : kept ? { ...tasks, pages: ${JSON.stringify(VIEWS_PAGES)} } : fitted ? { ...tasks, pages: { first: "home" }, views: ${JSON.stringify(FITTED_VIEWS)} } : spanning ? { ...tasks, pages: { first: "home" }, views: ${JSON.stringify(FITTED_VIEWS)} } : homes || torn || designed || drafted ? { ...tasks, pages: { first: "home" } } : tasks) };
         const article = location.pathname.startsWith("/article");
         window.__navigated = [];
         /*
@@ -310,7 +339,7 @@ async function buildHost() {
           seed: ${JSON.stringify(SEED)},
           principal: { kind: "human", id: "p1", roles: ["owner"] },
           // As Cloud's shell: the Graview on a desk, the pages on a phone; the kept view's app on the pages at both.
-          face: article || kept || fitted || homes ? "pages" : window.innerWidth < 768 ? "pages" : "graview",
+          face: article || kept || fitted || homes || spanning || torn || designed || drafted ? "pages" : window.innerWidth < 768 ? "pages" : "graview",
           // A view the host keeps, registered by its manifest's name as Cloud registers a chat's view.
           ...(kept
             ? {
@@ -331,6 +360,48 @@ async function buildHost() {
                   ),
               }
             : {}),
+          // Views that bleed full: the home's, a record's and a place's that draws its own heading (Roadmap f-views-bleed-full-width).
+          ...(spanning
+            ? {
+                views: (schema, registry) =>
+                  [${JSON.stringify(SPREAD)}, ${JSON.stringify(FEATURE)}, ${JSON.stringify(BANNER)}, ${JSON.stringify(FRAMED)}, ${JSON.stringify(ROLL)}].reduce(
+                    (views, manifest) => registerWorkerView(views, { manifest, worker: { source: ${JSON.stringify(BAND_SOURCE)} } }),
+                    registry,
+                  ),
+              }
+            : {}),
+          // A home refused before it starts, and a place whose React view throws: neither draws what it asked to span with.
+          ...(torn
+            ? {
+                views: (schema, registry) =>
+                  registerWorkerView(registry, { manifest: ${JSON.stringify(TORN)}, worker: { source: ${JSON.stringify(BAND_SOURCE)} } }).register(
+                    "task",
+                    { cardinality: "many", fidelity: "full" },
+                    markBleeds(() => { throw new Error("the thrown view threw"); }, "full"),
+                    { title: "The thrown", name: "thrown", lens: "view" },
+                  ),
+              }
+            : {}),
+          // A design's shell: a rail beside the page, or the page centered in a grid.
+          ...(designed
+            ? {
+                views: (schema, registry) =>
+                  [${JSON.stringify(SPREAD)}, ${JSON.stringify(BANNER)}].reduce(
+                    (views, manifest) => registerWorkerView(views, { manifest, worker: { source: ${JSON.stringify(BAND_SOURCE)} } }),
+                    registry,
+                  ),
+                pages: createPageRegistry(compiled.app.schema)
+                  .section("task", "Work")
+                  .surface("shell", ({ children }) =>
+                    asked.get("shell") === "grid"
+                      ? createElement("div", { "data-design-shell": "", style: { display: "grid", placeItems: "center" } }, children)
+                      : createElement("div", { "data-design-shell": "", style: { display: "flex" } }, createElement("aside", { style: { width: "200px" } }, "Rail"), children),
+                  ),
+              }
+            : {}),
+          // A home proposed and not kept.
+          ...(drafted && asked.get("draft") === "spread" ? { draftView: { manifest: ${JSON.stringify(SPREAD)}, source: ${JSON.stringify(BAND_SOURCE)}, author: "Proposed by Claude" } } : {}),
+          ...(drafted && asked.get("draft") === "torn" ? { draftView: { manifest: ${JSON.stringify(TORN)}, source: ${JSON.stringify(BAND_SOURCE)}, author: "Proposed by Claude" } } : {}),
           // The live home first, the deleted one after it, and the host listing it deleted (FR-202).
           ...(homes
             ? {
@@ -355,7 +426,7 @@ async function buildHost() {
           fonts: false,
           studio: false,
           onNavigate: (path, how) => window.__navigated.push([path, how]),
-          ...(article ? {} : { routing: "address", basePath: cards ? "${CARDS_BASE}/" : kept ? "${VIEWS_BASE}/" : fitted ? "${FITTED_BASE}/" : homes ? "${HOMES_BASE}/" : "${BASE}/" }),
+          ...(article ? {} : { routing: "address", basePath: cards ? "${CARDS_BASE}/" : kept ? "${VIEWS_BASE}/" : fitted ? "${FITTED_BASE}/" : homes ? "${HOMES_BASE}/" : spanning ? "${SPANNING_BASE}/" : torn ? "${TORN_BASE}/" : designed ? "${DESIGNED_BASE}/" : drafted ? "${DRAFTED_BASE}/" : "${BASE}/" }),
         });
         window.__handle.drawn().then(() => { window.__ready = true; });
         }`,
@@ -383,7 +454,7 @@ async function buildHost() {
       return;
     }
     // Every address under the base is the one page, as a host that owns the page answers it.
-    if ([BASE, SWAP_BASE, CARDS_BASE, VIEWS_BASE, FITTED_BASE, SHELL_BASE, HOMES_BASE, FORM_BASE].some((base) => path === base || path.startsWith(`${base}/`))) {
+    if ([BASE, SWAP_BASE, CARDS_BASE, VIEWS_BASE, FITTED_BASE, SHELL_BASE, HOMES_BASE, SPANNING_BASE, TORN_BASE, DESIGNED_BASE, DRAFTED_BASE, FORM_BASE].some((base) => path === base || path.startsWith(`${base}/`))) {
       response.writeHead(200, { "content-type": "text/html" });
       response.end(APP_PAGE);
       return;
@@ -1029,6 +1100,169 @@ try {
         one.fittedError = String(error?.message ?? error);
       }
       /*
+       * A VIEW THAT BLEEDS FULL (Roadmap f-views-bleed-full-width): the
+       * region each view draws in against the window less its safe areas,
+       * and its top against the bar's bottom — at this size, and at a desk
+       * at a tablet's 1024 as well.
+       */
+      try {
+        const widths = viewport.width > 1024 ? [viewport.width, 1024] : [viewport.width];
+        const spanned = {};
+        for (const width of widths) {
+          if (width !== viewport.width) await tab.setViewportSize({ width, height: viewport.height });
+          const measured = {};
+          for (const [view, path] of [["spread", "/"], ["feature", "/tasks/t1"], ["banner", "/places/the-banner"]]) {
+            await go(`${SPANNING_BASE}${path}`);
+            await tab.waitForFunction((name) => Boolean(document.querySelector(`[data-worker-view="${name}"]`)?.shadowRoot?.querySelector(".band")), view, { timeout: 20_000 });
+            await tab.waitForTimeout(200);
+            measured[view] = await tab.evaluate((name) => {
+              const region = document.querySelector(`[data-worker-view="${name}"]`);
+              const box = region.getBoundingClientRect();
+              /* The bar's foot: on a phone the place's line is the bar's second row (FR-138). */
+              const bar = (document.querySelector("[data-graview-place-line]") ?? document.querySelector("[data-graview-app-bar]"))?.getBoundingClientRect();
+              /* The safe areas, as the page's own env() reads them. */
+              const probe = document.createElement("div");
+              probe.style.cssText = "position:fixed;left:env(safe-area-inset-left,0px);right:env(safe-area-inset-right,0px);top:0;height:0";
+              document.body.append(probe);
+              const safe = probe.getBoundingClientRect();
+              probe.remove();
+              /* The window less a scrollbar standing in it, where the face scrolls inside the host's element. */
+              const page = region.closest("[data-graview-page-spans]")?.getBoundingClientRect();
+              return {
+                left: Math.round(box.left),
+                right: Math.round(box.right),
+                width: Math.round(box.width),
+                window: window.innerWidth,
+                page: page ? [Math.round(page.left), Math.round(page.right)] : null,
+                safe: [Math.round(safe.left), Math.round(safe.right)],
+                top: bar ? Math.round(box.top - bar.bottom) : null,
+                sideScroll: document.documentElement.scrollWidth > window.innerWidth + 1,
+              };
+            }, view);
+          }
+          spanned[width] = measured;
+        }
+        if (widths.length > 1) await tab.setViewportSize(viewport);
+        one.spanning = spanned;
+      } catch (error) {
+        one.spanningError = String(error?.message ?? error);
+      }
+      /*
+       * WHAT BLEEDING FULL TAKES IS THE VIEW'S ALONE (the review of pull
+       * request 533): a view that did not draw goes back to the column; a
+       * trail over a place keeps its spacing; a design's shell gives the view
+       * its region; the kind's blocks and a draft's line keep the page's gutter.
+       */
+      try {
+        const widths = viewport.width > 1024 ? [viewport.width, 1024] : [viewport.width];
+        const held = {};
+        const slotted = () =>
+          tab.evaluate(() => {
+            const slot = document.querySelector("[data-graview-bleed=full]");
+            const main = (slot ?? document).querySelector ? (slot?.closest("[data-graview-page-main]") ?? document.querySelector("[data-graview-page-main]")) : null;
+            const box = slot?.getBoundingClientRect();
+            const style = main ? getComputedStyle(main) : null;
+            const area = main?.getBoundingClientRect();
+            const line = document.querySelector('[data-testid="app-subtitle"]')?.getBoundingClientRect();
+            const trail = document.querySelector('[data-testid="page-trail"]')?.getBoundingClientRect();
+            const narrowed = document.querySelector('[data-testid="place-narrowed"]')?.getBoundingClientRect();
+            const bar = (document.querySelector("[data-graview-place-line]") ?? document.querySelector("[data-graview-app-bar]"))?.getBoundingClientRect();
+            const page = document.querySelector("[data-graview-page-spans]")?.getBoundingClientRect();
+            return {
+              slot: box ? [Math.round(box.left), Math.round(box.right)] : null,
+              top: box && bar ? Math.round(box.top - bar.bottom) : null,
+              column: area && style ? [Math.round(area.left + parseFloat(style.paddingLeft)), Math.round(area.right - parseFloat(style.paddingRight))] : null,
+              padding: style ? Math.round(parseFloat(style.paddingTop)) : null,
+              page: page ? [Math.round(page.left), Math.round(page.right)] : null,
+              rail: Math.round(document.querySelector("[data-design-shell] > aside")?.getBoundingClientRect().right ?? 0),
+              lineHeight: line ? Math.round(line.height) : null,
+              trailTop: trail && bar ? Math.round(trail.top - bar.bottom) : null,
+              trailBottomOverSlot: trail && box ? Math.round(box.top - trail.bottom) : null,
+              narrowedTop: narrowed && bar ? Math.round(narrowed.top - bar.bottom) : null,
+              error: document.querySelector("[data-graview-bleed=full] [data-graview-view-error]") !== null,
+              failed: document.querySelector("[data-graview-bleed=full] [data-worker-view-failed]") !== null,
+              window: window.innerWidth,
+              sideScroll: document.documentElement.scrollWidth > window.innerWidth + 1,
+            };
+          });
+        const band = (name) => tab.waitForFunction((view) => Boolean(document.querySelector(`[data-worker-view="${view}"]`)?.shadowRoot?.querySelector(".band")), name, { timeout: 20_000 });
+        const settled = () => tab.waitForTimeout(300);
+        for (const width of widths) {
+          if (width !== viewport.width) await tab.setViewportSize({ width, height: viewport.height });
+          const measured = {};
+          /* Did not draw: a home refused, a home proposed and refused, a place's React view that threw. */
+          await go(`${TORN_BASE}/`);
+          await tab.waitForSelector("[data-graview-bleed=full] [data-worker-view-failed]", { timeout: 20_000 });
+          await settled();
+          measured.tornHome = await slotted();
+          await go(`${DRAFTED_BASE}/?draft=torn`);
+          await tab.waitForSelector("[data-graview-bleed=full] [data-worker-view-failed]", { timeout: 20_000 });
+          await settled();
+          measured.tornDraft = await slotted();
+          await go(`${TORN_BASE}/places/the-thrown`);
+          await tab.waitForSelector("[data-graview-bleed=full] [data-graview-view-error]", { timeout: 20_000 });
+          await settled();
+          measured.thrown = await slotted();
+          /* A header holding more than the title: a section's trail, a narrowing on a framed place. */
+          await go(`${DESIGNED_BASE}/places/the-banner`);
+          await band("banner");
+          await settled();
+          measured.trail = await slotted();
+          await go(`${SPANNING_BASE}/places/the-framed?filter=status:todo`);
+          await band("framed");
+          await settled();
+          measured.narrowed = await slotted();
+          /* A frame with nothing over it, and a kind's list drawn by its view. */
+          await go(`${SPANNING_BASE}/places/the-framed`);
+          await band("framed");
+          await settled();
+          measured.framed = await slotted();
+          await go(`${SPANNING_BASE}/people`);
+          await band("roll");
+          await settled();
+          measured.list = await slotted();
+          /* A design's shell, measured as it stands. */
+          await go(`${DESIGNED_BASE}/`);
+          await band("spread");
+          await settled();
+          measured.rail = await slotted();
+          await go(`${DESIGNED_BASE}/?shell=grid`);
+          await band("spread");
+          await settled();
+          measured.centered = await slotted();
+          /* The kind's page blocks under a record's view, against the column. */
+          await go(`${SPANNING_BASE}/tasks/t1`);
+          await band("feature");
+          await tab.waitForSelector('[data-graview-face=pages] [data-graview-spec="page"]', { timeout: 20_000 });
+          await settled();
+          measured.blocks = await tab.evaluate(() => {
+            const blocks = document.querySelector('[data-graview-face=pages] [data-graview-spec="page"]').getBoundingClientRect();
+            const facts = document.querySelector('[data-graview-face=pages] [data-testid="record-fields"]')?.getBoundingClientRect();
+            return { blocks: [Math.round(blocks.left), Math.round(blocks.right)], facts: facts ? [Math.round(facts.left), Math.round(facts.right)] : null };
+          });
+          /* A draft's line, and another face's padding on the one document: a page that bleeds on a phone only, as `PageMain` writes it, beside a home that bleeds full. */
+          await go(`${DRAFTED_BASE}/?draft=spread`);
+          await band("spread");
+          await settled();
+          measured.draft = await tab.evaluate(() => {
+            const line = document.querySelector('[data-testid="draft-view-line"]');
+            const text = line?.querySelector("span")?.getBoundingClientRect();
+            const other = document.createElement("main");
+            other.setAttribute("data-graview-bleed-top", "");
+            other.style.paddingTop = "40px";
+            document.body.append(other);
+            const padding = Math.round(parseFloat(getComputedStyle(other).paddingTop));
+            other.remove();
+            return { textLeft: text ? Math.round(text.left) : null, otherFacePadding: padding };
+          });
+          held[width] = measured;
+        }
+        if (widths.length > 1) await tab.setViewportSize(viewport);
+        one.spanningHeld = held;
+      } catch (error) {
+        one.spanningHeldError = String(error?.message ?? error);
+      }
+      /*
        * A DELETED HOME VIEW NEVER DRAWS (FR-202): registered after the live
        * one, and listed by the host as deleted, the home draws the live one.
        */
@@ -1617,6 +1851,65 @@ try {
   report.checks.aPlaceDeclaredBleedDrawsEdgeToEdge = {
     seen: fittedSeen,
     ok: fittedHold(({ edge }, name) => spans(edge, name)),
+  };
+  /*
+   * Roadmap f-views-bleed-full-width: a view that says `bleed: "full"` — the home's, a record's, a place's —
+   * is the page's whole width less its safe areas at 390, 1024 and 1440, the page being the window (less a
+   * scrollbar standing in it), and the page never scrolls sideways.
+   */
+  const spanningSeen = Object.fromEntries(pagesAt.map(([name, one]) => [name, one.spanningError ? { error: one.spanningError } : one.spanning]));
+  const spanningHold = (test) =>
+    pagesAt.length === engines.length * SIZES.length &&
+    pagesAt.every(([, one]) => !one.spanningError && Object.keys(one.spanning ?? {}).length > 0 && Object.values(one.spanning).every((views) => ["spread", "feature", "banner"].every((view) => views[view] && test(views[view], view))));
+  const widthsMeasured = new Set(pagesAt.flatMap(([, one]) => Object.keys(one.spanning ?? {})));
+  report.checks.aViewThatBleedsFullSpansTheWindowAtEveryWidth = {
+    seen: spanningSeen,
+    ok:
+      ["390", "1024", "1440"].every((width) => widthsMeasured.has(width)) &&
+      spanningHold(
+        (box) =>
+          box.page !== null &&
+          box.page[0] === 0 &&
+          box.page[1] <= box.window &&
+          box.page[1] >= box.window - 20 &&
+          box.left === box.page[0] + box.safe[0] &&
+          box.right === box.page[1] - (box.window - box.safe[1]) &&
+          !box.sideScroll,
+      ),
+  };
+  /* Roadmap f-views-bleed-full-width: where the page opens on a view that bleeds full — the home's, a place's that draws its own heading — its first band is flush under the bar at every width; a record's stands under the record's heading. */
+  report.checks.aViewThatBleedsFullStartsFlushUnderTheBar = {
+    seen: spanningSeen,
+    ok: spanningHold((box, view) => box.top !== null && (view === "feature" ? box.top > 0 : box.top === 0)),
+  };
+  /* The review of pull request 533: what bleeding full takes is the view's alone. */
+  const heldSeen = Object.fromEntries(pagesAt.map(([name, one]) => [name, one.spanningHeldError ? { error: one.spanningHeldError } : one.spanningHeld]));
+  const heldHold = (test) => pagesAt.length === engines.length * SIZES.length && pagesAt.every(([, one]) => !one.spanningHeldError && Object.keys(one.spanningHeld ?? {}).length > 0 && Object.values(one.spanningHeld).every(test));
+  const inTheColumn = (box) => box.slot !== null && box.column !== null && box.slot[0] === box.column[0] && box.slot[1] === box.column[1] && box.padding >= 32 && !box.sideScroll;
+  /* A home refused before it starts (kept or proposed), with no home of the app's to fall back on, and a place whose React view threw: the column, the spacing and the app's line. */
+  report.checks.aViewThatBleedsFullThatDidNotDrawKeepsTheColumnAndTheLine = {
+    seen: heldSeen,
+    ok: heldHold(({ tornHome, tornDraft, thrown }) => tornHome.failed && inTheColumn(tornHome) && tornHome.lineHeight > 1 && tornDraft.failed && inTheColumn(tornDraft) && tornDraft.lineHeight > 1 && thrown.error && inTheColumn(thrown)),
+  };
+  /* A place's header holding more than the title — a section's trail, a narrowing — keeps the page's spacing over the view, which still spans. */
+  report.checks.aTrailOverAViewThatBleedsFullKeepsItsSpacing = {
+    seen: heldSeen,
+    ok: heldHold(({ trail, narrowed }) => trail.padding >= 32 && trail.trailTop >= 32 && trail.trailBottomOverSlot >= 0 && narrowed.padding >= 32 && narrowed.narrowedTop >= 32 && narrowed.top > narrowed.narrowedTop),
+  };
+  /* A design's shell that lays its children in a row beside a rail, or in a centered grid: the view spans the region the shell gives, at its width. */
+  report.checks.aViewThatBleedsFullSpansWhatADesignsShellGivesIt = {
+    seen: heldSeen,
+    ok: heldHold(({ rail, centered }) => rail.rail === 200 && rail.page[0] === 200 && rail.page[1] === rail.window && rail.slot[0] === 200 && rail.slot[1] === rail.window && !rail.sideScroll && centered.page[0] === 0 && centered.page[1] === centered.window && centered.slot[0] === 0 && centered.slot[1] === centered.window && !centered.sideScroll),
+  };
+  /* A place that keeps its frame, flush, and a kind's list drawn by its view, under its heading, each spans the page. */
+  report.checks.aFramedPlaceAndAListThatBleedFullSpanThePage = {
+    seen: heldSeen,
+    ok: heldHold(({ framed, list }) => framed.slot[0] === 0 && framed.slot[1] === framed.window && framed.top === 0 && list.slot[0] === 0 && list.slot[1] === list.window && !framed.sideScroll && !list.sideScroll),
+  };
+  /* The kind's page blocks under a record's view that bleeds full stand where the record's facts stand; a draft's line starts at the page's gutter; a second face's padding is its own. */
+  report.checks.whatStandsWithAViewThatBleedsFullKeepsThePagesGutter = {
+    seen: heldSeen,
+    ok: heldHold(({ blocks, draft }) => blocks.facts !== null && blocks.blocks[0] === blocks.facts[0] && blocks.blocks[1] === blocks.facts[1] && draft.textLeft >= 16 && draft.otherFacePadding === 40),
   };
   /* Roadmap f-fallback-lens-loses-gutter: where a view that bleeds did not draw, what is drawn in its stead stands in the column, inside the gutter. */
   report.checks.aFallbackPageKeepsItsGutters = {
