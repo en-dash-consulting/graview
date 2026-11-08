@@ -73,7 +73,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.69
 
-Published November 7, 2026 · the current version
+Published November 7, 2026
 
 An undo keeps to what a seat may see, and a suggestion is decided by who may make its change.
 
