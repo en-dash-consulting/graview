@@ -78,7 +78,8 @@
  *   record's page; a place whose view says `bleed: true` spans the phone
  *   as the home does; where a view that bleeds did not draw, the page drawn
  *   in its stead keeps the column's gutters; a view that says `heading:
- *   "own"` is titled once, by itself; and a record's "Seen in" names each
+ *   "own"` is titled once, by itself, on a place and on a record's page it
+ *   replaces; and a record's "Seen in" names each
  *   place once, past four the first three on a phone with a button for the rest
  *   (Roadmap f-view-place-min-width, f-bleed-on-places,
  *   f-fallback-lens-loses-gutter, f-place-header-repeats-view-title,
@@ -151,8 +152,9 @@ const EDGE_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<di
 const BROKEN = { name: "broken", title: "The broken", attach: "task", cardinality: "many", bleed: true, acts: ["no-such-act"] };
 /** A fifth place a task is seen in, so a phone's "Seen in" folds what is past the third (Roadmap f-seen-in-phone-length). */
 const PLAIN = { name: "plain", title: "The plain", attach: "task", cardinality: "many" };
-const CARD = { name: "card", attach: "person", cardinality: "one", replaces: "page" };
-const CARD_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<p class="card">\${props.node ? props.node.label : ""}</p>\`));`;
+/* A view that replaces a record's page and titles the record itself (Roadmap f-replacing-view-own-heading). */
+const CARD = { name: "card", attach: "person", cardinality: "one", replaces: "page", heading: "own" };
+const CARD_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<h2 class="own">\${props.node ? props.node.label : ""}</h2><p class="card">\${props.node ? props.node.label : ""}</p>\`));`;
 /*
  * A DELETED HOME VIEW REGISTERED AFTER THE LIVE ONE (FR-202), as Graview
  * Cloud hands a page its deleted views so Restore works in place: in the
@@ -1028,6 +1030,13 @@ try {
           slot: document.querySelector('[data-graview-face=pages] [data-graview-spec="page"]') !== null,
           saysSlot: (document.querySelector("[data-graview-face=pages]")?.textContent ?? "").includes("Who they are"),
           facts: document.querySelector('[data-graview-face=pages] [data-testid="record-fields"]') !== null,
+          /* Its own heading: the page's title said once, to a screen reader, and no head drawn over the view. */
+          titles: [...document.querySelectorAll("[data-graview-face=pages] [data-graview-page-title]")].map((title) => {
+            const box = title.getBoundingClientRect();
+            return { text: title.textContent?.trim() ?? "", drawn: box.width > 1 && box.height > 1 };
+          }),
+          own: document.querySelector('[data-worker-view="card"]')?.shadowRoot?.querySelector("h2.own")?.textContent ?? null,
+          head: document.querySelector('[data-graview-face=pages] [data-testid="spatial-link"], [data-graview-face=pages] [data-graview-record-asides]') !== null,
         }));
         /* A view's place on a phone (Roadmap f-view-place-min-width, f-bleed-on-places, f-fallback-lens-loses-gutter, f-place-header-repeats-view-title). */
         await go(`${FITTED_BASE}/places/the-wide`);
@@ -1841,6 +1850,11 @@ try {
   report.checks.aViewThatReplacesThePageDrawsAloneAndItsSlotIsNot = {
     seen: fittedSeen,
     ok: fittedHold(({ replaced }) => replaced.drawn === "Ada" && !replaced.slot && !replaced.saysSlot && !replaced.facts),
+  };
+  /* Roadmap f-replacing-view-own-heading: a view that replaces a record's page and says heading "own" titles it once, itself; the page's title is said to a screen reader only. */
+  report.checks.aViewThatReplacesARecordsPageAndDrawsItsOwnHeadingIsTitledOnce = {
+    seen: fittedSeen,
+    ok: fittedHold(({ replaced }) => replaced.own === "Ada" && replaced.titles.length === 1 && replaced.titles[0].text === "Ada" && !replaced.titles[0].drawn && !replaced.head),
   };
   /* Roadmap f-view-place-min-width: a view's wide content scrolls inside it; its place is the column's width, and the page never scrolls sideways. */
   report.checks.aViewsWideContentNeverWidensThePageOnAPhone = {

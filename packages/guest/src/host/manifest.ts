@@ -40,9 +40,12 @@ import { choicesOf, plainNode, readAcross, type GuestViewInput } from "./session
  *                what it listens on (`graview.on("wheel" | "drag" |
  *                "pinch", …)`), once a frame, and takes a wheel from the
  *                page only there (gestures.ts)
- *   heading      "own": a place's view that draws its own heading — its
- *                place on Pages says the title to a screen reader only,
- *                and no count over it
+ *   heading      "own": a view that draws its own heading — a place's,
+ *                whose place on Pages says the title to a screen reader
+ *                only, and no count over it; or a view of one record that
+ *                replaces its page, under which the record's page draws no
+ *                heading of its own and says the record's name to a
+ *                screen reader only
  *   flows        false: a fixed canvas (a map, a chart) keeps the place's
  *                frame on Pages; left out, its place flows with the page
  *   scene        { maxHeight }: the tallest its preview on the Scene is
@@ -146,8 +149,15 @@ export interface WorkerViewManifest {
    * out, a titled view's place on Pages says its title and how much it is
    * over above the view. `"own"` is a view that draws its own heading: the
    * place keeps its title for a screen reader and the keyboard, draws
-   * neither it nor the count, and the way to the kind's list stays. Only
-   * for a view that is a place.
+   * neither it nor the count, and the way to the kind's list stays. On a
+   * view of one record that replaces its page (`replaces: "page"`, Roadmap
+   * f-replacing-view-own-heading), the record's page draws none of its
+   * head over the view — the name, the line its kind's `describe` says,
+   * "In the scene", "Seen in" — and says the name to a screen reader and
+   * the keyboard only; the trail stays. `replaces: "page"` does not imply
+   * it: a view that draws no title of its own would leave its page with
+   * none a person can see. Only for a view that is a place, or one of one
+   * record that replaces its page.
    */
   readonly heading?: "own";
   /**
@@ -278,7 +288,7 @@ export function checkManifest<S extends AnySchema>(manifest: WorkerViewManifest,
   else if (manifest.replaces === "page" && manifest.attach === "home") findings.push('The home\'s view is the home already: replaces "page" is for a view of a kind, of one record (its page) or of many (its list).');
   if (manifest.gestures !== undefined && typeof manifest.gestures !== "boolean") findings.push(`The view's gestures is "${String(manifest.gestures)}": it is true, or left out.`);
   if (manifest.bleed !== undefined && typeof manifest.bleed !== "boolean" && manifest.bleed !== "full") findings.push(`The view's bleed is "${String(manifest.bleed)}": it is true, "full", or left out.`);
-  if (manifest.heading !== undefined && (manifest.heading !== "own" || manifest.attach === "home" || manifest.cardinality !== "many" || manifest.title === undefined)) findings.push(`The view's heading is "${String(manifest.heading)}": it is "own" on a view that is a place (a title, cardinality many), or left out.`);
+  if (manifest.heading !== undefined && (manifest.heading !== "own" || manifest.attach === "home" || (manifest.cardinality === "many" ? manifest.title === undefined : manifest.replaces !== "page"))) findings.push(`The view's heading is "${String(manifest.heading)}": it is "own" on a view that is a place (a title, cardinality many) or on a view of one record that replaces its page (replaces "page"), or left out.`);
   if (manifest.flows !== undefined && typeof manifest.flows !== "boolean") findings.push(`The view's flows is "${String(manifest.flows)}": it is false for a view that keeps its place's frame, or left out.`);
   else if (manifest.flows === false && (manifest.attach === "home" || manifest.cardinality !== "many" || manifest.title === undefined)) findings.push("Only a view that is a place keeps a frame: flows false needs a title and cardinality many on a kind.");
   findings.push(...sceneProblems(manifest.scene));

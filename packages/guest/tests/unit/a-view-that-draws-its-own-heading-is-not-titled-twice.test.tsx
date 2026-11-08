@@ -81,3 +81,58 @@ describe("a view's place on Pages", () => {
     expect(host.querySelector('[data-worker-view-place="mind-map"]')).not.toBeNull();
   });
 });
+
+/*
+ * A VIEW OF ONE RECORD THAT REPLACES ITS PAGE DRAWS ITS OWN HEADING TOO
+ * (Roadmap f-replacing-view-own-heading). A deliverable's page drawn by a
+ * view that titles the deliverable itself still had Graview's head over it:
+ * the name, "In the scene", "Seen in" — the name said twice. With `heading:
+ * "own"` the page draws none of it, and the name is still the page's one
+ * heading, said to a screen reader and the keyboard. `replaces: "page"`
+ * alone keeps the head, as it was.
+ */
+const brief: WorkerViewManifest = { name: "brief", attach: "deliverable", cardinality: "one", replaces: "page" };
+const NAMED = "graview.onProps((props) => graview.render(graview.html`<h2>${props.node.label}</h2>`));";
+async function page(manifest: WorkerViewManifest) {
+  const host = document.createElement("div");
+  document.body.appendChild(host);
+  const root = createRoot(host);
+  const views = registerWorkerView(registerDefaultViews(workshopApp.schema as AnySchema, createViews(workshopApp.schema as AnySchema)), { manifest, worker: { source: NAMED } });
+  await act(async () => root.render(<PagesApp context={{ store: store(), views: views as never, principal: nick }} initialPath="/deliverables/deliverable%3Aemail" />));
+  done = async () => {
+    await act(async () => root.unmount());
+    host.remove();
+  };
+  return host;
+}
+
+describe("a manifest's heading, on a view of one record", () => {
+  it('is "own" where the view replaces the record\'s page, and refused where it does not', () => {
+    expect(checkManifest({ ...brief, heading: "own" }, store())).toEqual([]);
+    const { replaces: _, ...beside } = brief;
+    expect(checkManifest({ ...beside, heading: "own" }, store())).toEqual([expect.stringContaining('replaces its page (replaces "page")')]);
+  });
+});
+
+describe("a record's page drawn by a view that replaces it", () => {
+  it("keeps its head over a view that does not draw its own heading, as it was", async () => {
+    const host = await page(brief);
+    const titles = host.querySelectorAll("[data-graview-page-title]");
+    expect(titles).toHaveLength(1);
+    expect(shown(titles[0]!)).toBe(true);
+    expect(titles[0]!.textContent).toBe("Email to Todd");
+    expect(host.querySelector('[data-testid="spatial-link"]')).not.toBeNull();
+  });
+  it("draws none of its head over a view that draws its own, and says the name once, to a screen reader", async () => {
+    const host = await page({ ...brief, heading: "own" });
+    const titles = host.querySelectorAll("[data-graview-page-title]");
+    expect(titles).toHaveLength(1);
+    expect(titles[0]!.textContent).toBe("Email to Todd");
+    expect(shown(titles[0]!)).toBe(false);
+    // Nothing of the head is drawn for the eye: no "In the scene", no "Seen in", no editable name.
+    expect(host.querySelector('[data-testid="spatial-link"]')).toBeNull();
+    expect(host.querySelector("[data-graview-record-asides]")).toBeNull();
+    expect(titles[0]!.children).toHaveLength(0);
+    expect(host.querySelector('[data-worker-view="brief"], [data-testid="record-view"]')).not.toBeNull();
+  });
+});

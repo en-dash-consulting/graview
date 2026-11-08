@@ -109,9 +109,14 @@ const named = (element: TreeElement) => {
   const said = ["id", "class", "data-record", "data-place", "data-act", "data-file", "href", "role", "name"].flatMap((name) => (element.getAttribute(name) === null ? [] : [` ${name}="${element.getAttribute(name)!.slice(0, 80)}"`]));
   return `<${element.localName}${said.join("")}>`;
 };
+/** A select's name is its label's words, never its options': the label around it, less what is in the select. */
+const labelOf = (select: TreeElement): string => {
+  for (let on = select.parentElement; on; on = on.parentElement) if (on.localName === "label") return on.childNodes.map((child) => (child === select ? "" : child instanceof TreeElement ? textOf(child) : child.nodeType === 3 ? child.textContent : "")).join("");
+  return "";
+};
 /** A control's name, as a person reads it. */
 const nameOf = (element: TreeElement): string => {
-  const said = (element.getAttribute("aria-label") ?? textOf(element)).replace(/\s+/g, " ").trim() || element.getAttribute("title") || element.getAttribute("name") || "";
+  const said = (element.getAttribute("aria-label") ?? (element.localName === "select" ? labelOf(element) : textOf(element))).replace(/\s+/g, " ").trim() || element.getAttribute("title") || element.getAttribute("name") || "";
   return said ? `“${said.length > 60 ? `${said.slice(0, 59)}…` : said}”` : named(element);
 };
 
@@ -120,7 +125,16 @@ const SAMPLES: Readonly<Record<string, string>> = {
   number: "1", range: "1", date: "2026-01-15", "datetime-local": "2026-01-15T09:00", time: "09:00", month: "2026-01", week: "2026-W03",
   email: "someone@example.com", url: "https://example.com", tel: "+1 555 0100", text: "A test", search: "A test", textarea: "A test",
 };
-const sampleOf = (field: TreeElement) => (field.localName === "textarea" ? SAMPLES["textarea"] : SAMPLES[(field.getAttribute("type") ?? "text").toLowerCase()]);
+/* A select is picked from, never typed into: it has no words to sample (`pickOf`). */
+const sampleOf = (field: TreeElement) => (field.localName === "select" ? undefined : field.localName === "textarea" ? SAMPLES["textarea"] : SAMPLES[(field.getAttribute("type") ?? "text").toLowerCase()]);
+/** What a person picks from a select: an option other than the one it shows, one that says something and is not disabled, or the one it shows where it has no other. */
+const pickOf = (select: TreeElement): string => {
+  const options = [...below(select)].filter((one) => one.localName === "option");
+  const valueOf = (option: TreeElement) => option.getAttribute("value") ?? textOf(option).trim();
+  const shown = options.find((one) => one.selected || one.getAttribute("selected") !== null) ?? options[0];
+  const other = options.find((one) => one !== shown && one.getAttribute("disabled") === null && valueOf(one) !== "" && (!shown || valueOf(one) !== valueOf(shown)));
+  return other ? valueOf(other) : shown ? valueOf(shown) : "";
+};
 
 const FIELD = new Set(["input", "textarea", "select"]);
 /** Controls a person presses that are no field, no link and no bound act: a button, a role's, a toggle. */
@@ -231,7 +245,17 @@ export async function checkPresses<S extends AnySchema>(context: PressCheckConte
     const as = bound.getAttribute("data-act")!;
     const scope = up(bound, root, (one) => one.localName === "fieldset" || one.getAttribute("role") === "group") ?? root;
     const fields = [...below(scope)].filter((one) => FIELD.has(one.localName) && one.getAttribute("name"));
-    let first = judged(bound, {});
+    /*
+     * A SELECT THAT SAVES WHEN IT IS CHANGED SAVES A PICK (Roadmap
+     * f-view-authoring-friction-2026-11): it is never pressed as drawn, only
+     * when a person chooses, and the choice is theirs. So it is judged as a
+     * person makes it: another of its options picked, or the one it shows
+     * where it has no other. The option the view showed, re-sent unchanged,
+     * is no press anybody makes. A text field the view filled is judged as
+     * drawn, as ever.
+     */
+    const picked = does === "save" && bound.localName === "select" && bound.getAttribute("name") ? { [bound.getAttribute("name")!]: pickOf(bound) } : {};
+    let first = judged(bound, picked);
     let filled = false;
     /*
      * As a person fills it: words in each field left empty. Refused as drawn
@@ -242,7 +266,7 @@ export async function checkPresses<S extends AnySchema>(context: PressCheckConte
     const empty = fields.filter((one) => one.value === "" && !(first.press.fields.find((field) => field.name === one.getAttribute("name"))?.from) && sampleOf(one) !== undefined);
     const samples = Object.fromEntries(empty.map((one) => [one.getAttribute("name")!, sampleOf(one)!]));
     if (empty.length > 0) {
-      const again = judged(bound, samples);
+      const again = judged(bound, { ...picked, ...samples });
       if (again.ok) [first, filled] = [again, !first.ok];
       else if (first.ok || first.missing) first = again;
     }
@@ -252,7 +276,7 @@ export async function checkPresses<S extends AnySchema>(context: PressCheckConte
     const shape = ((mutation?.input as { shape?: Record<string, unknown> } | undefined)?.shape ?? {}) as Record<string, unknown>;
     const clearable = first.press.fields.filter((field) => field.from && Object.hasOwn(shape, field.name) && accepts(shape[field.name], undefined)).map((field) => field.name);
     if (clearable.length > 0) {
-      const typed = { ...(filled ? samples : {}), ...Object.fromEntries(clearable.map((one) => [one, ""])) };
+      const typed = { ...picked, ...(filled ? samples : {}), ...Object.fromEntries(clearable.map((one) => [one, ""])) };
       const emptied = judged(bound, typed);
       if (!emptied.ok) return found(bound, does, false, `${name} is refused when ${clearable.map((one) => `“${one}”`).join(" and ")} ${clearable.length === 1 ? "is" : "are"} emptied: ${emptied.message.replace(/\.$/, "")}.`);
     }

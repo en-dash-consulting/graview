@@ -86,7 +86,7 @@ describe("who may stop a kind, and who may lift it", () => {
   it("refuses a stop said straight to the store by a seat that may not decide", () => {
     const store = storeOf(POLICY);
     const made = suggest(store, [editNote("one")], { author: actor, lineage })!;
-    expect(() => store.undo(made.batch, { author: reader, lineage: { basis: "Stop it", stopsKind: true } })).toThrow(/Not permitted|may decide/);
+    expect(() => store.undo(made.batch, { author: reader, lineage: { basis: "Stop it", stopsKind: true } })).toThrow(/Not permitted|may decide|waits for a keeper or a member to decide/);
     expect(suggestions(store)).toHaveLength(1);
   });
 

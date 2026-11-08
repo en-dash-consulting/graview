@@ -169,6 +169,15 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
    * to be done but what it offers. Any other view sits above all of those.
    */
   const whole = PageView !== undefined && replacesPage(ownPage);
+  /*
+   * AND ONE THAT DRAWS ITS OWN HEADING (Roadmap f-replacing-view-own-heading):
+   * a view that replaces the page and says `heading: "own"` titles the record
+   * itself, so the head over it said the name twice. Nothing of the head is
+   * drawn over it — the name, the kind's line, "In the scene", "Seen in" —
+   * and the name is the page's heading still, said to a screen reader and
+   * the keyboard only. The trail stays: a person keeps where they are.
+   */
+  const ownHeading = whole && node !== undefined && (ownPage as { ownHeading?: boolean }).ownHeading === true;
   // A file field that holds nothing yet is where one is put (FR-163): drawn where the face changes values in place and an act may write it.
   const unfilled = inPlace && fileFieldsOf(definition).length > 0;
   /*
@@ -184,46 +193,54 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
   const full = PageView !== undefined && node !== undefined && bleedsFull(ownPage);
 
   return (
-    <PageMain context={context} spans={full}>
+    <PageMain context={context} spans={full} {...(full && ownHeading ? { bleedTop: "full" as const } : {})}>
       <header style={{ display: "grid", gap: 12 }}>
         {/* Where it is (Roadmap gv-pages-where-am-i): its section, if the app named one, and its kind's list, over its name. */}
         <HeadTrail context={context} />
-        {/* The name is changed where it stands, as the scene's record changes it: a shelf renamed on its page took "Change the category" (W-181). */}
-        <PageTitle context={context}>{titleField ? <EditableValue<S> nodeId={id} field={titleField} value={facts.label} said={facts.label} /> : facts.label}</PageTitle>
-        {described && described !== facts.label ? <p style={lede}>{described}</p> : null}
-        {/* WHAT IT WAS MADE ON (FR-172): the record's own beginning, when its maker said what it was based on. */}
-        {madeOn?.lineage ? (
-          <p style={{ ...quiet, margin: 0 }} data-testid="record-lineage">
-            Made by {whoDid(madeOn, principal, { graph: store.graph as never, schema: store.schema, ...(context.seats ? { seats: context.seats } : {}), ...(context.people ? { people: context.people } : {}) })}, {lineageWords(madeOn.lineage)}
-          </p>
-        ) : null}
-        {/* Where it stands in the scene, and being told when it changes: quiet, beside each other, under the name — the name is the one thing to look at (Roadmap f-facts-by-type). */}
-        <div style={{ ...quiet, display: "flex", flexWrap: "wrap", alignItems: "center", gap: "4px 20px" }} data-graview-record-asides="">
-          <SceneLink context={context} stop={`#focus=${encodeURIComponent(id)}`} style={{ ...onward, ...quiet }} data-testid="spatial-link" />
-          {/* NOTIFY ME (Roadmap f-notify-subscriptions): told when somebody else changes it, or does something to it. */}
-          {inPlace && node ? (
-            <NotifyButton
-              choices={[{ on: "changed", record: id }, { on: "act", record: id }, { on: "reaches", kind: facts.kind, condition: "", record: id }]}
-              label="Notify me when this changes"
-              testId="record-notify"
-              style={QUIET_PRESS}
-            />
-          ) : null}
-        </div>
-        {seenIn.length > 0 ? <SeenIn context={context} places={seenIn} /> : null}
-        {kept ? (
-          <p style={{ ...quiet, margin: 0 }} data-testid="record-kept-in-step" data-graview-system={kept.system}>
-            Kept in step with {kept.words}
-            {kept.href ? (
-              <>
-                {" · "}
-                <a href={kept.href} target="_blank" rel="noopener noreferrer" style={link}>
-                  Open in {kept.system === "notion" ? "Notion" : "Google Calendar"}
-                </a>
-              </>
+        {ownHeading ? (
+          <PageTitle context={context} unseen>
+            {facts.label}
+          </PageTitle>
+        ) : (
+          <>
+            {/* The name is changed where it stands, as the scene's record changes it: a shelf renamed on its page took "Change the category" (W-181). */}
+            <PageTitle context={context}>{titleField ? <EditableValue<S> nodeId={id} field={titleField} value={facts.label} said={facts.label} /> : facts.label}</PageTitle>
+            {described && described !== facts.label ? <p style={lede}>{described}</p> : null}
+            {/* WHAT IT WAS MADE ON (FR-172): the record's own beginning, when its maker said what it was based on. */}
+            {madeOn?.lineage ? (
+              <p style={{ ...quiet, margin: 0 }} data-testid="record-lineage">
+                Made by {whoDid(madeOn, principal, { graph: store.graph as never, schema: store.schema, ...(context.seats ? { seats: context.seats } : {}), ...(context.people ? { people: context.people } : {}) })}, {lineageWords(madeOn.lineage)}
+              </p>
             ) : null}
-          </p>
-        ) : null}
+            {/* Where it stands in the scene, and being told when it changes: quiet, beside each other, under the name — the name is the one thing to look at (Roadmap f-facts-by-type). */}
+            <div style={{ ...quiet, display: "flex", flexWrap: "wrap", alignItems: "center", gap: "4px 20px" }} data-graview-record-asides="">
+              <SceneLink context={context} stop={`#focus=${encodeURIComponent(id)}`} style={{ ...onward, ...quiet }} data-testid="spatial-link" />
+              {/* NOTIFY ME (Roadmap f-notify-subscriptions): told when somebody else changes it, or does something to it. */}
+              {inPlace && node ? (
+                <NotifyButton
+                  choices={[{ on: "changed", record: id }, { on: "act", record: id }, { on: "reaches", kind: facts.kind, condition: "", record: id }]}
+                  label="Notify me when this changes"
+                  testId="record-notify"
+                  style={QUIET_PRESS}
+                />
+              ) : null}
+            </div>
+            {seenIn.length > 0 ? <SeenIn context={context} places={seenIn} /> : null}
+            {kept ? (
+              <p style={{ ...quiet, margin: 0 }} data-testid="record-kept-in-step" data-graview-system={kept.system}>
+                Kept in step with {kept.words}
+                {kept.href ? (
+                  <>
+                    {" · "}
+                    <a href={kept.href} target="_blank" rel="noopener noreferrer" style={link}>
+                      Open in {kept.system === "notion" ? "Notion" : "Google Calendar"}
+                    </a>
+                  </>
+                ) : null}
+              </p>
+            ) : null}
+          </>
+        )}
       </header>
 
       {node && isArchived(node) ? <ArchivedSaid context={context} id={id} kind={facts.kind} /> : null}

@@ -35,7 +35,8 @@ record holds in that field now. A field the act cannot take blank — a
 number emptied, a date never picked — is left out of the call, never sent
 as `""`. A radio or a select is the
 person's pick, not their words: its value goes only if it is one the act
-declares (an enum's option) or a record the view was shown. A view may
+declares (an enum's option) or a record the view was shown (the check
+picks one, as a person does). A view may
 empty a field after a press. A press on an act the seat may not run there
 is refused, and the view hears why.
 
@@ -54,9 +55,8 @@ or pick from that does not save (a click into it is not a press). Inside a
 card that opens (`graview-view-links`) a press is its own: it never opens
 the card.
 
-Draw a `<button data-act>` first: the host resets every button to the
-words around it at no specificity, so your own class styles it with
-nothing to undo. On an element bound to an act, `data-record` is always
+Draw a `<button data-act>` first: the host resets buttons at no
+specificity, so your class styles it with nothing to undo. On an element bound to an act, `data-record` is always
 the act's record, never a link: `<button data-act="acknowledge"
 data-record="threat:7">` acknowledges that threat and goes nowhere. A
 control you hear yourself with `graview.on("click")` — `role="button"`,

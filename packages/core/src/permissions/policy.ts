@@ -137,7 +137,8 @@ export interface PolicyWords {
 }
 
 /** "a sales manager", "a sales manager or a salesperson". */
-function rolesSaid(roles: readonly string[]): string {
+/** Roles said as a person reads them: "an owner or a planner". */
+export function rolesSaid(roles: readonly string[]): string {
   return listed(roles.map((role) => withArticle(humanizeField(role).toLowerCase())), "or");
 }
 

@@ -35,7 +35,7 @@ import { TYPE_TEXT, TYPING } from "./text/typing-hook.js";
 import type { FieldRevision } from "./ops/revisions.js";
 import { DECLINES, isAutomated, isTidyingActor, tidyingRefusal, type ActMeanings, type ServedStops } from "./ops/tidying.js";
 import { nameOfAuthor } from "./who.js";
-import { actingAs, grantsTo, isSystem, meIn, meOf, ownsId, permits, profileOf, withValidProfile, permittedMutations, proposes, subjectKinds, type PolicyWords } from "./permissions/policy.js";
+import { actingAs, grantsTo, isSystem, meIn, meOf, ownsId, permits, profileOf, rolesSaid, withValidProfile, permittedMutations, proposes, subjectKinds, type PolicyWords } from "./permissions/policy.js";
 import { MOST_PROPOSED, PROPOSE_CHANGES, proposeChangesMutation } from "./mutations/propose-changes.js";
 import { namesUnseen, redact } from "./ops/withheld.js";
 import { writersBehind } from "./ops/writers.js";
@@ -2433,7 +2433,12 @@ export class Store<S extends AnySchema> {
         // A suggestion is taken back by who made it, or decided by whoever may make its change: a seat that may not has a vote.
         if (judged.suggests && !isSystem(author as Principal) && (judged.author.kind !== author.kind || judged.author.id !== author.id)) {
           const no = judged.suggests.map((call) => this.permits(call, author as Principal)).find((verdict) => !verdict.ok);
-          if (no && !no.ok) return { ...no.refusal, message: `Not permitted to undo "${target.intent}": ${no.refusal.message}` };
+          /*
+           * Said in one short sentence: who decides it, and what this seat
+           * may do instead. The suggestion's own words name its records, and
+           * the refusal of its change said "Not permitted" a second time.
+           */
+          if (no && !no.ok) return { ...no.refusal, message: this.suggestionWaits(target, no.refusal, author as Principal) };
           continue;
         }
         if (!judged.mutation) {
@@ -2466,6 +2471,15 @@ export class Store<S extends AnySchema> {
       }
     }
     return undefined;
+  }
+
+  /** Why a seat may not take back somebody else's suggestion: who decides it, and whether this seat has a vote on it instead. */
+  private suggestionWaits(target: Operation, refusal: Refusal, author: Principal): string {
+    // Refused for something other than a role this seat lacks: that reason, which names no record.
+    if (refusal.wouldNeed.length === 0 || refusal.wouldNeed.some((role) => author.roles?.includes(role))) return refusal.message;
+    const decides = `That suggestion waits for ${rolesSaid(refusal.wouldNeed)} to decide.`;
+    const votes = this.mutations.has(VOTE_SUGGESTION) && this.permits({ name: VOTE_SUGGESTION, args: { suggestion: target.id, vote: "for" } }, author).ok;
+    return votes ? `${decides} You can vote on it, but not take it back.` : `${decides} You cannot take it back.`;
   }
 
   /** The change an undo of an undo puts back: the op at the root of its chain, or the last undo the log still holds of it. */

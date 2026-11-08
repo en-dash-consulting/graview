@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 224,
+  "gzipped": 112,
+  "changeset": "a-replacing-view-draws-its-own-heading.md",
+  "note": "Raised when a view of one record that replaces its page came to draw its own heading (the record's page leaving its head off under `heading: \"own\"`, and the manifest check taking it there), a select that saves on change came to be judged on a person's pick, and an undo of somebody else's suggestion came to be refused in one sentence in the app's roles. 209 / 99 over. Measured at 674_450 / 233_567 against the budget's 674_241 / 233_468."
+}
