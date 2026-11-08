@@ -24,6 +24,8 @@
  * same worker and the same image element — pushed, not redrawn — with the
  * last logo's `blob:` URL let go.
  */
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { deflateSync } from "node:zlib";
 import { resolve } from "node:path";
@@ -37,12 +39,13 @@ export const MASTHEAD_JS = `
 graview.style(\`
   .mast { display: flex; align-items: center; gap: 12px; padding: 12px; }
   .mast h2 { margin: 0; font-family: var(--graview-font-display); border-radius: var(--graview-radius); border: 1px solid var(--graview-edge); padding: 4px 8px; }
+  .mast .lent { color: rgb(1, 2, 3); font-family: monospace; }
 \`);
 let pushes = 0;
 graview.onProps((props) => {
   pushes += 1;
   const theme = props.theme || {};
-  graview.render(graview.html\`<div class="mast" id="mast" data-pushes="\${pushes}">\${theme.logo ? graview.html\`<img id="logo" alt="" src="\${theme.logo}">\` : ""}<h2 id="name">\${theme.name || ""}</h2><span id="radius">\${theme.radius || ""}</span></div>\`);
+  graview.render(graview.html\`<div class="mast" id="mast" data-pushes="\${pushes}">\${theme.logo ? graview.html\`<img id="logo" alt="" src="\${theme.logo}">\` : ""}<h2 id="name">\${theme.name || ""}</h2><span id="radius">\${theme.radius || ""}</span><small id="lent" class="lent">Granite becomes gneiss</small><small id="baloo" class="baloo">Granite becomes gneiss</small><small id="mono" style="font-family: monospace">Granite becomes gneiss</small></div>\`);
 });
 `;
 
@@ -79,6 +82,12 @@ function png(width, height, [r, g, b]) {
 export const PNG = png(36, 18, [20, 90, 160]);
 export const PNG_PATH = "/graview/assets/logo.png";
 
+/* A face the brand lends its views (Roadmap f-view-authoring-friction-2026-11): a real WOFF2 the app holds, at its content address. */
+export function lentFont(repoRoot) {
+  const bytes = readFileSync(resolve(repoRoot, "apps/seedbed/src/fonts/fraunces-latin.woff2"));
+  return { bytes, path: `/graview/assets/${createHash("sha256").update(bytes).digest("hex")}.woff2` };
+}
+
 export async function brandSuite({ repoRoot, build, browser, claim, report, POLICY, HOST, GUEST, HOST_PORT, GUEST_PORT }) {
   const proxied = POLICY !== "page";
   const policy = proxied ? POLICIES[POLICY] : undefined;
@@ -86,7 +95,19 @@ export async function brandSuite({ repoRoot, build, browser, claim, report, POLI
   /* Claude's view frame is an opaque origin: no address of its own, so the second logo is inline there too. */
   const secondLogo = POLICY === "claude" ? { logo: SVG_B, bytes: Buffer.from(SVG_B), width: 30, height: 30 } : { logo: PNG_PATH, bytes: PNG, width: 36, height: 18 };
   /* One theme for every view (Roadmap f-app-wide-view-theme): the first brand dresses every view in a stylesheet of its own and fades between records; the second has neither. */
-  const first = { name: "En Dash", logo: SVG_A, typography: { display: "Georgia, 'Times New Roman', serif" }, shape: { radius: 4 }, views: { css: ".mast h2 { letter-spacing: 0.25em; padding: 40px; text-transform: uppercase }", motion: "fade" } };
+  /*
+   * And it wins (Roadmap f-view-authoring-friction-2026-11): its `.lent` beats the view's own `.mast .lent`, specificity notwithstanding, and draws
+   * in a face the brand lends its views — a file the app holds, loaded by the host where the page has an address of its own (not Claude's opaque frame).
+   */
+  const font = lentFont(repoRoot);
+  const lends = POLICY !== "claude";
+  const first = {
+    name: "En Dash",
+    logo: SVG_A,
+    typography: { display: "Georgia, 'Times New Roman', serif" },
+    shape: { radius: 4 },
+    views: { css: `.mast h2 { letter-spacing: 0.25em; padding: 40px; text-transform: uppercase }\n.lent { color: rgb(200, 30, 30); font-family: "Rock Face", serif }\n.baloo { font-family: "Baloo 2", monospace }`, motion: "fade", ...(lends ? { fonts: [{ family: "Rock Face", src: font.path }, { family: "Baloo 2", src: font.path }] } : {}) },
+  };
   const second = { name: "En Dash Consulting", logo: secondLogo.logo, typography: { display: "'Courier New', Courier, monospace" }, shape: { radius: 16 } };
   const widgetJs = (
     await build({
@@ -98,7 +119,8 @@ import { registerWorkerView } from "@graview/guest/host/views";
 import { lin, offersApp, offersSeed } from ${JSON.stringify(resolve(repoRoot, "scripts/fixtures/offers-app.ts"))};
 window.__failures = [];
 const brands = { first: { ...${JSON.stringify(first)}, schemes: SCHEMES }, second: { ...${JSON.stringify(second)}, schemes: SCHEMES } };
-const definition = { manifest: ${JSON.stringify(MASTHEAD_MANIFEST)}, worker: { source: ${JSON.stringify(MASTHEAD_JS)} }, onFailure: (reason, detail) => window.__failures.push([reason, detail]) };
+window.__problems = [];
+const definition = { manifest: ${JSON.stringify(MASTHEAD_MANIFEST)}, worker: { source: ${JSON.stringify(MASTHEAD_JS)} }, asset: (path) => path, onFailure: (reason, detail) => window.__failures.push([reason, detail]), onProblem: (said) => window.__problems.push(said) };
 window.__handle = mount(document.getElementById("app"), {
   app: offersApp,
   seed: offersSeed,
@@ -132,6 +154,12 @@ window.__rebrand = () => window.__handle.setBrand(brands.second);
   const widgetHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Offers</title><style>body{margin:0}#app{position:relative;height:900px}</style></head><body><div id="app"></div><script>${widgetJs.replace(/<\/script/gi, "<\\/script")}</script></body></html>`;
   const hostHtml = proxied ? `<!doctype html><html><head><meta charset="utf-8"><title>Chat</title></head><body><iframe id="proxy" title="Widget" style="width:1200px;height:1000px;border:0" src="${GUEST}/proxy/${POLICY}.html"></iframe></body></html>` : widgetHtml;
   const asked = [];
+  const fontAsked = [];
+  const serveFont = (req, res) => {
+    fontAsked.push(req.url);
+    res.writeHead(200, { "content-type": "font/woff2", "cache-control": "no-store", "access-control-allow-origin": "*" });
+    res.end(font.bytes);
+  };
   const serveLogo = (req, res) => {
     asked.push(req.url);
     res.writeHead(200, { "content-type": "image/png", "cache-control": "no-store" });
@@ -144,6 +172,7 @@ window.__rebrand = () => window.__handle.setBrand(brands.second);
         return res.end(hostHtml);
       }
       if (!proxied && req.url === PNG_PATH) return serveLogo(req, res);
+      if (!proxied && req.url === font.path) return serveFont(req, res);
       res.writeHead(404);
       res.end();
     }).listen(HOST_PORT, "127.0.0.1"),
@@ -153,6 +182,7 @@ window.__rebrand = () => window.__handle.setBrand(brands.second);
         return res.end(proxyPage(policy, widgetHtml, HOST));
       }
       if (proxied && req.url === PNG_PATH) return serveLogo(req, res);
+      if (proxied && req.url === font.path) return serveFont(req, res);
       res.writeHead(404);
       res.end();
     }).listen(GUEST_PORT, "localhost"),
@@ -226,6 +256,12 @@ window.__rebrand = () => window.__handle.setBrand(brands.second);
           letterSpacing: getComputedStyle(heading).letterSpacing,
           transform: getComputedStyle(heading).textTransform,
           padding: getComputedStyle(heading).paddingTop,
+          lentColor: getComputedStyle(root.querySelector("#lent")).color,
+          lentFont: getComputedStyle(root.querySelector("#lent")).fontFamily,
+          faces: [...document.fonts].filter((face) => face.family.replace(/["']/g, "") === "Rock Face").map((face) => face.status),
+          balooFaces: [...document.fonts].filter((face) => face.family.replace(/["']/g, "") === "Baloo 2").map((face) => face.status),
+          balooWidth: root.querySelector("#baloo").getBoundingClientRect().width,
+          monoWidth: root.querySelector("#mono").getBoundingClientRect().width,
           motion: root.querySelector("[data-graview-view-root]")?.getAttribute("data-graview-motion") ?? null,
           radiusSaid: root.querySelector("#radius").textContent,
           pushes: Number(root.querySelector("#mast").getAttribute("data-pushes")),
@@ -245,10 +281,30 @@ window.__rebrand = () => window.__handle.setBrand(brands.second);
     claim("its logo is the brand's inline SVG, byte for byte, at the SVG's own size", sameBytes(before.bytes, [...Buffer.from(SVG_A)]) && before.natural.join("x") === "48x24", { natural: before.natural, scheme: before.scheme, bytes: Array.isArray(before.bytes) ? before.bytes.length : before.bytes });
     claim(blobAllowed ? "the logo is handed as a blob: URL of the page itself, which the policy lets an image load from" : "the logo is handed as a data: image, since the policy's img-src has no blob:", blobAllowed ? before.scheme === "blob" : before.scheme === "data", { src: before.src.slice(0, 60) });
     claim(
-      "the view is drawn with the app's stylesheet for every view, a sheet of the host's between the region's rules and the view's own: the heading takes its letter-spacing and its capitals, and the view's own padding wins where both say one",
-      before.sheets.join(",") === "data-graview-region,data-graview-view-theme,data-graview-view-style" && /letter-spacing: 0\.25em/.test(before.themeSheet ?? "") && before.letterSpacing !== "normal" && before.transform === "uppercase" && before.padding === "4px",
+      "the view is drawn with the app's stylesheet for every view, a sheet of the host's in the layer after the view's own: the heading takes its letter-spacing and its capitals, and the theme's padding wins where both say one",
+      before.sheets.join(",") === "data-graview-region,data-graview-view-theme,data-graview-view-style" && /^@layer graview-theme \{/.test(before.themeSheet ?? "") && /letter-spacing: 0\.25em/.test(before.themeSheet ?? "") && before.letterSpacing !== "normal" && before.transform === "uppercase" && before.padding === "40px",
       { sheets: before.sheets, letterSpacing: before.letterSpacing, transform: before.transform, padding: before.padding },
     );
+    claim(
+      "the app's stylesheet for every view wins over the view's own rule on the same element whatever its specificity: the theme's .lent color beats the view's .mast .lent",
+      before.lentColor === "rgb(200, 30, 30)",
+      { color: before.lentColor },
+    );
+    if (lends) {
+      await until(() => ["Rock Face", "Baloo 2"].every((family) => [...document.fonts].some((face) => face.family.replace(/["']/g, "") === family && face.status === "loaded")), undefined, "the lent faces loaded").catch(() => undefined);
+      await tab.waitForTimeout(200);
+      const lent = await read();
+      claim(
+        "the face the brand lends its views, a file the app holds at its content address, is loaded into the page by the host, and the view's text is drawn in it",
+        lent.faces.includes("loaded") && /Rock Face/.test(lent.lentFont) && fontAsked.length >= 1 && fontAsked.every((url) => url === font.path),
+        { faces: lent.faces, font: lent.lentFont, served: fontAsked, problems: await app.evaluate(() => window.__problems) },
+      );
+      claim(
+        'a face whose family is no one identifier, "Baloo 2", is loaded in this engine and its text is drawn in it, not in the fallback',
+        lent.balooFaces.length === 1 && lent.balooFaces[0] === "loaded" && lent.balooWidth !== lent.monoWidth,
+        { faces: lent.balooFaces, baloo: lent.balooWidth, mono: lent.monoWidth, problems: await app.evaluate(() => window.__problems) },
+      );
+    }
     claim("and, the brand asking for it, its root is set to fade between records", before.motion === "fade", { motion: before.motion });
 
     await app.evaluate(() => {
@@ -265,7 +321,8 @@ window.__rebrand = () => window.__handle.setBrand(brands.second);
     claim("and takes the new radius", after.viewRadius === "16px" && after.radiusSaid === "16px", { viewRadius: after.viewRadius, said: after.radiusSaid });
     claim(`and draws the new logo, byte for byte, at its own size (${secondLogo.width}×${secondLogo.height})`, sameBytes(after.bytes, [...secondLogo.bytes]) && after.natural.join("x") === `${secondLogo.width}x${secondLogo.height}`, { natural: after.natural, scheme: after.scheme, bytes: Array.isArray(after.bytes) ? after.bytes.length : after.bytes });
     claim("it followed the brand by being pushed it, not redrawn: the same region and the same image element, one push more", after.marked && after.pushes > before.pushes, { marked: after.marked, pushes: [before.pushes, after.pushes] });
-    claim("after the brand changes to one with no stylesheet for its views, the host's sheet is empty, the heading's letter-spacing and capitals are the browser's again, and nothing fades", after.themeSheet === "" && after.letterSpacing === "normal" && after.transform === "none" && after.motion === null, { themeSheet: after.themeSheet, letterSpacing: after.letterSpacing, transform: after.transform, motion: after.motion });
+    claim("after the brand changes to one with no stylesheet for its views, the host's sheet is empty, the heading's letter-spacing and capitals are the browser's again, the view's own rule holds, and nothing fades", after.themeSheet === "" && after.letterSpacing === "normal" && after.transform === "none" && after.lentColor === "rgb(1, 2, 3)" && after.motion === null, { themeSheet: after.themeSheet, letterSpacing: after.letterSpacing, transform: after.transform, lentColor: after.lentColor, motion: after.motion });
+    if (lends) claim("and the faces the brand lent are gone from the page once it lends none", after.faces.length === 0 && after.balooFaces.length === 0, { faces: after.faces, baloo: after.balooFaces });
     if (revoked !== null) claim("the last logo's blob: URL is let go once the new one is drawn", revoked === true, { url: before.src });
     if (secondLogo.logo === PNG_PATH) {
       /*
@@ -293,7 +350,7 @@ window.__rebrand = () => window.__handle.setBrand(brands.second);
         { served: asked, requests: logoRequests, ...marks },
       );
     }
-    const elsewhere = requests.filter((url) => /^https?:/.test(url) && !url.startsWith(`${HOST}/`) && !url.startsWith(`${GUEST}/proxy/`) && !url.endsWith(PNG_PATH) && !url.endsWith("/favicon.ico"));
+    const elsewhere = requests.filter((url) => /^https?:/.test(url) && !url.startsWith(`${HOST}/`) && !url.startsWith(`${GUEST}/proxy/`) && !url.endsWith(PNG_PATH) && !url.endsWith(font.path) && !url.endsWith("/favicon.ico"));
     claim("nothing else was requested", elsewhere.length === 0, elsewhere);
     claim("no view failed", (await app.evaluate(() => window.__failures)).length === 0, await app.evaluate(() => window.__failures));
     /* WebKit reports the harness's own fetch of the revoked URL, above, as a page error: that one is the claim, not the page. */

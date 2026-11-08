@@ -78,6 +78,6 @@
     "url": "https://github.com/en-dash-consulting/graview/issues"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22.22.0"
   }
 }

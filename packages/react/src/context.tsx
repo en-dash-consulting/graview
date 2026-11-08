@@ -3,6 +3,7 @@ import type {
   Brand,
   GraviewApp,
   HostFiles,
+  ViewerState,
   ResolveApp,
   LinkedRecords,
   LinkedReads,
@@ -18,6 +19,7 @@ import type {
   Store,
   ViewRegistry,
 } from "@graview/core";
+import type { DisplayOptionsHost } from "@graview/core";
 import { memorySubscriptions, openingOf, sayIn, tellTheWatchWhatIsUnseen, type DismissalStore, type Place, type KeptViews, type PagesArrangement, type SubscriptionStore } from "@graview/core";
 import { NO_AI, type AffordanceProvider, type HostAi } from "@graview/tools/frame";
 import { honorSetting, loadSetting, rememberSetting, type ReaderMemory } from "./settings.js";
@@ -40,7 +42,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPointerStore, type PointerStore, type ScenePoint } from "./pointer.js";
-import { HostAssetsContext, HostFilesContext } from "./files.js";
+import { HostAssetsContext, HostFilesContext, HostViewerStateContext } from "./files.js";
 import { useLinkedReads } from "./linked-reads.js";
 import type { MenuColumn, MenuPage, MenuSectionSource } from "./menu-types.js";
 import type { MenuViewSection } from "./view-places.js";
@@ -186,8 +188,15 @@ export interface HostNotification {
   readonly href?: string;
   readonly target?: string;
   readonly onSelect?: () => void;
-  /** Already read: listed, and not counted on the bell. */
+  /** Already read: listed, and no dot on the bell. A notice with `needs` is counted whether read or not. */
   readonly read?: boolean;
+  /**
+   * THIS ASKS SOMETHING OF THE PERSON (Roadmap f-inbox-needs-you-first): a
+   * proposal to review, a workflow that failed. Listed under Needs you and
+   * counted on the bell for as long as the host hands it, read or not; unsaid,
+   * it is an Update, listed, its unread drawn as the bell's dot and not counted.
+   */
+  readonly needs?: boolean;
 }
 
 export interface GraviewContextValue<S extends AnySchema> {
@@ -435,6 +444,8 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly composeChange?: ComposeChangeHost;
   /** Where a change to the app is shown on this page only, not kept (`GraviewProviderProps.onDraftChange`). */
   readonly onDraftChange?: DraftChangeHost;
+  /** What the host says of "Other ways to show this" (`GraviewProviderProps.displayOptions`). */
+  readonly displayOptions?: DisplayOptionsHost;
   /** The app this is mounted with (`GraviewProviderProps.app`), or the one it is drawn inside. */
   readonly app?: GraviewApp<S> | undefined;
   /** The reader's locale the host passed (`GraviewProviderProps.locale`, FR-178), or the one it is drawn inside. */
@@ -618,6 +629,13 @@ export interface GraviewProviderProps<S extends AnySchema> {
    * card says what would change without drawing it.
    */
   readonly onDraftChange?: DraftChangeHost | undefined;
+  /**
+   * "OTHER WAYS TO SHOW THIS" (`DisplayOptionsHost`, Roadmap
+   * f-display-options-switch): further options a host hands in, what it
+   * remembers being chosen, and where it hears what was kept. Unsaid, the
+   * options are the ones the declaration can draw.
+   */
+  readonly displayOptions?: DisplayOptionsHost | undefined;
   /** Extra or replacement affordance providers (e.g. an LLM intelligence). */
   readonly providers?: readonly AffordanceProvider<S>[];
   /**
@@ -644,6 +662,8 @@ export interface GraviewProviderProps<S extends AnySchema> {
    * host takes no files.
    */
   readonly files?: HostFiles | undefined;
+  /** WHERE WHAT A WORKER VIEW KEEPS FOR ITS VIEWER GOES (`graview.mine`): the host's, by the view's name. Unsaid, for the visit, in this page's memory. */
+  readonly viewerState?: ViewerState | undefined;
   /**
    * WHERE THE HOST SERVES AN APP'S OWN IMAGES (Roadmap
    * f-brand-marks-under-app-base): `assetsAt(path)` for a path under
@@ -838,9 +858,11 @@ export function GraviewProvider<S extends AnySchema>({
   onProposeChange,
   composeChange,
   onDraftChange,
+  displayOptions,
   providers,
   ai: handedAi,
   files,
+  viewerState,
   assetsAt,
   resolveApp,
   history,
@@ -939,6 +961,7 @@ export function GraviewProvider<S extends AnySchema>({
   const proposeChange = onProposeChange ?? outer?.onProposeChange;
   const composeAppChange = composeChange ?? outer?.composeChange;
   const draftChange = onDraftChange ?? outer?.onDraftChange;
+  const optionsHost = displayOptions ?? outer?.displayOptions;
   const app = mountedApp ?? (outer?.app as GraviewApp<S> | undefined);
   /*
    * WHAT DAYS, TIMES AND NUMBERS ARE SAID IN (FR-178): the reader's a host
@@ -1338,6 +1361,7 @@ export function GraviewProvider<S extends AnySchema>({
       ...(proposeChange ? { onProposeChange: proposeChange } : {}),
       ...(composeAppChange ? { composeChange: composeAppChange } : {}),
       ...(draftChange ? { onDraftChange: draftChange } : {}),
+      ...(optionsHost ? { displayOptions: optionsHost } : {}),
       app,
       ...(locale ? { locale } : {}),
       ...(timeZone ? { timeZone } : {}),
@@ -1409,7 +1433,8 @@ export function GraviewProvider<S extends AnySchema>({
 
   const live = useMemo(() => (typing ? { typing, sayCaret, who: others } : null), [typing, sayCaret, others]);
   const assetsHeld = assetsAt ? <HostAssetsContext.Provider value={assetsAt}>{children}</HostAssetsContext.Provider> : children;
-  const filed = files ? <HostFilesContext.Provider value={files}>{assetsHeld}</HostFilesContext.Provider> : assetsHeld;
+  const filesHeld = files ? <HostFilesContext.Provider value={files}>{assetsHeld}</HostFilesContext.Provider> : assetsHeld;
+  const filed = viewerState ? <HostViewerStateContext.Provider value={viewerState}>{filesHeld}</HostViewerStateContext.Provider> : filesHeld;
   return (
     <GraviewContext.Provider value={value as unknown as GraviewContextValue<AnySchema>}>
       <PlaybackContext.Provider value={playback as unknown as Playback}>

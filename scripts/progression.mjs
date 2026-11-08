@@ -168,7 +168,7 @@ try {
         await page.waitForTimeout(500);
       }
       if (chapter.drive === "standing") {
-        await page.click('[data-testid="standing"]');
+        await page.click('[data-testid="inbox-button"]');
         // The problems' rows are fetched when first reached for (FR-131), so wait for a row rather than a fixed time.
         await page.waitForFunction(() => document.querySelector('[data-testid="problems"] li'), null, { timeout: 10_000 }).catch(() => {});
         await page.waitForTimeout(200);
@@ -204,7 +204,8 @@ try {
       if (scheme === "light") {
         entry.saw = await page.evaluate(() => ({
           // The standing is a dot and a number; what it says is its name.
-          standing: document.querySelector('[data-testid="standing"]')?.getAttribute("aria-label") ?? null,
+          // The dot says all is well; while a rule is broken, the bell does.
+          standing: document.querySelector('[data-testid="standing"], [data-testid="inbox-button"][data-count]:not([data-count="0"])')?.getAttribute("aria-label") ?? null,
           districts: [...document.querySelectorAll('[data-graview-view^="kind:"]')].map((el) => el.textContent?.trim().replace(/\s+/g, " ") ?? ""),
           trail: ((at, most) => {
             // What a reader sees, not the styles a part brings along: a <style> in the plane is text too.
@@ -338,7 +339,7 @@ try {
           return {
             mounted: host?.querySelector("[data-graview-embed]") !== null,
             districts: [...(host?.querySelectorAll('[data-graview-view^="kind:"]') ?? [])].map((el) => el.textContent?.trim().replace(/\s+/g, " ") ?? ""),
-            standing: host?.querySelector('[data-testid="standing"]')?.getAttribute("aria-label") ?? null,
+            standing: host?.querySelector('[data-testid="standing"], [data-testid="inbox-button"][data-count]:not([data-count="0"])')?.getAttribute("aria-label") ?? null,
           };
         }, recipe.slug);
       }

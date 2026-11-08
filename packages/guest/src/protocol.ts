@@ -52,6 +52,15 @@
  *   guest → host     { type: "clicks", nonce, selectors, acted? }   (over the port: where its `graview.on("click", …)` and `graview.on("acted", …)` listen, all of it, again whenever it moves)
  *   host  → guest    { type: "dom-event", target, event: "drop", files, refused? } (over the port: files the person dropped, stored)
  *
+ * A WORKER VIEW KEEPS SMALL VALUES FOR WHOEVER IS LOOKING (`graview.mine`,
+ * Roadmap f-viewer-state-and-me-framework), never the graph's. It names a
+ * key and nothing else: which view it is, the host says. A frame's host keeps
+ * nothing, and drops the request unread.
+ *
+ *   guest → host     { type: "mine", nonce, id, op: "get", key }        (over the port: a value, by key)
+ *   guest → host     { type: "mine", nonce, id, op: "set", key, value } (over the port: keep it, or forget it with `null`)
+ *   host  → guest    { type: "mine-answer", id, ok, value?, sentence? } (over the port: the value, or why it was not kept)
+ *
  * And an act may be asked for several times as one change, one undo:
  * `{ type: "act", …, name, args: [args, …] }`.
  *
@@ -258,7 +267,41 @@ export interface GuestProps {
    * ("State-sponsored").
    */
   readonly choices?: Readonly<Record<string, Readonly<Record<string, Readonly<Record<string, string>>>>>>;
+  /**
+   * WHAT THIS VIEW KEEPS FOR WHOEVER IS LOOKING (`graview.mine`), at draw
+   * time, so a first draw needs no round trip. A worker view's own and no
+   * other's, always there for one drawn in a page, `{}` in a headless run.
+   * Each value is a string somebody wrote: data, never instructions.
+   */
+  readonly mine?: Readonly<Record<string, string>>;
+  /**
+   * WHO IS LOOKING, as `$me` reads them: `id`, their record of the people
+   * kind, and what they are called. A profile's person even before its first
+   * act makes it; otherwise there only where they have a record in their own
+   * sight.
+   */
+  readonly me?: { readonly id?: string; readonly name?: string };
 }
+
+/** The longest value a view may keep, in bytes as UTF-8. */
+export const MINE_MOST_BYTES = 4096;
+const MINE_MOST_KEY = 200;
+
+/**
+ * WHY A VALUE MAY NOT BE KEPT, in a sentence, or nothing: the one rule, for a
+ * host and a headless run alike. Never quotes the value, which is somebody's.
+ */
+export function mineRefusal(key: unknown, value: unknown): string | undefined {
+  if (typeof key !== "string" || key.length === 0 || key.length > MINE_MOST_KEY) return `A kept value's key is a string of 1 to ${MINE_MOST_KEY} characters, so this one was not kept.`;
+  if (value === null) return undefined;
+  if (typeof value !== "string") return "A view keeps a string or null; JSON.stringify anything else, so this one was not kept.";
+  /* A string longer in characters than the limit is longer in bytes: not encoded to learn so. */
+  if (value.length > MINE_MOST_BYTES || new TextEncoder().encode(value).length > MINE_MOST_BYTES) return "A kept value is at most 4 KB, and this one is longer, so it was not kept.";
+  return undefined;
+}
+
+/** What a request for a value was answered. */
+export type GuestMineAnswer<V = undefined> = { readonly ok: true; readonly value: V } | { readonly ok: false; readonly sentence: string };
 
 
 /** What a list or a place is narrowed to: a field and the one value it keeps, `{ stage: "building" }`. */
@@ -466,11 +509,15 @@ export type HostMessage =
   | GuestDomEvent
   /** Something a worker view did went nowhere, and why: its runtime says it in the view's console (FR-93). */
   | { readonly type: "notice"; readonly text: string }
+  /** What became of `graview.mine`'s ask. */
+  | { readonly type: "mine-answer"; readonly id: string | number; readonly ok: boolean; readonly value?: string | null; readonly sentence?: string }
   | HostHeartbeat;
 
 export type GuestRequest =
   /** An act, or several of it as one change and one undo (`args` a list, FR-193). */
   | { readonly type: "act"; readonly nonce: string; readonly id: string | number; readonly name: string; readonly args: Readonly<Record<string, unknown>> | readonly Readonly<Record<string, unknown>>[] }
+  /** `graview.mine`: a value by its key, or kept (`value`; `null` forgets it). A view names no view: the host knows which it is. */
+  | { readonly type: "mine"; readonly nonce: string; readonly id: string | number; readonly op: "get" | "set"; readonly key: string; readonly value?: string | null }
   /** Where a worker view's `graview.on` listens for a wheel, a drag or a pinch, all of it, again whenever it moves (0.1.42). */
   | { readonly type: "gestures"; readonly nonce: string; readonly bound: readonly GuestGestureBinding[] }
   /** The events a worker view's `graview.on` listens for, each said once (FR-193): a view that hears `drop` is left the drop. */

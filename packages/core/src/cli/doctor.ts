@@ -21,7 +21,8 @@ export const DOCTOR_USAGE = `  graview doctor [<dir>] [--document <file>] [--jso
       version, its lockfile and its node_modules holding that version, each
       declaration document's formatVersion one the installed core reads, and
       react beside react-dom at one version (React refuses a mismatched pair
-      at startup, and the page is blank). Run from a framework checkout with
+      at startup, and the page is blank), and no router of the product's own
+      beside @graview/pages. Run from a framework checkout with
       no graview on PATH, it says how to put it there. Each problem is said with its fix;
       exits 1 on any.
 `;
@@ -345,10 +346,23 @@ export function diagnose(dir: string, options: { readonly documents?: readonly s
     }
   }
 
+  const range = (name: string) => SECTIONS.map((section) => (manifest[section] as Record<string, string> | undefined)?.[name]).find((one) => typeof one === "string");
+
+  /* ---- a router of its own, beside the one the face mounts */
+  if (pins.has("@graview/pages")) {
+    for (const name of ["react-router-dom", "react-router"]) {
+      if (!range(name)) continue;
+      findings.push({
+        level: "problem",
+        says: `package.json names ${name} ${range(name)!} beside @graview/pages, which mounts a router of its own: a page reading this copy has no router above it, so useParams answers nothing with no error and every record page says nothing lives at its address, and Link and useLocation throw.`,
+        fix: `Import Link, NavLink, MemoryRouter, useLocation, useNavigate, useParams and useSearchParams from @graview/pages, take ${name} out of package.json and vite's dedupe, and run ${install}.`,
+      });
+    }
+  }
+
   /* ---- React's pair */
   const react = installedVersion(root, "react");
   const reactDom = installedVersion(root, "react-dom");
-  const range = (name: string) => SECTIONS.map((section) => (manifest[section] as Record<string, string> | undefined)?.[name]).find((one) => typeof one === "string");
   if (react && reactDom) {
     if (react.version !== reactDom.version) {
       findings.push({

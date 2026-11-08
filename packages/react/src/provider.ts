@@ -26,7 +26,7 @@ export type { MenuViewSection, ViewPlaceDraft, ViewPlaceDrawing, ViewPlaceHandle
 // Whether a panel beside the map lists a district opened from altitude.
 export { BesideTheMap } from "./beside-the-map.js";
 // The host's files (FR-163), where a file field's editor finds them.
-export { HostAssetsContext, HostFilesContext, useHostAssets, useHostFiles } from "./files.js";
+export { HostAssetsContext, HostFilesContext, HostViewerStateContext, useHostAssets, useHostFiles, useHostViewerState } from "./files.js";
 export type { GoTo, GoToAlso, GoToTarget } from "./go.js";
 export type { ActsDoor, AdministeredModule, AwaySummary, DrawnBox, GraviewContextValue, GraviewProviderProps, HostNotification, OnExport, PointerMenu, SceneHandle, Scheme, Seat, ViewMode, WorkflowRuns } from "./context.js";
 // Typing together (Roadmap f-collab-text): the host's `typing`, where an editor of a field typed together finds it.
@@ -43,7 +43,7 @@ export type { ReaderMemory } from "./settings.js";
 export { createViews, layerViews } from "./view-registry.js";
 // The host's views as the place menu tidies them (Roadmap f-place-menu-views).
 export { KeptViewsProvider, useTidiedViews } from "./tidied-views.js";
-export { BLEEDS, bleeds, DEFAULT_VIEW, isDefaultView, markBleeds, markDefaultView, markPreviews, markReplacesPage, PREVIEWS, previewOf, REPLACES_PAGE, replacesPage, type ScenePreviewing } from "./view-marks.js";
+export { BLEEDS, bleeds, bleedsFull, DEFAULT_VIEW, isDefaultView, markBleeds, markDefaultView, markPreviews, markReplacesPage, PREVIEWS, previewOf, REPLACES_PAGE, replacesPage, type ScenePreviewing } from "./view-marks.js";
 export { DefaultDrawnElsewhere } from "./default-elsewhere.js";
 export { PageDoorContext, ViewContentHeight, type PageDoor } from "./content-height.js";
 export type { Cardinality, Fidelity, ReactViewRegistry, ViewCell, ViewComponent, ViewProps } from "./view-registry.js";

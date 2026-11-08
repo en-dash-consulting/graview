@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "f62721da-3c9a-4e93-930c-971c2ede56e4":
+    status: "completed"
+    startedAt: "2026-08-30T04:03:20.205Z"
+    completedAt: "2026-08-30T04:03:20.205Z"
+    endedAt: "2026-08-30T04:03:20.205Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Append-only op log with author/batch/intent/inverse/reads/writes on every op. Reads tracked from op 0 via TrackedReader. Selective undo is a dependency check that names blocking ops and offers their batches; undo appends inverses; redo is the undo of an undo; graph reconstructs by folding the log."
+    appliedAt: "2026-08-30T04:03:20.205Z"

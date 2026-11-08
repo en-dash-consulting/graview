@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "3198508f-c841-4bcb-b283-74524a097c20":
+    status: "completed"
+    startedAt: "2026-09-11T17:42:53.937Z"
+    completedAt: "2026-09-12T11:55:16.693Z"
+    endedAt: "2026-09-12T11:55:16.693Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Third walk, stage E: the scaffold's one custom record page kept (rung one), then every surface replaced with Walk's own day book — shell, home, problems, list and record per kind — reading the graph through one model (readWalk) and taking its acts from recordFacts/kindFacts affordances with withheld drawn struck through. One finding: W-061, a design's own shell getting a second main under it on every route it had not replaced, including the not-found page no design can register; fixed in packages/pages router + PageMain with one-main-under-a-shell.test.tsx verified failing first. Stage checks hold: axe 0 across 68 screens at 1280 and 390 in both schemes, no control under 24px on the routed face, audit-ui's generic battery clean over all six design routes at both widths and schemes, the derived face absent from every route, every route rendering, and the design re-rendering on each op. walk3's own tests (17) and the whole harness list pass."
+    appliedAt: "2026-09-12T11:55:16.693Z"
+    lastModified: "2026-09-12T11:55:16.704Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

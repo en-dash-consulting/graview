@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "f0b410ab-97af-4250-b55b-da1392c9c77f":
+    status: "completed"
+    startedAt: "2026-09-19T05:34:30.079Z"
+    completedAt: "2026-09-19T05:38:53.832Z"
+    endedAt: "2026-09-19T05:38:53.832Z"
+    resolutionType: "code-change"
+    resolutionDetail: "run.ts in @graview/tools: declared steps, readRun/budget, runFrom with onCall announcements and typed outcomes, one batch + one undo"
+    appliedAt: "2026-09-19T05:38:53.832Z"
+    lastModified: "2026-09-19T05:38:53.844Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

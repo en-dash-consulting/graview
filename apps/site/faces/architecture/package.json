@@ -14,8 +14,7 @@
     "@graview/react": "^0.1.41",
     "@graview/ship": "^0.1.41",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "react-router-dom": "^7.1.1"
+    "react-dom": "^19.2.0"
   },
   "devDependencies": {
     "graview": "^0.1.41",

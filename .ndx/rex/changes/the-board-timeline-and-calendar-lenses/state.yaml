@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "1fb3d6a2-89dd-4ac8-9995-4cf45660ad57":
+    status: "completed"
+    startedAt: "2026-09-28T21:03:19.361Z"
+    completedAt: "2026-09-28T21:03:19.361Z"
+    endedAt: "2026-09-28T21:03:19.361Z"
+    resolutionType: "code-change"
+    resolutionDetail: "useArranging(props, {allow, lensAllows, arrangedBy, only|subject, kind}) in primitives/lens/arranging.tsx. Board: occupants found through the store, filtered/sorted, slots kept (BoardView.occupants; buildBoard orders occupants by given rank), no group. Timeline: spans filtered/sorted, no group. Calendar: filtered everywhere, agenda grouped under headings (calendar-group), no sort. Options `arranging` (name `arrange` was taken on the board) and `arrangedBy`. Rota fortnight arrangedBy held-at (harness claim theAgendaOpensByWhereEachShiftHappens holds); Things' KindList rewritten over the module (opens by list, open only, by name; harness aListYouArrangedIsALinkYouCanSend holds with list-query). Test a-lens-arranges-before-it-draws.test.tsx. Commit 734259b."
+    appliedAt: "2026-09-28T21:03:19.361Z"
+    lastModified: "2026-09-28T21:03:19.435Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

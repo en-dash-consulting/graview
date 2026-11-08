@@ -21,7 +21,7 @@ import {
 import { ROVING_ITEM, useRoving } from "@graview/primitives";
 import type { Affordance, AffordanceSet } from "@graview/tools";
 import { useRef, useState, type ReactNode } from "react";
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "@graview/pages";
 import type { DiscographySchema } from "../domain/schema.js";
 
 type S = DiscographySchema;

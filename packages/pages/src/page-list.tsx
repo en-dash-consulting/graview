@@ -21,16 +21,16 @@ import {
 import { describeSearched, matchNode, parseQuery } from "@graview/core/search";
 import { readableFields } from "@graview/core/words";
 import { fieldSpecOf, firstPicture, withComputed } from "@graview/core/blocks";
-import { bleeds, isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
+import { bleeds, bleedsFull, isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
 import { ViewBoundary } from "@graview/react/drawing";
 import { useCallback, useId, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router";
 import { kindFacts, kindMap } from "./facts.js";
 import { DerivedForm } from "./form.js";
 import { WithheldActs } from "./withheld-acts.js";
 import { kindOfSlug, pluralSlug, recordPath } from "./registry.js";
 import { type PageContext, useStoreTick } from "./page-context.js";
-import { pathOfPlace, placeKey, placesOf } from "./page-places.js";
+import { addressAsksForTheList, BUILT_IN, DefaultPlacePage, listOpensAs, pathOfPlace, placeKey, placesOf } from "./page-places.js";
 import { beginningsFrom, WhyLine } from "./page-search.js";
 import {
   KindMark,
@@ -104,7 +104,8 @@ export interface ListPageProps<S extends AnySchema> {
  */
 export function DefaultListPage<S extends AnySchema>({ context }: { context: PageContext<S> }) {
   const params = useParams();
-  const builtIn = useSearchParams()[0].get("drawn") === BUILT_IN;
+  const [address] = useSearchParams();
+  const builtIn = address.get("drawn") === BUILT_IN;
   const kind = kindOfSlug(context.store.schema, params["slug"] ?? "");
   if (!kind) {
     return (
@@ -122,13 +123,25 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
    * stands in for nothing, and the list is the app's own again.
    */
   const own = context.views?.lookup(kind, { cardinality: "many", fidelity: "full" });
+  /*
+   * A LIST THE DECLARATION OPENS AS A PLACE (`pages.lists.<kind>.opens`,
+   * Roadmap f-display-options-switch): that place's page, under the list's
+   * own heading at the list's own address — its picture, its forms — and
+   * the list the app draws by itself one link away.
+   */
+  const opened = builtIn ? undefined : listOpensAs(context, kind);
+  if (opened) {
+    const { place, flows } = opened;
+    const edges = kindMap(context.store).relations.filter((relation) => relation.from === kind || relation.to === kind).map((relation) => relation.edgeKind);
+    if (addressAsksForTheList(address, edges, flows)) return <ListPage context={context} kind={kind} />;
+    return <DefaultPlacePage context={context} asList={place} />;
+  }
   /* The list the app draws by itself stays reached under "Also as" (Roadmap f-make-any-page-better): `?drawn=built-in`. */
   if (own !== undefined && replacesPage(own) && !builtIn) return <ListOfView context={context} kind={kind} view={own as ComponentType<ViewProps<S>>} />;
   return <ListPage context={context} kind={kind} />;
 }
 
-/** The address word that draws a kind's list or a record's page as the app draws it by itself, though a view replaces it: `?drawn=built-in`. */
-export const BUILT_IN = "built-in";
+export { BUILT_IN };
 
 /**
  * THE KIND'S LIST PAGE, AS ITS VIEW DRAWS IT (FR-203): the trail and the
@@ -144,7 +157,7 @@ function ListOfView<S extends AnySchema>({ context, kind, view: View }: { readon
   const members = store.graph.nodesOfKind(kind).filter((node) => isCurrent(definition, node));
   const flagged = [...new Set(store.violations(invariantContext).flatMap((violation) => violation.nodeIds))];
   return (
-    <PageMain context={context}>
+    <PageMain context={context} spans={bleedsFull(View)}>
       <header style={{ display: "grid", gap: 4 }}>
         <HeadTrail context={context} />
         <PageTitle context={context}>{plural}</PageTitle>
@@ -157,7 +170,7 @@ function ListOfView<S extends AnySchema>({ context, kind, view: View }: { readon
       <section data-testid="list-view" style={{ display: "grid", minWidth: 0 }}>
         <ViewBoundary kind={kind} view={plural}>
           {/* Edge to edge on a phone, where the view says `bleed`, as on a record's page and a place. */}
-          <Bleed when={bleeds(View)}>
+          <Bleed when={bleeds(View)} full={bleedsFull(View)}>
             <View nodes={members as never} label={plural} fidelity="full" cardinality="many" mode="fullscreen" selected={false} {...(flagged.length > 0 ? { flagged } : {})} />
           </Bleed>
         </ViewBoundary>

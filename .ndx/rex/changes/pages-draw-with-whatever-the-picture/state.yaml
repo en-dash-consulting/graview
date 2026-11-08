@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "a2bd5497-9b29-4b29-99a5-51d8babd8da1":
+    status: "completed"
+    startedAt: "2026-09-22T06:12:35.811Z"
+    completedAt: "2026-09-22T06:27:21.472Z"
+    endedAt: "2026-09-22T06:27:21.472Z"
+    resolutionType: "code-change"
+    resolutionDetail: "A canvas lens was already allowed on a page and the capture seam already unreachable — what was missing was the guarantee and anything standing on it. Todo gained \"What is left\", a burn-down drawn on canvas, sized from its box and drawn at device pixel ratio; the pages harness proves it draws at phone and desk width and that no route reaches layoutsubtree."
+    appliedAt: "2026-09-22T06:27:21.472Z"
+    lastModified: "2026-09-22T06:27:21.484Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

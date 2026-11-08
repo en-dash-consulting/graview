@@ -234,6 +234,36 @@ try {
   };
 
   /*
+   * ONE SIGN-IN, TWO PEOPLE AT THE SCREEN (Roadmap
+   * f-viewer-state-and-me-framework): Sam, playing as Mia, is offered what Sam
+   * is offered, and is named to the room as Mia (Sam).
+   */
+  const offered = async (query) => {
+    // A context of its own: who stands where in the room is not what this asks.
+    const apart = await browser.newContext({ viewport: { width: 1560, height: 940 } });
+    const page = await apart.newPage();
+    page.on("pageerror", (error) => report.pageErrors.push(`profile: ${String(error).slice(0, 200)}`));
+    await page.goto(`${at("todo")}/pages/tasks/t-deposit?today=2026-09-01&fresh=1&as=${SAM}${query}`, { waitUntil: "load" });
+    await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+    await page.getByRole("heading", { level: 1 }).first().waitFor({ timeout: 15_000 }).catch(() => {});
+    await page.waitForTimeout(1500);
+    const acts = await page.locator("main button, [role=main] button").evaluateAll((all) => all.map((one) => one.textContent?.trim() ?? "").filter(Boolean));
+    await apart.close();
+    return acts.sort();
+  };
+  const samOffered = await offered("");
+  const miaOffered = await offered("&profile=Mia");
+  report.checks.aProfileIsOfferedWhatItsAccountIsOffered = { sam: samOffered, mia: miaOffered, ok: samOffered.length > 0 && samOffered.join() === miaOffered.join() };
+  const mia = await context.newPage();
+  mia.on("pageerror", (error) => report.pageErrors.push(`mia: ${String(error).slice(0, 200)}`));
+  await mia.goto(`${at("todo")}/pages/lists?today=2026-09-01&fresh=1&as=${SAM}&profile=Mia`, { waitUntil: "load" });
+  await mia.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+  await a.waitForFunction(() => [...document.querySelectorAll("[aria-label]")].some((one) => one.getAttribute("aria-label").startsWith("Mia (Sam)")), undefined, { timeout: 8_000 }).catch(() => {});
+  const namesOnA = await a.evaluate(() => [...document.querySelectorAll('[aria-label*=" is here"]')].map((one) => one.getAttribute("aria-label")));
+  report.checks.aProfileIsNamedToTheRoomAsThePersonAtTheScreenAndTheirAccount = { namesOnA, ok: namesOnA.some((one) => one.startsWith("Mia (Sam) is here")) };
+  await mia.close();
+
+  /*
    * A closes: gone within the TTL. WHAT THE CODE PROMISES, not a number
    * beside it: the last heartbeat can land just before the close, the
    * person lapses PRESENCE_TTL_MS after it, and the sweep that notices runs

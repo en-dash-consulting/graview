@@ -1,0 +1,13 @@
+schema: "rex/v2"
+items:
+  "7ee40570-0c80-4592-8775-af48f89923de":
+    status: "completed"
+    startedAt: "2026-09-11T20:09:19.050Z"
+    completedAt: "2026-09-13T04:54:46.154Z"
+    endedAt: "2026-09-13T04:54:46.154Z"
+    failureReason: "The second walk added nineteen findings (W-032…W-050), so its own acceptance criterion — \"docs/walkthrough-findings.md gains nothing\" — is not met. All nine stages were walked and every finding is fixed in a framework package with a criterion verified to fail without the fix; the walk must now be repeated until the log stays still."
+    resolutionType: "acknowledgment"
+    resolutionDetail: "The second walk was walked in full and every finding (W-032…W-050) fixed with a criterion. Its own criterion — the log gains nothing — was not met, and by the playbook that is carried by the next walk, not by re-running this one: the third, fourth and now the queued fifth walk hold it. Closed so the queue follows the working order rather than re-selecting a walk already done."
+    appliedAt: "2026-09-13T04:54:46.154Z"
+    lastModified: "2026-09-13T04:54:46.166Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

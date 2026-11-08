@@ -1,12 +1,12 @@
 import { numberAsRead, pluralLabel, type AnySchema, type Store } from "@graview/core";
-import { BrowserRouter, Link, MemoryRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Link, MemoryRouter, Navigate, Route, Routes } from "react-router";
 import { HOME_SLUG, openingOf, OVERVIEW_PATH, OVERVIEW_SLUG, sayIn } from "@graview/core";
 import { narrowedPath } from "@graview/core/navigate";
 import { revealSection } from "./section.js";
 import { pluralSlug } from "./registry.js";
 import { createContext, Suspense, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { aggregateId } from "@graview/layout/view";
-import { GoToContext, GraviewProvider, lazyPart, hasLanded, HostAssetsContext, HostFilesContext, markLanded, PlaybackContext, useGraviewIfAny, useOwnPlayback, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type FieldTyping, type GoTo, type GoToAlso, type GoToTarget, type GraviewContextValue, type Playback } from "@graview/react/provider";
+import { GoToContext, GraviewProvider, lazyPart, hasLanded, HostAssetsContext, HostFilesContext, HostViewerStateContext, markLanded, PlaybackContext, useGraviewIfAny, useOwnPlayback, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type FieldTyping, type GoTo, type GoToAlso, type GoToTarget, type GraviewContextValue, type Playback } from "@graview/react/provider";
 import { PageQuickAsk } from "./quick-ask.js";
 /* A view the seat drew, as a page: fetched when one is first shown here. */
 const DraftPage = lazyPart(() => import("./page-draft.js").then((module) => ({ default: module.DraftPage })));
@@ -15,7 +15,7 @@ import { PagesContextMenu } from "./context-menu.js";
 import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, DefaultPlacesPage, DefaultProblemsPage, DefaultRecordPage, DefaultSearchPage, DefaultShell, type PageContext } from "./pages.js";
 import { pathOfPlace, placesOf } from "./page-places.js";
 import { createPageRegistry, kindOfSlug, type PageRegistry } from "./registry.js";
-import { useHref, useLocation, useNavigate, useNavigationType, useParams } from "react-router-dom";
+import { useHref, useLocation, useNavigate, useNavigationType, useParams } from "react-router";
 import { appKeyOf, BarFindContext, FirstLookDoor, HeadingsUnder, PastBar, registerReaderLenses, SpecLinks, type BarFind, type FirstLook } from "@graview/primitives/pages";
 
 /** Who reads the face when the host names nobody. */
@@ -334,7 +334,7 @@ function FaceRoot<S extends AnySchema>({
     <div ref={root} data-graview-face="pages" style={{ display: "contents" }}>
       <FaceControlsRoot context={context} registry={registry as PageRegistry<S, unknown> | undefined} root={root}>
         {/* The scene's context menu, on what a right-click, the keyboard or a resting finger lands on here. */}
-        <PagesContextMenu context={context} root={root}>
+        <PagesContextMenu context={context} root={root} registry={registry}>
           {children}
         </PagesContextMenu>
       </FaceControlsRoot>
@@ -723,6 +723,7 @@ export function PagesApp<S extends AnySchema>({
       {...(context.onProposeChange ? { onProposeChange: context.onProposeChange } : {})}
       {...(context.composeChange ? { composeChange: context.composeChange } : {})}
       {...(context.onDraftChange ? { onDraftChange: context.onDraftChange } : {})}
+      {...(context.displayOptions ? { displayOptions: context.displayOptions } : {})}
       {...(context.keptViews ? { keptViews: context.keptViews } : {})}
       {...(context.onExport ? { onExport: context.onExport } : {})}
       {...(context.ai ? { ai: context.ai } : {})}
@@ -746,7 +747,8 @@ export function PagesApp<S extends AnySchema>({
   );
   const timed = <PlaybackContext.Provider value={playback as unknown as Playback}>{inner}</PlaybackContext.Provider>;
   const assetsHeld = context.assetsAt ? <HostAssetsContext.Provider value={context.assetsAt}>{timed}</HostAssetsContext.Provider> : timed;
-  const hosted = context.files ? <HostFilesContext.Provider value={context.files}>{assetsHeld}</HostFilesContext.Provider> : assetsHeld;
+  const filesHeld = context.files ? <HostFilesContext.Provider value={context.files}>{assetsHeld}</HostFilesContext.Provider> : assetsHeld;
+  const hosted = context.viewerState ? <HostViewerStateContext.Provider value={context.viewerState}>{filesHeld}</HostViewerStateContext.Provider> : filesHeld;
   const filed = hrefOf === undefined ? hosted : <HrefOfContext.Provider value={hrefOf}>{hosted}</HrefOfContext.Provider>;
   if (initialPath !== undefined) {
     /*

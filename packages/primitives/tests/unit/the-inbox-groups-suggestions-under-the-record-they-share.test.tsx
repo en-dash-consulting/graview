@@ -25,7 +25,7 @@ beforeAll(() => fetchInspector());
 const chapter = defineNode("chapter", { fields: z.object({ label: z.string() }), plural: "Chapters" });
 const note = defineNode("note", { fields: z.object({ label: z.string() }), plural: "Notes", edges: { "in-chapter": { to: ["chapter"], cardinality: "one" }, "waits-for": { to: ["note"] } } });
 const schema = createSchema([chapter, note]);
-const actor: Author = { kind: "system", id: "tidying", name: "Graview, tidying", automated: true };
+const actor: Author = { kind: "system", id: "tidying", name: "Graview, tidying", automated: true, tidying: true };
 const nora: Principal = { kind: "human", id: "nora", name: "Nora" };
 const STEER = "What I steer by";
 
@@ -116,7 +116,7 @@ describe("suggestions about one record", () => {
     await inbox(storeOf());
     const rows = [...group()!.querySelectorAll<HTMLElement>('[data-testid="suggestion"]')];
     for (const row of rows)
-      expect([...row.querySelectorAll("button")].map((one) => one.getAttribute("data-testid")).filter((id) => id !== "suggestion-record")).toEqual(["suggestion-why", "suggestion-accept", "suggestion-decline", "suggestion-not-now"]);
+      expect([...row.querySelectorAll("button")].map((one) => one.getAttribute("data-testid")).filter((id) => id !== "suggestion-record")).toEqual(["suggestion-why", "suggestion-accept", "suggestion-decline", "suggestion-stop-kind", "suggestion-not-now"]);
     const accept = $('[data-testid="suggestion-accept"]', rows[0])!;
     const described = accept.getAttribute("aria-describedby")!.split(" ").map((id) => document.getElementById(id)!.textContent).join(" ");
     expect(described).toBe(`${STEER} Put in 09 · Without a Map?`);

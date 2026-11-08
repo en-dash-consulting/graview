@@ -34,7 +34,7 @@ const rename = defineMutation("rename-task", {
   },
 });
 
-const actor: Author = { kind: "system", id: "tidying", name: "Graview, tidying", automated: true };
+const actor: Author = { kind: "system", id: "tidying", name: "Graview, tidying", automated: true, tidying: true };
 const nick: Author = { kind: "human", id: "nick", name: "Nick" };
 const NOW = "2026-10-22T09:00:00.000Z";
 

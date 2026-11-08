@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "22a718cc-99fd-4be7-aceb-05af0d0b1cbb":
+    status: "completed"
+    startedAt: "2026-09-03T21:20:40.533Z"
+    completedAt: "2026-09-03T21:20:40.801Z"
+    endedAt: "2026-09-03T21:20:40.801Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Commits 1d29a4e and a9cb040 on main. Layout connectors carry an edges list; the scene resolves them into strands anchored on member elements, clips every run to open ground, lights the selection's own lines, and re-measures once per commit from a layout effect. Verified by a Playwright probe of the squad week (all eight session-drill lines, four lit for the selected session, endpoints tracking the span mid-drag), the squad and homeflow direct-manipulation harnesses, and 512 monorepo tests."
+    appliedAt: "2026-09-03T21:20:40.801Z"
+    lastModified: "2026-09-03T21:20:40.811Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

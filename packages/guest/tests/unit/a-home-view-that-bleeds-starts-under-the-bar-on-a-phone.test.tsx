@@ -51,7 +51,7 @@ describe("a home view that bleeds", () => {
   it("gives the page's top padding back on a phone only, unless the view did not draw", async () => {
     const said = await home({ name: "hero", attach: "home", cardinality: "many", bleed: true });
     expect(said).toMatchObject({ home: true, bleedsTop: true });
-    expect(said.rule).toMatch(/^@media \(max-width:680px\)\{\[data-graview-bleed-top\]:not\(:has\(\[data-graview-bleed\]>\[data-worker-view-fallback\]\)\)\{padding-top:0 !important\}\}$/);
+    expect(said.rule).toMatch(/^@media \(max-width:680px\)\{\[data-graview-bleed-top=""\]:not\(:has\(\[data-graview-bleed\]>\[data-worker-view-fallback\]\)\)\{padding-top:0 !important\}\}$/);
   });
 
   it("leaves a home view that does not bleed its spacing", async () => {

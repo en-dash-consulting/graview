@@ -64,9 +64,9 @@ try {
         return {
           label: b?.textContent.trim() ?? null,
           disabled: b?.disabled ?? null,
-          problems: document.querySelector('[data-testid="standing"]')?.textContent.trim() ?? null,
-          // The bell's name says its count in words: "Inbox — 4 changes".
-          activity: document.querySelector('[data-testid="inbox-button"]')?.getAttribute("aria-label") ?? "",
+          problems: document.querySelector('[data-testid="standing"], [data-testid="inbox-count"]')?.textContent.trim() ?? null,
+          // What has happened is counted on its own tab, not the bell; the bell keeps the number for this.
+          activity: Number(document.querySelector('[data-testid="inbox-button"]')?.getAttribute("data-changes") ?? 0) > 0 ? document.querySelector('[data-testid="inbox-button"]').getAttribute("data-changes") : "",
         };
       }, seat.testId);
 

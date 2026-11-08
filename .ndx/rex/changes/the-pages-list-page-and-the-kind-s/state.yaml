@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "aeae3ab3-3959-4f0b-8358-49b42f68df2e":
+    status: "completed"
+    startedAt: "2026-09-28T21:03:18.798Z"
+    completedAt: "2026-09-28T21:03:18.798Z"
+    endedAt: "2026-09-28T21:03:18.798Z"
+    resolutionType: "code-change"
+    resolutionDetail: "ArrangeBar in @graview/primitives (Sort by + direction, Group by + bucket, grouped 'only…' select adding chips, query box, kept count; allow/query declinable; controls capped at page width; 24px remove targets) + arrangementOf/withArrangement for in.sort/in.filter/in.group/in.q. pages page-list.tsx reads sort/filter/group/q via arrangementFromSearch, keeps ?by/?<edge>=/?with/?past as aliases, says dropped parts (list-dropped), 'Show every one' on empty. Default Group view draws the bar at full fidelity and groups. Tests a-list-you-arranged-is-a-link.test.tsx, one-row-arranges-every-surface.test.tsx; verify-pages holds (arrange-group). Commit 5f8a65a."
+    appliedAt: "2026-09-28T21:03:18.798Z"
+    lastModified: "2026-09-28T21:03:18.868Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

@@ -55,13 +55,13 @@ const OFF_THE_PAGE = {
   // Roadmap f-revisions-say-what-broke: what a revised view, a picture or an act broke, said with the change — a host's, on no page.
   "@graview/core/revisions": { from: revisions, names: ["beyondAsked", "compareViewRevision", "datesPinned", "MEASURE_PICTURED_PAGE", "namesInSelector", "picturedCoverage", "placesTouched", "problemsMade", "sectionsOfDrawing", "selectorsOfStylesheet", "stringsOfSource", "viewProblemKey"] },
   // Roadmap f-app-wide-view-theme: the one CSS sanitizer — the guest host's as it first draws on the open kit, and the checker's for a document's `brand.views.css`.
-  "@graview/core/css": { from: css, names: ["CSS_AT_RULES", "CSS_DRAWN_AS", "CSS_FRAGMENT_PROPERTIES", "CSS_FUNCTIONS", "CSS_KEYWORD_PROPERTIES", "CSS_PREFIXED_SELECTORS", "CSS_PROPERTIES", "CSS_REFUSED_SELECTORS", "OPEN_MAX_STYLESHEET", "sanitizeDeclarations", "sanitizeStylesheet", "sanitizeStylesheets", "sanitizeValue", "serializeIdent", "serializeString", "serializeValues", "tokenize"] },
+  "@graview/core/css": { from: css, names: ["brandFamilies", "CSS_AT_RULES", "CSS_DRAWN_AS", "CSS_FRAGMENT_PROPERTIES", "CSS_FUNCTIONS", "CSS_KEYWORD_PROPERTIES", "CSS_PREFIXED_SELECTORS", "CSS_PROPERTIES", "CSS_REFUSED_SELECTORS", "OPEN_MAX_STYLESHEET", "sanitizeDeclarations", "sanitizeStylesheet", "sanitizeStylesheets", "sanitizeValue", "serializeIdent", "serializeString", "serializeValues", "tokenize", "VIEW_FONTS_MOST", "VIEW_FONTS_NOT_NAMED", "viewFontProblem", "viewFontSource"] },
   // Roadmap f-navigate-filters: where a view's navigate goes, as an address — the worker view's host and the routed face's alone.
   "@graview/core/navigate": { from: navigate, names: ["narrowedPath", "sectionSlug", "placeNamesFrom", "placeNamesOf"] },
   // Roadmap f-app-icons-home-screen: an app on a home screen — its head tags, its manifest and the files a host serves; a face's theme-color.
   "@graview/core/head": { from: head, names: ["headHtml", "homeScreenOf", "MANIFEST_PATH", "themeColorsOf"] },
   // Roadmap f-playback: the timeline around the past, fetched with it when somebody opens the past.
-  "@graview/core/history": { from: history, names: ["declarationSentence", "historyInWords", "makerOf", "makerWords", "restoreBatches", "ticksOf", "typedCounts", "typedRun", "typedSpans", "typingSentence", "typingWords", "unpublished"] },
+  "@graview/core/history": { from: history, names: ["declarationSentence", "digestWords", "foldDigests", "typedRowWords", "historyInWords", "makerOf", "makerWords", "restoreBatches", "ticksOf", "typedCounts", "typedRun", "typedSpans", "typingSentence", "typingWords", "unpublished"] },
   // Roadmap f-playback: the past itself — the fold, its kept points and the store it makes — fetched by the provider when somebody first asks to see it.
   "@graview/core/past": { from: past, names: ["askArchived", "askDeclaration", "declarationAt", "keptOf", "pastAt", "pastOf", "seqAt"] },
   "@graview/core/provenance": { from: provenance, names: ["isProvisional", "lineageWords", "linkKey", "linkProvenance", "linkProvenances", "provenanceWords", "provisionalLinks"] },
@@ -106,7 +106,7 @@ const OFF_THE_PAGE = {
   // The app's own actor's suggestions — made, accepted, declined — and what reads it back: the suggestions and declines in a store or a log, what the declaration lets it tidy, and Activity's digest.
   "@graview/core/tidying": {
     from: tidying,
-    names: ["acceptSuggestion", "advisoryVoterOf", "declined", "declinedIn", "declineSuggestion", "declinesIn", "digestWords", "foldDigests", "isDismissed", "isProposal", "isSuggestionBatch", "keptDeclines", "LEFT_ALONE", "mayDecide", "meaningKey", "propose", "proposedMutations", "proposalWords", "SIGN_IN_TO_VOTE", "signedOutSeat", "suggest", "suggestionKey", "suggestions", "suggestionsIn", "takenIn", "tallyOf", "tidyingOf", "tidyingRefusal", "typedRowWords", "voteSuggestion", "votesIn", "withdrawSuggestion"],
+    names: ["acceptSuggestion", "advisoryVoterOf", "isTidyingActor", "mayStopSuggesting", "servedStops", "stoppedIn", "stoppedKind", "stoppedSuggestions", "stopSuggesting", "suggestionKind", "suggestionKindWords", "declined", "declinedIn", "declineSuggestion", "declinesIn", "digestWords", "foldDigests", "isDismissed", "isProposal", "isSuggestionBatch", "keptDeclines", "LEFT_ALONE", "mayDecide", "meaningKey", "propose", "proposedMutations", "proposalWords", "SIGN_IN_TO_VOTE", "signedOutSeat", "suggest", "suggestionKey", "suggestions", "suggestionsIn", "takenIn", "tallyOf", "tidyingOf", "tidyingRefusal", "typedRowWords", "voteSuggestion", "votesIn", "withdrawSuggestion"],
   },
 } as const;
 

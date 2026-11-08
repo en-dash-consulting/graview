@@ -75,7 +75,7 @@ async function buildHost() {
       contents: `
         import { mount } from "@graview/embed";
         import { capabilities, memoryViews } from "@graview/core";
-        import { acceptSuggestion, declined, suggest, suggestions, voteSuggestion } from "@graview/core/tidying";
+        import { acceptSuggestion, declined, stoppedKind, suggest, suggestions, voteSuggestion } from "@graview/core/tidying";
         import { todoApp } from ${JSON.stringify(todo)};
         import seed from ${JSON.stringify(seed)};
         const asked = new URLSearchParams(location.search);
@@ -149,6 +149,8 @@ async function buildHost() {
            * The calm bar as Graview Cloud fills it, when the page asks (f-app-bar-calm): its rows in the app menu, the scheme choice,
            * its notifications in the inbox, and "Send feedback" as its mark alone.
            */
+          // What a host says needs this person, beside what it only tells them (Roadmap f-inbox-needs-you-first).
+          ...(asked.get("needs") ? { notifications: [{ id: "n-review", title: "Ada proposed a change to review", needs: true }, { id: "n-news", title: "The newsletter went out" }] } : {}),
           ...(asked.get("calm")
             ? {
                 appMenu: [{ label: "App settings", href: "#app-settings" }, { label: "Connections", href: "#connections" }],
@@ -177,7 +179,7 @@ async function buildHost() {
           return bell();
         };
         // What reads the suggestions back, for the claims that ask the store what a person declined, and casts a vote as somebody else.
-        window.__tidying = { acceptSuggestion, declined, suggestions, voteSuggestion };
+        window.__tidying = { acceptSuggestion, declined, stoppedKind, suggestions, voteSuggestion };
         // The framework's version, as a host's Report this is handed it (FR-237).
         window.__version = capabilities().version;
         /*
@@ -186,7 +188,7 @@ async function buildHost() {
          */
         if (asked.get("tidy")) {
           const store = window.__handle.store;
-          const actor = { kind: "system", id: "tidying", name: "Graview, tidying", automated: true };
+          const actor = { kind: "system", id: "tidying", name: "Graview, tidying", automated: true, tidying: true };
           store.apply({ name: "wait-for", args: { taskId: "t-paint", blockerId: "t-shelves" } }, { author: actor, lineage: { basis: "The shelves cover the wall that needs paint", confidence: 0.93 } });
           store.apply({ name: "wait-for", args: { taskId: "t-broadband", blockerId: "t-notice" } }, { author: actor, lineage: { basis: "The broadband moves with the notice date", confidence: 0.9 } });
           suggest(store, [{ name: "wait-for", args: { taskId: "t-post", blockerId: "t-notice" } }], { author: actor, lineage: { basis: "The post is redirected from the day notice is given", confidence: 0.45 } });
@@ -206,9 +208,20 @@ async function buildHost() {
          * Three suggestions about one task, when the page asks (f-suggestions-grouped-by-record): wait for notice, wait for the shelves,
          * set it aside — what the tray says under the task's name, once.
          */
+        /* Three suggestions of two kinds, a rule broken with a fix a press takes, and changes that ask nothing of anyone (Roadmap f-inbox-needs-you-first). */
+        if (asked.get("needs")) {
+          const store = window.__handle.store;
+          const actor = { kind: "system", id: "tidying", name: "Graview, tidying", automated: true, tidying: true };
+          store.apply({ name: "wait-for", args: { taskId: "t-keys", blockerId: "t-post" } });
+          store.apply({ name: "finish", args: { taskId: "t-keys" } });
+          const lineage = { basis: "They share a scope", actor: "missing-links" };
+          suggest(store, [{ name: "wait-for", args: { taskId: "t-post", blockerId: "t-notice" } }], { author: actor, lineage });
+          suggest(store, [{ name: "wait-for", args: { taskId: "t-broadband", blockerId: "t-notice" } }], { author: actor, lineage });
+          suggest(store, [{ name: "archive-task", args: { id: "t-paint" } }], { author: actor, lineage: { basis: "Nothing has changed on it in a month", actor: "archive" } });
+        }
         if (asked.get("byrecord")) {
           const store = window.__handle.store;
-          const actor = { kind: "system", id: "tidying", name: "Graview, tidying", automated: true };
+          const actor = { kind: "system", id: "tidying", name: "Graview, tidying", automated: true, tidying: true };
           const lineage = { basis: "The post is redirected from the day notice is given", confidence: 0.6 };
           suggest(store, [{ name: "wait-for", args: { taskId: "t-post", blockerId: "t-notice" } }], { author: actor, lineage });
           suggest(store, [{ name: "wait-for", args: { taskId: "t-post", blockerId: "t-shelves" } }], { author: actor, lineage });
@@ -220,7 +233,7 @@ async function buildHost() {
          */
         if (asked.get("crowd")) {
           const store = window.__handle.store;
-          const actor = { kind: "system", id: "tidying", name: "Graview, tidying", automated: true };
+          const actor = { kind: "system", id: "tidying", name: "Graview, tidying", automated: true, tidying: true };
           const long = "@tanstack/" + "react_router_devtools_".repeat(6);
           store.apply({ name: "rename", args: { id: "t-keys", label: long.slice(0, 120) } }, { author: options.principal });
           for (const node of store.graph.nodesOfKind("task")) {
@@ -781,12 +794,12 @@ try {
         document.querySelector('[data-testid="suggestion-decline"]')?.click();
         await new Promise((done) => setTimeout(done, 200));
         const declinedBy = window.__tidying.declined(window.__handle.store, [{ name: "wait-for", args: { taskId: "t-post", blockerId: "t-notice" } }])?.author.id ?? null;
-        return { trayGone: document.querySelector('[data-testid="suggestion"]') === null && !document.querySelector('[data-testid="inbox-tab-for-you"] .graview-inbox-tab-count'), unchanged: window.__handle.store.graph.allEdges().length === before, declinedBy, keyboard: document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName };
+        return { trayGone: document.querySelector('[data-testid="suggestion"]') === null, unchanged: window.__handle.store.graph.allEdges().length === before, declinedBy, keyboard: document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName };
       });
       await page.close();
       const ok =
-        tray !== null && tray.count === "1" && tray.rows.length === 1 && tray.rows[0] === "Should “Redirect the post” wait for Give notice on the flat?" &&
-        tray.hiddenAtFirst === true && tray.why === "The post is redirected from the day notice is given." && JSON.stringify(tray.buttons.slice(-4)) === JSON.stringify(["Why?", "Yes", "No", "Later"]) &&
+        tray !== null && tray.count === "2" && tray.rows.length === 1 && tray.rows[0] === "Should “Redirect the post” wait for Give notice on the flat?" &&
+        tray.hiddenAtFirst === true && tray.why === "The post is redirected from the day notice is given." && JSON.stringify(tray.buttons.slice(-5)) === JSON.stringify(["Why?", "Yes", "No", "Don't suggest this kind of thing", "Later"]) &&
         digest !== null && /Graview, tidying/.test(digest.said) && /Tidied 2 things today/.test(digest.said) && digest.each.length === 2 && digest.each.every((one) => /\d+% sure/.test(one)) && digest.undoes === 2 &&
         declined.trayGone && declined.unchanged && declined.declinedBy === "user-nora" && declined.keyboard !== "BODY";
       tidying[face] = { tray, digest, declined, ok };
@@ -1027,6 +1040,129 @@ try {
     report.checks.suggestionsAboutOneRecordStandUnderItsName = { ...grouped, ok: Object.values(grouped).every((one) => one.ok) };
   }
   /*
+   * ---- The inbox opens on what needs you (f-inbox-needs-you-first), on both faces: the bell counts what asks something of this
+   * person and not what has happened; it opens on For you wherever it was left; For you is Needs you and Updates; a broken rule is a
+   * sentence with its fix, and no dot of its own; and a kind of suggestion stopped stays stopped, with its way back.
+   */
+  {
+    const needs = {};
+    for (const face of ["graview", "pages"]) {
+      const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+      page.on("pageerror", (error) => errors.push(error.message));
+      await page.goto(`${at("chrome-host")}/?face=${face}&needs=1`, { waitUntil: "load" });
+      await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+      await page.waitForSelector('[data-testid="app-bar"] [data-testid="inbox-button"]', { timeout: 30_000 }).catch(() => {});
+      await page.waitForFunction(() => Number(document.querySelector('[data-testid="app-bar"] [data-testid="inbox-button"]')?.getAttribute("data-count")) >= 5, null, { timeout: 15_000 }).catch(() => {});
+      const said = await page.evaluate(async () => {
+        const wait = async (holds) => {
+          for (let turn = 0; turn < 100 && !holds(); turn++) await new Promise((done) => setTimeout(done, 50));
+          return holds();
+        };
+        const $ = (selector) => document.querySelector(selector);
+        const button = $('[data-testid="app-bar"] [data-testid="inbox-button"]');
+        if (!button) return null;
+        const tabOf = () => $('[data-testid="inbox"]')?.getAttribute("data-tab") ?? null;
+        const bell = { count: button.getAttribute("data-count"), badge: $('[data-testid="inbox-count"]')?.textContent ?? null, label: button.getAttribute("aria-label"), changes: Number(button.getAttribute("data-changes")) };
+        button.click();
+        await wait(() => $('[data-testid="inbox-tab-activity"]') && $('[data-testid="inbox-problem"]') && $('[data-testid="suggestion"]'));
+        const opened = tabOf();
+        const activityTab = $('[data-testid="inbox-tab-activity"]')?.textContent ?? null;
+        const needsYou = $('[data-testid="inbox-needs-you"]');
+        const updates = $('[data-testid="inbox-updates"]');
+        const parts = {
+          heads: [needsYou?.querySelector("h3")?.textContent ?? null, updates?.querySelector("h3")?.textContent ?? null],
+          suggestions: needsYou?.querySelectorAll('[data-testid="suggestion"]').length ?? 0,
+          grouped: needsYou?.querySelectorAll('[data-testid="suggestion-record-group"], [data-testid="suggestion-group"]').length ?? 0,
+          problems: needsYou?.querySelectorAll('[data-testid="inbox-problem"]').length ?? 0,
+          needsNotice: needsYou?.textContent.includes("Ada proposed a change to review") ?? false,
+          news: updates?.textContent.includes("The newsletter went out") ?? false,
+          newsInNeeds: needsYou?.textContent.includes("The newsletter went out") ?? true,
+        };
+        const row = $('[data-testid="inbox-problem"]');
+        const rule = {
+          words: row?.querySelector('[data-testid="inbox-problem-words"]')?.textContent ?? null,
+          fixes: [...(row?.querySelectorAll('[data-testid="inbox-problem-fix"]') ?? [])].map((one) => one.textContent),
+          dot: $('[data-testid="app-bar"] [data-testid="standing"]') !== null,
+        };
+        /* Left on Activity and put away, it opens on For you again. */
+        $('[data-testid="inbox-tab-activity"]')?.click();
+        await wait(() => tabOf() === "activity");
+        const left = tabOf();
+        button.click();
+        await wait(() => !$('[data-testid="inbox"]'));
+        button.click();
+        await wait(() => $('[data-testid="inbox-problem"]'));
+        const reopened = tabOf();
+        /* A fix a press takes: the rule goes, the count with it, and the keyboard stays in the inbox. */
+        const fix = [...document.querySelectorAll('[data-testid="inbox-problem-fix"]')].find((one) => /finish/i.test(one.textContent)) ?? $('[data-testid="inbox-problem-fix"]');
+        const before = document.querySelectorAll('[data-testid="inbox-problem"]').length;
+        fix?.focus();
+        fix?.click();
+        await wait(() => document.querySelectorAll('[data-testid="inbox-problem"]').length < before);
+        await new Promise((done) => setTimeout(done, 50));
+        const fixed = { rows: document.querySelectorAll('[data-testid="inbox-problem"]').length, count: button.getAttribute("data-count"), keyboard: document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName, broken: window.__handle.store.violations().length };
+        /* Stopping a kind: every suggestion of it goes, the app's own actor is refused it, and one undo brings it back. */
+        const store = window.__handle.store;
+        const asked = [{ name: "wait-for", args: { taskId: "t-keys", blockerId: "t-notice" } }];
+        const rowOf = [...document.querySelectorAll('[data-testid="suggestion"]')].find((one) => /notice|Give notice|waits?/i.test(one.textContent) && one.querySelector('[data-testid="suggestion-stop-kind"]') && !/set aside|archive/i.test(one.textContent));
+        const stop = rowOf?.querySelector('[data-testid="suggestion-stop-kind"]');
+        const offered = stop?.textContent ?? null;
+        stop?.focus();
+        stop?.click();
+        await wait(() => window.__tidying.suggestions(store).length === 1);
+        await new Promise((done) => setTimeout(done, 50));
+        const stopped = {
+          offered,
+          left: window.__tidying.suggestions(store).map((one) => one.calls[0].name),
+          held: Boolean(window.__tidying.stoppedKind(store, asked)),
+          heard: $('[data-testid="suggestion-heard"]')?.textContent ?? null,
+          keyboard: document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName,
+          listed: await wait(() => $('[data-testid="suggestions-stopped"]')) ? $('[data-testid="suggestions-stopped"]').textContent : null,
+        };
+        $('[data-testid="inbox-tab-activity"]')?.click();
+        await wait(() => $('[data-testid="diff-log"]'));
+        const stopRow = [...document.querySelectorAll('[data-testid="diff-log"] li')].find((one) => /Stopped suggesting/.test(one.textContent));
+        const undo = stopRow?.querySelector('[data-testid="undo-turn"]');
+        stopped.row = stopRow?.querySelector("[data-graview-activity-words]")?.textContent ?? null;
+        stopped.undo = undo?.textContent ?? null;
+        stopped.asItWas = $('[data-testid="show-past"]')?.textContent ?? null;
+        undo?.click();
+        await wait(() => window.__tidying.suggestions(store).length === 3);
+        stopped.back = window.__tidying.suggestions(store).length;
+        stopped.heldAfter = Boolean(window.__tidying.stoppedKind(store, asked));
+        return { bell, opened, activityTab, parts, rule, left, reopened, fixed, stopped };
+      });
+      await page.close();
+      // Three suggestions, one host notice marked as needing them, and the rules broken: the seed's own, and the one this page made.
+      const whole = said === null ? "" : String(4 + said.parts.problems);
+      const counted = said !== null && said.parts.problems >= 2 && said.bell.count === whole && said.bell.badge === whole && said.bell.changes > 0 && /^Inbox — \d+ need you: 1 rule broken/.test(said.bell.label ?? "") && !/change/.test(said.bell.label ?? "") && /^Activity\d/.test(said.activityTab ?? "");
+      const opens = said !== null && said.opened === "for-you" && said.left === "activity" && said.reopened === "for-you";
+      const split = said !== null && said.parts.heads[0] === "Needs you" && said.parts.heads[1] === "Updates" && said.parts.suggestions === 3 && said.parts.grouped >= 1 && said.parts.problems >= 2 && said.parts.needsNotice && said.parts.news && !said.parts.newsInNeeds;
+      const words = said !== null && /is done, but it waits for/.test(said.rule.words ?? "") && !/[=≠≥≤]|t-keys|nothing-done/.test(said.rule.words ?? "") && said.rule.fixes.length > 0 && !said.rule.dot && said.fixed.rows === said.parts.problems - 1 && said.fixed.broken === said.parts.problems - 1 && said.fixed.count === String(Number(whole) - 1) && said.fixed.keyboard !== "BODY";
+      const stops =
+        said !== null &&
+        said.stopped.offered === "Don't suggest this kind of thing" &&
+        JSON.stringify(said.stopped.left) === JSON.stringify(["archive-task"]) &&
+        said.stopped.held &&
+        /will not be suggested again/.test(said.stopped.heard ?? "") &&
+        said.stopped.keyboard !== "BODY" &&
+        /Stopped suggesting /.test(said.stopped.listed ?? "") &&
+        /Stopped suggesting /.test(said.stopped.row ?? "") &&
+        said.stopped.undo === "Undo" &&
+        said.stopped.asItWas === "As it was" &&
+        said.stopped.back === 3 &&
+        !said.stopped.heldAfter;
+      needs[face] = { said, counted, opens, split, words, stops };
+    }
+    const all = (claim) => ({ faces: Object.fromEntries(Object.entries(needs).map(([face, one]) => [face, one[claim]])), ok: Object.values(needs).every((one) => one[claim]) });
+    report.checks.theBellCountsWhatNeedsYouAndNotWhatHasHappened = all("counted");
+    report.checks.theInboxOpensOnForYouWhereverItWasLeft = all("opens");
+    report.checks.forYouIsNeedsYouAndUpdates = all("split");
+    report.checks.aBrokenRuleIsSaidInWordsWithItsFixAndNoDotOfItsOwn = all("words");
+    report.checks.aKindOfSuggestionIsStoppedRememberedAndTakenBack = all("stops");
+    report.inboxNeedsYou = needs;
+  }
+  /*
    * ---- A visitor is offered Sign in rather than a vote (f-votes-shared-seat), on both faces: the host's one shared signed-out seat
    * opens the tray and finds the host's "Sign in to vote" — a native button — where Accept and Decline were, before pressing
    * anything; pressing it asks the host, nothing is kept in the log, and the keyboard never lands on <body>.
@@ -1104,7 +1240,7 @@ try {
       await page.close();
       const ok =
         said !== null &&
-        /^Inbox — 1 waiting for you\b/.test(said.label ?? "") &&
+        /^Inbox — 2 need you\b/.test(said.label ?? "") &&
         said.away === "One suggestion waiting · tidied 2 things while you were away." &&
         /until tomorrow/.test(said.hint ?? "") &&
         said.focused === "suggestion-not-now" &&
@@ -1113,7 +1249,7 @@ try {
         after.kept === 1 &&
         after.rows === 0 &&
         // Put out of this reader's sight, it no longer waits for them: the bell counts it no more.
-        !/waiting for you/.test(after.button ?? "") &&
+        /^Inbox — 1 needs you\b/.test(after.button ?? "") &&
         after.keyboard !== "BODY";
       notNow[face] = { said, after, ok };
     }
@@ -1354,7 +1490,7 @@ try {
           noSuggestedOrActivity: bar.querySelector('[data-testid="suggested-button"], [data-testid="activity-button"]') === null,
           inboxBeforeStanding: (() => {
             const all = [...bar.querySelectorAll("[data-testid]")].map((el) => el.getAttribute("data-testid"));
-            return !all.includes("inbox-button") || all.indexOf("inbox-button") < all.indexOf("standing");
+            return !all.includes("inbox-button") || !all.includes("standing") || all.indexOf("inbox-button") < all.indexOf("standing");
           })(),
           height: Math.round(row.height),
           oneRow: parts.every((el) => { const box = el.getBoundingClientRect(); return box.top >= row.top - 1 && box.bottom <= row.bottom + 1; }),
@@ -1446,6 +1582,7 @@ try {
       }, testid);
     const stillness = {};
     const menus = {};
+    const schemes = {};
     const inboxes = {};
     const shares = {};
     const iconOnly = {};
@@ -1518,8 +1655,37 @@ try {
               };
             });
             const pane = await paneSaid(page, "app-menu");
-            await page.locator('[data-testid="app-menu-scheme-dark"]').click().catch(() => {});
+            /*
+             * The scheme, picked by the keyboard alone (f-scheme-choice-mount): Tab from where the menu put the keyboard to Dark, then
+             * Enter, and the host's onChoose hears "dark". The host keeps the choice, so System stays pressed until the host hands the
+             * embed the new one with `setSchemeChoice`, and then Dark is the one pressed.
+             */
+            const reached = [];
+            for (let step = 0; step < 12; step++) {
+              const on = await page.evaluate(() => document.activeElement?.getAttribute("data-testid") ?? null);
+              reached.push(on);
+              if (on === "app-menu-scheme-dark") break;
+              await page.keyboard.press("Tab");
+            }
+            const byKeyboard = reached.at(-1) === "app-menu-scheme-dark";
+            if (byKeyboard) await page.keyboard.press("Enter");
             const chosen = await page.evaluate(() => window.__schemeChosen ?? null);
+            const pressedNow = () =>
+              page.evaluate(() => [...document.querySelectorAll('[data-testid="app-menu"] [data-testid^="app-menu-scheme-"]')].map((one) => `${one.textContent}${one.getAttribute("aria-pressed") === "true" ? " (pressed)" : ""}`));
+            const beforeTheHost = await pressedNow();
+            await page.evaluate(() => window.__handle.setSchemeChoice({ value: window.__schemeChosen, onChoose: (value) => { window.__schemeChosen = value; } }));
+            await page.waitForTimeout(100);
+            const afterTheHost = await pressedNow();
+            schemes[key] = {
+              byKeyboard,
+              chosen,
+              beforeTheHost,
+              afterTheHost,
+              ok:
+                byKeyboard && chosen === "dark" &&
+                JSON.stringify(beforeTheHost) === JSON.stringify(["System (pressed)", "Light", "Dark"]) &&
+                JSON.stringify(afterTheHost) === JSON.stringify(["System", "Light", "Dark (pressed)"]),
+            };
             /* And the other face is one press from it. */
             let switched = null;
             if (width === 1440 && colorScheme === "light") {
@@ -1573,7 +1739,7 @@ try {
                 label,
                 count,
                 tabs: tabs.map((tab) => `${tab.textContent}${tab.getAttribute("aria-selected") === "true" ? " (selected)" : ""}`),
-                sum: tabCount(forYou) + tabCount(activity),
+                sum: tabCount(forYou),
                 notifications: [...document.querySelectorAll('[data-testid="inbox-notification"]')].map((one) => `${one.textContent}${one.hasAttribute("data-unread") ? " (unread)" : ""}`),
                 suggestions: document.querySelectorAll('[data-testid="inbox"] [data-testid="suggestion"]').length,
                 seen: window.__seen ?? [],
@@ -1586,7 +1752,7 @@ try {
               pane: inboxPane,
               ok:
                 inbox.before.bells === 1 && inbox.before.badges === 1 && inbox.before.old === 0 &&
-                inbox.count > 0 && inbox.count === inbox.sum && /^Inbox — 2 waiting for you/.test(inbox.label ?? "") &&
+                inbox.count > 0 && inbox.count === inbox.sum && /^Inbox — \d+ needs? you/.test(inbox.label ?? "") &&
                 inbox.tabs.length === 3 && /^For you/.test(inbox.tabs[0]) && inbox.tabs[0].endsWith("(selected)") && /^Activity/.test(inbox.tabs[1]) && /^Your asks/.test(inbox.tabs[2]) &&
                 inbox.notifications.length === 2 && inbox.notifications[0].endsWith("(unread)") && inbox.suggestions === 1 && inbox.seen.includes("n-invite") &&
                 inboxPane !== null && inboxPane.inTheViewport && inboxPane.keyboardIn,
@@ -1649,6 +1815,7 @@ try {
     report.checks.theBarHoldsStillAndNothingOnItOverlapsAtEveryWidth = { ...stillness, ok: all(stillness) };
     report.checks.findIsABoxWhereThereIsRoomAndTheMagnifierSooner = { ...finds, ok: all(finds) };
     report.checks.theAppMenuHoldsTheScenePagesTheHostsRowsAndTheScheme = { ...menus, ok: all(menus) };
+    report.checks.aPersonPicksTheSchemeByKeyboardAndTheHostsChoiceMovesThePress = { ...schemes, ok: all(schemes) };
     report.checks.oneInboxIsOneBellWithOneCountAndThreeTabs = { ...inboxes, ok: all(inboxes) };
     report.checks.aHostsShareSaysInASentenceWhoCanOpenTheApp = { ...shares, ok: all(shares) };
     report.checks.aHostsButtonDrawnAsItsMarkIsNamedByItsLabel = { ...iconOnly, ok: all(iconOnly) };
@@ -1683,7 +1850,7 @@ try {
             standing: visible(standing) ? [...standing.querySelectorAll('[data-testid="host-bar-action"]')].map((el) => el.textContent.trim()) : null,
             folded: visible(open) ? open.getAttribute("aria-label") : null,
             onTheRow,
-            beforeTheTools: first >= 0 && first < ids.indexOf("standing"),
+            beforeTheTools: first >= 0 && first < ids.findIndex((id) => id === "standing" || id === "profile-button"),
           };
         });
         /* "Send feedback" by the keyboard: on the row, or in the list behind the one control. */
@@ -1722,7 +1889,7 @@ try {
     await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
     await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
     await page.waitForTimeout(900);
-    await page.click('[data-testid="standing"]');
+    await page.click('[data-testid="inbox-button"]');
     await page.waitForSelector('[data-testid="problems"]', { timeout: 10_000 });
     await page.waitForTimeout(400);
     const problems = await page.evaluate(() => document.querySelector('[data-testid="problems"]')?.innerText ?? "");

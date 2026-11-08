@@ -1,5 +1,5 @@
 import type { AnySchema, KindOfSchema, PagesArrangement, Principal, Store } from "@graview/core";
-import { DefaultDrawnElsewhere, isDefaultView, markBleeds, markPreviews, markReplacesPage, useGoTo, useGraviewIfAny, useHostAssets, useHostFiles, usePlayback, ViewContentHeight, type GoTo, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
+import { DefaultDrawnElsewhere, isDefaultView, markBleeds, markPreviews, markReplacesPage, useGoTo, useGraviewIfAny, useHostAssets, useHostFiles, useHostViewerState, usePlayback, ViewContentHeight, type GoTo, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { setViewPlace } from "@graview/react/drawing";
 import { useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ComponentType, type ReactNode } from "react";
 import type { GuestPlace } from "../protocol.js";
@@ -51,6 +51,13 @@ export interface WorkerViewDefinition {
    * of the same name stood. Nothing of it is kept anywhere.
    */
   readonly draft?: boolean;
+  /**
+   * Proposed and not kept, and drawn as the page it would be, with no line
+   * over it (a page's own view, as a host's `forked` says it): what it keeps
+   * lasts this drawing, as a `draft`'s does, and nothing a host keeps is its
+   * to read or write.
+   */
+  readonly keepsNothing?: boolean;
 }
 
 /** The brand with its logo's paths under `/graview/assets/` where the host serves them (Roadmap f-brand-marks-under-app-base); as it is with no `assetsAt`. */
@@ -107,7 +114,7 @@ function useDefinitionThen(definition: WorkerViewDefinition): WorkerViewDefiniti
   const seq = playback?.past?.seq;
   const viewAt = playback?.host?.viewAt;
   // A draft is the code proposed, at any moment: a kept view of its name is not what it draws.
-  const then = useMemo(() => (seq === undefined || !viewAt || definition.draft ? undefined : viewAt(definition.manifest.name, seq)), [viewAt, seq, definition]);
+  const then = useMemo(() => (seq === undefined || !viewAt || definition.draft || definition.keepsNothing ? undefined : viewAt(definition.manifest.name, seq)), [viewAt, seq, definition]);
   return useMemo(() => (then === null ? null : then === undefined ? definition : { ...definition, worker: then as WorkerViewCode }), [then, definition]);
 }
 
@@ -139,12 +146,13 @@ function WorkerViewMount({ definition: given, store, principal, input, goTo, pla
   const hostFiles = useHostFiles();
   /* Where the app's own images are served (Roadmap f-brand-marks-under-app-base): the definition's word, else the page's host's. */
   const hostAssets = useHostAssets();
+  const viewerState = useHostViewerState();
   /* Where the face that holds the view to a box hears how tall it drew (the Scene's preview): the host measures, the view never says. */
   const told = useContext(ViewContentHeight);
   // The logo a view is handed is fetched from the page's origin: a path under /graview/assets/ is fetched where the host serves it.
   const served = useMemo(() => brandUnder(brand, hostAssets), [brand, hostAssets]);
-  const latest = useRef({ input, goTo, places, arrangement, onFailure, brand: served, hostFiles, hostAssets, told });
-  latest.current = { input, goTo, places, arrangement, onFailure, brand: served, hostFiles, hostAssets, told };
+  const latest = useRef({ input, goTo, places, arrangement, onFailure, brand: served, hostFiles, hostAssets, viewerState, told });
+  latest.current = { input, goTo, places, arrangement, onFailure, brand: served, hostFiles, hostAssets, viewerState, told };
   useEffect(() => {
     const element = holder.current;
     if (!element) return;
@@ -175,6 +183,8 @@ function WorkerViewMount({ definition: given, store, principal, input, goTo, pla
         ...(definition.links ? { links: definition.links } : {}),
         /* What a file dropped on what the view drew is stored through (FR-193): the page's host's files, as they are now. */
         files: () => latest.current.hostFiles,
+        /* What it keeps for its viewer (`graview.mine`). A draft, proposed and not kept, keeps nothing of anybody's. */
+        ...(definition.draft || definition.keepsNothing ? { draft: true } : { viewerState: () => latest.current.viewerState }),
         onContentHeight: (height) => latest.current.told?.(height),
       });
     const stop = untilItArrives(workerChunk, (module) => {
@@ -230,6 +240,9 @@ function Instead({ view: View, props, fellBack }: { readonly view: ViewComponent
   );
 }
 
+/** The same mark where nothing is drawn in a view's stead: a home with no page of its own to fall back on, in a past before the view existed. */
+const NOTHING_INSTEAD = <div data-worker-view-fallback="" style={{ display: "contents" }} />;
+
 /** The same mark around the home's own page, where the home's view fell back. */
 function FellBack({ name, reason, children }: { readonly name: string; readonly reason: WorkerViewFailure; readonly children: ReactNode }) {
   return (
@@ -260,9 +273,9 @@ export function workerView(definition: WorkerViewDefinition, options: { readonly
     const then = useDefinitionThen(definition);
     if (!graview) return null;
     /* Not made yet at the moment drawn: the kind's own face, as where it fails. */
-    if (then === null) return Fallback && !(elsewhere && isDefaultView(Fallback) && !replaces) ? <Instead view={Fallback} props={props} /> : null;
+    if (then === null) return Fallback && !(elsewhere && isDefaultView(Fallback) && !replaces) ? <Instead view={Fallback} props={props} /> : NOTHING_INSTEAD;
     /* Past its limits, the kind's own face — what the registry drew there before — in its place (FR-94), saying which view fell back and why; nothing, where the surface is that face already. */
-    if (failed && Fallback) return elsewhere && isDefaultView(Fallback) && !replaces ? null : <Instead view={Fallback} props={props} fellBack={{ name: definition.manifest.name, reason: failed }} />;
+    if (failed && Fallback) return elsewhere && isDefaultView(Fallback) && !replaces ? NOTHING_INSTEAD : <Instead view={Fallback} props={props} fellBack={{ name: definition.manifest.name, reason: failed }} />;
     /*
      * BESIDE THE RECORD'S OWN FIELDS (FR-149): what was drawn for the record
      * before, under the view — its fields, editable where an act writes
@@ -293,7 +306,14 @@ export function workerView(definition: WorkerViewDefinition, options: { readonly
     return (
       <div data-worker-view-beside={definition.manifest.name} style={{ display: "grid", gap: 12, minWidth: 0 }}>
         {mount}
-        <Beside {...props} />
+        {/* The view bleeds; what is under it is the record's, and the page's face gives it the column back (`BLEED_FULL_CSS`). */}
+        {definition.manifest.bleed === "full" ? (
+          <div data-worker-view-beside-under="" style={{ minWidth: 0 }}>
+            <Beside {...props} />
+          </div>
+        ) : (
+          <Beside {...props} />
+        )}
       </div>
     );
   }
@@ -329,7 +349,7 @@ export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry
     const home = workerView(definition, declared ? { fallback: declared } : {});
     // Edge to edge on a phone, where its manifest says so: the pages face takes the gutter back for it.
     // By its name, so the host's tidying keeps it undrawn once deleted, whatever registered after it (FR-202); a draft has none.
-    views.home((manifest.bleed === true ? markBleeds(home) : home) as unknown as ViewComponent<S>, definition.draft ? undefined : { name: manifest.name });
+    views.home((manifest.bleed === true || manifest.bleed === "full" ? markBleeds(home, manifest.bleed) : home) as unknown as ViewComponent<S>, definition.draft ? undefined : { name: manifest.name });
     return views;
   }
   const cell = { cardinality: manifest.cardinality, fidelity: "full" } as const;
@@ -353,7 +373,7 @@ export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry
    */
   const says = (before as { says?: unknown } | undefined)?.says;
   if (one && manifest.replaces !== "page" && typeof says === "function") (view as { says?: unknown }).says = says;
-  if (manifest.bleed === true) markBleeds(view);
+  if (manifest.bleed === true || manifest.bleed === "full") markBleeds(view, manifest.bleed);
   /*
    * A VIEW'S PLACE FLOWS WITH THE PAGE (Roadmap f-view-places-flow), as a
    * place drawn from blocks does: it is drawn in the page's column as long

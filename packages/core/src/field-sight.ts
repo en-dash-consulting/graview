@@ -32,7 +32,7 @@ export { withoutKeptFields } from "./ops/kept-fields.js";
 import type { Operation } from "./ops/types.js";
 import { keptOf, withoutKeptFields } from "./ops/kept-fields.js";
 import { namesUnseen, whole, withhold, type SeatLens } from "./ops/withheld.js";
-import { actingAs, grantsTo, isSystem } from "./permissions/policy.js";
+import { actingAs, grantsTo, isSystem, ownsId } from "./permissions/policy.js";
 import { FIELD_SIGHT, partialSight, recordsOf, type FieldsKept, type Records } from "./permissions/sight.js";
 import type { Policy, Principal, Sight } from "./permissions/types.js";
 import { labelOf } from "./schema/define-node.js";
@@ -64,14 +64,14 @@ export function partialKinds(policy: Policy | undefined): ReadonlySet<string> {
 function showing(principal: Principal, node: Node, graph: Joined, records?: Pick<Records, "creatorOf">): (sight: Sight) => boolean {
   const acting = actingAs(principal);
   const me = acting.id;
-  const mine = (other: { readonly id: string }) => other.id === me;
+  const mine = (other: { readonly id: string }) => ownsId(principal, other.id);
   return (sight) => {
     if (!sight.kinds.includes(node.kind) || !grantsTo(sight, acting)) return false;
     if (!sight.own && !sight.via) return true;
     if (me === undefined) return false;
     return sight.via
       ? graph.out(node.id, sight.via).some(mine) || graph.in(node.id, sight.via).some(mine)
-      : node.id === me || graph.out(node.id).some(mine) || graph.in(node.id).some(mine) || records?.creatorOf(node.id) === me;
+      : mine(node) || graph.out(node.id).some(mine) || graph.in(node.id).some(mine) || records?.creatorOf(node.id) === me;
   };
 }
 

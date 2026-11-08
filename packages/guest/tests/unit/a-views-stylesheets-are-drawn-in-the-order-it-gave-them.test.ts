@@ -68,7 +68,8 @@ describe("a view's stylesheets", () => {
 
   it("are drawn on the page with the first sheet's rules ahead of the second's", () => {
     const drawn = page([SHARED, OWN]);
-    expect(drawn.drawn).toBe(drawn.css);
+    /* In the host's layer for a view's own sheets, which the app's theme comes after (host/cascade.ts). */
+    expect(drawn.drawn).toBe(`@layer graview-view {\n${drawn.css}\n}`);
     expect(drawn.css).toContain(".gx { color: rgb(1, 2, 3); }");
     expect(drawn.css).toContain(".pl .top { padding: 22px; }");
     expect(drawn.css.indexOf(".gx {")).toBeLessThan(drawn.css.indexOf(".pl .top"));

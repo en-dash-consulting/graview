@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "51bbef5a-04e7-4654-ac01-8971c6708716":
+    status: "completed"
+    startedAt: "2026-09-19T07:13:40.061Z"
+    completedAt: "2026-09-19T07:15:03.688Z"
+    endedAt: "2026-09-19T07:15:03.688Z"
+    resolutionType: "code-change"
+    resolutionDetail: "--views <module> on describe/check/docs; note reworded to say it is the design"
+    appliedAt: "2026-09-19T07:15:03.688Z"
+    lastModified: "2026-09-19T07:15:03.701Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

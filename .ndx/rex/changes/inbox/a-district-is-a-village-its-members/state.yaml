@@ -1,0 +1,13 @@
+schema: "rex/v2"
+items:
+  "ed0eca5b-135c-4206-bdba-75f29554bff1":
+    status: "completed"
+    startedAt: "2026-09-20T04:51:29.132Z"
+    completedAt: "2026-09-20T05:10:51.992Z"
+    endedAt: "2026-09-20T05:10:51.992Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Members stand as buildings on the plot's sub-lattice with the square kept free; flagged roofs and lit selections; the anonymous block retired."
+    appliedAt: "2026-09-20T05:10:51.992Z"
+    needsPlacement: true
+    lastModified: "2026-09-20T05:10:52.004Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

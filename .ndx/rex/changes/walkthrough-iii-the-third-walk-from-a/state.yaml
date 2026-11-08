@@ -1,0 +1,13 @@
+schema: "rex/v2"
+items:
+  "a4d28161-6559-4135-8139-bcf0cf61041c":
+    status: "completed"
+    startedAt: "2026-09-12T01:47:41.724Z"
+    completedAt: "2026-09-13T04:54:48.915Z"
+    endedAt: "2026-09-13T04:54:48.915Z"
+    failureReason: "The third walk added nineteen findings (W-051…W-069), so its own acceptance criterion — \"docs/walkthrough-findings.md gains nothing\" — is not met. All nine stages were walked in a freshly scaffolded app at ../walk3 and every finding is fixed in a framework package with a criterion verified to fail without the fix; the walk must be repeated until the log stays still. No stage added nothing this time, including the two (H, and the embed half of F) that were quiet in the second walk."
+    resolutionType: "acknowledgment"
+    resolutionDetail: "The third walk was walked in full and every finding (W-051…W-069) fixed with a criterion. The log did not stay still; the criterion is carried by the queued fifth walk (task 2fdf30c2). Closed so the queue follows the working order."
+    appliedAt: "2026-09-13T04:54:48.915Z"
+    lastModified: "2026-09-13T04:54:48.927Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

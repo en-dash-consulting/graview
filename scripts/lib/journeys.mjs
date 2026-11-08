@@ -1750,12 +1750,11 @@ export const JOBS = {
       const page = person.page;
       const before = await inStore(page, ctx.kinds, lastBatch);
       if (ctx.face === "scene") {
-        const standing = page.locator('[data-testid="standing"]').locator("visible=true").first();
+        const standing = page.locator('[data-testid="inbox-button"]').locator("visible=true").first();
         if (!(await appears(standing))) throw new DeadEnd("nothing on the scene says something is wrong");
-        // From the keyboard, the skip that says so, where the page offers one; else the standing itself.
+        // From the keyboard, the skip that says so, where the page offers one; else the bell itself.
         if (!(await person.pressSkip("problems", "the skip to the problems"))) await person.press(standing, "the problems");
-        const problem = page.locator('[data-testid="standing"] ~ ul button, [data-testid="standing"] + * button, [data-testid="standing-card"] button').locator("visible=true").first();
-        const listed = (await problem.isVisible().catch(() => false)) ? problem : page.getByRole("listitem").getByRole("button", { name: /ways? to fix|to fix/ }).locator("visible=true").first();
+        const listed = page.locator('[data-testid="inbox-problem-words"]').locator("visible=true").first();
         await person.press(listed, "the problem");
         await person.settle(300);
         const repair = page.locator('[data-affordance^="invariant:"]').locator("visible=true").first();

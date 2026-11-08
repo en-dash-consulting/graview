@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 3666,
+  "gzipped": 1136,
+  "note": "Raised when an owner could flip between other ways to show a kind's list or a place (Roadmap f-display-options-switch): the host's `displayOptions` handed through and `pages.lists.<kind>.opens` in the document, its edit and its finding, up front. 3666 / 1136 more. Measured at 1911410 / 667950, against main's 1907744 / 666814."
+}

@@ -3,6 +3,7 @@ import type { AnyGraphNode, GraphEdge } from "../graph/types.js";
 import { actingAs } from "../permissions/policy.js";
 import type { Principal } from "../permissions/types.js";
 import { serveAlong, type FieldWriter, type Timeline } from "./served.js";
+import { DECLINES } from "./tidying.js";
 import type { Author, Operation } from "./types.js";
 
 /**
@@ -237,7 +238,7 @@ function undoesFollow(served: readonly Operation[], lens: SeatLens): Operation[]
     }
     return false;
   };
-  return served.map((op) => (op.undoes === undefined || op.withheld || !kept(op) ? op : withhold(op, lens, op.primitives)));
+  return served.map((op) => (op.undoes === undefined || op.withheld || DECLINES.liftTold?.(op, lens as never) || !kept(op) ? op : withhold(op, lens, op.primitives)));
 }
 
 /** The ops as this seat is served each on its own. */

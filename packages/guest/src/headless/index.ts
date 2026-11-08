@@ -29,7 +29,7 @@ import type { PlaceDescription } from "@graview/core/describe";
 // Static, not fetched: the headless run is itself fetched where a page presses a draft, and a door to the seat's file from there split the page's first chunk.
 import { placesFrom, placesOf, viewPlaceOf } from "@graview/core/seat";
 import { datesPinned } from "@graview/core/revisions";
-import { checkManifest, manifestActs, readsComputed, workerViewProps, type WorkerViewManifest } from "../host/manifest.js";
+import { checkManifest, edgesReadWithoutTheirKindsSaid, manifestActs, readsComputed, workerViewProps, type WorkerViewManifest } from "../host/manifest.js";
 import { PICTURE_STAND_IN, standInPictures } from "../host/pictures.js";
 import { judgeDestination, listsOf, placeVocabulary } from "../host/links.js";
 import { guestPlacesOf, placeNamed } from "../host/links-words.js";
@@ -115,7 +115,7 @@ export interface RunWorkerViewHeadlessOptions<S extends AnySchema> {
   /**
    * What every view of the app inherits (`Brand.views`, Roadmap
    * f-app-wide-view-theme), as the live host takes it: its stylesheet is
-   * drawn before the view's own in the run's `css`, so a picture of the
+   * drawn in the layer after the view's own in the run's `css`, so a picture of the
    * view is dressed as the page dresses it. Its refusals are the checker's
    * to say (`brand-views-css`), not this view's.
    */
@@ -233,7 +233,7 @@ export interface HeadlessDescribed {
   readonly props: GuestProps;
   /** What it sent: every batch it drew, its stylesheet, the acts it asked for and where it asked to go. */
   readonly transcript: HeadlessTranscript;
-  /** Its stylesheets as a page draws them, judged: the app's own for every view first (`brand.views.css`), then the view's in the order it gave them. What a picture of the drawing is styled with. */
+  /** Its stylesheets as a page draws them, judged: the view's in the order it gave them, and the app's own for every view (`brand.views.css`) in the layer that wins over them (host/cascade.ts). What a picture of the drawing is styled with. */
   readonly css: string;
   /** What the press `options.press` asked for would do, judged as the live host would: the description is of what it drew before it. */
   readonly pressed?: HeadlessPress;
@@ -386,7 +386,8 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
   const placesUnsure = options.views === undefined;
   /* A record's computed values beside its fields, as the page hands them (Roadmap f-computed-in-views). */
   const computed = readsComputed(store, manifest) ? (await import("../host/computed.js")).computedOn(store.schema) : undefined;
-  const shown = workerViewProps(store, principal, { manifest, ...(options.input ? { input: options.input } : {}), theme: options.theme ?? HEADLESS_THEME, places: guestPlacesOf(places), ...(computed ? { computed } : {}) });
+  /* What a view keeps for somebody is theirs: a headless run, told to an agent or a check, is handed none of it. */
+  const shown = { ...workerViewProps(store, principal, { manifest, ...(options.input ? { input: options.input } : {}), theme: options.theme ?? HEADLESS_THEME, places: guestPlacesOf(places), ...(computed ? { computed } : {}) }), mine: {} };
   /*
    * A view that asks for pictures (FR-175) is handed each file without the
    * host's path. Headless, no bytes are fetched, so a picture comes with a
@@ -500,7 +501,7 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
   const title = manifest.title ?? manifest.name;
   /* A day the source pins — `TODAY = "2026-11-01"`, "Tomorrow · Mon 2 Nov" — said against the app's today, so a view frozen on the day it was written is caught (Roadmap f-views-know-today). */
   const pinned = props.today ? datesPinned(source, { today: props.today, title: manifest.attach === "home" ? "Home" : title, ...(props.locale ? { locale: props.locale } : {}) }) : [];
-  const problems = [...handed.left.map((says) => ({ at: "pictures", says })), ...judged.problems, ...narrowing, ...gestureProblems(manifest, transcript), ...pressProblems, ...(presses?.problems ?? []).map((one) => ({ at: `press ${one.control}`, says: one.says })), ...pinned.map(({ at, says }) => ({ at, says }))];
+  const problems = [...edgesReadWithoutTheirKindsSaid(store, manifest).map((says) => ({ at: "reads", says })), ...handed.left.map((says) => ({ at: "pictures", says })), ...judged.problems, ...narrowing, ...gestureProblems(manifest, transcript), ...pressProblems, ...(presses?.problems ?? []).map((one) => ({ at: `press ${one.control}`, says: one.says })), ...pinned.map(({ at, says }) => ({ at, says }))];
   const slug = manifest.title ? slugOf(manifest.title) : manifest.name;
   const kind = manifest.attach === "home" ? null : manifest.attach;
   const description: Omit<PlaceDescription, "text"> = {

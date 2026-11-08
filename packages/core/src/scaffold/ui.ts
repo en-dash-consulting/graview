@@ -268,8 +268,8 @@ import {
   useStoreTick,
   type PageComponent,
   type PageContext,
+  useParams,
 } from "@graview/pages";
-import { useParams } from "react-router-dom";
 import { ${ids.schemaVar}, type ${ids.SchemaType} } from "../domain/schema.js";
 
 type S = ${ids.SchemaType};

@@ -14,7 +14,7 @@ import type { Affordance } from "@graview/tools";
 import { useGraviewIfAny, type AiDesk } from "@graview/react/provider";
 import { openQuickAsk, useQuickAskDrawn } from "@graview/primitives/pages";
 import { useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router";
 import { kindFacts } from "./facts.js";
 import { DerivedForm } from "./form.js";
 import { type PageContext, useStoreTick } from "./page-context.js";
@@ -43,7 +43,8 @@ export function DefaultSearchPage<S extends AnySchema>({ context }: { context: P
   const today = typeof invariantContext?.["today"] === "string" ? (invariantContext["today"] as string) : undefined;
   const found = search(store, q, {
     ...(principal ? { principal } : {}),
-    places: placesOf(context),
+    // A place kept off the lists is not one to be found: still at its address, and drawn there, but not offered.
+    places: placesOf(context).filter((place) => !place.hidden),
     flagged: new Set(store.violations(invariantContext).flatMap((violation) => violation.nodeIds)),
     ...(today ? { today } : {}),
     limit: 200,

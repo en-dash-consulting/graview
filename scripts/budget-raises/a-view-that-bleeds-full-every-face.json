@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 1835,
+  "gzipped": 656,
+  "note": "Raised when a worker view came to span the whole window at every width (`bleed: \"full\"`, Roadmap f-views-bleed-full-width): the pages face's box, rules and readings, and `checkManifest` and `registerWorkerView` taking the value and marking what is drawn with a view that bleeds full. Measured at 3_053_227 / 1_105_998 against 3_051_392 / 1_105_342 minified and gzipped."
+}

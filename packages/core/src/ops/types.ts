@@ -22,6 +22,19 @@ export function authorKindOf(author: { readonly kind: string } | undefined): Aut
   return KNOWN_AUTHOR_KINDS.has(author?.kind) ? (author!.kind as AuthorKind) : "system";
 }
 
+/**
+ * ONE PERSON AT A SCREEN UNDER ONE SIGN-IN (Roadmap
+ * f-viewer-state-and-me-framework): "Mia", on the account that is Nick. The
+ * host says it, as it says the seat. A name, not a seat: what the seat may do
+ * stays the account's, and `$me` reads the profile's own person (`meOf`).
+ */
+export interface SeatProfile {
+  /** The host's id for it, letters, digits, `_` and `-`, at most 64: `prf_mia`. Any other is no profile. */
+  readonly id: string;
+  /** What it is called, as people read it: data somebody wrote. */
+  readonly name: string;
+}
+
 export interface Author {
   /**
    * Who moved: a person, a visitor answering a form, an agent acting on
@@ -57,6 +70,8 @@ export interface Author {
    * (FR-06).
    */
   readonly onBehalfOf?: Author;
+  /** Who at the screen, on a person's seat: said with them, "Mia (Nick)". */
+  readonly profile?: SeatProfile;
   /**
    * THE APP'S OWN ACTOR (`@graview/core/tidying`): set by a `system` or
    * `agent` author that changes the graph on its own — "Graview, tidying".
@@ -65,6 +80,13 @@ export interface Author {
    * batches fold into one row of Activity. Ignored on a human author.
    */
   readonly automated?: true;
+  /**
+   * THE APP'S OWN TIDYING ACTOR, of the automated authors (`dream`'s
+   * `TIDYING_ACTOR`, or a host's own), said on purpose: what "Don't suggest
+   * this kind of thing" holds. A workflow, an importer and a host's triage
+   * are automated and not this. Ignored without `automated`.
+   */
+  readonly tidying?: true;
 }
 
 /**

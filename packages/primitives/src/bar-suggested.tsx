@@ -17,3 +17,6 @@ export const SuggestedCount = tray.part<{ readonly onCount: (count: number) => v
 
 /** What waits, in the inbox's "For you". */
 export const SuggestedList = tray.part<{ readonly close: () => void; readonly done: () => void }>((module, props) => <module.SuggestedList {...props} />, { quiet: true, as: "div" });
+
+/** What the app's own actor did while the person was away, what this seat may read of what waits and not answer, and what people said not to suggest, in the inbox's Updates. */
+export const SuggestedUpdates = tray.part<{ readonly alone: boolean; readonly close: () => void; readonly done: () => void }>((module, props) => <module.SuggestedUpdates {...props} />, { quiet: true, as: "div" });

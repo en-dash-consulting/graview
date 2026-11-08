@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "61b7bb6a-eb98-4a4e-a99d-1809760a3b86":
+    status: "completed"
+    startedAt: "2026-09-15T15:40:38.504Z"
+    completedAt: "2026-09-15T15:40:38.504Z"
+    endedAt: "2026-09-15T15:40:38.504Z"
+    appliedAt: "2026-09-15T15:40:38.504Z"
+    lastModified: "2026-09-15T15:40:38.516Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

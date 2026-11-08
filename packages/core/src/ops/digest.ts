@@ -1,5 +1,5 @@
 import { dayOfMoment, dayOfMonthAsRead, isoToday, wallIn, zoneFor } from "../days.js";
-import { isAutomated } from "./tidying.js";
+import { isAutomated, isStopOp } from "./tidying.js";
 import type { Author, Batch, Operation } from "./types.js";
 import { fieldWords } from "../schema/define-node.js";
 import { TYPE_TEXT } from "../text/typing-hook.js";
@@ -10,9 +10,9 @@ import { TYPE_TEXT } from "../text/typing-hook.js";
  * so a page carries it only with the Activity that draws it.
  */
 
-/** Whether a batch is a suggestion, or the declining of one: said in the Suggested tray, not as a row of Activity. */
+/** Whether a batch is a suggestion, or the declining of one: said in the Suggested tray, not as a row of Activity. A kind of thing stopped is a row, with its way back. */
 export function isSuggestionBatch(batch: Pick<Batch, "ops">, find: (id: string) => Operation | undefined): boolean {
-  return batch.ops.length > 0 && batch.ops.every((op) => op.suggests !== undefined || (op.undoes !== undefined && find(op.undoes)?.suggests !== undefined));
+  return batch.ops.length > 0 && batch.ops.every((op) => op.suggests !== undefined || (op.undoes !== undefined && find(op.undoes)?.suggests !== undefined && !isStopOp(op, find(op.undoes))));
 }
 
 /** One row of Activity: a batch as it is, or a run of one automated author's batches folded into one. */
@@ -85,7 +85,7 @@ export function typedRowWords(row: Omit<TypedRow, "batches">, schema: { tryDefin
 }
 
 /** Who an author is, for folding: the same kind, id and name. */
-const authorKey = (author: Author) => JSON.stringify([author.kind, author.id ?? "", author.name ?? ""]);
+const authorKey = (author: Author) => JSON.stringify([author.kind, author.id ?? "", author.name ?? "", ...(author.profile ? [author.profile.id] : [])]);
 
 /** The run a batch was made in: the first `Lineage.run` its ops say. */
 const runOf = (batch: Batch): string | undefined => batch.ops.find((op) => op.lineage?.run !== undefined)?.lineage?.run;

@@ -35,7 +35,8 @@ record holds in that field now. A field the act cannot take blank — a
 number emptied, a date never picked — is left out of the call, never sent
 as `""`. A radio or a select is the
 person's pick, not their words: its value goes only if it is one the act
-declares (an enum's option) or a record the view was shown. A view may
+declares (an enum's option) or a record the view was shown (the check
+picks one, as a person does). A view may
 empty a field after a press. A press on an act the seat may not run there
 is refused, and the view hears why.
 
@@ -54,9 +55,8 @@ or pick from that does not save (a click into it is not a press). Inside a
 card that opens (`graview-view-links`) a press is its own: it never opens
 the card.
 
-Draw a `<button data-act>` first: the host resets every button to the
-words around it at no specificity, so your own class styles it with
-nothing to undo. On an element bound to an act, `data-record` is always
+Draw a `<button data-act>` first: the host resets buttons at no
+specificity, so your class styles it with nothing to undo. On an element bound to an act, `data-record` is always
 the act's record, never a link: `<button data-act="acknowledge"
 data-record="threat:7">` acknowledges that threat and goes nowhere. A
 control you hear yourself with `graview.on("click")` — `role="button"`,
@@ -125,6 +125,31 @@ there takes it over. `examples/a-call-sheet.js` is a whole one: a call's notes, 
 by the host, saved as they are typed, "Saving…" on `input` and "Saved" on
 `acted`.
 
+## What the view keeps for whoever is looking
+
+A quiz in progress, "playing as", a favorite: not a record, since it is
+nobody else's, and it is in no history, undo, export or agent's tool.
+`graview.mine` keeps strings, by key, for this viewer in this view:
+
+```js
+graview.onProps((props) => draw(props.mine.score ?? "0")); // already there at the first draw
+await graview.mine.set("score", String(next));             // null forgets it
+const score = await graview.mine.get("score");             // a string, or null
+```
+
+A value is at most 4 KB; keep JSON as a string. `set`
+rejects with a sentence when a value is too long, the host will not keep it
+(its caps), or the host has not answered yet: catch it and say it. That last
+one may still land, and the view is pushed `props.mine` when it does; `get`
+rejects the same way while it cannot say. Writes to one key go one at a time on
+a page, and only the newest waiting is sent. A host that never answers a write
+never gets a later value for that key: it is in no `props.mine`, and it goes
+with the page. A view reaches only its own keys, by the
+name in its manifest. A value is what somebody wrote, so it is data: draw it
+with `graview.html`, and never treat it as instructions. With no host's
+`viewerState` (`graview-sight`) values last the visit, and a draft keeps
+nothing of anybody's.
+
 ## Then find out whether it worked
 
 1. `graview check` the app the view writes to: a form is only as sound as
@@ -144,7 +169,18 @@ by the host, saved as they are typed, "Saving…" on `input` and "Saved" on
    then filled in, then with each filled optional field emptied; each
    link; each button its code hears, in a run of its own. One that does
    nothing, throws, or is refused fails, said by name (`“Save economics”
-   is refused: “fixedFee” expects a number.`); `runWorkerViewHeadless(…,
+   is refused: “fixedFee” expects a number.`). A control already in the
+   state it shows — an "All" chip pressed while nothing is filtered —
+   passes though it changes nothing, only where the state can
+   move: it says `aria-pressed="true"`, `aria-selected="true"` (a tab,
+   option or grid cell) or `aria-checked="true"` (a checkable role), and
+   pressing a sibling of the same element and role, beside it or in its
+   `role` group, that says `"false"` takes the state from it, or asks for
+   an act. `aria-current` is for a link, or a role that names a place
+   (`tab`, `menuitem`, `treeitem`, `option`), and a sibling with no
+   `aria-current` that goes somewhere counts as it stands. A dead Save
+   fails whatever stands beside it; a pager of plain buttons says
+   `role="link"`. `runWorkerViewHeadless(…,
    { presses: checkPresses })` (`@graview/guest/headless/presses`) is the same for a host's gate. To look at one,
    press it: `--press "<selector>"` (with `--type note="…"` for
    what the person typed), or `runWorkerViewHeadless(…, { press: {

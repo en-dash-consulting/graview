@@ -1,0 +1,18 @@
+---
+id: "aa444846-f299-4149-b554-8ce32a758b10"
+type: "change"
+title: "A district's box holds its name (FR-143)"
+slug: "a-district-s-box-holds-its-name-fr-143"
+intent: "The selected district's box wraps 'WORKSHOP PARTS' to two lines and spills out of its top."
+acceptanceCriteria:
+  - "A long kind name fits (smaller, or cut with an ellipsis and whole on hover) and never spills out of its box"
+  - "'WORKSHOP PARTS' sits inside its box at 1280 and 1920"
+priority: "medium"
+tags:
+  - "graview-cloud"
+  - "FR-143"
+  - "bug"
+  - "design"
+source: "Graview Cloud, 2026-10-08 (handoff: a record drawn twice, and the scene's own place control — Nick on 0.1.17)"
+resolution: "Shipped in #155 (0.1.18): a district's name keeps one line, drawn smaller down to eleven pixels and then cut and said whole on hover, and its count is said once."
+---

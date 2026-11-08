@@ -26,7 +26,9 @@ import {
   type Via,
   type Lineage,
   type WireRefusal,
+  EMPTY_DIFF,
 } from "@graview/core";
+import type { ServedStops } from "@graview/core/tidying";
 import type { StorageLike } from "./browser-adapter.js";
 import { cursorAt } from "./cursor.js";
 import { FRICTION_PATH } from "./remote-friction.js";
@@ -84,6 +86,9 @@ export interface RemoteState {
   readonly enabledModules?: readonly string[];
   /** Where the server's log begins, when it was compacted (FR-23). */
   readonly horizon?: number;
+  /** The stops standing that this log may not hold, as this seat may be told (`servedStops`); absent where there are none, or from a server before them. */
+  readonly stops?: ServedStops["stops"];
+  readonly stoppedKinds?: ServedStops["kinds"];
   /** The host's build (FR-44); absent from a server before it, or a host that says none. */
   readonly build?: string;
   /** The host's hold, in its sentence (FR-66); absent while it takes changes, or from a server before it. */
@@ -824,6 +829,13 @@ async function opening<S extends AnySchema>(
     }
     for (const batch of dropping) provisional.delete(batch);
     for (const batch of echoed) tellAnswered(batch, ops);
+    /*
+     * A STOP LIFTED, on this page or another, as ops: what the host said of the
+     * stops this log does not hold no longer stands, so it is asked again. An
+     * undo of an op this log does not hold may be one, while it says any.
+     */
+    const lifted = ops.some((op) => op.lineage?.liftedStop === true || (op.undoes !== undefined && (store.log.get(op.undoes)?.lineage?.stopsKind === true || (store.log.get(op.undoes) === undefined && (store.stopsServed?.stops.length ?? 0) > 0))));
+    if (lifted) resync();
     return landed;
   };
 
@@ -837,6 +849,15 @@ async function opening<S extends AnySchema>(
    * leaves the client as it was, and the next answer that cannot land asks
    * again.
    */
+  /** What the host says of the stops this page's log does not hold: for its tray, its bell and its way back. */
+  const hearStops = (said: Pick<RemoteState, "stops" | "stoppedKinds">): void => {
+    const stops = said.stops ?? [];
+    const kinds = said.stoppedKinds ?? [];
+    if (stops.length === 0 && kinds.length === 0 && !store.stopsServed) return;
+    store.stopsServed = stops.length > 0 || kinds.length > 0 ? { stops, kinds } : undefined as never;
+    store.notify(EMPTY_DIFF as never, []);
+  };
+  if (state.stops || state.stoppedKinds) store.stopsServed = { stops: state.stops ?? [], kinds: state.stoppedKinds ?? [] };
   const resync = (): void => {
     if (resyncing) return;
     resyncing = track(
@@ -847,6 +868,7 @@ async function opening<S extends AnySchema>(
             meanwhile = [];
             return;
           }
+          hearStops(next);
           const held = new Set(next.log.map((op) => op.batch));
           const answered = pending.filter((batch) => held.has(batch));
           for (const batch of answered) settle(batch);
@@ -898,8 +920,10 @@ async function opening<S extends AnySchema>(
 
   const since = async (seq: number): Promise<Operation[]> => {
     const response = await reach(`${options.url}/graview/since?seq=${cursorAt(seq)}&opFormat=${FORMATS.op}`, { headers });
-    const answer = (await response.json()) as { ops?: Operation[]; version?: number; build?: string; reset?: boolean };
+    const answer = (await response.json()) as { ops?: Operation[]; version?: number; build?: string; reset?: boolean; stops?: RemoteState["stops"]; stoppedKinds?: RemoteState["stoppedKinds"] };
     if (moved(answer)) return [];
+    // Said on an answer that brings ops: one with none says nothing of stops, and what was said stands.
+    if ((answer.ops?.length ?? 0) > 0) hearStops(answer);
     // The ops cannot catch this client up (behind the horizon, or past where its seat is now served): it takes the state.
     if (answer.reset === true) {
       resync();
@@ -1166,6 +1190,7 @@ async function opening<S extends AnySchema>(
   const hear = (message: LiveServerMessage) => {
     switch (message.t) {
       case "welcome": {
+        hearStops(message);
         noticeBuild(message.build);
         // Back on a server whose declaration moved while this socket was away (FR-43): its ops are not this store's to fold.
         if (typeof message.version === "number" && message.version !== state.version) {
@@ -1965,7 +1990,9 @@ export function seatHeaders(principal: Principal | undefined): Record<string, st
   if (principal.roles?.length) headers[SEAT_HEADERS.roles] = principal.roles.join(",");
   if (principal.kind !== "human") headers[SEAT_HEADERS.kind] = principal.kind;
   if (principal.name) headers[SEAT_HEADERS.name] = encodeURIComponent(principal.name);
+  if (principal.profile) (headers[SEAT_HEADERS.profile] = principal.profile.id), (headers[SEAT_HEADERS.profileName] = encodeURIComponent(principal.profile.name));
   const person = principal.onBehalfOf;
+  if (person?.profile) (headers[SEAT_HEADERS.forProfile] = person.profile.id), (headers[SEAT_HEADERS.forProfileName] = encodeURIComponent(person.profile.name));
   if (person?.id) headers[SEAT_HEADERS.for] = person.id;
   if (person?.roles?.length) headers[SEAT_HEADERS.forRoles] = person.roles.join(",");
   if (person?.name) headers[SEAT_HEADERS.forName] = encodeURIComponent(person.name);

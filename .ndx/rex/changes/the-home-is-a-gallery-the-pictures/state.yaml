@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "6c8f85ad-be5a-445b-bcc8-0f73530ac49b":
+    status: "completed"
+    startedAt: "2026-09-27T06:05:00.000Z"
+    completedAt: "2026-09-27T07:05:00.000Z"
+    endedAt: "2026-09-27T07:05:00.000Z"
+    resolutionType: "code-change"
+    resolutionDetail: "DefaultHomePage: standing sentence as h1, Gallery (GalleryCard measured at 0.72 scale, inert, empty legend naming the beginning act), one row of kind counts with a line to /map, Recently. `wide` column (1160) for shell, home, /places and a picture page; reading pages keep 760. the-map-of-kinds and the-pictures-on-pages rewritten; 111 pages tests pass."
+    appliedAt: "2026-09-27T07:05:00.000Z"
+    lastModified: "2026-09-27T07:05:00.000Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

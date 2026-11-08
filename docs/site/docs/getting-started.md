@@ -48,7 +48,7 @@ The declaration split into domain and UI, so the domain has no React in it and `
 
 `package.json`, `tsconfig.json`, `tsconfig.build.json`, `vite.config.ts`, `index.html`, `embed.html`, `.gitignore`, `README.md`, `AGENTS.md`, `CLAUDE.md`, `src/domain/schema.ts`, `src/domain/mutations.ts`, `src/domain/invariants.ts`, `src/domain/brand.ts`, `src/domain/app.ts`, `src/ui/views.tsx`, `src/ui/app.tsx`, `src/ui/pages.tsx`, `src/main.tsx`, `src/embed.tsx`, `tests/domain.test.ts`, `.github/workflows/ci.yml`
 
-Dependencies: `@graview/core`, `@graview/layout`, `@graview/tools`, `@graview/render`, `@graview/react`, `@graview/primitives`, `@graview/pages`, `@graview/ship`, `@graview/embed`, `@graview/studio`, `@graview/guest`, `react`, `react-dom`, `react-router-dom`. Dev: `graview`, `@types/node`, `@types/react`, `@types/react-dom`, `typescript`, `vite`, `vitest`. No zod of your own — `@graview/core` re-exports `z`, so a kind's fields are built with exactly the copy the framework was built with.
+Dependencies: `@graview/core`, `@graview/layout`, `@graview/tools`, `@graview/render`, `@graview/react`, `@graview/primitives`, `@graview/pages`, `@graview/ship`, `@graview/embed`, `@graview/studio`, `@graview/guest`, `react`, `react-dom`. Dev: `graview`, `@types/node`, `@types/react`, `@types/react-dom`, `typescript`, `vite`, `vitest`. No zod of your own — `@graview/core` re-exports `z`, so a kind's fields are built with exactly the copy the framework was built with.
 
 ## The scripts it gives you
 

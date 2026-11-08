@@ -1,0 +1,7 @@
+schema: "rex/v2"
+items:
+  "d182b1bc-d4a4-4183-a844-8716be4aeeda":
+    status: "deferred"
+    needsPlacement: true
+    lastModified: "2026-10-16T20:24:14.000Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

@@ -1,6 +1,6 @@
 import { labelOf, pluralLabel, sharesItsName, type AnySchema, type Place } from "@graview/core";
 import { createContext, useContext, type CSSProperties, type ReactNode } from "react";
-import { Link, useHref, useLocation } from "react-router-dom";
+import { Link, useHref, useLocation } from "react-router";
 import { FaceControls, usePlaced, usePlacedOnTheFace } from "./face-placed.js";
 import { type PageContext, useStoreTick } from "./page-context.js";
 import { kindOfSlug, placePath, pluralSlug, recordPath, type PageRegistry, type PageSection } from "./registry.js";

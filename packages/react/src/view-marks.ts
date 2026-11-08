@@ -48,18 +48,26 @@ export function replacesPage(view: unknown): boolean {
  * worker view whose manifest says `bleed: true`): the pages face takes the
  * page's side gutter back for it there, keeping the safe areas, so the view
  * is the phone's width. At a desk it is the column's width, as any view is.
+ * `"full"` (`bleed: "full"`, Roadmap f-views-bleed-full-width) spans the
+ * page's whole width at every width, a desk's as well as a phone's.
  */
 export const BLEEDS: unique symbol = Symbol.for("graview.bleeds");
 
-/** Marks a view as drawn edge to edge on a phone. Returns the same component. */
-export function markBleeds<V extends object>(view: V): V {
-  Object.defineProperty(view, BLEEDS, { value: true, enumerable: false });
+/** Marks a view as drawn edge to edge on a phone, or across the page's whole width at every width (`"full"`). Returns the same component. */
+export function markBleeds<V extends object>(view: V, how: true | "full" = true): V {
+  Object.defineProperty(view, BLEEDS, { value: how, enumerable: false, configurable: true });
   return view;
 }
 
-/** Whether a view is drawn edge to edge on a phone. */
+/** Whether a view is drawn edge to edge on a phone: one that bleeds full is too. */
 export function bleeds(view: unknown): boolean {
-  return typeof view === "function" && (view as { [BLEEDS]?: boolean })[BLEEDS] === true;
+  const how = typeof view === "function" ? (view as { [BLEEDS]?: true | "full" })[BLEEDS] : undefined;
+  return how === true || how === "full";
+}
+
+/** Whether a view spans the page's whole width at every width (`bleed: "full"`). */
+export function bleedsFull(view: unknown): boolean {
+  return typeof view === "function" && (view as { [BLEEDS]?: true | "full" })[BLEEDS] === "full";
 }
 
 /**

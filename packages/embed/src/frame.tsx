@@ -1,5 +1,6 @@
 import type { HistoryHost } from "@graview/core/history";
-import { assetSrc, faviconHref, type Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type KeptViews, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal, type SignIn, type SubscriptionStore, type DismissalStore } from "@graview/core";
+import type { DisplayOptionsHost } from "@graview/core";
+import { assetSrc, faviconHref, type Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type KeptViews, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal, type SignIn, type ViewerState, type SubscriptionStore, type DismissalStore } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
 import { AppBar, appKeyOf, barPlaceAt, barPlaces, FirstLookDoor, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useThemeColor, useViewportHeight, type AppMenuRow, type BarAction, type BarFaces, type BarFind, type BarGo, type BarScheme, type BarShare, type BarStatus, type FirstLook, type HostAction, type NoticeBoard, type NoticeReport, type NoticeReporting } from "@graview/primitives/frame";
 import { layerViews, useGraph, useTidiedViews, useGraview, useTheKeyboardLandsSomewhere, type AwaySummary, type ErrorReport, type FieldTyping, type KeepLensHost, type ProposeChangeHost, type ComposeChangeHost, type DraftChangeHost, type MenuSectionSource, type OnExport, type HostNotification, type ReactViewRegistry, type ReaderMemory, type Scheme, type WorkflowRuns } from "@graview/react/provider";
@@ -370,6 +371,8 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    * says what would change without drawing it.
    */
   readonly onDraftChange?: DraftChangeHost;
+  /** "Other ways to show this": further options the host hands in, what it remembers being chosen, and where it hears what was kept (`DisplayOptionsHost`). */
+  readonly displayOptions?: DisplayOptionsHost;
   /**
    * THE AI THE SEAT MAY USE, decided by the host and never by a reader:
    * `{ complete }` (the host's model: prompt in, text out) for open
@@ -386,6 +389,13 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    * says this host takes no files.
    */
   readonly files?: HostFiles;
+  /**
+   * WHERE WHAT A WORKER VIEW KEEPS FOR ITS VIEWER GOES (`graview.mine`): the
+   * host's `{ read(view), write(view, key, value) }`, for the viewer it knows,
+   * the seat's or the profile's. Never in the graph, the log or an export.
+   * Unsaid, values are kept for the visit, in this page's memory.
+   */
+  readonly viewerState?: ViewerState;
   /**
    * WHERE THE HOST SERVES THE APP'S OWN IMAGES (Roadmap
    * f-brand-marks-under-app-base): `assetsAt(path)` for a path under
@@ -799,8 +809,10 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
     onProposeChange: props.onProposeChange,
     composeChange: props.composeChange,
     onDraftChange: props.onDraftChange,
+    displayOptions: props.displayOptions,
     ai: props.ai,
     files: props.files,
+    viewerState: props.viewerState,
     assetsAt: props.assetsAt,
     resolveApp: props.resolveApp,
     history: props.history,
@@ -925,9 +937,15 @@ export interface HostBar {
 /** What the host gave on the bar when it mounted. */
 export const hostBarOf = (options: Pick<FrameOptions, "appMenu" | "share" | "status" | "schemeChoice" | "notifications">): HostBar => ({ appMenu: options.appMenu, share: options.share, status: options.status, schemeChoice: options.schemeChoice, notifications: options.notifications });
 
-/** The bar's host settings as the frame's props: what is unset is left out, never set to undefined. */
+/**
+ * The bar's host settings as the frame's props. Every one is said, an unset
+ * one as undefined: these are spread over the options the host mounted with,
+ * so one left out would leave the mounted value standing, and a host's
+ * `setSchemeChoice(undefined)` (or `setShare`, `setStatus`, …) could not take
+ * back what it handed at mount.
+ */
 export function hostBarProps(bar: HostBar): Pick<FrameOptions, "appMenu" | "share" | "status" | "schemeChoice" | "notifications"> {
-  return { ...(bar.appMenu ? { appMenu: bar.appMenu } : {}), ...(bar.share ? { share: bar.share } : {}), ...(bar.status ? { status: bar.status } : {}), ...(bar.schemeChoice ? { schemeChoice: bar.schemeChoice } : {}), ...(bar.notifications ? { notifications: bar.notifications } : {}) };
+  return { appMenu: bar.appMenu, share: bar.share, status: bar.status, schemeChoice: bar.schemeChoice, notifications: bar.notifications };
 }
 
 /** The level a page's own title is said at: one below the app's name on the bar, or 2 when the host's own heading says the name (FR-131). */

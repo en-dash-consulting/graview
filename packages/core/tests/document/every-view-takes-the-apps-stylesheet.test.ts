@@ -72,8 +72,8 @@ describe("set-brand", () => {
     const outcome = editDocument(enDash, [{ op: "set-brand", views: { css: THEME, motion: "fade" } }]);
     if (!outcome.ok) throw new Error(JSON.stringify(outcome.findings));
     expect(outcome.document.brand?.views).toEqual({ css: THEME, motion: "fade" });
-    expect(outcome.said).toEqual(["Every view is drawn with the app's own stylesheet before its own.", "A view fades when the record it shows changes."]);
-    expect(diffDocuments(enDash, outcome.document).sentences).toEqual(["Every view is drawn with the app's own stylesheet before its own.", "A view fades when the record it shows changes."]);
+    expect(outcome.said).toEqual(["Every view is drawn with the app's own stylesheet, whose rules win over its own.", "A view fades when the record it shows changes."]);
+    expect(diffDocuments(enDash, outcome.document).sentences).toEqual(["Every view is drawn with the app's own stylesheet, whose rules win over its own.", "A view fades when the record it shows changes."]);
   });
 
   it("changes one part and keeps the other, and says only what changed", () => {

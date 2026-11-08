@@ -1,4 +1,4 @@
-import { isoToday, localeFor, timeZoneFor, type AnySchema, type FileKind, type Principal, type Store } from "@graview/core";
+import { isSystem, isoToday, localeFor, meOf, profileOf, timeZoneFor, type AnySchema, type FileKind, type Principal, type Store } from "@graview/core";
 import { fileFieldKind } from "./marks.js";
 import type { GuestAct, GuestEdge, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
 import type { GuestPictures } from "./pictures.js";
@@ -33,14 +33,19 @@ import { choicesOf, plainNode, readAcross, type GuestViewInput } from "./session
  *                the host's full-screen viewer (`data-lightbox`, media.ts)
  *   bleed        true: on a phone the pages face draws it edge to edge —
  *                the page's 20px side gutter taken back for it, the
- *                safe areas kept — and at a desk the column's width
+ *                safe areas kept — and at a desk the column's width;
+ *                "full": the page's whole width at every width, starting
+ *                right under the bar where the page opens on it
  *   gestures     true: the host forwards a wheel, a drag and a pinch over
  *                what it listens on (`graview.on("wheel" | "drag" |
  *                "pinch", …)`), once a frame, and takes a wheel from the
  *                page only there (gestures.ts)
- *   heading      "own": a place's view that draws its own heading — its
- *                place on Pages says the title to a screen reader only,
- *                and no count over it
+ *   heading      "own": a view that draws its own heading — a place's,
+ *                whose place on Pages says the title to a screen reader
+ *                only, and no count over it; or a view of one record that
+ *                replaces its page, under which the record's page draws no
+ *                heading of its own and says the record's name to a
+ *                screen reader only
  *   flows        false: a fixed canvas (a map, a chart) keeps the place's
  *                frame on Pages; left out, its place flows with the page
  *   scene        { maxHeight }: the tallest its preview on the Scene is
@@ -129,15 +134,30 @@ export interface WorkerViewManifest {
    * width, as any view is. Left out, the view is drawn inside the gutter,
    * and what it draws past its box is clipped there, a negative margin
    * included.
+   *
+   * ACROSS THE WHOLE PAGE AT EVERY WIDTH: `"full"` (Roadmap
+   * f-views-bleed-full-width). The view's box is the page's whole width —
+   * the window's, less the safe areas — on a desk and a tablet as on a
+   * phone, so a full-bleed editorial home is not a card boxed in the
+   * column. Where the page opens on the view (the home's, a place's that
+   * says `heading: "own"`), its first band starts right under the bar, with
+   * no top gutter; on a record's page it spans under the record's heading.
    */
-  readonly bleed?: boolean;
+  readonly bleed?: boolean | "full";
   /**
    * WHO SAYS ITS TITLE (Roadmap f-place-header-repeats-view-title). Left
    * out, a titled view's place on Pages says its title and how much it is
    * over above the view. `"own"` is a view that draws its own heading: the
    * place keeps its title for a screen reader and the keyboard, draws
-   * neither it nor the count, and the way to the kind's list stays. Only
-   * for a view that is a place.
+   * neither it nor the count, and the way to the kind's list stays. On a
+   * view of one record that replaces its page (`replaces: "page"`, Roadmap
+   * f-replacing-view-own-heading), the record's page draws none of its
+   * head over the view — the name, the line its kind's `describe` says,
+   * "In the scene", "Seen in" — and says the name to a screen reader and
+   * the keyboard only; the trail stays. `replaces: "page"` does not imply
+   * it: a view that draws no title of its own would leave its page with
+   * none a person can see. Only for a view that is a place, or one of one
+   * record that replaces its page.
    */
   readonly heading?: "own";
   /**
@@ -267,8 +287,8 @@ export function checkManifest<S extends AnySchema>(manifest: WorkerViewManifest,
   if (manifest.replaces !== undefined && manifest.replaces !== "page") findings.push(`The view's replaces is "${String(manifest.replaces)}": the one thing a view replaces is "page", or leave it out to draw the view above the record's own fields.`);
   else if (manifest.replaces === "page" && manifest.attach === "home") findings.push('The home\'s view is the home already: replaces "page" is for a view of a kind, of one record (its page) or of many (its list).');
   if (manifest.gestures !== undefined && typeof manifest.gestures !== "boolean") findings.push(`The view's gestures is "${String(manifest.gestures)}": it is true, or left out.`);
-  if (manifest.bleed !== undefined && typeof manifest.bleed !== "boolean") findings.push(`The view's bleed is "${String(manifest.bleed)}": it is true, or left out.`);
-  if (manifest.heading !== undefined && (manifest.heading !== "own" || manifest.attach === "home" || manifest.cardinality !== "many" || manifest.title === undefined)) findings.push(`The view's heading is "${String(manifest.heading)}": it is "own" on a view that is a place (a title, cardinality many), or left out.`);
+  if (manifest.bleed !== undefined && typeof manifest.bleed !== "boolean" && manifest.bleed !== "full") findings.push(`The view's bleed is "${String(manifest.bleed)}": it is true, "full", or left out.`);
+  if (manifest.heading !== undefined && (manifest.heading !== "own" || manifest.attach === "home" || (manifest.cardinality === "many" ? manifest.title === undefined : manifest.replaces !== "page"))) findings.push(`The view's heading is "${String(manifest.heading)}": it is "own" on a view that is a place (a title, cardinality many) or on a view of one record that replaces its page (replaces "page"), or left out.`);
   if (manifest.flows !== undefined && typeof manifest.flows !== "boolean") findings.push(`The view's flows is "${String(manifest.flows)}": it is false for a view that keeps its place's frame, or left out.`);
   else if (manifest.flows === false && (manifest.attach === "home" || manifest.cardinality !== "many" || manifest.title === undefined)) findings.push("Only a view that is a place keeps a frame: flows false needs a title and cardinality many on a kind.");
   findings.push(...sceneProblems(manifest.scene));
@@ -317,6 +337,59 @@ export function unreadEdgesSentence<S extends AnySchema>(store: Pick<Store<S>, "
     edges.map((edge) => `"${edge}"`),
     "and",
   )} to its manifest's reads.edges.`;
+}
+
+/**
+ * THE RELATIONS FROM A VIEW'S OWN KIND BACK TO IT THAT IT READS (Roadmap
+ * f-view-authoring-friction-2026-11): a rock's page that reads `becomes`
+ * (rock → rock) is handed the rocks linked to its rock by it, though it
+ * never listed `rock` in `reads.kinds` — the view's own kind is read across
+ * a relation that comes back to it. Only on a view of one record: a view of
+ * many already holds every member it is handed, and is never handed more of
+ * its own kind than the face gave it. None where `reads.kinds` names the
+ * kind, which hands every record of it.
+ */
+export function ownKindRelations<S extends AnySchema>(store: Pick<Store<S>, "schema">, manifest: Pick<WorkerViewManifest, "attach" | "cardinality" | "reads">): readonly string[] {
+  const kind = manifest.attach;
+  if (kind === "home" || manifest.cardinality !== "one" || (manifest.reads?.kinds ?? []).includes(kind)) return [];
+  return (manifest.reads?.edges ?? []).filter((name) => {
+    const edge = store.schema.edge(name);
+    return edge !== undefined && edge.from.includes(kind) && edge.to !== "*" && edge.to.includes(kind);
+  });
+}
+
+/**
+ * THE RELATIONS A VIEW READS AND IS NEVER HANDED (Roadmap
+ * f-view-authoring-friction-2026-11): a relation in `reads.edges` with an
+ * end no kind the view is handed is on — neither its own nor one in
+ * `reads.kinds` — so no link of it ever reaches the view, and nothing said
+ * why its links were missing. Each with the kinds that would hand it; none,
+ * where it goes to any kind (`to: "*"`) and a view of one is handed only its
+ * own record, since which kinds it links to is the author's to say.
+ */
+export function edgesReadWithoutTheirKinds<S extends AnySchema>(store: Pick<Store<S>, "schema">, manifest: Pick<WorkerViewManifest, "attach" | "cardinality" | "reads">): readonly { readonly edge: string; readonly kinds: readonly string[] }[] {
+  const handed = new Set([...(manifest.attach === "home" ? [] : [manifest.attach]), ...(manifest.reads?.kinds ?? [])]);
+  const out: { edge: string; kinds: string[] }[] = [];
+  for (const name of manifest.reads?.edges ?? []) {
+    const edge = store.schema.edge(name);
+    if (!edge) continue;
+    const from = edge.from.some((kind) => handed.has(kind)) ? [] : edge.from;
+    const to = edge.to === "*" || edge.to.some((kind) => handed.has(kind)) ? [] : edge.to;
+    const kinds = [...new Set([...from, ...to])];
+    if (kinds.length > 0) out.push({ edge: name, kinds });
+    else if (edge.to === "*" && manifest.attach !== "home" && manifest.cardinality === "one" && (manifest.reads?.kinds ?? []).length === 0) out.push({ edge: name, kinds: [] });
+  }
+  return out;
+}
+
+/** Each relation a view reads and is never handed, said with what to add to `reads.kinds`; empty when every one can reach it. */
+export function edgesReadWithoutTheirKindsSaid<S extends AnySchema>(store: Pick<Store<S>, "schema">, manifest: Pick<WorkerViewManifest, "name" | "attach" | "cardinality" | "reads">): readonly string[] {
+  return edgesReadWithoutTheirKinds(store, manifest).map(({ edge, kinds }) => {
+    const info = store.schema.edge(edge)!;
+    const ends = `${info.from.join(" or ")} to ${info.to === "*" ? "any kind" : info.to.join(" or ")}`;
+    if (kinds.length === 0) return `"${manifest.name}" reads the relation "${edge}", from ${ends}, and is handed no other kind, so no link of it reaches the view: name the kinds it links to in its manifest's reads.kinds.`;
+    return `"${manifest.name}" reads the relation "${edge}", from ${ends}, and is handed no ${kinds.join(" or ")}, so no link of it reaches the view: add ${kinds.map((kind) => `"${kind}"`).join(" or ")} to its manifest's reads.kinds.`;
+  });
 }
 
 export interface WorkerViewPropsInput {
@@ -369,10 +442,20 @@ export function workerViewProps<S extends AnySchema>(store: Store<S>, principal:
         : graph.nodesOfKind(attached as never)
       : [];
   /* What it reads across kinds (session.ts's `readAcross`, the frame guest's rule too): a view of many never reads more of its own kind than the face handed it. */
-  const ownIds = new Set([...own, ...members].map((one) => one.id));
+  /* Its own kind across a relation back to it (`ownKindRelations`): the records of its kind linked to its record by one it reads, as the viewer sees them. */
+  const record = own[0];
+  const kin = record
+    ? ownKindRelations(store, manifest).flatMap((edge) =>
+        [...graph.outEdges(record.id, edge).map((one) => one.to), ...graph.inEdges(record.id, edge).map((one) => one.from)].flatMap((id) => {
+          const found = id === record.id ? undefined : graph.getNode(id);
+          return found && found.kind === attached ? [found] : [];
+        }),
+      )
+    : [];
+  const ownIds = new Set([...own, ...members, ...kin].map((one) => one.id));
   const read = readAcross(graph, ownIds, { kinds: (manifest.reads?.kinds ?? []).filter((kind) => kind !== attached || manifest.cardinality === "one"), edges: manifest.reads?.edges ?? [] });
   const listed = new Map<string, unknown>();
-  for (const one of [...members, ...(read.nodes as typeof members)]) if (!own.some((mine) => mine.id === one.id)) listed.set(one.id, one);
+  for (const one of [...members, ...kin, ...(read.nodes as typeof members)]) if (!own.some((mine) => mine.id === one.id)) listed.set(one.id, one);
   const shown = new Set([...own.map((one) => one.id), ...listed.keys()]);
   const edges: GuestEdge[] = [...read.edges];
   const declared = new Set(manifestActs(manifest).map((one) => one.act));
@@ -394,6 +477,13 @@ export function workerViewProps<S extends AnySchema>(store: Store<S>, principal:
    */
   const computed = given.computed;
   const plain = (one: unknown) => (computed ? { ...plainNode(store, one), ...computed(graph, one) } : plainNode(store, one));
+  /* Who is looking, as `$me` reads them: the profile's person, known by its id before its first act makes it; else the seat's own record, in its sight. */
+  const profile = profileOf(principal);
+  const myId = meOf(principal);
+  const myRecord = !isSystem(principal) && myId !== undefined ? graph.getNode(myId) : undefined;
+  const myKind = myRecord && (store.schema.tryDefinition(myRecord.kind) as { people?: boolean } | undefined)?.people ? myRecord : undefined;
+  const hasPeople = () => store.schema.definitions.some((definition) => (definition as { people?: boolean }).people);
+  const me = profile ? { ...(hasPeople() ? { id: myId! } : {}), name: profile.name } : myKind ? { id: myKind.id, name: plainNode(store, myKind).label ?? myKind.id } : undefined;
   return {
     view: manifest.name,
     ...(own[0] ? { node: plain(own[0]) } : {}),
@@ -407,6 +497,7 @@ export function workerViewProps<S extends AnySchema>(store: Store<S>, principal:
     ...(input.implicated ? { implicated: visible(input.implicated) } : {}),
     ...(input.flagged ? { flagged: visible(input.flagged) } : {}),
     acts,
+    ...(me ? { me } : {}),
     ...(given.theme ? { theme: given.theme } : {}),
     // The locale and the clock every other surface says a day and a time in (Roadmap f-app-time-zone).
     locale: localeFor(),

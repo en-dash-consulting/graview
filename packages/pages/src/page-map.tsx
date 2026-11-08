@@ -1,6 +1,6 @@
 import { RelationMark } from "@graview/primitives/pages";
 import { humanizeField, labelOf, type AnySchema, type Store } from "@graview/core";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { kindMap, type KindRelation } from "./facts.js";
 import { useGraviewIfAny } from "@graview/react/provider";
 import { pluralSlug, recordPath } from "./registry.js";

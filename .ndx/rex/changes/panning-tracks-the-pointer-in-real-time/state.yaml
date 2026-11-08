@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "17b4fdae-6c99-417d-933f-398c6c6eda2a":
+    status: "completed"
+    startedAt: "2026-09-01T02:06:22.743Z"
+    completedAt: "2026-09-01T02:06:22.743Z"
+    endedAt: "2026-09-01T02:06:22.743Z"
+    resolutionType: "code-change"
+    resolutionDetail: "useAnimatedLayout is disabled while the drag gesture is active (scene.tsx: enabled = animate && !dragging), so pan and card drags track the pointer 1:1; the tween resumes on release. pnpm moving 10/10."
+    appliedAt: "2026-09-01T02:06:22.743Z"

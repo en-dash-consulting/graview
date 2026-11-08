@@ -26,7 +26,7 @@ import { Suspense, useCallback, useRef, useState, type ComponentType } from "rea
  * each one is in the page is the framework's business, not the host's.
  *
  * - `faces` — the app menu, which holds the scene and the pages
- * - `problems` — the dot that says whether everything is in order, and counts what is not
+ * - `problems` — the dot that says everything is in order, or the bell, which says what is not
  * - `activity` — the inbox: what has happened, and the way to take it back
  * - `ask` — the quick ask (⌘K), where the app is asked in words; pointed at beside Find, and only where a quick ask is drawn
  * - `find` — Find

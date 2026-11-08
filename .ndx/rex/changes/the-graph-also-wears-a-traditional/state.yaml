@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "dd174e35-ab9e-4e6a-9c20-83d7ab6c77a3":
+    status: "completed"
+    startedAt: "2026-09-01T07:01:15.278Z"
+    completedAt: "2026-09-01T07:01:15.278Z"
+    endedAt: "2026-09-01T07:01:15.278Z"
+    resolutionType: "code-change"
+    resolutionDetail: "@graview/pages ships the routed face: page registry mirroring the view registry, default home/list/record/problems/shell, recordFacts parity with the spatial derivations, DerivedForm over new core formFields (objects, discriminated unions, arrays, node pickers), todo mounts both faces from one declaration with cross-links, plural-slug-collision check, phone-width harness (pnpm pages), survey photographs the page face, smoke-install exercises the package. 541 tests + 26/26 audit + full sweep green."
+    appliedAt: "2026-09-01T07:01:15.278Z"

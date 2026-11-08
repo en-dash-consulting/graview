@@ -74,6 +74,7 @@ export function stackShapeProblem(value: string): string | null {
   if (/url\(|@import|[;{}<>\\]|\/\*|[\u0000-\u001f\u007f]/i.test(value)) return "it is not a list of font names; a document names a face, never where one comes from";
   for (const part of value.split(",")) {
     const family = part.trim();
+    if (/^(?:"\s|'\s)|\s["']$|\s\s/.test(family)) return `${family} has whitespace in its name other than single spaces between words`;
     if (/^"[^"']*"$/.test(family) || /^'[^"']*'$/.test(family)) continue;
     if (/["']/.test(family)) return `${family} is not quoted in one pair; write a face as Georgia or "Times New Roman"`;
   }

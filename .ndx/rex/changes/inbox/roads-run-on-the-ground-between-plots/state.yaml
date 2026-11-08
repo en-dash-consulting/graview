@@ -1,0 +1,13 @@
+schema: "rex/v2"
+items:
+  "1579a75f-16af-4578-ab80-f659c2dd8684":
+    status: "completed"
+    startedAt: "2026-09-20T05:10:59.235Z"
+    completedAt: "2026-09-20T05:10:59.235Z"
+    endedAt: "2026-09-20T05:10:59.235Z"
+    resolutionType: "code-change"
+    resolutionDetail: "One road per joined pair along the gutters between blocks, kerb to kerb; lines in the air only when stressed, chosen or live."
+    appliedAt: "2026-09-20T05:10:59.235Z"
+    needsPlacement: true
+    lastModified: "2026-09-20T05:10:59.248Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

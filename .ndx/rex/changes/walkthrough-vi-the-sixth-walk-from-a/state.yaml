@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "95371d9b-9fda-4f0c-940f-545b6342d327":
+    status: "completed"
+    startedAt: "2026-09-30T21:15:43.000Z"
+    completedAt: "2026-10-01T03:18:09.000Z"
+    endedAt: "2026-10-01T03:18:09.000Z"
+    resolutionType: "acknowledgment"
+    resolutionDetail: "The sixth walk was walked in full by a fresh agent in a car dealership domain (../walk6: vehicles with VIN, trim, mileage, price and condition, the lot, salespeople, customers, test drives, deals by stage, trade-ins, service appointments; seeded at a few hundred vehicles) and added 29 findings, W-124 to W-152, each fixed in a framework package with a criterion. The walk was cut off twice (a network error in stage A, a stalled stream after its last harness chain) and resumed; the reviewer finished it. In review: W-150's fix left a scroll region of the embed's own name as a second region of that name, failing verify-site's everyViewportIsClean on axe landmark-unique — it now becomes a named group, with a second test case verified failing without it. verify-site's theKitRedressesTheLiveGarden also failed, and on origin/main before this walk too: since ae188cc8 lines are not drawn while the scene moves, a chapter arrives with a half-second transition, and the harness read the line in that gap; it now waits for a path that has held for 300 ms. lines-check failed once on a rota page.goto timeout and held on its own rerun. Final: typecheck, build and 1662 tests pass; every harness in pnpm verify holds; verify-site holds. Noticed and not fixed: a chapter's lines show for one frame, vanish for the arrival transition and come back. The log did not stay still; the criterion carries to the seventh walk."
+    appliedAt: "2026-10-01T03:18:09.000Z"
+    lastModified: "2026-10-01T03:18:09.000Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

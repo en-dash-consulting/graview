@@ -51,7 +51,7 @@ import { computedOf, validateComputed } from "./computed.js";
 import type { TemplatePart } from "./template.js";
 import { parseTemplate, templateBraces, TemplateError } from "./template-parse.js";
 import { validateViews, VIEW_SLOTS } from "./views.js";
-import { brandFindings, emojiIconSentence, groundWords, splashSentence, subtitleSentence, viewsCssSentence, viewsMotionSentence } from "./brand-check.js";
+import { brandFindings, emojiIconSentence, groundWords, splashSentence, subtitleSentence, viewsCssSentence, viewsFontsSentence, viewsMotionSentence } from "./brand-check.js";
 import { darkLogoSentence, logoParts } from "./logo.js";
 import { emojiOf } from "../theme/marks.js";
 import { canonicalize } from "./canonical.js";
@@ -265,10 +265,17 @@ function buildShapes(): Record<EditOp, z.ZodType> {
         subtitle: z.union([z.boolean(), z.null()]).optional(),
         // The opening screen (Roadmap f-splash-in-document), whole; null for Graview's own.
         splash: z.union([z.object({ style: z.string(), image: z.string().min(1).optional(), title: z.string().min(1).max(80).optional(), kicker: z.string().min(1).max(80).optional(), shader: z.string().min(1).max(40).optional(), scheme: z.enum(["light", "dark", "device"]).optional() }).strict(), z.null()]).optional(),
-        // What every worker view inherits (Roadmap f-app-wide-view-theme): a stylesheet drawn before each view's own (its length the sanitizer's to refuse, in `brandFindings`), and a fade between records; null clears either, or all of it.
+        // What every worker view inherits (Roadmap f-app-wide-view-theme): a stylesheet that wins over each view's own (its length the sanitizer's to refuse, in `brandFindings`), and a fade between records; null clears either, or all of it.
         views: z
           .union([
-            z.object({ css: z.union([z.string().min(1), z.null()]).optional(), motion: z.union([z.enum(["none", "fade"]), z.null()]).optional() }).strict(),
+            z
+              .object({
+                css: z.union([z.string().min(1), z.null()]).optional(),
+                motion: z.union([z.enum(["none", "fade"]), z.null()]).optional(),
+                // The faces it lends its views, whole (Roadmap f-view-authoring-friction-2026-11); judged by `brandFindings` (brand-views-font) as the stylesheet is.
+                fonts: z.union([z.array(z.object({ family: z.string().min(1), src: z.string().min(1), weight: z.union([z.number(), z.string()]).optional(), style: z.enum(["normal", "italic"]).optional() }).strict()), z.null()]).optional(),
+              })
+              .strict(),
             z.null(),
           ])
           .optional(),
@@ -328,6 +335,8 @@ function buildShapes(): Record<EditOp, z.ZodType> {
         sort: z.record(kindName, z.union([listSortShape, z.null()])).optional(),
         // How a kind's list opens grouped: `{ "request": { "by": "status", "order": [...], "closed": ["done"] } }` or a field; null opens it ungrouped.
         group: z.record(kindName, z.union([listGroupShape, z.null()])).optional(),
+        // The place a kind's list opens as, by a lens's title: `{ "task": "Tasks by status" }`; null opens it as a list again.
+        opens: z.record(kindName, z.union([lensTitle, z.null()])).optional(),
         // The scene's word as a chat or a tool written before 0.1.17 sends it (FR-132's key, RESPELLED as `scene`).
         overview: z.union([z.string().min(1).max(40), z.null()]).optional(),
       })
@@ -731,9 +740,17 @@ class Editor {
         ...(typeof e.favicon === "string" || isObject(e.favicon) ? { favicon: e.favicon } : {}),
         ...(isObject(e.typography) ? { typography: Object.fromEntries(Object.entries(e.typography).filter(([, v]) => typeof v === "string")) as Doc } : {}),
         // The stylesheet every view gets is judged as a page draws it (Roadmap f-app-wide-view-theme): an edit that would leave part of it undrawn is refused, saying which part.
-        ...(isObject(e.views) && typeof e.views["css"] === "string" ? { views: { css: e.views["css"] } } : {}),
+        // And each face it lends them, by the rule the view's host loads it by, so an edit saves nothing a check would refuse (Roadmap f-view-authoring-friction-2026-11).
+        // Stored faces too where it names typography, which may take the name of one already lent.
+        ...((): Doc => {
+          const css = isObject(e.views) && typeof e.views["css"] === "string" ? { css: e.views["css"] } : {};
+          const given = isObject(e.views) ? e.views["fonts"] : undefined;
+          const stored = isObject(e.typography) && given === undefined ? (this.doc.brand?.views as Doc | undefined)?.["fonts"] : undefined;
+          const fonts = Array.isArray(given) ? given : Array.isArray(stored) ? stored : undefined;
+          return Object.keys(css).length > 0 || fonts ? { views: { ...css, ...(fonts ? { fonts } : {}) } } : {};
+        })(),
       },
-      { at, ...(this.options.fonts ? { fonts: this.options.fonts } : {}) },
+      { at, ...(this.options.fonts ? { fonts: this.options.fonts } : {}), ...(isObject(this.doc.brand?.typography) ? { typography: this.doc.brand.typography as Record<string, unknown> } : {}) },
     );
     if (judged.length > 0) return void this.findings.push(...judged);
     if (e.accent === null) {
@@ -885,6 +902,7 @@ class Editor {
       const had: Record<string, unknown> = brand["views"] ?? {};
       if (had["css"] !== undefined || had["motion"] === undefined) this.said.push(viewsCssSentence(false));
       if (had["motion"] === "fade") this.said.push(viewsMotionSentence(undefined));
+      if (Array.isArray(had["fonts"]) && had["fonts"].length > 0) this.said.push(viewsFontsSentence(undefined));
       delete brand["views"];
     } else if (isObject(e.views)) {
       const into: Record<string, unknown> = { ...(brand["views"] ?? {}) };
@@ -897,6 +915,12 @@ class Editor {
         if (e.views["motion"] === "fade") into["motion"] = "fade";
         else delete into["motion"];
         this.said.push(viewsMotionSentence(e.views["motion"] === "fade" ? "fade" : undefined));
+      }
+      if (e.views["fonts"] !== undefined) {
+        const fonts = e.views["fonts"] as readonly { readonly family: string }[] | null;
+        if (fonts === null || fonts.length === 0) delete into["fonts"];
+        else into["fonts"] = fonts;
+        this.said.push(viewsFontsSentence(fonts ?? undefined));
       }
       if (Object.keys(into).length === 0) delete brand["views"];
       else brand["views"] = into;
@@ -1476,6 +1500,9 @@ class Editor {
       this.doc.pages.first = e.title;
       follows = "; the app still opens on it";
     }
+    // A kind's list that opens as it follows too, or a new title leaves the list opening as nothing.
+    const opener = retitled ? this.doc.pages?.lists?.[(was["on"] as string | undefined) ?? kindsBound(was)[0] ?? ""] : undefined;
+    if (opener && namesLens(opener["opens"], String(was["title"]))) opener["opens"] = e.title;
     // Drawn in the place of one kept off the lists, it is kept off them too: said, so a lens meant to be seen is shown.
     const stays = lens.hidden === true ? `; it stays off the bar and the page list, as "${String(was["title"])}" was, until set-lens-hidden with "hidden": false shows it` : "";
     this.said.push(retitled ? `The lens "${String(was["title"])}" is now "${e.title}"${where}${follows}${stays}.` : `The lens "${e.title}" changes${where}${stays}.`);
@@ -1697,7 +1724,7 @@ class Editor {
     // `overview` is the scene's word as 0.1.15 and 0.1.16 took it (FR-134): read as `scene`, which wins when both are said.
     const { overview, ...rest } = given;
     const e: Doc = rest.scene === undefined && overview !== undefined ? { ...rest, scene: overview } : rest;
-    if (e.order === undefined && e.hide === undefined && e.first === undefined && e.scene === undefined && e.pages === undefined && e.primary === undefined && e.filters === undefined && e.sort === undefined && e.group === undefined) return this.fail(i, "", 'arrange-pages says at least one of "order", "hide", "first", "primary", "scene", "pages", "filters", "sort" or "group"');
+    if (e.order === undefined && e.hide === undefined && e.first === undefined && e.scene === undefined && e.pages === undefined && e.primary === undefined && e.filters === undefined && e.sort === undefined && e.group === undefined && e.opens === undefined) return this.fail(i, "", 'arrange-pages says at least one of "order", "hide", "first", "primary", "scene", "pages", "filters", "sort", "group" or "opens"');
     // A list's order and grouping are judged as the checker judges them, each refusal its sentence.
     for (const part of ["sort", "group"] as const) {
       for (const [kind, spec] of Object.entries((e[part] ?? {}) as Record<string, unknown>)) {
@@ -1715,6 +1742,12 @@ class Editor {
       }
     }
     const titles = (this.doc.lenses ?? []).flatMap((lens: Doc) => (isObject(lens) && typeof lens["title"] === "string" ? [`"${lens["title"]}"`] : []));
+    for (const [kind, title] of Object.entries((e.opens ?? {}) as Record<string, string | null>)) {
+      if (!this.doc.kinds[kind]) return this.fail(i, `opens.${kind}`, `"${kind}" is not a kind this app has; it has ${Object.keys(this.doc.kinds).join(", ")}`);
+      if (title === null) continue;
+      const over = ((this.doc.lenses ?? []) as Doc[]).some((lens) => isObject(lens) && namesLens(title, String(lens["title"])) && (lens["on"] ?? kindsBound(lens)[0]) === kind);
+      if (!over) return this.fail(i, `opens.${kind}`, `"${title}" is not a place over ${pluralWords(this.doc, kind)}`, `name a lens over them (${titles.join(", ") || "none is declared"})`);
+    }
     const kinds = Object.keys(this.doc.kinds);
     // A host's view is named as `view:<its name>`; by its title or name too where the host says its views (`EditOptions.views`).
     const viewsSaid = this.viewsSaid();
@@ -1801,7 +1834,7 @@ class Editor {
       }
     }
     // Each kind's list keeps what this edit does not say: its filters, its order, its grouping.
-    const listOfKind = (kind: string, part: "filters" | "sort" | "group", value: unknown) => {
+    const listOfKind = (kind: string, part: "filters" | "sort" | "group" | "opens", value: unknown) => {
       const lists = (pages.lists ??= {});
       const list = (lists[kind] ??= {});
       if (value === null) delete list[part];
@@ -1825,6 +1858,10 @@ class Editor {
         if (spec === null) said.push(part === "sort" ? `the list of ${plural} opens in its own order again` : `the list of ${plural} opens ungrouped again`);
         else said.push(`the list of ${plural} opens ${kindListWords({ [part]: spec } as KindList, this.listKeyType(kind))[part]}`);
       }
+    }
+    for (const [kind, title] of Object.entries((e.opens ?? {}) as Record<string, string | null>)) {
+      listOfKind(kind, "opens", title);
+      said.push(title === null ? `the list of ${pluralWords(this.doc, kind)} opens as a list again` : `the list of ${pluralWords(this.doc, kind)} opens as "${title}"`);
     }
     if (Object.keys(pages).length === 0) delete this.doc.pages;
     this.said.push(`${capitalize(listOf(said))}.`);
@@ -3485,6 +3522,15 @@ class Editor {
       delete this.doc.pages.first;
       if (Object.keys(this.doc.pages).length === 0) delete this.doc.pages;
       said += " (the app opens at its home again)";
+    }
+    // A kind's list that opened as it opens as a list again.
+    const over = lens ? ((lens["on"] as string | undefined) ?? kindsBound(lens)[0]) : undefined;
+    const lists = this.doc.pages?.lists as Record<string, Doc> | undefined;
+    if (title && over && lists?.[over] && namesLens(lists[over]["opens"], title)) {
+      delete lists[over]["opens"];
+      if (Object.keys(lists[over]).length === 0) delete lists[over];
+      if (Object.keys(lists).length === 0) delete this.doc.pages.lists;
+      if (Object.keys(this.doc.pages).length === 0) delete this.doc.pages;
     }
     return said;
   }

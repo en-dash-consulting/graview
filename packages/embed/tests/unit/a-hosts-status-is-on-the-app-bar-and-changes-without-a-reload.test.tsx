@@ -58,6 +58,12 @@ describe("a host's status on the app bar (Roadmap f-bar-status-item)", () => {
       await act(async () => handle.setStatus(undefined));
       expect(status(host)).toBeNull();
     });
+    // What the host handed at mount is taken off too, not left standing under an undefined.
+    await opened(mount, { face: "pages", status: { label: "Only you", description: "Only you can open this app." } }, async (host, handle) => {
+      expect(status(host)?.textContent).toBe("Only you");
+      await act(async () => handle.setStatus(undefined));
+      expect(status(host)).toBeNull();
+    });
     await opened(mountPages as unknown as typeof mount, {}, async (host, handle) => {
       await act(async () => (handle as unknown as PagesEmbedHandle).setStatus({ label: "Workspace", description: "Everyone in the workspace can open this app." }));
       expect(status(host)?.textContent).toBe("Workspace");

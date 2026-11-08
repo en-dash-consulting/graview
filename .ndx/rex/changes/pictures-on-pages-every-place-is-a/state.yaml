@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "42de4f53-b0e9-44bc-a525-27f848ecadc7":
+    status: "completed"
+    startedAt: "2026-09-21T19:33:28.674Z"
+    completedAt: "2026-09-21T20:06:02.367Z"
+    endedAt: "2026-09-21T20:06:02.367Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Places index and per-lens pages with the provider under the routed face; nav, home and kind pages carry the pictures; three apps wired; harness and tests added."
+    appliedAt: "2026-09-21T20:06:02.367Z"
+    lastModified: "2026-09-21T20:06:02.378Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

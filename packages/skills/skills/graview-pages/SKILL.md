@@ -80,7 +80,7 @@ under its routes:
   travels to the record. A kind's own row (one × glyph) is each line of its
   list, and its own page view (one × full) heads its record. A script
   view that draws its own heading says `heading: "own"` in its manifest:
-  its place then draws nothing over it.
+  its place, or the page it replaces, draws nothing over it.
 - `/map` — `kindMap(store)`: every declared relation in its words with
   its live count, also a section on the home page. A kind's list says what
   it relates to, arranged in the shared words (`?sort=due:desc`,

@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "ae466023-42cc-4ac9-b818-961e2ff5a854":
+    status: "completed"
+    startedAt: "2026-09-01T13:04:35.173Z"
+    completedAt: "2026-09-01T13:04:35.173Z"
+    endedAt: "2026-09-01T13:04:35.173Z"
+    resolutionType: "code-change"
+    resolutionDetail: "withOverview(state, false) strips kind-card expansions on descent; overview stop keeps them so re-ascending reopens districts. Layout unit test added; 581 tests + full sweep green."
+    appliedAt: "2026-09-01T13:04:35.173Z"

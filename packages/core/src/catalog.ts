@@ -403,7 +403,7 @@ export function catalogOf<S extends AnySchema>(given: Store<S>, target: AiTarget
   for (const one of panelKinds) for (const panel of capped(panelsFor(one))) add(panel);
 
   // ── places ──
-  for (const place of capped((options.places ?? []).filter((one) => (one.kind === undefined ? target.on === "place" : visible.has(one.kind) && (target.on === "place" || one.kind === kind))))) {
+  for (const place of capped((options.places ?? []).filter((one) => !one.hidden && (one.kind === undefined ? target.on === "place" : visible.has(one.kind) && (target.on === "place" || one.kind === kind))))) {
     if (target.on === "lens" && place.as === target.place) continue;
     add({ type: "place", id: `place:${place.as}`, label: place.title, description: `Go to ${place.title}`, place: place.as });
   }

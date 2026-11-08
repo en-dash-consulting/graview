@@ -1,7 +1,7 @@
 import { withArticle } from "../schema/define-node.js";
 import { canonicalize } from "./canonical.js";
 import { darkLogoSentence, logoParts } from "./logo.js";
-import { emojiIconSentence, splashSentence, subtitleSentence, viewsCssSentence, viewsMotionSentence } from "./brand-check.js";
+import { emojiIconSentence, splashSentence, subtitleSentence, viewsCssSentence, viewsFontsSentence, viewsMotionSentence } from "./brand-check.js";
 import { emojiOf } from "../theme/marks.js";
 import { quoted, quotedAtTheEnd } from "./quote.js";
 import { narrows, rangeWords } from "./range.js";
@@ -255,6 +255,7 @@ function brandSentences(was: Brand, now: Brand, appName: string): string[] {
   if ((was.views?.css === undefined) !== (now.views?.css === undefined)) out.push(viewsCssSentence(now.views?.css !== undefined));
   else if (!same(was.views?.css, now.views?.css)) out.push("The stylesheet every view is drawn with changes.");
   if ((was.views?.motion === "fade") !== (now.views?.motion === "fade")) out.push(viewsMotionSentence(now.views?.motion));
+  if (JSON.stringify(was.views?.fonts ?? []) !== JSON.stringify(now.views?.fonts ?? [])) out.push(viewsFontsSentence(now.views?.fonts));
   if (!same(was.scheme ?? "auto", now.scheme ?? "auto")) out.push(now.scheme === "light" || now.scheme === "dark" ? `The app opens ${now.scheme} when the reader has not chosen.` : "The app follows the reader's system for light and dark.");
   return out;
 }
@@ -389,6 +390,7 @@ function pagesSentences(before: Arrangement, after: Arrangement, kinds: GraviewD
     const words = kindListWords(after?.lists?.[kind] ?? {}, (key) => (spec?.computed?.[key] !== undefined ? "number" : sortTypeOfDocumentField(spec?.fields?.[key]?.type)));
     if (!same(before?.lists?.[kind]?.sort, after?.lists?.[kind]?.sort)) out.push(words.sort ? `The ${kind} list opens ${words.sort}.` : `The ${kind} list opens in its own order again.`);
     if (!same(before?.lists?.[kind]?.group, after?.lists?.[kind]?.group)) out.push(words.group ? `The ${kind} list opens ${words.group}.` : `The ${kind} list opens ungrouped again.`);
+    if (!same(before?.lists?.[kind]?.opens, after?.lists?.[kind]?.opens)) out.push(after?.lists?.[kind]?.opens ? `The ${kind} list opens as "${after.lists[kind]!.opens}".` : `The ${kind} list opens as a list again.`);
     if ((before?.lists?.[kind]?.export === false) !== (after?.lists?.[kind]?.export === false)) out.push(after?.lists?.[kind]?.export === false ? `The ${kind} list offers Export CSV to nobody.` : `The ${kind} list offers Export CSV again.`);
   }
   if (out.length === 0) out.push("The app's pages change.");

@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "5adef2d6-e70e-456e-918d-ee8a6d96debe":
+    status: "completed"
+    startedAt: "2026-09-13T07:36:31.570Z"
+    completedAt: "2026-09-13T07:36:31.570Z"
+    endedAt: "2026-09-13T07:36:31.570Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Each app exports open() — its adapter, its own scope, its seat, its brand — and both its main.tsx and the launcher mount through it. An edit made on the desk survives a desk reload and is there at the app's own port in the same browser; two demos on one desk keep two stores because each names its own scope. Rota is on the desk too. The mount waits for the open rather than rendering the example first and jumping. verify-remember drives all four claims."
+    appliedAt: "2026-09-13T07:36:31.570Z"
+    lastModified: "2026-09-13T07:36:31.578Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

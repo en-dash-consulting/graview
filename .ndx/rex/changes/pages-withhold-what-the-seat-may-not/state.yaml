@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "ea21cf5f-1d51-400b-8d2d-b3ad85bf4ded":
+    status: "completed"
+    startedAt: "2026-09-10T14:59:42.879Z"
+    completedAt: "2026-09-10T14:59:42.879Z"
+    endedAt: "2026-09-10T14:59:42.879Z"
+    resolutionType: "code-change"
+    resolutionDetail: "packages/pages/src/pages.tsx list-page verdicts (a10c8d0); apps/seedbed/src/ui/design.tsx and garden-map.tsx, chapter 13 (d0f38ea)"
+    appliedAt: "2026-09-10T14:59:42.879Z"
+    lastModified: "2026-09-10T14:59:42.891Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

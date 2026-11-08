@@ -23,7 +23,7 @@ import { stepKindOf } from "../workflows/steps.js";
 import { declaredWorkflows, resolveWorkflow } from "../workflows/resolve.js";
 import { workflowWorldOfApp } from "../workflows/world.js";
 import { computedOf } from "../document/computed.js";
-import { placePath } from "../views/types.js";
+import { kindPath, placePath, placeSlug } from "../views/types.js";
 import { dayAsRead, DEFAULT_LOCALE, numberAsRead, timeAsRead } from "../days.js";
 import { formatMoney } from "../document/template.js";
 import { amountOf } from "../schema/amount-mark.js";
@@ -206,6 +206,12 @@ export function describeApp<S extends AnySchema>(
         }),
       )}.`,
     );
+  }
+  // What a kind's list opens as (`pages.lists.<kind>.opens`): so an agent can tell what its address shows.
+  for (const [kind, list] of Object.entries(app.pages?.lists ?? {})) {
+    if (list.opens === undefined || !lensesDeclared.drawn.some((lens) => lens.kinds.includes(kind) && lens.as === placeSlug(list.opens!))) continue;
+    const at = kindPath(app.schema as AnySchema, kind);
+    lines.push(`The list of ${pluralOf(app.schema, kind).toLowerCase()} at ${at} opens as "${list.opens}"; the list itself is at ${at}?drawn=built-in.`);
   }
   // A status board (FR-97) moves a card only by an act; say which, so nobody expects a drag the policy will not run.
   for (const lens of lensesDeclared.drawn.filter((one) => one.lens === "columns")) {

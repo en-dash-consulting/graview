@@ -1,11 +1,12 @@
 import { imageRefusedWords } from "./open-judge.js";
 import { keepClicked } from "./clicked.js";
 import { guestPlacesOf } from "./links-words.js";
-import type { AnySchema, FileValue, HostFiles, PagesArrangement, Principal, Store } from "@graview/core";
+import { actingAs, meOf, type AnySchema, type FileValue, type HostFiles, type PagesArrangement, type Principal, type Store, type ViewerState } from "@graview/core";
+import { createMine, keptForTheVisit, visitOf } from "./mine.js";
 import { storedFilesOf } from "./marks.js";
 import { retryingImport } from "@graview/core/retry";
 import type { GuestDomEvent, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
-import { checkManifest, readsComputed, workerViewProps, type ComputedOn, type WorkerViewManifest } from "./manifest.js";
+import { checkManifest, edgesReadWithoutTheirKindsSaid, readsComputed, workerViewProps, type ComputedOn, type WorkerViewManifest } from "./manifest.js";
 import type { OpenDrawing, ViewRefusal } from "./open-draw.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestStats, type GuestViewInput } from "./session.js";
 import { startWorker, type GuestWorkerSource, type StartedWorker } from "./worker-start.js";
@@ -40,6 +41,8 @@ const pressChunk = retryingImport(() => import("./press.js"));
 const picturesChunk = retryingImport(() => import("./pictures.js"));
 /* A record's video placed by a view, and the full-screen viewer (0.1.37), fetched with the first view that places one. */
 const mediaChunk = retryingImport(() => import("./media.js"));
+/* The faces the app lends its views, fetched with the first view a brand that lends any dresses. */
+const fontsChunk = retryingImport(() => import("./fonts.js"));
 /* Files dropped on what the view drew (FR-193), fetched with the first `data-drop` a view whose manifest accepts files draws. */
 const dropChunk = retryingImport(() => import("./drop.js"));
 /* A wheel, a drag and a pinch over what the view drew (0.1.42), fetched only for a view whose manifest says gestures and that listens for one. */
@@ -252,6 +255,14 @@ export interface MountWorkerViewOptions<S extends AnySchema> {
    */
   readonly files?: () => HostFiles | undefined;
   /**
+   * WHERE WHAT THE VIEW KEEPS FOR ITS VIEWER GOES (`graview.mine`): the
+   * host's, by the view's name. Without it, for the visit, in this page's
+   * memory.
+   */
+  readonly viewerState?: () => ViewerState | undefined;
+  /** Code proposed and not kept (FR-187): what it keeps lasts this drawing, whatever a host keeps and whatever this visit has kept. */
+  readonly draft?: boolean;
+  /**
    * THE VIEW'S CONTENT HEIGHT (Roadmap f-view-content-height): how tall
    * what it drew is, in CSS pixels, each time that changes — measured by
    * the host on the drawn root, never said by the view — and `undefined`
@@ -402,6 +413,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   let timing = 0;
   /* What the person typed into a field saved as it is typed and not yet saved (FR-191, press.ts): saved as the view goes. */
   let flushSaves = () => {};
+  /* This drawing has gone: what it asked the host to keep still lands. */
+  let letGoOfMine = () => {};
   /* A jump, what is in sight and a record's file (sections.ts); why a press was refused, beside it (refused-note.ts). */
   let sections: GuestSections | undefined;
   let sectionsAsked: Promise<GuestSections | undefined> | undefined;
@@ -411,6 +424,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   const stop = () => {
     flushSaves();
     flushSaves = () => {};
+    letGoOfMine();
     sections?.dispose();
     tally();
     session?.dispose();
@@ -469,6 +483,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     queueMicrotask(() => fail("manifest", findings.join(" ")));
     return handle();
   }
+  /* A relation it reads whose far kind it is never handed (Roadmap f-view-authoring-friction-2026-11): drawn, and said to the host, as `graview view check` says it. */
+  for (const said of edgesReadWithoutTheirKindsSaid(options.store, manifest)) queueMicrotask(() => options.onProblem?.(said));
   /* Its code is longer than it may be, or its own source loads something (FR-96): refused before it runs, with why. */
   const refusedCode = (code: WorkerViewCode): [WorkerViewFailure, string?] | undefined => {
     const bytes = "source" in code ? new TextEncoder().encode(code.source).length : "script" in code ? new TextEncoder().encode(code.script).length : 0;
@@ -498,10 +514,44 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
    * host in the region — never handed to the view — and dressed again on
    * every push, which is how a brand the host changes reaches it.
    */
+  let lent = "[[],null]";
+  let toldOfTheme = "";
+  let lending = 0;
+  let giveFontsBack: (() => void) | undefined;
   const dress = () => {
     const views = options.brand?.()?.views;
-    drawing?.theme(views?.css);
+    /* A stylesheet for its views that draws nothing at all is said once: the part of one the open kit leaves out is the checker's to say (brand-views-css). */
+    if (drawing && !drawing.theme(views?.css) && toldOfTheme !== views?.css) {
+      toldOfTheme = views?.css ?? "";
+      const said = "The app's stylesheet for its views draws nothing: the open kit leaves all of it out, so views are drawn without it. graview check says which part (brand-views-css).";
+      port?.postMessage({ type: "notice", text: said });
+      options.onProblem?.(said);
+    }
     drawing?.motion(views?.motion ?? "none");
+    /* The faces the app lends its views (Roadmap f-view-authoring-friction-2026-11), loaded into the page by the host as their brand changes (fonts.ts). */
+    const fonts = views?.fonts ?? [];
+    /* And as the brand's own stacks change, since a face may not take one of their names. */
+    const typography = options.brand?.()?.typography;
+    const lendingNow = JSON.stringify([fonts, typography ?? null]);
+    if (lendingNow === lent) return;
+    lent = lendingNow;
+    lending += 1;
+    const asked = lending;
+    if (fonts.length === 0) {
+      giveFontsBack?.();
+      giveFontsBack = undefined;
+      return;
+    }
+    void fontsChunk().then(({ loadViewFonts }) => {
+      if (asked !== lending) return;
+      /* The new ones first, so a face both brands lend is never let go between them. */
+      const before = giveFontsBack;
+      giveFontsBack = loadViewFonts(document, fonts, { ...(options.asset ? { asset: options.asset } : {}), ...(options.images ? { origins: options.images.origins } : {}), ...(typography ? { typography } : {}) }, (said) => {
+        port?.postMessage({ type: "notice", text: said });
+        options.onProblem?.(said);
+      });
+      before?.();
+    });
   };
   let pushed = "";
   const push = () => {
@@ -553,6 +603,9 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     media?.dispose();
     drops?.dispose();
     gestures?.dispose();
+    lending += 1;
+    giveFontsBack?.();
+    giveFontsBack = undefined;
   };
 
   let port: MessagePort | undefined;
@@ -932,6 +985,26 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   // The drawing did not arrive (the network away as it was drawn): the plain face says so, and it is asked for again as the view is drawn again (FR-139).
   () => fail("start", "the view's drawing could not be loaded"));
 
+  /*
+   * WHAT IT KEEPS FOR ITS VIEWER (`graview.mine`), read as the worker starts,
+   * so its first draw has it. By its registered name, the host's to say; a
+   * problem says no value. Never the graph's.
+   */
+  const hostState = options.draft ? undefined : options.viewerState?.();
+  /* A seat whose id reads as a person's has no `meOf`, and is still nobody else: it never falls to the key of a seat with no id. */
+  const viewer = meOf(options.principal) ?? actingAs(options.principal).id ?? options.principal.visitorKey ?? "";
+  const mine = createMine({
+    view: manifest.name,
+    viewer,
+    /* A draft's is its own, for as long as it is drawn: nothing the view it would replace keeps is its to read or write. */
+    state: hostState ?? (options.draft ? keptForTheVisit() : visitOf(options.store, viewer)),
+    onRefused: (sentence) => {
+      options.onProblem?.(sentence);
+      if (session) port?.postMessage({ type: "notice", text: sentence });
+    },
+    onLate: () => session?.push(),
+  });
+  letGoOfMine = () => mine.dispose();
   const begin = (source: GuestWorkerSource) => (started = startWorker(window, {
     source,
     name: manifest.name,
@@ -969,8 +1042,9 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
           }
           given.postMessage(message);
         },
+        mine,
         props: () => {
-          const props = workerViewProps(options.store, options.principal, { manifest, ...(options.input ? { input: options.input() } : {}), theme: theme(), places: guestPlacesOf(vocabulary()), ...(computed ? { computed } : {}) });
+          const props = { ...workerViewProps(options.store, options.principal, { manifest, ...(options.input ? { input: options.input() } : {}), theme: theme(), places: guestPlacesOf(vocabulary()), ...(computed ? { computed } : {}) }), mine: mine.values() };
           const was = shown;
           shown = new Set([...(props.node ? [props.node.id] : []), ...(props.nodes ?? []).map((node) => node.id)]);
           /* The record it shows changed (Roadmap f-app-wide-view-theme): under the brand's "fade", what is drawn goes before the new one comes. */
@@ -1030,9 +1104,10 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     },
   }));
   /* What the worker waits for before it starts: the pictures' host, and what works out computed values, where the view needs them. */
-  const waits = manifest.pictures !== undefined || readsComputed(options.store, manifest);
+  const waits = manifest.pictures !== undefined || readsComputed(options.store, manifest) || hostState !== undefined;
   const ready = (): Promise<unknown> =>
     Promise.all([
+      mine.ready,
       picturesReady.catch(() => Promise.reject(new Error("the view's pictures could not be loaded"))),
       computedReady.catch(() => Promise.reject(new Error("the view's computed values could not be worked out"))),
     ]);

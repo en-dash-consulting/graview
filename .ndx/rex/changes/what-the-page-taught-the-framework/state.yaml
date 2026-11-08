@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "ae535203-3dc4-4824-94e9-93157e388f0b":
+    status: "completed"
+    startedAt: "2026-09-10T14:59:44.280Z"
+    completedAt: "2026-09-10T14:59:44.280Z"
+    endedAt: "2026-09-10T14:59:44.280Z"
+    resolutionType: "code-change"
+    resolutionDetail: "board occupants[], coverage self-feeding, embed faceOf/hostScheme/mountWhenNear; commit 992ac22"
+    appliedAt: "2026-09-10T14:59:44.280Z"
+    lastModified: "2026-09-10T14:59:44.292Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

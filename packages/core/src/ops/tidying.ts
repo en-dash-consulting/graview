@@ -3,6 +3,7 @@ import type { Primitive } from "../graph/primitives.js";
 import type { MutationCall } from "../mutations/types.js";
 import { labelOf, pluralOf } from "../schema/define-node.js";
 import type { AnySchema } from "../schema/schema.js";
+import type { Refusal } from "../permissions/types.js";
 import type { Author, Operation } from "./types.js";
 
 /*
@@ -33,6 +34,38 @@ export function isAutomated(author: Pick<Author, "kind" | "automated"> | undefin
   return author?.automated === true && author.kind !== "human" && author.kind !== "rule";
 }
 
+/**
+ * WHETHER AN AUTHOR IS THE APP'S OWN TIDYING ACTOR: automated, and marked so
+ * (`Author.tidying`). What "Don't suggest this kind of thing" is said to, and
+ * all it is said to: a declared workflow, an importer and a host's triage are
+ * set going by somebody, who turns them off.
+ */
+export function isTidyingActor(author: Pick<Author, "kind" | "automated" | "tidying"> | undefined): boolean {
+  return isAutomated(author) && author?.tidying === true;
+}
+
+/**
+ * WHAT A LINEAGE KEY MEANS IS HELD TO THE OP IT IS ON. A log a store opens is
+ * not run back through `lineageOf`, and a build before these keys kept them as
+ * it keeps any it does not know, so a key means something only on the op it
+ * was made for. A stop: an undo that changed nothing, of the app's own actor's
+ * suggestion, or of one the log no longer holds.
+ */
+export function isStopOp(op: Pick<Operation, "lineage" | "undoes" | "mutation" | "primitives">, target: Pick<Operation, "suggests" | "author" | "lineage"> | undefined): boolean {
+  if (op.lineage?.stopsKind !== true || op.undoes === undefined || op.mutation !== null || op.primitives.length > 0) return false;
+  return target === undefined || (target.suggests !== undefined && isTidyingActor(target.author) && target.lineage?.proposedBy === undefined);
+}
+
+/**
+ * WHAT A HOST SAYS OF THE STOPS A PAGE'S LOG DOES NOT HOLD (`Store.stopsServed`):
+ * those this seat may lift, in words with their batch and kinds, and the kinds
+ * of what else is stopped that it holds a suggestion of, with no words.
+ */
+export interface ServedStops {
+  readonly stops: readonly { readonly batch: string; readonly words: string; readonly kinds: readonly string[] }[];
+  readonly kinds: readonly string[];
+}
+
 /** Whether a record, as read, carries the leave-alone mark. */
 export const leftAlone = (node: unknown): boolean => (node as Record<string, unknown> | undefined)?.[LEFT_ALONE] === true;
 
@@ -60,7 +93,7 @@ export interface ActMeanings {
         readonly derived?: { readonly act: string; readonly relation?: string };
         readonly connects?: readonly string[];
         readonly creates?: readonly unknown[];
-        readonly subject?: { readonly arg: string };
+        readonly subject?: { readonly arg: string; readonly kinds?: string | readonly string[] };
       }
     | undefined;
   readonly has: (id: string) => boolean;
@@ -75,6 +108,18 @@ export interface KeptDecline {
   readonly at: string;
   readonly author: Author;
   readonly undoes?: string;
+  /** A kind of thing stopped (`stopSuggesting`): what is left of it to list and to lift once its op is archived. */
+  readonly stop?: KeptStop;
+}
+
+/** What a checkpoint keeps of a stop, beside the decline it was. */
+export interface KeptStop {
+  /** The batch the stop landed in: what `store.undo` is asked to take back. */
+  readonly batch: string;
+  /** What it stopped, in the words it was stopped with. */
+  readonly words: string;
+  /** One call of each kind it stopped: what whoever lifts it is judged as, and what a seat is kept from by. */
+  readonly calls: readonly MutationCall[];
 }
 
 /** A decline: the op in the log that said it, or what a checkpoint kept of one archived since. */
@@ -93,6 +138,18 @@ export interface DeclinesHeld {
   declined?: (ops: readonly Operation[], calls: readonly MutationCall[], meanings: ActMeanings | undefined, kept: Readonly<Record<string, KeptDecline>> | undefined) => Decline | undefined;
   /** What a checkpoint keeps of a log's declines (`Epoch.declines`). */
   kept?: (ops: readonly Operation[], meanings: ActMeanings | undefined, kept: Readonly<Record<string, KeptDecline>> | undefined) => Record<string, KeptDecline>;
+  /** The stop that answers every one of these calls, or undefined (`stoppedIn`): what the app's own tidying actor is refused. */
+  stopped?: (ops: readonly Operation[], calls: readonly MutationCall[], meanings: ActMeanings | undefined, kept: Readonly<Record<string, KeptDecline>> | undefined) => Decline | undefined;
+  /** Why this seat may not stop what these suggestions' kinds are, in a sentence, or undefined when it may (`stopRefusal`). */
+  stopRefusal?: (store: object, targets: readonly Operation[], author: Author) => string | undefined;
+  /** A stop behind a checkpoint, lifted, when these batches are that one stop's (`undo` of a batch whose op has gone to the archive). */
+  lift?: (store: object, ids: readonly string[], options: object, author: Author) => object | undefined;
+  /** The same asked as `mayUndo` asks: undefined when these batches are no kept stop's, else who may. */
+  liftRefusal?: (store: object, ids: readonly string[], author: Author) => { readonly refusal?: Refusal } | undefined;
+  /** Whether a seat is told of a stop lifted behind a checkpoint, which the log cannot vouch for. */
+  liftTold?: (op: Operation, lens: never) => boolean;
+  /** What refuses taking these ops back because of a stop among them, or nothing. */
+  undoRefusal?: (store: object, ops: readonly Operation[], author: Author) => Refusal | undefined;
 }
 export const DECLINES: DeclinesHeld = ((globalThis as Record<symbol, DeclinesHeld | undefined>)[Symbol.for("@graview/core:declines")] ??= {});
 

@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "1da2b382-3ea1-4290-9c81-117625945244":
+    status: "completed"
+    startedAt: "2026-09-27T06:05:00.000Z"
+    completedAt: "2026-09-27T07:05:00.000Z"
+    endedAt: "2026-09-27T07:05:00.000Z"
+    resolutionType: "code-change"
+    resolutionDetail: "galleryOf lists titled places then a card per live kind without one; KindOnPage draws an app-written group view as-is, replaces the framework default with a contact sheet of one/summary views, and falls back to label chips with no registry. Scaffold main.tsx passes views() and settings; scaffold.test pins it. verify-pages chapterNine: 0 place cards, 4 kind cards, every frame drawn."
+    appliedAt: "2026-09-27T07:05:00.000Z"
+    lastModified: "2026-09-27T07:05:00.000Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

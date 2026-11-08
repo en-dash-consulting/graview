@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "88aa5fd4-5509-4a67-b18e-2969171b2358":
+    status: "completed"
+    startedAt: "2026-09-20T14:03:56.442Z"
+    completedAt: "2026-09-20T14:03:56.442Z"
+    endedAt: "2026-09-20T14:03:56.442Z"
+    resolutionType: "code-change"
+    resolutionDetail: "The rung is one setting in the profile (\"Answers come from\", four pills, key fields only when needed); the provider owns the choice; the chat's gear and pane are gone."
+    appliedAt: "2026-09-20T14:03:56.442Z"
+    lastModified: "2026-09-20T14:03:56.454Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

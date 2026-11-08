@@ -37,12 +37,13 @@ import {
   type WireRefusal,
   type Lineage,
   type SeatLens,
+  profileOf,
 } from "@graview/core";
 // What a seat is served keeps the fields its sight keeps (Roadmap f-field-sight): the protocol judges them.
 import "@graview/core/field-sight";
 import "@graview/core/publishing";
 // And a vote on a suggestion (Roadmap f-suggestion-votes): the op a vote keeps is made where the log is.
-import "@graview/core/tidying";
+import { servedStops, type ServedStops } from "@graview/core/tidying";
 import { argumentWords } from "@graview/core/words";
 import { cursorAt, seqAt, type Cursor } from "./cursor.js";
 import { bytesOf, conflictSentence, LIVE_WIRE, type Limit, type LimitAnswer, type LimitAsked, type LiveClientMessage, type LiveServerMessage } from "./live.js";
@@ -581,6 +582,13 @@ export function wireRefusalOf(store: Store<AnySchema>, error: unknown): WireRefu
 const forWhom = (author: Author): Pick<Presence, "onBehalfOf" | "onBehalfOfName"> =>
   author.onBehalfOf?.id ? { onBehalfOf: author.onBehalfOf.id, ...(author.onBehalfOf.name ? { onBehalfOfName: author.onBehalfOf.name } : {}) } : {};
 
+/** Who at the screen, as history says it: "Mia (Nick)", where the seat carries a profile. A name a client claimed that already says so is the account's it claimed, and not said twice. */
+function nameAtTheScreen(author: Author, account: string | undefined): string | undefined {
+  const profile = profileOf(author);
+  if (!profile) return account;
+  return !account || account.startsWith(`${profile.name} (`) ? (account ?? profile.name) : `${profile.name} (${account})`;
+}
+
 /**
  * A PRESENCE AS THE SERVER BUILDS IT. Keyed by the seat — a client cannot
  * claim to be somebody else — with only the session taken from what it
@@ -600,7 +608,7 @@ export function presenceFrom(told: Presence, seat: Principal, now: Date = new Da
   const session = seat.id ? after : (after.split(":").at(-1) ?? "");
   // Always the seat's own namespace: one with no id is `kind::session`, where no identified person stands.
   const key = participant ?? participantKey({ kind: seat.kind, ...(seat.id ? { id: seat.id } : {}), session });
-  const name = seat.name ?? claimedName;
+  const name = nameAtTheScreen(seat, seat.name ?? claimedName);
   return { ...said, participant: key, kind: seat.kind, ...(name ? { name } : {}), ...forWhom(seat), ...(caret ? { caret } : {}), at: now.toISOString() };
 }
 
@@ -635,7 +643,7 @@ export function visitorPresence(
   author: Author,
   options: { readonly session?: string; readonly stop?: string; readonly over?: string | null; readonly hue?: number; readonly now?: Date } = {},
 ): Presence {
-  const name = author.name ?? author.id;
+  const name = nameAtTheScreen(author, author.name ?? author.id);
   return {
     participant: participantKey({ kind: author.kind, ...(author.id ? { id: author.id } : {}), session: options.session ?? author.session ?? "visit" }),
     kind: author.kind,
@@ -794,7 +802,7 @@ export interface Wire<S extends AnySchema> {
    */
   behind(principal: Principal, seq: number): boolean;
   /** `{ servedThrough }` for a seat of an app that publishes, as a cursor (the position after the last op it is served); nothing otherwise. */
-  servedOf(principal: Principal): { servedThrough?: Cursor };
+  servedOf(principal: Principal, stops?: boolean): { servedThrough?: Cursor; stops?: ServedStops["stops"]; stoppedKinds?: ServedStops["kinds"] };
   /** The store as the seat sees it. */
   seenFor(principal: Principal): Store<S>;
   /** The store's log as the seat sees it: every op in place, withheld ones under an opaque batch. */
@@ -989,7 +997,15 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
       return shown(principal, store.log.opsFrom(Math.max(0, Math.floor(seq) + 1)).filter((op) => op.seq < served));
     },
     behind: (principal, seq) => Number.isFinite(seq) && (Math.floor(seq) + 1 < store.log.horizon || (Math.floor(seq) >= servedTo(principal) && servedTo(principal) < store.log.length)),
-    servedOf: (principal) => (store.publishing?.mode === "on-publish" ? { servedThrough: cursorAt(servedTo(principal) - 1) } : {}),
+    servedOf: (principal, stops = true) => {
+      // What this seat may be told of the stops standing, which the log it is sent may not hold (`servedStops`).
+      const stopped = stops ? servedStops(store, principal) : undefined;
+      return {
+        ...(store.publishing?.mode === "on-publish" ? { servedThrough: cursorAt(servedTo(principal) - 1) } : {}),
+        ...(stopped?.stops.length ? { stops: stopped.stops } : {}),
+        ...(stopped?.kinds.length ? { stoppedKinds: stopped.kinds } : {}),
+      };
+    },
     seenFor: (principal) => seenBy(store, principal),
     seenLog(principal) {
       const log = seenBy(store, principal).log.all();
@@ -1736,8 +1752,9 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
       const cursor = cursorAt(ops.at(-1)?.seq ?? seq);
       // A client the ops cannot catch up — behind the horizon, or past where it is now served — is told to take the state.
       // (The ops after the horizon still come, so a client that predates `reset` sees the gap and takes the state as it did.)
-      if (wire.behind(asked.seat, seq)) return reply(200, { ops: opsFor(asked.opFormat, ops, served), cursor, reset: true, ...wire.horizonOf(), ...wire.servedOf(asked.seat), ...answering(asked) });
-      return reply(200, { ops: opsFor(asked.opFormat, ops, served), cursor, ...wire.servedOf(asked.seat), ...answering(asked) });
+      if (wire.behind(asked.seat, seq)) return reply(200, { ops: opsFor(asked.opFormat, ops, served), cursor, reset: true, ...wire.horizonOf(), ...wire.servedOf(asked.seat, false), ...answering(asked) });
+      // Nothing new in the log, nothing new of its stops: a poll with no ops does not work them out.
+      return reply(200, { ops: opsFor(asked.opFormat, ops, served), cursor, ...wire.servedOf(asked.seat, ops.length > 0), ...answering(asked) });
     },
     declared(peers) {
       for (const peer of peers) {

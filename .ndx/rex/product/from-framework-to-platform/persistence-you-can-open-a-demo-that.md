@@ -1,0 +1,21 @@
+---
+id: "78e28762-ba91-4a45-abdd-0ff9aa43d2d2"
+type: "capability"
+title: "Persistence you can open: a demo that keeps its graph in JSON files or SQLite behind a small server, and the launcher shows it"
+slug: "persistence-you-can-open-a-demo-that"
+statement: "A Graview demo keeps its graph on a server, in readable JSON files by default or in SQLite, and the launcher names this server-side persistence and shows the data folder beside the picture."
+criteria: [{"id":"c1","text":"The graview serve command shall host an app's store behind HTTP with the op log as the wire."},{"id":"c2","text":"The server shall apply every op through the store under the seat's principal, so the policy judges it the same as in the browser."},{"id":"c3","text":"The server shall persist the graph through the file adapter by default, as a readable directory of snapshot.json, log.jsonl and meta.json."},{"id":"c4","text":"When the --sqlite flag is given, the server shall persist the graph through core's sqlite adapter with no other change."},{"id":"c5","text":"The remote adapter in ship shall open the store from the server, send every op and receive the ops of other browsers."},{"id":"c6","text":"When two browsers are open on the demo, each shall see the other's changes within a second."},{"id":"c7","text":"When a person undoes their own op, the remote adapter shall carry out the undo."},{"id":"c8","text":"When the server is stopped and started again, it shall serve the stored graph, history and version."},{"id":"c9","text":"When the app's version is bumped, the server shall migrate the stored graph once, recording the migration in the log."},{"id":"c10","text":"Rota shall keep its data as JSON in apps/rota/data out of the box."},{"id":"c11","text":"The launcher's capability list shall name server-side persistence with a stop that shows the data folder beside the picture."},{"id":"c12","text":"The scaffold shall default to the browser adapter."}]
+tags:
+  - "persistence"
+  - "sqlite"
+  - "file-adapter"
+  - "ship"
+  - "server"
+  - "sync"
+  - "rota"
+  - "launcher"
+source: "Nick, 2026-09-13: \"/ndx-capture one demo app should show data persistence with sqlite or even json files. not sure how well-baked that is, but it should've also been revealed because that'd be a strong talking point/capability that the launcher would show. so at least one demo app should be illustrating how that works\""
+priority: "high"
+---
+
+Two server-side adapters already exist and nothing shows them: @graview/core's sqlite adapter (better-sqlite3, graph_nodes and graph_edges and the op log) and @graview/ship's file adapter (a directory per scope with snapshot.json, log.jsonl — one operation per line a person can grep — and meta.json carrying the stored version). Every demo remembers only in the browser, so the strongest talking point the platform has for a self-hoster — "where is my data" answered with a folder you can open, or a database you can query — is invisible, and the launcher's "persistence adapter" capability is true by assertion. This feature makes one demo keep its graph on a server: `graview serve` (in @graview/ship, or a tiny server the demo carries) hosts an app's store behind HTTP — the op log as the wire, ops applied through the same store the browser has, the same policy judging every op with the seat's principal — persisting through the file adapter by default (readable JSON in a directory the demo names) and SQLite behind a flag; the browser side is a remote adapter in ship that opens the store from the server, sends every op, and receives the others' (two browsers open on the demo see each other's changes). Migrations run against the stored graph on the server on version bump, once, in the log. Rota is the demo: its data lives in apps/rota/data as JSON out of the box, `--sqlite` swaps the adapter with nothing else changing, and the launcher's capability list names it with a stop that shows the folder's contents beside the picture. Export and health (ship's exportBundle, assertBundle, health) are surfaced on the server so the talking point has a proof: restart the server, reload, the graph is there. Source: Nick, 2026-09-13: "one demo app should show data persistence with sqlite or even json files … that'd be a strong talking point/capability that the launcher would show".

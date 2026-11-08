@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "db4e121f-04f5-4967-b513-89a4e645977c":
+    status: "completed"
+    startedAt: "2026-09-28T21:03:18.256Z"
+    completedAt: "2026-09-28T21:03:18.256Z"
+    endedAt: "2026-09-28T21:03:18.256Z"
+    resolutionType: "code-change"
+    resolutionDetail: "packages/core/src/arrange.ts: arrangeable() (sorts/filters/groups from fields by zod type, edges from either end with description/inverse, lifecycle + standing as `is`, display.hide honoured, fieldRoles.order as natural sort), arrange() (query, conjunction filter, stable sort, groups with empty last / option order / date buckets), parseArrangement/formatArrangement (sort=key[:desc], filter=k:v,…, group=key[:bucket], q), admitArrangement (drops + names stale parts), arrangeAllows. Structural ArrangeGraph/ArrangeNode so concrete schemas fit. Test arranged-from-the-declaration.test.ts incl. property sweep over awkwardApp. Commit 9d5534b."
+    appliedAt: "2026-09-28T21:03:18.256Z"
+    lastModified: "2026-09-28T21:03:18.326Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

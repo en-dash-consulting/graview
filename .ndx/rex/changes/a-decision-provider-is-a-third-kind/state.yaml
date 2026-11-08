@@ -1,0 +1,12 @@
+schema: "rex/v2"
+items:
+  "a5636b6f-44d3-409c-9311-03e59ec9957f":
+    status: "completed"
+    startedAt: "2026-09-19T05:08:43.482Z"
+    completedAt: "2026-09-19T05:11:17.877Z"
+    endedAt: "2026-09-19T05:11:17.877Z"
+    resolutionType: "code-change"
+    resolutionDetail: "kind \"decision\" + providerCan + undecidableArguments; checker, describe, docs, Door updated; 10 tests; committed"
+    appliedAt: "2026-09-19T05:11:17.877Z"
+    lastModified: "2026-09-19T05:11:17.891Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"

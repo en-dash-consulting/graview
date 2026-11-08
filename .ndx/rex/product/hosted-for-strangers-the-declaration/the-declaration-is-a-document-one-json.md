@@ -1,0 +1,15 @@
+---
+id: "cdd910b9-7729-4f95-a821-3d59c35edb3b"
+type: "capability"
+title: "The declaration is a document: one JSON object compiles into the same app defineApp declares"
+slug: "the-declaration-is-a-document-one-json"
+statement: "A Graview Declaration Document is a single JSON object that compiles into the same GraviewApp that defineApp declares, so a host can accept it from a stranger and run it without running their code."
+criteria: [{"id":"c1","text":"When a document is compiled, compileDocument shall return a GraviewApp that checkApp, createToolRuntime, deriveAffordances, the workbench and the pages face accept with no other code."},{"id":"c2","text":"The graview CLI shall run check, serve and mcp from a declaration document through the --document <file> option without a TS entry."},{"id":"c3","text":"When an act is compiled from a document, the system shall schema-check it, policy-check it, make it undoable and offer it as a tool exactly as it does an act declared with defineMutation."},{"id":"c4","text":"If a document fails to parse or compile, the system shall report each failure as a check finding carrying a JSON path and a sentence."},{"id":"c5","text":"When toDocument is applied to a document-expressible TS app such as apps/todo, it shall produce a document that compiles to an app whose graview describe is identical, and it shall name each surface it cannot express as a finding."},{"id":"c6","text":"When two documents are equal in meaning, canonicalize shall produce the same bytes for both."},{"id":"c7","text":"The document path shall evaluate no string as code, using neither eval nor Function."}]
+tags:
+  - "graview-cloud"
+  - "FR-01"
+source: "Graview Cloud FR-01, 2026-10-02"
+priority: "critical"
+---
+
+WHAT IS THERE NOW: a declaration is a TS module carrying code in label/describe, Zod fields, mutation apply, invariant evaluate, migrations, views; loadApp import()s it; the studio's meta-graph snapshot is JSON and writtenBody synthesises create/connect/sever/write acts, but has no modules, sights, settings or rule judgements. MISSING: a document form a host can accept from a stranger and run without running their code. POSITION: @graview/core/document — the Graview Declaration Document (spec drafted at ../graview-cloud/docs/declaration-document.md): kinds with typed fields (string, text, number, integer, boolean, date, datetime, enum, list, url, email), label/describe templates with a closed formatter set, lifecycle, edges; acts as closed effects (create, set, connect, sever, remove) with shorthands, derived arguments and allowedWhen refusals; rules in the FR-07 language with repairs; policy, sees, modules, lenses, settings and brand as the data they already are (brand may be just an accent); migrations as ship steps only. parseDocument, compileDocument → GraviewApp, canonicalize + hash, toDocument(app) for a document-expressible TS app with a finding per surface that is not. The interim compiler in ../graview-cloud/packages/document is written on public APIs to be lifted here.

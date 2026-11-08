@@ -128,8 +128,8 @@ describe("a control the view drew itself and hears with graview.on(\"click\")", 
 describe("whatever has the keyboard", () => {
   it("shows a whole ring at least 2px wide, set off from it, in the app's accent, that a view's outline: none does not take away", () => {
     const rule = REGION_CSS.split("\n").find((line) => line.includes(":focus-visible"))!;
-    expect(rule).toMatch(/outline: max\(2px, var\(--graview-focus-width, 2px\)\) solid var\(--graview-focus-color, var\(--graview-accent, Highlight\)\) !important/);
-    expect(rule).toMatch(/outline-offset: var\(--graview-focus-offset, 2px\) !important/);
+    expect(rule).toMatch(/outline-style: solid !important; outline-width: clamp\(2px, var\(--graview-focus-width, 2px\), 8px\) !important; outline-color: var\(--graview-focus-color, var\(--graview-ring-color, Highlight\)\) !important/);
+    expect(rule).toMatch(/outline-offset: clamp\(-2px, var\(--graview-focus-offset, 2px\), 8px\) !important/);
   });
 });
 
