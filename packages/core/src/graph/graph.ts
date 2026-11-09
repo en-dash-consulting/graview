@@ -87,6 +87,9 @@ export class GraphError extends Error {
  */
 export const NO_SUCH_LINK = "That link is not there to take away.";
 
+/** And a record that is not there, to remove, to change or to link: the same, its id kept on the error's `id`. */
+export const NO_SUCH_RECORD = { remove: "That record is not there to remove.", change: "That record is not there to change.", link: "A link names a record that is not there.", mergeInto: "The record to merge into is not there." } as const;
+
 export class MissingRecordError extends GraphError {
   constructor(
     readonly id: string,
@@ -409,7 +412,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
         const id = primitive.node.id;
         const node = this.nodes.get(id);
         if (!node) {
-          throw new MissingRecordError(id, `Cannot remove missing node "${id}"`);
+          throw new MissingRecordError(id, NO_SUCH_RECORD.remove);
         }
         for (const edge of [...this.outEdges(id), ...this.inEdges(id)]) {
           this.deleteEdge(edge);
@@ -425,7 +428,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
       case "patch-node": {
         const current = this.nodes.get(primitive.id);
         if (!current) {
-          throw new MissingRecordError(primitive.id, `Cannot patch missing node "${primitive.id}"`);
+          throw new MissingRecordError(primitive.id, NO_SUCH_RECORD.change);
         }
         assertKnownValues(primitive.after);
         const next = { ...current } as Record<string, unknown>;
@@ -445,7 +448,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
       case "splice-text": {
         const current = this.nodes.get(primitive.id);
         if (!current) {
-          throw new MissingRecordError(primitive.id, `Cannot splice the text of missing node "${primitive.id}"`);
+          throw new MissingRecordError(primitive.id, NO_SUCH_RECORD.change);
         }
         const text = (current as Record<string, unknown>)[primitive.field];
         let spliced: string | undefined;
@@ -567,7 +570,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
     const to = this.nodes.get(edge.to);
     if (!from || !to) {
       const missing = from ? edge.to : edge.from;
-      throw new MissingRecordError(missing, `Edge "${edge.kind}" references missing node "${missing}"`);
+      throw new MissingRecordError(missing, NO_SUCH_RECORD.link);
     }
     if (this.validate && !held && !this.schema.edgeAllowed(edge.kind, from.kind, to.kind)) {
       const declared = this.schema.edge(edge.kind);

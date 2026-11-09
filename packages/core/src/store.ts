@@ -1316,7 +1316,9 @@ export class Store<S extends AnySchema> {
       me: author && meIn(this.schema, author),
       everHeld: (id: string) => recordsOf(this.log).kindOf(id) !== undefined,
       keeps: (kind: string, field: string) => mayKeepField(this.policy?.sees, kind, field),
-      ...(author && this.hasNoRecord(author) ? { noRecord: true } : {}),
+      ...(author && this.hasNoRecord(author, false) ? { noRecord: true } : {}),
+      // Kept from its own person by its sight: an act declared as done as its author is refused, in words; another act's `ctx.me` is as it was.
+      ...(author && !this.hasNoRecord(author, false) && this.hasNoRecord(author) ? { selfUnseen: true } : {}),
       // The host's own may ask for an id a seat may not: it could write the same through `applyPrimitives`.
       ...(author && isSystem(author) ? { hostsOwn: true } : {}),
     };
@@ -1661,6 +1663,25 @@ export class Store<S extends AnySchema> {
       // whoever asked find out the honest way.
       return true;
     }
+  }
+
+  /**
+   * WHAT EACH CALL WOULD DO, REHEARSING NOTHING: change something, change
+   * nothing, or be refused by the act itself — compiled under the author's
+   * sight, as `wouldChange` is, but a call that cannot compile hands back
+   * why rather than counting as a change. The author's sight is worked out
+   * once for all of them and no copy of the graph or the log is made, so a
+   * face may ask it of every record it shows.
+   */
+  wouldDo(calls: readonly MutationCall[], author?: Principal): readonly ("changes" | "nothing" | { readonly refused: unknown })[] {
+    const sighted = this.sighted(author);
+    return calls.map((call) => {
+      try {
+        return compileMutation(this.graph, this.mutation(call.name), call.args, sighted).primitives.length > 0 ? "changes" : "nothing";
+      } catch (error) {
+        return { refused: error };
+      }
+    });
   }
 
   preview(call: MutationCall, context?: InvariantContext, options: { readonly author?: Principal } = {}): Preview<S> {
@@ -2521,16 +2542,19 @@ export class Store<S extends AnySchema> {
    * record: `$me` resolves to nothing there, so the act is not offered, and is
    * refused in the words it would refuse in, with a profile or without.
    */
-  private hasNoRecord(author: Author | Principal): boolean {
-    if (!this.schema.definitions.some((definition) => definition.people)) return false;
-    if (actingAs(author as Principal).id === undefined) return false;
+  private hasNoRecord(author: Author | Principal, bySight = true): boolean {
+    const people = this.schema.definitions.find((definition) => definition.people);
+    if (!people) return false;
+    // Kept from its own person by its sight: a seat with no id of its own sees one only through a sight of the whole kind.
+    const kept = (person: { readonly id: string; readonly kind: string }) => bySight && !this.seesOwnPerson(author as Principal, person);
+    if (actingAs(author as Principal).id === undefined) return kept({ id: "", kind: people.kind });
     const id = meOf(author);
     if (id === undefined) return true;
     const kind = this.graph.getNode(id)?.kind as string | undefined;
-    if (kind !== undefined && this.schema.tryDefinition(kind)?.people) return !this.seesOwnPerson(author as Principal, { id, kind });
+    if (kind !== undefined && this.schema.tryDefinition(kind)?.people) return kept({ id, kind });
     if (!profileOf(author)) return false;
     const person = this.personFor(author);
-    return !person || !this.seesOwnPerson(author as Principal, { id: person.id, kind: (person.node as { readonly kind: string }).kind });
+    return !person || kept({ id: person.id, kind: (person.node as { readonly kind: string }).kind });
   }
 
   /** Whether a seat's sight shows it its own person, there or about to be made: one with no links yet is judged as one. */

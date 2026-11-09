@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { compileDocument } from "../../src/check.js";
-import { profilePersonId, Store, type AnySchema, type Principal } from "../../src/index.js";
+import { bindSchema, createSchema, defineNode, nodeRef, profilePersonId, Store, z, type AnySchema, type Principal } from "../../src/index.js";
 
 /**
  * AN ACT DONE AS `$me` IS OFFERED ONLY TO A SEAT THAT CAN BE SOMEBODY HERE.
@@ -72,4 +72,44 @@ describe("a seat that can see its own person", () => {
       expect(store.graph.out("rock:q", "foundBy" as never).map((one) => one.id)).toEqual([person]);
     });
   }
+});
+
+describe("a seat with no id whose sight keeps the people kind from it", () => {
+  it("is not offered an act done as $me, and is refused it in words", () => {
+    const store = rocks();
+    const seat: Principal = { kind: "human", roles: ["guest"] };
+    expect(store.permittedMutations(seat).map((one) => one.name)).not.toContain("find-rock");
+    expect(store.permits(call, seat)).toMatchObject({ ok: false, refusal: { message: '"I found it" is done as you, and you have no record here' } });
+  });
+});
+
+describe("a code act that reads ctx.me for a seat kept from its own person", () => {
+  const coded = (doneAsMe: boolean) => {
+    const explorer = defineNode("explorer", { people: true, fields: z.object({ name: z.string() }) } as never);
+    const rock = defineNode("rock", { fields: z.object({ title: z.string() }), edges: { foundBy: { to: ["explorer"] } } } as never);
+    const schema = createSchema([explorer, rock]);
+    const { defineMutation } = bindSchema(schema);
+    const find = defineMutation("find", {
+      title: "Found it",
+      ...(doneAsMe ? { doneAsMe: true } : {}),
+      input: z.object({ id: nodeRef(["rock"]) }),
+      apply: (ctx: any, args: any) => ctx.addEdge({ from: args.id, to: ctx.me!, kind: "foundBy" } as never),
+    } as never);
+    return new Store({
+      schema,
+      mutations: [find] as never,
+      policy: { grants: [{ roles: "*", mutations: "*" }], sees: [{ roles: ["guest"], kinds: ["rock"] }] },
+      snapshot: { nodes: [{ id: "user:nick", kind: "explorer", name: "Nick" }, { id: "rock:q", kind: "rock", title: "Quartz" }], edges: [] } as never,
+    }) as unknown as Store<AnySchema>;
+  };
+
+  it("is refused in words where the act says it is done as its author", () => {
+    expect(() => coded(true).apply({ name: "find", args: { id: "rock:q" } }, { author: guest })).toThrow(/"Found it" is done as you, and you have no record here/);
+  });
+
+  it("runs as it did where the act does not say so", () => {
+    const store = coded(false);
+    store.apply({ name: "find", args: { id: "rock:q" } }, { author: guest });
+    expect(store.graph.outEdges("rock:q", "foundBy").map((edge) => edge.to)).toEqual(["user:nick"]);
+  });
 });

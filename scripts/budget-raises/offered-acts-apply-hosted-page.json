@@ -1,7 +1,7 @@
 {
   "budget": "a hosted page",
-  "minified": 433,
-  "gzipped": 193,
+  "minified": 733,
+  "gzipped": 331,
   "changeset": "offered-acts-apply.md",
-  "note": "Raised when an act is offered only where it applies: a seat whose sight keeps its own person from it is not offered an act done as itself, and the several bar rehearses each act over the chosen records and counts only those it applies to, with a removal of a link that is not there refused in words. Measured at 674_883 / 233_749 against 674_450 / 233_556 minified and gzipped."
+  "note": "Raised when an act is offered only where it applies: a seat whose sight keeps its own person from it is not offered an act done as itself, the several bar judges each act on every chosen record without a rehearsal (`store.wouldDo`, `severalApplies`), keeps its answer while nothing changes and counts only those an act applies to, and a record or a link that is not there is refused in words. Measured at 675_183 / 233_887 against 674_450 / 233_556 minified and gzipped."
 }

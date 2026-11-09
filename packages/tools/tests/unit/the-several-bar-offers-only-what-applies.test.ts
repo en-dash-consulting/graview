@@ -47,6 +47,19 @@ describe("the several bar", () => {
     expect(takeBack(store, bo)).toBeUndefined();
   });
 
+  it("says why it withheld an act every chosen record refuses, in words", () => {
+    const store = fresh([{ kind: "votedBy", from: "idea:a", to: "p_ann" }, { kind: "votedBy", from: "idea:b", to: "p_ann" }]);
+    const withheld = actsForSeveral(store, ideas, { principal: bo }).withheld.find((one) => one.label === "Take back a vote");
+    expect(withheld?.message).toMatch(/has nothing to take away/);
+    inWords(withheld!.message);
+  });
+
+  it("names a chosen record no longer here without its id", () => {
+    const outcome = actOnSeveral(fresh(), { mutation: "vote-for", subject: "id" }, ["idea:gone"], { author: bo });
+    expect(outcome.refused.map((one) => one.label)).toEqual(["A record that is no longer here"]);
+    for (const one of outcome.refused) expect(one.message).not.toMatch(/idea:gone/);
+  });
+
   it("offers it where the seat voted on some of them, and counts only those", () => {
     const store = fresh([{ kind: "votedBy", from: "idea:a", to: "p_ann" }]);
     const act = takeBack(store, ann);

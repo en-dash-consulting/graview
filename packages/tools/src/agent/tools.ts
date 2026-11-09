@@ -1,7 +1,9 @@
 import type { Completion } from "../intelligence.js";
 import {
-  actingAs,
   actSpelledAs,
+  FIELD_SIGHT,
+  meOf,
+  sees,
   askedArguments,
   actTitle,
   deriveMutations,
@@ -248,19 +250,20 @@ export interface ToolRuntimeOptions<S extends AnySchema> {
 }
 
 /**
- * WHETHER A SEAT'S SIGHT KEEPS EVERY PERSON FROM IT, read off the declaration
- * alone: a people kind no sight that reaches this seat names, or one whose
- * module is off. An act done as `$me` runs under the seat's sight, where its
- * own person is no record, so it is not offered (as `store.permittedMutations`).
+ * WHETHER A SEAT'S SIGHT KEEPS ITS OWN PERSON FROM IT, read off the
+ * declaration alone, as the store judges a person with no links yet: a
+ * people kind whose module is off, or no sight that reaches this seat shows
+ * it its own record — a sight of the whole kind, or one of its own records
+ * (`own`), and never one through a relation (`via`), which reaches others.
+ * An act done as `$me` runs under the seat's sight, where its own person is
+ * no record, so it is not offered (as `store.permittedMutations`).
  */
 const keptFromEveryPerson = (schema: AnySchema, policy: GraviewApp<AnySchema>["policy"], principal: Principal, off: ReadonlySet<string>): boolean => {
   const people = schema.definitions.find((definition) => definition.people)?.kind as string | undefined;
   if (people === undefined || isSystem(principal)) return false;
   if (off.has(people)) return true;
-  const sights = policy?.sees ?? [];
-  if (sights.length === 0) return false;
-  const acting = actingAs(principal);
-  return !sights.some((sight) => sight.kinds.includes(people) && (sight.roles === "*" || (acting.roles ?? []).some((role) => sight.roles.includes(role))) && ((!sight.own && !sight.via) || acting.id !== undefined));
+  if ((policy?.sees ?? []).length === 0) return false;
+  return !sees(policy, principal, { id: meOf(principal) ?? "", kind: people }, { out: () => [], in: () => [] }, undefined, FIELD_SIGHT.on === true);
 };
 
 /** Whether an app has a relation to another app's kind. */

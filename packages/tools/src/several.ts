@@ -120,6 +120,35 @@ function nameFieldOf(schema: AnySchema, kind: string): string {
  * seat that asks: the ones it may take, and the ones it may not with why.
  */
 export function actsForSeveral<S extends AnySchema>(store: Store<S>, ids: readonly string[], options: SeveralOptions<S> = {}): SeveralActs {
+  /*
+   * ASKED AGAIN WITH NOTHING CHANGED, THE SAME ANSWER. A face asks on every
+   * tick of the store while a choice stands, and a tick that changed nothing
+   * it holds asked it all again. Kept per store, by where its log stands and
+   * what was asked; options that carry functions (`derive`) are worked out
+   * afresh.
+   */
+  if (options.derive !== undefined) return worked(store, ids, options);
+  const stamp = stampOf(store);
+  const key = JSON.stringify([ids, options.principal ?? null, options.context ?? null]);
+  const kept = ANSWERED.get(store as object);
+  if (kept && kept.stamp === stamp && kept.key === key) return kept.answer;
+  const answer = worked(store, ids, options);
+  ANSWERED.set(store as object, { stamp, key, answer });
+  return answer;
+}
+
+/** The last answer each store was given, and what it was given for. */
+const ANSWERED = new WeakMap<object, { readonly stamp: string; readonly key: string; readonly answer: SeveralActs }>();
+
+/** Where a store stands: its log's length, horizon and last op, and how many records and links it holds — what any change moves. */
+function stampOf<S extends AnySchema>(store: Store<S>): string {
+  const length = store.log.length;
+  const last = length > 0 ? (store.log.opsFrom(length - 1)[0]?.id ?? "") : "";
+  const size = store.graph.size;
+  return `${length}:${store.log.horizon}:${last}:${size.nodes}:${size.edges}`;
+}
+
+function worked<S extends AnySchema>(store: Store<S>, ids: readonly string[], options: SeveralOptions<S>): SeveralActs {
   const nodes = ids.map((id) => store.graph.getNode(id)).filter((node) => node !== undefined);
   if (nodes.length === 0) return { acts: [], withheld: [] };
   const principal = options.principal ?? { kind: "human" };
@@ -206,22 +235,22 @@ export function actsForSeveral<S extends AnySchema>(store: Store<S>, ids: readon
     }
   }
   /*
-   * OFFERED ONLY WHERE IT APPLIES. Each act is rehearsed over the chosen
-   * records as `actOnSeveral` will run it, and offered only where it would
-   * change at least one, counting only those: "Take back a vote" over ideas
-   * the seat voted on none of was offered, and then refused on every one.
-   * An act still to be asked cannot be rehearsed before its answer, so it
-   * is offered over the records this seat may run it on.
+   * OFFERED ONLY WHERE IT APPLIES. Each act is judged on every chosen record
+   * — may this seat run it there, and would it change anything — and offered
+   * only where it would change at least one, counting only those: "Take back
+   * a vote" over ideas the seat voted on none of was offered, and then
+   * refused on every one. Judged without a rehearsal (`severalApplies`), as
+   * this is worked out on every change while the choice stands; pressing it
+   * rehearses the batch (`actOnSeveral`). An act refused on every record is
+   * withheld, with why; one that would change none is simply not offered.
    */
   const here = nodes.map((node) => node.id);
   const applying: SeveralAct[] = [];
+  const refusedWhole: SeveralWithheld[] = [];
   for (const act of acts) {
-    const call = { mutation: act.mutation, subject: act.subject, args: act.args };
-    const applies =
-      act.open.length > 0
-        ? here.filter((id) => store.permits({ name: act.mutation, args: { ...act.args, [act.subject]: id } }, principal).ok)
-        : judgeSeveral(store, call, here, { author: principal, ...(options.context ? { context: options.context as InvariantContext } : {}) }).going.map((one) => one.id);
+    const { applies, refusal } = severalApplies(store, act, here, principal);
     if (applies.length > 0) applying.push({ ...act, applies });
+    else if (refusal !== undefined) refusedWhole.push({ label: act.label, message: refusal });
   }
   // The day-to-day acts first, the field values after them, and what sets a record aside or removes it last.
   const ordered = [...applying.filter((act) => !act.more), ...applying.filter((act) => act.more)];
@@ -231,13 +260,45 @@ export function actsForSeveral<S extends AnySchema>(store: Store<S>, ids: readon
       return mutation?.subject !== undefined && mutation.derived?.act !== "edit" && (nodes.length === 1 || affordance.batch?.length === nodes.length);
     })
     .map((affordance) => ({ label: actTitle(mutations.get(affordance.mutation)!), message: affordance.refusal.message }));
-  return { acts: ordered, withheld };
+  return { acts: ordered, withheld: [...withheld, ...refusedWhole] };
 }
 
-/** A record as a person knows it, by id: its label, or the id where it is not here. */
+/**
+ * THE CHOSEN RECORDS ONE ACT APPLIES TO, judged without a rehearsal: those
+ * this seat may run it on and where it would change something (`wouldDo`).
+ * An act still to be asked is judged by whether the seat may run it alone,
+ * its answers not given yet. Where it applies to none and some record
+ * refused it, the first refusal, in words.
+ */
+export function severalApplies<S extends AnySchema>(
+  store: Store<S>,
+  act: Pick<SeveralAct, "mutation" | "subject" | "args"> & { readonly open?: readonly OpenParameter[] },
+  ids: readonly string[],
+  principal?: Principal,
+): { readonly applies: readonly string[]; readonly refusal?: string } {
+  let refusal: string | undefined;
+  const permitted: { readonly id: string; readonly call: MutationCall }[] = [];
+  for (const id of new Set(ids)) {
+    if (!store.graph.has(id)) continue;
+    const call: MutationCall = { name: act.mutation, args: { ...act.args, [act.subject]: id } };
+    const verdict = store.permits(call, principal);
+    if (verdict.ok) permitted.push({ id, call });
+    else refusal ??= verdict.refusal.message;
+  }
+  let applies = permitted.map((one) => one.id);
+  if ((act.open?.length ?? 0) === 0) {
+    const done = store.wouldDo(permitted.map((one) => one.call), principal);
+    applies = permitted.filter((_, at) => done[at] === "changes").map((one) => one.id);
+    const refused = done.find((one): one is { readonly refused: unknown } => typeof one === "object");
+    if (refused) refusal ??= failureWords(store.schema as AnySchema, store.allMutations() as never, refused.refused);
+  }
+  return applies.length > 0 || refusal === undefined ? { applies } : { applies, refusal };
+}
+
+/** A record as a person knows it, by id: its label, or, where it is not here, said so without its id. */
 function labelOfId<S extends AnySchema>(store: Store<S>, id: string): string {
   const node = store.graph.getNode(id);
-  return node ? labelOf(store.schema.tryDefinition(node.kind as string), node as never) : id;
+  return node ? labelOf(store.schema.tryDefinition(node.kind as string), node as never) : "A record that is no longer here";
 }
 
 /**
