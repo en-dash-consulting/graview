@@ -1,6 +1,6 @@
 {
   "budget": "every face",
-  "minified": 2296,
+  "minified": 2350,
   "gzipped": 730,
-  "note": "Raised when a file the app holds, lent as a face, came to have a size it may not pass: the host fetches such a file itself, refuses one that says it is past 2 MB and stops reading one that passes it, and hands FontFace the bytes; and the page holds one file a name, the one lent last, once it has loaded, telling each lender which. 2_346 / 1_128 more, the rest within the budget's room. Measured at 3_132_450 / 1_136_045 against 3_130_104 / 1_134_917."
+  "note": "Raised when a file the app holds, lent as a face, came to have a size it may not pass: the host fetches such a file itself, refuses one that says it is past 2 MB and stops reading one that passes it, and hands FontFace the bytes; and the page holds one file a name, the one lent last, once it has loaded, telling each lender which. 2_400 / 1_128 more, the rest within the budget's room. Measured at 3_132_504 / 1_136_045 against 3_130_104 / 1_134_917."
 }

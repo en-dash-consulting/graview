@@ -104,6 +104,17 @@ describe("two faces lent under one name in one document", () => {
     expect(third).toEqual([]);
   });
 
+  it("tell a view once of a file that failed while it lent the file again over its last lending", async () => {
+    wait = { a: 40 };
+    gone.add("a");
+    const said: string[] = [];
+    const before = loadViewFonts(document, [A], options, (one) => said.push(one));
+    backs.push(before);
+    lend(A, said, before);
+    await settled();
+    expect(said).toEqual([`The app's face "Rock Face" for its views could not be loaded from https://app.example${A.src}.`]);
+  });
+
   it("draw a file lent again as the last lent, and say so", async () => {
     const saidA: string[] = [];
     lend(A);

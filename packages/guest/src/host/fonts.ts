@@ -63,17 +63,18 @@ export function viewFontAddress(font: ViewFont, options: ViewFontsOptions): { re
 /** A file the app holds, read up to the limit: its bytes, `over` past it, or `failed`. Never sent on elsewhere. */
 async function readHeld(fetcher: typeof fetch, url: string, signal: AbortSignal): Promise<ArrayBuffer | "over" | "failed"> {
   const response = await fetcher(url, { signal, credentials: "same-origin", redirect: "error" });
-  if (!response.ok) return "failed";
+  if (!response.ok) {
+    void response.body?.cancel();
+    return "failed";
+  }
   const declared = Number(response.headers.get("content-length") ?? NaN);
   if (Number.isFinite(declared) && declared > VIEW_FONT_MOST_BYTES) {
     void response.body?.cancel();
     return "over";
   }
+  /* No body to count as it comes: not read whole to find out. */
   const reader = response.body?.getReader();
-  if (!reader) {
-    const bytes = await response.arrayBuffer();
-    return bytes.byteLength > VIEW_FONT_MOST_BYTES ? "over" : bytes;
-  }
+  if (!reader) return "failed";
   const chunks: Uint8Array[] = [];
   let size = 0;
   for (;;) {
@@ -118,11 +119,13 @@ interface Name {
 const held = new WeakMap<Document, Map<string, Name>>();
 const lendings = new WeakMap<() => void, Lending>();
 
-/** A face's weight and style as the engine matches them: no weight is "normal", which is 400, as "bold" is 700. */
-const nameOf = (font: ViewFont) => {
+/** A face's weight as the engine matches it: no weight is "normal", which is 400, as "bold" is 700. */
+const weightOf = (font: ViewFont) => {
   const weight = String(font.weight ?? "normal").trim().replace(/\s+/g, " ").toLowerCase();
-  return JSON.stringify([font.family.toLowerCase(), weight === "normal" ? "400" : weight === "bold" ? "700" : weight, font.style ?? "normal"]);
+  return weight === "normal" ? "400" : weight === "bold" ? "700" : weight;
 };
+/** A face's name: its family, weight and style, as the engine matches them, without regard to case. */
+const nameOf = (font: ViewFont) => JSON.stringify([font.family.toLowerCase(), weightOf(font), (font.style ?? "normal").toLowerCase()]);
 
 /** Put in the page's fonts the one face a name draws, take out the others, and say which, once the one that will draw has loaded. */
 function draw(document: Document, name: Name) {
@@ -205,11 +208,13 @@ export function loadViewFonts(document: Document, fonts: readonly ViewFont[], op
       if (one.stop.signal.aborted) return;
       const index = name.files.indexOf(one);
       if (index >= 0) name.files.splice(index, 1);
-      for (const [lending, family] of one.holders) lending.say(words(family));
+      /* Not to a lending about to be given back: the view lending it again hears it once, there. */
+      for (const [lending, family] of one.holders) if (!lending.going) lending.say(words(family));
       draw(document, name);
+      if (name.files.length === 0 && names.get(key) === name) names.delete(key);
     };
     const couldNot = () => fail((family) => `${named(family)} could not be loaded from ${at.url}.`);
-    const descriptors = { display: "swap" as const, ...(font.weight !== undefined ? { weight: String(font.weight) } : {}), ...(font.style ? { style: font.style } : {}) };
+    const descriptors = { display: "swap" as const, ...(font.weight !== undefined ? { weight: weightOf(font) } : {}), ...(font.style ? { style: font.style.toLowerCase() } : {}) };
     const load = (source: string | ArrayBuffer) => {
       /* A family that is not one identifier ("Baloo 2") is an error at once in Firefox unless quoted, and drawn by no name in the others if it is: quoted only where the engine refuses it plain. */
       let face = new Face(font.family, source, descriptors);
