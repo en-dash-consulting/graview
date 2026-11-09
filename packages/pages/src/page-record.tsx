@@ -1,4 +1,4 @@
-import { isArchived, isLeftAlone, isWithheld, labelOf, type AnySchema, type Place, type Principal, type Violation } from "@graview/core";
+import { isArchived, isLeftAlone, isWithheld, labelOf, nounOf, type AnySchema, type Place, type Principal, type Violation } from "@graview/core";
 import { describeNode, keptInStepWith } from "@graview/core/words";
 import { lineageWords } from "@graview/core/provenance";
 import { DefaultViewElsewhere, RecordInteractionsDoor, EditableValue, Files, NotifyButton, pageSays, ROVING_ITEM, useLined, useRoving } from "@graview/primitives/pages";
@@ -62,6 +62,10 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
   const [more, setMore] = useState(false);
   /** The act whose form was just done here: "Notify me when someone else does this" stands under the acts (Roadmap f-notify-subscriptions). */
   const [doneAct, setDoneAct] = useState<string | null>(null);
+  /** The record whose own view threw here: its page is drawn as it would be without that view, its heading and its facts. */
+  const [threwOn, setThrewOn] = useState<string | null>(null);
+  // Another record's page forgets it: coming back draws the view again.
+  if (threwOn !== null && threwOn !== id) setThrewOn(null);
   const actsHeading = useRef<HTMLHeadingElement | null>(null);
   const actForm = useRef<HTMLDivElement | null>(null);
   /*
@@ -124,7 +128,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
    * read and the records it listed are left out below; a relation left with
    * nothing to list has no heading.
    */
-  const said = PageView && node ? pageSays(ownPage, node as never, store.graph as never) : undefined;
+  const said = PageView && node && threwOn !== id ? pageSays(ownPage, node as never, store.graph as never) : undefined;
   /*
    * THE HEADING IS THE NAME, AND RENAMED WHERE IT STANDS (Roadmap
    * f-rename-in-place, f-facts-by-type): the field that holds the name —
@@ -169,7 +173,8 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
    * with what is wrong and what has happened: no facts, no links, nothing
    * to be done but what it offers. Any other view sits above all of those.
    */
-  const whole = PageView !== undefined && replacesPage(ownPage);
+  // One that threw is no page: the record's own heading and facts are drawn around its panel, as a page without it would be.
+  const whole = PageView !== undefined && replacesPage(ownPage) && threwOn !== id;
   /*
    * AND ONE THAT DRAWS ITS OWN HEADING (Roadmap f-replacing-view-own-heading):
    * a view that replaces the page and says `heading: "own"` titles the record
@@ -253,7 +258,8 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
             {/* Edge to edge on a phone, where the view says `bleed` (Bleed). */}
             <Bleed when={bleeds(ownPage)} full={full}>
               {/* A view that throws says so in its own slot, and the slot is the column again; the record's facts stand under it. */}
-              <ViewBoundary kind={facts.kind}>
+              {/* Keyed by the record, so a panel one record's view left is not what the next record's page opens on. */}
+              <ViewBoundary key={id} kind={facts.kind} view={`This ${nounOf(definition, facts.kind)}'s view`} said="" onCaught={() => setThrewOn(id)}>
                 <PageView node={node as never} cardinality="one" fidelity="full" mode="fullscreen" selected={false} {...(facts.violations.length > 0 ? { flagged: [id] } : {})} />
               </ViewBoundary>
             </Bleed>

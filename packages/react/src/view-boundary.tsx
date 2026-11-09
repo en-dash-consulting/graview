@@ -22,6 +22,12 @@ export interface ViewBoundaryProps {
   readonly kind: string;
   /** The view that threw, when the registration named one. */
   readonly view?: string;
+  /** What the panel says under its line in a person's words, in place of the kind's id; `""` says nothing more. */
+  readonly said?: string;
+  /** Told when the view threw, once its panel stands: a surface that drew less around a view that is the whole page draws its own again. */
+  readonly onCaught?: (error: Error) => void;
+  /** What the view is drawn from: a view that threw is drawn again once any of these changes (the store's version, another view). */
+  readonly reset?: readonly unknown[];
   readonly children: ReactNode;
 }
 
@@ -66,6 +72,14 @@ export class ViewBoundary extends Component<ViewBoundaryProps, ViewBoundaryState
       info.componentStack,
     );
     this.context?.(error, { module: "@graview/react" });
+    this.props.onCaught?.(error);
+  }
+
+  override componentDidUpdate(previous: ViewBoundaryProps): void {
+    if (!this.state.error) return;
+    const was = previous.reset ?? [];
+    const now = this.props.reset ?? [];
+    if (was.length !== now.length || was.some((value, at) => !Object.is(value, now[at]))) this.setState({ error: undefined });
   }
 
   override render(): ReactNode {
@@ -95,7 +109,7 @@ export class ViewBoundary extends Component<ViewBoundaryProps, ViewBoundaryState
         <strong style={{ color: "var(--graview-warn, #b4462a)" }}>
           {this.props.view ? `${this.props.view} could not draw` : "This view could not draw"}
         </strong>
-        <span style={{ color: "var(--graview-ink-muted, #555)" }}>{this.props.kind}</span>
+        {this.props.said === "" ? null : <span style={{ color: "var(--graview-ink-muted, #555)" }}>{this.props.said ?? this.props.kind}</span>}
         <span>{messageOf(error)}</span>
         {hint ? <span style={{ color: "var(--graview-ink-muted, #555)" }}>{hint}</span> : null}
       </div>

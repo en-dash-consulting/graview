@@ -84,7 +84,7 @@ export function recently(log: readonly Operation[], rows = 5): { readonly recent
 export function DefaultHomePage<S extends AnySchema>({ context }: { context: PageContext<S> }) {
   const { principal } = context;
   const { store, brand, invariantContext } = context;
-  useStoreTick(store);
+  const tick = useStoreTick(store);
   /* The home the app draws by itself, though a host's view is its body, reached under "Also as" (Roadmap f-make-any-page-better). */
   const builtIn = useSearchParams()[0].get("drawn") === "built-in";
   const violations = store.violations(invariantContext);
@@ -153,7 +153,7 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
             {/* Edge to edge on a phone, where the view says `bleed` (Bleed); across the page at every width, where it says "full". */}
             <Bleed when={bleeds(HomeView)} full={full}>
               {/* A view that throws says so in its own slot, and the slot is the column again: what gives a view the page's width sees it did not draw. */}
-              <ViewBoundary kind="home" {...(homeName ? { view: homeName } : {})}>
+              <ViewBoundary kind="home" view="The home's view" said="" reset={[tick, HomeView]}>
                 <HomeView cardinality="many" fidelity="full" mode="fullscreen" selected={false} {...(flagged.length > 0 ? { flagged } : {})} />
               </ViewBoundary>
             </Bleed>
