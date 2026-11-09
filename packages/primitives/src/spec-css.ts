@@ -38,7 +38,11 @@ ${/* A LINE OF FACTS WITH A CHOICE IN IT (\`runs\`): the choices as small
 .graview-spec-row .graview-spec-text.graview-spec-meta,.graview-spec-card .graview-spec-text.graview-spec-meta{display:flex;flex:1 1 auto;-webkit-line-clamp:none;line-clamp:none;max-height:none;overflow:visible}
 [data-graview-page-main] .graview-spec-meta{font-size:var(--graview-text-small)}
 .graview-spec-chip{display:inline-flex;align-items:center;box-sizing:border-box;min-height:1.375rem;padding:0 var(--graview-space-2,8px);border-radius:var(--graview-radius-sm,6px);background:color-mix(in srgb,var(--graview-ink) 7%,transparent);color:var(--graview-ink);font-weight:500;white-space:nowrap}
-.graview-spec-page{padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--graview-edge)}
+${/* A KIND'S PAGE HEADING THE RECORD THE SCENE DRAWS UNDER IT is ruled off
+   from it. On the pages face the record's facts below draw their own rule,
+   so the page there draws none: two rules with nothing between them read
+   as a view that failed to draw (Roadmap f-record-page-empty-band-under-page-spec). */ ""}
+.graview-spec-page[data-graview-heads-record]{padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--graview-edge)}
 .graview-spec-title{font-family:var(--graview-font-display,inherit);font-weight:600;font-size:1rem;line-height:1.3;overflow-wrap:anywhere}
 .graview-spec-text{margin:0;font-size:.875rem;line-height:1.45;overflow-wrap:anywhere}
 .graview-spec-text[data-graview-tone]{color:var(--graview-spec-tone)}

@@ -1021,7 +1021,20 @@ try {
           const view = document.querySelector('[data-worker-view="brief"]');
           const slot = document.querySelector('[data-graview-face=pages] [data-graview-spec="page"][data-graview-kind="task"]');
           const facts = document.querySelector('[data-graview-face=pages] [data-testid="record-fields"]');
-          return { view: [top(view), bottom(view)], slot: [top(slot), bottom(slot)], facts: [top(facts), bottom(facts)], slotSays: slot?.textContent?.trim() ?? null };
+          /*
+           * Between the slot and the facts (Roadmap f-record-page-empty-band-under-page-spec): what stands
+           * there beyond the page's own gap between its parts, and every line drawn across it — the
+           * slot's foot, anything after it, the facts' head — once the page's gap is taken off.
+           */
+          const main = facts?.closest("[data-graview-page-main]");
+          const gap = main ? parseFloat(getComputedStyle(main).rowGap) || 0 : 0;
+          const ruled = (element, side) => parseFloat(getComputedStyle(element).getPropertyValue(`border-${side}-width`)) > 0 && getComputedStyle(element).getPropertyValue(`border-${side}-style`) !== "none";
+          const section = slot?.closest('[data-testid="record-view"]');
+          // The slot, what holds it, and what follows it in the view's section — not what the slot draws inside it.
+          const between = section ? [section, ...section.querySelectorAll("*")].filter((element) => element.contains(slot) || Boolean(slot.compareDocumentPosition(element) & Node.DOCUMENT_POSITION_FOLLOWING && !slot.contains(element))) : [];
+          const lines = [...between.filter((element) => ruled(element, "bottom")).map((element) => element.getAttribute("data-testid") ?? element.className ?? element.tagName), ...(facts && ruled(facts, "top") ? ["record-fields"] : [])];
+          const band = slot && facts && section ? Math.round(facts.getBoundingClientRect().top - slot.getBoundingClientRect().bottom - gap) : null;
+          return { view: [top(view), bottom(view)], slot: [top(slot), bottom(slot)], facts: [top(facts), bottom(facts)], slotSays: slot?.textContent?.trim() ?? null, band, lines, next: section?.nextElementSibling?.getAttribute("data-testid") ?? null };
         });
         await go(`${FITTED_BASE}/people/p1`);
         await drawnIn("card");
@@ -1846,6 +1859,11 @@ try {
   report.checks.aRecordPagesSlotIsDrawnUnderItsViewAndAboveTheFacts = {
     seen: fittedSeen,
     ok: fittedHold(({ order }) => /Read the sources/.test(order.slotSays ?? "") && /Each source/.test(order.slotSays ?? "") && order.slot[0] >= order.view[1] && order.facts[0] >= order.slot[1]),
+  };
+  /* Roadmap f-record-page-empty-band-under-page-spec: one line between a kind's page and the facts, the facts' own, and no band of nothing between them. */
+  report.checks.aRecordPagesOwnLayoutDrawsOneDividerAndNoEmptyBandBeforeTheFacts = {
+    seen: fittedSeen,
+    ok: fittedHold(({ order }) => order.next === "record-fields" && order.band !== null && order.band >= 0 && order.band <= 1 && order.lines.length === 1 && order.lines[0] === "record-fields"),
   };
   report.checks.aViewThatReplacesThePageDrawsAloneAndItsSlotIsNot = {
     seen: fittedSeen,

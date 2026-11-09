@@ -47,6 +47,10 @@ describe("a selected record is drawn once", () => {
     expect(times(html, PART.title)).toBe(1);
   });
 
+  it("rules the page off from the record it heads, which the pages face does with the facts' own rule instead", () => {
+    expect(drawn()).toMatch(/data-graview-spec="page"[^>]*data-graview-heads-record=""/);
+  });
+
   it("says the goal and the summary once, and each topic once", () => {
     const html = drawn();
     expect(times(html, PART.goal)).toBe(1);
