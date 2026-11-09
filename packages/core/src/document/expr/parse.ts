@@ -8,6 +8,8 @@
  * parser turns text into a tree; `evaluate.ts` walks the tree under a budget.
  */
 
+import { SUBJECT_NAME } from "./subject.js";
+
 export type Expr =
   | { readonly t: "lit"; readonly value: string | number | boolean | null; readonly at: number }
   | { readonly t: "ident"; readonly name: string; readonly at: number }
@@ -70,6 +72,21 @@ function tokenize(source: string): Token[] {
       if (i >= source.length) throw new ExprSyntaxError("a quoted word is never closed", start, source);
       i++;
       tokens.push({ k: "str", v, at: start });
+      continue;
+    }
+    /*
+     * `$subject`: THE RECORD ITSELF (Roadmap f-guard-reads-record-not-argument).
+     * A bare name in an act's guard reads the argument the call gave by that
+     * name before the record's field; `$subject.holder` is always the
+     * record's own. The one name spelled with a `$`, as an act's effects
+     * spell it, so no field or argument can ever be called it.
+     */
+    if (c === "$") {
+      const start = i++;
+      while (i < source.length && /[A-Za-z0-9_]/.test(source[i]!)) i++;
+      const word = source.slice(start, i);
+      if (word !== SUBJECT_NAME) throw new ExprSyntaxError(`"${word}" is not a name here: "${SUBJECT_NAME}" is the record itself, and a field or an argument is said bare`, start, source);
+      tokens.push({ k: "id", v: word, at: start });
       continue;
     }
     if (/[A-Za-z_]/.test(c)) {

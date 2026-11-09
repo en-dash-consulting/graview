@@ -4,6 +4,7 @@ import { daySpanOf, ISO_MOMENT, isoToday, PARTIAL_DAY } from "../../days.js";
 import { dateOn } from "../../repeat.js";
 import type { AnyGraphNode, GraphReader } from "../../graph/types.js";
 import type { Expr } from "./parse.js";
+import { SUBJECT_NAME } from "./subject.js";
 import { linkedReaderOf, linkedRefsOf, type LinkedReader, type LinkedRecord, type LinkedRecordRef, type LinkedRelation } from "../../schema/linked.js";
 import { addMinutesTo, datetimeAt, formatWhen, isWeekday, minutesOfTime, startOfWeekOf, weekdayOfWhen, whenOf, zoneOf, type When } from "./when.js";
 
@@ -286,6 +287,11 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
       case "list":
         return e.items.map((item) => run(item, subject));
       case "ident": {
+        // The record the expression is judged on, never a binding: the outer one, inside a `where` or an `every` too.
+        if (e.name === SUBJECT_NAME) {
+          if (ctx.subject) return ctx.subject;
+          throw new ExprEvalError(`"${SUBJECT_NAME}" means nothing in a rule over the whole graph`, e.at);
+        }
         const bound = bindings && Object.hasOwn(bindings, e.name) ? bindings[e.name] : undefined;
         if (bound !== undefined) return bound;
         if (subject) return field(subject, e.name, e.at);

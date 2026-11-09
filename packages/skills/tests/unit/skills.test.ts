@@ -31,6 +31,8 @@ const checkSource = [
   readFileSync(resolve(SKILLS_DIR, "../../core/src/document/connection-findings.ts"), "utf8"),
   // What an act says of the other end of its links and of the records linked to its subject (FR-115, Roadmap f-acts-update-linked), said with the checker.
   readFileSync(resolve(SKILLS_DIR, "../../core/src/document/act-findings.ts"), "utf8"),
+  // A bare name in an act's condition or refusal that is both a field and an argument (`act-name-means-both`), said with the checker.
+  readFileSync(resolve(SKILLS_DIR, "../../core/src/document/guard-names.ts"), "utf8"),
   // What a document's brand is found wanting by (`brand-*`), decided in one place for the check and a `set-brand` edit alike.
   readFileSync(resolve(SKILLS_DIR, "../../core/src/document/brand-check.ts"), "utf8"),
   // A workflow's findings: each step kind's, and the workflow's own (Roadmap f-jobs-declared).

@@ -134,7 +134,8 @@ brackets joins; the last bar outside them is the formatter's.) A kind's
 the whole graph — a document's top-level `computed`, like `"mapProposed":
 "every(all('area'), proposed)"` — so a rule over the graph, a block and a
 face's own screen say it once (`factValues` from `@graview/core/blocks`;
-`describe_place` on the home lists them). Every evaluation
+`describe_place` on the home lists them). `$subject` is the record itself,
+even inside `where` (in an act's guard, see graview-permissions). Every evaluation
 has a step budget: a rule that reads too much is `over-budget`, never a hang.
 
 ## A rule that covers every record

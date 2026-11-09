@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 437,
+  "gzipped": 166,
+  "changeset": "a-document-act-clears-a-field-and-a-guard-reads-the-record.md",
+  "note": "Raised when a document act came to clear an optional field set to null (refusing a required one by its name) and the evaluator came to read `$subject`, the record itself. 437 / 166 over. Measured at 618_732 / 214_263 against the budget's 618_295 / 214_097."
+}

@@ -5,6 +5,7 @@ import * as z from "zod";
 import type { Expr } from "./expr/parse.js";
 import { ExprSyntaxError, parseExpr } from "./expr/parse.js";
 import { printExpr } from "./expr/print.js";
+import { SUBJECT_NAME } from "./expr/subject.js";
 import { error, type Finding } from "./findings.js";
 import { coerce } from "./migrate.js";
 import { outsideRange, rangeWords } from "./range.js";
@@ -453,7 +454,8 @@ function sources(doc: Doc, edge: string): Kinds {
 function kindsOf(doc: Doc, e: Expr, ctx: Kinds): Kinds {
   switch (e.t) {
     case "ident":
-      return targets(doc, ctx, e.name);
+      // `$subject` is the record itself: of the kinds it stands at.
+      return e.name === SUBJECT_NAME ? ctx : targets(doc, ctx, e.name);
     case "member":
       return targets(doc, kindsOf(doc, e.object, ctx), e.name);
     case "where":
@@ -507,7 +509,9 @@ function mapNames(doc: Doc, e: Expr, ctx: Kinds, rename: (site: Site) => string)
       }
       case "member": {
         const object = go(x.object, at);
-        const name = rename({ role: "name", kinds: kindsOf(doc, x.object, at), name: x.name });
+        // `$subject.holder` is the outer record's own, inside a `where` too.
+        const of = x.object.t === "ident" && x.object.name === SUBJECT_NAME ? ctx : kindsOf(doc, x.object, at);
+        const name = rename({ role: "name", kinds: of, name: x.name });
         return object === x.object && name === x.name ? x : { ...x, object, name };
       }
       case "unary": {

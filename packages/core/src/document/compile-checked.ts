@@ -1,6 +1,7 @@
 import { checkApp, dropAnsweredGlances } from "../cli/check.js";
 import { designFindings } from "./design-findings.js";
 import { actFindings } from "./act-findings.js";
+import { nameMeansBothFindings } from "./guard-names.js";
 import { derivesFindings } from "./derives-findings.js";
 import { linkedFindings } from "./linked-findings.js";
 import { connectionFindings } from "./connection-findings.js";
@@ -44,7 +45,7 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
   // What the brand may hold (FR-124): a mark that could act or load, a face from off the list.
   // A block's key is its own in its view: a face claims it by that key.
   // A relation to another app's kinds (FR-171), said in the checker's words, not the page's.
-  const own = [...linkedFindings(document), ...actFindings(document), ...derivesFindings(document), ...formatFindings(document), ...computedFindings(document), ...exprTypeFindings(document), ...factFindings(document), ...roleFindings(document), ...brandFindings(document.brand, options.fonts ? { fonts: options.fonts } : {}), ...viewKeys(document.views, "views", undefined, document.lenses), ...connectionFindings(document, app as never), ...documentJobFindings(document), ...documentWorkflowFindings(document, farCheck), ...documentAliasFindings(document)];
+  const own = [...linkedFindings(document), ...actFindings(document), ...derivesFindings(document), ...formatFindings(document), ...computedFindings(document), ...exprTypeFindings(document), ...factFindings(document), ...roleFindings(document), ...brandFindings(document.brand, options.fonts ? { fonts: options.fonts } : {}), ...viewKeys(document.views, "views", undefined, document.lenses), ...connectionFindings(document, app as never), ...documentJobFindings(document), ...documentWorkflowFindings(document, farCheck), ...documentAliasFindings(document), ...nameMeansBothFindings(document, app)];
   if (hasErrors(own)) return { ok: false, findings: [...compiled.findings, ...own] };
   // Braces in a block's plain words (FR-99): asked here, with the checker, and not of a page that compiles without it.
   // The checker's sentence for an accent (FR-126) or a ground says what the compile's did, and more: once is enough.

@@ -50,6 +50,8 @@ The coach sees "Show the installation" in the person's menu on the app bar and t
 
 1. **Let a role propose what it may not run.** `{ roles: ["helper"], mutations: [], propose: ["close-task"] }`: the act's form reads "Propose", an agent acting for them gets `propose_changes`, and the change waits in the Suggested tray as "Proposed by Ada" until a seat that may run it accepts it, as themselves (lineage `proposedBy`), or declines it. Reviewing is running: no grant of its own.
 
+1. **Say when an act may run, on the record's own values.** A grant says who; a document act's `allowedWhen` says when, and its `refusal` why not. A bare name there reads the argument the call gives by that name, and the record's field only when it gives none — so an act that `writes: ["holder", "expiresAt"]` and asks `holder == null` judges the call. Write `$subject.holder == null or $subject.expiresAt < now()` and `"{name} is held by {$subject.holder}"`: `$subject` is the record the act is on. `graview check` warns of each bare name that is both (`act-name-means-both`).
+
 ### Worked examples
 
 - `packages/core/tests/unit/permissions.test.ts` — grants by role, by mutation and by subject kind, and the refusal that names who could

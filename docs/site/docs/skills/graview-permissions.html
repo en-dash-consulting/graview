@@ -1847,6 +1847,9 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
 <ol>
 <li><strong>Let a role propose what it may not run.</strong> `{ roles: ["helper"], mutations: [], propose: ["close-task"] }`: the act's form reads "Propose", an agent acting for them gets <code>propose_changes</code>, and the change waits in the Suggested tray as "Proposed by Ada" until a seat that may run it accepts it, as themselves (lineage <code>proposedBy</code>), or declines it. Reviewing is running: no grant of its own.</li>
 </ol>
+<ol>
+<li><strong>Say when an act may run, on the record's own values.</strong> A grant says who; a document act's <code>allowedWhen</code> says when, and its <code>refusal</code> why not. A bare name there reads the argument the call gives by that name, and the record's field only when it gives none — so an act that <code>writes: ["holder", "expiresAt"]</code> and asks <code>holder == null</code> judges the call. Write <code>$subject.holder == null or $subject.expiresAt &lt; now()</code> and <code>"{name} is held by {$subject.holder}"</code>: <code>$subject</code> is the record the act is on. <code>graview check</code> warns of each bare name that is both (<code>act-name-means-both</code>).</li>
+</ol>
 <h3>Worked examples</h3>
 <ul>
 <li><code>packages/core/tests/unit/permissions.test.ts</code> — grants by role, by mutation and by subject kind, and the refusal that names who could</li>
