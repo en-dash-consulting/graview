@@ -1,5 +1,8 @@
 schema: "rex/v2"
 items:
   "ec92ebaf-7a59-4cf3-984b-fcd6c0a37836":
-    status: "in_progress"
+    status: "completed"
     startedAt: "2026-11-09T05:09:06.000Z"
+    completedAt: "2026-11-09T16:20:00.000Z"
+    lastModified: "2026-11-09T16:20:00.000Z"
+    resolutionDetail: "Shipped in 0.1.71: #549, landed through the batch #554 and released by the Version packages #555."
