@@ -96,7 +96,6 @@ describe("a record page with its own layout draws one divider before the facts",
     const { main, done } = await recordPage(true);
     const spec = main.querySelector('[data-testid="record-view"] [data-graview-spec="page"]')!;
     expect(spec.textContent).toBe("A note to keep.");
-    const cs = getComputedStyle(spec); console.log("SPEC", JSON.stringify([cs.borderBottom, cs.borderBottomStyle, cs.getPropertyValue("border-bottom")])); const fs = getComputedStyle(main.querySelector("[data-testid=record-fields]")!); console.log("FACTS", JSON.stringify([fs.borderTop, fs.borderTopStyle, (main.querySelector("[data-testid=record-fields]") as HTMLElement).style.borderTop]));
     expect(dividersBeforeTheFacts(main).map((element) => element.getAttribute("data-testid") ?? element.className)).toEqual(["record-fields"]);
     await done();
   });
