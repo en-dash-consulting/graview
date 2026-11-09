@@ -25,7 +25,7 @@ export interface FarHome {
   readonly name?: string;
   /** Whether this run may reach it at all — the grant; every run, when unsaid. */
   readonly reaches?: (origin: FarOrigin) => boolean;
-  /** The grant in the host's own words: a sentence for why this run may not reach it, said as the step's reason; undefined lets it. */
+  /** The grant in the host's own words: a sentence for why this run may not reach it, said as the step's reason. Undefined, or a blank string ("" or only spaces), lets it. */
   readonly refuses?: (origin: FarOrigin) => string | undefined;
 }
 
@@ -59,7 +59,7 @@ export function farAppsOver(homes: Readonly<Record<string, FarHome>>): FarApps {
       const home = Object.hasOwn(homes, address) ? homes[address] : undefined;
       if (!home || (home.reaches && !home.reaches(origin))) return undefined;
       const refused = home.refuses?.(origin);
-      if (refused) return { refused };
+      if (typeof refused === "string" && refused.trim() !== "") return { refused };
       const { store } = home;
       const actor = origin.author as Principal;
       const reader = linkedRecordsOver({ [address]: { store, ...(home.name ? { name: home.name } : {}) } });

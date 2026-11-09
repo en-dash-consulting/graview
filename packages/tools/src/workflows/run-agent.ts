@@ -2,6 +2,7 @@ import { labelOf, type AnyGraphNode, type AnySchema, type Store } from "@graview
 import { mutationToolSchema } from "@graview/core/json-schema";
 import { farReferenceOf, isFarReference, policyInstruction, type AgentStep } from "@graview/core/workflows";
 import { firstJsonObject, resolveProposal, toCall, validateProposals, type ProposedCall } from "../intelligence.js";
+import { refusalThen } from "./refusal.js";
 import type { FarApp, StepContext, StepRunner } from "./types.js";
 
 /*
@@ -55,7 +56,7 @@ export const runAgentStep: StepRunner<AgentStep> = {
       if (!ref) return context.skipped(`“${name}” names no kind or act of another app.`);
       if (apps.has(ref.address)) continue;
       const app = await context.otherApp(ref.address);
-      if ("refused" in app) return context.skipped(`${app.refused}, so the model's step did not run.`);
+      if ("refused" in app) return context.skipped(refusalThen(app.refused, "the model's step did not run"));
       apps.set(ref.address, app);
     }
     const farAct = (name: string) => {

@@ -5,6 +5,7 @@ import { workflowOrigin } from "@graview/core/workflows";
 import { describe, expect, it } from "vitest";
 import type { HostAi } from "../../src/ai.js";
 import { farAppsOver, memoryWorkflowLog, runWorkflow, type WorkflowLog } from "../../src/workflows.js";
+import { hostSentence, MOST_REFUSAL, refusalSentence, refusalThen } from "../../src/workflows/refusal.js";
 
 /*
  * A WORKFLOW'S STEP REACHES ANOTHER APP THROUGH THE HOST (Roadmap
@@ -154,6 +155,63 @@ describe("an act step that runs another app's act", () => {
     const { second: run } = await runTwice({ app: HQ, store: hq, workflow: "sync-tickets", farApps });
     expect(run.heldBack.map((one) => one.why)).toEqual([`Step 1: Graview Public (${PUBLIC_ADDRESS}) has no act “set-ticket-status”.`]);
     expect(statusOf(far, "t-1")).toBe("open");
+  });
+
+  const refusedWith = async (answer: unknown) => {
+    const { hq } = stores();
+    const { second } = await runTwice({ app: HQ, store: hq, workflow: "sync-tickets", farApps: { otherApp: () => answer as never } });
+    return second.heldBack.map((one) => one.why);
+  };
+  const framework = `Step 1: this host does not let “Keep Graview Public's tickets in step” reach ${PUBLIC_ADDRESS}.`;
+
+  it("says a host's sentence over several lines on one line", async () => {
+    expect(await refusedWith({ refused: "  The owner\n of this app\tmay not\n\nchange it.  " })).toEqual(["Step 1: The owner of this app may not change it."]);
+  });
+
+  it("adds no full stop after a host's own question, exclamation or ellipsis", async () => {
+    expect(await refusedWith({ refused: "Who allowed this?" })).toEqual(["Step 1: Who allowed this?"]);
+    expect(await refusedWith({ refused: "Not here!" })).toEqual(["Step 1: Not here!"]);
+    expect(await refusedWith({ refused: "Not yet…" })).toEqual(["Step 1: Not yet…"]);
+  });
+
+  it("cuts a long sentence whole, at a word, with an ellipsis, and breaks no character in two", async () => {
+    const long = `${"word ".repeat(120)}😀😀`;
+    const [why] = await refusedWith({ refused: long });
+    const said = why!.slice("Step 1: ".length);
+    expect(said.endsWith("word…")).toBe(true);
+    expect([...said].length).toBeLessThanOrEqual(500);
+    // A run of emoji is cut between them, never inside one.
+    const [emoji] = await refusedWith({ refused: "😀".repeat(600) });
+    const cut = emoji!.slice("Step 1: ".length);
+    expect(cut.endsWith("😀…")).toBe(true);
+    expect(cut).not.toMatch(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])/);
+  });
+
+  it("refuses in the framework's words for an answer that is neither an app nor a refusal", async () => {
+    for (const answer of ["no", true, 3, [], { refused: "   " }, { refused: 4 }]) expect(await refusedWith(answer)).toEqual([framework]);
+  });
+
+  it("lets a run in when the in-memory host's refuses says nothing, blank or empty alike", async () => {
+    for (const said of ["", "   ", undefined]) {
+      const { hq, public: far } = stores();
+      const { second } = await runTwice({ app: HQ, store: hq, workflow: "sync-tickets", farApps: farAppsOver({ [PUBLIC_ADDRESS]: { store: far, refuses: () => said } }) });
+      expect(second.heldBack).toEqual([]);
+      expect(statusOf(far, "t-1")).toBe("done");
+    }
+  });
+});
+
+describe("a host's sentence, said as a step's reason", () => {
+  it("is one line, cut at a word, given a full stop only where it has no mark of its own", () => {
+    expect(hostSentence("a\n b")).toBe("a b");
+    expect(hostSentence(" ")).toBe("");
+    expect(hostSentence(7)).toBe("");
+    expect(hostSentence("Done...")).toBe("Done");
+    expect(refusalSentence("No")).toBe("No.");
+    expect(refusalSentence("No?")).toBe("No?");
+    expect(refusalThen("No", "the model's step did not run")).toBe("No, so the model's step did not run.");
+    expect(refusalThen("No!", "the model's step did not run")).toBe("No! The model's step did not run.");
+    expect([...hostSentence("x".repeat(800))].length).toBe(MOST_REFUSAL);
   });
 });
 
