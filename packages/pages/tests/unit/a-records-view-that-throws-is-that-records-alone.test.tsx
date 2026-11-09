@@ -26,7 +26,7 @@ const AGENDA = "/deliverables/deliverable%3Aagenda";
 /** Throws on the email, draws "drawn" on any other deliverable. */
 function brief(options: { replaces?: boolean; ownHeading?: boolean } = {}) {
   const view = ((props: ViewProps<AnySchema>) => {
-    if (props.node?.id === "deliverable:email") throw new Error("the thrown view threw");
+    if (props.node?.id === "deliverable:email" && (props.node as { subject?: string }).subject === "Email to Todd") throw new Error("the thrown view threw");
     return <p data-testid="brief-drawn">drawn</p>;
   }) as unknown as ViewComponent<AnySchema>;
   if (options.replaces) markReplacesPage(view);
@@ -63,6 +63,7 @@ async function face(views: unknown, path: string) {
   };
   return {
     read,
+    store: shared,
     go: async (at: string) => {
       await act(async () => draw(at));
       await act(async () => new Promise((done) => setTimeout(done, 20)));
@@ -84,6 +85,19 @@ describe("a record's view that throws is that record's alone", () => {
     expect(page.read().panel).not.toBeNull();
     await page.done();
   });
+
+  for (const replaces of [false, true]) {
+    it(`staying on the record, its view${replaces ? ", the whole page," : ""} is drawn again once the store changes`, async () => {
+      const page = await face(brief({ replaces }), EMAIL);
+      expect(page.read().panel).not.toBeNull();
+      await act(async () => {
+        page.store.apply({ name: "set-subject", args: { deliverableId: "deliverable:email", subject: "Email to Todd, fixed" } }, { author: nick });
+      });
+      await act(async () => new Promise((done) => setTimeout(done, 20)));
+      expect(page.read()).toMatchObject({ panel: null, drawn: true, ...(replaces ? { facts: false } : {}) });
+      await page.done();
+    });
+  }
 
   it("the panel says what could not draw in words, not the kind's id", async () => {
     const page = await face(brief(), EMAIL);

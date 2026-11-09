@@ -1,4 +1,4 @@
-import { Component, type ErrorInfo, type ReactNode } from "react";
+import { Component, createRef, type ErrorInfo, type ReactNode } from "react";
 import { ErrorReportContext, type ErrorReport } from "./error-report.js";
 
 export { ErrorReportContext, type ErrorReport } from "./error-report.js";
@@ -51,6 +51,19 @@ function messageOf(error: unknown): string {
   return text === "[object Object]" ? "The view threw without a message." : text;
 }
 
+/** Where the keyboard was before the boundary changed: on its panel, with where the panel stood, or elsewhere. */
+type KeyboardWas =
+  | { readonly onPanel: true; readonly focused: Element; readonly parent: ParentNode | null; readonly before: ChildNode | null }
+  | { readonly onPanel: false; readonly focused: Element | null }
+  | null;
+
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]), [contenteditable="true"]';
+
+/** Whether nothing holds the keyboard: the page's body, or no element at all. */
+function keyboardLost(): boolean {
+  return document.activeElement === null || document.activeElement === document.body;
+}
+
 export class ViewBoundary extends Component<ViewBoundaryProps, ViewBoundaryState> {
   static override contextType = ErrorReportContext;
   declare context: ErrorReport | null;
@@ -75,11 +88,42 @@ export class ViewBoundary extends Component<ViewBoundaryProps, ViewBoundaryState
     this.props.onCaught?.(error);
   }
 
-  override componentDidUpdate(previous: ViewBoundaryProps): void {
+  /*
+   * THE KEYBOARD IS NEVER LEFT ON <body> (the watch's first rule). A view
+   * that held it and threw — a press ticked the store, the view threw on
+   * its redraw — took the focused element away with it: the panel takes the
+   * keyboard instead. A view drawn again while the panel holds it gives the
+   * keyboard to what it drew. Read before the page changes, kept after.
+   */
+  private readonly panel = createRef<HTMLDivElement>();
+
+  override getSnapshotBeforeUpdate(): KeyboardWas {
+    if (typeof document === "undefined") return null;
+    const focused = document.activeElement;
+    const panel = this.panel.current;
+    if (panel && focused === panel) return { onPanel: true, focused, parent: panel.parentNode, before: panel.previousSibling };
+    return { onPanel: false, focused };
+  }
+
+  override componentDidUpdate(previous: ViewBoundaryProps, previousState: ViewBoundaryState, was?: KeyboardWas): void {
+    if (was && !previousState.error && this.state.error && was.focused && was.focused !== document.body && !was.focused.isConnected && keyboardLost()) {
+      this.panel.current?.focus();
+    }
+    if (was?.onPanel && previousState.error && !this.state.error && keyboardLost()) {
+      const drawn = was.before ? was.before.nextSibling : (was.parent?.firstChild ?? null);
+      if (drawn instanceof HTMLElement) {
+        const first = drawn.matches(FOCUSABLE) ? drawn : drawn.querySelector<HTMLElement>(FOCUSABLE);
+        if (first) first.focus();
+        else {
+          if (!drawn.hasAttribute("tabindex")) drawn.setAttribute("tabindex", "-1");
+          drawn.focus();
+        }
+      }
+    }
     if (!this.state.error) return;
-    const was = previous.reset ?? [];
+    const before = previous.reset ?? [];
     const now = this.props.reset ?? [];
-    if (was.length !== now.length || was.some((value, at) => !Object.is(value, now[at]))) this.setState({ error: undefined });
+    if (before.length !== now.length || before.some((value, at) => !Object.is(value, now[at]))) this.setState({ error: undefined });
   }
 
   override render(): ReactNode {
@@ -88,7 +132,9 @@ export class ViewBoundary extends Component<ViewBoundaryProps, ViewBoundaryState
     const hint = hintOf(error);
     return (
       <div
+        ref={this.panel}
         role="alert"
+        tabIndex={-1}
         data-graview-view-error={this.props.kind}
         style={{
           display: "flex",

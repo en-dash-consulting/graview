@@ -1,6 +1,6 @@
 {
   "budget": "every face",
-  "minified": 611,
-  "gzipped": 0,
-  "note": "Raised when a React view on the home or a record's page came to be caught in its own slot (`ViewBoundary` inside `Bleed`, Roadmap f-bleed-phone-rule-rtl) — keyed by the record, drawn again on the home once the store or the home's view changes (`reset`), said in words (`said`), and a view that is the whole page drawing the record's heading and facts around its panel once it threw (`onCaught`) — the phone's bleed rule came to name each margin by its side and to give the column back to a view that threw, and a kind's page layout came to draw its rule only where it heads the scene's record (Roadmap f-record-page-empty-band-under-page-spec). 611 / 299 more, the gzipped within the budget's room. Measured at 3_130_656 / 1_135_179 against 3_130_045 / 1_134_880."
+  "minified": 1618,
+  "gzipped": 603,
+  "note": "Raised when a React view on the home or a record's page came to be caught in its own slot (`ViewBoundary` inside `Bleed`, Roadmap f-bleed-phone-rule-rtl) — keyed by the record and drawn again once the store changes (`reset`), said in words (`said`), a view that is the whole page drawing the record's heading and facts around its panel once it threw (`onCaught`), and the keyboard moved to the panel from a view that held it and threw, and back to what a view drew again — the phone's bleed rule came to name each margin by its side, and a kind's page layout came to draw its rule only where it heads the scene's record (Roadmap f-record-page-empty-band-under-page-spec). 1_618 / 603 more. Measured at 3_131_663 / 1_135_493 against 3_130_045 / 1_134_890."
 }
