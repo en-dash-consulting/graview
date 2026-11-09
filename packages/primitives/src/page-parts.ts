@@ -1,3 +1,4 @@
+import { arrange, arrangeable, parseArrangement, type ArrangeContext } from "@graview/core/arrange";
 import { fieldWords, labelOf, nounOf, pluralLabel, type AnySchema } from "@graview/core";
 import type { GraviewContextValue, MenuPage } from "@graview/react/provider";
 import { parseExpr } from "@graview/core/document";
@@ -31,6 +32,8 @@ export interface PagePart {
   readonly elements: readonly Element[];
   /** The page's own region: what a draft is judged by. */
   readonly main: Element | null;
+  /** What the page's address narrows its records to (`?filter=status:doing`), where it does: what another way to show it is drawn over. */
+  readonly filter?: string;
 }
 
 /** What the menu reads of the provider for a page's part. */
@@ -66,6 +69,21 @@ export function lensNarrows(lens: { readonly name?: unknown; readonly options?: 
   if (lens.name === "columns") return options["cap"] !== undefined || (Array.isArray(options["hidden"]) && options["hidden"].length > 0);
   if (lens.name === "calendar") return options["horizon"] !== undefined;
   return false;
+}
+
+/**
+ * THE RECORDS AN OPTION IS DRAWN OVER: what the page itself shows of them —
+ * every one, or those its address narrows it to (`?filter=`), judged by
+ * the same arranging a place on a page is, so that the preview and the
+ * page once it is kept agree. A word the kind cannot be narrowed by
+ * narrows nothing, as on the page.
+ */
+export function recordsShown<N extends { readonly id: string; readonly kind: string }>(schema: AnySchema, graph: ArrangeContext["graph"], kind: string, nodes: readonly N[], filter: string | undefined, flagged: ReadonlySet<string> = new Set()): readonly N[] {
+  const asked = filter ? (parseArrangement({ filter }).filter ?? []) : [];
+  const offered = asked.length > 0 ? arrangeable(schema, kind).filters : [];
+  const conditions = asked.filter((condition) => offered.some((one) => one.key === condition.key));
+  if (conditions.length === 0) return nodes;
+  return arrange(nodes as never, { filter: conditions }, { schema, graph, flagged }).nodes as unknown as readonly N[];
 }
 
 /** Each part offered, by the element the menu was opened at, for the outline while it is open. */

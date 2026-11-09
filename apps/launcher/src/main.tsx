@@ -29,7 +29,7 @@ import { open as openTodo } from "@graview/todo/open";
 import { open as openSeedbed } from "@graview/seedbed/open";
 import { RotaApp } from "@graview/rota/ui";
 import { open as openRota } from "@graview/rota/open";
-import { useCallback, useEffect, useMemo, useState, type ReactElement } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from "react";
 import { createRoot } from "react-dom/client";
 import { createLauncherStore, launcherApp, type LauncherStore } from "./domain/app.js";
 import { APPS } from "./domain/survey.js";
@@ -157,6 +157,52 @@ function useShowing(): string | null {
   }, [store, nodes]);
 }
 
+/**
+ * WHERE THE KEYBOARD GOES WHEN THE FACE CHANGES.
+ *
+ * Pressing an app's button takes the desk's bar away with the button in it,
+ * and the keyboard was left on `<body>`: a person who opened Things by
+ * keyboard then had to Tab in from the top of a page they had not seen. So
+ * whenever what is in front of you changes — an app opened, a switch
+ * sideways, back to all apps — the keyboard lands on the new face's own
+ * region: its `<main>` (the scene's is focusable for exactly this), or its
+ * first heading. Only when the keyboard is on nothing: an app that put it
+ * somewhere itself is left alone, and the page's first load is no change.
+ */
+function useKeyboardFollowsTheFace(showing: string | null, drawn: boolean): void {
+  const before = useRef(showing);
+  const owed = useRef(false);
+  /* When the switch was made: an app's own main may come a while after it opens, and is waited for this long from the press, not from any load. */
+  const since = useRef(0);
+  if (before.current !== showing) {
+    before.current = showing;
+    owed.current = true;
+    since.current = Date.now();
+  }
+  useEffect(() => {
+    if (!owed.current || (showing && !drawn)) return;
+    let frame = 0;
+    const until = since.current + 15_000;
+    const land = () => {
+      const active = document.activeElement;
+      if (active && active !== document.body && active !== document.documentElement) {
+        owed.current = false;
+        return;
+      }
+      const target = document.querySelector<HTMLElement>("#root main") ?? document.querySelector<HTMLElement>("#root h1");
+      if (target) {
+        if (!target.matches("a[href],button,input,select,textarea,[tabindex]")) target.tabIndex = -1;
+        target.focus({ preventScroll: true });
+        owed.current = false;
+        return;
+      }
+      if (Date.now() < until) frame = requestAnimationFrame(land);
+    };
+    frame = requestAnimationFrame(land);
+    return () => cancelAnimationFrame(frame);
+  }, [showing, drawn]);
+}
+
 /** Runs a launcher mutation as a person would: through the store, into the log. */
 function useDesk() {
   const { store } = useGraview<S>();
@@ -189,6 +235,7 @@ function Desk({
   const showing = useShowing();
   const demo = useOpened(showing);
   const desk = useDesk();
+  useKeyboardFollowsTheFace(showing, demo !== null);
   /* The page's colors are whoever is on screen: a mounted app in its own brand, the desk in the framework's. */
   const brand = showing ? demo?.brand : undefined;
   useEffect(() => applyScheme(scheme, brand), [scheme, brand]);
@@ -258,7 +305,8 @@ function Desk({
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
       <CommandBar scheme={scheme} onScheme={onScheme} onCall={onCall} calls={calls} />
       <BackOut home={MATRIX} />
-      <main aria-label="What each app exercises" style={{ position: "relative", flex: 1, minHeight: 0 }}>
+      {/* Focusable only programmatically, as the scene's is: where the keyboard lands on the way back from an app. */}
+      <main aria-label="What each app exercises" tabIndex={-1} style={{ position: "relative", flex: 1, minHeight: 0, outline: "none" }}>
         {/* Both, always: the overview lays the scene down rather than
             replacing it, so you can see where you were. */}
         <Scene renderer="dom" />

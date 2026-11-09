@@ -1,5 +1,6 @@
 import { ARCHIVED, isAutomated, type AnySchema, type Lineage, type MutationCall, type Primitive, type Principal, type Store } from "@graview/core";
 import { suggest } from "@graview/core/tidying";
+import { hostSentence } from "./refusal.js";
 import { declaredWorkflows, policiesOf, resolveWorkflow, workflowAuthor, workflowSpecHash, workflowWorldOfApp } from "@graview/core/workflows";
 import { routeOf } from "../tidy/policy.js";
 import { askedOf } from "./ask.js";
@@ -243,7 +244,14 @@ export async function runWorkflow<S extends AnySchema>(options: RunWorkflowOptio
           const origin: FarOrigin = { workflow: workflow.name, title: workflow.title, run: id, step: index, author: principal, dry };
           const reaching = (async () => {
             try {
-              return (await hook.otherApp(address, origin)) ?? { refused: `this host does not let “${workflow.title}” reach ${address}` };
+              const app = await hook.otherApp(address, origin);
+              const unreached = { refused: `this host does not let “${workflow.title}” reach ${address}` };
+              // An answer that is no app and no refusal (a string, `true`) is the framework's refusal, never a thrown message shown to a person.
+              if (!app || typeof app !== "object" || Array.isArray(app)) return unreached;
+              if (!("refused" in app)) return app;
+              // The host's own sentence, said as the step's reason on one line (`hostSentence`); one that says nothing is the framework's.
+              const words = hostSentence(app.refused);
+              return words ? { refused: words } : unreached;
             } catch (error) {
               return { refused: `${address} could not be reached: ${said(error)}` };
             }

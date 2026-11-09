@@ -478,7 +478,7 @@ function Menu<S extends AnySchema>({ context, root, registry, children }: { read
   /* "Make “This week” better" on a section of a worker view, for a seat that may change views (Roadmap f-make-this-section-better). */
   const better = useSectionBetterSection();
   /* "Other ways to show this" on a kind's list or a place, for a seat that may change the app, with AI on or off (Roadmap f-display-options-switch). */
-  const otherWays = useDisplayOptionsSection(listStandsAsItIs(registry as never, search, (kind) => kindMap(store).relations.filter((relation) => relation.from === kind || relation.to === kind).map((relation) => relation.edgeKind), (kind) => listOpensAs(context, kind)?.flows ?? true));
+  const otherWays = useDisplayOptionsSection(listStandsAsItIs(registry as never, search, (kind) => kindMap(store).relations.filter((relation) => relation.from === kind || relation.to === kind).map((relation) => relation.edgeKind), (kind) => listOpensAs(context, kind)?.flows ?? true), new URLSearchParams(search).get("filter"));
   const sections = useMemo(() => [copy, change, board, own, ...(tidy ? [tidy] : []), ...(notify ? [notify] : []), ...(better ? [better] : []), ...(otherWays ? [otherWays] : []), ...(inlineAi ? [inlineAi] : [])], [copy, change, board, own, tidy, notify, better, inlineAi]);
 
   return (

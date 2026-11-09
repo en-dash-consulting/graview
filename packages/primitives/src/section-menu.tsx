@@ -2,7 +2,7 @@ import { retryingImport } from "@graview/core/retry";
 import { isCurrent, type AnySchema } from "@graview/core";
 import { viewPlaceOf } from "@graview/react/drawing";
 import { placeOfSection } from "./section-words.js";
-import { lensNarrows, nudgesFor, pageMayChange, pagePartOf, PARTS, type PagePart } from "./page-parts.js";
+import { lensNarrows, nudgesFor, pageMayChange, pagePartOf, PARTS, recordsShown, type PagePart } from "./page-parts.js";
 import { aboutTheLook, mayChangeDeclaration } from "@graview/tools/section";
 import { lazyModule, useGoTo, useGraview, type AiDesk, type GraviewContextValue, type MenuPage, type MenuSection, type MenuTarget, type MenuViewSection } from "@graview/react/provider";
 import { pluralLabel } from "@graview/core";
@@ -189,7 +189,7 @@ export function sectionFor(target: MenuTarget, here: SectionHere): MenuSection |
  * says it now shows as something while it draws the same thing. A place is
  * still offered, whatever the design: its lens is what draws it.
  */
-export function displayOptionsSection(target: MenuTarget, here: SectionHere, listStands?: (kind: string) => boolean): MenuSection | null {
+export function displayOptionsSection(target: MenuTarget, here: SectionHere, listStands?: (kind: string) => boolean, filter?: string | null): MenuSection | null {
   const { aiDesk, app, composeChange, onProposeChange, principal, store } = here;
   if (target.face !== "pages" || target.section || !target.page) return null;
   if (onProposeChange === undefined || composeChange === undefined || !mayChangeDeclaration(store, principal)) return null;
@@ -203,9 +203,12 @@ export function displayOptionsSection(target: MenuTarget, here: SectionHere, lis
   }
   // The records the page would show: a kind with only retired ones has nothing to show another way.
   const definition = store.schema.tryDefinition(part.kind);
-  if (!store.graph.nodesOfKind(part.kind).some((node) => isCurrent(definition, node))) return null;
+  const current = store.graph.nodesOfKind(part.kind).filter((node) => isCurrent(definition, node));
+  if (current.length === 0) return null;
+  // Nor an address whose filter keeps none of them: there is nothing to draw another way (Roadmap f-other-ways-at-a-filter).
+  if (filter && recordsShown(store.schema, store.graph as never, part.kind, current as never, filter, new Set(store.violations().flatMap((violation) => violation.nodeIds))).length === 0) return null;
   // A group's heading is on its kind's list: the list is what is shown another way.
-  const whole: PagePart = part.slot === "group" ? { name: pluralLabel(store.schema, part.kind), slot: "list", kind: part.kind, elements: part.main ? [part.main] : [], main: part.main } : part;
+  const whole: PagePart = { ...(part.slot === "group" ? { name: pluralLabel(store.schema, part.kind), slot: "list" as const, kind: part.kind, elements: part.main ? [part.main] : [], main: part.main } : part), ...(filter ? { filter } : {}) };
   const returnTo = target.element ?? null;
   return { id: "display-options", items: [{ id: "other-ways", label: "Other ways to show this", run: () => askSection(aiDesk, { part: whole, mode: "options", returnTo }) }], prepare: () => optionsSwitch.prefetch() };
 }

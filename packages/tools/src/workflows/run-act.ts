@@ -1,5 +1,6 @@
 import { pluralOf, type AnyGraphNode, type AnySchema, type MutationCall, type Operation, type Principal, type Store } from "@graview/core";
 import { farReferenceOf, isFarReference, keyedId, recordsOver, workflowKey, workflowValue, type ActStep } from "@graview/core/workflows";
+import { refusalSentence } from "./refusal.js";
 import type { StepContext, StepRunner } from "./types.js";
 
 /*
@@ -113,7 +114,7 @@ async function runFarAct(step: ActStep, context: StepContext): Promise<void> {
   const ref = farReferenceOf(step.act);
   if (!ref) return context.skipped(`“${step.act}” names no act of another app.`);
   const app = await context.otherApp(ref.address);
-  if ("refused" in app) return context.skipped(`${app.refused}.`);
+  if ("refused" in app) return context.skipped(refusalSentence(app.refused));
   const where = app.shape.name ? `${app.shape.name} (${ref.address})` : ref.address;
   if (!Object.hasOwn(app.shape.acts, ref.name)) return context.skipped(`${where} has no act “${ref.name}”.`);
   const store = context.store;

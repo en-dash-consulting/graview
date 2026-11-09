@@ -6,7 +6,9 @@ import { draftView, isDraftFailure, judgeLens, lensFromSpec, recipeDraft, type D
 import type { Completion } from "@graview/tools";
 import type { ComposeChangeHost, ProposeChangeAnswer, ReshapeProposal } from "@graview/tools/reshape";
 import { BOARD_AT_MOST, fieldTypeOf, mainDate } from "./kind-shape.js";
-import { lensNarrows } from "./page-parts.js";
+import { lensNarrows, recordsShown } from "./page-parts.js";
+
+export { recordsShown };
 
 /*
  * OTHER WAYS TO SHOW THIS (Roadmap f-display-options-switch), worked out:
@@ -72,7 +74,22 @@ export interface OptionsInput {
   readonly linked?: (id: string, edge: string) => boolean;
   readonly offers?: readonly DisplayOptionOffer[];
   readonly choices?: readonly DisplayChoice[];
+  /** What the page's address narrows it to (`?filter=`): on a kind's list, an option that flows is not offered, since kept it would not be drawn there. */
+  readonly filter?: string;
 }
+
+/** Whether an option flows with the page — blocks: a kind's list that opens as one draws the list instead at an address that narrows it. */
+export const optionFlows = (drawn: Pick<DrawnLens, "lens">): boolean => drawn.lens === "blocks";
+
+/**
+ * AT AN ADDRESS THAT NARROWS THE LIST (Roadmap f-other-ways-at-a-filter): a
+ * kind's list that opens as a place draws the place there only where the
+ * place narrows itself, which a picture does and a place that flows does
+ * not — it is the list again. So on a list at `?filter=`, an option that
+ * flows is withheld: keeping it would show the list, not what was chosen.
+ */
+const withheldAtTheAddress = (input: OptionsInput, drawn: Pick<DrawnLens, "lens">): boolean => input.place === undefined && input.filter !== undefined && input.filter !== "" && optionFlows(drawn);
+
 
 /** The most an offer shows at once. */
 export const MOST_OPTIONS = 4;
@@ -229,7 +246,7 @@ function judged(input: OptionsInput, spec: unknown, about: Pick<DisplayOption, "
   if (drawing === drawingNow(input)) return undefined;
   const lens: DraftLens = { ...written, on: input.kind, title: freeLensTitle(input.app, written.title) };
   const verdict = judgeLens(input.app as GraviewApp<AnySchema>, lens, input.sight);
-  if (!verdict.ok) return undefined;
+  if (!verdict.ok || withheldAtTheAddress(input, verdict.drawn)) return undefined;
   const again = hiddenDrawing(input, lens);
   if (again && again.title === opensNow(input)) return undefined;
   const edits = again ? [opensAs(input, again.title)] : editsOfLens(input, lens);
@@ -248,7 +265,7 @@ export function displayOptionsFor(input: OptionsInput): readonly DisplayOption[]
     for (const lens of lensesOf(input.app)) {
       if (lens.title === undefined || lens.hidden === true || !overKind(lens, input.kind) || lens.title === opensNow(input) || lensNarrows(lens, input.kind)) continue;
       const verdict = judgeLens({ ...input.app, lenses: lensesOf(input.app).filter((one) => one !== lens) } as never, { ...lens, on: input.kind }, input.sight);
-      if (!verdict.ok) continue;
+      if (!verdict.ok || withheldAtTheAddress(input, verdict.drawn)) continue;
       const edits = [opensAs(input, lens.title)];
       if (!passes(input, edits)) continue;
       const drawing = drawingOf(lens);
@@ -258,7 +275,7 @@ export function displayOptionsFor(input: OptionsInput): readonly DisplayOption[]
   }
   for (const candidate of candidatesOf(input)) {
     const draft = recipeDraft(candidate.recipe, { app: input.app as GraviewApp<AnySchema>, ...(input.sight ? { sight: input.sight } : {}) });
-    if (isDraftFailure(draft)) continue;
+    if (isDraftFailure(draft) || withheldAtTheAddress(input, draft.drawn)) continue;
     const drawing = drawingOf(draft.lens);
     if (seen.has(drawing)) continue;
     const again = hiddenDrawing(input, draft.lens);
