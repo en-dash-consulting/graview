@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form alone",
+  "minified": 0,
+  "gzipped": 32,
+  "note": "Raised in the 0.1.71 Version packages pull request: with the versions written, a visitor's form alone measured 273_994 / 99_598 against 274_016 / 99_597, one gzipped byte over, from the version strings the bundle carries and nothing it draws."
+}

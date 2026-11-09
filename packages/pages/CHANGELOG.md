@@ -1,5 +1,36 @@
 # @graview/pages
 
+## 0.1.71
+
+### Patch Changes
+
+- b89e0a1: A record page whose kind declares its own page layout draws one divider before the facts, and no empty band between two (Roadmap f-record-page-empty-band-under-page-spec). `views.<kind>.page` drew the rule it heads the scene's record with on the pages face too, where the facts under it draw their own, so about 55 pixels of nothing stood between two lines and read as a view that failed to draw. The page's own rule is now drawn only where it heads the scene's record; a record page without a page layout is unchanged.
+  
+  A view that says `bleed: true` takes each safe area on its own side in a page that reads right to left (Roadmap f-bleed-phone-rule-rtl). The phone's rule named its margins by the direction of the text, so the left inset was kept on the right; it names them by side now, as `bleed: "full"` does. A React view that throws on the home or on a record's page is caught in its own slot: its panel stands where it would have drawn, the page and the record's facts stand around it, and a slot that bled gives the width back to the column, as one whose worker view did not draw already did.
+  
+  A panel is that record's alone: the next record opened draws its own view, and the home's view is drawn again once the store changes or the home's view does. A view that is the whole page (`replaces: "page"`, with or without `heading: "own"`) and threw no longer leaves a page with no name a person can see: the record's heading and its facts are drawn around the panel, as they would be without that view. The panel says "This deliverable's view could not draw" or "The home's view could not draw", and on a kind's list or a place its name or title, never the kind's declared id. A record's view is drawn again once the store changes, so one that threw on a value redraws when the person fixes it. A view that held the keyboard and threw gives it to its panel rather than the page's body, and a view drawn again while the panel holds it takes it back. `ViewBoundary` takes `said` (the words under its line, in place of the kind's id), `onCaught` and `reset` (what the view is drawn from: one that threw is drawn again once any of it changes).
+  
+  Compatibility: the look — a record page with its own page layout draws one divider and no empty band, a bleeding view keeps each safe area on its own side right to left, and a view that throws is caught in its own slot. The JavaScript API — additive: `ViewBoundary` takes optional `said`, `onCaught` and `reset`. Ops and primitives — unchanged. Stored formats — unchanged. The wire — unchanged. The declaration and check finding codes — unchanged. Derived tool names and input schemas — unchanged.
+- 72118ce: A host can refuse a workflow's step into another app in its own words. `FarApps.otherApp(address, origin)` may answer `{ refused: "The owner of this workflow's app may not change Graview Public." }`, and the step is skipped with that sentence, before anything there is read or run; an answer of nothing is still refused in the framework's words, and an act the app's shape lacks is still said to be missing. The sentence is said on one line, cut at a word with an ellipsis past 500 characters, and given a full stop only where it ends in none of its own; an answer that is neither an app nor a refusal is refused in the framework's words. `farAppsOver` takes a `refuses(origin)` grant that says the sentence for apps held in memory, a blank one letting the run in. Code that calls `otherApp` itself now gets the new `FarReached` type, `FarApp | { refused }`, and must check for `refused` before using the app. The `FarApp` types and the `graview-workflows` skill say how.
+  
+  "Other ways to show this" on a kind's list at an address that narrows it (`?filter=status:doing`, where the list opens as a board) no longer offers an option that flows, such as cards or rows: kept, it would have drawn the list there rather than itself. Every option is drawn over the records the address narrows the page to, so the preview and the page once kept agree. A place is offered its options as before, narrowed the same way, and an address whose filter keeps none of the records is not offered "Other ways to show this" at all. The embed's every-face budget is raised by 956 / 367 bytes for this changeset; the pages face alone stays within its own.
+  
+  What Graview Cloud does: to word a refusal for an app a workflow may not reach, answer `{ refused }` from `otherApp` rather than an app whose shape leaves the act out.
+  
+  Compatibility: the JavaScript API — breaking for code that calls `FarApps.otherApp` itself: it gets `FarReached` and checks `refused` before using the app; `farAppsOver` takes an optional `refuses`. The look — "Other ways to show this" at a narrowed address offers only what that address would draw. Ops and primitives — unchanged. Stored formats — unchanged. The wire — unchanged. The declaration and check finding codes — unchanged. Derived tool names and input schemas — unchanged.
+- Updated dependencies [8abdab2]
+- Updated dependencies [9962251]
+- Updated dependencies [b89e0a1]
+- Updated dependencies [7c87feb]
+- Updated dependencies [72118ce]
+- Updated dependencies [a3e5861]
+- Updated dependencies [30fb869]
+  - @graview/core@0.1.71
+  - @graview/primitives@0.1.71
+  - @graview/react@0.1.71
+  - @graview/tools@0.1.71
+  - @graview/layout@0.1.71
+
 ## 0.1.70
 
 ### Patch Changes

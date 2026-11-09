@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.71`](https://graview.dev/docs/releases.html#v0-1-71)
 - [`0.1.70`](https://graview.dev/docs/releases.html#v0-1-70)
 - [`0.1.69`](https://graview.dev/docs/releases.html#v0-1-69)
 - [`0.1.68`](https://graview.dev/docs/releases.html#v0-1-68)
@@ -72,9 +73,29 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
+## 0.1.71
+
+Published November 9, 2026 · the current version
+
+A visitor is told plainly they are not signed in; an act clears a field with null and its condition says $subject and $arg; a view's faces come from origins of their own and a file the app holds is bounded; a record page with its own layout draws one divider; and acts are offered only where they apply.
+
+- **A visitor is not signed in.** When the host hands `signIn`, the account pane says "Not signed in" and offers sign-in first, the bar's button says so too, and no seat's id is shown.
+- **An act clears a field.** A literal `null` in a document act's `set` removes an optional field's value; on a required field `graview check` warns (`act-clears-required`).
+- **An act's condition says which value it means.** `$subject.<field>` is the record's own value and `$arg.<name>` the call's argument; inside `where`, `every` and the rest, a member's own field comes first. `graview check` warns where a bare name means both (`act-name-means-both`) and where `$arg` means nothing (`act-arg-unknown`, `arg-outside-act`).
+- **A view's faces have origins of their own.** A host lists them in `fonts: { origins }`; `images.origins` is for images only. A file the app holds may be at most 2 MB as a face, and when two faces share a name the one lent last draws.
+- **A record page with its own layout** draws one divider and no empty band before its facts, and a view that throws in its slot is caught there, in words, while the page stays.
+- **A bleeding view on a phone** keeps each safe area on its own side in a right-to-left page.
+- **Acts are offered only where they apply.** The several bar acts on the chosen records an act applies to and says how many; an act done as you is not offered to a seat that cannot see its own person; a link that is not there is refused in words.
+- **A workflow's far step** says the host's own refusal (`otherApp` may answer `{ refused }`), and other ways to show a list at a filtered address offer only what that address would draw.
+- **Security and reliability fixes.**
+
+**Before you upgrade:** Breaks: a host that lent faces from an origin listed in `images.origins` lists it in `fonts.origins` instead. Inside `where`, `every` and the rest, a bare name that is a member's field now reads the member ahead of an act argument of the same name. Code calling `FarApps.otherApp` gets `FarReached` and checks `refused`. Some refusal sentences changed wording and no longer carry ids. `Store` gains `wouldDo` and `version`; `@graview/react`'s `ViewBoundary` gains optional `reset`, `said` and `onCaught`. Stored formats are unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.71) · [The full changelog for 0.1.71](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0171)
+
 ## 0.1.70
 
-Published November 8, 2026 · the current version
+Published November 8, 2026
 
 A design reaches the router through @graview/pages on React Router 8; a worker view keeps values for whoever is looking, spans the whole window and draws in its app's faces; the inbox opens on what needs you; and an owner can try other ways to show a list.
 
