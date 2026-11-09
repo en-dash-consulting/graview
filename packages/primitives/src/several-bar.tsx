@@ -166,7 +166,8 @@ export function SeveralBar({ store, chosen, principal, context, via, anchor, of,
   }, []);
 
   const run = (act: SeveralAct, extra: Readonly<Record<string, unknown>> = {}): readonly string[] | void => {
-    const done = actOnSeveral(store, { mutation: act.mutation, subject: act.subject, args: { ...act.args, ...extra }, label: act.label }, chosen, {
+    // Over the records it applies to, which are all it was offered for: one it cannot apply to was never in the count.
+    const done = actOnSeveral(store, { mutation: act.mutation, subject: act.subject, args: { ...act.args, ...extra }, label: act.label }, act.applies, {
       ...(principal ? { author: principal } : {}),
       ...(via ? { via } : {}),
       ...(context ? { context } : {}),
@@ -192,12 +193,14 @@ export function SeveralBar({ store, chosen, principal, context, via, anchor, of,
       data-testid="several-act"
       data-act={act.id}
       data-mutation={act.mutation}
+      data-applies={act.applies.length}
       {...(act.destructive ? { "data-tone": "warn" } : {})}
       aria-pressed={asking?.id === act.id ? true : undefined}
       onClick={() => press(act)}
     >
       {act.label}
       {act.open.length > 0 ? "…" : ""}
+      {act.applies.length < chosen.length ? <span className="graview-several-act-count">{` — ${act.applies.length} of ${chosen.length}`}</span> : null}
     </button>
   );
 
@@ -250,7 +253,7 @@ export function SeveralBar({ store, chosen, principal, context, via, anchor, of,
         </p>
       ) : null}
       {asking ? (
-        <div className="graview-several-ask" role="group" aria-label={`${asking.label}, for all ${chosen.length}`} data-testid="several-ask">
+        <div className="graview-several-ask" role="group" aria-label={asking.applies.length < chosen.length ? `${asking.label}, for ${asking.applies.length} of the ${chosen.length}` : `${asking.label}, for all ${chosen.length}`} data-testid="several-ask">
           <AnswerArgs store={store} affordance={asking.affordance} onApply={(args) => run(asking, args)} onCancel={() => setAsking(null)} />
         </div>
       ) : null}

@@ -80,6 +80,13 @@ export class GraphError extends Error {
  * patch, remove or link to (FR-46). Still a `GraphError`, so a caller that
  * caught those before catches this; `refusalOf` reads it as `missing`.
  */
+/**
+ * WHAT A REMOVAL OF A LINK THAT IS NOT THERE IS REFUSED IN: words, never the
+ * link's key (its relation and both ids, NUL-joined), which reached a person
+ * and an agent as the refusal of an act. The key stays on the error's `id`.
+ */
+export const NO_SUCH_LINK = "That link is not there to take away.";
+
 export class MissingRecordError extends GraphError {
   constructor(
     readonly id: string,
@@ -461,7 +468,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
         // Named by its own id when it carries one (reserved, `EDGE_FIELDS`), else by where it stands.
         const named = primitive.edge.id === undefined ? primitive.edge : this.linkById(primitive.edge.id);
         if (!named || !this.edges.has(edgeId(named))) {
-          throw new MissingRecordError(primitive.edge.id ?? edgeId(primitive.edge), `Cannot remove missing edge ${primitive.edge.id ?? edgeId(primitive.edge)}`);
+          throw new MissingRecordError(primitive.edge.id ?? edgeId(primitive.edge), NO_SUCH_LINK);
         }
         this.deleteEdge(named);
         return;

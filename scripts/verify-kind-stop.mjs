@@ -324,11 +324,14 @@ try {
     acts: await page.locator('[data-testid="several-act"]').allTextContents(),
     hash: await page.evaluate(() => decodeURIComponent(location.hash)),
     hashBefore,
+    // What each offered act says it applies to: every one at least one of the chosen, and none more.
+    applies: await page.locator('[data-testid="several-act"]').evaluateAll((acts) => acts.map((act) => Number(act.getAttribute("data-applies")))),
   };
   const checkIn = page.locator('[data-testid="several-act"][data-mutation="check-in"]');
   if ((await checkIn.count()) > 0) {
     await checkIn.click();
     await page.waitForTimeout(800);
+    report.walks.several.refused = await page.locator('[data-testid="several-refused"] li').allTextContents();
     const offer = page.getByRole("button", { name: /Take back/ }).first();
     report.walks.several.acted = {
       bar: await page.locator('[data-testid="several-bar"]').count(),
@@ -414,6 +417,8 @@ report.checks = {
   severalRowsAreChosenAndSaidByCount: walks.several?.said === "3 speakers chosen" && (walks.several?.acts ?? []).includes("Check them in") && walks.several?.hash === walks.several?.hashBefore,
   // "Check them in" checks in all three as one change, offered back as one, and taken back in one press.
   severalRowsAreOneChangeWithOneUndo: walks.several?.acted?.bar === 0 && /Check them in — 3 speakers/.test(walks.several?.acted?.offer ?? "") && walks.several?.undone === true && walks.several?.acted?.focus !== "body",
+  // No act the bar offers is then refused: each applies to at least one of the chosen and counts no more, and the one pressed refuses none.
+  noOfferedSeveralActIsThenRefused: (walks.several?.applies ?? []).length > 0 && walks.several.applies.every((n) => n >= 1 && n <= 3) && Array.isArray(walks.several?.refused) && walks.several.refused.length === 0,
   // Space on a box chooses it; Escape puts the choice down and leaves the stop where it was.
   escapePutsTheChoiceDownAndKeepsTheStop: walks.several?.one === "1 speaker chosen" && walks.several?.putDown?.bar === 0 && walks.several?.putDown?.stop === 1 && walks.several?.putDown?.hash === walks.several?.hashBefore,
   // The act asks in place; put away, the keyboard is back on the act.

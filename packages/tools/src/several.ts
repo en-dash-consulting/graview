@@ -71,6 +71,13 @@ export interface SeveralAct {
   readonly destructive?: true;
   /** The same act as an affordance on the first record, for a face that asks its questions with the form it asks one record's with. */
   readonly affordance: Affordance;
+  /**
+   * The chosen records it would apply to, in the order chosen: the ones the
+   * rehearsal `actOnSeveral` runs passes (for an act still to be asked, the
+   * ones this seat may run it on). Never empty: an act that applies to none
+   * is not offered. What a face counts and runs it over.
+   */
+  readonly applies: readonly string[];
 }
 
 /** An act that exists for these records and this seat may not take, and why. */
@@ -141,7 +148,7 @@ export function actsForSeveral<S extends AnySchema>(store: Store<S>, ids: readon
     if (affordance.open.some((parameter) => named.has(parameter.name))) return undefined;
     return mutation;
   };
-  const acts: SeveralAct[] = [];
+  const acts: Omit<SeveralAct, "applies">[] = [];
   const seen = new Set<string>();
   for (const affordance of set.affordances) {
     const mutation = shared(affordance);
@@ -198,8 +205,26 @@ export function actsForSeveral<S extends AnySchema>(store: Store<S>, ids: readon
       }
     }
   }
+  /*
+   * OFFERED ONLY WHERE IT APPLIES. Each act is rehearsed over the chosen
+   * records as `actOnSeveral` will run it, and offered only where it would
+   * change at least one, counting only those: "Take back a vote" over ideas
+   * the seat voted on none of was offered, and then refused on every one.
+   * An act still to be asked cannot be rehearsed before its answer, so it
+   * is offered over the records this seat may run it on.
+   */
+  const here = nodes.map((node) => node.id);
+  const applying: SeveralAct[] = [];
+  for (const act of acts) {
+    const call = { mutation: act.mutation, subject: act.subject, args: act.args };
+    const applies =
+      act.open.length > 0
+        ? here.filter((id) => store.permits({ name: act.mutation, args: { ...act.args, [act.subject]: id } }, principal).ok)
+        : judgeSeveral(store, call, here, { author: principal, ...(options.context ? { context: options.context as InvariantContext } : {}) }).going.map((one) => one.id);
+    if (applies.length > 0) applying.push({ ...act, applies });
+  }
   // The day-to-day acts first, the field values after them, and what sets a record aside or removes it last.
-  const ordered = [...acts.filter((act) => !act.more), ...acts.filter((act) => act.more)];
+  const ordered = [...applying.filter((act) => !act.more), ...applying.filter((act) => act.more)];
   const withheld = set.withheld
     .filter((affordance) => {
       const mutation = mutations.get(affordance.mutation);
@@ -207,6 +232,80 @@ export function actsForSeveral<S extends AnySchema>(store: Store<S>, ids: readon
     })
     .map((affordance) => ({ label: actTitle(mutations.get(affordance.mutation)!), message: affordance.refusal.message }));
   return { acts: ordered, withheld };
+}
+
+/** A record as a person knows it, by id: its label, or the id where it is not here. */
+function labelOfId<S extends AnySchema>(store: Store<S>, id: string): string {
+  const node = store.graph.getNode(id);
+  return node ? labelOf(store.schema.tryDefinition(node.kind as string), node as never) : id;
+}
+
+/**
+ * EACH RECORD JUDGED ON ITS OWN, AND THEN TOGETHER, telling nobody: may this
+ * seat run the act there, would it change anything, and would the store
+ * keep it (a rehearsal, `previewAll`). What `actOnSeveral` applies, and what
+ * `actsForSeveral` offers an act over.
+ */
+function judgeSeveral<S extends AnySchema>(
+  store: Store<S>,
+  act: SeveralCall,
+  ids: readonly string[],
+  options: Pick<ActOnSeveralOptions, "author" | "context">,
+): { readonly going: readonly { readonly id: string; readonly call: MutationCall }[]; readonly unchanged: readonly string[]; readonly refused: readonly SeveralRefusal[] } {
+  const author = options.author;
+  const mutation = store.allMutations().find((one) => one.name === act.mutation);
+  const words = (error: unknown) => failureWords(store.schema as AnySchema, store.allMutations() as never, error);
+  const refused: SeveralRefusal[] = [];
+  const unchanged: string[] = [];
+  let going: { readonly id: string; readonly call: MutationCall }[] = [];
+  for (const id of [...new Set(ids)]) {
+    const call: MutationCall = { name: act.mutation, args: { ...act.args, [act.subject]: id } };
+    if (!mutation) {
+      refused.push({ id, label: labelOfId(store, id), message: `There is no act “${act.mutation}”.`, reason: "invalid" });
+      continue;
+    }
+    const verdict = store.permits(call, author);
+    if (!verdict.ok) {
+      refused.push({ id, label: labelOfId(store, id), message: verdict.refusal.message, reason: "forbidden" });
+      continue;
+    }
+    if (!store.wouldChange(call, author)) {
+      unchanged.push(id);
+      continue;
+    }
+    going.push({ id, call });
+  }
+  /*
+   * JUDGED TOGETHER FIRST, one by one only when that refuses: a rehearsal
+   * of the whole batch is one copy of the graph, and the common case. A
+   * record refused alone is named and left out; the rest are judged again,
+   * since a record may only have passed beside one that was left out.
+   */
+  const rehearse = (calls: readonly MutationCall[]) => store.previewAll(calls, { ...(author ? { author } : {}), ...(options.context ? { context: options.context } : {}) });
+  for (let round = 0; going.length > 0; round += 1) {
+    try {
+      rehearse(going.map((one) => one.call));
+      break;
+    } catch (error) {
+      const still: typeof going = [];
+      for (const one of going) {
+        try {
+          rehearse([one.call]);
+          still.push(one);
+        } catch (alone) {
+          refused.push({ id: one.id, label: labelOfId(store, one.id), message: words(alone), reason: refusalOf(alone).reason });
+        }
+      }
+      // Each passes alone and together they do not: nothing more can be told apart, so the batch's own refusal is every one's.
+      if (still.length === going.length || round > going.length) {
+        for (const one of still) refused.push({ id: one.id, label: labelOfId(store, one.id), message: words(error), reason: refusalOf(error).reason });
+        going = [];
+        break;
+      }
+      going = still;
+    }
+  }
+  return { going, unchanged, refused };
 }
 
 /** One act over several records: the act, the argument each record goes in, and what every call shares. */
@@ -263,60 +362,7 @@ export function actOnSeveral<S extends AnySchema>(store: Store<S>, act: SeveralC
   const author = options.author;
   const mutation = store.allMutations().find((one) => one.name === act.mutation);
   const words = (error: unknown) => failureWords(store.schema as AnySchema, store.allMutations() as never, error);
-  const labelOfId = (id: string) => {
-    const node = store.graph.getNode(id);
-    return node ? labelOf(store.schema.tryDefinition(node.kind as string), node as never) : id;
-  };
-  const refused: SeveralRefusal[] = [];
-  const unchanged: string[] = [];
-  let going: { readonly id: string; readonly call: MutationCall }[] = [];
-  for (const id of [...new Set(ids)]) {
-    const call: MutationCall = { name: act.mutation, args: { ...act.args, [act.subject]: id } };
-    if (!mutation) {
-      refused.push({ id, label: labelOfId(id), message: `There is no act “${act.mutation}”.`, reason: "invalid" });
-      continue;
-    }
-    const verdict = store.permits(call, author);
-    if (!verdict.ok) {
-      refused.push({ id, label: labelOfId(id), message: verdict.refusal.message, reason: "forbidden" });
-      continue;
-    }
-    if (!store.wouldChange(call, author)) {
-      unchanged.push(id);
-      continue;
-    }
-    going.push({ id, call });
-  }
-  /*
-   * JUDGED TOGETHER FIRST, one by one only when that refuses: a rehearsal
-   * of the whole batch is one copy of the graph, and the common case. A
-   * record refused alone is named and left out; the rest are judged again,
-   * since a record may only have passed beside one that was left out.
-   */
-  const rehearse = (calls: readonly MutationCall[]) => store.previewAll(calls, { ...(author ? { author } : {}), ...(options.context ? { context: options.context } : {}) });
-  for (let round = 0; going.length > 0; round += 1) {
-    try {
-      rehearse(going.map((one) => one.call));
-      break;
-    } catch (error) {
-      const still: typeof going = [];
-      for (const one of going) {
-        try {
-          rehearse([one.call]);
-          still.push(one);
-        } catch (alone) {
-          refused.push({ id: one.id, label: labelOfId(one.id), message: words(alone), reason: refusalOf(alone).reason });
-        }
-      }
-      // Each passes alone and together they do not: nothing more can be told apart, so the batch's own refusal is every one's.
-      if (still.length === going.length || round > going.length) {
-        for (const one of still) refused.push({ id: one.id, label: labelOfId(one.id), message: words(error), reason: refusalOf(error).reason });
-        going = [];
-        break;
-      }
-      going = still;
-    }
-  }
+  const { going, unchanged, refused } = judgeSeveral(store, act, ids, options);
   if (going.length === 0) return { applied: [], unchanged, refused };
   const title = act.label ?? (mutation ? actTitle(mutation) : act.mutation);
   const kinds = [...new Set(going.map((one) => store.graph.getNode(one.id)?.kind as string | undefined))];
@@ -331,6 +377,6 @@ export function actOnSeveral<S extends AnySchema>(store: Store<S>, act: SeveralC
     // Refused as a whole after every record passed: a batch is all-or-nothing, and none of it was kept.
     const message = words(error);
     const reason = refusalOf(error).reason;
-    return { applied: [], unchanged, refused: [...refused, ...going.map((one) => ({ id: one.id, label: labelOfId(one.id), message, reason }))], allOrNothing: true };
+    return { applied: [], unchanged, refused: [...refused, ...going.map((one) => ({ id: one.id, label: labelOfId(store, one.id), message, reason }))], allOrNothing: true };
   }
 }

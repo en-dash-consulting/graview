@@ -1,5 +1,5 @@
 import * as z from "../schema/zod.js";
-import { MissingRecordError } from "../graph/graph.js";
+import { MissingRecordError, NO_SUCH_LINK } from "../graph/graph.js";
 import { edgeId } from "../graph/types.js";
 import { labelOf } from "../schema/define-node.js";
 import type { AnySchema } from "../schema/schema.js";
@@ -42,7 +42,7 @@ export function keepLinkMutation<S extends AnySchema>(schema: S): AnyMutationDef
        */
       if (!ctx.graph.getNode(from) || !ctx.graph.getNode(to)) {
         const id = edgeId({ kind, from, to });
-        throw new MissingRecordError(id, `Cannot remove missing edge ${id}`);
+        throw new MissingRecordError(id, NO_SUCH_LINK);
       }
       // The link as it is held, its own id and data (reserved) and all, put back as it was.
       const held = ctx.graph.edgesOfKind(kind, { archived: "all" }).find((edge) => edge.from === from && edge.to === to) ?? { kind, from, to };
