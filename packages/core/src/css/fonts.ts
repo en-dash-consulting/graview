@@ -28,6 +28,15 @@ import type { BrandViewFont } from "../theme/types.js";
 /** The most faces a brand lends its views. */
 export const VIEW_FONTS_MOST = 8;
 
+/**
+ * The most bytes one face lent to views may be (Roadmap f-lent-faces-bounded):
+ * a face is loaded with the first view dressed in its brand, so it has a size
+ * it may not pass. Two million is more than any one Latin face needs — a whole
+ * variable family in WOFF2 is a few hundred thousand — and less than one weight
+ * of a whole CJK face, which wants subsetting before a page loads it eagerly.
+ */
+export const VIEW_FONT_MOST_BYTES = 2_000_000;
+
 /** A face the brand lends its views (`BrandViewFont`). */
 export type ViewFont = BrandViewFont;
 
