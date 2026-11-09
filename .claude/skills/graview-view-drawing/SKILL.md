@@ -67,10 +67,10 @@ on an ancestor is only inherited.
 **A web face** is the brand's to lend, never the view's to load:
 `views.fonts: [{ family: "Baloo 2", src: "/graview/assets/<sha256>.woff2",
 weight: "400 800" }]`, then `font-family: "Baloo 2", var(--graview-font-body)`.
-The host loads an app's own file, or one on an origin in `fonts.origins`,
-of at most 2 MB (subset it), never under a system face's or the brand's
-name; else it is said and refused. Of two under one name, the last lent
-draws.
+The host loads an app's file of 2 MB at most, or one on an origin in
+`fonts.origins` (it bounds its own), never named as a system face or
+the brand's; else it is refused and said. Of two under one name, the last
+lent draws.
 
 ## Its box, and the gutter
 
