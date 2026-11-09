@@ -123,8 +123,8 @@ export function actsForSeveral<S extends AnySchema>(store: Store<S>, ids: readon
   /*
    * ASKED AGAIN WITH NOTHING CHANGED, THE SAME ANSWER. A face asks on every
    * tick of the store while a choice stands, and a tick that changed nothing
-   * it holds asked it all again. Kept per store, by where its log stands and
-   * what was asked; options that carry functions (`derive`) are worked out
+   * it holds asked it all again. Kept per store, by its `version` and what
+   * was asked; options that carry functions (`derive`) are worked out
    * afresh.
    */
   if (options.derive !== undefined) return worked(store, ids, options);
@@ -140,12 +140,9 @@ export function actsForSeveral<S extends AnySchema>(store: Store<S>, ids: readon
 /** The last answer each store was given, and what it was given for. */
 const ANSWERED = new WeakMap<object, { readonly stamp: string; readonly key: string; readonly answer: SeveralActs }>();
 
-/** Where a store stands: its log's length, horizon and last op, and how many records and links it holds — what any change moves. */
+/** Where a store stands: how many times it has told its subscribers something (`version`), which every change, adopt, tick and reread moves, and its log's length. */
 function stampOf<S extends AnySchema>(store: Store<S>): string {
-  const length = store.log.length;
-  const last = length > 0 ? (store.log.opsFrom(length - 1)[0]?.id ?? "") : "";
-  const size = store.graph.size;
-  return `${length}:${store.log.horizon}:${last}:${size.nodes}:${size.edges}`;
+  return `${store.version}:${store.log.length}`;
 }
 
 function worked<S extends AnySchema>(store: Store<S>, ids: readonly string[], options: SeveralOptions<S>): SeveralActs {
@@ -274,7 +271,7 @@ export function severalApplies<S extends AnySchema>(
   store: Store<S>,
   act: Pick<SeveralAct, "mutation" | "subject" | "args"> & { readonly open?: readonly OpenParameter[] },
   ids: readonly string[],
-  principal?: Principal,
+  principal: Principal = { kind: "human" },
 ): { readonly applies: readonly string[]; readonly refusal?: string } {
   let refusal: string | undefined;
   const permitted: { readonly id: string; readonly call: MutationCall }[] = [];

@@ -108,3 +108,28 @@ function takeBackArgs(store: Store<AnySchema>): Record<string, string> {
   const far = Object.keys(shape).find((key) => key !== act.subject!.arg)!;
   return { [far]: "p_ann" };
 }
+
+describe("the several bar for a profile whose person is not made yet", () => {
+  it("offers the acts done as it over every chosen record, as pressing them applies", () => {
+    const store = fresh();
+    const kid: Principal = { kind: "human", id: "p_ann", roles: ["member"], profile: { id: "prf_kid", name: "Kid" } };
+    const { acts, withheld } = actsForSeveral(store, ideas, { principal: kid });
+    for (const name of ["vote-for", "champion"]) expect(acts.find((act) => act.mutation === name)?.applies).toEqual(ideas);
+    expect(withheld.map((one) => one.message).join(" ")).not.toMatch(/no record here/);
+    const vote = acts.find((act) => act.mutation === "vote-for")!;
+    expect(actOnSeveral(store, { mutation: vote.mutation, subject: vote.subject, args: vote.args }, vote.applies, { author: kid }).applied).toEqual(ideas);
+  });
+});
+
+describe("what the several bar worked out", () => {
+  it("is worked out again after the store adopts a graph of the same size", () => {
+    const store = fresh([{ kind: "votedBy", from: "idea:a", to: "p_ann" }]);
+    const first = actsForSeveral(store, ideas, { principal: ann });
+    expect(takeBack(store, ann)?.applies).toEqual(["idea:a"]);
+    // The same records and as many links, the vote now on the other idea: nothing a count would tell.
+    const snapshot = store.snapshot();
+    store.adopt({ snapshot: { ...snapshot, edges: [{ kind: "votedBy", from: "idea:b", to: "p_ann" }] } as never, log: store.log.all() });
+    expect(actsForSeveral(store, ideas, { principal: ann })).not.toBe(first);
+    expect(takeBack(store, ann)?.applies).toEqual(["idea:b"]);
+  });
+});

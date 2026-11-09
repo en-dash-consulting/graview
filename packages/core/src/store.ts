@@ -637,6 +637,8 @@ export class Store<S extends AnySchema> {
   readonly past: PastPoint | undefined;
   /** How often `pastOf` keeps a point to fold from, in ops (`StoreOptions.pastEvery`). */
   readonly pastEvery: number;
+  /** What `version` reads: each time this store told its subscribers something, or would have. */
+  private told = 0;
   private readonly listeners = new Set<(diff: GraphDiff<NodeOfSchema<S>>, ops: readonly Operation[]) => void>();
 
   constructor(options: StoreOptions<S>) {
@@ -1584,6 +1586,7 @@ export class Store<S extends AnySchema> {
     const before = this.violations();
     this.ticked = { day, on };
     const moved = this.moved(before, this.violations());
+    if (day !== was) this.told += 1;
     if (day !== was && !this.rehearsing && this.quiet === 0) for (const listener of this.listeners) listener(EMPTY_DIFF as GraphDiff<NodeOfSchema<S>>, []);
     return { day, ...(was === undefined ? {} : { was }), appeared: moved.introduces, cleared: moved.resolves };
   }
@@ -1596,6 +1599,7 @@ export class Store<S extends AnySchema> {
    * diff and no ops, so what reads through the link reads again.
    */
   reread(): void {
+    this.told += 1;
     if (this.rehearsing || this.quiet > 0) return;
     for (const listener of this.listeners) listener(EMPTY_DIFF as GraphDiff<NodeOfSchema<S>>, []);
   }
@@ -1670,10 +1674,31 @@ export class Store<S extends AnySchema> {
    * nothing, or be refused by the act itself — compiled under the author's
    * sight, as `wouldChange` is, but a call that cannot compile hands back
    * why rather than counting as a change. The author's sight is worked out
-   * once for all of them and no copy of the graph or the log is made, so a
-   * face may ask it of every record it shows.
+   * once for all of them and no copy of the log is made, so a face may ask
+   * it of every record it shows. The author is the store's own, unsaid, as
+   * `apply`'s is; a profile whose person is not made yet is judged as the
+   * person `apply` would make first, on one copy of the graph for them all.
+   *
+   * It does not judge what only applying judges: the policy (`permits`
+   * does), the records a call needs that a host has not loaded
+   * (`missingFor`), a host's `admit`, the rules the change would break, and
+   * what tidying refuses (a record left alone, a change a person declined).
    */
-  wouldDo(calls: readonly MutationCall[], author?: Principal): readonly ("changes" | "nothing" | { readonly refused: unknown })[] {
+  wouldDo(calls: readonly MutationCall[], author: Author | Principal = this.by): readonly ("changes" | "nothing" | { readonly refused: unknown })[] {
+    const as = withValidProfile(author) as Principal;
+    if (this.personFor(as)) {
+      const twin = this.rehearsal();
+      const person = twin.personToMake(as, PREVIEW_BATCH, {});
+      if (person) {
+        twin.graph.applyPrimitives(person.primitives);
+        twin.log.append(person);
+      }
+      return twin.compiledEach(calls, as);
+    }
+    return this.compiledEach(calls, as);
+  }
+
+  private compiledEach(calls: readonly MutationCall[], author: Principal): readonly ("changes" | "nothing" | { readonly refused: unknown })[] {
     const sighted = this.sighted(author);
     return calls.map((call) => {
       try {
@@ -1682,6 +1707,17 @@ export class Store<S extends AnySchema> {
         return { refused: error };
       }
     });
+  }
+
+  /**
+   * HOW MANY TIMES THIS STORE HAS TOLD ITS SUBSCRIBERS SOMETHING, or would
+   * have: a change, an adopt, the day turning, something read beside the
+   * graph answering. What a face that keeps an answer worked out from the
+   * store keys it on: the same number, the same store as far as anybody
+   * reading it can tell.
+   */
+  get version(): number {
+    return this.told;
   }
 
   preview(call: MutationCall, context?: InvariantContext, options: { readonly author?: Principal } = {}): Preview<S> {
@@ -2680,6 +2716,7 @@ export class Store<S extends AnySchema> {
    * is nothing to tell.
    */
   notify(diff: GraphDiff<NodeOfSchema<S>>, ops: readonly Operation[]): void {
+    this.told += 1;
     if (this.quiet > 0) return;
     if (ops.length === 0 && isEmptyDiff(diff as GraphDiff<never>)) return;
     for (const listener of this.listeners) listener(diff, ops);
