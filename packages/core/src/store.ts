@@ -1686,17 +1686,30 @@ export class Store<S extends AnySchema> {
    */
   wouldDo(calls: readonly MutationCall[], author: Author | Principal = this.by): readonly ("changes" | "nothing" | { readonly refused: unknown })[] {
     const as = withValidProfile(author) as Principal;
-    if (this.personFor(as)) {
-      const twin = this.rehearsal();
-      const person = twin.personToMake(as, PREVIEW_BATCH, {});
-      if (person) {
-        twin.graph.applyPrimitives(person.primitives);
-        twin.log.append(person);
-      }
-      return twin.compiledEach(calls, as);
-    }
-    return this.compiledEach(calls, as);
+    const person = this.personFor(as);
+    return person ? this.withPersonMade(as, person.id).compiledEach(calls, as) : this.compiledEach(calls, as);
   }
+
+  /**
+   * THE STORE AS IT WOULD BE WITH A PROFILE'S PERSON MADE: one copy, kept
+   * while this store's `version` stands, so every call a face asks of it in
+   * one look — each act over every chosen record — is judged on the same copy.
+   */
+  private withPersonMade(author: Principal, person: string): Store<S> {
+    const key = `${this.version}:${this.log.length}:${actingAs(author).id}:${person}`;
+    if (this.personMade?.key === key) return this.personMade.twin;
+    const twin = this.rehearsal();
+    const made = twin.personToMake(author, PREVIEW_BATCH, {});
+    if (made) {
+      twin.graph.applyPrimitives(made.primitives);
+      twin.log.append(made);
+    }
+    this.personMade = { key, twin };
+    return twin;
+  }
+
+  /** The copy `withPersonMade` keeps, and the store's version and person it was made for. */
+  private personMade: { readonly key: string; readonly twin: Store<S> } | undefined;
 
   private compiledEach(calls: readonly MutationCall[], author: Principal): readonly ("changes" | "nothing" | { readonly refused: unknown })[] {
     const sighted = this.sighted(author);
@@ -1786,6 +1799,7 @@ export class Store<S extends AnySchema> {
       nextId: () => `${PREVIEW_BATCH}:${++made}`,
       mintBatch: () => PREVIEW_BATCH,
       rehearsing: true,
+      personMade: undefined,
     });
     // Its own acts, so "Type text" reads the text back off the rehearsal's log, as the apply would off this one's.
     const typer = this.typer && TYPING.typeText!(twin);
