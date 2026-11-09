@@ -501,6 +501,13 @@ describe("with no model", () => {
     expect(displayOptionsSection(home, here())).toBeNull();
   });
 
+  it("offers nothing at an address whose filter keeps none of the records, and is offered where it keeps some", () => {
+    expect(displayOptionsSection(page(), here(), undefined, "status:done")).toBeNull();
+    expect(displayOptionsSection(page(), here(), undefined, "status:doing")).not.toBeNull();
+    // A word the kind cannot be narrowed by narrows nothing, as on the page.
+    expect(displayOptionsSection(page(), here(), undefined, "nonsense:1")).not.toBeNull();
+  });
+
   it("offers board, calendar and cards from the declaration alone", () => {
     expect(shapes(displayOptionsFor(input()))).toEqual(expect.arrayContaining(["calendar", "cards"]));
   });

@@ -2,12 +2,13 @@ import { fieldWords, labelOf, nounOf, type AnySchema, type DisplayChoice, type D
 import { districtState } from "@graview/core/city";
 import { lowerFirst } from "@graview/core/words";
 import { fieldSpecOf } from "@graview/core/blocks";
-import { arrange, arrangeable, parseArrangement, type ArrangeContext } from "@graview/core/arrange";
 import { draftView, isDraftFailure, judgeLens, lensFromSpec, recipeDraft, type DraftLens, type DraftRecipe, type DraftSight } from "@graview/tools/draft";
 import type { Completion } from "@graview/tools";
 import type { ComposeChangeHost, ProposeChangeAnswer, ReshapeProposal } from "@graview/tools/reshape";
 import { BOARD_AT_MOST, fieldTypeOf, mainDate } from "./kind-shape.js";
-import { lensNarrows } from "./page-parts.js";
+import { lensNarrows, recordsShown } from "./page-parts.js";
+
+export { recordsShown };
 
 /*
  * OTHER WAYS TO SHOW THIS (Roadmap f-display-options-switch), worked out:
@@ -89,20 +90,6 @@ export const optionFlows = (drawn: Pick<DrawnLens, "lens">): boolean => drawn.le
  */
 const withheldAtTheAddress = (input: OptionsInput, drawn: Pick<DrawnLens, "lens">): boolean => input.place === undefined && input.filter !== undefined && input.filter !== "" && optionFlows(drawn);
 
-/**
- * THE RECORDS AN OPTION IS DRAWN OVER: what the page itself shows of them —
- * every one, or those its address narrows it to (`?filter=`), judged by
- * the same arranging a place on a page is, so that the preview and the
- * page once it is kept agree. A word the kind cannot be narrowed by
- * narrows nothing, as on the page.
- */
-export function recordsShown<N extends { readonly id: string; readonly kind: string }>(schema: AnySchema, graph: ArrangeContext["graph"], kind: string, nodes: readonly N[], filter: string | undefined, flagged: ReadonlySet<string> = new Set()): readonly N[] {
-  const asked = filter ? (parseArrangement({ filter }).filter ?? []) : [];
-  const offered = asked.length > 0 ? arrangeable(schema, kind).filters : [];
-  const conditions = asked.filter((condition) => offered.some((one) => one.key === condition.key));
-  if (conditions.length === 0) return nodes;
-  return arrange(nodes as never, { filter: conditions }, { schema, graph, flagged }).nodes as unknown as readonly N[];
-}
 
 /** The most an offer shows at once. */
 export const MOST_OPTIONS = 4;

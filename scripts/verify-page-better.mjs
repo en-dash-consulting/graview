@@ -1547,17 +1547,24 @@ try {
     });
     await page.click('[data-testid="section-close"]');
     await barGone(page);
+    // A filter that keeps none of the tasks: nothing to draw another way, so the row is not on the menu at all.
+    await goTo(page, "/tasks?today=2026-09-01&filter=status:done");
+    await page.waitForTimeout(800);
+    const emptyRows = await rowsOfMenu(page, `${MAIN} [data-graview-page-title]`);
+    await page.keyboard.press("Escape");
     report.checks.aFilteredAddressOnAKeptBoardOffersOnlyWhatItWouldDraw = {
+      offeredWhereNoneIsKept: emptyRows.includes("other-ways"),
       options: seen.options,
       checked: seen.checked,
       panes,
       kept,
       ok:
-        seen.options.length >= 2 &&
+        seen.options.filter((one) => one !== "As it is now").length >= 1 &&
         !seen.options.some((one) => /^(Cards|Rows|In order of)/.test(one)) &&
         panes.length >= 1 &&
         panes.every((one) => one.doing && !one.todo) &&
-        kept.place && kept.doing && !kept.todo && kept.opens !== null && kept.opens !== "The board",
+        kept.place && kept.doing && !kept.todo && kept.opens !== null && kept.opens !== "The board" &&
+        emptyRows.length > 0 && !emptyRows.includes("other-ways"),
     };
     await nowBare(page);
   }
