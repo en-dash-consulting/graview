@@ -46,7 +46,8 @@ class FakeWorker {
 beforeEach(() => {
   fonts = new Set();
   FakeWorker.made = [];
-  Object.assign(window, { FontFace: FakeFontFace, Worker: FakeWorker });
+  /* The host fetches a face's file itself, to hold it to its size (a-lent-face-past-its-size-is-not-loaded). */
+  Object.assign(window, { FontFace: FakeFontFace, Worker: FakeWorker, fetch: () => Promise.resolve(new Response(new Uint8Array(64))) });
   Object.assign(window.URL, { createObjectURL: () => "blob:https://host.example/1", revokeObjectURL: () => undefined });
   Object.defineProperty(document, "fonts", { value: { add: (face: unknown) => fonts.add(face), delete: (face: unknown) => fonts.delete(face) }, configurable: true });
 });

@@ -23,12 +23,12 @@ const BALOO = { family: "Baloo 2", src: `/graview/assets/${SHA}.woff2`, weight: 
 const FREDOKA = { family: "Fredoka", src: "https://fonts.gstatic.com/s/fredoka.woff2" };
 const asset = (path: string) => `https://app.example/base${path}`;
 
-let made: { family: string; source: string; descriptors: Record<string, string> }[];
+let made: { family: string; source: ArrayBuffer; descriptors: Record<string, string> }[];
 let fonts: Set<unknown>;
 /* As Firefox has it: a family that is not one CSS identifier without its quotes is an error at once, and a face in error is never added. */
 class FakeFontFace {
   readonly status: string;
-  constructor(readonly family: string, source: string, descriptors: Record<string, string>) {
+  constructor(readonly family: string, source: ArrayBuffer, descriptors: Record<string, string>) {
     made.push({ family, source, descriptors });
     this.status = /^[^"].*\s\d/.test(family) ? "error" : "unloaded";
   }
@@ -39,10 +39,12 @@ class FakeFontFace {
 beforeEach(() => {
   made = [];
   fonts = new Set();
-  Object.assign(window, { FontFace: FakeFontFace });
+  /* The host fetches a face's file itself, to hold it to its size (a-lent-face-past-its-size-is-not-loaded). */
+  Object.assign(window, { FontFace: FakeFontFace, fetch: () => Promise.resolve(new Response(new Uint8Array(64))) });
   Object.defineProperty(document, "fonts", { value: { add: (face: unknown) => fonts.add(face), delete: (face: unknown) => fonts.delete(face) }, configurable: true });
 });
 
+const settled = () => new Promise((resolve) => setTimeout(resolve, 20));
 /* Given back after each test: what the page holds outlives a test's stand-in for its fonts. */
 const backs: (() => void)[] = [];
 const lend = (given: Parameters<typeof loadViewFonts>[1], options: Parameters<typeof loadViewFonts>[2], say: Parameters<typeof loadViewFonts>[3]) => {
@@ -77,33 +79,37 @@ describe("a face lent to a view", () => {
     expect(viewFontAddress({ family: "Fraunces", src: BALOO.src }, { asset, typography: { display: "Fraunces, serif" } })).toEqual({ refused: expect.stringContaining("would replace") });
   });
 
-  it("is added to the page's fonts once, however often the view is dressed, with its weight and style", () => {
+  it("is added to the page's fonts once, however often the view is dressed, with its weight and style", async () => {
     const said: string[] = [];
     lend([FREDOKA], { origins: ["https://fonts.gstatic.com"] }, (one) => said.push(one));
     lend([FREDOKA], { origins: ["https://fonts.gstatic.com"] }, (one) => said.push(one));
+    await settled();
     expect(made).toHaveLength(1);
     expect(fonts.size).toBe(1);
     expect(said).toEqual([]);
   });
 
-  it("is built again with its family quoted where the engine takes it for no family at all, as Firefox does \"Baloo 2\"", () => {
+  it("is built again with its family quoted where the engine takes it for no family at all, as Firefox does \"Baloo 2\"", async () => {
     lend([BALOO], { asset }, () => {});
+    await settled();
     expect(made.map((one) => one.family)).toEqual(["Baloo 2", '"Baloo 2"']);
     expect([...fonts].map((one) => (one as FakeFontFace).family)).toEqual(['"Baloo 2"']);
     expect(made[1]!.descriptors).toEqual({ display: "swap", weight: "400 800" });
   });
 
-  it("is loaded at most eight to a brand, and what was left out is said", () => {
+  it("is loaded at most eight to a brand, and what was left out is said", async () => {
     const nine = Array.from({ length: 9 }, (_, at) => ({ family: `Rock${"abcdefghi"[at]}`, src: BALOO.src }));
     const said: string[] = [];
     lend(nine, { asset }, (one) => said.push(one));
+    await settled();
     expect(fonts.size).toBe(8);
     expect(said).toEqual([expect.stringMatching(/at most 8.*Rocki/)]);
   });
 
-  it("goes from the page once no view holds it", () => {
+  it("goes from the page once no view holds it", async () => {
     const first = lend([FREDOKA], { origins: ["https://fonts.gstatic.com"] }, () => {});
     const second = lend([FREDOKA], { origins: ["https://fonts.gstatic.com"] }, () => {});
+    await settled();
     first();
     expect(fonts.size).toBe(1);
     second();

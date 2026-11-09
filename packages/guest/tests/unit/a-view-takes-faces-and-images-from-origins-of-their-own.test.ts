@@ -26,7 +26,8 @@ class FakeFontFace {
 }
 beforeEach(() => {
   fonts = new Set();
-  Object.assign(window, { FontFace: FakeFontFace });
+  /* The host fetches a face's file itself, to hold it to its size (a-lent-face-past-its-size-is-not-loaded). */
+  Object.assign(window, { FontFace: FakeFontFace, fetch: () => Promise.resolve(new Response(new Uint8Array(64))) });
   Object.defineProperty(document, "fonts", { value: { add: (face: unknown) => fonts.add(face), delete: (face: unknown) => fonts.delete(face) }, configurable: true });
 });
 
