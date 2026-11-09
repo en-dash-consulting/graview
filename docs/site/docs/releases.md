@@ -74,7 +74,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.70
 
-Published November 8, 2026 · the current version
+Published November 8, 2026
 
 A design reaches the router through @graview/pages on React Router 8; a worker view keeps values for whoever is looking, spans the whole window and draws in its app's faces; the inbox opens on what needs you; and an owner can try other ways to show a list.
 

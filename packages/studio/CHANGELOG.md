@@ -1,5 +1,39 @@
 # @graview/studio
 
+## 0.1.71
+
+### Patch Changes
+
+- a3e5861: An act is offered only where it applies, and a record or a link that is not there is refused in words (Roadmap f-me-offered-without-sight-of-people, f-several-bar-offers-only-what-applies).
+  
+  An act done as yourself (`$me`) runs under the seat's sight, so a seat whose sight keeps its own person from it has no record of its own to be there. It was offered the act anyway, `permits` said yes, and applying it refused with "is done as you, and you have no record here", with a profile and without one. Such a seat is now nobody here — with an id or without one, and whether the people kind is out of its sight or seen only through a relation, which reaches others and never the seat itself: the act is not in its permitted acts, the actions strip or its agent tools, and `permits` refuses it in the words `apply` does. The stateless tool surface a host lists for a seat (`toolDefinitions`) reads the same off the declaration, judging a sight of some fields as the store does. A seat that sees its own person is unchanged. The act is withheld rather than made to work, since making it work would mean an act reads a record its seat is not served. A code act that declares `doneAsMe` and reads `ctx.me` for such a seat is refused the same way; one that does not declare it is as it was.
+  
+  The several bar offered "Take back a vote" over every chosen record, whoever held the link, and a seat with no vote on them was refused on each in the graph's own key for the link. `actsForSeveral` now judges each act on every chosen record — may the seat run it there, and would it change anything — and offers it only where it would change at least one. Each act carries `applies`, the records it applies to, which the bar counts ("— 1 of 3", of the chosen still there) and runs it over; an act that asked first is judged again with its answers when they are given. An act every chosen record refuses is listed among those withheld, with why. The judging rehearses nothing, so two thousand chosen are weighed in about 70 ms where rehearsing each act took seconds, and asked again with nothing changed the answer is the one already worked out; pressing an act still rehearses the batch. `severalApplies` is exported beside it; `store.wouldDo(calls, author)` says of each call whether it would change something, change nothing or be refused, for the store's own author when none is said and, for a profile whose person is not made yet, as the person `apply` would make first, on one copy of the store kept while its `version` stands, so a look at several records copies it once; and `store.version` counts every time the store told its subscribers something (a change, an adopt, the day turning, a reread), which the bar keys its answer on.
+  
+  A declared act that severs a link that is not there is refused by the records' names ("has nothing to take away: A hike is not linked to Ann that way"). Any other removal of a link that is not there is refused as "That link is not there to take away."; a record that is not there to remove, to change or for a link to name is refused in one sentence each ("That record is not there to remove.", "That record is not there to change.", "A link names a record that is not there."); and a chosen record no longer there is named "A record that is no longer here". None quotes an id; the error's `id` still holds it. `permittedMutations` still lists an act a seat may run at all, judged per record when it is called: with no record to judge against it cannot say more, and the refusal now arrives in words.
+  
+  Tests: `a-seat-that-cannot-see-the-people-is-not-offered-an-act-done-as-it` and `an-edge-removal-on-a-record-lacking-the-edge-is-refused-in-words` (core); `a-seat-kept-from-every-person-is-offered-no-tool-done-as-it`, `the-several-bar-offers-only-what-applies` and `the-several-bar-weighs-two-thousand-chosen-quickly` (tools), `a-store-says-what-a-call-would-do-without-rehearsing-it` (core), `the-several-bar-copies-the-store-once-for-a-person-not-made-yet` (tools). verify-kind-stop and verify-pages hold `noOfferedSeveralActIsThenRefused`, and verify-kind-stop `anActOverSomeOfTheChosenAppliesToThoseAlone`.
+  
+  A hosted page's first load grows by 1.3 KB up front (1.3 KB handed a compiled app). The pages face alone grows by 1.1 KB, every face by 2.9 KB, the embed with the studio handed in by 1.0 KB gzipped, a visitor's form by 1.1 KB (1.3 KB handed a compiled app) and Cloud's worker by 7.4 KB, under a raise of their budgets; the scene face before it draws stays under 1109 KB.
+  
+  Compatibility: ops and primitives — unchanged; a primitive naming a record or a link that is not there is refused in a sentence without its id, as the same error. Stored formats — unchanged. The wire — unchanged. The declaration and check finding codes — unchanged; a declared act that severs a link that is not there is refused in a sentence of its own. Derived tool names and input schemas — unchanged; a seat whose sight keeps its own person from it is no longer handed the tool of an act done as itself.
+  
+  What Graview Cloud does: a member whose sight keeps their own record from them is no longer offered an act done as them, on a page or through an agent; a selection of several is offered only what applies to it; and a refusal for a record or a link that is not there no longer quotes an id.
+- Updated dependencies [8abdab2]
+- Updated dependencies [9962251]
+- Updated dependencies [b89e0a1]
+- Updated dependencies [7c87feb]
+- Updated dependencies [72118ce]
+- Updated dependencies [a3e5861]
+- Updated dependencies [30fb869]
+  - @graview/core@0.1.71
+  - @graview/primitives@0.1.71
+  - @graview/pages@0.1.71
+  - @graview/react@0.1.71
+  - @graview/tools@0.1.71
+  - @graview/layout@0.1.71
+  - @graview/ship@0.1.71
+
 ## 0.1.70
 
 ### Patch Changes
