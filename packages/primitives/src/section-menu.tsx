@@ -189,7 +189,7 @@ export function sectionFor(target: MenuTarget, here: SectionHere): MenuSection |
  * says it now shows as something while it draws the same thing. A place is
  * still offered, whatever the design: its lens is what draws it.
  */
-export function displayOptionsSection(target: MenuTarget, here: SectionHere, listStands?: (kind: string) => boolean): MenuSection | null {
+export function displayOptionsSection(target: MenuTarget, here: SectionHere, listStands?: (kind: string) => boolean, filter?: string | null): MenuSection | null {
   const { aiDesk, app, composeChange, onProposeChange, principal, store } = here;
   if (target.face !== "pages" || target.section || !target.page) return null;
   if (onProposeChange === undefined || composeChange === undefined || !mayChangeDeclaration(store, principal)) return null;
@@ -205,7 +205,7 @@ export function displayOptionsSection(target: MenuTarget, here: SectionHere, lis
   const definition = store.schema.tryDefinition(part.kind);
   if (!store.graph.nodesOfKind(part.kind).some((node) => isCurrent(definition, node))) return null;
   // A group's heading is on its kind's list: the list is what is shown another way.
-  const whole: PagePart = part.slot === "group" ? { name: pluralLabel(store.schema, part.kind), slot: "list", kind: part.kind, elements: part.main ? [part.main] : [], main: part.main } : part;
+  const whole: PagePart = { ...(part.slot === "group" ? { name: pluralLabel(store.schema, part.kind), slot: "list" as const, kind: part.kind, elements: part.main ? [part.main] : [], main: part.main } : part), ...(filter ? { filter } : {}) };
   const returnTo = target.element ?? null;
   return { id: "display-options", items: [{ id: "other-ways", label: "Other ways to show this", run: () => askSection(aiDesk, { part: whole, mode: "options", returnTo }) }], prepare: () => optionsSwitch.prefetch() };
 }

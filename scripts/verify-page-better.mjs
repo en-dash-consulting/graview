@@ -68,6 +68,7 @@
  *   theKeyboardGoesBackToTheRowOnEscapeAndOnClose
  *   flippingFastAsItOpensSettlesOnTheLastPressed
  *   aKeptBoardAtAFilterIsThePageItsRowIsOfferedAndItsLinkKeepsTheFilter
+ *   aFilteredAddressOnAKeptBoardOffersOnlyWhatItWouldDraw
  *   aFilterAPlaceCannotHonorIsSaidPlainly
  *   anOldKeepIsNotFoundBySearchAndStaysAtItsAddress
  *   aPersonWhoMayNoLongerChangeTheAppIsOfferedNoUndo
@@ -268,7 +269,9 @@ async function serveHost() {
         const visitor = new URLSearchParams(location.search).get("visitor") === "1";
         const compiled = compileDocumentWithoutCheck(tasks, { today: () => "2026-09-01" });
         if (!compiled.ok) throw new Error("the document did not compile");
-        const storeOver = (app, records) => new Store({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], ...(app.policy ? { policy: app.policy } : {}), snapshot: records });
+        // ?today=2026-09-01: the day the app is asked about, so a calendar of the seeded tasks' month is something to show.
+        const pinnedDay = new URLSearchParams(location.search).get("today");
+        const storeOver = (app, records) => new Store({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], ...(app.policy ? { policy: app.policy } : {}), ...(pinnedDay ? { invariantOptions: { today: pinnedDay } } : {}), snapshot: records });
         // ?grouped=1: the tasks open grouped by their status, as a person may have kept them.
         const grouped = new URLSearchParams(location.search).get("grouped") === "1" ? composeAppChange({ document: tasks, edits: [{ op: "arrange-pages", group: { task: "status" } }] }) : null;
         if (grouped && !grouped.ok) throw new Error(grouped.refused);
@@ -1508,6 +1511,54 @@ try {
     await goTo(page, "/tasks?filter=is:any");
     const any = await page.evaluate(() => document.querySelector("[data-graview-page-main]")?.innerText ?? "");
     report.checks.aFilterAPlaceCannotHonorIsSaidPlainly = { nonsense, ok: nonsense.narrowed === null && /nonsense/.test(nonsense.dropped ?? "") && !/is is/.test(any) && !/Only those/.test(any) };
+    await nowBare(page);
+  }
+
+  /*
+   * AT AN ADDRESS THAT NARROWS A KEPT BOARD (Roadmap f-other-ways-at-a-filter):
+   * the list opens as a board, and `?filter=status:doing` narrows it. An
+   * option that flows would be the list again there once kept, so none is
+   * offered; what is offered is drawn over the doing tasks alone, and kept
+   * it is what the address then shows.
+   */
+  reach("aFilteredAddressOnAKeptBoardOffersOnlyWhatItWouldDraw");
+  {
+    await ready(page, "/tasks", "?noai=1&today=2026-09-01");
+    await otherWaysByKeyboard(page);
+    await shownOption(page);
+    await page.click(`${OPTION}:has-text("The board")`);
+    await page.click('[data-testid="section-keep"]');
+    await page.waitForSelector('[data-section-phase="options-kept"]', { timeout: 15_000 });
+    await page.click('[data-testid="section-close"]');
+    await barGone(page);
+    await goTo(page, "/tasks?today=2026-09-01&filter=status:doing");
+    await page.waitForTimeout(800);
+    await otherWaysByKeyboard(page);
+    await shownOption(page);
+    const seen = await switchSays(page);
+    const panes = await page.evaluate(() => [...document.querySelectorAll('[data-testid="display-option-pane"]')].map((one) => ({ key: one.getAttribute("data-display-option"), doing: /Book the hall/.test(one.textContent), todo: /Write the brief/.test(one.textContent) })));
+    await shot(page, "other-ways-filtered");
+    await page.click('[data-testid="section-keep"]');
+    await page.waitForSelector('[data-section-phase="options-kept"]', { timeout: 15_000 });
+    await page.waitForTimeout(400);
+    const kept = await page.evaluate(() => {
+      const lens = document.querySelector('[data-testid="place-lens"]');
+      return { place: Boolean(lens), doing: /Book the hall/.test(lens?.textContent ?? ""), todo: /Write the brief/.test(lens?.textContent ?? ""), opens: window.__changes.document().pages?.lists?.task?.opens ?? null };
+    });
+    await page.click('[data-testid="section-close"]');
+    await barGone(page);
+    report.checks.aFilteredAddressOnAKeptBoardOffersOnlyWhatItWouldDraw = {
+      options: seen.options,
+      checked: seen.checked,
+      panes,
+      kept,
+      ok:
+        seen.options.length >= 2 &&
+        !seen.options.some((one) => /^(Cards|Rows|In order of)/.test(one)) &&
+        panes.length >= 1 &&
+        panes.every((one) => one.doing && !one.todo) &&
+        kept.place && kept.doing && !kept.todo && kept.opens !== null && kept.opens !== "The board",
+    };
     await nowBare(page);
   }
 

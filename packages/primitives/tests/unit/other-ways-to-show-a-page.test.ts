@@ -8,7 +8,7 @@ import { createViews } from "@graview/react";
 import type { MenuTarget } from "@graview/react/provider";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import tasks from "../../../core/tests/document/fixtures/tasks.gdd.json";
-import { choicesFrom, createOptionSwitch, displayOptionsFor, forgetChoice, keepChoice, modelOption, offersFrom, optionOfOffer, rankOptions, readChoices, type DisplayOption } from "../../src/display-options.js";
+import { choicesFrom, createOptionSwitch, displayOptionsFor, forgetChoice, keepChoice, modelOption, offersFrom, optionOfOffer, rankOptions, readChoices, recordsShown, type DisplayOption } from "../../src/display-options.js";
 import { lensNarrows } from "../../src/page-parts.js";
 import { displayOptionsSection, type SectionHere } from "../../src/section-menu.js";
 
@@ -349,6 +349,42 @@ describe("what keeping one opens", () => {
     if (!back.ok) throw new Error(back.refused);
     const again = (await modelOption(input(undefined, { app: back.app as never, document: back.document }), answer))!;
     expect(again.edits).toEqual([{ op: "arrange-pages", opens: { task: first.title } }]);
+  });
+});
+
+describe("at an address that narrows the list", () => {
+  /* The list opens as a board, which narrows itself by `?filter=`; one that flows would draw the list there instead (Roadmap f-other-ways-at-a-filter). */
+  const opened = (() => {
+    const authored = { ...document, lenses: [...((document as { lenses?: readonly unknown[] }).lenses ?? []), { name: "columns", title: "Kept board", on: "task", hidden: true, bindings: { task: { column: "status" } } }], pages: { lists: { task: { opens: "Kept board" } } } } as unknown as GraviewDocument;
+    const made = compileDocument(authored);
+    if (!made.ok) throw new Error("the fixture compiles");
+    return { app: made.app as never, document: authored };
+  })();
+  const FLOWS = ["cards", "rows", "order"];
+  const offer = { id: "kept-cards", label: "Cards others kept", lens: { lens: "blocks", title: "Cards others kept", options: { blocks: [{ list: "all('task')", as: "card" }] } } } as const;
+
+  it("withholds an option that flows on a kind's list, which kept would draw the list there rather than itself", () => {
+    expect(shapes(displayOptionsFor(input(undefined, opened))).some((one) => FLOWS.includes(one))).toBe(true);
+    const narrowed = displayOptionsFor(input(undefined, { ...opened, filter: "status:doing", offers: [offer] }));
+    expect(narrowed.length).toBeGreaterThan(0);
+    expect(narrowed.filter((one) => one.drawn.lens === "blocks").map((one) => one.label)).toEqual([]);
+    expect(optionOfOffer(input(undefined, { ...opened, filter: "status:doing" }), offer)).toBeUndefined();
+    // A picture that narrows itself is still offered.
+    expect(shapes(narrowed)).toContain("calendar");
+  });
+
+  it("still offers one on a place, which draws what is kept narrowed by its address", () => {
+    const onPlace = displayOptionsFor(input(undefined, { place: "The board", filter: "status:doing" }));
+    expect(shapes(onPlace).some((one) => FLOWS.includes(one))).toBe(true);
+  });
+
+  it("draws the preview over the records the address narrows the page to, as the page kept would", () => {
+    const store = storeOf();
+    const nodes = store.graph.nodesOfKind("task") as unknown as readonly { readonly id: string; readonly kind: string }[];
+    expect(recordsShown(app.schema, store.graph as never, "task", nodes, "status:doing").map((one) => one.id)).toEqual(["t2", "t3"]);
+    expect(recordsShown(app.schema, store.graph as never, "task", nodes, undefined).map((one) => one.id)).toEqual(["t1", "t2", "t3"]);
+    // A word the kind cannot be narrowed by narrows nothing, as on the page.
+    expect(recordsShown(app.schema, store.graph as never, "task", nodes, "nonsense:1").map((one) => one.id)).toEqual(["t1", "t2", "t3"]);
   });
 });
 

@@ -8,7 +8,7 @@ import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExt
 import { createPortal } from "react-dom";
 import { DraftBar } from "./better-bar.js";
 import { declaredLensView } from "./declared-lenses.js";
-import { choicesFrom, createOptionSwitch, displayOptionsFor, modelOption, namesOfRecords, offersFrom, optionOfOffer, readChoices, type DisplayOption, type OptionsInput, type OptionSwitch } from "./display-options.js";
+import { choicesFrom, createOptionSwitch, displayOptionsFor, modelOption, namesOfRecords, offersFrom, optionFlows, optionOfOffer, readChoices, recordsShown, type DisplayOption, type OptionsInput, type OptionSwitch } from "./display-options.js";
 import { appKeyOf } from "./reader-lenses.js";
 import type { SectionAsk } from "./section-menu.js";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
@@ -73,7 +73,7 @@ const OptionPane = memo(function OptionPane({ option, shown, names, nodes, drew,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [option.key]);
   const View = useMemo(() => declaredLensView(option.drawn), [option.drawn]);
-  const flows = option.drawn.lens === "blocks";
+  const flows = optionFlows(option.drawn);
   return (
     <div ref={at} data-testid="display-option-pane" data-display-option={option.key} data-shown={shown ? "" : undefined} style={{ ...(flows ? PANE_FLOWS : PANE), ...(shown ? {} : PANE_OFF) }}>
       <div ref={inner} style={flows ? undefined : INNER}>
@@ -86,12 +86,15 @@ const OptionPane = memo(function OptionPane({ option, shown, names, nodes, drew,
 });
 
 /** Every option, drawn ahead, in the stage under the heading. */
-function Stage({ options, shown, names, drew, failed, kind }: { readonly options: readonly DisplayOption[]; readonly shown: string | null; readonly names: readonly string[]; readonly drew: (key: string) => void; readonly failed: (key: string) => void; readonly kind: string }) {
+function Stage({ options, shown, names, drew, failed, kind, filter }: { readonly options: readonly DisplayOption[]; readonly shown: string | null; readonly names: readonly string[]; readonly drew: (key: string) => void; readonly failed: (key: string) => void; readonly kind: string; readonly filter: string | undefined }) {
   const { store } = useGraview<AnySchema>();
   // Live: drawn again as the graph changes, as what is kept would be.
   useGraph();
   const definition = store.schema.tryDefinition(kind);
-  const nodes = store.graph.nodesOfKind(kind as never).filter((node) => isCurrent(definition, node)) as unknown as readonly never[];
+  const current = store.graph.nodesOfKind(kind as never).filter((node) => isCurrent(definition, node));
+  // What the page shows of them: narrowed as its address narrows it, so the preview is what keeping it shows here.
+  const flagged = filter ? new Set(store.violations().flatMap((violation) => violation.nodeIds)) : undefined;
+  const nodes = recordsShown(store.schema, store.graph as never, kind, current as never, filter, flagged) as unknown as readonly never[];
   return (
     <>
       <style>{`[${UNDER}]{display:none !important}[${WIDE}]{max-width:1160px !important}`}</style>
@@ -109,7 +112,8 @@ export function DisplaySwitch({ ask, close }: { readonly ask: Extract<SectionAsk
   const kind = part.kind!;
   const appKey = appKeyOf(brand, store.schema);
   const nodesOf = () => store.graph.nodesOfKind(kind as never).filter((node) => isCurrent(store.schema.tryDefinition(kind), node));
-  const [names] = useState(() => namesOfRecords(store.schema, kind, nodesOf() as never));
+  // The records an option is judged to show: those the page shows, narrowed as its address is.
+  const [names] = useState(() => namesOfRecords(store.schema, kind, recordsShown(store.schema, store.graph as never, kind, nodesOf() as never, part.filter, part.filter ? new Set(store.violations().flatMap((violation) => violation.nodeIds)) : undefined) as never));
   const [held] = useState(() => {
     const had = SWITCHES.get(ask.at);
     if (had) return had;
@@ -125,6 +129,7 @@ export function DisplaySwitch({ ask, close }: { readonly ask: Extract<SectionAsk
       sight: draftSight(declared, principal),
       linked: (id, edge) => store.graph.outEdges(id).some((one) => one.kind === edge),
       ...(part.slot === "place" ? { place: part.name } : {}),
+      ...(part.filter ? { filter: part.filter } : {}),
     };
     const choices: readonly DisplayChoice[] = [...readChoices(appKey), ...choicesFrom(host)];
     const asked = { kind, name: part.name, ...(part.slot === "place" ? { place: part.name } : {}) };
@@ -284,7 +289,7 @@ export function DisplaySwitch({ ask, close }: { readonly ask: Extract<SectionAsk
 
   return (
     <>
-      {stage && choosing ? createPortal(<Stage options={options} shown={shown} names={names} drew={drew} failed={failed} kind={kind} />, stage) : null}
+      {stage && choosing ? createPortal(<Stage options={options} shown={shown} names={names} drew={drew} failed={failed} kind={kind} filter={part.filter} />, stage) : null}
       <DraftBar
         phase={`options-${phase}`}
         name={part.name}

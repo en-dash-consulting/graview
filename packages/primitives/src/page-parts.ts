@@ -31,6 +31,8 @@ export interface PagePart {
   readonly elements: readonly Element[];
   /** The page's own region: what a draft is judged by. */
   readonly main: Element | null;
+  /** What the page's address narrows its records to (`?filter=status:doing`), where it does: what another way to show it is drawn over. */
+  readonly filter?: string;
 }
 
 /** What the menu reads of the provider for a page's part. */
