@@ -11,7 +11,10 @@ What is specific to Claude Code:
   source under `packages/skills/skills/`, copied by `pnpm skills`, and a test
   asserts the copies are current. The `ndx-*` skills drive the PRD workflow
   (`/ndx-work`, `/ndx-plan`, `/ndx-status`). Edit a skill at its source,
-  never the copy.
+  never the copy. `dev-sync` (`.claude/skills/dev-sync/`, its own source)
+  is one pass of the whole loop against Graview HQ: briefs and requests in,
+  HQ corrected, PRD ingested, built, released, booked back; run it with
+  `/dev-sync` or `/loop /dev-sync`. Workers lock work with HQ's leases.
 - **MCP.** With `ndx start .` running, rex and sourcevision are at
   `http://localhost:3117/mcp/rex` and `/mcp/sourcevision`. When several
   projects are registered on that server the endpoint answers 409 and asks
