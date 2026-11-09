@@ -1696,7 +1696,7 @@ export class Store<S extends AnySchema> {
    * one look — each act over every chosen record — is judged on the same copy.
    */
   private withPersonMade(author: Principal, person: string): Store<S> {
-    const key = `${this.version}:${this.log.length}:${actingAs(author).id}:${person}`;
+    const key = JSON.stringify([this.version, this.log.length, actingAs(author).id, person, profileOf(author)?.name]);
     if (this.personMade?.key === key) return this.personMade.twin;
     const twin = this.rehearsal();
     const made = twin.personToMake(author, PREVIEW_BATCH, {});
@@ -2731,6 +2731,8 @@ export class Store<S extends AnySchema> {
    */
   notify(diff: GraphDiff<NodeOfSchema<S>>, ops: readonly Operation[]): void {
     this.told += 1;
+    // A copy kept for a profile's person not made yet is the store as it was: let it go.
+    this.personMade = undefined;
     if (this.quiet > 0) return;
     if (ops.length === 0 && isEmptyDiff(diff as GraphDiff<never>)) return;
     for (const listener of this.listeners) listener(diff, ops);

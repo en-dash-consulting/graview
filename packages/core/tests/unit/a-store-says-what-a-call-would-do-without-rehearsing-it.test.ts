@@ -91,6 +91,20 @@ describe("what a call would do", () => {
   });
 });
 
+describe("the copy kept for a profile's person not made yet", () => {
+  it("is let go on any change, and is another for another name", () => {
+    const store = ideas();
+    const kept = () => (store as unknown as { personMade?: { twin: unknown } }).personMade?.twin;
+    store.wouldDo([{ name: "vote-for", args: { id: "idea:a" } }], kid);
+    const first = kept();
+    expect(first).toBeDefined();
+    store.wouldDo([{ name: "champion", args: { id: "idea:b" } }], { ...kid, profile: { id: "prf_kid", name: "Kiddo" } });
+    expect(kept()).not.toBe(first);
+    store.apply({ name: "vote-for", args: { id: "idea:a" } }, { author: ann });
+    expect(kept()).toBeUndefined();
+  });
+});
+
 describe("a store's version", () => {
   it("moves on every change, adopt of a same-sized graph, day turned and reread", () => {
     const store = ideas();
