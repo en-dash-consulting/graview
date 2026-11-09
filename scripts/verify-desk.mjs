@@ -231,6 +231,49 @@ try {
     report.checks.theDeskDrawsTheBellWithItsOwnLook = { bell, ok: bell !== null && bell.position === "relative" && bell.width >= 24 && bell.height >= 24 && bell.styled };
   }
 
+  /*
+   * PRESSED BY KEYBOARD, THE KEYBOARD GOES WITH IT (f-launcher-keeps-the-keyboard).
+   * The launch button is in the desk's bar, and the bar goes when the app
+   * comes, so the keyboard was left on <body>. It lands on the opened app's
+   * own region now, and on the desk's again on the way back — and is still
+   * there once the app has settled, not only for a frame.
+   */
+  {
+    const keyPage = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+    const where = () =>
+      keyPage.evaluate(() => {
+        const active = document.activeElement;
+        if (!active || active === document.body || active === document.documentElement) return { nowhere: true };
+        return { nowhere: false, tag: active.tagName.toLowerCase(), inMain: active.closest("main") !== null, inRoot: document.getElementById("root")?.contains(active) ?? false };
+      });
+    const kept = {};
+    try {
+      await keyPage.goto(`${at("launcher")}/?theme=light`, { waitUntil: "load" });
+      await keyPage.waitForSelector('[data-testid="launch-todo"]', { timeout: 40_000 });
+      await keyPage.focus('[data-testid="launch-todo"]');
+      await keyPage.keyboard.press("Enter");
+      // Mounted in place, the demo sets no flag of its own: it has drawn once the desk's "Opening…" is gone and a view is on screen.
+      await keyPage.waitForFunction(() => !document.querySelector('[data-testid="opening"]') && document.querySelector("#root main [data-graview-view]") !== null, null, { timeout: 40_000 });
+      await keyPage.waitForTimeout(2500);
+      kept.opened = await where();
+      await keyPage.focus('[data-testid="switcher"]');
+      await keyPage.keyboard.press("Enter");
+      await keyPage.waitForSelector('[data-testid="switch-home"]', { timeout: 8000 });
+      await keyPage.focus('[data-testid="switch-home"]');
+      await keyPage.keyboard.press("Enter");
+      await keyPage.waitForSelector('[data-testid="launch-todo"]', { timeout: 20_000 });
+      await keyPage.waitForTimeout(2500);
+      kept.home = await where();
+    } catch (error) {
+      kept.why = String(error).slice(0, 200);
+    }
+    await keyPage.close();
+    report.checks.openingAnAppByKeyboardKeepsTheKeyboardOnIt = {
+      ...kept,
+      ok: kept.opened?.nowhere === false && kept.opened.inMain && kept.opened.inRoot && kept.home?.nowhere === false && kept.home.inMain,
+    };
+  }
+
   /* ---------------------- a capability no demo shows is a problem, with a repair */
   const { createLauncherStore } = await import(
     pathToFileURL(resolve(repoRoot, "apps/launcher/dist/domain/app.js")).href
