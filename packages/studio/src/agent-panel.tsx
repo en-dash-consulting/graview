@@ -338,8 +338,8 @@ function Offered<S extends AnySchema>({
    *
    * A sentence split into several acts usually splits into acts that wait
    * on each other: the field cannot be added until the kind exists. The
-   * store's own refusal for that is `Edge "of" references missing node`,
-   * which is true, internal, and no use at all to somebody looking at a
+   * store's own refusal for that is "A link names a record that is not
+   * there", which is true, and no use at all to somebody looking at a
    * form with an empty picker in it.
    */
   const awaiting = refused

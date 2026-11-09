@@ -3,7 +3,7 @@ import { ActRefusal } from "../refused.js";
 import type { z } from "zod";
 import { ARCHIVED, isArchived } from "../graph/archived.js";
 import type { Graph } from "../graph/graph.js";
-import { GraphError, MissingRecordError } from "../graph/graph.js";
+import { GraphError, MissingRecordError, NO_SUCH_RECORD } from "../graph/graph.js";
 import { writesOf, type Primitive } from "../graph/primitives.js";
 import { TrackedReader } from "../graph/tracked.js";
 import { quotesKeptField } from "../permissions/sight.js";
@@ -254,6 +254,8 @@ export function compileMutation<S extends AnySchema>(
     readonly everHeld?: (id: string) => boolean;
     /** The seat's profile has no person here and can have none: an act that reads `ctx.me` is refused, in words. */
     readonly noRecord?: boolean;
+    /** The seat's sight keeps its own person from it: an act done as its author (`doneAsMe`) that reads `ctx.me` is refused, in words. */
+    readonly selfUnseen?: boolean;
     /** A system author, the host's own: it may name an id a seat may not (`refuseProfileId`). */
     readonly hostsOwn?: boolean;
     /**
@@ -344,7 +346,7 @@ export function compileMutation<S extends AnySchema>(
     schema: graph.schema,
     // An act that reads who it is done as, for a seat that can be nobody here, is refused in words before it names a record that is not there.
     get me() {
-      if (options.noRecord) throw new ActRefusal(`"${definition.title ?? definition.name}" is done as you, and you have no record here`);
+      if (options.noRecord || (options.selfUnseen && definition.doneAsMe)) throw new ActRefusal(`"${definition.title ?? definition.name}" is done as you, and you have no record here`);
       return options.me;
     },
     emit(primitive) {
@@ -357,13 +359,13 @@ export function compileMutation<S extends AnySchema>(
     },
     removeNode(id) {
       const node = reader.getNode(id) && graph.getNode(id);
-      if (!node) throw new MissingRecordError(id, `Cannot remove missing node "${id}"`);
+      if (!node) throw new MissingRecordError(id, NO_SUCH_RECORD.remove);
       unlink(id);
       primitives.push({ op: "remove-node", node });
     },
     patchNode(id, fields) {
       const node = reader.getNode(id) && graph.getNode(id);
-      if (!node) throw new MissingRecordError(id, `Cannot patch missing node "${id}"`);
+      if (!node) throw new MissingRecordError(id, NO_SUCH_RECORD.change);
       const before: Record<string, unknown> = {};
       const after: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(fields)) {
@@ -380,7 +382,7 @@ export function compileMutation<S extends AnySchema>(
     unarchiveNode: (id) => context.patchNode(id, { [ARCHIVED]: undefined }),
     mergeNode(gone, into) {
       const kept = reader.getNode(into) && graph.getNode(into);
-      if (!kept) throw new MissingRecordError(into, `Cannot merge into missing node "${into}"`);
+      if (!kept) throw new MissingRecordError(into, NO_SUCH_RECORD.mergeInto);
       if (gone === into || isArchived(kept)) throw new GraphError(gone === into ? "Cannot merge a record into itself" : "Cannot merge into an archived record");
       // THE KEPT ONE TAKES THE LINKS, but never a link to itself or one it has; then the duplicate is archived.
       const has = new Set([...graph.outEdges(into), ...graph.inEdges(into)].map(edgeId));

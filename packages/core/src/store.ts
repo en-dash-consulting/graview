@@ -40,7 +40,7 @@ import { MOST_PROPOSED, PROPOSE_CHANGES, proposeChangesMutation } from "./mutati
 import { namesUnseen, redact } from "./ops/withheld.js";
 import { writersBehind } from "./ops/writers.js";
 import { nounOf } from "./schema/define-node.js";
-import { behind, fieldsJudged, mayKeepField, partialSight, recordsOf } from "./permissions/sight.js";
+import { behind, fieldsJudged, mayKeepField, partialSight, recordsOf, sees } from "./permissions/sight.js";
 import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
 import { checkUndo, UndoBlockedError, undoneInverses, undoPrimitives, type UndoCheck } from "./ops/undo.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
@@ -637,6 +637,8 @@ export class Store<S extends AnySchema> {
   readonly past: PastPoint | undefined;
   /** How often `pastOf` keeps a point to fold from, in ops (`StoreOptions.pastEvery`). */
   readonly pastEvery: number;
+  /** What `version` reads: each time this store told its subscribers something, or would have. */
+  private told = 0;
   private readonly listeners = new Set<(diff: GraphDiff<NodeOfSchema<S>>, ops: readonly Operation[]) => void>();
 
   constructor(options: StoreOptions<S>) {
@@ -1316,7 +1318,9 @@ export class Store<S extends AnySchema> {
       me: author && meIn(this.schema, author),
       everHeld: (id: string) => recordsOf(this.log).kindOf(id) !== undefined,
       keeps: (kind: string, field: string) => mayKeepField(this.policy?.sees, kind, field),
-      ...(author && this.hasNoRecord(author) ? { noRecord: true } : {}),
+      ...(author && this.hasNoRecord(author, false) ? { noRecord: true } : {}),
+      // Kept from its own person by its sight: an act declared as done as its author is refused, in words; another act's `ctx.me` is as it was.
+      ...(author && !this.hasNoRecord(author, false) && this.hasNoRecord(author) ? { selfUnseen: true } : {}),
       // The host's own may ask for an id a seat may not: it could write the same through `applyPrimitives`.
       ...(author && isSystem(author) ? { hostsOwn: true } : {}),
     };
@@ -1484,7 +1488,7 @@ export class Store<S extends AnySchema> {
         permits(this.policy, principal, mutation.name, mutation.derived.kind, this.viaOf(mutation), actingAs(principal).id).ok,
     );
     const offered = [...declared, ...publishing, ...derived];
-    return profileOf(principal) ? offered.filter((mutation) => !this.noOneToBe(mutation, principal)) : offered;
+    return offered.filter((mutation) => !this.noOneToBe(mutation, principal));
   }
 
   /**
@@ -1582,6 +1586,7 @@ export class Store<S extends AnySchema> {
     const before = this.violations();
     this.ticked = { day, on };
     const moved = this.moved(before, this.violations());
+    if (day !== was) this.told += 1;
     if (day !== was && !this.rehearsing && this.quiet === 0) for (const listener of this.listeners) listener(EMPTY_DIFF as GraphDiff<NodeOfSchema<S>>, []);
     return { day, ...(was === undefined ? {} : { was }), appeared: moved.introduces, cleared: moved.resolves };
   }
@@ -1594,6 +1599,7 @@ export class Store<S extends AnySchema> {
    * diff and no ops, so what reads through the link reads again.
    */
   reread(): void {
+    this.told += 1;
     if (this.rehearsing || this.quiet > 0) return;
     for (const listener of this.listeners) listener(EMPTY_DIFF as GraphDiff<NodeOfSchema<S>>, []);
   }
@@ -1663,6 +1669,70 @@ export class Store<S extends AnySchema> {
     }
   }
 
+  /**
+   * WHAT EACH CALL WOULD DO, REHEARSING NOTHING: change something, change
+   * nothing, or be refused by the act itself — compiled under the author's
+   * sight, as `wouldChange` is, but a call that cannot compile hands back
+   * why rather than counting as a change. The author's sight is worked out
+   * once for all of them and no copy of the log is made, so a face may ask
+   * it of every record it shows. The author is the store's own, unsaid, as
+   * `apply`'s is; a profile whose person is not made yet is judged as the
+   * person `apply` would make first, on one copy of the graph for them all.
+   *
+   * It does not judge what only applying judges: the policy (`permits`
+   * does), the records a call needs that a host has not loaded
+   * (`missingFor`), a host's `admit`, the rules the change would break, and
+   * what tidying refuses (a record left alone, a change a person declined).
+   */
+  wouldDo(calls: readonly MutationCall[], author: Author | Principal = this.by): readonly ("changes" | "nothing" | { readonly refused: unknown })[] {
+    const as = withValidProfile(author) as Principal;
+    const person = this.personFor(as);
+    return person ? this.withPersonMade(as, person.id).compiledEach(calls, as) : this.compiledEach(calls, as);
+  }
+
+  /**
+   * THE STORE AS IT WOULD BE WITH A PROFILE'S PERSON MADE: one copy, kept
+   * while this store's `version` stands, so every call a face asks of it in
+   * one look — each act over every chosen record — is judged on the same copy.
+   */
+  private withPersonMade(author: Principal, person: string): Store<S> {
+    const key = JSON.stringify([this.version, this.log.length, actingAs(author).id, person, profileOf(author)?.name]);
+    if (this.personMade?.key === key) return this.personMade.twin;
+    const twin = this.rehearsal();
+    const made = twin.personToMake(author, PREVIEW_BATCH, {});
+    if (made) {
+      twin.graph.applyPrimitives(made.primitives);
+      twin.log.append(made);
+    }
+    this.personMade = { key, twin };
+    return twin;
+  }
+
+  /** The copy `withPersonMade` keeps, and the store's version and person it was made for. */
+  private personMade: { readonly key: string; readonly twin: Store<S> } | undefined;
+
+  private compiledEach(calls: readonly MutationCall[], author: Principal): readonly ("changes" | "nothing" | { readonly refused: unknown })[] {
+    const sighted = this.sighted(author);
+    return calls.map((call) => {
+      try {
+        return compileMutation(this.graph, this.mutation(call.name), call.args, sighted).primitives.length > 0 ? "changes" : "nothing";
+      } catch (error) {
+        return { refused: error };
+      }
+    });
+  }
+
+  /**
+   * HOW MANY TIMES THIS STORE HAS TOLD ITS SUBSCRIBERS SOMETHING, or would
+   * have: a change, an adopt, the day turning, something read beside the
+   * graph answering. What a face that keeps an answer worked out from the
+   * store keys it on: the same number, the same store as far as anybody
+   * reading it can tell.
+   */
+  get version(): number {
+    return this.told;
+  }
+
   preview(call: MutationCall, context?: InvariantContext, options: { readonly author?: Principal } = {}): Preview<S> {
     call = this.spelledCall(call);
     const definition = this.mutation(call.name);
@@ -1729,6 +1799,7 @@ export class Store<S extends AnySchema> {
       nextId: () => `${PREVIEW_BATCH}:${++made}`,
       mintBatch: () => PREVIEW_BATCH,
       rehearsing: true,
+      personMade: undefined,
     });
     // Its own acts, so "Type text" reads the text back off the rehearsal's log, as the apply would off this one's.
     const typer = this.typer && TYPING.typeText!(twin);
@@ -2515,15 +2586,32 @@ export class Store<S extends AnySchema> {
    * no person of that kind and none to be had (a record of another kind at its
    * id, from a restore or a host's own change, is not one), or an account whose
    * own id reads as a person's. With no people kind, nobody is asked to be one.
+   *
+   * AND A SEAT WHOSE SIGHT KEEPS ITS OWN PERSON FROM IT. An act runs under its
+   * author's sight (`sighted`), where a record the author may not see is no
+   * record: `$me` resolves to nothing there, so the act is not offered, and is
+   * refused in the words it would refuse in, with a profile or without.
    */
-  private hasNoRecord(author: Author | Principal): boolean {
-    if (!this.schema.definitions.some((definition) => definition.people)) return false;
-    if (actingAs(author as Principal).id === undefined) return false;
+  private hasNoRecord(author: Author | Principal, bySight = true): boolean {
+    const people = this.schema.definitions.find((definition) => definition.people);
+    if (!people) return false;
+    // Kept from its own person by its sight: a seat with no id of its own sees one only through a sight of the whole kind.
+    const kept = (person: { readonly id: string; readonly kind: string }) => bySight && !this.seesOwnPerson(author as Principal, person);
+    if (actingAs(author as Principal).id === undefined) return kept({ id: "", kind: people.kind });
     const id = meOf(author);
     if (id === undefined) return true;
-    if (!profileOf(author)) return false;
     const kind = this.graph.getNode(id)?.kind as string | undefined;
-    return !(kind !== undefined && this.schema.tryDefinition(kind)?.people) && !this.personFor(author);
+    if (kind !== undefined && this.schema.tryDefinition(kind)?.people) return kept({ id, kind });
+    if (!profileOf(author)) return false;
+    const person = this.personFor(author);
+    return !person || kept({ id: person.id, kind: (person.node as { readonly kind: string }).kind });
+  }
+
+  /** Whether a seat's sight shows it its own person, there or about to be made: one with no links yet is judged as one. */
+  private seesOwnPerson(author: Principal, person: { readonly id: string; readonly kind: string }): boolean {
+    if (!hidesFrom(this, author)) return true;
+    if (this.modules.disabledKinds.has(person.kind) && !isSystem(author)) return false;
+    return this.graph.has(person.id) ? seesId(this, author)(person.id) : sees(this.policy, author, person, { out: () => [], in: () => [] }, recordsOf(this.log), fieldsJudged(this));
   }
 
   /**
@@ -2642,6 +2730,9 @@ export class Store<S extends AnySchema> {
    * is nothing to tell.
    */
   notify(diff: GraphDiff<NodeOfSchema<S>>, ops: readonly Operation[]): void {
+    this.told += 1;
+    // A copy kept for a profile's person not made yet is the store as it was: let it go.
+    this.personMade = undefined;
     if (this.quiet > 0) return;
     if (ops.length === 0 && isEmptyDiff(diff as GraphDiff<never>)) return;
     for (const listener of this.listeners) listener(diff, ops);

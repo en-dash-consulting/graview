@@ -706,6 +706,9 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
                 if (edges.get(kind)?.cardinality === "one") for (const existing of graph.out(from, kind)) if (existing.id !== to) sever({ kind, from, to: existing.id });
                 if (!graph.out(from, kind).some((n) => n.id === to)) context.addEdge({ kind, from, to });
               } else {
+                // A link that is not there is nothing to take away, said in words rather than as the graph's missing key.
+                const ends = [graph.getNode(from), graph.getNode(to)] as const;
+                if (ends[0] && ends[1] && !graph.out(from, kind, { archived: "all" }).some((n) => n.id === to)) throw new ActRefusal(`"${title}" has nothing to take away: ${labelFor(ends[0])} is not linked to ${labelFor(ends[1])} that way`);
                 sever({ kind, from, to });
               }
             } else if ("through" in effect) {

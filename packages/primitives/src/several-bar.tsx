@@ -2,7 +2,7 @@ import { counted, layer, type AnySchema, type Principal, type Store, type Via } 
 import { retryingImport } from "@graview/core/retry";
 import { inTopLayer, lazyModule, useGraviewIfAny } from "@graview/react/provider";
 import { inlineAiOn, suggestsOnOpen } from "@graview/tools/frame";
-import { actOnSeveral, actsForSeveral, type SeveralAct, type SeveralOutcome } from "@graview/tools/several";
+import { actOnSeveral, actsForSeveral, severalApplies, type SeveralAct, type SeveralOutcome } from "@graview/tools/several";
 import { Suspense, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { SeveralAiProps } from "./several-ai.js";
 import { FOOT_MOVED, placeAtTheFoot } from "./notice-place.js";
@@ -91,6 +91,8 @@ export function SeveralBar({ store, chosen, principal, context, via, anchor, of,
   const bar = useRef<HTMLDivElement | null>(null);
   const moreId = useId();
   const kinds = useMemo(() => [...new Set(chosen.map((id) => store.graph.getNode(id)?.kind as string | undefined))], [store, key]); // eslint-disable-line react-hooks/exhaustive-deps
+  // The chosen still here: one removed while chosen is not counted among what an act could apply to.
+  const present = useMemo(() => chosen.filter((id) => store.graph.has(id)), [store, key, tick]); // eslint-disable-line react-hooks/exhaustive-deps
   const count = kinds.length === 1 && kinds[0] ? `${counted(store.schema, kinds[0], chosen.length)} chosen` : `${chosen.length} chosen`;
   /*
    * THE FIRST FEW, AND THE REST BEHIND MORE: the derivation's leading acts
@@ -166,7 +168,16 @@ export function SeveralBar({ store, chosen, principal, context, via, anchor, of,
   }, []);
 
   const run = (act: SeveralAct, extra: Readonly<Record<string, unknown>> = {}): readonly string[] | void => {
-    const done = actOnSeveral(store, { mutation: act.mutation, subject: act.subject, args: { ...act.args, ...extra }, label: act.label }, chosen, {
+    // Over the records it applies to, which are all it was offered for: one it cannot apply to was never in the count.
+    const args = { ...act.args, ...extra };
+    /*
+     * Over the records it applies to, which are all it was offered for. An
+     * act that asked first is judged again with its answers, which can
+     * change what it applies to; where they leave it none, it runs over the
+     * chosen, so each is told why.
+     */
+    const over = act.open.length > 0 ? severalApplies(store, { ...act, args, open: [] }, present, principal).applies : act.applies;
+    const done = actOnSeveral(store, { mutation: act.mutation, subject: act.subject, args, label: act.label }, over.length > 0 ? over : present, {
       ...(principal ? { author: principal } : {}),
       ...(via ? { via } : {}),
       ...(context ? { context } : {}),
@@ -192,12 +203,14 @@ export function SeveralBar({ store, chosen, principal, context, via, anchor, of,
       data-testid="several-act"
       data-act={act.id}
       data-mutation={act.mutation}
+      data-applies={act.applies.length}
       {...(act.destructive ? { "data-tone": "warn" } : {})}
       aria-pressed={asking?.id === act.id ? true : undefined}
       onClick={() => press(act)}
     >
       {act.label}
       {act.open.length > 0 ? "…" : ""}
+      {act.applies.length < present.length ? <span className="graview-several-act-count">{` — ${act.applies.length} of ${present.length}`}</span> : null}
     </button>
   );
 
@@ -250,7 +263,7 @@ export function SeveralBar({ store, chosen, principal, context, via, anchor, of,
         </p>
       ) : null}
       {asking ? (
-        <div className="graview-several-ask" role="group" aria-label={`${asking.label}, for all ${chosen.length}`} data-testid="several-ask">
+        <div className="graview-several-ask" role="group" aria-label={asking.applies.length < present.length ? `${asking.label}, for ${asking.applies.length} of the ${present.length}` : `${asking.label}, for all ${present.length}`} data-testid="several-ask">
           <AnswerArgs store={store} affordance={asking.affordance} onApply={(args) => run(asking, args)} onCancel={() => setAsking(null)} />
         </div>
       ) : null}

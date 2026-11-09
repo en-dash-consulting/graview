@@ -178,7 +178,7 @@ describe("a link made unsure", () => {
 
   it("is not a link to keep when there is none", () => {
     const store = storeOf();
-    expect(() => store.apply({ name: KEEP_LINK, args: edge }, { author: nick })).toThrow(/missing edge/);
+    expect(() => store.apply({ name: KEEP_LINK, args: edge }, { author: nick })).toThrow("That link is not there to take away.");
   });
 
   it("is kept by whoever may make or break such links, and by nobody else", () => {
