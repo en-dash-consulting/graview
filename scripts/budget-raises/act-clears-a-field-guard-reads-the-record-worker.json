@@ -1,5 +1,5 @@
 {
   "budget": "Cloud's worker",
-  "bytes": 7018,
-  "note": "Raised when a document act came to clear an optional field set to null and the rule language came to read `$subject`, the record itself: the act's runtime, the parser and the evaluator, and the checked compile's `act-clears-required` and `act-name-means-both` (`document/guard-names.ts`), which the worker judges a kept document with. Measured at 2_603_711 B against 2_596_693."
+  "bytes": 9781,
+  "note": "Raised when a document act came to clear an optional field set to null and the rule language came to say which value a name is (`$subject` the record's own, `$arg` the call's argument, a member's field first inside `where`): the act's runtime, the parser and the evaluator, the edits that rename both spellings, and the checked compile's `act-clears-required` and `act-name-means-both` (`document/guard-names.ts`), which the worker judges a kept document with. Measured at 2_606_474 B against 2_596_693."
 }

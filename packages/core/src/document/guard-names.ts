@@ -1,20 +1,19 @@
 import type { GraviewApp } from "../app.js";
 import { perMember } from "./expr/analyze.js";
 import { parseExpr, type Expr } from "./expr/parse.js";
-import { SUBJECT_NAME } from "./expr/subject.js";
+import { ARG_NAME, SUBJECT_NAME } from "./expr/subject.js";
 import { warning, type Finding } from "./findings.js";
 import type { GraviewDocument } from "./schema.js";
 import { parseTemplate } from "./template-parse.js";
 
 /*
  * A NAME THAT MEANS BOTH (Roadmap f-guard-reads-record-not-argument). In an
- * act's condition (`allowedWhen`) and its refusal, a bare name reads the
- * argument the call gave by that name, and the record's own field only when
- * the call gave none. Where a name is both — an act that `writes` holder and
- * asks `holder == null` — the condition judges what the call says, which is
- * seldom what its author meant. `$subject.holder` says the record's own; the
- * checker warns of each bare name that could be read either way, naming the
- * act and the field.
+ * act's condition (`allowedWhen`) and its refusal, a bare name is the call's
+ * argument by that name where it gave one, else the record's field
+ * (`expr/subject.ts`). A name that is both a field of the kind and an
+ * argument of the act can be read either way, so the checker asks for the
+ * one meant: `$subject.<field>`, the record's own, or `$arg.<name>`, the
+ * argument. Either silences it.
  */
 
 const asArray = <T>(v: T | readonly T[] | undefined): readonly T[] => [v ?? []].flat() as readonly T[];
@@ -79,8 +78,8 @@ export function nameMeansBothFindings(document: GraviewDocument, app: Pick<Gravi
     for (const { key, what, exprs } of said) {
       const names = [...new Set(exprs.flatMap(bareNames))].filter((field) => args.has(field) && isField(field));
       for (const field of names) {
-        const message = `"${name}"'s ${what} reads ${field}, which is both a field of ${kinds.join(" and ")} and an argument of "${name}": a bare name reads the argument the call gives, and the record's own ${field} only when the call gives none`;
-        out.push(warning("act-name-means-both", `acts.${name}.${key}`, message, `write ${SUBJECT_NAME}.${field} for the record's own value, or name the argument something else`));
+        const message = `"${name}"'s ${what} reads ${field}, which is both a field of ${kinds.join(" and ")} and an argument of "${name}": bare, it is the argument where the call gives one, else the field`;
+        out.push(warning("act-name-means-both", `acts.${name}.${key}`, message, `say which: ${SUBJECT_NAME}.${field} for the record's own, or ${ARG_NAME}.${field} for the argument`));
       }
     }
   }

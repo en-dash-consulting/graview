@@ -5,7 +5,7 @@ import * as z from "zod";
 import type { Expr } from "./expr/parse.js";
 import { ExprSyntaxError, parseExpr } from "./expr/parse.js";
 import { printExpr } from "./expr/print.js";
-import { SUBJECT_NAME } from "./expr/subject.js";
+import { dollarOf, SUBJECT_NAME } from "./expr/subject.js";
 import { error, type Finding } from "./findings.js";
 import { coerce } from "./migrate.js";
 import { outsideRange, rangeWords } from "./range.js";
@@ -487,6 +487,10 @@ interface Site {
   /** The kinds of record the name is read from (for name and field). */
   readonly kinds: Kinds;
   readonly name: string;
+  /** Said as `$arg.<name>`: the call's argument, never a record's name. */
+  readonly arg?: true;
+  /** Said as `$subject.<name>`: the record's own field, never an argument. */
+  readonly own?: true;
 }
 
 /**
@@ -509,9 +513,10 @@ function mapNames(doc: Doc, e: Expr, ctx: Kinds, rename: (site: Site) => string)
       }
       case "member": {
         const object = go(x.object, at);
-        // `$subject.holder` is the outer record's own, inside a `where` too.
-        const of = x.object.t === "ident" && x.object.name === SUBJECT_NAME ? ctx : kindsOf(doc, x.object, at);
-        const name = rename({ role: "name", kinds: of, name: x.name });
+        // `$subject.status` is the outer record's own, inside a `where` too.
+        const dollar = dollarOf(x.object);
+        const of = dollar === "subject" ? ctx : kindsOf(doc, x.object, at);
+        const name = rename(dollar === "arg" ? { role: "name", kinds: NONE, name: x.name, arg: true } : { role: "name", kinds: of, name: x.name, ...(dollar === "subject" ? { own: true as const } : {}) });
         return object === x.object && name === x.name ? x : { ...x, object, name };
       }
       case "unary": {
@@ -612,6 +617,11 @@ function parts(source: string): readonly TemplatePart[] | null {
  * `| plural: 'front'` — exactly as it was written.
  */
 function rewriteTemplate(doc: Doc, source: string, ctx: Kinds, r: Rename, prose?: (text: string) => string): string {
+  return mapTemplate(source, (e) => mapNames(doc, e, ctx, renamer(doc, r)), prose);
+}
+
+/** A template's text with each brace's expression mapped, the words around them kept (and `prose` applied to them). */
+function mapTemplate(source: string, map: (e: Expr) => Expr, prose?: (text: string) => string): string {
   const ps = parts(source);
   if (!ps) return source;
   const braces = templateBraces(source);
@@ -624,7 +634,7 @@ function rewriteTemplate(doc: Doc, source: string, ctx: Kinds, r: Rename, prose?
       return t;
     }
     const { inner, bar } = braces[brace++]!;
-    const next = mapNames(doc, p.expr!, ctx, renamer(doc, r));
+    const next = map(p.expr!);
     if (next === p.expr) return `{${inner}}`;
     changed = true;
     const tail = bar >= 0 ? inner.slice(bar) : "";
@@ -3121,6 +3131,11 @@ class Editor {
       const guard = exprAt(act.allowedWhen, on);
       if (guard !== undefined) act.allowedWhen = argRename?.has(r.from) && r.t === "field" && !hasKind(on, r.kind) ? rewriteBinding(guard, r.from, r.to) : guard;
       if (act.refusal !== undefined) act.refusal = tmplAt(act.refusal, on);
+      // An argument said as `$arg.<name>` follows its rename, in the condition and the refusal.
+      for (const [from, to] of argRename ?? []) {
+        if (act.allowedWhen !== undefined) act.allowedWhen = rewriteArgument(act.allowedWhen, from, to, false);
+        if (act.refusal !== undefined) act.refusal = rewriteArgument(act.refusal, from, to, true);
+      }
       for (const t of setTargets(act, doc)) for (const [k, v] of Object.entries(t.set)) if (isObject(v) && typeof v["expr"] === "string") (t.set as Doc)[k] = { expr: exprAt(v["expr"], t.kinds === "*" ? on : t.kinds) };
       if (JSON.stringify(act) !== before) {
         if (prose) {
@@ -3614,7 +3629,20 @@ function linkEnds(act: Doc | undefined): "none" | "near" | "far" {
 function rewriteBinding(source: string, from: string, to: string): string {
   try {
     const e = parseExpr(source);
-    const next = mapNames({ kinds: {} }, e, NONE, (s) => (s.role === "name" && s.name === from && s.kinds === NONE ? to : s.name));
+    const next = mapNames({ kinds: {} }, e, NONE, (s) => (s.role === "name" && s.name === from && s.kinds === NONE && !s.own ? to : s.name));
+    return next === e ? source : printExpr(next);
+  } catch {
+    return source;
+  }
+}
+
+/** `$arg.<from>` said `$arg.<to>`, in an expression or a template. */
+function rewriteArgument(source: string, from: string, to: string, template: boolean): string {
+  const map = (e: Expr) => mapNames({ kinds: {} }, e, NONE, (s) => (s.arg && s.name === from ? to : s.name));
+  if (template) return mapTemplate(source, map);
+  try {
+    const e = parseExpr(source);
+    const next = map(e);
     return next === e ? source : printExpr(next);
   } catch {
     return source;

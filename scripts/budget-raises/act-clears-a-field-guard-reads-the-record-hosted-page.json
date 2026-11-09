@@ -1,7 +1,7 @@
 {
   "budget": "a hosted page",
-  "minified": 754,
-  "gzipped": 251,
+  "minified": 1461,
+  "gzipped": 517,
   "changeset": "a-document-act-clears-a-field-and-a-guard-reads-the-record.md",
-  "note": "Raised when a document act came to clear an optional field set to null (refusing a required one by its name) and the rule language came to read `$subject`, the record itself, which the parser, the evaluator and the page's compile all know. 754 / 251 over. Measured at 675_219 / 233_830 against the budget's 674_465 / 233_579."
+  "note": "Raised when a document act came to clear an optional field set to null (refusing a required one by its name) and the rule language came to say which value a name is: `$subject` the record's own, `$arg` the call's argument, a member's field first inside `where`, which the parser, the evaluator and the page's compile know. 1_461 / 509 over. Measured at 675_926 / 234_088 against the budget's 674_465 / 233_579. The gzipped raise holds 8 bytes over what was measured: it varies by a few bytes between builds."
 }

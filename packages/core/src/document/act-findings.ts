@@ -189,8 +189,9 @@ function meFindings(name: string, act: ActSpec, document: GraviewDocument): Find
 
 /**
  * A FIELD AN ACT SETS TO NULL IS CLEARED (Roadmap f-act-clears-optional-field):
- * an optional one loses its value, and a required one cannot — the act would
- * be refused every time it runs, so the checker says so at the value.
+ * an optional one loses its value, and a required one cannot — the act is
+ * refused every time it runs on a kind that requires it, so the checker warns
+ * at the value. A warning: a document that compiled still compiles.
  */
 function clearsFindings(name: string, act: ActSpec, document: GraviewDocument): Finding[] {
   const out: Finding[] = [];
@@ -203,10 +204,12 @@ function clearsFindings(name: string, act: ActSpec, document: GraviewDocument): 
       const required = kinds.filter((kind) => document.kinds[kind]?.fields[field]?.required === true);
       if (required.length === 0) continue;
       const f = document.kinds[required[0]!]!.fields[field]!;
-      out.push(error("act-clears-required", `${path}.${field}`, `"${name}" sets ${field} to null, and every ${required.join(" and every ")} has one: the act would be refused each time it runs`, f.default !== undefined ? `set it to a value, like its default ${JSON.stringify(f.default)}` : `set it to a value, or say "required": false on ${required[0]}'s ${field} so clearing it is allowed`));
+      // Said of the kinds that require it: an act on several is refused only on those.
+      const on = required.length === kinds.length ? (kinds.length === 1 ? "" : " on every kind it is on") : ` on ${required.map((kind) => withArticle(kind)).join(" or ")}`;
+      out.push(warning("act-clears-required", `${path}.${field}`, `"${name}" sets ${field} to null, which ${required.join(" and ")} requires: it is refused each time it runs${on}`, f.default !== undefined ? `set it to a value, like its default ${JSON.stringify(f.default)}` : `set it to a value, or say "required": false on ${required.join(" and ")}'s ${field} so clearing it is allowed`));
     }
   };
-  judge(act.sets, `${at}.set`, subject);
+  judge(act.sets, `${at}.sets`, subject);
   const relation = act.connects ?? act.severs;
   if (act.setsOther && relation) judge(act.setsOther, `${at}.setsOther`, farEnd(document.kinds, relation, subject)?.kinds ?? "*");
   for (const [through, set] of Object.entries(act.setsLinked ?? {})) {

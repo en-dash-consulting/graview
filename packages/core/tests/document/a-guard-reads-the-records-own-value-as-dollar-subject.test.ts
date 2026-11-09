@@ -5,123 +5,155 @@ import { evaluateExpr, parseExpr } from "../../src/document/expr/index.js";
 import { ActRefusal, Store, type AnySchema, type GraviewApp } from "../../src/index.js";
 
 /**
- * A GUARD CAN SAY THE RECORD'S OWN VALUE WHERE AN ARGUMENT HAS THE SAME NAME
- * (Roadmap f-guard-reads-record-not-argument). In an act's `allowedWhen` and
- * its `refusal`, a bare name reads the argument the call gave by that name,
- * and the record's field only where the call gave none. `$subject` is the
- * record the act is on, so `$subject.holder` is always the record's own
- * holder, whatever the call says. graview check warns when a guard or a
- * refusal reads a bare name that is both a field of the kind and an argument
- * of the act.
+ * WHICH VALUE A NAME IS, IN AN ACT'S CONDITION AND REFUSAL (Roadmap
+ * f-guard-reads-record-not-argument). The scope rules:
+ *
+ * - `$subject.<field>` is the record's own field;
+ * - `$arg.<name>` is the call's argument by that name, or nothing;
+ * - a bare name is a member's field inside `where`, `every` and the rest
+ *   read per member; else the call's argument by that name, where it gave
+ *   one; else the record's field.
+ *
+ * graview check warns where a bare name is both a field of the kind and an
+ * argument of the act, and either spelling answers it.
  */
-const leases = (take: Record<string, unknown>) => ({
+const cards = (act: Record<string, unknown>) => ({
   format: "graview-document",
   formatVersion: 1,
-  name: "Leases",
-  description: "Who holds which piece of work.",
+  name: "Cards",
+  description: "Cards on a board.",
   kinds: {
-    lease: {
-      noun: "lease",
-      plural: "leases",
+    card: {
+      noun: "card",
+      plural: "cards",
       label: "{name}",
-      description: "A hold on one piece of work.",
+      description: "One card.",
       fields: {
         name: { type: "string", required: true },
-        holder: { type: "string" },
-        expiresAt: { type: "datetime" },
+        color: { type: "string" },
+        size: { type: "integer" },
       },
     },
   },
-  acts: { take: { title: "Take", on: "lease", writes: ["holder", "expiresAt"], ...take } },
+  acts: { recolor: { title: "Recolor", on: "card", writes: ["color", "size"], ...act } },
 });
 
-const onTheRecord = { allowedWhen: "$subject.holder == null or $subject.expiresAt < now()", refusal: "{name} is held by {$subject.holder}" };
-const bare = { allowedWhen: "holder == null or expiresAt < now()", refusal: "{name} is held by {holder}" };
-
 function compiled(doc: unknown): GraviewApp<AnySchema> {
-  const result = compileDocument(doc, { today: () => "2026-11-08" });
+  const result = compileDocument(doc, { today: () => "2026-11-09" });
   if (!result.ok) throw new Error(`the document compiles: ${JSON.stringify(result.findings.filter((f) => f.severity === "error"))}`);
   return result.app as GraviewApp<AnySchema>;
 }
-const storeOf = (app: GraviewApp<AnySchema>, expiresAt: string) =>
+const storeOf = (app: GraviewApp<AnySchema>) =>
   new Store<AnySchema>({
     schema: app.schema,
     mutations: app.mutations ?? [],
-    snapshot: { nodes: [{ id: "lease-a", kind: "lease", name: "Build the page", holder: "worker-a", expiresAt }], edges: [] } as never,
+    snapshot: { nodes: [{ id: "card-a", kind: "card", name: "First", color: "red", size: 2 }], edges: [] } as never,
   });
-const LIVE = "2099-01-01T00:00:00.000Z";
-const PAST = "2000-01-01T00:00:00.000Z";
-const take = { id: "lease-a", holder: "worker-b", expiresAt: PAST };
+/** Whether the act runs on card-a with these arguments. */
+const runs = (act: Record<string, unknown>, args: Record<string, unknown>): boolean => {
+  const store = storeOf(compiled(cards(act)));
+  try {
+    store.apply({ name: "recolor", args: { id: "card-a", ...args } });
+    return true;
+  } catch (e) {
+    if (e instanceof ActRefusal) return false;
+    throw e;
+  }
+};
+const refusal = (act: Record<string, unknown>, args: Record<string, unknown>): string => {
+  const store = storeOf(compiled(cards(act)));
+  try {
+    store.apply({ name: "recolor", args: { id: "card-a", ...args } });
+  } catch (e) {
+    return (e as Error).message;
+  }
+  throw new Error("expected a refusal");
+};
 
-describe("a guard reads the record's own value as $subject", () => {
-  it("judges the record, not the call: a live lease is refused whatever expiresAt the call sends", () => {
-    const store = storeOf(compiled(leases(onTheRecord)), LIVE);
-    expect(() => store.apply({ name: "take", args: take })).toThrow(ActRefusal);
-    expect((store.graph.getNode("lease-a") as Record<string, unknown>)["holder"]).toBe("worker-a");
-  });
-
-  it("names the record's own value in its refusal", () => {
-    const store = storeOf(compiled(leases(onTheRecord)), LIVE);
-    expect(() => store.apply({ name: "take", args: take })).toThrow("Build the page is held by worker-a");
-  });
-
-  it("allows the call once the record's own lease has run out", () => {
-    const store = storeOf(compiled(leases(onTheRecord)), PAST);
-    store.apply({ name: "take", args: { ...take, expiresAt: LIVE } });
-    expect((store.graph.getNode("lease-a") as Record<string, unknown>)["holder"]).toBe("worker-b");
-  });
-
-  it("a bare name reads the argument the call gave by that name", () => {
-    const store = storeOf(compiled(leases(bare)), LIVE);
-    store.apply({ name: "take", args: take });
-    expect((store.graph.getNode("lease-a") as Record<string, unknown>)["holder"]).toBe("worker-b");
-  });
-
-  it("is the outer record inside a where, where bare names are the member's", () => {
-    const expr = parseExpr("count(all('lease') where holder == $subject.holder)");
-    const a = { id: "a", kind: "lease", name: "A", holder: "x" };
-    const b = { id: "b", kind: "lease", name: "B", holder: "x" };
-    const c = { id: "c", kind: "lease", name: "C", holder: "y" };
-    const all = [a, b, c];
-    const graph = { getNode: (id: string) => all.find((n) => n.id === id), has: () => true, nodesOfKind: (kind: string) => all.filter((n) => n.kind === kind), out: () => [], in: () => [] };
-    expect(evaluateExpr(expr, { graph: graph as never, subject: a as never, kinds: new Map() })).toBe(2);
+describe("in an act's condition, which value a name is", () => {
+  it("$subject.<field> is the record's own field, even where the call gives an argument by that name", () => {
+    expect(runs({ allowedWhen: "$subject.color == 'red'" }, { color: "blue" })).toBe(true);
+    expect(runs({ allowedWhen: "$subject.color == 'blue'" }, { color: "blue" })).toBe(false);
   });
 
-  it("follows a renamed field, in the condition and the refusal", () => {
-    const renamed = editDocument(leases(onTheRecord) as never, [{ op: "rename-field", kind: "lease", field: "holder", to: "owner" }]);
+  it("$arg.<name> is the call's argument by that name, or nothing where it gave none", () => {
+    expect(runs({ allowedWhen: "$arg.color == 'blue'" }, { color: "blue" })).toBe(true);
+    expect(runs({ allowedWhen: "$arg.color == 'red'" }, { color: "blue" })).toBe(false);
+    expect(runs({ allowedWhen: "$arg.color == null" }, { size: 3 })).toBe(true);
+  });
+
+  it("a bare name is the call's argument by that name where it gave one, else the record's field", () => {
+    expect(runs({ allowedWhen: "color == 'blue'" }, { color: "blue" })).toBe(true);
+    expect(runs({ allowedWhen: "color == 'red'" }, { size: 3 })).toBe(true);
+  });
+
+  it("a refusal says either the same way", () => {
+    expect(refusal({ allowedWhen: "false", refusal: "{name} is {$subject.color}, not {$arg.color}" }, { color: "blue" })).toBe("First is red, not blue");
+  });
+});
+
+describe("inside where, every and some", () => {
+  const a = { id: "a", kind: "card", name: "A", color: "x" };
+  const b = { id: "b", kind: "card", name: "B", color: "x" };
+  const c = { id: "c", kind: "card", name: "C", color: "y" };
+  const all = [a, b, c];
+  const graph = { getNode: (id: string) => all.find((n) => n.id === id), has: () => true, nodesOfKind: (kind: string) => all.filter((n) => n.kind === kind), out: () => [], in: () => [] };
+  const kinds = new Map([["card", { fields: new Set(["name", "color", "size"]), edges: new Map() }]]);
+  const judge = (source: string, bindings: Record<string, string> = {}) => evaluateExpr(parseExpr(source), { graph: graph as never, subject: c as never, kinds: kinds as never, bindings });
+
+  it("$subject is the outer record", () => {
+    expect(judge("count(all('card') where color == $subject.color)")).toBe(1);
+  });
+
+  it("a member's own field is read ahead of an argument by the same name", () => {
+    expect(judge("count(all('card') where color == 'x')", { color: "y" })).toBe(2);
+    expect(judge("some(all('card'), color == 'y')", { color: "x" })).toBe(true);
+  });
+
+  it("a name that is no field of the member is still the argument", () => {
+    expect(judge("count(all('card') where color == shade)", { shade: "x" })).toBe(2);
+    expect(judge("count(all('card') where color == $arg.shade)", { shade: "y" })).toBe(1);
+  });
+});
+
+describe("the spelling", () => {
+  it("follows a renamed field in $subject.<field>, and a renamed argument in $arg.<name>", () => {
+    const renamed = editDocument(cards({ allowedWhen: "$subject.color != $arg.color", refusal: "{name} is {$subject.color}" }) as never, [{ op: "rename-field", kind: "card", field: "color", to: "hue" }]);
     expect(renamed.ok).toBe(true);
     if (!renamed.ok) return;
-    const act = (renamed.document.acts as Record<string, { allowedWhen: string; refusal: string }>)["take"]!;
-    expect(act.allowedWhen).toContain("$subject.owner == null");
-    expect(act.refusal).toBe("{name} is held by {$subject.owner}");
+    const act = (renamed.document.acts as Record<string, { allowedWhen: string; refusal: string }>)["recolor"]!;
+    expect(act.allowedWhen).toBe("$subject.hue != $arg.hue");
+    expect(act.refusal).toBe("{name} is {$subject.hue}");
   });
 
-  it("is the only name the language spells with a $", () => {
-    expect(() => parseExpr("$record.holder == null")).toThrow(/\$subject/);
+  it("is refused for any other $ name, and after a dot", () => {
+    expect(() => parseExpr("$record.color == null")).toThrow(/\$subject/);
+    expect(() => parseExpr("color.$subject")).toThrow(/field name after/);
   });
 });
 
 describe("graview check and a name that means both", () => {
-  const warned = (doc: unknown) => compileDocument(doc, { today: () => "2026-11-08" }).findings.filter((f) => f.code === "act-name-means-both");
+  const warned = (doc: unknown) => compileDocument(doc, { today: () => "2026-11-09" }).findings.filter((f) => f.code === "act-name-means-both");
 
-  it("warns of a guard's bare name that is a field and an argument, naming the act and the field", () => {
-    const found = warned(leases({ allowedWhen: bare.allowedWhen }));
+  it("warns of a condition's bare name that is a field and an argument, naming the act and the field", () => {
+    const found = warned(cards({ allowedWhen: "color != 'red' and size > 0" }));
     expect(found.map((f) => [f.severity, f.path])).toEqual([
-      ["warning", "acts.take.allowedWhen"],
-      ["warning", "acts.take.allowedWhen"],
+      ["warning", "acts.recolor.allowedWhen"],
+      ["warning", "acts.recolor.allowedWhen"],
     ]);
-    expect(found[0]!.message).toMatch(/"take"/);
-    expect(found[0]!.message).toMatch(/holder/);
-    expect(found[0]!.fix).toMatch(/\$subject\.holder/);
-    expect(found[1]!.message).toMatch(/expiresAt/);
+    expect(found[0]!.message).toMatch(/"recolor"/);
+    expect(found[0]!.message).toMatch(/color/);
+    expect(found[0]!.fix).toMatch(/\$subject\.color/);
+    expect(found[0]!.fix).toMatch(/\$arg\.color/);
+    expect(found[1]!.message).toMatch(/size/);
   });
 
   it("warns of a refusal's bare name the same way", () => {
-    expect(warned(leases({ allowedWhen: onTheRecord.allowedWhen, refusal: bare.refusal })).map((f) => f.path)).toEqual(["acts.take.refusal"]);
+    expect(warned(cards({ allowedWhen: "$subject.size > 0", refusal: "{name} is {color}" })).map((f) => f.path)).toEqual(["acts.recolor.refusal"]);
   });
 
-  it("says nothing of $subject's fields, nor of a field the act takes no argument for", () => {
-    expect(warned(leases(onTheRecord))).toEqual([]);
-    expect(warned(leases({ allowedWhen: "name != ''", refusal: "{name} is held" }))).toEqual([]);
+  it("is answered by either spelling, and says nothing of a field the act takes no argument for", () => {
+    expect(warned(cards({ allowedWhen: "$subject.color != $arg.color", refusal: "{name} is {$subject.color}" }))).toEqual([]);
+    expect(warned(cards({ allowedWhen: "name != ''", refusal: "{name} stays" }))).toEqual([]);
   });
 });

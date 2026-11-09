@@ -8,7 +8,7 @@
  * parser turns text into a tree; `evaluate.ts` walks the tree under a budget.
  */
 
-import { SUBJECT_NAME } from "./subject.js";
+import { ARG_NAME, SUBJECT_NAME } from "./subject.js";
 
 export type Expr =
   | { readonly t: "lit"; readonly value: string | number | boolean | null; readonly at: number }
@@ -74,18 +74,12 @@ function tokenize(source: string): Token[] {
       tokens.push({ k: "str", v, at: start });
       continue;
     }
-    /*
-     * `$subject`: THE RECORD ITSELF (Roadmap f-guard-reads-record-not-argument).
-     * A bare name in an act's guard reads the argument the call gave by that
-     * name before the record's field; `$subject.holder` is always the
-     * record's own. The one name spelled with a `$`, as an act's effects
-     * spell it, so no field or argument can ever be called it.
-     */
+    // `$subject` and `$arg` (`subject.ts`): the record itself and the call's arguments, by names no field or argument can have.
     if (c === "$") {
       const start = i++;
       while (i < source.length && /[A-Za-z0-9_]/.test(source[i]!)) i++;
       const word = source.slice(start, i);
-      if (word !== SUBJECT_NAME) throw new ExprSyntaxError(`"${word}" is not a name here: "${SUBJECT_NAME}" is the record itself, and a field or an argument is said bare`, start, source);
+      if (word !== SUBJECT_NAME && word !== ARG_NAME) throw new ExprSyntaxError(`"${word}" is not a name here: "${SUBJECT_NAME}" is the record itself and "${ARG_NAME}" the call's arguments`, start, source);
       tokens.push({ k: "id", v: word, at: start });
       continue;
     }
@@ -213,7 +207,7 @@ export function parseExpr(source: string): Expr {
         const dot = peek();
         pos++;
         const name = peek();
-        if (name.k !== "id") throw new ExprSyntaxError('expected a field name after "."', name.at, source);
+        if (name.k !== "id" || name.v.startsWith("$")) throw new ExprSyntaxError('expected a field name after "."', name.at, source);
         pos++;
         e = { t: "member", object: e, name: name.v, at: dot.at };
         continue;

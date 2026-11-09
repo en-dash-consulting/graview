@@ -1,6 +1,6 @@
 {
   "budget": "every face",
-  "minified": 3536,
-  "gzipped": 712,
-  "note": "Raised when a document act came to clear an optional field set to null and the rule language came to read `$subject`, the record itself: the act's runtime and the evaluator, and the studio's checked compile saying `act-clears-required` and `act-name-means-both`. 3_536 / 712 more. Measured at 3_133_631 / 1_136_027 against 3_130_095 / 1_135_315."
+  "minified": 4957,
+  "gzipped": 1280,
+  "note": "Raised when a document act came to clear an optional field set to null (refusing a required one by its name) and the rule language came to say which value a name is: `$subject` the record's own, `$arg` the call's argument, a member's field first inside `where`: the act's runtime and the evaluator, the edits that rename `$subject.<field>` and `$arg.<name>`, and the studio's checked compile warning `act-clears-required` and `act-name-means-both`. 4_957 / 1_242 more. Measured at 3_135_052 / 1_136_557 against 3_130_095 / 1_135_315. The gzipped raise holds 30 bytes over the most measured (1_136_567, 1_252 more): it varied by up to 10 bytes between builds."
 }

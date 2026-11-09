@@ -631,12 +631,14 @@ export function whatBlocksSay(blocks: readonly SpecBlock[], resolved: readonly R
     if (!expr) return;
     switch (expr.t) {
       case "ident":
-        fields.add(expr.name);
+        // `$subject` is the record itself, `$arg` the call's (`expr/subject.ts`): neither a field.
+        if (!expr.name.startsWith("$")) fields.add(expr.name);
         return;
       case "list":
         expr.items.forEach(reads);
         return;
       case "member":
+        if (expr.object.t === "ident" && expr.object.name === "$subject") fields.add(expr.name);
         return reads(expr.object);
       case "unary":
         return reads(expr.operand);

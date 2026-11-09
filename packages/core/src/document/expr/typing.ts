@@ -69,7 +69,7 @@ export function typeOfExpr(expr: Expr, fieldTypeOf: (name: string) => string | u
       case "list":
         return "list";
       case "member": {
-        // The subject's own field, said as `$subject.holder`, is typed as its bare name is.
+        // The subject's own field, said as `$subject.status`, is typed as its bare name is.
         const declared = e.object.t === "ident" && e.object.name === SUBJECT_NAME ? fieldTypeOf(e.name) : undefined;
         return declared === undefined ? "unknown" : valueTypeOfField(declared);
       }

@@ -1,6 +1,6 @@
 {
   "budget": "a visitor's form handed a compiled app",
-  "minified": 425,
-  "gzipped": 151,
-  "note": "Raised when a document act came to clear an optional field set to null (refusing a required one by its name) and the evaluator came to read `$subject`, the record itself. 425 / 151 more. Measured at 358_596 / 130_870 against 358_171 / 130_719."
+  "minified": 1046,
+  "gzipped": 372,
+  "note": "Raised when a document act came to clear an optional field set to null (refusing a required one by its name) and the rule language came to say which value a name is: `$subject` the record's own, `$arg` the call's argument, a member's field first inside `where`. 1_046 / 372 more, the gzipped varying by a few bytes between builds. Measured at 359_217 / 131_086 to 131_089 against 358_171 / 130_719."
 }
