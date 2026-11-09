@@ -1,13 +1,13 @@
 // @vitest-environment jsdom
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-import { createSchema, defineNode, Store, type Policy, type Principal, type SignIn } from "@graview/core";
+import { createSchema, defineNode, Store, type Policy, type PresenceChannel, type Principal, type SignIn } from "@graview/core";
 import { EMPTY_VIEW } from "@graview/layout";
 import { createViews, GraviewProvider } from "@graview/react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { registerDefaultViews } from "../../src/index.js";
+import { Profile, registerDefaultViews } from "../../src/index.js";
 import { ProfilePane } from "../../src/bar-panes.js";
 
 /**
@@ -21,7 +21,9 @@ import { ProfilePane } from "../../src/bar-panes.js";
 const note = defineNode("note", { fields: z.object({ label: z.string() }), plural: "Notes" });
 const schema = createSchema([note]);
 const policy: Policy = { roles: ["member"], grants: [{ roles: ["member"], mutations: "*" }] };
-const visitor: Principal = { kind: "human", id: "visitor", name: "A visitor" };
+const visitor: Principal = { kind: "human", id: "anonymous", name: "A visitor" };
+/** A channel that hears nobody else: enough for the seat to share where it is. */
+const alone: PresenceChannel = { here() {}, leave() {}, onWho: () => () => undefined };
 
 let unmount: (() => Promise<void>) | undefined;
 afterEach(async () => {
@@ -30,7 +32,7 @@ afterEach(async () => {
   document.body.innerHTML = "";
 });
 
-async function pane(signIn?: SignIn, hostActions: { label: string; onSelect?: () => void }[] = []) {
+async function pane(signIn?: SignIn, hostActions: { label: string; onSelect?: () => void }[] = [], presence?: PresenceChannel) {
   const host = document.createElement("div");
   document.body.appendChild(host);
   const root = createRoot(host);
@@ -38,7 +40,7 @@ async function pane(signIn?: SignIn, hostActions: { label: string; onSelect?: ()
   const close = vi.fn();
   await act(async () => {
     root.render(
-      <GraviewProvider store={store} principal={visitor} {...(signIn ? { signIn } : {})} views={registerDefaultViews(schema, createViews(schema))} initialView={{ ...EMPTY_VIEW, overview: true }}>
+      <GraviewProvider store={store} principal={visitor} {...(signIn ? { signIn } : {})} {...(presence ? { presence } : {})} views={registerDefaultViews(schema, createViews(schema))} initialView={{ ...EMPTY_VIEW, overview: true }}>
         <ProfilePane part="top" name="A visitor" me={undefined} hostActions={hostActions} close={close} />
       </GraviewProvider>,
     );
@@ -67,6 +69,49 @@ describe("the account pane, for a visitor the host offers a way in", () => {
     await act(async () => first.click());
     expect(run).toHaveBeenCalledTimes(1);
     expect(close).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("the account pane, for a visitor others here can see", () => {
+  it("says others see them as a visitor, never the seat's id or A visitor as a name", async () => {
+    const { host } = await pane({ label: "Sign in to make changes", run: () => {} }, [], alone);
+    const seen = host.querySelector('[data-testid="profile-seen-as"]');
+    expect(seen?.textContent).toBe("Others here see you as a visitor");
+    expect(host.textContent).not.toContain("anonymous");
+    expect(host.textContent).not.toContain("A visitor");
+  });
+});
+
+describe("the person's button, for a visitor the host offers a way in", () => {
+  async function button(signIn?: SignIn) {
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    const root = createRoot(host);
+    const store = new Store({ schema, mutations: [], invariants: [], policy });
+    await act(async () => {
+      root.render(
+        <GraviewProvider store={store} principal={visitor} {...(signIn ? { signIn } : {})} views={registerDefaultViews(schema, createViews(schema))} initialView={{ ...EMPTY_VIEW, overview: true }}>
+          <Profile />
+        </GraviewProvider>,
+      );
+    });
+    unmount = async () => act(async () => root.unmount());
+    return host.querySelector('[data-testid="profile-button"]')!;
+  }
+
+  it("is named Not signed in, and wears a person's outline rather than a letter", async () => {
+    const found = await button({ label: "Sign in to make changes", run: () => {} });
+    expect(found.getAttribute("aria-label")).toBe("Not signed in — sign in and your settings");
+    expect(found.getAttribute("aria-label")).not.toMatch(/A visitor|anonymous/);
+    const mark = found.querySelector('[data-testid="profile-mark"]')!;
+    expect(mark.querySelector("svg")).not.toBeNull();
+    expect(mark.textContent).toBe("");
+  });
+
+  it("without a way in, is named for the person and wears their letter", async () => {
+    const found = await button();
+    expect(found.getAttribute("aria-label")).toMatch(/ — you, your seat and your settings$/);
+    expect(found.querySelector('[data-testid="profile-mark"] svg')).toBeNull();
   });
 });
 

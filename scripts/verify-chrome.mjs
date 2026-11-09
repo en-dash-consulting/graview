@@ -1200,8 +1200,8 @@ try {
   }
   /*
    * ---- The account pane says a visitor is not signed in, and offers the host's sign-in first (f-profile-pane-says-signed-out), on
-   * both faces: the host's one shared signed-out seat opens the person from the keyboard and reads "Not signed in" — no "Signed in
-   * as", no role line — with the keyboard on the host's sign-in, the pane's first control; Enter on it asks the host once, and the
+   * both faces: the host's one shared signed-out seat finds the person's button named "Not signed in", opens it from the keyboard and
+   * reads "Not signed in" — no "Signed in as", no role line, never its id or "A visitor" as a name — with the keyboard on the host's sign-in, the pane's first control; Enter on it asks the host once, and the
    * keyboard never lands on <body>.
    */
   {
@@ -1225,6 +1225,8 @@ try {
           notSignedIn: text.includes("Not signed in"),
           signedInAs: text.includes("Signed in as"),
           roleLine: text.includes("No role in particular") || text.includes("This app has no sign-in"),
+          // Neither the seat's id nor "A visitor" said as who they are, here or in "Others here see you as a visitor".
+          namedAsSomebody: /anonymous|A visitor/.test(text),
           first: first?.getAttribute("data-testid") ?? first?.textContent ?? null,
           said: pane?.querySelector('[data-testid="profile-sign-in"]')?.textContent ?? null,
           keyboard: document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName ?? null,
@@ -1236,7 +1238,8 @@ try {
       await page.close();
       const ok =
         seen.notSignedIn && !seen.signedInAs && !seen.roleLine && seen.first === "profile-sign-in" && seen.said === "Sign in to make changes" &&
-        seen.keyboard === "profile-sign-in" && after.asked === 1 && after.keyboard !== "BODY";
+        seen.keyboard === "profile-sign-in" && after.asked === 1 && after.keyboard !== "BODY" && !seen.namedAsSomebody &&
+        /^Not signed in/.test(button ?? "") && !/anonymous|A visitor/.test(button ?? "");
       told[face] = { button, seen, after, ok };
     }
     report.checks.theAccountPaneSaysAVisitorIsNotSignedInAndOffersTheHostsSignInFirst = { ...told, ok: Object.values(told).every((one) => one.ok) };

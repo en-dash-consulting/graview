@@ -155,8 +155,8 @@ export function ProfilePane<S extends AnySchema>({
              * `signIn` only while the reader is a visitor (FR-183), and
              * "Signed in as A visitor", "No role in particular" read as
              * being somebody anonymous with no way out. The host's way in
-             * is the pane's first row, drawn as the menu draws it, so the
-             * keyboard that opens the pane lands on it.
+             * is the pane's first control, so the keyboard that opens the
+             * pane lands on it, and it is drawn as the menu draws it.
              */
             <div style={{ display: "grid", gap: 6 }}>
               <strong data-testid="profile-signed-out" style={{ fontSize: "1rem", fontWeight: 550 }}>
@@ -175,7 +175,8 @@ export function ProfilePane<S extends AnySchema>({
               </button>
               {sharing ? (
                 <span data-testid="profile-seen-as" style={{ fontSize: "0.8125rem", color: "var(--graview-ink-muted)" }}>
-                  Seen by others as {sharing.name}
+                  {/* Never the seat's id ("anonymous") or "A visitor" said as a name. */}
+                  Others here see you as a visitor
                 </span>
               ) : null}
             </div>

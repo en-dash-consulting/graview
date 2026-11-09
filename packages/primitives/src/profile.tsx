@@ -66,7 +66,7 @@ export function Profile<S extends AnySchema>({
    */
   readonly signature?: boolean;
 }) {
-  const { store, principal, seats, people } = useGraview<S>();
+  const { store, principal, seats, people, signIn } = useGraview<S>();
   /*
    * ONE OF THE FAMILY (FR-77): opening it closes any other popover, the
    * keyboard goes in, Escape or a press outside closes it and gives the
@@ -107,6 +107,13 @@ export function Profile<S extends AnySchema>({
         ? "Nobody in particular"
         : nameOfAuthor(principal, { graph: store.graph as never, schema: store.schema, seats, people })
       : labelOf(store.schema.tryDefinition(me.kind as string), me);
+  /*
+   * A VISITOR THE HOST OFFERS A WAY IN IS NOBODY YET (Graview HQ
+   * f-profile-pane-says-signed-out): the button says they are not signed
+   * in, as the pane does, and wears a person's outline rather than the
+   * first letter of "A visitor" or of the seat's id.
+   */
+  const said = signIn ? "Not signed in — sign in and your settings" : `${name} — you, your seat and your settings`;
 
   return (
     <div style={{ position: "relative" }}>
@@ -124,8 +131,8 @@ export function Profile<S extends AnySchema>({
         onClick={popover.toggle}
         onPointerEnter={fetchPane}
         onFocus={fetchPane}
-        aria-label={`${name} — you, your seat and your settings`}
-        title={`${name} — you, your seat and your settings`}
+        aria-label={said}
+        title={said}
         style={{ ...toolStyle, borderRadius: 999 }}
       >
         <span
@@ -145,7 +152,7 @@ export function Profile<S extends AnySchema>({
             border: "1px solid var(--graview-edge)",
           }}
         >
-          {initial(name)}
+          {signIn ? <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.4"><circle cx="8" cy="5.5" r="2.75" /><path d="M2.75 14c.6-2.9 2.7-4.5 5.25-4.5s4.65 1.6 5.25 4.5" /></svg> : initial(name)}
         </span>
       </button>
 
