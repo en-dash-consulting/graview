@@ -172,14 +172,17 @@ function useShowing(): string | null {
 function useKeyboardFollowsTheFace(showing: string | null, drawn: boolean): void {
   const before = useRef(showing);
   const owed = useRef(false);
+  /* When the switch was made: an app's own main may come a while after it opens, and is waited for this long from the press, not from any load. */
+  const since = useRef(0);
   if (before.current !== showing) {
     before.current = showing;
     owed.current = true;
+    since.current = Date.now();
   }
   useEffect(() => {
     if (!owed.current || (showing && !drawn)) return;
     let frame = 0;
-    const until = Date.now() + 4000;
+    const until = since.current + 15_000;
     const land = () => {
       const active = document.activeElement;
       if (active && active !== document.body && active !== document.documentElement) {
@@ -302,7 +305,8 @@ function Desk({
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
       <CommandBar scheme={scheme} onScheme={onScheme} onCall={onCall} calls={calls} />
       <BackOut home={MATRIX} />
-      <main aria-label="What each app exercises" style={{ position: "relative", flex: 1, minHeight: 0 }}>
+      {/* Focusable only programmatically, as the scene's is: where the keyboard lands on the way back from an app. */}
+      <main aria-label="What each app exercises" tabIndex={-1} style={{ position: "relative", flex: 1, minHeight: 0, outline: "none" }}>
         {/* Both, always: the overview lays the scene down rather than
             replacing it, so you can see where you were. */}
         <Scene renderer="dom" />
