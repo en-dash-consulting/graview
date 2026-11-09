@@ -1199,6 +1199,49 @@ try {
     report.checks.aVisitorIsOfferedSignInRatherThanAVote = { ...offered, ok: Object.values(offered).every((one) => one.ok) };
   }
   /*
+   * ---- The account pane says a visitor is not signed in, and offers the host's sign-in first (f-profile-pane-says-signed-out), on
+   * both faces: the host's one shared signed-out seat opens the person from the keyboard and reads "Not signed in" — no "Signed in
+   * as", no role line — with the keyboard on the host's sign-in, the pane's first control; Enter on it asks the host once, and the
+   * keyboard never lands on <body>.
+   */
+  {
+    const told = {};
+    for (const face of ["graview", "pages"]) {
+      const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+      page.on("pageerror", (error) => errors.push(error.message));
+      await page.goto(`${at("chrome-host")}/?face=${face}&signedOut=1`, { waitUntil: "load" });
+      await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+      await page.waitForSelector('[data-testid="profile-button"]', { timeout: 30_000 });
+      const button = await page.evaluate(() => document.querySelector('[data-testid="profile-button"]')?.getAttribute("aria-label") ?? null);
+      await page.focus('[data-testid="profile-button"]');
+      await page.keyboard.press("Enter");
+      await page.waitForSelector('[data-testid="profile"] [data-testid="profile-sign-in"]', { timeout: 10_000 }).catch(() => {});
+      await page.waitForTimeout(150);
+      const seen = await page.evaluate(() => {
+        const pane = document.querySelector('[data-testid="profile"]');
+        const text = pane?.textContent ?? "";
+        const first = pane?.querySelector("button, a[href], input, select, textarea, [tabindex]:not([tabindex='-1'])");
+        return {
+          notSignedIn: text.includes("Not signed in"),
+          signedInAs: text.includes("Signed in as"),
+          roleLine: text.includes("No role in particular") || text.includes("This app has no sign-in"),
+          first: first?.getAttribute("data-testid") ?? first?.textContent ?? null,
+          said: pane?.querySelector('[data-testid="profile-sign-in"]')?.textContent ?? null,
+          keyboard: document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName ?? null,
+        };
+      });
+      await page.keyboard.press("Enter");
+      await page.waitForTimeout(150);
+      const after = await page.evaluate(() => ({ asked: window.__signedIn ?? 0, keyboard: document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName ?? null }));
+      await page.close();
+      const ok =
+        seen.notSignedIn && !seen.signedInAs && !seen.roleLine && seen.first === "profile-sign-in" && seen.said === "Sign in to make changes" &&
+        seen.keyboard === "profile-sign-in" && after.asked === 1 && after.keyboard !== "BODY";
+      told[face] = { button, seen, after, ok };
+    }
+    report.checks.theAccountPaneSaysAVisitorIsNotSignedInAndOffersTheHostsSignInFirst = { ...told, ok: Object.values(told).every((one) => one.ok) };
+  }
+  /*
    * ---- "Not now" is one person's, and the tray says what tidying did while they were away, on both faces: the host hands what
    * whileAway() worked out; the tray says it in a line; Not now, pressed from the keyboard, hides the suggestion from this reader
    * alone — kept in this browser, nothing in the log, still waiting for everyone else — and the keyboard never lands on <body>.

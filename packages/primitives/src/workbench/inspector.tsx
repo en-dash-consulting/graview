@@ -9,6 +9,7 @@ import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type K
 import { AnswerArgs, nameOf } from "./answer-args.js";
 import { VISUALLY_HIDDEN } from "../primitives/index.js";
 import { ROVING_ITEM, useRoving } from "../roving.js";
+import { SIGN_IN_ROW } from "../sign-in-row.js";
 import { menuMatches } from "../menu-words.js";
 import { MENU_RANK_FLOOR, MENU_RANK_REST_MS, useFastRank } from "../menu-rank.js";
 import { TOLD_SUGGESTED_MOST, useToldSuggestions } from "../menu-told-door.js";
@@ -1540,7 +1541,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
             setMenuAt(null);
             gain.run();
           }}
-          style={{ padding: "5px 10px", fontSize: "0.875rem", borderRadius: 8, width: "100%", textAlign: "left" }}
+          style={SIGN_IN_ROW}
         >
           {gain.label}
         </button>
