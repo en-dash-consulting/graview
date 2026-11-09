@@ -39,6 +39,8 @@ export interface WorkerViewDefinition {
   readonly file?: (href: string) => string | undefined;
   /** The `https:` origins its images may come from by address (WorkerViewOptions.images): none by default. */
   readonly images?: { readonly origins: readonly string[] };
+  /** The `https:` origins the faces its app lends it may come from by address (WorkerViewOptions.fonts): none by default, and none taken from `images`. */
+  readonly fonts?: { readonly origins: readonly string[] };
   /** The `https:` origins its links may go to beyond what it was handed (WorkerViewOptions.links): none by default. */
   readonly links?: { readonly origins: readonly string[] };
   /**
@@ -180,6 +182,7 @@ function WorkerViewMount({ definition: given, store, principal, input, goTo, pla
         ...(definition.asset ? { asset: definition.asset } : latest.current.hostAssets ? { asset: (path: string) => latest.current.hostAssets?.(path) ?? path } : {}),
         ...(file ? { file } : {}),
         ...(definition.images ? { images: definition.images } : {}),
+        ...(definition.fonts ? { fonts: definition.fonts } : {}),
         ...(definition.links ? { links: definition.links } : {}),
         /* What a file dropped on what the view drew is stored through (FR-193): the page's host's files, as they are now. */
         files: () => latest.current.hostFiles,

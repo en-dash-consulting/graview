@@ -95,9 +95,9 @@ export interface BrandViews {
   /**
    * The faces the app lends its views (Roadmap f-view-authoring-friction-2026-11):
    * each a family and one file, loaded into the page by the view's host from
-   * where it lets a view's images come from — a file the app holds
+   * where it lets a face come from — a file the app holds
    * (`/graview/assets/<sha256>.woff2`) or an `https:` address on an origin
-   * it lists — and named by a view's stylesheet and `css` as any face is.
+   * it lists for faces (`fonts.origins`) — and named by a view's stylesheet and `css` as any face is.
    * Judged by `viewFontProblem` on `@graview/core/css`, at most eight, none
    * called what the page already draws in (a system face, Graview's own, one
    * of `typography`'s), and gone from the page when the brand stops lending it.

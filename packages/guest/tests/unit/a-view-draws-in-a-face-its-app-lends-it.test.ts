@@ -10,9 +10,10 @@ import { GUEST_PROTOCOL } from "../../src/protocol.js";
  * f-view-authoring-friction-2026-11). A view's stylesheet loads nothing, so
  * no `@font-face`; the brand lends its views faces instead
  * (`brand.views.fonts`), and the view's host loads each into the page as a
- * `FontFace`, only from where it lets a view's images come from: a file the
- * app holds, where the host says those are served (`asset`), or an `https:`
- * address on an origin it lists (`images.origins`). Anything else is said and
+ * `FontFace`, only from where it lets faces come from: a file the app
+ * holds, where the host says those are served (`asset`), or an `https:`
+ * address on an origin it lists for faces (`fonts.origins`, apart from
+ * `images.origins`). Anything else is said and
  * not fetched. A face never takes a name the page already draws in, and goes
  * when the brand or the view does. That a browser draws the view in it is
  * guest-sandbox's brand claims.
@@ -54,19 +55,19 @@ afterEach(() => {
 });
 
 describe("a face lent to a view", () => {
-  it("is loaded from a file the app holds where the host serves them, and from an https: origin the host lists for images", () => {
+  it("is loaded from a file the app holds where the host serves them, and from an https: origin the host lists for faces", () => {
     expect(viewFontAddress(BALOO, { asset })).toEqual({ url: `https://app.example/base/graview/assets/${SHA}.woff2` });
     expect(viewFontAddress(FREDOKA, { origins: ["https://fonts.gstatic.com"] })).toEqual({ url: FREDOKA.src });
   });
 
-  it("is held to the host's list as an image is: the origin as the URL parser says it, and a list entry that is no https: origin counts for nothing", () => {
+  it("is held to the host's list for faces as an image is to its own: the origin as the URL parser says it, and a list entry that is no https: origin counts for nothing", () => {
     expect(viewFontAddress(FREDOKA, { origins: ["https://FONTS.gstatic.com:443/"] })).toEqual({ url: FREDOKA.src });
     expect(viewFontAddress(FREDOKA, { origins: ["fonts.gstatic.com", "http://fonts.gstatic.com"] })).toEqual({ refused: expect.stringContaining("no origin this host lists") });
   });
 
   it("is refused, and said, where the host serves no app files, lists no such origin, or the face breaks the brand's rule", () => {
     expect(viewFontAddress(BALOO, {})).toEqual({ refused: expect.stringContaining("this host says nowhere the app's own files are served (`asset`)") });
-    expect(viewFontAddress(FREDOKA, { origins: ["https://upload.wikimedia.org"] })).toEqual({ refused: expect.stringContaining("https://fonts.gstatic.com is no origin this host lists for a view's images") });
+    expect(viewFontAddress(FREDOKA, { origins: ["https://upload.wikimedia.org"] })).toEqual({ refused: expect.stringContaining("https://fonts.gstatic.com is no origin this host lists for the faces its views are lent") });
     expect(viewFontAddress({ family: "Rock", src: "https://evil.example/steal.css" }, { origins: ["https://evil.example"] })).toEqual({ refused: expect.stringContaining("its src is a file the app holds") });
   });
 
@@ -143,7 +144,7 @@ describe("a view on a page", () => {
     };
     const brand: { current: { name: string; views?: { fonts: readonly typeof FREDOKA[] } } } = { current: { name: "Cars", views: { fonts: [FREDOKA] } } };
     const mounted = () => {
-      const view = mountWorkerView(document.body.appendChild(document.createElement("div")), { manifest: { name: "card", attach: "car", cardinality: "one" }, worker: { script: "/* the view */" }, store: store(), principal: reader, input: () => ({ node: { id: "car:golf" } }), images: { origins: ["https://fonts.gstatic.com"] }, brand: () => brand.current });
+      const view = mountWorkerView(document.body.appendChild(document.createElement("div")), { manifest: { name: "card", attach: "car", cardinality: "one" }, worker: { script: "/* the view */" }, store: store(), principal: reader, input: () => ({ node: { id: "car:golf" } }), fonts: { origins: ["https://fonts.gstatic.com"] }, brand: () => brand.current });
       FakeWorker.made.at(-1)!.say({ graview: "guest-ready", protocol: GUEST_PROTOCOL });
       return view;
     };
@@ -169,7 +170,7 @@ describe("a view on a page", () => {
     const said: string[] = [];
     const lends = { fonts: [FREDOKA] };
     const brand: { current: { name: string; views: typeof lends; typography?: { display: string } } } = { current: { name: "Cars", views: lends } };
-    const view = mountWorkerView(document.body.appendChild(document.createElement("div")), { manifest: { name: "card", attach: "car", cardinality: "one" }, worker: { script: "/* the view */" }, store: store(), principal: reader, input: () => ({ node: { id: "car:golf" } }), images: { origins: ["https://fonts.gstatic.com"] }, brand: () => brand.current, onProblem: (one) => said.push(one) });
+    const view = mountWorkerView(document.body.appendChild(document.createElement("div")), { manifest: { name: "card", attach: "car", cardinality: "one" }, worker: { script: "/* the view */" }, store: store(), principal: reader, input: () => ({ node: { id: "car:golf" } }), fonts: { origins: ["https://fonts.gstatic.com"] }, brand: () => brand.current, onProblem: (one) => said.push(one) });
     FakeWorker.made.at(-1)!.say({ graview: "guest-ready", protocol: GUEST_PROTOCOL });
     await until(() => fonts.size === 1);
     brand.current = { name: "Cars", views: lends, typography: { display: "Fredoka, serif" } };

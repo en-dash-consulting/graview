@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 10,
+  "gzipped": 7,
+  "note": "Raised when a view's lent faces came to load from origins of their own: the view reads `fonts.origins` for the faces it loads, apart from `images.origins`. 10 / 7 more. Measured at 264_778 / 101_743 against 264_768 / 101_736."
+}

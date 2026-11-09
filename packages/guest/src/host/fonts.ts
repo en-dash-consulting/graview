@@ -9,19 +9,20 @@ import { imageOriginsOf } from "./open-judge.js";
  * face is. Loaded into the document, not the view's shadow root: a face a
  * page's document holds is drawn in every shadow tree, and one declared
  * inside a shadow root is not loaded by every engine. A face is fetched only
- * from where the host lets a view's images come from — a file the app holds,
- * by the content address the host serves (`asset`), or an `https:` address on
- * an origin the host lists (`images.origins`, read as an image's are) — so an
- * app names no server the host did not choose. In the document it is the
- * page's, so a face never takes a name the page already draws in, and it goes
- * again when the last view holding it does. Fetched with the first view that
- * is dressed in a brand that lends one, and only then.
+ * from where the host says faces come from — a file the app holds, by the
+ * content address the host serves (`asset`), or an `https:` address on an
+ * origin the host lists for faces (`fonts.origins`, read as an image's
+ * origins are, and apart from them) — so an app names no server the host
+ * did not choose. In the document it is the page's, so a face never takes a
+ * name the page already draws in, and it goes again when the last view
+ * holding it does. Fetched with the first view that is dressed in a brand
+ * that lends one, and only then.
  */
 
 export interface ViewFontsOptions {
   /** Where a file the app holds is loaded from (MountWorkerViewOptions.asset). */
   readonly asset?: (path: string) => string | undefined;
-  /** The `https:` origins a view's images may come from (MountWorkerViewOptions.images). */
+  /** The `https:` origins a lent face may come from (MountWorkerViewOptions.fonts), apart from a view's images. */
   readonly origins?: readonly string[];
   /** The brand's own stacks: a face lent to a view never takes one of their names. */
   readonly typography?: { readonly body?: string; readonly display?: string; readonly mono?: string };
@@ -37,7 +38,7 @@ export function viewFontAddress(font: ViewFont, options: ViewFontsOptions): { re
     const url = options.asset?.(source.asset);
     return url ? { url } : { refused: `${named}: this host says nowhere the app's own files are served (\`asset\`), so ${font.src} is not fetched.` };
   }
-  return imageOriginsOf(options.origins).includes(new URL(source.https).origin) ? { url: source.https } : { refused: `${named}: ${source.origin} is no origin this host lists for a view's images (\`images.origins\`), so it is not fetched.` };
+  return imageOriginsOf(options.origins).includes(new URL(source.https).origin) ? { url: source.https } : { refused: `${named}: ${source.origin} is no origin this host lists for the faces its views are lent (\`fonts.origins\`), so it is not fetched.` };
 }
 
 /** The faces on a page, each with how many views hold it, so a view drawn again adds none twice and the last to go takes it. */
