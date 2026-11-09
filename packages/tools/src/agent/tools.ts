@@ -1,5 +1,6 @@
 import type { Completion } from "../intelligence.js";
 import {
+  actingAs,
   actSpelledAs,
   askedArguments,
   actTitle,
@@ -7,6 +8,7 @@ import {
   nearestAct,
   derivedVia,
   isAutomated,
+  isSystem,
   nodeRefArgs,
   permits,
   permittedMutations,
@@ -244,6 +246,22 @@ export interface ToolRuntimeOptions<S extends AnySchema> {
    */
   readonly workflows?: WorkflowTools;
 }
+
+/**
+ * WHETHER A SEAT'S SIGHT KEEPS EVERY PERSON FROM IT, read off the declaration
+ * alone: a people kind no sight that reaches this seat names, or one whose
+ * module is off. An act done as `$me` runs under the seat's sight, where its
+ * own person is no record, so it is not offered (as `store.permittedMutations`).
+ */
+const keptFromEveryPerson = (schema: AnySchema, policy: GraviewApp<AnySchema>["policy"], principal: Principal, off: ReadonlySet<string>): boolean => {
+  const people = schema.definitions.find((definition) => definition.people)?.kind as string | undefined;
+  if (people === undefined || isSystem(principal)) return false;
+  if (off.has(people)) return true;
+  const sights = policy?.sees ?? [];
+  if (sights.length === 0) return false;
+  const acting = actingAs(principal);
+  return !sights.some((sight) => sight.kinds.includes(people) && (sight.roles === "*" || (acting.roles ?? []).some((role) => sight.roles.includes(role))) && ((!sight.own && !sight.via) || acting.id !== undefined));
+};
 
 /** Whether an app has a relation to another app's kind. */
 const linksAnotherApp = (schema: AnySchema): boolean => schema.definitions.some((definition) => linkedRelations(definition).size > 0);
@@ -878,6 +896,7 @@ export function toolDefinitions<S extends AnySchema>(
   const publishes = onPublish(app.publishing) && !declared.some((act) => act.name === PUBLISH);
   const every = [...declared, ...deriveMutations(app.schema as AnySchema, declared as never), ...(publishes ? [publishMutation() as unknown as AnyMutationDefinition] : [])] as AnyMutationDefinition[];
   const modules = resolveModules(app.modules, options.enabledModules);
+  const nobody = keptFromEveryPerson(app.schema as AnySchema, app.policy as never, principal, modules.disabledKinds);
   const acts = every.filter(
     (act) => !modules.disabledMutations.has(act.name) && !(act.derived !== undefined && modules.disabledKinds.has(act.derived.kind)),
   );
@@ -889,6 +908,8 @@ export function toolDefinitions<S extends AnySchema>(
       .filter((act) => act.derived !== undefined && permits(app.policy, principal, act.name, act.derived.kind, derivedVia(app.schema as AnySchema, every as never, act as never)).ok)
       .map((act) => act.name),
   ]);
+  // A seat kept from every person is nobody here: an act done as `$me` is not offered it.
+  if (nobody) for (const act of acts) if (act.doneAsMe) permitted.delete(act.name);
   const { definitions } = surfaceOf(acts, permitted, options.readOnly === true, options.drafts, (act) => argumentsNeverShown(app.schema as AnySchema, app.policy, principal, act as never), linksAnotherApp(app.schema as AnySchema), options.subscriptions === true, isAutomated(principal), app.schema as AnySchema, options.learned === true, workflowToolsOf(options.workflows?.names ?? [], options.workflows ? (options.workflows.manage ? "manage" : "run") : undefined), proposedMutations(app.policy, principal, acts).length > 0);
   return { definitions, hash: surfaceHash(definitions) };
 }

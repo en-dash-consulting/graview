@@ -40,7 +40,7 @@ import { MOST_PROPOSED, PROPOSE_CHANGES, proposeChangesMutation } from "./mutati
 import { namesUnseen, redact } from "./ops/withheld.js";
 import { writersBehind } from "./ops/writers.js";
 import { nounOf } from "./schema/define-node.js";
-import { behind, fieldsJudged, mayKeepField, partialSight, recordsOf } from "./permissions/sight.js";
+import { behind, fieldsJudged, mayKeepField, partialSight, recordsOf, sees } from "./permissions/sight.js";
 import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
 import { checkUndo, UndoBlockedError, undoneInverses, undoPrimitives, type UndoCheck } from "./ops/undo.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
@@ -1484,7 +1484,7 @@ export class Store<S extends AnySchema> {
         permits(this.policy, principal, mutation.name, mutation.derived.kind, this.viaOf(mutation), actingAs(principal).id).ok,
     );
     const offered = [...declared, ...publishing, ...derived];
-    return profileOf(principal) ? offered.filter((mutation) => !this.noOneToBe(mutation, principal)) : offered;
+    return offered.filter((mutation) => !this.noOneToBe(mutation, principal));
   }
 
   /**
@@ -2515,15 +2515,29 @@ export class Store<S extends AnySchema> {
    * no person of that kind and none to be had (a record of another kind at its
    * id, from a restore or a host's own change, is not one), or an account whose
    * own id reads as a person's. With no people kind, nobody is asked to be one.
+   *
+   * AND A SEAT WHOSE SIGHT KEEPS ITS OWN PERSON FROM IT. An act runs under its
+   * author's sight (`sighted`), where a record the author may not see is no
+   * record: `$me` resolves to nothing there, so the act is not offered, and is
+   * refused in the words it would refuse in, with a profile or without.
    */
   private hasNoRecord(author: Author | Principal): boolean {
     if (!this.schema.definitions.some((definition) => definition.people)) return false;
     if (actingAs(author as Principal).id === undefined) return false;
     const id = meOf(author);
     if (id === undefined) return true;
-    if (!profileOf(author)) return false;
     const kind = this.graph.getNode(id)?.kind as string | undefined;
-    return !(kind !== undefined && this.schema.tryDefinition(kind)?.people) && !this.personFor(author);
+    if (kind !== undefined && this.schema.tryDefinition(kind)?.people) return !this.seesOwnPerson(author as Principal, { id, kind });
+    if (!profileOf(author)) return false;
+    const person = this.personFor(author);
+    return !person || !this.seesOwnPerson(author as Principal, { id: person.id, kind: (person.node as { readonly kind: string }).kind });
+  }
+
+  /** Whether a seat's sight shows it its own person, there or about to be made: one with no links yet is judged as one. */
+  private seesOwnPerson(author: Principal, person: { readonly id: string; readonly kind: string }): boolean {
+    if (!hidesFrom(this, author)) return true;
+    if (this.modules.disabledKinds.has(person.kind) && !isSystem(author)) return false;
+    return this.graph.has(person.id) ? seesId(this, author)(person.id) : sees(this.policy, author, person, { out: () => [], in: () => [] }, recordsOf(this.log), fieldsJudged(this));
   }
 
   /**
