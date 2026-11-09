@@ -1,4 +1,5 @@
 import { analyzeExpr } from "./expr/analyze.js";
+import { SUBJECT_NAME } from "./expr/subject.js";
 import { ExprSyntaxError, parseExpr, type Expr } from "./expr/parse.js";
 import { error, warning, type Finding } from "./findings.js";
 import type { GraviewDocument } from "./schema.js";
@@ -425,6 +426,8 @@ function listedKinds(expr: Expr, scope: Scope): readonly string[] | undefined {
   const visit = (e: Expr): readonly string[] | undefined => {
     switch (e.t) {
       case "ident":
+        // `$subject` is the record the view is about: of its kind.
+        if (e.name === SUBJECT_NAME) return scope.kind !== null ? [scope.kind] : undefined;
         return scope.kind !== null && scope.spec.relation(e.name) ? targetsFrom([scope.kind], e.name) : undefined;
       case "member": {
         const from = visit(e.object);

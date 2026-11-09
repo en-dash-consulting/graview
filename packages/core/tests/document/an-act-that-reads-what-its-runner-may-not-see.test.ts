@@ -83,6 +83,16 @@ describe("a document's act that reads what a role that may run it cannot see", (
     expect(hidden(compileDocument(walked).findings).map((f) => f.path)).toEqual(["acts.close-all"]);
   });
 
+  it("follows $subject to the record itself, in a condition and a refusal, and $arg to no record", () => {
+    const said = structuredClone(DEALS) as unknown as { acts: Record<string, unknown> };
+    said.acts = {
+      "close-own": { on: "deal", sets: { stage: "won" }, allowedWhen: "count($subject.notes) == 0" },
+      "reopen-own": { on: "deal", sets: { stage: "open" }, allowedWhen: "stage == 'won'", refusal: "{first($subject.notes).name} says no" },
+      "rename-own": { on: "deal", writes: ["name"], allowedWhen: "$arg.name != ''" },
+    };
+    expect(hidden(compileDocument(said).findings).map((f) => f.path)).toEqual(["acts.close-own", "acts.reopen-own"]);
+  });
+
   it("LifeLogics, whose acts read nothing beyond what they are handed, is told nothing", () => {
     expect(hidden(compileDocument(lifelogics).findings)).toEqual([]);
   });

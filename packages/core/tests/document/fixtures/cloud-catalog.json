@@ -9844,7 +9844,7 @@
             }
           ],
           "allowedWhen": "type == 'race'",
-          "refusal": "{name} is a ballot measure; nobody runs in it",
+          "refusal": "{$subject.name} is a ballot measure; nobody runs in it",
           "description": "Add someone running in this race, by name, as the ballot lists them."
         },
         "enter-race": {

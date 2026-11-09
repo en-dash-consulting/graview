@@ -1,5 +1,6 @@
 import { FUNCTIONS } from "./evaluate.js";
 import type { Expr } from "./parse.js";
+import { dollarOf } from "./subject.js";
 
 export interface ExprShape {
   /** Bare names read from the subject (or from bindings). */
@@ -34,14 +35,19 @@ export function analyzeExpr(expr: Expr): ExprShape {
       case "lit":
         return;
       case "ident":
-        if (!inWhere) names.add(e.name);
+        // `$subject` is the record itself and `$arg` the call's arguments, not names read from the record.
+        if (!inWhere && dollarOf(e) === undefined) names.add(e.name);
         return;
       case "list":
         e.items.forEach((x) => visit(x, inWhere));
         return;
-      case "member":
-        visit(e.object, inWhere);
+      case "member": {
+        // `$subject.status` reads the subject's own status, inside a `where` too; `$arg.status` reads no record.
+        const dollar = dollarOf(e.object);
+        if (dollar === "subject") names.add(e.name);
+        else if (dollar === undefined) visit(e.object, inWhere);
         return;
+      }
       case "unary":
         visit(e.operand, inWhere);
         return;

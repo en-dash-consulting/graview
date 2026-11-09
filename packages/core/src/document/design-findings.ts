@@ -1,5 +1,6 @@
 import { MOST_STANDING } from "../places.js";
 import { parseExpr, type Expr } from "./expr/parse.js";
+import { dollarOf } from "./expr/subject.js";
 import { defaultLabelField } from "./compiled.js";
 import { warning, type Finding } from "./findings.js";
 import { homeOf, viewsOf, type ViewBlock } from "./views.js";
@@ -135,10 +136,12 @@ function identsOf(e: Expr): Set<string> {
   const walk = (x: Expr) => {
     switch (x.t) {
       case "ident":
-        out.add(x.name);
+        // `$subject` and `$arg` are no names of the record; `$subject.stage` reads its stage.
+        if (dollarOf(x) === undefined) out.add(x.name);
         return;
       case "member":
-        walk(x.object);
+        if (dollarOf(x.object) === "subject") out.add(x.name);
+        else walk(x.object);
         return;
       case "list":
         x.items.forEach(walk);

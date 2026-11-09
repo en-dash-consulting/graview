@@ -1,6 +1,7 @@
 import { documentOf } from "../../document/to-document.js";
 import { parseExpr, type Expr } from "../../document/expr/parse.js";
 import { perMember } from "../../document/expr/analyze.js";
+import { dollarOf } from "../../document/expr/subject.js";
 import { farEnd } from "../../document/far-end.js";
 import { parseTemplate } from "../../document/template-parse.js";
 import { nodeRefKinds } from "../../mutations/node-ref.js";
@@ -55,6 +56,10 @@ export function kindsRead(expr: Expr, from: readonly string[], schema: AnySchema
   const visit = (e: Expr, at: readonly string[]): readonly string[] => {
     switch (e.t) {
       case "ident": {
+        // `$subject` is the record the expression starts from, inside a `where` too; `$arg` is the call's, and reads no record.
+        const dollar = dollarOf(e);
+        if (dollar === "subject") return from;
+        if (dollar === "arg") return [];
         const reached = targets(at, e.name);
         note(reached);
         return reached;
