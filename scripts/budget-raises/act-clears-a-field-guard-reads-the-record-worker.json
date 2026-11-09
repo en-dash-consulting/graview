@@ -1,5 +1,5 @@
 {
   "budget": "Cloud's worker",
-  "bytes": 13396,
-  "note": "Raised when a document act came to clear an optional field set to a literal null and the rule language came to say which value a name is (`$subject` the record's own, `$arg` the call's argument, a member's field first inside `where`): the act's runtime, the parser, the evaluator and the templates, the edits that rename both spellings, and the checked compile's `act-clears-required`, `act-name-means-both`, `act-arg-unknown` and `arg-outside-act` (`document/guard-names.ts`), which the worker judges a kept document with. Measured at 2_610_089 B against 2_596_693."
+  "bytes": 14237,
+  "note": "Raised when a document act came to clear an optional field set to a literal null and the rule language came to say which value a name is (`$subject` the record's own, `$arg` the call's argument, a member's field first inside `where`): the act's runtime, the parser, the evaluator and the templates, the edits that rename both spellings, and the checked compile's `act-clears-required`, `act-name-means-both`, `act-arg-unknown` and `arg-outside-act` (a workflow step's values and a view's conditions among where it looks) (`document/guard-names.ts`), which the worker judges a kept document with. Measured at 2_610_866 B against 2_596_693, with 64 bytes over it: the measure moved by a few bytes between runs."
 }

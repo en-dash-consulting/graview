@@ -149,5 +149,22 @@ export function nameMeansBothFindings(document: GraviewDocument, app: Pick<Gravi
     outside(`rules.${rule}.when`, expression(spec.when));
     if (spec.says) outside(`rules.${rule}.says`, templateExprs(spec.says));
   }
+  // A workflow step's values, worked out on the records it runs over: no act's call.
+  for (const [workflow, spec] of Object.entries(document.workflows ?? {})) {
+    ((spec as unknown as { steps?: readonly Record<string, unknown>[] }).steps ?? []).forEach((step, i) => {
+      for (const [field, value] of Object.entries((step["set"] ?? {}) as Record<string, unknown>)) outside(`workflows.${workflow}.steps.${i}.set.${field}`, expression(exprOf(value)));
+    });
+  }
+  // A view's conditions (`{"when": expr, "show": […]}`), wherever its blocks nest.
+  const conditions = (value: unknown, path: string): void => {
+    if (Array.isArray(value)) value.forEach((one, i) => conditions(one, `${path}.${i}`));
+    else if (value && typeof value === "object") {
+      for (const [key, one] of Object.entries(value)) {
+        if (key === "when" && typeof one === "string") outside(`${path}.when`, expression(one));
+        else conditions(one, `${path}.${key}`);
+      }
+    }
+  };
+  conditions(document.views, "views");
   return out;
 }

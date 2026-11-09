@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { compileDocument } from "../../src/check.js";
 import { editDocument } from "../../src/document/index.js";
 import { evaluateExpr, parseExpr } from "../../src/document/expr/index.js";
+import { nameMeansBothFindings } from "../../src/document/guard-names.js";
 import { ActRefusal, Store, type AnySchema, type GraviewApp } from "../../src/index.js";
 
 /**
@@ -124,6 +125,16 @@ describe("a set clears a field only where it says null", () => {
   });
 });
 
+describe("a computed value an act's condition reads", () => {
+  it("is handed none of the call's arguments: $arg in it is nothing", () => {
+    const doc = cards({ allowedWhen: "handed == null" }) as unknown as { kinds: { card: Record<string, unknown> } };
+    doc.kinds.card["computed"] = { handed: "$arg.color" };
+    const store = storeOf(compiled(doc));
+    store.apply({ name: "recolor", args: { id: "card-a", color: "blue" } });
+    expect((store.graph.getNode("card-a") as Record<string, unknown>)["color"]).toBe("blue");
+  });
+});
+
 describe("inside where, every and some", () => {
   const a = { id: "a", kind: "card", name: "A", color: "x" };
   const b = { id: "b", kind: "card", name: "B", color: "x" };
@@ -191,6 +202,14 @@ describe("graview check and a name that means both", () => {
       ["warning", "acts.recolor.sets.name"],
     ]);
     expect(found[0]!.message).toMatch(/shade/);
+  });
+
+  it("warns of $arg in a workflow step's values and a view's conditions, where no act is run", () => {
+    const doc = cards({}) as unknown as Record<string, unknown>;
+    doc["workflows"] = { weekly: { steps: [{ generate: "card", from: [{ kind: "card", dates: "due" }], window: "next week", set: { name: { expr: "$arg.name" }, color: { expr: "color" } } }] } };
+    doc["views"] = { home: [{ when: "$arg.color == 'red'", show: [{ text: "red" }] }, { group: [{ when: "true", show: [{ when: "$arg.size > 1", show: [{ text: "big" }] }] }] }] };
+    const found = nameMeansBothFindings(doc as never, { mutations: [] }).filter((f) => f.code === "arg-outside-act");
+    expect(found.map((f) => f.path)).toEqual(["workflows.weekly.steps.0.set.name", "views.home.0.when", "views.home.1.group.0.show.0.when"]);
   });
 
   it("warns of $arg where no act is run: a label, a computed value, a rule", () => {

@@ -1,6 +1,6 @@
 {
   "budget": "every face",
-  "minified": 6926,
-  "gzipped": 1873,
-  "note": "Raised when a document act came to clear an optional field set to a literal null (refusing a required one by its name) and the rule language came to say which value a name is: `$subject` the record's own, `$arg` the call's argument, a member's field first inside `where`, and a refusal saying `{$subject.<field>}` as it says the bare field: the act's runtime and the evaluator, the edits that rename `$subject.<field>` and `$arg.<name>`, and the studio's checked compile warning `act-clears-required`, `act-name-means-both`, `act-arg-unknown` and `arg-outside-act`. 6_926 / 1_843 more. Measured at 3_137_021 / 1_137_158 against 3_130_095 / 1_135_315. The gzipped raise holds 30 bytes over what was measured: it varies by a few bytes between builds."
+  "minified": 7315,
+  "gzipped": 2023,
+  "note": "Raised when a document act came to clear an optional field set to a literal null (refusing a required one by its name) and the rule language came to say which value a name is: `$subject` the record's own, `$arg` the call's argument, a member's field first inside `where`, and a refusal saying `{$subject.<field>}` as it says the bare field: the act's runtime and the evaluator, the edits that rename `$subject.<field>` and `$arg.<name>`, and the studio's checked compile warning `act-clears-required`, `act-name-means-both`, `act-arg-unknown` and `arg-outside-act` (a workflow step's values and a view's conditions among where it looks). 7_315 / 1_993 more. Measured at 3_137_410 / 1_137_308 against 3_130_095 / 1_135_315. The gzipped raise holds 30 bytes over what was measured: it varies by a few bytes between builds."
 }
