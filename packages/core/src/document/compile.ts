@@ -551,12 +551,15 @@ export function compileDocumentWithoutCheck(raw: unknown, options: CompileOption
  * sentence and a refusal, as `{amount | money}` does — worked out here, so
  * a page handed the compiled app renders it with nothing more.
  */
-function saidAsDeclared(parts: readonly TemplatePart[], fields: GraviewDocument["kinds"][string]["fields"] | undefined, computed?: GraviewDocument["kinds"][string]["computed"]): readonly TemplatePart[] {
+function saidAsDeclared(parts: readonly TemplatePart[], fields: GraviewDocument["kinds"][string]["fields"] | undefined, computed?: GraviewDocument["kinds"][string]["computed"], args?: ActSpec["args"]): readonly TemplatePart[] {
   return parts.map((part) => {
-    if (part.format || part.expr?.t !== "ident") return part;
-    const name = part.expr.name;
-    const worked = computed?.[name];
-    const said: { readonly format?: string; readonly places?: number } | undefined = fields?.[name] ?? (typeof worked === "object" ? worked : undefined);
+    const e = part.expr;
+    // `{$subject.amount}` is said as `{amount}` is; `{$arg.amount}` as its argument is declared, else the field it fills.
+    const dollar = e?.t === "member" && e.object.t === "ident" ? e.object.name : undefined;
+    if (part.format || !e || (e.t !== "ident" && dollar !== "$subject" && dollar !== "$arg")) return part;
+    const name = (e as { readonly name: string }).name;
+    const worked = dollar === "$arg" ? undefined : computed?.[name];
+    const said: { readonly format?: string; readonly places?: number } | undefined = (dollar === "$arg" ? args?.[name] : undefined) ?? fields?.[name] ?? (typeof worked === "object" ? worked : undefined);
     const format = said?.format;
     // Money in whole units where the field says `"places": 0`, as `{x | money: 0}` says it.
     return format === "money" || format === "percent" ? { ...part, format, ...(format === "money" && said?.places === 0 ? { formatArgs: ["0"] } : {}) } : part;
@@ -667,7 +670,7 @@ function planOf(document: GraviewDocument, findings: Finding[]): CompiledApp {
       effects,
       args: [...args],
       ...(act.allowedWhen ? { guard: parseExpr(act.allowedWhen) } : {}),
-      ...(act.refusal ? { refusal: saidAsDeclared(parseTemplate(act.refusal), document.kinds[[act.on ?? []].flat()[0] ?? ""]?.fields) } : {}),
+      ...(act.refusal ? { refusal: saidAsDeclared(parseTemplate(act.refusal), document.kinds[[act.on ?? []].flat()[0] ?? ""]?.fields, undefined, act.args) } : {}),
       exprs: [...exprs],
       destructive,
       idempotent,

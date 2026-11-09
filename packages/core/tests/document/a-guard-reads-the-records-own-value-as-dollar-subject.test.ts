@@ -32,6 +32,8 @@ const cards = (act: Record<string, unknown>) => ({
         name: { type: "string", required: true },
         color: { type: "string" },
         size: { type: "integer" },
+        status: { type: "enum", options: ["todo", "in-review", "done"], optionLabels: { "in-review": "In review" } },
+        price: { type: "number", format: "money" },
       },
     },
   },
@@ -47,7 +49,7 @@ const storeOf = (app: GraviewApp<AnySchema>) =>
   new Store<AnySchema>({
     schema: app.schema,
     mutations: app.mutations ?? [],
-    snapshot: { nodes: [{ id: "card-a", kind: "card", name: "First", color: "red", size: 2 }], edges: [] } as never,
+    snapshot: { nodes: [{ id: "card-a", kind: "card", name: "First", color: "red", size: 2, status: "in-review", price: 1200 }], edges: [] } as never,
   });
 /** Whether the act runs on card-a with these arguments. */
 const runs = (act: Record<string, unknown>, args: Record<string, unknown>): boolean => {
@@ -90,6 +92,36 @@ describe("in an act's condition, which value a name is", () => {
   it("a refusal says either the same way", () => {
     expect(refusal({ allowedWhen: "false", refusal: "{name} is {$subject.color}, not {$arg.color}" }, { color: "blue" })).toBe("First is red, not blue");
   });
+
+  it("a refusal says $subject.<field> as it says the bare field: a choice by its label, money as money", () => {
+    const said = refusal({ allowedWhen: "$subject.status != 'in-review'", refusal: "{name} is already {$subject.status}" }, {});
+    expect(said).toBe(refusal({ allowedWhen: "$subject.status != 'in-review'", refusal: "{name} is already {status}" }, {}));
+    expect(said).toMatch(/^First is already in review$/i);
+    expect(refusal({ allowedWhen: "false", refusal: "{$subject.price}" }, {})).toBe(refusal({ allowedWhen: "false", refusal: "{price}" }, {}));
+    expect(refusal({ allowedWhen: "false", refusal: "{$subject.price}" }, {})).toMatch(/1,200/);
+  });
+
+  it("and $arg.<name> as its argument is declared", () => {
+    const offer = { args: { offer: { type: "number", format: "money" } }, allowedWhen: "false" };
+    expect(refusal({ ...offer, refusal: "not at {$arg.offer}" }, { offer: 1234.5 })).toBe(refusal({ ...offer, refusal: "not at {$arg.offer | money}" }, { offer: 1234.5 }));
+    expect(refusal({ ...offer, refusal: "not at {$arg.offer}" }, { offer: 1234.5 })).not.toBe("not at 1234.5");
+  });
+});
+
+describe("a set clears a field only where it says null", () => {
+  it("a literal null clears an optional field", () => {
+    const store = storeOf(compiled(cards({ sets: { color: null } })));
+    store.apply({ name: "recolor", args: { id: "card-a" } });
+    expect(Object.hasOwn(store.graph.getNode("card-a") as object, "color")).toBe(false);
+  });
+
+  it("a value worked out to nothing is not a clearing, and is refused as before", () => {
+    for (const expr of ["$arg.shade", "first(all('card') where name == 'nobody').name"]) {
+      const store = storeOf(compiled(cards({ args: { shade: { type: "string" } }, effects: [{ set: { color: { expr } } }] })));
+      expect(() => store.apply({ name: "recolor", args: { id: "card-a" } })).toThrow(/does not match what card declares/);
+      expect((store.graph.getNode("card-a") as Record<string, unknown>)["color"]).toBe("red");
+    }
+  });
 });
 
 describe("inside where, every and some", () => {
@@ -99,7 +131,7 @@ describe("inside where, every and some", () => {
   const all = [a, b, c];
   const graph = { getNode: (id: string) => all.find((n) => n.id === id), has: () => true, nodesOfKind: (kind: string) => all.filter((n) => n.kind === kind), out: () => [], in: () => [] };
   const kinds = new Map([["card", { fields: new Set(["name", "color", "size"]), edges: new Map() }]]);
-  const judge = (source: string, bindings: Record<string, string> = {}) => evaluateExpr(parseExpr(source), { graph: graph as never, subject: c as never, kinds: kinds as never, bindings });
+  const judge = (source: string, bindings: Record<string, string> = {}) => evaluateExpr(parseExpr(source), { graph: graph as never, subject: c as never, kinds: kinds as never, bindings, args: bindings });
 
   it("$subject is the outer record", () => {
     expect(judge("count(all('card') where color == $subject.color)")).toBe(1);
@@ -150,6 +182,24 @@ describe("graview check and a name that means both", () => {
 
   it("warns of a refusal's bare name the same way", () => {
     expect(warned(cards({ allowedWhen: "$subject.size > 0", refusal: "{name} is {color}" })).map((f) => f.path)).toEqual(["acts.recolor.refusal"]);
+  });
+
+  it("warns of $arg.<name> the act does not take, in its condition and in a value it works out", () => {
+    const found = compileDocument(cards({ allowedWhen: "$arg.shade != ''", sets: { name: { expr: "$arg.title" } } }), { today: () => "2026-11-09" }).findings.filter((f) => f.code === "act-arg-unknown");
+    expect(found.map((f) => [f.severity, f.path])).toEqual([
+      ["warning", "acts.recolor.allowedWhen"],
+      ["warning", "acts.recolor.sets.name"],
+    ]);
+    expect(found[0]!.message).toMatch(/shade/);
+  });
+
+  it("warns of $arg where no act is run: a label, a computed value, a rule", () => {
+    const doc = cards({}) as unknown as { kinds: { card: Record<string, unknown> }; rules?: unknown };
+    doc.kinds.card["describe"] = "{$arg.color}";
+    doc.kinds.card["computed"] = { shade: "$arg.color" };
+    doc.rules = { named: { over: "card", require: "$arg.name != ''", says: "{name} needs a name" } };
+    const found = compileDocument(doc, { today: () => "2026-11-09" }).findings.filter((f) => f.code === "arg-outside-act");
+    expect(found.map((f) => f.path)).toEqual(["kinds.card.describe", "kinds.card.computed.shade", "rules.named.require"]);
   });
 
   it("is answered by either spelling, and says nothing of a field the act takes no argument for", () => {

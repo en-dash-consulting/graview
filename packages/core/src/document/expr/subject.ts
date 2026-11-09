@@ -5,9 +5,9 @@
  * - `$subject` is the record an expression is judged on — in an act's
  *   condition and refusal, the act's subject; inside a `where` or an
  *   `every`, still the outer record. `$subject.status` is its own field.
- * - `$arg` is the call's arguments, in an act's condition and refusal:
- *   `$arg.status` is the argument by that name, or nothing where the call
- *   gave none.
+ * - `$arg` is the call's arguments, in an act's condition, refusal and the
+ *   values it works out: `$arg.status` is the argument by that name, or
+ *   nothing where the call gave none — and nothing where no act is run.
  *
  * A bare name is a member's field inside a `where` or an `every`; else the
  * call's argument by that name, where it gave one; else the record's field.

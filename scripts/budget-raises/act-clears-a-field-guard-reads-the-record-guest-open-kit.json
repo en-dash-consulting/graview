@@ -1,6 +1,6 @@
 {
   "budget": "the guest host, drawing a worker view on the open kit",
-  "minified": 939,
-  "gzipped": 309,
-  "note": "Raised when a document act came to clear an optional field set to null (refusing a required one by its name) and the rule language came to say which value a name is: `$subject` the record's own, `$arg` the call's argument, a member's field first inside `where`. 939 / 301 more. Measured at 265_715 / 102_043 against 264_776 / 101_742. The gzipped raise holds 8 bytes over what was measured: it varies by a few bytes between builds."
+  "minified": 560,
+  "gzipped": 251,
+  "note": "Raised when a document act came to clear an optional field set to a literal null (refusing a required one by its name) and the rule language came to say which value a name is: `$subject` the record's own, `$arg` the call's argument, a member's field first inside `where`, and a refusal saying `{$subject.<field>}` as it says the bare field. 560 / 243 more. Measured at 265_336 / 101_985 against 264_776 / 101_742. The gzipped raise holds 8 bytes over what was measured: it varies by a few bytes between builds."
 }

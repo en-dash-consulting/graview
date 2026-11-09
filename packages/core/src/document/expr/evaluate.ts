@@ -91,6 +91,8 @@ export interface EvalContext {
   readonly kinds: ReadonlyMap<string, KindShape>;
   /** Named values beyond the subject's fields: act arguments, `$new`, … */
   readonly bindings?: Readonly<Record<string, Value>>;
+  /** The call's arguments an act's condition, refusal and values read as `$arg.<name>`: nothing anywhere else. */
+  readonly args?: Readonly<Record<string, Value>>;
   readonly today?: string;
   readonly now?: string;
   readonly budget?: number;
@@ -164,6 +166,8 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
   const worked = new Map<string, Value>();
   const working = new Set<string>();
   let bindings = ctx.bindings;
+  /** The call's arguments, `$arg`: an act's alone, and none in a computed value it reads. */
+  let args = ctx.args;
   /** What `$subject` is: the record judged, or the one a computed value is worked out for. */
   let root = ctx.subject;
   let inMember = false;
@@ -172,9 +176,8 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
     if (worked.has(key)) return worked.get(key)!;
     if (working.has(key)) throw new ExprEvalError(`"${name}"${node ? ` of ${withArticle(node.kind)}` : ""} depends on itself`, at);
     working.add(key);
-    const outer = bindings;
-    const [outerRoot, outerMember] = [root, inMember];
-    bindings = undefined;
+    const [outer, outerArgs, outerRoot, outerMember] = [bindings, args, root, inMember];
+    bindings = args = undefined;
     root = node;
     inMember = false;
     /*
@@ -195,6 +198,7 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
     } finally {
       steps = left;
       bindings = outer;
+      args = outerArgs;
       root = outerRoot;
       inMember = outerMember;
       working.delete(key);
@@ -312,21 +316,17 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
         // The record the expression is judged on, never a binding: the outer one, inside a `where` or an `every` too.
         if (e.name === SUBJECT_NAME) {
           if (root) return root;
-          throw new ExprEvalError(`"${SUBJECT_NAME}" means nothing in a rule over the whole graph`, e.at);
+        } else {
+          if (inMember && subject && hasOwnName(subject, e.name)) return field(subject, e.name, e.at);
+          const bound = bindings && Object.hasOwn(bindings, e.name) ? bindings[e.name] : undefined;
+          if (bound !== undefined) return bound;
+          if (subject) return field(subject, e.name, e.at);
         }
-        if (e.name === ARG_NAME) throw new ExprEvalError(`"${ARG_NAME}" says which argument: ${ARG_NAME}.<name>`, e.at);
-        if (inMember && subject && hasOwnName(subject, e.name)) return field(subject, e.name, e.at);
-        const bound = bindings && Object.hasOwn(bindings, e.name) ? bindings[e.name] : undefined;
-        if (bound !== undefined) return bound;
-        if (subject) return field(subject, e.name, e.at);
         throw new ExprEvalError(`"${e.name}" means nothing in a rule over the whole graph`, e.at);
       }
       case "member": {
-        // The call's argument by that name, or nothing where it gave none; an expression no act runs has none to read.
-        if (e.object.t === "ident" && e.object.name === ARG_NAME) {
-          if (!bindings) throw new ExprEvalError(`"${ARG_NAME}.${e.name}" is an act's argument, and nothing here is an act`, e.at);
-          return Object.hasOwn(bindings, e.name) ? (bindings[e.name] ?? null) : null;
-        }
+        // The call's argument by that name, or nothing where it gave none, or where no act is run.
+        if (e.object.t === "ident" && e.object.name === ARG_NAME) return args && Object.hasOwn(args, e.name) ? (args[e.name] ?? null) : null;
         const object = run(e.object, subject);
         if (object === null) return null;
         if (isNode(object)) return field(object, e.name, e.at);

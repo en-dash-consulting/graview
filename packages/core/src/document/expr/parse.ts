@@ -74,19 +74,12 @@ function tokenize(source: string): Token[] {
       tokens.push({ k: "str", v, at: start });
       continue;
     }
-    // `$subject` and `$arg` (`subject.ts`): the record itself and the call's arguments, by names no field or argument can have.
-    if (c === "$") {
+    if (/[A-Za-z_$]/.test(c)) {
       const start = i++;
       while (i < source.length && /[A-Za-z0-9_]/.test(source[i]!)) i++;
       const word = source.slice(start, i);
-      if (word !== SUBJECT_NAME && word !== ARG_NAME) throw new ExprSyntaxError(`"${word}" is not a name here: "${SUBJECT_NAME}" is the record itself and "${ARG_NAME}" the call's arguments`, start, source);
-      tokens.push({ k: "id", v: word, at: start });
-      continue;
-    }
-    if (/[A-Za-z_]/.test(c)) {
-      const start = i;
-      while (i < source.length && /[A-Za-z0-9_]/.test(source[i]!)) i++;
-      const word = source.slice(start, i);
+      // `$subject` and `$arg` (`subject.ts`): names no field or argument can have.
+      if (c === "$" && word !== SUBJECT_NAME && word !== ARG_NAME) throw new ExprSyntaxError(`"${word}": say ${SUBJECT_NAME} or ${ARG_NAME}`, start, source);
       // An OWN entry: "constructor" is a name, not an operator inherited from Object.
       const op = Object.hasOwn(WORD_OPERATORS, word) ? WORD_OPERATORS[word] : undefined;
       tokens.push(op ? { k: "op", v: op, at: start } : { k: "id", v: word, at: start });

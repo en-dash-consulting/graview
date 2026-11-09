@@ -196,6 +196,8 @@ export interface RenderContext {
   readonly kinds: ReadonlyMap<string, KindShape>;
   readonly graph?: GraphReader;
   readonly bindings?: Readonly<Record<string, Value>>;
+  /** An act's arguments, `$arg` in its refusal. */
+  readonly args?: Readonly<Record<string, Value>>;
   readonly today?: string;
   /** The steps each part may take; 500 unless the surface says (a home sweeps whole kinds). */
   readonly budget?: number;
@@ -226,9 +228,13 @@ export function renderTemplate(parts: readonly TemplatePart[], ctx: RenderContex
           today,
           budget: ctx.budget ?? 500,
           ...(ctx.bindings ? { bindings: ctx.bindings } : {}),
+          ...(ctx.args ? { args: ctx.args } : {}),
         });
         // A choice field named bare (`{status}`) is said by its option's label, else its id spoken — alone as a chip says it, among other words in lower case — never the id.
-        const labels = !part.format && part.expr!.t === "ident" && ctx.node ? ctx.kinds.get(ctx.node.kind)?.choices?.get(part.expr!.name) : undefined;
+        // `$subject.status`, and `$arg.status` for the field it fills, are said as `{status}` is.
+        const e = part.expr!;
+        const named = e.t === "ident" ? e.name : e.t === "member" && e.object.t === "ident" && e.object.name[0] === "$" ? e.name : undefined;
+        const labels = !part.format && named !== undefined && ctx.node ? ctx.kinds.get(ctx.node.kind)?.choices?.get(named) : undefined;
         if (labels && (typeof value === "string" || Array.isArray(value))) return capitalized(part, optionsSaid(value, labels, parts.length === 1));
         return capitalized(part, show(value, part.format, today, part.formatArgs, ctx.money, name));
       } catch (error) {

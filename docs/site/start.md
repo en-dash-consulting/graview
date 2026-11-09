@@ -107,10 +107,10 @@ a one-to-one edge followed to a field (`pins.version`); `today()` and
 `{field}` from the record. In an act's `allowedWhen` and `refusal`, a bare
 name is the call's argument by that name where it gave one, else the
 record's field; `$subject.status` is the record's own and `$arg.status` the
-argument, and `graview check` warns where a bare name is both
-(`act-name-means-both`). An act's `"set": { "assignee": null }` clears an
-optional field (a required one cannot be cleared); an argument cannot carry
-null, so an act that clears says so in its own `set`.
+argument (nothing outside an act), and `graview check` warns where a bare
+name is both (`act-name-means-both`). An act's `"set": { "assignee": null }`
+clears an optional field (a required one cannot be cleared); only a literal
+null clears, and an argument cannot carry one.
 
 A small document that compiles:
 

@@ -541,7 +541,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     const creation = effects.find((e): e is Extract<ActEffect, { create: string }> => "create" in e);
     /** What an effect's value is, as the act works it out: an expression, a literal (`$$` saying one `$`), the time or an argument. */
     const valueOf = (value: ValueSpec, bindings: Record<string, unknown>, graph: GraphReader, subject: AnyGraphNode | null = null): unknown => {
-      if (isRecord(value) && "expr" in value) return evaluateExpr(exprs.get(value.expr)!, { graph, subject, kinds: shapes, bindings: bindings as Record<string, Value>, today: today(), ...saying });
+      if (isRecord(value) && "expr" in value) return evaluateExpr(exprs.get(value.expr)!, { graph, subject, kinds: shapes, bindings: bindings as Record<string, Value>, args: bindings as Record<string, Value>, today: today(), ...saying });
       const ref = refName(value);
       return ref === undefined ? (typeof value === "string" && value.startsWith("$$") ? value.slice(1) : value) : ref === "now" ? new Date().toISOString() : ref === "today" ? today() : bindings[ref];
     };
@@ -622,13 +622,13 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
           if (guard && subject) {
             let allowed: Value;
             try {
-              allowed = evaluateExpr(guard, { graph, subject, kinds: shapes, bindings, today: today(), ...saying });
+              allowed = evaluateExpr(guard, { graph, subject, kinds: shapes, bindings, args: bindings, today: today(), ...saying });
             } catch (e) {
               if (e instanceof ExprEvalError) throw new ActRefusal(`"${title}" could not be judged: ${e.sentence}`);
               throw e;
             }
             if (allowed !== true) {
-              throw new ActRefusal(refusal ? renderTemplate(refusal, { node: subject, kinds: shapes, graph, bindings, today: today(), money }) : `"${title}" is not allowed for ${labelFor(subject)} right now`);
+              throw new ActRefusal(refusal ? renderTemplate(refusal, { node: subject, kinds: shapes, graph, bindings, args: bindings, today: today(), money }) : `"${title}" is not allowed for ${labelFor(subject)} right now`);
             }
           }
           const made = new Map<string, string>();
@@ -648,12 +648,13 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
             context.removeEdge(edge);
           };
           /*
-           * A FIELD SET TO NULL IS CLEARED (Roadmap f-act-clears-optional-field):
+           * A FIELD SET TO A LITERAL NULL IS CLEARED (Roadmap f-act-clears-optional-field):
            * an optional one loses its value — `undefined` is what a patch
            * removes a key with — and a required one is refused, by its name.
+           * A value worked out to null (an argument not given, `first()` of
+           * nothing) is not a clearing, and is judged by the store as before.
            */
-          const valueFor = (kind: string | undefined, field: string, v: unknown, of?: AnyGraphNode): unknown => {
-            if (v !== null) return v;
+          const cleared = (kind: string | undefined, field: string, of?: AnyGraphNode): undefined => {
             const declared = kind === undefined ? undefined : document.kinds[kind];
             const f = declared?.fields[field];
             if (f?.required) {
@@ -684,7 +685,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
               const kind = document.kinds[effect.create]!;
               const node = blank(effect.create);
               for (const [field, value] of Object.entries(effect.set ?? {})) {
-                const v = valueFor(effect.create, field, resolve(value, undefined));
+                const v = value === null ? cleared(effect.create, field) : resolve(value, undefined);
                 if (v !== undefined) node[field] = v;
               }
               const labelField = defaultLabelField(kind);
@@ -727,13 +728,13 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
                   if (refName(value) === "to") v = node.id;
                   else if (isRecord(value) && "expr" in value) {
                     try {
-                      v = evaluateExpr(exprs.get(value.expr)!, { graph, subject, kinds: shapes, bindings: { ...bindings, to: node }, today: today(), ...saying });
+                      v = evaluateExpr(exprs.get(value.expr)!, { graph, subject, kinds: shapes, bindings: { ...bindings, to: node }, args: bindings, today: today(), ...saying });
                     } catch (e) {
                       if (e instanceof ExprEvalError) throw new ActRefusal(`"${title}" could not work out a value for ${labelFor(node)}: ${e.sentence}`);
                       throw e;
                     }
                   } else v = resolve(value, undefined);
-                  if (v === null) patch[field] = valueFor(node.kind, field, v, node);
+                  if (value === null) patch[field] = cleared(node.kind, field, node);
                   else if (v !== undefined) patch[field] = v;
                 }
                 if (Object.keys(patch).length > 0) context.patchNode(node.id, patch);
@@ -744,9 +745,11 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
               if (!target && !there(targetId)) noRecord(targetId);
               const patch: Record<string, unknown> = {};
               for (const [field, value] of Object.entries(effect.set)) {
-                const v = resolve(value, target);
-                if (v === null) patch[field] = valueFor(target?.kind, field, v, target);
-                else if (v !== undefined) patch[field] = v;
+                if (value === null) patch[field] = cleared(target?.kind, field, target);
+                else {
+                  const v = resolve(value, target);
+                  if (v !== undefined) patch[field] = v;
+                }
               }
               if (Object.keys(patch).length > 0) context.patchNode(targetId, patch);
             } else if ("remove" in effect) {
