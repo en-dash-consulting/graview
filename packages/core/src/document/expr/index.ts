@@ -1,4 +1,5 @@
 export { parseExpr, ExprSyntaxError, MAX_EXPRESSION_LENGTH } from "./parse.js";
+export { ARG_NAME, SUBJECT_NAME } from "./subject.js";
 export { printExpr } from "./print.js";
 export type { Expr, BinaryOp } from "./parse.js";
 export { evaluateExpr, ExprEvalError, ExprBudgetError, NodeSet, DEFAULT_BUDGET, FUNCTIONS, GRAPH_FACTS } from "./evaluate.js";

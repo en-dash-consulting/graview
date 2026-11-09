@@ -1391,9 +1391,14 @@ async function severalTasksAreOneChange() {
     acts: await desk.locator('[data-testid="several-act"]').allTextContents(),
     names,
   };
+  // What each offered act says it applies to: every one at least one of the chosen, and none more.
+  const applies = await desk.locator('[data-testid="several-act"]').evaluateAll((acts) => acts.map((act) => Number(act.getAttribute("data-applies"))));
   report.checks.severalTasksAreChosenAndSaidByCount = chosen;
   await desk.click('[data-testid="several-act"][data-mutation="finish"]', { timeout: 5_000 });
   await desk.waitForTimeout(800);
+  const refused = await desk.locator('[data-testid="several-refused"] li').allTextContents();
+  // No act the bar offers is then refused: each applies to at least one of the chosen and counts no more, and the one pressed refuses none.
+  report.checks.noOfferedSeveralActIsThenRefused = { applies, refused, ok: applies.length > 0 && applies.every((n) => n >= 1 && n <= 3) && refused.length === 0 };
   const done = {
     rows: await rowsDrawn(desk),
     bar: await desk.locator('[data-testid="several-bar"]').count(),

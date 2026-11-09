@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 1618,
+  "gzipped": 652,
+  "note": "Raised when a React view on the home or a record's page came to be caught in its own slot (`ViewBoundary` inside `Bleed`, Roadmap f-bleed-phone-rule-rtl): keyed by the record and drawn again once the store changes, said in words, a view that is the whole page drawing the record's heading and facts around its panel once it threw, and the keyboard moved to the panel from a view that held it and threw, and back to what a view drew again; and the phone's bleed rule naming each margin by its side. 1_618 / 652 more. Measured at 762_515 / 275_085 against 760_897 / 274_433."
+}

@@ -88,6 +88,12 @@ export function lentFont(repoRoot) {
   return { bytes, path: `/graview/assets/${createHash("sha256").update(bytes).digest("hex")}.woff2` };
 }
 
+/* A face past the size a lent face may not pass (Roadmap f-lent-faces-bounded): three million bytes the app holds, which the host does not load. */
+export function oversizeFont() {
+  const bytes = Buffer.alloc(3_000_000, 7);
+  return { bytes, path: `/graview/assets/${createHash("sha256").update(bytes).digest("hex")}.woff2` };
+}
+
 export async function brandSuite({ repoRoot, build, browser, claim, report, POLICY, HOST, GUEST, HOST_PORT, GUEST_PORT }) {
   const proxied = POLICY !== "page";
   const policy = proxied ? POLICIES[POLICY] : undefined;
@@ -100,13 +106,14 @@ export async function brandSuite({ repoRoot, build, browser, claim, report, POLI
    * in a face the brand lends its views — a file the app holds, loaded by the host where the page has an address of its own (not Claude's opaque frame).
    */
   const font = lentFont(repoRoot);
+  const oversize = oversizeFont();
   const lends = POLICY !== "claude";
   const first = {
     name: "En Dash",
     logo: SVG_A,
     typography: { display: "Georgia, 'Times New Roman', serif" },
     shape: { radius: 4 },
-    views: { css: `.mast h2 { letter-spacing: 0.25em; padding: 40px; text-transform: uppercase }\n.lent { color: rgb(200, 30, 30); font-family: "Rock Face", serif }\n.baloo { font-family: "Baloo 2", monospace }`, motion: "fade", ...(lends ? { fonts: [{ family: "Rock Face", src: font.path }, { family: "Baloo 2", src: font.path }] } : {}) },
+    views: { css: `.mast h2 { letter-spacing: 0.25em; padding: 40px; text-transform: uppercase }\n.lent { color: rgb(200, 30, 30); font-family: "Rock Face", serif }\n.baloo { font-family: "Baloo 2", monospace }`, motion: "fade", ...(lends ? { fonts: [{ family: "Rock Face", src: font.path }, { family: "Baloo 2", src: font.path }, { family: "Big Face", src: oversize.path }] } : {}) },
   };
   const second = { name: "En Dash Consulting", logo: secondLogo.logo, typography: { display: "'Courier New', Courier, monospace" }, shape: { radius: 16 } };
   const widgetJs = (
@@ -160,6 +167,12 @@ window.__rebrand = () => window.__handle.setBrand(brands.second);
     res.writeHead(200, { "content-type": "font/woff2", "cache-control": "no-store", "access-control-allow-origin": "*" });
     res.end(font.bytes);
   };
+  const oversizeAsked = [];
+  const serveOversize = (req, res) => {
+    oversizeAsked.push(req.url);
+    res.writeHead(200, { "content-type": "font/woff2", "content-length": String(oversize.bytes.length), "cache-control": "no-store", "access-control-allow-origin": "*" });
+    res.end(oversize.bytes);
+  };
   const serveLogo = (req, res) => {
     asked.push(req.url);
     res.writeHead(200, { "content-type": "image/png", "cache-control": "no-store" });
@@ -173,6 +186,7 @@ window.__rebrand = () => window.__handle.setBrand(brands.second);
       }
       if (!proxied && req.url === PNG_PATH) return serveLogo(req, res);
       if (!proxied && req.url === font.path) return serveFont(req, res);
+      if (!proxied && req.url === oversize.path) return serveOversize(req, res);
       res.writeHead(404);
       res.end();
     }).listen(HOST_PORT, "127.0.0.1"),
@@ -183,6 +197,7 @@ window.__rebrand = () => window.__handle.setBrand(brands.second);
       }
       if (proxied && req.url === PNG_PATH) return serveLogo(req, res);
       if (proxied && req.url === font.path) return serveFont(req, res);
+      if (proxied && req.url === oversize.path) return serveOversize(req, res);
       res.writeHead(404);
       res.end();
     }).listen(GUEST_PORT, "localhost"),
@@ -260,6 +275,7 @@ window.__rebrand = () => window.__handle.setBrand(brands.second);
           lentFont: getComputedStyle(root.querySelector("#lent")).fontFamily,
           faces: [...document.fonts].filter((face) => face.family.replace(/["']/g, "") === "Rock Face").map((face) => face.status),
           balooFaces: [...document.fonts].filter((face) => face.family.replace(/["']/g, "") === "Baloo 2").map((face) => face.status),
+          bigFaces: [...document.fonts].filter((face) => face.family.replace(/["']/g, "") === "Big Face").map((face) => face.status),
           balooWidth: root.querySelector("#baloo").getBoundingClientRect().width,
           monoWidth: root.querySelector("#mono").getBoundingClientRect().width,
           motion: root.querySelector("[data-graview-view-root]")?.getAttribute("data-graview-motion") ?? null,
@@ -303,6 +319,17 @@ window.__rebrand = () => window.__handle.setBrand(brands.second);
         'a face whose family is no one identifier, "Baloo 2", is loaded in this engine and its text is drawn in it, not in the fallback',
         lent.balooFaces.length === 1 && lent.balooFaces[0] === "loaded" && lent.balooWidth !== lent.monoWidth,
         { faces: lent.balooFaces, baloo: lent.balooWidth, mono: lent.monoWidth, problems: await app.evaluate(() => window.__problems) },
+      );
+      const problems = await app.evaluate(() => window.__problems);
+      claim(
+        "a lent face past the size it may not pass, 2 MB, is not loaded, and the host is told in words",
+        lent.bigFaces.length === 0 && oversizeAsked.length >= 1 && problems.some((said) => said.includes('"Big Face"') && said.includes("is more than 2 MB")),
+        { faces: lent.bigFaces, asked: oversizeAsked.length, problems },
+      );
+      claim(
+        "no lent face within the limit is said to have failed to load in this engine",
+        !problems.some((said) => /could not be loaded/.test(said)),
+        { problems },
       );
     }
     claim("and, the brand asking for it, its root is set to fade between records", before.motion === "fade", { motion: before.motion });
@@ -350,7 +377,7 @@ window.__rebrand = () => window.__handle.setBrand(brands.second);
         { served: asked, requests: logoRequests, ...marks },
       );
     }
-    const elsewhere = requests.filter((url) => /^https?:/.test(url) && !url.startsWith(`${HOST}/`) && !url.startsWith(`${GUEST}/proxy/`) && !url.endsWith(PNG_PATH) && !url.endsWith(font.path) && !url.endsWith("/favicon.ico"));
+    const elsewhere = requests.filter((url) => /^https?:/.test(url) && !url.startsWith(`${HOST}/`) && !url.startsWith(`${GUEST}/proxy/`) && !url.endsWith(PNG_PATH) && !url.endsWith(font.path) && !url.endsWith(oversize.path) && !url.endsWith("/favicon.ico"));
     claim("nothing else was requested", elsewhere.length === 0, elsewhere);
     claim("no view failed", (await app.evaluate(() => window.__failures)).length === 0, await app.evaluate(() => window.__failures));
     /* WebKit reports the harness's own fetch of the revoked URL, above, as a page error: that one is the claim, not the page. */

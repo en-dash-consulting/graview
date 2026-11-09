@@ -177,10 +177,20 @@ export interface FarApp {
  * workflow reach that app. Handed to `runWorkflow` as `farApps`; without
  * it a step that names another app's kind or act is refused, in words.
  * `farAppsOver` is this host over stores it holds in memory.
+ *
+ * A HOST REFUSES IN ITS OWN WORDS by answering `{ refused: sentence }`
+ * ("The owner of this workflow's app may not change Graview Public."):
+ * the step is skipped and the run says that sentence, before it reads or
+ * runs anything there. `undefined` is refused in the framework's words; an
+ * app whose `shape.acts` lacks the act a step names is said to have no
+ * such act.
  */
 export interface FarApps {
-  otherApp(address: string, origin: FarOrigin): FarApp | undefined | Promise<FarApp | undefined>;
+  otherApp(address: string, origin: FarOrigin): FarReached | undefined | Promise<FarReached | undefined>;
 }
+
+/** What a host answers for an app a step names: the app, or its own sentence for why this run may not reach it. */
+export type FarReached = FarApp | { readonly refused: string };
 
 /** One change a step would make in another app, before what `approve` makes of it. */
 export interface FarStepChange {

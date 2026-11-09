@@ -8,7 +8,7 @@ import { createViews } from "@graview/react";
 import type { MenuTarget } from "@graview/react/provider";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import tasks from "../../../core/tests/document/fixtures/tasks.gdd.json";
-import { choicesFrom, createOptionSwitch, displayOptionsFor, forgetChoice, keepChoice, modelOption, offersFrom, optionOfOffer, rankOptions, readChoices, type DisplayOption } from "../../src/display-options.js";
+import { choicesFrom, createOptionSwitch, displayOptionsFor, forgetChoice, keepChoice, modelOption, offersFrom, optionOfOffer, rankOptions, readChoices, recordsShown, type DisplayOption } from "../../src/display-options.js";
 import { lensNarrows } from "../../src/page-parts.js";
 import { displayOptionsSection, type SectionHere } from "../../src/section-menu.js";
 
@@ -352,6 +352,42 @@ describe("what keeping one opens", () => {
   });
 });
 
+describe("at an address that narrows the list", () => {
+  /* The list opens as a board, which narrows itself by `?filter=`; one that flows would draw the list there instead (Roadmap f-other-ways-at-a-filter). */
+  const opened = (() => {
+    const authored = { ...document, lenses: [...((document as { lenses?: readonly unknown[] }).lenses ?? []), { name: "columns", title: "Kept board", on: "task", hidden: true, bindings: { task: { column: "status" } } }], pages: { lists: { task: { opens: "Kept board" } } } } as unknown as GraviewDocument;
+    const made = compileDocument(authored);
+    if (!made.ok) throw new Error("the fixture compiles");
+    return { app: made.app as never, document: authored };
+  })();
+  const FLOWS = ["cards", "rows", "order"];
+  const offer = { id: "kept-cards", label: "Cards others kept", lens: { lens: "blocks", title: "Cards others kept", options: { blocks: [{ list: "all('task')", as: "card" }] } } } as const;
+
+  it("withholds an option that flows on a kind's list, which kept would draw the list there rather than itself", () => {
+    expect(shapes(displayOptionsFor(input(undefined, opened))).some((one) => FLOWS.includes(one))).toBe(true);
+    const narrowed = displayOptionsFor(input(undefined, { ...opened, filter: "status:doing", offers: [offer] }));
+    expect(narrowed.length).toBeGreaterThan(0);
+    expect(narrowed.filter((one) => one.drawn.lens === "blocks").map((one) => one.label)).toEqual([]);
+    expect(optionOfOffer(input(undefined, { ...opened, filter: "status:doing" }), offer)).toBeUndefined();
+    // A picture that narrows itself is still offered.
+    expect(shapes(narrowed)).toContain("calendar");
+  });
+
+  it("still offers one on a place, which draws what is kept narrowed by its address", () => {
+    const onPlace = displayOptionsFor(input(undefined, { place: "The board", filter: "status:doing" }));
+    expect(shapes(onPlace).some((one) => FLOWS.includes(one))).toBe(true);
+  });
+
+  it("draws the preview over the records the address narrows the page to, as the page kept would", () => {
+    const store = storeOf();
+    const nodes = store.graph.nodesOfKind("task") as unknown as readonly { readonly id: string; readonly kind: string }[];
+    expect(recordsShown(app.schema, store.graph as never, "task", nodes, "status:doing").map((one) => one.id)).toEqual(["t2", "t3"]);
+    expect(recordsShown(app.schema, store.graph as never, "task", nodes, undefined).map((one) => one.id)).toEqual(["t1", "t2", "t3"]);
+    // A word the kind cannot be narrowed by narrows nothing, as on the page.
+    expect(recordsShown(app.schema, store.graph as never, "task", nodes, "nonsense:1").map((one) => one.id)).toEqual(["t1", "t2", "t3"]);
+  });
+});
+
 describe("an old keep", () => {
   it("is never offered as somewhere to go, though a person may be on it", () => {
     const places = [{ as: "every-task", title: "Every task", kind: "task", hidden: true }, { as: "the-board", title: "The board", kind: "task" }];
@@ -463,6 +499,13 @@ describe("with no model", () => {
     window.document.body.innerHTML = `<main data-graview-page-main=""><h1>Home</h1></main>`;
     const home = { about: [], face: "pages", page: { about: [], home: true, at: window.document.querySelector("h1")! } } as unknown as MenuTarget;
     expect(displayOptionsSection(home, here())).toBeNull();
+  });
+
+  it("offers nothing at an address whose filter keeps none of the records, and is offered where it keeps some", () => {
+    expect(displayOptionsSection(page(), here(), undefined, "status:done")).toBeNull();
+    expect(displayOptionsSection(page(), here(), undefined, "status:doing")).not.toBeNull();
+    // A word the kind cannot be narrowed by narrows nothing, as on the page.
+    expect(displayOptionsSection(page(), here(), undefined, "nonsense:1")).not.toBeNull();
   });
 
   it("offers board, calendar and cards from the declaration alone", () => {

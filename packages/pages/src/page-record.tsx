@@ -1,8 +1,9 @@
-import { isArchived, isLeftAlone, isWithheld, labelOf, type AnySchema, type Place, type Principal, type Violation } from "@graview/core";
+import { isArchived, isLeftAlone, isWithheld, labelOf, nounOf, type AnySchema, type Place, type Principal, type Violation } from "@graview/core";
 import { describeNode, keptInStepWith } from "@graview/core/words";
 import { lineageWords } from "@graview/core/provenance";
 import { DefaultViewElsewhere, RecordInteractionsDoor, EditableValue, Files, NotifyButton, pageSays, ROVING_ITEM, useLined, useRoving } from "@graview/primitives/pages";
 import { bleeds, bleedsFull, isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
+import { ViewBoundary } from "@graview/react/drawing";
 import type { ComponentType } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 import { useRef, useState } from "react";
@@ -42,7 +43,7 @@ const NO_PROBLEMS: readonly Violation[] = [];
 
 export function DefaultRecordPage<S extends AnySchema>({ context }: { context: PageContext<S> }) {
   const { store, brand, principal, invariantContext } = context;
-  useStoreTick(store);
+  const tick = useStoreTick(store);
   // A value is changed where it stands where the face provides the store its edits run through (a face handed views).
   const inPlace = useGraviewIfAny<S>() !== null;
   const params = useParams();
@@ -61,6 +62,12 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
   const [more, setMore] = useState(false);
   /** The act whose form was just done here: "Notify me when someone else does this" stands under the acts (Roadmap f-notify-subscriptions). */
   const [doneAct, setDoneAct] = useState<string | null>(null);
+  /**
+   * The record whose own view threw here, and at which version of the store: its page is drawn as it would be
+   * without that view, its heading and its facts. Another record, or any change to the store, draws the view again.
+   */
+  const [threwOn, setThrewOn] = useState<{ readonly id: string; readonly tick: number } | null>(null);
+  const threw = threwOn !== null && threwOn.id === id && threwOn.tick === tick;
   const actsHeading = useRef<HTMLHeadingElement | null>(null);
   const actForm = useRef<HTMLDivElement | null>(null);
   /*
@@ -123,7 +130,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
    * read and the records it listed are left out below; a relation left with
    * nothing to list has no heading.
    */
-  const said = PageView && node ? pageSays(ownPage, node as never, store.graph as never) : undefined;
+  const said = PageView && node && !threw ? pageSays(ownPage, node as never, store.graph as never) : undefined;
   /*
    * THE HEADING IS THE NAME, AND RENAMED WHERE IT STANDS (Roadmap
    * f-rename-in-place, f-facts-by-type): the field that holds the name —
@@ -168,7 +175,8 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
    * with what is wrong and what has happened: no facts, no links, nothing
    * to be done but what it offers. Any other view sits above all of those.
    */
-  const whole = PageView !== undefined && replacesPage(ownPage);
+  // One that threw is no page: the record's own heading and facts are drawn around its panel, as a page without it would be.
+  const whole = PageView !== undefined && replacesPage(ownPage) && !threw;
   /*
    * AND ONE THAT DRAWS ITS OWN HEADING (Roadmap f-replacing-view-own-heading):
    * a view that replaces the page and says `heading: "own"` titles the record
@@ -251,7 +259,11 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
           <DefaultViewElsewhere>
             {/* Edge to edge on a phone, where the view says `bleed` (Bleed). */}
             <Bleed when={bleeds(ownPage)} full={full}>
-              <PageView node={node as never} cardinality="one" fidelity="full" mode="fullscreen" selected={false} {...(facts.violations.length > 0 ? { flagged: [id] } : {})} />
+              {/* A view that throws says so in its own slot, and the slot is the column again; the record's facts stand under it. */}
+              {/* Keyed by the record, so a panel one record's view left is not what the next record's page opens on. */}
+              <ViewBoundary key={id} kind={facts.kind} view={`This ${nounOf(definition, facts.kind)}'s view`} said="" reset={[tick]} onCaught={() => setThrewOn({ id, tick })}>
+                <PageView node={node as never} cardinality="one" fidelity="full" mode="fullscreen" selected={false} {...(facts.violations.length > 0 ? { flagged: [id] } : {})} />
+              </ViewBoundary>
             </Bleed>
           </DefaultViewElsewhere>
           {whole ? (

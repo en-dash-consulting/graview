@@ -99,7 +99,7 @@ describe("a text field takes a splice", () => {
     refused([splice(-1, "", "!")]);
     refused([splice(0, "", "x", "note")]); // no text in the field
     refused([{ op: "splice-text", id: "t1", field: "kind", at: 0, removed: "", inserted: "x" }]);
-    expect(() => graph.applyPrimitives([{ ...splice(0, "", "x"), id: "t9" } as Primitive])).toThrow(/missing node "t9"/);
+    expect(() => graph.applyPrimitives([{ ...splice(0, "", "x"), id: "t9" } as Primitive])).toThrow("That record is not there to change.");
     expect(() => graph.applyPrimitives([splice(0, "W", "w")])).not.toThrow();
   });
 

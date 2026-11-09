@@ -231,6 +231,57 @@ try {
     report.checks.theDeskDrawsTheBellWithItsOwnLook = { bell, ok: bell !== null && bell.position === "relative" && bell.width >= 24 && bell.height >= 24 && bell.styled };
   }
 
+  /*
+   * PRESSED BY KEYBOARD, THE KEYBOARD GOES WITH IT (f-launcher-keeps-the-keyboard).
+   * The launch button is in the desk's bar, and the bar goes when the app
+   * comes, so the keyboard was left on <body>. It lands on the opened app's
+   * own region now, and on the desk's again on the way back — and is still
+   * there once the app has settled, not only for a frame — for every demo.
+   */
+  {
+    const keyPage = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+    const where = () =>
+      keyPage.evaluate(() => {
+        const active = document.activeElement;
+        if (!active || active === document.body || active === document.documentElement) return { nowhere: true };
+        return { nowhere: false, tag: active.tagName.toLowerCase(), inMain: active.closest("main") !== null, inRoot: document.getElementById("root")?.contains(active) ?? false, outline: getComputedStyle(active).outlineStyle };
+      });
+    const kept = {};
+    // Every demo the desk opens, each from the desk by keyboard, and back by keyboard.
+    for (const entry of APPS) {
+      const one = (kept[entry.id] = {});
+      try {
+        await keyPage.goto(`${at("launcher")}/?theme=light`, { waitUntil: "load" });
+        await keyPage.waitForSelector(`[data-testid="launch-${entry.id}"]`, { timeout: 40_000 });
+        await keyPage.focus(`[data-testid="launch-${entry.id}"]`);
+        await keyPage.keyboard.press("Enter");
+        // Mounted in place, a demo sets no flag of its own: it has drawn once the desk's "Opening…" is gone and its main is on screen.
+        await keyPage.waitForFunction(() => !document.querySelector('[data-testid="opening"]') && document.querySelector("#root main") !== null, null, { timeout: 40_000 });
+        await keyPage.waitForTimeout(2500);
+        one.opened = await where();
+        await keyPage.focus('[data-testid="switcher"]');
+        await keyPage.keyboard.press("Enter");
+        await keyPage.waitForSelector('[data-testid="switch-home"]', { timeout: 8000 });
+        await keyPage.focus('[data-testid="switch-home"]');
+        await keyPage.keyboard.press("Enter");
+        await keyPage.waitForSelector(`[data-testid="launch-${entry.id}"]`, { timeout: 20_000 });
+        await keyPage.waitForTimeout(2500);
+        one.home = await where();
+      } catch (error) {
+        one.why = String(error).slice(0, 200);
+      }
+    }
+    await keyPage.close();
+    report.checks.openingAnAppByKeyboardKeepsTheKeyboardOnIt = {
+      kept,
+      ok: APPS.every(({ id }) => {
+        const one = kept[id];
+        // On the opened app's own region, and on the desk's again, with no ring drawn round the whole of it.
+        return one?.opened?.nowhere === false && one.opened.inMain && one.opened.inRoot && one.home?.nowhere === false && one.home.inMain && one.home.tag === "main" && one.home.outline === "none";
+      }),
+    };
+  }
+
   /* ---------------------- a capability no demo shows is a problem, with a repair */
   const { createLauncherStore } = await import(
     pathToFileURL(resolve(repoRoot, "apps/launcher/dist/domain/app.js")).href

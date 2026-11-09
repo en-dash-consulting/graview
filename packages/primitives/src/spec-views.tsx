@@ -667,7 +667,7 @@ function SpecPage<S extends AnySchema>({ blocks, props }: { readonly blocks: rea
   // Here, the page's title is the record's head (`RecordHeadContext`).
   const titled = said.title !== undefined && (!elsewhere || said.title === labelOf(ctx.schema?.tryDefinition(node.kind), node));
   const body = (
-    <div className="graview-spec graview-spec-page" data-graview-spec="page" data-graview-kind={node.kind}>
+    <div className="graview-spec graview-spec-page" data-graview-spec="page" data-graview-kind={node.kind} {...(elsewhere ? {} : { "data-graview-heads-record": "" })}>
       <Viewed blocks={titled ? resolved.slice(1) : resolved} ctx={ctx} view={`${node.kind}.page`} />
     </div>
   );

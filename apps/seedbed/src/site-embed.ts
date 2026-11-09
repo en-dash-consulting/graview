@@ -206,12 +206,26 @@ export function recipeApp(slug: string): GraviewApp<AnySchema> {
   return compiled.app as GraviewApp<AnySchema>;
 }
 
+/*
+ * A recipe is shown as somebody working in it: when its declaration says
+ * who may act, the page is that person, holding the first role a grant
+ * names. The inbox counts what the person looking may repair, so a page
+ * mounted as nobody in particular would say nothing of the rules it breaks.
+ */
+function recipeSeat(slug: string): Principal | undefined {
+  const document = RECIPE_FILES[slug]?.document as { readonly policy?: { readonly grants?: readonly { readonly roles?: readonly string[] }[] } } | undefined;
+  const role = document?.policy?.grants?.flatMap((grant) => grant.roles ?? [])[0];
+  return role ? { kind: "human", id: `user-${slug}-${role}`, roles: [role] } : undefined;
+}
+
 export function mountRecipe(element: HTMLElement, slug: string, face?: EmbedFace, stop?: string, label?: string, scheme?: "light" | "dark"): EmbedHandle {
   const entry = RECIPES.find((recipe) => recipe.slug === slug);
   const app = recipeApp(slug);
+  const seat = recipeSeat(slug);
   const handle = mount(element, {
     app,
     seed: RECIPE_FILES[slug]!.seed as never,
+    ...(seat ? { principal: seat } : {}),
     ...(face ? { face } : {}),
     ...(stop ?? entry?.stop ? { stop: (stop ?? entry?.stop)! } : {}),
     ...(scheme ? { scheme } : {}),

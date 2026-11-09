@@ -235,6 +235,16 @@ export interface MountWorkerViewOptions<S extends AnySchema> {
    */
   readonly images?: { readonly origins: readonly string[] };
   /**
+   * WHERE THE FACES THE APP LENDS ITS VIEWS MAY COME FROM BY ADDRESS
+   * (`brand.views.fonts`): the `https:` origins the host lists
+   * (`["https://fonts.gstatic.com"]`), read as an image's are. A face on one
+   * of them is loaded into the page; a face on any other address is refused,
+   * and said once. A file the app holds is loaded where `asset` serves it,
+   * with no list. Apart from `images`: an origin here admits no image, and
+   * one in `images` admits no face. None by default.
+   */
+  readonly fonts?: { readonly origins: readonly string[] };
+  /**
    * WHERE A VIEW'S LINKS MAY GO BEYOND WHAT IT WAS HANDED (2026-10-21): the
    * `https:` origins the host lists (`["https://nvd.nist.gov"]`). A view's
    * `<a href>` is drawn where its address is one a record it was shown
@@ -544,13 +554,11 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     }
     void fontsChunk().then(({ loadViewFonts }) => {
       if (asked !== lending) return;
-      /* The new ones first, so a face both brands lend is never let go between them. */
-      const before = giveFontsBack;
-      giveFontsBack = loadViewFonts(document, fonts, { ...(options.asset ? { asset: options.asset } : {}), ...(options.images ? { origins: options.images.origins } : {}), ...(typography ? { typography } : {}) }, (said) => {
+      /* The new ones first, the last given back as they are held, so a face both brands lend is never let go between them (fonts.ts). */
+      giveFontsBack = loadViewFonts(document, fonts, { ...(options.asset ? { asset: options.asset } : {}), ...(options.fonts ? { origins: options.fonts.origins } : {}), ...(typography ? { typography } : {}) }, (said) => {
         port?.postMessage({ type: "notice", text: said });
         options.onProblem?.(said);
-      });
-      before?.();
+      }, giveFontsBack);
     });
   };
   let pushed = "";

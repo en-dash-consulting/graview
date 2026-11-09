@@ -7,6 +7,7 @@ import { choiceStyle } from "./choice.js";
 import type { BarGo } from "./app-bar.js";
 import type { HostAction } from "./profile.js";
 import { Seats } from "./seats.js";
+import { SIGN_IN_ROW } from "./sign-in-row.js";
 import { ownSentence, problemTitle, RuleLineView, useLined } from "./rule-line.js";
 
 /* Who else is here (FR-155), fetched with the panes once somebody is. */
@@ -140,13 +141,46 @@ export function ProfilePane<S extends AnySchema>({
   /** A quiet "Built with Graview" at the menu's foot, when the host asks for one. */
   readonly signature?: boolean | undefined;
 }) {
-  const { principal, seats, settings, settingValues, chooseSetting, sharing, ai } = useGraview<S>();
+  const { principal, seats, settings, settingValues, chooseSetting, sharing, ai, signIn } = useGraview<S>();
   const roles = principal.roles ?? [];
   const popover = { setOpen: (_open: false) => close() };
   return (
     <>
       {part === "top" ? (
         <>
+          {signIn ? (
+            /*
+             * A VISITOR IS TOLD THEY ARE NOT SIGNED IN, AND HOW TO BE
+             * (Graview HQ f-profile-pane-says-signed-out). A host hands
+             * `signIn` only while the reader is a visitor (FR-183), and
+             * "Signed in as A visitor", "No role in particular" read as
+             * being somebody anonymous with no way out. The host's way in
+             * is the pane's first control, so the keyboard that opens the
+             * pane lands on it, and it is drawn as the menu draws it.
+             */
+            <div style={{ display: "grid", gap: 6 }}>
+              <strong data-testid="profile-signed-out" style={{ fontSize: "1rem", fontWeight: 550 }}>
+                Not signed in
+              </strong>
+              <button
+                type="button"
+                data-testid="profile-sign-in"
+                onClick={() => {
+                  popover.setOpen(false);
+                  signIn.run();
+                }}
+                style={SIGN_IN_ROW}
+              >
+                {signIn.label}
+              </button>
+              {sharing ? (
+                <span data-testid="profile-seen-as" style={{ fontSize: "0.8125rem", color: "var(--graview-ink-muted)" }}>
+                  {/* Never the seat's id ("anonymous") or "A visitor" said as a name. */}
+                  Others here see you as a visitor
+                </span>
+              ) : null}
+            </div>
+          ) : (
           <div style={{ display: "grid", gap: 3 }}>
             <span style={eyebrow}>Signed in as</span>
             <strong style={{ fontSize: "1rem", fontWeight: 550 }}>{name}</strong>
@@ -190,6 +224,7 @@ export function ProfilePane<S extends AnySchema>({
               </span>
             ) : null}
           </div>
+          )}
 
           {/*
             * THE HOST'S OWN ACTIONS (FR-72), under who you are: "Your apps",

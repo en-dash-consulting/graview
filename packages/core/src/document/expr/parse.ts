@@ -8,6 +8,8 @@
  * parser turns text into a tree; `evaluate.ts` walks the tree under a budget.
  */
 
+import { ARG_NAME, SUBJECT_NAME } from "./subject.js";
+
 export type Expr =
   | { readonly t: "lit"; readonly value: string | number | boolean | null; readonly at: number }
   | { readonly t: "ident"; readonly name: string; readonly at: number }
@@ -72,10 +74,12 @@ function tokenize(source: string): Token[] {
       tokens.push({ k: "str", v, at: start });
       continue;
     }
-    if (/[A-Za-z_]/.test(c)) {
-      const start = i;
+    if (/[A-Za-z_$]/.test(c)) {
+      const start = i++;
       while (i < source.length && /[A-Za-z0-9_]/.test(source[i]!)) i++;
       const word = source.slice(start, i);
+      // `$subject` and `$arg` (`subject.ts`): names no field or argument can have.
+      if (c === "$" && word !== SUBJECT_NAME && word !== ARG_NAME) throw new ExprSyntaxError(`"${word}": say ${SUBJECT_NAME} or ${ARG_NAME}`, start, source);
       // An OWN entry: "constructor" is a name, not an operator inherited from Object.
       const op = Object.hasOwn(WORD_OPERATORS, word) ? WORD_OPERATORS[word] : undefined;
       tokens.push(op ? { k: "op", v: op, at: start } : { k: "id", v: word, at: start });
@@ -196,7 +200,7 @@ export function parseExpr(source: string): Expr {
         const dot = peek();
         pos++;
         const name = peek();
-        if (name.k !== "id") throw new ExprSyntaxError('expected a field name after "."', name.at, source);
+        if (name.k !== "id" || name.v.startsWith("$")) throw new ExprSyntaxError('expected a field name after "."', name.at, source);
         pos++;
         e = { t: "member", object: e, name: name.v, at: dot.at };
         continue;

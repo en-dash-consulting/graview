@@ -100,10 +100,17 @@ The rule language, in brief: a field or a one-to-one edge by its bare name
 `out('edge')` and `in('edge')` for the records an edge reaches forward and
 backward; `exists(set)`, `count(set)`, `every(set, condition)` and
 `some(set, condition)`; `set where condition` (inside `where`, `every` and `some`, bare names are
-the member's, not the outer record's); `==`, `!=`, `<`, `&&`, `||` and `!`;
+the member's, not the outer record's; `$subject.status` is always the outer
+record's own); `==`, `!=`, `<`, `&&`, `||` and `!`;
 a one-to-one edge followed to a field (`pins.version`); `today()` and
 `days(from, to)` for whole days between two dates. A `says` sentence fills
-`{field}` from the record.
+`{field}` from the record. In an act's `allowedWhen` and `refusal`, a bare
+name is the call's argument by that name where it gave one, else the
+record's field; `$subject.status` is the record's own and `$arg.status` the
+argument (nothing outside an act), and `graview check` warns where a bare
+name is both (`act-name-means-both`). An act's `"set": { "assignee": null }`
+clears an optional field (a required one cannot be cleared); only a literal
+null clears, and an argument cannot carry one.
 
 A small document that compiles:
 

@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form handed a compiled app",
+  "minified": 972,
+  "gzipped": 379,
+  "note": "Raised when a document act came to clear an optional field set to a literal null (refusing a required one by its name) and the rule language came to say which value a name is: `$subject` the record's own, `$arg` the call's argument, a member's field first inside `where`, and a refusal saying `{$subject.<field>}` as it says the bare field. 972 / 371 more. Measured at 359_143 / 131_090 against 358_171 / 130_719. The gzipped raise holds 8 bytes over what was measured: it varies by a few bytes between builds."
+}

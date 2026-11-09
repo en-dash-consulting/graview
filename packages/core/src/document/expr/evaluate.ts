@@ -4,6 +4,7 @@ import { daySpanOf, ISO_MOMENT, isoToday, PARTIAL_DAY } from "../../days.js";
 import { dateOn } from "../../repeat.js";
 import type { AnyGraphNode, GraphReader } from "../../graph/types.js";
 import type { Expr } from "./parse.js";
+import { ARG_NAME, SUBJECT_NAME } from "./subject.js";
 import { linkedReaderOf, linkedRefsOf, type LinkedReader, type LinkedRecord, type LinkedRecordRef, type LinkedRelation } from "../../schema/linked.js";
 import { addMinutesTo, datetimeAt, formatWhen, isWeekday, minutesOfTime, startOfWeekOf, weekdayOfWhen, whenOf, zoneOf, type When } from "./when.js";
 
@@ -90,6 +91,8 @@ export interface EvalContext {
   readonly kinds: ReadonlyMap<string, KindShape>;
   /** Named values beyond the subject's fields: act arguments, `$new`, … */
   readonly bindings?: Readonly<Record<string, Value>>;
+  /** The call's arguments an act's condition, refusal and values read as `$arg.<name>`: nothing anywhere else. */
+  readonly args?: Readonly<Record<string, Value>>;
   readonly today?: string;
   readonly now?: string;
   readonly budget?: number;
@@ -163,13 +166,20 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
   const worked = new Map<string, Value>();
   const working = new Set<string>();
   let bindings = ctx.bindings;
+  /** The call's arguments, `$arg`: an act's alone, and none in a computed value it reads. */
+  let args = ctx.args;
+  /** What `$subject` is: the record judged, or the one a computed value is worked out for. */
+  let root = ctx.subject;
+  let inMember = false;
   const computed = (node: AnyGraphNode | null, name: string, expr: Expr, at: number): Value => {
     const key = `${node?.id}\u0000${name}`;
     if (worked.has(key)) return worked.get(key)!;
     if (working.has(key)) throw new ExprEvalError(`"${name}"${node ? ` of ${withArticle(node.kind)}` : ""} depends on itself`, at);
     working.add(key);
-    const outer = bindings;
-    bindings = undefined;
+    const [outer, outerArgs, outerRoot, outerMember] = [bindings, args, root, inMember];
+    bindings = args = undefined;
+    root = node;
+    inMember = false;
     /*
      * A COMPUTED FIELD IS THE SAME VALUE WHEREVER IT IS READ (Roadmap
      * f-count-past-graph-budget). It is worked out under the budget a
@@ -188,6 +198,9 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
     } finally {
       steps = left;
       bindings = outer;
+      args = outerArgs;
+      root = outerRoot;
+      inMember = outerMember;
       working.delete(key);
     }
   };
@@ -276,7 +289,21 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
     throw new ExprEvalError(`${where} must be true or false, and was ${describe(v)}`, at);
   };
 
-  const withSubject = (subject: AnyGraphNode | null, e: Expr): Value => run(e, subject);
+  /** Read once per member, with the member as its subject: a bare name of the member's own is its field, ahead of an argument by that name. */
+  const withSubject = (subject: AnyGraphNode | null, e: Expr): Value => {
+    const was = inMember;
+    inMember = true;
+    try {
+      return run(e, subject);
+    } finally {
+      inMember = was;
+    }
+  };
+  /** Whether a record of its kind has a field, relation or computed value by this name. */
+  const hasOwnName = (node: AnyGraphNode, name: string): boolean => {
+    const shape = ctx.kinds.get(node.kind);
+    return shape ? shape.fields.has(name) || shape.edges.has(name) || shape.computed?.has(name) === true || shape.linked?.has(name) === true : Object.hasOwn(node, name);
+  };
 
   function run(e: Expr, subject: AnyGraphNode | null): Value {
     spend(1, e.at);
@@ -286,12 +313,20 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
       case "list":
         return e.items.map((item) => run(item, subject));
       case "ident": {
-        const bound = bindings && Object.hasOwn(bindings, e.name) ? bindings[e.name] : undefined;
-        if (bound !== undefined) return bound;
-        if (subject) return field(subject, e.name, e.at);
+        // The record the expression is judged on, never a binding: the outer one, inside a `where` or an `every` too.
+        if (e.name === SUBJECT_NAME) {
+          if (root) return root;
+        } else {
+          if (inMember && subject && hasOwnName(subject, e.name)) return field(subject, e.name, e.at);
+          const bound = bindings && Object.hasOwn(bindings, e.name) ? bindings[e.name] : undefined;
+          if (bound !== undefined) return bound;
+          if (subject) return field(subject, e.name, e.at);
+        }
         throw new ExprEvalError(`"${e.name}" means nothing in a rule over the whole graph`, e.at);
       }
       case "member": {
+        // The call's argument by that name, or nothing where it gave none, or where no act is run.
+        if (e.object.t === "ident" && e.object.name === ARG_NAME) return args && Object.hasOwn(args, e.name) ? (args[e.name] ?? null) : null;
         const object = run(e.object, subject);
         if (object === null) return null;
         if (isNode(object)) return field(object, e.name, e.at);

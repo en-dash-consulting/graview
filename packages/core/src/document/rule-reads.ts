@@ -1,6 +1,7 @@
 import type { RuleShapeSource } from "../invariants/types.js";
 import type { KindShape } from "./expr/evaluate.js";
 import type { Expr } from "./expr/parse.js";
+import { dollarOf } from "./expr/subject.js";
 
 /*
  * WHAT A RULE READS BEYOND ITS SUBJECT, worked out from its shape without
@@ -47,7 +48,12 @@ export function readsBeyondItsSubject(shape: RuleShapeSource, kinds: ReadonlyMap
       (expr) =>
         expr !== undefined &&
         parts(expr).some((part) =>
-          part.t === "call" ? ["fact", "all", "in", "out"].includes(part.fn) : part.t === "ident" && (!kind || kind.edges.has(part.name) || kind.computed?.has(part.name) === true),
+          part.t === "call"
+            ? ["fact", "all", "in", "out"].includes(part.fn)
+            : part.t === "ident"
+              ? dollarOf(part) === undefined && (!kind || kind.edges.has(part.name) || kind.computed?.has(part.name) === true)
+              : // `$subject.<name>` reads the subject's own, as its bare name does.
+                part.t === "member" && dollarOf(part.object) === "subject" && (!kind || kind.edges.has(part.name) || kind.computed?.has(part.name) === true),
         ),
     )
   );

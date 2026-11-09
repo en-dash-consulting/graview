@@ -7,12 +7,12 @@
  * Now the brand may declare faces for its views (`brand.views.fonts`), each
  * a family and one file, and the HOST loads them into the page, where a
  * view and the app's stylesheet for views name them as they name any face.
- * A face is loaded only from where the host already lets a view's image
- * come from: a file the app holds by its content address
- * (`/graview/assets/<sha256>.woff2`, what Graview Cloud's add_file answers),
- * where the host says where those live, or an `https:` address on an origin
- * the host lists for a view's images. The view never names a file itself,
- * so nothing it reads can ride out in a font's address.
+ * A face is loaded only from where the host lets a face come from: a file
+ * the app holds by its content address (`/graview/assets/<sha256>.woff2`,
+ * what Graview Cloud's add_file answers), where the host says where those
+ * live, or an `https:` address on an origin the host lists for faces
+ * (`fonts.origins`, apart from a view's images). The view never names a
+ * file itself, so nothing it reads can ride out in a font's address.
  *
  * In the document a face is the page's, so it never takes a name the page
  * already draws in: `new FontFace("Arial", …)` replaces Arial in the app's
@@ -27,6 +27,15 @@ import type { BrandViewFont } from "../theme/types.js";
 
 /** The most faces a brand lends its views. */
 export const VIEW_FONTS_MOST = 8;
+
+/**
+ * The most bytes one face lent to views may be (Roadmap f-lent-faces-bounded):
+ * a face is loaded with the first view dressed in its brand, so it has a size
+ * it may not pass. Two million is more than any one Latin face needs — a whole
+ * variable family in WOFF2 is a few hundred thousand — and less than one weight
+ * of a whole CJK face, which wants subsetting before a page loads it eagerly.
+ */
+export const VIEW_FONT_MOST_BYTES = 2_000_000;
 
 /** A face the brand lends its views (`BrandViewFont`). */
 export type ViewFont = BrandViewFont;
