@@ -215,7 +215,8 @@ describe("a hosted page", () => {
     // 1108 KB with the whole 0.1.70 batch together (2026-11-07): a seat's profile and what a view keeps, and the tray bringing `@graview/core/tidying` with it, among the rest: the scene face measured 1_133_632 B, 2_070 more than with the whole 0.1.67 batch (1_131_562).
     // 1109 KB since a document act came to clear an optional field set to null and the rule language to read `$subject`, the record itself (Roadmap f-act-clears-optional-field, f-guard-reads-record-not-argument): the scene face measured 1_134_725 B, 1_093 more than the whole 0.1.70 batch (1_133_632).
     // 1109 KB since a view that throws is caught in its own slot and the keyboard moves to its panel and back (`ViewBoundary`'s `said`, `onCaught`, `reset`, Roadmap f-bleed-phone-rule-rtl): the scene face measured 1_135_203 B, 1_571 more than the whole 0.1.70 batch (1_133_632).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1109 * 1024);
+    // 1111 KB with the whole 0.1.71 batch together (2026-11-09): a document act that clears a field and a condition that says `$subject`, a view that throws caught in its own slot, the account pane, a view's own font origins and the desk's keyboard, among the rest: the scene face measured 1_136_985 B, 3_353 more than the whole 0.1.70 batch (1_133_632).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1111 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {
