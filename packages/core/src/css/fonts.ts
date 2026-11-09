@@ -7,12 +7,12 @@
  * Now the brand may declare faces for its views (`brand.views.fonts`), each
  * a family and one file, and the HOST loads them into the page, where a
  * view and the app's stylesheet for views name them as they name any face.
- * A face is loaded only from where the host already lets a view's image
- * come from: a file the app holds by its content address
- * (`/graview/assets/<sha256>.woff2`, what Graview Cloud's add_file answers),
- * where the host says where those live, or an `https:` address on an origin
- * the host lists for a view's images. The view never names a file itself,
- * so nothing it reads can ride out in a font's address.
+ * A face is loaded only from where the host lets a face come from: a file
+ * the app holds by its content address (`/graview/assets/<sha256>.woff2`,
+ * what Graview Cloud's add_file answers), where the host says where those
+ * live, or an `https:` address on an origin the host lists for faces
+ * (`fonts.origins`, apart from a view's images). The view never names a
+ * file itself, so nothing it reads can ride out in a font's address.
  *
  * In the document a face is the page's, so it never takes a name the page
  * already draws in: `new FontFace("Arial", …)` replaces Arial in the app's

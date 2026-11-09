@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 30,
+  "gzipped": 0,
+  "note": "Raised when a view's lent faces came to load from origins of their own: a worker view's definition passes `fonts: { origins }` to the view it mounts, apart from `images`. 30 / 8 more, the gzipped within the budget's room. Measured at 46_890 / 20_328 against 46_860 / 20_320."
+}

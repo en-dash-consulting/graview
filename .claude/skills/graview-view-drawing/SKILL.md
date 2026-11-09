@@ -68,7 +68,7 @@ on an ancestor is only inherited.
 `views.fonts: [{ family: "Baloo 2", src: "/graview/assets/<sha256>.woff2",
 weight: "400 800" }]`, then `font-family: "Baloo 2", var(--graview-font-body)`.
 The host loads it from a file the app holds where it serves them, or an
-`https:` address on an origin it lists in `images.origins`, and never under a
+`https:` address on an origin it lists in `fonts.origins`, and never under a
 system face's name or the brand's own; else it is said and refused.
 
 ## Its box, and the gutter

@@ -107,7 +107,7 @@ export function cssRefusalsSaid(refused: readonly CssRefusal[]): string {
 }
 export const VIEWS_CSS_FIX = "a view's stylesheet loads nothing and stays in its own tree: no url() but url(#id) on a paint, no @import or @font-face (a face for every view is brand.views.fonts), no :host; the app's own tokens (var(--graview-accent), --graview-panel, --graview-font-display, …) are there to draw with";
 
-export const VIEWS_FONT_FIX = 'say { "family": "Baloo 2", "src": "/graview/assets/<sha256>.woff2" } under a name of its own, with a font file the app holds by its content address, or an https: address the host lists for a view\'s images; a view\'s own stylesheet then names it as font-family: "Baloo 2"';
+export const VIEWS_FONT_FIX = 'say { "family": "Baloo 2", "src": "/graview/assets/<sha256>.woff2" } under a name of its own, with a font file the app holds by its content address, or an https: address on an origin the host lists for faces (fonts.origins); a view\'s own stylesheet then names it as font-family: "Baloo 2"';
 
 export function brandFindings(brand: Partial<BrandSpec> | undefined, options: BrandCheckOptions = {}): Finding[] {
   const out: Finding[] = [];

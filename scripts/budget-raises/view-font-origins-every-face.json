@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 59,
+  "gzipped": 0,
+  "note": "Raised when a view's lent faces came to load from origins of their own: a worker view takes `fonts: { origins }` apart from `images.origins`, passed from its definition to the faces the page loads, and a face refused names `fonts.origins`. 59 / 30 more, the gzipped within the budget's room. Measured at 3_130_104 / 1_134_910 against 3_130_045 / 1_134_880."
+}
