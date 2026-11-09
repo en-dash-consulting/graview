@@ -3,6 +3,7 @@ import { bleeds, bleedsFull, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link, useSearchParams } from "react-router";
 import { HomeLine } from "@graview/primitives/pages";
+import { ViewBoundary } from "@graview/react/drawing";
 import { kindMap } from "./facts.js";
 import { pluralSlug } from "./registry.js";
 import { type PageContext, useStoreTick } from "./page-context.js";
@@ -126,7 +127,8 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
    * below: blocks about records that do not exist yet would be a page of
    * dashes, and the beginning is what an empty installation needs.
    */
-  const hostsHome = context.views?.homes?.().at(-1)?.name !== undefined;
+  const homeName = context.views?.homes?.().at(-1)?.name;
+  const hostsHome = homeName !== undefined;
   const HomeView = builtIn && hostsHome ? undefined : (context.views?.homeView?.() as ComponentType<ViewProps<S>> | undefined);
   const anything = (store.schema.kinds as readonly string[]).some((kind) => store.graph.nodesOfKind(kind as never).length > 0);
   if (HomeView && anything) {
@@ -150,7 +152,10 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
           <HomeLine.Provider value={placesItsLine ? line : null}>
             {/* Edge to edge on a phone, where the view says `bleed` (Bleed); across the page at every width, where it says "full". */}
             <Bleed when={bleeds(HomeView)} full={full}>
-              <HomeView cardinality="many" fidelity="full" mode="fullscreen" selected={false} {...(flagged.length > 0 ? { flagged } : {})} />
+              {/* A view that throws says so in its own slot, and the slot is the column again: what gives a view the page's width sees it did not draw. */}
+              <ViewBoundary kind="home" {...(homeName ? { view: homeName } : {})}>
+                <HomeView cardinality="many" fidelity="full" mode="fullscreen" selected={false} {...(flagged.length > 0 ? { flagged } : {})} />
+              </ViewBoundary>
             </Bleed>
           </HomeLine.Provider>
           {hostsHome ? (

@@ -88,7 +88,11 @@
  *   that draws its own heading — span the window less its safe areas at
  *   390, 1024 and 1440, never scrolling the page sideways, and the home's
  *   and the place's start right at the bar's bottom while the record's
- *   stands under its heading (Roadmap f-views-bleed-full-width).
+ *   stands under its heading (Roadmap f-views-bleed-full-width);
+ *   a record page's slot meets the facts with one line, the facts', and
+ *   no band between (Roadmap f-record-page-empty-band-under-page-spec);
+ *   and a view that bleeds on a phone keeps each safe area on its own
+ *   side, read left to right or right to left (Roadmap f-bleed-phone-rule-rtl).
  *
  *   node scripts/verify-address.mjs [--engine=chromium|webkit|firefox]   (all three by default)
  */
@@ -1036,6 +1040,36 @@ try {
           const band = slot && facts && section ? Math.round(facts.getBoundingClientRect().top - slot.getBoundingClientRect().bottom - gap) : null;
           return { view: [top(view), bottom(view)], slot: [top(slot), bottom(slot)], facts: [top(facts), bottom(facts)], slotSays: slot?.textContent?.trim() ?? null, band, lines, next: section?.nextElementSibling?.getAttribute("data-testid") ?? null };
         });
+        /*
+         * EACH SAFE AREA ON ITS OWN SIDE, EITHER WAY THE PAGE READS (Roadmap f-bleed-phone-rule-rtl).
+         * A browser here has no notch, so both insets are 0 and a rule that swaps them reads the same.
+         * The page's own phone rule, as served, is said again after it with the insets as numbers that
+         * differ (12 on the left, 2 on the right), and where the view's box stands against the page's
+         * edges is measured with the page read left to right and right to left.
+         */
+        const insets = await tab.evaluate(async () => {
+          const slot = document.querySelector('[data-graview-bleed=""]');
+          const served = slot?.querySelector(":scope > style")?.textContent ?? "";
+          if (!slot || !served) return null;
+          const main = slot.closest("[data-graview-page-main]");
+          const said = document.createElement("style");
+          said.textContent = served.replaceAll("env(safe-area-inset-left,0px)", "12px").replaceAll("env(safe-area-inset-right,0px)", "2px");
+          document.body.append(said);
+          const read = async (dir) => {
+            document.documentElement.setAttribute("dir", dir);
+            await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+            const box = slot.getBoundingClientRect();
+            const page = main.getBoundingClientRect();
+            return { left: Math.round(box.left - page.left), right: Math.round(page.right - box.right) };
+          };
+          const was = document.documentElement.getAttribute("dir");
+          const ltr = await read("ltr");
+          const rtl = await read("rtl");
+          if (was === null) document.documentElement.removeAttribute("dir");
+          else document.documentElement.setAttribute("dir", was);
+          said.remove();
+          return { phone: window.matchMedia("(max-width:680px)").matches, ltr, rtl };
+        });
         await go(`${FITTED_BASE}/people/p1`);
         await drawnIn("card");
         const replaced = await tab.evaluate(() => ({
@@ -1117,7 +1151,7 @@ try {
             keyboardOnAPlace: document.activeElement !== null && document.activeElement === document.querySelectorAll('[data-testid="seen-in"] a')[3],
           }));
         }
-        one.fitted = { home, record, order, replaced, wide, heading, edge, edgeTitled, fallback, seenIn };
+        one.fitted = { home, record, order, insets, replaced, wide, heading, edge, edgeTitled, fallback, seenIn };
       } catch (error) {
         one.fittedError = String(error?.message ?? error);
       }
@@ -1859,6 +1893,11 @@ try {
   report.checks.aRecordPagesSlotIsDrawnUnderItsViewAndAboveTheFacts = {
     seen: fittedSeen,
     ok: fittedHold(({ order }) => /Read the sources/.test(order.slotSays ?? "") && /Each source/.test(order.slotSays ?? "") && order.slot[0] >= order.view[1] && order.facts[0] >= order.slot[1]),
+  };
+  /* Roadmap f-bleed-phone-rule-rtl: at phone width a view that bleeds keeps the left inset on the left and the right on the right, read left to right or right to left. */
+  report.checks.aViewThatBleedsOnAPhoneKeepsEachSafeAreaOnItsSideInEitherDirection = {
+    seen: Object.fromEntries(Object.entries(fittedSeen).map(([name, fitted]) => [name, fitted?.error ? fitted : fitted?.insets])),
+    ok: fittedHold(({ insets }, name) => !/×844$/.test(name) || (insets !== null && insets.phone && ["ltr", "rtl"].every((dir) => insets[dir].left === 12 && insets[dir].right === 2))),
   };
   /* Roadmap f-record-page-empty-band-under-page-spec: one line between a kind's page and the facts, the facts' own, and no band of nothing between them. */
   report.checks.aRecordPagesOwnLayoutDrawsOneDividerAndNoEmptyBandBeforeTheFacts = {

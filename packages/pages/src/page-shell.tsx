@@ -221,7 +221,7 @@ export function PageMain<S extends AnySchema>({
  * column keeps its spacing, as a view that bleeds keeps the column's
  * width. A view that did not draw keeps it, as it keeps the gutter.
  */
-const BLEED_TOP_CSS = `@media (max-width:680px){[data-graview-bleed-top=""]:not(:has([data-graview-bleed]>[data-worker-view-fallback])){padding-top:0 !important}}`;
+const BLEED_TOP_CSS = `@media (max-width:680px){[data-graview-bleed-top=""]:not(:has([data-graview-bleed]>:is([data-worker-view-fallback],[data-graview-view-error]))){padding-top:0 !important}}`;
 /*
  * A VIEW THAT BLEEDS FULL STARTS UNDER THE BAR AT EVERY WIDTH (Roadmap
  * f-views-bleed-full-width), as it spans the page at every width. A place
@@ -287,8 +287,12 @@ export function Bleed({ when, full, children }: { readonly when: boolean; readon
  */
 const SLOT_OF_A_VIEW_THAT_DREW = `[data-graview-bleed=full]:not(:has(${DID_NOT_DRAW}))`;
 const BLEED_FULL_CSS = `${SLOT_OF_A_VIEW_THAT_DREW}{margin-left:calc(50% - 50cqw + env(safe-area-inset-left,0px));margin-right:calc(50% - 50cqw + env(safe-area-inset-right,0px))}${SLOT_OF_A_VIEW_THAT_DREW} [data-worker-view-beside-under]{box-sizing:border-box;width:100%;max-width:calc(760px + 2*var(--graview-page-gutter,20px));margin-inline:auto;padding-inline:var(--graview-page-gutter,20px)}${SLOT_OF_A_VIEW_THAT_DREW} [data-testid="draft-view-line"]{padding-inline:var(--graview-page-gutter,20px)}`;
-// What a view that did not draw left in its slot (`data-worker-view-fallback`) keeps the gutter: the bleed was the view's.
-const BLEED_CSS = `@media (max-width:680px){[data-graview-bleed=""]:not(:has(>[data-worker-view-fallback])){margin-inline:min(0px,calc(env(safe-area-inset-left,0px) - var(--graview-page-gutter,20px))) min(0px,calc(env(safe-area-inset-right,0px) - var(--graview-page-gutter,20px)))}}`;
+/*
+ * What a view that did not draw left in its slot (`data-worker-view-fallback`, or the panel for a React view that threw) keeps the gutter: the bleed was the view's.
+ * Each side takes its own safe area, whichever way the page reads: the insets are the device's, not the text's (Roadmap f-bleed-phone-rule-rtl).
+ */
+const LEFT_IN_ITS_SLOT = "[data-worker-view-fallback],[data-graview-view-error]";
+const BLEED_CSS = `@media (max-width:680px){[data-graview-bleed=""]:not(:has(>:is(${LEFT_IN_ITS_SLOT}))){margin-left:min(0px,calc(env(safe-area-inset-left,0px) - var(--graview-page-gutter,20px)));margin-right:min(0px,calc(env(safe-area-inset-right,0px) - var(--graview-page-gutter,20px)))}}`;
 
 const UNSEEN: React.CSSProperties = { position: "absolute", width: 1, height: 1, margin: -1, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap" };
 
