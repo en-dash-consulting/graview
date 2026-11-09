@@ -139,15 +139,14 @@ yesterday and now the button is gone.
     that may run it accepts it, as themselves (lineage `proposedBy`), or
     declines it. Reviewing is running: no grant of its own.
 
-12. **Say when an act may run, on the record's own values.** A grant says
-    who; a document act's `allowedWhen` says when, and its `refusal` why
-    not. A bare name there reads the argument the call gives by that name,
-    and the record's field only when it gives none — so an act that
-    `writes: ["holder", "expiresAt"]` and asks `holder == null` judges the
-    call. Write `$subject.holder == null or $subject.expiresAt < now()` and
-    `"{name} is held by {$subject.holder}"`: `$subject` is the record the
-    act is on. `graview check` warns of each bare name that is both
-    (`act-name-means-both`).
+12. **Say when an act may run.** A grant says who; a document act's
+    `allowedWhen` says when, and its `refusal` why not. There a bare name
+    is the call's argument by that name where it gave one, else the
+    record's field; `$subject.status` is the record's own field and
+    `$arg.status` the argument (`"{name} is already {$subject.status}"`).
+    Inside `where` or `every`, a member's own field comes first. `graview
+    check` warns of each bare name that is both a field and an argument
+    (`act-name-means-both`); say which with either.
 
 ## Worked examples
 
