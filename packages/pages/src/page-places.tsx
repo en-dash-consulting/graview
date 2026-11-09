@@ -119,7 +119,7 @@ function LensOnPage<S extends AnySchema>({ context, place, chosen, filter, bled 
    * otherwise take the whole face down with it (FR-24).
    */
   return (
-    <ViewBoundary kind={place.kind} view={place.title}>
+    <ViewBoundary kind={place.kind} view={place.title} said="">
       {/* Edge to edge on a phone, where the view says `bleed`, as on the home and a record's page (Roadmap f-bleed-on-places). */}
       <Bleed when={bleeds(View) && !bled}>
         <View
@@ -206,7 +206,7 @@ function KindOnPage<S extends AnySchema>({ context, kind }: { context: PageConte
   const flagged = [...new Set(store.violations(invariantContext).flatMap((violation) => violation.nodeIds))];
   if (Group && !isDefaultView(Group)) {
     return (
-      <ViewBoundary kind={kind}>
+      <ViewBoundary kind={kind} view={plural} said="">
         <Group nodes={members} label={plural} fidelity="full" cardinality="many" mode="fullscreen" selected={false} {...(flagged.length > 0 ? { flagged } : {})} />
       </ViewBoundary>
     );

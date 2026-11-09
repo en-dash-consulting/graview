@@ -168,7 +168,7 @@ function ListOfView<S extends AnySchema>({ context, kind, view: View }: { readon
         </p>
       </header>
       <section data-testid="list-view" style={{ display: "grid", minWidth: 0 }}>
-        <ViewBoundary kind={kind} view={plural}>
+        <ViewBoundary kind={kind} view={plural} said="">
           {/* Edge to edge on a phone, where the view says `bleed`, as on a record's page and a place. */}
           <Bleed when={bleeds(View)} full={bleedsFull(View)}>
             <View nodes={members as never} label={plural} fidelity="full" cardinality="many" mode="fullscreen" selected={false} {...(flagged.length > 0 ? { flagged } : {})} />
