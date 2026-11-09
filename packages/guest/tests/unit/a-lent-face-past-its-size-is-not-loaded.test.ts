@@ -36,7 +36,7 @@ class FakeFontFace {
 }
 let asked: { url: string; init: RequestInit | undefined }[];
 let pulled: number;
-let cancelled: boolean;
+let canceled: boolean;
 /** A body of `size` bytes in chunks of 64 KiB, counting what was read of it. */
 const body = (size: number) => {
   let sent = 0;
@@ -49,7 +49,7 @@ const body = (size: number) => {
       controller.enqueue(chunk);
     },
     cancel() {
-      cancelled = true;
+      canceled = true;
     },
   });
 };
@@ -58,7 +58,7 @@ beforeEach(() => {
   made = [];
   asked = [];
   pulled = 0;
-  cancelled = false;
+  canceled = false;
   fonts = new Set();
   Object.assign(window, {
     FontFace: FakeFontFace,
@@ -104,7 +104,7 @@ describe("a file the app holds, lent as a face, has a size it may not pass", () 
     const said = await lend(HELD);
     expect(fonts.size).toBe(0);
     expect(made).toEqual([]);
-    expect(cancelled).toBe(true);
+    expect(canceled).toBe(true);
     expect(pulled).toBeLessThan(VIEW_FONT_MOST_BYTES + 3 * 65_536);
     expect(said).toEqual([over]);
   });
