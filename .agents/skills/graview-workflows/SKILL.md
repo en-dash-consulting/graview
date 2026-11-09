@@ -117,8 +117,9 @@ workflow's actor; a dry run lists each far act in `run.far`, naming the
 app, and keeps nothing there; a real one runs it there with the run's
 lineage, so that app's log says which run made it. A host with none
 refuses the step: "this host does not let workflows reach other apps".
-`farAppsOver({ "@self/graview-public": { store, name } })` is that host
-over stores in memory.
+A host refuses in its own words by answering `{ refused: "sentence" }`;
+the step says that sentence. `farAppsOver({ "@self/graview-public":
+{ store, name, refuses } })` is that host over stores in memory.
 
 **Say it in TypeScript** the same way: `defineApp({ workflows })` takes the
 same objects.

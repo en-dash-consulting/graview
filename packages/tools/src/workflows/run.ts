@@ -243,7 +243,13 @@ export async function runWorkflow<S extends AnySchema>(options: RunWorkflowOptio
           const origin: FarOrigin = { workflow: workflow.name, title: workflow.title, run: id, step: index, author: principal, dry };
           const reaching = (async () => {
             try {
-              return (await hook.otherApp(address, origin)) ?? { refused: `this host does not let “${workflow.title}” reach ${address}` };
+              const app = await hook.otherApp(address, origin);
+              const unreached = { refused: `this host does not let “${workflow.title}” reach ${address}` };
+              if (!app) return unreached;
+              if (!("refused" in app)) return app;
+              // The host's own sentence, said as the step's reason (its full stop the step's to write); one that says nothing is the framework's.
+              const words = typeof app.refused === "string" ? app.refused.trim().replace(/\.+$/, "").slice(0, 500) : "";
+              return words ? { refused: words } : unreached;
             } catch (error) {
               return { refused: `${address} could not be reached: ${said(error)}` };
             }

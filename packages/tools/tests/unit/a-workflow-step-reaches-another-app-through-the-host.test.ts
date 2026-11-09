@@ -127,6 +127,34 @@ describe("an act step that runs another app's act", () => {
     expect(kept.heldBack.map((one) => one.why)).toEqual([`Step 1: this host does not let “Keep Graview Public's tickets in step” reach ${PUBLIC_ADDRESS}.`]);
     expect(statusOf(far, "t-1")).toBe("open");
   });
+
+  it("says the host's own sentence when the host refuses it in its words, and touches nothing there", async () => {
+    const { hq, public: far } = stores();
+    const sentence = "The owner of this workflow's app may not change Graview Public.";
+    const { second: run } = await runTwice({ app: HQ, store: hq, workflow: "sync-tickets", farApps: { otherApp: () => ({ refused: sentence }) } });
+    expect(run.outcome).toBe("partial");
+    expect(run.heldBack).toEqual([{ step: 0, why: `Step 1: ${sentence}` }]);
+    expect(run.far).toBeUndefined();
+    // And through the in-memory host, by its grant's own words.
+    const { second: kept } = await runTwice({ app: HQ, store: hq, workflow: "sync-tickets", farApps: farAppsOver({ [PUBLIC_ADDRESS]: { store: far, refuses: (origin) => (origin.workflow === "sync-tickets" ? "HQ's workflows may only read Graview Public" : undefined) } }) });
+    expect(kept.heldBack.map((one) => one.why)).toEqual(["Step 1: HQ's workflows may only read Graview Public."]);
+    expect(statusOf(far, "t-1")).toBe("open");
+    expect(far.log.all()).toEqual([]);
+  });
+
+  it("still says in words that the app has no such act when its host gives no refusal of its own", async () => {
+    const { hq, public: far } = stores();
+    const reached = farAppsOver({ [PUBLIC_ADDRESS]: { store: far, name: "Graview Public" } });
+    const farApps = {
+      async otherApp(address: string, origin: Parameters<typeof reached.otherApp>[1]) {
+        const app = await reached.otherApp(address, origin);
+        return app && !("refused" in app) ? { ...app, shape: { ...app.shape, acts: {} } } : app;
+      },
+    };
+    const { second: run } = await runTwice({ app: HQ, store: hq, workflow: "sync-tickets", farApps });
+    expect(run.heldBack.map((one) => one.why)).toEqual([`Step 1: Graview Public (${PUBLIC_ADDRESS}) has no act “set-ticket-status”.`]);
+    expect(statusOf(far, "t-1")).toBe("open");
+  });
 });
 
 describe("a model's step that reads and proposes in another app", () => {
@@ -160,5 +188,13 @@ describe("a model's step that reads and proposes in another app", () => {
     const { second } = await runTwice({ app: HQ, store: hq, workflow: "close-public", ai: model(asked) });
     expect(asked).toEqual([]);
     expect(second.heldBack.map((one) => one.why)).toEqual([`Step 1: this host does not let workflows reach other apps, so it could not reach ${PUBLIC_ADDRESS}, so the model's step did not run.`]);
+  });
+
+  it("does not run, and says the host's own sentence, when the host refuses it in its words", async () => {
+    const { hq } = stores();
+    const asked: string[] = [];
+    const { second } = await runTwice({ app: HQ, store: hq, workflow: "close-public", ai: model(asked), farApps: { otherApp: () => ({ refused: "The owner of this workflow's app may not change Graview Public." }) } });
+    expect(asked).toEqual([]);
+    expect(second.heldBack.map((one) => one.why)).toEqual(["Step 1: The owner of this workflow's app may not change Graview Public, so the model's step did not run."]);
   });
 });

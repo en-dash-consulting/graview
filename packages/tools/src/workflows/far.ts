@@ -3,7 +3,7 @@ import { mutationToolSchema } from "@graview/core/json-schema";
 import { linkedRecordsOver } from "@graview/core/linked";
 import { suggest } from "@graview/core/tidying";
 import type { FarAppShape } from "@graview/core/workflows";
-import type { FarActAnswer, FarApp, FarApps, FarOrigin } from "./types.js";
+import type { FarActAnswer, FarApps, FarOrigin, FarReached } from "./types.js";
 
 /*
  * THE HOST, OVER APPS IT HOLDS IN MEMORY (Roadmap
@@ -25,6 +25,8 @@ export interface FarHome {
   readonly name?: string;
   /** Whether this run may reach it at all — the grant; every run, when unsaid. */
   readonly reaches?: (origin: FarOrigin) => boolean;
+  /** The grant in the host's own words: a sentence for why this run may not reach it, said as the step's reason; undefined lets it. */
+  readonly refuses?: (origin: FarOrigin) => string | undefined;
 }
 
 /** What a store's app is, said for a workflow in another app: its name, its kinds, and every act with its input schema. */
@@ -53,9 +55,11 @@ const said = (error: unknown): string => (error instanceof Error ? error.message
 /** `FarApps` over stores this process holds, by address: what `runWorkflow({ farApps })` is handed by a host holding both apps. */
 export function farAppsOver(homes: Readonly<Record<string, FarHome>>): FarApps {
   return {
-    otherApp(address, origin): FarApp | undefined {
+    otherApp(address, origin): FarReached | undefined {
       const home = Object.hasOwn(homes, address) ? homes[address] : undefined;
       if (!home || (home.reaches && !home.reaches(origin))) return undefined;
+      const refused = home.refuses?.(origin);
+      if (refused) return { refused };
       const { store } = home;
       const actor = origin.author as Principal;
       const reader = linkedRecordsOver({ [address]: { store, ...(home.name ? { name: home.name } : {}) } });
