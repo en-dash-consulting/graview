@@ -647,6 +647,21 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
             severed.add(key);
             context.removeEdge(edge);
           };
+          /*
+           * A FIELD SET TO NULL IS CLEARED (Roadmap f-act-clears-optional-field):
+           * an optional one loses its value — `undefined` is what a patch
+           * removes a key with — and a required one is refused, by its name.
+           */
+          const valueFor = (kind: string | undefined, field: string, v: unknown, of?: AnyGraphNode): unknown => {
+            if (v !== null) return v;
+            const declared = kind === undefined ? undefined : document.kinds[kind];
+            const f = declared?.fields[field];
+            if (f?.required) {
+              const named = f.label ?? humanizeField(field);
+              throw new ActRefusal(`"${title}" cannot clear ${named}${of ? ` of ${labelFor(of)}` : ""}: every ${declared!.noun ?? kind} has one`, "invalid");
+            }
+            return undefined;
+          };
           const resolve = (value: ValueSpec, current: AnyGraphNode | undefined): unknown => {
             const ref = refName(value);
             if (ref === "subject") return subjectId;
@@ -669,7 +684,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
               const kind = document.kinds[effect.create]!;
               const node = blank(effect.create);
               for (const [field, value] of Object.entries(effect.set ?? {})) {
-                const v = resolve(value, undefined);
+                const v = valueFor(effect.create, field, resolve(value, undefined));
                 if (v !== undefined) node[field] = v;
               }
               const labelField = defaultLabelField(kind);
@@ -718,7 +733,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
                       throw e;
                     }
                   } else v = resolve(value, undefined);
-                  if (v !== undefined) patch[field] = v;
+                  if (v === null) patch[field] = valueFor(node.kind, field, v, node);
+                  else if (v !== undefined) patch[field] = v;
                 }
                 if (Object.keys(patch).length > 0) context.patchNode(node.id, patch);
               }
@@ -729,7 +745,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
               const patch: Record<string, unknown> = {};
               for (const [field, value] of Object.entries(effect.set)) {
                 const v = resolve(value, target);
-                if (v !== undefined) patch[field] = v;
+                if (v === null) patch[field] = valueFor(target?.kind, field, v, target);
+                else if (v !== undefined) patch[field] = v;
               }
               if (Object.keys(patch).length > 0) context.patchNode(targetId, patch);
             } else if ("remove" in effect) {

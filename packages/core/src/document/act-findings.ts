@@ -187,9 +187,50 @@ function meFindings(name: string, act: ActSpec, document: GraviewDocument): Find
   return out;
 }
 
+/**
+ * A FIELD AN ACT SETS TO NULL IS CLEARED (Roadmap f-act-clears-optional-field):
+ * an optional one loses its value, and a required one cannot — the act would
+ * be refused every time it runs, so the checker says so at the value.
+ */
+function clearsFindings(name: string, act: ActSpec, document: GraviewDocument): Finding[] {
+  const out: Finding[] = [];
+  const at = `acts.${name}`;
+  const subject = asArray(act.on);
+  const judge = (set: Readonly<Record<string, unknown>> | undefined, path: string, kinds: readonly string[] | "*") => {
+    if (kinds === "*") return;
+    for (const [field, value] of Object.entries(set ?? {})) {
+      if (value !== null) continue;
+      const required = kinds.filter((kind) => document.kinds[kind]?.fields[field]?.required === true);
+      if (required.length === 0) continue;
+      const f = document.kinds[required[0]!]!.fields[field]!;
+      out.push(error("act-clears-required", `${path}.${field}`, `"${name}" sets ${field} to null, and every ${required.join(" and every ")} has one: the act would be refused each time it runs`, f.default !== undefined ? `set it to a value, like its default ${JSON.stringify(f.default)}` : `set it to a value, or say "required": false on ${required[0]}'s ${field} so clearing it is allowed`));
+    }
+  };
+  judge(act.sets, `${at}.set`, subject);
+  const relation = act.connects ?? act.severs;
+  if (act.setsOther && relation) judge(act.setsOther, `${at}.setsOther`, farEnd(document.kinds, relation, subject)?.kinds ?? "*");
+  for (const [through, set] of Object.entries(act.setsLinked ?? {})) {
+    const far = farEnd(document.kinds, through, subject);
+    judge(set, `${at}.setsLinked.${through}`, far?.kinds ?? "*");
+  }
+  const made = new Map<string, string>();
+  if (act.creates) made.set("new", act.creates);
+  (act.effects ?? []).forEach((effect, i) => {
+    const where = `${at}.effects.${i}.set`;
+    if ("create" in effect) {
+      if (effect.as) made.set(effect.as, effect.create);
+      judge(effect.set, where, [effect.create]);
+    } else if ("set" in effect && !("through" in effect)) {
+      const target = typeof effect.target === "string" ? effect.target.replace(/^\$/, "") : "subject";
+      judge(effect.set, where, target === "subject" ? subject : made.has(target) ? [made.get(target)!] : "*");
+    }
+  });
+  return out;
+}
+
 /** Every range, other-end and `$me` finding of a document, in its order: fields, then acts. */
 export function actFindings(document: GraviewDocument): Finding[] {
-  return [...rangeFindings(document), ...neverArchivedFindings(document), ...neverTidiedFindings(document), ...Object.entries(document.acts ?? {}).flatMap(([name, act]) => [...otherEndFindings(name, act, document), ...linkedFindings(name, act, document), ...meFindings(name, act, document)])];
+  return [...rangeFindings(document), ...neverArchivedFindings(document), ...neverTidiedFindings(document), ...Object.entries(document.acts ?? {}).flatMap(([name, act]) => [...otherEndFindings(name, act, document), ...linkedFindings(name, act, document), ...meFindings(name, act, document), ...clearsFindings(name, act, document)])];
 }
 
 /**
