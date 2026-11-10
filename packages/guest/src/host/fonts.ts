@@ -70,9 +70,9 @@ async function readHeld(fetcher: typeof fetch, url: string, signal: AbortSignal,
     void response.body?.cancel();
     return "failed";
   }
-  /* A font, or bytes that say nothing more: anything else (a page, a sign-in) is not read as one. */
+  /* A font (or one of the older names servers still give it), bytes that say nothing more, or no type at all: anything else (a page, a sign-in) is not read as one. */
   const type = (response.headers.get("content-type") ?? "").split(";")[0]!.trim().toLowerCase();
-  if (!type.startsWith("font/") && type !== "application/octet-stream") {
+  if (type !== "" && !type.startsWith("font/") && !type.startsWith("application/font-") && !type.startsWith("application/x-font-") && type !== "application/octet-stream") {
     void response.body?.cancel();
     return { type };
   }
@@ -379,6 +379,12 @@ export function readFrameFonts(window: Window & typeof globalThis, fonts: readon
   const reading: FrameFontsReading = { read, waiting: () => [...waiting] };
   page.set(key, reading);
   if (page.size > READINGS_KEPT) page.delete(page.keys().next().value!);
-  read.catch(() => page.delete(key));
+  // A reading in which a face could not be had (a network fault, a host's 5xx) is not kept: the next frame asks again.
+  read.then(
+    (got) => {
+      if (got.said.length > 0 && page.get(key) === reading) page.delete(key);
+    },
+    () => page.delete(key),
+  );
   return reading;
 }

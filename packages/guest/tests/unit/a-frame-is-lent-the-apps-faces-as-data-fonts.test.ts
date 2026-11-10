@@ -187,6 +187,20 @@ describe("frames on one page lent the same faces", () => {
     expect(JSON.stringify(one.lent())).toBe(JSON.stringify(two.lent()));
   });
 
+  it("does not keep a reading in which a face could not be had: the next frame asks again", async () => {
+    let failing = true;
+    vi.spyOn(window, "fetch").mockImplementation(((url: string, init: RequestInit) => (failing ? Promise.resolve(new Response("busy", { status: 503 })) : (fetcher as never as typeof fetch)(url, init))) as never);
+    const AGAIN = { ...ROCK, family: "Rock Again" };
+    const brand = () => ({ name: "Quarry", views: { fonts: [AGAIN] } });
+    const problems: string[] = [];
+    const one = drawn(brand, problems);
+    await vi.waitFor(() => expect(one.lent()).toHaveLength(1));
+    expect(JSON.stringify(one.lent())).not.toContain("Rock Again");
+    failing = false;
+    const two = drawn(brand);
+    await vi.waitFor(() => expect(JSON.stringify(two.lent())).toContain("Rock Again"));
+  });
+
   it("does not say it has drawn while its faces are being read, and says so once they are", async () => {
     let arrive = () => {};
     vi.spyOn(window, "fetch").mockImplementation((() => new Promise<Response>((done) => (arrive = () => done(new Response(new Uint8Array(64).fill(5), { headers: WOFF2 }))))) as never);

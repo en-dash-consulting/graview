@@ -125,6 +125,13 @@ describe("a file the app holds that answers as something else", () => {
     expect(made).toEqual([]);
     expect(fonts.size).toBe(0);
   });
+
+  it("is read as a face when it answers an older font type, or bytes, or no type at all", async () => {
+    for (const type of ["application/font-woff2", "application/x-font-ttf", "application/octet-stream", "FONT/WOFF2; charset=binary", null]) {
+      answer = async () => new Response(body(1), type ? { headers: { "content-type": type } } : {});
+      expect(await lend(HELD)).toEqual([]);
+    }
+  });
 });
 
 describe("a face on an origin the host lists for faces", () => {
