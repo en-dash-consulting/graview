@@ -104,6 +104,14 @@ its policy needs `img-src data:` to show it. The scheme is the app's own
 again when the app's toggle or brand changes. `mountGuestView` takes
 `reads`, `theme`, `brand` and `places` too.
 
+The faces the brand lends its views (`brand.views.fonts`) are lent to a
+frame as well: the host reads each file — the app's own where `asset`
+serves it, or one on an origin `fonts.origins` lists — at most 2 MB, the
+last lent winning a shared name, and hands it as a `data:` font the client
+puts in the frame's document. A guest names the family (`font-family:
+"Rock Face", serif`) and loads nothing; its policy needs `font-src data:`.
+What is not lent is said to `onProblem` (`guestView` says it in the console).
+
 `title` names the frame for assistive technology. Registered with the same
 title, the guest is a place on both faces: listed by `placesOf`, at
 `/places/the-price-sheet` on the routed face and `#view=the-price-sheet` in

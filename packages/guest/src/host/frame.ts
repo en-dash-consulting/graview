@@ -1,5 +1,5 @@
 import type { AnySchema, Principal, Store } from "@graview/core";
-import { GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN, isGuestReady, type GuestPlace, type GuestTheme, type HostHello } from "../protocol.js";
+import { GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN, isGuestReady, type GuestFont, type GuestPlace, type GuestTheme, type HostHello, type HostMessage } from "../protocol.js";
 import { mintNonce } from "./nonce.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestReads, type GuestStats, type GuestViewInput } from "./session.js";
 import { retryingImport } from "@graview/core/retry";
@@ -12,6 +12,8 @@ import { createGuestLogo, readTheme, themeWithBrand, watchTheme, type GuestBrand
 
 /* The pictures' host, fetched only for a frame that asks for them (FR-175): a page of frames that do not carries none of it. */
 const picturesChunk = retryingImport(() => import("./pictures.js"));
+/* The faces' reader, fetched only for a frame whose brand lends faces (Roadmap f-faces-lent-to-frames). */
+const fontsChunk = retryingImport(() => import("./fonts.js"));
 
 /*
  * A FRAME GUEST'S HOST: `@graview/guest/host/frame`. Mounting a frame into
@@ -66,6 +68,20 @@ export interface MountGuestViewOptions<S extends AnySchema> {
   readonly pictures?: GuestPictures;
   /** Where a record's file (`FileValue.href`) is fetched for those pictures: a host serving the app under a base answers `base + href`. The href resolved against the page by default. */
   readonly file?: (href: string) => string | undefined;
+  /**
+   * Where a file the app holds (`/graview/assets/<sha256>.woff2`) is read
+   * from for the faces its brand lends its views (`brand.views.fonts`,
+   * Roadmap f-faces-lent-to-frames), as a worker view's `asset` says. Each
+   * face is read by the host, at most 2 MB, and handed to the frame as a
+   * `data:` font its client puts in the frame's document: the frame's policy
+   * allows `font-src data:` and is asked for nothing more. Without it, a face
+   * the app holds is not lent, and that is said (`onProblem`).
+   */
+  readonly asset?: (path: string) => string | undefined;
+  /** The `https:` origins a lent face may be read from by address, as a worker view's `fonts` says: none by default. */
+  readonly fonts?: { readonly origins: readonly string[] };
+  /** What the host could not do for the frame, in a sentence: a face it did not lend, and why; the frame's height held (`onSize`). */
+  readonly onProblem?: (said: string) => void;
   /** The app's named places: what the guest is told of (`props.places`), and may ask to go to by slug. None by default. */
   readonly places?: () => readonly GuestPlace[];
   readonly onNavigate?: (id: string) => void;
@@ -140,8 +156,52 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
   /* The app's look, kept up (FR-86): pushed again when what the frame would be handed has changed. */
   const logo = createGuestLogo(window as Window & typeof globalThis, () => push(), "data");
   const theme = () => themeWithBrand(() => options.theme?.() ?? readTheme(element), options.brand, logo);
+  /*
+   * THE FACES THE APP LENDS ITS VIEWS, LENT TO THE FRAME (Roadmap
+   * f-faces-lent-to-frames): read by the host as the brand lends them
+   * (fonts.ts, `frameFonts`) and handed over the port as `data:` fonts, again
+   * whenever the brand changes them and to every document the frame loads.
+   */
+  let fontsAsked = "[[],null]";
+  let lentFonts: readonly GuestFont[] = [];
+  let fontsReading: AbortController | undefined;
+  const sendFonts = () => port?.postMessage({ type: "fonts", fonts: lentFonts } satisfies HostMessage);
+  const lendFonts = () => {
+    const given = options.brand?.();
+    const fonts = given?.views?.fonts ?? [];
+    const typography = given?.typography;
+    const asked = JSON.stringify([fonts, typography ?? null]);
+    if (asked === fontsAsked) return;
+    fontsAsked = asked;
+    fontsReading?.abort();
+    fontsReading = undefined;
+    if (fonts.length === 0) {
+      if (lentFonts.length > 0) {
+        lentFonts = [];
+        sendFonts();
+      }
+      return;
+    }
+    const reading = (fontsReading = new AbortController());
+    void fontsChunk()
+      .then(({ frameFonts }) => frameFonts(fonts, { ...(options.asset ? { asset: options.asset } : {}), ...(options.fonts ? { origins: options.fonts.origins } : {}), ...(typography ? { typography } : {}), fetch: window.fetch.bind(window), signal: reading.signal }, (said) => options.onProblem?.(said)))
+      .then(
+        (read) => {
+          if (reading.signal.aborted) return;
+          fontsReading = undefined;
+          lentFonts = read;
+          sendFonts();
+          drew();
+        },
+        () => {
+          if (fontsReading === reading) fontsReading = undefined;
+          drew();
+        },
+      );
+  };
   let pushed = "";
   const push = () => {
+    lendFonts();
     if (!session) return;
     pushed = JSON.stringify(theme());
     session.push();
@@ -183,7 +243,7 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
   let handed = false;
   let quiet: ReturnType<typeof setTimeout> | undefined;
   const drew = () => {
-    if (!handed || pictures?.waiting()) return;
+    if (!handed || pictures?.waiting() || fontsReading) return;
     clearTimeout(quiet);
     iframe.removeAttribute("data-guest-view-failed");
     iframe.removeAttribute("aria-busy");
@@ -269,10 +329,13 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
      */
     iframe.contentWindow!.postMessage(hello, "*", [channel.port2]);
     push();
+    if (lentFonts.length > 0) sendFonts();
     handed = true;
     soon();
   };
   window.addEventListener("message", onMessage);
+  /* The faces are read as the frame is mounted, not once the guest is ready: the guest is handed them as soon after as they are read. */
+  lendFonts();
   element.appendChild(iframe);
   element.removeAttribute("aria-busy");
 
@@ -288,6 +351,7 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
       clearTimeout(silent);
       clearTimeout(quiet);
       unwatch();
+      fontsReading?.abort();
       logo.dispose();
       stopPictures();
       pictures?.dispose();

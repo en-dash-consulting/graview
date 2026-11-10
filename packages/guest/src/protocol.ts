@@ -501,6 +501,22 @@ export interface GuestPressed {
   readonly message?: string;
 }
 
+/**
+ * A FACE THE APP LENDS A FRAME (`brand.views.fonts`), as the frame is handed
+ * it: its name as the app's sheets say it, and the file as a `data:` font the
+ * host read. A frame is another origin, where neither the app's own files
+ * nor a font origin the host lists are anything it may fetch, and its policy
+ * allows `font-src data:`. The client puts it in the frame's document, so a
+ * guest's `font-family: "Rock Face"` draws in it.
+ */
+export interface GuestFont {
+  readonly family: string;
+  readonly weight?: string;
+  readonly style?: string;
+  /** `data:font/woff2;base64,…` (or woff, ttf, otf): at most `VIEW_FONT_MOST_BYTES` of file. */
+  readonly src: string;
+}
+
 export type HostMessage =
   /** `push` numbers it, for a worker view's runtime to say when it has drawn it (FR-94). */
   | { readonly type: "props"; readonly props: GuestProps; readonly push?: number }
@@ -509,6 +525,8 @@ export type HostMessage =
   | GuestDomEvent
   /** Something a worker view did went nowhere, and why: its runtime says it in the view's console (FR-93). */
   | { readonly type: "notice"; readonly text: string }
+  /** The faces the app lends a frame (`GuestFont`), every one again whenever they change: the client puts them in the frame's document in place of those it was lent before. */
+  | { readonly type: "fonts"; readonly fonts: readonly GuestFont[] }
   /** What became of `graview.mine`'s ask. */
   | { readonly type: "mine-answer"; readonly id: string | number; readonly ok: boolean; readonly value?: string | null; readonly sentence?: string }
   | HostHeartbeat;

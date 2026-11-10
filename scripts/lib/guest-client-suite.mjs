@@ -28,7 +28,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { graviewSources } from "./graview-sources.mjs";
-import { PNG, PNG_PATH, SVG_A } from "./guest-brand-suite.mjs";
+import { lentFont, PNG, PNG_PATH, SVG_A } from "./guest-brand-suite.mjs";
 
 /*
  * Wait inside a frame served under the view's policy by asking from Node.
@@ -90,6 +90,18 @@ GraviewGuest.connect().subscribe((props) => {
   name.style.borderRadius = theme.radius;
 });
 </script></body></html>`;
+/*
+ * A frame guest lettered in a face the app lends its views (Roadmap
+ * f-faces-lent-to-frames): it names "Rock Face" and loads nothing, and its
+ * policy allows `font-src data:` alone, so the face can only have come as a
+ * data: font the host read and handed over the port.
+ */
+export const LETTERING_POLICY = `${VIEW_POLICY}; font-src data:`;
+const LETTERING = (client) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Lettering</title>
+<style>span { display: inline-block; font-size: 32px; white-space: nowrap } #lent { font-family: "Rock Face", monospace } #mono { font-family: monospace }</style></head>
+<body><span id="lent">Granite becomes gneiss</span><br><span id="mono">Granite becomes gneiss</span>
+<script>${client.replace(/<\/script/gi, "<\\/script")}</script>
+<script>window.__seen = []; GraviewGuest.connect().subscribe((props) => window.__seen.push(props));</script></body></html>`;
 const BRANDS = {
   first: { name: "En Dash", logo: SVG_A, typography: { display: "Georgia, 'Times New Roman', serif" }, shape: { radius: 4 } },
   second: { name: "En Dash Consulting", logo: PNG_PATH, typography: { display: "'Courier New', Courier, monospace" }, shape: { radius: 16 } },
@@ -98,6 +110,8 @@ const BRANDS = {
 export async function clientSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, GUEST, GUEST_PORT }) {
   const client = readFileSync(resolve(repoRoot, "packages/guest/client.js"), "utf8");
   const out = mkdtempSync(join(tmpdir(), "graview-guest-client-"));
+  const font = lentFont(repoRoot);
+  const firstBrand = { ...BRANDS.first, views: { fonts: [{ family: "Rock Face", src: font.path }] } };
   await build({
     stdin: {
       contents: `
@@ -105,7 +119,7 @@ import { mount } from "@graview/embed";
 import { guestView } from "@graview/guest/host";
 import { SCHEMES } from "@graview/core";
 import { lin, offersApp, offersSeed } from ${JSON.stringify(resolve(repoRoot, "scripts/fixtures/offers-app.ts"))};
-const brands = { first: { ...${JSON.stringify(BRANDS.first)}, schemes: SCHEMES }, second: { ...${JSON.stringify(BRANDS.second)}, schemes: SCHEMES } };
+const brands = { first: { ...${JSON.stringify(firstBrand)}, schemes: SCHEMES }, second: { ...${JSON.stringify(BRANDS.second)}, schemes: SCHEMES } };
 window.__rebrand = () => window.__handle.setBrand(brands.second);
 
 const asked = new URLSearchParams(location.search);
@@ -125,6 +139,7 @@ window.__handle = mount(document.getElementById("app"), {
   views: (schema, registry) => {
     registry.register("package", { cardinality: "many", fidelity: "full" }, guestView({ url: ${JSON.stringify(`${GUEST}/prices.html`)}, name: "prices", title: "The price sheet", reads: { kinds: ["offer"], edges: ["includes"] } }), { title: "The price sheet" });
     registry.register("signal", { cardinality: "many", fidelity: "full" }, guestView({ url: ${JSON.stringify(`${GUEST}/masthead.html`)}, name: "masthead", title: "The masthead" }), { title: "The masthead" });
+    registry.register("signal", { cardinality: "many", fidelity: "full" }, guestView({ url: ${JSON.stringify(`${GUEST}/lettering.html`)}, name: "lettering", title: "The lettering", asset: (path) => path }), { title: "The lettering" });
     registry.home?.(guestView({ url: ${JSON.stringify(`${GUEST}/front.html`)}, name: "front", title: "The front page", reads: { kinds: ["package"] } }));
     return registry;
   },
@@ -152,12 +167,13 @@ window.__handle.drawn().then(() => { window.__ready = true; });
   );
   mkdirSync(join(out, "graview/assets"), { recursive: true });
   writeFileSync(join(out, PNG_PATH), PNG);
+  writeFileSync(join(out, font.path), font.bytes);
   const servers = [
     createServer((request, response) => {
       const path = decodeURIComponent((request.url ?? "/").split("?")[0]).replace(/^\/+/, "") || "index.html";
       try {
         const body = readFileSync(join(out, path));
-        response.writeHead(200, { "content-type": path.endsWith(".js") ? "text/javascript" : path.endsWith(".png") ? "image/png" : "text/html" });
+        response.writeHead(200, { "content-type": path.endsWith(".js") ? "text/javascript" : path.endsWith(".png") ? "image/png" : path.endsWith(".woff2") ? "font/woff2" : "text/html" });
         response.end(body);
       } catch {
         response.writeHead(404);
@@ -165,12 +181,12 @@ window.__handle.drawn().then(() => { window.__ready = true; });
       }
     }).listen(HOST_PORT, "127.0.0.1"),
     createServer((request, response) => {
-      const body = { "/prices.html": priceSheet(repoRoot, client), "/front.html": FRONT(client), "/masthead.html": MASTHEAD(client) }[request.url ?? ""];
+      const body = { "/prices.html": priceSheet(repoRoot, client), "/front.html": FRONT(client), "/masthead.html": MASTHEAD(client), "/lettering.html": LETTERING(client) }[request.url ?? ""];
       if (!body) {
         response.writeHead(404);
         return response.end();
       }
-      response.writeHead(200, { "content-type": "text/html", "content-security-policy": request.url === "/masthead.html" ? MASTHEAD_POLICY : VIEW_POLICY });
+      response.writeHead(200, { "content-type": "text/html", "content-security-policy": request.url === "/masthead.html" ? MASTHEAD_POLICY : request.url === "/lettering.html" ? LETTERING_POLICY : VIEW_POLICY });
       response.end(body);
     }).listen(GUEST_PORT, "localhost"),
   ];
@@ -270,6 +286,21 @@ window.__handle.drawn().then(() => { window.__ready = true; });
     const home = await tab.evaluate(() => ({ inBody: Boolean(document.querySelector('[data-testid="home-view"] iframe[data-guest-view="front"]')), title: document.querySelector('iframe[data-guest-view="front"]')?.getAttribute("title") ?? null }));
     const listed = await front.evaluate(() => [...document.querySelectorAll("#list li")].map((li) => li.textContent));
     claim("a frame guest attached to the home is the routed home's body, drawn over what it reads", home.inBody && home.title === "The front page" && listed.length === 3, { home, listed });
+    // ── the faces the app lends its views, in a frame (Roadmap f-faces-lent-to-frames) ──
+    await open("/places/the-lettering");
+    const lettering = await guestFrame("lettering");
+    await until(lettering, () => [...document.fonts].some((face) => face.family.replace(/["']/g, "") === "Rock Face" && face.status === "loaded"), 15_000);
+    const lettered = await lettering.evaluate(() => ({
+      faces: [...document.fonts].filter((face) => face.family.replace(/["']/g, "") === "Rock Face").map((face) => face.status),
+      drawn: document.fonts.check('32px "Rock Face"'),
+      lent: document.getElementById("lent").getBoundingClientRect().width,
+      mono: document.getElementById("mono").getBoundingClientRect().width,
+    }));
+    claim(
+      "a frame guest is lent the face the app lends its views as a data: font, under Cloud's view policy with font-src data: alone, and its text draws in it",
+      lettered.faces.length === 1 && lettered.faces[0] === "loaded" && lettered.drawn && Math.abs(lettered.lent - lettered.mono) > 1 && violations.length === 0,
+      { ...lettered, violations, policy: LETTERING_POLICY },
+    );
     // ── the brand (FR-127) ──
     await open("/places/the-masthead");
     let masthead;

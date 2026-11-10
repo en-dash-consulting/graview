@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-24T04:02:44.134Z",
+  "at": "2026-11-10T18:43:29.791Z",
   "transport": "client",
   "engine": "chromium",
   "claims": {
@@ -120,6 +120,19 @@
           "The whole thing",
           "Later on"
         ]
+      }
+    },
+    "a frame guest is lent the face the app lends its views as a data: font, under Cloud's view policy with font-src data: alone, and its text draws in it": {
+      "ok": true,
+      "detail": {
+        "faces": [
+          "loaded"
+        ],
+        "drawn": true,
+        "lent": 346.9375,
+        "mono": 422.46875,
+        "violations": [],
+        "policy": "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; font-src data:"
       }
     },
     "a frame guest draws the app's logo from props.theme, the brand's inline SVG byte for byte at its own size, handed as a data: image (Cloud's view policy with img-src data:)": {

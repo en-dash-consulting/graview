@@ -1,5 +1,5 @@
 import type { AnySchema } from "@graview/core";
-import { useGoTo, useGraview, useHostFiles, type ViewComponent, type ViewProps } from "@graview/react/provider";
+import { useGoTo, useGraview, useHostAssets, useHostFiles, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { useEffect, useRef } from "react";
 import { frameChunk, untilItArrives, workerChunk } from "./arrive.js";
 import type { GuestFrame } from "./frame.js";
@@ -35,6 +35,10 @@ export interface GuestViewOptions {
   readonly pictures?: GuestPictures;
   /** Where a record's file is fetched for those pictures, under the app's base (`MountGuestViewOptions.file`). The page's host's files say where by default (`HostFiles.src`). */
   readonly file?: (href: string) => string | undefined;
+  /** Where a file the app holds is read from for the faces its brand lends its views, handed to a frame guest as `data:` fonts (`MountGuestViewOptions.asset`). Where the page's host serves the app's images by default (`HostAssets`). */
+  readonly asset?: (path: string) => string | undefined;
+  /** The `https:` origins a face lent to a frame guest may be read from by address (`MountGuestViewOptions.fonts`). None by default. */
+  readonly fonts?: { readonly origins: readonly string[] };
   /** Where the frame first stands before the guest asks for a height. 160px by default. */
   readonly height?: number;
   readonly limits?: GuestLimits;
@@ -73,6 +77,9 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
     const filesNow = useHostFiles();
     const hostFiles = useRef(filesNow);
     hostFiles.current = filesNow;
+    const assetsNow = useHostAssets();
+    const hostAssets = useRef(assetsNow);
+    hostAssets.current = assetsNow;
     const branded = useRef(brand);
     branded.current = brand;
     const goTo = useGoTo();
@@ -128,6 +135,10 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
           ...(options.reads ? { reads: options.reads } : {}),
           ...(options.pictures ? { pictures: options.pictures } : {}),
           ...(file ? { file } : {}),
+          /* The faces the app lends its views, read where the app's own files are served: the view's word, else the page's host's (Roadmap f-faces-lent-to-frames). */
+          ...(options.asset ? { asset: options.asset } : hostAssets.current ? { asset: (path: string) => hostAssets.current?.(path) ?? path } : {}),
+          ...(options.fonts ? { fonts: options.fonts } : {}),
+          onProblem: (said) => console.warn(`${options.name}: ${said}`),
           places: () => views.places(),
           brand: () => branded.current,
           /* A record, a place or a kind's list — narrowed and to a section — where the face goes; what goes nowhere is said in the console. */
