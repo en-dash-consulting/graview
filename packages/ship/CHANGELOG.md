@@ -1,5 +1,11 @@
 # @graview/ship
 
+## 0.1.72
+
+### Patch Changes
+
+- @graview/core@0.1.72
+
 ## 0.1.71
 
 ### Patch Changes
