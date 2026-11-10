@@ -37,10 +37,10 @@ export interface Playback<S extends AnySchema = AnySchema> {
    * closes the timeline and comes back to now.
    */
   show(seq: number | null, options?: { readonly focus?: boolean }): void;
-  /** Whether the keyboard was asked to go on to the timeline's scrubber as it is drawn (History pressed in the app menu). */
-  readonly focusWanted: boolean;
+  /** Whether the keyboard was asked to go on to the timeline's scrubber as it is drawn (History pressed in the app menu, or a host's `showHistory()`). */
+  readonly focusWanted?: boolean;
   /** The timeline took the keyboard, or let it be: asked no more. */
-  focused(): void;
+  focused?(): void;
   /** The store as it is now, whole: read through the seat's sight (`seenBy`), as the seat is served it. */
   readonly live: Store<S>;
   /** What the host keeps outside the log: declaration changes, a script view's code at a moment, the ops a compaction archived. */
@@ -98,44 +98,68 @@ export function useLiveStore<S extends AnySchema>(shown: Store<S>, principal: Pr
  * a host's own menu, through its mount handle, asks the face it mounted to
  * open its timeline at now — the way History in the app menu does —
  * without reaching into the tree. The door is the mount's own, handed down
- * by context: another mount over the same store is not asked, and a door
- * closed with its mount opens nothing again.
+ * by context, and what listens on it is where a timeline is drawn
+ * (`PastBar`), not every provider under it: a studio's or a picture's has
+ * no timeline to open. Another mount over the same store is not asked, and
+ * a door closed with its mount opens nothing again.
  */
 export interface HistoryDoor {
-  /** Opens the timeline at now on the faces under this door. Whether one heard it: `false` before a face is drawn, which then opens it as it arrives, and after `close`. */
-  show(): boolean;
-  /** A face's playback, listening; what it hands back stops it. */
-  listen(open: () => void): () => void;
+  /**
+   * Opens the timeline at now where this mount draws one, the keyboard
+   * going on to its scrubber with `focus`. Whether a timeline will draw:
+   * `false` where the face draws none, after `close`, and before the face
+   * has drawn — which then opens it as it arrives, unless it draws none.
+   */
+  show(options?: { readonly focus?: boolean }): boolean;
+  /** A timeline's place, listening; what it hands back stops it. */
+  listen(open: (options: { readonly focus: boolean }) => void): () => void;
+  /** The face has drawn: a request nobody heard is not kept from here. */
+  settle(): void;
+  /** Another app swapped in: a request kept for the face it replaced is dropped. */
+  forget(): void;
   /** The mount is gone: nothing waits, and nothing is opened again. */
   close(): void;
 }
 
 export function createHistoryDoor(): HistoryDoor {
-  const listening = new Set<() => void>();
-  let waiting = false;
+  const listening = new Set<(options: { readonly focus: boolean }) => void>();
+  let waiting: { readonly focus: boolean } | null = null;
+  let settled = false;
   let closed = false;
   return {
-    show() {
+    show(options) {
       if (closed) return false;
+      const asked = { focus: options?.focus === true };
       if (listening.size === 0) {
-        waiting = true;
+        if (!settled) waiting = asked;
         return false;
       }
-      for (const open of [...listening]) open();
+      for (const open of [...listening]) open(asked);
       return true;
     },
     listen(open) {
       if (closed) return () => {};
       listening.add(open);
       if (waiting) {
-        waiting = false;
-        open();
+        const asked = waiting;
+        waiting = null;
+        open(asked);
       }
       return () => void listening.delete(open);
     },
+    settle() {
+      settled = true;
+      // What drew with the face has listened by the next task; a request still kept then has no timeline to open.
+      setTimeout(() => {
+        if (listening.size === 0) waiting = null;
+      }, 0);
+    },
+    forget() {
+      waiting = null;
+    },
     close() {
       closed = true;
-      waiting = false;
+      waiting = null;
       listening.clear();
     },
   };
@@ -238,9 +262,6 @@ export function useOwnPlayback<S extends AnySchema>(live: Store<S>, principal: P
     [live],
   );
   const focused = useCallback(() => setFocusWanted(false), []);
-  // A host's menu opening the history (`handle.showHistory()`): the timeline at now, as History in the app menu opens it.
-  const door = useContext(HistoryDoorContext);
-  useEffect(() => (inherited || !door ? undefined : door.listen(() => setSeq(Number.POSITIVE_INFINITY))), [inherited, door]);
   const owns = useCallback(
     (store: Store<AnySchema>, seat: Principal) => [live as unknown as Store<AnySchema>, past?.store as unknown as Store<AnySchema> | undefined].some((one) => one !== undefined && (one === store || one.seenBy(seat) === store)),
     [live, past],

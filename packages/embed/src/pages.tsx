@@ -111,6 +111,7 @@ function PagesDrawing<S extends AnySchema>(props: PagesEmbedProps<S>) {
                   name={brand?.name ?? app.name}
                   heading={props.heading ?? 2}
                   named={barLeaves(bar).name !== false}
+                  history={barLeaves(bar).history !== false}
                   at={at}
                   without={props.pages?.without()}
                   home={{ ...(props.hrefOf?.("/") !== undefined ? { href: props.hrefOf("/") } : address ? { href: addressOf("/", base) } : {}), go: () => steer("/"), current: at.split("?")[0] === "/" }}
@@ -274,7 +275,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
       });
       return said!;
     },
-    showHistory: () => door.show(),
+    showHistory: () => door.show({ focus: true }),
     unmount: () => {
       door.close();
       root.unmount();

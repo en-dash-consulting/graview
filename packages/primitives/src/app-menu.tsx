@@ -28,7 +28,7 @@ const MENU_CSS = `
 
 const SCHEME_WORDS: Record<SchemeChoice, string> = { system: "System", light: "Light", dark: "Dark" };
 
-export function AppMenuPane({ faces, rows, scheme, close }: { readonly faces?: BarFaces | undefined; readonly rows: readonly AppMenuRow[]; readonly scheme?: BarScheme | undefined; readonly close: () => void }) {
+export function AppMenuPane({ faces, rows, scheme, history = false, close }: { readonly faces?: BarFaces | undefined; readonly rows: readonly AppMenuRow[]; readonly scheme?: BarScheme | undefined; readonly history?: boolean; readonly close: () => void }) {
   const offers = scheme?.offers ?? (["system", "light", "dark"] as const);
   return (
     <>
@@ -62,7 +62,7 @@ export function AppMenuPane({ faces, rows, scheme, close }: { readonly faces?: B
           })}
         </div>
       ) : null}
-      <HistoryRow close={close} />
+      {history ? <HistoryRow close={close} /> : null}
       {rows.length > 0 ? (
         <ul aria-label="From the host" data-testid="app-menu-rows" className="graview-app-menu-group">
           {rows.map((row) => (

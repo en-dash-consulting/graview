@@ -658,6 +658,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
               name={brand?.name ?? app.name}
               heading={heading}
               named={barLeaves(bar).name !== false}
+              history={barLeaves(bar).history !== false}
               faces={barLeaves(bar).faces === false ? undefined : {
                 scene: { label: sceneTitle(arrangement), current: !onPages, go: () => toOverview(), reach: () => void preload(sceneFace.current) },
                 // The pages, back at the page the reader was on.
@@ -948,8 +949,10 @@ export interface EmbedHandle {
    * f-host-opens-history): the timeline History in the app menu opens —
    * every change, the app as it was at each, played back, and "Restore to
    * here" — at now, on whichever face this mount draws, and on no other
-   * mount over the same store. Whether a face heard it: `false` before the
-   * face has drawn, which then opens it as it arrives, and after `unmount`.
+   * mount over the same store; the keyboard goes on to its scrubber where
+   * nothing else holds it. Whether a timeline will draw: `false` on the
+   * picture, which draws none, and after `unmount`; `false` too before the
+   * face has drawn, which then opens it as it arrives.
    */
   showHistory(): boolean;
   readonly store: Store<AnySchema>;
@@ -1015,6 +1018,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
   let drawnFace: EmbedFace | null = null;
   let waiting: (() => void)[] = [];
   const onFaceDrawn = (face: EmbedFace) => {
+    historyDoor.settle();
     drawnFace = face;
     if (face !== asked) return;
     const done = waiting;
@@ -1110,6 +1114,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
         flushSync(() => {
           setters?.label(label);
           setters?.app({ app, remote, at, n: ++swaps });
+          historyDoor.forget();
         });
       };
       if (settling) swap();
@@ -1165,7 +1170,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
       });
       return said!;
     },
-    showHistory: () => historyDoor.show(),
+    showHistory: () => historyDoor.show({ focus: true }),
     unmount: () => {
       historyDoor.close();
       root.unmount();

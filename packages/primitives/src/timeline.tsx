@@ -141,9 +141,12 @@ export function Timeline({ face }: { readonly face: TimelineFace }) {
   const scrubberRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
     if (!playback.focusWanted) return;
-    playback.focused();
+    playback.focused?.();
     const active = document.activeElement;
-    if (active === null || active === document.body || active.closest('[data-testid="app-menu-open"], [data-testid="app-menu"]') !== null) scrubberRef.current?.focus({ preventScroll: true });
+    // This face's own menu: the embed's box it is drawn in, or the page where it is the page.
+    const root = section.current?.closest("[data-graview-embed]") ?? document.body;
+    const menu = active?.closest('[data-testid="app-menu-open"], [data-testid="app-menu"]');
+    if (active === null || active === document.body || (menu && root.contains(menu))) scrubberRef.current?.focus({ preventScroll: true });
   }, [playback.focusWanted, playback]);
 
   /*

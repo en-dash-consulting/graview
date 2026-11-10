@@ -9,7 +9,7 @@ import { barPanes } from "./bar-panes-door.js";
 const TidyFoot = barPanes.part((panes, props: { readonly id: string; readonly scene: boolean; readonly reach: BarGo; readonly done: () => void }) => <panes.TidyFoot {...props} />, { quiet: true });
 
 /* The app menu's rows (Roadmap f-app-bar-calm): fetched with the panes when it is first reached for. */
-const AppMenuRows = barPanes.part((panes, props: { readonly faces?: BarFaces | undefined; readonly rows: readonly AppMenuRow[]; readonly scheme?: BarScheme | undefined; readonly close: () => void }) => <panes.AppMenuPane {...props} />, { what: "The app menu" });
+const AppMenuRows = barPanes.part((panes, props: { readonly faces?: BarFaces | undefined; readonly rows: readonly AppMenuRow[]; readonly scheme?: BarScheme | undefined; readonly history: boolean; readonly close: () => void }) => <panes.AppMenuPane {...props} />, { what: "The app menu" });
 
 /* Who else is here (FR-155): drawn once somebody is, so a reader alone never fetches it. */
 const Here = barPanes.part((panes, props: { readonly scene: boolean; readonly compact: boolean }) => <panes.Here {...props} />, { quiet: true });
@@ -573,6 +573,7 @@ export function AppBar({
   scenePlaces,
   skips,
   named = true,
+  history = true,
   actions,
   appMenu = NO_ROWS,
   scheme,
@@ -583,6 +584,13 @@ export function AppBar({
   readonly name: string;
   /** Whether the app's mark and name are drawn, the way home: not under a host's own bar that says them. */
   readonly named?: boolean;
+  /**
+   * Whether the app menu offers History, the app's timeline (Roadmap
+   * f-host-opens-history), where the face keeps a playback. Never under a
+   * host's own bar that says the app's name: the host offers it there, from
+   * its own menu, by `showHistory()`.
+   */
+  readonly history?: boolean;
   /** The level the app's name is said at: 1 when the page is the app's, `false` when the host's own heading already says it. */
   readonly heading?: 1 | 2 | 3 | 4 | 5 | 6 | false;
   /** The way home, and whether the reader is there. */
@@ -777,7 +785,8 @@ export function AppBar({
   // The app menu: the scene and the pages, the host's rows, the scheme — drawn where it holds anything.
   // History is the menu's wherever the face keeps a playback (Roadmap f-host-opens-history).
   const playback = usePlayback();
-  const menuHolds = Boolean(faces) || appMenu.length > 0 || Boolean(scheme) || playback !== null;
+  const offersHistory = history && named && playback !== null;
+  const menuHolds = Boolean(faces) || appMenu.length > 0 || Boolean(scheme) || offersHistory;
   return (
     <>
       <header
@@ -806,8 +815,8 @@ export function AppBar({
                 </span>
               </Home>
             </Heading>
-            {menuHolds ? <AppMenu name={name} faces={faces} rows={appMenu} scheme={scheme} /> : null}
-          </div> : menuHolds ? <AppMenu name={name} faces={faces} rows={appMenu} scheme={scheme} /> : null}
+            {menuHolds ? <AppMenu name={name} faces={faces} rows={appMenu} scheme={scheme} history={offersHistory} /> : null}
+          </div> : menuHolds ? <AppMenu name={name} faces={faces} rows={appMenu} scheme={scheme} history={offersHistory} /> : null}
           <div className="graview-bar-mid" {...(stands ? { "data-places": "standing" } : !compact && placeControl ? { "data-place": "" } : {})}>
             {compact ? null : placeControl}
           </div>
@@ -915,7 +924,7 @@ const NO_ROWS: readonly AppMenuRow[] = [];
  */
 export const FACE_EVENT = "graview:go-to-face";
 
-function AppMenu({ name, faces, rows, scheme }: { readonly name: string; readonly faces?: BarFaces | undefined; readonly rows: readonly AppMenuRow[]; readonly scheme?: BarScheme | undefined }) {
+function AppMenu({ name, faces, rows, scheme, history }: { readonly name: string; readonly faces?: BarFaces | undefined; readonly rows: readonly AppMenuRow[]; readonly scheme?: BarScheme | undefined; readonly history: boolean }) {
   const popover = usePopover("app-menu", { align: "start" });
   const reach = () => barPanes.prefetch();
   /* A part asked to go to the other face (`FACE_EVENT`): gone to as the menu's row would, without opening the menu. */
@@ -958,7 +967,7 @@ function AppMenu({ name, faces, rows, scheme }: { readonly name: string; readonl
       <div {...popover.pane} data-testid="app-menu" hidden={!popover.open} className="graview-bar-list graview-app-menu" style={POPOVER_STYLE} aria-label={`${name} — app menu`} role="group">
         {popover.open ? (
           <Suspense fallback={null}>
-            <AppMenuRows faces={faces} rows={rows} scheme={scheme} close={() => popover.setOpen(false)} />
+            <AppMenuRows faces={faces} rows={rows} scheme={scheme} history={history} close={() => popover.setOpen(false)} />
           </Suspense>
         ) : null}
       </div>

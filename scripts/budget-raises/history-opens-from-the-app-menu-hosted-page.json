@@ -1,7 +1,7 @@
 {
   "budget": "a hosted page",
-  "minified": 650,
-  "gzipped": 180,
+  "minified": 830,
+  "gzipped": 260,
   "changeset": "history-opens-from-the-app-menu-and-the-hosts-menu.md",
-  "note": "Raised when History came to the app menu and showHistory() to the mount handle: the app menu's control drawn wherever the face keeps a playback, a mount's own history door its faces listen on, and a playback asked to give the keyboard to its scrubber. Measured at 678_058 / 235_001 against 677_421 / 234_828 minified and gzipped."
+  "note": "Raised when History came to the app menu and showHistory() to the mount handle: the app menu's control drawn wherever the face keeps a playback and the bar says the app's name, a mount's own history door that the timeline's place listens on, and a playback asked to give the keyboard to its scrubber. Measured at 678_239 / 235_078 against its base of 677_421 / 234_828 minified and gzipped."
 }

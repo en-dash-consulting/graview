@@ -233,26 +233,60 @@ describe("showHistory() on the mount handle", () => {
     }
   });
 
-  it("opens nothing once its mount is gone: unmounted, asked, then mounted again over the store", { timeout: 30_000 }, async () => {
+  it("opens nothing once its mount is gone, not on the mount over the same store and element that took its place", { timeout: 30_000 }, async () => {
     const store = written();
     const host = placed();
-    let handle: EmbedHandle | undefined;
+    let gone: EmbedHandle | undefined;
     await act(async () => {
-      handle = mount(host, pagesAt(store));
+      gone = mount(host, pagesAt(store));
     });
     await settled(() => expect(host.textContent).toContain("Third"));
-    await act(async () => handle!.unmount());
-    expect(handle!.showHistory()).toBe(false);
+    await act(async () => gone!.unmount());
     let again: EmbedHandle | undefined;
     await act(async () => {
       again = mount(host, pagesAt(store));
     });
     try {
       await settled(() => expect(host.textContent).toContain("Third"));
+      let heard: boolean | undefined;
+      await act(async () => {
+        heard = gone!.showHistory();
+      });
+      expect(heard).toBe(false);
+      await awhile();
+      expect(timeline(host)).toBeNull();
+      // The mount that is here still opens its own.
+      await act(async () => void again!.showHistory());
+      await settled(() => atNow(host));
+    } finally {
+      await act(async () => again!.unmount());
+      host.remove();
+      sessionStorage.clear();
+    }
+  });
+
+  it("says a picture draws no timeline, and opens none when the host goes on to another face", { timeout: 30_000 }, async () => {
+    const host = placed();
+    let handle: EmbedHandle | undefined;
+    await act(async () => {
+      handle = mount(host, { app, fonts: false, face: "picture", store: written(), principal: me } as unknown as EmbedOptions);
+    });
+    try {
+      await act(async () => handle!.drawn());
+      await awhile();
+      let heard: boolean | undefined;
+      await act(async () => {
+        heard = handle!.showHistory();
+      });
+      expect(heard).toBe(false);
+      await awhile();
+      expect(timeline(host)).toBeNull();
+      await act(async () => handle!.setFace("pages"));
+      await settled(() => expect(host.textContent).toContain("Third"));
       await awhile();
       expect(timeline(host)).toBeNull();
     } finally {
-      await act(async () => again!.unmount());
+      await act(async () => handle!.unmount());
       host.remove();
       sessionStorage.clear();
     }
@@ -285,6 +319,37 @@ describe("showHistory() on the mount handle", () => {
       asked.remove();
       beside.remove();
       sessionStorage.clear();
+    }
+  });
+});
+
+describe("History under a host's own bar", () => {
+  it("is not offered where the host's bar says the app's name, nor where the host says no History, and the host's showHistory() still opens it", { timeout: 30_000 }, async () => {
+    for (const bar of [{ faces: false, name: false }, { history: false }] as const) {
+      const host = placed();
+      let handle: EmbedHandle | undefined;
+      await act(async () => {
+        handle = mount(host, { ...pagesAt(written()), bar } as unknown as EmbedOptions);
+      });
+      try {
+        await settled(() => expect(host.textContent).toContain("Third"));
+        await awhile();
+        if ("name" in bar) expect(host.querySelector('[data-testid="app-menu-open"]'), "no nameless chevron for History alone").toBeNull();
+        else {
+          await click(host.querySelector('[data-testid="app-menu-open"]'));
+          await awhile();
+          expect(host.querySelector('[data-testid="app-menu"] [data-testid="app-face-pages"]')).not.toBeNull();
+          expect(host.querySelector('[data-testid="app-menu-history"]')).toBeNull();
+        }
+        await act(async () => void handle!.showHistory());
+        await settled(() => atNow(host));
+        // The host's own menu pressed, and put away: the keyboard goes on to the scrubber.
+        await settled(() => expect(document.activeElement).toBe(host.querySelector('[data-testid="scrubber"]')));
+      } finally {
+        await act(async () => handle!.unmount());
+        host.remove();
+        sessionStorage.clear();
+      }
     }
   });
 });
