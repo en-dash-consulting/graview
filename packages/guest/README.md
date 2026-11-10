@@ -62,11 +62,12 @@ guest.autoSize();
 
 The frame takes each height it asks for, up to `limits.maxHeight` (4,000px
 by default). A page sized by its own frame (`height: 100vh`) asks for a
-little more each time the frame grows, so a guest whose heights track the
-frame's own a few times running is held at the height it was given and
-watched: one that then asks another height of its own accord has content
-that grows, and grows to the cap; one that asks nothing new stays held, the
-frame wears `data-guest-view-held`, and `onProblem` is told why. Size the
+little more each time the frame grows. A height that tracks the frame's
+own a few times running is refused for a moment: content that grows asks
+another meanwhile and is taken; otherwise the height is given after all,
+and a guest that then asks again by the same step is held, the frame wears
+`data-guest-view-held`, and `onProblem` is told why. A gallery whose last
+picture lands just there keeps its whole height. Size the
 page by its content. `guestView({ onSize })` is told each height the frame
 takes.
 
@@ -120,6 +121,8 @@ serves it, or one on an origin `fonts.origins` lists — at most 2 MB, the
 last lent winning a shared name, and hands it as a `data:` font the client
 puts in the frame's document. A guest names the family (`font-family:
 "Rock Face", serif`) and loads nothing; its policy needs `font-src data:`.
+Frames in one brand share one reading of its faces. The frame says it has
+drawn once they are read, or after two seconds, saying which did not come.
 What is not lent is said to `onProblem` (`guestView` says it in the console).
 
 `title` names the frame for assistive technology. Registered with the same

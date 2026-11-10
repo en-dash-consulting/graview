@@ -1,0 +1,7 @@
+{
+  "budget": "the guest host, before a worker is drawn",
+  "minified": 290,
+  "gzipped": 102,
+  "changeset": "a-frame-that-grows-only-with-itself-is-held.md",
+  "note": "Raised when the growth guard came to give a refused height back after a moment and hold a guest only when it asks again by the same step once its frame has moved, armed again after content that grew (Roadmap f-guest-growth-guard). Measured at 36_876 / 16_764 against 36_586 / 16_662 minified and gzipped."
+}

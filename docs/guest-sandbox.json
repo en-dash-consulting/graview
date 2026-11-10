@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-10T19:20:28.472Z",
+  "at": "2026-11-10T19:52:24.803Z",
   "transport": "frame",
   "engine": "chromium",
   "claims": {
@@ -28,26 +28,6 @@
             "kind": "shopper",
             "label": "Bethan Okonkwo",
             "email": "bethan@mail.example"
-          },
-          {
-            "label": "Flood 0",
-            "id": "enquiry:flood-0.09gt5i4",
-            "kind": "enquiry"
-          },
-          {
-            "label": "Flood 1",
-            "id": "enquiry:flood-1.09gt5i4",
-            "kind": "enquiry"
-          },
-          {
-            "label": "Flood 2",
-            "id": "enquiry:flood-2.09gt5i4",
-            "kind": "enquiry"
-          },
-          {
-            "label": "Flood 3",
-            "id": "enquiry:flood-3.09gt5i4",
-            "kind": "enquiry"
           }
         ]
       }

@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-10T19:14:08.914Z",
+  "at": "2026-11-10T19:52:44.762Z",
   "transport": "client",
   "engine": "firefox",
   "claims": {
@@ -138,16 +138,17 @@
     "a frame guest whose page is its own frame's height (100vh) is held a few rounds in rather than grown to Cloud's 20,000px, and the host is told why in words": {
       "ok": true,
       "detail": {
-        "height": 288,
-        "held": "288px",
+        "height": 320,
+        "held": "320px",
         "sizes": [
           192,
           224,
           256,
-          288
+          288,
+          320
         ],
         "said": [
-          "The view \"tall\" asked to be 32px taller than its frame each time its frame was made taller, 4 times running, so it is held at 288px: a page sized by its own frame (100vh) grows with it. Size the page by its content, or ask for a height (guest.size)."
+          "The view \"tall\" asked to be 32px taller than its frame each time its frame was made taller, 5 times running, so it is held at 320px: a page sized by its own frame (100vh) grows with it. Size the page by its content, or ask for a height (guest.size)."
         ]
       }
     },
@@ -156,7 +157,7 @@
       "detail": {
         "height": 20000,
         "held": null,
-        "sizes": 20,
+        "sizes": 18,
         "said": []
       }
     },

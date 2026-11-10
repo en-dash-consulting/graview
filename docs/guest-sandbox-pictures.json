@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-10T19:13:42.576Z",
+  "at": "2026-11-10T19:52:27.357Z",
   "transport": "pictures",
   "engine": "chromium",
   "claims": {
@@ -77,15 +77,15 @@
           "signed": true
         },
         {
+          "path": "/graview/files/face-6.png",
+          "signed": true
+        },
+        {
           "path": "/graview/files/face-4.png",
           "signed": true
         },
         {
           "path": "/graview/files/face-5.png",
-          "signed": true
-        },
-        {
-          "path": "/graview/files/face-6.png",
           "signed": true
         },
         {
@@ -400,15 +400,15 @@
           "signed": true
         },
         {
+          "path": "/graview/files/face-6.png",
+          "signed": true
+        },
+        {
           "path": "/graview/files/face-4.png",
           "signed": true
         },
         {
           "path": "/graview/files/face-5.png",
-          "signed": true
-        },
-        {
-          "path": "/graview/files/face-6.png",
           "signed": true
         },
         {
@@ -682,15 +682,15 @@
             "signed": true
           },
           {
+            "path": "/graview/files/face-6.png",
+            "signed": true
+          },
+          {
             "path": "/graview/files/face-4.png",
             "signed": true
           },
           {
             "path": "/graview/files/face-5.png",
-            "signed": true
-          },
-          {
-            "path": "/graview/files/face-6.png",
             "signed": true
           },
           {
@@ -1013,15 +1013,15 @@
           "signed": true
         },
         {
+          "path": "/graview/files/face-6.png",
+          "signed": true
+        },
+        {
           "path": "/graview/files/face-4.png",
           "signed": true
         },
         {
           "path": "/graview/files/face-5.png",
-          "signed": true
-        },
-        {
-          "path": "/graview/files/face-6.png",
           "signed": true
         },
         {
@@ -1275,7 +1275,7 @@
         ],
         "still": false,
         "paused": false,
-        "time": 0.042421,
+        "time": 0.062986,
         "said": null
       }
     },
@@ -1284,7 +1284,7 @@
       "detail": {
         "playing": true,
         "paused": false,
-        "time": 0.049362,
+        "time": 0.06398,
         "after": 0
       }
     },

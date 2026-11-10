@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-10T19:14:25.901Z",
+  "at": "2026-11-10T19:53:39.233Z",
   "transport": "brand",
   "engine": "chromium",
   "policy": "the app's own page, with no content security policy",
@@ -44,7 +44,7 @@
           "font": "Georgia, \"Times New Roman\", serif"
         },
         "marked": false,
-        "src": "blob:http://127.0.0.1:5992/3691fdee-2553-4d51-920b-eb055302c",
+        "src": "blob:http://127.0.0.1:5992/f32051cf-7a89-4188-b1d1-b32eefa16",
         "bytes": 192
       }
     },
@@ -69,7 +69,7 @@
     "the logo is handed as a blob: URL of the page itself, which the policy lets an image load from": {
       "ok": true,
       "detail": {
-        "src": "blob:http://127.0.0.1:5992/3691fdee-2553-4d51-920b-eb055302c"
+        "src": "blob:http://127.0.0.1:5992/f32051cf-7a89-4188-b1d1-b32eefa16"
       }
     },
     "the view is drawn with the app's stylesheet for every view, a sheet of the host's in the layer after the view's own: the heading takes its letter-spacing and its capitals, and the theme's padding wins where both say one": {
@@ -180,7 +180,7 @@
           "font": "\"Courier New\", Courier, monospace"
         },
         "marked": true,
-        "src": "blob:http://127.0.0.1:5992/4c0960ff-83cf-4a09-97b3-5db27d989",
+        "src": "blob:http://127.0.0.1:5992/b230940f-f508-4060-8e21-7fbdce708",
         "bytes": 89
       }
     },
@@ -232,7 +232,7 @@
     "the last logo's blob: URL is let go once the new one is drawn": {
       "ok": true,
       "detail": {
-        "url": "blob:http://127.0.0.1:5992/3691fdee-2553-4d51-920b-eb055302c620"
+        "url": "blob:http://127.0.0.1:5992/f32051cf-7a89-4188-b1d1-b32eefa16a39"
       }
     },
     "the PNG at the page's own address was fetched once, by the host: the view loaded nothing": {
