@@ -1,5 +1,5 @@
 import type { AnySchema, Brand, Person, Principal, Store } from "@graview/core";
-import { createPartsWatch, ErrorReportContext, GraviewProvider, PartsWatchContext, type AwaySummary, type HostNotification, type Scheme } from "@graview/react/provider";
+import { createPartsWatch, ErrorReportContext, GraviewProvider, PartsWatchContext, createHistoryDoor, HistoryDoorContext, type AwaySummary, type HostNotification, type Scheme } from "@graview/react/provider";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDrawnSignal } from "./drawn.js";
 import { draftWaits, fetchDraftHost, Settling, useDraft, type EmbedDraftView } from "./draft.js";
@@ -111,6 +111,7 @@ function PagesDrawing<S extends AnySchema>(props: PagesEmbedProps<S>) {
                   name={brand?.name ?? app.name}
                   heading={props.heading ?? 2}
                   named={barLeaves(bar).name !== false}
+                  history={barLeaves(bar).history !== false}
                   at={at}
                   without={props.pages?.without()}
                   home={{ ...(props.hrefOf?.("/") !== undefined ? { href: props.hrefOf("/") } : address ? { href: addressOf("/", base) } : {}), go: () => steer("/"), current: at.split("?")[0] === "/" }}
@@ -177,6 +178,8 @@ export interface PagesEmbedHandle {
   setDraftView(draft: EmbedDraftView | null): void;
   /** Says something in the app's own notices (FR-75): a toast, or a banner that stays until it is cleared. */
   notify(notice: Notice): NoticeHandle;
+  /** Opens the app's history from the host's own menu (Roadmap f-host-opens-history): the timeline History in the app menu opens, at now, on this mount alone. Whether the face heard it: `false` before it has drawn, which then opens it as it arrives, and after `unmount`. */
+  showHistory(): boolean;
   readonly store: Store<AnySchema>;
   unmount(): void;
 }
@@ -188,6 +191,8 @@ export interface PagesEmbedHandle {
 export function mount<S extends AnySchema>(element: HTMLElement, options: PagesEmbedOptions<S>): PagesEmbedHandle {
   const store = options.store ?? options.remote?.store ?? storeOf(options.app, options.seed);
   const board = options.notices ?? createNoticeBoard();
+  // This mount's own way to the timeline (Roadmap f-host-opens-history): closed with it.
+  const door = createHistoryDoor();
   let set: {
     scheme(scheme: Scheme): void;
     seat(principal: Principal): void;
@@ -219,6 +224,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
     const [draft, setDraft] = useState<EmbedDraftView | null | undefined>(options.draftView);
     set = { path: setPath, scheme: setScheme, seat: setSeat, seats: setSeats, people: setPeople, hostContext: setHostContext, brand: setBrand, whileAway: setWhileAway, label: setLabel, hostActions: setHostActions, barActions: setBarActions, hostBar: (bar) => setHostBar((held) => ({ ...held, ...bar })), draft: setDraft };
     return (
+      <HistoryDoorContext.Provider value={door}>
       <PagesEmbed<S>
         {...options}
         store={store as never}
@@ -238,6 +244,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
         scheme={scheme}
         onSeat={setSeat}
       />
+      </HistoryDoorContext.Provider>
     );
   }
   const root: Root = createRoot(element);
@@ -268,7 +275,11 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
       });
       return said!;
     },
-    unmount: () => root.unmount(),
+    showHistory: () => door.show({ focus: true }),
+    unmount: () => {
+      door.close();
+      root.unmount();
+    },
   };
 }
 

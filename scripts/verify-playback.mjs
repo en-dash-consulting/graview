@@ -20,7 +20,10 @@
  * seat by `archivedSeenBy`, and the scrubber's first stop is that moment,
  * drawn as it stood, with the plan's sentence and link in a quiet line and
  * no alert; and a host whose history is kept since a time after every
- * archived change is never asked for the archive at all.
+ * archived change is never asked for the archive at all. And "History",
+ * one row in the app menu beside the app's name, reached by the keyboard,
+ * opens the same timeline at now on both faces, and says "No changes yet"
+ * before anything has happened (Roadmap f-host-opens-history).
  *
  *   node scripts/verify-playback.mjs [--engine=chromium|webkit|firefox] [--quick] [--headed]
  *
@@ -173,6 +176,33 @@ const showOldest = async (page) => {
 };
 
 /*
+ * HISTORY, FROM THE APP MENU (Roadmap f-host-opens-history), as a keyboard
+ * reaches it: the menu's control beside the app's name pressed with Enter,
+ * Tab walked until the keyboard is on the row named "History", and Enter.
+ * What it opens is read once the timeline is drawn: where it stands, what
+ * it says, where the keyboard went, and whether the menu put itself away.
+ */
+const historyFromTheAppMenu = async (page) => {
+  await page.locator('[data-testid="app-menu-open"]').locator("visible=true").first().focus();
+  await page.keyboard.press("Enter");
+  await page.waitForSelector('[data-testid="app-menu"] [data-testid="app-menu-history"]', { timeout: 20_000 });
+  const named = await page.locator('[data-testid="app-menu"]').getByRole("button", { name: "History", exact: true }).count();
+  let tabs = 0;
+  for (; tabs < 40; tabs++) {
+    if (await page.evaluate(() => document.activeElement?.getAttribute("data-testid") === "app-menu-history")) break;
+    await page.keyboard.press("Tab");
+  }
+  const reached = await page.evaluate(() => document.activeElement?.getAttribute("data-testid") === "app-menu-history");
+  if (reached) await page.keyboard.press("Enter");
+  else await page.click('[data-testid="app-menu-history"]');
+  await page.waitForSelector('[data-testid="timeline"]', { timeout: 20_000 }).catch(() => {});
+  await page.waitForFunction(() => document.activeElement?.getAttribute("data-testid") === "scrubber", undefined, { timeout: 5_000 }).catch(() => {});
+  const keyboard = await page.evaluate(() => document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName ?? null);
+  const menuOpen = await page.locator('[data-testid="app-menu"]:not([hidden])').count() > 0;
+  return { named, reached, tabs, keyboard, menuOpen, shown: await drawn(page) };
+};
+
+/*
  * THE ARCHIVE A HOST KEEPS (FR-196): Things keeps none, so the harness hands
  * one as `__todoHistory` before the page loads — the ops and epochs the
  * harness's own compaction moved out, served a range at a time. `?archive=`
@@ -291,6 +321,11 @@ try {
       await arriveWithoutWebfonts(page, SCENE("&fresh=1"));
       await ready(page);
       run.before = await drawn(page);
+      // Before anything has happened, History is in the app menu all the same, and its timeline says so.
+      run.historyEmpty = await historyFromTheAppMenu(page);
+      run.historyEmptyLog = await page.evaluate(() => window.__playbackStores.find((one) => one.schema.kinds.includes("task")).log.length);
+      await page.click('[data-testid="back-to-now"]');
+      await page.waitForTimeout(400);
       run.grown = await grow(page);
       await page.waitForTimeout(500);
       run.now = await drawn(page);
@@ -322,6 +357,10 @@ try {
       await page.click('[data-testid="back-to-now"]');
       await page.waitForTimeout(400);
       run.backToNow = await drawn(page);
+      // History, from the app menu, by the keyboard: the same timeline, at now.
+      run.historyScene = await historyFromTheAppMenu(page);
+      await page.click('[data-testid="back-to-now"]');
+      await page.waitForTimeout(400);
 
       // The routed face, on the same history: the list of tasks as it was.
       await arriveWithoutWebfonts(page, PAGES);
@@ -338,6 +377,9 @@ try {
       await page.click('[data-testid="back-to-now"]');
       await page.waitForTimeout(400);
       run.pagesBack = await drawn(page);
+      run.historyPages = await historyFromTheAppMenu(page);
+      await page.click('[data-testid="back-to-now"]');
+      await page.waitForTimeout(400);
       // "Restore to here": every change since taken back as one, which is undone as one.
       await showOldest(page);
       await scrub(page, 2);
@@ -429,6 +471,13 @@ report.checks = {
   thePlayerWalksToNowAtItsSpeed: every((run) => run.playing.playing && !run.played.playing && run.played.index === run.played.max && run.played.past === "now"),
   backToNowIsNow: every((run) => !run.backToNow.timeline && run.backToNow.added.length === ADDED.length && run.backToNow.early),
   theRoutedFaceRedrawsThePlaceAsItWas: every((run) => run.pagesNow.added.length === ADDED.length - 1 && /^As of /.test(run.pagesStart.asOf ?? "") && exactly(run.pagesStart, run.pagesStartWas, "open") && exactly(run.pagesStopped, run.pagesStoppedWas, "open") && run.pagesBack.added.length === ADDED.length - 1 && !run.pagesBack.timeline),
+  // Roadmap f-host-opens-history: one row in the app menu, named "History", reached by the keyboard, opens the timeline at now on both faces, puts the menu away and hands the keyboard to its scrubber.
+  historyInTheAppMenuOpensTheTimelineAtNowOnBothFaces: every((run) =>
+    [run.historyScene, run.historyPages].every(
+      (at) => at && at.named === 1 && at.reached && !at.menuOpen && at.keyboard === "scrubber" && at.shown.timeline && at.shown.past === "now" && at.shown.asOf === "Now" && at.shown.ticks.length === 6 && at.shown.index === at.shown.max,
+    ),
+  ),
+  historyIsInTheAppMenuBeforeAnythingHasHappenedAndSaysNoChangesYet: every((run) => run.historyEmptyLog === 0 && run.historyEmpty?.named === 1 && run.historyEmpty.shown.timeline && run.historyEmpty.shown.caption === "No changes yet" && run.historyEmpty.shown.ticks.length === 0),
   restoreToHereIsOneChangeBackToThatMoment: every((run) => run.restoreOffered && !run.restored.timeline && run.restoredStore?.same && run.restoredStore?.oneUndo && /^Restore to /.test(run.restoredStore?.intent ?? "")),
   // FR-196: with the host's archive the scrubber reaches the start, and seq 1 is drawn as the uncompacted store stood there.
   aCompactedStoresScrubberReachesSeqOneThroughTheArchive: every((run) => run.compacted?.horizon > 1 && run.compacted.archived === run.compacted.horizon && run.atOne?.shown.past === "1" && run.atOne.shown.index === 1 && run.atStart?.shown.past === "0"),
