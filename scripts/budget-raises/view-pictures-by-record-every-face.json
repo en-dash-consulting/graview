@@ -1,0 +1,7 @@
+{
+  "budget": "every face",
+  "minified": 1817,
+  "gzipped": 599,
+  "changeset": "a-view-chooses-its-pictures-by-record.md",
+  "note": "Raised when a view came to choose its pictures by record (Roadmap f-view-pictures-by-record): `pictures.records`, its subject and the records linked to it or a list of ids, and `pictures.most`, read off what it is handed on the page and in a headless run alike (`pictureRecordsOf`), and judged by `checkManifest` with its finding codes. Measured at 3_151_055 / 1_142_917 against 3_149_238 / 1_142_318 minified and gzipped."
+}

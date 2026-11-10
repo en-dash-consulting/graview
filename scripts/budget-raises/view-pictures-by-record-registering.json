@@ -1,0 +1,7 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 889,
+  "gzipped": 257,
+  "changeset": "a-view-chooses-its-pictures-by-record.md",
+  "note": "Raised when a view came to choose its pictures by record (Roadmap f-view-pictures-by-record): `pictures.records`, its subject and the records linked to it or a list of ids, and `pictures.most`, read off what it is handed on the page and in a headless run alike (`pictureRecordsOf`), and judged by `checkManifest` with its finding codes. Measured at 48_684 / 21_054 against 47_795 / 20_797 minified and gzipped."
+}

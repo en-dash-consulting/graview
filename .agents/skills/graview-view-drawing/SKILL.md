@@ -88,9 +88,8 @@ said once in its console and the host's problems, with the address:
 
 - **A `data:` image** the view holds: PNG, GIF, JPEG, WebP, AVIF, BMP or
   SVG, at most 512,000 characters as its URL.
-- **The app's logo**: `<img src="${props.theme.logo}">`. The host made it
-  from the brand's mark (a `blob:` URL of the page, or a `data:` image
-  where the page's policy refuses `blob:`). Absent when the brand has none.
+- **The app's logo**: `<img src="${props.theme.logo}">`, which the host
+  made from the brand's mark; absent when it has none.
 - **An image the app holds**, by the content address it was stored at:
   `/graview/assets/<sha256>.<ext>` (what Graview Cloud's `add_image`
   answers) — or that path under the app's base, or by the page's own
@@ -103,15 +102,17 @@ said once in its console and the host's problems, with the address:
   it send what it reads anywhere. It is asked for with no referrer.
   Unlisted, a URL on a record is refused.
 - **A picture on a record.** Say `pictures: true` in the manifest, or
-  `{ width: 400 }`, the widest the view draws one in CSS pixels. Each file
+  `{ width: 400 }`, the widest it draws one in CSS pixels. Each file
   on a record the view is handed is then `{ name, type, bytes, width,
   height, caption, src, left }` in its field, never the host's path to it.
   `src` is the address the host made from the bytes, fetched as the reader
-  and made smaller to `width`; it is absent on the first push, and a push follows when
-  it is ready. `left` says why a picture will never come: past one
+  and made smaller to `width`; absent until a later push brings it.
+  `left` says why a picture will never come: past one
   picture's byte budget or the view's, or what the host answered when it
-  was not loaded. A document, and an SVG, has no `src`: show its name,
-  type and size.
+  was not loaded. A document or SVG has no `src`: show its name,
+  type and size. They share 12 MB: choose kinds (`["circuit"]`), or
+  `{ records: "subject" }` (its record and what links to it) or ids, and
+  `most: 12`.
 
 ```js
 const photos = (job.photos || []).map((photo) => photo.src

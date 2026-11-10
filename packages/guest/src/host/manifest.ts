@@ -232,6 +232,19 @@ function picturesProblems<S extends AnySchema>(pictures: unknown, store: Store<S
     return problems;
   }
   for (const [key, value] of Object.entries(pictures)) {
+    /* By record (Roadmap f-view-pictures-by-record): its subject and what is linked to it, or the records it names, and the most it is handed. */
+    if (key === "records") {
+      if (value === "subject") {
+        if (manifest.attach === "home" || manifest.cardinality !== "one") problems.push('The view\'s pictures records "subject" is the record a view of one is drawn over and the records linked to it: a view of many, or the home, is drawn over no one record, so list the records by id, or cap its pictures with "most" (view-pictures-records).');
+      } else if (!(Array.isArray(value) && value.length > 0 && value.length <= 200 && value.every((one) => typeof one === "string" && one.length > 0 && one.length <= 200))) {
+        problems.push('The view\'s pictures records is "subject" — the record it is drawn over and the records linked to it by an edge it reads — or a list of 1 to 200 record ids, ["driver:hamilton"] (view-pictures-records).');
+      }
+      continue;
+    }
+    if (key === "most") {
+      if (!(Number.isInteger(value) && (value as number) >= 1 && (value as number) <= 500)) problems.push("The view's pictures most is a whole number from 1 to 500: the most pictures it is handed, in the order its records are handed (view-pictures-most).");
+      continue;
+    }
     if (key === "width" && typeof value !== "string" && !Array.isArray(value)) {
       if (!(Number.isInteger(value) && (value as number) >= 16 && (value as number) <= 4_096)) problems.push("The view's pictures width is a whole number of pixels from 16 to 4096.");
       continue;

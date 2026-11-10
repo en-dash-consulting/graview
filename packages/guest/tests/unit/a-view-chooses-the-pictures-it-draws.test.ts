@@ -89,7 +89,7 @@ describe("what is left out past the budget", () => {
     const shown = (handed: GuestProps) => (handed.nodes ?? []).map((node) => Object.entries(node).filter(([, value]) => (value as GuestFile)?.name).map(([field, value]) => `${node.id}.${field}:${(value as GuestFile).left ? "left" : "kept"}`)).flat();
     expect(shown(again)).toEqual(shown(first));
     expect(shown(first)).toEqual(["driver:0.portrait:kept", "driver:1.portrait:kept", "driver:2.portrait:left", "circuit:monza.map:kept", "circuit:monza.photo:kept", "circuit:spa.map:left", "circuit:spa.photo:left"]);
-    expect(fileOf(first, "driver:2", "portrait").left).toMatch(/in the order its records are handed, took them\. A view that draws only some kinds' pictures says which \("pictures": \["<kind>"\]\)\.$/);
+    expect(fileOf(first, "driver:2", "portrait").left).toMatch(/in the order its records are handed, took them\. A view that draws only some kinds' pictures says which \("pictures": \["<kind>"\]\), and one that draws only some records' says which \("records": "subject", or their ids\)\.$/);
   });
 });
 
