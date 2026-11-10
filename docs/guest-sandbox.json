@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-24T03:59:53.082Z",
+  "at": "2026-11-10T19:20:28.472Z",
   "transport": "frame",
   "engine": "chromium",
   "claims": {
@@ -28,6 +28,26 @@
             "kind": "shopper",
             "label": "Bethan Okonkwo",
             "email": "bethan@mail.example"
+          },
+          {
+            "label": "Flood 0",
+            "id": "enquiry:flood-0.09gt5i4",
+            "kind": "enquiry"
+          },
+          {
+            "label": "Flood 1",
+            "id": "enquiry:flood-1.09gt5i4",
+            "kind": "enquiry"
+          },
+          {
+            "label": "Flood 2",
+            "id": "enquiry:flood-2.09gt5i4",
+            "kind": "enquiry"
+          },
+          {
+            "label": "Flood 3",
+            "id": "enquiry:flood-3.09gt5i4",
+            "kind": "enquiry"
           }
         ]
       }
@@ -255,7 +275,7 @@
     "the guest cannot navigate the top window": {
       "ok": true,
       "detail": {
-        "url": "http://127.0.0.1:5792/",
+        "url": "http://127.0.0.1:5992/",
         "tried": {
           "ok": false,
           "error": "SecurityError"

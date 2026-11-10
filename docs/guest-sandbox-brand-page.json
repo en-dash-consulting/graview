@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-24T04:02:54.997Z",
+  "at": "2026-11-10T19:14:25.901Z",
   "transport": "brand",
   "engine": "chromium",
   "policy": "the app's own page, with no content security policy",
@@ -15,6 +15,27 @@
         ],
         "viewFont": "Georgia, \"Times New Roman\", serif",
         "viewRadius": "4px",
+        "sheets": [
+          "data-graview-region",
+          "data-graview-view-theme",
+          "data-graview-view-style"
+        ],
+        "themeSheet": "@layer graview-theme {\n.mast h2 { letter-spacing: 0.25em; padding: 40px; text-transform: uppercase; }\n.lent { color: rgb(200, 30, 30); font-family: \"Rock Face\", serif; }\n.baloo { font-family: \"Baloo 2\", monospace; }\n}",
+        "letterSpacing": "6px",
+        "transform": "uppercase",
+        "padding": "40px",
+        "lentColor": "rgb(200, 30, 30)",
+        "lentFont": "\"Rock Face\", serif",
+        "faces": [
+          "loaded"
+        ],
+        "balooFaces": [
+          "loaded"
+        ],
+        "bigFaces": [],
+        "balooWidth": 147.625,
+        "monoWidth": 176,
+        "motion": "fade",
         "radiusSaid": "4px",
         "pushes": 2,
         "appHeadingFont": "Georgia, \"Times New Roman\", serif",
@@ -23,7 +44,7 @@
           "font": "Georgia, \"Times New Roman\", serif"
         },
         "marked": false,
-        "src": "blob:http://127.0.0.1:5792/ab0d4ed8-7b0b-4c68-a9f5-98eca04a3",
+        "src": "blob:http://127.0.0.1:5992/3691fdee-2553-4d51-920b-eb055302c",
         "bytes": 192
       }
     },
@@ -48,7 +69,79 @@
     "the logo is handed as a blob: URL of the page itself, which the policy lets an image load from": {
       "ok": true,
       "detail": {
-        "src": "blob:http://127.0.0.1:5792/ab0d4ed8-7b0b-4c68-a9f5-98eca04a3"
+        "src": "blob:http://127.0.0.1:5992/3691fdee-2553-4d51-920b-eb055302c"
+      }
+    },
+    "the view is drawn with the app's stylesheet for every view, a sheet of the host's in the layer after the view's own: the heading takes its letter-spacing and its capitals, and the theme's padding wins where both say one": {
+      "ok": true,
+      "detail": {
+        "sheets": [
+          "data-graview-region",
+          "data-graview-view-theme",
+          "data-graview-view-style"
+        ],
+        "letterSpacing": "6px",
+        "transform": "uppercase",
+        "padding": "40px"
+      }
+    },
+    "the app's stylesheet for every view wins over the view's own rule on the same element whatever its specificity: the theme's .lent color beats the view's .mast .lent": {
+      "ok": true,
+      "detail": {
+        "color": "rgb(200, 30, 30)"
+      }
+    },
+    "the face the brand lends its views, a file the app holds at its content address, is loaded into the page by the host, and the view's text is drawn in it": {
+      "ok": true,
+      "detail": {
+        "faces": [
+          "loaded"
+        ],
+        "font": "\"Rock Face\", serif",
+        "served": [
+          "/graview/assets/48282a415ec22e31beaf0a0666e6fae0c8cbddcd0b1f6e729f27c3ade8a64e43.woff2",
+          "/graview/assets/48282a415ec22e31beaf0a0666e6fae0c8cbddcd0b1f6e729f27c3ade8a64e43.woff2"
+        ],
+        "problems": [
+          "The app's face \"Big Face\" for its views is not loaded: its file, /graview/assets/892f2fe04ec507da2fe21530851fc8c60ae8a0d9b126b61d7168fd5dbb209a1b.woff2, is more than 2 MB, the most a file the app holds may be as a face for its views."
+        ]
+      }
+    },
+    "a face whose family is no one identifier, \"Baloo 2\", is loaded in this engine and its text is drawn in it, not in the fallback": {
+      "ok": true,
+      "detail": {
+        "faces": [
+          "loaded"
+        ],
+        "baloo": 147.625,
+        "mono": 176,
+        "problems": [
+          "The app's face \"Big Face\" for its views is not loaded: its file, /graview/assets/892f2fe04ec507da2fe21530851fc8c60ae8a0d9b126b61d7168fd5dbb209a1b.woff2, is more than 2 MB, the most a file the app holds may be as a face for its views."
+        ]
+      }
+    },
+    "a lent face past the size it may not pass, 2 MB, is not loaded, and the host is told in words": {
+      "ok": true,
+      "detail": {
+        "faces": [],
+        "asked": 1,
+        "problems": [
+          "The app's face \"Big Face\" for its views is not loaded: its file, /graview/assets/892f2fe04ec507da2fe21530851fc8c60ae8a0d9b126b61d7168fd5dbb209a1b.woff2, is more than 2 MB, the most a file the app holds may be as a face for its views."
+        ]
+      }
+    },
+    "no lent face within the limit is said to have failed to load in this engine": {
+      "ok": true,
+      "detail": {
+        "problems": [
+          "The app's face \"Big Face\" for its views is not loaded: its file, /graview/assets/892f2fe04ec507da2fe21530851fc8c60ae8a0d9b126b61d7168fd5dbb209a1b.woff2, is more than 2 MB, the most a file the app holds may be as a face for its views."
+        ]
+      }
+    },
+    "and, the brand asking for it, its root is set to fade between records": {
+      "ok": true,
+      "detail": {
+        "motion": "fade"
       }
     },
     "after the brand changes, the view says \"En Dash Consulting\" in the new display face, as the app's wordmark and headings do": {
@@ -62,6 +155,23 @@
         ],
         "viewFont": "\"Courier New\", Courier, monospace",
         "viewRadius": "16px",
+        "sheets": [
+          "data-graview-region",
+          "data-graview-view-theme",
+          "data-graview-view-style"
+        ],
+        "themeSheet": "",
+        "letterSpacing": "normal",
+        "transform": "none",
+        "padding": "4px",
+        "lentColor": "rgb(1, 2, 3)",
+        "lentFont": "monospace",
+        "faces": [],
+        "balooFaces": [],
+        "bigFaces": [],
+        "balooWidth": 160.03125,
+        "monoWidth": 176,
+        "motion": null,
         "radiusSaid": "16px",
         "pushes": 4,
         "appHeadingFont": "\"Courier New\", Courier, monospace",
@@ -70,7 +180,7 @@
           "font": "\"Courier New\", Courier, monospace"
         },
         "marked": true,
-        "src": "blob:http://127.0.0.1:5792/bc0a7726-b3eb-43c7-8d15-a85243956",
+        "src": "blob:http://127.0.0.1:5992/4c0960ff-83cf-4a09-97b3-5db27d989",
         "bytes": 89
       }
     },
@@ -102,10 +212,27 @@
         ]
       }
     },
+    "after the brand changes to one with no stylesheet for its views, the host's sheet is empty, the heading's letter-spacing and capitals are the browser's again, the view's own rule holds, and nothing fades": {
+      "ok": true,
+      "detail": {
+        "themeSheet": "",
+        "letterSpacing": "normal",
+        "transform": "none",
+        "lentColor": "rgb(1, 2, 3)",
+        "motion": null
+      }
+    },
+    "and the faces the brand lent are gone from the page once it lends none": {
+      "ok": true,
+      "detail": {
+        "faces": [],
+        "baloo": []
+      }
+    },
     "the last logo's blob: URL is let go once the new one is drawn": {
       "ok": true,
       "detail": {
-        "url": "blob:http://127.0.0.1:5792/ab0d4ed8-7b0b-4c68-a9f5-98eca04a3e03"
+        "url": "blob:http://127.0.0.1:5992/3691fdee-2553-4d51-920b-eb055302c620"
       }
     },
     "the PNG at the page's own address was fetched once, by the host: the view loaded nothing": {
@@ -118,11 +245,11 @@
         "requests": [
           {
             "type": "fetch",
-            "url": "http://127.0.0.1:5792/graview/assets/logo.png"
+            "url": "http://127.0.0.1:5992/graview/assets/logo.png"
           },
           {
             "type": "image",
-            "url": "http://127.0.0.1:5792/graview/assets/logo.png"
+            "url": "http://127.0.0.1:5992/graview/assets/logo.png"
           }
         ],
         "appMarks": 1,
