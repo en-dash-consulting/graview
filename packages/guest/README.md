@@ -60,6 +60,16 @@ guest.navigate(id);
 guest.autoSize();
 ```
 
+The frame takes each height it asks for, up to `limits.maxHeight` (4,000px
+by default). A page sized by its own frame (`height: 100vh`) asks for a
+little more each time the frame grows, so a guest whose heights track the
+frame's own a few times running is held at the height it was given and
+watched: one that then asks another height of its own accord has content
+that grows, and grows to the cap; one that asks nothing new stays held, the
+frame wears `data-guest-view-held`, and `onProblem` is told why. Size the
+page by its content. `guestView({ onSize })` is told each height the frame
+takes.
+
 In React, `useGuest()` from `@graview/guest/react` is the same connection:
 `{ props, act, navigate, size }`, re-rendering on every push. The guest
 entries import nothing of the framework, so a guest bundle carries none of it.

@@ -41,6 +41,18 @@ export interface GuestViewOptions {
   readonly fonts?: { readonly origins: readonly string[] };
   /** Where the frame first stands before the guest asks for a height. 160px by default. */
   readonly height?: number;
+  /**
+   * Each height a frame guest is given, once the frame has taken it
+   * (Roadmap f-guest-growth-guard): what a host that sizes what holds the
+   * view reads. Not told a height the growth guard held.
+   */
+  readonly onSize?: (height: number) => void;
+  /**
+   * What the host could not do for a frame guest, in a sentence: a face it
+   * did not lend, and the guest's height held because it grew only with its
+   * own frame. Said in the console as well, whether or not this is given.
+   */
+  readonly onProblem?: (said: string) => void;
   readonly limits?: GuestLimits;
   /** Where a worker guest's links may go (`mountGuestWorker`'s `links`). Any `https:` address by default. */
   readonly links?: KitLinks;
@@ -138,7 +150,19 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
           /* The faces the app lends its views, read where the app's own files are served: the view's word, else the page's host's (Roadmap f-faces-lent-to-frames). */
           ...(options.asset ? { asset: options.asset } : hostAssets.current ? { asset: (path: string) => hostAssets.current?.(path) ?? path } : {}),
           ...(options.fonts ? { fonts: options.fonts } : {}),
-          onProblem: (said) => console.warn(`${options.name}: ${said}`),
+          onProblem: (said) => {
+            console.warn(`${options.name}: ${said}`);
+            options.onProblem?.(said);
+          },
+          /* The frame takes each height, and the host is told it. */
+          ...(options.onSize
+            ? {
+                onSize: (height: number) => {
+                  if (mounted) mounted.iframe.style.height = `${height}px`;
+                  options.onSize?.(height);
+                },
+              }
+            : {}),
           places: () => views.places(),
           brand: () => branded.current,
           /* A record, a place or a kind's list — narrowed and to a section — where the face goes; what goes nowhere is said in the console. */

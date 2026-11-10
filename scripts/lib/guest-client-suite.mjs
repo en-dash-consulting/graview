@@ -102,6 +102,21 @@ const LETTERING = (client) => `<!doctype html><html lang="en"><head><meta charse
 <body><span id="lent">Granite becomes gneiss</span><br><span id="mono">Granite becomes gneiss</span>
 <script>${client.replace(/<\/script/gi, "<\\/script")}</script>
 <script>window.__seen = []; GraviewGuest.connect().subscribe((props) => window.__seen.push(props));</script></body></html>`;
+/*
+ * Two frame guests that grow (Roadmap f-guest-growth-guard), each sized by
+ * the client's autoSize and allowed Cloud's 20,000px: one whose page is its
+ * own frame's height and a margin (100vh), which only grows with itself, and
+ * one whose rows keep coming, 25,000px of them, which really grows.
+ */
+const TALL = (client) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Tall</title>
+<style>html, body { margin: 0 } body { height: 100vh; padding-bottom: 16px; box-sizing: content-box }</style></head><body><p>A page as tall as its frame.</p>
+<script>${client.replace(/<\/script/gi, "<\\/script")}</script>
+<script>window.__seen = []; const guest = GraviewGuest.connect(); guest.subscribe((props) => window.__seen.push(props)); guest.autoSize();</script></body></html>`;
+const LONG = (client) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Long</title>
+<style>html, body { margin: 0 } .row { height: 1000px; border-bottom: 1px solid }</style></head><body><div id="rows"></div>
+<script>${client.replace(/<\/script/gi, "<\\/script")}</script>
+<script>window.__seen = []; const guest = GraviewGuest.connect(); guest.subscribe((props) => window.__seen.push(props)); guest.autoSize();
+let rows = 0; const more = setInterval(() => { const row = document.createElement("div"); row.className = "row"; document.getElementById("rows").appendChild(row); if (++rows === 25) clearInterval(more); }, 40);</script></body></html>`;
 const BRANDS = {
   first: { name: "En Dash", logo: SVG_A, typography: { display: "Georgia, 'Times New Roman', serif" }, shape: { radius: 4 } },
   second: { name: "En Dash Consulting", logo: PNG_PATH, typography: { display: "'Courier New', Courier, monospace" }, shape: { radius: 16 } },
@@ -121,6 +136,8 @@ import { SCHEMES } from "@graview/core";
 import { lin, offersApp, offersSeed } from ${JSON.stringify(resolve(repoRoot, "scripts/fixtures/offers-app.ts"))};
 const brands = { first: { ...${JSON.stringify(firstBrand)}, schemes: SCHEMES }, second: { ...${JSON.stringify(BRANDS.second)}, schemes: SCHEMES } };
 window.__rebrand = () => window.__handle.setBrand(brands.second);
+window.__sizes = {};
+window.__held = [];
 
 const asked = new URLSearchParams(location.search);
 window.__handle = mount(document.getElementById("app"), {
@@ -140,6 +157,9 @@ window.__handle = mount(document.getElementById("app"), {
     registry.register("package", { cardinality: "many", fidelity: "full" }, guestView({ url: ${JSON.stringify(`${GUEST}/prices.html`)}, name: "prices", title: "The price sheet", reads: { kinds: ["offer"], edges: ["includes"] } }), { title: "The price sheet" });
     registry.register("signal", { cardinality: "many", fidelity: "full" }, guestView({ url: ${JSON.stringify(`${GUEST}/masthead.html`)}, name: "masthead", title: "The masthead" }), { title: "The masthead" });
     registry.register("signal", { cardinality: "many", fidelity: "full" }, guestView({ url: ${JSON.stringify(`${GUEST}/lettering.html`)}, name: "lettering", title: "The lettering", asset: (path) => path }), { title: "The lettering" });
+    const grown = (name) => ({ onSize: (height) => (window.__sizes[name] ??= []).push(height), onProblem: (said) => window.__held.push([name, said]), limits: { maxHeight: 20000 } });
+    registry.register("signal", { cardinality: "many", fidelity: "full" }, guestView({ url: ${JSON.stringify(`${GUEST}/tall.html`)}, name: "tall", title: "The tall page", ...grown("tall") }), { title: "The tall page" });
+    registry.register("signal", { cardinality: "many", fidelity: "full" }, guestView({ url: ${JSON.stringify(`${GUEST}/long.html`)}, name: "long", title: "The long list", ...grown("long") }), { title: "The long list" });
     registry.home?.(guestView({ url: ${JSON.stringify(`${GUEST}/front.html`)}, name: "front", title: "The front page", reads: { kinds: ["package"] } }));
     return registry;
   },
@@ -181,7 +201,7 @@ window.__handle.drawn().then(() => { window.__ready = true; });
       }
     }).listen(HOST_PORT, "127.0.0.1"),
     createServer((request, response) => {
-      const body = { "/prices.html": priceSheet(repoRoot, client), "/front.html": FRONT(client), "/masthead.html": MASTHEAD(client), "/lettering.html": LETTERING(client) }[request.url ?? ""];
+      const body = { "/prices.html": priceSheet(repoRoot, client), "/front.html": FRONT(client), "/masthead.html": MASTHEAD(client), "/lettering.html": LETTERING(client), "/tall.html": TALL(client), "/long.html": LONG(client) }[request.url ?? ""];
       if (!body) {
         response.writeHead(404);
         return response.end();
@@ -301,6 +321,26 @@ window.__handle.drawn().then(() => { window.__ready = true; });
       lettered.faces.length === 1 && lettered.faces[0] === "loaded" && lettered.drawn && Math.abs(lettered.lent - lettered.mono) > 1 && violations.length === 0,
       { ...lettered, violations, policy: LETTERING_POLICY },
     );
+    // ── a frame that grows only with itself, and one that really grows (Roadmap f-guest-growth-guard) ──
+    const frameHeight = (name) => tab.evaluate((view) => {
+      const frame = document.querySelector(`iframe[data-guest-view="${view}"]`);
+      return { height: frame ? Number.parseInt(frame.style.height, 10) : null, held: frame?.getAttribute("data-guest-view-held") ?? null, sizes: window.__sizes[view] ?? [], said: window.__held.filter(([one, said]) => one === view && /held at/.test(said)).map(([, said]) => said) };
+    }, name);
+    await open("/places/the-tall-page");
+    await guestFrame("tall");
+    await tab.waitForFunction(() => document.querySelector('iframe[data-guest-view="tall"]')?.hasAttribute("data-guest-view-held"), null, { timeout: 10_000 }).catch(() => {});
+    await tab.waitForTimeout(800);
+    const tall = await frameHeight("tall");
+    claim(
+      "a frame guest whose page is its own frame's height (100vh) is held a few rounds in rather than grown to Cloud's 20,000px, and the host is told why in words",
+      tall.held !== null && tall.height !== null && tall.height < 400 && tall.said.length === 1 && /held at \d+px/.test(tall.said[0]) && tall.sizes.at(-1) === tall.height,
+      { ...tall, sizes: tall.sizes.slice(-6) },
+    );
+    await open("/places/the-long-list");
+    await guestFrame("long");
+    await tab.waitForFunction(() => Number.parseInt(document.querySelector('iframe[data-guest-view="long"]')?.style.height ?? "0", 10) >= 20_000, null, { timeout: 15_000 }).catch(() => {});
+    const long = await frameHeight("long");
+    claim("a frame guest whose content really grows, 25,000px of rows, grows to the 20,000px cap and is not held, and guestView's onSize is told each height", long.height === 20_000 && long.held === null && long.said.length === 0 && long.sizes.at(-1) === 20_000, { ...long, sizes: long.sizes.length });
     // ── the brand (FR-127) ──
     await open("/places/the-masthead");
     let masthead;

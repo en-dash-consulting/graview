@@ -80,7 +80,7 @@ export interface MountGuestViewOptions<S extends AnySchema> {
   readonly asset?: (path: string) => string | undefined;
   /** The `https:` origins a lent face may be read from by address, as a worker view's `fonts` says: none by default. */
   readonly fonts?: { readonly origins: readonly string[] };
-  /** What the host could not do for the frame, in a sentence: a face it did not lend, and why; the frame's height held (`onSize`). */
+  /** What the host could not do for the frame, in a sentence: a face it did not lend, and why; the guest's height held (`onSize`). */
   readonly onProblem?: (said: string) => void;
   /** The app's named places: what the guest is told of (`props.places`), and may ask to go to by slug. None by default. */
   readonly places?: () => readonly GuestPlace[];
@@ -93,7 +93,12 @@ export interface MountGuestViewOptions<S extends AnySchema> {
   readonly onLost?: (said: string) => void;
   /** The face's own way of going (`useGoTo`), read when the guest goes: where `onArrive` is not given, the arrival is gone to by it. */
   readonly goTo?: () => GoTo | undefined;
-  /** The guest asked for a height. By default the frame takes it. */
+  /**
+   * The guest asked for a height. By default the frame takes it. Not told a
+   * height the growth guard held (Roadmap f-guest-growth-guard): a guest
+   * whose every height tracks the frame's own a few times running is held,
+   * the frame wears `data-guest-view-held`, and `onProblem` is told why.
+   */
   readonly onSize?: (height: number) => void;
   readonly limits?: GuestLimits;
   /** The frame's accessible name. The view's name by default. */
@@ -311,6 +316,12 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
       onSize: (height) => {
         if (options.onSize) options.onSize(height);
         else iframe.style.height = `${height}px`;
+        drew();
+      },
+      /* Held, growing only with its own frame (Roadmap f-guest-growth-guard): said, and worn on the frame with the height it is held at. */
+      onHeld: (said, height) => {
+        iframe.setAttribute("data-guest-view-held", `${height}px`);
+        options.onProblem?.(said);
         drew();
       },
       ...(options.limits ? { limits: options.limits } : {}),

@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 98,
+  "gzipped": 39,
+  "changeset": "a-frame-that-grows-only-with-itself-is-held.md",
+  "note": "Raised when the guest session came to hold a guest that grows only with its own frame (Roadmap f-guest-growth-guard): `growthGuard` sets each height asked for against the one last given, holds one that tracks it a few rounds running, takes another height the guest asks of its own accord, and says why once it has been quiet; `guestView` takes `onSize` and `onProblem`. Measured at 621_158 / 215_233 against 621_060 / 215_194 minified and gzipped."
+}
