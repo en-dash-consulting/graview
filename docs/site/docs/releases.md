@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.72`](https://graview.dev/docs/releases.html#v0-1-72)
 - [`0.1.71`](https://graview.dev/docs/releases.html#v0-1-71)
 - [`0.1.70`](https://graview.dev/docs/releases.html#v0-1-70)
 - [`0.1.69`](https://graview.dev/docs/releases.html#v0-1-69)
@@ -72,6 +73,22 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.3`](https://graview.dev/docs/releases.html#v0-1-3)
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
+
+## 0.1.72
+
+Published November 10, 2026 · the current version
+
+An app's history opens from the app menu and from a host's own menu; a frame is lent the app's faces; a view chooses its pictures by record; and a frame that only grows with itself is held.
+
+- **History is in the app menu.** The chevron beside the app's name has a History row that opens the timeline at now on the scene and the routed face alike, and gives the keyboard to its scrubber. An app with no changes yet says "No changes yet". `bar: { history: false }` leaves it out.
+- **A host opens it from its own menu.** `showHistory()` on the handle `mount` returns opens that mount's timeline, and answers whether one will draw.
+- **A frame is lent the app's faces.** A `guestView` frame draws in the faces `brand.views.fonts` lends, handed over as `data:` fonts, held to the same 2 MB, and needs only `font-src data:`. A face file is read only where it answers as a font or as plain bytes.
+- **A view chooses its pictures by record.** A manifest's `pictures` takes `records` (`{ subject: true }` or `{ ids: [...] }`) and `most`, so a view of one record is handed that record's pictures, not every one of its kind. `checkManifest` refuses a malformed choice (`view-pictures-records`, `view-pictures-most`).
+- **A frame that grows only with itself is held.** A guest sized by `100vh` that asks for its frame's height each time the frame grows is held at the height it was given, and the host is told why through `onProblem` and `onHeld`.
+
+**Before you upgrade:** Breaks: a host that serves a face file as anything but a font type, `application/octet-stream` or no type now has the face said and not loaded. A host that pins the inlined guest client's hash takes the new `GUEST_CLIENT_SHA256`. Under a host's bar with `name: false` the app menu offers no History. Gains, nothing taken away: `showHistory()` on `EmbedHandle` and `PagesEmbedHandle`, `createHistoryDoor`, `HistoryDoorContext` and `HistoryDoor` on `@graview/react`, `EmbedBar.history`, optional `Playback.focusWanted` and `focused()`, `GuestFont` and a `fonts` message on the frame's wire, and `records` and `most` on a view's `pictures`. Stored formats are unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.72) · [The full changelog for 0.1.72](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0172)
 
 ## 0.1.71
 
