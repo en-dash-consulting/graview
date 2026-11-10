@@ -28,6 +28,12 @@
  *   link, stepped back and in again by Escape: the same scroll, the keyboard
  *   on the same link, the same address; pressed twice by the keyboard, the
  *   keyboard is still on the control;
+ *   outThePageShowsExactlyWhatWasOnScreen — scrolled down and stepped back,
+ *   each part of the page stands where it stood in the window, at the
+ *   sheet's scale: nothing moved by the bar's height;
+ *   theKeyboardReachesTheCitysRecords — out, Tab from the control reaches a
+ *   record a line runs to, named for it, and Enter opens its page, in, with
+ *   the keyboard on the new page;
  *   lessMotionSkipsTheTravel — with reduced motion asked for, the page is at
  *   its end state in the frame after the press, with no transition.
  *
@@ -225,9 +231,40 @@ try {
       await steppedIn(desk);
       const onControl = await desk.evaluate(() => document.activeElement?.getAttribute("data-testid") === "step-back");
       claim("backInTheScrollTheKeyboardAndTheAddressAreKept", onControl, { app, how: "pressed twice by the keyboard: the keyboard stays on the control", onControl });
+
+      /* THE KEYBOARD REACHES THE CITY: out again, Tab on from the control to a record a line runs to, and Enter opens its page. */
+      await desk.keyboard.press("Enter");
+      await steppedBack(desk);
+      const targets = await desk.evaluate(() => [...document.querySelectorAll("[data-graview-line-to]")].map((g) => g.getAttribute("data-graview-line-to")));
+      let stop = null;
+      for (let presses = 1; presses <= 30 && !stop; presses += 1) {
+        await desk.keyboard.press("Tab");
+        stop = await desk.evaluate(() => {
+          const at = document.activeElement?.closest("[data-graview-city-record]");
+          return at ? { id: at.getAttribute("data-graview-city-record"), name: at.getAttribute("aria-label"), lit: at.hasAttribute("data-graview-lit") } : null;
+        });
+        if (stop) stop.presses = presses;
+      }
+      let opened = null;
+      if (stop) {
+        await desk.keyboard.press("Enter");
+        await steppedIn(desk);
+        await desk.waitForTimeout(300);
+        opened = await desk.evaluate(() => ({
+          path: decodeURIComponent(location.pathname),
+          phase: document.querySelector("[data-graview-step-back]")?.getAttribute("data-graview-step-back"),
+          keyboard: document.activeElement === document.body ? "body" : (document.activeElement?.tagName ?? null),
+        }));
+      }
+      claim(
+        "theKeyboardReachesTheCitysRecords",
+        Boolean(stop && stop.lit && targets.includes(stop.id) && /^Open \S/.test(stop.name ?? "") && opened && opened.path.endsWith(`/${stop.id}`) && opened.phase === "in" && opened.keyboard !== "body"),
+        { app, record, stop, lines: targets, opened },
+      );
     }
 
-    /* BACK IN AS IT WAS: scrolled, the keyboard on a link of the page, out and in by Escape. */
+    /* BACK IN AS IT WAS: scrolled, the keyboard on a link of the page, out and in by Escape — in a window short enough that the page scrolls. */
+    await desk.setViewportSize({ width: DESK.width, height: 560 });
     await arrive(desk, `${origin}${record}${query}`);
     const before = await desk.evaluate(() => {
       document.documentElement.style.minHeight = "";
@@ -240,11 +277,31 @@ try {
       const link = links[0];
       link?.setAttribute("data-step-back-probe", "");
       link?.focus({ preventScroll: true });
-      return { scrollY: Math.round(scrollY), address: location.href, focused: link ? link.textContent.trim().slice(0, 40) : null };
+      const at = link?.getBoundingClientRect();
+      return { scrollY: Math.round(scrollY), address: location.href, focused: link ? link.textContent.trim().slice(0, 40) : null, probe: at ? { x: at.left, y: at.top } : null };
     });
     await desk.evaluate(() => document.querySelector('[data-testid="step-back"]').click());
     await steppedBack(desk);
-    const whileOut = await desk.evaluate(() => ({ active: document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName ?? null }));
+    const whileOut = await desk.evaluate(() => {
+      const sheet = document.querySelector("[data-graview-step-back]").getBoundingClientRect();
+      const probe = document.querySelector("[data-step-back-probe]")?.getBoundingClientRect();
+      const foot = document.querySelector("[data-graview-bar-foot]")?.getBoundingClientRect().top ?? 0;
+      const roomWidth = document.documentElement.clientWidth;
+      return {
+        active: document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName ?? null,
+        sheet: { x: sheet.left, y: sheet.top, scale: sheet.width / roomWidth },
+        barFoot: foot,
+        probe: probe ? { x: probe.left, y: probe.top } : null,
+      };
+    });
+    /* The sheet is the window as it was seen, scaled about its corner under the bar: each part where it stood, at that scale. */
+    const expected = before.probe ? { x: whileOut.sheet.x + before.probe.x * whileOut.sheet.scale, y: whileOut.sheet.y + (before.probe.y - whileOut.barFoot) * whileOut.sheet.scale } : null;
+    const off = expected && whileOut.probe ? Math.max(Math.abs(expected.x - whileOut.probe.x), Math.abs(expected.y - whileOut.probe.y)) : null;
+    claim(
+      "outThePageShowsExactlyWhatWasOnScreen",
+      before.scrollY > 0 && off !== null && off <= 2,
+      { app, path: record, scrolledBy: before.scrollY, probeBefore: before.probe, probeOut: whileOut.probe, expected, off },
+    );
     await desk.keyboard.press("Escape");
     await steppedIn(desk);
     const after = await desk.evaluate(() => ({ scrollY: Math.round(scrollY), address: location.href, onTheLink: document.activeElement?.hasAttribute("data-step-back-probe") ?? false }));
@@ -253,6 +310,7 @@ try {
       before.focused !== null && whileOut.active === "step-back" && Math.abs(after.scrollY - before.scrollY) <= 1 && after.address === before.address && after.onTheLink,
       { app, how: "scrolled, on a link, out and in by Escape", before, whileOut, after },
     );
+    await desk.setViewportSize(DESK);
     await desk.close();
 
     /* LESS MOTION: the end state in the frame after the press, no transition. */

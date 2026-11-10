@@ -5,7 +5,7 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
-import { PagesApp } from "../../src/index.js";
+import { createPageRegistry, PagesApp, type PageComponent } from "../../src/index.js";
 import { bestFit, nearestOnBox, roomBeside } from "../../src/city-fit.js";
 import { pageBox, setBack, SET_BACK_SCALE } from "../../src/step-back-geometry.js";
 
@@ -67,12 +67,21 @@ afterEach(async () => {
   document.body.innerHTML = "";
 });
 
-async function face(embedded = false) {
+/* A home with a field on it, to type into before stepping back. */
+const Home = (() => (
+  <main>
+    <h2 data-graview-page-title="">Home</h2>
+    <input data-testid="typed" aria-label="Notes" />
+  </main>
+)) as PageComponent<typeof schema>;
+
+async function face(embedded = false, path = "/items/i1") {
   const store = new Store({ schema, mutations: [], invariants: [], snapshot: { nodes: [{ id: "i1", kind: "item", label: "Pay the deposit" }] as never, edges: [] } });
   const host = document.createElement("div");
   document.body.appendChild(host);
   const root = createRoot(host);
-  await act(async () => root.render(<PagesApp context={{ store, principal: nina, ...(embedded ? { embedded: true } : {}) }} initialPath="/items/i1" />));
+  const registry = createPageRegistry<typeof schema, PageComponent<typeof schema>>(schema).surface("home", Home);
+  await act(async () => root.render(<PagesApp context={{ store, principal: nina, ...(embedded ? { embedded: true } : {}) }} registry={registry} initialPath={path} />));
   unmounts.push(() => act(async () => root.unmount()));
   return host;
 }
@@ -107,6 +116,42 @@ describe("the step-back control on a routed page", () => {
     expect(sheet.getAttribute("data-graview-step-back")).toBe("in");
     expect(sheet.style.display).toBe("contents");
     expect(sheet.firstElementChild!.hasAttribute("inert")).toBe(false);
+  });
+
+  it("draws nothing of the page again: the same elements, and a field half typed keeps its words, out and back in", async () => {
+    const host = await face(false, "/");
+    const field = host.querySelector<HTMLInputElement>('[data-testid="typed"]')!;
+    const title = host.querySelector("[data-graview-page-title]")!;
+    field.value = "Call the landlord";
+    const button = host.querySelector<HTMLButtonElement>('[data-testid="step-back"]')!;
+    const sheet = host.querySelector<HTMLElement>("[data-graview-step-back]")!;
+    await act(async () => button.click());
+    await frames();
+    expect(sheet.getAttribute("data-graview-step-back")).toBe("out");
+    expect(host.querySelector('[data-testid="typed"]')).toBe(field);
+    expect(host.querySelector("[data-graview-page-title]")).toBe(title);
+    await act(async () => button.click());
+    await act(async () => new Promise((done) => setTimeout(done, 700)));
+    expect(sheet.getAttribute("data-graview-step-back")).toBe("in");
+    expect(host.querySelector('[data-testid="typed"]')).toBe(field);
+    expect(field.isConnected).toBe(true);
+    expect(field.value).toBe("Call the landlord");
+  });
+
+  it("pressed twice before it began to move, is in: the second press is never lost to the frame the first waits for", async () => {
+    const host = await face();
+    const button = host.querySelector<HTMLButtonElement>('[data-testid="step-back"]')!;
+    const sheet = host.querySelector<HTMLElement>("[data-graview-step-back]")!;
+    await act(async () => button.click());
+    expect(sheet.getAttribute("data-graview-step-back")).toBe("leaving");
+    // One frame in: the first frame it waits for has passed, the second is asked for.
+    await act(async () => new Promise<void>((done) => requestAnimationFrame(() => done())));
+    await act(async () => button.click());
+    await frames();
+    await act(async () => new Promise((done) => setTimeout(done, 700)));
+    expect(sheet.getAttribute("data-graview-step-back")).toBe("in");
+    expect(sheet.style.display).toBe("contents");
+    expect(button.getAttribute("aria-pressed")).toBe("false");
   });
 
   it("is not offered on an embedded face, whose page is the host's", async () => {

@@ -3,10 +3,10 @@ import { retryingImport } from "@graview/core/retry";
 import { toolStyle } from "@graview/primitives/pages";
 import { lazyPart } from "@graview/react/provider";
 import { createContext, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { useHref, useLocation } from "react-router";
+import { useHref, useLocation, useNavigate } from "react-router";
 import { useStoreTick, type PageContext } from "./page-context.js";
 import { liveKinds, pluralOf } from "./page-typography.js";
-import { kindOfSlug } from "./registry.js";
+import { kindOfSlug, recordPath } from "./registry.js";
 import { pageBox, setBack } from "./step-back-geometry.js";
 
 /**
@@ -61,6 +61,12 @@ const CityBehind = lazyPart(retryingImport(() => import("./city-behind.js").then
 const TRAVEL_MS = 420;
 const lessMotion = (): boolean => typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+/** The window's own size, less a desk's scrollbar: what a fixed sheet the width of the page is laid out in. */
+const windowSize = () => ({ width: document.documentElement.clientWidth || window.innerWidth, height: document.documentElement.clientHeight || window.innerHeight });
+
+/** Whether a transition that ended is the sheet's own travel, not one of the page's own inside it. */
+const ownTravel = (element: Element) => (event: TransitionEvent) => event.target === element && event.propertyName === "transform";
+
 /** Where the person was when they stepped back: what comes back with them. */
 interface Kept {
   readonly scrollX: number;
@@ -83,6 +89,9 @@ export function StepBackFrame<S extends AnySchema>({ context, bar, children }: {
   const [phase, setPhase] = useState<StepBackPhase>("in");
   // The region under the bar, in the window, measured as the person steps back; and how far up the page had been scrolled in it.
   const [region, setRegion] = useState<{ readonly top: number; readonly shift: number; readonly width: number; readonly height: number } | null>(null);
+  // The bar's foot: a mark between the bar and the page, where the region under the bar begins.
+  const barFoot = useRef<HTMLSpanElement>(null);
+  const navigate = useNavigate();
   const [settled, setSettled] = useState(false);
   const kept = useRef<Kept | null>(null);
   const control = useRef<HTMLButtonElement>(null);
@@ -95,18 +104,29 @@ export function StepBackFrame<S extends AnySchema>({ context, bar, children }: {
 
   const toggle = useCallback(() => {
     if (phase === "in") {
-      const first = inner.current?.firstElementChild;
-      const top = first ? first.getBoundingClientRect().top : 0;
+      const foot = barFoot.current?.getBoundingClientRect().top ?? 0;
       const active = document.activeElement;
       const onPage = active instanceof HTMLElement && inner.current?.contains(active) ? active : null;
       kept.current = { scrollX: window.scrollX, scrollY: window.scrollY, focus: onPage, address };
-      // The bar's foot, in the document: where the region under it begins once the page stands still.
-      setRegion({ top: Math.max(0, top + window.scrollY), shift: Math.min(0, top), width: window.innerWidth, height: window.innerHeight });
+      /*
+       * The bar's foot in the document is where the region under it begins
+       * once the page stands still (the bar is in the page's flow, so with
+       * the page fixed the window scrolls back to its top). Whatever stood
+       * at a height of the window stands there still: the page is moved up
+       * by exactly how far it had been scrolled.
+       */
+      setRegion({ top: Math.max(0, foot + window.scrollY), shift: -window.scrollY, ...windowSize() });
       setSettled(false);
       setPhase(lessMotion() ? "out" : "leaving");
       return;
     }
-    if (phase === "out" || phase === "leaving") {
+    // Pressed again before it began to move: it was never away.
+    if (phase === "leaving") {
+      setSettled(false);
+      setPhase("in");
+      return;
+    }
+    if (phase === "out") {
       setSettled(false);
       setPhase(lessMotion() ? "in" : "returning");
     }
@@ -115,7 +135,9 @@ export function StepBackFrame<S extends AnySchema>({ context, bar, children }: {
   /* STEPPING BACK: the page stands still where it was seen, then recedes — one frame later, so the travel is drawn from where it stood. */
   useLayoutEffect(() => {
     if (phase !== "leaving") return;
-    const frame = requestAnimationFrame(() => requestAnimationFrame(() => setPhase("out")));
+    let frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => setPhase("out"));
+    });
     return () => cancelAnimationFrame(frame);
   }, [phase]);
 
@@ -133,12 +155,21 @@ export function StepBackFrame<S extends AnySchema>({ context, bar, children }: {
       return;
     }
     const element = sheet.current;
-    const done = () => setSettled(true);
-    element?.addEventListener("transitionend", done, { once: true });
+    if (!element) return;
+    const mine = ownTravel(element);
+    let frame = 0;
+    // Its own travel ended, and a frame later what it moved is where it stands.
+    const done = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => setSettled(true));
+    };
+    const ended = (event: TransitionEvent) => mine(event) && done();
+    element.addEventListener("transitionend", ended);
     const timer = setTimeout(done, TRAVEL_MS + 120);
     return () => {
-      element?.removeEventListener("transitionend", done);
+      element.removeEventListener("transitionend", ended);
       clearTimeout(timer);
+      cancelAnimationFrame(frame);
     };
   }, [phase]);
 
@@ -146,11 +177,14 @@ export function StepBackFrame<S extends AnySchema>({ context, bar, children }: {
   useEffect(() => {
     if (phase !== "returning") return;
     const element = sheet.current;
+    if (!element) return;
+    const mine = ownTravel(element);
     const done = () => setPhase("in");
-    element?.addEventListener("transitionend", done, { once: true });
+    const ended = (event: TransitionEvent) => mine(event) && done();
+    element.addEventListener("transitionend", ended);
     const timer = setTimeout(done, TRAVEL_MS + 120);
     return () => {
-      element?.removeEventListener("transitionend", done);
+      element.removeEventListener("transitionend", ended);
       clearTimeout(timer);
     };
   }, [phase]);
@@ -188,12 +222,22 @@ export function StepBackFrame<S extends AnySchema>({ context, bar, children }: {
       event.preventDefault();
       toggle();
     };
-    const resized = () => setRegion((was) => (was ? { ...was, width: window.innerWidth, height: window.innerHeight } : was));
+    /* Once a frame at most, and the bar's foot read again: a phone turned may give the bar another height. */
+    let frame = 0;
+    const resized = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        const top = barFoot.current?.getBoundingClientRect().top;
+        setRegion((was) => (was ? { ...was, ...(top === undefined ? {} : { top: Math.max(0, top) }), ...windowSize() } : was));
+      });
+    };
     document.addEventListener("keydown", key);
     window.addEventListener("resize", resized);
     return () => {
       document.removeEventListener("keydown", key);
       window.removeEventListener("resize", resized);
+      cancelAnimationFrame(frame);
     };
   }, [phase, toggle]);
 
@@ -201,7 +245,8 @@ export function StepBackFrame<S extends AnySchema>({ context, bar, children }: {
   const room = region ? { width: region.width, height: Math.max(0, region.height - region.top) } : { width: 0, height: 0 };
   const back = setBack(room);
   const receded = phase === "out";
-  const travel = lessMotion() ? "none" : `transform ${TRAVEL_MS}ms cubic-bezier(.2,.7,.2,1)`;
+  // Only the step travels: at rest, a window resized moves the page at once, so the lines are never measured from where it is passing.
+  const travel = lessMotion() || settled ? "none" : `transform ${TRAVEL_MS}ms cubic-bezier(.2,.7,.2,1)`;
   const sheetStyle: CSSProperties = away
     ? {
         position: "fixed",
@@ -229,9 +274,30 @@ export function StepBackFrame<S extends AnySchema>({ context, bar, children }: {
   const top = region?.top ?? 0;
   const cityRegion = useMemo(() => ({ x: 0, y: top, width: room.width, height: room.height }), [top, room.width, room.height]);
   const cityPage = useMemo(() => pageBox({ width: room.width, height: room.height }), [room.width, room.height]);
+  /* A record the city shows a way to: its page, the page coming back in on the way so the keyboard lands on the new one. */
+  const hrefOf = useCallback(
+    (id: string) => {
+      const node = context.store.graph.getNode(id);
+      return node ? `${base}${recordPath(context.store.schema, node.kind as string, id)}` : `${base}/`;
+    },
+    [context.store, base],
+  );
+  const open = useCallback(
+    (id: string) => {
+      const node = context.store.graph.getNode(id);
+      if (!node) return;
+      kept.current = null;
+      setSettled(false);
+      setRegion(null);
+      setPhase("in");
+      navigate(recordPath(context.store.schema, node.kind as string, id));
+    },
+    [context.store, navigate],
+  );
   return (
     <StepBackContext.Provider value={offered ? value : null}>
       {bar}
+      <span ref={barFoot} aria-hidden="true" data-graview-bar-foot="" style={{ display: "block", height: 0 }} />
       {away ? (
         <Suspense fallback={null}>
           <CityBehind
@@ -244,6 +310,8 @@ export function StepBackFrame<S extends AnySchema>({ context, bar, children }: {
             sheet={sheet}
             shown={receded}
             settled={settled && receded}
+            open={open}
+            hrefOf={hrefOf}
           />
         </Suspense>
       ) : null}
