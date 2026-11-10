@@ -101,8 +101,15 @@ export interface GuestHostOptions<S extends AnySchema> {
   readonly theme?: () => GuestTheme;
   /** The guest asked to go to a record the viewer may see. */
   readonly onNavigate?: (id: string) => void;
-  /** The guest asked for a height. */
+  /** The guest asked for a height, and was not held (`onHeld`). */
   readonly onSize?: (height: number) => void;
+  /**
+   * THE GROWTH GUARD (Roadmap f-guest-growth-guard): the guest's height was
+   * held, because each height it asked for tracked the one it was last
+   * given — a page sized by its own frame (`100vh`) grows with it to the
+   * cap. Said once, in a sentence, with the height it is held at.
+   */
+  readonly onHeld?: (said: string, height: number) => void;
   /** The guest asked to go to a named place of the app, one `places` lists (FR-93). */
   readonly onNavigatePlace?: (as: string) => void;
   /**
@@ -243,6 +250,143 @@ export function plainNode<S extends AnySchema>(store: Store<S>, node: unknown): 
   return { ...copy, label: definition?.label ? definition.label(copy as never) : typeof own === "string" && own.length > 0 ? own : copy.id };
 }
 
+/** How many heights in a row may track the one last given, after the first that set the pattern, before a guest is held. */
+export const GROWTH_ROUNDS = 3;
+
+/**
+ * THE GROWTH GUARD (Roadmap f-guest-growth-guard). A frame takes the height
+ * its guest asks for, up to `maxHeight`; a guest whose page is sized by its
+ * own frame (`height: 100vh`, and a margin) asks for a little more than the
+ * frame each time it is made taller, and so grows with it to the cap — Cloud
+ * lets a frame of many views be 20,000px. Each height is set against the one
+ * last given: where it is more by the same number of pixels, or by the same
+ * share, `GROWTH_ROUNDS` times running with nothing pushed between, it may
+ * be tracking its own height rather than its content — or it may be a
+ * gallery whose pictures of one height arrive one by one.
+ *
+ * REFUSED, THEN ASKED AGAIN. The height that looks like it is refused, for
+ * `GROWTH_QUIET_MS`. Content that grows meanwhile asks another height of its
+ * own accord, which is taken, and the guard starts over. Asked nothing new,
+ * the guest is given what it asked for after all (`apply`), and watched for
+ * as long again: a page sized by its frame asks once more, by the same step,
+ * as soon as its frame has moved, and only then is it held — at the height it
+ * was last given, the host told why. Content that had finished asks nothing,
+ * and the guard starts over, having said nothing. While held, the height it
+ * was refused is refused again; another one, and any lower one, is taken.
+ */
+export function growthGuard(
+  view: string,
+  hooks: {
+    /** The guest is held: why, in a sentence, and the height it is held at. */
+    readonly say: (said: string, height: number) => void;
+    /** A height refused a moment ago is the guest's after all. */
+    readonly apply: (height: number) => void;
+    /** The clock, for tests. */
+    readonly later?: (then: () => void, ms: number) => () => void;
+  },
+): { takes(height: number): boolean; pushed(): void; dispose(): void } {
+  const later =
+    hooks.later ??
+    ((then: () => void, ms: number) => {
+      const timer = setTimeout(then, ms);
+      return () => clearTimeout(timer);
+    });
+  type Step = { readonly over: number; readonly ratio: number };
+  const tracks = (height: number, from: number, step: Step) => Math.abs(height - from - step.over) <= 1 || Math.abs(height / from - step.ratio) <= 0.002;
+  let given: number | undefined;
+  let step: Step | undefined;
+  let rounds = 0;
+  /* Refused a moment ago, and what happens if nothing new is asked: it is given after all. */
+  let refusing: { readonly refused: number; readonly cancel: () => void } | undefined;
+  /* Given after all, and watched for a guest that asks again by the same step. */
+  let watching: { readonly step: Step; readonly times: number; readonly cancel: () => void } | undefined;
+  /* Held: the height it was refused. */
+  let held: number | undefined;
+  const reset = () => {
+    refusing?.cancel();
+    watching?.cancel();
+    refusing = undefined;
+    watching = undefined;
+    held = undefined;
+    step = undefined;
+    rounds = 0;
+  };
+  const take = (height: number) => {
+    given = height;
+    return true;
+  };
+  const same = (a: number, b: number) => Math.abs(a - b) <= 1;
+  return {
+    takes(height) {
+      if (given === undefined || given <= 0 || height <= given) {
+        reset();
+        return take(height);
+      }
+      if (held !== undefined) {
+        if (same(height, held)) return false;
+        /* Another height of its own accord: its content grew. */
+        reset();
+        return take(height);
+      }
+      if (refusing) {
+        if (same(height, refusing.refused)) return false;
+        reset();
+        return take(height);
+      }
+      if (watching) {
+        const asked = watching;
+        watching.cancel();
+        watching = undefined;
+        if (tracks(height, given, asked.step)) {
+          /* Its frame moved, and it asked for more by the same step at once: it is sized by its frame. */
+          held = height;
+          hooks.say(`The view "${view}" asked to be ${asked.step.over}px taller than its frame each time its frame was made taller, ${asked.times} times running, so it is held at ${given}px: a page sized by its own frame (100vh) grows with it. Size the page by its content, or ask for a height (guest.size).`, given);
+          return false;
+        }
+        reset();
+        return take(height);
+      }
+      const now = { over: height - given, ratio: height / given };
+      rounds = step && tracks(height, given, step) ? rounds + 1 : 0;
+      step = now;
+      if (rounds < GROWTH_ROUNDS) return take(height);
+      const times = rounds + 2;
+      refusing = {
+        refused: height,
+        cancel: later(() => {
+          refusing = undefined;
+          given = height;
+          watching = {
+            step: now,
+            times,
+            cancel: later(() => {
+              /* Nothing more: its content had finished. Start over, having said nothing. */
+              watching = undefined;
+              step = undefined;
+              rounds = 0;
+            }, GROWTH_QUIET_MS),
+          };
+          /* Watched before it is given: a guest may answer before this returns. */
+          hooks.apply(height);
+        }, GROWTH_QUIET_MS),
+      };
+      return false;
+    },
+    pushed() {
+      if (refusing || watching || held !== undefined) return;
+      step = undefined;
+      rounds = 0;
+    },
+    dispose() {
+      refusing?.cancel();
+      watching?.cancel();
+    },
+  };
+}
+
+/** How long a refused height waits for content that grows on its own, and a height given after all waits for a guest that asks again. */
+export const GROWTH_QUIET_MS = 600;
+
 /**
  * THE HOST'S HALF OF ONE FRAME, without the DOM: what to push, and what to
  * make of what comes back. `mountGuestView` wires it to an iframe; a test
@@ -312,6 +456,7 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
     };
   };
 
+  const growth = growthGuard(options.view, { say: (said, height) => options.onHeld?.(said, height), apply: (height) => !disposed && options.onSize?.(height) });
   let disposed = false;
   let pushes = 0;
   /*
@@ -326,6 +471,8 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
   const push = () => {
     if (disposed) return;
     pushes += 1;
+    /* What it is handed now may really be taller: a height asked for after a push is judged afresh. */
+    growth.pushed();
     unanswered.add(pushes);
     if (unanswered.size > 100) unanswered.delete(unanswered.values().next().value!);
     const now = props();
@@ -472,7 +619,8 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
         return;
       }
       if (data.type === "size" && typeof data.height === "number" && Number.isFinite(data.height)) {
-        options.onSize?.(Math.max(0, Math.min(maxHeight, Math.round(data.height))));
+        const height = Math.max(0, Math.min(maxHeight, Math.round(data.height)));
+        if (growth.takes(height)) options.onSize?.(height);
         return;
       }
       stats.dropped += 1;
@@ -495,6 +643,7 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
     },
     dispose() {
       disposed = true;
+      growth.dispose();
       off();
     },
   };

@@ -60,6 +60,17 @@ guest.navigate(id);
 guest.autoSize();
 ```
 
+The frame takes each height it asks for, up to `limits.maxHeight` (4,000px
+by default). A page sized by its own frame (`height: 100vh`) asks for a
+little more each time the frame grows. A height that tracks the frame's
+own a few times running is refused for a moment: content that grows asks
+another meanwhile and is taken; otherwise the height is given after all,
+and a guest that then asks again by the same step is held, the frame wears
+`data-guest-view-held`, and `onProblem` is told why. A gallery whose last
+picture lands just there keeps its whole height. Size the
+page by its content. `guestView({ onSize })` is told each height the frame
+takes.
+
 In React, `useGuest()` from `@graview/guest/react` is the same connection:
 `{ props, act, navigate, size }`, re-rendering on every push. The guest
 entries import nothing of the framework, so a guest bundle carries none of it.
@@ -103,6 +114,16 @@ its policy needs `img-src data:` to show it. The scheme is the app's own
 (the embed's `data-graview-scheme`), not the system's, and the host pushes
 again when the app's toggle or brand changes. `mountGuestView` takes
 `reads`, `theme`, `brand` and `places` too.
+
+The faces the brand lends its views (`brand.views.fonts`) are lent to a
+frame as well: the host reads each file — the app's own where `asset`
+serves it, or one on an origin `fonts.origins` lists — at most 2 MB, the
+last lent winning a shared name, and hands it as a `data:` font the client
+puts in the frame's document. A guest names the family (`font-family:
+"Rock Face", serif`) and loads nothing; its policy needs `font-src data:`.
+Frames in one brand share one reading of its faces. The frame says it has
+drawn once they are read, or after two seconds, saying which did not come.
+What is not lent is said to `onProblem` (`guestView` says it in the console).
 
 `title` names the frame for assistive technology. Registered with the same
 title, the guest is a place on both faces: listed by `placesOf`, at

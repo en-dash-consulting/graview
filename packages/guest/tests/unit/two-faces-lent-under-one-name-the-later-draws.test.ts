@@ -40,7 +40,7 @@ beforeEach(() => {
     FontFace: FakeFontFace,
     fetch: (url: string) => {
       const which = url.includes("aaaa") ? "a" : "b";
-      const answer = () => (gone.has(which) ? new Response("gone", { status: 404 }) : new Response(new Uint8Array([which === "a" ? 0xa : 0xb, 0, 0])));
+      const answer = () => (gone.has(which) ? new Response("gone", { status: 404 }) : new Response(new Uint8Array([which === "a" ? 0xa : 0xb, 0, 0]), { headers: { "content-type": "font/woff2" } }));
       return new Promise((resolve) => setTimeout(() => resolve(answer()), wait[which] ?? 0));
     },
   });

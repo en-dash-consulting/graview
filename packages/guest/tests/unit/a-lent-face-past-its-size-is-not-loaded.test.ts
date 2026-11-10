@@ -118,6 +118,22 @@ describe("a file the app holds, lent as a face, has a size it may not pass", () 
   });
 });
 
+describe("a file the app holds that answers as something else", () => {
+  it("is not read as a face, and the view and the host are told what it answered", async () => {
+    answer = async () => new Response("<html>Sign in</html>", { headers: { "content-type": "text/html" } });
+    expect(await lend(HELD)).toEqual([`The app's face "Rock Face" for its views is not loaded: ${HELD_AT} answered text/html, not a font.`]);
+    expect(made).toEqual([]);
+    expect(fonts.size).toBe(0);
+  });
+
+  it("is read as a face when it answers an older font type, or bytes, or no type at all", async () => {
+    for (const type of ["application/font-woff2", "application/x-font-ttf", "application/octet-stream", "FONT/WOFF2; charset=binary", null]) {
+      answer = async () => new Response(body(1), type ? { headers: { "content-type": type } } : {});
+      expect(await lend(HELD)).toEqual([]);
+    }
+  });
+});
+
 describe("a face on an origin the host lists for faces", () => {
   it("is loaded by its address, as a page loads any face, and never fetched by the host", async () => {
     answer = async () => new Response(body(1));

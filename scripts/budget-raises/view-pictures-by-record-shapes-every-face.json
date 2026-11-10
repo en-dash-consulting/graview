@@ -1,0 +1,7 @@
+{
+  "budget": "every face",
+  "minified": 158,
+  "gzipped": 62,
+  "changeset": "a-view-chooses-its-pictures-by-record.md",
+  "note": "Raised when a view's pictures came to choose records only by an object ({ subject, ids }) and be capped only by a number, so a string or a list under records or most still names a kind, and the page came to leave out pictures in the order a headless run does (Roadmap f-view-pictures-by-record). Measured at 3_151_503 / 1_143_083 against 3_151_345 / 1_143_021 minified and gzipped."
+}

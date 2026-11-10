@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-24T04:00:44.651Z",
+  "at": "2026-11-10T19:21:16.651Z",
   "transport": "open",
   "engine": "firefox",
   "policy": "the app's own page, with no content security policy",
@@ -70,8 +70,8 @@
     "the progress ring turns: its keyframes are drawn and running": {
       "ok": true,
       "detail": {
-        "before": "matrix(-0.38137, 0.924422, -0.924422, -0.38137, 0, 0)",
-        "after": "matrix(-0.988243, -0.152892, 0.152892, -0.988243, 0, 0)"
+        "before": "matrix(-0.675668, 0.737206, -0.737206, -0.675668, 0, 0)",
+        "after": "matrix(-0.887148, -0.461485, 0.461485, -0.887148, 0, 0)"
       }
     },
     "after the app's toggle to dark, the same view takes the dark panel, edge and accent": {
@@ -258,6 +258,7 @@
       "detail": [
         "style",
         "style",
+        "style",
         "div",
         "div",
         "div",
@@ -306,7 +307,7 @@
           "href": null,
           "text": "a link out"
         },
-        "url": "http://127.0.0.1:5792/"
+        "url": "http://127.0.0.1:5992/"
       }
     },
     "srcset is not drawn": {
@@ -325,6 +326,7 @@
       "ok": true,
       "detail": {
         "tags": [
+          "style",
           "style",
           "style",
           "div",
@@ -372,6 +374,7 @@
     "<iframe>, <object>, <embed> and <form> are not drawn, and a press on what was drawn submits nothing": {
       "ok": true,
       "detail": [
+        "style",
         "style",
         "style",
         "div",
@@ -455,7 +458,7 @@
           "bottom": 1133.75,
           "left": 16
         },
-        "sheet": ".cover { position: absolute; top: 0; left: 0; width: 100vw; height: 48px; z-index: 2147483647; background: rgb(200, 0, 0); }",
+        "sheet": "@layer graview-view {\n.cover { position: absolute; top: 0; left: 0; width: 100vw; height: 48px; z-index: 2147483647; background: rgb(200, 0, 0); }\n}",
         "at": "bar",
         "contain": "layout style paint",
         "overflow": "clip"
@@ -1085,7 +1088,7 @@
           "opener": true,
           "referrer": ""
         },
-        "url": "http://127.0.0.1:5792/"
+        "url": "http://127.0.0.1:5992/"
       }
     },
     "the same view run headless refuses the same two links and says each — no address it was handed, a scheme no link takes — and nothing else": {
@@ -1195,7 +1198,7 @@
           "element": true,
           "applied": "url(\"#glow\")"
         },
-        "sheet": ".lane { display: flex; gap: 8px; overflow-x: auto; max-width: 200px; }\n.lane span { flex: 0 0 120px; }\n.reel { height: 20px; mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent); background: var(--graview-accent); }\n.num { font: 700 48px/1 var(--graview-font-body); -webkit-text-stroke: 2px rgb(1, 2, 3); -webkit-text-fill-color: transparent; }\n@keyframes rise { from { opacity: 0.2; } to { opacity: 1; } }\n.reveal { animation: rise linear both; animation-timeline: view(); animation-range: entry 0% cover 40%; }\n.pulse { animation: rise 2s linear infinite; }\n.dot { filter: url(\"#glow\"); }"
+        "sheet": "@layer graview-view {\n.lane { display: flex; gap: 8px; overflow-x: auto; max-width: 200px; }\n.lane span { flex: 0 0 120px; }\n.reel { height: 20px; mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent); background: var(--graview-accent); }\n.num { font: 700 48px/1 var(--graview-font-body); -webkit-text-stroke: 2px rgb(1, 2, 3); -webkit-text-fill-color: transparent; }\n@keyframes rise { from { opacity: 0.2; } to { opacity: 1; } }\n.reveal { animation: rise linear both; animation-timeline: view(); animation-range: entry 0% cover 40%; }\n.pulse { animation: rise 2s linear infinite; }\n.dot { filter: url(\"#glow\"); }\n}"
       }
     },
     "where a person asks for less motion, every animation a view draws is held still — its pulse and the showcase's ring run once in a millisecond, its reveal on no scroll — whatever the view's own sheet says": {
@@ -1247,7 +1250,7 @@
     "connections": 0
   },
   "requests": [
-    "http://127.0.0.1:5792/",
+    "http://127.0.0.1:5992/",
     "https://cars.example/golf"
   ],
   "passed": true

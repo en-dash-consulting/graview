@@ -40,7 +40,7 @@ beforeEach(() => {
   made = [];
   fonts = new Set();
   /* The host fetches a face's file itself, to hold it to its size (a-lent-face-past-its-size-is-not-loaded). */
-  Object.assign(window, { FontFace: FakeFontFace, fetch: () => Promise.resolve(new Response(new Uint8Array(64))) });
+  Object.assign(window, { FontFace: FakeFontFace, fetch: () => Promise.resolve(new Response(new Uint8Array(64), { headers: { "content-type": "font/woff2" } })) });
   Object.defineProperty(document, "fonts", { value: { add: (face: unknown) => fonts.add(face), delete: (face: unknown) => fonts.delete(face) }, configurable: true });
 });
 
