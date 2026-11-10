@@ -7,7 +7,7 @@ import { useHref, useLocation, useNavigate } from "react-router";
 import { useStoreTick, type PageContext } from "./page-context.js";
 import { liveKinds, pluralOf } from "./page-typography.js";
 import { kindOfSlug, recordPath } from "./registry.js";
-import { pageBox, setBack, setBackTransform, SET_BACK_ORIGIN } from "./step-back-geometry.js";
+import { pageBox, setBack, setBackOrigin, setBackTransform } from "./step-back-geometry.js";
 
 /**
  * STEPPING BACK FROM THE PAGE (Graview HQ feature:f-page-zooms-out-to-the-city).
@@ -90,7 +90,7 @@ export function StepBackFrame<S extends AnySchema>({ context, bar, children }: {
   const offered = !context.embedded;
   const [phase, setPhase] = useState<StepBackPhase>("in");
   // The region under the bar, in the window, measured as the person steps back; and how far up the page had been scrolled in it.
-  const [region, setRegion] = useState<{ readonly top: number; readonly shift: number; readonly width: number; readonly height: number } | null>(null);
+  const [region, setRegion] = useState<{ readonly top: number; readonly shift: number; readonly width: number; readonly height: number; readonly rtl: boolean } | null>(null);
   // The bar's foot: a mark between the bar and the page, where the region under the bar begins.
   const barFoot = useRef<HTMLSpanElement>(null);
   const navigate = useNavigate();
@@ -117,7 +117,9 @@ export function StepBackFrame<S extends AnySchema>({ context, bar, children }: {
        * at a height of the window stands there still: the page is moved up
        * by exactly how far it had been scrolled.
        */
-      setRegion({ top: Math.max(0, foot + window.scrollY), shift: -window.scrollY, ...windowSize() });
+      // Which way the page reads: a page that reads right to left steps back to the right, mirrored.
+      const reads = getComputedStyle(inner.current?.firstElementChild ?? document.documentElement).direction;
+      setRegion({ top: Math.max(0, foot + window.scrollY), shift: -window.scrollY, ...windowSize(), rtl: reads === "rtl" });
       setSettled(false);
       setPhase(lessMotion() ? "out" : "leaving");
       return;
@@ -129,6 +131,8 @@ export function StepBackFrame<S extends AnySchema>({ context, bar, children }: {
       return;
     }
     if (phase === "out") {
+      /* The keyboard on a way into the city — which is drawn plain once the page is in — waits on the control instead. */
+      if (document.activeElement?.closest('[data-testid="city-behind"]')) control.current?.focus({ preventScroll: true });
       setSettled(false);
       setPhase(lessMotion() ? "in" : "returning");
     }
@@ -245,7 +249,8 @@ export function StepBackFrame<S extends AnySchema>({ context, bar, children }: {
 
   const away = phase !== "in" && region !== null;
   const room = region ? { width: region.width, height: Math.max(0, region.height - region.top) } : { width: 0, height: 0 };
-  const back = setBack(room);
+  const rtl = region?.rtl ?? false;
+  const back = setBack(room, rtl);
   const receded = phase === "out";
   // Only the step travels: at rest, a window resized moves the page at once, so the lines are never measured from where it is passing.
   const travel = lessMotion() || settled ? "none" : `transform ${TRAVEL_MS}ms cubic-bezier(.2,.7,.2,1)`;
@@ -260,7 +265,7 @@ export function StepBackFrame<S extends AnySchema>({ context, bar, children }: {
         zIndex: LOCAL_LAYERS.raised,
         background: "var(--graview-ground)",
         // Turned on its left edge, in perspective: a panel standing in the city, the city behind it (step-back-geometry.ts).
-        transformOrigin: SET_BACK_ORIGIN,
+        transformOrigin: setBackOrigin(back),
         transform: receded ? setBackTransform(room, back) : "none",
         transition: travel,
         // The page's own edge, as a sheet standing over the ground has one; at its size the line is a pixel and a half.
@@ -276,7 +281,7 @@ export function StepBackFrame<S extends AnySchema>({ context, bar, children }: {
   const seen = useMemo(() => (away ? seenBy(context, base) : null), [away, context, base, tick]);
   const top = region?.top ?? 0;
   const cityRegion = useMemo(() => ({ x: 0, y: top, width: room.width, height: room.height }), [top, room.width, room.height]);
-  const cityPage = useMemo(() => pageBox({ width: room.width, height: room.height }), [room.width, room.height]);
+  const cityPage = useMemo(() => pageBox({ width: room.width, height: room.height }, setBack({ width: room.width, height: room.height }, rtl)), [room.width, room.height, rtl]);
   /* A record the city shows a way to: its page, the page coming back in on the way so the keyboard lands on the new one. */
   const open = useCallback(
     (id: string) => {
@@ -303,6 +308,7 @@ export function StepBackFrame<S extends AnySchema>({ context, bar, children }: {
             subject={seen!.recordAt(`${base}${location.pathname}`)}
             region={cityRegion}
             page={cityPage}
+            rtl={rtl}
             sheet={sheet}
             shown={receded}
             settled={settled && receded}

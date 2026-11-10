@@ -1,11 +1,19 @@
 // @vitest-environment jsdom
 import { bindSchema, createSchema, defineNode, nodeRef, Store } from "@graview/core";
-import { routeBetweenFrames, routingsSoFar } from "@graview/react/ground";
-import { describe, expect, it } from "vitest";
+import { routeBetweenFrames, routeOnTheGround, routesRemembered } from "@graview/react/ground";
+import { describe, expect, it, vi } from "vitest";
+// How many times a ground was routed rather than remembered: the router's own count, not part of the entry.
+import { routingsSoFar } from "../../../react/src/ribbons.js";
 import { z } from "zod";
 import { drawCity, type Seen } from "../../src/city-behind.js";
 import { cityRooms } from "../../src/city-fit.js";
 import { pageBox } from "../../src/step-back-geometry.js";
+
+/* The router as the city reaches it, watched: drawing the city must call none of it. */
+vi.mock("@graview/react/ground", async (original) => {
+  const real = await original<typeof import("@graview/react/ground")>();
+  return { ...real, routeOnTheGround: vi.fn(real.routeOnTheGround), routeBetweenFrames: vi.fn(real.routeBetweenFrames), routesRemembered: vi.fn(real.routesRemembered) };
+});
 
 /**
  * THE CITY BEHIND A PAGE HOLDS NO FRAME ON A BIG APP (Graview HQ
@@ -69,11 +77,17 @@ describe("the city behind a page, on twenty-five districts", () => {
     it(`draws at once and routes no street while it draws, ${each} records a district`, async () => {
       const store = big(each);
       const routedBefore = routingsSoFar();
+      vi.mocked(routeOnTheGround).mockClear();
+      vi.mocked(routeBetweenFrames).mockClear();
+      vi.mocked(routesRemembered).mockClear();
       const first = timed(() => drawCity({ store }, seen, new Set(["k3-1", "k7-2"]), rooms));
       expect(first.value).not.toBeNull();
       expect(first.value!.ground.plots).toHaveLength(KINDS);
       expect(first.value!.buildings.length).toBeGreaterThan(KINDS);
-      // Drawn without routing: the streets are not routed while the city draws.
+      // Drawn without routing: no street is routed, remembered or asked for while the city draws.
+      expect(routeOnTheGround).not.toHaveBeenCalled();
+      expect(routeBetweenFrames).not.toHaveBeenCalled();
+      expect(routesRemembered).not.toHaveBeenCalled();
       expect(routingsSoFar()).toBe(routedBefore);
       expect(first.ms, `${first.ms.toFixed(0)} ms to draw the city`).toBeLessThan(120);
 

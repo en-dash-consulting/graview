@@ -37,6 +37,8 @@
  *   theKeyboardReachesTheCitysRecords — out, Tab from the control reaches a
  *   record a line runs to, named for it, and Enter opens its page, in, with
  *   the keyboard on the new page;
+ *   escapeFromTheCityLeavesTheKeyboardOnTheControl — Escape pressed on a way
+ *   into the city brings the page in with the keyboard on the control;
  *   lessMotionSkipsTheTravel — with reduced motion asked for, the page is at
  *   its end state in the frame after the press, with no transition.
  *
@@ -285,6 +287,22 @@ try {
       }
       let opened = null;
       if (stop) {
+        /* Escape from a way into the city: the page comes in, and the keyboard waits on the control, not on nothing. */
+        await desk.keyboard.press("Escape");
+        await steppedIn(desk);
+        const escaped = await desk.evaluate(() => ({
+          phase: document.querySelector("[data-graview-step-back]")?.getAttribute("data-graview-step-back"),
+          keyboard: document.activeElement === document.body ? "body" : (document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName ?? null),
+        }));
+        claim("escapeFromTheCityLeavesTheKeyboardOnTheControl", escaped.phase === "in" && escaped.keyboard === "step-back", { app, record, from: stop.id, ...escaped });
+        /* And out again, Tab on to the same way in, for Enter. */
+        await desk.keyboard.press("Enter");
+        await steppedBack(desk);
+        let again = null;
+        for (let presses = 1; presses <= 30 && again !== stop.id; presses += 1) {
+          await desk.keyboard.press("Tab");
+          again = await desk.evaluate(() => document.activeElement?.closest("[data-graview-city-record]")?.getAttribute("data-graview-city-record") ?? null);
+        }
         await desk.keyboard.press("Enter");
         await steppedIn(desk);
         await desk.waitForTimeout(300);

@@ -6,7 +6,7 @@ import { useGoTo } from "@graview/react/provider";
 import { ribbonsOf, ribbonWidth, routeBetweenFrames } from "@graview/react/ground";
 import { useEffect, useLayoutEffect, useMemo, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type RefObject } from "react";
 import type { PageContext } from "./page-context.js";
-import { bestFit, cityRooms, leavesFrom, overlaps } from "./city-fit.js";
+import { bestFit, CITY_PLACEMENT, cityRooms, leavesFrom, overlaps } from "./city-fit.js";
 import type { Box } from "./step-back-geometry.js";
 
 /*
@@ -145,11 +145,13 @@ interface Reading {
   readonly counts: Readonly<Record<string, number>>;
   readonly ribbons: readonly { readonly key: string; readonly from: string; readonly to: string; readonly width: number }[];
 }
-let lastReading: { readonly store: object; readonly version: number; readonly kinds: string; readonly reading: Reading } | null = null;
+/* Kept by store, and let go with it: a page that is gone keeps no store alive here. */
+const readings = new WeakMap<object, { readonly version: number; readonly kinds: string; readonly reading: Reading }>();
 function readingOf<S extends AnySchema>(store: Store<S>, seen: Seen): Reading {
   const version = (store as unknown as { version?: number }).version ?? -1;
   const kinds = seen.kinds.join("|");
-  if (lastReading && lastReading.store === store && lastReading.version === version && version >= 0 && lastReading.kinds === kinds) return lastReading.reading;
+  const last = readings.get(store);
+  if (last && last.version === version && version >= 0 && last.kinds === kinds) return last.reading;
   const live = new Set(seen.kinds);
   const members = new Map<string, string[]>();
   for (const node of store.graph.allNodes()) {
@@ -168,7 +170,7 @@ function readingOf<S extends AnySchema>(store: Store<S>, seen: Seen): Reading {
   const most = found.reduce((top, ribbon) => Math.max(top, ribbon.links), 0);
   const ribbons = found.map((ribbon) => ({ key: ribbon.key, from: ribbon.from, to: ribbon.to, width: ribbonWidth(ribbon.links, most) }));
   const reading = { members, counts, ribbons };
-  lastReading = { store, version, kinds, reading };
+  readings.set(store, { version, kinds, reading });
   return reading;
 }
 
@@ -199,11 +201,12 @@ function groundOf<S extends AnySchema>(source: CitySource<S>, seen: Seen, readin
 }
 
 /** What stands on every district: a row of blocks per value of its main choice, the records the page shows first in their rows. */
-let lastStanding: { readonly key: string; readonly store: object; readonly buildings: readonly DrawnBuilding[] } | null = null;
+const standings = new WeakMap<object, { readonly key: string; readonly buildings: readonly DrawnBuilding[] }>();
 function standingOf<S extends AnySchema>(store: Store<S>, ground: Ground, reading: Reading, first: ReadonlySet<string>): readonly DrawnBuilding[] {
   const version = (store as unknown as { version?: number }).version ?? -1;
   const key = `${version}|${ground.upright}|${ground.plots.map((plot) => plot.kind).join(",")}|${[...first].join(",")}`;
-  if (lastStanding && lastStanding.store === store && lastStanding.key === key && version >= 0) return lastStanding.buildings;
+  const last = standings.get(store);
+  if (last && last.key === key && version >= 0) return last.buildings;
   const schema = store.schema;
   const buildings: DrawnBuilding[] = [];
   for (const { kind } of ground.plots) {
@@ -230,7 +233,7 @@ function standingOf<S extends AnySchema>(store: Store<S>, ground: Ground, readin
     for (const block of blocks) buildings.push({ id: block.id, kind, depth: block.col + block.row, tier: tiers[block.lane]!, ...faces(block) });
   }
   buildings.sort((a, b) => a.depth - b.depth);
-  lastStanding = { key, store, buildings };
+  standings.set(store, { key, buildings });
   return buildings;
 }
 
@@ -350,6 +353,9 @@ function pageAsLaidOut(sheet: HTMLElement, parts: readonly Part[]): { readonly s
   return { sheet: flat, boxes, project };
 }
 
+/** Whether the person asked for less motion. */
+const lessMotion = (): boolean => typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 /** A frame's worth of calls, as one: a resize or a layout change asks many times and is answered once. */
 function perFrame(run: () => void): { (): void; cancel(): void } {
   let asked = 0;
@@ -373,6 +379,7 @@ export function CityBehind<S extends AnySchema>({
   subject,
   region,
   page,
+  rtl,
   sheet,
   shown,
   settled,
@@ -388,6 +395,8 @@ export function CityBehind<S extends AnySchema>({
   readonly region: Box;
   /** The stepped-back page's box in the region. */
   readonly page: Box;
+  /** The page reads right to left: the city stands down and to the left of it. */
+  readonly rtl: boolean;
   readonly sheet: RefObject<HTMLDivElement | null>;
   /** Whether the page has stepped back: the city fades in with it. */
   readonly shown: boolean;
@@ -405,7 +414,7 @@ export function CityBehind<S extends AnySchema>({
   }, [sheet, store, seen, subject, tick]);
 
   const firstKey = useMemo(() => [...new Set(parts.map((one) => one.id))].join("\n"), [parts]);
-  const room = useMemo(() => cityRooms(region, page), [region, page]);
+  const room = useMemo(() => cityRooms(region, page, CITY_PLACEMENT, rtl), [region, page, rtl]);
   const city = useMemo(
     () => drawCity({ store, accents: context.brand?.accents, arranged: context.views?.arrangement?.()?.order }, seen, new Set(firstKey ? firstKey.split("\n") : []), room),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -417,7 +426,7 @@ export function CityBehind<S extends AnySchema>({
   useEffect(() => {
     if (!city) return;
     const ground = city.ground;
-    return routeBetweenFrames({ ribbons: city.ribbons, plots: ground.map, cell: CELL, tilt: 0.5 }, (runs) => setRoads({ ground, runs }));
+    return routeBetweenFrames({ ribbons: city.ribbons, plots: ground.map, cell: CELL, tilt: 0.5, elsewhere: true }, (runs) => setRoads({ ground, runs }));
   }, [city]);
 
   /* The scene's lighting for the scheme the page is drawn in, read off the page itself. */
@@ -485,7 +494,8 @@ export function CityBehind<S extends AnySchema>({
   };
   const runs = roads && roads.ground === ground ? roads.runs : null;
   const most = new Map(city.ribbons.map((ribbon) => [ribbon.key, ribbon.width]));
-  const fade = { opacity: shown ? 1 : 0, transition: "opacity 300ms ease" };
+  // The city comes up as the page steps back; with less motion asked for, it is simply there.
+  const fade = { opacity: shown ? 1 : 0, transition: lessMotion() ? "none" : "opacity 300ms ease" };
   const name = `The city behind this page: ${ground.plots.length === 1 ? "one kind" : `${ground.plots.length} kinds`}, ${ground.plots.map((one) => `${one.label} ${one.count}`).join(", ")}`;
   const go = (id: string) => (event: ReactMouseEvent | ReactKeyboardEvent) => {
     if ("key" in event && event.key !== "Enter") return;

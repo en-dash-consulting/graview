@@ -83,6 +83,8 @@ export interface RouteInput {
   readonly tilt?: number | undefined;
   /** The districts' name cards, on the canvas from origin zero. */
   readonly labels?: readonly Box[];
+  /** Routed for a picture of the city drawn off the scene, which the scene's camera never draws from (`routesSeen`). */
+  readonly elsewhere?: boolean;
 }
 
 /**
@@ -483,6 +485,8 @@ class MinHeap {
  */
 interface Routed {
   readonly ground: string;
+  /** Routed for a picture of the city drawn off the scene (the pages' city behind a page): never the scene's streets as its camera moves. */
+  readonly elsewhere: boolean;
   readonly cell: number;
   readonly tilt: number;
   readonly runs: ReadonlyMap<string, Point[]>;
@@ -503,7 +507,7 @@ const boxesOf = (labels: readonly Box[]) => labels.map((box) => `${Math.round(bo
 const keyOf = (input: RouteInput, ground: string) => `${ground}|${input.cell}|${input.tilt ?? 0.5}|${boxesOf(input.labels ?? [])}`;
 
 function remember(input: RouteInput, ground: string, runs: ReadonlyMap<string, Point[]>): void {
-  routed.set(keyOf(input, ground), { ground, cell: input.cell, tilt: input.tilt ?? 0.5, runs });
+  routed.set(keyOf(input, ground), { ground, elsewhere: input.elsewhere === true, cell: input.cell, tilt: input.tilt ?? 0.5, runs });
   while (routed.size > KEPT) routed.delete(routed.keys().next().value!);
 }
 
@@ -572,11 +576,13 @@ export function routeBetweenFrames(input: RouteInput, done: (runs: ReadonlyMap<s
  * The routes last given for this ground at this tilt, at the cell asked —
  * the city on its way in or out, the camera moving over the same streets.
  * Nothing when the ground has not been routed: a ribbon is drawn where it
- * was routed, never where it might be.
+ * was routed, never where it might be. Only the scene's own count: a
+ * picture of the city drawn elsewhere routes without the scene's name cards
+ * (`elsewhere`), and the scene never borrows its streets.
  */
 export function routesSeen(ground: string, cell: number, tilt: number): ReadonlyMap<string, Point[]> | undefined {
   let found: Routed | undefined;
-  for (const kept of routed.values()) if (kept.ground === ground && kept.tilt === tilt) found = kept;
+  for (const kept of routed.values()) if (kept.ground === ground && kept.tilt === tilt && !kept.elsewhere) found = kept;
   if (!found || cell <= 0) return undefined;
   if (found.cell === cell) return found.runs;
   const by = cell / found.cell;

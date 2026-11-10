@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createPageRegistry, PagesApp, type PageComponent } from "../../src/index.js";
 import { bestFit, cityRooms, leavesFrom, roomBehind } from "../../src/city-fit.js";
-import { pageBox, setBack, setBackTransform, SET_BACK_SCALE, SET_BACK_TURN, SET_BACK_TURN_NARROW } from "../../src/step-back-geometry.js";
+import { pageBox, setBack, setBackOrigin, setBackTransform, SET_BACK_SCALE, SET_BACK_TURN, SET_BACK_TURN_NARROW } from "../../src/step-back-geometry.js";
 
 /**
  * A PAGE STEPS BACK OVER THE CITY AND COMES IN AS IT WAS (Graview HQ
@@ -30,6 +30,22 @@ describe("where the page stands stepped back", () => {
     expect(transform).toMatch(/^translate\(.+\) perspective\(\d+px\) rotateY\(20deg\) rotateX\(3deg\) scale\(0\.5\)$/);
     // About its left edge's middle, scaled by a half: its top stands at y once moved up by a quarter of the region.
     expect(transform).toContain(`translate(${back.x}px, ${(back.y - 850 / 4).toFixed(1)}px)`);
+  });
+
+  it("is mirrored in a page that reads right to left: up and to the right, turned on its right edge, the city down and to the left", () => {
+    const region = { width: 1440, height: 850 };
+    const back = setBack(region, true);
+    expect(back.rtl).toBe(true);
+    expect(setBackOrigin(back)).toBe("100% 50%");
+    expect(setBackOrigin(setBack(region))).toBe("0 50%");
+    expect(setBackTransform({ height: 850 }, back)).toContain(`translate(-${back.x}px,`);
+    expect(setBackTransform({ height: 850 }, back)).toContain("rotateY(-20deg)");
+    const page = pageBox(region, back);
+    expect(page.x + page.width).toBe(region.width - back.x);
+    const [behind] = cityRooms(region, page, "behind", true);
+    expect(behind!.x + behind!.width).toBeLessThan(page.x + page.width);
+    expect(behind!.x + behind!.width).toBeGreaterThan(page.x);
+    expect(behind!.y).toBeGreaterThan(page.y);
   });
 
   it("turns less on a phone, and recedes less: its words are smaller to begin with", () => {

@@ -22,7 +22,7 @@ export interface Box {
 export interface SetBack {
   /** The page's scale: every part of it at the same scale. */
   readonly scale: number;
-  /** Where the page's left edge stands in the region, and its top. */
+  /** Where the page's leading edge stands in the region (its left, or its right in a page that reads right to left), and its top. */
   readonly x: number;
   readonly y: number;
   /** How far it is turned on its left edge, and tipped back, in degrees. */
@@ -30,6 +30,8 @@ export interface SetBack {
   readonly tip: number;
   /** How far the viewer stands from the region, in pixels: what the turn is seen in perspective from. */
   readonly perspective: number;
+  /** The page reads right to left: everything mirrored — up and to the right, turned on its right edge, the city down and to the left. */
+  readonly rtl: boolean;
 }
 
 /** How far the page recedes at a desk: to a half of its size, where its words still read. */
@@ -46,7 +48,7 @@ const NARROW = 600;
 const AIR = 16;
 
 /** How the page stands stepped back in a region of this size: smaller, up and to the left, turned. */
-export function setBack(region: { readonly width: number; readonly height: number }): SetBack {
+export function setBack(region: { readonly width: number; readonly height: number }, rtl = false): SetBack {
   const narrow = region.width < NARROW;
   const scale = narrow ? SET_BACK_SCALE_NARROW : SET_BACK_SCALE;
   const gutter = Math.max(AIR, Math.round(Math.min(region.width, region.height) * 0.03));
@@ -57,23 +59,28 @@ export function setBack(region: { readonly width: number; readonly height: numbe
     turn: narrow ? SET_BACK_TURN_NARROW : SET_BACK_TURN,
     tip: narrow ? 2 : 3,
     perspective: Math.round(Math.max(region.width, region.height) * (narrow ? 1.6 : 1.2)),
+    rtl,
   };
 }
 
 /**
- * The page's transform, as CSS, about its left edge's middle
- * (`transform-origin: 0 50%`): moved so its top-left stands at `x`, `y`,
- * seen in perspective, turned and tipped, and scaled.
+ * The page's transform, as CSS, about its leading edge's middle
+ * (`setBackOrigin`): moved so its top leading corner stands `x` in from
+ * that side and `y` down, seen in perspective, turned and tipped, and
+ * scaled. Mirrored for a page that reads right to left.
  */
 export function setBackTransform(region: { readonly height: number }, back: SetBack): string {
   const ty = back.y - (region.height / 2) * (1 - back.scale);
-  return `translate(${back.x}px, ${ty.toFixed(1)}px) perspective(${back.perspective}px) rotateY(${back.turn}deg) rotateX(${back.tip}deg) scale(${back.scale})`;
+  const tx = back.rtl ? -back.x : back.x;
+  const turn = back.rtl ? -back.turn : back.turn;
+  return `translate(${tx}px, ${ty.toFixed(1)}px) perspective(${back.perspective}px) rotateY(${turn}deg) rotateX(${back.tip}deg) scale(${back.scale})`;
 }
 
-/** Where the transform turns the page about: its left edge's middle. */
-export const SET_BACK_ORIGIN = "0 50%";
+/** Where the transform turns the page about: its leading edge's middle. */
+export const setBackOrigin = (back: SetBack): string => (back.rtl ? "100% 50%" : "0 50%");
 
 /** The page's box in the region, stepped back, before its turn: what it covers at most. */
 export function pageBox(region: { readonly width: number; readonly height: number }, back: SetBack = setBack(region)): Box {
-  return { x: back.x, y: back.y, width: region.width * back.scale, height: region.height * back.scale };
+  const width = region.width * back.scale;
+  return { x: back.rtl ? region.width - back.x - width : back.x, y: back.y, width, height: region.height * back.scale };
 }

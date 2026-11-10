@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-10T19:55:58.999Z",
+  "at": "2026-11-10T20:15:05.013Z",
   "engine": "chromium",
   "claims": {
     "everyRoutedPageHasTheControl": {
@@ -615,6 +615,25 @@
             "address": "http://localhost:5804/pages/gardeners/june?chapter=9",
             "onTheLink": true
           }
+        }
+      ]
+    },
+    "escapeFromTheCityLeavesTheKeyboardOnTheControl": {
+      "ok": true,
+      "detail": [
+        {
+          "app": "todo",
+          "record": "/pages/tasks/t-deposit",
+          "from": "reason-deposit",
+          "phase": "in",
+          "keyboard": "step-back"
+        },
+        {
+          "app": "seedbed",
+          "record": "/pages/gardeners/june",
+          "from": "plot-1",
+          "phase": "in",
+          "keyboard": "step-back"
         }
       ]
     },

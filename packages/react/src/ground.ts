@@ -18,4 +18,4 @@ export { RIBBON_WIDTH, ribbonWidth } from "./ribbon-width.js";
 export { routeOnTheGround } from "./ribbons.js";
 export type { RouteInput } from "./ribbons.js";
 // The same router a ribbon at a time between frames, remembered for the picture it routed: a city stepped back to twice is routed once.
-export { routeBetweenFrames, routesRemembered, routingsSoFar } from "./ribbons.js";
+export { routeBetweenFrames, routesRemembered } from "./ribbons.js";

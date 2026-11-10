@@ -42,18 +42,21 @@ export function roomBeside(region: { readonly width: number; readonly height: nu
   };
 }
 
-/** Behind the page: the whole region but for the corner the page stands in. */
-export function roomBehind(region: { readonly width: number; readonly height: number }, page: Box): Box {
-  const x = page.x + page.width * BEHIND_FROM;
+/** Behind the page: the whole region but for the corner the page stands in — its top left, or its top right in a page that reads right to left. */
+export function roomBehind(region: { readonly width: number; readonly height: number }, page: Box, rtl = false): Box {
   const y = page.y + page.height * (region.height > region.width ? BEHIND_FROM_TALL : BEHIND_FROM);
-  return { x, y, width: Math.max(0, region.width - x - AIR), height: Math.max(0, region.height - y - AIR) };
+  const height = Math.max(0, region.height - y - AIR);
+  if (rtl) return { x: AIR, y, width: Math.max(0, page.x + page.width * (1 - BEHIND_FROM) - AIR), height };
+  const x = page.x + page.width * BEHIND_FROM;
+  return { x, y, width: Math.max(0, region.width - x - AIR), height };
 }
 
 /** The rooms the city may be fitted to, for a placement: the one it is drawn larger in is chosen (`bestFit`). */
-export function cityRooms(region: { readonly width: number; readonly height: number }, page: Box, placement: CityPlacement = CITY_PLACEMENT): readonly Box[] {
-  if (placement === "behind") return [roomBehind(region, page)];
+export function cityRooms(region: { readonly width: number; readonly height: number }, page: Box, placement: CityPlacement = CITY_PLACEMENT, rtl = false): readonly Box[] {
+  if (placement === "behind") return [roomBehind(region, page, rtl)];
   const { right, below } = roomBeside(region, page);
-  return [right, below];
+  // Beside a page that reads right to left: the band to its left.
+  return rtl ? [{ x: AIR, y: AIR, width: Math.max(0, page.x - 2 * AIR), height: Math.max(0, region.height - 2 * AIR) }, below] : [right, below];
 }
 
 /** The scale a drawing of this size is drawn at to fit a box whole, never stretched. */
