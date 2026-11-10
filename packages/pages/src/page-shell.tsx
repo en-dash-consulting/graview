@@ -12,6 +12,7 @@ import { type PageContext, StartFreshLink, useStoreTick } from "./page-context.j
 import { usePlacedOnTheFace } from "./face-placed.js";
 import { classes, sizedBy, type ControlSize } from "./control-size.js";
 import { BODY, WIDE, column, h1, quiet } from "./page-typography.js";
+import { StepBackControl, StepBackFrame } from "./step-back.js";
 
 
 /**
@@ -57,7 +58,12 @@ export function DefaultShell<S extends AnySchema>({
         lineHeight: 1.5,
       }}
     >
-      {context.embedded ? null : <OwnBar context={context} />}
+      {/*
+        * The bar, and under it the page in a sheet that steps back over the
+        * app's city and comes in again (step-back.tsx): the bar stays where
+        * it is, and holds the control that does it.
+        */}
+      <StepBackFrame context={context} bar={context.embedded ? null : <OwnBar context={context} />}>
       <div style={{ flex: 1 }}>{children}</div>
       {/*
         * Whether this browser remembers, and the way back to the example: the
@@ -85,6 +91,7 @@ export function DefaultShell<S extends AnySchema>({
           </div>
         </footer>
       ) : null}
+      </StepBackFrame>
     </div>
   );
 }
@@ -161,6 +168,8 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
         }
         tools={
           <>
+            {/* Step back from the page to the city behind it, and in again (step-back.tsx). */}
+            <StepBackControl />
             {/* The standing, as the problems' own page: a dot and its name, with no count of its own; the bell counts what needs you (Roadmap f-inbox-needs-you-first). */}
             <Link to="/problems" data-testid="standing-link" aria-label={said} title={said} style={{ ...toolStyle, position: "relative", textDecoration: "none", color: problems === 0 ? "var(--graview-ink-muted)" : "var(--graview-warn)" }}>
               <StandingDot tone={problems === 0 ? "var(--graview-good)" : "var(--graview-warn)"} />

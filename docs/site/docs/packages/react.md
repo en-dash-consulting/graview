@@ -6,7 +6,7 @@
 pnpm add @graview/react
 ```
 
-Entry points: `@graview/react`, `@graview/react/provider`, `@graview/react/drawing`
+Entry points: `@graview/react`, `@graview/react/provider`, `@graview/react/drawing`, `@graview/react/ground`
 
 ## What it is
 

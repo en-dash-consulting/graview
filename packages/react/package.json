@@ -16,6 +16,10 @@
     "./drawing": {
       "types": "./dist/drawing.d.ts",
       "default": "./dist/drawing.js"
+    },
+    "./ground": {
+      "types": "./dist/ground.d.ts",
+      "default": "./dist/ground.js"
     }
   },
   "scripts": {

@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 5474,
+  "gzipped": 2157,
+  "note": "Raised when a routed page came to step back over the app's city (Graview HQ feature:f-page-zooms-out-to-the-city): the bar's toggle and the sheet the page steps back in are drawn with the page, and the city behind it (the scene's map, blocks and streets, and the lines from the page to its records) is a chunk fetched the first time a person steps back. Measured at 770_082 / 278_027 against 764_608 / 275_870 minified and gzipped."
+}

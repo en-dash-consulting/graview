@@ -143,6 +143,8 @@ const CHAIN = [
   ["rehearsal", "rehearse-studio.mjs"],
   ["remember", "verify-remember.mjs"],
   ["pages", "verify-pages.mjs"],
+  // Step back from any routed page to the city behind it: the page smaller, up and to the left, still reading; lines from what it shows to those records' buildings; back in, the scroll, the keyboard and the address kept; less motion, no travel — todo and the garden, a desk and a phone.
+  ["step-back", "verify-step-back.mjs"],
   // Whether a person can do each app's core jobs on both faces, and what it costs; fails only on a regression.
   ["journeys", "verify-journeys.mjs"],
   ["panning", "verify-panning.mjs"],

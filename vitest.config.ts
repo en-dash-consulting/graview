@@ -94,6 +94,7 @@ export default defineConfig({
       "@graview/render": src("render"),
       "@graview/react/provider": fileURLToPath(new URL("./packages/react/src/provider.ts", import.meta.url)),
       "@graview/react/drawing": fileURLToPath(new URL("./packages/react/src/drawing.ts", import.meta.url)),
+      "@graview/react/ground": fileURLToPath(new URL("./packages/react/src/ground.ts", import.meta.url)),
       "@graview/react": src("react"),
       "@graview/primitives/frame": fileURLToPath(new URL("./packages/primitives/src/frame.ts", import.meta.url)),
       "@graview/primitives/pages": fileURLToPath(new URL("./packages/primitives/src/pages.ts", import.meta.url)),

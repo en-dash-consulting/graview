@@ -1,0 +1,644 @@
+{
+  "at": "2026-11-10T19:25:16.195Z",
+  "engine": "chromium",
+  "claims": {
+    "everyRoutedPageHasTheControl": {
+      "ok": true,
+      "detail": [
+        {
+          "app": "todo",
+          "path": "/pages",
+          "control": {
+            "pressed": "false",
+            "name": "Step back to the city",
+            "width": 30,
+            "height": 30
+          }
+        },
+        {
+          "app": "todo",
+          "path": "/pages/tasks",
+          "control": {
+            "pressed": "false",
+            "name": "Step back to the city",
+            "width": 30,
+            "height": 30
+          }
+        },
+        {
+          "app": "todo",
+          "path": "/pages/tasks/t-deposit",
+          "control": {
+            "pressed": "false",
+            "name": "Step back to the city",
+            "width": 30,
+            "height": 30
+          }
+        },
+        {
+          "app": "todo",
+          "path": "/pages/map",
+          "control": {
+            "pressed": "false",
+            "name": "Step back to the city",
+            "width": 30,
+            "height": 30
+          }
+        },
+        {
+          "app": "todo",
+          "path": "/pages/problems",
+          "control": {
+            "pressed": "false",
+            "name": "Step back to the city",
+            "width": 30,
+            "height": 30
+          }
+        },
+        {
+          "app": "seedbed",
+          "path": "/pages",
+          "control": {
+            "pressed": "false",
+            "name": "Step back to the city",
+            "width": 30,
+            "height": 30
+          }
+        },
+        {
+          "app": "seedbed",
+          "path": "/pages/plantings",
+          "control": {
+            "pressed": "false",
+            "name": "Step back to the city",
+            "width": 30,
+            "height": 30
+          }
+        },
+        {
+          "app": "seedbed",
+          "path": "/pages/gardeners/june",
+          "control": {
+            "pressed": "false",
+            "name": "Step back to the city",
+            "width": 30,
+            "height": 30
+          }
+        },
+        {
+          "app": "seedbed",
+          "path": "/pages/map",
+          "control": {
+            "pressed": "false",
+            "name": "Step back to the city",
+            "width": 30,
+            "height": 30
+          }
+        },
+        {
+          "app": "seedbed",
+          "path": "/pages/problems",
+          "control": {
+            "pressed": "false",
+            "name": "Step back to the city",
+            "width": 30,
+            "height": 30
+          }
+        }
+      ]
+    },
+    "outThePageIsSmallerAndSetBackOverTheCity": {
+      "ok": true,
+      "detail": [
+        {
+          "app": "todo",
+          "path": "/pages",
+          "width": 1440,
+          "barBottom": 48,
+          "sheet": {
+            "x": 26,
+            "y": 74,
+            "width": 792,
+            "height": 469
+          },
+          "scale": 0.55,
+          "title": {
+            "x": 146,
+            "y": 100,
+            "width": 553,
+            "height": 21
+          },
+          "titleText": "1 thing is late.",
+          "titleFont": 19.360000000000003,
+          "inWindow": true,
+          "city": {
+            "x": 834,
+            "y": 64,
+            "width": 590,
+            "height": 820
+          },
+          "kinds": 6,
+          "buildings": 22,
+          "cityClearOfPage": true,
+          "upAndLeft": true,
+          "inert": true
+        },
+        {
+          "app": "todo",
+          "path": "/pages/tasks",
+          "width": 1440,
+          "barBottom": 48,
+          "sheet": {
+            "x": 26,
+            "y": 74,
+            "width": 792,
+            "height": 469
+          },
+          "scale": 0.55,
+          "title": {
+            "x": 158,
+            "y": 86,
+            "width": 37,
+            "height": 18
+          },
+          "titleText": "Tasks",
+          "titleFont": 15.2064,
+          "inWindow": true,
+          "city": {
+            "x": 834,
+            "y": 64,
+            "width": 590,
+            "height": 820
+          },
+          "kinds": 6,
+          "buildings": 22,
+          "cityClearOfPage": true,
+          "upAndLeft": true,
+          "inert": true
+        },
+        {
+          "app": "todo",
+          "path": "/pages/tasks/t-deposit",
+          "width": 1440,
+          "barBottom": 48,
+          "sheet": {
+            "x": 26,
+            "y": 74,
+            "width": 792,
+            "height": 469
+          },
+          "scale": 0.55,
+          "title": {
+            "x": 146,
+            "y": 104,
+            "width": 553,
+            "height": 21
+          },
+          "titleText": "Pay the deposit",
+          "titleFont": 19.360000000000003,
+          "inWindow": true,
+          "city": {
+            "x": 834,
+            "y": 64,
+            "width": 590,
+            "height": 820
+          },
+          "kinds": 6,
+          "buildings": 22,
+          "cityClearOfPage": true,
+          "upAndLeft": true,
+          "inert": true
+        },
+        {
+          "app": "todo",
+          "path": "/pages/map",
+          "width": 1440,
+          "barBottom": 48,
+          "sheet": {
+            "x": 26,
+            "y": 74,
+            "width": 792,
+            "height": 469
+          },
+          "scale": 0.55,
+          "title": {
+            "x": 253,
+            "y": 126,
+            "width": 338,
+            "height": 18
+          },
+          "titleText": "Connections",
+          "titleFont": 15.2064,
+          "inWindow": true,
+          "city": {
+            "x": 834,
+            "y": 64,
+            "width": 590,
+            "height": 820
+          },
+          "kinds": 6,
+          "buildings": 22,
+          "cityClearOfPage": true,
+          "upAndLeft": true,
+          "inert": true
+        },
+        {
+          "app": "todo",
+          "path": "/pages/problems",
+          "width": 1440,
+          "barBottom": 48,
+          "sheet": {
+            "x": 26,
+            "y": 74,
+            "width": 792,
+            "height": 469
+          },
+          "scale": 0.55,
+          "title": {
+            "x": 146,
+            "y": 100,
+            "width": 553,
+            "height": 21
+          },
+          "titleText": "What is out of order",
+          "titleFont": 19.360000000000003,
+          "inWindow": true,
+          "city": {
+            "x": 834,
+            "y": 64,
+            "width": 590,
+            "height": 820
+          },
+          "kinds": 6,
+          "buildings": 22,
+          "cityClearOfPage": true,
+          "upAndLeft": true,
+          "inert": true
+        },
+        {
+          "app": "todo",
+          "path": "/pages/tasks/t-deposit",
+          "phone": true,
+          "width": 390,
+          "barBottom": 48,
+          "sheet": {
+            "x": 16,
+            "y": 109,
+            "width": 215,
+            "height": 413
+          },
+          "scale": 0.5512820512820513,
+          "title": {
+            "x": 26,
+            "y": 139,
+            "width": 195,
+            "height": 16
+          },
+          "titleText": "Pay the deposit",
+          "titleFont": 14.994871794871795,
+          "inWindow": true,
+          "city": {
+            "x": 16,
+            "y": 538,
+            "width": 358,
+            "height": 290
+          },
+          "kinds": 6,
+          "buildings": 22,
+          "cityClearOfPage": true,
+          "upAndLeft": true,
+          "inert": true
+        },
+        {
+          "app": "seedbed",
+          "path": "/pages",
+          "width": 1440,
+          "barBottom": 48,
+          "sheet": {
+            "x": 26,
+            "y": 74,
+            "width": 792,
+            "height": 469
+          },
+          "scale": 0.55,
+          "title": {
+            "x": 103,
+            "y": 96,
+            "width": 638,
+            "height": 18
+          },
+          "titleText": "2 gardeners, 2 plots, 1 planting and 1 rule.",
+          "titleFont": 15.2064,
+          "inWindow": true,
+          "city": {
+            "x": 834,
+            "y": 64,
+            "width": 590,
+            "height": 820
+          },
+          "kinds": 4,
+          "buildings": 7,
+          "cityClearOfPage": true,
+          "upAndLeft": true,
+          "inert": true
+        },
+        {
+          "app": "seedbed",
+          "path": "/pages/plantings",
+          "width": 1440,
+          "barBottom": 48,
+          "sheet": {
+            "x": 26,
+            "y": 74,
+            "width": 792,
+            "height": 469
+          },
+          "scale": 0.55,
+          "title": {
+            "x": 226,
+            "y": 111,
+            "width": 68,
+            "height": 18
+          },
+          "titleText": "Plantings",
+          "titleFont": 15.2064,
+          "inWindow": true,
+          "city": {
+            "x": 834,
+            "y": 64,
+            "width": 590,
+            "height": 820
+          },
+          "kinds": 4,
+          "buildings": 7,
+          "cityClearOfPage": true,
+          "upAndLeft": true,
+          "inert": true
+        },
+        {
+          "app": "seedbed",
+          "path": "/pages/gardeners/june",
+          "width": 1440,
+          "barBottom": 48,
+          "sheet": {
+            "x": 26,
+            "y": 74,
+            "width": 792,
+            "height": 469
+          },
+          "scale": 0.55,
+          "title": {
+            "x": 213,
+            "y": 116,
+            "width": 418,
+            "height": 19
+          },
+          "titleText": "June",
+          "titleFont": 15.2064,
+          "inWindow": true,
+          "city": {
+            "x": 834,
+            "y": 64,
+            "width": 590,
+            "height": 820
+          },
+          "kinds": 4,
+          "buildings": 7,
+          "cityClearOfPage": true,
+          "upAndLeft": true,
+          "inert": true
+        },
+        {
+          "app": "seedbed",
+          "path": "/pages/map",
+          "width": 1440,
+          "barBottom": 48,
+          "sheet": {
+            "x": 26,
+            "y": 74,
+            "width": 792,
+            "height": 469
+          },
+          "scale": 0.55,
+          "title": {
+            "x": 213,
+            "y": 114,
+            "width": 418,
+            "height": 18
+          },
+          "titleText": "Connections",
+          "titleFont": 15.2064,
+          "inWindow": true,
+          "city": {
+            "x": 834,
+            "y": 64,
+            "width": 590,
+            "height": 820
+          },
+          "kinds": 4,
+          "buildings": 7,
+          "cityClearOfPage": true,
+          "upAndLeft": true,
+          "inert": true
+        },
+        {
+          "app": "seedbed",
+          "path": "/pages/problems",
+          "width": 1440,
+          "barBottom": 48,
+          "sheet": {
+            "x": 26,
+            "y": 74,
+            "width": 792,
+            "height": 469
+          },
+          "scale": 0.55,
+          "title": {
+            "x": 213,
+            "y": 96,
+            "width": 418,
+            "height": 18
+          },
+          "titleText": "All rules hold",
+          "titleFont": 15.2064,
+          "inWindow": true,
+          "city": {
+            "x": 834,
+            "y": 64,
+            "width": 590,
+            "height": 820
+          },
+          "kinds": 4,
+          "buildings": 7,
+          "cityClearOfPage": true,
+          "upAndLeft": true,
+          "inert": true
+        },
+        {
+          "app": "seedbed",
+          "path": "/pages/gardeners/june",
+          "phone": true,
+          "width": 390,
+          "barBottom": 48,
+          "sheet": {
+            "x": 16,
+            "y": 109,
+            "width": 215,
+            "height": 413
+          },
+          "scale": 0.5512820512820513,
+          "title": {
+            "x": 27,
+            "y": 151,
+            "width": 193,
+            "height": 16
+          },
+          "titleText": "June",
+          "titleFont": 12.701538461538462,
+          "inWindow": true,
+          "city": {
+            "x": 16,
+            "y": 538,
+            "width": 358,
+            "height": 290
+          },
+          "kinds": 4,
+          "buildings": 7,
+          "cityClearOfPage": true,
+          "upAndLeft": true,
+          "inert": true
+        }
+      ]
+    },
+    "theKeyboardReachesTheControl": {
+      "ok": true,
+      "detail": [
+        {
+          "app": "todo",
+          "path": "/pages/tasks/t-deposit",
+          "presses": 13
+        },
+        {
+          "app": "seedbed",
+          "path": "/pages/gardeners/june",
+          "presses": 12
+        }
+      ]
+    },
+    "linesRunFromThePageToTheRecordsItShows": {
+      "ok": true,
+      "detail": [
+        {
+          "app": "todo",
+          "record": "Pay the deposit (t-deposit)",
+          "links": [
+            "Today (today, link)",
+            "The landlord holds the date for 48 hours once the deposit… (reason-deposit, link)"
+          ],
+          "linkedOnThePage": [
+            "today",
+            "reason-deposit"
+          ],
+          "missing": [],
+          "said": "Stepped back. Lines run from this page to Pay the deposit, Today, The landlord holds the date for 48 hours once the deposit… in the city.",
+          "astray": []
+        },
+        {
+          "app": "seedbed",
+          "record": "June (june)",
+          "links": [
+            "Plot 1 (plot-1, link)"
+          ],
+          "linkedOnThePage": [
+            "plot-1"
+          ],
+          "missing": [],
+          "said": "Stepped back. Lines run from this page to June, Plot 1 in the city.",
+          "astray": []
+        }
+      ]
+    },
+    "backInTheScrollTheKeyboardAndTheAddressAreKept": {
+      "ok": true,
+      "detail": [
+        {
+          "app": "todo",
+          "how": "pressed twice by the keyboard: the keyboard stays on the control",
+          "onControl": true
+        },
+        {
+          "app": "todo",
+          "how": "scrolled, on a link, out and in by Escape",
+          "before": {
+            "scrollY": 240,
+            "address": "http://localhost:5803/pages/tasks/t-deposit?today=2026-09-01",
+            "focused": "Today"
+          },
+          "whileOut": {
+            "active": "step-back"
+          },
+          "after": {
+            "scrollY": 240,
+            "address": "http://localhost:5803/pages/tasks/t-deposit?today=2026-09-01",
+            "onTheLink": true
+          }
+        },
+        {
+          "app": "seedbed",
+          "how": "pressed twice by the keyboard: the keyboard stays on the control",
+          "onControl": true
+        },
+        {
+          "app": "seedbed",
+          "how": "scrolled, on a link, out and in by Escape",
+          "before": {
+            "scrollY": 0,
+            "address": "http://localhost:5804/pages/gardeners/june?chapter=9",
+            "focused": "Gardeners"
+          },
+          "whileOut": {
+            "active": "step-back"
+          },
+          "after": {
+            "scrollY": 0,
+            "address": "http://localhost:5804/pages/gardeners/june?chapter=9",
+            "onTheLink": true
+          }
+        }
+      ]
+    },
+    "lessMotionSkipsTheTravel": {
+      "ok": true,
+      "detail": [
+        {
+          "app": "todo",
+          "next": {
+            "phase": "out",
+            "transition": "0s",
+            "transform": "matrix(0.55, 0, 0, 0.55, 26, 26)"
+          },
+          "back": "in",
+          "phases": [
+            "out",
+            "in"
+          ]
+        },
+        {
+          "app": "seedbed",
+          "next": {
+            "phase": "out",
+            "transition": "0s",
+            "transform": "matrix(0.55, 0, 0, 0.55, 26, 26)"
+          },
+          "back": "in",
+          "phases": [
+            "out",
+            "in"
+          ]
+        }
+      ]
+    }
+  },
+  "shots": ".generated/step-back",
+  "passed": true
+}
