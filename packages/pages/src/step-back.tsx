@@ -7,7 +7,7 @@ import { useHref, useLocation, useNavigate } from "react-router";
 import { useStoreTick, type PageContext } from "./page-context.js";
 import { liveKinds, pluralOf } from "./page-typography.js";
 import { kindOfSlug, recordPath } from "./registry.js";
-import { pageBox, setBack } from "./step-back-geometry.js";
+import { pageBox, setBack, setBackTransform, SET_BACK_ORIGIN } from "./step-back-geometry.js";
 
 /**
  * STEPPING BACK FROM THE PAGE (Graview HQ feature:f-page-zooms-out-to-the-city).
@@ -18,12 +18,14 @@ import { pageBox, setBack } from "./step-back-geometry.js";
  * lightweight connected pipe/line things that show where on the page it's
  * related to connected datas."
  *
- * Two states, for now. In, the page is the page. Out, the page under the bar
- * is the same page, still drawn, scaled down as one plane and moved up and to
- * the left, and the app's city — the scene's own map of the data — stands
- * in the room it leaves, with a line from each part of the page that shows a
- * record to that record's building. Back in, the page is where it was: the
- * scroll, the keyboard and the address.
+ * Two states, for now. In, the page is the page. Out, the app's city — the
+ * scene's own map of the data — is the ground under the bar, and the page
+ * is the same page, still drawn, standing in front of it as one plane:
+ * smaller, up and to the left, and turned on its left edge in perspective
+ * (Nick: "behind would be cool … behind/to the side a little.. angled"). A
+ * line runs from each part of the page that shows a record to that record's
+ * building. Back in, the page is where it was: the scroll, the keyboard and
+ * the address.
  *
  * This is not the scene and the pages trading places (the bar's app menu,
  * the scene's altitude): the page never leaves. The city is fetched when a
@@ -257,8 +259,9 @@ export function StepBackFrame<S extends AnySchema>({ context, bar, children }: {
         overflow: "hidden",
         zIndex: LOCAL_LAYERS.raised,
         background: "var(--graview-ground)",
-        transformOrigin: "0 0",
-        transform: receded ? `translate(${back.x}px, ${back.y}px) scale(${back.scale})` : "none",
+        // Turned on its left edge, in perspective: a panel standing in the city, the city behind it (step-back-geometry.ts).
+        transformOrigin: SET_BACK_ORIGIN,
+        transform: receded ? setBackTransform(room, back) : "none",
         transition: travel,
         // The page's own edge, as a sheet standing over the ground has one; at its size the line is a pixel and a half.
         outline: receded ? "2px solid var(--graview-edge)" : "none",
@@ -275,13 +278,6 @@ export function StepBackFrame<S extends AnySchema>({ context, bar, children }: {
   const cityRegion = useMemo(() => ({ x: 0, y: top, width: room.width, height: room.height }), [top, room.width, room.height]);
   const cityPage = useMemo(() => pageBox({ width: room.width, height: room.height }), [room.width, room.height]);
   /* A record the city shows a way to: its page, the page coming back in on the way so the keyboard lands on the new one. */
-  const hrefOf = useCallback(
-    (id: string) => {
-      const node = context.store.graph.getNode(id);
-      return node ? `${base}${recordPath(context.store.schema, node.kind as string, id)}` : `${base}/`;
-    },
-    [context.store, base],
-  );
   const open = useCallback(
     (id: string) => {
       const node = context.store.graph.getNode(id);
@@ -311,7 +307,6 @@ export function StepBackFrame<S extends AnySchema>({ context, bar, children }: {
             shown={receded}
             settled={settled && receded}
             open={open}
-            hrefOf={hrefOf}
           />
         </Suspense>
       ) : null}

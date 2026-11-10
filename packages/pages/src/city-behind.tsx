@@ -1,12 +1,12 @@
 import { hueFor, isoShade, labelOf, LOCAL_LAYERS, orderKinds, type AnySchema, type Scheme, type Store } from "@graview/core";
 import { cityMap, districtBlocks, districtState, TIER_HEIGHT, toIso, type CityMap, type StateTier } from "@graview/core/scene";
 import { beginning } from "@graview/core/seat";
-// A door tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts): the provider's barrel, which it reads the scheme from.
-import { useGraviewIfAny } from "@graview/react/provider";
+// A door tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts): the provider's barrel, whose way to a record's address it links with.
+import { useGoTo } from "@graview/react/provider";
 import { ribbonsOf, ribbonWidth, routeBetweenFrames } from "@graview/react/ground";
 import { useEffect, useLayoutEffect, useMemo, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type RefObject } from "react";
 import type { PageContext } from "./page-context.js";
-import { bestFit, nearestOnBox, overlaps, roomBeside } from "./city-fit.js";
+import { bestFit, cityRooms, leavesFrom, overlaps } from "./city-fit.js";
 import type { Box } from "./step-back-geometry.js";
 
 /*
@@ -36,9 +36,11 @@ import type { Box } from "./step-back-geometry.js";
  * is kept at module scope for the store's version and the records the page
  * shows, across steps in and out.
  *
- * Drawn as one SVG fitted whole into the room the stepped-back page leaves,
- * never stretched; the lines over everything, from where each part of the
- * page stands now to where its record stands.
+ * Drawn as one SVG fitted whole into its room, never stretched: behind the
+ * page, the ground it stands on (`CITY_PLACEMENT`, city-fit.ts). The lines
+ * are drawn over the page and the city both, so a line is seen leaving its
+ * part of the page and a record the page stands in front of is still found:
+ * each line ends in a ring around its roof, drawn over the page too.
  */
 
 /** Lattice cells are drawn at this many units: the SVG is fitted to its room, so the number is only the drawing's own grain. */
@@ -242,11 +244,11 @@ export interface City {
 }
 
 /**
- * THE CITY TO DRAW in the room the page leaves: the map run whichever way
+ * THE CITY TO DRAW in the room it has around the page: the map run whichever way
  * draws it larger, chosen from the plots alone, and what stands on it. No
  * street is routed here (`routeBetweenFrames` does that, after).
  */
-export function drawCity<S extends AnySchema>(source: CitySource<S>, seen: Seen, first: ReadonlySet<string>, rooms: { readonly right: Box; readonly below: Box }): City | null {
+export function drawCity<S extends AnySchema>(source: CitySource<S>, seen: Seen, first: ReadonlySet<string>, rooms: readonly Box[]): City | null {
   const reading = readingOf(source.store, seen);
   const wide = groundOf(source, seen, reading, false);
   const tall = groundOf(source, seen, reading, true);
@@ -322,6 +324,32 @@ function partBox(element: Element): Box {
   return drawn.width > 0 && drawn.height > 0 ? asBox(drawn) : asBox(element.getBoundingClientRect());
 }
 
+/**
+ * THE PAGE AS IT IS LAID OUT, AND WHERE ITS PLANE PUTS EACH POINT OF IT.
+ * The sheet is laid out flat at the window's size and stood turned by one
+ * transform, so each part is read where it is laid out — the transform let
+ * go for the reading and put back at once, at rest, where nothing travels —
+ * and carried through that same transform: the matrix the browser computed
+ * for the sheet, about the sheet's own origin, in perspective.
+ */
+function pageAsLaidOut(sheet: HTMLElement, parts: readonly Part[]): { readonly sheet: Box; readonly boxes: readonly Box[]; readonly project: (point: Point) => Point } {
+  const style = getComputedStyle(sheet);
+  const turned = new DOMMatrix(style.transform === "none" ? undefined : style.transform);
+  const [ox = 0, oy = 0] = style.transformOrigin.split(" ").map((one) => parseFloat(one));
+  const held = sheet.style.transform;
+  sheet.style.transform = "none";
+  const flat = asBox(sheet.getBoundingClientRect());
+  const boxes = parts.map((one) => partBox(one.element));
+  sheet.style.transform = held;
+  const about = new DOMMatrix().translate(ox, oy).multiply(turned).translate(-ox, -oy);
+  const project = (point: Point): Point => {
+    const p = about.transformPoint(new DOMPoint(point.x - flat.x, point.y - flat.y, 0, 1));
+    const w = p.w || 1;
+    return { x: p.x / w + flat.x, y: p.y / w + flat.y };
+  };
+  return { sheet: flat, boxes, project };
+}
+
 /** A frame's worth of calls, as one: a resize or a layout change asks many times and is answered once. */
 function perFrame(run: () => void): { (): void; cancel(): void } {
   let asked = 0;
@@ -349,7 +377,6 @@ export function CityBehind<S extends AnySchema>({
   shown,
   settled,
   open,
-  hrefOf,
 }: {
   readonly context: PageContext<S>;
   readonly seen: Seen;
@@ -368,8 +395,6 @@ export function CityBehind<S extends AnySchema>({
   readonly settled: boolean;
   /** Go to a record's own page, the page coming back in on the way. */
   readonly open: (id: string) => void;
-  /** A record page's address, for the link a building is. */
-  readonly hrefOf: (id: string) => string;
 }) {
   const store = context.store as unknown as Store<AnySchema>;
 
@@ -380,7 +405,7 @@ export function CityBehind<S extends AnySchema>({
   }, [sheet, store, seen, subject, tick]);
 
   const firstKey = useMemo(() => [...new Set(parts.map((one) => one.id))].join("\n"), [parts]);
-  const room = useMemo(() => roomBeside(region, page), [region, page]);
+  const room = useMemo(() => cityRooms(region, page), [region, page]);
   const city = useMemo(
     () => drawCity({ store, accents: context.brand?.accents, arranged: context.views?.arrangement?.()?.order }, seen, new Set(firstKey ? firstKey.split("\n") : []), room),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -395,11 +420,11 @@ export function CityBehind<S extends AnySchema>({
     return routeBetweenFrames({ ribbons: city.ribbons, plots: ground.map, cell: CELL, tilt: 0.5 }, (runs) => setRoads({ ground, runs }));
   }, [city]);
 
-  /* The scene's lighting for the scheme the app is drawn in: the provider's, where the face has one, else read off the page. */
-  const told = useGraviewIfAny()?.scheme;
-  const [read, setRead] = useState<Scheme>("light");
-  useLayoutEffect(() => setRead(schemeOf(sheet.current)), [sheet]);
-  const scheme: Scheme = told === "dark" || told === "light" ? told : read;
+  /* The scene's lighting for the scheme the page is drawn in, read off the page itself. */
+  const [scheme, setScheme] = useState<Scheme>("light");
+  useLayoutEffect(() => setScheme(schemeOf(sheet.current)), [sheet]);
+  /* A record's page, as this face addresses it: the link a building a line runs to is. */
+  const goTo = useGoTo();
 
   /*
    * THE LINES, from where each part stands now, at rest, to its record's
@@ -417,19 +442,19 @@ export function CityBehind<S extends AnySchema>({
     const hues = new Map(city.ground.plots.map((one) => [one.kind, one.hue]));
     const measure = () => {
       const svg = document.querySelector<SVGSVGElement>('[data-testid="city-behind"] svg');
-      const sheetBox = sheet.current?.getBoundingClientRect();
+      const element = sheet.current;
       const matrix = svg?.getScreenCTM();
-      if (!svg || !sheetBox || !matrix) return;
+      if (!svg || !element || !matrix || typeof DOMMatrix === "undefined") return;
+      const plane = pageAsLaidOut(element, parts);
       const out: Line[] = [];
-      for (const { element, id, part } of parts) {
-        if (out.length >= MOST_LINES) break;
+      parts.forEach(({ id, part }, index) => {
+        if (out.length >= MOST_LINES) return;
         const building = byId.get(id);
-        if (!building) continue;
-        const box = partBox(element);
-        if (box.width <= 0 || box.height <= 0 || !overlaps(box, asBox(sheetBox))) continue;
+        const box = plane.boxes[index]!;
+        if (!building || box.width <= 0 || box.height <= 0 || !overlaps(box, plane.sheet)) return;
         const at = { x: matrix.a * building.top.x + matrix.c * building.top.y + matrix.e, y: matrix.b * building.top.x + matrix.d * building.top.y + matrix.f };
-        out.push({ key: `${out.length}`, to: id, part, from: nearestOnBox(box, at), at, hue: hues.get(building.kind) ?? 220 });
-      }
+        out.push({ key: `${out.length}`, to: id, part, from: leavesFrom(box, plane.project, at), at, hue: hues.get(building.kind) ?? 220 });
+      });
       setMeasured(out);
     };
     measure();
@@ -521,7 +546,7 @@ export function CityBehind<S extends AnySchema>({
               return (
                 <a
                   key={one.id}
-                  href={hrefOf(one.id)}
+                  href={goTo.href?.({ record: one.id })}
                   tabIndex={0}
                   aria-label={`Open ${said}`}
                   data-graview-city-record={one.id}
@@ -556,10 +581,12 @@ export function CityBehind<S extends AnySchema>({
         style={{ position: "fixed", left: 0, top: 0, width: "100vw", height: "100vh", zIndex: LOCAL_LAYERS.over, pointerEvents: "none", overflow: "visible" }}
       >
         {lines.map((line) => (
-          <g key={line.key} data-graview-line-to={line.to} data-graview-line-part={line.part}>
+          <g key={line.key} data-graview-line-to={line.to} data-graview-line-part={line.part} data-graview-line-from={`${line.from.x.toFixed(1)},${line.from.y.toFixed(1)}`}>
             <line x1={line.from.x} y1={line.from.y} x2={line.at.x} y2={line.at.y} stroke={`hsl(${line.hue} 45% 45%)`} strokeOpacity={0.7} strokeWidth={1.25} />
             <circle cx={line.from.x} cy={line.from.y} r={2.5} fill={`hsl(${line.hue} 45% 45%)`} />
             <circle cx={line.at.x} cy={line.at.y} r={3} fill="none" stroke={`hsl(${line.hue} 45% 45%)`} strokeWidth={1.25} />
+            {/* A ring around the roof, over the page too: a record the page stands in front of is still found. */}
+            <circle cx={line.at.x} cy={line.at.y} r={10} fill="none" stroke={`hsl(${line.hue} 45% 45%)`} strokeOpacity={0.45} strokeWidth={1.25} />
           </g>
         ))}
       </svg>

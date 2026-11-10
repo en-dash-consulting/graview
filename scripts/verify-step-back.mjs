@@ -16,10 +16,13 @@
  *   the problems each have the bar's step-back control, a toggle that says
  *   whether it is pressed;
  *   theKeyboardReachesTheControl — Tab from the top of the page reaches it;
- *   outThePageIsSmallerAndSetBackOverTheCity — pressed, the page is the
- *   same page at a little over half its size, up and to the left, its title
- *   still in the window and drawn big enough to read, and the city stands in
- *   the room it leaves, clear of it, its districts and buildings drawn;
+ *   outThePageStandsAngledInFrontOfTheCity — pressed, the page is the same
+ *   page, about half its size, up and to the left, turned in perspective (a
+ *   3D transform, less on a phone), in front of the city, its title still in
+ *   the window and drawn big enough to read;
+ *   theCityFillsTheGroundBehindThePage — the city's layer is the whole
+ *   region under the bar, under the page, its districts and buildings drawn,
+ *   and most of its buildings are not under the page;
  *   linesRunFromThePageToTheRecordsItShows — on a record's page, a line from
  *   the title to the record's own building and one from each part of the
  *   page that links to a record to that record's building, every one ending
@@ -97,40 +100,66 @@ const measureOut = () => {
     const r = el.getBoundingClientRect();
     return { x: Math.round(r.left), y: Math.round(r.top), width: Math.round(r.width), height: Math.round(r.height) };
   };
+  const width = document.documentElement.clientWidth;
   const sheet = document.querySelector("[data-graview-step-back]");
-  const bar = document.querySelector("[data-graview-app-bar]") ?? document.querySelector(".graview-bar");
-  const title = sheet?.querySelector("[data-graview-page-title]:not([style*='clip'])") ?? sheet?.querySelector("main h1, main h2, h1, h2");
-  const cityBox = document.querySelector('[data-testid="city-behind"] svg');
+  const foot = document.querySelector("[data-graview-bar-foot]");
+  const barBottom = foot ? Math.round(foot.getBoundingClientRect().top) : 0;
+  const title = [...(sheet?.querySelectorAll("[data-graview-page-title], h1, h2") ?? [])].find((one) => one.getBoundingClientRect().width > 2) ?? null;
+  const layer = document.querySelector('[data-testid="city-behind"]');
   const titleBox = box(title);
   const sheetBox = box(sheet);
-  const cityRect = box(cityBox);
-  const meets = (a, b) => Boolean(a && b) && a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
-  // What the city drew inside its box: the buildings' own boxes, unioned.
+  const layerBox = box(layer);
+  const transform = sheet?.style.transform ?? "";
+  const scale = Number(transform.match(/scale\(([\d.]+)\)/)?.[1] ?? NaN);
+  const turn = Number(transform.match(/rotateY\(([\d.]+)deg\)/)?.[1] ?? NaN);
+  const computed = sheet ? getComputedStyle(sheet).transform : "none";
+  const threeD = computed !== "none" && !new DOMMatrix(computed).is2D;
+  const inside = (r, b) => b && r.x >= b.x && r.x <= b.x + b.width && r.y >= b.y && r.y <= b.y + b.height;
   const buildings = [...document.querySelectorAll("[data-graview-city-record]")];
-  let drawn = null;
-  for (const one of buildings) {
+  const centers = buildings.map((one) => {
     const r = one.getBoundingClientRect();
-    if (r.width === 0) continue;
-    drawn = drawn ? { l: Math.min(drawn.l, r.left), t: Math.min(drawn.t, r.top), r: Math.max(drawn.r, r.right), b: Math.max(drawn.b, r.bottom) } : { l: r.left, t: r.top, r: r.right, b: r.bottom };
-  }
-  const drawnBox = drawn ? { x: drawn.l, y: drawn.t, width: drawn.r - drawn.l, height: drawn.b - drawn.t } : null;
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  });
+  const covered = centers.filter((c) => inside(c, sheetBox)).length;
+  // In front: the middle of the page is the page, not the city.
+  const middle = sheetBox ? document.elementFromPoint(sheetBox.x + sheetBox.width / 2, sheetBox.y + sheetBox.height / 2) : null;
+  const zOf = (el) => Number(el ? getComputedStyle(el).zIndex : NaN);
   return {
-    width: innerWidth,
-    barBottom: bar ? Math.round(bar.getBoundingClientRect().bottom) : null,
+    width,
+    barBottom,
     sheet: sheetBox,
-    scale: sheetBox ? sheetBox.width / innerWidth : null,
+    scale,
+    turn,
+    threeD,
+    seenAt: sheetBox ? sheetBox.width / width : null,
     title: titleBox,
     titleText: title?.textContent?.trim().slice(0, 60) ?? null,
-    titleFont: title ? parseFloat(getComputedStyle(title).fontSize) * (sheetBox ? sheetBox.width / innerWidth : 1) : null,
+    titleFont: title ? parseFloat(getComputedStyle(title).fontSize) * scale : null,
     inWindow: Boolean(titleBox && titleBox.x >= 0 && titleBox.y >= 0 && titleBox.x + titleBox.width <= innerWidth && titleBox.y + titleBox.height <= innerHeight),
-    city: cityRect,
+    upAndLeft: Boolean(sheetBox && sheetBox.x < width * 0.1 && sheetBox.y < barBottom + innerHeight * 0.1 && sheetBox.x + sheetBox.width / 2 < width / 2),
+    inFront: Boolean(middle && sheet?.contains(middle)) && zOf(sheet) > zOf(layer),
+    layer: layerBox,
+    layerFills: Boolean(layerBox && Math.abs(layerBox.x) <= 1 && Math.abs(layerBox.y - barBottom) <= 1 && Math.abs(layerBox.width - width) <= 1 && Math.abs(layerBox.y + layerBox.height - innerHeight) <= 2),
     kinds: document.querySelectorAll("[data-graview-city-kind]").length,
     buildings: buildings.length,
-    cityClearOfPage: drawnBox ? !meets(drawnBox, sheetBox) : false,
-    upAndLeft: Boolean(sheetBox && sheetBox.x < innerWidth * 0.1 && cityRect && (cityRect.x > sheetBox.x + sheetBox.width - 2 || cityRect.y > sheetBox.y + sheetBox.height - 2)),
+    coveredByThePage: covered,
     inert: sheet?.firstElementChild?.hasAttribute("inert") ?? false,
   };
 };
+
+/** Both claims about the page out, from one measure; a phone's turn less than a desk's. */
+function claimOut(out, detail, deskTurn) {
+  claim(
+    "outThePageStandsAngledInFrontOfTheCity",
+    out.threeD && out.turn > 4 && out.turn < 30 && (deskTurn === undefined || out.turn < deskTurn) && out.seenAt > 0.3 && out.seenAt < 0.75 && out.inWindow && out.titleFont >= 8 && out.upAndLeft && out.inFront && out.inert && (out.sheet?.y ?? 0) >= out.barBottom - 1,
+    { ...detail, sheet: out.sheet, turn: out.turn, scale: out.scale, threeD: out.threeD, title: out.titleText, titleFont: out.titleFont, inWindow: out.inWindow, upAndLeft: out.upAndLeft, inFront: out.inFront },
+  );
+  claim(
+    "theCityFillsTheGroundBehindThePage",
+    out.layerFills && out.kinds > 0 && out.buildings > 0 && out.coveredByThePage <= out.buildings / 2,
+    { ...detail, layer: out.layer, barBottom: out.barBottom, kinds: out.kinds, buildings: out.buildings, coveredByThePage: out.coveredByThePage },
+  );
+}
 
 /** The lines drawn, and what the page links to, read independently from its hrefs. */
 const measureLines = (base) => {
@@ -142,7 +171,18 @@ const measureLines = (base) => {
     const end = { x: Number(line.getAttribute("x2")), y: Number(line.getAttribute("y2")) };
     const building = document.querySelector(`[data-graview-city-record="${CSS.escape(to)}"]`);
     const r = building?.getBoundingClientRect();
+    /* Where it leaves: on a part of the page that shows this record, as the page's turned plane draws that part. */
+    const [fx, fy] = (g.getAttribute("data-graview-line-from") ?? "").split(",").map(Number);
+    const part = g.getAttribute("data-graview-line-part");
+    const showing = part === "self"
+      ? [...sheet.querySelectorAll("[data-graview-page-title], h1, h2")]
+      : [...sheet.querySelectorAll("[data-graview-record], a[href]")].filter((el) => el.getAttribute("data-graview-record") === to || (el.href && decodeURIComponent(new URL(el.href).pathname).endsWith(`/${to}`)));
+    const onItsPart = showing.some((el) => {
+      const b = el.getBoundingClientRect();
+      return fx >= b.left - 3 && fx <= b.right + 3 && fy >= b.top - 3 && fy <= b.bottom + 3;
+    });
     return {
+      onItsPart,
       to,
       part: g.getAttribute("data-graview-line-part"),
       name: building?.querySelector("title")?.textContent ?? null,
@@ -165,6 +205,7 @@ const measureLines = (base) => {
 };
 
 let browser;
+let deskTurn;
 const servers = [];
 mkdirSync(SHOTS, { recursive: true });
 try {
@@ -186,11 +227,8 @@ try {
       await desk.click('[data-testid="step-back"]');
       await steppedBack(desk);
       const out = await desk.evaluate(measureOut);
-      claim(
-        "outThePageIsSmallerAndSetBackOverTheCity",
-        out.scale > 0.4 && out.scale < 0.7 && out.inWindow && out.titleFont >= 8 && out.kinds > 0 && out.buildings > 0 && out.cityClearOfPage && out.upAndLeft && out.inert && (out.sheet?.y ?? 0) >= (out.barBottom ?? 0),
-        { app, path, ...out },
-      );
+      claimOut(out, { app, path });
+      deskTurn = out.turn;
       if (path === record) await desk.screenshot({ path: resolve(SHOTS, `${app}-record-out-${ENGINE}.png`) });
       await desk.click('[data-testid="step-back"]');
       await steppedIn(desk);
@@ -224,8 +262,8 @@ try {
       const to = new Set(drawn.lines.map((line) => line.to));
       claim(
         "linesRunFromThePageToTheRecordsItShows",
-        Boolean(self) && others.length > 0 && drawn.linked.every((id) => to.has(id)) && drawn.lines.every((line) => line.endsOnItsBuilding && line.lit) && /Lines run from this page to/.test(drawn.said ?? ""),
-        { app, record: self ? `${self.name} (${self.to})` : null, links: others.map((line) => `${line.name} (${line.to}, ${line.part})`), linkedOnThePage: drawn.linked, missing: drawn.linked.filter((id) => !to.has(id)), said: drawn.said, astray: drawn.lines.filter((line) => !line.endsOnItsBuilding || !line.lit) },
+        Boolean(self) && others.length > 0 && drawn.linked.every((id) => to.has(id)) && drawn.lines.every((line) => line.endsOnItsBuilding && line.lit && line.onItsPart) && /Lines run from this page to/.test(drawn.said ?? ""),
+        { app, record: self ? `${self.name} (${self.to})` : null, links: others.map((line) => `${line.name} (${line.to}, ${line.part})`), linkedOnThePage: drawn.linked, missing: drawn.linked.filter((id) => !to.has(id)), said: drawn.said, astray: drawn.lines.filter((line) => !line.endsOnItsBuilding || !line.lit || !line.onItsPart) },
       );
       await desk.keyboard.press("Enter");
       await steppedIn(desk);
@@ -282,20 +320,19 @@ try {
     });
     await desk.evaluate(() => document.querySelector('[data-testid="step-back"]').click());
     await steppedBack(desk);
+    /* The sheet is the window as it was seen, then turned and set back as one plane: with its transform let go for a moment, each part stands where it stood. */
     const whileOut = await desk.evaluate(() => {
-      const sheet = document.querySelector("[data-graview-step-back]").getBoundingClientRect();
+      const sheet = document.querySelector("[data-graview-step-back]");
+      const held = sheet.style.transform;
+      sheet.style.transform = "none";
       const probe = document.querySelector("[data-step-back-probe]")?.getBoundingClientRect();
-      const foot = document.querySelector("[data-graview-bar-foot]")?.getBoundingClientRect().top ?? 0;
-      const roomWidth = document.documentElement.clientWidth;
+      sheet.style.transform = held;
       return {
         active: document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName ?? null,
-        sheet: { x: sheet.left, y: sheet.top, scale: sheet.width / roomWidth },
-        barFoot: foot,
         probe: probe ? { x: probe.left, y: probe.top } : null,
       };
     });
-    /* The sheet is the window as it was seen, scaled about its corner under the bar: each part where it stood, at that scale. */
-    const expected = before.probe ? { x: whileOut.sheet.x + before.probe.x * whileOut.sheet.scale, y: whileOut.sheet.y + (before.probe.y - whileOut.barFoot) * whileOut.sheet.scale } : null;
+    const expected = before.probe;
     const off = expected && whileOut.probe ? Math.max(Math.abs(expected.x - whileOut.probe.x), Math.abs(expected.y - whileOut.probe.y)) : null;
     claim(
       "outThePageShowsExactlyWhatWasOnScreen",
@@ -349,10 +386,11 @@ try {
     await phone.click('[data-testid="step-back"]');
     await steppedBack(phone);
     const small = await phone.evaluate(measureOut);
-    claim("outThePageIsSmallerAndSetBackOverTheCity", small.scale > 0.4 && small.scale < 0.7 && small.inWindow && small.kinds > 0 && small.cityClearOfPage && small.upAndLeft, { app, path: record, phone: true, ...small });
+    claimOut(small, { app, path: record, phone: true }, deskTurn);
     await phone.screenshot({ path: resolve(SHOTS, `${app}-record-out-phone-${ENGINE}.png`) });
     await phone.click('[data-testid="step-back"]');
     await steppedIn(phone);
+    await phone.screenshot({ path: resolve(SHOTS, `${app}-record-in-phone-${ENGINE}.png`) });
     await phoneContext.close();
   }
 } catch (error) {

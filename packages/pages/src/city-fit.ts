@@ -1,10 +1,29 @@
 import type { Box } from "./step-back-geometry.js";
 
 /*
- * WHERE THE CITY HAS ROOM BESIDE THE STEPPED-BACK PAGE, and where a line
+ * WHERE THE CITY STANDS AROUND THE STEPPED-BACK PAGE, and where a line
  * leaves a part of it (Graview HQ feature:f-page-zooms-out-to-the-city).
  * Pure arithmetic, fetched with the city (`city-behind.tsx`).
+ *
+ * Two ways the city can stand, one switch (`CITY_PLACEMENT`): BEHIND the
+ * page, the ground it stands on — the whole region under the bar, its
+ * districts drawn a little down and to the right of the page's corner so
+ * most of them are not under it — or BESIDE it, in the band to its right or
+ * under it, never covered. Behind is what the owner chose.
  */
+
+/** Where the city stands around the page stepped back. */
+export type CityPlacement = "behind" | "beside";
+export const CITY_PLACEMENT: CityPlacement = "behind";
+
+/**
+ * How far into the page's box the city's own box begins, behind it: a third
+ * of the way across and down, so the page covers the city's back corner and
+ * leaves the rest of it to read.
+ */
+const BEHIND_FROM = 0.35;
+/** In a window taller than it is wide (a phone), the page is a column and the city runs under it: its box begins most of the way down the page. */
+const BEHIND_FROM_TALL = 0.8;
 
 /** The air between the page, the city and the region's edges, in pixels. */
 const AIR = 16;
@@ -23,6 +42,20 @@ export function roomBeside(region: { readonly width: number; readonly height: nu
   };
 }
 
+/** Behind the page: the whole region but for the corner the page stands in. */
+export function roomBehind(region: { readonly width: number; readonly height: number }, page: Box): Box {
+  const x = page.x + page.width * BEHIND_FROM;
+  const y = page.y + page.height * (region.height > region.width ? BEHIND_FROM_TALL : BEHIND_FROM);
+  return { x, y, width: Math.max(0, region.width - x - AIR), height: Math.max(0, region.height - y - AIR) };
+}
+
+/** The rooms the city may be fitted to, for a placement: the one it is drawn larger in is chosen (`bestFit`). */
+export function cityRooms(region: { readonly width: number; readonly height: number }, page: Box, placement: CityPlacement = CITY_PLACEMENT): readonly Box[] {
+  if (placement === "behind") return [roomBehind(region, page)];
+  const { right, below } = roomBeside(region, page);
+  return [right, below];
+}
+
 /** The scale a drawing of this size is drawn at to fit a box whole, never stretched. */
 export function fitIn(box: Box, drawing: { readonly width: number; readonly height: number }): number {
   if (drawing.width <= 0 || drawing.height <= 0 || box.width <= 0 || box.height <= 0) return 0;
@@ -30,14 +63,14 @@ export function fitIn(box: Box, drawing: { readonly width: number; readonly heig
 }
 
 /**
- * Of several drawings (the map run wide, and run upright) and the two rooms,
- * the pairing that draws the city largest. Ties go to the first drawing and
- * the room to the right.
+ * Of several drawings (the map run wide, and run upright) and the rooms it
+ * may stand in, the pairing that draws the city largest. Ties go to the
+ * first drawing and the first room.
  */
-export function bestFit<D extends { readonly width: number; readonly height: number }>(rooms: { readonly right: Box; readonly below: Box }, drawings: readonly D[]): { readonly drawing: D; readonly box: Box; readonly scale: number } | null {
+export function bestFit<D extends { readonly width: number; readonly height: number }>(rooms: readonly Box[], drawings: readonly D[]): { readonly drawing: D; readonly box: Box; readonly scale: number } | null {
   let best: { drawing: D; box: Box; scale: number } | null = null;
   for (const drawing of drawings) {
-    for (const box of [rooms.right, rooms.below]) {
+    for (const box of rooms) {
       const scale = fitIn(box, drawing);
       if (scale > 0 && (best === null || scale > best.scale + 1e-9)) best = { drawing, box, scale };
     }
@@ -45,25 +78,32 @@ export function bestFit<D extends { readonly width: number; readonly height: num
   return best;
 }
 
-/** The point of a box nearest another point: where a line from the box toward that point leaves it. */
-export function nearestOnBox(box: Box, to: { readonly x: number; readonly y: number }): { readonly x: number; readonly y: number } {
-  const x = Math.max(box.x, Math.min(box.x + box.width, to.x));
-  const y = Math.max(box.y, Math.min(box.y + box.height, to.y));
-  // A point inside the box leaves by the nearest side, so a line never starts in the middle of the words.
-  if (x > box.x && x < box.x + box.width && y > box.y && y < box.y + box.height) {
-    const sides = [
-      { d: x - box.x, p: { x: box.x, y } },
-      { d: box.x + box.width - x, p: { x: box.x + box.width, y } },
-      { d: y - box.y, p: { x, y: box.y } },
-      { d: box.y + box.height - y, p: { x, y: box.y + box.height } },
-    ];
-    sides.sort((a, b) => a.d - b.d);
-    return sides[0]!.p;
-  }
-  return { x, y };
-}
-
 /** Whether two boxes share any area: a part of the page outside what the stepped-back page shows is not drawn from. */
 export function overlaps(a: Box, b: Box): boolean {
   return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+}
+
+/**
+ * WHERE A LINE LEAVES A PART OF THE PAGE STANDING TURNED: the part's box on
+ * the page as laid out, each of its corners and the middles of its sides
+ * carried through the page's own transform (`project`), and of those the one
+ * nearest the record the line runs to. Every one is a point of the part
+ * where the page's plane puts it, so the line starts on the part, not on the
+ * box it would have had flat.
+ */
+export function leavesFrom(box: Box, project: (point: { readonly x: number; readonly y: number }) => { readonly x: number; readonly y: number }, to: { readonly x: number; readonly y: number }): { readonly x: number; readonly y: number } {
+  const { x, y, width: w, height: h } = box;
+  const on = [
+    { x, y },
+    { x: x + w / 2, y },
+    { x: x + w, y },
+    { x: x + w, y: y + h / 2 },
+    { x: x + w, y: y + h },
+    { x: x + w / 2, y: y + h },
+    { x, y: y + h },
+    { x, y: y + h / 2 },
+  ].map(project);
+  let best = on[0]!;
+  for (const point of on) if (Math.hypot(point.x - to.x, point.y - to.y) < Math.hypot(best.x - to.x, best.y - to.y)) best = point;
+  return best;
 }

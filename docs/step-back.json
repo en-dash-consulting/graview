@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-10T19:25:16.195Z",
+  "at": "2026-11-10T19:55:58.999Z",
   "engine": "chromium",
   "claims": {
     "everyRoutedPageHasTheControl": {
@@ -107,406 +107,401 @@
         }
       ]
     },
-    "outThePageIsSmallerAndSetBackOverTheCity": {
+    "outThePageStandsAngledInFrontOfTheCity": {
       "ok": true,
       "detail": [
         {
           "app": "todo",
           "path": "/pages",
-          "width": 1440,
-          "barBottom": 48,
           "sheet": {
-            "x": 26,
-            "y": 74,
-            "width": 792,
-            "height": 469
+            "x": 22,
+            "y": 76,
+            "width": 602,
+            "height": 425
           },
-          "scale": 0.55,
-          "title": {
-            "x": 146,
-            "y": 100,
-            "width": 553,
-            "height": 21
-          },
-          "titleText": "1 thing is late.",
-          "titleFont": 19.360000000000003,
+          "turn": 20,
+          "scale": 0.5,
+          "threeD": true,
+          "title": "1 thing is late.",
+          "titleFont": 17.6,
           "inWindow": true,
-          "city": {
-            "x": 834,
-            "y": 64,
-            "width": 590,
-            "height": 820
-          },
-          "kinds": 6,
-          "buildings": 22,
-          "cityClearOfPage": true,
           "upAndLeft": true,
-          "inert": true
+          "inFront": true
         },
         {
           "app": "todo",
           "path": "/pages/tasks",
-          "width": 1440,
-          "barBottom": 48,
           "sheet": {
-            "x": 26,
-            "y": 74,
-            "width": 792,
-            "height": 469
+            "x": 22,
+            "y": 76,
+            "width": 602,
+            "height": 425
           },
-          "scale": 0.55,
-          "title": {
-            "x": 158,
-            "y": 86,
-            "width": 37,
-            "height": 18
-          },
-          "titleText": "Tasks",
-          "titleFont": 15.2064,
+          "turn": 20,
+          "scale": 0.5,
+          "threeD": true,
+          "title": "Tasks",
+          "titleFont": 13.824,
           "inWindow": true,
-          "city": {
-            "x": 834,
-            "y": 64,
-            "width": 590,
-            "height": 820
-          },
-          "kinds": 6,
-          "buildings": 22,
-          "cityClearOfPage": true,
           "upAndLeft": true,
-          "inert": true
+          "inFront": true
         },
         {
           "app": "todo",
           "path": "/pages/tasks/t-deposit",
-          "width": 1440,
-          "barBottom": 48,
           "sheet": {
-            "x": 26,
-            "y": 74,
-            "width": 792,
-            "height": 469
+            "x": 22,
+            "y": 76,
+            "width": 602,
+            "height": 425
           },
-          "scale": 0.55,
-          "title": {
-            "x": 146,
-            "y": 104,
-            "width": 553,
-            "height": 21
-          },
-          "titleText": "Pay the deposit",
-          "titleFont": 19.360000000000003,
+          "turn": 20,
+          "scale": 0.5,
+          "threeD": true,
+          "title": "Pay the deposit",
+          "titleFont": 17.6,
           "inWindow": true,
-          "city": {
-            "x": 834,
-            "y": 64,
-            "width": 590,
-            "height": 820
-          },
-          "kinds": 6,
-          "buildings": 22,
-          "cityClearOfPage": true,
           "upAndLeft": true,
-          "inert": true
+          "inFront": true
         },
         {
           "app": "todo",
           "path": "/pages/map",
-          "width": 1440,
-          "barBottom": 48,
           "sheet": {
-            "x": 26,
-            "y": 74,
-            "width": 792,
-            "height": 469
+            "x": 22,
+            "y": 76,
+            "width": 602,
+            "height": 425
           },
-          "scale": 0.55,
-          "title": {
-            "x": 253,
-            "y": 126,
-            "width": 338,
-            "height": 18
-          },
-          "titleText": "Connections",
-          "titleFont": 15.2064,
+          "turn": 20,
+          "scale": 0.5,
+          "threeD": true,
+          "title": "Connections",
+          "titleFont": 13.824,
           "inWindow": true,
-          "city": {
-            "x": 834,
-            "y": 64,
-            "width": 590,
-            "height": 820
-          },
-          "kinds": 6,
-          "buildings": 22,
-          "cityClearOfPage": true,
           "upAndLeft": true,
-          "inert": true
+          "inFront": true
         },
         {
           "app": "todo",
           "path": "/pages/problems",
-          "width": 1440,
-          "barBottom": 48,
           "sheet": {
-            "x": 26,
-            "y": 74,
-            "width": 792,
-            "height": 469
+            "x": 22,
+            "y": 76,
+            "width": 602,
+            "height": 425
           },
-          "scale": 0.55,
-          "title": {
-            "x": 146,
-            "y": 100,
-            "width": 553,
-            "height": 21
-          },
-          "titleText": "What is out of order",
-          "titleFont": 19.360000000000003,
+          "turn": 20,
+          "scale": 0.5,
+          "threeD": true,
+          "title": "What is out of order",
+          "titleFont": 17.6,
           "inWindow": true,
-          "city": {
-            "x": 834,
-            "y": 64,
-            "width": 590,
-            "height": 820
-          },
-          "kinds": 6,
-          "buildings": 22,
-          "cityClearOfPage": true,
           "upAndLeft": true,
-          "inert": true
+          "inFront": true
         },
         {
           "app": "todo",
           "path": "/pages/tasks/t-deposit",
           "phone": true,
-          "width": 390,
-          "barBottom": 48,
           "sheet": {
-            "x": 16,
-            "y": 109,
-            "width": 215,
-            "height": 413
+            "x": 15,
+            "y": 110,
+            "width": 221,
+            "height": 435
           },
-          "scale": 0.5512820512820513,
-          "title": {
-            "x": 26,
-            "y": 139,
-            "width": 195,
-            "height": 16
-          },
-          "titleText": "Pay the deposit",
-          "titleFont": 14.994871794871795,
+          "turn": 9,
+          "scale": 0.58,
+          "threeD": true,
+          "title": "Pay the deposit",
+          "titleFont": 15.775999999999998,
           "inWindow": true,
-          "city": {
-            "x": 16,
-            "y": 538,
-            "width": 358,
-            "height": 290
-          },
-          "kinds": 6,
-          "buildings": 22,
-          "cityClearOfPage": true,
           "upAndLeft": true,
-          "inert": true
+          "inFront": true
         },
         {
           "app": "seedbed",
           "path": "/pages",
-          "width": 1440,
-          "barBottom": 48,
           "sheet": {
-            "x": 26,
-            "y": 74,
-            "width": 792,
-            "height": 469
+            "x": 22,
+            "y": 76,
+            "width": 602,
+            "height": 425
           },
-          "scale": 0.55,
-          "title": {
-            "x": 103,
-            "y": 96,
-            "width": 638,
-            "height": 18
-          },
-          "titleText": "2 gardeners, 2 plots, 1 planting and 1 rule.",
-          "titleFont": 15.2064,
+          "turn": 20,
+          "scale": 0.5,
+          "threeD": true,
+          "title": "2 gardeners, 2 plots, 1 planting and 1 rule.",
+          "titleFont": 13.824,
           "inWindow": true,
-          "city": {
-            "x": 834,
-            "y": 64,
-            "width": 590,
-            "height": 820
-          },
-          "kinds": 4,
-          "buildings": 7,
-          "cityClearOfPage": true,
           "upAndLeft": true,
-          "inert": true
+          "inFront": true
         },
         {
           "app": "seedbed",
           "path": "/pages/plantings",
-          "width": 1440,
-          "barBottom": 48,
           "sheet": {
-            "x": 26,
-            "y": 74,
-            "width": 792,
-            "height": 469
+            "x": 22,
+            "y": 76,
+            "width": 602,
+            "height": 425
           },
-          "scale": 0.55,
-          "title": {
-            "x": 226,
-            "y": 111,
-            "width": 68,
-            "height": 18
-          },
-          "titleText": "Plantings",
-          "titleFont": 15.2064,
+          "turn": 20,
+          "scale": 0.5,
+          "threeD": true,
+          "title": "Plantings",
+          "titleFont": 13.824,
           "inWindow": true,
-          "city": {
-            "x": 834,
-            "y": 64,
-            "width": 590,
-            "height": 820
-          },
-          "kinds": 4,
-          "buildings": 7,
-          "cityClearOfPage": true,
           "upAndLeft": true,
-          "inert": true
+          "inFront": true
         },
         {
           "app": "seedbed",
           "path": "/pages/gardeners/june",
-          "width": 1440,
-          "barBottom": 48,
           "sheet": {
-            "x": 26,
-            "y": 74,
-            "width": 792,
-            "height": 469
+            "x": 22,
+            "y": 76,
+            "width": 602,
+            "height": 425
           },
-          "scale": 0.55,
-          "title": {
-            "x": 213,
-            "y": 116,
-            "width": 418,
-            "height": 19
-          },
-          "titleText": "June",
-          "titleFont": 15.2064,
+          "turn": 20,
+          "scale": 0.5,
+          "threeD": true,
+          "title": "June",
+          "titleFont": 13.824,
           "inWindow": true,
-          "city": {
-            "x": 834,
-            "y": 64,
-            "width": 590,
-            "height": 820
-          },
-          "kinds": 4,
-          "buildings": 7,
-          "cityClearOfPage": true,
           "upAndLeft": true,
-          "inert": true
+          "inFront": true
         },
         {
           "app": "seedbed",
           "path": "/pages/map",
-          "width": 1440,
-          "barBottom": 48,
           "sheet": {
-            "x": 26,
-            "y": 74,
-            "width": 792,
-            "height": 469
+            "x": 22,
+            "y": 76,
+            "width": 602,
+            "height": 425
           },
-          "scale": 0.55,
-          "title": {
-            "x": 213,
-            "y": 114,
-            "width": 418,
-            "height": 18
-          },
-          "titleText": "Connections",
-          "titleFont": 15.2064,
+          "turn": 20,
+          "scale": 0.5,
+          "threeD": true,
+          "title": "Connections",
+          "titleFont": 13.824,
           "inWindow": true,
-          "city": {
-            "x": 834,
-            "y": 64,
-            "width": 590,
-            "height": 820
-          },
-          "kinds": 4,
-          "buildings": 7,
-          "cityClearOfPage": true,
           "upAndLeft": true,
-          "inert": true
+          "inFront": true
         },
         {
           "app": "seedbed",
           "path": "/pages/problems",
-          "width": 1440,
-          "barBottom": 48,
           "sheet": {
-            "x": 26,
-            "y": 74,
-            "width": 792,
-            "height": 469
+            "x": 22,
+            "y": 76,
+            "width": 602,
+            "height": 425
           },
-          "scale": 0.55,
-          "title": {
-            "x": 213,
-            "y": 96,
-            "width": 418,
-            "height": 18
-          },
-          "titleText": "All rules hold",
-          "titleFont": 15.2064,
+          "turn": 20,
+          "scale": 0.5,
+          "threeD": true,
+          "title": "All rules hold",
+          "titleFont": 13.824,
           "inWindow": true,
-          "city": {
-            "x": 834,
-            "y": 64,
-            "width": 590,
-            "height": 820
-          },
-          "kinds": 4,
-          "buildings": 7,
-          "cityClearOfPage": true,
           "upAndLeft": true,
-          "inert": true
+          "inFront": true
         },
         {
           "app": "seedbed",
           "path": "/pages/gardeners/june",
           "phone": true,
-          "width": 390,
-          "barBottom": 48,
           "sheet": {
-            "x": 16,
-            "y": 109,
-            "width": 215,
-            "height": 413
+            "x": 15,
+            "y": 110,
+            "width": 221,
+            "height": 435
           },
-          "scale": 0.5512820512820513,
-          "title": {
-            "x": 27,
-            "y": 151,
-            "width": 193,
-            "height": 16
-          },
-          "titleText": "June",
-          "titleFont": 12.701538461538462,
+          "turn": 9,
+          "scale": 0.58,
+          "threeD": true,
+          "title": "June",
+          "titleFont": 13.363199999999999,
           "inWindow": true,
-          "city": {
-            "x": 16,
-            "y": 538,
-            "width": 358,
-            "height": 290
+          "upAndLeft": true,
+          "inFront": true
+        }
+      ]
+    },
+    "theCityFillsTheGroundBehindThePage": {
+      "ok": true,
+      "detail": [
+        {
+          "app": "todo",
+          "path": "/pages",
+          "layer": {
+            "x": 0,
+            "y": 48,
+            "width": 1440,
+            "height": 852
           },
+          "barBottom": 48,
+          "kinds": 6,
+          "buildings": 22,
+          "coveredByThePage": 0
+        },
+        {
+          "app": "todo",
+          "path": "/pages/tasks",
+          "layer": {
+            "x": 0,
+            "y": 48,
+            "width": 1440,
+            "height": 852
+          },
+          "barBottom": 48,
+          "kinds": 6,
+          "buildings": 22,
+          "coveredByThePage": 0
+        },
+        {
+          "app": "todo",
+          "path": "/pages/tasks/t-deposit",
+          "layer": {
+            "x": 0,
+            "y": 48,
+            "width": 1440,
+            "height": 852
+          },
+          "barBottom": 48,
+          "kinds": 6,
+          "buildings": 22,
+          "coveredByThePage": 0
+        },
+        {
+          "app": "todo",
+          "path": "/pages/map",
+          "layer": {
+            "x": 0,
+            "y": 48,
+            "width": 1440,
+            "height": 852
+          },
+          "barBottom": 48,
+          "kinds": 6,
+          "buildings": 22,
+          "coveredByThePage": 0
+        },
+        {
+          "app": "todo",
+          "path": "/pages/problems",
+          "layer": {
+            "x": 0,
+            "y": 48,
+            "width": 1440,
+            "height": 852
+          },
+          "barBottom": 48,
+          "kinds": 6,
+          "buildings": 22,
+          "coveredByThePage": 0
+        },
+        {
+          "app": "todo",
+          "path": "/pages/tasks/t-deposit",
+          "phone": true,
+          "layer": {
+            "x": 0,
+            "y": 93,
+            "width": 390,
+            "height": 751
+          },
+          "barBottom": 93,
+          "kinds": 6,
+          "buildings": 22,
+          "coveredByThePage": 0
+        },
+        {
+          "app": "seedbed",
+          "path": "/pages",
+          "layer": {
+            "x": 0,
+            "y": 48,
+            "width": 1440,
+            "height": 852
+          },
+          "barBottom": 48,
           "kinds": 4,
           "buildings": 7,
-          "cityClearOfPage": true,
-          "upAndLeft": true,
-          "inert": true
+          "coveredByThePage": 0
+        },
+        {
+          "app": "seedbed",
+          "path": "/pages/plantings",
+          "layer": {
+            "x": 0,
+            "y": 48,
+            "width": 1440,
+            "height": 852
+          },
+          "barBottom": 48,
+          "kinds": 4,
+          "buildings": 7,
+          "coveredByThePage": 0
+        },
+        {
+          "app": "seedbed",
+          "path": "/pages/gardeners/june",
+          "layer": {
+            "x": 0,
+            "y": 48,
+            "width": 1440,
+            "height": 852
+          },
+          "barBottom": 48,
+          "kinds": 4,
+          "buildings": 7,
+          "coveredByThePage": 0
+        },
+        {
+          "app": "seedbed",
+          "path": "/pages/map",
+          "layer": {
+            "x": 0,
+            "y": 48,
+            "width": 1440,
+            "height": 852
+          },
+          "barBottom": 48,
+          "kinds": 4,
+          "buildings": 7,
+          "coveredByThePage": 0
+        },
+        {
+          "app": "seedbed",
+          "path": "/pages/problems",
+          "layer": {
+            "x": 0,
+            "y": 48,
+            "width": 1440,
+            "height": 852
+          },
+          "barBottom": 48,
+          "kinds": 4,
+          "buildings": 7,
+          "coveredByThePage": 0
+        },
+        {
+          "app": "seedbed",
+          "path": "/pages/gardeners/june",
+          "phone": true,
+          "layer": {
+            "x": 0,
+            "y": 93,
+            "width": 390,
+            "height": 751
+          },
+          "barBottom": 93,
+          "kinds": 4,
+          "buildings": 7,
+          "coveredByThePage": 0
         }
       ]
     },
@@ -540,7 +535,7 @@
             "reason-deposit"
           ],
           "missing": [],
-          "said": "Stepped back. Lines run from this page to Pay the deposit, Today, The landlord holds the date for 48 hours once the deposit… in the city.",
+          "said": "Stepped back. Lines run from this page to Pay the deposit, Today, The landlord holds the date for 48 hours once the deposit… in the city. Each is a way to its page.",
           "astray": []
         },
         {
@@ -553,7 +548,7 @@
             "plot-1"
           ],
           "missing": [],
-          "said": "Stepped back. Lines run from this page to June, Plot 1 in the city.",
+          "said": "Stepped back. Lines run from this page to June, Plot 1 in the city. Each is a way to its page.",
           "astray": []
         }
       ]
@@ -572,10 +567,18 @@
           "before": {
             "scrollY": 240,
             "address": "http://localhost:5803/pages/tasks/t-deposit?today=2026-09-01",
-            "focused": "Today"
+            "focused": "Today",
+            "probe": {
+              "x": 431.59375,
+              "y": 388.890625
+            }
           },
           "whileOut": {
-            "active": "step-back"
+            "active": "step-back",
+            "probe": {
+              "x": 431.59375,
+              "y": 388.890625
+            }
           },
           "after": {
             "scrollY": 240,
@@ -592,18 +595,111 @@
           "app": "seedbed",
           "how": "scrolled, on a link, out and in by Escape",
           "before": {
-            "scrollY": 0,
+            "scrollY": 132,
             "address": "http://localhost:5804/pages/gardeners/june?chapter=9",
-            "focused": "Gardeners"
+            "focused": "Plot 1",
+            "probe": {
+              "x": 554,
+              "y": 171.609375
+            }
           },
           "whileOut": {
-            "active": "step-back"
+            "active": "step-back",
+            "probe": {
+              "x": 554,
+              "y": 171.609375
+            }
           },
           "after": {
-            "scrollY": 0,
+            "scrollY": 132,
             "address": "http://localhost:5804/pages/gardeners/june?chapter=9",
             "onTheLink": true
           }
+        }
+      ]
+    },
+    "theKeyboardReachesTheCitysRecords": {
+      "ok": true,
+      "detail": [
+        {
+          "app": "todo",
+          "record": "/pages/tasks/t-deposit",
+          "stop": {
+            "id": "reason-deposit",
+            "name": "Open The landlord holds the date for 48 hours once the deposit…",
+            "lit": true,
+            "presses": 3
+          },
+          "lines": [
+            "t-deposit",
+            "today",
+            "reason-deposit"
+          ],
+          "opened": {
+            "path": "/pages/reasons/reason-deposit",
+            "phase": "in",
+            "keyboard": "H1"
+          }
+        },
+        {
+          "app": "seedbed",
+          "record": "/pages/gardeners/june",
+          "stop": {
+            "id": "plot-1",
+            "name": "Open Plot 1",
+            "lit": true,
+            "presses": 3
+          },
+          "lines": [
+            "june",
+            "plot-1"
+          ],
+          "opened": {
+            "path": "/pages/plots/plot-1",
+            "phase": "in",
+            "keyboard": "H1"
+          }
+        }
+      ]
+    },
+    "outThePageShowsExactlyWhatWasOnScreen": {
+      "ok": true,
+      "detail": [
+        {
+          "app": "todo",
+          "path": "/pages/tasks/t-deposit",
+          "scrolledBy": 240,
+          "probeBefore": {
+            "x": 431.59375,
+            "y": 388.890625
+          },
+          "probeOut": {
+            "x": 431.59375,
+            "y": 388.890625
+          },
+          "expected": {
+            "x": 431.59375,
+            "y": 388.890625
+          },
+          "off": 0
+        },
+        {
+          "app": "seedbed",
+          "path": "/pages/gardeners/june",
+          "scrolledBy": 132,
+          "probeBefore": {
+            "x": 554,
+            "y": 171.609375
+          },
+          "probeOut": {
+            "x": 554,
+            "y": 171.609375
+          },
+          "expected": {
+            "x": 554,
+            "y": 171.609375
+          },
+          "off": 0
         }
       ]
     },
@@ -615,7 +711,7 @@
           "next": {
             "phase": "out",
             "transition": "0s",
-            "transform": "matrix(0.55, 0, 0, 0.55, 26, 26)"
+            "transform": "matrix3d(0.472419, -0.0185063, -0.17101, 9.89642e-05, 0.00857999, 0.501976, 0.0245899, -1.42302e-05, 0.327432, 0.049216, 0.938405, -0.000543058, 26, -187, 0, 1)"
           },
           "back": "in",
           "phases": [
@@ -628,7 +724,7 @@
           "next": {
             "phase": "out",
             "transition": "0s",
-            "transform": "matrix(0.55, 0, 0, 0.55, 26, 26)"
+            "transform": "matrix3d(0.472419, -0.0185063, -0.17101, 9.89642e-05, 0.00857999, 0.501976, 0.0245899, -1.42302e-05, 0.327432, 0.049216, 0.938405, -0.000543058, 26, -187, 0, 1)"
           },
           "back": "in",
           "phases": [

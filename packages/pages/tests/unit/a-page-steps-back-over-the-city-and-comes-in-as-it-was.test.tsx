@@ -6,8 +6,8 @@ import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createPageRegistry, PagesApp, type PageComponent } from "../../src/index.js";
-import { bestFit, nearestOnBox, roomBeside } from "../../src/city-fit.js";
-import { pageBox, setBack, SET_BACK_SCALE } from "../../src/step-back-geometry.js";
+import { bestFit, cityRooms, leavesFrom, roomBehind } from "../../src/city-fit.js";
+import { pageBox, setBack, setBackTransform, SET_BACK_SCALE, SET_BACK_TURN, SET_BACK_TURN_NARROW } from "../../src/step-back-geometry.js";
 
 /**
  * A PAGE STEPS BACK OVER THE CITY AND COMES IN AS IT WAS (Graview HQ
@@ -17,42 +17,60 @@ import { pageBox, setBack, SET_BACK_SCALE } from "../../src/step-back-geometry.j
  * judge (`pnpm verify step-back`).
  */
 describe("where the page stands stepped back", () => {
-  it("is the same page at a little over half its size, up and to the left", () => {
+  it("is the same page at half its size, up and to the left, turned on its left edge in perspective", () => {
     const back = setBack({ width: 1440, height: 850 });
     expect(back.scale).toBe(SET_BACK_SCALE);
-    expect(back.scale).toBeGreaterThan(0.5);
-    expect(back.scale).toBeLessThan(0.6);
     expect(back.x).toBeGreaterThanOrEqual(16);
     expect(back.y).toBeGreaterThanOrEqual(16);
+    expect(back.turn).toBe(SET_BACK_TURN);
+    expect(back.turn).toBeGreaterThan(5);
+    expect(back.turn).toBeLessThan(30);
     expect(pageBox({ width: 1440, height: 850 }, back)).toEqual({ x: back.x, y: back.y, width: 1440 * back.scale, height: 850 * back.scale });
+    const transform = setBackTransform({ height: 850 }, back);
+    expect(transform).toMatch(/^translate\(.+\) perspective\(\d+px\) rotateY\(20deg\) rotateX\(3deg\) scale\(0\.5\)$/);
+    // About its left edge's middle, scaled by a half: its top stands at y once moved up by a quarter of the region.
+    expect(transform).toContain(`translate(${back.x}px, ${(back.y - 850 / 4).toFixed(1)}px)`);
   });
 
-  it("leaves room for the city to its right and under it, clear of the page", () => {
+  it("turns less on a phone, and recedes less: its words are smaller to begin with", () => {
+    const phone = setBack({ width: 390, height: 760 });
+    expect(phone.turn).toBe(SET_BACK_TURN_NARROW);
+    expect(phone.turn).toBeLessThan(SET_BACK_TURN);
+    expect(phone.scale).toBeGreaterThan(SET_BACK_SCALE);
+  });
+
+  it("stands the city behind the page: the whole region but the page's corner, so most of it is not under the page", () => {
     const region = { width: 1440, height: 850 };
     const page = pageBox(region);
-    const { right, below } = roomBeside(region, page);
-    expect(right.x).toBeGreaterThan(page.x + page.width);
-    expect(below.y).toBeGreaterThan(page.y + page.height);
-    expect(right.x + right.width).toBeLessThanOrEqual(region.width);
-    expect(below.y + below.height).toBeLessThanOrEqual(region.height);
+    const [behind] = cityRooms(region, page);
+    expect(behind).toEqual(roomBehind(region, page));
+    expect(behind!.x).toBeGreaterThan(page.x);
+    expect(behind!.x).toBeLessThan(page.x + page.width);
+    expect(behind!.y).toBeLessThan(page.y + page.height);
+    expect(behind!.x + behind!.width).toBeLessThanOrEqual(region.width);
+    expect(behind!.y + behind!.height).toBeLessThanOrEqual(region.height);
+    // Beside it, still one switch away.
+    expect(cityRooms(region, page, "beside")).toHaveLength(2);
   });
 
-  it("stands the city in whichever room draws it larger: beside the page at a desk, under it on a phone", () => {
+  it("fits the city to its room whichever way the map runs draws it larger", () => {
     const wide = { width: 400, height: 200 };
     const tall = { width: 200, height: 400 };
-    const desk = bestFit(roomBeside({ width: 1440, height: 850 }, pageBox({ width: 1440, height: 850 })), [wide, tall]);
-    expect(desk?.box).toEqual(roomBeside({ width: 1440, height: 850 }, pageBox({ width: 1440, height: 850 })).right);
-    const phone = bestFit(roomBeside({ width: 390, height: 760 }, pageBox({ width: 390, height: 760 })), [wide, tall]);
-    expect(phone?.box).toEqual(roomBeside({ width: 390, height: 760 }, pageBox({ width: 390, height: 760 })).below);
-    expect(bestFit(roomBeside({ width: 0, height: 0 }, pageBox({ width: 0, height: 0 })), [wide])).toBeNull();
+    const desk = bestFit([{ x: 0, y: 0, width: 1000, height: 600 }], [wide, tall]);
+    expect(desk?.drawing).toBe(wide);
+    const phone = bestFit([{ x: 0, y: 0, width: 300, height: 600 }], [wide, tall]);
+    expect(phone?.drawing).toBe(tall);
+    expect(bestFit([{ x: 0, y: 0, width: 0, height: 0 }], [wide])).toBeNull();
   });
 
-  it("leaves a part of the page from the side nearest the record it runs to", () => {
+  it("leaves a part of the page from a point of the part where the page's plane puts it, the one nearest its record", () => {
     const part = { x: 100, y: 100, width: 80, height: 20 };
-    expect(nearestOnBox(part, { x: 600, y: 110 })).toEqual({ x: 180, y: 110 });
-    expect(nearestOnBox(part, { x: 140, y: 500 })).toEqual({ x: 140, y: 120 });
-    // From inside, by the nearest side: never from the middle of the words.
-    expect(nearestOnBox(part, { x: 175, y: 110 })).toEqual({ x: 180, y: 110 });
+    const flat = (point: { x: number; y: number }) => point;
+    expect(leavesFrom(part, flat, { x: 600, y: 110 })).toEqual({ x: 180, y: 110 });
+    expect(leavesFrom(part, flat, { x: 140, y: 500 })).toEqual({ x: 140, y: 120 });
+    // Turned: the points are carried through the plane's own transform, and the line leaves from one of them.
+    const halved = (point: { x: number; y: number }) => ({ x: point.x / 2 + 10, y: point.y / 2 + 5 });
+    expect(leavesFrom(part, halved, { x: 600, y: 60 })).toEqual({ x: 100, y: 60 });
   });
 });
 

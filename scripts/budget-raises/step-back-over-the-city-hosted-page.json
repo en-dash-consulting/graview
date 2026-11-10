@@ -3,5 +3,5 @@
   "minified": 37,
   "gzipped": 228,
   "changeset": "a-page-steps-back-over-the-city.md",
-  "note": "Raised when a routed page came to step back over the app's city (Graview HQ feature:f-page-zooms-out-to-the-city): the bar's toggle and the sheet the page steps back in are drawn with the page, and the city behind it (the scene's map, blocks and streets, and the lines from the page to its records) is a chunk fetched the first time a person steps back. Up front it is only the glue of one more chunk, its door tied to what the page drew first so the page still loads thirteen chunks before it draws. Measured at 677_440 / 235_023 against 677_403 / 234_795 minified and gzipped."
+  "note": "Raised when a routed page came to step back over the app's city (Graview HQ feature:f-page-zooms-out-to-the-city): the bar's toggle and the sheet the page stands turned in are drawn with the page, and the city behind it (the scene's map, blocks and streets routed between frames, the lines from the page's turned plane to its records, and a way to each of those records for the keyboard) is a chunk fetched the first time a person steps back. Up front it is only the glue of one more chunk, its door tied to what the page drew first so the page still loads thirteen chunks before it draws. Measured at 677_440 / 235_020 against 677_403 / 234_795 minified and gzipped."
 }

@@ -4,7 +4,7 @@ import { routeBetweenFrames, routingsSoFar } from "@graview/react/ground";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { drawCity, type Seen } from "../../src/city-behind.js";
-import { roomBeside } from "../../src/city-fit.js";
+import { cityRooms } from "../../src/city-fit.js";
 import { pageBox } from "../../src/step-back-geometry.js";
 
 /**
@@ -33,7 +33,7 @@ const { defineMutation } = bindSchema(schema);
 const rename = defineMutation("rename", {
   title: "Rename",
   input: z.object({ id: nodeRef(kinds.map((_, i) => `k${i}`) as never), label: z.string() }),
-  apply(ctx, args) {
+  apply(ctx: { patchNode(id: string, patch: Record<string, unknown>): void }, args: { readonly id: string; readonly label: string }) {
     ctx.patchNode(args.id, { label: args.label } as never);
   },
 } as never);
@@ -56,7 +56,7 @@ const seen: Seen = {
   recordAt: () => null,
 };
 const region = { x: 0, y: 56, width: 1440, height: 844 };
-const rooms = roomBeside(region, pageBox(region));
+const rooms = cityRooms(region, pageBox(region));
 
 const timed = <T>(run: () => T): { readonly value: T; readonly ms: number } => {
   const began = performance.now();
