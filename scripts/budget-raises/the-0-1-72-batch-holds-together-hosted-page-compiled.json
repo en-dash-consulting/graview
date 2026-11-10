@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 1,
+  "gzipped": 32,
+  "changeset": "the-0-1-72-batch-holds-together.md",
+  "note": "Raised when the 0.1.72 batch's two branches were merged (History in the app menu and showHistory() on the mount handle; a frame lent the app's faces, a view's pictures chosen by record, and a frame that grows only with itself held): each measured alone against main, together they came to 3 bytes gzipped (215_591 against 215_588) over their summed raises, held for a few bytes either side."
+}

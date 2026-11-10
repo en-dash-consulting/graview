@@ -66,7 +66,7 @@ little more each time the frame grows. A height that tracks the frame's
 own a few times running is refused for a moment: content that grows asks
 another meanwhile and is taken; otherwise the height is given after all,
 and a guest that then asks again by the same step is held, the frame wears
-`data-guest-view-held`, and `onProblem` is told why. A gallery whose last
+`data-guest-view-held`, and the host's `{ onProblem }` is told why. A gallery whose last
 picture lands just there keeps its whole height. Size the
 page by its content. `guestView({ onSize })` is told each height the frame
 takes.
@@ -123,7 +123,7 @@ puts in the frame's document. A guest names the family (`font-family:
 "Rock Face", serif`) and loads nothing; its policy needs `font-src data:`.
 Frames in one brand share one reading of its faces. The frame says it has
 drawn once they are read, or after two seconds, saying which did not come.
-What is not lent is said to `onProblem` (`guestView` says it in the console).
+What is not lent is said to the host's `{ onProblem }` (`guestView` says it in the console).
 
 `title` names the frame for assistive technology. Registered with the same
 title, the guest is a place on both faces: listed by `placesOf`, at

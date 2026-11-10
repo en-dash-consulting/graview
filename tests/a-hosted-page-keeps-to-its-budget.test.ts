@@ -218,7 +218,8 @@ describe("a hosted page", () => {
     // 1109 KB since an act came to be offered only where it applies (Roadmap f-me-offered-without-sight-of-people, f-several-bar-offers-only-what-applies): the store's `wouldDo` and a seat kept from its own person, the several bar's judging without a rehearsal, and a record or a link that is not there said in words: the scene face measured 1_134_689 B, 1_057 more than the 0.1.70 batch (1_133_632).
     // 1112 KB with the whole 0.1.71 batch together (2026-11-09): a document act that clears a field and a condition that says `$subject`, a view that throws caught in its own slot, acts offered only where they apply, the account pane, a view's own font origins and bounded faces, and the desk's keyboard: the scene face measured 1_138_290 B, 4_658 more than the whole 0.1.70 batch (1_133_632).
     // 1113 KB since History came to the app menu and `showHistory()` to the mount handle (Roadmap f-host-opens-history): the app menu's control drawn wherever the face keeps a playback, a mount's history door, and a playback asked to give the keyboard to its scrubber: the scene face measured 1_138_948 B, 658 more than the whole 0.1.71 batch (1_138_290).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1113 * 1024);
+    // 1114 KB with the whole 0.1.72 batch together (2026-11-10): History in the app menu, and a frame lent the app's faces with pictures by record and its growth held: the scene face measured 1_139_723 B, 1_433 more than the whole 0.1.71 batch (1_138_290).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1114 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

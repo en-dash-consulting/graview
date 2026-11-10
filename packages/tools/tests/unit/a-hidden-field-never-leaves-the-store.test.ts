@@ -19,7 +19,8 @@ const seed = {
   ],
   edges: [{ kind: "guardian", from: "player:bea", to: "person:pat" }],
 };
-const NUMBERS = /0101|0202|asthma/;
+// The phone numbers whole, and the condition: a bare "0101" also turns up inside a minted id or a clock.
+const NUMBERS = /555 0101|555 0202|asthma/;
 const at = (seat: Principal, path: string, init: RequestInit = {}) => new Request(`https://store.example${path}`, { ...init, headers: { "content-type": "application/json", ...seatHeaders(seat) } });
 
 /** A served roster where the coach added Ann, with a phone number or without, and called her. */

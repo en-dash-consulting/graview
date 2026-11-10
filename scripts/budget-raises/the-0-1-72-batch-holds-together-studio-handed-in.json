@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 0,
+  "gzipped": 32,
+  "note": "Raised when the 0.1.72 batch's two branches were merged (History in the app menu and showHistory() on the mount handle; a frame lent the app's faces, a view's pictures chosen by record, and a frame that grows only with itself held): each measured alone against main, together they came to 9 bytes gzipped (1_952_788 / 682_666 against 2_015_396 / 682_657) over their summed raises, held for a few bytes either side."
+}
