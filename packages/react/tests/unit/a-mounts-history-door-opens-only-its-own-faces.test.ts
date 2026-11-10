@@ -68,6 +68,18 @@ describe("a mount's history door", () => {
     expect(opened).toBe(0);
   });
 
+  it("keeps a request made while another app or face is on its way, and opens it as that face's timeline listens", () => {
+    for (const between of ["forget", "unsettle"] as const) {
+      const door = createHistoryDoor();
+      door.settle();
+      door[between]();
+      expect(door.show()).toBe(false);
+      let opened = 0;
+      door.listen(() => (opened += 1));
+      expect(opened).toBe(1);
+    }
+  });
+
   it("closed with its mount, forgets what it was asked and opens nothing again", () => {
     const door = createHistoryDoor();
     door.show();

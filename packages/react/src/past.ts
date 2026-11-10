@@ -115,7 +115,9 @@ export interface HistoryDoor {
   listen(open: (options: { readonly focus: boolean }) => void): () => void;
   /** The face has drawn: a request nobody heard is not kept from here. */
   settle(): void;
-  /** Another app swapped in: a request kept for the face it replaced is dropped. */
+  /** Another face is asked for: until it draws, a request waits for it. */
+  unsettle(): void;
+  /** Another app swapped in: a request kept for the face it replaced is dropped, and one made before the new face draws waits for it. */
   forget(): void;
   /** The mount is gone: nothing waits, and nothing is opened again. */
   close(): void;
@@ -154,8 +156,12 @@ export function createHistoryDoor(): HistoryDoor {
         if (listening.size === 0) waiting = null;
       }, 0);
     },
+    unsettle() {
+      settled = false;
+    },
     forget() {
       waiting = null;
+      settled = false;
     },
     close() {
       closed = true;

@@ -1061,6 +1061,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
         {...(face !== undefined ? { face } : {})}
         onOpening={(opened) => {
           asked = opened;
+          historyDoor.unsettle();
         }}
         {...(stop !== undefined ? { stop } : {})}
         {...(path !== undefined ? { path } : {})}
@@ -1079,6 +1080,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
         scheme={scheme}
         onFace={(next) => {
           asked = next;
+          historyDoor.unsettle();
           setFace(next);
         }}
         onSeat={setSeat}
@@ -1121,6 +1123,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
       else swapping = swapping.then(fetchSettling).then(swap);
     },
     setFace: (face) => {
+      if (face !== asked) historyDoor.unsettle();
       asked = face;
       flushSync(() => setters?.face(face));
     },
@@ -1131,6 +1134,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
         if (isOverview(path)) {
           if (asked === "pages" || asked === "picture") {
             asked = "scene";
+            historyDoor.unsettle();
             setters?.face("scene");
           }
           return;
@@ -1138,6 +1142,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
         setters?.path(path);
         if (asked !== "pages") {
           asked = "pages";
+          historyDoor.unsettle();
           setters?.face("pages");
         }
       }),
