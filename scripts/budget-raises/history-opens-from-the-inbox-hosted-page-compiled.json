@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 366,
+  "gzipped": 72,
+  "changeset": "history-opens-from-the-inbox-and-the-hosts-menu.md",
+  "note": "Raised when History came to the inbox and showHistory() to the mount handle: one row at the inbox's foot that opens the timeline at now, and each face's playback listening for a host that asks for it by its store. Measured at 621_244 / 215_232 against 620_888 / 215_165 minified and gzipped."
+}

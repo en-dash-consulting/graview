@@ -89,6 +89,39 @@ export function useLiveStore<S extends AnySchema>(shown: Store<S>, principal: Pr
   return live;
 }
 
+/*
+ * THE HISTORY, OPENED FROM OUTSIDE THE FACE (Roadmap f-host-opens-history):
+ * a host's own menu, through its mount handle, asks the face that draws a
+ * store to open its timeline at now — the way "History" in the inbox does —
+ * without reaching into the tree. Each face's own playback listens for its
+ * live store; one drawn inside another inherits the outer one's, which
+ * listens for both.
+ */
+const historyAsked = new WeakMap<object, Set<() => void>>();
+/** Asked before any face drawing the store was here (a face is fetched as it is first drawn): opened by the first that arrives. */
+const historyWaiting = new WeakSet<object>();
+
+/**
+ * Opens the timeline of every face drawing `store`, at now with the way
+ * back in reach; asked before a face is drawn, the first to arrive opens it.
+ */
+export function showHistory(store: Store<AnySchema>): void {
+  const listening = historyAsked.get(store);
+  if (!listening || listening.size === 0) {
+    historyWaiting.add(store);
+    return;
+  }
+  for (const listener of [...listening]) listener();
+}
+
+function listenForHistory(store: object, listener: () => void): () => void {
+  const listening = historyAsked.get(store) ?? new Set<() => void>();
+  historyAsked.set(store, listening);
+  listening.add(listener);
+  if (historyWaiting.delete(store)) listener();
+  return () => void listening.delete(listener);
+}
+
 type History = typeof import("@graview/core/past");
 /** `@graview/core/past`, fetched when somebody first asks to see the past: the fold is none of a page's weight until then. */
 const history = /* @__PURE__ */ retryingImport(() => import("@graview/core/past"));
@@ -175,6 +208,8 @@ export function useOwnPlayback<S extends AnySchema>(live: Store<S>, principal: P
     last.current = past;
   }, [past]);
   const show = useCallback((next: number | null) => setSeq(next === null ? null : next >= live.log.length ? Number.POSITIVE_INFINITY : next), [live]);
+  // A host's menu opening the history (`showHistory`): the timeline at now, as "History" in the inbox opens it.
+  useEffect(() => (inherited ? undefined : listenForHistory(live, () => setSeq(Number.POSITIVE_INFINITY))), [inherited, live]);
   const owns = useCallback(
     (store: Store<AnySchema>, seat: Principal) => [live as unknown as Store<AnySchema>, past?.store as unknown as Store<AnySchema> | undefined].some((one) => one !== undefined && (one === store || one.seenBy(seat) === store)),
     [live, past],

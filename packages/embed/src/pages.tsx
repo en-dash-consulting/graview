@@ -1,5 +1,5 @@
 import type { AnySchema, Brand, Person, Principal, Store } from "@graview/core";
-import { createPartsWatch, ErrorReportContext, GraviewProvider, PartsWatchContext, type AwaySummary, type HostNotification, type Scheme } from "@graview/react/provider";
+import { createPartsWatch, ErrorReportContext, GraviewProvider, PartsWatchContext, showHistory, type AwaySummary, type HostNotification, type Scheme } from "@graview/react/provider";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDrawnSignal } from "./drawn.js";
 import { draftWaits, fetchDraftHost, Settling, useDraft, type EmbedDraftView } from "./draft.js";
@@ -177,6 +177,8 @@ export interface PagesEmbedHandle {
   setDraftView(draft: EmbedDraftView | null): void;
   /** Says something in the app's own notices (FR-75): a toast, or a banner that stays until it is cleared. */
   notify(notice: Notice): NoticeHandle;
+  /** Opens the app's history from the host's own menu (Roadmap f-host-opens-history): the timeline "History" in the inbox opens, at now. */
+  showHistory(): void;
   readonly store: Store<AnySchema>;
   unmount(): void;
 }
@@ -268,6 +270,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
       });
       return said!;
     },
+    showHistory: () => flushSync(() => showHistory(store as never)),
     unmount: () => root.unmount(),
   };
 }
