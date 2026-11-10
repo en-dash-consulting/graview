@@ -37,8 +37,10 @@ export type EmbedFace = "scene" | "graview" | "pages" | "picture";
 export interface EmbedBar {
   /** `false`: no switch between the scene and the pages. */
   readonly faces?: false;
-  /** `false`: no app mark and name, the way home; the host's own bar says it. Say `heading: false` too where the host's heading names the app. */
+  /** `false`: no app mark and name, the way home; the host's own bar says it. Say `heading: false` too where the host's heading names the app. The app menu offers no History then: the host's own menu does, by `showHistory()`. */
   readonly name?: false;
+  /** `false`: the app menu offers no History (Roadmap f-host-opens-history); the host's own menu does, by `showHistory()`. */
+  readonly history?: false;
 }
 
 /** What `bar` leaves out, read from the option: nothing when it is `true`. */
@@ -860,10 +862,13 @@ export function FrameBar({
   keeping,
   onFind,
   named = true,
+  history = true,
 }: {
   readonly name: string;
   /** Whether the bar draws the app's mark and name (`EmbedBar.name`). */
   readonly named?: boolean;
+  /** Whether the app menu offers History (`EmbedBar.history`). */
+  readonly history?: boolean;
   readonly heading: 1 | 2 | 3 | 4 | 5 | 6 | false;
   /** The switch between the scene and the pages (FR-137); none where only the pages are drawn. */
   readonly faces?: BarFaces | undefined;
@@ -901,6 +906,7 @@ export function FrameBar({
       brand={brand}
       name={name}
       named={named}
+      history={history}
       description={brand?.subtitle}
       heading={heading}
       faces={faces}

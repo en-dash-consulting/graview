@@ -157,7 +157,7 @@ describe("a view that asks for pictures", () => {
     expect(porch[0]!.src).toMatch(/^data:/);
     expect(porch[1]!.src).toMatch(/^data:/);
     expect(roof[0]!.src).toBeUndefined();
-    expect(roof[0]!.left).toBe('The picture "roof.png" on "Roof survey" is left out: the view "Job photos" is handed at most 500 bytes of pictures, and the pictures before it, in the order its records are handed, took them. A view that draws only some kinds\' pictures says which ("pictures": ["<kind>"]).');
+    expect(roof[0]!.left).toBe('The picture "roof.png" on "Roof survey" is left out: the view "Job photos" is handed at most 500 bytes of pictures, and the pictures before it, in the order its records are handed, took them. A view that draws only some kinds\' pictures says which ("pictures": ["<kind>"]), and one that draws only some records\' says which ("records": { "subject": true }, or their "ids").');
     expect(said).toContain(roof[0]!.left);
   });
 

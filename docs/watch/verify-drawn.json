@@ -1,13 +1,7 @@
 {
-  "at": "2026-10-24T02:43:01.255Z",
+  "at": "2026-11-10T19:15:31.091Z",
   "harness": "verify-drawn",
   "engine": "chromium",
-  "open": 1,
-  "violations": [
-    {
-      "rule": "keyboard-lands-nowhere",
-      "detail": "a press on <button> \"Hide · Off the places, for everyone; sti\" in [data-testid=\"context-menu\"] left the keyboard on <body> (it was removed)",
-      "at": "features?tidy=1"
-    }
-  ]
+  "open": 0,
+  "violations": []
 }

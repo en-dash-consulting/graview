@@ -9,6 +9,7 @@ export type {
   GuestDroppedFile,
   GuestEvent,
   GuestFile,
+  GuestFont,
   GuestNavigateTo,
   GuestNode,
   GuestPlace,

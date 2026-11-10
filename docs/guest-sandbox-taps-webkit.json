@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-24T04:04:27.600Z",
+  "at": "2026-11-10T19:23:12.516Z",
   "transport": "taps",
   "engine": "webkit",
   "claims": {
@@ -175,7 +175,7 @@
       "ok": true,
       "detail": {
         "stayed": "/",
-        "opened": "http://127.0.0.1:5792/?at=%2Fthreats%2Fthreat%253Aphishing",
+        "opened": "http://127.0.0.1:5992/?at=%2Fthreats%2Fthreat%253Aphishing",
         "href": "/?at=%2Fthreats%2Fthreat%253Aphishing",
         "landedThere": "/threats/threat%3Aphishing"
       }

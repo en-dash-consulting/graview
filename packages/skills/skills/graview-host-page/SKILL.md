@@ -46,18 +46,18 @@ decides the frame; the app still decides what is in it.**
    `@graview/embed/pages` and bundle nothing else.
 4. **Put the host's own furniture inside the embed, never over it.**
    `hostActions: [{ label, href }]` (or `onSelect` for a press) draws the
-   host's links in the person's menu, under who is signed in, reached by
-   the keyboard; `barActions` (`iconOnly` for a mark), `appMenu`,
-   `schemeChoice`, `share` and `notifications` fill the bar, its app
-   menu, Share and the inbox, each with a `set…` on the handle; a
-   notification with `needs: true` stands under Needs you, and is what the
-   bell counts. Popovers are in the top layer: no `z-index` override. `quickAsk: false`
-   draws no quick ask (⌘K). Say the host's own news through
-   `handle.notify({ kind: "toast" | "banner", sentence, tone, action })`,
-   not a toast of your own. `onReport({ message, code?, place?, record?,
-   version })` puts a native "Report this" on the framework's own warning
-   and error toasts (not on yours), handing you those four and the
-   version. `firstLook: { seen, onDone, steps }` points at the app's
+   host's links in the person's menu; `barActions` (`iconOnly` for a
+   mark), `appMenu`, `schemeChoice`, `share` and `notifications` fill the
+   bar, its app menu, Share and the inbox, each with a `set…` on the
+   handle; a notification with `needs: true` stands under Needs you, and
+   is what the bell counts. Popovers are in the top layer: no `z-index`
+   override. `quickAsk: false` draws no quick ask (⌘K). Say the host's own
+   news through `handle.notify({ kind: "toast" | "banner", sentence,
+   tone, action })`, not a toast of your own; a History in your menu is
+   `handle.showHistory()`, the app menu's own timeline. `onReport({ message,
+   code?, place?, record?, version })` puts a native "Report this" on the
+   framework's own warning and error toasts (not on yours).
+   `firstLook: { seen, onDone, steps }` points at the app's
    controls once, your `steps` naming a `FIRST_LOOK_ANCHORS` control.
 5. **A changed app keeps the reader's place.** `handle.setApp(app,
    store)`, not a remount, keeps the face, the page and the stop, and a

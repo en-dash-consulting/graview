@@ -1,0 +1,6 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 321,
+  "changeset": "a-view-chooses-its-pictures-by-record.md",
+  "note": "Raised when a view's pictures came to choose records only by an object ({ subject, ids }) and be capped only by a number, so a string or a list under records or most still names a kind, and the page came to leave out pictures in the order a headless run does (Roadmap f-view-pictures-by-record). Measured at 2_622_072 B against 2_621_751."
+}

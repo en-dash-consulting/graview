@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 920,
+  "gzipped": 325,
+  "changeset": "history-opens-from-the-app-menu-and-the-hosts-menu.md",
+  "note": "Raised when History came to the app menu and showHistory() to the mount handle: the app menu's control drawn wherever the face keeps a playback and the bar says the app's name, a mount's own history door that the timeline's place listens on, and a playback asked to give the keyboard to its scrubber. Measured at 621_702 / 215_441 against its base of 620_888 / 215_165 minified and gzipped. Then 90 more minified and 40 more gzipped when a request made while another face or app is on its way waits for it (the door unsettled on each face asked for)."
+}

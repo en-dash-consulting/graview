@@ -1,0 +1,7 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 1402,
+  "gzipped": 484,
+  "changeset": "a-frame-is-lent-the-apps-faces.md",
+  "note": "Raised when a frame guest came to be lent the faces the app lends its views (Roadmap f-faces-lent-to-frames): `guestView` and `mountGuestView` take `asset` and `fonts`, the frame's host reads each face within 2 MB and hands it over the port as a data: font (`frameFonts`, in the faces' chunk), and the client puts it in the frame's document. Measured at 269_148 / 103_599 against 267_746 / 103_115 minified and gzipped."
+}

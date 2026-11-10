@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 256,
+  "gzipped": 192,
+  "note": "Raised when the 0.1.72 batch's two branches were merged (History in the app menu and showHistory() on the mount handle; a frame lent the app's faces, a view's pictures chosen by record, and a frame that grows only with itself held): each measured alone against main, together they came to 210 bytes minified and 160 gzipped (3_155_440 / 1_144_558 against 3_155_230 / 1_144_398) over their summed raises, held for a few bytes either side."
+}

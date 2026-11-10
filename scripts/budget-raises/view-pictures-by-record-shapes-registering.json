@@ -1,0 +1,7 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 235,
+  "gzipped": 79,
+  "changeset": "a-view-chooses-its-pictures-by-record.md",
+  "note": "Raised when a view's pictures came to choose records only by an object ({ subject, ids }) and be capped only by a number, so a string or a list under records or most still names a kind, and the page came to leave out pictures in the order a headless run does (Roadmap f-view-pictures-by-record). Measured at 49_209 / 21_230 against 48_974 / 21_151 minified and gzipped."
+}

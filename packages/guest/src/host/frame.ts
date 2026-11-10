@@ -1,5 +1,5 @@
 import type { AnySchema, Principal, Store } from "@graview/core";
-import { GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN, isGuestReady, type GuestPlace, type GuestTheme, type HostHello } from "../protocol.js";
+import { GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN, isGuestReady, type GuestFont, type GuestPlace, type GuestTheme, type HostHello, type HostMessage } from "../protocol.js";
 import { mintNonce } from "./nonce.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestReads, type GuestStats, type GuestViewInput } from "./session.js";
 import { retryingImport } from "@graview/core/retry";
@@ -12,6 +12,10 @@ import { createGuestLogo, readTheme, themeWithBrand, watchTheme, type GuestBrand
 
 /* The pictures' host, fetched only for a frame that asks for them (FR-175): a page of frames that do not carries none of it. */
 const picturesChunk = retryingImport(() => import("./pictures.js"));
+/* The faces' reader, fetched only for a frame whose brand lends faces (Roadmap f-faces-lent-to-frames). */
+const fontsChunk = retryingImport(() => import("./fonts.js"));
+/** The longest a frame waits for the faces it is lent before it says it has drawn: as long as a picture is given to load. */
+export const FACES_WAIT_MS = 2_000;
 
 /*
  * A FRAME GUEST'S HOST: `@graview/guest/host/frame`. Mounting a frame into
@@ -66,6 +70,20 @@ export interface MountGuestViewOptions<S extends AnySchema> {
   readonly pictures?: GuestPictures;
   /** Where a record's file (`FileValue.href`) is fetched for those pictures: a host serving the app under a base answers `base + href`. The href resolved against the page by default. */
   readonly file?: (href: string) => string | undefined;
+  /**
+   * Where a file the app holds (`/graview/assets/<sha256>.woff2`) is read
+   * from for the faces its brand lends its views (`brand.views.fonts`,
+   * Roadmap f-faces-lent-to-frames), as a worker view's `asset` says. Each
+   * face is read by the host, at most 2 MB, and handed to the frame as a
+   * `data:` font its client puts in the frame's document: the frame's policy
+   * allows `font-src data:` and is asked for nothing more. Without it, a face
+   * the app holds is not lent, and that is said (`onProblem`).
+   */
+  readonly asset?: (path: string) => string | undefined;
+  /** The `https:` origins a lent face may be read from by address, as a worker view's `fonts` says: none by default. */
+  readonly fonts?: { readonly origins: readonly string[] };
+  /** What the host could not do for the frame, in a sentence: a face it did not lend, and why; the guest's height held (`onSize`). */
+  readonly onProblem?: (said: string) => void;
   /** The app's named places: what the guest is told of (`props.places`), and may ask to go to by slug. None by default. */
   readonly places?: () => readonly GuestPlace[];
   readonly onNavigate?: (id: string) => void;
@@ -77,7 +95,12 @@ export interface MountGuestViewOptions<S extends AnySchema> {
   readonly onLost?: (said: string) => void;
   /** The face's own way of going (`useGoTo`), read when the guest goes: where `onArrive` is not given, the arrival is gone to by it. */
   readonly goTo?: () => GoTo | undefined;
-  /** The guest asked for a height. By default the frame takes it. */
+  /**
+   * The guest asked for a height. By default the frame takes it. Not told a
+   * height the growth guard held (Roadmap f-guest-growth-guard): a guest
+   * whose every height tracks the frame's own a few times running is held,
+   * the frame wears `data-guest-view-held`, and `onProblem` is told why.
+   */
   readonly onSize?: (height: number) => void;
   readonly limits?: GuestLimits;
   /** The frame's accessible name. The view's name by default. */
@@ -140,8 +163,70 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
   /* The app's look, kept up (FR-86): pushed again when what the frame would be handed has changed. */
   const logo = createGuestLogo(window as Window & typeof globalThis, () => push(), "data");
   const theme = () => themeWithBrand(() => options.theme?.() ?? readTheme(element), options.brand, logo);
+  /*
+   * THE FACES THE APP LENDS ITS VIEWS, LENT TO THE FRAME (Roadmap
+   * f-faces-lent-to-frames): read by the host as the brand lends them, once a
+   * page for every frame in the same brand (fonts.ts, `readFrameFonts`), and
+   * handed over the port as `data:` fonts, again whenever the brand changes
+   * them and to every document the frame loads. The frame waits for them
+   * before it says it has drawn, for `FACES_WAIT_MS` at most: past it, it is
+   * said which face has not come, and the frame is handed it when it does.
+   */
+  let fontsAsked = "[[],null]";
+  let lentFonts: readonly GuestFont[] = [];
+  let fontsReading: { stopped: boolean } | undefined;
+  let fontsLate: ReturnType<typeof setTimeout> | undefined;
+  const sendFonts = () => port?.postMessage({ type: "fonts", fonts: lentFonts } satisfies HostMessage);
+  const lendFonts = () => {
+    const given = options.brand?.();
+    const fonts = given?.views?.fonts ?? [];
+    const typography = given?.typography;
+    const asked = JSON.stringify([fonts, typography ?? null]);
+    if (asked === fontsAsked) return;
+    fontsAsked = asked;
+    if (fontsReading) fontsReading.stopped = true;
+    fontsReading = undefined;
+    clearTimeout(fontsLate);
+    if (fonts.length === 0) {
+      if (lentFonts.length > 0) {
+        lentFonts = [];
+        sendFonts();
+      }
+      return;
+    }
+    const reading = { stopped: false };
+    fontsReading = reading;
+    const done = () => {
+      clearTimeout(fontsLate);
+      if (fontsReading === reading) fontsReading = undefined;
+      drew();
+    };
+    void fontsChunk()
+      .then(({ readFrameFonts }) => {
+        if (reading.stopped) return;
+        const lending = readFrameFonts(window as Window & typeof globalThis, fonts, { ...(options.asset ? { asset: options.asset } : {}), ...(options.fonts ? { origins: options.fonts.origins } : {}), ...(typography ? { typography } : {}) });
+        fontsLate = setTimeout(() => {
+          if (reading.stopped || fontsReading !== reading) return;
+          const late = lending.waiting();
+          if (late.length > 0) options.onProblem?.(`The app's ${late.length === 1 ? "face" : "faces"} ${late.map((family) => `"${family}"`).join(", ")} for its views did not arrive in ${FACES_WAIT_MS / 1_000} seconds, so the frame is drawn without ${late.length === 1 ? "it" : "them"} and handed ${late.length === 1 ? "it" : "them"} once ${late.length === 1 ? "it arrives" : "they arrive"}.`);
+          fontsReading = undefined;
+          drew();
+        }, FACES_WAIT_MS);
+        return lending.read.then(({ fonts: read, said }) => {
+          if (reading.stopped) return;
+          for (const one of said) options.onProblem?.(one);
+          lentFonts = read;
+          sendFonts();
+          done();
+        });
+      })
+      .catch(() => {
+        if (!reading.stopped) done();
+      });
+  };
   let pushed = "";
   const push = () => {
+    lendFonts();
     if (!session) return;
     pushed = JSON.stringify(theme());
     session.push();
@@ -183,7 +268,7 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
   let handed = false;
   let quiet: ReturnType<typeof setTimeout> | undefined;
   const drew = () => {
-    if (!handed || pictures?.waiting()) return;
+    if (!handed || pictures?.waiting() || fontsReading) return;
     clearTimeout(quiet);
     iframe.removeAttribute("data-guest-view-failed");
     iframe.removeAttribute("aria-busy");
@@ -253,6 +338,12 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
         else iframe.style.height = `${height}px`;
         drew();
       },
+      /* Held, growing only with its own frame (Roadmap f-guest-growth-guard): said, and worn on the frame with the height it is held at. */
+      onHeld: (said, height) => {
+        iframe.setAttribute("data-guest-view-held", `${height}px`);
+        options.onProblem?.(said);
+        drew();
+      },
       ...(options.limits ? { limits: options.limits } : {}),
       limiter,
     });
@@ -269,10 +360,13 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
      */
     iframe.contentWindow!.postMessage(hello, "*", [channel.port2]);
     push();
+    if (lentFonts.length > 0) sendFonts();
     handed = true;
     soon();
   };
   window.addEventListener("message", onMessage);
+  /* The faces are read as the frame is mounted, not once the guest is ready: the guest is handed them as soon after as they are read. */
+  lendFonts();
   element.appendChild(iframe);
   element.removeAttribute("aria-busy");
 
@@ -288,6 +382,8 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
       clearTimeout(silent);
       clearTimeout(quiet);
       unwatch();
+      if (fontsReading) fontsReading.stopped = true;
+      clearTimeout(fontsLate);
       logo.dispose();
       stopPictures();
       pictures?.dispose();

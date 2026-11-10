@@ -1,0 +1,6 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 698,
+  "changeset": "a-frame-is-lent-the-apps-faces.md",
+  "note": "Raised when a frame guest came to be lent the faces the app lends its views (Roadmap f-faces-lent-to-frames): `guestView` and `mountGuestView` take `asset` and `fonts`, the frame's host reads each face within 2 MB and hands it over the port as a data: font (`frameFonts`, in the faces' chunk), and the client puts it in the frame's document. Measured at 2_619_172 B against 2_618_474."
+}

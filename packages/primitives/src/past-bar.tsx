@@ -1,6 +1,6 @@
 import { retryingImport } from "@graview/core/retry";
-import { lazyModule, usePlayback } from "@graview/react/provider";
-import { Suspense } from "react";
+import { HistoryDoorContext, lazyModule, usePlayback } from "@graview/react/provider";
+import { Suspense, useContext, useEffect, useRef } from "react";
 
 /*
  * THE TIMELINE'S DOOR (Roadmap f-playback). Nothing of playback is in a
@@ -25,6 +25,22 @@ export const prefetchTimeline = (): void => TIMELINE.prefetch();
  */
 export function PastBar({ face }: { readonly face: TimelineFace }) {
   const playback = usePlayback();
+  /*
+   * WHERE A HOST'S `showHistory()` IS HEARD (Roadmap f-host-opens-history):
+   * here, where the timeline is drawn, so a mount whose face draws none
+   * (a picture, a studio's own map) is told so rather than opened unseen.
+   */
+  const door = useContext(HistoryDoorContext);
+  const held = useRef(playback);
+  held.current = playback;
+  const here = playback !== null;
+  useEffect(() => {
+    if (!door || !here) return;
+    return door.listen(({ focus }) => {
+      const now = held.current;
+      now?.show(now.live.log.length, { focus });
+    });
+  }, [door, here]);
   if (!playback?.open) return null;
   return (
     <Suspense fallback={null}>

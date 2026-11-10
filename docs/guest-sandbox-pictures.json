@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-24T04:03:13.303Z",
+  "at": "2026-11-10T19:52:27.357Z",
   "transport": "pictures",
   "engine": "chromium",
   "claims": {
@@ -61,7 +61,259 @@
       "ok": true,
       "detail": [
         {
-          "path": "/graview/files/harbor-6d1f.jpg",
+          "path": "/graview/files/face-0.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-1.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-2.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-3.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-6.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-4.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-5.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-7.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-8.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-9.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-10.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-11.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-12.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-13.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-14.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-15.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-16.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-17.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-18.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-19.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-20.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-21.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-22.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-23.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-24.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-25.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-26.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-27.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-28.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-29.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-30.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-31.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-32.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-33.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-34.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-35.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-36.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-37.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-38.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-39.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-40.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-41.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-42.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-43.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-44.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-45.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-46.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-47.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-48.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-49.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-50.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-51.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-52.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-53.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-54.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-55.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-56.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-57.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-58.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-59.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-60.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-61.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-62.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-63.png",
           "signed": true
         }
       ]
@@ -70,11 +322,11 @@
       "ok": true,
       "detail": [
         {
-          "url": "http://127.0.0.1:5792/graview/files/porch-3f9a.png",
+          "url": "http://127.0.0.1:5992/graview/files/porch-3f9a.png",
           "type": "fetch"
         },
         {
-          "url": "http://127.0.0.1:5792/graview/files/step-77c1.png",
+          "url": "http://127.0.0.1:5992/graview/files/step-77c1.png",
           "type": "fetch"
         }
       ]
@@ -83,11 +335,11 @@
       "ok": true,
       "detail": [
         {
-          "url": "http://127.0.0.1:5792/graview/files/porch-3f9a.png",
+          "url": "http://127.0.0.1:5992/graview/files/porch-3f9a.png",
           "type": "fetch"
         },
         {
-          "url": "http://127.0.0.1:5792/graview/files/step-77c1.png",
+          "url": "http://127.0.0.1:5992/graview/files/step-77c1.png",
           "type": "fetch"
         }
       ]
@@ -132,7 +384,259 @@
       "ok": true,
       "detail": [
         {
-          "path": "/graview/files/harbor-6d1f.jpg",
+          "path": "/graview/files/face-0.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-1.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-2.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-3.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-6.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-4.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-5.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-7.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-8.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-9.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-10.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-11.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-12.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-13.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-14.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-15.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-16.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-17.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-18.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-19.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-20.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-21.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-22.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-23.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-24.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-25.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-26.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-27.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-28.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-29.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-30.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-31.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-32.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-33.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-34.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-35.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-36.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-37.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-38.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-39.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-40.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-41.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-42.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-43.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-44.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-45.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-46.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-47.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-48.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-49.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-50.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-51.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-52.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-53.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-54.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-55.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-56.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-57.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-58.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-59.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-60.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-61.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-62.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-63.png",
           "signed": true
         }
       ]
@@ -141,11 +645,11 @@
       "ok": true,
       "detail": [
         {
-          "url": "http://127.0.0.1:5792/a/jobs/graview/files/porch-3f9a.png",
+          "url": "http://127.0.0.1:5992/a/jobs/graview/files/porch-3f9a.png",
           "type": "fetch"
         },
         {
-          "url": "http://127.0.0.1:5792/a/jobs/graview/files/step-77c1.png",
+          "url": "http://127.0.0.1:5992/a/jobs/graview/files/step-77c1.png",
           "type": "fetch"
         }
       ]
@@ -162,17 +666,269 @@
       "detail": {
         "asked": [
           {
-            "path": "/graview/files/harbor-6d1f.jpg",
+            "path": "/graview/files/face-0.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-1.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-2.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-3.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-6.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-4.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-5.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-7.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-8.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-9.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-10.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-11.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-12.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-13.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-14.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-15.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-16.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-17.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-18.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-19.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-20.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-21.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-22.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-23.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-24.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-25.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-26.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-27.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-28.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-29.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-30.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-31.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-32.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-33.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-34.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-35.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-36.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-37.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-38.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-39.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-40.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-41.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-42.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-43.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-44.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-45.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-46.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-47.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-48.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-49.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-50.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-51.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-52.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-53.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-54.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-55.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-56.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-57.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-58.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-59.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-60.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-61.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-62.png",
+            "signed": true
+          },
+          {
+            "path": "/graview/files/face-63.png",
             "signed": true
           }
         ],
         "requests": [
           {
-            "url": "http://127.0.0.1:5792/a/jobs/graview/files/porch-3f9a.png",
+            "url": "http://127.0.0.1:5992/a/jobs/graview/files/porch-3f9a.png",
             "type": "fetch"
           },
           {
-            "url": "http://127.0.0.1:5792/a/jobs/graview/files/step-77c1.png",
+            "url": "http://127.0.0.1:5992/a/jobs/graview/files/step-77c1.png",
             "type": "fetch"
           }
         ]
@@ -197,14 +953,13 @@
             }
           ],
           "papers": [
-            "/a/jobs/graview/files/quote-9e4f.pdf",
             "/a/jobs/graview/files/quote-9e4f.pdf"
           ]
         },
         "requests": [
-          "http://127.0.0.1:5792/a/jobs/graview/files/porch-3f9a.png",
-          "http://127.0.0.1:5792/a/jobs/graview/files/step-77c1.png",
-          "http://127.0.0.1:5792/a/jobs/graview/files/plan-02bd.svg"
+          "http://127.0.0.1:5992/a/jobs/graview/files/porch-3f9a.png",
+          "http://127.0.0.1:5992/a/jobs/graview/files/step-77c1.png",
+          "http://127.0.0.1:5992/a/jobs/graview/files/plan-02bd.svg"
         ]
       }
     },
@@ -242,10 +997,296 @@
       "ok": true,
       "detail": [
         {
-          "path": "/graview/files/harbor-6d1f.jpg",
+          "path": "/graview/files/face-0.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-1.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-2.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-3.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-6.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-4.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-5.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-7.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-8.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-9.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-10.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-11.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-12.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-13.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-14.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-15.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-16.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-17.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-18.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-19.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-20.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-21.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-22.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-23.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-24.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-25.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-26.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-27.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-28.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-29.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-30.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-31.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-32.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-33.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-34.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-35.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-36.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-37.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-38.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-39.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-40.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-41.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-42.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-43.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-44.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-45.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-46.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-47.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-48.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-49.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-50.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-51.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-52.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-53.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-54.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-55.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-56.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-57.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-58.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-59.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-60.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-61.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-62.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/face-63.png",
           "signed": true
         }
       ]
+    },
+    "a <graview-video autoplay cover> is a background the host plays: muted, looping, inline, with no controls, its poster, and filling the box the view sized": {
+      "ok": true,
+      "detail": {
+        "autoplay": true,
+        "muted": true,
+        "loop": true,
+        "inline": true,
+        "controls": false,
+        "preload": "auto",
+        "poster": "/graview/files/clip-5d0a.png",
+        "fit": "cover",
+        "box": [
+          1160,
+          120
+        ],
+        "video": [
+          1160,
+          120
+        ],
+        "still": false,
+        "paused": false,
+        "time": 0.062986,
+        "said": null
+      }
+    },
+    "the hero background plays on its own, pressed by nobody": {
+      "ok": true,
+      "detail": {
+        "playing": true,
+        "paused": false,
+        "time": 0.06398,
+        "after": 0
+      }
     },
     "a press on the view's data-lightbox opens the host's full-screen viewer over the app, the keyboard on its Close": {
       "ok": true,
@@ -270,6 +1311,31 @@
       "detail": {
         "failures": [],
         "problems": []
+      }
+    },
+    "where the person asked for less motion, the hero stands still at its poster, fetching only its metadata, muted and looping still, with no controls": {
+      "ok": true,
+      "detail": {
+        "autoplay": false,
+        "muted": true,
+        "loop": true,
+        "inline": true,
+        "controls": false,
+        "preload": "metadata",
+        "poster": "/graview/files/clip-5d0a.png",
+        "fit": "cover",
+        "box": [
+          1160,
+          120
+        ],
+        "video": [
+          1160,
+          120
+        ],
+        "still": true,
+        "paused": true,
+        "time": 0,
+        "said": null
       }
     },
     "the full-size photograph is a real JPEG with JFIF and an EXIF APP1, heavier as a data: image than the 512,000 characters a view's own may be": {
@@ -308,6 +1374,22 @@
       "detail": {
         "failures": [],
         "problems": []
+      }
+    },
+    "a pictures: true view of sixty-four records, their pictures settling one by one within a second, is not stopped as a flood and draws every picture": {
+      "ok": true,
+      "detail": {
+        "drawn": 64,
+        "failures": [],
+        "problems": [],
+        "fellBack": null
+      }
+    },
+    "the host fetched each of the sixty-four pictures once, with the reader's session": {
+      "ok": true,
+      "detail": {
+        "asked": 64,
+        "distinct": 64
       }
     }
   },

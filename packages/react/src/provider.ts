@@ -69,5 +69,5 @@ export type { AiDesk, AiDeskState, HeldGhost } from "./ai-desk.js";
 export type { KeepLensAnswer, KeepLensHost, LensEdit, ComposeChangeHost, DraftChangeHost, ProposeChangeAnswer, ProposeChangeHost, ReshapeProposal, SeatKept, SeatOutcome, SeatTalk, SeatTalkState, SeatTurn } from "./seat-talk.js";
 export type { LazyModule, LazyPartOptions, PartsWatch } from "./lazy-part.js";
 // The app as it was (Roadmap f-playback): the moment a face draws instead of now, held by its outermost provider.
-export { PlaybackContext, useLiveStore, useOwnPlayback, usePlayback, useReadersServed } from "./past.js";
-export type { PastShown, Playback } from "./past.js";
+export { createHistoryDoor, HistoryDoorContext, PlaybackContext, useLiveStore, useOwnPlayback, usePlayback, useReadersServed } from "./past.js";
+export type { HistoryDoor, PastShown, Playback } from "./past.js";
