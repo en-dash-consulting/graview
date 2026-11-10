@@ -14,6 +14,8 @@ import { createGuestLogo, readTheme, themeWithBrand, watchTheme, type GuestBrand
 const picturesChunk = retryingImport(() => import("./pictures.js"));
 /* The faces' reader, fetched only for a frame whose brand lends faces (Roadmap f-faces-lent-to-frames). */
 const fontsChunk = retryingImport(() => import("./fonts.js"));
+/** The longest a frame waits for the faces it is lent before it says it has drawn: as long as a picture is given to load. */
+export const FACES_WAIT_MS = 2_000;
 
 /*
  * A FRAME GUEST'S HOST: `@graview/guest/host/frame`. Mounting a frame into
@@ -163,13 +165,17 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
   const theme = () => themeWithBrand(() => options.theme?.() ?? readTheme(element), options.brand, logo);
   /*
    * THE FACES THE APP LENDS ITS VIEWS, LENT TO THE FRAME (Roadmap
-   * f-faces-lent-to-frames): read by the host as the brand lends them
-   * (fonts.ts, `frameFonts`) and handed over the port as `data:` fonts, again
-   * whenever the brand changes them and to every document the frame loads.
+   * f-faces-lent-to-frames): read by the host as the brand lends them, once a
+   * page for every frame in the same brand (fonts.ts, `readFrameFonts`), and
+   * handed over the port as `data:` fonts, again whenever the brand changes
+   * them and to every document the frame loads. The frame waits for them
+   * before it says it has drawn, for `FACES_WAIT_MS` at most: past it, it is
+   * said which face has not come, and the frame is handed it when it does.
    */
   let fontsAsked = "[[],null]";
   let lentFonts: readonly GuestFont[] = [];
-  let fontsReading: AbortController | undefined;
+  let fontsReading: { stopped: boolean } | undefined;
+  let fontsLate: ReturnType<typeof setTimeout> | undefined;
   const sendFonts = () => port?.postMessage({ type: "fonts", fonts: lentFonts } satisfies HostMessage);
   const lendFonts = () => {
     const given = options.brand?.();
@@ -178,8 +184,9 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
     const asked = JSON.stringify([fonts, typography ?? null]);
     if (asked === fontsAsked) return;
     fontsAsked = asked;
-    fontsReading?.abort();
+    if (fontsReading) fontsReading.stopped = true;
     fontsReading = undefined;
+    clearTimeout(fontsLate);
     if (fonts.length === 0) {
       if (lentFonts.length > 0) {
         lentFonts = [];
@@ -187,22 +194,35 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
       }
       return;
     }
-    const reading = (fontsReading = new AbortController());
+    const reading = { stopped: false };
+    fontsReading = reading;
+    const done = () => {
+      clearTimeout(fontsLate);
+      if (fontsReading === reading) fontsReading = undefined;
+      drew();
+    };
     void fontsChunk()
-      .then(({ frameFonts }) => frameFonts(fonts, { ...(options.asset ? { asset: options.asset } : {}), ...(options.fonts ? { origins: options.fonts.origins } : {}), ...(typography ? { typography } : {}), fetch: window.fetch.bind(window), signal: reading.signal }, (said) => options.onProblem?.(said)))
-      .then(
-        (read) => {
-          if (reading.signal.aborted) return;
+      .then(({ readFrameFonts }) => {
+        if (reading.stopped) return;
+        const lending = readFrameFonts(window as Window & typeof globalThis, fonts, { ...(options.asset ? { asset: options.asset } : {}), ...(options.fonts ? { origins: options.fonts.origins } : {}), ...(typography ? { typography } : {}) });
+        fontsLate = setTimeout(() => {
+          if (reading.stopped || fontsReading !== reading) return;
+          const late = lending.waiting();
+          if (late.length > 0) options.onProblem?.(`The app's ${late.length === 1 ? "face" : "faces"} ${late.map((family) => `"${family}"`).join(", ")} for its views did not arrive in ${FACES_WAIT_MS / 1_000} seconds, so the frame is drawn without ${late.length === 1 ? "it" : "them"} and handed ${late.length === 1 ? "it" : "them"} once ${late.length === 1 ? "it arrives" : "they arrive"}.`);
           fontsReading = undefined;
+          drew();
+        }, FACES_WAIT_MS);
+        return lending.read.then(({ fonts: read, said }) => {
+          if (reading.stopped) return;
+          for (const one of said) options.onProblem?.(one);
           lentFonts = read;
           sendFonts();
-          drew();
-        },
-        () => {
-          if (fontsReading === reading) fontsReading = undefined;
-          drew();
-        },
-      );
+          done();
+        });
+      })
+      .catch(() => {
+        if (!reading.stopped) done();
+      });
   };
   let pushed = "";
   const push = () => {
@@ -362,7 +382,8 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
       clearTimeout(silent);
       clearTimeout(quiet);
       unwatch();
-      fontsReading?.abort();
+      if (fontsReading) fontsReading.stopped = true;
+      clearTimeout(fontsLate);
       logo.dispose();
       stopPictures();
       pictures?.dispose();

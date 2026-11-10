@@ -47,6 +47,8 @@ export interface ViewFontsOptions {
 }
 
 const named = (family: unknown) => `The app's face "${String(family)}" for its views`;
+/** A face whose file answered as something else: not read as a font. */
+const notAFont = (family: string, url: string, type: string) => `${named(family)} is not loaded: ${url} answered ${type || "no type"}, not a font.`;
 
 /** Where the page loads a face from, or why it does not. */
 export function viewFontAddress(font: ViewFont, options: ViewFontsOptions): { readonly url: string } | { readonly refused: string } {
@@ -62,11 +64,17 @@ export function viewFontAddress(font: ViewFont, options: ViewFontsOptions): { re
 }
 
 /** A face's file, read up to the limit: its bytes, `over` past it, or `failed`. Never sent on elsewhere. A file the app holds is asked for with the page's session, one on a listed origin with none. */
-async function readHeld(fetcher: typeof fetch, url: string, signal: AbortSignal, credentials: RequestCredentials = "same-origin"): Promise<ArrayBuffer | "over" | "failed"> {
+async function readHeld(fetcher: typeof fetch, url: string, signal: AbortSignal, credentials: RequestCredentials = "same-origin"): Promise<ArrayBuffer | "over" | "failed" | { readonly type: string }> {
   const response = await fetcher(url, { signal, credentials, redirect: "error" });
   if (!response.ok) {
     void response.body?.cancel();
     return "failed";
+  }
+  /* A font, or bytes that say nothing more: anything else (a page, a sign-in) is not read as one. */
+  const type = (response.headers.get("content-type") ?? "").split(";")[0]!.trim().toLowerCase();
+  if (!type.startsWith("font/") && type !== "application/octet-stream") {
+    void response.body?.cancel();
+    return { type };
   }
   const declared = Number(response.headers.get("content-length") ?? NaN);
   if (Number.isFinite(declared) && declared > VIEW_FONT_MOST_BYTES) {
@@ -232,6 +240,7 @@ export function loadViewFonts(document: Document, fonts: readonly ViewFont[], op
       readHeld(fetcher!, at.url, one.stop.signal).then((read) => {
         if (one.stop.signal.aborted) return one.settle();
         if (read === "failed") return couldNot();
+        if (typeof read === "object" && "type" in read) return fail((family) => notAFont(family, at.url, read.type));
         if (read === "over") return fail((family) => `${named(family)} is not loaded: its file, ${at.url}, is more than ${VIEW_FONT_MOST_BYTES / 1_000_000} MB, the most a file the app holds may be as a face for its views.`);
         load(read);
       }, couldNot);
@@ -288,7 +297,7 @@ function base64Of(bytes: ArrayBuffer): string {
  * which. What is refused, too large or unreadable is said, naming the face,
  * as it is for a worker view.
  */
-export async function frameFonts(fonts: readonly ViewFont[], options: ViewFontsOptions & { readonly fetch: typeof fetch; readonly signal?: AbortSignal }, say: (said: string) => void): Promise<readonly GuestFont[]> {
+export async function frameFonts(fonts: readonly ViewFont[], options: ViewFontsOptions & { readonly fetch: typeof fetch; readonly signal?: AbortSignal; readonly settled?: (family: string) => void }, say: (said: string) => void): Promise<readonly GuestFont[]> {
   if (fonts.length > VIEW_FONTS_MOST) say(`The app lends its views ${fonts.length} faces and at most ${VIEW_FONTS_MOST} are loaded, so ${fonts.slice(VIEW_FONTS_MOST).map((font) => `"${font.family}"`).join(", ")} ${fonts.length - VIEW_FONTS_MOST === 1 ? "is" : "are"} not.`);
   /* Each name's files in the order they were lent, a file lent twice counted where it was lent last. */
   const names = new Map<string, { readonly font: ViewFont; readonly url: string }[]>();
@@ -306,24 +315,70 @@ export async function frameFonts(fonts: readonly ViewFont[], options: ViewFontsO
   const signal = options.signal ?? new AbortController().signal;
   const lent = await Promise.all(
     [...names.values()].map(async (files): Promise<GuestFont | undefined> => {
-      for (let at = files.length - 1; at >= 0; at -= 1) {
-        const { font, url } = files[at]!;
-        const isHeld = "asset" in viewFontSource(font.src)!;
-        const read = await readHeld(options.fetch, url, signal, isHeld ? "same-origin" : "omit").catch(() => "failed" as const);
-        if (signal.aborted) return undefined;
-        if (read === "failed") {
-          say(`${named(font.family)} could not be loaded from ${url}.`);
-          continue;
+      try {
+        for (let at = files.length - 1; at >= 0; at -= 1) {
+          const { font, url } = files[at]!;
+          const isHeld = "asset" in viewFontSource(font.src)!;
+          const read = await readHeld(options.fetch, url, signal, isHeld ? "same-origin" : "omit").catch(() => "failed" as const);
+          if (signal.aborted) return undefined;
+          if (read === "failed") {
+            say(`${named(font.family)} could not be loaded from ${url}.`);
+            continue;
+          }
+          if (read === "over") {
+            say(`${named(font.family)} is not loaded: its file, ${url}, is more than ${VIEW_FONT_MOST_BYTES / 1_000_000} MB, the most a file may be as a face for the app's views.`);
+            continue;
+          }
+          if (!(read instanceof ArrayBuffer)) {
+            say(notAFont(font.family, url, read.type));
+            continue;
+          }
+          if (files.length > 1) say(`${named(font.family)} is lent from ${files.length} files, and the one drawn in the frame is ${url}.`);
+          return { family: font.family, ...(font.weight !== undefined ? { weight: weightOf(font) } : {}), ...(font.style ? { style: font.style.toLowerCase() } : {}), src: `data:${fontType(url)};base64,${base64Of(read)}` };
         }
-        if (read === "over") {
-          say(`${named(font.family)} is not loaded: its file, ${url}, is more than ${VIEW_FONT_MOST_BYTES / 1_000_000} MB, the most a file may be as a face for the app's views.`);
-          continue;
-        }
-        if (files.length > 1) say(`${named(font.family)} is lent from ${files.length} files, and the one drawn in the frame is ${url}.`);
-        return { family: font.family, ...(font.weight !== undefined ? { weight: weightOf(font) } : {}), ...(font.style ? { style: font.style.toLowerCase() } : {}), src: `data:${fontType(url)};base64,${base64Of(read)}` };
+        return undefined;
+      } finally {
+        options.settled?.(files[0]!.font.family);
       }
-      return undefined;
     }),
   );
   return lent.filter((one): one is GuestFont => one !== undefined);
+}
+
+/** One reading of a brand's faces, shared by every frame on a page lent them. */
+export interface FrameFontsReading {
+  /** The faces as frames are handed them, and what was said of them, once all are read. */
+  readonly read: Promise<{ readonly fonts: readonly GuestFont[]; readonly said: readonly string[] }>;
+  /** The families still being read. */
+  waiting(): readonly string[];
+}
+const readings = new WeakMap<object, Map<string, FrameFontsReading>>();
+/** The most brands' readings a page keeps at once: an older one is read again if it is lent again. */
+const READINGS_KEPT = 8;
+
+/**
+ * THE FACES A BRAND LENDS, READ ONCE A PAGE (Roadmap f-faces-lent-to-frames):
+ * every frame dressed in the same brand, its files served from the same
+ * place, is handed the same reading — fetched and encoded once, and what was
+ * said of it said to each frame's host.
+ */
+export function readFrameFonts(window: Window & typeof globalThis, fonts: readonly ViewFont[], options: ViewFontsOptions): FrameFontsReading {
+  const served = fonts.map((font) => {
+    const source = viewFontSource(font.src);
+    return source && "asset" in source ? (options.asset?.(source.asset) ?? null) : null;
+  });
+  const key = JSON.stringify([fonts, options.typography ?? null, options.origins ?? [], served]);
+  const page = readings.get(window) ?? new Map<string, FrameFontsReading>();
+  readings.set(window, page);
+  const had = page.get(key);
+  if (had) return had;
+  const said: string[] = [];
+  const waiting = new Set<string>();
+  for (const font of fonts.slice(0, VIEW_FONTS_MOST)) if (!("refused" in viewFontAddress(font, options))) waiting.add(font.family);
+  const read = frameFonts(fonts, { ...options, fetch: window.fetch.bind(window), settled: (family) => waiting.delete(family) }, (one) => said.push(one)).then((lent) => ({ fonts: lent, said }));
+  const reading: FrameFontsReading = { read, waiting: () => [...waiting] };
+  page.set(key, reading);
+  if (page.size > READINGS_KEPT) page.delete(page.keys().next().value!);
+  read.catch(() => page.delete(key));
+  return reading;
 }

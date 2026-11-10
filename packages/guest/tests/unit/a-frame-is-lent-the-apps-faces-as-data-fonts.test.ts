@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { connectGuest } from "../../src/guest.js";
 import { frameFonts } from "../../src/host/fonts.js";
-import { mountGuestView, type GuestFrame } from "../../src/host/frame.js";
+import { FACES_WAIT_MS, mountGuestView, type GuestFrame } from "../../src/host/frame.js";
 import { GUEST_PROTOCOL, type GuestFont, type HostHello, type HostMessage } from "../../src/protocol.js";
 import { bethan, showroom } from "./showroom.js";
 
@@ -28,15 +28,18 @@ const ELSEWHERE = { family: "Elsewhere", src: "https://fonts.example/elsewhere.w
 const at = (path: string) => `https://app.example${path}`;
 
 /** What each address answers: bytes of one value, so which file was handed can be read off its data. */
+const WOFF2 = { "content-type": "font/woff2" };
+const PAGE = { family: "Sign In", src: `/graview/assets/${SHA("d")}.woff2` };
 const files = new Map<string, () => Response>([
-  [at(ROCK.src), () => new Response(new Uint8Array(300).fill(1))],
-  [at(ROCK_AGAIN.src), () => new Response(new Uint8Array(200).fill(2))],
-  [at(BIG.src), () => new Response(new Uint8Array(2_000_001), { headers: { "content-length": "2000001" } })],
-  [FAR.src, () => new Response(new Uint8Array(100).fill(3))],
+  [at(ROCK.src), () => new Response(new Uint8Array(300).fill(1), { headers: WOFF2 })],
+  [at(ROCK_AGAIN.src), () => new Response(new Uint8Array(200).fill(2), { headers: { "content-type": "application/octet-stream" } })],
+  [at(BIG.src), () => new Response(new Uint8Array(2_000_001), { headers: { ...WOFF2, "content-length": "2000001" } })],
+  [FAR.src, () => new Response(new Uint8Array(100).fill(3), { headers: WOFF2 })],
+  [at(PAGE.src), () => new Response("<html>Sign in</html>", { headers: { "content-type": "text/html; charset=utf-8" } })],
 ]);
-let asked: { url: string; credentials: RequestCredentials | undefined }[];
+let asked: { url: string; credentials: RequestCredentials | undefined; redirect?: RequestRedirect | undefined }[];
 const fetcher = (async (url: string, init?: RequestInit) => {
-  asked.push({ url, credentials: init?.credentials });
+  asked.push({ url, credentials: init?.credentials, redirect: init?.redirect });
   return files.get(url)?.() ?? new Response("gone", { status: 404 });
 }) as unknown as typeof fetch;
 beforeEach(() => {
@@ -53,10 +56,16 @@ describe("the host reads the faces an app lends a frame", () => {
     expect(fonts.map((font) => font.family)).toEqual(["Rock Face", "Fredoka"]);
     expect(fonts.every((font) => font.src.startsWith("data:font/woff2;base64,"))).toBe(true);
     expect(bytesOf(fonts[0]!)).toEqual(new Array(300).fill(1));
-    expect(asked).toEqual([
-      { url: at(ROCK.src), credentials: "same-origin" },
-      { url: FAR.src, credentials: "omit" },
+    expect(asked, "and never follows a redirect").toEqual([
+      { url: at(ROCK.src), credentials: "same-origin", redirect: "error" },
+      { url: FAR.src, credentials: "omit", redirect: "error" },
     ]);
+  });
+
+  it("takes a file only as a font or as bytes that say nothing more, and says one that answered as a page", async () => {
+    const said: string[] = [];
+    expect(await frameFonts([PAGE], { asset: at, fetch: fetcher }, (one) => said.push(one))).toEqual([]);
+    expect(said).toEqual([`The app's face "Sign In" for its views is not loaded: ${at(PAGE.src)} answered text/html, not a font.`]);
   });
 
   it("hands the file lent last under a shared name, and says which", async () => {
@@ -144,5 +153,64 @@ describe("the client in the frame", () => {
     await vi.waitFor(() => expect([...faces].map((face) => face.family)).toEqual(["Baloo 2"]));
     guest.close();
     vi.unstubAllGlobals();
+  });
+});
+
+describe("frames on one page lent the same faces", () => {
+  const frames: GuestFrame[] = [];
+  afterEach(() => {
+    for (const one of frames.splice(0)) one.dispose();
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+  /** A frame drawn in `brand`, said ready, with what its port hears and what its host is told. */
+  const drawn = (brand: () => { name: string; views: { fonts: readonly { family: string; src: string }[] } }, problems: string[] = []) => {
+    const element = document.createElement("div");
+    document.body.appendChild(element);
+    const frame = mountGuestView(element, { url: "https://cards.example/card.html", view: "card", store: showroom(), principal: bethan, input: () => ({ node: { id: "car:golf" } }), brand, asset: at, onProblem: (said) => problems.push(said) });
+    frames.push(frame);
+    const posted = vi.spyOn(frame.iframe.contentWindow!, "postMessage");
+    window.dispatchEvent(new MessageEvent("message", { data: { graview: "guest-ready", protocol: GUEST_PROTOCOL }, origin: "null", source: frame.iframe.contentWindow }));
+    const [said, , [port]] = posted.mock.calls.at(-1) as unknown as [HostHello, string, MessagePort[]];
+    const heard: HostMessage[] = [];
+    port!.onmessage = (event) => heard.push(event.data);
+    return { frame, heard, size: (height: number) => port!.postMessage({ type: "size", nonce: said.nonce, height }), lent: () => heard.filter((one) => one.type === "fonts") };
+  };
+
+  it("read each face once for all of them, and hand each frame the same", async () => {
+    vi.spyOn(window, "fetch").mockImplementation(fetcher as never);
+    const brand = () => ({ name: "Quarry", views: { fonts: [ROCK, FAR] } });
+    const one = drawn(brand);
+    const two = drawn(brand);
+    await vi.waitFor(() => expect([one.lent().length, two.lent().length]).toEqual([1, 1]));
+    expect(asked.filter((ask) => ask.url === at(ROCK.src)), "read once").toHaveLength(1);
+    expect(JSON.stringify(one.lent())).toBe(JSON.stringify(two.lent()));
+  });
+
+  it("does not say it has drawn while its faces are being read, and says so once they are", async () => {
+    let arrive = () => {};
+    vi.spyOn(window, "fetch").mockImplementation((() => new Promise<Response>((done) => (arrive = () => done(new Response(new Uint8Array(64).fill(5), { headers: WOFF2 }))))) as never);
+    const slow = { family: "Slow Face", src: `/graview/assets/${SHA("e")}.woff2` };
+    const { frame, size } = drawn(() => ({ name: "Quarry", views: { fonts: [slow] } }));
+    size(220);
+    await new Promise((done) => setTimeout(done, 400));
+    expect(frame.iframe.hasAttribute("data-guest-view-drawn"), "the guest asked a height, but its face is still coming").toBe(false);
+    arrive();
+    await vi.waitFor(() => expect(frame.iframe.hasAttribute("data-guest-view-drawn")).toBe(true));
+  });
+
+  it("says it has drawn after two seconds when a face never arrives, says which in words, and hands it if it comes", async () => {
+    let arrive = () => {};
+    vi.spyOn(window, "fetch").mockImplementation((() => new Promise<Response>((done) => (arrive = () => done(new Response(new Uint8Array(64).fill(6), { headers: WOFF2 }))))) as never);
+    const stalled = { family: "Stalled Face", src: `/graview/assets/${SHA("f")}.woff2` };
+    const problems: string[] = [];
+    const { frame, size, lent } = drawn(() => ({ name: "Quarry", views: { fonts: [stalled] } }), problems);
+    size(220);
+    await new Promise((done) => setTimeout(done, FACES_WAIT_MS - 300));
+    expect(frame.iframe.hasAttribute("data-guest-view-drawn")).toBe(false);
+    await vi.waitFor(() => expect(frame.iframe.hasAttribute("data-guest-view-drawn")).toBe(true), { timeout: 2_000 });
+    expect(problems).toEqual([`The app's face "Stalled Face" for its views did not arrive in ${FACES_WAIT_MS / 1_000} seconds, so the frame is drawn without it and handed it once it arrives.`]);
+    arrive();
+    await vi.waitFor(() => expect(lent()).toHaveLength(1));
   });
 });
