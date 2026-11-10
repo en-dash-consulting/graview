@@ -261,33 +261,52 @@ export const GROWTH_ROUNDS = 3;
  * lets a frame of many views be 20,000px. Each height is set against the one
  * last given: where it is more by the same number of pixels, or by the same
  * share, `GROWTH_ROUNDS` times running with nothing pushed between, it may
- * be tracking its own height rather than its content.
+ * be tracking its own height rather than its content — or it may be a
+ * gallery whose pictures of one height arrive one by one.
  *
- * HELD, THEN ASKED AGAIN. Rows of one height arriving one by one look the
- * same, so the guest is held at the height it was last given and watched: a
- * page sized by its frame, its frame not moved, has nothing new to say, and
- * says at most the height it was refused again; content that grows says
- * another height of its own accord. Asked another height while held, the
- * guest's content is what grows, and it is never held again: it grows to the
- * cap. Asked nothing new for `GROWTH_QUIET_MS`, it stays held, and the host is
- * told why, once. A lower height is always taken.
+ * REFUSED, THEN ASKED AGAIN. The height that looks like it is refused, for
+ * `GROWTH_QUIET_MS`. Content that grows meanwhile asks another height of its
+ * own accord, which is taken, and the guard starts over. Asked nothing new,
+ * the guest is given what it asked for after all (`apply`), and watched for
+ * as long again: a page sized by its frame asks once more, by the same step,
+ * as soon as its frame has moved, and only then is it held — at the height it
+ * was last given, the host told why. Content that had finished asks nothing,
+ * and the guard starts over, having said nothing. While held, the height it
+ * was refused is refused again; another one, and any lower one, is taken.
  */
-export function growthGuard(view: string, say: (said: string, height: number) => void, later: (then: () => void, ms: number) => () => void = (then, ms) => {
-  const timer = setTimeout(then, ms);
-  return () => clearTimeout(timer);
-}): { takes(height: number): boolean; pushed(): void; dispose(): void } {
+export function growthGuard(
+  view: string,
+  hooks: {
+    /** The guest is held: why, in a sentence, and the height it is held at. */
+    readonly say: (said: string, height: number) => void;
+    /** A height refused a moment ago is the guest's after all. */
+    readonly apply: (height: number) => void;
+    /** The clock, for tests. */
+    readonly later?: (then: () => void, ms: number) => () => void;
+  },
+): { takes(height: number): boolean; pushed(): void; dispose(): void } {
+  const later =
+    hooks.later ??
+    ((then: () => void, ms: number) => {
+      const timer = setTimeout(then, ms);
+      return () => clearTimeout(timer);
+    });
   type Step = { readonly over: number; readonly ratio: number };
   const tracks = (height: number, from: number, step: Step) => Math.abs(height - from - step.over) <= 1 || Math.abs(height / from - step.ratio) <= 0.002;
   let given: number | undefined;
   let step: Step | undefined;
   let rounds = 0;
-  /* Held: the height it was refused, and the word to the host still to come. */
-  let held: { readonly refused: number; readonly cancel: () => void } | undefined;
-  /* Its content grew of its own accord while it was held: never held again. */
-  let grows = false;
-  let told = false;
-  const release = () => {
-    held?.cancel();
+  /* Refused a moment ago, and what happens if nothing new is asked: it is given after all. */
+  let refusing: { readonly refused: number; readonly cancel: () => void } | undefined;
+  /* Given after all, and watched for a guest that asks again by the same step. */
+  let watching: { readonly step: Step; readonly times: number; readonly cancel: () => void } | undefined;
+  /* Held: the height it was refused. */
+  let held: number | undefined;
+  const reset = () => {
+    refusing?.cancel();
+    watching?.cancel();
+    refusing = undefined;
+    watching = undefined;
     held = undefined;
     step = undefined;
     rounds = 0;
@@ -296,48 +315,76 @@ export function growthGuard(view: string, say: (said: string, height: number) =>
     given = height;
     return true;
   };
+  const same = (a: number, b: number) => Math.abs(a - b) <= 1;
   return {
     takes(height) {
       if (given === undefined || given <= 0 || height <= given) {
-        release();
+        reset();
         return take(height);
       }
-      if (held) {
-        if (Math.abs(height - held.refused) <= 1) return false;
-        /* Another height of its own accord: its content is what grows. */
-        release();
-        grows = true;
+      if (held !== undefined) {
+        if (same(height, held)) return false;
+        /* Another height of its own accord: its content grew. */
+        reset();
         return take(height);
       }
-      if (grows) return take(height);
+      if (refusing) {
+        if (same(height, refusing.refused)) return false;
+        reset();
+        return take(height);
+      }
+      if (watching) {
+        const asked = watching;
+        watching.cancel();
+        watching = undefined;
+        if (tracks(height, given, asked.step)) {
+          /* Its frame moved, and it asked for more by the same step at once: it is sized by its frame. */
+          held = height;
+          hooks.say(`The view "${view}" asked to be ${asked.step.over}px taller than its frame each time its frame was made taller, ${asked.times} times running, so it is held at ${given}px: a page sized by its own frame (100vh) grows with it. Size the page by its content, or ask for a height (guest.size).`, given);
+          return false;
+        }
+        reset();
+        return take(height);
+      }
       const now = { over: height - given, ratio: height / given };
       rounds = step && tracks(height, given, step) ? rounds + 1 : 0;
       step = now;
       if (rounds < GROWTH_ROUNDS) return take(height);
-      const at = given;
-      const times = rounds + 1;
-      held = {
+      const times = rounds + 2;
+      refusing = {
         refused: height,
         cancel: later(() => {
-          if (told) return;
-          told = true;
-          say(`The view "${view}" asked to be ${now.over}px taller than its frame each time its frame was made taller, ${times} times running, so it is held at ${at}px: a page sized by its own frame (100vh) grows with it. Size the page by its content, or ask for a height (guest.size).`, at);
+          refusing = undefined;
+          given = height;
+          watching = {
+            step: now,
+            times,
+            cancel: later(() => {
+              /* Nothing more: its content had finished. Start over, having said nothing. */
+              watching = undefined;
+              step = undefined;
+              rounds = 0;
+            }, GROWTH_QUIET_MS),
+          };
+          /* Watched before it is given: a guest may answer before this returns. */
+          hooks.apply(height);
         }, GROWTH_QUIET_MS),
       };
       return false;
     },
     pushed() {
-      if (held) return;
+      if (refusing || watching || held !== undefined) return;
       step = undefined;
       rounds = 0;
     },
     dispose() {
-      held?.cancel();
+      refusing?.cancel();
+      watching?.cancel();
     },
   };
 }
 
-/** How long a held guest has to ask another height of its own accord before it is said to grow only with its frame. */
+/** How long a refused height waits for content that grows on its own, and a height given after all waits for a guest that asks again. */
 export const GROWTH_QUIET_MS = 600;
 
 /**
@@ -409,7 +456,7 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
     };
   };
 
-  const growth = growthGuard(options.view, (said, height) => options.onHeld?.(said, height));
+  const growth = growthGuard(options.view, { say: (said, height) => options.onHeld?.(said, height), apply: (height) => !disposed && options.onSize?.(height) });
   let disposed = false;
   let pushes = 0;
   /*

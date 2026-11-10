@@ -18,85 +18,132 @@ import { bethan, showroom } from "./showroom.js";
  */
 const CAP = 20_000;
 
-/** The guard with its clock in hand: what it would say later is said when `quiet()` is called. */
-function guarded(view: string) {
+/**
+ * A frame and the guard over it, with the clock in hand: `quiet()` lets what
+ * would happen after a moment happen. `moved` is the guest's own answer to
+ * its frame moving, for a page sized by its frame.
+ */
+function framed(view: string) {
   const said: [string, number][] = [];
   const waiting: (() => void)[] = [];
-  const guard = growthGuard(view, (words, height) => said.push([words, height]), (then) => {
-    waiting.push(then);
-    return () => waiting.splice(waiting.indexOf(then), 1);
+  let frame = 160;
+  let moved = () => {};
+  const guard = growthGuard(view, {
+    say: (words, height) => said.push([words, height]),
+    apply: (height) => {
+      frame = height;
+      moved();
+    },
+    later: (then) => {
+      waiting.push(then);
+      return () => {
+        const at = waiting.indexOf(then);
+        if (at >= 0) waiting.splice(at, 1);
+      };
+    },
   });
-  return { guard, said, quiet: () => waiting.splice(0).forEach((then) => then()) };
+  const ask = (height: number) => {
+    const asked = Math.min(CAP, height);
+    if (guard.takes(asked) && asked !== frame) {
+      frame = asked;
+      moved();
+    }
+  };
+  return {
+    guard,
+    said,
+    ask,
+    frame: () => frame,
+    quiet: () => waiting.splice(0).forEach((then) => then()),
+    /** The guest is a page as tall as its frame and `margin` more: it asks again whenever its frame moves. */
+    sizedByItsFrame(margin: number | ((frame: number) => number)) {
+      const more = typeof margin === "number" ? (at: number) => at + margin : margin;
+      moved = () => ask(more(frame));
+      ask(more(frame));
+    },
+  };
 }
 
-/** A guest sized by its own frame: each height it asks for is the frame's, and 16px of margin. A frame not moved asks the same again. */
-const runaway = (take: (height: number) => boolean, from = 160, rounds = 40) => {
-  let frame = from;
-  for (let round = 0; round < rounds; round += 1) {
-    const asked = Math.min(CAP, frame + 16);
-    if (take(asked)) frame = asked;
-  }
-  return frame;
-};
-
-/** A guest sized by its content: it asks a height only when its content changes, whatever its frame. */
-const rows = (take: (height: number) => boolean, row: number, count: number) => {
-  let frame = 0;
-  for (let content = row; content <= row * count; content += row) if (take(Math.min(CAP, content))) frame = Math.min(CAP, content);
-  return frame;
-};
-
 describe("the growth guard", () => {
-  it("holds a guest that asks for its own frame's height and 16px more, a few rounds in, and says so once it asks nothing new", () => {
-    const { guard, said, quiet } = guarded("tall-card");
-    const held = runaway((height) => guard.takes(height));
-    expect(held).toBe(160 + 16 * (GROWTH_ROUNDS + 1));
-    expect(said, "not until it has been quiet").toEqual([]);
-    quiet();
-    expect(said).toEqual([[`The view "tall-card" asked to be 16px taller than its frame each time its frame was made taller, ${GROWTH_ROUNDS + 1} times running, so it is held at ${held}px: a page sized by its own frame (100vh) grows with it. Size the page by its content, or ask for a height (guest.size).`, held]]);
+  it("holds a page as tall as its frame and 16px more once it asks again after it is given what it refused, and says so", () => {
+    const page = framed("tall-card");
+    page.sizedByItsFrame(16);
+    expect(page.frame(), "refused a few rounds in").toBe(160 + 16 * (GROWTH_ROUNDS + 1));
+    expect(page.said).toEqual([]);
+    page.quiet();
+    const held = 160 + 16 * (GROWTH_ROUNDS + 2);
+    expect(page.frame(), "given what it asked, it asked again by the same step, and is held").toBe(held);
+    expect(page.said).toEqual([[`The view "tall-card" asked to be 16px taller than its frame each time its frame was made taller, ${GROWTH_ROUNDS + 2} times running, so it is held at ${held}px: a page sized by its own frame (100vh) grows with it. Size the page by its content, or ask for a height (guest.size).`, held]]);
+    page.quiet();
+    expect(page.frame(), "and stays held").toBe(held);
   });
 
   it("holds one that asks for the same share more each time (110vh)", () => {
-    const { guard } = guarded("share");
-    let frame = 200;
-    for (let round = 0; round < 40; round += 1) {
-      const asked = Math.round(frame * 1.1);
-      if (guard.takes(asked)) frame = asked;
-    }
-    expect(frame).toBeLessThan(400);
+    const page = framed("share");
+    page.sizedByItsFrame((at) => Math.round(at * 1.1));
+    for (let moment = 0; moment < 6 && page.said.length === 0; moment += 1) page.quiet();
+    expect(page.frame(), "rounded to whole pixels, a few rounds more").toBeLessThan(1_000);
+    expect(page.said).toHaveLength(1);
+  });
+
+  it("gives a gallery whose pictures of one height stop arriving just where it would be held all of its height, and says nothing", () => {
+    const gallery = framed("gallery");
+    for (const height of [100, 300, 500, 700, 900]) gallery.ask(height);
+    expect(gallery.frame(), "900 refused for a moment").toBe(700);
+    gallery.quiet();
+    expect(gallery.frame(), "given after all").toBe(900);
+    gallery.quiet();
+    expect(gallery.frame()).toBe(900);
+    expect(gallery.said).toEqual([]);
+  });
+
+  it("is armed again after content that grew: the same gallery, then sized by its frame, is held", () => {
+    const page = framed("gallery-then-tall");
+    for (const height of [100, 300, 500, 700, 900]) page.ask(height);
+    page.quiet();
+    page.quiet();
+    page.sizedByItsFrame(16);
+    page.quiet();
+    expect(page.said).toHaveLength(1);
+    expect(page.frame()).toBeLessThan(1_100);
   });
 
   it("lets a guest whose content grows by steps of its own grow to the cap, and says nothing", () => {
-    const { guard, said, quiet } = guarded("growing");
-    let frame = 160;
-    for (const step of [240, 90, 410, 1200, 75, 3300, 640, 5100, 220, 9000]) if (guard.takes(Math.min(CAP, frame + step))) frame = Math.min(CAP, frame + step);
-    quiet();
-    expect(frame).toBe(CAP);
-    expect(said).toEqual([]);
+    const page = framed("growing");
+    let content = 160;
+    for (const step of [240, 90, 410, 1200, 75, 3300, 640, 5100, 220, 9000]) page.ask((content += step));
+    page.quiet();
+    page.quiet();
+    expect(page.frame()).toBe(CAP);
+    expect(page.said).toEqual([]);
   });
 
-  it("lets rows of one height, 25,000px of them, grow to the cap: held a moment, the next row asks another height and it is never held again", () => {
-    const { guard, said, quiet } = guarded("rows");
-    expect(rows((height) => guard.takes(height), 1_001, 25)).toBe(CAP);
-    quiet();
-    expect(said).toEqual([]);
+  it("lets rows of one height, 25,000px of them, grow to the cap: a row refused a moment is taken when the next asks another height", () => {
+    const page = framed("rows");
+    for (let content = 1_001; content <= 25_025; content += 1_001) page.ask(content);
+    page.quiet();
+    page.quiet();
+    expect(page.frame()).toBe(CAP);
+    expect(page.said).toEqual([]);
   });
 
   it("lets content that grows in equal steps grow where each step follows something pushed", () => {
-    const { guard } = guarded("pushed");
-    let frame = 400;
-    for (let row = 0; row < 30; row += 1) {
-      guard.pushed();
-      if (guard.takes(frame + 40)) frame += 40;
+    const page = framed("pushed");
+    page.ask(400);
+    for (let row = 1; row <= 30; row += 1) {
+      page.guard.pushed();
+      page.ask(400 + row * 40);
     }
-    expect(frame).toBe(400 + 30 * 40);
+    expect(page.frame()).toBe(400 + 30 * 40);
   });
 
   it("while held, refuses the height it was refused, and takes one lower", () => {
-    const { guard } = guarded("held");
-    const held = runaway((height) => guard.takes(height));
-    expect(guard.takes(held + 16)).toBe(false);
-    expect(guard.takes(held - 40), "lower").toBe(true);
+    const page = framed("held");
+    page.sizedByItsFrame(16);
+    page.quiet();
+    const held = page.frame();
+    expect(page.guard.takes(held + 16)).toBe(false);
+    expect(page.guard.takes(held - 40), "lower").toBe(true);
   });
 });
 
@@ -124,14 +171,28 @@ describe("a frame whose guest is sized by its own frame", () => {
   it("stops growing a few rounds in, wears the height it is held at, and says why to the host", async () => {
     const problems: string[] = [];
     const { iframe, ask } = mounted(problems);
-    for (let round = 0; round < 30; round += 1) {
+    /* A page as tall as its frame and a margin: it asks again whenever its frame moves. */
+    for (let round = 0; round < 200 && !iframe.hasAttribute("data-guest-view-held"); round += 1) {
       ask(height(iframe) + 16);
-      await tick();
+      await tick(20);
     }
     expect(height(iframe)).toBeLessThan(300);
-    await vi.waitFor(() => expect(problems).toHaveLength(1), { timeout: GROWTH_QUIET_MS + 1_000 });
+    expect(problems).toHaveLength(1);
     expect(iframe.getAttribute("data-guest-view-held")).toBe(iframe.style.height);
     expect(problems[0]).toContain('The view "card" asked to be 16px taller than its frame each time its frame was made taller');
+  });
+
+  it("is given all of a gallery whose pictures of one height stop arriving just where it would be held, and says nothing", async () => {
+    const problems: string[] = [];
+    const { iframe, ask } = mounted(problems);
+    for (const content of [100, 300, 500, 700, 900]) {
+      ask(content);
+      await tick();
+    }
+    await tick(2 * GROWTH_QUIET_MS + 200);
+    expect(height(iframe)).toBe(900);
+    expect(iframe.hasAttribute("data-guest-view-held")).toBe(false);
+    expect(problems).toEqual([]);
   });
 
   it("grows to the cap where its content grows, and is not held", async () => {
@@ -141,7 +202,7 @@ describe("a frame whose guest is sized by its own frame", () => {
       ask(content);
       await tick();
     }
-    await tick(GROWTH_QUIET_MS + 100);
+    await tick(2 * GROWTH_QUIET_MS + 200);
     expect(height(iframe)).toBe(CAP);
     expect(iframe.hasAttribute("data-guest-view-held")).toBe(false);
     expect(problems).toEqual([]);
