@@ -1,14 +1,17 @@
 import { isInlineSvg } from "@graview/core";
+import { usePlayback } from "@graview/react/provider";
 import type { MouseEvent, ReactNode } from "react";
 import type { AppMenuRow, BarFaces, BarScheme, SchemeChoice } from "./app-bar.js";
 import { useMarkup } from "./markup.js";
+import { prefetchTimeline } from "./past-bar.js";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /*
  * WHAT THE APP'S NAME OPENS (Roadmap f-app-bar-calm): the app menu. The
  * scene and the pages stood on the row as a pill of two, a control a
  * person uses once a session given the room of three places; they are the
- * menu's first rows now, the one drawn checked. Then the host's rows —
+ * menu's first rows now, the one drawn checked. Then History, the app's
+ * timeline (Roadmap f-host-opens-history). Then the host's rows —
  * Graview Cloud's App settings, Connections — and, where the host or the
  * Shell turns it on, the scheme: System, Light or Dark. Fetched with the
  * bar's panes when the menu is first reached for.
@@ -59,6 +62,7 @@ export function AppMenuPane({ faces, rows, scheme, close }: { readonly faces?: B
           })}
         </div>
       ) : null}
+      <HistoryRow close={close} />
       {rows.length > 0 ? (
         <ul aria-label="From the host" data-testid="app-menu-rows" className="graview-app-menu-group">
           {rows.map((row) => (
@@ -87,6 +91,40 @@ export function AppMenuPane({ faces, rows, scheme, close }: { readonly faces?: B
         </div>
       ) : null}
     </>
+  );
+}
+
+/**
+ * HISTORY, WHERE PEOPLE LOOK FOR IT (Roadmap f-host-opens-history): an
+ * app's previous versions were reached only from a row of Activity ("As it
+ * was"), which few found. One plain row in the app menu, wherever the face
+ * keeps a playback, opens the timeline at now — its ticks, its player,
+ * "Restore to here" — the one a row of Activity opens, and the keyboard goes
+ * on to its scrubber as it is drawn. An app nothing has happened in yet
+ * opens a timeline that says so.
+ */
+function HistoryRow({ close }: { readonly close: () => void }) {
+  const playback = usePlayback();
+  if (!playback) return null;
+  return (
+    <div className="graview-app-menu-group">
+      <button
+        type="button"
+        className="graview-bar-item"
+        data-testid="app-menu-history"
+        onPointerEnter={prefetchTimeline}
+        onFocus={prefetchTimeline}
+        onClick={() => {
+          close();
+          playback.show(playback.live.log.length, { focus: true });
+        }}
+      >
+        <span className="graview-bar-mark">
+          <HistoryMark />
+        </span>
+        <span>History</span>
+      </button>
+    </div>
   );
 }
 
@@ -128,6 +166,17 @@ function SceneMark() {
     <Mark>
       <path d="M7 1.5 L12.5 4.5 L7 7.5 L1.5 4.5 Z" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
       <path d="M1.5 7.5 L7 10.5 L12.5 7.5" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" strokeLinecap="round" />
+    </Mark>
+  );
+}
+
+/** History's mark: a clock with its hand turned back. */
+function HistoryMark() {
+  return (
+    <Mark>
+      <path d="M2.25 7 a4.75 4.75 0 1 0 1.4-3.35" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      <path d="M1.75 2.25 V4.75 H4.25" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M7 4.25 V7 L8.75 8" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
     </Mark>
   );
 }

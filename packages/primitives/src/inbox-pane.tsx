@@ -1,11 +1,10 @@
 import type { AnySchema, Repair, Violation } from "@graview/core";
 import type { AiInteraction } from "@graview/core/catalog";
 import { failureWords } from "@graview/core/words";
-import { useGraview, usePlayback, useSelection, type HostNotification } from "@graview/react/provider";
+import { useGraview, useSelection, type HostNotification } from "@graview/react/provider";
 import type { ToolCall } from "@graview/tools";
 import { Suspense, useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { SuggestedList, SuggestedUpdates } from "./bar-suggested.js";
-import { prefetchTimeline } from "./past-bar.js";
 import { problemSentence } from "./problem-sentence.js";
 import { VISUALLY_HIDDEN } from "./primitives/index.js";
 import { ActivityFeed, InteractionRow, UndoTurn } from "./workbench/activity.js";
@@ -44,10 +43,7 @@ const INBOX_CSS = `
 .graview-inbox-problem-words:focus-visible{outline:2px solid var(--graview-accent);outline-offset:2px;border-radius:4px}
 .graview-inbox-fixes{display:flex;flex-wrap:wrap;gap:4px}
 .graview-inbox-fixes button{min-height:24px;padding:1px 10px;font-size:.75rem}
-.graview-inbox-unread{flex:none;width:7px;height:7px;border-radius:50%;background:var(--graview-accent);transform:translateY(-1px)}
-.graview-inbox-history{position:sticky;bottom:0;margin-top:auto;padding:4px 6px;border-top:1px solid var(--graview-edge);background:var(--graview-float)}
-.graview-inbox-history .graview-inbox-row{display:flex;align-items:center;gap:8px;min-height:32px;font-weight:500}
-.graview-inbox-history-said{margin-left:auto;font-size:.75rem;font-weight:400;color:var(--graview-ink-muted)}`;
+.graview-inbox-unread{flex:none;width:7px;height:7px;border-radius:50%;background:var(--graview-accent);transform:translateY(-1px)}`;
 
 /** A count as a badge says it: up to 99, then "99+". */
 const badgeCount = (count: number): string => (count > 99 ? "99+" : String(count));
@@ -136,49 +132,7 @@ export function InboxPane({ tab, choose, asksOn, counts, notifications, rules, a
           <Asks asks={asks} />
         )}
       </div>
-      <HistoryEntry close={close} />
     </>
-  );
-}
-
-/**
- * HISTORY, WHERE PEOPLE LOOK FOR IT (Roadmap f-host-opens-history): the
- * app's previous versions were reached only from a row of Activity ("As it
- * was"), which few found. One plain row at the foot of the inbox, under
- * every tab, opens the timeline at now — its ticks, its player, "Restore to
- * here" — the one a row of Activity opens, and the keyboard goes on to its
- * scrubber. Drawn only where the face keeps a playback.
- */
-function HistoryEntry({ close }: { readonly close: () => void }) {
-  const playback = usePlayback();
-  const said = useId();
-  if (!playback) return null;
-  const open = () => {
-    playback.show(playback.live.log.length);
-    close();
-    // The timeline is fetched as it is first opened: the keyboard goes on to its scrubber once it is drawn.
-    const until = Date.now() + 5_000;
-    const land = () => {
-      const scrubber = document.querySelector<HTMLElement>('[data-testid="timeline"] [data-testid="scrubber"]');
-      if (scrubber) scrubber.focus({ preventScroll: true });
-      else if (Date.now() < until) requestAnimationFrame(land);
-    };
-    requestAnimationFrame(land);
-  };
-  return (
-    <div className="graview-inbox-history">
-      <button type="button" className="graview-inbox-row" data-testid="inbox-history" aria-describedby={said} onPointerEnter={prefetchTimeline} onFocus={prefetchTimeline} onClick={open}>
-        <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true" focusable="false" style={{ flex: "0 0 auto" }}>
-          <path d="M2.5 8 a5.5 5.5 0 1 0 1.6-3.9" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          <path d="M2 2.5 V5.5 H5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M8 5 V8 L10 9.25" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-        <span>History</span>
-        <span id={said} className="graview-inbox-history-said" aria-hidden="true">
-          Every change, and the app as it was
-        </span>
-      </button>
-    </div>
   );
 }
 

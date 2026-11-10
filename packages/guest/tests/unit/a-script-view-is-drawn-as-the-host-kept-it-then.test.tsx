@@ -32,6 +32,8 @@ function drawnAt(viewAt: HistoryHost["viewAt"], also: { readonly keepsNothing?: 
     host: viewAt ? { viewAt: (name, seq) => (asked.push([name, seq]), viewAt(name, seq)) } : {},
     owns: () => true,
     archive: null,
+    focusWanted: false,
+    focused: () => {},
   };
   const View = views.lookup("deliverable", { cardinality: "one", fidelity: "full" }) as ViewComponent<AnySchema>;
   const html = renderToStaticMarkup(

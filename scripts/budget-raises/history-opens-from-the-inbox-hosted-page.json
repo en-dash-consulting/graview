@@ -1,7 +1,0 @@
-{
-  "budget": "a hosted page",
-  "minified": 370,
-  "gzipped": 80,
-  "changeset": "history-opens-from-the-inbox-and-the-hosts-menu.md",
-  "note": "Raised when History came to the inbox and showHistory() to the mount handle: one row at the inbox's foot that opens the timeline at now, and each face's playback listening for a host that asks for it by its store. Measured at 677_781 / 234_904 against 677_421 / 234_828 minified and gzipped."
-}

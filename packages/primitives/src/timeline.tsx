@@ -128,7 +128,23 @@ export function Timeline({ face }: { readonly face: TimelineFace }) {
         : "Reading the older changes from the archive…"
     : tick
       ? `${who(tick) === "you" ? "You" : who(tick)}: ${tick.said}`
-      : "Nothing had happened yet";
+      : length === 0 && horizon === 0
+        ? "No changes yet"
+        : "Nothing had happened yet";
+
+  /*
+   * THE KEYBOARD GOES ON TO THE SCRUBBER where History was pressed (Roadmap
+   * f-host-opens-history), on this timeline's own — never another app's on
+   * the page — and only while it is where the closed menu left it: a person
+   * who has gone on elsewhere as the timeline arrived keeps their place.
+   */
+  const scrubberRef = useRef<HTMLInputElement | null>(null);
+  useEffect(() => {
+    if (!playback.focusWanted) return;
+    playback.focused();
+    const active = document.activeElement;
+    if (active === null || active === document.body || active.closest('[data-testid="app-menu-open"], [data-testid="app-menu"]') !== null) scrubberRef.current?.focus({ preventScroll: true });
+  }, [playback.focusWanted, playback]);
 
   /*
    * ON THE SCENE IT STANDS OVER THE PICTURE'S FOOT, AND SAYS HOW TALL, as a
@@ -227,6 +243,7 @@ export function Timeline({ face }: { readonly face: TimelineFace }) {
         })}
       </div>
       <input
+        ref={scrubberRef}
         type="range"
         data-testid="scrubber"
         aria-label="Moment"

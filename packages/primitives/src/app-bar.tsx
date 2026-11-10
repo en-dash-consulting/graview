@@ -1,5 +1,5 @@
 import { allLabel, arrangedEntries, hueFor, isInlineSvg, kindPath, MOST_STANDING, offeredPlaces, onePerPicture, OVERVIEW_SLUG, placeLabel, placePath, pluralLabel, primaryOf, samePicture, sharesItsName, supportingKinds, type AnySchema, type Brand, type PagesArrangement, type Place, type Principal, type Store } from "@graview/core";
-import { POPOVER_STYLE, useGraviewIfAny, usePopover } from "@graview/react/provider";
+import { POPOVER_STYLE, useGraviewIfAny, usePlayback, usePopover } from "@graview/react/provider";
 import { useQuickAskDrawn } from "./quick-ask-desk.js";
 import { createContext, Suspense, useCallback, useContext, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type PointerEvent, type ReactNode } from "react";
 import { AppMark } from "./app-title.js";
@@ -775,7 +775,9 @@ export function AppBar({
   // What the row holds changed — the name, the places, the face, the brand — so the places and the words may fit now, or no longer.
   useLayoutEffect(weigh, [weigh, name, brand, said, list?.current, onPages, compact, folded, find]);
   // The app menu: the scene and the pages, the host's rows, the scheme — drawn where it holds anything.
-  const menuHolds = Boolean(faces) || appMenu.length > 0 || Boolean(scheme);
+  // History is the menu's wherever the face keeps a playback (Roadmap f-host-opens-history).
+  const playback = usePlayback();
+  const menuHolds = Boolean(faces) || appMenu.length > 0 || Boolean(scheme) || playback !== null;
   return (
     <>
       <header

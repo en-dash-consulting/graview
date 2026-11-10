@@ -54,7 +54,7 @@ decides the frame; the app still decides what is in it.**
    override. `quickAsk: false` draws no quick ask (⌘K). Say the host's own
    news through `handle.notify({ kind: "toast" | "banner", sentence,
    tone, action })`, not a toast of your own; a History in your menu is
-   `handle.showHistory()`, the inbox's own timeline. `onReport({ message,
+   `handle.showHistory()`, the app menu's own timeline. `onReport({ message,
    code?, place?, record?, version })` puts a native "Report this" on the
    framework's own warning and error toasts (not on yours).
    `firstLook: { seen, onDone, steps }` points at the app's

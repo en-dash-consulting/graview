@@ -36,7 +36,11 @@ export interface Playback<S extends AnySchema = AnySchema> {
    * or past the log's end is now, with the timeline still open. `null`
    * closes the timeline and comes back to now.
    */
-  show(seq: number | null): void;
+  show(seq: number | null, options?: { readonly focus?: boolean }): void;
+  /** Whether the keyboard was asked to go on to the timeline's scrubber as it is drawn (History pressed in the app menu). */
+  readonly focusWanted: boolean;
+  /** The timeline took the keyboard, or let it be: asked no more. */
+  focused(): void;
   /** The store as it is now, whole: read through the seat's sight (`seenBy`), as the seat is served it. */
   readonly live: Store<S>;
   /** What the host keeps outside the log: declaration changes, a script view's code at a moment, the ops a compaction archived. */
@@ -91,36 +95,54 @@ export function useLiveStore<S extends AnySchema>(shown: Store<S>, principal: Pr
 
 /*
  * THE HISTORY, OPENED FROM OUTSIDE THE FACE (Roadmap f-host-opens-history):
- * a host's own menu, through its mount handle, asks the face that draws a
- * store to open its timeline at now — the way "History" in the inbox does —
- * without reaching into the tree. Each face's own playback listens for its
- * live store; one drawn inside another inherits the outer one's, which
- * listens for both.
+ * a host's own menu, through its mount handle, asks the face it mounted to
+ * open its timeline at now — the way History in the app menu does —
+ * without reaching into the tree. The door is the mount's own, handed down
+ * by context: another mount over the same store is not asked, and a door
+ * closed with its mount opens nothing again.
  */
-const historyAsked = new WeakMap<object, Set<() => void>>();
-/** Asked before any face drawing the store was here (a face is fetched as it is first drawn): opened by the first that arrives. */
-const historyWaiting = new WeakSet<object>();
-
-/**
- * Opens the timeline of every face drawing `store`, at now with the way
- * back in reach; asked before a face is drawn, the first to arrive opens it.
- */
-export function showHistory(store: Store<AnySchema>): void {
-  const listening = historyAsked.get(store);
-  if (!listening || listening.size === 0) {
-    historyWaiting.add(store);
-    return;
-  }
-  for (const listener of [...listening]) listener();
+export interface HistoryDoor {
+  /** Opens the timeline at now on the faces under this door. Whether one heard it: `false` before a face is drawn, which then opens it as it arrives, and after `close`. */
+  show(): boolean;
+  /** A face's playback, listening; what it hands back stops it. */
+  listen(open: () => void): () => void;
+  /** The mount is gone: nothing waits, and nothing is opened again. */
+  close(): void;
 }
 
-function listenForHistory(store: object, listener: () => void): () => void {
-  const listening = historyAsked.get(store) ?? new Set<() => void>();
-  historyAsked.set(store, listening);
-  listening.add(listener);
-  if (historyWaiting.delete(store)) listener();
-  return () => void listening.delete(listener);
+export function createHistoryDoor(): HistoryDoor {
+  const listening = new Set<() => void>();
+  let waiting = false;
+  let closed = false;
+  return {
+    show() {
+      if (closed) return false;
+      if (listening.size === 0) {
+        waiting = true;
+        return false;
+      }
+      for (const open of [...listening]) open();
+      return true;
+    },
+    listen(open) {
+      if (closed) return () => {};
+      listening.add(open);
+      if (waiting) {
+        waiting = false;
+        open();
+      }
+      return () => void listening.delete(open);
+    },
+    close() {
+      closed = true;
+      waiting = false;
+      listening.clear();
+    },
+  };
 }
+
+/** The door of the mount a face is drawn in, if its mount keeps one. */
+export const HistoryDoorContext = createContext<HistoryDoor | null>(null);
 
 type History = typeof import("@graview/core/past");
 /** `@graview/core/past`, fetched when somebody first asks to see the past: the fold is none of a page's weight until then. */
@@ -207,14 +229,23 @@ export function useOwnPlayback<S extends AnySchema>(live: Store<S>, principal: P
   useEffect(() => {
     last.current = past;
   }, [past]);
-  const show = useCallback((next: number | null) => setSeq(next === null ? null : next >= live.log.length ? Number.POSITIVE_INFINITY : next), [live]);
-  // A host's menu opening the history (`showHistory`): the timeline at now, as "History" in the inbox opens it.
-  useEffect(() => (inherited ? undefined : listenForHistory(live, () => setSeq(Number.POSITIVE_INFINITY))), [inherited, live]);
+  const [focusWanted, setFocusWanted] = useState(false);
+  const show = useCallback(
+    (next: number | null, options?: { readonly focus?: boolean }) => {
+      setSeq(next === null ? null : next >= live.log.length ? Number.POSITIVE_INFINITY : next);
+      setFocusWanted(next !== null && options?.focus === true);
+    },
+    [live],
+  );
+  const focused = useCallback(() => setFocusWanted(false), []);
+  // A host's menu opening the history (`handle.showHistory()`): the timeline at now, as History in the app menu opens it.
+  const door = useContext(HistoryDoorContext);
+  useEffect(() => (inherited || !door ? undefined : door.listen(() => setSeq(Number.POSITIVE_INFINITY))), [inherited, door]);
   const owns = useCallback(
     (store: Store<AnySchema>, seat: Principal) => [live as unknown as Store<AnySchema>, past?.store as unknown as Store<AnySchema> | undefined].some((one) => one !== undefined && (one === store || one.seenBy(seat) === store)),
     [live, past],
   );
   const open = seq !== null;
-  const own = useMemo<Playback<S>>(() => ({ past, open, show, live, host, owns, archive: reading, kept }), [past, open, show, live, host, owns, reading, kept]);
+  const own = useMemo<Playback<S>>(() => ({ past, open, show, focusWanted, focused, live, host, owns, archive: reading, kept }), [past, open, show, focusWanted, focused, live, host, owns, reading, kept]);
   return inherited ? outer : own;
 }

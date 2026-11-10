@@ -67,7 +67,7 @@ describe("a view that bleeds full and did not draw", () => {
   it("is marked where the host says the view did not exist then, and there is nothing to draw in its stead", () => {
     const source = store();
     const past = pastOf(source, 0);
-    const playback: Playback = { past: { seq: 0, at: undefined, store: past }, open: true, show: () => {}, live: source, host: { viewAt: () => null }, owns: () => true, archive: null };
+    const playback: Playback = { past: { seq: 0, at: undefined, store: past }, open: true, show: () => {}, live: source, host: { viewAt: () => null }, owns: () => true, archive: null, focusWanted: false, focused: () => {} };
     const View = workerView({ manifest: hero, worker: { source: SOURCE } }) as ViewComponent<AnySchema>;
     const html = renderToStaticMarkup(
       <PlaybackContext.Provider value={playback}>

@@ -4,7 +4,7 @@ import { EMPTY_VIEW, fromUrl, toUrl, withFocus, withOverview, type ViewState } f
 import { appKeyOf, BarFindContext, descentTarget, fetchFrameworkViews, fetchNotices, frameworkViewDoors, frameworkVoice, NoticeBoardContext, sceneReportWhere, useWidth, type AppMenuRow, type BarFind, type BarScheme, type BarShare, type BarStatus } from "@graview/primitives/frame";
 import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } from "@graview/studio";
 import { createNoticeBoard, quickAskOf, type Notice, type NoticeHandle } from "@graview/primitives/frame";
-import { afterFirstDraw, createPartsWatch, ErrorReportContext, GraviewProvider, lazyModule, markLanded, openingView, PageDoorContext, PartsWatchContext, showHistory, useNavigation, type AwaySummary, type ErrorReport, type HostNotification, type PageDoor, type PartsWatch, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
+import { afterFirstDraw, createPartsWatch, ErrorReportContext, GraviewProvider, lazyModule, markLanded, openingView, PageDoorContext, PartsWatchContext, createHistoryDoor, HistoryDoorContext, useNavigation, type AwaySummary, type ErrorReport, type HostNotification, type PageDoor, type PartsWatch, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
 import { AddressBar, atTheBareHome, faceAtAddress, holdsNothing, landing, placed, stopAtAddress, whereTheSceneOpens } from "./address.js";
 import { createContext, createElement, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import type { EmbedWhere } from "./where.js";
@@ -945,12 +945,13 @@ export interface EmbedHandle {
   notify(notice: Notice): NoticeHandle;
   /**
    * OPENS THE APP'S HISTORY FROM THE HOST'S OWN MENU (Roadmap
-   * f-host-opens-history): the timeline "History" in the inbox opens — every
-   * change, the app as it was at each, played back, and "Restore to here" —
-   * at now, on whichever face is drawn. Called before the face has drawn,
-   * it opens as the face arrives.
+   * f-host-opens-history): the timeline History in the app menu opens —
+   * every change, the app as it was at each, played back, and "Restore to
+   * here" — at now, on whichever face this mount draws, and on no other
+   * mount over the same store. Whether a face heard it: `false` before the
+   * face has drawn, which then opens it as it arrives, and after `unmount`.
    */
-  showHistory(): void;
+  showHistory(): boolean;
   readonly store: Store<AnySchema>;
   unmount(): void;
 }
@@ -995,6 +996,8 @@ function swapped<S extends AnySchema>({ path: _path, stop: _stop, ...options }: 
 export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedOptions<S>): EmbedHandle {
   let store: Store<AnySchema> = (options.store ?? options.remote?.store ?? storeOf(options.app, options.seed)) as never;
   const board = options.notices ?? createNoticeBoard();
+  // This mount's own way to the timeline (Roadmap f-host-opens-history): closed with it.
+  const historyDoor = createHistoryDoor();
   let setters: Setters | null = null;
   const here: Whereabouts = {};
   let swaps = 0;
@@ -1044,6 +1047,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
       },
       face: setFace, stop: setStop, path: setPath, scheme: setScheme, seat: setSeat, seats: setSeats, quickAsk: setQuickAsk, people: setPeople, hostContext: setHostContext, brand: setBrand, whileAway: setWhileAway, label: setCalled, hostActions: setHostActions, barActions: setBarActions, hostBar: (bar) => setHostBar((held) => ({ ...held, ...bar })), draft: setDraft };
     return (
+      <HistoryDoorContext.Provider value={historyDoor}>
       <Whereabouts.Provider value={here}>
       <Embed<S>
         key={swap?.n ?? 0}
@@ -1077,6 +1081,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
         onFaceDrawn={onFaceDrawn}
       />
       </Whereabouts.Provider>
+      </HistoryDoorContext.Provider>
     );
   }
   const where = (): EmbedWhere => {
@@ -1160,8 +1165,11 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
       });
       return said!;
     },
-    showHistory: () => flushSync(() => showHistory(store)),
-    unmount: () => root.unmount(),
+    showHistory: () => historyDoor.show(),
+    unmount: () => {
+      historyDoor.close();
+      root.unmount();
+    },
   };
 }
 
