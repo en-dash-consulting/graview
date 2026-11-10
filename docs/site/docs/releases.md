@@ -75,7 +75,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.71
 
-Published November 9, 2026 · the current version
+Published November 9, 2026
 
 A visitor is told plainly they are not signed in; an act clears a field with null and its condition says $subject and $arg; a view's faces come from origins of their own and a file the app holds is bounded; a record page with its own layout draws one divider; and acts are offered only where they apply.
 
