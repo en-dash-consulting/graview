@@ -27,51 +27,58 @@ import type { GuestFile, GuestNode, GuestProps } from "../protocol.js";
  * of the widest it draws a picture, in CSS pixels (`width`, 1 200 by
  * default), and the fields whose pictures it draws, by kind
  * (`{ circuit: "photo" }`, `{ driver: ["portrait", "helmet"] }`). An object
- * that chooses no kind hands every picture. A kind called `width`, `records`
- * or `most` is chosen in the list form.
+ * that chooses no kind hands every picture. A kind called `width` is chosen
+ * in the list form.
  *
  * BY RECORD (Roadmap f-view-pictures-by-record): beside them, the records
- * whose pictures it draws — `records: "subject"`, the record a view of one
- * is drawn over and each record linked to it by an edge it is handed, or a
- * list of record ids — and `most`, the most pictures it is handed. A view
- * of one champion that reads every driver says `{ records: "subject" }`
- * and is handed the champion's photo, not 820 drivers' past its budget.
+ * whose pictures it draws — `records: { subject: true }`, the record a view
+ * of one is drawn over and each record linked to it by an edge it is handed,
+ * and/or `records: { ids: [...] }` — and `most`, the most pictures it is
+ * handed. A view of one champion that reads every driver says
+ * `{ records: { subject: true } }` and is handed the champion's photo, not
+ * 820 drivers' past its budget. As with `width`, only these shapes are the
+ * options: `records: "photo"` or `most: ["portrait"]` names a kind called
+ * `records` or `most` and the fields it draws, as it always did.
  */
 export type GuestPictures =
   | true
   | readonly string[]
   | {
       readonly width?: number;
-      readonly records?: "subject" | readonly string[];
-      readonly most?: number;
-      readonly [kind: string]: number | string | readonly string[] | undefined;
+      readonly records?: PictureRecords | string | readonly string[];
+      readonly most?: number | string | readonly string[];
+      readonly [kind: string]: number | string | readonly string[] | PictureRecords | undefined;
     };
 
-/** The keys of the object form that are not kinds. */
-export const PICTURE_OPTIONS: readonly string[] = ["width", "records", "most"];
+/** The records whose pictures a view draws: its subject and what is linked to it, and/or these ids. */
+export interface PictureRecords {
+  readonly subject?: true;
+  readonly ids?: readonly string[];
+}
 
 const isKindList = (pictures: GuestPictures): pictures is readonly string[] => Array.isArray(pictures);
+
+/** `records` as the option it is, not a kind called `records`: an object, which no field list ever was. */
+export const isPictureRecords = (value: unknown): value is PictureRecords => typeof value === "object" && value !== null && !Array.isArray(value);
 
 /**
  * THE RECORDS WHOSE PICTURES A GUEST DRAWS (Roadmap
  * f-view-pictures-by-record), read off what it is handed: every record,
- * where it chose none; the ids it listed; or, for `"subject"`, the record it
+ * where it chose none; the ids it listed; and, for `subject`, the record it
  * is drawn over (`props.node`) and each record an edge it is handed joins to
  * that one, either way round — none where it is drawn over no one record.
  */
 export function pictureRecordsOf(pictures: GuestPictures, props: Pick<GuestProps, "node" | "edges">): (id: string) => boolean {
   const records = pictures === true || isKindList(pictures) ? undefined : pictures.records;
-  if (records === undefined) return () => true;
-  if (records !== "subject") {
-    const listed = new Set(Array.isArray(records) ? records : []);
-    return (id) => listed.has(id);
-  }
+  if (!isPictureRecords(records)) return () => true;
+  const drawn = new Set(Array.isArray(records.ids) ? records.ids : []);
   const subject = props.node?.id;
-  if (subject === undefined) return () => false;
-  const drawn = new Set([subject]);
-  for (const edge of props.edges ?? []) {
-    if (edge.from === subject) drawn.add(edge.to);
-    if (edge.to === subject) drawn.add(edge.from);
+  if (records.subject === true && subject !== undefined) {
+    drawn.add(subject);
+    for (const edge of props.edges ?? []) {
+      if (edge.from === subject) drawn.add(edge.to);
+      if (edge.to === subject) drawn.add(edge.from);
+    }
   }
   return (id) => drawn.has(id);
 }
@@ -102,7 +109,6 @@ export function picturesChosen(pictures: GuestPictures): (kind: string, field: s
   }
   const fields = new Map<string, ReadonlySet<string>>();
   for (const [kind, value] of Object.entries(pictures)) {
-    if (PICTURE_OPTIONS.includes(kind)) continue;
     if (typeof value === "string") fields.set(kind, new Set([value]));
     else if (Array.isArray(value)) fields.set(kind, new Set(value as readonly string[]));
   }
@@ -257,7 +263,7 @@ const tooHeavyToFetch = (file: FileValue, on: GuestNode) => `${namedPicture(file
  * a fetch that happened to finish first came to.
  */
 const pastTheViewsBudget = (file: FileValue, on: GuestNode, view: string, perView: number) =>
-  `${namedPicture(file, on)} is left out: the view ${view} is handed at most ${said(perView)} bytes of pictures, and the pictures before it, in the order its records are handed, took them. A view that draws only some kinds' pictures says which ("pictures": ["<kind>"]), and one that draws only some records' says which ("records": "subject", or their ids).`;
+  `${namedPicture(file, on)} is left out: the view ${view} is handed at most ${said(perView)} bytes of pictures, and the pictures before it, in the order its records are handed, took them. A view that draws only some kinds' pictures says which ("pictures": ["<kind>"]), and one that draws only some records' says which ("records": { "subject": true }, or their "ids").`;
 
 /**
  * THE PICTURES A HEADLESS RUN HANDS A VIEW (FR-192): each picture the page
@@ -434,20 +440,22 @@ export function createGuestPictures(window: Window & typeof globalThis, options:
       const handed = handFiles(props, (file, on, field) => {
         /* A picture the view did not choose — its kind, its field or its record — is handed by its facts alone, never fetched (FR-220). */
         if (!isGuestPicture(file) || !chosen(on.kind, field) || !records(on.id)) return guestFileOf(file);
-        /* Past the most it said it is handed: by its facts and why, never fetched. */
+        /*
+         * IN THE ORDER A HEADLESS RUN TAKES THEM (`standInPictures`): too heavy
+         * to fetch, then past the most it said it is handed, then past the
+         * view's budget, each reckoned as the record says it — so which come
+         * with an address is the same on every push, and on the page as in a
+         * run. A picture whose fetch failed keeps the place it was given.
+         */
+        if (file.bytes > PICTURE_FETCH_BYTES) {
+          const left = tooHeavyToFetch(file, on);
+          tell(left);
+          return guestFileOf(file, { left });
+        }
         if (count >= most) {
           const left = pastTheMost(options.view, most);
           tell(left);
           return guestFileOf(file, { left });
-        }
-        held.add(file.href);
-        let entry = entries.get(file.href);
-        if (entry?.state === "left") return guestFileOf(file, { left: entry.said });
-        if (!entry && file.bytes > PICTURE_FETCH_BYTES) {
-          entry = { state: "left", said: tooHeavyToFetch(file, on) };
-          entries.set(file.href, entry);
-          tell(entry.said);
-          return guestFileOf(file, { left: entry.said });
         }
         /* Reckoned as the record says it, whatever a fetch came to: which pictures fit is the same on every push (FR-220). */
         const bytes = reckon(file);
@@ -458,6 +466,9 @@ export function createGuestPictures(window: Window & typeof globalThis, options:
         }
         total += bytes;
         count += 1;
+        held.add(file.href);
+        const entry = entries.get(file.href);
+        if (entry?.state === "left") return guestFileOf(file, { left: entry.said });
         if (!entry) start(file, on);
         return guestFileOf(file, entry?.state === "ready" ? { src: entry.url } : {});
       });

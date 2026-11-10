@@ -110,8 +110,8 @@ said once in its console and the host's problems, with the address:
   `left` says why a picture will never come: past one
   picture's byte budget or the view's, or what the host answered when it
   was not loaded. A document or SVG has no `src`: show its name,
-  type and size. They share 12 MB: choose kinds (`["circuit"]`), or
-  `{ records: "subject" }` (its record and what links to it) or ids, and
+  type and size. They share 12 MB: choose kinds, or `records:
+  { subject: true }` (its record and what links to it) or `{ ids }`, and
   `most: 12`.
 
 ```js

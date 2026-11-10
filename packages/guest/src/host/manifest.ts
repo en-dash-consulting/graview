@@ -233,15 +233,22 @@ function picturesProblems<S extends AnySchema>(pictures: unknown, store: Store<S
   }
   for (const [key, value] of Object.entries(pictures)) {
     /* By record (Roadmap f-view-pictures-by-record): its subject and what is linked to it, or the records it names, and the most it is handed. */
-    if (key === "records") {
-      if (value === "subject") {
-        if (manifest.attach === "home" || manifest.cardinality !== "one") problems.push('The view\'s pictures records "subject" is the record a view of one is drawn over and the records linked to it: a view of many, or the home, is drawn over no one record, so list the records by id, or cap its pictures with "most" (view-pictures-records).');
-      } else if (!(Array.isArray(value) && value.length > 0 && value.length <= 200 && value.every((one) => typeof one === "string" && one.length > 0 && one.length <= 200))) {
-        problems.push('The view\'s pictures records is "subject" — the record it is drawn over and the records linked to it by an edge it reads — or a list of 1 to 200 record ids, ["driver:hamilton"] (view-pictures-records).');
+    /*
+     * As with `width`, only the options' own shapes are the options: a string
+     * or a list under `records` or `most` names a kind called that and its
+     * fields, as it always did, so no manifest that was sound means anything new.
+     */
+    if (key === "records" && typeof value !== "string" && !Array.isArray(value)) {
+      const { subject, ids, ...rest } = (typeof value === "object" && value !== null ? value : { rest: true }) as { subject?: unknown; ids?: unknown };
+      const idsSound = ids === undefined || (Array.isArray(ids) && ids.length > 0 && ids.length <= 200 && ids.every((one) => typeof one === "string" && one.length > 0 && one.length <= 200));
+      if (Object.keys(rest).length > 0 || (subject !== undefined && subject !== true) || !idsSound || (subject === undefined && ids === undefined)) {
+        problems.push('The view\'s pictures records is { "subject": true } — the record it is drawn over and the records linked to it by an edge it reads — and/or { "ids": [<1 to 200 record ids>] } (view-pictures-records).');
+      } else if (subject === true && (manifest.attach === "home" || manifest.cardinality !== "one")) {
+        problems.push('The view\'s pictures records { "subject": true } is the record a view of one is drawn over and the records linked to it: a view of many, or the home, is drawn over no one record, so list the records by "ids", or cap its pictures with "most" (view-pictures-records).');
       }
       continue;
     }
-    if (key === "most") {
+    if (key === "most" && typeof value !== "string" && !Array.isArray(value)) {
       if (!(Number.isInteger(value) && (value as number) >= 1 && (value as number) <= 500)) problems.push("The view's pictures most is a whole number from 1 to 500: the most pictures it is handed, in the order its records are handed (view-pictures-most).");
       continue;
     }
