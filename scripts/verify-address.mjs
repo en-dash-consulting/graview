@@ -1237,6 +1237,9 @@ try {
               narrowedTop: narrowed && bar ? Math.round(narrowed.top - bar.bottom) : null,
               error: document.querySelector("[data-graview-bleed=full] [data-graview-view-error]") !== null,
               failed: document.querySelector("[data-graview-bleed=full] [data-worker-view-failed]") !== null,
+              /* The built-in home drawn in a stopped home view's place, marked with the view and why (Roadmap f-view-budget-fair-to-visitors). */
+              fellBack: document.querySelector("[data-worker-view-fell-back]")?.getAttribute("data-worker-view-fell-back") ?? null,
+              builtIn: document.querySelector('[data-worker-view-fell-back] [data-testid="kinds"]') !== null,
               window: window.innerWidth,
               sideScroll: document.documentElement.scrollWidth > window.innerWidth + 1,
             };
@@ -1246,9 +1249,9 @@ try {
         for (const width of widths) {
           if (width !== viewport.width) await tab.setViewportSize({ width, height: viewport.height });
           const measured = {};
-          /* Did not draw: a home refused, a home proposed and refused, a place's React view that threw. */
+          /* Did not draw: a home refused (the app's built-in home in its place, as the app declares none), a home proposed and refused, a place's React view that threw. */
           await go(`${TORN_BASE}/`);
-          await tab.waitForSelector("[data-graview-bleed=full] [data-worker-view-failed]", { timeout: 20_000 });
+          await tab.waitForSelector('[data-worker-view-fell-back] [data-testid="kinds"]', { timeout: 20_000 });
           await settled();
           measured.tornHome = await slotted();
           await go(`${DRAFTED_BASE}/?draft=torn`);
@@ -1957,10 +1960,14 @@ try {
   const heldSeen = Object.fromEntries(pagesAt.map(([name, one]) => [name, one.spanningHeldError ? { error: one.spanningHeldError } : one.spanningHeld]));
   const heldHold = (test) => pagesAt.length === engines.length * SIZES.length && pagesAt.every(([, one]) => !one.spanningHeldError && Object.keys(one.spanningHeld ?? {}).length > 0 && Object.values(one.spanningHeld).every(test));
   const inTheColumn = (box) => box.slot !== null && box.column !== null && box.slot[0] === box.column[0] && box.slot[1] === box.column[1] && box.padding >= 32 && !box.sideScroll;
-  /* A home refused before it starts (kept or proposed), with no home of the app's to fall back on, and a place whose React view threw: the column, the spacing and the app's line. */
+  /*
+   * A home kept and refused before it starts, with no home of the app's to fall back on: the app's built-in home in its place (Roadmap
+   * f-view-budget-fair-to-visitors), marked with the view, its page's spacing and the app's line, never the page sideways. A home proposed
+   * and refused, which says why in its place, and a place whose React view threw: the column, the spacing and the app's line.
+   */
   report.checks.aViewThatBleedsFullThatDidNotDrawKeepsTheColumnAndTheLine = {
     seen: heldSeen,
-    ok: heldHold(({ tornHome, tornDraft, thrown }) => tornHome.failed && inTheColumn(tornHome) && tornHome.lineHeight > 1 && tornDraft.failed && inTheColumn(tornDraft) && tornDraft.lineHeight > 1 && thrown.error && inTheColumn(thrown)),
+    ok: heldHold(({ tornHome, tornDraft, thrown }) => tornHome.fellBack === "torn" && tornHome.builtIn && tornHome.slot === null && tornHome.padding >= 32 && tornHome.lineHeight > 1 && !tornHome.sideScroll && tornDraft.failed && inTheColumn(tornDraft) && tornDraft.lineHeight > 1 && thrown.error && inTheColumn(thrown)),
   };
   /* A place's header holding more than the title — a section's trail, a narrowing — keeps the page's spacing over the view, which still spans. */
   report.checks.aTrailOverAViewThatBleedsFullKeepsItsSpacing = {
