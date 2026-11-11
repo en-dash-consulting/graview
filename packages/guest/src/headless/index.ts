@@ -456,7 +456,8 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
 
   /* Judged again here, from the transcript alone — what it drew before a press it was asked for, and every act it asked for. */
   const pressedAt = options.press !== undefined ? transcript.pressed : undefined;
-  const judged = judgeTranscript(pressedAt ? { ...transcript, renders: transcript.renders.slice(0, pressedAt.renders) } : transcript, input, options.brand?.views?.css ? { theme: options.brand.views.css } : {});
+  const lent = (options.brand?.views?.fonts ?? []).map((font) => font.family);
+  const judged = judgeTranscript(pressedAt ? { ...transcript, renders: transcript.renders.slice(0, pressedAt.renders) } : transcript, input, { ...(options.brand?.views?.css ? { theme: options.brand.views.css } : {}), ...(lent.length > 0 ? { lent } : {}) });
   if (!judged.ok) return failed(judged.reason, judged.detail, transcript);
   /*
    * A FILTER OR A SECTION IT ASKED FOR, held to the kind here, where the

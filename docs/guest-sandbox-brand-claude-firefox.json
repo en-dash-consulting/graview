@@ -1,10 +1,10 @@
 {
-  "at": "2026-10-24T04:03:04.284Z",
+  "at": "2026-11-11T06:27:37.557Z",
   "transport": "brand",
   "engine": "firefox",
   "policy": {
     "name": "claude",
-    "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' blob: data:; font-src 'self' data:; media-src 'self' blob: data:; worker-src 'self' blob:; frame-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'self' http://127.0.0.1:5792; form-action 'self'; webrtc 'block'",
+    "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' blob: data:; font-src 'self' data:; media-src 'self' blob: data:; worker-src 'self' blob:; frame-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'self' http://127.0.0.1:5892; form-action 'self'; webrtc 'block'",
     "sandbox": "allow-scripts allow-forms"
   },
   "claims": {
@@ -19,6 +19,31 @@
         ],
         "viewFont": "Georgia, \"Times New Roman\", serif",
         "viewRadius": "4px",
+        "sheets": [
+          "data-graview-region",
+          "data-graview-view-theme",
+          "data-graview-view-style"
+        ],
+        "themeSheet": "@layer graview-theme {\n.mast h2 { letter-spacing: 0.25em; padding: 40px; text-transform: uppercase; }\n.lent { color: rgb(200, 30, 30); font-family: \"Rock Face\", serif; }\n.baloo { font-family: \"Baloo 2\", monospace; }\n}",
+        "letterSpacing": "6px",
+        "transform": "uppercase",
+        "padding": "40px",
+        "lentColor": "rgb(200, 30, 30)",
+        "lentFont": "\"Rock Face\", serif",
+        "faces": [],
+        "balooFaces": [],
+        "bigFaces": [
+          "loaded"
+        ],
+        "ownFaces": [
+          "loaded"
+        ],
+        "ownFont": "\"Own Face\", monospace",
+        "ownWidth": 138.06666564941406,
+        "ownSheet": "@layer graview-view {\n.mast { display: flex; align-items: center; gap: 12px; padding: 12px; }\n.mast h2 { margin: 0; font-family: var(--graview-font-display); border-radius: var(--graview-radius); border: 1px solid var(--graview-edge); padding: 4px 8px; }\n.mast .lent { color: rgb(1, 2, 3); font-family: monospace; }\n.mast .own { font-family: \"Own Face\", monospace; }\n.mast .big { font-family: \"Big Face\", monospace; }\n}",
+        "balooWidth": 169.63333129882812,
+        "monoWidth": 169.63333129882812,
+        "motion": "fade",
         "radiusSaid": "4px",
         "pushes": 2,
         "appHeadingFont": "Georgia, \"Times New Roman\", serif",
@@ -27,7 +52,7 @@
           "font": "Georgia, \"Times New Roman\", serif"
         },
         "marked": false,
-        "src": "blob:null/9743c56c-1ec5-49f0-b998-d4d035bf2ad5",
+        "src": "blob:null/0b775d31-6a60-4790-905a-58876374f6fb",
         "bytes": 192
       }
     },
@@ -52,7 +77,51 @@
     "the logo is handed as a blob: URL of the page itself, which the policy lets an image load from": {
       "ok": true,
       "detail": {
-        "src": "blob:null/9743c56c-1ec5-49f0-b998-d4d035bf2ad5"
+        "src": "blob:null/0b775d31-6a60-4790-905a-58876374f6fb"
+      }
+    },
+    "the view is drawn with the app's stylesheet for every view, a sheet of the host's in the layer after the view's own: the heading takes its letter-spacing and its capitals, and the theme's padding wins where both say one": {
+      "ok": true,
+      "detail": {
+        "sheets": [
+          "data-graview-region",
+          "data-graview-view-theme",
+          "data-graview-view-style"
+        ],
+        "letterSpacing": "6px",
+        "transform": "uppercase",
+        "padding": "40px"
+      }
+    },
+    "the app's stylesheet for every view wins over the view's own rule on the same element whatever its specificity: the theme's .lent color beats the view's .mast .lent": {
+      "ok": true,
+      "detail": {
+        "color": "rgb(200, 30, 30)"
+      }
+    },
+    "a face the view's own stylesheet declares as a data: font is loaded into the page by the host, from its bytes, and the view's text is drawn in it, not in the fallback": {
+      "ok": true,
+      "detail": {
+        "faces": [
+          "loaded"
+        ],
+        "font": "\"Own Face\", monospace",
+        "own": 138.06666564941406,
+        "mono": 169.63333129882812,
+        "problems": []
+      }
+    },
+    "the view's sheet as drawn holds no @font-face and no data: URL, and no font was requested for it: the face was handed to the page as bytes": {
+      "ok": true,
+      "detail": {
+        "sheet": "@layer graview-view {\n.mast { display: flex; align-items: center; gap: 12px; padding: 12px; }\n.mast h2 { margin: 0; font-family: var(--graview-font-display); border-radius: var(--graview-radius); bord",
+        "data": []
+      }
+    },
+    "and, the brand asking for it, its root is set to fade between records": {
+      "ok": true,
+      "detail": {
+        "motion": "fade"
       }
     },
     "after the brand changes, the view says \"En Dash Consulting\" in the new display face, as the app's wordmark and headings do": {
@@ -66,6 +135,31 @@
         ],
         "viewFont": "\"Courier New\", Courier, monospace",
         "viewRadius": "16px",
+        "sheets": [
+          "data-graview-region",
+          "data-graview-view-theme",
+          "data-graview-view-style"
+        ],
+        "themeSheet": "",
+        "letterSpacing": "normal",
+        "transform": "none",
+        "padding": "4px",
+        "lentColor": "rgb(1, 2, 3)",
+        "lentFont": "monospace",
+        "faces": [],
+        "balooFaces": [],
+        "bigFaces": [
+          "loaded"
+        ],
+        "ownFaces": [
+          "loaded"
+        ],
+        "ownFont": "\"Own Face\", monospace",
+        "ownWidth": 130.56666564941406,
+        "ownSheet": "@layer graview-view {\n.mast { display: flex; align-items: center; gap: 12px; padding: 12px; }\n.mast h2 { margin: 0; font-family: var(--graview-font-display); border-radius: var(--graview-radius); border: 1px solid var(--graview-edge); padding: 4px 8px; }\n.mast .lent { color: rgb(1, 2, 3); font-family: monospace; }\n.mast .own { font-family: \"Own Face\", monospace; }\n.mast .big { font-family: \"Big Face\", monospace; }\n}",
+        "balooWidth": 145.21665954589844,
+        "monoWidth": 160.4166717529297,
+        "motion": null,
         "radiusSaid": "16px",
         "pushes": 4,
         "appHeadingFont": "\"Courier New\", Courier, monospace",
@@ -74,7 +168,7 @@
           "font": "\"Courier New\", Courier, monospace"
         },
         "marked": true,
-        "src": "blob:null/b3ded1de-843b-45d2-93d7-6d462e9e702c",
+        "src": "blob:null/a3f0f8d8-b8db-4307-81a2-8b0d1ac792c0",
         "bytes": 136
       }
     },
@@ -106,10 +200,20 @@
         ]
       }
     },
+    "after the brand changes to one with no stylesheet for its views, the host's sheet is empty, the heading's letter-spacing and capitals are the browser's again, the view's own rule holds, and nothing fades": {
+      "ok": true,
+      "detail": {
+        "themeSheet": "",
+        "letterSpacing": "normal",
+        "transform": "none",
+        "lentColor": "rgb(1, 2, 3)",
+        "motion": null
+      }
+    },
     "the last logo's blob: URL is let go once the new one is drawn": {
       "ok": true,
       "detail": {
-        "url": "blob:null/9743c56c-1ec5-49f0-b998-d4d035bf2ad5"
+        "url": "blob:null/0b775d31-6a60-4790-905a-58876374f6fb"
       }
     },
     "nothing else was requested": {

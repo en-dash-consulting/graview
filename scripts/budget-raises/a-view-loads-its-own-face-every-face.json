@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 20205,
+  "gzipped": 6991,
+  "note": "Raised when a view's stylesheet came to declare its own face as a data: font (HQ f-view-font-face-data): the face's judge and its sentences (core's css/faces.ts) are in each chunk that carries the sanitizer — the open kit's, the headless run's and the draft check's — and the host's loading of a face from its bytes is in the fonts chunk. Measured at 3_192_936 / 1_159_750 against 3_172_731 / 1_152_759: 20_205 / 6_991 more."
+}

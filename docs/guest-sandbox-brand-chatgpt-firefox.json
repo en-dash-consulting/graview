@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-10T19:22:27.240Z",
+  "at": "2026-11-11T06:27:44.257Z",
   "transport": "brand",
   "engine": "firefox",
   "policy": {
@@ -37,8 +37,14 @@
           "loaded"
         ],
         "bigFaces": [],
-        "balooWidth": 147.6999969482422,
-        "monoWidth": 176.7333221435547,
+        "ownFaces": [
+          "loaded"
+        ],
+        "ownFont": "\"Own Face\", monospace",
+        "ownWidth": 134.43333435058594,
+        "ownSheet": "@layer graview-view {\n.mast { display: flex; align-items: center; gap: 12px; padding: 12px; }\n.mast h2 { margin: 0; font-family: var(--graview-font-display); border-radius: var(--graview-radius); border: 1px solid var(--graview-edge); padding: 4px 8px; }\n.mast .lent { color: rgb(1, 2, 3); font-family: monospace; }\n.mast .own { font-family: \"Own Face\", monospace; }\n.mast .big { font-family: \"Big Face\", monospace; }\n}",
+        "balooWidth": 138.0500030517578,
+        "monoWidth": 165.1999969482422,
         "motion": "fade",
         "radiusSaid": "4px",
         "pushes": 2,
@@ -107,7 +113,8 @@
           "/graview/assets/48282a415ec22e31beaf0a0666e6fae0c8cbddcd0b1f6e729f27c3ade8a64e43.woff2"
         ],
         "problems": [
-          "The app's face \"Big Face\" for its views is not loaded: its file, /graview/assets/892f2fe04ec507da2fe21530851fc8c60ae8a0d9b126b61d7168fd5dbb209a1b.woff2, is more than 2 MB, the most a file the app holds may be as a face for its views."
+          "The app's face \"Big Face\" for its views is not loaded: its file, /graview/assets/892f2fe04ec507da2fe21530851fc8c60ae8a0d9b126b61d7168fd5dbb209a1b.woff2, is more than 2 MB, the most a file the app holds may be as a face for its views.",
+          "Not loaded: the @font-face \"Big Face\", since the app lends its views a face by that name (brand.views.fonts), and the app's face is the one drawn: call the view's own something else (view-font-face-lent)."
         ]
       }
     },
@@ -117,10 +124,11 @@
         "faces": [
           "loaded"
         ],
-        "baloo": 147.6999969482422,
-        "mono": 176.7333221435547,
+        "baloo": 138.0500030517578,
+        "mono": 165.1999969482422,
         "problems": [
-          "The app's face \"Big Face\" for its views is not loaded: its file, /graview/assets/892f2fe04ec507da2fe21530851fc8c60ae8a0d9b126b61d7168fd5dbb209a1b.woff2, is more than 2 MB, the most a file the app holds may be as a face for its views."
+          "The app's face \"Big Face\" for its views is not loaded: its file, /graview/assets/892f2fe04ec507da2fe21530851fc8c60ae8a0d9b126b61d7168fd5dbb209a1b.woff2, is more than 2 MB, the most a file the app holds may be as a face for its views.",
+          "Not loaded: the @font-face \"Big Face\", since the app lends its views a face by that name (brand.views.fonts), and the app's face is the one drawn: call the view's own something else (view-font-face-lent)."
         ]
       }
     },
@@ -130,7 +138,8 @@
         "faces": [],
         "asked": 1,
         "problems": [
-          "The app's face \"Big Face\" for its views is not loaded: its file, /graview/assets/892f2fe04ec507da2fe21530851fc8c60ae8a0d9b126b61d7168fd5dbb209a1b.woff2, is more than 2 MB, the most a file the app holds may be as a face for its views."
+          "The app's face \"Big Face\" for its views is not loaded: its file, /graview/assets/892f2fe04ec507da2fe21530851fc8c60ae8a0d9b126b61d7168fd5dbb209a1b.woff2, is more than 2 MB, the most a file the app holds may be as a face for its views.",
+          "Not loaded: the @font-face \"Big Face\", since the app lends its views a face by that name (brand.views.fonts), and the app's face is the one drawn: call the view's own something else (view-font-face-lent)."
         ]
       }
     },
@@ -138,7 +147,40 @@
       "ok": true,
       "detail": {
         "problems": [
-          "The app's face \"Big Face\" for its views is not loaded: its file, /graview/assets/892f2fe04ec507da2fe21530851fc8c60ae8a0d9b126b61d7168fd5dbb209a1b.woff2, is more than 2 MB, the most a file the app holds may be as a face for its views."
+          "The app's face \"Big Face\" for its views is not loaded: its file, /graview/assets/892f2fe04ec507da2fe21530851fc8c60ae8a0d9b126b61d7168fd5dbb209a1b.woff2, is more than 2 MB, the most a file the app holds may be as a face for its views.",
+          "Not loaded: the @font-face \"Big Face\", since the app lends its views a face by that name (brand.views.fonts), and the app's face is the one drawn: call the view's own something else (view-font-face-lent)."
+        ]
+      }
+    },
+    "a face the view's own stylesheet declares as a data: font is loaded into the page by the host, from its bytes, and the view's text is drawn in it, not in the fallback": {
+      "ok": true,
+      "detail": {
+        "faces": [
+          "loaded"
+        ],
+        "font": "\"Own Face\", monospace",
+        "own": 134.43333435058594,
+        "mono": 165.1999969482422,
+        "problems": [
+          "The app's face \"Big Face\" for its views is not loaded: its file, /graview/assets/892f2fe04ec507da2fe21530851fc8c60ae8a0d9b126b61d7168fd5dbb209a1b.woff2, is more than 2 MB, the most a file the app holds may be as a face for its views.",
+          "Not loaded: the @font-face \"Big Face\", since the app lends its views a face by that name (brand.views.fonts), and the app's face is the one drawn: call the view's own something else (view-font-face-lent)."
+        ]
+      }
+    },
+    "the view's sheet as drawn holds no @font-face and no data: URL, and no font was requested for it: the face was handed to the page as bytes": {
+      "ok": true,
+      "detail": {
+        "sheet": "@layer graview-view {\n.mast { display: flex; align-items: center; gap: 12px; padding: 12px; }\n.mast h2 { margin: 0; font-family: var(--graview-font-display); border-radius: var(--graview-radius); bord",
+        "data": []
+      }
+    },
+    "a face of the view's own under a name the brand lends, \"Big Face\", is not loaded while the brand lends it, and the host is told why, with its code": {
+      "ok": true,
+      "detail": {
+        "faces": [],
+        "problems": [
+          "The app's face \"Big Face\" for its views is not loaded: its file, /graview/assets/892f2fe04ec507da2fe21530851fc8c60ae8a0d9b126b61d7168fd5dbb209a1b.woff2, is more than 2 MB, the most a file the app holds may be as a face for its views.",
+          "Not loaded: the @font-face \"Big Face\", since the app lends its views a face by that name (brand.views.fonts), and the app's face is the one drawn: call the view's own something else (view-font-face-lent)."
         ]
       }
     },
@@ -172,9 +214,17 @@
         "lentFont": "monospace",
         "faces": [],
         "balooFaces": [],
-        "bigFaces": [],
-        "balooWidth": 159.98333740234375,
-        "monoWidth": 176.73333740234375,
+        "bigFaces": [
+          "loaded"
+        ],
+        "ownFaces": [
+          "loaded"
+        ],
+        "ownFont": "\"Own Face\", monospace",
+        "ownWidth": 129.75,
+        "ownSheet": "@layer graview-view {\n.mast { display: flex; align-items: center; gap: 12px; padding: 12px; }\n.mast h2 { margin: 0; font-family: var(--graview-font-display); border-radius: var(--graview-radius); border: 1px solid var(--graview-edge); padding: 4px 8px; }\n.mast .lent { color: rgb(1, 2, 3); font-family: monospace; }\n.mast .own { font-family: \"Own Face\", monospace; }\n.mast .big { font-family: \"Big Face\", monospace; }\n}",
+        "balooWidth": 144.31666564941406,
+        "monoWidth": 159.43333435058594,
         "motion": null,
         "radiusSaid": "16px",
         "pushes": 4,
@@ -233,6 +283,17 @@
         "baloo": []
       }
     },
+    "and once the brand lends no face by that name, the view's own \"Big Face\" is loaded under it": {
+      "ok": true,
+      "detail": {
+        "big": [
+          "loaded"
+        ],
+        "own": [
+          "loaded"
+        ]
+      }
+    },
     "the PNG at the page's own address was fetched once, by the host: the view loaded nothing": {
       "ok": true,
       "detail": {
@@ -243,11 +304,11 @@
         "requests": [
           {
             "type": "fetch",
-            "url": "http://localhost:5993/graview/assets/logo.png"
+            "url": "http://localhost:5893/graview/assets/logo.png"
           },
           {
             "type": "image",
-            "url": "http://localhost:5993/graview/assets/logo.png"
+            "url": "http://localhost:5893/graview/assets/logo.png"
           }
         ],
         "appMarks": 1,

@@ -72,15 +72,26 @@ export function brandFamilies(typography: { readonly body?: unknown; readonly di
   return [typography?.body, typography?.display, typography?.mono].flatMap((stack) => (typeof stack === "string" ? stack.split(",").map((family) => family.trim().replace(/^["']|["']$/g, "").trim().replace(/\s+/g, " ")).filter((family) => family !== "") : []));
 }
 
-/** Why a brand may not lend its views this face, or null. `taken`: the families the brand's own stacks name. */
-export function viewFontProblem(font: unknown, taken: readonly string[] = []): string | null {
-  if (typeof font !== "object" || font === null || Array.isArray(font)) return 'a face is { "family": <its name>, "src": <its file> }';
-  const { family, src, weight, style } = font as Record<string, unknown>;
+/**
+ * Why a face may not be called this, or null. A face lent to views and a
+ * face a view's own stylesheet declares are both the page's once loaded, so
+ * both are held to it. `taken`: the families the brand's own stacks name.
+ */
+export function viewFamilyProblem(family: unknown, taken: readonly string[] = []): string | null {
   /* Single spaces between words alone: Firefox reads "Arial " as Arial, so any other whitespace would get a name past what follows. */
   if (typeof family !== "string" || family.length > 60 || !/^[A-Za-z0-9][A-Za-z0-9-]*(?: [A-Za-z0-9-]+)*$/.test(family)) return "its family is words of letters, digits and hyphens with single spaces between them, at most 60 characters";
   if (CSS_WIDE.has(family.toLowerCase())) return `"${family}" is a name CSS keeps for itself`;
   const name = family.toLowerCase();
   if (VIEW_FONTS_NOT_NAMED.includes(name) || name.startsWith("ui-") || taken.some((one) => one.toLowerCase() === name)) return `"${family}" would replace a face the page already draws in: call it something of its own`;
+  return null;
+}
+
+/** Why a brand may not lend its views this face, or null. `taken`: the families the brand's own stacks name. */
+export function viewFontProblem(font: unknown, taken: readonly string[] = []): string | null {
+  if (typeof font !== "object" || font === null || Array.isArray(font)) return 'a face is { "family": <its name>, "src": <its file> }';
+  const { family, src, weight, style } = font as Record<string, unknown>;
+  const named = viewFamilyProblem(family, taken);
+  if (named) return named;
   if (typeof src !== "string" || !viewFontSource(src)) return `its src is a file the app holds (/graview/assets/<sha256>.woff2) or an https: address of a WOFF2, WOFF, TTF or OTF file, not ${JSON.stringify(src)}`;
   if (weight !== undefined && !weightOk(weight)) return "its weight is a whole number from 1 to 1000, or a range of two (\"300 700\")";
   if (style !== undefined && style !== "normal" && style !== "italic") return 'its style is "normal" or "italic"';

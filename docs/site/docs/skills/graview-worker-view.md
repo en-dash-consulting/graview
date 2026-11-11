@@ -59,7 +59,7 @@ To go somewhere, `<a data-record>` or `<a data-place>`; to do something, a `<but
 
 With `gestures: true`, `graview.on("wheel" | "drag" | "pinch", selector, fn)` hears them over what the selector matches, at most once a frame with the deltas summed. Each carries `x`, `y` from the matched element's top left and its `width`, `height`; a `wheel` adds `deltaX`, `deltaY`, `deltaMode`, `ctrlKey`, `metaKey`, a `drag` `phase`, `pointerId`, `button`, `pressure`, `dx`, `dy`, a `pinch` (a trackpad's Control-wheel too) `phase`, `scale`, `rotation`. The page scrolls everywhere else; say `touch-action: none` on what drags. Without the flag the check says so.
 
-HTML, SVG and stylesheets, drawn with the app's `--graview-*` tokens so light and dark follow the app's toggle; nothing that loads or escapes. What the host keeps, the tokens, the images a view may show and a web face are `graview-view-drawing`. What the host leaves out it lists in `refused`. `summary::marker` and `::-webkit-details-marker` style a disclosure's triangle.
+HTML, SVG and stylesheets, drawn with the app's `--graview-*` tokens so light and dark follow the app's toggle; nothing that loads or escapes. What the host keeps, the tokens, images, a lent face and a `data:` `@font-face` are `graview-view-drawing`. What the host leaves out it lists in `refused`. `summary::marker` and `::-webkit-details-marker` style a disclosure's triangle.
 
 ### Links
 

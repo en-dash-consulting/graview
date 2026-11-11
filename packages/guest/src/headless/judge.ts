@@ -1,4 +1,6 @@
 import type { DescribedPart, DescribedProblem, DescribedVideo } from "@graview/core/describe";
+import { viewFaceRefusedWords } from "@graview/core/css";
+import { lentNamed } from "../host/own-faces.js";
 import { placeNamed, placesSaid, quoted, unsureOfViews } from "../host/links-words.js";
 import type { ViewRefusal } from "../host/open-draw.js";
 import { handedLinks, judgeLink, linkRefusedWords } from "../host/external-links.js";
@@ -64,6 +66,8 @@ export function sayRefusal(refusal: ViewRefusal, host: ImageHost & { readonly li
       return { at: `drawing ${element}${name}`, says: `Not drawn: ${element || "an element"}${name} names ${said}, ${ids.length === 1 ? "which is" : "which are"} no element of this view. It names elements the view draws itself, by their id (<h2 id="…">), drawn once each is there.` };
     }
     case "css":
+      /* A view's own face (HQ f-view-font-face-data), said as the page says it (core's faces.ts). */
+      if (refusal.css?.reason === "font-face") return { at: "stylesheet @font-face", says: viewFaceRefusedWords(refusal.css) };
       return { at: `stylesheet${name === " stylesheet" ? "" : name}`, says: `Not drawn: CSS the open kit leaves out${refusal.css ? ` (${refusal.css.reason}${refusal.css.name ? ` ${refusal.css.name}` : ""})` : ""}.${why(refusal.css?.name)}` };
   }
 }
@@ -71,6 +75,8 @@ export function sayRefusal(refusal: ViewRefusal, host: ImageHost & { readonly li
 /** What the host adds to a transcript's drawing beyond what the isolate was told: the app's stylesheet for every view (Roadmap f-app-wide-view-theme). */
 export interface JudgeOptions {
   readonly theme?: string;
+  /** The families the app lends its views (`brand.views.fonts`): a face of the view's own by one of them is not loaded, as on the page (host/fonts.ts). */
+  readonly lent?: readonly string[];
 }
 
 export function judgeTranscript(transcript: HeadlessTranscript, input: HeadlessInput, options: JudgeOptions = {}): Judged {
@@ -93,6 +99,8 @@ export function judgeTranscript(transcript: HeadlessTranscript, input: HeadlessI
     if (!acts.has(act)) return { ok: false, reason: "act", detail: `It binds a press to the act "${act}" (data-act), which its manifest does not name.` };
   }
   const problems: DescribedProblem[] = [...drawn.refused.map((one) => sayRefusal(one, { ...(input.imageOrigins ? { origins: input.imageOrigins } : {}), assets: input.assets === true, ...(input.linkOrigins ? { linkOrigins: input.linkOrigins } : {}) })), ...said.problems];
+  /* A face of the view's own named as one the app lends: the app's is drawn on the page, and the view's is not loaded. */
+  for (const face of lentNamed(drawn.faces, options.lent)) problems.push({ at: "stylesheet @font-face", says: viewFaceRefusedWords({ reason: "font-face", name: "lent", family: face.family }) });
   /* A part that threw or took too long (`graview.part`, Roadmap f-view-part-fails-alone): the page draws a note in its place, and says why. */
   const failedParts = (node: { readonly childNodes: readonly unknown[] }): void => {
     for (const child of node.childNodes as { nodeType: number; childNodes: unknown[]; getAttribute(name: string): string | null }[]) {

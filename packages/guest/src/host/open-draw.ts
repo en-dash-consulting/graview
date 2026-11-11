@@ -1,5 +1,5 @@
 import type { GuestDomEvent } from "../protocol.js";
-import { sanitizeStylesheet, sanitizeStylesheets, type CssRefusal } from "./css.js";
+import { sanitizeStylesheet, sanitizeStylesheets, type CssRefusal, type ViewFace } from "./css.js";
 import type { OpenNamespace, OpenRefusal } from "./open-judge.js";
 import { createOpenRenderer, type OpenRenderer } from "./open-render.js";
 import { inLayer, VIEW_LAYERS } from "./cascade.js";
@@ -145,6 +145,8 @@ export interface OpenDrawing {
   readonly refused: readonly ViewRefusal[];
   /** The view's stylesheets as drawn, one after another. */
   readonly css: string;
+  /** The faces the view's stylesheets declare as `data:` fonts (HQ f-view-font-face-data), for its host to load into the page: never in `css`. */
+  readonly faces: readonly ViewFace[];
   dispose(): void;
 }
 
@@ -193,6 +195,7 @@ export function createOpenDrawing(shadow: ShadowRoot, options: OpenDrawingOption
   });
   const cssRefused: ViewRefusal[] = [];
   let css = "";
+  let faces: readonly ViewFace[] = [];
 
   /** The nearest element the view drew, at or above where it happened. */
   const drawnAt = (event: Event): Element | undefined => {
@@ -307,7 +310,8 @@ export function createOpenDrawing(shadow: ShadowRoot, options: OpenDrawingOption
       fadeGuard = setTimeout(unfade, FADE_MS * 4);
     },
     style(given) {
-      const judged = sanitizeStylesheets(given);
+      const judged = sanitizeStylesheets(given, undefined, { faces: true });
+      faces = judged.faces;
       cssRefused.length = 0;
       for (const one of judged.refused) {
         cssRefused.push({ reason: "css", name: "stylesheet", css: one });
@@ -328,6 +332,9 @@ export function createOpenDrawing(shadow: ShadowRoot, options: OpenDrawingOption
     },
     get css() {
       return css;
+    },
+    get faces() {
+      return faces;
     },
     dispose() {
       for (const type of EVENTS) shadow.removeEventListener(type, hear);

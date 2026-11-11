@@ -5,8 +5,8 @@ description: Draw in a Graview worker view — the HTML, SVG and CSS the host ke
 
 # Drawing in a worker view
 
-A worker view (`graview-worker-view`: its manifest, its global, its writes
-and its limits) draws by saying markup; the host draws what the open kit
+A worker view (`graview-worker-view`: its manifest, global, writes
+and limits) draws by saying markup; the host draws what the open kit
 keeps of it into a shadow root it owns, and lists the rest. **What it may
 draw is broad; what it may load is only what the host chose.**
 
@@ -31,14 +31,14 @@ Never drawn: `script`, `iframe`, `object`, `embed`, `link`, `meta`, `base`,
 attribute; `href` but a link out (`graview-view-links`); `src` on anything
 but `img`, and on `img` any address but the ones below. In CSS: `url()`
 except `url(#id)` on `fill`, `stroke`, `clip-path`, `marker` or `filter`;
-`@import`; `@font-face`; `@property`; `image-set()`, `attr()` and other
+`@import`; `@font-face` but a `data:` one (below); `@property`; `image-set()`, `attr()` and other
 unlisted functions; `position: fixed`; `:host`. `position: sticky` sticks
 within the view; `all: unset` takes a button's chrome off. What the host leaves out it lists in `refused` (below).
 
 A view never speaks as the app's chrome. `nav`, `header`, `footer`, `aside`
 and `search` are drawn as `div`, and `output` as `span`, each with what it
-holds. They lose their role, not
-their selector. A `section` is named only by a heading it draws (`aria-labelledby`). `role` takes
+holds. They keep their
+selector. A `section` is named only by a heading it draws (`aria-labelledby`). `role` takes
 no landmark or notice's role (`navigation`, `status`, `alert`, …) but a
 named `region`.
 
@@ -63,13 +63,15 @@ its cascade layer is after the view's own sheets, so its rule wins at any
 specificity. A view's `!important` and a `style` attribute go past it; a rule
 on an ancestor is only inherited.
 
-**A web face** is the brand's to lend, never the view's to load:
-`views.fonts: [{ family: "Baloo 2", src: "/graview/assets/<sha256>.woff2",
-weight: "400 800" }]`, then `font-family: "Baloo 2", var(--graview-font-body)`.
-The host loads an app's file of 2 MB at most, or one on an origin in
-`fonts.origins` (it bounds its own), never named as a system face or
-the brand's; else it is refused and said. Of two under one name, the last
-lent draws.
+**A web face** the brand lends: `views.fonts: [{ family: "Baloo 2", src:
+"/graview/assets/<sha256>.woff2", weight: "400 800" }]`, then `font-family:
+"Baloo 2", var(--graview-font-body)`: an app's file of 2 MB at most, or one
+on an origin in `fonts.origins`. **The view's own face** is a `data:` font:
+`@font-face { font-family: "Shout"; src: url(data:font/woff2;base64,…) }`,
+50 KB a face, 200 KB a view, decoded; never an address or `local()`.
+Neither takes a system or brand face's name; under a lent face's name,
+the app's draws. Of two files a name, the last lent draws. What is refused is
+said, with its code.
 
 ## Its box, and the gutter
 
@@ -82,8 +84,7 @@ phone (680px or less) it takes the gutter back, keeping the safe areas.
 ## The images a view may show
 
 An `img`'s `src` is drawn only when it is one of these; any other address
-— another site, a path of the app's of your own making — is refused, and
-said once in its console and the host's problems, with the address:
+is refused, and said once in its console and to the host:
 
 - **A `data:` image** the view holds: PNG, GIF, JPEG, WebP, AVIF, BMP or
   SVG, at most 512,000 characters as its URL.
@@ -97,8 +98,7 @@ said once in its console and the host's problems, with the address:
   headless run), and refused elsewhere.
 - **An `https:` image on an origin the host lists** — `images: { origins:
   ["https://upload.wikimedia.org"] }` on the view's definition (and on a
-  headless run). The view never chooses an origin, so it sends
-  what it reads nowhere. It is asked for with no referrer.
+  headless run), asked for with no referrer.
   Unlisted, a URL on a record is refused.
 - **A picture on a record.** Say `pictures: true` in the manifest, or
   `{ width: 400 }`, the widest it draws one. Each file
@@ -194,6 +194,6 @@ bytes as words: a `data:` URI in a text field is cut at 20,000 characters.
 
 ## What the check cannot see
 
-`graview check` and `refused` never see whether the drawing reads: an image with no `alt`, a token
-used for a meaning it does not carry, colors that fail in dark. Look, on
-both faces, at 390 and on a desk, in both schemes.
+`graview check` and `refused` never see whether it reads (an image with no
+`alt`, a token used for a meaning it does not carry, colors that fail in
+dark): look on both faces, at 390 and on a desk, in both schemes.

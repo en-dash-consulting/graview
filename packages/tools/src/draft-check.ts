@@ -1,4 +1,4 @@
-import { sanitizeStylesheet, type CssRefusal } from "@graview/core/css";
+import { sanitizeStylesheet, viewFaceRefusedWords, type CssRefusal } from "@graview/core/css";
 import { styleStringsOf } from "./section.js";
 
 /*
@@ -76,6 +76,8 @@ function refusalWords({ refusal, rule, kept }: StyleRefusal): string {
       return `${begun(`a value of ${name || "a property"}`)} is not allowed and is removed${keeps} (position may be static, relative, absolute or sticky).`;
     case "size":
       return "The stylesheet is too long and is removed whole: keep it short.";
+    case "font-face":
+      return viewFaceRefusedWords(refusal);
     default:
       return `${begun(`a rule ${name ? `near ${name} ` : ""}`)}could not be read and is removed: write plain CSS, one rule at a time, no nesting.`;
   }
@@ -112,8 +114,11 @@ function keptOf(css: string): string[] {
 function styleRefusalsOf(source: string): StyleRefusal[] {
   const found: StyleRefusal[] = [];
   for (const sheet of styleStringsOf(source)) {
-    const css = source.slice(sheet.start, sheet.end).replace(/\$\{(?:[^{}]|\{[^{}]*\})*\}/g, "0");
-    const whole = sanitizeStylesheet(css).refused;
+    const written = source.slice(sheet.start, sheet.end);
+    const css = written.replace(/\$\{(?:[^{}]|\{[^{}]*\})*\}/g, "0");
+    /* A view's own sheet, whose data: faces are kept (HQ f-view-font-face-data). A face whose bytes come in a ${…} is read here as "0": not judged by what stands in for it. */
+    const faced = (refusals: readonly CssRefusal[]) => (css === written ? refusals : refusals.filter((one) => one.reason !== "font-face"));
+    const whole = faced(sanitizeStylesheet(css, undefined, { faces: true }).refused);
     if (whole.length === 0) continue;
     if (whole.some((one) => one.reason === "size")) {
       found.push({ refusal: { reason: "size" } });
@@ -122,9 +127,9 @@ function styleRefusalsOf(source: string): StyleRefusal[] {
     // Each rule judged alone, as the sanitizer judges it among the rest, so what it refuses is said with its own selector.
     const left = [...whole];
     for (const rule of topRules(css)) {
-      const judged = sanitizeStylesheet(rule.text);
+      const judged = sanitizeStylesheet(rule.text, undefined, { faces: true });
       const kept = keptOf(judged.css);
-      for (const refusal of judged.refused) {
+      for (const refusal of faced(judged.refused)) {
         const at = left.findIndex((one) => one.reason === refusal.reason && one.name === refusal.name);
         if (at < 0) continue;
         left.splice(at, 1);

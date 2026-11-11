@@ -115,7 +115,7 @@ describe("what a view's plain rule cannot do to the host's own", () => {
     const rule = REGION_CSS.split("\n").find((line) => line.includes(":focus-visible"))!;
     expect(rule).toContain("outline-color: var(--graview-focus-color, var(--graview-ring-color, Highlight)) !important");
     expect(rule).not.toContain("var(--graview-accent");
-    expect(sanitizeStylesheet("button { --graview-ring-color: transparent; --graview-accent: transparent }")).toEqual({ css: "button { --graview-accent: transparent; }", refused: [{ reason: "property", name: "--graview-ring-color" }] });
+    expect(sanitizeStylesheet("button { --graview-ring-color: transparent; --graview-accent: transparent }")).toEqual({ css: "button { --graview-accent: transparent; }", refused: [{ reason: "property", name: "--graview-ring-color" }], faces: [] });
     expect(sanitizeDeclarations("--graview-ring-color: red").refused).toEqual([{ reason: "property", name: "--graview-ring-color" }]);
   });
 

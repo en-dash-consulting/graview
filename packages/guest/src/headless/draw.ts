@@ -1,4 +1,4 @@
-import { sanitizeStylesheet, sanitizeStylesheets } from "../host/css.js";
+import { sanitizeStylesheet, sanitizeStylesheets, type ViewFace } from "../host/css.js";
 import { createOpenRenderer } from "../host/open-render.js";
 import { dressedCss } from "../host/cascade.js";
 import type { ViewRefusal } from "../host/open-draw.js";
@@ -21,6 +21,8 @@ export interface DrawnTranscript {
   readonly over: boolean;
   /** The stylesheets as a page would draw them — where the app has its own for every view (`theme`), each in the host's layer, the theme's winning (cascade.ts). */
   readonly css: string;
+  /** The faces its stylesheets declare as `data:` fonts (HQ f-view-font-face-data), as the page would load them: apart from `css`. */
+  readonly faces: readonly ViewFace[];
   /** The element drawn for a view's id: what a press the run made landed on (0.1.45). */
   elementOf(id: string): TreeElement | undefined;
   /** The view's id for an element drawn: what a press the check makes asks the run to land on (Roadmap f-views-work-end-to-end). */
@@ -52,13 +54,15 @@ export function drawTranscript(renders: readonly unknown[], sheets: readonly str
   for (const batch of renders) renderer.apply(batch);
   const refused: ViewRefusal[] = [...renderer.refused];
   let kept = "";
+  let faces: readonly ViewFace[] = [];
   if (sheets) {
-    const judged = sanitizeStylesheets(sheets);
+    const judged = sanitizeStylesheets(sheets, undefined, { faces: true });
     kept = judged.css;
+    faces = judged.faces;
     for (const one of judged.refused) refused.push({ reason: "css", name: "stylesheet", css: one });
   }
   const dressed = options.theme ? sanitizeStylesheet(options.theme).css : "";
   /* In the host's layers, as the page draws them: the theme's rule wins where both style one element (cascade.ts). */
   const css = dressedCss(dressed, kept);
-  return { root, refused, size: renderer.size, over, css, elementOf: (id) => renderer.elementOf(id) as unknown as TreeElement | undefined, idOf: (element) => renderer.idOf(element as unknown as Node) };
+  return { root, refused, size: renderer.size, over, css, faces, elementOf: (id) => renderer.elementOf(id) as unknown as TreeElement | undefined, idOf: (element) => renderer.idOf(element as unknown as Node) };
 }

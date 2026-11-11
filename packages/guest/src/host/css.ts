@@ -7,4 +7,4 @@
  * imports is core's.
  */
 export { CSS_DRAWN_AS, OPEN_MAX_STYLESHEET, sanitizeDeclarations, sanitizeStylesheet, sanitizeStylesheets, sanitizeValue, serializeIdent, serializeString, serializeValues, tokenize } from "@graview/core/css";
-export type { ComponentValue, CssRefusal, CssRefusalReason, Declaration, Rule, SanitizedCss, Token } from "@graview/core/css";
+export type { ComponentValue, CssRefusal, CssRefusalReason, Declaration, Rule, SanitizedCss, Token, ViewFace } from "@graview/core/css";

@@ -570,6 +570,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     const lendingNow = JSON.stringify([fonts, typography ?? null]);
     if (lendingNow === lent) return;
     lent = lendingNow;
+    /* A face of the view's own may not take a name the brand now lends or stacks: judged again against it. */
+    if (drawing && drawing.faces.length > 0) lendOwn();
     lending += 1;
     const asked = lending;
     if (fonts.length === 0) {
@@ -584,6 +586,41 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         port?.postMessage({ type: "notice", text: said });
         options.onProblem?.(said);
       }, giveFontsBack);
+    });
+  };
+  /*
+   * THE FACES THE VIEW'S OWN STYLESHEETS DECLARE (HQ f-view-font-face-data):
+   * `data:` fonts the open kit judged, loaded into the page from their bytes
+   * as the view's sheets change, or the faces the brand lends (whose names a
+   * view's own may not take), and what the open kit refused of them said
+   * once each (fonts.ts).
+   */
+  let owning = 0;
+  let giveOwnBack: (() => void) | undefined;
+  const toldFaces = new Set<string>();
+  const sayFace = (said: string) => {
+    if (toldFaces.has(said)) return;
+    toldFaces.add(said);
+    port?.postMessage({ type: "notice", text: said });
+    options.onProblem?.(said);
+  };
+  const lendOwn = () => {
+    const faces = drawing?.faces ?? [];
+    const refused = (drawing?.refused ?? []).flatMap((one) => (one.reason === "css" && one.css?.reason === "font-face" ? [one.css] : []));
+    owning += 1;
+    const asked = owning;
+    if (faces.length === 0 && refused.length === 0) {
+      giveOwnBack?.();
+      giveOwnBack = undefined;
+      return;
+    }
+    const brand = options.brand?.();
+    const lent = (brand?.views?.fonts ?? []).map((font) => font.family);
+    const typography = brand?.typography;
+    void fontsChunk().then(({ loadViewFaces, viewFaceRefusedWords }) => {
+      if (asked !== owning) return;
+      for (const one of refused) sayFace(viewFaceRefusedWords(one));
+      giveOwnBack = loadViewFaces(document, faces, { lent, ...(typography ? { typography } : {}) }, sayFace, giveOwnBack);
     });
   };
   let pushed = "";
@@ -639,6 +676,9 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     lending += 1;
     giveFontsBack?.();
     giveFontsBack = undefined;
+    owning += 1;
+    giveOwnBack?.();
+    giveOwnBack = undefined;
   };
 
   let port: MessagePort | undefined;
@@ -713,6 +753,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       const within = budget.draw((spent) => (one[0] === "render" ? live.apply(one[1], spent) : (live.style(one[1]), true)));
       if (!within) return fail("slow", drawnTooLong());
       if (one[0] === "render") refill();
+      else lendOwn();
     });
   /* Links stay in the app (FR-93): a record the viewer may see, or a place the app has. */
   const keptNow = () => new Set([...options.store.kindsKeptFrom(options.principal), ...options.store.modules.disabledKinds]);
