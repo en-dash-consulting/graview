@@ -194,6 +194,19 @@ if (asked.get("mode") === "fork") {
     };
     const view = (name) => tab.locator(`[data-worker-view="${name}"]`);
     const text = (name, id) => view(name).locator(`#${id}`).textContent({ timeout: 15_000 });
+    /*
+     * A WRITE ON ITS WAY IS ONE THE HOST WAS ASKED FOR. A press reaches the
+     * view's worker and its ask comes back to the host a round trip later:
+     * drawn again before that, the old drawing is let go with nothing sent,
+     * and there is no write on its way to hear. So a press that writes is
+     * followed by the host's own write call before the view is drawn again.
+     */
+    const writes = () => tab.evaluate(() => window.__calls.filter((one) => one[0] === "write").length);
+    const pressThenWriting = async (name, id) => {
+      const before = await writes();
+      await view(name).locator(`#${id}`).click();
+      await tab.waitForFunction((count) => window.__calls.filter((one) => one[0] === "write").length > count, before, { timeout: 8_000 }).catch(() => {});
+    };
     const until = (name, id, wanted) =>
       tab
         .waitForFunction(([one, at, value]) => document.querySelector(`[data-worker-view="${one}"]`)?.shadowRoot?.querySelector(`#${at}`)?.textContent === value, [name, id, wanted], { timeout: 8_000 })
@@ -229,7 +242,7 @@ if (asked.get("mode") === "fork") {
 
     /* ── drawn again with a write on its way ── */
     await tab.evaluate(() => (window.__slowOnce = 400));
-    await view("quiz").locator("#wipe").click();
+    await pressThenWriting("quiz", "wipe");
     await tab.evaluate(() => window.__mount("quiz"));
     await until("quiz", "keep", "Keep");
     const heardBefore = await text("quiz", "score");
@@ -237,7 +250,7 @@ if (asked.get("mode") === "fork") {
     const heard = await text("quiz", "score");
     claim("a view drawn again with a write on its way hears the value when it lands", heardBefore === "9" && heard === "wiped", { heardBefore, heard });
     await tab.evaluate(() => (window.__slowOnce = 400));
-    await view("quiz").locator("#wipe").click();
+    await pressThenWriting("quiz", "wipe");
     await tab.evaluate(() => window.__mount("quiz"));
     await until("quiz", "keep", "Keep");
     await view("quiz").locator("#keep").click();
