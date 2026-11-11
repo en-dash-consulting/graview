@@ -1,0 +1,21 @@
+---
+"@graview/core": patch
+"@graview/tools": patch
+"@graview/pages": patch
+"@graview/primitives": patch
+"@graview/studio": patch
+"@graview/guest": patch
+"@graview/skills": patch
+---
+
+A template reads what Graview Cloud's templates now say, and a field keeps a time of day (HQ feature f-template-format-cloud-additions). A question may be a `time`, whose answer "3 PM" or "3:30pm" is kept as "15:00"; setup words may say `${id}` where a letter follows the answer (`"${date}T${dinnerTime}:00"`), beside `$id`, which is still the answer itself; a question's `ask` may say an earlier answer as `${id}` (`questionAsked` reads it in); and a template may come with views — `views`, curated worker views, each its manifest (`name`, `attach`, `cardinality`, `title` and the rest of a worker view's manifest), beside `frameViews`, each `name`, `kind`, `cardinality`, `title` and `reads` — their code kept beside the template as `views/<template id>/<name>.js` or `.html`. `graview create --template` writes each view it finds there to the project's `views/`, a curated view's manifest beside it, and says which it left out; `graview apply --template` takes time answers and `${id}` words and names the views it leaves to the host. `graview check template.json` now checks the template as well as its document (`templateFindings`, on `@graview/core/check`): an `$id` or `${id}` no question asks, a question that names one not asked before it, and a view naming a kind, a relation or an act the document lacks are refused, with the path to fix them at.
+
+A field may be `{ "type": "time" }` (`timeField()` in code): a time of day with no day and no zone, kept as `HH:MM`. It refuses anything else, sorts as its hours do, is said "3:00 PM" (in en-US) by a card, a record's facts, a list's CSV and `{x | time}`, is typed in a time input on Pages, in a visitor's form, in place and in the workbench (`control: "time"`, `ArgShape` `{ type: "time" }`), is read from "3 PM" in a form, a spreadsheet cell or a migration (`parseTimeOfDay`, on `@graview/core/words`), and tells an agent its pattern and `x-graview-type: "time"`.
+
+A host can ask whether a seat may run an act on a record without previewing it (HQ feature f-may-seat-run-act-on-record): `mayRun(store, seat, { act, record?, args? })` and `mayRunEach(store, seat, asks)`, on `@graview/core/seat`, answer `{ answer: "allowed" }`, `{ answer: "fill", toFill }` with the arguments still to give by name, or `{ answer: "refused", rule, reason, message, wouldNeed? }`, where `rule` is `policy`, `own-records` (a derived remove, archive, bring-back or merge reaching only what the seat made), `sight`, `condition` (an act's `allowedWhen`, or its own `ActRefusal`), `arguments` or `act`. It asks the store's own judgment in the order `apply` does — `permits`, `missingFor`, the act compiled with nothing written and what it would make held to the graph (`Store.wouldLand`) — and copies no store: a hundred acts on rota are answered in about a millisecond. A refusal by the own-records rule says so (`Refusal.onlyWhatYouMade`), and a document act answers its condition on part of a call (`ruleOn`) with the judgment its `apply` throws on.
+
+A hosted page carries 1.3 KB more up front, and one handed a compiled app 1.3 KB more, under raises of their budgets: the time field's schema, input and words, and a document act's condition judged on part of a call. The pages face, a visitor's form, every face, the embed and Cloud's worker grow with it, under raises of their budgets.
+
+Tests: `a time of day is a field of its own`, `a template asks a time and comes with views` (core), `a template sets up a live store` (tools), `a seat is told what it may run without running it`.
+
+Compatibility: ops and primitives — unchanged. Stored formats — a record may hold a time field's `HH:MM` string; nothing else stored changes. The wire — unchanged. The declaration and check finding codes — a new field type, `time`; a template may carry `views` and `frameViews`, a `time` question and `${id}` in setup words and asks; `graview check` of a template adds the codes `question` (an ask naming an id) and `view` beside `setup`. Derived tool names and input schemas — a time field's argument says `x-graview-type: "time"` and its `HH:MM` pattern; every other schema is unchanged.

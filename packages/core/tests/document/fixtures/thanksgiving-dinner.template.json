@@ -1,0 +1,133 @@
+{
+  "format": "graview-template",
+  "formatVersion": 1,
+  "id": "thanksgiving-dinner",
+  "version": 1,
+  "title": "Thanksgiving dinner",
+  "pitch": "Who is coming, who brings what, and the day hour by hour, for one dinner.",
+  "useCases": ["thanksgiving", "holiday", "dinner", "potluck", "family"],
+  "document": {
+    "format": "graview-document",
+    "formatVersion": 1,
+    "name": "Thanksgiving dinner",
+    "description": "One dinner: the households coming, the dishes each brings, and the day as it runs.",
+    "kinds": {
+      "event": {
+        "noun": "dinner",
+        "plural": "dinners",
+        "fields": {
+          "name": { "type": "string", "required": true },
+          "date": { "type": "date", "required": true },
+          "place": { "type": "place" },
+          "notes": { "type": "text" }
+        }
+      },
+      "household": {
+        "fields": {
+          "name": { "type": "string", "required": true },
+          "role": { "type": "enum", "options": ["hosts", "guests"], "default": "guests", "required": true },
+          "arrives": { "type": "time", "description": "when they expect to arrive" }
+        }
+      },
+      "moment": {
+        "noun": "moment",
+        "plural": "the day",
+        "fields": {
+          "name": { "type": "string", "required": true },
+          "at": { "type": "datetime", "required": true },
+          "who": { "type": "string" },
+          "status": { "type": "enum", "options": ["confirmed", "tentative"], "default": "confirmed", "required": true },
+          "notes": { "type": "text" }
+        }
+      },
+      "dish": {
+        "fields": {
+          "name": { "type": "string", "required": true },
+          "course": { "type": "enum", "options": ["appetizer", "main", "side", "bread", "dessert", "drinks"], "required": true },
+          "status": { "type": "enum", "options": ["proposed", "confirmed"], "default": "proposed", "required": true },
+          "ready": { "type": "time", "description": "when it comes out of the oven" }
+        },
+        "edges": {
+          "broughtBy": { "to": ["household"], "cardinality": "one", "description": "the household bringing it", "inverse": "brings" }
+        }
+      }
+    },
+    "acts": {
+      "add-event": { "title": "Add the dinner", "creates": "event", "description": "Say the day and the place." },
+      "add-household": { "title": "Add a household", "creates": "household", "description": "A family or a couple coming to dinner." },
+      "add-moment": { "title": "Add a moment", "creates": "moment", "description": "Something that happens at a time on the day." },
+      "add-dish": { "title": "Add a dish", "creates": "dish", "description": "Something somebody is bringing." },
+      "confirm-dish": {
+        "title": "Confirm the dish",
+        "on": "dish",
+        "sets": { "status": "confirmed" },
+        "allowedWhen": "status == 'proposed'",
+        "refusal": "{name} is already confirmed",
+        "description": "Say it is settled that it is coming."
+      },
+      "confirm-moment": {
+        "title": "Confirm the time",
+        "on": "moment",
+        "sets": { "status": "confirmed" },
+        "allowedWhen": "status == 'tentative'",
+        "refusal": "{name} is already confirmed",
+        "description": "Settle a time somebody was not sure of."
+      }
+    },
+    "views": {
+      "dish": { "card": [{ "title": "{name}" }, { "field": "course" }, { "text": "Out of the oven at {ready | time}" }] },
+      "household": { "card": [{ "title": "{name}" }, { "field": "arrives" }] }
+    }
+  },
+  "seed": {
+    "nodes": [
+      { "id": "example-pie", "kind": "dish", "name": "Pumpkin pie", "course": "dessert", "status": "confirmed", "ready": "16:30" },
+      { "id": "example-rolls", "kind": "dish", "name": "Dinner rolls", "course": "bread" }
+    ],
+    "edges": [],
+    "anchor": "2026-11-11"
+  },
+  "views": [
+    {
+      "name": "thanksgiving-home",
+      "attach": "home",
+      "cardinality": "many",
+      "bleed": true,
+      "reads": { "kinds": ["moment", "dish", "household", "event"], "edges": ["broughtBy"] },
+      "acts": ["confirm-dish"]
+    },
+    {
+      "name": "thanksgiving-day",
+      "attach": "moment",
+      "cardinality": "many",
+      "title": "The Day",
+      "bleed": true,
+      "heading": "own",
+      "reads": { "kinds": ["household", "event"] },
+      "acts": ["confirm-moment"]
+    }
+  ],
+  "questions": [
+    { "id": "date", "ask": "What day is the dinner?", "type": "date", "default": "2026-11-26" },
+    { "id": "host", "ask": "Which household is hosting? Like “The Parkers” or “Dana and Chris”.", "type": "string", "optional": true },
+    { "id": "place", "ask": "Where is it? An address, or just “our place”.", "type": "string", "optional": true },
+    { "id": "dinnerTime", "ask": "What time is dinner served? Like 3 PM.", "type": "time", "default": "15:00" },
+    { "id": "households", "ask": "Which other households are coming? One per line.", "type": "list", "optional": true }
+  ],
+  "setup": [
+    { "act": "add-event", "args": { "name": "Thanksgiving dinner", "date": "$date", "place": "$place" } },
+    { "act": "add-household", "args": { "name": "$host", "role": "hosts" }, "if": "present(host)" },
+    { "forEach": "$households", "act": "add-household", "args": { "name": "$item", "role": "guests" }, "if": "lower(item) != lower(host)" },
+    { "act": "add-moment", "args": { "name": "Turkey goes in the oven", "at": "${date}T09:30:00", "notes": "About 4 hours at 325°F for a 16 lb bird." } },
+    { "act": "add-moment", "args": { "name": "First guests arrive", "at": "${date}T12:00:00", "who": "Guests", "status": "tentative" } },
+    { "act": "add-moment", "args": { "name": "Dinner is served", "at": "${date}T${dinnerTime}:00", "who": "Everyone" } },
+    { "act": "add-moment", "args": { "name": "Dessert & coffee", "at": "${date}T17:15:00", "who": "Everyone" } },
+    { "act": "add-dish", "args": { "name": "Roast turkey", "course": "main", "ready": "$dinnerTime" } },
+    { "act": "add-dish", "args": { "name": "Mashed potatoes", "course": "side" } }
+  ],
+  "readme": "# Thanksgiving dinner\n\nOne dinner, from who is coming to when the pie comes out.\n\n- Each **household** says when it arrives and what it brings.\n- **The Day** is the dinner hour by hour, set from the day and the time you give.\n- Every **dish** is proposed until somebody confirms it.",
+  "screenshots": [],
+  "author": { "workspace": "graview", "name": "Graview" },
+  "remixedFrom": null,
+  "license": "CC-BY-4.0"
+}

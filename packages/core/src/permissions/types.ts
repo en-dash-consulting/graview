@@ -158,6 +158,12 @@ export interface Refusal {
    * is a different problem and says so.
    */
   readonly wouldNeed: readonly string[];
+  /**
+   * Refused by the rule that a derived edit, remove, archive, bring-back or
+   * merge riding a grant to make the kind reaches only the records this
+   * principal made (W-201): the seat may run the act on its own records.
+   */
+  readonly onlyWhatYouMade?: true;
 }
 
 /**

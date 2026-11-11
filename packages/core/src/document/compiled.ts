@@ -45,7 +45,7 @@ import { rememberDocument } from "./remembered.js";
 import { isRecord, respellDocument } from "./respell.js";
 import { moneyOf } from "./brand.js";
 import { markAmount } from "../schema/amount-mark.js";
-import { DATE_VALUE, ISO_DAY, isMoment, isoToday } from "../days.js";
+import { DATE_VALUE, ISO_DAY, isMoment, isoToday, TIME_OF_DAY } from "../days.js";
 import type { HomeView, ViewSpecsByKind } from "./views.js";
 import type { DerivesDeclaration } from "../keep-linked.js";
 
@@ -228,6 +228,20 @@ export function defaultLabelField(spec: KindSpec): string | undefined {
   return first(entries.filter(([, f]) => f.required && (f.type === "string" || f.type === "text"))) ?? first(entries.filter(([, f]) => f.type === "string"));
 }
 
+/** Every name an expression reads where an argument could stand — a bare name, and `$arg.<name>` — walked from its parse. */
+function namesRead(expr: Expr): Set<string> {
+  const names = new Set<string>();
+  const visit = (e: unknown): void => {
+    if (!e || typeof e !== "object") return;
+    const node = e as { readonly t?: string; readonly name?: string; readonly object?: { readonly t?: string; readonly name?: string } };
+    if (node.t === "ident" && node.name) names.add(node.name);
+    if (node.t === "member" && node.object?.t === "ident" && node.object.name === "$arg" && node.name) names.add(node.name);
+    for (const value of Object.values(node)) if (value && typeof value === "object") visit(value);
+  };
+  visit(expr);
+  return names;
+}
+
 /*
  * A FIELD'S SCHEMA, in zod/mini (schema/zod.ts): a page that builds an app
  * in the browser pays for the checks it calls, not for classic zod whole
@@ -273,6 +287,10 @@ export function fieldSchema(spec: FieldSpec, optional: boolean, money?: Money): 
       break;
     case "datetime":
       schema = z.string().check(z.refine(isMoment, "a date and time like 2026-10-02T14:30:00Z"));
+      break;
+    case "time":
+      // A time of day with no day and no zone: the wall's, wherever it is read.
+      schema = z.string().check(z.regex(TIME_OF_DAY, "a time of day like 15:00"));
       break;
     case "enum":
       schema = z.enum(spec.options as [string, ...string[]]);
@@ -545,6 +563,24 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
      * labeled from the arguments its fields are set from.
      */
     const creation = effects.find((e): e is Extract<ActEffect, { create: string }> => "create" in e);
+    /**
+     * THE ACT'S CONDITION ON ITS RECORD, AND THE WORDS IT REFUSES IN: one
+     * judgment, which `apply` throws on and `ruleOn` answers with, so the two
+     * cannot say different things. Undefined where it holds.
+     */
+    const refusedBy = (graph: GraphReader, subject: AnyGraphNode, bindings: Record<string, Value>): string | undefined => {
+      let allowed: Value;
+      try {
+        allowed = evaluateExpr(guard!, { graph, subject, kinds: shapes, bindings, args: bindings, today: today(), ...saying });
+      } catch (e) {
+        if (e instanceof ExprEvalError) throw new ActRefusal(`"${title}" could not be judged: ${e.sentence}`);
+        throw e;
+      }
+      if (allowed === true) return undefined;
+      return refusal ? renderTemplate(refusal, { node: subject, kinds: shapes, graph, bindings, args: bindings, today: today(), money }) : `"${title}" is not allowed for ${labelFor(subject)} right now`;
+    };
+    /** The names the condition reads where an argument would stand: bare, and `$arg.<name>`. Read when first asked. */
+    let guardReads: Set<string> | undefined;
     /** What an effect's value is, as the act works it out: an expression, a literal (`$$` saying one `$`), the time or an argument. */
     const valueOf = (value: ValueSpec, bindings: Record<string, unknown>, graph: GraphReader, subject: AnyGraphNode | null = null): unknown => {
       if (isRecord(value) && "expr" in value) return evaluateExpr(exprs.get(value.expr)!, { graph, subject, kinds: shapes, bindings: bindings as Record<string, Value>, args: bindings as Record<string, Value>, today: today(), ...saying });
@@ -609,6 +645,26 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
                   return false;
                 }
               },
+              /*
+               * Its condition on a record with the arguments given so far, judged as `apply` judges it
+               * (`refusedBy`) — unjudged where it reads an argument not given yet.
+               */
+              ruleOn: (graph: GraphReader, id: string, given: Readonly<Record<string, unknown>>) => {
+                const subject = graph.getNode(id);
+                if (!subject) return undefined;
+                if (subjectKinds.length > 0 && !subjectKinds.includes(subject.kind)) return { refused: `"${title}" acts on ${subjectKinds.join(" or ")}, not on ${withArticle(subject.kind)}`, reason: "invalid" as const };
+                const bindings: Record<string, Value> = {};
+                for (const [k, v] of Object.entries(given)) if (v !== undefined) bindings[k] = v as Value;
+                guardReads ??= namesRead(guard);
+                if ([...args.keys()].some((arg) => bindings[arg] === undefined && guardReads!.has(arg))) return undefined;
+                try {
+                  const no = refusedBy(graph, subject, bindings);
+                  return no === undefined ? true : { refused: no, reason: "refused" as const };
+                } catch (e) {
+                  if (e instanceof ActRefusal) return { refused: e.sentence, reason: e.reason };
+                  throw e;
+                }
+              },
             }
           : {}),
         describe: (input: Record<string, unknown>, graph: GraphReader) => {
@@ -626,16 +682,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
           const bindings: Record<string, Value> = {};
           for (const [k, v] of Object.entries(input)) if (v !== undefined) bindings[k] = v as Value;
           if (guard && subject) {
-            let allowed: Value;
-            try {
-              allowed = evaluateExpr(guard, { graph, subject, kinds: shapes, bindings, args: bindings, today: today(), ...saying });
-            } catch (e) {
-              if (e instanceof ExprEvalError) throw new ActRefusal(`"${title}" could not be judged: ${e.sentence}`);
-              throw e;
-            }
-            if (allowed !== true) {
-              throw new ActRefusal(refusal ? renderTemplate(refusal, { node: subject, kinds: shapes, graph, bindings, args: bindings, today: today(), money }) : `"${title}" is not allowed for ${labelFor(subject)} right now`);
-            }
+            const no = refusedBy(graph, subject, bindings);
+            if (no !== undefined) throw new ActRefusal(no);
           }
           const made = new Map<string, string>();
           // A record is there when the graph has it or this act has just made it.

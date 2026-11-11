@@ -217,7 +217,7 @@ function seenSchema(schema: AnySchema, sight: DraftSight | undefined): AnySchema
 
 // ── the declaration, read for drawing ────────────────────────────────────────
 
-type FieldType = "string" | "text" | "number" | "integer" | "boolean" | "date" | "datetime" | "enum" | "list" | "url" | "email" | "phone" | "place" | "duration";
+type FieldType = "string" | "text" | "number" | "integer" | "boolean" | "date" | "datetime" | "enum" | "list" | "url" | "email" | "phone" | "place" | "duration" | "time";
 
 interface FieldInfo {
   readonly name: string;

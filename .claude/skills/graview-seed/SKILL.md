@@ -101,6 +101,29 @@ preview app.json --seed seed.json` serves the scene and Pages over a
 snapshot (`{ "nodes": [{ "id", "kind", …fields }], "edges": [{ "kind",
 "from", "to" }] }`) so you can walk in as a person would.
 
+## Or from a template
+
+A graview-template (Graview Cloud's shape) is the document, the questions
+asked to set it up, and what their answers do as ordinary acts:
+
+```json
+"questions": [{ "id": "date", "ask": "What day?", "type": "date" },
+  { "id": "dinnerTime", "ask": "What time is dinner?", "type": "time", "default": "15:00" }],
+"setup": [{ "act": "add-moment", "args": { "name": "Dinner", "at": "${date}T${dinnerTime}:00" } },
+  { "forEach": "$households", "act": "add-household", "args": { "name": "$item" }, "if": "present(host)" }],
+"views": [{ "name": "the-day", "attach": "moment", "cardinality": "many", "title": "The Day", "reads": { "kinds": ["household"] } }]
+```
+
+A question is `string`, `text`, `number`, `date`, `time` ("3 PM" is kept as
+"15:00"), `list` or `choice`, and its `ask` may say an earlier answer as
+`${id}`. `"$id"` alone is the answer itself; `${id}` reads it into words
+where a letter follows. `views` (worker views, each its manifest) and
+`frameViews` keep their code beside the template, `views/<template
+id>/<name>.js` (or `.html`); `graview create --template` writes it to
+`views/`, and `graview apply --template` sets a store up and leaves views
+to the host. `npx graview check template.json` refuses an `$id`, a
+`${id}`, a kind, a relation or an act the template does not have.
+
 Then open it with an empty store (Start fresh, with a ship browser adapter) and
 go through your own front door. A test holds it: derive the affordances of
 each root kind on an empty graph and assert the way in is offered, and that a

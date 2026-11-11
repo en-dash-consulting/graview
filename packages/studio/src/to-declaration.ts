@@ -14,6 +14,7 @@ import {
   nodeRefArgs,
   phoneField,
   placeField,
+  timeField,
   repeatField,
   repeatKey,
   type AnyMutationDefinition,
@@ -137,6 +138,8 @@ export function zodFor(type: FieldType, required: boolean, options?: readonly st
             ? placeField()
             : type === "duration"
               ? durationField()
+              : type === "time"
+                ? timeField()
         : type === "url"
           ? z.url()
           : type === "email"
@@ -172,6 +175,8 @@ export function defaultFor(type: FieldType, options?: readonly string[]): unknow
       return [];
     case "date":
       return new Date().toISOString().slice(0, 10);
+    case "time":
+      return "12:00";
     default:
       return "";
   }

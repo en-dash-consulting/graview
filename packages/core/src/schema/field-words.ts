@@ -1,4 +1,4 @@
-import { localeFor, numberAsRead } from "../days.js";
+import { localeFor, numberAsRead, TIME_OF_DAY, timeAsRead } from "../days.js";
 import { typedFieldOf } from "./typed-field-of.js";
 import type { TypedField } from "./typed-fields.js";
 import type { AmountMark } from "./amount-mark.js";
@@ -141,9 +141,10 @@ export function fieldSays(definition: Readable | undefined, key: string): TypedF
   return ownField(definition, key) ?? (definition && workedOutAs(definition, key) === "duration" ? "duration" : undefined);
 }
 
-/** A phone, a place or a duration in words; undefined for a value that is not one. */
+/** A phone, a place, a duration or a time of day in words ("3:00 PM" in en-US, "15:00" in en-GB); undefined for a value that is not one. */
 export function typedWords(type: TypedField | undefined, value: unknown, locale?: string): string | undefined {
   if (type === "duration") return typeof value === "number" ? sayDuration(value, locale) : undefined;
+  if (type === "time") return typeof value === "string" && TIME_OF_DAY.test(value) ? timeAsRead(value, locale) : undefined;
   if (type === "phone") return typeof value === "string" ? sayPhone(value, locale) : undefined;
   return type === "place" && typeof value === "string" ? value.trim() : undefined;
 }

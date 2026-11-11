@@ -317,6 +317,21 @@ function Control<S extends AnySchema>({
           />
         </label>
       );
+    case "time":
+      // A time of day with no day and no zone: the browser's own time input, which sends "15:00" and shows it as the reader's clock does.
+      return (
+        <label data-graview-part="field" data-graview-field="time">
+          <span data-graview-part="label">{title}</span>
+          <input
+            type="time"
+            name={spec.name}
+            required={!spec.optional}
+            value={typeof value === "string" ? value.slice(0, 5) : ""}
+            onChange={(event) => onChange(event.target.value)}
+            data-graview-part="control"
+          />
+        </label>
+      );
     case "number":
       // Money, a percent, a measure: asked for as it is said — "$" beside "1,250.50" — and read as typed.
       if (spec.amount) return <AmountControl title={title} name={spec.name} optional={spec.optional} amount={spec.amount} value={value} onChange={onChange} />;

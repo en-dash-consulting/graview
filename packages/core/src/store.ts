@@ -1805,15 +1805,32 @@ export class Store<S extends AnySchema> {
   /** The copy `withPersonMade` keeps, and the store's version and person it was made for. */
   private personMade: { readonly key: string; readonly twin: Store<S> } | undefined;
 
-  private compiledEach(calls: readonly MutationCall[], author: Principal): readonly ("changes" | "nothing" | { readonly refused: unknown })[] {
+  private compiledEach(calls: readonly MutationCall[], author: Principal, land?: (graph: Graph<S>, primitives: readonly Primitive[]) => unknown): readonly ("changes" | "nothing" | { readonly refused: unknown })[] {
     const sighted = this.sighted(author);
     return calls.map((call) => {
       try {
-        return compileMutation(this.graph, this.mutation(call.name), call.args, sighted).primitives.length > 0 ? "changes" : "nothing";
+        const { primitives } = compileMutation(this.graph, this.mutation(call.name), call.args, sighted);
+        // And, asked, whether what it makes would land on the graph as it stands: a link to take away that is not there, an id taken.
+        const refused = land && primitives.length > 0 ? land(this.graph, primitives) : undefined;
+        return refused !== undefined ? { refused } : primitives.length > 0 ? "changes" : "nothing";
       } catch (error) {
         return { refused: error };
       }
     });
+  }
+
+  /**
+   * `wouldDo`, and whether what each call makes would land on the graph as
+   * it stands, judged by `land` — `wouldRefuse` (`graph/would-refuse.ts`):
+   * the record or link it names there, its id free, what it writes fitting
+   * its kind — with nothing copied and nothing written. What `mayRun`
+   * (`@graview/core/seat`) asks once the policy and the seat's sight have
+   * let a call through; the judge is handed in, so a page carries none of it.
+   */
+  wouldLand(calls: readonly MutationCall[], author: Author | Principal, land: (graph: Graph<S>, primitives: readonly Primitive[]) => unknown): readonly ("changes" | "nothing" | { readonly refused: unknown })[] {
+    const as = withValidProfile(author) as Principal;
+    const person = this.personFor(as);
+    return person ? this.withPersonMade(as, person.id).compiledEach(calls, as, land) : this.compiledEach(calls, as, land);
   }
 
   /**

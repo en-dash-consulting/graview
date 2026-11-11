@@ -18,7 +18,7 @@ export { compileDocument } from "./document/compile-checked.js";
 // The look judged alone (Roadmap f-design-critic): what `graview check` says of clutter, focus and repetition, with the edits.
 export { designFindings } from "./document/design-findings.js";
 export type { DesignJob, DesignOptions } from "./document/design-findings.js";
-export { instantiateTemplate } from "./document/instantiate-template.js";
+export { instantiateTemplate, templateFindings } from "./document/instantiate-template.js";
 export { describeApp } from "./cli/describe.js";
 export type { DescribeOptions } from "./cli/describe.js";
 export { generateAgentsMd, generateLlmsTxt } from "./cli/docs.js";

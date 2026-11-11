@@ -123,6 +123,9 @@ export function fieldType(schema: unknown): OfferType | undefined {
     case "boolean":
     case "choice":
       return shape.type;
+    // A time of day is kept as `HH:MM`, so its words sort as its hours do.
+    case "time":
+      return "text";
     default:
       return undefined;
   }

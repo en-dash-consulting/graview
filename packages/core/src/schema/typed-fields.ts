@@ -18,7 +18,7 @@ import { defOf } from "./zod.js";
  */
 
 /** The field types a value's words and its link are read from. */
-export type TypedField = "phone" | "place" | "duration";
+export type TypedField = "phone" | "place" | "duration" | "time";
 
 /*
  * WHICH FIELDS ARE WHICH: a mark on the schema's def, as a file field and an
@@ -27,8 +27,8 @@ export type TypedField = "phone" | "place" | "duration";
  */
 const TYPED = Symbol.for("@graview/core:typed-field");
 
-/** Marks a schema as holding a phone number, a place or a duration, where its type is one; any other it leaves as it is. */
-export const markTyped = <T extends object>(schema: T, type: string): T => (/^(phone|place|duration)$/.test(type) && ((defOf(schema) as Record<symbol, string>)[TYPED] = type), schema);
+/** Marks a schema as holding a phone number, a place, a duration or a time of day, where its type is one; any other it leaves as it is. */
+export const markTyped = <T extends object>(schema: T, type: string): T => (/^(phone|place|duration|time)$/.test(type) && ((defOf(schema) as Record<symbol, string>)[TYPED] = type), schema);
 
 /**
  * A PHONE NUMBER, LOOSELY: at least three digits, with the spaces, `+`, `-`,

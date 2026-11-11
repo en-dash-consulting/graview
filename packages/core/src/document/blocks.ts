@@ -421,10 +421,10 @@ export function safeHref(value: unknown): string | undefined {
   }
 }
 
-/** What a block's field holds where it is a phone, a place or a duration: the document's type, else the definition's mark. */
+/** What a block's field holds where it is a phone, a place, a duration or a time of day: the document's type, else the definition's mark. */
 const typedOf = (ctx: BlockContext, key: string): TypedField | undefined => {
   const type = ctx.fields[key]?.type;
-  return type === "phone" || type === "place" || type === "duration" ? type : fieldSays(ctx.definition, key);
+  return type === "phone" || type === "place" || type === "duration" || type === "time" ? type : fieldSays(ctx.definition, key);
 };
 /** What the record's field is said as, where its declaration says (`markAmount`): a field named bare, `{price}`, is said as money. */
 const amountAt = (ctx: BlockContext, key: string) => amountOf((ctx.definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape?.[key]) ?? workedOutAmount(ctx.definition as never, key);
