@@ -1,5 +1,35 @@
 # @graview/react
 
+## 0.1.73
+
+### Patch Changes
+
+- a254c2d: A district's records with no value for its kind's main choice stand in one row, so one more of them no longer moves every block in the district.
+  
+  The scene stands a district's records in rows, one per value of its kind's main choice and one for the records with none. Every record with no value opened a row of its own: the plot was cut into one more row for each, and every block on it moved. They now share one row, and adding one moves no other block. The rows are `districtLanes` in `@graview/core/scene`, which the scene's plots use; chosen records still stand at the head of their rows in the order the district gives its members, and a chosen record that is not one of them is left out, as before.
+  
+  Adding or removing a record still moves the blocks after it in its row, each one place along, and a district is still laid out afresh as its own grid grows (its plot taking its third cell at five records, or its fullest row outgrowing its places). Where the city lays its districts out is unchanged.
+  
+  Tests: `a-districts-blocks-hold-still-as-records-come-and-go` (core).
+  
+  What a hosted page loads up front is unchanged; every face grows by 0.1 KB, under a raise of its budget.
+  
+  Compatibility: ops and primitives — unchanged. Stored formats — unchanged. The wire — unchanged. The declaration and check finding codes — unchanged. Derived tool names and input schemas — unchanged.
+- 9303a2a: A visitor's view is no longer stopped by the host's own link check (Roadmap f-visitor-link-check-off-the-draw-clock, f-view-budget-fair-to-visitors). A home view handed fifty-seven records with pictures, each card a link to its record and to a place, drew well for its owner and was stopped for every signed-out visitor: each link the host made asked the store which kinds the seat is kept from, and for a seat under a `sees` rule that is worked out from every act the seat may do. One batch asked it close to seven hundred times, all on the view's draw clock. `store.kindsKeptFrom` now keeps its answer per seat while nothing it reads has changed, and works it out again once a change is committed or put back, the store tells its subscribers anything else (the day turning, something read beside the graph, a server's state adopted), field sight or publishing is loaded, or another seat asks. The seat's answer is worked out correctly for every principal, and every visitor of one shared seat is one entry whatever its session or key; at most 64 seats are kept at once, and each call is handed its own copy of the answer. A worker view's host works out what a batch is judged by — the seat's kept kinds, the app's lists and places, which records it sees — once while it draws and links that batch. In the test that holds it, a batch went from 684 calls to one.
+  
+  A view the draw budget stopped is told so by that budget's own number — "What it drew took this page longer than the 300 ms of any one second a view may take to draw." — where it was told it took longer than the push's 3,000 ms. And a home view that stops, on an app that declares no home of its own, falls back to the app's built-in home, the page `?drawn=built-in` shows, marked `data-worker-view-fell-back` with the view's name and `data-worker-view-failed` with why, where it was a plain list of every record — whether the view was stopped before it ran or after it had drawn. Once a home view has fallen back, the built-in home stays in its place for the page's life, the home left and come back to, so the page never flaps between the two; a different view handed as the home is drawn. A draft home still says why in its place. The pages face offers this through `HomeFallsBack` (`@graview/react/provider`), which a face that draws a home provides. It is drawn with the page, so a hosted page carries 0.9 KB more up front, and 0.9 KB more when handed a compiled app.
+  
+  Compatibility: ops and primitives — unchanged. Stored formats — unchanged. The wire — unchanged. The declaration and check finding codes — unchanged. Derived tool names and input schemas — unchanged.
+- Updated dependencies [a254c2d]
+- Updated dependencies [9e45c01]
+- Updated dependencies [2d94b0c]
+- Updated dependencies [2799441]
+- Updated dependencies [9303a2a]
+  - @graview/core@0.1.73
+  - @graview/tools@0.1.73
+  - @graview/layout@0.1.73
+  - @graview/render@0.1.73
+
 ## 0.1.72
 
 ### Patch Changes
