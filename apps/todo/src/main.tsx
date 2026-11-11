@@ -218,6 +218,13 @@ if (window.location.pathname.startsWith("/pages")) {
         brand: thingsBrand,
         signature: true,
         sceneHref: "/",
+        /*
+         * PAGES AND THE SCENE ARE ONE PLACE (a prototype): the Scene's own
+         * city under every page, and Up steps back from the page onto its
+         * record's building, then to the district and the whole city.
+         * `?scene=off` reads the pages as they were.
+         */
+        sceneUnderPages: new URLSearchParams(window.location.search).get("scene") !== "off",
         invariantContext: { today: today() },
         /*
          * THE SAME SEAT ON BOTH FACES. The routed face lists the kinds this

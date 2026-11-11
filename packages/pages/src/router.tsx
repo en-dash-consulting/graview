@@ -16,6 +16,7 @@ import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, Def
 import { pathOfPlace, placesOf } from "./page-places.js";
 import { createPageRegistry, kindOfSlug, type PageRegistry } from "./registry.js";
 import { useHref, useLocation, useNavigate, useNavigationType, useParams } from "react-router";
+import { OnePlace } from "./one-place.js";
 import { appKeyOf, BarFindContext, FirstLookDoor, HeadingsUnder, PastBar, registerReaderLenses, SpecLinks, type BarFind, type FirstLook } from "@graview/primitives/pages";
 
 /** Who reads the face when the host names nobody. */
@@ -599,7 +600,7 @@ export function PagesRoutes<S extends AnySchema>({
           * place that took the address (`pages-overview-taken` warns of it)
           * keeps its page here.
           */}
-        {placesOf(inside).some((place) => place.as === OVERVIEW_SLUG) ? null : <Route path={OVERVIEW_PATH} element={<Navigate to="/" replace />} />}
+        {placesOf(inside).some((place) => place.as === OVERVIEW_SLUG) || (inside.sceneUnderPages && inside.views) ? null : <Route path={OVERVIEW_PATH} element={<Navigate to="/" replace />} />}
         <Route path="/places/:as" element={<DefaultPlacePage context={inside} />} />
         <Route path="/:slug" element={<KindSwitch context={inside} registry={registry} page="list" />} />
         <Route
@@ -687,7 +688,14 @@ export function PagesApp<S extends AnySchema>({
       <Reported onNavigate={onNavigate} path={path} />
       {steering ? <Steered steering={steering} /> : null}
       {context.presence || outer ? <SaysWhere context={context} to={outer} /> : null}
-      <PagesRoutes context={context} {...(registry ? { registry } : {})} />
+      {context.sceneUnderPages && context.views ? (
+        // The page over the Scene's own city: one place at every altitude (one-place.tsx).
+        <OnePlace context={context}>
+          <PagesRoutes context={context} {...(registry ? { registry } : {})} />
+        </OnePlace>
+      ) : (
+        <PagesRoutes context={context} {...(registry ? { registry } : {})} />
+      )}
       {/* The face owns the page: its controls are found in the page. */}
       {firstLook ? <FirstLookDoor firstLook={firstLook} root={thePage} app={appKeyOf(given.brand, given.store.schema)} /> : null}
     </>

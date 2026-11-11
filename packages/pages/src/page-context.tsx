@@ -48,6 +48,15 @@ export interface PageContext<S extends AnySchema> {
 
   /** Where the spatial face lives, for the cross-links. Default "/". */
   readonly sceneHref?: string;
+  /**
+   * PAGES AND THE SCENE ARE ONE PLACE (Graview HQ
+   * feature:f-page-zooms-out-to-the-city), a prototype: the Scene's own
+   * city is drawn under the page, and one control steps back from the page
+   * onto the place its address is in that city, then up to the district
+   * and the whole city (`one-place.tsx`). Needs `views`, the registry the
+   * Scene draws with. Off unless given.
+   */
+  readonly sceneUnderPages?: boolean;
   readonly invariantContext?: Readonly<Record<string, unknown>>;
   /**
    * Whether this browser remembers the edits (a ship browser adapter behind

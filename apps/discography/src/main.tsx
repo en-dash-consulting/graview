@@ -111,6 +111,8 @@ if (window.location.pathname.startsWith("/pages")) {
         brand: discographyBrand,
         signature: true,
         sceneHref: "/",
+        // Pages and the Scene are one place (a prototype): see apps/todo/src/main.tsx. `?scene=off` reads the pages as they were.
+        sceneUnderPages: new URLSearchParams(window.location.search).get("scene") !== "off",
         remembers: true,
         principal: openingSeat(),
         seats: SEATS,
