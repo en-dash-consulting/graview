@@ -75,7 +75,11 @@ export type WorkerViewFailure =
   | "nodes"
   /** It sent more than `messages` messages in `messageWindowMs`. */
   | "flood"
-  /** It took longer than `pushMs`, fitted to the device, to draw what it was shown. */
+  /**
+   * It took longer than `pushMs`, fitted to the device, to draw what it was
+   * shown — or what it sent took the host's page more than `drawMs` of one
+   * second to draw. The sentence names the clock that stopped it.
+   */
   | "slow";
 
 export interface WorkerViewLimits extends GuestLimits {
@@ -127,7 +131,7 @@ function why(reason: WorkerViewFailure, limits: Required<Pick<WorkerViewLimits, 
     case "flood":
       return `It sent more than ${limits.messages} messages in ${limits.messageWindowMs.toLocaleString("en-US")} ms.`;
     case "slow":
-      return `It took longer than ${limits.pushMs.toLocaleString("en-US")} ms to draw what it was shown.`;
+      return detail ?? `It took longer than ${limits.pushMs.toLocaleString("en-US")} ms to draw what it was shown.`;
   }
 }
 
@@ -660,23 +664,53 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   };
   /* The host's own time drawing the view, at most `drawMs` of any second (draw-budget.ts), as fitted to the device: past it, the view is slow. */
   const budget = createDrawBudget(() => limits.drawMs, () => clock.now());
+  /* The draw clock, said as itself (Roadmap f-view-budget-fair-to-visitors): a view it stopped is not told a push took too long. */
+  const drawnTooLong = () => `What it drew took this page longer than the ${Math.round(limits.drawMs).toLocaleString("en-US")} ms of any one second a view may take to draw.`;
   /* The fields the view marked `data-prefill`, filled by the host from the record after each batch it draws (FR-150, press.ts). */
   let refill = () => {};
-  const draw = (one: ["render", unknown] | ["style", readonly string[]]) => {
-    if (failed) return;
-    if (!drawing) return void waiting.push(one);
-    const live = drawing;
-    const within = budget.draw((spent) => (one[0] === "render" ? live.apply(one[1], spent) : (live.style(one[1]), true)));
-    if (!within) return fail("slow");
-    if (one[0] === "render") refill();
+  /*
+   * WHAT ONE BATCH IS JUDGED BY (Roadmap f-visitor-link-check-off-the-draw-clock):
+   * what the seat is kept from, the app's lists and places, and which records
+   * it sees, worked out once while the host draws one batch and links what it
+   * drew. Nothing commits while a batch is drawn; the next batch asks again.
+   */
+  let batch: { kept?: ReadonlySet<string>; lists?: ReturnType<typeof listsOf>; vocabulary?: ReturnType<typeof placeVocabulary>; seen?: Map<string, boolean> } | undefined;
+  const inOneBatch = (run: () => void) => {
+    if (batch) return run();
+    batch = {};
+    try {
+      run();
+    } finally {
+      batch = undefined;
+    }
   };
+  const draw = (one: ["render", unknown] | ["style", readonly string[]]) =>
+    inOneBatch(() => {
+      if (failed) return;
+      if (!drawing) return void waiting.push(one);
+      const live = drawing;
+      const within = budget.draw((spent) => (one[0] === "render" ? live.apply(one[1], spent) : (live.style(one[1]), true)));
+      if (!within) return fail("slow", drawnTooLong());
+      if (one[0] === "render") refill();
+    });
   /* Links stay in the app (FR-93): a record the viewer may see, or a place the app has. */
-  const kept = () => new Set([...options.store.kindsKeptFrom(options.principal), ...options.store.modules.disabledKinds]);
-  const lists = () => listsOf(options.store.schema, kept());
+  const keptNow = () => new Set([...options.store.kindsKeptFrom(options.principal), ...options.store.modules.disabledKinds]);
+  const kept = () => (batch ? (batch.kept ??= keptNow()) : keptNow());
+  const listsNow = () => listsOf(options.store.schema, kept());
+  const lists = () => (batch ? (batch.lists ??= listsNow()) : listsNow());
   /* The one vocabulary (FR-235): the Scene, the home, each kind's list and each titled place, as the headless check reads them. */
-  const vocabulary = () => placeVocabulary(options.store.schema, options.places?.() ?? [], { kept: kept(), ...(options.arrangement ? { pages: options.arrangement() } : {}) });
+  const vocabularyNow = () => placeVocabulary(options.store.schema, options.places?.() ?? [], { kept: kept(), ...(options.arrangement ? { pages: options.arrangement() } : {}) });
+  const vocabulary = () => (batch ? (batch.vocabulary ??= vocabularyNow()) : vocabularyNow());
+  const seesNow = (id: string) => options.store.seenBy(options.principal).graph.has(id);
+  const sees = (id: string) => {
+    if (!batch) return seesNow(id);
+    const seen = (batch.seen ??= new Map());
+    let one = seen.get(id);
+    if (one === undefined) seen.set(id, (one = seesNow(id)));
+    return one;
+  };
   const links = createLinks({
-    sees: (id) => options.store.seenBy(options.principal).graph.has(id),
+    sees,
     places: vocabulary,
     lists,
     schema: options.store.schema,

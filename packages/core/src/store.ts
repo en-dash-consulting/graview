@@ -1438,8 +1438,31 @@ export class Store<S extends AnySchema> {
     return refusalFor(this.schema, arg, given, candidates);
   }
 
-  /** The kinds of administered modules this principal may not see at all. */
+  /**
+   * The kinds of administered modules this principal may not see at all.
+   *
+   * KEPT WHILE NOTHING IT READS HAS CHANGED: for a seat under a `sees` rule
+   * it is worked out from every act the seat may do, and a page asks it for
+   * each link it draws. The answer is kept per seat and asked again once
+   * the store has told its subscribers anything, an op is logged, or what
+   * judges a partial sight or offers publishing is loaded.
+   */
   kindsKeptFrom(principal: Principal = HUMAN): ReadonlySet<string> {
+    const all = this.log.all();
+    const state = `${this.told}|${this.log.length}|${all.at(-1)?.id ?? ""}|${fieldsJudged(this) ? 1 : 0}|${PUBLISHING.act ? 1 : 0}`;
+    if (this.keptKinds?.state !== state) this.keptKinds = { state, seats: new Map() };
+    const seat = JSON.stringify(principal);
+    const held = this.keptKinds.seats.get(seat);
+    if (held) return held;
+    const kept = this.kindsKeptNow(principal);
+    this.keptKinds.seats.set(seat, kept);
+    return kept;
+  }
+
+  /** What `kindsKeptFrom` keeps: the store's state it was worked out at, and each seat's answer there. */
+  private keptKinds: { readonly state: string; readonly seats: Map<string, ReadonlySet<string>> } | undefined;
+
+  private kindsKeptNow(principal: Principal): ReadonlySet<string> {
     const kept = new Set<string>();
     for (const [name, module] of this.modules.administered) {
       if (this.mayAdminister(name, principal)) continue;
@@ -1800,6 +1823,7 @@ export class Store<S extends AnySchema> {
       mintBatch: () => PREVIEW_BATCH,
       rehearsing: true,
       personMade: undefined,
+      keptKinds: undefined,
     });
     // Its own acts, so "Type text" reads the text back off the rehearsal's log, as the apply would off this one's.
     const typer = this.typer && TYPING.typeText!(twin);
