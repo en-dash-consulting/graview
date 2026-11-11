@@ -569,7 +569,7 @@ const NAMED = new WeakMap<readonly Operation[], { readonly told: unknown; readon
  * his account, though the seat itself is not served. Kept for one reading of
  * the log while the store tells nothing new.
  */
-export function namedAuthors(store: Judged, lens: Pick<SeatLens, "shows" | "keepsSeat">, ops: readonly Operation[]): readonly Operation[] {
+export function namedAuthors(store: Judged, lens: Pick<SeatLens, "shows" | "served">, ops: readonly Operation[]): readonly Operation[] {
   const graph = store.graph;
   if (!graph.hasPersonSeats?.() || !graph.personBoundTo) return ops;
   const told = (store as { readonly version?: unknown }).version ?? store.log.all().length;
@@ -581,11 +581,18 @@ export function namedAuthors(store: Judged, lens: Pick<SeatLens, "shows" | "keep
     if (isWithheld(op) || (author.onBehalfOf ?? author).kind !== "human") return op;
     const seat = seatPersonOf(author.onBehalfOf ?? author);
     const id = seat === undefined ? undefined : graph.personBoundTo!(seat);
-    const node = id === undefined || !lens.shows(id) ? undefined : graph.getNode(id);
+    const whole = id === undefined || !lens.shows(id) ? undefined : graph.getNode(id);
+    // Named as this seat is shown the record — its sight, field by field — and not at all where what it is shown names nobody.
+    const node = whole && lens.served(whole);
     if (!node) return op;
-    const name = labelOf(store.schema?.tryDefinition(node.kind) as never, node as never);
+    let name: unknown;
+    try {
+      name = labelOf(store.schema?.tryDefinition(node.kind) as never, node as never);
+    } catch {
+      name = undefined;
+    }
     const person = author.onBehalfOf ?? author;
-    if (!name || person.name === name) return op;
+    if (typeof name !== "string" || name.trim().length === 0 || name === node.id || person.name === name) return op;
     changed = true;
     return { ...op, author: author.onBehalfOf ? { ...author, onBehalfOf: { ...person, name } } : { ...author, name } };
   });

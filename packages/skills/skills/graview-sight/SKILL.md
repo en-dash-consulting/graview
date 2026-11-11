@@ -118,12 +118,12 @@ removed, and a kind that requires more than a name has none for a profile
 carry it only where a host trusts them; otherwise it is the host's `seatOf`.
 
 A person entered before they joined is bound, not made twice:
-`bindPerson(store, joining, "person:bud", { author })` (`@graview/core/binding`)
-is the `bind-person` op; `$me`, `own` and `self` then read that record. Only the
-host's system seat, or a grant naming `bind-person` for a role, binds (never
-`*`), never an agent; never a seat itself. It stays once they act. A seat is
-served its own binding; whoever may bind sees them all. A host forwards a
-change through `answerSeenBy`, never a raw result.
+`bindPerson(store, joining, "person:bud", { author })` (`@graview/core/binding`);
+`$me`, `own` and `self` then read that record. Only the host's system seat, or a
+human with a role a grant names `bind-person` for binds (never `*`). A
+seat sees its own binding; whoever may bind sees all. A host
+reads through `seenBy` each time and keeps none of its methods, and forwards a
+change through `answerSeenBy`: re-read, never pass on, what a listener is handed.
 
 What a view keeps for that viewer (`graview.mine`, `graview-view-forms`) goes
 where the host says, for the viewer it knows, handed to `mount`, `<Embed>` and
