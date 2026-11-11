@@ -1,6 +1,9 @@
 schema: "rex/v2"
 items:
   "ec2eb443-3629-404d-888a-cde1c1ba8906":
-    status: "in_progress"
+    status: "completed"
     startedAt: "2026-11-11T02:42:28.000Z"
-    lastModified: "2026-11-11T02:42:28.000Z"
+    completedAt: "2026-11-11T18:00:00.000Z"
+    lastModified: "2026-11-11T18:00:00.000Z"
+    resolutionType: "code-change"
+    resolutionDetail: "An <img> takes loading and fetchpriority, and pictures: { thumb } hands a smaller copy made from the same bytes beside src (view-pictures-thumb). PR #566, landed in the 0.1.73 batch #568."

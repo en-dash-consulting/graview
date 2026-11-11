@@ -1,6 +1,9 @@
 schema: "rex/v2"
 items:
   "6fb13b22-292d-4bb2-b1f5-e73367da2e68":
-    status: "in_progress"
+    status: "completed"
     startedAt: "2026-11-11T02:42:28.000Z"
-    lastModified: "2026-11-11T02:42:28.000Z"
+    completedAt: "2026-11-11T18:00:00.000Z"
+    lastModified: "2026-11-11T18:00:00.000Z"
+    resolutionType: "code-change"
+    resolutionDetail: "bleed: \"full\" already spanned a desk; the worker-view and drawing skills now say it beside true, and checkManifest refuses any other value with the view-bleed finding. PR #566, landed in the 0.1.73 batch #568."
