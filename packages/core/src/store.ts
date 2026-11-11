@@ -561,24 +561,29 @@ const KEPT_KINDS_SEATS = 64;
 
 /**
  * THE SEAT A KEPT-KINDS ANSWER IS FOR: exactly what working it out reads of
- * a principal — its kind, id, roles, whether it is a shared seat, its
- * profile's id and name, and the same of whom it acts for — each read by
- * name, never the principal serialized whole (a getter, a proxy or a
- * `toJSON` would say less than it is), and roles in one order. What it does
- * not read (a session, a display name, which visitor of a shared seat) is
- * no part of it, so a seat every visitor shares is one entry. None where
- * it cannot be said whole (agents for agents past eight deep): that seat's
- * answer is worked out each time and kept for nobody.
+ * a principal — its kind, its id, its roles, the profile it is judged by
+ * (`profileOf`'s reading, not the fields it reads that from), and the same
+ * of whom it acts for — each read by name, never the principal serialized
+ * whole, and roles in one order. What it does not read (a session, a
+ * display name, which visitor of a shared seat) is no part of it, so a seat
+ * every visitor shares is one entry. Only strings are said: a kind, an id
+ * or a role that is anything else, or a seat past eight deep, has no key,
+ * and its answer is worked out each time and kept for nobody.
  */
 function keptKindsSeat(principal: Principal, depth = 0): string | undefined {
-  const behalf = principal.onBehalfOf;
-  const behind = behalf === undefined ? null : depth < 8 ? keptKindsSeat(behalf, depth + 1) : undefined;
+  if (typeof principal !== "object" || principal === null) return undefined;
+  const behalf = principal.onBehalfOf as Principal | null | undefined;
+  // No one to act for, as `actingAs` reads it, absent or null; said apart, since `isSystem` asks which.
+  const behind = behalf === undefined ? "absent" : behalf === null ? "null" : depth < 8 ? keptKindsSeat(behalf, depth + 1) : undefined;
   if (behind === undefined) return undefined;
-  const given = principal.roles;
-  const roles = given === undefined ? null : [...new Set([...given].map((role) => JSON.stringify(role) ?? "null"))].sort();
-  const profile = (principal as { readonly profile?: { readonly id?: unknown; readonly name?: unknown } }).profile;
-  const read = (value: unknown) => (value === undefined ? null : (JSON.stringify(value) ?? null));
-  return JSON.stringify([read(principal.kind), read(principal.id), roles, principal.shared === true, profile ? [read(profile.id), read(profile.name)] : null, behind]);
+  const kind: unknown = principal.kind;
+  const id: unknown = principal.id;
+  const given: unknown = principal.roles;
+  if ((kind !== undefined && typeof kind !== "string") || (id !== undefined && typeof id !== "string")) return undefined;
+  if (given !== undefined && (!Array.isArray(given) || !given.every((role) => typeof role === "string"))) return undefined;
+  const roles = given === undefined ? null : [...new Set(given as readonly string[])].sort();
+  const profile = profileOf(principal);
+  return JSON.stringify([kind ?? null, id ?? null, roles, profile ? [profile.id, profile.name] : null, behind]);
 }
 
 function storeTag(): string {

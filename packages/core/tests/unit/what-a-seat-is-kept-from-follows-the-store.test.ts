@@ -83,6 +83,50 @@ describe("the seat's own person", () => {
     expect(kept(camp, mia)).toEqual([]);
   });
 
+  /* Each pair asked in the order that would hand the second the first's answer, were they taken for one seat. */
+  const askedInTurn = (first: Principal, second: Principal) => {
+    const camp = store();
+    const answers = [kept(camp, first), kept(camp, second)];
+    expect(answers).toEqual([fresh(camp, first), fresh(camp, second)]);
+    return answers;
+  };
+
+  it("is worked out for the profile the seat is judged by: one whose profile a shared seat does not carry is another seat", () => {
+    const shared = { ...mia, shared: 1 } as unknown as Principal;
+    const [sharedFirst, miaAfter] = askedInTurn(shared, mia);
+    expect(miaAfter).toEqual(["note"]);
+    expect(sharedFirst).not.toEqual(miaAfter);
+    const [miaFirst, sharedAfter] = askedInTurn(mia, shared);
+    expect(sharedAfter).toEqual(sharedFirst);
+    expect(miaFirst).toEqual(["note"]);
+  });
+
+  it("is never kept for a kind, an id or a role that is not a string, and is worked out correctly for it", () => {
+    const camper: Principal = { kind: "human", id: "user:ada", roles: ["camper"] };
+    const posing = { ...camper, roles: [{ toJSON: () => "camper" }] } as unknown as Principal;
+    const [posed, real] = askedInTurn(posing, camper);
+    expect(real).toEqual([]);
+    expect(posed).not.toEqual(real);
+    const camp = store();
+    for (const odd of [posing, { kind: Symbol("human"), roles: ["camper"] }, { kind: "human", roles: [7] }] as unknown as Principal[]) {
+      expect(kept(camp, odd)).toEqual(fresh(camp, odd));
+    }
+    /* An id that is a function is no seat's: working it out refuses it, as it always did, and nothing is kept for it. */
+    const called = { kind: "human", id: () => "user:ada", roles: ["camper"] } as unknown as Principal;
+    expect(() => fresh(camp, called)).toThrow();
+    expect(() => kept(camp, called)).toThrow();
+    expect((camp as unknown as { keptKinds?: { seats: Map<string, unknown> } }).keptKinds?.seats.size ?? 0).toBe(0);
+  });
+
+  it("reads a seat acting for nobody (`onBehalfOf: null`) as acting for nobody, and answers it apart from one that says nothing", () => {
+    const loose = { kind: "human", id: "user:ada", roles: ["camper"], onBehalfOf: null } as unknown as Principal;
+    const [nobody] = askedInTurn(loose, { kind: "human", id: "user:ada", roles: ["camper"] });
+    expect(nobody).toEqual([]);
+    /* The system with null beside it is not the system, as `isSystem` reads it: kept apart, each as worked out afresh. */
+    askedInTurn({ kind: "system", onBehalfOf: null } as unknown as Principal, { kind: "system" });
+    askedInTurn({ kind: "system" }, { kind: "system", onBehalfOf: null } as unknown as Principal);
+  });
+
   it("asked by a host's `admit` of a change it then refuses: what was worked out over the change is let go with it", () => {
     const camp = store();
     kept(camp, mia);

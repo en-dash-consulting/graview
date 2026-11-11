@@ -2,5 +2,5 @@
   "budget": "the guest host, registering a worker view",
   "minified": 160,
   "gzipped": 63,
-  "note": "Raised when what a seat is kept from came to be worked out once a state: `store.kindsKeptFrom` keeps its answer, and hands out a copy, per seat — the principal fields it reads, at most 64 at once — while nothing it reads has changed, a worker view's host judges one batch's links by what it worked out once for the batch, a view the draw budget stopped is told that budget's number, and a home view that stops on an app with no home of its own falls back to the built-in home (`HomeFallsBack`). 160 / 63 more. Measured at 49_385 / 21_299 against 49_225 / 21_236."
+  "note": "Raised when what a seat is kept from came to be worked out once a state: `store.kindsKeptFrom` keeps its answer, and hands out a copy, per seat — at most 64 seats at once — while nothing it reads has changed, a worker view's host judges one batch's links by what it worked out once for the batch, a view the draw budget stopped is told that budget's number, and a home view that stops on an app with no home of its own falls back to the built-in home (`HomeFallsBack`). 160 / 63 more. Measured at 49_385 / 21_299 against 49_225 / 21_236."
 }
