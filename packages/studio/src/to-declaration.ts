@@ -545,6 +545,13 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
     ];
   });
 
+  // The strip a device offers, in its order, as the studio now says it (Roadmap f-device-nav-bar).
+  const screens = read
+    .ofKind("screen")
+    .map((node) => ({ place: str(node, "place") ?? "", label: name(node), at: typeof node["at"] === "number" ? (node["at"] as number) : 0 }))
+    .sort((a, b) => a.at - b.at)
+    .map(({ place, label }) => ({ place, label }));
+
   const brandNode = read.ofKind("brand")[0];
   const brand = base?.brand
     ? { ...base.brand, ...(brandNode ? { name: name(brandNode) } : {}) }
@@ -573,6 +580,7 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
       : {}),
     // The workflows are carried, not edited here yet (Roadmap f-jobs-declared): `graview check` says what a renamed or removed kind leaves them naming.
     ...(base?.workflows ? { workflows: base.workflows } : {}),
+    ...(screens.length > 0 ? { devices: { ...(base?.devices ?? {}), screens } } : {}),
     // The connections are carried, not edited here yet: a renamed kind's calendar follows it.
     ...(base?.connections
       ? {

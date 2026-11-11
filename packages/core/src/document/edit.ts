@@ -20,6 +20,9 @@ const refusedFormat = (format: string, type: string): string => {
 import { farEnd } from "./far-end.js";
 import { jobFindings, jobWorldOfDocument } from "../job-findings.js";
 import { JobSpec } from "./purpose-spec.js";
+import { DeviceScreenSpec } from "./devices-spec.js";
+import { deviceFindings } from "../device-findings.js";
+import { compileDocumentWithoutCheck } from "./compile.js";
 import { WORKFLOW_JUDGING } from "../workflows/judging.js";
 import { aliasWord, documentAliasFindings } from "../alias-findings.js";
 import { humanizeField, withArticle } from "../schema/define-node.js";
@@ -176,6 +179,9 @@ export const EDIT_OPS = [
   "add-job",
   "edit-job",
   "remove-job",
+  "add-device-screen",
+  "move-device-screen",
+  "remove-device-screen",
   "add-alias",
   "set-aliases",
   "set-connection",
@@ -386,6 +392,11 @@ function buildShapes(): Record<EditOp, z.ZodType> {
       })
       .strict(),
     "remove-job": z.object({ op: z.literal("remove-job"), name: jobName }).strict(),
+    // A device's screen (`devices.screens[]`, Roadmap f-device-nav-bar): a place and the word under its press, placed at `at` or last.
+    "add-device-screen": z.object({ op: z.literal("add-device-screen"), screen: z.record(z.string(), z.unknown()), at: z.number().int().min(0).optional() }).strict(),
+    // A screen by the place it shows, moved to `to` (0 first).
+    "move-device-screen": z.object({ op: z.literal("move-device-screen"), place: z.string().min(1).max(200), to: z.number().int().min(0) }).strict(),
+    "remove-device-screen": z.object({ op: z.literal("remove-device-screen"), place: z.string().min(1).max(200) }).strict(),
     // Another word people use for a kind, or for one of its fields (Roadmap f-learned-suggestions).
     "add-alias": z.object({ op: z.literal("add-alias"), kind: kindName, field: fieldName.optional(), alias: z.string().min(1).max(40) }).strict(),
     // All of a kind's or a field's other words at once; null or [] takes them away.
@@ -1176,6 +1187,12 @@ class Editor {
         return this.editJob(i, e);
       case "remove-job":
         return this.removeJob(i, e.name);
+      case "add-device-screen":
+        return this.addDeviceScreen(i, e);
+      case "move-device-screen":
+        return this.moveDeviceScreen(i, e);
+      case "remove-device-screen":
+        return this.removeDeviceScreen(i, e.place);
       case "add-alias":
         return this.setAliases(i, e.kind, e.field, [...this.aliasesOf(e.kind, e.field), e.alias], e.alias);
       case "set-aliases":
@@ -1327,6 +1344,70 @@ class Editor {
     const [job] = this.doc.purpose.jobs.splice(index, 1);
     this.keepPurpose({ ...this.doc.purpose });
     this.said.push(`The job "${job.name}" (${quotedAtTheEnd(job.ask)}) is removed.`);
+  }
+
+  // ── the screens a device offers (Roadmap f-device-nav-bar) ──
+
+  /** The screens as they now stand, or no `devices` when there are none. */
+  private keepScreens(screens: Doc[]) {
+    if (screens.length === 0) delete this.doc.devices;
+    else this.doc.devices = { ...(this.doc.devices ?? {}), screens };
+  }
+
+  /** The screen that shows a place, by the word the document names it with; -1 having said why. */
+  private screenIndex(i: number, place: string): number {
+    const screens: Doc[] = this.doc.devices?.screens ?? [];
+    const index = screens.findIndex((screen) => screen.place === place);
+    if (index < 0) this.fail(i, "place", `no device screen shows "${place}"${screens.length > 0 ? `; the screens show ${screens.map((screen) => `"${screen.place}"`).join(", ")}` : ""}`);
+    return index;
+  }
+
+  /**
+   * The screens placed, judged as `graview check` judges them (`device-*`)
+   * over the app the document compiles to: kept only when this change makes
+   * nothing wrong. A document that does not compile yet is judged by what a
+   * screen says alone, and its own faults are the compile's to say.
+   */
+  private placeScreens(i: number, screens: Doc[], at: number | undefined): boolean {
+    const compiled = compileDocumentWithoutCheck({ ...this.doc, devices: { screens } });
+    const wrong = compiled.ok
+      ? deviceFindings({ screens: screens as never }, compiled.app).filter((finding) => finding.index === undefined || finding.index === at)
+      : [];
+    for (const finding of wrong) this.failAs(finding.code, i, finding.index === undefined ? "" : `screen.${finding.key ?? ""}`, finding.message, finding.fix);
+    if (wrong.length > 0) return false;
+    this.keepScreens(screens);
+    return true;
+  }
+
+  private addDeviceScreen(i: number, e: Doc) {
+    const parsed = DeviceScreenSpec.safeParse(e.screen);
+    if (!parsed.success) return this.refuse(i, parsed.error.issues.map((issue) => ({ ...issue, path: ["screen", ...issue.path] })), "a device screen");
+    const screen = parsed.data as Doc;
+    const screens: Doc[] = [...(this.doc.devices?.screens ?? [])];
+    const at = Math.min(e.at ?? screens.length, screens.length);
+    screens.splice(at, 0, screen);
+    if (!this.placeScreens(i, screens, at)) return;
+    this.said.push(`A device screen, ${quoted(screen.label)}, shows ${quoted(screen.place)}${screens.length > 1 ? `, ${at === 0 ? "first" : at === screens.length - 1 ? "last" : `at ${at + 1} of ${screens.length}`} along the strip` : ""}.`);
+  }
+
+  private moveDeviceScreen(i: number, e: Doc) {
+    const index = this.screenIndex(i, e.place);
+    if (index < 0) return;
+    const screens: Doc[] = [...this.doc.devices.screens];
+    const [screen] = screens.splice(index, 1);
+    const to = Math.min(e.to, screens.length);
+    screens.splice(to, 0, screen);
+    this.keepScreens(screens);
+    this.said.push(`The device screen ${quoted(screen.label)} is now ${to === 0 ? "first" : to === screens.length - 1 ? "last" : `${to + 1} of ${screens.length}`} along the strip.`);
+  }
+
+  private removeDeviceScreen(i: number, place: string) {
+    const index = this.screenIndex(i, place);
+    if (index < 0) return;
+    const screens: Doc[] = [...this.doc.devices.screens];
+    const [screen] = screens.splice(index, 1);
+    this.keepScreens(screens);
+    this.said.push(`The device screen ${quoted(screen.label)} (${quotedAtTheEnd(screen.place)}) is taken off the strip${screens.length === 0 ? "; with none declared, a device offers the home and the app's jobs, else its bar" : ""}.`);
   }
 
   // ── what the app does on its own, and when (Roadmap f-jobs-declared) ──

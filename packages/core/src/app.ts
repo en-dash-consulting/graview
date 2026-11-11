@@ -16,6 +16,7 @@ import type { PagesArrangement } from "./views/types.js";
 import type { VisitorFormDeclaration } from "./visitor-form-shape.js";
 import type { AppPurpose } from "./job-shape.js";
 import type { AppWorkflows } from "./workflow-shape.js";
+import type { AppDevices } from "./device-shape.js";
 
 /**
  * Everything one application declares, in one object. `graview check` and
@@ -314,6 +315,18 @@ export interface GraviewApp<S extends AnySchema = AnySchema> {
    *   workflows: { "tidy-done": { title: "Set aside what is done", when: [{ every: "day 03:00" }], steps: [{ act: "archive-task", over: { kind: "task", where: "done" } }] } }
    */
   readonly workflows?: AppWorkflows;
+  /**
+   * THE SCREENS A DEVICE OFFERS (Roadmap f-device-nav-bar): a fixed screen
+   * — an e-ink reader on a wall — draws a strip along its bottom with a
+   * press for each, in order, and Refresh. Each names a place (`home`,
+   * `tasks`, a lens's `as`, `job:<name>`) and the word under its press, at
+   * most twelve characters, at most four screens. Unsaid, the strip is the
+   * home and the app's jobs, else the places its bar stands.
+   * `graview check` holds each to the declaration (`device-*`).
+   *
+   *   devices: { screens: [{ place: "home", label: "Today" }, { place: "tasks", label: "Tasks" }] }
+   */
+  readonly devices?: AppDevices;
 }
 
 /**

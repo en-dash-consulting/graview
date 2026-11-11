@@ -55,6 +55,9 @@ const ONE_OF_EACH: Record<(typeof EDIT_OPS)[number], Record<string, unknown>> = 
   "add-job": { op: "add-job", job: { name: "unbooked", ask: "Who is still unbooked?", kind: "vendor", where: "status != 'booked'", sort: "due" } },
   "edit-job": { op: "edit-job", name: "unbooked", sort: { by: "quote", direction: "desc" } },
   "remove-job": { op: "remove-job", name: "unbooked" },
+  "add-device-screen": { op: "add-device-screen", screen: { place: "vendors", label: "Vendors" } },
+  "move-device-screen": { op: "move-device-screen", place: "vendors", to: 0 },
+  "remove-device-screen": { op: "remove-device-screen", place: "vendors" },
   "add-alias": { op: "add-alias", kind: "vendor", alias: "supplier" },
   "set-aliases": { op: "set-aliases", kind: "vendor", field: "quote", aliases: ["cost", "fee"] },
   "set-connection": { op: "set-connection", name: "deadlines", connection: { system: "google-calendar", calendar: "primary", kind: "vendor", fields: { summary: "name", start: "due", end: "until" }, direction: "read" } },
@@ -65,7 +68,7 @@ const ONE_OF_EACH: Record<(typeof EDIT_OPS)[number], Record<string, unknown>> = 
   "resume-workflow": { op: "resume-workflow", name: "tidy-vendors" },
 };
 /** An edit that needs something the fixture does not have, and what to do first. */
-const FIRST: Partial<Record<(typeof EDIT_OPS)[number], Record<string, unknown>>> = { "remove-lens": ONE_OF_EACH["add-lens"], "set-lens-hidden": ONE_OF_EACH["add-lens"], "remove-grant": ONE_OF_EACH["add-grant"], "remove-sight": ONE_OF_EACH["add-sight"], "edit-job": ONE_OF_EACH["add-job"], "remove-job": ONE_OF_EACH["add-job"], "rename-view": { op: "arrange-pages", first: "view:eagles-nest" }, "set-connection": { op: "add-field", kind: "vendor", field: "until", spec: { type: "date" } }, "set-workflow": ONE_OF_EACH["add-workflow"], "remove-workflow": ONE_OF_EACH["add-workflow"], "pause-workflow": ONE_OF_EACH["add-workflow"], "resume-workflow": ONE_OF_EACH["add-workflow"] };
+const FIRST: Partial<Record<(typeof EDIT_OPS)[number], Record<string, unknown>>> = { "remove-lens": ONE_OF_EACH["add-lens"], "set-lens-hidden": ONE_OF_EACH["add-lens"], "remove-grant": ONE_OF_EACH["add-grant"], "remove-sight": ONE_OF_EACH["add-sight"], "edit-job": ONE_OF_EACH["add-job"], "remove-job": ONE_OF_EACH["add-job"], "move-device-screen": ONE_OF_EACH["add-device-screen"], "remove-device-screen": ONE_OF_EACH["add-device-screen"], "rename-view": { op: "arrange-pages", first: "view:eagles-nest" }, "set-connection": { op: "add-field", kind: "vendor", field: "until", spec: { type: "date" } }, "set-workflow": ONE_OF_EACH["add-workflow"], "remove-workflow": ONE_OF_EACH["add-workflow"], "pause-workflow": ONE_OF_EACH["add-workflow"], "resume-workflow": ONE_OF_EACH["add-workflow"] };
 
 describe("every edit says what it did", () => {
   it.each(EDIT_OPS.map((op) => [op]))("%s", (op) => {

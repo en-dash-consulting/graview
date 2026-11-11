@@ -173,6 +173,13 @@ Everything a Graview app declares, and the checker that verifies it.
   A `search` hit says its own: a record, a kind's list or a place carries
   `address`, spelled the same way under the `basePath` it is given, and a
   seat finds only the records its sight lets it open.
+- **The screens a device offers** — `@graview/core/devices`, on no page:
+  the strip a fixed screen draws along its foot (`deviceScreensOf`: the
+  declaration's `devices.screens`, else the home and the app's jobs, else
+  its bar), the place a screen names (`screenPlaceOf`), and the checker's
+  words for one it cannot offer (`deviceFindings`), held to
+  `MOST_DEVICE_SCREENS` and `LONGEST_SCREEN_LABEL`. `@graview/pages/device`
+  draws it.
 - **Conformance** — `@graview/core/conformance`: fixtures a host runs against
   a version (`conformance()`) to prove it reads, compiles and derives the same.
 - **A status board's moves** — `@graview/core/describe`: `columnReach` says

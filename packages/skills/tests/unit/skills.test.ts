@@ -37,6 +37,8 @@ const checkSource = [
   readFileSync(resolve(SKILLS_DIR, "../../core/src/document/brand-check.ts"), "utf8"),
   // A workflow's findings: each step kind's, and the workflow's own (Roadmap f-jobs-declared).
   ...readdirSync(resolve(SKILLS_DIR, "../../core/src/workflows")).map((name) => readFileSync(resolve(SKILLS_DIR, "../../core/src/workflows", name), "utf8")),
+  // A device's screens (`device-*`), judged in one place for the check and the edits alike (Roadmap f-device-nav-bar).
+  readFileSync(resolve(SKILLS_DIR, "../../core/src/device-findings.ts"), "utf8"),
 ].join("\n");
 
 /**

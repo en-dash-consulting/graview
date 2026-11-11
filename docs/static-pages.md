@@ -56,3 +56,48 @@ markup. It is not a second reading of the declaration.
   Bundled for a Worker it is about 83 KB minified, 31 KB gzipped, most of it
   zod. Nothing on a hosted page imports it, so a page's up-front weight is
   unchanged.
+
+## A fixed screen: an e-ink reader (Roadmap f-eink-display-profile)
+
+`@graview/pages/device` draws the same place for a reader on a wall, which a
+host photographs in a browser of its own and sends as a picture:
+
+```ts
+import { renderScreen, resolveTap, tapAt } from "@graview/pages/device";
+
+const screen = renderScreen(store, app, "/tasks", {
+  profile: "eink",                        // the one profile there is
+  viewport: { width: 758, height: 1024 }, // a Kindle Paperwhite 3, upright, in CSS pixels
+  viewer,
+  page: 0,                                // a long place is on pages; `screen.page` says which of how many
+});
+// screen.html → the host's browser at 758 × 1024 → a PNG for the device.
+// Later, a tap at (x, y) on that picture:
+const region = tapAt(screen.taps, x, y);
+const next = region && resolveTap(store, app, region, { viewer, renderId: screen.renderId });
+// next: { ok: true, does: "go" | "open" | "page" | "refresh" | "act", place, page } or { ok: false, refused, place, page }
+```
+
+- **A fixed layout, worked out here.** Every row has a height the profile
+  sets and is placed at its pixel; every line is one line, cut short by the
+  sheet. So each region in `taps` is exactly the box the browser draws for
+  it (`pnpm verify device` holds each to its element's box within a pixel),
+  and nothing needs a browser to know where a press is.
+- **The profile.** Sixteen grays (`EINK_GRAYS`), no transition, animation
+  or hover, no script, no font or anything else fetched, nothing under 20 px,
+  every press at least 64 px on each side (`EINK_LEAST_TARGET`). The page
+  is settled when written: the same picture with and without waiting.
+- **What each region does**, exactly one of: `go` a place's address (or
+  `job:<name>`), `open` a record's id, `act` an act with every argument
+  bound — only one this seat may run, that changes something, loses
+  nothing, and asks for nothing typed — `page` another page of this place,
+  or `refresh`.
+- **`renderId`** is the same for the same store state as the seat sees it,
+  declaration, place, seat, profile, viewport and page. `resolveTap` runs an
+  act only when the screen the app draws now for that seat has the same id
+  and the act on it; against a newer store it judges the act again as the
+  seat now stands and refuses it in words.
+- **The strip** along the foot is the app's `devices.screens` (at most 4,
+  each word at most 12 characters, `graview check` says one it cannot
+  offer), else the home and the app's jobs, else its bar — with Refresh
+  last, and the screen it is on marked.

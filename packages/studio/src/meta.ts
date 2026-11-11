@@ -376,7 +376,24 @@ export const brandNode = defineNode("brand", {
   display: { labels: { label: "name", body: "body typeface", display: "display typeface" } },
 });
 
-export const STUDIO_SCHEMA = createSchema([kindNode, fieldNode, computedNode, edgeNode, actNode, ruleNode, roleNode, grantNode, sightNode, lensNode, brandNode]);
+/**
+ * ONE PRESS OF A DEVICE'S STRIP (Roadmap f-device-nav-bar): the place it
+ * shows and the word under it, in the strip's order (`at`, from 0). Its id is
+ * the place it shows, which is unique along the strip.
+ */
+export const screenNode = defineNode("screen", {
+  // A part of the declaration is in the app or not: never set aside (FR-173).
+  archives: false,
+  // Nothing automated tidies a declaration: a person decides what is in the app.
+  tidying: "never",
+  description: "A screen a device offers along the strip at its foot: the place it shows and the word under its press.",
+  plural: "screens",
+  fields: z.object({ label, place: z.string(), at: z.number().int().min(0) }),
+  label: (node) => node.label,
+  display: { labels: { label: "the word under its press", place: "the place it shows", at: "where it is along the strip" } },
+});
+
+export const STUDIO_SCHEMA = createSchema([kindNode, fieldNode, computedNode, edgeNode, actNode, ruleNode, roleNode, grantNode, sightNode, lensNode, brandNode, screenNode]);
 export type StudioSchema = typeof STUDIO_SCHEMA;
 
 /*
@@ -1115,6 +1132,61 @@ export const setLensExport = act("set-lens-export", {
   },
 });
 
+/** A screen's id: the place it shows, which a strip names once. */
+export const screenId = (place: string): string => `screen:${place.trim()}`;
+
+/** The screens along the strip, in its order. */
+const screensOf = (graph: Reader | Ctx["graph"]): { id: string; at: number }[] =>
+  (graph.nodesOfKind("screen") as unknown as { id: string; at: number }[]).map((node) => ({ id: node.id, at: node.at })).sort((a, b) => a.at - b.at);
+
+/**
+ * OFFER A PLACE ON A DEVICE'S STRIP, last, under a word. Said to the document
+ * as `add-device-screen`; `graview check` judges the place and the word
+ * (`device-*`) when the studio applies.
+ */
+export const addScreen = act("add-screen", {
+  title: "Offer a screen on devices",
+  description: "Put a place on the strip along a device's foot, last, with the word under its press: a place's address word, title or address, or a job as job:<name>.",
+  creates: ["screen"],
+  input: z.object({ place: z.string().min(1), label: z.string().min(1) }),
+  describe: (args) => `Offer ${args.place} on devices as ${args.label}`,
+  apply(ctx, args) {
+    ctx.addNode({ id: screenId(args.place), kind: "screen", label: args.label.trim(), place: args.place.trim(), at: screensOf(ctx.graph).length });
+  },
+});
+
+/** MOVE A SCREEN ALONG THE STRIP, to `to` (0 first). Said to the document as `move-device-screen`. */
+export const moveScreen = act("move-screen", {
+  title: "Move the screen along the strip",
+  description: "Put this screen at another place along a device's strip, 0 first; the others keep their order around it.",
+  subject: { kinds: ["screen"], arg: "id" },
+  writes: ["at"],
+  input: z.object({ id: nodeRef(["screen"]), to: z.number().int().min(0) }),
+  describe: (args, graph) => `Move the screen ${labelOf(graph, args.id)} to ${args.to + 1} along the strip`,
+  apply(ctx, args) {
+    const order = screensOf(ctx.graph).map((screen) => screen.id).filter((id) => id !== args.id);
+    order.splice(Math.min(args.to, order.length), 0, args.id);
+    order.forEach((id, at) => ctx.patchNode(id, { at }));
+  },
+});
+
+/** TAKE A SCREEN OFF THE STRIP. Said to the document as `remove-device-screen`; the place itself stays. */
+export const removeScreen = act("remove-screen", {
+  title: "Take the screen off the strip",
+  description: "Stop offering this place on devices. The place stays; with no screen left, a device offers the home and the app's jobs, else its bar.",
+  subject: { kinds: ["screen"], arg: "id" },
+  input: z.object({ id: nodeRef(["screen"]) }),
+  describe: (args, graph) => `Take the screen ${labelOf(graph, args.id)} off the strip`,
+  apply(ctx, args) {
+    // The others close up behind it, in their order.
+    const rest = screensOf(ctx.graph).filter((screen) => screen.id !== args.id);
+    ctx.removeNode(args.id);
+    rest.forEach((screen, at) => {
+      if (screen.at !== at) ctx.patchNode(screen.id, { at });
+    });
+  },
+});
+
 export const STUDIO_MUTATIONS: readonly AnyMutationDefinition<StudioSchema>[] = [
   addKind,
   renameKind,
@@ -1147,6 +1219,9 @@ export const STUDIO_MUTATIONS: readonly AnyMutationDefinition<StudioSchema>[] = 
   setLensHidden,
   setLensExport,
   addEdgeToAnotherApp,
+  addScreen,
+  moveScreen,
+  removeScreen,
 ];
 
 /** The studio as an app: the meta-schema, its acts, and an agent seat that may propose any of them. */

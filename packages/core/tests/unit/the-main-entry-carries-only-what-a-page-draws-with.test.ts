@@ -19,6 +19,7 @@ import * as friction from "../../src/friction.js";
 import * as head from "../../src/head.js";
 import * as history from "../../src/history.js";
 import * as jobs from "../../src/jobs.js";
+import * as devices from "../../src/devices.js";
 import * as workflows from "../../src/workflows.js";
 import * as learn from "../../src/learn.js";
 import * as told from "../../src/told.js";
@@ -72,6 +73,8 @@ const OFF_THE_PAGE = {
   "@graview/core/field-sight": { from: fieldSight, names: ["fieldsKept", "keptFrom", "partialKinds", "withoutKeptFields"] },
   "@graview/core/forms": { from: forms, names: ["askedFormFields", "changedArgs", "editStart", "formArgs", "formComplete", "formField", "formFields", "keptArguments", "undecidableArguments", "VISITOR_ROLE", "formReceived", "formVisitor", "pickersIn", "visitorForm", "visitorSeesKind"] },
   "@graview/core/import": { from: importing, names: ["coerceCell", "ImportMappingError", "importRows", "parseCsv", "previewImport", "proposeMapping", "readBoolean", "readDateTime", "readDay", "readNumber", "readOption"] },
+  // Roadmap f-device-nav-bar: the screens a device offers, read by the e-ink render, the checker and the edits — on no page.
+  "@graview/core/devices": { from: devices, names: ["deviceScreensOf", "screenPlaceOf", "screenGo", "deviceFindings", "documentDeviceFindings", "screenWords", "JOB_SCREEN_PREFIX", "LONGEST_SCREEN_LABEL", "MOST_DEVICE_SCREENS"] },
   "@graview/core/describe": { from: describePlaces, names: ["columnActs", "columnChoices", "columnMoves", "columnOf", "columnReach", "columnSteps", "describePlace", "placeText", "resolveFor", "shadowedPageSlots", "statusColumns"] },
   "@graview/core/check": { from: check, names: ["arrangementFindings", "checkApp", "formatFindings", "compileDocument", "instantiateTemplate", "describeApp", "generateAgentsMd", "generateLlmsTxt", "clockReaders", "designFindings"] },
   "@graview/core/scene": { from: scene, names: ["BLOCK", "cityExtent", "cityMap", "districtBlocks", "districtLanes", "districtState", "heightOf", "MAX_SIDE", "plotsOverlap", "roadsOf", "sharedEdges", "sideFor", "TIER_HEIGHT", "TILTED", "toIso", "TOP_DOWN", "villageCap", "villageOf", "sceneDistricts", "sceneThumbnail", "agoWords", "lastRunWords", "runCount", "workflowSpots", "workflowsOnTheMap"] },

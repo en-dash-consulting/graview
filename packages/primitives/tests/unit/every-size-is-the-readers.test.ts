@@ -49,9 +49,19 @@ describe("every size is the reader's to change", () => {
     expect(files.length).toBeGreaterThan(40);
   });
 
+  /*
+   * BUT A FIXED SCREEN IS NOT A READER'S PAGE. The e-ink profile
+   * (`@graview/pages/device`) lays a place out at a viewport its host
+   * names, every row at the pixel it is drawn at, so that where each press
+   * is can be known without a browser: there is no reader's setting on a
+   * reader on a wall, and its type is sized for arm's length by the
+   * profile itself (Roadmap f-eink-display-profile).
+   */
+  const FIXED_SCREENS = new Set(["pages/src/device.ts"]);
+
   it("writes no font size in pixels, anywhere a person installs", () => {
     const offenders: string[] = [];
-    for (const path of files) {
+    for (const path of files.filter((file) => !FIXED_SCREENS.has(relative(packages, file)))) {
       const text = readFileSync(path, "utf8");
       for (const [line, index] of text.split("\n").map((l, i) => [l, i] as const)) {
         /*

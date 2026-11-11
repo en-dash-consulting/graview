@@ -29,7 +29,6 @@ import {
   humanizeField,
   isCurrent,
   labelOf,
-  localeFor,
   sayingIn,
   emojiMark,
   logoOf,
@@ -51,10 +50,10 @@ import {
   type Store,
   type ThemeTokens,
 } from "@graview/core";
-import { describeNode, readableFields } from "@graview/core/words";
-import { withComputed } from "@graview/core/blocks";
-import { describePlace, type DescribedItem, type DescribedPart, type PlaceDescription } from "@graview/core/describe";
+import { describeNode } from "@graview/core/words";
+import type { DescribedItem, DescribedPart, PlaceDescription } from "@graview/core/describe";
 import { markdownHtml } from "@graview/core/markdown";
+import { esc, glanced, readPlace, relationsOf, slugOf } from "./static-read.js";
 
 /** How the page looks: the app's brand (its own, unsaid) in one of its two schemes. */
 export interface StaticLook {
@@ -190,26 +189,12 @@ export function renderPlace<S extends AnySchema>(
 }
 
 function placeRendered<S extends AnySchema>(store: Store<S>, declaration: GraviewApp<S>, place: string | AppPlace, options: RenderPlaceOptions): RenderedPlace {
-  const viewer: Principal = options.viewer ?? { kind: "human" };
-  const brand = options.look?.brand ?? declaration.brand ?? { name: declaration.name, schemes: SCHEMES };
+  // What the place holds for this seat, read as the device's screen reads it (`./static-read.ts`).
+  const { brand, locale, seen, kept, described, there } = readPlace(store, declaration, place, { viewer: options.viewer, brand: options.look?.brand, locale: options.locale, today: options.today });
   const scheme: Scheme = options.look?.scheme ?? (brand.scheme === "dark" || brand.scheme === "light" ? brand.scheme : "light");
   const css = staticCss(brand, scheme);
   const appName = brand.name || declaration.name;
   const base = (options.base ?? "").replace(/\/$/, "");
-  const seen = store.seenBy(viewer);
-  const asked = typeof place === "string" ? recordOfAddress(seen as never, place) ?? place : place;
-  // Said in the reader's locale, else the brand's the page wears: the describer reads it off the app's brand, as every face does.
-  const locale = localeFor(options.locale ?? brand.locale ?? declaration.brand?.locale);
-  const described = describePlace(store, viewer, asked, { app: { ...declaration, brand: { ...brand, locale } }, ...(options.today ? { today: options.today } : {}) });
-
-  /*
-   * A KIND KEPT FROM THIS SEAT IS NOT THERE: an administered module's kinds
-   * for a seat that does not administer it, a kind it sees none of, a
-   * disabled module's — the routed face lists none of them, so a record, a
-   * list or a picture of one is answered as nothing at all.
-   */
-  const kept = new Set<string>([...store.kindsKeptFrom(viewer), ...store.modules.disabledKinds]);
-  const there = described.ok && !(described.description.place.kind !== null && kept.has(described.description.place.kind));
 
   const write = new Writer(base, seen.schema as AnySchema);
   const site = staticSite(seen as unknown as Store<AnySchema>, kept, base);
@@ -275,22 +260,6 @@ function staticSite(seen: Store<AnySchema>, kept: ReadonlySet<string>, base: str
 }
 
 /* ------------------------------------------------------------ the places */
-
-/** A record's address on the routed face, `/<plural>/<id>`, as the record's id; anything else is left to `describePlace`. */
-function recordOfAddress(seen: Store<AnySchema> | Store<never>, asked: string): string | undefined {
-  const parts = asked.split(/[?#]/)[0]!.split("/").filter(Boolean);
-  if (!asked.startsWith("/") || parts.length !== 2 || parts[0] === "places") return undefined;
-  let id: string;
-  try {
-    id = decodeURIComponent(parts[1]!);
-  } catch {
-    return undefined;
-  }
-  const node = (seen as Store<AnySchema>).graph.getNode(id);
-  // The address names the kind as well as the id: `/lists/task-1` is no record's.
-  if (!node || recordPath((seen as Store<AnySchema>).schema, node.kind, id) !== `/${parts[0]}/${encodeURIComponent(id)}`) return `\u0000${asked}`;
-  return id;
-}
 
 /** A record's page: its kind, its name, its declared sentence, what is wrong with it, its facts, and what it is related to. */
 function writeRecord(write: Writer, seen: Store<AnySchema>, d: PlaceDescription, kept: ReadonlySet<string>): void {
@@ -372,43 +341,6 @@ function writePlace(write: Writer, d: PlaceDescription): void {
     for (const fact of d.facts) write.raw(`<div><dt>${esc(fact.label)}</dt><dd>${esc(fact.value ?? "—")}</dd></div>`);
     write.raw(`</dl></section>`);
   }
-}
-
-/** A plain row (its name alone) given what a glance at the record says — the default card's facts, as the routed list shows them. */
-function glanced(seen: Store<AnySchema>, item: DescribedItem, locale: string): DescribedItem {
-  if (item.parts.length > 0) return item;
-  const node = seen.graph.getNode(item.id);
-  if (!node) return item;
-  const definition = seen.schema.tryDefinition(node.kind);
-  const read = (definition as { computed?: object } | undefined)?.computed ? withComputed(seen.schema, seen.graph as never, node as never) : node;
-  const fields = readableFields(read as Record<string, unknown>, definition, { limit: 3, said: [item.title], glance: true, locale });
-  return { ...item, parts: fields.map((field) => ({ t: "text", text: field.alone })) };
-}
-
-/** A record's relations, both ways, each captioned in its declaration's own words for this end — as its routed page groups them. */
-function relationsOf(seen: Store<AnySchema>, id: string, kept: ReadonlySet<string>): { heading: string; targets: { id: string; kind: string; label: string }[] }[] {
-  const node = seen.graph.getNode(id);
-  if (!node) return [];
-  const groups = new Map<string, { heading: string; targets: { id: string; kind: string; label: string }[] }>();
-  for (const edge of seen.graph.allEdges()) {
-    const direction = edge.from === id ? "out" : edge.to === id ? "in" : null;
-    if (!direction) continue;
-    const other = seen.graph.getNode(direction === "out" ? edge.to : edge.from);
-    if (!other || kept.has(other.kind)) continue;
-    const declaredOn = seen.schema.tryDefinition(direction === "out" ? node.kind : other.kind);
-    const words = (declaredOn?.edges as Record<string, { description?: string; inverse?: string }> | undefined)?.[edge.kind];
-    const description = direction === "in" ? (words?.inverse ?? words?.description) : words?.description;
-    const heading = description ? description.charAt(0).toUpperCase() + description.slice(1) : `${direction === "in" ? "← " : "→ "}${humanizeField(edge.kind)}`;
-    const key = `${edge.kind}|${direction}|${heading}`;
-    const group = groups.get(key) ?? { heading, targets: [] };
-    groups.set(key, group);
-    group.targets.push({ id: other.id, kind: other.kind, label: labelOf(seen.schema.tryDefinition(other.kind), other as never) });
-  }
-  return [...groups.values()].map((group) => ({ ...group, targets: group.targets.sort((a, b) => a.label.localeCompare(b.label)) }));
-}
-
-function slugOf(seen: Store<AnySchema>, kind: string): string {
-  return recordPath(seen.schema, kind, "x").split("/")[1]!;
 }
 
 /** The app's name and its mark, at the head of every page. */
@@ -524,10 +456,6 @@ class Writer {
   }
 }
 
-const ESCAPES: Readonly<Record<string, string>> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-function esc(text: string): string {
-  return String(text).replace(/[&<>"']/g, (ch) => ESCAPES[ch]!);
-}
 function attr(text: string): string {
   return esc(text);
 }
