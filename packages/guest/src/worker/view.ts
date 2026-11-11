@@ -22,6 +22,7 @@
  *   graview.navigate(to)     go to a record (its id), else a place by that slug, or a place or a kind's list
  *                            ({ place: slug, where: { stage: "building" }, section: "shipping-soon" })
  *   graview.html``           markup, with every value put in it escaped
+ *   graview.part(name, draw) one part's markup, which falls back alone where draw throws or takes too long
  *   graview.mine.get(key), graview.mine.set(key, value | null)   what it keeps for whoever is looking: its own strings of at most 4 KB
  *
  * The same global, over a transcript rather than a port, is what a
@@ -74,5 +75,5 @@ if (hardening.stuck.length > 0) throw new Error(`The view's worker could not be 
 
 export { view as graview };
 export { VIEW_ROOT } from "./view-global.js";
-export type { Drawable, GraviewView, Html, ViewEvent } from "./view-global.js";
+export type { Drawable, GraviewView, Html, PartDrawn, PartElement, ViewEvent } from "./view-global.js";
 export type { GuestAnswer, GuestPressed, GuestProps, GuestTheme } from "../protocol.js";

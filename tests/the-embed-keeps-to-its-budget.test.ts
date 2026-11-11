@@ -16,6 +16,12 @@ import { WORKER_BUDGET, workerRaises } from "../scripts/lib/import-cost.mjs";
  */
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 type Measured = { name: string; minified: number; gzipped: number; budget: { minified: number; gzipped: number }; carries: string[]; over: boolean };
+/*
+ * Only the entries a claim reads. Each full measure bundles every entry
+ * (every face twice over, at about 3 MB): three of them in one file ran the
+ * claim past its minute beside a harness chain.
+ */
+const measuredOf = (...names: string[]) => measureBudgets(repo, (BUDGETS as { name: string }[]).filter((one) => names.includes(one.name)));
 
 describe("the embed's bundle budget", () => {
   it("holds the pages face alone under its budget, and well under every face", async () => {
@@ -33,7 +39,7 @@ describe("the embed's bundle budget", () => {
    * 104 kB of it; it is now imported when the studio is turned on.
    */
   it("keeps the studio out of what a page first loads, and the studio is most of the difference", async () => {
-    const measured = (await measureBudgets(repo)) as Measured[];
+    const measured = (await measuredOf("embed without the studio", "every face")) as Measured[];
     const without = measured.find((one) => one.name === "embed without the studio")!;
     const every = measured.find((one) => one.name === "every face")!;
     expect(without.carries).toEqual([]);
@@ -49,7 +55,7 @@ describe("the embed's bundle budget", () => {
    * is in a chunk the entry does not import outright.
    */
   it("puts no @graview/studio module in a lazy chunk when the host hands the studio in", async () => {
-    const measured = (await measureBudgets(repo)) as (Measured & { lazy: string[]; defers: string[]; packages?: string[] })[];
+    const measured = (await measuredOf("embed with the studio handed in", "every face")) as (Measured & { lazy: string[]; defers: string[]; packages?: string[] })[];
     const handed = measured.find((one) => one.name === "embed with the studio handed in")!;
     const every = measured.find((one) => one.name === "every face")!;
     expect(handed.over, `${handed.minified} B minified, ${handed.gzipped} B gzipped, deferring ${handed.defers.join(", ")}`).toBe(false);

@@ -5,8 +5,11 @@ import { checkUndo } from "./ops/undo.js";
 import type { Batch, Operation } from "./ops/types.js";
 import type { FieldWriter, Timeline } from "./ops/served.js";
 import { writersOf, type Writers } from "./ops/writers.js";
-import { namesUnseen, redact, type SeatLens } from "./ops/withheld.js";
-import { actingAs, grantsTo, isSystem, meOf, profileOf } from "./permissions/policy.js";
+import { isWithheld, namesUnseen, redact, type SeatLens } from "./ops/withheld.js";
+import { labelOf } from "./schema/define-node.js";
+import { actingAs, grantsTo, isSystem, meOf, profileOf, seatedIn, seatPersonOf } from "./permissions/policy.js";
+import { PERSON_SEAT } from "./graph/archived.js";
+import { bindsPeople, seatsKept, unseated } from "./binding-served.js";
 import { FIELD_SIGHT, fieldsJudged, partialSight, recordsOf, sees, type Judged, type Records } from "./permissions/sight.js";
 import type { Principal } from "./permissions/types.js";
 import { diffSnapshots } from "./graph/diff.js";
@@ -31,8 +34,14 @@ function turnedOff(store: Judged, principal: Principal): ReadonlySet<string> {
  */
 export function hidesFrom(store: Judged, principal: Principal): boolean {
   if (isSystem(principal)) return false;
-  return (store.policy?.sees?.length ?? 0) > 0 || turnedOff(store, principal).size > 0;
+  return (store.policy?.sees?.length ?? 0) > 0 || turnedOff(store, principal).size > 0 || (store.graph.hasPersonSeats?.() === true && !bindsPeople(store.policy, principal));
 }
+
+/*
+ * AND WHILE A PERSON IS BOUND TO A SEAT (Roadmap f-invite-binds-existing-person):
+ * the seat is an account's id, told to that account itself, to the host and
+ * to whoever binds people (`seatsKept`), and served to nobody else.
+ */
 
 /**
  * WHICH KINDS A SEAT SEES EVERY RECORD OF (FR-55): by a sight that is not
@@ -77,10 +86,12 @@ export function seesEveryRecord(store: Judged & { readonly schema: { readonly ki
  * just made is its maker's own. Asking costs nothing more for that — who
  * made what is an index the log keeps as it goes (`recordsOf`).
  */
-export function seesId(store: Judged, principal: Principal): (id: string) => boolean {
+export function seesId(store: Judged, asked: Principal): (id: string) => boolean {
   return (id) => {
-    const off = turnedOff(store, principal);
+    const off = turnedOff(store, asked);
     if (!store.policy?.sees?.length && off.size === 0) return true;
+    // The seat as it is bound now, read as each id is asked: a view held across a binding, or its undo, judges as the seat is (`seatedIn`).
+    const principal = seatedIn(store.graph, asked);
     const records = recordsOf(store.log);
     const node = store.graph.getNode(id);
     if (node) return !off.has(node.kind) && sees(store.policy, principal, node, store.graph, records, fieldsJudged(store));
@@ -128,7 +139,9 @@ function unplaced(store: Judged, records: Records, id: string): string | undefin
  * `seesId` reads them again for every id — a served log asks of every
  * string in every op, and most are the same few ids.
  */
-function pinnedSight(store: Judged, principal: Principal, judged: Map<string, boolean> = new Map(), unnamed?: Set<string>): (id: string) => boolean {
+function pinnedSight(store: Judged, asked: Principal, judged: Map<string, boolean> = new Map(), unnamed?: Set<string>): (id: string) => boolean {
+  // The seat as it is bound now, taken once with the rest: a served log kept across a binding is kept under the seat it was judged as (`logSeenBy`).
+  const principal = seatedIn(store.graph, asked);
   const off = turnedOff(store, principal);
   if (!store.policy?.sees?.length && off.size === 0) return () => true;
   const records = recordsOf(store.log);
@@ -211,6 +224,7 @@ function lensFor(store: Judged, principal: Principal): { readonly lens: SeatLens
    * that guessed an id whether the guess was real.
    */
   const actor = isSystem(principal) ? undefined : actingAs(principal).id;
+  const keepsSeat = seatsKept(store.policy, principal);
   const length = (): number => (store.log as { readonly length?: number }).length ?? store.log.all().length;
   // The same record served the same way is the same object, so a view read twice is equal by identity.
   const cleared = new WeakMap<object, { readonly without: string; readonly node: unknown }>();
@@ -230,6 +244,8 @@ function lensFor(store: Judged, principal: Principal): { readonly lens: SeatLens
         if (!optional(node.kind, field)) return undefined;
         (without ??= []).push(field);
       }
+      // The seat a person is bound to, unless it is this seat's own or this seat binds people.
+      if (Object.hasOwn(node, PERSON_SEAT) && unseated(node, keepsSeat) !== node) (without ??= []).push(PERSON_SEAT);
       if (!without) return node;
       const key = without.join("\u0000");
       const held = cleared.get(node);
@@ -288,6 +304,7 @@ function lensFor(store: Judged, principal: Principal): { readonly lens: SeatLens
       ...(actor !== undefined ? { actor } : {}),
       ...(timeline ? { timeline } : {}),
       hides: () => hidesFrom(store, principal),
+      keepsSeat,
       // A pinned lens is already of one moment: pinning it again is itself.
       pin: pinned ? () => lens : () => pinWith(fresh()),
     };
@@ -373,7 +390,8 @@ export function logSeenBy(store: Judged, principal: Principal): readonly Operati
   const length = (store.log as { readonly length?: number }).length ?? all.length;
   const horizon = length - all.length;
   const off = [...turnedOff(store, principal)].sort().join("\u0000");
-  const key = seatKey(principal);
+  // A seat bound to a person, or no longer, is another seat's log: what it read before judged other records its own.
+  const key = seatKey(seatedIn(store.graph, principal));
   let seats = SERVED_LOGS.get(store.log);
   if (!seats) SERVED_LOGS.set(store.log, (seats = new Map()));
   const held = seats.get(key);
@@ -445,7 +463,7 @@ const VIEWS = new WeakMap<object, Map<string, unknown>>();
 function seatKey(principal: Principal): string {
   const judged = isSystem(principal) ? principal : actingAs(principal);
   // An agent's own id too: two agents for one person are two seats, and each view answers as its own (`seenFor`, `wouldChange`, `preview`).
-  return `${principal.kind}|${judged.id ?? ""}|${(judged.roles ?? []).join(",")}|${principal.onBehalfOf ? `for:${principal.id ?? ""}` : ""}${profileOf(principal) ? `|as:${meOf(principal)}` : ""}`;
+  return `${principal.kind}|${judged.id ?? ""}|${(judged.roles ?? []).join(",")}|${principal.onBehalfOf ? `for:${principal.id ?? ""}` : ""}${profileOf(principal) || meOf(principal) !== actingAs(principal).id ? `|as:${meOf(principal)}` : ""}`;
 }
 
 /**
@@ -527,10 +545,73 @@ export function viewsOf(store: object): Map<string, unknown> {
   return views;
 }
 
+/**
+ * LET GO OF ONE SEAT'S VIEWS OF A STORE, at the head and as a reader: for
+ * a seat that is nobody's account, made up for one run (a check drawing a
+ * view as each role), so nothing kept for it outlives the run. The next
+ * `seenBy` for that seat makes its view anew.
+ */
+export function forgetSeatView(store: object, principal: Principal): void {
+  const views = VIEWS.get(store);
+  views?.delete(viewKey(principal, "head"));
+  views?.delete(viewKey(principal, "published"));
+}
+
+/** Whether a kind here is the people, whom a seat could be bound to. */
+const hasPeople = (store: Judged): boolean => ((store.schema as { readonly definitions?: readonly { readonly people?: boolean }[] } | undefined)?.definitions ?? []).some((definition) => definition.people === true);
+
+const NAMED = new WeakMap<readonly Operation[], { readonly told: unknown; readonly ops: readonly Operation[] }>();
+
+/**
+ * WHO DID IT, AS THE PERSON THEY WERE BOUND TO (Roadmap
+ * f-invite-binds-existing-person): an op by a seat bound to a record this
+ * seat is served carries that record's name, so Activity says "Bud" and not
+ * his account, though the seat itself is not served. Kept for one reading of
+ * the log while the store tells nothing new.
+ */
+export function namedAuthors(store: Judged, lens: Pick<SeatLens, "shows" | "served">, ops: readonly Operation[]): readonly Operation[] {
+  const graph = store.graph;
+  if (!graph.hasPersonSeats?.() || !graph.personBoundTo) return ops;
+  const told = (store as { readonly version?: unknown }).version ?? store.log.all().length;
+  const held = NAMED.get(ops);
+  if (held && held.told === told) return held.ops;
+  let changed = false;
+  const named = ops.map((op) => {
+    const author = op.author;
+    if (isWithheld(op) || (author.onBehalfOf ?? author).kind !== "human") return op;
+    const seat = seatPersonOf(author.onBehalfOf ?? author);
+    const id = seat === undefined ? undefined : graph.personBoundTo!(seat);
+    const whole = id === undefined || !lens.shows(id) ? undefined : graph.getNode(id);
+    // Named as this seat is shown the record — its sight, field by field — and not at all where what it is shown names nobody.
+    const node = whole && lens.served(whole);
+    if (!node) return op;
+    let name: unknown;
+    try {
+      name = labelOf(store.schema?.tryDefinition(node.kind) as never, node as never);
+    } catch {
+      name = undefined;
+    }
+    const person = author.onBehalfOf ?? author;
+    if (typeof name !== "string" || name.trim().length === 0 || name === node.id || person.name === name) return op;
+    changed = true;
+    return { ...op, author: author.onBehalfOf ? { ...author, onBehalfOf: { ...person, name } } : { ...author, name } };
+  });
+  const out = changed ? named : ops;
+  NAMED.set(ops, { told, ops: out });
+  return out;
+}
+
 /** The app as a seat is served it at the head: what its sight reaches, as the store grows. */
 export function seatView<T extends Viewed>(store: T, principal: Principal): T {
   // A module off keeps its kinds from every seat as a sight would (FR-12); the view reads which are off as it goes. The system is kept from nothing.
-  if (!hidesFrom(store, principal)) return store;
+  /*
+   * WHERE NOTHING IS KEPT, THE STORE ITSELF — unless a person here could be
+   * bound to a seat (Roadmap f-invite-binds-existing-person): a view held from
+   * before the first binding would serve it after. Such a view reads the
+   * store as it is while nothing is kept (`open`), and is judged once
+   * something is.
+   */
+  if (!hidesFrom(store, principal) && !hasPeople(store)) return store;
   const key = viewKey(principal, "head");
   const views = viewsOf(store);
   const held = views.get(key);
@@ -591,16 +672,26 @@ export function seatView<T extends Viewed>(store: T, principal: Principal): T {
    * and one that touched what this seat may not see withheld — so the log
    * still loads, folds and undoes, and says something happened there.
    */
-  const ops = (): readonly Operation[] => logSeenBy(store as never, principal);
+  // Nothing kept from this seat now: every read is the store's own, as it is for a seat no view is made for.
+  const open = (): boolean => !hidesFrom(store, principal);
+  const ops = (): readonly Operation[] => namedAuthors(store, lens, logSeenBy(store as never, principal));
   const reading = (): LogReading => readingOf(ops(), () => store.log.epochs());
 
   const graph = new Proxy(full, {
     get(target, prop) {
+      if (open()) return bound(target, prop);
       switch (prop) {
         case "getNode":
           return (id: string) => served(target.getNode(id));
         case "has":
           return seenId;
+        // Whom a seat is bound to, asked only of the seats this one may be told of (its own, or every one for whoever binds people), and only a record it is served.
+        case "personBoundTo":
+          return (seat: string) => {
+            if (!lens.keepsSeat?.(seat)) return undefined;
+            const id = (target as { personBoundTo?(seat: string): string | undefined }).personBoundTo?.(seat);
+            return id !== undefined && seenId(id) ? id : undefined;
+          };
         /*
          * Each read as the graph's own, its arguments handed on — a read that
          * lists records says which (FR-173) — and what comes back served:
@@ -646,6 +737,7 @@ export function seatView<T extends Viewed>(store: T, principal: Principal): T {
   };
   const log = new Proxy(store.log, {
     get(target, prop) {
+      if (open()) return bound(target, prop);
       switch (prop) {
         case "all":
         case "toJSON":
@@ -677,6 +769,7 @@ export function seatView<T extends Viewed>(store: T, principal: Principal): T {
 
   const view = new Proxy(store, {
     get(target, prop) {
+      if (prop !== SEAT && prop !== "seenFor" && prop !== "seenBy" && prop !== "graph" && prop !== "log" && open()) return bound(target, prop);
       switch (prop) {
         // Whose view this is (`seatOf`): read by what reads a store from outside it — the past, the suggestions — without importing this module.
         case SEAT:
@@ -706,6 +799,8 @@ export function seatView<T extends Viewed>(store: T, principal: Principal): T {
         case "findings":
           return () =>
             target.findings().filter((finding) => {
+              // Who is bound to whom is told to whoever binds people, and the host (Roadmap f-invite-binds-existing-person).
+              if ((finding as { readonly code?: string }).code === "person-seat-shared" && !bindsPeople(store.policy, principal)) return false;
               const ids = finding.id.includes("->") ? finding.id.split("->").map((end, at) => (at === 0 ? end.slice(end.indexOf(":") + 1) : end)) : [finding.id];
               return ids.every((id) => !full.has(id) || seenId(id)) && !namesUnseen(finding, lens.sees);
             });

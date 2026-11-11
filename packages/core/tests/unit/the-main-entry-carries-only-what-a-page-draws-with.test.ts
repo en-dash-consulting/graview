@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import * as arrange from "../../src/arrange.js";
+import * as binding from "../../src/binding.js";
 import * as blocks from "../../src/blocks.js";
 import * as catalog from "../../src/catalog.js";
 import * as city from "../../src/city.js";
@@ -55,7 +56,7 @@ const OFF_THE_PAGE = {
   // Roadmap f-revisions-say-what-broke: what a revised view, a picture or an act broke, said with the change — a host's, on no page.
   "@graview/core/revisions": { from: revisions, names: ["beyondAsked", "compareViewRevision", "datesPinned", "MEASURE_PICTURED_PAGE", "namesInSelector", "picturedCoverage", "placesTouched", "problemsMade", "sectionsOfDrawing", "selectorsOfStylesheet", "stringsOfSource", "viewProblemKey"] },
   // Roadmap f-app-wide-view-theme: the one CSS sanitizer — the guest host's as it first draws on the open kit, and the checker's for a document's `brand.views.css`.
-  "@graview/core/css": { from: css, names: ["brandFamilies", "CSS_AT_RULES", "CSS_DRAWN_AS", "CSS_FRAGMENT_PROPERTIES", "CSS_FUNCTIONS", "CSS_KEYWORD_PROPERTIES", "CSS_PREFIXED_SELECTORS", "CSS_PROPERTIES", "CSS_REFUSED_SELECTORS", "OPEN_MAX_STYLESHEET", "sanitizeDeclarations", "sanitizeStylesheet", "sanitizeStylesheets", "sanitizeValue", "serializeIdent", "serializeString", "serializeValues", "tokenize", "VIEW_FONTS_MOST", "VIEW_FONTS_NOT_NAMED", "VIEW_FONT_MOST_BYTES", "viewFontProblem", "viewFontSource"] },
+  "@graview/core/css": { from: css, names: ["brandFamilies", "CSS_AT_RULES", "CSS_DRAWN_AS", "CSS_FRAGMENT_PROPERTIES", "CSS_FUNCTIONS", "CSS_KEYWORD_PROPERTIES", "CSS_PREFIXED_SELECTORS", "CSS_PROPERTIES", "CSS_REFUSED_SELECTORS", "OPEN_MAX_STYLESHEET", "sanitizeDeclarations", "sanitizeStylesheet", "sanitizeStylesheets", "sanitizeValue", "serializeIdent", "serializeString", "serializeValues", "tokenize", "isFontType", "VIEW_FACE_DESCRIPTORS", "VIEW_FACE_MOST_BYTES", "VIEW_FACES_MOST", "VIEW_FACES_MOST_BYTES", "viewFaceRefusedWords", "facesRenamed", "VIEW_SHEETS_MOST", "viewFaceFamily", "VIEW_FONTS_MOST", "VIEW_FONTS_NOT_NAMED", "VIEW_FONT_MOST_BYTES", "viewFontProblem", "viewFontSource"] },
   // Roadmap f-navigate-filters: where a view's navigate goes, as an address — the worker view's host and the routed face's alone.
   "@graview/core/navigate": { from: navigate, names: ["narrowedPath", "sectionSlug", "placeNamesFrom", "placeNamesOf"] },
   // Roadmap f-app-icons-home-screen: an app on a home screen — its head tags, its manifest and the files a host serves; a face's theme-color.
@@ -73,7 +74,7 @@ const OFF_THE_PAGE = {
   "@graview/core/import": { from: importing, names: ["coerceCell", "ImportMappingError", "importRows", "parseCsv", "previewImport", "proposeMapping", "readBoolean", "readDateTime", "readDay", "readNumber", "readOption"] },
   "@graview/core/describe": { from: describePlaces, names: ["columnActs", "columnChoices", "columnMoves", "columnOf", "columnReach", "columnSteps", "describePlace", "placeText", "resolveFor", "shadowedPageSlots", "statusColumns"] },
   "@graview/core/check": { from: check, names: ["arrangementFindings", "checkApp", "formatFindings", "compileDocument", "instantiateTemplate", "describeApp", "generateAgentsMd", "generateLlmsTxt", "clockReaders", "designFindings"] },
-  "@graview/core/scene": { from: scene, names: ["BLOCK", "cityExtent", "cityMap", "districtBlocks", "districtState", "heightOf", "MAX_SIDE", "plotsOverlap", "roadsOf", "sharedEdges", "sideFor", "TIER_HEIGHT", "TILTED", "toIso", "TOP_DOWN", "villageCap", "villageOf", "sceneDistricts", "sceneThumbnail", "agoWords", "lastRunWords", "runCount", "workflowSpots", "workflowsOnTheMap"] },
+  "@graview/core/scene": { from: scene, names: ["BLOCK", "cityExtent", "cityMap", "districtBlocks", "districtLanes", "districtState", "heightOf", "MAX_SIDE", "plotsOverlap", "roadsOf", "sharedEdges", "sideFor", "TIER_HEIGHT", "TILTED", "toIso", "TOP_DOWN", "villageCap", "villageOf", "sceneDistricts", "sceneThumbnail", "agoWords", "lastRunWords", "runCount", "workflowSpots", "workflowsOnTheMap"] },
   // The map alone, laid out before the scene draws; what stands on the ground is /scene's, fetched with the ground.
   "@graview/core/city": { from: city, names: ["BLOCK", "cityExtent", "cityMap", "districtState", "MAX_SIDE", "PITCH", "plotsOverlap", "sharedEdges", "sideFor", "TILTED", "toIso", "TOP_DOWN"] },
   "@graview/core/figures": { from: figures, names: ["FIGURES", "FIGURE_NAMES", "figureBrief", "figureFaults", "figureSvg"] },
@@ -83,7 +84,7 @@ const OFF_THE_PAGE = {
   "@graview/core/words": { from: words, names: ["argShape", "argumentWords", "describeArg", "describeNode", "excerptOf", "failureWords", "isLongText", "isMarkdownField", "pageSections", "readableFields", "repeatAsRead", "repeatingDateAsRead", "tellApart", "viaSaid", "fieldSays", "mapsHref", "parseDuration", "sayDuration", "sayPhone", "telHref", "typedHref", "typedWords", "typedFieldOf", "edgeWords", "valueWords", "amountBox", "amountInBox", "readAmount", "endAfterStartMoved", "namesInstant", "readPartialDay", "readWhenTyped", "startAndEndOf", "storedOfWall", "wallNow", "wallOfStored", "zoneSaid", "capitalize", "lowerFirst", "keptInStepWith"] },
   // FR-180: Markdown read into blocks, fetched with the first a page draws.
   "@graview/core/markdown": { from: markdown, names: ["escapeHtml", "headingLevel", "inlineOf", "markdownBlocks", "markdownHtml", "safeHref"] },
-  "@graview/core/seat": { from: seat, names: ["answerSeenBy", "archivedSeenBy", "archiveFrom", "beginning", "placesFrom", "placesOf", "viewPlaceOf"] },
+  "@graview/core/seat": { from: seat, names: ["answerSeenBy", "archivedSeenBy", "archiveFrom", "beginning", "forgetSeatView", "placesFrom", "placesOf", "viewPlaceOf"] },
   // Roadmap f-ai-candidate-catalog: what the inline AI may pick from, the state a model reads and what an interaction leaves behind, fetched when somebody first opens it.
   // Roadmap f-notify-subscriptions: what a person asked to be told of, matched against a commit under their sight — the host's and a sheet's, fetched when somebody first subscribes.
   "@graview/core/subscriptions": { from: subscriptions, names: ["holdTypingRuns", "matchSubscriptions", "subscribersNow", "subscriptionProblem", "subscriptionWords", "TYPING_QUIET_MS", "watchSubscriptions"] },
@@ -92,6 +93,8 @@ const OFF_THE_PAGE = {
   // Roadmap f-jobs-declared: what the app does on its own and when — its shape, its step kinds, its schedule, what starts it, what the checker says — a host's and a runner's, on no page.
   "@graview/core/workflows": { from: workflows, names: ["actsMaking", "actStep", "afterMs", "afterWords", "agentStep", "archiveStep", "classifyApplies", "classifyAsks", "classifyStep", "classifyWords", "datesIn", "declaredWorkflows", "DEFAULT_GENERATE_KEY", "documentWorkflowFindings", "DREAMING", "dreamingWorkflow", "farArgsFindings", "farNamesOf", "farReachOf", "farReferenceFindings", "farReferenceOf", "farWords", "floorLabel", "followsFindings", "generateStep", "isFarReference", "generateWants", "keeps", "keyedId", "keyFields", "kindNoun", "linksIn", "MOST_GENERATED", "MOST_STEPS", "MOST_WINDOW_DAYS", "MOST_WORKFLOWS", "nextOf", "nextRunAt", "policiesOf", "policyApplies", "policyInstruction", "recordsOver", "resolveWorkflow", "SCHEDULE_WORDS", "scheduleOf", "scheduleOfCron", "scheduleOfWords", "scheduleWords", "STEP_KINDS", "stepKindOf", "stepShapes", "triggeredBy", "triggerWords", "windowDays", "workflowAuthor", "workflowFindings", "workflowFindingsOf", "workflowKey", "workflowOrigin", "workflowReach", "workflowsOf", "WorkflowSpec", "workflowSpecHash", "WorkflowsSpec", "WorkflowStepSpec", "WorkflowTriggerSpec", "workflowValue", "workflowWords", "workflowWorldOfApp", "workflowWorldOfDocument"] },
   // Roadmap f-friction-log: what people looked for and could not do — kept, counted across people, said to a model; a page records through the main entry's `recordFriction` alone.
+  // Roadmap f-invite-binds-existing-person: binding a joining account to the person entered for it — the act, who may, and when it stays — a host's, on no page.
+  "@graview/core/binding": { from: binding, names: ["bindPerson"] },
   "@graview/core/friction": {
     from: friction,
     names: ["callShape", "FRICTION_KEPT_MOST", "FRICTION_LIMITS", "FRICTION_RETENTION_DAYS", "FRICTION_TYPES", "frictionDigest", "frictionEvent", "frictionOf", "frictionSinkTo", "keptFriction", "memoryFriction", "ownFriction", "toolMistakes", "withinRetention"],

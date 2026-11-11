@@ -4,6 +4,7 @@ import { actingAs } from "../permissions/policy.js";
 import type { Principal } from "../permissions/types.js";
 import { serveAlong, type FieldWriter, type Timeline } from "./served.js";
 import { DECLINES } from "./tidying.js";
+import { unseatedOp } from "../binding-served.js";
 import type { Author, Operation } from "./types.js";
 
 /**
@@ -41,6 +42,8 @@ export const touchedBy: (primitive: Primitive) => readonly string[] = writesOf;
  */
 export interface SeatLens {
   readonly sees: (id: string) => boolean;
+  /** Which seats a person is bound to this reader may be told (`seatsKept`): none, unless said. */
+  readonly keepsSeat?: (seat: string) => boolean;
   readonly shows: (id: string) => boolean;
   readonly served: <N extends { readonly id: string; readonly kind: string }>(node: N) => N | undefined;
   /** A record as the seat is served it, given who wrote each field's value: the seat's own words are served as written (FR-55). */
@@ -215,7 +218,8 @@ export function redact(ops: readonly Operation[], seeing: SeatLens | ((id: strin
   // A seat from whom nothing is kept is served the log as it is (FR-67).
   if (given.hides?.() === false) return [...ops];
   const lens = given.pin?.() ?? given;
-  return undoesFollow(judgedOps(ops, lens), lens);
+  // And no seat a person is bound to, in any op: that is the host's alone (Roadmap f-invite-binds-existing-person).
+  return undoesFollow(judgedOps(ops, lens), lens).map((op) => unseatedOp(op, lens.keepsSeat));
 }
 
 /**

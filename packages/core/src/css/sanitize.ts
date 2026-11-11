@@ -9,6 +9,7 @@ import {
   CSS_DRAWN_AS,
   OPEN_MAX_STYLESHEET,
 } from "./tables.js";
+import { facesRenamed, judgeFace, renameFamilies, VIEW_FACES_TEXT_ALLOWANCE, VIEW_SHEETS_MOST, type FaceBudget, type ViewFace } from "./faces.js";
 
 /*
  * A VIEW'S CSS, READ AS A BROWSER READS IT (FR-90).
@@ -691,12 +692,33 @@ export type CssRefusalReason =
   /** Something the parser could not read: a bad string or url, a rule with no block, nesting past its depth. */
   | "unreadable"
   /** More CSS than a view may give. */
-  | "size";
+  | "size"
+  /** A view's own face, refused or in part (faces.ts): `name` is the problem (`ViewFaceProblem`). */
+  | "font-face";
 
 export interface CssRefusal {
   readonly reason: CssRefusalReason;
-  /** The at-rule, property, function or selector refused. */
+  /** The at-rule, property, function or selector refused; for a face, what was wrong with it (`ViewFaceProblem`). */
   readonly name?: string;
+  /** A face's family, where it is a plain name. */
+  readonly family?: string;
+  /** A face's bytes, decoded, where it was refused for its size; the view's faces' together, where for theirs. */
+  readonly bytes?: number;
+  /** A face's descriptor left out. */
+  readonly descriptor?: string;
+  /** What a face said that was refused: its address, its type, or why its family is not one. */
+  readonly said?: string;
+}
+
+/** A view's faces as its sheets are judged: what is spent, what is kept, and how much of the sheet their `data:` URLs are. */
+interface FaceJudging {
+  readonly budget: FaceBudget;
+  readonly kept: ViewFace[];
+  data: number;
+  /** The families the app lends its views: a face of the view's own may not take one. */
+  readonly lent?: readonly string[];
+  /** Written again under the faces' names on the page: the faces were judged already, and are passed over. */
+  readonly skip?: true;
 }
 
 const PROPERTIES = new Set(CSS_PROPERTIES);
@@ -829,8 +851,10 @@ function judgeDeclaration(declaration: Declaration, refuse: (refusal: CssRefusal
     }
     return `${name}: ${word}${declaration.important && !(attribute && name === "all") ? " !important" : ""}`;
   }
-  const value = judgeValue(custom ? undefined : name, declaration.value, refuse);
-  if (!value) return undefined;
+  const judged = judgeValue(custom ? undefined : name, declaration.value, refuse);
+  if (!judged) return undefined;
+  /* A face the view declared is drawn under the name the host gave it on this page alone (faces.ts). */
+  const value = renaming && (name === "font-family" || name === "font") ? renameFamilies(judged, renaming) : judged;
   const said = serializeValues(value).trim();
   return `${custom ? `--${serializeName(declaration.name.slice(2))}` : name}: ${said}${declaration.important && !(attribute && HELD.test(name)) ? " !important" : ""}`;
 }
@@ -896,14 +920,14 @@ function judgeSelector(prelude: readonly ComponentValue[], refuse: (refusal: Css
 }
 
 /** The contents of a style rule's block: declarations and nested rules. */
-function judgeBlock(values: readonly ComponentValue[], refuse: (refusal: CssRefusal) => void, depth: number): string {
+function judgeBlock(values: readonly ComponentValue[], refuse: (refusal: CssRefusal) => void, depth: number, faces?: FaceJudging): string {
   const kept: string[] = [];
   for (const item of blockItems(values)) {
     if (item.type === "declaration") {
       const said = judgeDeclaration(item, refuse);
       if (said) kept.push(`${said};`);
     } else {
-      const said = judgeRule(item, refuse, depth + 1, "style");
+      const said = judgeRule(item, refuse, depth + 1, "style", faces);
       if (said) kept.push(said);
     }
   }
@@ -965,7 +989,7 @@ function asDrawn(values: readonly ComponentValue[]): ComponentValue[] {
   });
 }
 
-function judgeRule(rule: Rule, refuse: (refusal: CssRefusal) => void, depth: number, within: "sheet" | "style" | "keyframes"): string | undefined {
+function judgeRule(rule: Rule, refuse: (refusal: CssRefusal) => void, depth: number, within: "sheet" | "style" | "keyframes", faces?: FaceJudging): string | undefined {
   if (depth > MAX_DEPTH) {
     refuse({ reason: "unreadable", name: "nesting" });
     return undefined;
@@ -986,10 +1010,29 @@ function judgeRule(rule: Rule, refuse: (refusal: CssRefusal) => void, depth: num
       refuse({ reason: "unreadable", name: "selector" });
       return undefined;
     }
-    return `${selector} { ${judgeBlock(rule.block, refuse, depth)} }`;
+    return `${selector} { ${judgeBlock(rule.block, refuse, depth, faces)} }`;
   }
   const name = lower(rule.name);
   const canonical = name === "-webkit-keyframes" ? "keyframes" : name;
+  if (name === "font-face" && faces) {
+    /* A view's own face, at the top of its sheet alone: kept apart from the CSS, which still holds no @font-face (faces.ts). */
+    if (faces.skip) return undefined;
+    if (depth > 0 || within !== "sheet") {
+      refuse({ reason: "font-face", name: "where" });
+      return undefined;
+    }
+    if (!rule.block) {
+      refuse({ reason: "font-face", name: "unreadable" });
+      return undefined;
+    }
+    const judged = judgeFace(rule.prelude, blockItems(rule.block), faces.budget, refuse, faces.lent);
+    /* Only a face kept is not counted toward the sheet's length: a refused one's text is the sheet's like any other. */
+    if (judged.face) {
+      faces.data += judged.data;
+      faces.kept.push(judged.face);
+    }
+    return undefined;
+  }
   if (!AT_RULES.has(canonical) || within === "keyframes") {
     refuse({ reason: "at-rule", name: `@${name}` });
     return undefined;
@@ -1020,9 +1063,9 @@ function judgeRule(rule: Rule, refuse: (refusal: CssRefusal) => void, depth: num
   /* Inside a style rule a conditional rule holds declarations (nesting); at the top it holds rules. */
   const body =
     within === "style"
-      ? judgeBlock(rule.block, refuse, depth)
+      ? judgeBlock(rule.block, refuse, depth, faces)
       : rules(rule.block, false)
-          .map((inner) => judgeRule(inner, refuse, depth + 1, "sheet"))
+          .map((inner) => judgeRule(inner, refuse, depth + 1, "sheet", faces))
           .filter((one): one is string => one !== undefined)
           .join(" ");
   return `@${canonical} ${condition} { ${body} }`;
@@ -1033,17 +1076,47 @@ export interface SanitizedCss {
   readonly css: string;
   /** What was not kept, in the order it was met. */
   readonly refused: readonly CssRefusal[];
+  /** The faces a view's own stylesheet declares (`{ faces: true }`), for the host to load from their bytes: never in `css`. */
+  readonly faces: readonly ViewFace[];
+}
+
+/**
+ * How a stylesheet is read. `faces`: a view's own, whose `@font-face` of a
+ * `data:` font is kept as a face (faces.ts) — `scope`, the name the host
+ * gives this view on its page, under which each face is drawn and every
+ * `font-family` or `font` naming it is written (`viewFaceFamily`), so a face
+ * a view declares draws in that view alone; `lent`, the families the app
+ * lends its views, which a view's own face may not take.
+ */
+export interface SanitizeOptions {
+  readonly faces?: boolean | { readonly scope?: string; readonly lent?: readonly string[] };
+}
+
+/** What a face named in a `font-family` or a `font` is written as while a view's sheets are written: its family, lowercased, to its name on the page. */
+let renaming: ReadonlyMap<string, string> | undefined;
+const renamed = <T>(rename: ReadonlyMap<string, string> | undefined, run: () => T): T => {
+  const before = renaming;
+  renaming = rename && rename.size > 0 ? rename : undefined;
+  try {
+    return run();
+  } finally {
+    renaming = before;
+  }
+};
+
+/** One sheet judged, with how much of it counts toward its budget: its length less the `data:` URLs of the faces kept from it. */
+function judgeSheet(css: string, faces: FaceJudging | undefined): SanitizedCss & { readonly counted: number } {
+  const refused: CssRefusal[] = [];
+  const refuse = (refusal: CssRefusal) => void refused.push(refusal);
+  const kept = rules(parse(css), true)
+    .map((rule) => judgeRule(rule, refuse, 0, "sheet", faces))
+    .filter((one): one is string => one !== undefined);
+  return { css: kept.join("\n"), refused, faces: faces?.kept ?? [], counted: css.length - (faces?.data ?? 0) };
 }
 
 /** A VIEW'S STYLESHEET, judged: what may be drawn of it, and what was refused. */
-export function sanitizeStylesheet(css: string, maxLength = OPEN_MAX_STYLESHEET): SanitizedCss {
-  const refused: CssRefusal[] = [];
-  if (css.length > maxLength) return { css: "", refused: [{ reason: "size" }] };
-  const refuse = (refusal: CssRefusal) => void refused.push(refusal);
-  const kept = rules(parse(css), true)
-    .map((rule) => judgeRule(rule, refuse, 0, "sheet"))
-    .filter((one): one is string => one !== undefined);
-  return { css: kept.join("\n"), refused };
+export function sanitizeStylesheet(css: string, maxLength = OPEN_MAX_STYLESHEET, options: SanitizeOptions = {}): SanitizedCss {
+  return sanitizeStylesheets([css], maxLength, options);
 }
 
 /**
@@ -1051,45 +1124,88 @@ export function sanitizeStylesheet(css: string, maxLength = OPEN_MAX_STYLESHEET)
  * as one sheet is, so a sheet left open swallows nothing after it, and all
  * of them held to one budget between them. A sheet that would go past it
  * is refused for its size and the ones before it are drawn.
+ *
+ * Their faces (`{ faces }`) are held to one budget between them too, and
+ * the text they ride in to one allowance past the sheets' own budget
+ * (`VIEW_FACES_TEXT_ALLOWANCE`): a sheet whose text would take the view
+ * past both is refused before it is read, and of what is read only the
+ * faces kept are not counted toward the budget. At most `VIEW_SHEETS_MOST`
+ * sheets are read.
  */
-export function sanitizeStylesheets(sheets: readonly string[], maxLength = OPEN_MAX_STYLESHEET): SanitizedCss {
+export function sanitizeStylesheets(sheets: readonly string[], maxLength = OPEN_MAX_STYLESHEET, options: SanitizeOptions = {}): SanitizedCss {
+  const facing = options.faces ? (options.faces === true ? {} : options.faces) : undefined;
   const kept: string[] = [];
+  const keptSheets: string[] = [];
   const refused: CssRefusal[] = [];
+  const faces: ViewFace[] = [];
+  const budget: FaceBudget = { bytes: 0, count: 0 };
+  const allowance = facing ? VIEW_FACES_TEXT_ALLOWANCE : 0;
+  const read = facing && sheets.length > VIEW_SHEETS_MOST ? sheets.slice(0, VIEW_SHEETS_MOST) : sheets;
+  if (read.length < sheets.length) refused.push({ reason: "size", name: "sheets" });
   let spent = 0;
-  for (const sheet of sheets) {
-    if (spent + sheet.length > maxLength) {
+  let readSoFar = 0;
+  for (const sheet of read) {
+    /* Before it is read: what is read of a view's sheets is bounded, whatever they hold. */
+    if (facing && readSoFar + sheet.length > maxLength + allowance) {
       refused.push({ reason: "size" });
       continue;
     }
-    spent += sheet.length;
-    const judged = sanitizeStylesheet(sheet, maxLength);
-    if (judged.css) kept.push(judged.css);
-    refused.push(...judged.refused);
-  }
-  return { css: kept.join("\n"), refused };
-}
-
-/** A `style` attribute, judged: declarations only. */
-export function sanitizeDeclarations(css: string, maxLength = OPEN_MAX_STYLESHEET): SanitizedCss {
-  const refused: CssRefusal[] = [];
-  if (css.length > maxLength) return { css: "", refused: [{ reason: "size" }] };
-  const refuse = (refusal: CssRefusal) => void refused.push(refusal);
-  const kept: string[] = [];
-  for (const item of blockItems(parse(css))) {
-    if (item.type !== "declaration") {
-      refuse({ reason: "unreadable", name: "a rule in a style attribute" });
+    if (!facing && spent + sheet.length > maxLength) {
+      refused.push({ reason: "size" });
       continue;
     }
-    const said = judgeDeclaration(item, refuse, true);
-    if (said) kept.push(said);
+    readSoFar += sheet.length;
+    /* Judged against a copy: a sheet refused for its length spends nothing of the view's faces. */
+    const judging: FaceJudging | undefined = facing ? { budget: { ...budget }, kept: [], data: 0, ...(facing.lent ? { lent: facing.lent } : {}) } : undefined;
+    const judged = judgeSheet(sheet, judging);
+    if (spent + judged.counted > maxLength) {
+      /* Too long whole, said with what was wrong with the faces in it: a face past its size is said as that. */
+      refused.push({ reason: "size" }, ...judged.refused.filter((one) => one.reason === "font-face"));
+      continue;
+    }
+    if (judging) Object.assign(budget, judging.budget);
+    spent += judged.counted;
+    keptSheets.push(sheet);
+    if (judged.css) kept.push(judged.css);
+    refused.push(...judged.refused);
+    faces.push(...judged.faces);
   }
-  return { css: kept.join("; "), refused };
+  /* Each face under its name on this page: the sheets written again with every font-family and font that names one naming that. */
+  const rename = facing?.scope ? facesRenamed(faces, facing.scope) : undefined;
+  if (!rename || rename.size === 0) return { css: kept.join("\n"), refused, faces };
+  const skip: FaceJudging = { budget: { bytes: 0, count: 0 }, kept: [], data: 0, skip: true };
+  const css = renamed(rename, () => keptSheets.map((sheet) => judgeSheet(sheet, skip).css).filter((one) => one !== ""));
+  return { css: css.join("\n"), refused, faces };
+}
+
+/** What a sheet's or an attribute's font families are written as: each face's family, lowercased, to its name on the page. */
+export interface FamilyNames {
+  readonly rename?: ReadonlyMap<string, string>;
+}
+
+/** A `style` attribute, judged: declarations only. `rename`: the view's faces' names on the page (`facesRenamed`). */
+export function sanitizeDeclarations(css: string, maxLength = OPEN_MAX_STYLESHEET, options: FamilyNames = {}): SanitizedCss {
+  const refused: CssRefusal[] = [];
+  if (css.length > maxLength) return { css: "", refused: [{ reason: "size" }], faces: [] };
+  const refuse = (refusal: CssRefusal) => void refused.push(refusal);
+  const kept: string[] = [];
+  renamed(options.rename, () => {
+    for (const item of blockItems(parse(css))) {
+      if (item.type !== "declaration") {
+        refuse({ reason: "unreadable", name: "a rule in a style attribute" });
+        continue;
+      }
+      const said = judgeDeclaration(item, refuse, true);
+      if (said) kept.push(said);
+    }
+  });
+  return { css: kept.join("; "), refused, faces: [] };
 }
 
 /** One value for one property (an SVG presentation attribute), judged. */
-export function sanitizeValue(property: string, value: string): { readonly value: string } | { readonly refused: CssRefusal } {
+export function sanitizeValue(property: string, value: string, options: FamilyNames = {}): { readonly value: string } | { readonly refused: CssRefusal } {
   let refusal: CssRefusal | undefined;
-  const said = judgeDeclaration(toDeclaration(property, parse(value)), (one) => (refusal ??= one));
+  const said = renamed(options.rename, () => judgeDeclaration(toDeclaration(property, parse(value)), (one) => (refusal ??= one)));
   if (said === undefined || refusal) return { refused: refusal ?? { reason: "unreadable", name: property } };
   return { value: said.slice(said.indexOf(":") + 1).trim() };
 }

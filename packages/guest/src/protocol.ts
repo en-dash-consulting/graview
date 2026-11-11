@@ -209,6 +209,8 @@ export interface GuestFile {
   readonly poster?: true;
   /** A picture's address for `<img src>`, made by the host from the bytes. Smaller than the file where the view needs no more. */
   readonly src?: string;
+  /** Its second, smaller address, where the view asked for one (`pictures.thumb`): made from `src` at that width, for a chip or a grid, and a still. Absent where it would be no smaller than `src`: draw `thumb || src`. */
+  readonly thumb?: string;
   /** Why a picture was left out, in a sentence that names the view. */
   readonly left?: string;
 }
@@ -281,6 +283,27 @@ export interface GuestProps {
    * sight.
    */
   readonly me?: { readonly id?: string; readonly name?: string };
+  /**
+   * WHAT THIS SEAT IS KEPT FROM, of the kinds the view reads (Roadmap
+   * f-view-knows-what-its-seat-cannot-see): so a view can say "Sign in to
+   * see the vendors" rather than draw an empty section. Absent where
+   * nothing of what it reads is kept from the seat.
+   */
+  readonly unseen?: GuestUnseen;
+}
+
+/**
+ * WHAT A VIEW'S SEAT IS KEPT FROM, and only what the seat may know of it.
+ * `kinds`: each kind the view reads that the seat sees none of. `fields`:
+ * for a worker view, for each kind it reads and sees, the fields some
+ * record of it may be handed without, from the app's sight rules alone. A
+ * frame guest is handed `kinds` alone, of the kinds its own `reads` names.
+ * Nothing about any record: no count, no id, no value.
+ */
+export interface GuestUnseen {
+  readonly kinds: readonly string[];
+  /** A worker view's alone. */
+  readonly fields?: Readonly<Record<string, readonly string[]>>;
 }
 
 /** The longest value a view may keep, in bytes as UTF-8. */
@@ -518,8 +541,12 @@ export interface GuestFont {
 }
 
 export type HostMessage =
-  /** `push` numbers it, for a worker view's runtime to say when it has drawn it (FR-94). */
-  | { readonly type: "props"; readonly props: GuestProps; readonly push?: number }
+  /**
+   * `push` numbers it, for a worker view's runtime to say when it has drawn it (FR-94);
+   * `partMs` is the most one `graview.part` may take of it (`PART_SHARE`), and `partMark` what the
+   * runtime stamps on a part it hands on failed, so the host honors no mark the view wrote itself.
+   */
+  | { readonly type: "props"; readonly props: GuestProps; readonly push?: number; readonly partMs?: number; readonly partMark?: string }
   | GuestAnswer
   | GuestEvent
   | GuestDomEvent

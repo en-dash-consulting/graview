@@ -323,6 +323,10 @@ function validate(document: GraviewDocument): Finding[] {
     effects.forEach((effect, i) => {
       const shorthands = effects.length - (act.effects?.length ?? 0);
       const where = act.effects && i >= shorthands ? `${at}.effects.${i - shorthands}` : at;
+      // The framework's own marks (`$archived`, `$seat`) are no field: no effect writes one, whatever record it names.
+      const marked = "set" in effect && effect.set && typeof effect.set === "object" ? Object.keys(effect.set).filter((field) => field.startsWith("$")) : [];
+      for (const field of marked) findings.push(error("act-field", `${where}.set.${field}`, `"${field}" is the framework's own mark, not a field: no act can set it`));
+      if (marked.length > 0) return;
       if ("create" in effect) {
         if (!kinds.has(effect.create)) findings.push(error("act-kind", `${where}.create`, `"${effect.create}" is not a kind this document declares`));
         else {

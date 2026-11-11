@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 800,
+  "gzipped": 448,
+  "note": "Raised when the 0.1.73 batch's branches were merged (a view knows its seat, a part fails alone, a view's own face): each measured its open-kit growth against a batch the others had already moved, and together they come to 658 bytes minified and 358 gzipped over their summed raises (293_740 / 113_153 against 293_082 / 112_795), held for a few bytes either side."
+}

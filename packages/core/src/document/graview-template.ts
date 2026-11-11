@@ -1,6 +1,7 @@
 import * as z from "zod";
 import type { GraphReader } from "../graph/types.js";
 import type { Primitive } from "../graph/primitives.js";
+import { unseated } from "../binding-served.js";
 import type { CompiledDocument } from "./compile.js";
 import { analyzeExpr } from "./expr/analyze.js";
 import { evaluateExpr, ExprEvalError, type Value } from "./expr/evaluate.js";
@@ -171,7 +172,8 @@ export interface RefusedTemplate {
 /** The example content as primitives, for a store to apply as one batch of its own. */
 export function templateSeedPrimitives(seed: TemplateSeed, document: GraviewDocument): Primitive[] {
   return [
-    ...seed.nodes.map((node): Primitive => ({ op: "add-node", node: withDefaults(node, document) as never })),
+    // A template never says whose record a person is: bindings stay in the installation that made them.
+    ...seed.nodes.map((node): Primitive => ({ op: "add-node", node: unseated(withDefaults(node, document)) as never })),
     ...seed.edges.map((edge): Primitive => ({ op: "add-edge", edge })),
   ];
 }

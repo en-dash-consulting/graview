@@ -32,7 +32,7 @@ export { withoutKeptFields } from "./ops/kept-fields.js";
 import type { Operation } from "./ops/types.js";
 import { keptOf, withoutKeptFields } from "./ops/kept-fields.js";
 import { namesUnseen, whole, withhold, type SeatLens } from "./ops/withheld.js";
-import { actingAs, grantsTo, isSystem, ownsId } from "./permissions/policy.js";
+import { actingAs, grantsTo, isSystem, ownsId, seatedIn } from "./permissions/policy.js";
 import { FIELD_SIGHT, partialSight, recordsOf, type FieldsKept, type Records } from "./permissions/sight.js";
 import type { Policy, Principal, Sight } from "./permissions/types.js";
 import { labelOf } from "./schema/define-node.js";
@@ -100,7 +100,8 @@ export function keptFrom(store: Judged, principal: Principal): FieldsKept | unde
     if (!kinds.has(node.kind)) return undefined;
     const records = recordsOf(store.log);
     const maker = { creatorOf: (id: string) => records.creatorOf(id) ?? (id === node.id && !store.graph.getNode(id) ? actingAs(principal).id : undefined) };
-    return fieldsKept(store.policy, principal, node, store.graph, maker);
+    // The seat as it is bound now (`seatedIn`), asked of each record: a binding taken back keeps what it kept before.
+    return fieldsKept(store.policy, seatedIn(store.graph, principal), node, store.graph, maker);
   };
 }
 

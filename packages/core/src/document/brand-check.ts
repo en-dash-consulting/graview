@@ -97,6 +97,8 @@ export function cssRefusalWords(refusal: CssRefusal): string {
       return refusal.name ? `${refusal.name} it cannot read` : "CSS it cannot read";
     case "size":
       return "its length";
+    case "font-face":
+      return "an @font-face";
   }
 }
 /** The refusals of one stylesheet, each said once, the first few. */

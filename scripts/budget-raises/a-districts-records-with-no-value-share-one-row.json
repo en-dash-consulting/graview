@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 128,
+  "gzipped": 40,
+  "note": "Raised when a district's records with no value for its kind's main choice came to stand in one row: the scene's plots stand their rows through `districtLanes` in `@graview/core/scene`, which opens the row for them once rather than once a record. Measured at 3_155_568 / 1_144_575 against 3_155_440 / 1_144_535 minified and gzipped."
+}

@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker",
+  "minified": 1428,
+  "gzipped": 557,
+  "note": "Raised when a worker view came to be told what its seat cannot see (Roadmap f-view-knows-what-its-seat-cannot-see): `props.unseen`, the kinds it reads that the seat sees none of and the fields its sight may keep, read from the policy as each push is built, and the host's way in drawn where everything it reads is kept. 1_428 / 557 more than its budget held. Measured at 33_858 / 14_207 against 32_430 / 13_650."
+}

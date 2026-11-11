@@ -27,6 +27,7 @@ export const VIEW_USAGE = `  graview view check <view.js> --app <app> --manifest
                      [--seed <file>] [--record <id>] [--as <id>] [--roles a,b]
                      [--width <px>] [--press <selector> [--type name=value]…]
                      [--audit [--browser]] [--no-presses] [--json]
+                     [--seats [owner,<role>,visitor]]
       run a worker view once, headless, with no network, seated as one
       member (the system, unless --as or --roles say who), and say what it
       drew, or why it will not do; a view of one record is run over the
@@ -43,7 +44,15 @@ export const VIEW_USAGE = `  graview view check <view.js> --app <app> --manifest
       that need a browser and did not run, and fails on a problem the view
       must fix; --browser lays what it drew out in Chromium, through the
       project's own Playwright, and runs every rule there — the ring the
-      keyboard shows, text contrast, and Tab through the view and out
+      keyboard shows, text contrast, and Tab through the view and out;
+      --seats runs it once as each seat the app's policy names — the owner
+      (--as and --roles, else the system), each role as a person holding it
+      alone, and a visitor where the app has one — or the ones it lists,
+      and says for each whether it drew, fell back or was stopped, and what
+      it reads that the seat is not handed; it fails where a seat is stopped
+      or falls back for anything but having nothing it reads in sight; what
+      it says of each seat is for someone who may see as every seat — the
+      app's owner — never for one of the seats
 `;
 
 function flag(argv: readonly string[], name: string): string | undefined {
@@ -85,6 +94,34 @@ export async function view(argv: readonly string[]): Promise<number> {
   const pressAt = flag(argv, "--press");
   const typed = Object.fromEntries(argv.flatMap((one, at) => (one === "--type" && argv[at + 1]?.includes("=") ? [[argv[at + 1]!.slice(0, argv[at + 1]!.indexOf("=")), argv[at + 1]!.slice(argv[at + 1]!.indexOf("=") + 1)]] : [])));
   const manifest = readJson(manifestAt) as WorkerViewManifest;
+  /* As each seat (Roadmap f-view-check-draws-for-each-seat): the policy's, or the ones named. */
+  if (argv.includes("--seats")) {
+    const { runWorkerViewForEachSeat, seatsOfPolicy } = await import("./headless/seats.js");
+    const listed = flag(argv, "--seats");
+    const wanted = listed && !listed.startsWith("--") ? listed.split(",").map((one) => one.trim()).filter(Boolean) : undefined;
+    const every = seatsOfPolicy(app.policy, principal);
+    const unknown = (wanted ?? []).filter((name) => !every.some((seat) => seat.name === name));
+    if (unknown.length > 0) {
+      process.stderr.write(`graview view check --seats: ${unknown.map((one) => `"${one}"`).join(", ")} is no seat of this app; its seats are ${every.map((seat) => seat.name).join(", ")}.\n`);
+      return 1;
+    }
+    const checked = await runWorkerViewForEachSeat({
+      store,
+      manifest,
+      owner: principal,
+      ...(wanted ? { seats: every.filter((seat) => wanted.includes(seat.name)) } : {}),
+      source: readFileSync(resolve(process.cwd(), file), "utf8"),
+      run: nodeIsolate(),
+      places: (app.views?.places?.() ?? []).filter((place, at, all) => all.findIndex((other) => other.as === place.as) === at).map((place) => ({ as: place.as, title: place.title, kind: place.kind })),
+      views: [],
+      ...(app.brand?.views ? { brand: { views: app.brand.views } } : {}),
+      ...(width ? { width: Number(width) } : {}),
+      ...(argv.includes("--no-presses") ? {} : { presses: (await import("./headless/presses.js")).checkPresses }),
+    });
+    if (argv.includes("--json")) process.stdout.write(`${JSON.stringify({ ok: checked.ok, seats: checked.seats.map(({ result: _result, ...seat }) => seat) }, null, 2)}\n`);
+    else process.stdout.write(checked.text);
+    return checked.ok ? 0 : 1;
+  }
   /* A view of one record is run over one (W-242): the one --record names, or the first of its kind the seat sees. */
   let over = "";
   let input: { readonly node: { readonly id: string } } | undefined;

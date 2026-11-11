@@ -1,4 +1,4 @@
-import { ARCHIVED, isArchived, LEFT_ALONE } from "../graph/archived.js";
+import { ARCHIVED, isArchived, LEFT_ALONE, PERSON_SEAT, personSeatOf } from "../graph/archived.js";
 import { UNSET, type Primitive } from "../graph/primitives.js";
 import type { GraphEdge } from "../graph/types.js";
 import { canonicalize } from "./canonical.js";
@@ -296,6 +296,8 @@ export function planMigration(before: GraviewDocument, after: GraviewDocument, g
      */
     // A record a person said to leave alone stays so, whatever its kind is called now.
     if ((node as Record<string, unknown>)[LEFT_ALONE] === true) next[LEFT_ALONE] = true;
+    // A person bound to an account stays theirs while their kind is still the people (Roadmap f-invite-binds-existing-person).
+    if (personSeatOf(node) !== undefined && after.kinds[newKind]!.people === true) next[PERSON_SEAT] = personSeatOf(node);
     if (isArchived(node)) {
       if (after.kinds[newKind]!.archives !== false) next[ARCHIVED] = true;
       else {

@@ -1,15 +1,18 @@
 import { imageRefusedWords } from "./open-judge.js";
 import { keepClicked } from "./clicked.js";
 import { guestPlacesOf } from "./links-words.js";
-import { actingAs, meOf, type AnySchema, type FileValue, type HostFiles, type PagesArrangement, type Principal, type Store, type ViewerState } from "@graview/core";
+import { actingAs, meOf, type AnySchema, type FileValue, type HostFiles, type PagesArrangement, type Principal, type SignIn, type Store, type ViewerState } from "@graview/core";
+import { readsOnlyUnseen, unseenOf, viewKinds } from "./unseen.js";
 import { createMine, keptForTheVisit, visitOf } from "./mine.js";
 import { storedFilesOf } from "./marks.js";
 import { retryingImport } from "@graview/core/retry";
 import type { GuestDomEvent, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
+import { PART_SHARE } from "../part.js";
 import { checkManifest, edgesReadWithoutTheirKindsSaid, readsComputed, workerViewProps, type ComputedOn, type WorkerViewManifest } from "./manifest.js";
 import type { OpenDrawing, ViewRefusal } from "./open-draw.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestStats, type GuestViewInput } from "./session.js";
 import { startWorker, type GuestWorkerSource, type StartedWorker } from "./worker-start.js";
+import { mintNonce } from "./nonce.js";
 import { judgeCodeAct, type DropGrant } from "./writes.js";
 import { createDrawBudget } from "./draw-budget.js";
 import { fitBudget, keepStart, paceOf } from "./device-pace.js";
@@ -43,6 +46,8 @@ const picturesChunk = retryingImport(() => import("./pictures.js"));
 const mediaChunk = retryingImport(() => import("./media.js"));
 /* The faces the app lends its views, fetched with the first view a brand that lends any dresses. */
 const fontsChunk = retryingImport(() => import("./fonts.js"));
+/* How many worker views this page has mounted: each one's own name for the faces it declares is its count and a few random letters. */
+let viewsMounted = 0;
 /* Files dropped on what the view drew (FR-193), fetched with the first `data-drop` a view whose manifest accepts files draws. */
 const dropChunk = retryingImport(() => import("./drop.js"));
 /* A wheel, a drag and a pinch over what the view drew (0.1.42), fetched only for a view whose manifest says gestures and that listens for one. */
@@ -75,7 +80,11 @@ export type WorkerViewFailure =
   | "nodes"
   /** It sent more than `messages` messages in `messageWindowMs`. */
   | "flood"
-  /** It took longer than `pushMs`, fitted to the device, to draw what it was shown. */
+  /**
+   * It took longer than `pushMs`, fitted to the device, to draw what it was
+   * shown — or what it sent took the host's page more than `drawMs` of one
+   * second to draw. The sentence names the clock that stopped it.
+   */
   | "slow";
 
 export interface WorkerViewLimits extends GuestLimits {
@@ -127,7 +136,7 @@ function why(reason: WorkerViewFailure, limits: Required<Pick<WorkerViewLimits, 
     case "flood":
       return `It sent more than ${limits.messages} messages in ${limits.messageWindowMs.toLocaleString("en-US")} ms.`;
     case "slow":
-      return `It took longer than ${limits.pushMs.toLocaleString("en-US")} ms to draw what it was shown.`;
+      return detail ?? `It took longer than ${limits.pushMs.toLocaleString("en-US")} ms to draw what it was shown.`;
   }
 }
 
@@ -280,6 +289,15 @@ export interface MountWorkerViewOptions<S extends AnySchema> {
    * (the Scene's preview of a place) sizes it by.
    */
   readonly onContentHeight?: (height: number | undefined) => void;
+  /**
+   * WHAT A SIGNED-OUT READER COULD GAIN (FR-183): the host's way in, given
+   * while the reader is a visitor. Where every kind the view reads is kept
+   * from its seat (Roadmap f-view-knows-what-its-seat-cannot-see), the view
+   * is not started: the host draws this one line to press in its place —
+   * or, with none, says that nothing here is shown to the reader — rather
+   * than a part with nothing in it.
+   */
+  readonly signIn?: () => SignIn | undefined;
 }
 
 export interface WorkerView {
@@ -367,6 +385,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   const base = { pushMs: limits.pushMs, drawMs: limits.drawMs };
   /* The page's pace, once this view's worker has started: what its time budgets were fitted by. */
   let pace: number | undefined;
+  /* What the runtime stamps on a part it hands on failed (`graview.part`): a mark the view writes itself is not honored (parts.ts). */
+  const partMark = mintNonce();
   /* What the view was last shown: the plain face drawn in its place, if it fails. */
   let lastProps: GuestProps | undefined;
   /* What works out its records' computed values, once fetched (below). */
@@ -508,6 +528,17 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     queueMicrotask(() => fail(...refusedNow));
     return handle();
   }
+  /*
+   * NOTHING IT READS IS THE SEAT'S TO SEE (Roadmap
+   * f-view-knows-what-its-seat-cannot-see): not started, and in its place
+   * the line a reader with no acts is given (FR-183) — the host's way in for
+   * a visitor — never a part with nothing in it.
+   */
+  const reads = viewKinds(manifest);
+  if (readsOnlyUnseen(reads, unseenOf(options.store, options.principal, reads))) {
+    drawKept(shadow, region, options.signIn?.());
+    return handle();
+  }
 
   /*
    * THE APP'S LOOK, KEPT UP. The tokens reach the view's stylesheet by
@@ -545,6 +576,11 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     const lendingNow = JSON.stringify([fonts, typography ?? null]);
     if (lendingNow === lent) return;
     lent = lendingNow;
+    /* A face of the view's own may not take a name the brand now lends: its sheets are judged again against it. */
+    if (drawing && sheetsGiven) {
+      drawing.style(sheetsGiven, lentFamilies());
+      lendOwn();
+    }
     lending += 1;
     const asked = lending;
     if (fonts.length === 0) {
@@ -559,6 +595,42 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         port?.postMessage({ type: "notice", text: said });
         options.onProblem?.(said);
       }, giveFontsBack);
+    });
+  };
+  /*
+   * THE FACES THE VIEW'S OWN STYLESHEETS DECLARE (HQ f-view-font-face-data):
+   * `data:` fonts the open kit judged, loaded into the page from their bytes
+   * under this view's own name for them (`faceScope`), so they draw here and
+   * nowhere else on the page, as the view's sheets change or the faces the
+   * brand lends (whose names a view's own may not take), and what the open
+   * kit refused of them said once each (fonts.ts).
+   */
+  const faceScope = `graview-view-${(viewsMounted += 1).toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  let sheetsGiven: readonly string[] | undefined;
+  const lentFamilies = () => (options.brand?.()?.views?.fonts ?? []).map((font) => font.family);
+  let owning = 0;
+  let giveOwnBack: (() => void) | undefined;
+  const toldFaces = new Set<string>();
+  const sayFace = (said: string) => {
+    if (toldFaces.has(said)) return;
+    toldFaces.add(said);
+    port?.postMessage({ type: "notice", text: said });
+    options.onProblem?.(said);
+  };
+  const lendOwn = () => {
+    const faces = drawing?.faces ?? [];
+    const refused = (drawing?.refused ?? []).flatMap((one) => (one.reason === "css" && one.css?.reason === "font-face" ? [one.css] : []));
+    owning += 1;
+    const asked = owning;
+    if (faces.length === 0 && refused.length === 0) {
+      giveOwnBack?.();
+      giveOwnBack = undefined;
+      return;
+    }
+    void fontsChunk().then(({ loadViewFaces, viewFaceRefusedWords }) => {
+      if (asked !== owning) return;
+      for (const one of refused) sayFace(viewFaceRefusedWords(one));
+      giveOwnBack = loadViewFaces(document, faces, { scope: faceScope }, sayFace, giveOwnBack);
     });
   };
   let pushed = "";
@@ -614,6 +686,9 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     lending += 1;
     giveFontsBack?.();
     giveFontsBack = undefined;
+    owning += 1;
+    giveOwnBack?.();
+    giveOwnBack = undefined;
   };
 
   let port: MessagePort | undefined;
@@ -660,23 +735,55 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   };
   /* The host's own time drawing the view, at most `drawMs` of any second (draw-budget.ts), as fitted to the device: past it, the view is slow. */
   const budget = createDrawBudget(() => limits.drawMs, () => clock.now());
+  /* The draw clock, said as itself (Roadmap f-view-budget-fair-to-visitors): a view it stopped is not told a push took too long. */
+  const drawnTooLong = () => `What it drew took this page longer than the ${Math.round(limits.drawMs).toLocaleString("en-US")} ms of any one second a view may take to draw.`;
   /* The fields the view marked `data-prefill`, filled by the host from the record after each batch it draws (FR-150, press.ts). */
   let refill = () => {};
-  const draw = (one: ["render", unknown] | ["style", readonly string[]]) => {
-    if (failed) return;
-    if (!drawing) return void waiting.push(one);
-    const live = drawing;
-    const within = budget.draw((spent) => (one[0] === "render" ? live.apply(one[1], spent) : (live.style(one[1]), true)));
-    if (!within) return fail("slow");
-    if (one[0] === "render") refill();
+  /*
+   * WHAT ONE BATCH IS JUDGED BY (Roadmap f-visitor-link-check-off-the-draw-clock):
+   * what the seat is kept from, the app's lists and places, and which records
+   * it sees, worked out once while the host draws one batch and links what it
+   * drew. Nothing commits while a batch is drawn; the next batch asks again.
+   */
+  let batch: { kept?: ReadonlySet<string>; lists?: ReturnType<typeof listsOf>; vocabulary?: ReturnType<typeof placeVocabulary>; seen?: Map<string, boolean> } | undefined;
+  const inOneBatch = (run: () => void) => {
+    if (batch) return run();
+    batch = {};
+    try {
+      run();
+    } finally {
+      batch = undefined;
+    }
   };
+  const draw = (one: ["render", unknown] | ["style", readonly string[]]) =>
+    inOneBatch(() => {
+      if (failed) return;
+      if (!drawing) return void waiting.push(one);
+      const live = drawing;
+      if (one[0] === "style") sheetsGiven = one[1];
+      const within = budget.draw((spent) => (one[0] === "render" ? live.apply(one[1], spent) : (live.style(one[1], lentFamilies()), true)));
+      if (!within) return fail("slow", drawnTooLong());
+      if (one[0] === "render") refill();
+      else lendOwn();
+    });
   /* Links stay in the app (FR-93): a record the viewer may see, or a place the app has. */
-  const kept = () => new Set([...options.store.kindsKeptFrom(options.principal), ...options.store.modules.disabledKinds]);
-  const lists = () => listsOf(options.store.schema, kept());
+  const keptNow = () => new Set([...options.store.kindsKeptFrom(options.principal), ...options.store.modules.disabledKinds]);
+  const kept = () => (batch ? (batch.kept ??= keptNow()) : keptNow());
+  const listsNow = () => listsOf(options.store.schema, kept());
+  const lists = () => (batch ? (batch.lists ??= listsNow()) : listsNow());
   /* The one vocabulary (FR-235): the Scene, the home, each kind's list and each titled place, as the headless check reads them. */
-  const vocabulary = () => placeVocabulary(options.store.schema, options.places?.() ?? [], { kept: kept(), ...(options.arrangement ? { pages: options.arrangement() } : {}) });
+  const vocabularyNow = () => placeVocabulary(options.store.schema, options.places?.() ?? [], { kept: kept(), ...(options.arrangement ? { pages: options.arrangement() } : {}) });
+  const vocabulary = () => (batch ? (batch.vocabulary ??= vocabularyNow()) : vocabularyNow());
+  const seesNow = (id: string) => options.store.seenBy(options.principal).graph.has(id);
+  const sees = (id: string) => {
+    if (!batch) return seesNow(id);
+    const seen = (batch.seen ??= new Map());
+    let one = seen.get(id);
+    if (one === undefined) seen.set(id, (one = seesNow(id)));
+    return one;
+  };
   const links = createLinks({
-    sees: (id) => options.store.seenBy(options.principal).graph.has(id),
+    sees,
     places: vocabulary,
     lists,
     schema: options.store.schema,
@@ -836,7 +943,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     element.setAttribute("aria-haspopup", "dialog");
     wantMedia();
   };
-  void Promise.all([openDrawChunk(), pressChunk()]).then(([{ createOpenDrawing, handedLinks, judgeLink, linkRefusedWords }, { createPressReader, createSaver, fillPrefills, judgePress, markPresses, prefillOf, quietPictures }]) => {
+  void Promise.all([openDrawChunk(), pressChunk()]).then(([{ createOpenDrawing, createPartFallbacks, handedLinks, judgeLink, linkRefusedWords }, { createPressReader, createSaver, fillPrefills, judgePress, markPresses, prefillOf, quietPictures }]) => {
     if (failed) return;
     const reader = createPressReader();
     /* Whether the view hears `acted` on this control, or on something around it: then what became of it is the view's to say. */
@@ -884,7 +991,10 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       saver.flush();
     };
     const prefilled = new WeakSet<Element>();
+    /* A part that threw or took too long (`graview.part`): the host's note in its place, and why said (parts.ts). */
+    const parts = createPartFallbacks(shadow, { view: `"${manifest.title ?? manifest.name}"`, mark: partMark, ...(options.onProblem ? { onProblem: options.onProblem } : {}) });
     refill = () => {
+      parts.refresh();
       /* A card bound to a record is a link once it is drawn whole: whether it holds a field is known only then (pressable.ts). */
       links.refresh(shadow);
       markPresses(shadow);
@@ -906,6 +1016,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     const toldLinks = new Set<string>();
     drawing = createOpenDrawing(shadow, {
       origin: options.origin ?? window.location.origin,
+      faceScope,
       link: (value) => judgeLink(value, { handed: handed(), ...(options.links ? { origins: options.links.origins } : {}) }),
       ...(options.asset ? { asset: options.asset } : {}),
       ...(options.images ? { imageOrigins: options.images.origins } : {}),
@@ -1048,11 +1159,17 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
             pending.set(message.push, clock.now());
             mark();
           }
-          given.postMessage(message);
+          /* With the most one part of it may take (`graview.part`), a quarter of the push's time as fitted, and the mark a part it hands on failed carries. */
+          given.postMessage(message.type === "props" ? { ...message, partMs: limits.pushMs / PART_SHARE, partMark } : message);
         },
         mine,
         props: () => {
-          const props = { ...workerViewProps(options.store, options.principal, { manifest, ...(options.input ? { input: options.input() } : {}), theme: theme(), places: guestPlacesOf(vocabulary()), ...(computed ? { computed } : {}) }), mine: mine.values() };
+          /* One answer to what the seat is kept from, for its places and what it is told it cannot see (`batch.kept`). */
+          let made: GuestProps | undefined;
+          inOneBatch(() => {
+            made = workerViewProps(options.store, options.principal, { manifest, ...(options.input ? { input: options.input() } : {}), theme: theme(), places: guestPlacesOf(vocabulary()), kept: kept(), ...(computed ? { computed } : {}) });
+          });
+          const props = { ...made!, mine: mine.values() };
           const was = shown;
           shown = new Set([...(props.node ? [props.node.id] : []), ...(props.nodes ?? []).map((node) => node.id)]);
           /* The record it shows changed (Roadmap f-app-wide-view-theme): under the brand's "fade", what is drawn goes before the new one comes. */
@@ -1192,4 +1309,23 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       },
     };
   }
+}
+
+/** The line drawn where every kind a view reads is kept from its seat: the host's way in, or that nothing here is shown. */
+function drawKept(shadow: ShadowRoot, region: HTMLElement, signIn: SignIn | undefined): void {
+  const document = region.ownerDocument;
+  region.setAttribute("data-worker-view-unseen", "");
+  const line = document.createElement("p");
+  line.setAttribute("data-graview-unseen", "");
+  line.style.cssText = "margin:0;padding:12px;color:var(--graview-ink-muted, inherit);font-family:var(--graview-font-body, inherit)";
+  if (signIn) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.setAttribute("data-testid", "sign-in");
+    button.textContent = signIn.label;
+    button.style.cssText = "font:inherit;color:var(--graview-accent, inherit);background:none;border:1px solid currentColor;border-radius:var(--graview-radius, 8px);padding:6px 12px;cursor:pointer";
+    button.addEventListener("click", () => signIn.run());
+    line.appendChild(button);
+  } else line.textContent = "Nothing here is shown to you.";
+  shadow.replaceChildren(line);
 }

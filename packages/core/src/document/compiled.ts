@@ -314,6 +314,12 @@ const noRecord = (id: string): never => {
   throw new ActRefusal(`there is no record "${id}"`, "invalid");
 };
 
+/** A document act writing one of the framework's own marks (`$archived`, `$seat`): refused, whatever the checker let by. */
+const marks = (fields: Readonly<Record<string, unknown>>): void => {
+  const mark = Object.keys(fields).find((field) => field.startsWith("$"));
+  if (mark !== undefined) throw new ActRefusal(`"${mark}" is the framework's own mark, not a field: no act can set it`, "invalid");
+};
+
 const argSchema = (arg: ArgPlan, money: Money): z.ZodMiniType => ("field" in arg ? fieldSchema(arg.field, arg.optional, money) : "ref" in arg ? refTo(arg.ref) : z.optional(z.unknown()));
 
 /*
@@ -694,6 +700,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
               const named = String((labelField && node[labelField]) ?? effect.create);
               const kept = quotesKeptField(named, effect.create, node, (one, field) => mayKeepField(document.policy?.sees, one, field));
               const id = context.freshId(kept ? effect.create : named, effect.create, node);
+              marks(node);
               context.addNode({ ...node, id } as never);
               if (effect.as) made.set(effect.as, id);
             } else if ("connect" in effect || "sever" in effect) {
@@ -740,6 +747,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
                   if (value === null) patch[field] = cleared(node.kind, field, node);
                   else if (v !== undefined) patch[field] = v;
                 }
+                marks(patch);
                 if (Object.keys(patch).length > 0) context.patchNode(node.id, patch);
               }
             } else if ("set" in effect) {
@@ -754,6 +762,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
                   if (v !== undefined) patch[field] = v;
                 }
               }
+              marks(patch);
               if (Object.keys(patch).length > 0) context.patchNode(targetId, patch);
             } else if ("remove" in effect) {
               const id = String(resolve(effect.remove, undefined) ?? "");

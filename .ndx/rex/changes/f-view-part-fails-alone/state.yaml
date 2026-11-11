@@ -1,0 +1,7 @@
+schema: "rex/v2"
+items:
+  "b17632cc-f623-4500-8011-e6a5e7d6bad1":
+    status: "in_progress"
+    startedAt: "2026-11-11T00:00:00.000Z"
+    lastModified: "2026-11-11T00:00:00.000Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"
