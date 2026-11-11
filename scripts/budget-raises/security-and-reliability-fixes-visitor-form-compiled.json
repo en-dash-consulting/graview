@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form handed a compiled app",
+  "minified": 422,
+  "gzipped": 31,
+  "note": "Raised for the security and reliability fixes in how apply judges a call. 422 / 31 more. Measured at 367_644 / 133_990 against 367_222 / 133_967."
+}

@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 422,
+  "gzipped": 120,
+  "changeset": "security-and-reliability-fixes.md",
+  "note": "Raised for the security and reliability fixes in how apply judges a call. 422 / 120 more, minified and gzipped."
+}

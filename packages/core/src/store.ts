@@ -42,7 +42,7 @@ import { actingAs, boundPersonOf, grantsTo, isSystem, meIn, meOf, ownsId, permit
 import { MOST_PROPOSED, PROPOSE_CHANGES, proposeChangesMutation } from "./mutations/propose-changes.js";
 import { namesUnseen, redact } from "./ops/withheld.js";
 import { writersBehind } from "./ops/writers.js";
-import { nounOf } from "./schema/define-node.js";
+import { nounOf, withArticle } from "./schema/define-node.js";
 import { behind, fieldsJudged, mayKeepField, partialSight, recordsOf, sees } from "./permissions/sight.js";
 import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
 import { checkUndo, UndoBlockedError, undoneInverses, undoPrimitives, type UndoCheck } from "./ops/undo.js";
@@ -1346,6 +1346,19 @@ export class Store<S extends AnySchema> {
     };
   }
 
+  /** Refuses a record named for a kind's own act that is of none of the kinds it takes, as a document's act on the wrong kind is refused. */
+  private keepsToItsKinds(definition: AnyMutationDefinition<S>, call: MutationCall): void {
+    const subject = definition.subject;
+    if (subject && subject.kinds !== "*") this.ofKinds(definition, call.args[subject.arg], subject.kinds as readonly string[]);
+    for (const ref of nodeRefArgs(definition.input)) if (ref.name !== subject?.arg) this.ofKinds(definition, call.args[ref.name], ref.kinds);
+  }
+
+  private ofKinds(definition: AnyMutationDefinition<S>, id: unknown, kinds: readonly string[]): void {
+    if (typeof id !== "string" || kinds.includes("*")) return;
+    const node = this.graph.getNode(id);
+    if (node && !kinds.includes(node.kind)) throw new ActRefusal(`"${definition.title ?? definition.name}" acts on ${kinds.join(" or ")}, not on ${withArticle(node.kind)}`, "invalid");
+  }
+
   /**
    * AN ACT RUNS UNDER ITS AUTHOR'S SIGHT (FR-55). Its body, its guard, its
    * refusal and its sentence read the store as the author is served it,
@@ -2093,6 +2106,8 @@ export class Store<S extends AnySchema> {
         }
         const missing = this.missingFor(call, as as Principal);
         if (missing) throw missing;
+        // A kind's own act takes only that kind's records: its subject, and every record it names.
+        if (definition.derived) this.keepsToItsKinds(definition, call);
         let compiled: ReturnType<typeof compileMutation>;
         try {
           compiled = compileMutation(this.graph, definition, call.args, { ...this.sighted(as as Principal), hint });

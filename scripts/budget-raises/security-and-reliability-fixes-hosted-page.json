@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 422,
+  "gzipped": 112,
+  "changeset": "security-and-reliability-fixes.md",
+  "note": "Raised for the security and reliability fixes in how apply judges a call. 422 / 112 more, minified and gzipped."
+}

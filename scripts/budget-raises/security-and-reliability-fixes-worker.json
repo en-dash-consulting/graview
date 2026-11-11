@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 900,
+  "note": "Raised for the security and reliability fixes in how apply judges a call. Measured at 2_682_128 B against 2_681_241."
+}
