@@ -1,5 +1,6 @@
 import type { FileValue } from "@graview/core";
 import type { GuestFile, GuestNode, GuestProps } from "../protocol.js";
+import { THUMB_REFUSED, thumbIsSound } from "./picture-thumb.js";
 
 /*
  * THE PICTURES ON THE RECORDS A GUEST IS HANDED (FR-175).
@@ -42,11 +43,16 @@ import type { GuestFile, GuestNode, GuestProps } from "../protocol.js";
  *
  * TWO SIZES (Roadmap f-view-pictures-load-lazily-and-small): `thumb`, a
  * width narrower than `width`, and each picture handed an address comes
- * with a second, smaller one beside `src` — `thumb`, made at that width —
- * for a chip or a grid, while a hero draws `src`. Both are reckoned against
- * the view's budget; where the picture is no wider than `thumb`, `thumb` is
- * `src` and is reckoned once. A string or a list under `thumb` names a kind
- * called `thumb` and its fields, as it always did.
+ * with a second, smaller one beside `src` — `thumb`, made at that width
+ * from `src`'s bytes — for a chip or a grid, while a hero draws `src`. It
+ * is a still: an animated picture handed as it is keeps its animation in
+ * `src` alone. Where it would be no smaller than `src` (a picture no wider
+ * than the thumb, or one the page could not make smaller) no `thumb` is
+ * handed, and the view draws `src`: a frame is never posted the same
+ * `data:` image twice. Both are reckoned against the view's budget. A
+ * string or a list under `thumb` names a kind called `thumb` and its
+ * fields, as it always did; a number that is not a sound thumb
+ * (`thumbIsSound`) asks for none, and is said.
  */
 export type GuestPictures =
   | true
@@ -100,7 +106,13 @@ const pastTheMost = (view: string, most: number) => `The view ${view} is handed 
 
 /** The width a guest draws a picture small at, in CSS pixels, where it asked for a second size (`thumb`). */
 export function pictureThumbOf(pictures: GuestPictures): number | undefined {
-  return pictures === true || isKindList(pictures) || typeof pictures.thumb !== "number" ? undefined : pictures.thumb;
+  if (pictures === true || isKindList(pictures) || typeof pictures.thumb !== "number") return undefined;
+  return thumbIsSound(pictures.thumb, pictures.width) ? pictures.thumb : undefined;
+}
+
+/** Where a guest's host asked for a thumb that is no sound one (a frame's, which no manifest check reads): what is said, once. */
+export function thumbProblemOf(pictures: GuestPictures): string | undefined {
+  return pictures !== true && !isKindList(pictures) && typeof pictures.thumb === "number" && pictureThumbOf(pictures) === undefined ? THUMB_REFUSED : undefined;
 }
 
 /** The widest a guest draws a picture, in CSS pixels. */
@@ -270,7 +282,12 @@ export function pictureBudget(pictures: GuestPictures, limits: GuestPictureLimit
   const thumbNeed = thumb === undefined ? undefined : Math.round(thumb * Math.min(2, Math.max(1, devicePixelRatio || 1)));
   /* Whether a picture's thumb is its `src` itself: no wider than the thumb is drawn, so the one address serves both and is reckoned once. */
   const thumbIsSrc = (file: FileValue) => thumbNeed !== undefined && file.width !== undefined && file.width <= thumbNeed;
-  /* A picture and its thumb, together: both are handed, so both are counted. */
+  /*
+   * A picture and its thumb, together: both are handed, so both are counted,
+   * before either is made. Erring high: a thumb the page then finds no
+   * smaller than `src` is not handed and was counted all the same, and a
+   * record that says no width is counted at its bytes twice.
+   */
   const reckon = (file: FileValue) => at(file, need) + (thumbNeed === undefined || thumbIsSrc(file) ? 0 : at(file, thumbNeed));
   return { width, perFile, perView, need, thumbNeed, thumbIsSrc, reckon, chosen: picturesChosen(pictures), most: mostOf(pictures) };
 }
@@ -297,7 +314,7 @@ const pastTheViewsBudget = (file: FileValue, on: GuestNode, view: string, perVie
  * sentence, said again in `left`.
  */
 export function standInPictures(props: GuestProps, options: { readonly view: string; readonly pictures: GuestPictures; readonly limits?: GuestPictureLimits; readonly standIn: string }): { readonly props: GuestProps; readonly left: readonly string[] } {
-  const { perView, reckon, chosen, most, thumbNeed } = pictureBudget(options.pictures, options.limits, 2);
+  const { perView, reckon, chosen, most, thumbNeed, thumbIsSrc } = pictureBudget(options.pictures, options.limits, 2);
   const records = pictureRecordsOf(options.pictures, props);
   const left: string[] = [];
   let total = 0;
@@ -314,7 +331,7 @@ export function standInPictures(props: GuestProps, options: { readonly view: str
     if (total + bytes > perView) return leave(pastTheViewsBudget(file, on, options.view, perView));
     total += bytes;
     count += 1;
-    return guestFileOf(file, { src: options.standIn, ...(thumbNeed !== undefined ? { thumb: options.standIn } : {}) });
+    return guestFileOf(file, { src: options.standIn, ...(thumbNeed !== undefined && !thumbIsSrc(file) ? { thumb: options.standIn } : {}) });
   });
   return { props: handed, left };
 }
@@ -332,6 +349,9 @@ export function createGuestPictures(window: Window & typeof globalThis, options:
   const drawnFor = new Map<string, string>();
   const told = new Set<string>();
   let disposed = false;
+  /* A thumb its host asked for that is no sound one: none is made, and it is said once. */
+  const thumbProblem = thumbProblemOf(options.pictures);
+  if (thumbProblem) queueMicrotask(() => (options.onLeft ? options.onLeft(thumbProblem) : window.console.warn(thumbProblem)));
   /*
    * PUSHED AGAIN AT MOST ONCE IN `PICTURES_SETTLE_MS` (FR-207): each push is
    * the view's whole props, drawn and answered, so sixty pictures settling
@@ -426,8 +446,7 @@ export function createGuestPictures(window: Window & typeof globalThis, options:
     const type = (response.headers.get("content-type") ?? "").split(";")[0]!.trim();
     if (!response.ok) return unanswered(file, on, String(response.status));
     if (!isGuestPicture({ type })) return unanswered(file, on, `${type || "no type"}, not a picture`);
-    const source: Blob = new window.Blob([await response.arrayBuffer()], { type });
-    let blob = source;
+    let blob: Blob = new window.Blob([await response.arrayBuffer()], { type });
     if (blob.size > PICTURE_FETCH_BYTES) return failed;
     /* Made smaller where it is wider than the view draws a picture, or heavier than one may be; a picture that fits is handed as it is, animation and all. */
     const narrow = file.width !== undefined && file.width <= need;
@@ -439,9 +458,13 @@ export function createGuestPictures(window: Window & typeof globalThis, options:
     if (blob.size > perFile) return { state: "left", said: `${named(file, on)} is left out: made as small as the ${said(width)} pixels across the view ${options.view} draws a picture at, it is still more than the ${said(perFile)} bytes one picture is handed.` };
     const full = await addressOf(blob);
     if (thumbNeed === undefined) return { state: "ready", ...full };
-    /* Its second size (`thumb`): made from the bytes fetched, at the thumb's width; where it is no smaller than `src`, `src` is its thumb too. */
-    const small = thumbIsSrc(file) ? undefined : await shrink(source, thumbNeed, perFile).catch(() => undefined);
-    return { state: "ready", ...full, thumb: small && small.size < blob.size ? await addressOf(small) : full };
+    /*
+     * Its second size (`thumb`): made from `src`'s bytes, already no wider than
+     * the view draws one, so the picture as fetched — as large as 40 MB — is
+     * decoded once and let go. Where it is no smaller than `src`, none.
+     */
+    const small = thumbIsSrc(file) ? undefined : await shrink(blob, thumbNeed, perFile).catch(() => undefined);
+    return { state: "ready", ...full, ...(small && small.size < blob.size ? { thumb: await addressOf(small) } : {}) };
   };
 
   const start = (file: FileValue, on: GuestNode) => {

@@ -5,16 +5,19 @@ import { sayRefusal } from "../../src/headless/judge.js";
 import { checkManifest, workerViewProps, type WorkerViewManifest } from "../../src/host/manifest.js";
 import { judgeAttribute } from "../../src/host/open-judge.js";
 import { createGuestPictures, PICTURES_SETTLE_MS, standInPictures, type GuestPictures } from "../../src/host/pictures.js";
+import { THUMB_REFUSED } from "../../src/host/picture-thumb.js";
 import type { GuestFile, GuestProps } from "../../src/protocol.js";
 
 /**
  * A VIEW'S PICTURES LOAD LAZILY AND AT THE SIZE EACH USE NEEDS (Roadmap
  * f-view-pictures-load-lazily-and-small). A home that draws sixty record
- * photos asked for each at the width of its hero, and every `<img>` loaded at
- * once: `loading` was refused. An `<img>` now takes `loading` ("lazy" or
- * "eager") and `fetchpriority` ("high", "low" or "auto"), and a manifest may
- * ask for a second, smaller size (`pictures.thumb`): each picture then comes
- * with `thumb` beside `src`, both reckoned against the view's budget.
+ * photos asked for each at the width of its hero, and could not say which
+ * `<img>` to draw first: `loading` was refused. An `<img>` now takes `loading` ("lazy" or
+ * "eager") and `fetchpriority` ("high", "low" or "auto") — which order the
+ * page's decoding and drawing of the pictures it was handed, not the host's
+ * fetching of them — and a manifest may ask for a second, smaller size
+ * (`pictures.thumb`): each picture then comes with `thumb` beside `src`,
+ * made from `src`, both reckoned against the view's budget.
  */
 const moment = defineNode("moment", { fields: z.object({ label: z.string(), photo: imageField().optional() }), plural: "Moments", label: (node) => node.label });
 const schema = createSchema([moment]);
@@ -91,53 +94,66 @@ describe("a home of sixty photos that asks for two sizes", () => {
     expect(count({ width: 400, thumb: 100 })).toBe(11);
   });
 
-  it("on the page, is handed two addresses, each made at its own size, each drawn as handed", async () => {
+  /** The pictures' host, run until what it fetched has settled, with `shrink` and the problems it said. */
+  async function settled(pictures: GuestPictures, props: GuestProps, shrink: (blob: Blob, across: number) => Promise<Blob | undefined>) {
     vi.spyOn(window, "fetch").mockImplementation(async () => new Response(new Uint8Array(1_000), { status: 200, headers: { "content-type": "image/jpeg" } }));
-    const widths: number[] = [];
-    for (const as of ["data"] as const) {
-      widths.length = 0;
-      const pictures: GuestPictures = { width: 1_200, thumb: 240, records: { ids: ["moment:0"] } };
-      const host = createGuestPictures(window, {
-        as,
-        view: '"home"',
-        pictures,
-        moved: () => {},
-        shrink: async (_blob, across) => {
-          widths.push(across);
-          return new Blob([new Uint8Array(across)], { type: "image/jpeg" });
-        },
-      });
-      const props = propsOf(home(pictures));
-      host.hand(props);
-      for (let i = 0; i < 20; i += 1) await new Promise((done) => setTimeout(done, 0));
-      await new Promise((done) => setTimeout(done, PICTURES_SETTLE_MS));
-      const file = fileOf(host.hand(props), "moment:0");
-      expect(file.src, as).toBeDefined();
-      expect(file.thumb, as).toBeDefined();
-      expect(file.thumb).not.toBe(file.src);
-      expect(host.drawn(file.src!)).toBeDefined();
-      expect(host.drawn(file.thumb!)).toBeDefined();
-      /* jsdom's device pixel ratio is 1: the full size at 1 200 across, the thumb at 240. */
-      expect([...widths].sort((a, b) => a - b)).toEqual([240, 1_200]);
-      expect(fileOf(host.hand(props), "moment:1").thumb).toBeUndefined();
-      host.dispose();
-    }
-  });
-
-  it("hands the src as the thumb where the picture is no wider than the thumb, and reckons it once", async () => {
-    const small = { ...photo(0, 20_000), width: 200, height: 150 };
-    const nodes = [{ id: "moment:0", kind: "moment", label: "Small", photo: small }];
-    const props = { view: "home", edges: [], acts: [], nodes } as unknown as GuestProps;
-    vi.spyOn(window, "fetch").mockImplementation(async () => new Response(new Uint8Array(1_000), { status: 200, headers: { "content-type": "image/jpeg" } }));
-    const host = createGuestPictures(window, { as: "data", view: '"home"', pictures: { thumb: 240 }, moved: () => {}, shrink: async (blob) => blob });
+    const told: string[] = [];
+    const host = createGuestPictures(window, { as: "data", view: '"home"', pictures, moved: () => {}, onLeft: (said) => told.push(said), shrink });
     host.hand(props);
     for (let i = 0; i < 20; i += 1) await new Promise((done) => setTimeout(done, 0));
     await new Promise((done) => setTimeout(done, PICTURES_SETTLE_MS));
-    const file = fileOf(host.hand(props), "moment:0");
-    expect(file.thumb).toBe(file.src);
+    return { host, told, props: host.hand(props) };
+  }
+
+  it("on the page, is handed two addresses, each made at its own size and drawn as handed, decoding the picture as fetched once", async () => {
+    const shrunk: { readonly from: number; readonly across: number }[] = [];
+    const pictures: GuestPictures = { width: 1_200, thumb: 240, records: { ids: ["moment:0"] } };
+    const { host, props } = await settled(pictures, propsOf(home(pictures)), async (blob, across) => {
+      shrunk.push({ from: blob.size, across });
+      return new Blob([new Uint8Array(across)], { type: "image/jpeg" });
+    });
+    const file = fileOf(props, "moment:0");
+    expect(file.src).toBeDefined();
+    expect(file.thumb).toBeDefined();
+    expect(file.thumb).not.toBe(file.src);
+    expect(host.drawn(file.src!)).toBeDefined();
+    expect(host.drawn(file.thumb!)).toBeDefined();
+    /* jsdom's device pixel ratio is 1. The 1 000 bytes fetched are made 1 200 across once; the thumb is made from those, never from what was fetched. */
+    expect(shrunk).toEqual([
+      { from: 1_000, across: 1_200 },
+      { from: 1_200, across: 240 },
+    ]);
+    expect(fileOf(props, "moment:1").thumb).toBeUndefined();
     host.dispose();
-    /* Reckoned once: 20 KB fits a budget of 20 KB with its thumb, which is the same bytes. */
+  });
+
+  it("hands no thumb where it would be no smaller than src, so a frame is never posted the same image twice, and reckons the picture once", async () => {
+    const small = { ...photo(0, 20_000), width: 200, height: 150 };
+    const props = { view: "home", edges: [], acts: [], nodes: [{ id: "moment:0", kind: "moment", label: "Small", photo: small }] } as unknown as GuestProps;
+    const narrow = await settled({ thumb: 240 }, props, async (blob) => blob);
+    expect(fileOf(narrow.props, "moment:0").src).toMatch(/^data:image\/jpeg;base64,/);
+    expect(fileOf(narrow.props, "moment:0").thumb).toBeUndefined();
+    narrow.host.dispose();
+    vi.restoreAllMocks();
+    /* A wide picture the page could not make smaller: its src is all there is. */
+    const wide = await settled({ thumb: 240 }, propsOf(home({ thumb: 240, records: { ids: ["moment:0"] } })), async (blob, across) => (across === 240 ? undefined : blob));
+    expect(fileOf(wide.props, "moment:0").src).toBeDefined();
+    expect(fileOf(wide.props, "moment:0").thumb).toBeUndefined();
+    wide.host.dispose();
+    /* Reckoned once: 20 KB fits a budget of 20 KB, with no thumb of its own. */
     const { props: headless } = standInPictures(props, { view: '"home"', pictures: { thumb: 240 }, standIn: "data:x", limits: { picturesBytes: 20_000 } });
-    expect(fileOf(headless, "moment:0")).toMatchObject({ src: "data:x", thumb: "data:x" });
+    expect(fileOf(headless, "moment:0").src).toBe("data:x");
+    expect(fileOf(headless, "moment:0").thumb).toBeUndefined();
+  });
+
+  it("makes no thumb for a frame's host that asked for one no sound, and says so once (view-pictures-thumb)", async () => {
+    for (const thumb of [-5, 0, 5_000, 1_200]) {
+      const pictures = { thumb, records: { ids: ["moment:0"] } } as GuestPictures;
+      const { host, told, props } = await settled(pictures, propsOf(home(pictures)), async (blob) => blob);
+      expect(fileOf(props, "moment:0").thumb, String(thumb)).toBeUndefined();
+      expect(told, String(thumb)).toEqual([THUMB_REFUSED]);
+      host.dispose();
+      vi.restoreAllMocks();
+    }
   });
 });

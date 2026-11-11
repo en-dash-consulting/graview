@@ -30,8 +30,8 @@ Every view comes with a manifest the host enforces:
 - `reads` lists the other kinds and the edges it is shown. Nothing else is handed to it. A view of one reading an edge from its kind to its kind (rock `becomes` rock) is handed the records linked to it. An edge to a kind it is not handed brings nothing, and the check says so.
 - `acts` lists the acts it may ask for, by name. An entry with `as` and `constants` is another name for the same act with arguments the view cannot change.
 - A view of one record (`cardinality: "one"`) is drawn above the kind's page blocks and the record's own fields, which stay editable. `replaces: "page"` draws it alone, and the page blocks never (`graview-view-specs`). On a view of many, it is its kind's list page (`/<plural>`).
-- `gestures: true` lets it hear a wheel, a drag and a pinch (below). `bleed: true` takes the edges on a phone, `"full"` a desk's (`graview-view-drawing`).
-- `pictures: true` hands each picture on a record with an address the host made from its bytes, never its path, and lets the view place a record's video and open the host's full-screen viewer (`graview-view-drawing`). They share 12 MB: name the kinds it draws, `["circuit"]`, or fields, `{ circuit: "photo" }`; `thumb` a second size.
+- `gestures: true` hears wheels, drags and pinches (below). `bleed: true` takes the edges on a phone, `"full"` a desk's.
+- `pictures: true` hands each picture on a record with an address the host made from its bytes, never its path, lets the view place a record's video and open the host's full-screen viewer (`graview-view-drawing`). They share 12 MB: name the kinds it draws, `["circuit"]`, or fields, `{ circuit: "photo" }`; `thumb`, narrower than `width`, a second size.
 
 A manifest that names a kind, an edge or an act the app does not declare is
 refused before the view starts.

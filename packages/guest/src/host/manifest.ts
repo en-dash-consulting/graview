@@ -2,6 +2,7 @@ import { isSystem, isoToday, localeFor, meOf, profileOf, timeZoneFor, type AnySc
 import { fileFieldKind } from "./marks.js";
 import type { GuestAct, GuestEdge, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
 import type { GuestPictures } from "./pictures.js";
+import { THUMB_REFUSED, thumbIsSound } from "./picture-thumb.js";
 import { choicesOf, plainNode, readAcross, type GuestViewInput } from "./session.js";
 
 /*
@@ -102,8 +103,8 @@ export interface WorkerViewManifest {
    * `width`, `{ circuit: "photo" }`; a picture it did not choose is handed
    * by its facts alone, never fetched nor reckoned against its budget.
    * `thumb`, a width narrower than `width`, hands each picture a second,
-   * smaller address beside `src` (`thumb`), for a chip or a grid; both
-   * sizes are reckoned against the budget.
+   * smaller address beside `src` (`thumb`), for a chip or a grid, where it
+   * is smaller than `src`; both sizes are reckoned against the budget.
    */
   readonly pictures?: GuestPictures;
   /**
@@ -257,8 +258,7 @@ function picturesProblems<S extends AnySchema>(pictures: unknown, store: Store<S
     }
     /* A second, smaller size (Roadmap f-view-pictures-load-lazily-and-small): a number, never a kind called `thumb`'s fields. */
     if (key === "thumb" && typeof value !== "string" && !Array.isArray(value)) {
-      const width = typeof (pictures as { width?: unknown }).width === "number" ? (pictures as { width: number }).width : 1_200;
-      if (!(Number.isInteger(value) && (value as number) >= 16 && (value as number) <= 4_096 && (value as number) < width)) problems.push("The view's pictures thumb is a whole number of pixels from 16 to 4096, narrower than its width (1,200 by default): the size it draws a picture small at (view-pictures-thumb).");
+      if (!thumbIsSound(value, (pictures as { width?: unknown }).width)) problems.push(THUMB_REFUSED);
       continue;
     }
     if (key === "width" && typeof value !== "string" && !Array.isArray(value)) {

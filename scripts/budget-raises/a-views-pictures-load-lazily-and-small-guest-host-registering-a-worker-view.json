@@ -1,6 +1,6 @@
 {
   "budget": "the guest host, registering a worker view",
-  "minified": 458,
-  "gzipped": 139,
-  "note": "Raised when a view's pictures came to load lazily and in two sizes (an `<img>` taking `loading` and `fetchpriority`, `pictures.thumb` handed and reckoned beside `src`, Roadmap f-view-pictures-load-lazily-and-small) and a view's bleed refusal to say what each value does and end with its finding code (Roadmap f-home-view-full-bleed-on-desk): 458 / 139 more. Measured at 49_686 / 21_403 against 49_228 / 21_264 minified and gzipped."
+  "minified": 590,
+  "gzipped": 341,
+  "note": "Raised when a view's pictures came to be drawn lazily and handed in two sizes (an `<img>` taking `loading` and `fetchpriority`, `pictures.thumb` made from `src`, handed where it is smaller and reckoned beside it, a frame's host told of a thumb no sound one, Roadmap f-view-pictures-load-lazily-and-small) and a view's bleed refusal to say what each value does and end with its finding code (Roadmap f-home-view-full-bleed-on-desk): 590 / 341 more. Measured at 49_818 / 21_605 against 49_228 / 21_264 minified and gzipped."
 }
