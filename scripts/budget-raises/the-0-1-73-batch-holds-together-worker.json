@@ -1,5 +1,5 @@
 {
   "budget": "Cloud's worker",
-  "bytes": 2900,
-  "note": "Raised when the 0.1.73 batch's five branches were merged (a district's rows; pictures lazily and at a thumb size; a visitor's view not stopped by the link check; a view told what its seat can't see and checked as each seat; a part of a view that fails alone): each branch measured its own growth against a base the others had already moved, and together they come to 2_739 bytes over their summed raises. Measured at 2_637_671 B against 2_634_932. With the part branch fixed after review, 43 bytes more (2_638_463 against 2_638_420)."
+  "bytes": 3800,
+  "note": "Raised when the 0.1.73 batch's five branches were merged (a district's rows; pictures lazily and at a thumb size; a visitor's view not stopped by the link check; a view told what its seat can't see and checked as each seat; a part of a view that fails alone): each branch measured its own growth against a base the others had already moved, and together they come to 2_739 bytes over their summed raises. Measured at 2_637_671 B against 2_634_932. With the part branch fixed after review, 43 bytes more (2_638_463 against 2_638_420). With a view's own face merged, 311 bytes more (2_665_936 against 2_665_625). With the headless runtime regenerated, 335 bytes more (2_666_360)."
 }
