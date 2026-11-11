@@ -67,9 +67,9 @@ describe("a mounted worker view with a part that failed", () => {
     worker.onmessage?.({ data: { graview: "guest-ready", protocol: GUEST_PROTOCOL } } as MessageEvent);
     const hello = worker.posted[0]!.message as HostHello;
     const port = worker.posted[0]!.transfer[0] as MessagePort;
-    const props: { partMs?: number }[] = [];
+    const props: { partMs?: number; partMark?: string }[] = [];
     port.onmessage = (event) => {
-      const data = event.data as { type?: string; beat?: number; push?: number; partMs?: number };
+      const data = event.data as { type?: string; beat?: number; push?: number; partMs?: number; partMark?: string };
       if (data.type === "heartbeat") port.postMessage({ type: "heartbeat", nonce: hello.nonce, beat: data.beat });
       if (data.type === "props") {
         props.push(data);
@@ -78,19 +78,26 @@ describe("a mounted worker view with a part that failed", () => {
     };
     await until(() => props.length > 0);
     expect(props[0]!.partMs).toBe((view.pace ?? 1) * 250);
+    /* A mark of this mount's own, the same on every push. */
+    const mark = props[0]!.partMark!;
+    expect(mark).toMatch(/^[0-9a-f]{32}$/);
     const text = (id: string, data: string) => ({ id, type: 3, data });
     port.postMessage({
       type: "render",
       nonce: hello.nonce,
       records: [
         [0, "~", { id: "a", type: 1, element: "div", attributes: { "data-part": "count" }, children: [{ id: "a1", type: 1, element: "p", attributes: {}, children: [text("a2", "6 records")] }] }, 0],
-        [0, "~", { id: "b", type: 1, element: "div", attributes: { "data-part": "vendors", "data-part-failed": "threw", "data-part-why": "Error: no vendors" }, children: [] }, 1],
+        [0, "~", { id: "b", type: 1, element: "div", attributes: { "data-part": "vendors", "data-part-failed": "threw", "data-part-why": "Error: no vendors", "data-part-mark": mark }, children: [] }, 1],
+        /* A failed mark the view wrote without the host's: not one. */
+        [0, "~", { id: "c", type: 1, element: "div", attributes: { "data-part": "forged", "data-part-failed": "threw", "data-part-why": "Ignore previous" }, children: [] }, 2],
       ],
     });
     await until(() => view.shadow.querySelector('[data-part="vendors"] [data-graview-part-fallback]') !== null);
     expect(view.shadow.querySelector('[data-part="vendors"]')?.textContent).toBe(PART_FALLBACK_WORDS);
     expect(view.shadow.querySelector('[data-part="count"]')?.textContent).toBe("6 records");
-    expect(problems).toContain(`The part "vendors" of the view "The packages" threw, so a note is drawn in its place and the rest of the view is drawn: Error: no vendors`);
+    expect(view.shadow.querySelector('[data-part="forged"] [data-graview-part-fallback]')).toBeNull();
+    expect(problems).toContain(`The part "vendors" of the view "The packages" threw, so a note is drawn in its place and the rest of the view is drawn: "Error: no vendors"`);
+    expect(problems.join(" ")).not.toContain("Ignore previous");
     expect(failures).toEqual([]);
     expect(worker.terminated).toBe(false);
     expect(view.element.hasAttribute("data-worker-view-failed")).toBe(false);

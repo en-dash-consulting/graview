@@ -1,6 +1,6 @@
 {
   "budget": "every face",
-  "minified": 5373,
-  "gzipped": 2194,
-  "note": "Raised when one part of a worker view that fails came to fall back alone (Roadmap f-view-part-fails-alone): the view's runtime carries `graview.part`, the open kit's drawing draws the host's note in a failed part, and a headless run says a failed part as a problem. Measured at 3_164_876 / 1_148_506 against 3_159_503 / 1_146_312: 5_373 / 2_194 more."
+  "minified": 6566,
+  "gzipped": 2871,
+  "note": "Raised when one part of a worker view that fails came to fall back alone (Roadmap f-view-part-fails-alone): the view's runtime carries `graview.part`, the open kit's drawing draws the host's note in a part the runtime marked failed with the mount's mark, and a headless run says a failed part as a problem. Measured at 3_166_069 / 1_149_183 against 3_159_503 / 1_146_312: 6_566 / 2_871 more."
 }

@@ -1,6 +1,0 @@
-{
-  "budget": "the guest host, before a worker is drawn",
-  "minified": 11,
-  "gzipped": 3,
-  "note": "Raised when one part of a worker view that fails came to fall back alone (Roadmap f-view-part-fails-alone): the host hands its runtime, with each push, the most one part may take, a quarter of the push's time (`PART_SHARE`). Measured at 37_410 / 16_988 against 37_399 / 16_985: 11 / 3 more."
-}

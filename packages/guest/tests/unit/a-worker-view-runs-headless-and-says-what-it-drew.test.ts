@@ -197,7 +197,7 @@ describe("a view that will not do is a failure naming why", () => {
     const result = await headless({ manifest, source: `graview.onProps(() => graview.render(graview.html\`\${graview.part("kept", () => "<p>kept</p>")}\${graview.part("vendors", () => { throw new Error("no vendors"); })}\`));` });
     const drawn = described(result);
     expect(drawn.parts).toContainEqual({ t: "text", text: "kept" });
-    expect(drawn.problems).toContainEqual({ at: 'part "vendors"', says: 'The part "vendors" threw: Error: no vendors. The page draws a note in its place and the rest of the view.' });
+    expect(drawn.problems).toContainEqual({ at: 'part "vendors"', says: 'The part "vendors" threw: "Error: no vendors". The page draws a note in its place and the rest of the view.' });
   });
 });
 

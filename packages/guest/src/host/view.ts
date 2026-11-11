@@ -6,11 +6,13 @@ import { readsOnlyUnseen, unseenOf, viewKinds } from "./unseen.js";
 import { createMine, keptForTheVisit, visitOf } from "./mine.js";
 import { storedFilesOf } from "./marks.js";
 import { retryingImport } from "@graview/core/retry";
-import { PART_SHARE, type GuestDomEvent, type GuestPlace, type GuestProps, type GuestTheme } from "../protocol.js";
+import type { GuestDomEvent, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
+import { PART_SHARE } from "../part.js";
 import { checkManifest, edgesReadWithoutTheirKindsSaid, readsComputed, workerViewProps, type ComputedOn, type WorkerViewManifest } from "./manifest.js";
 import type { OpenDrawing, ViewRefusal } from "./open-draw.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestStats, type GuestViewInput } from "./session.js";
 import { startWorker, type GuestWorkerSource, type StartedWorker } from "./worker-start.js";
+import { mintNonce } from "./nonce.js";
 import { judgeCodeAct, type DropGrant } from "./writes.js";
 import { createDrawBudget } from "./draw-budget.js";
 import { fitBudget, keepStart, paceOf } from "./device-pace.js";
@@ -381,6 +383,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   const base = { pushMs: limits.pushMs, drawMs: limits.drawMs };
   /* The page's pace, once this view's worker has started: what its time budgets were fitted by. */
   let pace: number | undefined;
+  /* What the runtime stamps on a part it hands on failed (`graview.part`): a mark the view writes itself is not honored (parts.ts). */
+  const partMark = mintNonce();
   /* What the view was last shown: the plain face drawn in its place, if it fails. */
   let lastProps: GuestProps | undefined;
   /* What works out its records' computed values, once fetched (below). */
@@ -940,7 +944,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     };
     const prefilled = new WeakSet<Element>();
     /* A part that threw or took too long (`graview.part`): the host's note in its place, and why said (parts.ts). */
-    const parts = createPartFallbacks(shadow, { view: `"${manifest.title ?? manifest.name}"`, ...(options.onProblem ? { onProblem: options.onProblem } : {}) });
+    const parts = createPartFallbacks(shadow, { view: `"${manifest.title ?? manifest.name}"`, mark: partMark, ...(options.onProblem ? { onProblem: options.onProblem } : {}) });
     refill = () => {
       parts.refresh();
       /* A card bound to a record is a link once it is drawn whole: whether it holds a field is known only then (pressable.ts). */
@@ -1106,8 +1110,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
             pending.set(message.push, clock.now());
             mark();
           }
-          /* With the most one part of it may take (`graview.part`): a quarter of the push's time, as fitted. */
-          given.postMessage(message.type === "props" ? { ...message, partMs: limits.pushMs / PART_SHARE } : message);
+          /* With the most one part of it may take (`graview.part`), a quarter of the push's time as fitted, and the mark a part it hands on failed carries. */
+          given.postMessage(message.type === "props" ? { ...message, partMs: limits.pushMs / PART_SHARE, partMark } : message);
         },
         mine,
         props: () => {

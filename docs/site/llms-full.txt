@@ -6308,7 +6308,7 @@ graview.onProps((props) => …)   // every push of what it is shown (and at once
 graview.props                   // the last push
 graview.render(markup)          // draw: a string, graview.html`…`, or nodes
 graview.html`<li>${x}</li>`     // markup; every value put in is escaped
-graview.part("vendors", () => graview.html`…`)   // one part, which fails alone (Limits)
+graview.part("vendors", () => graview.html`…`)   // fails alone (Limits)
 graview.on("click", ".card", (event) => …)   // also input, change, keydown, toggle, acted
 graview.act(name, args)         // ask for an act: resolves { ok, intent } or { ok: false, reason, message }
 graview.navigate("offer:7")     // a record, else a place or a kind's list by slug
@@ -6337,11 +6337,11 @@ An act must be in the manifest. Where every member sees every record, `graview.a
 
 ### Limits
 
-256 kB of source, 5 000 nodes, 120 messages a second, 1 000 ms a push and 100 ms a second of the page's time drawing it; the two times grow up to fourfold on a slow device, the counts never. Past any, the view is stopped and its records' plain face drawn, with why. A part made by `graview.part` (a `<div data-part>`; `{ as: "li" }`) that throws or takes a quarter of the push is a note instead, the rest drawn, why said in the console. Draw summaries; never spin.
+256 kB of source, 5 000 nodes, 120 messages a second, 1 000 ms a push and 100 ms a second of the page's time drawing it; the two times grow up to fourfold on a slow device, the counts never. Past any, the view is stopped and its records' plain face drawn, with why. A `graview.part` (a `<div data-part>`; `{ as: "li" }`) that throws or takes a quarter of the push is a note instead, the rest drawn, why in the console; a slow one rests three pushes, then runs. Name each part apart; a loop's same-named rows go by order. Draw summaries; never spin.
 
 ### Worked examples
 
-`examples/offers-list.js` is a list lens: rows linking to their records, and a note typed and pressed in. `examples/front-page.js` is a home: a headline, a figure, an SVG ring and cards linking to a place. `examples/a-record.js` is a view of one record: a deliverable's draft read off `props.node`, and "Edit draft" prefilled. `examples/a-map-that-pans-and-zooms.js` is an SVG map a wheel and a pinch zoom at the pointer, and a drag pans.
+`examples/offers-list.js` is a list lens: rows linking to records, a note typed in. `examples/front-page.js` is a home: a headline, a figure, an SVG ring, cards. `examples/a-record.js` is a view of one record: its draft read off `props.node`, "Edit draft" prefilled. `examples/a-map-that-pans-and-zooms.js` is an SVG map a wheel and a pinch zoom at the pointer, and a drag pans.
 
 ### Registering it
 
