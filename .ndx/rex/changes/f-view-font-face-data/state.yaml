@@ -1,7 +1,10 @@
 schema: "rex/v2"
 items:
   "e18433d8-521d-4bd8-bfb1-89a10f0b19d8":
-    status: "in_progress"
+    status: "completed"
     startedAt: "2026-11-11T12:00:00.000Z"
-    lastModified: "2026-11-11T12:00:00.000Z"
+    completedAt: "2026-11-11T13:55:00.000Z"
+    lastModified: "2026-11-11T13:55:00.000Z"
     lastModifiedBy: "Nick Daniel <nick@endash.us>"
+    resolutionType: "code-change"
+    resolutionDetail: "A view's stylesheet keeps an @font-face from a data: font (50 KB a face, 200 KB a view, sixteen faces), loaded as a FontFace under a name of that view's own; a lent face wins. PR #572, landed in the 0.1.73 batch #568."
