@@ -5,8 +5,9 @@ import { checkUndo } from "./ops/undo.js";
 import type { Batch, Operation } from "./ops/types.js";
 import type { FieldWriter, Timeline } from "./ops/served.js";
 import { writersOf, type Writers } from "./ops/writers.js";
-import { namesUnseen, redact, type SeatLens } from "./ops/withheld.js";
-import { actingAs, grantsTo, isSystem, meOf, profileOf, seatedIn } from "./permissions/policy.js";
+import { isWithheld, namesUnseen, redact, type SeatLens } from "./ops/withheld.js";
+import { labelOf } from "./schema/define-node.js";
+import { actingAs, grantsTo, isSystem, meOf, profileOf, seatedIn, seatPersonOf } from "./permissions/policy.js";
 import { PERSON_SEAT } from "./graph/archived.js";
 import { bindsPeople, seatsKept, unseated } from "./binding-served.js";
 import { FIELD_SIGHT, fieldsJudged, partialSight, recordsOf, sees, type Judged, type Records } from "./permissions/sight.js";
@@ -556,10 +557,54 @@ export function forgetSeatView(store: object, principal: Principal): void {
   views?.delete(viewKey(principal, "published"));
 }
 
+/** Whether a kind here is the people, whom a seat could be bound to. */
+const hasPeople = (store: Judged): boolean => ((store.schema as { readonly definitions?: readonly { readonly people?: boolean }[] } | undefined)?.definitions ?? []).some((definition) => definition.people === true);
+
+const NAMED = new WeakMap<readonly Operation[], { readonly told: unknown; readonly ops: readonly Operation[] }>();
+
+/**
+ * WHO DID IT, AS THE PERSON THEY WERE BOUND TO (Roadmap
+ * f-invite-binds-existing-person): an op by a seat bound to a record this
+ * seat is served carries that record's name, so Activity says "Bud" and not
+ * his account, though the seat itself is not served. Kept for one reading of
+ * the log while the store tells nothing new.
+ */
+export function namedAuthors(store: Judged, lens: Pick<SeatLens, "shows" | "keepsSeat">, ops: readonly Operation[]): readonly Operation[] {
+  const graph = store.graph;
+  if (!graph.hasPersonSeats?.() || !graph.personBoundTo) return ops;
+  const told = (store as { readonly version?: unknown }).version ?? store.log.all().length;
+  const held = NAMED.get(ops);
+  if (held && held.told === told) return held.ops;
+  let changed = false;
+  const named = ops.map((op) => {
+    const author = op.author;
+    if (isWithheld(op) || (author.onBehalfOf ?? author).kind !== "human") return op;
+    const seat = seatPersonOf(author.onBehalfOf ?? author);
+    const id = seat === undefined ? undefined : graph.personBoundTo!(seat);
+    const node = id === undefined || !lens.shows(id) ? undefined : graph.getNode(id);
+    if (!node) return op;
+    const name = labelOf(store.schema?.tryDefinition(node.kind) as never, node as never);
+    const person = author.onBehalfOf ?? author;
+    if (!name || person.name === name) return op;
+    changed = true;
+    return { ...op, author: author.onBehalfOf ? { ...author, onBehalfOf: { ...person, name } } : { ...author, name } };
+  });
+  const out = changed ? named : ops;
+  NAMED.set(ops, { told, ops: out });
+  return out;
+}
+
 /** The app as a seat is served it at the head: what its sight reaches, as the store grows. */
 export function seatView<T extends Viewed>(store: T, principal: Principal): T {
   // A module off keeps its kinds from every seat as a sight would (FR-12); the view reads which are off as it goes. The system is kept from nothing.
-  if (!hidesFrom(store, principal)) return store;
+  /*
+   * WHERE NOTHING IS KEPT, THE STORE ITSELF — unless a person here could be
+   * bound to a seat (Roadmap f-invite-binds-existing-person): a view held from
+   * before the first binding would serve it after. Such a view reads the
+   * store as it is while nothing is kept (`open`), and is judged once
+   * something is.
+   */
+  if (!hidesFrom(store, principal) && !hasPeople(store)) return store;
   const key = viewKey(principal, "head");
   const views = viewsOf(store);
   const held = views.get(key);
@@ -620,11 +665,14 @@ export function seatView<T extends Viewed>(store: T, principal: Principal): T {
    * and one that touched what this seat may not see withheld — so the log
    * still loads, folds and undoes, and says something happened there.
    */
-  const ops = (): readonly Operation[] => logSeenBy(store as never, principal);
+  // Nothing kept from this seat now: every read is the store's own, as it is for a seat no view is made for.
+  const open = (): boolean => !hidesFrom(store, principal);
+  const ops = (): readonly Operation[] => namedAuthors(store, lens, logSeenBy(store as never, principal));
   const reading = (): LogReading => readingOf(ops(), () => store.log.epochs());
 
   const graph = new Proxy(full, {
     get(target, prop) {
+      if (open()) return bound(target, prop);
       switch (prop) {
         case "getNode":
           return (id: string) => served(target.getNode(id));
@@ -682,6 +730,7 @@ export function seatView<T extends Viewed>(store: T, principal: Principal): T {
   };
   const log = new Proxy(store.log, {
     get(target, prop) {
+      if (open()) return bound(target, prop);
       switch (prop) {
         case "all":
         case "toJSON":
@@ -713,6 +762,7 @@ export function seatView<T extends Viewed>(store: T, principal: Principal): T {
 
   const view = new Proxy(store, {
     get(target, prop) {
+      if (prop !== SEAT && prop !== "seenFor" && prop !== "seenBy" && prop !== "graph" && prop !== "log" && open()) return bound(target, prop);
       switch (prop) {
         // Whose view this is (`seatOf`): read by what reads a store from outside it — the past, the suggestions — without importing this module.
         case SEAT:

@@ -12,7 +12,7 @@ import { recordsOf } from "./permissions/sight.js";
 import type { Principal } from "./permissions/types.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { Judged } from "./permissions/sight.js";
-import { hidesFrom, seatLens, seenBy } from "./seen.js";
+import { hidesFrom, namedAuthors, seatLens, seenBy } from "./seen.js";
 import { unseatedPrimitive } from "./binding-served.js";
 import type { Store } from "./store.js";
 
@@ -104,7 +104,8 @@ export function answerSeenBy<
       touched: [...diff.touched.filter(lens.shows), ...[...patched.keys()].filter((id) => lens.shows(id) && !diff.touched.includes(id))],
     };
   }
-  if (answer.ops) out["ops"] = redact(answer.ops, lens);
+  // Each op's author named as the person they were bound to, where this seat is served that person (Roadmap f-invite-binds-existing-person).
+  if (answer.ops) out["ops"] = namedAuthors(store, lens, redact(answer.ops, lens));
   if (answer.primitives) {
     // An apply's primitives are its ops'; a preview's are not in the log yet, and are judged from the graph as it stands.
     const ops = out["ops"] as readonly Operation[] | undefined;

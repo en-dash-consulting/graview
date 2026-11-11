@@ -445,13 +445,45 @@ describe("two people bound to one account", () => {
 });
 
 describe("an app with no sight is served as it is again once nobody is bound", () => {
-  it("serves through a seat's view only while a record is bound, and never for whoever binds people", () => {
+  it("reads the store as it is while nobody is bound, and never through a view for whoever binds people", () => {
     const store = people([{ roles: ["owner"], mutations: [BIND_PERSON] }, { roles: "*", mutations: ["give-it"] }]);
-    expect(store.seenBy(ann)).toBe(store);
+    const view = store.seenBy(ann);
+    expect(view.graph.getNode("participant:bud")).toBe(store.graph.getNode("participant:bud"));
     const done = bindPerson(store, bud, "participant:bud", { author: organizer });
-    expect(store.seenBy(ann)).not.toBe(store);
-    expect(store.seenBy(organizer)).toBe(store);
+    expect(view.graph.getNode("participant:bud")).not.toHaveProperty("$seat");
+    expect(store.seenBy(organizer).graph.getNode("participant:bud")).toBe(store.graph.getNode("participant:bud"));
     store.undo(done.batch, { author: organizer });
-    expect(store.seenBy(ann)).toBe(store);
+    expect(view.graph.getNode("participant:bud")).toBe(store.graph.getNode("participant:bud"));
+  });
+
+  it("never serves a binding made after a seat's view was taken to that view", () => {
+    const store = people([{ roles: ["owner"], mutations: [BIND_PERSON] }, { roles: "*", mutations: ["give-it"] }]);
+    const view = store.seenBy(ann);
+    const graph = view.graph;
+    const log = view.log;
+    bindPerson(store, bud, "participant:bud", { author: organizer });
+    for (const read of [view.graph.snapshot(), graph.snapshot(), graph.getNode("participant:bud"), log.all(), view.log.all(), view.checkpoint()]) {
+      expect(JSON.stringify(read ?? null)).not.toContain("$seat");
+      expect(JSON.stringify(read ?? null)).not.toContain("acct-bud");
+    }
+  });
+});
+
+describe("Activity names a bound person by their record", () => {
+  it("says Bud, not his account, to a member who sees Bud", () => {
+    const store = family();
+    bindPerson(store, bud, "participant:bud", { author: organizer });
+    store.apply({ name: "give-it", args: { id: "gift:kite" } }, { author: bud });
+    const view = store.seenBy(ann);
+    const op = view.log.all().at(-1)!;
+    expect(nameOfAuthor(op.author, { graph: view.graph as never, schema: store.schema })).toBe("Bud");
+  });
+
+  it("says nothing of the record to a seat that may not see Bud", () => {
+    const store = people([{ roles: ["owner"], mutations: [BIND_PERSON] }, { roles: "*", mutations: ["give-it"] }], [{ roles: ["owner", "member"], kinds: ["gift", "household", "secret"] }, { roles: ["owner"], kinds: ["participant"] }]);
+    bindPerson(store, bud, "participant:bud", { author: organizer });
+    store.applyPrimitives([{ op: "add-edge", edge: { kind: "givenBy", from: "gift:kite", to: "participant:bud" } } as never], { author: bud });
+    const ops = store.seenBy(ann).log.all();
+    expect(JSON.stringify(ops)).not.toContain('"name":"Bud"');
   });
 });

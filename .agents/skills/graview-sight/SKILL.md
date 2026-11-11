@@ -122,7 +122,8 @@ A person entered before they joined is bound, not made twice:
 is the `bind-person` op; `$me`, `own` and `self` then read that record. Only the
 host's system seat, or a grant naming `bind-person` for a role, binds (never
 `*`), never an agent; never a seat itself. It stays once they act. A seat is
-served its own binding; whoever may bind sees them all.
+served its own binding; whoever may bind sees them all. A host forwards a
+change through `answerSeenBy`, never a raw result.
 
 What a view keeps for that viewer (`graview.mine`, `graview-view-forms`) goes
 where the host says, for the viewer it knows, handed to `mount`, `<Embed>` and
