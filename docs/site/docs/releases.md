@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.73`](https://graview.dev/docs/releases.html#v0-1-73)
 - [`0.1.72`](https://graview.dev/docs/releases.html#v0-1-72)
 - [`0.1.71`](https://graview.dev/docs/releases.html#v0-1-71)
 - [`0.1.70`](https://graview.dev/docs/releases.html#v0-1-70)
@@ -74,9 +75,28 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
-## 0.1.72
+## 0.1.73
 
 Published November 11, 2026 · the current version
+
+A visitor's view is no longer stopped by the host's link check; a view knows what its seat can't see, is checked as every seat, and fails a part at a time; a view loads its own face; a joining member becomes the person already entered; and a home view's pictures load lazily and small.
+
+- **A visitor's view draws.** A home view of many linked records that drew for its owner and stopped for every signed-out visitor now draws for both: what a seat is kept from is worked out once per seat, not once per link. A home view that does stop falls back to the app's built-in home and stays there.
+- **A view knows what its seat can't see.** A worker view is handed `props.unseen` — the kinds it reads that the seat sees none of, and the fields sight may keep from it — so it can say "Sign in to see the vendors". A view whose seat sees nothing it reads is not started; the host's sign-in is drawn in its place.
+- **A view is checked as every seat.** `graview view check --seats` runs a view as its owner, as each role and as a visitor, and says for each whether it drew, fell back or was stopped.
+- **A part of a view fails alone.** `graview.part(name, draw)` marks a part; one that throws or runs long is drawn as a small note, and the rest of the view still draws.
+- **A view loads its own face.** A worker view's stylesheet may declare an `@font-face` from a `data:` font, up to 50 KB a face and 200 KB a view, drawn in that view alone.
+- **A joining member is the person already entered.** `bindPerson` on `@graview/core/binding` binds the joining account to an existing record of the people kind, so `$me`, grants, acts and Activity are that record and no second person is made.
+- **Pictures load lazily and at the size each use needs.** An `<img>` in a view takes `loading` and `fetchpriority`, and `pictures: { thumb }` hands a smaller copy beside `src`. `bleed: "full"` is said in the skills and the manifest check.
+- **A district's records with no value share one row**, so adding one moves no other block.
+
+**Before you upgrade:** Breaks: a view's stylesheet `@font-face` was refused and is now kept where its source is a `data:` font, and a face file is loaded only where its bytes are a font. A worker view whose home stops now falls back to the built-in home rather than a plain list. A host that pins the inlined guest client's hash takes the new `GUEST_CLIENT_SHA256`. A record of the people kind may carry `$seat`, which an export, a seed and a template drop; an act may not set a field whose name begins with `$`. A store with a people kind answers `seenBy` with a view of the graph as that seat in every case. Gains, nothing taken away: `bind-person` and `@graview/core/binding`, the `person-seat-shared` finding, `props.unseen`, `partMs` and `partMark` on a view's push, `thumb` on a `GuestFile`, `pictures.thumb`, `graview.part`, `runWorkerViewForEachSeat` and `seatsOfPolicy`, `graview view check --seats`, `forgetSeatView`, `HomeFallsBack`, the `view-font-face*`, `view-pictures-thumb` and `view-bleed` finding codes, and `districtLanes` on `@graview/core/scene`. Stored formats are otherwise unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.73) · [The full changelog for 0.1.73](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0173)
+
+## 0.1.72
+
+Published November 11, 2026
 
 An app's history opens from the app menu and from a host's own menu; a frame is lent the app's faces; a view chooses its pictures by record; and a frame that only grows with itself is held.
 
