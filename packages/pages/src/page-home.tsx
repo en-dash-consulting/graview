@@ -40,6 +40,8 @@ function ProblemsHere({ violations }: { readonly violations: readonly Violation[
   const error = violations.some((violation) => violation.status === "could-not-judge" || violation.status === "over-budget");
   return (
     <Link to="/problems" data-testid="problems-here" data-graview-problems-tone={error ? "error" : "rule"} style={{ ...link, color: error ? "var(--graview-warn)" : "var(--graview-ink-muted)" }}>
+      {/* A warning carries its mark as well as its words, never its hue alone (Roadmap f-better-bare-app-defaults). */}
+      {error ? <span aria-hidden="true" data-graview-warning-mark="">⚠ </span> : null}
       {violations.length === 1 ? "A rule is broken" : "Rules are broken"} — see what, and what would fix it
     </Link>
   );

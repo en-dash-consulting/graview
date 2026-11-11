@@ -268,13 +268,29 @@ const utcStampOf = (day: string, minutes: number): number => Date.UTC(+day.slice
  */
 const namesZone = (at: string): boolean => /[Z+-][\d:]*$/.test(at.slice(16));
 
-function moment(at: string, options: Intl.DateTimeFormatOptions, locale: string | undefined, timeZone: string | undefined, named = false): string {
+function moment(at: string, options: Intl.DateTimeFormatOptions, locale: string | undefined, timeZone: string | undefined, named: boolean | "elsewhere" = false): string {
   if (!ISO_MOMENT.test(at)) return at;
   const zoned = namesZone(at);
   const stamp = Date.parse(at.replace(" ", "T") + (zoned ? "" : "Z"));
   if (Number.isNaN(stamp)) return at;
   const zone = zoned ? zoneFor(timeZone) : UTC;
-  return said(stamp, { ...options, hour: "numeric", minute: "2-digit", ...(zoned && named ? { timeZoneName: "short" } : {}), ...(zone ? { timeZone: zone } : {}) }, locale);
+  const naming = named === "elsewhere" ? zoned && !readersClockIs(zone, stamp) : zoned && named;
+  return said(stamp, { ...options, hour: "numeric", minute: "2-digit", ...(naming ? { timeZoneName: "short" } : {}), ...(zone ? { timeZone: zone } : {}) }, locale);
+}
+
+/**
+ * WHETHER THE READER'S OWN CLOCK SAYS THIS INSTANT AS THE ZONE DOES: the
+ * person's zone a host passed, else the clock the page runs on. A reader in
+ * the app's zone is not told its name ("9:30 AM", never "9:30 AM EST" to
+ * somebody in New York); one elsewhere is, since the same words would name
+ * another moment on their own clock.
+ */
+function readersClockIs(zone: string | undefined, stamp: number): boolean {
+  const own = readersZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
+  if (zone === undefined || own === zone) return true;
+  const there = wallIn(stamp, zone);
+  const here = wallIn(stamp, own);
+  return there.day === here.day && there.minutes === here.minutes;
 }
 
 /**
@@ -286,6 +302,15 @@ function moment(at: string, options: Intl.DateTimeFormatOptions, locale: string 
  * is said as it is.
  */
 export const momentAsRead = (at: string, locale?: string, timeZone?: string): string => moment(at, { year: "numeric", month: "short", day: "numeric" }, locale, timeZone, true);
+
+/**
+ * A moment as a glance says it (Roadmap f-better-bare-app-defaults): as
+ * `momentAsRead`, the zone named only when the reader's own clock is not
+ * the one it is said on — "Nov 26, 2026, 9:30 AM" to a reader in the app's
+ * zone, "Nov 26, 2026, 9:30 AM EST" to one elsewhere. A row, a card and a
+ * hit in Find say this; a record's page and a model are told the zone.
+ */
+export const momentAtAGlance = (at: string, locale?: string, timeZone?: string): string => moment(at, { year: "numeric", month: "short", day: "numeric" }, locale, timeZone, "elsewhere");
 
 /** A moment's time of day: "3:30 PM" (en-US), "15:30" (en-GB), an instant on the clock `momentAsRead` says it on. Anything that is not a moment is said as it is. */
 export const timeAsRead = (at: string, locale?: string, timeZone?: string): string => moment(at, {}, locale, timeZone);

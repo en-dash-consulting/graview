@@ -1,6 +1,7 @@
 import { labelOf, resolveKit, type AnyGraphNode, type AnySchema, type GraphReader } from "@graview/core";
-import { blockContextFor, blocksName, compileBlocks, isTallBlock, resolveBlocks, whatBlocksSay, type BlockContext, type BlocksSaid, type ResolvedBlock, type ResolvedList, type SpecBlock } from "@graview/core/blocks";
+import { blockContextFor, blocksName, compileBlocks, isTallBlock, resolveBlocks, whatBlocksSay, withComputed, type BlockContext, type BlocksSaid, type ResolvedBlock, type ResolvedList, type SpecBlock } from "@graview/core/blocks";
 import type { ViewSlot, ViewSpecsByKind } from "@graview/core/document";
+import { excerptOf, readableFields } from "@graview/core/words";
 import { isDefaultView, useGraph, useGraview, ViewModeProvider, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { createContext, Fragment, Suspense, useContext, useMemo, useRef, useState, type ComponentType, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 import { useEndsAboveItsList } from "./stretched-link.js";
@@ -136,6 +137,23 @@ function Drawn({ block }: { readonly block: ResolvedBlock }): ReactNode {
   const under = useContext(HeadingsUnder);
   const homeLine = useContext(HomeLine);
   const linked = useContext(NamedByItsLink);
+  /*
+   * A WARNING IS NEVER TOLD BY HUE ALONE (Roadmap f-better-bare-app-defaults):
+   * a line in the warning tone carries the kit's mark and, to a screen
+   * reader, the word — so an accent near the warning's hue can be the app's
+   * own and a warning still reads as one. A badge is a value ("Low"), said
+   * by its own words; it is not a warning, whatever its tone.
+   */
+  const flag = useFlagMark();
+  const warned = (tone: string | undefined): ReactNode =>
+    tone === "warn" ? (
+      <>
+        <span className="graview-spec-mark" aria-hidden="true">
+          {flag}
+        </span>
+        <span className="graview-spec-said">Warning: </span>
+      </>
+    ) : null;
   if (said && block.t === "badge" && said.values.some((value) => sameWords(value, block.text))) return null;
   if (said && block.t === "field" && said.field !== undefined && block.field === said.field) return null;
   // A count of nothing is not a badge: "0 votes" was a pill saying there is nothing to say.
@@ -152,6 +170,7 @@ function Drawn({ block }: { readonly block: ResolvedBlock }): ReactNode {
       if (block.markdown || hasShape(block.text)) {
         return (
           <div className="graview-spec-text" {...(block.tone ? { "data-graview-tone": block.tone } : {})} {...linesOf(block.lines, true)}>
+            {warned(block.tone)}
             <TextBody text={block.text} markdown={block.markdown} />
           </div>
         );
@@ -160,6 +179,7 @@ function Drawn({ block }: { readonly block: ResolvedBlock }): ReactNode {
       if (block.runs) {
         return (
           <p className="graview-spec-text graview-spec-meta" {...(block.tone ? { "data-graview-tone": block.tone } : {})} {...linesOf(block.lines, false)}>
+            {warned(block.tone)}
             {block.runs.map((run, at) => (
               <Fragment key={at}>
                 {/* A space between two facts, for whoever hears or copies the line; the gap is what is seen. Two runs of words keep their dot, in the words, never a mark of its own. */}
@@ -178,6 +198,7 @@ function Drawn({ block }: { readonly block: ResolvedBlock }): ReactNode {
       }
       return (
         <p className="graview-spec-text" {...(block.tone ? { "data-graview-tone": block.tone } : {})} {...linesOf(block.lines, true)}>
+          {warned(block.tone)}
           {block.text}
         </p>
       );
@@ -414,11 +435,26 @@ function Listed({ node, as, depth, said = null }: { readonly node: AnyGraphNode;
    * the record's name is the row's, whole, wrapping where it must.
    */
   if (as === "row" && depth <= MAX_LIST_DEPTH && (!View || isDefaultView(View))) {
+    /*
+     * ITS GLANCE AFTER ITS NAME, AS ITS LIST SAYS IT (Roadmap
+     * f-better-bare-app-defaults). A home listing a kind with no row of its
+     * own drew bare names, so the glance a declaration gave the kind changed
+     * its list and not its rows on the home: "Dinner", where the list said
+     * "Dinner · Nov 26, 2026, 9:30 AM".
+     */
+    const definition = store.schema.tryDefinition(node.kind);
+    const read = (definition as { computed?: object } | undefined)?.computed ? withComputed(store.schema, store.graph as never, node as never) : node;
+    const facts = readableFields(read as Record<string, unknown>, definition, { limit: 3, said: [label], glance: true }).map((field) => (field.long ? excerptOf(field.stored, { markdown: field.markdown, most: 100 }) : field.alone));
     return (
       <li className="graview-spec-item" data-graview-listed={node.id} data-as={as} {...marked}>
-        <ListedLink node={node} label={label} />
+        <ListedLink node={node} label={broken ? `${label} — implicated in a problem` : label} />
         <div className="graview-spec graview-spec-row" data-graview-spec="row" data-graview-kind={node.kind} aria-hidden="true">
           <strong className="graview-spec-title">{broken ? `${label} ${flag}` : label}</strong>
+          {facts.length > 0 ? (
+            <span className="graview-spec-text graview-spec-glance" data-testid="record-glance">
+              {facts.join(" · ")}
+            </span>
+          ) : null}
         </div>
       </li>
     );
@@ -577,6 +613,27 @@ function SpecList({ list }: { readonly list: ResolvedList }) {
   );
 }
 
+/** Words compared as a reader compares them: case, punctuation and spacing aside. */
+const wordsOf = (text: string) => text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+
+/** Whether a headline or a line of these blocks (or of a group in them) already says the app's line, in its literal words. */
+function blocksSayTheLine(blocks: readonly SpecBlock[], line: string): boolean {
+  const said = wordsOf(line);
+  if (said.length === 0) return false;
+  const literal = (block: SpecBlock): string | undefined => {
+    const parts = (block as { readonly parts?: readonly { readonly text?: string }[] | null }).parts;
+    return block.t === "headline" || block.t === "text" ? (parts ?? []).map((part) => part.text ?? " ").join("") : undefined;
+  };
+  const walk = (list: readonly SpecBlock[]): boolean =>
+    list.some((block) => {
+      const text = literal(block);
+      if (text !== undefined && wordsOf(text).includes(said)) return true;
+      const inner = (block as { readonly blocks?: readonly SpecBlock[] }).blocks;
+      return Array.isArray(inner) && walk(inner);
+    });
+  return walk(blocks);
+}
+
 /** Blocks about no one record — the home's body, a blocks lens — drawn under the provider, from the graph its seat may see, as `view`: `"home"`, or a blocks lens's own address. */
 export function SpecPlace({ blocks, heading = 2, firstHeading, slot, view = slot, flagged }: { readonly blocks: readonly SpecBlock[]; readonly heading?: number; readonly firstHeading?: number; readonly slot: "home" | "place"; readonly view?: string; /** The records a broken rule names, marked where a list draws them (Roadmap f-blocks-home-flagged). */ readonly flagged?: readonly string[] }) {
   const { store, brand } = useGraview();
@@ -584,11 +641,16 @@ export function SpecPlace({ blocks, heading = 2, firstHeading, slot, view = slot
   const broken = useMemo(() => (flagged && flagged.length > 0 ? new Set(flagged) : null), [flagged]);
   // As `resolveFor` reads them: the store's own day, the brand's money (FR-100), a page's budget — blocks about no record sweep whole kinds.
   const ctx: SpecContext = blockContextFor(store, null, null, { heading, firstHeading, money: brand });
-  // The app's line goes under the home's headline when it has one (`HomeLine`), else first.
-  const line = useContext(HomeLine);
   // The page above says the first headline as its lede (`PlacePageHead`): drawn once, there.
   const ledeAbove = useContext(PlacePageHead)?.lede === true;
   const drawn = ledeAbove && slot === "place" && blocks[0]?.t === "headline" ? blocks.slice(1) : blocks;
+  /*
+   * The app's line goes under the home's headline when it has one (`HomeLine`), else first —
+   * and not at all where the home's own words already say it (Roadmap f-better-bare-app-defaults):
+   * a home written with the description as its headline or a line read it twice.
+   */
+  const given = useContext(HomeLine);
+  const line = given !== null && brand?.subtitle && blocksSayTheLine(drawn, brand.subtitle) ? null : given;
   const headed = drawn.some((block) => block.t === "headline");
   return (
     <div className={`graview-spec graview-spec-${slot}`} data-graview-spec={slot}>

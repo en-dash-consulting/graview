@@ -40,8 +40,12 @@ import { accentProblem } from "./theme/accent.js";
 import { traitsOfDocument, type Trait, type TraitName } from "./traits.js";
 import { compileDocument } from "./document/compile-checked.js";
 import { composeReshape } from "./starting-document.js";
+import { fromDeclaration } from "./compose-home.js";
 
 export type { DocumentEdit } from "./document/edit.js";
+/** A plain document's first home, a kind's row and its glance, each proposed only where the document has none (Roadmap f-compose-home-from-declaration): what `composeDesign` proposes, one at a time. */
+export { glanceFromDeclaration, homeFromDeclaration, MOST_HOME_LISTS, rowFromDeclaration } from "./compose-home.js";
+export type { ComposedPart } from "./compose-home.js";
 /** A kind said by its noun and its plural, as the declaration spells them — for a host that writes about a document's kinds (the starter), never from the kind's id alone. */
 export { nounWords, pluralWords } from "./document/policy-words.js";
 
@@ -250,6 +254,11 @@ const MOST_ROUNDS = 40;
  *   1. jobs (`add-job`), inferred by `inferJobs`, where the document says
  *      none — the derived home opens on them; a declared home is given a
  *      list answering each (the critic's `design-job-unanswered` edit);
+ *   1b. what a plain document is missing (`homeFromDeclaration`,
+ *      `glanceFromDeclaration`, `rowFromDeclaration`): a home of a count
+ *      headline and a list per kind, dated kinds first, where it has none;
+ *      a glance and a row for each kind with none, leading with its date
+ *      and its status — a declared home, row or glance is kept;
  *   2. the critic's own edits (`designFindings`), asked again after each
  *      until it has no warning left: places that repeat removed, more than
  *      a person scans kept off the bar, the home given one thing to read
@@ -289,6 +298,15 @@ export function composeDesign(source: GraviewDocument | GraviewApp<AnySchema>, o
         reasons.push(`Nothing says what this app's people come to do, so its home said only what it holds: "${job.ask}" is a job it can answer from its ${pluralOf(doc, job.kind)}${title ? `, with "${title}" offered on each` : job.act ? ", with the act that answers it offered on each" : ""}.`);
     }
   }
+
+  /*
+   * WHAT A PLAIN DOCUMENT IS MISSING (Roadmap f-compose-home-from-declaration):
+   * a home of a count headline and a list per kind, dated kinds first; a
+   * glance and a row for each kind that has none, leading with its date and
+   * its status. A declared home, row or glance is kept: only what is
+   * missing is proposed, before the critic is asked, so it judges these too.
+   */
+  for (const part of fromDeclaration(doc)) if (attempt(part.edit)) reasons.push(part.said);
 
   for (let round = 0; round < MOST_ROUNDS; round += 1) {
     // One finding at a time, asked again after it: two edits worked out against the same home would undo each other.

@@ -1,0 +1,18 @@
+---
+"@graview/core": patch
+"@graview/primitives": patch
+"@graview/pages": patch
+"@graview/guest": patch
+---
+
+A bare app looks designed by default (Roadmap f-better-bare-app-defaults), from Graview Cloud building a Thanksgiving app from a chat. A kind whose date is a moment leads its glance with it when nothing declares when a record is, said as people say it — "Nov 26, 2026, 9:30 AM", with no field label — and a glance names the zone only to a reader whose own clock is not the one it is said on (`momentAtAGlance`, beside `momentAsRead` on `@graview/core`); a record's page and a model are still told the zone. A list of a kind with no row of its own on a home written as blocks says each record's glance after its name, as the kind's list does, so a declared glance shapes the home's rows too, and a place's description says the same line. The home says the app's description once: not again under a headline or a line of its own that already says it, on the face and in `describePlace`'s masthead alike.
+
+An accent near the warning's hue is taken when its contrast holds: pumpkin #b4532a was refused for sharing it. A document's accent is now refused only for its contrast (`accentProblem`, `set-brand`, `graview check`), and every warning carries its mark and its words: the bar's standing draws the warning's mark where a rule is broken, a line in the warning tone draws the kit's mark and says "Warning:" to a screen reader, a record a rule names on a blocks home is said "implicated in a problem" by its link, and the home's could-not-judge line carries the mark. `brandFromAccent` takes `warnMayShareHue` for a brand that draws its warnings the same way; without it, it refuses as before.
+
+`composeDesign` proposes what a plain document is missing (Roadmap f-compose-home-from-declaration): where it has no home, one of a count headline and a list per kind, the dated kinds first and sorted by their date (`homeFromDeclaration`); for each kind with none, a glance and a row leading with its date and its status (`glanceFromDeclaration`, `rowFromDeclaration`), all on `@graview/core/compose`. A declared home, row or glance is kept: only what is missing is proposed, before the critic is asked. The words a host composes with, `nounWords` and `pluralWords`, are on the same entry and named in docs/stability.md.
+
+A hosted page carries 0.6 KB more up front, and one handed a compiled app 0.6 KB more, under raises of their budgets. The pages face, every face, a visitor's form, the embed with the studio handed in and Cloud's worker grow with it, under raises of theirs.
+
+Tests: `a bare app looks designed by default` (core, pages), `compose proposes a home and rows for a plain document` (core).
+
+Compatibility: the declaration and check finding codes — a document's accent that shares the warning's hue and reads is no longer refused (`set-brand` takes it, `graview check` says nothing of it); no code is added or removed. `composeDesign` proposes more for a plain document: a `set-home`, and a `set-glance` and a `set-view` (row) per kind with a date or a status, each one `editDocument` takes, so a host that applied its edits sees a home and rows it did not before. `describePlace` says a default row's glance as one text part after its title, and leaves the masthead's subtitle out where the home's own heading or line says it. Ops and primitives, stored formats, the wire, derived tool names and input schemas — unchanged. What a host sees differently: a glance's time without its zone to a reader in the app's zone, a kind's first moment leading its glance, glances on a blocks home's rows, the description said once, the warning's mark on the bar's standing and on warning-toned lines.

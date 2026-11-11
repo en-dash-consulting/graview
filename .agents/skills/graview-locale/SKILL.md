@@ -45,7 +45,9 @@ brand, the name, mark, typeface and palette, is `graview-brand`.
 5. **Say them in templates.** `{at | time}` ("10:47 AM"), `{at | datetime}`
    ("Oct 16, 2026, 10:47 AM EDT"), `{at | date}` and `relative` (an
    instant's day counted on the app's clock); a field block takes
-   `as: "time"`, `as: "datetime"` and `as: "money"`.
+   `as: "time"`, `as: "datetime"` and `as: "money"`. A glance (a derived
+   row or card) says a moment without its zone to a reader on the app's
+   clock, and with it to one elsewhere; a record's page always names it.
 
 6. **Read today; never write it.** A worker view is handed the app's
    today, the day its rules read, on the app's clock: `graview.today`
