@@ -1,5 +1,5 @@
 import type { AnySchema } from "./schema/schema.js";
-import type { CityMap, Road, StateTier } from "./city.js";
+import type { CityMap, DistrictState, Road, StateTier } from "./city.js";
 
 const byId = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 
@@ -132,6 +132,40 @@ export interface LaneRest {
   readonly rows: number;
   readonly col: number;
   readonly row: number;
+}
+
+/**
+ * A DISTRICT'S ROWS, as the scene stands them: one per value of the kind's
+ * main choice (`districtState`), in declared order, and one more for the
+ * records with none — ONE, however many of them there are. Each record
+ * with no value used to open a row of its own, so the third such record
+ * cut the plot into one more row and every block on it moved. `first`
+ * stand at the head of their rows (a chosen record is never one of the
+ * `+n`), in the order the members are given in, as the scene stood them;
+ * one that is not a member is not stood at all. The rest keep the order
+ * they are given in.
+ */
+export function districtLanes(
+  state: DistrictState | undefined,
+  memberIds: readonly string[],
+  valueOf: (id: string) => unknown,
+  first: readonly string[] = [],
+): { readonly lanes: readonly (readonly string[])[]; readonly tiers: readonly StateTier[] } {
+  const lanes: string[][] = state ? state.values.map(() => []) : [[]];
+  const tiers: StateTier[] = state ? [...state.tiers] : ["waiting"];
+  const ahead = memberIds.filter((id) => first.includes(id));
+  for (const id of ahead.length > 0 ? [...ahead, ...memberIds.filter((id) => !first.includes(id))] : memberIds) {
+    const at = state ? state.values.indexOf(valueOf(id) as string) : 0;
+    if (at >= 0) lanes[at]!.push(id);
+    else {
+      if (lanes.length === state!.values.length) {
+        lanes.push([]);
+        tiers.push("waiting");
+      }
+      lanes[lanes.length - 1]!.push(id);
+    }
+  }
+  return { lanes, tiers };
 }
 
 /** How tall a block of each tier stands, as a share of its footprint: done lies flat. */
