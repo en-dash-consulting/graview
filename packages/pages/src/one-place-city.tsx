@@ -65,7 +65,7 @@ interface Drawn {
   readonly label: string;
 }
 
-export function OnePlaceCity({ where, page, sheet, connected, view, lessMotion, resolve, openRecord, openKind, motion, onAltitude }: OnePlaceCityProps) {
+export function OnePlaceCity({ where, page, out, sheet, connected, view, lessMotion, resolve, openRecord, openKind, motion, onAltitude }: OnePlaceCityProps) {
   const { store } = useGraview();
   const { view: seen, go } = useNavigation();
   const box = useRef<HTMLDivElement>(null);
@@ -82,18 +82,38 @@ export function OnePlaceCity({ where, page, sheet, connected, view, lessMotion, 
    */
   const wanted = useMemo<ViewState>(() => withOverview(EMPTY_VIEW, true), []);
   const asked = useRef("");
+  /*
+   * ONLY ONCE THE PAGE GOES OUT. While it is read, the view the provider
+   * holds is the page's own (what the page's quick ask is about, say), and
+   * the Scene is not drawn; out, the Scene's view is the overview; in
+   * again, the page's own view comes back.
+   */
+  const kept = useRef<ViewState | null>(null);
   useEffect(() => {
-    const next = { ...wanted, ...(seen.pan ? { pan: seen.pan } : {}) };
-    asked.current = toUrl(next);
-    go(next);
+    if (out) {
+      kept.current ??= seen;
+      const next = { ...wanted, ...(seen.overview && seen.pan ? { pan: seen.pan } : {}) };
+      asked.current = toUrl(next);
+      go(next);
+      return;
+    }
+    if (kept.current) {
+      const back = kept.current;
+      kept.current = null;
+      asked.current = toUrl(back);
+      go(back);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wanted]);
+  }, [out]);
 
   /* The Scene's own way down — a record focused, a district gone into — is that place, in the panel. A pan is the camera's own and is kept. */
+  const latestOut = useRef(out);
+  latestOut.current = out;
   const latest = useRef({ openRecord, openKind });
   latest.current = { openRecord, openKind };
   useEffect(() => {
-    if (toUrl(seen) === asked.current) return;
+    // While the page is read the view is the page's own, and none of this is the Scene's.
+    if (!latestOut.current || toUrl(seen) === asked.current) return;
     if (seen.overview && seen.focusId === null) return;
     const focus = seen.focusId;
     const back = { ...wanted, ...(seen.pan ? { pan: seen.pan } : {}) };
@@ -106,8 +126,8 @@ export function OnePlaceCity({ where, page, sheet, connected, view, lessMotion, 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seen]);
 
-  const state = useRef({ where, page, view, lessMotion, resolve, onAltitude });
-  state.current = { where, page, view, lessMotion, resolve, onAltitude };
+  const state = useRef({ where, page, out, view, lessMotion, resolve, onAltitude });
+  state.current = { where, page, out, view, lessMotion, resolve, onAltitude };
 
   useEffect(() => {
     let frame = 0;
@@ -119,14 +139,14 @@ export function OnePlaceCity({ where, page, sheet, connected, view, lessMotion, 
     let altitude = PAGE;
     /** A move of the camera this face is making: from one camera to another, about the place. */
     let move: { from: Live; to: Live; fromAltitude: number; toAltitude: number; about: Point; start: number; done: () => void } | null = null;
-    /** Where the place was aimed for while the page is read: its key and the window's size. */
-    let aimedFor = "";
-    let aimTries = 0;
     /** A zoom the person's own hand made on the Scene, and when it last moved. */
     let handZoom = 0;
     let handSince = 0;
     let lastPlace = "";
     let lastReported = "";
+    /* When the camera was last written into the view: the Scene settles what is painted a beat after (its wheel's rule), so nothing new is painted until that beat has passed. */
+    let committedAt = -Infinity;
+    const QUIET_MS = 220;
     const lines = new Map<string, { g: SVGGElement; path: SVGPathElement; dot: SVGCircleElement; arrow: SVGPathElement; ring: HTMLButtonElement }>();
 
     /** The picture as laid out now, read while nothing is painted over it. */
@@ -175,6 +195,7 @@ export function OnePlaceCity({ where, page, sheet, connected, view, lessMotion, 
         altitude = toLevel;
         rest = toLevel;
         cam.commit();
+        committedAt = performance.now();
         return;
       }
       move = {
@@ -188,6 +209,7 @@ export function OnePlaceCity({ where, page, sheet, connected, view, lessMotion, 
           rest = toLevel;
           altitude = toLevel;
           cam.commit();
+          committedAt = performance.now();
         },
       };
     };
@@ -201,10 +223,36 @@ export function OnePlaceCity({ where, page, sheet, connected, view, lessMotion, 
       const at = state.current;
       const asking = motion.current;
 
+      /*
+       * WHILE THE PAGE IS READ the Scene is not drawn at all: no room, no
+       * scroll, no pointer, no keyboard. Asked out, it is drawn a frame
+       * before anything moves, laid out, and the camera aimed out of sight
+       * where stepping out begins; only then does the page move.
+       */
+      const drawn = at.out || rest !== PAGE || move !== null || asking.scrubbing || altitude > 0.001;
+      if (!drawn) {
+        if (holder.style.display !== "none") {
+          holder.style.display = "none";
+          holder.style.visibility = "hidden";
+          plane.style.transform = "";
+          plane.style.opacity = "";
+          plane.style.borderRadius = "";
+          draw([], 0);
+        }
+        return;
+      }
+      if (holder.style.display === "none") {
+        holder.style.display = "block";
+        return;
+      }
+
       /* THE CAMERA AS IT IS: a move between stops painted now, or the view's own. */
       const live = cam.live();
       const between = !level(live);
+      // Settling: a move written into the view not yet laid out, or written too recently for a new one to be painted safely.
       const settling = cam.moving() && !between;
+      // Written too recently for a new move to be painted safely: the Scene settles what is painted a beat after a commit.
+      const calm = now - committedAt >= QUIET_MS;
       if (between) painted = live;
       else if (!settling) {
         painted = LEVEL_LIVE;
@@ -215,14 +263,26 @@ export function OnePlaceCity({ where, page, sheet, connected, view, lessMotion, 
       const zoomNow = cam.zoom();
       const placeKey = `${keyOf(at.where)}|${at.view.width}x${at.view.height}`;
 
+      /* At the page, the camera waits where stepping out begins: aimed for each place before anything moves. */
+      let ready = rest !== PAGE || move !== null || asking.scrubbing;
+      if (!ready && anchor && !settling) {
+        // Painted, not written into the view: the move starts from it in this same frame, and only its end is written.
+        const want = cameraFor(PAGE, anchor, zoomNow);
+        if (Math.hypot(want.x - painted.x, want.y - painted.y) + Math.abs(want.s - painted.s) * 100 > 0.5) {
+          cam.liveTo(want);
+          painted = want;
+        }
+        ready = true;
+      }
+
       /* WHAT IS ASKED: a level (Up, Down, a press), or a scrub of the altitude by a hand on the page. */
-      if (anchor && asking.level !== null && !move && !settling) {
+      if (ready && calm && anchor && asking.level !== null && !move && !settling) {
         const toLevel = asking.level;
         asking.level = null;
         if (toLevel !== rest || placeKey !== lastPlace) moveTo(cam, toLevel, anchor, now);
         lastPlace = placeKey;
       }
-      if (anchor && asking.scrub !== 0 && !settling) {
+      if (ready && calm && anchor && asking.scrub !== 0 && !settling) {
         const delta = asking.scrub;
         asking.scrub = 0;
         move = null;
@@ -238,7 +298,7 @@ export function OnePlaceCity({ where, page, sheet, connected, view, lessMotion, 
         handSince = now;
         asking.scrubbing = true;
       }
-      if (asking.scrubbing && !asking.held && now - handSince > LET_GO_MS && !settling) {
+      if (asking.scrubbing && !asking.held && now - handSince > LET_GO_MS && !settling && calm) {
         asking.scrubbing = false;
         if (anchor) moveTo(cam, restingLevel(altitude), anchor, now);
       }
@@ -272,41 +332,23 @@ export function OnePlaceCity({ where, page, sheet, connected, view, lessMotion, 
             handSince = now;
           }
           altitude = atZoom;
-          if (now - handSince > LET_GO_MS && !asking.held && anchor) moveTo(cam, restingLevel(atZoom), anchor, now);
+          if (now - handSince > LET_GO_MS && !asking.held && anchor && calm) moveTo(cam, restingLevel(atZoom), anchor, now);
         } else altitude = rest;
       }
 
-      /* WHILE THE PAGE IS READ, the camera waits where stepping out begins: aimed once for each place, out of sight. */
-      if (rest === PAGE && !move && !asking.scrubbing && anchor && !settling) {
-        if (aimedFor !== placeKey) {
-          aimedFor = placeKey;
-          aimTries = 0;
-        }
-        const want = cameraFor(PAGE, anchor, zoomNow);
-        if (!level(want) && aimTries < 4 && Math.hypot(want.x, want.y) + Math.abs(want.s - 1) * 100 > 2) {
-          aimTries += 1;
-          cam.liveTo(want);
-          cam.commit();
-        }
-      }
       // Moving to another place at a level above the page: the camera flies there and stays at that level.
-      if (rest !== PAGE && !move && !asking.scrubbing && anchor && placeKey !== lastPlace && !settling && holder.querySelector("[data-graview-settled]")) {
+      if (rest !== PAGE && !move && !asking.scrubbing && anchor && placeKey !== lastPlace && !settling && calm && holder.querySelector("[data-graview-settled]")) {
         lastPlace = placeKey;
         moveTo(cam, rest, anchor, now);
       }
 
       /* THE PAGE: its box from the altitude, then how it stands on the place as the camera has it this frame. */
       const a = altitude;
-      const away = a > 0.001 || move !== null || asking.scrubbing;
+      // Out, or asked out and waiting for the camera to be aimed: the page is not back in until nothing asks it out.
+      const away = a > 0.001 || move !== null || asking.scrubbing || (asking.level !== null && asking.level > PAGE) || asking.scrub !== 0;
       holder.style.visibility = away ? "visible" : "hidden";
-      // Read, the city is out of reach and out of the page's measure; out, it is the picture, and nothing of it scrolls.
+      // Drawn but not yet moved out, the city takes no pointer and no keyboard.
       if (holder.inert === away) holder.inert = !away;
-      const overflow = away ? "hidden" : "auto";
-      if (holder.style.overflow !== overflow) {
-        holder.style.overflow = overflow;
-        holder.scrollTop = 0;
-        holder.scrollLeft = 0;
-      }
       holder.style.opacity = String(a >= PANEL ? 1 : ease(clamp01(a * 1.3)));
       const pageAt = pageBox(a, at.view);
       // Into or out of the panel, the page makes straight for the roof where the move leaves it (or comes from), not after a roof still on its way.
@@ -409,6 +451,8 @@ export function OnePlaceCity({ where, page, sheet, connected, view, lessMotion, 
       if (!svg || !ringLayer) return;
       svg.style.opacity = String(opacity);
       ringLayer.style.opacity = String(opacity);
+      // No lines, no group of their ends: nothing of it outside the page's landmarks while the page is read.
+      ringLayer.hidden = found.length === 0;
       const keep = new Set(found.map((line) => line.key));
       for (const [key, drawn] of lines) {
         if (keep.has(key)) continue;
@@ -527,14 +571,14 @@ export function OnePlaceCity({ where, page, sheet, connected, view, lessMotion, 
          * in the page — and what of it reaches past the window is inside a
          * box that scrolls, as a phone's sideways row would be.
          */
-        style={{ position: "fixed", inset: 0, zIndex: LOCAL_LAYERS.under, visibility: "hidden", overflow: "auto", scrollbarWidth: "none", containerType: "size" }}
+        style={{ position: "fixed", inset: 0, zIndex: LOCAL_LAYERS.under, display: "none", visibility: "hidden", overflow: "hidden", containerType: "size" }}
       >
         {/* One set of lines on this face: nothing is chosen on the Scene, so it draws no lines of its own from a choice and no outline of one. */}
-        <Scene renderer="dom" blur={false} camera={camera} style={{ width: "100%", height: "100%" }} />
+        <Scene renderer="dom" blur={false} animate={false} camera={camera} style={{ width: "100%", height: "100%" }} />
       </div>
       <svg ref={overlay} aria-hidden="true" data-testid="one-place-lines" width={view.width} height={view.height} style={{ position: "fixed", left: 0, top: 0, zIndex: LOCAL_LAYERS.over + 1, pointerEvents: "none", overflow: "visible", opacity: 0 }} />
       {/* Each line's end, a ring the keyboard and the pointer reach: that record, in the panel. */}
-      <div ref={rings} role="group" aria-label="What this page shows, in the city" style={{ position: "fixed", left: 0, top: 0, width: 0, height: 0, zIndex: LOCAL_LAYERS.over + 1, opacity: 0 }} />
+      <div ref={rings} hidden role="group" aria-label="What this page shows, in the city" style={{ position: "fixed", left: 0, top: 0, width: 0, height: 0, zIndex: LOCAL_LAYERS.over + 1, opacity: 0 }} />
     </>
   );
 }

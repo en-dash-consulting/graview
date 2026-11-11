@@ -58,6 +58,8 @@ export interface OnePlaceCityProps {
   readonly where: PageWhere;
   /** The page's own address: the record chosen in the city. */
   readonly page: PageWhere;
+  /** Whether the page has left the window (or is asked to): the Scene is drawn, and its view is the overview, only then. */
+  readonly out: boolean;
   /** The page's own element: the one thing that moves between the levels. */
   readonly sheet: RefObject<HTMLDivElement | null>;
   /** The Connected list's box in the page, grown as the page becomes the panel. */
@@ -348,7 +350,7 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
   return (
     <OnePlaceUpContext.Provider value={upValue}>
       <Suspense fallback={null}>
-        <OnePlaceCity where={where} page={where} sheet={sheet} connected={connected} view={view} lessMotion={lessMotion()} resolve={resolve} openRecord={openRecord} openKind={openKind} motion={motion} onAltitude={onAltitude} />
+        <OnePlaceCity where={where} page={where} out={now.away} sheet={sheet} connected={connected} view={view} lessMotion={lessMotion()} resolve={resolve} openRecord={openRecord} openKind={openKind} motion={motion} onAltitude={onAltitude} />
       </Suspense>
       <div ref={sheet} data-graview-one-place={now.level} data-graview-standing-on={where.type === "record" ? where.id : where.type === "list" ? `kind:${where.kind}` : where.type} style={sheetStyle}>
         <div {...(now.level >= 2 ? { inert: true } : {})} style={away ? { minHeight: "100%", display: "flex", flexDirection: "column" } : { display: "contents" }}>
