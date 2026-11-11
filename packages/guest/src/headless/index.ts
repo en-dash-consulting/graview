@@ -62,6 +62,8 @@ export type { ImageHost } from "../host/open-judge.js";
 export { HEADLESS_ENTRY, HEADLESS_VIEW } from "./protocol.js";
 export type { HeadlessFailureReason, HeadlessInput, HeadlessOutcome, HeadlessTranscript } from "./protocol.js";
 export { createTree, TreeDocument, TreeElement, TreeText } from "./tree.js";
+export { runWorkerViewForEachSeat, seatsOfPolicy } from "./seats.js";
+export type { HeadlessSeat, RunForEachSeatOptions, SeatCheck, SeatsChecked } from "./seats.js";
 
 /**
  * WHAT THE HOST'S ISOLATE IS HANDED. Load `script` into the isolate as code

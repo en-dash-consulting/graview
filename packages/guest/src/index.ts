@@ -16,6 +16,7 @@ export type {
   GuestPressed,
   GuestProps,
   GuestTheme,
+  GuestUnseen,
   GuestWhere,
   GuestReady,
   GuestRefusal,

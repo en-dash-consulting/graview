@@ -283,6 +283,30 @@ export interface GuestProps {
    * sight.
    */
   readonly me?: { readonly id?: string; readonly name?: string };
+  /**
+   * WHAT THIS SEAT IS KEPT FROM, of the kinds the view reads (Roadmap
+   * f-view-knows-what-its-seat-cannot-see): so a view can say "Sign in to
+   * see the vendors" rather than draw an empty section. Absent where
+   * nothing of what it reads is kept from the seat.
+   */
+  readonly unseen?: GuestUnseen;
+}
+
+/**
+ * WHAT A VIEW'S SEAT IS KEPT FROM, and only what the seat may know of it.
+ * `kinds`: each kind the view reads that the seat sees none of. `fields`:
+ * for each kind it reads and sees, the fields some record of it may be
+ * handed without, from the app's sight rules alone. `withheld`: for each
+ * kind it reads that a sight shows the seat every record of, how many of
+ * them it is handed none of (a field such a record cannot be without is
+ * kept from it, or names a record it may not see) — a count, never a name.
+ * A kind kept from the seat, or one it sees only its own records of
+ * (`own`, `via`), has no count at all, and nor does an app that publishes.
+ */
+export interface GuestUnseen {
+  readonly kinds: readonly string[];
+  readonly fields: Readonly<Record<string, readonly string[]>>;
+  readonly withheld: Readonly<Record<string, number>>;
 }
 
 /** The longest value a view may keep, in bytes as UTF-8. */

@@ -153,8 +153,10 @@ function WorkerViewMount({ definition: given, store, principal, input, goTo, pla
   const told = useContext(ViewContentHeight);
   // The logo a view is handed is fetched from the page's origin: a path under /graview/assets/ is fetched where the host serves it.
   const served = useMemo(() => brandUnder(brand, hostAssets), [brand, hostAssets]);
-  const latest = useRef({ input, goTo, places, arrangement, onFailure, brand: served, hostFiles, hostAssets, viewerState, told });
-  latest.current = { input, goTo, places, arrangement, onFailure, brand: served, hostFiles, hostAssets, viewerState, told };
+  /* The host's way in for a visitor (FR-183): drawn in the view's place where everything it reads is kept from the seat. */
+  const signIn = useGraviewIfAny<AnySchema>()?.signIn;
+  const latest = useRef({ input, goTo, places, arrangement, onFailure, brand: served, hostFiles, hostAssets, viewerState, told, signIn });
+  latest.current = { input, goTo, places, arrangement, onFailure, brand: served, hostFiles, hostAssets, viewerState, told, signIn };
   useEffect(() => {
     const element = holder.current;
     if (!element) return;
@@ -189,6 +191,7 @@ function WorkerViewMount({ definition: given, store, principal, input, goTo, pla
         /* What it keeps for its viewer (`graview.mine`). A draft, proposed and not kept, keeps nothing of anybody's. */
         ...(definition.draft || definition.keepsNothing ? { draft: true } : { viewerState: () => latest.current.viewerState }),
         onContentHeight: (height) => latest.current.told?.(height),
+        signIn: () => latest.current.signIn,
       });
     const stop = untilItArrives(workerChunk, (module) => {
       mounted.current = module.mountWorkerView(element, optionsFor(definition.worker));

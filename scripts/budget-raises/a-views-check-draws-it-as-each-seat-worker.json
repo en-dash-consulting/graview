@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 8645,
+  "note": "Raised when a view's headless check came to run it as each seat (Roadmap f-view-check-draws-for-each-seat) — `runWorkerViewForEachSeat` and `seatsOfPolicy` on `@graview/guest/headless` — and a view came to be told what its seat cannot see (`props.unseen`, Roadmap f-view-knows-what-its-seat-cannot-see), which the headless run hands each seat as the page does. Measured at 2_635_302 B against 2_626_657."
+}
