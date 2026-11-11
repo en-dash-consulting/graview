@@ -1,6 +1,5 @@
 import type { AnySchema } from "../schema/schema.js";
 import type { AnyMutationDefinition } from "./types.js";
-import type { RefusalReason } from "../refused.js";
 
 /**
  * WHETHER AN ACT WOULD RUN ON A RECORD NOW, writing a field of it: where
@@ -31,18 +30,6 @@ export function wouldRun<S extends AnySchema>(mutation: AnyMutationDefinition<S>
   const given: Record<string, unknown> = { [arg]: node, ...(field !== arg && field in shape && value !== undefined && value !== null ? { [field]: value } : {}) };
   const parsed = (mutation.input as { safeParse?(input: unknown): { success: boolean; data?: unknown } }).safeParse?.(given);
   const args = parsed?.success ? (parsed.data as Record<string, unknown>) : given;
-  const ran = ruleByRunning(mutation, schema, graph, args, me);
-  return ran === undefined || ran === true;
-}
-
-/**
- * AN ACT'S OWN RULE, ASKED BY RUNNING IT on what it was handed against a
- * context that writes nothing: `true` where it ran, the words of an
- * `ActRefusal` not `invalid` where its rule said no, and `undefined` for any
- * other error, which answers nothing against it. What `wouldRun` and
- * `mayRun` ask of an act whose rule lives in its `apply`.
- */
-export function ruleByRunning<S extends AnySchema>(mutation: AnyMutationDefinition<S>, schema: S, graph: { getNode(id: string): unknown }, args: Readonly<Record<string, unknown>>, me: string | undefined): true | { readonly refused: string; readonly reason: RefusalReason } | undefined {
   const nothing = () => undefined;
   const context = {
     graph,
@@ -63,8 +50,8 @@ export function ruleByRunning<S extends AnySchema>(mutation: AnyMutationDefiniti
   try {
     mutation.apply(context as never, args as never);
   } catch (error) {
-    const refusal = error as { readonly name?: unknown; readonly reason?: unknown; readonly sentence?: unknown } | null;
-    return refusal?.name === "ActRefusal" && refusal.reason !== "invalid" ? { refused: String(refusal.sentence), reason: refusal.reason as RefusalReason } : undefined;
+    const refusal = error as { readonly name?: unknown; readonly reason?: unknown } | null;
+    return !(refusal?.name === "ActRefusal" && refusal.reason !== "invalid");
   }
   return true;
 }

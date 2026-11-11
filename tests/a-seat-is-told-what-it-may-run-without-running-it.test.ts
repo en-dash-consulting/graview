@@ -1,4 +1,7 @@
-import { refusalOf, Store, type AnySchema, type Principal } from "@graview/core";
+import { ActRefusal, bindSchema, nodeRef, profilePersonId, refusalOf, Store, z, type AnySchema, type Principal } from "@graview/core";
+import "@graview/core/field-sight";
+import { compileDocument } from "@graview/core/check";
+import { coach, MUTATIONS, parent, schema as rosterSchema, world } from "../packages/core/tests/support/hidden-phones.js";
 import { formFields, type FormField } from "@graview/core/forms";
 import { mayRun, mayRunEach, type MayRunAnswer } from "@graview/core/seat";
 import { describe, expect, it, vi } from "vitest";
@@ -17,12 +20,124 @@ import todoExample from "../apps/todo/src/data/example.json";
  * record of the two examples with a policy.
  */
 
-type Make = (options: { snapshot: never }) => Store<AnySchema>;
-const apps: { readonly name: string; readonly make: Make; readonly snapshot: unknown; readonly seats: readonly Principal[] }[] = [
+
+
+/*
+ * AN APP BUILT TO BE AWKWARD: a document whose sight keeps a field from a
+ * member, shows them only the ideas they lead (`via`) and the ones they
+ * made (`own`), whose `lead` act is granted only on the seat's own end,
+ * whose conditions read the record and an argument, and a seat with a
+ * profile whose person is not made yet — and beside it a roster whose sight
+ * hides a phone, with a code act that refuses on what it is handed.
+ */
+const ideasDocument = {
+  format: "graview-document",
+  formatVersion: 1,
+  name: "Ideas",
+  roles: ["lead", "member"],
+  kinds: {
+    member: { noun: "member", plural: "members", people: true, fields: { name: { type: "string", required: true } } },
+    idea: {
+      noun: "idea",
+      plural: "ideas",
+      fields: { title: { type: "string", required: true }, status: { type: "enum", options: ["open", "done"], default: "open", required: true }, secret: { type: "string" }, note: { type: "string" } },
+      edges: { ledBy: { to: ["member"], cardinality: "one", description: "who leads it", inverse: "what they lead" } },
+    },
+  },
+  acts: {
+    "add-idea": { title: "Add an idea", creates: "idea", description: "Put an idea on the board." },
+    "close-idea": { title: "Close it", on: "idea", sets: { status: "done" }, allowedWhen: "status == 'open'", refusal: "{title} is already closed", description: "Say it is done." },
+    "note-idea": { title: "Note it", on: "idea", args: { words: { type: "string", required: true } }, sets: { note: "$words" }, allowedWhen: "words != 'nope'", refusal: "not that note", description: "Note something about it." },
+    "set-secret": { title: "Set the secret", on: "idea", args: { value: { type: "string", required: true } }, sets: { secret: "$value" }, description: "Keep the secret." },
+    lead: { title: "Lead it", fromTheOtherEnd: "Lead this idea", on: "idea", effects: [{ connect: "ledBy", from: "$subject", to: "$leader" }], description: "Say who leads it." },
+  },
+  policy: {
+    grants: [
+      { roles: ["lead"], mutations: "*" },
+      { roles: ["member"], mutations: ["add-idea", "close-idea", "note-idea", "set-secret"] },
+      { roles: "*", mutations: ["lead"], ownEnd: true },
+    ],
+    sees: [
+      { roles: ["lead"], kinds: ["member", "idea"] },
+      { roles: ["member"], kinds: ["member"] },
+      { roles: ["member"], kinds: ["idea"], via: "ledBy", hide: ["secret"] },
+      { roles: ["member"], kinds: ["idea"], own: true, hide: ["secret"] },
+    ],
+  },
+};
+function ideas(): Store<AnySchema> {
+  const compiled = compileDocument(ideasDocument as never);
+  if (!compiled.ok) throw new Error(JSON.stringify(compiled.findings.filter((f) => f.severity === "error")));
+  const app = compiled.app;
+  const store = new Store<AnySchema>({
+    schema: app.schema,
+    mutations: app.mutations ?? [],
+    policy: app.policy!,
+    snapshot: {
+      nodes: [
+        { id: "member:lee", kind: "member", name: "Lee" },
+        { id: "member:mo", kind: "member", name: "Mo" },
+        { id: "idea:picnic", kind: "idea", title: "A picnic", status: "open", secret: "in the rain" },
+        { id: "idea:quiz", kind: "idea", title: "A quiz", status: "done", $leftAlone: true },
+        { id: "idea:fair", kind: "idea", title: "A fair", status: "open" },
+      ],
+      edges: [{ kind: "ledBy", from: "idea:picnic", to: "member:mo" }],
+    } as never,
+  });
+  // Mo made the fair: their own record, by the log.
+  store.apply({ name: "note-idea", args: { id: "idea:fair", words: "bring a tent" } }, { author: { kind: "human", id: "member:lee", roles: ["lead"] } });
+  return store;
+}
+
+/** The roster whose sight hides a player's phone from a parent, with a code act that refuses on what it is handed and fills a default. */
+const { defineMutation } = bindSchema(rosterSchema);
+const sizePlayer = defineMutation("size-player", {
+  title: "Size the shirt",
+  subject: { kinds: ["player"], arg: "id" },
+  writes: ["team"],
+  input: z.object({ id: nodeRef(["player"]), size: z.number().default(3), reason: z.string() }),
+  apply(ctx, args) {
+    if (args.reason === "no") throw new ActRefusal("No reason, no shirt.");
+    if (args.size === undefined) throw new ActRefusal("No size.");
+    ctx.patchNode(args.id, { team: `size ${args.size}` });
+  },
+});
+/** A code act that goes wrong: the act's own fault, not what it was handed. */
+const jamPlayer = defineMutation("jam-player", {
+  title: "Jam",
+  subject: { kinds: ["player"], arg: "id" },
+  writes: ["team"],
+  input: z.object({ id: nodeRef(["player"]) }),
+  apply() {
+    throw new Error("The jam went wrong.");
+  },
+});
+function roster(): Store<AnySchema> {
+  const built = world("555 0101");
+  return new Store<AnySchema>({ schema: built.schema, mutations: [...(MUTATIONS as never[]), sizePlayer as never, jamPlayer as never], policy: built.policy!, snapshot: built.graph.snapshot() as never });
+}
+
+const apps: { readonly name: string; readonly fresh: () => Store<AnySchema>; readonly seats: readonly Principal[] }[] = [
+  {
+    name: "a document app with field sight, own and via sight, an own-end grant and a profile seat",
+    fresh: ideas,
+    seats: [
+      { kind: "human", id: "member:lee", roles: ["lead"] },
+      { kind: "human", id: "member:mo", roles: ["member"] },
+      { kind: "human", id: "acct-new", name: "Nia", roles: ["member"], profile: { id: "prf_nia", name: "Nia" } } as Principal,
+      // The app's own actor, held to what people said: a record left alone is not changed by it.
+      { kind: "system", id: "app:tidier", name: "Tidying", automated: true, tidying: true } as Principal,
+      { kind: "human", id: "a-passer-by", roles: [] },
+    ],
+  },
+  {
+    name: "a roster that hides a phone, with a code act that refuses on an argument",
+    fresh: roster,
+    seats: [coach, parent, { kind: "human", id: "a-passer-by", roles: [] }],
+  },
   {
     name: "rota",
-    make: createRotaStore as unknown as Make,
-    snapshot: rotaExample,
+    fresh: () => createRotaStore({ snapshot: rotaExample as never }) as unknown as Store<AnySchema>,
     seats: [
       { kind: "human", id: "user-jo", roles: ["coordinator"] },
       { kind: "human", id: "user-ada", roles: ["volunteer"] },
@@ -32,8 +147,7 @@ const apps: { readonly name: string; readonly make: Make; readonly snapshot: unk
   },
   {
     name: "todo",
-    make: createTodoStore as unknown as Make,
-    snapshot: todoExample,
+    fresh: () => createTodoStore({ snapshot: todoExample as never }) as unknown as Store<AnySchema>,
     seats: [
       { kind: "human", id: "user-nora", roles: ["keeper"] },
       { kind: "human", id: "user-sam", roles: ["member"] },
@@ -115,8 +229,7 @@ function applied(make: () => Store<AnySchema>, seat: Principal, name: string, ar
 }
 
 describe("whether a seat may run an act on a record", () => {
-  for (const { name, make, snapshot, seats } of apps) {
-    const fresh = () => make({ snapshot: snapshot as never });
+  for (const { name, fresh, seats } of apps) {
 
     it(`agrees with applying it, for every seat, act and record of ${name}`, () => {
       const store = fresh();
@@ -160,11 +273,48 @@ describe("whether a seat may run an act on a record", () => {
           // A refusal said before the arguments are given holds whatever they are; an allowed or a fill is one the filled call can meet.
           if (told.answer === "refused" && did.ok) wrong.push(`${at}: refused (${told.rule}) before its arguments, and applying them ran it`);
           if (told.answer === "fill" && told.toFill.some((one) => given[one] !== undefined)) wrong.push(`${at}: asked to fill what it was given`);
+          // Nor is it told to fill, or allowed, an act applying refuses whatever it is handed: who may, what the seat may see of the record, the kind it acts on.
+          // (Where the filled call names another record, its refusal may be that record's, which a call not given it cannot know.)
+          const othersNamed = Object.entries(args).some(([key, value]) => key !== ask.subject && typeof value === "string" && store.graph.getNode(value) !== undefined);
+          const always = !did.ok && !othersNamed && (did.reason === "forbidden" || did.reason === "missing" || / not on /.test(did.sentence));
+          if (told.answer !== "refused" && always) wrong.push(`${at}: told ${told.answer}, and applying refused it whatever it was handed (${did.reason}: ${did.sentence})`);
         }
       }
       expect(wrong).toEqual([]);
     });
   }
+
+  it("refuses before its arguments an act that writes a field the seat's sight keeps, as applying does", () => {
+    const store = ideas();
+    const mo: Principal = { kind: "human", id: "member:mo", roles: ["member"] };
+    expect(applied(ideas, mo, "set-secret", { id: "idea:picnic", value: "sunny" })).toMatchObject({ ok: false, reason: "invalid" });
+    expect(mayRun(store, mo, { act: "set-secret", record: "idea:picnic" })).toMatchObject({ answer: "refused", rule: "arguments", reason: "invalid" });
+    expect(mayRun(store, mo, { act: "set-secret", record: "idea:picnic", args: { value: "sunny" } })).toMatchObject({ answer: "refused", reason: "invalid" });
+    // The lead, who is shown the secret, may set it.
+    expect(mayRun(store, { kind: "human", id: "member:lee", roles: ["lead"] }, { act: "set-secret", record: "idea:picnic" })).toEqual({ answer: "fill", toFill: ["value"] });
+  });
+
+  it("fills a code act's defaults and believes no refusal while arguments are still to give", () => {
+    const store = roster();
+    expect(mayRun(store, coach, { act: "size-player", record: "player:ann" })).toEqual({ answer: "fill", toFill: ["reason"] });
+    expect(mayRun(store, coach, { act: "size-player", record: "player:ann", args: { reason: "growing" } })).toEqual({ answer: "allowed" });
+    expect(mayRun(store, coach, { act: "size-player", record: "player:ann", args: { reason: "no" } })).toMatchObject({ answer: "refused", rule: "condition", message: "No reason, no shirt." });
+    expect(mayRun(store, coach, { act: "size-player", record: "player:ann", args: { id: "player:bea" } })).toMatchObject({ answer: "refused", rule: "arguments", reason: "invalid" });
+    // An act that goes wrong is the act's, not its arguments'.
+    expect(mayRun(store, coach, { act: "jam-player", record: "player:ann" })).toMatchObject({ answer: "refused", rule: "act", message: "The jam went wrong." });
+  });
+
+  it("judges a seat whose profile's person is not made yet as the person applying makes first", () => {
+    const store = ideas();
+    const nia = { kind: "human", id: "acct-new", name: "Nia", roles: ["member"], profile: { id: "prf_nia", name: "Nia" } } as Principal;
+    const person = profilePersonId("acct-new", { id: "prf_nia" });
+    // Nia's own new idea: made as hers, and the person she is is the one `lead` may name at her end.
+    expect(mayRun(store, nia, { act: "add-idea", args: { title: "A walk" } })).toEqual({ answer: "allowed" });
+    expect(applied(ideas, nia, "add-idea", { title: "A walk" })).toEqual({ ok: true });
+    const told = mayRun(store, nia, { act: "lead", record: "idea:fair", args: { leader: person } });
+    const did = applied(ideas, nia, "lead", { id: "idea:fair", leader: person });
+    expect(told.answer === "allowed").toBe(did.ok);
+  });
 
   it("says allowed, the arguments still to fill, or the rule and the words that refused it", () => {
     const store = createTodoStore({ snapshot: todoExample as never }) as unknown as Store<AnySchema>;
@@ -230,6 +380,13 @@ describe("whether a seat may run an act on a record", () => {
       expect(answers).toHaveLength(100);
     }
     expect(rehearsal).not.toHaveBeenCalled();
+    // A seat whose profile has no person yet is judged on one copy with that person made, kept while the store stands — however many it asks.
+    const nia = { kind: "human", id: "acct-new", name: "Nia", roles: ["member"], profile: { id: "prf_nia", name: "Nia" } } as Principal;
+    const board = ideas();
+    const its = asks(board).map((ask) => ({ act: ask.act, ...(ask.record ? { record: ask.record } : {}) }));
+    mayRunEach(board, nia, its);
+    mayRunEach(board, nia, its);
+    expect(rehearsal.mock.calls.length).toBeLessThanOrEqual(1);
     rehearsal.mockRestore();
     expect(Math.min(...runs)).toBeLessThan(50);
   });

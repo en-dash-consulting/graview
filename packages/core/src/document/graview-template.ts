@@ -337,7 +337,7 @@ function refsIn(value: unknown, into: Set<string> = new Set()): Set<string> {
 
 /** The `${id}`s a question's words name. */
 function bracedIn(words: string): string[] {
-  return [...words.matchAll(/\$\{([a-z][A-Za-z0-9]*)\}/g)].map((m) => m[1]!);
+  return [...words.matchAll(/\$\$|\$\{([a-z][A-Za-z0-9]*)\}/g)].flatMap((m) => (m[1] === undefined ? [] : [m[1]]));
 }
 
 /**
@@ -346,7 +346,9 @@ function bracedIn(words: string): string[] {
  * answer not given is said as nothing, as setup words say it.
  */
 export function questionAsked(question: Pick<TemplateQuestion, "ask">, answers: Readonly<Record<string, unknown>>): string {
-  return question.ask.replace(/\$\{([a-z][A-Za-z0-9]*)\}/g, (_, name: string) => {
+  // `$$` is a dollar as it is written, as in setup words: "$${place}" says "${place}".
+  return question.ask.replace(/\$\$|\$\{([a-z][A-Za-z0-9]*)\}/g, (_: string, name: string | undefined) => {
+    if (name === undefined) return "$";
     const answer = answers[name];
     return answer === undefined || answer === null ? "" : Array.isArray(answer) ? answer.join(", ") : String(answer);
   });

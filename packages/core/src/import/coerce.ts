@@ -263,7 +263,7 @@ export function coerceCell(spec: FieldSpec, input: unknown, said: string, option
       // A time of day as it is typed ("3 PM", "15:00"), or as a spreadsheet keeps one: a part of a day, or a date whose clock is the time.
       const fromSheet = (minutes: number) => `${String(Math.floor(minutes / 60) % 24).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
       const value =
-        input instanceof Date ? fromSheet(input.getUTCHours() * 60 + input.getUTCMinutes()) : typeof input === "number" && input >= 0 && input < 1 ? fromSheet(Math.round(input * 1440)) : parseTimeOfDay(String(input));
+        input instanceof Date ? fromSheet(input.getUTCHours() * 60 + input.getUTCMinutes()) : typeof input === "number" && input >= 0 && input < 1 ? fromSheet(Math.min(Math.round(input * 1440), 1439)) : parseTimeOfDay(String(input));
       return value === undefined ? { ok: false, why: `${quoted} under ${said} is not a time of day, like 15:00 or 3 PM` } : { ok: true, value };
     }
   }

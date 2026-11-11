@@ -42,7 +42,7 @@ import { actingAs, boundPersonOf, grantsTo, isSystem, meIn, meOf, ownsId, permit
 import { MOST_PROPOSED, PROPOSE_CHANGES, proposeChangesMutation } from "./mutations/propose-changes.js";
 import { namesUnseen, redact } from "./ops/withheld.js";
 import { writersBehind } from "./ops/writers.js";
-import { nounOf } from "./schema/define-node.js";
+import { nounOf, withArticle } from "./schema/define-node.js";
 import { behind, fieldsJudged, mayKeepField, partialSight, recordsOf, sees } from "./permissions/sight.js";
 import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
 import { checkUndo, UndoBlockedError, undoneInverses, undoPrimitives, type UndoCheck } from "./ops/undo.js";
@@ -1805,32 +1805,119 @@ export class Store<S extends AnySchema> {
   /** The copy `withPersonMade` keeps, and the store's version and person it was made for. */
   private personMade: { readonly key: string; readonly twin: Store<S> } | undefined;
 
-  private compiledEach(calls: readonly MutationCall[], author: Principal, land?: (graph: Graph<S>, primitives: readonly Primitive[]) => unknown): readonly ("changes" | "nothing" | { readonly refused: unknown })[] {
+  private compiledEach(calls: readonly MutationCall[], author: Principal): readonly ("changes" | "nothing" | { readonly refused: unknown })[] {
     const sighted = this.sighted(author);
     return calls.map((call) => {
       try {
-        const { primitives } = compileMutation(this.graph, this.mutation(call.name), call.args, sighted);
-        // And, asked, whether what it makes would land on the graph as it stands: a link to take away that is not there, an id taken.
-        const refused = land && primitives.length > 0 ? land(this.graph, primitives) : undefined;
-        return refused !== undefined ? { refused } : primitives.length > 0 ? "changes" : "nothing";
+        return compileMutation(this.graph, this.mutation(call.name), call.args, sighted).primitives.length > 0 ? "changes" : "nothing";
       } catch (error) {
         return { refused: error };
       }
     });
   }
 
+  /** Who may: the policy's verdict on a call, refused as `apply` refuses it. */
+  private permittedTo(call: MutationCall, as: Author | Principal): void {
+    // A vote is judged with no policy too: a shared seat's vote is refused whether or not the app says who may do what (Roadmap f-votes-shared-seat).
+    const voting = this.voter !== undefined && this.mutations.get(call.name) === this.voter;
+    const binding = this.binder !== undefined && this.mutations.get(call.name) === this.binder;
+    const verdict = this.policy || (this.publisher && call.name === PUBLISH) || voting || binding || this.mutations.get(call.name) === this.proposer ? this.judged(call, as as Principal) : undefined;
+    // Rehearsing a proposal, an act its author may propose stands as the reviewer's would (Roadmap f-proposals-for-review).
+    if (verdict && !verdict.ok && !(this.proposing && this.mayPropose(call, as as Principal))) this.refuse(verdict.refusal, as.id);
+  }
+
+  /** What an agent was declared able to do, and the modules turned off. */
+  private declaredTo(call: MutationCall, as: Author | Principal): void {
+    const refusal = this.refusesAgent(call, as) ?? this.namesTurnedOff(call, as as Principal);
+    if (refusal) this.refuse(refusal, as.id);
+  }
+
   /**
-   * `wouldDo`, and whether what each call makes would land on the graph as
-   * it stands, judged by `land` — `wouldRefuse` (`graph/would-refuse.ts`):
-   * the record or link it names there, its id free, what it writes fitting
-   * its kind — with nothing copied and nothing written. What `mayRun`
-   * (`@graview/core/seat`) asks once the policy and the seat's sight have
-   * let a call through; the judge is handed in, so a page carries none of it.
+   * ONE CALL JUDGED AS `apply` JUDGES IT once who may has been asked: what
+   * it names there for this seat, its input and its own rule (compiled),
+   * the mark only binding writes, and what the app's own actor is held to.
+   * What it makes, or the refusal thrown.
    */
-  wouldLand(calls: readonly MutationCall[], author: Author | Principal, land: (graph: Graph<S>, primitives: readonly Primitive[]) => unknown): readonly ("changes" | "nothing" | { readonly refused: unknown })[] {
+  private judgedCall(definition: AnyMutationDefinition<S>, call: MutationCall, as: Author | Principal, decided: boolean, hint?: string): ReturnType<typeof compileMutation> {
+    const missing = this.missingFor(call, as as Principal);
+    if (missing) throw missing;
+    // A kind's own act — its edit, remove, archive, merge — takes only that kind's records: its subject, and every record it names.
+    const subject = definition.subject;
+    if (definition.derived && subject && subject.kinds !== "*") this.ofKinds(definition, call.args[subject.arg], subject.kinds as readonly string[]);
+    if (definition.derived) for (const ref of nodeRefArgs(definition.input)) if (ref.name !== subject?.arg) this.ofKinds(definition, call.args[ref.name], ref.kinds);
+    let compiled: ReturnType<typeof compileMutation>;
+    try {
+      compiled = compileMutation(this.graph, definition, call.args, { ...this.sighted(as as Principal), hint });
+    } catch (error) {
+      // A press the act's own input refused: the watch tells a form filled wrongly from an act offered whole.
+      if (error instanceof InvalidArguments && !this.rehearsing) tellTheWatchOfAnInputRefusal(error, as.id);
+      throw error;
+    }
+    // Whose record a person is, only binding says (Roadmap f-invite-binds-existing-person): no other act writes the mark.
+    if (definition !== this.binder && compiled.primitives.some((one) => (one.op === "add-node" && Object.hasOwn(one.node, PERSON_SEAT)) || (one.op === "patch-node" && Object.hasOwn(one.after, PERSON_SEAT)))) {
+      throw new ActRefusal(`"${definition.title ?? definition.name}" cannot say whose record a person is: only binding an account to it does.`);
+    }
+    if (isAutomated(as)) {
+      const refused = tidyingRefusal(this.schema, this.graph, compiled.primitives, this.authorName(as), { declaration: !this.suggesting && !decided });
+      if (refused) this.refuse({ mutation: call.name, message: refused, wouldNeed: [] }, as.id);
+    }
+    return compiled;
+  }
+
+  /** Refuses a record named for an act that is of none of the kinds it takes, as a document's act on the wrong kind is refused. */
+  private ofKinds(definition: AnyMutationDefinition<S>, id: unknown, kinds: readonly string[]): void {
+    if (typeof id !== "string" || kinds.includes("*")) return;
+    const node = this.graph.getNode(id);
+    if (node && !kinds.includes(node.kind)) throw new ActRefusal(`"${definition.title ?? definition.name}" acts on ${kinds.join(" or ")}, not on ${withArticle(node.kind)}`, "invalid");
+  }
+
+  /**
+   * WHAT `apply` WOULD SAY OF ONE CALL, WITHOUT APPLYING IT: undefined where
+   * it would run, else the refusal it would throw. The same steps `apply`
+   * takes, in its order — who may, what an agent was declared able to do,
+   * what the app's own actor is held to, what the call names for this seat,
+   * its input and rule, the mark only binding writes — and what it makes
+   * judged by `land` over the graph as it stands (`wouldRefuse`, handed in,
+   * so a page carries none of it), the graph's own checks of a write. A seat
+   * whose profile's person is not made yet is judged as the person `apply`
+   * makes first, on the one copy of the graph `wouldDo` keeps for it; nothing
+   * else is copied, nothing is written and nobody is told. What `mayRun`
+   * (`@graview/core/seat`) asks.
+   */
+  wouldApply(call: MutationCall, author: Author | Principal, land: (graph: Graph<S>, primitives: readonly Primitive[]) => unknown): unknown {
     const as = withValidProfile(author) as Principal;
     const person = this.personFor(as);
-    return person ? this.withPersonMade(as, person.id).compiledEach(calls, as, land) : this.compiledEach(calls, as, land);
+    const store = person ? this.withPersonMade(as, person.id) : this;
+    const was = store.rehearsing;
+    store.rehearsing = true;
+    try {
+      store.stillNow();
+      const spelled = store.spelledCall(call);
+      store.permittedTo(spelled, as);
+      store.declaredTo(spelled, as);
+      if (isAutomated(as)) store.refuseDeclined([spelled], as);
+      if (isTidyingActor(as)) store.refuseStopped([spelled], as, store.suggesting);
+      const definition = store.mutation(spelled.name);
+      if (definition === store.publisher || definition === store.voter || definition === store.proposer) return undefined;
+      const { primitives } = store.judgedCall(definition, spelled, as, false);
+      return primitives.length > 0 ? land(store.graph, store.asSplices(primitives, undefined).map(normalize)) : undefined;
+    } catch (error) {
+      return error;
+    } finally {
+      store.rehearsing = was;
+    }
+  }
+
+  /**
+   * The store a seat's call is judged on: this one, or — for a seat whose
+   * profile's person is not made yet — the one copy with that person made
+   * that `wouldDo` keeps while this store stands. What `mayRun` reads a
+   * seat's sight and records from, as `apply` would after making the person.
+   */
+  judgedAs(author: Author | Principal): Store<S> {
+    const as = withValidProfile(author) as Principal;
+    const person = this.personFor(as);
+    return person ? this.withPersonMade(as, person.id) : this;
   }
 
   /**
@@ -2014,18 +2101,8 @@ export class Store<S extends AnySchema> {
      * seat holds say what it may do at all; `may` narrows what THIS provider
      * was brought in for, and the narrower of the two wins.
      */
-    const permitted = (call: MutationCall, as: Author | Principal = author) => {
-      // A vote is judged with no policy too: a shared seat's vote is refused whether or not the app says who may do what (Roadmap f-votes-shared-seat).
-      const voting = this.voter !== undefined && this.mutations.get(call.name) === this.voter;
-      const binding = this.binder !== undefined && this.mutations.get(call.name) === this.binder;
-      const verdict = this.policy || (this.publisher && call.name === PUBLISH) || voting || binding || this.mutations.get(call.name) === this.proposer ? this.judged(call, as as Principal) : undefined;
-      // Rehearsing a proposal, an act its author may propose stands as the reviewer's would (Roadmap f-proposals-for-review).
-      if (verdict && !verdict.ok && !(this.proposing && this.mayPropose(call, as as Principal))) this.refuse(verdict.refusal, as.id);
-    };
-    const declared = (call: MutationCall, as: Author | Principal = author) => {
-      const refusal = this.refusesAgent(call, as) ?? this.namesTurnedOff(call, as as Principal);
-      if (refusal) this.refuse(refusal, as.id);
-    };
+    const permitted = (call: MutationCall, as: Author | Principal = author) => this.permittedTo(call, as);
+    const declared = (call: MutationCall, as: Author | Principal = author) => this.declaredTo(call, as);
     /* A call that names a record an earlier call makes (`{ $made: n }`, FR-193) is asked once that record is there to name. */
     const naming = calls.map(namesMade);
     calls.forEach((call, at) => naming[at] || permitted(call));
@@ -2108,25 +2185,8 @@ export class Store<S extends AnySchema> {
           intents.push(op.intent);
           continue;
         }
-        const missing = this.missingFor(call, as as Principal);
-        if (missing) throw missing;
-        let compiled: ReturnType<typeof compileMutation>;
-        try {
-          compiled = compileMutation(this.graph, definition, call.args, { ...this.sighted(as as Principal), hint });
-        } catch (error) {
-          // A press the act's own input refused: the watch tells a form filled wrongly from an act offered whole.
-          if (error instanceof InvalidArguments && !this.rehearsing) tellTheWatchOfAnInputRefusal(error, as.id);
-          throw error;
-        }
+        const compiled = this.judgedCall(definition, call, as, decided, hint);
         if (hint !== undefined && compiled.firstMinted !== undefined && compiled.firstMinted !== hint) renamed.set(hint, compiled.firstMinted);
-        // Whose record a person is, only binding says (Roadmap f-invite-binds-existing-person): no other act writes the mark.
-        if (definition !== this.binder && compiled.primitives.some((one) => (one.op === "add-node" && Object.hasOwn(one.node, PERSON_SEAT)) || (one.op === "patch-node" && Object.hasOwn(one.after, PERSON_SEAT)))) {
-          throw new ActRefusal(`"${definition.title ?? definition.name}" cannot say whose record a person is: only binding an account to it does.`);
-        }
-        if (isAutomated(as)) {
-          const refused = tidyingRefusal(this.schema, this.graph, compiled.primitives, this.authorName(as), { declaration: !this.suggesting && !decided });
-          if (refused) this.refuse({ mutation: call.name, message: refused, wouldNeed: [] }, as.id);
-        }
         /*
          * AN ACT THAT DID NOTHING DOES NOT GO IN THE HISTORY.
          *

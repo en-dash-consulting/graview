@@ -15,7 +15,7 @@ export function parseTimeOfDay(input: unknown): string | undefined {
   const s = input.trim().toLowerCase();
   if (s === "noon") return "12:00";
   if (s === "midnight") return "00:00";
-  const m = /^(\d{1,2})(?:[:.](\d{2}))?(?::\d{2})?\s*(am|pm|a\.m\.|p\.m\.|a|p)?$/.exec(s);
+  const m = /^(\d{1,2})(?:[:.](\d{2}))?(?::[0-5]\d)?\s*(am|pm|a\.m\.|p\.m\.|a|p)?$/.exec(s);
   if (!m) return undefined;
   const hour = Number(m[1]);
   const minute = m[2] ? Number(m[2]) : 0;

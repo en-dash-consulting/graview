@@ -228,20 +228,6 @@ export function defaultLabelField(spec: KindSpec): string | undefined {
   return first(entries.filter(([, f]) => f.required && (f.type === "string" || f.type === "text"))) ?? first(entries.filter(([, f]) => f.type === "string"));
 }
 
-/** Every name an expression reads where an argument could stand — a bare name, and `$arg.<name>` — walked from its parse. */
-function namesRead(expr: Expr): Set<string> {
-  const names = new Set<string>();
-  const visit = (e: unknown): void => {
-    if (!e || typeof e !== "object") return;
-    const node = e as { readonly t?: string; readonly name?: string; readonly object?: { readonly t?: string; readonly name?: string } };
-    if (node.t === "ident" && node.name) names.add(node.name);
-    if (node.t === "member" && node.object?.t === "ident" && node.object.name === "$arg" && node.name) names.add(node.name);
-    for (const value of Object.values(node)) if (value && typeof value === "object") visit(value);
-  };
-  visit(expr);
-  return names;
-}
-
 /*
  * A FIELD'S SCHEMA, in zod/mini (schema/zod.ts): a page that builds an app
  * in the browser pays for the checks it calls, not for classic zod whole
@@ -565,8 +551,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     const creation = effects.find((e): e is Extract<ActEffect, { create: string }> => "create" in e);
     /**
      * THE ACT'S CONDITION ON ITS RECORD, AND THE WORDS IT REFUSES IN: one
-     * judgment, which `apply` throws on and `ruleOn` answers with, so the two
-     * cannot say different things. Undefined where it holds.
+     * judgment, which `apply` throws on and the act hands as its `condition`,
+     * so the two cannot say different things. Undefined where it holds.
      */
     const refusedBy = (graph: GraphReader, subject: AnyGraphNode, bindings: Record<string, Value>): string | undefined => {
       let allowed: Value;
@@ -579,8 +565,6 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
       if (allowed === true) return undefined;
       return refusal ? renderTemplate(refusal, { node: subject, kinds: shapes, graph, bindings, args: bindings, today: today(), money }) : `"${title}" is not allowed for ${labelFor(subject)} right now`;
     };
-    /** The names the condition reads where an argument would stand: bare, and `$arg.<name>`. Read when first asked. */
-    let guardReads: Set<string> | undefined;
     /** What an effect's value is, as the act works it out: an expression, a literal (`$$` saying one `$`), the time or an argument. */
     const valueOf = (value: ValueSpec, bindings: Record<string, unknown>, graph: GraphReader, subject: AnyGraphNode | null = null): unknown => {
       if (isRecord(value) && "expr" in value) return evaluateExpr(exprs.get(value.expr)!, { graph, subject, kinds: shapes, bindings: bindings as Record<string, Value>, args: bindings as Record<string, Value>, today: today(), ...saying });
@@ -645,26 +629,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
                   return false;
                 }
               },
-              /*
-               * Its condition on a record with the arguments given so far, judged as `apply` judges it
-               * (`refusedBy`) — unjudged where it reads an argument not given yet.
-               */
-              ruleOn: (graph: GraphReader, id: string, given: Readonly<Record<string, unknown>>) => {
-                const subject = graph.getNode(id);
-                if (!subject) return undefined;
-                if (subjectKinds.length > 0 && !subjectKinds.includes(subject.kind)) return { refused: `"${title}" acts on ${subjectKinds.join(" or ")}, not on ${withArticle(subject.kind)}`, reason: "invalid" as const };
-                const bindings: Record<string, Value> = {};
-                for (const [k, v] of Object.entries(given)) if (v !== undefined) bindings[k] = v as Value;
-                guardReads ??= namesRead(guard);
-                if ([...args.keys()].some((arg) => bindings[arg] === undefined && guardReads!.has(arg))) return undefined;
-                try {
-                  const no = refusedBy(graph, subject, bindings);
-                  return no === undefined ? true : { refused: no, reason: "refused" as const };
-                } catch (e) {
-                  if (e instanceof ActRefusal) return { refused: e.sentence, reason: e.reason };
-                  throw e;
-                }
-              },
+              // Its condition as data, and the one judgment `apply` throws on: what `mayRun` (`@graview/core/seat`) asks of part of a call.
+              condition: { expr: guard, refusedBy },
             }
           : {}),
         describe: (input: Record<string, unknown>, graph: GraphReader) => {

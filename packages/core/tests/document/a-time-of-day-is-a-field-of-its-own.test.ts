@@ -66,7 +66,7 @@ describe("a time of day as it is typed", () => {
     expect(parseTimeOfDay("09:30:00")).toBe("09:30");
     expect(parseTimeOfDay("noon")).toBe("12:00");
     expect(parseTimeOfDay("midnight")).toBe("00:00");
-    for (const typed of ["3", "25:00", "13 pm", "9:75", "soon", "", 15, null]) expect(parseTimeOfDay(typed), String(typed)).toBeUndefined();
+    for (const typed of ["3", "25:00", "13 pm", "9:75", "3:00:99", "3:00:60", "soon", "", 15, null]) expect(parseTimeOfDay(typed), String(typed)).toBeUndefined();
   });
 
   it("is said as the reader's clock says it, with no zone moving it", () => {
@@ -147,6 +147,8 @@ describe("a document's time field", () => {
     expect(coerceCell({ type: "time" }, "3 PM", "At")).toEqual({ ok: true, value: "15:00" });
     expect(coerceCell({ type: "time" }, " 09:30 ", "At")).toEqual({ ok: true, value: "09:30" });
     expect(coerceCell({ type: "time" }, 0.625, "At")).toEqual({ ok: true, value: "15:00" });
+    // A part of a day just short of a whole one is the day's last minute, never midnight again.
+    expect(coerceCell({ type: "time" }, 0.999999, "At")).toEqual({ ok: true, value: "23:59" });
     expect(coerceCell({ type: "time" }, new Date(Date.UTC(1899, 11, 30, 18, 45)), "At")).toEqual({ ok: true, value: "18:45" });
     expect(coerceCell({ type: "time" }, "teatime", "At")).toEqual({ ok: false, why: "“teatime” under At is not a time of day, like 15:00 or 3 PM" });
   });

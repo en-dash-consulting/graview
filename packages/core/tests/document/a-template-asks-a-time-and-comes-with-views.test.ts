@@ -63,6 +63,11 @@ describe("a template in Graview Cloud's shapes", () => {
   it("asks a question with the earlier answers its ${id} names", () => {
     expect(questionAsked({ ask: "Who is coming to ${place}?" }, { place: "our place" })).toBe("Who is coming to our place?");
     expect(questionAsked({ ask: "Bring something to ${place}" }, {})).toBe("Bring something to ");
+    // `$$` is a dollar as written, there and in what graview check reads.
+    expect(questionAsked({ ask: "Is it $$5 or $${place}?" }, { place: "home" })).toBe("Is it $5 or ${place}?");
+    const t = copy();
+    t.questions[1]!.ask = "Write $${anything} here";
+    expect(templateFindings(t)).toEqual([]);
   });
 });
 
