@@ -81,7 +81,7 @@ export type {
 
 // Graph — the reactive in-memory model the framework owns.
 export { Graph, GraphError, MissingRecordError } from "./graph/graph.js";
-export { ARCHIVED, archivedFrom, isArchived } from "./graph/archived.js";
+export { ARCHIVED, archivedFrom, isArchived, PERSON_SEAT } from "./graph/archived.js";
 export type { Archived, ArchivedOption } from "./graph/archived.js";
 export type { ApplyPrimitivesOptions, GraphListener, GraphOptions } from "./graph/graph.js";
 export { diffSnapshots, EMPTY_DIFF, isEmptyDiff } from "./graph/diff.js";
@@ -223,6 +223,7 @@ export type { HasLog, LinkProvenance, LinkRef } from "./ops/provenance.js";
 export { KEEP_LINK } from "./mutations/keep-link.js";
 // A vote on a suggestion (Roadmap f-suggestion-votes): the act every store answers to, what its op keeps, and what the app says of suggestions as a whole.
 export { PROPOSE_CHANGES, type ProposeChangesArgs } from "./mutations/propose-changes.js";
+export { BIND_PERSON } from "./mutations/bind-person.js";
 export { VOTE_SUGGESTION, type AppTidying, type SuggestionVote, type Vote, type VotesOptions } from "./mutations/vote-suggestion.js";
 // Typing into a field typed together (Roadmap f-collab-text): the act every store answers to, and whether a field is one.
 export { TYPE_TEXT } from "./text/typing-hook.js";
@@ -236,6 +237,7 @@ export {
   actingAs,
   meIn,
   meOf,
+  seatPersonOf,
   profileOf,
   profilePersonId,
   withValidProfile,

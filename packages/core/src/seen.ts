@@ -6,7 +6,7 @@ import type { Batch, Operation } from "./ops/types.js";
 import type { FieldWriter, Timeline } from "./ops/served.js";
 import { writersOf, type Writers } from "./ops/writers.js";
 import { namesUnseen, redact, type SeatLens } from "./ops/withheld.js";
-import { actingAs, grantsTo, isSystem, meOf, profileOf } from "./permissions/policy.js";
+import { actingAs, grantsTo, isSystem, meOf, profileOf, seatedIn } from "./permissions/policy.js";
 import { FIELD_SIGHT, fieldsJudged, partialSight, recordsOf, sees, type Judged, type Records } from "./permissions/sight.js";
 import type { Principal } from "./permissions/types.js";
 import { diffSnapshots } from "./graph/diff.js";
@@ -77,10 +77,12 @@ export function seesEveryRecord(store: Judged & { readonly schema: { readonly ki
  * just made is its maker's own. Asking costs nothing more for that — who
  * made what is an index the log keeps as it goes (`recordsOf`).
  */
-export function seesId(store: Judged, principal: Principal): (id: string) => boolean {
+export function seesId(store: Judged, asked: Principal): (id: string) => boolean {
   return (id) => {
-    const off = turnedOff(store, principal);
+    const off = turnedOff(store, asked);
     if (!store.policy?.sees?.length && off.size === 0) return true;
+    // The seat as it is bound now, read as each id is asked: a view held across a binding, or its undo, judges as the seat is (`seatedIn`).
+    const principal = seatedIn(store.graph, asked);
     const records = recordsOf(store.log);
     const node = store.graph.getNode(id);
     if (node) return !off.has(node.kind) && sees(store.policy, principal, node, store.graph, records, fieldsJudged(store));
@@ -128,7 +130,9 @@ function unplaced(store: Judged, records: Records, id: string): string | undefin
  * `seesId` reads them again for every id — a served log asks of every
  * string in every op, and most are the same few ids.
  */
-function pinnedSight(store: Judged, principal: Principal, judged: Map<string, boolean> = new Map(), unnamed?: Set<string>): (id: string) => boolean {
+function pinnedSight(store: Judged, asked: Principal, judged: Map<string, boolean> = new Map(), unnamed?: Set<string>): (id: string) => boolean {
+  // The seat as it is bound now, taken once with the rest: a served log kept across a binding is kept under the seat it was judged as (`logSeenBy`).
+  const principal = seatedIn(store.graph, asked);
   const off = turnedOff(store, principal);
   if (!store.policy?.sees?.length && off.size === 0) return () => true;
   const records = recordsOf(store.log);
@@ -373,7 +377,8 @@ export function logSeenBy(store: Judged, principal: Principal): readonly Operati
   const length = (store.log as { readonly length?: number }).length ?? all.length;
   const horizon = length - all.length;
   const off = [...turnedOff(store, principal)].sort().join("\u0000");
-  const key = seatKey(principal);
+  // A seat bound to a person, or no longer, is another seat's log: what it read before judged other records its own.
+  const key = seatKey(seatedIn(store.graph, principal));
   let seats = SERVED_LOGS.get(store.log);
   if (!seats) SERVED_LOGS.set(store.log, (seats = new Map()));
   const held = seats.get(key);
@@ -445,7 +450,7 @@ const VIEWS = new WeakMap<object, Map<string, unknown>>();
 function seatKey(principal: Principal): string {
   const judged = isSystem(principal) ? principal : actingAs(principal);
   // An agent's own id too: two agents for one person are two seats, and each view answers as its own (`seenFor`, `wouldChange`, `preview`).
-  return `${principal.kind}|${judged.id ?? ""}|${(judged.roles ?? []).join(",")}|${principal.onBehalfOf ? `for:${principal.id ?? ""}` : ""}${profileOf(principal) ? `|as:${meOf(principal)}` : ""}`;
+  return `${principal.kind}|${judged.id ?? ""}|${(judged.roles ?? []).join(",")}|${principal.onBehalfOf ? `for:${principal.id ?? ""}` : ""}${profileOf(principal) || meOf(principal) !== actingAs(principal).id ? `|as:${meOf(principal)}` : ""}`;
 }
 
 /**

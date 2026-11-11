@@ -15,6 +15,8 @@ export interface Judged {
     /** A store's own graph says its links, so an op can be judged where it stood (FR-55). */
     outEdges?(id: string): readonly GraphEdge[];
     inEdges?(id: string): readonly GraphEdge[];
+    /** The record of the people kind a seat is bound to (`Graph.personBoundTo`): who `$me`, `own` and `self` read it as. */
+    personBoundTo?(seat: string): string | undefined;
   };
   readonly log: LogReading;
   /** The kinds of the modules this workspace has off (FR-12), kept from every seat as a sight keeps a record. */

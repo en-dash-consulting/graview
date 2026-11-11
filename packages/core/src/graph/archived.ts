@@ -36,5 +36,20 @@ export const archivedFrom = (value: unknown): Archived => (value === true || val
  */
 export const LEFT_ALONE = "$leftAlone";
 
+/**
+ * WHOSE RECORD THIS IS (Roadmap f-invite-binds-existing-person): on a record
+ * of the people kind, the seat bound to it — an account's id, or a profile's
+ * person (`seatPersonOf`) — so a person an organizer entered before they
+ * joined is the one `$me` reads once they do. Set by `bind-person` alone,
+ * and taken back by its undo.
+ */
+export const PERSON_SEAT = "$seat";
+
+/** The seat a record of the people kind is bound to, where it is bound. */
+export const personSeatOf = (node: unknown): string | undefined => {
+  const seat = (node as Record<string, unknown> | null | undefined)?.[PERSON_SEAT];
+  return typeof seat === "string" && seat.length > 0 ? seat : undefined;
+};
+
 /** The framework's own marks on a record: kept wherever it goes, never judged as fields. */
-export const MARKS: ReadonlySet<string> = new Set([ARCHIVED, LEFT_ALONE]);
+export const MARKS: ReadonlySet<string> = new Set([ARCHIVED, LEFT_ALONE, PERSON_SEAT]);

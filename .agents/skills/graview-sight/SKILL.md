@@ -117,6 +117,13 @@ removed, and a kind that requires more than a name has none for a profile
 (`people-unmakeable`): `$me` then refuses, and the act is not offered. The seat headers
 carry it only where a host trusts them; otherwise it is the host's `seatOf`.
 
+A person entered before they joined is bound, not made twice:
+`store.bindPerson(joining, "person:bud", { author })` is the `bind-person`
+op, undone like any; `$me`, `own` and `self` then read that record. An owner,
+an admin or the host's system seat binds (by name or `*`); a seat never binds
+itself. Someone else's record, another kind, or an account bound elsewhere is
+refused in a sentence.
+
 What a view keeps for that viewer (`graview.mine`, `graview-view-forms`) goes
 where the host says, for the viewer it knows, handed to `mount`, `<Embed>` and
 `PagesApp` as `viewerState`:

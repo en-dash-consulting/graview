@@ -1,4 +1,4 @@
-import { ARCHIVED, LEFT_ALONE } from "../graph/archived.js";
+import { ARCHIVED, LEFT_ALONE, PERSON_SEAT } from "../graph/archived.js";
 import * as z from "./zod.js";
 import { argumentsTaken, takesAnId } from "../mutations/define-mutation.js";
 import { nodeRefArgs } from "../mutations/node-ref.js";
@@ -122,6 +122,8 @@ export function nodeJsonSchema(definition: AnyNodeDefinition): JsonSchema {
   if (properties) properties[ARCHIVED] = { type: "boolean", const: true, description: "Set when the record is archived: kept with its links and history, out of lists, counts and rules." };
   // And a person may have said to leave it alone: no automated author changes it.
   if (properties) properties[LEFT_ALONE] = { type: "boolean", const: true, description: "Set when a person said to leave the record alone: no automated author changes it." };
+  // And a person may be bound to the account that joined as them (Roadmap f-invite-binds-existing-person).
+  if (properties && definition.people) properties[PERSON_SEAT] = { type: "string", minLength: 1, description: "Set when an account was bound to this person: the seat that is them here." };
   return js;
 }
 
