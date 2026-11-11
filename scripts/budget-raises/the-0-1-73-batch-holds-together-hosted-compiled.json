@@ -2,6 +2,6 @@
   "budget": "a hosted page handed a compiled app",
   "minified": 1,
   "gzipped": 32,
-  "changeset": "the-0-1-73-batch-holds-together",
+  "changeset": "the-0-1-73-batch-holds-together.md",
   "note": "Raised when the 0.1.73 batch's five branches were merged: together they come to 1 byte gzipped over their summed raises up front (215_975 against 215_974), held for a few bytes either side."
 }
