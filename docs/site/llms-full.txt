@@ -5602,6 +5602,17 @@ const viewerState: ViewerState = {
 
 Keep it out of the record store: it is never history, an export or an agent's.
 
+### What a view is told it cannot see
+
+A worker view is handed `props.unseen` where its seat is kept from some of what it reads, so it says why a part is empty:
+
+```js
+const { kinds = [], fields = {} } = graview.props.unseen ?? {};
+if (kinds.includes("vendor")) draw("Sign in to see the vendors");
+```
+
+`kinds`: the kinds it reads the seat sees none of (no sight for its roles, an `own` or `via` sight and no id, a module off). `fields`: per kind it sees, the fields `hide` or `fields` may keep from it, read from the policy. Nothing of any record is said: no count, no id. A frame, somebody else's code, is handed `kinds` alone, of those its own `reads` names. Where everything a view reads is kept, the host draws its `signIn` line (or "Nothing here is shown to you.") instead of starting it. `graview view check --seats` runs a view as each seat the policy names and says what each could not see: for the owner's eyes only.
+
 ### Then find out whether it worked
 
 ```sh
@@ -5911,7 +5922,7 @@ graview.on("drop", "[data-drop]", (event) => {
 2. `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>` says what it drew. Headless, a picture comes with a stand-in `src`; one the page would leave out comes with `left`, among the problems.
 3. Open the place and read the view's `refused` (`WorkerView.refused`, or `graview.refused` in its console): every element, attribute and address the host left out, and why.
 4. Toggle to dark; change the brand. Does the view follow?
-5. As a member who may see fewer records, are the pictures on the records they may not see absent — not merely hidden?
+5. As each seat (`--seats`): are the pictures it may not see absent? A kind in `props.unseen` gets a sentence, not a hole.
 
 ### What the check cannot see
 
@@ -6303,7 +6314,7 @@ graview.navigate("offer:7")     // a record, else a place or a kind's list by sl
 graview.navigate({ place: "features", where: { stage: "building" }, section: "Shipping soon" })
 ```
 
-`props` holds `node`, the record a view of one is drawn for, and `nodes`, the records a view of many is drawn for and those it reads. A record is plain data: `id`, `kind`, `label`, and each field and computed value by name (`props.node.draft`), as the viewer sees it; no `fields` key. A view of one finds its record in `node`, never in `nodes`. A choice holds its option's id; draw the label `props.choices` gives by kind, field and option: `props.choices.actor.motive[node.motive]`. Then `edges` (`{ kind, from, to }` among them), `label` (its title), `acts` (`{ name, title }`, those the viewer may run), `places` (`{ as, title }`), and `theme` (`scheme`, `accent`, `ink`, `radius` …, the app's `name` and `logo`), and `locale` and `timeZone`: say a kept instant with `new Intl.DateTimeFormat(props.locale, { timeZone: props.timeZone, hour: "numeric", minute: "2-digit" })`, never your own zone or today (`graview.today`, `graview-locale`). `render` keeps what it can, by element and by `data-key` or `id`, so give repeated rows a `data-key`: a field being typed in keeps its text across a push. An event carries `value`, `checked`, `key`, `pressed` for a bound press, and `element`, what the selector matched: read its `data-*`. Elements lack `closest`, `matches` and `dataset`.
+`props` holds `node`, the record a view of one is drawn for, and `nodes`, the records a view of many is drawn for and those it reads. A record is plain data: `id`, `kind`, `label`, and each field and computed value by name (`props.node.draft`), as the viewer sees it; no `fields` key. A view of one finds its record in `node`, never in `nodes`. A choice holds its option's id; draw the label `props.choices` gives by kind, field and option: `props.choices.actor.motive[node.motive]`. Then `edges` (`{ kind, from, to }` among them), `label` (its title), `acts` (`{ name, title }`, those the viewer may run), `places` (`{ as, title }`), and `theme` (`scheme`, `accent`, `ink`, `radius` …, the app's `name` and `logo`), and `locale` and `timeZone`: say a kept instant with `new Intl.DateTimeFormat(props.locale, { timeZone: props.timeZone, hour: "numeric", minute: "2-digit" })`, never your own zone or today (`graview.today`, `graview-locale`). `render` keeps what it can, by element and by `data-key` or `id`, so give repeated rows a `data-key`: a field being typed in keeps its text across a push. An event carries `value`, `checked`, `key`, `pressed` for a bound press, and `element`, what the selector matched: read its `data-*`. Elements lack `closest`, `matches` and `dataset`. `props.unseen`: what the seat cannot see (`graview-sight`).
 
 ### Links and buttons, by default
 
@@ -6344,7 +6355,7 @@ A view with `attach: "home"` given to `registerWorkerView` is the home's own vie
 ### Then find out whether it worked
 
 1. `graview check` the app the view names. `checkManifest(manifest, store)` and `checkViewSource(source)` from `@graview/guest/host/views` must both say nothing.
-2. Run it headless, with no network, as a member who may see less than you, over a seed: `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>`. It prints what the view drew, said as `graview describe` says a place, or why it will not do: `error` (what it threw), `nodes`, `flood`, `slow`, `act` (an act its manifest does not name), `manifest` or `source`. A view of one record runs over the first of its kind the seat sees, or the one `--record <id>` names. It presses each control (`graview-view-forms`). So does `runWorkerViewHeadless` (`guest/headless`).
+2. Run it headless, with no network, as each seat, over a seed: `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --seats` (or `--roles <role>`, one). It says what it drew, or why it will not do: `error` (what it threw), `nodes`, `flood`, `slow`, `act` (an act its manifest does not name), `manifest` or `source`. A view of one record runs over the first of its kind the seat sees, or `--record <id>`. It presses each control (`graview-view-forms`). So does `runWorkerViewForEachSeat` (`guest/headless`).
 3. Open the place on both faces as that member. Is anything shown that they should not see? Does the region carry no `data-worker-view-failed`? `start` there means it never ran: the note under the plain face names what the page's Content-Security-Policy lacks (`worker-src blob:`).
 4. Toggle to dark: does it restyle?
 5. Follow each link, and tap each card on a phone, as `graview-view-links` says. A view that writes is pressed as `graview-view-forms` says.

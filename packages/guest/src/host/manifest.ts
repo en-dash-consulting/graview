@@ -4,6 +4,7 @@ import type { GuestAct, GuestEdge, GuestPlace, GuestProps, GuestTheme } from "..
 import type { GuestPictures } from "./pictures.js";
 import { THUMB_REFUSED, thumbIsSound } from "./picture-thumb.js";
 import { choicesOf, plainNode, readAcross, type GuestViewInput } from "./session.js";
+import { unseenOf, viewKinds } from "./unseen.js";
 
 /*
  * A WORKER VIEW IS A PLACE, WITH A MANIFEST THE HOST ENFORCES (FR-91).
@@ -435,6 +436,8 @@ export interface WorkerViewPropsInput {
    * view whose kinds have computed values starts (`readsComputed`).
    */
   readonly computed?: ComputedOn;
+  /** The kinds the store keeps from the seat (`kindsKeptFrom`), where the host asked already for this push. Asked of the store otherwise. */
+  readonly kept?: ReadonlySet<string>;
 }
 
 /** A record's computed values over the viewer's graph, by name; none for a kind that has none. */
@@ -537,5 +540,9 @@ export function workerViewProps<S extends AnySchema>(store: Store<S>, principal:
     ...choicesOf(store.schema, [...own, ...listed.values()]),
     // A link names a place by its slug, so each slug once: a picture over several kinds is one place to a view.
     ...(given.places ? { places: given.places.filter((place, at, all) => all.findIndex((other) => other.as === place.as) === at).map(({ as, title, kind }) => ({ as, title, kind })) } : {}),
+    // What its seat is kept from, of what it reads, and only what the seat may know of it (Roadmap f-view-knows-what-its-seat-cannot-see).
+    ...withUnseen(unseenOf(store, principal, viewKinds(manifest), given.kept)),
   };
 }
+
+const withUnseen = (unseen: GuestProps["unseen"]): Pick<GuestProps, "unseen"> => (unseen ? { unseen } : {});

@@ -2,6 +2,7 @@ import { choiceWords, InvalidArguments, isoToday, localeFor, PermissionDeniedErr
 import type { GuestPictureLimits } from "./pictures.js";
 import type { Arrival, Destination } from "./links.js";
 import type { Mine } from "./mine.js";
+import { unseenOf } from "./unseen.js";
 /* The links' judging — a filter held to the kind's fields — fetched with the first navigate, so a frame's host carries none of it before. */
 const linksChunk = () => import("./links.js");
 import type { GuestAct, GuestAnswer, GuestEdge, GuestNode, GuestPlace, GuestProps, GuestRefusal, GuestTheme, HostMessage } from "../protocol.js";
@@ -401,6 +402,11 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
   const seen = () => options.store.seenBy(options.principal);
 
   const plain = (node: unknown): GuestNode => plainNode(options.store, node);
+  /* The kinds of those its own `reads` names that the seat sees none of, and nothing more: a frame is somebody else's code (Roadmap f-view-knows-what-its-seat-cannot-see). */
+  const unseenFor = (kinds: readonly string[]): Pick<GuestProps, "unseen"> => {
+    const unseen = unseenOf(options.store, options.principal, [...new Set(kinds)], undefined, true);
+    return unseen ? { unseen } : {};
+  };
 
   const props = (): GuestProps => {
     if (options.props) return options.props();
@@ -453,6 +459,7 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
       // Each option of the handed records' choices, by its label (Roadmap f-option-labels).
       ...choicesOf(options.store.schema, [...(node ? [node] : []), ...(listed ?? [])]),
       ...(options.placesShown ?{ places: options.placesShown().map(({ as, title, kind }) => ({ as, title, kind })) } : {}),
+      ...unseenFor(options.reads?.kinds ?? []),
     };
   };
 

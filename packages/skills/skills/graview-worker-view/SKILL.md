@@ -67,7 +67,8 @@ can, by element and by `data-key` or `id`, so give repeated rows a
 `data-key`: a field being typed in keeps its text across a push. An event
 carries `value`, `checked`, `key`, `pressed` for a bound press, and
 `element`, what the selector matched: read its `data-*`. Elements lack
-`closest`, `matches` and `dataset`.
+`closest`, `matches` and `dataset`. `props.unseen`: what the seat cannot see
+(`graview-sight`).
 
 ## Links and buttons, by default
 
@@ -157,15 +158,15 @@ is first drawn.
 1. `graview check` the app the view names. `checkManifest(manifest, store)` and
    `checkViewSource(source)` from `@graview/guest/host/views` must both say
    nothing.
-2. Run it headless, with no network, as a member who may see less than
-   you, over a seed: `graview view check view.js --app <app> --manifest
-   manifest.json --seed <seed.json> --roles <role>`. It prints what the
-   view drew, said as `graview describe` says a place, or why it will not
-   do: `error` (what it threw), `nodes`, `flood`, `slow`, `act` (an act
-   its manifest does not name), `manifest` or `source`. A view of one
-   record runs over the first of its kind the seat sees, or the one
-   `--record <id>` names. It presses each control (`graview-view-forms`).
-   So does `runWorkerViewHeadless` (`guest/headless`).
+2. Run it headless, with no network, as each seat, over a seed:
+   `graview view check view.js --app <app> --manifest manifest.json --seed
+   <seed.json> --seats` (or `--roles <role>`, one). It says what it drew,
+   or why it will not do: `error` (what it threw), `nodes`, `flood`,
+   `slow`, `act` (an act its manifest does not name), `manifest` or
+   `source`. A view of one record runs over the first of its kind the seat
+   sees, or `--record <id>`. It presses each control
+   (`graview-view-forms`). So does `runWorkerViewForEachSeat`
+   (`guest/headless`).
 3. Open the place on both faces as that member. Is anything shown that
    they should not see? Does the region carry no `data-worker-view-failed`?
    `start` there means it never ran: the note under the plain face names

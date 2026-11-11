@@ -130,6 +130,25 @@ const viewerState: ViewerState = {
 
 Keep it out of the record store: it is never history, an export or an agent's.
 
+## What a view is told it cannot see
+
+A worker view is handed `props.unseen` where its seat is kept from some of
+what it reads, so it says why a part is empty:
+
+```js
+const { kinds = [], fields = {} } = graview.props.unseen ?? {};
+if (kinds.includes("vendor")) draw("Sign in to see the vendors");
+```
+
+`kinds`: the kinds it reads the seat sees none of (no sight for its roles, an
+`own` or `via` sight and no id, a module off). `fields`: per kind it sees, the
+fields `hide` or `fields` may keep from it, read from the policy. Nothing of
+any record is said: no count, no id. A frame, somebody else's code, is handed
+`kinds` alone, of those its own `reads` names. Where everything a view reads
+is kept, the host draws its `signIn` line (or "Nothing here is shown to you.")
+instead of starting it. `graview view check --seats` runs a view as each seat
+the policy names and says what each could not see: for the owner's eyes only.
+
 ## Then find out whether it worked
 
 ```sh

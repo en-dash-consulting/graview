@@ -82,7 +82,7 @@ graview.on("drop", "[data-drop]", (event) => {
 2. `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>` says what it drew. Headless, a picture comes with a stand-in `src`; one the page would leave out comes with `left`, among the problems.
 3. Open the place and read the view's `refused` (`WorkerView.refused`, or `graview.refused` in its console): every element, attribute and address the host left out, and why.
 4. Toggle to dark; change the brand. Does the view follow?
-5. As a member who may see fewer records, are the pictures on the records they may not see absent — not merely hidden?
+5. As each seat (`--seats`): are the pictures it may not see absent? A kind in `props.unseen` gets a sentence, not a hole.
 
 ### What the check cannot see
 

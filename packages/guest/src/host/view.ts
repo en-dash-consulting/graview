@@ -1,7 +1,8 @@
 import { imageRefusedWords } from "./open-judge.js";
 import { keepClicked } from "./clicked.js";
 import { guestPlacesOf } from "./links-words.js";
-import { actingAs, meOf, type AnySchema, type FileValue, type HostFiles, type PagesArrangement, type Principal, type Store, type ViewerState } from "@graview/core";
+import { actingAs, meOf, type AnySchema, type FileValue, type HostFiles, type PagesArrangement, type Principal, type SignIn, type Store, type ViewerState } from "@graview/core";
+import { readsOnlyUnseen, unseenOf, viewKinds } from "./unseen.js";
 import { createMine, keptForTheVisit, visitOf } from "./mine.js";
 import { storedFilesOf } from "./marks.js";
 import { retryingImport } from "@graview/core/retry";
@@ -284,6 +285,15 @@ export interface MountWorkerViewOptions<S extends AnySchema> {
    * (the Scene's preview of a place) sizes it by.
    */
   readonly onContentHeight?: (height: number | undefined) => void;
+  /**
+   * WHAT A SIGNED-OUT READER COULD GAIN (FR-183): the host's way in, given
+   * while the reader is a visitor. Where every kind the view reads is kept
+   * from its seat (Roadmap f-view-knows-what-its-seat-cannot-see), the view
+   * is not started: the host draws this one line to press in its place —
+   * or, with none, says that nothing here is shown to the reader — rather
+   * than a part with nothing in it.
+   */
+  readonly signIn?: () => SignIn | undefined;
 }
 
 export interface WorkerView {
@@ -510,6 +520,17 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   const refusedNow = typeof given === "function" ? undefined : refusedCode(given);
   if (refusedNow) {
     queueMicrotask(() => fail(...refusedNow));
+    return handle();
+  }
+  /*
+   * NOTHING IT READS IS THE SEAT'S TO SEE (Roadmap
+   * f-view-knows-what-its-seat-cannot-see): not started, and in its place
+   * the line a reader with no acts is given (FR-183) — the host's way in for
+   * a visitor — never a part with nothing in it.
+   */
+  const reads = viewKinds(manifest);
+  if (readsOnlyUnseen(reads, unseenOf(options.store, options.principal, reads))) {
+    drawKept(shadow, region, options.signIn?.());
     return handle();
   }
 
@@ -1086,7 +1107,12 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         },
         mine,
         props: () => {
-          const props = { ...workerViewProps(options.store, options.principal, { manifest, ...(options.input ? { input: options.input() } : {}), theme: theme(), places: guestPlacesOf(vocabulary()), ...(computed ? { computed } : {}) }), mine: mine.values() };
+          /* One answer to what the seat is kept from, for its places and what it is told it cannot see (`batch.kept`). */
+          let made: GuestProps | undefined;
+          inOneBatch(() => {
+            made = workerViewProps(options.store, options.principal, { manifest, ...(options.input ? { input: options.input() } : {}), theme: theme(), places: guestPlacesOf(vocabulary()), kept: kept(), ...(computed ? { computed } : {}) });
+          });
+          const props = { ...made!, mine: mine.values() };
           const was = shown;
           shown = new Set([...(props.node ? [props.node.id] : []), ...(props.nodes ?? []).map((node) => node.id)]);
           /* The record it shows changed (Roadmap f-app-wide-view-theme): under the brand's "fade", what is drawn goes before the new one comes. */
@@ -1226,4 +1252,23 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       },
     };
   }
+}
+
+/** The line drawn where every kind a view reads is kept from its seat: the host's way in, or that nothing here is shown. */
+function drawKept(shadow: ShadowRoot, region: HTMLElement, signIn: SignIn | undefined): void {
+  const document = region.ownerDocument;
+  region.setAttribute("data-worker-view-unseen", "");
+  const line = document.createElement("p");
+  line.setAttribute("data-graview-unseen", "");
+  line.style.cssText = "margin:0;padding:12px;color:var(--graview-ink-muted, inherit);font-family:var(--graview-font-body, inherit)";
+  if (signIn) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.setAttribute("data-testid", "sign-in");
+    button.textContent = signIn.label;
+    button.style.cssText = "font:inherit;color:var(--graview-accent, inherit);background:none;border:1px solid currentColor;border-radius:var(--graview-radius, 8px);padding:6px 12px;cursor:pointer";
+    button.addEventListener("click", () => signIn.run());
+    line.appendChild(button);
+  } else line.textContent = "Nothing here is shown to you.";
+  shadow.replaceChildren(line);
 }
