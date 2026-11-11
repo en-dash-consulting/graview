@@ -27,6 +27,7 @@ export { createViews, layerViews } from "./view-registry.js";
 export { KeptViewsProvider, useTidiedViews } from "./tidied-views.js";
 export { BLEEDS, bleeds, bleedsFull, DEFAULT_VIEW, isDefaultView, markBleeds, markDefaultView, markPreviews, markReplacesPage, PREVIEWS, previewOf, REPLACES_PAGE, replacesPage, type ScenePreviewing } from "./view-marks.js";
 export { DefaultDrawnElsewhere } from "./default-elsewhere.js";
+export { HomeFallsBack } from "./home-falls-back.js";
 export { PageDoorContext, ViewContentHeight, type PageDoor } from "./content-height.js";
 export { ErrorReportContext } from "./error-report.js";
 export type { ErrorReport } from "./error-report.js";

@@ -556,6 +556,36 @@ const batchesOf = (ops: readonly Operation[]): ReadonlyMap<string, string> => ne
  * from the platform's random source where there is one, which every page
  * and Node 22 has.
  */
+/** The most seats `kindsKeptFrom` keeps an answer for at once: past it, the answers kept are let go and worked out again as asked. */
+const KEPT_KINDS_SEATS = 64;
+
+/**
+ * THE SEAT A KEPT-KINDS ANSWER IS FOR: exactly what working it out reads of
+ * a principal — its kind, its id, its roles, the profile it is judged by
+ * (`profileOf`'s reading, not the fields it reads that from), and the same
+ * of whom it acts for — each read by name, never the principal serialized
+ * whole, and roles in one order. What it does not read (a session, a
+ * display name, which visitor of a shared seat) is no part of it, so a seat
+ * every visitor shares is one entry. Only strings are said: a kind, an id
+ * or a role that is anything else, or a seat past eight deep, has no key,
+ * and its answer is worked out each time and kept for nobody.
+ */
+function keptKindsSeat(principal: Principal, depth = 0): string | undefined {
+  if (typeof principal !== "object" || principal === null) return undefined;
+  const behalf = principal.onBehalfOf as Principal | null | undefined;
+  // No one to act for, as `actingAs` reads it, absent or null; said apart, since `isSystem` asks which.
+  const behind = behalf === undefined ? "absent" : behalf === null ? "null" : depth < 8 ? keptKindsSeat(behalf, depth + 1) : undefined;
+  if (behind === undefined) return undefined;
+  const kind: unknown = principal.kind;
+  const id: unknown = principal.id;
+  const given: unknown = principal.roles;
+  if ((kind !== undefined && typeof kind !== "string") || (id !== undefined && typeof id !== "string")) return undefined;
+  if (given !== undefined && (!Array.isArray(given) || !given.every((role) => typeof role === "string"))) return undefined;
+  const roles = given === undefined ? null : [...new Set(given as readonly string[])].sort();
+  const profile = profileOf(principal);
+  return JSON.stringify([kind ?? null, id ?? null, roles, profile ? [profile.id, profile.name] : null, behind]);
+}
+
 function storeTag(): string {
   const random = (globalThis as { crypto?: { getRandomValues?: (array: Uint8Array) => Uint8Array } }).crypto;
   const bytes = new Uint8Array(6);
@@ -1438,8 +1468,39 @@ export class Store<S extends AnySchema> {
     return refusalFor(this.schema, arg, given, candidates);
   }
 
-  /** The kinds of administered modules this principal may not see at all. */
+  /**
+   * The kinds of administered modules this principal may not see at all.
+   *
+   * KEPT WHILE NOTHING IT READS HAS CHANGED: for a seat under a `sees` rule
+   * it is worked out from every act the seat may do, and a page asks it for
+   * each link it draws. The answer is kept per seat and asked again once
+   * the store has told its subscribers anything, an op is logged, a change
+   * is put back, or what judges a partial sight or offers publishing is
+   * loaded. A seat is what working it out reads of the principal
+   * (`keptKindsSeat`), so every visitor of a shared seat is one entry; at
+   * most `KEPT_KINDS_SEATS` are kept at once. Each call is handed its own
+   * copy: what a caller does to it is never the next caller's answer.
+   */
   kindsKeptFrom(principal: Principal = HUMAN): ReadonlySet<string> {
+    const all = this.log.all();
+    const state = `${this.told}|${this.log.length}|${all.at(-1)?.id ?? ""}|${fieldsJudged(this) ? 1 : 0}|${PUBLISHING.act ? 1 : 0}`;
+    if (this.keptKinds?.state !== state) this.keptKinds = { state, seats: new Map() };
+    const seats = this.keptKinds.seats;
+    const seat = keptKindsSeat(principal);
+    if (seat === undefined) return this.kindsKeptNow(principal);
+    let kept = seats.get(seat);
+    if (!kept) {
+      kept = this.kindsKeptNow(principal);
+      if (seats.size >= KEPT_KINDS_SEATS) seats.clear();
+      seats.set(seat, kept);
+    }
+    return new Set(kept);
+  }
+
+  /** What `kindsKeptFrom` keeps: the store's state it was worked out at, and each seat's answer there, never handed out. */
+  private keptKinds: { readonly state: string; readonly seats: Map<string, ReadonlySet<string>> } | undefined;
+
+  private kindsKeptNow(principal: Principal): ReadonlySet<string> {
     const kept = new Set<string>();
     for (const [name, module] of this.modules.administered) {
       if (this.mayAdminister(name, principal)) continue;
@@ -1800,6 +1861,7 @@ export class Store<S extends AnySchema> {
       mintBatch: () => PREVIEW_BATCH,
       rehearsing: true,
       personMade: undefined,
+      keptKinds: undefined,
     });
     // Its own acts, so "Type text" reads the text back off the rehearsal's log, as the apply would off this one's.
     const typer = this.typer && TYPING.typeText!(twin);
@@ -2680,6 +2742,8 @@ export class Store<S extends AnySchema> {
   private putBack(rollback: GraphSnapshot<NodeOfSchema<S>>, kept: number): void {
     this.graph.load(rollback);
     if (this.log.length > kept) this.log.truncate(kept);
+    // What a seat is kept from, if a host's `admit` asked it of the change put back: never an answer for whatever is logged at that length next.
+    this.keptKinds = undefined;
   }
 
   /** Asks the host's `admit`, when there is one, with the change as planned; one it refuses is put back, and its word goes on up. */
