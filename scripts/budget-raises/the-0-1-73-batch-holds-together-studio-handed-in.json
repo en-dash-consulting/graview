@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 0,
+  "gzipped": 100,
+  "note": "Raised when the 0.1.73 batch's seven branches were merged and the full suite measured this entry 3 bytes gzipped over (1_967_190 / 687_858 against 687_855): the minified length is the same on every build, but esbuild's split chunks hash their names and name their shared symbols differently from build to build, so gzip lands within about 100 bytes of itself. Held for that spread."
+}
