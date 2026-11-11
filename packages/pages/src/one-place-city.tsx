@@ -3,7 +3,7 @@ import { aggregateId, EMPTY_VIEW, kindCardId, toUrl, withFocus, withOverview, wi
 import { Scene, type SceneCamera } from "@graview/react";
 import { BesideTheMap, useGraview, useNavigation } from "@graview/react/provider";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { aimPoint, anchorOf, easedToward, IN, SHEET_ORIGIN, standingCss, standingOn, stopAtZoom, zoomAt, type Box, type PageWhere, type Point, type Standing, type Stop } from "./one-place-geometry.js";
+import { aimPoint, anchorOf, easedToward, IN, SHEET_ORIGIN, standingCss, standingOn, stopAtZoom, unionOf, zoomAt, type Box, type PageWhere, type Point, type Standing, type Stop } from "./one-place-geometry.js";
 import type { OnePlaceCityProps } from "./one-place.js";
 
 /*
@@ -208,6 +208,12 @@ export function OnePlaceCity({ where, page, stop, returning, sheet, view, lessMo
       const beside = panelBox !== null && panelBox.x > at.view.width * 0.3;
       // Where the place is aimed: the middle of the city that is seen beside the panel, else under the page's foot.
       const aimAt = (): Point => (panelBox ? (beside ? { x: panelBox.x / 2, y: at.view.height / 2 } : { x: at.view.width / 2, y: Math.max(40, panelBox.y / 2) }) : aimPoint(at.stop, placeAt, at.view));
+      // Where to aim, and what is aimed: [the point on the window, the point of the city that should come to it].
+      const cityMiddle = (): Point => {
+        const city = unionOf([...plots.values()]);
+        return city ? { x: city.x + city.width / 2, y: city.y + city.height / 2 } : { x: at.view.width / 2, y: at.view.height / 2 };
+      };
+      const aimed = (): [Point, Point] => (at.stop === "city" || placeAt.type === "home" ? [{ x: at.view.width / 2, y: at.view.height / 2 }, cityMiddle()] : [aimAt(), anchor!]);
 
       /*
        * THE ONE CAMERA, ASKED: arriving at a stop, the Scene's zoom about the
@@ -232,19 +238,20 @@ export function OnePlaceCity({ where, page, stop, returning, sheet, view, lessMo
         } else if (aim.phase === "wait" && (((settled && Math.abs(cam.zoom() - aim.zoom) < 0.02) || now - aim.since > ARRIVE_MS) && panelLanded)) {
           aim = { ...aim, phase: "pan", since: now };
         } else if (aim.phase === "pan") {
-          if (at.stop !== "city" && placeAt.type !== "home") {
-            const target = aimAt();
-            const dx = target.x - anchor.x;
-            const dy = target.y - anchor.y;
+          {
+            // At the overview, and for home, the whole city is aimed at the window's middle; elsewhere the place where the level asks.
+            const [target, from] = aimed();
+            const dx = target.x - from.x;
+            const dy = target.y - from.y;
             if (Math.hypot(dx, dy) > 3) cam.panBy(dx, dy);
           }
           aim = { ...aim, phase: "check", since: now, zoom: cam.zoom() };
         } else if (aim.phase === "check" && ((settled && now - aim.since > 300) || now - aim.since > ARRIVE_MS)) {
           // Where the pan landed, looked at again: a city that moved under it meanwhile is aimed at once more.
-          const target = aimAt();
-          const off = Math.hypot(target.x - anchor.x, target.y - anchor.y);
+          const [target, from] = aimed();
+          const off = Math.hypot(target.x - from.x, target.y - from.y);
           const again = aim.again ?? 0;
-          aim = off > 24 && again < 2 && at.stop !== "city" && placeAt.type !== "home" ? { ...aim, phase: "pan", since: now, again: again + 1 } : { ...aim, phase: "done", since: now, zoom: cam.zoom() };
+          aim = off > 24 && again < 2 ? { ...aim, phase: "pan", since: now, again: again + 1 } : { ...aim, phase: "done", since: now, zoom: cam.zoom() };
         } else if (aim.phase === "done" && now - aim.since > ARRIVE_MS && settled) {
           // The person's zoom: past this stop's range, the next stop, the camera left where the hand put it.
           const next = stopAtZoom(cam.zoom(), at.stop, placeAt, at.view.width);
@@ -318,7 +325,7 @@ export function OnePlaceCity({ where, page, stop, returning, sheet, view, lessMo
           if (rect.height < 1 || mid < panelBox.y || mid > panelBox.y + panelBox.height) continue;
           const end = endOf({ type: "record", id });
           if (!end) continue;
-          const from = beside ? { x: panelBox.x, y: mid } : { x: rect.left + rect.width / 2, y: Math.max(panelBox.y, rect.top) };
+          const from = beside ? { x: panelBox.x, y: mid } : { x: rect.left + Math.min(rect.width / 2, 60), y: panelBox.y };
           found.push({ key: id, from, to: middle(end), target: { type: "record", id }, label: labelFor({ type: "record", id }), on: onOf({ type: "record", id }) });
         }
       }
