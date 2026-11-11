@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 1,
+  "gzipped": 64,
+  "note": "Raised when the 0.1.73 batch's three branches were merged (a district's records with no value share one row; a view's pictures load lazily and at a thumb size; a visitor's view is not stopped by the link check, a stop names its clock, and a stopped home falls back to the built-in one): each measured alone against main, together they came to 49 bytes gzipped over their summed raises (3_159_503 / 1_146_308 against 3_159_503 / 1_146_259), held for a few bytes either side."
+}
