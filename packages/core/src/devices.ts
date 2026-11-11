@@ -10,7 +10,7 @@
  * reads it, as `graview check` and `editDocument` do. The shapes
  * (`AppDevices`, `DeviceScreen`) are on `@graview/core`.
  */
-export { deviceScreensOf, screenGo, screenPlaceOf } from "./device-screens.js";
+export { deviceScreensOf, screenGo, screenPlaceOf, screenPlacesNamed } from "./device-screens.js";
 export type { ResolvedScreen, ScreenPlace } from "./device-screens.js";
 export { deviceFindings, documentDeviceFindings, screenWords } from "./device-findings.js";
 export type { DeviceFinding, DeviceFindingCode } from "./device-findings.js";

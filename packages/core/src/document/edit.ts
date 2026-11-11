@@ -1383,7 +1383,9 @@ class Editor {
     };
     const wrong = compiled.ok
       ? deviceFindings({ screens: screens as never }, compiled.app).filter(
-          (finding) => finding.index === undefined || finding.index === at || (finding.code === "device-screen-twice" && goes(finding.index) !== undefined && goes(finding.index) === goes(at)),
+          (finding) =>
+            finding.severity === "error" &&
+            (finding.index === undefined || finding.index === at || (finding.code === "device-screen-twice" && goes(finding.index) !== undefined && goes(finding.index) === goes(at))),
         )
       : [];
     for (const finding of wrong) this.failAs(finding.code, i, finding.index === undefined ? "" : `screen.${finding.key ?? ""}`, finding.message, finding.fix);
@@ -1434,6 +1436,8 @@ class Editor {
   followScreens(base: GraviewDocument): void {
     const screens: Doc[] | undefined = this.doc.devices?.screens;
     if (!Array.isArray(screens) || screens.length === 0) return;
+    // Nothing a place is made of changed — kinds and their words, lenses, jobs, the arrangement: no screen moved, and nothing is compiled.
+    if (placesSaid(base) === placesSaid(this.doc)) return;
     const before = compileDocumentWithoutCheck(base);
     const after = compileDocumentWithoutCheck(this.doc);
     if (!before.ok || !after.ok) return;
@@ -1456,8 +1460,13 @@ class Editor {
         kept.push(screen);
         continue;
       }
-      const word = moved.is === "job" ? `job:${moved.job.name}` : moved.place.slug;
-      this.said.push(`The device screen ${quoted(screen.label)} follows its place to ${quoted(word)}.`);
+      // By its address, which no other place answers to: a lens titled as a kind's list takes the word, not the address.
+      const word = moved.is === "job" ? `job:${moved.job.name}` : moved.place.address;
+      this.said.push(
+        moved.is === "place" && was.is === "place" && moved.place.address === was.place.address
+          ? `The device screen ${quoted(screen.label)} names its place by its address, ${quoted(word)}: another place now answers to ${quoted(screen.place)}.`
+          : `The device screen ${quoted(screen.label)} follows its place to ${quoted(word)}.`,
+      );
       kept.push({ ...screen, place: word });
     }
     this.keepScreens(kept);
@@ -1630,7 +1639,11 @@ class Editor {
       was = lenses[at];
       // A device's screen of the lens follows it to its new title (`followScreens`).
       const before = typeof was?.["title"] === "string" ? placeSlug(was["title"]) : undefined;
-      if (before !== undefined && placeSlug(e.title) !== before) this.lensOrigin.set(placeSlug(e.title), this.lensOrigin.get(before) ?? before);
+      if (before !== undefined && placeSlug(e.title) !== before) {
+        // Retitled again in the same change, onward or back: one entry, from the title it had in the base document.
+        this.lensOrigin.set(placeSlug(e.title), this.lensOrigin.get(before) ?? before);
+        this.lensOrigin.delete(before);
+      }
     }
     // A lens drawn anew in another's place stays off the lists if that one was.
     const lens: Doc = { name, title: e.title, ...(e.on !== undefined ? { on: e.on } : {}), ...(e.bindings !== undefined ? { bindings: e.bindings } : {}), ...(e.options !== undefined ? { options: e.options } : {}), ...(was?.["hidden"] === true ? { hidden: true } : {}), ...(was?.["export"] === false ? { export: false } : {}), ...(e.create === false ? { create: false } : {}) };
@@ -4066,6 +4079,11 @@ export function editDocument(document: GraviewDocument, edits: readonly unknown[
     editor.said.push(`The tools an agent is offered change: ${listOf([...editor.toolsMoved])}. A conversation that listed them before should list them again.`);
   }
   return { ok: true, document: editor.doc as GraviewDocument, said: editor.said, fills: editor.fills };
+}
+
+/** What a document's places are made of, as one string: its kinds and their words, its lenses, its jobs and its arrangement. */
+function placesSaid(doc: Doc): string {
+  return JSON.stringify([Object.entries(doc.kinds ?? {}).map(([kind, spec]) => [kind, (spec as Doc).plural ?? null, (spec as Doc).noun ?? null]), doc.lenses ?? null, (doc.purpose?.jobs ?? []).map((job: Doc) => [job.name, job.kind, job.roles ?? null]), doc.pages ?? null, Boolean(doc.views?.home)]);
 }
 
 /** What a declaration holds, enough for the rule language's name walk: each kind's fields, and where its relations go. */

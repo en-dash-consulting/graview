@@ -223,5 +223,21 @@ describe("the tap map", () => {
     // The reader may not see the count, so bumping it is not a press they could make.
     expect(acts({ kind: "human", id: "lou", roles: ["reader"] })).toEqual([]);
   });
+
+  it("refuses in words, and never throws on, a tap with nothing it does or an id for a screen the profile cannot draw — and echoes no page below the first", () => {
+    const store = choreStore();
+    const drawn = choreScreen(store as never, doer);
+    const done = drawn.taps.find((tap) => "act" in tap.does)!;
+    const id = (params: object) => `eink.${Buffer.from(JSON.stringify(params)).toString("base64url")}.${drawn.renderId.split(".")[2]}`;
+    const nothing = resolveTap(store, chores, { label: "Nothing" } as never, { viewer: doer, renderId: drawn.renderId });
+    expect(nothing.ok).toBe(false);
+    if (!nothing.ok) expect(nothing.refused).toMatch(/does nothing/);
+    const tiny = resolveTap(store, chores, done, { viewer: doer, renderId: id({ place: "/chores/c-bins", width: 1, height: 1, page: 0 }) });
+    expect(tiny.ok).toBe(false);
+    if (!tiny.ok) expect(tiny.refused).toMatch(/not on a screen this app drew/);
+    const below = resolveTap(store, chores, { label: "Refresh", does: { refresh: true } }, { viewer: doer, renderId: id({ place: "/chores/c-bins", width: 758, height: 1024, page: -5 }) });
+    expect(below).toMatchObject({ page: 0 });
+    expect((store.graph.getNode("c-bins") as unknown as { done: boolean }).done).toBe(false);
+  });
 });
 

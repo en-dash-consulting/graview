@@ -53,6 +53,18 @@ export function screenPlaceOf<S extends AnySchema>(app: GraviewApp<S>, word: str
   return found ? { is: "place", place: found } : undefined;
 }
 
+/** Every place a screen's word answers to, the one the strip goes to first: more than one, and the word is ambiguous. */
+export function screenPlacesNamed<S extends AnySchema>(app: GraviewApp<S>, word: string, places: readonly AppPlace[] = placesOf(app)): readonly AppPlace[] {
+  const asked = word.trim();
+  if (asked.startsWith(JOB_SCREEN_PREFIX)) return [];
+  const word_ = said(asked);
+  return places.filter(
+    (place) =>
+      place.slug !== OVERVIEW_SLUG &&
+      (place.slug === asked || place.address === asked || said(place.title) === word_ || placeSlug(place.title) === word_ || (place.kind !== null && place.kind === asked && place.address === `/${place.slug}`)),
+  );
+}
+
 /** Where a screen's place goes: its address, or `job:<name>`. */
 export const screenGo = (found: ScreenPlace): string => (found.is === "job" ? `${JOB_SCREEN_PREFIX}${found.job.name}` : found.place.address);
 

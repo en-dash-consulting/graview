@@ -1,9 +1,9 @@
 import type { GraviewApp } from "./app.js";
 import { placesOf } from "./app-places.js";
-import { error, type Finding } from "./document/findings.js";
+import { error, warning, type Finding } from "./document/findings.js";
 import { DevicesSpec } from "./document/devices-spec.js";
 import type { GraviewDocument } from "./document/schema.js";
-import { screenPlaceOf, screenGo } from "./device-screens.js";
+import { screenPlaceOf, screenPlacesNamed, screenGo } from "./device-screens.js";
 import { LONGEST_SCREEN_LABEL, MOST_DEVICE_SCREENS, screenLabelWidth, shortScreenLabel, type AppDevices, type DeviceScreen } from "./device-shape.js";
 import { HOME_SLUG, OVERVIEW_SLUG } from "./places.js";
 import { jobsOf } from "./jobs.js";
@@ -16,13 +16,16 @@ import type { AnySchema } from "./schema/schema.js";
  * strip holds them all.
  *
  * Codes: `device-screen-place`, `device-screen-label`, `device-screen-twice`,
- * `device-screens-too-many` — every one an error.
+ * `device-screens-too-many` — every one an error — and `device-screen-ambiguous`,
+ * a warning: a word two places answer to, the strip going to the first.
  */
 
-export type DeviceFindingCode = "device-screen-place" | "device-screen-label" | "device-screen-twice" | "device-screens-too-many";
+export type DeviceFindingCode = "device-screen-place" | "device-screen-label" | "device-screen-twice" | "device-screens-too-many" | "device-screen-ambiguous";
 
 export interface DeviceFinding {
   readonly code: DeviceFindingCode;
+  /** Every one an error but `device-screen-ambiguous`, a warning: the strip goes to the first place the word names. */
+  readonly severity: "error" | "warning";
   /** Which screen (its place in `screens`); none for what is wrong with the list. */
   readonly index?: number;
   readonly key?: keyof DeviceScreen;
@@ -44,6 +47,7 @@ export function deviceFindings<S extends AnySchema>(devices: AppDevices | undefi
   if (screens.length > MOST_DEVICE_SCREENS) {
     out.push({
       code: "device-screens-too-many",
+      severity: "error",
       message: `The app offers ${screens.length} device screens; the strip holds ${MOST_DEVICE_SCREENS} beside Refresh, each wide enough for a finger.`,
       fix: `Keep the ${MOST_DEVICE_SCREENS} people go to most; the others stay a press away from those.`,
     });
@@ -57,6 +61,7 @@ export function deviceFindings<S extends AnySchema>(devices: AppDevices | undefi
       const scene = screen.place.trim() === OVERVIEW_SLUG;
       out.push({
         code: "device-screen-place",
+        severity: "error",
         index,
         key: "place",
         message: scene ? `${said} names the scene, which moves, and a device draws no picture that moves.` : `${said} names "${screen.place}", which is not a place of this app.`,
@@ -65,7 +70,18 @@ export function deviceFindings<S extends AnySchema>(devices: AppDevices | undefi
     } else {
       const go = screenGo(found);
       const first = went.get(go);
-      if (first !== undefined) out.push({ code: "device-screen-twice", index, key: "place", message: `${said} goes where screen ${first + 1} already goes (${go === "/" ? HOME_SLUG : go}).`, fix: "Give each screen a place of its own, or take this one away." });
+      const named = screenPlacesNamed(app, screen.place, places);
+      if (named.length > 1) {
+        out.push({
+          code: "device-screen-ambiguous",
+          severity: "warning",
+          index,
+          key: "place",
+          message: `${said} names "${screen.place}", which ${named.length} places answer to; the strip goes to the first, ${named[0]!.title} (${named[0]!.address}).`,
+          fix: `Name the one you mean by its address: ${quotedList(named.map((place) => place.address))}.`,
+        });
+      }
+      if (first !== undefined) out.push({ code: "device-screen-twice", severity: "error", index, key: "place", message: `${said} goes where screen ${first + 1} already goes (${go === "/" ? HOME_SLUG : go}).`, fix: "Give each screen a place of its own, or take this one away." });
       else went.set(go, index);
     }
     // Counted as a reader sees it: one for each character however it is spelled, two for a full-width one.
@@ -74,6 +90,7 @@ export function deviceFindings<S extends AnySchema>(devices: AppDevices | undefi
     if (width === 0 || width > LONGEST_SCREEN_LABEL) {
       out.push({
         code: "device-screen-label",
+        severity: "error",
         index,
         key: "label",
         message: width === 0 ? `Device screen ${index + 1} has no word under its press.` : `${said} is ${width} characters${wide ? " wide, a full-width character counting as two" : ""}, and the strip has room for ${LONGEST_SCREEN_LABEL} under each press.`,
@@ -105,5 +122,5 @@ export function documentDeviceFindings<S extends AnySchema>(document: GraviewDoc
   if (document.devices === undefined) return [];
   const shape = devicesShapeFindings(document.devices);
   if (shape.length > 0) return shape;
-  return deviceFindings(document.devices, app).map((finding) => error(finding.code, documentDevicePath(finding), finding.message, finding.fix));
+  return deviceFindings(document.devices, app).map((finding) => (finding.severity === "warning" ? warning : error)(finding.code, documentDevicePath(finding), finding.message, finding.fix));
 }

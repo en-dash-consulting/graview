@@ -622,24 +622,33 @@ export function resolveTap<S extends AnySchema>(store: Store<S>, declaration: Gr
   const viewer: Principal = options.viewer ?? { kind: "human" };
   const parts = typeof options.renderId === "string" ? options.renderId.split(".") : [];
   const params = parts.length === 3 && parts[0] === "eink" ? decodeParams(parts[1]!) : undefined;
-  if (!params) return { ok: false, refused: "This tap was not on a screen this app drew; draw the screen again and tap there.", place: "/", page: 0 };
-  const here = { place: params.place, page: params.page };
-  const does = region.does as Partial<Record<string, unknown>>;
+  // An id for a screen the profile could not have drawn — too small to lay out — is no screen this app drew.
+  if (!params || !(Math.floor(params.width) >= LEAST_VIEWPORT.width && Math.floor(params.height) >= LEAST_VIEWPORT.height)) {
+    return { ok: false, refused: "This tap was not on a screen this app drew; draw the screen again and tap there.", place: "/", page: 0 };
+  }
+  const here = { place: params.place, page: Number.isFinite(params.page) ? Math.max(0, Math.floor(params.page)) : 0 };
+  const does = (region && typeof region.does === "object" && region.does !== null ? region.does : {}) as Partial<Record<string, unknown>>;
   if (typeof does.page === "number" && Number.isFinite(does.page)) return { ok: true, does: "page", place: params.place, page: Math.max(0, Math.floor(does.page)) };
   if (does.refresh === true) return { ok: true, does: "refresh", ...here };
   if (typeof does.go !== "string" && typeof does.open !== "string" && typeof does.act !== "string") return { ok: false, refused: "This tap does nothing Graview knows.", ...here };
 
   // The screen as the seat now stands: a press is answered only if it is one of its own.
-  const now = renderScreen(store, declaration, params.place, {
-    profile: "eink",
-    viewport: { width: params.width, height: params.height },
-    viewer,
-    page: params.page,
-    ...(params.today ? { today: params.today } : {}),
-    ...(params.locale ? { locale: params.locale } : {}),
-    ...(params.timeZone ? { timeZone: params.timeZone } : {}),
-    ...(params.base ? { base: params.base } : {}),
-  });
+  let now: RenderedScreen;
+  try {
+    now = renderScreen(store, declaration, params.place, {
+      profile: "eink",
+      viewport: { width: params.width, height: params.height },
+      viewer,
+      page: here.page,
+      ...(params.today ? { today: params.today } : {}),
+      ...(params.locale ? { locale: params.locale } : {}),
+      ...(params.timeZone ? { timeZone: params.timeZone } : {}),
+      ...(params.base ? { base: params.base } : {}),
+    });
+  } catch {
+    // A reading no screen could be drawn in — a time zone or a locale nobody has — is no screen this app drew.
+    return { ok: false, refused: "This tap was not on a screen this app drew; draw the screen again and tap there.", place: "/", page: 0 };
+  }
   const shown = now.taps.find((tap) => tap.label === region.label && sameDoes(tap.does, region.does));
   if (typeof does.go === "string") {
     if (!shown) return { ok: false, refused: `“${region.label}” is not on this screen, so it goes nowhere.`, ...here };

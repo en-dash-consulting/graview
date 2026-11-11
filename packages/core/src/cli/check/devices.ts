@@ -16,7 +16,7 @@ export function checkDevices<S extends AnySchema>(ctx: CheckContext<S>): void {
   if (!app.devices?.screens || documentOf(app)) return;
   for (const finding of deviceFindings(app.devices, app)) {
     add({
-      severity: "error",
+      severity: finding.severity,
       code: finding.code,
       where: `defineApp(…).devices.screens${finding.index === undefined ? "" : `[${finding.index}]${finding.key ? `.${finding.key}` : ""}`}`,
       message: finding.message,

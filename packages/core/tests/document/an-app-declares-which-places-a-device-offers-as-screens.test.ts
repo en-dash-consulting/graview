@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createSchema, defineApp, defineNode, z } from "../../src/index.js";
 import { checkApp, compileDocument } from "../../src/check.js";
 import { editDocument, readDocument, toDocument, type GraviewDocument } from "../../src/document/index.js";
-import { deviceScreensOf, LONGEST_SCREEN_LABEL, MOST_DEVICE_SCREENS } from "../../src/devices.js";
+import { deviceScreensOf, LONGEST_SCREEN_LABEL, MOST_DEVICE_SCREENS, screenLabelWidth } from "../../src/devices.js";
 
 /**
  * AN APP DECLARES WHICH PLACES A DEVICE OFFERS AS SCREENS (Roadmap
@@ -179,7 +179,7 @@ describe("the edits", () => {
     const strip = withScreens([{ place: "home", label: "Today" }, { place: "vendors", label: "Vendors" }, { place: "/categories", label: "Categories" }]);
     const renamed = editDocument(strip, [{ op: "rename-kind", kind: "vendor", to: "supplier" }]);
     if (!renamed.ok) throw new Error(JSON.stringify(renamed.findings));
-    expect(renamed.document.devices?.screens).toEqual([{ place: "home", label: "Today" }, { place: "suppliers", label: "Vendors" }, { place: "/categories", label: "Categories" }]);
+    expect(renamed.document.devices?.screens).toEqual([{ place: "home", label: "Today" }, { place: "/suppliers", label: "Vendors" }, { place: "/categories", label: "Categories" }]);
     expect(renamed.said.some((line) => line.includes('"Vendors"') && line.includes("suppliers"))).toBe(true);
     expect(errorsOf(renamed.document)).toEqual([]);
     expect(compileDocument(renamed.document).ok).toBe(true);
@@ -203,12 +203,56 @@ describe("the edits", () => {
     if (!lensed.ok) throw new Error(JSON.stringify(lensed.findings));
     const retitled = editDocument(lensed.document, [{ op: "add-lens", replace: "The shortlist", title: "Our picks", on: "vendor", options: { blocks: [{ list: "all('vendor')", as: "row" }] } }]);
     if (!retitled.ok) throw new Error(JSON.stringify(retitled.findings));
-    expect(retitled.document.devices?.screens?.map((screen) => screen.place)).toEqual(["our-picks", "job:unbooked"]);
+    expect(retitled.document.devices?.screens?.map((screen) => screen.place)).toEqual(["/places/our-picks", "job:unbooked"]);
     expect(compileDocument(retitled.document).ok).toBe(true);
     const gone = editDocument(retitled.document, [{ op: "remove-lens", title: "Our picks" }, { op: "remove-job", name: "unbooked" }]);
     if (!gone.ok) throw new Error(JSON.stringify(gone.findings));
     expect(gone.document.devices).toBeUndefined();
     expect(compileDocument(gone.document).ok).toBe(true);
+  });
+
+  it("carry a screen along a lens retitled twice in one change, onward or back", () => {
+    const blocks = { blocks: [{ list: "all('vendor')", as: "row" }] };
+    const base = editDocument(vendors, [
+      { op: "add-lens", title: "The shortlist", on: "vendor", options: blocks },
+      { op: "add-device-screen", screen: { place: "The shortlist", label: "Shortlist" } },
+    ]);
+    if (!base.ok) throw new Error(JSON.stringify(base.findings));
+    const onward = editDocument(base.document, [
+      { op: "add-lens", replace: "The shortlist", title: "Our picks", on: "vendor", options: blocks },
+      { op: "add-lens", replace: "Our picks", title: "Final picks", on: "vendor", options: blocks },
+    ]);
+    if (!onward.ok) throw new Error(JSON.stringify(onward.findings));
+    expect(onward.document.devices?.screens).toEqual([{ place: "/places/final-picks", label: "Shortlist" }]);
+    const back = editDocument(base.document, [
+      { op: "add-lens", replace: "The shortlist", title: "Our picks", on: "vendor", options: blocks },
+      { op: "add-lens", replace: "Our picks", title: "The shortlist", on: "vendor", options: blocks },
+    ]);
+    if (!back.ok) throw new Error(JSON.stringify(back.findings));
+    expect(back.document.devices?.screens).toEqual([{ place: "The shortlist", label: "Shortlist" }]);
+  });
+
+  it("keep a screen on its kind's list when a lens comes to be titled as that list, naming it by its address — and the checker warns of a word that names two places", () => {
+    const blocks = { blocks: [{ list: "all('vendor')", as: "row" }] };
+    const titled = editDocument(withScreens([{ place: "categories", label: "Categories" }]), [{ op: "add-lens", title: "Categories", on: "vendor", options: blocks }]);
+    if (!titled.ok) throw new Error(JSON.stringify(titled.findings));
+    expect(titled.document.devices?.screens).toEqual([{ place: "/categories", label: "Categories" }]);
+    const compiled = compileDocument(titled.document);
+    if (!compiled.ok) throw new Error(JSON.stringify(compiled.findings));
+    expect(deviceScreensOf(compiled.app).map((screen) => screen.go)).toEqual(["/categories"]);
+    // Said with a word both answer to, the checker warns, and names the addresses that tell them apart.
+    const both = compileDocument({ ...titled.document, devices: { screens: [{ place: "categories", label: "Categories" }] } });
+    const warned = both.findings.find((finding) => finding.code === "device-screen-ambiguous");
+    expect(warned).toMatchObject({ severity: "warning", path: "devices.screens.0.place" });
+    expect(warned!.fix).toContain('"/categories"');
+    expect(warned!.fix).toContain('"/places/categories"');
+  });
+});
+
+describe("a flag on the strip", () => {
+  it("is as wide as two of its characters, like any other picture", () => {
+    expect(screenLabelWidth("🇯🇵").width).toBe(2);
+    expect(screenLabelWidth("🇯🇵🇯🇵🇯🇵🇯🇵🇯🇵🇯🇵🇯🇵").width).toBe(14);
   });
 });
 

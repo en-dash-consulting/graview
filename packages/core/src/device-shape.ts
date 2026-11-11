@@ -52,8 +52,8 @@ function characters(text: string): string[] {
   return Segmenter ? [...new Segmenter(undefined, { granularity: "grapheme" }).segment(text)].map((one) => one.segment) : Array.from(text);
 }
 
-/** A character as wide as two of the strip's: East Asian wide and full-width forms, and the pictures emoji draw. */
-const WIDE = /[ᄀ-ᅟ⺀-〾ぁ-㏿㐀-䶿一-鿿ꀀ-꓏가-힣豈-﫿︰-﹏＀-｠￠-￦]|\p{Extended_Pictographic}/u;
+/** A character as wide as two of the strip's: East Asian wide and full-width forms, the pictures emoji draw, and a flag (a pair of regional indicators). */
+const WIDE = /[ᄀ-ᅟ⺀-〾ぁ-㏿㐀-䶿一-鿿ꀀ-꓏가-힣豈-﫿︰-﹏＀-｠￠-￦]|\p{Extended_Pictographic}|[\u{1F1E6}-\u{1F1FF}]/u;
 
 /** How much of the strip a word takes under its press: one for each character a reader sees, two for a full-width one. */
 export function screenLabelWidth(text: string): { readonly width: number; readonly wide: boolean } {

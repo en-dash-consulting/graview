@@ -599,7 +599,7 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
   /*
    * THE STRIP FOLLOWS WHAT IT SHOWS (Roadmap f-device-nav-bar), as the jobs
    * follow their kinds: a screen of a renamed kind's list names it by its
-   * new address word, and a screen whose place is gone — a kind taken away,
+   * new address, and a screen whose place is gone — a kind taken away,
    * a lens no longer drawn — leaves the strip. One that named nothing before
    * is kept for the checker to say.
    */
@@ -610,7 +610,7 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
       const kind = follow(was.place.kind);
       if (!liveKinds.has(kind)) return [];
       const now = screenPlaceOf(declared, screen.place);
-      return [now?.is === "place" && now.place.kind === kind && !now.place.address.startsWith("/places/") ? screen : { ...screen, place: kindPath(schema, kind).slice(1) }];
+      return [now?.is === "place" && now.place.kind === kind && !now.place.address.startsWith("/places/") ? screen : { ...screen, place: kindPath(schema, kind) }];
     }
     return screenPlaceOf(declared, screen.place) ? [screen] : [];
   });

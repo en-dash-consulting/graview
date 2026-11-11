@@ -73,10 +73,10 @@ describe("a device's screens in the studio", () => {
     studio.store.apply({ name: "rename-kind", args: { id: "declared:vendor", label: "supplier" } } as never);
     const applied = studio.apply();
     if (!applied.ok) throw new Error(JSON.stringify(applied.check.findings));
-    expect(applied.app.devices?.screens).toEqual([{ place: "home", label: "Today" }, { place: "suppliers", label: "Vendors" }]);
+    expect(applied.app.devices?.screens).toEqual([{ place: "home", label: "Today" }, { place: "/suppliers", label: "Vendors" }]);
     const document = studio.document();
     if (!document?.ok) throw new Error(JSON.stringify(document));
-    expect(document.document.devices?.screens).toEqual([{ place: "home", label: "Today" }, { place: "suppliers", label: "Vendors" }]);
+    expect(document.document.devices?.screens).toEqual([{ place: "home", label: "Today" }, { place: "/suppliers", label: "Vendors" }]);
   });
 
   it("takes a screen off the strip when the kind it shows is removed", () => {
@@ -95,7 +95,7 @@ describe("a device's screens in the studio", () => {
     renamed.store.apply({ name: "rename-kind", args: { id: "declared:note", label: "memo" } } as never);
     const applied = renamed.apply();
     if (!applied.ok) throw new Error(JSON.stringify(applied.check.findings));
-    expect(applied.app.devices?.screens).toEqual([{ place: "home", label: "Home" }, { place: "memos", label: "Notes" }, { place: "/tags", label: "Tags" }]);
+    expect(applied.app.devices?.screens).toEqual([{ place: "home", label: "Home" }, { place: "/memos", label: "Notes" }, { place: "/tags", label: "Tags" }]);
     const removed = createStudio(app as never);
     removed.store.apply({ name: "remove-kind", args: { id: "declared:tag" } } as never);
     const without = removed.apply();
