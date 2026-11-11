@@ -121,7 +121,8 @@ A person entered before they joined is bound, not made twice:
 `bindPerson(store, joining, "person:bud", { author })` (`@graview/core/binding`)
 is the `bind-person` op; `$me`, `own` and `self` then read that record. Only the
 host's system seat, or a grant naming `bind-person` for a role, binds (never
-`*`); never a seat itself. It stays once they act. No seat but the host's is served the binding.
+`*`), never an agent; never a seat itself. It stays once they act. A seat is
+served its own binding; whoever may bind sees them all.
 
 What a view keeps for that viewer (`graview.mine`, `graview-view-forms`) goes
 where the host says, for the viewer it knows, handed to `mount`, `<Embed>` and

@@ -8,6 +8,7 @@ import { writersOf, type Writers } from "./ops/writers.js";
 import { namesUnseen, redact, type SeatLens } from "./ops/withheld.js";
 import { actingAs, grantsTo, isSystem, meOf, profileOf, seatedIn } from "./permissions/policy.js";
 import { PERSON_SEAT } from "./graph/archived.js";
+import { bindsPeople, seatsKept, unseated } from "./binding-served.js";
 import { FIELD_SIGHT, fieldsJudged, partialSight, recordsOf, sees, type Judged, type Records } from "./permissions/sight.js";
 import type { Principal } from "./permissions/types.js";
 import { diffSnapshots } from "./graph/diff.js";
@@ -32,17 +33,14 @@ function turnedOff(store: Judged, principal: Principal): ReadonlySet<string> {
  */
 export function hidesFrom(store: Judged, principal: Principal): boolean {
   if (isSystem(principal)) return false;
-  return (store.policy?.sees?.length ?? 0) > 0 || turnedOff(store, principal).size > 0 || seated(store);
+  return (store.policy?.sees?.length ?? 0) > 0 || turnedOff(store, principal).size > 0 || (store.graph.hasPersonSeats?.() === true && !bindsPeople(store.policy, principal));
 }
 
-/**
- * AND A SEAT A PERSON IS BOUND TO (Roadmap f-invite-binds-existing-person),
- * in the graph or anywhere in its log: an account's id, the host's alone, so
- * every seat but the host's is served the records and the ops without it.
+/*
+ * AND WHILE A PERSON IS BOUND TO A SEAT (Roadmap f-invite-binds-existing-person):
+ * the seat is an account's id, told to that account itself, to the host and
+ * to whoever binds people (`seatsKept`), and served to nobody else.
  */
-function seated(store: Judged): boolean {
-  return store.graph.hasPersonSeats?.() === true || recordsOf(store.log).seated === true;
-}
 
 /**
  * WHICH KINDS A SEAT SEES EVERY RECORD OF (FR-55): by a sight that is not
@@ -225,6 +223,7 @@ function lensFor(store: Judged, principal: Principal): { readonly lens: SeatLens
    * that guessed an id whether the guess was real.
    */
   const actor = isSystem(principal) ? undefined : actingAs(principal).id;
+  const keepsSeat = seatsKept(store.policy, principal);
   const length = (): number => (store.log as { readonly length?: number }).length ?? store.log.all().length;
   // The same record served the same way is the same object, so a view read twice is equal by identity.
   const cleared = new WeakMap<object, { readonly without: string; readonly node: unknown }>();
@@ -244,7 +243,8 @@ function lensFor(store: Judged, principal: Principal): { readonly lens: SeatLens
         if (!optional(node.kind, field)) return undefined;
         (without ??= []).push(field);
       }
-      if (Object.hasOwn(node, PERSON_SEAT)) (without ??= []).push(PERSON_SEAT);
+      // The seat a person is bound to, unless it is this seat's own or this seat binds people.
+      if (Object.hasOwn(node, PERSON_SEAT) && unseated(node, keepsSeat) !== node) (without ??= []).push(PERSON_SEAT);
       if (!without) return node;
       const key = without.join("\u0000");
       const held = cleared.get(node);
@@ -303,6 +303,7 @@ function lensFor(store: Judged, principal: Principal): { readonly lens: SeatLens
       ...(actor !== undefined ? { actor } : {}),
       ...(timeline ? { timeline } : {}),
       hides: () => hidesFrom(store, principal),
+      keepsSeat,
       // A pinned lens is already of one moment: pinning it again is itself.
       pin: pinned ? () => lens : () => pinWith(fresh()),
     };
@@ -629,6 +630,13 @@ export function seatView<T extends Viewed>(store: T, principal: Principal): T {
           return (id: string) => served(target.getNode(id));
         case "has":
           return seenId;
+        // Whom a seat is bound to, asked only of the seats this one may be told of (its own, or every one for whoever binds people), and only a record it is served.
+        case "personBoundTo":
+          return (seat: string) => {
+            if (!lens.keepsSeat?.(seat)) return undefined;
+            const id = (target as { personBoundTo?(seat: string): string | undefined }).personBoundTo?.(seat);
+            return id !== undefined && seenId(id) ? id : undefined;
+          };
         /*
          * Each read as the graph's own, its arguments handed on — a read that
          * lists records says which (FR-173) — and what comes back served:
@@ -734,6 +742,8 @@ export function seatView<T extends Viewed>(store: T, principal: Principal): T {
         case "findings":
           return () =>
             target.findings().filter((finding) => {
+              // Who is bound to whom is told to whoever binds people, and the host (Roadmap f-invite-binds-existing-person).
+              if ((finding as { readonly code?: string }).code === "person-seat-shared" && !bindsPeople(store.policy, principal)) return false;
               const ids = finding.id.includes("->") ? finding.id.split("->").map((end, at) => (at === 0 ? end.slice(end.indexOf(":") + 1) : end)) : [finding.id];
               return ids.every((id) => !full.has(id) || seenId(id)) && !namesUnseen(finding, lens.sees);
             });

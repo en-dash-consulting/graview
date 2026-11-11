@@ -115,7 +115,7 @@ export function answerSeenBy<
         : redact([{ id: "", seq: 0, batch: "", author: { kind: "system" }, intent: "", mutation: null, primitives: answer.primitives as never, reads: [], writes: [], at: "" }], lens)[0]!.primitives;
   }
   // Nor the seat a person is bound to: the host's alone (Roadmap f-invite-binds-existing-person).
-  if (out["primitives"]) out["primitives"] = (out["primitives"] as readonly Primitive[]).flatMap((one) => unseatedPrimitive(one) ?? []);
+  if (out["primitives"]) out["primitives"] = (out["primitives"] as readonly Primitive[]).flatMap((one) => unseatedPrimitive(one, lens.keepsSeat) ?? []);
   // What a change wrote of a field the seat may not see is no part of what it is told (Roadmap f-field-sight).
   if (lens.kept && out["primitives"]) out["primitives"] = withoutKeptFields(out["primitives"] as readonly Primitive[], lens);
   // Records the seat is served, and no id that names nothing: a hidden record and an absent one are left out alike (FR-55).

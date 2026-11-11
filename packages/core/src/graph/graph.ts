@@ -471,7 +471,9 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
           if (isUnset(value)) delete next[key];
           else next[key] = value;
         }
-        const patched = this.oneSeat((restoring ? next : this.checkPatch(current, next, Object.keys(primitive.after))) as NodeOfSchema<S>);
+        const written = (restoring ? next : this.checkPatch(current, next, Object.keys(primitive.after))) as NodeOfSchema<S>;
+        // Only a patch that says whose record this is may change it: an edit of a record two share leaves it as it was.
+        const patched = Object.hasOwn(primitive.after, PERSON_SEAT) ? this.oneSeat(written) : written;
         this.nodes.set(primitive.id, patched);
         this.archived[isArchived(patched) ? "add" : "delete"](primitive.id);
         this.seat(current, patched);

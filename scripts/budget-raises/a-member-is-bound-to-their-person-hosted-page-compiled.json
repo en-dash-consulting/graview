@@ -1,7 +1,7 @@
 {
   "budget": "a hosted page handed a compiled app",
-  "minified": 4485,
-  "gzipped": 1402,
+  "minified": 5012,
+  "gzipped": 1593,
   "changeset": "a-member-is-bound-to-their-person.md",
-  "note": "Raised when a member who joins came to be bound to the person entered for them, the binding held to the people who run the app (Roadmap f-invite-binds-existing-person): the graph's index of which seat each person is bound to, the seat read as it is bound now wherever a store judges it, and the record and the log a seat is served as the store keeps them; making a binding and judging who may are `@graview/core/binding`'s, on no page. 4_485 / 1_402 more than its budget held, the gzipped with 8 bytes for what gzip gives from one build to the next. Measured at 627_737 / 217_369 against 623_252 / 215_975."
+  "note": "Raised when a member who joins came to be bound to the person entered for them, the binding held to the people who run the app (Roadmap f-invite-binds-existing-person): the graph's index of which seat each person is bound to, the seat read as it is bound now wherever a store judges it, and the record and the log each seat is served as the store keeps them for that seat; making a binding and judging who may are `@graview/core/binding`'s, on no page. 5_012 / 1_593 more than its budget held, the gzipped with 8 bytes for what gzip gives from one build to the next. Measured at 628_264 / 217_560 against 623_252 / 215_975."
 }

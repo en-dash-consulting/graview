@@ -104,12 +104,15 @@ const refused = (call: MutationCall, message: string, wouldNeed: readonly string
  * names `bind-person` for, by its name and for a role the seat holds — never
  * a grant to every role, never every act (`*`), never a grant held to the
  * seat's own record or end. With no policy, the host alone. Never a seat no
- * one person holds, a visitor, or one signed out; never a seat binding
+ * one person holds, a visitor, one signed out, an agent or anybody acting
+ * for another; never a seat binding
  * itself, whatever it is granted.
  */
 function judgedBinding(store: object, call: MutationCall, principal: Principal): { readonly ok: true } | { readonly ok: false; readonly refusal: Refusal } {
   const held = store as Held;
   if (signedOutSeat(principal)) return refused(call, "Sign in to bind an account to a record here.");
+  // A person binds, never an agent nor anybody acting for one: what an agent reads in a record could steer it to.
+  if (principal.kind === "agent" || principal.onBehalfOf !== undefined) return refused(call, "An agent cannot bind an account to a record here: a person who runs this app does that.");
   if (isSystem(principal)) return { ok: true };
   const seat = call.args["seat"];
   const record = call.args["record"];
