@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, before a worker is drawn",
+  "minified": 1,
+  "gzipped": 16,
+  "note": "Raised when the 0.1.73 batch's five branches were merged: together they come to 3 bytes gzipped over their summed raises (38_803 / 17_527 against 38_803 / 17_524), held for a few bytes either side."
+}
