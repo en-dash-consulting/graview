@@ -29,7 +29,7 @@ import { isAutomated, tidyingRefusal } from "./ops/tidying.js";
  * arguments are still to fill, by name, after judging all it can without
  * them: who may, what the seat may see, the arguments given as the act's
  * input reads them, and a document act's condition (`allowedWhen`) where it
- * reads none of what is missing. Any other rule is the act's to say once it
+ * reads no argument the caller left out. Any other rule is the act's to say once it
  * is handed everything.
  */
 
@@ -115,21 +115,32 @@ export function mayRun<S extends AnySchema>(store: Store<S>, seat: Principal, as
   const read = readGiven(mutation as AnyMutationDefinition<AnySchema>, given);
 
   // A whole call: what `apply` would say of it.
-  if (read.toFill.length === 0 && read.wrong === undefined) {
-    const refusal = store.wouldApply({ name: mutation.name, args: given }, seat, wouldRefuse);
+  let toFill = read.toFill;
+  let whole: unknown;
+  if (toFill.length === 0 && read.wrong === undefined) {
+    const refusal = (whole = store.wouldApply({ name: mutation.name, args: given }, seat, wouldRefuse));
     if (refusal === undefined) return { answer: "allowed" };
     // A record the call names that this seat is not served is the seat's sight, as `apply` asks it (`missingFor`); one the act's writes find gone is the record's state.
     if (refusal instanceof MissingRecordError && judged.missingFor({ name: mutation.name, args: given }, seat)) return refused("sight", "missing", refusal.message);
-    return saidBy(refusal);
+    // Refused for what it was not given ("nothing to change") while arguments it may take are still to give: judged as part of a call, those to fill.
+    const left = Object.keys((mutation.input as { shape?: object }).shape ?? {}).filter((name) => given[name] === undefined);
+    if (!(left.length > 0 && ((refusal instanceof ActRefusal && refusal.reason === "invalid") || refusal instanceof InvalidArguments) && !/ not on /.test(refusal.message))) return saidBy(refusal);
+    toFill = left;
   }
+  const answer = partly(judged, seat, mutation, given, read.wrong, toFill);
+  // Of a whole call refused for what it was not handed, a rule the rest would meet anyway is said in `apply`'s own words.
+  return whole !== undefined && answer.answer === "refused" ? saidBy(whole) : answer;
+}
 
-  // Part of a call: who may, what the seat may see, what it was given, and a condition that reads none of what is missing.
+/** Part of a call: who may, what the seat may see, what it was given, and a condition that reads no argument the caller left out. */
+function partly<S extends AnySchema>(judged: Store<S>, seat: Principal, mutation: AnyMutationDefinition<S>, given: Record<string, unknown>, wrong: string | undefined, toFill: readonly string[]): MayRunAnswer {
+  const subject = mutation.subject?.arg;
   const call: MutationCall = { name: mutation.name, args: given };
   const verdict = judged.permits(call, seat);
   if (!verdict.ok) return refused(verdict.refusal.onlyWhatYouMade ? "own-records" : "policy", "forbidden", verdict.refusal.message, verdict.refusal.wouldNeed);
   const missing = judged.missingFor(call, seat);
   if (missing) return refused("sight", "missing", missing.message);
-  if (read.wrong !== undefined) return refused("arguments", "invalid", read.wrong);
+  if (wrong !== undefined) return refused("arguments", "invalid", wrong);
   const on = subject !== undefined ? given[subject] : undefined;
   const record = typeof on === "string" ? (judged.seenBy(seat).graph.getNode(on) as NodeOfSchema<S> | undefined) : undefined;
   const kinds = mutation.subject?.kinds;
@@ -149,16 +160,18 @@ export function mayRun<S extends AnySchema>(store: Store<S>, seat: Principal, as
   const condition = mutation.condition;
   if (record && condition) {
     const reads = namesRead(condition.expr);
-    if (record && !read.toFill.some((name) => reads.has(name))) {
+    // Judged only on what the caller gave: an argument left out, required, optional or with a default, may be given and change the answer.
+    const taken = Object.keys((mutation.input as { shape?: object }).shape ?? {});
+    if (record && !taken.some((name) => given[name] === undefined && reads.has(name))) {
       try {
-        const no = condition.refusedBy(judged.seenBy(seat).graph as never, record, read.args);
+        const no = condition.refusedBy(judged.seenBy(seat).graph as never, record, given);
         if (no !== undefined) return refused("condition", "refused", no);
       } catch (error) {
         return saidBy(error);
       }
     }
   }
-  return { answer: "fill", toFill: read.toFill };
+  return { answer: "fill", toFill };
 }
 
 /** `mayRun` of several acts for one seat — a route tool's whole list in one call. */

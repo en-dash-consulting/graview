@@ -1,5 +1,5 @@
 {
   "budget": "Cloud's worker",
-  "bytes": 11010,
-  "note": "Raised when a field came to keep a time of day, a template came to read time questions, ${id} words and the views it comes with, apply came to judge each call and each write through one path a host can ask without writing, and a host came to ask whether a seat may run an act on a record without a preview (`mayRun` on `@graview/core/seat`), with security and reliability fixes: Cloud's worker imports all of them. The worker had 108 bytes of room under 2_681_241. Measured at 2_692_143 B against 2_681_133."
+  "bytes": 12446,
+  "note": "Raised when a field came to keep a time of day, a template came to read time questions, ${id} words and the views it comes with, apply came to judge each call and each write through one path a host can ask without writing, and a host came to ask whether a seat may run an act on a record without a preview (`mayRun` on `@graview/core/seat`), with security and reliability fixes: Cloud's worker imports all of them. The worker had 108 bytes of room under 2_681_241. Measured at 2_693_579 B against 2_681_133."
 }

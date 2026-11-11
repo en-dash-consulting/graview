@@ -3,10 +3,9 @@ import { compileDocument } from "../../src/check.js";
 import { refusalOf, Store, type AnySchema, type Principal } from "../../src/index.js";
 
 /**
- * A KIND'S OWN ACTS TAKE ONLY THAT KIND'S RECORDS. Every kind is given a
- * remove, an archive, a bring-back, a merge, a leave-alone and an edit of
- * its own, each on a record of that kind; handed a record of another kind,
- * each is refused in words, as a document's act on the wrong kind is.
+ * A KIND'S OWN ACTS TAKE ONLY THAT KIND'S RECORDS: its remove, archive,
+ * bring-back, merge and edit each take a record of that kind, and refuse
+ * one of another kind in words, the record left as it was.
  */
 const app = () => {
   const compiled = compileDocument({
@@ -57,7 +56,7 @@ const said = (run: () => unknown) => {
   }
 };
 
-describe("a kind's own remove takes only that kind's records", () => {
+describe("a kind's own acts take only that kind's records", () => {
   for (const [act, args] of [
     ["remove-vault", {}],
     ["archive-vault", {}],
@@ -80,7 +79,7 @@ describe("a kind's own remove takes only that kind's records", () => {
     expect(store.graph.getNode(errand)).toBeDefined();
   });
 
-  it("an edit that rides the making of a kind changes only records of that kind", () => {
+  it("edit-vault, asked by another keyholder, takes only vaults", () => {
     const store = setUp();
     const { errand } = ids(store);
     const maker: Principal = { kind: "human", id: "mo", roles: ["keyholder"] };

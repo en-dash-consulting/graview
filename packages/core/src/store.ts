@@ -1878,11 +1878,15 @@ export class Store<S extends AnySchema> {
    * what the app's own actor is held to, what the call names for this seat,
    * its input and rule, the mark only binding writes — and what it makes
    * judged by `land` over the graph as it stands (`wouldRefuse`, handed in,
-   * so a page carries none of it), the graph's own checks of a write. A seat
-   * whose profile's person is not made yet is judged as the person `apply`
-   * makes first, on the one copy of the graph `wouldDo` keeps for it; nothing
-   * else is copied, nothing is written and nobody is told. What `mayRun`
-   * (`@graview/core/seat`) asks.
+   * so a page carries none of it), the graph's own checks of a write.
+   * Publishing, a vote and a proposal are judged by making their op as
+   * `apply` makes it and keeping none (a proposal rehearses its calls, as it
+   * does when applied). Where a kind follows another (`derives`), what
+   * follows the change is worked out as `apply` works it out, over a copy of
+   * the graph with the change made. A seat whose profile's person is not
+   * made yet is judged as the person `apply` makes first, on the one copy of
+   * the store `wouldDo` keeps for it. Nothing else is copied, nothing is
+   * written and nobody is told. What `mayRun` (`@graview/core/seat`) asks.
    */
   wouldApply(call: MutationCall, author: Author | Principal, land: (graph: Graph<S>, primitives: readonly Primitive[]) => unknown): unknown {
     const as = withValidProfile(author) as Principal;
@@ -1898,9 +1902,33 @@ export class Store<S extends AnySchema> {
       if (isAutomated(as)) store.refuseDeclined([spelled], as);
       if (isTidyingActor(as)) store.refuseStopped([spelled], as, store.suggesting);
       const definition = store.mutation(spelled.name);
-      if (definition === store.publisher || definition === store.voter || definition === store.proposer) return undefined;
+      // Publishing, a vote and a proposal make an op of their own, as `apply` makes it: each judged by making it and keeping none.
+      const made = { id: `${PREVIEW_BATCH}:0`, at: store.now() };
+      if (definition === store.publisher) return void PUBLISHING.op!(store, made, spelled, PREVIEW_BATCH, as, {});
+      if (definition === store.voter) {
+        if (!VOTING.op) throw new GraphError("Load @graview/core/tidying to vote on a suggestion.");
+        return void VOTING.op(store, made, spelled, PREVIEW_BATCH, as, {});
+      }
+      if (definition === store.proposer) {
+        const ids = (store as unknown as { nextId: () => string }).nextId;
+        (store as unknown as { nextId: () => string }).nextId = () => made.id;
+        try {
+          return void store.proposal(spelled, PREVIEW_BATCH, as, undefined);
+        } finally {
+          (store as unknown as { nextId: () => string }).nextId = ids;
+        }
+      }
       const { primitives } = store.judgedCall(definition, spelled, as, false);
-      return primitives.length > 0 ? land(store.graph, store.asSplices(primitives, undefined).map(normalize)) : undefined;
+      if (primitives.length === 0) return undefined;
+      const splices = store.asSplices(primitives, undefined).map(normalize);
+      // Where a kind follows another, what follows a change is worked out over the graph the change leaves, as `apply` works it out: on a copy of the graph, the one place this asks one.
+      if (keepsLinked(store.schema)) {
+        const copy = Graph.from(store.schema, store.graph.snapshot(), { validate: store.validate });
+        copy.applyPrimitives(splices);
+        keepLinked(store.schema, copy, splices, { mayWriteBack: store.writesBack(as) });
+        return undefined;
+      }
+      return land(store.graph, splices);
     } catch (error) {
       return error;
     } finally {
