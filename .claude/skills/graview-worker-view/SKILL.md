@@ -98,8 +98,8 @@ too) `phase`, `scale`, `rotation`. The page scrolls everywhere else; say
 
 HTML, SVG and stylesheets, drawn with the app's `--graview-*` tokens so
 light and dark follow the app's toggle; nothing that loads or escapes. What
-the host keeps, the tokens, the images a view may show and a web face are
-`graview-view-drawing`. What the host leaves out it lists in `refused`.
+the host keeps, the tokens, images, a lent face and a `data:` `@font-face`
+are `graview-view-drawing`. What the host leaves out it lists in `refused`.
 `summary::marker` and `::-webkit-details-marker` style a disclosure's
 triangle.
 

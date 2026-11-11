@@ -1,5 +1,8 @@
-import { brandFamilies, VIEW_FONT_MOST_BYTES, VIEW_FONTS_MOST, viewFontProblem, viewFontSource, type ViewFont } from "@graview/core/css";
+import { VIEW_FONT_MOST_BYTES, VIEW_FONTS_MOST, viewFaceFamily, viewFontProblem, viewFontSource, brandFamilies, type ViewFace, type ViewFont } from "@graview/core/css";
 import { imageOriginsOf } from "./open-judge.js";
+
+/* A view's own face refused by the open kit, said as the page says it: fetched with the faces (view.ts). */
+export { viewFaceRefusedWords } from "@graview/core/css";
 import type { GuestFont } from "../protocol.js";
 
 /*
@@ -110,9 +113,12 @@ interface Lending {
   readonly say: (said: string) => void;
   going: boolean;
 }
-/** One file lent under a name: the lendings holding it (each with the family as it lent it), and its face once it has loaded. */
+/** One file lent under a name: the lendings holding it (each with the face as it said it: `The app's face "X" for its views`), and its face once it has loaded. `shown`: the file as it is said. */
 interface Lent {
   readonly url: string;
+  readonly shown: string;
+  /** A face given as bytes: they, so the same bytes given again are known as the one file, byte for byte. */
+  readonly bytes?: readonly ArrayBuffer[];
   readonly stop: AbortController;
   readonly holders: Map<Lending, string>;
   readonly settled: Promise<void>;
@@ -159,10 +165,10 @@ function draw(document: Document, name: Name) {
   name.told = drawing.url;
   const told = new Set<Lending>();
   for (const one of staying) {
-    for (const [lending, family] of one.holders) {
+    for (const [lending, face] of one.holders) {
       if (lending.going || told.has(lending)) continue;
       told.add(lending);
-      lending.say(`${named(family)} is lent from ${staying.length} files on this page, and the one drawn in every view is ${drawing.url}.`);
+      lending.say(`${face} is lent from ${staying.length} files on this page, and the one drawn in every view is ${drawing.shown}.`);
     }
   }
 }
@@ -175,13 +181,7 @@ function draw(document: Document, name: Name) {
  * lend is never let go between them.
  */
 export function loadViewFonts(document: Document, fonts: readonly ViewFont[], options: ViewFontsOptions, say: (said: string) => void, replacing?: () => void): () => void {
-  const page = document.defaultView as (Window & { FontFace?: typeof FontFace; fetch?: typeof fetch }) | null;
-  const names = held.get(document) ?? new Map<string, Name>();
-  held.set(document, names);
-  const lending: Lending = { say, going: false };
-  const replaced = replacing ? lendings.get(replacing) : undefined;
-  if (replaced) replaced.going = true;
-  const mine: { readonly name: Name; readonly one: Lent }[] = [];
+  const asks: Ask[] = [];
   if (fonts.length > VIEW_FONTS_MOST) say(`The app lends its views ${fonts.length} faces and at most ${VIEW_FONTS_MOST} are loaded, so ${fonts.slice(VIEW_FONTS_MOST).map((font) => `"${font.family}"`).join(", ")} ${fonts.length - VIEW_FONTS_MOST === 1 ? "is" : "are"} not.`);
   for (const font of fonts.slice(0, VIEW_FONTS_MOST)) {
     const at = viewFontAddress(font, options);
@@ -190,16 +190,101 @@ export function loadViewFonts(document: Document, fonts: readonly ViewFont[], op
       continue;
     }
     const isHeld = "asset" in viewFontSource(font.src)!;
+    asks.push({
+      key: nameOf(font),
+      family: font.family,
+      face: named(font.family),
+      url: at.url,
+      shown: at.url,
+      descriptors: { display: "swap", ...(font.weight !== undefined ? { weight: weightOf(font) } : {}), ...(font.style ? { style: font.style.toLowerCase() } : {}) },
+      source: isHeld ? { held: at.url } : { address: at.url },
+    });
+  }
+  return lend(document, asks, say, replacing);
+}
+
+/** A view's own face as said: the family as its stylesheet declares it. */
+const own = (family: string) => `The view's own face "${family}"`;
+/** Whether two faces' sources are the same bytes, compared whole: a file given by its address has none, and is known by that. */
+function sameBytes(had: readonly ArrayBuffer[] | undefined, given: readonly ArrayBuffer[] | undefined): boolean {
+  if (!had || !given) return had === given;
+  if (had.length !== given.length) return false;
+  return had.every((one, at) => {
+    const other = given[at]!;
+    if (one.byteLength !== other.byteLength) return false;
+    const [a, b] = [new Uint8Array(one), new Uint8Array(other)];
+    for (let i = 0; i < a.length; i += 1) if (a[i] !== b[i]) return false;
+    return true;
+  });
+}
+/** Where a view's own faces are loaded: under the view's own name on the page (`faceScope`), the open kit having judged them, and the app's lent names refused there. */
+export interface ViewFacesOptions {
+  readonly scope: string;
+}
+
+/**
+ * THE FACES A VIEW'S OWN STYLESHEET DECLARES, LOADED (HQ
+ * f-view-font-face-data): each a `data:` font the open kit judged and
+ * decoded (`@graview/core/css`), made a `FontFace` from its bytes here —
+ * never from an address, so nothing is fetched and the page's policy for
+ * fonts is not asked — under the view's own name for it
+ * (`viewFaceFamily(scope, family)`), which its sheets were written to name:
+ * it draws in that view and nowhere else on the page, whatever it is
+ * called, and gone when the view is. The same view giving the same bytes
+ * again holds the one file. What it answers gives them back; `replacing`
+ * as for `loadViewFonts`.
+ */
+export function loadViewFaces(document: Document, faces: readonly ViewFace[], options: ViewFacesOptions, say: (said: string) => void, replacing?: () => void): () => void {
+  const asks: Ask[] = [];
+  for (const face of faces) {
+    const weight = face.weight === undefined ? undefined : face.weight === "normal" ? "400" : face.weight === "bold" ? "700" : face.weight;
+    const family = viewFaceFamily(options.scope, face.family);
+    asks.push({
+      key: JSON.stringify([family.toLowerCase(), weight ?? "400", face.style ?? "normal", face.stretch ?? "normal", face.unicodeRange ?? ""]),
+      family,
+      face: own(face.family),
+      url: `own:${face.size}`,
+      shown: `the ${(face.size / 1_000).toLocaleString("en-US", { maximumFractionDigits: 1 })} KB data: font the view's stylesheet declared last`,
+      descriptors: { display: (face.display ?? "swap") as FontDisplay, ...(weight ? { weight } : {}), ...(face.style ? { style: face.style } : {}), ...(face.stretch ? { stretch: face.stretch } : {}), ...(face.unicodeRange ? { unicodeRange: face.unicodeRange } : {}) },
+      source: { bytes: face.sources.map((one) => one.bytes.slice().buffer as ArrayBuffer) },
+    });
+  }
+  return lend(document, asks, say, replacing);
+}
+
+/** One face asked of the page: its name's key, how it is said, its file's identity and how that is said, its descriptors, and where its bytes come from. */
+interface Ask {
+  readonly key: string;
+  readonly family: string;
+  readonly face: string;
+  readonly url: string;
+  readonly shown: string;
+  readonly descriptors: FontFaceDescriptors;
+  /** An address the engine loads; a file the app holds, read here to its bound; or the bytes themselves, tried in order. */
+  readonly source: { readonly address: string } | { readonly held: string } | { readonly bytes: readonly ArrayBuffer[] };
+}
+
+/** Lend the page each face asked: one file a name, the last lent drawn (`draw`). What it answers gives them back. */
+function lend(document: Document, asks: readonly Ask[], say: (said: string) => void, replacing?: () => void): () => void {
+  const page = document.defaultView as (Window & { FontFace?: typeof FontFace; fetch?: typeof fetch }) | null;
+  const names = held.get(document) ?? new Map<string, Name>();
+  held.set(document, names);
+  const lending: Lending = { say, going: false };
+  const replaced = replacing ? lendings.get(replacing) : undefined;
+  if (replaced) replaced.going = true;
+  const mine: { readonly name: Name; readonly one: Lent }[] = [];
+  for (const ask of asks) {
     const Face = page?.FontFace;
     const fetcher = page?.fetch?.bind(page);
-    if (!Face || !document.fonts || (isHeld && !fetcher)) continue;
-    const key = nameOf(font);
+    if (!Face || !document.fonts || ("held" in ask.source && !fetcher)) continue;
+    const key = ask.key;
     const name = names.get(key) ?? { files: [] };
     names.set(key, name);
-    const had = name.files.find((one) => one.url === at.url);
+    const given = "bytes" in ask.source ? ask.source.bytes : undefined;
+    const had = name.files.find((one) => one.url === ask.url && sameBytes(one.bytes, given));
     if (had) {
       /* Lent again, it is the last lent. */
-      had.holders.set(lending, font.family);
+      had.holders.set(lending, ask.face);
       name.files.splice(name.files.indexOf(had), 1);
       name.files.push(had);
       mine.push({ name, one: had });
@@ -208,41 +293,47 @@ export function loadViewFonts(document: Document, fonts: readonly ViewFont[], op
     }
     let settle = () => {};
     const settled = new Promise<void>((resolve) => (settle = resolve));
-    const one: Lent = { url: at.url, stop: new AbortController(), holders: new Map([[lending, font.family]]), settled, settle, drawn: false };
+    const one: Lent = { url: ask.url, shown: ask.shown, ...(given ? { bytes: given } : {}), stop: new AbortController(), holders: new Map([[lending, ask.face]]), settled, settle, drawn: false };
     name.files.push(one);
     mine.push({ name, one });
     /* Said to every view holding it, and let go, so a view that lends it again tries again. */
-    const fail = (words: (family: string) => string) => {
+    const fail = (words: (face: string) => string) => {
       one.settle();
       if (one.stop.signal.aborted) return;
       const index = name.files.indexOf(one);
       if (index >= 0) name.files.splice(index, 1);
       /* Not to a lending about to be given back: the view lending it again hears it once, there. */
-      for (const [lending, family] of one.holders) if (!lending.going) lending.say(words(family));
+      for (const [lending, face] of one.holders) if (!lending.going) lending.say(words(face));
       draw(document, name);
       if (name.files.length === 0 && names.get(key) === name) names.delete(key);
     };
-    const couldNot = () => fail((family) => `${named(family)} could not be loaded from ${at.url}.`);
-    const descriptors = { display: "swap" as const, ...(font.weight !== undefined ? { weight: weightOf(font) } : {}), ...(font.style ? { style: font.style.toLowerCase() } : {}) };
-    const load = (source: string | ArrayBuffer) => {
+    const couldNot = () => fail((face) => ("bytes" in ask.source ? `${face} could not be loaded: this browser reads none of its sources as a font.` : `${face} could not be loaded from ${ask.url}.`));
+    /* Each source in turn, as CSS tries a src list: the next where the engine reads this one as no font. */
+    const load = (sources: readonly (string | ArrayBuffer)[]) => {
+      const [source, ...rest] = sources;
+      if (source === undefined) return couldNot();
       /* A family that is not one identifier ("Baloo 2") is an error at once in Firefox unless quoted, and drawn by no name in the others if it is: quoted only where the engine refuses it plain. */
-      let face = new Face(font.family, source, descriptors);
-      if (face.status === "error") face = new Face(JSON.stringify(font.family), source, descriptors);
-      face.load().then(() => {
-        one.settle();
-        if (one.stop.signal.aborted || !name.files.includes(one)) return;
-        one.face = face;
-        draw(document, name);
-      }, couldNot);
+      let face = new Face(ask.family, source, ask.descriptors);
+      if (face.status === "error") face = new Face(JSON.stringify(ask.family), source, ask.descriptors);
+      face.load().then(
+        () => {
+          one.settle();
+          if (one.stop.signal.aborted || !name.files.includes(one)) return;
+          one.face = face;
+          draw(document, name);
+        },
+        () => (rest.length > 0 ? load(rest) : couldNot()),
+      );
     };
-    if (!isHeld) load(`url(${JSON.stringify(at.url)})`);
+    if ("address" in ask.source) load([`url(${JSON.stringify(ask.source.address)})`]);
+    else if ("bytes" in ask.source) load(ask.source.bytes);
     else
-      readHeld(fetcher!, at.url, one.stop.signal).then((read) => {
+      readHeld(fetcher!, ask.source.held, one.stop.signal).then((read) => {
         if (one.stop.signal.aborted) return one.settle();
         if (read === "failed") return couldNot();
-        if (typeof read === "object" && "type" in read) return fail((family) => notAFont(family, at.url, read.type));
-        if (read === "over") return fail((family) => `${named(family)} is not loaded: its file, ${at.url}, is more than ${VIEW_FONT_MOST_BYTES / 1_000_000} MB, the most a file the app holds may be as a face for its views.`);
-        load(read);
+        if (typeof read === "object" && "type" in read) return fail(() => notAFont(ask.family, ask.url, read.type));
+        if (read === "over") return fail((face) => `${face} is not loaded: its file, ${ask.url}, is more than ${VIEW_FONT_MOST_BYTES / 1_000_000} MB, the most a file the app holds may be as a face for its views.`);
+        load([read]);
       }, couldNot);
   }
   let given = false;

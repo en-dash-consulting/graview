@@ -1,5 +1,5 @@
 import type { GuestDomEvent } from "../protocol.js";
-import { sanitizeStylesheet, sanitizeStylesheets, type CssRefusal } from "./css.js";
+import { facesRenamed, sanitizeStylesheet, sanitizeStylesheets, type CssRefusal, type ViewFace } from "./css.js";
 import type { OpenNamespace, OpenRefusal } from "./open-judge.js";
 import { createOpenRenderer, type OpenRenderer } from "./open-render.js";
 import { inLayer, VIEW_LAYERS } from "./cascade.js";
@@ -93,6 +93,8 @@ const EVENTS = ["click", "input", "change", "keydown"] as const;
 export interface OpenDrawingOptions {
   /** The host page's origin, for a `blob:` image of its own. */
   readonly origin: string;
+  /** The view's own name on its page, under which each face its sheets declare is drawn (core's `viewFaceFamily`): one no other view on the page has. */
+  readonly faceScope?: string;
   /** Where an image the app holds is loaded from (JudgeContext.asset). */
   readonly asset?: (path: string) => string | undefined;
   /** The origins an image may be loaded from by its `https:` address (JudgeContext.imageOrigins). */
@@ -124,8 +126,12 @@ export type ViewRefusal = OpenRefusal | { readonly reason: "css"; readonly name:
 export interface OpenDrawing {
   /** Draw one batch of the view's mutation records; false if `spent` stopped it partway (OpenRenderer.apply). */
   apply(records: unknown, spent?: () => boolean): boolean;
-  /** Draw the view's stylesheets, every one it gave, in order, as the open kit allows them. */
-  style(sheets: readonly string[]): void;
+  /**
+   * Draw the view's stylesheets, every one it gave, in order, as the open
+   * kit allows them. `lent`: the families the app lends its views, which a
+   * face of the view's own may not take (HQ f-view-font-face-data).
+   */
+  style(sheets: readonly string[], lent?: readonly string[]): void;
   /**
    * Dress the view in the app's own stylesheet for every view (`brand.views.css`, Roadmap f-app-wide-view-theme),
    * in the layer that wins over the view's own and judged as it is; `undefined` takes it off. What the checker warned of is left
@@ -145,6 +151,8 @@ export interface OpenDrawing {
   readonly refused: readonly ViewRefusal[];
   /** The view's stylesheets as drawn, one after another. */
   readonly css: string;
+  /** The faces the view's stylesheets declare as `data:` fonts (HQ f-view-font-face-data), for its host to load into the page under `faceScope`: never in `css`. */
+  readonly faces: readonly ViewFace[];
   dispose(): void;
 }
 
@@ -175,6 +183,7 @@ export function createOpenDrawing(shadow: ShadowRoot, options: OpenDrawingOption
 
   const renderer = createOpenRenderer(into, {
     origin: options.origin,
+    faceNames: () => faceNames,
     ...(options.asset ? { asset: options.asset } : {}),
     ...(options.imageOrigins ? { imageOrigins: options.imageOrigins } : {}),
     ...(options.picture ? { picture: options.picture } : {}),
@@ -193,6 +202,9 @@ export function createOpenDrawing(shadow: ShadowRoot, options: OpenDrawingOption
   });
   const cssRefused: ViewRefusal[] = [];
   let css = "";
+  let faces: readonly ViewFace[] = [];
+  /* Each face the sheets keep, by its family lowercased, to its name on the page: what a style or presentation attribute naming one is written as. */
+  let faceNames: ReadonlyMap<string, string> | undefined;
 
   /** The nearest element the view drew, at or above where it happened. */
   const drawnAt = (event: Event): Element | undefined => {
@@ -306,8 +318,10 @@ export function createOpenDrawing(shadow: ShadowRoot, options: OpenDrawingOption
       /* A view that draws nothing new for the record is not left invisible. */
       fadeGuard = setTimeout(unfade, FADE_MS * 4);
     },
-    style(given) {
-      const judged = sanitizeStylesheets(given);
+    style(given, lent) {
+      const judged = sanitizeStylesheets(given, undefined, { faces: { ...(options.faceScope ? { scope: options.faceScope } : {}), ...(lent ? { lent } : {}) } });
+      faces = judged.faces;
+      faceNames = options.faceScope && faces.length > 0 ? facesRenamed(faces, options.faceScope) : undefined;
       cssRefused.length = 0;
       for (const one of judged.refused) {
         cssRefused.push({ reason: "css", name: "stylesheet", css: one });
@@ -328,6 +342,9 @@ export function createOpenDrawing(shadow: ShadowRoot, options: OpenDrawingOption
     },
     get css() {
       return css;
+    },
+    get faces() {
+      return faces;
     },
     dispose() {
       for (const type of EVENTS) shadow.removeEventListener(type, hear);

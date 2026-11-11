@@ -14,7 +14,10 @@
  *             on SVG's `<a>`, SMIL (which can rewrite an `href`), every `src`/`href`/`srcset`
  *             but an image's `data:` or same-origin `blob:` source and an SVG
  *             reference to `#id` in the view's own drawing, and in CSS every
- *             `url()` but `url(#id)` on a paint, `@import`, `@font-face`,
+ *             `url()` but `url(#id)` on a paint, `@import`, an `@font-face`
+ *             with any `src` but a `data:` font (one the view declares is
+ *             loaded by the host from its bytes, held to 50 KB a face and
+ *             200 KB a view: core's css/faces.ts),
  *             `@namespace`, `@property` (a registration is the whole page's),
  *             and every function not on `CSS_FUNCTIONS`
  *             (`image-set()`, `cross-fade()`, `element()`, `paint()`,

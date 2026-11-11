@@ -6,5 +6,5 @@
  * draws with. The host draws through this module as it did; what it
  * imports is core's.
  */
-export { CSS_DRAWN_AS, OPEN_MAX_STYLESHEET, sanitizeDeclarations, sanitizeStylesheet, sanitizeStylesheets, sanitizeValue, serializeIdent, serializeString, serializeValues, tokenize } from "@graview/core/css";
-export type { ComponentValue, CssRefusal, CssRefusalReason, Declaration, Rule, SanitizedCss, Token } from "@graview/core/css";
+export { CSS_DRAWN_AS, facesRenamed, OPEN_MAX_STYLESHEET, sanitizeDeclarations, sanitizeStylesheet, sanitizeStylesheets, sanitizeValue, serializeIdent, serializeString, serializeValues, tokenize } from "@graview/core/css";
+export type { ComponentValue, CssRefusal, CssRefusalReason, Declaration, Rule, SanitizedCss, Token, ViewFace } from "@graview/core/css";

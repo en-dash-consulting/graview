@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 6861,
+  "gzipped": 2645,
+  "note": "Raised when a view's stylesheet came to declare its own face as a data: font (HQ f-view-font-face-data): the draft check judges a drafted view's sheets as the host does, so the face's judge and its sentences (core's css/faces.ts) come with the sanitizer it carries. Measured at 1_961_008 / 685_828 against 1_954_147 / 683_183: 6_861 / 2_645 more."
+}
