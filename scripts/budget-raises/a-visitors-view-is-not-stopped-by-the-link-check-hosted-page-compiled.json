@@ -1,7 +1,7 @@
 {
   "budget": "a hosted page handed a compiled app",
-  "minified": 406,
-  "gzipped": 122,
+  "minified": 808,
+  "gzipped": 296,
   "changeset": "a-visitors-view-is-not-stopped-by-the-link-check.md",
-  "note": "Raised when what a seat is kept from came to be worked out once a state: `store.kindsKeptFrom` keeps its answer per seat while nothing it reads has changed, a worker view's host judges one batch's links by what it worked out once for the batch, a view the draw budget stopped is told that budget's number, and a home view that stops on an app with no home of its own falls back to the built-in home (`HomeFallsBack`). Measured at 622_494 / 215_699 against 622_088 / 215_577 minified and gzipped."
+  "note": "Raised when what a seat is kept from came to be worked out once a state: `store.kindsKeptFrom` keeps its answer, and hands out a copy, per seat — the principal fields it reads, at most 64 at once — while nothing it reads has changed, a worker view's host judges one batch's links by what it worked out once for the batch, a view the draw budget stopped is told that budget's number, and a home view that stops on an app with no home of its own falls back to the built-in home (`HomeFallsBack`). Measured at 622_896 / 215_873 against 622_088 / 215_577 minified and gzipped."
 }

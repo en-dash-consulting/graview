@@ -1,5 +1,5 @@
 {
   "budget": "Cloud's worker",
-  "bytes": 1155,
-  "note": "Raised when what a seat is kept from came to be worked out once a state: `store.kindsKeptFrom` keeps its answer per seat while nothing it reads has changed. The worker had no room under 2_622_135. Measured at 2_623_227 B against 2_622_072."
+  "bytes": 2417,
+  "note": "Raised when what a seat is kept from came to be worked out once a state: `store.kindsKeptFrom` keeps its answer, and hands out a copy, per seat — the principal fields it reads, at most 64 at once — while nothing it reads has changed. The worker had no room under 2_622_135. Measured at 2_624_489 B against 2_622_072."
 }

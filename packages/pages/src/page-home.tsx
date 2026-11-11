@@ -81,6 +81,9 @@ export function recently(log: readonly Operation[], rows = 5): { readonly recent
  * each list, the relations live at /map, and Recently stays short at the
  * foot.
  */
+/** The home views that stopped in this page, and why: the built-in home stands in each one's place while the page lives. */
+const STOPPED_HOMES = new WeakMap<object, { readonly name: string; readonly reason: string }>();
+
 export function DefaultHomePage<S extends AnySchema>({ context }: { context: PageContext<S> }) {
   const { principal } = context;
   const { store, brand, invariantContext } = context;
@@ -90,13 +93,21 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
   /*
    * A HOME'S VIEW THAT STOPPED, ON AN APP WITH NO HOME OF ITS OWN (Roadmap
    * f-view-budget-fair-to-visitors): the built-in home is drawn in its place,
-   * marked with the view's name and why — for the view that stopped, until
-   * another is the home.
+   * marked with the view's name and why — for as long as the page lives,
+   * however often the home is left and come back to, so it never flaps
+   * between the two. A different view handed as the home is drawn.
    */
-  const [stopped, setStopped] = useState<{ readonly view: unknown; readonly name: string; readonly reason: string }>();
   const given = context.views?.homeView?.();
-  const fellBack = stopped && stopped.view === given ? stopped : undefined;
-  const fallsBack = useCallback((name: string, reason: string) => setStopped({ view: given, name, reason }), [given]);
+  const [, heard] = useState(0);
+  const fellBack = given ? STOPPED_HOMES.get(given) : undefined;
+  const fallsBack = useCallback(
+    (name: string, reason: string) => {
+      if (!given) return;
+      STOPPED_HOMES.set(given, { name, reason });
+      heard((n) => n + 1);
+    },
+    [given],
+  );
   const violations = store.violations(invariantContext);
   const { recent, kept } = recently(store.log.all());
   // In the declaration's order, less what it leaves off the home (FR-80).
