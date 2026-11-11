@@ -3,7 +3,7 @@ items:
   "140406eb-f734-48ec-b0b7-aea3a96ed2a6":
     status: "completed"
     startedAt: "2026-11-10T21:30:00.000Z"
-    completedAt: "2026-11-11T18:00:00.000Z"
-    lastModified: "2026-11-11T18:00:00.000Z"
+    completedAt: "2026-11-11T13:55:00.000Z"
+    lastModified: "2026-11-11T13:55:00.000Z"
     resolutionType: "code-change"
     resolutionDetail: "A stop is said by the clock that stopped it, and a home view that stops falls back to the built-in home and stays (HomeFallsBack). PR #567, landed in the 0.1.73 batch #568."

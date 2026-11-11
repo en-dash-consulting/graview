@@ -2,7 +2,7 @@ schema: "rex/v2"
 items:
   "b61603ac-13e7-437c-9098-4d8e920902cf":
     status: "completed"
-    startedAt: "2026-11-11T18:00:00.000Z"
-    completedAt: "2026-11-11T18:00:00.000Z"
-    lastModified: "2026-11-11T18:00:00.000Z"
+    startedAt: "2026-11-11T13:55:00.000Z"
+    completedAt: "2026-11-11T13:55:00.000Z"
+    lastModified: "2026-11-11T13:55:00.000Z"
     lastModifiedBy: "Nick Daniel <nick@endash.us>"

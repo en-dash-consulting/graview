@@ -3,7 +3,7 @@ items:
   "5e577081-02fe-400e-9f46-88ca39471ce7":
     status: "completed"
     startedAt: "2026-11-10T21:30:00.000Z"
-    completedAt: "2026-11-11T18:00:00.000Z"
-    lastModified: "2026-11-11T18:00:00.000Z"
+    completedAt: "2026-11-11T13:55:00.000Z"
+    lastModified: "2026-11-11T13:55:00.000Z"
     resolutionType: "code-change"
     resolutionDetail: "store.kindsKeptFrom keeps its answer per seat until something it reads changes, and a worker view's host works out what a batch is judged by once per batch (684 calls to 1 in the test). PR #567, landed in the 0.1.73 batch #568."
