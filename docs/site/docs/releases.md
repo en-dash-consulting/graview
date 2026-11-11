@@ -76,7 +76,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.72
 
-Published November 10, 2026 · the current version
+Published November 11, 2026 · the current version
 
 An app's history opens from the app menu and from a host's own menu; a frame is lent the app's faces; a view chooses its pictures by record; and a frame that only grows with itself is held.
 
