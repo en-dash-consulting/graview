@@ -108,7 +108,8 @@ const listed = (words: readonly string[]) => (words.length <= 1 ? words.join("")
  * so hand the result only to the app's owner or someone the policy lets see
  * what each seat sees, never to one of the seats. A seat it made up
  * (`view-as:<role>`, the visitor) has the views kept for it let go of once
- * its run is done, so nothing of it outlives the check.
+ * its run is done, so nothing of it outlives the check; a seat the host
+ * handed in `seats` keeps what is kept for it.
  */
 export async function runWorkerViewForEachSeat<S extends AnySchema>(options: RunForEachSeatOptions<S>): Promise<SeatsChecked> {
   const { runWorkerViewHeadless } = await import("./index.js");
@@ -136,8 +137,8 @@ export async function runWorkerViewForEachSeat<S extends AnySchema>(options: Run
       const over = !options.input && manifest.cardinality === "one" && manifest.attach !== "home" ? store.seenBy(principal).graph.nodesOfKind(manifest.attach as never)[0] : undefined;
       result = await runWorkerViewHeadless({ ...rest, principal, ...(over ? { input: { node: { id: over.id } } } : {}) });
     } finally {
-      /* Every seat but the owner's is let go of: a made-up one outlives nothing, and any other is made anew when next asked. */
-      if (principal !== owner) forgetSeatView(store, principal);
+      /* Only a seat this run made up (each role's, the visitor's) is let go of: one the host handed is somebody's, and its view stays theirs. */
+      if (!options.seats && principal !== owner) forgetSeatView(store, principal);
     }
     const told = [
       ...(reads.kinds.length > 0 ? [`it reads ${listed(reads.kinds)}, which this seat sees none of`] : []),

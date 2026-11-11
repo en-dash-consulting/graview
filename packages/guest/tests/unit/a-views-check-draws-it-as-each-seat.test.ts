@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { WorkerViewManifest } from "../../src/host/manifest.js";
 import { runWorkerViewForEachSeat, seatsOfPolicy } from "../../src/headless/index.js";
 import { nodeIsolate } from "../../src/headless/node.js";
-import { club, clubPolicy, member } from "./club.js";
+import { club, clubPolicy, member, parent } from "./club.js";
 
 /*
  * A VIEW'S CHECK DRAWS IT AS EACH SEAT (Roadmap
@@ -54,6 +54,13 @@ describe("a view's check, as each seat", () => {
     await runWorkerViewForEachSeat({ store, manifest: players, source: playersSource, run, owner: member });
     expect(store.seenBy(member)).toBe(before.get("owner"));
     for (const name of ["parent", "visitor"]) expect(store.seenBy(seats.find((seat) => seat.name === name)!.principal), name).not.toBe(before.get(name));
+  });
+
+  it("keeps what is kept for a seat the host hands", async () => {
+    const store = club();
+    const before = store.seenBy(parent);
+    await runWorkerViewForEachSeat({ store, manifest: players, source: playersSource, run, seats: [{ name: "parent", principal: parent }] });
+    expect(store.seenBy(parent)).toBe(before);
   });
 
   it("runs as the seats the host hands, and says one that is stopped", async () => {
