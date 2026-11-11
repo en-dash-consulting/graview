@@ -10,7 +10,7 @@ A person entered before they joined is the one who joins (Roadmap f-invite-binds
 
 The binding is an act, `bind-person` (`BIND_PERSON`), answered by every store with a people kind once the host loads `@graview/core/binding`, and offered by no list: one op, blamed on whoever bound it. Binding is held to the people who run the app: the host's own seat, or a role the policy grants `bind-person` by name. It is refused in a sentence a host can show (`ActRefusal`) for a record that is already someone else's, a record of a kind that is not the people, and an account already bound to a different record or with a record of its own. A `graview check`-style finding, `person-seat-shared`, says where a graph holds two people bound to one account. Every answer kept for a seat is worked out as it is bound now. The `graview-sight` skill says the shape.
 
-A hosted page carries 5.9 KB more up front, and one handed a compiled app 5.7 KB more, under raises of their budgets: every store reads a seat as it is bound now, and serves each seat what it may be told of who is bound. Every face, the pages face, a visitor's form, the guest host's chunks and Cloud's worker grow with it, under raises of their budgets.
+A hosted page carries 6.0 KB more up front, and one handed a compiled app 5.8 KB more, under raises of their budgets: every store reads a seat as it is bound now, and serves each seat what it may be told of who is bound. Every face, the pages face, a visitor's form, the guest host's chunks and Cloud's worker grow with it, under raises of their budgets.
 
 Tests: `a member is bound to their person` (core), `a guest is never handed the seat a person is bound to` (guest).
 

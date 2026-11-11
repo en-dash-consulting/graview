@@ -487,3 +487,32 @@ describe("Activity names a bound person by their record", () => {
     expect(JSON.stringify(ops)).not.toContain('"name":"Bud"');
   });
 });
+
+describe("an act's author is named as the viewer is shown them", () => {
+  it("says no name a sight keeps from the viewer, in the log or in what a change answers", async () => {
+    await import("../../src/field-sight.js");
+    const { answerSeenBy } = await import("../../src/seat.js");
+    const member = defineNode("member", { people: true, label: (n: any) => n.name, fields: z.object({ name: z.string().optional(), age: z.number() }) } as never);
+    const prize = defineNode("prize", { label: (n: any) => n.title, fields: z.object({ title: z.string() }), edges: { wonBy: { to: ["member"] } } } as never);
+    const own = createSchema([member, prize]);
+    const win = bindSchema(own).defineMutation("win", { title: "I won it", doneAsMe: true, subject: { kinds: ["prize"], arg: "id" }, input: z.object({ id: nodeRef(["prize"]) }), apply: (ctx: any, args: any) => ctx.addEdge({ kind: "wonBy", from: args.id, to: ctx.me }) } as never);
+    const store = new Store<AnySchema>({
+      schema: own,
+      mutations: [win] as never,
+      policy: {
+        grants: [{ roles: ["owner"], mutations: "*" }, { roles: ["owner"], mutations: [BIND_PERSON] }, { roles: ["member"], mutations: ["win"] }],
+        sees: [{ roles: ["owner"], kinds: ["member", "prize"] }, { roles: ["member"], kinds: ["member"], hide: ["name"] }, { roles: ["member"], kinds: ["prize"] }],
+      },
+      snapshot: { nodes: [{ id: "member:bud", kind: "member", name: "Budrick Secret", age: 12 }, { id: "prize:kite", kind: "prize", title: "A kite" }], edges: [] },
+    } as never);
+    bindPerson(store, bud, "member:bud", { author: organizer });
+    const done = store.apply({ name: "win", args: { id: "prize:kite" } }, { author: bud });
+    const view = store.seenBy(ann);
+    expect(view.graph.getNode("member:bud")).toMatchObject({ id: "member:bud", age: 12 });
+    expect(view.graph.getNode("member:bud")).not.toHaveProperty("name");
+    expect(JSON.stringify(view.log.all())).not.toContain("Budrick");
+    expect(JSON.stringify(answerSeenBy(store as never, ann, { ops: done.ops }))).not.toContain("Budrick");
+    // Whoever is shown the name is told it.
+    expect(store.seenBy(organizer).log.all().at(-1)!.author.id).toBe("acct-bud");
+  });
+});
