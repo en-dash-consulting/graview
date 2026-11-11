@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 1,
+  "gzipped": 16,
+  "note": "Raised when the 0.1.73 batch's branches were merged (a view's pictures load lazily and at a thumb size; a visitor's view is not stopped by the link check): each measured alone against main, together they came to 7 bytes gzipped over their summed raises (49_978 / 21_675 against 49_978 / 21_668), held for a few bytes either side."
+}
