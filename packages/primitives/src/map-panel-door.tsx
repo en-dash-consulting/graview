@@ -3,29 +3,7 @@ import { retryingImport } from "@graview/core/retry";
 // The door stands with the scene, whose face has fetched `@graview/react` already.
 import { mapChoice } from "@graview/react";
 import { lazyModule, useGraph, useGraview } from "@graview/react/provider";
-import { createContext, Suspense, useSyncExternalStore } from "react";
-
-/**
- * WHERE THE MAP'S PANEL HOLDS A ROUTED PAGE'S PLACE (`@graview/pages`'s
- * `sceneUnderPages`): the words its way back to the page says ("Open ↗"),
- * in place of "Go to it" and "Go in", and its record's links said under
- * "Connected". Null, as everywhere else, and the panel is as it was.
- */
-export const MapPanelOpensPage = createContext<string | null>(null);
-
-/**
- * THE MAP'S PANEL HOLDING A ROUTED PAGE'S PLACE, for a host to hand the
- * pages (`sceneUnderPages: { panel: MapPanelOpeningPages }`): the panel,
- * its way back to the page said "Open ↗". Handed in rather than imported
- * by the pages, so a face that never draws the city carries none of it.
- */
-export function MapPanelOpeningPages() {
-  return (
-    <MapPanelOpensPage.Provider value="Open ↗">
-      <MapPanel />
-    </MapPanelOpensPage.Provider>
-  );
-}
+import { Suspense, useSyncExternalStore } from "react";
 
 /** What the panel beside the map shows: a lens open, one record, one district — or nothing. */
 export type MapPanelShowing = { readonly what: "lens"; readonly kind: string } | { readonly what: "record"; readonly id: string } | { readonly what: "district"; readonly kind: string };

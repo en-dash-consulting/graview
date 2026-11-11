@@ -1,7 +1,7 @@
 import type { HistoryHost } from "@graview/core/history";
 import type { DisplayOptionsHost } from "@graview/core";
 import { freshAddress, sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ViewerState, type ResolveApp, type LinkedRecords, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration, type SignIn, type SubscriptionStore, type DismissalStore, type KeptViews } from "@graview/core";
-import { useCallback, useRef, useSyncExternalStore, type ComponentType, type CSSProperties, type ReactNode } from "react";
+import { useCallback, useRef, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import type { AwaySummary, FieldTyping, KeepLensHost, ProposeChangeHost, ComposeChangeHost, DraftChangeHost, MenuSectionSource, OnExport, ReactViewRegistry } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
 import { Onward } from "./onward.js";
@@ -51,15 +51,12 @@ export interface PageContext<S extends AnySchema> {
   /**
    * PAGES AND THE SCENE ARE ONE PLACE (Graview HQ
    * feature:f-page-zooms-out-to-the-city), a prototype: the Scene's own
-   * city is drawn under the page, and one control steps back from the page
-   * onto the place its address is in that city, then up to the district
-   * and the whole city (`one-place.tsx`). Needs `views`, the registry the
-   * Scene draws with. Off unless given. `{ panel }` hands in the Scene's map
-   * panel the page goes into a level up (`MapPanelOpeningPages` from
-   * `@graview/primitives/scene`): handed in, so a face that never draws the
-   * city carries none of it.
+   * city is drawn under the page, and Up — or a pinch — moves the page
+   * itself, continuously, from the window to a panel beside its place in
+   * that city, to standing on it, to the whole city (`one-place.tsx`).
+   * Needs `views`, the registry the Scene draws with. Off unless given.
    */
-  readonly sceneUnderPages?: boolean | { readonly panel?: ComponentType };
+  readonly sceneUnderPages?: boolean;
   readonly invariantContext?: Readonly<Record<string, unknown>>;
   /**
    * Whether this browser remembers the edits (a ship browser adapter behind

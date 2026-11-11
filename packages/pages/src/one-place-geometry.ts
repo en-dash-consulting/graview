@@ -2,13 +2,13 @@
  * PAGES AND THE SCENE ARE ONE PLACE: THE ARITHMETIC
  * (Graview HQ feature:f-page-zooms-out-to-the-city).
  *
- * Pure, no DOM. Every page address is a place in the Scene's own city, and
- * altitude is the Scene's own camera: the page, the panel, stood back,
- * the city. What is measured — where the Scene draws a building or a
- * district now — is measured on the Scene (`one-place-city.tsx`); here is
- * only what follows from it: which stops an address has, how close the
- * Scene's camera comes at each, where the place should stand on the window,
- * and how the page stands on it.
+ * Pure, no DOM. One number says where a person is: the ALTITUDE, from 0
+ * (the page, the whole window) through 1 (the page as a panel beside its
+ * place in the city) and 2 (the page standing on its building, the city
+ * around it) to 3 (the whole city). It is not a mode: it is read off the
+ * Scene's own camera — how close it is — so a slow pinch moves everything
+ * a little, and the levels are where it rests when let go. From it follow
+ * the page's box, how the page stands, and where the camera aims.
  */
 
 export interface Box {
@@ -23,6 +23,11 @@ export interface Point {
   readonly y: number;
 }
 
+export interface View {
+  readonly width: number;
+  readonly height: number;
+}
+
 /** What a page address is in the city. */
 export type PageWhere =
   | { readonly type: "home" }
@@ -31,91 +36,161 @@ export type PageWhere =
   | { readonly type: "list"; readonly kind: string }
   | { readonly type: "place"; readonly as: string; readonly kinds: readonly string[] };
 
-/**
- * One altitude. `page` (L0) is the page read; `panel` (L1) is the Scene's
- * map panel holding the page's place, the city beside it; `back` (L2) is
- * the page standing angled on its place with the city around it; `city` is
- * the Scene, with nothing over it.
- */
-export type Stop = "page" | "panel" | "back" | "city";
+/** The levels: the page, the panel, stood back, the city. */
+export const LEVELS = 3;
+export const PAGE = 0;
+export const PANEL = 1;
+export const BACK = 2;
+export const CITY = 3;
 
-/** A window narrower than this is a phone's: fewer stops, and the page drawn flat from above. */
+/** A window narrower than this is a phone's: the panel a sheet from the foot, the page standing flat. */
 export const PHONE = 600;
+const phoneOf = (view: View) => view.width <= PHONE;
 
 /**
- * THE STOPS, LOWEST FIRST: the page, the panel, stood back, the city — on a
- * phone too, where the panel is a sheet from the foot and the page stands
- * flat. Home has no panel (nothing is chosen on the map), so it stands over
- * the whole city and then is the overview.
+ * HOW CLOSE THE SCENE'S CAMERA IS AT EACH LEVEL — its own zoom from
+ * altitude, where 1 is the whole city fitted to the window — closest at
+ * the page and furthest at the city, so pulling back from a page is the
+ * camera rising. The page's own (level 0) is where the camera waits, a
+ * little closer than the panel's, so stepping out begins as a pull back.
  */
-export function stopsOf(where: PageWhere, _width: number): readonly Stop[] {
-  switch (where.type) {
-    case "overview":
-      return ["city"];
-    case "home":
-      return ["page", "back", "city"];
-    default:
-      return ["page", "panel", "back", "city"];
+export function levelZooms(where: PageWhere, view: View): readonly [number, number, number, number] {
+  if (where.type === "record") {
+    const panel = phoneOf(view) ? 2 : 2.2;
+    return [Math.min(2.9, panel * 1.3), panel, 1.4, 1];
   }
-}
-
-/** The first stop above the page. */
-export const firstStepOf = (where: PageWhere, width: number): Stop => stopsOf(where, width)[1] ?? "city";
-
-/**
- * HOW CLOSE THE SCENE'S CAMERA COMES AT A STOP: its own zoom from altitude,
- * where 1 is the whole city fitted to the window. The page itself is the
- * first step's (the camera waits there, so stepping back begins in place).
- */
-export function zoomAt(stop: Stop, where: PageWhere, width: number): number {
-  const phone = width <= PHONE;
-  const at = stop === "page" ? firstStepOf(where, width) : stop;
-  if (at === "city" || where.type === "home" || where.type === "overview") return 1;
-  if (where.type === "record") return at === "panel" ? (phone ? 2 : 2.2) : 1.3;
-  return at === "panel" ? 1.6 : 1.15;
+  if (where.type === "home" || where.type === "overview") return [1.8, 1.4, 1.15, 1];
+  return [2.1, 1.6, 1.2, 1];
 }
 
 /**
- * THE STOP A ZOOM IS AT. The camera is the person's once a stop has been
- * reached: a zoom past the middle between this stop's camera and the next
- * one's, with some slack so a hand resting on a boundary does not flicker,
- * is that stop. Zoomed in past the panel's camera is the page again.
+ * THE ALTITUDE A ZOOM IS AT: between two levels, as far between them as the
+ * zoom is, on the ratio (so each step of a pinch moves it as much). Held
+ * within the page and the city.
  */
-export function stopAtZoom(zoom: number, now: Stop, where: PageWhere, width: number): Stop {
-  if (now === "page") return now;
-  const stops = stopsOf(where, width);
-  const index = stops.indexOf(now);
-  if (index < 0) return now;
-  const here = zoomAt(now, where, width);
-  const SLACK = 1.12;
-  if (now === "panel" && zoom > here * 1.25) return "page";
-  const above = stops[index + 1];
-  if (above) {
-    const out = zoomAt(above, where, width);
-    if (out <= here && zoom < Math.sqrt(out * here) / SLACK) return above;
+export function altitudeAt(zoom: number, zooms: readonly number[]): number {
+  if (zoom >= zooms[0]!) return 0;
+  for (let level = 0; level < zooms.length - 1; level++) {
+    const near = zooms[level]!;
+    const far = zooms[level + 1]!;
+    if (zoom <= near && zoom >= far) return level + Math.log(near / zoom) / Math.log(near / far);
   }
-  const below = stops[index - 1];
-  if (below && below !== "page") {
-    const close = zoomAt(below, where, width);
-    if (close > here && zoom > Math.sqrt(close * here) * SLACK) return below;
-  }
-  return now;
+  return zooms.length - 1;
 }
 
-/** How small the page stands at a stop: at a desk and on a phone. */
-export function sheetScale(where: PageWhere, stop: Stop, width: number): number {
-  const phone = width <= PHONE;
-  if (stop === "page") return 1;
-  if (stop === "city" || stop === "panel") return 0.04;
-  // Stepped back: about a third of the window, where its words still read as a page.
-  if (where.type === "home") return phone ? 0.44 : 0.4;
-  return phone ? 0.42 : 0.34;
+/** The zoom an altitude is at: `altitudeAt` the other way. */
+export function zoomAtAltitude(altitude: number, zooms: readonly number[]): number {
+  const a = Math.max(0, Math.min(zooms.length - 1, altitude));
+  const level = Math.min(zooms.length - 2, Math.floor(a));
+  const near = zooms[level]!;
+  const far = zooms[level + 1]!;
+  return near * Math.pow(far / near, a - level);
 }
 
-/** Where the place should stand on the window at a stop: low enough that the page above it fits. */
-export function aimPoint(stop: Stop, where: PageWhere, view: { readonly width: number; readonly height: number }): Point {
-  const room = sheetScale(where, stop === "page" ? firstStepOf(where, view.width) : stop, view.width) * view.height;
-  return { x: view.width / 2, y: Math.min(view.height - 60, Math.max(view.height * 0.58, room + 70)) };
+/** The level an altitude rests at when let go: the nearest. */
+export const restingLevel = (altitude: number): number => Math.max(0, Math.min(LEVELS, Math.round(altitude)));
+
+/**
+ * THE PANEL'S BOX: on a desk a column at the window's right, the city to
+ * its left; on a phone a sheet from the foot, the city above it.
+ */
+export function panelBox(view: View): Box {
+  if (phoneOf(view)) {
+    const top = Math.round(view.height * 0.42);
+    return { x: 8, y: top, width: view.width - 16, height: view.height - top - 8 };
+  }
+  const width = Math.round(Math.max(420, Math.min(760, view.width * 0.36)));
+  return { x: view.width - width - 12, y: 12, width, height: view.height - 24 };
+}
+
+/** Where the place stands on the window at a level: beside the panel at 1, low enough under the standing page at 2, the city's middle at 3. */
+export function aimAt(level: number, view: View): Point {
+  if (level <= PANEL) {
+    const panel = panelBox(view);
+    return phoneOf(view) ? { x: view.width / 2, y: panel.y / 2 } : { x: panel.x / 2, y: view.height / 2 };
+  }
+  if (level === BACK) return { x: view.width / 2, y: Math.round(view.height * (phoneOf(view) ? 0.7 : 0.68)) };
+  return { x: view.width / 2, y: view.height / 2 };
+}
+
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+const ease = (t: number) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
+
+/** The page's box at an altitude: the window at 0, the panel from 1 on, every step between drawn. */
+export function pageBox(altitude: number, view: View): Box {
+  const full = { x: 0, y: 0, width: view.width, height: view.height };
+  const panel = panelBox(view);
+  const t = ease(Math.min(1, Math.max(0, altitude)));
+  return { x: lerp(full.x, panel.x, t), y: lerp(full.y, panel.y, t), width: lerp(full.width, panel.width, t), height: lerp(full.height, panel.height, t) };
+}
+
+/** How the page stands: its foot's middle moved by (x, y), scaled, turned by `turn` (0 flat, 1 a desk's angle). Nothing, as a panel. */
+export interface Standing {
+  readonly x: number;
+  readonly y: number;
+  readonly scale: number;
+  readonly turn: number;
+  readonly opacity: number;
+}
+
+export const AS_IT_IS: Standing = { x: 0, y: 0, scale: 1, turn: 0, opacity: 1 };
+
+/**
+ * HOW THE PAGE STANDS at an altitude past the panel, its box the panel's:
+ * from the panel (1) to standing on its roof (2) — its foot's middle on the
+ * point, about a fifth of the window wide at a desk and half on a phone,
+ * turned a little at a desk and flat on a phone — and on to the city (3),
+ * shrinking into its building and gone.
+ */
+export function standingAt(altitude: number, roof: Point, box: Box, view: View): Standing {
+  if (altitude <= PANEL) return AS_IT_IS;
+  const phone = phoneOf(view);
+  const foot = { x: box.x + box.width / 2, y: box.y + box.height };
+  const stoodWidth = phone ? view.width * 0.5 : Math.max(260, view.width * 0.2);
+  const stood = { x: roof.x - foot.x, y: roof.y - 4 - foot.y, scale: stoodWidth / box.width, turn: phone ? 0 : 1, opacity: 1 };
+  if (altitude <= BACK) {
+    const t = ease(altitude - PANEL);
+    return { x: lerp(0, stood.x, t), y: lerp(0, stood.y, t), scale: Math.exp(lerp(0, Math.log(stood.scale), t)), turn: lerp(0, stood.turn, t), opacity: 1 };
+  }
+  const t = ease(altitude - BACK);
+  return { x: roof.x - foot.x, y: roof.y - foot.y, scale: stood.scale * Math.exp(lerp(0, Math.log(0.05), t)), turn: stood.turn * (1 - t), opacity: 1 - ease((t - 0.35) / 0.65) };
+}
+
+/** The standing as CSS, about the page's foot (`SHEET_ORIGIN`). */
+export function standingCss(standing: Standing, view: View): string {
+  if (standing.x === 0 && standing.y === 0 && standing.scale === 1 && standing.turn === 0) return "none";
+  const turn = standing.turn > 0.001 ? ` perspective(${Math.round(Math.max(view.width, view.height) * 1.4)}px) rotateY(${(-14 * standing.turn).toFixed(3)}deg) rotateX(${(5 * standing.turn).toFixed(3)}deg)` : "";
+  return `translate(${standing.x.toFixed(2)}px, ${standing.y.toFixed(2)}px)${turn} scale(${standing.scale.toFixed(5)})`;
+}
+
+/** The transform's origin: the middle of the page's foot. */
+export const SHEET_ORIGIN = "50% 100%";
+
+/** The camera between stops, as the Scene paints it: a point `p` of the picture is on screen at `p · s + (x, y)`. */
+export interface Live {
+  readonly x: number;
+  readonly y: number;
+  readonly s: number;
+}
+
+export const LEVEL_LIVE: Live = { x: 0, y: 0, s: 1 };
+
+/** Where the camera puts a point of the picture. */
+export const project = (live: Live, p: Point): Point => ({ x: p.x * live.s + live.x, y: p.y * live.s + live.y });
+
+/** The camera that grows the picture by `s` and puts its point `p` at the window's point `at`. */
+export const cameraPutting = (p: Point, at: Point, s: number): Live => ({ s, x: at.x - p.x * s, y: at.y - p.y * s });
+
+/**
+ * BETWEEN TWO CAMERAS, AS FAR AS `t`: the place the page stands on moves in
+ * a straight line on the window while the picture grows or shrinks
+ * steadily, so it never swings out of the way and back.
+ */
+export function cameraBetween(from: Live, to: Live, about: Point, t: number): Live {
+  const a = project(from, about);
+  const b = project(to, about);
+  const s = Math.exp(lerp(Math.log(from.s), Math.log(to.s), t));
+  return cameraPutting(about, { x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t) }, s);
 }
 
 /** The smallest box around boxes, or null for none. */
@@ -147,58 +222,29 @@ export function meetingOf(districts: readonly Box[], all: readonly Box[]): Point
 }
 
 /**
- * THE POINT THE PAGE STANDS ON, on the window, as the Scene draws it now:
- * the middle of its building's roof, the middle of its district, where its
- * districts meet, or the middle of the city.
+ * THE POINT OF THE PICTURE THE PAGE STANDS ON: its building's roof, its
+ * district's middle, where its districts meet, or the middle of the city.
  */
-export function anchorOf(where: PageWhere, place: { readonly building?: Box | null; readonly district?: Box | null; readonly districts?: readonly Box[]; readonly all?: readonly Box[] }, view: { readonly width: number; readonly height: number }): Point | null {
+export function anchorOf(where: PageWhere, place: { readonly building?: Box | null; readonly district?: Box | null; readonly districts?: readonly Box[]; readonly all?: readonly Box[] }): Point | null {
   if (where.type === "record" && place.building) return { x: place.building.x + place.building.width / 2, y: place.building.y + place.building.height * 0.3 };
   if ((where.type === "record" || where.type === "list") && place.district) return middleOf(place.district);
-  // A place of one kind stands on its district; of several, where they meet.
   if (where.type === "place") return place.districts?.length === 1 ? middleOf(place.districts[0]!) : meetingOf(place.districts ?? [], place.all ?? []);
-  if (where.type === "home" || where.type === "overview") {
-    const city = unionOf(place.all ?? []);
-    return city ? middleOf(city) : { x: view.width / 2, y: view.height / 2 };
-  }
-  return null;
+  const city = unionOf(place.all ?? []);
+  return city ? middleOf(city) : null;
 }
-
-/** How the page stands: where its foot's middle is moved to, how small, how far turned. In, all nothing. */
-export interface Standing {
-  readonly x: number;
-  readonly y: number;
-  readonly scale: number;
-  readonly turn: number;
-}
-
-export const IN: Standing = { x: 0, y: 0, scale: 1, turn: 0 };
 
 /**
- * HOW THE PAGE STANDS ON ITS POINT at a stop: its foot's middle on it, at
- * its scale; at a desk turned a little, a panel standing in the city; on a
- * phone flat, seen from above. Over the whole city the page floats above
- * the middle rather than standing on a roof.
+ * A LINE THAT WOULD END UNDER THE PAGE ends at the page's edge nearest its
+ * building instead, an arrow there pointing on toward it. Null when the
+ * building is not under the page.
  */
-export function standingOn(stop: Stop, where: PageWhere, at: Point, view: { readonly width: number; readonly height: number }): Standing {
-  if (stop === "page") return IN;
-  const scale = sheetScale(where, stop, view.width);
-  const over = where.type === "home" && stop !== "city";
-  const foot = over ? { x: at.x, y: at.y + scale * view.height * 0.5 } : at;
-  return { x: foot.x - view.width / 2, y: foot.y - view.height - (stop === "city" ? 0 : 4), scale, turn: view.width > PHONE && stop !== "city" ? 1 : 0 };
+export function edgeToward(to: Point, page: Box): Point | null {
+  if (!inside(to, page)) return null;
+  const edges = [
+    { x: page.x, y: to.y },
+    { x: page.x + page.width, y: to.y },
+    { x: to.x, y: page.y },
+    { x: to.x, y: page.y + page.height },
+  ];
+  return edges.reduce((best, p) => (Math.hypot(p.x - to.x, p.y - to.y) < Math.hypot(best.x - to.x, best.y - to.y) ? p : best));
 }
-
-/** The standing as CSS, about the page's foot (`SHEET_ORIGIN`). */
-export function standingCss(standing: Standing, view: { readonly width: number; readonly height: number }): string {
-  if (standing.x === 0 && standing.y === 0 && standing.scale === 1 && standing.turn === 0) return "none";
-  const turn = standing.turn > 0.001 ? ` perspective(${Math.round(Math.max(view.width, view.height) * 1.4)}px) rotateY(${(-14 * standing.turn).toFixed(2)}deg) rotateX(${(5 * standing.turn).toFixed(2)}deg)` : "";
-  return `translate(${standing.x.toFixed(1)}px, ${standing.y.toFixed(1)}px)${turn} scale(${standing.scale.toFixed(4)})`;
-}
-
-/** A standing eased toward another by a share of the way. */
-export function easedToward(from: Standing, to: Standing, share: number): Standing {
-  const s = Math.max(0, Math.min(1, share));
-  return { x: from.x + (to.x - from.x) * s, y: from.y + (to.y - from.y) * s, scale: from.scale + (to.scale - from.scale) * s, turn: from.turn + (to.turn - from.turn) * s };
-}
-
-/** The transform's origin: the middle of the page's foot. */
-export const SHEET_ORIGIN = "50% 100%";

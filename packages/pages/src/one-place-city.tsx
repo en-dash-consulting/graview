@@ -1,342 +1,374 @@
 import { labelOf, LOCAL_LAYERS } from "@graview/core";
-import { aggregateId, EMPTY_VIEW, kindCardId, toUrl, withFocus, withOverview, withSelection, withWithin, type ViewState } from "@graview/layout/view";
+import { EMPTY_VIEW, toUrl, withOverview, type ViewState } from "@graview/layout/view";
 import { Scene, type SceneCamera } from "@graview/react";
-import { BesideTheMap, useGraview, useNavigation } from "@graview/react/provider";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { aimPoint, anchorOf, easedToward, IN, SHEET_ORIGIN, standingCss, standingOn, stopAtZoom, unionOf, zoomAt, type Box, type PageWhere, type Point, type Standing, type Stop } from "./one-place-geometry.js";
+import { useGraview, useNavigation } from "@graview/react/provider";
+import { useEffect, useMemo, useRef } from "react";
+import { aimAt, altitudeAt, anchorOf, AS_IT_IS, cameraBetween, cameraPutting, CITY, edgeToward, LEVEL_LIVE, levelZooms, PAGE, pageBox, PANEL, project, restingLevel, SHEET_ORIGIN, standingAt, standingCss, unionOf, type Box, type Live, type PageWhere, type Point } from "./one-place-geometry.js";
 import type { OnePlaceCityProps } from "./one-place.js";
 
 /*
- * THE CITY UNDER THE PAGE (Graview HQ feature:f-page-zooms-out-to-the-city).
+ * THE CITY UNDER THE PAGE, AND ONE CAMERA OVER BOTH
+ * (Graview HQ feature:f-page-zooms-out-to-the-city).
  *
- * Not a picture of the city: the Scene itself, in the provider the pages
- * draw with, at its overview — `layout` → `placeCity`, the plots, the
- * buildings, the streets, all the Scene's own. And ONE camera: the Scene's
- * own zoom from altitude and its pan (`SceneCamera`), the same the wheel,
- * the pinch, a drag and the zoom controls move. A stop asks that camera for
- * a zoom and a pan; the person's hand moves the same camera at any stop,
- * and a zoom past a stop's range is the next stop. Nothing is drawn over
- * the Scene's box but the page and the lines, and both are placed every
- * frame from where the Scene draws the place NOW — in the window's own
- * coordinates, read in that frame — so a city that reflows, a drag, a
- * zoom, carries the page and the lines with it.
+ * The Scene itself, in the provider the pages draw with, at its overview:
+ * `layout` → `placeCity`, its plots, its buildings, its streets. Over it,
+ * nothing but the page the person was reading — the same element at every
+ * altitude — and the lines from its parts to their buildings.
  *
- * While the page is read the Scene is not drawn at all (`display: none`):
- * it takes no room, no scroll, no pointer and no keyboard, and nothing of
- * it is measured as part of the page.
+ * ONE FRAME, ONE NUMBER. Each animation frame reads the Scene's own camera
+ * (its committed zoom and the move between stops it is painting, `live`)
+ * and turns it into the ALTITUDE — or, while this face is moving the
+ * camera itself (Up, Down, a pinch on the page), sets that camera from the
+ * altitude. From the altitude in that frame follow the page's box, how it
+ * stands, how much of the Connected list has grown in, the city's fade,
+ * and the lines: each line's building end is the building's place in the
+ * picture carried through that same camera, and its page end is read from
+ * the page after its own transform for that frame is written. Nothing is
+ * read from a frame before.
+ *
+ * Between levels the camera is the Scene's move between stops, painted on
+ * its layers outside React; at a level it is written into the view once,
+ * and the city laid out again at that zoom.
  */
 
 /** The most lines drawn from a page's parts: past this a list's lines are a hatch. */
 const MOST_LINES = 40;
-/** How long the page takes to stand on its place, or to come back in. */
-const STAND_MS = 480;
-/** How long the camera is given to arrive before the page is aimed at again. */
-const ARRIVE_MS = 900;
-
-interface Line {
-  readonly key: string;
-  readonly from: Point;
-  readonly to: Point;
-  readonly target: { readonly type: "record"; readonly id: string } | { readonly type: "list"; readonly kind: string };
-  readonly label: string;
-  /** What the line ends on: the record's building, or its district (`kind:<kind>`) where the city draws no building for it. */
-  readonly on?: string;
-}
+/** How long one level's move takes. A person who asked for less motion is cut straight there. */
+export const MOVE_MS = 560;
+/** A hand that has stopped zooming for this long has let go: the altitude settles to the nearest level. */
+const LET_GO_MS = 240;
+const NS = "http://www.w3.org/2000/svg";
 
 const kindOfId = (id: string | null): string | null => (id === null ? null : id.startsWith("kind:") ? id.slice(5) : id.startsWith("aggregate:") && !id.includes("|") && !id.includes("+") ? id.slice(10) : null);
 const boxOf = (rect: DOMRect): Box => ({ x: rect.left, y: rect.top, width: rect.width, height: rect.height });
 const middle = (box: Box): Point => ({ x: box.x + box.width / 2, y: box.y + box.height / 2 });
 const keyOf = (where: PageWhere): string => (where.type === "record" ? `record:${where.id}` : where.type === "list" ? `list:${where.kind}` : where.type === "place" ? `place:${where.kinds.join(",")}` : where.type);
-const ease = (t: number) => 1 - Math.pow(1 - Math.max(0, Math.min(1, t)), 3);
+const ease = (t: number) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
+const level = (live: Live) => Math.abs(live.s - 1) < 1e-4 && Math.abs(live.x) < 0.05 && Math.abs(live.y) < 0.05;
+const clamp01 = (t: number) => Math.max(0, Math.min(1, t));
 
-export function OnePlaceCity({ where, page, stop, returning, sheet, view, lessMotion, resolve, openRecord, openKind, onStop, panel: Panel }: OnePlaceCityProps) {
+/** The city as it is laid out, read when the camera is at a level: each district's tile and each building, in the picture's own pixels. */
+interface World {
+  readonly plots: ReadonlyMap<string, Box>;
+  readonly buildings: ReadonlyMap<string, Box>;
+}
+
+/** What one line joins, in this frame. */
+interface Drawn {
+  readonly key: string;
+  readonly from: Point;
+  readonly to: Point;
+  /** The line ends at the page's edge, the building under the page: the arrow points this way. */
+  readonly under: Point | null;
+  readonly on: string;
+  readonly target: { readonly type: "record"; readonly id: string } | { readonly type: "list"; readonly kind: string };
+  readonly label: string;
+}
+
+export function OnePlaceCity({ where, page, sheet, connected, view, lessMotion, resolve, openRecord, openKind, motion, onAltitude }: OnePlaceCityProps) {
   const { store } = useGraview();
   const { view: seen, go } = useNavigation();
   const box = useRef<HTMLDivElement>(null);
+  const overlay = useRef<SVGSVGElement>(null);
+  const rings = useRef<HTMLDivElement>(null);
   const camera = useRef<SceneCamera | null>(null);
-  const [lines, setLines] = useState<readonly Line[]>([]);
 
   /*
-   * THE SCENE'S STOP: always the overview — the Scene's lens over the grid
-   * and its shelf of districts are not drawn on this face; a place is a page
-   * like any other. What is chosen is the page's place: its record (lit,
-   * standing first in its row), its kind's district, a place's lens. At the
-   * panel the Scene's own map panel shows that choice beside the city.
+   * THE SCENE'S STOP: always the overview — its lens over the grid and its
+   * shelf of districts are not drawn on this face — and nothing chosen on
+   * it, so it draws no lines of its own from a choice and no outline of
+   * one: this face draws the one set of lines. (A record its plot has no
+   * room to draw — one of a "+415" — stands on its district.)
    */
-  const subject = page.type === "record" ? page.id : null;
-  const choice = page.type === "record" ? `r:${page.id}` : page.type === "list" ? `k:${page.kind}` : page.type === "place" ? `p:${page.as}:${page.kinds[0]}` : "";
-  const panel = stop === "panel";
-  const wanted = useMemo<ViewState>(() => {
-    const overview = withOverview(EMPTY_VIEW, true);
-    if (choice.startsWith("r:")) return withSelection(overview, [choice.slice(2)]);
-    if (choice.startsWith("k:")) return withSelection(overview, [kindCardId(choice.slice(2))]);
-    if (choice.startsWith("p:")) {
-      const [, as, kind] = choice.split(":");
-      // At the panel a place is its lens beside the map; elsewhere its district is chosen.
-      return panel ? withWithin(withFocus(overview, aggregateId(kind!)), "view", as!) : withSelection(overview, [kindCardId(kind!)]);
-    }
-    return overview;
-  }, [choice, panel]);
+  const wanted = useMemo<ViewState>(() => withOverview(EMPTY_VIEW, true), []);
   const asked = useRef("");
   useEffect(() => {
-    // The pan the camera has is kept: only what is chosen changes.
     const next = { ...wanted, ...(seen.pan ? { pan: seen.pan } : {}) };
     asked.current = toUrl(next);
     go(next);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wanted]);
 
-  /*
-   * WHAT THE PERSON DOES ON THE SCENE IS WHERE THEY GO. Its way down — a
-   * record focused, a district gone into, "Open ↗" in the panel — is that
-   * page; another record or district chosen (a connected row, a tile) is
-   * that one in the panel, the camera flying to it; the panel closed is a
-   * step out. A pan is the camera's own and is kept.
-   */
-  const latest = useRef({ stop, openRecord, openKind, onStop, subject });
-  latest.current = { stop, openRecord, openKind, onStop, subject };
+  /* The Scene's own way down — a record focused, a district gone into — is that place, in the panel. A pan is the camera's own and is kept. */
+  const latest = useRef({ openRecord, openKind });
+  latest.current = { openRecord, openKind };
   useEffect(() => {
-    const url = toUrl(seen);
-    if (url === asked.current) return;
-    const { pan: _pan, ...bare } = seen;
-    const { pan: _wantedPan, ...want } = wanted;
-    if (toUrl(bare as ViewState) === toUrl(want as ViewState)) return;
-    const back = { ...wanted, ...(seen.pan ? { pan: seen.pan } : {}) };
-    const restore = () => {
-      asked.current = toUrl(back);
-      go(back);
-    };
-    const now = latest.current;
-    if (now.stop === "page") return restore();
+    if (toUrl(seen) === asked.current) return;
+    if (seen.overview && seen.focusId === null) return;
     const focus = seen.focusId;
-    const wentDown = !seen.overview || (focus !== null && focus !== wanted.focusId);
-    if (wentDown) {
-      restore();
-      const record = focus && store.graph.getNode(focus) ? focus : null;
-      const kind = kindOfId(focus);
-      // Down from the panel is the page; down from anywhere else is that place in the panel.
-      const at = now.stop === "panel" ? "page" : "panel";
-      if (record) now.openRecord(record, at);
-      else if (kind) now.openKind(kind, at);
-      return;
-    }
-    const chosen = seen.selection ?? [];
-    if (chosen.length === 1 && chosen[0] !== now.subject) {
-      const one = chosen[0]!;
-      restore();
-      if (store.graph.getNode(one)) now.openRecord(one, "panel");
-      else if (kindOfId(one)) now.openKind(kindOfId(one)!, "panel");
-      return;
-    }
-    if (chosen.length === 0 && (wanted.selection?.length ?? 0) > 0 && now.stop === "panel") {
-      // The panel closed: a step out, the page standing in the city.
-      restore();
-      now.onStop("back");
-    }
+    const back = { ...wanted, ...(seen.pan ? { pan: seen.pan } : {}) };
+    asked.current = toUrl(back);
+    go(back);
+    const record = focus && store.graph.getNode(focus) ? focus : null;
+    const kind = kindOfId(focus);
+    if (record) latest.current.openRecord(record, PANEL);
+    else if (kind) latest.current.openKind(kind, PANEL);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seen]);
 
-  const state = useRef({ where, page, stop, returning, view, lessMotion, resolve, onStop });
-  state.current = { where, page, stop, returning, view, lessMotion, resolve, onStop };
+  const state = useRef({ where, page, view, lessMotion, resolve, onAltitude });
+  state.current = { where, page, view, lessMotion, resolve, onAltitude };
 
   useEffect(() => {
     let frame = 0;
-    let wroteSheet = "";
-    let wroteLines = "";
-    let shown: Standing = IN;
-    // Where the stop's camera was asked for: which stop, which place, and how far it has got.
-    let aim: { key: string; phase: "wait" | "zoom" | "pan" | "check" | "done"; since: number; zoom: number; again?: number } = { key: "", phase: "done", since: 0, zoom: 1 };
-    // When the panel was first drawn: the city lays itself out again in the room beside it, and is aimed at once that has landed.
-    let panelSince = 0;
-    let standFrom: { at: number; from: Standing } = { at: 0, from: IN };
-    let lastStop: Stop = "page";
-    let lastKey = "";
-    let wasResting = true;
-    const tick = (now: number) => {
-      frame = requestAnimationFrame(tick);
-      const holder = box.current;
-      const plane = sheet.current;
-      const cam = camera.current;
-      if (!holder || !plane) return;
-      const at = state.current;
-      const resting = at.stop === "page" && !at.returning;
-      if (resting) {
-        if (!wasResting) {
-          holder.style.display = "none";
-          wasResting = true;
-          shown = IN;
-          aim = { key: "", phase: "done", since: 0, zoom: 1 };
-          if (wroteLines !== "") {
-            wroteLines = "";
-            setLines([]);
-          }
-        }
-        return;
-      }
-      if (wasResting) {
-        // Out from the page: the Scene is drawn again, and laid out before anything is measured on it.
-        holder.style.display = "block";
-        wasResting = false;
-        standFrom = { at: now, from: IN };
-        return;
-      }
-      const key = `${at.stop}|${keyOf(at.where)}|${at.view.width}x${at.view.height}`;
-      if (at.stop !== lastStop) {
-        standFrom = { at: now, from: shown };
-        lastStop = at.stop;
-      }
+    let world: World = { plots: new Map(), buildings: new Map() };
+    /** The camera between stops this frame, as painted — the last one seen while the view takes in a move just let go. */
+    let painted: Live = LEVEL_LIVE;
+    /** The level the camera rests at, and the altitude this frame. */
+    let rest = PAGE;
+    let altitude = PAGE;
+    /** A move of the camera this face is making: from one camera to another, about the place. */
+    let move: { from: Live; to: Live; fromAltitude: number; toAltitude: number; about: Point; start: number; done: () => void } | null = null;
+    /** Where the place was aimed for while the page is read: its key and the window's size. */
+    let aimedFor = "";
+    let aimTries = 0;
+    /** A zoom the person's own hand made on the Scene, and when it last moved. */
+    let handZoom = 0;
+    let handSince = 0;
+    let lastPlace = "";
+    let lastReported = "";
+    const lines = new Map<string, { g: SVGGElement; path: SVGPathElement; dot: SVGCircleElement; arrow: SVGPathElement; ring: HTMLButtonElement }>();
 
-      /* WHERE THE SCENE DRAWS THE PLACE NOW, in the window's coordinates. */
+    /** The picture as laid out now, read while nothing is painted over it. */
+    const readWorld = (holder: HTMLElement): World => {
       const plots = new Map<string, Box>();
       for (const plot of holder.querySelectorAll<SVGGElement>("[data-graview-plot]")) {
         const kind = kindOfId(plot.getAttribute("data-graview-plot"));
         const tile = plot.querySelector(".graview-plot-tile") ?? plot;
         if (kind) plots.set(kind, boxOf(tile.getBoundingClientRect()));
       }
-      const placeAt = at.where;
-      const building = placeAt.type === "record" ? holder.querySelector(`[data-graview-building="${CSS.escape(placeAt.id)}"]`) : null;
-      const place = {
-        building: building ? boxOf(building.getBoundingClientRect()) : null,
-        district: placeAt.type === "record" || placeAt.type === "list" ? (plots.get(placeAt.kind) ?? null) : null,
-        districts: placeAt.type === "place" ? placeAt.kinds.flatMap((kind) => (plots.has(kind) ? [plots.get(kind)!] : [])) : [],
-        all: [...plots.values()],
-      };
-      const anchor = plots.size > 0 ? anchorOf(placeAt, place, at.view) : null;
-      // The Scene's map panel, at the panel: beside the city on a desk, a sheet from the foot on a phone.
-      const panelElement = at.stop === "panel" ? holder.querySelector<HTMLElement>('[data-testid="record-panel"], [data-testid="district-panel"], [data-testid="lens-panel"]') : null;
-      const panelBox = panelElement ? boxOf(panelElement.getBoundingClientRect()) : null;
-      const beside = panelBox !== null && panelBox.x > at.view.width * 0.3;
-      // Where the place is aimed: the middle of the city that is seen beside the panel, else under the page's foot.
-      const aimAt = (): Point => (panelBox ? (beside ? { x: panelBox.x / 2, y: at.view.height / 2 } : { x: at.view.width / 2, y: Math.max(40, panelBox.y / 2) }) : aimPoint(at.stop, placeAt, at.view));
-      // Where to aim, and what is aimed: [the point on the window, the point of the city that should come to it].
-      const cityMiddle = (): Point => {
-        const city = unionOf([...plots.values()]);
-        return city ? { x: city.x + city.width / 2, y: city.y + city.height / 2 } : { x: at.view.width / 2, y: at.view.height / 2 };
-      };
-      const aimed = (): [Point, Point] => (at.stop === "city" || placeAt.type === "home" ? [{ x: at.view.width / 2, y: at.view.height / 2 }, cityMiddle()] : [aimAt(), anchor!]);
+      const buildings = new Map<string, Box>();
+      for (const building of holder.querySelectorAll("[data-graview-building]")) buildings.set(building.getAttribute("data-graview-building")!, boxOf(building.getBoundingClientRect()));
+      return { plots, buildings };
+    };
 
-      /*
-       * THE ONE CAMERA, ASKED: arriving at a stop, the Scene's zoom about the
-       * place, then its pan to bring the place under the page's foot. Once
-       * there, the camera is the person's: a zoom past this stop's range is
-       * the next stop, and nothing pulls the camera back.
-       */
-      if (cam && anchor) {
-        if (key !== aim.key) {
-          const placeChanged = key.split("|")[1] !== lastKey.split("|")[1];
-          lastKey = key;
-          aim = { key, phase: "zoom", since: now, zoom: zoomAt(at.stop, placeAt, at.view.width) };
-          if (!placeChanged && aim.zoom === cam.zoom()) aim.phase = "pan";
-        }
-        const settled = holder.querySelector("[data-graview-settled]") !== null;
-        if (!panelBox) panelSince = 0;
-        else if (panelSince === 0) panelSince = now;
-        const panelLanded = at.stop !== "panel" || (panelBox !== null && now - panelSince > 450) || now - aim.since > ARRIVE_MS * 2;
-        if (aim.phase === "zoom") {
-          cam.zoomTo(aim.zoom, anchor.x, anchor.y);
-          aim = { ...aim, phase: "wait", since: now };
-        } else if (aim.phase === "wait" && (((settled && Math.abs(cam.zoom() - aim.zoom) < 0.02) || now - aim.since > ARRIVE_MS) && panelLanded)) {
-          aim = { ...aim, phase: "pan", since: now };
-        } else if (aim.phase === "pan") {
-          {
-            // At the overview, and for home, the whole city is aimed at the window's middle; elsewhere the place where the level asks.
-            const [target, from] = aimed();
-            const dx = target.x - from.x;
-            const dy = target.y - from.y;
-            if (Math.hypot(dx, dy) > 3) cam.panBy(dx, dy);
-          }
-          aim = { ...aim, phase: "check", since: now, zoom: cam.zoom() };
-        } else if (aim.phase === "check" && ((settled && now - aim.since > 300) || now - aim.since > ARRIVE_MS)) {
-          // Where the pan landed, looked at again: a city that moved under it meanwhile is aimed at once more.
-          const [target, from] = aimed();
-          const off = Math.hypot(target.x - from.x, target.y - from.y);
-          const again = aim.again ?? 0;
-          aim = off > 24 && again < 2 ? { ...aim, phase: "pan", since: now, again: again + 1 } : { ...aim, phase: "done", since: now, zoom: cam.zoom() };
-        } else if (aim.phase === "done" && now - aim.since > ARRIVE_MS && settled) {
-          // The person's zoom: past this stop's range, the next stop, the camera left where the hand put it.
-          const next = stopAtZoom(cam.zoom(), at.stop, placeAt, at.view.width);
-          // One level a gesture, the camera then aimed as that level asks: a hard pinch does not skip a level.
-          if (next !== at.stop) {
-            aim = { ...aim, since: now };
-            at.onStop(next);
-          }
-        }
+    /** The place the page stands on, in the picture. */
+    const anchorIn = (at: PageWhere, w: World): Point | null =>
+      anchorOf(at, {
+        building: at.type === "record" ? (w.buildings.get(at.id) ?? null) : null,
+        district: at.type === "record" || at.type === "list" ? (w.plots.get(at.kind) ?? null) : null,
+        districts: at.type === "place" ? at.kinds.flatMap((kind) => (w.plots.has(kind) ? [w.plots.get(kind)!] : [])) : [],
+        all: [...w.plots.values()],
+      });
+
+    /** The camera a level asks for, against the view's own: how much closer than now, and the place where that level aims it. */
+    const cameraFor = (lvl: number, anchor: Point, zoomNow: number): Live => {
+      const now = state.current;
+      const zooms = levelZooms(now.where, now.view);
+      const s = zooms[lvl]! / zoomNow;
+      if (lvl === CITY || now.where.type === "home" || now.where.type === "overview") {
+        const city = unionOf([...world.plots.values()]);
+        const middleOfCity = city ? middle(city) : anchor;
+        return cameraPutting(middleOfCity, aimAt(CITY, now.view), s);
+      }
+      return cameraPutting(anchor, aimAt(lvl === PAGE ? PANEL : lvl, now.view), s);
+    };
+
+    /** Start a move of the camera to a level. */
+    const moveTo = (cam: SceneCamera, toLevel: number, anchor: Point, now: number) => {
+      const from = painted;
+      const to = cameraFor(toLevel, anchor, cam.zoom());
+      const fromAltitude = altitude;
+      if (state.current.lessMotion) {
+        cam.liveTo(to);
+        painted = to;
+        altitude = toLevel;
+        rest = toLevel;
+        cam.commit();
+        return;
+      }
+      move = {
+        from,
+        to,
+        fromAltitude,
+        toAltitude: toLevel,
+        about: anchor,
+        start: now,
+        done: () => {
+          rest = toLevel;
+          altitude = toLevel;
+          cam.commit();
+        },
+      };
+    };
+
+    const tick = (now: number) => {
+      frame = requestAnimationFrame(tick);
+      const holder = box.current;
+      const plane = sheet.current;
+      const cam = camera.current;
+      if (!holder || !plane || !cam) return;
+      const at = state.current;
+      const asking = motion.current;
+
+      /* THE CAMERA AS IT IS: a move between stops painted now, or the view's own. */
+      const live = cam.live();
+      const between = !level(live);
+      const settling = cam.moving() && !between;
+      if (between) painted = live;
+      else if (!settling) {
+        painted = LEVEL_LIVE;
+        world = readWorld(holder);
+      }
+      const anchor = world.plots.size > 0 ? anchorIn(at.where, world) : null;
+      const zooms = levelZooms(at.where, at.view);
+      const zoomNow = cam.zoom();
+      const placeKey = `${keyOf(at.where)}|${at.view.width}x${at.view.height}`;
+
+      /* WHAT IS ASKED: a level (Up, Down, a press), or a scrub of the altitude by a hand on the page. */
+      if (anchor && asking.level !== null && !move && !settling) {
+        const toLevel = asking.level;
+        asking.level = null;
+        if (toLevel !== rest || placeKey !== lastPlace) moveTo(cam, toLevel, anchor, now);
+        lastPlace = placeKey;
+      }
+      if (anchor && asking.scrub !== 0 && !settling) {
+        const delta = asking.scrub;
+        asking.scrub = 0;
+        move = null;
+        const target = Math.max(PAGE, Math.min(CITY, altitude + delta));
+        // The cameras of the levels either side, the one rested at as it is (a pan the person made is kept).
+        const lower = Math.floor(target);
+        const upper = Math.min(CITY, lower + 1);
+        const camOf = (lvl: number) => (lvl === rest ? cameraFor(rest, anchor, zoomNow) : cameraFor(lvl, anchor, zoomNow));
+        const placed = cameraBetween(camOf(lower), camOf(upper), anchor, target - lower);
+        cam.liveTo(placed);
+        painted = placed;
+        altitude = target;
+        handSince = now;
+        asking.scrubbing = true;
+      }
+      if (asking.scrubbing && !asking.held && now - handSince > LET_GO_MS && !settling) {
+        asking.scrubbing = false;
+        if (anchor) moveTo(cam, restingLevel(altitude), anchor, now);
       }
 
-      /*
-       * THE PAGE ON ITS PLACE: its foot on the point, this frame. Standing
-       * up or coming in, its size and turn ease over a moment; at rest it
-       * is exactly where the Scene draws the place.
-       */
-      // At the panel the page goes into it: its box, fading as the panel holds what it said.
-      const target = panelBox
-        ? { x: panelBox.x + panelBox.width / 2 - at.view.width / 2, y: panelBox.y + panelBox.height - at.view.height, scale: Math.min(panelBox.width / at.view.width, panelBox.height / at.view.height), turn: 0 }
-        : anchor
-          ? standingOn(at.stop, placeAt, anchor, at.view)
-          : at.stop === "page"
-            ? IN
-            : shown;
-      const t = at.lessMotion ? 1 : ease((now - standFrom.at) / STAND_MS);
-      shown = t >= 1 ? target : easedToward(standFrom.from, target, t);
-      const css = standingCss(shown, at.view);
-      if (css !== wroteSheet) {
+      /* A MOVE UNDER WAY: the camera set from how far it has got. */
+      if (move) {
+        const t = clamp01((now - move.start) / MOVE_MS);
+        const e = ease(t);
+        const placed = cameraBetween(move.from, move.to, move.about, e);
+        cam.liveTo(placed);
+        painted = placed;
+        altitude = move.fromAltitude + (move.toAltitude - move.fromAltitude) * e;
+        if (t >= 1) {
+          const finished = move;
+          move = null;
+          finished.done();
+        }
+      } else if (!asking.scrubbing && !settling) {
+        /*
+         * AT REST, OR THE PERSON'S OWN HAND ON THE SCENE: a pinch or a
+         * ctrl+wheel over the city zooms its camera, and the altitude is
+         * where that zoom is — every step of it. Let go, it settles to the
+         * nearest level.
+         */
+        const effective = zoomNow * painted.s;
+        const atZoom = altitudeAt(effective, zooms);
+        const expected = zooms[rest]!;
+        if (rest !== PAGE && Math.abs(Math.log(effective / expected)) > 0.03) {
+          if (handZoom !== effective) {
+            handZoom = effective;
+            handSince = now;
+          }
+          altitude = atZoom;
+          if (now - handSince > LET_GO_MS && !asking.held && anchor) moveTo(cam, restingLevel(atZoom), anchor, now);
+        } else altitude = rest;
+      }
+
+      /* WHILE THE PAGE IS READ, the camera waits where stepping out begins: aimed once for each place, out of sight. */
+      if (rest === PAGE && !move && !asking.scrubbing && anchor && !settling) {
+        if (aimedFor !== placeKey) {
+          aimedFor = placeKey;
+          aimTries = 0;
+        }
+        const want = cameraFor(PAGE, anchor, zoomNow);
+        if (!level(want) && aimTries < 4 && Math.hypot(want.x, want.y) + Math.abs(want.s - 1) * 100 > 2) {
+          aimTries += 1;
+          cam.liveTo(want);
+          cam.commit();
+        }
+      }
+      // Moving to another place at a level above the page: the camera flies there and stays at that level.
+      if (rest !== PAGE && !move && !asking.scrubbing && anchor && placeKey !== lastPlace && !settling && holder.querySelector("[data-graview-settled]")) {
+        lastPlace = placeKey;
+        moveTo(cam, rest, anchor, now);
+      }
+
+      /* THE PAGE: its box from the altitude, then how it stands on the place as the camera has it this frame. */
+      const a = altitude;
+      const away = a > 0.001 || move !== null || asking.scrubbing;
+      holder.style.visibility = away ? "visible" : "hidden";
+      // Read, the city is out of reach and out of the page's measure; out, it is the picture, and nothing of it scrolls.
+      if (holder.inert === away) holder.inert = !away;
+      const overflow = away ? "hidden" : "auto";
+      if (holder.style.overflow !== overflow) {
+        holder.style.overflow = overflow;
+        holder.scrollTop = 0;
+        holder.scrollLeft = 0;
+      }
+      holder.style.opacity = String(a >= PANEL ? 1 : ease(clamp01(a * 1.3)));
+      const pageAt = pageBox(a, at.view);
+      // Into or out of the panel, the page makes straight for the roof where the move leaves it (or comes from), not after a roof still on its way.
+      const stoodRoof = move && anchor && Math.min(move.fromAltitude, move.toAltitude) >= PANEL - 0.001 && Math.max(move.fromAltitude, move.toAltitude) <= 2.001 ? project(move.toAltitude > move.fromAltitude ? move.to : move.from, anchor) : null;
+      const roof = stoodRoof ?? (anchor ? project(painted, anchor) : { x: at.view.width / 2, y: at.view.height / 2 });
+      const standing = away ? standingAt(a, roof, pageAt, at.view) : AS_IT_IS;
+      if (away) {
+        plane.style.left = `${pageAt.x.toFixed(2)}px`;
+        plane.style.top = `${pageAt.y.toFixed(2)}px`;
+        plane.style.width = `${pageAt.width.toFixed(2)}px`;
+        plane.style.height = `${pageAt.height.toFixed(2)}px`;
         plane.style.transformOrigin = SHEET_ORIGIN;
-        plane.style.transition = "opacity 240ms ease";
-        plane.style.transform = css;
-        wroteSheet = css;
+        plane.style.transform = standingCss(standing, at.view);
+        plane.style.opacity = String(standing.opacity);
+        plane.style.borderRadius = `${(a >= PANEL ? 10 : 10 * a).toFixed(2)}px`;
+      } else {
+        plane.style.transform = "";
+        plane.style.opacity = "";
+        plane.style.borderRadius = "";
+      }
+      /* The Connected list grows into the page as it becomes the panel. */
+      const grown = clamp01((a - 0.55) / 0.45);
+      const list = connected.current;
+      if (list) {
+        const inner = list.firstElementChild as HTMLElement | null;
+        list.style.height = `${((inner?.scrollHeight ?? 0) * ease(grown)).toFixed(2)}px`;
+        list.style.opacity = String(ease(grown));
       }
 
-      /*
-       * THE LINES, from this frame's positions: from each part of the page
-       * that shows a record — a link to its page, a row that names it — to
-       * that record's building, or to its district where the city has no
-       * building for it; a kind's list to its district. The page's parts
-       * are read as the browser draws them turned.
-       */
-      const found: Line[] = [];
-      const endOf = (target: Line["target"]): Box | null => {
-        if (target.type === "record") {
-          const drawn = holder.querySelector(`[data-graview-building="${CSS.escape(target.id)}"]`);
-          if (drawn) return boxOf(drawn.getBoundingClientRect());
-          const kind = store.graph.getNode(target.id)?.kind as string | undefined;
-          return kind ? (plots.get(kind) ?? null) : null;
-        }
-        return plots.get(target.kind) ?? null;
-      };
-      const onOf = (target: Line["target"]): string => {
-        if (target.type !== "record") return `kind:${target.kind}`;
-        if (holder.querySelector(`[data-graview-building="${CSS.escape(target.id)}"]`)) return "building";
-        return `kind:${String(store.graph.getNode(target.id)?.kind ?? "")}`;
-      };
-      const labelFor = (target: Line["target"]) => {
-        if (target.type !== "record") return target.kind;
-        const node = store.graph.getNode(target.id);
-        return node ? labelOf(store.schema.tryDefinition(node.kind as string), node as never) : target.id;
-      };
-      const subjectId = at.page.type === "record" ? at.page.id : null;
-      if (at.stop === "panel" && panelElement && panelBox && t >= 1) {
-        /* At the panel: from each connected row, at the panel's edge toward the city, to that record's building. */
-        for (const row of panelElement.querySelectorAll<HTMLElement>("[data-graview-record]")) {
-          if (found.length >= MOST_LINES) break;
-          const id = row.getAttribute("data-graview-record");
-          if (!id || id === subjectId || !store.graph.getNode(id) || found.some((line) => line.key === id)) continue;
-          const rect = row.getBoundingClientRect();
-          const mid = rect.top + rect.height / 2;
-          if (rect.height < 1 || mid < panelBox.y || mid > panelBox.y + panelBox.height) continue;
-          const end = endOf({ type: "record", id });
-          if (!end) continue;
-          const from = beside ? { x: panelBox.x, y: mid } : { x: rect.left + Math.min(rect.width / 2, 60), y: panelBox.y };
-          found.push({ key: id, from, to: middle(end), target: { type: "record", id }, label: labelFor({ type: "record", id }), on: onOf({ type: "record", id }) });
-        }
-      }
-      if (at.stop === "back" && t >= 1) {
-        const sheetBox = plane.getBoundingClientRect();
+      /* THE LINES, from this frame's numbers. */
+      const shown = a >= PANEL ? Math.min(1, standing.opacity * 1.2) : ease(clamp01((a - 0.6) / 0.4));
+      const found: Drawn[] = [];
+      if (shown > 0.01) {
+        const pageRect = boxOf(plane.getBoundingClientRect());
+        const subjectId = at.page.type === "record" ? at.page.id : null;
         const taken = new Set<string>();
-        for (const element of plane.querySelectorAll("a[href], [data-graview-record]")) {
+        // A district the Scene draws in this frame: one it has let go of off the window has no end to give.
+        const drawnPlot = (kind: string) => holder.querySelector(`[data-graview-plot="kind:${CSS.escape(kind)}"]`) !== null;
+        const endOf = (target: Drawn["target"]): { at: Point; on: string } | null => {
+          if (target.type === "record") {
+            // Still standing in this frame (a plot shows fewer buildings as it changes): its place in the picture; else its district.
+            const building = holder.querySelector(`[data-graview-building="${CSS.escape(target.id)}"]`) ? world.buildings.get(target.id) : undefined;
+            if (building) return { at: project(painted, { x: building.x + building.width / 2, y: building.y + building.height / 2 }), on: "building" };
+            const kind = store.graph.getNode(target.id)?.kind as string | undefined;
+            const district = kind && drawnPlot(kind) ? world.plots.get(kind) : undefined;
+            return district ? { at: project(painted, middle(district)), on: `kind:${kind}` } : null;
+          }
+          const district = drawnPlot(target.kind) ? world.plots.get(target.kind) : undefined;
+          return district ? { at: project(painted, middle(district)), on: `kind:${target.kind}` } : null;
+        };
+        const labelFor = (target: Drawn["target"]) => {
+          if (target.type !== "record") return target.kind;
+          const node = store.graph.getNode(target.id);
+          return node ? labelOf(store.schema.tryDefinition(node.kind as string), node as never) : target.id;
+        };
+        // The page's own parts first — a link to a record's page, a row that names one — then the Connected rows for what the page does not show.
+        const parts = [...plane.querySelectorAll<HTMLElement>("a[href], [data-graview-record]")].sort((x, y) => Number(x.closest("[data-graview-connected]") !== null) - Number(y.closest("[data-graview-connected]") !== null));
+        for (const element of parts) {
           if (found.length >= MOST_LINES) break;
           if (element.closest("nav, header, [role=navigation], [role=banner]")) continue;
           const named = element.getAttribute("data-graview-record");
-          let target: Line["target"] | null = null;
+          let target: Drawn["target"] | null = null;
           if (named !== null && store.graph.getNode(named)) target = { type: "record", id: named };
           else if (element instanceof HTMLAnchorElement && element.href) {
             const resolved = at.resolve(element.pathname);
@@ -348,41 +380,120 @@ export function OnePlaceCity({ where, page, stop, returning, sheet, view, lessMo
           const rect = element.getBoundingClientRect();
           if (rect.width < 1 || rect.height < 1) continue;
           const from = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-          if (from.x < sheetBox.left || from.x > sheetBox.right || from.y < sheetBox.top || from.y > sheetBox.bottom) continue;
+          // Only what is in sight on the page: a part scrolled past, or under the page's own edge, draws none.
+          const port = element.closest("[data-graview-one-place]");
+          const visible = port ? port.getBoundingClientRect() : null;
+          if (!visible || from.x < visible.left || from.x > visible.right || from.y < visible.top || from.y > visible.bottom) continue;
           const end = endOf(target);
           if (!end) continue;
           taken.add(key);
-          found.push({ key, from, to: middle(end), target, label: labelFor(target), on: onOf(target) });
-        }
-        // A place of several kinds: a line from where it stands to each district it shows.
-        if (placeAt.type === "place") {
-          for (const kind of placeAt.kinds) {
-            const district = plots.get(kind);
-            if (district) found.push({ key: `meet:${kind}`, from: { x: sheetBox.left + sheetBox.width / 2, y: sheetBox.bottom }, to: middle(district), target: { type: "list", kind }, label: kind });
-          }
+          const under = edgeToward(end.at, pageRect);
+          found.push({ key, from, to: under ?? end.at, under: under ? end.at : null, on: end.on, target, label: labelFor(target) });
         }
       }
-      const said = found.map((line) => `${line.key}@${Math.round(line.from.x)},${Math.round(line.from.y)}>${Math.round(line.to.x)},${Math.round(line.to.y)}`).join("|");
-      if (said !== wroteLines) {
-        wroteLines = said;
-        setLines(found);
+      draw(found, shown);
+
+      /* Told what the frame says, when it changes: the level rested at or headed for, and whether the page is out of the window. */
+      const said = `${move ? move.toAltitude : restingLevel(a)}|${away ? 1 : 0}|${move || asking.scrubbing ? 1 : 0}`;
+      if (said !== lastReported) {
+        lastReported = said;
+        at.onAltitude({ level: move ? move.toAltitude : restingLevel(a), away, moving: move !== null || asking.scrubbing });
+      }
+      holder.setAttribute("data-graview-altitude-now", a.toFixed(3));
+    };
+
+    /* The overlay, written in the frame it is measured in: no React state per frame. */
+    const draw = (found: readonly Drawn[], opacity: number) => {
+      const svg = overlay.current;
+      const ringLayer = rings.current;
+      if (!svg || !ringLayer) return;
+      svg.style.opacity = String(opacity);
+      ringLayer.style.opacity = String(opacity);
+      const keep = new Set(found.map((line) => line.key));
+      for (const [key, drawn] of lines) {
+        if (keep.has(key)) continue;
+        drawn.g.remove();
+        drawn.ring.remove();
+        lines.delete(key);
+      }
+      for (const line of found) {
+        let drawn = lines.get(line.key);
+        if (!drawn) {
+          const g = document.createElementNS(NS, "g");
+          const path = document.createElementNS(NS, "path");
+          path.setAttribute("fill", "none");
+          path.setAttribute("stroke", "var(--graview-accent)");
+          path.setAttribute("stroke-width", "1.5");
+          path.setAttribute("stroke-opacity", "0.8");
+          path.setAttribute("stroke-linecap", "round");
+          const dot = document.createElementNS(NS, "circle");
+          dot.setAttribute("r", "2.5");
+          dot.setAttribute("fill", "var(--graview-accent)");
+          const arrow = document.createElementNS(NS, "path");
+          arrow.setAttribute("fill", "var(--graview-accent)");
+          g.append(path, dot, arrow);
+          svg.append(g);
+          const ring = document.createElement("button");
+          ring.type = "button";
+          ring.setAttribute("data-testid", "one-place-ring");
+          ring.style.cssText = "position:fixed;width:16px;height:16px;padding:0;border-radius:8px;border:2px solid var(--graview-accent);background:color-mix(in srgb, var(--graview-accent) 18%, transparent);cursor:pointer;";
+          const target = line.target;
+          ring.addEventListener("click", () => (target.type === "record" ? latest.current.openRecord(target.id, PANEL) : latest.current.openKind(target.kind, PANEL)));
+          ringLayer.append(ring);
+          drawn = { g, path, dot, arrow, ring };
+          lines.set(line.key, drawn);
+        }
+        const { from, to } = line;
+        const bend = { x: (from.x + to.x) / 2, y: Math.min(from.y, to.y) - 24 };
+        drawn.g.setAttribute("data-graview-line", line.key);
+        drawn.g.setAttribute("data-graview-line-on", line.on);
+        drawn.g.toggleAttribute("data-graview-line-under", line.under !== null);
+        drawn.g.setAttribute("data-graview-line-from", `${from.x.toFixed(2)},${from.y.toFixed(2)}`);
+        drawn.g.setAttribute("data-graview-line-to", `${to.x.toFixed(2)},${to.y.toFixed(2)}`);
+        if (line.under) drawn.g.setAttribute("data-graview-line-toward", `${line.under.x.toFixed(2)},${line.under.y.toFixed(2)}`);
+        else drawn.g.removeAttribute("data-graview-line-toward");
+        drawn.path.setAttribute("d", `M${from.x.toFixed(2)},${from.y.toFixed(2)} Q${bend.x.toFixed(2)},${bend.y.toFixed(2)} ${to.x.toFixed(2)},${to.y.toFixed(2)}`);
+        drawn.dot.setAttribute("cx", from.x.toFixed(2));
+        drawn.dot.setAttribute("cy", from.y.toFixed(2));
+        if (line.under) {
+          // An arrow at the page's edge, pointing on toward the building under the page.
+          const angle = Math.atan2(line.under.y - to.y, line.under.x - to.x);
+          const tip = { x: to.x + Math.cos(angle) * 7, y: to.y + Math.sin(angle) * 7 };
+          const left = { x: to.x + Math.cos(angle + 2.4) * 6, y: to.y + Math.sin(angle + 2.4) * 6 };
+          const right = { x: to.x + Math.cos(angle - 2.4) * 6, y: to.y + Math.sin(angle - 2.4) * 6 };
+          drawn.arrow.setAttribute("d", `M${tip.x.toFixed(2)},${tip.y.toFixed(2)} L${left.x.toFixed(2)},${left.y.toFixed(2)} L${right.x.toFixed(2)},${right.y.toFixed(2)} Z`);
+          drawn.ring.style.display = "none";
+        } else {
+          drawn.arrow.setAttribute("d", "");
+          drawn.ring.style.display = "";
+          drawn.ring.style.left = `${(to.x - 8).toFixed(2)}px`;
+          drawn.ring.style.top = `${(to.y - 8).toFixed(2)}px`;
+        }
+        drawn.ring.setAttribute("data-graview-to", line.target.type === "record" ? line.target.id : `kind:${line.target.kind}`);
+        drawn.ring.setAttribute("aria-label", line.target.type === "record" ? `Open ${line.label}` : `Open the ${line.label} list`);
+        drawn.ring.title = line.label;
       }
     };
+
     frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(frame);
+      for (const drawn of lines.values()) {
+        drawn.g.remove();
+        drawn.ring.remove();
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /*
-   * A building pressed, at any stop but the page: its page opens, the camera
+   * A building pressed, above the page: its record, in the panel, the camera
    * flying to it. The Scene's blocks take no press of their own (their tile
-   * does, for the district), so the building is found by where each stands:
-   * of those under the pointer, the one in front.
+   * does, for the district), so the building is found by where each stands.
+   * The end of a drag is the camera's, not a press.
    */
   const downAt = useRef<{ x: number; y: number } | null>(null);
   const pressed = (event: React.MouseEvent) => {
-    if (stop === "page") return;
-    // The end of a drag is the camera's, not a press on what it ended over.
     const from = downAt.current;
     if (from && Math.hypot(event.clientX - from.x, event.clientY - from.y) > 6) return;
     let id: string | null = null;
@@ -398,60 +509,32 @@ export function OnePlaceCity({ where, page, stop, returning, sheet, view, lessMo
     if (!id || !store.graph.getNode(id)) return;
     event.preventDefault();
     event.stopPropagation();
-    openRecord(id, "panel");
+    openRecord(id, PANEL);
   };
 
-  const resting = stop === "page" && !returning;
   return (
     <>
       <div
         ref={box}
         data-testid="one-place-city"
-        aria-hidden={resting ? true : undefined}
-        {...(resting ? { inert: true } : {})}
         onPointerDownCapture={(event) => {
           downAt.current = { x: event.clientX, y: event.clientY };
         }}
         onClickCapture={pressed}
-        style={{ position: "fixed", inset: 0, zIndex: LOCAL_LAYERS.under, display: "none", containerType: "size" }}
+        /*
+         * While the page is read the city is laid out, out of sight, so the
+         * first frame out has it to move: no pointer, no keyboard, no room
+         * in the page — and what of it reaches past the window is inside a
+         * box that scrolls, as a phone's sideways row would be.
+         */
+        style={{ position: "fixed", inset: 0, zIndex: LOCAL_LAYERS.under, visibility: "hidden", overflow: "auto", scrollbarWidth: "none", containerType: "size" }}
       >
-        {/* At the panel the city is laid out in the room beside the Scene's own map panel, which holds the page's place. */}
-        <BesideTheMap.Provider value={panel}>
-          <Scene renderer="dom" blur={false} camera={camera} style={{ width: "100%", height: "100%" }} />
-          {/* The Scene's own map panel, as the host handed it (`sceneUnderPages: { panel }`). */}
-          {panel && Panel ? <Panel /> : null}
-        </BesideTheMap.Provider>
+        {/* One set of lines on this face: nothing is chosen on the Scene, so it draws no lines of its own from a choice and no outline of one. */}
+        <Scene renderer="dom" blur={false} camera={camera} style={{ width: "100%", height: "100%" }} />
       </div>
-      {lines.length > 0 ? (
-        <>
-          <svg aria-hidden="true" data-testid="one-place-lines" width={view.width} height={view.height} style={{ position: "fixed", left: 0, top: 0, zIndex: LOCAL_LAYERS.over + 1, pointerEvents: "none", overflow: "visible" }}>
-            {lines.map((line) => {
-              const bend = { x: (line.from.x + line.to.x) / 2, y: Math.min(line.from.y, line.to.y) - 30 };
-              return (
-                <g key={line.key} data-graview-line={line.key} data-graview-line-on={line.on ?? (line.target.type === "list" ? `kind:${line.target.kind}` : "building")} data-graview-line-to={`${line.to.x.toFixed(1)},${line.to.y.toFixed(1)}`}>
-                  <path d={`M${line.from.x.toFixed(1)},${line.from.y.toFixed(1)} Q${bend.x.toFixed(1)},${bend.y.toFixed(1)} ${line.to.x.toFixed(1)},${line.to.y.toFixed(1)}`} fill="none" stroke="var(--graview-accent)" strokeWidth={1.5} strokeOpacity={0.75} strokeLinecap="round" />
-                  <circle cx={line.from.x} cy={line.from.y} r={2.5} fill="var(--graview-accent)" />
-                </g>
-              );
-            })}
-          </svg>
-          {/* Each line's end, a ring the keyboard and the pointer reach: that record's page. */}
-          <div role="group" aria-label="What this page shows, in the city" style={{ position: "fixed", left: 0, top: 0, width: 0, height: 0, zIndex: LOCAL_LAYERS.over + 1 }}>
-            {lines.map((line) => (
-              <button
-                key={line.key}
-                type="button"
-                data-testid="one-place-ring"
-                data-graview-to={line.target.type === "record" ? line.target.id : `kind:${line.target.kind}`}
-                aria-label={line.target.type === "record" ? `Open ${line.label}` : `Open the ${line.label} list`}
-                title={line.label}
-                onClick={() => (line.target.type === "record" ? openRecord(line.target.id, "panel") : openKind(line.target.kind, "panel"))}
-                style={{ position: "fixed", left: line.to.x - 9, top: line.to.y - 9, width: 18, height: 18, padding: 0, borderRadius: 9, border: "2px solid var(--graview-accent)", background: "color-mix(in srgb, var(--graview-accent) 18%, transparent)", cursor: "pointer" }}
-              />
-            ))}
-          </div>
-        </>
-      ) : null}
+      <svg ref={overlay} aria-hidden="true" data-testid="one-place-lines" width={view.width} height={view.height} style={{ position: "fixed", left: 0, top: 0, zIndex: LOCAL_LAYERS.over + 1, pointerEvents: "none", overflow: "visible", opacity: 0 }} />
+      {/* Each line's end, a ring the keyboard and the pointer reach: that record, in the panel. */}
+      <div ref={rings} role="group" aria-label="What this page shows, in the city" style={{ position: "fixed", left: 0, top: 0, width: 0, height: 0, zIndex: LOCAL_LAYERS.over + 1, opacity: 0 }} />
     </>
   );
 }

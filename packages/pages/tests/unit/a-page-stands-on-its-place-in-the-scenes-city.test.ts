@@ -1,53 +1,64 @@
 import { describe, expect, it } from "vitest";
-import { anchorOf, IN, meetingOf, standingCss, standingOn, stopAtZoom, stopsOf, zoomAt, type Box } from "../../src/one-place-geometry.js";
+import { altitudeAt, anchorOf, cameraBetween, cameraPutting, edgeToward, levelZooms, meetingOf, pageBox, panelBox, project, standingAt, standingCss, zoomAtAltitude, type Box } from "../../src/one-place-geometry.js";
 
 const desk = { width: 2000, height: 1185 };
 const phone = { width: 390, height: 844 };
 const tasks: Box = { x: 300, y: 380, width: 270, height: 140 };
 const lists: Box = { x: 580, y: 280, width: 180, height: 100 };
-const building: Box = { x: 420, y: 400, width: 30, height: 30 };
 const record = { type: "record", id: "t-deposit", kind: "task" } as const;
 
-describe("a page stands on its place in the Scene's city", () => {
-  it("has the page, the panel, the page stood back and the city, at a desk and on a phone; home has no panel", () => {
-    expect(stopsOf(record, desk.width)).toEqual(["page", "panel", "back", "city"]);
-    expect(stopsOf(record, phone.width)).toEqual(["page", "panel", "back", "city"]);
-    expect(stopsOf({ type: "home" }, desk.width)).toEqual(["page", "back", "city"]);
-    expect(stopsOf({ type: "overview" }, desk.width)).toEqual(["city"]);
+describe("a page stands on its place in the Scene's city, one altitude from page to city", () => {
+  it("reads the altitude off the camera's zoom, steadily between levels, and back", () => {
+    const zooms = levelZooms(record, desk);
+    expect(zooms[0]).toBeGreaterThan(zooms[1]);
+    expect(zooms[1]).toBeGreaterThan(zooms[2]);
+    expect(zooms[2]).toBeGreaterThan(zooms[3]);
+    for (const level of [0, 1, 2, 3]) expect(altitudeAt(zooms[level]!, zooms)).toBeCloseTo(level, 6);
+    // A little of a pinch is a little of the way.
+    expect(altitudeAt(zooms[1]! * 0.98, zooms)).toBeGreaterThan(1);
+    expect(altitudeAt(zooms[1]! * 0.98, zooms)).toBeLessThan(1.1);
+    for (const a of [0.3, 1.5, 2.7]) expect(altitudeAt(zoomAtAltitude(a, zooms), zooms)).toBeCloseTo(a, 6);
   });
 
-  it("asks the Scene's own camera to come closest at the panel, less stood back, and level over the city", () => {
-    expect(zoomAt("panel", record, desk.width)).toBeGreaterThan(zoomAt("back", record, desk.width));
-    expect(zoomAt("back", record, desk.width)).toBeGreaterThan(zoomAt("city", record, desk.width));
-    expect(zoomAt("city", record, desk.width)).toBe(1);
-    // The page waits where its first step begins, so stepping back begins in place.
-    expect(zoomAt("page", record, desk.width)).toBe(zoomAt("panel", record, desk.width));
+  it("narrows the page from the window to the panel through every box between, a column at a desk and a sheet from the foot on a phone", () => {
+    expect(pageBox(0, desk)).toEqual({ x: 0, y: 0, width: desk.width, height: desk.height });
+    expect(pageBox(1, desk)).toEqual(panelBox(desk));
+    const half = pageBox(0.5, desk);
+    expect(half.width).toBeLessThan(desk.width);
+    expect(half.width).toBeGreaterThan(panelBox(desk).width);
+    expect(panelBox(desk).x).toBeGreaterThan(desk.width / 2);
+    expect(panelBox(phone).y).toBeGreaterThan(phone.height / 3);
   });
 
-  it("moves one level for a zoom past a level's range, and never on a hand resting near its own", () => {
-    expect(stopAtZoom(2.1, "panel", record, desk.width)).toBe("panel");
-    expect(stopAtZoom(1.4, "panel", record, desk.width)).toBe("back");
-    expect(stopAtZoom(0.7, "back", record, desk.width)).toBe("city");
-    expect(stopAtZoom(2.6, "back", record, desk.width)).toBe("panel");
-    expect(stopAtZoom(2.9, "panel", record, desk.width)).toBe("page");
-    // Home stood back and its overview share a camera: zooming out is the overview.
-    expect(stopAtZoom(0.7, "back", { type: "home" }, desk.width)).toBe("city");
-  });
-
-  it("stands a record page's foot on its building's roof, turned a little at a desk and flat on a phone", () => {
-    const at = anchorOf(record, { building, district: tasks }, desk)!;
-    expect(at.x).toBe(building.x + building.width / 2);
-    const stood = standingOn("back", record, at, desk);
-    // Its foot's middle, where the transform turns it about, is moved onto the point.
-    expect(stood.x + desk.width / 2).toBe(at.x);
-    expect(stood.y + desk.height).toBeCloseTo(at.y - 4);
+  it("stands the page's foot on its roof at 2, turned at a desk and flat on a phone, and as it is at the panel", () => {
+    const roof = { x: 600, y: 700 };
+    const box = panelBox(desk);
+    expect(standingCss(standingAt(1, roof, box, desk), desk)).toBe("none");
+    const stood = standingAt(2, roof, box, desk);
+    expect(box.x + box.width / 2 + stood.x).toBeCloseTo(roof.x);
     expect(standingCss(stood, desk)).toContain("rotateY");
-    expect(standingCss(standingOn("back", record, at, phone), phone)).not.toContain("rotate");
-    expect(standingCss(IN, desk)).toBe("none");
+    expect(standingCss(standingAt(2, roof, panelBox(phone), phone), phone)).not.toContain("rotate");
+    // Into its building at the city, and gone.
+    expect(standingAt(3, roof, box, desk).opacity).toBe(0);
+  });
+
+  it("moves the camera so the place travels in a straight line on the window", () => {
+    const about = { x: 400, y: 300 };
+    const from = cameraPutting(about, { x: 100, y: 100 }, 1);
+    const to = cameraPutting(about, { x: 300, y: 500 }, 2);
+    const mid = project(cameraBetween(from, to, about, 0.5), about);
+    expect(mid.x).toBeCloseTo(200);
+    expect(mid.y).toBeCloseTo(300);
+  });
+
+  it("ends a line to a building under the page at the page's edge", () => {
+    const page = { x: 100, y: 100, width: 300, height: 400 };
+    expect(edgeToward({ x: 120, y: 300 }, page)).toEqual({ x: 100, y: 300 });
+    expect(edgeToward({ x: 50, y: 50 }, page)).toBeNull();
   });
 
   it("stands a place of one kind on its district, and of several where they meet, never inside one kind's district", () => {
-    const one = anchorOf({ type: "place", as: "the-lists", kinds: ["list"] }, { districts: [lists], all: [tasks, lists] }, desk)!;
+    const one = anchorOf({ type: "place", as: "the-lists", kinds: ["list"] }, { districts: [lists], all: [tasks, lists] })!;
     expect(one).toEqual({ x: lists.x + lists.width / 2, y: lists.y + lists.height / 2 });
     const far: Box = { x: 900, y: 600, width: 200, height: 100 };
     const meet = meetingOf([tasks, far], [tasks, lists, far])!;
@@ -55,8 +66,5 @@ describe("a page stands on its place in the Scene's city", () => {
       const inside = meet.x > box.x && meet.x < box.x + box.width && meet.y > box.y && meet.y < box.y + box.height;
       expect(inside).toBe(false);
     }
-    // Two districts whose middles meet inside a third: a plaza above the city instead.
-    const plaza = meetingOf([{ x: 0, y: 380, width: 100, height: 140 }, { x: 900, y: 380, width: 100, height: 140 }], [tasks, { x: 0, y: 380, width: 100, height: 140 }, { x: 900, y: 380, width: 100, height: 140 }])!;
-    expect(plaza.y).toBeLessThan(380);
   });
 });

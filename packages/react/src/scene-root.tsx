@@ -163,6 +163,20 @@ export interface SceneCamera {
   /** Pan the picture by so many pixels, within the camera's reach. */
   panBy(dx: number, dy: number): void;
   readonly range: { readonly min: number; readonly max: number };
+  /**
+   * THE CAMERA BETWEEN STOPS: what the hand (or a host) has done to the
+   * picture and not yet written into the view — grown by `s` about the
+   * ground's corner, then moved by (x, y) — painted as of this call. A
+   * point of the picture at `p` (the ground's pixels, as the view lays it
+   * out) is on screen at `p · s + (x, y)`.
+   */
+  live(): { readonly x: number; readonly y: number; readonly s: number };
+  /** Paint the camera between stops now, in this frame, outside React. */
+  liveTo(at: { readonly x: number; readonly y: number; readonly s: number }): void;
+  /** Write the camera between stops into the view: the city laid out again at that zoom and pan, nothing moving. */
+  commit(): boolean;
+  /** Whether the picture is between stops, or settling into one. */
+  moving(): boolean;
 }
 
 type Point = { x: number; y: number };
@@ -1147,6 +1161,17 @@ export function Scene<S extends AnySchema>({
       },
       panBy: (dx, dy) => nudge(dx, dy),
       range: { min: ZOOM_MIN, max: ZOOM_MAX },
+      live: () => {
+        shift.flush();
+        return shift.offset();
+      },
+      liveTo: (at) => shift.placeNow(at),
+      // Steered first, as a wheel is: the city laid out at the new zoom snaps there, where the move left it, rather than tweening from where it was.
+      commit: () => {
+        steer();
+        return shift.settle();
+      },
+      moving: () => shift.settling.current || shift.offset().s !== 1 || shift.offset().x !== 0 || shift.offset().y !== 0,
     };
   }
   panBy.current = (dx, dy) => {
