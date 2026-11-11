@@ -44,6 +44,8 @@ const picturesChunk = retryingImport(() => import("./pictures.js"));
 const mediaChunk = retryingImport(() => import("./media.js"));
 /* The faces the app lends its views, fetched with the first view a brand that lends any dresses. */
 const fontsChunk = retryingImport(() => import("./fonts.js"));
+/* How many worker views this page has mounted: each one's own name for the faces it declares is its count and a few random letters. */
+let viewsMounted = 0;
 /* Files dropped on what the view drew (FR-193), fetched with the first `data-drop` a view whose manifest accepts files draws. */
 const dropChunk = retryingImport(() => import("./drop.js"));
 /* A wheel, a drag and a pinch over what the view drew (0.1.42), fetched only for a view whose manifest says gestures and that listens for one. */
@@ -570,8 +572,11 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     const lendingNow = JSON.stringify([fonts, typography ?? null]);
     if (lendingNow === lent) return;
     lent = lendingNow;
-    /* A face of the view's own may not take a name the brand now lends or stacks: judged again against it. */
-    if (drawing && drawing.faces.length > 0) lendOwn();
+    /* A face of the view's own may not take a name the brand now lends: its sheets are judged again against it. */
+    if (drawing && sheetsGiven) {
+      drawing.style(sheetsGiven, lentFamilies());
+      lendOwn();
+    }
     lending += 1;
     const asked = lending;
     if (fonts.length === 0) {
@@ -591,10 +596,14 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   /*
    * THE FACES THE VIEW'S OWN STYLESHEETS DECLARE (HQ f-view-font-face-data):
    * `data:` fonts the open kit judged, loaded into the page from their bytes
-   * as the view's sheets change, or the faces the brand lends (whose names a
-   * view's own may not take), and what the open kit refused of them said
-   * once each (fonts.ts).
+   * under this view's own name for them (`faceScope`), so they draw here and
+   * nowhere else on the page, as the view's sheets change or the faces the
+   * brand lends (whose names a view's own may not take), and what the open
+   * kit refused of them said once each (fonts.ts).
    */
+  const faceScope = `graview-view-${(viewsMounted += 1).toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  let sheetsGiven: readonly string[] | undefined;
+  const lentFamilies = () => (options.brand?.()?.views?.fonts ?? []).map((font) => font.family);
   let owning = 0;
   let giveOwnBack: (() => void) | undefined;
   const toldFaces = new Set<string>();
@@ -614,13 +623,10 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       giveOwnBack = undefined;
       return;
     }
-    const brand = options.brand?.();
-    const lent = (brand?.views?.fonts ?? []).map((font) => font.family);
-    const typography = brand?.typography;
     void fontsChunk().then(({ loadViewFaces, viewFaceRefusedWords }) => {
       if (asked !== owning) return;
       for (const one of refused) sayFace(viewFaceRefusedWords(one));
-      giveOwnBack = loadViewFaces(document, faces, { lent, ...(typography ? { typography } : {}) }, sayFace, giveOwnBack);
+      giveOwnBack = loadViewFaces(document, faces, { scope: faceScope }, sayFace, giveOwnBack);
     });
   };
   let pushed = "";
@@ -750,7 +756,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       if (failed) return;
       if (!drawing) return void waiting.push(one);
       const live = drawing;
-      const within = budget.draw((spent) => (one[0] === "render" ? live.apply(one[1], spent) : (live.style(one[1]), true)));
+      if (one[0] === "style") sheetsGiven = one[1];
+      const within = budget.draw((spent) => (one[0] === "render" ? live.apply(one[1], spent) : (live.style(one[1], lentFamilies()), true)));
       if (!within) return fail("slow", drawnTooLong());
       if (one[0] === "render") refill();
       else lendOwn();
@@ -1005,6 +1012,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     const toldLinks = new Set<string>();
     drawing = createOpenDrawing(shadow, {
       origin: options.origin ?? window.location.origin,
+      faceScope,
       link: (value) => judgeLink(value, { handed: handed(), ...(options.links ? { origins: options.links.origins } : {}) }),
       ...(options.asset ? { asset: options.asset } : {}),
       ...(options.images ? { imageOrigins: options.images.origins } : {}),

@@ -110,14 +110,36 @@ function keptOf(css: string): string[] {
   return [...new Set([...css.slice(open + 1).matchAll(/(?:^|;)\s*(-{0,2}[a-zA-Z][\w-]*)\s*:/g)].map((one) => one[1]!))];
 }
 
+/** A template's `${…}` in a stylesheet a script writes. */
+const TEMPLATED = /\$\{(?:[^{}]|\{[^{}]*\})*\}/g;
+
+/** The faces of a sheet whose own text has a `${…}`: their families, lowercased, and whether one names no family the text says. */
+function templatedFaces(written: string): { readonly families: ReadonlySet<string>; readonly unnamed: boolean } {
+  const families = new Set<string>();
+  let unnamed = false;
+  /* The same rules as the sheet read with "0", with a mark where each `${…}` was that holds no bracket. */
+  for (const rule of topRules(written.replace(TEMPLATED, ""))) {
+    if (!/^@font-face\b/i.test(rule.head) || !rule.text.includes("")) continue;
+    const family = /font-family\s*:\s*(?:"([^"]*)"|'([^']*)'|([^;}"']*[^;}"'\s]))\s*[;}]/i.exec(rule.text);
+    const name = family ? (family[1] ?? family[2] ?? family[3] ?? "").trim() : "";
+    if (name === "") unnamed = true;
+    else families.add(name.toLowerCase());
+  }
+  return { families, unnamed };
+}
+
 /** What the host's sanitizer refuses of a script's stylesheets, each with the rule it was in and what of that rule was kept. */
 function styleRefusalsOf(source: string): StyleRefusal[] {
   const found: StyleRefusal[] = [];
   for (const sheet of styleStringsOf(source)) {
     const written = source.slice(sheet.start, sheet.end);
-    const css = written.replace(/\$\{(?:[^{}]|\{[^{}]*\})*\}/g, "0");
-    /* A view's own sheet, whose data: faces are kept (HQ f-view-font-face-data). A face whose bytes come in a ${…} is read here as "0": not judged by what stands in for it. */
-    const faced = (refusals: readonly CssRefusal[]) => (css === written ? refusals : refusals.filter((one) => one.reason !== "font-face"));
+    const css = written.replace(TEMPLATED, "0");
+    /*
+     * A view's own sheet, whose data: faces are kept (HQ f-view-font-face-data). A face whose own text has a ${…} — its bytes from a
+     * constant, say — is read here with "0" standing in: what is refused of that face is not said, and every other face's is.
+     */
+    const unread = templatedFaces(written);
+    const faced = (refusals: readonly CssRefusal[]) => (unread.families.size === 0 && !unread.unnamed ? refusals : refusals.filter((one) => one.reason !== "font-face" || !(one.family !== undefined ? unread.families.has(one.family.toLowerCase()) : unread.unnamed)));
     const whole = faced(sanitizeStylesheet(css, undefined, { faces: true }).refused);
     if (whole.length === 0) continue;
     if (whole.some((one) => one.reason === "size")) {

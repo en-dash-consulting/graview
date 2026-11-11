@@ -1,5 +1,5 @@
 {
   "budget": "Cloud's worker",
-  "bytes": 24114,
-  "note": "Raised when a view's stylesheet came to declare its own face as a data: font (HQ f-view-font-face-data): the worker runs a view headless and judges its sheets with core's sanitizer, which now reads an @font-face of a data: font (css/faces.ts, 12.2 KB: a face's family, sources decoded and counted, descriptors, and the sentence each refusal is said in, ending with its finding code), and the headless judge says a face named as one the app lends (own-faces.ts). Measured at 2_662_577 B against 2_638_463 B for the batch it is built on: 24_114 more."
+  "bytes": 27105,
+  "note": "Raised when a view's stylesheet came to declare its own face as a data: font (HQ f-view-font-face-data): the worker runs a view headless and judges its sheets with core's sanitizer, which now reads an @font-face of a data: font (css/faces.ts: a face's family, sources decoded and counted, descriptors; css/faces-words.ts: the sentence each refusal is said in, ending with its finding code), and writes a face's family as the view's own name for it. Measured at 2_665_568 B against 2_638_463 B for the batch it is built on: 27_105 more."
 }

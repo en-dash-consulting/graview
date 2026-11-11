@@ -36,6 +36,8 @@ export interface DrawTranscriptOptions {
   readonly asset?: (path: string) => string | undefined;
   readonly link?: (value: string) => string | undefined;
   /** The app's stylesheet for every view (`brand.views.css`, Roadmap f-app-wide-view-theme), in the layer that wins over the view's own, as the page draws it; its refusals are the checker's to say, not the view's. */
+  /** The families the app lends its views (`brand.views.fonts`): a face of the view's own may not take one, as on the page. */
+  readonly lent?: readonly string[];
   readonly theme?: string;
 }
 
@@ -56,7 +58,7 @@ export function drawTranscript(renders: readonly unknown[], sheets: readonly str
   let kept = "";
   let faces: readonly ViewFace[] = [];
   if (sheets) {
-    const judged = sanitizeStylesheets(sheets, undefined, { faces: true });
+    const judged = sanitizeStylesheets(sheets, undefined, { faces: { scope: "graview-view", ...(options.lent ? { lent: options.lent } : {}) } });
     kept = judged.css;
     faces = judged.faces;
     for (const one of judged.refused) refused.push({ reason: "css", name: "stylesheet", css: one });

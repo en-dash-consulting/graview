@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-11T06:27:33.975Z",
+  "at": "2026-11-11T07:39:35.836Z",
   "transport": "brand",
   "engine": "chromium",
   "policy": {
@@ -32,17 +32,24 @@
         "lentFont": "\"Rock Face\", serif",
         "faces": [],
         "balooFaces": [],
-        "bigFaces": [
+        "bigFaces": [],
+        "ownBigFaces": [
           "loaded"
         ],
         "ownFaces": [
           "loaded"
         ],
-        "ownFont": "\"Own Face\", monospace",
-        "ownWidth": 138.203125,
-        "ownSheet": "@layer graview-view {\n.mast { display: flex; align-items: center; gap: 12px; padding: 12px; }\n.mast h2 { margin: 0; font-family: var(--graview-font-display); border-radius: var(--graview-radius); border: 1px solid var(--graview-edge); padding: 4px 8px; }\n.mast .lent { color: rgb(1, 2, 3); font-family: monospace; }\n.mast .own { font-family: \"Own Face\", monospace; }\n.mast .big { font-family: \"Big Face\", monospace; }\n}",
-        "balooWidth": 169.234375,
-        "monoWidth": 169.234375,
+        "ownFont": "\"graview-view-1lnn0gm Own Face\", monospace",
+        "ownWidth": 118.046875,
+        "ownInlineWidth": 118.046875,
+        "ownFamilies": [
+          "graview-view-1lnn0gm Own Face"
+        ],
+        "hostOwnWidth": 211.234375,
+        "hostMonoWidth": 211.234375,
+        "ownSheet": "@layer graview-view {\n.mast { display: flex; align-items: center; gap: 12px; padding: 12px; }\n.mast h2 { margin: 0; font-family: var(--graview-font-display); border-radius: var(--graview-radius); border: 1px solid var(--graview-edge); padding: 4px 8px; }\n.mast .lent { color: rgb(1, 2, 3); font-family: monospace; }\n.mast .own { font-family: \"graview-view-1lnn0gm Own Face\", monospace; }\n.mast .big { font-family: \"graview-view-1lnn0gm Big Face\", monospace; }\n}",
+        "balooWidth": 144.546875,
+        "monoWidth": 144.546875,
         "motion": "fade",
         "radiusSaid": "4px",
         "pushes": 2,
@@ -52,7 +59,7 @@
           "font": "Georgia, \"Times New Roman\", serif"
         },
         "marked": false,
-        "src": "blob:null/7c2573cd-0be4-447c-af06-9918600e2793",
+        "src": "blob:null/6fc36c6c-19a1-4f2e-bf4f-89c0fe988cef",
         "bytes": 192
       }
     },
@@ -77,7 +84,7 @@
     "the logo is handed as a blob: URL of the page itself, which the policy lets an image load from": {
       "ok": true,
       "detail": {
-        "src": "blob:null/7c2573cd-0be4-447c-af06-9918600e2793"
+        "src": "blob:null/6fc36c6c-19a1-4f2e-bf4f-89c0fe988cef"
       }
     },
     "the view is drawn with the app's stylesheet for every view, a sheet of the host's in the layer after the view's own: the heading takes its letter-spacing and its capitals, and the theme's padding wins where both say one": {
@@ -105,9 +112,9 @@
         "faces": [
           "loaded"
         ],
-        "font": "\"Own Face\", monospace",
-        "own": 138.203125,
-        "mono": 169.234375,
+        "font": "\"graview-view-1lnn0gm Own Face\", monospace",
+        "own": 118.046875,
+        "mono": 144.546875,
         "problems": []
       }
     },
@@ -116,6 +123,18 @@
       "detail": {
         "sheet": "@layer graview-view {\n.mast { display: flex; align-items: center; gap: 12px; padding: 12px; }\n.mast h2 { margin: 0; font-family: var(--graview-font-display); border-radius: var(--graview-radius); bord",
         "data": []
+      }
+    },
+    "the view's own face draws in the view alone: its style attribute naming it is drawn in it, while the host page's own text that names the same family is drawn as it was, in its fallback, and the page holds no face by the name the view wrote": {
+      "ok": true,
+      "detail": {
+        "inline": 118.046875,
+        "own": 118.046875,
+        "hostOwn": 211.234375,
+        "hostMono": 211.234375,
+        "families": [
+          "graview-view-1lnn0gm Own Face"
+        ]
       }
     },
     "and, the brand asking for it, its root is set to fade between records": {
@@ -148,17 +167,24 @@
         "lentFont": "monospace",
         "faces": [],
         "balooFaces": [],
-        "bigFaces": [
+        "bigFaces": [],
+        "ownBigFaces": [
           "loaded"
         ],
         "ownFaces": [
           "loaded"
         ],
-        "ownFont": "\"Own Face\", monospace",
-        "ownWidth": 130.65625,
-        "ownSheet": "@layer graview-view {\n.mast { display: flex; align-items: center; gap: 12px; padding: 12px; }\n.mast h2 { margin: 0; font-family: var(--graview-font-display); border-radius: var(--graview-radius); border: 1px solid var(--graview-edge); padding: 4px 8px; }\n.mast .lent { color: rgb(1, 2, 3); font-family: monospace; }\n.mast .own { font-family: \"Own Face\", monospace; }\n.mast .big { font-family: \"Big Face\", monospace; }\n}",
-        "balooWidth": 145.484375,
-        "monoWidth": 160,
+        "ownFont": "\"graview-view-1lnn0gm Own Face\", monospace",
+        "ownWidth": 113.609375,
+        "ownInlineWidth": 113.609375,
+        "ownFamilies": [
+          "graview-view-1lnn0gm Own Face"
+        ],
+        "hostOwnWidth": 211.234375,
+        "hostMonoWidth": 211.234375,
+        "ownSheet": "@layer graview-view {\n.mast { display: flex; align-items: center; gap: 12px; padding: 12px; }\n.mast h2 { margin: 0; font-family: var(--graview-font-display); border-radius: var(--graview-radius); border: 1px solid var(--graview-edge); padding: 4px 8px; }\n.mast .lent { color: rgb(1, 2, 3); font-family: monospace; }\n.mast .own { font-family: \"graview-view-1lnn0gm Own Face\", monospace; }\n.mast .big { font-family: \"graview-view-1lnn0gm Big Face\", monospace; }\n}",
+        "balooWidth": 126.484375,
+        "monoWidth": 139.109375,
         "motion": null,
         "radiusSaid": "16px",
         "pushes": 4,
@@ -168,7 +194,7 @@
           "font": "\"Courier New\", Courier, monospace"
         },
         "marked": true,
-        "src": "blob:null/8d41badb-bf99-46c1-9c1e-3984e6ce7249",
+        "src": "blob:null/8080757c-614c-426b-be12-1425f2c2151c",
         "bytes": 136
       }
     },
@@ -213,7 +239,7 @@
     "the last logo's blob: URL is let go once the new one is drawn": {
       "ok": true,
       "detail": {
-        "url": "blob:null/7c2573cd-0be4-447c-af06-9918600e2793"
+        "url": "blob:null/6fc36c6c-19a1-4f2e-bf4f-89c0fe988cef"
       }
     },
     "nothing else was requested": {

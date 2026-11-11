@@ -73,15 +73,27 @@ export function brandFamilies(typography: { readonly body?: unknown; readonly di
 }
 
 /**
- * Why a face may not be called this, or null. A face lent to views and a
- * face a view's own stylesheet declares are both the page's once loaded, so
- * both are held to it. `taken`: the families the brand's own stacks name.
+ * Why a name is no plain family, or null: words of letters, digits and
+ * hyphens, and no name CSS keeps for itself. A face a view's own stylesheet
+ * declares is held to this alone, since it is drawn under a name of the
+ * view's on the page (faces.ts).
  */
-export function viewFamilyProblem(family: unknown, taken: readonly string[] = []): string | null {
+export function familyNameProblem(family: unknown): string | null {
   /* Single spaces between words alone: Firefox reads "Arial " as Arial, so any other whitespace would get a name past what follows. */
   if (typeof family !== "string" || family.length > 60 || !/^[A-Za-z0-9][A-Za-z0-9-]*(?: [A-Za-z0-9-]+)*$/.test(family)) return "its family is words of letters, digits and hyphens with single spaces between them, at most 60 characters";
   if (CSS_WIDE.has(family.toLowerCase())) return `"${family}" is a name CSS keeps for itself`;
-  const name = family.toLowerCase();
+  return null;
+}
+
+/**
+ * Why a face lent to views may not be called this, or null: it is the
+ * page's once loaded, so it never takes a name the page already draws in.
+ * `taken`: the families the brand's own stacks name.
+ */
+export function viewFamilyProblem(family: unknown, taken: readonly string[] = []): string | null {
+  const plain = familyNameProblem(family);
+  if (plain) return plain;
+  const name = (family as string).toLowerCase();
   if (VIEW_FONTS_NOT_NAMED.includes(name) || name.startsWith("ui-") || taken.some((one) => one.toLowerCase() === name)) return `"${family}" would replace a face the page already draws in: call it something of its own`;
   return null;
 }

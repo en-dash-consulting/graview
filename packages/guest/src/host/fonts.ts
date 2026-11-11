@@ -1,6 +1,5 @@
-import { brandFamilies, VIEW_FONT_MOST_BYTES, VIEW_FONTS_MOST, viewFaceRefusedWords, viewFamilyProblem, viewFontProblem, viewFontSource, type ViewFace, type ViewFont } from "@graview/core/css";
+import { VIEW_FONT_MOST_BYTES, VIEW_FONTS_MOST, viewFaceFamily, viewFontProblem, viewFontSource, brandFamilies, type ViewFace, type ViewFont } from "@graview/core/css";
 import { imageOriginsOf } from "./open-judge.js";
-import { lentNamed } from "./own-faces.js";
 
 /* A view's own face refused by the open kit, said as the page says it: fetched with the faces (view.ts). */
 export { viewFaceRefusedWords } from "@graview/core/css";
@@ -118,6 +117,8 @@ interface Lending {
 interface Lent {
   readonly url: string;
   readonly shown: string;
+  /** A face given as bytes: they, so the same bytes given again are known as the one file, byte for byte. */
+  readonly bytes?: readonly ArrayBuffer[];
   readonly stop: AbortController;
   readonly holders: Map<Lending, string>;
   readonly settled: Promise<void>;
@@ -204,18 +205,21 @@ export function loadViewFonts(document: Document, fonts: readonly ViewFont[], op
 
 /** A view's own face as said: the family as its stylesheet declares it. */
 const own = (family: string) => `The view's own face "${family}"`;
-/** Bytes as an identity a file is known by on the page: two views declaring one face from the same bytes hold one file. */
-function digestOf(face: ViewFace): string {
-  let hash = 0x811c9dc5;
-  for (const source of face.sources) for (const byte of source.bytes) hash = Math.imul(hash ^ byte, 0x01000193) >>> 0;
-  return `own:${face.size}:${hash.toString(16)}`;
+/** Whether two faces' sources are the same bytes, compared whole: a file given by its address has none, and is known by that. */
+function sameBytes(had: readonly ArrayBuffer[] | undefined, given: readonly ArrayBuffer[] | undefined): boolean {
+  if (!had || !given) return had === given;
+  if (had.length !== given.length) return false;
+  return had.every((one, at) => {
+    const other = given[at]!;
+    if (one.byteLength !== other.byteLength) return false;
+    const [a, b] = [new Uint8Array(one), new Uint8Array(other)];
+    for (let i = 0; i < a.length; i += 1) if (a[i] !== b[i]) return false;
+    return true;
+  });
 }
-
-/** Where a view's own faces are judged against what the page already has: the families the app lends its views, and its own stacks. */
+/** Where a view's own faces are loaded: under the view's own name on the page (`faceScope`), the open kit having judged them, and the app's lent names refused there. */
 export interface ViewFacesOptions {
-  /** The families the app lends its views (`brand.views.fonts`): of one name, the app's face is drawn. */
-  readonly lent?: readonly string[];
-  readonly typography?: ViewFontsOptions["typography"];
+  readonly scope: string;
 }
 
 /**
@@ -223,33 +227,24 @@ export interface ViewFacesOptions {
  * f-view-font-face-data): each a `data:` font the open kit judged and
  * decoded (`@graview/core/css`), made a `FontFace` from its bytes here —
  * never from an address, so nothing is fetched and the page's policy for
- * fonts is not asked — and held as a lent face is: one file a name on the
- * page, the last lent drawn and the views lending it told which, and gone
- * when the last view holding it does. A face named as one the app lends its
- * views is not loaded (own-faces.ts), nor one the brand's own stacks name.
- * What it answers gives them back; `replacing` as for `loadViewFonts`.
+ * fonts is not asked — under the view's own name for it
+ * (`viewFaceFamily(scope, family)`), which its sheets were written to name:
+ * it draws in that view and nowhere else on the page, whatever it is
+ * called, and gone when the view is. The same view giving the same bytes
+ * again holds the one file. What it answers gives them back; `replacing`
+ * as for `loadViewFonts`.
  */
 export function loadViewFaces(document: Document, faces: readonly ViewFace[], options: ViewFacesOptions, say: (said: string) => void, replacing?: () => void): () => void {
-  const lentHere = new Set(lentNamed(faces, options.lent));
-  const taken = brandFamilies(options.typography);
   const asks: Ask[] = [];
   for (const face of faces) {
-    if (lentHere.has(face)) {
-      say(viewFaceRefusedWords({ reason: "font-face", name: "lent", family: face.family }));
-      continue;
-    }
-    const problem = viewFamilyProblem(face.family, taken);
-    if (problem) {
-      say(viewFaceRefusedWords({ reason: "font-face", name: "family", family: face.family, said: problem }));
-      continue;
-    }
     const weight = face.weight === undefined ? undefined : face.weight === "normal" ? "400" : face.weight === "bold" ? "700" : face.weight;
+    const family = viewFaceFamily(options.scope, face.family);
     asks.push({
-      key: JSON.stringify([face.family.toLowerCase(), weight ?? "400", face.style ?? "normal", face.stretch ?? "normal", face.unicodeRange ?? ""]),
-      family: face.family,
+      key: JSON.stringify([family.toLowerCase(), weight ?? "400", face.style ?? "normal", face.stretch ?? "normal", face.unicodeRange ?? ""]),
+      family,
       face: own(face.family),
-      url: digestOf(face),
-      shown: `the ${(face.size / 1_000).toLocaleString("en-US", { maximumFractionDigits: 1 })} KB data: font a view's stylesheet declared last`,
+      url: `own:${face.size}`,
+      shown: `the ${(face.size / 1_000).toLocaleString("en-US", { maximumFractionDigits: 1 })} KB data: font the view's stylesheet declared last`,
       descriptors: { display: (face.display ?? "swap") as FontDisplay, ...(weight ? { weight } : {}), ...(face.style ? { style: face.style } : {}), ...(face.stretch ? { stretch: face.stretch } : {}), ...(face.unicodeRange ? { unicodeRange: face.unicodeRange } : {}) },
       source: { bytes: face.sources.map((one) => one.bytes.slice().buffer as ArrayBuffer) },
     });
@@ -285,7 +280,8 @@ function lend(document: Document, asks: readonly Ask[], say: (said: string) => v
     const key = ask.key;
     const name = names.get(key) ?? { files: [] };
     names.set(key, name);
-    const had = name.files.find((one) => one.url === ask.url);
+    const given = "bytes" in ask.source ? ask.source.bytes : undefined;
+    const had = name.files.find((one) => one.url === ask.url && sameBytes(one.bytes, given));
     if (had) {
       /* Lent again, it is the last lent. */
       had.holders.set(lending, ask.face);
@@ -297,7 +293,7 @@ function lend(document: Document, asks: readonly Ask[], say: (said: string) => v
     }
     let settle = () => {};
     const settled = new Promise<void>((resolve) => (settle = resolve));
-    const one: Lent = { url: ask.url, shown: ask.shown, stop: new AbortController(), holders: new Map([[lending, ask.face]]), settled, settle, drawn: false };
+    const one: Lent = { url: ask.url, shown: ask.shown, ...(given ? { bytes: given } : {}), stop: new AbortController(), holders: new Map([[lending, ask.face]]), settled, settle, drawn: false };
     name.files.push(one);
     mine.push({ name, one });
     /* Said to every view holding it, and let go, so a view that lends it again tries again. */

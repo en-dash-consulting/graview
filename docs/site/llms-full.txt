@@ -5866,7 +5866,7 @@ A control of your own keeps its role and state, and every `aria-*`: `<span role=
 
 Shared rules go in `brand.views.css` (`graview-brand`). **The theme wins**: its cascade layer is after the view's own sheets, so its rule wins at any specificity. A view's `!important` and a `style` attribute go past it; a rule on an ancestor is only inherited.
 
-**A web face** the brand lends: `views.fonts: [{ family: "Baloo 2", src: "/graview/assets/<sha256>.woff2", weight: "400 800" }]`, then `font-family: "Baloo 2", var(--graview-font-body)`: an app's file of 2 MB at most, or one on an origin in `fonts.origins`. **The view's own face** is a `data:` font: `@font-face { font-family: "Shout"; src: url(data:font/woff2;base64,…) }`, 50 KB a face, 200 KB a view, decoded; never an address or `local()`. Neither takes a system or brand face's name; under a lent face's name, the app's draws. Of two files a name, the last lent draws. What is refused is said, with its code.
+**A web face** the brand lends: `views.fonts: [{ family: "Baloo 2", src: "/graview/assets/<sha256>.woff2", weight: "400 800" }]`, then `font-family: "Baloo 2", var(--graview-font-body)`: an app's file of 2 MB at most, or one on an origin in `fonts.origins`. **The view's own face** is a `data:` font: `@font-face { font-family: "Shout"; src: url(data:font/woff2;base64,…) }`, 50 KB a face, 200 KB a view, decoded; never an address or `local()`. It draws in this view alone, whatever its name; under a lent face's name, the app's draws. What is refused is said, with its code.
 
 ### Its box, and the gutter
 

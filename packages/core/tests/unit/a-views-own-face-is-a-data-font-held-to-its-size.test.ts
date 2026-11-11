@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sanitizeStylesheet, sanitizeStylesheets, tokenize, VIEW_FACE_MOST_BYTES, VIEW_FACES_MOST_BYTES, viewFaceRefusedWords, type CssRefusal } from "../../src/css.js";
+import { sanitizeDeclarations, sanitizeStylesheet, sanitizeStylesheets, sanitizeValue, tokenize, VIEW_FACE_MOST_BYTES, VIEW_FACES_MOST_BYTES, VIEW_SHEETS_MOST, viewFaceRefusedWords, type CssRefusal } from "../../src/css.js";
 
 /**
  * A VIEW'S OWN FACE IS A `data:` FONT, HELD TO ITS SIZE (HQ
@@ -107,7 +107,7 @@ describe("a view's own face", () => {
     expect(viewFaceRefusedWords(faceRefusals(said.refused)[0]!)).toMatch(/font-family, src, font-weight, font-style, font-display, unicode-range and font-stretch.*\(view-font-face-descriptor\)\.$/);
   });
 
-  it("is called by a plain name, so nothing in it breaks out of the rule or takes a face the page already draws in", () => {
+  it("is called by a plain name, so nothing in it breaks out of the rule, and no name CSS keeps for itself", () => {
     for (const family of [`"Shout\\"; } body { color: red"`, `"Shout</style>"`, `"a\\a b"`, `"${"x".repeat(61)}"`, `Shout, serif`, `var(--x)`, `""`]) {
       const said = sanitizeStylesheet(face(`font-family: ${family}; src: ${data(64)}`), undefined, views);
       expect(said.faces, family).toEqual([]);
@@ -115,7 +115,7 @@ describe("a view's own face", () => {
       expect(viewFaceRefusedWords(faceRefusals(said.refused)[0]!)).toMatch(/\(view-font-face-family\)\.$/);
       expect(said.css).not.toMatch(/red|style/);
     }
-    for (const family of ["Arial", "serif", "Montserrat", "ui-rounded", "inherit"]) {
+    for (const family of ["serif", "sans-serif", "inherit", "system-ui"]) {
       const said = sanitizeStylesheet(face(`font-family: ${family}; src: ${data(64)}`), undefined, views);
       expect(said.faces, family).toEqual([]);
       expect(faceRefusals(said.refused), family).toEqual([expect.objectContaining({ name: "family" })]);
@@ -143,5 +143,59 @@ describe("a view's own face", () => {
     const said = sanitizeStylesheet(face(`font-family: Shout; src: ${data(64)}`));
     expect(said.faces).toEqual([]);
     expect(said.refused).toEqual([{ reason: "at-rule", name: "@font-face" }]);
+  });
+});
+
+describe("a view's own face, on its page", () => {
+  const scoped = { faces: { scope: "gv-7" } } as const;
+
+  it("is drawn under the view's own name for it: every font-family and font that names it names that, and nothing else is renamed", () => {
+    const said = sanitizeStylesheets([face(`font-family: Lato; src: ${data(64)}`), `.a { font-family: Lato, "Noto Sans", serif } .b { font: 700 2rem/1.1 lato } .c { font-family: "LATO" } .d { font-family: var(--x) } .e { content: "Lato" }`], undefined, scoped);
+    expect(said.faces.map((one) => one.family)).toEqual(["Lato"]);
+    expect(said.css).toBe(`.a { font-family: "gv-7 Lato", "Noto Sans", serif; }\n.b { font: 700 2rem/1.1 "gv-7 Lato"; }\n.c { font-family: "gv-7 Lato"; }\n.d { font-family: var(--x); }\n.e { content: "Lato"; }`);
+  });
+
+  it("is renamed in a style attribute and a presentation attribute too, as the host hands their names", () => {
+    const rename = new Map([["shout display", "gv-7 Shout Display"]]);
+    expect(sanitizeDeclarations("font-family: Shout Display, serif; color: red", undefined, { rename }).css).toBe(`font-family: "gv-7 Shout Display", serif; color: red`);
+    expect(sanitizeValue("font-family", "Shout Display", { rename })).toEqual({ value: `"gv-7 Shout Display"` });
+    expect(sanitizeValue("font-family", "Shout Display")).toEqual({ value: "Shout Display" });
+  });
+
+  it("may be called any plain name — a system face's, a well-known web face's — since it draws in its view alone", () => {
+    for (const family of ["Arial", "Lato", "Inter", "Apple Color Emoji", "Montserrat"]) expect(sanitizeStylesheet(face(`font-family: "${family}"; src: ${data(64)}`), undefined, scoped).faces, family).toHaveLength(1);
+  });
+
+  it("is not kept under a family the app lends its views, nor renamed there, so the view's text in it is drawn in the app's", () => {
+    const said = sanitizeStylesheets([face(`font-family: "Rock Face"; src: ${data(64)}`), `.a { font-family: "Rock Face", serif }`], undefined, { faces: { scope: "gv-7", lent: ["rock face"] } });
+    expect(said.faces).toEqual([]);
+    expect(faceRefusals(said.refused)).toEqual([{ reason: "font-face", name: "lent", family: "Rock Face" }]);
+    expect(viewFaceRefusedWords(faceRefusals(said.refused)[0]!)).toMatch(/app's face is the one drawn.*\(view-font-face-lent\)\.$/);
+    expect(said.css).toBe(`.a { font-family: "Rock Face", serif; }`);
+  });
+});
+
+describe("a view's stylesheets, faces and all, are still held to a length", () => {
+  it("counts the text of a face it refused toward the sheet's length, and says the face as well as the length", () => {
+    const refused = sanitizeStylesheet(face(`font-family: Shout; src: url(data:image/png;base64,${font(60_000)})`), undefined, views);
+    expect(refused.refused).toEqual([{ reason: "size" }, { reason: "font-face", name: "type", family: "Shout", said: "image/png" }]);
+  });
+
+  it("reads many sheets of refused data: strings only to one allowance between them, refusing the rest before it is parsed", () => {
+    const sheet = face(`font-family: Shout; src: url(data:image/png;base64,${"A".repeat(520_000)})`);
+    const began = performance.now();
+    const said = sanitizeStylesheets(Array.from({ length: 20 }, () => sheet), undefined, views);
+    expect(performance.now() - began).toBeLessThan(400);
+    expect(said.faces).toEqual([]);
+    expect(said.css).toBe("");
+    expect(said.refused.filter((one) => one.reason === "size")).toHaveLength(20);
+    /* Only the first was read: the others would take what is read past the one allowance. */
+    expect(said.refused.filter((one) => one.reason === "font-face")).toHaveLength(1);
+  });
+
+  it(`reads at most ${VIEW_SHEETS_MOST} sheets, and says it left the rest`, () => {
+    const said = sanitizeStylesheets(Array.from({ length: VIEW_SHEETS_MOST + 5 }, (_, at) => `.x${at} { color: red }`), undefined, views);
+    expect(said.css.split("\n")).toHaveLength(VIEW_SHEETS_MOST);
+    expect(said.refused).toEqual([{ reason: "size", name: "sheets" }]);
   });
 });

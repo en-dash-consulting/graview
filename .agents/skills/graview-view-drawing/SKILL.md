@@ -68,10 +68,9 @@ on an ancestor is only inherited.
 "Baloo 2", var(--graview-font-body)`: an app's file of 2 MB at most, or one
 on an origin in `fonts.origins`. **The view's own face** is a `data:` font:
 `@font-face { font-family: "Shout"; src: url(data:font/woff2;base64,…) }`,
-50 KB a face, 200 KB a view, decoded; never an address or `local()`.
-Neither takes a system or brand face's name; under a lent face's name,
-the app's draws. Of two files a name, the last lent draws. What is refused is
-said, with its code.
+50 KB a face, 200 KB a view, decoded; never an address or `local()`. It
+draws in this view alone, whatever its name; under a lent face's name, the
+app's draws. What is refused is said, with its code.
 
 ## Its box, and the gutter
 

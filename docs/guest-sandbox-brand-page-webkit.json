@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-11T06:27:28.950Z",
+  "at": "2026-11-11T07:39:30.868Z",
   "transport": "brand",
   "engine": "webkit",
   "policy": "the app's own page, with no content security policy",
@@ -33,14 +33,21 @@
           "loaded"
         ],
         "bigFaces": [],
+        "ownBigFaces": [],
         "ownFaces": [
           "loaded"
         ],
-        "ownFont": "\"Own Face\", monospace",
-        "ownWidth": 134.4375,
-        "ownSheet": "@layer graview-view {\n.mast { display: flex; align-items: center; gap: 12px; padding: 12px; }\n.mast h2 { margin: 0; font-family: var(--graview-font-display); border-radius: var(--graview-radius); border: 1px solid var(--graview-edge); padding: 4px 8px; }\n.mast .lent { color: rgb(1, 2, 3); font-family: monospace; }\n.mast .own { font-family: \"Own Face\", monospace; }\n.mast .big { font-family: \"Big Face\", monospace; }\n}",
-        "balooWidth": 138.078125,
-        "monoWidth": 165.140625,
+        "ownFont": "\"graview-view-1x77yg3 Own Face\", monospace",
+        "ownWidth": 115.25,
+        "ownInlineWidth": 115.25,
+        "ownFamilies": [
+          "graview-view-1x77yg3 Own Face"
+        ],
+        "hostOwnWidth": 211.921875,
+        "hostMonoWidth": 211.921875,
+        "ownSheet": "@layer graview-view {\n.mast { display: flex; align-items: center; gap: 12px; padding: 12px; }\n.mast h2 { margin: 0; font-family: var(--graview-font-display); border-radius: var(--graview-radius); border: 1px solid var(--graview-edge); padding: 4px 8px; }\n.mast .lent { color: rgb(1, 2, 3); font-family: monospace; }\n.mast .own { font-family: \"graview-view-1x77yg3 Own Face\", monospace; }\n.mast .big { font-family: \"Big Face\", monospace; }\n}",
+        "balooWidth": 118.375,
+        "monoWidth": 141.578125,
         "motion": "fade",
         "radiusSaid": "4px",
         "pushes": 2,
@@ -50,7 +57,7 @@
           "font": "Georgia, \"Times New Roman\", serif"
         },
         "marked": false,
-        "src": "blob:http://127.0.0.1:5892/95f5d8c4-8a6e-478e-8602-69f4c71e4",
+        "src": "blob:http://127.0.0.1:5892/6fc7c7ba-06d4-4d29-bdf8-e6a8cbd14",
         "bytes": 192
       }
     },
@@ -75,7 +82,7 @@
     "the logo is handed as a blob: URL of the page itself, which the policy lets an image load from": {
       "ok": true,
       "detail": {
-        "src": "blob:http://127.0.0.1:5892/95f5d8c4-8a6e-478e-8602-69f4c71e4"
+        "src": "blob:http://127.0.0.1:5892/6fc7c7ba-06d4-4d29-bdf8-e6a8cbd14"
       }
     },
     "the view is drawn with the app's stylesheet for every view, a sheet of the host's in the layer after the view's own: the heading takes its letter-spacing and its capitals, and the theme's padding wins where both say one": {
@@ -120,8 +127,8 @@
         "faces": [
           "loaded"
         ],
-        "baloo": 138.078125,
-        "mono": 165.140625,
+        "baloo": 118.375,
+        "mono": 141.578125,
         "problems": [
           "The app's face \"Big Face\" for its views is not loaded: its file, /graview/assets/892f2fe04ec507da2fe21530851fc8c60ae8a0d9b126b61d7168fd5dbb209a1b.woff2, is more than 2 MB, the most a file the app holds may be as a face for its views.",
           "Not loaded: the @font-face \"Big Face\", since the app lends its views a face by that name (brand.views.fonts), and the app's face is the one drawn: call the view's own something else (view-font-face-lent)."
@@ -154,9 +161,9 @@
         "faces": [
           "loaded"
         ],
-        "font": "\"Own Face\", monospace",
-        "own": 134.4375,
-        "mono": 165.140625,
+        "font": "\"graview-view-1x77yg3 Own Face\", monospace",
+        "own": 115.25,
+        "mono": 141.578125,
         "problems": [
           "The app's face \"Big Face\" for its views is not loaded: its file, /graview/assets/892f2fe04ec507da2fe21530851fc8c60ae8a0d9b126b61d7168fd5dbb209a1b.woff2, is more than 2 MB, the most a file the app holds may be as a face for its views.",
           "Not loaded: the @font-face \"Big Face\", since the app lends its views a face by that name (brand.views.fonts), and the app's face is the one drawn: call the view's own something else (view-font-face-lent)."
@@ -168,6 +175,18 @@
       "detail": {
         "sheet": "@layer graview-view {\n.mast { display: flex; align-items: center; gap: 12px; padding: 12px; }\n.mast h2 { margin: 0; font-family: var(--graview-font-display); border-radius: var(--graview-radius); bord",
         "data": []
+      }
+    },
+    "the view's own face draws in the view alone: its style attribute naming it is drawn in it, while the host page's own text that names the same family is drawn as it was, in its fallback, and the page holds no face by the name the view wrote": {
+      "ok": true,
+      "detail": {
+        "inline": 115.25,
+        "own": 115.25,
+        "hostOwn": 211.921875,
+        "hostMono": 211.921875,
+        "families": [
+          "graview-view-1x77yg3 Own Face"
+        ]
       }
     },
     "a face of the view's own under a name the brand lends, \"Big Face\", is not loaded while the brand lends it, and the host is told why, with its code": {
@@ -210,17 +229,24 @@
         "lentFont": "monospace",
         "faces": [],
         "balooFaces": [],
-        "bigFaces": [
+        "bigFaces": [],
+        "ownBigFaces": [
           "loaded"
         ],
         "ownFaces": [
           "loaded"
         ],
-        "ownFont": "\"Own Face\", monospace",
-        "ownWidth": 129.71875,
-        "ownSheet": "@layer graview-view {\n.mast { display: flex; align-items: center; gap: 12px; padding: 12px; }\n.mast h2 { margin: 0; font-family: var(--graview-font-display); border-radius: var(--graview-radius); border: 1px solid var(--graview-edge); padding: 4px 8px; }\n.mast .lent { color: rgb(1, 2, 3); font-family: monospace; }\n.mast .own { font-family: \"Own Face\", monospace; }\n.mast .big { font-family: \"Big Face\", monospace; }\n}",
-        "balooWidth": 144.421875,
-        "monoWidth": 159.34375,
+        "ownFont": "\"graview-view-1x77yg3 Own Face\", monospace",
+        "ownWidth": 112.796875,
+        "ownInlineWidth": 112.796875,
+        "ownFamilies": [
+          "graview-view-1x77yg3 Own Face"
+        ],
+        "hostOwnWidth": 211.921875,
+        "hostMonoWidth": 211.921875,
+        "ownSheet": "@layer graview-view {\n.mast { display: flex; align-items: center; gap: 12px; padding: 12px; }\n.mast h2 { margin: 0; font-family: var(--graview-font-display); border-radius: var(--graview-radius); border: 1px solid var(--graview-edge); padding: 4px 8px; }\n.mast .lent { color: rgb(1, 2, 3); font-family: monospace; }\n.mast .own { font-family: \"graview-view-1x77yg3 Own Face\", monospace; }\n.mast .big { font-family: \"graview-view-1x77yg3 Big Face\", monospace; }\n}",
+        "balooWidth": 125.578125,
+        "monoWidth": 138.5625,
         "motion": null,
         "radiusSaid": "16px",
         "pushes": 4,
@@ -230,7 +256,7 @@
           "font": "\"Courier New\", Courier, monospace"
         },
         "marked": true,
-        "src": "blob:http://127.0.0.1:5892/d905b43a-88de-47e5-b226-17a24b352",
+        "src": "blob:http://127.0.0.1:5892/ff629981-5c72-4190-882d-59dbee1dc",
         "bytes": 89
       }
     },
@@ -285,6 +311,7 @@
         "big": [
           "loaded"
         ],
+        "lent": [],
         "own": [
           "loaded"
         ]
@@ -293,7 +320,7 @@
     "the last logo's blob: URL is let go once the new one is drawn": {
       "ok": true,
       "detail": {
-        "url": "blob:http://127.0.0.1:5892/95f5d8c4-8a6e-478e-8602-69f4c71e4d15"
+        "url": "blob:http://127.0.0.1:5892/6fc7c7ba-06d4-4d29-bdf8-e6a8cbd14571"
       }
     },
     "the PNG at the page's own address was fetched once, by the host: the view loaded nothing": {

@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-11T06:27:40.314Z",
+  "at": "2026-11-11T07:39:42.357Z",
   "transport": "brand",
   "engine": "chromium",
   "policy": {
@@ -37,14 +37,21 @@
           "loaded"
         ],
         "bigFaces": [],
+        "ownBigFaces": [],
         "ownFaces": [
           "loaded"
         ],
-        "ownFont": "\"Own Face\", monospace",
-        "ownWidth": 134.59375,
-        "ownSheet": "@layer graview-view {\n.mast { display: flex; align-items: center; gap: 12px; padding: 12px; }\n.mast h2 { margin: 0; font-family: var(--graview-font-display); border-radius: var(--graview-radius); border: 1px solid var(--graview-edge); padding: 4px 8px; }\n.mast .lent { color: rgb(1, 2, 3); font-family: monospace; }\n.mast .own { font-family: \"Own Face\", monospace; }\n.mast .big { font-family: \"Big Face\", monospace; }\n}",
-        "balooWidth": 138.234375,
-        "monoWidth": 164.8125,
+        "ownFont": "\"graview-view-1b0yszj Own Face\", monospace",
+        "ownWidth": 115.375,
+        "ownInlineWidth": 115.375,
+        "ownFamilies": [
+          "graview-view-1b0yszj Own Face"
+        ],
+        "hostOwnWidth": 211.234375,
+        "hostMonoWidth": 211.234375,
+        "ownSheet": "@layer graview-view {\n.mast { display: flex; align-items: center; gap: 12px; padding: 12px; }\n.mast h2 { margin: 0; font-family: var(--graview-font-display); border-radius: var(--graview-radius); border: 1px solid var(--graview-edge); padding: 4px 8px; }\n.mast .lent { color: rgb(1, 2, 3); font-family: monospace; }\n.mast .own { font-family: \"graview-view-1b0yszj Own Face\", monospace; }\n.mast .big { font-family: \"Big Face\", monospace; }\n}",
+        "balooWidth": 118.484375,
+        "monoWidth": 141.265625,
         "motion": "fade",
         "radiusSaid": "4px",
         "pushes": 2,
@@ -124,8 +131,8 @@
         "faces": [
           "loaded"
         ],
-        "baloo": 138.234375,
-        "mono": 164.8125,
+        "baloo": 118.484375,
+        "mono": 141.265625,
         "problems": [
           "The app's face \"Big Face\" for its views is not loaded: its file, /graview/assets/892f2fe04ec507da2fe21530851fc8c60ae8a0d9b126b61d7168fd5dbb209a1b.woff2, is more than 2 MB, the most a file the app holds may be as a face for its views.",
           "Not loaded: the @font-face \"Big Face\", since the app lends its views a face by that name (brand.views.fonts), and the app's face is the one drawn: call the view's own something else (view-font-face-lent)."
@@ -158,9 +165,9 @@
         "faces": [
           "loaded"
         ],
-        "font": "\"Own Face\", monospace",
-        "own": 134.59375,
-        "mono": 164.8125,
+        "font": "\"graview-view-1b0yszj Own Face\", monospace",
+        "own": 115.375,
+        "mono": 141.265625,
         "problems": [
           "The app's face \"Big Face\" for its views is not loaded: its file, /graview/assets/892f2fe04ec507da2fe21530851fc8c60ae8a0d9b126b61d7168fd5dbb209a1b.woff2, is more than 2 MB, the most a file the app holds may be as a face for its views.",
           "Not loaded: the @font-face \"Big Face\", since the app lends its views a face by that name (brand.views.fonts), and the app's face is the one drawn: call the view's own something else (view-font-face-lent)."
@@ -172,6 +179,18 @@
       "detail": {
         "sheet": "@layer graview-view {\n.mast { display: flex; align-items: center; gap: 12px; padding: 12px; }\n.mast h2 { margin: 0; font-family: var(--graview-font-display); border-radius: var(--graview-radius); bord",
         "data": []
+      }
+    },
+    "the view's own face draws in the view alone: its style attribute naming it is drawn in it, while the host page's own text that names the same family is drawn as it was, in its fallback, and the page holds no face by the name the view wrote": {
+      "ok": true,
+      "detail": {
+        "inline": 115.375,
+        "own": 115.375,
+        "hostOwn": 211.234375,
+        "hostMono": 211.234375,
+        "families": [
+          "graview-view-1b0yszj Own Face"
+        ]
       }
     },
     "a face of the view's own under a name the brand lends, \"Big Face\", is not loaded while the brand lends it, and the host is told why, with its code": {
@@ -214,17 +233,24 @@
         "lentFont": "monospace",
         "faces": [],
         "balooFaces": [],
-        "bigFaces": [
+        "bigFaces": [],
+        "ownBigFaces": [
           "loaded"
         ],
         "ownFaces": [
           "loaded"
         ],
-        "ownFont": "\"Own Face\", monospace",
-        "ownWidth": 129.84375,
-        "ownSheet": "@layer graview-view {\n.mast { display: flex; align-items: center; gap: 12px; padding: 12px; }\n.mast h2 { margin: 0; font-family: var(--graview-font-display); border-radius: var(--graview-radius); border: 1px solid var(--graview-edge); padding: 4px 8px; }\n.mast .lent { color: rgb(1, 2, 3); font-family: monospace; }\n.mast .own { font-family: \"Own Face\", monospace; }\n.mast .big { font-family: \"Big Face\", monospace; }\n}",
-        "balooWidth": 144.578125,
-        "monoWidth": 159,
+        "ownFont": "\"graview-view-1b0yszj Own Face\", monospace",
+        "ownWidth": 112.890625,
+        "ownInlineWidth": 112.890625,
+        "ownFamilies": [
+          "graview-view-1b0yszj Own Face"
+        ],
+        "hostOwnWidth": 211.234375,
+        "hostMonoWidth": 211.234375,
+        "ownSheet": "@layer graview-view {\n.mast { display: flex; align-items: center; gap: 12px; padding: 12px; }\n.mast h2 { margin: 0; font-family: var(--graview-font-display); border-radius: var(--graview-radius); border: 1px solid var(--graview-edge); padding: 4px 8px; }\n.mast .lent { color: rgb(1, 2, 3); font-family: monospace; }\n.mast .own { font-family: \"graview-view-1b0yszj Own Face\", monospace; }\n.mast .big { font-family: \"graview-view-1b0yszj Big Face\", monospace; }\n}",
+        "balooWidth": 125.6875,
+        "monoWidth": 138.234375,
         "motion": null,
         "radiusSaid": "16px",
         "pushes": 4,
@@ -289,6 +315,7 @@
         "big": [
           "loaded"
         ],
+        "lent": [],
         "own": [
           "loaded"
         ]

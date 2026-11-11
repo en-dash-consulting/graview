@@ -113,6 +113,8 @@ export function appImagePath(value: string, origin: string): string | undefined 
 export interface JudgeContext {
   /** The host page's origin, for a `blob:` image of its own. "null" in an opaque origin. */
   readonly origin: string;
+  /** The faces the view's sheets declare, by their family lowercased, to their names on the page: what a `style` or a `font-family` attribute naming one is written as (core's css/faces.ts). */
+  readonly faceNames?: () => ReadonlyMap<string, string> | undefined;
   /**
    * Where an image the app holds is loaded from (`/graview/assets/<sha256>.<ext>`):
    * the host's address for it, or undefined to refuse it. Without it, a view
@@ -277,13 +279,15 @@ function judgeValue(name: string, kind: OpenAttribute, value: string, context: J
     case "fragment":
       return FRAGMENT.test(value) ? { value } : refused("url");
     case "style": {
-      const judged = sanitizeDeclarations(value, OPEN_MAX_ATTRIBUTE);
+      const rename = context.faceNames?.();
+      const judged = sanitizeDeclarations(value, OPEN_MAX_ATTRIBUTE, rename ? { rename } : {});
       if (judged.refused.length > 0 && judged.css === "") return refused(judged.refused[0]!.reason === "url" ? "url" : "css", judged.refused[0]);
       /* What was kept is drawn; what was not is written down beside it. */
       return { value: judged.css, ...(judged.refused.length > 0 ? { dropped: judged.refused } : {}) };
     }
     case "css": {
-      const judged = sanitizeValue(name, value);
+      const rename = context.faceNames?.();
+      const judged = sanitizeValue(name, value, rename ? { rename } : {});
       return "refused" in judged ? refused(judged.refused.reason === "url" ? "url" : "css", judged.refused) : { value: judged.value };
     }
   }

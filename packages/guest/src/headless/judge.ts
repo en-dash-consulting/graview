@@ -1,6 +1,5 @@
 import type { DescribedPart, DescribedProblem, DescribedVideo } from "@graview/core/describe";
 import { viewFaceRefusedWords } from "@graview/core/css";
-import { lentNamed } from "../host/own-faces.js";
 import { placeNamed, placesSaid, quoted, unsureOfViews } from "../host/links-words.js";
 import type { ViewRefusal } from "../host/open-draw.js";
 import { handedLinks, judgeLink, linkRefusedWords } from "../host/external-links.js";
@@ -89,7 +88,7 @@ export function judgeTranscript(transcript: HeadlessTranscript, input: HeadlessI
   /* A link out goes where the records the view was shown say, or to an origin the host lists, as on the page. */
   const handed = handedLinks(input.props);
   /* Nothing loads in a run: the app's own image is drawn as the path the live host resolves, where the host says it does. */
-  const drawn = drawTranscript(transcript.renders, transcript.sheets, { maxNodes: limits.maxNodes, ...(input.origin ? { origin: input.origin } : {}), ...(input.imageOrigins ? { imageOrigins: input.imageOrigins } : {}), ...(input.assets ? { asset: (path: string) => path } : {}), ...(options.theme ? { theme: options.theme } : {}), link: (value: string) => judgeLink(value, { handed, ...(input.linkOrigins ? { origins: input.linkOrigins } : {}) }) });
+  const drawn = drawTranscript(transcript.renders, transcript.sheets, { maxNodes: limits.maxNodes, ...(input.origin ? { origin: input.origin } : {}), ...(input.imageOrigins ? { imageOrigins: input.imageOrigins } : {}), ...(input.assets ? { asset: (path: string) => path } : {}), ...(options.theme ? { theme: options.theme } : {}), ...(options.lent ? { lent: options.lent } : {}), link: (value: string) => judgeLink(value, { handed, ...(input.linkOrigins ? { origins: input.linkOrigins } : {}) }) });
   if (drawn.over) return { ok: false, reason: "nodes", detail: `It drew more than the ${limits.maxNodes.toLocaleString("en-US")} things a view may draw.` };
   // A kind's list is somewhere a view may go by name too, by its plural or the kind's name.
   const goes = [...input.places, ...(input.lists ?? []).filter((slug) => !input.places.some((place) => place.as === slug)).map((slug) => ({ as: slug }))];
@@ -99,8 +98,6 @@ export function judgeTranscript(transcript: HeadlessTranscript, input: HeadlessI
     if (!acts.has(act)) return { ok: false, reason: "act", detail: `It binds a press to the act "${act}" (data-act), which its manifest does not name.` };
   }
   const problems: DescribedProblem[] = [...drawn.refused.map((one) => sayRefusal(one, { ...(input.imageOrigins ? { origins: input.imageOrigins } : {}), assets: input.assets === true, ...(input.linkOrigins ? { linkOrigins: input.linkOrigins } : {}) })), ...said.problems];
-  /* A face of the view's own named as one the app lends: the app's is drawn on the page, and the view's is not loaded. */
-  for (const face of lentNamed(drawn.faces, options.lent)) problems.push({ at: "stylesheet @font-face", says: viewFaceRefusedWords({ reason: "font-face", name: "lent", family: face.family }) });
   /* A part that threw or took too long (`graview.part`, Roadmap f-view-part-fails-alone): the page draws a note in its place, and says why. */
   const failedParts = (node: { readonly childNodes: readonly unknown[] }): void => {
     for (const child of node.childNodes as { nodeType: number; childNodes: unknown[]; getAttribute(name: string): string | null }[]) {

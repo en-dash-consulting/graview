@@ -62,65 +62,58 @@ const backs: (() => void)[] = [];
 afterEach(() => {
   for (const back of backs.splice(0)) back();
 });
+const familiesOnPage = () => [...fonts].map((one) => (one as FakeFontFace).family).sort();
 
 describe("a face a view's stylesheet declares", () => {
-  it("is loaded into the page from its own bytes, with its descriptors, and nothing is fetched", async () => {
+  it("is loaded into the page from its own bytes, under the view's own name for it, with its descriptors, and nothing is fetched", async () => {
     const said: string[] = [];
-    backs.push(loadViewFaces(document, facesOf(sheet("Shout Display")), {}, (one) => said.push(one)));
+    backs.push(loadViewFaces(document, facesOf(sheet("Shout Display")), { scope: "gv-a" }, (one) => said.push(one)));
     await settled();
     expect(fetched).toEqual([]);
     expect(said).toEqual([]);
-    expect(fonts.size).toBe(1);
-    expect(made[0]!.family).toBe("Shout Display");
+    expect(familiesOnPage()).toEqual(["gv-a Shout Display"]);
     expect(made[0]!.source).toBeInstanceOf(ArrayBuffer);
     expect((made[0]!.source as ArrayBuffer).byteLength).toBe(2_000);
     expect(made[0]!.descriptors).toMatchObject({ weight: "700" });
   });
 
-  it("is not loaded where the app lends its views a face by that name: the app's face is drawn, and that is said with a finding code", async () => {
-    const said: string[] = [];
-    backs.push(loadViewFaces(document, facesOf(sheet("rock face")), { lent: ["Rock Face"] }, (one) => said.push(one)));
+  it("named as a face the host page draws in (\"Lato\"), takes nothing from the page: the page's own Lato is never replaced", async () => {
+    backs.push(loadViewFaces(document, facesOf(sheet("Lato")), { scope: "gv-a" }, () => {}));
     await settled();
-    expect(fonts.size).toBe(0);
-    expect(said).toEqual([expect.stringMatching(/"rock face".*the app lends its views a face by that name.*app's face is the one drawn.*\(view-font-face-lent\)\.$/)]);
+    expect(familiesOnPage()).toEqual(["gv-a Lato"]);
+    expect(familiesOnPage()).not.toContain("Lato");
   });
 
-  it("never takes a name of the brand's own stacks", async () => {
+  it("declared by two views as \"Display\" from two files, is each view's own: both are on the page, each drawn in its view", async () => {
     const said: string[] = [];
-    backs.push(loadViewFaces(document, facesOf(sheet("Fraunces")), { typography: { display: "Fraunces, serif" } }, (one) => said.push(one)));
+    backs.push(loadViewFaces(document, facesOf(sheet("Display", 2_000, 1)), { scope: "gv-a" }, (one) => said.push(one)));
+    backs.push(loadViewFaces(document, facesOf(sheet("Display", 2_000, 2)), { scope: "gv-b" }, (one) => said.push(one)));
     await settled();
-    expect(fonts.size).toBe(0);
-    expect(said).toEqual([expect.stringMatching(/would replace.*\(view-font-face-family\)\.$/)]);
+    expect(familiesOnPage()).toEqual(["gv-a Display", "gv-b Display"]);
+    const byFamily = new Map([...fonts].map((one) => [(one as FakeFontFace).family, new Uint8Array((one as FakeFontFace).source as ArrayBuffer)[5]]));
+    expect([byFamily.get("gv-a Display"), byFamily.get("gv-b Display")]).toEqual([1, 2]);
+    expect(said).toEqual([]);
   });
 
-  it("drawn by two views from two files under one name, is the last lent's on the page, and that is said", async () => {
-    const said: string[] = [];
-    backs.push(loadViewFaces(document, facesOf(sheet("Shout", 2_000, 1)), {}, (one) => said.push(`first: ${one}`)));
+  it("is loaded once however often the view gives the same bytes again, a new file when they differ, and goes with the view", async () => {
+    const one = loadViewFaces(document, facesOf(sheet("Shout")), { scope: "gv-a" }, () => {});
+    const again = loadViewFaces(document, facesOf(sheet("Shout")), { scope: "gv-a" }, () => {}, one);
     await settled();
-    backs.push(loadViewFaces(document, facesOf(sheet("Shout", 2_000, 2)), {}, (one) => said.push(`second: ${one}`)));
+    expect(made).toHaveLength(1);
+    const changed = loadViewFaces(document, facesOf(sheet("Shout", 2_000, 9)), { scope: "gv-a" }, () => {}, again);
     await settled();
     expect(made).toHaveLength(2);
     expect(fonts.size).toBe(1);
-    expect(new Uint8Array((([...fonts][0] as FakeFontFace).source as ArrayBuffer))[5]).toBe(2);
-    expect(said.some((one) => /lent from 2 files/.test(one))).toBe(true);
-  });
-
-  it("is loaded once however often the view gives its stylesheets again, and goes with the view", async () => {
-    const one = loadViewFaces(document, facesOf(sheet("Shout")), {}, () => {});
-    const again = loadViewFaces(document, facesOf(sheet("Shout")), {}, () => {}, one);
-    await settled();
-    expect(made).toHaveLength(1);
-    expect(fonts.size).toBe(1);
-    again();
+    changed();
     expect(fonts.size).toBe(0);
   });
 
   it("is apart from the faces the app lends: a lent face by another name is drawn beside it", async () => {
     Object.assign(window, { fetch: () => Promise.resolve(new Response(new Uint8Array(64), { headers: { "content-type": "font/woff2" } })) });
     backs.push(loadViewFonts(document, [{ family: "Rock Face", src: `/graview/assets/${"b".repeat(64)}.woff2` }], { asset: (path) => path }, () => {}));
-    backs.push(loadViewFaces(document, facesOf(sheet("Shout")), { lent: ["Rock Face"] }, () => {}));
+    backs.push(loadViewFaces(document, facesOf(sheet("Shout")), { scope: "gv-a" }, () => {}));
     await settled();
-    expect([...fonts].map((one) => (one as FakeFontFace).family).sort()).toEqual(["Rock Face", "Shout"]);
+    expect(familiesOnPage()).toEqual(["Rock Face", "gv-a Shout"]);
   });
 });
 
@@ -152,39 +145,76 @@ afterEach(() => {
   document.body.replaceChildren();
 });
 
+/** A view past its ready, whose runtime the test speaks for, dressed in `brand` where given. */
+function mounted(brand?: () => { readonly name: string; readonly views?: { readonly fonts?: readonly { family: string; src: string }[] } }) {
+  const problems: string[] = [];
+  const view = mountWorkerView(document.body.appendChild(document.createElement("div")), {
+    manifest: { name: "packages", title: "The packages", attach: "package", cardinality: "many" },
+    worker: { script: "/* the view */" },
+    store: store(),
+    principal: lin,
+    limits: { silentMs: 5_000 },
+    ...(brand ? { brand, asset: (path: string) => path } : {}),
+    onProblem: (said) => problems.push(said),
+  });
+  const worker = FakeWorker.made.at(-1)!;
+  worker.say({ graview: "guest-ready", protocol: GUEST_PROTOCOL });
+  const hello = worker.posted[0]!.message as HostHello;
+  const port = worker.posted[0]!.transfer[0] as MessagePort;
+  port.onmessage = (event) => {
+    const data = event.data as { type?: string; beat?: number; push?: number };
+    if (data.type === "heartbeat") port.postMessage({ type: "heartbeat", nonce: hello.nonce, beat: data.beat });
+    if (data.type === "props" && typeof data.push === "number") port.postMessage({ type: "pushed", nonce: hello.nonce, push: data.push, ms: 3 });
+  };
+  const style = (sheets: readonly string[]) => port.postMessage({ type: "style", sheets, nonce: hello.nonce });
+  const drawnCss = () => view.shadow.querySelector("[data-graview-view-style]")?.textContent ?? "";
+  return { view, problems, style, drawnCss };
+}
+
 describe("a worker view on a page", () => {
-  it("draws in the face its stylesheet declares, says a face past its size once, and gives its face back when it goes", async () => {
-    const problems: string[] = [];
-    const view = mountWorkerView(document.body.appendChild(document.createElement("div")), {
-      manifest: { name: "packages", title: "The packages", attach: "package", cardinality: "many" },
-      worker: { script: "/* the view */" },
-      store: store(),
-      principal: lin,
-      limits: { silentMs: 5_000 },
-      onProblem: (said) => problems.push(said),
-    });
-    const worker = FakeWorker.made.at(-1)!;
-    worker.say({ graview: "guest-ready", protocol: GUEST_PROTOCOL });
-    const hello = worker.posted[0]!.message as HostHello;
-    const port = worker.posted[0]!.transfer[0] as MessagePort;
-    port.onmessage = (event) => {
-      const data = event.data as { type?: string; beat?: number; push?: number };
-      if (data.type === "heartbeat") port.postMessage({ type: "heartbeat", nonce: hello.nonce, beat: data.beat });
-      if (data.type === "props" && typeof data.push === "number") port.postMessage({ type: "pushed", nonce: hello.nonce, push: data.push, ms: 3 });
-    };
+  it("draws in the face its stylesheet declares, under its own name for it, says a face past its size once, and gives its face back when it goes", async () => {
+    const { view, problems, style, drawnCss } = mounted();
     const sheets = [sheet("Shout"), sheet("Too Big", 60_000), ".title { font-family: Shout, serif }"];
-    port.postMessage({ type: "style", sheets, nonce: hello.nonce });
+    style(sheets);
     await until(() => fonts.size === 1 && problems.length > 0);
-    expect([...fonts].map((one) => (one as FakeFontFace).family)).toEqual(["Shout"]);
+    const [family] = familiesOnPage();
+    expect(family).toMatch(/^graview-view-[a-z0-9]+ Shout$/);
+    expect(drawnCss()).toContain(`.title { font-family: "${family}", serif; }`);
     expect(fetched).toEqual([]);
     expect(problems).toEqual([expect.stringMatching(/"Too Big".*more than the 50 KB.*\(view-font-face-size\)\.$/)]);
     /* The view gives the same sheets again, and one more rule: the face is not loaded twice, nor the refusal said twice. */
-    port.postMessage({ type: "style", sheets: [...sheets, ".x { color: red }"], nonce: hello.nonce });
+    style([...sheets, ".x { color: red }"]);
     await wait(50);
     expect(made).toHaveLength(1);
     expect(problems).toHaveLength(1);
     view.dispose();
     expect(fonts.size).toBe(0);
+  });
+
+  it("two views that both declare \"Display\" from different bytes draw each its own, and neither names the family the page's own text is in", async () => {
+    const first = mounted();
+    const second = mounted();
+    first.style([sheet("Display", 2_000, 1), ".t { font-family: Display }"]);
+    second.style([sheet("Display", 2_000, 2), ".t { font-family: Display }"]);
+    await until(() => fonts.size === 2);
+    const families = familiesOnPage();
+    expect(families).toHaveLength(2);
+    expect(families.every((one) => / Display$/.test(one) && one !== "Display")).toBe(true);
+    expect(first.drawnCss()).not.toBe(second.drawnCss());
+    for (const one of [first, second]) expect(families.some((family) => one.drawnCss().includes(`"${family}"`))).toBe(true);
+    first.view.dispose();
+    second.view.dispose();
+  });
+
+  it("does not load a face named as one the app lends its views: the app's is drawn, the view's rule names it as written, and the host is told with its code", async () => {
+    Object.assign(window, { fetch: () => Promise.resolve(new Response(new Uint8Array(64), { headers: { "content-type": "font/woff2" } })) });
+    const { view, problems, style, drawnCss } = mounted(() => ({ name: "Offers", views: { fonts: [{ family: "Rock Face", src: `/graview/assets/${"b".repeat(64)}.woff2` }] } }));
+    style([sheet("Rock Face"), `.t { font-family: "Rock Face", serif }`]);
+    await until(() => problems.length > 0 && fonts.size > 0);
+    expect(familiesOnPage()).toEqual(["Rock Face"]);
+    expect(problems).toEqual([expect.stringMatching(/"Rock Face".*app's face is the one drawn.*\(view-font-face-lent\)\.$/)]);
+    expect(drawnCss()).toContain(`.t { font-family: "Rock Face", serif; }`);
+    view.dispose();
   });
 });
 
@@ -196,8 +226,9 @@ describe("a headless run", () => {
       { lent: ["Rock Face"] },
     );
     expect(judged.ok).toBe(true);
-    const says = judged.ok ? judged.problems.map((problem) => problem.says) : [];
+    const says = judged.ok ? judged.problems.filter((problem) => problem.at === "stylesheet @font-face").map((problem) => problem.says) : [];
     expect(says).toEqual([expect.stringMatching(/"Too Big".*\(view-font-face-size\)\.$/), expect.stringMatching(/"Rock Face".*\(view-font-face-lent\)\.$/)]);
     expect(judged.ok && judged.drawn.css).not.toMatch(/font-face|url/);
+    expect(judged.ok && judged.drawn.faces.map((face) => face.family)).toEqual(["Shout"]);
   });
 });

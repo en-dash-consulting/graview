@@ -9,15 +9,26 @@
  * name, its sources decoded and counted, its descriptors the seven a face
  * has — and hands the face on apart from the CSS it writes, which still
  * holds no `@font-face` and no `url()`. The host loads it into the page as
- * a `FontFace` made from the bytes (guest's host/fonts.ts), where it is
- * the page's, held to the names a lent face is held to. Only a view's own
- * sheets are read so (`{ faces: true }`): the app's stylesheet for every
- * view lends its faces by `brand.views.fonts`, and refuses `@font-face` as
- * before.
+ * a `FontFace` made from the bytes (guest's host/fonts.ts).
  *
- * No imports but types and the family rule: the sanitizer brings this.
+ * A VIEW'S FACE IS THE VIEW'S ALONE. In the document a face is the page's
+ * under its family, so a face loaded under the name a view wrote would
+ * draw wherever the page, or another view, names that family. So each is
+ * loaded under a name the host gives that view on its page
+ * (`viewFaceFamily(scope, family)`), and the view's sheets, style
+ * attributes and presentation attributes are written with every
+ * `font-family` and `font` that names the face naming that instead: it
+ * draws in the view that declared it and nowhere else, whatever it is
+ * called. A family the app lends its views (`brand.views.fonts`) stays the
+ * app's: a view's own face of that name is refused, and is not renamed, so
+ * the view's text in it is drawn in the app's.
+ *
+ * Only a view's own sheets are read so (`{ faces }`): the app's stylesheet
+ * for every view lends its faces by `brand.views.fonts`, and refuses
+ * `@font-face` as before. No imports but types and the family rule: the
+ * sanitizer brings this, and what is said of a refusal is faces-words.ts.
  */
-import { viewFamilyProblem } from "./fonts.js";
+import { familyNameProblem } from "./fonts.js";
 import type { ComponentValue, CssRefusal, Declaration } from "./sanitize.js";
 
 /**
@@ -45,8 +56,66 @@ export const VIEW_FACES_MOST = 16;
 /** The descriptors a view's face may say: anything else is left out of it, and said. */
 export const VIEW_FACE_DESCRIPTORS: readonly string[] = ["font-family", "src", "font-weight", "font-style", "font-display", "unicode-range", "font-stretch"];
 
-/** How much longer than its budget a sheet may be for the faces in it: twice what the faces may be as base64, so a face past its bounds is refused by name, not the whole sheet for its length. */
+/**
+ * How much more than their budget a view's sheets together may be read for
+ * the faces in them: twice what the faces may be as base64, so a face a
+ * little past its bounds is refused by name. One allowance for all of a
+ * view's sheets, read before any is parsed, so what is parsed of them is
+ * bounded however many there are; and of what is read, only the faces kept
+ * are not counted toward the sheets' budget.
+ */
 export const VIEW_FACES_TEXT_ALLOWANCE = 2 * Math.ceil(VIEW_FACES_MOST_BYTES / 3) * 4;
+
+/** The most stylesheets of a view's that are read where it may declare faces: more is said, and not read. */
+export const VIEW_SHEETS_MOST = 64;
+
+/** The name a view's face is loaded and drawn under on its page: the host's name for the view, then the family it wrote. */
+export function viewFaceFamily(scope: string, family: string): string {
+  return `${scope} ${family}`;
+}
+
+/** Each face's family, lowercased, to its name on the page (`viewFaceFamily`). */
+export function facesRenamed(faces: readonly ViewFace[], scope: string): ReadonlyMap<string, string> {
+  return new Map(faces.map((face) => [face.family.toLowerCase(), viewFaceFamily(scope, face.family)]));
+}
+
+/**
+ * A `font-family` or `font` value with every family that names one of the
+ * view's faces written as its name on the page: in each comma's part, the
+ * family is its last string, or the idents it ends with (`700 2rem Shout
+ * Display`). Anything else is left as it was.
+ */
+export function renameFamilies(values: readonly ComponentValue[], rename: ReadonlyMap<string, string>): ComponentValue[] {
+  const out: ComponentValue[] = [];
+  let part: ComponentValue[] = [];
+  const flush = () => {
+    let end = part.length;
+    while (end > 0 && part[end - 1]!.type === "whitespace") end -= 1;
+    let start = end;
+    let name: string | undefined;
+    const last = part[end - 1];
+    if (last?.type === "string") {
+      start = end - 1;
+      name = last.value;
+    } else {
+      while (start > 0 && (part[start - 1]!.type === "ident" || part[start - 1]!.type === "whitespace")) start -= 1;
+      while (start < end && part[start]!.type === "whitespace") start += 1;
+      const words = part.slice(start, end).filter((one) => one.type === "ident") as { value: string }[];
+      name = words.length > 0 ? words.map((one) => one.value).join(" ") : undefined;
+    }
+    const to = name === undefined ? undefined : rename.get(name.toLowerCase());
+    out.push(...(to === undefined ? part : [...part.slice(0, start), { type: "string" as const, value: to }, ...part.slice(end)]));
+    part = [];
+  };
+  for (const value of values) {
+    if (value.type === ",") {
+      flush();
+      out.push(value);
+    } else part.push(value);
+  }
+  flush();
+  return out;
+}
 
 /** One source of a view's face: its bytes, decoded, and the type its URL said. */
 export interface ViewFaceSource {
@@ -164,7 +233,7 @@ export interface FaceBudget {
  * nothing, with every refusal said as `{ reason: "font-face", name: <the
  * problem> }`. `budget` is spent by a face kept.
  */
-export function judgeFace(prelude: readonly ComponentValue[], items: readonly (Declaration | { readonly type: "at-rule" | "qualified" })[], budget: FaceBudget, refuse: (refusal: CssRefusal) => void): { readonly face?: ViewFace; readonly data: number } {
+export function judgeFace(prelude: readonly ComponentValue[], items: readonly (Declaration | { readonly type: "at-rule" | "qualified" })[], budget: FaceBudget, refuse: (refusal: CssRefusal) => void, lent: readonly string[] = []): { readonly face?: ViewFace; readonly data: number } {
   const declared = new Map<string, Declaration>();
   const stray: string[] = [];
   let data = 0;
@@ -183,9 +252,9 @@ export function judgeFace(prelude: readonly ComponentValue[], items: readonly (D
   }
   const familyDeclared = declared.get("font-family");
   const written = familyDeclared && !familyDeclared.important ? familyOf(familyDeclared.value) : undefined;
-  const familyProblem = viewFamilyProblem(written);
+  const familyProblem = familyNameProblem(written);
   /* Named in what is said only where it is a plain name: one that is not is never written back, here or anywhere. */
-  const plain = written !== undefined && familyProblem !== viewFamilyProblem(undefined) ? written : undefined;
+  const plain = written !== undefined && familyProblem !== familyNameProblem(undefined) ? written : undefined;
   for (const descriptor of stray) refuse({ reason: "font-face", name: "descriptor", ...(plain !== undefined ? { family: plain } : {}), descriptor });
   const refuseFace = (name: ViewFaceProblem, more: Partial<CssRefusal> = {}) => {
     refuse({ reason: "font-face", name, ...(plain !== undefined ? { family: plain } : {}), ...more });
@@ -194,6 +263,8 @@ export function judgeFace(prelude: readonly ComponentValue[], items: readonly (D
   if (parts(prelude).length > 0) return refuseFace("unreadable");
   if (written === undefined || familyProblem) return refuseFace("family", { said: familyProblem ?? "its family is one name" });
   const family = written;
+  /* A name the app lends its views is the app's: its face is drawn there, and the view's is not loaded. */
+  if (lent.some((one) => one.toLowerCase() === family.toLowerCase())) return refuseFace("lent");
   const src = declared.get("src");
   if (!src) return refuseFace("src", { said: "no src" });
   const sources: ViewFaceSource[] = [];
@@ -243,47 +314,4 @@ function dataLength(value: ComponentValue): number {
   if (value.type === "url") return /^data:/i.test(value.value) ? value.value.length : 0;
   if (value.type === "func") return value.value.reduce((sum, one) => sum + (one.type === "string" && /^data:/i.test(one.value) ? one.value.length : dataLength(one)), 0);
   return 0;
-}
-
-const KB = (bytes: number) => `${(bytes / 1_000).toLocaleString("en-US", { maximumFractionDigits: 1 })} KB`;
-const DRAWS = "a view's face is a data: URL of a WOFF2, WOFF, TTF or OTF font (src: url(data:font/woff2;base64,…))";
-const LENT = "or a face the app lends its views (brand.views.fonts)";
-
-/** One refusal of a view's face, said to its author: what was refused, why, and what would do, ending with its finding code. */
-export function viewFaceRefusedWords(refusal: CssRefusal): string {
-  const named = refusal.family !== undefined ? `the @font-face "${refusal.family}"` : "an @font-face";
-  switch (refusal.name as ViewFaceProblem) {
-    case "where":
-      return `Not drawn: an @font-face inside @media, @supports, @container or a rule. A view's face is declared at the top of its stylesheet (view-font-face).`;
-    case "unreadable":
-      return `Not drawn: ${named}, which has something before its block. A face is @font-face { font-family: …; src: … } (view-font-face).`;
-    case "family":
-      return `Not drawn: ${named}: ${refusal.said ?? "its font-family is one name, in quotes or as plain words"}. It is called by a name of its own, which the view's rules then name (view-font-face-family).`;
-    case "src":
-      return `Not drawn: ${named} has ${refusal.said === "no src" ? "no src" : "a src that is no url()"}: ${DRAWS} (view-font-face-src).`;
-    case "address":
-      return `Not loaded: ${named} names url(${JSON.stringify(refusal.said ?? "")}). A view loads nothing from the network: ${DRAWS}, ${LENT} (view-font-face-src).`;
-    case "local":
-      return `Not loaded: ${named} names local(), a face installed on the reader's own machine, which differs from one reader to the next and tells the page what is installed: ${DRAWS} (view-font-face-src).`;
-    case "type":
-      return `Not loaded: ${named} is a data: URL of ${refusal.said ?? "no type"}, not a font: ${DRAWS} (view-font-face-type).`;
-    case "encoding":
-      return `Not loaded: ${named} is a data: URL that is not base64, or not base64 throughout: ${DRAWS} (view-font-face-type).`;
-    case "bytes":
-      return `Not loaded: ${named} holds bytes that are not a WOFF2, WOFF, TrueType or OpenType file, whatever its data: URL says (view-font-face-type).`;
-    case "size":
-      return `Not loaded: ${named} is ${KB(refusal.bytes ?? 0)} decoded, more than the ${KB(VIEW_FACE_MOST_BYTES)} one face a view declares may be: subset it to the letters the view draws, ${LENT}, which may be larger (view-font-face-size).`;
-    case "total":
-      return `Not loaded: ${named} would take the view's faces to ${KB(refusal.bytes ?? 0)}, more than the ${KB(VIEW_FACES_MOST_BYTES)} a view's faces may be together: the faces before it are drawn, and the app may lend the rest (brand.views.fonts) (view-font-faces-size).`;
-    case "count":
-      return `Not loaded: ${named} is more than the ${VIEW_FACES_MOST} faces a view's stylesheets may declare (view-font-faces-size).`;
-    case "descriptor":
-      return `Not kept: ${refusal.descriptor ?? "a descriptor"} in ${named}. A view's face takes ${VIEW_FACE_DESCRIPTORS.slice(0, -1).join(", ")} and ${VIEW_FACE_DESCRIPTORS.at(-1)}, and is drawn without the rest (view-font-face-descriptor).`;
-    case "value":
-      return `Not kept: the ${refusal.descriptor ?? "descriptor"} of ${named}, a value a face does not take, so the face is drawn as if it said none (view-font-face-descriptor).`;
-    case "lent":
-      return `Not loaded: ${named}, since the app lends its views a face by that name (brand.views.fonts), and the app's face is the one drawn: call the view's own something else (view-font-face-lent).`;
-    default:
-      return `Not drawn: ${named} (view-font-face).`;
-  }
 }
