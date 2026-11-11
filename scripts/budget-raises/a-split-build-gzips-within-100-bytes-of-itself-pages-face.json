@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 0,
+  "gzipped": 100,
+  "note": "Raised in the 0.1.73 Version packages step, where this entry measured within a few bytes of its gzipped budget (min margin 0 gz margin -15 OVER): its minified length is the same on every build, but esbuild names the chunks it splits and the symbols they share differently from build to build, so the same sources gzip within about 100 bytes of themselves, and a version number written anew moves them again. Held for that spread, until the measure is made the same on every build."
+}
