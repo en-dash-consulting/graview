@@ -6308,6 +6308,7 @@ graview.onProps((props) => …)   // every push of what it is shown (and at once
 graview.props                   // the last push
 graview.render(markup)          // draw: a string, graview.html`…`, or nodes
 graview.html`<li>${x}</li>`     // markup; every value put in is escaped
+graview.part("vendors", () => graview.html`…`)   // one part, which fails alone (Limits)
 graview.on("click", ".card", (event) => …)   // also input, change, keydown, toggle, acted
 graview.act(name, args)         // ask for an act: resolves { ok, intent } or { ok: false, reason, message }
 graview.navigate("offer:7")     // a record, else a place or a kind's list by slug
@@ -6324,11 +6325,11 @@ To go somewhere, `<a data-record>` or `<a data-place>`; to do something, a `<but
 
 With `gestures: true`, `graview.on("wheel" | "drag" | "pinch", selector, fn)` hears them over what the selector matches, at most once a frame with the deltas summed. Each carries `x`, `y` from the matched element's top left and its `width`, `height`; a `wheel` adds `deltaX`, `deltaY`, `deltaMode`, `ctrlKey`, `metaKey`, a `drag` `phase`, `pointerId`, `button`, `pressure`, `dx`, `dy`, a `pinch` (a trackpad's Control-wheel too) `phase`, `scale`, `rotation`. The page scrolls everywhere else; say `touch-action: none` on what drags. Without the flag the check says so.
 
-HTML, SVG and stylesheets, drawn with the app's `--graview-*` tokens so light and dark follow the app's toggle; nothing that loads or escapes. What the host keeps, the tokens, the images a view may show and a web face are `graview-view-drawing`. What the host leaves out it lists in `refused`. A `<section aria-labelledby="h">` is named by its own `<h2 id="h">`; `summary::marker` and `::-webkit-details-marker` style a disclosure's triangle.
+HTML, SVG and stylesheets, drawn with the app's `--graview-*` tokens so light and dark follow the app's toggle; nothing that loads or escapes. What the host keeps, the tokens, the images a view may show and a web face are `graview-view-drawing`. What the host leaves out it lists in `refused`. `summary::marker` and `::-webkit-details-marker` style a disclosure's triangle.
 
 ### Links
 
-`<a data-record="offer:7">`, `<a data-place="the-packages">` and a whole card or row with `data-record` are links the host follows on a click, a phone's tap and Enter, to what the viewer may see. An `<a href>` goes out only to an address a record was handed. A card, a link out, what a tap inside it reaches, and going narrowed or to a section are `graview-view-links`.
+`<a data-record="offer:7">`, `<a data-place="the-packages">` and a whole card or row with `data-record` go where the viewer may see, on a click, a tap and Enter. An `<a href>` goes out only to an address a record was handed. Cards, links out and going narrowed are `graview-view-links`.
 
 ### Writes
 
@@ -6336,7 +6337,7 @@ An act must be in the manifest. Where every member sees every record, `graview.a
 
 ### Limits
 
-256 kB of source, 5 000 nodes, 120 messages a second, 1 000 ms a push and 100 ms a second of the page's time drawing it; the two times grow up to fourfold on a slow device, the counts never. Past any, the view is stopped and its records' plain face drawn, with why. Draw summaries, not every row. Timers go untimed; a worker busy under the heartbeat's 5 s spends the person's CPU: never spin.
+256 kB of source, 5 000 nodes, 120 messages a second, 1 000 ms a push and 100 ms a second of the page's time drawing it; the two times grow up to fourfold on a slow device, the counts never. Past any, the view is stopped and its records' plain face drawn, with why. A part made by `graview.part` (a `<div data-part>`; `{ as: "li" }`) that throws or takes a quarter of the push is a note instead, the rest drawn, why said in the console. Draw summaries; never spin.
 
 ### Worked examples
 

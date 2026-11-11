@@ -540,9 +540,15 @@ export interface GuestFont {
   readonly src: string;
 }
 
+/** A part of a view (`graview.part`) may take this share of a push's time: a quarter of `pushMs`, as fitted to the device. */
+export const PART_SHARE = 4;
+
 export type HostMessage =
-  /** `push` numbers it, for a worker view's runtime to say when it has drawn it (FR-94). */
-  | { readonly type: "props"; readonly props: GuestProps; readonly push?: number }
+  /**
+   * `push` numbers it, for a worker view's runtime to say when it has drawn it (FR-94);
+   * `partMs` is the most one `graview.part` may take of it (`PART_SHARE`).
+   */
+  | { readonly type: "props"; readonly props: GuestProps; readonly push?: number; readonly partMs?: number }
   | GuestAnswer
   | GuestEvent
   | GuestDomEvent

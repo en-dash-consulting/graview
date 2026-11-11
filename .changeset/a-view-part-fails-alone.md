@@ -1,0 +1,8 @@
+---
+"@graview/guest": patch
+"@graview/skills": patch
+---
+
+One part of a worker view that fails falls back alone, and the rest of the view still draws (Roadmap f-view-part-fails-alone). A view marks a part of what it draws with `graview.part(name, () => markup)`, which hands on the part's markup in a `<div data-part="name">` (`{ as: "li" }` or `{ as: "article" }` for another element). Where the part's code throws, or takes more than its share of the push — a quarter of `pushMs`, as fitted to the device — the runtime hands the part on empty, marked `data-part-failed` with why in `data-part-why`, and the host draws its own note in the part's place: "This part could not be drawn.", small and muted, a note to a screen reader. Why is said once in the view's console and to `onProblem`, naming the part and the error or the time it took. A part that threw draws again on the next push once it does not throw, and the note goes; a part that took too long is not run again while the view is drawn, so it cannot go on to take the whole view's budget. A part that never returns is still the whole view's stop, and so is the page's own draw budget, both unchanged. A headless run, and so `graview view check`, says a part that failed as a problem. The `graview-worker-view` skill says how a part is written.
+
+Compatibility: ops and primitives — unchanged. Stored formats — unchanged. The wire — a worker view's `props` push carries an optional `partMs`, the most one part may take; a runtime before this one ignores it. The declaration and check finding codes — unchanged. Derived tool names and input schemas — unchanged. The JavaScript API — new, optional: `graview.part`, and the `PartDrawn` and `PartElement` types of `@graview/guest/worker/view`.

@@ -338,3 +338,6 @@ export function createOpenDrawing(shadow: ShadowRoot, options: OpenDrawingOption
     },
   };
 }
+
+/* A part of a view that fails, drawn as the host's note in its place (Roadmap f-view-part-fails-alone): fetched with the drawing. */
+export { createPartFallbacks } from "./parts.js";

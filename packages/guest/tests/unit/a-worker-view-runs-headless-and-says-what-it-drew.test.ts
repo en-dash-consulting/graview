@@ -192,6 +192,13 @@ describe("a view that will not do is a failure naming why", () => {
     expect(said).toMatch(/CSS the open kit leaves out/);
     expect(said).toMatch(/"offer-nope", which this seat was not shown/);
   });
+
+  it("says a part that threw as a problem, and draws the rest (Roadmap f-view-part-fails-alone)", async () => {
+    const result = await headless({ manifest, source: `graview.onProps(() => graview.render(graview.html\`\${graview.part("kept", () => "<p>kept</p>")}\${graview.part("vendors", () => { throw new Error("no vendors"); })}\`));` });
+    const drawn = described(result);
+    expect(drawn.parts).toContainEqual({ t: "text", text: "kept" });
+    expect(drawn.problems).toContainEqual({ at: 'part "vendors"', says: 'The part "vendors" threw: Error: no vendors. The page draws a note in its place and the rest of the view.' });
+  });
 });
 
 describe("never in the host's own context", () => {
