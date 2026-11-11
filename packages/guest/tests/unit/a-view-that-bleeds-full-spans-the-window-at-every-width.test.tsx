@@ -66,7 +66,7 @@ describe("a manifest's bleed of full", () => {
   it('is true, "full", or left out, and nothing else', () => {
     expect(checkManifest({ ...brief, bleed: "full" }, store())).toEqual([]);
     expect(checkManifest(hero, store())).toEqual([]);
-    expect(checkManifest({ ...brief, bleed: "wide" } as unknown as WorkerViewManifest, store())).toEqual([expect.stringContaining('bleed is "wide": it is true, "full", or left out')]);
+    expect(checkManifest({ ...brief, bleed: "wide" } as unknown as WorkerViewManifest, store())).toEqual([expect.stringContaining(`bleed is "wide": it is true (edge to edge on a phone, the column on a desk), "full" (the page's whole width at every width, a desk's included), or left out (view-bleed).`)]);
   });
   it("marks the view it registers as bleeding full, which bleeds on a phone as well", () => {
     const one = registry({ ...brief, bleed: "full" }).lookup("deliverable", { cardinality: "one", fidelity: "full" });

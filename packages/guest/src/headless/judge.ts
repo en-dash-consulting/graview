@@ -32,6 +32,8 @@ const WHY: Readonly<Record<string, string>> = {
   feImage: " It loads an image: a filter here is made of the view's own pixels.",
   "@property": " It registers a property for the whole page, the app's own --graview-* among them: animate a transform, an opacity or a color in @keyframes.",
   "a href": " An <a> in SVG goes to a record or a place (data-record, data-place); a link out is an HTML <a href>.",
+  loading: ' An <img> loads "lazy" or "eager".',
+  fetchpriority: ' An <img> fetches at "high", "low" or "auto".',
   role: ` A role of the app's chrome or notices is the app's; role="region" is drawn while it has a name (aria-label).`,
 };
 

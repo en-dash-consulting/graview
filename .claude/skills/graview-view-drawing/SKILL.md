@@ -22,8 +22,7 @@ color, type, `mask-image`, scroll margins, transitions, `@keyframes`,
 `animation-timeline`, `@media`, `@supports` and `@container`; reduced motion
 holds motion still. Every property kept is in `CSS_PROPERTIES` (functions
 `CSS_FUNCTIONS`, at-rules `CSS_AT_RULES`) on `@graview/core/css`. Each
-`graview.style(css)` adds a sheet after the last (a shared design system's,
-then the view's own), each judged alone; a sheet given again is not added
+`graview.style(css)` adds a sheet after the last, each judged alone; a sheet given again is not added
 twice: say what changes per push in a class or `style`.
 
 Never drawn: `script`, `iframe`, `object`, `embed`, `link`, `meta`, `base`,
@@ -38,8 +37,8 @@ within the view; `all: unset` takes a button's chrome off. What the host leaves 
 
 A view never speaks as the app's chrome. `nav`, `header`, `footer`, `aside`
 and `search` are drawn as `div`, and `output` as `span`, each with what it
-holds. They lose their landmark or status role; a selector for them still
-matches. A `section` is named only by a heading it draws (`aria-labelledby`). `role` takes
+holds. They lose their role, not
+their selector. A `section` is named only by a heading it draws (`aria-labelledby`). `role` takes
 no landmark or notice's role (`navigation`, `status`, `alert`, …) but a
 named `region`.
 
@@ -98,21 +97,22 @@ said once in its console and the host's problems, with the address:
   headless run), and refused elsewhere.
 - **An `https:` image on an origin the host lists** — `images: { origins:
   ["https://upload.wikimedia.org"] }` on the view's definition (and on a
-  headless run). The view never chooses an origin: an open list would let
-  it send what it reads anywhere. It is asked for with no referrer.
+  headless run). The view never chooses an origin, so it sends
+  what it reads nowhere. It is asked for with no referrer.
   Unlisted, a URL on a record is refused.
 - **A picture on a record.** Say `pictures: true` in the manifest, or
-  `{ width: 400 }`, the widest it draws one in CSS pixels. Each file
+  `{ width: 400 }`, the widest it draws one. Each file
   on a record the view is handed is then `{ name, type, bytes, width,
-  height, caption, src, left }` in its field, never the host's path to it.
-  `src` is the address the host made from the bytes, fetched as the reader
-  and made smaller to `width`; absent until a later push brings it.
-  `left` says why a picture will never come: past one
-  picture's byte budget or the view's, or what the host answered when it
-  was not loaded. A document or SVG has no `src`: show its name,
-  type and size. They share 12 MB: choose kinds, or `records:
-  { subject: true }` (its record and what links to it) or `{ ids }`, and
-  `most: 12`.
+  height, caption, src, thumb, left }` in its field, never the host's path to it.
+  `src` is the host's address for it, fetched as the reader and made
+  smaller to `width`; absent until a later push. `left` says why
+  one never will: a budget, or the host's answer. A document or SVG has
+  no `src`: show its name, type and size. They share 12 MB: choose kinds, or `records:
+  { subject: true }` (it and what links to it) or `{ ids }`, and
+  `most: 12`. `thumb: 240` (< `width`) adds a smaller, still
+  `thumb` where smaller, in the 12 MB: draw `thumb || src`. All
+  are fetched as handed; `loading="lazy"` and `fetchpriority` on an `img`
+  order only its decoding and drawing.
 
 ```js
 const photos = (job.photos || []).map((photo) => photo.src

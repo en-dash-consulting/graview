@@ -151,7 +151,7 @@ export const HTML_ELEMENTS: Readonly<Record<string, OpenElement>> = {
   meter: { attributes: { value: "number", min: "number", max: "number", low: "number", high: "number", optimum: "number" } },
   progress: { attributes: { value: "number", max: "number" } },
   // images, held in the drawing: data: or the host's own blob:
-  img: { empty: true, attributes: { src: "image", alt: "text", width: "number", height: "number", decoding: { oneOf: ["async", "sync", "auto"] } } },
+  img: { empty: true, attributes: { src: "image", alt: "text", width: "number", height: "number", decoding: { oneOf: ["async", "sync", "auto"] }, loading: { oneOf: ["lazy", "eager"] }, fetchpriority: { oneOf: ["high", "low", "auto"] } } },
   /*
    * A record's video, played by the host (0.1.37): `<graview-video
    * data-record="moment:x" data-field="clip">` (and `data-index` in a

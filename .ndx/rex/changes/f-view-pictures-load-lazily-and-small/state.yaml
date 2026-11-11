@@ -1,0 +1,6 @@
+schema: "rex/v2"
+items:
+  "ec2eb443-3629-404d-888a-cde1c1ba8906":
+    status: "in_progress"
+    startedAt: "2026-11-11T02:42:28.000Z"
+    lastModified: "2026-11-11T02:42:28.000Z"
