@@ -4,6 +4,7 @@ import { actingAs } from "../permissions/policy.js";
 import type { Principal } from "../permissions/types.js";
 import { serveAlong, type FieldWriter, type Timeline } from "./served.js";
 import { DECLINES } from "./tidying.js";
+import { unseatedOp } from "../binding-served.js";
 import type { Author, Operation } from "./types.js";
 
 /**
@@ -215,7 +216,8 @@ export function redact(ops: readonly Operation[], seeing: SeatLens | ((id: strin
   // A seat from whom nothing is kept is served the log as it is (FR-67).
   if (given.hides?.() === false) return [...ops];
   const lens = given.pin?.() ?? given;
-  return undoesFollow(judgedOps(ops, lens), lens);
+  // And no seat a person is bound to, in any op: that is the host's alone (Roadmap f-invite-binds-existing-person).
+  return undoesFollow(judgedOps(ops, lens), lens).map(unseatedOp);
 }
 
 /**

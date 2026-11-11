@@ -98,7 +98,7 @@ export function seatPersonOf(principal: Author): string | undefined {
 const BOUND_PERSON: unique symbol = Symbol.for("@graview/core:bound-person") as never;
 
 /** The record a store bound this seat to, as `seatedIn` read it. */
-const boundPersonOf = (principal: Author): string | undefined => {
+export const boundPersonOf = (principal: Author): string | undefined => {
   const bound = (principal as { readonly [BOUND_PERSON]?: unknown })[BOUND_PERSON];
   return typeof bound === "string" ? bound : undefined;
 };

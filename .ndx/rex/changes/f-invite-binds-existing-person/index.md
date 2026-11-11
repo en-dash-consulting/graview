@@ -8,7 +8,7 @@ acceptanceCriteria:
   - "A host binds a joining account to an existing person record (store.bindPerson), as a named act (bind-person) in the log, blamed on whoever bound it and undone like any act (test)"
   - "After a binding, $me, own sight, self grants, acts done as the seat and the name Activity says resolve to the bound record, and no second person is made, for an account and for a profile (test)"
   - "A binding is refused in a sentence for a record already bound to another account, a record of another kind, and an account already bound to a different record or with a record of its own (test)"
-  - "Who may bind is the policy's (by name or every act, never a self or own-end grant) or the host's system seat, and no seat ever binds itself (test)"
+  - "Binding is held to the people who run the app: the host's system seat or a role the policy grants bind-person by name, and no seat ever binds itself (test)"
   - "After a binding and after its undo, the kinds kept from the seat, its seat view held across both, and its served log are judged as the seat is now, and a seat's own claim to a binding is never believed (test)"
 touches:
   - "90b438f3-5664-45a5-9902-564a6b0b011c"

@@ -3,7 +3,7 @@ import type { AnySchema, NodeOfSchema } from "../schema/schema.js";
 import { SchemaError } from "../schema/schema.js";
 import { assertKnownValues, unknownPrimitive } from "../format-error.js";
 import { applySplice } from "../text/splice.js";
-import { isArchived, MARKS, personSeatOf, type ArchivedOption } from "./archived.js";
+import { isArchived, MARKS, PERSON_SEAT, personSeatOf, type ArchivedOption } from "./archived.js";
 import { diffSnapshots, diffTouched, type GraphDiff } from "./diff.js";
 import { edgeFieldsProblem } from "./edge-fields.js";
 import { isUnset, type Primitive } from "./primitives.js";
@@ -252,14 +252,32 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
 
   /**
    * THE RECORD OF THE PEOPLE KIND A SEAT IS BOUND TO (Roadmap
-   * f-invite-binds-existing-person): the one whose `PERSON_SEAT` names it —
-   * of several (a restore, a host's own change), the first by id, so every
-   * store reading the same graph says the same one.
+   * f-invite-binds-existing-person): the one whose `PERSON_SEAT` names it.
+   * Of several — a graph loaded so, since no change here makes a second —
+   * none: an account is never one of two people, and `validateGraph` says
+   * so (`person-seat-shared`).
    */
   personBoundTo(seat: string): string | undefined {
     const ids = this.seats.get(seat);
-    if (!ids?.size) return undefined;
-    return ids.size === 1 ? ids.values().next().value : [...ids].sort()[0];
+    return ids?.size === 1 ? ids.values().next().value : undefined;
+  }
+
+  /** Whether any record of the people kind is bound to a seat. */
+  hasPersonSeats(): boolean {
+    return this.seats.size > 0;
+  }
+
+  /**
+   * A RECORD COMING BACK BOUND TO A SEAT ANOTHER ALREADY IS — an undo
+   * putting back a person removed after another was bound — comes back
+   * unbound: two records never share one account.
+   */
+  private oneSeat<N extends { readonly id: string; readonly kind: string }>(node: N): N {
+    const seat = personSeatOf(node);
+    const ids = seat === undefined ? undefined : this.seats.get(seat);
+    if (!ids || [...ids].every((id) => id === node.id) || !(this.schema.tryDefinition(node.kind) as { readonly people?: boolean } | undefined)?.people) return node;
+    const { [PERSON_SEAT]: _seat, ...rest } = node as N & Record<string, unknown>;
+    return rest as unknown as N;
   }
 
   /** Edges leaving `id`, optionally of one kind — every one, whatever is at its far end. */
@@ -420,7 +438,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
     switch (primitive.op) {
       case "add-node":
         assertKnownValues(primitive.node);
-        this.insertNode(primitive.node as NodeOfSchema<S>, restoring, inPlace);
+        this.insertNode(this.oneSeat(primitive.node as NodeOfSchema<S>), restoring, inPlace);
         return;
       case "remove-node": {
         const id = primitive.node.id;
@@ -453,7 +471,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
           if (isUnset(value)) delete next[key];
           else next[key] = value;
         }
-        const patched = (restoring ? next : this.checkPatch(current, next, Object.keys(primitive.after))) as NodeOfSchema<S>;
+        const patched = this.oneSeat((restoring ? next : this.checkPatch(current, next, Object.keys(primitive.after))) as NodeOfSchema<S>);
         this.nodes.set(primitive.id, patched);
         this.archived[isArchived(patched) ? "add" : "delete"](primitive.id);
         this.seat(current, patched);

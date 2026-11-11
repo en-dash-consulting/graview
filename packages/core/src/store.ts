@@ -30,14 +30,15 @@ import { OperationLog, type Epoch, type LogArchive } from "./ops/log.js";
 import type { Author, Batch, Operation, SentOut, Via } from "./ops/types.js";
 import { lineageOf, type Lineage } from "./ops/lineage.js";
 import { KEEP_LINK, keepLinkMutation, keepLinkVia } from "./mutations/keep-link.js";
-import { BIND_PERSON, bindPersonMutation } from "./mutations/bind-person.js";
+import { BIND_PERSON, BINDING } from "./binding-served.js";
+import { PERSON_SEAT } from "./graph/archived.js";
 import { ActRefusal } from "./refused.js";
 import { advisoryVoterOf, signedOutSeat, SIGN_IN_TO_VOTE, VOTE_SUGGESTION, VOTING, voteSuggestionMutation, type AppTidying, type VotesOptions } from "./mutations/vote-suggestion.js";
 import { TYPE_TEXT, TYPING } from "./text/typing-hook.js";
 import type { FieldRevision } from "./ops/revisions.js";
 import { DECLINES, isAutomated, isTidyingActor, tidyingRefusal, type ActMeanings, type ServedStops } from "./ops/tidying.js";
 import { nameOfAuthor } from "./who.js";
-import { actingAs, bindable, grantsTo, isSystem, meIn, meOf, ownsId, permits, profileOf, rolesSaid, seatedIn, seatPersonOf, withValidProfile, permittedMutations, proposes, subjectKinds, type PolicyWords } from "./permissions/policy.js";
+import { actingAs, boundPersonOf, grantsTo, isSystem, meIn, meOf, ownsId, permits, profileOf, rolesSaid, seatedIn, withValidProfile, permittedMutations, proposes, subjectKinds, type PolicyWords } from "./permissions/policy.js";
 import { MOST_PROPOSED, PROPOSE_CHANGES, proposeChangesMutation } from "./mutations/propose-changes.js";
 import { namesUnseen, redact } from "./ops/withheld.js";
 import { writersBehind } from "./ops/writers.js";
@@ -585,7 +586,8 @@ function keptKindsSeat(principal: Principal, depth = 0): string | undefined {
   if (given !== undefined && (!Array.isArray(given) || !given.every((role) => typeof role === "string"))) return undefined;
   const roles = given === undefined ? null : [...new Set(given as readonly string[])].sort();
   const profile = profileOf(principal);
-  return JSON.stringify([kind ?? null, id ?? null, roles, profile ? [profile.id, profile.name] : null, behind]);
+  // And the record the store bound it to (`seatedIn`, read before this is asked): a binding and its undo are two seats.
+  return JSON.stringify([kind ?? null, id ?? null, roles, profile ? [profile.id, profile.name] : null, boundPersonOf(principal) ?? null, behind]);
 }
 
 function storeTag(): string {
@@ -734,14 +736,6 @@ export class Store<S extends AnySchema> {
     if (!options.past && !this.mutations.has(PROPOSE_CHANGES)) {
       this.proposer = proposeChangesMutation();
       this.mutations.set(PROPOSE_CHANGES, this.proposer);
-    }
-    // "Bind a person" (Roadmap f-invite-binds-existing-person): answered by every store with a people kind, offered by no list. An app's own `bind-person` keeps its name.
-    if (!options.past && !this.mutations.has(BIND_PERSON)) {
-      this.binder = bindPersonMutation(options.schema, {
-        graph: () => this.graph,
-        actedAs: (id) => this.log.all().some((op) => op.mutation?.name !== BIND_PERSON && seatPersonOf(op.author) === id),
-      });
-      if (this.binder) this.mutations.set(BIND_PERSON, this.binder);
     }
 
     const horizon = given("horizon", options.horizon);
@@ -951,6 +945,11 @@ export class Store<S extends AnySchema> {
   private spelled(name: string): string {
     // "Type text" (Roadmap f-collab-text): answered by every store once `@graview/core/typing` is loaded, and offered by no list.
     if (name === TYPE_TEXT && !this.typer && TYPING.typeText && !this.past && !this.mutations.has(name)) this.mutations.set(name, (this.typer = TYPING.typeText(this)));
+    // "Bind a person" (Roadmap f-invite-binds-existing-person): answered where a kind is the people once the host loads `@graview/core/binding`, and offered by no list.
+    if (name === BIND_PERSON && !this.binder && BINDING.act && !this.past && !this.mutations.has(name)) {
+      const binder = BINDING.act(this) as AnyMutationDefinition<S> | undefined;
+      if (binder) this.mutations.set(name, (this.binder = binder));
+    }
     return this.mutations.has(name) ? name : (actSpelledAs(name, this.mutations.keys()) ?? name);
   }
 
@@ -1075,7 +1074,8 @@ export class Store<S extends AnySchema> {
     const mutation = this.mutations.get(call.name) ?? (call.name === PUBLISH ? this.publisher : undefined);
     const nobody = mutation && !undoing && this.noOneToBe(mutation, principal);
     if (nobody) return { ok: false, refusal: nobody } as ReturnType<typeof permits>;
-    if (mutation && mutation === this.binder) return this.judgedBinding(call, principal);
+    // Binding a seat to a person is judged by `@graview/core/binding`, which made the act: the host, or a grant that names it.
+    if (mutation && mutation === this.binder) return BINDING.judged!(this, call, principal) as ReturnType<typeof permits>;
     // Publishing is the declaration's `publishers`, not a grant's.
     if (mutation && mutation === this.publisher) return PUBLISHING.verdict!(this, principal) as ReturnType<typeof permits>;
     /*
@@ -1147,28 +1147,6 @@ export class Store<S extends AnySchema> {
      * retitle a shift has not been trusted with making one.
      */
     return permits(this.policy, principal, call.name, kind, removeVia([...this.mutations.values()], mutation.derived.kind), typeof id === "string" ? id : undefined, this.words);
-  }
-
-  /**
-   * WHO MAY BIND A SEAT TO A PERSON (Roadmap f-invite-binds-existing-person):
-   * the host's system seat, and a seat the policy grants `bind-person` by
-   * name or every act — an owner, an admin — read from its grants alone:
-   * riding no other act, and never by a grant held to the seat's own record
-   * or end, which would let a member hand their record to another account.
-   * With no policy, anybody, as for any act. And never a seat binding itself,
-   * whatever it is granted: that is somebody else's to decide.
-   */
-  private judgedBinding(call: MutationCall, principal: Principal): ReturnType<typeof permits> {
-    if (isSystem(principal)) return { ok: true };
-    const seat = call.args["seat"];
-    const account = actingAs(principal).id;
-    const record = call.args["record"];
-    if ((typeof seat === "string" && account !== undefined && (seat === account || seat.startsWith(`${account}~`))) || (typeof record === "string" && ownsId(principal, record))) {
-      return { ok: false, refusal: { mutation: call.name, wouldNeed: [], message: "You cannot bind yourself to a record here: somebody who runs this app does that." } } as ReturnType<typeof permits>;
-    }
-    if (!this.policy) return { ok: true };
-    const policy = { ...this.policy, grants: this.policy.grants.filter((grant) => !grant.self && !grant.ownEnd) };
-    return permits(policy, principal, call.name, this.subjectKindOf(call, principal), undefined, typeof record === "string" ? record : undefined, this.words);
   }
 
   /**
@@ -1480,25 +1458,6 @@ export class Store<S extends AnySchema> {
    */
   personOf(principal: Principal): string | undefined {
     return meOf(this.seated(principal));
-  }
-
-  /**
-   * BIND A JOINING ACCOUNT TO THE PERSON ENTERED FOR IT (Roadmap
-   * f-invite-binds-existing-person): what a host calls as an invitation is
-   * accepted, so the record an organizer made for Bud — his household, his
-   * lists — is the one `$me`, `own`, `self` and an act done as him read
-   * from then on, and no second Bud is made. `joining` is the seat as the
-   * host will serve it (its account, and the profile it acts as, if any);
-   * `record` the person's id. The `bind-person` act, applied as
-   * `options.author` — the organizer, or the host's system seat — and so
-   * blamed on them and undone like any act. Refused (`ActRefusal`, or
-   * `PermissionDeniedError` for who may) in a sentence a host can show.
-   */
-  bindPerson(joining: Principal, record: string, options: ApplyOptions = {}): ApplyResult<S> {
-    if (!this.binder || this.mutations.get(BIND_PERSON) !== this.binder) throw new ActRefusal("Nobody here can be bound to a record: this app says of no kind that it is its people.");
-    const seat = bindable(withValidProfile(joining)) ? seatPersonOf(withValidProfile(joining)) : undefined;
-    if (seat === undefined) throw new ActRefusal("Only somebody who signed in can be bound to a record here.");
-    return this.apply({ name: BIND_PERSON, args: { record, seat } }, options);
   }
 
   /** The seat as this store judges it now: its bound person read from the graph (`seatedIn`). */
@@ -2143,6 +2102,10 @@ export class Store<S extends AnySchema> {
           throw error;
         }
         if (hint !== undefined && compiled.firstMinted !== undefined && compiled.firstMinted !== hint) renamed.set(hint, compiled.firstMinted);
+        // Whose record a person is, only binding says (Roadmap f-invite-binds-existing-person): no other act writes the mark.
+        if (definition !== this.binder && compiled.primitives.some((one) => (one.op === "add-node" && Object.hasOwn(one.node, PERSON_SEAT)) || (one.op === "patch-node" && Object.hasOwn(one.after, PERSON_SEAT)))) {
+          throw new ActRefusal(`"${definition.title ?? definition.name}" cannot say whose record a person is: only binding an account to it does.`);
+        }
         if (isAutomated(as)) {
           const refused = tidyingRefusal(this.schema, this.graph, compiled.primitives, this.authorName(as), { declaration: !this.suggesting && !decided });
           if (refused) this.refuse({ mutation: call.name, message: refused, wouldNeed: [] }, as.id);
@@ -2616,6 +2579,17 @@ export class Store<S extends AnySchema> {
     // Asked of `@graview/core/tidying`; a store that has not loaded it offers no way back it cannot judge.
     const stop = DECLINES.undoRefusal ? DECLINES.undoRefusal(this, ops, author) : ops.some((target) => target.undoes !== undefined && target.mutation === null && (target.lineage?.stopsKind || target.lineage?.liftedStop)) ? { mutation: "undo", wouldNeed: [], message: "This cannot be taken back here yet." } : undefined;
     if (stop) return stop;
+    /*
+     * A BINDING STAYS ONCE ITS SEAT HAS ACTED AS THE RECORD (Roadmap
+     * f-invite-binds-existing-person): taking it back would leave what they
+     * did to whoever is bound there next. Judged by `@graview/core/binding`;
+     * a store that has not loaded it takes no binding back.
+     */
+    for (const target of ops) {
+      if (target.undoes !== undefined || target.mutation?.name !== BIND_PERSON) continue;
+      const kept = BINDING.undo ? BINDING.undo(this, target) : "This binding cannot be taken back here.";
+      if (kept) return { mutation: "undo", wouldNeed: [], message: kept };
+    }
     if (this.policy || this.publisher) {
       for (const target of ops) {
         /*

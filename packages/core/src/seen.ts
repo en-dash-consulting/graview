@@ -7,6 +7,7 @@ import type { FieldWriter, Timeline } from "./ops/served.js";
 import { writersOf, type Writers } from "./ops/writers.js";
 import { namesUnseen, redact, type SeatLens } from "./ops/withheld.js";
 import { actingAs, grantsTo, isSystem, meOf, profileOf, seatedIn } from "./permissions/policy.js";
+import { PERSON_SEAT } from "./graph/archived.js";
 import { FIELD_SIGHT, fieldsJudged, partialSight, recordsOf, sees, type Judged, type Records } from "./permissions/sight.js";
 import type { Principal } from "./permissions/types.js";
 import { diffSnapshots } from "./graph/diff.js";
@@ -31,7 +32,16 @@ function turnedOff(store: Judged, principal: Principal): ReadonlySet<string> {
  */
 export function hidesFrom(store: Judged, principal: Principal): boolean {
   if (isSystem(principal)) return false;
-  return (store.policy?.sees?.length ?? 0) > 0 || turnedOff(store, principal).size > 0;
+  return (store.policy?.sees?.length ?? 0) > 0 || turnedOff(store, principal).size > 0 || seated(store);
+}
+
+/**
+ * AND A SEAT A PERSON IS BOUND TO (Roadmap f-invite-binds-existing-person),
+ * in the graph or anywhere in its log: an account's id, the host's alone, so
+ * every seat but the host's is served the records and the ops without it.
+ */
+function seated(store: Judged): boolean {
+  return store.graph.hasPersonSeats?.() === true || recordsOf(store.log).seated === true;
 }
 
 /**
@@ -234,6 +244,7 @@ function lensFor(store: Judged, principal: Principal): { readonly lens: SeatLens
         if (!optional(node.kind, field)) return undefined;
         (without ??= []).push(field);
       }
+      if (Object.hasOwn(node, PERSON_SEAT)) (without ??= []).push(PERSON_SEAT);
       if (!without) return node;
       const key = without.join("\u0000");
       const held = cleared.get(node);

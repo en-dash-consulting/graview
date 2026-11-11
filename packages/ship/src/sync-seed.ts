@@ -2,6 +2,7 @@ import {
   Graph,
   normalize,
   writesOf,
+  unseatedSnapshot,
   type AnySchema,
   type Operation,
   type Principal,
@@ -49,7 +50,9 @@ const same = (a: unknown, b: unknown): boolean => JSON.stringify(a) === JSON.str
  * changed is dropped and put again, because a kind is a record's identity
  * to the schema and no patch can move it.
  */
-export function seedSteps(seed: GraphSnapshot, live: GraphSnapshot, options: SeedSyncOptions = {}): MigrationStep[] {
+export function seedSteps(given: GraphSnapshot, live: GraphSnapshot, options: SeedSyncOptions = {}): MigrationStep[] {
+  // A seed never says whose record a person is: bindings and account ids stay in the installation that made them.
+  const seed = unseatedSnapshot(given);
   const steps: MigrationStep[] = [];
   const liveNodes = new Map(live.nodes.map((node) => [node.id, node]));
   const seedNodes = new Map(seed.nodes.map((node) => [node.id, node]));

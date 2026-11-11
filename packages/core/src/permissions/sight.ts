@@ -1,3 +1,4 @@
+import { PERSON_SEAT } from "../graph/archived.js";
 import type { GraphEdge } from "../graph/types.js";
 import type { Epoch, LogReading } from "../ops/log.js";
 import type { Operation } from "../ops/types.js";
@@ -17,6 +18,8 @@ export interface Judged {
     inEdges?(id: string): readonly GraphEdge[];
     /** The record of the people kind a seat is bound to (`Graph.personBoundTo`): who `$me`, `own` and `self` read it as. */
     personBoundTo?(seat: string): string | undefined;
+    /** Whether any record is bound to a seat now: a graph every seat but the host's is served without the mark. */
+    hasPersonSeats?(): boolean;
   };
   readonly log: LogReading;
   /** The kinds of the modules this workspace has off (FR-12), kept from every seat as a sight keeps a record. */
@@ -97,6 +100,8 @@ export function sightedKinds(policy: Policy | undefined): ReadonlySet<string> {
  */
 export interface Records {
   kindOf(id: string): string | undefined;
+  /** Whether any op it read says the seat a person is bound to (`PERSON_SEAT`): a log every seat but the host's is served without it. */
+  readonly seated?: boolean;
   /** The id of the seat that first added it — the person, for an agent acting for one. */
   creatorOf(id: string): string | undefined;
   /**
@@ -151,9 +156,14 @@ function indexFrom(base: number, checkpoint: Epoch | undefined): Index {
   return { base, end: base, read: [], kinds, creators, entries: [], records: { kindOf: (id) => kinds.get(id), creatorOf: (id) => creators.get(id), knowsAll } };
 }
 
+/** Whether a primitive says the seat a person is bound to. */
+const namesSeat = (primitive: Operation["primitives"][number]): boolean =>
+  primitive.op === "add-node" || primitive.op === "remove-node" ? Object.hasOwn(primitive.node, PERSON_SEAT) : primitive.op === "patch-node" && (Object.hasOwn(primitive.after, PERSON_SEAT) || Object.hasOwn(primitive.before, PERSON_SEAT));
+
 /** Reads one op into the index: the kind of each record it first adds or removes, and who first made one. */
 function readInto(index: Index, op: Operation): void {
   const seq = index.end;
+  if (!index.records.seated && op.primitives.some(namesSeat)) (index.records as { seated?: boolean }).seated = true;
   for (const primitive of op.primitives) {
     if (primitive.op !== "add-node" && primitive.op !== "remove-node") continue;
     const { id, kind } = primitive.node;

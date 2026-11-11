@@ -1,6 +1,6 @@
 {
   "budget": "every face",
-  "minified": 3941,
-  "gzipped": 1300,
-  "note": "Raised when a member who joins came to be bound to the person entered for them (Roadmap f-invite-binds-existing-person): the `bind-person` act every store with a people kind answers, its refusals in words, `store.bindPerson` and `store.personOf`, the graph's index of which seat each person is bound to, and the seat read as it is bound now wherever a store judges it (`seatedIn`: grants, sight, field sight, the served log, the kinds kept, `$me`). 3_941 / 1_300 more than its budget held, the gzipped with 44 bytes for what gzip gives from one build to the next. Measured at 3_175_476 / 1_153_387 to 1_153_418 against 3_171_535 / 1_152_131."
+  "minified": 4759,
+  "gzipped": 1387,
+  "note": "Raised when a member who joins came to be bound to the person entered for them, the binding held to the people who run the app (Roadmap f-invite-binds-existing-person): the graph's index of which seat each person is bound to, the seat read as it is bound now wherever a store judges it, and the record and the log a seat is served as the store keeps them; making a binding and judging who may are `@graview/core/binding`'s, on no page. 4_759 / 1_387 more than its budget held, the gzipped with 40 bytes for what gzip gives from one build to the next. Measured at 3_176_294 / 1_153_478 against 3_171_535 / 1_152_131."
 }

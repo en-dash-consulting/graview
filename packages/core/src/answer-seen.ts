@@ -13,6 +13,7 @@ import type { Principal } from "./permissions/types.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { Judged } from "./permissions/sight.js";
 import { hidesFrom, seatLens, seenBy } from "./seen.js";
+import { unseatedPrimitive } from "./binding-served.js";
 import type { Store } from "./store.js";
 
 /*
@@ -113,6 +114,8 @@ export function answerSeenBy<
         ? servePrimitives(answer.primitives as readonly Primitive[], lens.timeline, { served: (node, writer) => lens.servedWith(node, writer), edgeClean: (edge) => !namesUnseen(edge, lens.sees), sees: lens.sees }, actingAs(principal).id)
         : redact([{ id: "", seq: 0, batch: "", author: { kind: "system" }, intent: "", mutation: null, primitives: answer.primitives as never, reads: [], writes: [], at: "" }], lens)[0]!.primitives;
   }
+  // Nor the seat a person is bound to: the host's alone (Roadmap f-invite-binds-existing-person).
+  if (out["primitives"]) out["primitives"] = (out["primitives"] as readonly Primitive[]).flatMap((one) => unseatedPrimitive(one) ?? []);
   // What a change wrote of a field the seat may not see is no part of what it is told (Roadmap f-field-sight).
   if (lens.kept && out["primitives"]) out["primitives"] = withoutKeptFields(out["primitives"] as readonly Primitive[], lens);
   // Records the seat is served, and no id that names nothing: a hidden record and an absent one are left out alike (FR-55).
