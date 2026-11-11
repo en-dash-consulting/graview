@@ -402,9 +402,9 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
   const seen = () => options.store.seenBy(options.principal);
 
   const plain = (node: unknown): GuestNode => plainNode(options.store, node);
-  /* What the seat is kept from, of the kinds it reads and the kinds of what it is handed: never a kind read off a record it may not see (Roadmap f-view-knows-what-its-seat-cannot-see). */
+  /* The kinds of those its own `reads` names that the seat sees none of, and nothing more: a frame is somebody else's code (Roadmap f-view-knows-what-its-seat-cannot-see). */
   const unseenFor = (kinds: readonly string[]): Pick<GuestProps, "unseen"> => {
-    const unseen = unseenOf(options.store, options.principal, [...new Set(kinds)]);
+    const unseen = unseenOf(options.store, options.principal, [...new Set(kinds)], undefined, true);
     return unseen ? { unseen } : {};
   };
 
@@ -459,7 +459,7 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
       // Each option of the handed records' choices, by its label (Roadmap f-option-labels).
       ...choicesOf(options.store.schema, [...(node ? [node] : []), ...(listed ?? [])]),
       ...(options.placesShown ?{ places: options.placesShown().map(({ as, title, kind }) => ({ as, title, kind })) } : {}),
-      ...unseenFor([...(options.reads?.kinds ?? []), ...[...(node ? [node] : []), ...(listed ?? [])].map((one) => (one as { kind: string }).kind)]),
+      ...unseenFor(options.reads?.kinds ?? []),
     };
   };
 

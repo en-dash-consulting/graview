@@ -1,4 +1,5 @@
 import { rolesOf, type AnySchema, type Policy, type Principal } from "@graview/core";
+import { forgetSeatView } from "@graview/core/seat";
 import type { GuestUnseen } from "../protocol.js";
 import { readsOnlyUnseen, unseenOf, viewKinds } from "../host/unseen.js";
 import type { HeadlessFailureReason } from "./protocol.js";
@@ -98,7 +99,17 @@ const names = (source: string, field: string) => new RegExp(`(?<![\\w$])${field.
 
 const listed = (words: readonly string[]) => (words.length <= 1 ? words.join("") : `${words.slice(0, -1).join(", ")} and ${words.at(-1)}`);
 
-/** Run a worker view headless once for each seat, and say for each what came of it. */
+/**
+ * Run a worker view headless once for each seat, and say for each what came
+ * of it.
+ *
+ * FOR SOMEBODY WHO MAY SEE AS EVERY SEAT: what it says of one seat — what
+ * the view drew for it, what it was kept from — is said to whoever asked,
+ * so hand the result only to the app's owner or someone the policy lets see
+ * what each seat sees, never to one of the seats. A seat it made up
+ * (`view-as:<role>`, the visitor) has the views kept for it let go of once
+ * its run is done, so nothing of it outlives the check.
+ */
 export async function runWorkerViewForEachSeat<S extends AnySchema>(options: RunForEachSeatOptions<S>): Promise<SeatsChecked> {
   const { runWorkerViewHeadless } = await import("./index.js");
   const { store, manifest, source } = options;
@@ -118,14 +129,19 @@ export async function runWorkerViewForEachSeat<S extends AnySchema>(options: Run
       checked.push({ ...base, outcome: "fell-back", reason: "unseen", says: `${name}: falls back — ${listed(kinds)} ${kinds.length === 1 ? "is" : "are"} kept from this seat, so the host draws its way in (or that nothing here is shown) instead of the view.` });
       continue;
     }
-    /* A view of one record over the first of its kind this seat sees, unless the host said which. */
-    const over = !options.input && manifest.cardinality === "one" && manifest.attach !== "home" ? store.seenBy(principal).graph.nodesOfKind(manifest.attach as never)[0] : undefined;
     const { owner: _owner, seats: _seats, ...rest } = options;
-    const result = await runWorkerViewHeadless({ ...rest, principal, ...(over ? { input: { node: { id: over.id } } } : {}) });
+    let result: HeadlessResult;
+    try {
+      /* A view of one record over the first of its kind this seat sees, unless the host said which. */
+      const over = !options.input && manifest.cardinality === "one" && manifest.attach !== "home" ? store.seenBy(principal).graph.nodesOfKind(manifest.attach as never)[0] : undefined;
+      result = await runWorkerViewHeadless({ ...rest, principal, ...(over ? { input: { node: { id: over.id } } } : {}) });
+    } finally {
+      /* Every seat but the owner's is let go of: a made-up one outlives nothing, and any other is made anew when next asked. */
+      if (principal !== owner) forgetSeatView(store, principal);
+    }
     const told = [
       ...(reads.kinds.length > 0 ? [`it reads ${listed(reads.kinds)}, which this seat sees none of`] : []),
       ...Object.entries(fields).map(([kind, read]) => `it reads ${listed(read)} of ${kind}, which this seat is not handed`),
-      ...Object.entries(unseen?.withheld ?? {}).filter(([, count]) => count > 0).map(([kind, count]) => `${count} ${kind} record${count === 1 ? " is" : "s are"} withheld from it`),
     ];
     const also = told.length > 0 ? `; ${told.join("; ")}` : "";
     if (!result.ok) {

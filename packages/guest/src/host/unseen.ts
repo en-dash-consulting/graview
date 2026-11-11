@@ -21,18 +21,12 @@ import type { GuestUnseen } from "../protocol.js";
  *              alone (`hide`, `fields`): the sights that show the seat
  *              every record of the kind, else every sight that shows it
  *              some. Never from a record.
- *   withheld   for each kind it reads that a sight shows the seat every
- *              record of (one with no `own` or `via`), how many of them it
- *              is handed none of, because a field the record cannot be
- *              without is kept from it or names a record it may not see.
- *              Those are records the seat's sight says it may know of. A
- *              kind it sees only its own records of has no count — another
- *              person's record is never counted — nor has a kind kept from
- *              it, not even 0; nor any kind of an app that publishes, whose
- *              reader may not know what is not published yet.
  *
- * Absent where none of that is so: nothing kept, no field hidden and no
- * record withheld.
+ * Nothing about a record is said: no count, no id, no value. A frame
+ * guest, somebody else's code, is told less (`frame`): only the kinds it
+ * named in its own `reads`, and no fields.
+ *
+ * Absent where none of that is so: nothing kept and no field hidden.
  */
 
 /** The kinds a view's manifest reads: the kind it attaches to (not the home) and every kind it reads beside. */
@@ -54,7 +48,7 @@ function declaredFields(schema: AnySchema, kind: string): readonly string[] {
  * WHAT THE SEAT IS KEPT FROM, of these kinds — or undefined where nothing
  * is: what a view is handed as `props.unseen`.
  */
-export function unseenOf<S extends AnySchema>(store: Store<S>, principal: Principal, asked: readonly string[], keptAlready?: ReadonlySet<string>): GuestUnseen | undefined {
+export function unseenOf<S extends AnySchema>(store: Store<S>, principal: Principal, asked: readonly string[], keptAlready?: ReadonlySet<string>, frame = false): GuestUnseen | undefined {
   const sights = store.policy?.sees ?? [];
   const system = isSystem(principal);
   // Nothing kept from it: no sight, no module off (`hidesFrom`), or the system.
@@ -70,7 +64,7 @@ export function unseenOf<S extends AnySchema>(store: Store<S>, principal: Princi
   const hidden = kinds.filter((kind) => off.has(kind) || kept.has(kind) || (sights.length > 0 && showing(kind).length === 0));
   const shown = kinds.filter((kind) => !hidden.includes(kind));
   const fields: Record<string, readonly string[]> = {};
-  for (const kind of shown) {
+  for (const kind of frame ? [] : shown) {
     const all = showing(kind);
     const every = all.filter((sight) => !sight.own && !sight.via);
     const by = every.length > 0 ? every : all;
@@ -78,20 +72,8 @@ export function unseenOf<S extends AnySchema>(store: Store<S>, principal: Princi
     const without = declaredFields(store.schema, kind).filter((field) => !by.some((sight) => showsField(sight, field)));
     if (without.length > 0) fields[kind] = without;
   }
-  /* Records a sight shows it every one of, and it is handed none of: worked out over the whole store, said only as a number. */
-  const withheld: Record<string, number> = {};
-  let any = hidden.length > 0 || Object.keys(fields).length > 0;
-  if (store.publishing === undefined) {
-    const seen = store.seenBy(principal).graph;
-    for (const kind of shown) {
-      if (!showing(kind).some((sight) => !sight.own && !sight.via)) continue;
-      let count = 0;
-      for (const node of store.graph.nodesOfKind(kind as never)) if (!seen.has(node.id)) count += 1;
-      withheld[kind] = count;
-      if (count > 0) any = true;
-    }
-  }
-  return any ? { kinds: hidden, fields, withheld } : undefined;
+  if (frame) return hidden.length > 0 ? { kinds: hidden } : undefined;
+  return hidden.length > 0 || Object.keys(fields).length > 0 ? { kinds: hidden, fields } : undefined;
 }
 
 /** Whether every kind a view reads is kept from its seat: the host draws the way in where the view would draw nothing. */

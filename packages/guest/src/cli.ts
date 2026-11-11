@@ -50,7 +50,9 @@ export const VIEW_USAGE = `  graview view check <view.js> --app <app> --manifest
       alone, and a visitor where the app has one — or the ones it lists,
       and says for each whether it drew, fell back or was stopped, and what
       it reads that the seat is not handed; it fails where a seat is stopped
-      or falls back for anything but having nothing it reads in sight
+      or falls back for anything but having nothing it reads in sight; what
+      it says of each seat is for someone who may see as every seat — the
+      app's owner — never for one of the seats
 `;
 
 function flag(argv: readonly string[], name: string): string | undefined {

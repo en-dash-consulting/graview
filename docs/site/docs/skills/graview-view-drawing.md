@@ -14,7 +14,7 @@ A worker view (`graview-worker-view`: its manifest, its global, its writes and i
 
 HTML's sectioning, headings, text, lists, tables, `details`/`summary`, `button`, `input`, `select`, `textarea`, `label`, `fieldset`, `meter`, `progress` and `img`. SVG's `svg`, `g`, shapes, `path`, `text`, gradients, `clipPath`, `mask`, `marker`, `pattern`, `symbol`, `use href="#id"`, `filter` and its `fe*`. Attributes: `id`, `class`, `style`, `title`, `role`, `aria-*`, `data-*`, and each element's own. CSS for layout, grid, flex, columns and `break-inside`, color, type, `mask-image`, scroll margins, transitions, `@keyframes`, `animation-timeline`, `@media`, `@supports` and `@container`; reduced motion holds motion still. Every property kept is in `CSS_PROPERTIES` (functions `CSS_FUNCTIONS`, at-rules `CSS_AT_RULES`) on `@graview/core/css`. Each `graview.style(css)` adds a sheet after the last, each judged alone; a sheet given again is not added twice: say what changes per push in a class or `style`.
 
-Never drawn: `script`, `iframe`, `object`, `embed`, `link`, `meta`, `base`, `style`, `form`, `video` (place a `graview-video`, below), `canvas`, SVG `image`, `feImage`, `foreignObject` and SMIL; any `srcset` or `on*` attribute; `href` but a link out (`graview-view-links`); `src` on anything but `img`, and on `img` any address but the ones below. In CSS: `url()` except `url(#id)` on `fill`, `stroke`, `clip-path`, `marker` or `filter`; `@import`; `@font-face`; `@property`; `image-set()`, `attr()` and other unlisted functions; `position: fixed`; `:host`. `position: sticky` sticks within the view; `all: unset` takes a button's chrome off.
+Never drawn: `script`, `iframe`, `object`, `embed`, `link`, `meta`, `base`, `style`, `form`, `video` (place a `graview-video`, below), `canvas`, SVG `image`, `feImage`, `foreignObject` and SMIL; any `srcset` or `on*` attribute; `href` but a link out (`graview-view-links`); `src` on anything but `img`, and on `img` any address but the ones below. In CSS: `url()` except `url(#id)` on `fill`, `stroke`, `clip-path`, `marker` or `filter`; `@import`; `@font-face`; `@property`; `image-set()`, `attr()` and other unlisted functions; `position: fixed`; `:host`. `position: sticky` sticks within the view; `all: unset` takes a button's chrome off. What the host leaves out it lists in `refused` (below).
 
 A view never speaks as the app's chrome. `nav`, `header`, `footer`, `aside` and `search` are drawn as `div`, and `output` as `span`, each with what it holds. They lose their role, not their selector. A `section` is named only by a heading it draws (`aria-labelledby`). `role` takes no landmark or notice's role (`navigation`, `status`, `alert`, …) but a named `region`.
 
@@ -82,7 +82,7 @@ graview.on("drop", "[data-drop]", (event) => {
 2. `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>` says what it drew. Headless, a picture comes with a stand-in `src`; one the page would leave out comes with `left`, among the problems.
 3. Open the place and read the view's `refused` (`WorkerView.refused`, or `graview.refused` in its console): every element, attribute and address the host left out, and why.
 4. Toggle to dark; change the brand. Does the view follow?
-5. As each seat (`--seats`): pictures on records it may not see absent, not hidden? A kind in `props.unseen` gets a sentence, not a hole.
+5. As each seat (`--seats`): are the pictures it may not see absent? A kind in `props.unseen` gets a sentence, not a hole.
 
 ### What the check cannot see
 

@@ -9,6 +9,7 @@ acceptanceCriteria:
   - "runWorkerViewForEachSeat says per seat drew, fell-back or stopped, with the reason, the props.unseen it was handed and what it reads that the seat is not handed (test)"
   - "A seat that sees nothing the view reads falls back as the page does, without running it (test)"
   - "graview view check --seats runs it as each seat, or the ones listed, and refuses a seat the app does not have (test)"
+  - "What it says of each seat is said to be for somebody who may see as every seat, and the views kept for each seat it made up are let go of once its run is done (test)"
 touches:
   - "cb40fbe6-0fd7-4f8a-a255-a56a7dedf1cb"
 priority: "medium"

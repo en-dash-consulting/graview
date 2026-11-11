@@ -527,6 +527,18 @@ export function viewsOf(store: object): Map<string, unknown> {
   return views;
 }
 
+/**
+ * LET GO OF ONE SEAT'S VIEWS OF A STORE, at the head and as a reader: for
+ * a seat that is nobody's account, made up for one run (a check drawing a
+ * view as each role), so nothing kept for it outlives the run. The next
+ * `seenBy` for that seat makes its view anew.
+ */
+export function forgetSeatView(store: object, principal: Principal): void {
+  const views = VIEWS.get(store);
+  views?.delete(viewKey(principal, "head"));
+  views?.delete(viewKey(principal, "published"));
+}
+
 /** The app as a seat is served it at the head: what its sight reaches, as the store grows. */
 export function seatView<T extends Viewed>(store: T, principal: Principal): T {
   // A module off keeps its kinds from every seat as a sight would (FR-12); the view reads which are off as it goes. The system is kept from nothing.

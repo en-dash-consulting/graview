@@ -32,10 +32,11 @@ describe("a view's check, as each seat", () => {
     expect(checked.seats.map((seat) => [seat.seat, seat.outcome])).toEqual([["owner", "drew"], ["member", "drew"], ["parent", "drew"], ["visitor", "drew"]]);
     expect(by.owner!.reads).toEqual({ kinds: [], fields: {} });
     expect(by.parent!.reads).toEqual({ kinds: [], fields: { player: ["phone"] } });
-    expect(by.parent!.unseen!.withheld).toEqual({ player: 0, memo: 1 });
+    // What the seat is kept from, and nothing of any record: no count of what it is handed none of.
+    expect(by.parent!.unseen).toEqual({ kinds: [], fields: { player: ["phone"], memo: ["code"] } });
     expect(by.visitor!.reads).toEqual({ kinds: ["memo"], fields: { player: ["phone"] } });
     expect(by.parent!.says).toContain("it reads phone of player, which this seat is not handed");
-    expect(by.parent!.says).toContain("1 memo record is withheld from it");
+    expect(by.parent!.says).not.toMatch(/withheld|\d+ memo/);
     expect(checked.ok).toBe(true);
   });
 
@@ -44,6 +45,15 @@ describe("a view's check, as each seat", () => {
     const outcomes = checked.seats.map((seat) => [seat.seat, seat.outcome, seat.reason ?? null]);
     expect(outcomes).toEqual([["owner", "drew", null], ["member", "drew", null], ["parent", "fell-back", "unseen"], ["visitor", "fell-back", "unseen"]]);
     expect(checked.text).toContain("visitor: falls back — vendor is kept from this seat");
+  });
+
+  it("lets go of what it kept for each seat it made up once the run is done, and keeps the owner's", async () => {
+    const store = club();
+    const seats = seatsOfPolicy(clubPolicy, member);
+    const before = new Map(seats.map((seat) => [seat.name, store.seenBy(seat.principal)]));
+    await runWorkerViewForEachSeat({ store, manifest: players, source: playersSource, run, owner: member });
+    expect(store.seenBy(member)).toBe(before.get("owner"));
+    for (const name of ["parent", "visitor"]) expect(store.seenBy(seats.find((seat) => seat.name === name)!.principal), name).not.toBe(before.get(name));
   });
 
   it("runs as the seats the host hands, and says one that is stopped", async () => {

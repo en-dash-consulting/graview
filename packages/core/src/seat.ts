@@ -8,7 +8,8 @@
  * seat's plans read — and the archive behind the undo horizon as one seat
  * may see it (`archivedSeenBy`, FR-198), which a host answers
  * `HistoryHost.archived` with, and the archive from an epoch a host keeps
- * when it keeps a plan's window of history (`archiveFrom`, FR-214).
+ * when it keeps a plan's window of history (`archiveFrom`, FR-214) — and a
+ * seat's views let go of after a run that made the seat up (`forgetSeatView`).
  *
  * Apart from `@graview/core` because a bundler places a whole file in a
  * page's first chunk when the first chunk can reach it and any chunk uses
@@ -20,3 +21,4 @@ export { answerSeenBy } from "./answer-seen.js";
 export { archivedSeenBy, archiveFrom, type ArchivedSeen } from "./archived-seen.js";
 export { beginning } from "./beginning.js";
 export { placesFrom, placesOf, viewPlaceOf } from "./app-places.js";
+export { forgetSeatView } from "./seen.js";

@@ -33,7 +33,7 @@ but `img`, and on `img` any address but the ones below. In CSS: `url()`
 except `url(#id)` on `fill`, `stroke`, `clip-path`, `marker` or `filter`;
 `@import`; `@font-face`; `@property`; `image-set()`, `attr()` and other
 unlisted functions; `position: fixed`; `:host`. `position: sticky` sticks
-within the view; `all: unset` takes a button's chrome off.
+within the view; `all: unset` takes a button's chrome off. What the host leaves out it lists in `refused` (below).
 
 A view never speaks as the app's chrome. `nav`, `header`, `footer`, `aside`
 and `search` are drawn as `div`, and `output` as `span`, each with what it
@@ -189,8 +189,8 @@ bytes as words: a `data:` URI in a text field is cut at 20,000 characters.
    `graview.refused` in its console): every element, attribute and
    address the host left out, and why.
 4. Toggle to dark; change the brand. Does the view follow?
-5. As each seat (`--seats`): pictures on records it may not see absent, not
-   hidden? A kind in `props.unseen` gets a sentence, not a hole.
+5. As each seat (`--seats`): are the pictures it may not see absent?
+   A kind in `props.unseen` gets a sentence, not a hole.
 
 ## What the check cannot see
 

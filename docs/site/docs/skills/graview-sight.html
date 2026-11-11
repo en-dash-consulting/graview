@@ -1837,10 +1837,10 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
 };</code></pre></div>
 <p>Keep it out of the record store: it is never history, an export or an agent's.</p>
 <h3>What a view is told it cannot see</h3>
-<p>A worker view, and a frame through its bridge, is handed <code>props.unseen</code> where its seat is kept from some of what it reads, so it says why a part is empty:</p>
-<div class="code" data-scroller><pre><code class="language-js">const { kinds = [], fields = {}, withheld = {} } = graview.props.unseen ?? {};
+<p>A worker view is handed <code>props.unseen</code> where its seat is kept from some of what it reads, so it says why a part is empty:</p>
+<div class="code" data-scroller><pre><code class="language-js">const { kinds = [], fields = {} } = graview.props.unseen ?? {};
 if (kinds.includes("vendor")) draw("Sign in to see the vendors");</code></pre></div>
-<p><code>kinds</code>: the kinds it reads the seat sees none of (no sight for its roles, an <code>own</code> or <code>via</code> sight and no id, a module off). <code>fields</code>: per kind it sees, the fields <code>hide</code> or <code>fields</code> may keep from it, read from the policy, never a record. <code>withheld</code>: per kind a sight shows it every record of, how many it is handed none of, because a field one cannot be without is kept or names a record it may not see. A kind kept from it, or seen only as its own (<code>own</code>, <code>via</code>), has no count, nor has an app that publishes. Where everything a view reads is kept, the host draws its <code>signIn</code> line (or "Nothing here is shown to you.") instead of starting it. <code>graview view check --seats</code> runs a view as each seat the policy names and says what each could not see.</p>
+<p><code>kinds</code>: the kinds it reads the seat sees none of (no sight for its roles, an <code>own</code> or <code>via</code> sight and no id, a module off). <code>fields</code>: per kind it sees, the fields <code>hide</code> or <code>fields</code> may keep from it, read from the policy. Nothing of any record is said: no count, no id. A frame, somebody else's code, is handed <code>kinds</code> alone, of those its own <code>reads</code> names. Where everything a view reads is kept, the host draws its <code>signIn</code> line (or "Nothing here is shown to you.") instead of starting it. <code>graview view check --seats</code> runs a view as each seat the policy names and says what each could not see: for the owner's eyes only.</p>
 <h3>Then find out whether it worked</h3>
 <div class="code" data-scroller><pre><code class="language-sh">pnpm build &amp;&amp; npx graview check ./dist/domain/app.js</code></pre></div>
 <ul>
