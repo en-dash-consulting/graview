@@ -4,11 +4,11 @@ import { aggregateId, kindCardId, withFocus, withOverview, withPicture, withWith
 // Drawn only with the scene, whose face has fetched `@graview/react` already.
 import { pickedFrom, ribbonsOf, ribbonSentence } from "@graview/react";
 import { useFlagged, useKit, ViewBoundary } from "@graview/react/drawing";
-import type { MapPanelShowing } from "./map-panel-door.js";
+import { MapPanelOpensPage, type MapPanelShowing } from "./map-panel-door.js";
 import { NamedAbove } from "./primitives/index.js";
 import { Fields } from "./editable.js";
 import { isDefaultView, useGraph, useGraview, useNavigation, useViolations, ViewModeProvider, type ViewComponent } from "@graview/react/provider";
-import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from "react";
+import { Suspense, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from "react";
 import { barPanes } from "./bar-panes-door.js";
 import { problemsNamed } from "./problem-count.js";
 import { problemsAsked, putDownProblemsAsked, subscribeToProblemsAsked } from "./map-asks.js";
@@ -519,6 +519,7 @@ function linkGroups(
 
 function RecordPanel<S extends AnySchema>({ id }: { readonly id: string }) {
   const actsAt = useActsAt();
+  const opensPage = useContext(MapPanelOpensPage);
   const { store, views, view, setSelection } = useGraview<S>();
   const { go } = useNavigation();
   const graph = useGraph<S>();
@@ -560,7 +561,7 @@ function RecordPanel<S extends AnySchema>({ id }: { readonly id: string }) {
                 handTheKeyboardTo(id, event.currentTarget);
               }}
             >
-              Go to it
+              {opensPage ?? "Go to it"}
             </button>
             <ActsButton on={id} about={name(id)} />
             <button type="button" data-testid="record-panel-district" style={pressStyle} onClick={() => setSelection([kindCardId(kind)])}>
@@ -579,6 +580,11 @@ function RecordPanel<S extends AnySchema>({ id }: { readonly id: string }) {
           <Fields<S> id={id} shown={[name(id)]} />
         )}
       </div>
+      {opensPage !== null ? (
+        <h3 style={{ ...heading, fontSize: "0.95rem", color: "var(--graview-ink)" }} data-testid="record-panel-connected">
+          Connected <span style={{ fontWeight: 400, color: "var(--graview-ink-faint)" }}>· {groups.reduce((sum, group) => sum + group.others.length, 0)}</span>
+        </h3>
+      ) : null}
       {groups.length === 0 ? <p style={{ ...quiet, margin: "14px 18px" }}>No links yet.</p> : null}
       {groups.map((group) => (
         <section key={group.key} aria-label={group.words} data-graview-links={group.edge}>
@@ -616,6 +622,7 @@ const NARROW_PAST = 24;
 
 function DistrictPanel<S extends AnySchema>({ kind }: { readonly kind: string }) {
   const actsAt = useActsAt();
+  const opensPage = useContext(MapPanelOpensPage);
   const { store, view, setSelection, setEmphasis } = useGraview<S>();
   const { go } = useNavigation();
   const graph = useGraph<S>();
@@ -698,7 +705,7 @@ function DistrictPanel<S extends AnySchema>({ kind }: { readonly kind: string })
           </p>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
             <button type="button" data-testid="district-panel-go" style={pressStyle} onClick={() => go({ ...withFocus(withOverview(view, false), aggregateId(kind)), relation: null })}>
-              Go in
+              {opensPage ?? "Go in"}
             </button>
             <ActsButton on={kindCardId(kind)} about={`the ${plural.toLowerCase()}`} />
           </div>

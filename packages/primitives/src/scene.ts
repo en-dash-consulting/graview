@@ -22,7 +22,7 @@ export type { QuickAskOpening } from "./quick-ask-desk.js";
 export { quickAskOf } from "./quick-ask-setting.js";
 export { LinesKey } from "./lines-key.js";
 /* What is chosen from altitude, beside the map at a size a person reads: a lens, a record's links, a district. */
-export { MapPanel, mapPanelShows } from "./map-panel-door.js";
+export { MapPanel, MapPanelOpeningPages, MapPanelOpensPage, mapPanelShows } from "./map-panel-door.js";
 export type { MapPanelShowing } from "./map-panel-door.js";
 export { Inspector } from "./workbench/inspector-door.js";
 // The inline AI (Roadmap f-ai-candidate-catalog): its part of the context menu and the ghost of what it proposed, fetched when first drawn.

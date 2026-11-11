@@ -16,7 +16,8 @@ import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, Def
 import { pathOfPlace, placesOf } from "./page-places.js";
 import { createPageRegistry, kindOfSlug, type PageRegistry } from "./registry.js";
 import { useHref, useLocation, useNavigate, useNavigationType, useParams } from "react-router";
-import { OnePlace } from "./one-place.js";
+// The page over the Scene's own city is fetched only where a face asks for it (`sceneUnderPages`): a hosted page draws none of it.
+const OnePlace = lazyPart(() => import("./one-place.js").then((module) => ({ default: module.OnePlace })));
 import { appKeyOf, BarFindContext, FirstLookDoor, HeadingsUnder, PastBar, registerReaderLenses, SpecLinks, type BarFind, type FirstLook } from "@graview/primitives/pages";
 
 /** Who reads the face when the host names nobody. */
@@ -690,9 +691,11 @@ export function PagesApp<S extends AnySchema>({
       {context.presence || outer ? <SaysWhere context={context} to={outer} /> : null}
       {context.sceneUnderPages && context.views ? (
         // The page over the Scene's own city: one place at every altitude (one-place.tsx).
-        <OnePlace context={context}>
-          <PagesRoutes context={context} {...(registry ? { registry } : {})} />
-        </OnePlace>
+        <Suspense fallback={null}>
+          <OnePlace context={context as unknown as PageContext<AnySchema>}>
+            <PagesRoutes context={context} {...(registry ? { registry } : {})} />
+          </OnePlace>
+        </Suspense>
       ) : (
         <PagesRoutes context={context} {...(registry ? { registry } : {})} />
       )}

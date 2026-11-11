@@ -1,6 +1,6 @@
 {
   "budget": "every face",
-  "minified": 18800,
-  "gzipped": 7300,
-  "note": "Raised when a routed page came to be read over the Scene's own city (Graview HQ feature:f-page-zooms-out-to-the-city, a prototype): the pages face's sheet, its altitude control and the chunk with the Scene under the page. Measured at 3_174_246 / 1_151_867 against 3_155_486 / 1_144_590 minified and gzipped."
+  "minified": 25600,
+  "gzipped": 11500,
+  "note": "Raised when a routed page came to be read over the Scene's own city (Graview HQ feature:f-page-zooms-out-to-the-city, a prototype): the pages face's Up, the chunk with the Scene under the page, its one camera, the levels and the lines, and the map panel's way back to the page and its connected records. Measured at 3_181_081 / 1_156_022 against 3_155_486 / 1_144_590 minified and gzipped."
 }

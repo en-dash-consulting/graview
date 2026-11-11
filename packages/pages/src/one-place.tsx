@@ -1,11 +1,12 @@
 import { OVERVIEW_PATH, LOCAL_LAYERS, type AnySchema } from "@graview/core";
 import { retryingImport } from "@graview/core/retry";
 import { lazyPart, useGraview } from "@graview/react/provider";
-import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type CSSProperties, type ReactNode } from "react";
 import { useHref, useLocation, useNavigate } from "react-router";
 import type { PageContext } from "./page-context.js";
 import { pluralOf } from "./page-typography.js";
 import { kindOfSlug, recordPath, pluralSlug } from "./registry.js";
+import { OnePlaceUpContext } from "./one-place-control.js";
 import { PHONE, stopsOf, type PageWhere, type Stop } from "./one-place-geometry.js";
 
 /**
@@ -14,22 +15,30 @@ import { PHONE, stopsOf, type PageWhere, type Stop } from "./one-place-geometry.
  * The routed page is read over the Scene's own city — the `Scene` of
  * `@graview/react`, mounted underneath in the same provider the pages draw
  * with, laid out by the same `layout` → `placeCity` the Scene face uses —
- * and altitude is the camera. One control steps back: the page shrinks onto
- * the place its address is (a record's building, a kind's district, where a
- * place's districts meet, over the whole city for home), then the camera
- * rises to the district and to the city, which is the Scene with nothing
- * over it. Pressing a building flies the camera there and opens its page;
- * following a link on a page flies the camera to the linked record. The
- * address is the page's route throughout, so Back and Forward work.
+ * and altitude is the Scene's own camera. Four levels:
  *
- * The city's own part — the Scene, the camera, the lines from the page's
- * parts to the buildings they show — is fetched as the page first draws
- * (`one-place-city.tsx`), so a page reads before any of it arrives.
+ * - L0, THE PAGE: the routed page, the whole window; the city is not drawn.
+ * - L1, THE PANEL: the page's place in the Scene's map panel (a record, its
+ *   fields and what it is connected to; a kind's district; a place's lens),
+ *   the city beside it centered on its building or district, a line from
+ *   each connected row to its building. "Open ↗" is the page again.
+ * - L2, STOOD BACK: the page standing angled on its building with the city
+ *   around it (flat on a phone), the lines from its parts to their buildings.
+ * - THE OVERVIEW: the whole city, nothing over it.
+ *
+ * Up and Down, the wheel and the pinch move between them through the one
+ * camera; a drag pans it. Pressing a building or a connected row puts that
+ * record in the panel, the camera flying to it; following a link on a page
+ * flies there through the city. The address is the page's route at every
+ * level, so Back and Forward work.
+ *
+ * The city's own part (`one-place-city.tsx`) is fetched as the page first
+ * draws, so a page reads before any of it arrives.
  */
 const OnePlaceCity = lazyPart(retryingImport(() => import("./one-place-city.js").then((module) => ({ default: module.OnePlaceCity }))));
 
-/** How long one step of the camera takes. A person who asked for less motion is cut straight there. */
-export const TRAVEL_MS = 520;
+/** How long a move of the camera takes. A person who asked for less motion is cut straight there. */
+export const TRAVEL_MS = 560;
 const lessMotion = (): boolean => typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 const windowSize = () => ({ width: document.documentElement.clientWidth || window.innerWidth, height: window.innerHeight });
@@ -38,7 +47,7 @@ const windowSize = () => ({ width: document.documentElement.clientWidth || windo
 export interface OnePlaceCityProps {
   /** The place the page stands on: during a link's travel, the page it left. */
   readonly where: PageWhere;
-  /** The page's own address: the record lit in the city. */
+  /** The page's own address: the record chosen in the city. */
   readonly page: PageWhere;
   readonly stop: Stop;
   /** Coming back in: the page travels to fill the window. */
@@ -48,10 +57,14 @@ export interface OnePlaceCityProps {
   readonly lessMotion: boolean;
   /** What an address on the page is: a record, a kind's list, or nothing of the city's. */
   readonly resolve: (pathname: string) => PageWhere | null;
-  /** A building pressed, a line's ring, the Scene's own descent: that record's page. */
-  readonly openRecord: (id: string) => void;
-  /** A district pressed: its kind's list. */
-  readonly openKind: (kind: string) => void;
+  /** That record, at a level: its page, or in the panel. */
+  readonly openRecord: (id: string, at: "page" | "panel") => void;
+  /** That kind's list, at a level. */
+  readonly openKind: (kind: string, at: "page" | "panel") => void;
+  /** The person's hand took the camera to another level (a zoom past a stop's range, the panel closed). */
+  readonly onStop: (stop: Stop) => void;
+  /** The Scene's map panel, as the host handed it (`sceneUnderPages: { panel }`): drawn at the panel level. */
+  readonly panel?: ComponentType | undefined;
 }
 
 /** What the page's address is in the city. */
@@ -67,7 +80,7 @@ function whereOf(schema: AnySchema, has: (id: string) => string | undefined, pat
   if (segments.length === 0) return { type: "home" };
   if (segments[0] === "places" && segments.length === 2) {
     const kinds = placeKinds(segments[1]!);
-    return kinds.length > 0 ? { type: "place", kinds } : { type: "home" };
+    return kinds.length > 0 ? { type: "place", as: segments[1]!, kinds } : { type: "home" };
   }
   const kind = kindOfSlug(schema, segments[0]!);
   if (kind && segments.length === 1) return { type: "list", kind };
@@ -76,12 +89,6 @@ function whereOf(schema: AnySchema, has: (id: string) => string | undefined, pat
 }
 
 const sameWhere = (a: PageWhere, b: PageWhere) => JSON.stringify(a) === JSON.stringify(b);
-
-/** Where the person was when they stepped back: what comes back with them. */
-interface Kept {
-  readonly scrollY: number;
-  readonly address: string;
-}
 
 export function OnePlace<S extends AnySchema>({ context, children }: { readonly context: PageContext<S>; readonly children: ReactNode }) {
   const { views } = useGraview<S>();
@@ -100,9 +107,9 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
   const [returning, setReturning] = useState(false);
   // During a link's travel: the page it left, which the camera starts over.
   const [from, setFrom] = useState<PageWhere | null>(null);
-  const kept = useRef<Kept | null>(null);
+  const kept = useRef<{ readonly scrollY: number; readonly address: string } | null>(null);
   const sheet = useRef<HTMLDivElement>(null);
-  const control = useRef<HTMLButtonElement>(null);
+  const controls = useRef<HTMLDivElement>(null);
   const timers = useRef<number[]>([]);
   const later = (ms: number, run: () => void) => timers.current.push(window.setTimeout(run, ms));
   const cancelTimers = () => {
@@ -134,7 +141,7 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
       cancelTimers();
       setReturning(false);
       if (stop === "page") kept.current = { scrollY: window.scrollY, address };
-      // Home's city is the overview, at its own address.
+      // Home's overview is at its own address.
       if (next === "city" && where.type === "home") navigate(OVERVIEW_PATH);
       setStop(next);
     },
@@ -143,16 +150,9 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
 
   const up = useCallback(() => {
     const at = stops.indexOf(stop);
-    if (at < 0 || at >= stops.length - 1) {
-      // From the whole city the one control comes down to the page again — on the overview's own address, home's.
-      if (where.type === "overview") {
-        navigate("/");
-        return;
-      }
-      return comeIn();
-    }
+    if (at < 0 || at >= stops.length - 1) return;
     goTo(stops[at + 1]!);
-  }, [stops, stop, where.type, goTo, comeIn, navigate]);
+  }, [stops, stop, goTo]);
 
   const down = useCallback(() => {
     if (where.type === "overview") return navigate("/");
@@ -173,17 +173,19 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
 
   /*
    * GOING SOMEWHERE MOVES THE CAMERA. A link followed on a page: the page
-   * steps back over where it was, the camera flies to where it goes, and it
-   * comes in there. Stepped back — a building pressed, Back in the browser
-   * — the camera flies and the stop is kept. The overview's address is the
-   * city.
+   * stands back over where it was, the camera flies to where it goes, and
+   * it comes in there. Above the page — a building or a connected row
+   * pressed, Back in the browser — the camera flies and the level is kept,
+   * or becomes the one asked for. The overview's address is the city.
    */
   const was = useRef<PageWhere>(where);
-  const opening = useRef(false);
+  const asked = useRef<Stop | null>(null);
   useLayoutEffect(() => {
     const left = was.current;
     was.current = where;
     if (sameWhere(left, where)) return;
+    const wanted = asked.current;
+    asked.current = null;
     if (where.type === "overview") {
       cancelTimers();
       setFrom(null);
@@ -191,8 +193,8 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
       return;
     }
     if (left.type === "overview") {
-      // Down from the overview: home's page, from above.
       cancelTimers();
+      if (wanted && wanted !== "page") return setStop(wanted);
       setStop("page");
       if (!lessMotion()) {
         setReturning(true);
@@ -201,45 +203,51 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
       return;
     }
     const allowed = stopsOf(where, view.width);
-    if (stop === "page" && !returning) {
+    if (stop === "page" && !returning && wanted !== "panel") {
       if (lessMotion()) return;
-      // The page stands back over the place it left, the camera flies to the new one, and the page comes in there.
       kept.current = { scrollY: 0, address };
       setFrom(left);
-      setStop(allowed[1] ?? "back");
-      later(TRAVEL_MS * 0.6, () => setFrom(null));
-      later(TRAVEL_MS * 1.7, () => comeIn());
+      setStop("back");
+      later(TRAVEL_MS * 0.5, () => setFrom(null));
+      later(TRAVEL_MS * 2.2, () => comeIn());
       return;
     }
-    if (!allowed.includes(stop)) setStop(allowed.includes("back") ? "back" : allowed[1] ?? "page");
-    if (opening.current) {
-      opening.current = false;
-      // A building pressed: once the camera is there, the page opens.
-      later(lessMotion() ? 0 : TRAVEL_MS + 80, () => comeIn());
+    if (wanted === "page") {
+      later(lessMotion() ? 0 : TRAVEL_MS + 120, () => comeIn());
+      return;
     }
+    if (wanted && allowed.includes(wanted)) {
+      if (stop === "page") kept.current = { scrollY: window.scrollY, address };
+      setStop(wanted);
+      return;
+    }
+    if (!allowed.includes(stop)) setStop(allowed[1] ?? "page");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [where]);
 
   const openRecord = useCallback(
-    (id: string) => {
+    (id: string, at: "page" | "panel") => {
       const kind = has(id);
       if (!kind) return;
       const path = recordPath(schema, kind, id);
-      if (path === location.pathname) return comeIn();
-      opening.current = true;
+      if (path === location.pathname) return at === "page" ? comeIn() : goTo("panel");
+      asked.current = at;
       navigate(path);
     },
-    [has, schema, location.pathname, navigate, comeIn],
+    [has, schema, location.pathname, navigate, comeIn, goTo],
   );
   const openKind = useCallback(
-    (kind: string) => {
+    (kind: string, at: "page" | "panel") => {
+      // A place that shows this kind is already its page.
+      if (where.type === "place" && where.kinds.includes(kind)) return at === "page" ? comeIn() : goTo("panel");
       const path = `/${pluralSlug(schema, kind)}`;
-      if (path === location.pathname) return;
+      if (path === location.pathname) return at === "page" ? comeIn() : goTo("panel");
+      asked.current = at;
       navigate(path);
-      if (stop === "city" || stop === "page") setStop("back");
     },
-    [schema, location.pathname, navigate, stop],
+    [schema, location.pathname, navigate, where, comeIn, goTo],
   );
+  const onStop = useCallback((next: Stop) => (next === "page" ? comeIn() : goTo(next)), [comeIn, goTo]);
 
   const resolve = useCallback(
     (pathname: string): PageWhere | null => {
@@ -251,12 +259,15 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
   );
 
   /*
-   * THE WHEEL AND THE PINCH ARE THE CAMERA TOO. On the page, a pinch out
-   * (ctrl+wheel on a trackpad) steps back; stepped back, the wheel goes up
-   * and down the stops. At the city the Scene's own hand has them.
+   * ON THE PAGE, A PINCH OUT (ctrl and the wheel on a trackpad) IS UP: the
+   * city is not drawn, so nothing else takes it. Above the page the Scene's
+   * own hand has the wheel, the pinch and the drag — the one camera — and a
+   * zoom past a stop's range is the next stop (`one-place-city.tsx`).
+   * Escape comes down one; a press on the page standing in the city brings
+   * it in.
    */
-  const latest = useRef({ stop, up, down });
-  latest.current = { stop, up, down };
+  const latest = useRef({ stop, up, down, comeIn });
+  latest.current = { stop, up, down, comeIn };
   useEffect(() => {
     let resting = 0;
     const once = (run: () => void) => {
@@ -266,33 +277,21 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
       run();
     };
     const wheel = (event: WheelEvent) => {
-      const { stop: at, up: rise, down: fall } = latest.current;
-      if (at === "city") return;
-      if (at === "page") {
-        if (!event.ctrlKey || event.deltaY <= 0) return;
-        event.preventDefault();
-        once(rise);
-        return;
-      }
+      if (latest.current.stop !== "page" || !event.ctrlKey || event.deltaY <= 0) return;
       event.preventDefault();
-      if (Math.abs(event.deltaY) < 4) return;
-      once(event.deltaY > 0 ? rise : fall);
+      once(latest.current.up);
     };
     let pinch: number | null = null;
     const apart = (touches: TouchList) => Math.hypot(touches[0]!.clientX - touches[1]!.clientX, touches[0]!.clientY - touches[1]!.clientY);
     const touchStart = (event: TouchEvent) => {
-      pinch = event.touches.length === 2 && latest.current.stop !== "city" ? apart(event.touches) : null;
+      pinch = event.touches.length === 2 && latest.current.stop === "page" ? apart(event.touches) : null;
     };
     const touchMove = (event: TouchEvent) => {
       if (pinch === null || event.touches.length !== 2) return;
       event.preventDefault();
-      const ratio = apart(event.touches) / pinch;
-      if (ratio < 0.75) {
+      if (apart(event.touches) / pinch < 0.75) {
         pinch = null;
         once(latest.current.up);
-      } else if (ratio > 1.35 && latest.current.stop !== "page") {
-        pinch = null;
-        once(latest.current.down);
       }
     };
     const key = (event: KeyboardEvent) => {
@@ -301,22 +300,41 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
       event.preventDefault();
       latest.current.down();
     };
+    // The page standing in the city takes no pointer (a drag over it pans the city); a press on it, without a drag, brings it in.
+    let downAt: { x: number; y: number } | null = null;
+    const pointerDown = (event: PointerEvent) => {
+      downAt = { x: event.clientX, y: event.clientY };
+    };
+    const click = (event: MouseEvent) => {
+      if (latest.current.stop !== "back" || !sheet.current || !downAt) return;
+      if (Math.hypot(event.clientX - downAt.x, event.clientY - downAt.y) > 6) return;
+      if ((event.target as Element | null)?.closest?.('[data-testid="one-place-ring"], [data-testid="one-place-controls"]')) return;
+      const box = sheet.current.getBoundingClientRect();
+      if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) return;
+      event.preventDefault();
+      event.stopPropagation();
+      latest.current.comeIn();
+    };
     window.addEventListener("wheel", wheel, { passive: false });
     window.addEventListener("touchstart", touchStart, { passive: true });
     window.addEventListener("touchmove", touchMove, { passive: false });
+    window.addEventListener("pointerdown", pointerDown, true);
+    window.addEventListener("click", click, true);
     document.addEventListener("keydown", key);
     return () => {
       window.removeEventListener("wheel", wheel);
       window.removeEventListener("touchstart", touchStart);
       window.removeEventListener("touchmove", touchMove);
+      window.removeEventListener("pointerdown", pointerDown, true);
+      window.removeEventListener("click", click, true);
       document.removeEventListener("keydown", key);
     };
   }, []);
 
-  /* Stepped back, the page cannot hold the keyboard: it waits on the control. */
+  /* Out of the page, the keyboard cannot stay on it: it waits on the way back up or down. */
   useLayoutEffect(() => {
     if (stop === "page") return;
-    if (sheet.current?.contains(document.activeElement)) control.current?.focus({ preventScroll: true });
+    if (sheet.current?.contains(document.activeElement) || document.activeElement === document.body) controls.current?.querySelector<HTMLButtonElement>("button:not([disabled])")?.focus({ preventScroll: true });
   }, [stop]);
 
   const away = stop !== "page" || returning || from !== null;
@@ -331,93 +349,109 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
         overflow: "hidden",
         zIndex: LOCAL_LAYERS.over,
         background: "var(--graview-ground, Canvas)",
-        transformOrigin: "50% 100%",
         outline: stop === "page" ? "none" : "2px solid var(--graview-edge)",
         borderRadius: stop === "page" ? 0 : 6,
         boxShadow: stop === "page" ? "none" : "0 24px 60px rgba(0,0,0,0.22)",
-        cursor: "zoom-in",
-        opacity: stop === "city" ? 0 : 1,
-        pointerEvents: stop === "city" ? "none" : "auto",
+        // A drag over it pans the city under it; a press on it brings it in (above).
+        pointerEvents: "none",
+        opacity: stop === "city" || stop === "panel" ? 0 : 1,
         willChange: "transform",
       }
     : { display: "contents" };
-  const innerStyle: CSSProperties = away ? { marginTop: shift, minHeight: view.height, pointerEvents: "none" } : { display: "contents" };
+  const innerStyle: CSSProperties = away ? { marginTop: shift, minHeight: view.height } : { display: "contents" };
 
-  const label = labelFor(stop, stops, where, store as unknown as PageContext<AnySchema>["store"]);
+  const said = saidFor(stop, stops, where, store as unknown as PageContext<AnySchema>["store"]);
+  const upValue = useMemo(() => ({ up, said: said.up ?? "Up" }), [up, said.up]);
+  const phone = view.width <= PHONE;
+  const control: CSSProperties = {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    height: 40,
+    padding: "0 14px",
+    borderTopWidth: 0,
+    borderRightWidth: 0,
+    borderBottomWidth: 0,
+    borderLeftWidth: 0,
+    borderStyle: "solid",
+    borderColor: "var(--graview-edge)",
+    background: "none",
+    color: "var(--graview-ink, CanvasText)",
+    font: "inherit",
+    fontSize: "0.875rem",
+    fontWeight: 600,
+    cursor: "pointer",
+  };
   return (
-    <>
+    <OnePlaceUpContext.Provider value={upValue}>
       <Suspense fallback={null}>
-        <OnePlaceCity
-          where={from ?? where}
-          page={where}
-          stop={stop}
-          returning={returning}
-          sheet={sheet}
-          view={view}
-          lessMotion={lessMotion()}
-          resolve={resolve}
-          openRecord={openRecord}
-          openKind={openKind}
-        />
+        <OnePlaceCity where={from ?? where} page={where} stop={stop} returning={returning} sheet={sheet} view={view} lessMotion={lessMotion()} resolve={resolve} openRecord={openRecord} openKind={openKind} onStop={onStop} panel={typeof context.sceneUnderPages === "object" ? context.sceneUnderPages.panel : undefined} />
       </Suspense>
       <div
         ref={sheet}
         data-graview-one-place={stop}
         data-graview-standing-on={where.type === "record" ? where.id : where.type === "list" ? `kind:${where.kind}` : where.type}
         style={sheetStyle}
-        {...(stop !== "page" && stop !== "city" ? { onClick: () => comeIn(), title: "Back to the page" } : {})}
       >
         <div style={innerStyle} {...(away ? { inert: true } : {})}>
           {children}
         </div>
       </div>
-      <button
-        ref={control}
-        type="button"
-        data-testid="up"
-        data-graview-stop={stop}
-        aria-label={label.said}
-        title={label.said}
-        onClick={up}
-        style={{
-          position: "fixed",
-          left: view.width <= PHONE ? 12 : 20,
-          bottom: view.width <= PHONE ? 12 : 20,
-          zIndex: LOCAL_LAYERS.over + 2,
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 6,
-          height: 40,
-          padding: "0 14px",
-          borderRadius: 20,
-          border: "1px solid var(--graview-edge)",
-          background: "var(--graview-panel, Canvas)",
-          color: "var(--graview-ink, CanvasText)",
-          font: "inherit",
-          fontSize: 14,
-          fontWeight: 600,
-          boxShadow: "0 6px 18px rgba(0,0,0,0.16)",
-          cursor: "pointer",
-        }}
-      >
-        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-          {label.down ? <path d="M8 3v10M3.5 8.5L8 13l4.5-4.5" /> : <path d="M8 13V3M3.5 7.5L8 3l4.5 4.5" />}
-        </svg>
-        {label.short}
-      </button>
-    </>
+      {/* Above the page, Up and Down stand on the city, in a corner the panel and the Scene's own controls leave empty. */}
+      {stop !== "page" ? (
+        <div
+          ref={controls}
+          role="group"
+          aria-label="Altitude"
+          data-testid="one-place-controls"
+          data-graview-stop={stop}
+          style={{
+            position: "fixed",
+            left: phone ? 10 : 20,
+            ...(phone ? { top: 10 } : { bottom: 20 }),
+            zIndex: LOCAL_LAYERS.over + 2,
+            display: "inline-flex",
+            borderRadius: 20,
+            border: "1px solid var(--graview-edge)",
+            background: "var(--graview-panel, Canvas)",
+            boxShadow: "0 6px 18px rgba(0,0,0,0.16)",
+            overflow: "hidden",
+          }}
+        >
+          {said.up ? (
+            <button type="button" data-testid="altitude-up" aria-label={said.up} title={said.up} onClick={up} style={control}>
+              <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M8 13V3M3.5 7.5L8 3l4.5 4.5" />
+              </svg>
+              Up
+            </button>
+          ) : null}
+          <button type="button" data-testid="altitude-down" aria-label={said.down} title={said.down} onClick={down} style={{ ...control, ...(said.up ? { borderLeftWidth: 1 } : {}) }}>
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M8 3v10M3.5 8.5L8 13l4.5-4.5" />
+            </svg>
+            Down
+          </button>
+        </div>
+      ) : null}
+    </OnePlaceUpContext.Provider>
   );
 }
 
-/** What the one control says at a stop: where pressing it goes. */
-function labelFor(stop: Stop, stops: readonly Stop[], where: PageWhere, store: PageContext<AnySchema>["store"]): { readonly short: string; readonly said: string; readonly down: boolean } {
+/** What Up and Down say at a stop: where pressing each goes. Up is null at the top. */
+function saidFor(stop: Stop, stops: readonly Stop[], where: PageWhere, store: PageContext<AnySchema>["store"]): { readonly up: string | null; readonly down: string } {
   const at = stops.indexOf(stop);
   const next = at >= 0 && at < stops.length - 1 ? stops[at + 1]! : null;
-  if (next === null) return { short: "Back to the page", said: where.type === "overview" ? "Down to the home page" : "Down to the page", down: true };
-  if (next === "back") return { short: "Up", said: "Up: step back from the page, to where it stands in the city", down: false };
-  if (next === "district") {
-    const kind = where.type === "record" || where.type === "list" ? where.kind : null;
-    return { short: "Up", said: kind ? `Up to the ${pluralOf(store, kind).toLowerCase()} district` : "Up to the district", down: false };
-  }
-  return { short: "Up", said: "Up to the whole city", down: false };
+  const before = at > 0 ? stops[at - 1]! : null;
+  const kind = where.type === "record" || where.type === "list" ? where.kind : null;
+  const words: Record<Stop, string> = {
+    page: "the page",
+    panel: "the page beside the map",
+    back: kind ? `the page standing in the ${pluralOf(store, kind).toLowerCase()} district` : "the page standing in the city",
+    city: "the whole city",
+  };
+  return {
+    up: next ? `Up to ${words[next]}` : null,
+    down: where.type === "overview" ? "Down to the home page" : before ? `Down to ${words[before]}` : "Down to the page",
+  };
 }

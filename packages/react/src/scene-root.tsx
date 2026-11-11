@@ -144,6 +144,25 @@ export interface SceneProps {
   readonly animate?: boolean;
   /** Rendered over the scene — an affordance surface, a header, a legend. */
   readonly children?: ReactNode;
+  /**
+   * THE SCENE'S OWN CAMERA, HANDED OUT: filled each render with the zoom
+   * from altitude and the moves the person's hand makes — the same zoom
+   * and pan the wheel, the pinch and the controls write — so a host that
+   * stands something on the city (a routed page stepped back onto its
+   * building) moves the one camera rather than a second one over the box.
+   */
+  readonly camera?: { current: SceneCamera | null };
+}
+
+/** The Scene's camera from altitude, as `camera` hands it out. */
+export interface SceneCamera {
+  /** The person's zoom from altitude: 1 is the city fitted to its box. */
+  zoom(): number;
+  /** Zoom to a scale, the point under these window coordinates staying where it is. Held within `range`. */
+  zoomTo(scale: number, clientX: number, clientY: number): void;
+  /** Pan the picture by so many pixels, within the camera's reach. */
+  panBy(dx: number, dy: number): void;
+  readonly range: { readonly min: number; readonly max: number };
 }
 
 type Point = { x: number; y: number };
@@ -908,6 +927,7 @@ export function Scene<S extends AnySchema>({
   style,
   animate = true,
   children,
+  camera,
 }: SceneProps) {
   const context = useGraview<S>();
   /* The app's workflows, its own or its document's: a compiled app carries them only there (`declaredWorkflows`). */
@@ -1117,6 +1137,18 @@ export function Scene<S extends AnySchema>({
     setView((current) => withPan(current, panWithin(limit, { x: (current.pan?.x ?? 0) + dx, y: (current.pan?.y ?? 0) + dy })));
   // Tab passes over a card the panel covers, and the camera brings the one it lands on into the part that is seen.
   useKeyboardKeepsToWhatIsSeen(wrapperRef, dock, (dx, dy) => nudge(dx, dy));
+  if (camera) {
+    camera.current = {
+      zoom: () => zoomLive.current,
+      zoomTo: (scale, clientX, clientY) => {
+        const box = wrapperRef.current?.getBoundingClientRect();
+        const about = box ? { x: clientX - box.left, y: clientY - box.top } : { x: 0, y: 0 };
+        zoomTo.current(Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, scale)) / zoomLive.current, about);
+      },
+      panBy: (dx, dy) => nudge(dx, dy),
+      range: { min: ZOOM_MIN, max: ZOOM_MAX },
+    };
+  }
   panBy.current = (dx, dy) => {
     steer();
     const limit = cameraLimit(result);

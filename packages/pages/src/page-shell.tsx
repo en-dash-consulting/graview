@@ -10,6 +10,7 @@ import type { ReactNode } from "react";
 import { kindOfSlug } from "./registry.js";
 import { type PageContext, StartFreshLink, useStoreTick } from "./page-context.js";
 import { usePlacedOnTheFace } from "./face-placed.js";
+import { OnePlaceUp } from "./one-place-control.js";
 import { classes, sizedBy, type ControlSize } from "./control-size.js";
 import { BODY, WIDE, column, h1, quiet } from "./page-typography.js";
 
@@ -161,6 +162,8 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
         }
         tools={
           <>
+            {/* Up from the page to its place in the Scene's city, where the city stands under the pages (one-place.tsx). */}
+            <OnePlaceUp />
             {/* The standing, as the problems' own page: a dot and its name, with no count of its own; the bell counts what needs you (Roadmap f-inbox-needs-you-first). */}
             <Link to="/problems" data-testid="standing-link" aria-label={said} title={said} style={{ ...toolStyle, position: "relative", textDecoration: "none", color: problems === 0 ? "var(--graview-ink-muted)" : "var(--graview-warn)" }}>
               <StandingDot tone={problems === 0 ? "var(--graview-good)" : "var(--graview-warn)"} />

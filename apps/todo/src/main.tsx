@@ -5,6 +5,7 @@ import { createRoot } from "react-dom/client";
 import { useMemo, useState, type ReactNode } from "react";
 import type { DevApp, DevAppChanges } from "./dev-change.js";
 import { PagesApp } from "@graview/pages";
+import { MapPanelOpeningPages } from "@graview/primitives/scene";
 import { lendViewPressing } from "@graview/guest/host/pressing";
 
 // A draft's controls are pressed before anybody sees it: a page that draws PagesApp itself, not the embed, lends the headless run as the embed does.
@@ -220,11 +221,13 @@ if (window.location.pathname.startsWith("/pages")) {
         sceneHref: "/",
         /*
          * PAGES AND THE SCENE ARE ONE PLACE (a prototype): the Scene's own
-         * city under every page, and Up steps back from the page onto its
-         * record's building, then to the district and the whole city.
+         * city under every page, one camera: Up puts the page into the
+         * Scene's map panel beside its record's building, then stands it on
+         * the building with the city around it, then the whole city. The
+         * panel is handed in, so the pages carry none of it themselves.
          * `?scene=off` reads the pages as they were.
          */
-        sceneUnderPages: new URLSearchParams(window.location.search).get("scene") !== "off",
+        ...(new URLSearchParams(window.location.search).get("scene") === "off" ? {} : { sceneUnderPages: { panel: MapPanelOpeningPages } }),
         invariantContext: { today: today() },
         /*
          * THE SAME SEAT ON BOTH FACES. The routed face lists the kinds this

@@ -1,6 +1,6 @@
 {
   "budget": "the pages face alone",
-  "minified": 14400,
-  "gzipped": 5500,
-  "note": "Raised when a routed page came to be read over the Scene's own city (Graview HQ feature:f-page-zooms-out-to-the-city, a prototype): the sheet the page stands in and the one altitude control are drawn with the page, and the Scene itself, the camera over it and the lines from the page's parts to their buildings are a chunk fetched as the page first draws. Measured at 779_946 / 281_778 against 765_625 / 276_291 minified and gzipped."
+  "minified": 5600,
+  "gzipped": 3300,
+  "note": "Raised when a routed page came to be read over the Scene's own city (Graview HQ feature:f-page-zooms-out-to-the-city, a prototype): the bar's Up and the page's way into the city, fetched only where a face asks for the city under its pages, and the Scene's camera handed out. Measured at 771_221 / 279_579 against 765_625 / 276_291 minified and gzipped."
 }

@@ -1,5 +1,6 @@
 import { aiThroughDevServer } from "@graview/tools";
 import { PagesApp } from "@graview/pages";
+import { MapPanelOpeningPages } from "@graview/primitives/scene";
 import { themeCss, type Scheme } from "@graview/primitives";
 import { browserStartsFresh, createBrowserAdapter, forgetFreshParam, openStore } from "@graview/ship/browser";
 import { createRoot } from "react-dom/client";
@@ -112,7 +113,7 @@ if (window.location.pathname.startsWith("/pages")) {
         signature: true,
         sceneHref: "/",
         // Pages and the Scene are one place (a prototype): see apps/todo/src/main.tsx. `?scene=off` reads the pages as they were.
-        sceneUnderPages: new URLSearchParams(window.location.search).get("scene") !== "off",
+        ...(new URLSearchParams(window.location.search).get("scene") === "off" ? {} : { sceneUnderPages: { panel: MapPanelOpeningPages } }),
         remembers: true,
         principal: openingSeat(),
         seats: SEATS,
