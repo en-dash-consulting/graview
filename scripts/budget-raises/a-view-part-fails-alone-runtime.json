@@ -1,6 +1,6 @@
 {
   "budget": "a worker view's runtime",
-  "minified": 1585,
-  "gzipped": 659,
-  "note": "Raised when one part of a worker view that fails came to fall back alone (Roadmap f-view-part-fails-alone): `graview.part` runs one part's code, catches what it throws, times it against the share of the push the host hands with each one, and hands on an empty element marked failed with why, said once in the view's console. Measured at 67_038 / 23_506 against 65_453 / 22_847: 1_585 / 659 more."
+  "minified": 1891,
+  "gzipped": 821,
+  "note": "Raised when one part of a worker view that fails came to fall back alone (Roadmap f-view-part-fails-alone): `graview.part` runs one part's code, catches what it throws, times its own time apart from the parts inside it against the share of the push the host hands with each one, knows a part by its name and its turn in one render, rests a slow part three pushes, and hands on an empty element marked failed with why and the host's mark, said once a part in the view's console. Measured at 67_344 / 23_668 against 65_453 / 22_847: 1_891 / 821 more."
 }

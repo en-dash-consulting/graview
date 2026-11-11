@@ -16,7 +16,8 @@
 import { RemoteRootElement, remoteId, updateRemoteElementAttribute } from "@remote-dom/core/elements";
 import type { Unsent } from "../channel.js";
 import { HTML_ELEMENTS, UNNAMED_ELEMENTS, openAttribute, svgElementName } from "../open-kit.js";
-import { GUEST_GESTURES, PART_SHARE, navigateRequest, type GuestAnswer, type GuestDomEvent, type GuestDroppedFile, type GuestGesture, type GuestNavigateTo, type GuestPressed, type GuestProps, type HostMessage } from "../protocol.js";
+import { PART_NAME, PART_REST_PUSHES, PART_SHARE } from "../part.js";
+import { GUEST_GESTURES, navigateRequest, type GuestAnswer, type GuestDomEvent, type GuestDroppedFile, type GuestGesture, type GuestNavigateTo, type GuestPressed, type GuestProps, type HostMessage } from "../protocol.js";
 import { dayIn, fromToday } from "../from-today.js";
 import type { Hardening } from "./harden.js";
 import { createListenerLedger } from "./listeners.js";
@@ -96,8 +97,6 @@ export type PartDrawn = string | Html | readonly (string | Html)[] | null | unde
 /** The elements a part may be drawn as: one that holds what it drew, wherever it stands. */
 export type PartElement = "div" | "li" | "article";
 const PART_ELEMENTS: ReadonlySet<string> = new Set(["div", "li", "article"]);
-/** A part's name: what the host and its console call it. */
-const PART_NAME = /^[a-z0-9][a-z0-9_-]{0,63}$/i;
 
 /** An act's arguments, or a list of them: several of the act as one change, one undo (FR-193). */
 export type ActArgs = Readonly<Record<string, unknown>> | readonly Readonly<Record<string, unknown>>[];
@@ -288,6 +287,10 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
      */
     current = message.props;
     if (typeof message.partMs === "number" && message.partMs > 0) partMs = message.partMs;
+    if (typeof message.partMark === "string") partMark = message.partMark;
+    pushes += 1;
+    turns.clear();
+    innerMs = 0;
     const began = io.now();
     for (const listener of propsListeners) {
       try {
@@ -424,6 +427,8 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
     if (refusedLast.length > 0) io.warn(`The host will not draw: ${refusedLast.join(", ")}`);
     tellCustom(next);
     morph(root as unknown as Node, next);
+    /* The parts of the next render are counted afresh: a name's turn is its place in one render. */
+    turns.clear();
   }
 
   /*
@@ -432,13 +437,27 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
    * making it: `graview.part` runs one part's, catches what it throws and
    * times it, and hands on, in the part's place, an empty element marked
    * failed with why — which the host draws its note in (host/parts.ts).
-   * The time is the view's own, as a push's is: a part past its share is
-   * not run again while the view is drawn, so it cannot go on to take the
-   * whole view's budget. A part that never returns cannot be caught here:
-   * that is the whole view's stop, as before.
+   * The time is the part's own, the parts inside it not counted, as a
+   * push's is the view's own: a part past its share is handed on as failed
+   * for the next `PART_REST_PUSHES` pushes without running, so it cannot go
+   * on to take the whole view's budget, and is tried again on the one after.
+   * A part is known by its name and its turn among the parts of that name
+   * in one render, so rows drawn in a loop under one name are told apart.
+   * A part that never returns cannot be caught here: that is the whole
+   * view's stop, as before. What the runtime marks failed carries the mark
+   * the host handed it (`partMark`), so the host honors no mark the view
+   * wrote itself.
    */
   let partMs = 1_000 / PART_SHARE;
-  const slowParts = new Map<string, string>();
+  let partMark = "";
+  /* The pushes heard, and when each part that took too long is tried again. */
+  let pushes = 0;
+  const slowParts = new Map<string, { readonly why: string; readonly until: number }>();
+  /* Each name's turn in the render being made: cleared at each push and once a render is drawn. */
+  const turns = new Map<string, number>();
+  /* The time parts inside the one being run took: not that part's own. */
+  let innerMs = 0;
+  /* Said once for each part and way it failed, however its words change. */
   const toldParts = new Set<string>();
   const thrown = (error: unknown): string => {
     try {
@@ -458,27 +477,37 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
     if (typeof name !== "string" || !PART_NAME.test(name)) throw new TypeError(`graview.part names its part in letters, digits, - and _ ("vendors", "budget-2026"), at most 64 of them.`);
     if (typeof draw !== "function") throw new TypeError(`graview.part("${name}", draw) is handed a function that returns the part's markup.`);
     const tag = typeof options?.as === "string" && PART_ELEMENTS.has(options.as) ? options.as : "div";
+    const turn = turns.get(name) ?? 0;
+    turns.set(name, turn + 1);
+    const key = `${name}#${turn}`;
     const failed = (reason: "threw" | "slow", why: string) => {
       const said = `The part "${name}" ${reason === "threw" ? "threw" : "took too long"}, so a note is drawn in its place and the rest of the view is drawn: ${why}`;
-      if (!toldParts.has(said) && toldParts.size < 100) {
-        toldParts.add(said);
+      if (!toldParts.has(`${name} ${reason}`) && toldParts.size < 100) {
+        toldParts.add(`${name} ${reason}`);
         io.warn(said);
       }
-      return markup(`<${tag} data-part="${name}" data-part-failed="${reason}" data-part-why="${escape(why.slice(0, 300))}"></${tag}>`);
+      return markup(`<${tag} data-part="${name}" data-part-failed="${reason}" data-part-why="${escape(why.slice(0, 300))}"${partMark ? ` data-part-mark="${escape(partMark)}"` : ""}></${tag}>`);
     };
-    const slow = slowParts.get(name);
-    if (slow !== undefined) return failed("slow", slow);
+    const slow = slowParts.get(key);
+    if (slow !== undefined && pushes <= slow.until) return failed("slow", slow.why);
+    slowParts.delete(key);
+    const outer = innerMs;
+    innerMs = 0;
     const began = io.now();
     let made: string;
+    let own = 0;
     try {
       made = partMarkup(draw());
     } catch (error) {
       return failed("threw", thrown(error));
+    } finally {
+      const spent = io.now() - began;
+      own = spent - innerMs;
+      innerMs = outer + spent;
     }
-    const ms = io.now() - began;
-    if (ms > partMs) {
-      const why = `it took ${Math.round(ms).toLocaleString("en-US")} ms, past the ${Math.round(partMs).toLocaleString("en-US")} ms a part may take of a push, and is not drawn again while the view is.`;
-      slowParts.set(name, why);
+    if (own > partMs) {
+      const why = `it took ${Math.round(own).toLocaleString("en-US")} ms, past the ${Math.round(partMs).toLocaleString("en-US")} ms a part may take of a push, and is left as a note for the next ${PART_REST_PUSHES} pushes.`;
+      slowParts.set(key, { why, until: pushes + PART_REST_PUSHES });
       return failed("slow", why);
     }
     return markup(`<${tag} data-part="${name}">${made}</${tag}>`);

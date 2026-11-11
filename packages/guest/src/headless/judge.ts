@@ -6,6 +6,7 @@ import { imageRefusedWords, type ImageHost } from "../host/open-judge.js";
 import { describeDrawing } from "./describe.js";
 import { drawTranscript, type DrawnTranscript } from "./draw.js";
 import type { HeadlessFailureReason, HeadlessInput, HeadlessTranscript } from "./protocol.js";
+import { PART_NAME } from "../part.js";
 
 /*
  * WHAT A HEADLESS RUN'S TRANSCRIPT COMES TO (FR-95): the view's messages
@@ -94,14 +95,16 @@ export function judgeTranscript(transcript: HeadlessTranscript, input: HeadlessI
   }
   const problems: DescribedProblem[] = [...drawn.refused.map((one) => sayRefusal(one, { ...(input.imageOrigins ? { origins: input.imageOrigins } : {}), assets: input.assets === true, ...(input.linkOrigins ? { linkOrigins: input.linkOrigins } : {}) })), ...said.problems];
   /* A part that threw or took too long (`graview.part`, Roadmap f-view-part-fails-alone): the page draws a note in its place, and says why. */
+  const partsSaid = new Set<string>();
   const failedParts = (node: { readonly childNodes: readonly unknown[] }): void => {
     for (const child of node.childNodes as { nodeType: number; childNodes: unknown[]; getAttribute(name: string): string | null }[]) {
       if (child.nodeType !== 1) continue;
       const failed = child.getAttribute("data-part-failed");
-      if (failed !== null && child.getAttribute("data-part") !== null) {
-        const name = child.getAttribute("data-part") ?? "";
-        const why = child.getAttribute("data-part-why") ?? "";
-        problems.push({ at: `part "${name}"`, says: `The part "${name}" ${failed === "slow" ? "took too long" : "threw"}: ${why}${/[.!?]$/.test(why) ? "" : "."} The page draws a note in its place and the rest of the view.` });
+      const name = child.getAttribute("data-part") ?? "";
+      if (failed !== null && PART_NAME.test(name) && !partsSaid.has(`${name} ${failed}`) && partsSaid.size < 10) {
+        partsSaid.add(`${name} ${failed}`);
+        const why = JSON.stringify((child.getAttribute("data-part-why") ?? "").replace(/[\u0000-\u001f\u007f\u2028\u2029]+/g, " ").slice(0, 300));
+        problems.push({ at: `part "${name}"`, says: `The part "${name}" ${failed === "slow" ? "took too long" : "threw"}: ${why}. The page draws a note in its place and the rest of the view.` });
       }
       failedParts(child);
     }

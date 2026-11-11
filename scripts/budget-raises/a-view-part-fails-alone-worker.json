@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 688,
+  "note": "Raised when one part of a worker view that fails came to fall back alone (Roadmap f-view-part-fails-alone): a headless run's runtime carries `graview.part`, and its judge says a part the runtime marked failed as a problem, its name checked and why quoted. Measured at 2_630_084 B against 2_629_396."
+}

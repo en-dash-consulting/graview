@@ -27,7 +27,8 @@
  * honest. What it may reach is the page's to hold, as it always is.
  */
 import "@remote-dom/core/polyfill";
-import { PART_SHARE, mineRefusal, type GuestAnswer, type GuestProps } from "../protocol.js";
+import { mineRefusal, type GuestAnswer, type GuestProps } from "../protocol.js";
+import { PART_SHARE } from "../part.js";
 import { harden, type Hardening } from "../worker/harden.js";
 import { createViewRuntime, type GraviewView } from "../worker/view-global.js";
 import { judgeTranscript } from "./judge.js";

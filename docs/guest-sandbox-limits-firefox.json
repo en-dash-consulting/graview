@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-11T05:26:21.434Z",
+  "at": "2026-11-11T06:04:02.144Z",
   "transport": "limits",
   "engine": "firefox",
   "claims": {
@@ -9,7 +9,7 @@
         "failure": {
           "reason": "slow",
           "detail": "It took longer than 1,000 ms to draw what it was shown.",
-          "at": 1079
+          "at": 1059
         },
         "running": false,
         "face": [
@@ -29,7 +29,7 @@
         "failure": {
           "reason": "silent",
           "detail": "It stopped answering for 1,500 ms.",
-          "at": 1580
+          "at": 1563
         },
         "running": false,
         "face": [
@@ -49,7 +49,7 @@
         "failure": {
           "reason": "flood",
           "detail": "It sent more than 120 messages in 1,000 ms.",
-          "at": 267
+          "at": 287
         },
         "running": false,
         "face": [
@@ -69,7 +69,7 @@
         "failure": {
           "reason": "nodes",
           "detail": "It drew more than the 5,000 things a view may draw.",
-          "at": 1780
+          "at": 1823
         },
         "running": false,
         "face": [
@@ -89,7 +89,7 @@
         "failure": {
           "reason": "source",
           "detail": "Its code is longer than the 256,000 bytes a view may be.",
-          "at": 18
+          "at": 16
         },
         "running": false,
         "face": [
@@ -109,7 +109,7 @@
         "failure": {
           "reason": "slow",
           "detail": "What it drew took this page longer than the 100 ms of any one second a view may take to draw.",
-          "at": 230
+          "at": 237
         },
         "running": false,
         "face": [
@@ -122,8 +122,8 @@
         ],
         "note": "This view was stopped. What it drew took this page longer than the 100 ms of any one second a view may take to draw.",
         "pulse": {
-          "last": 2481,
-          "longest": 125,
+          "last": 2408,
+          "longest": 141,
           "ticks": 41
         }
       }
@@ -157,8 +157,8 @@
           }
         ],
         "problems": [
-          "The part \"vendors\" of the view \"The packages\" threw, so a note is drawn in its place and the rest of the view is drawn: Error: no vendors",
-          "The part \"timeline\" of the view \"The packages\" took too long, so a note is drawn in its place and the rest of the view is drawn: it took 800 ms, past the 500 ms a part may take of a push, and is not drawn again while the view is."
+          "The part \"vendors\" of the view \"The packages\" threw, so a note is drawn in its place and the rest of the view is drawn: \"Error: no vendors\"",
+          "The part \"timeline\" of the view \"The packages\" took too long, so a note is drawn in its place and the rest of the view is drawn: \"it took 799 ms, past the 500 ms a part may take of a push, and is left as a note for the next 3 pushes.\""
         ]
       }
     },
@@ -173,16 +173,16 @@
           "text": "This part could not be drawn."
         },
         "problems": [
-          "The part \"vendors\" of the view \"The packages\" threw, so a note is drawn in its place and the rest of the view is drawn: Error: no vendors",
-          "The part \"timeline\" of the view \"The packages\" took too long, so a note is drawn in its place and the rest of the view is drawn: it took 800 ms, past the 500 ms a part may take of a push, and is not drawn again while the view is."
+          "The part \"vendors\" of the view \"The packages\" threw, so a note is drawn in its place and the rest of the view is drawn: \"Error: no vendors\"",
+          "The part \"timeline\" of the view \"The packages\" took too long, so a note is drawn in its place and the rest of the view is drawn: \"it took 799 ms, past the 500 ms a part may take of a push, and is left as a note for the next 3 pushes.\""
         ]
       }
     },
     "the page's own timer kept time while views spun, never more than 250 ms between 50 ms ticks": {
       "ok": true,
       "detail": {
-        "last": 2481,
-        "longest": 125,
+        "last": 2408,
+        "longest": 141,
         "ticks": 41
       }
     },
@@ -203,7 +203,7 @@
         "spin": {
           "reason": "slow",
           "detail": "It took longer than 1,000 ms to draw what it was shown.",
-          "at": 1079
+          "at": 1059
         },
         "slow": 0
       }
@@ -358,7 +358,7 @@
         "spin": {
           "reason": "slow",
           "detail": "It took longer than 4,000 ms to draw what it was shown.",
-          "at": 4403
+          "at": 4375
         },
         "running": false,
         "face": [
@@ -394,38 +394,38 @@
       "long": {
         "reason": "source",
         "detail": "Its code is longer than the 256,000 bytes a view may be.",
-        "at": 18
+        "at": 16
       },
       "churn": {
         "reason": "slow",
         "detail": "What it drew took this page longer than the 100 ms of any one second a view may take to draw.",
-        "at": 230
+        "at": 237
       },
       "flood": {
         "reason": "flood",
         "detail": "It sent more than 120 messages in 1,000 ms.",
-        "at": 267
+        "at": 287
       },
       "spin": {
         "reason": "slow",
         "detail": "It took longer than 1,000 ms to draw what it was shown.",
-        "at": 1079
+        "at": 1059
       },
       "later": {
         "reason": "silent",
         "detail": "It stopped answering for 1,500 ms.",
-        "at": 1580
+        "at": 1563
       },
       "nodes": {
         "reason": "nodes",
         "detail": "It drew more than the 5,000 things a view may draw.",
-        "at": 1780
+        "at": 1823
       }
     },
     "problems": {
       "parts": [
-        "The part \"vendors\" of the view \"The packages\" threw, so a note is drawn in its place and the rest of the view is drawn: Error: no vendors",
-        "The part \"timeline\" of the view \"The packages\" took too long, so a note is drawn in its place and the rest of the view is drawn: it took 800 ms, past the 500 ms a part may take of a push, and is not drawn again while the view is."
+        "The part \"vendors\" of the view \"The packages\" threw, so a note is drawn in its place and the rest of the view is drawn: \"Error: no vendors\"",
+        "The part \"timeline\" of the view \"The packages\" took too long, so a note is drawn in its place and the rest of the view is drawn: \"it took 799 ms, past the 500 ms a part may take of a push, and is left as a note for the next 3 pushes.\""
       ]
     },
     "parts": {
@@ -547,8 +547,8 @@
       "parts": 1
     },
     "pulse": {
-      "last": 2481,
-      "longest": 125,
+      "last": 2408,
+      "longest": 141,
       "ticks": 41
     }
   },
@@ -671,7 +671,7 @@
       "spin": {
         "reason": "slow",
         "detail": "It took longer than 4,000 ms to draw what it was shown.",
-        "at": 4403
+        "at": 4375
       }
     },
     "pace": {

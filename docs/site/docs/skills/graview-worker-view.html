@@ -1829,7 +1829,7 @@ graview.onProps((props) =&gt; …)   // every push of what it is shown (and at o
 graview.props                   // the last push
 graview.render(markup)          // draw: a string, graview.html`…`, or nodes
 graview.html`&lt;li&gt;${x}&lt;/li&gt;`     // markup; every value put in is escaped
-graview.part("vendors", () =&gt; graview.html`…`)   // one part, which fails alone (Limits)
+graview.part("vendors", () =&gt; graview.html`…`)   // fails alone (Limits)
 graview.on("click", ".card", (event) =&gt; …)   // also input, change, keydown, toggle, acted
 graview.act(name, args)         // ask for an act: resolves { ok, intent } or { ok: false, reason, message }
 graview.navigate("offer:7")     // a record, else a place or a kind's list by slug
@@ -1845,9 +1845,9 @@ graview.navigate({ place: "features", where: { stage: "building" }, section: "Sh
 <h3>Writes</h3>
 <p>An act must be in the manifest. Where every member sees every record, <code>graview.act</code> applies it as given; anywhere else <strong>only a press applies an act</strong>: a person's click on a <code>data-act</code>, or a field of theirs that saves. How those are written and heard is <code>graview-view-forms</code>.</p>
 <h3>Limits</h3>
-<p>256 kB of source, 5 000 nodes, 120 messages a second, 1 000 ms a push and 100 ms a second of the page's time drawing it; the two times grow up to fourfold on a slow device, the counts never. Past any, the view is stopped and its records' plain face drawn, with why. A part made by <code>graview.part</code> (a <code>&lt;div data-part&gt;</code>; <code>{ as: "li" }</code>) that throws or takes a quarter of the push is a note instead, the rest drawn, why said in the console. Draw summaries; never spin.</p>
+<p>256 kB of source, 5 000 nodes, 120 messages a second, 1 000 ms a push and 100 ms a second of the page's time drawing it; the two times grow up to fourfold on a slow device, the counts never. Past any, the view is stopped and its records' plain face drawn, with why. A <code>graview.part</code> (a <code>&lt;div data-part&gt;</code>; <code>{ as: "li" }</code>) that throws or takes a quarter of the push is a note instead, the rest drawn, why in the console; a slow one rests three pushes, then runs. Name each part apart; a loop's same-named rows go by order. Draw summaries; never spin.</p>
 <h3>Worked examples</h3>
-<p><code>examples/offers-list.js</code> is a list lens: rows linking to their records, and a note typed and pressed in. <code>examples/front-page.js</code> is a home: a headline, a figure, an SVG ring and cards linking to a place. <code>examples/a-record.js</code> is a view of one record: a deliverable's draft read off <code>props.node</code>, and "Edit draft" prefilled. <code>examples/a-map-that-pans-and-zooms.js</code> is an SVG map a wheel and a pinch zoom at the pointer, and a drag pans.</p>
+<p><code>examples/offers-list.js</code> is a list lens: rows linking to records, a note typed in. <code>examples/front-page.js</code> is a home: a headline, a figure, an SVG ring, cards. <code>examples/a-record.js</code> is a view of one record: its draft read off <code>props.node</code>, "Edit draft" prefilled. <code>examples/a-map-that-pans-and-zooms.js</code> is an SVG map a wheel and a pinch zoom at the pointer, and a drag pans.</p>
 <h3>Registering it</h3>
 <div class="code" data-scroller><pre><code class="language-ts">import { registerWorkerView, workerHome } from "@graview/guest/host/views";
 views: (schema, registry) =&gt; registerWorkerView(registry, { manifest, worker: { source } }),
