@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 1542,
+  "gzipped": 552,
+  "note": "Raised when a view's pictures came to load lazily and in two sizes (an `<img>` taking `loading` and `fetchpriority`, `pictures.thumb` handed and reckoned beside `src`, Roadmap f-view-pictures-load-lazily-and-small) and a view's bleed refusal to say what each value does and end with its finding code (Roadmap f-home-view-full-bleed-on-desk): 1542 / 552 more. Measured at 3_157_028 / 1_145_142 against 3_155_486 / 1_144_590 minified and gzipped."
+}

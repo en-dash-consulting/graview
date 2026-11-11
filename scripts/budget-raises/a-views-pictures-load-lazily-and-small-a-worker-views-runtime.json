@@ -1,0 +1,6 @@
+{
+  "budget": "a worker view's runtime",
+  "minified": 77,
+  "gzipped": 10,
+  "note": "Raised when a view's pictures came to load lazily and in two sizes (an `<img>` taking `loading` and `fetchpriority`, `pictures.thumb` handed and reckoned beside `src`, Roadmap f-view-pictures-load-lazily-and-small) and a view's bleed refusal to say what each value does and end with its finding code (Roadmap f-home-view-full-bleed-on-desk): 77 / 10 more. Measured at 65_453 / 22_847 against 65_376 / 22_837 minified and gzipped."
+}

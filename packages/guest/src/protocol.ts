@@ -209,6 +209,8 @@ export interface GuestFile {
   readonly poster?: true;
   /** A picture's address for `<img src>`, made by the host from the bytes. Smaller than the file where the view needs no more. */
   readonly src?: string;
+  /** Its second, smaller address, where the view asked for one (`pictures.thumb`): made at that width, for a chip or a grid; `src` itself where the picture is no wider. */
+  readonly thumb?: string;
   /** Why a picture was left out, in a sentence that names the view. */
   readonly left?: string;
 }

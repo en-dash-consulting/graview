@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 1261,
+  "gzipped": 424,
+  "note": "Raised when a view's pictures came to load lazily and in two sizes (an `<img>` taking `loading` and `fetchpriority`, `pictures.thumb` handed and reckoned beside `src`, Roadmap f-view-pictures-load-lazily-and-small) and a view's bleed refusal to say what each value does and end with its finding code (Roadmap f-home-view-full-bleed-on-desk): 1261 / 424 more. Measured at 274_711 / 105_735 against 273_450 / 105_311 minified and gzipped."
+}

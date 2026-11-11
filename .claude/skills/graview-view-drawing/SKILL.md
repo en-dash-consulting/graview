@@ -102,17 +102,16 @@ said once in its console and the host's problems, with the address:
   it send what it reads anywhere. It is asked for with no referrer.
   Unlisted, a URL on a record is refused.
 - **A picture on a record.** Say `pictures: true` in the manifest, or
-  `{ width: 400 }`, the widest it draws one in CSS pixels. Each file
+  `{ width: 400 }`, the widest it draws one (CSS px). Each file
   on a record the view is handed is then `{ name, type, bytes, width,
   height, caption, src, left }` in its field, never the host's path to it.
-  `src` is the address the host made from the bytes, fetched as the reader
-  and made smaller to `width`; absent until a later push brings it.
-  `left` says why a picture will never come: past one
-  picture's byte budget or the view's, or what the host answered when it
-  was not loaded. A document or SVG has no `src`: show its name,
-  type and size. They share 12 MB: choose kinds, or `records:
+  `src` is the host's address for it, fetched as the reader and made
+  smaller to `width`; absent until a later push brings it. `left` says why
+  one never will: a budget, or the host's answer. A document or SVG has
+  no `src`: show its name, type and size. They share 12 MB: choose kinds, or `records:
   { subject: true }` (its record and what links to it) or `{ ids }`, and
-  `most: 12`.
+  `most: 12`. `thumb: 240` adds a smaller `thumb` (in the 12 MB). An
+  `img` takes `loading="lazy"`, `fetchpriority`.
 
 ```js
 const photos = (job.photos || []).map((photo) => photo.src
