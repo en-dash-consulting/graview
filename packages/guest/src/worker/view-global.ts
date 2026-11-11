@@ -16,7 +16,7 @@
 import { RemoteRootElement, remoteId, updateRemoteElementAttribute } from "@remote-dom/core/elements";
 import type { Unsent } from "../channel.js";
 import { HTML_ELEMENTS, UNNAMED_ELEMENTS, openAttribute, svgElementName } from "../open-kit.js";
-import { GUEST_GESTURES, navigateRequest, type GuestAnswer, type GuestDomEvent, type GuestDroppedFile, type GuestGesture, type GuestNavigateTo, type GuestPressed, type GuestProps, type HostMessage } from "../protocol.js";
+import { GUEST_GESTURES, PART_SHARE, navigateRequest, type GuestAnswer, type GuestDomEvent, type GuestDroppedFile, type GuestGesture, type GuestNavigateTo, type GuestPressed, type GuestProps, type HostMessage } from "../protocol.js";
 import { dayIn, fromToday } from "../from-today.js";
 import type { Hardening } from "./harden.js";
 import { createListenerLedger } from "./listeners.js";
@@ -90,6 +90,15 @@ const SAID = ["value", "checked", "key", "pressed", "files", "refused", "x", "y"
 
 export type Drawable = string | Html | Node | readonly (string | Html | Node)[] | null | undefined;
 
+/** What a part's `draw` returns: markup, as `render` takes it, without nodes. */
+export type PartDrawn = string | Html | readonly (string | Html)[] | null | undefined | false;
+
+/** The elements a part may be drawn as: one that holds what it drew, wherever it stands. */
+export type PartElement = "div" | "li" | "article";
+const PART_ELEMENTS: ReadonlySet<string> = new Set(["div", "li", "article"]);
+/** A part's name: what the host and its console call it. */
+const PART_NAME = /^[a-z0-9][a-z0-9_-]{0,63}$/i;
+
 /** An act's arguments, or a list of them: several of the act as one change, one undo (FR-193). */
 export type ActArgs = Readonly<Record<string, unknown>> | readonly Readonly<Record<string, unknown>>[];
 
@@ -105,6 +114,16 @@ export interface GraviewView {
   /** Go to a record, a place or a kind's list — narrowed (`where`) and to a `section`, as `GuestNavigateTo` says. */
   navigate(to: GuestNavigateTo): void;
   html(strings: TemplateStringsArray, ...values: unknown[]): Html;
+  /**
+   * ONE PART OF WHAT IT DRAWS, THAT FAILS ALONE (Roadmap f-view-part-fails-alone):
+   * `draw`'s markup in a `<div data-part="name">` (`as: "li"` or `"article"`
+   * for another element). Where `draw` throws, or takes more than its share
+   * of the push's time (a quarter of `pushMs`), the part is handed on empty
+   * and marked failed, the host draws a note in its place, the rest of the
+   * view is drawn, and why is said in its console and to the host. A part
+   * that took too long is not run again while the view is drawn.
+   */
+  part(name: string, draw: () => PartDrawn, options?: { readonly as?: PartElement }): Html;
   /** The app's today, `YYYY-MM-DD`, on the app's clock (`props.today`): never a day the view pins. */
   readonly today: string;
   /** A day or a moment said against today: "today", "tomorrow", "in 3 days", "2 weeks ago"; with `{ due: true }`, a past day is "overdue". */
@@ -268,6 +287,7 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
      * it for itself: the way out is the runtime's.
      */
     current = message.props;
+    if (typeof message.partMs === "number" && message.partMs > 0) partMs = message.partMs;
     const began = io.now();
     for (const listener of propsListeners) {
       try {
@@ -406,6 +426,64 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
     morph(root as unknown as Node, next);
   }
 
+  /*
+   * A PART THAT FAILS FALLS BACK ALONE (Roadmap f-view-part-fails-alone).
+   * A view hands the host markup, so what throws is the view's own code
+   * making it: `graview.part` runs one part's, catches what it throws and
+   * times it, and hands on, in the part's place, an empty element marked
+   * failed with why — which the host draws its note in (host/parts.ts).
+   * The time is the view's own, as a push's is: a part past its share is
+   * not run again while the view is drawn, so it cannot go on to take the
+   * whole view's budget. A part that never returns cannot be caught here:
+   * that is the whole view's stop, as before.
+   */
+  let partMs = 1_000 / PART_SHARE;
+  const slowParts = new Map<string, string>();
+  const toldParts = new Set<string>();
+  const thrown = (error: unknown): string => {
+    try {
+      return error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+    } catch {
+      return "an error";
+    }
+  };
+  const partMarkup = (drawn: PartDrawn): string => {
+    if (drawn === null || drawn === undefined || drawn === false) return "";
+    if (typeof drawn === "string") return drawn;
+    if (isHtml(drawn)) return drawn.html;
+    if (Array.isArray(drawn)) return drawn.map((one) => partMarkup(one as PartDrawn)).join("");
+    throw new TypeError("a part's draw returns markup: a string, graview.html`…` or a list of them");
+  };
+  function part(name: string, draw: () => PartDrawn, options?: { readonly as?: PartElement }): Html {
+    if (typeof name !== "string" || !PART_NAME.test(name)) throw new TypeError(`graview.part names its part in letters, digits, - and _ ("vendors", "budget-2026"), at most 64 of them.`);
+    if (typeof draw !== "function") throw new TypeError(`graview.part("${name}", draw) is handed a function that returns the part's markup.`);
+    const tag = typeof options?.as === "string" && PART_ELEMENTS.has(options.as) ? options.as : "div";
+    const failed = (reason: "threw" | "slow", why: string) => {
+      const said = `The part "${name}" ${reason === "threw" ? "threw" : "took too long"}, so a note is drawn in its place and the rest of the view is drawn: ${why}`;
+      if (!toldParts.has(said) && toldParts.size < 100) {
+        toldParts.add(said);
+        io.warn(said);
+      }
+      return markup(`<${tag} data-part="${name}" data-part-failed="${reason}" data-part-why="${escape(why.slice(0, 300))}"></${tag}>`);
+    };
+    const slow = slowParts.get(name);
+    if (slow !== undefined) return failed("slow", slow);
+    const began = io.now();
+    let made: string;
+    try {
+      made = partMarkup(draw());
+    } catch (error) {
+      return failed("threw", thrown(error));
+    }
+    const ms = io.now() - began;
+    if (ms > partMs) {
+      const why = `it took ${Math.round(ms).toLocaleString("en-US")} ms, past the ${Math.round(partMs).toLocaleString("en-US")} ms a part may take of a push, and is not drawn again while the view is.`;
+      slowParts.set(name, why);
+      return failed("slow", why);
+    }
+    return markup(`<${tag} data-part="${name}">${made}</${tag}>`);
+  }
+
   const sheets: string[] = [];
 
   /*
@@ -494,6 +572,7 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
       const request = navigateRequest(to);
       if (request) io.send(request);
     },
+    part,
     html(strings: TemplateStringsArray, ...values: unknown[]) {
       return markup(strings.reduce((out, text, index) => out + text + (index < values.length ? piece(values[index]) : ""), ""));
     },

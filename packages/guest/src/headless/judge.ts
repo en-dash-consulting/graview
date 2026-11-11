@@ -93,6 +93,20 @@ export function judgeTranscript(transcript: HeadlessTranscript, input: HeadlessI
     if (!acts.has(act)) return { ok: false, reason: "act", detail: `It binds a press to the act "${act}" (data-act), which its manifest does not name.` };
   }
   const problems: DescribedProblem[] = [...drawn.refused.map((one) => sayRefusal(one, { ...(input.imageOrigins ? { origins: input.imageOrigins } : {}), assets: input.assets === true, ...(input.linkOrigins ? { linkOrigins: input.linkOrigins } : {}) })), ...said.problems];
+  /* A part that threw or took too long (`graview.part`, Roadmap f-view-part-fails-alone): the page draws a note in its place, and says why. */
+  const failedParts = (node: { readonly childNodes: readonly unknown[] }): void => {
+    for (const child of node.childNodes as { nodeType: number; childNodes: unknown[]; getAttribute(name: string): string | null }[]) {
+      if (child.nodeType !== 1) continue;
+      const failed = child.getAttribute("data-part-failed");
+      if (failed !== null && child.getAttribute("data-part") !== null) {
+        const name = child.getAttribute("data-part") ?? "";
+        const why = child.getAttribute("data-part-why") ?? "";
+        problems.push({ at: `part "${name}"`, says: `The part "${name}" ${failed === "slow" ? "took too long" : "threw"}: ${why}${/[.!?]$/.test(why) ? "" : "."} The page draws a note in its place and the rest of the view.` });
+      }
+      failedParts(child);
+    }
+  };
+  failedParts(drawn.root);
   for (const went of transcript.went) {
     /* A bare string is a record first, then a place by that slug, as the host follows it. */
     if ("record" in went && !(input.props.node?.id === went.record || (input.props.nodes ?? []).some((node) => node.id === went.record) || placeNamed(goes, went.record)))

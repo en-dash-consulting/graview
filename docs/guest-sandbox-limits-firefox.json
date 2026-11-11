@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-10T19:25:11.121Z",
+  "at": "2026-11-11T05:26:21.434Z",
   "transport": "limits",
   "engine": "firefox",
   "claims": {
@@ -9,7 +9,7 @@
         "failure": {
           "reason": "slow",
           "detail": "It took longer than 1,000 ms to draw what it was shown.",
-          "at": 1094
+          "at": 1079
         },
         "running": false,
         "face": [
@@ -29,7 +29,7 @@
         "failure": {
           "reason": "silent",
           "detail": "It stopped answering for 1,500 ms.",
-          "at": 1581
+          "at": 1580
         },
         "running": false,
         "face": [
@@ -49,7 +49,7 @@
         "failure": {
           "reason": "flood",
           "detail": "It sent more than 120 messages in 1,000 ms.",
-          "at": 473
+          "at": 267
         },
         "running": false,
         "face": [
@@ -69,7 +69,7 @@
         "failure": {
           "reason": "nodes",
           "detail": "It drew more than the 5,000 things a view may draw.",
-          "at": 3049
+          "at": 1780
         },
         "running": false,
         "face": [
@@ -89,7 +89,7 @@
         "failure": {
           "reason": "source",
           "detail": "Its code is longer than the 256,000 bytes a view may be.",
-          "at": 25
+          "at": 18
         },
         "running": false,
         "face": [
@@ -108,8 +108,8 @@
       "detail": {
         "failure": {
           "reason": "slow",
-          "detail": "It took longer than 1,000 ms to draw what it was shown.",
-          "at": 303
+          "detail": "What it drew took this page longer than the 100 ms of any one second a view may take to draw.",
+          "at": 230
         },
         "running": false,
         "face": [
@@ -120,11 +120,11 @@
           "AI strategy sprint",
           "Copernicus build"
         ],
-        "note": "This view was stopped. It took longer than 1,000 ms to draw what it was shown.",
+        "note": "This view was stopped. What it drew took this page longer than the 100 ms of any one second a view may take to draw.",
         "pulse": {
-          "last": 3845,
-          "longest": 189,
-          "ticks": 65
+          "last": 2481,
+          "longest": 125,
+          "ticks": 41
         }
       }
     },
@@ -135,12 +135,55 @@
         "drawn": "6 records"
       }
     },
+    "a view whose part throws is kept: that part is drawn as the host's note, the rest of the view is drawn, and why is said to the host": {
+      "ok": true,
+      "detail": {
+        "running": true,
+        "parts": [
+          {
+            "part": "count",
+            "failed": null,
+            "text": "6 records"
+          },
+          {
+            "part": "vendors",
+            "failed": "threw",
+            "text": "This part could not be drawn."
+          },
+          {
+            "part": "timeline",
+            "failed": "slow",
+            "text": "This part could not be drawn."
+          }
+        ],
+        "problems": [
+          "The part \"vendors\" of the view \"The packages\" threw, so a note is drawn in its place and the rest of the view is drawn: Error: no vendors",
+          "The part \"timeline\" of the view \"The packages\" took too long, so a note is drawn in its place and the rest of the view is drawn: it took 800 ms, past the 500 ms a part may take of a push, and is not drawn again while the view is."
+        ]
+      }
+    },
+    "a part busy 800 ms, past a quarter of its view's 2,000 ms push, is drawn as the host's note and said, and the view is kept": {
+      "ok": true,
+      "detail": {
+        "share": 500,
+        "pace": 1,
+        "timeline": {
+          "part": "timeline",
+          "failed": "slow",
+          "text": "This part could not be drawn."
+        },
+        "problems": [
+          "The part \"vendors\" of the view \"The packages\" threw, so a note is drawn in its place and the rest of the view is drawn: Error: no vendors",
+          "The part \"timeline\" of the view \"The packages\" took too long, so a note is drawn in its place and the rest of the view is drawn: it took 800 ms, past the 500 ms a part may take of a push, and is not drawn again while the view is."
+        ]
+      }
+    },
     "the page's own timer kept time while views spun, never more than 250 ms between 50 ms ticks": {
       "ok": true,
       "detail": {
-        "last": 3845,
-        "longest": 189,
-        "ticks": 65
+        "last": 2481,
+        "longest": 125,
+        "ticks": 41
       }
     },
     "a page is at one pace, measured once from its first worker's start — 1 where it started fast — every view on it alike, and a view that spins is stopped as slow at that pace times the base 1,000 ms, the sentence naming the budget it was held to": {
@@ -153,13 +196,14 @@
           "nodes": 1,
           "churn": 1,
           "long": null,
-          "good": 1
+          "good": 1,
+          "parts": 1
         },
         "fitted": 1000,
         "spin": {
           "reason": "slow",
           "detail": "It took longer than 1,000 ms to draw what it was shown.",
-          "at": 1094
+          "at": 1079
         },
         "slow": 0
       }
@@ -314,7 +358,7 @@
         "spin": {
           "reason": "slow",
           "detail": "It took longer than 4,000 ms to draw what it was shown.",
-          "at": 4395
+          "at": 4403
         },
         "running": false,
         "face": [
@@ -334,7 +378,7 @@
         "flood": {
           "reason": "flood",
           "detail": "It sent more than 120 messages in 1,000 ms.",
-          "at": 468
+          "at": 392
         },
         "running": false
       }
@@ -350,33 +394,65 @@
       "long": {
         "reason": "source",
         "detail": "Its code is longer than the 256,000 bytes a view may be.",
-        "at": 25
+        "at": 18
       },
       "churn": {
         "reason": "slow",
-        "detail": "It took longer than 1,000 ms to draw what it was shown.",
-        "at": 303
+        "detail": "What it drew took this page longer than the 100 ms of any one second a view may take to draw.",
+        "at": 230
       },
       "flood": {
         "reason": "flood",
         "detail": "It sent more than 120 messages in 1,000 ms.",
-        "at": 473
+        "at": 267
       },
       "spin": {
         "reason": "slow",
         "detail": "It took longer than 1,000 ms to draw what it was shown.",
-        "at": 1094
+        "at": 1079
       },
       "later": {
         "reason": "silent",
         "detail": "It stopped answering for 1,500 ms.",
-        "at": 1581
+        "at": 1580
       },
       "nodes": {
         "reason": "nodes",
         "detail": "It drew more than the 5,000 things a view may draw.",
-        "at": 3049
+        "at": 1780
       }
+    },
+    "problems": {
+      "parts": [
+        "The part \"vendors\" of the view \"The packages\" threw, so a note is drawn in its place and the rest of the view is drawn: Error: no vendors",
+        "The part \"timeline\" of the view \"The packages\" took too long, so a note is drawn in its place and the rest of the view is drawn: it took 800 ms, past the 500 ms a part may take of a push, and is not drawn again while the view is."
+      ]
+    },
+    "parts": {
+      "spin": [],
+      "later": [],
+      "flood": [],
+      "nodes": [],
+      "churn": [],
+      "long": [],
+      "good": [],
+      "parts": [
+        {
+          "part": "count",
+          "failed": null,
+          "text": "6 records"
+        },
+        {
+          "part": "vendors",
+          "failed": "threw",
+          "text": "This part could not be drawn."
+        },
+        {
+          "part": "timeline",
+          "failed": "slow",
+          "text": "This part could not be drawn."
+        }
+      ]
     },
     "running": {
       "spin": false,
@@ -385,7 +461,8 @@
       "nodes": false,
       "churn": false,
       "long": false,
-      "good": true
+      "good": true,
+      "parts": true
     },
     "faces": {
       "spin": [
@@ -436,16 +513,18 @@
         "AI strategy sprint",
         "Copernicus build"
       ],
-      "good": []
+      "good": [],
+      "parts": []
     },
     "notes": {
       "spin": "This view was stopped. It took longer than 1,000 ms to draw what it was shown.",
       "later": "This view was stopped. It stopped answering for 1,500 ms.",
       "flood": "This view was stopped. It sent more than 120 messages in 1,000 ms.",
       "nodes": "This view was stopped. It drew more than the 5,000 things a view may draw.",
-      "churn": "This view was stopped. It took longer than 1,000 ms to draw what it was shown.",
+      "churn": "This view was stopped. What it drew took this page longer than the 100 ms of any one second a view may take to draw.",
       "long": "This view was stopped. Its code is longer than the 256,000 bytes a view may be.",
-      "good": null
+      "good": null,
+      "parts": null
     },
     "drawn": {
       "spin": null,
@@ -454,7 +533,8 @@
       "nodes": null,
       "churn": null,
       "long": null,
-      "good": "6 records"
+      "good": "6 records",
+      "parts": "6 records"
     },
     "pace": {
       "spin": 1,
@@ -463,12 +543,13 @@
       "nodes": 1,
       "churn": 1,
       "long": null,
-      "good": 1
+      "good": 1,
+      "parts": 1
     },
     "pulse": {
-      "last": 3845,
-      "longest": 189,
-      "ticks": 65
+      "last": 2481,
+      "longest": 125,
+      "ticks": 41
     }
   },
   "policy": {
@@ -585,12 +666,12 @@
       "flood": {
         "reason": "flood",
         "detail": "It sent more than 120 messages in 1,000 ms.",
-        "at": 468
+        "at": 392
       },
       "spin": {
         "reason": "slow",
         "detail": "It took longer than 4,000 ms to draw what it was shown.",
-        "at": 4395
+        "at": 4403
       }
     },
     "pace": {

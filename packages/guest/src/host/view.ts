@@ -5,7 +5,7 @@ import { actingAs, meOf, type AnySchema, type FileValue, type HostFiles, type Pa
 import { createMine, keptForTheVisit, visitOf } from "./mine.js";
 import { storedFilesOf } from "./marks.js";
 import { retryingImport } from "@graview/core/retry";
-import type { GuestDomEvent, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
+import { PART_SHARE, type GuestDomEvent, type GuestPlace, type GuestProps, type GuestTheme } from "../protocol.js";
 import { checkManifest, edgesReadWithoutTheirKindsSaid, readsComputed, workerViewProps, type ComputedOn, type WorkerViewManifest } from "./manifest.js";
 import type { OpenDrawing, ViewRefusal } from "./open-draw.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestStats, type GuestViewInput } from "./session.js";
@@ -870,7 +870,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     element.setAttribute("aria-haspopup", "dialog");
     wantMedia();
   };
-  void Promise.all([openDrawChunk(), pressChunk()]).then(([{ createOpenDrawing, handedLinks, judgeLink, linkRefusedWords }, { createPressReader, createSaver, fillPrefills, judgePress, markPresses, prefillOf, quietPictures }]) => {
+  void Promise.all([openDrawChunk(), pressChunk()]).then(([{ createOpenDrawing, createPartFallbacks, handedLinks, judgeLink, linkRefusedWords }, { createPressReader, createSaver, fillPrefills, judgePress, markPresses, prefillOf, quietPictures }]) => {
     if (failed) return;
     const reader = createPressReader();
     /* Whether the view hears `acted` on this control, or on something around it: then what became of it is the view's to say. */
@@ -918,7 +918,10 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       saver.flush();
     };
     const prefilled = new WeakSet<Element>();
+    /* A part that threw or took too long (`graview.part`): the host's note in its place, and why said (parts.ts). */
+    const parts = createPartFallbacks(shadow, { view: `"${manifest.title ?? manifest.name}"`, ...(options.onProblem ? { onProblem: options.onProblem } : {}) });
     refill = () => {
+      parts.refresh();
       /* A card bound to a record is a link once it is drawn whole: whether it holds a field is known only then (pressable.ts). */
       links.refresh(shadow);
       markPresses(shadow);
@@ -1082,7 +1085,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
             pending.set(message.push, clock.now());
             mark();
           }
-          given.postMessage(message);
+          /* With the most one part of it may take (`graview.part`): a quarter of the push's time, as fitted. */
+          given.postMessage(message.type === "props" ? { ...message, partMs: limits.pushMs / PART_SHARE } : message);
         },
         mine,
         props: () => {

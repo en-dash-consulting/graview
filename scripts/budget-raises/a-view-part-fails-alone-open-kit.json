@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 2908,
+  "gzipped": 1208,
+  "note": "Raised when one part of a worker view that fails came to fall back alone (Roadmap f-view-part-fails-alone): the view's runtime the host puts in front of a view's source carries `graview.part`, which catches a part that throws and times one past a quarter of the push, and the drawing carries `parts.ts`, which draws the host's note in a part marked failed and says why to `onProblem`. Measured at 278_515 / 107_465 against 275_607 / 106_257: 2_908 / 1_208 more."
+}
