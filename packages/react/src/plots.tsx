@@ -1,5 +1,5 @@
 import { labelOf, numberAsRead, SCENE_LAYERS, type Brand, type Scheme } from "@graview/core";
-import { districtBlocks, districtState, TIER_HEIGHT, toIso, type Building, type StateTier } from "@graview/core/scene";
+import { districtBlocks, districtLanes, districtState, TIER_HEIGHT, toIso, type Building, type StateTier } from "@graview/core/scene";
 import type { InterpolatedLayout } from "@graview/layout";
 import { memo, useCallback, useMemo, useRef, type CSSProperties, type ReactElement } from "react";
 import { useGraph, useGraview } from "./context.js";
@@ -146,19 +146,7 @@ export function Plots({ frame, width, height, pan, pinned, close, today, swallow
       names.set(id, name);
       return name;
     };
-    const lanes: string[][] = state ? state.values.map(() => []) : [[]];
-    const tiers: StateTier[] = state ? [...state.tiers] : ["waiting"];
-    for (const id of first.length > 0 ? [...first, ...members.filter((id) => !first.includes(id))] : members) {
-      const at = state ? state.values.indexOf(valueOf(id) as string) : 0;
-      if (at >= 0) lanes[at]!.push(id);
-      else {
-        if (lanes.length === tiers.length) {
-          lanes.push([]);
-          tiers.push("waiting");
-        }
-        lanes[lanes.length - 1]!.push(id);
-      }
-    }
+    const { lanes, tiers } = districtLanes(state, members, valueOf, first);
     const { blocks, rests } = districtBlocks(node.plot!, lanes, tiers.map((tier) => TIER_HEIGHT[tier]));
     const corners = tileCorners(node.plot!, at0, none);
     // A record's due date past and not done: overdue, lit like a problem.
