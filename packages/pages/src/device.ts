@@ -92,11 +92,12 @@ export interface RenderedScreen {
   /** Whether the place was there for this seat; a screen that says nothing lives here when not. */
   readonly found: boolean;
   /**
-   * WHICH PICTURE THIS IS: the same for the same store state as this seat
-   * sees it, declaration, place, seat, profile, viewport and page, and
-   * different when any of them differs. A tap is resolved against it
-   * (`resolveTap`); it carries the place, page and viewport it was drawn
-   * for, and nothing of what the seat may not see.
+   * WHICH PICTURE THIS IS: made of what the screen shows — its markup and
+   * its regions — and the place, page, viewport and reading it was drawn
+   * for, so the same store, declaration, place, seat, profile, viewport and
+   * page give the same id, and a change the screen does not show keeps it.
+   * A tap is resolved against it (`resolveTap`); it says nothing the screen
+   * does not.
    */
   readonly renderId: string;
   readonly page: { readonly index: number; readonly count: number };
@@ -106,7 +107,11 @@ export interface RenderedScreen {
 
 /* ------------------------------------------------------------ the profile */
 
-/** The profile's sixteen grays, black to white: every color the screen is drawn in is one of them. */
+/**
+ * The profile's sixteen grays, black to white: every color the screen's sheet names is one of them. The
+ * framework does not rasterize: a browser's antialiased type draws grays between them, and the host
+ * quantizes the picture to its panel.
+ */
 export const EINK_GRAYS: readonly string[] = Array.from({ length: 16 }, (_, at) => `#${(at * 17).toString(16).padStart(2, "0").repeat(3)}`);
 /** The least a press measures on each side, in CSS pixels: a finger, not a pointer. */
 export const EINK_LEAST_TARGET = 64;
@@ -160,7 +165,8 @@ type Row =
   | { readonly t: "heading"; readonly text: string }
   | { readonly t: "text"; readonly text: string; readonly quiet?: boolean }
   | { readonly t: "field"; readonly label: string; readonly text: string }
-  | { readonly t: "item"; readonly title: string; readonly glance: string; readonly id: string; readonly href: string }
+  /** `glance` is worked out only for a row on the page drawn: a list of thousands reads a dozen of them. */
+  | { readonly t: "item"; readonly title: string; readonly glance: string | (() => string); readonly id: string; readonly href: string }
   | { readonly t: "link"; readonly text: string; readonly go: string; readonly href?: string }
   | { readonly t: "act"; readonly text: string; readonly act: string; readonly args: Readonly<Record<string, unknown>> };
 
@@ -192,8 +198,7 @@ class Rows {
     return `${this.base}${path}`;
   }
   item(item: DescribedItem): void {
-    const read = glanced(this.seen, item, this.locale);
-    this.rows.push({ t: "item", title: item.title, glance: lineOf(read.parts), id: item.id, href: this.href(recordPath(this.seen.schema, item.kind, item.id)) });
+    this.rows.push({ t: "item", title: item.title, glance: () => lineOf(glanced(this.seen, item, this.locale).parts), id: item.id, href: this.href(recordPath(this.seen.schema, item.kind, item.id)) });
   }
   /** Parts as rows: a heading a row of its own, a line a row, a fact a label over its value, each record of a list a row that opens it. */
   parts(parts: readonly DescribedPart[]): void {
@@ -295,11 +300,8 @@ function screenActs<S extends AnySchema>(store: Store<S>, id: string, viewer: Pr
     const named = Object.values(affordance.args).filter((value): value is string => typeof value === "string" && store.graph.getNode(value) !== undefined);
     if (named.some((other) => !store.sees(viewer, other))) continue;
     if (!store.permits(call, viewer).ok) continue;
-    try {
-      if (!store.wouldChange(call, viewer)) continue;
-    } catch {
-      continue;
-    }
+    // Rehearsed as the seat: an act its own rule refuses, or one that changes nothing this seat can see, is not a press it could make.
+    if (store.wouldDo([call], viewer)[0] !== "changes") continue;
     out.push({ label: affordance.label, act: affordance.mutation, args: affordance.args });
   }
   return out;
@@ -424,7 +426,7 @@ function drawRows(rows: readonly Row[], top: number, width: number, taps: TapReg
         out.push(at(box, "gv-field", line("gv-label", row.label) + line("gv-value", row.text)));
         break;
       case "item":
-        out.push(at(box, "gv-item", line("gv-name", row.title) + line("gv-glance", row.glance), { label: row.title, does: { open: row.id }, href: row.href }, taps));
+        out.push(at(box, "gv-item", line("gv-name", row.title) + line("gv-glance", typeof row.glance === "function" ? row.glance() : row.glance), { label: row.title, does: { open: row.id }, href: row.href }, taps));
         break;
       case "link":
         out.push(at(box, "gv-link", line("", row.text), { label: row.text, does: { go: row.go }, href: row.href }, taps));
@@ -519,7 +521,7 @@ function screenRendered<S extends AnySchema>(store: Store<S>, declaration: Gravi
 
   const asked = typeof place === "string" ? place : place.address;
   const params: ScreenParams = { place: asked, width, height, page: index, ...(options.today ? { today: options.today } : {}), ...(options.locale ? { locale: options.locale } : {}), ...(options.timeZone ? { timeZone: options.timeZone } : {}), ...(options.base ? { base: options.base } : {}) };
-  const renderId = `eink.${encodeParams(params)}.${stateOf(store, viewer)}${hash(`${seatOf(viewer)}\u0000${html}\u0000${JSON.stringify(taps)}`)}`;
+  const renderId = `eink.${encodeParams(params)}.${hash(`${html}\u0000${JSON.stringify(taps)}`)}`;
   return { html, css, title: head, found: content.found, renderId, page: { index, count: pages.length }, taps };
 }
 
@@ -560,7 +562,7 @@ function decodeParams(text: string): ScreenParams | undefined {
   }
 }
 
-/** Two 53-bit string hashes side by side (cyrb53, two seeds), as 26 hex digits: an id, not a secret. */
+/** Two 53-bit string hashes side by side (cyrb53, two seeds), as 28 hex digits: an id, not a secret. */
 function hash(text: string): string {
   const one = (seed: number): string => {
     let h1 = 0xdeadbeef ^ seed;
@@ -577,24 +579,14 @@ function hash(text: string): string {
   return one(1) + one(2);
 }
 
-const seatOf = (viewer: Principal): string => JSON.stringify({ kind: viewer.kind, id: viewer.id ?? null, roles: [...(viewer.roles ?? [])].sort() });
-
-/**
- * THE APP AS THIS SEAT SEES IT, as a hash: every record and relation it may
- * see, in id order, and the store's day. A change it cannot see changes
- * nothing here, so an id says nothing of what is kept from the seat.
- */
-function stateOf<S extends AnySchema>(store: Store<S>, viewer: Principal): string {
-  const seen = store.seenBy(viewer);
-  const snapshot = seen.snapshot();
-  const byId = <T extends { id?: string }>(a: T, b: T) => ((a.id ?? "") < (b.id ?? "") ? -1 : (a.id ?? "") > (b.id ?? "") ? 1 : 0);
-  const edges = snapshot.edges.map((edge) => ({ ...edge, id: (edge as { id?: string }).id ?? `${edge.kind}|${edge.from}|${edge.to}` }));
-  return hash(JSON.stringify([[...snapshot.nodes].sort(byId), edges.sort(byId), store.today() ?? null, seatOf(viewer)]));
-}
-
 /* -------------------------------------------------------------- the taps */
 
-/** What a tap does now: a screen to draw, an act done, or a refusal in words — each with the screen to draw next. */
+/**
+ * What a tap does now: a screen to draw, an act done, or a refusal in words —
+ * each with the screen to draw next. `place` is a place to hand back to
+ * `renderScreen` (an address such as `/tasks`, a record's address, or
+ * `job:<name>`), never a URL to follow: it is not checked as one.
+ */
 export type TapOutcome =
   | { readonly ok: true; readonly does: "go" | "open" | "page" | "refresh"; readonly place: string; readonly page: number }
   | { readonly ok: true; readonly does: "act"; readonly said: string; readonly place: string; readonly page: number }
@@ -616,12 +608,15 @@ function sortedDeep(value: unknown): unknown {
 
 /**
  * WHAT A TAP DOES NOW. A press that goes somewhere answers the place to draw
- * next (an address, `job:<name>`, or this place at another page). An act is
- * run only when the screen it was pressed on is the screen the app draws
- * now for this seat — the same `renderId` — and the act is on it, as drawn;
- * against a store that has moved on since, the act is judged again as the
- * seat now stands and refused in words, never run on a state the picture
- * did not show.
+ * next — a place to hand back to `renderScreen`, never a URL to follow —
+ * and only when the screen, drawn again as the seat now stands, still has
+ * that press: a `go` or an `open` no screen of this place offers is refused,
+ * as a forged act is. Turning a page and Refresh answer this place. An act
+ * is run only when the screen it was pressed on is the screen the app draws
+ * now for this seat — the same `renderId` — and the act is on it, with the
+ * same arguments; when what the screen shows has changed since, the act is
+ * judged again as the seat now stands and refused in words, never run on a
+ * state the picture did not show.
  */
 export function resolveTap<S extends AnySchema>(store: Store<S>, declaration: GraviewApp<S>, region: Pick<TapRegion, "label" | "does">, options: ResolveTapOptions): TapOutcome {
   const viewer: Principal = options.viewer ?? { kind: "human" };
@@ -630,19 +625,11 @@ export function resolveTap<S extends AnySchema>(store: Store<S>, declaration: Gr
   if (!params) return { ok: false, refused: "This tap was not on a screen this app drew; draw the screen again and tap there.", place: "/", page: 0 };
   const here = { place: params.place, page: params.page };
   const does = region.does as Partial<Record<string, unknown>>;
-  if (typeof does.go === "string") return { ok: true, does: "go", place: does.go, page: 0 };
-  if (typeof does.open === "string") {
-    // A record the seat may not see — or of a kind kept from it — is answered as no record at all.
-    const node = store.seenBy(viewer).graph.getNode(does.open);
-    if (!node || store.kindsKeptFrom(viewer).has(node.kind) || store.modules.disabledKinds.has(node.kind)) return { ok: false, refused: NOTHING, ...here };
-    return { ok: true, does: "open", place: recordPath(store.schema, node.kind, node.id), page: 0 };
-  }
   if (typeof does.page === "number" && Number.isFinite(does.page)) return { ok: true, does: "page", place: params.place, page: Math.max(0, Math.floor(does.page)) };
   if (does.refresh === true) return { ok: true, does: "refresh", ...here };
-  if (typeof does.act !== "string") return { ok: false, refused: "This tap does nothing Graview knows.", ...here };
+  if (typeof does.go !== "string" && typeof does.open !== "string" && typeof does.act !== "string") return { ok: false, refused: "This tap does nothing Graview knows.", ...here };
 
-  const act = does.act;
-  const args = (does.args && typeof does.args === "object" ? does.args : {}) as Record<string, unknown>;
+  // The screen as the seat now stands: a press is answered only if it is one of its own.
   const now = renderScreen(store, declaration, params.place, {
     profile: "eink",
     viewport: { width: params.width, height: params.height },
@@ -654,6 +641,20 @@ export function resolveTap<S extends AnySchema>(store: Store<S>, declaration: Gr
     ...(params.base ? { base: params.base } : {}),
   });
   const shown = now.taps.find((tap) => tap.label === region.label && sameDoes(tap.does, region.does));
+  if (typeof does.go === "string") {
+    if (!shown) return { ok: false, refused: `“${region.label}” is not on this screen, so it goes nowhere.`, ...here };
+    return { ok: true, does: "go", place: does.go, page: 0 };
+  }
+  if (typeof does.open === "string") {
+    // A record the seat may not see — or of a kind kept from it — is answered as no record at all.
+    const node = store.seenBy(viewer).graph.getNode(does.open);
+    if (!node || store.kindsKeptFrom(viewer).has(node.kind) || store.modules.disabledKinds.has(node.kind)) return { ok: false, refused: NOTHING, ...here };
+    if (!shown) return { ok: false, refused: `“${region.label}” is not on this screen, so it opens nothing.`, ...here };
+    return { ok: true, does: "open", place: recordPath(store.schema, node.kind, node.id), page: 0 };
+  }
+
+  const act = does.act as string;
+  const args = (does.args && typeof does.args === "object" ? does.args : {}) as Record<string, unknown>;
   if (now.renderId !== options.renderId) {
     // The app moved on since the picture was drawn: judged again as the seat now stands, and not run.
     const verdict = store.permits({ name: act, args }, viewer);

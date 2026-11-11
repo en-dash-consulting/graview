@@ -86,14 +86,15 @@ this package serves lists, records, forms, problems and history as ordinary link
 
 - **A place on a fixed screen, and what each part of it does.** `@graview/pages/device`'s
   `renderScreen(store, declaration, place, { profile: "eink", viewport, viewer, page })`
-  draws a place for an e-ink reader at the viewport its host names — sixteen grays, no
+  draws a place for an e-ink reader at the viewport its host names — its colors the sixteen grays (the host quantizes the picture to its panel), no
   motion, no hover, no script, nothing fetched, type for arm's length, every press at
   least 64 px — at a fixed layout the framework works out itself, a long place on pages.
   It answers `{ html, css, title, found, renderId, page, taps }`: `taps` is each pressable
   region's rectangle in the viewport's pixels and what it does (`go`, `open`, `act`,
   `page`, `refresh`), exactly where the browser draws it. `tapAt` finds the region under a
-  point; `resolveTap` says what it does now, and runs an act only on the screen the app
-  still draws for that seat. The strip along its foot is the declaration's
+  point; `resolveTap` says what it does now — a place to hand back to `renderScreen`, never a
+  URL to follow — answers only a press the screen still offers, and runs an act only on the
+  screen the app still draws for that seat. The strip along its foot is the declaration's
   `devices.screens`, else the home and its jobs, else its bar. It imports no React, so a
   Worker draws it; the host's browser takes the picture. See `docs/static-pages.md`.
 

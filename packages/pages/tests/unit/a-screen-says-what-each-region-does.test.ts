@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { createSchema, defineApp, defineMutation, defineNode, nodeRef, Store, z, type Policy, type Principal } from "@graview/core";
+import { ActRefusal, createSchema, defineApp, defineMutation, defineNode, nodeRef, Store, z, type Policy, type Principal } from "@graview/core";
 import { deriveAffordances } from "@graview/tools/derive";
 import { describe, expect, it } from "vitest";
 import { renderScreen, resolveTap, tapAt, type TapRegion } from "@graview/pages/device";
@@ -57,7 +57,7 @@ describe("the tap map", () => {
     const task = store.graph.nodesOfKind("task")[0]!;
     for (const place of ["home", "/tasks", task.id]) {
       const drawn = screen(store as never, place);
-      expect(drawn.renderId).toMatch(/^eink\.[A-Za-z0-9_-]+\.[0-9a-f]{56}$/);
+      expect(drawn.renderId).toMatch(/^eink\.[A-Za-z0-9_-]+\.[0-9a-f]{28}$/);
       for (const tap of drawn.taps) {
         expect(Object.keys(tap).sort()).toEqual(["does", "height", "label", "width", "x", "y"]);
         expect(DOES.filter((one) => one in tap.does), tap.label).toHaveLength(1);
@@ -73,7 +73,7 @@ describe("the tap map", () => {
     expect(tapAt(screen(store as never, "home").taps, -1, -1)).toBeUndefined();
   });
 
-  it("gives the same id and the same map for the same store, declaration, place, seat, profile, viewport and page — and another when any differs", () => {
+  it("gives the same id and the same map for the same store, declaration, place, seat, profile, viewport and page — and another when what the screen shows differs", () => {
     const a = screen(todo() as never, "/tasks");
     const b = screen(todo() as never, "/tasks");
     expect(b.renderId).toBe(a.renderId);
@@ -83,7 +83,6 @@ describe("the tap map", () => {
       screen(todo() as never, "/tasks", { page: 1 }),
       screen(todo() as never, "/lists"),
       screen(todo() as never, "/tasks", { viewport: { width: 758, height: 1100 } }),
-      screen(todo() as never, "/tasks", { viewer: { kind: "human", id: "user-sam", roles: ["member"] } }),
     ];
     for (const other of others) expect(other.renderId).not.toBe(a.renderId);
     // And a changed store is another picture.
@@ -91,6 +90,17 @@ describe("the tap map", () => {
     const open = changed.graph.nodesOfKind("task").find((task) => !(task as { done?: boolean }).done)!;
     changed.apply({ name: "finish", args: { taskId: open.id } }, { author: keeper });
     expect(screen(changed as never, "/tasks").renderId).not.toBe(a.renderId);
+  });
+
+  it("depends only on what the screen shows: a change it does not show keeps its id, and an act tapped on it still runs", () => {
+    const store = choreStore();
+    const drawn = choreScreen(store as never, doer);
+    // Another chore, on no part of this screen, is renamed.
+    store.apply({ name: "rename-chore", args: { id: "c-hall", label: "Sweep the hall and the stairs" } }, { author: doer });
+    expect(choreScreen(store as never, doer).renderId).toBe(drawn.renderId);
+    const done = drawn.taps.find((tap) => "act" in tap.does)!;
+    expect(resolveTap(store, chores, done, { viewer: doer, renderId: drawn.renderId }).ok).toBe(true);
+    expect((store.graph.getNode("c-bins") as unknown as { done: boolean }).done).toBe(true);
   });
 
   it("offers an act only to a seat that may run it with every argument bound; one that needs a typed argument is not offered", () => {
@@ -169,8 +179,49 @@ describe("the tap map", () => {
     expect(resolveTap(store, todoApp, refresh, { viewer: keeper, renderId: list.renderId })).toEqual({ ok: true, does: "refresh", place: "/tasks", page: 0 });
     const home = list.taps.find((tap) => "go" in tap.does && tap.does.go === "/")!;
     expect(resolveTap(store, todoApp, home, { viewer: keeper, renderId: list.renderId })).toEqual({ ok: true, does: "go", place: "/", page: 0 });
+    // A place to draw is never a URL to follow: a go or an open the screen does not offer is refused, not echoed.
+    for (const forged of [{ label: "Home", does: { go: "https://elsewhere.example/" } }, { label: "Anywhere", does: { go: "/lists" } }, { label: "Pay the deposit", does: { open: "t-quote" } }] as const) {
+      const outcome = resolveTap(store, todoApp, forged, { viewer: keeper, renderId: list.renderId });
+      expect(outcome.ok, forged.label).toBe(false);
+      if (!outcome.ok) expect(outcome.refused).toMatch(/is not on this screen/);
+    }
     // A record the seat may not see is answered as nothing there.
     const nora = { label: "Nora", does: { open: "user-nora" } } as const;
     expect(resolveTap(store, todoApp, nora, { viewer: { kind: "human", id: "user-sam", roles: ["member"] }, renderId: list.renderId }).ok).toBe(false);
   });
+
+  it("offers no act the store would refuse or that would change nothing the seat can see, so none takes a slot it cannot fill", () => {
+    const parcel = defineNode("parcel", { fields: z.object({ label: z.string(), done: z.boolean(), count: z.number() }), plural: "Parcels" });
+    const parcels = createSchema([parcel]);
+    const ship = defineMutation("ship-parcel", {
+      title: "Ship it",
+      description: "Send a parcel that is done.",
+      subject: { kinds: ["parcel"], arg: "id" },
+      writes: ["done"],
+      input: z.object({ id: nodeRef(["parcel"]) }),
+      apply(ctx, args) {
+        if (!(ctx.graph.getNode(args.id) as unknown as { done: boolean }).done) throw new ActRefusal("Finish it first.");
+        ctx.patchNode(args.id, { done: true });
+      },
+    });
+    const bump = defineMutation("bump-parcel", {
+      title: "Bump it",
+      description: "Count one more.",
+      subject: { kinds: ["parcel"], arg: "id" },
+      writes: ["count"],
+      input: z.object({ id: nodeRef(["parcel"]) }),
+      apply(ctx, args) {
+        ctx.patchNode(args.id, { count: (ctx.graph.getNode(args.id) as unknown as { count: number }).count + 1 });
+      },
+    });
+    const rules: Policy = { roles: ["packer", "reader"], grants: [{ roles: "*", mutations: ["ship-parcel", "bump-parcel"] }], sees: [{ roles: ["packer"], kinds: ["parcel"] }, { roles: ["reader"], kinds: ["parcel"], hide: ["count"] }] };
+    const app = defineApp({ name: "parcels", schema: parcels, mutations: [ship, bump], policy: rules });
+    const store = new Store({ schema: parcels, mutations: [ship, bump], policy: rules, snapshot: { nodes: [{ id: "p-1", kind: "parcel", label: "Books", done: false, count: 1 }] as never, edges: [] } });
+    const acts = (viewer: Principal) => renderScreen(store, app, "p-1", { profile: "eink", viewport: PW3, viewer }).taps.flatMap((tap) => ("act" in tap.does ? [tap.does.act] : []));
+    // The packer is not offered shipping a parcel that is not done: its apply says "Finish it first."
+    expect(acts({ kind: "human", id: "kim", roles: ["packer"] })).toEqual(["bump-parcel"]);
+    // The reader may not see the count, so bumping it is not a press they could make.
+    expect(acts({ kind: "human", id: "lou", roles: ["reader"] })).toEqual([]);
+  });
 });
+

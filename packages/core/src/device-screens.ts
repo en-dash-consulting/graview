@@ -1,6 +1,6 @@
 import type { GraviewApp } from "./app.js";
 import { placesOf, type AppPlace } from "./app-places.js";
-import { JOB_SCREEN_PREFIX, MOST_DEVICE_SCREENS, type DeviceScreen } from "./device-shape.js";
+import { JOB_SCREEN_PREFIX, MOST_DEVICE_SCREENS, shortScreenLabel, type DeviceScreen } from "./device-shape.js";
 import { jobsFor, jobsOf, type ResolvedJob } from "./jobs.js";
 import type { Principal } from "./permissions/types.js";
 import { HOME_SLUG, OVERVIEW_SLUG, primaryOf, supportingKinds } from "./places.js";
@@ -92,7 +92,8 @@ export function deviceScreensOf<S extends AnySchema>(app: GraviewApp<S>, options
   const home = places.find((place) => place.slug === HOME_SLUG)!;
   const jobs = jobsFor(jobsOf(app), principal).filter((job) => !kept.has(job.kind));
   if (jobs.length > 0) {
-    return [{ go: home.address, label: home.title, from: "jobs" as const }, ...jobs.map((job) => ({ go: `${JOB_SCREEN_PREFIX}${job.name}`, label: humanizeField(job.name), from: "jobs" as const }))].slice(0, MOST_DEVICE_SCREENS);
+    // A word nobody wrote for the strip is held to the strip's length, shortened in words (`shortScreenLabel`).
+    return [{ go: home.address, label: shortScreenLabel(home.title), from: "jobs" as const }, ...jobs.map((job) => ({ go: `${JOB_SCREEN_PREFIX}${job.name}`, label: shortScreenLabel(humanizeField(job.name)), from: "jobs" as const }))].slice(0, MOST_DEVICE_SCREENS);
   }
 
   // The bar: what `pages.primary` stands up, or every kind but the ones that support the others, its lists before its pictures.
@@ -106,5 +107,5 @@ export function deviceScreensOf<S extends AnySchema>(app: GraviewApp<S>, options
   };
   const lists = places.filter((place) => stands(place) && !place.address.startsWith("/places/"));
   const pictures = places.filter((place) => stands(place) && place.address.startsWith("/places/"));
-  return [home, ...lists, ...pictures].map((place) => ({ go: place.address, label: place.title, from: "bar" as const })).slice(0, MOST_DEVICE_SCREENS);
+  return [home, ...lists, ...pictures].map((place) => ({ go: place.address, label: shortScreenLabel(place.title), from: "bar" as const })).slice(0, MOST_DEVICE_SCREENS);
 }

@@ -17,6 +17,7 @@ import {
   repeatField,
   repeatKey,
   type AnyMutationDefinition,
+  kindPath,
   type AnySchema,
   type EdgeDeclaration,
   type Grant,
@@ -31,6 +32,7 @@ import {
 } from "@graview/core";
 import { coverageRule, expressionRule } from "@graview/core/document";
 import { isMarkdownField } from "@graview/core/words";
+import { screenPlaceOf } from "@graview/core/devices";
 import * as z from "zod";
 import { DECLARED_KIND, type FieldType } from "./meta.js";
 import { fieldTypeOf, lensNodeId } from "./from-declaration.js";
@@ -557,7 +559,7 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
     ? { ...base.brand, ...(brandNode ? { name: name(brandNode) } : {}) }
     : undefined;
 
-  return {
+  const declared: GraviewApp<AnySchema> = {
     name: options.name ?? base?.name ?? "Declared in the studio",
     schema,
     mutations,
@@ -580,7 +582,6 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
       : {}),
     // The workflows are carried, not edited here yet (Roadmap f-jobs-declared): `graview check` says what a renamed or removed kind leaves them naming.
     ...(base?.workflows ? { workflows: base.workflows } : {}),
-    ...(screens.length > 0 ? { devices: { ...(base?.devices ?? {}), screens } } : {}),
     // The connections are carried, not edited here yet: a renamed kind's calendar follows it.
     ...(base?.connections
       ? {
@@ -595,6 +596,25 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
         }
       : {}),
   };
+  /*
+   * THE STRIP FOLLOWS WHAT IT SHOWS (Roadmap f-device-nav-bar), as the jobs
+   * follow their kinds: a screen of a renamed kind's list names it by its
+   * new address word, and a screen whose place is gone — a kind taken away,
+   * a lens no longer drawn — leaves the strip. One that named nothing before
+   * is kept for the checker to say.
+   */
+  const strip = screens.flatMap((screen) => {
+    const was = base ? screenPlaceOf(base, screen.place) : undefined;
+    if (!was) return [screen];
+    if (was.is === "place" && was.place.kind !== null && !was.place.address.startsWith("/places/")) {
+      const kind = follow(was.place.kind);
+      if (!liveKinds.has(kind)) return [];
+      const now = screenPlaceOf(declared, screen.place);
+      return [now?.is === "place" && now.place.kind === kind && !now.place.address.startsWith("/places/") ? screen : { ...screen, place: kindPath(schema, kind).slice(1) }];
+    }
+    return screenPlaceOf(declared, screen.place) ? [screen] : [];
+  });
+  return strip.length > 0 ? { ...declared, devices: { ...(base?.devices ?? {}), screens: strip } } : declared;
 }
 
 /** The same input, with every node reference to a renamed kind pointing at its new name. */

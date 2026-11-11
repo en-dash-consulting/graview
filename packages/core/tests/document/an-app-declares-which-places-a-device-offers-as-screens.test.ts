@@ -53,7 +53,7 @@ describe("a document's device screens", () => {
     const [finding] = errorsOf(withScreens([{ place: "vendors", label: "Everyone we might hire" }]));
     expect(finding).toMatchObject({ code: "device-screen-label", path: "devices.screens.0.label" });
     expect(finding!.message).toBe(`Device screen 1 ("Everyone we might hire") is 22 characters, and the strip has room for ${LONGEST_SCREEN_LABEL} under each press.`);
-    expect(finding!.fix).toBe(`Say it in ${LONGEST_SCREEN_LABEL} characters or fewer, like "Everyone we".`);
+    expect(finding!.fix).toBe(`Say it in ${LONGEST_SCREEN_LABEL} characters or fewer, like "Everyone we…".`);
   });
 
   it(`refuses more screens than the strip holds — ${MOST_DEVICE_SCREENS} beside Refresh — and one place twice`, () => {
@@ -69,6 +69,30 @@ describe("a document's device screens", () => {
 
   it("refuses a screen that is not one, by its shape", () => {
     expect(errorsOf(withScreens([{ place: "home", label: "Home", icon: "🏠" }]))[0]).toMatchObject({ code: "unknown-key", path: "devices.screens.0" });
+  });
+});
+
+describe("a screen's word, as a person counts it", () => {
+  it("counts what a reader sees as one character once, however it is spelled, and a full-width character as two", () => {
+    // Twelve characters, thirteen UTF-16 units: an accent written as its own mark.
+    expect(errorsOf(withScreens([{ place: "vendors", label: "Cafe\u0301 vendors" }]))).toEqual([]);
+    // Nine characters, each as wide as two of the strip's.
+    const [wide] = errorsOf(withScreens([{ place: "vendors", label: "日本語のタスク一覧" }]));
+    expect(wide).toMatchObject({ code: "device-screen-label" });
+    expect(wide!.message).toContain("a full-width character counting as two");
+  });
+
+  it("holds the strip it works out to the same word length, shortened in words", () => {
+    const long = compileDocument({
+      ...vendors,
+      purpose: { jobs: [{ name: "unbooked-and-due-this-month", ask: "Who is still unbooked?", kind: "vendor" }] },
+    });
+    if (!long.ok) throw new Error(JSON.stringify(long.findings));
+    expect(deviceScreensOf(long.app).map((screen) => screen.label)).toEqual(["Home", "Unbooked…"]);
+    const titled = compileDocument({ ...vendors, lenses: [{ name: "blocks", title: "The vendors we are still deciding between", on: "vendor", options: { blocks: [{ list: "all('vendor')", as: "row" }] } }] });
+    if (!titled.ok) throw new Error(JSON.stringify(titled.findings));
+    for (const screen of deviceScreensOf(titled.app)) expect([...new Intl.Segmenter().segment(screen.label)].length, screen.label).toBeLessThanOrEqual(LONGEST_SCREEN_LABEL);
+    expect(deviceScreensOf(titled.app).map((screen) => screen.label)).toContain("Vendors we…");
   });
 });
 
@@ -143,4 +167,48 @@ describe("the edits", () => {
     expect(missing.ok).toBe(false);
     if (!missing.ok) expect(missing.findings[0]!.message).toBe('no device screen shows "venues"; the screens show "home", "vendors", "categories"');
   });
+
+  it("refuse a screen put before another screen for the same place", () => {
+    const one = withScreens([{ place: "vendors", label: "Vendors" }]);
+    const twice = editDocument(one, [{ op: "add-device-screen", screen: { place: "/vendors", label: "Suppliers" }, at: 0 }]);
+    expect(twice.ok).toBe(false);
+    if (!twice.ok) expect(twice.findings[0]).toMatchObject({ code: "device-screen-twice" });
+  });
+
+  it("carry a screen along when its kind is renamed, and the document still compiles", () => {
+    const strip = withScreens([{ place: "home", label: "Today" }, { place: "vendors", label: "Vendors" }, { place: "/categories", label: "Categories" }]);
+    const renamed = editDocument(strip, [{ op: "rename-kind", kind: "vendor", to: "supplier" }]);
+    if (!renamed.ok) throw new Error(JSON.stringify(renamed.findings));
+    expect(renamed.document.devices?.screens).toEqual([{ place: "home", label: "Today" }, { place: "suppliers", label: "Vendors" }, { place: "/categories", label: "Categories" }]);
+    expect(renamed.said.some((line) => line.includes('"Vendors"') && line.includes("suppliers"))).toBe(true);
+    expect(errorsOf(renamed.document)).toEqual([]);
+    expect(compileDocument(renamed.document).ok).toBe(true);
+  });
+
+  it("take a screen off the strip when the kind it shows is removed, and the document still compiles", () => {
+    const strip = withScreens([{ place: "home", label: "Today" }, { place: "categories", label: "Categories" }]);
+    const removed = editDocument(strip, [{ op: "remove-kind", kind: "category" }]);
+    if (!removed.ok) throw new Error(JSON.stringify(removed.findings));
+    expect(removed.document.devices?.screens).toEqual([{ place: "home", label: "Today" }]);
+    expect(compileDocument(removed.document).ok).toBe(true);
+  });
+
+  it("carry a screen along when its lens is drawn anew under another title, and drop it when the lens or its job goes", () => {
+    const lensed = editDocument(vendors, [
+      { op: "add-lens", title: "The shortlist", on: "vendor", options: { blocks: [{ list: "all('vendor')", as: "row" }] } },
+      { op: "add-job", job: { name: "unbooked", ask: "Who is still unbooked?", kind: "vendor", where: "status != 'booked'" } },
+      { op: "add-device-screen", screen: { place: "The shortlist", label: "Shortlist" } },
+      { op: "add-device-screen", screen: { place: "job:unbooked", label: "Unbooked" } },
+    ]);
+    if (!lensed.ok) throw new Error(JSON.stringify(lensed.findings));
+    const retitled = editDocument(lensed.document, [{ op: "add-lens", replace: "The shortlist", title: "Our picks", on: "vendor", options: { blocks: [{ list: "all('vendor')", as: "row" }] } }]);
+    if (!retitled.ok) throw new Error(JSON.stringify(retitled.findings));
+    expect(retitled.document.devices?.screens?.map((screen) => screen.place)).toEqual(["our-picks", "job:unbooked"]);
+    expect(compileDocument(retitled.document).ok).toBe(true);
+    const gone = editDocument(retitled.document, [{ op: "remove-lens", title: "Our picks" }, { op: "remove-job", name: "unbooked" }]);
+    if (!gone.ok) throw new Error(JSON.stringify(gone.findings));
+    expect(gone.document.devices).toBeUndefined();
+    expect(compileDocument(gone.document).ok).toBe(true);
+  });
 });
+

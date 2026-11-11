@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { createSchema, defineApp, defineNode, z } from "@graview/core";
 import { compileDocument } from "@graview/core/check";
 import { readDocument, type GraviewDocument } from "@graview/core/document";
 import { describe, expect, it } from "vitest";
@@ -66,4 +67,40 @@ describe("a device's screens in the studio", () => {
     expect(document?.ok).toBe(false);
     if (document && !document.ok) expect(JSON.stringify(document)).toMatch(/device-screen-place/);
   });
+
+  it("carries a screen along when its kind is renamed, in the app it applies and the document it hands back", () => {
+    const studio = studioOf(withStrip);
+    studio.store.apply({ name: "rename-kind", args: { id: "declared:vendor", label: "supplier" } } as never);
+    const applied = studio.apply();
+    if (!applied.ok) throw new Error(JSON.stringify(applied.check.findings));
+    expect(applied.app.devices?.screens).toEqual([{ place: "home", label: "Today" }, { place: "suppliers", label: "Vendors" }]);
+    const document = studio.document();
+    if (!document?.ok) throw new Error(JSON.stringify(document));
+    expect(document.document.devices?.screens).toEqual([{ place: "home", label: "Today" }, { place: "suppliers", label: "Vendors" }]);
+  });
+
+  it("takes a screen off the strip when the kind it shows is removed", () => {
+    const studio = studioOf(withStrip);
+    studio.store.apply({ name: "remove-kind", args: { id: "declared:vendor" } } as never);
+    const applied = studio.apply();
+    if (!applied.ok) throw new Error(JSON.stringify(applied.check.findings));
+    expect(applied.app.devices?.screens).toEqual([{ place: "home", label: "Today" }]);
+  });
+
+  it("carries a TypeScript app's screen along a renamed kind, and drops one whose kind is removed", () => {
+    const note = defineNode("note", { fields: z.object({ label: z.string() }) });
+    const tag = defineNode("tag", { fields: z.object({ label: z.string() }), plural: "tags" });
+    const app = defineApp({ name: "notes", schema: createSchema([note, tag]), devices: { screens: [{ place: "home", label: "Home" }, { place: "notes", label: "Notes" }, { place: "/tags", label: "Tags" }] } });
+    const renamed = createStudio(app as never);
+    renamed.store.apply({ name: "rename-kind", args: { id: "declared:note", label: "memo" } } as never);
+    const applied = renamed.apply();
+    if (!applied.ok) throw new Error(JSON.stringify(applied.check.findings));
+    expect(applied.app.devices?.screens).toEqual([{ place: "home", label: "Home" }, { place: "memos", label: "Notes" }, { place: "/tags", label: "Tags" }]);
+    const removed = createStudio(app as never);
+    removed.store.apply({ name: "remove-kind", args: { id: "declared:tag" } } as never);
+    const without = removed.apply();
+    if (!without.ok) throw new Error(JSON.stringify(without.check.findings));
+    expect(without.app.devices?.screens?.map((screen) => screen.place)).toEqual(["home", "notes"]);
+  });
 });
+

@@ -15,8 +15,10 @@
  *
  *   it fits the viewport, with nothing to scroll, and what does not fit is
  *   on pages that say which of how many;
- *   every pixel drawn is gray (red, green and blue equal), and every color
- *   the page computes is one of the profile's sixteen;
+ *   every color the page computes is one of the profile's sixteen grays,
+ *   and every pixel drawn is gray (red, green and blue equal) — how many
+ *   levels the antialiased type draws is recorded, not held to sixteen: the
+ *   host quantizes the picture to its panel;
  *   each region of the tap map is its element's box, to within a pixel, and
  *   every press is at least 64 px each way;
  *   the picture taken the moment the page is written is the picture taken

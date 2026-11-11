@@ -22,6 +22,9 @@ import { jobFindings, jobWorldOfDocument } from "../job-findings.js";
 import { JobSpec } from "./purpose-spec.js";
 import { DeviceScreenSpec } from "./devices-spec.js";
 import { deviceFindings } from "../device-findings.js";
+import { screenGo, screenPlaceOf, type ScreenPlace } from "../device-screens.js";
+import { placesOf } from "../app-places.js";
+import type { GraviewApp } from "../app.js";
 import { compileDocumentWithoutCheck } from "./compile.js";
 import { WORKFLOW_JUDGING } from "../workflows/judging.js";
 import { aliasWord, documentAliasFindings } from "../alias-findings.js";
@@ -724,6 +727,8 @@ class Editor {
   private readonly kindOrigin = new Map<string, string | undefined>();
   private readonly fieldOrigin = new Map<string, string | undefined>();
   private readonly edgeOrigin = new Map<string, string | undefined>();
+  /** A lens drawn anew under another title: its title's address word now, and the one it had in the base document. */
+  private readonly lensOrigin = new Map<string, string>();
 
   constructor(
     readonly doc: Doc,
@@ -1370,8 +1375,16 @@ class Editor {
    */
   private placeScreens(i: number, screens: Doc[], at: number | undefined): boolean {
     const compiled = compileDocumentWithoutCheck({ ...this.doc, devices: { screens } });
+    // The screen placed is held to all it says — and to the screen already there for its place, wherever along the strip either stands.
+    const goes = (index: number | undefined): string | undefined => {
+      if (!compiled.ok || index === undefined || typeof screens[index]?.place !== "string") return undefined;
+      const found = screenPlaceOf(compiled.app, screens[index]!.place);
+      return found ? screenGo(found) : undefined;
+    };
     const wrong = compiled.ok
-      ? deviceFindings({ screens: screens as never }, compiled.app).filter((finding) => finding.index === undefined || finding.index === at)
+      ? deviceFindings({ screens: screens as never }, compiled.app).filter(
+          (finding) => finding.index === undefined || finding.index === at || (finding.code === "device-screen-twice" && goes(finding.index) !== undefined && goes(finding.index) === goes(at)),
+        )
       : [];
     for (const finding of wrong) this.failAs(finding.code, i, finding.index === undefined ? "" : `screen.${finding.key ?? ""}`, finding.message, finding.fix);
     if (wrong.length > 0) return false;
@@ -1408,6 +1421,62 @@ class Editor {
     const [screen] = screens.splice(index, 1);
     this.keepScreens(screens);
     this.said.push(`The device screen ${quoted(screen.label)} (${quotedAtTheEnd(screen.place)}) is taken off the strip${screens.length === 0 ? "; with none declared, a device offers the home and the app's jobs, else its bar" : ""}.`);
+  }
+
+  /**
+   * THE STRIP FOLLOWS WHAT IT SHOWS, as a job follows its kind: once the
+   * change is whole, a screen whose place was renamed — a kind's list under
+   * its new plural, a lens drawn anew under another title — names it by its
+   * new address word, and a screen whose place is gone (a kind, a lens or a
+   * job taken away) leaves the strip. A screen that named nothing before is
+   * its own edit's to answer for.
+   */
+  followScreens(base: GraviewDocument): void {
+    const screens: Doc[] | undefined = this.doc.devices?.screens;
+    if (!Array.isArray(screens) || screens.length === 0) return;
+    const before = compileDocumentWithoutCheck(base);
+    const after = compileDocumentWithoutCheck(this.doc);
+    if (!before.ok || !after.ok) return;
+    const placesBefore = placesOf(before.app);
+    const placesAfter = placesOf(after.app);
+    const kept: Doc[] = [];
+    for (const screen of screens) {
+      const was = typeof screen.place === "string" ? screenPlaceOf(before.app, screen.place, placesBefore) : undefined;
+      if (!was) {
+        kept.push(screen);
+        continue;
+      }
+      const moved = this.followedPlace(was, after.app, placesAfter);
+      if (!moved) {
+        this.said.push(`The device screen ${quoted(screen.label)} is taken off the strip: ${quoted(screen.place)} is no longer a place of the app.`);
+        continue;
+      }
+      const now = screenPlaceOf(after.app, screen.place, placesAfter);
+      if (now && screenGo(now) === screenGo(moved)) {
+        kept.push(screen);
+        continue;
+      }
+      const word = moved.is === "job" ? `job:${moved.job.name}` : moved.place.slug;
+      this.said.push(`The device screen ${quoted(screen.label)} follows its place to ${quoted(word)}.`);
+      kept.push({ ...screen, place: word });
+    }
+    this.keepScreens(kept);
+  }
+
+  /** Where a place of the base document is now: the same job, the home, a kind's list under the kind's new name, a lens under its new title. */
+  private followedPlace(was: ScreenPlace, app: GraviewApp, places: ReturnType<typeof placesOf>): ScreenPlace | undefined {
+    if (was.is === "job") return screenPlaceOf(app, `job:${was.job.name}`, places);
+    const place = was.place;
+    if (place.kind === null) {
+      const same = places.find((one) => one.slug === place.slug);
+      return same ? { is: "place", place: same } : undefined;
+    }
+    const kind = [...this.kindOrigin].find(([, origin]) => origin === place.kind)?.[0];
+    if (kind === undefined) return undefined;
+    const pictured = place.address.startsWith("/places/");
+    const slug = pictured ? ([...this.lensOrigin].find(([, origin]) => origin === place.slug)?.[0] ?? place.slug) : undefined;
+    const found = places.find((one) => one.kind === kind && (pictured ? one.address.startsWith("/places/") && one.slug === slug : !one.address.startsWith("/places/")));
+    return found ? { is: "place", place: found } : undefined;
   }
 
   // ── what the app does on its own, and when (Roadmap f-jobs-declared) ──
@@ -1559,6 +1628,9 @@ class Editor {
       at = this.lensIndex(i, e.replace, e.on, "replace");
       if (at < 0) return;
       was = lenses[at];
+      // A device's screen of the lens follows it to its new title (`followScreens`).
+      const before = typeof was?.["title"] === "string" ? placeSlug(was["title"]) : undefined;
+      if (before !== undefined && placeSlug(e.title) !== before) this.lensOrigin.set(placeSlug(e.title), this.lensOrigin.get(before) ?? before);
     }
     // A lens drawn anew in another's place stays off the lists if that one was.
     const lens: Doc = { name, title: e.title, ...(e.on !== undefined ? { on: e.on } : {}), ...(e.bindings !== undefined ? { bindings: e.bindings } : {}), ...(e.options !== undefined ? { options: e.options } : {}), ...(was?.["hidden"] === true ? { hidden: true } : {}), ...(was?.["export"] === false ? { export: false } : {}), ...(e.create === false ? { create: false } : {}) };
@@ -3969,6 +4041,8 @@ export function editDocument(document: GraviewDocument, edits: readonly unknown[
     editor.apply(i, raw);
   });
   if (editor.findings.length > 0) return { ok: false, findings: editor.findings };
+  // A device's screens follow a place renamed, and leave with one taken away (Roadmap f-device-nav-bar).
+  editor.followScreens(current);
   /*
    * WHAT THE PEOPLE AND THE POLICY MAKE TOGETHER, judged once the change is
    * whole (FR-170): moving the people from one kind to another is two edits,

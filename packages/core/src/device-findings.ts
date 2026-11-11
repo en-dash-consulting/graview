@@ -4,7 +4,7 @@ import { error, type Finding } from "./document/findings.js";
 import { DevicesSpec } from "./document/devices-spec.js";
 import type { GraviewDocument } from "./document/schema.js";
 import { screenPlaceOf, screenGo } from "./device-screens.js";
-import { LONGEST_SCREEN_LABEL, MOST_DEVICE_SCREENS, type AppDevices, type DeviceScreen } from "./device-shape.js";
+import { LONGEST_SCREEN_LABEL, MOST_DEVICE_SCREENS, screenLabelWidth, shortScreenLabel, type AppDevices, type DeviceScreen } from "./device-shape.js";
 import { HOME_SLUG, OVERVIEW_SLUG } from "./places.js";
 import { jobsOf } from "./jobs.js";
 import type { AnySchema } from "./schema/schema.js";
@@ -68,14 +68,16 @@ export function deviceFindings<S extends AnySchema>(devices: AppDevices | undefi
       if (first !== undefined) out.push({ code: "device-screen-twice", index, key: "place", message: `${said} goes where screen ${first + 1} already goes (${go === "/" ? HOME_SLUG : go}).`, fix: "Give each screen a place of its own, or take this one away." });
       else went.set(go, index);
     }
+    // Counted as a reader sees it: one for each character however it is spelled, two for a full-width one.
     const label = screen.label.trim();
-    if (label.length === 0 || label.length > LONGEST_SCREEN_LABEL) {
+    const { width, wide } = screenLabelWidth(label);
+    if (width === 0 || width > LONGEST_SCREEN_LABEL) {
       out.push({
         code: "device-screen-label",
         index,
         key: "label",
-        message: label.length === 0 ? `Device screen ${index + 1} has no word under its press.` : `${said} is ${label.length} characters, and the strip has room for ${LONGEST_SCREEN_LABEL} under each press.`,
-        fix: `Say it in ${LONGEST_SCREEN_LABEL} characters or fewer${label.length > 0 ? `, like "${label.slice(0, LONGEST_SCREEN_LABEL).trim()}"` : ""}.`,
+        message: width === 0 ? `Device screen ${index + 1} has no word under its press.` : `${said} is ${width} characters${wide ? " wide, a full-width character counting as two" : ""}, and the strip has room for ${LONGEST_SCREEN_LABEL} under each press.`,
+        fix: `Say it in ${LONGEST_SCREEN_LABEL} characters or fewer${width > 0 ? `, like "${shortScreenLabel(label)}"` : ""}.`,
       });
     }
   });

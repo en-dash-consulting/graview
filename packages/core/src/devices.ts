@@ -14,5 +14,5 @@ export { deviceScreensOf, screenGo, screenPlaceOf } from "./device-screens.js";
 export type { ResolvedScreen, ScreenPlace } from "./device-screens.js";
 export { deviceFindings, documentDeviceFindings, screenWords } from "./device-findings.js";
 export type { DeviceFinding, DeviceFindingCode } from "./device-findings.js";
-export { JOB_SCREEN_PREFIX, LONGEST_SCREEN_LABEL, MOST_DEVICE_SCREENS } from "./device-shape.js";
+export { JOB_SCREEN_PREFIX, LONGEST_SCREEN_LABEL, MOST_DEVICE_SCREENS, screenLabelWidth, shortScreenLabel } from "./device-shape.js";
 export type { AppDevices, DeviceScreen } from "./device-shape.js";

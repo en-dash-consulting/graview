@@ -76,6 +76,7 @@ const screen = renderScreen(store, app, "/tasks", {
 const region = tapAt(screen.taps, x, y);
 const next = region && resolveTap(store, app, region, { viewer, renderId: screen.renderId });
 // next: { ok: true, does: "go" | "open" | "page" | "refresh" | "act", place, page } or { ok: false, refused, place, page }
+// `place` is a place to hand back to renderScreen, never a URL to follow.
 ```
 
 - **A fixed layout, worked out here.** Every row has a height the profile
@@ -83,7 +84,9 @@ const next = region && resolveTap(store, app, region, { viewer, renderId: screen
   sheet. So each region in `taps` is exactly the box the browser draws for
   it (`pnpm verify device` holds each to its element's box within a pixel),
   and nothing needs a browser to know where a press is.
-- **The profile.** Sixteen grays (`EINK_GRAYS`), no transition, animation
+- **The profile.** Its colors are the sixteen grays (`EINK_GRAYS`); the
+  framework does not rasterize, and a browser's antialiased type draws grays
+  between them, so the host quantizes the picture to its panel. No transition, animation
   or hover, no script, no font or anything else fetched, nothing under 20 px,
   every press at least 64 px on each side (`EINK_LEAST_TARGET`). The page
   is settled when written: the same picture with and without waiting.
@@ -92,12 +95,17 @@ const next = region && resolveTap(store, app, region, { viewer, renderId: screen
   bound — only one this seat may run, that changes something, loses
   nothing, and asks for nothing typed — `page` another page of this place,
   or `refresh`.
-- **`renderId`** is the same for the same store state as the seat sees it,
-  declaration, place, seat, profile, viewport and page. `resolveTap` runs an
-  act only when the screen the app draws now for that seat has the same id
-  and the act on it; against a newer store it judges the act again as the
-  seat now stands and refuses it in words.
+- **`renderId`** is made of what the screen shows (its markup and regions)
+  and what it was drawn for (place, page, viewport, reading): the same
+  inputs give the same id, and a change the screen does not show keeps it.
+  `resolveTap` draws the screen again as the seat now stands. A `go` or an
+  `open` that screen does not offer is refused; an act runs only when the
+  id is the same and the act is on it with the same arguments; when what
+  the screen shows has changed, it judges the act again and refuses it in
+  words. `place` in its answer is a place to hand back to `renderScreen`,
+  never a URL to follow.
 - **The strip** along the foot is the app's `devices.screens` (at most 4,
-  each word at most 12 characters, `graview check` says one it cannot
+  each word at most 12 characters as a reader counts them, a full-width one
+  as two, `graview check` says one it cannot
   offer), else the home and the app's jobs, else its bar — with Refresh
   last, and the screen it is on marked.
