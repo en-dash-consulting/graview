@@ -9,7 +9,7 @@
  * tool surface and zod's JSON Schema into that face's first load — some
  * 30 KB the pages face alone never drew with before a reader asked.
  */
-import { askedArguments, inAskedOrder, meOf, nodeRefArgs, tellTheWatchOfAPressRefusedByItsInput, type AnySchema, type NodeOfSchema, type Principal, type Store } from "@graview/core";
+import { askedArguments, inAskedOrder, nodeRefArgs, tellTheWatchOfAPressRefusedByItsInput, type AnySchema, type NodeOfSchema, type Principal, type Store } from "@graview/core";
 import { insightProvider } from "./providers/insight.js";
 import { usageBoost, usageWeights } from "./usage.js";
 import { invariantProvider } from "./providers/invariant.js";
@@ -460,8 +460,8 @@ function narrowed<S extends AnySchema>(store: Store<S>, affordance: Affordance, 
   if (!asked?.candidates) return undefined;
   const on = (id: string) => store.permits({ name: affordance.mutation, args: { ...affordance.args, ...(affordance.batch?.[0] ?? {}), [asked.name]: id } }, asking).ok;
   const permitted = asked.candidates.filter(on);
-  /* The seat's own record, a profile's person where it carries one (`meOf`). */
-  const own = meOf(asking);
+  /* The seat's own record: the person it was bound to, or a profile's person where it carries one (`store.personOf`). */
+  const own = store.personOf(asking);
   const me = own === undefined ? undefined : store.graph.getNode(own);
   if (permitted.length === 0) {
     const kinds = open ? subject.kinds : "*";

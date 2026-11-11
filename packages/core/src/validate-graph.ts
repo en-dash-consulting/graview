@@ -1,3 +1,4 @@
+import { PERSON_SEAT } from "./graph/archived.js";
 import { Graph, misfit } from "./graph/graph.js";
 import { UNSET, type Primitive } from "./graph/primitives.js";
 import { edgeId, type AnyGraphNode, type GraphEdge, type GraphSnapshot } from "./graph/types.js";
@@ -26,6 +27,7 @@ import type { AnySchema } from "./schema/schema.js";
  *   rule-error       a rule threw rather than judged (`could-not-judge`)
  *   rule-budget      a rule would have read more than its budget (`over-budget`)
  *   derived-out-of-step  a record that follows another (`derives`) says other than its source works out
+ *   person-seat-shared  two people are bound to one account, so neither is its record (Roadmap f-invite-binds-existing-person)
  */
 export type GraphFindingCode =
   | "node-shape"
@@ -34,7 +36,8 @@ export type GraphFindingCode =
   | "edge-disallowed"
   | "rule-error"
   | "rule-budget"
-  | "derived-out-of-step";
+  | "derived-out-of-step"
+  | "person-seat-shared";
 
 /** Every code, in the order findings are reported. */
 export const GRAPH_FINDING_CODES: readonly GraphFindingCode[] = [
@@ -45,6 +48,7 @@ export const GRAPH_FINDING_CODES: readonly GraphFindingCode[] = [
   "rule-error",
   "rule-budget",
   "derived-out-of-step",
+  "person-seat-shared",
 ];
 
 /**
@@ -285,6 +289,32 @@ export function validateGraph<S extends AnySchema>(
         detail: step.field,
         message: `${named(schema, node)}: ${humanizeField(step.field)} says ${JSON.stringify(step.holds ?? null)}, and it follows ${named(schema, source)}, which works it out as ${JSON.stringify(step.follows ?? null)}`,
         repair: { action: "coerce", primitives: [{ op: "patch-node", id: step.id, before: { [step.field]: step.holds === undefined ? UNSET : step.holds }, after: { [step.field]: step.follows === undefined ? UNSET : step.follows } }] },
+      });
+    }
+  }
+
+  /*
+   * TWO PEOPLE BOUND TO ONE ACCOUNT (Roadmap f-invite-binds-existing-person):
+   * a restore or a host's own change put back a record bound to a seat
+   * another already is. Neither is that account's record then
+   * (`Graph.personBoundTo`); the fix unbinds them all, and a host binds
+   * the right one again. The seat itself is never said.
+   */
+  const bound = new Map<string, AnyGraphNode[]>();
+  for (const node of nodes.values()) {
+    const seat = (node as Record<string, unknown>)[PERSON_SEAT];
+    if (typeof seat !== "string" || !(schema.tryDefinition(node.kind) as { readonly people?: boolean } | undefined)?.people) continue;
+    bound.set(seat, [...(bound.get(seat) ?? []), node]);
+  }
+  for (const shared of bound.values()) {
+    if (shared.length < 2) continue;
+    const others = shared.length - 1;
+    for (const node of shared) {
+      findings.push({
+        code: "person-seat-shared",
+        id: node.id,
+        message: `${named(schema, node)} and ${others} other${others > 1 ? "s" : ""} are bound to one account, so none of them is that account's record until it is bound again`,
+        repair: { action: "clear", primitives: shared.map((one): Primitive => ({ op: "patch-node", id: one.id, before: { [PERSON_SEAT]: (one as Record<string, unknown>)[PERSON_SEAT] }, after: { [PERSON_SEAT]: UNSET } })) },
       });
     }
   }

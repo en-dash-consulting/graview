@@ -73,10 +73,68 @@ export const profilePersonId = (account: string, profile: Pick<SeatProfile, "id"
  * own id reads as a profile's person.
  */
 export function meOf(principal: Author): string | undefined {
+  return boundPersonOf(principal) ?? seatPersonOf(principal);
+}
+
+/**
+ * THE PERSON A SEAT IS BEFORE ANY BINDING: its account's id, or its
+ * profile's person (`profilePersonId`). What a binding is kept under
+ * (`PERSON_SEAT`, `bind-person`): the seat, not the record.
+ */
+export function seatPersonOf(principal: Author): string | undefined {
   const account = actingAs(principal as Principal).id;
   if (account === undefined || account.includes("~")) return undefined;
   const profile = profileOf(principal);
   return profile ? profilePersonId(account, profile) : account;
+}
+
+/**
+ * WHERE A STORE SAYS WHICH RECORD A SEAT WAS BOUND TO: on the principal it
+ * judges, under a key no JSON can carry, so a host's header, a client's
+ * call or an op read back from the log never says it. Only `seatedIn` sets
+ * it, from the graph, each time a store is asked; whatever a caller hung
+ * there is read again and replaced.
+ */
+const BOUND_PERSON: unique symbol = Symbol.for("@graview/core:bound-person") as never;
+
+/** The record a store bound this seat to, as `seatedIn` read it. */
+export const boundPersonOf = (principal: Author): string | undefined => {
+  const bound = (principal as { readonly [BOUND_PERSON]?: unknown })[BOUND_PERSON];
+  return typeof bound === "string" ? bound : undefined;
+};
+
+/** What a graph says of bindings: the record of the people kind a seat was bound to (`Graph.personBoundTo`). */
+export interface PersonBindings {
+  personBoundTo?(seat: string): string | undefined;
+}
+
+/**
+ * Whether a seat can be bound to a record at all: a person who signed in,
+ * or an agent acting for one — never a seat no one person holds (`shared`),
+ * a visitor, or an agent or the system acting for nobody.
+ */
+export function bindable(principal: Author): boolean {
+  const person = (principal.onBehalfOf ?? principal) as Principal;
+  return person.kind === "human" && person.shared !== true && (principal as Principal).shared !== true && seatPersonOf(principal) !== undefined;
+}
+
+/**
+ * THE SEAT AS A STORE JUDGES IT NOW: its bound person read from the graph
+ * (Roadmap f-invite-binds-existing-person) — the record an organizer
+ * entered before the person joined, which `$me`, `own`, `self` and an act
+ * done as them then are — and none where the graph binds it to none,
+ * whatever the principal was handed with. Read each time it is asked, so
+ * a binding taken back is taken back from every answer that follows. The
+ * principal itself where nothing changes.
+ */
+export function seatedIn<P extends Author>(graph: PersonBindings | undefined, principal: P): P {
+  if (typeof principal !== "object" || principal === null) return principal;
+  const seat = bindable(principal) ? seatPersonOf(principal) : undefined;
+  const bound = seat === undefined ? undefined : graph?.personBoundTo?.(seat);
+  const had = (principal as { readonly [BOUND_PERSON]?: unknown })[BOUND_PERSON];
+  if (bound === had) return principal;
+  const { [BOUND_PERSON]: _given, ...rest } = principal as P & { readonly [BOUND_PERSON]?: unknown };
+  return (bound === undefined ? rest : { ...rest, [BOUND_PERSON]: bound }) as P;
 }
 
 /**
@@ -90,14 +148,15 @@ export function meIn(schema: { readonly definitions: readonly unknown[] }, princ
 
 /**
  * WHETHER AN ID IS THE PRINCIPAL'S OWN, as `self`, `ownEnd`, `own` and `via`
- * read it: the account's, always, so a profile narrows nothing, and the
- * person of the profile it carries, which is the account's own and no other's.
+ * read it: the account's, always, so a profile narrows nothing; the
+ * person of the profile it carries, which is the account's own and no other's;
+ * and the record the store bound the seat to (`seatedIn`).
  */
 export function ownsId(principal: Principal, id: string | undefined): boolean {
   if (id === undefined) return false;
   const account = actingAs(principal).id;
   if (account === undefined || account.includes("~")) return false;
-  return id === account || (id.includes("~") && id === meOf(principal));
+  return id === account || id === boundPersonOf(principal) || (id.includes("~") && id === meOf(principal));
 }
 
 /**

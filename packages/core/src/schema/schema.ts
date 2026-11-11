@@ -1,4 +1,4 @@
-import { MARKS } from "../graph/archived.js";
+import { MARKS, PERSON_SEAT, personSeatOf } from "../graph/archived.js";
 import * as z from "./zod.js";
 import type {
   AnyNodeDefinition,
@@ -181,10 +181,12 @@ export function createSchema<const Defs extends readonly AnyNodeDefinition[]>(
       }
       // The framework's marks — archived (FR-173), left alone — are not fields the kind declares: kept, never judged.
       const fields: Record<string, unknown> = {};
-      const marks: Record<string, true> = {};
+      const marks: Record<string, true | string> = {};
       for (const [key, value] of Object.entries(node as Record<string, unknown>)) {
         if (!MARKS.has(key)) fields[key] = value;
         else if (value === true) marks[key] = true;
+        // The seat a person is bound to is a word, not a flag (`PERSON_SEAT`).
+        else if (key === PERSON_SEAT && personSeatOf(node) !== undefined) marks[key] = value as string;
       }
       const parsed = parser.parse(fields) as NodeOf<Defs[number]>;
       return Object.keys(marks).length > 0 ? ({ ...parsed, ...marks } as typeof parsed) : parsed;

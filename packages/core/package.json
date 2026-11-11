@@ -141,6 +141,10 @@
       "types": "./dist/seat.d.ts",
       "default": "./dist/seat.js"
     },
+    "./binding": {
+      "types": "./dist/binding.d.ts",
+      "default": "./dist/binding.js"
+    },
     "./publishing": {
       "types": "./dist/publishing.d.ts",
       "default": "./dist/publishing.js"

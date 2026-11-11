@@ -1,5 +1,5 @@
 import { authorKindOf, type Author } from "./ops/types.js";
-import { profileOf } from "./permissions/policy.js";
+import { profileOf, seatPersonOf } from "./permissions/policy.js";
 import type { Principal } from "./permissions/types.js";
 import { labelOf } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
@@ -32,7 +32,7 @@ export interface Person {
 export function nameOfAuthor(
   author: Pick<Author, "kind" | "id" | "name" | "onBehalfOf" | "profile">,
   where: {
-    readonly graph: { getNode(id: string): ({ id: string; kind: string } & Record<string, unknown>) | undefined };
+    readonly graph: { getNode(id: string): ({ id: string; kind: string } & Record<string, unknown>) | undefined; personBoundTo?(seat: string): string | undefined };
     readonly schema: AnySchema;
     readonly seats?: readonly { readonly label: string; readonly principal: Principal }[];
     /** The host's directory of people, for authors nothing else here knows. */
@@ -47,6 +47,11 @@ export function nameOfAuthor(
     const { onBehalfOf, ...itself } = author;
     return `${nameOfAuthor(itself, where)}, for ${nameOfAuthor(onBehalfOf, where)}`;
   }
+  /* A SEAT BOUND TO A PERSON ENTERED FOR IT (Roadmap f-invite-binds-existing-person) is that person: "Bud", not his account. */
+  const joined = author.kind === "human" ? seatPersonOf(author) : undefined;
+  const bound = joined === undefined ? undefined : where.graph.personBoundTo?.(joined);
+  const boundTo = bound === undefined ? undefined : where.graph.getNode(bound);
+  if (boundTo) return labelOf(where.schema.tryDefinition(boundTo.kind), boundTo);
   /* WHO AT THE SCREEN: "Mia (Nick)"; on an account nothing here names, just "Mia". */
   const profile = author.profile && profileOf(author);
   if (profile) {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import * as arrange from "../../src/arrange.js";
+import * as binding from "../../src/binding.js";
 import * as blocks from "../../src/blocks.js";
 import * as catalog from "../../src/catalog.js";
 import * as city from "../../src/city.js";
@@ -92,6 +93,8 @@ const OFF_THE_PAGE = {
   // Roadmap f-jobs-declared: what the app does on its own and when — its shape, its step kinds, its schedule, what starts it, what the checker says — a host's and a runner's, on no page.
   "@graview/core/workflows": { from: workflows, names: ["actsMaking", "actStep", "afterMs", "afterWords", "agentStep", "archiveStep", "classifyApplies", "classifyAsks", "classifyStep", "classifyWords", "datesIn", "declaredWorkflows", "DEFAULT_GENERATE_KEY", "documentWorkflowFindings", "DREAMING", "dreamingWorkflow", "farArgsFindings", "farNamesOf", "farReachOf", "farReferenceFindings", "farReferenceOf", "farWords", "floorLabel", "followsFindings", "generateStep", "isFarReference", "generateWants", "keeps", "keyedId", "keyFields", "kindNoun", "linksIn", "MOST_GENERATED", "MOST_STEPS", "MOST_WINDOW_DAYS", "MOST_WORKFLOWS", "nextOf", "nextRunAt", "policiesOf", "policyApplies", "policyInstruction", "recordsOver", "resolveWorkflow", "SCHEDULE_WORDS", "scheduleOf", "scheduleOfCron", "scheduleOfWords", "scheduleWords", "STEP_KINDS", "stepKindOf", "stepShapes", "triggeredBy", "triggerWords", "windowDays", "workflowAuthor", "workflowFindings", "workflowFindingsOf", "workflowKey", "workflowOrigin", "workflowReach", "workflowsOf", "WorkflowSpec", "workflowSpecHash", "WorkflowsSpec", "WorkflowStepSpec", "WorkflowTriggerSpec", "workflowValue", "workflowWords", "workflowWorldOfApp", "workflowWorldOfDocument"] },
   // Roadmap f-friction-log: what people looked for and could not do — kept, counted across people, said to a model; a page records through the main entry's `recordFriction` alone.
+  // Roadmap f-invite-binds-existing-person: binding a joining account to the person entered for it — the act, who may, and when it stays — a host's, on no page.
+  "@graview/core/binding": { from: binding, names: ["bindPerson"] },
   "@graview/core/friction": {
     from: friction,
     names: ["callShape", "FRICTION_KEPT_MOST", "FRICTION_LIMITS", "FRICTION_RETENTION_DAYS", "FRICTION_TYPES", "frictionDigest", "frictionEvent", "frictionOf", "frictionSinkTo", "keptFriction", "memoryFriction", "ownFriction", "toolMistakes", "withinRetention"],

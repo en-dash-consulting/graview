@@ -1,4 +1,4 @@
-import { choiceWords, InvalidArguments, isoToday, localeFor, PermissionDeniedError, timeZoneFor, type AnySchema, type Principal, type Store } from "@graview/core";
+import { choiceWords, InvalidArguments, isoToday, localeFor, PermissionDeniedError, timeZoneFor, unseated, type AnySchema, type Principal, type Store } from "@graview/core";
 import type { GuestPictureLimits } from "./pictures.js";
 import type { Arrival, Destination } from "./links.js";
 import type { Mine } from "./mine.js";
@@ -244,7 +244,8 @@ export function choicesOf(schema: AnySchema, nodes: readonly unknown[]): Pick<Gu
  * the field `GuestNode` always promised and a guest had to work out itself.
  */
 export function plainNode<S extends AnySchema>(store: Store<S>, node: unknown): GuestNode {
-  const copy = structuredClone(node) as GuestNode & Record<string, unknown>;
+  // Never the seat a person is bound to: an account's id, the host's alone (Roadmap f-invite-binds-existing-person).
+  const copy = structuredClone(unseated(node)) as GuestNode & Record<string, unknown>;
   /* `labelOf`'s rule, said here: core's module for it carries zod, which a page drawing guests need not load. */
   const definition = store.schema.tryDefinition(copy.kind) as { label?: (node: never) => string } | undefined;
   const own = copy["label"];
