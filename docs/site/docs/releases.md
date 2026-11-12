@@ -77,7 +77,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.73
 
-Published November 11, 2026 · the current version
+Published November 11, 2026
 
 A visitor's view is no longer stopped by the host's link check; a view knows what its seat can't see, is checked as every seat, and fails a part at a time; a view loads its own face; a joining member becomes the person already entered; and a home view's pictures load lazily and small.
 
