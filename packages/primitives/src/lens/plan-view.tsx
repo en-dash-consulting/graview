@@ -1,7 +1,7 @@
 import type { AnySchema, NodeOfSchema } from "@graview/core";
 import { areaOf, boxOf, fitLabel, overlaps, spanAt, type FittedLabel, type LabelBox } from "@graview/layout";
 import { hueFor } from "../default-views.js";
-import { Chip, Panel } from "../primitives/index.js";
+import { Chip, Panel, VISUALLY_HIDDEN } from "../primitives/index.js";
 import { useDrawnSize, useGraview, useTextMeasure, type ViewProps } from "@graview/react";
 import { useMemo, useRef, useState, type MouseEvent, type ReactElement } from "react";
 import { type MapPoint, type PlanLensOptions, type PlanLensState, buildPlanLens } from "./plan-state.js";
@@ -47,7 +47,11 @@ function Roster({
               background: emphasis === "flagged" ? fillFor(region.what, emphasis, options.hues) : undefined,
             }}
           >
-            <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>{region.label}</span>
+            <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>
+              {/* A warning is never told by its hue alone (Roadmap f-better-bare-app-defaults). */}
+              {emphasis === "flagged" ? <><span aria-hidden="true" data-graview-warning-mark="">⚠ </span><span style={VISUALLY_HIDDEN}>Implicated in a problem: </span></> : null}
+              {region.label}
+            </span>
             <span style={{ opacity: 0.7, whiteSpace: "nowrap" }}>
               {region.what ? `${region.what} · ` : ""}
               {region.markers.length}
@@ -702,7 +706,8 @@ export function PlanView<S extends AnySchema>({
                * alone once it is set. (docs/graview-feedback.md F-013.)
                */
               role="button"
-              aria-label={`${region.label}${region.what ? `, ${region.what}` : ""}, ${region.markers.length} standing in it`}
+              aria-label={`${region.label}${region.what ? `, ${region.what}` : ""}, ${region.markers.length} standing in it${emphasis === "flagged" ? ", implicated in a problem" : ""}`}
+              {...(emphasis === "flagged" ? { "data-graview-flagged": "" } : {})}
               style={{ opacity: dim, cursor: "pointer" }}
             >
               <polygon
@@ -710,6 +715,8 @@ export function PlanView<S extends AnySchema>({
                 fill={fillFor(region.what, emphasis, options.hues)}
                 stroke={strokeFor(region.what, emphasis, options.hues)}
                 strokeWidth={emphasis === "flagged" ? 5 : 2.5}
+                // A flagged region's edge is dashed as well as warn-colored: its shape says it, not its hue alone.
+                {...(emphasis === "flagged" ? { strokeDasharray: `${S * 0.02} ${S * 0.012}` } : {})}
                 strokeLinejoin="round"
               />
             </g>
@@ -726,7 +733,7 @@ export function PlanView<S extends AnySchema>({
                   ? {
                       "data-graview-pick": marker.id,
                       role: "button",
-                      "aria-label": `${marker.label}${marker.what ? `, ${marker.what}` : ""}, in ${region.label}`,
+                      "aria-label": `${marker.label}${marker.what ? `, ${marker.what}` : ""}, in ${region.label}${emphasis === "flagged" ? ", implicated in a problem" : ""}`,
                     }
                   : { "aria-hidden": true })}
                 {...(emphasis ? { "data-graview-emphasis": emphasis } : {})}
@@ -808,6 +815,7 @@ export function PlanView<S extends AnySchema>({
             >
               {fitted.lines.map((line, index) => (
                 <tspan key={line + String(index)} x={at.x} dy={index === 0 ? 0 : fitted.fontSize * 1.15}>
+                  {index === 0 && emphasis === "flagged" ? "⚠ " : null}
                   {line}
                 </tspan>
               ))}

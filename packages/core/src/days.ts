@@ -286,11 +286,35 @@ function moment(at: string, options: Intl.DateTimeFormatOptions, locale: string 
  * another moment on their own clock.
  */
 function readersClockIs(zone: string | undefined, stamp: number): boolean {
-  const own = readersZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
-  if (zone === undefined || own === zone) return true;
-  const there = wallIn(stamp, zone);
+  /*
+   * Only a reader who is there: the zone a host passed for the person, or
+   * the clock of the page they are reading on. A server, a static page or
+   * a model has no reader's clock, so its words always name the zone.
+   */
+  const own = readersZone ?? (inAPage() ? runtimeZone() : undefined);
+  if (own === undefined) return false;
+  const at = zone ?? runtimeZone();
+  // At an hour a clock says twice — the hour summer time gives back — the time alone names two instants: the zone is said.
+  if (saidTwice(stamp, at)) return false;
+  if (own === at) return true;
+  const there = wallIn(stamp, at);
   const here = wallIn(stamp, own);
   return there.day === here.day && there.minutes === here.minutes;
+}
+
+const inAPage = (): boolean => typeof (globalThis as { document?: unknown }).document !== "undefined";
+
+/* Asked once: the runtime's zone does not change under a page, and asking costs a formatter each time. */
+let runtime: string | undefined;
+const runtimeZone = (): string => (runtime ??= Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC");
+
+/** Whether the wall time an instant shows in a zone is shown again an hour before or after it (a clock set back). */
+function saidTwice(stamp: number, zone: string): boolean {
+  const wall = wallIn(stamp, zone);
+  return [stamp - 3_600_000, stamp + 3_600_000].some((other) => {
+    const again = wallIn(other, zone);
+    return again.day === wall.day && again.minutes === wall.minutes;
+  });
 }
 
 /**

@@ -6,7 +6,8 @@ import { humanizeValue } from "../schema/humanize.js";
 import { evaluateExpr, NodeSet, type KindShape, type Value } from "./expr/evaluate.js";
 import { parseExpr, type Expr } from "./expr/parse.js";
 import type { FieldSpec } from "./schema.js";
-import { capitalized, EMPTY_GRAPH, formatMoney, formatValue, headlineSaid, namerOf, optionsSaid, type Money, type TemplatePart } from "./template.js";
+import { repeatingDateAsRead } from "../repeat-words.js";
+import { capitalized, EMPTY_GRAPH, formatMoney, formatValue, glanced, headlineSaid, namerOf, optionsSaid, type Money, type TemplatePart } from "./template.js";
 import { parseTemplate } from "./template-parse.js";
 import { fieldSpecOf } from "./field-spec.js";
 import { linkedRefsOf, type LinkedRecordRef, type LinkedRelation } from "../schema/linked.js";
@@ -345,6 +346,13 @@ function say(parts: Parsed<readonly TemplatePart[]>, ctx: BlockContext, prose?: 
         if (ctx.glance) return excerptOf(judged.value, { markdown: true });
         if (prose && parts.length === 1) return (markdown = true), judged.value;
         return markdownWords(judged.value);
+      }
+      // `{at | glance}`: as a glance at the record says the field — a repeating date by its rule, a moment's zone only to a reader elsewhere (Roadmap f-compose-home-from-declaration).
+      if (part.format === "glance" && part.expr?.t === "ident") {
+        const field = part.expr.name;
+        const labels = ctx.fields[field]?.type === "enum" ? labelsOf(ctx, field) : undefined;
+        const repeated = typeof judged.value === "string" ? repeatingDateAsRead(judged.value, ctx.node?.[`${field}Repeat`], { today: ctx.today, locale: ctx.money?.locale }) : undefined;
+        return capitalized(part, repeated ?? glanced(judged.value, labels, ctx.today, ctx.money));
       }
       // A choice named bare (`{status}`), in a badge, a title or a line, is said by its option's label (Roadmap f-option-labels), as a field block says it.
       const choice = !part.format && part.expr?.t === "ident" && ctx.fields[part.expr.name]?.type === "enum" ? part.expr.name : undefined;

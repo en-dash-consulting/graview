@@ -1,5 +1,5 @@
 import { labelOf, resolveKit, type AnyGraphNode, type AnySchema, type GraphReader } from "@graview/core";
-import { blockContextFor, blocksName, compileBlocks, isTallBlock, resolveBlocks, whatBlocksSay, withComputed, type BlockContext, type BlocksSaid, type ResolvedBlock, type ResolvedList, type SpecBlock } from "@graview/core/blocks";
+import { blockContextFor, blocksName, compileBlocks, isTallBlock, resolveBlocks, whatBlocksSay, withComputed, homeSaysTheLine, type BlockContext, type BlocksSaid, type ResolvedBlock, type ResolvedList, type SpecBlock } from "@graview/core/blocks";
 import type { ViewSlot, ViewSpecsByKind } from "@graview/core/document";
 import { excerptOf, readableFields } from "@graview/core/words";
 import { isDefaultView, useGraph, useGraview, ViewModeProvider, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
@@ -444,7 +444,9 @@ function Listed({ node, as, depth, said = null }: { readonly node: AnyGraphNode;
      */
     const definition = store.schema.tryDefinition(node.kind);
     const read = (definition as { computed?: object } | undefined)?.computed ? withComputed(store.schema, store.graph as never, node as never) : node;
-    const facts = readableFields(read as Record<string, unknown>, definition, { limit: 3, said: [label], glance: true }).map((field) => (field.long ? excerptOf(field.stored, { markdown: field.markdown, most: 100 }) : field.alone));
+    // A row under its group's heading does not say the heading again: the field it is grouped by, and the heading's words, are left out.
+    const unsaid = said ? Object.fromEntries(Object.entries(read as Record<string, unknown>).filter(([key, value]) => key !== said.field && !(typeof value === "string" && said.values.includes(value)))) : read;
+    const facts = readableFields(unsaid as Record<string, unknown>, definition, { limit: 3, said: [label, ...(said?.values ?? [])], glance: true }).map((field) => (field.long ? excerptOf(field.stored, { markdown: field.markdown, most: 100 }) : field.alone));
     return (
       <li className="graview-spec-item" data-graview-listed={node.id} data-as={as} {...marked}>
         <ListedLink node={node} label={broken ? `${label} — implicated in a problem` : label} />
@@ -613,27 +615,6 @@ function SpecList({ list }: { readonly list: ResolvedList }) {
   );
 }
 
-/** Words compared as a reader compares them: case, punctuation and spacing aside. */
-const wordsOf = (text: string) => text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
-
-/** Whether a headline or a line of these blocks (or of a group in them) already says the app's line, in its literal words. */
-function blocksSayTheLine(blocks: readonly SpecBlock[], line: string): boolean {
-  const said = wordsOf(line);
-  if (said.length === 0) return false;
-  const literal = (block: SpecBlock): string | undefined => {
-    const parts = (block as { readonly parts?: readonly { readonly text?: string }[] | null }).parts;
-    return block.t === "headline" || block.t === "text" ? (parts ?? []).map((part) => part.text ?? " ").join("") : undefined;
-  };
-  const walk = (list: readonly SpecBlock[]): boolean =>
-    list.some((block) => {
-      const text = literal(block);
-      if (text !== undefined && wordsOf(text).includes(said)) return true;
-      const inner = (block as { readonly blocks?: readonly SpecBlock[] }).blocks;
-      return Array.isArray(inner) && walk(inner);
-    });
-  return walk(blocks);
-}
-
 /** Blocks about no one record — the home's body, a blocks lens — drawn under the provider, from the graph its seat may see, as `view`: `"home"`, or a blocks lens's own address. */
 export function SpecPlace({ blocks, heading = 2, firstHeading, slot, view = slot, flagged }: { readonly blocks: readonly SpecBlock[]; readonly heading?: number; readonly firstHeading?: number; readonly slot: "home" | "place"; readonly view?: string; /** The records a broken rule names, marked where a list draws them (Roadmap f-blocks-home-flagged). */ readonly flagged?: readonly string[] }) {
   const { store, brand } = useGraview();
@@ -650,7 +631,7 @@ export function SpecPlace({ blocks, heading = 2, firstHeading, slot, view = slot
    * a home written with the description as its headline or a line read it twice.
    */
   const given = useContext(HomeLine);
-  const line = given !== null && brand?.subtitle && blocksSayTheLine(drawn, brand.subtitle) ? null : given;
+  const line = given !== null && brand?.subtitle && homeSaysTheLine(blocks, brand.subtitle) ? null : given;
   const headed = drawn.some((block) => block.t === "headline");
   return (
     <div className={`graview-spec graview-spec-${slot}`} data-graview-spec={slot}>

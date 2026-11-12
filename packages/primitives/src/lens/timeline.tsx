@@ -5,7 +5,7 @@ import { withNaturalTime } from "./natural-time.js";
 import { useGraview, type ViewProps } from "@graview/react";
 import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactElement } from "react";
 import { hueFor } from "../default-views.js";
-import { Chip, Panel, Roster } from "../primitives/index.js";
+import { Chip, Panel, Roster, VISUALLY_HIDDEN } from "../primitives/index.js";
 
 /**
  * The timeline/calendar lens.
@@ -622,7 +622,7 @@ function Column({
              */
             data-graview-emphasis={emphasisOf(span.id)}
             data-graview-flagged={brokenIds.has(span.id) ? "" : undefined}
-            title={`${span.label} · ${format(span.start)}–${format(span.end)}`}
+            title={`${span.label} · ${format(span.start)}–${format(span.end)}${brokenIds.has(span.id) ? " — implicated in a problem" : ""}`}
             style={{
               position: "absolute",
               top: `${pct(span.start)}%`,
@@ -665,6 +665,8 @@ function Column({
             >
               {/* A bar too short to hold a line of text keeps its name in the
                   tooltip rather than spilling it across its neighbors. */}
+              {/* A warning is never told by its hue alone (Roadmap f-better-bare-app-defaults): the mark before the name, the words to a screen reader. */}
+              {brokenIds.has(span.id) ? <><span aria-hidden="true" data-graview-warning-mark="">⚠ </span><span style={VISUALLY_HIDDEN}>Implicated in a problem: </span></> : null}
               {height >= 3.4 ? span.label : null}
             </div>
           </div>
@@ -680,7 +682,8 @@ function Column({
           data-graview-pick={span.id}
           data-graview-emphasis={emphasis}
           data-graview-moment=""
-          title={`${span.label} · ${format(span.start)}`}
+          data-graview-flagged={brokenIds.has(span.id) ? "" : undefined}
+          title={`${span.label} · ${format(span.start)}${brokenIds.has(span.id) ? " — implicated in a problem" : ""}`}
           style={{
             position: "absolute",
             top: `${pct(span.start)}%`,
@@ -734,8 +737,14 @@ function Column({
             }}
           >
             {span.label}
+            {brokenIds.has(span.id) ? <span style={VISUALLY_HIDDEN}> — implicated in a problem</span> : null}
           </span>
-          <span
+          {/* A broken moment's dot is the warning's mark, not a dot in its hue (Roadmap f-better-bare-app-defaults). */}
+          {brokenIds.has(span.id) ? (
+            <span aria-hidden="true" data-graview-warning-mark="" style={{ flex: "0 0 auto", fontSize: "0.75rem", lineHeight: 1, color: "var(--graview-warn)" }}>
+              ⚠
+            </span>
+          ) : <span
             style={{
               width: 7,
               height: 7,
@@ -754,7 +763,7 @@ function Column({
                     ? undefined
                     : `0 0 8px hsl(${Math.round(hue(span))} 60% var(--graview-tint-lightness) / 0.45)`,
             }}
-          />
+          />}
         </div>
         );
       })}

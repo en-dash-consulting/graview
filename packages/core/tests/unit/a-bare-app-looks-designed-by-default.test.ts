@@ -15,11 +15,9 @@ import { readableFields } from "../../src/words.js";
  */
 afterEach(() => sayIn({}));
 
-/** The clock this test runs on, and a zone whose clock is surely another one at the instant below. */
+/** The clock this test runs on: in Node, nobody's. */
 const HERE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 const AT = "2026-11-26T14:30:00Z";
-const wall = (zone: string) => new Intl.DateTimeFormat("en-US", { timeZone: zone, hour: "numeric", minute: "2-digit", hourCycle: "h23" }).format(Date.parse(AT));
-const ELSEWHERE = ["Asia/Tokyo", "America/Los_Angeles", "Europe/London"].find((zone) => wall(zone) !== wall(HERE))!;
 
 const thanksgiving: GraviewDocument = {
   format: "graview-document",
@@ -44,29 +42,58 @@ describe("a derived row whose kind's date is a datetime", () => {
   const app = compiled(thanksgiving);
   const definition = app.schema.tryDefinition("moment");
   const node = { id: "m1", kind: "moment", name: "Dinner", who: "Diana", at: AT };
+  const NY = "America/New_York";
+  const glance = (one: Record<string, unknown> = node) => readableFields(one, definition, { limit: 3, said: ["Dinner"], glance: true });
 
   it("leads with the time as people say it, with no field label", () => {
-    sayIn({ appTimeZone: HERE });
-    const glance = readableFields(node, definition, { limit: 3, said: ["Dinner"], glance: true });
-    expect(glance[0]!.key).toBe("at");
-    expect(glance[0]!.alone).toBe(momentAtAGlance(AT));
-    expect(glance[0]!.alone).not.toMatch(/^At\b|:\s/);
-    expect(glance[0]!.alone).toMatch(/^Nov 26, 2026, \d{1,2}:30 [AP]M$/);
+    sayIn({ appTimeZone: NY, readerTimeZone: NY });
+    expect(glance()[0]!.key).toBe("at");
+    expect(glance()[0]!.alone).toBe(momentAtAGlance(AT));
+    expect(glance()[0]!.alone).toBe("Nov 26, 2026, 9:30 AM");
   });
 
   it("names the zone only when the reader is not in the app's zone", () => {
+    // A reader on the app's clock, by its own name or another zone's that keeps the same time.
+    sayIn({ appTimeZone: NY, readerTimeZone: NY });
+    expect(glance()[0]!.alone).toBe("Nov 26, 2026, 9:30 AM");
+    sayIn({ appTimeZone: "America/Detroit", readerTimeZone: NY });
+    expect(glance()[0]!.alone).toBe("Nov 26, 2026, 9:30 AM");
+    // A reader elsewhere is said the instant on the app's clock, with the zone that clock is.
+    sayIn({ appTimeZone: "Asia/Tokyo" });
+    expect(glance()[0]!.alone).toBe("Nov 26, 2026, 11:30 PM GMT+9");
+  });
+
+  it("names the zone where there is no reader's clock to judge by — a server, a static page, a model", () => {
+    // These tests run in Node, with no page: the runtime's clock is nobody's.
     sayIn({ appTimeZone: HERE });
-    expect(readableFields(node, definition, { glance: true })[0]!.alone).not.toMatch(/[AP]M \S+$/);
-    sayIn({ appTimeZone: ELSEWHERE });
-    expect(readableFields(node, definition, { glance: true })[0]!.alone).toMatch(/[AP]M \S+$/);
-    // A person's zone a host passes is the reader's own clock: said there, it is not named.
-    sayIn({ appTimeZone: ELSEWHERE, readerTimeZone: HERE });
-    expect(readableFields(node, definition, { glance: true })[0]!.alone).not.toMatch(/[AP]M \S+$/);
+    expect(glance()[0]!.alone).toMatch(/[AP]M \S+$/);
+    sayIn({ appTimeZone: NY, readerTimeZone: NY });
+    expect(readableFields(node, definition, { glance: true, noReader: true })[0]!.alone).toBe("Nov 26, 2026, 9:30 AM EST");
+  });
+
+  it("names the zone at the hour a clock says twice, when summer time ends", () => {
+    sayIn({ appTimeZone: NY, readerTimeZone: NY });
+    expect(glance({ ...node, at: "2026-11-01T05:30:00Z" })[0]!.alone).toBe("Nov 1, 2026, 1:30 AM EDT");
+    expect(glance({ ...node, at: "2026-11-01T06:30:00Z" })[0]!.alone).toBe("Nov 1, 2026, 1:30 AM EST");
+    expect(glance({ ...node, at: "2026-11-01T08:30:00Z" })[0]!.alone).toBe("Nov 1, 2026, 3:30 AM");
   });
 
   it("keeps the zone on the record's page, where the facts are read whole", () => {
-    sayIn({ appTimeZone: HERE });
-    expect(readableFields(node, definition).find((field) => field.key === "at")!.value).toMatch(/[AP]M \S+$/);
+    sayIn({ appTimeZone: NY, readerTimeZone: NY });
+    expect(readableFields(node, definition).find((field) => field.key === "at")!.value).toBe("Nov 26, 2026, 9:30 AM EST");
+  });
+
+  it("leads with the kind's date as composeDesign picks it: a day as well as a moment, its when role first, never a bookkeeping one", () => {
+    sayIn({ appTimeZone: NY, readerTimeZone: NY });
+    const kinds = (fields: Record<string, unknown>, fieldRoles?: Record<string, string>) =>
+      compiled({ ...thanksgiving, kinds: { task: { fields: { name: { type: "string", required: true }, ...fields }, ...(fieldRoles ? { fieldRoles } : {}) } }, acts: { "add-task": { title: "Add a task", creates: "task" } } } as unknown as GraviewDocument).schema.tryDefinition("task");
+    const keys = (definition: ReturnType<typeof kinds>, one: Record<string, unknown>) => readableFields({ id: "t", kind: "task", name: "Book van", ...one }, definition, { limit: 3, said: ["Book van"], glance: true }).map((field) => field.key);
+    const bookkeeping = kinds({ status: { type: "enum", options: ["open", "done"] }, priority: { type: "enum", options: ["low", "high"] }, due: { type: "date" }, updatedAt: { type: "datetime" } });
+    expect(keys(bookkeeping, { status: "open", priority: "high", due: "2026-11-20", updatedAt: "2026-11-10T08:00:00Z" })).toEqual(["due", "status", "priority"]);
+    const dayFirst = kinds({ due: { type: "date" }, remindAt: { type: "datetime" } });
+    expect(keys(dayFirst, { due: "2026-11-20", remindAt: "2026-11-19T08:00:00Z" })).toEqual(["due", "remindAt"]);
+    const roled = kinds({ due: { type: "date" }, remindAt: { type: "datetime" } }, { when: "remindAt" });
+    expect(keys(roled, { due: "2026-11-20", remindAt: "2026-11-19T08:00:00Z" })).toEqual(["remindAt", "due"]);
   });
 });
 
@@ -90,6 +117,14 @@ describe("the masthead says the app's description once", () => {
     expect(headed.masthead?.subtitle).toBeUndefined();
     const lined = home({ ...thanksgiving, views: { home: [{ headline: "Thursday" }, { text: "who brings what and when we eat" }] } } as GraviewDocument);
     expect(lined.masthead?.subtitle).toBeUndefined();
+    // Inside a `when` too, as the face reads it (`homeSaysTheLine`).
+    const shown = home({ ...thanksgiving, views: { home: [{ headline: "Thursday" }, { when: "count(all('moment')) > 0", show: [{ title: "Who brings what, and when we eat" }] }] } } as GraviewDocument);
+    expect(shown.masthead?.subtitle).toBeUndefined();
+  });
+
+  it("but only for the whole description, on its words' bounds: a sentence that shares some of them is not it", () => {
+    const near = home({ ...thanksgiving, views: { home: [{ headline: "Who brings what, and when we eaten" }, { text: "Who brings what" }] } } as GraviewDocument);
+    expect(near.masthead?.subtitle).toBe("Who brings what, and when we eat.");
   });
 });
 

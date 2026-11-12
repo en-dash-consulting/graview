@@ -381,7 +381,7 @@ function glanced(seen: Store<AnySchema>, item: DescribedItem, locale: string): D
   if (!node) return item;
   const definition = seen.schema.tryDefinition(node.kind);
   const read = (definition as { computed?: object } | undefined)?.computed ? withComputed(seen.schema, seen.graph as never, node as never) : node;
-  const fields = readableFields(read as Record<string, unknown>, definition, { limit: 3, said: [item.title], glance: true, locale });
+  const fields = readableFields(read as Record<string, unknown>, definition, { limit: 3, said: [item.title], glance: true, noReader: true, locale });
   return { ...item, parts: fields.map((field) => ({ t: "text", text: field.alone })) };
 }
 
