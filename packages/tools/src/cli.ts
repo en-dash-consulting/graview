@@ -65,7 +65,9 @@ export const MCP_USAGE = `  graview mcp <entry> [--data <dir> | --sqlite <file> 
       setup acts run as ONE batch authored by the template (a system seat,
       "template:<id>", unless --as/--roles say otherwise), so one --undo takes
       it back. --examples brings its example content too, as a batch of its
-      own. Without <entry>, the template's own document is the app.
+      own. Without <entry>, the template's own document is the app. A time
+      question takes "3 PM" or "15:00"; the views a template comes with are
+      named, and left to the host that draws the app.
 `;
 
 function flag(argv: readonly string[], name: string): string | undefined {
@@ -403,6 +405,11 @@ async function applyTemplate(argv: readonly string[], where: string): Promise<nu
       }
     }
     const extra = { made: applied.made, ...(examples ? { examples } : {}) };
+    /* A store keeps records, not views: the views a template comes with are the host's to install, and said so. */
+    const views = [...(template.frameViews ?? []), ...(template.views ?? [])].map((view) => view.name);
+    const viewsNote = views.length > 0 ? `${template.title} comes with ${views.length === 1 ? "a view" : `${views.length} views`} (${views.join(", ")}); a store keeps records, so a host that draws the app installs ${views.length === 1 ? "it" : "them"} — graview create --template writes ${views.length === 1 ? "it" : "them"} into views/.\n` : "";
+    // Said beside the report, never in it: what is printed is the report a caller reads.
+    if (viewsNote) say(viewsNote);
     if (preview) {
       process.stdout.write(report(target.log.all().slice(before), { preview: true, ...extra, violations: target.violations().length }));
       return 0;

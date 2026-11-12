@@ -1,5 +1,6 @@
 import * as z from "zod";
 import { markTyped, PHONE } from "./typed-fields.js";
+import { TIME_OF_DAY } from "../days.js";
 
 /*
  * A DECLARATION'S PHONE, PLACE AND DURATION, in the classic zod a product
@@ -30,4 +31,9 @@ export function placeField(): z.ZodString {
 /** A length of time in whole minutes: entered as "1h 30m", "90", "1:30" or "1.5 h", said as "1 h 30 min". */
 export function durationField(): z.ZodNumber {
   return markTyped(z.number().int().min(0), "duration");
+}
+
+/** A time of day with no day and no zone, kept as "15:00": typed in a time input, said "3:00 PM" where the reader's clock says it so. */
+export function timeField(): z.ZodString {
+  return markTyped(z.string().regex(TIME_OF_DAY, "a time of day like 15:00"), "time");
 }

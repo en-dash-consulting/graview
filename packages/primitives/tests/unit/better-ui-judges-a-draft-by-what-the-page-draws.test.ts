@@ -87,6 +87,12 @@ describe("Better UI judging a draft of a view", () => {
     expect(read.records.find((one) => one.label === "The Velvet Notes")).toMatchObject({ facts: ["booked"], under: "Booked", opens: true });
   });
 
+  it("reads the words either side of a chip as two facts, as a glance led by its date draws them", () => {
+    const root = drawn(`<ul><li class="pg-card"><a data-record="t1">Write the brief</a><span>Sep 3, 2026 <span class="graview-chip">Todo</span> Done: no</span></li></ul>`);
+    const read = readDrawn(root, ["Write the brief"]);
+    expect([...(read.records[0]?.facts ?? [])].sort()).toEqual(["Done: no", "Sep 3, 2026", "Todo"]);
+  });
+
   it("passes the unchanged draft: the script already on the page loses nothing", () => {
     const live = drawn(home());
     const before = readDrawn(live, recordLabelsOf(live, named));

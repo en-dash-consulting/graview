@@ -50,12 +50,12 @@ describe("set-brand refuses an accent that does not read, naming the pair, the r
     expect(compiled.findings.filter((f) => f.path.startsWith("brand"))).toEqual([]);
   });
 
-  it("says a hue the warning color is drawn in as that, not as a contrast, and never asks a document for a dark accent it cannot give", () => {
-    const clash = accentProblem("#993300")!;
-    expect(clash.sentence).toBe('#993300 reads as given, but the warning color is drawn in its hue, so "something is broken" would look like "this is selected", at any shade — pick another hue.');
-    expect(clash.pair.on).toMatch(/^#[0-9a-f]{6}$/);
-    expect(clash.ratio).toBeGreaterThan(0);
-    expect(accentProblem("#ff6600")!.sentence).toMatch(/; no shade of this hue does, since the warning color is drawn in it — pick another hue\.$/);
+  it("takes a hue the warning color is drawn in where it reads, refuses one only for its contrast, and never asks a document for a dark accent it cannot give", () => {
+    // Every warning carries its mark and its words, so sharing its hue is no reason to refuse (Roadmap f-better-bare-app-defaults).
+    expect(accentProblem("#993300")).toBeNull();
+    const orange = accentProblem("#ff6600")!;
+    expect(orange.sentence).toMatch(/^#ff6600 text on #[0-9a-f]{6} is \d\.\d:1; 4\.5:1 is needed — #[0-9a-f]{6} would pass\.$/);
+    expect(orange.sentence).not.toMatch(/warning/);
     const dark = accentProblem("#3a0ca3")!;
     expect(dark.sentence).toMatch(/^#3a0ca3 reads in the light scheme, but not in the dark: /);
     expect(dark.sentence).not.toMatch(/supply one|needs an accent of its own/);

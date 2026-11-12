@@ -1,5 +1,60 @@
 # @graview/primitives
 
+## 0.1.74
+
+### Patch Changes
+
+- 35bad5d: A bare app looks designed by default (Roadmap f-better-bare-app-defaults), from Graview Cloud building a Thanksgiving app from a chat. When nothing declares a glance, a glance leads with the kind's date — its `when` role's date or moment, else its first one that is not bookkeeping (`createdAt`, `updatedAt`), the one rule `composeDesign` uses too (`kindDateField`) — said as people say it, "Nov 26, 2026, 9:30 AM", with no field label. A glance names the zone only to a reader whose own clock is not the one it is said on (`momentAtAGlance`, beside `momentAsRead` on `@graview/core`): the person's zone a host passed, or the clock of the page they read on. Where there is no reader — a server, a static page, a description for a model (`readableFields`' `noReader`, which `describePlace` and the static pages pass) — and at an hour a clock says twice when summer time ends, the zone is named; a record's page always names it. A list of a kind with no row of its own on a home written as blocks says each record's glance after its name, as the kind's list does, leaving out what its group's heading says, and a place's description says the same line. The home says the app's description once: not again under a headline, a title or a line of its own that says the whole of it — in a group as well, though never in a `when`, which may not hold for the seat — judged the same way on the face and in `describePlace`'s masthead (`homeSaysTheLine`, `@graview/core/blocks`). An app with nothing in it yet is described as the face draws it: its way in, never a home of noughts.
+  
+  An accent near the warning's hue is taken when its contrast holds: pumpkin #b4532a was refused for sharing it. A document's accent is now refused only for its contrast (`accentProblem`, `set-brand`, `graview check`), and every warning carries its mark and its words: the bar's standing draws the warning's mark where a rule is broken, a line in the warning tone draws the kit's mark and says "Warning:" to a screen reader, a record a rule names on a blocks home, a calendar, a timeline or a plan says so in words beside the mark, a coverage's rows short of covered carry the mark and its empty ticks are open squares, its bar short of whole is striped, a plan's flagged ground is dashed, and the map's flagged blocks and their key are hatched. `brandFromAccent` takes `warnMayShareHue` for a brand that draws its warnings the same way; without it, it refuses as before.
+  
+  `composeDesign` proposes what a plain document is missing (Roadmap f-compose-home-from-declaration): where it has no home, one of a count headline and a list per kind, the dated kinds first and sorted by their date (`homeFromDeclaration`); for each kind with none, a glance and a row leading with its date and its status (`glanceFromDeclaration`, `rowFromDeclaration`), all on `@graview/core/compose`. A row is named first, then says its date as a glance says it — `{at | glance}`, a new formatter: the zone only to a reader elsewhere, a date that repeats by its rule — and its status, each only where a record holds it. A status is found by the kind's roles or by choices that end, not by a field's name alone. The composed home keeps to what each seat sees. A declared home, row or glance is kept: only what is missing is proposed, before the critic is asked, and a TypeScript app's installation kinds are left alone. The words a host composes with, `nounWords` and `pluralWords`, are on the same entry and named in docs/stability.md.
+  
+  A hosted page carries 1.2 KB more up front, and one handed a compiled app 1.2 KB more, under raises of their budgets. The pages face, every face, a visitor's form, the embed with the studio handed in and Cloud's worker grow with it, under raises of theirs.
+  
+  Tests: `a bare app looks designed by default` (core, pages), `compose proposes a home and rows for a plain document` (core); the `brand` harness's `noWarningIsToldByHueAlone`.
+  
+  Compatibility: the declaration and check finding codes — a template may name a new formatter, `glance`, which a build before this one refuses by name; a document's accent that shares the warning's hue and reads is no longer refused (`set-brand` takes it, `graview check` says nothing of it); no code is added or removed. `composeDesign` proposes more for a plain document: a `set-home`, and a `set-glance` and a `set-view` (row) per kind with a date or a status, each one `editDocument` takes, so a host that applied its edits sees a home and rows it did not before. `describePlace` says a default row's glance as one text part after its title, always names a moment's zone, and leaves the masthead's subtitle out where the home's own words say it. Ops and primitives, stored formats, the wire, derived tool names and input schemas — unchanged. What a host sees differently: a kind's date leading its glance (a day as well as a moment), a glance's time without its zone to a reader on the app's clock, glances on a blocks home's rows, the description said once, the warning's mark, words and patterns where a warning was told by its color.
+- 4454bd8: A template reads what Graview Cloud's templates now say, and a field keeps a time of day (HQ feature f-template-format-cloud-additions). A question may be a `time`, whose answer "3 PM" or "3:30pm" is kept as "15:00"; setup words may say `${id}` where a letter follows the answer (`"${date}T${dinnerTime}:00"`), beside `$id`, which is still the answer itself; a question's `ask` may say an earlier answer as `${id}` (`questionAsked` reads it in); and a template may come with views — `views`, curated worker views, each its manifest (`name`, `attach`, `cardinality`, `title` and the rest of a worker view's manifest), beside `frameViews`, each `name`, `kind`, `cardinality`, `title` and `reads` — their code kept beside the template as `views/<template id>/<name>.js` or `.html`. `graview create --template` writes each view it finds there to the project's `views/`, a curated view's manifest beside it, and says which it left out; `graview apply --template` takes time answers and `${id}` words and names the views it leaves to the host. `graview check template.json` now checks the template as well as its document (`templateFindings`, on `@graview/core/check`): an `$id` or `${id}` no question asks, a question that names one not asked before it, and a view naming a kind, a relation or an act the document lacks are refused, with the path to fix them at.
+  
+  A field may be `{ "type": "time" }` (`timeField()` in code): a time of day with no day and no zone, kept as `HH:MM`. It refuses anything else, sorts as its hours do, is said "3:00 PM" (in en-US) by a card, a record's facts, a list's CSV and `{x | time}`, is typed in a time input on Pages, in a visitor's form, in place and in the workbench (`control: "time"`, `ArgShape` `{ type: "time" }`), is read from "3 PM" in a form, a spreadsheet cell or a migration (`parseTimeOfDay`, on `@graview/core/words`), and tells an agent its pattern and `x-graview-type: "time"`.
+  
+  A host can ask whether a seat may run an act on a record without previewing it (HQ feature f-may-seat-run-act-on-record): `mayRun(store, seat, { act, record?, args? })` and `mayRunEach(store, seat, asks)`, on `@graview/core/seat`, answer `{ answer: "allowed" }`, `{ answer: "fill", toFill, anyOf? }` with the required arguments still to give by name (and, for an act handed all it needs that changes nothing with it, the arguments at least one of which to give), or `{ answer: "refused", rule, reason, message, wouldNeed? }`, where `rule` is `policy`, `own-records` (a derived remove, archive, bring-back or merge reaching only what the seat made), `sight`, `condition` (an act's `allowedWhen`, or its own `ActRefusal`), `arguments` or `act` (none by that name, or one that went wrong). Handed a whole call it asks `store.wouldApply(call, seat, judge)`: `apply` now judges each call through one path and writes after it, and the graph judges each write before making it (`Graph.judged`), so the answer is what applying would say for every seat, the app's own actor included; publishing, a vote and a proposal are judged by making their op as `apply` makes it and keeping none, and where a kind follows another (`derives`) what follows the change is worked out as `apply` works it out, over a copy of the graph with the change made. Handed part of a call it judges who may, what the seat may see, the arguments given as the act's input reads them (its defaults filled), an act that writes only fields the seat is not shown, what the app's own actor is held to, and a document act's condition where it reads no argument the caller left out (one optional or with a default included) (`condition` on the act, its expression and the judgment its `apply` throws on), and otherwise says what is still to fill. It writes nothing and copies no store, but for a seat whose profile's person is not made yet: that seat is judged, as `apply` judges it, as the person made first, on the one copy the store keeps for it while it stands (`store.judgedAs(seat)`). A hundred acts on rota are answered in about a millisecond. A refusal by the own-records rule says so (`Refusal.onlyWhatYouMade`).
+  
+  A hosted page carries 3.0 KB more up front, and one handed a compiled app 3.0 KB more, under raises of their budgets: the time field's schema, input and words, a document act's condition handed as data and apply's one judging path. The pages face, a visitor's form, every face, the embed and Cloud's worker grow with it, under raises of their budgets.
+  
+  Tests: `a time of day is a field of its own`, `a template asks a time and comes with views` (core), `a template sets up a live store` (tools), `a seat is told what it may run without running it`, `a seat is told to fill what a code act and a new profile need`.
+  
+  Compatibility: ops and primitives — unchanged, though an act may now refuse a call it used to take, and a document act's argument left out is its default to what the act's condition reads and to a record the act makes, while a field the act sets on a record already there from an argument left out stays as it stands. Stored formats — a record may hold a time field's `HH:MM` string; nothing else stored changes. The wire — unchanged. The declaration and check finding codes — a new field type, `time`; a template may carry `views` and `frameViews`, a `time` question and `${id}` in setup words and asks; `graview check` of a template adds the codes `question` (an ask naming an id) and `view` beside `setup`. Derived tool names and input schemas — a time field's argument says `x-graview-type: "time"` and its `HH:MM` pattern; every other schema is unchanged.
+  
+  Security and reliability fixes.
+- beece2b: Better UI reads the words either side of a chip as two facts. A glance that leads with its kind's date draws "Sep 3, 2026", then a status chip, then "Done: no"; what a draft must still say was read as one fact, "Sep 3, 2026 Done: no", so a draft that kept the date and the done apart was told it had lost both.
+  
+  Compatibility: ops and primitives — unchanged. Stored formats — unchanged. The wire — unchanged. The declaration and check finding codes — unchanged. Derived tool names and input schemas — unchanged.
+- Updated dependencies [35bad5d]
+- Updated dependencies [690dde3]
+- Updated dependencies [4454bd8]
+  - @graview/core@0.1.74
+  - @graview/react@0.1.74
+  - @graview/tools@0.1.74
+  - @graview/layout@0.1.74
+  - @graview/render@0.1.74
+
+## 0.1.73
+
+### Patch Changes
+
+- Updated dependencies [a254c2d]
+- Updated dependencies [9e45c01]
+- Updated dependencies [2d94b0c]
+- Updated dependencies [2799441]
+- Updated dependencies [9303a2a]
+  - @graview/core@0.1.73
+  - @graview/react@0.1.73
+  - @graview/tools@0.1.73
+  - @graview/layout@0.1.73
+  - @graview/render@0.1.73
+
 ## 0.1.72
 
 ### Patch Changes

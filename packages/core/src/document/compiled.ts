@@ -45,7 +45,7 @@ import { rememberDocument } from "./remembered.js";
 import { isRecord, respellDocument } from "./respell.js";
 import { moneyOf } from "./brand.js";
 import { markAmount } from "../schema/amount-mark.js";
-import { DATE_VALUE, ISO_DAY, isMoment, isoToday } from "../days.js";
+import { DATE_VALUE, ISO_DAY, isMoment, isoToday, TIME_OF_DAY } from "../days.js";
 import type { HomeView, ViewSpecsByKind } from "./views.js";
 import type { DerivesDeclaration } from "../keep-linked.js";
 
@@ -274,6 +274,10 @@ export function fieldSchema(spec: FieldSpec, optional: boolean, money?: Money): 
     case "datetime":
       schema = z.string().check(z.refine(isMoment, "a date and time like 2026-10-02T14:30:00Z"));
       break;
+    case "time":
+      // A time of day with no day and no zone: the wall's, wherever it is read.
+      schema = z.string().check(z.regex(TIME_OF_DAY, "a time of day like 15:00"));
+      break;
     case "enum":
       schema = z.enum(spec.options as [string, ...string[]]);
       // A choice that takes several of its options (FR-233): a list of them, each at most once.
@@ -312,6 +316,12 @@ export function fieldSchema(spec: FieldSpec, optional: boolean, money?: Money): 
 /** A call naming a record that is not there: the call as sent is wrong (`invalid`), not the act. */
 const noRecord = (id: string): never => {
   throw new ActRefusal(`there is no record "${id}"`, "invalid");
+};
+
+/** A document act writing one of the framework's own marks (`$archived`, `$seat`): refused, whatever the checker let by. */
+const marks = (fields: Readonly<Record<string, unknown>>): void => {
+  const mark = Object.keys(fields).find((field) => field.startsWith("$"));
+  if (mark !== undefined) throw new ActRefusal(`"${mark}" is the framework's own mark, not a field: no act can set it`, "invalid");
 };
 
 const argSchema = (arg: ArgPlan, money: Money): z.ZodMiniType => ("field" in arg ? fieldSchema(arg.field, arg.optional, money) : "ref" in arg ? refTo(arg.ref) : z.optional(z.unknown()));
@@ -539,6 +549,22 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
      * labeled from the arguments its fields are set from.
      */
     const creation = effects.find((e): e is Extract<ActEffect, { create: string }> => "create" in e);
+    /**
+     * THE ACT'S CONDITION ON ITS RECORD, AND THE WORDS IT REFUSES IN: one
+     * judgment, which `apply` throws on and the act hands as its `condition`,
+     * so the two cannot say different things. Undefined where it holds.
+     */
+    const refusedBy = (graph: GraphReader, subject: AnyGraphNode, bindings: Record<string, Value>): string | undefined => {
+      let allowed: Value;
+      try {
+        allowed = evaluateExpr(guard!, { graph, subject, kinds: shapes, bindings, args: bindings, today: today(), ...saying });
+      } catch (e) {
+        if (e instanceof ExprEvalError) throw new ActRefusal(`"${title}" could not be judged: ${e.sentence}`);
+        throw e;
+      }
+      if (allowed === true) return undefined;
+      return refusal ? renderTemplate(refusal, { node: subject, kinds: shapes, graph, bindings, args: bindings, today: today(), money }) : `"${title}" is not allowed for ${labelFor(subject)} right now`;
+    };
     /** What an effect's value is, as the act works it out: an expression, a literal (`$$` saying one `$`), the time or an argument. */
     const valueOf = (value: ValueSpec, bindings: Record<string, unknown>, graph: GraphReader, subject: AnyGraphNode | null = null): unknown => {
       if (isRecord(value) && "expr" in value) return evaluateExpr(exprs.get(value.expr)!, { graph, subject, kinds: shapes, bindings: bindings as Record<string, Value>, args: bindings as Record<string, Value>, today: today(), ...saying });
@@ -603,6 +629,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
                   return false;
                 }
               },
+              // Its condition as data, and the one judgment `apply` throws on: what `mayRun` (`@graview/core/seat`) asks of part of a call.
+              condition: { expr: guard, refusedBy },
             }
           : {}),
         describe: (input: Record<string, unknown>, graph: GraphReader) => {
@@ -619,17 +647,16 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
           if (subject && subjectKinds.length > 0 && !subjectKinds.includes(subject.kind)) throw new ActRefusal(`"${title}" acts on ${subjectKinds.join(" or ")}, not on ${withArticle(subject.kind)}`, "invalid");
           const bindings: Record<string, Value> = {};
           for (const [k, v] of Object.entries(input)) if (v !== undefined) bindings[k] = v as Value;
+          /*
+           * AN ARGUMENT LEFT OUT IS ITS DEFAULT to what the act's condition
+           * reads and to a record the act makes; a field it sets on a record
+           * already there from an argument left out stays as it stands.
+           */
+          const defaulted: Record<string, Value> = { ...bindings };
+          for (const [k, a] of args) if (defaulted[k] === undefined && "field" in a && a.field.default !== undefined) defaulted[k] = a.field.default as Value;
           if (guard && subject) {
-            let allowed: Value;
-            try {
-              allowed = evaluateExpr(guard, { graph, subject, kinds: shapes, bindings, args: bindings, today: today(), ...saying });
-            } catch (e) {
-              if (e instanceof ExprEvalError) throw new ActRefusal(`"${title}" could not be judged: ${e.sentence}`);
-              throw e;
-            }
-            if (allowed !== true) {
-              throw new ActRefusal(refusal ? renderTemplate(refusal, { node: subject, kinds: shapes, graph, bindings, args: bindings, today: today(), money }) : `"${title}" is not allowed for ${labelFor(subject)} right now`);
-            }
+            const no = refusedBy(graph, subject, defaulted);
+            if (no !== undefined) throw new ActRefusal(no);
           }
           const made = new Map<string, string>();
           // A record is there when the graph has it or this act has just made it.
@@ -663,7 +690,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
             }
             return undefined;
           };
-          const resolve = (value: ValueSpec, current: AnyGraphNode | undefined): unknown => {
+          const resolve = (value: ValueSpec, current: AnyGraphNode | undefined, making = false): unknown => {
             const ref = refName(value);
             if (ref === "subject") return subjectId;
             // The acting person's own record of the people kind (Roadmap f-act-as-me), never an argument.
@@ -674,7 +701,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
             }
             if (made.has(ref!)) return made.get(ref!);
             try {
-              return valueOf(value, bindings, graph, current ?? subject ?? null);
+              return valueOf(value, making ? defaulted : bindings, graph, current ?? subject ?? null);
             } catch (e) {
               if (e instanceof ExprEvalError) throw new ActRefusal(`"${title}" could not work out a value: ${e.sentence}`);
               throw e;
@@ -685,7 +712,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
               const kind = document.kinds[effect.create]!;
               const node = blank(effect.create);
               for (const [field, value] of Object.entries(effect.set ?? {})) {
-                const v = value === null ? cleared(effect.create, field) : resolve(value, undefined);
+                const v = value === null ? cleared(effect.create, field) : resolve(value, undefined, true);
                 if (v !== undefined) node[field] = v;
               }
               const labelField = defaultLabelField(kind);
@@ -694,6 +721,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
               const named = String((labelField && node[labelField]) ?? effect.create);
               const kept = quotesKeptField(named, effect.create, node, (one, field) => mayKeepField(document.policy?.sees, one, field));
               const id = context.freshId(kept ? effect.create : named, effect.create, node);
+              marks(node);
               context.addNode({ ...node, id } as never);
               if (effect.as) made.set(effect.as, id);
             } else if ("connect" in effect || "sever" in effect) {
@@ -740,6 +768,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
                   if (value === null) patch[field] = cleared(node.kind, field, node);
                   else if (v !== undefined) patch[field] = v;
                 }
+                marks(patch);
                 if (Object.keys(patch).length > 0) context.patchNode(node.id, patch);
               }
             } else if ("set" in effect) {
@@ -754,6 +783,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
                   if (v !== undefined) patch[field] = v;
                 }
               }
+              marks(patch);
               if (Object.keys(patch).length > 0) context.patchNode(targetId, patch);
             } else if ("remove" in effect) {
               const id = String(resolve(effect.remove, undefined) ?? "");
@@ -905,6 +935,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     ...(document.tidying ? { tidying: document.tidying } : {}),
     // Who it is for and what they come to do (Roadmap f-app-jobs): data the checker, the describer and a seat read.
     ...(document.purpose ? { purpose: document.purpose } : {}),
+    // The screens a device offers (Roadmap f-device-nav-bar): data the e-ink render draws as its strip.
+    ...(document.devices ? { devices: document.devices } : {}),
     // The document's views are the declaration's view specs (FR-03): data the framework draws.
     ...(plan.viewSpecs ? { viewSpecs: plan.viewSpecs as never } : {}),
     // And its home view, about no one record, is the app's home (FR-81).

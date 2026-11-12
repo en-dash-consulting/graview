@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { entryArg, loadApp } from "@graview/core/cli";
 import { readSnapshot } from "@graview/core/snapshot";
-import type { GraviewApp, PersistenceAdapter } from "@graview/core";
+import { unseatedSnapshot, type GraviewApp, type PersistenceAdapter } from "@graview/core";
 import { createFileAdapter, scopeDirectory } from "./file-adapter.js";
 import { fileSubscriptions } from "./file-subscriptions.js";
 import { fileFriction } from "./file-friction.js";
@@ -212,7 +212,8 @@ export function viewsFileOf(backend: Pick<StoreBackend, "adapter" | "where">, sc
 /** A seed file in either snapshot format: the line format with its header, or an old `{ nodes, edges }`. */
 function readSeed(file: string): GraphSnapshot {
   try {
-    return readSnapshot(readFileSync(file, "utf8")).snapshot as GraphSnapshot;
+    // A seed never says whose record a person is: bindings stay in the installation that made them.
+    return unseatedSnapshot(readSnapshot(readFileSync(file, "utf8")).snapshot as GraphSnapshot);
   } catch (error) {
     throw new Error(`${file}: ${error instanceof Error ? error.message : String(error)}`);
   }

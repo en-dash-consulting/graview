@@ -36,6 +36,8 @@ export { isMarkdownField } from "./schema/markdown.js";
 // A phone, a place and a duration, said, linked, and read from what was typed.
 export { fieldSays, mapsHref, parseDuration, sayDuration, sayPhone, telHref, typedHref, typedWords } from "./schema/field-words.js";
 export { typedFieldOf } from "./schema/typed-field-of.js";
+// A time of day as it is typed ("3 PM"), read as the "15:00" a time field keeps.
+export { parseTimeOfDay } from "./time-typed.js";
 export { amountBox, amountInBox, readAmount } from "./amount-input.js";
 export type { AmountBox } from "./amount-input.js";
 // A day or a moment typed as people say it — "tomorrow 3pm", "Fri 10:30", "17 Oct" — kept as the field keeps it (Roadmap f-date-inputs).

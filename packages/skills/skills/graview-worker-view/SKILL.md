@@ -7,10 +7,9 @@ description: Write a Graview worker view — one plain script, no imports and no
 
 A worker view is for what the declared blocks cannot draw: a chart, a grid
 of cards, a front page with a figure and a ring. It is one plain script.
-The host runs it in a hardened worker with no network, no storage and no
-DOM of its own, and draws what it says into a shadow root inside a region
-the host owns. **What it may draw is broad; what it may reach is not.**
-Write it against one global, `graview`. There is nothing to import and
+The host runs it in a hardened worker with no network, storage or DOM,
+and draws what it says into a shadow root in a region the host owns.
+**What it may draw is broad; what it may reach is not.** Write it against one global, `graview`. There is nothing to import and
 nothing to build; the word `import` may not appear in it at all, even in a
 comment, and nor may `export`.
 
@@ -31,8 +30,8 @@ Every view comes with a manifest the host enforces:
 - `reads` lists the other kinds and the edges it is shown. Nothing else is handed to it. A view of one reading an edge from its kind to its kind (rock `becomes` rock) is handed the records linked to it. An edge to a kind it is not handed brings nothing, and the check says so.
 - `acts` lists the acts it may ask for, by name. An entry with `as` and `constants` is another name for the same act with arguments the view cannot change.
 - A view of one record (`cardinality: "one"`) is drawn above the kind's page blocks and the record's own fields, which stay editable. `replaces: "page"` draws it alone, and the page blocks never (`graview-view-specs`). On a view of many, it is its kind's list page (`/<plural>`).
-- `gestures: true` lets it hear a wheel, a drag and a pinch (below). `bleed: true` draws it edge to edge on a phone (`graview-view-drawing`).
-- `pictures: true` hands each picture on a record with an address the host made from its bytes, never its path, and lets the view place a record's video and open the host's full-screen viewer (`graview-view-drawing`). They share 12 MB: name the kinds it draws, `["circuit"]`, or fields, `{ circuit: "photo" }`.
+- `gestures: true` hears wheels, drags and pinches (below). `bleed: true` takes the edges on a phone, `"full"` a desk's.
+- `pictures: true` hands each picture on a record with an address the host made from its bytes, never its path, lets the view place a record's video and open the host's full-screen viewer (`graview-view-drawing`). They share 12 MB: name the kinds it draws, `["circuit"]`, or fields, `{ circuit: "photo" }`; `thumb`, narrower than `width`, a second size.
 
 A manifest that names a kind, an edge or an act the app does not declare is
 refused before the view starts.
@@ -45,6 +44,7 @@ graview.onProps((props) => …)   // every push of what it is shown (and at once
 graview.props                   // the last push
 graview.render(markup)          // draw: a string, graview.html`…`, or nodes
 graview.html`<li>${x}</li>`     // markup; every value put in is escaped
+graview.part("vendors", () => graview.html`…`)   // fails alone (Limits)
 graview.on("click", ".card", (event) => …)   // also input, change, keydown, toggle, acted
 graview.act(name, args)         // ask for an act: resolves { ok, intent } or { ok: false, reason, message }
 graview.navigate("offer:7")     // a record, else a place or a kind's list by slug
@@ -68,7 +68,8 @@ can, by element and by `data-key` or `id`, so give repeated rows a
 `data-key`: a field being typed in keeps its text across a push. An event
 carries `value`, `checked`, `key`, `pressed` for a bound press, and
 `element`, what the selector matched: read its `data-*`. Elements lack
-`closest`, `matches` and `dataset`.
+`closest`, `matches` and `dataset`. `props.unseen`: what the seat cannot see
+(`graview-sight`).
 
 ## Links and buttons, by default
 
@@ -97,20 +98,17 @@ too) `phase`, `scale`, `rotation`. The page scrolls everywhere else; say
 
 HTML, SVG and stylesheets, drawn with the app's `--graview-*` tokens so
 light and dark follow the app's toggle; nothing that loads or escapes. What
-the host keeps, the tokens, the images a view may show and a web face are
-`graview-view-drawing`. What the host leaves out it lists in `refused`.
-A `<section aria-labelledby="h">` is named by its own `<h2 id="h">`;
+the host keeps, the tokens, images, a lent face and a `data:` `@font-face`
+are `graview-view-drawing`. What the host leaves out it lists in `refused`.
 `summary::marker` and `::-webkit-details-marker` style a disclosure's
 triangle.
 
 ## Links
 
 `<a data-record="offer:7">`, `<a data-place="the-packages">` and a whole
-card or row with `data-record` are links the host follows on a click, a
-phone's tap and Enter, to what the viewer may see. An `<a href>` goes out
-only to an address a record was handed. A card, a link out,
-what a tap inside it reaches, and going narrowed or to a section are
-`graview-view-links`.
+card or row with `data-record` go where the viewer may see, on a click, a
+tap and Enter. An `<a href>` goes out only to an address a record was
+handed. Cards, links out and going narrowed are `graview-view-links`.
 
 ## Writes
 
@@ -124,17 +122,18 @@ saves. How those are written and heard is `graview-view-forms`.
 256 kB of source, 5 000 nodes, 120 messages a second, 1 000 ms a push
 and 100 ms a second of the page's time drawing it; the two times grow
 up to fourfold on a slow device, the counts never. Past any, the view
-is stopped and its records' plain face drawn, with why. Draw summaries,
-not every row. Timers go untimed; a worker busy under the heartbeat's
-5 s spends the person's CPU: never spin.
+is stopped and its records' plain face drawn, with why. A
+`graview.part` (a `<div data-part>`; `{ as: "li" }`) that throws or takes
+a quarter of the push is a note instead, the rest drawn, why in the
+console; a slow one rests three pushes, then runs. Name each part apart;
+a loop's same-named rows go by order. Draw summaries; never spin.
 
 ## Worked examples
 
-`examples/offers-list.js` is a list lens: rows linking to their records,
-and a note typed and pressed in. `examples/front-page.js` is a home: a
-headline, a figure, an SVG ring and cards linking to a place.
-`examples/a-record.js` is a view of one record: a deliverable's draft
-read off `props.node`, and "Edit draft" prefilled. `examples/a-map-that-pans-and-zooms.js` is an
+`examples/offers-list.js` is a list lens: rows linking to records, a
+note typed in. `examples/front-page.js` is a home: a headline, a figure,
+an SVG ring, cards. `examples/a-record.js` is a view of one record: its
+draft read off `props.node`, "Edit draft" prefilled. `examples/a-map-that-pans-and-zooms.js` is an
 SVG map a wheel and a pinch zoom at the pointer, and a drag pans.
 
 ## Registering it
@@ -158,15 +157,15 @@ is first drawn.
 1. `graview check` the app the view names. `checkManifest(manifest, store)` and
    `checkViewSource(source)` from `@graview/guest/host/views` must both say
    nothing.
-2. Run it headless, with no network, as a member who may see less than
-   you, over a seed: `graview view check view.js --app <app> --manifest
-   manifest.json --seed <seed.json> --roles <role>`. It prints what the
-   view drew, said as `graview describe` says a place, or why it will not
-   do: `error` (what it threw), `nodes`, `flood`, `slow`, `act` (an act
-   its manifest does not name), `manifest` or `source`. A view of one
-   record runs over the first of its kind the seat sees, or the one
-   `--record <id>` names. It presses each control (`graview-view-forms`).
-   So does `runWorkerViewHeadless` (`guest/headless`).
+2. Run it headless, with no network, as each seat, over a seed:
+   `graview view check view.js --app <app> --manifest manifest.json --seed
+   <seed.json> --seats` (or `--roles <role>`, one). It says what it drew,
+   or why it will not do: `error` (what it threw), `nodes`, `flood`,
+   `slow`, `act` (an act its manifest does not name), `manifest` or
+   `source`. A view of one record runs over the first of its kind the seat
+   sees, or `--record <id>`. It presses each control
+   (`graview-view-forms`). So does `runWorkerViewForEachSeat`
+   (`guest/headless`).
 3. Open the place on both faces as that member. Is anything shown that
    they should not see? Does the region carry no `data-worker-view-failed`?
    `start` there means it never ran: the note under the plain face names

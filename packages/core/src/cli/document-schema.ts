@@ -1,6 +1,7 @@
 import * as z from "../schema/zod.js";
 import { ConnectionSpec } from "../document/connection-spec.js";
 import { PurposeSpec } from "../document/purpose-spec.js";
+import { DevicesSpec } from "../document/devices-spec.js";
 import { WorkflowSpec } from "../document/workflow-spec.js";
 import { DocumentSpec, FieldSpec, KindSpec, RuleSpec } from "../document/schema.js";
 import { BLOCK_KEYS, FIGURE_EMPHASES, FIGURE_FORMATS, LIST_AS, MAX_LIST_LIMIT, MAX_TEXT_LINES, VIEW_FIELD_FORMATS, VIEW_SLOTS, VIEW_TONES } from "../document/views.js";
@@ -107,6 +108,12 @@ export function documentJsonSchema(version: string): Json {
   properties["purpose"] = {
     ...purpose,
     description: "Who the app is for (`for`), and up to twelve jobs they come to it to do: each a question in their words (`ask`), answered by the records of one kind (`kind`) a rule-language condition holds for (`where`), in an order (`sort`), with the act they usually take next (`act`), for some roles or everybody (`roles`).",
+  };
+  // A device's screens likewise (Roadmap f-device-nav-bar, `devices-spec.ts`): read loosely by the compiler, judged by the checker, said here whole.
+  const { $schema: _devices, ...devices } = z.toJSONSchema(built(DevicesSpec) as z.ZodMiniType, { io: "input", unrepresentable: "any" }) as Json;
+  properties["devices"] = {
+    ...devices,
+    description: "The screens a device offers along the strip at its foot, in order, beside Refresh: each a place (`place`: `home`, a kind's plural, a lens's `as`, an address, or `job:<name>`) and the word under its press (`label`, at most 12 characters). At most 4. Unsaid, the home and the app's jobs, else the places its bar stands.",
   };
   // Workflows likewise (Roadmap f-jobs-declared, `workflow-spec.ts`): read loosely by the compiler, judged by the checker, said here whole.
   const { $schema: _workflow, ...workflow } = z.toJSONSchema(built(WorkflowSpec) as z.ZodMiniType, { io: "input", unrepresentable: "any" }) as Json;

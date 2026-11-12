@@ -1,6 +1,6 @@
 {
   "name": "@graview/pages",
-  "version": "0.1.72",
+  "version": "0.1.74",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -12,6 +12,10 @@
     "./static": {
       "types": "./dist/static.d.ts",
       "default": "./dist/static.js"
+    },
+    "./device": {
+      "types": "./dist/device.d.ts",
+      "default": "./dist/device.js"
     },
     "./visitor-form": {
       "types": "./dist/visitor-form.d.ts",

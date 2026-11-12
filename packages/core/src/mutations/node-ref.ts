@@ -73,6 +73,21 @@ export function nodeRefKinds(schema: unknown): readonly string[] | undefined {
   return inner ? nodeRefKinds(inner) : undefined;
 }
 
+/**
+ * The node kinds an argument's records may be, a list of references
+ * included (`z.array(nodeRef([...]))`, optional or nullable): what the store
+ * holds each record an act is handed to. `nodeRefKinds` stays an argument
+ * that names one record, which a form asks for with one picker.
+ */
+export function heldRefKinds(schema: unknown): readonly string[] | undefined {
+  const direct = nodeRefKinds(schema);
+  if (direct) return direct;
+  const def = defOf(schema);
+  if (!def) return undefined;
+  if (def.type === "array") return heldRefKinds(def.element);
+  return def.innerType ? heldRefKinds(def.innerType) : undefined;
+}
+
 /** One argument of an act that names a record: its name, the kinds it accepts, and whether it may be left out. */
 export interface NodeRefArg {
   readonly name: string;

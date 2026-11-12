@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "3441dc25-892b-4e97-ad8c-230837953410":
+    status: "completed"
+    startedAt: "2026-11-11T20:15:00.000Z"
+    completedAt: "2026-11-12T08:00:00.000Z"
+    lastModified: "2026-11-12T08:00:00.000Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"
+    resolutionType: "code-change"
+    resolutionDetail: "Templates take time questions, ${id} in setup words and asks, views and frameViews; graview check checks the template; a time field keeps HH:MM. PR #577, landed in the 0.1.74 batch #580."

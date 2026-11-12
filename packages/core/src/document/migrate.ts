@@ -1,4 +1,4 @@
-import { ARCHIVED, isArchived, LEFT_ALONE } from "../graph/archived.js";
+import { ARCHIVED, isArchived, LEFT_ALONE, PERSON_SEAT, personSeatOf } from "../graph/archived.js";
 import { UNSET, type Primitive } from "../graph/primitives.js";
 import type { GraphEdge } from "../graph/types.js";
 import { canonicalize } from "./canonical.js";
@@ -8,6 +8,8 @@ import { fileOfKind, filesOf, isFileValue, type FileValue } from "../schema/file
 import { isAppAddress } from "../schema/app-link.js";
 import { PHONE } from "../schema/typed-fields.js";
 import { parseDuration } from "../schema/field-words.js";
+import { ISO_MOMENT } from "../days.js";
+import { parseTimeOfDay } from "../time-typed.js";
 import { linkedEdges } from "../schema/linked.js";
 
 /*
@@ -166,6 +168,12 @@ export function coerce(value: unknown, from: FieldType, to: FieldSpec): unknown 
       const n = parseDuration(value);
       return n === undefined || outsideRange(n, to, "") !== undefined ? undefined : n;
     }
+    case "time": {
+      // A time of day as it is typed ("3 PM"), or the time on the wall of a moment kept without a zone.
+      const t = asText(value)?.trim();
+      if (!t) return undefined;
+      return ISO_MOMENT.test(t) && !/[Z+-][\d:]*$/.test(t.slice(16)) ? t.slice(11, 16) : parseTimeOfDay(t);
+    }
     case "url":
     case "email": {
       const t = asText(value)?.trim();
@@ -296,6 +304,8 @@ export function planMigration(before: GraviewDocument, after: GraviewDocument, g
      */
     // A record a person said to leave alone stays so, whatever its kind is called now.
     if ((node as Record<string, unknown>)[LEFT_ALONE] === true) next[LEFT_ALONE] = true;
+    // A person bound to an account stays theirs while their kind is still the people (Roadmap f-invite-binds-existing-person).
+    if (personSeatOf(node) !== undefined && after.kinds[newKind]!.people === true) next[PERSON_SEAT] = personSeatOf(node);
     if (isArchived(node)) {
       if (after.kinds[newKind]!.archives !== false) next[ARCHIVED] = true;
       else {

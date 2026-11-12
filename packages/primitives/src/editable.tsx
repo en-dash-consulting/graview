@@ -544,6 +544,8 @@ export function EditableValue<S extends AnySchema>({
           type={
             amount
               ? "text"
+              : editable.shape.type === "time"
+              ? "time"
               : editable.shape.type === "number" && !editable.shape.duration
               ? "number"
               : "text"
@@ -952,6 +954,7 @@ function baseTypeOf(schema: unknown): string | undefined {
 function blankWords(editable: EditableField, fact: string): string {
   const shape = editable.shape;
   if (shape.type === "date") return shape.time ? "Pick a day and time" : "Pick a day";
+  if (shape.type === "time") return "Pick a time";
   if (shape.type === "choice" || (shape.type === "several" && shape.of.type === "choice")) return "Choose…";
   return `Add ${fact.toLowerCase()}`;
 }

@@ -40,12 +40,14 @@ graview.style(\`
   .mast { display: flex; align-items: center; gap: 12px; padding: 12px; }
   .mast h2 { margin: 0; font-family: var(--graview-font-display); border-radius: var(--graview-radius); border: 1px solid var(--graview-edge); padding: 4px 8px; }
   .mast .lent { color: rgb(1, 2, 3); font-family: monospace; }
+  .mast .own { font-family: "Own Face", monospace; }
+  .mast .big { font-family: "Big Face", monospace; }
 \`);
 let pushes = 0;
 graview.onProps((props) => {
   pushes += 1;
   const theme = props.theme || {};
-  graview.render(graview.html\`<div class="mast" id="mast" data-pushes="\${pushes}">\${theme.logo ? graview.html\`<img id="logo" alt="" src="\${theme.logo}">\` : ""}<h2 id="name">\${theme.name || ""}</h2><span id="radius">\${theme.radius || ""}</span><small id="lent" class="lent">Granite becomes gneiss</small><small id="baloo" class="baloo">Granite becomes gneiss</small><small id="mono" style="font-family: monospace">Granite becomes gneiss</small></div>\`);
+  graview.render(graview.html\`<div class="mast" id="mast" data-pushes="\${pushes}">\${theme.logo ? graview.html\`<img id="logo" alt="" src="\${theme.logo}">\` : ""}<h2 id="name">\${theme.name || ""}</h2><span id="radius">\${theme.radius || ""}</span><small id="lent" class="lent">Granite becomes gneiss</small><small id="baloo" class="baloo">Granite becomes gneiss</small><small id="mono" style="font-family: monospace">Granite becomes gneiss</small><small id="own" class="own">Granite becomes gneiss</small><small id="ownInline" style="font-family: 'Own Face', monospace">Granite becomes gneiss</small><small id="big" class="big">Granite becomes gneiss</small></div>\`);
 });
 `;
 
@@ -88,6 +90,16 @@ export function lentFont(repoRoot) {
   return { bytes, path: `/graview/assets/${createHash("sha256").update(bytes).digest("hex")}.woff2` };
 }
 
+/*
+ * The view's own faces (HQ f-view-font-face-data): a real WOFF2 of 20 KB as a data: font in its stylesheet, which the host loads from its
+ * bytes, and one under a name the brand lends ("Big Face"), which it does not load while the brand lends that name.
+ */
+export function ownFaceSheet(repoRoot) {
+  const bytes = readFileSync(resolve(repoRoot, "apps/seedbed/src/fonts/figtree-latin.woff2"));
+  const src = `url(data:font/woff2;base64,${bytes.toString("base64")}) format("woff2")`;
+  return `@font-face { font-family: "Own Face"; src: ${src}; font-weight: 300 900; font-display: swap; }\n@font-face { font-family: "Big Face"; src: ${src}; }`;
+}
+
 /* A face past the size a lent face may not pass (Roadmap f-lent-faces-bounded): three million bytes the app holds, which the host does not load. */
 export function oversizeFont() {
   const bytes = Buffer.alloc(3_000_000, 7);
@@ -127,7 +139,7 @@ import { lin, offersApp, offersSeed } from ${JSON.stringify(resolve(repoRoot, "s
 window.__failures = [];
 const brands = { first: { ...${JSON.stringify(first)}, schemes: SCHEMES }, second: { ...${JSON.stringify(second)}, schemes: SCHEMES } };
 window.__problems = [];
-const definition = { manifest: ${JSON.stringify(MASTHEAD_MANIFEST)}, worker: { source: ${JSON.stringify(MASTHEAD_JS)} }, asset: (path) => path, onFailure: (reason, detail) => window.__failures.push([reason, detail]), onProblem: (said) => window.__problems.push(said) };
+const definition = { manifest: ${JSON.stringify(MASTHEAD_MANIFEST)}, worker: { source: ${JSON.stringify(`${MASTHEAD_JS}\ngraview.style(${JSON.stringify(ownFaceSheet(repoRoot))});\n`)} }, asset: (path) => path, onFailure: (reason, detail) => window.__failures.push([reason, detail]), onProblem: (said) => window.__problems.push(said) };
 window.__handle = mount(document.getElementById("app"), {
   app: offersApp,
   seed: offersSeed,
@@ -158,7 +170,7 @@ window.__rebrand = () => window.__handle.setBrand(brands.second);
       logLevel: "silent",
     })
   ).outputFiles[0].text;
-  const widgetHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Offers</title><style>body{margin:0}#app{position:relative;height:900px}</style></head><body><div id="app"></div><script>${widgetJs.replace(/<\/script/gi, "<\\/script")}</script></body></html>`;
+  const widgetHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Offers</title><style>body{margin:0}#app{position:relative;height:900px}</style></head><body><p id="hostOwn" style="font-family: 'Own Face', monospace; display: inline-block; margin: 0">Granite becomes gneiss</p><p id="hostMono" style="font-family: 'No Face Here', monospace; display: inline-block; margin: 0">Granite becomes gneiss</p><div id="app"></div><script>${widgetJs.replace(/<\/script/gi, "<\\/script")}</script></body></html>`;
   const hostHtml = proxied ? `<!doctype html><html><head><meta charset="utf-8"><title>Chat</title></head><body><iframe id="proxy" title="Widget" style="width:1200px;height:1000px;border:0" src="${GUEST}/proxy/${POLICY}.html"></iframe></body></html>` : widgetHtml;
   const asked = [];
   const fontAsked = [];
@@ -276,6 +288,15 @@ window.__rebrand = () => window.__handle.setBrand(brands.second);
           faces: [...document.fonts].filter((face) => face.family.replace(/["']/g, "") === "Rock Face").map((face) => face.status),
           balooFaces: [...document.fonts].filter((face) => face.family.replace(/["']/g, "") === "Baloo 2").map((face) => face.status),
           bigFaces: [...document.fonts].filter((face) => face.family.replace(/["']/g, "") === "Big Face").map((face) => face.status),
+          ownBigFaces: [...document.fonts].filter((face) => face.family.replace(/["']/g, "").endsWith(" Big Face")).map((face) => face.status),
+          ownFaces: [...document.fonts].filter((face) => face.family.replace(/["']/g, "") .endsWith(" Own Face")).map((face) => face.status),
+          ownFont: getComputedStyle(root.querySelector("#own")).fontFamily,
+          ownWidth: root.querySelector("#own").getBoundingClientRect().width,
+          ownInlineWidth: root.querySelector("#ownInline").getBoundingClientRect().width,
+          ownFamilies: [...document.fonts].filter((face) => / Own Face$/.test(face.family.replace(/["']/g, ""))).map((face) => face.family.replace(/["']/g, "")),
+          hostOwnWidth: document.querySelector("#hostOwn").getBoundingClientRect().width,
+          hostMonoWidth: document.querySelector("#hostMono").getBoundingClientRect().width,
+          ownSheet: root.querySelector("[data-graview-view-style]")?.textContent ?? "",
           balooWidth: root.querySelector("#baloo").getBoundingClientRect().width,
           monoWidth: root.querySelector("#mono").getBoundingClientRect().width,
           motion: root.querySelector("[data-graview-view-root]")?.getAttribute("data-graview-motion") ?? null,
@@ -332,6 +353,31 @@ window.__rebrand = () => window.__handle.setBrand(brands.second);
         { problems },
       );
     }
+    /* The view's own face (HQ f-view-font-face-data): a data: font its stylesheet declares, loaded by the host from its bytes, under every policy. */
+    await until(() => [...document.fonts].some((face) => face.family.replace(/["']/g, "").endsWith(" Own Face") && face.status === "loaded"), undefined, "the view's own face loaded").catch(() => undefined);
+    const owned = await read();
+    const ownProblems = await app.evaluate(() => window.__problems);
+    claim(
+      "a face the view's own stylesheet declares as a data: font is loaded into the page by the host, from its bytes, and the view's text is drawn in it, not in the fallback",
+      owned.ownFaces.length === 1 && owned.ownFaces[0] === "loaded" && /Own Face/.test(owned.ownFont) && owned.ownWidth !== owned.monoWidth,
+      { faces: owned.ownFaces, font: owned.ownFont, own: owned.ownWidth, mono: owned.monoWidth, problems: ownProblems },
+    );
+    claim(
+      "the view's sheet as drawn holds no @font-face and no data: URL, and no font was requested for it: the face was handed to the page as bytes",
+      !/@font-face|data:/i.test(owned.ownSheet) && !requests.some((url) => /^data:(font|application)\//i.test(url)),
+      { sheet: owned.ownSheet.slice(0, 200), data: requests.filter((url) => url.startsWith("data:")).map((url) => url.slice(0, 40)) },
+    );
+    claim(
+      "the view's own face draws in the view alone: its style attribute naming it is drawn in it, while the host page's own text that names the same family is drawn as it was, in its fallback, and the page holds no face by the name the view wrote",
+      Math.abs(owned.ownInlineWidth - owned.ownWidth) < 0.5 && Math.abs(owned.ownInlineWidth - owned.monoWidth) >= 0.5 && Math.abs(owned.hostOwnWidth - owned.hostMonoWidth) < 0.5 && owned.ownFamilies.length === 1 && owned.ownFamilies[0] !== "Own Face",
+      { inline: owned.ownInlineWidth, own: owned.ownWidth, hostOwn: owned.hostOwnWidth, hostMono: owned.hostMonoWidth, families: owned.ownFamilies },
+    );
+    if (lends)
+      claim(
+        'a face of the view\'s own under a name the brand lends, "Big Face", is not loaded while the brand lends it, and the host is told why, with its code',
+        owned.bigFaces.length === 0 && owned.ownBigFaces.length === 0 && ownProblems.some((said) => said.includes('"Big Face"') && said.includes("(view-font-face-lent)")),
+        { faces: owned.bigFaces, problems: ownProblems },
+      );
     claim("and, the brand asking for it, its root is set to fade between records", before.motion === "fade", { motion: before.motion });
 
     await app.evaluate(() => {
@@ -350,6 +396,11 @@ window.__rebrand = () => window.__handle.setBrand(brands.second);
     claim("it followed the brand by being pushed it, not redrawn: the same region and the same image element, one push more", after.marked && after.pushes > before.pushes, { marked: after.marked, pushes: [before.pushes, after.pushes] });
     claim("after the brand changes to one with no stylesheet for its views, the host's sheet is empty, the heading's letter-spacing and capitals are the browser's again, the view's own rule holds, and nothing fades", after.themeSheet === "" && after.letterSpacing === "normal" && after.transform === "none" && after.lentColor === "rgb(1, 2, 3)" && after.motion === null, { themeSheet: after.themeSheet, letterSpacing: after.letterSpacing, transform: after.transform, lentColor: after.lentColor, motion: after.motion });
     if (lends) claim("and the faces the brand lent are gone from the page once it lends none", after.faces.length === 0 && after.balooFaces.length === 0, { faces: after.faces, baloo: after.balooFaces });
+    if (lends) {
+      await until(() => [...document.fonts].some((face) => face.family.replace(/["']/g, "").endsWith(" Big Face") && face.status === "loaded"), undefined, "the view's own Big Face loaded").catch(() => undefined);
+      const freed = await read();
+      claim('and once the brand lends no face by that name, the view\'s own "Big Face" is loaded under it', freed.ownBigFaces.length === 1 && freed.ownBigFaces[0] === "loaded" && freed.bigFaces.length === 0 && freed.ownFaces.length === 1, { big: freed.ownBigFaces, lent: freed.bigFaces, own: freed.ownFaces });
+    }
     if (revoked !== null) claim("the last logo's blob: URL is let go once the new one is drawn", revoked === true, { url: before.src });
     if (secondLogo.logo === PNG_PATH) {
       /*

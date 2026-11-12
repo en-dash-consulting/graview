@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "e03acb48-2e81-43e4-9b7f-c3fd2ef33527":
+    status: "completed"
+    startedAt: "2026-11-11T04:00:00.000Z"
+    completedAt: "2026-11-11T13:55:00.000Z"
+    lastModified: "2026-11-11T13:55:00.000Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"
+    resolutionType: "code-change"
+    resolutionDetail: "A worker view is handed props.unseen (kinds, and fields from the policy); a frame guest kinds alone, of its own reads. A view whose seat sees nothing it reads draws the host's sign-in instead. PR #569, landed in the 0.1.73 batch #568."

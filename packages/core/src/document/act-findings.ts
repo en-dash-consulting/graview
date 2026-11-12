@@ -91,6 +91,7 @@ function literalFits(value: unknown, type: string): boolean {
     case "url":
     case "email":
     case "phone":
+    case "time":
       return typeof value === "string";
     default:
       return true;

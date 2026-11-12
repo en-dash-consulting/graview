@@ -115,19 +115,21 @@ describe("every key of the brand, the name and the description: previewed, appli
 
 describe("describePlace says the home's masthead: the name, the line under it, and the logo by its alt text", () => {
   const owner: Principal = { kind: "human", id: "u:owner", roles: ["owner"] };
-  const say = (document: GraviewDocument) => {
+  const say = (document: GraviewDocument, snapshot?: { nodes: Record<string, unknown>[]; edges: [] }) => {
     const { app } = compiles(document);
-    const store = new Store<AnySchema>({ schema: app.schema as AnySchema, mutations: app.mutations ?? [], policy: app.policy! });
+    const store = new Store<AnySchema>({ schema: app.schema as AnySchema, mutations: app.mutations ?? [], policy: app.policy!, ...(snapshot ? { snapshot: snapshot as never } : {}) });
     const result = describePlace(store, owner, "home", { app: app as GraviewApp<AnySchema>, today: "2026-10-07" });
     if (!result.ok) throw new Error(result.error);
     return result.description;
   };
 
   it("says an inline logo with its alt text, and the description under the name", () => {
-    const home = say(enDash);
+    const home = say(enDash, { nodes: [{ id: "w1", kind: "workshop", title: "Mapping the work", status: "planned" }], edges: [] });
     expect(home.masthead).toEqual({ name: "En Dash", subtitle: enDash.description, logo: { alt: "En Dash Consulting", drawn: "inline SVG" } });
     expect(home.text.split("\n")[1]).toBe(`Masthead: the logo ("En Dash Consulting", inline SVG), En Dash — ${enDash.description}`);
     expect(home.drawnBy).toBe("blocks");
+    // With nothing in it yet, the face draws its way in rather than the home's blocks, and the description says so (Roadmap f-better-bare-app-defaults).
+    expect(say(enDash).drawnBy).toBe("derived");
   });
 
   it("says a logo from a path by its path, its alt the app's name when none is given", () => {

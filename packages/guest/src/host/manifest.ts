@@ -1,8 +1,10 @@
-import { isSystem, isoToday, localeFor, meOf, profileOf, timeZoneFor, type AnySchema, type FileKind, type Principal, type Store } from "@graview/core";
+import { isSystem, isoToday, localeFor, profileOf, timeZoneFor, type AnySchema, type FileKind, type Principal, type Store } from "@graview/core";
 import { fileFieldKind } from "./marks.js";
 import type { GuestAct, GuestEdge, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
 import type { GuestPictures } from "./pictures.js";
+import { THUMB_REFUSED, thumbIsSound } from "./picture-thumb.js";
 import { choicesOf, plainNode, readAcross, type GuestViewInput } from "./session.js";
+import { unseenOf, viewKinds } from "./unseen.js";
 
 /*
  * A WORKER VIEW IS A PLACE, WITH A MANIFEST THE HOST ENFORCES (FR-91).
@@ -101,6 +103,9 @@ export interface WorkerViewManifest {
    * (FR-220): the kinds, `["circuit"]`, or the fields by kind beside
    * `width`, `{ circuit: "photo" }`; a picture it did not choose is handed
    * by its facts alone, never fetched nor reckoned against its budget.
+   * `thumb`, a width narrower than `width`, hands each picture a second,
+   * smaller address beside `src` (`thumb`), for a chip or a grid, where it
+   * is smaller than `src`; both sizes are reckoned against the budget.
    */
   readonly pictures?: GuestPictures;
   /**
@@ -252,6 +257,11 @@ function picturesProblems<S extends AnySchema>(pictures: unknown, store: Store<S
       if (!(Number.isInteger(value) && (value as number) >= 1 && (value as number) <= 500)) problems.push("The view's pictures most is a whole number from 1 to 500: the most pictures it is handed, in the order its records are handed (view-pictures-most).");
       continue;
     }
+    /* A second, smaller size (Roadmap f-view-pictures-load-lazily-and-small): a number, never a kind called `thumb`'s fields. */
+    if (key === "thumb" && typeof value !== "string" && !Array.isArray(value)) {
+      if (!thumbIsSound(value, (pictures as { width?: unknown }).width)) problems.push(THUMB_REFUSED);
+      continue;
+    }
     if (key === "width" && typeof value !== "string" && !Array.isArray(value)) {
       if (!(Number.isInteger(value) && (value as number) >= 16 && (value as number) <= 4_096)) problems.push("The view's pictures width is a whole number of pixels from 16 to 4096.");
       continue;
@@ -307,7 +317,7 @@ export function checkManifest<S extends AnySchema>(manifest: WorkerViewManifest,
   if (manifest.replaces !== undefined && manifest.replaces !== "page") findings.push(`The view's replaces is "${String(manifest.replaces)}": the one thing a view replaces is "page", or leave it out to draw the view above the record's own fields.`);
   else if (manifest.replaces === "page" && manifest.attach === "home") findings.push('The home\'s view is the home already: replaces "page" is for a view of a kind, of one record (its page) or of many (its list).');
   if (manifest.gestures !== undefined && typeof manifest.gestures !== "boolean") findings.push(`The view's gestures is "${String(manifest.gestures)}": it is true, or left out.`);
-  if (manifest.bleed !== undefined && typeof manifest.bleed !== "boolean" && manifest.bleed !== "full") findings.push(`The view's bleed is "${String(manifest.bleed)}": it is true, "full", or left out.`);
+  if (manifest.bleed !== undefined && typeof manifest.bleed !== "boolean" && manifest.bleed !== "full") findings.push(`The view's bleed is ${JSON.stringify(manifest.bleed)}: it is true (edge to edge on a phone, the column on a desk), "full" (the page's whole width at every width, a desk's included), or left out (view-bleed).`);
   if (manifest.heading !== undefined && (manifest.heading !== "own" || manifest.attach === "home" || (manifest.cardinality === "many" ? manifest.title === undefined : manifest.replaces !== "page"))) findings.push(`The view's heading is "${String(manifest.heading)}": it is "own" on a view that is a place (a title, cardinality many) or on a view of one record that replaces its page (replaces "page"), or left out.`);
   if (manifest.flows !== undefined && typeof manifest.flows !== "boolean") findings.push(`The view's flows is "${String(manifest.flows)}": it is false for a view that keeps its place's frame, or left out.`);
   else if (manifest.flows === false && (manifest.attach === "home" || manifest.cardinality !== "many" || manifest.title === undefined)) findings.push("Only a view that is a place keeps a frame: flows false needs a title and cardinality many on a kind.");
@@ -426,6 +436,8 @@ export interface WorkerViewPropsInput {
    * view whose kinds have computed values starts (`readsComputed`).
    */
   readonly computed?: ComputedOn;
+  /** The kinds the store keeps from the seat (`kindsKeptFrom`), where the host asked already for this push. Asked of the store otherwise. */
+  readonly kept?: ReadonlySet<string>;
 }
 
 /** A record's computed values over the viewer's graph, by name; none for a kind that has none. */
@@ -499,7 +511,7 @@ export function workerViewProps<S extends AnySchema>(store: Store<S>, principal:
   const plain = (one: unknown) => (computed ? { ...plainNode(store, one), ...computed(graph, one) } : plainNode(store, one));
   /* Who is looking, as `$me` reads them: the profile's person, known by its id before its first act makes it; else the seat's own record, in its sight. */
   const profile = profileOf(principal);
-  const myId = meOf(principal);
+  const myId = store.personOf(principal);
   const myRecord = !isSystem(principal) && myId !== undefined ? graph.getNode(myId) : undefined;
   const myKind = myRecord && (store.schema.tryDefinition(myRecord.kind) as { people?: boolean } | undefined)?.people ? myRecord : undefined;
   const hasPeople = () => store.schema.definitions.some((definition) => (definition as { people?: boolean }).people);
@@ -528,5 +540,9 @@ export function workerViewProps<S extends AnySchema>(store: Store<S>, principal:
     ...choicesOf(store.schema, [...own, ...listed.values()]),
     // A link names a place by its slug, so each slug once: a picture over several kinds is one place to a view.
     ...(given.places ? { places: given.places.filter((place, at, all) => all.findIndex((other) => other.as === place.as) === at).map(({ as, title, kind }) => ({ as, title, kind })) } : {}),
+    // What its seat is kept from, of what it reads, and only what the seat may know of it (Roadmap f-view-knows-what-its-seat-cannot-see).
+    ...withUnseen(unseenOf(store, principal, viewKinds(manifest), given.kept)),
   };
 }
+
+const withUnseen = (unseen: GuestProps["unseen"]): Pick<GuestProps, "unseen"> => (unseen ? { unseen } : {});

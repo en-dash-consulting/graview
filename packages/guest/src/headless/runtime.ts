@@ -28,6 +28,7 @@
  */
 import "@remote-dom/core/polyfill";
 import { mineRefusal, type GuestAnswer, type GuestProps } from "../protocol.js";
+import { PART_SHARE } from "../part.js";
 import { harden, type Hardening } from "../worker/harden.js";
 import { createViewRuntime, type GraviewView } from "../worker/view-global.js";
 import { judgeTranscript } from "./judge.js";
@@ -132,7 +133,7 @@ async function run(text: string): Promise<string> {
 
   /* One push of what it is shown, timed with its top line. */
   const began = clock();
-  if (!failure) runtime.hear({ type: "props", props: input.props as GuestProps, push: 1 });
+  if (!failure) runtime.hear({ type: "props", props: input.props as GuestProps, push: 1, partMs: input.limits.pushMs / PART_SHARE });
   transcript.ms += clock() - began;
   if (transcript.ms >= input.limits.pushMs) fail("slow", `It took longer than ${input.limits.pushMs.toLocaleString("en-US")} ms to draw what it was shown.`);
   /* What it drew goes in microtasks: let them run, and anything it chained on them, a bounded number of turns. */

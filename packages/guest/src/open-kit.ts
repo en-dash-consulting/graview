@@ -14,7 +14,10 @@
  *             on SVG's `<a>`, SMIL (which can rewrite an `href`), every `src`/`href`/`srcset`
  *             but an image's `data:` or same-origin `blob:` source and an SVG
  *             reference to `#id` in the view's own drawing, and in CSS every
- *             `url()` but `url(#id)` on a paint, `@import`, `@font-face`,
+ *             `url()` but `url(#id)` on a paint, `@import`, an `@font-face`
+ *             with any `src` but a `data:` font (one the view declares is
+ *             loaded by the host from its bytes, held to 50 KB a face and
+ *             200 KB a view: core's css/faces.ts),
  *             `@namespace`, `@property` (a registration is the whole page's),
  *             and every function not on `CSS_FUNCTIONS`
  *             (`image-set()`, `cross-fade()`, `element()`, `paint()`,
@@ -151,7 +154,7 @@ export const HTML_ELEMENTS: Readonly<Record<string, OpenElement>> = {
   meter: { attributes: { value: "number", min: "number", max: "number", low: "number", high: "number", optimum: "number" } },
   progress: { attributes: { value: "number", max: "number" } },
   // images, held in the drawing: data: or the host's own blob:
-  img: { empty: true, attributes: { src: "image", alt: "text", width: "number", height: "number", decoding: { oneOf: ["async", "sync", "auto"] } } },
+  img: { empty: true, attributes: { src: "image", alt: "text", width: "number", height: "number", decoding: { oneOf: ["async", "sync", "auto"] }, loading: { oneOf: ["lazy", "eager"] }, fetchpriority: { oneOf: ["high", "low", "auto"] } } },
   /*
    * A record's video, played by the host (0.1.37): `<graview-video
    * data-record="moment:x" data-field="clip">` (and `data-index` in a

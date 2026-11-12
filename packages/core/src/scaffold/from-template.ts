@@ -37,6 +37,35 @@ export function templateJson(template: GraviewTemplate): string {
   return `${JSON.stringify(template, null, 2)}\n`;
 }
 
+/** Where a template keeps a view's code beside it: `views/<template id>/<name>.html` for a frame view, `.js` for a curated one. */
+export function templateViewSources(template: GraviewTemplate): readonly { readonly name: string; readonly path: string }[] {
+  return [
+    ...(template.frameViews ?? []).map((view) => ({ name: view.name, path: `views/${template.id}/${view.name}.html` })),
+    ...(template.views ?? []).map((view) => ({ name: view.name, path: `views/${template.id}/${view.name}.js` })),
+  ];
+}
+
+/**
+ * THE VIEWS A TEMPLATE COMES WITH, as project files: each one's code in
+ * `views/`, and a curated view's manifest beside it — the template's entry
+ * as it stands, which `graview view check views/<name>.js --manifest
+ * views/<name>.manifest.json` runs it with. A view whose code was not found
+ * is left out; the template still names it in template.json.
+ */
+export function templateViewFiles(template: GraviewTemplate, code: Readonly<Record<string, string>>): { readonly path: string; readonly contents: string }[] {
+  const files: { path: string; contents: string }[] = [];
+  for (const view of template.frameViews ?? []) {
+    const source = code[view.name];
+    if (source !== undefined) files.push({ path: `views/${view.name}.html`, contents: source });
+  }
+  for (const view of template.views ?? []) {
+    const source = code[view.name];
+    if (source === undefined) continue;
+    files.push({ path: `views/${view.name}.js`, contents: source }, { path: `views/${view.name}.manifest.json`, contents: `${JSON.stringify(view, null, 2)}\n` });
+  }
+  return files;
+}
+
 export function documentAppTs(ids: Ids): string {
   return `import { Store, type AnySchema, type GraviewApp, type StoreOptions } from "@graview/core";
 import { sayFindings } from "@graview/core/document";

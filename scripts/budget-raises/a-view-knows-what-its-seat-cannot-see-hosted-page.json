@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 240,
+  "gzipped": 55,
+  "changeset": "a-view-knows-what-its-seat-cannot-see.md",
+  "note": "Raised when a worker view came to be told what its seat cannot see (Roadmap f-view-knows-what-its-seat-cannot-see): `props.unseen`, the kinds it reads that the seat sees none of and the fields its sight may keep, read from the policy as each push is built, and the host's way in drawn where everything it reads is kept: a registered worker view reads the host's `signIn` from the provider and hands it to its host, and the store lets go of a seat's views when a check that made the seat up is done (`forgetSeatView`). 240 / 55 more than its budget held. Measured at 679_789 / 235_579 against 679_549 / 235_525."
+}

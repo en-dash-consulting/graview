@@ -8,7 +8,7 @@ import { normalize, writesOf, type Primitive } from "./graph/primitives.js";
 import { keepLinked, keepsLinked } from "./keep-linked.js";
 import { bareOp, inverseOf } from "./ops/inverse.js";
 import { LabelIndex, refusalFor, type RefCandidate, type RefResolution } from "./labels.js";
-import { nodeRefArgs, type NodeRefArg } from "./mutations/node-ref.js";
+import { heldRefKinds, nodeRefArgs, type NodeRefArg } from "./mutations/node-ref.js";
 import type { GraphSnapshot } from "./graph/types.js";
 import { verifyFold, type VerifyResult } from "./integrity.js";
 import { evaluate } from "./invariants/engine.js";
@@ -30,16 +30,19 @@ import { OperationLog, type Epoch, type LogArchive } from "./ops/log.js";
 import type { Author, Batch, Operation, SentOut, Via } from "./ops/types.js";
 import { lineageOf, type Lineage } from "./ops/lineage.js";
 import { KEEP_LINK, keepLinkMutation, keepLinkVia } from "./mutations/keep-link.js";
+import { BIND_PERSON, BINDING } from "./binding-served.js";
+import { PERSON_SEAT } from "./graph/archived.js";
+import { ActRefusal } from "./refused.js";
 import { advisoryVoterOf, signedOutSeat, SIGN_IN_TO_VOTE, VOTE_SUGGESTION, VOTING, voteSuggestionMutation, type AppTidying, type VotesOptions } from "./mutations/vote-suggestion.js";
 import { TYPE_TEXT, TYPING } from "./text/typing-hook.js";
 import type { FieldRevision } from "./ops/revisions.js";
 import { DECLINES, isAutomated, isTidyingActor, tidyingRefusal, type ActMeanings, type ServedStops } from "./ops/tidying.js";
 import { nameOfAuthor } from "./who.js";
-import { actingAs, grantsTo, isSystem, meIn, meOf, ownsId, permits, profileOf, rolesSaid, withValidProfile, permittedMutations, proposes, subjectKinds, type PolicyWords } from "./permissions/policy.js";
+import { actingAs, boundPersonOf, grantsTo, isSystem, meIn, meOf, ownsId, permits, profileOf, rolesSaid, seatedIn, withValidProfile, permittedMutations, proposes, subjectKinds, type PolicyWords } from "./permissions/policy.js";
 import { MOST_PROPOSED, PROPOSE_CHANGES, proposeChangesMutation } from "./mutations/propose-changes.js";
 import { namesUnseen, redact } from "./ops/withheld.js";
 import { writersBehind } from "./ops/writers.js";
-import { nounOf } from "./schema/define-node.js";
+import { nounOf, withArticle } from "./schema/define-node.js";
 import { behind, fieldsJudged, mayKeepField, partialSight, recordsOf, sees } from "./permissions/sight.js";
 import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
 import { checkUndo, UndoBlockedError, undoneInverses, undoPrimitives, type UndoCheck } from "./ops/undo.js";
@@ -556,6 +559,37 @@ const batchesOf = (ops: readonly Operation[]): ReadonlyMap<string, string> => ne
  * from the platform's random source where there is one, which every page
  * and Node 22 has.
  */
+/** The most seats `kindsKeptFrom` keeps an answer for at once: past it, the answers kept are let go and worked out again as asked. */
+const KEPT_KINDS_SEATS = 64;
+
+/**
+ * THE SEAT A KEPT-KINDS ANSWER IS FOR: exactly what working it out reads of
+ * a principal — its kind, its id, its roles, the profile it is judged by
+ * (`profileOf`'s reading, not the fields it reads that from), and the same
+ * of whom it acts for — each read by name, never the principal serialized
+ * whole, and roles in one order. What it does not read (a session, a
+ * display name, which visitor of a shared seat) is no part of it, so a seat
+ * every visitor shares is one entry. Only strings are said: a kind, an id
+ * or a role that is anything else, or a seat past eight deep, has no key,
+ * and its answer is worked out each time and kept for nobody.
+ */
+function keptKindsSeat(principal: Principal, depth = 0): string | undefined {
+  if (typeof principal !== "object" || principal === null) return undefined;
+  const behalf = principal.onBehalfOf as Principal | null | undefined;
+  // No one to act for, as `actingAs` reads it, absent or null; said apart, since `isSystem` asks which.
+  const behind = behalf === undefined ? "absent" : behalf === null ? "null" : depth < 8 ? keptKindsSeat(behalf, depth + 1) : undefined;
+  if (behind === undefined) return undefined;
+  const kind: unknown = principal.kind;
+  const id: unknown = principal.id;
+  const given: unknown = principal.roles;
+  if ((kind !== undefined && typeof kind !== "string") || (id !== undefined && typeof id !== "string")) return undefined;
+  if (given !== undefined && (!Array.isArray(given) || !given.every((role) => typeof role === "string"))) return undefined;
+  const roles = given === undefined ? null : [...new Set(given as readonly string[])].sort();
+  const profile = profileOf(principal);
+  // And the record the store bound it to (`seatedIn`, read before this is asked): a binding and its undo are two seats.
+  return JSON.stringify([kind ?? null, id ?? null, roles, profile ? [profile.id, profile.name] : null, boundPersonOf(principal) ?? null, behind]);
+}
+
 function storeTag(): string {
   const random = (globalThis as { crypto?: { getRandomValues?: (array: Uint8Array) => Uint8Array } }).crypto;
   const bytes = new Uint8Array(6);
@@ -577,6 +611,8 @@ export class Store<S extends AnySchema> {
   private voter: AnyMutationDefinition<S> | undefined;
   /** "Propose changes" (Roadmap f-proposals-for-review), when the app declared no act by that name. */
   private proposer: AnyMutationDefinition<S> | undefined;
+  /** "Bind a person" (Roadmap f-invite-binds-existing-person): answered where a kind is the people, offered by no list. */
+  private binder: AnyMutationDefinition<S> | undefined;
   private readonly invariants: readonly InvariantDefinition<S>[];
   private readonly invariantOptions: EvaluateOptions<S>;
   readonly policy: Policy | undefined;
@@ -909,6 +945,11 @@ export class Store<S extends AnySchema> {
   private spelled(name: string): string {
     // "Type text" (Roadmap f-collab-text): answered by every store once `@graview/core/typing` is loaded, and offered by no list.
     if (name === TYPE_TEXT && !this.typer && TYPING.typeText && !this.past && !this.mutations.has(name)) this.mutations.set(name, (this.typer = TYPING.typeText(this)));
+    // "Bind a person" (Roadmap f-invite-binds-existing-person): answered where a kind is the people once the host loads `@graview/core/binding`, and offered by no list.
+    if (name === BIND_PERSON && !this.binder && BINDING.act && !this.past && !this.mutations.has(name)) {
+      const binder = BINDING.act(this) as AnyMutationDefinition<S> | undefined;
+      if (binder) this.mutations.set(name, (this.binder = binder));
+    }
     return this.mutations.has(name) ? name : (actSpelledAs(name, this.mutations.keys()) ?? name);
   }
 
@@ -925,7 +966,7 @@ export class Store<S extends AnySchema> {
   }
 
   allMutations(): AnyMutationDefinition<S>[] {
-    return [...this.mutations.values(), ...(this.publisher ? [this.publisher] : [])].filter((mutation) => mutation !== this.keeper && mutation !== this.typer && mutation !== this.voter && mutation !== this.proposer && !this.mutationDisabled(mutation));
+    return [...this.mutations.values(), ...(this.publisher ? [this.publisher] : [])].filter((mutation) => mutation !== this.keeper && mutation !== this.typer && mutation !== this.voter && mutation !== this.proposer && mutation !== this.binder && !this.mutationDisabled(mutation));
   }
 
   /** The declared acts a derived act resolves its permission through; keeping a link, those that make or break its relation. */
@@ -1018,6 +1059,8 @@ export class Store<S extends AnySchema> {
   /** What `permits` answers from the grants alone; on an undo, a call already made, so it asks no record of who took it back. */
   private judged(call: MutationCall, principal: Principal, undoing = false): ReturnType<typeof permits> {
     call = this.spelledCall(call);
+    // The seat as it is bound now: `self`, `ownEnd` and `$me` read the record it was bound to, and nothing a caller said of one.
+    principal = this.seated(principal);
     /*
      * The same answer `apply` would give. A declared agent's `may` narrows
      * it before the policy does; asked without it, the chat offered a
@@ -1031,6 +1074,8 @@ export class Store<S extends AnySchema> {
     const mutation = this.mutations.get(call.name) ?? (call.name === PUBLISH ? this.publisher : undefined);
     const nobody = mutation && !undoing && this.noOneToBe(mutation, principal);
     if (nobody) return { ok: false, refusal: nobody } as ReturnType<typeof permits>;
+    // Binding a seat to a person is judged by `@graview/core/binding`, which made the act: the host, or a grant that names it.
+    if (mutation && mutation === this.binder) return BINDING.judged!(this, call, principal) as ReturnType<typeof permits>;
     // Publishing is the declaration's `publishers`, not a grant's.
     if (mutation && mutation === this.publisher) return PUBLISHING.verdict!(this, principal) as ReturnType<typeof permits>;
     /*
@@ -1115,7 +1160,7 @@ export class Store<S extends AnySchema> {
     if (!this.policy || this.past || signedOutSeat(principal)) return false;
     call = this.spelledCall(call);
     const mutation = this.mutations.get(call.name);
-    if (!mutation || mutation === this.proposer || mutation === this.voter || this.refusesAgent(call, principal) || this.namesTurnedOff(call, principal)) return false;
+    if (!mutation || mutation === this.proposer || mutation === this.voter || mutation === this.binder || this.refusesAgent(call, principal) || this.namesTurnedOff(call, principal)) return false;
     return !this.permits(call, principal).ok && proposes(this.policy, principal, call.name, this.subjectKindOf(call, principal));
   }
 
@@ -1301,6 +1346,25 @@ export class Store<S extends AnySchema> {
     };
   }
 
+  /** Refuses a record named for an act that is of none of the kinds it takes — at its subject or any record argument — as a document's act on the wrong kind is refused. */
+  private keepsToItsKinds(definition: AnyMutationDefinition<S>, call: MutationCall): void {
+    const subject = definition.subject;
+    if (subject && subject.kinds !== "*") this.ofKinds(definition, call.args[subject.arg], subject.kinds as readonly string[]);
+    const shape = (definition.input as { shape?: Record<string, unknown> }).shape ?? {};
+    for (const [name, field] of Object.entries(shape)) {
+      const kinds = name === subject?.arg ? undefined : heldRefKinds(field);
+      if (kinds) this.ofKinds(definition, call.args[name], kinds);
+    }
+  }
+
+  private ofKinds(definition: AnyMutationDefinition<S>, id: unknown, kinds: readonly string[]): void {
+    // A list of records: each one held to the kinds.
+    if (Array.isArray(id)) return id.forEach((one) => this.ofKinds(definition, one, kinds));
+    if (typeof id !== "string" || kinds.includes("*")) return;
+    const node = this.graph.getNode(id);
+    if (node && !kinds.includes(node.kind)) throw new ActRefusal(`"${definition.title ?? definition.name}" acts on ${kinds.join(" or ")}, not on ${withArticle(node.kind)}`, "invalid");
+  }
+
   /**
    * AN ACT RUNS UNDER ITS AUTHOR'S SIGHT (FR-55). Its body, its guard, its
    * refusal and its sentence read the store as the author is served it,
@@ -1313,6 +1377,7 @@ export class Store<S extends AnySchema> {
    * the store's own graph.
    */
   private sighted(author: Principal | undefined): NonNullable<Parameters<typeof compileMutation<S>>[3]> {
+    author = author && this.seated(author);
     // Who `$me` is: the person, for an agent acting for one (Roadmap f-act-as-me).
     const me = {
       me: author && meIn(this.schema, author),
@@ -1405,6 +1470,20 @@ export class Store<S extends AnySchema> {
     return this.graph.has(id) && seesId(this, principal)(id);
   }
 
+  /**
+   * WHO `$me` IS FOR THIS SEAT HERE: the record it was bound to
+   * (`bindPerson`), where it was; else its account's id, or its profile's
+   * person (`meOf`). What a host or a view says "you" with.
+   */
+  personOf(principal: Principal): string | undefined {
+    return meOf(this.seated(principal));
+  }
+
+  /** The seat as this store judges it now: its bound person read from the graph (`seatedIn`). */
+  private seated<A extends Author>(principal: A): A {
+    return seatedIn(this.graph, principal);
+  }
+
   private labels: LabelIndex<S> | undefined;
 
   /**
@@ -1438,8 +1517,41 @@ export class Store<S extends AnySchema> {
     return refusalFor(this.schema, arg, given, candidates);
   }
 
-  /** The kinds of administered modules this principal may not see at all. */
+  /**
+   * The kinds of administered modules this principal may not see at all.
+   *
+   * KEPT WHILE NOTHING IT READS HAS CHANGED: for a seat under a `sees` rule
+   * it is worked out from every act the seat may do, and a page asks it for
+   * each link it draws. The answer is kept per seat and asked again once
+   * the store has told its subscribers anything, an op is logged, a change
+   * is put back, or what judges a partial sight or offers publishing is
+   * loaded. A seat is what working it out reads of the principal
+   * (`keptKindsSeat`), so every visitor of a shared seat is one entry; at
+   * most `KEPT_KINDS_SEATS` are kept at once. Each call is handed its own
+   * copy: what a caller does to it is never the next caller's answer.
+   */
   kindsKeptFrom(principal: Principal = HUMAN): ReadonlySet<string> {
+    // Kept for the seat as it is bound now (`seatedIn`): a binding, and its undo, is another seat's answer.
+    principal = this.seated(principal);
+    const all = this.log.all();
+    const state = `${this.told}|${this.log.length}|${all.at(-1)?.id ?? ""}|${fieldsJudged(this) ? 1 : 0}|${PUBLISHING.act ? 1 : 0}`;
+    if (this.keptKinds?.state !== state) this.keptKinds = { state, seats: new Map() };
+    const seats = this.keptKinds.seats;
+    const seat = keptKindsSeat(principal);
+    if (seat === undefined) return this.kindsKeptNow(principal);
+    let kept = seats.get(seat);
+    if (!kept) {
+      kept = this.kindsKeptNow(principal);
+      if (seats.size >= KEPT_KINDS_SEATS) seats.clear();
+      seats.set(seat, kept);
+    }
+    return new Set(kept);
+  }
+
+  /** What `kindsKeptFrom` keeps: the store's state it was worked out at, and each seat's answer there, never handed out. */
+  private keptKinds: { readonly state: string; readonly seats: Map<string, ReadonlySet<string>> } | undefined;
+
+  private kindsKeptNow(principal: Principal): ReadonlySet<string> {
     const kept = new Set<string>();
     for (const [name, module] of this.modules.administered) {
       if (this.mayAdminister(name, principal)) continue;
@@ -1473,6 +1585,7 @@ export class Store<S extends AnySchema> {
    * second list to keep in step.
    */
   permittedMutations(principal: Principal = HUMAN): readonly AnyMutationDefinition<S>[] {
+    principal = this.seated(principal);
     const all = this.allMutations();
     const declared = permittedMutations(
       this.policy,
@@ -1722,6 +1835,129 @@ export class Store<S extends AnySchema> {
     });
   }
 
+  /** Who may: the policy's verdict on a call, refused as `apply` refuses it. */
+  private permittedTo(call: MutationCall, as: Author | Principal): void {
+    // A vote is judged with no policy too: a shared seat's vote is refused whether or not the app says who may do what (Roadmap f-votes-shared-seat).
+    const voting = this.voter !== undefined && this.mutations.get(call.name) === this.voter;
+    const binding = this.binder !== undefined && this.mutations.get(call.name) === this.binder;
+    const verdict = this.policy || (this.publisher && call.name === PUBLISH) || voting || binding || this.mutations.get(call.name) === this.proposer ? this.judged(call, as as Principal) : undefined;
+    // Rehearsing a proposal, an act its author may propose stands as the reviewer's would (Roadmap f-proposals-for-review).
+    if (verdict && !verdict.ok && !(this.proposing && this.mayPropose(call, as as Principal))) this.refuse(verdict.refusal, as.id);
+  }
+
+  /** What an agent was declared able to do, and the modules turned off. */
+  private declaredTo(call: MutationCall, as: Author | Principal): void {
+    const refusal = this.refusesAgent(call, as) ?? this.namesTurnedOff(call, as as Principal);
+    if (refusal) this.refuse(refusal, as.id);
+  }
+
+  /**
+   * ONE CALL JUDGED AS `apply` JUDGES IT once who may has been asked: what
+   * it names there for this seat, its input and its own rule (compiled),
+   * the mark only binding writes, and what the app's own actor is held to.
+   * What it makes, or the refusal thrown.
+   */
+  private judgedCall(definition: AnyMutationDefinition<S>, call: MutationCall, as: Author | Principal, decided: boolean, hint?: string): ReturnType<typeof compileMutation> {
+    const missing = this.missingFor(call, as as Principal);
+    if (missing) throw missing;
+    // An act takes only the kinds it names: its subject's, and each record argument's. Binding a person says its own refusal.
+    if (definition !== this.binder) this.keepsToItsKinds(definition, call);
+    let compiled: ReturnType<typeof compileMutation>;
+    try {
+      compiled = compileMutation(this.graph, definition, call.args, { ...this.sighted(as as Principal), hint });
+    } catch (error) {
+      // A press the act's own input refused: the watch tells a form filled wrongly from an act offered whole.
+      if (error instanceof InvalidArguments && !this.rehearsing) tellTheWatchOfAnInputRefusal(error, as.id);
+      throw error;
+    }
+    // Whose record a person is, only binding says (Roadmap f-invite-binds-existing-person): no other act writes the mark.
+    if (definition !== this.binder && compiled.primitives.some((one) => (one.op === "add-node" && Object.hasOwn(one.node, PERSON_SEAT)) || (one.op === "patch-node" && Object.hasOwn(one.after, PERSON_SEAT)))) {
+      throw new ActRefusal(`"${definition.title ?? definition.name}" cannot say whose record a person is: only binding an account to it does.`);
+    }
+    if (isAutomated(as)) {
+      const refused = tidyingRefusal(this.schema, this.graph, compiled.primitives, this.authorName(as), { declaration: !this.suggesting && !decided });
+      if (refused) this.refuse({ mutation: call.name, message: refused, wouldNeed: [] }, as.id);
+    }
+    return compiled;
+  }
+
+  /**
+   * WHAT `apply` WOULD SAY OF ONE CALL, WITHOUT APPLYING IT: undefined where
+   * it would run, else the refusal it would throw. The same steps `apply`
+   * takes, in its order — who may, what an agent was declared able to do,
+   * what the app's own actor is held to, what the call names for this seat,
+   * its input and rule, the mark only binding writes — and what it makes
+   * judged by `land` over the graph as it stands (`wouldRefuse`, handed in,
+   * so a page carries none of it), the graph's own checks of a write.
+   * Publishing, a vote and a proposal are judged by making their op as
+   * `apply` makes it and keeping none (a proposal rehearses its calls, as it
+   * does when applied). Where a kind follows another (`derives`), what
+   * follows the change is worked out as `apply` works it out, over a copy of
+   * the graph with the change made. A seat whose profile's person is not
+   * made yet is judged as the person `apply` makes first, on the one copy of
+   * the store `wouldDo` keeps for it. Nothing else is copied, nothing is
+   * written and nobody is told. What `mayRun` (`@graview/core/seat`) asks.
+   */
+  wouldApply(call: MutationCall, author: Author | Principal, land: (graph: Graph<S>, primitives: readonly Primitive[]) => unknown): unknown {
+    const as = withValidProfile(author) as Principal;
+    const person = this.personFor(as);
+    const store = person ? this.withPersonMade(as, person.id) : this;
+    const was = store.rehearsing;
+    store.rehearsing = true;
+    try {
+      store.stillNow();
+      const spelled = store.spelledCall(call);
+      store.permittedTo(spelled, as);
+      store.declaredTo(spelled, as);
+      if (isAutomated(as)) store.refuseDeclined([spelled], as);
+      if (isTidyingActor(as)) store.refuseStopped([spelled], as, store.suggesting);
+      const definition = store.mutation(spelled.name);
+      // Publishing, a vote and a proposal make an op of their own, as `apply` makes it: each judged by making it and keeping none.
+      const made = { id: `${PREVIEW_BATCH}:0`, at: store.now() };
+      if (definition === store.publisher) return void PUBLISHING.op!(store, made, spelled, PREVIEW_BATCH, as, {});
+      if (definition === store.voter) {
+        if (!VOTING.op) throw new GraphError("Load @graview/core/tidying to vote on a suggestion.");
+        return void VOTING.op(store, made, spelled, PREVIEW_BATCH, as, {});
+      }
+      if (definition === store.proposer) {
+        const ids = (store as unknown as { nextId: () => string }).nextId;
+        (store as unknown as { nextId: () => string }).nextId = () => made.id;
+        try {
+          return void store.proposal(spelled, PREVIEW_BATCH, as, undefined);
+        } finally {
+          (store as unknown as { nextId: () => string }).nextId = ids;
+        }
+      }
+      const { primitives } = store.judgedCall(definition, spelled, as, false);
+      if (primitives.length === 0) return undefined;
+      const splices = store.asSplices(primitives, undefined).map(normalize);
+      // Where a kind follows another, what follows a change is worked out over the graph the change leaves, as `apply` works it out: on a copy of the graph, the one place this asks one.
+      if (keepsLinked(store.schema)) {
+        const copy = Graph.from(store.schema, store.graph.snapshot(), { validate: store.validate });
+        copy.applyPrimitives(splices);
+        keepLinked(store.schema, copy, splices, { mayWriteBack: store.writesBack(as) });
+        return undefined;
+      }
+      return land(store.graph, splices);
+    } catch (error) {
+      return error;
+    } finally {
+      store.rehearsing = was;
+    }
+  }
+
+  /**
+   * The store a seat's call is judged on: this one, or — for a seat whose
+   * profile's person is not made yet — the one copy with that person made
+   * that `wouldDo` keeps while this store stands. What `mayRun` reads a
+   * seat's sight and records from, as `apply` would after making the person.
+   */
+  judgedAs(author: Author | Principal): Store<S> {
+    const as = withValidProfile(author) as Principal;
+    const person = this.personFor(as);
+    return person ? this.withPersonMade(as, person.id) : this;
+  }
+
   /**
    * HOW MANY TIMES THIS STORE HAS TOLD ITS SUBSCRIBERS SOMETHING, or would
    * have: a change, an adopt, the day turning, something read beside the
@@ -1800,6 +2036,7 @@ export class Store<S extends AnySchema> {
       mintBatch: () => PREVIEW_BATCH,
       rehearsing: true,
       personMade: undefined,
+      keptKinds: undefined,
     });
     // Its own acts, so "Type text" reads the text back off the rehearsal's log, as the apply would off this one's.
     const typer = this.typer && TYPING.typeText!(twin);
@@ -1902,17 +2139,8 @@ export class Store<S extends AnySchema> {
      * seat holds say what it may do at all; `may` narrows what THIS provider
      * was brought in for, and the narrower of the two wins.
      */
-    const permitted = (call: MutationCall, as: Author | Principal = author) => {
-      // A vote is judged with no policy too: a shared seat's vote is refused whether or not the app says who may do what (Roadmap f-votes-shared-seat).
-      const voting = this.voter !== undefined && this.mutations.get(call.name) === this.voter;
-      const verdict = this.policy || (this.publisher && call.name === PUBLISH) || voting || this.mutations.get(call.name) === this.proposer ? this.judged(call, as as Principal) : undefined;
-      // Rehearsing a proposal, an act its author may propose stands as the reviewer's would (Roadmap f-proposals-for-review).
-      if (verdict && !verdict.ok && !(this.proposing && this.mayPropose(call, as as Principal))) this.refuse(verdict.refusal, as.id);
-    };
-    const declared = (call: MutationCall, as: Author | Principal = author) => {
-      const refusal = this.refusesAgent(call, as) ?? this.namesTurnedOff(call, as as Principal);
-      if (refusal) this.refuse(refusal, as.id);
-    };
+    const permitted = (call: MutationCall, as: Author | Principal = author) => this.permittedTo(call, as);
+    const declared = (call: MutationCall, as: Author | Principal = author) => this.declaredTo(call, as);
     /* A call that names a record an earlier call makes (`{ $made: n }`, FR-193) is asked once that record is there to name. */
     const naming = calls.map(namesMade);
     calls.forEach((call, at) => naming[at] || permitted(call));
@@ -1995,21 +2223,8 @@ export class Store<S extends AnySchema> {
           intents.push(op.intent);
           continue;
         }
-        const missing = this.missingFor(call, as as Principal);
-        if (missing) throw missing;
-        let compiled: ReturnType<typeof compileMutation>;
-        try {
-          compiled = compileMutation(this.graph, definition, call.args, { ...this.sighted(as as Principal), hint });
-        } catch (error) {
-          // A press the act's own input refused: the watch tells a form filled wrongly from an act offered whole.
-          if (error instanceof InvalidArguments && !this.rehearsing) tellTheWatchOfAnInputRefusal(error, as.id);
-          throw error;
-        }
+        const compiled = this.judgedCall(definition, call, as, decided, hint);
         if (hint !== undefined && compiled.firstMinted !== undefined && compiled.firstMinted !== hint) renamed.set(hint, compiled.firstMinted);
-        if (isAutomated(as)) {
-          const refused = tidyingRefusal(this.schema, this.graph, compiled.primitives, this.authorName(as), { declaration: !this.suggesting && !decided });
-          if (refused) this.refuse({ mutation: call.name, message: refused, wouldNeed: [] }, as.id);
-        }
         /*
          * AN ACT THAT DID NOTHING DOES NOT GO IN THE HISTORY.
          *
@@ -2479,6 +2694,17 @@ export class Store<S extends AnySchema> {
     // Asked of `@graview/core/tidying`; a store that has not loaded it offers no way back it cannot judge.
     const stop = DECLINES.undoRefusal ? DECLINES.undoRefusal(this, ops, author) : ops.some((target) => target.undoes !== undefined && target.mutation === null && (target.lineage?.stopsKind || target.lineage?.liftedStop)) ? { mutation: "undo", wouldNeed: [], message: "This cannot be taken back here yet." } : undefined;
     if (stop) return stop;
+    /*
+     * A BINDING STAYS ONCE ITS SEAT HAS ACTED AS THE RECORD (Roadmap
+     * f-invite-binds-existing-person): taking it back would leave what they
+     * did to whoever is bound there next. Judged by `@graview/core/binding`;
+     * a store that has not loaded it takes no binding back.
+     */
+    for (const target of ops) {
+      if (target.undoes !== undefined || target.mutation?.name !== BIND_PERSON) continue;
+      const kept = BINDING.undo ? BINDING.undo(this, target) : "This binding cannot be taken back here.";
+      if (kept) return { mutation: "undo", wouldNeed: [], message: kept };
+    }
     if (this.policy || this.publisher) {
       for (const target of ops) {
         /*
@@ -2533,7 +2759,7 @@ export class Store<S extends AnySchema> {
          * it" is everybody's to run, and undoing Ann's was taking back her vote.
          */
         /* What the act wrote as them: the profile's person, where they were one. */
-        const names = (value: unknown) => JSON.stringify(value).includes(JSON.stringify(meOf(judged.author)));
+        const names = (value: unknown) => JSON.stringify(value).includes(JSON.stringify(meOf(this.seated(judged.author))));
         const verdict =
           by !== undefined && by !== actingAs(author as Principal).id && !isSystem(author as Principal) && !names(judged.mutation.args) && names(judged.primitives)
             ? { ok: false as const, refusal: { mutation: judged.mutation.name, wouldNeed: [], message: "it was done as somebody else." } }
@@ -2568,6 +2794,7 @@ export class Store<S extends AnySchema> {
    * record: one removed stays removed.
    */
   private personFor(author: Author | Principal): { readonly id: string; readonly name: string; readonly node: unknown } | undefined {
+    author = this.seated(author);
     const profile = profileOf(author);
     const id = meOf(author);
     if (!profile || id === undefined) return undefined;
@@ -2593,6 +2820,7 @@ export class Store<S extends AnySchema> {
    * refused in the words it would refuse in, with a profile or without.
    */
   private hasNoRecord(author: Author | Principal, bySight = true): boolean {
+    author = this.seated(author);
     const people = this.schema.definitions.find((definition) => definition.people);
     if (!people) return false;
     // Kept from its own person by its sight: a seat with no id of its own sees one only through a sight of the whole kind.
@@ -2680,6 +2908,8 @@ export class Store<S extends AnySchema> {
   private putBack(rollback: GraphSnapshot<NodeOfSchema<S>>, kept: number): void {
     this.graph.load(rollback);
     if (this.log.length > kept) this.log.truncate(kept);
+    // What a seat is kept from, if a host's `admit` asked it of the change put back: never an answer for whatever is logged at that length next.
+    this.keptKinds = undefined;
   }
 
   /** Asks the host's `admit`, when there is one, with the change as planned; one it refuses is put back, and its word goes on up. */

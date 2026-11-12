@@ -1,4 +1,4 @@
-import { ARCHIVED, LEFT_ALONE } from "../graph/archived.js";
+import { ARCHIVED, LEFT_ALONE, PERSON_SEAT } from "../graph/archived.js";
 import * as z from "./zod.js";
 import { argumentsTaken, takesAnId } from "../mutations/define-mutation.js";
 import { nodeRefArgs } from "../mutations/node-ref.js";
@@ -27,11 +27,12 @@ export function toJsonSchema(schema: unknown): JsonSchema {
 /** zod's names for string formats that JSON Schema calls something else; the rest are the same word. */
 const JSON_SCHEMA_FORMATS: Readonly<Record<string, string>> = { guid: "uuid", url: "uri", datetime: "date-time", json_string: "json-string" };
 
-/** What a phone, a place and a duration hold, for an agent, where the field says nothing of itself. */
+/** What a phone, a place, a duration and a time of day hold, for an agent, where the field says nothing of itself. */
 const TYPED_WORDS = {
   phone: "A phone number as it is written, like +1 555 123 4567 or 020 7946 0958 ext. 12.",
   place: "An address or a place's name, as a person would search a map for it.",
   duration: "A length of time in whole minutes: 90 is 1 h 30 min.",
+  time: "A time of day on a 24-hour clock, HH:MM with no day and no zone: 15:00 is 3 PM.",
 } as const;
 
 type ZodStringDef = { readonly type?: string; readonly format?: string; readonly checks?: readonly { readonly _zod?: { readonly def?: { readonly format?: string; readonly pattern?: RegExp } } }[] };
@@ -122,6 +123,8 @@ export function nodeJsonSchema(definition: AnyNodeDefinition): JsonSchema {
   if (properties) properties[ARCHIVED] = { type: "boolean", const: true, description: "Set when the record is archived: kept with its links and history, out of lists, counts and rules." };
   // And a person may have said to leave it alone: no automated author changes it.
   if (properties) properties[LEFT_ALONE] = { type: "boolean", const: true, description: "Set when a person said to leave the record alone: no automated author changes it." };
+  // And a person may be bound to the account that joined as them (Roadmap f-invite-binds-existing-person).
+  if (properties && definition.people) properties[PERSON_SEAT] = { type: "string", minLength: 1, description: "Set when an account was bound to this person: the seat that is them here." };
   return js;
 }
 

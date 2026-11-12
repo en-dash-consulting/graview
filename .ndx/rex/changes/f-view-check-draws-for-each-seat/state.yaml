@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "59f46e0c-49f2-4fae-9fd7-d1f938690642":
+    status: "completed"
+    startedAt: "2026-11-11T04:00:00.000Z"
+    completedAt: "2026-11-11T13:55:00.000Z"
+    lastModified: "2026-11-11T13:55:00.000Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"
+    resolutionType: "code-change"
+    resolutionDetail: "runWorkerViewForEachSeat and seatsOfPolicy on @graview/guest/headless, and graview view check --seats; made-up seats are let go of with forgetSeatView. PR #569, landed in the 0.1.73 batch #568."

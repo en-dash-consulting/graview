@@ -1,6 +1,6 @@
 {
   "name": "@graview/core",
-  "version": "0.1.72",
+  "version": "0.1.74",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -97,6 +97,10 @@
       "types": "./dist/jobs.d.ts",
       "default": "./dist/jobs.js"
     },
+    "./devices": {
+      "types": "./dist/devices.d.ts",
+      "default": "./dist/devices.js"
+    },
     "./workflows": {
       "types": "./dist/workflows.d.ts",
       "default": "./dist/workflows.js"
@@ -140,6 +144,10 @@
     "./seat": {
       "types": "./dist/seat.d.ts",
       "default": "./dist/seat.js"
+    },
+    "./binding": {
+      "types": "./dist/binding.d.ts",
+      "default": "./dist/binding.js"
     },
     "./publishing": {
       "types": "./dist/publishing.d.ts",

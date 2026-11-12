@@ -1,6 +1,6 @@
 import { counted as countOf, isCurrent, isWithheld, numberAsRead, type AnySchema, type Operation, type Violation } from "@graview/core";
-import { bleeds, bleedsFull, type ViewProps } from "@graview/react/provider";
-import type { ComponentType } from "react";
+import { bleeds, bleedsFull, HomeFallsBack, type ViewProps } from "@graview/react/provider";
+import { useCallback, useState, type ComponentType } from "react";
 import { Link, useSearchParams } from "react-router";
 import { HomeLine } from "@graview/primitives/pages";
 import { ViewBoundary } from "@graview/react/drawing";
@@ -40,6 +40,8 @@ function ProblemsHere({ violations }: { readonly violations: readonly Violation[
   const error = violations.some((violation) => violation.status === "could-not-judge" || violation.status === "over-budget");
   return (
     <Link to="/problems" data-testid="problems-here" data-graview-problems-tone={error ? "error" : "rule"} style={{ ...link, color: error ? "var(--graview-warn)" : "var(--graview-ink-muted)" }}>
+      {/* A warning carries its mark as well as its words, never its hue alone (Roadmap f-better-bare-app-defaults). */}
+      {error ? <span aria-hidden="true" data-graview-warning-mark="">⚠ </span> : null}
       {violations.length === 1 ? "A rule is broken" : "Rules are broken"} — see what, and what would fix it
     </Link>
   );
@@ -81,12 +83,33 @@ export function recently(log: readonly Operation[], rows = 5): { readonly recent
  * each list, the relations live at /map, and Recently stays short at the
  * foot.
  */
+/** The home views that stopped in this page, and why: the built-in home stands in each one's place while the page lives. */
+const STOPPED_HOMES = new WeakMap<object, { readonly name: string; readonly reason: string }>();
+
 export function DefaultHomePage<S extends AnySchema>({ context }: { context: PageContext<S> }) {
   const { principal } = context;
   const { store, brand, invariantContext } = context;
   const tick = useStoreTick(store);
   /* The home the app draws by itself, though a host's view is its body, reached under "Also as" (Roadmap f-make-any-page-better). */
   const builtIn = useSearchParams()[0].get("drawn") === "built-in";
+  /*
+   * A HOME'S VIEW THAT STOPPED, ON AN APP WITH NO HOME OF ITS OWN (Roadmap
+   * f-view-budget-fair-to-visitors): the built-in home is drawn in its place,
+   * marked with the view's name and why — for as long as the page lives,
+   * however often the home is left and come back to, so it never flaps
+   * between the two. A different view handed as the home is drawn.
+   */
+  const given = context.views?.homeView?.();
+  const [, heard] = useState(0);
+  const fellBack = given ? STOPPED_HOMES.get(given) : undefined;
+  const fallsBack = useCallback(
+    (name: string, reason: string) => {
+      if (!given) return;
+      STOPPED_HOMES.set(given, { name, reason });
+      heard((n) => n + 1);
+    },
+    [given],
+  );
   const violations = store.violations(invariantContext);
   const { recent, kept } = recently(store.log.all());
   // In the declaration's order, less what it leaves off the home (FR-80).
@@ -129,7 +152,7 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
    */
   const homeName = context.views?.homes?.().at(-1)?.name;
   const hostsHome = homeName !== undefined;
-  const HomeView = builtIn && hostsHome ? undefined : (context.views?.homeView?.() as ComponentType<ViewProps<S>> | undefined);
+  const HomeView = (builtIn && hostsHome) || fellBack ? undefined : (given as ComponentType<ViewProps<S>> | undefined);
   const anything = (store.schema.kinds as readonly string[]).some((kind) => store.graph.nodesOfKind(kind as never).length > 0);
   if (HomeView && anything) {
     /*
@@ -154,7 +177,9 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
             <Bleed when={bleeds(HomeView)} full={full}>
               {/* A view that throws says so in its own slot, and the slot is the column again: what gives a view the page's width sees it did not draw. */}
               <ViewBoundary kind="home" view="The home's view" said="" reset={[tick, HomeView]}>
-                <HomeView cardinality="many" fidelity="full" mode="fullscreen" selected={false} {...(flagged.length > 0 ? { flagged } : {})} />
+                <HomeFallsBack.Provider value={fallsBack}>
+                  <HomeView cardinality="many" fidelity="full" mode="fullscreen" selected={false} {...(flagged.length > 0 ? { flagged } : {})} />
+                </HomeFallsBack.Provider>
               </ViewBoundary>
             </Bleed>
           </HomeLine.Provider>
@@ -191,7 +216,7 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
   // Said under the headline when there is a beginning, a problem here, or nothing broken anywhere and no job leads.
   const standingCard = beginsHere || here.length > 0 || (violations.length === 0 && !leads);
 
-  return (
+  const page = (
     <PageMain context={context} style={wide}>
       <header style={{ display: "grid", gap: 12 }}>
         {/* The app is named once, on the bar (FR-131); the line under its name is said here, where it is about the app. */}
@@ -288,5 +313,13 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
         </section>
       ) : null}
     </PageMain>
+  );
+  /* Drawn in a stopped view's place: which view, and why, said to whoever looks. */
+  return fellBack ? (
+    <div data-worker-view-fell-back={fellBack.name} data-worker-view-failed={fellBack.reason} style={{ display: "contents" }}>
+      {page}
+    </div>
+  ) : (
+    page
   );
 }

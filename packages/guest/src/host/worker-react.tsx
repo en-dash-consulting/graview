@@ -1,5 +1,5 @@
 import type { AnySchema, KindOfSchema, PagesArrangement, Principal, Store } from "@graview/core";
-import { DefaultDrawnElsewhere, isDefaultView, markBleeds, markPreviews, markReplacesPage, useGoTo, useGraviewIfAny, useHostAssets, useHostFiles, useHostViewerState, usePlayback, ViewContentHeight, type GoTo, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
+import { DefaultDrawnElsewhere, HomeFallsBack, isDefaultView, markBleeds, markPreviews, markReplacesPage, useGoTo, useGraviewIfAny, useHostAssets, useHostFiles, useHostViewerState, usePlayback, ViewContentHeight, type GoTo, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { setViewPlace } from "@graview/react/drawing";
 import { useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ComponentType, type ReactNode } from "react";
 import type { GuestPlace } from "../protocol.js";
@@ -153,8 +153,10 @@ function WorkerViewMount({ definition: given, store, principal, input, goTo, pla
   const told = useContext(ViewContentHeight);
   // The logo a view is handed is fetched from the page's origin: a path under /graview/assets/ is fetched where the host serves it.
   const served = useMemo(() => brandUnder(brand, hostAssets), [brand, hostAssets]);
-  const latest = useRef({ input, goTo, places, arrangement, onFailure, brand: served, hostFiles, hostAssets, viewerState, told });
-  latest.current = { input, goTo, places, arrangement, onFailure, brand: served, hostFiles, hostAssets, viewerState, told };
+  /* The host's way in for a visitor (FR-183): drawn in the view's place where everything it reads is kept from the seat. */
+  const signIn = useGraviewIfAny<AnySchema>()?.signIn;
+  const latest = useRef({ input, goTo, places, arrangement, onFailure, brand: served, hostFiles, hostAssets, viewerState, told, signIn });
+  latest.current = { input, goTo, places, arrangement, onFailure, brand: served, hostFiles, hostAssets, viewerState, told, signIn };
   useEffect(() => {
     const element = holder.current;
     if (!element) return;
@@ -189,6 +191,7 @@ function WorkerViewMount({ definition: given, store, principal, input, goTo, pla
         /* What it keeps for its viewer (`graview.mine`). A draft, proposed and not kept, keeps nothing of anybody's. */
         ...(definition.draft || definition.keepsNothing ? { draft: true } : { viewerState: () => latest.current.viewerState }),
         onContentHeight: (height) => latest.current.told?.(height),
+        signIn: () => latest.current.signIn,
       });
     const stop = untilItArrives(workerChunk, (module) => {
       mounted.current = module.mountWorkerView(element, optionsFor(definition.worker));
@@ -262,7 +265,7 @@ function FellBack({ name, reason, children }: { readonly name: string; readonly 
  * worker, a manifest that names what the app does not declare, a view past
  * its limits — `fallback` is drawn in its place.
  */
-export function workerView(definition: WorkerViewDefinition, options: { readonly fallback?: ViewComponent<AnySchema>; readonly beside?: ViewComponent<AnySchema> } = {}): ViewComponent<AnySchema> {
+export function workerView(definition: WorkerViewDefinition, options: { readonly fallback?: ViewComponent<AnySchema>; readonly beside?: ViewComponent<AnySchema>; readonly home?: boolean } = {}): ViewComponent<AnySchema> {
   const Fallback = options.fallback;
   /* A view that replaces the record's page took the page's facts with it: where it fails, the record's own face is all that is left to say them. */
   const replaces = definition.manifest.replaces === "page";
@@ -270,6 +273,9 @@ export function workerView(definition: WorkerViewDefinition, options: { readonly
     const graview = useGraviewIfAny<AnySchema>();
     const goTo = useGoTo();
     const elsewhere = useContext(DefaultDrawnElsewhere);
+    /* The home's view with no home of the app's to stand in for it: the face that draws the home draws its built-in one instead, where it offers to (Roadmap f-view-budget-fair-to-visitors). */
+    const homeFallsBack = useContext(HomeFallsBack);
+    const fallsBack = options.home && !Fallback ? homeFallsBack : null;
     const [failed, setFailed] = useState<WorkerViewFailure | null>(null);
     const latest = useRef(props);
     latest.current = props;
@@ -279,6 +285,7 @@ export function workerView(definition: WorkerViewDefinition, options: { readonly
     if (then === null) return Fallback && !(elsewhere && isDefaultView(Fallback) && !replaces) ? <Instead view={Fallback} props={props} /> : NOTHING_INSTEAD;
     /* Past its limits, the kind's own face — what the registry drew there before — in its place (FR-94), saying which view fell back and why; nothing, where the surface is that face already. */
     if (failed && Fallback) return elsewhere && isDefaultView(Fallback) && !replaces ? NOTHING_INSTEAD : <Instead view={Fallback} props={props} fellBack={{ name: definition.manifest.name, reason: failed }} />;
+    if (failed && fallsBack) return NOTHING_INSTEAD;
     /*
      * BESIDE THE RECORD'S OWN FIELDS (FR-149): what was drawn for the record
      * before, under the view — its fields, editable where an act writes
@@ -298,9 +305,10 @@ export function workerView(definition: WorkerViewDefinition, options: { readonly
         scheme={graview.scheme}
         brand={graview.brand}
         tick={props}
-        drawsItsOwn={Fallback !== undefined}
+        drawsItsOwn={Fallback !== undefined || fallsBack !== null}
         onFailure={(reason, detail) => {
           setFailed(reason);
+          fallsBack?.(definition.manifest.name, reason);
           definition.onFailure?.(reason, detail);
         }}
       />
@@ -346,10 +354,11 @@ export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry
     /*
      * A draft that fails says why in its place (FR-187): the app's own home standing there would picture the proposal as fine.
      * What fails over is the app's own home, the last one no host's view gave (FR-202), never another view a host may have deleted.
+     * An app that declares no home falls back to its built-in one, where the face that draws the home offers it (`HomeFallsBack`): never a list of every record.
      */
     const given = views.homes?.();
     const declared = definition.draft ? undefined : ((given ? given.filter((one) => one.name === undefined).at(-1)?.view : views.homeView?.()) as ViewComponent<AnySchema> | undefined);
-    const home = workerView(definition, declared ? { fallback: declared } : {});
+    const home = workerView(definition, declared ? { fallback: declared } : { home: !definition.draft });
     // Edge to edge on a phone, where its manifest says so: the pages face takes the gutter back for it.
     // By its name, so the host's tidying keeps it undrawn once deleted, whatever registered after it (FR-202); a draft has none.
     views.home((manifest.bleed === true || manifest.bleed === "full" ? markBleeds(home, manifest.bleed) : home) as unknown as ViewComponent<S>, definition.draft ? undefined : { name: manifest.name });

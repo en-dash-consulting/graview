@@ -28,6 +28,7 @@
         "contact": { "type": "phone", "label": "Who to call" },
         "venue": { "type": "place" },
         "length": { "type": "duration" },
+        "starts": { "type": "time", "description": "when it starts" },
         "sections": { "type": "enum", "multiple": true, "options": ["soprano", "alto", "tenor", "bass"], "optionLabels": { "soprano": "Sopranos", "alto": "Altos", "tenor": "Tenors", "bass": "Basses" }, "description": "Which sections rehearse." }
       }
     }

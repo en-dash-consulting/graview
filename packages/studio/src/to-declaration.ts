@@ -14,9 +14,11 @@ import {
   nodeRefArgs,
   phoneField,
   placeField,
+  timeField,
   repeatField,
   repeatKey,
   type AnyMutationDefinition,
+  kindPath,
   type AnySchema,
   type EdgeDeclaration,
   type Grant,
@@ -31,6 +33,7 @@ import {
 } from "@graview/core";
 import { coverageRule, expressionRule } from "@graview/core/document";
 import { isMarkdownField } from "@graview/core/words";
+import { screenPlaceOf } from "@graview/core/devices";
 import * as z from "zod";
 import { DECLARED_KIND, type FieldType } from "./meta.js";
 import { fieldTypeOf, lensNodeId } from "./from-declaration.js";
@@ -137,6 +140,8 @@ export function zodFor(type: FieldType, required: boolean, options?: readonly st
             ? placeField()
             : type === "duration"
               ? durationField()
+              : type === "time"
+                ? timeField()
         : type === "url"
           ? z.url()
           : type === "email"
@@ -172,6 +177,8 @@ export function defaultFor(type: FieldType, options?: readonly string[]): unknow
       return [];
     case "date":
       return new Date().toISOString().slice(0, 10);
+    case "time":
+      return "12:00";
     default:
       return "";
   }
@@ -545,12 +552,19 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
     ];
   });
 
+  // The strip a device offers, in its order, as the studio now says it (Roadmap f-device-nav-bar).
+  const screens = read
+    .ofKind("screen")
+    .map((node) => ({ place: str(node, "place") ?? "", label: name(node), at: typeof node["at"] === "number" ? (node["at"] as number) : 0 }))
+    .sort((a, b) => a.at - b.at)
+    .map(({ place, label }) => ({ place, label }));
+
   const brandNode = read.ofKind("brand")[0];
   const brand = base?.brand
     ? { ...base.brand, ...(brandNode ? { name: name(brandNode) } : {}) }
     : undefined;
 
-  return {
+  const declared: GraviewApp<AnySchema> = {
     name: options.name ?? base?.name ?? "Declared in the studio",
     schema,
     mutations,
@@ -587,6 +601,25 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
         }
       : {}),
   };
+  /*
+   * THE STRIP FOLLOWS WHAT IT SHOWS (Roadmap f-device-nav-bar), as the jobs
+   * follow their kinds: a screen of a renamed kind's list names it by its
+   * new address, and a screen whose place is gone — a kind taken away,
+   * a lens no longer drawn — leaves the strip. One that named nothing before
+   * is kept for the checker to say.
+   */
+  const strip = screens.flatMap((screen) => {
+    const was = base ? screenPlaceOf(base, screen.place) : undefined;
+    if (!was) return [screen];
+    if (was.is === "place" && was.place.kind !== null && !was.place.address.startsWith("/places/")) {
+      const kind = follow(was.place.kind);
+      if (!liveKinds.has(kind)) return [];
+      const now = screenPlaceOf(declared, screen.place);
+      return [now?.is === "place" && now.place.kind === kind && !now.place.address.startsWith("/places/") ? screen : { ...screen, place: kindPath(schema, kind) }];
+    }
+    return screenPlaceOf(declared, screen.place) ? [screen] : [];
+  });
+  return strip.length > 0 ? { ...declared, devices: { ...(base?.devices ?? {}), screens: strip } } : declared;
 }
 
 /** The same input, with every node reference to a renamed kind pointing at its new name. */

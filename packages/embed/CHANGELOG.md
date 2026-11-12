@@ -1,5 +1,50 @@
 # @graview/embed
 
+## 0.1.74
+
+### Patch Changes
+
+- abe6fe2: The 0.1.74 batch holds together: each of its three branches measured its own growth against main, and merged they come to a few bytes more than the sum of their raises (10 bytes gzipped up front on a hosted page, 6 on a hosted page handed a compiled app, 19 bytes minified and 18 gzipped on every face, and 18 bytes of what Cloud's worker imports), and a split build gzips to within about 100 bytes of itself from build to build, so the batch files raises of its own for the margin — 0.0 KB more up front on a hosted page (1 byte minified and 100 gzipped), and 0.0 KB more up front on a hosted page handed a compiled app (1 byte minified and 100 gzipped). The scene face before it draws measures 1_154_955 bytes with all three together.
+  
+  Compatibility: ops and primitives — unchanged. Stored formats — unchanged. The wire — unchanged. The declaration and check finding codes — unchanged. Derived tool names and input schemas — unchanged.
+- Updated dependencies [35bad5d]
+- Updated dependencies [690dde3]
+- Updated dependencies [4454bd8]
+- Updated dependencies [beece2b]
+  - @graview/core@0.1.74
+  - @graview/primitives@0.1.74
+  - @graview/react@0.1.74
+  - @graview/pages@0.1.74
+  - @graview/guest@0.1.74
+  - @graview/studio@0.1.74
+  - @graview/tools@0.1.74
+  - @graview/layout@0.1.74
+
+## 0.1.73
+
+### Patch Changes
+
+- 2103a64: The 0.1.73 batch holds together: each of its seven branches measured its own growth against main, and merged they come to a few bytes more than the sum of their raises (1 byte gzipped up front on a hosted page handed a compiled app, 10 bytes minified and some gzipped on every face, a few on the guest host registering a worker view, some on the open kit, and 3.8 KB of what Cloud's worker imports), and a split build gzips to within about 100 bytes of itself from build to build, so the batch files raises of its own for the margin — 0.0 KB more up front on a hosted page handed a compiled app (1 byte minified and 32 gzipped).
+  
+  Compatibility: ops and primitives — unchanged. Stored formats — unchanged. The wire — unchanged. The declaration and check finding codes — unchanged. Derived tool names and input schemas — unchanged.
+- Updated dependencies [a254c2d]
+- Updated dependencies [09306b4]
+- Updated dependencies [9e45c01]
+- Updated dependencies [2799441]
+- Updated dependencies [2d94b0c]
+- Updated dependencies [b4a48f3]
+- Updated dependencies [2799441]
+- Updated dependencies [09306b4]
+- Updated dependencies [9303a2a]
+  - @graview/core@0.1.73
+  - @graview/react@0.1.73
+  - @graview/guest@0.1.73
+  - @graview/tools@0.1.73
+  - @graview/pages@0.1.73
+  - @graview/layout@0.1.73
+  - @graview/primitives@0.1.73
+  - @graview/studio@0.1.73
+
 ## 0.1.72
 
 ### Patch Changes

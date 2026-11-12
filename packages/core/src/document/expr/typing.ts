@@ -24,6 +24,7 @@ export function valueTypeOfField(type: string | undefined): ValueType {
     case "url":
     case "email":
     case "phone":
+    case "time":
     case "place":
       return "text";
     case "number":

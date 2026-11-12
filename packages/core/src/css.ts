@@ -27,5 +27,8 @@ export {
 } from "./css/tables.js";
 export { brandFamilies, VIEW_FONT_MOST_BYTES, VIEW_FONTS_MOST, VIEW_FONTS_NOT_NAMED, viewFontProblem, viewFontSource } from "./css/fonts.js";
 export type { ViewFont } from "./css/fonts.js";
+export { facesRenamed, isFontType, VIEW_FACE_DESCRIPTORS, VIEW_FACE_MOST_BYTES, VIEW_FACES_MOST, VIEW_FACES_MOST_BYTES, VIEW_SHEETS_MOST, viewFaceFamily } from "./css/faces.js";
+export { viewFaceRefusedWords } from "./css/faces-words.js";
+export type { ViewFace, ViewFaceProblem, ViewFaceSource } from "./css/faces.js";
 export { sanitizeDeclarations, sanitizeStylesheet, sanitizeStylesheets, sanitizeValue, serializeIdent, serializeString, serializeValues, tokenize } from "./css/sanitize.js";
-export type { ComponentValue, CssRefusal, CssRefusalReason, Declaration, Rule, SanitizedCss, Token } from "./css/sanitize.js";
+export type { ComponentValue, CssRefusal, CssRefusalReason, Declaration, FamilyNames, Rule, SanitizeOptions, SanitizedCss, Token } from "./css/sanitize.js";

@@ -40,8 +40,13 @@ import { accentProblem } from "./theme/accent.js";
 import { traitsOfDocument, type Trait, type TraitName } from "./traits.js";
 import { compileDocument } from "./document/compile-checked.js";
 import { composeReshape } from "./starting-document.js";
+import { endingChoice, fromDeclaration } from "./compose-home.js";
+import { INSTALLATION_MODULE } from "./installation.js";
 
 export type { DocumentEdit } from "./document/edit.js";
+/** A plain document's first home, a kind's row and its glance, each proposed only where the document has none (Roadmap f-compose-home-from-declaration): what `composeDesign` proposes, one at a time. */
+export { glanceFromDeclaration, homeFromDeclaration, MOST_HOME_LISTS, rowFromDeclaration } from "./compose-home.js";
+export type { ComposedPart } from "./compose-home.js";
 /** A kind said by its noun and its plural, as the declaration spells them — for a host that writes about a document's kinds (the starter), never from the kind's id alone. */
 export { nounWords, pluralWords } from "./document/policy-words.js";
 
@@ -70,8 +75,6 @@ export interface DesignProposal {
  * toward (and say: "not yet booked"); the ones that end it otherwise are
  * left out of a job's records but never named as its goal.
  */
-const DONE = new Set(["done", "complete", "completed", "closed", "shipped", "booked", "paid", "finished", "resolved", "published", "delivered", "approved", "merged", "released", "signed", "won", "returned", "fixed", "filed"]);
-const ENDED = new Set(["canceled", "cancelled", "declined", "rejected", "withdrawn", "abandoned", "lost", "dropped", "archived", "wontfix", "won't do", "duplicate"]);
 /** A flow's opening values, as a question says them: "Which requests are still open?" */
 const OPENING: Readonly<Record<string, string>> = { new: "new", open: "open", pending: "pending", submitted: "submitted", requested: "requested", proposed: "proposed", draft: "in draft", unread: "unread", waiting: "waiting", inbox: "in the inbox", todo: "to do", "to do": "to do", triage: "in triage", received: "received", unassigned: "unassigned" };
 /** A date a record is due by — not the day it was written or happened. */
@@ -92,21 +95,6 @@ const listed = (words: readonly string[], join = "or") => (words.length < 2 ? wo
 
 type Acts = NonNullable<GraviewDocument["acts"]>;
 const actsOn = (document: GraviewDocument, kind: string): [string, Acts[string]][] => Object.entries(document.acts ?? {}).filter(([, act]) => [act.on ?? []].flat().includes(kind));
-
-/** A choice field that ends: some values a record is done at, some it is still on the way. */
-function endingChoice(spec: KindSpec): { field: string; options: readonly string[]; done: readonly string[]; ended: readonly string[] } | undefined {
-  // A choice that takes several (FR-233) is no status: a record is not in two stages at once.
-  const choices = Object.entries(spec.fields).filter(([, field]) => field.type === "enum" && !field.multiple && Array.isArray(field.options) && field.options.length >= 2);
-  // A field called a status, stage or state first; then any choice whose values end.
-  const ranked = [...choices].sort(([a], [b]) => Number(/status|stage|state|phase/i.test(b)) - Number(/status|stage|state|phase/i.test(a)));
-  for (const [field, choice] of ranked) {
-    const options = choice.options!;
-    const done = options.filter((value) => DONE.has(said(value)));
-    const ended = options.filter((value) => ENDED.has(said(value)));
-    if (done.length > 0 && done.length + ended.length < options.length) return { field, options, done, ended };
-  }
-  return undefined;
-}
 
 /** The act people take next to bring a record to one of these values: one that sets the field to it. */
 function actSetting(document: GraviewDocument, kind: string, field: string, values: readonly string[]): string | undefined {
@@ -250,6 +238,11 @@ const MOST_ROUNDS = 40;
  *   1. jobs (`add-job`), inferred by `inferJobs`, where the document says
  *      none — the derived home opens on them; a declared home is given a
  *      list answering each (the critic's `design-job-unanswered` edit);
+ *   1b. what a plain document is missing (`homeFromDeclaration`,
+ *      `glanceFromDeclaration`, `rowFromDeclaration`): a home of a count
+ *      headline and a list per kind, dated kinds first, where it has none;
+ *      a glance and a row for each kind with none, leading with its date
+ *      and its status — a declared home, row or glance is kept;
  *   2. the critic's own edits (`designFindings`), asked again after each
  *      until it has no warning left: places that repeat removed, more than
  *      a person scans kept off the bar, the home given one thing to read
@@ -289,6 +282,17 @@ export function composeDesign(source: GraviewDocument | GraviewApp<AnySchema>, o
         reasons.push(`Nothing says what this app's people come to do, so its home said only what it holds: "${job.ask}" is a job it can answer from its ${pluralOf(doc, job.kind)}${title ? `, with "${title}" offered on each` : job.act ? ", with the act that answers it offered on each" : ""}.`);
     }
   }
+
+  /*
+   * WHAT A PLAIN DOCUMENT IS MISSING (Roadmap f-compose-home-from-declaration):
+   * a home of a count headline and a list per kind, dated kinds first; a
+   * glance and a row for each kind that has none, leading with its date and
+   * its status. A declared home, row or glance is kept: only what is
+   * missing is proposed, before the critic is asked, so it judges these too.
+   */
+  // A TypeScript app's installation kinds (its people and invitations) are the framework's, never the product's to design.
+  const skip = new Set(isDocument(source) ? [] : Object.entries(source.modules ?? {}).flatMap(([name, module]) => (name === INSTALLATION_MODULE ? (module.kinds ?? []) : [])));
+  for (const part of fromDeclaration(doc, { skip })) if (attempt(part.edit)) reasons.push(part.said);
 
   for (let round = 0; round < MOST_ROUNDS; round += 1) {
     // One finding at a time, asked again after it: two edits worked out against the same home would undo each other.

@@ -159,6 +159,13 @@ describe("a hostile stylesheet", () => {
       expect(said.css).not.toMatch(/@import|@font-face|@namespace|@property|@page|@layer|@counter-style|@-moz-document/i);
       expect(said.css).not.toMatch(/:host|::slotted|::part/i);
     });
+    /* Read as a view's own sheet, whose @font-face of a data: font is kept as a face (HQ f-view-font-face-data): still nothing reaches out, and no face with an address. */
+    it(`keeps nothing that reaches out, read as a view's own sheet: ${name}`, () => {
+      const said = sanitizeStylesheet(css, undefined, { faces: true });
+      expect(reaches(said.css)).toEqual([]);
+      expect(said.css).not.toMatch(/attacker|@font-face/i);
+      expect(said.faces).toEqual([]);
+    });
   }
 });
 

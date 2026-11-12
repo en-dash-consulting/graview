@@ -4,6 +4,8 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.74`](https://graview.dev/docs/releases.html#v0-1-74)
+- [`0.1.73`](https://graview.dev/docs/releases.html#v0-1-73)
 - [`0.1.72`](https://graview.dev/docs/releases.html#v0-1-72)
 - [`0.1.71`](https://graview.dev/docs/releases.html#v0-1-71)
 - [`0.1.70`](https://graview.dev/docs/releases.html#v0-1-70)
@@ -74,9 +76,47 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
+## 0.1.74
+
+Published November 12, 2026 · the current version
+
+Any place drawn for an e-ink screen with what each press does; a bare app that looks designed, and a home proposed from the declaration; templates that ask a time and bring their views; a field that keeps a time of day; and a host asks whether a seat may run an act without running it.
+
+- **An e-ink screen.** `@graview/pages/device` draws any place for a reader on a wall (a Kindle Paperwhite 3 upright is 758 × 1024): sixteen grays, no motion, type at 20 px or more and presses at least 64 px, pages that turn at the foot. `taps` says what each region does, and `resolveTap` does it as the seat that tapped, refusing anything the screen it was tapped on did not offer.
+- **An app says which places a device offers.** `devices: { screens: [{ place, label }] }` names the strip along a device's foot; `graview check` holds each to a real place and 12 characters, and a screen follows its place when it is renamed.
+- **A bare app looks designed.** With nothing declared, a glance leads with the kind's date said as people say it, naming the zone only to a reader on another clock. The home says the app's description once. Every warning carries its mark and its words, never its color alone.
+- **A home from the declaration.** `composeDesign` proposes what a plain document lacks — a home of a count and a list per kind, and a row and a glance per kind with its date and status — and keeps what is declared. The new formatter `{x | glance}` says a moment as a glance does.
+- **Templates ask a time and bring views.** A question may be a `time`; setup words may say `${id}`; a template may carry `views` and `frameViews`, which `graview create --template` writes beside the project. `graview check template.json` checks the template too.
+- **A time of day.** A field may be `{ "type": "time" }`, kept as `HH:MM`, typed in a time input and read from "3 PM".
+- **May this seat run this?** `mayRun` and `mayRunEach` on `@graview/core/seat` answer allowed, what is left to fill, or refused with the rule and the words, writing nothing. Applying and asking now judge through one path.
+- Security and reliability fixes.
+
+**Before you upgrade:** Breaks: an act may now refuse a call it used to take. A document act's argument left out is its default to what the act's condition reads and to a record the act makes, and no longer overwrites a field already set. A template may name the formatter `glance`, which a build before this one refuses by name, so update hosts before documents that use it. A bare app's glances, rows and home read differently (a kind's date leads a glance, the zone is named only to a reader elsewhere, a description is said once), and `composeDesign` proposes a home, rows and glances for a plain document where it proposed none. A document accent that shares the warning's hue and reads is no longer refused. Gains, nothing taken away: `@graview/pages/device` (`renderScreen`, `tapAt`, `resolveTap`, `EINK_GRAYS`, `EINK_LEAST_TARGET`), `@graview/core/devices`, a document's `devices`, the `device-screen-*` findings and the `add-`, `move-` and `remove-device-screen` edits; the `time` field type, `timeField()` and `parseTimeOfDay`; a template's `time` questions, `${id}`, `views` and `frameViews`, `questionAsked` and `templateFindings`; `mayRun`, `mayRunEach`, `store.wouldApply` and `store.judgedAs`; `homeFromDeclaration`, `rowFromDeclaration`, `glanceFromDeclaration`, `kindDateField`, `momentAtAGlance` and `homeSaysTheLine`. Stored formats are otherwise unchanged: a record may hold a time field's `HH:MM`.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.74) · [The full changelog for 0.1.74](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0174)
+
+## 0.1.73
+
+Published November 11, 2026
+
+A visitor's view is no longer stopped by the host's link check; a view knows what its seat can't see, is checked as every seat, and fails a part at a time; a view loads its own face; a joining member becomes the person already entered; and a home view's pictures load lazily and small.
+
+- **A visitor's view draws.** A home view of many linked records that drew for its owner and stopped for every signed-out visitor now draws for both: what a seat is kept from is worked out once per seat, not once per link. A home view that does stop falls back to the app's built-in home and stays there.
+- **A view knows what its seat can't see.** A worker view is handed `props.unseen` — the kinds it reads that the seat sees none of, and the fields sight may keep from it — so it can say "Sign in to see the vendors". A view whose seat sees nothing it reads is not started; the host's sign-in is drawn in its place.
+- **A view is checked as every seat.** `graview view check --seats` runs a view as its owner, as each role and as a visitor, and says for each whether it drew, fell back or was stopped.
+- **A part of a view fails alone.** `graview.part(name, draw)` marks a part; one that throws or runs long is drawn as a small note, and the rest of the view still draws.
+- **A view loads its own face.** A worker view's stylesheet may declare an `@font-face` from a `data:` font, up to 50 KB a face and 200 KB a view, drawn in that view alone.
+- **A joining member is the person already entered.** `bindPerson` on `@graview/core/binding` binds the joining account to an existing record of the people kind, so `$me`, grants, acts and Activity are that record and no second person is made.
+- **Pictures load lazily and at the size each use needs.** An `<img>` in a view takes `loading` and `fetchpriority`, and `pictures: { thumb }` hands a smaller copy beside `src`. `bleed: "full"` is said in the skills and the manifest check.
+- **A district's records with no value share one row**, so adding one moves no other block.
+
+**Before you upgrade:** Breaks: a view's stylesheet `@font-face` was refused and is now kept where its source is a `data:` font, and a face file is loaded only where its bytes are a font. A worker view whose home stops now falls back to the built-in home rather than a plain list. A host that pins the inlined guest client's hash takes the new `GUEST_CLIENT_SHA256`. A record of the people kind may carry `$seat`, which an export, a seed and a template drop; an act may not set a field whose name begins with `$`. A store with a people kind answers `seenBy` with a view of the graph as that seat in every case. Gains, nothing taken away: `bind-person` and `@graview/core/binding`, the `person-seat-shared` finding, `props.unseen`, `partMs` and `partMark` on a view's push, `thumb` on a `GuestFile`, `pictures.thumb`, `graview.part`, `runWorkerViewForEachSeat` and `seatsOfPolicy`, `graview view check --seats`, `forgetSeatView`, `HomeFallsBack`, the `view-font-face*`, `view-pictures-thumb` and `view-bleed` finding codes, and `districtLanes` on `@graview/core/scene`. Stored formats are otherwise unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.73) · [The full changelog for 0.1.73](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0173)
+
 ## 0.1.72
 
-Published November 10, 2026 · the current version
+Published November 11, 2026
 
 An app's history opens from the app menu and from a host's own menu; a frame is lent the app's faces; a view chooses its pictures by record; and a frame that only grows with itself is held.
 

@@ -301,6 +301,8 @@ export function templateIntelligence<S extends AnySchema>(
             return { ok: true, value: `First ${hint ?? field.name}` };
           case "date":
             return { ok: true, value: field.time ? `${today}T09:00` : today };
+          case "time":
+            return { ok: true, value: "09:00" };
           case "number":
             return { ok: true, value: field.min ?? 1 };
           case "boolean":

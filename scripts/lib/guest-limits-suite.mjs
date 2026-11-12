@@ -32,6 +32,9 @@ const PUSH_MS = 1_000;
 const SILENT_MS = 1_500;
 /* How long the server holds the paced page's scripts: four times a fast start (60 ms) and some, so the page is at the ceiling. */
 const PACED_START_MS = 300;
+/* The parts view's push and how long its slow part is busy: past a quarter of the push at pace 1, within the whole push at any pace. */
+const PARTS_PUSH_MS = 2_000;
+const PART_BUSY_MS = 800;
 
 export async function limitsSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, viewScript, engine }) {
   /* GRAVIEW_SLOW=4: every page as slow as the nightly's runner, as scripts/lib/watch.mjs does it. */
@@ -58,6 +61,8 @@ export async function limitsSuite({ repoRoot, build, browser, claim, report, HOS
     long: `const padding = "${"padding ".repeat(40_000)}"; graview.onProps((props) => { ${draw} graview.style(padding.slice(0, 0)); });`,
     /* Well behaved, for the control. */
     good: `graview.onProps((props) => { ${draw} });`,
+    /* Three parts (Roadmap f-view-part-fails-alone): one draws, one throws, one is busy past its share of the push and within the push. */
+    parts: `graview.onProps((props) => graview.render(graview.html\`\${graview.part("count", () => graview.html\`<p>\${(props.nodes || []).length} records</p>\`)}\${graview.part("vendors", () => { throw new Error("no vendors"); })}\${graview.part("timeline", () => { const until = Date.now() + ${PART_BUSY_MS}; while (Date.now() < until) {} return "<p>late</p>"; })}\`));`,
   };
   const scripts = Object.fromEntries(await Promise.all(Object.entries(views).map(async ([name, code]) => [name, await viewScript(code)])));
   /* The paced page's views, served slowly: two that draw in time on a slow device, and the spinner and the flood again. */
@@ -120,6 +125,7 @@ import { mountWorkerView } from "@graview/guest/host/worker";
 import { lin, offersApp, offersSeed } from ${JSON.stringify(resolve(repoRoot, "scripts/fixtures/offers-app.ts"))};
 const store = new Store({ schema: offersApp.schema, mutations: offersApp.mutations, policy: offersApp.policy, snapshot: structuredClone(offersSeed) });
 const failures = {};
+const problems = {};
 const mounted = {};
 const began = performance.now();
 /* The page's own timer, every 50 ms: the longest it went between ticks while views spun. */
@@ -135,12 +141,15 @@ for (const [name, script] of Object.entries(window.VIEWS)) {
     store,
     principal: lin,
     /* The 100 000 nodes take their builder longer than a push may: given time, so it is the node cap that stops it. The spinner blocks its heartbeat too: given the heartbeat's default, so it is the push's time — fitted to the device, up to four times the base — that stops it. */
-    limits: name === "nodes" ? { pushMs: 30000, silentMs: 30000 } : name === "spin" ? { pushMs: ${PUSH_MS} } : { pushMs: ${PUSH_MS}, silentMs: ${SILENT_MS} },
+    limits: name === "nodes" ? { pushMs: 30000, silentMs: 30000 } : name === "spin" ? { pushMs: ${PUSH_MS} } : name === "parts" ? { pushMs: ${PARTS_PUSH_MS}, silentMs: ${SILENT_MS} } : { pushMs: ${PUSH_MS}, silentMs: ${SILENT_MS} },
     onFailure: (reason, detail) => (failures[name] = { reason, detail, at: performance.now() - began }),
+    onProblem: (said) => (problems[name] ??= []).push(said),
   });
 }
 window.__host = {
   failures,
+  problems,
+  parts: () => Object.fromEntries(Object.entries(mounted).map(([name, view]) => [name, [...view.shadow.querySelectorAll("[data-part]")].map((one) => ({ part: one.getAttribute("data-part"), failed: one.getAttribute("data-part-failed"), text: one.textContent }))])),
   pulse,
   pace: () => Object.fromEntries(Object.entries(mounted).map(([name, view]) => [name, view.pace ?? null])),
   running: () => Object.fromEntries(Object.entries(mounted).map(([name, view]) => [name, view.worker !== undefined])),
@@ -271,7 +280,7 @@ window.__host = {
     /* A page a view has frozen answers nothing: given 15 s, its silence is the finding. */
     const silent = { failures: {}, running: {}, faces: {}, notes: {}, drawn: {}, pace: {}, pulse: { ticks: 0, longest: Infinity, frozen: true } };
     const host = await Promise.race([
-      tab.evaluate(() => ({ failures: window.__host.failures, running: window.__host.running(), faces: window.__host.faces(), notes: window.__host.notes(), drawn: window.__host.drawn(), pace: window.__host.pace(), pulse: window.__host.pulse })),
+      tab.evaluate(() => ({ failures: window.__host.failures, problems: window.__host.problems, parts: window.__host.parts(), running: window.__host.running(), faces: window.__host.faces(), notes: window.__host.notes(), drawn: window.__host.drawn(), pace: window.__host.pace(), pulse: window.__host.pulse })),
       new Promise((done) => setTimeout(() => done(silent), 15_000)),
     ]);
     report.limits = host;
@@ -294,6 +303,25 @@ window.__host = {
     const churn = stopped("churn", "slow", 5_000);
     claim("a view that sends, in few messages, more to draw than the host may draw in its time is stopped as slow, its plain face drawn and the reason said", churn.ok, { ...churn.detail, pulse: host.pulse });
     claim("a view within its limits is kept, and draws", host.running.good === true && !host.failures.good && host.drawn.good === "6 records", { running: host.running.good, failure: host.failures.good, drawn: host.drawn.good });
+    /*
+     * A PART THAT FAILS FALLS BACK ALONE (Roadmap f-view-part-fails-alone): the
+     * view is kept, its part that drew is drawn, and the host's note stands in
+     * the part that threw, and in the one busy past a quarter of its push —
+     * where the page's pace leaves that share under the time it was busy.
+     */
+    const parts = Object.fromEntries((host.parts?.parts ?? []).map((one) => [one.part, one]));
+    const partsSaid = (host.problems?.parts ?? []).join(" ");
+    claim(
+      "a view whose part throws is kept: that part is drawn as the host's note, the rest of the view is drawn, and why is said to the host",
+      host.running.parts === true && !host.failures.parts && parts.count?.text === "6 records" && parts.vendors?.failed === "threw" && parts.vendors.text === "This part could not be drawn." && /The part "vendors" of the view "The packages" threw.*Error: no vendors/.test(partsSaid),
+      { running: host.running.parts, failure: host.failures.parts, parts: host.parts?.parts, problems: host.problems?.parts },
+    );
+    const share = (host.pace.parts ?? 1) * (PARTS_PUSH_MS / 4);
+    claim(
+      `a part busy ${PART_BUSY_MS} ms, past a quarter of its view's ${PARTS_PUSH_MS.toLocaleString("en-US")} ms push, is drawn as the host's note and said, and the view is kept`,
+      host.running.parts === true && !host.failures.parts && (share >= PART_BUSY_MS ? parts.timeline?.text === "late" : parts.timeline?.failed === "slow" && parts.timeline.text === "This part could not be drawn." && /The part "timeline" .* took too long/.test(partsSaid)),
+      { share, pace: host.pace.parts, timeline: parts.timeline, problems: host.problems?.parts },
+    );
     claim("the page's own timer kept time while views spun, never more than 250 ms between 50 ms ticks", host.pulse.ticks > 20 && host.pulse.longest < 250, host.pulse);
     /*
      * The budget fits the device: the page measured its first worker's start

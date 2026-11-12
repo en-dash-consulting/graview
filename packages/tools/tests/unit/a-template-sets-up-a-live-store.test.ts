@@ -96,4 +96,20 @@ describe("graview apply --template", () => {
     expect(refused.err).toContain("answers.budget");
     expect((await stored()).log.all()).toEqual([]);
   });
+
+  it("asks a time question, reads ${id} into the setup's words, and names the views the template comes with", async () => {
+    const thanksgiving = resolve(import.meta.dirname, "../../../core/tests/document/fixtures/thanksgiving-dinner.template.json");
+    const its = JSON.parse(readFileSync(thanksgiving, "utf8")) as { document: unknown };
+    const data = join(root, "data");
+    const done = await run(["--template", thanksgiving, "--answers", JSON.stringify({ date: "2026-11-26", dinnerTime: "4 PM" }), "--data", data]);
+    expect(done.code).toBe(0);
+    expect(done.err).toContain("Thanksgiving dinner comes with 2 views (thanksgiving-home, thanksgiving-day)");
+    const compiled = compileDocument(its.document);
+    if (!compiled.ok) throw new Error("the fixture compiles");
+    const opened = await openStore({ app: compiled.app, adapter: createFileAdapter(data), scope: compiled.app.name });
+    const store = opened.store;
+    opened.close();
+    expect(store.graph.nodesOfKind("moment").find((n) => n["name"] === "Dinner is served")?.["at"]).toBe("2026-11-26T16:00:00");
+    expect(store.graph.nodesOfKind("dish").find((n) => n["name"] === "Roast turkey")?.["ready"]).toBe("16:00");
+  });
 });

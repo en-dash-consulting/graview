@@ -64,11 +64,10 @@ yet") rather than refusing it; a host hands its manifests as `views` to
 `emphasis: "large"`.
 **No home, and `purpose.jobs`** (the face handed `app`): the home opens
 on the jobs. The first with records waiting is the title, its count, five
-records, its `act` on each; others follow smaller, an empty one a quiet
-line, the gallery after. A drawn home answers a job only by listing its
-kind (`design-job-unanswered`). `composeDesign(document)`
-(`@graview/core/compose`) proposes jobs (`inferJobs`), the critic's edits
-and an accent as one change.
+records, its `act` on each; the rest smaller, the gallery after. A drawn
+home answers a job only by listing its kind (`design-job-unanswered`).
+`composeDesign(document)` (`@graview/core/compose`) proposes jobs, a
+home, rows and glances where missing, the critic's edits and an accent.
 
 **Hand it `views`** (the scene's registry, plus `settings`/`presence`) —
 `graview create` does — and the face puts the scene's provider

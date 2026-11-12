@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 11622,
+  "gzipped": 4125,
+  "note": "Raised when a view's stylesheet came to declare its own face as a data: font (HQ f-view-font-face-data): the sanitizer reads an @font-face at the top of a view's sheet (core's css/faces.ts) — its family a plain name, every src a data: URL of a font type, decoded and counted to 50 KB a face and 200 KB a view, its bytes read for a font file's signature, its descriptors the seven a face has — and hands the face on apart from the CSS, each refusal said in a sentence that ends with its finding code; its family is written in the view's font-family and font, in its sheets and its attributes, as the name the host gives that view on the page, and the host loads it under that name as a FontFace made from its bytes (fonts.ts); what is said of a refused face is a module of its own, in the fonts chunk. Measured at 293_082 / 112_786 against 281_460 / 108_661: 11_622 / 4_125 more."
+}

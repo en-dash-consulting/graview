@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-24T04:02:27.020Z",
+  "at": "2026-11-11T06:03:50.695Z",
   "transport": "limits",
   "engine": "webkit",
   "claims": {
@@ -9,7 +9,7 @@
         "failure": {
           "reason": "slow",
           "detail": "It took longer than 1,000 ms to draw what it was shown.",
-          "at": 1066
+          "at": 1307
         },
         "running": false,
         "face": [
@@ -29,7 +29,7 @@
         "failure": {
           "reason": "silent",
           "detail": "It stopped answering for 1,500 ms.",
-          "at": 1572
+          "at": 1573.0000000000002
         },
         "running": false,
         "face": [
@@ -49,7 +49,7 @@
         "failure": {
           "reason": "flood",
           "detail": "It sent more than 120 messages in 1,000 ms.",
-          "at": 139
+          "at": 178
         },
         "running": false,
         "face": [
@@ -69,7 +69,7 @@
         "failure": {
           "reason": "nodes",
           "detail": "It drew more than the 5,000 things a view may draw.",
-          "at": 991
+          "at": 1003
         },
         "running": false,
         "face": [
@@ -89,7 +89,7 @@
         "failure": {
           "reason": "source",
           "detail": "Its code is longer than the 256,000 bytes a view may be.",
-          "at": 24.999999999999986
+          "at": 25
         },
         "running": false,
         "face": [
@@ -108,8 +108,8 @@
       "detail": {
         "failure": {
           "reason": "slow",
-          "detail": "It took longer than 1,000 ms to draw what it was shown.",
-          "at": 253
+          "detail": "What it drew took this page longer than the 100 ms of any one second a view may take to draw.",
+          "at": 291
         },
         "running": false,
         "face": [
@@ -120,10 +120,10 @@
           "AI strategy sprint",
           "Copernicus build"
         ],
-        "note": "This view was stopped. It took longer than 1,000 ms to draw what it was shown.",
+        "note": "This view was stopped. What it drew took this page longer than the 100 ms of any one second a view may take to draw.",
         "pulse": {
-          "last": 2383,
-          "longest": 137,
+          "last": 2335,
+          "longest": 114,
           "ticks": 43
         }
       }
@@ -135,12 +135,77 @@
         "drawn": "6 records"
       }
     },
+    "a view whose part throws is kept: that part is drawn as the host's note, the rest of the view is drawn, and why is said to the host": {
+      "ok": true,
+      "detail": {
+        "running": true,
+        "parts": [
+          {
+            "part": "count",
+            "failed": null,
+            "text": "6 records"
+          },
+          {
+            "part": "vendors",
+            "failed": "threw",
+            "text": "This part could not be drawn."
+          },
+          {
+            "part": "timeline",
+            "failed": "slow",
+            "text": "This part could not be drawn."
+          }
+        ],
+        "problems": [
+          "The part \"vendors\" of the view \"The packages\" threw, so a note is drawn in its place and the rest of the view is drawn: \"Error: no vendors\"",
+          "The part \"timeline\" of the view \"The packages\" took too long, so a note is drawn in its place and the rest of the view is drawn: \"it took 799 ms, past the 500 ms a part may take of a push, and is left as a note for the next 3 pushes.\""
+        ]
+      }
+    },
+    "a part busy 800 ms, past a quarter of its view's 2,000 ms push, is drawn as the host's note and said, and the view is kept": {
+      "ok": true,
+      "detail": {
+        "share": 500,
+        "pace": 1,
+        "timeline": {
+          "part": "timeline",
+          "failed": "slow",
+          "text": "This part could not be drawn."
+        },
+        "problems": [
+          "The part \"vendors\" of the view \"The packages\" threw, so a note is drawn in its place and the rest of the view is drawn: \"Error: no vendors\"",
+          "The part \"timeline\" of the view \"The packages\" took too long, so a note is drawn in its place and the rest of the view is drawn: \"it took 799 ms, past the 500 ms a part may take of a push, and is left as a note for the next 3 pushes.\""
+        ]
+      }
+    },
     "the page's own timer kept time while views spun, never more than 250 ms between 50 ms ticks": {
       "ok": true,
       "detail": {
-        "last": 2383,
-        "longest": 137,
+        "last": 2335,
+        "longest": 114,
         "ticks": 43
+      }
+    },
+    "a page is at one pace, measured once from its first worker's start — 1 where it started fast — every view on it alike, and a view that spins is stopped as slow at that pace times the base 1,000 ms, the sentence naming the budget it was held to": {
+      "ok": true,
+      "detail": {
+        "pace": {
+          "spin": 1,
+          "later": 1,
+          "flood": 1,
+          "nodes": 1,
+          "churn": 1,
+          "long": null,
+          "good": 1,
+          "parts": 1
+        },
+        "fitted": 1000,
+        "spin": {
+          "reason": "slow",
+          "detail": "It took longer than 1,000 ms to draw what it was shown.",
+          "at": 1307
+        },
+        "slow": 0
       }
     },
     "the page throws nothing": {
@@ -264,6 +329,63 @@
     "the policy pages throw nothing": {
       "ok": true,
       "detail": []
+    },
+    "a page whose first worker took four times a fast start or longer is at pace 4, every view on it alike, and a view that draws in 300 ms draws, not falls back": {
+      "ok": true,
+      "detail": {
+        "pace": {
+          "steady": 4,
+          "heavy": 4,
+          "spin": 4,
+          "flood": 4
+        },
+        "steady": {
+          "drawn": "6 records",
+          "running": true
+        }
+      }
+    },
+    "on that page a view whose listener takes 1 500 ms a push — past the fixed 1,000 ms — draws, within the four times it was given": {
+      "ok": true,
+      "detail": {
+        "drawn": "6 records",
+        "running": true
+      }
+    },
+    "on that page a view that spins is stopped as slow at 4,000 ms, not 1,000, the sentence naming the budget it was held to, its plain face drawn": {
+      "ok": true,
+      "detail": {
+        "spin": {
+          "reason": "slow",
+          "detail": "It took longer than 4,000 ms to draw what it was shown.",
+          "at": 4351
+        },
+        "running": false,
+        "face": [
+          "A way in",
+          "The whole thing",
+          "Later on",
+          "Team coaching",
+          "AI strategy sprint",
+          "Copernicus build"
+        ],
+        "note": "This view was stopped. It took longer than 4,000 ms to draw what it was shown."
+      }
+    },
+    "on that page a flood is still a flood: a view that floods the host is stopped at the same allowance of 120 messages in 1,000 ms": {
+      "ok": true,
+      "detail": {
+        "flood": {
+          "reason": "flood",
+          "detail": "It sent more than 120 messages in 1,000 ms.",
+          "at": 404
+        },
+        "running": false
+      }
+    },
+    "the paced page throws nothing": {
+      "ok": true,
+      "detail": []
     }
   },
   "pageErrors": [],
@@ -272,33 +394,65 @@
       "long": {
         "reason": "source",
         "detail": "Its code is longer than the 256,000 bytes a view may be.",
-        "at": 24.999999999999986
+        "at": 25
       },
       "flood": {
         "reason": "flood",
         "detail": "It sent more than 120 messages in 1,000 ms.",
-        "at": 139
+        "at": 178
       },
       "churn": {
         "reason": "slow",
-        "detail": "It took longer than 1,000 ms to draw what it was shown.",
-        "at": 253
+        "detail": "What it drew took this page longer than the 100 ms of any one second a view may take to draw.",
+        "at": 291
       },
       "nodes": {
         "reason": "nodes",
         "detail": "It drew more than the 5,000 things a view may draw.",
-        "at": 991
+        "at": 1003
       },
       "spin": {
         "reason": "slow",
         "detail": "It took longer than 1,000 ms to draw what it was shown.",
-        "at": 1066
+        "at": 1307
       },
       "later": {
         "reason": "silent",
         "detail": "It stopped answering for 1,500 ms.",
-        "at": 1572
+        "at": 1573.0000000000002
       }
+    },
+    "problems": {
+      "parts": [
+        "The part \"vendors\" of the view \"The packages\" threw, so a note is drawn in its place and the rest of the view is drawn: \"Error: no vendors\"",
+        "The part \"timeline\" of the view \"The packages\" took too long, so a note is drawn in its place and the rest of the view is drawn: \"it took 799 ms, past the 500 ms a part may take of a push, and is left as a note for the next 3 pushes.\""
+      ]
+    },
+    "parts": {
+      "spin": [],
+      "later": [],
+      "flood": [],
+      "nodes": [],
+      "churn": [],
+      "long": [],
+      "good": [],
+      "parts": [
+        {
+          "part": "count",
+          "failed": null,
+          "text": "6 records"
+        },
+        {
+          "part": "vendors",
+          "failed": "threw",
+          "text": "This part could not be drawn."
+        },
+        {
+          "part": "timeline",
+          "failed": "slow",
+          "text": "This part could not be drawn."
+        }
+      ]
     },
     "running": {
       "spin": false,
@@ -307,7 +461,8 @@
       "nodes": false,
       "churn": false,
       "long": false,
-      "good": true
+      "good": true,
+      "parts": true
     },
     "faces": {
       "spin": [
@@ -358,16 +513,18 @@
         "AI strategy sprint",
         "Copernicus build"
       ],
-      "good": []
+      "good": [],
+      "parts": []
     },
     "notes": {
       "spin": "This view was stopped. It took longer than 1,000 ms to draw what it was shown.",
       "later": "This view was stopped. It stopped answering for 1,500 ms.",
       "flood": "This view was stopped. It sent more than 120 messages in 1,000 ms.",
       "nodes": "This view was stopped. It drew more than the 5,000 things a view may draw.",
-      "churn": "This view was stopped. It took longer than 1,000 ms to draw what it was shown.",
+      "churn": "This view was stopped. What it drew took this page longer than the 100 ms of any one second a view may take to draw.",
       "long": "This view was stopped. Its code is longer than the 256,000 bytes a view may be.",
-      "good": null
+      "good": null,
+      "parts": null
     },
     "drawn": {
       "spin": null,
@@ -376,11 +533,22 @@
       "nodes": null,
       "churn": null,
       "long": null,
-      "good": "6 records"
+      "good": "6 records",
+      "parts": "6 records"
+    },
+    "pace": {
+      "spin": 1,
+      "later": 1,
+      "flood": 1,
+      "nodes": 1,
+      "churn": 1,
+      "long": null,
+      "good": 1,
+      "parts": 1
     },
     "pulse": {
-      "last": 2383,
-      "longest": 137,
+      "last": 2335,
+      "longest": 114,
       "ticks": 43
     }
   },
@@ -491,6 +659,64 @@
         "first": null,
         "second": null
       }
+    }
+  },
+  "paced": {
+    "failures": {
+      "flood": {
+        "reason": "flood",
+        "detail": "It sent more than 120 messages in 1,000 ms.",
+        "at": 404
+      },
+      "spin": {
+        "reason": "slow",
+        "detail": "It took longer than 4,000 ms to draw what it was shown.",
+        "at": 4351
+      }
+    },
+    "pace": {
+      "steady": 4,
+      "heavy": 4,
+      "spin": 4,
+      "flood": 4
+    },
+    "running": {
+      "steady": true,
+      "heavy": true,
+      "spin": false,
+      "flood": false
+    },
+    "drawn": {
+      "steady": "6 records",
+      "heavy": "6 records",
+      "spin": null,
+      "flood": null
+    },
+    "faces": {
+      "steady": [],
+      "heavy": [],
+      "spin": [
+        "A way in",
+        "The whole thing",
+        "Later on",
+        "Team coaching",
+        "AI strategy sprint",
+        "Copernicus build"
+      ],
+      "flood": [
+        "A way in",
+        "The whole thing",
+        "Later on",
+        "Team coaching",
+        "AI strategy sprint",
+        "Copernicus build"
+      ]
+    },
+    "notes": {
+      "steady": null,
+      "heavy": null,
+      "spin": "This view was stopped. It took longer than 4,000 ms to draw what it was shown.",
+      "flood": "This view was stopped. It sent more than 120 messages in 1,000 ms."
     }
   },
   "passed": true

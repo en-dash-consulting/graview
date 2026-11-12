@@ -1,4 +1,4 @@
-import { assertReadable, bareOp, formatStamp, type AnySchema, type Epoch, type FormatStamp, type GraviewApp, type LogArchive, type Operation, type Store } from "@graview/core";
+import { assertReadable, bareOp, formatStamp, unseatedOp, unseatedSnapshot, type AnySchema, type Epoch, type FormatStamp, type GraviewApp, type LogArchive, type Operation, type Store } from "@graview/core";
 import type { GraphSnapshot } from "./snapshot.js";
 
 /**
@@ -101,11 +101,12 @@ export function exportBundle<S extends AnySchema>(
     exportedAt: (options.now ?? (() => new Date().toISOString()))(),
     // Snapshot format 2 when the checkpoint it begins at lies past what stood published (FR-31).
     ...formatStamp(horizon > 0 && checkpoint?.seq === horizon ? checkpoint : undefined),
-    snapshot: store.snapshot() as GraphSnapshot,
+    // Never whose record a person is: bindings and account ids stay in the installation that made them (Roadmap f-invite-binds-existing-person).
+    snapshot: unseatedSnapshot(store.snapshot() as GraphSnapshot),
     // Stamped op format 2, and so written: a persisted or archived op from format 1 goes without an inverse its primitives already say.
-    log: log.map(bareOp),
+    log: log.map((op) => unseatedOp(bareOp(op))),
     ...(horizon > 0 ? { horizon } : {}),
-    ...(horizon > 0 && checkpoint?.seq === horizon ? { checkpoint } : {}),
+    ...(horizon > 0 && checkpoint?.seq === horizon ? { checkpoint: { ...checkpoint, base: unseatedSnapshot(checkpoint.base) } } : {}),
   });
   const horizon = log[0]?.seq ?? store.log.horizon;
   const own = store.log.epochs().find((epoch) => epoch.horizon && epoch.seq === horizon);

@@ -1,5 +1,5 @@
 import { labelOf, numberAsRead, SCENE_LAYERS, type Brand, type Scheme } from "@graview/core";
-import { districtBlocks, districtState, TIER_HEIGHT, toIso, type Building, type StateTier } from "@graview/core/scene";
+import { districtBlocks, districtLanes, districtState, TIER_HEIGHT, toIso, type Building, type StateTier } from "@graview/core/scene";
 import type { InterpolatedLayout } from "@graview/layout";
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactElement } from "react";
 import { usePlayback } from "./past.js";
@@ -157,19 +157,7 @@ export function Plots({ frame, width, height, pan, pinned, close, today, swallow
       names.set(id, name);
       return name;
     };
-    const lanes: string[][] = state ? state.values.map(() => []) : [[]];
-    const tiers: StateTier[] = state ? [...state.tiers] : ["waiting"];
-    for (const id of first.length > 0 ? [...first, ...members.filter((id) => !first.includes(id))] : members) {
-      const at = state ? state.values.indexOf(valueOf(id) as string) : 0;
-      if (at >= 0) lanes[at]!.push(id);
-      else {
-        if (lanes.length === tiers.length) {
-          lanes.push([]);
-          tiers.push("waiting");
-        }
-        lanes[lanes.length - 1]!.push(id);
-      }
-    }
+    const { lanes, tiers } = districtLanes(state, members, valueOf, first);
     const { blocks, rests } = districtBlocks(node.plot!, lanes, tiers.map((tier) => TIER_HEIGHT[tier]));
     const corners = tileCorners(node.plot!, at0, none);
     // A record's due date past and not done: overdue, lit like a problem.
@@ -204,6 +192,13 @@ export function Plots({ frame, width, height, pan, pinned, close, today, swallow
     <>
     <style>{groundCss(scheme)}</style>
     <svg className="graview-plots" aria-hidden="true" data-graview-world="" width={width} height={height} style={style} data-graview-plots={tiles.length} data-graview-named={close ? "" : undefined} data-graview-rising={rising ? "" : undefined}>
+      {/* A flagged block's roof is hatched as well as warn-colored: its pattern says it, not its hue alone (Roadmap f-better-bare-app-defaults). Once for the scene, every tile's roofs read it. */}
+      <defs>
+        <pattern id="graview-flag-hatch" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <rect width="3" height="3" fill="var(--graview-warn)" />
+          <rect width="1.2" height="3" fill="color-mix(in oklab, var(--graview-warn) 45%, var(--graview-panel))" />
+        </pattern>
+      </defs>
       <g transform={`translate(${(city.originX + pan.x).toFixed(1)} ${(city.originY + pan.y).toFixed(1)})`}>
         {tiles.map((node) => (
           <PlotTile
@@ -508,6 +503,7 @@ function groundCss(scheme: Scheme): string {
 .graview-building[data-graview-tier=done] polygon{fill:${mix(light ? "13%" : "18%")}}
 .graview-building[data-graview-flagged] polygon{fill:var(--graview-warn);stroke:var(--graview-warn)}
 .graview-building[data-graview-flagged] .graview-iso-left{fill:color-mix(in oklab,var(--graview-warn) 80%,var(--graview-ink))}
+.graview-building[data-graview-flagged] .graview-iso-roof{fill:url(#graview-flag-hatch)}
 .graview-building[data-graview-recent]{filter:drop-shadow(0 0 2px color-mix(in oklab,var(--graview-accent) 70%,transparent))}
 .graview-building[data-graview-own] .graview-iso-roof{stroke:var(--graview-ink);stroke-width:1.4;stroke-opacity:1}
 .graview-building[data-graview-selected] polygon{stroke:var(--graview-accent);stroke-width:1.4;stroke-opacity:1}

@@ -1,11 +1,13 @@
 import * as z from "zod";
 import type { GraphReader } from "../graph/types.js";
 import type { Primitive } from "../graph/primitives.js";
+import { unseated } from "../binding-served.js";
 import type { CompiledDocument } from "./compile.js";
 import { analyzeExpr } from "./expr/analyze.js";
 import { evaluateExpr, ExprEvalError, type Value } from "./expr/evaluate.js";
 import { ExprSyntaxError, parseExpr } from "./expr/parse.js";
 import { error, type Finding } from "./findings.js";
+import { parseTimeOfDay } from "../time-typed.js";
 import type { GraviewDocument } from "./schema.js";
 
 /*
@@ -19,6 +21,14 @@ import type { GraviewDocument } from "./schema.js";
  *
  * The document is typed loosely on purpose: `compileDocument` is the one
  * judge of a document, and it says what is wrong in its own sentences.
+ *
+ * Cloud's additions of 2026-11, read here the same way: a question may be a
+ * `time` (an answer "3 PM" is kept as "15:00"); setup words may say
+ * `${id}` where a letter follows the answer (`"${date}T09:30:00"`), and a
+ * question may say an earlier one's (`"Who is coming to ${place}?"`); and a
+ * template may come with views — `frameViews` (pages in a sandboxed frame)
+ * and `views` (curated worker views, each its manifest), their code kept
+ * beside the template as `views/<template id>/<name>.html` or `.js`.
  */
 
 export const TEMPLATE_FORMAT = "graview-template";
@@ -30,7 +40,8 @@ const QUESTION_ID = /^[a-z][A-Za-z0-9]*$/;
 /** The name `forEach` binds each list entry to. */
 const ITEM = "item";
 
-export const TEMPLATE_QUESTION_TYPES = ["string", "text", "number", "date", "list", "choice"] as const;
+/** `time` is a time of day, kept as "15:00": an answer said "3 PM" or "3:30pm" is read as one. */
+export const TEMPLATE_QUESTION_TYPES = ["string", "text", "number", "date", "time", "list", "choice"] as const;
 
 /*
  * A template's shape, built the first time one is read rather than when the
@@ -78,6 +89,42 @@ function buildShapes() {
     })
     .strict();
 
+  /** A view's name: 2–40 lower-case letters, digits and hyphens, as a worker view's manifest says it. */
+  const viewName = z.string().regex(/^[a-z][a-z0-9-]{1,39}$/, "a view's name is 2–40 lowercase letters, digits and hyphens");
+
+  /*
+   * A FRAME VIEW THE TEMPLATE COMES WITH: a page somebody wrote, drawn in a
+   * sandboxed frame of its own, for a kind (`many`: a place titled `title`;
+   * `one`: on each record's page). The template names it and what it reads;
+   * its page is kept beside the template, never inside it.
+   */
+  const FrameView = z
+    .object({
+      name: viewName,
+      kind: z.string().min(1),
+      cardinality: z.enum(["one", "many"]),
+      title: z.string().min(1).max(60).optional(),
+      reads: z.object({ kinds: z.array(z.string().min(1)).max(20).optional(), edges: z.array(z.string().min(1)).max(20).optional() }).strict().optional(),
+    })
+    .strict();
+
+  /*
+   * A VIEW CURATED FROM A CHAT (a worker view): its manifest, as a host keeps
+   * one — `name`, `attach` (a kind, or "home"), `cardinality`, `title`, and
+   * the rest of a worker view's manifest (`reads`, `acts`, `pictures`,
+   * `bleed`, `heading` …), which the host that installs it judges as it
+   * judges any view. Its script is kept beside the template, as
+   * `views/<template id>/<name>.js`, never inside it: a template is data.
+   */
+  const WorkerView = z
+    .object({
+      name: viewName,
+      attach: z.string().min(1),
+      cardinality: z.enum(["one", "many"]),
+      title: z.string().min(1).max(60).optional(),
+    })
+    .catchall(z.unknown());
+
   const TemplateSpec = z
     .object({
       format: z.literal(TEMPLATE_FORMAT),
@@ -89,6 +136,8 @@ function buildShapes() {
       useCases: z.array(z.string().min(1).max(40)).max(20),
       document: z.record(z.string(), z.unknown()),
       seed: SeedSpec.optional(),
+      frameViews: z.array(FrameView).max(5).optional(),
+      views: z.array(WorkerView).max(5).optional(),
       questions: z.array(QuestionSpec).max(12),
       setup: z.array(SetupStepSpec).max(50),
       readme: z.string().min(1).max(20_000),
@@ -104,8 +153,13 @@ function buildShapes() {
         if (seen.has(q.id)) ctx.addIssue({ code: "custom", message: `two questions are called "${q.id}"`, path: ["questions", i, "id"] });
         seen.add(q.id);
       });
+      const named = new Set<string>();
+      [...(t.frameViews ?? []), ...(t.views ?? [])].forEach((v) => {
+        if (named.has(v.name)) ctx.addIssue({ code: "custom", message: `two views are called "${v.name}"`, path: ["views"] });
+        named.add(v.name);
+      });
     });
-  return { QuestionSpec, SetupStepSpec, SeedNodeSpec, SeedSpec, TemplateSpec };
+  return { QuestionSpec, SetupStepSpec, SeedNodeSpec, SeedSpec, FrameView, WorkerView, TemplateSpec };
 }
 let shapes: ReturnType<typeof buildShapes> | undefined;
 type Shapes = ReturnType<typeof buildShapes>;
@@ -116,6 +170,8 @@ export type TemplateQuestion = z.infer<Shapes["QuestionSpec"]>;
 export type TemplateSetupStep = z.infer<Shapes["SetupStepSpec"]>;
 export type TemplateSeedNode = z.infer<Shapes["SeedNodeSpec"]>;
 export type TemplateSeed = z.infer<Shapes["SeedSpec"]>;
+export type TemplateFrameView = z.infer<Shapes["FrameView"]>;
+export type TemplateWorkerView = z.infer<Shapes["WorkerView"]>;
 export type GraviewTemplate = z.infer<Shapes["TemplateSpec"]>;
 
 /** Whether some JSON says it is a template (rather than a bare document). Says nothing about whether it is a good one. */
@@ -171,7 +227,8 @@ export interface RefusedTemplate {
 /** The example content as primitives, for a store to apply as one batch of its own. */
 export function templateSeedPrimitives(seed: TemplateSeed, document: GraviewDocument): Primitive[] {
   return [
-    ...seed.nodes.map((node): Primitive => ({ op: "add-node", node: withDefaults(node, document) as never })),
+    // A template never says whose record a person is: bindings stay in the installation that made them.
+    ...seed.nodes.map((node): Primitive => ({ op: "add-node", node: unseated(withDefaults(node, document)) as never })),
     ...seed.edges.map((edge): Primitive => ({ op: "add-edge", edge })),
   ];
 }
@@ -205,6 +262,11 @@ function coerceAnswer(q: TemplateQuestion, value: unknown): { readonly ok: true;
     case "date": {
       const s = typeof value === "string" ? value.trim() : "";
       return validDate(s) ? { ok: true, value: s } : no(`"${q.id}" needs a date written like 2026-10-02 — ${quoted(value)} is not one`);
+    }
+    case "time": {
+      // "3 PM", "3:30pm", "15:00" — kept as "15:00"; a bare "3" is not said clearly enough to be one.
+      const t = parseTimeOfDay(value);
+      return t ? { ok: true, value: t } : no(`"${q.id}" needs a time of day, like 15:00 or 3 PM — ${quoted(value)} is not one`);
     }
     case "list": {
       const entries = Array.isArray(value) ? value : typeof value === "string" ? value.split(/[,\n]/) : undefined;
@@ -253,12 +315,18 @@ export function resolveAnswers(questions: readonly TemplateQuestion[], answers: 
 
 // ── setup ──────────────────────────────────────────────────────────────────
 
-const REF = /\$(\$|[a-z][A-Za-z0-9]*)/g;
+/**
+ * WHAT SETUP WORDS NAME: `$name`; `${name}`, where a letter or a digit
+ * follows the answer (`"${date}T09:30:00"`, `"${dinnerTime}:00"`); and `$$`,
+ * a dollar as it is written.
+ */
+const REF = /\$(\$|\{[a-z][A-Za-z0-9]*\}|[a-z][A-Za-z0-9]*)/g;
+const refName = (ref: string): string => (ref.startsWith("{") ? ref.slice(1, -1) : ref);
 const ABSENT = Symbol("absent");
 
 function refsIn(value: unknown, into: Set<string> = new Set()): Set<string> {
   if (typeof value === "string") {
-    for (const m of value.matchAll(REF)) if (m[1] !== "$") into.add(m[1]!);
+    for (const m of value.matchAll(REF)) if (m[1] !== "$") into.add(refName(m[1]!));
   } else if (Array.isArray(value)) {
     value.forEach((v) => refsIn(v, into));
   } else if (value && typeof value === "object") {
@@ -267,12 +335,80 @@ function refsIn(value: unknown, into: Set<string> = new Set()): Set<string> {
   return into;
 }
 
-/** `"$budget"` is the answer itself (a number stays a number) or nothing at all; `"Trip to $place"` reads it into the words. */
+/** The `${id}`s a question's words name. */
+function bracedIn(words: string): string[] {
+  return [...words.matchAll(/\$\$|\$\{([a-z][A-Za-z0-9]*)\}/g)].flatMap((m) => (m[1] === undefined ? [] : [m[1]]));
+}
+
+/**
+ * A QUESTION AS IT IS ASKED, with the earlier answers it names read into
+ * it: "Who is coming to ${place}?" asks "Who is coming to our place?". An
+ * answer not given is said as nothing, as setup words say it.
+ */
+export function questionAsked(question: Pick<TemplateQuestion, "ask">, answers: Readonly<Record<string, unknown>>): string {
+  // `$$` is a dollar as it is written, as in setup words: "$${place}" says "${place}".
+  return question.ask.replace(/\$\$|\$\{([a-z][A-Za-z0-9]*)\}/g, (_: string, name: string | undefined) => {
+    if (name === undefined) return "$";
+    const answer = answers[name];
+    return answer === undefined || answer === null ? "" : Array.isArray(answer) ? answer.join(", ") : String(answer);
+  });
+}
+
+/**
+ * THE VIEWS A TEMPLATE COMES WITH name only what its document declares: a
+ * frame view's kind, a curated view's `attach` ("home" or a kind), the
+ * kinds and relations each reads, and the acts a curated view may ask for.
+ * The rest of a view's manifest is the installing host's to judge, as it
+ * judges any view; a name the document lacks is the template's mistake,
+ * said before anybody installs it.
+ */
+function checkViews(template: GraviewTemplate, compiled: CompiledDocument): Finding[] {
+  const findings: Finding[] = [];
+  const schema = compiled.app.schema;
+  const acts = new Set((compiled.app.mutations ?? []).map((m) => m.name));
+  const isKind = (kind: string) => schema.tryDefinition(kind) !== undefined;
+  const reads = (at: string, read: unknown) => {
+    if (!read || typeof read !== "object") return;
+    const { kinds, edges } = read as { kinds?: unknown; edges?: unknown };
+    if (Array.isArray(kinds)) kinds.forEach((kind, k) => typeof kind === "string" && !isKind(kind) && findings.push(error("view", `${at}.reads.kinds.${k}`, `"${kind}" is not a kind of this template's document`)));
+    if (Array.isArray(edges)) edges.forEach((edge, k) => typeof edge === "string" && !schema.edge(edge) && findings.push(error("view", `${at}.reads.edges.${k}`, `"${edge}" is not a relation of this template's document`)));
+  };
+  (template.frameViews ?? []).forEach((view, i) => {
+    const at = `frameViews.${i}`;
+    if (!isKind(view.kind)) findings.push(error("view", `${at}.kind`, `"${view.kind}" is not a kind of this template's document`));
+    reads(at, view.reads);
+  });
+  (template.views ?? []).forEach((view, i) => {
+    const at = `views.${i}`;
+    if (view.attach === "home" ? view.cardinality !== "many" : !isKind(view.attach)) {
+      findings.push(error("view", `${at}.attach`, view.attach === "home" ? 'a view of the home is a view of many: "cardinality": "many"' : `"${view.attach}" is not a kind of this template's document, nor "home"`));
+    }
+    reads(at, view["reads"]);
+    const asked = view["acts"];
+    if (Array.isArray(asked)) {
+      asked.forEach((entry, k) => {
+        const name = typeof entry === "string" ? entry : entry && typeof entry === "object" ? (entry as { act?: unknown }).act : undefined;
+        if (typeof name === "string" && !acts.has(name)) findings.push(error("view", `${at}.acts.${k}`, `"${name}" is not an act of this template's document`));
+      });
+    }
+  });
+  return findings;
+}
+
+/**
+ * `"$budget"` is the answer itself (a number stays a number) or nothing at
+ * all; `"Trip to $place"` and `"${date}T09:30:00"` read it into the words —
+ * so `"${budget}"` alone is the answer as words, as Graview Cloud reads it.
+ */
 function substitute(value: unknown, scope: Readonly<Record<string, unknown>>): unknown {
   if (typeof value === "string") {
     const whole = /^\$([a-z][A-Za-z0-9]*)$/.exec(value);
     if (whole) return whole[1]! in scope ? scope[whole[1]!] : ABSENT;
-    return value.replace(REF, (_, name: string) => (name === "$" ? "$" : name in scope ? String(scope[name] ?? "") : ""));
+    return value.replace(REF, (_, ref: string) => {
+      if (ref === "$") return "$";
+      const one = refName(ref);
+      return one in scope ? String(scope[one] ?? "") : "";
+    });
   }
   if (Array.isArray(value)) return value.map((v) => substitute(v, scope)).filter((v) => v !== ABSENT);
   if (value && typeof value === "object") {
@@ -307,10 +443,18 @@ export function checkTemplate(template: GraviewTemplate, compiled: CompiledDocum
   const questions = new Map(template.questions.map((q) => [q.id, q]));
 
   template.questions.forEach((q, i) => {
+    // A question may say an earlier answer, `${id}`: "Who is coming to ${place}?" — asked in order, it is known by then.
+    for (const name of bracedIn(q.ask)) {
+      const at = template.questions.findIndex((one) => one.id === name);
+      if (at === -1) findings.push(error("question", `questions.${i}.ask`, `"\${${name}}" is not one of the questions`));
+      else if (at >= i) findings.push(error("question", `questions.${i}.ask`, `"\${${name}}" is ${at === i ? "this question" : "asked after this one"}, so its answer is not known yet`));
+    }
     if (q.default === undefined) return;
     const c = coerceAnswer(q, q.default);
     if (!c.ok) findings.push(error("question", `questions.${i}.default`, `the default does not answer its own question: ${c.sentence}`));
   });
+
+  findings.push(...checkViews(template, compiled));
 
   template.setup.forEach((step, i) => {
     if (!acts.has(step.act)) findings.push(setupFinding(i, ".act", `"${step.act}" is not an act of this template's document`));
@@ -323,7 +467,7 @@ export function checkTemplate(template: GraviewTemplate, compiled: CompiledDocum
       inScope.add(ITEM);
     }
     for (const ref of refsIn(step.args)) {
-      if (!inScope.has(ref)) findings.push(setupFinding(i, ".args", ref === ITEM ? `"$${ITEM}" only means something inside a forEach` : `"$${ref}" is not one of the questions`));
+      if (!inScope.has(ref)) findings.push(setupFinding(i, ".args", ref === ITEM ? `"$${ITEM}" only means something inside a forEach` : `"$${ref}" is not one of the questions; this template asks about ${[...questions.keys()].map((k) => `"${k}"`).join(", ") || "nothing"}`));
     }
     if (step.if) {
       try {

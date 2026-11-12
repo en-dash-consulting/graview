@@ -117,7 +117,8 @@ describe("a worker view past its limits", () => {
     const began = performance.now();
     say!({ type: "render", records });
     await until(() => failures.length > 0, 5_000);
-    expect(failures[0]).toMatchObject({ reason: "slow" });
+    /* The clock that stopped it is the one it is told of, by its own number: not the push's 1,000 ms (Roadmap f-view-budget-fair-to-visitors). */
+    expect(failures[0]).toMatchObject({ reason: "slow", detail: "What it drew took this page longer than the 50 ms of any one second a view may take to draw." });
     expect(worker!.terminated).toBe(true);
     expect(face(view)).toContain("The whole thing");
     /* The page was held for about drawMs, not for the 5 000 style records. */

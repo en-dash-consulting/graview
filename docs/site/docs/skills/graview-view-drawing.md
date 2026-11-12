@@ -8,15 +8,15 @@ Installed into a project by `graview skills install .`, and read by whichever as
 
 ## Drawing in a worker view
 
-A worker view (`graview-worker-view`: its manifest, its global, its writes and its limits) draws by saying markup; the host draws what the open kit keeps of it into a shadow root it owns, and lists the rest. **What it may draw is broad; what it may load is only what the host chose.**
+A worker view (`graview-worker-view`: its manifest, global, writes and limits) draws by saying markup; the host draws what the open kit keeps of it into a shadow root it owns, and lists the rest. **What it may draw is broad; what it may load is only what the host chose.**
 
 ### What it may draw
 
-HTML's sectioning, headings, text, lists, tables, `details`/`summary`, `button`, `input`, `select`, `textarea`, `label`, `fieldset`, `meter`, `progress` and `img`. SVG's `svg`, `g`, shapes, `path`, `text`, gradients, `clipPath`, `mask`, `marker`, `pattern`, `symbol`, `use href="#id"`, `filter` and its `fe*`. Attributes: `id`, `class`, `style`, `title`, `role`, `aria-*`, `data-*`, and each element's own. CSS for layout, grid, flex, columns and `break-inside`, color, type, `mask-image`, scroll margins, transitions, `@keyframes`, `animation-timeline`, `@media`, `@supports` and `@container`; reduced motion holds motion still. Every property kept is in `CSS_PROPERTIES` (functions `CSS_FUNCTIONS`, at-rules `CSS_AT_RULES`) on `@graview/core/css`. Each `graview.style(css)` adds a sheet after the last (a shared design system's, then the view's own), each judged alone; a sheet given again is not added twice: say what changes per push in a class or `style`.
+HTML's sectioning, headings, text, lists, tables, `details`/`summary`, `button`, `input`, `select`, `textarea`, `label`, `fieldset`, `meter`, `progress` and `img`. SVG's `svg`, `g`, shapes, `path`, `text`, gradients, `clipPath`, `mask`, `marker`, `pattern`, `symbol`, `use href="#id"`, `filter` and its `fe*`. Attributes: `id`, `class`, `style`, `title`, `role`, `aria-*`, `data-*`, and each element's own. CSS for layout, grid, flex, columns and `break-inside`, color, type, `mask-image`, scroll margins, transitions, `@keyframes`, `animation-timeline`, `@media`, `@supports` and `@container`; reduced motion holds motion still. Every property kept is in `CSS_PROPERTIES` (functions `CSS_FUNCTIONS`, at-rules `CSS_AT_RULES`) on `@graview/core/css`. Each `graview.style(css)` adds a sheet after the last, each judged alone; a sheet given again is not added twice: say what changes per push in a class or `style`.
 
-Never drawn: `script`, `iframe`, `object`, `embed`, `link`, `meta`, `base`, `style`, `form`, `video` (place a `graview-video`, below), `canvas`, SVG `image`, `feImage`, `foreignObject` and SMIL; any `srcset` or `on*` attribute; `href` but a link out (`graview-view-links`); `src` on anything but `img`, and on `img` any address but the ones below. In CSS: `url()` except `url(#id)` on `fill`, `stroke`, `clip-path`, `marker` or `filter`; `@import`; `@font-face`; `@property`; `image-set()`, `attr()` and other unlisted functions; `position: fixed`; `:host`. `position: sticky` sticks within the view; `all: unset` takes a button's chrome off. What the host leaves out it lists in `refused` (below).
+Never drawn: `script`, `iframe`, `object`, `embed`, `link`, `meta`, `base`, `style`, `form`, `video` (place a `graview-video`, below), `canvas`, SVG `image`, `feImage`, `foreignObject` and SMIL; any `srcset` or `on*` attribute; `href` but a link out (`graview-view-links`); `src` on anything but `img`, and on `img` any address but the ones below. In CSS: `url()` except `url(#id)` on `fill`, `stroke`, `clip-path`, `marker` or `filter`; `@import`; `@font-face` but a `data:` one (below); `@property`; `image-set()`, `attr()` and other unlisted functions; `position: fixed`; `:host`. `position: sticky` sticks within the view; `all: unset` takes a button's chrome off. What the host leaves out it lists in `refused` (below).
 
-A view never speaks as the app's chrome. `nav`, `header`, `footer`, `aside` and `search` are drawn as `div`, and `output` as `span`, each with what it holds. They lose their landmark or status role; a selector for them still matches. A `section` is named only by a heading it draws (`aria-labelledby`). `role` takes no landmark or notice's role (`navigation`, `status`, `alert`, …) but a named `region`.
+A view never speaks as the app's chrome. `nav`, `header`, `footer`, `aside` and `search` are drawn as `div`, and `output` as `span`, each with what it holds. They keep their selector. A `section` is named only by a heading it draws (`aria-labelledby`). `role` takes no landmark or notice's role (`navigation`, `status`, `alert`, …) but a named `region`.
 
 A control of your own keeps its role and state, and every `aria-*`: `<span role="checkbox" aria-checked="true" tabindex="0">`, `switch`, `aria-pressed`, `aria-expanded` with `aria-controls` naming an id you drew, tabs, `slider`. Hear Space and Enter on `keydown`.
 
@@ -26,7 +26,7 @@ A control of your own keeps its role and state, and every `aria-*`: `<span role=
 
 Shared rules go in `brand.views.css` (`graview-brand`). **The theme wins**: its cascade layer is after the view's own sheets, so its rule wins at any specificity. A view's `!important` and a `style` attribute go past it; a rule on an ancestor is only inherited.
 
-**A web face** is the brand's to lend, never the view's to load: `views.fonts: [{ family: "Baloo 2", src: "/graview/assets/<sha256>.woff2", weight: "400 800" }]`, then `font-family: "Baloo 2", var(--graview-font-body)`. The host loads an app's file of 2 MB at most, or one on an origin in `fonts.origins` (it bounds its own), never named as a system face or the brand's; else it is refused and said. Of two under one name, the last lent draws.
+**A web face** the brand lends: `views.fonts: [{ family: "Baloo 2", src: "/graview/assets/<sha256>.woff2", weight: "400 800" }]`, then `font-family: "Baloo 2", var(--graview-font-body)`: an app's file of 2 MB at most, or one on an origin in `fonts.origins`. **The view's own face** is a `data:` font: `@font-face { font-family: "Shout"; src: url(data:font/woff2;base64,…) }`, 50 KB a face, 200 KB a view, decoded; never an address or `local()`. It draws in this view alone, whatever its name; under a lent face's name, the app's draws. What is refused is said, with its code.
 
 ### Its box, and the gutter
 
@@ -34,13 +34,13 @@ On Pages a view is drawn in the page's column, and nothing it draws passes its b
 
 ### The images a view may show
 
-An `img`'s `src` is drawn only when it is one of these; any other address — another site, a path of the app's of your own making — is refused, and said once in its console and the host's problems, with the address:
+An `img`'s `src` is drawn only when it is one of these; any other address is refused, and said once in its console and to the host:
 
 - **A `data:` image** the view holds: PNG, GIF, JPEG, WebP, AVIF, BMP or SVG, at most 512,000 characters as its URL.
 - **The app's logo**: `<img src="${props.theme.logo}">`, which the host made from the brand's mark; absent when it has none.
 - **An image the app holds**, by the content address it was stored at: `/graview/assets/<sha256>.<ext>` (what Graview Cloud's `add_image` answers) — or that path under the app's base, or by the page's own address for it, each the same image. It is drawn only where the host says where those live (`asset` on the view's definition, and on a headless run), and refused elsewhere.
-- **An `https:` image on an origin the host lists** — `images: { origins: ["https://upload.wikimedia.org"] }` on the view's definition (and on a headless run). The view never chooses an origin: an open list would let it send what it reads anywhere. It is asked for with no referrer. Unlisted, a URL on a record is refused.
-- **A picture on a record.** Say `pictures: true` in the manifest, or `{ width: 400 }`, the widest it draws one in CSS pixels. Each file on a record the view is handed is then `{ name, type, bytes, width, height, caption, src, left }` in its field, never the host's path to it. `src` is the address the host made from the bytes, fetched as the reader and made smaller to `width`; absent until a later push brings it. `left` says why a picture will never come: past one picture's byte budget or the view's, or what the host answered when it was not loaded. A document or SVG has no `src`: show its name, type and size. They share 12 MB: choose kinds, or `records: { subject: true }` (its record and what links to it) or `{ ids }`, and `most: 12`.
+- **An `https:` image on an origin the host lists** — `images: { origins: ["https://upload.wikimedia.org"] }` on the view's definition (and on a headless run), asked for with no referrer. Unlisted, a URL on a record is refused.
+- **A picture on a record.** Say `pictures: true` in the manifest, or `{ width: 400 }`, the widest it draws one. Each file on a record the view is handed is then `{ name, type, bytes, width, height, caption, src, thumb, left }` in its field, never the host's path to it. `src` is the host's address for it, fetched as the reader and made smaller to `width`; absent until a later push. `left` says why one never will: a budget, or the host's answer. A document or SVG has no `src`: show its name, type and size. They share 12 MB: choose kinds, or `records: { subject: true }` (it and what links to it) or `{ ids }`, and `most: 12`. `thumb: 240` (< `width`) adds a smaller, still `thumb` where smaller, in the 12 MB: draw `thumb || src`. All are fetched as handed; `loading="lazy"` and `fetchpriority` on an `img` order only its decoding and drawing.
 
 ```js
 const photos = (job.photos || []).map((photo) => photo.src
@@ -82,11 +82,11 @@ graview.on("drop", "[data-drop]", (event) => {
 2. `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>` says what it drew. Headless, a picture comes with a stand-in `src`; one the page would leave out comes with `left`, among the problems.
 3. Open the place and read the view's `refused` (`WorkerView.refused`, or `graview.refused` in its console): every element, attribute and address the host left out, and why.
 4. Toggle to dark; change the brand. Does the view follow?
-5. As a member who may see fewer records, are the pictures on the records they may not see absent — not merely hidden?
+5. As each seat (`--seats`): are the pictures it may not see absent? A kind in `props.unseen` gets a sentence, not a hole.
 
 ### What the check cannot see
 
-`graview check` and `refused` never see whether the drawing reads: an image with no `alt`, a token used for a meaning it does not carry, colors that fail in dark. Look, on both faces, at 390 and on a desk, in both schemes.
+`graview check` and `refused` never see whether it reads (an image with no `alt`, a token used for a meaning it does not carry, colors that fail in dark): look on both faces, at 390 and on a desk, in both schemes.
 
 ---
 

@@ -1,0 +1,783 @@
+{
+  "at": "2026-11-11T22:24:52.938Z",
+  "viewport": {
+    "width": 758,
+    "height": 1024
+  },
+  "checks": {
+    "everyScreenFitsTheViewportWithNothingToScroll": {
+      "held": [
+        {
+          "screen": "todo home (home) page 1 of 1",
+          "scrollWidth": 758,
+          "scrollHeight": 1024,
+          "scrolled": 0,
+          "outside": 0,
+          "ok": true
+        },
+        {
+          "screen": "todo list (/tasks) page 1 of 3",
+          "scrollWidth": 758,
+          "scrollHeight": 1024,
+          "scrolled": 0,
+          "outside": 0,
+          "ok": true
+        },
+        {
+          "screen": "todo list (/tasks) page 2 of 3",
+          "scrollWidth": 758,
+          "scrollHeight": 1024,
+          "scrolled": 0,
+          "outside": 0,
+          "ok": true
+        },
+        {
+          "screen": "todo list (/tasks) page 3 of 3",
+          "scrollWidth": 758,
+          "scrollHeight": 1024,
+          "scrolled": 0,
+          "outside": 0,
+          "ok": true
+        },
+        {
+          "screen": "todo record (t-deposit) page 1 of 2",
+          "scrollWidth": 758,
+          "scrollHeight": 1024,
+          "scrolled": 0,
+          "outside": 0,
+          "ok": true
+        },
+        {
+          "screen": "todo record (t-deposit) page 2 of 2",
+          "scrollWidth": 758,
+          "scrollHeight": 1024,
+          "scrolled": 0,
+          "outside": 0,
+          "ok": true
+        },
+        {
+          "screen": "rota home (home) page 1 of 1",
+          "scrollWidth": 758,
+          "scrollHeight": 1024,
+          "scrolled": 0,
+          "outside": 0,
+          "ok": true
+        },
+        {
+          "screen": "rota list (/shifts) page 1 of 2",
+          "scrollWidth": 758,
+          "scrollHeight": 1024,
+          "scrolled": 0,
+          "outside": 0,
+          "ok": true
+        },
+        {
+          "screen": "rota list (/shifts) page 2 of 2",
+          "scrollWidth": 758,
+          "scrollHeight": 1024,
+          "scrolled": 0,
+          "outside": 0,
+          "ok": true
+        },
+        {
+          "screen": "rota record (s-mon-open) page 1 of 2",
+          "scrollWidth": 758,
+          "scrollHeight": 1024,
+          "scrolled": 0,
+          "outside": 0,
+          "ok": true
+        },
+        {
+          "screen": "rota record (s-mon-open) page 2 of 2",
+          "scrollWidth": 758,
+          "scrollHeight": 1024,
+          "scrolled": 0,
+          "outside": 0,
+          "ok": true
+        },
+        {
+          "screen": "seedbed home (home) page 1 of 1",
+          "scrollWidth": 758,
+          "scrollHeight": 1024,
+          "scrolled": 0,
+          "outside": 0,
+          "ok": true
+        },
+        {
+          "screen": "seedbed list (/plantings) page 1 of 1",
+          "scrollWidth": 758,
+          "scrollHeight": 1024,
+          "scrolled": 0,
+          "outside": 0,
+          "ok": true
+        },
+        {
+          "screen": "seedbed record (beans) page 1 of 1",
+          "scrollWidth": 758,
+          "scrollHeight": 1024,
+          "scrolled": 0,
+          "outside": 0,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "whatDoesNotFitGoesOntoPagesThatSayWhichOfHowMany": {
+      "held": [
+        {
+          "screen": "todo home (home) page 1 of 1",
+          "page": {
+            "index": 0,
+            "count": 1
+          },
+          "found": true,
+          "says": true
+        },
+        {
+          "screen": "todo list (/tasks) page 1 of 3",
+          "page": {
+            "index": 0,
+            "count": 3
+          },
+          "found": true,
+          "says": true
+        },
+        {
+          "screen": "todo list (/tasks) page 2 of 3",
+          "page": {
+            "index": 1,
+            "count": 3
+          },
+          "found": true,
+          "says": true
+        },
+        {
+          "screen": "todo list (/tasks) page 3 of 3",
+          "page": {
+            "index": 2,
+            "count": 3
+          },
+          "found": true,
+          "says": true
+        },
+        {
+          "screen": "todo record (t-deposit) page 1 of 2",
+          "page": {
+            "index": 0,
+            "count": 2
+          },
+          "found": true,
+          "says": true
+        },
+        {
+          "screen": "todo record (t-deposit) page 2 of 2",
+          "page": {
+            "index": 1,
+            "count": 2
+          },
+          "found": true,
+          "says": true
+        },
+        {
+          "screen": "rota home (home) page 1 of 1",
+          "page": {
+            "index": 0,
+            "count": 1
+          },
+          "found": true,
+          "says": true
+        },
+        {
+          "screen": "rota list (/shifts) page 1 of 2",
+          "page": {
+            "index": 0,
+            "count": 2
+          },
+          "found": true,
+          "says": true
+        },
+        {
+          "screen": "rota list (/shifts) page 2 of 2",
+          "page": {
+            "index": 1,
+            "count": 2
+          },
+          "found": true,
+          "says": true
+        },
+        {
+          "screen": "rota record (s-mon-open) page 1 of 2",
+          "page": {
+            "index": 0,
+            "count": 2
+          },
+          "found": true,
+          "says": true
+        },
+        {
+          "screen": "rota record (s-mon-open) page 2 of 2",
+          "page": {
+            "index": 1,
+            "count": 2
+          },
+          "found": true,
+          "says": true
+        },
+        {
+          "screen": "seedbed home (home) page 1 of 1",
+          "page": {
+            "index": 0,
+            "count": 1
+          },
+          "found": true,
+          "says": true
+        },
+        {
+          "screen": "seedbed list (/plantings) page 1 of 1",
+          "page": {
+            "index": 0,
+            "count": 1
+          },
+          "found": true,
+          "says": true
+        },
+        {
+          "screen": "seedbed record (beans) page 1 of 1",
+          "page": {
+            "index": 0,
+            "count": 1
+          },
+          "found": true,
+          "says": true
+        }
+      ],
+      "ok": true
+    },
+    "everyPixelDrawnIsGray": {
+      "held": [
+        {
+          "screen": "todo home (home) page 1 of 1",
+          "width": 758,
+          "height": 1024,
+          "colored": 0,
+          "spread": 0,
+          "levels": 256,
+          "ok": true
+        },
+        {
+          "screen": "todo list (/tasks) page 1 of 3",
+          "width": 758,
+          "height": 1024,
+          "colored": 0,
+          "spread": 0,
+          "levels": 256,
+          "ok": true
+        },
+        {
+          "screen": "todo list (/tasks) page 2 of 3",
+          "width": 758,
+          "height": 1024,
+          "colored": 0,
+          "spread": 0,
+          "levels": 256,
+          "ok": true
+        },
+        {
+          "screen": "todo list (/tasks) page 3 of 3",
+          "width": 758,
+          "height": 1024,
+          "colored": 0,
+          "spread": 0,
+          "levels": 256,
+          "ok": true
+        },
+        {
+          "screen": "todo record (t-deposit) page 1 of 2",
+          "width": 758,
+          "height": 1024,
+          "colored": 0,
+          "spread": 0,
+          "levels": 256,
+          "ok": true
+        },
+        {
+          "screen": "todo record (t-deposit) page 2 of 2",
+          "width": 758,
+          "height": 1024,
+          "colored": 0,
+          "spread": 0,
+          "levels": 256,
+          "ok": true
+        },
+        {
+          "screen": "rota home (home) page 1 of 1",
+          "width": 758,
+          "height": 1024,
+          "colored": 0,
+          "spread": 0,
+          "levels": 256,
+          "ok": true
+        },
+        {
+          "screen": "rota list (/shifts) page 1 of 2",
+          "width": 758,
+          "height": 1024,
+          "colored": 0,
+          "spread": 0,
+          "levels": 256,
+          "ok": true
+        },
+        {
+          "screen": "rota list (/shifts) page 2 of 2",
+          "width": 758,
+          "height": 1024,
+          "colored": 0,
+          "spread": 0,
+          "levels": 256,
+          "ok": true
+        },
+        {
+          "screen": "rota record (s-mon-open) page 1 of 2",
+          "width": 758,
+          "height": 1024,
+          "colored": 0,
+          "spread": 0,
+          "levels": 256,
+          "ok": true
+        },
+        {
+          "screen": "rota record (s-mon-open) page 2 of 2",
+          "width": 758,
+          "height": 1024,
+          "colored": 0,
+          "spread": 0,
+          "levels": 256,
+          "ok": true
+        },
+        {
+          "screen": "seedbed home (home) page 1 of 1",
+          "width": 758,
+          "height": 1024,
+          "colored": 0,
+          "spread": 0,
+          "levels": 256,
+          "ok": true
+        },
+        {
+          "screen": "seedbed list (/plantings) page 1 of 1",
+          "width": 758,
+          "height": 1024,
+          "colored": 0,
+          "spread": 0,
+          "levels": 256,
+          "ok": true
+        },
+        {
+          "screen": "seedbed record (beans) page 1 of 1",
+          "width": 758,
+          "height": 1024,
+          "colored": 0,
+          "spread": 0,
+          "levels": 256,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "everyColorThePageComputesIsOneOfTheSixteenGrays": {
+      "held": [
+        {
+          "screen": "todo home (home) page 1 of 1",
+          "off": [],
+          "ok": true
+        },
+        {
+          "screen": "todo list (/tasks) page 1 of 3",
+          "off": [],
+          "ok": true
+        },
+        {
+          "screen": "todo list (/tasks) page 2 of 3",
+          "off": [],
+          "ok": true
+        },
+        {
+          "screen": "todo list (/tasks) page 3 of 3",
+          "off": [],
+          "ok": true
+        },
+        {
+          "screen": "todo record (t-deposit) page 1 of 2",
+          "off": [],
+          "ok": true
+        },
+        {
+          "screen": "todo record (t-deposit) page 2 of 2",
+          "off": [],
+          "ok": true
+        },
+        {
+          "screen": "rota home (home) page 1 of 1",
+          "off": [],
+          "ok": true
+        },
+        {
+          "screen": "rota list (/shifts) page 1 of 2",
+          "off": [],
+          "ok": true
+        },
+        {
+          "screen": "rota list (/shifts) page 2 of 2",
+          "off": [],
+          "ok": true
+        },
+        {
+          "screen": "rota record (s-mon-open) page 1 of 2",
+          "off": [],
+          "ok": true
+        },
+        {
+          "screen": "rota record (s-mon-open) page 2 of 2",
+          "off": [],
+          "ok": true
+        },
+        {
+          "screen": "seedbed home (home) page 1 of 1",
+          "off": [],
+          "ok": true
+        },
+        {
+          "screen": "seedbed list (/plantings) page 1 of 1",
+          "off": [],
+          "ok": true
+        },
+        {
+          "screen": "seedbed record (beans) page 1 of 1",
+          "off": [],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "eachTapRegionIsItsElementsBoxWithinAPixel": {
+      "held": [
+        {
+          "screen": "todo home (home) page 1 of 1",
+          "regions": 10,
+          "elements": 10,
+          "wrong": [],
+          "ok": true
+        },
+        {
+          "screen": "todo list (/tasks) page 1 of 3",
+          "regions": 10,
+          "elements": 10,
+          "wrong": [],
+          "ok": true
+        },
+        {
+          "screen": "todo list (/tasks) page 2 of 3",
+          "regions": 12,
+          "elements": 12,
+          "wrong": [],
+          "ok": true
+        },
+        {
+          "screen": "todo list (/tasks) page 3 of 3",
+          "regions": 6,
+          "elements": 6,
+          "wrong": [],
+          "ok": true
+        },
+        {
+          "screen": "todo record (t-deposit) page 1 of 2",
+          "regions": 7,
+          "elements": 7,
+          "wrong": [],
+          "ok": true
+        },
+        {
+          "screen": "todo record (t-deposit) page 2 of 2",
+          "regions": 7,
+          "elements": 7,
+          "wrong": [],
+          "ok": true
+        },
+        {
+          "screen": "rota home (home) page 1 of 1",
+          "regions": 11,
+          "elements": 11,
+          "wrong": [],
+          "ok": true
+        },
+        {
+          "screen": "rota list (/shifts) page 1 of 2",
+          "regions": 11,
+          "elements": 11,
+          "wrong": [],
+          "ok": true
+        },
+        {
+          "screen": "rota list (/shifts) page 2 of 2",
+          "regions": 11,
+          "elements": 11,
+          "wrong": [],
+          "ok": true
+        },
+        {
+          "screen": "rota record (s-mon-open) page 1 of 2",
+          "regions": 8,
+          "elements": 8,
+          "wrong": [],
+          "ok": true
+        },
+        {
+          "screen": "rota record (s-mon-open) page 2 of 2",
+          "regions": 7,
+          "elements": 7,
+          "wrong": [],
+          "ok": true
+        },
+        {
+          "screen": "seedbed home (home) page 1 of 1",
+          "regions": 10,
+          "elements": 10,
+          "wrong": [],
+          "ok": true
+        },
+        {
+          "screen": "seedbed list (/plantings) page 1 of 1",
+          "regions": 6,
+          "elements": 6,
+          "wrong": [],
+          "ok": true
+        },
+        {
+          "screen": "seedbed record (beans) page 1 of 1",
+          "regions": 8,
+          "elements": 8,
+          "wrong": [],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "everyPressIsAtLeast64PxEachWay": {
+      "held": [
+        {
+          "screen": "todo home (home) page 1 of 1",
+          "small": [],
+          "ok": true
+        },
+        {
+          "screen": "todo list (/tasks) page 1 of 3",
+          "small": [],
+          "ok": true
+        },
+        {
+          "screen": "todo list (/tasks) page 2 of 3",
+          "small": [],
+          "ok": true
+        },
+        {
+          "screen": "todo list (/tasks) page 3 of 3",
+          "small": [],
+          "ok": true
+        },
+        {
+          "screen": "todo record (t-deposit) page 1 of 2",
+          "small": [],
+          "ok": true
+        },
+        {
+          "screen": "todo record (t-deposit) page 2 of 2",
+          "small": [],
+          "ok": true
+        },
+        {
+          "screen": "rota home (home) page 1 of 1",
+          "small": [],
+          "ok": true
+        },
+        {
+          "screen": "rota list (/shifts) page 1 of 2",
+          "small": [],
+          "ok": true
+        },
+        {
+          "screen": "rota list (/shifts) page 2 of 2",
+          "small": [],
+          "ok": true
+        },
+        {
+          "screen": "rota record (s-mon-open) page 1 of 2",
+          "small": [],
+          "ok": true
+        },
+        {
+          "screen": "rota record (s-mon-open) page 2 of 2",
+          "small": [],
+          "ok": true
+        },
+        {
+          "screen": "seedbed home (home) page 1 of 1",
+          "small": [],
+          "ok": true
+        },
+        {
+          "screen": "seedbed list (/plantings) page 1 of 1",
+          "small": [],
+          "ok": true
+        },
+        {
+          "screen": "seedbed record (beans) page 1 of 1",
+          "small": [],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "thePictureIsTheSameWithAndWithoutWaiting": {
+      "held": [
+        {
+          "screen": "todo home (home) page 1 of 1",
+          "ok": true
+        },
+        {
+          "screen": "todo list (/tasks) page 1 of 3",
+          "ok": true
+        },
+        {
+          "screen": "todo list (/tasks) page 2 of 3",
+          "ok": true
+        },
+        {
+          "screen": "todo list (/tasks) page 3 of 3",
+          "ok": true
+        },
+        {
+          "screen": "todo record (t-deposit) page 1 of 2",
+          "ok": true
+        },
+        {
+          "screen": "todo record (t-deposit) page 2 of 2",
+          "ok": true
+        },
+        {
+          "screen": "rota home (home) page 1 of 1",
+          "ok": true
+        },
+        {
+          "screen": "rota list (/shifts) page 1 of 2",
+          "ok": true
+        },
+        {
+          "screen": "rota list (/shifts) page 2 of 2",
+          "ok": true
+        },
+        {
+          "screen": "rota record (s-mon-open) page 1 of 2",
+          "ok": true
+        },
+        {
+          "screen": "rota record (s-mon-open) page 2 of 2",
+          "ok": true
+        },
+        {
+          "screen": "seedbed home (home) page 1 of 1",
+          "ok": true
+        },
+        {
+          "screen": "seedbed list (/plantings) page 1 of 1",
+          "ok": true
+        },
+        {
+          "screen": "seedbed record (beans) page 1 of 1",
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "thePageFetchesNothing": {
+      "held": [
+        {
+          "screen": "todo home (home) page 1 of 1",
+          "asked": [],
+          "ok": true
+        },
+        {
+          "screen": "todo list (/tasks) page 1 of 3",
+          "asked": [],
+          "ok": true
+        },
+        {
+          "screen": "todo list (/tasks) page 2 of 3",
+          "asked": [],
+          "ok": true
+        },
+        {
+          "screen": "todo list (/tasks) page 3 of 3",
+          "asked": [],
+          "ok": true
+        },
+        {
+          "screen": "todo record (t-deposit) page 1 of 2",
+          "asked": [],
+          "ok": true
+        },
+        {
+          "screen": "todo record (t-deposit) page 2 of 2",
+          "asked": [],
+          "ok": true
+        },
+        {
+          "screen": "rota home (home) page 1 of 1",
+          "asked": [],
+          "ok": true
+        },
+        {
+          "screen": "rota list (/shifts) page 1 of 2",
+          "asked": [],
+          "ok": true
+        },
+        {
+          "screen": "rota list (/shifts) page 2 of 2",
+          "asked": [],
+          "ok": true
+        },
+        {
+          "screen": "rota record (s-mon-open) page 1 of 2",
+          "asked": [],
+          "ok": true
+        },
+        {
+          "screen": "rota record (s-mon-open) page 2 of 2",
+          "asked": [],
+          "ok": true
+        },
+        {
+          "screen": "seedbed home (home) page 1 of 1",
+          "asked": [],
+          "ok": true
+        },
+        {
+          "screen": "seedbed list (/plantings) page 1 of 1",
+          "asked": [],
+          "ok": true
+        },
+        {
+          "screen": "seedbed record (beans) page 1 of 1",
+          "asked": [],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "noPageThrew": {
+      "errors": [],
+      "ok": true
+    }
+  },
+  "screens": 14,
+  "passed": true
+}

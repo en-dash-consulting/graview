@@ -51,6 +51,8 @@ export type ArgShape =
    * fraction as a percent — asked for as "$1,250.50".
    */
   | { readonly type: "number"; readonly min?: number; readonly max?: number; readonly step?: number; readonly duration?: true; readonly amount?: AmountMark }
+  /** A time of day with no day and no zone, kept as `HH:MM` ("15:00"): asked for with a time input. */
+  | { readonly type: "time" }
   | { readonly type: "choice"; readonly options: readonly string[] }
   /**
    * YES OR NO — an argument that takes a boolean.
@@ -150,6 +152,8 @@ export function describeArg(schema: unknown): ArgShape {
   }
 
   if (type === "string") {
+    // A time of day: `timeField()`, a document's `time`.
+    if (typedFieldOf(field) === "time") return { type: "time" };
     // A moment that names an instant: a document's `datetime` (checked by `isMoment`) or zod's own ISO date and time.
     if (checks.some((check) => check.fn === isMoment || check.format === "datetime") || def?.format === "datetime") return { type: "date", time: true, instant: true };
     // A date is a string with a date-shaped pattern. Recognizing it means

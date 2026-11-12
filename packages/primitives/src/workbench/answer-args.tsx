@@ -484,7 +484,7 @@ export function AnswerArgs({
           ) : (
           <input
             autoFocus
-            type={shape.type === "number" && !shape.duration && !amount ? "number" : shape.type === "text" && shape.holds === "phone" ? "tel" : "text"}
+            type={shape.type === "time" ? "time" : shape.type === "number" && !shape.duration && !amount ? "number" : shape.type === "text" && shape.holds === "phone" ? "tel" : "text"}
             {...(amount ? { inputMode: "decimal" as const, "data-graview-amount": amount.format ?? "unit" } : {})}
             /*
              * A FIELD IS ASKED FOR IN WORDS. `dependsOn` and `label` are the

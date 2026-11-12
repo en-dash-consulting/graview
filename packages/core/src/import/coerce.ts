@@ -5,6 +5,7 @@ import { isAppAddress } from "../schema/app-link.js";
 import { PHONE } from "../schema/typed-fields.js";
 import { parseDuration } from "../schema/field-words.js";
 import { readPartialDay } from "../when-typed.js";
+import { parseTimeOfDay } from "../time-typed.js";
 
 /**
  * A CELL, READ AS THE FIELD IT GOES IN (FR-177). A spreadsheet holds what a
@@ -257,6 +258,13 @@ export function coerceCell(spec: FieldSpec, input: unknown, said: string, option
       // Minutes, or a length of time as it is typed: "1h 30m", "1:30", "1.5 h".
       const value = parseDuration(typeof input === "number" || typeof input === "string" ? input : String(input));
       return value === undefined ? { ok: false, why: `${quoted} under ${said} is not a length of time, like 1h 30m or 90 (minutes)` } : { ok: true, value };
+    }
+    case "time": {
+      // A time of day as it is typed ("3 PM", "15:00"), or as a spreadsheet keeps one: a part of a day, or a date whose clock is the time.
+      const fromSheet = (minutes: number) => `${String(Math.floor(minutes / 60) % 24).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+      const value =
+        input instanceof Date ? fromSheet(input.getUTCHours() * 60 + input.getUTCMinutes()) : typeof input === "number" && input >= 0 && input < 1 ? fromSheet(Math.min(Math.round(input * 1440), 1439)) : parseTimeOfDay(String(input));
+      return value === undefined ? { ok: false, why: `${quoted} under ${said} is not a time of day, like 15:00 or 3 PM` } : { ok: true, value };
     }
   }
 }

@@ -23,6 +23,7 @@ import { toDocument } from "../document/to-document.js";
 import {
   checkAccents,
   checkJobs,
+  checkDevices,
   checkWorkflows,
   checkAliases,
   checkActsFromEnds,
@@ -141,6 +142,7 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>, options: Check
   checkFactRules(ctx);
   checkClockRules(ctx);
   checkJobs(ctx);
+  checkDevices(ctx);
   checkWorkflows(ctx);
   checkAliases(ctx);
   // The look: places that repeat, more than a person scans, a home with nothing to read first — judged of the app written as a document.

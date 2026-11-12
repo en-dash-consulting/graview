@@ -1,4 +1,5 @@
 import type { DescribedPart, DescribedProblem, DescribedVideo } from "@graview/core/describe";
+import { viewFaceRefusedWords } from "@graview/core/css";
 import { placeNamed, placesSaid, quoted, unsureOfViews } from "../host/links-words.js";
 import type { ViewRefusal } from "../host/open-draw.js";
 import { handedLinks, judgeLink, linkRefusedWords } from "../host/external-links.js";
@@ -6,6 +7,7 @@ import { imageRefusedWords, type ImageHost } from "../host/open-judge.js";
 import { describeDrawing } from "./describe.js";
 import { drawTranscript, type DrawnTranscript } from "./draw.js";
 import type { HeadlessFailureReason, HeadlessInput, HeadlessTranscript } from "./protocol.js";
+import { PART_NAME } from "../part.js";
 
 /*
  * WHAT A HEADLESS RUN'S TRANSCRIPT COMES TO (FR-95): the view's messages
@@ -32,6 +34,8 @@ const WHY: Readonly<Record<string, string>> = {
   feImage: " It loads an image: a filter here is made of the view's own pixels.",
   "@property": " It registers a property for the whole page, the app's own --graview-* among them: animate a transform, an opacity or a color in @keyframes.",
   "a href": " An <a> in SVG goes to a record or a place (data-record, data-place); a link out is an HTML <a href>.",
+  loading: ' An <img> loads "lazy" or "eager".',
+  fetchpriority: ' An <img> fetches at "high", "low" or "auto".',
   role: ` A role of the app's chrome or notices is the app's; role="region" is drawn while it has a name (aria-label).`,
 };
 
@@ -62,6 +66,8 @@ export function sayRefusal(refusal: ViewRefusal, host: ImageHost & { readonly li
       return { at: `drawing ${element}${name}`, says: `Not drawn: ${element || "an element"}${name} names ${said}, ${ids.length === 1 ? "which is" : "which are"} no element of this view. It names elements the view draws itself, by their id (<h2 id="…">), drawn once each is there.` };
     }
     case "css":
+      /* A view's own face (HQ f-view-font-face-data), said as the page says it (core's faces.ts). */
+      if (refusal.css?.reason === "font-face") return { at: "stylesheet @font-face", says: viewFaceRefusedWords(refusal.css) };
       return { at: `stylesheet${name === " stylesheet" ? "" : name}`, says: `Not drawn: CSS the open kit leaves out${refusal.css ? ` (${refusal.css.reason}${refusal.css.name ? ` ${refusal.css.name}` : ""})` : ""}.${why(refusal.css?.name)}` };
   }
 }
@@ -69,6 +75,8 @@ export function sayRefusal(refusal: ViewRefusal, host: ImageHost & { readonly li
 /** What the host adds to a transcript's drawing beyond what the isolate was told: the app's stylesheet for every view (Roadmap f-app-wide-view-theme). */
 export interface JudgeOptions {
   readonly theme?: string;
+  /** The families the app lends its views (`brand.views.fonts`): a face of the view's own by one of them is not loaded, as on the page (host/fonts.ts). */
+  readonly lent?: readonly string[];
 }
 
 export function judgeTranscript(transcript: HeadlessTranscript, input: HeadlessInput, options: JudgeOptions = {}): Judged {
@@ -81,7 +89,7 @@ export function judgeTranscript(transcript: HeadlessTranscript, input: HeadlessI
   /* A link out goes where the records the view was shown say, or to an origin the host lists, as on the page. */
   const handed = handedLinks(input.props);
   /* Nothing loads in a run: the app's own image is drawn as the path the live host resolves, where the host says it does. */
-  const drawn = drawTranscript(transcript.renders, transcript.sheets, { maxNodes: limits.maxNodes, ...(input.origin ? { origin: input.origin } : {}), ...(input.imageOrigins ? { imageOrigins: input.imageOrigins } : {}), ...(input.assets ? { asset: (path: string) => path } : {}), ...(options.theme ? { theme: options.theme } : {}), link: (value: string) => judgeLink(value, { handed, ...(input.linkOrigins ? { origins: input.linkOrigins } : {}) }) });
+  const drawn = drawTranscript(transcript.renders, transcript.sheets, { maxNodes: limits.maxNodes, ...(input.origin ? { origin: input.origin } : {}), ...(input.imageOrigins ? { imageOrigins: input.imageOrigins } : {}), ...(input.assets ? { asset: (path: string) => path } : {}), ...(options.theme ? { theme: options.theme } : {}), ...(options.lent ? { lent: options.lent } : {}), link: (value: string) => judgeLink(value, { handed, ...(input.linkOrigins ? { origins: input.linkOrigins } : {}) }) });
   if (drawn.over) return { ok: false, reason: "nodes", detail: `It drew more than the ${limits.maxNodes.toLocaleString("en-US")} things a view may draw.` };
   // A kind's list is somewhere a view may go by name too, by its plural or the kind's name.
   const goes = [...input.places, ...(input.lists ?? []).filter((slug) => !input.places.some((place) => place.as === slug)).map((slug) => ({ as: slug }))];
@@ -91,6 +99,22 @@ export function judgeTranscript(transcript: HeadlessTranscript, input: HeadlessI
     if (!acts.has(act)) return { ok: false, reason: "act", detail: `It binds a press to the act "${act}" (data-act), which its manifest does not name.` };
   }
   const problems: DescribedProblem[] = [...drawn.refused.map((one) => sayRefusal(one, { ...(input.imageOrigins ? { origins: input.imageOrigins } : {}), assets: input.assets === true, ...(input.linkOrigins ? { linkOrigins: input.linkOrigins } : {}) })), ...said.problems];
+  /* A part that threw or took too long (`graview.part`, Roadmap f-view-part-fails-alone): the page draws a note in its place, and says why. */
+  const partsSaid = new Set<string>();
+  const failedParts = (node: { readonly childNodes: readonly unknown[] }): void => {
+    for (const child of node.childNodes as { nodeType: number; childNodes: unknown[]; getAttribute(name: string): string | null }[]) {
+      if (child.nodeType !== 1) continue;
+      const failed = child.getAttribute("data-part-failed");
+      const name = child.getAttribute("data-part") ?? "";
+      if (failed !== null && PART_NAME.test(name) && !partsSaid.has(`${name} ${failed}`) && partsSaid.size < 10) {
+        partsSaid.add(`${name} ${failed}`);
+        const why = JSON.stringify((child.getAttribute("data-part-why") ?? "").replace(/[\u0000-\u001f\u007f\u2028\u2029]+/g, " ").slice(0, 300));
+        problems.push({ at: `part "${name}"`, says: `The part "${name}" ${failed === "slow" ? "took too long" : "threw"}: ${why}. The page draws a note in its place and the rest of the view.` });
+      }
+      failedParts(child);
+    }
+  };
+  failedParts(drawn.root);
   for (const went of transcript.went) {
     /* A bare string is a record first, then a place by that slug, as the host follows it. */
     if ("record" in went && !(input.props.node?.id === went.record || (input.props.nodes ?? []).some((node) => node.id === went.record) || placeNamed(goes, went.record)))

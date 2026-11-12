@@ -1,7 +1,7 @@
 import type { AnyGraphNode, GraphReader } from "../graph/types.js";
 import { evaluateExpr, ExprEvalError, NodeSet, type KindShape, type Value } from "./expr/evaluate.js";
 import type { Expr } from "./expr/parse.js";
-import { DATE_VALUE, dayAsRead, dayOfMoment, ISO_DAY, ISO_MOMENT, isoToday, momentAsRead, numberAsRead, timeAsRead } from "../days.js";
+import { DATE_VALUE, dayAsRead, dayOfMoment, ISO_DAY, ISO_MOMENT, isoToday, momentAsRead, momentAtAGlance, numberAsRead, timeAsRead } from "../days.js";
 import { capitalize, listed } from "../capital.js";
 import { excerpt } from "../excerpt.js";
 import { formatMoney, type Money } from "./money.js";
@@ -32,6 +32,12 @@ import { humanizeValue, optionInSentence } from "../schema/humanize.js";
  * (`brand.timeZone`), or a person's a host passed, never on the server's;
  * one kept without a zone, as it was written.
  *
+ * `glance` says a field as a glance at its record says it (Roadmap
+ * f-compose-home-from-declaration): a day as a person reads it, a moment
+ * with its zone named only to a reader whose clock is another, a date that
+ * repeats as "Every Tuesday, next Nov 17", a choice by its label — what a
+ * composed row says so it reads as the derived one does.
+ *
  * `capital` may follow any of them, or stand alone: it upper-cases the first
  * letter of what was said, for a count in words that starts a headline —
  * "{count(all('finding')) | words | capital} findings" says "Fifty-seven findings".
@@ -41,7 +47,7 @@ import { humanizeValue, optionInSentence } from "../schema/humanize.js";
  * name, title or label field, else its id.
  */
 
-export const FORMATTERS = ["money", "percent", "date", "time", "datetime", "relative", "upper", "lower", "count", "words", "and", "plural", "excerpt"] as const;
+export const FORMATTERS = ["money", "percent", "date", "time", "datetime", "relative", "upper", "lower", "count", "words", "and", "plural", "excerpt", "glance"] as const;
 export type Formatter = (typeof FORMATTERS)[number];
 
 export interface TemplatePart {
@@ -167,6 +173,8 @@ function show(value: Value, format: Formatter | undefined, today: string, args: 
       return String(value).toUpperCase();
     case "lower":
       return String(value).toLowerCase();
+    case "glance":
+      return glanced(value, undefined, today, money);
     case "excerpt":
       return excerpt(String(value), Number(args[0]) || undefined);
     case "date":
@@ -189,6 +197,20 @@ function show(value: Value, format: Formatter | undefined, today: string, args: 
       // A day or a moment said into a sentence — "was due {due}" — is said as a person reads it, never as it is kept.
       return typeof value === "string" && DATE_VALUE.test(value) ? dayAsRead(value, money?.locale) : typeof value === "string" && ISO_MOMENT.test(value) ? momentAsRead(value, money?.locale, money?.timeZone) : String(value);
   }
+}
+
+/**
+ * A value as a glance says it (`| glance`): a moment's zone only to a reader elsewhere, a day as read, a choice by its label.
+ * A date that repeats is said by its rule where a record's blocks say it (`blocks.ts`), which reads the record's repeat.
+ */
+export function glanced(value: Value, labels: Readonly<Record<string, string>> | undefined, today: string, money?: Money): string {
+  if (value === null || value === undefined || value === "") return "—";
+  if (typeof value === "string") {
+    if (ISO_MOMENT.test(value)) return momentAtAGlance(value, money?.locale, money?.timeZone);
+    if (DATE_VALUE.test(value)) return dayAsRead(value, money?.locale);
+    if (labels) return optionsSaid(value, labels, true);
+  }
+  return show(value, undefined, today, [], money);
 }
 
 export interface RenderContext {
@@ -236,6 +258,7 @@ export function renderTemplate(parts: readonly TemplatePart[], ctx: RenderContex
         const named = e.t === "ident" ? e.name : e.t === "member" && e.object.t === "ident" && e.object.name[0] === "$" ? e.name : undefined;
         const labels = !part.format && named !== undefined && ctx.node ? ctx.kinds.get(ctx.node.kind)?.choices?.get(named) : undefined;
         if (labels && (typeof value === "string" || Array.isArray(value))) return capitalized(part, optionsSaid(value, labels, parts.length === 1));
+        if (part.format === "glance") return capitalized(part, glanced(value, named !== undefined && ctx.node ? ctx.kinds.get(ctx.node.kind)?.choices?.get(named) : undefined, today, ctx.money));
         return capitalized(part, show(value, part.format, today, part.formatArgs, ctx.money, name));
       } catch (error) {
         if (error instanceof ExprEvalError) return "—";

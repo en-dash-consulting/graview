@@ -36,6 +36,8 @@ A served store sends a seat only what it sees, withholds the rest of the log in 
 
 A host says who at a shared screen on the seat: `principal: { ..., profile: { id: "prf_mia", name: "Mia" } }` (an id of letters, digits, `_` and `-`). `$me`, a sight `via` the people or `own`, and a view's `props.me` then read Mia's person, a record of the people kind made on her first act, its id `<account>~prf_mia`, so it can only ever be that account's. It is a name, not a seat: the roles, grants and `seatOf` stay the account's, and everything the account could reach it still reaches. History says "Mia (Nick)". Without a profile, nothing changes. A person removed stays removed, and a kind that requires more than a name has none for a profile (`people-unmakeable`): `$me` then refuses, and the act is not offered. The seat headers carry it only where a host trusts them; otherwise it is the host's `seatOf`.
 
+A person entered before they joined is bound, not made twice: `bindPerson(store, joining, "person:bud", { author })` (`@graview/core/binding`); `$me`, `own` and `self` then read that record. Only the host's system seat, or a human with a role a grant names `bind-person` for binds (never `*`). A seat sees its own binding; whoever may bind sees all. A host reads through `seenBy` each time and keeps none of its methods, and forwards a change through `answerSeenBy`: re-read, never pass on, what a listener is handed.
+
 What a view keeps for that viewer (`graview.mine`, `graview-view-forms`) goes where the host says, for the viewer it knows, handed to `mount`, `<Embed>` and `PagesApp` as `viewerState`:
 
 ```ts
@@ -46,6 +48,17 @@ const viewerState: ViewerState = {
 ```
 
 Keep it out of the record store: it is never history, an export or an agent's.
+
+### What a view is told it cannot see
+
+A worker view is handed `props.unseen` where its seat is kept from some of what it reads, so it says why a part is empty:
+
+```js
+const { kinds = [], fields = {} } = graview.props.unseen ?? {};
+if (kinds.includes("vendor")) draw("Sign in to see the vendors");
+```
+
+`kinds`: the kinds it reads the seat sees none of (no sight for its roles, an `own` or `via` sight and no id, a module off). `fields`: per kind it sees, the fields `hide` or `fields` may keep from it, read from the policy. Nothing of any record is said: no count, no id. A frame, somebody else's code, is handed `kinds` alone, of those its own `reads` names. Where everything a view reads is kept, the host draws its `signIn` line (or "Nothing here is shown to you.") instead of starting it. `graview view check --seats` runs a view as each seat the policy names and says what each could not see: for the owner's eyes only.
 
 ### Then find out whether it worked
 
