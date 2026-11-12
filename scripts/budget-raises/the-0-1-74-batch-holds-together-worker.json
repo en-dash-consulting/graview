@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 256,
+  "note": "Raised when the 0.1.74 batch's branches were merged (a place drawn for an e-ink device's screen; a field that keeps a time of day and what a seat may run): each measured its own growth against main, and together they come to 18 bytes over their summed raises (2_714_971 against 2_714_953), held for a few bytes either side."
+}
