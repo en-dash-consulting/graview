@@ -82,6 +82,7 @@ export interface ZodUses {
   phoneField?: boolean;
   placeField?: boolean;
   durationField?: boolean;
+  timeField?: boolean;
   /** A date that repeats keeps how beside it (`repeatField()`). */
   repeatField?: boolean;
   /** A relation to another app's kind (FR-171), kept in a field (`linkedRecordField(…)`). */
@@ -90,7 +91,7 @@ export interface ZodUses {
 
 /** The framework helpers a printed schema calls beside `z`, as an import list's leading names. */
 export const helpersUsed = (uses: ZodUses): string =>
-  (["appLinkField", "durationField", "fileField", "imageField", "linkedRecordField", "markdownField", "phoneField", "placeField", "repeatField", "videoField"] as const)
+  (["appLinkField", "durationField", "fileField", "imageField", "linkedRecordField", "markdownField", "phoneField", "placeField", "repeatField", "timeField", "videoField"] as const)
     .filter((name) => uses[name])
     .map((name) => `${name}, `)
     .join("");

@@ -8,6 +8,8 @@ import { fileOfKind, filesOf, isFileValue, type FileValue } from "../schema/file
 import { isAppAddress } from "../schema/app-link.js";
 import { PHONE } from "../schema/typed-fields.js";
 import { parseDuration } from "../schema/field-words.js";
+import { ISO_MOMENT } from "../days.js";
+import { parseTimeOfDay } from "../time-typed.js";
 import { linkedEdges } from "../schema/linked.js";
 
 /*
@@ -165,6 +167,12 @@ export function coerce(value: unknown, from: FieldType, to: FieldSpec): unknown 
       // A number is minutes; words are read as a length of time is typed: "1h 30m", "1:30", "1.5 h".
       const n = parseDuration(value);
       return n === undefined || outsideRange(n, to, "") !== undefined ? undefined : n;
+    }
+    case "time": {
+      // A time of day as it is typed ("3 PM"), or the time on the wall of a moment kept without a zone.
+      const t = asText(value)?.trim();
+      if (!t) return undefined;
+      return ISO_MOMENT.test(t) && !/[Z+-][\d:]*$/.test(t.slice(16)) ? t.slice(11, 16) : parseTimeOfDay(t);
     }
     case "url":
     case "email": {

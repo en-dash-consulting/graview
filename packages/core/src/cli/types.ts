@@ -58,6 +58,7 @@ const HOLDS: Partial<Record<FieldSpec["type"], string>> = {
   phone: "A phone number, as it was written.",
   place: "An address or a place's name, linked to the reader's maps app.",
   duration: "A length of time, in whole minutes.",
+  time: "A time of day, as 15:00: no day and no zone.",
 };
 
 /** A field's comment: its description, the words it is shown by, and what a string of its type holds. */

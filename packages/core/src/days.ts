@@ -62,6 +62,13 @@ export function daySpanOf(value: string): { readonly from: string; readonly to: 
   return { from: `${value}-01`, to: `${value}-${String(last).padStart(2, "0")}` };
 }
 
+/**
+ * A TIME OF DAY as a record keeps one: `HH:MM` on a 24-hour clock, no day
+ * and no zone — "15:00". It is the time on the wall wherever it is read, so
+ * it sorts as written and is said as the reader's clock says it ("3:00 PM").
+ */
+export const TIME_OF_DAY = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+
 /** A moment as the record holds it: a day, a `T` or a space, and a time of day, with or without seconds and a zone. */
 export const ISO_MOMENT = /^\d{4}(-\d\d){2}[T ]\d\d:\d\d(:[\d.]+)?(Z|[+-][\d:]+)?$/;
 
@@ -287,8 +294,8 @@ function moment(at: string, options: Intl.DateTimeFormatOptions, locale: string 
  */
 export const momentAsRead = (at: string, locale?: string, timeZone?: string): string => moment(at, { year: "numeric", month: "short", day: "numeric" }, locale, timeZone, true);
 
-/** A moment's time of day: "3:30 PM" (en-US), "15:30" (en-GB), an instant on the clock `momentAsRead` says it on. Anything that is not a moment is said as it is. */
-export const timeAsRead = (at: string, locale?: string, timeZone?: string): string => moment(at, {}, locale, timeZone);
+/** A moment's time of day: "3:30 PM" (en-US), "15:30" (en-GB), an instant on the clock `momentAsRead` says it on; a time of day alone ("15:30") as the wall says it. Anything else is said as it is. */
+export const timeAsRead = (at: string, locale?: string, timeZone?: string): string => (TIME_OF_DAY.test(at) ? moment(`2000-01-01T${at}`, {}, locale, undefined) : moment(at, {}, locale, timeZone));
 
 /** The day a moment falls on: an instant's on the clock it is said on, a wall time's as written; a day is itself. Undefined for anything else. */
 export function dayOfMoment(at: string, timeZone?: string): string | undefined {

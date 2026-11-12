@@ -8,7 +8,7 @@ import { normalize, writesOf, type Primitive } from "./graph/primitives.js";
 import { keepLinked, keepsLinked } from "./keep-linked.js";
 import { bareOp, inverseOf } from "./ops/inverse.js";
 import { LabelIndex, refusalFor, type RefCandidate, type RefResolution } from "./labels.js";
-import { nodeRefArgs, type NodeRefArg } from "./mutations/node-ref.js";
+import { heldRefKinds, nodeRefArgs, type NodeRefArg } from "./mutations/node-ref.js";
 import type { GraphSnapshot } from "./graph/types.js";
 import { verifyFold, type VerifyResult } from "./integrity.js";
 import { evaluate } from "./invariants/engine.js";
@@ -42,7 +42,7 @@ import { actingAs, boundPersonOf, grantsTo, isSystem, meIn, meOf, ownsId, permit
 import { MOST_PROPOSED, PROPOSE_CHANGES, proposeChangesMutation } from "./mutations/propose-changes.js";
 import { namesUnseen, redact } from "./ops/withheld.js";
 import { writersBehind } from "./ops/writers.js";
-import { nounOf } from "./schema/define-node.js";
+import { nounOf, withArticle } from "./schema/define-node.js";
 import { behind, fieldsJudged, mayKeepField, partialSight, recordsOf, sees } from "./permissions/sight.js";
 import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
 import { checkUndo, UndoBlockedError, undoneInverses, undoPrimitives, type UndoCheck } from "./ops/undo.js";
@@ -1346,6 +1346,25 @@ export class Store<S extends AnySchema> {
     };
   }
 
+  /** Refuses a record named for an act that is of none of the kinds it takes — at its subject or any record argument — as a document's act on the wrong kind is refused. */
+  private keepsToItsKinds(definition: AnyMutationDefinition<S>, call: MutationCall): void {
+    const subject = definition.subject;
+    if (subject && subject.kinds !== "*") this.ofKinds(definition, call.args[subject.arg], subject.kinds as readonly string[]);
+    const shape = (definition.input as { shape?: Record<string, unknown> }).shape ?? {};
+    for (const [name, field] of Object.entries(shape)) {
+      const kinds = name === subject?.arg ? undefined : heldRefKinds(field);
+      if (kinds) this.ofKinds(definition, call.args[name], kinds);
+    }
+  }
+
+  private ofKinds(definition: AnyMutationDefinition<S>, id: unknown, kinds: readonly string[]): void {
+    // A list of records: each one held to the kinds.
+    if (Array.isArray(id)) return id.forEach((one) => this.ofKinds(definition, one, kinds));
+    if (typeof id !== "string" || kinds.includes("*")) return;
+    const node = this.graph.getNode(id);
+    if (node && !kinds.includes(node.kind)) throw new ActRefusal(`"${definition.title ?? definition.name}" acts on ${kinds.join(" or ")}, not on ${withArticle(node.kind)}`, "invalid");
+  }
+
   /**
    * AN ACT RUNS UNDER ITS AUTHOR'S SIGHT (FR-55). Its body, its guard, its
    * refusal and its sentence read the store as the author is served it,
@@ -1816,6 +1835,129 @@ export class Store<S extends AnySchema> {
     });
   }
 
+  /** Who may: the policy's verdict on a call, refused as `apply` refuses it. */
+  private permittedTo(call: MutationCall, as: Author | Principal): void {
+    // A vote is judged with no policy too: a shared seat's vote is refused whether or not the app says who may do what (Roadmap f-votes-shared-seat).
+    const voting = this.voter !== undefined && this.mutations.get(call.name) === this.voter;
+    const binding = this.binder !== undefined && this.mutations.get(call.name) === this.binder;
+    const verdict = this.policy || (this.publisher && call.name === PUBLISH) || voting || binding || this.mutations.get(call.name) === this.proposer ? this.judged(call, as as Principal) : undefined;
+    // Rehearsing a proposal, an act its author may propose stands as the reviewer's would (Roadmap f-proposals-for-review).
+    if (verdict && !verdict.ok && !(this.proposing && this.mayPropose(call, as as Principal))) this.refuse(verdict.refusal, as.id);
+  }
+
+  /** What an agent was declared able to do, and the modules turned off. */
+  private declaredTo(call: MutationCall, as: Author | Principal): void {
+    const refusal = this.refusesAgent(call, as) ?? this.namesTurnedOff(call, as as Principal);
+    if (refusal) this.refuse(refusal, as.id);
+  }
+
+  /**
+   * ONE CALL JUDGED AS `apply` JUDGES IT once who may has been asked: what
+   * it names there for this seat, its input and its own rule (compiled),
+   * the mark only binding writes, and what the app's own actor is held to.
+   * What it makes, or the refusal thrown.
+   */
+  private judgedCall(definition: AnyMutationDefinition<S>, call: MutationCall, as: Author | Principal, decided: boolean, hint?: string): ReturnType<typeof compileMutation> {
+    const missing = this.missingFor(call, as as Principal);
+    if (missing) throw missing;
+    // An act takes only the kinds it names: its subject's, and each record argument's. Binding a person says its own refusal.
+    if (definition !== this.binder) this.keepsToItsKinds(definition, call);
+    let compiled: ReturnType<typeof compileMutation>;
+    try {
+      compiled = compileMutation(this.graph, definition, call.args, { ...this.sighted(as as Principal), hint });
+    } catch (error) {
+      // A press the act's own input refused: the watch tells a form filled wrongly from an act offered whole.
+      if (error instanceof InvalidArguments && !this.rehearsing) tellTheWatchOfAnInputRefusal(error, as.id);
+      throw error;
+    }
+    // Whose record a person is, only binding says (Roadmap f-invite-binds-existing-person): no other act writes the mark.
+    if (definition !== this.binder && compiled.primitives.some((one) => (one.op === "add-node" && Object.hasOwn(one.node, PERSON_SEAT)) || (one.op === "patch-node" && Object.hasOwn(one.after, PERSON_SEAT)))) {
+      throw new ActRefusal(`"${definition.title ?? definition.name}" cannot say whose record a person is: only binding an account to it does.`);
+    }
+    if (isAutomated(as)) {
+      const refused = tidyingRefusal(this.schema, this.graph, compiled.primitives, this.authorName(as), { declaration: !this.suggesting && !decided });
+      if (refused) this.refuse({ mutation: call.name, message: refused, wouldNeed: [] }, as.id);
+    }
+    return compiled;
+  }
+
+  /**
+   * WHAT `apply` WOULD SAY OF ONE CALL, WITHOUT APPLYING IT: undefined where
+   * it would run, else the refusal it would throw. The same steps `apply`
+   * takes, in its order — who may, what an agent was declared able to do,
+   * what the app's own actor is held to, what the call names for this seat,
+   * its input and rule, the mark only binding writes — and what it makes
+   * judged by `land` over the graph as it stands (`wouldRefuse`, handed in,
+   * so a page carries none of it), the graph's own checks of a write.
+   * Publishing, a vote and a proposal are judged by making their op as
+   * `apply` makes it and keeping none (a proposal rehearses its calls, as it
+   * does when applied). Where a kind follows another (`derives`), what
+   * follows the change is worked out as `apply` works it out, over a copy of
+   * the graph with the change made. A seat whose profile's person is not
+   * made yet is judged as the person `apply` makes first, on the one copy of
+   * the store `wouldDo` keeps for it. Nothing else is copied, nothing is
+   * written and nobody is told. What `mayRun` (`@graview/core/seat`) asks.
+   */
+  wouldApply(call: MutationCall, author: Author | Principal, land: (graph: Graph<S>, primitives: readonly Primitive[]) => unknown): unknown {
+    const as = withValidProfile(author) as Principal;
+    const person = this.personFor(as);
+    const store = person ? this.withPersonMade(as, person.id) : this;
+    const was = store.rehearsing;
+    store.rehearsing = true;
+    try {
+      store.stillNow();
+      const spelled = store.spelledCall(call);
+      store.permittedTo(spelled, as);
+      store.declaredTo(spelled, as);
+      if (isAutomated(as)) store.refuseDeclined([spelled], as);
+      if (isTidyingActor(as)) store.refuseStopped([spelled], as, store.suggesting);
+      const definition = store.mutation(spelled.name);
+      // Publishing, a vote and a proposal make an op of their own, as `apply` makes it: each judged by making it and keeping none.
+      const made = { id: `${PREVIEW_BATCH}:0`, at: store.now() };
+      if (definition === store.publisher) return void PUBLISHING.op!(store, made, spelled, PREVIEW_BATCH, as, {});
+      if (definition === store.voter) {
+        if (!VOTING.op) throw new GraphError("Load @graview/core/tidying to vote on a suggestion.");
+        return void VOTING.op(store, made, spelled, PREVIEW_BATCH, as, {});
+      }
+      if (definition === store.proposer) {
+        const ids = (store as unknown as { nextId: () => string }).nextId;
+        (store as unknown as { nextId: () => string }).nextId = () => made.id;
+        try {
+          return void store.proposal(spelled, PREVIEW_BATCH, as, undefined);
+        } finally {
+          (store as unknown as { nextId: () => string }).nextId = ids;
+        }
+      }
+      const { primitives } = store.judgedCall(definition, spelled, as, false);
+      if (primitives.length === 0) return undefined;
+      const splices = store.asSplices(primitives, undefined).map(normalize);
+      // Where a kind follows another, what follows a change is worked out over the graph the change leaves, as `apply` works it out: on a copy of the graph, the one place this asks one.
+      if (keepsLinked(store.schema)) {
+        const copy = Graph.from(store.schema, store.graph.snapshot(), { validate: store.validate });
+        copy.applyPrimitives(splices);
+        keepLinked(store.schema, copy, splices, { mayWriteBack: store.writesBack(as) });
+        return undefined;
+      }
+      return land(store.graph, splices);
+    } catch (error) {
+      return error;
+    } finally {
+      store.rehearsing = was;
+    }
+  }
+
+  /**
+   * The store a seat's call is judged on: this one, or — for a seat whose
+   * profile's person is not made yet — the one copy with that person made
+   * that `wouldDo` keeps while this store stands. What `mayRun` reads a
+   * seat's sight and records from, as `apply` would after making the person.
+   */
+  judgedAs(author: Author | Principal): Store<S> {
+    const as = withValidProfile(author) as Principal;
+    const person = this.personFor(as);
+    return person ? this.withPersonMade(as, person.id) : this;
+  }
+
   /**
    * HOW MANY TIMES THIS STORE HAS TOLD ITS SUBSCRIBERS SOMETHING, or would
    * have: a change, an adopt, the day turning, something read beside the
@@ -1997,18 +2139,8 @@ export class Store<S extends AnySchema> {
      * seat holds say what it may do at all; `may` narrows what THIS provider
      * was brought in for, and the narrower of the two wins.
      */
-    const permitted = (call: MutationCall, as: Author | Principal = author) => {
-      // A vote is judged with no policy too: a shared seat's vote is refused whether or not the app says who may do what (Roadmap f-votes-shared-seat).
-      const voting = this.voter !== undefined && this.mutations.get(call.name) === this.voter;
-      const binding = this.binder !== undefined && this.mutations.get(call.name) === this.binder;
-      const verdict = this.policy || (this.publisher && call.name === PUBLISH) || voting || binding || this.mutations.get(call.name) === this.proposer ? this.judged(call, as as Principal) : undefined;
-      // Rehearsing a proposal, an act its author may propose stands as the reviewer's would (Roadmap f-proposals-for-review).
-      if (verdict && !verdict.ok && !(this.proposing && this.mayPropose(call, as as Principal))) this.refuse(verdict.refusal, as.id);
-    };
-    const declared = (call: MutationCall, as: Author | Principal = author) => {
-      const refusal = this.refusesAgent(call, as) ?? this.namesTurnedOff(call, as as Principal);
-      if (refusal) this.refuse(refusal, as.id);
-    };
+    const permitted = (call: MutationCall, as: Author | Principal = author) => this.permittedTo(call, as);
+    const declared = (call: MutationCall, as: Author | Principal = author) => this.declaredTo(call, as);
     /* A call that names a record an earlier call makes (`{ $made: n }`, FR-193) is asked once that record is there to name. */
     const naming = calls.map(namesMade);
     calls.forEach((call, at) => naming[at] || permitted(call));
@@ -2091,25 +2223,8 @@ export class Store<S extends AnySchema> {
           intents.push(op.intent);
           continue;
         }
-        const missing = this.missingFor(call, as as Principal);
-        if (missing) throw missing;
-        let compiled: ReturnType<typeof compileMutation>;
-        try {
-          compiled = compileMutation(this.graph, definition, call.args, { ...this.sighted(as as Principal), hint });
-        } catch (error) {
-          // A press the act's own input refused: the watch tells a form filled wrongly from an act offered whole.
-          if (error instanceof InvalidArguments && !this.rehearsing) tellTheWatchOfAnInputRefusal(error, as.id);
-          throw error;
-        }
+        const compiled = this.judgedCall(definition, call, as, decided, hint);
         if (hint !== undefined && compiled.firstMinted !== undefined && compiled.firstMinted !== hint) renamed.set(hint, compiled.firstMinted);
-        // Whose record a person is, only binding says (Roadmap f-invite-binds-existing-person): no other act writes the mark.
-        if (definition !== this.binder && compiled.primitives.some((one) => (one.op === "add-node" && Object.hasOwn(one.node, PERSON_SEAT)) || (one.op === "patch-node" && Object.hasOwn(one.after, PERSON_SEAT)))) {
-          throw new ActRefusal(`"${definition.title ?? definition.name}" cannot say whose record a person is: only binding an account to it does.`);
-        }
-        if (isAutomated(as)) {
-          const refused = tidyingRefusal(this.schema, this.graph, compiled.primitives, this.authorName(as), { declaration: !this.suggesting && !decided });
-          if (refused) this.refuse({ mutation: call.name, message: refused, wouldNeed: [] }, as.id);
-        }
         /*
          * AN ACT THAT DID NOTHING DOES NOT GO IN THE HISTORY.
          *

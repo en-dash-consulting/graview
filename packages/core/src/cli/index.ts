@@ -12,6 +12,7 @@ import { readDocument } from "../document/compile.js";
 import { compileDocument } from "../document/compile-checked.js";
 import { sayFindings } from "../document/findings.js";
 import { isGraviewTemplate } from "../document/graview-template.js";
+import { templateFindings } from "../document/instantiate-template.js";
 import { create, CREATE_USAGE } from "./create.js";
 import { doctor, DOCTOR_USAGE } from "./doctor.js";
 import { auditFace, projectRootOf, withFaceFindings } from "./check/face.js";
@@ -117,6 +118,16 @@ export function documentIn(file: string): unknown {
     return isGraviewTemplate(parsed) ? (parsed as { document?: unknown }).document : text;
   } catch {
     return text;
+  }
+}
+
+/** The template a .json file is, parsed; undefined for a bare document or a file that is not JSON. */
+function templateIn(file: string): unknown {
+  try {
+    const parsed = JSON.parse(readFileSync(resolve(process.cwd(), file), "utf8")) as unknown;
+    return isGraviewTemplate(parsed) ? parsed : undefined;
+  } catch {
+    return undefined;
   }
 }
 
@@ -283,9 +294,18 @@ export async function main(argv: string[]): Promise<number> {
        */
       if (isDocument(entry)) {
         const compiled = loadDocument(entry, flag(argv, "--previous"));
-        if (argv.includes("--json")) process.stdout.write(`${JSON.stringify({ ok: compiled.ok, findings: compiled.findings }, null, 2)}\n`);
-        else process.stdout.write(`${compiled.findings.length > 0 ? sayFindings(compiled.findings) : "✓ the document compiles and checks clean"}\n`);
-        return compiled.ok ? 0 : 1;
+        /*
+         * A TEMPLATE IS CHECKED AS ONE TOO: its shape, and what its questions,
+         * setup and views name — an answer `$guests` no question asks for, an
+         * act or a kind the document lacks — before anybody answers it.
+         */
+        const template = templateIn(entry);
+        const own = template === undefined ? [] : templateFindings(template, compiled.ok ? compiled : undefined);
+        const findings = [...compiled.findings, ...own];
+        const ok = compiled.ok && !own.some((f) => f.severity === "error");
+        if (argv.includes("--json")) process.stdout.write(`${JSON.stringify({ ok, findings }, null, 2)}\n`);
+        else process.stdout.write(`${findings.length > 0 ? sayFindings(findings) : template !== undefined ? "✓ the template and its document compile and check clean" : "✓ the document compiles and checks clean"}\n`);
+        return ok ? 0 : 1;
       }
       const app = await loadViews(await loadApp(entry), flag(argv, "--views"));
       // The face, beside the declaration (FR-232): the project the entry is in, or the directory named.

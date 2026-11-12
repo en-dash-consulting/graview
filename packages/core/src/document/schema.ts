@@ -61,9 +61,10 @@ export const EDGE_NAME = /^(?:[a-z][a-z0-9]*(?:-[a-z0-9]+)*|[a-z][A-Za-z0-9]*)$/
 /**
  * `image` and `file` hold what the host stored (FR-162): a `FileValue`, its
  * `href` a path on the host. `phone` and `place` are words drawn as a link to
- * call and to a map; `duration` is a whole number of minutes, said "1 h 30 min".
+ * call and to a map; `duration` is a whole number of minutes, said "1 h 30 min";
+ * `time` is a time of day with no day and no zone, kept as "15:00".
  */
-export const FIELD_TYPES = ["string", "text", "number", "integer", "boolean", "date", "datetime", "enum", "list", "url", "email", "image", "video", "file", "app-link", "phone", "place", "duration"] as const;
+export const FIELD_TYPES = ["string", "text", "number", "integer", "boolean", "date", "datetime", "enum", "list", "url", "email", "image", "video", "file", "app-link", "phone", "place", "duration", "time"] as const;
 export type FieldType = (typeof FIELD_TYPES)[number];
 
 /*

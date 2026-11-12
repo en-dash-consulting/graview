@@ -52,7 +52,9 @@ graview create <dir> [--name "Field Notes"] [--kind note] [--plural notes]
                          its document as src/domain/app.json and the
                          template as template.json, for `graview apply
                          --template` to set a store up from. Named after
-                         the template unless --name says otherwise.
+                         the template unless --name says otherwise. The
+                         views it comes with are written to views/ from
+                         views/<template id>/<name>.js (or .html) beside it.
 
 ```
 

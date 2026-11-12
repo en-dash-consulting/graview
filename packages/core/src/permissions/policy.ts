@@ -302,6 +302,7 @@ export function permits(
         ...(kind === undefined ? {} : { kind }),
         wouldNeed,
         message: said(policy, names, kind, who, words),
+        ...(ridden ? { onlyWhatYouMade: true as const } : {}),
       },
     };
   }

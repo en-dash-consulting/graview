@@ -209,6 +209,17 @@ export interface MutationDefinitionSpec<S extends AnySchema, I extends z.ZodType
    */
   allowedOn?(graph: GraphReader<NodeOfSchema<S>>, subject: string): boolean;
   /**
+   * A document act's condition (`allowedWhen`), as data: its parsed
+   * expression, and the one judgment its `apply` throws on — the words that
+   * refuse it on a record with these arguments, or undefined where it holds
+   * (it throws an `ActRefusal` where it cannot be judged). What `mayRun`
+   * (`@graview/core/seat`) judges part of a call by.
+   */
+  readonly condition?: {
+    readonly expr: unknown;
+    refusedBy(graph: GraphReader, subject: NodeOfSchema<S>, args: Record<string, unknown>): string | undefined;
+  };
+  /**
    * THE ACT IS DONE AS THE SEAT'S OWN RECORD: a document act that says `$me`,
    * or a code act that says so here. Not offered to a seat whose profile has
    * no person and can have none (`Store.permittedMutations`). A code act that

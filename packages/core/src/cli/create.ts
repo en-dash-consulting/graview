@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, writeFi
 import { dirname, isAbsolute, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { LINKED_PACKAGES, scaffoldProject, validateScaffoldOptions, type ScaffoldOptions } from "../scaffold/index.js";
+import { templateViewSources } from "../scaffold/from-template.js";
 import type { GraviewTemplate } from "../document/graview-template.js";
 import { instantiateTemplate } from "../document/instantiate-template.js";
 
@@ -42,7 +43,9 @@ export const CREATE_USAGE = `  graview create <dir> [--name "Field Notes"] [--ki
                            its document as src/domain/app.json and the
                            template as template.json, for \`graview apply
                            --template\` to set a store up from. Named after
-                           the template unless --name says otherwise.
+                           the template unless --name says otherwise. The
+                           views it comes with are written to views/ from
+                           views/<template id>/<name>.js (or .html) beside it.
 `;
 
 export interface CreateIo {
@@ -148,6 +151,9 @@ export async function create(argv: readonly string[], io: CreateIo = defaultIo):
     }
     template = read.raw as GraviewTemplate;
   }
+  /* The views a template comes with: their code is found beside it, `views/<template id>/<name>.js`, or left out and said so. */
+  const templateViews = template && templateFlag ? await readTemplateViews(templateFlag, template) : {};
+  const viewsLeft = template ? templateViewSources(template).filter((source) => templateViews[source.name] === undefined) : [];
 
   const { version } = ownManifest();
   const pmFlag = flag(argv, "--pm");
@@ -159,7 +165,7 @@ export async function create(argv: readonly string[], io: CreateIo = defaultIo):
   // Everything that can be refused is refused before a directory exists.
   const base: ScaffoldOptions = {
     name: flag(argv, "--name") || template?.title || fromDirectoryName(dir),
-    ...(template ? { template } : {}),
+    ...(template ? { template, templateViews } : {}),
     ...(flag(argv, "--kind") ? { kind: flag(argv, "--kind") } : {}),
     // "Shifts" is what a person types; the slug is what the generator wants.
     ...(flag(argv, "--plural") ? { plural: flag(argv, "--plural")!.trim().toLowerCase() } : {}),
@@ -335,7 +341,10 @@ export async function create(argv: readonly string[], io: CreateIo = defaultIo):
       (template
         ? `Made from the template "${template.title}": its document is src/domain/app.json, and\n` +
           `\`${run} apply-template\` runs its setup into ./data as one batch that one undo takes back\n` +
-          `(answer its questions with \`${run} apply-template ${pm === "pnpm" ? "" : "-- "}--answers '{"${template.questions[0]?.id ?? "question"}": …}'\`).\n\n`
+          `(answer its questions with \`${run} apply-template ${pm === "pnpm" ? "" : "-- "}--answers '{"${template.questions[0]?.id ?? "question"}": …}'\`).\n` +
+          (Object.keys(templateViews).length > 0 ? `It comes with ${Object.keys(templateViews).length === 1 ? "a view" : `${Object.keys(templateViews).length} views`}, in views/: ${Object.keys(templateViews).join(", ")}.\n` : "") +
+          (viewsLeft.length > 0 ? `${viewsLeft.length === 1 ? "A view it names was" : `${viewsLeft.length} views it names were`} not found beside it and ${viewsLeft.length === 1 ? "is" : "are"} left out: ${viewsLeft.map((left) => `${left.name} (${left.path})`).join(", ")}.\n` : "") +
+          "\n"
         : "") +
       (committed ? `The first commit is "${scaffold.name}, on Graview". ` : "") +
       `AGENTS.md is what an agent reads first; CLAUDE.md imports it.\n` +
@@ -374,6 +383,25 @@ async function readTemplateFrom(where: string): Promise<{ readonly raw: unknown 
   } catch (error) {
     return `${where} is not JSON: ${error instanceof Error ? error.message : String(error)}`;
   }
+}
+
+/** The code of each view a template names, read beside it — from the template's directory, or the address it was fetched from. A view whose code is not there is absent. */
+async function readTemplateViews(where: string, template: GraviewTemplate): Promise<Record<string, string>> {
+  const code: Record<string, string> = {};
+  for (const source of templateViewSources(template)) {
+    try {
+      if (/^https?:\/\//.test(where)) {
+        const response = await fetch(new URL(source.path, where));
+        if (response.ok) code[source.name] = await response.text();
+      } else {
+        const file = resolve(dirname(resolve(process.cwd(), where)), source.path);
+        if (existsSync(file)) code[source.name] = readFileSync(file, "utf8");
+      }
+    } catch {
+      // Not there: said as left out.
+    }
+  }
+  return code;
 }
 
 /** Whether a directory already sits inside a git work tree. */

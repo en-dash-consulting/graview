@@ -33,7 +33,8 @@ others that they show, is `graview-view-specs`.
        kickOff: z.string(),
        opponent: z.string(),
        // Host-kept file ("image"/"video"/"file"); appLinkField() another app
-       // (its records: graview-linked-records); phoneField(), placeField().
+       // (its records: graview-linked-records); phoneField(), placeField(),
+       // timeField() (a time of day, "15:00", no day and no zone).
        crest: imageField().optional(),
      }),
      plural: "Fixtures",

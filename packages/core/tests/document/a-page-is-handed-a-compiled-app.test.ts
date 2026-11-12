@@ -173,9 +173,9 @@ const labelsOf = (app: GraviewApp<AnySchema>, store: Store<AnySchema>) =>
   });
 const actShape = (app: GraviewApp<AnySchema>) =>
   (app.mutations ?? []).map((m) => {
-    const { apply: _apply, describe: _describe, allowedOn, input, ...declared } = m as unknown as Record<string, unknown>;
-    // Its condition, judged without arguments, is a function: compared by whether there is one.
-    return { ...declared, allowedOn: typeof allowedOn, tool: mutationToolSchema(m as never), form: formFields(input) };
+    const { apply: _apply, describe: _describe, allowedOn, condition, input, ...declared } = m as unknown as Record<string, unknown>;
+    // Its condition, judged without arguments or with some of them, is a function: compared by whether there is one.
+    return { ...declared, allowedOn: typeof allowedOn, condition: (condition as { expr?: unknown } | undefined)?.expr, tool: mutationToolSchema(m as never), form: formFields(input) };
   });
 const kindShape = (app: GraviewApp<AnySchema>) =>
   app.schema.kinds.map((kind) => {

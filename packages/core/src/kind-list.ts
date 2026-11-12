@@ -110,7 +110,7 @@ export function sortTypeOfDocumentField(type: string | undefined): "choice" | "b
   if (type === "enum") return "choice";
   if (type === "boolean") return "boolean";
   if (type === "number" || type === "integer" || type === "duration") return "number";
-  if (type === "date" || type === "datetime") return "date";
+  if (type === "date" || type === "datetime" || type === "time") return "date";
   return "text";
 }
 
