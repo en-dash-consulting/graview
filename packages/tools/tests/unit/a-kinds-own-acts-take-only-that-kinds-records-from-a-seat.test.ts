@@ -14,18 +14,18 @@ const app = () => {
     format: "graview-document",
     formatVersion: 1,
     name: "Keys",
-    roles: ["keyholder", "runner"],
+    roles: ["packer", "runner"],
     kinds: {
-      vault: { fields: { name: { type: "string", required: true } } },
+      box: { fields: { name: { type: "string", required: true } } },
       errand: { fields: { name: { type: "string", required: true } } },
     },
     acts: {
-      "add-vault": { title: "Add a vault", description: "Add a vault to keep.", creates: "vault" },
+      "add-box": { title: "Add a box", description: "Add a box to fill.", creates: "box" },
       "add-errand": { title: "Add an errand", description: "Add an errand to run.", creates: "errand" },
     },
     policy: {
       grants: [
-        { roles: ["keyholder"], mutations: ["add-vault", "remove-vault", "archive-vault", "edit-vault", "merge-vault"] },
+        { roles: ["packer"], mutations: ["add-box", "remove-box", "archive-box", "edit-box", "merge-box"] },
         { roles: ["runner"], mutations: ["add-errand"] },
       ],
     },
@@ -34,34 +34,34 @@ const app = () => {
   return compiled.app;
 };
 
-const keyholder: Principal = { kind: "human", id: "kim", roles: ["keyholder"] };
+const packer: Principal = { kind: "human", id: "pat", roles: ["packer"] };
 const runner: Principal = { kind: "human", id: "ray", roles: ["runner"] };
-const agent: Principal = { kind: "agent", id: "helper", roles: ["keyholder"] };
+const agent: Principal = { kind: "agent", id: "helper", roles: ["packer"] };
 
 function setUp() {
   const a = app();
   const store = new Store<AnySchema>({ schema: a.schema, mutations: a.mutations ?? [], ...(a.policy ? { policy: a.policy } : {}) });
-  store.apply({ name: "add-vault", args: { name: "Main vault" } }, { author: keyholder });
+  store.apply({ name: "add-box", args: { name: "Main box" } }, { author: packer });
   store.apply({ name: "add-errand", args: { name: "Post" } }, { author: runner });
-  const vault = (store.graph.nodesOfKind("vault" as never)[0] as unknown as { id: string }).id;
+  const box = (store.graph.nodesOfKind("box" as never)[0] as unknown as { id: string }).id;
   const errand = (store.graph.nodesOfKind("errand" as never)[0] as unknown as { id: string }).id;
-  return { store, vault, errand };
+  return { store, box, errand };
 }
 
 describe("a kind's own acts take only that kind's records, from a seat", () => {
   it("one act over several records refuses the record of another kind and runs on the rest", () => {
-    const { store, vault, errand } = setUp();
+    const { store, box, errand } = setUp();
     const before = store.graph.getNode(errand);
-    const outcome = actOnSeveral(store, { mutation: "archive-vault", subject: "id" }, [vault, errand], { author: keyholder });
-    expect(outcome.applied).toEqual([vault]);
+    const outcome = actOnSeveral(store, { mutation: "archive-box", subject: "id" }, [box, errand], { author: packer });
+    expect(outcome.applied).toEqual([box]);
     expect(outcome.refused.map((one) => [one.id, one.reason])).toEqual([[errand, "invalid"]]);
     expect(store.graph.getNode(errand)).toEqual(before);
   });
 
   for (const [act, args] of [
-    ["remove-vault", {}],
-    ["archive-vault", {}],
-    ["edit-vault", { name: "Renamed" }],
+    ["remove-box", {}],
+    ["archive-box", {}],
+    ["edit-box", { name: "Renamed" }],
   ] as const) {
     it(`an agent's tool for ${act} is refused a record of another kind`, async () => {
       const { store, errand } = setUp();
@@ -76,19 +76,19 @@ describe("a kind's own acts take only that kind's records, from a seat", () => {
   }
 
   it("an agent's tool still takes the kind's own records", async () => {
-    const { store, vault } = setUp();
+    const { store, box } = setUp();
     const runtime = createToolRuntime(store, { author: agent });
-    expect((await runtime.call("edit-vault", { id: vault, name: "Renamed" })).ok).toBe(true);
-    expect(store.graph.getNode(vault)?.["name"]).toBe("Renamed");
+    expect((await runtime.call("edit-box", { id: box, name: "Renamed" })).ok).toBe(true);
+    expect(store.graph.getNode(box)?.["name"]).toBe("Renamed");
   });
 
-  it("an agent's tool for merge-vault is refused a record of another kind at either end", async () => {
-    const { store, vault, errand } = setUp();
+  it("an agent's tool for merge-box is refused a record of another kind at either end", async () => {
+    const { store, box, errand } = setUp();
     const runtime = createToolRuntime(store, { author: agent });
-    expect(runtime.definitions.map((one) => one.name)).toContain("merge-vault");
-    expect((await runtime.call("merge-vault", { id: errand, into: vault })).ok).toBe(false);
-    expect((await runtime.call("merge-vault", { id: vault, into: errand })).ok).toBe(false);
+    expect(runtime.definitions.map((one) => one.name)).toContain("merge-box");
+    expect((await runtime.call("merge-box", { id: errand, into: box })).ok).toBe(false);
+    expect((await runtime.call("merge-box", { id: box, into: errand })).ok).toBe(false);
     expect(store.graph.getNode(errand)).toBeDefined();
-    expect(store.graph.getNode(vault)).toBeDefined();
+    expect(store.graph.getNode(box)).toBeDefined();
   });
 });

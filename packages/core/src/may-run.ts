@@ -6,6 +6,7 @@ import { InvalidArguments } from "./mutations/invalid-arguments.js";
 import { refusalOf } from "./refusal.js";
 import { ActRefusal, type RefusalReason } from "./refused.js";
 import { MissingRecordError } from "./graph/graph.js";
+import { heldRefKinds } from "./mutations/node-ref.js";
 import { wouldRefuse } from "./graph/would-refuse.js";
 import { FIELD_SIGHT } from "./permissions/sight.js";
 import { isAutomated, tidyingRefusal } from "./ops/tidying.js";
@@ -40,7 +41,13 @@ export type MayRunAnswer =
   /** The act would run as asked. */
   | { readonly answer: "allowed" }
   /** The act may run once these arguments are given, by name; whether it then does is the act's to say. */
-  | { readonly answer: "fill"; readonly toFill: readonly string[] }
+  | {
+      readonly answer: "fill";
+      /** The arguments it cannot run without, not given yet. */
+      readonly toFill: readonly string[];
+      /** Where it was handed all it needs and changes nothing with it: the arguments it may take, at least one of which it must be given. */
+      readonly anyOf?: readonly string[];
+    }
   /** It would be refused: by which rule, the reason a program branches on, the words a person reads, and the roles that could where the policy knows them. */
   | { readonly answer: "refused"; readonly rule: MayRunRule; readonly reason: RefusalReason; readonly message: string; readonly wouldNeed?: readonly string[] };
 
@@ -115,21 +122,21 @@ export function mayRun<S extends AnySchema>(store: Store<S>, seat: Principal, as
   const read = readGiven(mutation as AnyMutationDefinition<AnySchema>, given);
 
   // A whole call: what `apply` would say of it.
-  let toFill = read.toFill;
-  let whole: unknown;
-  if (toFill.length === 0 && read.wrong === undefined) {
-    const refusal = (whole = store.wouldApply({ name: mutation.name, args: given }, seat, wouldRefuse));
-    if (refusal === undefined) return { answer: "allowed" };
-    // A record the call names that this seat is not served is the seat's sight, as `apply` asks it (`missingFor`); one the act's writes find gone is the record's state.
-    if (refusal instanceof MissingRecordError && judged.missingFor({ name: mutation.name, args: given }, seat)) return refused("sight", "missing", refusal.message);
-    // Refused for what it was not given ("nothing to change") while arguments it may take are still to give: judged as part of a call, those to fill.
-    const left = Object.keys((mutation.input as { shape?: object }).shape ?? {}).filter((name) => given[name] === undefined);
-    if (!(left.length > 0 && ((refusal instanceof ActRefusal && refusal.reason === "invalid") || refusal instanceof InvalidArguments) && !/ not on /.test(refusal.message))) return saidBy(refusal);
-    toFill = left;
-  }
-  const answer = partly(judged, seat, mutation, given, read.wrong, toFill);
-  // Of a whole call refused for what it was not handed, a rule the rest would meet anyway is said in `apply`'s own words.
-  return whole !== undefined && answer.answer === "refused" ? saidBy(whole) : answer;
+  if (read.toFill.length > 0 || read.wrong !== undefined) return partly(judged, seat, mutation, given, read.wrong, read.toFill);
+  const refusal = store.wouldApply({ name: mutation.name, args: given }, seat, wouldRefuse);
+  if (refusal === undefined) return { answer: "allowed" };
+  // A record the call names that this seat is not served is the seat's sight, as `apply` asks it (`missingFor`); one the act's writes find gone is the record's state.
+  if (refusal instanceof MissingRecordError && judged.missingFor({ name: mutation.name, args: given }, seat)) return refused("sight", "missing", refusal.message);
+  /*
+   * HANDED ALL IT NEEDS, AND CHANGING NOTHING WITH IT — the act's own word
+   * that the call is not enough ("nothing to change"), not its input's
+   * refusal of what it was given — while arguments it may take are left
+   * out: one of those is what to give, where nothing else would refuse it.
+   */
+  const left = Object.keys((mutation.input as { shape?: object }).shape ?? {}).filter((name) => given[name] === undefined);
+  if (!(refusal instanceof ActRefusal && refusal.reason === "invalid") || left.length === 0) return saidBy(refusal);
+  const answer = partly(judged, seat, mutation, given, undefined, []);
+  return answer.answer === "refused" ? saidBy(refusal) : { answer: "fill", toFill: [], anyOf: left };
 }
 
 /** Part of a call: who may, what the seat may see, what it was given, and a condition that reads no argument the caller left out. */
@@ -145,6 +152,15 @@ function partly<S extends AnySchema>(judged: Store<S>, seat: Principal, mutation
   const record = typeof on === "string" ? (judged.seenBy(seat).graph.getNode(on) as NodeOfSchema<S> | undefined) : undefined;
   const kinds = mutation.subject?.kinds;
   if (record && kinds !== undefined && kinds !== "*" && !(kinds as readonly string[]).includes(record.kind)) return refused("arguments", "invalid", `"${mutation.title ?? mutation.name}" acts on ${kinds.join(" or ")}, not on ${record.kind}`);
+  // Each record argument given, of a kind the act names for it.
+  for (const [name, field] of Object.entries((mutation.input as { shape?: Record<string, unknown> }).shape ?? {})) {
+    const named = name === subject ? undefined : heldRefKinds(field);
+    if (!named || named.includes("*")) continue;
+    for (const id of [given[name]].flat()) {
+      const node = typeof id === "string" ? judged.seenBy(seat).graph.getNode(id) : undefined;
+      if (node && !named.includes(node.kind)) return refused("arguments", "invalid", `"${mutation.title ?? mutation.name}" acts on ${named.join(" or ")}, not on ${node.kind}`);
+    }
+  }
   // An act that writes only fields the seat's sight keeps on this record is refused whatever it is handed: `apply` refuses each such write.
   const kept = record ? FIELD_SIGHT.keptFrom?.(judged as never, seat)?.(record) : undefined;
   const writes = mutation.writes ?? [];

@@ -17,29 +17,29 @@ const app = () => {
       format: "graview-document",
       formatVersion: 1,
       name: "Keys",
-      roles: ["keyholder", "runner", "maker"],
+      roles: ["packer", "runner", "maker"],
       kinds: {
-        vault: { fields: { name: { type: "string", required: true } } },
+        box: { fields: { name: { type: "string", required: true } } },
         errand: { fields: { name: { type: "string", required: true } } },
         meeting: { fields: { name: { type: "string", required: true }, startsAt: { type: "datetime", required: true, repeats: true } } },
         shift: { fields: { name: { type: "string", required: true }, startsAt: { type: "datetime", required: true, repeats: true } } },
       },
       acts: {
-        "add-vault": { title: "Add a vault", creates: "vault" },
+        "add-box": { title: "Add a box", creates: "box" },
         "add-errand": { title: "Add an errand", creates: "errand" },
         "add-meeting": { title: "Add a meeting", creates: "meeting" },
       },
       policy: {
         grants: [
           {
-            roles: ["keyholder"],
+            roles: ["packer"],
             mutations: [
-              "add-vault",
-              "remove-vault",
-              "archive-vault",
-              "unarchive-vault",
-              "merge-vault",
-              "edit-vault",
+              "add-box",
+              "remove-box",
+              "archive-box",
+              "unarchive-box",
+              "merge-box",
+              "edit-box",
               "add-meeting",
               "edit-meeting",
               "skip-meeting",
@@ -48,7 +48,7 @@ const app = () => {
             ],
           },
           { roles: ["runner"], mutations: ["add-errand"] },
-          { roles: ["maker"], mutations: ["add-vault"] },
+          { roles: ["maker"], mutations: ["add-box"] },
         ],
       },
     } as never,
@@ -58,7 +58,7 @@ const app = () => {
   return compiled.app;
 };
 
-const keyholder: Principal = { kind: "human", id: "kim", roles: ["keyholder"] };
+const packer: Principal = { kind: "human", id: "pat", roles: ["packer"] };
 const runner: Principal = { kind: "human", id: "ray", roles: ["runner"] };
 const maker: Principal = { kind: "human", id: "mo", roles: ["maker"] };
 
@@ -77,8 +77,8 @@ function setUp(): Store<AnySchema> {
       edges: [],
     } as never,
   });
-  store.apply({ name: "add-vault", args: { name: "Main vault" } }, { author: keyholder });
-  store.apply({ name: "add-vault", args: { name: "Side vault" } }, { author: keyholder });
+  store.apply({ name: "add-box", args: { name: "Main box" } }, { author: packer });
+  store.apply({ name: "add-box", args: { name: "Side box" } }, { author: packer });
   store.apply({ name: "add-errand", args: { name: "Post" } }, { author: runner });
   return store;
 }
@@ -95,18 +95,18 @@ const refusedAs = (record: string) => ({ reason: "invalid", sentence: expect.str
 
 describe("a kind's own acts take only that kind's records", () => {
   for (const [act, args] of [
-    ["remove-vault", {}],
-    ["archive-vault", {}],
-    ["unarchive-vault", {}],
-    ["edit-vault", { name: "Renamed" }],
-    ["leave-alone-vault", {}],
-    ["allow-tidying-vault", {}],
+    ["remove-box", {}],
+    ["archive-box", {}],
+    ["unarchive-box", {}],
+    ["edit-box", { name: "Renamed" }],
+    ["leave-alone-box", {}],
+    ["allow-tidying-box", {}],
   ] as const) {
     it(`${act} is refused a record of another kind, and the record stays as it was`, () => {
       const store = setUp();
       const errand = first(store, "errand");
       const before = store.graph.getNode(errand);
-      expect(said(() => store.apply({ name: act, args: { id: errand, ...args } }, { author: keyholder }))).toMatchObject(refusedAs("an errand"));
+      expect(said(() => store.apply({ name: act, args: { id: errand, ...args } }, { author: packer }))).toMatchObject(refusedAs("an errand"));
       expect(store.graph.getNode(errand)).toEqual(before);
     });
   }
@@ -119,7 +119,7 @@ describe("a kind's own acts take only that kind's records", () => {
     it(`${act} is refused a record of another kind that repeats too, and nothing is made or changed`, () => {
       const store = setUp();
       const before = store.graph.snapshot();
-      expect(said(() => store.apply({ name: act, args: { id: "shift:late", ...args } }, { author: keyholder }))).toMatchObject(refusedAs("a shift"));
+      expect(said(() => store.apply({ name: act, args: { id: "shift:late", ...args } }, { author: packer }))).toMatchObject(refusedAs("a shift"));
       expect(store.graph.snapshot()).toEqual(before);
     });
 
@@ -127,46 +127,46 @@ describe("a kind's own acts take only that kind's records", () => {
       const store = setUp();
       const errand = first(store, "errand");
       const before = store.graph.snapshot();
-      expect(said(() => store.apply({ name: act, args: { id: errand, ...args } }, { author: keyholder }))).toMatchObject({ reason: expect.stringMatching(/invalid|refused/) });
+      expect(said(() => store.apply({ name: act, args: { id: errand, ...args } }, { author: packer }))).toMatchObject({ reason: expect.stringMatching(/invalid|refused/) });
       expect(store.graph.snapshot()).toEqual(before);
     });
 
     it(`${act} still takes the kind's own records`, () => {
       const store = setUp();
-      expect(said(() => store.apply({ name: act, args: { id: "meeting:weekly", ...args } }, { author: keyholder }))).toBe("ran");
+      expect(said(() => store.apply({ name: act, args: { id: "meeting:weekly", ...args } }, { author: packer }))).toBe("ran");
     });
   }
 
-  it("merge-vault is refused a record of another kind, at either end", () => {
+  it("merge-box is refused a record of another kind, at either end", () => {
     const store = setUp();
-    const vault = first(store, "vault");
+    const box = first(store, "box");
     const errand = first(store, "errand");
     const before = store.graph.snapshot();
-    expect(said(() => store.apply({ name: "merge-vault", args: { id: errand, into: vault } }, { author: keyholder }))).toMatchObject(refusedAs("an errand"));
-    expect(said(() => store.apply({ name: "merge-vault", args: { id: vault, into: errand } }, { author: keyholder }))).toMatchObject(refusedAs("an errand"));
+    expect(said(() => store.apply({ name: "merge-box", args: { id: errand, into: box } }, { author: packer }))).toMatchObject(refusedAs("an errand"));
+    expect(said(() => store.apply({ name: "merge-box", args: { id: box, into: errand } }, { author: packer }))).toMatchObject(refusedAs("an errand"));
     expect(store.graph.snapshot()).toEqual(before);
   });
 
-  it("an edit that rides the making of a kind changes only records of that kind", () => {
+  it("edit-box takes only boxes, for a seat that may make them", () => {
     const store = setUp();
     const errand = first(store, "errand");
-    expect(said(() => store.apply({ name: "edit-vault", args: { id: errand, name: "Renamed" } }, { author: maker }))).not.toBe("ran");
+    expect(said(() => store.apply({ name: "edit-box", args: { id: errand, name: "Renamed" } }, { author: maker }))).not.toBe("ran");
     expect(store.graph.getNode(errand)?.["name"]).toBe("Post");
   });
 
   it("a batch with one call on a record of another kind is refused whole", () => {
     const store = setUp();
-    const vault = first(store, "vault");
+    const box = first(store, "box");
     const errand = first(store, "errand");
     const before = store.graph.snapshot();
     expect(
       said(() =>
         store.applyAll(
           [
-            { name: "archive-vault", args: { id: vault } },
-            { name: "remove-vault", args: { id: errand } },
+            { name: "archive-box", args: { id: box } },
+            { name: "remove-box", args: { id: errand } },
           ],
-          { author: keyholder },
+          { author: packer },
         ),
       ),
     ).toMatchObject(refusedAs("an errand"));
@@ -175,14 +175,14 @@ describe("a kind's own acts take only that kind's records", () => {
 
   it("still takes the kind's own records", () => {
     const store = setUp();
-    const vault = first(store, "vault");
-    const side = (store.graph.nodesOfKind("vault" as never)[1] as unknown as { id: string }).id;
-    expect(said(() => store.apply({ name: "edit-vault", args: { id: vault, name: "Renamed" } }, { author: keyholder }))).toBe("ran");
-    expect(said(() => store.apply({ name: "leave-alone-vault", args: { id: vault } }, { author: keyholder }))).toBe("ran");
-    expect(said(() => store.apply({ name: "allow-tidying-vault", args: { id: vault } }, { author: keyholder }))).toBe("ran");
-    expect(said(() => store.apply({ name: "archive-vault", args: { id: vault } }, { author: keyholder }))).toBe("ran");
-    expect(said(() => store.apply({ name: "unarchive-vault", args: { id: vault } }, { author: keyholder }))).toBe("ran");
-    expect(said(() => store.apply({ name: "merge-vault", args: { id: side, into: vault } }, { author: keyholder }))).toBe("ran");
-    expect(said(() => store.apply({ name: "remove-vault", args: { id: vault } }, { author: keyholder }))).toBe("ran");
+    const box = first(store, "box");
+    const side = (store.graph.nodesOfKind("box" as never)[1] as unknown as { id: string }).id;
+    expect(said(() => store.apply({ name: "edit-box", args: { id: box, name: "Renamed" } }, { author: packer }))).toBe("ran");
+    expect(said(() => store.apply({ name: "leave-alone-box", args: { id: box } }, { author: packer }))).toBe("ran");
+    expect(said(() => store.apply({ name: "allow-tidying-box", args: { id: box } }, { author: packer }))).toBe("ran");
+    expect(said(() => store.apply({ name: "archive-box", args: { id: box } }, { author: packer }))).toBe("ran");
+    expect(said(() => store.apply({ name: "unarchive-box", args: { id: box } }, { author: packer }))).toBe("ran");
+    expect(said(() => store.apply({ name: "merge-box", args: { id: side, into: box } }, { author: packer }))).toBe("ran");
+    expect(said(() => store.apply({ name: "remove-box", args: { id: box } }, { author: packer }))).toBe("ran");
   });
 });

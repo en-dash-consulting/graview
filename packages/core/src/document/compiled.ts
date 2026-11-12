@@ -647,10 +647,15 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
           if (subject && subjectKinds.length > 0 && !subjectKinds.includes(subject.kind)) throw new ActRefusal(`"${title}" acts on ${subjectKinds.join(" or ")}, not on ${withArticle(subject.kind)}`, "invalid");
           const bindings: Record<string, Value> = {};
           for (const [k, v] of Object.entries(input)) if (v !== undefined) bindings[k] = v as Value;
-          // An argument left out is its default, to the condition and the effects alike.
-          for (const [k, a] of args) if (bindings[k] === undefined && "field" in a && a.field.default !== undefined) bindings[k] = a.field.default as Value;
+          /*
+           * AN ARGUMENT LEFT OUT IS ITS DEFAULT to what the act's condition
+           * reads and to a record the act makes; a field it sets on a record
+           * already there from an argument left out stays as it stands.
+           */
+          const defaulted: Record<string, Value> = { ...bindings };
+          for (const [k, a] of args) if (defaulted[k] === undefined && "field" in a && a.field.default !== undefined) defaulted[k] = a.field.default as Value;
           if (guard && subject) {
-            const no = refusedBy(graph, subject, bindings);
+            const no = refusedBy(graph, subject, defaulted);
             if (no !== undefined) throw new ActRefusal(no);
           }
           const made = new Map<string, string>();
@@ -685,7 +690,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
             }
             return undefined;
           };
-          const resolve = (value: ValueSpec, current: AnyGraphNode | undefined): unknown => {
+          const resolve = (value: ValueSpec, current: AnyGraphNode | undefined, making = false): unknown => {
             const ref = refName(value);
             if (ref === "subject") return subjectId;
             // The acting person's own record of the people kind (Roadmap f-act-as-me), never an argument.
@@ -696,7 +701,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
             }
             if (made.has(ref!)) return made.get(ref!);
             try {
-              return valueOf(value, bindings, graph, current ?? subject ?? null);
+              return valueOf(value, making ? defaulted : bindings, graph, current ?? subject ?? null);
             } catch (e) {
               if (e instanceof ExprEvalError) throw new ActRefusal(`"${title}" could not work out a value: ${e.sentence}`);
               throw e;
@@ -707,7 +712,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
               const kind = document.kinds[effect.create]!;
               const node = blank(effect.create);
               for (const [field, value] of Object.entries(effect.set ?? {})) {
-                const v = value === null ? cleared(effect.create, field) : resolve(value, undefined);
+                const v = value === null ? cleared(effect.create, field) : resolve(value, undefined, true);
                 if (v !== undefined) node[field] = v;
               }
               const labelField = defaultLabelField(kind);

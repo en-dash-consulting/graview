@@ -8,7 +8,7 @@ import { normalize, writesOf, type Primitive } from "./graph/primitives.js";
 import { keepLinked, keepsLinked } from "./keep-linked.js";
 import { bareOp, inverseOf } from "./ops/inverse.js";
 import { LabelIndex, refusalFor, type RefCandidate, type RefResolution } from "./labels.js";
-import { nodeRefArgs, type NodeRefArg } from "./mutations/node-ref.js";
+import { heldRefKinds, nodeRefArgs, type NodeRefArg } from "./mutations/node-ref.js";
 import type { GraphSnapshot } from "./graph/types.js";
 import { verifyFold, type VerifyResult } from "./integrity.js";
 import { evaluate } from "./invariants/engine.js";
@@ -1350,10 +1350,16 @@ export class Store<S extends AnySchema> {
   private keepsToItsKinds(definition: AnyMutationDefinition<S>, call: MutationCall): void {
     const subject = definition.subject;
     if (subject && subject.kinds !== "*") this.ofKinds(definition, call.args[subject.arg], subject.kinds as readonly string[]);
-    for (const ref of nodeRefArgs(definition.input)) if (ref.name !== subject?.arg) this.ofKinds(definition, call.args[ref.name], ref.kinds);
+    const shape = (definition.input as { shape?: Record<string, unknown> }).shape ?? {};
+    for (const [name, field] of Object.entries(shape)) {
+      const kinds = name === subject?.arg ? undefined : heldRefKinds(field);
+      if (kinds) this.ofKinds(definition, call.args[name], kinds);
+    }
   }
 
   private ofKinds(definition: AnyMutationDefinition<S>, id: unknown, kinds: readonly string[]): void {
+    // A list of records: each one held to the kinds.
+    if (Array.isArray(id)) return id.forEach((one) => this.ofKinds(definition, one, kinds));
     if (typeof id !== "string" || kinds.includes("*")) return;
     const node = this.graph.getNode(id);
     if (node && !kinds.includes(node.kind)) throw new ActRefusal(`"${definition.title ?? definition.name}" acts on ${kinds.join(" or ")}, not on ${withArticle(node.kind)}`, "invalid");

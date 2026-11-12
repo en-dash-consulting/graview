@@ -30,6 +30,15 @@ const shelve = defineMutation("shelve", {
     ctx.addEdge({ kind: "on", from: args.id, to: args.shelf });
   },
 });
+const shelveAll = defineMutation("shelve-all", {
+  title: "Shelve these",
+  subject: { kinds: ["shelf"], arg: "id" },
+  writes: [],
+  input: z.object({ id: nodeRef(["shelf"]), books: z.array(nodeRef(["book"])), also: z.array(nodeRef(["book"])).nullable().optional() }),
+  apply(ctx, args) {
+    for (const one of [...args.books, ...(args.also ?? [])]) ctx.addEdge({ kind: "on", from: one, to: args.id });
+  },
+});
 const anything = defineMutation("note-anything", {
   title: "Note anything",
   subject: { kinds: "*", arg: "id" },
@@ -43,7 +52,7 @@ const anything = defineMutation("note-anything", {
 const store = () =>
   new Store<AnySchema>({
     schema: schema as unknown as AnySchema,
-    mutations: [noteShelf, shelve, anything] as never,
+    mutations: [noteShelf, shelve, shelveAll, anything] as never,
     snapshot: { nodes: [{ id: "s1", kind: "shelf", name: "Top" }, { id: "b1", kind: "book", name: "Dune" }], edges: [] } as never,
   });
 const said = (run: () => unknown) => {
@@ -65,6 +74,13 @@ describe("a declared act takes only the kinds it names", () => {
   it("refuses a record argument of another kind", () => {
     const s = store();
     expect(said(() => s.apply({ name: "shelve", args: { id: "b1", shelf: "b1" } }))).toMatchObject({ reason: "invalid", sentence: '"Shelve the book" acts on shelf, not on a book' });
+  });
+
+  it("refuses a record of another kind in a list of records, and in a list that may be null", () => {
+    const s = store();
+    expect(said(() => s.apply({ name: "shelve-all", args: { id: "s1", books: ["b1", "s1"] } }))).toMatchObject({ reason: "invalid", sentence: '"Shelve these" acts on book, not on a shelf' });
+    expect(said(() => s.apply({ name: "shelve-all", args: { id: "s1", books: ["b1"], also: ["s1"] } }))).toMatchObject({ reason: "invalid", sentence: '"Shelve these" acts on book, not on a shelf' });
+    expect(said(() => s.apply({ name: "shelve-all", args: { id: "s1", books: ["b1"], also: null } }))).toBe("ran");
   });
 
   it("takes the kinds it names, and any kind where it names every one", () => {

@@ -375,6 +375,26 @@ describe("whether a seat may run an act on a record", () => {
     expect((store as unknown as { rehearsing: boolean }).rehearsing).toBe(false);
   });
 
+  it("answers a whole call its input refuses with that refusal, and names only required arguments to fill", () => {
+    const store = ideas();
+    const lee: Principal = { kind: "human", id: "member:lee", roles: ["lead"] };
+    for (const [act, args] of [
+      ["note-idea", { id: "idea:picnic", words: "w", bogus: 1 }],
+      ["edit-idea", { id: "idea:picnic", bogus: 1 }],
+    ] as const) {
+      const did = applied(ideas, lee, act, args);
+      expect(did).toMatchObject({ ok: false, reason: "invalid" });
+      expect(mayRun(store, lee, { act, args })).toMatchObject({ answer: "refused", rule: "arguments", reason: "invalid", message: (did as { sentence: string }).sentence });
+    }
+    // A field the seat's sight hides, written whole: refused as applying refuses it.
+    const rosterStore = roster();
+    const did = applied(roster, parent, "set-phone", { id: "player:ann", phone: "1" });
+    expect(mayRun(rosterStore, parent, { act: "set-phone", args: { id: "player:ann", phone: "1" } })).toMatchObject({ answer: "refused", reason: (did as { reason: string }).reason });
+    // An edit handed only its record changes nothing: at least one of what it may take is to give, and nothing is required.
+    expect(mayRun(store, lee, { act: "edit-idea", record: "idea:picnic" })).toMatchObject({ answer: "fill", toFill: [], anyOf: ["title"] });
+    expect(mayRun(store, lee, { act: "explain-idea", record: "idea:picnic" })).toEqual({ answer: "fill", toFill: ["words"] });
+  });
+
   it("fills a code act's defaults and believes no refusal while arguments are still to give", () => {
     const store = roster();
     expect(mayRun(store, coach, { act: "size-player", record: "player:ann" })).toEqual({ answer: "fill", toFill: ["reason"] });
