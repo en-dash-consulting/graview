@@ -1,4 +1,4 @@
-import { OVERVIEW_PATH, LOCAL_LAYERS, hueFor, labelOf, type AnySchema } from "@graview/core";
+import { OVERVIEW_PATH, ONE_FACE_LAYERS, hueFor, labelOf, type AnySchema } from "@graview/core";
 import { retryingImport } from "@graview/core/retry";
 import { barPlaces, HOME_KEY, PastBar } from "@graview/primitives/pages";
 import { lazyPart, useGraview, usePlayback } from "@graview/react/provider";
@@ -500,7 +500,7 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
         height: view.height - view.top,
         overflowY: "auto",
         overflowX: "hidden",
-        zIndex: LOCAL_LAYERS.over,
+        zIndex: ONE_FACE_LAYERS.page,
         background: "var(--graview-ground, Canvas)",
         boxShadow: "0 18px 50px rgba(0,0,0,0.20)",
         outline: "1px solid var(--graview-edge)",
@@ -553,7 +553,7 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
         * is laid over the page as it stands there, clear, so the keyboard
         * and a press reach it.
         */}
-      <div ref={boardLayer} role="group" aria-label="The app's views" data-testid="one-place-boards" tabIndex={-1} onKeyDown={boardKeys} hidden={now.level < PANEL && !now.moving} style={{ position: "fixed", left: 0, top: 0, width: 0, height: 0, zIndex: LOCAL_LAYERS.over + 1 }}>
+      <div ref={boardLayer} role="group" aria-label="The app's views" data-testid="one-place-boards" tabIndex={-1} onKeyDown={boardKeys} hidden={now.level < PANEL && !now.moving} style={{ position: "fixed", left: 0, top: 0, width: 0, height: 0, zIndex: ONE_FACE_LAYERS.marks }}>
         {standing.map((board) => (
           <button
             key={board.key}
@@ -581,7 +581,7 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
         ))}
       </div>
       {/* THE APP'S BAR, fixed at the window's top over the page and the city alike: the shell draws it here (`page-shell.tsx`). */}
-      <div ref={setBar} data-testid="one-place-bar" style={{ position: "fixed", left: 0, right: 0, top: 0, zIndex: LOCAL_LAYERS.over + 4, background: "var(--graview-ground, Canvas)" }} />
+      <div ref={setBar} data-testid="one-place-bar" style={{ position: "fixed", left: 0, right: 0, top: 0, zIndex: ONE_FACE_LAYERS.bar, background: "var(--graview-ground, Canvas)" }} />
       {now.level === PANEL && !now.moving ? <PanelEdge view={view} size={sizePanel} motion={motion} /> : null}
       <Altitude box={fab} level={now.level} moving={now.moving} goTo={goTo} where={where} chosen={chosen} boards={boards} current={current} store={store} />
       <style>{ONE_PLACE_CSS}</style>
@@ -599,11 +599,11 @@ function BoardFace({ board, width, height }: { readonly board: Board; readonly w
   return (
     <div data-graview-board-face="" aria-hidden="true" style={{ position: "absolute", left: 0, top: 0, width, height, transformOrigin: "0 0", background: "var(--graview-ground, Canvas)", border: "3px solid var(--graview-edge)", borderTop: `10px solid ${hue}`, borderRadius: 18, overflow: "hidden", boxShadow: "0 18px 40px rgba(0,0,0,0.28)", pointerEvents: "none" }}>
       <div style={{ padding: "26px 34px 0" }}>
-        <div style={{ fontSize: 64, lineHeight: 1.08, fontWeight: 650, color: "var(--graview-ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{board.label}</div>
+        <div style={{ fontSize: "4rem", lineHeight: 1.08, fontWeight: 650, color: "var(--graview-ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{board.label}</div>
         {/* What it shows, live: the first of its records, as a page would list them. */}
         <div style={{ marginTop: 18, display: "grid", gap: 12 }}>
           {board.lines.map((line, index) => (
-            <div key={index} style={{ display: "flex", alignItems: "center", gap: 16, padding: "10px 16px", borderRadius: 12, border: "2px solid var(--graview-edge)", fontSize: 34, color: "var(--graview-ink-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <div key={index} style={{ display: "flex", alignItems: "center", gap: 16, padding: "10px 16px", borderRadius: 12, border: "2px solid var(--graview-edge)", fontSize: "2.125rem", color: "var(--graview-ink-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               <span style={{ flex: "0 0 auto", width: 18, height: 18, borderRadius: 9, border: `3px solid ${hue}` }} />
               {line}
             </div>
@@ -657,14 +657,13 @@ const ONE_PLACE_CSS = `
 [data-graview-past-slot] > * { pointer-events: auto; margin: 0 !important; }
 .graview-one-place-board:focus-visible { outline: 3px solid var(--graview-accent); outline-offset: 4px; border-radius: 6px; }
 .graview-one-place-board:hover [data-graview-board-face] { border-color: var(--graview-accent); }
-[data-testid="one-place-city"] .graview-zoom, [data-testid="one-place-city"] .graview-edge-sign { display: none; }
-[data-graview-altitude-stops] { display: inline-flex; align-items: stretch; height: 32px; padding: 2px; gap: 2px; border-radius: 8px; border: 1px solid var(--graview-edge); background: var(--graview-panel, Canvas); box-shadow: 0 1px 2px rgba(0,0,0,0.12); box-sizing: border-box; }
-[data-graview-altitude-stops] button { display: inline-flex; align-items: center; justify-content: center; min-width: 52px; padding: 0 10px; border: none; border-radius: 6px; background: none; color: var(--graview-ink-muted); font: inherit; font-size: 0.8125rem; font-weight: 500; cursor: pointer; white-space: nowrap; }
-[data-graview-altitude-stops] button:hover { color: var(--graview-ink); background: color-mix(in srgb, var(--graview-ink) 7%, transparent); }
-[data-graview-altitude-stops] button[aria-pressed="true"] { color: var(--graview-ink); font-weight: 600; background: color-mix(in srgb, var(--graview-accent) 18%, transparent); cursor: default; }
-[data-graview-altitude-stops] button[data-graview-key-stop] { min-width: 30px; padding: 0 8px; margin-left: 2px; box-shadow: -1px 0 0 0 var(--graview-edge); border-radius: 0 6px 6px 0; }
-[data-graview-altitude-stops] button:focus-visible { outline: 2px solid var(--graview-accent); outline-offset: 1px; }
-@media (max-width: 600px), (pointer: coarse) { [data-graview-altitude-stops] { height: 48px; } [data-graview-altitude-stops] button { min-width: 64px; min-height: 44px; } [data-graview-altitude-stops] button[data-graview-key-stop] { min-width: 44px; } }
+[data-graview-one-face-stops] { display: inline-flex; align-items: stretch; height: 32px; padding: 2px; gap: 2px; border-radius: 8px; border: 1px solid var(--graview-edge); background: var(--graview-panel, Canvas); box-shadow: 0 1px 2px rgba(0,0,0,0.12); box-sizing: border-box; }
+[data-graview-one-face-stops] button { display: inline-flex; align-items: center; justify-content: center; min-width: 52px; padding: 0 10px; border: none; border-radius: 6px; background: none; color: var(--graview-ink-muted); font: inherit; font-size: 0.8125rem; font-weight: 500; cursor: pointer; white-space: nowrap; }
+[data-graview-one-face-stops] button:hover { color: var(--graview-ink); background: color-mix(in srgb, var(--graview-ink) 7%, transparent); }
+[data-graview-one-face-stops] button[aria-pressed="true"] { color: var(--graview-ink); font-weight: 600; background: color-mix(in srgb, var(--graview-accent) 18%, transparent); cursor: default; }
+[data-graview-one-face-stops] button[data-graview-key-stop] { min-width: 30px; padding: 0 8px; margin-left: 2px; box-shadow: -1px 0 0 0 var(--graview-edge); border-radius: 0 6px 6px 0; }
+[data-graview-one-face-stops] button:focus-visible { outline: 2px solid var(--graview-accent); outline-offset: 1px; }
+@media (max-width: 600px), (pointer: coarse) { [data-graview-one-face-stops] { height: 48px; } [data-graview-one-face-stops] button { min-width: 64px; min-height: 44px; } [data-graview-one-face-stops] button[data-graview-key-stop] { min-width: 44px; } }
 `;
 
 /**
@@ -730,8 +729,8 @@ function Altitude({
   }, [level]);
   const keys = (stop: number): string | undefined => (stop === level + 1 ? "Alt+ArrowUp" : stop === level - 1 ? "Alt+ArrowDown Escape" : undefined);
   return (
-    <div ref={box} data-testid="altitude" data-graview-altitude={level} data-graview-foot="" style={{ position: "fixed", left: 16, right: 16, bottom: 16, zIndex: LOCAL_LAYERS.over + 3, display: "flex", flexWrap: "wrap-reverse", alignItems: "flex-end", gap: 8, pointerEvents: "none" }}>
-      <div role="group" aria-label={`Altitude: ${LEVEL_NAMES[level]!.toLowerCase()}, ${level + 1} of 3`} data-graview-altitude-stops="" style={{ pointerEvents: "auto", position: "relative" }}>
+    <div ref={box} data-testid="altitude" data-graview-one-face-level={level} data-graview-foot="" style={{ position: "fixed", left: 16, right: 16, bottom: 16, zIndex: ONE_FACE_LAYERS.control, display: "flex", flexWrap: "wrap-reverse", alignItems: "flex-end", gap: 8, pointerEvents: "none" }}>
+      <div role="group" aria-label={`Altitude: ${LEVEL_NAMES[level]!.toLowerCase()}, ${level + 1} of 3`} data-graview-one-face-stops="" style={{ pointerEvents: "auto", position: "relative" }}>
         {[PAGE, PANEL, CITY].map((stop) => (
           <button
             key={stop}
@@ -910,8 +909,8 @@ function PanelEdge({ view, size, motion }: { readonly view: View; readonly size:
       className="graview-one-place-edge"
       style={
         phone
-          ? { position: "fixed", left: panel.x + panel.width / 2 - 32, top: panel.y - 14, width: 64, height: 28, zIndex: LOCAL_LAYERS.over + 2, cursor: "row-resize", touchAction: "none" }
-          : { position: "fixed", left: panel.x - 8, top: panel.y + 16, width: 14, height: panel.height - 32, zIndex: LOCAL_LAYERS.over + 2, cursor: "col-resize", touchAction: "none" }
+          ? { position: "fixed", left: panel.x + panel.width / 2 - 32, top: panel.y - 14, width: 64, height: 28, zIndex: ONE_FACE_LAYERS.edge, cursor: "row-resize", touchAction: "none" }
+          : { position: "fixed", left: panel.x - 8, top: panel.y + 16, width: 14, height: panel.height - 32, zIndex: ONE_FACE_LAYERS.edge, cursor: "col-resize", touchAction: "none" }
       }
     />
   );

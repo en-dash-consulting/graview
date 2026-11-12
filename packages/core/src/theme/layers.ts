@@ -73,6 +73,15 @@ export const SCENE_LAYERS = {
 /** Order within one box: under (0), raised (1) and over (2) its siblings. */
 export const LOCAL_LAYERS = { under: 0, raised: 1, over: 2 } as const;
 
+/**
+ * THE ONE FACE'S OWN RUNGS (Pages and the Scene as one place), inside the
+ * page under every app-wide rung: the city under all of it, the page that
+ * moves over the city, the lines and the views over the page, the panel's
+ * edge, the control at the foot, and the bar over everything the camera
+ * moves.
+ */
+export const ONE_FACE_LAYERS = { city: 0, page: 2, marks: 3, edge: 4, control: 5, bar: 6 } as const;
+
 /** The custom property a rung is written as. */
 export const layerProperty = (name: Layer): string => `--graview-layer-${name}`;
 

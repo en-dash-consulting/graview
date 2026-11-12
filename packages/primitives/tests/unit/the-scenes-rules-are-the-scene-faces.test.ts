@@ -40,6 +40,8 @@ const SCENE_FILES = [
   "primitives/src/lines-key.tsx",
   // The panel beside the map: drawn only with the scene, by the faces that draw it.
   "primitives/src/map-panel.tsx",
+  // The city under the one face (Pages and the Scene as one place): the Scene itself, read and aimed, drawn only with it.
+  "pages/src/one-place-city.tsx",
 ];
 /*
  * The district's card and its drive-in are the kind's many × glyph cell in

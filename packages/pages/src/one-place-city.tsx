@@ -1,4 +1,4 @@
-import { labelOf, LOCAL_LAYERS } from "@graview/core";
+import { labelOf, ONE_FACE_LAYERS } from "@graview/core";
 import { EMPTY_VIEW, toUrl, withOverview, type ViewState } from "@graview/layout/view";
 import { Scene, type SceneCamera } from "@graview/react";
 import { useGraview, useNavigation } from "@graview/react/provider";
@@ -814,14 +814,16 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
          * in the page — and what of it reaches past the window is inside a
          * box that scrolls, as a phone's sideways row would be.
          */
-        style={{ position: "fixed", inset: 0, zIndex: LOCAL_LAYERS.under, display: "none", visibility: "hidden", overflow: "hidden", containerType: "size" }}
+        style={{ position: "fixed", inset: 0, zIndex: ONE_FACE_LAYERS.city, display: "none", visibility: "hidden", overflow: "hidden", containerType: "size" }}
       >
         {/* One set of lines on this face: nothing is chosen on the Scene, so it draws no lines of its own from a choice and no outline of one. */}
+        {/* The Scene's own zoom and its signs past the edge are not this face's: the control at the foot and the camera are. */}
+        <style>{`[data-testid="one-place-city"] .graview-zoom, [data-testid="one-place-city"] .graview-edge-sign { display: none; }`}</style>
         <Scene renderer="dom" blur={false} animate={false} camera={camera} options={sceneOptions} style={{ width: "100%", height: "100%" }} />
       </div>
-      <svg ref={overlay} aria-hidden="true" data-testid="one-place-lines" width={view.width} height={view.height} style={{ position: "fixed", left: 0, top: 0, zIndex: LOCAL_LAYERS.over + 1, pointerEvents: "none", overflow: "visible", opacity: 0 }} />
+      <svg ref={overlay} aria-hidden="true" data-testid="one-place-lines" width={view.width} height={view.height} style={{ position: "fixed", left: 0, top: 0, zIndex: ONE_FACE_LAYERS.marks, pointerEvents: "none", overflow: "visible", opacity: 0 }} />
       {/* Each line's end, a ring the keyboard and the pointer reach: that record, in the panel. */}
-      <div ref={rings} hidden role="group" aria-label="What this page shows, in the city" style={{ position: "fixed", left: 0, top: 0, width: 0, height: 0, zIndex: LOCAL_LAYERS.over + 1, opacity: 0 }} />
+      <div ref={rings} hidden role="group" aria-label="What this page shows, in the city" style={{ position: "fixed", left: 0, top: 0, width: 0, height: 0, zIndex: ONE_FACE_LAYERS.marks, opacity: 0 }} />
     </>
   );
 }
