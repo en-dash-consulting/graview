@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 0,
+  "gzipped": 256,
+  "note": "Raised in the 0.1.74 Version packages step: the version string written into the build (0.1.73 to 0.1.74) is the same length, so every face is byte for byte the same minified (3_226_719), but its 215 chunks gzip 108 bytes larger (1_171_666 against 1_171_558 at the batch's head), 23 over the budget; held for that and the spread a split build gzips to from build to build."
+}
