@@ -647,6 +647,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
           if (subject && subjectKinds.length > 0 && !subjectKinds.includes(subject.kind)) throw new ActRefusal(`"${title}" acts on ${subjectKinds.join(" or ")}, not on ${withArticle(subject.kind)}`, "invalid");
           const bindings: Record<string, Value> = {};
           for (const [k, v] of Object.entries(input)) if (v !== undefined) bindings[k] = v as Value;
+          // An argument left out is its default, to the condition and the effects alike.
+          for (const [k, a] of args) if (bindings[k] === undefined && "field" in a && a.field.default !== undefined) bindings[k] = a.field.default as Value;
           if (guard && subject) {
             const no = refusedBy(graph, subject, bindings);
             if (no !== undefined) throw new ActRefusal(no);

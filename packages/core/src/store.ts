@@ -1346,6 +1346,19 @@ export class Store<S extends AnySchema> {
     };
   }
 
+  /** Refuses a record named for an act that is of none of the kinds it takes — at its subject or any record argument — as a document's act on the wrong kind is refused. */
+  private keepsToItsKinds(definition: AnyMutationDefinition<S>, call: MutationCall): void {
+    const subject = definition.subject;
+    if (subject && subject.kinds !== "*") this.ofKinds(definition, call.args[subject.arg], subject.kinds as readonly string[]);
+    for (const ref of nodeRefArgs(definition.input)) if (ref.name !== subject?.arg) this.ofKinds(definition, call.args[ref.name], ref.kinds);
+  }
+
+  private ofKinds(definition: AnyMutationDefinition<S>, id: unknown, kinds: readonly string[]): void {
+    if (typeof id !== "string" || kinds.includes("*")) return;
+    const node = this.graph.getNode(id);
+    if (node && !kinds.includes(node.kind)) throw new ActRefusal(`"${definition.title ?? definition.name}" acts on ${kinds.join(" or ")}, not on ${withArticle(node.kind)}`, "invalid");
+  }
+
   /**
    * AN ACT RUNS UNDER ITS AUTHOR'S SIGHT (FR-55). Its body, its guard, its
    * refusal and its sentence read the store as the author is served it,
@@ -1841,10 +1854,8 @@ export class Store<S extends AnySchema> {
   private judgedCall(definition: AnyMutationDefinition<S>, call: MutationCall, as: Author | Principal, decided: boolean, hint?: string): ReturnType<typeof compileMutation> {
     const missing = this.missingFor(call, as as Principal);
     if (missing) throw missing;
-    // A kind's own act — its edit, remove, archive, merge — takes only that kind's records: its subject, and every record it names.
-    const subject = definition.subject;
-    if (definition.derived && subject && subject.kinds !== "*") this.ofKinds(definition, call.args[subject.arg], subject.kinds as readonly string[]);
-    if (definition.derived) for (const ref of nodeRefArgs(definition.input)) if (ref.name !== subject?.arg) this.ofKinds(definition, call.args[ref.name], ref.kinds);
+    // An act takes only the kinds it names: its subject's, and each record argument's. Binding a person says its own refusal.
+    if (definition !== this.binder) this.keepsToItsKinds(definition, call);
     let compiled: ReturnType<typeof compileMutation>;
     try {
       compiled = compileMutation(this.graph, definition, call.args, { ...this.sighted(as as Principal), hint });
@@ -1862,13 +1873,6 @@ export class Store<S extends AnySchema> {
       if (refused) this.refuse({ mutation: call.name, message: refused, wouldNeed: [] }, as.id);
     }
     return compiled;
-  }
-
-  /** Refuses a record named for an act that is of none of the kinds it takes, as a document's act on the wrong kind is refused. */
-  private ofKinds(definition: AnyMutationDefinition<S>, id: unknown, kinds: readonly string[]): void {
-    if (typeof id !== "string" || kinds.includes("*")) return;
-    const node = this.graph.getNode(id);
-    if (node && !kinds.includes(node.kind)) throw new ActRefusal(`"${definition.title ?? definition.name}" acts on ${kinds.join(" or ")}, not on ${withArticle(node.kind)}`, "invalid");
   }
 
   /**
