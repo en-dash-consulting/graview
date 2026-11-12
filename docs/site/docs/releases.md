@@ -78,7 +78,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.74
 
-Published November 12, 2026 · the current version
+Published November 12, 2026
 
 Any place drawn for an e-ink screen with what each press does; a bare app that looks designed, and a home proposed from the declaration; templates that ask a time and bring their views; a field that keeps a time of day; and a host asks whether a seat may run an act without running it.
 

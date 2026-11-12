@@ -6,7 +6,7 @@
 - Start a product: `npm create graview@latest my-app` (Node 22 or later)
 - License: Elastic License 2.0 — source-available, free to build with and to ship products on
 - Source: https://github.com/en-dash-consulting/graview
-- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.1.74)
+- npm: https://www.npmjs.com/package/graview — 14 packages, one version ()
 - Hosted: Graview Cloud, https://graview.cloud (private alpha, invite-only)
 
 ## Questions, answered plainly
@@ -976,7 +976,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.74
 
-Published November 12, 2026 · the current version
+Published November 12, 2026
 
 Any place drawn for an e-ink screen with what each press does; a bare app that looks designed, and a home proposed from the declaration; templates that ask a time and bring their views; a field that keeps a time of day; and a host asks whether a seat may run an act without running it.
 
