@@ -40,6 +40,14 @@ export interface AccentBrandOptions {
   readonly base: Readonly<Record<Scheme, ThemeTokens>>;
   /** Kept away from the accent on purpose; derived only if it stays distinct. */
   readonly warn?: { readonly dark?: string; readonly light?: string };
+  /**
+   * Take an accent whose hue the warning color shares, where every warning
+   * is told by its mark and its words as well as its color (Roadmap
+   * f-better-bare-app-defaults): what a document's accent does, since the
+   * framework's own warnings all carry both. A brand that draws warnings of
+   * its own in color alone leaves it unset and is refused.
+   */
+  readonly warnMayShareHue?: boolean;
 }
 
 export interface DerivedBrand {
@@ -150,7 +158,7 @@ export function brandFromAccent(options: AccentBrandOptions): DerivedBrand | Ref
      * means "something is broken".
      */
     const warn = colorsIn(schemes[scheme].warn)[0];
-    if (warn && hueGap(rgbToHsl(warn).h, tone.h) < 25) {
+    if (warn && !options.warnMayShareHue && hueGap(rgbToHsl(warn).h, tone.h) < 25) {
       missing.add(`warn (${scheme})`);
       reasons.push(
         `the warning color shares the accent's hue in ${scheme}, so "something is broken" looks like "this is selected"`,

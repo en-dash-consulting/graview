@@ -48,7 +48,9 @@ brand, the name, mark, typeface and palette, is `graview-brand`.
    `as: "time"`, `as: "datetime"` and `as: "money"`. A time of day with no
    day is its own field, `{ "type": "time" }` (`timeField()`): kept as
    "15:00", typed in a time input, said "3:00 PM" in en-US, and never moved
-   by a zone.
+   by a zone. A glance (a derived row or card) says a moment without its
+   zone to a reader on the app's clock, and with it to one elsewhere; a
+   record's page always names it.
 
 6. **Read today; never write it.** A worker view is handed the app's
    today, the day its rules read, on the app's clock: `graview.today`

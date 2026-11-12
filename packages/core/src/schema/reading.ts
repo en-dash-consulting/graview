@@ -1,4 +1,5 @@
-import { dayAsRead, DATE_VALUE, ISO_MOMENT, momentAsRead } from "../days.js";
+import { dayAsRead, DATE_VALUE, isMoment, ISO_MOMENT, momentAsRead, momentAtAGlance } from "../days.js";
+import { kindDateField, type DatedField } from "../kind-date.js";
 import { fieldWords, labelOf, nounOf, type ReadableField } from "./define-node.js";
 import { valueWords } from "./value-words.js";
 import { filesOf, isVideo, videoWords } from "./files.js";
@@ -143,6 +144,13 @@ export function readableFields(
     readonly excerpt?: boolean;
     /** The app's locale its days are said in (FR-178): a reader's a host passed wins, and the page's when unsaid. */
     readonly locale?: string | undefined;
+    /**
+     * NO READER IS THERE (Roadmap f-better-bare-app-defaults): a model, a
+     * static page, a description a server writes. A glance names a
+     * moment's zone only to a reader whose clock is another; with nobody's
+     * clock to judge by, it always names it.
+     */
+    readonly noReader?: boolean;
     /** The app's time zone its instants are said in (Roadmap f-app-time-zone): a person's a host passed wins, and the page's when unsaid. */
     readonly timeZone?: string | undefined;
     /**
@@ -182,7 +190,17 @@ export function readableFields(
    */
   // Unchosen, a glance leads with who made the record and when, where the kind's roles say (`fieldRoles.who`, `.when`).
   const roles = definition?.fieldRoles;
-  const chosen = options.glance ? (display?.glance ?? [roles?.["who"], roles?.["when"]].filter((key): key is string => !!key)) : pageOrder(display?.page);
+  /*
+   * THE KIND'S DATE LEADS (Roadmap f-better-bare-app-defaults). A schedule
+   * item with an `at` and nothing declaring when it is read "Dinner · Nov
+   * 26…" only where `at` happened to be declared first. Unchosen, a glance
+   * leads with the kind's date as `kindDateField` picks it — the one
+   * `composeDesign` sorts and leads a row with: its `when` role's date or
+   * moment, else its first that is not bookkeeping (`updatedAt`) — after
+   * who made it.
+   */
+  const when = options.glance && !display?.glance ? (kindDateField(datedFields(definition), roles?.["when"])?.name ?? roles?.["when"]) : roles?.["when"];
+  const chosen = options.glance ? (display?.glance ?? [roles?.["who"], when].filter((key): key is string => !!key)) : pageOrder(display?.page);
   /*
    * A GLANCE THE DECLARATION CHOSE IS SAID EXACTLY: its fields and no
    * others. It was the order only, so a card went on to say whatever came
@@ -277,7 +295,8 @@ export function readableFields(
           typeof value === "string" && DATE_VALUE.test(value) && (value.length === 10 || isDateField(definition, key))
           ? dayAsRead(value, options.locale)
           : typeof value === "string" && ISO_MOMENT.test(value)
-          ? momentAsRead(value, options.locale, options.timeZone)
+          ? // A glance names the zone only to a reader whose clock is not the one it is said on.
+            (options.glance && !options.noReader ? momentAtAGlance : momentAsRead)(value, options.locale, options.timeZone)
           : typeof value === "string" && isChoice(definition, key)
             ? valueWords(definition, key, value)
             : stored);
@@ -336,6 +355,20 @@ function isDateField(definition: AnyNodeDefinition | undefined, key: string): bo
   for (let depth = 0; depth < 6 && at?.innerType !== undefined; depth++) at = (at.innerType as { _zod?: { def?: Def } })._zod?.def;
   // A document's date: the pattern that takes a year or a month alone.
   return at?.type === "string" && (at.checks ?? []).some((check) => check._zod?.def?.pattern?.source === DATE_VALUE.source);
+}
+
+/** The kind's declared fields that hold a day or a moment, with which. */
+function datedFields(definition: AnyNodeDefinition | undefined): DatedField[] {
+  const shape = (definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape ?? {};
+  return Object.keys(shape).flatMap((name) => (isMomentField(definition, name) ? [{ name, type: "datetime" }] : isDateField(definition, name) ? [{ name, type: "date" }] : []));
+}
+
+/** Whether a field holds a moment — a document's `datetime` — under optional, default and nullable. */
+function isMomentField(definition: AnyNodeDefinition | undefined, key: string): boolean {
+  type Def = { readonly type?: string; readonly format?: string; readonly innerType?: unknown; readonly checks?: readonly { readonly _zod?: { readonly def?: { readonly fn?: unknown; readonly format?: string } } }[] };
+  let at = ((definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape?.[key] as { _zod?: { def?: Def } } | undefined)?._zod?.def;
+  for (let depth = 0; depth < 6 && at?.innerType !== undefined; depth++) at = (at.innerType as { _zod?: { def?: Def } })._zod?.def;
+  return at?.type === "string" && (at.format === "datetime" || (at.checks ?? []).some((check) => check._zod?.def?.fn === isMoment || check._zod?.def?.format === "datetime"));
 }
 
 /** Whether a field is one of a declared set of values (`z.enum`), under optional, default and nullable. */

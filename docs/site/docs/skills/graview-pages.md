@@ -34,7 +34,7 @@ The app bar, one row over any shell (`barAbove`): the name, the switch (Scene, P
 
 **Home as data** (FR-81): `home`, blocks as in `graview-view-specs` (`views.home`), replaces this body, and the app opens on it (FR-136): 40 blocks at its top (a group is one; 120 in all), and a `figure` may say `emphasis: "large"`.
 
-**No home, and `purpose.jobs`** (the face handed `app`): the home opens on the jobs. The first with records waiting is the title, its count, five records, its `act` on each; others follow smaller, an empty one a quiet line, the gallery after. A drawn home answers a job only by listing its kind (`design-job-unanswered`). `composeDesign(document)` (`@graview/core/compose`) proposes jobs (`inferJobs`), the critic's edits and an accent as one change.
+**No home, and `purpose.jobs`** (the face handed `app`): the home opens on the jobs. The first with records waiting is the title, its count, five records, its `act` on each; the rest smaller, the gallery after. A drawn home answers a job only by listing its kind (`design-job-unanswered`). `composeDesign(document)` (`@graview/core/compose`) proposes jobs, a home, rows and glances where missing, the critic's edits and an accent.
 
 **Hand it `views`** (the scene's registry, plus `settings`/`presence`) — `graview create` does — and the face puts the scene's provider under its routes:
 

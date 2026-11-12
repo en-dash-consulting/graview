@@ -223,6 +223,7 @@ describe("a hosted page", () => {
     // 1121 KB since a member who joins came to be bound to the person entered for them (Roadmap f-invite-binds-existing-person): every store reads a seat as it is bound now, serves each seat what it may be told of who is bound, and names a bound person in Activity by their record: the scene face measured 1_147_069 B.
     // 1124 KB since a field came to keep a time of day, a document act to hand its condition as data and apply to judge each call and each write through one path (HQ features f-template-format-cloud-additions, f-may-seat-run-act-on-record), with security and reliability fixes: the scene face measured 1_150_113 B, 2_209 over 1121 KB.
     // 1125 KB with the 0.1.74 batch together (2026-11-11): a place drawn for an e-ink device's screen beside a field that keeps a time of day and what a seat may run: the scene face measured 1_150_985 B, 9 over 1124 KB.
+    // 1125 KB since a bare app came to look designed by default (Roadmap f-better-bare-app-defaults): a blocks home's derived row says its kind's glance, a glance leads with its kind's date and names a moment's zone only to a reader elsewhere, a warning carries its mark, its words or its pattern: the scene face measured 1_151_234 B.
     for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1125 * 1024);
   });
 

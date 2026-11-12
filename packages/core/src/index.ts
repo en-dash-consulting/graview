@@ -322,6 +322,7 @@ export {
   localeFor,
   minutesAsRead,
   momentAsRead,
+  momentAtAGlance,
   monthAsRead,
   numberAsRead,
   sayIn,
