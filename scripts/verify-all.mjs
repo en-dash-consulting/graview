@@ -139,6 +139,8 @@ const CHAIN = [
   ["drive-in", "verify-drive-in.mjs"],
   // The scene under a finger and a mouse, on the discography's thousand songs: a tap chooses and never pans, a drag never chooses, a pinch and a wheel zoom under the hand, a double-tap goes in, a quick second tap lands where it was aimed, a list scrolls without moving its card, the page behind never scrolls, and the frames keep up at a quarter speed — on a phone and a desk, in Chromium and WebKit.
   ["scene-hands", "verify-scene-hands.mjs"],
+  // Pages and the Scene as one face: no switch, one control at the foot that says the level, the same page moving from Page to Nearby to the City with its lines exact and no overshoot, every view standing in the city clear of the districts and their names, anything chosen there landing Nearby, the bar usable at every level, the history rising and falling, and a duplicate view found.
+  ["one-face", "verify-one-face.mjs"],
   // The studio's whole path, on a scratch copy of seedbed: said, rewritten, written, compiled, migrated.
   ["rehearsal", "rehearse-studio.mjs"],
   ["remember", "verify-remember.mjs"],
@@ -173,7 +175,7 @@ const CHAIN = [
  * hold no state of a harness's (each opens its own browser context), and
  * runs side by side.
  */
-const ALONE = new Set(["lines", "panning", "first-load", "scale", "scene-at-scale", "scene-hands", "renderer", "who", "journeys", "create"]);
+const ALONE = new Set(["lines", "panning", "first-load", "scale", "scene-at-scale", "scene-hands", "one-face", "renderer", "who", "journeys", "create"]);
 
 /** Where the last run's verdicts are kept, for `--failed`. */
 const LAST_RUN = resolve(repoRoot, "docs/watch/last-run.json");

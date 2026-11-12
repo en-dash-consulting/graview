@@ -8,9 +8,10 @@ import { useHostAssets } from "@graview/react/provider";
 import type { BarFind } from "@graview/primitives/pages";
 import type { ReactNode } from "react";
 import { kindOfSlug } from "./registry.js";
+import { useOneFace } from "./one-place-control.js";
+import { createPortal } from "react-dom";
 import { type PageContext, StartFreshLink, useStoreTick } from "./page-context.js";
 import { usePlacedOnTheFace } from "./face-placed.js";
-import { OnePlaceUp } from "./one-place-control.js";
 import { classes, sizedBy, type ControlSize } from "./control-size.js";
 import { BODY, WIDE, column, h1, quiet } from "./page-typography.js";
 
@@ -34,6 +35,7 @@ export function DefaultShell<S extends AnySchema>({
 }) {
   const { store, brand } = context;
   useStoreTick(store);
+  const bar = useOneFace()?.bar ?? null;
   // On its own the routed face owns the page, and wears the brand's icon where the host serves it, and its colors; embedded, the host's page keeps its own (FR-124).
   const providedAssetsAt = useHostAssets();
   useFavicon(context.embedded ? undefined : assetSrc(context.assetsAt ?? providedAssetsAt, faviconHref(brand)));
@@ -58,7 +60,15 @@ export function DefaultShell<S extends AnySchema>({
         lineHeight: 1.5,
       }}
     >
-      {context.embedded ? null : <OwnBar context={context} />}
+      {context.embedded ? null : bar ? (
+        <>
+          {/* On the one face the bar stands fixed at the window's top, outside the page that moves; the page keeps its room. */}
+          {createPortal(<OwnBar context={context} />, bar)}
+          <div aria-hidden="true" data-graview-bar-room="" style={{ height: "var(--graview-one-face-bar, 0px)", flex: "0 0 auto" }} />
+        </>
+      ) : (
+        <OwnBar context={context} />
+      )}
       <div style={{ flex: 1 }}>{children}</div>
       {/*
         * Whether this browser remembers, and the way back to the example: the
@@ -125,11 +135,20 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
         name={brand?.name ?? "Graview"}
         description={brand?.subtitle}
         home={{ href: `${base}/`, go: () => navigate("/"), current: location.pathname === "/" }}
-        faces={{
-          // The scene is on its own address (`sceneHref`); this face is the pages.
-          scene: { label: sceneTitle(arrangement), current: false, go: () => window.location.assign(sceneHref) },
-          pages: { label: pagesTitle(arrangement), current: true, go: () => undefined },
-        }}
+        /*
+         * The scene is on its own address (`sceneHref`); this face is the
+         * pages. Where the Scene's city stands under the pages there is one
+         * face, and nothing to switch to: the city is the camera rising
+         * (`one-place.tsx`), and the bar offers no switch.
+         */
+        faces={
+          context.sceneUnderPages && context.views
+            ? undefined
+            : {
+                scene: { label: sceneTitle(arrangement), current: false, go: () => window.location.assign(sceneHref) },
+                pages: { label: pagesTitle(arrangement), current: true, go: () => undefined },
+              }
+        }
         places={places}
         current={barPlaceAt(places, here)}
         reach={{ href: (path) => `${base}${path}`, go: (place) => navigate(place.path) }}
@@ -162,8 +181,6 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
         }
         tools={
           <>
-            {/* Up from the page to its place in the Scene's city, where the city stands under the pages (one-place.tsx). */}
-            <OnePlaceUp />
             {/* The standing, as the problems' own page: a dot and its name, with no count of its own; the bell counts what needs you (Roadmap f-inbox-needs-you-first). */}
             <Link to="/problems" data-testid="standing-link" aria-label={said} title={said} style={{ ...toolStyle, position: "relative", textDecoration: "none", color: problems === 0 ? "var(--graview-ink-muted)" : "var(--graview-warn)" }}>
               <StandingDot tone={problems === 0 ? "var(--graview-good)" : "var(--graview-warn)"} />

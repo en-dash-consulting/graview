@@ -1,7 +1,8 @@
 import { labelOf, numberAsRead, SCENE_LAYERS, type Brand, type Scheme } from "@graview/core";
 import { districtBlocks, districtState, TIER_HEIGHT, toIso, type Building, type StateTier } from "@graview/core/scene";
 import type { InterpolatedLayout } from "@graview/layout";
-import { memo, useCallback, useMemo, useRef, type CSSProperties, type ReactElement } from "react";
+import { memo, useCallback, useEffect, useMemo, useReducer, useRef, type CSSProperties, type ReactElement } from "react";
+import { usePlayback } from "./past.js";
 import { useGraph, useGraview } from "./context.js";
 import { useFlagged } from "./emphasis.js";
 import { ownRecords, useSinceLastVisit } from "./last-visit.js";
@@ -114,6 +115,16 @@ export function Plots({ frame, width, height, pan, pinned, close, today, swallow
    */
   const drawn = useRef(new Map<string, PlotDrawing>());
   /*
+   * WHILE THE APP'S HISTORY IS PLAYED, A RECORD RISES AS IT COMES INTO BEING
+   * AND SINKS AS IT GOES: its building grows up from its foot as the moment
+   * shown passes the change that made it, and goes back down into the
+   * ground, the same element, as the moment passes the change that removed
+   * it — or as the scrubber is taken back before it was made. Only while a
+   * timeline is open: now, a record made or removed is simply there or not,
+   * as it always was.
+   */
+  const rising = Boolean(usePlayback()?.open);
+  /*
    * EACH RECORD'S NAME, SAID ONCE PER CHANGE OF THE GRAPH. A plot is drawn
    * again whenever the city's cell changes — every step of a zoom — and
    * every block on it said its record's label again, a template rendered
@@ -192,7 +203,7 @@ export function Plots({ frame, width, height, pan, pinned, close, today, swallow
   return (
     <>
     <style>{groundCss(scheme)}</style>
-    <svg className="graview-plots" aria-hidden="true" data-graview-world="" width={width} height={height} style={style} data-graview-plots={tiles.length} data-graview-named={close ? "" : undefined}>
+    <svg className="graview-plots" aria-hidden="true" data-graview-world="" width={width} height={height} style={style} data-graview-plots={tiles.length} data-graview-named={close ? "" : undefined} data-graview-rising={rising ? "" : undefined}>
       <g transform={`translate(${(city.originX + pan.x).toFixed(1)} ${(city.originY + pan.y).toFixed(1)})`}>
         {tiles.map((node) => (
           <PlotTile
@@ -206,6 +217,7 @@ export function Plots({ frame, width, height, pan, pinned, close, today, swallow
             ownKey={ownKey}
             named={close ?? false}
             press={press}
+            rising={rising}
           />
         ))}
       </g>
@@ -300,6 +312,7 @@ const PlotTile = memo(function PlotTile({
   ownKey,
   named,
   press,
+  rising,
 }: {
   readonly id: string;
   readonly drawing: PlotDrawing;
@@ -312,7 +325,10 @@ const PlotTile = memo(function PlotTile({
   /** Come down past the whole map: the blocks wide enough for a name say it. */
   readonly named: boolean;
   readonly press: (id: string) => boolean;
+  /** The history is being played: a building that goes sinks into the ground before it is gone. */
+  readonly rising: boolean;
 }) {
+  const leaving = useLeaving(drawing.buildings, rising);
   const chosen = new Set(chosenKey.split("\n"));
   const broken = new Set(flaggedKey.split("\n"));
   const recent = new Set(recentKey.split("\n"));
@@ -329,13 +345,14 @@ const PlotTile = memo(function PlotTile({
         }}
       />
       {/* THE BLOCKS: a row per value, back to front; a problem lit, a change since you were here aglow, your own marked. */}
-      {drawing.buildings.length > 0 ? (
+      {drawing.buildings.length + leaving.length > 0 ? (
         <g className="graview-village" data-graview-village={drawing.buildings.length} data-graview-rest={drawing.rests.reduce((sum, rest) => sum + rest.count, 0) || undefined}>
-          {drawing.buildings.map((block) => (
+          {[...drawing.buildings, ...leaving].map((block) => (
             <g
               key={block.id}
               className="graview-building"
               data-graview-building={block.id}
+              data-graview-leaving={leaving.includes(block) ? "" : undefined}
               data-graview-tier={block.tier}
               data-graview-flagged={broken.has(block.id) || block.overdue ? "" : undefined}
               data-graview-overdue={block.overdue ? "" : undefined}
@@ -433,10 +450,47 @@ export function toLattice(point: Point, city: City, pan: Point): { readonly col:
  * somebody else changed since you were last here aglow in the accent; your
  * own with an ink rim; a selected one in the accent. A hand-placed district's curb is dashed.
  */
+/** How long a building takes to sink into the ground, or to rise out of it. */
+export const RISE_MS = 420;
+
+/**
+ * THE BUILDINGS GOING, while the history is played: each block that was
+ * drawn and is no longer, kept as it last stood for as long as it takes to
+ * sink — the same element, by its key — unless it comes back first, when it
+ * rises again from wherever it had got to. None kept now, outside playback.
+ */
+function useLeaving<B extends { readonly id: string }>(buildings: readonly B[], rising: boolean): readonly B[] {
+  const before = useRef(buildings);
+  const gone = useRef(new Map<string, { readonly block: B; readonly until: number }>());
+  const [, wake] = useReducer((n: number) => n + 1, 0);
+  if (before.current !== buildings) {
+    const here = new Set(buildings.map((block) => block.id));
+    for (const id of [...gone.current.keys()]) if (here.has(id)) gone.current.delete(id);
+    if (rising) for (const block of before.current) if (!here.has(block.id) && !gone.current.has(block.id)) gone.current.set(block.id, { block, until: performance.now() + RISE_MS });
+    before.current = buildings;
+  }
+  if (!rising && gone.current.size > 0) gone.current.clear();
+  useEffect(() => {
+    if (gone.current.size === 0) return;
+    const next = Math.min(...[...gone.current.values()].map((one) => one.until));
+    const timer = window.setTimeout(() => {
+      const now = performance.now();
+      for (const [id, one] of gone.current) if (one.until <= now + 4) gone.current.delete(id);
+      wake();
+    }, Math.max(0, next - performance.now()) + 8);
+    return () => window.clearTimeout(timer);
+  });
+  return [...gone.current.values()].map((one) => one.block);
+}
+
 function groundCss(scheme: Scheme): string {
   const light = scheme === "light";
   const mix = (share: string, of = "var(--graview-ink)") => `color-mix(in oklab, ${of} ${share}, var(--graview-panel))`;
   return `.graview-plots{z-index:${SCENE_LAYERS.plots};opacity:var(--graview-altitude);transition:opacity 640ms cubic-bezier(.33,0,.2,1)}
+.graview-plots[data-graview-rising] .graview-building{transform-box:fill-box;transform-origin:50% 100%;transform:scaleY(1);opacity:1;transition:transform ${RISE_MS}ms cubic-bezier(.33,0,.2,1),opacity ${RISE_MS}ms}
+@starting-style{.graview-plots[data-graview-rising] .graview-building{transform:scaleY(0);opacity:0}}
+.graview-plots[data-graview-rising] .graview-building[data-graview-leaving]{transform:scaleY(0);opacity:0;pointer-events:none}
+@media (prefers-reduced-motion:reduce){.graview-plots[data-graview-rising] .graview-building{transition:none}.graview-plots[data-graview-rising] .graview-building[data-graview-leaving]{display:none}}
 .graview-plot-tile{fill:color-mix(in oklab,var(--graview-ink) ${light ? 5 : 9}%,transparent);stroke:color-mix(in oklab,var(--graview-ink) ${light ? 22 : 30}%,transparent);stroke-linejoin:round;pointer-events:auto;cursor:pointer}
 .graview-plot-tile:hover{fill:color-mix(in oklab,var(--graview-ink) ${light ? 10 : 16}%,transparent)}
 .graview-plot[data-graview-pinned] .graview-plot-tile{stroke-dasharray:4 3}

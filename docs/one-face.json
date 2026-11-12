@@ -1,0 +1,1530 @@
+{
+  "at": "2026-11-12T05:24:56.688Z",
+  "engines": [
+    "chromium"
+  ],
+  "app": "apps/todo",
+  "checks": {
+    "theFaceOffersNoSwitch": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "faces": 0,
+          "sceneLink": 0,
+          "barUp": 0,
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "url": "/pages",
+          "level": 2,
+          "shell": 0,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "oneControlAtTheBottomLeftSaysTheLevel": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "levels": [
+            {
+              "level": 0,
+              "at": {
+                "left": 16,
+                "bottom": 16,
+                "top": 852,
+                "height": 32
+              },
+              "stops": [
+                {
+                  "w": 52,
+                  "h": 26,
+                  "name": "Page: you are here",
+                  "words": "Page",
+                  "pressed": true
+                },
+                {
+                  "w": 62.921875,
+                  "h": 26,
+                  "name": "Nearby: this page beside the tasks district",
+                  "words": "Nearby",
+                  "pressed": false
+                },
+                {
+                  "w": 52,
+                  "h": 26,
+                  "name": "City: every page and view of the app",
+                  "words": "City",
+                  "pressed": false
+                }
+              ],
+              "said": "Altitude: page, 1 of 3",
+              "key": false,
+              "sheetTop": 0,
+              "controlBottom": 884
+            },
+            {
+              "level": 1,
+              "at": {
+                "left": 16,
+                "bottom": 16,
+                "top": 852,
+                "height": 32
+              },
+              "stops": [
+                {
+                  "w": 52,
+                  "h": 26,
+                  "name": "Page: this page alone",
+                  "words": "Page",
+                  "pressed": false
+                },
+                {
+                  "w": 63.453125,
+                  "h": 26,
+                  "name": "Nearby: you are here",
+                  "words": "Nearby",
+                  "pressed": true
+                },
+                {
+                  "w": 52,
+                  "h": 26,
+                  "name": "City: every page and view of the app",
+                  "words": "City",
+                  "pressed": false
+                }
+              ],
+              "said": "Altitude: nearby, 2 of 3",
+              "key": true,
+              "sheetTop": 60,
+              "controlBottom": 884
+            },
+            {
+              "level": 2,
+              "at": {
+                "left": 16,
+                "bottom": 16,
+                "top": 852,
+                "height": 32
+              },
+              "stops": [
+                {
+                  "w": 52,
+                  "h": 26,
+                  "name": "Page: this page alone",
+                  "words": "Page",
+                  "pressed": false
+                },
+                {
+                  "w": 62.921875,
+                  "h": 26,
+                  "name": "Nearby: “Pay the deposit” beside its place in the city",
+                  "words": "Nearby",
+                  "pressed": false
+                },
+                {
+                  "w": 52,
+                  "h": 26,
+                  "name": "City: you are here",
+                  "words": "City",
+                  "pressed": true
+                }
+              ],
+              "said": "Altitude: city, 3 of 3",
+              "key": true,
+              "sheetTop": 471.1083068847656,
+              "controlBottom": 884
+            }
+          ],
+          "foot": {
+            "room": true,
+            "lastBottom": 0,
+            "fabTop": 852
+          },
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "levels": [
+            {
+              "level": 0,
+              "at": {
+                "left": 16,
+                "bottom": 16,
+                "top": 775,
+                "height": 48
+              },
+              "stops": [
+                {
+                  "w": 64,
+                  "h": 44,
+                  "name": "Page: you are here",
+                  "words": "Page",
+                  "pressed": true
+                },
+                {
+                  "w": 64,
+                  "h": 44,
+                  "name": "Nearby: this page beside the tasks district",
+                  "words": "Nearby",
+                  "pressed": false
+                },
+                {
+                  "w": 64,
+                  "h": 44,
+                  "name": "City: every page and view of the app",
+                  "words": "City",
+                  "pressed": false
+                }
+              ],
+              "said": "Altitude: page, 1 of 3",
+              "key": false,
+              "sheetTop": 0,
+              "controlBottom": 823
+            },
+            {
+              "level": 1,
+              "at": {
+                "left": 16,
+                "bottom": 458,
+                "top": 333,
+                "height": 48
+              },
+              "stops": [
+                {
+                  "w": 64,
+                  "h": 44,
+                  "name": "Page: this page alone",
+                  "words": "Page",
+                  "pressed": false
+                },
+                {
+                  "w": 64,
+                  "h": 44,
+                  "name": "Nearby: you are here",
+                  "words": "Nearby",
+                  "pressed": true
+                },
+                {
+                  "w": 64,
+                  "h": 44,
+                  "name": "City: every page and view of the app",
+                  "words": "City",
+                  "pressed": false
+                }
+              ],
+              "said": "Altitude: nearby, 2 of 3",
+              "key": true,
+              "sheetTop": 391,
+              "controlBottom": 381
+            },
+            {
+              "level": 2,
+              "at": {
+                "left": 16,
+                "bottom": 16,
+                "top": 775,
+                "height": 48
+              },
+              "stops": [
+                {
+                  "w": 64,
+                  "h": 44,
+                  "name": "Page: this page alone",
+                  "words": "Page",
+                  "pressed": false
+                },
+                {
+                  "w": 64,
+                  "h": 44,
+                  "name": "Nearby: “Pay the deposit” beside its place in the city",
+                  "words": "Nearby",
+                  "pressed": false
+                },
+                {
+                  "w": 64,
+                  "h": 44,
+                  "name": "City: you are here",
+                  "words": "City",
+                  "pressed": true
+                }
+              ],
+              "said": "Altitude: city, 3 of 3",
+              "key": true,
+              "sheetTop": 212.9103240966797,
+              "controlBottom": 823
+            }
+          ],
+          "foot": {
+            "room": true,
+            "lastBottom": 0,
+            "fabTop": 775
+          },
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "theSameNodeMovesThroughEveryLevel": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "frames": 221,
+          "moved": 136,
+          "same": true,
+          "jump": {
+            "worst": 0.102,
+            "at": 3
+          },
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "frames": 220,
+          "moved": 136,
+          "same": true,
+          "jump": {
+            "worst": 0.22,
+            "at": 2
+          },
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "lineEndsAreExactEveryFrame": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "worst": 0.49,
+          "counted": 439,
+          "examples": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "worst": 0.49,
+          "counted": 284,
+          "examples": [],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "levelMovesNeverOvershoot": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "moves": [
+            {
+              "from": 0,
+              "to": 1,
+              "how": "control",
+              "frames": 98,
+              "zoomBack": 0,
+              "widthBack": 0
+            },
+            {
+              "from": 1,
+              "to": 2,
+              "how": "control",
+              "frames": 164,
+              "zoomBack": 0,
+              "widthBack": 0
+            },
+            {
+              "from": 2,
+              "to": 1,
+              "how": "keys",
+              "frames": 79,
+              "zoomBack": 0,
+              "widthBack": 0
+            },
+            {
+              "from": 1,
+              "to": 0,
+              "how": "keys",
+              "frames": 158,
+              "zoomBack": 0,
+              "widthBack": 0
+            },
+            {
+              "from": 0,
+              "to": 2,
+              "how": "control",
+              "frames": 83,
+              "zoomBack": 0,
+              "widthBack": 0
+            },
+            {
+              "from": 2,
+              "to": 0,
+              "how": "control",
+              "frames": 166,
+              "zoomBack": 0,
+              "widthBack": 0
+            }
+          ],
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "moves": [
+            {
+              "from": 0,
+              "to": 1,
+              "how": "control",
+              "frames": 98,
+              "zoomBack": 0,
+              "widthBack": 0
+            },
+            {
+              "from": 1,
+              "to": 2,
+              "how": "control",
+              "frames": 164,
+              "zoomBack": 0,
+              "widthBack": 0
+            },
+            {
+              "from": 2,
+              "to": 1,
+              "how": "keys",
+              "frames": 79,
+              "zoomBack": 0,
+              "widthBack": 0
+            },
+            {
+              "from": 1,
+              "to": 0,
+              "how": "keys",
+              "frames": 160,
+              "zoomBack": 0,
+              "widthBack": 0
+            },
+            {
+              "from": 0,
+              "to": 2,
+              "how": "control",
+              "frames": 252,
+              "zoomBack": 0,
+              "widthBack": 0
+            },
+            {
+              "from": 2,
+              "to": 0,
+              "how": "control",
+              "frames": 82,
+              "zoomBack": 0,
+              "widthBack": 0
+            }
+          ],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "theCityHasNoShear": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "frames": 221,
+          "sheared": 0,
+          "first": null,
+          "reachedTheCity": true,
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "frames": 220,
+          "sheared": 0,
+          "first": null,
+          "reachedTheCity": true,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "theBarStaysOnScreenAndUsableAtEveryLevel": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "states": [
+            {
+              "at": "page",
+              "top": 0,
+              "controls": [
+                {
+                  "name": "Things — app menu",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Find anything",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Inbox — 2 need you: 2 rules broken",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "2 rules broken",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Nora — you, your seat and your settings",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                }
+              ]
+            },
+            {
+              "at": "rising",
+              "top": 0,
+              "controls": [
+                {
+                  "name": "Things — app menu",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Find anything",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Inbox — 2 need you: 2 rules broken",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "2 rules broken",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Nora — you, your seat and your settings",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                }
+              ]
+            },
+            {
+              "at": "nearby",
+              "top": 0,
+              "controls": [
+                {
+                  "name": "Things — app menu",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Find anything",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Inbox — 2 need you: 2 rules broken",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "2 rules broken",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Nora — you, your seat and your settings",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                }
+              ]
+            },
+            {
+              "at": "rising to the city",
+              "top": 0,
+              "controls": [
+                {
+                  "name": "Things — app menu",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Find anything",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Inbox — 2 need you: 2 rules broken",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "2 rules broken",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Nora — you, your seat and your settings",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                }
+              ]
+            },
+            {
+              "at": "city",
+              "top": 0,
+              "controls": [
+                {
+                  "name": "Things — app menu",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Find anything",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Inbox — 2 need you: 2 rules broken",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "2 rules broken",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Nora — you, your seat and your settings",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                }
+              ]
+            }
+          ],
+          "history": true,
+          "level": 2,
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "states": [
+            {
+              "at": "page",
+              "top": 0,
+              "controls": [
+                {
+                  "name": "Things — app menu",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Find",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Inbox — 2 need you: 2 rules broken",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "2 rules broken",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Nora — you, your seat and your settings",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                }
+              ]
+            },
+            {
+              "at": "rising",
+              "top": 0,
+              "controls": [
+                {
+                  "name": "Things — app menu",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Find",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Inbox — 2 need you: 2 rules broken",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "2 rules broken",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Nora — you, your seat and your settings",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                }
+              ]
+            },
+            {
+              "at": "nearby",
+              "top": 0,
+              "controls": [
+                {
+                  "name": "Things — app menu",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Find",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Inbox — 2 need you: 2 rules broken",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "2 rules broken",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Nora — you, your seat and your settings",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                }
+              ]
+            },
+            {
+              "at": "rising to the city",
+              "top": 0,
+              "controls": [
+                {
+                  "name": "Things — app menu",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Find",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Inbox — 2 need you: 2 rules broken",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "2 rules broken",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Nora — you, your seat and your settings",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                }
+              ]
+            },
+            {
+              "at": "city",
+              "top": 0,
+              "controls": [
+                {
+                  "name": "Things — app menu",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Find",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Inbox — 2 need you: 2 rules broken",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "2 rules broken",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                },
+                {
+                  "name": "Nora — you, your seat and your settings",
+                  "inside": true,
+                  "clear": true,
+                  "inert": false,
+                  "tabbable": true
+                }
+              ]
+            }
+          ],
+          "history": true,
+          "level": 2,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "everyViewStandsAtTheCity": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "offered": [
+            "/",
+            "/",
+            "/lists",
+            "/tasks",
+            "/places/the-month",
+            "/places/the-week",
+            "/rules",
+            "/reasons",
+            "/people",
+            "/invitations",
+            "/places/the-lists",
+            "/places/what-is-left",
+            "/places/who-may-do-what",
+            "/map"
+          ],
+          "views": [
+            "Home",
+            "Lists",
+            "Tasks",
+            "Rules",
+            "Reasons",
+            "People",
+            "Invitations",
+            "The lists",
+            "What is left",
+            "Who may do what",
+            "The month",
+            "The week",
+            "Connections"
+          ],
+          "missing": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "offered": [
+            "/",
+            "/",
+            "/lists",
+            "/tasks",
+            "/rules",
+            "/reasons",
+            "/people",
+            "/invitations",
+            "/places/the-lists",
+            "/places/what-is-left",
+            "/places/who-may-do-what",
+            "/places/the-month",
+            "/places/the-week",
+            "/map"
+          ],
+          "views": [
+            "Home",
+            "Lists",
+            "Tasks",
+            "Rules",
+            "Reasons",
+            "People",
+            "Invitations",
+            "The lists",
+            "What is left",
+            "Who may do what",
+            "The month",
+            "The week",
+            "Connections"
+          ],
+          "missing": [],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aViewStandsOnItsOwnDistrict": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "astray": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "astray": [
+            "Lists by kind:task"
+          ],
+          "ok": false
+        }
+      ],
+      "ok": false
+    },
+    "noViewCoversADistrictsBuildingsOrLabel": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "covers": [],
+          "onEachOther": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "covers": [],
+          "onEachOther": [],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "everyViewIsInsideTheWindowBelowTheBar": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "outside": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "outside": [],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "everyKindsNameIsReadableAtCity": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "names": [
+            {
+              "kind": "kind:list",
+              "covered": [],
+              "size": 15
+            },
+            {
+              "kind": "kind:reason",
+              "covered": [],
+              "size": 15
+            },
+            {
+              "kind": "kind:rule",
+              "covered": [],
+              "size": 15
+            },
+            {
+              "kind": "kind:task",
+              "covered": [],
+              "size": 15
+            }
+          ],
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "names": [
+            {
+              "kind": "kind:list",
+              "covered": [],
+              "size": 15
+            },
+            {
+              "kind": "kind:reason",
+              "covered": [],
+              "size": 15
+            },
+            {
+              "kind": "kind:rule",
+              "covered": [],
+              "size": 15
+            }
+          ],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "choosingAnythingAtCityLandsAtNearbyAndStays": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "results": [
+            {
+              "how": "press",
+              "landed": {
+                "url": "/pages/places/the-week",
+                "level": 1
+              },
+              "levels": [
+                2,
+                1
+              ],
+              "start": 0,
+              "same": true,
+              "jump": {
+                "worst": 0.079,
+                "at": 21
+              },
+              "back": {
+                "url": "/pages/tasks/t-deposit",
+                "level": 1
+              },
+              "ok": true
+            },
+            {
+              "how": "keys",
+              "landed": {
+                "url": "/pages/places/the-week",
+                "level": 1
+              },
+              "levels": [
+                2,
+                1
+              ],
+              "start": 0,
+              "same": true,
+              "jump": {
+                "worst": 0.079,
+                "at": 21
+              },
+              "back": {
+                "url": "/pages/tasks/t-deposit",
+                "level": 1
+              },
+              "ok": true
+            },
+            {
+              "how": "control",
+              "landed": {
+                "url": "/pages/places/the-week",
+                "level": 1
+              },
+              "levels": [
+                2,
+                1
+              ],
+              "start": 0,
+              "same": true,
+              "jump": {
+                "worst": 0.079,
+                "at": 21
+              },
+              "back": {
+                "url": "/pages/tasks/t-deposit",
+                "level": 1
+              },
+              "ok": true
+            },
+            {
+              "how": "building",
+              "landed": {
+                "url": "/pages/lists/someday",
+                "level": 1
+              },
+              "levels": [
+                1
+              ],
+              "start": 13.9,
+              "same": true,
+              "jump": {
+                "worst": 0.078,
+                "at": 19
+              },
+              "back": {
+                "url": "/pages/tasks/t-deposit",
+                "level": 1
+              },
+              "ok": true
+            },
+            {
+              "how": "find",
+              "landed": {
+                "url": "/pages/search",
+                "level": 1
+              },
+              "levels": [
+                2,
+                1
+              ],
+              "start": null,
+              "same": true,
+              "jump": {
+                "worst": 0.814,
+                "at": 4
+              },
+              "back": {
+                "url": "/pages/search",
+                "level": 1
+              },
+              "ok": false
+            }
+          ],
+          "ok": false
+        }
+      ],
+      "ok": false
+    },
+    "clickingTheGroundDeselectsAndStaysAtCity": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "afterPress": {
+            "level": 2,
+            "chosen": null
+          },
+          "afterEscape": {
+            "level": 2,
+            "chosen": null
+          },
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "zoomingWithNothingSelectedStaysInTheCity": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "before": 0.8683,
+          "closer": 3,
+          "levels": [
+            2
+          ],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "everyViewThatShowsRecordsDrawsItsLines": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "results": [
+            {
+              "path": "/pages/tasks",
+              "shown": 8,
+              "lines": 8,
+              "missing": [],
+              "ok": true
+            },
+            {
+              "path": "/pages/places/the-week",
+              "shown": 9,
+              "lines": 9,
+              "missing": [],
+              "ok": true
+            },
+            {
+              "path": "/pages/places/the-month",
+              "shown": 6,
+              "lines": 6,
+              "missing": [],
+              "ok": true
+            },
+            {
+              "path": "/pages/places/the-lists",
+              "shown": 14,
+              "lines": 14,
+              "missing": [],
+              "ok": true
+            },
+            {
+              "path": "/pages/places/what-is-left",
+              "shown": 0,
+              "lines": 0,
+              "missing": [],
+              "ok": true
+            }
+          ],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aRecordMadeInTheRangeRisesAsTheScrubCrossesIt": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "frames": 143,
+          "madeRises": true,
+          "droppedRisesGoingBack": false,
+          "madeSinksGoingBack": true,
+          "droppedSinks": true,
+          "untouchedOneNode": true,
+          "takenBackMidSinkIsTheSameNode": true,
+          "buttonMovesInThePast": true,
+          "ok": false
+        }
+      ],
+      "ok": false
+    },
+    "aRemovedRecordComesDown": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "ok": true,
+          "droppedSinks": true,
+          "madeSinksGoingBack": true
+        }
+      ],
+      "ok": true
+    },
+    "theSameNodeIsKeptWhileScrubbing": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "ok": true,
+          "untouchedOneNode": true,
+          "takenBackMidSinkIsTheSameNode": true,
+          "buttonMovesInThePast": true
+        }
+      ],
+      "ok": true
+    },
+    "theNearbyPanelResizesByDragAndKeyboard": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "before": {
+            "width": 518,
+            "height": 828
+          },
+          "dragged": {
+            "width": 699,
+            "height": 828
+          },
+          "role": "separator",
+          "range": [
+            360,
+            1037
+          ],
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "before": {
+            "width": 396,
+            "height": 440
+          },
+          "dragged": {
+            "width": 396,
+            "height": 580
+          },
+          "role": "separator",
+          "range": [
+            15,
+            70
+          ],
+          "ok": false
+        }
+      ],
+      "ok": false
+    },
+    "linesStayExactWhileResizing": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "worst": 0,
+          "counted": 285,
+          "examples": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "worst": 0.01,
+          "counted": 228,
+          "examples": [],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "theChosenWidthIsKeptAcrossLevelMoves": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "stepped": 384,
+          "back": 384,
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "stepped": 396,
+          "back": 396,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aDuplicateViewIsFound": {
+      "held": [
+        {
+          "found": [
+            {
+              "severity": "warning",
+              "message": "The view \"Root causes\" shows every root cause as a list and nothing else, which is what the Root causes page (/root-causes) already shows — two boards and two places for one view. Keep the Root causes page.",
+              "edits": [
+                {
+                  "op": "remove-lens",
+                  "title": "Root causes"
+                }
+              ]
+            },
+            {
+              "severity": "note",
+              "message": "The view \"This week\" shows every week as a list and nothing else, which is what the Weeks page (/weeks) already shows. The arrangement names \"This week\", so it stays until the arrangement names the list instead.",
+              "edits": null
+            },
+            {
+              "severity": "warning",
+              "message": "The views \"Where they stand\" and \"Standing\" draw the same blocks of the same root causes, with the same options — two boards and two places for one view. Keep \"Where they stand\", said first.",
+              "edits": [
+                {
+                  "op": "remove-lens",
+                  "title": "Standing"
+                }
+              ]
+            }
+          ],
+          "fixedLeaves": 0,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "noPageThrew": {
+      "errors": [],
+      "ok": true
+    }
+  },
+  "strips": [
+    "docs/one-face/desk-light.png",
+    "docs/one-face/phone-light.png",
+    "docs/one-face/desk-dark.png",
+    "docs/one-face/phone-dark.png"
+  ],
+  "passed": false
+}

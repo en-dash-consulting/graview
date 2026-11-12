@@ -12,6 +12,21 @@ import { discographySchema } from "./domain/schema.js";
 import { views } from "./ui/views.js";
 import { openingSeat, SEATS } from "./ui/seats.js";
 
+/*
+ * ONE FACE (a prototype: Pages and the Scene are one place). The routed
+ * pages stand over the Scene's own city, and the city is the camera rising
+ * from a page, so a person who opens the app's root is sent to that city —
+ * `/pages/places/overview`, which stands over the home — rather than to the
+ * Scene's face of its own, with its switch and its record "drive-in".
+ * `?scene=off` keeps the faces as they were. A driven browser still gets
+ * the Scene's face here: the harnesses of the Scene's own hand drive it
+ * until they are moved onto the one face.
+ */
+if (!window.location.pathname.startsWith("/pages") && !navigator.webdriver && new URLSearchParams(window.location.search).get("scene") !== "off") {
+  window.location.replace(`/pages/places/overview${window.location.search}`);
+  await new Promise(() => undefined);
+}
+
 const sheet = new CSSStyleSheet();
 document.adoptedStyleSheets = [sheet];
 

@@ -17,6 +17,7 @@ import { pathOfPlace, placesOf } from "./page-places.js";
 import { createPageRegistry, kindOfSlug, type PageRegistry } from "./registry.js";
 import { useHref, useLocation, useNavigate, useNavigationType, useParams } from "react-router";
 // The page over the Scene's own city is fetched only where a face asks for it (`sceneUnderPages`): a hosted page draws none of it.
+import { useOneFace } from "./one-place-control.js";
 const OnePlace = lazyPart(() => import("./one-place.js").then((module) => ({ default: module.OnePlace })));
 import { appKeyOf, BarFindContext, FirstLookDoor, HeadingsUnder, PastBar, registerReaderLenses, SpecLinks, type BarFind, type FirstLook } from "@graview/primitives/pages";
 
@@ -415,6 +416,10 @@ function GoesByAddress<S extends AnySchema>({ context, children }: { readonly co
   const base = useHref("/").replace(/\/$/, "");
   /* The host's own address for a path, where it says one; none at all where it said `false` (`PagesAppProps.hrefOf`). */
   const hostHref = useContext(HrefOfContext);
+  // One face: the overview is the camera rising to the city, not another address.
+  const oneFace = useOneFace();
+  const face = useRef(oneFace);
+  face.current = oneFace;
   const goTo = useMemo<GoTo>(() => {
     /** The face's path for a destination, basename-relative; none for one it does not have. */
     const pathOf = (to: GoToTarget, also?: GoToAlso): string | undefined => {
@@ -442,10 +447,12 @@ function GoesByAddress<S extends AnySchema>({ context, children }: { readonly co
      * none, and the link goes nowhere.
      */
     const toOverview = () => {
+      if (face.current) return face.current.goLevel(2);
       if (context.overview) return context.overview();
       if (!context.embedded) window.location.assign(context.sceneHref ?? "/");
     };
     const overviewHref = (): string | undefined => {
+      if (face.current) return hostHref === false ? undefined : `${base}${OVERVIEW_PATH}`;
       if (context.overview) return hostHref === false ? undefined : hostHref ? hostHref(OVERVIEW_PATH) : `${base}${OVERVIEW_PATH}`;
       return context.embedded ? undefined : (context.sceneHref ?? "/");
     };
@@ -554,6 +561,7 @@ export function PagesRoutes<S extends AnySchema>({
   const [barFind, setBarFind] = useState<BarFind | null>(null);
   // Where the face is, for a shell's `usePlaceHere()` and each page's trail: read as the pages read the store.
   const placeRoot = useMemo<PlaceHereRoot>(() => ({ context: inside as unknown as PlaceHereRoot["context"], registry: registry as PlaceHereRoot["registry"] }), [inside, registry]);
+  const oneFace = useOneFace() !== null;
   const told = useMemo(() => ({ onFind: setBarFind, find: !(registry?.without().has("find") ?? false), places: !(registry?.without().has("places") ?? false) }), [registry]);
   const routes = (
     // The routed face holds the keyboard the way the scene does, and offers Find and the way back, whichever shell an app draws.
@@ -562,8 +570,8 @@ export function PagesRoutes<S extends AnySchema>({
     <GoesByAddress context={context}>
     <FaceRoot context={context} registry={registry}>
     {frame(<>
-    {/* The app as it was, and the way through it (Roadmap f-playback): at the head of the page, under the bar. */}
-    <PastBar face="pages" />
+    {/* The app as it was, and the way through it (Roadmap f-playback): at the head of the page, under the bar — or, on the one face, at the window's foot beside the button that moves a level, where it is reached at every level (`one-place.tsx`). */}
+    {oneFace ? null : <PastBar face="pages" />}
     <RecordLinks context={inside}>
       <ScrollReset />
       <SectionOnArrival />
@@ -601,7 +609,7 @@ export function PagesRoutes<S extends AnySchema>({
           * place that took the address (`pages-overview-taken` warns of it)
           * keeps its page here.
           */}
-        {placesOf(inside).some((place) => place.as === OVERVIEW_SLUG) || (inside.sceneUnderPages && inside.views) ? null : <Route path={OVERVIEW_PATH} element={<Navigate to="/" replace />} />}
+        {placesOf(inside).some((place) => place.as === OVERVIEW_SLUG) ? null : <Route path={OVERVIEW_PATH} element={<Navigate to="/" replace />} />}
         <Route path="/places/:as" element={<DefaultPlacePage context={inside} />} />
         <Route path="/:slug" element={<KindSwitch context={inside} registry={registry} page="list" />} />
         <Route

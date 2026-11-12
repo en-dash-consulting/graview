@@ -1013,13 +1013,16 @@ export function layout<S extends AnySchema>(
                     height: marqueeHeightFor(options.screens![item.kind]!.map((place) => place.title), MARQUEE_WIDTH, options.nameWidth) + 8,
                   },
                 }
-              : {}),
+              : options.standing?.[item.kind]
+                ? { marquee: options.standing[item.kind]! }
+                : {}),
           };
         }),
         schema,
         { width: opts.width - dockRight, height: sheetOverChoice ? opts.height : opts.height - dockBottom },
         // The corner's chrome, where it is said, is kept clear box by box rather than as a rail down the whole right edge.
-        opts.chrome ? { ...opts.inset, right: Math.min(opts.inset?.right ?? 0, 8) } : (opts.inset ?? {}),
+        // The plaza the views of no one kind stand on, at the city's back edge, kept at the top of the ground (`standing`).
+        (({ top, ...rest }) => ({ ...rest, top: (top ?? 0) + (options.plaza ?? 0) }))(opts.chrome ? { ...opts.inset, right: Math.min(opts.inset?.right ?? 0, 8) } : (opts.inset ?? {})),
         {
           ...(opts.cityOrder ? { order: opts.cityOrder } : {}),
           ...(opts.plots ? { plots: opts.plots } : {}),

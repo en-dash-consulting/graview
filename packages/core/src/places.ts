@@ -125,6 +125,8 @@ export interface PlaceFinding {
   readonly path: string;
   readonly message: string;
   readonly fix: string;
+  /** The fix as the document edits a host applies, where it can be written down. */
+  readonly edits?: readonly Record<string, unknown>[];
 }
 
 export interface DeclaredLenses {

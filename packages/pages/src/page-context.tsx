@@ -292,6 +292,8 @@ export function SceneLink<S extends AnySchema>({
     </>
   );
   const named = label ? { "aria-label": label } : {};
+  // One face: the city is the camera rising from this page (the button at the window's foot), never another address.
+  if (context.sceneUnderPages && context.views) return null;
   if (context.overview) {
     const go = context.overview;
     return (
