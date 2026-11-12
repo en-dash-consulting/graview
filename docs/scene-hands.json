@@ -1,0 +1,1996 @@
+{
+  "at": "2026-11-12T13:06:27.399Z",
+  "engines": [
+    "chromium",
+    "webkit"
+  ],
+  "app": "apps/discography",
+  "checks": {
+    "aTapChoosesWithoutARing": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "before": {
+            "x": 264.5,
+            "y": 395.22918701171875,
+            "width": 87,
+            "height": 44
+          },
+          "after": {
+            "x": 264.5,
+            "y": 213.25000762939453,
+            "width": 87,
+            "height": 44.00001525878906
+          },
+          "selected": [
+            "kind:album"
+          ],
+          "ring": false,
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "before": {
+            "x": 877.8953552246094,
+            "y": 344.5116424560547,
+            "width": 343.00006103515625,
+            "height": 171.99996948242188
+          },
+          "after": {
+            "x": 667.59521484375,
+            "y": 358.68096923828125,
+            "width": 287,
+            "height": 143
+          },
+          "selected": [
+            "kind:album"
+          ],
+          "ring": false,
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "iPhone 13"
+          },
+          "before": {
+            "x": 252.57406616210938,
+            "y": 306.3000183105469,
+            "width": 73,
+            "height": 36
+          },
+          "after": {
+            "x": 252.57406616210938,
+            "y": 156.55557250976562,
+            "width": 73,
+            "height": 36
+          },
+          "selected": [
+            "kind:album"
+          ],
+          "ring": false,
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "desk 1440×900"
+          },
+          "before": {
+            "x": 877.8952941894531,
+            "y": 344.51165771484375,
+            "width": 342.99993896484375,
+            "height": 172
+          },
+          "after": {
+            "x": 667.59521484375,
+            "y": 358.68096923828125,
+            "width": 287,
+            "height": 143
+          },
+          "selected": [
+            "kind:album"
+          ],
+          "ring": false,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aTapOpeningASheetLeavesTheCityWhereItStood": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "runs": [
+            {
+              "id": "kind:album",
+              "moved": {
+                "id": "kind:album",
+                "dx": 0,
+                "dy": -181.97918701171875,
+                "grew": 0
+              },
+              "sameSize": true,
+              "asOne": true,
+              "above": true,
+              "said": {
+                "sheetTop": 339.640625,
+                "chosenBottom": 235.25001525878906,
+                "covered": [],
+                "zoom": false
+              },
+              "ok": true
+            },
+            {
+              "id": "kind:song",
+              "moved": {
+                "id": "kind:song",
+                "dx": 0,
+                "dy": -241.72915649414062,
+                "grew": 0
+              },
+              "sameSize": true,
+              "asOne": true,
+              "above": true,
+              "said": {
+                "sheetTop": 339.640625,
+                "chosenBottom": 219.25,
+                "covered": [],
+                "zoom": false
+              },
+              "ok": true
+            }
+          ],
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "iPhone 13"
+          },
+          "runs": [
+            {
+              "id": "kind:album",
+              "moved": {
+                "id": "kind:album",
+                "dx": 0,
+                "dy": -149.74444580078125,
+                "grew": 0
+              },
+              "sameSize": true,
+              "asOne": true,
+              "above": true,
+              "said": {
+                "sheetTop": 280.140625,
+                "chosenBottom": 174.55557250976562,
+                "covered": [],
+                "zoom": false
+              },
+              "ok": true
+            },
+            {
+              "id": "kind:song",
+              "moved": {
+                "id": "kind:song",
+                "dx": 0,
+                "dy": -208.26297760009766,
+                "grew": 0
+              },
+              "sameSize": true,
+              "asOne": true,
+              "above": true,
+              "said": {
+                "sheetTop": 280.140625,
+                "chosenBottom": 158.55557250976562,
+                "covered": [],
+                "zoom": false
+              },
+              "ok": true
+            }
+          ],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aPhonesSheetShowsMostOfTheScreen": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "opened": {
+            "share": 0.66,
+            "rest": "1",
+            "said": "Two thirds of the screen",
+            "inSight": true,
+            "handle": {
+              "x": 206,
+              "y": 351.640625
+            },
+            "widths": "87,87,87,87,58"
+          },
+          "up": {
+            "share": 0.925,
+            "rest": "2",
+            "said": "Nearly all of the screen",
+            "inSight": false,
+            "handle": {
+              "x": 206,
+              "y": 154
+            },
+            "widths": "87,87,87,87,58"
+          },
+          "down": {
+            "share": 0.52,
+            "rest": "0",
+            "said": "Half of the screen",
+            "inSight": true,
+            "handle": {
+              "x": 206,
+              "y": 456.09375
+            },
+            "widths": "87,87,87,87,58"
+          },
+          "keyed": {
+            "share": 0.66,
+            "rest": "1",
+            "said": "Two thirds of the screen",
+            "inSight": true,
+            "handle": {
+              "x": 206,
+              "y": 351.640625
+            },
+            "widths": "87,87,87,87,58"
+          },
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "iPhone 13"
+          },
+          "opened": {
+            "share": 0.66,
+            "rest": "1",
+            "said": "Two thirds of the screen",
+            "inSight": true,
+            "handle": {
+              "x": 195,
+              "y": 292.140625
+            },
+            "widths": "73,73,73,73,49"
+          },
+          "up": {
+            "share": 0.902,
+            "rest": "2",
+            "said": "Nearly all of the screen",
+            "inSight": false,
+            "handle": {
+              "x": 195,
+              "y": 154
+            },
+            "widths": "73,73,73,73,49"
+          },
+          "down": {
+            "share": 0.52,
+            "rest": "0",
+            "said": "Half of the screen",
+            "inSight": true,
+            "handle": {
+              "x": 195,
+              "y": 372.09375
+            },
+            "widths": "73,73,73,73,49"
+          },
+          "keyed": {
+            "share": 0.66,
+            "rest": "1",
+            "said": "Two thirds of the screen",
+            "inSight": true,
+            "handle": {
+              "x": 195,
+              "y": 292.140625
+            },
+            "widths": "73,73,73,73,49"
+          },
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aTapOnTheGroundNeverPans": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "bare": {
+            "x": 296,
+            "y": 309
+          },
+          "before": {
+            "x": 351.9999694824219,
+            "y": 169.50003051757812,
+            "width": 87,
+            "height": 44
+          },
+          "after": {
+            "x": 351.9999694824219,
+            "y": 351.47918701171875,
+            "width": 87,
+            "height": 44
+          },
+          "selected": [],
+          "hash": "#overview=1",
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "bare": {
+            "x": 731,
+            "y": 269
+          },
+          "before": {
+            "x": 906.642822265625,
+            "y": 239.15716552734375,
+            "width": 287,
+            "height": 143
+          },
+          "after": {
+            "x": 1163.9418640136719,
+            "y": 201.48839569091797,
+            "width": 343.00006103515625,
+            "height": 172.00001525878906
+          },
+          "selected": [],
+          "hash": "#overview=1",
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "iPhone 13"
+          },
+          "bare": {
+            "x": 256,
+            "y": 232
+          },
+          "before": {
+            "x": 337.611083984375,
+            "y": 114.03705215454102,
+            "width": 73,
+            "height": 35.99999237060547
+          },
+          "after": {
+            "x": 337.611083984375,
+            "y": 263.78150177001953,
+            "width": 73,
+            "height": 35.99998474121094
+          },
+          "selected": [],
+          "hash": "#overview=1",
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "desk 1440×900"
+          },
+          "bare": {
+            "x": 731,
+            "y": 269
+          },
+          "before": {
+            "x": 906.642822265625,
+            "y": 239.15716552734375,
+            "width": 287,
+            "height": 143
+          },
+          "after": {
+            "x": 1163.9418640136719,
+            "y": 201.48839569091797,
+            "width": 343.00006103515625,
+            "height": 172.00001525878906
+          },
+          "selected": [],
+          "hash": "#overview=1",
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aDragOnTheSceneNeverSelects": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "runs": [
+            {
+              "start": "ground",
+              "before": {
+                "x": 351.9999694824219,
+                "y": 351.47918701171875,
+                "width": 87,
+                "height": 44
+              },
+              "after": {
+                "x": 411.9999694824219,
+                "y": 391.47918701171875,
+                "width": 87,
+                "height": 44
+              },
+              "selected": [],
+              "ok": true
+            },
+            {
+              "start": "kind:song",
+              "before": {
+                "x": 411.9999694824219,
+                "y": 391.47918701171875,
+                "width": 87,
+                "height": 44
+              },
+              "after": {
+                "x": 471.99998474121094,
+                "y": 431.4791564941406,
+                "width": 87.00003051757812,
+                "height": 44
+              },
+              "selected": [],
+              "ok": true
+            }
+          ],
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "runs": [
+            {
+              "start": "ground",
+              "before": {
+                "x": 1163.9418640136719,
+                "y": 201.48839569091797,
+                "width": 343.00006103515625,
+                "height": 172.00001525878906
+              },
+              "after": {
+                "x": 1223.94189453125,
+                "y": 241.4883804321289,
+                "width": 343,
+                "height": 171.99998474121094
+              },
+              "selected": [],
+              "ok": true
+            },
+            {
+              "start": "kind:song",
+              "before": {
+                "x": 1223.94189453125,
+                "y": 241.4883804321289,
+                "width": 343,
+                "height": 171.99998474121094
+              },
+              "after": {
+                "x": 1283.94189453125,
+                "y": 281.4883804321289,
+                "width": 343,
+                "height": 171.99998474121094
+              },
+              "selected": [],
+              "ok": true
+            }
+          ],
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "iPhone 13"
+          },
+          "runs": [
+            {
+              "start": "ground",
+              "before": {
+                "x": 337.611083984375,
+                "y": 263.78150177001953,
+                "width": 73,
+                "height": 35.99998474121094
+              },
+              "after": {
+                "x": 397.611083984375,
+                "y": 303.781494140625,
+                "width": 73,
+                "height": 36
+              },
+              "selected": [],
+              "ok": true
+            },
+            {
+              "start": "kind:song",
+              "before": {
+                "x": 397.611083984375,
+                "y": 303.781494140625,
+                "width": 73,
+                "height": 36
+              },
+              "after": {
+                "x": 457.611083984375,
+                "y": 343.781494140625,
+                "width": 73,
+                "height": 36
+              },
+              "selected": [],
+              "ok": true
+            }
+          ],
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "desk 1440×900"
+          },
+          "runs": [
+            {
+              "start": "ground",
+              "before": {
+                "x": 1163.9418640136719,
+                "y": 201.48839569091797,
+                "width": 343.00006103515625,
+                "height": 172.00001525878906
+              },
+              "after": {
+                "x": 1223.94189453125,
+                "y": 241.48839569091797,
+                "width": 343,
+                "height": 172.00001525878906
+              },
+              "selected": [],
+              "ok": true
+            },
+            {
+              "start": "kind:song",
+              "before": {
+                "x": 1223.94189453125,
+                "y": 241.48839569091797,
+                "width": 343,
+                "height": 172.00001525878906
+              },
+              "after": {
+                "x": 1283.94189453125,
+                "y": 281.48839569091797,
+                "width": 343,
+                "height": 172.00001525878906
+              },
+              "selected": [],
+              "ok": true
+            }
+          ],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aPinchZoomsUnderTheFingers": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "mid": {
+            "x": 177,
+            "y": 439
+          },
+          "before": {
+            "x": 177.00001525878906,
+            "y": 438.9791564941406,
+            "width": 87,
+            "height": 44
+          },
+          "after": {
+            "x": 177.50003814697266,
+            "y": 438.4583435058594,
+            "width": 174.99998474121094,
+            "height": 87
+          },
+          "grew": 2.01,
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "iPhone 13"
+          },
+          "mid": {
+            "x": 168,
+            "y": 349
+          },
+          "before": {
+            "x": 167.5370635986328,
+            "y": 348.81854248046875,
+            "width": 73,
+            "height": 36
+          },
+          "after": {
+            "x": 167.07411193847656,
+            "y": 349.13702392578125,
+            "width": 146,
+            "height": 73
+          },
+          "grew": 2,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aWheelZoomStaysUnderTheCursor": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "before": {
+            "x": 591.8488616943359,
+            "y": 487.53489685058594,
+            "width": 343.0000305175781,
+            "height": 172.00003051757812
+          },
+          "after": {
+            "x": 592.9086151123047,
+            "y": 487.91761779785156,
+            "width": 705,
+            "height": 352.9999694824219
+          },
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "desk 1440×900"
+          },
+          "before": {
+            "x": 591.8488616943359,
+            "y": 487.53489685058594,
+            "width": 343.0000305175781,
+            "height": 172.00003051757812
+          },
+          "after": {
+            "x": 592.9086151123047,
+            "y": 487.91761779785156,
+            "width": 705,
+            "height": 352.9999694824219
+          },
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aDoubleTapGoesIntoTheDistrictPressed": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "runs": [
+            {
+              "id": "kind:album",
+              "hash": "#focus=aggregate:album&overview=1&zoom=1",
+              "ok": true
+            },
+            {
+              "id": "kind:artist",
+              "hash": "#focus=aggregate:artist&overview=1&zoom=1",
+              "ok": true
+            },
+            {
+              "id": "kind:song",
+              "hash": "#focus=aggregate:song&overview=1&zoom=1",
+              "ok": true
+            },
+            {
+              "id": "kind:era",
+              "hash": "#focus=aggregate:era&overview=1",
+              "ok": true
+            }
+          ],
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "runs": [
+            {
+              "id": "kind:album",
+              "hash": "#focus=aggregate:album&overview=1&zoom=1",
+              "ok": true
+            },
+            {
+              "id": "kind:artist",
+              "hash": "#focus=aggregate:artist&overview=1&zoom=1",
+              "ok": true
+            },
+            {
+              "id": "kind:song",
+              "hash": "#focus=aggregate:song&overview=1&zoom=1",
+              "ok": true
+            },
+            {
+              "id": "kind:era",
+              "hash": "#focus=aggregate:era&overview=1",
+              "ok": true
+            }
+          ],
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "iPhone 13"
+          },
+          "runs": [
+            {
+              "id": "kind:album",
+              "hash": "#focus=aggregate:album&overview=1&zoom=1",
+              "ok": true
+            },
+            {
+              "id": "kind:artist",
+              "hash": "#focus=aggregate:artist&overview=1&zoom=1",
+              "ok": true
+            },
+            {
+              "id": "kind:song",
+              "hash": "#focus=aggregate:song&overview=1&zoom=1",
+              "ok": true
+            },
+            {
+              "id": "kind:era",
+              "hash": "#focus=aggregate:era&overview=1",
+              "ok": true
+            }
+          ],
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "desk 1440×900"
+          },
+          "runs": [
+            {
+              "id": "kind:album",
+              "hash": "#focus=aggregate:album&overview=1&zoom=1",
+              "ok": true
+            },
+            {
+              "id": "kind:artist",
+              "hash": "#focus=aggregate:artist&overview=1&zoom=1",
+              "ok": true
+            },
+            {
+              "id": "kind:song",
+              "hash": "#focus=aggregate:song&overview=1&zoom=1",
+              "ok": true
+            },
+            {
+              "id": "kind:era",
+              "hash": "#focus=aggregate:era&overview=1",
+              "ok": true
+            }
+          ],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "twoQuickTapsLandOnTheSecondCard": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "runs": [
+            {
+              "first": "kind:album",
+              "second": "kind:artist",
+              "selected": [
+                "kind:artist"
+              ],
+              "hash": "#overview=1&sel=kind:artist",
+              "ok": true
+            },
+            {
+              "first": "kind:artist",
+              "second": "kind:era",
+              "selected": [
+                "kind:era"
+              ],
+              "hash": "#overview=1&sel=kind:era",
+              "ok": true
+            },
+            {
+              "first": "kind:era",
+              "second": "kind:song",
+              "selected": [
+                "kind:song"
+              ],
+              "hash": "#overview=1&sel=kind:song",
+              "ok": true
+            }
+          ],
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "runs": [
+            {
+              "first": "kind:album",
+              "second": "kind:artist",
+              "selected": [
+                "kind:artist"
+              ],
+              "hash": "#overview=1&sel=kind:artist",
+              "ok": true
+            },
+            {
+              "first": "kind:artist",
+              "second": "kind:era",
+              "selected": [
+                "kind:era"
+              ],
+              "hash": "#overview=1&sel=kind:era",
+              "ok": true
+            },
+            {
+              "first": "kind:era",
+              "second": "kind:song",
+              "selected": [
+                "kind:song"
+              ],
+              "hash": "#overview=1&sel=kind:song",
+              "ok": true
+            }
+          ],
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "iPhone 13"
+          },
+          "runs": [
+            {
+              "first": "kind:album",
+              "second": "kind:artist",
+              "selected": [
+                "kind:artist"
+              ],
+              "hash": "#overview=1&sel=kind:artist",
+              "ok": true
+            },
+            {
+              "first": "kind:artist",
+              "second": "kind:era",
+              "selected": [
+                "kind:era"
+              ],
+              "hash": "#overview=1&sel=kind:era",
+              "ok": true
+            },
+            {
+              "first": "kind:era",
+              "second": "kind:song",
+              "selected": [
+                "kind:song"
+              ],
+              "hash": "#overview=1&sel=kind:song",
+              "ok": true
+            }
+          ],
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "desk 1440×900"
+          },
+          "runs": [
+            {
+              "first": "kind:album",
+              "second": "kind:artist",
+              "selected": [
+                "kind:artist"
+              ],
+              "hash": "#overview=1&sel=kind:artist",
+              "ok": true
+            },
+            {
+              "first": "kind:artist",
+              "second": "kind:era",
+              "selected": [
+                "kind:era"
+              ],
+              "hash": "#overview=1&sel=kind:era",
+              "ok": true
+            },
+            {
+              "first": "kind:era",
+              "second": "kind:song",
+              "selected": [
+                "kind:song"
+              ],
+              "hash": "#overview=1&sel=kind:song",
+              "ok": true
+            }
+          ],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aFocusedPreviewScrollsWithoutMovingTheScene": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "focused": "aggregate:album",
+          "before": 0,
+          "after": 201,
+          "card": {
+            "x": 206,
+            "y": 418,
+            "width": 356,
+            "height": 530
+          },
+          "cardAfter": {
+            "x": 206,
+            "y": 418,
+            "width": 356,
+            "height": 530
+          },
+          "pinned": false,
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "iPhone 13"
+          },
+          "focused": "aggregate:artist",
+          "before": 0,
+          "after": 0,
+          "card": {
+            "x": 195,
+            "y": 330.5,
+            "width": 337,
+            "height": 355
+          },
+          "cardAfter": {
+            "x": 195,
+            "y": 330.5,
+            "width": 337,
+            "height": 355
+          },
+          "pinned": false,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "upFromAFocusBringsTheCityBackAsItStood": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "before": {
+            "x": 351.9999694824219,
+            "y": 351.47918701171875,
+            "width": 87,
+            "height": 44
+          },
+          "after": {
+            "x": 351.9999694824219,
+            "y": 351.47918701171875,
+            "width": 87,
+            "height": 44
+          },
+          "hash": "#overview=1",
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "before": {
+            "x": 1163.9418640136719,
+            "y": 201.48839569091797,
+            "width": 343.00006103515625,
+            "height": 172.00001525878906
+          },
+          "after": {
+            "x": 1163.9418640136719,
+            "y": 201.48839569091797,
+            "width": 343.00006103515625,
+            "height": 172.00001525878906
+          },
+          "hash": "#overview=1",
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "iPhone 13"
+          },
+          "before": {
+            "x": 337.611083984375,
+            "y": 263.78150177001953,
+            "width": 73,
+            "height": 35.99998474121094
+          },
+          "after": {
+            "x": 337.611083984375,
+            "y": 263.78150177001953,
+            "width": 73,
+            "height": 35.99998474121094
+          },
+          "hash": "#overview=1",
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "desk 1440×900"
+          },
+          "before": {
+            "x": 1163.9418640136719,
+            "y": 201.48839569091797,
+            "width": 343.00006103515625,
+            "height": 172.00001525878906
+          },
+          "after": {
+            "x": 1163.9418640136719,
+            "y": 201.48839569091797,
+            "width": 343.00006103515625,
+            "height": 172.00001525878906
+          },
+          "hash": "#overview=1",
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "turningThePhoneAndItsToolbarMoveNothing": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "before": {
+            "x": 177.00001525878906,
+            "y": 197.25,
+            "width": 87,
+            "height": 44
+          },
+          "toolbar": {
+            "x": 177.00001525878906,
+            "y": 197.25,
+            "width": 87,
+            "height": 44
+          },
+          "turned": true,
+          "selected": [
+            "kind:song"
+          ],
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "iPhone 13"
+          },
+          "before": {
+            "x": 167.5370635986328,
+            "y": 140.55556869506836,
+            "width": 73,
+            "height": 36.00000762939453
+          },
+          "toolbar": {
+            "x": 167.5370635986328,
+            "y": 140.55556869506836,
+            "width": 73,
+            "height": 36.00000762939453
+          },
+          "turned": true,
+          "selected": [
+            "kind:song"
+          ],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "thePageNeverScrollsBehindTheScene": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1&sel=kind:album",
+            "selected": [
+              "kind:album"
+            ],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1&sel=kind:song",
+            "selected": [
+              "kind:song"
+            ],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1&sel=kind:album",
+            "selected": [
+              "kind:album"
+            ],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1",
+            "selected": [],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1&pan=120,80",
+            "selected": [],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1&pan=29,-5",
+            "selected": [],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#focus=aggregate:era&overview=1",
+            "selected": [],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1&sel=kind:song",
+            "selected": [
+              "kind:song"
+            ],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#focus=aggregate:album",
+            "selected": [],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1&sel=kind:song",
+            "selected": [
+              "kind:song"
+            ],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1",
+            "selected": [],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1&pan=158.67,73.36",
+            "selected": [],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1&sel=kind:album",
+            "selected": [
+              "kind:album"
+            ],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1",
+            "selected": [],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1&pan=120,80",
+            "selected": [],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1&pan=136.02,-47.45",
+            "selected": [],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#focus=aggregate:era&overview=1",
+            "selected": [],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1&sel=kind:song",
+            "selected": [
+              "kind:song"
+            ],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1",
+            "selected": [],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "iPhone 13"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1&sel=kind:album",
+            "selected": [
+              "kind:album"
+            ],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "iPhone 13"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1&sel=kind:song",
+            "selected": [
+              "kind:song"
+            ],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "iPhone 13"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1&sel=kind:album",
+            "selected": [
+              "kind:album"
+            ],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "iPhone 13"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1",
+            "selected": [],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "iPhone 13"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1&pan=120,80",
+            "selected": [],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "iPhone 13"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1&pan=27,-2.5",
+            "selected": [],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "iPhone 13"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#focus=aggregate:era&overview=1",
+            "selected": [],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "iPhone 13"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1&sel=kind:song",
+            "selected": [
+              "kind:song"
+            ],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "iPhone 13"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#focus=aggregate:artist",
+            "selected": [],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "iPhone 13"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1&sel=kind:song",
+            "selected": [
+              "kind:song"
+            ],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "iPhone 13"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1",
+            "selected": [],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "desk 1440×900"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1&sel=kind:album",
+            "selected": [
+              "kind:album"
+            ],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "desk 1440×900"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1",
+            "selected": [],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "desk 1440×900"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1&pan=120,80",
+            "selected": [],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "desk 1440×900"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1&pan=136.02,-47.45",
+            "selected": [],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "desk 1440×900"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#focus=aggregate:era&overview=1",
+            "selected": [],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "desk 1440×900"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1&sel=kind:song",
+            "selected": [
+              "kind:song"
+            ],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        },
+        {
+          "where": {
+            "engine": "webkit",
+            "device": "desk 1440×900"
+          },
+          "after": "ran",
+          "state": {
+            "hash": "#overview=1",
+            "selected": [],
+            "pinned": false,
+            "page": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "top": 0,
+              "scale": 1,
+              "offsetTop": 0
+            },
+            "overscroll": "contain",
+            "ring": false
+          }
+        }
+      ],
+      "ok": true
+    },
+    "panAndPinchKeepTheirFramesAtAQuarterSpeed": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "slowdown": 4,
+          "budget": {
+            "medianMs": 18.7,
+            "worstMs": 96
+          },
+          "runs": [
+            {
+              "label": "pan",
+              "frames": 61,
+              "medianMs": 16.7,
+              "worstMs": 16.8,
+              "ok": true
+            },
+            {
+              "label": "pinch",
+              "frames": 62,
+              "medianMs": 16.7,
+              "worstMs": 16.8,
+              "ok": true
+            }
+          ],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "noPageThrew": {
+      "errors": [],
+      "ok": true
+    }
+  },
+  "passed": true
+}

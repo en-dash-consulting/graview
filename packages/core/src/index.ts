@@ -343,7 +343,7 @@ export { TEXT_PAIRS } from "./theme/types.js";
 export { checkKitContrast, connectorHueColor, connectorKitFor, DEFAULT_KIT, kitVariables, resolveKit } from "./theme/kit.js";
 export type { KitContrastFinding } from "./theme/kit.js";
 export type { ConnectorKit, ConnectorRoute, Kit, KitEndCap, KitOverrides, KitStrokePattern } from "./theme/types.js";
-export { layer, layerProperty, layerVariables, LAYERS, LOCAL_LAYERS, SCENE_LAYERS } from "./theme/layers.js";
+export { layer, layerProperty, layerVariables, LAYERS, LOCAL_LAYERS, ONE_FACE_LAYERS, SCENE_LAYERS } from "./theme/layers.js";
 export type { Layer } from "./theme/layers.js";
 export type { Brand, BrandLogo, BrandViewFont, BrandViews, FaviconSpec, Scheme, TextPair, ThemeTokens } from "./theme/types.js";
 export type { Grant, Policy, Principal, Refusal, Sight } from "./permissions/types.js";

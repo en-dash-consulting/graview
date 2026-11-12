@@ -48,6 +48,15 @@ export interface PageContext<S extends AnySchema> {
 
   /** Where the spatial face lives, for the cross-links. Default "/". */
   readonly sceneHref?: string;
+  /**
+   * PAGES AND THE SCENE ARE ONE PLACE (Graview HQ
+   * feature:f-page-zooms-out-to-the-city), a prototype: the Scene's own
+   * city is drawn under the page, and Up — or a pinch — moves the page
+   * itself, continuously, from the window to a panel beside its place in
+   * that city, to standing on it, to the whole city (`one-place.tsx`).
+   * Needs `views`, the registry the Scene draws with. Off unless given.
+   */
+  readonly sceneUnderPages?: boolean;
   readonly invariantContext?: Readonly<Record<string, unknown>>;
   /**
    * Whether this browser remembers the edits (a ship browser adapter behind
@@ -283,6 +292,8 @@ export function SceneLink<S extends AnySchema>({
     </>
   );
   const named = label ? { "aria-label": label } : {};
+  // One face: the city is the camera rising from this page (the button at the window's foot), never another address.
+  if (context.sceneUnderPages && context.views) return null;
   if (context.overview) {
     const go = context.overview;
     return (

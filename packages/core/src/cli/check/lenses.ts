@@ -302,7 +302,7 @@ export function checkLensBindings<S extends AnySchema>(ctx: CheckContext<S>): vo
 export function checkDeclaredLenses<S extends AnySchema>(ctx: CheckContext<S>): void {
   const declared = declaredLenses(ctx.app);
   for (const finding of declared.findings) {
-    ctx.add({ severity: finding.severity, code: finding.code, where: finding.path, message: finding.message, fix: finding.fix });
+    ctx.add({ severity: finding.severity, code: finding.code, where: finding.path, message: finding.message, fix: finding.fix, ...(finding.edits ? { edits: finding.edits } : {}) });
   }
   /*
    * WHAT A LENS SHOWS OF ITSELF, AND WHAT IT LEFT OUT (Roadmap
@@ -397,7 +397,7 @@ export function checkDeclaredLenses<S extends AnySchema>(ctx: CheckContext<S>): 
 /** What `pages` names that is not there: a kind in `order` or `hide`, a place for `first` (FR-80), a list's filter. */
 export function checkPagesArrangement<S extends AnySchema>(ctx: CheckContext<S>): void {
   for (const finding of arrangementFindings(ctx.app, ctx.views ? { views: ctx.views } : {})) {
-    ctx.add({ severity: finding.severity, code: finding.code, where: finding.path, message: finding.message, fix: finding.fix });
+    ctx.add({ severity: finding.severity, code: finding.code, where: finding.path, message: finding.message, fix: finding.fix, ...(finding.edits ? { edits: finding.edits } : {}) });
   }
   const kinds = ctx.app.schema.kinds as readonly string[];
   for (const [kind, list] of Object.entries(ctx.app.pages?.lists ?? {})) {

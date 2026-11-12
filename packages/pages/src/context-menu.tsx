@@ -10,6 +10,7 @@ import type { PageContext } from "./page-context.js";
 import { addressAsksForTheList, BUILT_IN, listOpensAs, pathOfPlace } from "./page-places.js";
 import { kindMap } from "./facts.js";
 import { kindOfSlug, pluralSlug, recordPath, type PageRegistry } from "./registry.js";
+import { useOneFace } from "./one-place-control.js";
 
 /**
  * THE CONTEXT MENU ON THE ROUTED FACE — the scene's own menu (`Inspector`
@@ -144,6 +145,10 @@ function Menu<S extends AnySchema>({ context, root, registry, children }: { read
   const schema = store.schema;
   const navigate = useNavigate();
   const { pathname, search } = useLocation();
+  // The one face, held for the menu's items, which are made outside a render.
+  const theOneFace = useOneFace();
+  const oneFace = useRef(theOneFace);
+  oneFace.current = theOneFace;
   // The router's own root (`/pages/`), for reading a link's address and writing one a new tab opens.
   const base = useHref("/").replace(/\/$/, "");
 
@@ -408,7 +413,11 @@ function Menu<S extends AnySchema>({ context, root, registry, children }: { read
       }
       // Where the scene is to be had: the embed's own way, else the scene's address when the face owns its page.
       const stop = node ? `#focus=${encodeURIComponent(node.id)}` : place ? `#focus=${encodeURIComponent(aggregateId(place.kind))}&view=${encodeURIComponent(place.as)}` : kind ? `#focus=${encodeURIComponent(aggregateId(kind))}` : undefined;
-      if (stop !== undefined && (context.overview || !context.embedded)) {
+      const face = oneFace.current;
+      if (face && (node || place || kind)) {
+        // One face: the city is the camera rising, the record (or the list, or the view) beside it.
+        items.push({ id: "in-the-scene", label: "Show in the city", run: () => (node ? face.openRecord(node.id, 1) : face.openPath(place ? pathOfPlace(context, place) : `/${pluralSlug(schema, kind!)}`, 1)) });
+      } else if (stop !== undefined && (context.overview || !context.embedded)) {
         const scene = context.overview;
         items.push({ id: "in-the-scene", label: "Show in the scene", run: () => (scene ? scene(stop) : location.assign(`${context.sceneHref ?? "/"}${stop}`)) });
       }

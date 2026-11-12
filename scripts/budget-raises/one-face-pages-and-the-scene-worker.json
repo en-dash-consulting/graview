@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 5300,
+  "note": "Raised when `graview check` came to name two views that show the same thing (`view-duplicates-another`), with the edit that removes one: the worker checks the documents it is handed. Measured at 2_627_250 B against 2_622_135."
+}

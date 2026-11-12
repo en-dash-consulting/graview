@@ -8,6 +8,8 @@ import { useHostAssets } from "@graview/react/provider";
 import type { BarFind } from "@graview/primitives/pages";
 import type { ReactNode } from "react";
 import { kindOfSlug } from "./registry.js";
+import { useOneFace } from "./one-place-control.js";
+import { createPortal } from "react-dom";
 import { type PageContext, StartFreshLink, useStoreTick } from "./page-context.js";
 import { usePlacedOnTheFace } from "./face-placed.js";
 import { classes, sizedBy, type ControlSize } from "./control-size.js";
@@ -33,6 +35,7 @@ export function DefaultShell<S extends AnySchema>({
 }) {
   const { store, brand } = context;
   useStoreTick(store);
+  const bar = useOneFace()?.bar ?? null;
   // On its own the routed face owns the page, and wears the brand's icon where the host serves it, and its colors; embedded, the host's page keeps its own (FR-124).
   const providedAssetsAt = useHostAssets();
   useFavicon(context.embedded ? undefined : assetSrc(context.assetsAt ?? providedAssetsAt, faviconHref(brand)));
@@ -57,7 +60,15 @@ export function DefaultShell<S extends AnySchema>({
         lineHeight: 1.5,
       }}
     >
-      {context.embedded ? null : <OwnBar context={context} />}
+      {context.embedded ? null : bar ? (
+        <>
+          {/* On the one face the bar stands fixed at the window's top, outside the page that moves; the page keeps its room. */}
+          {createPortal(<OwnBar context={context} />, bar)}
+          <div aria-hidden="true" data-graview-bar-room="" style={{ height: "var(--graview-one-face-bar, 0px)", flex: "0 0 auto" }} />
+        </>
+      ) : (
+        <OwnBar context={context} />
+      )}
       <div style={{ flex: 1 }}>{children}</div>
       {/*
         * Whether this browser remembers, and the way back to the example: the
@@ -124,11 +135,20 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
         name={brand?.name ?? "Graview"}
         description={brand?.subtitle}
         home={{ href: `${base}/`, go: () => navigate("/"), current: location.pathname === "/" }}
-        faces={{
-          // The scene is on its own address (`sceneHref`); this face is the pages.
-          scene: { label: sceneTitle(arrangement), current: false, go: () => window.location.assign(sceneHref) },
-          pages: { label: pagesTitle(arrangement), current: true, go: () => undefined },
-        }}
+        /*
+         * The scene is on its own address (`sceneHref`); this face is the
+         * pages. Where the Scene's city stands under the pages there is one
+         * face, and nothing to switch to: the city is the camera rising
+         * (`one-place.tsx`), and the bar offers no switch.
+         */
+        faces={
+          context.sceneUnderPages && context.views
+            ? undefined
+            : {
+                scene: { label: sceneTitle(arrangement), current: false, go: () => window.location.assign(sceneHref) },
+                pages: { label: pagesTitle(arrangement), current: true, go: () => undefined },
+              }
+        }
         places={places}
         current={barPlaceAt(places, here)}
         reach={{ href: (path) => `${base}${path}`, go: (place) => navigate(place.path) }}
@@ -416,6 +436,14 @@ export function PageFind<S extends AnySchema>({
     handed.current = new Set([addressed]);
     setTyped(addressed);
   }, [addressed]);
+  /** The address the first key left for the search page: a key before the search page is drawn replaces it. */
+  const leftFrom = useRef<string | null>(null);
+  const shownKey = useRef(location.key);
+  shownKey.current = location.key;
+  useEffect(() => {
+    // Drawn at another address: the next first key leaves that one.
+    if (leftFrom.current !== location.key) leftFrom.current = null;
+  }, [location.key]);
   const go = (words: string) => {
     setTyped(words);
     handed.current.add(words);
@@ -427,7 +455,22 @@ export function PageFind<S extends AnySchema>({
       return;
     }
     const to = words.trim() ? `/search?${new URLSearchParams({ q: words }).toString()}` : "/search";
-    navigate(to, { replace: onSearch });
+    // Said as the box's own: a result chosen from here takes the search's place in the history, so Back goes where Find was opened.
+    /*
+     * On the search page already, each key replaces it — and so does a key
+     * a fast typist presses before the search page has been drawn: the
+     * address this face shows is still the one the first key left.
+     */
+    const searching = onSearch || leftFrom.current === location.key;
+    if (!searching) {
+      const from = location.key;
+      leftFrom.current = from;
+      // A step that never landed (refused, or kept by the host) leaves the address as it was: the next key pushes again, never over it.
+      window.setTimeout(() => {
+        if (leftFrom.current === from && shownKey.current === from) leftFrom.current = null;
+      }, 1000);
+    }
+    navigate(to, { replace: searching, state: { found: true } });
   };
   return (
     <form
@@ -447,6 +490,14 @@ export function PageFind<S extends AnySchema>({
         data-testid="nav-find"
         value={typed}
         onChange={(event) => go(event.target.value)}
+        onKeyDown={(event) => {
+          // The arrow down from the box goes onto the first thing the words found; Enter there goes to it.
+          if (event.key !== "ArrowDown" || event.altKey || event.metaKey || event.ctrlKey || event.shiftKey) return;
+          const first = document.querySelector<HTMLAnchorElement>('[data-testid="search-hit"] a[href]');
+          if (!first) return;
+          event.preventDefault();
+          first.focus();
+        }}
         placeholder={onList ? (named ? narrowing : "Narrow…") : "Find…"}
         aria-keyshortcuts="/ Meta+K Control+K"
         aria-label={onList ? "Narrow this list" : "Find anything"}

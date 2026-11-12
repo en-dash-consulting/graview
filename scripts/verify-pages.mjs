@@ -121,7 +121,8 @@ async function thePhoneFirst() {
     fields: document.querySelector('[data-testid="record-fields"]') !== null,
     linksToList: [...document.querySelectorAll('a[href^="/pages/lists/"]')].length > 0,
     actions: document.querySelector('[data-testid="record-actions"]') !== null,
-    spatialLink: document.querySelector('[data-testid="spatial-link"]') !== null,
+    // Things' pages stand over the Scene's own city (the one face): the city is the camera rising from the page, so there is no link to a second face.
+    noSceneLink: document.querySelector('[data-testid="spatial-link"]') === null,
   }));
   return phone;
 }
@@ -688,7 +689,8 @@ async function theTwoFacesCrossLink(desk) {
   const spatial = await desk.evaluate(
     () => document.querySelector('[data-testid="spatial-link"]')?.getAttribute("href") ?? "",
   );
-  report.checks.recordLinksItsStop = spatial === "/#focus=t-deposit";
+  // On the one face a record's page offers no way to a second face: "Show in the city" is the camera, from the control and the menu.
+  report.checks.recordOffersNoSecondFace = spatial === "";
 }
 
 async function thePicturesOnPages(desk) {

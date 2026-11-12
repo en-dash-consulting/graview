@@ -125,6 +125,8 @@ interface Carried {
   readonly mode: SectionMode;
   readonly words?: string;
   readonly at: number;
+  /** Already gone to: put back by a face drawn again before its page was, which opens the card without going there twice. */
+  readonly gone?: boolean;
 }
 
 /** The part of the pages a right-click in the scene is about: a place by its title, or the list of the kind it is on. */
@@ -239,9 +241,12 @@ export function SectionDoor() {
       // Kept or not, it is taken now.
     }
     // The page asked for, gone to at once; the card opened on it once it is drawn.
-    if ("list" in to) latest.current.goTo.list(to.list);
-    else latest.current.goTo.place(to.place);
+    if (!carried.gone) {
+      if ("list" in to) latest.current.goTo.list(to.list);
+      else latest.current.goTo.place(to.place);
+    }
     let tries = 0;
+    let asked = false;
     const timer = setInterval(() => {
       tries += 1;
       // A page drawn: its own region, else the region around its title (a product's own design marks no region).
@@ -252,13 +257,24 @@ export function SectionDoor() {
         return;
       }
       clearInterval(timer);
+      // Its page is drawn here: asked or not, it is this drawing's.
+      asked = true;
       const page: MenuPage = "place" in to ? { at: pages, place: to.place } : { at: pages, about: [`aggregate:${to.list}`] };
       const part = pagePartOf(page, latest.current.here);
       if (!part || !pageMayChange(part, latest.current.here)) return;
       PARTS.set(pages, part);
       askSection(latest.current.here.aiDesk, carried!.words ? { part, mode: "describe", words: carried!.words, fromScene: true } : { part, mode: carried!.mode, fromScene: true });
     }, 120);
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      // Drawn again before its page was (the one face takes over from the routed page it drew while its part was fetched): the next drawing opens the card.
+      if (asked || tries > 150) return;
+      try {
+        sessionStorage.setItem(CARRY, JSON.stringify({ ...carried, gone: true }));
+      } catch {
+        // Not kept: the card is not opened.
+      }
+    };
   }, []);
   const held = heldOf(aiDesk);
   const id = useId();

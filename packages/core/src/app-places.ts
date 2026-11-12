@@ -1,6 +1,6 @@
 import type { GraviewApp } from "./app.js";
 import { LENSES_THAT_LIST, listsRecords } from "./lenses-that-list.js";
-import { arrangedEntries, declaredLenses, HOME_SLUG, isShippedLens, MOST_STANDING, openingOf, OVERVIEW_PATH, OVERVIEW_SLUG, pagesTitle, sceneTitle, viewReference, type PlaceFinding, type ShippedLensName } from "./places.js";
+import { arrangedEntries, bindsOf, declaredLenses, HOME_SLUG, isShippedLens, MOST_STANDING, openingOf, OVERVIEW_PATH, OVERVIEW_SLUG, pagesTitle, sceneTitle, viewReference, type PlaceFinding, type ShippedLensName } from "./places.js";
 import type { AnySchema } from "./schema/schema.js";
 import { allLabel, nounOf, pluralLabel, pluralOf } from "./schema/define-node.js";
 import { kindPath, onePerPicture, placePath, placeSlug, samePicture, sharesItsName, type HostView, type PagesArrangement, type Place } from "./views/types.js";
@@ -44,6 +44,7 @@ export function arrangementFindings<S extends AnySchema>(app: GraviewApp<S>, opt
       findings.push({ severity: "warning", code: "lens-export-lists-no-records", path: `lenses.${index}.export`, message: `${named} says export, but the ${lens.name} lens lists no records, so it has nothing to export and the switch does nothing.`, fix: `Drop "export": only ${LENSES_THAT_LIST.join(", ")} list records.` });
     }
   });
+  findings.push(...duplicateViewFindings(app));
   const taken = places.find((place) => place.as === OVERVIEW_SLUG);
   if (taken) {
     findings.push({
@@ -318,4 +319,115 @@ export function placesFrom(
     });
   }
   return out;
+}
+
+/*
+ * TWO VIEWS THAT SHOW THE SAME THING (Graview HQ
+ * feature:f-page-zooms-out-to-the-city, docs/pages-and-lenses-are-one.md).
+ *
+ * Pages and lenses are becoming one thing: a view, at its own address, that
+ * stands in the city as a board like every other. While they come together
+ * an app may say the same view twice — two lenses with different titles
+ * over the same picture, or a lens that is nothing but a kind's list, which
+ * the kind's own list page already is. Each is a board, a place on the bar
+ * and an address a person has to choose between for nothing. The checker
+ * says which to keep, and the fix is the document edit that takes the other
+ * away (`remove-lens`), so a host applies it rather than anybody editing by
+ * hand.
+ */
+
+/** A value said the same whatever order its keys were written in. */
+const canonical = (value: unknown): string => {
+  if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
+  if (value && typeof value === "object") return `{${Object.keys(value as Record<string, unknown>).filter((key) => (value as Record<string, unknown>)[key] !== undefined).sort().map((key) => `${JSON.stringify(key)}:${canonical((value as Record<string, unknown>)[key])}`).join(",")}}`;
+  return JSON.stringify(value) ?? "undefined";
+};
+
+/** The kinds a lens is a picture of, in order. */
+function kindsOfLens(lens: NonNullable<GraviewApp["lenses"]>[number]): readonly string[] {
+  if (lens.on) return [lens.on];
+  const bindings = (lens.bindings ?? {}) as Readonly<Record<string, unknown>>;
+  if (bindsOf(lens) === "entities") return [...new Set(Object.values(bindings).flatMap((binding) => (binding && typeof binding === "object" && typeof (binding as { kind?: unknown }).kind === "string" ? [(binding as { kind: string }).kind] : [])))];
+  return Object.keys(bindings);
+}
+
+/** What a lens draws, said once: two lenses with the same words draw the same picture. */
+const pictureOf = (lens: NonNullable<GraviewApp["lenses"]>[number]): string =>
+  canonical({ name: lens.name, kinds: [...kindsOfLens(lens)].sort(), bindings: lens.bindings ?? {}, options: lens.options ?? {}, arrangedBy: lens.arrangedBy ?? null, binds: bindsOf(lens), roles: lens.requiredRoles ?? [], create: lens.create ?? true, export: lens.export ?? true });
+
+/** The kind whose whole list a blocks lens is and nothing more — one block, `all('<kind>')` — or null. */
+function onlyAKindsList(lens: NonNullable<GraviewApp["lenses"]>[number], kinds: readonly string[]): string | null {
+  if (lens.name !== "blocks") return null;
+  const blocks = (lens.options as { blocks?: unknown } | undefined)?.blocks;
+  if (!Array.isArray(blocks) || blocks.length !== 1) return null;
+  const block = blocks[0] as Record<string, unknown> | null;
+  if (!block || typeof block !== "object") return null;
+  const extra = Object.keys(block).filter((key) => key !== "list" && key !== "as");
+  if (extra.length > 0 || typeof block["list"] !== "string") return null;
+  const said = /^\s*all\(\s*['"]([^'"]+)['"]\s*\)\s*$/.exec(block["list"]);
+  return said && kinds.includes(said[1]!) ? said[1]! : null;
+}
+
+export function duplicateViewFindings<S extends AnySchema>(app: GraviewApp<S>): readonly PlaceFinding[] {
+  const lenses = app.lenses ?? [];
+  const kinds = app.schema.kinds as readonly string[];
+  // Named by the arrangement as the bar and the opening read it: by title, by its address word, or as a host's view.
+  const named = (title: string) => {
+    const said = new Set([title.trim().toLowerCase(), placeSlug(title), `view:${placeSlug(title)}`]);
+    return [...(app.pages?.primary ?? []), ...(app.pages?.first ? [app.pages.first] : [])].some((one) => said.has(one.trim().toLowerCase()) || said.has(placeSlug(one)));
+  };
+  const hiddenKinds = new Set(app.pages?.hide ?? []);
+  const findings: PlaceFinding[] = [];
+  const seen = new Map<string, number>();
+  lenses.forEach((lens, index) => {
+    const title = typeof lens.title === "string" ? lens.title.trim() : "";
+    // Untitled is no place; hidden is no place on the bar; one for some seats only is not the list every seat has.
+    if (!title || lens.hidden === true) return;
+    const list = lens.requiredRoles?.length || lens.create === false ? null : onlyAKindsList(lens, kinds);
+    if (list && hiddenKinds.has(list)) return;
+    if (list) {
+      const plural = pluralLabel(app.schema, list);
+      // Named by the arrangement, the place is not removed out from under it: the arrangement is pointed at the list first.
+      if (named(title)) {
+        findings.push({
+          severity: "note",
+          code: "view-duplicates-another",
+          path: `lenses.${index}`,
+          message: `The view "${title}" shows every ${nounOf(app.schema.tryDefinition(list), list)} as a list and nothing else, which is what the ${plural} page (${kindPath(app.schema, list)}) already shows. The arrangement names "${title}", so it stays until the arrangement names the list instead.`,
+          fix: `Name "${list}" where pages names "${title}", then remove "${title}" ({"op": "remove-lens", "title": "${title}"}).`,
+        });
+        return;
+      }
+      findings.push({
+        severity: "warning",
+        code: "view-duplicates-another",
+        path: `lenses.${index}`,
+        message: `The view "${title}" shows every ${nounOf(app.schema.tryDefinition(list), list)} as a list and nothing else, which is what the ${plural} page (${kindPath(app.schema, list)}) already shows — two boards and two places for one view. Keep the ${plural} page.`,
+        fix: `Remove "${title}" ({"op": "remove-lens", "title": "${title}"}); to say more than the list, give it a headline or a figure and it is a view of its own.`,
+        edits: [{ op: "remove-lens", title }],
+      });
+      return;
+    }
+    const picture = pictureOf(lens);
+    const first = seen.get(picture);
+    if (first === undefined) {
+      seen.set(picture, index);
+      return;
+    }
+    const earlier = lenses[first]!;
+    const earlierTitle = String(earlier.title).trim();
+    // Keep the one the arrangement names (first, or on the bar's row); else the one said first.
+    const keepLater = named(title) && !named(earlierTitle);
+    const [keep, drop, dropAt] = keepLater ? [title, earlierTitle, first] : [earlierTitle, title, index];
+    if (keepLater) seen.set(picture, index);
+    findings.push({
+      severity: "warning",
+      code: "view-duplicates-another",
+      path: `lenses.${dropAt}`,
+      message: `The views "${keep}" and "${drop}" draw the same ${lens.name} of the same ${kindsOfLens(lens).map((kind) => pluralLabel(app.schema, kind).toLowerCase()).join(" and ") || "records"}, with the same options — two boards and two places for one view. Keep "${keep}"${keepLater ? ", which the arrangement names" : ", said first"}.`,
+      fix: `Remove "${drop}" ({"op": "remove-lens", "title": "${drop}"}), and point any link to it at "${keep}".`,
+      edits: [{ op: "remove-lens", title: drop }],
+    });
+  });
+  return findings;
 }

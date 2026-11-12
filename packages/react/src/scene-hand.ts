@@ -241,7 +241,28 @@ export function useWorldShift({
 
   /** The offset the hand has made so far, not yet in the view. */
   const offset = useCallback(() => live.current, []);
-  return { shiftTo, zoomBy, settle, drop, settling, offset };
+  /**
+   * PAINTED NOW, not on the next frame: a host that moves the camera itself
+   * (a routed page standing on the city) sets the offset and reads where
+   * everything stands in the same frame. `flush` paints what the hand last
+   * asked for, so what is read is what the frame will show.
+   */
+  const placeNow = useCallback(
+    (at: { x: number; y: number; s: number }) => {
+      if (painting.current !== 0) cancelAnimationFrame(painting.current);
+      painting.current = 0;
+      live.current = { ...at };
+      put(live.current);
+    },
+    [put],
+  );
+  const flush = useCallback(() => {
+    if (painting.current === 0) return;
+    cancelAnimationFrame(painting.current);
+    painting.current = 0;
+    put(live.current);
+  }, [put]);
+  return { shiftTo, zoomBy, settle, drop, settling, offset, placeNow, flush };
 }
 
 /**

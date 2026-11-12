@@ -1,0 +1,22 @@
+---
+"@graview/core": minor
+"create-graview": minor
+"@graview/embed": minor
+"graview": minor
+"@graview/guest": minor
+"@graview/layout": minor
+"@graview/pages": minor
+"@graview/primitives": minor
+"@graview/react": minor
+"@graview/render": minor
+"@graview/ship": minor
+"@graview/skills": minor
+"@graview/studio": minor
+"@graview/tools": minor
+---
+
+Pages and the Scene can be one face, as a host option: `sceneUnderPages`. A routed face given it stands over the Scene's own city, and the same page moves on one camera from Page to Nearby (the page beside its place in the city, with a line from each record it shows to that record's building) to City (every page and view of the app standing on its district). On that face the Scene/Pages switch is gone. So is the Scene's record "drive-in" (a record chosen in the city is its own page, with what it is linked to listed under it at Nearby), and so are Up and Down: one control at the bottom left, Page · Nearby · City, says where you are and goes to any level. An app without the option draws as it did. The move is staged: a host turns the option on app by app (Graview Cloud as it moves each one), and the one face becomes the default in 0.2.1. Pages and lenses are becoming one thing, a defined view. `graview check` names two views that show the same thing and carries the edit that removes one (`view-duplicates-another`), and docs/pages-and-lenses-are-one.md sets out the declaration, the format upgrade that will move a stored document, and what a host does to move an app.
+
+A hosted page carries 0.3 KB more up front, and one handed a compiled app 0.3 KB more up front: the routed face asks the one face for the city where the city stands under its pages.
+
+Compatibility: a routed face given `sceneUnderPages` is the one face, with no switch; a face without it is unchanged. While the history is played, the Scene's buildings rise and sink on every face. The JavaScript API is additive (`PageContext.sceneUnderPages`, `SceneCamera`, `LayoutOptions.standing` and `plaza`, `ONE_FACE_LAYERS`). Ops and primitives are unchanged. Stored formats are unchanged in this version; the move of titled lenses into views is the format upgrade the design note describes. The wire is unchanged. The declaration and check finding codes are additive (`view-duplicates-another`). Derived tool names and input schemas are unchanged.

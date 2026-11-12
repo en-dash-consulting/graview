@@ -424,6 +424,16 @@ export interface LayoutOptions {
    */
   readonly screens?: Readonly<Record<string, readonly { readonly as: string; readonly title: string; readonly across?: string }[]>>;
   /**
+   * THE ROOM UNDER EACH DISTRICT'S NAME FOR THE VIEWS THAT STAND ON IT, by
+   * kind, on the screen (Pages and the Scene as one place): the routed
+   * face's views of a kind stand there as signs from altitude, and the city
+   * is laid out with that ground held for them — no other district's name
+   * is placed on it — as a focused district's showings are.
+   */
+  readonly standing?: Readonly<Record<string, { readonly width: number; readonly height: number }>>;
+  /** And the room at the top of the ground for the plaza the views of no one kind stand on, in pixels: the city is fitted under it. */
+  readonly plaza?: number;
+  /**
    * FLY CLOSER. A factor on the city's cell from altitude — 1 is the whole
    * map fitted to the window; 1.5 is the camera brought in toward the
    * picture a person chose, plots and villages and roads all bigger, the
@@ -463,7 +473,7 @@ export interface LayoutOptions {
  * canvas and never exceeds the cap. Heights come from the band proportions in
  * `layout()`, which is what keeps the composition together at any size.
  */
-export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset" | "plainGroups" | "besideTheMap" | "judged" | "relevance" | "cityOrder" | "plots" | "screens" | "cityZoom" | "cityStood" | "nameWidth" | "chrome" | "tilt" | "dock" | "headroom">> = {
+export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset" | "plainGroups" | "besideTheMap" | "judged" | "relevance" | "cityOrder" | "plots" | "screens" | "standing" | "plaza" | "cityZoom" | "cityStood" | "nameWidth" | "chrome" | "tilt" | "dock" | "headroom">> = {
   width: 1200,
   height: 760,
   focusSize: { width: 1200, height: 420 },

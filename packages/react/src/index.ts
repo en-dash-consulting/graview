@@ -63,7 +63,7 @@ export type { TransitionOptions } from "./animation.js";
 export { ACTIVITY_HOLD_MS, markActivity } from "./activity.js";
 export { useActivity, useAttention } from "./attention.js";
 export type { ActivityMark, Attention, Manner, ToolCallLike } from "./activity.js";
-export type { ResolvedViewProps, SceneProps } from "./scene.js";
+export type { ResolvedViewProps, SceneCamera, SceneProps } from "./scene.js";
 
 
 export { useViolations } from "./hooks.js";

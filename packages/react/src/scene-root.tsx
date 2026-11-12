@@ -144,6 +144,39 @@ export interface SceneProps {
   readonly animate?: boolean;
   /** Rendered over the scene — an affordance surface, a header, a legend. */
   readonly children?: ReactNode;
+  /**
+   * THE SCENE'S OWN CAMERA, HANDED OUT: filled each render with the zoom
+   * from altitude and the moves the person's hand makes — the same zoom
+   * and pan the wheel, the pinch and the controls write — so a host that
+   * stands something on the city (a routed page stepped back onto its
+   * building) moves the one camera rather than a second one over the box.
+   */
+  readonly camera?: { current: SceneCamera | null };
+}
+
+/** The Scene's camera from altitude, as `camera` hands it out. */
+export interface SceneCamera {
+  /** The person's zoom from altitude: 1 is the city fitted to its box. */
+  zoom(): number;
+  /** Zoom to a scale, the point under these window coordinates staying where it is. Held within `range`. */
+  zoomTo(scale: number, clientX: number, clientY: number): void;
+  /** Pan the picture by so many pixels, within the camera's reach. */
+  panBy(dx: number, dy: number): void;
+  readonly range: { readonly min: number; readonly max: number };
+  /**
+   * THE CAMERA BETWEEN STOPS: what the hand (or a host) has done to the
+   * picture and not yet written into the view — grown by `s` about the
+   * ground's corner, then moved by (x, y) — painted as of this call. A
+   * point of the picture at `p` (the ground's pixels, as the view lays it
+   * out) is on screen at `p · s + (x, y)`.
+   */
+  live(): { readonly x: number; readonly y: number; readonly s: number };
+  /** Paint the camera between stops now, in this frame, outside React. */
+  liveTo(at: { readonly x: number; readonly y: number; readonly s: number }): void;
+  /** Write the camera between stops into the view: the city laid out again at that zoom and pan, nothing moving. */
+  commit(): boolean;
+  /** Whether the picture is between stops, or settling into one. */
+  moving(): boolean;
 }
 
 type Point = { x: number; y: number };
@@ -908,6 +941,7 @@ export function Scene<S extends AnySchema>({
   style,
   animate = true,
   children,
+  camera,
 }: SceneProps) {
   const context = useGraview<S>();
   /* The app's workflows, its own or its document's: a compiled app carries them only there (`declaredWorkflows`). */
@@ -1117,6 +1151,29 @@ export function Scene<S extends AnySchema>({
     setView((current) => withPan(current, panWithin(limit, { x: (current.pan?.x ?? 0) + dx, y: (current.pan?.y ?? 0) + dy })));
   // Tab passes over a card the panel covers, and the camera brings the one it lands on into the part that is seen.
   useKeyboardKeepsToWhatIsSeen(wrapperRef, dock, (dx, dy) => nudge(dx, dy));
+  if (camera) {
+    camera.current = {
+      zoom: () => zoomLive.current,
+      zoomTo: (scale, clientX, clientY) => {
+        const box = wrapperRef.current?.getBoundingClientRect();
+        const about = box ? { x: clientX - box.left, y: clientY - box.top } : { x: 0, y: 0 };
+        zoomTo.current(Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, scale)) / zoomLive.current, about);
+      },
+      panBy: (dx, dy) => nudge(dx, dy),
+      range: { min: ZOOM_MIN, max: ZOOM_MAX },
+      live: () => {
+        shift.flush();
+        return shift.offset();
+      },
+      liveTo: (at) => shift.placeNow(at),
+      // Steered first, as a wheel is: the city laid out at the new zoom snaps there, where the move left it, rather than tweening from where it was.
+      commit: () => {
+        steer();
+        return shift.settle();
+      },
+      moving: () => shift.settling.current || shift.offset().s !== 1 || shift.offset().x !== 0 || shift.offset().y !== 0,
+    };
+  }
   panBy.current = (dx, dy) => {
     steer();
     const limit = cameraLimit(result);

@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-24T04:43:56.889Z",
+  "at": "2026-11-12T13:03:22.645Z",
   "engine": "chromium",
   "checks": {
     "phoneHome": {
@@ -29,7 +29,7 @@
       "fields": true,
       "linksToList": true,
       "actions": true,
-      "spatialLink": true
+      "noSceneLink": true
     },
     "theControlSetsIt": {
       "root": "32px",
@@ -103,7 +103,9 @@
           "scrolls": false,
           "end": {
             "end": 761,
-            "feet": [],
+            "feet": [
+              852
+            ],
             "last": "li record-row",
             "ok": true
           }
@@ -123,7 +125,9 @@
           "scrolls": false,
           "end": {
             "end": 267,
-            "feet": [],
+            "feet": [
+              852
+            ],
             "last": "li record-row",
             "ok": true
           }
@@ -142,8 +146,10 @@
           "countedInAnEyebrow": false,
           "scrolls": false,
           "end": {
-            "end": 721,
-            "feet": [],
+            "end": 668,
+            "feet": [
+              772
+            ],
             "last": "li record-row",
             "ok": true
           }
@@ -162,8 +168,10 @@
           "countedInAnEyebrow": false,
           "scrolls": false,
           "end": {
-            "end": 335,
-            "feet": [],
+            "end": 283,
+            "feet": [
+              772
+            ],
             "last": "li record-row",
             "ok": true
           }
@@ -296,7 +304,7 @@
       "ok": true
     },
     "exportingAGroupedListWritesTheRowsOnScreenInTheirOrder": {
-      "file": "Tasks — 2026-10-24.csv",
+      "file": "Tasks — 2026-11-12.csv",
       "header": [
         "Group",
         "Name",
@@ -490,6 +498,15 @@
       ],
       "ok": true
     },
+    "noOfferedSeveralActIsThenRefused": {
+      "applies": [
+        3,
+        3,
+        3
+      ],
+      "refused": [],
+      "ok": true
+    },
     "threeTasksAreMarkedDoneAsOneChangeWithOneUndo": {
       "before": 10,
       "done": {
@@ -560,7 +577,7 @@
     },
     "derivedFormApplies": true,
     "sceneOffersThePages": true,
-    "recordLinksItsStop": true,
+    "recordOffersNoSecondFace": true,
     "placesIndex": {
       "cards": [
         "/pages/places/the-lists",
