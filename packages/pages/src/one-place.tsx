@@ -619,9 +619,13 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
    * the button. Headed back down, a keyboard left on a board (going out of
    * reach) goes to the page's title.
    */
+  const cameFrom = useRef(now.level);
   useLayoutEffect(() => {
     const active = document.activeElement;
     const onBoards = boardLayer.current?.contains(active) === true;
+    // Only a move between levels places the keyboard: a page that opens at Page leaves it where the routed face puts it, as the derived pages do.
+    const moved = cameFrom.current !== now.level;
+    cameFrom.current = now.level;
     if (now.level === CITY) {
       if (now.moving || onBoards || fab.current?.contains(active) || deselected.current || bar?.contains(active)) return;
       boardEls.current.get(current)?.focus({ preventScroll: true });
@@ -629,7 +633,7 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
     }
     chosen.current = null;
     deselected.current = false;
-    if (!onBoards && active !== document.body) return;
+    if (!onBoards && (active !== document.body || !moved)) return;
     const title = sheet.current?.querySelector<HTMLElement>("main h1, h1:not([data-graview-app-bar] h1)");
     if (title) {
       if (!title.hasAttribute("tabindex")) title.setAttribute("tabindex", "-1");
@@ -686,6 +690,8 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
 
   return (
     <OneFaceContext.Provider value={face}>
+      {/* THE APP'S BAR, fixed at the window's top over the page and the city alike: the shell draws it here (`page-shell.tsx`). First in the document, as the derived pages have it, so Tab reaches the bar before the page's own links at every level; its layer, not its place, sets it over the rest. */}
+      <div ref={setBar} data-testid="one-place-bar" style={{ position: "fixed", left: 0, right: 0, top: 0, zIndex: ONE_FACE_LAYERS.bar, background: "var(--graview-ground, Canvas)" }} />
       <Suspense fallback={null}>
         <OnePlaceCity where={where} out={now.away} sheet={sheet} connected={connected} boards={standing} current={current} boardEls={boardEls} boardLayer={boardLayer} fab={fab} view={view} lessMotion={lessMotion()} resolve={resolve} openRecord={openRecord} openKind={openKind} onGround={onGround} motion={motion} onAltitude={onAltitude} />
       </Suspense>
@@ -731,8 +737,6 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
           </button>
         ))}
       </div>
-      {/* THE APP'S BAR, fixed at the window's top over the page and the city alike: the shell draws it here (`page-shell.tsx`). */}
-      <div ref={setBar} data-testid="one-place-bar" style={{ position: "fixed", left: 0, right: 0, top: 0, zIndex: ONE_FACE_LAYERS.bar, background: "var(--graview-ground, Canvas)" }} />
       {now.level === PANEL && !now.moving ? <PanelEdge view={view} size={sizePanel} keep={keepPanel} motion={motion} /> : null}
       <Altitude box={fab} level={now.level} moving={now.moving} goTo={goTo} where={where} chosen={chosen} boards={boards} current={current} store={store} motion={motion} begin={beginAway} />
       <style>{ONE_PLACE_CSS}</style>

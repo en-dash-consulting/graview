@@ -654,8 +654,9 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       // Out, or asked out and waiting for the camera to be aimed: the page is not back in until nothing asks it out.
       const away = a > 0.001 || move !== null || asking.scrubbing || (asking.level !== null && asking.level > PAGE) || asking.scrub !== 0;
       holder.style.visibility = away ? "visible" : "hidden";
-      // Drawn but not yet moved out, the city takes no pointer and no keyboard.
-      if (holder.inert === away) holder.inert = !away;
+      // Drawn but not yet moved out, or on its way between levels, the city takes no pointer and no keyboard, as the boards do not: a press lands where the move ends.
+      const reachable = away && !move && !(rest === PAGE && !asking.scrubbing);
+      if (holder.inert === reachable) holder.inert = !reachable;
       holder.style.opacity = String(a >= PANEL ? 1 : ease(clamp01(a * 1.3)));
       const phone = at.view.width <= PHONE;
       const panel = panelBox(at.view);
