@@ -44,6 +44,8 @@ import type { OnePlaceCityProps } from "./one-place.js";
 const RECORD_PARTS = "[data-graview-pick], [data-graview-record], [data-record]";
 const recordShownBy = (element: Element): string | null => element.getAttribute("data-graview-pick") ?? element.getAttribute("data-graview-record") ?? element.getAttribute("data-record");
 
+const zoomNowOf = (cam: SceneCamera): string => cam.zoom().toFixed(4);
+
 /** The most lines drawn from a page's parts: past this a list's lines are a hatch. */
 const MOST_LINES = 40;
 /** How long one level's move takes. A person who asked for less motion is cut straight there. */
@@ -188,6 +190,9 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     let ownZoom: number | null = null;
     /** The panel as it was last frame, and whether a hand has moved it since the camera was written. */
     let lastPanel = "";
+    /** When the city was last read, and what it was read for. */
+    let lastRead = -Infinity;
+    let lastReadKey = "";
     let resized = false;
 
     let handSince = 0;
@@ -412,8 +417,18 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       if (between) painted = live;
       else if (!settling) {
         painted = LEVEL_LIVE;
-        world = readWorld(holder);
-        standAll(world, cam.zoom());
+        /*
+         * THE CITY READ AGAIN ONLY WHEN IT MAY HAVE MOVED: a camera written,
+         * the window or the views changed, or a while gone by (a record added
+         * lays its district out again) — never every frame of a page at rest.
+         */
+        const readKey = `${at.view.width}x${at.view.height}|${at.boards.length}|${at.current}|${zoomNowOf(cam)}`;
+        if (readKey !== lastReadKey || committedAt > lastRead || now - lastRead > 500) {
+          world = readWorld(holder);
+          standAll(world, cam.zoom());
+          lastRead = now;
+          lastReadKey = readKey;
+        }
       }
       const anchor = world.plots.size > 0 ? anchorIn(at.where, world) : null;
       const zooms = levelZooms(at.where, at.view);
@@ -683,6 +698,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
 
     /* The overlay, written in the frame it is measured in: no React state per frame. */
     const draw = (found: readonly Drawn[], opacity: number) => {
+      const control = fab.current?.querySelector('[role="group"]')?.getBoundingClientRect() ?? null;
       const svg = overlay.current;
       const ringLayer = rings.current;
       if (!svg || !ringLayer) return;
@@ -746,8 +762,9 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           drawn.ring.style.display = "none";
         } else {
           drawn.arrow.setAttribute("d", "");
-          // An end under the bar is not offered: the bar stands over it.
-          drawn.ring.style.display = to.y < (state.current.view.top ?? 0) + 8 ? "none" : "";
+          // An end under the bar, or under the control at the foot, is not offered: they stand over it.
+          const under = control && to.x > control.left - 10 && to.x < control.right + 10 && to.y > control.top - 10 && to.y < control.bottom + 10;
+          drawn.ring.style.display = to.y < (state.current.view.top ?? 0) + 8 || under ? "none" : "";
           drawn.ring.style.left = `${(to.x - 8).toFixed(2)}px`;
           drawn.ring.style.top = `${(to.y - 8).toFixed(2)}px`;
         }

@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-12T05:41:19.335Z",
+  "at": "2026-11-12T05:49:04.625Z",
   "engines": [
     "chromium"
   ],
@@ -287,7 +287,7 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 208,
+          "frames": 235,
           "moved": 136,
           "same": true,
           "jump": {
@@ -301,12 +301,12 @@
             "engine": "chromium",
             "device": "Pixel 7"
           },
-          "frames": 223,
+          "frames": 236,
           "moved": 136,
           "same": true,
           "jump": {
-            "worst": 0.22,
-            "at": 2
+            "worst": 0.223,
+            "at": 3
           },
           "ok": true
         }
@@ -331,7 +331,7 @@
             "device": "Pixel 7"
           },
           "worst": 0.49,
-          "counted": 292,
+          "counted": 284,
           "examples": [],
           "ok": true
         }
@@ -352,76 +352,7 @@
               "how": "control",
               "arrived": true,
               "moved": 34,
-              "frames": 101,
-              "zoomBack": 0,
-              "widthBack": 0
-            },
-            {
-              "from": 1,
-              "to": 2,
-              "how": "control",
-              "arrived": true,
-              "moved": 34,
-              "frames": 162,
-              "zoomBack": 0,
-              "widthBack": 0
-            },
-            {
-              "from": 2,
-              "to": 1,
-              "how": "keys",
-              "arrived": true,
-              "moved": 34,
-              "frames": 79,
-              "zoomBack": 0,
-              "widthBack": 0
-            },
-            {
-              "from": 1,
-              "to": 0,
-              "how": "keys",
-              "arrived": true,
-              "moved": 33,
-              "frames": 160,
-              "zoomBack": 0,
-              "widthBack": 0
-            },
-            {
-              "from": 0,
-              "to": 2,
-              "how": "control",
-              "arrived": true,
-              "moved": 34,
-              "frames": 252,
-              "zoomBack": 0,
-              "widthBack": 0
-            },
-            {
-              "from": 2,
-              "to": 0,
-              "how": "control",
-              "arrived": true,
-              "moved": 35,
-              "frames": 332,
-              "zoomBack": 0,
-              "widthBack": 0
-            }
-          ],
-          "ok": true
-        },
-        {
-          "where": {
-            "engine": "chromium",
-            "device": "Pixel 7"
-          },
-          "moves": [
-            {
-              "from": 0,
-              "to": 1,
-              "how": "control",
-              "arrived": true,
-              "moved": 34,
-              "frames": 99,
+              "frames": 114,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -441,7 +372,7 @@
               "how": "keys",
               "arrived": true,
               "moved": 34,
-              "frames": 237,
+              "frames": 79,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -451,7 +382,7 @@
               "how": "keys",
               "arrived": true,
               "moved": 33,
-              "frames": 79,
+              "frames": 158,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -461,7 +392,76 @@
               "how": "control",
               "arrived": true,
               "moved": 34,
+              "frames": 83,
+              "zoomBack": 0,
+              "widthBack": 0
+            },
+            {
+              "from": 2,
+              "to": 0,
+              "how": "control",
+              "arrived": true,
+              "moved": 35,
               "frames": 166,
+              "zoomBack": 0,
+              "widthBack": 0
+            }
+          ],
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "moves": [
+            {
+              "from": 0,
+              "to": 1,
+              "how": "control",
+              "arrived": true,
+              "moved": 34,
+              "frames": 113,
+              "zoomBack": 0,
+              "widthBack": 0
+            },
+            {
+              "from": 1,
+              "to": 2,
+              "how": "control",
+              "arrived": true,
+              "moved": 34,
+              "frames": 164,
+              "zoomBack": 0,
+              "widthBack": 0
+            },
+            {
+              "from": 2,
+              "to": 1,
+              "how": "keys",
+              "arrived": true,
+              "moved": 34,
+              "frames": 243,
+              "zoomBack": 0,
+              "widthBack": 0
+            },
+            {
+              "from": 1,
+              "to": 0,
+              "how": "keys",
+              "arrived": true,
+              "moved": 33,
+              "frames": 316,
+              "zoomBack": 0,
+              "widthBack": 0
+            },
+            {
+              "from": 0,
+              "to": 2,
+              "how": "control",
+              "arrived": true,
+              "moved": 34,
+              "frames": 83,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -471,7 +471,7 @@
               "how": "control",
               "arrived": true,
               "moved": 34,
-              "frames": 83,
+              "frames": 82,
               "zoomBack": 0,
               "widthBack": 0
             }
@@ -488,7 +488,7 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 208,
+          "frames": 235,
           "sheared": 0,
           "first": null,
           "reachedTheCity": true,
@@ -499,7 +499,7 @@
             "engine": "chromium",
             "device": "Pixel 7"
           },
-          "frames": 223,
+          "frames": 236,
           "sheared": 0,
           "first": null,
           "reachedTheCity": true,
@@ -1177,7 +1177,7 @@
               "same": true,
               "jump": {
                 "worst": 0.079,
-                "at": 20
+                "at": 21
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
@@ -1192,13 +1192,14 @@
                 "level": 1
               },
               "levels": [
+                2,
                 1
               ],
-              "start": 0.3,
+              "start": 0,
               "same": true,
               "jump": {
                 "worst": 0.079,
-                "at": 20
+                "at": 21
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
@@ -1235,14 +1236,13 @@
                 "level": 1
               },
               "levels": [
-                2,
                 1
               ],
-              "start": 12.1,
+              "start": 12,
               "same": true,
               "jump": {
-                "worst": 0.078,
-                "at": 20
+                "worst": 0.079,
+                "at": 19
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
@@ -1264,7 +1264,7 @@
               "same": true,
               "jump": {
                 "worst": 0.814,
-                "at": 5
+                "at": 4
               },
               "back": {
                 "url": "/pages/search",
@@ -1466,7 +1466,7 @@
             "device": "desk 1440×900"
           },
           "worst": 0,
-          "counted": 290,
+          "counted": 295,
           "examples": [],
           "ok": true
         },
@@ -1501,6 +1501,27 @@
           },
           "stepped": 396,
           "back": 396,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aPinchOnThePageIsTheBrowsersOwnAndBesideTheCityMovesTheCamera": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "onPage": {
+            "level": 0,
+            "taken": 0,
+            "altitude": 0
+          },
+          "nearby": {
+            "before": 1,
+            "highest": 2
+          },
           "ok": true
         }
       ],

@@ -1,7 +1,7 @@
 import { labelOf, numberAsRead, SCENE_LAYERS, type Brand, type Scheme } from "@graview/core";
 import { districtBlocks, districtState, TIER_HEIGHT, toIso, type Building, type StateTier } from "@graview/core/scene";
 import type { InterpolatedLayout } from "@graview/layout";
-import { memo, useCallback, useEffect, useMemo, useReducer, useRef, type CSSProperties, type ReactElement } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactElement } from "react";
 import { usePlayback } from "./past.js";
 import { useGraph, useGraview } from "./context.js";
 import { useFlagged } from "./emphasis.js";
@@ -458,29 +458,29 @@ export const RISE_MS = 420;
  * drawn and is no longer, kept as it last stood for as long as it takes to
  * sink — the same element, by its key — unless it comes back first, when it
  * rises again from wherever it had got to. None kept now, outside playback.
+ * Worked out in the render the blocks change in (state set from the last
+ * render's blocks, as React has it), so a building going keeps its element.
  */
 function useLeaving<B extends { readonly id: string }>(buildings: readonly B[], rising: boolean): readonly B[] {
-  const before = useRef(buildings);
-  const gone = useRef(new Map<string, { readonly block: B; readonly until: number }>());
-  const [, wake] = useReducer((n: number) => n + 1, 0);
-  if (before.current !== buildings) {
+  // Which blocks stand, said once: a plot drawn again with the same blocks changes nothing here.
+  const key = buildings.map((block) => block.id).join("\n");
+  const [seen, setSeen] = useState({ key, buildings });
+  const [gone, setGone] = useState<ReadonlyMap<string, { readonly block: B; readonly until: number }>>(new Map());
+  if (seen.key !== key) {
+    setSeen({ key, buildings });
     const here = new Set(buildings.map((block) => block.id));
-    for (const id of [...gone.current.keys()]) if (here.has(id)) gone.current.delete(id);
-    if (rising) for (const block of before.current) if (!here.has(block.id) && !gone.current.has(block.id)) gone.current.set(block.id, { block, until: performance.now() + RISE_MS });
-    before.current = buildings;
+    const next = new Map([...gone].filter(([id]) => !here.has(id)));
+    if (rising) for (const block of seen.buildings) if (!here.has(block.id) && !next.has(block.id)) next.set(block.id, { block, until: performance.now() + RISE_MS });
+    setGone(next);
   }
-  if (!rising && gone.current.size > 0) gone.current.clear();
   useEffect(() => {
-    if (gone.current.size === 0) return;
-    const next = Math.min(...[...gone.current.values()].map((one) => one.until));
-    const timer = window.setTimeout(() => {
-      const now = performance.now();
-      for (const [id, one] of gone.current) if (one.until <= now + 4) gone.current.delete(id);
-      wake();
-    }, Math.max(0, next - performance.now()) + 8);
+    if (!rising && gone.size > 0) return setGone(new Map());
+    if (gone.size === 0) return;
+    const next = Math.min(...[...gone.values()].map((one) => one.until));
+    const timer = window.setTimeout(() => setGone((was) => new Map([...was].filter(([, one]) => one.until > performance.now() + 4))), Math.max(0, next - performance.now()) + 8);
     return () => window.clearTimeout(timer);
-  });
-  return [...gone.current.values()].map((one) => one.block);
+  }, [gone, rising]);
+  return useMemo(() => [...gone.values()].map((one) => one.block), [gone]);
 }
 
 function groundCss(scheme: Scheme): string {

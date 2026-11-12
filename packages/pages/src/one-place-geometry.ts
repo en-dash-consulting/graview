@@ -65,6 +65,9 @@ export const LEVELS = CITY;
 /** What each level is called, where a person is told it. */
 export const LEVEL_NAMES: readonly [string, string, string] = ["Page", "Nearby", "City"];
 
+/** The height the control at the foot keeps on a phone, above the sheet, with its margin. */
+export const CONTROL_ROOM = 72;
+
 /** A window narrower than this is a phone's: the panel a sheet from the foot. */
 export const PHONE = 600;
 const phoneOf = (view: View) => view.width <= PHONE;
@@ -133,7 +136,8 @@ export function aimAt(level: number, view: View): Point {
   const bar = view.top ?? 0;
   if (level <= PANEL) {
     const panel = panelBox(view);
-    return phoneOf(view) ? { x: view.width / 2, y: (bar + panel.y) / 2 } : { x: panel.x / 2, y: bar + (view.height - bar) / 2 };
+    // On a phone the control rides at the foot of the city, above the sheet: the place is aimed in what it leaves.
+    return phoneOf(view) ? { x: view.width / 2, y: (bar + panel.y - CONTROL_ROOM) / 2 } : { x: panel.x / 2, y: bar + (view.height - bar) / 2 };
   }
   // A little below the middle of what the bar leaves: the boards rise from the city, and want the room above it.
   return { x: view.width / 2, y: bar + (view.height - bar) * 0.56 };

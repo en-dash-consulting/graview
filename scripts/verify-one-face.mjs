@@ -42,7 +42,7 @@ const STRIPS = resolve(repoRoot, "docs/one-face");
 
 const report = { at: new Date().toISOString(), engines, app: "apps/todo", checks: {} };
 const errors = [];
-const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [] };
+const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [] };
 
 /* ------------------------------------------------------------------ */
 /* In the page                                                         */
@@ -513,6 +513,56 @@ async function resize(page, where, phone) {
   return { where, before: { width: before.width, height: before.height }, dragged: { width: dragged.width, height: dragged.height }, role: before.role, range: [before.min, before.max], ok: before.role === "separator" && grew && ends && (phone ? stepped.height > atHome.height : stepped.width > atHome.width) };
 }
 
+
+/*
+ * A PINCH ON THE PAGE IS THE BROWSER'S OWN: on a phone, two fingers closing
+ * on the page leave it the page — no level moved, nothing taken from the
+ * browser's zoom — while beside the city the same pinch on the page moves
+ * the camera up toward the City.
+ */
+async function pinch(page, where) {
+  await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
+  await ready(page);
+  const cdp = await page.context().newCDPSession(page);
+  const fingers = async (at, from, to) => {
+    const points = (gap) => [{ x: at.x - gap, y: at.y }, { x: at.x + gap, y: at.y }];
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: points(from) });
+    for (let i = 1; i <= 8; i++) await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: points(from + ((to - from) * i) / 8) });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  };
+  // Who took the moves: a listener after the face's own, reading whether the browser was told no.
+  await page.evaluate(() => {
+    window.__pinchTaken = 0;
+    window.addEventListener("touchmove", (event) => {
+      if (event.defaultPrevented) window.__pinchTaken += 1;
+    }, { passive: true });
+  });
+  await fingers({ x: 200, y: 420 }, 120, 40);
+  await page.waitForTimeout(900);
+  const onPage = { level: await levelOf(page), taken: await page.evaluate(() => window.__pinchTaken), altitude: await page.evaluate(() => Number(document.querySelector('[data-testid="one-place-city"]')?.getAttribute("data-graview-altitude-now") ?? 0)) };
+  await press(page, '[data-testid="altitude-stop-1"]');
+  await restAt(page, 1);
+  const sheet = await page.evaluate(() => {
+    const r = document.querySelector("[data-graview-one-place]").getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height * 0.55 };
+  });
+  const before = await page.evaluate(() => Number(document.querySelector('[data-testid="one-place-city"]').getAttribute("data-graview-altitude-now")));
+  let highest = before;
+  const watching = page.evaluate(() => new Promise((done) => {
+    let most = 0;
+    const t0 = performance.now();
+    const tick = () => {
+      most = Math.max(most, Number(document.querySelector('[data-testid="one-place-city"]').getAttribute("data-graview-altitude-now")));
+      if (performance.now() - t0 < 1500) requestAnimationFrame(tick);
+      else done(most);
+    };
+    requestAnimationFrame(tick);
+  }));
+  await fingers(sheet, 140, 30);
+  highest = Math.max(highest, await watching);
+  return { where, onPage, nearby: { before, highest }, ok: onPage.level === 0 && onPage.taken === 0 && onPage.altitude < 0.01 && highest > before + 0.2 };
+}
+
 /*
  * THE CITY WITH NOTHING CHOSEN: a press on bare ground, or Escape, leaves
  * no view chosen and the city where it is; then a wheel with ctrl (a
@@ -917,6 +967,7 @@ try {
       [seen.overshoot, (page, where) => noOvershoot(page, where)],
       [seen.bar, (page, where) => bar(page, where)],
       [seen.resize, (page, where) => resize(page, where, true)],
+      ...(engine === "chromium" ? [[seen.pinch, (page, where) => pinch(page, where)]] : []),
     ]);
     seen.switch.push(await rootIsTheOneFace(browser, { engine, device: "desk 1440×900" }).catch((error) => ({ ok: false, error: String(error?.message ?? error) })));
     if (engine === "chromium") {
@@ -961,6 +1012,7 @@ try {
   report.checks.theNearbyPanelResizesByDragAndKeyboard = { held: seen.resize, ok: every(seen.resize) };
   report.checks.linesStayExactWhileResizing = { held: seen.resizeLines, ok: every(seen.resizeLines) };
   report.checks.theChosenWidthIsKeptAcrossLevelMoves = { held: seen.resizeKept, ok: every(seen.resizeKept) };
+  report.checks.aPinchOnThePageIsTheBrowsersOwnAndBesideTheCityMovesTheCamera = { held: seen.pinch, ok: every(seen.pinch) };
   report.checks.aDuplicateViewIsFound = { held: seen.duplicate, ok: every(seen.duplicate) };
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
   report.passed = Object.values(report.checks).every((check) => check.ok);

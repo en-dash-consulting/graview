@@ -2,7 +2,7 @@ import { OVERVIEW_PATH, ONE_FACE_LAYERS, hueFor, labelOf, type AnySchema } from 
 import { retryingImport } from "@graview/core/retry";
 import { barPlaces, HOME_KEY, PastBar } from "@graview/primitives/pages";
 import { lazyPart, useGraview, usePlayback } from "@graview/react/provider";
-import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type RefObject } from "react";
+import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type RefObject } from "react";
 import { useHref, useLocation, useNavigate } from "react-router";
 import { recordFacts } from "./facts.js";
 import { useStoreTick, type PageContext } from "./page-context.js";
@@ -415,8 +415,15 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
     const apart = (touches: TouchList) => Math.hypot(touches[0]!.clientX - touches[1]!.clientX, touches[0]!.clientY - touches[1]!.clientY);
     const touchStart = (event: TouchEvent) => {
       motion.current.held = event.touches.length > 0;
-      const atCity = latest.current.now.level === CITY && !latest.current.now.moving;
-      const mine = !atCity && (!latest.current.now.away || (onPage(event.touches[0]?.target ?? null) && onPage(event.touches[1]?.target ?? null)));
+      /*
+       * A PINCH IS THE BROWSER'S OWN ON THE PAGE: there it zooms the page's
+       * words for whoever needs them larger, and a level is moved by the
+       * control, Alt and the arrows, or ctrl and the wheel. Beside the city
+       * a pinch on the page scrubs the altitude; over the city, and at the
+       * City, the Scene's own hand zooms the camera.
+       */
+      const nearby = latest.current.now.level === PANEL && latest.current.now.away && !latest.current.now.moving;
+      const mine = nearby && onPage(event.touches[0]?.target ?? null) && onPage(event.touches[1]?.target ?? null);
       pinch = event.touches.length === 2 && mine ? apart(event.touches) : null;
     };
     const touchMove = (event: TouchEvent) => {
@@ -630,29 +637,31 @@ function BoardFace({ board, width, height }: { readonly board: Board; readonly w
 /** How long a board takes to rise out of the city or sink into it, as a building does while the history plays. */
 const RISE_MS = 420;
 
-/** The boards going while the history is played: kept as they were for as long as they take to sink, unless they come back first. */
+/**
+ * The views going while the history is played: kept as they were for as
+ * long as they take to sink, unless they come back first. Worked out as
+ * the list changes, in the render that changes it (state set from the
+ * last render's list, as React has it), so a view going keeps its element.
+ */
 function useLeavingBoards(boards: readonly Board[], rising: boolean): readonly Board[] {
-  const before = useRef(boards);
-  const gone = useRef(new Map<string, { readonly board: Board; readonly until: number }>());
-  const [, wake] = useReducer((n: number) => n + 1, 0);
-  if (before.current !== boards) {
+  const key = boards.map((board) => board.key).join("\n");
+  const [seen, setSeen] = useState({ key, boards });
+  const [gone, setGone] = useState<ReadonlyMap<string, { readonly board: Board; readonly until: number }>>(new Map());
+  if (seen.key !== key) {
+    setSeen({ key, boards });
     const here = new Set(boards.map((board) => board.key));
-    for (const key of [...gone.current.keys()]) if (here.has(key)) gone.current.delete(key);
-    if (rising) for (const board of before.current) if (!here.has(board.key) && board.where.type !== "record" && !gone.current.has(board.key)) gone.current.set(board.key, { board, until: performance.now() + RISE_MS });
-    before.current = boards;
+    const next = new Map([...gone].filter(([one]) => !here.has(one)));
+    if (rising) for (const board of seen.boards) if (!here.has(board.key) && board.where.type !== "record" && !next.has(board.key)) next.set(board.key, { board, until: performance.now() + RISE_MS });
+    setGone(next);
   }
-  if (!rising && gone.current.size > 0) gone.current.clear();
   useEffect(() => {
-    if (gone.current.size === 0) return;
-    const next = Math.min(...[...gone.current.values()].map((one) => one.until));
-    const timer = window.setTimeout(() => {
-      const now = performance.now();
-      for (const [key, one] of gone.current) if (one.until <= now + 4) gone.current.delete(key);
-      wake();
-    }, Math.max(0, next - performance.now()) + 8);
+    if (!rising && gone.size > 0) return setGone(new Map());
+    if (gone.size === 0) return;
+    const next = Math.min(...[...gone.values()].map((one) => one.until));
+    const timer = window.setTimeout(() => setGone((was) => new Map([...was].filter(([, one]) => one.until > performance.now() + 4))), Math.max(0, next - performance.now()) + 8);
     return () => window.clearTimeout(timer);
-  });
-  return [...gone.current.values()].map((one) => one.board);
+  }, [gone, rising]);
+  return useMemo(() => [...gone.values()].map((one) => one.board), [gone]);
 }
 
 const ONE_PLACE_CSS = `

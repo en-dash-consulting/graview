@@ -1,33 +1,7 @@
 {
-  "at": "2026-11-12T05:44:45.451Z",
+  "at": "2026-11-12T05:52:06.956Z",
   "harness": "verify-one-face",
   "engine": "chromium",
-  "open": 5,
-  "violations": [
-    {
-      "rule": "target-too-small",
-      "detail": "<button data-testid=\"one-place-ring\" aria-label=\"Open Take down the shelves\"> is 16×16 pixels at 1440 wide, within 12 pixels of <button data-testid=\"altitude-stop-0\" aria-label=\"Page: this page alone\"> \"Page\" in [data-testid=\"altitude\"]",
-      "at": "someday"
-    },
-    {
-      "rule": "target-too-small",
-      "detail": "<button data-testid=\"one-place-ring\" aria-label=\"Open Touch up the paint\"> is 16×16 pixels at 1440 wide, within 12 pixels of <button data-testid=\"altitude-stop-1\" aria-label=\"Nearby: you are here\"> \"Nearby\" in [data-testid=\"altitude\"]",
-      "at": "someday"
-    },
-    {
-      "rule": "control-covered",
-      "detail": "<button data-testid=\"one-place-ring\" aria-label=\"Open Take down the shelves\"> is covered by <div aria-label=\"Altitude: nearby, 2 of 3\"> \"PageNearbyCity\" in [data-testid=\"altitude\"] at 1440 wide — a press there lands on the other",
-      "at": "someday"
-    },
-    {
-      "rule": "control-covered",
-      "detail": "<button data-testid=\"one-place-ring\" aria-label=\"Open Touch up the paint\"> is covered by <div aria-label=\"Altitude: nearby, 2 of 3\"> \"PageNearbyCity\" in [data-testid=\"altitude\"] at 1440 wide — a press there lands on the other",
-      "at": "someday"
-    },
-    {
-      "rule": "control-covered",
-      "detail": "<button data-testid=\"district-problems-task\" aria-label=\"2 problems in Tasks\"> \"⚠ 2\" in [data-testid=\"one-place-city\"] in view \"kind:task\" is covered by <button data-testid=\"altitude-stop-1\" aria-label=\"Nearby: this page beside the tasks district\"> \"Nearby\" in [data-testid=\"altitude\"] at 412 wide — a press there lands on the other",
-      "at": "t-deposit?today=2026-09-01"
-    }
-  ]
+  "open": 0,
+  "violations": []
 }
