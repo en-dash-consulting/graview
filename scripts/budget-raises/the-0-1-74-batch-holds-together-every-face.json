@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 100,
+  "gzipped": 150,
+  "note": "Raised when the 0.1.74 batch's three branches were merged (a place drawn for an e-ink device's screen; a field that keeps a time of day and what a seat may run; a bare app that looks designed): each measured alone against main, and together they come to 19 bytes minified and 18 gzipped over their summed raises (3_226_646 / 1_171_511 against 3_226_627 / 1_171_493), held for a few bytes either side and for the spread a split build gzips to from build to build."
+}
