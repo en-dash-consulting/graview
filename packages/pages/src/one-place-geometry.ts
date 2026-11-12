@@ -395,3 +395,39 @@ export function fitCamera(around: Box, area: Box, margin = 16, most = Infinity):
   const s = Math.min(most, room.width / Math.max(1, around.width), room.height / Math.max(1, around.height));
   return cameraPutting({ x: around.x + around.width / 2, y: around.y + around.height / 2 }, { x: room.x + room.width / 2, y: room.y + room.height / 2 }, s);
 }
+
+/*
+ * A LINE KEEPS TO THE CITY. It leaves the page's edge outward — left at a
+ * desk, up on a phone — and runs only through the part of the window the
+ * city is seen in: never over the page, the bar or the control at the foot.
+ * A record whose building is outside that part (under the page, past the
+ * window) is pointed at: the line ends on that part's edge nearest it, with
+ * a marker toward it.
+ */
+export interface Route {
+  /** Where the line ends: the building, or the edge of the city's part nearest it. */
+  readonly to: Point;
+  /** The building, when it is out of the city's part and the line points toward it. */
+  readonly toward: Point | null;
+  /** The curve's one control point, out from the page's edge and inside the city's part. */
+  readonly bend: Point;
+}
+
+const clampTo = (p: Point, box: Box): Point => ({ x: Math.max(box.x, Math.min(box.x + box.width, p.x)), y: Math.max(box.y, Math.min(box.y + box.height, p.y)) });
+
+export function routeLine(from: Point, target: Point, area: Box, phone: boolean): Route {
+  const inArea = target.x >= area.x && target.x <= area.x + area.width && target.y >= area.y && target.y <= area.y + area.height;
+  const to = inArea ? target : clampTo(target, area);
+  const reach = Math.min(80, Math.max(16, Math.hypot(to.x - from.x, to.y - from.y) / 2));
+  // Out along the edge's normal, and never past the city's part: every point of the curve lies between its ends and this one.
+  const bend = clampTo(phone ? { x: from.x, y: from.y - reach } : { x: from.x - reach, y: from.y }, area);
+  return { to, toward: inArea ? null : target, bend };
+}
+
+/** The part of the window the city is seen in beside the page: left of it at a desk, above it on a phone; under the bar, above the control. */
+export function cityArea(page: Box, view: View, control: Box | null, phone: boolean): Box {
+  const top = (view.top ?? 0) + 6;
+  const bottom = Math.min(phone ? page.y - 6 : view.height - 6, control ? control.y - 6 : Infinity);
+  const right = phone ? view.width - 6 : page.x - 6;
+  return { x: 6, y: top, width: Math.max(0, right - 6), height: Math.max(0, bottom - top) };
+}

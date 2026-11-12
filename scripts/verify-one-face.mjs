@@ -42,7 +42,7 @@ const STRIPS = resolve(repoRoot, "docs/one-face");
 
 const report = { at: new Date().toISOString(), engines, app: "apps/todo", checks: {} };
 const errors = [];
-const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [] };
+const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], shortcuts: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [] };
 
 /* ------------------------------------------------------------------ */
 /* In the page                                                         */
@@ -104,16 +104,21 @@ function startRecording(page) {
         .map((g) => {
           const [fx, fy] = (g.getAttribute("data-graview-line-from") ?? "0,0").split(",").map(Number);
           const [tx, ty] = (g.getAttribute("data-graview-line-to") ?? "0,0").split(",").map(Number);
+          const [bx, by] = (g.getAttribute("data-graview-line-bend") ?? "0,0").split(",").map(Number);
           const key = g.getAttribute("data-graview-line");
           const on = g.getAttribute("data-graview-line-on");
           const under = g.hasAttribute("data-graview-line-under");
           const building = on === "building" ? document.querySelector(`[data-graview-building="${CSS.escape(key)}"]`) : null;
-          return { key, on, under, from: { x: fx, y: fy }, to: { x: tx, y: ty }, building: building ? rect(building) : null, opacity: Number(getComputedStyle(g.ownerSVGElement).opacity) };
+          return { key, on, under, from: { x: fx, y: fy }, to: { x: tx, y: ty }, bend: { x: bx, y: by }, building: building ? rect(building) : null, opacity: Number(getComputedStyle(g.ownerSVGElement).opacity) };
         });
       const boards = [...document.querySelectorAll("[data-graview-board]")].map((b) => ({ key: b.getAttribute("data-graview-board"), path: b.getAttribute("data-graview-board-path"), box: rect(b), opacity: Number(b.style.opacity || 0), face: b.firstElementChild ? matrixOf(b.firstElementChild) : null, own: b.hasAttribute("aria-current") }));
       // Read while it is in the window's flow, the page is the window: the box it fills.
       const inFlow = getComputedStyle(now).display === "contents";
+      const bar = document.querySelector('[data-testid="one-place-bar"]')?.getBoundingClientRect();
+      const control = document.querySelector('[data-testid="altitude"] [role="group"]')?.getBoundingClientRect();
       frames.push({
+        bar: bar ? { x: bar.left, y: bar.top, width: bar.width, height: bar.height } : null,
+        control: control ? { x: control.left, y: control.top, width: control.width, height: control.height } : null,
         t: performance.now(),
         same: now.__oneFace === token,
         level: Number(now.getAttribute("data-graview-one-place")),
@@ -181,6 +186,32 @@ function lineMisses(frames, phone) {
     }
   }
   return { worst: Number(worst.toFixed(2)), counted, examples };
+}
+
+
+/** Every point of every line, sampled along its curve in every frame: none inside the page, the bar or the control. */
+function linesInside(frames) {
+  const inside = (p, b, pad = 1) => b && p.x > b.x + pad && p.x < b.x + b.width - pad && p.y > b.y + pad && p.y < b.y + b.height - pad;
+  let crossed = 0;
+  let counted = 0;
+  const examples = [];
+  for (const frame of frames) {
+    if (frame.altitude < 0.6 || frame.altitude > 1.4) continue;
+    for (const line of frame.lines) {
+      if (line.opacity < 0.05 || !line.bend) continue;
+      counted++;
+      for (let i = 1; i < 20; i++) {
+        const t = i / 20;
+        const p = { x: (1 - t) ** 2 * line.from.x + 2 * (1 - t) * t * line.bend.x + t * t * line.to.x, y: (1 - t) ** 2 * line.from.y + 2 * (1 - t) * t * line.bend.y + t * t * line.to.y };
+        if (inside(p, frame.box) || inside(p, frame.bar) || inside(p, frame.control)) {
+          crossed++;
+          if (examples.length < 4) examples.push({ key: line.key, altitude: frame.altitude, at: p });
+          break;
+        }
+      }
+    }
+  }
+  return { counted, crossed, examples };
 }
 
 const press = async (page, selector) => {
@@ -276,7 +307,7 @@ async function theButton(page, where, phone) {
   const corner = (l) => l.at && l.at.left <= 24 && (l.at.bottom <= 24 || (phone && l.level === 1));
   const ok =
     levels.every((l) => corner(l) && sized(l) && lit(l) && words(l)) &&
-    !levels[0].key && levels[1].key && levels[2].key &&
+    levels.every((l) => l.key) &&
     /1 of 3/.test(levels[0].said ?? "") && /3 of 3/.test(levels[2].said ?? "") &&
     foot.room && foot.lastBottom <= foot.fabTop + 1 &&
     // A phone's sheet: the control rides above it, never over it.
@@ -286,7 +317,8 @@ async function theButton(page, where, phone) {
 }
 
 async function sameNode(page, where, phone) {
-  await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
+  // A phone's sheet shows the top of a record's page, where no part names another record: its list's rows do.
+  await page.goto(`${at("todo")}${phone ? "/pages/tasks" : "/pages/tasks/t-deposit"}?${DAY}`, { waitUntil: "load" });
   await ready(page);
   await startRecording(page);
   for (const [button, level] of [["rise", 1], ["rise", 2], ["descend", 1], ["descend", 0]]) {
@@ -297,6 +329,8 @@ async function sameNode(page, where, phone) {
   const moving = frames.filter((f, i) => i > 0 && JSON.stringify(f.box) !== JSON.stringify(frames[i - 1].box));
   const jump = jumps(frames);
   seen.lines.push({ where, ...lineMisses(frames, phone), ok: lineMisses(frames, phone).counted > 0 && lineMisses(frames, phone).worst <= 2 });
+  const crossing = linesInside(frames);
+  seen.crossing.push({ where, path: "/pages/tasks/t-deposit", ...crossing, ok: crossing.counted > 0 && crossing.crossed === 0 });
   const shear = frames.filter((f) => !shearless(f.matrix) || f.boards.some((b) => b.face && !shearless(b.face)));
   seen.shear.push({ where, frames: frames.length, sheared: shear.length, first: shear[0] ? { altitude: shear[0].altitude, matrix: shear[0].matrix } : null, reachedTheCity: frames.some((f) => f.altitude > 1.99), ok: shear.length === 0 && frames.some((f) => f.altitude > 1.99) });
   return { where, frames: frames.length, moved: moving.length, same: frames.every((f) => f.same), jump, ok: frames.length > 30 && frames.every((f) => f.same) && jump.worst <= 0.25 && moving.length > 20 };
@@ -462,7 +496,7 @@ async function chosen(page, where) {
  * City and back — the move starting and ending from it.
  */
 async function resize(page, where, phone) {
-  await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}${phone ? "/pages/tasks" : "/pages/tasks/t-deposit"}?${DAY}`, { waitUntil: "load" });
   await page.evaluate(() => {
     try {
       localStorage.removeItem("graview.one-face.panel.desk");
@@ -491,6 +525,8 @@ async function resize(page, where, phone) {
   const dragged = await panelOf();
   const misses = lineMisses(frames, phone);
   seen.resizeLines.push({ where, ...misses, ok: misses.counted > 0 && misses.worst <= 2 });
+  const crossing = linesInside(frames);
+  seen.crossing.push({ where, path: "resizing", ...crossing, ok: crossing.counted > 0 && crossing.crossed === 0 });
   await page.locator('[data-testid="one-place-panel-edge"]').focus();
   await page.keyboard.press("End");
   await page.waitForTimeout(300);
@@ -561,6 +597,191 @@ async function pinch(page, where) {
   await fingers(sheet, 140, 30);
   highest = Math.max(highest, await watching);
   return { where, onPage, nearby: { before, highest }, ok: onPage.level === 0 && onPage.taken === 0 && onPage.altitude < 0.01 && highest > before + 0.2 };
+}
+
+
+/*
+ * THE RECORD BESIDE THE CITY: at Nearby on a record's page, the record
+ * stands out from what it is linked to — its own colour and lifted — the
+ * Scene draws no lines or words of its own from it into the city, and the
+ * page's "Also connected" list says nothing the page already shows, in the
+ * page's flow rather than over it.
+ */
+async function chosenRecord(page, where) {
+  await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
+  await ready(page);
+  await press(page, '[data-testid="altitude-stop-1"]');
+  await restAt(page, 1);
+  await page.waitForTimeout(500);
+  const read = await page.evaluate(() => {
+    const city = document.querySelector('[data-testid="one-place-city"]');
+    const roofOf = (building) => getComputedStyle(building.querySelector(".graview-iso-roof")).fill;
+    const chosen = city.querySelector('[data-graview-building="t-deposit"]');
+    const others = [...city.querySelectorAll("[data-graview-building]")].filter((b) => b !== chosen);
+    const lift = chosen ? new DOMMatrixReadOnly(getComputedStyle(chosen).transform === "none" ? undefined : getComputedStyle(chosen).transform).f : 0;
+    const words = [...city.querySelectorAll(".graview-record-links, .graview-record-link-said")].filter((el) => el.getBoundingClientRect().width > 0 && getComputedStyle(el).display !== "none").length;
+    const box = document.querySelector("[data-graview-connected-box]");
+    const listed = [...(box?.querySelectorAll("[data-graview-record]") ?? [])].map((b) => b.getAttribute("data-graview-record"));
+    const sheet = document.querySelector("[data-graview-one-place]");
+    const shown = new Set([...sheet.querySelectorAll("[data-graview-pick], [data-graview-record], [data-record]")].filter((el) => !box?.contains(el)).map((el) => el.getAttribute("data-graview-pick") ?? el.getAttribute("data-graview-record") ?? el.getAttribute("data-record")));
+    return { found: Boolean(chosen), roof: chosen ? roofOf(chosen) : null, sameRoof: others.filter((b) => roofOf(b) === (chosen ? roofOf(chosen) : "")).length, lift, words, listed, repeated: listed.filter((id) => shown.has(id)), sticky: box ? getComputedStyle(box).position : null };
+  });
+  seen.standsOut.push({ where, ...read, ok: read.found && read.sameRoof === 0 && read.lift < -2 });
+  seen.noCityWords.push({ where, words: read.words, ok: read.words === 0 });
+  seen.connected.push({ where, listed: read.listed, repeated: read.repeated, position: read.sticky, ok: read.repeated.length === 0 && read.sticky !== "sticky" && read.sticky !== "fixed" });
+  return { where, ok: true };
+}
+
+
+/* Book the van, beside the city: the list it is on stands out of sight, and its line points there from the city's edge. */
+async function offSight(page, where) {
+  await page.goto(`${at("todo")}/pages/tasks/t-book?${DAY}`, { waitUntil: "load" });
+  await ready(page);
+  await startRecording(page);
+  await press(page, '[data-testid="altitude-stop-1"]');
+  await restAt(page, 1);
+  await page.waitForTimeout(400);
+  const frames = await stopRecording(page);
+  const crossing = linesInside(frames);
+  const pointed = frames.at(-1)?.lines.filter((line) => line.under).length ?? 0;
+  seen.crossing.push({ where, path: "/pages/tasks/t-book", pointed, ...crossing, ok: crossing.counted > 0 && crossing.crossed === 0 });
+  return { where, ok: true };
+}
+
+
+/*
+ * THE LEVELS' OWN KEYS: 1, 2 and 3 go to Page, Nearby and City, [ and ]
+ * down and up; each stop names its key, and the keys stand over the stops
+ * while the Key is open. The browser's zoom chords are its own: none is
+ * taken, and no level moves. In a field the keys type.
+ */
+async function shortcuts(page, where) {
+  await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
+  await ready(page);
+  await page.locator("h1").last().click();
+  const moves = [];
+  for (const [key, want] of [["2", 1], ["3", 2], ["[", 1], ["]", 2], ["1", 0]]) {
+    await page.keyboard.press(key);
+    const reached = await restAt(page, want).then(() => true, () => false);
+    moves.push({ key, want, reached });
+  }
+  const named = await page.evaluate(() => [0, 1, 2].map((n) => ({ title: document.querySelector(`[data-testid="altitude-stop-${n}"]`)?.getAttribute("title"), keys: document.querySelector(`[data-testid="altitude-stop-${n}"]`)?.getAttribute("aria-keyshortcuts") })));
+  await press(page, '[data-testid="altitude-stop-1"]');
+  await restAt(page, 1);
+  await press(page, '[data-testid="altitude-key"]');
+  await page.waitForTimeout(200);
+  const caps = await page.evaluate(() => ({ caps: [0, 1, 2].map((n) => document.querySelector(`[data-testid="altitude-keycap-${n}"]`)?.textContent ?? null), listed: document.querySelector('[data-testid="altitude-key-keys"]')?.textContent ?? "" }));
+  await press(page, '[data-testid="altitude-key"]');
+  seen.shortcuts.push({ where, moves, named, caps, ok: moves.every((m) => m.reached) && named.every((n, i) => n.title?.includes(`· ${i + 1}`) && n.keys?.split(" ").includes(String(i + 1))) && caps.caps.join() === "1,2,3" && /1 Page/.test(caps.listed) });
+  // The browser's zoom chords: told to the page, none taken, and the level stays.
+  const zoom = await page.evaluate(() => {
+    const taken = [];
+    for (const [key, mod] of [["=", "ctrlKey"], ["-", "ctrlKey"], ["0", "ctrlKey"], ["=", "metaKey"], ["-", "metaKey"]]) {
+      const event = new KeyboardEvent("keydown", { key, [mod]: true, bubbles: true, cancelable: true });
+      document.body.dispatchEvent(event);
+      if (event.defaultPrevented) taken.push(`${mod}+${key}`);
+    }
+    return taken;
+  });
+  await page.waitForTimeout(400);
+  seen.zoomKeys.push({ where, taken: zoom, level: await levelOf(page), ok: zoom.length === 0 && (await levelOf(page)) === 1 });
+  // In a field, the keys type.
+  await page.locator('[data-testid="one-place-bar"] [data-testid="nav-find"]:visible, [data-testid="one-place-bar"] [data-testid="app-find-open"]:visible').first().click();
+  await page.keyboard.type("123[]");
+  await page.waitForTimeout(500);
+  const typed = await page.evaluate(() => (document.activeElement instanceof HTMLInputElement ? document.activeElement.value : null));
+  seen.inField.push({ where, typed, level: await levelOf(page), ok: typed === "123[]" && (await levelOf(page)) === 1 });
+  return { where, ok: true };
+}
+
+
+/*
+ * THE CONTROL PUT AWAY INTO A SLIDER: one press folds it into a slider that
+ * names only the level you are at; dragged from Page to City the camera
+ * follows the thumb through every altitude between and settles at a level;
+ * and the choice is kept when the page is opened again.
+ */
+async function slider(page, where) {
+  await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
+  await ready(page);
+  const areaOf = () => page.evaluate(() => {
+    const r = document.querySelector('[data-testid="altitude"] [role="group"]').getBoundingClientRect();
+    return { width: r.width, height: r.height, area: r.width * r.height };
+  });
+  const whole = await areaOf();
+  await press(page, '[data-testid="altitude-size"]');
+  await page.waitForTimeout(200);
+  const mini = await areaOf();
+  seen.small.push({ where, whole, mini, share: Number((mini.area / whole.area).toFixed(3)), ok: mini.area <= whole.area / 3 });
+  const folded = await page.evaluate(() => {
+    const el = document.querySelector('[data-testid="altitude-slider"]');
+    const r = el?.getBoundingClientRect();
+    return el ? { role: el.getAttribute("role"), now: el.getAttribute("aria-valuenow"), text: el.getAttribute("aria-valuetext"), word: document.querySelector('[data-testid="altitude-word"]')?.textContent, stops: document.querySelectorAll('[data-testid^="altitude-stop-"]').length, height: r.height } : null;
+  });
+  seen.folds.push({ where, folded, ok: Boolean(folded) && folded.role === "slider" && folded.now === "0" && folded.text === "Page" && folded.word === "Page" && folded.stops === 0 });
+  const thumb = await page.locator('[data-testid="altitude-thumb"]').boundingBox();
+  const trackEnd = await page.evaluate(() => {
+    const t = document.querySelector('[data-testid="altitude-thumb"]').parentElement.getBoundingClientRect();
+    return { x: t.right, y: t.top + t.height / 2 };
+  });
+  const altitudes = [];
+  await page.mouse.move(thumb.x + thumb.width / 2, thumb.y + thumb.height / 2);
+  await page.mouse.down();
+  for (let i = 1; i <= 12; i++) {
+    await page.mouse.move(thumb.x + thumb.width / 2 + ((trackEnd.x - thumb.x - thumb.width / 2) * i) / 12, trackEnd.y);
+    await page.waitForTimeout(60);
+    altitudes.push(await page.evaluate(() => Number(document.querySelector('[data-testid="one-place-city"]')?.getAttribute("data-graview-altitude-now") ?? 0)));
+  }
+  await page.mouse.up();
+  const settled = await restAt(page, 2, 10_000).then(() => true, () => false);
+  const between = altitudes.filter((a) => a > 0.15 && a < 1.85).length;
+  const word = await page.evaluate(() => document.querySelector('[data-testid="altitude-word"]')?.textContent);
+  seen.dragged.push({ where, altitudes: altitudes.map((a) => Number(a.toFixed(2))), between, settled, word, ok: between >= 3 && settled && word === "City" });
+  await page.reload({ waitUntil: "load" });
+  await ready(page);
+  const kept = await page.evaluate(() => Boolean(document.querySelector('[data-testid="altitude-slider"]')));
+  await press(page, '[data-testid="altitude-size"]');
+  seen.keptChoice.push({ where, kept, ok: kept });
+  return { where, ok: true };
+}
+
+
+/*
+ * THE LEGEND AND THE TOOLTIP, WHOLE OR PUT AWAY: in both states the
+ * control's tooltip names the level and its keys on hover and on focus, and
+ * is what a screen reader is told (`aria-describedby`); and the Key opens
+ * the legend, keys and all.
+ */
+async function legend(page, where) {
+  await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
+  await ready(page);
+  const states = [];
+  for (const state of ["whole", "slider"]) {
+    if (state === "slider") await press(page, '[data-testid="altitude-size"]');
+    await page.waitForTimeout(200);
+    const target = state === "whole" ? '[data-testid="altitude-stop-1"]' : '[data-testid="altitude-slider"]';
+    await page.locator(target).hover();
+    await page.waitForTimeout(700);
+    const hovered = await page.evaluate((target) => {
+      const el = document.querySelector(target);
+      const tip = document.getElementById(el?.getAttribute("aria-describedby") ?? "");
+      return { said: tip?.textContent ?? null, shown: tip ? Number(getComputedStyle(tip).opacity) : 0 };
+    }, target);
+    await page.mouse.move(700, 300);
+    await page.locator(target).focus();
+    await page.waitForTimeout(700);
+    const focused = await page.evaluate((target) => {
+      const tip = document.getElementById(document.querySelector(target)?.getAttribute("aria-describedby") ?? "");
+      return tip ? Number(getComputedStyle(tip).opacity) : 0;
+    }, target);
+    await press(page, '[data-testid="altitude-key"]');
+    await page.waitForTimeout(200);
+    const legendText = await page.evaluate(() => document.querySelector('[data-testid="altitude-key-pane"]')?.textContent ?? "");
+    await press(page, '[data-testid="altitude-key"]');
+    states.push({ state, hovered, focused, legend: /1 Page/.test(legendText) && /View/.test(legendText) });
+  }
+  await press(page, '[data-testid="altitude-size"]');
+  return { where, states, ok: states.every((one) => one.hovered.said?.includes("1 Page") && one.hovered.shown > 0.9 && one.focused > 0.9 && one.legend) };
 }
 
 /*
@@ -958,6 +1179,11 @@ try {
       [seen.viewLines, (page, where) => linesOfEveryView(page, where)],
       [seen.risen, (page, where) => history(page, where)],
       [seen.resize, (page, where) => resize(page, where, false)],
+      [seen.chosenRecord, (page, where) => chosenRecord(page, where)],
+      [seen.offSight, (page, where) => offSight(page, where)],
+      [seen.shortcutsRun, (page, where) => shortcuts(page, where)],
+      [seen.sliderRun, (page, where) => slider(page, where)],
+      [seen.legend, (page, where) => legend(page, where)],
     ]);
     const phone = { ...devices[PHONE], ...(engine === "chromium" ? {} : { isMobile: false }) };
     await run(phone, PHONE, [
@@ -968,6 +1194,8 @@ try {
       [seen.bar, (page, where) => bar(page, where)],
       [seen.resize, (page, where) => resize(page, where, true)],
       ...(engine === "chromium" ? [[seen.pinch, (page, where) => pinch(page, where)]] : []),
+      [seen.offSight, (page, where) => offSight(page, where)],
+      [seen.sliderRun, (page, where) => slider(page, where)],
     ]);
     seen.switch.push(await rootIsTheOneFace(browser, { engine, device: "desk 1440×900" }).catch((error) => ({ ok: false, error: String(error?.message ?? error) })));
     if (engine === "chromium") {
@@ -1013,6 +1241,18 @@ try {
   report.checks.linesStayExactWhileResizing = { held: seen.resizeLines, ok: every(seen.resizeLines) };
   report.checks.theChosenWidthIsKeptAcrossLevelMoves = { held: seen.resizeKept, ok: every(seen.resizeKept) };
   report.checks.aPinchOnThePageIsTheBrowsersOwnAndBesideTheCityMovesTheCamera = { held: seen.pinch, ok: every(seen.pinch) };
+  report.checks.atNearbyTheSelectedRecordStandsOutFromItsRelated = { held: seen.standsOut, ok: every(seen.standsOut) };
+  report.checks.atNearbyNoCitySideConnectionLabelsForTheSelectedRecord = { held: seen.noCityWords, ok: every(seen.noCityWords) };
+  report.checks.connectedNeverRepeatsOrCoversThePage = { held: seen.connected, ok: every(seen.connected) };
+  report.checks.noLineCrossesTheNearbyPanel = { held: seen.crossing, ok: every(seen.crossing) };
+  report.checks.levelShortcutsMoveLevelsAndAreShown = { held: seen.shortcuts, ok: every(seen.shortcuts) };
+  report.checks.browserZoomKeysAreNotTaken = { held: seen.zoomKeys, ok: every(seen.zoomKeys) };
+  report.checks.shortcutsDoNotFireInAField = { held: seen.inField, ok: every(seen.inField) };
+  report.checks.theControlCollapsesToASliderNamingTheLevel = { held: seen.folds, ok: every(seen.folds) };
+  report.checks.draggingTheSliderScrubsTheLevels = { held: seen.dragged, ok: every(seen.dragged) };
+  report.checks.theCollapsedControlIsAtMostAThirdOfTheExpanded = { held: seen.small, ok: every(seen.small) };
+  report.checks.theLegendAndTooltipsAreReachableInBothStates = { held: seen.legend, ok: every(seen.legend) };
+  report.checks.theCollapsedChoiceIsKept = { held: seen.keptChoice, ok: every(seen.keptChoice) };
   report.checks.aDuplicateViewIsFound = { held: seen.duplicate, ok: every(seen.duplicate) };
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
   report.passed = Object.values(report.checks).every((check) => check.ok);

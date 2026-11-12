@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { altitudeAt, anchorOf, cameraBetween, cameraPutting, edgeToward, fitCamera, leaveFrom, levelZooms, meetingOf, nearestThatWay, pageBox, panelBox, project, signFeet, signRoom, standingAt, standingCss, zoomAtAltitude, type Box } from "../../src/one-place-geometry.js";
+import { altitudeAt, anchorOf, cityArea, routeLine, cameraBetween, cameraPutting, edgeToward, fitCamera, leaveFrom, levelZooms, meetingOf, nearestThatWay, pageBox, panelBox, project, signFeet, signRoom, standingAt, standingCss, zoomAtAltitude, type Box } from "../../src/one-place-geometry.js";
 
 const desk = { width: 2000, height: 1185, top: 48 };
 const phone = { width: 390, height: 844, top: 96 };
@@ -97,5 +97,25 @@ describe("a page stands on its place in the Scene's city, one altitude from page
       const inside = meet.x > box.x && meet.x < box.x + box.width && meet.y > box.y && meet.y < box.y + box.height;
       expect(inside).toBe(false);
     }
+  });
+
+  it("keeps a line to the city: never over the page, the bar or the control, pointing at a building out of sight from the city's edge", () => {
+    const page = panelBox(desk);
+    const control = { x: 16, y: desk.height - 48, width: 220, height: 32 };
+    const area = cityArea(page, desk, control, false);
+    const from = { x: page.x, y: 900 };
+    for (const target of [{ x: 300, y: 500 }, { x: page.x + 100, y: -200 }, { x: -300, y: 400 }, { x: 400, y: desk.height + 300 }, { x: page.x + 50, y: 400 }]) {
+      const route = routeLine(from, target, area, false);
+      for (let i = 1; i < 20; i++) {
+        const t = i / 20;
+        const x = (1 - t) ** 2 * from.x + 2 * (1 - t) * t * route.bend.x + t * t * route.to.x;
+        const y = (1 - t) ** 2 * from.y + 2 * (1 - t) * t * route.bend.y + t * t * route.to.y;
+        expect(x).toBeLessThanOrEqual(page.x);
+        expect(y).toBeGreaterThanOrEqual(desk.top);
+        expect(x > control.x && x < control.x + control.width && y > control.y && y < control.y + control.height).toBe(false);
+      }
+    }
+    expect(routeLine(from, { x: page.x + 100, y: -200 }, area, false).toward).not.toBeNull();
+    expect(routeLine(from, { x: 300, y: 500 }, area, false).toward).toBeNull();
   });
 });

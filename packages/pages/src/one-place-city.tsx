@@ -3,7 +3,7 @@ import { EMPTY_VIEW, toUrl, withOverview, type ViewState } from "@graview/layout
 import { Scene, type SceneCamera } from "@graview/react";
 import { useGraview, useNavigation } from "@graview/react/provider";
 import { useEffect, useMemo, useRef } from "react";
-import { aimAt, altitudeAt, anchorOf, BOARD_ASPECT, boardWidthFor, fitCamera, SIGN_GAP, SIGN_POST, signFeet, signRoom, cameraBetween, cameraPutting, CITY, edgeToward, footOf, leaveFrom, LEVEL_LIVE, levelZooms, PAGE, pageBox, PANEL, panelBox, PHONE, project, restingLevel, SHEET_ORIGIN, standingAt, standingCss, unionOf, type Box, type Live, type PageWhere, type Point } from "./one-place-geometry.js";
+import { aimAt, altitudeAt, anchorOf, BOARD_ASPECT, boardWidthFor, fitCamera, SIGN_GAP, SIGN_POST, signFeet, signRoom, cameraBetween, cameraPutting, CITY, cityArea, footOf, leaveFrom, routeLine, LEVEL_LIVE, levelZooms, PAGE, pageBox, PANEL, panelBox, PHONE, project, restingLevel, SHEET_ORIGIN, standingAt, standingCss, unionOf, type Box, type Live, type PageWhere, type Point } from "./one-place-geometry.js";
 import type { OnePlaceCityProps } from "./one-place.js";
 
 /*
@@ -44,6 +44,23 @@ import type { OnePlaceCityProps } from "./one-place.js";
 const RECORD_PARTS = "[data-graview-pick], [data-graview-record], [data-record]";
 const recordShownBy = (element: Element): string | null => element.getAttribute("data-graview-pick") ?? element.getAttribute("data-graview-record") ?? element.getAttribute("data-record");
 
+/*
+ * THE CITY ON THIS FACE. The Scene's own zoom and its signs past the edge
+ * are not this face's: the control at the foot and the camera are. Nor are
+ * the Scene's lines and words from a chosen record to what it is linked
+ * to: the page beside the city says those, and its lines leave from where
+ * it says them. The record the page is about stands out from the rest —
+ * lifted off its plot and lit in the accent — while what it is linked to
+ * stays lit as the Scene lights it, and everything else is quiet.
+ */
+const CITY_CSS = `
+[data-testid="one-place-city"] .graview-zoom, [data-testid="one-place-city"] .graview-edge-sign, [data-testid="one-place-city"] .graview-record-links { display: none; }
+[data-testid="one-place-city"] .graview-building[data-graview-here] { transform: translateY(-7px); }
+[data-testid="one-place-city"] .graview-building[data-graview-here] .graview-iso-roof { fill: var(--graview-accent); }
+[data-testid="one-place-city"] .graview-building[data-graview-here] .graview-iso-left { fill: color-mix(in srgb, var(--graview-accent) 55%, black); }
+[data-testid="one-place-city"] .graview-building[data-graview-here] .graview-iso-right { fill: color-mix(in srgb, var(--graview-accent) 72%, black); }
+`;
+
 const zoomNowOf = (cam: SceneCamera): string => cam.zoom().toFixed(4);
 
 /** The most lines drawn from a page's parts: past this a list's lines are a hatch. */
@@ -77,6 +94,8 @@ interface Drawn {
   readonly to: Point;
   /** The line ends at the page's edge, the building under the page: the arrow points this way. */
   readonly under: Point | null;
+  /** The curve's control point, out from the page's edge, inside the city's part. */
+  readonly bend: Point;
   readonly on: string;
   readonly target: { readonly type: "record"; readonly id: string } | { readonly type: "list"; readonly kind: string };
   readonly label: string;
@@ -455,8 +474,9 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         lastPlace = placeKey;
       }
       if (ready && calm && anchor && asking.scrub !== 0 && !settling) {
-        const delta = asking.scrub;
-        asking.scrub = 0;
+        // As far as the hand has gone, but no more than a step a frame: a hand ahead of the camera is caught up with, never jumped to.
+        const delta = Math.max(-0.12, Math.min(0.12, asking.scrub));
+        asking.scrub -= delta;
         move = null;
         const target = Math.max(PAGE, Math.min(CITY, altitude + delta));
         // The cameras of the levels either side, the one rested at as it is (a pan the person made is kept).
@@ -631,6 +651,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       const found: Drawn[] = [];
       if (shown > 0.01) {
         const pageRect = boxOf(plane.getBoundingClientRect());
+        const controlRect = fab.current?.querySelector('[data-graview-one-face-dock]')?.getBoundingClientRect();
+        const area = cityArea(pageRect, at.view, controlRect ? boxOf(controlRect) : null, phone);
         const subjectId = at.where.type === "record" ? at.where.id : null;
         const taken = new Set<string>();
         // A district the Scene draws in this frame: one it has let go of off the window has no end to give.
@@ -679,8 +701,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           const end = endOf(target);
           if (!end) continue;
           taken.add(key);
-          const under = edgeToward(end.at, pageRect);
-          found.push({ key, from, to: under ?? end.at, under: under ? end.at : null, on: end.on, target, label: labelFor(target) });
+          const route = routeLine(from, end.at, area, phone);
+          found.push({ key, from, to: route.to, bend: route.bend, under: route.toward, on: end.on, target, label: labelFor(target) });
         }
       }
       draw(found, shown);
@@ -691,6 +713,11 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         lastReported = said;
         at.onAltitude({ level: move ? move.toAltitude : restingLevel(a), away, moving: move !== null || asking.scrubbing });
       }
+      /* The record the page is about, marked where it stands: the one building that is "you are here". */
+      const hereId = at.where.type === "record" ? at.where.id : null;
+      const marked = holder.querySelector("[data-graview-here]");
+      if (marked && marked.getAttribute("data-graview-building") !== hereId) marked.removeAttribute("data-graview-here");
+      if (hereId && (!marked || marked.getAttribute("data-graview-building") !== hereId)) holder.querySelector(`[data-graview-building="${CSS.escape(hereId)}"]`)?.setAttribute("data-graview-here", "");
       holder.setAttribute("data-graview-altitude-now", a.toFixed(3));
       // The camera's zoom as painted in this frame, for a reader of the move (the harness holds it to going one way).
       holder.setAttribute("data-graview-camera-zoom", (zoomNow * painted.s).toFixed(4));
@@ -698,7 +725,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
 
     /* The overlay, written in the frame it is measured in: no React state per frame. */
     const draw = (found: readonly Drawn[], opacity: number) => {
-      const control = fab.current?.querySelector('[role="group"]')?.getBoundingClientRect() ?? null;
+      const control = fab.current?.querySelector('[data-graview-one-face-dock]')?.getBoundingClientRect() ?? null;
       const svg = overlay.current;
       const ringLayer = rings.current;
       if (!svg || !ringLayer) return;
@@ -741,12 +768,13 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           lines.set(line.key, drawn);
         }
         const { from, to } = line;
-        const bend = { x: (from.x + to.x) / 2, y: Math.min(from.y, to.y) - 24 };
+        const bend = line.bend;
         drawn.g.setAttribute("data-graview-line", line.key);
         drawn.g.setAttribute("data-graview-line-on", line.on);
         drawn.g.toggleAttribute("data-graview-line-under", line.under !== null);
         drawn.g.setAttribute("data-graview-line-from", `${from.x.toFixed(2)},${from.y.toFixed(2)}`);
         drawn.g.setAttribute("data-graview-line-to", `${to.x.toFixed(2)},${to.y.toFixed(2)}`);
+        drawn.g.setAttribute("data-graview-line-bend", `${bend.x.toFixed(2)},${bend.y.toFixed(2)}`);
         if (line.under) drawn.g.setAttribute("data-graview-line-toward", `${line.under.x.toFixed(2)},${line.under.y.toFixed(2)}`);
         else drawn.g.removeAttribute("data-graview-line-toward");
         drawn.path.setAttribute("d", `M${from.x.toFixed(2)},${from.y.toFixed(2)} Q${bend.x.toFixed(2)},${bend.y.toFixed(2)} ${to.x.toFixed(2)},${to.y.toFixed(2)}`);
@@ -759,7 +787,10 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           const left = { x: to.x + Math.cos(angle + 2.4) * 6, y: to.y + Math.sin(angle + 2.4) * 6 };
           const right = { x: to.x + Math.cos(angle - 2.4) * 6, y: to.y + Math.sin(angle - 2.4) * 6 };
           drawn.arrow.setAttribute("d", `M${tip.x.toFixed(2)},${tip.y.toFixed(2)} L${left.x.toFixed(2)},${left.y.toFixed(2)} L${right.x.toFixed(2)},${right.y.toFixed(2)} Z`);
-          drawn.ring.style.display = "none";
+          // The marker toward a building out of sight is the way to it: its name said, a press flies there.
+          drawn.ring.style.display = "";
+          drawn.ring.style.left = `${(to.x - 8).toFixed(2)}px`;
+          drawn.ring.style.top = `${(to.y - 8).toFixed(2)}px`;
         } else {
           drawn.arrow.setAttribute("d", "");
           // An end under the bar, or under the control at the foot, is not offered: they stand over it.
@@ -835,7 +866,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       >
         {/* One set of lines on this face: nothing is chosen on the Scene, so it draws no lines of its own from a choice and no outline of one. */}
         {/* The Scene's own zoom and its signs past the edge are not this face's: the control at the foot and the camera are. */}
-        <style>{`[data-testid="one-place-city"] .graview-zoom, [data-testid="one-place-city"] .graview-edge-sign { display: none; }`}</style>
+        <style>{CITY_CSS}</style>
         <Scene renderer="dom" blur={false} animate={false} camera={camera} options={sceneOptions} style={{ width: "100%", height: "100%" }} />
       </div>
       <svg ref={overlay} aria-hidden="true" data-testid="one-place-lines" width={view.width} height={view.height} style={{ position: "fixed", left: 0, top: 0, zIndex: ONE_FACE_LAYERS.marks, pointerEvents: "none", overflow: "visible", opacity: 0 }} />

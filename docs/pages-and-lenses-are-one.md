@@ -124,8 +124,8 @@ and held by `pnpm verify one-face` (`aDuplicateViewIsFound`).
 
 ## What Graview Cloud changes
 
-1. Mount the routed face with `sceneUnderPages: true` (and `views`) where it
-   hosts an app as the page itself. Stop drawing the Scene/Pages switch: pass
+1. Nothing to set where it hosts an app as the page itself: a routed face
+   that owns its page and has `views` is the one face. Stop drawing the Scene/Pages switch: pass
    `bar: { faces: false }` to `@graview/embed` until the embed draws the one
    face in a box (below).
 2. Run `upgradeDocument` on read (it already does) once format 2 ships. The
@@ -139,7 +139,7 @@ and held by `pnpm verify one-face` (`aDuplicateViewIsFound`).
 
 ## What breaks for a host
 
-- `PagesApp` with `sceneUnderPages`: the bar has no Scene/Pages switch, no
+- A `PagesApp` that owns its page and has `views`: the bar has no Scene/Pages switch, no
   "In the scene" link, and no Up on the bar. The page's bar is portaled to a
   fixed slot at the window's top. A `pages-design` shell that measured the
   bar inside its own flow sees a spacer of the bar's height in its place.
@@ -156,10 +156,10 @@ and held by `pnpm verify one-face` (`aDuplicateViewIsFound`).
 
 **An author on the dev kit** (`graview create`, a code declaration):
 
-1. Turn on the one face where the routed face owns the page:
-   `PagesApp` with `views` and `sceneUnderPages: true`. If your app also
-   serves the Scene's own face at `/`, send people to `/pages/places/overview`
-   (the examples do this). Drop any link of your own to "the scene".
+1. Nothing to turn on: a `PagesApp` that owns its page and is handed `views`
+   is the one face. If your app also serves the Scene's own face at `/`, send
+   people to `/pages/places/overview` (the examples do this). Drop any link
+   of your own to "the scene".
 2. Run `graview check`. A `view-duplicates-another` warning names a view
    that shows only what a kind's list page already shows, or two views of
    the same picture, and says which to keep. In a code declaration, delete the
@@ -167,16 +167,67 @@ and held by `pnpm verify one-face` (`aDuplicateViewIsFound`).
    document.
 3. Nothing to migrate in your data. The views are declaration, not records.
 
-**Graview Cloud** (documents, hosted for strangers):
+**Graview Cloud** (documents, hosted for strangers), staged one app at a time:
 
-1. Mount the routed face with `sceneUnderPages: true`. Under `@graview/embed`,
-   say `bar: { faces: false }` until the embed draws the one face in its box.
-2. Show `view-duplicates-another` with its `edits` as a one-press fix.
-3. When the format upgrade ships (format 2), `upgradeDocument` moves each
-   stored document for you: titled lenses become views, duplicates fold,
-   and `pages.scene` / `pages.pages` go. Record the version it returns as
-   authored by the system, as Cloud does for any upgrade. Nothing else is
-   rewritten by hand.
+0.2.0 changes no stored format. An app's document as it is today compiles,
+draws on the one face, and runs beside an app already moved. Nothing is
+rewritten when a document is read.
+
+1. **Read, as today.** `upgradeDocument(stored)` (from
+   `@graview/core/document`) runs on every read, in memory. In 0.2.0 it has
+   no format step, so it returns the document as stored. It is idempotent:
+   reading it twice gives the same document. It is not written back.
+2. **See what moving an app would do.** `compileDocument(document).findings`
+   includes `check:view-duplicates-another`, a **warning** that never fails
+   the document. Each finding carries `edits` (for example
+   `[{ "op": "remove-lens", "title": "Root causes" }]`) and says which view
+   stays. A note without `edits` means the arrangement names the duplicate;
+   point `pages.first`/`pages.primary` at the list first.
+3. **Move one app, when staff choose.** Collect the edits:
+   `findings.filter((f) => f.code === "check:view-duplicates-another").flatMap((f) => f.edits ?? [])`.
+   Then apply them through the host's own change path: Cloud's
+   `apply_change`, or `editDocument(document, edits)` and store the result.
+   Record it as a new version authored by the system ("one view per
+   picture, 0.2"). Applying it again finds nothing and changes nothing.
+4. **Take it back** by reverting that version in the app's history, as for
+   any change. Records are untouched either way.
+5. **Leave the rest** as they are until chosen. A moved app and an unmoved
+   app run on the same host, on the same 0.2.0 packages.
+
+When format 2 ships (a later version), step 3 becomes `UPGRADES[1]` in
+`upgradeDocument`, so a host gets the same result by storing what a read
+returned. The staged rule stays the same: upgraded in memory on read, and
+persisted per app by an explicit host call.
+
+Held by
+`packages/core/tests/document/a-staged-move-to-one-view-per-picture.test.ts`:
+an unmoved app compiles with the folds as warnings, a moved and an unmoved
+app compile side by side, and reading a document twice changes nothing.
+
+## Deferred past 0.2.0 (named follow-ups)
+
+- **embed-one-face-in-a-box**: the one face drawn inside a host's element.
+  It positions against the window today, so `@graview/embed` draws the plain
+  routed face with no switch, and Cloud's hosted pages get no city yet.
+- **close-up-live-views**: a view up close at the City as its live,
+  interactive page.
+- **format-2**: `views.items` in the stored format, done by `UPGRADES[1]`.
+- **scene-harnesses-onto-the-one-face**: the Scene-face harnesses
+  (navigation, scene-hands, drive-in, chrome, menu, seat and others) still
+  drive the Scene's own face at the root. A person at the root of Things or
+  the discography is sent to the one face; a driven browser is not.
+- **district-views-menu**: the district label's legacy menu of views,
+  routed through "choose a view".
+- **worker-view-lines**: lines from a worker view's `data-record` parts,
+  reported by the guest host through the frame.
+- **custom-view fixtures** through the harness: a worker view, a product
+  React view, and a pages-design app.
+- **calendar-labels**: the calendar's time labels, and building names that
+  collide at Nearby.
+- **crowded-cities**: the City with many views (rota, the discography) on a
+  phone; one phone view stands nearer the wrong district.
+- **find-enter**: Find's Enter lands on its results page at Nearby, not on
+  the record.
 
 ## Not done in this pass
 
