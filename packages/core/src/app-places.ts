@@ -353,7 +353,7 @@ function kindsOfLens(lens: NonNullable<GraviewApp["lenses"]>[number]): readonly 
 
 /** What a lens draws, said once: two lenses with the same words draw the same picture. */
 const pictureOf = (lens: NonNullable<GraviewApp["lenses"]>[number]): string =>
-  canonical({ name: lens.name, kinds: [...kindsOfLens(lens)].sort(), bindings: lens.bindings ?? {}, options: lens.options ?? {}, arrangedBy: lens.arrangedBy ?? null, binds: bindsOf(lens) });
+  canonical({ name: lens.name, kinds: [...kindsOfLens(lens)].sort(), bindings: lens.bindings ?? {}, options: lens.options ?? {}, arrangedBy: lens.arrangedBy ?? null, binds: bindsOf(lens), roles: lens.requiredRoles ?? [], create: lens.create ?? true, export: lens.export ?? true });
 
 /** The kind whose whole list a blocks lens is and nothing more — one block, `all('<kind>')` — or null. */
 function onlyAKindsList(lens: NonNullable<GraviewApp["lenses"]>[number], kinds: readonly string[]): string | null {
@@ -371,16 +371,20 @@ function onlyAKindsList(lens: NonNullable<GraviewApp["lenses"]>[number], kinds: 
 export function duplicateViewFindings<S extends AnySchema>(app: GraviewApp<S>): readonly PlaceFinding[] {
   const lenses = app.lenses ?? [];
   const kinds = app.schema.kinds as readonly string[];
+  // Named by the arrangement as the bar and the opening read it: by title, by its address word, or as a host's view.
   const named = (title: string) => {
-    const said = title.trim().toLowerCase();
-    return (app.pages?.primary ?? []).some((one) => one.trim().toLowerCase() === said) || app.pages?.first?.trim().toLowerCase() === said;
+    const said = new Set([title.trim().toLowerCase(), placeSlug(title), `view:${placeSlug(title)}`]);
+    return [...(app.pages?.primary ?? []), ...(app.pages?.first ? [app.pages.first] : [])].some((one) => said.has(one.trim().toLowerCase()) || said.has(placeSlug(one)));
   };
+  const hiddenKinds = new Set(app.pages?.hide ?? []);
   const findings: PlaceFinding[] = [];
   const seen = new Map<string, number>();
   lenses.forEach((lens, index) => {
     const title = typeof lens.title === "string" ? lens.title.trim() : "";
-    if (!title) return;
-    const list = onlyAKindsList(lens, kinds);
+    // Untitled is no place; hidden is no place on the bar; one for some seats only is not the list every seat has.
+    if (!title || lens.hidden === true) return;
+    const list = lens.requiredRoles?.length || lens.create === false ? null : onlyAKindsList(lens, kinds);
+    if (list && hiddenKinds.has(list)) return;
     if (list) {
       const plural = pluralLabel(app.schema, list);
       // Named by the arrangement, the place is not removed out from under it: the arrangement is pointed at the list first.

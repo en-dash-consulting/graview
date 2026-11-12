@@ -195,15 +195,16 @@ async function noSwitch(page, where) {
   await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
   await ready(page);
   await page.locator('[data-testid="app-menu-open"]').first().click();
-  await page.waitForSelector('[data-testid="app-menu"]:not([hidden])', { timeout: 5_000 }).catch(() => {});
+  const opened = await page.waitForSelector('[data-testid="app-menu"]:not([hidden])', { timeout: 5_000 }).then(() => true, () => false);
   await page.waitForTimeout(400);
   const menu = await page.evaluate(() => ({
     faces: document.querySelectorAll('[data-testid="app-faces"], [data-testid^="app-face-"]').length,
     sceneLink: [...document.querySelectorAll("a")].filter((a) => /in the scene/i.test(a.textContent ?? "") && a.offsetParent !== null).length,
-    barUp: document.querySelectorAll('[data-testid="up"]').length,
+    // No altitude control on the bar: the one at the foot is the way up.
+    barUp: document.querySelectorAll('[data-testid="one-place-bar"] [data-testid*="altitude"], [data-testid="one-place-bar"] [data-testid="up"]').length,
   }));
   await page.keyboard.press("Escape");
-  return { where, ...menu, ok: menu.faces === 0 && menu.sceneLink === 0 && menu.barUp === 0 };
+  return { where, opened, ...menu, ok: opened && menu.faces === 0 && menu.sceneLink === 0 && menu.barUp === 0 };
 }
 
 async function rootIsTheOneFace(browser, where) {
@@ -356,7 +357,8 @@ async function views(page, where) {
   // A kind's list stands by that kind's district.
   const kindOf = { "/tasks": "task", "/lists": "list", "/reasons": "reason", "/rules": "rule" };
   const astray = seenNow.signs.filter((sign) => kindOf[sign.path] && seenNow.signs && !(sign.near ?? "").endsWith(kindOf[sign.path])).map((sign) => `${sign.label} by ${sign.near}`);
-  seen.stand.push({ where, astray, ok: astray.length === 0 });
+  const checked = seenNow.signs.filter((sign) => kindOf[sign.path]).length;
+  seen.stand.push({ where, checked, astray, ok: checked > 0 && astray.length === 0 });
   seen.cover.push({ where, covers: seenNow.covers, onEachOther: seenNow.onEachOther, ok: seenNow.covers.length === 0 && seenNow.onEachOther.length === 0 });
   seen.inside.push({ where, outside: seenNow.outside, ok: seenNow.outside.length === 0 });
   seen.names.push({ where, names: seenNow.names.map((n) => ({ kind: n.kind, covered: n.covered, size: n.size })), ok: seenNow.names.length > 0 && seenNow.names.every((n) => n.covered.length === 0 && n.size >= 11) });
@@ -591,7 +593,7 @@ async function noOvershoot(page, where) {
     const from = await levelOf(page);
     if (how === "keys") await page.keyboard.press(to > from ? "Alt+ArrowUp" : "Alt+ArrowDown");
     else await press(page, `[data-testid="altitude-stop-${to}"]`);
-    await restAt(page, to).catch(() => {});
+    const arrived = await restAt(page, to).then(() => true, () => false);
     await page.waitForTimeout(500);
     const frames = await page.evaluate(() => {
       window.__zoomStop = true;
@@ -610,9 +612,10 @@ async function noOvershoot(page, where) {
       }
       return worst;
     };
-    moves.push({ from, to, how, frames: frames.length, zoomBack: Number(reversal(frames.map((f) => f.zoom), (v) => v * 0.005).toFixed(4)), widthBack: Number(reversal(frames.map((f) => f.width), () => 1).toFixed(2)) });
+    const moved = frames.filter((f, i) => i > 0 && (f.zoom !== frames[i - 1].zoom || f.width !== frames[i - 1].width)).length;
+    moves.push({ from, to, how, arrived, moved, frames: frames.length, zoomBack: Number(reversal(frames.map((f) => f.zoom), (v) => v * 0.005).toFixed(4)), widthBack: Number(reversal(frames.map((f) => f.width), () => 1).toFixed(2)) });
   }
-  return { where, moves, ok: moves.every((move) => move.zoomBack === 0 && move.widthBack === 0) };
+  return { where, moves, ok: moves.every((move) => move.arrived && move.moved >= 5 && move.zoomBack === 0 && move.widthBack === 0) };
 }
 
 /*
@@ -687,7 +690,8 @@ async function linesOfEveryView(page, where) {
       return { shown: [...shown], lines: [...lines] };
     });
     const missing = seenHere.shown.filter((id) => !seenHere.lines.includes(id)).slice(0, 40 - 0);
-    results.push({ path, shown: seenHere.shown.length, lines: seenHere.lines.length, missing: missing.slice(0, 8), ok: missing.length === 0 || seenHere.lines.length >= 40 });
+    results.push({ path, shown: seenHere.shown.length, lines: seenHere.lines.length, missing: missing.slice(0, 8), // At most forty lines are drawn: past that, the forty drawn are the claim.
+      ok: (path.endsWith("what-is-left") || seenHere.shown.length > 0) && (missing.length === 0 || (seenHere.lines.length >= 40 && seenHere.shown.length > 40)) });
   }
   return { where, results, ok: results.every((one) => one.ok) && results.some((one) => one.shown > 0) };
 }

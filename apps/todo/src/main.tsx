@@ -26,11 +26,13 @@ import { todoViews } from "./ui/views.js";
  * from a page, so a person who opens the app's root is sent to that city —
  * `/pages/places/overview`, which stands over the home — rather than to the
  * Scene's face of its own, with its switch and its record "drive-in".
- * `?scene=off` keeps the faces as they were. A driven browser still gets
+ * `?scene=off` keeps the faces as they were (and the pages' way to the
+ * Scene carries it), and a link to a stop in the Scene (`/#focus=…`) is
+ * left where it points. A driven browser still gets
  * the Scene's face here: the harnesses of the Scene's own hand drive it
  * until they are moved onto the one face.
  */
-if (!window.location.pathname.startsWith("/pages") && !navigator.webdriver && new URLSearchParams(window.location.search).get("scene") !== "off") {
+if (!window.location.pathname.startsWith("/pages") && !window.location.hash && !navigator.webdriver && new URLSearchParams(window.location.search).get("scene") !== "off") {
   window.location.replace(`/pages/places/overview${window.location.search}`);
   await new Promise(() => undefined);
 }
@@ -232,7 +234,8 @@ if (window.location.pathname.startsWith("/pages")) {
         store: shown.store as typeof opened.store,
         brand: thingsBrand,
         signature: true,
-        sceneHref: "/",
+        // `?scene=off` reaches the Scene's own face from the pages it turned off.
+        sceneHref: new URLSearchParams(window.location.search).get("scene") === "off" ? "/?scene=off" : "/",
         /*
          * PAGES AND THE SCENE ARE ONE PLACE (a prototype): the Scene's own
          * city under every page, one camera: Up narrows the page into a

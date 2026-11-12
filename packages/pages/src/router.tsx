@@ -452,7 +452,7 @@ function GoesByAddress<S extends AnySchema>({ context, children }: { readonly co
       if (!context.embedded) window.location.assign(context.sceneHref ?? "/");
     };
     const overviewHref = (): string | undefined => {
-      if (face.current) return hostHref === false ? undefined : `${base}${OVERVIEW_PATH}`;
+      if (face.current) return hostHref === false ? undefined : hostHref ? hostHref(OVERVIEW_PATH) : `${base}${OVERVIEW_PATH}`;
       if (context.overview) return hostHref === false ? undefined : hostHref ? hostHref(OVERVIEW_PATH) : `${base}${OVERVIEW_PATH}`;
       return context.embedded ? undefined : (context.sceneHref ?? "/");
     };
@@ -609,7 +609,8 @@ export function PagesRoutes<S extends AnySchema>({
           * place that took the address (`pages-overview-taken` warns of it)
           * keeps its page here.
           */}
-        {placesOf(inside).some((place) => place.as === OVERVIEW_SLUG) ? null : <Route path={OVERVIEW_PATH} element={<Navigate to="/" replace />} />}
+        {/* On the one face the overview is the city over the home: the face takes its address there itself (`one-place.tsx`), keeping what it carries. */}
+        {placesOf(inside).some((place) => place.as === OVERVIEW_SLUG) || (inside.sceneUnderPages && inside.views) ? null : <Route path={OVERVIEW_PATH} element={<Navigate to="/" replace />} />}
         <Route path="/places/:as" element={<DefaultPlacePage context={inside} />} />
         <Route path="/:slug" element={<KindSwitch context={inside} registry={registry} page="list" />} />
         <Route

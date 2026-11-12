@@ -18,11 +18,13 @@ import { openingSeat, SEATS } from "./ui/seats.js";
  * from a page, so a person who opens the app's root is sent to that city —
  * `/pages/places/overview`, which stands over the home — rather than to the
  * Scene's face of its own, with its switch and its record "drive-in".
- * `?scene=off` keeps the faces as they were. A driven browser still gets
+ * `?scene=off` keeps the faces as they were (and the pages' way to the
+ * Scene carries it), and a link to a stop in the Scene (`/#focus=…`) is
+ * left where it points. A driven browser still gets
  * the Scene's face here: the harnesses of the Scene's own hand drive it
  * until they are moved onto the one face.
  */
-if (!window.location.pathname.startsWith("/pages") && !navigator.webdriver && new URLSearchParams(window.location.search).get("scene") !== "off") {
+if (!window.location.pathname.startsWith("/pages") && !window.location.hash && !navigator.webdriver && new URLSearchParams(window.location.search).get("scene") !== "off") {
   window.location.replace(`/pages/places/overview${window.location.search}`);
   await new Promise(() => undefined);
 }
@@ -125,7 +127,7 @@ if (window.location.pathname.startsWith("/pages")) {
         store: opened.store,
         brand: discographyBrand,
         signature: true,
-        sceneHref: "/",
+        sceneHref: new URLSearchParams(window.location.search).get("scene") === "off" ? "/?scene=off" : "/",
         // Pages and the Scene are one place (a prototype): see apps/todo/src/main.tsx. `?scene=off` reads the pages as they were.
         sceneUnderPages: new URLSearchParams(window.location.search).get("scene") !== "off",
         remembers: true,

@@ -5,7 +5,7 @@ import { lazyPart, useGraview, usePlayback } from "@graview/react/provider";
 import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type RefObject } from "react";
 import { useHref, useLocation, useNavigate } from "react-router";
 import { recordFacts } from "./facts.js";
-import type { PageContext } from "./page-context.js";
+import { useStoreTick, type PageContext } from "./page-context.js";
 import { pluralOf } from "./page-typography.js";
 import { kindOfSlug, recordPath, pluralSlug } from "./registry.js";
 import { OneFaceContext, type OneFace } from "./one-place-control.js";
@@ -160,6 +160,8 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
   const { views } = useGraview<S>();
   const store = context.store as unknown as PageContext<AnySchema>["store"];
   const schema = store.schema as AnySchema;
+  // The views' signs say what their records are now: drawn again as the store changes.
+  const tick = useStoreTick(store);
   const location = useLocation();
   const navigate = useNavigate();
   const base = useHref("/").replace(/\/$/, "");
@@ -195,18 +197,28 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
       return undefined;
     }
   });
-  const sizePanel = useCallback(
-    (to: number | undefined) => {
-      setPanelSize(to);
-      try {
-        if (to === undefined) window.localStorage.removeItem(panelKey);
-        else window.localStorage.setItem(panelKey, String(Math.round(to * 1000) / 1000));
-      } catch {
-        // A browser that keeps nothing keeps the size for this visit.
-      }
-    },
-    [panelKey],
-  );
+  // Across the phone's width the size is the other device's: read again for it.
+  useEffect(() => {
+    try {
+      const kept = window.localStorage.getItem(panelKey);
+      setPanelSize(kept === null ? undefined : Number(kept) || undefined);
+    } catch {
+      setPanelSize(undefined);
+    }
+  }, [panelKey]);
+  /** The size, now; kept in this browser once the hand lets go (`keepPanel`), not on every move. */
+  const sizePanel = useCallback((to: number | undefined) => setPanelSize(to), []);
+  const panelHeld = useRef(panelSize);
+  panelHeld.current = panelSize;
+  const keepPanel = useCallback(() => {
+    try {
+      const to = panelHeld.current;
+      if (to === undefined) window.localStorage.removeItem(panelKey);
+      else window.localStorage.setItem(panelKey, String(Math.round(to * 1000) / 1000));
+    } catch {
+      // A browser that keeps nothing keeps the size for this visit.
+    }
+  }, [panelKey]);
   const view = useMemo(() => ({ ...size, top: barHeight, ...(panelSize !== undefined ? { panel: panelSize } : {}) }), [size, barHeight, panelSize]);
   const motion = useRef<Motion>({ level: where.type === "overview" ? CITY : null, scrub: 0, scrubbing: false, held: false, resizing: false });
   // What the camera says: the level rested at or headed for, and whether the page is out of the window.
@@ -249,7 +261,8 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
       out.push({ key: `record:${where.id}`, label: node ? labelOf(store.schema.tryDefinition(node.kind as string), node as never) : where.id, path: recordPath(schema, where.kind, where.id), eyebrow: "page", lines: [], kind: where.kind, where });
     }
     return out;
-  }, [store, context.principal, context.views, schema, has, placeKinds, where]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store, context.principal, context.views, schema, has, placeKinds, where, tick]);
   const current = boardKeyOf(where, boards);
   /* While the history is played, a view that comes into being rises out of the city, and one that goes sinks back into it. */
   const rising = Boolean(usePlayback()?.open) && !lessMotion();
@@ -378,13 +391,13 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
   const onGround = useCallback(() => {
     if (latest.current.now.level === CITY && !latest.current.now.moving) latest.current.deselect();
   }, []);
-  const latest = useRef({ now, rise, descend, deselect });
-  latest.current = { now, rise, descend, deselect };
+  const latest = useRef({ now, rise, descend, deselect, keep });
+  latest.current = { now, rise, descend, deselect, keep };
   useEffect(() => {
     const onPage = (target: EventTarget | null) => target instanceof Node && sheet.current?.contains(target) === true;
     const begin = () => {
       if (!latest.current.now.away) {
-        keep();
+        latest.current.keep();
         setNow((was) => (was.away ? was : { ...was, away: true }));
       }
     };
@@ -582,7 +595,7 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
       </div>
       {/* THE APP'S BAR, fixed at the window's top over the page and the city alike: the shell draws it here (`page-shell.tsx`). */}
       <div ref={setBar} data-testid="one-place-bar" style={{ position: "fixed", left: 0, right: 0, top: 0, zIndex: ONE_FACE_LAYERS.bar, background: "var(--graview-ground, Canvas)" }} />
-      {now.level === PANEL && !now.moving ? <PanelEdge view={view} size={sizePanel} motion={motion} /> : null}
+      {now.level === PANEL && !now.moving ? <PanelEdge view={view} size={sizePanel} keep={keepPanel} motion={motion} /> : null}
       <Altitude box={fab} level={now.level} moving={now.moving} goTo={goTo} where={where} chosen={chosen} boards={boards} current={current} store={store} />
       <style>{ONE_PLACE_CSS}</style>
     </OneFaceContext.Provider>
@@ -749,7 +762,13 @@ function Altitude({
           </button>
         ))}
         {level >= PANEL ? (
-          <button type="button" data-testid="altitude-key" data-graview-key-stop="" aria-expanded={keyOpen} aria-label="Key: what the city's marks mean" title="Key: what the city's marks mean" onClick={() => setKeyOpen((open) => !open)}>
+          <button type="button" data-testid="altitude-key" data-graview-key-stop="" aria-expanded={keyOpen} aria-label="Key: what the city's marks mean" title="Key: what the city's marks mean" onClick={() => setKeyOpen((open) => !open)} onKeyDown={(event) => {
+              // The Key's Escape is the Key's: it puts the Key away, and nothing moves a level.
+              if (event.key !== "Escape" || !keyOpen) return;
+              event.preventDefault();
+              event.stopPropagation();
+              setKeyOpen(false);
+            }}>
             <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
               <circle cx="7" cy="7" r="5.6" />
               <path d="M7 6.4v3.4" />
@@ -783,7 +802,7 @@ function CityKey({ close }: { readonly close: () => void }) {
   ];
   return (
     <div
-      role="dialog"
+      role="region"
       aria-label="What the city's marks mean"
       data-testid="altitude-key-pane"
       onKeyDown={(event) => {
@@ -857,7 +876,7 @@ export { PHONE };
  * most, a double press puts it back. The city beside it follows on the one
  * camera as it moves (`one-place-city.tsx`).
  */
-function PanelEdge({ view, size, motion }: { readonly view: View; readonly size: (to: number | undefined) => void; readonly motion: { readonly current: Motion } }) {
+function PanelEdge({ view, size, keep, motion }: { readonly view: View; readonly size: (to: number | undefined) => void; readonly keep: () => void; readonly motion: { readonly current: Motion } }) {
   const phone = view.width <= PHONE;
   const range = panelRange(view);
   const panel = panelBox(view);
@@ -892,11 +911,15 @@ function PanelEdge({ view, size, motion }: { readonly view: View; readonly size:
       onPointerUp={(event) => {
         event.currentTarget.releasePointerCapture?.(event.pointerId);
         motion.current.resizing = false;
+        keep();
       }}
       onPointerCancel={() => {
         motion.current.resizing = false;
       }}
-      onDoubleClick={() => size(undefined)}
+      onDoubleClick={() => {
+        size(undefined);
+        requestAnimationFrame(keep);
+      }}
       onKeyDown={(event) => {
         // A phone's sheet grows as its top goes up: the share above it shrinks.
         const grow = phone ? -step : step;
@@ -905,6 +928,7 @@ function PanelEdge({ view, size, motion }: { readonly view: View; readonly size:
         if (to === null) return;
         event.preventDefault();
         size(clamp(to));
+        requestAnimationFrame(keep);
       }}
       className="graview-one-place-edge"
       style={

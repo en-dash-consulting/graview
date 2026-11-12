@@ -487,7 +487,7 @@ function groundCss(scheme: Scheme): string {
   const light = scheme === "light";
   const mix = (share: string, of = "var(--graview-ink)") => `color-mix(in oklab, ${of} ${share}, var(--graview-panel))`;
   return `.graview-plots{z-index:${SCENE_LAYERS.plots};opacity:var(--graview-altitude);transition:opacity 640ms cubic-bezier(.33,0,.2,1)}
-.graview-plots[data-graview-rising] .graview-building{transform-box:fill-box;transform-origin:50% 100%;transform:scaleY(1);opacity:1;transition:transform ${RISE_MS}ms cubic-bezier(.33,0,.2,1),opacity ${RISE_MS}ms}
+.graview-plots[data-graview-rising] .graview-building{transform-box:fill-box;transform-origin:50% 100%;transform:scaleY(1);transition:transform ${RISE_MS}ms cubic-bezier(.33,0,.2,1),opacity ${RISE_MS}ms}
 @starting-style{.graview-plots[data-graview-rising] .graview-building{transform:scaleY(0);opacity:0}}
 .graview-plots[data-graview-rising] .graview-building[data-graview-leaving]{transform:scaleY(0);opacity:0;pointer-events:none}
 @media (prefers-reduced-motion:reduce){.graview-plots[data-graview-rising] .graview-building{transition:none}.graview-plots[data-graview-rising] .graview-building[data-graview-leaving]{display:none}}
