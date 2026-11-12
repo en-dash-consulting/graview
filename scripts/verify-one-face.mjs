@@ -602,7 +602,7 @@ async function pinch(page, where) {
 
 /*
  * THE RECORD BESIDE THE CITY: at Nearby on a record's page, the record
- * stands out from what it is linked to — its own colour and lifted — the
+ * stands out from what it is linked to — its own color and lifted — the
  * Scene draws no lines or words of its own from it into the city, and the
  * page's "Also connected" list says nothing the page already shows, in the
  * page's flow rather than over it.

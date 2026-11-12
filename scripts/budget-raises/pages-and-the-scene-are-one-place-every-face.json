@@ -1,6 +1,6 @@
 {
   "budget": "every face",
-  "minified": 55700,
-  "gzipped": 22200,
-  "note": "Raised when a routed page came to be read over the Scene's own city (Graview HQ feature:f-page-zooms-out-to-the-city, a prototype): the pages face's Up, the chunk with the Scene under the page, the one camera that moves the page and the city in the same frame, the Connected list and the lines. Measured at 3_184_975 / 1_157_447 against 3_155_486 / 1_144_590 minified and gzipped. Raised again for the one face's own parts, fetched with the city under the pages: the control at the foot, the views standing in the city and their places, the panel's edge, the bar held at the window's top, and buildings that rise and sink while the history plays. Measured at 3_211_044 / 1_166_620 against 3_184_986 / 1_157_490."
+  "minified": 66500,
+  "gzipped": 24700,
+  "note": "Raised when a routed page came to be read over the Scene's own city (Graview HQ feature:f-page-zooms-out-to-the-city, a prototype): the pages face's Up, the chunk with the Scene under the page, the one camera that moves the page and the city in the same frame, the Connected list and the lines. Measured at 3_184_975 / 1_157_447 against 3_155_486 / 1_144_590 minified and gzipped. Raised again for the one face's own parts, fetched with the city under the pages: the control at the foot, the views standing in the city and their places, the panel's edge, the bar held at the window's top, and buildings that rise and sink while the history plays. Measured at 3_211_044 / 1_166_620 against 3_184_986 / 1_157_490. And again for the control's slider, its legend and keys, the lines kept to the city, the panel's edge, and the record the page is about standing out. Measured at 3_221_743 / 1_169_104 against 3_211_186 / 1_166_790."
 }
