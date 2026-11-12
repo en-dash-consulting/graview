@@ -438,6 +438,8 @@ export function PageFind<S extends AnySchema>({
   }, [addressed]);
   /** The address the first key left for the search page: a key before the search page is drawn replaces it. */
   const leftFrom = useRef<string | null>(null);
+  const shownKey = useRef(location.key);
+  shownKey.current = location.key;
   useEffect(() => {
     // Drawn at another address: the next first key leaves that one.
     if (leftFrom.current !== location.key) leftFrom.current = null;
@@ -460,7 +462,14 @@ export function PageFind<S extends AnySchema>({
      * address this face shows is still the one the first key left.
      */
     const searching = onSearch || leftFrom.current === location.key;
-    if (!searching) leftFrom.current = location.key;
+    if (!searching) {
+      const from = location.key;
+      leftFrom.current = from;
+      // A step that never landed (refused, or kept by the host) leaves the address as it was: the next key pushes again, never over it.
+      window.setTimeout(() => {
+        if (leftFrom.current === from && shownKey.current === from) leftFrom.current = null;
+      }, 1000);
+    }
     navigate(to, { replace: searching, state: { found: true } });
   };
   return (

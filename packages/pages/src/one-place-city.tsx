@@ -200,6 +200,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     let move: { from: Live; to: Live; fromAltitude: number; toAltitude: number; about: Point; start: number; foot: string; done: () => void } | null = null;
     /** What stood at the foot when the City was last fitted: the legend opened or put away there fits it again. */
     let cityFoot = "";
+    /** Where the camera stood when it came to rest at the City: a hand that moved it since keeps it. */
+    let cityAt = "";
     /** A zoom the person's own hand made on the Scene, and when it last moved. */
     let handZoom = 0;
     /*
@@ -355,7 +357,9 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       });
       // At rest the region stands 16 pixels off the window's foot: each rect where it would be there.
       const rest = now.map((box) => ({ ...box, y: height - 16 - (bottom - box.y) }));
-      return { now, rest, key: rest.map((box) => `${Math.round(box.x)},${Math.round(box.y)},${Math.round(box.width)},${Math.round(box.height)}`).join("|") };
+      // What changes the fit: the control and the legend over it (the first rect). The timeline's width follows the window's, and a resize refits on its own.
+      const dock = rest[0];
+      return { now, rest, key: dock ? `${Math.round(dock.x)},${Math.round(dock.y)},${Math.round(dock.width)},${Math.round(dock.height)}` : "" };
     };
     /** How much of the window above a phone's sheet the control and the legend keep, at Nearby. */
     const footRoom = (): number => {
@@ -413,7 +417,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         painted = to;
         altitude = toLevel;
         rest = toLevel;
-        cityFoot = toLevel === CITY ? footNow().key : "";
+        cityFoot = "";
         cam.commit();
         committedAt = performance.now();
         ownZoom = cam.zoom();
@@ -430,7 +434,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         done: () => {
           rest = toLevel;
           altitude = toLevel;
-          cityFoot = toLevel === CITY ? footNow().key : "";
+          cityFoot = "";
           cam.commit();
           committedAt = performance.now();
           ownZoom = null;
@@ -550,7 +554,11 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
          */
         const foot = footNow().key;
         if (foot !== move.foot) {
+          // From where the camera is painted now, toward the new end: never a jump in the middle of the move.
           move.foot = foot;
+          move.from = painted;
+          move.fromAltitude = altitude;
+          move.start = now;
           move.to = cameraFor(move.toAltitude, move.about, cam.zoom());
         }
         const t = clamp01((now - move.start) / MOVE_MS);
@@ -584,12 +592,22 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
          */
         if (rest === CITY && !move) {
           altitude = CITY;
-          // The legend opened or put away at the City: the city is fitted again beside it.
+          /*
+           * The legend opened or put away at the City: the city is fitted
+           * again beside it — unless the person has moved the camera there
+           * since it came to the City, which is theirs to keep.
+           */
           const foot = footNow().key;
-          if (cityFoot === "") cityFoot = foot;
-          else if (foot !== cityFoot && calm && anchor) {
+          const where = `${zoomNowOf(cam)}|${holder.querySelector(".graview-plots > g")?.getAttribute("transform") ?? ""}`;
+          if (cityFoot === "") {
+            // Recorded once the camera written at the City has settled.
+            if (calm) {
+              cityFoot = foot;
+              cityAt = where;
+            }
+          } else if (foot !== cityFoot && calm && anchor) {
             cityFoot = foot;
-            moveTo(cam, CITY, anchor, now);
+            if (where === cityAt) moveTo(cam, CITY, anchor, now);
           }
           if (ownZoom !== null && Math.abs(Math.log(effective / ownZoom)) > 0.001) ownZoom = effective;
         } else if (rest !== PAGE && ownZoom !== null && Math.abs(Math.log(effective / ownZoom)) > 0.03) {

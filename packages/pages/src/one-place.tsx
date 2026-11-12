@@ -242,10 +242,17 @@ function useIntentTip(): IntentTip {
 
 /** The tooltip itself: one for the control, over the part it is about. */
 function Tip({ id, tip, said }: { readonly id: string; readonly tip: IntentTip; readonly said: string }) {
+  // The level's own tooltip is the description the stop and the slider are given, and says only that; another part's words are shown in one of their own.
+  const own = !tip.shown || tip.shown.text === said;
   return (
-    <span id={id} role="tooltip" data-graview-one-face-tip="" data-graview-shown={tip.shown ? "" : undefined} style={{ left: tip.shown?.left ?? 0 }}>
-      {tip.shown?.text ?? said}
-    </span>
+    <>
+      <span id={id} role="tooltip" data-graview-one-face-tip="" data-graview-shown={tip.shown && own ? "" : undefined} style={{ left: tip.shown?.left ?? 0 }}>
+        {said}
+      </span>
+      <span aria-hidden="true" data-graview-one-face-tip="" data-graview-shown={tip.shown && !own ? "" : undefined} style={{ left: tip.shown?.left ?? 0 }}>
+        {own ? "" : tip.shown!.text}
+      </span>
+    </>
   );
 }
 
@@ -1156,10 +1163,22 @@ function FootRoom({ fab, sheet }: { readonly fab: RefObject<HTMLDivElement | nul
         if (!said) continue;
         const r = el.getBoundingClientRect();
         if (r.width === 0 || r.height === 0) continue;
-        const bottom = r.bottom + scrollY;
-        if (bottom < end + window.innerHeight - 400) continue;
+        if (r.bottom + scrollY < end + window.innerHeight - 400) continue;
         if (!parts.some((part) => r.right > part.left - 8 && r.left < part.right + 8)) continue;
-        lowest = Math.max(lowest, bottom);
+        // Fixed to the window (a notice, a dialog): it does not scroll to the page's end.
+        if (el.offsetParent === null && getComputedStyle(el).position === "fixed") continue;
+        // Inside a box that scrolls or clips: where that box shows it, not where its content runs on below.
+        let seen = r.bottom;
+        for (let at = el.parentElement; at && at !== plane; at = at.parentElement) {
+          const style = getComputedStyle(at);
+          if (style.position === "fixed") {
+            seen = -Infinity;
+            break;
+          }
+          if (style.overflowY !== "visible") seen = Math.min(seen, at.getBoundingClientRect().bottom);
+        }
+        if (seen === -Infinity) continue;
+        lowest = Math.max(lowest, seen + scrollY);
       }
       if (lowest === -Infinity) return setHeight(0);
       // The control's top where it rests, and air above it: the lowest such part ends there at the scroll's end.

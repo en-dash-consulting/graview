@@ -302,8 +302,26 @@ async function theButton(page, where, phone) {
         return r.width > 0 && r.height > 0 && parts.some((p) => r.right > p.left && r.left < p.right && r.bottom > p.top && r.top < p.bottom);
       })
       .map((el) => `${el.tagName.toLowerCase()} “${(el.textContent ?? "").trim().slice(0, 30)}”`);
-    // The band kept under the page's last words: the room, and nothing in the control's column above it but what needs it.
-    return { room: Boolean(room), roomHeight: room ? room.getBoundingClientRect().height : null, covered };
+    const roomHeight = room ? room.getBoundingClientRect().height : null;
+    /*
+     * And no empty band: with the room taken away, the page scrolled to its
+     * end again, something must stand under the control for there to be any
+     * room at all — and never more room than the control's own height and air.
+     */
+    let neededWithout = null;
+    if (room && roomHeight > 0) {
+      const was = room.style.height;
+      room.style.height = "0px";
+      window.scrollTo(0, document.documentElement.scrollHeight);
+      neededWithout = [...sheet.querySelectorAll("*")].some((el) => {
+        if (room.contains(el) || !(el.matches("a[href], button, input, select, textarea, img, svg, video, canvas, [role=button], [role=link]") || (el.childElementCount === 0 && (el.textContent ?? "").trim().length > 0))) return false;
+        const r = el.getBoundingClientRect();
+        return r.width > 0 && r.height > 0 && parts.some((p) => r.right > p.left - 8 && r.left < p.right + 8 && r.bottom > p.top - 8 && r.top < p.bottom);
+      });
+      room.style.height = was;
+    }
+    const most = Math.max(0, ...parts.map((p) => p.height)) + 40;
+    return { room: Boolean(room), roomHeight, neededWithout, most, covered };
   });
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.keyboard.press("Alt+ArrowUp");
@@ -328,7 +346,7 @@ async function theButton(page, where, phone) {
     levels.every((l) => corner(l) && sized(l) && lit(l) && words(l) && caps(l)) &&
     levels.every((l) => l.key) &&
     /1 of 3/.test(levels[0].said ?? "") && /3 of 3/.test(levels[2].said ?? "") &&
-    foot.room && foot.covered.length === 0 &&
+    foot.room && foot.covered.length === 0 && (foot.roomHeight === 0 || (foot.neededWithout === true && foot.roomHeight <= foot.most)) &&
     // A phone's sheet: the control rides above it, never over it.
     (!phone || (levels[1].controlBottom !== null && levels[1].controlBottom <= levels[1].sheetTop + 1)) &&
     (await levelOf(page)) === 0;

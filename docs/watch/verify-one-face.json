@@ -1,23 +1,7 @@
 {
-  "at": "2026-11-12T13:29:51.043Z",
+  "at": "2026-11-12T14:19:23.120Z",
   "harness": "verify-one-face",
   "engine": "chromium",
-  "open": 3,
-  "violations": [
-    {
-      "rule": "control-covered",
-      "detail": "<button data-testid=\"showing-what-is-left\" aria-label=\"Tasks: What is left\"> in [data-testid=\"drive-in-task\"] in view \"kind:task\" is covered by <button data-testid=\"altitude-stop-2\" aria-label=\"City: every page and view of the app\"> \"City\" in [data-testid=\"altitude\"] at 412 wide — a press there lands on the other",
-      "at": "tasks?today=2026-09-01"
-    },
-    {
-      "rule": "control-covered",
-      "detail": "<button data-testid=\"showing-the-month\" aria-label=\"Tasks: The month\"> in [data-testid=\"drive-in-task\"] in view \"kind:task\" is covered by <button data-testid=\"altitude-stop-2\" aria-label=\"City: every page and view of the app\"> \"City\" in [data-testid=\"altitude\"] at 412 wide — a press there lands on the other",
-      "at": "tasks?today=2026-09-01"
-    },
-    {
-      "rule": "control-covered",
-      "detail": "<button data-testid=\"showing-the-week\" aria-label=\"Tasks: The week\"> in [data-testid=\"drive-in-task\"] in view \"kind:task\" is covered by <div data-testid=\"one-place-panel-edge\" aria-label=\"The sheet's height\"> at 412 wide — a press there lands on the other",
-      "at": "tasks?today=2026-09-01"
-    }
-  ]
+  "open": 0,
+  "violations": []
 }
