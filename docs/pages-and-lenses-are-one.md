@@ -251,8 +251,9 @@ app compile side by side, and reading a document twice changes nothing.
   (navigation, scene-hands, drive-in, chrome, menu, seat and others) still
   drive the Scene's own face at the root. A person at the root of Things or
   the discography is sent to the one face; a driven browser is not.
-- **district-views-menu**: the district label's legacy menu of views,
-  routed through "choose a view".
+- **district-views-menu**: the district label's legacy menu of views is not
+  drawn on the one face (each view stands as its billboard); removing it from
+  the Scene's own face goes with one-face-by-default.
 - **worker-view-lines**: lines from a worker view's `data-record` parts,
   reported by the guest host through the frame.
 - **custom-view fixtures** through the harness: a worker view, a product

@@ -42,7 +42,7 @@ const STRIPS = resolve(repoRoot, "docs/one-face");
 
 const report = { at: new Date().toISOString(), engines, app: "apps/todo", checks: {} };
 const errors = [];
-const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], shortcuts: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [] };
+const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], shortcuts: [], keysTurnOff: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [] };
 
 /* ------------------------------------------------------------------ */
 /* In the page                                                         */
@@ -711,6 +711,15 @@ async function shortcuts(page, where) {
   await page.waitForTimeout(200);
   const caps = await page.evaluate(() => ({ caps: [0, 1, 2].map((n) => document.querySelector(`[data-testid="altitude-keycap-${n}"]`)?.textContent ?? null), listed: document.querySelector('[data-testid="altitude-key-keys"]')?.textContent ?? "" }));
   seen.shortcuts.push({ where, moves, named, caps, ok: moves.every((m) => m.reached) && named.every((n, i) => n.keys?.split(" ").includes(String(i + 1))) && caps.caps.join() === "1,2,3" && /1 Page/.test(caps.listed) });
+  // The keys can be turned off from the legend, and the line says so in words; turned back on, 3 goes to the city again.
+  await press(page, '[data-testid="altitude-keys-turn"]');
+  const offLine = await page.evaluate(() => document.querySelector('[data-testid="altitude-key-keys"]')?.textContent ?? "");
+  await page.keyboard.press("3");
+  await page.waitForTimeout(400);
+  const stayedOff = (await levelOf(page)) === 1;
+  await press(page, '[data-testid="altitude-keys-turn"]');
+  const onLine = await page.evaluate(() => document.querySelector('[data-testid="altitude-key-keys"]')?.textContent ?? "");
+  seen.keysTurnOff.push({ where, offLine, stayedOff, onLine, ok: /are off/.test(offLine) && /Turn on/.test(offLine) && stayedOff && /1 Page/.test(onLine) && /Turn off/.test(onLine) });
   // The browser's zoom chords: told to the page, none taken, and the level stays.
   const zoom = await page.evaluate(() => {
     const taken = [];
@@ -1284,6 +1293,7 @@ try {
   report.checks.connectedNeverRepeatsOrCoversThePage = { held: seen.connected, ok: every(seen.connected) };
   report.checks.noLineCrossesTheNearbyPanel = { held: seen.crossing, ok: every(seen.crossing) };
   report.checks.levelShortcutsMoveLevelsAndAreShown = { held: seen.shortcuts, ok: every(seen.shortcuts) };
+  report.checks.theLevelKeysTurnOffAndTheLegendSaysSo = { held: seen.keysTurnOff, ok: every(seen.keysTurnOff) };
   report.checks.browserZoomKeysAreNotTaken = { held: seen.zoomKeys, ok: every(seen.zoomKeys) };
   report.checks.shortcutsDoNotFireInAField = { held: seen.inField, ok: every(seen.inField) };
   report.checks.theControlCollapsesToASliderNamingTheLevel = { held: seen.folds, ok: every(seen.folds) };

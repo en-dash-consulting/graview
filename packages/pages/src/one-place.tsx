@@ -836,6 +836,7 @@ const ONE_PLACE_CSS = `
   [data-graview-mini-tool] { width: 44px; height: 44px; margin: 0; }
   [data-testid="altitude-key-pane"] { padding-right: 48px !important; }
   [data-testid="altitude-key-pane"] [data-testid="altitude-key-hide"] { width: 44px !important; height: 44px !important; top: 0 !important; right: 0 !important; }
+  [data-testid="altitude-keys-turn"] { min-height: 44px !important; min-width: 44px !important; }
 }
 `;
 
@@ -1207,26 +1208,36 @@ function FootRoom({ fab, sheet }: { readonly fab: RefObject<HTMLDivElement | nul
   return <div ref={room} aria-hidden="true" data-graview-altitude-room="" style={{ height }} />;
 }
 
-/** The single keys, on or off, as a person may want them off (WCAG 2.1.4). */
-function KeysSwitch() {
+/** The level's keys, said as they are now, with the one button that turns them off or back on (WCAG 2.1.4). A bare checkbox read as "off" while the keys worked; the line itself says which it is. */
+function KeysLine() {
   const [on, setOn] = useState(keysOn);
+  const turn = () => {
+    const next = !on;
+    setOn(next);
+    try {
+      window.localStorage.setItem(KEYS_KEY, next ? "on" : "off");
+    } catch {
+      // Kept for this visit only.
+    }
+  };
+  const button = (
+    <button
+      type="button"
+      data-testid="altitude-keys-turn"
+      aria-pressed={on}
+      aria-label={on ? "Level keys are on: turn them off" : "Level keys are off: turn them on"}
+      onClick={turn}
+      style={{ display: "inline-flex", alignItems: "center", minHeight: 24, minWidth: 24, marginLeft: 6, padding: "0 4px", verticalAlign: "middle", border: "none", background: "none", color: "var(--graview-accent)", font: "inherit", textDecoration: "underline", textUnderlineOffset: 2, cursor: "pointer" }}
+    >
+      {on ? "Turn off" : "Turn on"}
+    </button>
+  );
   return (
-    <label style={{ display: "inline-flex", alignItems: "center", gap: 4, marginLeft: 6, color: "var(--graview-ink-muted)" }}>
-      <input
-        type="checkbox"
-        data-testid="altitude-keys-on"
-        checked={on}
-        onChange={(event) => {
-          setOn(event.target.checked);
-          try {
-            window.localStorage.setItem(KEYS_KEY, event.target.checked ? "on" : "off");
-          } catch {
-            // Kept for this visit only.
-          }
-        }}
-      />
-      on
-    </label>
+    <p data-testid="altitude-key-keys" data-graview-keys={on ? "on" : "off"} style={{ margin: "0 0 6px", color: "var(--graview-ink-muted)" }}>
+      <strong style={{ fontWeight: 600, color: "var(--graview-ink)" }}>Keys</strong>
+      {on ? ": 1 Page · 2 Nearby · 3 City · [ down · ] up" : " are off: Alt ↑ up · Alt ↓ down"}
+      {button}
+    </p>
   );
 }
 
@@ -1257,10 +1268,7 @@ function CityKey({ close }: { readonly close: () => void }) {
       <button type="button" data-testid="altitude-key-hide" aria-label="Put the legend away" onClick={close} style={{ position: "absolute", top: 2, right: 2, width: 24, height: 24, padding: 0, border: "none", borderRadius: 4, background: "none", color: "var(--graview-ink-muted)", font: "inherit", cursor: "pointer" }}>
         ×
       </button>
-      <p data-testid="altitude-key-keys" style={{ margin: "0 0 6px", color: "var(--graview-ink-muted)" }}>
-        <strong style={{ fontWeight: 600, color: "var(--graview-ink)" }}>Keys</strong>: 1 Page · 2 Nearby · 3 City · [ down · ] up{" "}
-        <KeysSwitch />
-      </p>
+      <KeysLine />
       <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 3 }}>
         {rows.map(([mark, term, words]) => (
           <li key={term} style={{ display: "grid", gridTemplateColumns: "18px 1fr", gap: 10, alignItems: "start", lineHeight: "18px" }}>

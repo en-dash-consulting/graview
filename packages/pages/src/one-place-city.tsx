@@ -54,7 +54,7 @@ const recordShownBy = (element: Element): string | null => element.getAttribute(
  * stays lit as the Scene lights it, and everything else is quiet.
  */
 const CITY_CSS = `
-[data-testid="one-place-city"] .graview-zoom, [data-testid="one-place-city"] .graview-edge-sign, [data-testid="one-place-city"] .graview-record-links { display: none; }
+[data-testid="one-place-city"] .graview-zoom, [data-testid="one-place-city"] .graview-edge-sign, [data-testid="one-place-city"] .graview-record-links, [data-testid="one-place-city"] .graview-drive-in { display: none; }
 [data-testid="one-place-city"] .graview-building[data-graview-here] { translate: 0 -7px; }
 [data-testid="one-place-city"] .graview-building[data-graview-here] .graview-iso-roof { fill: var(--graview-accent); }
 [data-testid="one-place-city"] .graview-building[data-graview-here] .graview-iso-left { fill: color-mix(in srgb, var(--graview-accent) 55%, black); }
