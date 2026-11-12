@@ -699,8 +699,8 @@ export function PagesApp<S extends AnySchema>({
       {steering ? <Steered steering={steering} /> : null}
       {context.presence || outer ? <SaysWhere context={context} to={outer} /> : null}
       {context.sceneUnderPages && context.views ? (
-        // The page over the Scene's own city: one place at every altitude (one-place.tsx).
-        <Suspense fallback={null}>
+        // The page over the Scene's own city: one place at every altitude (one-place.tsx). While its part is fetched the page is drawn as the routed face draws it, never a blank window.
+        <Suspense fallback={<PagesRoutes context={context} {...(registry ? { registry } : {})} />}>
           <OnePlace context={context as unknown as PageContext<AnySchema>}>
             <PagesRoutes context={context} {...(registry ? { registry } : {})} />
           </OnePlace>

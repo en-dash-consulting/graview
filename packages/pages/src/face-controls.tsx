@@ -81,12 +81,27 @@ export interface UndoLook {
  * store has changed since the face was drawn (an offer comes only with an
  * act, FR-152); placed in a shell's row, once there is any change at all.
  */
+/*
+ * What the log held when the face was FIRST drawn over a store: the one face draws the routed page while its own part is fetched and then draws it
+ * again inside, and an act made on the first page is still this face's to offer back on the second.
+ */
+const firstDrawn = new WeakMap<object, { readonly length: number; readonly at: number }>();
+/** Drawn again this soon after the first, it is the same drawing: a face drawn later begins from what the log holds then. */
+const DRAWN_AGAIN_MS = 10_000;
+const drawnSince = (store: object, now: number): number => {
+  const was = firstDrawn.get(store);
+  if (was !== undefined && was.length <= now && Date.now() - was.at < DRAWN_AGAIN_MS) return was.length;
+  firstDrawn.set(store, { length: now, at: Date.now() });
+  return now;
+};
+
 function WayBack<S extends AnySchema>({ context, docked, at, ...look }: { readonly context: PageContext<S>; readonly docked: boolean; readonly at: string } & UndoLook) {
   const { store } = context;
   const tick = useStoreTick(store);
-  const [since] = useState(() => store.batches().length);
+  const [since] = useState(() => (docked ? drawnSince(store, store.batches().length) : store.batches().length));
   const wanted = useRef(false);
-  wanted.current ||= tick > 0 || (!docked && since > 0);
+  // Docked, a change since the face was first drawn is wanted though this drawing has seen no tick: it came while the face was drawn the first time.
+  wanted.current ||= tick > 0 || (!docked && since > 0) || (docked && store.batches().length > since);
   return wanted.current ? (
     <Suspense fallback={null}>
       {/* The door's component is not generic: the context is the face's own. */}
