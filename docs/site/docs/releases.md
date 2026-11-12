@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.74`](https://graview.dev/docs/releases.html#v0-1-74)
 - [`0.1.73`](https://graview.dev/docs/releases.html#v0-1-73)
 - [`0.1.72`](https://graview.dev/docs/releases.html#v0-1-72)
 - [`0.1.71`](https://graview.dev/docs/releases.html#v0-1-71)
@@ -74,6 +75,25 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.3`](https://graview.dev/docs/releases.html#v0-1-3)
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
+
+## 0.1.74
+
+Published November 12, 2026 · the current version
+
+Any place drawn for an e-ink screen with what each press does; a bare app that looks designed, and a home proposed from the declaration; templates that ask a time and bring their views; a field that keeps a time of day; and a host asks whether a seat may run an act without running it.
+
+- **An e-ink screen.** `@graview/pages/device` draws any place for a reader on a wall (a Kindle Paperwhite 3 upright is 758 × 1024): sixteen grays, no motion, type at 20 px or more and presses at least 64 px, pages that turn at the foot. `taps` says what each region does, and `resolveTap` does it as the seat that tapped, refusing anything the screen it was tapped on did not offer.
+- **An app says which places a device offers.** `devices: { screens: [{ place, label }] }` names the strip along a device's foot; `graview check` holds each to a real place and 12 characters, and a screen follows its place when it is renamed.
+- **A bare app looks designed.** With nothing declared, a glance leads with the kind's date said as people say it, naming the zone only to a reader on another clock. The home says the app's description once. Every warning carries its mark and its words, never its color alone.
+- **A home from the declaration.** `composeDesign` proposes what a plain document lacks — a home of a count and a list per kind, and a row and a glance per kind with its date and status — and keeps what is declared. The new formatter `{x | glance}` says a moment as a glance does.
+- **Templates ask a time and bring views.** A question may be a `time`; setup words may say `${id}`; a template may carry `views` and `frameViews`, which `graview create --template` writes beside the project. `graview check template.json` checks the template too.
+- **A time of day.** A field may be `{ "type": "time" }`, kept as `HH:MM`, typed in a time input and read from "3 PM".
+- **May this seat run this?** `mayRun` and `mayRunEach` on `@graview/core/seat` answer allowed, what is left to fill, or refused with the rule and the words, writing nothing. Applying and asking now judge through one path.
+- Security and reliability fixes.
+
+**Before you upgrade:** Breaks: an act may now refuse a call it used to take. A document act's argument left out is its default to what the act's condition reads and to a record the act makes, and no longer overwrites a field already set. A template may name the formatter `glance`, which a build before this one refuses by name, so update hosts before documents that use it. A bare app's glances, rows and home read differently (a kind's date leads a glance, the zone is named only to a reader elsewhere, a description is said once), and `composeDesign` proposes a home, rows and glances for a plain document where it proposed none. A document accent that shares the warning's hue and reads is no longer refused. Gains, nothing taken away: `@graview/pages/device` (`renderScreen`, `tapAt`, `resolveTap`, `EINK_GRAYS`, `EINK_LEAST_TARGET`), `@graview/core/devices`, a document's `devices`, the `device-screen-*` findings and the `add-`, `move-` and `remove-device-screen` edits; the `time` field type, `timeField()` and `parseTimeOfDay`; a template's `time` questions, `${id}`, `views` and `frameViews`, `questionAsked` and `templateFindings`; `mayRun`, `mayRunEach`, `store.wouldApply` and `store.judgedAs`; `homeFromDeclaration`, `rowFromDeclaration`, `glanceFromDeclaration`, `kindDateField`, `momentAtAGlance` and `homeSaysTheLine`. Stored formats are otherwise unchanged: a record may hold a time field's `HH:MM`.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.74) · [The full changelog for 0.1.74](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0174)
 
 ## 0.1.73
 
