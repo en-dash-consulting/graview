@@ -6,7 +6,7 @@
 - Start a product: `npm create graview@latest my-app` (Node 22 or later)
 - License: Elastic License 2.0 — source-available, free to build with and to ship products on
 - Source: https://github.com/en-dash-consulting/graview
-- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.1.74)
+- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.2.0)
 - Hosted: Graview Cloud, https://graview.cloud (private alpha, invite-only)
 
 ## Questions, answered plainly
@@ -902,6 +902,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.2.0`](https://graview.dev/docs/releases.html#v0-2-0)
 - [`0.1.74`](https://graview.dev/docs/releases.html#v0-1-74)
 - [`0.1.73`](https://graview.dev/docs/releases.html#v0-1-73)
 - [`0.1.72`](https://graview.dev/docs/releases.html#v0-1-72)
@@ -974,9 +975,26 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
-## 0.1.74
+## 0.2.0
 
 Published November 12, 2026 · the current version
+
+Pages and the Scene become one face, opt-in per app: a page rises on one camera from Page to Nearby to City, every view stands as a billboard in the city, and graview check finds two views that show the same thing.
+
+- **One face, opt-in.** A `PagesApp` given `views` and `sceneUnderPages: true` stands over the app's own city. A face without it is unchanged; one face by default comes in 0.2.1.
+- **Three levels on one camera.** Page is the page. Nearby is the same page as a panel beside its place in the city (a resizable sheet on a phone), with a line from each record it shows to that record's building and a Connected list. City is an isometric city with every page and view of the app standing as a billboard on its district; choosing anything there lands at Nearby. The same element moves between levels, never a cut to another screen.
+- **One control at the bottom left.** Page · Nearby · City and a legend of what the city's marks mean, which folds into a one-row slider. Keys 1, 2, 3 and [ ] move a level and can be turned off in the legend; Cmd or Ctrl with plus and minus stay the browser's zoom. No Scene/Pages switch and no Up; the bar stays at the top at every level.
+- **History in the levels.** While the history is played, buildings rise and sink as the scrub passes the changes that made and removed them.
+- **Duplicate views are found.** `graview check` names two views that show the same thing (`view-duplicates-another`) and carries the `remove-lens` edit that removes one: how pages and lenses become one view, applied per app.
+- **Find.** The down arrow goes onto the first result, and a result chosen after typing replaces the search page in the history, on every routed face.
+
+**Before you upgrade:** Breaks: on every routed face, a Find result chosen after typing in the box now replaces the search page in the history, so Back returns to where Find was opened. While the history is played, the Scene's buildings rise and sink on every face. Everything else changes only where a host turns `sceneUnderPages` on: that face has no Scene/Pages switch, no "In the scene" link and no Up, the Scene's record drive-in is not drawn there, a person at the app's root is sent to it, and the keys 1, 2, 3, [ and ] move a level unless a person turns them off. Turning it off again puts the routed face back as it was. Gains, nothing taken away: `PageContext.sceneUnderPages`, `SceneProps.camera` and the `SceneCamera` type, `LayoutOptions.standing` and `plaza`, `ONE_FACE_LAYERS`, and the `view-duplicates-another` finding. Stored formats, ops, the wire, derived tool names and their input schemas are unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.2.0) · [The full changelog for 0.2.0](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#020)
+
+## 0.1.74
+
+Published November 12, 2026
 
 Any place drawn for an e-ink screen with what each press does; a bare app that looks designed, and a home proposed from the declaration; templates that ask a time and bring their views; a field that keeps a time of day; and a host asks whether a seat may run an act without running it.
 
@@ -8132,7 +8150,7 @@ Source: https://graview.dev/docs/site.html
 
 # This site is a Graview app
 
-graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 495 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
+graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 496 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
 
 ## The site, running
 
@@ -8157,7 +8175,7 @@ This is that declaration, compiled in your browser by the same compiler `graview
 | `chapter` | A step of the garden, grown: a declaration that passes its own check, opened in a browser on every push. | 16 |
 | `example` | An example app in the repository, described by its own package.json. | 5 |
 | `question` | A question the front page answers plainly, read off its FAQ. | 7 |
-| `release` | A version every package shares, as the releases page says it: when npm published it, what came in it in a few plain lines, and what a host must know before upgrading. Written by hand with the Version packages pull request (apps/site/releases.json). | 76 |
+| `release` | A version every package shares, as the releases page says it: when npm published it, what came in it in a few plain lines, and what a host must know before upgrading. Written by hand with the Version packages pull request (apps/site/releases.json). | 77 |
 | `scaffold` | What graview create writes, read from the generator itself. | 1 |
 
 ## How a page is made
