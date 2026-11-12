@@ -2,7 +2,7 @@ import { OVERVIEW_PATH, ONE_FACE_LAYERS, hueFor, labelOf, type AnySchema } from 
 import { retryingImport } from "@graview/core/retry";
 import { barPlaces, HOME_KEY, PastBar } from "@graview/primitives/pages";
 import { lazyPart, useGraview, usePlayback } from "@graview/react/provider";
-import { Suspense, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type RefObject } from "react";
+import { Suspense, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type FocusEvent as ReactFocusEvent, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject } from "react";
 import { useHref, useLocation, useNavigate } from "react-router";
 import { recordFacts } from "./facts.js";
 import { useStoreTick, type PageContext } from "./page-context.js";
@@ -153,8 +153,101 @@ const boardKeyOf = (where: PageWhere, boards: readonly Board[]): string => {
   return found?.key ?? HOME_KEY;
 };
 
-/** The control's tooltip: over it, read on hover and on the keyboard's focus, said by `aria-describedby`. */
-const TIP: CSSProperties = {};
+/*
+ * THE CONTROL'S TOOLTIPS, ON INTENT. A pointer passing over shows nothing:
+ * a tooltip comes after the pointer has rested on a part for TIP_DELAY_MS,
+ * and goes TIP_HIDE_MS after it leaves. Once one has shown, the next part
+ * the pointer rests on shows its own at once, for TIP_WARM_MS after the last
+ * went (the way along the stops). The keyboard's focus shows it at once; a
+ * finger, only a long press.
+ */
+const TIP_DELAY_MS = 600;
+const TIP_HIDE_MS = 100;
+const TIP_WARM_MS = 300;
+const TIP_PRESS_MS = 500;
+/** When a tooltip of the control was last put away, for the warm window. */
+let tipHiddenAt = -Infinity;
+/** When a pointer last went down: a focus that follows a press is the pointer's, and shows no tooltip. */
+let pressedAt = -Infinity;
+if (typeof document !== "undefined") document.addEventListener("pointerdown", () => (pressedAt = performance.now()), { capture: true, passive: true });
+
+interface IntentTip {
+  /** What is shown, and how far from the control's left edge; null when nothing is. */
+  readonly shown: { readonly text: string; readonly left: number } | null;
+  /** The handlers a part takes to have its tooltip shown on intent. */
+  readonly on: (text: string) => {
+    readonly onPointerEnter: (event: ReactPointerEvent<HTMLElement>) => void;
+    readonly onPointerLeave: (event: ReactPointerEvent<HTMLElement>) => void;
+    readonly onPointerDown: (event: ReactPointerEvent<HTMLElement>) => void;
+    readonly onPointerUp: (event: ReactPointerEvent<HTMLElement>) => void;
+    readonly onPointerCancel: (event: ReactPointerEvent<HTMLElement>) => void;
+    readonly onFocus: (event: ReactFocusEvent<HTMLElement>) => void;
+    readonly onBlur: () => void;
+  };
+}
+
+function useIntentTip(): IntentTip {
+  const [shown, setShown] = useState<IntentTip["shown"]>(null);
+  const showing = useRef(false);
+  const timer = useRef<number | undefined>(undefined);
+  const clear = () => window.clearTimeout(timer.current);
+  useEffect(() => clear, []);
+  const show = (el: HTMLElement, text: string) => {
+    clear();
+    const host = el.closest("[data-graview-tip-host]");
+    const left = host ? Math.max(0, el.getBoundingClientRect().left - host.getBoundingClientRect().left) : 0;
+    showing.current = true;
+    setShown({ text, left });
+  };
+  const hide = (after: number) => {
+    clear();
+    const go = () => {
+      if (showing.current) tipHiddenAt = performance.now();
+      showing.current = false;
+      setShown(null);
+    };
+    if (after > 0) timer.current = window.setTimeout(go, after);
+    else go();
+  };
+  const on: IntentTip["on"] = (text) => ({
+    onPointerEnter: (event) => {
+      if (event.pointerType === "touch") return;
+      const el = event.currentTarget;
+      clear();
+      if (showing.current || performance.now() - tipHiddenAt < TIP_WARM_MS) show(el, text);
+      else timer.current = window.setTimeout(() => show(el, text), TIP_DELAY_MS);
+    },
+    onPointerLeave: (event) => {
+      if (event.pointerType !== "touch") hide(TIP_HIDE_MS);
+    },
+    onPointerDown: (event) => {
+      if (event.pointerType !== "touch") return;
+      const el = event.currentTarget;
+      clear();
+      timer.current = window.setTimeout(() => show(el, text), TIP_PRESS_MS);
+    },
+    onPointerUp: (event) => {
+      // A finger lifted: what a long press showed stays a moment to be read; a tap showed nothing.
+      if (event.pointerType === "touch") hide(showing.current ? 1500 : 0);
+    },
+    onPointerCancel: () => hide(0),
+    onFocus: (event) => {
+      // The keyboard's focus (or one moved there for it), not a press's.
+      if (event.currentTarget.matches(":focus-visible") || performance.now() - pressedAt > 400) show(event.currentTarget, text);
+    },
+    onBlur: () => hide(0),
+  });
+  return { shown, on };
+}
+
+/** The tooltip itself: one for the control, over the part it is about. */
+function Tip({ id, tip, said }: { readonly id: string; readonly tip: IntentTip; readonly said: string }) {
+  return (
+    <span id={id} role="tooltip" data-graview-one-face-tip="" data-graview-shown={tip.shown ? "" : undefined} style={{ left: tip.shown?.left ?? 0 }}>
+      {tip.shown?.text ?? said}
+    </span>
+  );
+}
 
 /** Where this browser keeps whether the legend is shown beside the city. */
 const LEGEND_KEY = "graview.one-face.legend";
@@ -594,8 +687,8 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
           {children}
           {/* What the record is linked to, grown into the page as it becomes the panel: its rows the lines leave from. */}
           {away && subject ? <Connected store={store} id={subject} box={connected} sheet={sheet} openRecord={openRecord} /> : null}
-          {/* Room at the page's foot for the button that moves a level, so it never sits over the last of the page. */}
-          {away ? null : <div aria-hidden="true" data-graview-altitude-room="" style={{ height: "calc(var(--graview-altitude-room, 100px) + 28px)" }} />}
+          {/* Room at the page's foot only where the control would stand over the page's last words: none where the foot is empty beside it. */}
+          {away ? null : <FootRoom fab={fab} sheet={sheet} />}
         </div>
       </div>
       {/*
@@ -717,15 +810,26 @@ const ONE_PLACE_CSS = `
 [data-graview-one-face-stops] button[aria-pressed="true"] { color: var(--graview-ink); font-weight: 600; background: color-mix(in srgb, var(--graview-accent) 18%, transparent); cursor: default; }
 [data-graview-one-face-stops] button[data-graview-key-stop] { min-width: 30px; padding: 0 8px; margin-left: 2px; box-shadow: -1px 0 0 0 var(--graview-edge); border-radius: 0 6px 6px 0; }
 [data-graview-one-face-stops] button:focus-visible, [data-graview-one-face-slider]:focus-visible { outline: 2px solid var(--graview-accent); outline-offset: 1px; }
-[data-graview-one-face-slider]::before { content: ""; position: absolute; inset: -4px -8px -16px; }
-[data-graview-one-face-tip] { position: absolute; left: 0; bottom: calc(100% + 6px); padding: 4px 8px; border-radius: 6px; border: 1px solid var(--graview-edge); background: var(--graview-panel, Canvas); color: var(--graview-ink); font-size: 0.75rem; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 120ms ease 300ms; }
-[data-graview-one-face-mini]:hover > [data-graview-one-face-tip], [data-graview-one-face-mini]:focus-within > [data-graview-one-face-tip], [data-graview-one-face-stops]:hover > [data-graview-one-face-tip], [data-graview-one-face-stops]:focus-within > [data-graview-one-face-tip] { opacity: 1; }
+[data-graview-one-face-tip] { position: absolute; left: 0; bottom: calc(100% + 6px); padding: 4px 8px; border-radius: 6px; border: 1px solid var(--graview-edge); background: var(--graview-panel, Canvas); color: var(--graview-ink); font-size: 0.75rem; white-space: nowrap; pointer-events: none; opacity: 0; }
+[data-graview-one-face-tip][data-graview-shown] { opacity: 1; }
 [data-graview-one-face-mini]:has([aria-expanded="true"]) > [data-graview-one-face-tip], [data-graview-one-face-stops]:has([data-testid="altitude-key"][aria-expanded="true"]) > [data-graview-one-face-tip] { opacity: 0; }
-@media (prefers-reduced-motion: reduce) { [data-graview-one-face-tip] { transition: none; } }
-[data-graview-mini-tool] { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; padding: 0; border: none; border-radius: 4px; background: none; color: var(--graview-ink-muted); cursor: pointer; }
+/* Put away, the same control made shorter: one row, the stops' height, border and type — the level's name, the track, and the way back to all three. */
+[data-graview-one-face-mini] { display: inline-flex; align-items: stretch; height: 32px; padding: 2px; gap: 2px; border-radius: 8px; border: 1px solid var(--graview-edge); background: var(--graview-panel, Canvas); box-shadow: 0 1px 2px rgba(0,0,0,0.12); box-sizing: border-box; }
+[data-graview-mini-word] { display: inline-flex; align-items: center; justify-content: center; min-width: 54px; padding: 0 4px; border: none; border-radius: 6px; background: color-mix(in srgb, var(--graview-accent) 18%, transparent); color: var(--graview-ink); font: inherit; font-size: 0.8125rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+[data-graview-mini-word]:hover { background: color-mix(in srgb, var(--graview-accent) 26%, transparent); }
+[data-graview-mini-word]:focus-visible { outline: 2px solid var(--graview-accent); outline-offset: 1px; }
+/* The chevron: a small glyph in a 24-pixel target (a thumb's 44 on a phone), reaching over the row's own padding. */
+[data-graview-mini-tool] { position: relative; flex: none; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; width: 24px; height: 26px; margin: 0 -2px 0 -4px; padding: 0; border: none; border-radius: 6px; background: none; color: var(--graview-ink-muted); cursor: pointer; }
 [data-graview-mini-tool]:hover { color: var(--graview-ink); }
-[data-graview-mini-tool]:focus-visible { outline: 2px solid var(--graview-accent); outline-offset: 0; }
-@media (max-width: 600px), (pointer: coarse) { [data-graview-one-face-stops] { height: 48px; } [data-graview-one-face-stops] button { min-width: 64px; min-height: 44px; } [data-graview-one-face-stops] button[data-graview-key-stop] { min-width: 44px; } }
+[data-graview-mini-tool]:focus-visible { outline: 2px solid var(--graview-accent); outline-offset: -2px; }
+@media (max-width: 600px), (pointer: coarse) {
+  [data-graview-one-face-stops] { height: 48px; } [data-graview-one-face-stops] button { min-width: 64px; min-height: 44px; } [data-graview-one-face-stops] button[data-graview-key-stop] { min-width: 44px; }
+  [data-graview-one-face-mini] { height: 48px; }
+  [data-graview-mini-word] { min-width: 60px; min-height: 44px; }
+  [data-graview-mini-tool] { width: 44px; height: 44px; margin: 0; }
+  [data-testid="altitude-key-pane"] { padding-right: 48px !important; }
+  [data-testid="altitude-key-pane"] [data-testid="altitude-key-hide"] { width: 44px !important; height: 44px !important; top: 0 !important; right: 0 !important; }
+}
 `;
 
 /**
@@ -798,30 +902,20 @@ function Altitude({
     if (stop === PANEL) return level === CITY ? `Nearby: ${into ? `“${into.label}”` : "this page"} beside its place in the city` : `Nearby: this page beside ${kind ? `the ${pluralOf(store, kind).toLowerCase()} district` : "the city"}`;
     return "City: every page and view of the app";
   };
-  /* How much of the window's foot this stands over — the control, and the timeline beside it — for the room the page keeps at its foot. */
-  useEffect(() => {
-    const el = box.current;
-    if (!el || typeof ResizeObserver === "undefined") return;
-    const measure = () => document.documentElement.style.setProperty("--graview-altitude-room", `${Math.ceil(el.getBoundingClientRect().height + 16)}px`);
-    measure();
-    const watch = new ResizeObserver(measure);
-    watch.observe(el);
-    return () => {
-      watch.disconnect();
-      document.documentElement.style.removeProperty("--graview-altitude-room");
-    };
-  }, [box]);
   /*
    * THE LEGEND: shown by default beside the city and at the City, where it
    * says what is on the screen, and put away there as the person chooses,
    * kept in this browser; on the page, where there is no city to explain,
    * only when asked for.
    */
+  // A phone has no room beside the city for it: there it starts put away, until it is asked for — and then it is kept.
   const [legendCity, setLegendCity] = useState<boolean>(() => {
+    const roomy = typeof window === "undefined" || window.innerWidth > PHONE;
     try {
-      return window.localStorage.getItem(LEGEND_KEY) !== "hidden";
+      const kept = window.localStorage.getItem(LEGEND_KEY);
+      return kept === null ? roomy : kept !== "hidden";
     } catch {
-      return true;
+      return roomy;
     }
   });
   const [legendPage, setLegendPage] = useState(false);
@@ -838,33 +932,33 @@ function Altitude({
   };
   const tipId = useId();
   const tip = `${LEVEL_NAMES[level]} (${LEVEL_KEYS[level]}) · [ and ] to move`;
+  const intent = useIntentTip();
+  const stopTips = [PAGE, PANEL, CITY].map((stop) => intent.on(stop === level ? tip : `${LEVEL_NAMES[stop]} (${LEVEL_KEYS[stop]})`));
   const keys = (stop: number): string => [LEVEL_KEYS[stop], stop === level + 1 ? "] Alt+ArrowUp" : stop === level - 1 ? "[ Alt+ArrowDown Escape" : ""].filter(Boolean).join(" ");
   return (
     <div ref={box} role="region" aria-label="Where you are" data-testid="altitude" data-graview-one-face-level={level} data-graview-foot="" style={{ position: "fixed", left: 16, right: 16, bottom: 16, zIndex: ONE_FACE_LAYERS.control, display: "flex", flexWrap: "wrap-reverse", alignItems: "flex-end", gap: 8, pointerEvents: "none" }}>
       {/* The legend over the control, in the same column: the room the camera keeps at the foot is theirs together. */}
-      <div data-graview-one-face-dock="" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: keyOpen && !small ? 30 : 6, pointerEvents: "none" }}>
+      <div data-graview-one-face-dock="" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: keyOpen && !small ? 30 : 8, pointerEvents: "none" }}>
       {keyOpen ? <CityKey close={() => setKeyOpen(false)} /> : null}
       {small ? (
-        <div role="group" aria-label="Level" data-graview-one-face-mini="" style={{ pointerEvents: "auto", position: "relative", display: "inline-flex", flexDirection: "column", alignItems: "flex-start", gap: 1, padding: "2px 5px 3px", borderRadius: 8, border: "1px solid var(--graview-edge)", background: "var(--graview-panel, Canvas)" }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 1, height: 14 }}>
-            <span data-testid="altitude-mini-word" style={{ fontSize: "0.6875rem", fontWeight: 600, lineHeight: 1, color: "var(--graview-ink)", padding: "0 2px" }}>{LEVEL_NAMES[level]}</span>
-            <button type="button" data-testid="altitude-key" aria-expanded={keyOpen} aria-label="Legend: what the city's marks mean, and the keys" onClick={() => setKeyOpen((open) => !open)} onKeyDown={(event) => {
-              if (event.key !== "Escape" || !keyOpen) return;
-              event.preventDefault();
-              event.stopPropagation();
-              setKeyOpen(false);
-            }} data-graview-mini-tool="">
-              <svg width="11" height="11" viewBox="0 0 14 14" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="7" cy="7" r="5.6" /><path d="M7 6.4v3.4" /><circle cx="7" cy="4.3" r="0.4" fill="currentColor" /></svg>
-            </button>
-            <button type="button" data-testid="altitude-size" aria-expanded={false} aria-label="Show all three levels" onClick={() => keepSmall(false)} data-graview-mini-tool="">
-              <svg width="10" height="10" viewBox="0 0 12 12" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 3l3 3-3 3" /></svg>
-            </button>
-          </span>
-          <LevelSlider level={level} goTo={goTo} motion={motion} begin={begin} describedBy={tipId} />
-          <span id={tipId} role="tooltip" data-graview-one-face-tip="" style={TIP}>{tip}</span>
+        <div role="group" aria-label="Level" data-graview-one-face-mini="" data-graview-tip-host="" style={{ pointerEvents: "auto", position: "relative" }}>
+          {/* The level's name, in the stops' own type: pressed, it opens the legend, as the Key does when the levels are shown whole. */}
+          <button type="button" data-testid="altitude-key" data-graview-mini-word="" aria-expanded={keyOpen} aria-label={`${LEVEL_NAMES[level]}: show the legend, what the city's marks mean and the keys`} {...intent.on("Legend")} onClick={() => setKeyOpen((open) => !open)} onKeyDown={(event) => {
+            if (event.key !== "Escape" || !keyOpen) return;
+            event.preventDefault();
+            event.stopPropagation();
+            setKeyOpen(false);
+          }}>
+            <span data-testid="altitude-mini-word">{LEVEL_NAMES[level]}</span>
+          </button>
+          <LevelSlider level={level} goTo={goTo} motion={motion} begin={begin} describedBy={tipId} tip={intent.on(tip)} />
+          <button type="button" data-testid="altitude-size" aria-expanded={false} aria-label="Show all three levels" {...intent.on("Show all three levels")} onClick={() => keepSmall(false)} data-graview-mini-tool="">
+            <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M4 3l3 3-3 3" /></svg>
+          </button>
+          <Tip id={tipId} tip={intent} said={tip} />
         </div>
       ) : (
-      <div role="group" aria-label={`Altitude: ${LEVEL_NAMES[level]!.toLowerCase()}, ${level + 1} of 3`} data-graview-one-face-stops="" style={{ pointerEvents: "auto", position: "relative" }}>
+      <div role="group" aria-label={`Altitude: ${LEVEL_NAMES[level]!.toLowerCase()}, ${level + 1} of 3`} data-graview-one-face-stops="" data-graview-tip-host="" style={{ pointerEvents: "auto", position: "relative" }}>
         {[PAGE, PANEL, CITY].map((stop) => (
           <button
             key={stop}
@@ -875,8 +969,12 @@ function Altitude({
             aria-label={saying(stop)}
             aria-keyshortcuts={keys(stop)}
             {...(stop === level ? { "aria-describedby": tipId } : {})}
+            {...stopTips[stop]!}
             // The board the keyboard chose keeps it: a press here goes into it.
-            onPointerDown={(event) => event.preventDefault()}
+            onPointerDown={(event) => {
+              event.preventDefault();
+              stopTips[stop]!.onPointerDown(event);
+            }}
             onClick={() => (stop === level ? undefined : goTo(stop))}
           >
             {LEVEL_NAMES[stop]}
@@ -888,7 +986,7 @@ function Altitude({
             ) : null}
           </button>
         ))}
-        <button type="button" data-testid="altitude-key" data-graview-key-stop="" aria-expanded={keyOpen} aria-label="Key: what the city's marks mean" title="Key: what the city's marks mean" onClick={() => setKeyOpen((open) => !open)} onKeyDown={(event) => {
+        <button type="button" data-testid="altitude-key" data-graview-key-stop="" aria-expanded={keyOpen} aria-label="Key: what the city's marks mean" {...intent.on("Key: what the city's marks mean")} onClick={() => setKeyOpen((open) => !open)} onKeyDown={(event) => {
               // The Key's Escape is the Key's: it puts the Key away, and nothing moves a level.
               if (event.key !== "Escape" || !keyOpen) return;
               event.preventDefault();
@@ -901,8 +999,8 @@ function Altitude({
               <circle cx="7" cy="4.3" r="0.4" fill="currentColor" />
             </svg>
           </button>
-        <span id={tipId} role="tooltip" data-graview-one-face-tip="" style={TIP}>{tip}</span>
-        <button type="button" data-testid="altitude-size" data-graview-key-stop="" aria-expanded={true} aria-label="Put the levels away into a slider" title="Put the levels away into a slider" onClick={() => keepSmall(true)}>
+        <Tip id={tipId} tip={intent} said={tip} />
+        <button type="button" data-testid="altitude-size" data-graview-key-stop="" aria-expanded={true} aria-label="Put the levels away into a slider" {...intent.on("Put the levels away into a slider")} onClick={() => keepSmall(true)}>
           <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3L5 6l3 3" /></svg>
         </button>
       </div>
@@ -926,7 +1024,11 @@ function Altitude({
  * is let go, as a pinch does; pressed on the track, or moved by the arrows,
  * Home and End, or 1, 2 and 3, it goes to a stop.
  */
-function LevelSlider({ level, goTo, motion, begin, describedBy }: { readonly level: number; readonly goTo: (level: number) => void; readonly motion: { readonly current: Motion }; readonly begin: () => void; readonly describedBy: string }) {
+/** The collapsed control's track, and its thumb. */
+const TRACK = 64;
+const THUMB = 14;
+
+function LevelSlider({ level, goTo, motion, begin, describedBy, tip }: { readonly level: number; readonly goTo: (level: number) => void; readonly motion: { readonly current: Motion }; readonly begin: () => void; readonly describedBy: string; readonly tip: ReturnType<IntentTip["on"]> }) {
   const track = useRef<HTMLDivElement>(null);
   const moved = useRef(false);
   const [dragging, setDragging] = useState<number | null>(null);
@@ -934,7 +1036,8 @@ function LevelSlider({ level, goTo, motion, begin, describedBy }: { readonly lev
   const atPointer = (clientX: number): number => {
     const box = track.current?.getBoundingClientRect();
     if (!box || box.width === 0) return level;
-    return Math.max(0, Math.min(CITY, ((clientX - box.left) / box.width) * CITY));
+    // The stops stand inside the track, half a thumb in from each end.
+    return Math.max(0, Math.min(CITY, ((clientX - box.left - THUMB / 2) / Math.max(1, box.width - THUMB)) * CITY));
   };
   const shown = dragging ?? level;
   const named = LEVEL_NAMES[Math.round(shown)]!;
@@ -950,6 +1053,10 @@ function LevelSlider({ level, goTo, motion, begin, describedBy }: { readonly lev
       aria-valuetext={LEVEL_NAMES[level]}
       aria-keyshortcuts="1 2 3 [ ]"
       aria-describedby={describedBy}
+      onPointerEnter={tip.onPointerEnter}
+      onPointerLeave={tip.onPointerLeave}
+      onFocus={tip.onFocus}
+      onBlur={tip.onBlur}
       onKeyDown={(event) => {
         const to = event.key === "ArrowLeft" || event.key === "ArrowDown" ? level - 1 : event.key === "ArrowRight" || event.key === "ArrowUp" ? level + 1 : event.key === "Home" ? PAGE : event.key === "End" ? CITY : null;
         if (to === null || event.altKey) return;
@@ -993,13 +1100,14 @@ function LevelSlider({ level, goTo, motion, begin, describedBy }: { readonly lev
         motion.current.scrub = 0;
       }}
       data-graview-one-face-slider=""
-      style={{ position: "relative", display: "inline-flex", alignItems: "center", height: 10, padding: "0 6px", cursor: "pointer", touchAction: "none", outline: "none", borderRadius: 4 }}
+      style={{ position: "relative", flex: "none", display: "inline-flex", alignItems: "center", width: TRACK, padding: 0, cursor: "pointer", touchAction: "none", outline: "none", borderRadius: 6 }}
     >
-      <div ref={track} aria-hidden="true" style={{ position: "relative", width: 46, height: 3, borderRadius: 2, background: "var(--graview-edge)" }}>
+      <div ref={track} aria-hidden="true" style={{ position: "relative", width: "100%", height: 2, borderRadius: 1, background: "var(--graview-edge)" }}>
+        {/* A tick on the line at each stop, and the thumb on the one you are at — all inside the track's ends. */}
         {[PAGE, PANEL, CITY].map((stop) => (
-          <span key={stop} style={{ position: "absolute", left: `${(stop / CITY) * 100}%`, top: "50%", width: 6, height: 6, marginLeft: -3, marginTop: -3, borderRadius: 3, background: "var(--graview-ink-faint, var(--graview-edge))" }} />
+          <span key={stop} style={{ position: "absolute", left: `calc(${THUMB / 2}px + ${stop / CITY} * (100% - ${THUMB}px))`, top: "50%", width: 2, height: 8, marginLeft: -1, marginTop: -4, borderRadius: 1, background: "var(--graview-ink-muted)" }} />
         ))}
-        <span data-testid="altitude-thumb" style={{ position: "absolute", left: `${(shown / CITY) * 100}%`, top: "50%", width: 12, height: 12, marginLeft: -6, marginTop: -6, borderRadius: 6, background: "var(--graview-accent)", boxShadow: "0 1px 3px rgba(0,0,0,0.3)", transition: dragging === null ? "left 200ms ease" : "none" }} />
+        <span data-testid="altitude-thumb" style={{ position: "absolute", left: `calc(${THUMB / 2}px + ${shown / CITY} * (100% - ${THUMB}px))`, top: "50%", width: THUMB, height: THUMB, marginLeft: -THUMB / 2, marginTop: -THUMB / 2, borderRadius: THUMB / 2, background: "var(--graview-accent)", boxShadow: "0 1px 3px rgba(0,0,0,0.3)", transition: dragging === null ? "left 200ms ease" : "none" }} />
       </div>
       {/* While dragged the word under the thumb is said here; at rest the button beside it says it. */}
       <span data-testid="altitude-word" aria-hidden="true" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>
@@ -1007,6 +1115,77 @@ function LevelSlider({ level, goTo, motion, begin, describedBy }: { readonly lev
       </span>
     </div>
   );
+}
+
+/** What on a page a person reads or presses: a part that would be covered if the control stood over it. */
+const CONTENT = "a[href], button, input, select, textarea, img, svg, video, canvas, [role=button], [role=link]";
+
+/**
+ * THE ROOM THE PAGE KEEPS AT ITS FOOT FOR THE CONTROL — only as much as
+ * keeps the control off the page's content when it is scrolled to its end.
+ * Every part with words or a control whose column the control stands in
+ * (the control's width, and a little air) is measured where it would be at
+ * the scroll's end: the room is what lifts the lowest of them clear of the
+ * control's top. A footer whose words stand at its right, the control at
+ * its empty left, keeps no room at all.
+ */
+function FootRoom({ fab, sheet }: { readonly fab: RefObject<HTMLDivElement | null>; readonly sheet: RefObject<HTMLDivElement | null> }) {
+  const room = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState(0);
+  useEffect(() => {
+    let frame = 0;
+    const measure = () => {
+      frame = 0;
+      const plane = sheet.current;
+      const holder = fab.current;
+      const spacer = room.current;
+      if (!plane || !holder || !spacer) return;
+      const parts = [holder.querySelector("[data-graview-one-face-dock]"), holder.querySelector("[data-graview-past-slot] > *")].flatMap((el) => {
+        const r = el?.getBoundingClientRect();
+        return r && r.width > 0 && r.height > 0 ? [r] : [];
+      });
+      if (parts.length === 0) return setHeight(0);
+      const scrollY = window.scrollY;
+      const whole = document.documentElement.scrollHeight - spacer.offsetHeight;
+      const end = Math.max(0, whole - window.innerHeight);
+      let lowest = -Infinity;
+      for (const el of plane.querySelectorAll<HTMLElement>("*")) {
+        if (el === spacer || spacer.contains(el)) continue;
+        // A leaf with words, or a control or a picture: what a person reads or presses.
+        const said = el.matches(CONTENT) || (el.childElementCount === 0 && (el.textContent ?? "").trim().length > 0);
+        if (!said) continue;
+        const r = el.getBoundingClientRect();
+        if (r.width === 0 || r.height === 0) continue;
+        const bottom = r.bottom + scrollY;
+        if (bottom < end + window.innerHeight - 400) continue;
+        if (!parts.some((part) => r.right > part.left - 8 && r.left < part.right + 8)) continue;
+        lowest = Math.max(lowest, bottom);
+      }
+      if (lowest === -Infinity) return setHeight(0);
+      // The control's top where it rests, and air above it: the lowest such part ends there at the scroll's end.
+      const top = Math.min(...parts.map((part) => part.top)) - 8;
+      const need = Math.ceil(lowest - top + window.innerHeight - whole);
+      setHeight((was) => (Math.abs(was - Math.max(0, need)) < 1 ? was : Math.max(0, need)));
+    };
+    const soon = () => {
+      if (!frame) frame = requestAnimationFrame(measure);
+    };
+    soon();
+    const sized = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(soon);
+    // The page is in the window's flow here (its box is the document's): the body's size is the page's.
+    sized?.observe(document.body);
+    if (fab.current) sized?.observe(fab.current);
+    const changed = typeof MutationObserver === "undefined" ? null : new MutationObserver(soon);
+    if (sheet.current) changed?.observe(sheet.current, { childList: true, subtree: true, characterData: true });
+    window.addEventListener("resize", soon);
+    return () => {
+      cancelAnimationFrame(frame);
+      sized?.disconnect();
+      changed?.disconnect();
+      window.removeEventListener("resize", soon);
+    };
+  }, [fab, sheet]);
+  return <div ref={room} aria-hidden="true" data-graview-altitude-room="" style={{ height }} />;
 }
 
 /** The single keys, on or off, as a person may want them off (WCAG 2.1.4). */
@@ -1056,7 +1235,7 @@ function CityKey({ close }: { readonly close: () => void }) {
       }}
       style={{ pointerEvents: "auto", position: "relative", width: "max-content", maxWidth: "calc(100vw - 32px)", padding: "8px 28px 8px 10px", borderRadius: 8, border: "1px solid var(--graview-edge)", background: "var(--graview-panel, Canvas)", color: "var(--graview-ink)", boxShadow: "0 1px 2px rgba(0,0,0,0.12)", fontSize: "0.75rem", lineHeight: 1.35 }}
     >
-      <button type="button" data-testid="altitude-key-hide" aria-label="Put the legend away" title="Put the legend away" onClick={close} style={{ position: "absolute", top: 4, right: 4, width: 20, height: 20, padding: 0, border: "none", borderRadius: 4, background: "none", color: "var(--graview-ink-muted)", font: "inherit", cursor: "pointer" }}>
+      <button type="button" data-testid="altitude-key-hide" aria-label="Put the legend away" onClick={close} style={{ position: "absolute", top: 2, right: 2, width: 24, height: 24, padding: 0, border: "none", borderRadius: 4, background: "none", color: "var(--graview-ink-muted)", font: "inherit", cursor: "pointer" }}>
         ×
       </button>
       <p data-testid="altitude-key-keys" style={{ margin: "0 0 6px", color: "var(--graview-ink-muted)" }}>

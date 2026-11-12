@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-12T07:01:48.124Z",
+  "at": "2026-11-12T13:03:22.645Z",
   "engine": "chromium",
   "checks": {
     "phoneHome": {
@@ -102,7 +102,7 @@
           "countedInAnEyebrow": false,
           "scrolls": false,
           "end": {
-            "end": 685,
+            "end": 761,
             "feet": [
               852
             ],
@@ -124,7 +124,7 @@
           "countedInAnEyebrow": false,
           "scrolls": false,
           "end": {
-            "end": 191,
+            "end": 267,
             "feet": [
               852
             ],
@@ -146,7 +146,7 @@
           "countedInAnEyebrow": false,
           "scrolls": false,
           "end": {
-            "end": 621,
+            "end": 668,
             "feet": [
               772
             ],
@@ -168,7 +168,7 @@
           "countedInAnEyebrow": false,
           "scrolls": false,
           "end": {
-            "end": 235,
+            "end": 283,
             "feet": [
               772
             ],

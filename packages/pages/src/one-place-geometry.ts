@@ -43,7 +43,8 @@ export interface View {
 
 /** How wide a desk's panel may be, and how high a phone's sheet may stand (the share above it), on this window. */
 export function panelRange(view: View): { readonly min: number; readonly max: number; readonly default: number } {
-  if (phoneOf(view)) return { min: 0.15, max: 0.7, default: 0.4 };
+  // A phone's sheet never rises so far that the city above it is lost under the control: it keeps the control's room and a band of city.
+  if (phoneOf(view)) return { min: Math.min(0.4, Math.max(0.15, (CONTROL_ROOM + 180) / Math.max(1, view.height - (view.top ?? 0)))), max: 0.7, default: 0.4 };
   const fallback = Math.round(Math.max(420, Math.min(760, view.width * 0.36)));
   return { min: Math.min(fallback, 360), max: Math.max(fallback, Math.round(view.width * 0.72)), default: fallback };
 }
@@ -132,12 +133,16 @@ export function panelBox(view: View): Box {
 }
 
 /** Where the place stands on the window: beside the panel at the page and the panel, the city's middle at the city. */
-export function aimAt(level: number, view: View): Point {
+export function aimAt(level: number, view: View, room: number = CONTROL_ROOM): Point {
   const bar = view.top ?? 0;
   if (level <= PANEL) {
     const panel = panelBox(view);
-    // On a phone the control rides at the foot of the city, above the sheet: the place is aimed in what it leaves.
-    return phoneOf(view) ? { x: view.width / 2, y: (bar + panel.y - CONTROL_ROOM) / 2 } : { x: panel.x / 2, y: bar + (view.height - bar) / 2 };
+    // On a phone the control (and the legend, when it is open) rides at the foot of the city, above the sheet: the place is aimed in what they leave, never less than half of it.
+    const kept = Math.max(CONTROL_ROOM, Math.min(room, (panel.y - bar) / 2));
+    if (phoneOf(view)) return { x: view.width / 2, y: (bar + panel.y - kept) / 2 };
+    // At a desk the control and the legend stand at the foot of the city's column: the place is aimed in what they leave above them.
+    const foot = Math.max(0, Math.min(room - CONTROL_ROOM, (view.height - bar) / 2));
+    return { x: panel.x / 2, y: bar + (view.height - bar - foot) / 2 };
   }
   // A little below the middle of what the bar leaves: the boards rise from the city, and want the room above it.
   return { x: view.width / 2, y: bar + (view.height - bar) * 0.56 };
@@ -396,13 +401,35 @@ export function fitCamera(around: Box, area: Box, margin = 16, most = Infinity):
   return cameraPutting({ x: around.x + around.width / 2, y: around.y + around.height / 2 }, { x: room.x + room.width / 2, y: room.y + room.height / 2 }, s);
 }
 
+/**
+ * THE CITY FITTED BESIDE WHAT STANDS AT THE FOOT. The control, the legend
+ * over it when it is open, and the timeline beside them each keep their
+ * rect: the city is fitted either above all of them, or to the right of
+ * them and above the control, whichever draws it larger — never under any.
+ */
+export function fitBeside(around: Box, view: View, reserved: readonly Box[], margin = 16, most = Infinity): Live {
+  const bar = view.top ?? 0;
+  const whole = { x: 0, y: bar, width: view.width, height: view.height - bar };
+  const kept = reserved.filter((box) => box.width > 0 && box.height > 0);
+  if (kept.length === 0) return fitCamera(around, whole, margin, most);
+  const top = Math.min(...kept.map((box) => box.y));
+  const right = Math.max(...kept.map((box) => box.x + box.width));
+  const above = fitCamera(around, { x: 0, y: bar, width: view.width, height: Math.max(1, top - bar) }, margin, most);
+  // Beside them, above the line of what stands lowest (the control itself): nothing is drawn down at the window's foot.
+  const lowest = Math.max(...kept.map((box) => box.y + box.height));
+  const foot = Math.min(...kept.filter((box) => box.y + box.height >= lowest - 1).map((box) => box.y));
+  const beside = fitCamera(around, { x: right, y: bar, width: Math.max(1, view.width - right), height: Math.max(1, foot - bar) }, margin, most);
+  return beside.s > above.s ? beside : above;
+}
+
 /*
  * A LINE KEEPS TO THE CITY. It leaves the page's edge outward — left at a
  * desk, up on a phone — and runs only through the part of the window the
- * city is seen in: never over the page, the bar or the control at the foot.
- * A record whose building is outside that part (under the page, past the
- * window) is pointed at: the line ends on that part's edge nearest it, with
- * a marker toward it.
+ * city is seen in: never over the page, the bar, the control at the foot or
+ * the legend over it. A record whose building is outside that part (under
+ * the page, past the window, under the control) is pointed at: the line
+ * ends on that part's edge nearest it, with a marker toward it. A line with
+ * no way through is not drawn.
  */
 export interface Route {
   /** Where the line starts: on the page's edge, inside the city's part. */
@@ -416,18 +443,73 @@ export interface Route {
 }
 
 const clampTo = (p: Point, box: Box): Point => ({ x: Math.max(box.x, Math.min(box.x + box.width, p.x)), y: Math.max(box.y, Math.min(box.y + box.height, p.y)) });
+const grown = (box: Box, by: number): Box => ({ x: box.x - by, y: box.y - by, width: box.width + 2 * by, height: box.height + 2 * by });
+const inBox = (p: Point, box: Box): boolean => p.x >= box.x && p.x <= box.x + box.width && p.y >= box.y && p.y <= box.y + box.height;
 
-export function routeLine(given: Point, target: Point, area: Box, phone: boolean, control: Box | null = null): Route {
+/** A point of the curve from `from` through `bend` to `to`, as far as `t`. */
+export const curveAt = (from: Point, bend: Point, to: Point, t: number): Point => ({
+  x: (1 - t) ** 2 * from.x + 2 * (1 - t) * t * bend.x + t * t * to.x,
+  y: (1 - t) ** 2 * from.y + 2 * (1 - t) * t * bend.y + t * t * to.y,
+});
+
+/** Whether no point of the curve falls inside any of the boxes. */
+export function curveClear(from: Point, bend: Point, to: Point, boxes: readonly Box[], steps = 48): boolean {
+  if (boxes.length === 0) return true;
+  for (let i = 1; i < steps; i++) {
+    const p = curveAt(from, bend, to, i / steps);
+    if (boxes.some((box) => inside(p, box))) return false;
+  }
+  return true;
+}
+
+/** How far a line's end keeps from the page's edge: its ring's reach, and the panel's edge that is dragged there. */
+export const END_ROOM = 20;
+/** How far a line keeps from what is reserved: its stroke and a little air. */
+const KEEP_OFF = 3;
+/** And how far its end ring reaches. */
+const RING = 9;
+
+export function routeLine(given: Point, target: Point, area: Box, phone: boolean, reserved: readonly Box[] = []): Route | null {
+  const keepOut = reserved.filter((box) => box.width > 0 && box.height > 0).map((box) => grown(box, KEEP_OFF));
   // The line starts where the page's edge meets the city's part: never beside the control, below or past it.
   let from = phone ? { x: Math.max(area.x, Math.min(area.x + area.width, given.x)), y: given.y } : { x: given.x, y: Math.max(area.y, Math.min(area.y + area.height, given.y)) };
-  // On a phone the control rides on the sheet's top edge: a line leaves that edge past the control's right.
-  if (phone && control && from.x < control.x + control.width + 8) from = { x: Math.min(area.x + area.width, control.x + control.width + 8), y: from.y };
-  const inArea = target.x >= area.x && target.x <= area.x + area.width && target.y >= area.y && target.y <= area.y + area.height;
-  const to = inArea ? target : clampTo(target, area);
+  // Something standing on that edge (a phone's control rides on the sheet's top): the line leaves the edge past it.
+  for (let step = 0; step < keepOut.length; step++) {
+    const on = keepOut.find((box) => (phone ? from.x >= box.x && from.x <= box.x + box.width && box.y + box.height >= from.y - 40 && box.y <= from.y : from.y >= box.y && from.y <= box.y + box.height && box.x + box.width >= from.x - 40 && box.x <= from.x));
+    if (!on) break;
+    from = phone ? { x: on.x + on.width + 8, y: from.y } : { x: from.x, y: on.y - 8 };
+  }
+  if (phone ? from.x > area.x + area.width : from.y < area.y) return null;
+  // The end keeps clear of the page's edge, by its ring and the edge that is dragged there.
+  const ends: Box = phone ? { ...area, height: Math.max(0, area.height - END_ROOM) } : { ...area, width: Math.max(0, area.width - END_ROOM) };
+  let to = inBox(target, ends) ? target : clampTo(target, ends);
+  // An end under what is reserved stops at its nearest edge instead, pointing on.
+  const under = keepOut.find((box) => inside(to, grown(box, RING)));
+  if (under) {
+    const out = grown(under, RING + 1);
+    const at = to;
+    const ways = [
+      { x: at.x, y: out.y },
+      { x: out.x + out.width, y: at.y },
+      { x: out.x, y: at.y },
+      { x: at.x, y: out.y + out.height },
+    ].filter((p) => inBox(p, ends) && !keepOut.some((box) => inside(p, grown(box, RING))));
+    if (ways.length === 0) return null;
+    to = ways.reduce((best, p) => (Math.hypot(p.x - at.x, p.y - at.y) < Math.hypot(best.x - at.x, best.y - at.y) ? p : best));
+  }
+  const toward = to.x === target.x && to.y === target.y ? null : target;
+  /*
+   * THE BEND: out along the edge's normal and never past the city's part —
+   * every point of the curve lies between its ends and this one — as near
+   * the edge as lets the curve keep off everything reserved.
+   */
   const reach = Math.min(80, Math.max(16, Math.hypot(to.x - from.x, to.y - from.y) / 2));
-  // Out along the edge's normal, and never past the city's part: every point of the curve lies between its ends and this one.
-  const bend = clampTo(phone ? { x: from.x, y: from.y - reach } : { x: from.x - reach, y: from.y }, area);
-  return { from, to, toward: inArea ? null : target, bend };
+  const span = phone ? from.y - area.y : from.x - area.x;
+  for (let out = reach; out <= Math.max(reach, span) + 12; out += 12) {
+    const bend = clampTo(phone ? { x: from.x, y: from.y - out } : { x: from.x - out, y: from.y }, area);
+    if (curveClear(from, bend, to, keepOut)) return { from, to, toward, bend };
+  }
+  return null;
 }
 
 /** The part of the window the city is seen in beside the page: left of it at a desk, above it on a phone; under the bar, above the control. */

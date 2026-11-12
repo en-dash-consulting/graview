@@ -3,7 +3,7 @@ import { EMPTY_VIEW, toUrl, withOverview, type ViewState } from "@graview/layout
 import { Scene, type SceneCamera } from "@graview/react";
 import { useGraview, useNavigation } from "@graview/react/provider";
 import { useEffect, useMemo, useRef } from "react";
-import { aimAt, altitudeAt, anchorOf, BOARD_ASPECT, boardWidthFor, fitCamera, SIGN_GAP, SIGN_POST, signFeet, signRoom, cameraBetween, cameraPutting, CITY, cityArea, footOf, leaveFrom, routeLine, LEVEL_LIVE, levelZooms, PAGE, pageBox, PANEL, panelBox, PHONE, project, restingLevel, SHEET_ORIGIN, standingAt, standingCss, unionOf, type Box, type Live, type PageWhere, type Point } from "./one-place-geometry.js";
+import { aimAt, altitudeAt, anchorOf, BOARD_ASPECT, boardWidthFor, fitBeside, SIGN_GAP, SIGN_POST, signFeet, signRoom, cameraBetween, cameraPutting, CITY, cityArea, footOf, leaveFrom, routeLine, LEVEL_LIVE, levelZooms, PAGE, pageBox, PANEL, panelBox, PHONE, project, restingLevel, SHEET_ORIGIN, standingAt, standingCss, unionOf, type Box, type Live, type PageWhere, type Point } from "./one-place-geometry.js";
 import type { OnePlaceCityProps } from "./one-place.js";
 
 /*
@@ -85,6 +85,8 @@ interface World {
   readonly buildings: ReadonlyMap<string, Box>;
   /** Each district's name, where it is drawn under its plot; none where it stands above or beside it, or says nothing. */
   readonly plates: ReadonlyMap<string, Box>;
+  /** Where each district's name stands, said or not: the room its views hold is laid out under it. */
+  readonly named: ReadonlyMap<string, Box>;
 }
 
 /** What one line joins, in this frame. */
@@ -188,14 +190,16 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
 
   useEffect(() => {
     let frame = 0;
-    let world: World = { plots: new Map(), buildings: new Map(), plates: new Map() };
+    let world: World = { plots: new Map(), buildings: new Map(), plates: new Map(), named: new Map() };
     /** The camera between stops this frame, as painted — the last one seen while the view takes in a move just let go. */
     let painted: Live = LEVEL_LIVE;
     /** The level the camera rests at, and the altitude this frame. */
     let rest = PAGE;
     let altitude = PAGE;
     /** A move of the camera this face is making: from one camera to another, about the place. */
-    let move: { from: Live; to: Live; fromAltitude: number; toAltitude: number; about: Point; start: number; done: () => void } | null = null;
+    let move: { from: Live; to: Live; fromAltitude: number; toAltitude: number; about: Point; start: number; foot: string; done: () => void } | null = null;
+    /** What stood at the foot when the City was last fitted: the legend opened or put away there fits it again. */
+    let cityFoot = "";
     /** A zoom the person's own hand made on the Scene, and when it last moved. */
     let handZoom = 0;
     /*
@@ -233,13 +237,16 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       const buildings = new Map<string, Box>();
       for (const building of holder.querySelectorAll("[data-graview-building]")) buildings.set(building.getAttribute("data-graview-building")!, boxOf(building.getBoundingClientRect()));
       const plates = new Map<string, Box>();
+      const named = new Map<string, Box>();
       for (const face of holder.querySelectorAll<HTMLElement>(".graview-kind-face[data-graview-nameplate]")) {
         const said = face.getAttribute("data-graview-nameplate") ?? "none";
         const kind = kindOfId(face.closest("[data-graview-view]")?.getAttribute("data-graview-view") ?? null);
-        if (!kind || said === "none" || said.endsWith("above") || said.endsWith("aside")) continue;
-        plates.set(kind, boxOf(face.getBoundingClientRect()));
+        if (!kind || said.endsWith("above") || said.endsWith("aside")) continue;
+        const box = boxOf(face.getBoundingClientRect());
+        if (box.width > 0 && box.height > 0) named.set(kind, box);
+        if (said !== "none") plates.set(kind, box);
       }
-      return { plots, buildings, plates };
+      return { plots, buildings, plates, named };
     };
 
     /** What a page stands on in the picture as it is laid out. */
@@ -302,14 +309,23 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         const own = [tile, ...(plate ? [plate] : [])];
         const others = taken.filter((box) => !own.includes(box));
         const rowWidth = (n: number) => n * width + (n - 1) * SIGN_GAP;
-        const under = { x: tile.x + tile.width / 2, y: (plate ? plate.y + plate.height : tile.y + tile.height) + 6 };
+        // Under its name, said or not: the layout held that room there (`LayoutOptions.standing`).
+        const name = plate ?? w.named.get(kind);
+        const under = { x: tile.x + tile.width / 2, y: (name ? name.y + name.height : tile.y + tile.height) + 6 };
+        // Behind the district, over the tallest of the blocks at its back corner.
+        const blocks = [...w.buildings.values()].filter((one) => one.x + one.width / 2 > tile.x && one.x + one.width / 2 < tile.x + tile.width && one.y + one.height / 2 > tile.y && one.y + one.height / 2 < tile.y + tile.height);
+        const back = Math.min(tile.y, ...blocks.map((one) => one.y)) - 4;
+        // The room the layout holds under the name first; then behind the district, and beside it.
         const candidates: { feet: ReadonlyMap<string, Point> }[] = [
           { feet: signFeet(keys, under, width, "down") },
-          { feet: signFeet(keys, { x: tile.x + tile.width / 2, y: tile.y - 4 }, width, "up") },
+          { feet: signFeet(keys, { x: tile.x + tile.width / 2, y: back }, width, "up") },
           { feet: signFeet(keys, { x: tile.x - 8 - rowWidth(Math.min(keys.length, 3)) / 2, y: tile.y + tile.height / 2 - (height + SIGN_POST * zoomNow) / 2 }, width, "down") },
           { feet: signFeet(keys, { x: tile.x + tile.width + 8 + rowWidth(Math.min(keys.length, 3)) / 2, y: tile.y + tile.height / 2 - (height + SIGN_POST * zoomNow) / 2 }, width, "down") },
         ];
-        const cost = (feet: ReadonlyMap<string, Point>) => [...feet.values()].reduce((sum, foot) => sum + others.concat(own.slice(1)).reduce((inner, box) => inner + overlap(signBox(foot), box), 0) + overlap(signBox(foot), tile), 0);
+        // A view stands on its own district: a foot nearer another district's ground than its own reads as that one's, and weighs more than any overlap.
+        const gap = (p: Point, b: Box) => Math.hypot(Math.max(b.x - p.x, 0, p.x - (b.x + b.width)), Math.max(b.y - p.y, 0, p.y - (b.y + b.height)));
+        const astray = (foot: Point) => [...w.plots.entries()].some(([other, box]) => other !== kind && gap(foot, box) <= gap(foot, tile)) ? 1e6 : 0;
+        const cost = (feet: ReadonlyMap<string, Point>) => [...feet.values()].reduce((sum, foot) => sum + astray(foot) + others.concat(own.slice(1)).reduce((inner, box) => inner + overlap(signBox(foot), box), 0) + overlap(signBox(foot), tile), 0);
         const best = candidates.reduce((pick, one) => (cost(one.feet) < cost(pick.feet) - 0.5 ? one : pick));
         for (const [key, foot] of best.feet) {
           next.set(key, foot);
@@ -319,6 +335,32 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       }
       slots = next;
       whole = unionOf(boxes);
+    };
+
+    /*
+     * WHAT STANDS AT THE FOOT: the control, the legend over it when it is
+     * open, and the timeline beside them — each its own rect, read in the
+     * frame that uses it. `now` is where they are this frame (a phone's
+     * control rides on the sheet at Nearby); `rest` is where they stand at
+     * the window's foot, which is where they are at the City.
+     */
+    const footNow = (): { readonly now: readonly Box[]; readonly rest: readonly Box[]; readonly key: string } => {
+      const holder = fab.current;
+      if (!holder) return { now: [], rest: [], key: "" };
+      const bottom = holder.getBoundingClientRect().bottom;
+      const height = state.current.view.height;
+      const now = [holder.querySelector("[data-graview-one-face-dock]"), holder.querySelector("[data-graview-past-slot] > *")].flatMap((el) => {
+        const r = el?.getBoundingClientRect();
+        return r && r.width > 0 && r.height > 0 ? [boxOf(r)] : [];
+      });
+      // At rest the region stands 16 pixels off the window's foot: each rect where it would be there.
+      const rest = now.map((box) => ({ ...box, y: height - 16 - (bottom - box.y) }));
+      return { now, rest, key: rest.map((box) => `${Math.round(box.x)},${Math.round(box.y)},${Math.round(box.width)},${Math.round(box.height)}`).join("|") };
+    };
+    /** How much of the window above a phone's sheet the control and the legend keep, at Nearby. */
+    const footRoom = (): number => {
+      const dock = fab.current?.querySelector("[data-graview-one-face-dock]")?.getBoundingClientRect();
+      return dock ? dock.height + 24 : 72;
     };
 
     /** The place the page stands on, in the picture. */
@@ -343,10 +385,9 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
          * control at the foot leave. Worked out once, before the move, and
          * held: the camera goes straight there and stops.
          */
-        const bar = now.view.top ?? 0;
-        const foot = fab.current ? Math.max(0, now.view.height - fab.current.getBoundingClientRect().top) : 72;
         if (whole) {
-          const fitted = fitCamera(whole, { x: 0, y: bar, width: now.view.width, height: now.view.height - bar - foot }, 20, s);
+          // Fitted beside what stands at the foot as it stands there at the City, its legend's rect read now.
+          const fitted = fitBeside(whole, now.view, footNow().rest, 20, s);
           // Never past what the camera can be written at: a fit below its reach was painted, then put back up when written — an overshoot.
           const least = (camera.current?.range.min ?? 0) / zoomNow;
           if (fitted.s >= least) return fitted;
@@ -359,7 +400,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         const middleOfCity = city ? middle(city) : anchor;
         return cameraPutting(middleOfCity, aimAt(CITY, now.view), s);
       }
-      return cameraPutting(anchor, aimAt(lvl === PAGE ? PANEL : lvl, now.view), s);
+      return cameraPutting(anchor, aimAt(lvl === PAGE ? PANEL : lvl, now.view, footRoom()), s);
     };
 
     /** Start a move of the camera to a level. */
@@ -372,6 +413,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         painted = to;
         altitude = toLevel;
         rest = toLevel;
+        cityFoot = toLevel === CITY ? footNow().key : "";
         cam.commit();
         committedAt = performance.now();
         ownZoom = cam.zoom();
@@ -384,9 +426,11 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         toAltitude: toLevel,
         about: anchor,
         start: now,
+        foot: footNow().key,
         done: () => {
           rest = toLevel;
           altitude = toLevel;
+          cityFoot = toLevel === CITY ? footNow().key : "";
           cam.commit();
           committedAt = performance.now();
           ownZoom = null;
@@ -498,6 +542,17 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
 
       /* A MOVE UNDER WAY: the camera set from how far it has got. */
       if (move) {
+        /*
+         * WHAT STANDS AT THE FOOT CHANGED UNDER WAY — the legend opens as the
+         * level it is shown at is headed for — and the camera's end is
+         * worked out again from it, in this frame: the fit and the aim read
+         * the rects as they are, never as they were when the move began.
+         */
+        const foot = footNow().key;
+        if (foot !== move.foot) {
+          move.foot = foot;
+          move.to = cameraFor(move.toAltitude, move.about, cam.zoom());
+        }
         const t = clamp01((now - move.start) / MOVE_MS);
         const e = ease(t);
         const placed = cameraBetween(move.from, move.to, move.about, e);
@@ -529,6 +584,13 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
          */
         if (rest === CITY && !move) {
           altitude = CITY;
+          // The legend opened or put away at the City: the city is fitted again beside it.
+          const foot = footNow().key;
+          if (cityFoot === "") cityFoot = foot;
+          else if (foot !== cityFoot && calm && anchor) {
+            cityFoot = foot;
+            moveTo(cam, CITY, anchor, now);
+          }
           if (ownZoom !== null && Math.abs(Math.log(effective / ownZoom)) > 0.001) ownZoom = effective;
         } else if (rest !== PAGE && ownZoom !== null && Math.abs(Math.log(effective / ownZoom)) > 0.03) {
           if (handZoom !== effective) {
@@ -654,6 +716,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         const pageRect = boxOf(plane.getBoundingClientRect());
         const controlRect = fab.current?.querySelector('[data-graview-one-face-dock]')?.getBoundingClientRect();
         const area = cityArea(pageRect, at.view, controlRect ? boxOf(controlRect) : null, phone);
+        // Everything that stands at the foot this frame, each its own rect: no line runs under any of them.
+        const reserved = footNow().now;
         const subjectId = at.where.type === "record" ? at.where.id : null;
         const taken = new Set<string>();
         // A district the Scene draws in this frame: one it has let go of off the window has no end to give.
@@ -702,7 +766,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           const end = endOf(target);
           if (!end) continue;
           taken.add(key);
-          const route = routeLine(from, end.at, area, phone, controlRect ? boxOf(controlRect) : null);
+          const route = routeLine(from, end.at, area, phone, reserved);
+          if (!route) continue;
           found.push({ key, from: route.from, to: route.to, bend: route.bend, under: route.toward, on: end.on, target, label: labelFor(target) });
         }
       }

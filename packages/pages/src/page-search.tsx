@@ -14,7 +14,7 @@ import type { Affordance } from "@graview/tools";
 import { useGraviewIfAny, type AiDesk } from "@graview/react/provider";
 import { openQuickAsk, useQuickAskDrawn } from "@graview/primitives/pages";
 import { useEffect } from "react";
-import { Link, useSearchParams } from "react-router";
+import { Link, useLocation, useSearchParams } from "react-router";
 import { kindFacts } from "./facts.js";
 import { DerivedForm } from "./form.js";
 import { type PageContext, useStoreTick } from "./page-context.js";
@@ -40,6 +40,8 @@ export function DefaultSearchPage<S extends AnySchema>({ context }: { context: P
   useStoreTick(store);
   const [params] = useSearchParams();
   const q = params.get("q") ?? "";
+  /* Reached by typing in the Find box: what is chosen here takes the search's place, and Back goes where Find was opened. */
+  const fromFind = (useLocation().state as { found?: boolean } | null)?.found === true;
   const today = typeof invariantContext?.["today"] === "string" ? (invariantContext["today"] as string) : undefined;
   const found = search(store, q, {
     ...(principal ? { principal } : {}),
@@ -70,6 +72,8 @@ export function DefaultSearchPage<S extends AnySchema>({ context }: { context: P
   return (
     <PageMain context={context}>
       <style>{ROWS_CSS}</style>
+      {/* The arrows walk the results, as they came from the Find box: up from the first goes back to the box. */}
+      <HitKeys />
       <header style={{ display: "grid", gap: 12 }}>
         <p style={eyebrow}>Search</p>
         <PageTitle context={context} data-testid="search-heading">
@@ -105,16 +109,16 @@ export function DefaultSearchPage<S extends AnySchema>({ context }: { context: P
           {named.map((hit) => (
             <li key={`${hit.about}:${hit.about === "rule" ? hit.name : hit.about === "place" ? hit.as : hit.kind}`} data-testid="search-hit" data-about={hit.about}>
               {hit.about === "kind" ? (
-                <Link to={`/${pluralSlug(store.schema, hit.kind)}`} style={link}>
+                <Link replace={fromFind} to={`/${pluralSlug(store.schema, hit.kind)}`} style={link}>
                   {hit.label}
                   {hit.count > 0 ? <span style={quiet}> · {hit.count} match</span> : null}
                 </Link>
               ) : hit.about === "place" ? (
-                <Link to={pathOfPlace(context, hit)} style={link}>
+                <Link replace={fromFind} to={pathOfPlace(context, hit)} style={link}>
                   Go to {hit.title}
                 </Link>
               ) : hit.about === "rule" ? (
-                <Link to="/problems" style={link}>
+                <Link replace={fromFind} to="/problems" style={link}>
                   The rule “{hit.label}”
                 </Link>
               ) : null}
@@ -140,7 +144,7 @@ export function DefaultSearchPage<S extends AnySchema>({ context }: { context: P
               .filter((hit) => hit.kind === kind)
               .map((hit) => (
                 <li key={hit.id} data-testid="search-hit" data-about="node" className="graview-row">
-                  <Link to={recordPath(store.schema, kind, hit.id)} className="graview-row-title" {...(hit.label.length > 60 ? { title: hit.label } : {})}>
+                  <Link replace={fromFind} to={recordPath(store.schema, kind, hit.id)} className="graview-row-title" {...(hit.label.length > 60 ? { title: hit.label } : {})}>
                     {hit.flagged ? <><span role="img" aria-label="Breaks a rule:" style={{ color: "var(--graview-warn)" }}>⚠</span>{" "}</> : null}
                     {hit.label}
                   </Link>
@@ -307,4 +311,25 @@ function AskLine({ asked, desk }: { readonly asked: string; readonly desk: AiDes
       </button>
     </p>
   );
+}
+
+/** Up and down among the results, by the keyboard: the order they are read in. */
+function HitKeys() {
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      // Taken already — the Find box's own arrow onto the first result — is not taken twice.
+      if (event.defaultPrevented || (event.key !== "ArrowDown" && event.key !== "ArrowUp")) return;
+      if (event.altKey || event.metaKey || event.ctrlKey || event.shiftKey) return;
+      const hits = [...document.querySelectorAll<HTMLAnchorElement>('[data-testid="search-hit"] a[href]')];
+      const at = hits.indexOf(document.activeElement as HTMLAnchorElement);
+      if (at < 0) return;
+      event.preventDefault();
+      if (event.key === "ArrowDown") hits[Math.min(hits.length - 1, at + 1)]?.focus();
+      else if (at > 0) hits[at - 1]?.focus();
+      else document.querySelector<HTMLInputElement>('[data-testid="nav-find"]')?.focus();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+  return null;
 }

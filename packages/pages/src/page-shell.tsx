@@ -436,6 +436,12 @@ export function PageFind<S extends AnySchema>({
     handed.current = new Set([addressed]);
     setTyped(addressed);
   }, [addressed]);
+  /** The address the first key left for the search page: a key before the search page is drawn replaces it. */
+  const leftFrom = useRef<string | null>(null);
+  useEffect(() => {
+    // Drawn at another address: the next first key leaves that one.
+    if (leftFrom.current !== location.key) leftFrom.current = null;
+  }, [location.key]);
   const go = (words: string) => {
     setTyped(words);
     handed.current.add(words);
@@ -447,7 +453,15 @@ export function PageFind<S extends AnySchema>({
       return;
     }
     const to = words.trim() ? `/search?${new URLSearchParams({ q: words }).toString()}` : "/search";
-    navigate(to, { replace: onSearch });
+    // Said as the box's own: a result chosen from here takes the search's place in the history, so Back goes where Find was opened.
+    /*
+     * On the search page already, each key replaces it — and so does a key
+     * a fast typist presses before the search page has been drawn: the
+     * address this face shows is still the one the first key left.
+     */
+    const searching = onSearch || leftFrom.current === location.key;
+    if (!searching) leftFrom.current = location.key;
+    navigate(to, { replace: searching, state: { found: true } });
   };
   return (
     <form
@@ -467,6 +481,14 @@ export function PageFind<S extends AnySchema>({
         data-testid="nav-find"
         value={typed}
         onChange={(event) => go(event.target.value)}
+        onKeyDown={(event) => {
+          // The arrow down from the box goes onto the first thing the words found; Enter there goes to it.
+          if (event.key !== "ArrowDown" || event.altKey || event.metaKey || event.ctrlKey || event.shiftKey) return;
+          const first = document.querySelector<HTMLAnchorElement>('[data-testid="search-hit"] a[href]');
+          if (!first) return;
+          event.preventDefault();
+          first.focus();
+        }}
         placeholder={onList ? (named ? narrowing : "Narrow…") : "Find…"}
         aria-keyshortcuts="/ Meta+K Control+K"
         aria-label={onList ? "Narrow this list" : "Find anything"}

@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-12T07:01:48.124Z",
+  "at": "2026-11-12T13:03:22.645Z",
   "engine": "chromium",
   "steps": [
     {
@@ -158,7 +158,7 @@
         "name": "2 problems in Tasks",
         "said": "2",
         "title": "2 problems in Tasks — \"Order boxes\" is done, but it waits for \"Find someone who moves pianos\" (and 1 more). Press to see them and how to fix them.",
-        "width": 35.671875,
+        "width": 36.125,
         "height": 24
       }
     ],
@@ -541,9 +541,9 @@
       "up": true
     },
     "midway": {
-      "t": 281,
-      "x": 233.4268798828125,
-      "y": 548.2238922119141,
+      "t": 283,
+      "x": 225.322509765625,
+      "y": 550.1803741455078,
       "width": 1200
     },
     "frames": 81,

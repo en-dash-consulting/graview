@@ -265,7 +265,10 @@ async function theButton(page, where, phone) {
       const stops = [0, 1, 2].map((n) => {
         const b = document.querySelector(`[data-testid="altitude-stop-${n}"]`);
         const r = b?.getBoundingClientRect();
-        return b ? { w: r.width, h: r.height, name: b.getAttribute("aria-label"), words: b.textContent?.trim(), pressed: b.getAttribute("aria-pressed") === "true" } : null;
+        // The stop's own word, read without the keycap that stands over it while the legend is open (the legend says the keys, and is open by default beside the city).
+        const cap = b?.querySelector("kbd");
+        const words = b ? [...b.childNodes].filter((node) => node !== cap).map((node) => node.textContent).join("").trim() : null;
+        return b ? { w: r.width, h: r.height, name: b.getAttribute("aria-label"), words, keycap: cap ? cap.textContent.trim() : null, pressed: b.getAttribute("aria-pressed") === "true" } : null;
       });
       const sheet = document.querySelector("[data-graview-one-place]").getBoundingClientRect();
       const r = group?.getBoundingClientRect();
@@ -280,15 +283,27 @@ async function theButton(page, where, phone) {
     });
   const levels = [];
   levels.push({ level: 0, ...(await read()) });
-  // The page's last words are not under the control: scrolled to its foot, the last thing above the room kept for it.
-  const foot = await page.evaluate(() => {
+  /*
+   * The control covers none of the page: scrolled to its foot, no part a
+   * person reads or presses (a leaf with words, a control, a picture) is
+   * under the control — and the page keeps no empty band for it where
+   * nothing would be under it (Nick, 2026-11-12: "extra space in the footer").
+   */
+  const foot = await page.evaluate(async () => {
     window.scrollTo(0, document.documentElement.scrollHeight);
+    await new Promise((done) => setTimeout(done, 300));
     const room = document.querySelector("[data-graview-altitude-room]");
-    const fab = document.querySelector('[data-testid="altitude"] [role="group"]').getBoundingClientRect();
-    let last = room?.previousElementSibling;
-    while (last && last.getBoundingClientRect().height === 0) last = last.previousElementSibling;
-    const deepest = last ? [...last.querySelectorAll("*")].filter((el) => el.getBoundingClientRect().height > 0 && el.children.length === 0).map((el) => el.getBoundingClientRect().bottom) : [];
-    return { room: Boolean(room), lastBottom: Math.max(0, ...deepest), fabTop: fab.top };
+    const parts = [document.querySelector("[data-graview-one-face-dock]"), document.querySelector("[data-graview-past-slot] > *")].filter(Boolean).map((el) => el.getBoundingClientRect()).filter((r) => r.width > 0 && r.height > 0);
+    const sheet = document.querySelector("[data-graview-one-place]");
+    const covered = [...sheet.querySelectorAll("*")]
+      .filter((el) => !room?.contains(el) && (el.matches("a[href], button, input, select, textarea, img, svg, video, canvas, [role=button], [role=link]") || (el.childElementCount === 0 && (el.textContent ?? "").trim().length > 0)))
+      .filter((el) => {
+        const r = el.getBoundingClientRect();
+        return r.width > 0 && r.height > 0 && parts.some((p) => r.right > p.left && r.left < p.right && r.bottom > p.top && r.top < p.bottom);
+      })
+      .map((el) => `${el.tagName.toLowerCase()} “${(el.textContent ?? "").trim().slice(0, 30)}”`);
+    // The band kept under the page's last words: the room, and nothing in the control's column above it but what needs it.
+    return { room: Boolean(room), roomHeight: room ? room.getBoundingClientRect().height : null, covered };
   });
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.keyboard.press("Alt+ArrowUp");
@@ -305,13 +320,15 @@ async function theButton(page, where, phone) {
   const sized = (l) => l.stops.every((stop) => stop && Boolean(stop.name) && (phone ? stop.h >= 44 && stop.w >= 44 : stop.h <= 30));
   const lit = (l) => l.stops.map((stop) => stop?.pressed).join() === [0, 1, 2].map((n) => n === l.level).join();
   const words = (l) => l.stops.map((stop) => stop?.words).join("·") === "Page·Nearby·City";
+  // A keycap, where one stands over a stop, names that stop's own key.
+  const caps = (l) => l.stops.every((stop, n) => stop?.keycap === null || stop?.keycap === String(n + 1));
   // At the bottom left — a phone's rides above the sheet at Nearby.
   const corner = (l) => l.at && l.at.left <= 24 && (l.at.bottom <= 24 || (phone && l.level === 1));
   const ok =
-    levels.every((l) => corner(l) && sized(l) && lit(l) && words(l)) &&
+    levels.every((l) => corner(l) && sized(l) && lit(l) && words(l) && caps(l)) &&
     levels.every((l) => l.key) &&
     /1 of 3/.test(levels[0].said ?? "") && /3 of 3/.test(levels[2].said ?? "") &&
-    foot.room && foot.lastBottom <= foot.fabTop + 1 &&
+    foot.room && foot.covered.length === 0 &&
     // A phone's sheet: the control rides above it, never over it.
     (!phone || (levels[1].controlBottom !== null && levels[1].controlBottom <= levels[1].sheetTop + 1)) &&
     (await levelOf(page)) === 0;
@@ -715,7 +732,8 @@ async function slider(page, where) {
   await press(page, '[data-testid="altitude-size"]');
   await page.waitForTimeout(200);
   const mini = await areaOf();
-  seen.small.push({ where, whole, mini, share: Number((mini.area / whole.area).toFixed(3)), ok: mini.area <= whole.area / 3 });
+  // The same control made shorter, not another widget: clearly narrower (at most 60% of the levels' width), and the same height.
+  seen.small.push({ where, whole, mini, share: Number((mini.width / whole.width).toFixed(3)), ok: mini.width <= whole.width * 0.6 && Math.abs(mini.height - whole.height) <= 1 });
   const folded = await page.evaluate(() => {
     const el = document.querySelector('[data-testid="altitude-slider"]');
     const r = el?.getBoundingClientRect();
@@ -1252,7 +1270,7 @@ try {
   report.checks.shortcutsDoNotFireInAField = { held: seen.inField, ok: every(seen.inField) };
   report.checks.theControlCollapsesToASliderNamingTheLevel = { held: seen.folds, ok: every(seen.folds) };
   report.checks.draggingTheSliderScrubsTheLevels = { held: seen.dragged, ok: every(seen.dragged) };
-  report.checks.theCollapsedControlIsAtMostAThirdOfTheExpanded = { held: seen.small, ok: every(seen.small) };
+  report.checks.theCollapsedControlIsClearlySmallerAndTheSameHeight = { held: seen.small, ok: every(seen.small) };
   report.checks.theLegendAndTooltipsAreReachableInBothStates = { held: seen.legend, ok: every(seen.legend) };
   report.checks.theCollapsedChoiceIsKept = { held: seen.keptChoice, ok: every(seen.keptChoice) };
   report.checks.aDuplicateViewIsFound = { held: seen.duplicate, ok: every(seen.duplicate) };

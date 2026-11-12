@@ -1,13 +1,14 @@
 # Pages and lenses are one: the view
 
 Status: design note for the Pages+Scene unification (Graview HQ
-feature:f-page-zooms-out-to-the-city). Part of it ships with the prototype on
-`build/pages-and-the-scene-are-one-place`; the rest is the plan. Pre-1.0: no
-shims, no aliases. The format upgrade does the moving.
+feature:f-page-zooms-out-to-the-city). The one face ships in 0.2.0 as a
+host option, `sceneUnderPages`, off unless a host gives it: Cloud turns it
+on app by app, and making it the default is 0.2.1. The rest of this note is
+the plan. Pre-1.0: no shims, no aliases. The format upgrade does the moving.
 
-## What a person sees now
+## What a person sees on the one face
 
-There is one face. A routed page is read over the Scene's own city, and one
+Where a host gives `sceneUnderPages`, there is one face. A routed page is read over the Scene's own city, and one
 camera moves the page itself between three levels, every step drawn, the
 same element all the way:
 
@@ -124,9 +125,10 @@ and held by `pnpm verify one-face` (`aDuplicateViewIsFound`).
 
 ## What Graview Cloud changes
 
-1. Set `sceneUnderPages: true` where it hosts an app as the page itself. Stop drawing the Scene/Pages switch: pass
-   `bar: { faces: false }` to `@graview/embed` until the embed draws the one
-   face in a box (below).
+1. Set `sceneUnderPages: true` per app, as it moves each one (see
+   "Upgrading to 0.2"), where it hosts that app as the page itself. Where it
+   embeds an app and wants no switch, pass `bar: { faces: false }` to
+   `@graview/embed` until the embed draws the one face in a box (below).
 2. Run `upgradeDocument` on read (it already does) once format 2 ships. The
    stored document upgrades itself, and Cloud records the system-authored
    version it returns. No hand migration of users' documents.
@@ -153,50 +155,76 @@ and held by `pnpm verify one-face` (`aDuplicateViewIsFound`).
 
 ## Upgrading to 0.2
 
+0.2.0 makes the one face available and changes nothing for an app that does
+not ask for it. `sceneUnderPages` is off unless a host gives it, and an app
+without it draws exactly as in 0.1: the routed face with its Scene/Pages
+switch, and the Scene at its own address. No stored format changes, and
+nothing is rewritten when a document is read.
+
 **An author on the dev kit** (`graview create`, a code declaration):
 
-1. Give the `PagesApp` that owns its page `views` and `sceneUnderPages:
-   true`. If your app also serves the Scene's own face at `/`, send
-   people to `/pages/places/overview` (the examples do this). Drop any link
-   of your own to "the scene".
+1. Nothing is required. To try the one face, give the `PagesApp` that owns
+   its page `views` (the registry the Scene draws with) and
+   `sceneUnderPages: true`. If the app also serves the Scene's own face at
+   `/`, send people to the one face instead (Things and the discography send
+   a person, not a driven browser, to `/pages/`), and drop any link of your
+   own to "the scene": the face has no switch.
 2. Run `graview check`. A `view-duplicates-another` warning names a view
    that shows only what a kind's list page already shows, or two views of
-   the same picture, and says which to keep. In a code declaration, delete the
-   lens it names. The finding's `edit:` line is the same change for a
-   document.
-3. Nothing to migrate in your data. The views are declaration, not records.
+   the same picture, and says which to keep. It never fails the check. In a
+   code declaration, delete the lens it names. The finding's `edit:` line is
+   the same change for a document.
+3. Nothing to migrate in your data. Views are declaration, not records.
 
-**Graview Cloud** (documents, hosted for strangers), staged one app at a time:
+**Graview Cloud** (documents, hosted for strangers) moves one app at a time,
+when staff choose:
 
-0.2.0 changes no stored format. An app's document as it is today compiles,
-draws on the one face, and runs beside an app already moved. Nothing is
-rewritten when a document is read.
-
-1. **Read, as today.** `upgradeDocument(stored)` (from
-   `@graview/core/document`) runs on every read, in memory. In 0.2.0 it has
-   no format step, so it returns the document as stored. It is idempotent:
-   reading it twice gives the same document. It is not written back.
+1. **Leave every app as it is.** `upgradeDocument(stored)` (from
+   `@graview/core/document`) still runs on every read, in memory. In 0.2.0 it
+   has no format step, so it returns the document as stored, and it is
+   idempotent. It is not written back. An app Cloud has not moved draws as
+   it did in 0.1.
 2. **See what moving an app would do.** `compileDocument(document).findings`
-   includes `check:view-duplicates-another`, a **warning** that never fails
-   the document. Each finding carries `edits` (for example
-   `[{ "op": "remove-lens", "title": "Root causes" }]`) and says which view
-   stays. A note without `edits` means the arrangement names the duplicate;
-   point `pages.first`/`pages.primary` at the list first.
-3. **Move one app, when staff choose.** Collect the edits:
-   `findings.filter((f) => f.code === "check:view-duplicates-another").flatMap((f) => f.edits ?? [])`.
-   Then apply them through the host's own change path: Cloud's
-   `apply_change`, or `editDocument(document, edits)` and store the result.
-   Record it as a new version authored by the system ("one view per
-   picture, 0.2"). Applying it again finds nothing and changes nothing.
-4. **Take it back** by reverting that version in the app's history, as for
-   any change. Records are untouched either way.
-5. **Leave the rest** as they are until chosen. A moved app and an unmoved
-   app run on the same host, on the same 0.2.0 packages.
+   includes `check:view-duplicates-another`, a warning. Each finding carries
+   `edits` (for example `[{ "op": "remove-lens", "title": "Root causes" }]`)
+   and says which view stays. A note without `edits` means the arrangement
+   names the duplicate: point `pages.first` or `pages.primary` at the list
+   first.
+3. **Move one app.** Two steps, each its own act:
+   - Turn on `sceneUnderPages` for that app where Cloud hosts it as the page
+     itself (a per-app setting of Cloud's, not of the document). An embed
+     keeps its faces for now: pass `bar: { faces: false }` to
+     `@graview/embed` if the switch should not show, until the one face
+     draws in a box (below).
+   - Apply the app's `view-duplicates-another` edits as one new version
+     authored by the system ("one view per picture, 0.2"):
+     `findings.filter((f) => f.code === "check:view-duplicates-another").flatMap((f) => f.edits ?? [])`,
+     through Cloud's own change path (`apply_change`, or
+     `editDocument(document, edits)` and store the result). Applying it again
+     finds nothing and changes nothing.
+4. **Take it back** by turning the setting off, and by reverting that
+   system-authored version in the app's history, as for any change. Records
+   are untouched either way.
+5. **A moved app and an unmoved app run side by side** on the same host and
+   the same 0.2.0 packages.
 
-When format 2 ships (a later version), step 3 becomes `UPGRADES[1]` in
-`upgradeDocument`, so a host gets the same result by storing what a read
-returned. The staged rule stays the same: upgraded in memory on read, and
-persisted per app by an explicit host call.
+When format 2 ships (a later version), the edits of step 3 become
+`UPGRADES[1]` in `upgradeDocument`. The staged rule stays the same:
+upgraded in memory on read, persisted per app by an explicit host call.
+
+**What breaks:**
+
+- Nothing, for an app without `sceneUnderPages`.
+- With it, on that app's routed face: the bar has no Scene/Pages switch, no
+  "In the scene" link and no Up. The bar is portaled to a fixed slot at the
+  window's top, so a `pages-design` shell that measured the bar inside its
+  own flow sees a spacer of the bar's height in its place. The Scene's record
+  drive-in is not drawn; a record chosen in the city is its own page.
+- The face positions the page and the city against the window (`position:
+  fixed`), so it is not drawn inside a host's box: `@graview/embed` keeps
+  drawing the routed face with its faces in 0.2.0.
+- While the history is played, the Scene's buildings rise and sink on every
+  face, the option or not.
 
 Held by
 `packages/core/tests/document/a-staged-move-to-one-view-per-picture.test.ts`:
@@ -205,18 +233,17 @@ app compile side by side, and reading a document twice changes nothing.
 
 ## Deferred past 0.2.0 (named follow-ups)
 
-- **one-face-by-default**: the one face without the `sceneUnderPages` option.
-  Tried in this pass and taken back: with it on for every routed face that
-  owns its page, 32 unit tests of the routed face (boards, menus, a record's
-  name in place, Seen in, "the record's way to the scene") and the hosted
-  budgets failed. They hold claims about the page as it was drawn before the
-  city part loads, and about the link to the Scene. Each needs moving onto
-  the one face, or retiring where the one face makes it obsolete, before the
-  option can go.
-
+- **one-face-by-default (0.2.1)**: the one face without the
+  `sceneUnderPages` option. Tried in this pass and taken back: with it on
+  for every routed face that owns its page, 32 unit tests of the routed face
+  (boards, menus, a record's name in place, Seen in, "the record's way to the
+  scene") and the hosted budgets failed. They hold claims about the page as
+  it was drawn before the city part loads, and about the link to the Scene.
+  Each needs moving onto the one face, or retiring where the one face makes
+  it obsolete, before the option can go.
 - **embed-one-face-in-a-box**: the one face drawn inside a host's element.
   It positions against the window today, so `@graview/embed` draws the plain
-  routed face with no switch, and Cloud's hosted pages get no city yet.
+  routed face, and Cloud's embedded pages get no city yet.
 - **close-up-live-views**: a view up close at the City as its live,
   interactive page.
 - **format-2**: `views.items` in the stored format, done by `UPGRADES[1]`.
@@ -233,9 +260,11 @@ app compile side by side, and reading a document twice changes nothing.
 - **calendar-labels**: the calendar's time labels, and building names that
   collide at Nearby.
 - **crowded-cities**: the City with many views (rota, the discography) on a
-  phone; one phone view stands nearer the wrong district.
-- **find-enter**: Find's Enter lands on its results page at Nearby, not on
-  the record.
+  phone draws the city small, and a district's name may go unsaid there.
+  (A phone's view standing nearer the wrong district is fixed in 0.2.0: the
+  layout holds the room under each district's name for its views.)
+- **one-face-ring-targets**: the rings at a line's end are 16 pixels; where
+  two lines end close together, the watch finds them small and touching.
 
 ## Not done in this pass
 

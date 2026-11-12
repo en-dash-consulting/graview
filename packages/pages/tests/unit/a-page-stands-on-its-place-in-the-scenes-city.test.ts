@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { altitudeAt, anchorOf, cityArea, routeLine, cameraBetween, cameraPutting, edgeToward, fitCamera, leaveFrom, levelZooms, meetingOf, nearestThatWay, pageBox, panelBox, project, signFeet, signRoom, standingAt, standingCss, zoomAtAltitude, type Box } from "../../src/one-place-geometry.js";
+import { altitudeAt, anchorOf, cityArea, curveAt, END_ROOM, fitBeside, routeLine, cameraBetween, cameraPutting, edgeToward, fitCamera, leaveFrom, levelZooms, meetingOf, nearestThatWay, pageBox, panelBox, project, signFeet, signRoom, standingAt, standingCss, zoomAtAltitude, type Box } from "../../src/one-place-geometry.js";
 
 const desk = { width: 2000, height: 1185, top: 48 };
 const phone = { width: 390, height: 844, top: 96 };
@@ -105,7 +105,8 @@ describe("a page stands on its place in the Scene's city, one altitude from page
     const area = cityArea(page, desk, control, false);
     const from = { x: page.x, y: 900 };
     for (const target of [{ x: 300, y: 500 }, { x: page.x + 100, y: -200 }, { x: -300, y: 400 }, { x: 400, y: desk.height + 300 }, { x: page.x + 50, y: 400 }]) {
-      const route = routeLine(from, target, area, false);
+      const route = routeLine(from, target, area, false)!;
+      expect(route).not.toBeNull();
       for (let i = 1; i < 20; i++) {
         const t = i / 20;
         const x = (1 - t) ** 2 * from.x + 2 * (1 - t) * t * route.bend.x + t * t * route.to.x;
@@ -115,7 +116,43 @@ describe("a page stands on its place in the Scene's city, one altitude from page
         expect(x > control.x && x < control.x + control.width && y > control.y && y < control.y + control.height).toBe(false);
       }
     }
-    expect(routeLine(from, { x: page.x + 100, y: -200 }, area, false).toward).not.toBeNull();
-    expect(routeLine(from, { x: 300, y: 500 }, area, false).toward).toBeNull();
+    expect(routeLine(from, { x: page.x + 100, y: -200 }, area, false)!.toward).not.toBeNull();
+    expect(routeLine(from, { x: 300, y: 500 }, area, false)!.toward).toBeNull();
+  });
+
+  it("keeps a phone's lines off the control and the legend over it, leaving the sheet's edge past them", () => {
+    const sheet = panelBox(phone);
+    // The control riding on the sheet's top edge, and the legend over it.
+    const control = { x: 16, y: sheet.y - 58, width: 298, height: 48 };
+    const legend = { x: 16, y: control.y - 30 - 160, width: 300, height: 160 };
+    const area = cityArea(sheet, phone, null, true);
+    for (const target of [{ x: 60, y: 140 }, { x: 200, y: control.y + 10 }, { x: 350, y: 200 }, { x: 40, y: legend.y + 40 }, { x: 200, y: phone.height }]) {
+      for (const part of [{ x: 40, y: sheet.y + 40 }, { x: 300, y: sheet.y + 40 }, { x: 370, y: sheet.y + 40 }]) {
+        const route = routeLine({ x: part.x, y: sheet.y }, target, area, true, [control, legend]);
+        if (!route) continue;
+        // It leaves the sheet's own edge, past the control, and its end keeps clear of the sheet's edge.
+        expect(route.from.y).toBe(sheet.y);
+        expect(route.from.x).toBeGreaterThan(control.x + control.width);
+        expect(route.to.y).toBeLessThanOrEqual(sheet.y - 6 - END_ROOM + 0.01);
+        for (let i = 1; i < 40; i++) {
+          const p = curveAt(route.from, route.bend, route.to, i / 40);
+          for (const box of [control, legend]) expect(p.x > box.x && p.x < box.x + box.width && p.y > box.y && p.y < box.y + box.height).toBe(false);
+        }
+      }
+    }
+    // A building in plain sight beside the control is reached.
+    expect(routeLine({ x: 370, y: sheet.y }, { x: 350, y: 200 }, area, true, [control])?.toward).toBeNull();
+  });
+
+  it("fits the city beside what stands at the foot: above it, or to its right, whichever is larger", () => {
+    const city = { x: 0, y: 0, width: 800, height: 300 };
+    const legend = { x: 16, y: desk.height - 260, width: 330, height: 244 };
+    const camera = fitBeside(city, desk, [legend], 20);
+    const left = city.x * camera.s + camera.x;
+    const bottom = (city.y + city.height) * camera.s + camera.y;
+    // Never under the legend: wholly to its right, or wholly above it.
+    expect(left >= legend.x + legend.width || bottom <= legend.y).toBe(true);
+    // With nothing at the foot, the whole window under the bar.
+    expect(fitBeside(city, desk, [], 20).s).toBeGreaterThanOrEqual(camera.s);
   });
 });
