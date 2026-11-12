@@ -54,6 +54,8 @@ const CHAIN = [
   ["watch", "verify-watch.mjs"],
   // No browser: what Cloud's hosted page carries before the app draws, from esbuild's metafile (FR-57).
   ["hosted", "verify-hosted-page.mjs"],
+  // A place drawn for an e-ink reader, as a host photographs it: it fits or goes onto pages, every pixel gray, each press its element's box, the same picture however soon it is taken, nothing fetched (Roadmap f-eink-display-profile, f-render-tap-map).
+  ["device", "verify-device.mjs"],
   // Guest views, hostile, in a frame (three engines) and in a worker inside Claude's and ChatGPT's widgets (FR-04, FR-68–FR-71).
   ["guest", "guest-sandbox.mjs"],
   ["site", "verify-site.mjs"],

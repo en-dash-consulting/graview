@@ -77,6 +77,17 @@ own actor tidying are `graview-tidying`.
    `design` puts it in the product's own markup — `records[kind](record,
    site)` writes a record's page, `document(page)` what goes around it —
    which is how graview.dev renders its pages (`apps/site/design.mjs`).
+   For a reader on a wall, `renderScreen(store, app, place, { profile:
+   "eink", viewport: { width: 758, height: 1024 }, viewer })` from
+   `@graview/pages/device` draws it at a fixed layout, its colors sixteen
+   grays (the host quantizes the picture to its panel), a long list on
+   pages, with `taps` — each region's rectangle and what it does (`go`,
+   `open`, `act`, `page`, `refresh`) — and a `renderId`; `resolveTap`
+   answers a tap with a place to render (never a URL), and runs an act
+   only while the screen still shows it. Say
+   the strip along its foot with `devices: { screens: [{ place: "tasks",
+   label: "Tasks" }] }`, at most 4, each word 12 characters at most;
+   `graview check` says a place it lacks (`device-screen-place`).
 
 4. **Know what a kind opens to before you draw it a picture.** Gone into
    with no lens of its own (`#focus=aggregate:room`), a kind opens to its

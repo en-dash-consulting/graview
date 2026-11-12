@@ -1,6 +1,7 @@
 import * as z from "../schema/zod.js";
 import { LINKED_TARGET } from "../schema/linked.js";
 import type { AppPurpose } from "../job-shape.js";
+import type { AppDevices } from "../device-shape.js";
 import type { AppWorkflows } from "../workflow-shape.js";
 
 /*
@@ -659,6 +660,12 @@ function build() {
      * `./purpose-spec.ts`) is the checker's to judge and an edit's to hold, and the JSON schema says it.
      */
     purpose: z.optional(loose as unknown as z.ZodMiniType<AppPurpose>),
+    /**
+     * The screens a device offers, in order, each a place and the word under its press (Roadmap
+     * f-device-nav-bar, `device-shape.ts`). Read loosely here, as a page that draws the app offers no
+     * strip; its shape (`DevicesSpec`, `./devices-spec.ts`) is the checker's to judge and an edit's to hold.
+     */
+    devices: z.optional(loose as unknown as z.ZodMiniType<AppDevices>),
     /**
      * What the app does on its own, and when (Roadmap f-jobs-declared, `workflow-shape.ts`): workflows by
      * name, each a title, what starts it and its steps. Read loosely here, as a page that draws the app runs

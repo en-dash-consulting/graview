@@ -914,6 +914,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     ...(document.tidying ? { tidying: document.tidying } : {}),
     // Who it is for and what they come to do (Roadmap f-app-jobs): data the checker, the describer and a seat read.
     ...(document.purpose ? { purpose: document.purpose } : {}),
+    // The screens a device offers (Roadmap f-device-nav-bar): data the e-ink render draws as its strip.
+    ...(document.devices ? { devices: document.devices } : {}),
     // The document's views are the declaration's view specs (FR-03): data the framework draws.
     ...(plan.viewSpecs ? { viewSpecs: plan.viewSpecs as never } : {}),
     // And its home view, about no one record, is the app's home (FR-81).

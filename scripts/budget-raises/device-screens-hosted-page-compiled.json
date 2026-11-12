@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 36,
+  "gzipped": 6,
+  "changeset": "a-place-is-drawn-for-an-e-ink-screen-with-what-each-region-does.md",
+  "note": "Raised when a declaration came to say which places a device offers as screens (Roadmap f-device-nav-bar): a compiled app carries its `devices` as the document said them. Measured at 629_218 / 217_947 against 629_182 / 217_941 minified and gzipped."
+}

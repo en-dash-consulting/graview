@@ -392,6 +392,29 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
     });
   }
 
+  // ── the strip a device offers (Roadmap f-device-nav-bar): what left it, what joined it, then each moved to its place ──
+  const strip = (read: Read) =>
+    read
+      .ofKind("screen")
+      .map((node) => ({ place: str(node, "place") ?? "", label: label(node), at: typeof node["at"] === "number" ? (node["at"] as number) : 0 }))
+      .sort((a, b) => a.at - b.at);
+  const stripBefore = strip(was);
+  const stripAfter = strip(now);
+  const kept = (screen: { place: string; label: string }) => stripAfter.some((one) => one.place === screen.place && one.label === screen.label);
+  let order = stripBefore.filter(kept).map((screen) => screen.place);
+  for (const screen of stripBefore) if (!kept(screen)) edits.push({ op: "remove-device-screen", place: screen.place });
+  for (const screen of stripAfter) {
+    if (order.includes(screen.place)) continue;
+    edits.push({ op: "add-device-screen", screen: { place: screen.place, label: screen.label } });
+    order.push(screen.place);
+  }
+  stripAfter.forEach((screen, at) => {
+    if (order[at] === screen.place) return;
+    edits.push({ op: "move-device-screen", place: screen.place, to: at });
+    order = order.filter((place) => place !== screen.place);
+    order.splice(at, 0, screen.place);
+  });
+
   // ── what the policy, the lenses and the brand became, which no op says yet ──
   const outEdges = (reading: Reading, id: string) =>
     reading.edges

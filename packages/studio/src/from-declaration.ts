@@ -4,7 +4,7 @@ import { fieldSpecOf } from "@graview/core/blocks";
 import { isMarkdownField } from "@graview/core/words";
 import type { AnyMutationDefinition, AnySchema, GraphEdge, GraphSnapshot, GraviewApp, InvariantDefinition } from "@graview/core";
 import type { z } from "zod";
-import { DECLARED_KIND, FIELD_TYPES, type FieldType } from "./meta.js";
+import { DECLARED_KIND, FIELD_TYPES, screenId, type FieldType } from "./meta.js";
 
 /*
  * A DECLARATION READ INTO THE GRAPH. Every kind, field, edge, act, rule,
@@ -309,6 +309,11 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
       ...(lens.export === false ? { export: false } : {}),
     });
   }
+
+  // The screens a device offers, in the strip's order (Roadmap f-device-nav-bar).
+  (app.devices?.screens ?? []).forEach((screen, at) => {
+    nodes.push({ id: screenId(screen.place), kind: "screen", label: screen.label, place: screen.place, at });
+  });
 
   if (app.brand) {
     nodes.push({
