@@ -48,7 +48,7 @@ export { repeatField } from "./schema/repeat-field.js";
 export { markdownField } from "./schema/markdown-field.js";
 // A phone, a place and a length of time: a tel: link, a link to the reader's maps app, minutes said "1 h 30 min".
 export type { TypedField } from "./schema/typed-fields.js";
-export { durationField, phoneField, placeField } from "./schema/typed-field-builders.js";
+export { durationField, phoneField, placeField, timeField } from "./schema/typed-field-builders.js";
 export { nameOfAuthor } from "./who.js";
 export type { Person } from "./who.js";
 export { createSchema, SchemaError } from "./schema/schema.js";
@@ -322,10 +322,12 @@ export {
   localeFor,
   minutesAsRead,
   momentAsRead,
+  momentAtAGlance,
   monthAsRead,
   numberAsRead,
   sayIn,
   sayingIn,
+  TIME_OF_DAY,
   timeAsRead,
   timeZoneFor,
   timeZoneProblem,
@@ -517,6 +519,7 @@ export { defineApp } from "./app.js";
 export type { EntityBinding, GraviewApp, LensDeclaration } from "./app.js";
 export type { VisitorFormDeclaration } from "./visitor-form-shape.js";
 export type { AppPurpose, JobDeclaration, JobSort } from "./job-shape.js";
+export type { AppDevices, DeviceScreen } from "./device-shape.js";
 export { foldPresence, nextExpiry, parseParticipant, participantKey, PRESENCE_TTL_MS, presenceName, presenceStands, REMOTE_PRESENCE_TTL_MS, samePresence, VISITOR_PRESENCE_TTL_MS } from "./presence.js";
 export type { Participant, Presence, PresenceCaret, PresenceChannel, PresenceRobot } from "./presence.js";
 export { FRESH_KEY, freshAddress } from "./fresh.js";

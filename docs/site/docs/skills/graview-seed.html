@@ -1839,6 +1839,14 @@ chain.unreachable;  // what nothing here can make — often right, always worth 
 <div class="code" data-scroller><pre><code class="language-sh">pnpm build:domain &amp;&amp; npx graview check ./dist/domain/app.js
 npx graview describe ./dist/domain/app.js</code></pre></div>
 <p>A document (<code>app.json</code>, a graview-document) needs no build: <code>npx graview describe --document app.json</code> reads the same chain out, and <code>npx graview preview app.json --seed seed.json</code> serves the scene and Pages over a snapshot (<code>{ "nodes": [{ "id", "kind", …fields }], "edges": [{ "kind", "from", "to" }] }</code>) so you can walk in as a person would.</p>
+<h3>Or from a template</h3>
+<p>A graview-template (Graview Cloud's shape) is the document, the questions asked to set it up, and what their answers do as ordinary acts:</p>
+<div class="code" data-scroller><pre><code class="language-json">"questions": [{ "id": "date", "ask": "What day?", "type": "date" },
+  { "id": "dinnerTime", "ask": "What time is dinner?", "type": "time", "default": "15:00" }],
+"setup": [{ "act": "add-moment", "args": { "name": "Dinner", "at": "${date}T${dinnerTime}:00" } },
+  { "forEach": "$households", "act": "add-household", "args": { "name": "$item" }, "if": "present(host)" }],
+"views": [{ "name": "the-day", "attach": "moment", "cardinality": "many", "title": "The Day", "reads": { "kinds": ["household"] } }]</code></pre></div>
+<p>A question is <code>string</code>, <code>text</code>, <code>number</code>, <code>date</code>, <code>time</code> ("3 PM" is kept as "15:00"), <code>list</code> or <code>choice</code>, and its <code>ask</code> may say an earlier answer as <code>${id}</code>. <code>"$id"</code> alone is the answer itself; <code>${id}</code> reads it into words where a letter follows. <code>views</code> (worker views, each its manifest) and <code>frameViews</code> keep their code beside the template, <code>views/&lt;template id&gt;/&lt;name&gt;.js</code> (or <code>.html</code>); <code>graview create --template</code> writes it to <code>views/</code>, and <code>graview apply --template</code> sets a store up and leaves views to the host. <code>npx graview check template.json</code> refuses an <code>$id</code>, a <code>${id}</code>, a kind, a relation or an act the template does not have.</p>
 <p>Then open it with an empty store (Start fresh, with a ship browser adapter) and go through your own front door. A test holds it: derive the affordances of each root kind on an empty graph and assert the way in is offered, and that a kind deeper in the chain offers nothing and says what it waits for.</p>
 <h3>What the check cannot see</h3>
 <ul>

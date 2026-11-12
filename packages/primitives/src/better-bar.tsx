@@ -52,7 +52,9 @@ function factsOf(row: Element, name: Element, others: readonly Element[] = []): 
     if (!parent || name.contains(parent) || nested.some((item) => item.contains(parent)) || parent.closest("button, input, select, textarea, [role='button'], nav, [hidden], [aria-hidden='true'], script, style")) continue;
     const link = parent.closest("a[href]");
     if (link && !link.contains(name)) continue;
-    byParent.set(parent, (byParent.get(parent) ?? "") + (node.textContent ?? ""));
+    // Words either side of a chip ("Sep 3, 2026 [Todo] Done: no") are two facts: the chip stands between them, as a dot would.
+    const apart = node.previousSibling?.nodeType === 1 && byParent.has(parent) ? " · " : "";
+    byParent.set(parent, (byParent.get(parent) ?? "") + apart + (node.textContent ?? ""));
   }
   // Facts a row says together ("Sep 3, 2026 · Done: no") are each a fact of their own.
   for (const [parent, text] of [...byParent].flatMap(([parent, text]) => text.split(/\s+·\s+/).map((one) => [parent, one] as const))) {

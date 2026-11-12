@@ -28,7 +28,10 @@
  *   the scene's record panel links them as the page does;
  *   a rehearsal's sections — a choice that takes several of its options
  *   (FR-233) — are said by their labels, opened in place as a box per
- *   option, and asked for by the form as boxes whose ticked ones are sent.
+ *   option, and asked for by the form as boxes whose ticked ones are sent;
+ *   a rehearsal's start — a time of day (`time`) — is said "7:30 PM",
+ *   never as it is kept, and the form asks for it in a time input and
+ *   keeps "18:45".
  *
  *   node scripts/verify-field-types.mjs [--engine=chromium|webkit|firefox] [--quick] [--shots=<dir>]
  */
@@ -202,7 +205,7 @@ try {
         const readBoxes = () => page.evaluate(() => [...document.querySelectorAll('[data-graview-choices="sections"] input[type="checkbox"]')].map((box) => `${box.value}:${box.checked ? 1 : 0}`));
         await until(page, () => readBoxes().then((boxes) => boxes.length === 4), 5_000);
         const boxes = await readBoxes();
-        return { links: await page.evaluate(linksIn, facts), saysGrouped: said.includes("(555) 123-4567"), saysDuration: said.includes("1 h 30 min"), saysMinutes: /\b90\b/.test(said), sections, boxes };
+        return { links: await page.evaluate(linksIn, facts), saysGrouped: said.includes("(555) 123-4567"), saysDuration: said.includes("1 h 30 min"), saysMinutes: /\b90\b/.test(said), saysTime: said.includes("7:30 PM"), saysKeptTime: said.includes("19:30"), sections, boxes };
       });
 
       /* A SEASON: its rehearsals' durations added up, and what is left of the time it planned. */
@@ -241,7 +244,9 @@ try {
         await page.waitForTimeout(200);
         const phoneType = await form.locator('input[name="contact"]').getAttribute("type");
         const durationType = await form.locator('input[name="length"]').getAttribute("type");
+        const timeType = await form.locator('input[name="starts"]').getAttribute("type");
         await form.locator('input[name="name"]').fill("Concert warm-up");
+        await form.locator('input[name="starts"]').fill("18:45");
         await form.locator('input[name="contact"]').fill("(555) 987-6543");
         await form.locator('input[name="venue"]').fill("Riverside Church");
         await form.locator('input[name="length"]').fill("1:15");
@@ -255,7 +260,8 @@ try {
         await form.locator('button[type="submit"]').click();
         const made = await until(page, () => page.evaluate(() => window.__handle.store.graph.allNodes().some((node) => node.name === "Concert warm-up" && node.length === 75 && node.contact === "(555) 987-6543")));
         const sections = await page.evaluate(() => window.__handle.store.graph.allNodes().find((node) => node.name === "Concert warm-up")?.sections ?? null);
-        return { phoneType, durationType, made, boxCount, boxWords: boxWords.map((words) => words.trim()), sections };
+        const starts = await page.evaluate(() => window.__handle.store.graph.allNodes().find((node) => node.name === "Concert warm-up")?.starts ?? null);
+        return { phoneType, durationType, timeType, made, starts, boxCount, boxWords: boxWords.map((words) => words.trim()), sections };
       });
 
       /* THE PLACE'S CARDS: each phone a call, each place a map, each duration said. */
@@ -311,6 +317,14 @@ report.checks.aDurationChangedInPlaceIsTypedAsWordsAndKeptAsMinutes = {
 report.checks.theFormAsksForAPhoneAndADurationAsThemselves = {
   seen: seen.form,
   ok: all(seen.form, (one) => one.phoneType === "tel" && one.durationType === "text" && one.made),
+};
+report.checks.aTimeOfDayIsSaidAsTheReadersClockSaysIt = {
+  seen: seen.record,
+  ok: all(seen.record, (one) => one.saysTime && !one.saysKeptTime),
+};
+report.checks.theFormAsksForATimeOfDayInATimeInputAndKeepsItAsHoursAndMinutes = {
+  seen: seen.form,
+  ok: all(seen.form, (one) => one.timeType === "time" && one.made && one.starts === "18:45"),
 };
 report.checks.aChoiceOfSeveralIsSaidByItsLabelsAndChangedInPlaceAsBoxes = {
   seen: seen.record,

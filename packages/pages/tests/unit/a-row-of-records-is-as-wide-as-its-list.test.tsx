@@ -24,7 +24,9 @@ describe("a row of records is as wide as its list", () => {
       const title = li.querySelector('.graview-spec-row[data-graview-kind="finding"] .graview-spec-title')?.textContent ?? "";
       const flagged = li.hasAttribute("data-graview-flagged");
       expect(title.endsWith(" ⚠")).toBe(flagged);
-      expect(flagged ? title.slice(0, -2) : title).toBe(li.querySelector("a")?.getAttribute("aria-label"));
+      // Its link says the name, and says in words what the flag says (Roadmap f-better-bare-app-defaults: a warning is never told by its mark or hue alone).
+      const name = flagged ? title.slice(0, -2) : title;
+      expect(li.querySelector("a")?.getAttribute("aria-label")).toBe(flagged ? `${name} — implicated in a problem` : name);
     }
     expect(items[0]!.textContent).toContain("The headline inside a nested group is drawn at the page title's size");
     await done();

@@ -20,3 +20,5 @@ export { fileFieldsOf, fileWords, firstPicture, videoClock } from "./schema/file
 // One declared field in the document's words: `url`, `date`, `enum`, `image` (FR-162).
 export { fieldSpecOf } from "./document/field-spec.js";
 export type { BlockContextOptions, BlockSource } from "./document/block-context.js";
+// Whether a home's own blocks already say the app's line, so the face and `describePlace` say it once (Roadmap f-better-bare-app-defaults).
+export { homeSaysTheLine } from "./document/says-the-line.js";

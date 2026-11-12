@@ -42,6 +42,14 @@
  * visitor's page draws the logo and wears the page's icon from under the
  * base, each loaded, on each face.
  *
+ * And with an accent near the warning's hue — pumpkin #b4532a, which was
+ * refused for it (Roadmap f-better-bare-app-defaults) — and a rule a
+ * workshop breaks, on the routed face's home, a list, a calendar and a
+ * coverage, a timeline and a plan: no warning is told by hue alone — a tint
+ * of it, a ring of it, a fill and an edge of it counted with its own color. Every element painted in the
+ * warning color stands in something that carries the warning's mark (or a
+ * pattern) and says it in words.
+ *
  *   node scripts/verify-brand.mjs [--engine=chromium|webkit|firefox] [--quick]
  */
 import { createServer } from "node:http";
@@ -116,17 +124,49 @@ async function buildHost() {
         const logo = asked.get("base") === "1" ? ${JSON.stringify(UNDER_BASE)} : logos[asked.get("logo")];
         // A page background of the app's own (Roadmap f-brand-ground).
         const ground = asked.get("ground");
-        const brand = { ...enDash.brand, ...(logo ? { logo } : {}), ...(ground ? { ground } : {}) };
-        const compiled = compileDocumentWithoutCheck({ ...enDash, brand }, { today: () => "2026-10-07" });
+        // An accent near the warning's hue, a rule a workshop breaks, a line in the warning tone, a calendar and a coverage that draw it.
+        const warned = asked.get("warn") === "1";
+        const brand = { ...enDash.brand, ...(logo ? { logo } : {}), ...(ground ? { ground } : {}), ...(warned ? { accent: ${JSON.stringify(PUMPKIN)} } : {}) };
+        const warnings = warned
+          ? {
+              kinds: {
+                ...enDash.kinds,
+                shift: { noun: "shift", plural: "shifts", fields: { label: { type: "string", required: true }, day: { type: "enum", options: ["mon", "tue"], default: "mon", required: true }, from: { type: "integer" }, until: { type: "integer" } } },
+                room: { noun: "room", plural: "rooms", fields: { label: { type: "string", required: true }, outline: { type: "list", of: "number" } } },
+              },
+              rules: {
+                "every-workshop-held": { title: "Every workshop is held", over: "workshop", require: "status == 'held'", says: "{title} is not held yet" },
+                "shifts-end-by-noon": { title: "Every shift ends by noon", over: "shift", require: "until <= 720", says: "{label} runs past noon" },
+                "no-room-is-a-store": { title: "No room is a store", over: "room", require: "label != 'Store'", says: "{label} is only a store" },
+              },
+              views: { ...enDash.views, home: [...enDash.views.home, { text: "A workshop still needs a date", tone: "warn" }, { list: "all('workshop')", as: "row" }] },
+              lenses: [
+                { name: "calendar", title: "When", bindings: { workshop: { start: "held" } }, options: { range: "month", today: "2026-10-01" } },
+                { name: "coverage", title: "Who came", bindings: { rows: { kind: "workshop" }, columns: { kind: "person" }, link: { edge: "attendedBy" } } },
+                { name: "timeline", title: "The week", bindings: { shift: { start: "from", end: "until", column: "day" } } },
+                { name: "plan", title: "The building", bindings: { regions: { kind: "room" }, outline: { field: "outline", on: "regions" } } },
+              ],
+            }
+          : {};
+        const compiled = compileDocumentWithoutCheck({ ...enDash, ...warnings, brand }, { today: () => "2026-10-07" });
         if (!compiled.ok) throw new Error("the document did not compile");
         window.__handle = mount(document.getElementById("app"), {
           app: compiled.app,
           seed: { nodes: [
             { id: "w1", kind: "workshop", title: "Farm Bureau POM workshop", status: "held", held: "2026-09-30" },
-            { id: "w2", kind: "workshop", title: "Mapping the work", status: "planned" },
+            { id: "w2", kind: "workshop", title: "Mapping the work", status: "planned", ...(warned ? { held: "2026-10-20" } : {}) },
             { id: "p1", kind: "person", name: "Ada" },
+            ...(warned
+              ? [
+                  { id: "s1", kind: "shift", label: "Morning desk", day: "mon", from: 540, until: 660 },
+                  { id: "s2", kind: "shift", label: "Long desk", day: "tue", from: 600, until: 900 },
+                  { id: "r1", kind: "room", label: "Hall", outline: [{ x: 0.05, y: 0.05 }, { x: 0.55, y: 0.05 }, { x: 0.55, y: 0.6 }, { x: 0.05, y: 0.6 }] },
+                  { id: "r2", kind: "room", label: "Store", outline: [{ x: 0.6, y: 0.05 }, { x: 0.95, y: 0.05 }, { x: 0.95, y: 0.6 }, { x: 0.6, y: 0.6 }] },
+                ]
+              : []),
           ], edges: [{ id: "e1", kind: "attendedBy", from: "w1", to: "p1" }] },
           face: asked.get("face") ?? "graview",
+          ...(asked.get("path") ? { at: { face: asked.get("face") ?? "pages", path: asked.get("path"), stop: "" } } : {}),
           principal: { kind: "human", id: "u:owner", roles: ["owner"] },
           label: compiled.app.name,
           heading: false,
@@ -184,6 +224,77 @@ async function buildHost() {
   return { stop: () => (host.close(), rmSync(out, { recursive: true, force: true })) };
 }
 
+const PUMPKIN = "#b4532a";
+/** Where a warning is drawn: the home, a list, a calendar, a coverage, a timeline and a plan. */
+const WARNED_PATHS = ["/", "/workshops", "/places/when", "/places/who-came", "/places/the-week", "/places/the-building"];
+
+/**
+ * EVERY WARNING TOLD BY MORE THAN HUE, read in the page: each element whose
+ * own words, fill or edge are in the warning color, and whether the thing
+ * it stands in carries the warning's mark (⚠, or a pattern drawn for it)
+ * and says it in words — on screen, in its label, its title or to a
+ * screen reader.
+ */
+function warningsTold() {
+  const root = document.querySelector('[class^="graview-embed-"], [class*=" graview-embed-"]');
+  if (!root) return { painted: 0, bare: ["no embed"] };
+  const probe = document.createElement("div");
+  probe.style.color = "var(--graview-warn)";
+  root.appendChild(probe);
+  const warn = getComputedStyle(probe).color;
+  probe.remove();
+  // A tint of the warning — mixed into the panel (`color-mix`), or the warning at a share of its alpha — is still the warning: a color on the line from the panel to it.
+  probe.style.color = "var(--graview-panel)";
+  root.appendChild(probe);
+  const panel = getComputedStyle(probe).color;
+  probe.remove();
+  const rgb = (color) => (color.match(/[\d.]+/g) ?? []).slice(0, 4).map(Number);
+  const [wr, wg, wb] = rgb(warn);
+  const [pr, pg, pb] = rgb(panel);
+  const warnish = (color) => {
+    if (!color || color === "none" || /transparent/.test(color)) return false;
+    // A shadow or a gradient names its colors in its value: each is judged.
+    const colors = color.match(/rgba?\([^)]*\)/g) ?? [];
+    return colors.some((one) => {
+      const [r, g, b, alpha = 1] = rgb(one);
+      if (alpha < 0.1) return false;
+      if (r === wr && g === wg && b === wb) return true;
+      const span = [wr - pr, wg - pg, wb - pb];
+      const longest = span.reduce((at, v, i) => (Math.abs(v) > Math.abs(span[at]) ? i : at), 0);
+      if (Math.abs(span[longest]) < 20) return false;
+      const t = ([r, g, b][longest] - [pr, pg, pb][longest]) / span[longest];
+      return t >= 0.15 && t <= 1.05 && [r, g, b].every((v, i) => Math.abs(v - ([pr, pg, pb][i] + t * span[i])) <= 10);
+    });
+  };
+  const WORDS = /problem|rule|warning|not covered|broken|not all/i;
+  const painted = [];
+  for (const one of root.querySelectorAll("*")) {
+    const box = one.getBoundingClientRect();
+    if (box.width === 0 || box.height === 0) continue;
+    const style = getComputedStyle(one);
+    const ownText = [...one.childNodes].some((node) => node.nodeType === 3 && node.textContent.trim() !== "");
+    const paints =
+      (ownText && warnish(style.color)) ||
+      warnish(style.backgroundColor) ||
+      (parseFloat(style.borderLeftWidth) > 0 && warnish(style.borderLeftColor)) ||
+      // A ring of it: a box-shadow or an outline.
+      (style.boxShadow !== "none" && warnish(style.boxShadow)) ||
+      (style.outlineStyle !== "none" && parseFloat(style.outlineWidth) > 0 && warnish(style.outlineColor)) ||
+      (one instanceof SVGElement && (warnish(style.fill) || warnish(style.stroke)));
+    if (paints) painted.push(one);
+  }
+  const bare = [];
+  for (const one of painted) {
+    const holder = one.closest('[data-graview-flagged], [data-calendar-entry], [data-graview-pick], li, p, a, button, h3, [role="img"]') ?? one;
+    const words = `${holder.textContent} ${holder.getAttribute("aria-label") ?? ""} ${holder.getAttribute("title") ?? ""} ${[...holder.querySelectorAll("[aria-label],[title]")].map((el) => `${el.getAttribute("aria-label") ?? ""} ${el.getAttribute("title") ?? ""}`).join(" ")}`;
+    const style = getComputedStyle(one);
+    const patterned = /repeating-linear-gradient|url\(/.test(style.backgroundImage + style.fill) || (one instanceof SVGElement && style.strokeDasharray !== "none");
+    const marked = holder.textContent.includes("⚠") || holder.matches("[data-graview-warning-mark]") || holder.querySelector("[data-graview-warning-mark], [data-graview-standing-mark]") !== null || patterned;
+    if (!(marked && WORDS.test(words))) bare.push(`${one.tagName.toLowerCase()} "${(holder.textContent ?? "").trim().slice(0, 50)}"`);
+  }
+  return { painted: painted.length, bare: [...new Set(bare)], flagged: root.querySelectorAll("[data-graview-flagged], [data-graview-emphasis=flagged]").length };
+}
+
 /** What the page draws of the brand, read in the page. */
 function read() {
   const root = document.querySelector('[class^="graview-embed-"], [class*=" graview-embed-"]');
@@ -228,6 +339,7 @@ const icons = [];
 const logos = [];
 const grounds = [];
 const underBase = [];
+const warnings = [];
 let browser;
 try {
   for (const engine of engines) {
@@ -255,6 +367,18 @@ try {
       const answered = icon ? await fetch(new URL(icon, at("brand-host"))).then((response) => response.status) : null;
       underBase.push({ engine, face, pictures: drawn.pictures, icons: drawn.icons, iconAnswered: answered });
     }
+    // An accent near the warning's hue, where a rule is broken: on the routed face's home, a list, a calendar and a coverage.
+    for (const scheme of SCHEMES)
+      for (const path of WARNED_PATHS) {
+        const context = await browser.newContext({ viewport: DESK, colorScheme: scheme });
+        const page = await context.newPage();
+        page.on("pageerror", (error) => errors.push(`${engine} warn ${path}: ${error.message}`));
+        await page.goto(`${at("brand-host")}/?face=pages&theme=${scheme}&warn=1&path=${encodeURIComponent(path)}`, { waitUntil: "load" });
+        await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+        await page.waitForTimeout(800);
+        warnings.push({ engine, scheme, path, ...(await page.evaluate(warningsTold)) });
+        await context.close();
+      }
     await browser.close();
     browser = undefined;
   }
@@ -297,6 +421,12 @@ const checks = {
     ok:
       underBase.length === engines.length * FACES.length &&
       underBase.every((one) => one.pictures.length > 0 && one.pictures.every((picture) => picture.loaded && picture.src === `${APP_BASE}${UNDER_BASE}`) && one.icons.length > 0 && one.icons.every((href) => href === `${APP_BASE}${ICON}`) && one.iconAnswered === 200),
+  },
+  noWarningIsToldByHueAlone: {
+    accent: PUMPKIN,
+    seen: warnings,
+    // Something is painted in the warning color on the home at least — a rule is broken there — and nothing so painted goes without the mark and the words.
+    ok: warnings.length === engines.length * SCHEMES.length * WARNED_PATHS.length && warnings.every((one) => one.painted > 0) && warnings.every((one) => one.bare.length === 0),
   },
   noPageThrew: { errors, ok: errors.length === 0 },
 };

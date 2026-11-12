@@ -16,10 +16,11 @@ import type { DescribedFact, DescribedHostView, DescribedItem, DescribedMasthead
 import { sortForGrid } from "../grid-sort.js";
 import type { ResolvedBlock } from "./blocks.js";
 import { resolveFor, type ResolveForOptions } from "./resolve-for.js";
+import { homeSaysTheLine } from "./says-the-line.js";
 import { computedValues, withComputed, type ComputedRecord, type PlainComputed } from "./computed-values.js";
 import { computedOf } from "./computed.js";
 import { isInlineSvg, logoOf, markHref } from "../theme/marks.js";
-import { markdownWords } from "../excerpt-of.js";
+import { excerptOf, markdownWords } from "../excerpt-of.js";
 import { visitorForm, type VisitorForm } from "../mutations/visitor-form.js";
 import { creatingActs, describeActForm, describeVisitorForm, formLines } from "./describe-forms.js";
 import type { DescribedForm, DescribedVideo } from "./described.js";
@@ -142,10 +143,10 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
       const titled = first?.t === "title" || (as === "row" && first?.t === "headline");
       return { id: node.id, kind: node.kind, title: titled ? first.text : title, parts: say(titled ? rest : said, depth, `views.${node.kind}.${as}`, ` (${node.id})`, titled ? 1 : 0) };
     }
-    if (as === "row") return { id: node.id, kind: node.kind, title, parts: [] };
-    // The default card: its title, and what a glance at it says (FR-39, FR-83).
+    // The default card and row: its title, and what a glance at it says (FR-39, FR-83) — a row's on one line after its name (Roadmap f-better-bare-app-defaults).
     const read = (definition as { computed?: object } | undefined)?.computed ? withComputed(schema, graph, node) : node;
-    const fields = readableFields(read as Record<string, unknown>, definition, { limit: 3, said: [title], glance: true, locale: app.brand?.locale, timeZone: app.brand?.timeZone });
+    const fields = readableFields(read as Record<string, unknown>, definition, { limit: 3, said: [title], glance: true, noReader: true, locale: app.brand?.locale, timeZone: app.brand?.timeZone });
+    if (as === "row") return { id: node.id, kind: node.kind, title, parts: fields.length > 0 ? [{ t: "text", text: fields.map((field) => (field.long ? excerptOf(field.stored, { markdown: field.markdown, most: 100 }) : field.alone)).join(" · ") }] : [] };
     return { id: node.id, kind: node.kind, title, parts: fields.map((field) => ({ t: "text", text: field.alone })) };
   };
 
@@ -268,10 +269,24 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
         ...(brand?.subtitle && brand.subtitleDrawn !== false ? { subtitle: brand.subtitle } : {}),
         ...(logo ? { logo: { alt: brand?.logoAlt ?? name, ...(isInlineSvg(logo) ? { drawn: "inline SVG" as const } : { drawn: "image" as const, src: logo }) } } : {}),
       };
-      if (app.home) {
+      /*
+       * AN EMPTY APP OPENS ON ITS WAY IN, as the face draws it (Roadmap
+       * f-better-bare-app-defaults): a home of blocks about records that do
+       * not exist yet would be a page of noughts, so the face draws the
+       * derived home — "Nothing here yet.", and where to begin — until there
+       * is anything this seat can see, and this says the same.
+       */
+      const anything = (schema.kinds as readonly string[]).some((kind) => graph.nodesOfKind(kind).length > 0);
+      if (app.home && anything) {
         drawnBy = "blocks";
         // On the routed face the home is the page: its first headline is the page's own h1.
         parts = say(resolved(null, {}), 0, "views.home");
+        // The app's line is said once (Roadmap f-better-bare-app-defaults): a home whose own headline or line already says it is not given it again under the name.
+        const line = masthead.subtitle;
+        if (line !== undefined && homeSaysTheLine(app.home, line)) {
+          const { subtitle: _said, ...rest } = masthead;
+          masthead = rest;
+        }
       } else {
         drawnBy = "derived";
         // Not a kind kept from this seat (an administered module's it does not administer, one it sees none of) or a disabled module's: the routed home lists neither (FR-174).
@@ -282,6 +297,14 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
         for (const kind of shown) {
           const count = graph.nodesOfKind(kind).filter((node) => isCurrent(schema.tryDefinition(kind), node)).length;
           if (count > 0) parts.push({ t: "text", text: `${count} ${kindWord(schema, kind, count)}` });
+        }
+        if (!shown.some((kind) => graph.nodesOfKind(kind).some((node) => isCurrent(schema.tryDefinition(kind), node)))) {
+          parts.push({ t: "text", text: "Nothing here yet." });
+          // Where to begin, in the act's own words: one this seat may take, as the face's home names it.
+          const begins = shown
+            .map((kind) => ({ kind, act: store.allMutations().find((mutation) => (mutation.creates ?? []).includes(kind as never) && store.permits({ name: mutation.name, args: {} }, principal).ok) }))
+            .find((one) => one.act !== undefined);
+          if (begins) parts.push({ t: "text", text: `Begin with “${begins.act!.title ?? begins.act!.name}”, under ${pluralOf(schema, begins.kind)}.` });
         }
       }
     } else if (lens?.lens === "blocks") {

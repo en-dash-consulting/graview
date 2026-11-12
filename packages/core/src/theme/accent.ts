@@ -47,7 +47,16 @@ export function documentSchemes(accent: string, ground?: Ground): DerivedBrand |
   const derived = brandFromAccent({ accent, base });
   if (derived.ok || !derived.missing.every((part) => part.startsWith("warn"))) return derived;
   // The bad status of the ground it stands on: a dark page in the light scheme draws the dark scheme's.
-  return brandFromAccent({ accent, base, warn: { light: base.light.bad, dark: base.dark.bad } });
+  const red = brandFromAccent({ accent, base, warn: { light: base.light.bad, dark: base.dark.bad } });
+  if (red.ok || !red.missing.every((part) => part.startsWith("warn"))) return red;
+  /*
+   * AN ACCENT NEAR BOTH IS STILL TAKEN (Roadmap f-better-bare-app-defaults):
+   * pumpkin #b4532a was refused for sharing the warning's hue though it
+   * reads on every ground. Every warning the framework draws carries its
+   * mark and its words, so it is never told by hue alone; the warning keeps
+   * its own color, and the accent is the author's.
+   */
+  return brandFromAccent({ accent, base, warnMayShareHue: true });
 }
 
 /** The first pair this color fails as given in the light scheme, or null when it reads. */
@@ -83,18 +92,8 @@ export function accentProblem(accent: string, ground?: Ground): AccentRefusal | 
   const derived = failure ? undefined : documentSchemes(accent, ground);
   if (!failure && derived?.ok) return null;
   const suggestion = nearestPassing(color, ground);
-  /*
-   * A hue the warning color stands on cannot be an accent at any shade:
-   * "something is broken" would look like "this is selected". Said as that,
-   * not as a contrast, since no lightness answers it.
-   */
-  const asIs = derived ?? documentSchemes(accent, ground);
-  const clash = !asIs.ok && asIs.missing.some((part) => part.startsWith("warn"));
-  const fix = suggestion
-    ? ` — ${suggestion} would pass.`
-    : clash
-      ? "; no shade of this hue does, since the warning color is drawn in it — pick another hue."
-      : "; no shade of this hue does, so pick another color.";
+  // A hue the warning color stands on is no reason to refuse (`documentSchemes`): only contrast is.
+  const fix = suggestion ? ` — ${suggestion} would pass.` : "; no shade of this hue does, so pick another color.";
   if (failure) {
     const text = failure.pair.text === hex(color) ? accent : `${failure.pair.text === "#ffffff" ? "white" : "black"} text`;
     const on = failure.pair.on === hex(color) ? accent : failure.pair.on;
@@ -105,9 +104,6 @@ export function accentProblem(accent: string, ground?: Ground): AccentRefusal | 
   const dark = groundSchemes(ground).dark;
   const darkPanel = composite(colorsIn(dark.panel)[0]!, colorsIn(dark.ground)[0]!);
   const pair = { text: hex(color), on: hex(darkPanel) };
-  if (refused.missing.every((part) => part.startsWith("warn"))) {
-    return { sentence: `${accent} reads as given, but the warning color is drawn in its hue, so "something is broken" would look like "this is selected"${suggestion ? fix : ", at any shade — pick another hue."}`, pair, ratio: contrast(color, darkPanel), requires: AA, ...(suggestion ? { suggestion } : {}) };
-  }
   // A document cannot give the dark scheme an accent of its own, so the derivation's advice to is left out.
   const why = refused.why.replace(/ — supply one for (dark|light)/g, "").replace(/, so (dark|light) needs an accent of its own/g, "");
   return { sentence: `${accent} reads in the light scheme, but not in the dark: ${why}${fix}`, pair, ratio: contrast(color, darkPanel), requires: AA, ...(suggestion ? { suggestion } : {}) };

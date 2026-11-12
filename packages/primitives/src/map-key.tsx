@@ -11,7 +11,7 @@ const MARKS: readonly [string, string][] = [
   ["waiting", "Waiting"],
   ["active", "Under way: darker and taller"],
   ["done", "Done: flat and pale"],
-  ["flagged", "A problem, or past its due date"],
+  ["flagged", "A problem, or past its due date: hatched, in the warning color"],
   ["recent", "Changed since you were last here"],
   ["own", "Yours"],
 ];
@@ -24,7 +24,7 @@ const css = (light: boolean) => {
 .graview-map-key i{flex:none;width:14px;height:10px;border-radius:2px;background:${ink(light ? 34 : 42)}}
 .graview-map-key i[data-graview-mark=active]{height:14px;background:${ink(70)}}
 .graview-map-key i[data-graview-mark=done]{height:4px;background:${ink(light ? 13 : 18)}}
-.graview-map-key i[data-graview-mark=flagged]{background:var(--graview-warn)}
+.graview-map-key i[data-graview-mark=flagged]{background:repeating-linear-gradient(135deg,var(--graview-warn) 0 3px,color-mix(in oklab,var(--graview-warn) 45%,var(--graview-panel)) 3px 5px)}
 .graview-map-key i[data-graview-mark=recent]{box-shadow:0 0 3px 1px color-mix(in oklab,var(--graview-accent) 70%,transparent)}
 .graview-map-key i[data-graview-mark=own]{outline:1.4px solid var(--graview-ink)}
 .graview-map-key i[data-graview-mark=more]{width:auto;height:auto;background:none;font-size:.6875rem;font-style:normal}`;

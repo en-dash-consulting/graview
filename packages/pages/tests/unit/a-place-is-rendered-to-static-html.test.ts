@@ -238,6 +238,9 @@ describe("the entry", () => {
   it("imports nothing of React, the router, the DOM faces or the seat", () => {
     const source = readFileSync(new URL("../../src/static.ts", import.meta.url), "utf8");
     const imported = [...source.matchAll(/from "([^"]+)"/g)].map((match) => match[1]);
-    expect(imported.sort()).toEqual(["@graview/core", "@graview/core/blocks", "@graview/core/describe", "@graview/core/markdown", "@graview/core/words"]);
+    expect(imported.sort()).toEqual(["./static-read.js", "@graview/core", "@graview/core/describe", "@graview/core/markdown", "@graview/core/words"]);
+    // What it reads, it reads with the device's screen (`./static-read.ts`), which reaches no further.
+    const read = readFileSync(new URL("../../src/static-read.ts", import.meta.url), "utf8");
+    expect([...read.matchAll(/from "([^"]+)"/g)].map((match) => match[1]).sort()).toEqual(["@graview/core", "@graview/core/blocks", "@graview/core/describe", "@graview/core/words"]);
   });
 });

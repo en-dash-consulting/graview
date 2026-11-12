@@ -1,12 +1,27 @@
 import { compileDocument } from "./compile-checked.js";
 import type { CompileOptions } from "./compile.js";
 import { checkTemplate, expandSetup, readGraviewTemplate, resolveAnswers, shiftSeed, withDefaults, type InstantiatedTemplate, type RefusedTemplate } from "./graview-template.js";
+import type { Finding } from "./findings.js";
 
 /*
  * Instantiating a template compiles its document WITH the checker, so it
  * lives beside the checked compile and is exported from
  * `@graview/core/check`, not from the document barrel a page imports.
  */
+/**
+ * WHAT IS WRONG WITH A TEMPLATE BEFORE ANYBODY ANSWERS IT — `graview check
+ * template.json`: its shape, and what its questions, setup, examples and
+ * views name against its document (handed in compiled, or compiled here).
+ * No answers are judged; a document that does not compile is said by its
+ * own compile, so only the template's shape is judged without one.
+ */
+export function templateFindings(raw: unknown, compiled?: Extract<ReturnType<typeof compileDocument>, { ok: true }>): Finding[] {
+  const read = readGraviewTemplate(raw);
+  if (!read.ok) return [...read.findings];
+  const judged = compiled ?? compileDocument(read.template.document);
+  return judged.ok ? checkTemplate(read.template, judged) : [];
+}
+
 /**
  * A template, made ready to install: its shape read, its document compiled
  * through the same compiler every document goes through, the answers held to

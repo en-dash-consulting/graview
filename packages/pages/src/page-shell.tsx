@@ -163,7 +163,7 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
           <>
             {/* The standing, as the problems' own page: a dot and its name, with no count of its own; the bell counts what needs you (Roadmap f-inbox-needs-you-first). */}
             <Link to="/problems" data-testid="standing-link" aria-label={said} title={said} style={{ ...toolStyle, position: "relative", textDecoration: "none", color: problems === 0 ? "var(--graview-ink-muted)" : "var(--graview-warn)" }}>
-              <StandingDot tone={problems === 0 ? "var(--graview-good)" : "var(--graview-warn)"} />
+              <StandingDot tone={problems === 0 ? "var(--graview-good)" : "var(--graview-warn)"} broken={problems > 0} />
             </Link>
             {/*
               * One inbox — what waits for you, what has happened, what you asked — as the scene's

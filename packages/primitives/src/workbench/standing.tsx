@@ -35,7 +35,13 @@ export function standingWords(violations: readonly { readonly invariant: string 
   return violations.length === 0 ? clean : brokenWords(violations);
 }
 
-/** The dot itself: eight pixels in the tone of the rules. */
-export function StandingDot({ tone: color }: { readonly tone: string }) {
+/**
+ * The dot itself: eight pixels in the tone of the rules — and, where a rule
+ * is broken, the warning's mark in that tone (Roadmap
+ * f-better-bare-app-defaults), so a broken rule is never told by hue alone;
+ * its words are the tool's name and hover.
+ */
+export function StandingDot({ tone: color, broken = false }: { readonly tone: string; readonly broken?: boolean }) {
+  if (broken) return <span aria-hidden="true" data-graview-standing-mark="" style={{ flex: "0 0 auto", color, fontSize: "0.875rem", lineHeight: 1 }}>⚠</span>;
   return <span aria-hidden="true" style={{ width: 8, height: 8, borderRadius: 999, flex: "0 0 auto", background: color }} />;
 }

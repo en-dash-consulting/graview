@@ -181,6 +181,13 @@ export function Plots({ frame, width, height, pan, pinned, close, today, swallow
     <>
     <style>{groundCss(scheme)}</style>
     <svg className="graview-plots" aria-hidden="true" data-graview-world="" width={width} height={height} style={style} data-graview-plots={tiles.length} data-graview-named={close ? "" : undefined}>
+      {/* A flagged block's roof is hatched as well as warn-colored: its pattern says it, not its hue alone (Roadmap f-better-bare-app-defaults). Once for the scene, every tile's roofs read it. */}
+      <defs>
+        <pattern id="graview-flag-hatch" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <rect width="3" height="3" fill="var(--graview-warn)" />
+          <rect width="1.2" height="3" fill="color-mix(in oklab, var(--graview-warn) 45%, var(--graview-panel))" />
+        </pattern>
+      </defs>
       <g transform={`translate(${(city.originX + pan.x).toFixed(1)} ${(city.originY + pan.y).toFixed(1)})`}>
         {tiles.map((node) => (
           <PlotTile
@@ -437,6 +444,7 @@ function groundCss(scheme: Scheme): string {
 .graview-building[data-graview-tier=done] polygon{fill:${mix(light ? "13%" : "18%")}}
 .graview-building[data-graview-flagged] polygon{fill:var(--graview-warn);stroke:var(--graview-warn)}
 .graview-building[data-graview-flagged] .graview-iso-left{fill:color-mix(in oklab,var(--graview-warn) 80%,var(--graview-ink))}
+.graview-building[data-graview-flagged] .graview-iso-roof{fill:url(#graview-flag-hatch)}
 .graview-building[data-graview-recent]{filter:drop-shadow(0 0 2px color-mix(in oklab,var(--graview-accent) 70%,transparent))}
 .graview-building[data-graview-own] .graview-iso-roof{stroke:var(--graview-ink);stroke-width:1.4;stroke-opacity:1}
 .graview-building[data-graview-selected] polygon{stroke:var(--graview-accent);stroke-width:1.4;stroke-opacity:1}

@@ -6,6 +6,7 @@ import { linkedRelationOf, type LinkedRelation } from "../schema/linked.js";
 import { isRepeatField, repeatedBy } from "../repeat.js";
 import { isMarkdownField } from "../schema/markdown.js";
 import { parseDuration } from "../schema/field-words.js";
+import { parseTimeOfDay } from "../time-typed.js";
 import { describeArg, unwrap } from "./arg-shape.js";
 import type { AmountMark } from "../schema/amount-mark.js";
 import { nodeRefKinds } from "./node-ref.js";
@@ -55,7 +56,8 @@ export type FormField =
   | { readonly control: "opaque"; readonly name: string; readonly optional: boolean };
 
 export interface ScalarField {
-  readonly control: "text" | "date" | "number" | "choice" | "boolean";
+  /** `time`: a time of day with no day and no zone, asked for with a time input and sent as `HH:MM`. */
+  readonly control: "text" | "date" | "time" | "number" | "choice" | "boolean";
   readonly name: string;
   readonly optional: boolean;
   /** A date with a time of day in it (`YYYY-MM-DDTHH:MM`): asked for with a date AND a time. */
@@ -188,6 +190,7 @@ export function formField(name: string, schema: unknown): FormField {
   if (scalar.type === "text") return { control: "text", name, optional, ...(scalar.long ? { long: true as const } : {}), ...(isAppLinkField(field) ? { app: true as const } : {}), ...(isMarkdownField(field) ? { markdown: true as const } : {}), ...(scalar.holds ? { holds: scalar.holds } : {}) };
   // A length of time is typed as words ("1h 30m") and sent as minutes.
   if (scalar.type === "number" && scalar.duration) return { control: "text", name, optional, holds: "duration" };
+  if (scalar.type === "time") return { control: "time", name, optional };
   if (scalar.type === "date") return { control: "date", name, optional, ...(scalar.time ? { time: true as const } : {}), ...(scalar.instant ? { instant: true as const } : {}), ...(scalar.partial ? { partial: true as const } : {}) };
   if (scalar.type === "number") {
     return {
@@ -248,6 +251,8 @@ export function formArgs(fields: readonly FormField[], values: Readonly<Record<s
     // A length of time as it was typed, sent as the whole minutes the field keeps; words that are not one are sent as typed, and refused in the field's own words.
     // A phone and a place are kept as they were entered, trimmed.
     if (field.control === "text" && field.holds && typeof held === "string") sent[field.name] = held.trim() === "" ? undefined : field.holds === "duration" ? (parseDuration(held) ?? held) : held.trim();
+    // A time of day as a time input sends it ("15:00", "15:00:00") or as it was typed ("3 PM"), sent as `HH:MM`; words that are not one are sent as typed, and refused in the field's own words.
+    if (field.control === "time" && typeof held === "string") sent[field.name] = held.trim() === "" ? undefined : (parseTimeOfDay(held) ?? held.trim());
     if (field.control === "group" && held !== undefined && typeof held === "object" && held !== null) {
       sent[field.name] = formArgs(field.fields, held as Record<string, unknown>);
     }

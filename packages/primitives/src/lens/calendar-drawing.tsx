@@ -3,7 +3,7 @@ import type { CalendarGrain, PlacedEntry } from "./calendar-options.js";
 import { entriesOn } from "./calendar-placing.js";
 import { type CalendarCell, type CalendarSpan, entriesIn } from "./calendar-spans.js";
 import { useRef } from "react";
-import { useWidth } from "../primitives/index.js";
+import { useWidth, VISUALLY_HIDDEN as SAID_ONLY } from "../primitives/index.js";
 
 /** How a calendar entry stands against the others: as it is, picked out, or set back. */
 export type Emphasis = "plain" | "lit" | "dimmed";
@@ -398,11 +398,12 @@ function Entry({
       data-graview-emphasis={emphasis}
       data-calendar-part={spanning ? (opens ? "opens" : closes ? "closes" : "through") : undefined}
       data-calendar-in={cell.from}
-      title={
+      data-graview-flagged={flagged ? "" : undefined}
+      title={`${
         spanning
           ? `${entry.label} · ${entry.from} – ${entry.to}`
           : `${entry.label}${entry.at === null ? " · all day" : ` · ${clock(entry.at)}`}${entry.repeats ? " · repeats" : ""}`
-      }
+      }`}
       style={{
         display: "block",
         minHeight: 24,
@@ -431,6 +432,8 @@ function Entry({
       {/* A cell in the middle of a span keeps the name once, at the start —
           repeating it on every cell of a fortnight is five lies about how
           many things are happening. */}
+      {/* A warning is never told by its hue alone (Roadmap f-better-bare-app-defaults): the mark beside the name, and the words to a screen reader. */}
+      {flagged && (opens || rowStart) ? <><span aria-hidden="true" data-graview-warning-mark="">⚠ </span><span style={SAID_ONLY}>Implicated in a problem: </span></> : null}
       {opens || rowStart ? entry.repeats ? <><span aria-hidden="true">↻ </span>{said}</> : said : " "}
     </span>
   );

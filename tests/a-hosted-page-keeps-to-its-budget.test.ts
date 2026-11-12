@@ -221,7 +221,10 @@ describe("a hosted page", () => {
     // 1114 KB with the whole 0.1.72 batch together (2026-11-10): History in the app menu, and a frame lent the app's faces with pictures by record and its growth held: the scene face measured 1_139_723 B, 1_433 more than the whole 0.1.71 batch (1_138_290).
     // 1115 KB since a worker view came to be told what its seat cannot see (Roadmap f-view-knows-what-its-seat-cannot-see): a registered view reads the host's `signIn` and hands it to its host, which draws it where everything the view reads is kept from the seat: the scene face measured 1_140_887 B, 151 more than 1114 KB held on the 0.1.73 batch.
     // 1121 KB since a member who joins came to be bound to the person entered for them (Roadmap f-invite-binds-existing-person): every store reads a seat as it is bound now, serves each seat what it may be told of who is bound, and names a bound person in Activity by their record: the scene face measured 1_147_069 B.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1121 * 1024);
+    // 1124 KB since a field came to keep a time of day, a document act to hand its condition as data and apply to judge each call and each write through one path (HQ features f-template-format-cloud-additions, f-may-seat-run-act-on-record), with security and reliability fixes: the scene face measured 1_150_113 B, 2_209 over 1121 KB.
+    // 1125 KB since a bare app came to look designed by default (Roadmap f-better-bare-app-defaults): a blocks home's derived row says its kind's glance, a glance leads with its kind's date and names a moment's zone only to a reader elsewhere, a warning carries its mark, its words or its pattern: the scene face measured 1_151_234 B.
+    // 1128 KB with the whole 0.1.74 batch together (2026-11-11): a place drawn for an e-ink device's screen, a field that keeps a time of day and what a seat may run, and a bare app that looks designed, each measured against main: the scene face measured 1_154_955 B, 2_955 over 1125 KB.
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1128 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

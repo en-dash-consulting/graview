@@ -4,7 +4,7 @@ import { onTheHorizon } from "./horizon.js";
 import { useArranging } from "./arranging.js";
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactElement } from "react";
 import { hueFor } from "../default-views.js";
-import { Chip, Panel, Roster, useWidth } from "../primitives/index.js";
+import { Chip, Panel, Roster, useWidth, VISUALLY_HIDDEN } from "../primitives/index.js";
 
 /**
  * The coverage lens: does everything on one side have something on the other?
@@ -892,7 +892,15 @@ export function CoverageView<S extends AnySchema>({
                       color:
                         missing || broken.has(row.id) ? "var(--graview-warn)" : "var(--graview-ink)",
                     }}
+                    {...(missing || broken.has(row.id) ? { "data-graview-flagged": "" } : {})}
                   >
+                    {/* A warning is never told by its hue alone (Roadmap f-better-bare-app-defaults): the mark, and the words to a screen reader. */}
+                    {missing || broken.has(row.id) ? (
+                      <span style={{ flex: "0 0 auto" }}>
+                        <span aria-hidden="true" data-graview-warning-mark="">⚠</span>
+                        <span style={VISUALLY_HIDDEN}>{missing ? "Not covered: " : "Implicated in a problem: "}</span>
+                      </span>
+                    ) : null}
                     {row.ref ? (
                       <span
                         style={{
@@ -1026,7 +1034,8 @@ export function CoverageView<S extends AnySchema>({
                                 }
                           }
                         >
-                          <span style={cellStyle(filled, missing, lit.has(column.id) && lit.has(row.id), lit.size > 0)} />
+                          {/* A missing row's empty tick is an open square — its shape is its mark — and says so on hover; the row's name says it to a screen reader. */}
+                          <span style={cellStyle(filled, missing, lit.has(column.id) && lit.has(row.id), lit.size > 0)} {...(!filled && missing ? { "data-graview-warning-mark": "", title: "Not covered" } : {})} />
                           {stacked ? <span>{column.label}</span> : null}
                         </div>
                       );
@@ -1159,10 +1168,11 @@ function cellStyle(
     return {
       width: 5,
       height: 5,
-      // The empty cell's tick is the filled cell's square, small: the matrix speaks in one shape.
+      // The empty cell's tick is the filled cell's square, small: the matrix speaks in one shape — a missing row's an open one, so its shape says it as well as its hue.
       borderRadius: 1,
-      background: rowIsMissing ? "var(--graview-warn)" : "var(--graview-edge)",
-      opacity: rowIsMissing ? 0.5 : 1,
+      boxSizing: "border-box",
+      background: rowIsMissing ? "transparent" : "var(--graview-edge)",
+      ...(rowIsMissing ? { border: "1.5px solid var(--graview-warn)" } : {}),
     };
   }
   return {
@@ -1182,7 +1192,8 @@ function CoverageBar({ grid }: { grid: CoverageGrid }) {
   return (
     <div
       role="img"
-      aria-label={`${covered} of ${required.length} covered`}
+      aria-label={`${covered} of ${required.length} covered${share < 1 ? ", not all of them" : ""}`}
+      data-graview-flagged={share < 1 ? "" : undefined}
       style={{
         height: 6,
         borderRadius: 999,
@@ -1194,7 +1205,8 @@ function CoverageBar({ grid }: { grid: CoverageGrid }) {
         style={{
           width: `${Math.round(share * 100)}%`,
           height: "100%",
-          background: share === 1 ? "var(--graview-accent)" : "var(--graview-warn)",
+          // Short of whole, striped as well as warn-colored: its pattern says it, not its hue alone.
+          background: share === 1 ? "var(--graview-accent)" : "repeating-linear-gradient(135deg, var(--graview-warn) 0 4px, color-mix(in oklab, var(--graview-warn) 45%, var(--graview-panel)) 4px 7px)",
         }}
       />
     </div>

@@ -97,6 +97,10 @@
       "types": "./dist/jobs.d.ts",
       "default": "./dist/jobs.js"
     },
+    "./devices": {
+      "types": "./dist/devices.d.ts",
+      "default": "./dist/devices.js"
+    },
     "./workflows": {
       "types": "./dist/workflows.d.ts",
       "default": "./dist/workflows.js"

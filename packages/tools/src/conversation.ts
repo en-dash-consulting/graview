@@ -16,7 +16,7 @@ import {
   type Store,
   type Violation,
 } from "@graview/core";
-import { argumentWords, lowerFirst, readableFields, readPartialDay, tellApart } from "@graview/core/words";
+import { argumentWords, lowerFirst, parseTimeOfDay, readableFields, readPartialDay, tellApart } from "@graview/core/words";
 import { search } from "@graview/core/search";
 import { formFields, type FormField } from "@graview/core/forms";
 import type { GraviewDocument } from "@graview/core/document";
@@ -789,6 +789,11 @@ function answerFrom(
       const day = today ?? new Date().toISOString().slice(0, 10);
       // A sentence that names no hour still has to give one when the act asks for a time of day.
       return field.time ? `${day}T09:00` : day;
+    }
+    // A time of day only as the sentence says one — "at 3 PM", "at 15:30" — never guessed.
+    case "time": {
+      const said = /\b(\d{1,2}(?::\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)|\d{1,2}:\d{2}|noon|midnight)(?![\w:])/i.exec(asked)?.[1];
+      return said === undefined ? undefined : parseTimeOfDay(said);
     }
     /*
      * A CHOICE IS ITS OWN WORD. "Give a role keeper to Sam" names the role

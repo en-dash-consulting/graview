@@ -2,7 +2,7 @@ import * as z from "../schema/zod.js";
 import { filesOf } from "../schema/files.js";
 import { amountOf } from "../schema/amount-mark.js";
 import { sayAmount } from "../document/amount.js";
-import { DATE_VALUE, dayAsRead, ISO_MOMENT, momentAsRead } from "../days.js";
+import { DATE_VALUE, dayAsRead, ISO_MOMENT, momentAsRead, TIME_OF_DAY, timeAsRead } from "../days.js";
 import { typedFieldOf } from "../schema/typed-field-of.js";
 import { labelOf } from "../schema/define-node.js";
 import { LEFT_ALONE } from "../graph/archived.js";
@@ -281,6 +281,8 @@ function valueSaid(definition: AnyNodeDefinition, schema: unknown, field: string
   if (typeof value !== "string") return "a new value";
   if (DATE_VALUE.test(value)) return dayAsRead(value);
   if (ISO_MOMENT.test(value)) return momentAsRead(value);
+  // A time of day as the clock says it: "3:00 PM".
+  if (typedFieldOf(schema) === "time" && TIME_OF_DAY.test(value)) return timeAsRead(value);
   // A choice by its option's words; anything else written, by its start (FR-180) and in quotes.
   for (let def = z.defOf(schema) as { readonly type?: string; readonly innerType?: unknown } | undefined; def; def = z.defOf(def.innerType) as typeof def) {
     if (def.type === "enum") return humanizeValue(value);

@@ -33,7 +33,7 @@ import {
 import { agentsMd, claudeMd } from "./agents.js";
 import { schemaTs, mutationsTs, invariantsTs, brandTs, appTs, domainTest } from "./domain.js";
 import { indexHtml, embedHtml, embedTsx, viewsTsx, uiAppTsx, pagesTsx, mainTsx } from "./ui.js";
-import { documentAppTs, documentBrandTs, documentJson, documentSchemaTs, documentTest, templateJson, templateKind } from "./from-template.js";
+import { documentAppTs, documentBrandTs, documentJson, documentSchemaTs, documentTest, templateJson, templateKind, templateViewFiles } from "./from-template.js";
 import type { GraviewTemplate } from "../document/graview-template.js";
 
 export { pascal, slugify, titleCase, validateScaffoldOptions } from "./names.js";
@@ -94,6 +94,15 @@ export interface ScaffoldOptions {
    * `readGraviewTemplate` first; this trusts what it is handed.
    */
   readonly template?: GraviewTemplate;
+  /**
+   * The code of the views the template comes with (`frameViews`, `views`),
+   * by view name: what was found beside the template as
+   * `views/<template id>/<name>.html` or `.js`. Each is written to the
+   * project's `views/` — a curated view with its manifest beside it as
+   * `<name>.manifest.json`, for `graview view check` — and a view named
+   * here and not handed is left out, which `graview create` says.
+   */
+  readonly templateViews?: Readonly<Record<string, string>>;
 }
 
 export interface ScaffoldFile {
@@ -225,7 +234,7 @@ export function scaffoldProject(given: ScaffoldOptions): Scaffold {
     { path: "src/embed.tsx", contents: embedTsx(ids) },
     { path: "tests/domain.test.ts", contents: template ? documentTest(ids) : domainTest(ids) },
     { path: ".github/workflows/ci.yml", contents: ciYml(ids) },
-    ...(template ? [{ path: "template.json", contents: templateJson(template) }] : []),
+    ...(template ? [{ path: "template.json", contents: templateJson(template) }, ...templateViewFiles(template, options.templateViews ?? {})] : []),
   ];
 
   if (!workspace) {

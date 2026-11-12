@@ -32,6 +32,8 @@ function described(schema: AnySchema, field: FormField, words: (name: string) =>
       return { ...base, input: field.holds === "duration" ? "length of time" : field.holds ?? (field.markdown ? "Markdown text" : field.long ? "long text" : field.app ? "app address" : "text") };
     case "date":
       return { ...base, input: field.time || field.instant ? "date and time" : "date" };
+    case "time":
+      return { ...base, input: "time of day" };
     case "number":
       return { ...base, input: field.amount ? "amount" : "number", ...(field.min === undefined ? {} : { min: field.min }), ...(field.max === undefined ? {} : { max: field.max }) };
     case "choice":
