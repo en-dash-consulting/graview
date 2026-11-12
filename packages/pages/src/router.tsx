@@ -16,9 +16,8 @@ import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, Def
 import { pathOfPlace, placesOf } from "./page-places.js";
 import { createPageRegistry, kindOfSlug, type PageRegistry } from "./registry.js";
 import { useHref, useLocation, useNavigate, useNavigationType, useParams } from "react-router";
-// The page over the Scene's own city is fetched only where a face owns its page and has views (`isOneFace`): a hosted page, embedded, draws none of it.
+// The page over the Scene's own city is fetched only where a face asks for it (`sceneUnderPages`): a hosted page draws none of it.
 import { useOneFace } from "./one-place-control.js";
-import { isOneFace } from "./page-context.js";
 const OnePlace = lazyPart(() => import("./one-place.js").then((module) => ({ default: module.OnePlace })));
 import { appKeyOf, BarFindContext, FirstLookDoor, HeadingsUnder, PastBar, registerReaderLenses, SpecLinks, type BarFind, type FirstLook } from "@graview/primitives/pages";
 
@@ -611,7 +610,7 @@ export function PagesRoutes<S extends AnySchema>({
           * keeps its page here.
           */}
         {/* On the one face the overview is the city over the home: the face takes its address there itself (`one-place.tsx`), keeping what it carries. */}
-        {placesOf(inside).some((place) => place.as === OVERVIEW_SLUG) || isOneFace(inside) ? null : <Route path={OVERVIEW_PATH} element={<Navigate to="/" replace />} />}
+        {placesOf(inside).some((place) => place.as === OVERVIEW_SLUG) || (inside.sceneUnderPages && inside.views) ? null : <Route path={OVERVIEW_PATH} element={<Navigate to="/" replace />} />}
         <Route path="/places/:as" element={<DefaultPlacePage context={inside} />} />
         <Route path="/:slug" element={<KindSwitch context={inside} registry={registry} page="list" />} />
         <Route
@@ -699,7 +698,7 @@ export function PagesApp<S extends AnySchema>({
       <Reported onNavigate={onNavigate} path={path} />
       {steering ? <Steered steering={steering} /> : null}
       {context.presence || outer ? <SaysWhere context={context} to={outer} /> : null}
-      {isOneFace(context) ? (
+      {context.sceneUnderPages && context.views ? (
         // The page over the Scene's own city: one place at every altitude (one-place.tsx).
         <Suspense fallback={null}>
           <OnePlace context={context as unknown as PageContext<AnySchema>}>

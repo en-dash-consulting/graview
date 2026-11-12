@@ -123,6 +123,8 @@ if (window.location.pathname.startsWith("/pages")) {
         // The seat the chapter puts at the keyboard: the pages withhold by it.
         ...(chapter?.principal ? { principal: chapter.principal } : {}),
         sceneHref: "/",
+        // Pages and the Scene as one place (a prototype), asked for with `?city=1`: the routed pages over the Scene's own city.
+        sceneUnderPages: new URLSearchParams(window.location.search).get("city") === "1",
         remembers,
         // The garden's pictures on this face too, as the chapter stands them up.
         views: seedbedViews(opened.store.schema as never, {

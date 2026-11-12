@@ -130,6 +130,8 @@ if (window.location.pathname.startsWith("/pages")) {
         brand: rotaBrand,
         signature: true,
         sceneHref: "/",
+        // Pages and the Scene as one place (a prototype), asked for with `?city=1`: the routed pages over the Scene's own city.
+        sceneUnderPages: new URLSearchParams(window.location.search).get("city") === "1",
         invariantContext: { today: today() },
         principal,
         remembers,

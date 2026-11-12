@@ -124,8 +124,7 @@ and held by `pnpm verify one-face` (`aDuplicateViewIsFound`).
 
 ## What Graview Cloud changes
 
-1. Nothing to set where it hosts an app as the page itself: a routed face
-   that owns its page and has `views` is the one face. Stop drawing the Scene/Pages switch: pass
+1. Set `sceneUnderPages: true` where it hosts an app as the page itself. Stop drawing the Scene/Pages switch: pass
    `bar: { faces: false }` to `@graview/embed` until the embed draws the one
    face in a box (below).
 2. Run `upgradeDocument` on read (it already does) once format 2 ships. The
@@ -139,7 +138,7 @@ and held by `pnpm verify one-face` (`aDuplicateViewIsFound`).
 
 ## What breaks for a host
 
-- A `PagesApp` that owns its page and has `views`: the bar has no Scene/Pages switch, no
+- `PagesApp` with `sceneUnderPages`: the bar has no Scene/Pages switch, no
   "In the scene" link, and no Up on the bar. The page's bar is portaled to a
   fixed slot at the window's top. A `pages-design` shell that measured the
   bar inside its own flow sees a spacer of the bar's height in its place.
@@ -156,8 +155,8 @@ and held by `pnpm verify one-face` (`aDuplicateViewIsFound`).
 
 **An author on the dev kit** (`graview create`, a code declaration):
 
-1. Nothing to turn on: a `PagesApp` that owns its page and is handed `views`
-   is the one face. If your app also serves the Scene's own face at `/`, send
+1. Give the `PagesApp` that owns its page `views` and `sceneUnderPages:
+   true`. If your app also serves the Scene's own face at `/`, send
    people to `/pages/places/overview` (the examples do this). Drop any link
    of your own to "the scene".
 2. Run `graview check`. A `view-duplicates-another` warning names a view
@@ -205,6 +204,15 @@ an unmoved app compiles with the folds as warnings, a moved and an unmoved
 app compile side by side, and reading a document twice changes nothing.
 
 ## Deferred past 0.2.0 (named follow-ups)
+
+- **one-face-by-default**: the one face without the `sceneUnderPages` option.
+  Tried in this pass and taken back: with it on for every routed face that
+  owns its page, 32 unit tests of the routed face (boards, menus, a record's
+  name in place, Seen in, "the record's way to the scene") and the hosted
+  budgets failed. They hold claims about the page as it was drawn before the
+  city part loads, and about the link to the Scene. Each needs moving onto
+  the one face, or retiring where the one face makes it obsolete, before the
+  option can go.
 
 - **embed-one-face-in-a-box**: the one face drawn inside a host's element.
   It positions against the window today, so `@graview/embed` draws the plain

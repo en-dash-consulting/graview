@@ -10,7 +10,7 @@ import type { ReactNode } from "react";
 import { kindOfSlug } from "./registry.js";
 import { useOneFace } from "./one-place-control.js";
 import { createPortal } from "react-dom";
-import { isOneFace, type PageContext, StartFreshLink, useStoreTick } from "./page-context.js";
+import { type PageContext, StartFreshLink, useStoreTick } from "./page-context.js";
 import { usePlacedOnTheFace } from "./face-placed.js";
 import { classes, sizedBy, type ControlSize } from "./control-size.js";
 import { BODY, WIDE, column, h1, quiet } from "./page-typography.js";
@@ -142,7 +142,7 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
          * (`one-place.tsx`), and the bar offers no switch.
          */
         faces={
-          isOneFace(context)
+          context.sceneUnderPages && context.views
             ? undefined
             : {
                 scene: { label: sceneTitle(arrangement), current: false, go: () => window.location.assign(sceneHref) },

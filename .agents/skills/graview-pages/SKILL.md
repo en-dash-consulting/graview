@@ -34,7 +34,7 @@ if (location.pathname.startsWith("/pages")) {
 - `/problems` — every broken rule, with repairs.
 
 The app bar, one row over any shell (`barAbove`): the name, the switch (Scene, Pages;
-none on a face with `views`), the place you are on — whose list
+none with `sceneUnderPages`), the place you are on — whose list
 holds the home, the Lists, the Pictures (standing on a wide bar, else
 under More, as an empty kind is) — Find, standing, person.
 A shell with a rail of its own says `surface("shell", Shell, { without:
