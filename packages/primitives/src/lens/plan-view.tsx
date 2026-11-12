@@ -341,7 +341,8 @@ export function PlanView<S extends AnySchema>({
         const y = box.top + down * (box.bottom - box.top);
         const span = spanAt(region.outline, y);
         const room = Math.max(0, (span.x1 - span.x0) * U - inset * 2);
-        const fitted = fitLabel(region.label, {
+        // A flagged region's name carries the warning's mark, measured with it, so the mark never runs past the room it was given.
+        const fitted = fitLabel(emphasisOf(region.id, implicated, flagged) === "flagged" ? `⚠ ${region.label}` : region.label, {
           room,
           height,
           size: S * 0.023,
@@ -483,7 +484,7 @@ export function PlanView<S extends AnySchema>({
       }
     }
     return { named, placed, tagged };
-  }, [map.regions, W, H, touchable, display, body]);
+  }, [map.regions, W, H, touchable, display, body, implicated, flagged]);
 
   /** Everything the drawing could not say for itself, in the order it is drawn. */
   const unsaid = useMemo(() => {
@@ -815,7 +816,6 @@ export function PlanView<S extends AnySchema>({
             >
               {fitted.lines.map((line, index) => (
                 <tspan key={line + String(index)} x={at.x} dy={index === 0 ? 0 : fitted.fontSize * 1.15}>
-                  {index === 0 && emphasis === "flagged" ? "⚠ " : null}
                   {line}
                 </tspan>
               ))}

@@ -4,8 +4,8 @@
  * declares a glance, and the one `composeDesign` sorts a kind's list and
  * leads its row with. The field its `when` role names, where that is a date
  * or a moment; else its first date or moment that is not bookkeeping — the
- * day a record was made or last changed (`createdAt`, `updated_on`,
- * `lastSeen`) says when somebody typed, not when the thing is.
+ * day a record was made or last changed (`createdAt`, `updated_on`) says
+ * when somebody typed, not when the thing is.
  */
 export interface DatedField {
   readonly name: string;
@@ -13,7 +13,8 @@ export interface DatedField {
 }
 
 /** A field that keeps when a record was written or touched, not when what it is about happens. */
-export const BOOKKEEPING_DATE = /^(?:created|updated|modified|edited|changed|deleted|removed|archived|restored|synced|imported|exported|indexed|seen|viewed|read|touched|last[A-Z_-]\w*)(?:[_-]?(?:at|on|date|time|stamp))?$/i;
+// Conservative: only the four a store or a sync writes as it keeps a record (`createdAt`, `updated_on`, `modified`), never a date a person sets (`lastService`, `archivedOn`, `seen`).
+export const BOOKKEEPING_DATE = /^(?:created|updated|modified|edited|lastModified|lastUpdated|lastEdited)(?:(?:_?(?:at|on))|At|On)?$|^(?:Created|Updated|Modified|Edited)(?:At|On)?$/;
 
 const dated = (type: string) => type === "date" || type === "datetime";
 

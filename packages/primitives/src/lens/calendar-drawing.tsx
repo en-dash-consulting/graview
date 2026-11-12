@@ -403,7 +403,7 @@ function Entry({
         spanning
           ? `${entry.label} · ${entry.from} – ${entry.to}`
           : `${entry.label}${entry.at === null ? " · all day" : ` · ${clock(entry.at)}`}${entry.repeats ? " · repeats" : ""}`
-      }${flagged ? " — implicated in a problem" : ""}`}
+      }`}
       style={{
         display: "block",
         minHeight: 24,

@@ -622,7 +622,7 @@ function Column({
              */
             data-graview-emphasis={emphasisOf(span.id)}
             data-graview-flagged={brokenIds.has(span.id) ? "" : undefined}
-            title={`${span.label} · ${format(span.start)}–${format(span.end)}${brokenIds.has(span.id) ? " — implicated in a problem" : ""}`}
+            title={`${span.label} · ${format(span.start)}–${format(span.end)}`}
             style={{
               position: "absolute",
               top: `${pct(span.start)}%`,
@@ -666,7 +666,8 @@ function Column({
               {/* A bar too short to hold a line of text keeps its name in the
                   tooltip rather than spilling it across its neighbors. */}
               {/* A warning is never told by its hue alone (Roadmap f-better-bare-app-defaults): the mark before the name, the words to a screen reader. */}
-              {brokenIds.has(span.id) ? <><span aria-hidden="true" data-graview-warning-mark="">⚠ </span><span style={VISUALLY_HIDDEN}>Implicated in a problem: </span></> : null}
+              {/* Said once, with the name: a bar too short to show its name still says it to a screen reader. */}
+              {brokenIds.has(span.id) ? <><span aria-hidden="true" data-graview-warning-mark="">⚠ </span><span style={VISUALLY_HIDDEN}>Implicated in a problem: {height >= 3.4 ? null : span.label}</span></> : null}
               {height >= 3.4 ? span.label : null}
             </div>
           </div>
@@ -683,7 +684,7 @@ function Column({
           data-graview-emphasis={emphasis}
           data-graview-moment=""
           data-graview-flagged={brokenIds.has(span.id) ? "" : undefined}
-          title={`${span.label} · ${format(span.start)}${brokenIds.has(span.id) ? " — implicated in a problem" : ""}`}
+          title={`${span.label} · ${format(span.start)}`}
           style={{
             position: "absolute",
             top: `${pct(span.start)}%`,

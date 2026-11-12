@@ -61,6 +61,17 @@ describe("composeDesign on a plain document with no home", () => {
     expect(said).toContain("The app has no home of its own, so it opens on how many schedule, dishes and rooms it holds, then a list of its schedule, dishes and rooms, the schedule first, by date.");
   });
 
+  it("and an app with nothing in it yet is described as the face draws it: its way in, not a page of noughts", () => {
+    const app = compiled(applied(plain, edits));
+    const store = new Store<AnySchema>({ schema: app.schema, mutations: app.mutations ?? [], policy: app.policy!, invariants: app.invariants ?? [] });
+    const described = describePlace(store, { kind: "human", id: "u:owner", roles: ["owner"] }, "home", { app: app as never });
+    if (!described.ok) throw new Error(described.error);
+    expect(described.description.drawnBy).toBe("derived");
+    expect(described.description.text).not.toMatch(/[Zz]ero/);
+    expect(described.description.text).toContain("Nothing here yet.");
+    expect(described.description.text).toMatch(/Begin with “Add (a dish|to the schedule|a room)”, under /);
+  });
+
   it("as edits graview check takes, with nothing left for the critic to warn of", () => {
     const document = applied(plain, edits);
     const out = compileDocument(document);
@@ -88,6 +99,11 @@ describe("a row and a glance for each kind that has none", () => {
   it("each say what they are in the kind's and its fields' words", () => {
     expect(rowFromDeclaration(plain, "moment")!.said).toBe("Each schedule item is listed by its name, then its at, so a list of them reads at a glance.");
     expect(glanceFromDeclaration(plain, "dish")!.said).toBe("A glance at a dish says its status and course.");
+  });
+
+  it("leaves out of a glance every field the record's name already says", () => {
+    const labeled = { ...plain, kinds: { guest: { label: "{first} {last} ({status})", fields: { first: { type: "string", required: true }, last: { type: "string" }, status: { type: "enum", options: ["invited", "coming", "declined"] }, arrives: { type: "date" }, diet: { type: "string" } } } } } as unknown as GraviewDocument;
+    expect(glanceFromDeclaration(labeled, "guest")!.edit).toEqual({ op: "set-glance", kind: "guest", fields: ["arrives", "diet"] });
   });
 
   it("finds a status by its role or its choices, not its name alone", () => {
@@ -145,15 +161,36 @@ describe("the composed home keeps to what each seat sees", () => {
     policy: { grants: [{ roles: ["owner"], mutations: "*" }, { roles: ["staff"], mutations: ["add-task"] }], sees: [{ roles: ["owner"], kinds: ["review", "task"] }, { roles: ["staff"], kinds: ["task"] }] },
   } as unknown as GraviewDocument;
 
-  it("counts in its headline only kinds every role sees, and stands each list only where its seat has some to see", () => {
-    const home = homeFromDeclaration(office)!.edit as unknown as { blocks: Record<string, unknown>[] };
-    expect(home.blocks[0]).toEqual({ headline: "{count(all('task')) | words | capital} {count(all('task')) | plural: 'task', 'tasks'}." });
-    const app = compiled(applied(office, [home]));
+  const seats = (document: GraviewDocument) => {
+    const home = homeFromDeclaration(document)!.edit as unknown as { blocks: Record<string, unknown>[] };
+    const app = compiled(applied(document, [home]));
     const store = new Store<AnySchema>({ schema: app.schema, mutations: app.mutations ?? [], policy: app.policy!, invariants: app.invariants ?? [], snapshot: { nodes: [{ id: "r1", kind: "review", name: "Ann" }, { id: "t1", kind: "task", name: "File it" }], edges: [] } as never });
-    const staff = describePlace(store, { kind: "human", id: "u:s", roles: ["staff"] }, "home", { app: app as never });
-    if (!staff.ok) throw new Error(staff.error);
-    expect(staff.description.text).not.toMatch(/salary|review/i);
-    expect(staff.description.text).toMatch(/One task\./);
+    const as = (principal: Principal) => {
+      const described = describePlace(store, principal, "home", { app: app as never });
+      if (!described.ok) throw new Error(described.error);
+      return described.description.text;
+    };
+    return { home, as };
+  };
+
+  it("counts in its headline only kinds every seat sees — one that holds no role too — and stands each list only where its seat has some to see", () => {
+    const { home, as } = seats(office);
+    // Every role sees tasks, but a seat that holds no role sees nothing here: the headline counts nothing, and is the app's name.
+    expect(home.blocks[0]).toEqual({ headline: "Office" });
+    expect(as({ kind: "human", id: "u:s", roles: ["staff"] })).not.toMatch(/salary|review/i);
+    expect(as({ kind: "human", id: "u:s", roles: ["staff"] })).toMatch(/Tasks/);
+    for (const nobody of [{ kind: "human", id: "u:v", roles: [] }, { kind: "agent", id: "a:1" }] as Principal[]) {
+      const said = as(nobody);
+      expect(said).not.toMatch(/[Zz]ero/);
+      expect(said).not.toMatch(/salary|review|task/i);
+    }
+  });
+
+  it("and counts a kind a sight shows everyone", () => {
+    const open = { ...office, policy: { ...office.policy, sees: [{ roles: ["owner"], kinds: ["review"] }, { roles: "*", kinds: ["task"] }] } } as unknown as GraviewDocument;
+    const { home, as } = seats(open);
+    expect(home.blocks[0]).toEqual({ headline: "{count(all('task')) | words | capital} {count(all('task')) | plural: 'task', 'tasks'}." });
+    expect(as({ kind: "human", id: "u:v", roles: [] })).toMatch(/One task\./);
   });
 });
 

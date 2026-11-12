@@ -92,6 +92,11 @@ describe("a derived row whose kind's date is a datetime", () => {
     expect(keys(bookkeeping, { status: "open", priority: "high", due: "2026-11-20", updatedAt: "2026-11-10T08:00:00Z" })).toEqual(["due", "status", "priority"]);
     const dayFirst = kinds({ due: { type: "date" }, remindAt: { type: "datetime" } });
     expect(keys(dayFirst, { due: "2026-11-20", remindAt: "2026-11-19T08:00:00Z" })).toEqual(["due", "remindAt"]);
+    // A date a person sets is the kind's date, whatever it is called: only what a store writes as it keeps a record is bookkeeping.
+    const serviced = kinds({ lastService: { type: "date" }, createdAt: { type: "datetime" } });
+    expect(keys(serviced, { lastService: "2026-10-01", createdAt: "2026-11-10T08:00:00Z" })[0]).toBe("lastService");
+    for (const name of ["lastVisit", "lastDay", "seen", "archivedOn"]) expect(keys(kinds({ [name]: { type: "date" } }), { [name]: "2026-10-01" })).toEqual([name]);
+    for (const name of ["createdAt", "updatedOn", "modified", "lastModified"]) expect(keys(kinds({ [name]: { type: "date" }, due: { type: "date" } }), { [name]: "2026-10-01", due: "2026-12-01" })[0]).toBe("due");
     const roled = kinds({ due: { type: "date" }, remindAt: { type: "datetime" } }, { when: "remindAt" });
     expect(keys(roled, { due: "2026-11-20", remindAt: "2026-11-19T08:00:00Z" })).toEqual(["remindAt", "due"]);
   });
@@ -117,9 +122,12 @@ describe("the masthead says the app's description once", () => {
     expect(headed.masthead?.subtitle).toBeUndefined();
     const lined = home({ ...thanksgiving, views: { home: [{ headline: "Thursday" }, { text: "who brings what and when we eat" }] } } as GraviewDocument);
     expect(lined.masthead?.subtitle).toBeUndefined();
-    // Inside a `when` too, as the face reads it (`homeSaysTheLine`).
-    const shown = home({ ...thanksgiving, views: { home: [{ headline: "Thursday" }, { when: "count(all('moment')) > 0", show: [{ title: "Who brings what, and when we eat" }] }] } } as GraviewDocument);
-    expect(shown.masthead?.subtitle).toBeUndefined();
+  });
+
+  it("and still says it where the home's words that say it stand inside a `when`, which may not hold for the seat", () => {
+    const hidden = home({ ...thanksgiving, views: { home: [{ headline: "Thursday" }, { when: "count(all('moment')) > 5", show: [{ title: "Who brings what, and when we eat" }] }] } } as GraviewDocument);
+    expect(hidden.masthead?.subtitle).toBe("Who brings what, and when we eat.");
+    expect(hidden.text).toContain("Who brings what, and when we eat.");
   });
 
   it("but only for the whole description, on its words' bounds: a sentence that shares some of them is not it", () => {

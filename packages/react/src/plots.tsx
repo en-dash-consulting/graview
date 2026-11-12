@@ -181,6 +181,13 @@ export function Plots({ frame, width, height, pan, pinned, close, today, swallow
     <>
     <style>{groundCss(scheme)}</style>
     <svg className="graview-plots" aria-hidden="true" data-graview-world="" width={width} height={height} style={style} data-graview-plots={tiles.length} data-graview-named={close ? "" : undefined}>
+      {/* A flagged block's roof is hatched as well as warn-colored: its pattern says it, not its hue alone (Roadmap f-better-bare-app-defaults). Once for the scene, every tile's roofs read it. */}
+      <defs>
+        <pattern id="graview-flag-hatch" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <rect width="3" height="3" fill="var(--graview-warn)" />
+          <rect width="1.2" height="3" fill="color-mix(in oklab, var(--graview-warn) 45%, var(--graview-panel))" />
+        </pattern>
+      </defs>
       <g transform={`translate(${(city.originX + pan.x).toFixed(1)} ${(city.originY + pan.y).toFixed(1)})`}>
         {tiles.map((node) => (
           <PlotTile
@@ -319,13 +326,6 @@ const PlotTile = memo(function PlotTile({
       {/* THE BLOCKS: a row per value, back to front; a problem lit, a change since you were here aglow, your own marked. */}
       {drawing.buildings.length > 0 ? (
         <g className="graview-village" data-graview-village={drawing.buildings.length} data-graview-rest={drawing.rests.reduce((sum, rest) => sum + rest.count, 0) || undefined}>
-          {/* A flagged block's roof is hatched as well as warn-colored: its pattern says it, not its hue alone (Roadmap f-better-bare-app-defaults). */}
-          <defs>
-            <pattern id="graview-flag-hatch" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-              <rect width="3" height="3" fill="var(--graview-warn)" />
-              <rect width="1.2" height="3" fill="color-mix(in oklab, var(--graview-warn) 45%, var(--graview-panel))" />
-            </pattern>
-          </defs>
           {drawing.buildings.map((block) => (
             <g
               key={block.id}

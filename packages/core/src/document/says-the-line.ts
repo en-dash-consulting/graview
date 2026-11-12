@@ -2,7 +2,7 @@
  * WHETHER A HOME'S OWN WORDS ALREADY SAY THE APP'S LINE (Roadmap
  * f-better-bare-app-defaults). The home said the app's description under a
  * headline that said it already. A headline, a title or a line of the
- * home's blocks — inside a group or a `when` as well — that says the whole
+ * home's blocks — inside a group as well, never inside a `when`, whose words a seat may not be shown — that says the whole
  * description, word for word (case, punctuation and spacing aside), says
  * it; a few of its words in another sentence do not. The face and
  * `describePlace` both ask this, of the same blocks, so they never differ.
@@ -19,7 +19,7 @@ export function saysTheLine(texts: readonly string[], line: string): boolean {
 
 type Literal = { readonly text?: string };
 
-/** The literal words of a home's headlines, titles and lines, as declared (`views.home`) or compiled (`compileBlocks`), groups and `when`s walked. */
+/** The literal words of a home's headlines, titles and lines, as declared (`views.home`) or compiled (`compileBlocks`), groups walked; what a `when` shows is left out, since it may not hold for the seat. */
 export function homeWords(blocks: readonly unknown[]): string[] {
   const out: string[] = [];
   const walk = (list: readonly unknown[]): void => {
@@ -30,13 +30,11 @@ export function homeWords(blocks: readonly unknown[]): string[] {
       if (typeof block["t"] === "string") {
         if (block["t"] === "headline" || block["t"] === "title" || block["t"] === "text") out.push(((block["parts"] as readonly Literal[] | null) ?? []).map((part) => part.text ?? " ").join(""));
         if (Array.isArray(block["blocks"])) walk(block["blocks"] as readonly unknown[]);
-        if (Array.isArray(block["show"])) walk(block["show"] as readonly unknown[]);
         continue;
       }
       // Declared: the key is the block's kind, a template's braces left out.
       for (const key of ["headline", "title", "text"] as const) if (typeof block[key] === "string") out.push((block[key] as string).replace(/\{[^}]*\}/g, " "));
       if (Array.isArray(block["group"])) walk(block["group"] as readonly unknown[]);
-      if (Array.isArray(block["show"])) walk(block["show"] as readonly unknown[]);
     }
   };
   walk(blocks);

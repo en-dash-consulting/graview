@@ -100,10 +100,8 @@ function nameTemplate(spec: KindSpec): string | undefined {
 function seenWholeByEveryone(document: GraviewDocument, kind: string): boolean {
   const sees = (document.policy as { readonly sees?: readonly { readonly roles: readonly string[] | "*"; readonly kinds: readonly string[]; readonly own?: boolean; readonly via?: string }[] } | undefined)?.sees;
   if (!sees) return true;
-  const roles = Array.isArray(document.roles) ? (document.roles as readonly string[]) : [];
-  const whole = sees.filter((sight) => sight.kinds.includes(kind) && !sight.own && sight.via === undefined);
-  if (whole.some((sight) => sight.roles === "*")) return true;
-  return roles.length > 0 && roles.every((role) => whole.some((sight) => Array.isArray(sight.roles) && sight.roles.includes(role)));
+  // Every seat: one that holds no role (a visitor, an agent acting for nobody) as well, which only a sight for everyone (`"*"`) reaches.
+  return sees.some((sight) => sight.roles === "*" && sight.kinds.includes(kind) && !sight.own && sight.via === undefined);
 }
 
 /** A count said in words with its noun: the declared plural where it is a plural, else English's of the noun ("schedule items", never "two schedule"). */
@@ -183,16 +181,18 @@ export function rowFromDeclaration(document: GraviewDocument, kind: string, opti
 export function glanceFromDeclaration(document: GraviewDocument, kind: string, options: FromDeclarationOptions = {}): ComposedPart | undefined {
   const spec = document.kinds[kind];
   if (!spec || options.skip?.has(kind) || spec.glance !== undefined) return undefined;
-  const naming = new Set([defaultLabelField(spec) ?? ""]);
+  // Every field the record's name already says — its naming field, or each its label reads ("{first} {last}") — is left out: a glance says what the name does not.
+  const naming = new Set([defaultLabelField(spec) ?? "", ...[...(spec.label ?? "").matchAll(/\{\s*([A-Za-z][A-Za-z0-9_]*)/g)].map((match) => match[1]!)]);
   const date = dateOfKind(spec)?.field;
   const status = statusOfKind(spec);
   if (!date && !status) return undefined;
-  const led = [date, status].filter((field): field is string => field !== undefined);
+  const led = [date, status].filter((field): field is string => field !== undefined && !naming.has(field));
   const rest = Object.entries(spec.fields)
     // Not a day a record was written or touched: that is bookkeeping, not a fact a glance compares by.
     .filter(([field, one]) => !led.includes(field) && !naming.has(field) && glanceable(one) && !((one.type === "date" || one.type === "datetime") && BOOKKEEPING_DATE.test(field)))
     .map(([field]) => field);
   const fields = [...led, ...rest].slice(0, 3);
+  if (fields.length === 0) return undefined;
   const noun = nounWords(document.kinds, kind).toLowerCase();
   return {
     edit: { op: "set-glance", kind, fields } as DocumentEdit,

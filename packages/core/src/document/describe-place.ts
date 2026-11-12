@@ -269,7 +269,15 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
         ...(brand?.subtitle && brand.subtitleDrawn !== false ? { subtitle: brand.subtitle } : {}),
         ...(logo ? { logo: { alt: brand?.logoAlt ?? name, ...(isInlineSvg(logo) ? { drawn: "inline SVG" as const } : { drawn: "image" as const, src: logo }) } } : {}),
       };
-      if (app.home) {
+      /*
+       * AN EMPTY APP OPENS ON ITS WAY IN, as the face draws it (Roadmap
+       * f-better-bare-app-defaults): a home of blocks about records that do
+       * not exist yet would be a page of noughts, so the face draws the
+       * derived home — "Nothing here yet.", and where to begin — until there
+       * is anything this seat can see, and this says the same.
+       */
+      const anything = (schema.kinds as readonly string[]).some((kind) => graph.nodesOfKind(kind).length > 0);
+      if (app.home && anything) {
         drawnBy = "blocks";
         // On the routed face the home is the page: its first headline is the page's own h1.
         parts = say(resolved(null, {}), 0, "views.home");
@@ -289,6 +297,14 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
         for (const kind of shown) {
           const count = graph.nodesOfKind(kind).filter((node) => isCurrent(schema.tryDefinition(kind), node)).length;
           if (count > 0) parts.push({ t: "text", text: `${count} ${kindWord(schema, kind, count)}` });
+        }
+        if (!shown.some((kind) => graph.nodesOfKind(kind).some((node) => isCurrent(schema.tryDefinition(kind), node)))) {
+          parts.push({ t: "text", text: "Nothing here yet." });
+          // Where to begin, in the act's own words: one this seat may take, as the face's home names it.
+          const begins = shown
+            .map((kind) => ({ kind, act: store.allMutations().find((mutation) => (mutation.creates ?? []).includes(kind as never) && store.permits({ name: mutation.name, args: {} }, principal).ok) }))
+            .find((one) => one.act !== undefined);
+          if (begins) parts.push({ t: "text", text: `Begin with “${begins.act!.title ?? begins.act!.name}”, under ${pluralOf(schema, begins.kind)}.` });
         }
       }
     } else if (lens?.lens === "blocks") {
