@@ -405,6 +405,8 @@ export function fitCamera(around: Box, area: Box, margin = 16, most = Infinity):
  * a marker toward it.
  */
 export interface Route {
+  /** Where the line starts: on the page's edge, inside the city's part. */
+  readonly from: Point;
   /** Where the line ends: the building, or the edge of the city's part nearest it. */
   readonly to: Point;
   /** The building, when it is out of the city's part and the line points toward it. */
@@ -415,19 +417,24 @@ export interface Route {
 
 const clampTo = (p: Point, box: Box): Point => ({ x: Math.max(box.x, Math.min(box.x + box.width, p.x)), y: Math.max(box.y, Math.min(box.y + box.height, p.y)) });
 
-export function routeLine(from: Point, target: Point, area: Box, phone: boolean): Route {
+export function routeLine(given: Point, target: Point, area: Box, phone: boolean, control: Box | null = null): Route {
+  // The line starts where the page's edge meets the city's part: never beside the control, below or past it.
+  let from = phone ? { x: Math.max(area.x, Math.min(area.x + area.width, given.x)), y: given.y } : { x: given.x, y: Math.max(area.y, Math.min(area.y + area.height, given.y)) };
+  // On a phone the control rides on the sheet's top edge: a line leaves that edge past the control's right.
+  if (phone && control && from.x < control.x + control.width + 8) from = { x: Math.min(area.x + area.width, control.x + control.width + 8), y: from.y };
   const inArea = target.x >= area.x && target.x <= area.x + area.width && target.y >= area.y && target.y <= area.y + area.height;
   const to = inArea ? target : clampTo(target, area);
   const reach = Math.min(80, Math.max(16, Math.hypot(to.x - from.x, to.y - from.y) / 2));
   // Out along the edge's normal, and never past the city's part: every point of the curve lies between its ends and this one.
   const bend = clampTo(phone ? { x: from.x, y: from.y - reach } : { x: from.x - reach, y: from.y }, area);
-  return { to, toward: inArea ? null : target, bend };
+  return { from, to, toward: inArea ? null : target, bend };
 }
 
 /** The part of the window the city is seen in beside the page: left of it at a desk, above it on a phone; under the bar, above the control. */
 export function cityArea(page: Box, view: View, control: Box | null, phone: boolean): Box {
   const top = (view.top ?? 0) + 6;
-  const bottom = Math.min(phone ? page.y - 6 : view.height - 6, control ? control.y - 6 : Infinity);
+  // Above the control: on a phone it rides on the sheet, so the city's part ends over it.
+  const bottom = phone ? page.y - 6 : Math.min(view.height - 6, control ? control.y - 6 : Infinity);
   const right = phone ? view.width - 6 : page.x - 6;
   return { x: 6, y: top, width: Math.max(0, right - 6), height: Math.max(0, bottom - top) };
 }

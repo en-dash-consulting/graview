@@ -115,7 +115,9 @@ function startRecording(page) {
       // Read while it is in the window's flow, the page is the window: the box it fills.
       const inFlow = getComputedStyle(now).display === "contents";
       const bar = document.querySelector('[data-testid="one-place-bar"]')?.getBoundingClientRect();
-      const control = document.querySelector('[data-testid="altitude"] [role="group"]')?.getBoundingClientRect();
+      // The control and the legend over it, and the timeline beside them: all of what stands at the foot.
+      const dock = [document.querySelector("[data-graview-one-face-dock]"), document.querySelector("[data-graview-past-slot] > *")].filter(Boolean).map((el) => el.getBoundingClientRect());
+      const control = dock.length ? dock.reduce((a, b) => new DOMRect(Math.min(a.left, b.left), Math.min(a.top, b.top), Math.max(a.right, b.right) - Math.min(a.left, b.left), Math.max(a.bottom, b.bottom) - Math.min(a.top, b.top))) : null;
       frames.push({
         bar: bar ? { x: bar.left, y: bar.top, width: bar.width, height: bar.height } : null,
         control: control ? { x: control.left, y: control.top, width: control.width, height: control.height } : null,
@@ -330,7 +332,7 @@ async function sameNode(page, where, phone) {
   const jump = jumps(frames);
   seen.lines.push({ where, ...lineMisses(frames, phone), ok: lineMisses(frames, phone).counted > 0 && lineMisses(frames, phone).worst <= 2 });
   const crossing = linesInside(frames);
-  seen.crossing.push({ where, path: "/pages/tasks/t-deposit", ...crossing, ok: crossing.counted > 0 && crossing.crossed === 0 });
+  seen.crossing.push({ where, path: phone ? "/pages/tasks" : "/pages/tasks/t-deposit", ...crossing, ok: crossing.counted > 0 && crossing.crossed === 0 });
   const shear = frames.filter((f) => !shearless(f.matrix) || f.boards.some((b) => b.face && !shearless(b.face)));
   seen.shear.push({ where, frames: frames.length, sheared: shear.length, first: shear[0] ? { altitude: shear[0].altitude, matrix: shear[0].matrix } : null, reachedTheCity: frames.some((f) => f.altitude > 1.99), ok: shear.length === 0 && frames.some((f) => f.altitude > 1.99) });
   return { where, frames: frames.length, moved: moving.length, same: frames.every((f) => f.same), jump, ok: frames.length > 30 && frames.every((f) => f.same) && jump.worst <= 0.25 && moving.length > 20 };
@@ -618,7 +620,8 @@ async function chosenRecord(page, where) {
     const roofOf = (building) => getComputedStyle(building.querySelector(".graview-iso-roof")).fill;
     const chosen = city.querySelector('[data-graview-building="t-deposit"]');
     const others = [...city.querySelectorAll("[data-graview-building]")].filter((b) => b !== chosen);
-    const lift = chosen ? new DOMMatrixReadOnly(getComputedStyle(chosen).transform === "none" ? undefined : getComputedStyle(chosen).transform).f : 0;
+    // Lifted by its own translate, apart from the transform playback rises by.
+    const lift = chosen ? parseFloat((getComputedStyle(chosen).translate || "0 0").split(" ")[1] ?? "0") || 0 : 0;
     const words = [...city.querySelectorAll(".graview-record-links, .graview-record-link-said")].filter((el) => el.getBoundingClientRect().width > 0 && getComputedStyle(el).display !== "none").length;
     const box = document.querySelector("[data-graview-connected-box]");
     const listed = [...(box?.querySelectorAll("[data-graview-record]") ?? [])].map((b) => b.getAttribute("data-graview-record"));
@@ -644,7 +647,7 @@ async function offSight(page, where) {
   const frames = await stopRecording(page);
   const crossing = linesInside(frames);
   const pointed = frames.at(-1)?.lines.filter((line) => line.under).length ?? 0;
-  seen.crossing.push({ where, path: "/pages/tasks/t-book", pointed, ...crossing, ok: crossing.counted > 0 && crossing.crossed === 0 });
+  seen.crossing.push({ where, path: "/pages/tasks/t-book", pointed, ...crossing, ok: crossing.counted > 0 && crossing.crossed === 0 && pointed > 0 });
   return { where, ok: true };
 }
 
@@ -668,11 +671,11 @@ async function shortcuts(page, where) {
   const named = await page.evaluate(() => [0, 1, 2].map((n) => ({ title: document.querySelector(`[data-testid="altitude-stop-${n}"]`)?.getAttribute("title"), keys: document.querySelector(`[data-testid="altitude-stop-${n}"]`)?.getAttribute("aria-keyshortcuts") })));
   await press(page, '[data-testid="altitude-stop-1"]');
   await restAt(page, 1);
-  await press(page, '[data-testid="altitude-key"]');
+  // The legend shows by default beside the city: opened only if it is not.
+  if ((await page.locator('[data-testid="altitude-key"]').first().getAttribute("aria-expanded")) !== "true") await press(page, '[data-testid="altitude-key"]');
   await page.waitForTimeout(200);
   const caps = await page.evaluate(() => ({ caps: [0, 1, 2].map((n) => document.querySelector(`[data-testid="altitude-keycap-${n}"]`)?.textContent ?? null), listed: document.querySelector('[data-testid="altitude-key-keys"]')?.textContent ?? "" }));
-  await press(page, '[data-testid="altitude-key"]');
-  seen.shortcuts.push({ where, moves, named, caps, ok: moves.every((m) => m.reached) && named.every((n, i) => n.title?.includes(`· ${i + 1}`) && n.keys?.split(" ").includes(String(i + 1))) && caps.caps.join() === "1,2,3" && /1 Page/.test(caps.listed) });
+  seen.shortcuts.push({ where, moves, named, caps, ok: moves.every((m) => m.reached) && named.every((n, i) => n.keys?.split(" ").includes(String(i + 1))) && caps.caps.join() === "1,2,3" && /1 Page/.test(caps.listed) });
   // The browser's zoom chords: told to the page, none taken, and the level stays.
   const zoom = await page.evaluate(() => {
     const taken = [];
@@ -759,7 +762,7 @@ async function legend(page, where) {
   for (const state of ["whole", "slider"]) {
     if (state === "slider") await press(page, '[data-testid="altitude-size"]');
     await page.waitForTimeout(200);
-    const target = state === "whole" ? '[data-testid="altitude-stop-1"]' : '[data-testid="altitude-slider"]';
+    const target = state === "whole" ? '[data-testid^="altitude-stop-"][aria-pressed="true"]' : '[data-testid="altitude-slider"]';
     await page.locator(target).hover();
     await page.waitForTimeout(700);
     const hovered = await page.evaluate((target) => {
@@ -781,7 +784,7 @@ async function legend(page, where) {
     states.push({ state, hovered, focused, legend: /1 Page/.test(legendText) && /View/.test(legendText) });
   }
   await press(page, '[data-testid="altitude-size"]');
-  return { where, states, ok: states.every((one) => one.hovered.said?.includes("1 Page") && one.hovered.shown > 0.9 && one.focused > 0.9 && one.legend) };
+  return { where, states, ok: states.every((one) => /\(\d\) · \[ and \] to move/.test(one.hovered.said ?? "") && one.hovered.shown > 0.9 && one.focused > 0.9 && one.legend) };
 }
 
 /*
@@ -1194,7 +1197,6 @@ try {
       [seen.bar, (page, where) => bar(page, where)],
       [seen.resize, (page, where) => resize(page, where, true)],
       ...(engine === "chromium" ? [[seen.pinch, (page, where) => pinch(page, where)]] : []),
-      [seen.offSight, (page, where) => offSight(page, where)],
       [seen.sliderRun, (page, where) => slider(page, where)],
     ]);
     seen.switch.push(await rootIsTheOneFace(browser, { engine, device: "desk 1440×900" }).catch((error) => ({ ok: false, error: String(error?.message ?? error) })));

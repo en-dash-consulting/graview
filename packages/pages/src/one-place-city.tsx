@@ -55,7 +55,7 @@ const recordShownBy = (element: Element): string | null => element.getAttribute(
  */
 const CITY_CSS = `
 [data-testid="one-place-city"] .graview-zoom, [data-testid="one-place-city"] .graview-edge-sign, [data-testid="one-place-city"] .graview-record-links { display: none; }
-[data-testid="one-place-city"] .graview-building[data-graview-here] { transform: translateY(-7px); }
+[data-testid="one-place-city"] .graview-building[data-graview-here] { translate: 0 -7px; }
 [data-testid="one-place-city"] .graview-building[data-graview-here] .graview-iso-roof { fill: var(--graview-accent); }
 [data-testid="one-place-city"] .graview-building[data-graview-here] .graview-iso-left { fill: color-mix(in srgb, var(--graview-accent) 55%, black); }
 [data-testid="one-place-city"] .graview-building[data-graview-here] .graview-iso-right { fill: color-mix(in srgb, var(--graview-accent) 72%, black); }
@@ -441,8 +441,9 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
          * the window or the views changed, or a while gone by (a record added
          * lays its district out again) — never every frame of a page at rest.
          */
-        const readKey = `${at.view.width}x${at.view.height}|${at.boards.length}|${at.current}|${zoomNowOf(cam)}`;
-        if (readKey !== lastReadKey || committedAt > lastRead || now - lastRead > 500) {
+        const readKey = `${at.view.width}x${at.view.height}|${at.boards.length}|${at.current}|${zoomNowOf(cam)}|${holder.querySelector(".graview-plots > g")?.getAttribute("transform") ?? ""}`;
+        // An empty city is read again every frame until it has laid out; a pan moves the city's own transform, which is in the key.
+        if (world.plots.size === 0 || readKey !== lastReadKey || committedAt > lastRead || now - lastRead > 500) {
           world = readWorld(holder);
           standAll(world, cam.zoom());
           lastRead = now;
@@ -701,8 +702,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           const end = endOf(target);
           if (!end) continue;
           taken.add(key);
-          const route = routeLine(from, end.at, area, phone);
-          found.push({ key, from, to: route.to, bend: route.bend, under: route.toward, on: end.on, target, label: labelFor(target) });
+          const route = routeLine(from, end.at, area, phone, controlRect ? boxOf(controlRect) : null);
+          found.push({ key, from: route.from, to: route.to, bend: route.bend, under: route.toward, on: end.on, target, label: labelFor(target) });
         }
       }
       draw(found, shown);
@@ -740,6 +741,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         drawn.ring.remove();
         lines.delete(key);
       }
+      /* One marker where several lines end together: the first one's, the rest drawn without a ring of their own. */
+      const ringsAt: Point[] = [];
       for (const line of found) {
         let drawn = lines.get(line.key);
         if (!drawn) {
@@ -788,14 +791,18 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           const right = { x: to.x + Math.cos(angle - 2.4) * 6, y: to.y + Math.sin(angle - 2.4) * 6 };
           drawn.arrow.setAttribute("d", `M${tip.x.toFixed(2)},${tip.y.toFixed(2)} L${left.x.toFixed(2)},${left.y.toFixed(2)} L${right.x.toFixed(2)},${right.y.toFixed(2)} Z`);
           // The marker toward a building out of sight is the way to it: its name said, a press flies there.
-          drawn.ring.style.display = "";
+          const crowded = ringsAt.some((p) => Math.hypot(p.x - to.x, p.y - to.y) < 28);
+          drawn.ring.style.display = crowded ? "none" : "";
+          if (!crowded) ringsAt.push(to);
           drawn.ring.style.left = `${(to.x - 8).toFixed(2)}px`;
           drawn.ring.style.top = `${(to.y - 8).toFixed(2)}px`;
         } else {
           drawn.arrow.setAttribute("d", "");
           // An end under the bar, or under the control at the foot, is not offered: they stand over it.
           const under = control && to.x > control.left - 10 && to.x < control.right + 10 && to.y > control.top - 10 && to.y < control.bottom + 10;
-          drawn.ring.style.display = to.y < (state.current.view.top ?? 0) + 8 || under ? "none" : "";
+          const crowded = ringsAt.some((p) => Math.hypot(p.x - to.x, p.y - to.y) < 28);
+          drawn.ring.style.display = to.y < (state.current.view.top ?? 0) + 8 || under || crowded ? "none" : "";
+          if (!crowded) ringsAt.push(to);
           drawn.ring.style.left = `${(to.x - 8).toFixed(2)}px`;
           drawn.ring.style.top = `${(to.y - 8).toFixed(2)}px`;
         }

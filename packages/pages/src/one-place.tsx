@@ -165,6 +165,16 @@ const CONTROL_KEY = "graview.one-face.control";
 /** The keys that go straight to each level, Page, Nearby and City. */
 const LEVEL_KEYS = ["1", "2", "3"] as const as readonly string[];
 
+/** Where this browser keeps whether the level's single keys are on (WCAG 2.1.4: they can be turned off). */
+const KEYS_KEY = "graview.one-face.keys";
+const keysOn = (): boolean => {
+  try {
+    return window.localStorage.getItem(KEYS_KEY) !== "off";
+  } catch {
+    return true;
+  }
+};
+
 /** Typing somewhere: the keys are the field's, not the altitude's. */
 const typingIn = (target: EventTarget | null): boolean => target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement || (target instanceof HTMLElement && target.isContentEditable);
 
@@ -426,9 +436,10 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
       /*
        * A PINCH IS THE BROWSER'S OWN ON THE PAGE: there it zooms the page's
        * words for whoever needs them larger, and a level is moved by the
-       * control, Alt and the arrows, or ctrl and the wheel. Beside the city
-       * a pinch on the page scrubs the altitude; over the city, and at the
-       * City, the Scene's own hand zooms the camera.
+       * control, its keys, or Alt and the arrows. Ctrl and the wheel, a
+       * trackpad's pinch, are the browser's own over the page too. Beside the
+       * city two fingers on the page scrub the altitude; over the city, and
+       * at the City, the Scene's own hand zooms the camera.
        */
       const nearby = latest.current.now.level === PANEL && latest.current.now.away && !latest.current.now.moving;
       const mine = nearby && onPage(event.touches[0]?.target ?? null) && onPage(event.touches[1]?.target ?? null);
@@ -449,10 +460,16 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
     };
     const key = (event: KeyboardEvent) => {
       // Never with the browser's own chords (its zoom is Cmd or Ctrl and plus, minus, 0), never while the keys are writing, never into a view's frame.
-      if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || typingIn(event.target) || document.activeElement instanceof HTMLIFrameElement) return;
+      const target = (event.composedPath()[0] ?? event.target) as EventTarget | null;
+      if (event.defaultPrevented || event.repeat || event.isComposing || event.metaKey || event.ctrlKey || event.shiftKey || typingIn(target)) return;
+      // Where the keys mean something of their own — a menu, a list to type into, a grid — they are theirs.
+      if (target instanceof Element && target.closest('[role="menu"], [role="listbox"], [role="combobox"], [role="grid"], [role="textbox"], [role="spinbutton"], [role="tree"]')) return;
       if (document.querySelector("[data-graview-overlay]:not([hidden])")) return;
       const level = latest.current.now.level;
-      // 1, 2 and 3: Page, Nearby and City. [ and ]: down and up a level.
+      // 1, 2 and 3: Page, Nearby and City. [ and ]: down and up a level — unless the keys were turned off in the legend.
+      if (!event.altKey && !keysOn()) {
+        if (LEVEL_KEYS.includes(event.key) || event.key === "[" || event.key === "]") return;
+      }
       const stop = !event.altKey ? LEVEL_KEYS.indexOf(event.key) : -1;
       if (stop >= 0) {
         event.preventDefault();
@@ -675,7 +692,8 @@ function useLeavingBoards(boards: readonly Board[], rising: boolean): readonly B
     const timer = window.setTimeout(() => setGone((was) => new Map([...was].filter(([, one]) => one.until > performance.now() + 4))), Math.max(0, next - performance.now()) + 8);
     return () => window.clearTimeout(timer);
   }, [gone, rising]);
-  return useMemo(() => [...gone.values()].map((one) => one.board), [gone]);
+  const kept = useMemo(() => [...gone.values()].map((one) => one.board), [gone]);
+  return rising ? kept : [];
 }
 
 const ONE_PLACE_CSS = `
@@ -699,7 +717,7 @@ const ONE_PLACE_CSS = `
 [data-graview-one-face-stops] button[aria-pressed="true"] { color: var(--graview-ink); font-weight: 600; background: color-mix(in srgb, var(--graview-accent) 18%, transparent); cursor: default; }
 [data-graview-one-face-stops] button[data-graview-key-stop] { min-width: 30px; padding: 0 8px; margin-left: 2px; box-shadow: -1px 0 0 0 var(--graview-edge); border-radius: 0 6px 6px 0; }
 [data-graview-one-face-stops] button:focus-visible, [data-graview-one-face-slider]:focus-visible { outline: 2px solid var(--graview-accent); outline-offset: 1px; }
-[data-graview-one-face-slider]::before { content: ""; position: absolute; inset: -16px -8px; }
+[data-graview-one-face-slider]::before { content: ""; position: absolute; inset: -4px -8px -16px; }
 [data-graview-one-face-tip] { position: absolute; left: 0; bottom: calc(100% + 6px); padding: 4px 8px; border-radius: 6px; border: 1px solid var(--graview-edge); background: var(--graview-panel, Canvas); color: var(--graview-ink); font-size: 0.75rem; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 120ms ease 300ms; }
 [data-graview-one-face-mini]:hover > [data-graview-one-face-tip], [data-graview-one-face-mini]:focus-within > [data-graview-one-face-tip], [data-graview-one-face-stops]:hover > [data-graview-one-face-tip], [data-graview-one-face-stops]:focus-within > [data-graview-one-face-tip] { opacity: 1; }
 [data-graview-one-face-mini]:has([aria-expanded="true"]) > [data-graview-one-face-tip], [data-graview-one-face-stops]:has([data-testid="altitude-key"][aria-expanded="true"]) > [data-graview-one-face-tip] { opacity: 0; }
@@ -822,18 +840,23 @@ function Altitude({
   const tip = `${LEVEL_NAMES[level]} (${LEVEL_KEYS[level]}) · [ and ] to move`;
   const keys = (stop: number): string => [LEVEL_KEYS[stop], stop === level + 1 ? "] Alt+ArrowUp" : stop === level - 1 ? "[ Alt+ArrowDown Escape" : ""].filter(Boolean).join(" ");
   return (
-    <div ref={box} role="region" aria-label="Level" data-testid="altitude" data-graview-one-face-level={level} data-graview-foot="" style={{ position: "fixed", left: 16, right: 16, bottom: 16, zIndex: ONE_FACE_LAYERS.control, display: "flex", flexWrap: "wrap-reverse", alignItems: "flex-end", gap: 8, pointerEvents: "none" }}>
+    <div ref={box} role="region" aria-label="Where you are" data-testid="altitude" data-graview-one-face-level={level} data-graview-foot="" style={{ position: "fixed", left: 16, right: 16, bottom: 16, zIndex: ONE_FACE_LAYERS.control, display: "flex", flexWrap: "wrap-reverse", alignItems: "flex-end", gap: 8, pointerEvents: "none" }}>
       {/* The legend over the control, in the same column: the room the camera keeps at the foot is theirs together. */}
       <div data-graview-one-face-dock="" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: keyOpen && !small ? 30 : 6, pointerEvents: "none" }}>
       {keyOpen ? <CityKey close={() => setKeyOpen(false)} /> : null}
       {small ? (
-        <div role="group" aria-label="Level" data-graview-one-face-mini="" style={{ pointerEvents: "auto", position: "relative", display: "inline-flex", flexDirection: "column", alignItems: "flex-start", gap: 2, padding: "3px 6px 5px", borderRadius: 8, border: "1px solid var(--graview-edge)", background: "var(--graview-panel, Canvas)" }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 2, height: 16 }}>
+        <div role="group" aria-label="Level" data-graview-one-face-mini="" style={{ pointerEvents: "auto", position: "relative", display: "inline-flex", flexDirection: "column", alignItems: "flex-start", gap: 1, padding: "2px 5px 3px", borderRadius: 8, border: "1px solid var(--graview-edge)", background: "var(--graview-panel, Canvas)" }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 1, height: 14 }}>
             <span data-testid="altitude-mini-word" style={{ fontSize: "0.6875rem", fontWeight: 600, lineHeight: 1, color: "var(--graview-ink)", padding: "0 2px" }}>{LEVEL_NAMES[level]}</span>
-            <button type="button" data-testid="altitude-key" aria-expanded={keyOpen} aria-label="Legend: what the city's marks mean, and the keys" aria-describedby={tipId} onClick={() => setKeyOpen((open) => !open)} data-graview-mini-tool="">
+            <button type="button" data-testid="altitude-key" aria-expanded={keyOpen} aria-label="Legend: what the city's marks mean, and the keys" onClick={() => setKeyOpen((open) => !open)} onKeyDown={(event) => {
+              if (event.key !== "Escape" || !keyOpen) return;
+              event.preventDefault();
+              event.stopPropagation();
+              setKeyOpen(false);
+            }} data-graview-mini-tool="">
               <svg width="11" height="11" viewBox="0 0 14 14" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="7" cy="7" r="5.6" /><path d="M7 6.4v3.4" /><circle cx="7" cy="4.3" r="0.4" fill="currentColor" /></svg>
             </button>
-            <button type="button" data-testid="altitude-size" aria-expanded={false} aria-label="Show all three levels" aria-describedby={tipId} onClick={() => keepSmall(false)} data-graview-mini-tool="">
+            <button type="button" data-testid="altitude-size" aria-expanded={false} aria-label="Show all three levels" onClick={() => keepSmall(false)} data-graview-mini-tool="">
               <svg width="10" height="10" viewBox="0 0 12 12" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 3l3 3-3 3" /></svg>
             </button>
           </span>
@@ -851,7 +874,7 @@ function Altitude({
             aria-pressed={stop === level}
             aria-label={saying(stop)}
             aria-keyshortcuts={keys(stop)}
-            aria-describedby={tipId}
+            {...(stop === level ? { "aria-describedby": tipId } : {})}
             // The board the keyboard chose keeps it: a press here goes into it.
             onPointerDown={(event) => event.preventDefault()}
             onClick={() => (stop === level ? undefined : goTo(stop))}
@@ -935,6 +958,7 @@ function LevelSlider({ level, goTo, motion, begin, describedBy }: { readonly lev
         goTo(Math.max(PAGE, Math.min(CITY, to)));
       }}
       onPointerDown={(event) => {
+        if (event.button !== 0 || !event.isPrimary) return;
         event.currentTarget.setPointerCapture(event.pointerId);
         motion.current.held = true;
         // Out of the page's flow and a hand on the camera from the first touch: the frame does not put the page back before the thumb moves.
@@ -966,11 +990,12 @@ function LevelSlider({ level, goTo, motion, begin, describedBy }: { readonly lev
       onPointerCancel={() => {
         setDragging(null);
         motion.current.held = false;
+        motion.current.scrub = 0;
       }}
       data-graview-one-face-slider=""
-      style={{ position: "relative", display: "inline-flex", alignItems: "center", height: 12, padding: "0 6px", cursor: "pointer", touchAction: "none", outline: "none", borderRadius: 4 }}
+      style={{ position: "relative", display: "inline-flex", alignItems: "center", height: 10, padding: "0 6px", cursor: "pointer", touchAction: "none", outline: "none", borderRadius: 4 }}
     >
-      <div ref={track} aria-hidden="true" style={{ position: "relative", width: 56, height: 3, borderRadius: 2, background: "var(--graview-edge)" }}>
+      <div ref={track} aria-hidden="true" style={{ position: "relative", width: 46, height: 3, borderRadius: 2, background: "var(--graview-edge)" }}>
         {[PAGE, PANEL, CITY].map((stop) => (
           <span key={stop} style={{ position: "absolute", left: `${(stop / CITY) * 100}%`, top: "50%", width: 6, height: 6, marginLeft: -3, marginTop: -3, borderRadius: 3, background: "var(--graview-ink-faint, var(--graview-edge))" }} />
         ))}
@@ -981,6 +1006,29 @@ function LevelSlider({ level, goTo, motion, begin, describedBy }: { readonly lev
         {named}
       </span>
     </div>
+  );
+}
+
+/** The single keys, on or off, as a person may want them off (WCAG 2.1.4). */
+function KeysSwitch() {
+  const [on, setOn] = useState(keysOn);
+  return (
+    <label style={{ display: "inline-flex", alignItems: "center", gap: 4, marginLeft: 6, color: "var(--graview-ink-muted)" }}>
+      <input
+        type="checkbox"
+        data-testid="altitude-keys-on"
+        checked={on}
+        onChange={(event) => {
+          setOn(event.target.checked);
+          try {
+            window.localStorage.setItem(KEYS_KEY, event.target.checked ? "on" : "off");
+          } catch {
+            // Kept for this visit only.
+          }
+        }}
+      />
+      on
+    </label>
   );
 }
 
@@ -1012,7 +1060,8 @@ function CityKey({ close }: { readonly close: () => void }) {
         ×
       </button>
       <p data-testid="altitude-key-keys" style={{ margin: "0 0 6px", color: "var(--graview-ink-muted)" }}>
-        <strong style={{ fontWeight: 600, color: "var(--graview-ink)" }}>Keys</strong>: 1 Page · 2 Nearby · 3 City · [ down · ] up
+        <strong style={{ fontWeight: 600, color: "var(--graview-ink)" }}>Keys</strong>: 1 Page · 2 Nearby · 3 City · [ down · ] up{" "}
+        <KeysSwitch />
       </p>
       <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 3 }}>
         {rows.map(([mark, term, words]) => (
@@ -1055,8 +1104,13 @@ function Connected({ store, id, box, sheet, openRecord }: { readonly store: Page
         const marked = part.getAttribute("data-graview-pick") ?? part.getAttribute("data-graview-record") ?? part.getAttribute("data-record");
         if (marked) shown.add(marked);
         else if (part instanceof HTMLAnchorElement) {
-          const last = decodeURIComponent(part.pathname.split("/").filter(Boolean).at(-1) ?? "");
-          if (last) shown.add(last);
+          if (part.origin !== window.location.origin) continue;
+          try {
+            const last = decodeURIComponent(part.pathname.split("/").filter(Boolean).at(-1) ?? "");
+            if (last) shown.add(last);
+          } catch {
+            // An address that is no record's.
+          }
         }
       }
       setOnPage((was) => (was && was.size === shown.size && [...shown].every((one) => was.has(one)) ? was : shown));

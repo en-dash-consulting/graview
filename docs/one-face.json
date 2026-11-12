@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-12T05:49:04.625Z",
+  "at": "2026-11-12T07:33:56.166Z",
   "engines": [
     "chromium"
   ],
@@ -71,7 +71,7 @@
                 }
               ],
               "said": "Altitude: page, 1 of 3",
-              "key": false,
+              "key": true,
               "sheetTop": 0,
               "controlBottom": 884
             },
@@ -88,21 +88,21 @@
                   "w": 52,
                   "h": 26,
                   "name": "Page: this page alone",
-                  "words": "Page",
+                  "words": "Page1",
                   "pressed": false
                 },
                 {
                   "w": 63.4375,
                   "h": 26,
                   "name": "Nearby: you are here",
-                  "words": "Nearby",
+                  "words": "Nearby2",
                   "pressed": true
                 },
                 {
                   "w": 52,
                   "h": 26,
                   "name": "City: every page and view of the app",
-                  "words": "City",
+                  "words": "City3",
                   "pressed": false
                 }
               ],
@@ -124,27 +124,27 @@
                   "w": 52,
                   "h": 26,
                   "name": "Page: this page alone",
-                  "words": "Page",
+                  "words": "Page1",
                   "pressed": false
                 },
                 {
                   "w": 62.90625,
                   "h": 26,
                   "name": "Nearby: “Pay the deposit” beside its place in the city",
-                  "words": "Nearby",
+                  "words": "Nearby2",
                   "pressed": false
                 },
                 {
                   "w": 52,
                   "h": 26,
                   "name": "City: you are here",
-                  "words": "City",
+                  "words": "City3",
                   "pressed": true
                 }
               ],
               "said": "Altitude: city, 3 of 3",
               "key": true,
-              "sheetTop": 471.1083068847656,
+              "sheetTop": 360.0362854003906,
               "controlBottom": 884
             }
           ],
@@ -153,7 +153,7 @@
             "lastBottom": 0,
             "fabTop": 852
           },
-          "ok": true
+          "ok": false
         },
         {
           "where": {
@@ -193,7 +193,7 @@
                 }
               ],
               "said": "Altitude: page, 1 of 3",
-              "key": false,
+              "key": true,
               "sheetTop": 0,
               "controlBottom": 823
             },
@@ -210,21 +210,21 @@
                   "w": 64,
                   "h": 44,
                   "name": "Page: this page alone",
-                  "words": "Page",
+                  "words": "Page1",
                   "pressed": false
                 },
                 {
                   "w": 64,
                   "h": 44,
                   "name": "Nearby: you are here",
-                  "words": "Nearby",
+                  "words": "Nearby2",
                   "pressed": true
                 },
                 {
                   "w": 64,
                   "h": 44,
                   "name": "City: every page and view of the app",
-                  "words": "City",
+                  "words": "City3",
                   "pressed": false
                 }
               ],
@@ -246,27 +246,27 @@
                   "w": 64,
                   "h": 44,
                   "name": "Page: this page alone",
-                  "words": "Page",
+                  "words": "Page1",
                   "pressed": false
                 },
                 {
                   "w": 64,
                   "h": 44,
                   "name": "Nearby: “Pay the deposit” beside its place in the city",
-                  "words": "Nearby",
+                  "words": "Nearby2",
                   "pressed": false
                 },
                 {
                   "w": 64,
                   "h": 44,
                   "name": "City: you are here",
-                  "words": "City",
+                  "words": "City3",
                   "pressed": true
                 }
               ],
               "said": "Altitude: city, 3 of 3",
               "key": true,
-              "sheetTop": 212.9103240966797,
+              "sheetTop": 110.41033935546875,
               "controlBottom": 823
             }
           ],
@@ -275,10 +275,10 @@
             "lastBottom": 0,
             "fabTop": 775
           },
-          "ok": true
+          "ok": false
         }
       ],
-      "ok": true
+      "ok": false
     },
     "theSameNodeMovesThroughEveryLevel": {
       "held": [
@@ -287,11 +287,11 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 235,
+          "frames": 220,
           "moved": 136,
           "same": true,
           "jump": {
-            "worst": 0.102,
+            "worst": 0.132,
             "at": 2
           },
           "ok": true
@@ -301,12 +301,12 @@
             "engine": "chromium",
             "device": "Pixel 7"
           },
-          "frames": 236,
+          "frames": 220,
           "moved": 136,
           "same": true,
           "jump": {
-            "worst": 0.223,
-            "at": 3
+            "worst": 0.211,
+            "at": 2
           },
           "ok": true
         }
@@ -321,7 +321,7 @@
             "device": "desk 1440×900"
           },
           "worst": 0.49,
-          "counted": 439,
+          "counted": 349,
           "examples": [],
           "ok": true
         },
@@ -331,7 +331,7 @@
             "device": "Pixel 7"
           },
           "worst": 0.49,
-          "counted": 284,
+          "counted": 500,
           "examples": [],
           "ok": true
         }
@@ -352,7 +352,7 @@
               "how": "control",
               "arrived": true,
               "moved": 34,
-              "frames": 114,
+              "frames": 85,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -372,7 +372,7 @@
               "how": "keys",
               "arrived": true,
               "moved": 34,
-              "frames": 79,
+              "frames": 240,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -382,7 +382,7 @@
               "how": "keys",
               "arrived": true,
               "moved": 33,
-              "frames": 158,
+              "frames": 312,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -402,7 +402,7 @@
               "how": "control",
               "arrived": true,
               "moved": 35,
-              "frames": 166,
+              "frames": 82,
               "zoomBack": 0,
               "widthBack": 0
             }
@@ -421,7 +421,7 @@
               "how": "control",
               "arrived": true,
               "moved": 34,
-              "frames": 113,
+              "frames": 98,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -441,7 +441,7 @@
               "how": "keys",
               "arrived": true,
               "moved": 34,
-              "frames": 243,
+              "frames": 237,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -451,7 +451,7 @@
               "how": "keys",
               "arrived": true,
               "moved": 33,
-              "frames": 316,
+              "frames": 78,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -488,7 +488,7 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 235,
+          "frames": 220,
           "sheared": 0,
           "first": null,
           "reachedTheCity": true,
@@ -499,7 +499,7 @@
             "engine": "chromium",
             "device": "Pixel 7"
           },
-          "frames": 236,
+          "frames": 220,
           "sheared": 0,
           "first": null,
           "reachedTheCity": true,
@@ -1146,14 +1146,16 @@
             },
             {
               "kind": "kind:rule",
-              "covered": [],
+              "covered": [
+                "SPAN"
+              ],
               "size": 15
             }
           ],
-          "ok": true
+          "ok": false
         }
       ],
-      "ok": true
+      "ok": false
     },
     "choosingAnythingAtCityLandsAtNearbyAndStays": {
       "held": [
@@ -1170,14 +1172,13 @@
                 "level": 1
               },
               "levels": [
-                2,
                 1
               ],
-              "start": 0,
+              "start": 0.3,
               "same": true,
               "jump": {
                 "worst": 0.079,
-                "at": 21
+                "at": 20
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
@@ -1238,11 +1239,11 @@
               "levels": [
                 1
               ],
-              "start": 12,
+              "start": 13.8,
               "same": true,
               "jump": {
-                "worst": 0.079,
-                "at": 19
+                "worst": 0.078,
+                "at": 18
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
@@ -1371,7 +1372,7 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 144,
+          "frames": 142,
           "madeRises": true,
           "droppedRisesGoingBack": true,
           "madeSinksGoingBack": true,
@@ -1466,7 +1467,7 @@
             "device": "desk 1440×900"
           },
           "worst": 0,
-          "counted": 295,
+          "counted": 228,
           "examples": [],
           "ok": true
         },
@@ -1475,8 +1476,8 @@
             "engine": "chromium",
             "device": "Pixel 7"
           },
-          "worst": 0.01,
-          "counted": 228,
+          "worst": 0,
+          "counted": 422,
           "examples": [],
           "ok": true
         }
@@ -1522,6 +1523,452 @@
             "before": 1,
             "highest": 2
           },
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "atNearbyTheSelectedRecordStandsOutFromItsRelated": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "found": true,
+          "roof": "rgb(79, 70, 229)",
+          "sameRoof": 0,
+          "lift": -7,
+          "words": 0,
+          "listed": [],
+          "repeated": [],
+          "sticky": "static",
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "atNearbyNoCitySideConnectionLabelsForTheSelectedRecord": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "words": 0,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "connectedNeverRepeatsOrCoversThePage": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "listed": [],
+          "repeated": [],
+          "position": "static",
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "noLineCrossesTheNearbyPanel": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "path": "/pages/tasks/t-deposit",
+          "counted": 267,
+          "crossed": 0,
+          "examples": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "path": "resizing",
+          "counted": 171,
+          "crossed": 0,
+          "examples": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "path": "/pages/tasks/t-book",
+          "pointed": 1,
+          "counted": 159,
+          "crossed": 0,
+          "examples": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "path": "/pages/tasks",
+          "counted": 250,
+          "crossed": 218,
+          "examples": [
+            {
+              "key": "t-piano",
+              "altitude": 0.684,
+              "at": {
+                "x": 341.90625,
+                "y": 281.825625
+              }
+            },
+            {
+              "key": "t-shelves",
+              "altitude": 0.684,
+              "at": {
+                "x": 344.91849999999994,
+                "y": 281.9998
+              }
+            },
+            {
+              "key": "t-paint",
+              "altitude": 0.684,
+              "at": {
+                "x": 345.19677499999995,
+                "y": 277.41435
+              }
+            },
+            {
+              "key": "t-piano",
+              "altitude": 0.725,
+              "at": {
+                "x": 341.95250000000004,
+                "y": 296.2225
+              }
+            }
+          ],
+          "ok": false
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "path": "resizing",
+          "counted": 211,
+          "crossed": 211,
+          "examples": [
+            {
+              "key": "t-piano",
+              "altitude": 1,
+              "at": {
+                "x": 342.25125,
+                "y": 347.770625
+              }
+            },
+            {
+              "key": "t-shelves",
+              "altitude": 1,
+              "at": {
+                "x": 344.67639999999994,
+                "y": 342.9955
+              }
+            },
+            {
+              "key": "t-paint",
+              "altitude": 1,
+              "at": {
+                "x": 344.53159999999997,
+                "y": 333.131875
+              }
+            },
+            {
+              "key": "t-piano",
+              "altitude": 1,
+              "at": {
+                "x": 342.25125,
+                "y": 347.770625
+              }
+            }
+          ],
+          "ok": false
+        }
+      ],
+      "ok": false
+    },
+    "levelShortcutsMoveLevelsAndAreShown": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "moves": [
+            {
+              "key": "2",
+              "want": 1,
+              "reached": true
+            },
+            {
+              "key": "3",
+              "want": 2,
+              "reached": true
+            },
+            {
+              "key": "[",
+              "want": 1,
+              "reached": true
+            },
+            {
+              "key": "]",
+              "want": 2,
+              "reached": true
+            },
+            {
+              "key": "1",
+              "want": 0,
+              "reached": true
+            }
+          ],
+          "named": [
+            {
+              "title": null,
+              "keys": "1"
+            },
+            {
+              "title": null,
+              "keys": "2 ] Alt+ArrowUp"
+            },
+            {
+              "title": null,
+              "keys": "3"
+            }
+          ],
+          "caps": {
+            "caps": [
+              "1",
+              "2",
+              "3"
+            ],
+            "listed": "Keys: 1 Page · 2 Nearby · 3 City · [ down · ] up on"
+          },
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "browserZoomKeysAreNotTaken": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "taken": [],
+          "level": 1,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "shortcutsDoNotFireInAField": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "typed": "123[]",
+          "level": 1,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "theControlCollapsesToASliderNamingTheLevel": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "folded": {
+            "role": "slider",
+            "now": "0",
+            "text": "Page",
+            "word": "Page",
+            "stops": 0,
+            "height": 10
+          },
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "folded": {
+            "role": "slider",
+            "now": "0",
+            "text": "Page",
+            "word": "Page",
+            "stops": 0,
+            "height": 10
+          },
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "draggingTheSliderScrubsTheLevels": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "altitudes": [
+            0,
+            0,
+            0,
+            0,
+            0.6,
+            1,
+            1.17,
+            1.33,
+            1.5,
+            1.67,
+            1.83,
+            2
+          ],
+          "between": 7,
+          "settled": true,
+          "word": "City",
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "altitudes": [
+            0,
+            0,
+            0,
+            0,
+            0.6,
+            1,
+            1.17,
+            1.33,
+            1.5,
+            1.67,
+            1.83,
+            2
+          ],
+          "between": 7,
+          "settled": true,
+          "word": "City",
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "theCollapsedControlIsAtMostAThirdOfTheExpanded": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "whole": {
+            "width": 244.90625,
+            "height": 32,
+            "area": 7837
+          },
+          "mini": {
+            "width": 74.796875,
+            "height": 32,
+            "area": 2393.5
+          },
+          "share": 0.305,
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "whole": {
+            "width": 298,
+            "height": 48,
+            "area": 14304
+          },
+          "mini": {
+            "width": 74.796875,
+            "height": 32,
+            "area": 2393.5
+          },
+          "share": 0.167,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "theLegendAndTooltipsAreReachableInBothStates": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "states": [
+            {
+              "state": "whole",
+              "hovered": {
+                "said": "Page (1) · [ and ] to move",
+                "shown": 1
+              },
+              "focused": 1,
+              "legend": true
+            },
+            {
+              "state": "slider",
+              "hovered": {
+                "said": "Page (1) · [ and ] to move",
+                "shown": 1
+              },
+              "focused": 1,
+              "legend": true
+            }
+          ],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "theCollapsedChoiceIsKept": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "kept": true,
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "kept": true,
           "ok": true
         }
       ],

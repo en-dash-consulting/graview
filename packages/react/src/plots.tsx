@@ -466,12 +466,15 @@ function useLeaving<B extends { readonly id: string }>(buildings: readonly B[], 
   const key = buildings.map((block) => block.id).join("\n");
   const [seen, setSeen] = useState({ key, buildings });
   const [gone, setGone] = useState<ReadonlyMap<string, { readonly block: B; readonly until: number }>>(new Map());
-  if (seen.key !== key) {
+  if (seen.buildings !== buildings) {
+    // The blocks as last drawn, kept so one that goes sinks as it last stood.
     setSeen({ key, buildings });
-    const here = new Set(buildings.map((block) => block.id));
-    const next = new Map([...gone].filter(([id]) => !here.has(id)));
-    if (rising) for (const block of seen.buildings) if (!here.has(block.id) && !next.has(block.id)) next.set(block.id, { block, until: performance.now() + RISE_MS });
-    setGone(next);
+    if (seen.key !== key) {
+      const here = new Set(buildings.map((block) => block.id));
+      const next = new Map([...gone].filter(([id]) => !here.has(id)));
+      if (rising) for (const block of seen.buildings) if (!here.has(block.id) && !next.has(block.id)) next.set(block.id, { block, until: performance.now() + RISE_MS });
+      setGone(next);
+    }
   }
   useEffect(() => {
     if (!rising && gone.size > 0) return setGone(new Map());
@@ -480,7 +483,9 @@ function useLeaving<B extends { readonly id: string }>(buildings: readonly B[], 
     const timer = window.setTimeout(() => setGone((was) => new Map([...was].filter(([, one]) => one.until > performance.now() + 4))), Math.max(0, next - performance.now()) + 8);
     return () => window.clearTimeout(timer);
   }, [gone, rising]);
-  return useMemo(() => [...gone.values()].map((one) => one.block), [gone]);
+  const kept = useMemo(() => [...gone.values()].map((one) => one.block), [gone]);
+  // The history put away: nothing is going, in this very render.
+  return rising ? kept : [];
 }
 
 function groundCss(scheme: Scheme): string {

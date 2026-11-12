@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-24T06:44:46.243Z",
+  "at": "2026-11-12T07:01:48.124Z",
   "engine": "chromium",
   "steps": [
     {
@@ -158,7 +158,7 @@
         "name": "2 problems in Tasks",
         "said": "2",
         "title": "2 problems in Tasks — \"Order boxes\" is done, but it waits for \"Find someone who moves pianos\" (and 1 more). Press to see them and how to fix them.",
-        "width": 36.125,
+        "width": 35.671875,
         "height": 24
       }
     ],
@@ -220,7 +220,7 @@
       "bottom": 7,
       "left": 7,
       "belowTheBar": true,
-      "top": 386,
+      "top": 341,
       "radius": 14,
       "shadow": true,
       "edge": true,
@@ -254,8 +254,8 @@
       "before": {
         "kind:list": "clear",
         "kind:reason": "off the screen",
-        "kind:rule": "covered",
-        "kind:task": "off the screen"
+        "kind:rule": "off the screen",
+        "kind:task": "covered"
       },
       "landed": [
         {
@@ -299,7 +299,7 @@
           "afterwards": "clear"
         },
         {
-          "id": "kind:task",
+          "id": "kind:rule",
           "was": "off the screen",
           "atThePress": "off the screen",
           "coveredWhenLanded": false,
@@ -307,7 +307,7 @@
           "afterwards": "clear"
         },
         {
-          "id": "kind:task",
+          "id": "kind:rule",
           "was": "off the screen",
           "atThePress": "clear",
           "coveredWhenLanded": false,
@@ -316,7 +316,15 @@
         },
         {
           "id": "kind:task",
-          "was": "off the screen",
+          "was": "covered",
+          "atThePress": "off the screen",
+          "coveredWhenLanded": false,
+          "underInFlight": false,
+          "afterwards": "clear"
+        },
+        {
+          "id": "kind:task",
+          "was": "covered",
           "atThePress": "clear",
           "coveredWhenLanded": false,
           "underInFlight": false,
@@ -324,7 +332,7 @@
         },
         {
           "id": "kind:task",
-          "was": "off the screen",
+          "was": "covered",
           "atThePress": "clear",
           "coveredWhenLanded": false,
           "underInFlight": false,
@@ -332,7 +340,15 @@
         },
         {
           "id": "kind:task",
-          "was": "off the screen",
+          "was": "covered",
+          "atThePress": "clear",
+          "coveredWhenLanded": false,
+          "underInFlight": false,
+          "afterwards": "clear"
+        },
+        {
+          "id": "kind:task",
+          "was": "covered",
           "atThePress": "clear",
           "coveredWhenLanded": false,
           "underInFlight": false,
@@ -526,8 +542,8 @@
     },
     "midway": {
       "t": 281,
-      "x": 234.21829223632812,
-      "y": 548.0328369140625,
+      "x": 233.4268798828125,
+      "y": 548.2238922119141,
       "width": 1200
     },
     "frames": 81,
@@ -678,8 +694,14 @@
         "width": 390
       },
       "boxBottom": 38,
-      "boxWidth": 247,
-      "small": 0
+      "boxWidth": 302,
+      "small": 0,
+      "actsBefore": 0,
+      "panel": false,
+      "asks": true,
+      "actsAfter": 6,
+      "smallActs": 0,
+      "scrollAfter": true
     },
     "typo": {
       "rows": [
@@ -698,6 +720,41 @@
         "kind:reason",
         "kind:task"
       ]
+    },
+    "still": {
+      "before": [
+        "_r_6_-0@81:44",
+        "_r_6_-1@156:44",
+        "_r_6_-2@200:44",
+        "_r_6_-4@244:44",
+        "_r_6_-5@288:44",
+        "_r_6_-6@332:44",
+        "_r_6_-7@376:44",
+        "_r_6_-8@420:44",
+        "_r_6_-all-task@464:40",
+        "_r_6_-3@535:44"
+      ],
+      "lit": [
+        true,
+        true,
+        true
+      ],
+      "after": [
+        "_r_6_-0@81:44",
+        "_r_6_-1@156:44",
+        "_r_6_-2@200:44",
+        "_r_6_-4@244:44",
+        "_r_6_-5@288:44",
+        "_r_6_-6@332:44",
+        "_r_6_-7@376:44",
+        "_r_6_-8@420:44",
+        "_r_6_-all-task@464:40",
+        "_r_6_-3@535:44"
+      ],
+      "actsInList": 0,
+      "panelActs": 6,
+      "rightReaches": true,
+      "keysTaught": "↑↓ move↵ open→ actionsesc close"
     },
     "ok": true
   },
@@ -743,6 +800,9 @@
     "theFindBoxIsACombobox": true,
     "theDistrictOpensNarrowed": true,
     "theStripIsASheetOnAPhone": true,
+    "theListStaysStillUnderThePointer": true,
+    "actsOpenOnlyWhenAskedFor": true,
+    "theStripTeachesItsKeys": true,
     "aTypoFindsTheRecordSaidAsNear": true,
     "theStopSurvivesWhatItNames": true,
     "whatYouCanPressIsWhatYouCanSee": true

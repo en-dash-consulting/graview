@@ -1,7 +1,68 @@
 {
-  "at": "2026-11-12T05:52:06.956Z",
+  "at": "2026-11-12T07:37:17.227Z",
   "harness": "verify-one-face",
   "engine": "chromium",
-  "open": 0,
-  "violations": []
+  "open": 12,
+  "violations": [
+    {
+      "rule": "control-covered",
+      "detail": "<button data-testid=\"district-problems-task\" aria-label=\"2 problems in Tasks\"> \"⚠ 2\" in [data-testid=\"one-place-city\"] in view \"kind:task\" is covered by <div data-testid=\"altitude-key-pane\" aria-label=\"What the city's marks mean\"> \"×Keys: 1 Page · 2 Nearby · 3 City · [ do\" in [data-testid=\"altitude\"] at 1440 wide — a press there lands on the other",
+      "at": "t-deposit?today=2026-09-01"
+    },
+    {
+      "rule": "control-covered",
+      "detail": "<button data-testid=\"one-place-ring\" aria-label=\"Open Today\"> is covered by <div data-testid=\"one-place-panel-edge\" aria-label=\"The panel's width\"> at 1440 wide — a press there lands on the other",
+      "at": "t-deposit?today=2026-09-01"
+    },
+    {
+      "rule": "control-covered",
+      "detail": "<button data-testid=\"district-problems-task\" aria-label=\"2 problems in Tasks\"> \"⚠ 2\" in [data-testid=\"one-place-city\"] in view \"kind:task\" is covered by <span> \"Road: these kinds are linked.\" in [data-testid=\"altitude-key-pane\"] at 1440 wide — a press there lands on the other",
+      "at": "the-lists?today=2026-09-01"
+    },
+    {
+      "rule": "target-too-small",
+      "detail": "<button data-testid=\"altitude-key\" aria-label=\"Legend: what the city's marks mean, and the keys\"> in [data-testid=\"altitude\"] is 16×16 pixels at 1440 wide, within 12 pixels of <button data-testid=\"altitude-size\" aria-label=\"Show all three levels\"> in [data-testid=\"altitude\"]",
+      "at": "t-deposit?today=2026-09-01"
+    },
+    {
+      "rule": "target-too-small",
+      "detail": "<button data-testid=\"altitude-size\" aria-label=\"Show all three levels\"> in [data-testid=\"altitude\"] is 16×16 pixels at 1440 wide, within 12 pixels of <button data-testid=\"altitude-key\" aria-label=\"Legend: what the city's marks mean, and the keys\"> in [data-testid=\"altitude\"]",
+      "at": "t-deposit?today=2026-09-01"
+    },
+    {
+      "rule": "control-covered",
+      "detail": "<button aria-label=\"Reasons, list\"> \"ReasonsThe landlord holds the date for 4\" in [data-testid=\"one-place-boards\"] is covered by <div> \"Things\" in [data-testid=\"app-bar\"] at 412 wide — a press there lands on the other",
+      "at": "t-deposit?today=2026-09-01"
+    },
+    {
+      "rule": "control-covered",
+      "detail": "<button data-testid=\"district-problems-task\" aria-label=\"2 problems in Tasks\"> \"⚠ 2\" in [data-testid=\"one-place-city\"] in view \"kind:task\" is covered by <button data-testid=\"altitude-key\" aria-label=\"Key: what the city's marks mean\"> in [data-testid=\"altitude\"] at 412 wide — a press there lands on the other",
+      "at": "tasks?today=2026-09-01"
+    },
+    {
+      "rule": "target-too-small",
+      "detail": "<button data-testid=\"altitude-key\" aria-label=\"Legend: what the city's marks mean, and the keys\"> in [data-testid=\"altitude\"] is 16×16 pixels at 412 wide, within 12 pixels of <button data-testid=\"altitude-size\" aria-label=\"Show all three levels\"> in [data-testid=\"altitude\"]",
+      "at": "t-deposit?today=2026-09-01"
+    },
+    {
+      "rule": "target-too-small",
+      "detail": "<button data-testid=\"altitude-size\" aria-label=\"Show all three levels\"> in [data-testid=\"altitude\"] is 16×16 pixels at 412 wide, within 12 pixels of <button data-testid=\"altitude-key\" aria-label=\"Legend: what the city's marks mean, and the keys\"> in [data-testid=\"altitude\"]",
+      "at": "t-deposit?today=2026-09-01"
+    },
+    {
+      "rule": "target-too-small",
+      "detail": "<button data-testid=\"altitude-key\" aria-label=\"Legend: what the city's marks mean, and the keys\"> in [data-testid=\"altitude\"] is 16×16 pixels at 412 wide, within 12 pixels of <button aria-label=\"Add notes\"> \"Add notes\" in [data-testid=\"record-fields\"]",
+      "at": "t-deposit?today=2026-09-01"
+    },
+    {
+      "rule": "target-too-small",
+      "detail": "<button data-testid=\"altitude-size\" aria-label=\"Show all three levels\"> in [data-testid=\"altitude\"] is 16×16 pixels at 412 wide, within 12 pixels of <button aria-label=\"Add notes\"> \"Add notes\" in [data-testid=\"record-fields\"]",
+      "at": "t-deposit?today=2026-09-01"
+    },
+    {
+      "rule": "target-too-small",
+      "detail": "<button data-testid=\"altitude-key-hide\" aria-label=\"Put the legend away\"> \"×\" in [data-testid=\"altitude-key-pane\"] is 20×20 pixels at 1440 wide, within 12 pixels of <button data-testid=\"district-problems-task\" aria-label=\"2 problems in Tasks\"> \"⚠ 2\" in [data-testid=\"one-place-city\"] in view \"kind:task\"",
+      "at": "t-deposit?today=2026-09-01"
+    }
+  ]
 }
