@@ -262,7 +262,7 @@ function useCamera(view: ViewState) {
   const cameraLive = useRef(camera);
   cameraLive.current = camera;
   const panWithin = useCallback(
-    (limit: Point, wanted: Point): Point => {
+    (limit: Point, wanted: Point, from?: Point): Point => {
       const cam = cameraLive.current;
       /*
        * AND THE CAMERA'S OWN FLIGHT IS INSIDE THE LIMIT, WHEREVER IT WENT.
@@ -279,8 +279,19 @@ function useCamera(view: ViewState) {
        * can pan back over the city and as far as the flight itself went,
        * but never further out than either.
        */
-      const within = (bound: number, at: number, want: number) => Math.max(Math.min(-bound, at), Math.min(Math.max(bound, at), want + at)) - at;
-      return { x: within(limit.x, cam.x, wanted.x), y: within(limit.y, cam.y, wanted.y) };
+      /*
+       * AND WHERE THE HAND BEGAN IS INSIDE IT TOO. A camera another hand
+       * wrote past the limit (the one face's Nearby, framing a record beside
+       * the page) was snapped back to it by the first pixel of a drag: the
+       * city leapt 145 pixels under the finger. From where it stands, a hand
+       * moves it as far as it goes and back in, never further out.
+       */
+      const within = (bound: number, at: number, want: number, began?: number) => {
+        const lo = Math.min(-bound, at, began === undefined ? at : began + at);
+        const hi = Math.max(bound, at, began === undefined ? at : began + at);
+        return Math.max(lo, Math.min(hi, want + at)) - at;
+      };
+      return { x: within(limit.x, cam.x, wanted.x, from?.x), y: within(limit.y, cam.y, wanted.y, from?.y) };
     },
     [],
   );
@@ -1148,7 +1159,7 @@ export function Scene<S extends AnySchema>({
   };
   /** The view's own pan moved by so much, held within the camera's reach. */
   const nudge = (dx: number, dy: number, limit = cameraLimit(result)) =>
-    setView((current) => withPan(current, panWithin(limit, { x: (current.pan?.x ?? 0) + dx, y: (current.pan?.y ?? 0) + dy })));
+    setView((current) => withPan(current, panWithin(limit, { x: (current.pan?.x ?? 0) + dx, y: (current.pan?.y ?? 0) + dy }, current.pan ?? { x: 0, y: 0 })));
   // Tab passes over a card the panel covers, and the camera brings the one it lands on into the part that is seen.
   useKeyboardKeepsToWhatIsSeen(wrapperRef, dock, (dx, dy) => nudge(dx, dy));
   if (camera) {
@@ -1186,7 +1197,7 @@ export function Scene<S extends AnySchema>({
      * notch of a wheel.
      */
     const live = shift.offset();
-    shift.shiftTo(panWithin(limit, { x: pan.x + live.x + dx, y: pan.y + live.y + dy }), pan);
+    shift.shiftTo(panWithin(limit, { x: pan.x + live.x + dx, y: pan.y + live.y + dy }, { x: pan.x + live.x, y: pan.y + live.y }), pan);
     noteMoved();
   };
 

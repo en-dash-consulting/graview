@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { besideShare, CITY_LEAST, deskPanelWidth, frameSpacing, frameSpacingAt, GUTTER, levelZooms, PANEL_MOST, PANEL_SHARE, panelBox, panelRange, panelStoreKey } from "../../src/one-place-geometry.js";
+import { besideShare, boardMost, CITY_LEAST, deskPanelWidth, frameSpacing, frameSpacingAt, GUTTER, levelZooms, PANEL_MOST, PANEL_SHARE, panelBox, panelRange, panelStoreKey } from "../../src/one-place-geometry.js";
 
 const laptop = { width: 1440, height: 900, top: 48 };
 
@@ -107,5 +107,17 @@ describe("with the city beside a wider panel narrower, the camera at Nearby stan
     expect(zooms[0]).toBeGreaterThan(zooms[1]);
     expect(zooms[1]).toBeGreaterThan(zooms[2]);
     expect(levelZooms(record, { width: 390, height: 844 })[1]).toBe(2);
+  });
+
+  it("draws a board as much narrower at Nearby, its full width at the City, and every step between", () => {
+    const desk = { width: 1280, height: 800 };
+    const full = boardMost(desk, record, 1);
+    const nearby = boardMost(desk, record, levelZooms(record, desk)[1]);
+    expect(nearby).toBeCloseTo(full * besideShare(desk), 6);
+    const between = boardMost(desk, record, (1 + levelZooms(record, desk)[1]) / 2);
+    expect(between).toBeLessThan(full);
+    expect(between).toBeGreaterThan(nearby);
+    // A small window's boards are never narrower: their words are as small as can be read.
+    expect(boardMost({ width: 844, height: 390 }, record, 3)).toBe(boardMost({ width: 844, height: 390 }, record, 1));
   });
 });

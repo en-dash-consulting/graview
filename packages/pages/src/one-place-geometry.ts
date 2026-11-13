@@ -260,6 +260,21 @@ export const boardWidthFor = (view: View): number => Math.round(Math.max(52, Mat
 export const BOARD_LEAST_ON_A_PHONE = 68;
 /** A window too small for a desk's boards: a phone, or one turned on its side. */
 export const smallWindow = (view: View): boolean => view.width <= PHONE || view.height <= 600;
+/**
+ * THE WIDEST A BOARD IS DRAWN, AT A ZOOM: `boardWidthFor` at the City, and
+ * beside the page on a desk as much narrower as the camera stood back for
+ * the wider panel (`besideShare`), so a board keeps its size against its
+ * district and still finds room over it. Between, as far between as the
+ * zoom is: never a jump as the camera moves. A small window's are never
+ * narrower: their words are already as small as can be read.
+ */
+export function boardMost(view: View, where: PageWhere, zoom: number): number {
+  const most = boardWidthFor(view);
+  if (smallWindow(view)) return most;
+  const nearby = levelZooms(where, view)[PANEL];
+  const t = nearby > 1 ? Math.max(0, Math.min(1, (zoom - 1) / (nearby - 1))) : 0;
+  return most * (1 - (1 - besideShare(view)) * t);
+}
 export const boardFaceWidth = (view: View): number => (smallWindow(view) ? 240 : panelBox(view).width);
 export const boardLeast = (view: View): number => (smallWindow(view) ? BOARD_LEAST_ON_A_PHONE : 0);
 /** A board is this much wider than it is tall. */

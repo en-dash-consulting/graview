@@ -4,7 +4,7 @@ import { Scene, type SceneCamera } from "@graview/react";
 import { useGraview, useNavigation, useViolations } from "@graview/react/provider";
 import { useOneFace } from "./one-place-control.js";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
-import { aimAt, anchorOf, BOARD_ASPECT, frameSpacingAt, boardFaceWidth, boardLeast, boardWidthFor, fitBeside, fitCamera, SIGN_GAP, SIGN_POST, signRoom, cameraBetween, cameraPutting, CITY, cityArea, footOf, leaveFrom, routeLine, LEVEL_LIVE, levelZooms, PAGE, pageBox, PANEL, panelBox, PHONE, project, restingLevel, SHEET_ORIGIN, standingAt, standingCss, unionOf, type Box, type Live, type PageWhere, type Point } from "./one-place-geometry.js";
+import { aimAt, anchorOf, BOARD_ASPECT, frameSpacingAt, boardFaceWidth, boardLeast, boardMost, boardWidthFor, fitBeside, fitCamera, SIGN_GAP, SIGN_POST, signRoom, cameraBetween, cameraPutting, CITY, cityArea, footOf, leaveFrom, routeLine, LEVEL_LIVE, levelZooms, PAGE, pageBox, PANEL, panelBox, PHONE, project, restingLevel, SHEET_ORIGIN, standingAt, standingCss, unionOf, type Box, type Live, type PageWhere, type Point } from "./one-place-geometry.js";
 import type { OnePlaceCityProps } from "./one-place.js";
 import { placeSigns } from "./one-place-signs.js";
 import { pluralOf } from "./page-typography.js";
@@ -233,6 +233,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     let cityAt = "";
     /** The camera at the level rested at as a scrub began: the person's own, kept for the scrub to leave from. */
     let restCam: Live | null = null;
+    /** Where each board a person can press stands this frame: a line's end under one offers no ring of its own there. */
+    let boardsShown: Box[] = [];
     /*
      * THE ZOOM THIS FACE LAST LEFT THE CAMERA AT. Only a zoom that differs
      * from it is a hand's: a new address at rest asks the camera for a
@@ -353,7 +355,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       const origin = city ? { x: city.x, y: city.y } : { x: 0, y: 0 };
       // A size on the screen at most, and on a small window at least: what it says is read.
       const natural = boardWidthFor(view) * zoomNow * cam.s;
-      const width = Math.max(Math.min(natural, boardWidthFor(view)), boardLeast(view));
+      const width = Math.max(Math.min(natural, boardMost(view, state.current.where, zoomNow * cam.s)), boardLeast(view));
       const k = width / Math.max(1e-6, natural);
       const sizes = new Map<string, { width: number; height: number }>();
       for (const [kind, el] of tagEls.current) {
@@ -879,9 +881,9 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       const pageAt = pageBox(a, at.view);
       /* The boards' size this frame: their width in the picture, carried through the camera painted now. */
       // A size on the screen at most, as `standAll` placed them: at Nearby the camera is close.
-      const boardWidth = Math.max(Math.min(boardWidthFor(at.view) * zoomNow * painted.s, boardWidthFor(at.view)), boardLeast(at.view));
+      const boardWidth = Math.max(Math.min(boardWidthFor(at.view) * zoomNow * painted.s, boardMost(at.view, at.where, zoomNow * painted.s)), boardLeast(at.view));
       // The view the page goes into is as wide as it will be where the move ends: held, so the page shrinks one way only.
-      const intoWidth = move && move.toAltitude >= CITY ? Math.max(Math.min(boardWidthFor(at.view) * zoomNow * move.to.s, boardWidthFor(at.view)), boardLeast(at.view)) : boardWidth;
+      const intoWidth = move && move.toAltitude >= CITY ? Math.max(Math.min(boardWidthFor(at.view) * zoomNow * move.to.s, boardMost(at.view, at.where, zoomNow * move.to.s)), boardLeast(at.view)) : boardWidth;
       // Across a move, each board goes from where it stood to where it will stand, as the names do: the page's own with them, so a page chosen at the City leaves from the board pressed.
       const gone = goneAt(now);
       const carried = gone.t;
@@ -946,6 +948,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
             ...(dockRect && dockRect.width > 0 ? [boxOf(dockRect)] : []),
           ];
       const under = (b: Box) => keepOut.some((k) => Math.min(b.x + b.width, k.x + k.width) - Math.max(b.x, k.x) > 1 && Math.min(b.y + b.height, k.y + k.height) - Math.max(b.y, k.y) > 1);
+      boardsShown = [];
       for (const [key, button] of boardEls.current ?? []) {
         /*
          * A board that had no place where the move began (its district out
@@ -981,6 +984,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         button.style.opacity = key === at.current ? (shownOwn > 0.001 ? "1" : "0") : seen.toFixed(3);
         button.style.setProperty("--graview-sign-post", `${((posts.get(key) ?? SIGN_POST * zoomNow) * painted.s).toFixed(2)}px`);
         button.style.pointerEvents = reached ? "auto" : "none";
+        if (reached) boardsShown.push({ x: foot.x - w / 2, y: foot.y - h, width: w, height: h });
         const face = button.firstElementChild as HTMLElement | null;
         if (face) face.style.transform = `scale(${(w / boardFaceWidth(at.view)).toFixed(5)})`;
       }
@@ -1189,7 +1193,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         } else {
           drawn.arrow.setAttribute("d", "");
           // An end under the bar, or under the control at the foot, is not offered: they stand over it.
-          const under = control && to.x > control.left - 10 && to.x < control.right + 10 && to.y > control.top - 10 && to.y < control.bottom + 10;
+          // Nor one a view's board stands over, or within a fingertip of: the board takes the press there, and the building is pressed as itself.
+          const under = (control && to.x > control.left - 10 && to.x < control.right + 10 && to.y > control.top - 10 && to.y < control.bottom + 10) || boardsShown.some((b) => to.x > b.x - 20 && to.x < b.x + b.width + 20 && to.y > b.y - 20 && to.y < b.y + b.height + 20);
           const crowded = ringsAt.some((p) => Math.hypot(p.x - to.x, p.y - to.y) < 28);
           drawn.ring.style.display = to.y < (state.current.view.top ?? 0) + 8 || under || crowded ? "none" : "";
           if (!crowded) ringsAt.push(to);
