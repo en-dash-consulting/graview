@@ -9,7 +9,7 @@ import { useStoreTick, type PageContext } from "./page-context.js";
 import { pluralOf } from "./page-typography.js";
 import { kindOfSlug, recordPath, pluralSlug } from "./registry.js";
 import { OneFaceContext, type OneFace } from "./one-place-control.js";
-import { boardCut, CITY, LEVEL_NAMES, nearestThatWay, PAGE, PANEL, panelBox, panelRange, PHONE, type Box, type PageWhere, type View } from "./one-place-geometry.js";
+import { BOARD_ASPECT, boardFaceWidth, smallWindow, CITY, LEVEL_NAMES, nearestThatWay, PAGE, PANEL, panelBox, panelRange, PHONE, type Box, type PageWhere, type View } from "./one-place-geometry.js";
 
 /**
  * PAGES AND THE SCENE ARE ONE PLACE (Graview HQ feature:f-page-zooms-out-to-the-city).
@@ -68,7 +68,7 @@ export interface Board {
   readonly path: string;
   /** What it is, said to a screen reader: the home, a list, a view, a record's page. */
   readonly eyebrow: string;
-  /** What it is, drawn over its title: "90 species", "View of species", "Front page". */
+  /** What it is, drawn over its title: "90 species", "View · species", "Front page". */
   readonly says: string;
   /** What a list shows, live: the first few of its records' names, drawn on its sign. A view draws its own picture, so says none of them. */
   readonly lines: readonly string[];
@@ -168,6 +168,8 @@ const TIP_WARM_MS = 300;
 const TIP_PRESS_MS = 500;
 /** When a tooltip of the control was last put away, for the warm window. */
 let tipHiddenAt = -Infinity;
+/** Until when a focus this face put on the control itself (a page with nothing else to take it) shows no tooltip. */
+let quietFocusUntil = -Infinity;
 /** When a pointer last went down: a focus that follows a press is the pointer's, and shows no tooltip. */
 let pressedAt = -Infinity;
 if (typeof document !== "undefined") document.addEventListener("pointerdown", () => (pressedAt = performance.now()), { capture: true, passive: true });
@@ -234,6 +236,7 @@ function useIntentTip(): IntentTip {
     onPointerCancel: () => hide(0),
     onFocus: (event) => {
       // The keyboard's focus (or one moved there for it), not a press's.
+      if (performance.now() < quietFocusUntil) return;
       if (event.currentTarget.matches(":focus-visible") || performance.now() - pressedAt > 400) show(event.currentTarget, text);
     },
     onBlur: () => hide(0),
@@ -374,7 +377,7 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
      * WHAT EACH BOARD SAYS IT IS. A view's board listed the first records of
      * its kind, as its kind's list did: ten views on a rich app drew alike,
      * and none looked like itself. A list's board says how many it holds
-     * and its first few; a view's says whose view it is, over its own
+     * and its first; a view's says whose view it is, over its own
      * title; the home's and the connections' say what they are.
      */
     const out: Board[] = places.map((place) => {
@@ -392,7 +395,7 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
                 ? `No ${pluralOf(store, kind).toLowerCase()} yet`
                 : counted(store.schema, kind, count)
               : kind
-                ? `View of ${pluralOf(store, kind).toLowerCase()}`
+                ? `View · ${pluralOf(store, kind).toLowerCase()}`
                 : "A view";
       return {
         key: place.key,
@@ -662,10 +665,24 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
     deselected.current = false;
     if (!onBoards && (active !== document.body || !moved)) return;
     const title = sheet.current?.querySelector<HTMLElement>("main h1, h1:not([data-graview-app-bar] h1)");
-    if (title) {
-      if (!title.hasAttribute("tabindex")) title.setAttribute("tabindex", "-1");
-      title.focus({ preventScroll: true });
-    } else fab.current?.querySelector<HTMLButtonElement>("button")?.focus({ preventScroll: true });
+    /*
+     * A page with no title of its own (a view drawn in place of a record's
+     * page) takes the keyboard on its main part; only a page with none of
+     * that either puts it on the control — on the level it is at, its
+     * tooltip quiet: the first stop lit by a focus ring, "Page (1)" up, read
+     * as a second level chosen.
+     */
+    const landing = title ?? sheet.current?.querySelector<HTMLElement>("main, [role=main]") ?? null;
+    if (landing) {
+      if (!landing.hasAttribute("tabindex")) {
+        landing.setAttribute("tabindex", "-1");
+        if (landing !== title) landing.setAttribute("data-graview-focus-landing", "");
+      }
+      landing.focus({ preventScroll: true });
+    } else {
+      quietFocusUntil = performance.now() + 400;
+      (fab.current?.querySelector<HTMLButtonElement>('button[aria-pressed="true"]') ?? fab.current?.querySelector<HTMLButtonElement>("button"))?.focus({ preventScroll: true });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [now.level, now.moving, current, bar]);
 
@@ -696,7 +713,6 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
       }
     : { display: "contents", ["--graview-one-face-bar" as string]: `${barHeight}px` };
   const subject = where.type === "record" ? where.id : null;
-  const panel = panelBox(view);
 
   /* The arrow keys among the boards: the nearest that way. */
   const boardKeys = (event: ReactKeyboardEvent<HTMLDivElement>) => {
@@ -760,7 +776,7 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
             className="graview-one-place-board"
             style={{ position: "fixed", left: 0, top: 0, width: 0, height: 0, padding: 0, margin: 0, border: "none", background: "none", cursor: "pointer", overflow: "visible", display: "block", opacity: 0, color: "inherit", font: "inherit", textAlign: "start" }}
           >
-            {board.key === current ? null : <BoardFace board={board} width={panel.width} height={boardCut(panel)} />}
+            {board.key === current ? null : <BoardFace board={board} width={boardFaceWidth(view)} height={boardFaceWidth(view) / BOARD_ASPECT} small={smallWindow(view)} />}
           </button>
         ))}
       </div>
@@ -778,19 +794,21 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
  * A title too long for it is cut whole, with an ellipsis; the board's own
  * name (`title`, and what a screen reader is told) is the whole of it.
  */
-function BoardFace({ board, width, height }: { readonly board: Board; readonly width: number; readonly height: number }) {
+function BoardFace({ board, width, height, small }: { readonly board: Board; readonly width: number; readonly height: number; readonly small: boolean }) {
+  // A small window's face is narrower and its words fewer to a line: its title on two lines, broken where a word must be, fits the card whole.
+  const sizes = small ? { pad: "16px 16px 0", says: "2.125rem", title: "2.25rem" } : { pad: "22px 34px 0", says: "2.25rem", title: "3.5rem" };
   const hue = board.kind ? `hsl(${Math.round(hueFor(board.kind))} 55% 52%)` : "var(--graview-accent)";
   const view = board.eyebrow === "view";
   return (
     <div data-graview-board-face="" aria-hidden="true" style={{ position: "absolute", left: 0, top: 0, width, height, transformOrigin: "0 0", background: "var(--graview-ground, Canvas)", border: "3px solid var(--graview-edge)", borderTop: `10px solid ${hue}`, borderRadius: 18, overflow: "hidden", boxShadow: "0 18px 40px rgba(0,0,0,0.28)", pointerEvents: "none" }}>
       {/* A view's board is drawn as a view: a band of its kind's color behind what it is, where a list's is a plain card. */}
-      <div style={{ padding: "22px 34px 0", ...(view ? { background: `linear-gradient(color-mix(in srgb, ${hue} 16%, transparent), transparent 85%)`, height: "100%", boxSizing: "border-box" } : {}) }}>
-        <div data-graview-board-says="" style={{ fontSize: "2.25rem", lineHeight: 1.2, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: view ? hue : "var(--graview-ink-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{board.says}</div>
+      <div lang="en" style={{ padding: sizes.pad, ...(view ? { background: `linear-gradient(color-mix(in srgb, ${hue} 16%, transparent), transparent 85%)`, height: "100%", boxSizing: "border-box" } : {}) }}>
+        <div data-graview-board-says="" style={{ fontSize: sizes.says, lineHeight: 1.2, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: view ? hue : "var(--graview-ink-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{board.says}</div>
         {/* Two lines before it is cut: "Connections" and "Cited facts" whole, never "Connec…". */}
-        <div data-graview-board-title="" style={{ marginTop: 6, fontSize: "3.5rem", lineHeight: 1.15, fontWeight: 650, color: "var(--graview-ink)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", overflowWrap: "anywhere" }}>{board.label}</div>
-        {/* What a list shows, live: the first of its records, as its page lists them. */}
+        <div data-graview-board-title="" style={{ marginTop: 6, fontSize: sizes.title, lineHeight: 1.15, fontWeight: 650, color: "var(--graview-ink)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", overflowWrap: "break-word", hyphens: "auto" }}>{board.label}</div>
+        {/* What a list shows, live: the first of its records, as its page lists them — where the card has room for it under a title on two lines. */}
         <div style={{ marginTop: 16, display: "grid", gap: 12 }}>
-          {board.lines.map((line, index) => (
+          {(small ? [] : board.lines).map((line, index) => (
             <div key={index} style={{ display: "flex", alignItems: "center", gap: 16, padding: "10px 16px", borderRadius: 12, border: "2px solid var(--graview-edge)", fontSize: "2.125rem", color: "var(--graview-ink-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               <span style={{ flex: "0 0 auto", width: 18, height: 18, borderRadius: 9, border: `3px solid ${hue}` }} />
               <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>{line}</span>
@@ -846,6 +864,7 @@ const ONE_PLACE_CSS = `
 .graview-one-place-board[data-graview-rising][data-graview-leaving] { transform: scaleY(0); pointer-events: none; }
 .graview-one-place-board[aria-current] { outline: 2px solid color-mix(in srgb, var(--graview-accent) 60%, transparent); outline-offset: 3px; border-radius: 4px; }
 [data-graview-past-slot] > * { pointer-events: auto; margin: 0 !important; }
+[data-graview-focus-landing]:focus { outline: none; }
 .graview-one-place-board:focus-visible { outline: 3px solid var(--graview-accent); outline-offset: 4px; border-radius: 6px; }
 .graview-one-place-board:hover [data-graview-board-face] { border-color: var(--graview-accent); }
 [data-graview-one-face-stops] { display: inline-flex; align-items: stretch; height: 32px; padding: 2px; gap: 2px; border-radius: 8px; border: 1px solid var(--graview-edge); background: var(--graview-panel, Canvas); box-shadow: 0 1px 2px rgba(0,0,0,0.12); box-sizing: border-box; }

@@ -244,8 +244,8 @@ interface PlotDrawing {
 
 /** A block's name is written over it once the block is this wide on the screen: coming down, the blocks are named. */
 const NAMED_FROM = 34;
-/** How wide a letter of a block's name is taken to be, and how far above and below its baseline it reaches (`.graview-building-name`: .625rem). */
-const NAME_LETTER = 6;
+/** How wide a letter of a block's name is taken to be — at weight 500, a little wider than the plain weight's 6 — and how far above and below its baseline it reaches (`.graview-building-name`: .625rem). */
+const NAME_LETTER = 6.4;
 const NAME_ABOVE = 9;
 const NAME_BELOW = 3;
 /** The clear space kept around a name, so two never touch: two at two pixels apart read as one run of words. */

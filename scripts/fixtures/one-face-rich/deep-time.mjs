@@ -45,6 +45,10 @@ export const document = {
     expedition: named("expedition", "expeditions", "A season's dig.", { year: { type: "number" } }, { ledBy: one("researcher", "who led it", "the digs they led"), visited: many("site", "where it dug", "the digs that came here") }, "{year}"),
     specimen: named("specimen", "specimens", "One fossil, catalogued.", { catalog: { type: "string" } }, { of: one("species", "what it is", "its specimens"), dugAt: one("site", "where it came out of the ground", "what came out of the ground here") }, "{catalog}"),
   },
+  // A rule four specimens break, so a district has problems to say: its "⚠ 4" beside its name, at the City and beside a page.
+  rules: {
+    "specimen-has-a-catalog-number": { title: "A specimen has a catalog number", description: "A fossil nobody can find in the drawers is a fossil lost.", over: "specimen", require: "catalog != null", says: "{name} has no catalog number" },
+  },
   acts: {
     "add-species": { creates: "species", title: "Add a species", description: "Name a species known from its fossils." },
     "add-specimen": { creates: "specimen", title: "Catalogue a specimen", description: "Put a fossil in the catalogue." },
@@ -106,7 +110,7 @@ for (let i = 0; i < 16; i++) {
   for (let s = 0; s < 2; s++) link("visited", `expedition-${i}`, `site-${Math.floor(rand() * 30)}`);
 }
 for (let i = 0; i < 16; i++) {
-  add("specimen", `specimen-${i}`, { name: `Specimen ${String.fromCharCode(65 + (i % 26))}-${100 + i}`, catalog: `DT-${1000 + i * 13}` });
+  add("specimen", `specimen-${i}`, { name: `Specimen ${String.fromCharCode(65 + (i % 26))}-${100 + i}`, ...(i % 4 === 0 ? {} : { catalog: `DT-${1000 + i * 13}` }) });
   link("of", `specimen-${i}`, `species-${Math.floor(rand() * 90)}`);
   link("dugAt", `specimen-${i}`, `site-${Math.floor(rand() * 30)}`);
 }
