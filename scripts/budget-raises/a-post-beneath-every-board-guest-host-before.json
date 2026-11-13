@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, before a worker is drawn",
+  "minified": 16,
+  "gzipped": 16,
+  "note": "Raised when the ladder took a rung beneath every box of its layer (LOCAL_LAYERS.beneath), which the guest host carries with the rest of LOCAL_LAYERS: 11 bytes minified, and a few gzipped either side. Measured at 41_636 / 18_723 against 41_625 / 18_721."
+}

@@ -70,8 +70,8 @@ export const SCENE_LAYERS = {
   opened: 11,
 } as const;
 
-/** Order within one box: under (0), raised (1) and over (2) its siblings. */
-export const LOCAL_LAYERS = { under: 0, raised: 1, over: 2 } as const;
+/** Order within one box: beneath every box of its layer (-1: a board's post under every board), under (0), raised (1) and over (2) its siblings. */
+export const LOCAL_LAYERS = { beneath: -1, under: 0, raised: 1, over: 2 } as const;
 
 /**
  * THE ONE FACE'S OWN RUNGS (Pages and the Scene as one place), inside the

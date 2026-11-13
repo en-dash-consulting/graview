@@ -1,4 +1,4 @@
-import { OVERVIEW_PATH, ONE_FACE_LAYERS, counted, hueFor, labelOf, type AnySchema } from "@graview/core";
+import { LOCAL_LAYERS, OVERVIEW_PATH, ONE_FACE_LAYERS, counted, hueFor, labelOf, type AnySchema } from "@graview/core";
 import { RECORD_BOXES_ATTRIBUTE, RECORD_BOXES_MOVED, recordBoxesOf } from "@graview/core/record-boxes";
 import { retryingImport } from "@graview/core/retry";
 import { barPlaces, HOME_KEY, PastBar } from "@graview/primitives/pages";
@@ -826,7 +826,7 @@ export function OnePlace<S extends AnySchema>({
               chosen.current = board.key;
             }}
             className="graview-one-place-board"
-            // In the layer's own box, not each a layer of its own: every board's post is drawn under every board (its `z-index: -1`), so a post that has to cross another board runs behind its words, never over them.
+            // In the layer's own box, not each a layer of its own: every board's post is drawn under every board (`LOCAL_LAYERS.beneath`), so a post that has to cross another board runs behind its words, never over them.
             style={{ position: "absolute", left: 0, top: 0, width: 0, height: 0, padding: 0, margin: 0, border: "none", background: "none", cursor: "pointer", overflow: "visible", display: "block", opacity: 0, color: "inherit", font: "inherit", textAlign: "start" }}
           >
             {board.key === current ? null : <BoardFace board={board} width={boardFaceWidth(view)} height={boardFaceWidth(view) / BOARD_ASPECT} small={smallWindow(view)} />}
@@ -911,8 +911,8 @@ const ONE_PLACE_CSS = `
 .graview-one-place-edge:hover::after, .graview-one-place-edge:focus-visible::after { background: var(--graview-accent); }
 .graview-one-place-edge:focus-visible { outline: none; }
 .graview-one-place-board { touch-action: none; }
-.graview-one-place-board::after { content: ""; position: absolute; z-index: -1; left: 50%; top: 100%; width: 2px; height: var(--graview-sign-post, 10px); margin-left: -1px; background: color-mix(in srgb, var(--graview-ink) 35%, transparent); }
-.graview-one-place-board::before { content: ""; position: absolute; z-index: -1; left: 50%; top: calc(100% + var(--graview-sign-post, 10px)); width: 18px; height: 6px; margin: -3px 0 0 -9px; border-radius: 50%; background: rgba(0,0,0,0.28); }
+.graview-one-place-board::after { content: ""; position: absolute; z-index: ${LOCAL_LAYERS.beneath}; left: 50%; top: 100%; width: 2px; height: var(--graview-sign-post, 10px); margin-left: -1px; background: color-mix(in srgb, var(--graview-ink) 35%, transparent); }
+.graview-one-place-board::before { content: ""; position: absolute; z-index: ${LOCAL_LAYERS.beneath}; left: 50%; top: calc(100% + var(--graview-sign-post, 10px)); width: 18px; height: 6px; margin: -3px 0 0 -9px; border-radius: 50%; background: rgba(0,0,0,0.28); }
 .graview-one-place-board[data-graview-rising] { transform-origin: 50% 100%; transform: scaleY(1); transition: transform ${RISE_MS}ms cubic-bezier(.33,0,.2,1); }
 @starting-style { .graview-one-place-board[data-graview-rising] { transform: scaleY(0); } }
 .graview-one-place-board[data-graview-rising][data-graview-leaving] { transform: scaleY(0); pointer-events: none; }
