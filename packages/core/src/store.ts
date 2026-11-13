@@ -953,6 +953,21 @@ export class Store<S extends AnySchema> {
     return this.mutations.has(name) ? name : (actSpelledAs(name, this.mutations.keys()) ?? name);
   }
 
+  /**
+   * WHO PROPOSED IT AND WHO VOTED FOR IT ARE THE STORE'S TO SAY (Roadmap
+   * f-invite-binds-existing-person): a caller's lineage names who proposed
+   * a change only as the suggestion it accepts says it, and names voters
+   * only from the host's own seat — so no seat writes an account into the
+   * log to see what it is served back as.
+   */
+  private heldLineage(lineage: Lineage | undefined, author: Author): Lineage | undefined {
+    if (!lineage || (lineage.proposedBy === undefined && lineage.voters === undefined)) return lineage;
+    const { proposedBy: _by, voters, ...rest } = lineage;
+    const proposed = lineage.suggestion === undefined ? undefined : this.log.get(lineage.suggestion)?.lineage?.proposedBy;
+    const system = isSystem(author as Principal);
+    return { ...rest, ...(proposed !== undefined ? { proposedBy: proposed } : {}), ...(system && voters !== undefined ? { voters } : {}) } as Lineage;
+  }
+
   /** A call with its act's name as the store spells it, so the log and every check read the one name. */
   private spelledCall(call: MutationCall): MutationCall {
     const name = this.spelled(call.name);
@@ -2109,7 +2124,7 @@ export class Store<S extends AnySchema> {
     this.stillNow();
     const batch = options.batch ?? this.mintBatch("batch");
     const author = withValidProfile(options.author ?? this.by);
-    const lineage = lineageOf(options.lineage);
+    const lineage = this.heldLineage(lineageOf(options.lineage), author);
     const ops: Operation[] = [];
     const allPrimitives: Primitive[] = [];
     const reads = new Set<string>();
@@ -2470,7 +2485,7 @@ export class Store<S extends AnySchema> {
     const before = this.violations();
     const rollback = this.graph.snapshot();
     const intent = options.intent ?? "Apply a change";
-    const lineage = lineageOf(options.lineage);
+    const lineage = this.heldLineage(lineageOf(options.lineage), author);
     const handed = this.asSplices(primitives, options.base).map(normalize);
     // What follows it (Roadmap f-keep-linked), worked out on the graph as it lands: the host's change keeps derived records in step too.
     this.graph.applyPrimitives(handed);
@@ -2608,7 +2623,7 @@ export class Store<S extends AnySchema> {
     }
 
     const batch = options.batch ?? this.mintBatch("undo");
-    const lineage = lineageOf(options.lineage, true);
+    const lineage = this.heldLineage(lineageOf(options.lineage, true), author);
 
     /*
      * Undo is a CHANGE, and it is judged like one.

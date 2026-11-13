@@ -6,8 +6,11 @@ import {
   hidesFrom,
   hueFor,
   isUnset,
+  namedAuthors,
   namesUnseen,
   participantKey,
+  parseParticipant,
+  boundPeopleFor,
   readsPublished,
   recordsOf,
   redact,
@@ -853,6 +856,34 @@ export function whoFor<S extends AnySchema>(store: Store<S>, principal: Principa
   const standing = who.filter((presence) => presence.until === undefined || now < Date.parse(presence.until));
   const behind = readsPublished(store.publishing, principal);
   if (!hidesFrom(store, principal) && !behind) return standing;
+  return seenPresence(store, principal, boundPresence(store, principal, standing), behind);
+}
+
+/**
+ * SOMEBODY BOUND TO A PERSON IS HERE AS THAT PERSON (Roadmap
+ * f-invite-binds-existing-person): to anybody but themselves and the host,
+ * their figure is keyed, named and acted for as the record they were bound
+ * to — and, where the reader may not see that record, not shown at all —
+ * never as their account.
+ */
+function boundPresence<S extends AnySchema>(store: Store<S>, principal: Principal, who: readonly Presence[]): Presence[] {
+  const bound = boundPeopleFor(store, principal);
+  return who.map((presence) => {
+    let out = presence;
+    const key = parseParticipant(presence.participant);
+    const as = key?.kind === "human" && key.id !== undefined ? bound(key.id) : undefined;
+    if (as && !as.shown) return undefined;
+    if (as) out = { ...out, participant: participantKey({ kind: "human", id: as.id, session: key!.session }), ...(as.name !== undefined ? { name: as.name } : {}) };
+    const forWhom = out.onBehalfOf === undefined ? undefined : bound(out.onBehalfOf);
+    if (forWhom) {
+      const { onBehalfOf: _for, onBehalfOfName: _forName, ...rest } = out;
+      out = { ...rest, ...(forWhom.shown ? { onBehalfOf: forWhom.id, ...(forWhom.name !== undefined ? { onBehalfOfName: forWhom.name } : {}) } : {}) };
+    }
+    return out;
+  }).flatMap((one) => (one ? [one] : []));
+}
+
+function seenPresence<S extends AnySchema>(store: Store<S>, principal: Principal, standing: readonly Presence[], behind: boolean): Presence[] {
   const lens = seatLens(store, principal);
   const seen = seesId(store, principal);
   const kept = (node: string, field: string) => keptField(lens, node, field);
@@ -905,9 +936,20 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
       const author = authorOf(op, at);
       return author && authoredBy(author, principal) ? op : { ...op, batch: opaqueBatch(op.batch) };
     });
-  // Withheld in place (FR-16), no id the seat may not see in any of them (FR-55), and no session it may not see.
-  const shown = (principal: Principal, ops: readonly Operation[]): Operation[] =>
-    sighted(principal) ? unattributed(principal, redact(ops, seatLens(store, principal)), (_op, at) => ops[at]?.author) : [...ops];
+  /*
+   * Withheld in place (FR-16), no id the seat may not see in any of them (FR-55), and no session it may not see —
+   * and an author bound to a person said as that record, never as the account (Roadmap f-invite-binds-existing-person).
+   */
+  const shown = (principal: Principal, ops: readonly Operation[]): Operation[] => {
+    if (!sighted(principal)) return [...ops];
+    const lens = seatLens(store, principal);
+    return [...namedAuthors(store, lens, unattributed(principal, redact(ops, lens), (_op, at) => ops[at]?.author))];
+  };
+  /** Who wrote one op, as this seat is told it: by name, else by id as it is served, else "Someone". */
+  const writerOf = (lens: SeatLens | undefined, wrote: Operation | undefined): string => {
+    const seen = wrote && lens ? namedAuthors(store, lens, redact([wrote], lens))[0] : wrote;
+    return seen?.author.name ?? seen?.author.id ?? "Someone";
+  };
   /*
    * EVERY FIELD'S REVISION (FR-05): the seq of the op that last wrote it,
    * read off the log once and caught up from wherever the log has grown
@@ -971,13 +1013,12 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
       if (lens && (!lens.shows(node) || keptField(lens, node, field))) continue;
       const at = current().of(node, field);
       const wrote = at >= store.log.horizon ? store.log.opsFrom(at)[0] : undefined;
-      const seen = wrote && lens ? redact([wrote], lens)[0] : wrote;
       out.push({
         node,
         field,
         theirs: ((lens ? seenBy(store, author) : store).graph.getNode(node) as Record<string, unknown> | undefined)?.[field],
         yours: undefined,
-        by: seen?.author.name ?? seen?.author.id ?? "Someone",
+        by: writerOf(lens, wrote),
         rev: at,
         saw: rev,
       });
@@ -1089,7 +1130,6 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
       return stale.map((entry) => {
         const rev = revs.of(entry.node, entry.field);
         const wrote = rev >= store.log.horizon ? store.log.opsFrom(rev)[0] : undefined;
-        const seen = wrote && lens ? redact([wrote], lens)[0] : wrote;
         // Theirs as the seat's view serves the record: a field naming what it may not see is cleared there too (FR-55).
         const theirs = ((lens ? seenBy(store, author) : store).graph.getNode(entry.node) as Record<string, unknown> | undefined)?.[entry.field];
         const mine = yours.get(`${entry.node}\u0000${entry.field}`);
@@ -1098,7 +1138,7 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
           field: entry.field,
           theirs,
           yours: lens && namesUnseen(mine, lens.sees) ? undefined : mine,
-          by: seen?.author.name ?? seen?.author.id ?? "Someone",
+          by: writerOf(lens, wrote),
           rev,
           saw: entry.rev,
         };

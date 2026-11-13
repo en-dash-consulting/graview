@@ -2,14 +2,15 @@ import type { AnyGraphNode, GraphEdge, GraphNodeBase, GraphReader, GraphSnapshot
 import type { Violation } from "./invariants/types.js";
 import { batchesOf, undoneIn, type Epoch, type LogReading, type OperationLog } from "./ops/log.js";
 import { checkUndo } from "./ops/undo.js";
-import type { Batch, Operation } from "./ops/types.js";
+import type { Author, Batch, Operation } from "./ops/types.js";
 import type { FieldWriter, Timeline } from "./ops/served.js";
 import { writersOf, type Writers } from "./ops/writers.js";
 import { isWithheld, namesUnseen, redact, type SeatLens } from "./ops/withheld.js";
 import { labelOf } from "./schema/define-node.js";
 import { actingAs, grantsTo, isSystem, meOf, profileOf, seatedIn, seatPersonOf } from "./permissions/policy.js";
 import { PERSON_SEAT } from "./graph/archived.js";
-import { bindsPeople, seatsKept, unseated } from "./binding-served.js";
+import { isUnset } from "./graph/primitives.js";
+import { seatsKept, unseated } from "./binding-served.js";
 import { FIELD_SIGHT, fieldsJudged, partialSight, recordsOf, sees, type Judged, type Records } from "./permissions/sight.js";
 import type { Principal } from "./permissions/types.js";
 import { diffSnapshots } from "./graph/diff.js";
@@ -34,13 +35,13 @@ function turnedOff(store: Judged, principal: Principal): ReadonlySet<string> {
  */
 export function hidesFrom(store: Judged, principal: Principal): boolean {
   if (isSystem(principal)) return false;
-  return (store.policy?.sees?.length ?? 0) > 0 || turnedOff(store, principal).size > 0 || (store.graph.hasPersonSeats?.() === true && !bindsPeople(store.policy, principal));
+  return (store.policy?.sees?.length ?? 0) > 0 || turnedOff(store, principal).size > 0 || anyBound(store);
 }
 
 /*
  * AND WHILE A PERSON IS BOUND TO A SEAT (Roadmap f-invite-binds-existing-person):
- * the seat is an account's id, told to that account itself, to the host and
- * to whoever binds people (`seatsKept`), and served to nobody else.
+ * the seat is an account's id, told to that account itself and to the host,
+ * which binds people (`seatsKept`), and served to nobody else.
  */
 
 /**
@@ -224,7 +225,7 @@ function lensFor(store: Judged, principal: Principal): { readonly lens: SeatLens
    * that guessed an id whether the guess was real.
    */
   const actor = isSystem(principal) ? undefined : actingAs(principal).id;
-  const keepsSeat = seatsKept(store.policy, principal);
+  const keepsSeat = seatsKept(principal);
   const length = (): number => (store.log as { readonly length?: number }).length ?? store.log.all().length;
   // The same record served the same way is the same object, so a view read twice is equal by identity.
   const cleared = new WeakMap<object, { readonly without: string; readonly node: unknown }>();
@@ -560,44 +561,216 @@ export function forgetSeatView(store: object, principal: Principal): void {
 /** Whether a kind here is the people, whom a seat could be bound to. */
 const hasPeople = (store: Judged): boolean => ((store.schema as { readonly definitions?: readonly { readonly people?: boolean }[] } | undefined)?.definitions ?? []).some((definition) => definition.people === true);
 
-const NAMED = new WeakMap<readonly Operation[], { readonly told: unknown; readonly ops: readonly Operation[] }>();
+/** An author whose record this reader may not see: somebody, as `WITHHELD_AUTHOR` is for a withheld op — never no id, which a page reads as the reader. */
+const SOMEONE = { id: "someone", name: "Someone" } as const;
+
+const NAMED = new WeakMap<readonly Operation[], { readonly told: unknown; readonly lens: object; readonly ops: readonly Operation[] }>();
+
+/** Each seat the log ever bound to a person, and the last record it was bound to — kept though that record is removed since. */
+const EVER_BOUND = new WeakMap<object, { horizon: number; length: number; readonly bound: Map<string, string> }>();
+
+/**
+ * WHOM A SEAT WAS BOUND TO, AS THE LOG SAYS (Roadmap
+ * f-invite-binds-existing-person): every binding the log holds, followed
+ * through an unbinding, but not through the record's removal or a second
+ * record bound to the same seat — so what an author did is never said as
+ * the account again once it was said as a record. Read once a growth.
+ */
+function everBound(store: Judged): ReadonlyMap<string, string> {
+  const log = store.log as { readonly horizon?: number; readonly length?: number; all(): readonly Operation[] };
+  const horizon = log.horizon ?? 0;
+  const length = log.length ?? log.all().length;
+  let held = EVER_BOUND.get(log);
+  if (held && held.horizon === horizon && held.length === length) return held.bound;
+  // A compaction moves the horizon past ops already read: what they bound is kept, though the record is gone.
+  if (held && held.length <= length && held.length >= horizon) held.horizon = horizon;
+  else {
+    held = { horizon, length: horizon, bound: new Map() };
+    EVER_BOUND.set(log, held);
+    // Behind a horizon, the graph's own bindings stand for what the archive said.
+    for (const node of (store.graph as { allNodes?(): readonly { readonly id: string }[] }).allNodes?.() ?? []) {
+      const seat = (node as Record<string, unknown>)[PERSON_SEAT];
+      if (typeof seat === "string") held.bound.set(seat, node.id);
+    }
+  }
+  const ops = log.all();
+  for (let at = held.length - horizon; at < ops.length; at++) {
+    for (const primitive of ops[at]!.primitives) {
+      if (primitive.op === "add-node") {
+        const seat = (primitive.node as Record<string, unknown>)[PERSON_SEAT];
+        if (typeof seat === "string") held.bound.set(seat, primitive.node.id);
+      } else if (primitive.op === "patch-node" && Object.hasOwn(primitive.after, PERSON_SEAT)) {
+        const seat = (primitive.after as Record<string, unknown>)[PERSON_SEAT];
+        const was = (primitive.before as Record<string, unknown>)[PERSON_SEAT];
+        if (typeof seat === "string" && !isUnset(seat)) held.bound.set(seat, primitive.id);
+        else if (typeof was === "string" && held.bound.get(was) === primitive.id) held.bound.delete(was);
+      }
+    }
+  }
+  held.length = length;
+  return held.bound;
+}
+
+/**
+ * Whether a bare account has a profile bound to a person (`acct~prf`), which
+ * a reader may not be told: what names only the account (who proposed, who
+ * voted, who is here) is then nobody's to that reader, since it would pair
+ * the account with the person.
+ */
+function profileBound(store: Judged, keepsSeat: ((seat: string) => boolean) | undefined, account: string): boolean {
+  if (account.includes("~")) return false;
+  for (const seat of everBound(store).keys()) if (seat.startsWith(`${account}~`) && keepsSeat?.(seat) !== true) return true;
+  return false;
+}
+
+/** Whether the log ever bound a seat to a person: what a seat is served is judged from then on. */
+const anyBound = (store: Judged): boolean => store.graph.hasPersonSeats?.() === true || ((store.schema as { readonly definitions?: readonly { readonly people?: boolean }[] } | undefined)?.definitions ?? []).some((one) => one.people === true) && everBound(store).size > 0;
+
+/**
+ * WHAT A READER IS TOLD OF A SEAT BOUND TO A PERSON: the record it is bound
+ * to now — else the one the log last bound it to — unless the reader may be
+ * told the seat itself (the seat's own, and the host's, `keepsSeat`); and
+ * whether the reader may see that record. Undefined for a seat bound to none.
+ */
+export function boundAs(store: Judged, lens: Pick<SeatLens, "shows" | "keepsSeat">): (seat: string) => { readonly id: string; readonly shown: boolean } | undefined {
+  if (!anyBound(store)) return () => undefined;
+  const graph = store.graph;
+  const bound = everBound(store);
+  return (seat) => {
+    if (lens.keepsSeat?.(seat) === true) return undefined;
+    const id = graph.personBoundTo?.(seat) ?? bound.get(seat);
+    if (id !== undefined) return { id, shown: lens.shows(id) };
+    // A bare account one of whose profiles is somebody's record here: no record this reader may be told.
+    return profileBound(store, lens.keepsSeat, seat) ? { id: seat, shown: false } : undefined;
+  };
+}
+
+/** A record's name as this seat is shown the record — its sight, field by field — and none where what it is shown names nobody. */
+function shownName(store: Judged, lens: Pick<SeatLens, "shows" | "served">, id: string): string | undefined {
+  const whole = lens.shows(id) ? store.graph.getNode(id) : undefined;
+  const node = whole && lens.served(whole);
+  if (!node) return undefined;
+  let name: unknown;
+  try {
+    name = labelOf(store.schema?.tryDefinition(node.kind) as never, node as never);
+  } catch {
+    name = undefined;
+  }
+  return typeof name === "string" && name.trim().length > 0 && name !== node.id ? name : undefined;
+}
+
+/**
+ * WHO A SEAT BOUND TO A PERSON IS, TO THIS READER (Roadmap
+ * f-invite-binds-existing-person): what a host says of somebody beyond the
+ * log — who is here, for whom an agent acts — says the record, by its id
+ * and its name where the reader may see it, and never the account. Undefined
+ * for a seat bound to nobody, and for the reader's own seat and the host's.
+ */
+export function boundPeopleFor(store: Judged, principal: Principal): (seat: string) => { readonly id: string; readonly shown: boolean; readonly name?: string } | undefined {
+  if (!anyBound(store)) return () => undefined;
+  const lens = seatLens(store, principal);
+  const as = boundAs(store, lens);
+  return (seat) => {
+    const bound = as(seat);
+    if (bound === undefined) return undefined;
+    const name = bound.shown ? shownName(store, lens, bound.id) : undefined;
+    return { ...bound, ...(name !== undefined ? { name } : {}) };
+  };
+}
 
 /**
  * WHO DID IT, AS THE PERSON THEY WERE BOUND TO (Roadmap
- * f-invite-binds-existing-person): an op by a seat bound to a record this
- * seat is served carries that record's name, so Activity says "Bud" and not
- * his account, though the seat itself is not served. Kept for one reading of
- * the log while the store tells nothing new.
+ * f-invite-binds-existing-person): an op by a seat bound to a record is
+ * authored, to every reader but that seat and the host, by the record — its
+ * id and its name, where this reader may see it; by neither, only the name
+ * the author gave, where it may not — never by the account, which is the
+ * seat itself (`$seat`) and served to nobody else. So is who proposed it and
+ * who voted for it. To the seat itself and the host, its account, named as
+ * its record where it is served one, so Activity says "Bud". An author bound
+ * to nobody is as it was. Kept for one reading of the log while the store
+ * tells nothing new.
  */
-export function namedAuthors(store: Judged, lens: Pick<SeatLens, "shows" | "served">, ops: readonly Operation[]): readonly Operation[] {
+export function namedAuthors(store: Judged, lens: Pick<SeatLens, "shows" | "served" | "keepsSeat">, ops: readonly Operation[]): readonly Operation[] {
+  if (!anyBound(store)) return ops;
   const graph = store.graph;
-  if (!graph.hasPersonSeats?.() || !graph.personBoundTo) return ops;
   const told = (store as { readonly version?: unknown }).version ?? store.log.all().length;
   const held = NAMED.get(ops);
-  if (held && held.told === told) return held.ops;
+  if (held && held.told === told && held.lens === lens) return held.ops;
+  const as = boundAs(store, lens);
+  const nameOf = (id: string): string | undefined => shownName(store, lens, id);
+  /** A seat named in a lineage, as this reader is told it: its record where it may see it, else nobody's. */
+  const seatSaid = (seat: string): string | undefined => {
+    const bound = as(seat);
+    return bound === undefined ? seat : bound.shown ? bound.id : undefined;
+  };
+  /*
+   * A person's seat, its account, and what this reader is told of it: the
+   * seat's own record — or, for a profile bound to nobody on an account that
+   * is somebody's record here, nobody this reader is told of, since its
+   * account is that person's and its session would pair the two.
+   */
+  const seated = (person: Author) => {
+    const seat = person.kind === "human" ? seatPersonOf(person) : undefined;
+    const account = actingAs(person as Principal).id;
+    const bound = seat === undefined ? undefined : (as(seat) ?? (account !== undefined && seat !== account && lens.keepsSeat?.(seat) !== true && as(account) !== undefined ? { id: account, shown: false } : undefined));
+    return { seat, account, bound };
+  };
   let changed = false;
   const named = ops.map((op) => {
+    if (isWithheld(op)) return op;
+    let out = op;
     const author = op.author;
-    if (isWithheld(op) || (author.onBehalfOf ?? author).kind !== "human") return op;
-    const seat = seatPersonOf(author.onBehalfOf ?? author);
-    const id = seat === undefined ? undefined : graph.personBoundTo!(seat);
-    const whole = id === undefined || !lens.shows(id) ? undefined : graph.getNode(id);
-    // Named as this seat is shown the record — its sight, field by field — and not at all where what it is shown names nobody.
-    const node = whole && lens.served(whole);
-    if (!node) return op;
-    let name: unknown;
-    try {
-      name = labelOf(store.schema?.tryDefinition(node.kind) as never, node as never);
-    } catch {
-      name = undefined;
-    }
     const person = author.onBehalfOf ?? author;
-    if (typeof name !== "string" || name.trim().length === 0 || name === node.id || person.name === name) return op;
-    changed = true;
-    return { ...op, author: author.onBehalfOf ? { ...author, onBehalfOf: { ...person, name } } : { ...author, name } };
+    const { seat, account, bound } = seated(person);
+    let said: string | undefined;
+    if (seat !== undefined && bound !== undefined) {
+      // Anybody else: the record, never the account — nor the profile, which is the account's.
+      said = bound.shown ? nameOf(bound.id) : undefined;
+      const { profile: _profile, name: own, id: _id, session: _session, ...rest } = person;
+      // Where the reader may not see the record: somebody, by no id and no name of the account's — as a withheld op's author is.
+      const whom = bound.shown ? { ...rest, id: bound.id, ...((said ?? own) !== undefined ? { name: said ?? own } : {}) } : { kind: rest.kind, id: SOMEONE.id, name: SOMEONE.name };
+      out = { ...out, author: author.onBehalfOf ? { ...author, onBehalfOf: whom } : whom };
+    } else if (seat !== undefined && (graph.personBoundTo?.(seat) ?? everBound(store).get(seat)) !== undefined) {
+      // The seat itself, or the host: its own account, named as its record.
+      said = nameOf((graph.personBoundTo?.(seat) ?? everBound(store).get(seat))!);
+      if (said !== undefined && person.name !== said) out = { ...out, author: author.onBehalfOf ? { ...author, onBehalfOf: { ...person, name: said } } : { ...person, name: said } };
+    }
+    // Who proposed it, and who voted for it: never an account this reader may not be told.
+    const lineage = op.lineage;
+    if (lineage && (lineage.proposedBy !== undefined || lineage.voters !== undefined)) {
+      /*
+       * Who proposed it is a person by their account: read as that person is,
+       * profile and all — this op's author when they proposed it, the
+       * proposal's author when this op accepted it.
+       */
+      const proposal = lineage.suggestion === undefined ? undefined : (store.log as { get?(id: string): Operation | undefined }).get?.(lineage.suggestion);
+      const proposer = proposal && !isWithheld(proposal) ? (proposal.author.onBehalfOf ?? proposal.author) : person;
+      const them = proposer === person ? { seat, account, bound } : seated(proposer);
+      const by = lineage.proposedBy === undefined ? undefined : them.seat !== undefined && lineage.proposedBy === them.account ? them.bound : as(lineage.proposedBy);
+      const voters = lineage.voters?.flatMap((voter) => seatSaid(voter) ?? []);
+      const votersMoved = voters !== undefined && (voters.length !== lineage.voters!.length || voters.some((one, at) => one !== lineage.voters![at]));
+      if (by !== undefined || votersMoved) {
+        const { proposedBy, voters: _voters, ...rest } = lineage;
+        const name = by?.shown ? nameOf(by.id) : undefined;
+        // The default words name the proposer by their account's name: said again as the record — and, with the proposal behind a horizon, whatever name they gave.
+        const ownName = by !== undefined && rest.basis.startsWith("Proposed by ") && (proposal === undefined || [proposer.name, proposer.profile?.name, lineage.proposedBy].some((one) => one !== undefined && rest.basis === `Proposed by ${one}`));
+        out = {
+          ...out,
+          lineage: {
+            ...rest,
+            ...(ownName ? { basis: name !== undefined ? `Proposed by ${name}` : "Proposed" } : {}),
+            // Somebody, where the reader may not see them: still a proposal, by nobody it may be told of.
+            ...(proposedBy === undefined ? {} : by === undefined ? { proposedBy } : { proposedBy: by.shown ? by.id : SOMEONE.id }),
+            ...(voters !== undefined ? { voters } : {}),
+          },
+        };
+      }
+    }
+    if (out !== op) changed = true;
+    return out;
   });
   const out = changed ? named : ops;
-  NAMED.set(ops, { told, ops: out });
+  NAMED.set(ops, { told, lens, ops: out });
   return out;
 }
 
@@ -662,7 +835,13 @@ export function seatView<T extends Viewed>(store: T, principal: Principal): T {
     const base = servedGraph(epoch.base, epoch.seq);
     if (!epoch.creators) return { ...rest, base } as unknown as E;
     const kept = new Set(base.nodes.map((node) => node.id));
-    const creators = Object.fromEntries(Object.entries(epoch.creators).filter(([id, maker]) => kept.has(id) && !namesUnseen(maker, lens.sees)));
+    // A maker bound to a person is that person's record to this seat, as an op's author is (`namedAuthors`), unless the seat is told its account.
+    const as = boundAs(store as never, lens);
+    const madeBy = (maker: string): string | undefined => {
+      const bound = as(maker);
+      return bound === undefined ? maker : bound.shown ? bound.id : undefined;
+    };
+    const creators = Object.fromEntries(Object.entries(epoch.creators).flatMap(([id, maker]) => (kept.has(id) ? [[id, madeBy(maker)] as const] : [])).filter((entry): entry is readonly [string, string] => entry[1] !== undefined && !namesUnseen(entry[1], lens.sees)));
     return { ...rest, base, creators } as unknown as E;
   };
   /** An epoch as this seat is served it, when there is one. */
@@ -685,7 +864,7 @@ export function seatView<T extends Viewed>(store: T, principal: Principal): T {
           return (id: string) => served(target.getNode(id));
         case "has":
           return seenId;
-        // Whom a seat is bound to, asked only of the seats this one may be told of (its own, or every one for whoever binds people), and only a record it is served.
+        // Whom a seat is bound to, asked only of the seats this one may be told of (its own; every one is the host's alone), and only a record it is served.
         case "personBoundTo":
           return (seat: string) => {
             if (!lens.keepsSeat?.(seat)) return undefined;
@@ -799,8 +978,8 @@ export function seatView<T extends Viewed>(store: T, principal: Principal): T {
         case "findings":
           return () =>
             target.findings().filter((finding) => {
-              // Who is bound to whom is told to whoever binds people, and the host (Roadmap f-invite-binds-existing-person).
-              if ((finding as { readonly code?: string }).code === "person-seat-shared" && !bindsPeople(store.policy, principal)) return false;
+              // Who is bound to whom is the host's alone, which binds people (Roadmap f-invite-binds-existing-person).
+              if ((finding as { readonly code?: string }).code === "person-seat-shared") return false;
               const ids = finding.id.includes("->") ? finding.id.split("->").map((end, at) => (at === 0 ? end.slice(end.indexOf(":") + 1) : end)) : [finding.id];
               return ids.every((id) => !full.has(id) || seenId(id)) && !namesUnseen(finding, lens.sees);
             });

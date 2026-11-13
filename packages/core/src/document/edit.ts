@@ -1,4 +1,6 @@
 import type { FarAppResolver } from "../workflows/far.js";
+import { BIND_PERSON } from "../binding-served.js";
+import { BINDING_UNGRANTED } from "../binding-ungranted.js";
 import { DERIVED_ACTS, derivedActOf, derivedActsOf, givenWhenNeverArchived, givenWhenNeverTidied, RELATION_ACTS, relationActName, relationActsOf } from "../mutations/derived-names.js";
 import { documentRelations, givesRelationAct, renamedRelationAct } from "./relation-acts.js";
 import * as z from "zod";
@@ -2484,6 +2486,8 @@ class Editor {
     for (const key of sight ? [] : (["mutations", "propose"] as const)) {
       if (part[key] === undefined || part[key] === "*") continue;
       for (const [n, act] of (part[key] as string[]).entries()) {
+        // Binding an account to a person is the host's, as an invitation is accepted: no grant an edit adds gives it.
+        if (act === BIND_PERSON) return this.failAs("grant-gives-binding", i, `${key}.${n}`, BINDING_UNGRANTED, `leave "${BIND_PERSON}" out of the grant`);
         const derived = derivedActOf(act);
         if (this.doc.acts?.[act] || (derived && this.doc.kinds[derived.kind] && (this.doc.kinds[derived.kind].archives !== false || givenWhenNeverArchived(derived.act)) && (this.doc.kinds[derived.kind].tidying !== "never" || givenWhenNeverTidied(derived.act))) || givesRelationAct(act, this.doc.kinds)) continue;
         const relationActs = relationActsOf(documentRelations(this.doc.kinds)).filter((name) => givesRelationAct(name, this.doc.kinds));

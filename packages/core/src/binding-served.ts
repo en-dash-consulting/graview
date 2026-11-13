@@ -12,7 +12,7 @@ import type { Primitive } from "./graph/primitives.js";
 import type { MutationCall } from "./mutations/types.js";
 import type { Operation } from "./ops/types.js";
 import { bindable, isSystem, seatPersonOf } from "./permissions/policy.js";
-import type { Policy, Principal, Refusal } from "./permissions/types.js";
+import type { Principal, Refusal } from "./permissions/types.js";
 
 /** The name of the act that binds a seat to a person already entered. */
 export const BIND_PERSON = "bind-person";
@@ -21,7 +21,7 @@ export const BIND_PERSON = "bind-person";
 export interface BindingServed {
   /** The `bind-person` act for this store, or none where no kind is the people. */
   act?: (store: object) => unknown;
-  /** Whether this seat may run this binding: the host's system seat, or a grant that names the act for one of its roles. */
+  /** Whether this seat may run this binding: the host's system seat alone, acting for the app's owner; no grant gives it. */
   judged?: (store: object, call: MutationCall, principal: Principal) => { readonly ok: true } | { readonly ok: false; readonly refusal: Refusal };
   /** Why this binding's op may not be taken back, in a sentence; undefined when it may. */
   undo?: (store: object, op: Operation) => string | undefined;
@@ -70,7 +70,7 @@ export function unseatedPrimitive(primitive: Primitive, keeps: KeepsSeat = NO_SE
 /**
  * AN OP WITHOUT A SEAT ITS READER MAY NOT BE TOLD: its primitives, what puts
  * it back and, for a binding, its call. A seat is an account's id: its own
- * account's to know, and the host's and whoever binds people's. The op
+ * account's to know, and the host's, which binds people. The op
  * itself where it names none.
  */
 export function unseatedOp(op: Operation, keeps: KeepsSeat = NO_SEAT): Operation {
@@ -89,20 +89,9 @@ export function unseatedSnapshot<T extends { readonly nodes: readonly unknown[] 
   return snapshot.nodes.some((node) => unseated(node) !== node) ? { ...snapshot, nodes: snapshot.nodes.map((node) => unseated(node)) } : snapshot;
 }
 
-/**
- * WHETHER A SEAT BINDS PEOPLE HERE: a person — no agent, nobody acting for
- * another — holding a role a grant names `bind-person` for, by name. What
- * may bind (`@graview/core/binding`), and what is told who is bound.
- */
-export function bindsPeople(policy: Policy | undefined, principal: Principal): boolean {
-  if (principal.kind !== "human" || principal.onBehalfOf !== undefined || principal.shared === true) return false;
-  const roles = principal.roles ?? [];
-  return (policy?.grants ?? []).some((grant) => Array.isArray(grant.mutations) && grant.mutations.includes(BIND_PERSON) && Array.isArray(grant.roles) && !grant.self && !grant.ownEnd && (grant.roles as readonly string[]).some((role) => roles.includes(role)));
-}
-
-/** The seats a reader may be told a record is bound to: every one for the host and whoever binds people; its own for a person; none for anybody else. */
-export function seatsKept(policy: Policy | undefined, principal: Principal): KeepsSeat {
-  if (isSystem(principal) || bindsPeople(policy, principal)) return () => true;
+/** The seats a reader may be told a record is bound to: every one for the host, which binds people; its own for a person; none for anybody else. */
+export function seatsKept(principal: Principal): KeepsSeat {
+  if (isSystem(principal)) return () => true;
   const own = bindable(principal) ? seatPersonOf(principal) : undefined;
   return own === undefined ? NO_SEAT : (seat) => seat === own;
 }

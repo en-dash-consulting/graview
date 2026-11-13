@@ -67,9 +67,9 @@ const participants = (store: Store<AnySchema>) => store.graph.nodesOfKind("parti
 describe("binding a joining account to the person entered for it", () => {
   it("is one named op, blamed on whoever bound it, and makes no second person", () => {
     const store = family();
-    const done = bindPerson(store, bud, "participant:bud", { author: organizer });
+    const done = bindPerson(store, bud, "participant:bud", { author: host });
     expect(done.ops).toHaveLength(1);
-    expect(done.ops[0]).toMatchObject({ mutation: { name: BIND_PERSON }, author: { id: "acct-org" } });
+    expect(done.ops[0]).toMatchObject({ mutation: { name: BIND_PERSON }, author: { kind: "system", id: "host" } });
     expect(done.ops[0]!.intent).toMatch(/Bud/);
     expect(participants(store)).toBe(2);
     expect(store.personOf(bud)).toBe("participant:bud");
@@ -83,7 +83,7 @@ describe("binding a joining account to the person entered for it", () => {
     const store = family();
     expect(store.sees(bud, "household:smith")).toBe(false);
     expect(store.permits({ name: "edit-participant", args: { id: "participant:bud", age: 13 } }, bud).ok).toBe(false);
-    bindPerson(store, bud, "participant:bud", { author: organizer });
+    bindPerson(store, bud, "participant:bud", { author: host });
     expect(store.sees(bud, "household:smith")).toBe(true);
     expect(store.permits({ name: "edit-participant", args: { id: "participant:bud", age: 13 } }, bud).ok).toBe(true);
     expect(store.permits({ name: "edit-participant", args: { id: "participant:ann", age: 41 } }, bud).ok).toBe(false);
@@ -107,19 +107,19 @@ describe("binding a joining account to the person entered for it", () => {
 
   it("is undone like any act, and he is nobody's record again", () => {
     const store = family();
-    const done = bindPerson(store, bud, "participant:bud", { author: organizer });
-    store.undo(done.batch, { author: organizer });
+    const done = bindPerson(store, bud, "participant:bud", { author: host });
+    store.undo(done.batch, { author: host });
     expect(store.personOf(bud)).toBe("acct-bud");
     expect(store.sees(bud, "household:smith")).toBe(false);
     expect(store.permits({ name: "edit-participant", args: { id: "participant:bud", age: 13 } }, bud).ok).toBe(false);
     // And once unbound, it may be bound to somebody else.
-    bindPerson(store, ann, "participant:bud", { author: organizer });
+    bindPerson(store, ann, "participant:bud", { author: host });
     expect(store.personOf(ann)).toBe("participant:bud");
   });
 
   it("is said in Activity as the person, not the account", () => {
     const store = family();
-    bindPerson(store, bud, "participant:bud", { author: organizer });
+    bindPerson(store, bud, "participant:bud", { author: host });
     const done = store.apply({ name: "give-it", args: { id: "gift:kite" } }, { author: bud });
     expect(nameOfAuthor(done.ops[0]!.author, { graph: store.graph as never, schema: store.schema })).toBe("Bud");
   });
@@ -128,50 +128,50 @@ describe("binding a joining account to the person entered for it", () => {
 describe("a binding is refused, in a sentence a host can show", () => {
   it("to a record already bound to another account", () => {
     const store = family();
-    bindPerson(store, bud, "participant:bud", { author: organizer });
-    expect(() => bindPerson(store, ann, "participant:bud", { author: organizer })).toThrow(ActRefusal);
-    expect(() => bindPerson(store, ann, "participant:bud", { author: organizer })).toThrow(/Bud is already someone else's record here/);
+    bindPerson(store, bud, "participant:bud", { author: host });
+    expect(() => bindPerson(store, ann, "participant:bud", { author: host })).toThrow(ActRefusal);
+    expect(() => bindPerson(store, ann, "participant:bud", { author: host })).toThrow(/Bud is already someone else's record here/);
     expect(store.personOf(ann)).toBe("acct-ann");
   });
 
   it("to a record of a kind that is not the people", () => {
     const store = family();
-    expect(() => bindPerson(store, bud, "household:smith", { author: organizer })).toThrow(/The Smiths is a household, not a participant/);
-    expect(() => bindPerson(store, bud, "participant:nobody", { author: organizer })).toThrow();
+    expect(() => bindPerson(store, bud, "household:smith", { author: host })).toThrow(/The Smiths is a household, not a participant/);
+    expect(() => bindPerson(store, bud, "participant:nobody", { author: host })).toThrow();
   });
 
   it("for an account already bound to a different record", () => {
     const store = family();
-    bindPerson(store, bud, "participant:bud", { author: organizer });
-    expect(() => bindPerson(store, bud, "participant:ann", { author: organizer })).toThrow(/That account is already Bud here/);
+    bindPerson(store, bud, "participant:bud", { author: host });
+    expect(() => bindPerson(store, bud, "participant:ann", { author: host })).toThrow(/That account is already Bud here/);
     // Binding it to the record it is bound to again changes nothing.
-    expect(bindPerson(store, bud, "participant:bud", { author: organizer }).ops).toEqual([]);
+    expect(bindPerson(store, bud, "participant:bud", { author: host }).ops).toEqual([]);
   });
 
   it("for an account that already has its own record here", () => {
     const store = family();
     store.applyPrimitives([{ op: "add-node", node: { id: "acct-bud", kind: "participant", name: "Bud B.", age: 12 } as never }], { author: host });
-    expect(() => bindPerson(store, bud, "participant:bud", { author: organizer })).toThrow(/already has its own record here, Bud B\./);
+    expect(() => bindPerson(store, bud, "participant:bud", { author: host })).toThrow(/already has its own record here, Bud B\./);
   });
 
   it("to a record that is another account's own", () => {
     const store = family();
     store.applyPrimitives([{ op: "add-node", node: { id: "acct-ann", kind: "participant", name: "Ann A.", age: 40 } as never }], { author: host });
     store.apply({ name: "give-it", args: { id: "gift:kite" } }, { author: ann });
-    expect(() => bindPerson(store, bud, "acct-ann", { author: organizer })).toThrow(/Ann A\. is already someone else's record here/);
+    expect(() => bindPerson(store, bud, "acct-ann", { author: host })).toThrow(/Ann A\. is already someone else's record here/);
   });
 
   it("to a seat that is nobody in particular", () => {
     const store = family();
-    expect(() => bindPerson(store, { kind: "human", id: "anonymous", shared: true }, "participant:bud", { author: organizer })).toThrow(/signed in/);
-    expect(() => bindPerson(store, { kind: "visitor", id: "form:1" }, "participant:bud", { author: organizer })).toThrow(/signed in/);
+    expect(() => bindPerson(store, { kind: "human", id: "anonymous", shared: true }, "participant:bud", { author: host })).toThrow(/signed in/);
+    expect(() => bindPerson(store, { kind: "visitor", id: "form:1" }, "participant:bud", { author: host })).toThrow(/signed in/);
   });
 });
 
 describe("who may bind", () => {
-  it("is the policy's: an owner, or the host's system seat", () => {
-    expect(bindPerson(family(), bud, "participant:bud", { author: organizer }).ops).toHaveLength(1);
+  it("is the host's system seat alone: never a member, nor an owner the policy grants binding by name", () => {
     expect(bindPerson(family(), bud, "participant:bud", { author: host }).ops).toHaveLength(1);
+    expect(() => bindPerson(family(), bud, "participant:bud", { author: organizer })).toThrow(PermissionDeniedError);
     expect(() => bindPerson(family(), bud, "participant:bud", { author: ann })).toThrow(PermissionDeniedError);
   });
 
@@ -206,12 +206,12 @@ describe("every answer kept for the seat is worked out again after a binding", (
     const store = family();
     const before = store.seenBy(bud);
     expect(before.graph.getNode("household:smith")).toBeUndefined();
-    const done = bindPerson(store, bud, "participant:bud", { author: organizer });
+    const done = bindPerson(store, bud, "participant:bud", { author: host });
     // The view held from before is judged as he is now, and so is one asked for afresh.
     expect(before.graph.getNode("household:smith")).toBeDefined();
     const after = store.seenBy(bud);
     expect(after.graph.getNode("household:smith")).toBeDefined();
-    store.undo(done.batch, { author: organizer });
+    store.undo(done.batch, { author: host });
     for (const view of [before, after, store.seenBy(bud)]) {
       expect(view.graph.getNode("household:smith")).toBeUndefined();
       expect(view.graph.out("participant:bud").map((one) => one.id)).not.toContain("household:smith");
@@ -224,9 +224,9 @@ describe("every answer kept for the seat is worked out again after a binding", (
     const renamed = (view: Store<AnySchema>) => view.log.all()[edit.seq]!;
     const view = store.seenBy(bud);
     expect(JSON.stringify(renamed(view))).not.toContain("Smith family");
-    const done = bindPerson(store, bud, "participant:bud", { author: organizer });
+    const done = bindPerson(store, bud, "participant:bud", { author: host });
     expect(JSON.stringify(renamed(view))).toContain("Smith family");
-    store.undo(done.batch, { author: organizer });
+    store.undo(done.batch, { author: host });
     expect(JSON.stringify(renamed(view))).not.toContain("Smith family");
     expect(JSON.stringify(renamed(store.seenBy(bud)))).not.toContain("Smith family");
   });
@@ -259,7 +259,7 @@ const people = (grants: Policy["grants"] | undefined, sees?: Policy["sees"]) =>
   } as never);
 const sock: Principal = { kind: "human", id: "acct-sock", roles: ["member"] };
 
-describe("only a grant that names binding, for a role, binds", () => {
+describe("no grant binds", () => {
   it("is never every act: a member every role may do anything binds no sock account and no made-up seat", () => {
     const store = people([{ roles: "*", mutations: "*" }], [{ roles: "*", kinds: ["participant", "household", "gift", "secret"] }]);
     expect(() => bindPerson(store, sock, "participant:bud", { author: ann })).toThrow(PermissionDeniedError);
@@ -273,10 +273,11 @@ describe("only a grant that names binding, for a role, binds", () => {
     expect(() => bindPerson(store, sock, "participant:bud", { author: ann })).toThrow(PermissionDeniedError);
   });
 
-  it("is a grant that names it for a role the seat holds", () => {
+  it("is not even a grant that names it for a role the seat holds", () => {
     const store = people([{ roles: ["owner"], mutations: [BIND_PERSON] }]);
     expect(() => bindPerson(store, bud, "participant:bud", { author: ann })).toThrow(PermissionDeniedError);
-    expect(bindPerson(store, bud, "participant:bud", { author: organizer }).ops).toHaveLength(1);
+    expect(() => bindPerson(store, bud, "participant:bud", { author: organizer })).toThrow(PermissionDeniedError);
+    expect(bindPerson(store, bud, "participant:bud", { author: host }).ops).toHaveLength(1);
   });
 
   it("is the host alone where the app has no policy", () => {
@@ -297,12 +298,12 @@ describe("a binding is never made by somebody nobody in particular", () => {
   }
 });
 
-describe("the seat a person is bound to is served to that person, whoever binds people and the host alone", () => {
+describe("the seat a person is bound to is served to that person and the host alone", () => {
   const leaks = (value: unknown) => JSON.stringify(value ?? null).includes("acct-bud") || JSON.stringify(value ?? null).includes("$seat");
   it("is not in another member's records, log or answers, nor a visitor's, nor where nothing else is kept", () => {
     for (const store of [family(), people([{ roles: ["owner"], mutations: [BIND_PERSON] }, { roles: "*", mutations: ["give-it"] }])]) {
-      const done = bindPerson(store, bud, "participant:bud", { author: organizer });
-      for (const seat of [ann, { kind: "visitor", id: "form:1", roles: ["member"] } as Principal, { kind: "agent", id: "helper", roles: ["owner"], onBehalfOf: organizer } as Principal]) {
+      const done = bindPerson(store, bud, "participant:bud", { author: host });
+      for (const seat of [ann, organizer, { kind: "visitor", id: "form:1", roles: ["member"] } as Principal, { kind: "agent", id: "helper", roles: ["owner"], onBehalfOf: organizer } as Principal]) {
         const view = store.seenBy(seat);
         expect(leaks(view.graph.snapshot())).toBe(false);
         expect(leaks(view.graph.getNode("participant:bud"))).toBe(false);
@@ -311,21 +312,19 @@ describe("the seat a person is bound to is served to that person, whoever binds 
       }
       expect(leaks(done.ops)).toBe(true);
       expect(store.seenBy(host).graph.getNode("participant:bud")).toMatchObject({ $seat: "acct-bud" });
-      // Whoever binds people sees who is bound.
-      expect(store.seenBy(organizer).graph.getNode("participant:bud")).toMatchObject({ $seat: "acct-bud" });
     }
   });
 
   it("is not shown by a sight that hides every field", () => {
     const store = people([{ roles: ["owner"], mutations: [BIND_PERSON] }], [{ roles: ["member"], kinds: ["participant"], fields: [] }, { roles: ["owner"], kinds: ["participant", "household", "gift", "secret"] }]);
-    bindPerson(store, bud, "participant:bud", { author: organizer });
+    bindPerson(store, bud, "participant:bud", { author: host });
     expect(leaks(store.seenBy(ann).graph.snapshot())).toBe(false);
     expect(leaks(store.seenBy(ann).log.all())).toBe(false);
   });
 
   it("is not in what leaves the installation", () => {
     const store = family();
-    bindPerson(store, bud, "participant:bud", { author: organizer });
+    bindPerson(store, bud, "participant:bud", { author: host });
     expect(leaks(unseatedSnapshot(store.snapshot()))).toBe(false);
     expect(leaks(store.log.all().map((op) => unseatedOp(op)))).toBe(false);
     expect(unseated(store.graph.getNode("participant:bud"))).toEqual({ id: "participant:bud", kind: "participant", name: "Bud", age: 12 });
@@ -335,25 +334,25 @@ describe("the seat a person is bound to is served to that person, whoever binds 
 describe("one person's history is never handed to another account", () => {
   it("keeps a binding once its seat has acted as the record, and binds nobody else there", () => {
     const store = family();
-    const done = bindPerson(store, bud, "participant:bud", { author: organizer });
+    const done = bindPerson(store, bud, "participant:bud", { author: host });
     store.apply({ name: "give-it", args: { id: "gift:kite" } }, { author: bud });
-    expect(store.mayUndo(done.batch, organizer)).toMatchObject({ ok: false, refusal: { message: "Bud has acted here: unbinding would hand what they did to someone else." } });
+    expect(store.mayUndo(done.batch, host)).toMatchObject({ ok: false, refusal: { message: "Bud has acted here: unbinding would hand what they did to someone else." } });
     expect(() => store.undo(done.batch, { author: host })).toThrow(/Bud has acted here/);
-    expect(() => bindPerson(store, ann, "participant:bud", { author: organizer })).toThrow(/already someone else's record/);
+    expect(() => bindPerson(store, ann, "participant:bud", { author: host })).toThrow(/already someone else's record/);
     // A host's own repair that unbinds him does not make his record anybody else's either.
     store.applyPrimitives([{ op: "patch-node", id: "participant:bud", before: { $seat: "acct-bud" }, after: { $seat: undefined } } as never], { author: host });
     expect(store.personOf(bud)).toBe("acct-bud");
-    expect(() => bindPerson(store, ann, "participant:bud", { author: organizer })).toThrow(/Bud is already someone else's record here/);
-    expect(bindPerson(store, bud, "participant:bud", { author: organizer }).ops).toHaveLength(1);
+    expect(() => bindPerson(store, ann, "participant:bud", { author: host })).toThrow(/Bud is already someone else's record here/);
+    expect(bindPerson(store, bud, "participant:bud", { author: host }).ops).toHaveLength(1);
   });
 });
 
 describe("two records never share one seat", () => {
   it("brings a record back unbound when its seat is bound to another by then", () => {
     const store = family();
-    bindPerson(store, bud, "participant:bud", { author: organizer });
+    bindPerson(store, bud, "participant:bud", { author: host });
     const removed = store.apply({ name: "remove-participant", args: { id: "participant:bud" } }, { author: organizer });
-    bindPerson(store, bud, "participant:ann", { author: organizer });
+    bindPerson(store, bud, "participant:ann", { author: host });
     store.undo(removed.batch, { author: organizer });
     expect(store.graph.getNode("participant:bud")).not.toHaveProperty("$seat");
     expect(store.personOf(bud)).toBe("participant:ann");
@@ -388,7 +387,7 @@ describe("no act but binding writes the seat", () => {
 describe("a bound person's own page knows who they are", () => {
   it("serves Bud the seat on his own record alone, so his page's store resolves $me and acts as him", () => {
     const store = family();
-    bindPerson(store, bud, "participant:bud", { author: organizer });
+    bindPerson(store, bud, "participant:bud", { author: host });
     store.applyPrimitives([{ op: "add-node", node: { id: "participant:sue", kind: "participant", name: "Sue", age: 9, $seat: "acct-sue" } as never }], { author: host });
     const served = store.seenBy(bud);
     const snapshot = served.graph.snapshot();
@@ -406,7 +405,7 @@ describe("a bound person's own page knows who they are", () => {
 
   it("serves Ann no seat anywhere, and her view says no seat is anybody's", () => {
     const store = family();
-    bindPerson(store, bud, "participant:bud", { author: organizer });
+    bindPerson(store, bud, "participant:bud", { author: host });
     const served = store.seenBy(ann);
     expect(JSON.stringify(served.graph.snapshot())).not.toContain("$seat");
     expect(JSON.stringify(served.log.all())).not.toContain("acct-bud");
@@ -426,9 +425,9 @@ describe("an agent never binds", () => {
 describe("two people bound to one account", () => {
   const shared = () => new Store<AnySchema>({ schema, mutations: [giveIt] as never, policy, snapshot: { nodes: [{ id: "participant:bud", kind: "participant", name: "Bud", age: 12, $seat: "acct-bud" }, { id: "participant:ann", kind: "participant", name: "Ann", age: 40, $seat: "acct-bud" }], edges: [] } } as never);
 
-  it("is said to whoever binds people and the host, and to no other seat", () => {
+  it("is said to the host, and to no other seat", () => {
     const store = shared();
-    expect(store.seenBy(organizer).findings().filter((one) => one.code === "person-seat-shared")).toHaveLength(2);
+    expect(store.seenBy(organizer).findings().filter((one) => one.code === "person-seat-shared")).toEqual([]);
     expect(store.findings().filter((one) => one.code === "person-seat-shared")).toHaveLength(2);
     expect(store.seenBy(ann).findings().filter((one) => one.code === "person-seat-shared")).toEqual([]);
     expect(JSON.stringify(store.seenBy(ann).findings())).not.toContain("acct-bud");
@@ -445,14 +444,14 @@ describe("two people bound to one account", () => {
 });
 
 describe("an app with no sight is served as it is again once nobody is bound", () => {
-  it("reads the store as it is while nobody is bound, and never through a view for whoever binds people", () => {
+  it("reads the store as it is while nobody is bound, and through a view for every person once somebody is", () => {
     const store = people([{ roles: ["owner"], mutations: [BIND_PERSON] }, { roles: "*", mutations: ["give-it"] }]);
     const view = store.seenBy(ann);
     expect(view.graph.getNode("participant:bud")).toBe(store.graph.getNode("participant:bud"));
-    const done = bindPerson(store, bud, "participant:bud", { author: organizer });
+    const done = bindPerson(store, bud, "participant:bud", { author: host });
     expect(view.graph.getNode("participant:bud")).not.toHaveProperty("$seat");
-    expect(store.seenBy(organizer).graph.getNode("participant:bud")).toBe(store.graph.getNode("participant:bud"));
-    store.undo(done.batch, { author: organizer });
+    expect(store.seenBy(organizer).graph.getNode("participant:bud")).not.toHaveProperty("$seat");
+    store.undo(done.batch, { author: host });
     expect(view.graph.getNode("participant:bud")).toBe(store.graph.getNode("participant:bud"));
   });
 
@@ -461,7 +460,7 @@ describe("an app with no sight is served as it is again once nobody is bound", (
     const view = store.seenBy(ann);
     const graph = view.graph;
     const log = view.log;
-    bindPerson(store, bud, "participant:bud", { author: organizer });
+    bindPerson(store, bud, "participant:bud", { author: host });
     for (const read of [view.graph.snapshot(), graph.snapshot(), graph.getNode("participant:bud"), log.all(), view.log.all(), view.checkpoint()]) {
       expect(JSON.stringify(read ?? null)).not.toContain("$seat");
       expect(JSON.stringify(read ?? null)).not.toContain("acct-bud");
@@ -472,7 +471,7 @@ describe("an app with no sight is served as it is again once nobody is bound", (
 describe("Activity names a bound person by their record", () => {
   it("says Bud, not his account, to a member who sees Bud", () => {
     const store = family();
-    bindPerson(store, bud, "participant:bud", { author: organizer });
+    bindPerson(store, bud, "participant:bud", { author: host });
     store.apply({ name: "give-it", args: { id: "gift:kite" } }, { author: bud });
     const view = store.seenBy(ann);
     const op = view.log.all().at(-1)!;
@@ -481,7 +480,7 @@ describe("Activity names a bound person by their record", () => {
 
   it("says nothing of the record to a seat that may not see Bud", () => {
     const store = people([{ roles: ["owner"], mutations: [BIND_PERSON] }, { roles: "*", mutations: ["give-it"] }], [{ roles: ["owner", "member"], kinds: ["gift", "household", "secret"] }, { roles: ["owner"], kinds: ["participant"] }]);
-    bindPerson(store, bud, "participant:bud", { author: organizer });
+    bindPerson(store, bud, "participant:bud", { author: host });
     store.applyPrimitives([{ op: "add-edge", edge: { kind: "givenBy", from: "gift:kite", to: "participant:bud" } } as never], { author: bud });
     const ops = store.seenBy(ann).log.all();
     expect(JSON.stringify(ops)).not.toContain('"name":"Bud"');
@@ -505,14 +504,15 @@ describe("an act's author is named as the viewer is shown them", () => {
       },
       snapshot: { nodes: [{ id: "member:bud", kind: "member", name: "Budrick Secret", age: 12 }, { id: "prize:kite", kind: "prize", title: "A kite" }], edges: [] },
     } as never);
-    bindPerson(store, bud, "member:bud", { author: organizer });
+    bindPerson(store, bud, "member:bud", { author: host });
     const done = store.apply({ name: "win", args: { id: "prize:kite" } }, { author: bud });
     const view = store.seenBy(ann);
     expect(view.graph.getNode("member:bud")).toMatchObject({ id: "member:bud", age: 12 });
     expect(view.graph.getNode("member:bud")).not.toHaveProperty("name");
     expect(JSON.stringify(view.log.all())).not.toContain("Budrick");
     expect(JSON.stringify(answerSeenBy(store as never, ann, { ops: done.ops }))).not.toContain("Budrick");
-    // Whoever is shown the name is told it.
-    expect(store.seenBy(organizer).log.all().at(-1)!.author.id).toBe("acct-bud");
+    // Whoever is shown the name is told it, as the record and not the account.
+    expect(store.seenBy(organizer).log.all().at(-1)!.author).toMatchObject({ id: "member:bud", name: "Budrick Secret" });
+    expect(JSON.stringify(view.log.all())).not.toContain("acct-bud");
   });
 });

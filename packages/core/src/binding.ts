@@ -4,7 +4,7 @@
  * before he joins — his household, his lists — and when his account accepts
  * an invitation, the host binds it to that record rather than making a
  * second Bud (`bindPerson`). A host's, on no page: loading it teaches every
- * store the `bind-person` act, who may run it and when it may be taken back
+ * store the `bind-person` act, that the host alone runs it, and when it may be taken back
  * (`BINDING`). Resolving a seat to its record is the main entry's.
  */
 import { BIND_PERSON, BINDING } from "./binding-served.js";
@@ -100,34 +100,33 @@ function bindPersonMutation(store: Held): AnyMutationDefinition | undefined {
 const refused = (call: MutationCall, message: string, wouldNeed: readonly string[] = []): { readonly ok: false; readonly refusal: Refusal } => ({ ok: false, refusal: { mutation: call.name, wouldNeed: [...wouldNeed], message } });
 
 /**
- * WHO MAY BIND A SEAT TO A PERSON: the host's system seat, and a seat a grant
- * names `bind-person` for, by its name and for a role the seat holds — never
- * a grant to every role, never every act (`*`), never a grant held to the
- * seat's own record or end. With no policy, the host alone. Never a seat no
- * one person holds, a visitor, one signed out, an agent or anybody acting
- * for another; never a seat binding
- * itself, whatever it is granted.
+ * WHO MAY BIND A SEAT TO A PERSON: the host's system seat, acting for the
+ * app's owner when an invitation is accepted — and nobody else. No grant
+ * gives it, whatever a policy names (`graview check` refuses one that does,
+ * `grant-gives-binding`): a role that could bind could bind any seat,
+ * itself among them. Never a seat no one person holds, a visitor, one
+ * signed out, an agent or anybody acting for another.
  */
-function judgedBinding(store: object, call: MutationCall, principal: Principal): { readonly ok: true } | { readonly ok: false; readonly refusal: Refusal } {
-  const held = store as Held;
+function judgedBinding(_store: object, call: MutationCall, principal: Principal): { readonly ok: true } | { readonly ok: false; readonly refusal: Refusal } {
   if (signedOutSeat(principal)) return refused(call, "Sign in to bind an account to a record here.");
   // A person binds, never an agent nor anybody acting for one: what an agent reads in a record could steer it to.
   if (principal.kind === "agent" || principal.onBehalfOf !== undefined) return refused(call, "An agent cannot bind an account to a record here: a person who runs this app does that.");
-  if (isSystem(principal)) return { ok: true };
+  /*
+   * The host itself, and nothing else that writes as the system: never the
+   * app's own actor or a workflow (`automated`), whose suggestion a vote
+   * could carry in, nor another app's change arriving here.
+   */
+  if (isSystem(principal)) {
+    if (principal.automated === true || /^(workflow|app|template):/.test(principal.id ?? "")) return refused(call, "Not permitted: only the host binds an account to a record here, as an invitation is accepted.");
+    return { ok: true };
+  }
   const seat = call.args["seat"];
   const record = call.args["record"];
-  const acting = actingAs(principal);
-  const account = acting.id;
+  const account = actingAs(principal).id;
   if ((typeof seat === "string" && account !== undefined && (seat === account || seat.startsWith(`${account}~`))) || (typeof record === "string" && ownsId(principal, record))) {
-    return refused(call, "You cannot bind yourself to a record here: somebody who runs this app does that.");
+    return refused(call, "You cannot bind yourself to a record here: only the host does that, as an invitation is accepted.");
   }
-  const naming = (held.policy?.grants ?? []).filter((grant) => Array.isArray(grant.mutations) && grant.mutations.includes(BIND_PERSON) && Array.isArray(grant.roles) && !grant.self && !grant.ownEnd);
-  const kind = typeof record === "string" ? held.graph.getNode(record)?.kind : undefined;
-  const roles = acting.roles ?? [];
-  const granted = naming.some((grant) => (grant.roles as readonly string[]).some((role) => roles.includes(role)) && (grant.kinds === undefined || grant.kinds === "*" || (kind !== undefined && grant.kinds.includes(kind))));
-  if (granted) return { ok: true };
-  const who = [...new Set(naming.flatMap((grant) => grant.roles as readonly string[]))];
-  return refused(call, who.length > 0 ? "Not permitted: only the people who run this app bind an account to a record here." : "Not permitted: only the host binds an account to a record here.", who);
+  return refused(call, "Not permitted: only the host binds an account to a record here, as an invitation is accepted.");
 }
 
 /** Why a binding may not be taken back: the seat has acted as the record since, and unbinding would hand what it did to somebody else. */
@@ -150,7 +149,7 @@ BINDING.undo = bindingKept;
  * an invitation is accepted. `joining` is the seat as the host will serve it
  * (its account, and the profile it acts as, if any); `record` the person's
  * id. The `bind-person` act, applied as `options.author` — the host's system
- * seat, or somebody a grant names the act for — and so blamed on them and
+ * seat, acting for the app's owner; no grant gives it — and so blamed on it and
  * undone like any act, until the seat has acted as the record. Refused
  * (`ActRefusal`, or `PermissionDeniedError` for who may) in a sentence a
  * host can show.
