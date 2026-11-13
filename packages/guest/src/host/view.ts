@@ -8,6 +8,7 @@ import { storedFilesOf } from "./marks.js";
 import { retryingImport } from "@graview/core/retry";
 import type { GuestDomEvent, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
 import { PART_SHARE } from "../part.js";
+import { createViewRecords } from "./view-records.js";
 import { checkManifest, edgesReadWithoutTheirKindsSaid, readsComputed, workerViewProps, type ComputedOn, type WorkerViewManifest } from "./manifest.js";
 import type { OpenDrawing, ViewRefusal } from "./open-draw.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestStats, type GuestViewInput } from "./session.js";
@@ -395,6 +396,27 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   let started: StartedWorker | undefined;
   let drawing: OpenDrawing | undefined;
   let failed = false;
+  /*
+   * WHERE ITS RECORDS ARE (Graview HQ feature:f-one-face-lines-from-frame-views,
+   * view-records.ts): each element it drew marked with `data-record`, of a
+   * record it was handed as its seat sees it. A page that draws lines to
+   * records (the one face) reads it off the region (`RECORD_BOXES`), since
+   * what the view drew is in a shadow root the page's own reading does not
+   * reach. Nothing of it goes to the view.
+   */
+  let seenFor: GuestProps | undefined;
+  const seenNow = new Map<string, boolean>();
+  const seesHere = (id: string) => {
+    if (seenFor !== lastProps) {
+      seenNow.clear();
+      seenFor = lastProps;
+    }
+    let one = seenNow.get(id);
+    if (one === undefined) seenNow.set(id, (one = seesNow(id)));
+    return one;
+  };
+  const records = createViewRecords(region, shadow, (id) => !failed && shown.has(id) && seesHere(id));
+  const recordsMoved = () => records.moved();
   let counted: GuestStats = { applied: 0, refused: 0, dropped: 0 };
   /* What came before the drawing's module did: drawn, in order, once it has. */
   const waiting: (["render", unknown] | ["style", readonly string[]])[] = [];
@@ -473,6 +495,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     region.removeAttribute("data-worker-view-drawn");
     region.setAttribute("data-worker-view-failed", reason);
     if (options.fallback !== false) (options.fallback ?? plainFace)(region, reason, said);
+    recordsMoved();
     options.onFailure?.(reason, said);
   };
   /**
@@ -994,6 +1017,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     /* A part that threw or took too long (`graview.part`): the host's note in its place, and why said (parts.ts). */
     const parts = createPartFallbacks(shadow, { view: `"${manifest.title ?? manifest.name}"`, mark: partMark, ...(options.onProblem ? { onProblem: options.onProblem } : {}) });
     refill = () => {
+      recordsMoved();
       parts.refresh();
       /* A card bound to a record is a link once it is drawn whole: whether it holds a field is known only then (pressable.ts). */
       links.refresh(shadow);
@@ -1304,6 +1328,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         stop();
         heights?.disconnect();
         drawing?.dispose();
+        records.dispose();
         region.remove();
         author?.remove();
       },

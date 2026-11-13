@@ -1,4 +1,5 @@
 import { OVERVIEW_PATH, ONE_FACE_LAYERS, hueFor, labelOf, type AnySchema } from "@graview/core";
+import { RECORD_BOXES_ATTRIBUTE, RECORD_BOXES_MOVED, recordBoxesOf } from "@graview/core/record-boxes";
 import { retryingImport } from "@graview/core/retry";
 import { barPlaces, HOME_KEY, PastBar } from "@graview/primitives/pages";
 import { lazyPart, useGraview, usePlayback } from "@graview/react/provider";
@@ -676,6 +677,7 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
       }
     : { display: "contents", ["--graview-one-face-bar" as string]: `${barHeight}px` };
   const subject = where.type === "record" ? where.id : null;
+  const whole = useWholeView(sheet, `${where.type}:${subject ?? ""}`);
   const panel = panelBox(view);
 
   /* The arrow keys among the boards: the nearest that way. */
@@ -706,9 +708,11 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
         <div {...(now.level >= CITY ? { inert: true } : {})} style={away ? { minHeight: "100%", display: "flex", flexDirection: "column" } : { display: "contents" }}>
           {/* Under a host's bar (an embed's, in the slot) the shell keeps no room for it: the page keeps it here. */}
           {context.embedded ? <div aria-hidden="true" data-graview-bar-room="" style={{ height: "var(--graview-one-face-bar, 0px)", flex: "0 0 auto" }} /> : null}
+          {/* Over a view that is the record's whole page, what it is linked to comes first: seen, and reached by the keyboard and a screen reader, before the view. */}
+          {away && subject && whole ? <Connected store={store} id={subject} box={connected} sheet={sheet} openRecord={openRecord} whole /> : null}
           {children}
           {/* What the record is linked to, grown into the page as it becomes the panel: its rows the lines leave from. */}
-          {away && subject ? <Connected store={store} id={subject} box={connected} sheet={sheet} openRecord={openRecord} /> : null}
+          {away && subject && !whole ? <Connected store={store} id={subject} box={connected} sheet={sheet} openRecord={openRecord} whole={false} /> : null}
           {/* Room at the page's foot only where the control would stand over the page's last words: none where the foot is empty beside it. */}
           {away ? null : <FootRoom fab={fab} sheet={sheet} />}
         </div>
@@ -1306,8 +1310,31 @@ function CityKey({ close }: { readonly close: () => void }) {
  * it for that record's building. Nothing at all when the page shows every
  * one. What the Scene's own record view said under the record ("why this is
  * here", "the list it is on") is here when the page does not say it.
+ *
+ * A PAGE THAT IS A VIEW'S WHOLE (Graview HQ brief
+ * b-cloud-2026-11-13-connected-under-a-view): a tall view can put what the
+ * record is connected to far below the first window, or under nothing that
+ * says it is there. Then Connected stands at the page's top, every record
+ * it is linked to said there at once, small, under how many there are; a
+ * line leaves from the view's own part for a record where that part is in
+ * sight, and from here where it is not.
  */
-function Connected({ store, id, box, sheet, openRecord }: { readonly store: PageContext<AnySchema>["store"]; readonly id: string; readonly box: RefObject<HTMLDivElement | null>; readonly sheet: RefObject<HTMLDivElement | null>; readonly openRecord: (id: string, level: number) => void }) {
+/** Whether the page the sheet holds is a view's whole (`data-graview-whole-view`), as it is drawn now. */
+function useWholeView(sheet: RefObject<HTMLDivElement | null>, at: string): boolean {
+  const [whole, setWhole] = useState(false);
+  useLayoutEffect(() => {
+    const plane = sheet.current;
+    if (!plane) return;
+    const read = () => setWhole(plane.querySelector("[data-graview-whole-view]") !== null);
+    read();
+    const watch = typeof MutationObserver === "undefined" ? null : new MutationObserver(read);
+    watch?.observe(plane, { childList: true, subtree: true });
+    return () => watch?.disconnect();
+  }, [sheet, at]);
+  return whole;
+}
+
+function Connected({ store, id, box, sheet, openRecord, whole }: { readonly store: PageContext<AnySchema>["store"]; readonly id: string; readonly box: RefObject<HTMLDivElement | null>; readonly sheet: RefObject<HTMLDivElement | null>; readonly openRecord: (id: string, level: number) => void; readonly whole: boolean }) {
   const tick = useStoreTick(store);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const facts = useMemo(() => recordFacts(store, id), [store, id, tick]);
@@ -1318,8 +1345,14 @@ function Connected({ store, id, box, sheet, openRecord }: { readonly store: Page
     if (!plane) return;
     const read = () => {
       const shown = new Set<string>();
-      for (const part of plane.querySelectorAll("[data-graview-pick], [data-graview-record], [data-record], a[href]")) {
+      for (const part of plane.querySelectorAll(`[data-graview-pick], [data-graview-record], [data-record], a[href], [${RECORD_BOXES_ATTRIBUTE}]`)) {
         if (box.current?.contains(part)) continue;
+        /* A view drawn where the page cannot read (a worker view, a frame): the records its host says it shows, in sight or not. */
+        const drawn = recordBoxesOf(part);
+        if (drawn) {
+          for (const one of drawn.shows()) shown.add(one);
+          continue;
+        }
         const marked = part.getAttribute("data-graview-pick") ?? part.getAttribute("data-graview-record") ?? part.getAttribute("data-record");
         if (marked) shown.add(marked);
         else if (part instanceof HTMLAnchorElement) {
@@ -1337,11 +1370,40 @@ function Connected({ store, id, box, sheet, openRecord }: { readonly store: Page
     read();
     const watch = typeof MutationObserver === "undefined" ? null : new MutationObserver(read);
     watch?.observe(plane, { childList: true, subtree: true });
-    return () => watch?.disconnect();
+    plane.addEventListener(RECORD_BOXES_MOVED, read);
+    return () => {
+      watch?.disconnect();
+      plane.removeEventListener(RECORD_BOXES_MOVED, read);
+    };
   }, [sheet, box, id, tick]);
-  const groups = (facts?.links ?? []).map((group) => ({ ...group, targets: group.targets.filter((target) => !onPage?.has(target.id)) })).filter((group) => group.targets.length > 0);
+  const groups = (facts?.links ?? []).map((group) => ({ ...group, targets: whole ? group.targets : group.targets.filter((target) => !onPage?.has(target.id)) })).filter((group) => group.targets.length > 0);
   const total = groups.reduce((sum, group) => sum + group.targets.length, 0);
   if (onPage === null || total === 0) return <div ref={box} data-graview-connected-box="" hidden />;
+  if (whole) {
+    return (
+      <div ref={box} data-graview-connected-box="" data-graview-connected-at="top" style={{ height: 0, opacity: 0, overflow: "hidden", background: "var(--graview-panel, Canvas)", borderBottom: "1px solid var(--graview-edge)", flex: "0 0 auto" }}>
+        <section data-graview-connected={total} aria-label="Connected" style={{ padding: "8px 18px 10px" }}>
+          <h2 style={{ margin: "0 0 6px", fontSize: "0.95rem" }}>
+            Connected <span style={{ fontWeight: 400, color: "var(--graview-ink-faint)" }}>· {total}</span>
+          </h2>
+          {groups.map((group) => (
+            <div key={`${group.edgeKind}|${group.direction}`} style={{ marginTop: 4 }}>
+              <div style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>{group.description ?? group.edgeKind}</div>
+              <ul style={{ listStyle: "none", margin: "2px 0 0", padding: 0, display: "flex", flexWrap: "wrap", gap: 4 }}>
+                {group.targets.map((target) => (
+                  <li key={target.id}>
+                    <button type="button" data-graview-record={target.id} onClick={() => openRecord(target.id, PANEL)} style={{ display: "inline-flex", alignItems: "center", minHeight: 26, padding: "2px 8px", border: "1px solid var(--graview-edge)", borderRadius: 999, background: "none", color: "var(--graview-ink)", font: "inherit", fontSize: "0.8125rem", cursor: "pointer" }}>
+                      {target.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </section>
+      </div>
+    );
+  }
   return (
     <div ref={box} data-graview-connected-box="" style={{ height: 0, opacity: 0, overflow: "hidden", background: "var(--graview-panel, Canvas)", borderTop: "1px solid var(--graview-edge)", flex: "0 0 auto" }}>
       <section data-graview-connected={total} aria-label="Also connected" style={{ padding: "10px 18px 12px" }}>

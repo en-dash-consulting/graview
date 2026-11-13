@@ -145,6 +145,8 @@ const CHAIN = [
   ["one-face", "verify-one-face.mjs"],
   // The one face mounted whole through the embed, as Graview Cloud mounts it: its bar in the one face's slot, seen and pressed at Page, Nearby and City, at a desk and on a phone; the window scrolls the page; 1, 2, 3, [ and ] move the levels (FR-239).
   ["embed-one-face", "verify-embed-one-face.mjs"],
+  // A view drawn where the page cannot read has its lines to the city: a worker view's cards and a frame guest's rows each a line within 2 px of its box at Nearby, kept on them every frame as the page or the frame scrolls, a record page drawn by a view that names no record still its one line, and Connected not repeating what a frame shows.
+  ["frame-lines", "verify-frame-lines.mjs"],
   // The studio's whole path, on a scratch copy of seedbed: said, rewritten, written, compiled, migrated.
   ["rehearsal", "rehearse-studio.mjs"],
   ["remember", "verify-remember.mjs"],
@@ -179,7 +181,7 @@ const CHAIN = [
  * hold no state of a harness's (each opens its own browser context), and
  * runs side by side.
  */
-const ALONE = new Set(["lines", "panning", "first-load", "scale", "scene-at-scale", "scene-hands", "one-face", "embed-one-face", "renderer", "who", "journeys", "create"]);
+const ALONE = new Set(["lines", "panning", "first-load", "scale", "scene-at-scale", "scene-hands", "one-face", "embed-one-face", "frame-lines", "renderer", "who", "journeys", "create"]);
 
 /** Where the last run's verdicts are kept, for `--failed`. */
 const LAST_RUN = resolve(repoRoot, "docs/watch/last-run.json");

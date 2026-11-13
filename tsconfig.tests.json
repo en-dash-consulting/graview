@@ -22,6 +22,7 @@
       "@graview/core/csv": ["./packages/core/src/csv.ts"],
       "@graview/core/revisions": ["./packages/core/src/revisions.ts"],
       "@graview/core/head": ["./packages/core/src/head.ts"],
+      "@graview/core/record-boxes": ["./packages/core/src/record-boxes.ts"],
       "@graview/core/shown": ["./packages/core/src/shown.ts"],
       "@graview/core/markdown": ["./packages/core/src/markdown.ts"],
       "@graview/core/seat": ["./packages/core/src/seat.ts"],

@@ -53,6 +53,10 @@
       "types": "./dist/shown.d.ts",
       "default": "./dist/shown.js"
     },
+    "./record-boxes": {
+      "types": "./dist/record-boxes.d.ts",
+      "default": "./dist/record-boxes.js"
+    },
     "./head": {
       "types": "./dist/head.d.ts",
       "default": "./dist/head.js"

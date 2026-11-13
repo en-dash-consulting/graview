@@ -1,9 +1,10 @@
 import { labelOf, ONE_FACE_LAYERS } from "@graview/core";
+import { RECORD_BOXES_ATTRIBUTE, RECORD_BOXES_MOVED, recordBoxesOf } from "@graview/core/record-boxes";
 import { EMPTY_VIEW, toUrl, withOverview, type ViewState } from "@graview/layout/view";
 import { Scene, type SceneCamera } from "@graview/react";
 import { useGraview, useNavigation } from "@graview/react/provider";
 import { useEffect, useMemo, useRef } from "react";
-import { aimAt, altitudeAt, anchorOf, BOARD_ASPECT, boardWidthFor, fitBeside, SIGN_GAP, SIGN_POST, signFeet, signRoom, cameraBetween, cameraPutting, CITY, cityArea, footOf, leaveFrom, routeLine, LEVEL_LIVE, levelZooms, PAGE, pageBox, PANEL, panelBox, PHONE, project, restingLevel, SHEET_ORIGIN, standingAt, standingCss, unionOf, type Box, type Live, type PageWhere, type Point } from "./one-place-geometry.js";
+import { aimAt, altitudeAt, anchorOf, BOARD_ASPECT, boardWidthFor, fitBeside, fitCamera, SIGN_GAP, SIGN_POST, signFeet, signRoom, cameraBetween, cameraPutting, CITY, cityArea, footOf, leaveFrom, routeLine, LEVEL_LIVE, levelZooms, PAGE, pageBox, PANEL, panelBox, PHONE, project, restingLevel, SHEET_ORIGIN, standingAt, standingCss, unionOf, type Box, type Live, type PageWhere, type Point } from "./one-place-geometry.js";
 import type { OnePlaceCityProps } from "./one-place.js";
 
 /*
@@ -42,6 +43,17 @@ import type { OnePlaceCityProps } from "./one-place.js";
  * line, not three. A part scrolled out of the page draws none.
  */
 const RECORD_PARTS = "[data-graview-pick], [data-graview-record], [data-record]";
+/*
+ * AND WHAT A VIEW DRAWN WHERE THE PAGE CANNOT READ SAYS IT SHOWS (Graview
+ * HQ feature:f-one-face-lines-from-frame-views): a worker view's shadow
+ * root, a frame guest's document. The element it is drawn in holds its
+ * records' boxes, judged by its host (`RECORD_BOXES`), in its own pixels;
+ * each is carried through that element's box in this frame, so a line
+ * leaves it as it leaves a part of the page's own. A record page drawn by
+ * a view that names none of the records it draws still has its one line,
+ * from the view to the record it is about.
+ */
+const VIEW_PARTS = `[${RECORD_BOXES_ATTRIBUTE}]`;
 const recordShownBy = (element: Element): string | null => element.getAttribute("data-graview-pick") ?? element.getAttribute("data-graview-record") ?? element.getAttribute("data-record");
 
 /*
@@ -101,6 +113,8 @@ interface Drawn {
   readonly on: string;
   readonly target: { readonly type: "record"; readonly id: string } | { readonly type: "list"; readonly kind: string };
   readonly label: string;
+  /** The middle of the part it leaves from, in the window. */
+  readonly part: Point;
 }
 
 export function OnePlaceCity({ where, out, sheet, connected, boards, current, boardEls, boardLayer, fab, view, lessMotion, resolve, openRecord, openKind, onGround, motion, onAltitude }: OnePlaceCityProps) {
@@ -191,6 +205,100 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
   useEffect(() => {
     let frame = 0;
     let world: World = { plots: new Map(), buildings: new Map(), plates: new Map(), named: new Map() };
+    /*
+     * NEARBY FRAMES WHAT THE RECORD IS CONNECTED TO (Graview HQ brief
+     * b-cloud-2026-11-13-connected-under-a-view): a record's page at Nearby
+     * is aimed beside the panel at the level's own zoom, unless the
+     * buildings of what it is linked to and what its page shows would fall
+     * outside the city's side of the window; then the camera stands back,
+     * no further than it must, to take them all in. That zoom is this
+     * page's Nearby, so the altitude read from the camera is the level's
+     * still, and the move there is the one move, as any level's is.
+     */
+    let nearbyZoom: number | null = null;
+    /* What the last Nearby framing took in; a view that says its records after the move began is framed again, once, from where the camera is. */
+    let framedKey = "";
+    let reframeAsked = false;
+    /*
+     * ONCE A MOVE, AND NEVER OVER A HAND: armed as a move to a record's Nearby
+     * begins, taken by the first word from a view of what it shows after
+     * that, and put away once taken or the moment the person moves the
+     * camera themselves. A list a view grows later never takes the camera
+     * from where somebody left it.
+     */
+    let reframeArmed = false;
+    const askReframe = () => {
+      if (reframeArmed) reframeAsked = true;
+    };
+    const byHand = () => {
+      reframeArmed = false;
+      reframeAsked = false;
+    };
+    const framingKeyNow = (id: string): string => `${id}|${[...new Set([id, ...store.graph.neighbors(id).map((node) => node.id as string), ...markedOnPage()])].sort().join(" ")}`;
+    const zoomsOf = (where: PageWhere, view: OnePlaceCityProps["view"]): readonly [number, number, number] => {
+      const zooms = levelZooms(where, view);
+      return nearbyZoom !== null && where.type === "record" ? [zooms[0], nearbyZoom, zooms[2]] : zooms;
+    };
+    /** The records a page shows, by what its parts mark and what a view drawn in it says. */
+    const markedOnPage = (): string[] => {
+      const plane = sheet.current;
+      if (!plane) return [];
+      const ids: string[] = [];
+      for (const part of plane.querySelectorAll(`${RECORD_PARTS}, ${VIEW_PARTS}`)) {
+        const view = recordBoxesOf(part);
+        if (view) ids.push(...view.shows());
+        else {
+          const named = recordShownBy(part);
+          if (named) ids.push(named);
+        }
+        if (ids.length > 400) break;
+      }
+      return ids;
+    };
+    const nearbyFraming = (id: string, anchor: Point, most: number, zoomNow: number): Live => {
+      const now = state.current;
+      const view = now.view;
+      const base = cameraPutting(anchor, aimAt(PANEL, view, footRoom()), most);
+      const ids = new Set([id, ...store.graph.neighbors(id).map((node) => node.id as string), ...markedOnPage()]);
+      framedKey = `${id}|${[...ids].sort().join(" ")}`;
+      const kinds = new Set<string>();
+      const boxes = [...ids].flatMap((one) => {
+        const building = world.buildings.get(one);
+        if (!building) return [];
+        const kind = store.graph.getNode(one)?.kind as string | undefined;
+        if (kind) kinds.add(kind);
+        return [building];
+      });
+      // And each of their districts' names, with what is said beside it: a district's marks stay in sight with its buildings.
+      const named = [...kinds].flatMap((kind) => {
+        const plate = world.plates.get(kind) ?? world.named.get(kind);
+        return plate ? [plate] : [];
+      });
+      const around = boxes.length > 1 ? unionOf([...boxes, ...named]) : null;
+      if (!around) return base;
+      // The city's side of the window at Nearby: beside the panel above what stands at the foot, or above a phone's sheet and the control riding on it.
+      const bar = view.top ?? 0;
+      const panel = panelBox(view);
+      const dock = footNow().rest[0];
+      const area: Box = view.width <= PHONE ? { x: 0, y: bar, width: view.width, height: Math.max(1, panel.y - bar - footRoom()) } : { x: 0, y: bar, width: panel.x, height: Math.max(1, (dock ? dock.y : view.height) - bar) };
+      const margin = 28;
+      const a = project(base, { x: around.x, y: around.y });
+      const b = project(base, { x: around.x + around.width, y: around.y + around.height });
+      if (a.x >= area.x + margin && a.y >= area.y + margin && b.x <= area.x + area.width - margin && b.y <= area.y + area.height - margin) return base;
+      const fit = fitCamera(around, area, margin, most);
+      // Never as far back as the City, nor past what the camera can be written at.
+      const least = Math.max(1.15 / zoomNow, (camera.current?.range.min ?? 0) / zoomNow);
+      if (fit.s >= least) return fit;
+      /* More than the least zoom holds: the record's own building first, in the city's side, and as much else around it as fits. */
+      const middleOf = { x: around.x + around.width / 2, y: around.y + around.height / 2 };
+      const held = cameraPutting(middleOf, project(fit, middleOf), least);
+      const own = world.buildings.get(id);
+      if (!own) return held;
+      const lo = project(held, { x: own.x, y: own.y });
+      const hi = project(held, { x: own.x + own.width, y: own.y + own.height });
+      const shift = (low: number, high: number, from: number, to: number) => (low < from ? from - low : high > to ? to - high : 0);
+      return { s: held.s, x: held.x + shift(lo.x, hi.x, area.x + margin, area.x + area.width - margin), y: held.y + shift(lo.y, hi.y, area.y + margin, area.y + area.height - margin) };
+    };
     /** The camera between stops this frame, as painted — the last one seen while the view takes in a move just let go. */
     let painted: Live = LEVEL_LIVE;
     /** The level the camera rests at, and the altitude this frame. */
@@ -379,7 +487,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     /** The camera a level asks for, against the view's own: how much closer than now, and the place where that level aims it. */
     const cameraFor = (lvl: number, anchor: Point, zoomNow: number): Live => {
       const now = state.current;
-      const zooms = levelZooms(now.where, now.view);
+      const zooms = zoomsOf(now.where, now.view);
       const s = zooms[lvl]! / zoomNow;
       if (lvl === CITY) {
         /*
@@ -404,11 +512,18 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         const middleOfCity = city ? middle(city) : anchor;
         return cameraPutting(middleOfCity, aimAt(CITY, now.view), s);
       }
+      if (lvl === PANEL && now.where.type === "record") {
+        const framed = nearbyFraming(now.where.id, anchor, s, zoomNow);
+        nearbyZoom = zoomNow * framed.s;
+        return framed;
+      }
+      if (lvl === PANEL) nearbyZoom = null;
       return cameraPutting(anchor, aimAt(lvl === PAGE ? PANEL : lvl, now.view, footRoom()), s);
     };
 
     /** Start a move of the camera to a level. */
-    const moveTo = (cam: SceneCamera, toLevel: number, anchor: Point, now: number) => {
+    const moveTo = (cam: SceneCamera, toLevel: number, anchor: Point, now: number, arm = true) => {
+      reframeArmed = arm && toLevel === PANEL && state.current.where.type === "record";
       const from = painted;
       const to = cameraFor(toLevel, anchor, cam.zoom());
       const fromAltitude = altitude;
@@ -499,7 +614,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         }
       }
       const anchor = world.plots.size > 0 ? anchorIn(at.where, world) : null;
-      const zooms = levelZooms(at.where, at.view);
+      const zooms = zoomsOf(at.where, at.view);
       const zoomNow = cam.zoom();
       const placeKey = `${keyOf(at.where)}|${at.view.width}x${at.view.height}`;
 
@@ -541,7 +656,16 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       }
       if (asking.scrubbing && !asking.held && now - handSince > LET_GO_MS && !settling && calm) {
         asking.scrubbing = false;
-        if (anchor) moveTo(cam, restingLevel(altitude), anchor, now);
+        if (anchor) moveTo(cam, restingLevel(altitude), anchor, now, false);
+      }
+
+      /* A VIEW'S RECORDS SAID AFTER NEARBY WAS FRAMED: framed again, the one camera moving there from where it is. */
+      if (reframeAsked && !move && !asking.scrubbing && !settling && calm && anchor) {
+        reframeAsked = false;
+        if (rest === PANEL && at.where.type === "record" && framingKeyNow(at.where.id) !== framedKey) {
+          reframeArmed = false;
+          moveTo(cam, PANEL, anchor, now, false);
+        }
       }
 
       /* A MOVE UNDER WAY: the camera set from how far it has got. */
@@ -580,7 +704,16 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
          * nearest level.
          */
         const effective = zoomNow * painted.s;
-        const atZoom = altitudeAt(effective, zooms);
+        let atZoom = altitudeAt(effective, zooms);
+        /*
+         * A NEARBY THAT STANDS BACK is close to the City's zoom: a hand's small
+         * zoom out from it is judged on the level's own spacing, so a little
+         * pinch does not settle at the City.
+         */
+        if (rest === PANEL && nearbyZoom !== null && effective < nearbyZoom) {
+          const own = levelZooms(at.where, at.view);
+          atZoom = Math.min(CITY, PANEL + Math.log(nearbyZoom / effective) / Math.log(own[PANEL]! / own[CITY]!));
+        }
         // The zoom a move just written into the view settles a beat later: it is the face's own once it is still.
         if (ownZoom === null && calm) ownZoom = effective;
         /*
@@ -616,7 +749,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
             handSince = now;
           }
           altitude = atZoom;
-          if (now - handSince > LET_GO_MS && !asking.held && anchor && calm) moveTo(cam, restingLevel(atZoom), anchor, now);
+          if (now - handSince > LET_GO_MS && !asking.held && anchor && calm) moveTo(cam, restingLevel(atZoom), anchor, now, false);
         } else if (!(rest !== PAGE && placeKey !== lastPlace)) altitude = rest;
       }
 
@@ -758,11 +891,69 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           const node = store.graph.getNode(target.id);
           return node ? labelOf(store.schema.tryDefinition(node.kind as string), node as never) : target.id;
         };
-        // The page's own parts first — a link to a record's page, a row that names one — then the Connected rows for what the page does not show.
-        const parts = [...plane.querySelectorAll<HTMLElement>(`a[href], ${RECORD_PARTS}`)].sort((x, y) => Number(x.closest("[data-graview-connected]") !== null) - Number(y.closest("[data-graview-connected]") !== null));
+        /* The page's box in sight, read once a frame for every part on it. */
+        const ports = new Map<Element, DOMRect>();
+        const portOf = (element: Element): DOMRect | null => {
+          const port = element.closest("[data-graview-one-place]");
+          if (!port) return null;
+          let box = ports.get(port);
+          if (!box) ports.set(port, (box = port.getBoundingClientRect()));
+          return box;
+        };
+        /* One line a record: from where it is shown, in sight on the page, to where it stands. */
+        const offer = (target: Drawn["target"], part: Point, visible: DOMRect) => {
+          const key = target.type === "record" ? target.id : `kind:${target.kind}`;
+          if (taken.has(key)) return;
+          // Only what is in sight on the page: a part scrolled past, or under the page's own edge, draws none.
+          if (part.x < visible.left || part.x > visible.right || part.y < visible.top || part.y > visible.bottom) return;
+          // The line leaves the page's edge that faces the city, level with the part: never across the page's words.
+          const from = leaveFrom(part, pageRect, phone);
+          const end = endOf(target);
+          if (!end) return;
+          taken.add(key);
+          const route = routeLine(from, end.at, area, phone, reserved);
+          if (!route) return;
+          found.push({ key, from: route.from, to: route.to, bend: route.bend, under: route.toward, on: end.on, target, label: labelFor(target), part });
+        };
+        /* The record page drawn by a view that names no other record: where its one line to the record leaves from. */
+        let aboutPart: { readonly part: Point; readonly visible: DOMRect } | null = null;
+        // The page's own parts first — a link to a record's page, a row that names one, a view's records — then the Connected rows for what the page does not show.
+        const parts = [...plane.querySelectorAll<HTMLElement>(`a[href], ${RECORD_PARTS}, ${VIEW_PARTS}`)].sort((x, y) => Number(x.closest("[data-graview-connected]") !== null) - Number(y.closest("[data-graview-connected]") !== null));
         for (const element of parts) {
           if (found.length >= MOST_LINES) break;
           if (element.closest("nav, header, [role=navigation], [role=banner]")) continue;
+          const visible = portOf(element);
+          if (!visible) continue;
+          const boxes = recordBoxesOf(element);
+          if (boxes) {
+            const rect = element.getBoundingClientRect();
+            if (rect.width < 1 || rect.height < 1) continue;
+            // Its pixels carried through its box as this frame paints it: the page scales as it moves a level.
+            const scale = element.offsetWidth > 0 ? rect.width / element.offsetWidth : 1;
+            let named = false;
+            let about: Point | null = null;
+            for (const box of boxes.boxes()) {
+              if (found.length >= MOST_LINES) break;
+              if (!store.graph.getNode(box.id)) continue;
+              const part = { x: rect.left + (box.x + box.width / 2) * scale, y: rect.top + (box.y + box.height / 2) * scale };
+              if (box.id === subjectId) {
+                about ??= part;
+                continue;
+              }
+              named = true;
+              offer({ type: "record", id: box.id }, part, visible);
+            }
+            if (!named && subjectId !== null && aboutPart === null) {
+              // From the middle of what is in sight of it, or the record's own part where it drew one.
+              const top = Math.max(rect.top, visible.top);
+              const bottom = Math.min(rect.bottom, visible.bottom);
+              const left = Math.max(rect.left, visible.left);
+              const right = Math.min(rect.right, visible.right);
+              if (about) aboutPart = { part: about, visible };
+              else if (bottom - top >= 1 && right - left >= 1) aboutPart = { part: { x: (left + right) / 2, y: (top + bottom) / 2 }, visible };
+            }
+            continue;
+          }
           const named = recordShownBy(element);
           let target: Drawn["target"] | null = null;
           if (named !== null && store.graph.getNode(named)) target = { type: "record", id: named };
@@ -771,24 +962,11 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
             target = resolved?.type === "record" ? { type: "record", id: resolved.id } : resolved?.type === "list" ? { type: "list", kind: resolved.kind } : null;
           }
           if (!target || (target.type === "record" && target.id === subjectId)) continue;
-          const key = target.type === "record" ? target.id : `kind:${target.kind}`;
-          if (taken.has(key)) continue;
           const rect = element.getBoundingClientRect();
           if (rect.width < 1 || rect.height < 1) continue;
-          const part = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-          // Only what is in sight on the page: a part scrolled past, or under the page's own edge, draws none.
-          const port = element.closest("[data-graview-one-place]");
-          const visible = port ? port.getBoundingClientRect() : null;
-          if (!visible || part.x < visible.left || part.x > visible.right || part.y < visible.top || part.y > visible.bottom) continue;
-          // The line leaves the page's edge that faces the city, level with the part: never across the page's words.
-          const from = leaveFrom(part, pageRect, phone);
-          const end = endOf(target);
-          if (!end) continue;
-          taken.add(key);
-          const route = routeLine(from, end.at, area, phone, reserved);
-          if (!route) continue;
-          found.push({ key, from: route.from, to: route.to, bend: route.bend, under: route.toward, on: end.on, target, label: labelFor(target) });
+          offer(target, { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }, visible);
         }
+        if (aboutPart && subjectId !== null && found.length < MOST_LINES) offer({ type: "record", id: subjectId }, aboutPart.part, aboutPart.visible);
       }
       draw(found, shown);
 
@@ -860,6 +1038,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         drawn.g.setAttribute("data-graview-line-on", line.on);
         drawn.g.toggleAttribute("data-graview-line-under", line.under !== null);
         drawn.g.setAttribute("data-graview-line-from", `${from.x.toFixed(2)},${from.y.toFixed(2)}`);
+        drawn.g.setAttribute("data-graview-line-part", `${line.part.x.toFixed(2)},${line.part.y.toFixed(2)}`);
         drawn.g.setAttribute("data-graview-line-to", `${to.x.toFixed(2)},${to.y.toFixed(2)}`);
         drawn.g.setAttribute("data-graview-line-bend", `${bend.x.toFixed(2)},${bend.y.toFixed(2)}`);
         if (line.under) drawn.g.setAttribute("data-graview-line-toward", `${line.under.x.toFixed(2)},${line.under.y.toFixed(2)}`);
@@ -897,8 +1076,16 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     };
 
     frame = requestAnimationFrame(tick);
+    const said = sheet.current;
+    said?.addEventListener(RECORD_BOXES_MOVED, askReframe);
+    // The person's own hand on the city: a press, a drag, a wheel, a pinch.
+    const city = box.current;
+    const hands = ["pointerdown", "wheel", "touchstart"] as const;
+    for (const type of hands) city?.addEventListener(type, byHand, { capture: true, passive: true });
     return () => {
       cancelAnimationFrame(frame);
+      said?.removeEventListener(RECORD_BOXES_MOVED, askReframe);
+      for (const type of hands) city?.removeEventListener(type, byHand, { capture: true });
       for (const drawn of lines.values()) {
         drawn.g.remove();
         drawn.ring.remove();

@@ -1,0 +1,421 @@
+{
+  "at": "2026-11-13T08:33:41.297Z",
+  "engines": [
+    "chromium"
+  ],
+  "checks": {
+    "aWorkerViewsRecordsHaveLinesWithinTwoPixelsOfTheirBoxes": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "inSight": [
+            "f1",
+            "f2",
+            "f3",
+            "f4",
+            "f5"
+          ],
+          "missing": [],
+          "stray": 0,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "scrollingThePageKeepsAWorkerViewsLinesOnItsRecordsEveryFrame": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "frames": 68,
+          "counted": 324,
+          "worst": 0,
+          "examples": [],
+          "scrolled": 720,
+          "settled": {
+            "inSight": [
+              "f5",
+              "f6",
+              "f7",
+              "f8"
+            ],
+            "missing": [],
+            "stray": 0,
+            "ok": true
+          },
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aMoveToTheCityAndBackKeepsAWorkerViewsLinesOnItsRecordsEveryFrame": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "frames": 108,
+          "counted": 233,
+          "worst": 0,
+          "examples": [],
+          "framesDrawnBetweenLevels": 24,
+          "settled": {
+            "inSight": [
+              "f1",
+              "f2",
+              "f3",
+              "f4",
+              "f5"
+            ],
+            "missing": [],
+            "stray": 0,
+            "ok": true
+          },
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "goingToARecordAndBackAtNearbyBringsTheLinesBack": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "before": {
+            "inSight": [
+              "f1",
+              "f2",
+              "f3",
+              "f4",
+              "f5"
+            ],
+            "missing": [],
+            "stray": 0,
+            "ok": true
+          },
+          "there": [
+            "r1"
+          ],
+          "after": {
+            "inSight": [
+              "f1",
+              "f2",
+              "f3",
+              "f4",
+              "f5"
+            ],
+            "missing": [],
+            "stray": 0,
+            "ok": true
+          },
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aFrameGuestsRecordsHaveLinesWithinTwoPixelsOfTheirBoxes": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "rows": 8,
+          "shown": [
+            "f1",
+            "f2",
+            "p1",
+            "f3"
+          ],
+          "missing": [],
+          "strays": [],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "scrollingTheFrameKeepsItsLinesOnItsRowsAndScrollingThePageEveryFrame": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "before": {
+            "shown": [
+              "f1",
+              "f2",
+              "p1",
+              "f3"
+            ],
+            "missing": [],
+            "strays": [],
+            "ok": true
+          },
+          "inFrame": {
+            "shown": [
+              "p1",
+              "f3",
+              "f4",
+              "f5"
+            ],
+            "missing": [],
+            "strays": [],
+            "ok": true
+          },
+          "toItsEnd": {
+            "shown": [
+              "f4",
+              "f5",
+              "f6"
+            ],
+            "missing": [],
+            "strays": [],
+            "ok": true
+          },
+          "pageScrolled": {
+            "frames": 51,
+            "moved": true,
+            "counted": 87,
+            "worst": 0,
+            "examples": []
+          },
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aSeatThatCannotSeeAMarkedRecordGetsNoLineToIt": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "shown": [
+            "f1",
+            "f2",
+            "f3"
+          ],
+          "missing": [],
+          "strays": [],
+          "ok": true,
+          "p1": false
+        }
+      ],
+      "ok": true
+    },
+    "aRecordPageDrawnByAViewThatNamesNoRecordHasItsOneLine": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "view": {
+            "left": 930,
+            "top": 272,
+            "right": 1408,
+            "bottom": 480.61
+          },
+          "line": {
+            "on": "building",
+            "part": {
+              "x": 1169,
+              "y": 376.3
+            }
+          },
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "onATallViewThatIsTheWholePageItsConnectedRecordsAreInTheFirstWindowAndEveryLineEndsInIt": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "said": 8,
+          "missing": [],
+          "lines": 8,
+          "linesPastTheWindow": [],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aTallViewsOwnPillsHaveTheirLinesWhenScrolledTo": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "inSight": [
+            "r1",
+            "r2",
+            "r3",
+            "r4",
+            "r5",
+            "r6",
+            "r7",
+            "r8"
+          ],
+          "missing": [],
+          "stray": 0,
+          "ok": true,
+          "linesPastTheWindow": []
+        }
+      ],
+      "ok": true
+    },
+    "aDeepWideViewIsMeasuredWithinItsBudget": {
+      "budgetMs": 2,
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "boxes": 200,
+          "coldMedianMs": 0.9,
+          "coldWorstMs": 1.3,
+          "warmMs": 0.027,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aWorkerViewsRecordMovingUnderATransitionKeepsItsLineOnItEveryFrame": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "frames": 73,
+          "counted": 365,
+          "worst": 0,
+          "examples": [],
+          "traveled": 60,
+          "positionsSeen": 55,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aWorkerViewsRecordUnderAnEndlessAnimationKeepsItsLineOnItEveryFrame": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "frames": 90,
+          "counted": 360,
+          "worst": 0,
+          "examples": [],
+          "traveled": 60,
+          "framesWithItsLine": 90,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aLittleZoomOutAtANearbyThatStandsBackSettlesAtNearby": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "sheet": 1,
+          "altitude": 1,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "whereTheCitysSideCannotHoldItAllTheRecordsBuildingIsInSightAndALinePointsTowardTheRest": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "610×360"
+          },
+          "lines": 8,
+          "pointed": 8,
+          "own": {
+            "building": {
+              "left": 39.79999923706055,
+              "top": 71.69999694824219,
+              "right": 45.89999771118164,
+              "bottom": 78
+            },
+            "panel": {
+              "left": 178,
+              "top": 103,
+              "right": 598,
+              "bottom": 348
+            }
+          },
+          "ownInSight": true,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aCameraMovedByHandAtNearbyStaysWhereItWasLeftWhenAViewShowsMore": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "before": {
+            "zoom": "1.1500",
+            "transform": null,
+            "r1": {
+              "x": 464,
+              "y": 225
+            }
+          },
+          "panned": {
+            "zoom": "1.1500",
+            "transform": null,
+            "r1": {
+              "x": 584,
+              "y": 305
+            }
+          },
+          "after": {
+            "zoom": "1.1500",
+            "transform": null,
+            "r1": {
+              "x": 584,
+              "y": 305
+            }
+          },
+          "f7": true,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "noPageThrew": {
+      "errors": [],
+      "ok": true
+    }
+  },
+  "passed": true
+}
