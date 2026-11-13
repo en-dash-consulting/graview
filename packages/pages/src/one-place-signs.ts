@@ -89,6 +89,14 @@ export function diamondReach(box: Box, tile: Box): number {
 /** From a point to the nearest edge of a box: none inside it. */
 const gapTo = (p: Point, b: Box): number => Math.hypot(Math.max(b.x - p.x, 0, p.x - (b.x + b.width)), Math.max(b.y - p.y, 0, p.y - (b.y + b.height)));
 
+/**
+ * What a pixel of a post across a board weighs, beside a pixel of a board on
+ * what it must never stand on (1 and more): a crossing the length of a card
+ * weighs less than one pixel of that, and more than any distance from where
+ * a board belongs.
+ */
+const POST_CROSSING = 1e-3;
+
 export function placeSigns(asked: SignsAsked): SignsPlaced {
   const { tiles, buildings, board } = asked;
   const reserved = asked.reserved ?? [];
@@ -100,19 +108,37 @@ export function placeSigns(asked: SignsAsked): SignsPlaced {
   const posts = new Map<string, number>();
   const scales = new Map<string, number>();
   const stood: Box[] = [];
+  /** Each board's post as it stands: no other board stands across it. */
+  const stoodPosts: Box[] = [];
   const kinds = [...tiles.keys()];
 
   const { width, height, post, gap } = board;
   const card = (foot: Point, scale = 1): Box => ({ x: foot.x - (width * scale) / 2, y: foot.y - height * scale, width: width * scale, height: height * scale });
   const taken = (box: Box, length: number) => ({ ...box, height: box.height + length });
+  /** A board's post, from its foot down, as wide as it is drawn. */
+  const postOf = (foot: Point, length: number): Box => ({ x: foot.x - 1, y: foot.y, width: 2, height: Math.max(0, length) });
   const nameBoxes = [...names.values()];
   /** What a board's card and post would stand on, weighed: another board or a name most, then ground, then what is kept clear. */
-  const covers = (foot: Point, length: number, ground: readonly Box[], blocks: readonly Box[], scale = 1, near?: { readonly stood: readonly Box[]; readonly names: readonly Box[] }): number => {
+  const covers = (foot: Point, length: number, ground: readonly Box[], blocks: readonly Box[], scale = 1, near?: { readonly stood: readonly Box[]; readonly posts: readonly Box[]; readonly names: readonly Box[] }): number => {
     const face = card(foot, scale);
     const cardBox = grow(face, gap / 2);
     const whole = taken(face, length);
     const named = grow(whole, 2);
-    let sum = 0;
+    /*
+     * A POST NEVER CROSSES A BOARD (Nick's decision). Each board placed is
+     * an obstacle to the posts: this one's post down across a board already
+     * standing, or this card across a post already standing. It is weighed
+     * after what a board must never stand on — another board, a name, a
+     * district's ground — and before how far a board stands from where it
+     * belongs: of the places clear of those, one whose post crosses nothing
+     * is always taken. Where none is, the post is drawn under the board it
+     * crosses (`one-place.tsx`), never over its words.
+     */
+    const pole = postOf(foot, length);
+    let crossed = 0;
+    for (const other of near?.stood ?? stood) crossed += overlap(pole, other);
+    for (const other of near?.posts ?? stoodPosts) crossed += overlap(cardBox, other);
+    let sum = crossed * POST_CROSSING;
     for (const other of near?.stood ?? stood) sum += overlap(cardBox, other) * 4;
     for (const other of near?.names ?? nameBoxes) sum += overlap(named, other) * 4;
     // A district's ground is its diamond: the bare corners of its box are the street.
@@ -130,6 +156,7 @@ export function placeSigns(asked: SignsAsked): SignsPlaced {
     posts.set(key, length);
     if (scale !== 1) scales.set(key, scale);
     stood.push(grow(card(foot, scale), gap / 2));
+    stoodPosts.push(postOf(foot, length));
   };
   const allTiles = [...tiles.values()];
 
@@ -208,7 +235,7 @@ export function placeSigns(asked: SignsAsked): SignsPlaced {
     const region = { x: middleX - reachX - half.w * 0.25, y: top - gap - up, width: 2 * reachX + half.w * 0.5, height: middleY - (top - gap - up) };
     const groundNear = allTiles.filter((one) => overlap(one, region) > 0);
     const blocksNear = buildings.filter((one) => overlap(one, region) > 0);
-    const near = { stood: stood.filter((one) => overlap(one, region) > 0), names: nameBoxes.filter((one) => overlap(one, region) > 0) };
+    const near = { stood: stood.filter((one) => overlap(one, region) > 0), posts: stoodPosts.filter((one) => overlap(one, region) > 0), names: nameBoxes.filter((one) => overlap(one, region) > 0) };
     let best: { foot: Point; length: number; scale: number; cost: number } | null = null;
     // The places tried, the least to ask first, and no more than so many: a district with sixty views stops looking long before it has tried every place for the sixtieth.
     let tried = 0;

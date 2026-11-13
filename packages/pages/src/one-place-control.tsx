@@ -29,3 +29,13 @@ export const OneFaceContext = createContext<OneFace | null>(null);
 
 /** The one face, where the city stands under the pages; null where it does not. */
 export const useOneFace = (): OneFace | null => useContext(OneFaceContext);
+
+/**
+ * WHETHER THE ONE FACE IS HERE OR ON ITS WAY. The routed page is drawn once,
+ * before the one face's part arrives, and moved into it when it does
+ * (`router.tsx`): what the page draws differently on the one face — the bar
+ * in its slot, no timeline at the head — it draws so from the first,
+ * rather than drawing it again as new elements when the face arrives.
+ */
+export const OneFaceComing = createContext(false);
+export const useOneFaceComing = (): boolean => useContext(OneFaceComing);

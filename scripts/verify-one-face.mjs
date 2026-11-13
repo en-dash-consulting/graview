@@ -20,6 +20,12 @@
  * Nearby read clean: nothing said stands on anything else said, every
  * district names its kind, no word is cut off or wraps, the legend is
  * closed until its button opens it, and each view's board is that view.
+ * There, too, a record opened in the city by a press or a link is lit where
+ * it stands with its district in its order and nothing faded but what a
+ * fresh load fades; a board's post crosses no name and runs under any board
+ * it has to cross; a district's "⚠ n" opens that kind's problems alone; and
+ * the page is drawn once, its elements, keyboard and typed word kept as the
+ * one face arrives.
  *
  * Frame strips (desk and phone, light and dark), and the rich app's City
  * and Nearby at 1280 and 390 wide (`rich-*.png`), are written to
@@ -49,7 +55,7 @@ const STRIPS = resolve(repoRoot, "docs/one-face");
 
 const report = { at: new Date().toISOString(), engines, app: "apps/todo", checks: {} };
 const errors = [];
-const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], shortcuts: [], keysTurnOff: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [], richClear: [], richNamed: [], richWords: [], richLegend: [], richViews: [], richRecords: [], richNearbyViews: [], richControls: [], richOwnDistrict: [], richLegible: [], richHomeNearby: [], richOneLevel: [], richSmooth: [], richFocusSeen: [], richProblems: [], richHand: [] };
+const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], shortcuts: [], keysTurnOff: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [], richClear: [], richNamed: [], richWords: [], richLegend: [], richViews: [], richRecords: [], richNearbyViews: [], richControls: [], richOwnDistrict: [], richLegible: [], richHomeNearby: [], richOneLevel: [], richSmooth: [], richFocusSeen: [], richProblems: [], richHand: [], richProblemsOfKind: [], richPosts: [], richPostsUnder: [], recordInPlace: [], oneRuleFades: [], noWordsAfterPress: [], drawnOnce: [] };
 
 /* ------------------------------------------------------------------ */
 /* In the page                                                         */
@@ -1313,7 +1319,32 @@ const readRich = (page) =>
     // On a phone's City, which pans, the views put away under the bar or the control until panned to: they stand all the same.
     const under = [...document.querySelectorAll("[data-graview-board][data-graview-under]")].map((b) => b.getAttribute("data-graview-board"));
     const namesUnder = (innerWidth <= 600 || innerHeight <= 600) ? [...document.querySelectorAll("[data-graview-district-tag][data-graview-under]")].map((t) => ({ kind: t.getAttribute("data-graview-district-tag"), text: t.textContent })) : [];
-    return { boards, under, namesUnder, tags, plots, plates, problems, buildings, lines, controls, unseenFocus, chosenLooking, tipUp, district, dock: dock ? rect(dock) : null, level, panel: level === 1 && panelEl ? rect(panelEl) : null, legend, bar, width: innerWidth, height: innerHeight };
+    /*
+     * EACH BOARD'S POST, from the foot of its card down to the ground: what
+     * other board or district's name it runs across, and, where it does,
+     * whether it is drawn under that board — the board, not the post, is
+     * what is seen where they cross.
+     */
+    // Beside a page its own board is the page, laid over it clear: not a board standing in the city.
+    const besidePage = Number(document.querySelector("[data-graview-one-place]")?.getAttribute("data-graview-one-place")) === 1;
+    const standing = [...document.querySelectorAll("[data-graview-board]")].filter((b) => Number(b.style.opacity || 0) > 0.9 && !b.hasAttribute("data-graview-under") && !(besidePage && b.hasAttribute("aria-current")));
+    const postCrossings = [];
+    for (const b of standing) {
+      const box = rect(b);
+      const length = parseFloat(b.style.getPropertyValue("--graview-sign-post")) || 0;
+      const post = { x: box.x + box.width / 2 - 1, y: box.y + box.height, width: 2, height: length };
+      const across = (other) => Math.max(0, Math.min(post.x + post.width, other.x + other.width) - Math.max(post.x, other.x)) > 0 && Math.min(post.y + post.height, other.y + other.height) - Math.max(post.y, other.y) > 1;
+      for (const o of standing) {
+        if (o === b) continue;
+        const other = rect(o);
+        if (!across(other)) continue;
+        const y = (Math.max(post.y, other.y) + Math.min(post.y + post.height, other.y + other.height)) / 2;
+        const seenThere = document.elementFromPoint(post.x + 1, y)?.closest("[data-graview-board]");
+        postCrossings.push({ post: b.getAttribute("title"), across: `“${o.getAttribute("title")}”`, under: seenThere === o });
+      }
+      for (const t of tags) if (across(t.box)) postCrossings.push({ post: b.getAttribute("title"), across: `the ${t.kind} name`, under: null });
+    }
+    return { boards, under, namesUnder, tags, plots, plates, problems, buildings, lines, controls, unseenFocus, chosenLooking, tipUp, district, postCrossings, dock: dock ? rect(dock) : null, level, panel: level === 1 && panelEl ? rect(panelEl) : null, legend, bar, width: innerWidth, height: innerHeight };
   });
 
 const overlapOf = (a, b) => Math.max(0, Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x)) * Math.max(0, Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y));
@@ -1423,7 +1454,7 @@ async function rich(browser, device) {
       const underThePage = seenNow.panel ? Object.entries(seenNow.district).filter(([, tile]) => overlapOf(tile, seenNow.panel) >= tile.width * tile.height * 0.5).map(([kind]) => kind) : [];
       // A small window's City pans rather than shrink its words past reading: there it may run past the window's edge.
       const pans = level === 2 && (device.width <= 600 || device.height <= 600);
-      result[level === 2 ? "city" : "nearby"] = { unseenFocus: seenNow.unseenFocus, clash, underPanel, outside: pans ? [] : outside, onGround, hidden, kindsInSight, lineEnds, lines: seenNow.lines.length, controlsCovered, astray, small, underThePage, chosenLooking: seenNow.chosenLooking, tipUp: seenNow.tipUp, problems: seenNow.problems };
+      result[level === 2 ? "city" : "nearby"] = { unseenFocus: seenNow.unseenFocus, clash, underPanel, outside: pans ? [] : outside, onGround, hidden, kindsInSight, lineEnds, lines: seenNow.lines.length, controlsCovered, astray, small, underThePage, chosenLooking: seenNow.chosenLooking, tipUp: seenNow.tipUp, problems: seenNow.problems, postCrossings: seenNow.postCrossings };
       if (level === 1) {
         /*
          * Every view whose district is in sight beside the page stands there as
@@ -1578,7 +1609,16 @@ async function rich(browser, device) {
           }
           await restAt(page, 1, 15_000).catch(() => {});
         }
-        opens.push({ from: from === 2 ? "City" : "Nearby", how, there, url: new URL(page.url()).pathname, level: await levelOf(page) });
+        // What the page beside the city lists: whose problems it says it is, and the kind of every record a problem there names.
+        const listed = await page.evaluate(() => {
+          const sheet = document.querySelector("[data-graview-one-place]");
+          return {
+            of: sheet?.querySelector("[data-graview-problems-of]")?.getAttribute("data-graview-problems-of") ?? null,
+            named: [...(sheet?.querySelectorAll("main section:not([data-testid=rules]) a[href]") ?? [])].map((a) => new URL(a.href).pathname.split("/").at(-2)),
+          };
+        });
+        const at = new URL(page.url());
+        opens.push({ from: from === 2 ? "City" : "Nearby", how, there, url: at.pathname, kind: at.searchParams.get("kind"), level: await levelOf(page), ...listed });
       }
       result.problemsOpen = opens;
     }
@@ -1617,6 +1657,19 @@ async function rich(browser, device) {
   if (result.handOnABoard) seen.richHand.push({ where, ...result.handOnABoard });
   else if (device.width === 1280 || device.width === 390) seen.richHand.push({ where, error: result.error, ok: false });
   if (result.problemsOpen) seen.richProblems.push({ where, opens: result.problemsOpen, ok: result.problemsOpen.every((one) => one.there && one.url.endsWith("/problems") && one.level === 1) });
+  // The specimens' "⚠ n" opens the problems narrowed to specimens: the page says so, and every problem it lists names a specimen.
+  if (result.problemsOpen) seen.richProblemsOfKind.push({ where, opens: result.problemsOpen.map(({ from, how, kind, of, named }) => ({ from, how, kind, of, named: [...new Set(named)] })), ok: result.problemsOpen.every((one) => one.there && one.kind === "specimen" && one.of === "specimen" && one.named.length > 0 && one.named.every((plural) => plural === "specimens")) });
+  /*
+   * A board's post never runs across a district's name, at the City and
+   * beside a page. Across another board it runs only where no place by its
+   * district stands clear of every board, name and ground (held by the
+   * placement's own tests), and there the board is what is seen where they
+   * cross: the post is drawn under it, never over its words.
+   */
+  const acrossNames = [...(city.postCrossings ?? []), ...(nearby.postCrossings ?? [])].filter((one) => one.under === null);
+  seen.richPosts.push({ where, acrossNames, error: result.error, ok: !result.error && Array.isArray(city.postCrossings) && Array.isArray(nearby.postCrossings) && acrossNames.length === 0 });
+  const crossingBoards = [...(city.postCrossings ?? []), ...(nearby.postCrossings ?? [])].filter((one) => one.under !== null);
+  seen.richPostsUnder.push({ where, crossings: crossingBoards, error: result.error, ok: !result.error && crossingBoards.every((one) => one.under) });
   seen.richOwnDistrict.push({ where, city: city.astray, nearby: nearby.astray, pageCoversADistrict: nearby.underThePage, ok: !result.error && city.astray?.length === 0 && nearby.astray?.length === 0 && (where.device !== "1280×800" || (nearby.underThePage?.length ?? 0) > 0) });
   // On a small window (a phone, or one on its side) a board's words are never smaller than 9 pixels: the City pans rather than shrink them, and beside a page a board stands only where it can be read.
   const small = device.width <= 600 || device.height <= 600;
@@ -1624,6 +1677,229 @@ async function rich(browser, device) {
   seen.richHomeNearby.push({ where, ...result.home, ok: Boolean(result.home && result.home.districts > 0 && (!result.home.held || result.home.behind.length === 0)) });
   seen.richOneLevel.push({ where, nearby: { chosen: nearby.chosenLooking, tip: nearby.tipUp }, city: { chosen: city.chosenLooking, tip: city.tipUp }, ok: !result.error && nearby.chosenLooking?.length === 1 && city.chosenLooking?.length === 1 && nearby.tipUp?.length === 0 && city.tipUp?.length === 0 });
   seen.richViews.push({ where, ...result.views, ok: Boolean(result.views && result.views.boards.length + (device.width <= 600 || device.height <= 600 ? result.views.underThePansBar.length : 0) === 4 && result.views.asThemselves === result.views.boards.length && result.views.alike.length === 0) });
+}
+
+/*
+ * A RECORD OPENED IN THE CITY IS LIT WHERE IT STANDS. Nick pressed a
+ * record's building at Nearby: it was chosen, but its building moved to its
+ * district's top corner, the others laid out again around it, the rest of
+ * the city faded, and a line's words floated over the city — where loading
+ * that record's page fresh lit it in place with nothing faded. Here a
+ * species' page goes to Nearby, another species' building is pressed, and
+ * then one of the records its page links to is pressed in the page beside
+ * the city: each time the district's buildings stand where they stood (read
+ * in the district's own ground, so the camera's move is not counted), what
+ * is faded is what a fresh load of that page fades, no line's words stand
+ * over the city, and the record opened is the one lit.
+ */
+const RECORD_FROM = "species-1";
+/** Every building of one district, where it stands on its own ground (its tile's corners as the frame), what of the city is faded, and the words over the city. */
+const readDistrict = (page, kind) =>
+  page.evaluate((kind) => {
+    const city = document.querySelector('[data-testid="one-place-city"]');
+    const tile = city?.querySelector(`[data-graview-plot="kind:${CSS.escape(kind)}"] .graview-plot-tile`);
+    const corners = (tile?.getAttribute("points") ?? "").trim().split(/\s+/).map((pair) => pair.split(",").map(Number));
+    // The diamond's top, right and left corners: the district's own two axes.
+    const top = corners.reduce((a, b) => (b[1] < a[1] ? b : a), [0, Infinity]);
+    const right = corners.reduce((a, b) => (b[0] > a[0] ? b : a), [-Infinity, 0]);
+    const left = corners.reduce((a, b) => (b[0] < a[0] ? b : a), [Infinity, 0]);
+    const u = [right[0] - top[0], right[1] - top[1]];
+    const v = [left[0] - top[0], left[1] - top[1]];
+    const det = u[0] * v[1] - u[1] * v[0] || 1;
+    const onGround = (x, y) => {
+      const dx = x - top[0];
+      const dy = y - top[1];
+      return [Math.round(((dx * v[1] - dy * v[0]) / det) * 1000) / 1000, Math.round(((u[0] * dy - u[1] * dx) / det) * 1000) / 1000];
+    };
+    const at = {};
+    for (const b of city?.querySelectorAll(`[data-graview-plot="kind:${CSS.escape(kind)}"] [data-graview-building]`) ?? []) {
+      // Where it meets the ground: its left face's lowest corner, as the plot draws it (a lift is a translate, not its points).
+      const pts = (b.querySelector(".graview-iso-left")?.getAttribute("points") ?? "").trim().split(/\s+/).map((pair) => pair.split(",").map(Number));
+      const foot = pts.reduce((a, p) => (p[1] > a[1] ? p : a), [0, -Infinity]);
+      at[b.getAttribute("data-graview-building")] = onGround(foot[0], foot[1]);
+    }
+    let faded = 0;
+    for (const b of city?.querySelectorAll("[data-graview-building]") ?? []) {
+      let o = 1;
+      for (let el = b; el && el !== city; el = el.parentElement) o *= Number(getComputedStyle(el).opacity);
+      if (o < 0.95) faded++;
+    }
+    const words = [...document.querySelectorAll(".graview-record-link-said")].filter((el) => el.getBoundingClientRect().width > 0 && getComputedStyle(el).display !== "none" && getComputedStyle(el).visibility !== "hidden").map((el) => el.textContent);
+    const lit = [...(city?.querySelectorAll("[data-graview-building][data-graview-here]") ?? [])].map((b) => b.getAttribute("data-graview-building"));
+    const chosenOnTheScene = [...(city?.querySelectorAll("[data-graview-building][data-graview-selected]") ?? [])].map((b) => b.getAttribute("data-graview-building"));
+    return { at, faded, words, lit, chosenOnTheScene, url: location.pathname, level: Number(document.querySelector("[data-graview-one-place]")?.getAttribute("data-graview-one-place")) };
+  }, kind);
+/** What of a district moved, in its own ground's measure. */
+const movedIn = (before, after) => Object.keys(before).filter((id) => after[id] && Math.hypot(after[id][0] - before[id][0], after[id][1] - before[id][1]) > 0.02);
+/** The most buildings faded in any one frame from now until it is read: a fade that comes and goes is a fade. */
+const watchFading = (page) =>
+  page.evaluate(() => {
+    window.__mostFaded = 0;
+    window.__fadeWatch = true;
+    const tick = () => {
+      if (!window.__fadeWatch) return;
+      const city = document.querySelector('[data-testid="one-place-city"]');
+      let faded = 0;
+      for (const b of city?.querySelectorAll("[data-graview-building]") ?? []) if (Number(getComputedStyle(b).opacity) < 0.95) faded++;
+      window.__mostFaded = Math.max(window.__mostFaded, faded);
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+const mostFaded = (page) => page.evaluate(() => ((window.__fadeWatch = false), window.__mostFaded));
+
+async function recordInPlace(browser) {
+  const where = { device: "1280×800", how: "pointer" };
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, colorScheme: "dark" });
+  const page = await context.newPage();
+  page.on("pageerror", (error) => errors.push(`record in place: ${error.message}`));
+  const runs = [];
+  try {
+    const nearby = async (path) => {
+      await page.goto(`${richHost.url}${path}?theme=dark`, { waitUntil: "load" });
+      await ready(page);
+      await page.keyboard.press("2");
+      await restAt(page, 1, 15_000);
+      await page.waitForTimeout(700);
+    };
+    await nearby(`/species/${RECORD_FROM}`);
+    // A building of another species, pressed where it stands: one nothing else stands over, beside the page.
+    const target = await page.evaluate((from) => {
+      const panel = document.querySelector("[data-graview-one-place]").getBoundingClientRect();
+      for (const b of document.querySelectorAll('[data-testid="one-place-city"] [data-graview-plot="kind:species"] [data-graview-building]')) {
+        if (b.getAttribute("data-graview-building") === from) continue;
+        const r = b.getBoundingClientRect();
+        const x = r.left + r.width / 2;
+        const y = r.top + r.height * 0.6;
+        if (x < 20 || x > panel.left - 20 || y < 80 || y > innerHeight - 120) continue;
+        if (document.elementFromPoint(x, y)?.closest('[data-testid="one-place-city"]')) return { id: b.getAttribute("data-graview-building"), x, y };
+      }
+      return null;
+    }, RECORD_FROM);
+    const before = await readDistrict(page, "species");
+    if (target) {
+      await watchFading(page);
+      await page.mouse.click(target.x, target.y);
+      await page.waitForTimeout(300);
+      await restAt(page, 1, 15_000).catch(() => {});
+      await page.waitForTimeout(900);
+      const after = await readDistrict(page, "species");
+      const most = await mostFaded(page);
+      await nearby(`/species/${target.id}`);
+      const fresh = await readDistrict(page, "species");
+      runs.push({ by: "a press on its building", opened: target.id, landed: after.url, moved: movedIn(before.at, after.at), lit: after.lit, chosenOnTheScene: after.chosenOnTheScene, faded: { afterThePress: after.faded, mostWhileItMoved: most, freshLoad: fresh.faded }, words: after.words, freshMoved: movedIn(after.at, fresh.at) });
+    } else runs.push({ by: "a press on its building", error: "no building of another species to press" });
+    // And a link in the page beside the city: one of the records the species' page links to.
+    await nearby(`/species/${RECORD_FROM}`);
+    const link = await page.evaluate(() => {
+      const button = document.querySelector("[data-graview-connected-box] [data-graview-record]");
+      return button ? button.getAttribute("data-graview-record") : null;
+    });
+    const linkKind = link ? await page.evaluate((id) => document.querySelector(`[data-graview-building="${CSS.escape(id)}"]`)?.closest("[data-graview-plot]")?.getAttribute("data-graview-plot")?.replace(/^kind:/, "") ?? null, link) : null;
+    if (link && linkKind) {
+      const beforeLink = await readDistrict(page, linkKind);
+      await watchFading(page);
+      await page.locator(`[data-graview-connected-box] [data-graview-record="${link}"]`).first().click();
+      await page.waitForTimeout(300);
+      await restAt(page, 1, 15_000).catch(() => {});
+      await page.waitForTimeout(900);
+      const after = await readDistrict(page, linkKind);
+      const most = await mostFaded(page);
+      const path = new URL(page.url()).pathname.replace(/^\/pages/, "");
+      await nearby(path);
+      const fresh = await readDistrict(page, linkKind);
+      runs.push({ by: "a link in the page", opened: link, landed: after.url, moved: movedIn(beforeLink.at, after.at), lit: after.lit, chosenOnTheScene: after.chosenOnTheScene, faded: { afterThePress: after.faded, mostWhileItMoved: most, freshLoad: fresh.faded }, words: after.words, freshMoved: movedIn(after.at, fresh.at) });
+    } else runs.push({ by: "a link in the page", error: "no linked record with a building beside the page" });
+  } catch (error) {
+    runs.push({ error: String(error?.message ?? error) });
+  }
+  await context.close().catch(() => {});
+  for (const run of runs) {
+    const done = !run.error;
+    seen.recordInPlace.push({ where, ...run, ok: done && run.landed.endsWith(`/${run.opened}`) && run.moved.length === 0 && run.freshMoved.length === 0 && run.lit.includes(run.opened) && run.chosenOnTheScene.length === 0 });
+    seen.oneRuleFades.push({ where, by: run.by, faded: run.faded, error: run.error, ok: done && run.faded.afterThePress === run.faded.freshLoad && run.faded.mostWhileItMoved <= run.faded.freshLoad });
+    seen.noWordsAfterPress.push({ where, by: run.by, words: run.words, error: run.error, ok: done && run.words.length === 0 });
+  }
+}
+
+/*
+ * THE PAGE IS DRAWN ONCE. With the one face on, its part is fetched as the
+ * page first draws, and it arrived some 300 ms later: the page and its bar
+ * drawn again as new elements, and a press, the keyboard and a word typed
+ * in that time lost. Here its part is held back a while, as a slow network
+ * would; meanwhile the keyboard goes into Find and a word is typed there,
+ * which goes to what it finds; once the one face has come, that page's
+ * main, the bar and Find are the same elements, the keyboard still in Find,
+ * the word as typed, the page in the one face's sheet and the bar in its
+ * slot.
+ */
+async function drawnOnce(browser) {
+  const where = { device: "1280×800" };
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const page = await context.newPage();
+  page.on("pageerror", (error) => errors.push(`drawn once: ${error.message}`));
+  let held = 0;
+  // The one face's part, told by what it draws: held back 2.5 s.
+  await page.route("**/*.js", async (route) => {
+    const response = await route.fetch();
+    const body = await response.text();
+    if (body.includes("data-graview-one-place") && body.includes("one-place-bar")) {
+      held++;
+      await new Promise((resolve) => setTimeout(resolve, 2_500));
+    }
+    await route.fulfill({ response, body });
+  });
+  const result = { where };
+  try {
+    await page.goto(`${richHost.url}/species/${RECORD_FROM}`, { waitUntil: "commit" });
+    await page.waitForSelector("[data-graview-app-bar]", { timeout: 30_000 });
+    const meanwhile = await page.evaluate(async () => {
+      const arriving = document.documentElement.hasAttribute("data-graview-one-face-arriving") && !document.querySelector("[data-graview-one-place]");
+      const bar = document.querySelector("[data-graview-app-bar]");
+      if (bar) bar.__drawnOnce = 1;
+      // Find, as a person reaches it: its box, or the button that opens it.
+      let find = bar?.querySelector('[data-testid="app-find"] input, input[data-testid="nav-find"], input[type="search"]');
+      if (!find) {
+        bar?.querySelector('[data-testid="app-find-open"]')?.click();
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        find = bar?.querySelector('[data-testid="app-find"] input, input[data-testid="nav-find"], input[type="search"]');
+      }
+      if (find) find.__drawnOnce = 1;
+      find?.focus();
+      return { arriving, find: Boolean(find), focused: document.activeElement === find };
+    });
+    if (meanwhile.find) await page.keyboard.type("fern", { delay: 20 });
+    // A word in Find goes to what it finds: that page, drawn while the one face is still on its way, is the page that has to stay.
+    await page.waitForTimeout(300);
+    const stillArriving = await page.evaluate(() => {
+      const main = document.querySelector("main");
+      if (main) main.__drawnOnce = 1;
+      return document.documentElement.hasAttribute("data-graview-one-face-arriving") && !document.querySelector("[data-graview-one-place]");
+    });
+    meanwhile.stillArriving = stillArriving;
+    await page.waitForFunction(() => !document.documentElement.hasAttribute("data-graview-one-face-arriving") && document.querySelector("[data-graview-one-place]"), null, { timeout: 30_000 });
+    await page.waitForTimeout(400);
+    const after = await page.evaluate(() => {
+      const main = document.querySelector("main");
+      const bar = document.querySelector("[data-graview-app-bar]");
+      const active = document.activeElement;
+      return {
+        sameMain: main?.__drawnOnce === 1,
+        sameBar: bar?.__drawnOnce === 1,
+        keyboardInFind: active?.__drawnOnce === 1,
+        typed: active instanceof HTMLInputElement ? active.value : null,
+        inTheSheet: Boolean(main && document.querySelector("[data-graview-one-place]")?.contains(main)),
+        barInTheSlot: Boolean(bar && document.querySelector('[data-testid="one-place-bar"]')?.contains(bar)),
+        mains: document.querySelectorAll("main").length,
+      };
+    });
+    Object.assign(result, { heldBack: held, meanwhile, after });
+  } catch (error) {
+    result.error = String(error?.message ?? error);
+  }
+  await context.close().catch(() => {});
+  const a = result.after;
+  seen.drawnOnce.push({ ...result, ok: Boolean(!result.error && result.heldBack > 0 && result.meanwhile?.arriving && result.meanwhile.stillArriving && result.meanwhile.find && a?.sameMain && a.sameBar && a.keyboardInFind && a.typed === "fern" && a.inTheSheet && a.barInTheSlot && a.mains === 1) });
 }
 
 /* ------------------------------------------------------------------ */
@@ -1682,6 +1958,10 @@ try {
     ]);
     seen.switch.push(await rootIsTheOneFace(browser, { engine, device: "desk 1440×900" }).catch((error) => ({ ok: false, error: String(error?.message ?? error) })));
     for (const device of [{ width: 1520, height: 900 }, { width: 1280, height: 800 }, { width: 390, height: 844 }, { width: 844, height: 390 }, { width: 768, height: 1024 }, { width: 360, height: 640 }]) await rich(browser, device);
+    if (engine === "chromium") {
+      await recordInPlace(browser);
+      await drawnOnce(browser);
+    }
     if (engine === "chromium") {
       report.strips = [];
       for (const scheme of ["light", "dark"]) {
@@ -1755,6 +2035,13 @@ try {
   report.checks.noBoardsWordsAreSmallerThanNinePixels = { held: seen.richLegible, ok: every(seen.richLegible) };
   report.checks.atNearbyTheHomeFramesTheCityBesideThePage = { held: seen.richHomeNearby, ok: every(seen.richHomeNearby) };
   report.checks.theLevelControlShowsOneChosenLevelAfterTheKeys = { held: seen.richOneLevel, ok: every(seen.richOneLevel) };
+  report.checks.aRecordOpenedInTheCityByAPressOrALinkIsLitWhereItStandsAndItsDistrictKeepsItsOrder = { held: seen.recordInPlace, ok: every(seen.recordInPlace) };
+  report.checks.whetherTheRestOfTheCityFadesIsOneRuleOnAFreshLoadAndAfterAPress = { held: seen.oneRuleFades, ok: every(seen.oneRuleFades) };
+  report.checks.noLinksWordsFloatOverTheCityAfterARecordIsOpenedThere = { held: seen.noWordsAfterPress, ok: every(seen.noWordsAfterPress) };
+  report.checks.thePageIsDrawnOnceAndItsElementsFocusAndTypedWordSurviveTheOneFacesArrival = { held: seen.drawnOnce, ok: every(seen.drawnOnce) };
+  report.checks.noBoardsPostCrossesADistrictsName = { held: seen.richPosts, ok: every(seen.richPosts) };
+  report.checks.aPostCrossesABoardOnlyUnderIt = { held: seen.richPostsUnder, ok: every(seen.richPostsUnder) };
+  report.checks.aDistrictsWarningChipOpensTheProblemsOfThatKindAlone = { held: seen.richProblemsOfKind, ok: every(seen.richProblemsOfKind) };
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
   report.passed = Object.values(report.checks).every((check) => check.ok);
 } catch (error) {

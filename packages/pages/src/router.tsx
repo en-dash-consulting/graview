@@ -17,7 +17,9 @@ import { pathOfPlace, placesOf } from "./page-places.js";
 import { createPageRegistry, kindOfSlug, type PageRegistry } from "./registry.js";
 import { useHref, useLocation, useNavigate, useNavigationType, useParams } from "react-router";
 // The page over the Scene's own city is fetched only where a face asks for it (`sceneUnderPages`): a hosted page draws none of it.
-import { useOneFace } from "./one-place-control.js";
+import { OneFaceComing, OneFaceContext, useOneFace, useOneFaceComing, type OneFace } from "./one-place-control.js";
+import { createPortal } from "react-dom";
+import { heldHost, HeldHere } from "./held-element.js";
 const OnePlace = lazyPart(() => import("./one-place.js").then((module) => ({ default: module.OnePlace })));
 import { appKeyOf, BarFindContext, FirstLookDoor, HeadingsUnder, PastBar, registerReaderLenses, SpecLinks, type BarFind, type FirstLook } from "@graview/primitives/pages";
 
@@ -561,7 +563,9 @@ export function PagesRoutes<S extends AnySchema>({
   const [barFind, setBarFind] = useState<BarFind | null>(null);
   // Where the face is, for a shell's `usePlaceHere()` and each page's trail: read as the pages read the store.
   const placeRoot = useMemo<PlaceHereRoot>(() => ({ context: inside as unknown as PlaceHereRoot["context"], registry: registry as PlaceHereRoot["registry"] }), [inside, registry]);
-  const oneFace = useOneFace() !== null;
+  // The one face, here or on its way: the page is drawn once, as it will stand on it.
+  const faceHere = useOneFace() !== null;
+  const oneFace = useOneFaceComing() || faceHere;
   const told = useMemo(() => ({ onFind: setBarFind, find: !(registry?.without().has("find") ?? false), places: !(registry?.without().has("places") ?? false) }), [registry]);
   const routes = (
     // The routed face holds the keyboard the way the scene does, and offers Find and the way back, whichever shell an app draws.
@@ -634,12 +638,55 @@ export function PagesRoutes<S extends AnySchema>({
 }
 
 /**
- * THE ONE FACE ON ITS WAY. While the one face's part is fetched the page is
- * drawn as the routed face draws it, and once it arrives that page is drawn
- * again inside it: its bar, links and fields are new elements. Until then the
- * document says so (`data-graview-one-face-arriving` on `<html>`), so a host,
- * a harness or a screenshot that waits for the page waits for the page that
- * stays — the same signal for every face on the page, counted.
+ * THE PAGE OVER THE SCENE'S OWN CITY, DRAWN ONCE: one place at every
+ * altitude (`one-place.tsx`). Its part is fetched as the page first draws,
+ * and the page is not drawn again when it arrives. It used to be: the
+ * routed page stood as the Suspense fallback, and the one face drew it anew
+ * inside itself some 300 ms later, so a press, the keyboard and a word typed
+ * in that time were lost with the elements they were in. The page is drawn
+ * once, into an element of its own, and that element moves — into the
+ * fallback's place first, then into the one face's sheet — so it is the
+ * same page, its fields and focus as they were. The one face says itself to
+ * the page from where the page is drawn, once it has come.
+ */
+function OneFacePage({ context, registry }: { readonly context: PageContext<AnySchema>; readonly registry: PageRegistry<AnySchema, PageComponent<AnySchema>> | undefined }) {
+  const [host] = useState(() => heldHost("data-graview-one-face-page"));
+  const [face, setFace] = useState<OneFace | null>(null);
+  // Gone with the face: where it was last put while nothing held it.
+  useEffect(() => () => host?.remove(), [host]);
+  const page = <PagesRoutes context={context} {...(registry ? { registry } : {})} />;
+  // Drawn on a server, nothing moves: the page as the fallback draws it.
+  if (!host)
+    return (
+      <Suspense fallback={<OneFaceArriving>{page}</OneFaceArriving>}>
+        <OnePlace context={context} onFace={setFace}>
+          {page}
+        </OnePlace>
+      </Suspense>
+    );
+  return (
+    <OneFaceComing.Provider value={true}>
+      <OneFaceContext.Provider value={face}>{createPortal(page, host)}</OneFaceContext.Provider>
+      <Suspense
+        fallback={
+          <OneFaceArriving>
+            <HeldHere host={host} />
+          </OneFaceArriving>
+        }
+      >
+        <OnePlace context={context} page={host} onFace={setFace} />
+      </Suspense>
+    </OneFaceComing.Provider>
+  );
+}
+
+/**
+ * THE ONE FACE ON ITS WAY. While the one face's part is fetched the page
+ * stands where the routed face would draw it; once it arrives the same page
+ * moves into it (`OneFacePage`). Until then the document says so
+ * (`data-graview-one-face-arriving` on `<html>`), so a host, a harness or a
+ * screenshot that waits for the face waits for the face — the same signal
+ * for every face on the page, counted.
  */
 let arriving = 0;
 function OneFaceArriving({ children }: { readonly children: ReactNode }) {
@@ -725,12 +772,7 @@ export function PagesApp<S extends AnySchema>({
       {steering ? <Steered steering={steering} /> : null}
       {context.presence || outer ? <SaysWhere context={context} to={outer} /> : null}
       {context.sceneUnderPages && context.views ? (
-        // The page over the Scene's own city: one place at every altitude (one-place.tsx). While its part is fetched the page is drawn as the routed face draws it, never a blank window.
-        <Suspense fallback={<OneFaceArriving><PagesRoutes context={context} {...(registry ? { registry } : {})} /></OneFaceArriving>}>
-          <OnePlace context={context as unknown as PageContext<AnySchema>}>
-            <PagesRoutes context={context} {...(registry ? { registry } : {})} />
-          </OnePlace>
-        </Suspense>
+        <OneFacePage context={context as unknown as PageContext<AnySchema>} registry={registry as unknown as PageRegistry<AnySchema, PageComponent<AnySchema>> | undefined} />
       ) : (
         <PagesRoutes context={context} {...(registry ? { registry } : {})} />
       )}

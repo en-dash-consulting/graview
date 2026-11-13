@@ -100,6 +100,46 @@ describe("the City says every district's name and stands every view clear of eve
   });
 });
 
+/*
+ * A POST NEVER CROSSES A BOARD OR A NAME (Nick's decision): the line from a
+ * board down to its district's ground runs over no other board's card and
+ * no district's name. Every placed board is an obstacle to the posts, both
+ * ways — a post placed down across a board standing, and a board placed
+ * across a post standing.
+ */
+describe("a board's post never crosses another board or a district's name", () => {
+  const postOf = (foot: { x: number; y: number }, length: number): Box => ({ x: foot.x - 1, y: foot.y, width: 2, height: length });
+  const crossings = (placed: ReturnType<typeof placeSigns>) => {
+    const out: string[] = [];
+    for (const [key, foot] of placed.feet) {
+      const pole = postOf(foot, placed.posts.get(key)!);
+      for (const [other, theirs] of placed.feet) if (other !== key && overlap(pole, card(theirs, placed.scales.get(other) ?? 1)) > 0) out.push(`${key}'s post across ${other}`);
+      for (const [kind, box] of placed.names) if (overlap(pole, box) > 0) out.push(`${key}'s post across the ${kind} name`);
+    }
+    return out;
+  };
+
+  /** Districts at these places on the lattice, each with so many views. */
+  const city = (at: readonly (readonly [string, number, number])[], views: number) =>
+    placeSigns({
+      ...asked,
+      tiles: new Map(at.map(([kind, col, row]) => [kind, tile(col, row)] as const)),
+      buildings: [],
+      names: new Map(at.map(([kind]) => [kind, name])),
+      signs: at.flatMap(([kind]) => Array.from({ length: views }, (_, i) => ({ key: `place:${kind}:${i}`, kind }))),
+    });
+
+  it("where one district holds three views", () => {
+    // Stood one over another, the higher board's post came down across the one under it.
+    expect(crossings(city([["species", 0, 0]], 3))).toEqual([]);
+  });
+
+  it("where four districts side by side, or three one behind another, hold two views each", () => {
+    expect(crossings(city([["species", 0, 0], ["site", 1, 0], ["period", 0, 1], ["event", 1, 1]], 2))).toEqual([]);
+    expect(crossings(city([["species", 0, 0], ["event", 1, 1], ["eon", 2, 2]], 2))).toEqual([]);
+  });
+});
+
 describe("placing the City's words stays cheap", () => {
   it("places sixty views of one kind among forty districts and a thousand buildings in under 8 ms", () => {
     const many = new Map<string, Box>();

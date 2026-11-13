@@ -157,10 +157,23 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
   latestOut.current = out;
   const latest = useRef({ openRecord, openKind });
   latest.current = { openRecord, openKind };
-  useEffect(() => {
+  /*
+   * NOTHING CHOSEN ON THE SCENE, AFTER A PRESS AS ON A FRESH LOAD. A page
+   * opened while the page is out (a building pressed, a link, a pill) says
+   * its subject to the provider as the page's choice: the Scene took it for
+   * its own, lit that building alone, faded the rest of the city, put the
+   * record at the head of its row and wrote its links' words over the city.
+   * Out, the Scene keeps nothing chosen — one rule, whichever way the page
+   * came — and the page's choice is kept for the page to have back. Read
+   * before the frame is painted, so nothing faded is ever drawn.
+   */
+  useLayoutEffect(() => {
     // While the page is read the view is the page's own, and none of this is the Scene's.
     if (!latestOut.current || toUrl(seen) === asked.current) return;
-    if (seen.overview && seen.focusId === null) return;
+    const picked = seen.selection ?? [];
+    if (seen.overview && seen.focusId === null && picked.length === 0) return;
+    // What the page chose is the page's: had back when it comes in again.
+    if (picked.length > 0 && kept.current) kept.current = { ...kept.current, selection: picked };
     const focus = seen.focusId;
     const back = { ...wanted, ...(seen.pan ? { pan: seen.pan } : {}) };
     asked.current = toUrl(back);
@@ -1378,7 +1391,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
               <span data-graview-district-tag-name="">{one.plural}</span> <span data-graview-district-tag-count="">{one.count === 0 ? "none yet" : one.count.toLocaleString()}</span>
             </button>
             {one.problems > 0 ? (
-              <button type="button" data-graview-district-problems={one.kind} aria-label={`${one.problems} ${one.problems === 1 ? "problem" : "problems"} in ${one.plural}`} title={`${one.problems} ${one.problems === 1 ? "problem" : "problems"} in ${one.plural}: press to see them`} onClick={() => face?.openPath("/problems", PANEL)}>
+              <button type="button" data-graview-district-problems={one.kind} aria-label={`${one.problems} ${one.problems === 1 ? "problem" : "problems"} in ${one.plural}`} title={`${one.problems} ${one.problems === 1 ? "problem" : "problems"} in ${one.plural}: press to see them`} onClick={() => face?.openPath(`/problems?kind=${encodeURIComponent(one.kind)}`, PANEL)}>
                 ⚠ {one.problems}
               </button>
             ) : null}
