@@ -49,7 +49,7 @@ const STRIPS = resolve(repoRoot, "docs/one-face");
 
 const report = { at: new Date().toISOString(), engines, app: "apps/todo", checks: {} };
 const errors = [];
-const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], pointsOut: [], shortcuts: [], keysTurnOff: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [], richClear: [], richNamed: [], richWords: [], richLegend: [], richViews: [], richRecords: [], richNearbyViews: [], richControls: [], richOwnDistrict: [], richLegible: [], richHomeNearby: [], richOneLevel: [], richSmooth: [], richFocusSeen: [], richProblems: [], richHand: [], richHomeViews: [], richBoardsUnder: [] };
+const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], pointsOut: [], shortcuts: [], keysTurnOff: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [], richClear: [], richNamed: [], richWords: [], richLegend: [], richViews: [], richRecords: [], richNearbyViews: [], richControls: [], richOwnDistrict: [], richLegible: [], richHomeNearby: [], richOneLevel: [], richSmooth: [], richFocusSeen: [], richProblems: [], richHand: [], richHomeViews: [], richBoardsUnder: [], richHomeClear: [] };
 
 /* ------------------------------------------------------------------ */
 /* In the page                                                         */
@@ -1337,7 +1337,9 @@ const readRich = (page) =>
     // On a phone's City, which pans, the views put away under the bar or the control until panned to: they stand all the same.
     const under = [...document.querySelectorAll("[data-graview-board][data-graview-under]")].map((b) => b.getAttribute("data-graview-board"));
     const namesUnder = (innerWidth <= 600 || innerHeight <= 600) ? [...document.querySelectorAll("[data-graview-district-tag][data-graview-under]")].map((t) => ({ kind: t.getAttribute("data-graview-district-tag"), text: t.textContent })) : [];
-    return { boards, under, namesUnder, tags, plots, plates, problems, buildings, lines, controls, unseenFocus, chosenLooking, tipUp, district, dock: dock ? rect(dock) : null, level, panel: level === 1 && panelEl ? rect(panelEl) : null, legend, bar, width: innerWidth, height: innerHeight };
+    // Each district's "+n" — the Scene's count of what its rows have no room for — where it is drawn and seen.
+    const rests = [...document.querySelectorAll('[data-testid="one-place-city"] .graview-village-rest')].filter((el) => getComputedStyle(el).visibility !== "hidden" && el.getBoundingClientRect().width > 0).map((el) => ({ text: el.textContent.replace(/^.*?\+/, "+"), box: rect(el) })).filter((one) => one.box.x + one.box.width > 0 && one.box.x < innerWidth && one.box.y + one.box.height > 0 && one.box.y < innerHeight);
+    return { rests, boards, under, namesUnder, tags, plots, plates, problems, buildings, lines, controls, unseenFocus, chosenLooking, tipUp, district, dock: dock ? rect(dock) : null, level, panel: level === 1 && panelEl ? rect(panelEl) : null, legend, bar, width: innerWidth, height: innerHeight };
   });
 
 const overlapOf = (a, b) => Math.max(0, Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x)) * Math.max(0, Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y));
@@ -1414,7 +1416,9 @@ async function rich(browser, device) {
       // The views stand at Nearby as at the City (the page's own is the page there).
       const boards = seenNow.boards.filter((b) => level === 2 || !b.own).map((b) => ({ name: `“${b.label}”`, box: b.box }));
       const plates = seenNow.plates.map((p) => ({ name: `the Scene's ${p.kind} name`, box: p.box }));
-      const clash = onEachOther([...tags, ...boards, ...plates]);
+      // And nothing said on a district's "+n": a name butting against one reads as one run of words.
+      const counts = seenNow.rests.map((one) => ({ name: `the count ${one.text}`, box: { x: one.box.x - 2, y: one.box.y - 2, width: one.box.width + 4, height: one.box.height + 4 } }));
+      const clash = [...onEachOther([...tags, ...boards, ...plates]), ...counts.flatMap((count) => [...tags, ...boards].filter((t) => overlapOf(t.box, count.box) > 2).map((t) => `${t.name} × ${count.name}`))];
       // At Nearby nothing this face says stands under the page beside the city.
       const underPanel = seenNow.panel ? [...tags, ...plates, ...boards].filter((t) => overlapOf(t.box, seenNow.panel) > 2).map((t) => t.name) : [];
       // A board beside its district, never on it: on no district's ground.
@@ -1508,6 +1512,12 @@ async function rich(browser, device) {
       }
       return [...new Set(ids.filter(Boolean).map((id) => id.replace(/-\d+$/, "")))];
     });
+    {
+      const tags = home.tags.map((t) => ({ name: `the ${t.kind} name`, box: t.box }));
+      const boards = home.boards.map((b) => ({ name: `“${b.label}”`, box: b.box }));
+      const counts = home.rests.map((one) => ({ name: `the count ${one.text}`, box: { x: one.box.x - 2, y: one.box.y - 2, width: one.box.width + 4, height: one.box.height + 4 } }));
+      result.homeClear = { clash: [...onEachOther([...tags, ...boards]), ...counts.flatMap((count) => [...tags, ...boards].filter((t) => overlapOf(t.box, count.box) > 2).map((t) => `${t.name} × ${count.name}`))], names: tags.length };
+    }
     const sideOf = home.panel ? (home.width <= 600 ? { x: 0, y: home.bar, width: home.width, height: home.panel.y - home.bar } : { x: 0, y: home.bar, width: home.panel.x, height: home.height - home.bar }) : null;
     const viewsKinds = homeKinds.filter((kind) => home.district[kind]);
     result.homeViews = { kinds: viewsKinds, behind: sideOf ? viewsKinds.filter((kind) => { const tile = home.district[kind]; const mid = { x: tile.x + tile.width / 2, y: tile.y + tile.height / 2 }; return overlapOf(tile, home.panel) > tile.width * tile.height * 0.15 || mid.x < sideOf.x || mid.x > sideOf.x + sideOf.width || mid.y < sideOf.y || mid.y > sideOf.y + sideOf.height; }) : ["no panel"] };
@@ -1671,6 +1681,7 @@ async function rich(browser, device) {
   // On a small window (a phone, or one on its side) a board's words are never smaller than 9 pixels: the City pans rather than shrink them, and beside a page a board stands only where it can be read.
   const small = device.width <= 600 || device.height <= 600;
   seen.richLegible.push({ where, city: city.small, nearby: nearby.small, ok: !result.error && (!small || (city.small?.length === 0 && nearby.small?.length === 0)) });
+  seen.richHomeClear.push({ where, ...result.homeClear, ok: Boolean(result.homeClear && result.homeClear.names > 0 && result.homeClear.clash.length === 0) });
   seen.richHomeViews.push({ where, ...result.homeViews, ok: Boolean(result.homeViews && result.homeViews.kinds.length > 0 && result.homeViews.behind.length === 0) });
   seen.richBoardsUnder.push({ where, ...result.boardsUnderLines, ok: Boolean(result.boardsUnderLines?.over) });
   seen.richHomeNearby.push({ where, ...result.home, ok: Boolean(result.home && result.home.districts > 0 && (!result.home.held || result.home.behind.length === 0)) });
@@ -1808,6 +1819,7 @@ try {
   report.checks.noBoardsWordsAreSmallerThanNinePixels = { held: seen.richLegible, ok: every(seen.richLegible) };
   report.checks.atNearbyTheHomeFramesTheCityBesideThePage = { held: seen.richHomeNearby, ok: every(seen.richHomeNearby) };
   report.checks.atNearbyOnTheHomeEveryDistrictItsViewsShowStandsOnTheCitysSide = { held: seen.richHomeViews, ok: every(seen.richHomeViews) };
+  report.checks.atNearbyOnTheHomeNoNameOrBoardStandsOnAnotherOrOnADistrictsCount = { held: seen.richHomeClear, ok: every(seen.richHomeClear) };
   report.checks.theBoardsStandUnderTheLines = { held: seen.richBoardsUnder, ok: every(seen.richBoardsUnder) };
   report.checks.theLevelControlShowsOneChosenLevelAfterTheKeys = { held: seen.richOneLevel, ok: every(seen.richOneLevel) };
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };

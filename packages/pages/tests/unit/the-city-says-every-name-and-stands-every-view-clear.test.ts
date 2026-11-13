@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import type { Box } from "../../src/one-place-geometry.js";
 import { diamondReach, placeSigns } from "../../src/one-place-signs.js";
@@ -46,6 +47,18 @@ describe("the City says every district's name and stands every view clear of eve
       for (const [other, theirs] of boxes) if (other !== kind) expect(overlap(box, theirs), `${kind} × ${other}`).toBe(0);
       // Never a card over the records: no name on a building or the name written over it.
       expect(overlap(box, { ...building, y: building.y - 14, height: building.height + 14 }), `${kind} on a building`).toBe(0);
+    }
+  });
+
+  it("stands no name on another, nor on a district's count, beside the home on a phone", () => {
+    // What the one face asked at Nearby on Deep Time's home at 390 wide: where each district's name had stood on another's.
+    const asked = JSON.parse(readFileSync(new URL("./fixtures/deep-time-home-nearby-390.json", import.meta.url), "utf8"));
+    const tight = placeSigns({ ...asked, tiles: new Map(asked.tiles), names: new Map(asked.names) });
+    const boxes = [...tight.names];
+    expect(boxes.length).toBeGreaterThanOrEqual(6);
+    for (const [kind, box] of boxes) {
+      for (const [other, theirs] of boxes) if (other !== kind) expect(overlap(box, theirs), `${kind} × ${other}`).toBe(0);
+      for (const kept of asked.reserved as Box[]) expect(overlap(box, kept), `${kind} on what is kept clear`).toBe(0);
     }
   });
 

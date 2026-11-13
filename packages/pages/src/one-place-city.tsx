@@ -480,6 +480,17 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         building: board.where.type === "record" && w.buildings.has(board.where.id) ? onScreen(w.buildings.get(board.where.id)!) : null,
       }));
       const reserved = footNow().now.map((box) => ({ x: box.x - 6, y: box.y - 6, width: box.width + 12, height: box.height + 12 }));
+      // And a district's "+n", the count of what its rows have no room for: the Scene's words, which nothing this face says stands on.
+      const scene = box.current;
+      if (scene) {
+        for (const rest of scene.querySelectorAll(".graview-village-rest")) {
+          const r = rest.getBoundingClientRect();
+          if (r.width < 1) continue;
+          const inPicture = { x: (r.left - painted.x) / painted.s, y: (r.top - painted.y) / painted.s, width: r.width / painted.s, height: r.height / painted.s };
+          const seen = onScreen(inPicture);
+          reserved.push({ x: seen.x - 3, y: seen.y - 3, width: seen.width + 6, height: seen.height + 6 });
+        }
+      }
       const round = (n: number) => Math.round(n / 2) * 2;
       const rel = (box: Box) => [round(box.x - origin.x), round(box.y - origin.y), round(box.width), round(box.height)];
       const buildingsOnScreen = [...w.buildings.values()].map(onScreen);
