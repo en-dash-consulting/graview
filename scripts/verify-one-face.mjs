@@ -43,7 +43,7 @@ import { launchEngine } from "./lib/engine.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { serving } from "./lib/serve.mjs";
 import { serveRich } from "./lib/one-face-rich-host.mjs";
-import { document as deepTime } from "./fixtures/one-face-rich/deep-time.mjs";
+import { document as deepTime, seed as deepTimeSeed } from "./fixtures/one-face-rich/deep-time.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const asked = process.argv.find((arg) => arg.startsWith("--engine="))?.slice("--engine=".length);
@@ -57,7 +57,7 @@ const STRIPS = resolve(repoRoot, "docs/one-face");
 
 const report = { at: new Date().toISOString(), engines, app: "apps/todo", checks: {} };
 const errors = [];
-const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], pointsOut: [], shortcuts: [], keysTurnOff: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [], richClear: [], richNamed: [], richWords: [], richLegend: [], richViews: [], richRecords: [], richNearbyViews: [], richControls: [], richOwnDistrict: [], richLegible: [], richHomeNearby: [], richOneLevel: [], richSmooth: [], richFocusSeen: [], richProblems: [], richHand: [], richHomeViews: [], richBoardsUnder: [], richHomeClear: [], richProblemsOfKind: [], richPosts: [], richPostsUnder: [], recordInPlace: [], oneRuleFades: [], noWordsAfterPress: [], drawnOnce: [], nearbyZoom: [], nearbyPan: [], nearbyBack: [], panelPinch: [], phoneCity: [], panelWidth: [], panelSpacing: [], viewInPanel: [] };
+const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], pointsOut: [], shortcuts: [], keysTurnOff: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [], richClear: [], richNamed: [], richWords: [], richLegend: [], richViews: [], richRecords: [], richNearbyViews: [], richControls: [], richOwnDistrict: [], richLegible: [], richHomeNearby: [], richOneLevel: [], richSmooth: [], richFocusSeen: [], richProblems: [], richHand: [], richHomeViews: [], richPanelCrossings: [], richBoardsUnder: [], richHomeClear: [], richProblemsOfKind: [], richPosts: [], richPostsUnder: [], recordInPlace: [], oneRuleFades: [], noWordsAfterPress: [], drawnOnce: [], nearbyZoom: [], nearbyPan: [], nearbyBack: [], panelPinch: [], phoneCity: [], panelWidth: [], panelSpacing: [], viewInPanel: [] };
 
 /* ------------------------------------------------------------------ */
 /* In the page                                                         */
@@ -1473,6 +1473,58 @@ async function rich(browser, device) {
       await page.waitForTimeout(700);
       moved.push({ to: level, ...signJumps(await stopRecording(page)) });
       const seenNow = await readRich(page);
+      /*
+       * INSIDE THE PANEL NO LINE CROSSES ANOTHER PART: each straight piece of
+       * each line's path inside the page, against every part that names a
+       * record there — a link, a row, a pill — but its own.
+       */
+      if (level === 1) result.panelCrossings = await page.evaluate(() => {
+        const sheet = document.querySelector("[data-graview-one-place]");
+        const panel = sheet?.getBoundingClientRect();
+        if (!sheet || !panel) return null;
+        const parts = [];
+        const read = (root) => {
+          for (const el of root.querySelectorAll("a[href], [data-graview-record], [data-record], [data-graview-pick]")) {
+            const r = el.getBoundingClientRect();
+            if (r.width < 1 || r.height < 1 || r.bottom < panel.top || r.top > panel.bottom) continue;
+            parts.push({ el, id: el.getAttribute("data-graview-record") ?? el.getAttribute("data-record") ?? el.getAttribute("data-graview-pick") ?? el.getAttribute("href"), box: { x: r.left, y: r.top, width: r.width, height: r.height } });
+          }
+        };
+        read(sheet);
+        for (const host of sheet.querySelectorAll("[data-worker-view]")) if (host.shadowRoot) read(host.shadowRoot);
+        const crossings = [];
+        let pieces = 0;
+        for (const g of document.querySelectorAll("[data-graview-line]")) {
+          const key = g.getAttribute("data-graview-line");
+          const [sx, sy] = (g.getAttribute("data-graview-line-start") ?? "NaN,NaN").split(",").map(Number);
+          const points = [];
+          for (const [, cmd, rest] of (g.querySelector("path")?.getAttribute("d") ?? "").matchAll(/([MLQ])([^MLQ]*)/g)) {
+            if (cmd === "Q") break;
+            const [x, y] = rest.trim().split(/[ ,]+/).map(Number);
+            points.push({ cmd, x, y });
+          }
+          for (let i = 1; i < points.length; i++) {
+            if (points[i].cmd !== "L") continue;
+            pieces++;
+            const a = points[i - 1];
+            const b = points[i];
+            for (const part of parts) {
+              const o = part.box;
+              // Its own part: the one it starts on.
+              if (sx >= o.x - 1 && sx <= o.x + o.width + 1 && sy >= o.y - 1 && sy <= o.y + o.height + 1) continue;
+              for (let t = 0; t <= 1; t += 0.02) {
+                const x = a.x + (b.x - a.x) * t;
+                const y = a.y + (b.y - a.y) * t;
+                if (x > o.x + 1 && x < o.x + o.width - 1 && y > o.y + 1 && y < o.y + o.height - 1) {
+                  crossings.push(`${key} across ${part.id}`);
+                  break;
+                }
+              }
+            }
+          }
+        }
+        return { parts: parts.length, pieces, crossings: [...new Set(crossings)] };
+      });
       await page.mouse.move(2, Math.round(device.height / 2));
       await page.waitForTimeout(200);
       await page.screenshot({ path: resolve(STRIPS, `rich-${device.width}-${level === 1 ? "nearby" : "city"}.png`) });
@@ -1796,6 +1848,8 @@ async function rich(browser, device) {
   const small = device.width <= 600 || device.height <= 600;
   seen.richLegible.push({ where, city: city.small, nearby: nearby.small, ok: !result.error && (!small || (city.small?.length === 0 && nearby.small?.length === 0)) });
   seen.richHomeClear.push({ where, ...result.homeClear, ok: Boolean(result.homeClear && result.homeClear.names > 0 && result.homeClear.clash.length === 0) });
+  // A desk's Nearby draws lines from the formation's page: there are some to hold. A small window may draw none.
+  seen.richPanelCrossings.push({ where, ...result.panelCrossings, error: result.error, ok: Boolean(result.panelCrossings && (device.width < 1000 || result.panelCrossings.pieces > 0) && result.panelCrossings.crossings.length === 0) });
   seen.richHomeViews.push({ where, ...result.homeViews, ok: Boolean(result.homeViews && result.homeViews.kinds.length > 0 && result.homeViews.behind.length === 0) });
   seen.richBoardsUnder.push({ where, ...result.boardsUnderLines, ok: Boolean(result.boardsUnderLines?.over) });
   seen.richHomeNearby.push({ where, ...result.home, ok: Boolean(result.home && result.home.districts > 0 && (!result.home.held || result.home.behind.length === 0)) });
@@ -1880,8 +1934,9 @@ const readDistrict = (page, kind) =>
   }, kind);
 /** What of a district moved or changed its size within the district by more than a pixel of its tile as first read: x, y, width or height. */
 const reshaped = (before, after, unit = 1) => Object.keys(before).filter((id) => after[id] && before[id].some((v, i) => Math.abs(after[id][i] - v) * unit > 1)).map((id) => `${id} ${before[id].map((v) => (v * unit).toFixed(1)).join(",")} → ${after[id].map((v) => (v * unit).toFixed(1)).join(",")}`);
-/** Whether, before it was opened, the record's building and every building its page would draw a line to stood in the city's side: then the camera had nothing to bring into sight. */
-const allInSight = (before, after, opened) => [opened, ...after.ends].every((id) => { const box = before.onScreen[id]; return box && box[0] >= before.side.left && box[1] >= before.side.top && box[0] + box[2] <= before.side.right && box[1] + box[3] <= before.side.bottom; });
+/** Whether, before it was opened, the record's building, every record it is connected to and every building its page draws a line to stood in the city's side: then the camera had nothing to bring into sight. */
+const neighborsOf = (id) => deepTimeSeed.edges.flatMap((edge) => (edge.from === id ? [edge.to] : edge.to === id ? [edge.from] : []));
+const allInSight = (before, after, opened) => [opened, ...neighborsOf(opened), ...after.ends].every((id) => { const box = before.onScreen[id]; return box && box[0] >= before.side.left && box[1] >= before.side.top && box[0] + box[2] <= before.side.right && box[1] + box[3] <= before.side.bottom; });
 /** Whether the camera moved: any building's box on the screen changed by more than a pixel. */
 const cameraMoved = (before, after) => Object.keys(before.onScreen).some((id) => after.onScreen[id] && before.onScreen[id].some((v, i) => Math.abs(after.onScreen[id][i] - v) > 1));
 /** What of a district moved, in its own ground's measure. */
@@ -2501,6 +2556,7 @@ try {
   report.checks.atNearbyTheHomeFramesTheCityBesideThePage = { held: seen.richHomeNearby, ok: every(seen.richHomeNearby) };
   report.checks.atNearbyOnTheHomeEveryDistrictItsViewsShowStandsOnTheCitysSide = { held: seen.richHomeViews, ok: every(seen.richHomeViews) };
   report.checks.atNearbyOnTheHomeNoNameOrBoardStandsOnAnotherOrOnADistrictsCount = { held: seen.richHomeClear, ok: every(seen.richHomeClear) };
+  report.checks.atNearbyOnARichPageNoLineCrossesAnotherPartInThePanel = { held: seen.richPanelCrossings, ok: every(seen.richPanelCrossings) };
   report.checks.theBoardsStandUnderTheLines = { held: seen.richBoardsUnder, ok: every(seen.richBoardsUnder) };
   report.checks.theLevelControlShowsOneChosenLevelAfterTheKeys = { held: seen.richOneLevel, ok: every(seen.richOneLevel) };
   report.checks.aRecordOpenedInTheCityIsLitWhereItStandsInItsDistrictAndTheCameraStaysWhereEverythingItFramesIsInSight = { held: seen.recordInPlace, ok: every(seen.recordInPlace) };

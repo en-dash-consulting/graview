@@ -127,6 +127,8 @@ interface Drawn {
   readonly under: Point | null;
   /** Where the line starts: on the part's own edge facing the city, a short line from it to the page's edge (`from`). */
   readonly start: Point;
+  /** Its way inside the page, from `start` to the page's edge: through the gap between rows where a straight way would cross another part. */
+  readonly via: readonly Point[];
   /** Gathered with the other lines into its district: how many, and whether this one draws the line they share and its count. */
   readonly gathered?: { readonly kind: string; readonly count: number; readonly lead: boolean };
   /** The curve's control point, out from the page's edge, inside the city's part. */
@@ -337,12 +339,24 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       const dock = footNow().rest[0];
       const area: Box = view.width <= PHONE ? { x: 0, y: bar, width: view.width, height: Math.max(1, panel.y - bar - footRoom()) } : { x: 0, y: bar, width: panel.x, height: Math.max(1, (dock ? dock.y : view.height) - bar) };
       const margin = 28;
+      /*
+       * ALREADY IN SIGHT, THE CAMERA STAYS: a record opened from the city
+       * beside the page, where it and everything it is connected to already
+       * stand in the city's side as the camera rests, moves no camera.
+       */
+      const buildings = unionOf(boxes);
+      const inSight = (cam: Live, box: Box) => {
+        const lo = project(cam, { x: box.x, y: box.y });
+        const hi = project(cam, { x: box.x + box.width, y: box.y + box.height });
+        return lo.x >= area.x && lo.y >= area.y && hi.x <= area.x + area.width && hi.y <= area.y + area.height;
+      };
+      if (rest === PANEL && !move && level(painted) && buildings && inSight(LEVEL_LIVE, buildings)) return LEVEL_LIVE;
       const a = project(base, { x: around.x, y: around.y });
       const b = project(base, { x: around.x + around.width, y: around.y + around.height });
       if (a.x >= area.x + margin && a.y >= area.y + margin && b.x <= area.x + area.width - margin && b.y <= area.y + area.height - margin) return base;
       const fit = fitCamera(around, area, margin, most);
       // Never as far back as the City, nor past what the camera can be written at.
-      const least = Math.max(1.15 / zoomNow, (camera.current?.range.min ?? 0) / zoomNow);
+      const least = Math.max(1.02 / zoomNow, (camera.current?.range.min ?? 0) / zoomNow);
       if (fit.s >= least) return fit;
       /* More than the least zoom holds: the record's own building first, in the city's side, and as much else around it as fits. */
       const middleOf = { x: around.x + around.width / 2, y: around.y + around.height / 2 };
@@ -700,7 +714,13 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           }));
           const what = own ?? city;
           const close = fitCamera(what, shown, 16, s);
-          return close.s >= least ? close : cameraPutting(middle(what), middle(shown), least);
+          if (close.s >= least) return close;
+          // As far out as the camera goes: the city as near the middle of its side as its views' districts let it, they in the side whole.
+          const held = cameraPutting(middle(city), middle(shown), least);
+          const lo = project(held, { x: what.x, y: what.y });
+          const hi = project(held, { x: what.x + what.width, y: what.y + what.height });
+          const shift = (low: number, high: number, from: number, to: number) => (low < from ? from - low : high > to ? to - high : 0);
+          return { s: held.s, x: held.x + shift(lo.x, hi.x, shown.x, shown.x + shown.width), y: held.y + shift(lo.y, hi.y, shown.y, shown.y + shown.height) };
         }
       }
       if (lvl === CITY || now.where.type === "home" || now.where.type === "overview") {
@@ -1293,28 +1313,27 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           if (!box) ports.set(port, (box = port.getBoundingClientRect()));
           return box;
         };
-        /* One line a record: from where it is shown, in sight on the page, to where it stands. */
+        /* One line a record: from where it is shown, in sight on the page, to where it stands — gathered first, routed once every part is known. */
+        const asked: { key: string; target: Drawn["target"]; part: Point; box: Box; visible: DOMRect; end: { at: Point; on: string } }[] = [];
+        /** Every part's box on the page in sight: what a line inside the page goes round. */
+        const words: Box[] = [];
         const offer = (target: Drawn["target"], part: Point, visible: DOMRect, partBox: Box) => {
           const key = target.type === "record" ? target.id : `kind:${target.kind}`;
-          if (taken.has(key)) return;
           // Only what is in sight on the page: a part scrolled past, or under the page's own edge, draws none.
           if (part.x < visible.left || part.x > visible.right || part.y < visible.top || part.y > visible.bottom) return;
-          // The line starts on the part itself, on its edge that faces the city, and leaves the page at its edge level with it.
-          const from = leaveFrom(part, pageRect, phone);
-          const start = phone ? { x: part.x, y: Math.max(partBox.y, visible.top, from.y) } : { x: Math.max(partBox.x, visible.left, from.x), y: part.y };
+          if (partBox.width > 0 && partBox.height > 0) words.push(partBox);
+          if (taken.has(key)) return;
           const end = endOf(target);
           if (!end) return;
           taken.add(key);
-          const route = routeLine(from, end.at, area, phone, reserved);
-          if (!route) return;
-          found.push({ key, from: route.from, to: route.to, bend: route.bend, under: route.toward, on: end.on, target, label: labelFor(target), part, start });
+          asked.push({ key, target, part, box: partBox, visible, end });
         };
         /* The record page drawn by a view that names no other record: where its one line to the record leaves from. */
         let aboutPart: { readonly part: Point; readonly visible: DOMRect; readonly box: Box } | null = null;
         // The page's own parts first — a link to a record's page, a row that names one, a view's records — then the Connected rows for what the page does not show.
         const parts = [...plane.querySelectorAll<HTMLElement>(`a[href], ${RECORD_PARTS}, ${VIEW_PARTS}`)].sort((x, y) => Number(x.closest("[data-graview-connected]") !== null) - Number(y.closest("[data-graview-connected]") !== null));
         for (const element of parts) {
-          if (found.length >= MOST_LINES) break;
+          if (asked.length >= MOST_LINES) break;
           if (element.closest("nav, header, [role=navigation], [role=banner]")) continue;
           const visible = portOf(element);
           if (!visible) continue;
@@ -1327,12 +1346,13 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
             let named = false;
             let about: Point | null = null;
             for (const box of boxes.boxes()) {
-              if (found.length >= MOST_LINES) break;
+              if (asked.length >= MOST_LINES) break;
               if (!store.graph.getNode(box.id)) continue;
               const part = { x: rect.left + (box.x + box.width / 2) * scale, y: rect.top + (box.y + box.height / 2) * scale };
               const partBox = { x: rect.left + box.x * scale, y: rect.top + box.y * scale, width: box.width * scale, height: box.height * scale };
               if (box.id === subjectId) {
                 about ??= part;
+                if (partBox.width > 0 && partBox.height > 0) words.push(partBox);
                 continue;
               }
               named = true;
@@ -1361,7 +1381,61 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           if (rect.width < 1 || rect.height < 1) continue;
           offer(target, { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }, visible, boxOf(rect));
         }
-        if (aboutPart && subjectId !== null && found.length < MOST_LINES) offer({ type: "record", id: subjectId }, aboutPart.part, aboutPart.visible, aboutPart.box);
+        if (aboutPart && subjectId !== null && asked.length < MOST_LINES) offer({ type: "record", id: subjectId }, aboutPart.part, aboutPart.visible, aboutPart.box);
+        /*
+         * INSIDE THE PAGE A LINE CROSSES NO ONE ELSE'S WORDS (Graview Cloud's
+         * Deep Time: a row's later pills struck through the earlier ones on
+         * their way to the panel's edge). Each line leaves its own part; where
+         * the straight way to the edge would cross another part, it drops
+         * into the gap above or below its row — the one toward where it is
+         * going first — runs along it to the edge, and goes on from there.
+         * Lines along one gap stand a pixel or two apart.
+         */
+        const hits = (a: Point, b: Point, own: Box) =>
+          words.some((o) => o !== own && Math.max(a.x, b.x) > o.x + 1 && Math.min(a.x, b.x) < o.x + o.width - 1 && Math.max(a.y, b.y) > o.y + 1 && Math.min(a.y, b.y) < o.y + o.height - 1);
+        const edgeX = pageRect.x;
+        const wayIn = (one: (typeof asked)[number]): { via: Point[]; gap: number | null } => {
+          const b = one.box;
+          const from = leaveFrom(one.part, pageRect, phone);
+          const straight = phone ? { x: one.part.x, y: Math.max(b.y, one.visible.top, from.y) } : { x: Math.max(b.x, one.visible.left, from.x), y: one.part.y };
+          if (phone || !hits(straight, from, b)) return { via: [straight, from], gap: null };
+          const beside = words.filter((o) => o !== b && o.x < b.x + b.width && o.x + o.width > edgeX);
+          const above = beside.filter((o) => o.y + o.height <= b.y + 1).reduce((most, o) => Math.max(most, o.y + o.height), -Infinity);
+          const below = beside.filter((o) => o.y >= b.y + b.height - 1).reduce((least, o) => Math.min(least, o.y), Infinity);
+          const gaps = [
+            { y: Number.isFinite(above) ? (above + b.y) / 2 : b.y - 4, leave: b.y },
+            { y: Number.isFinite(below) ? (b.y + b.height + below) / 2 : b.y + b.height + 4, leave: b.y + b.height },
+          ].filter((g) => g.y > one.visible.top && g.y < one.visible.bottom);
+          // Toward where it is going first: up for a building above the part, down for one below.
+          if (one.end.at.y > one.part.y) gaps.reverse();
+          const x = b.x + Math.min(10, b.width / 2);
+          for (const gap of gaps) {
+            const leave = { x, y: gap.leave };
+            const down = { x, y: gap.y };
+            const out = { x: edgeX, y: gap.y };
+            if (!hits(leave, down, b) && !hits(down, out, b)) return { via: [leave, down, out], gap: Math.round(gap.y) };
+          }
+          return { via: [straight, from], gap: null };
+        };
+        const ways = asked.map(wayIn);
+        // Lines along one gap: a pixel and a half apart, about its middle.
+        const along = new Map<number, number[]>();
+        ways.forEach((way, at) => {
+          if (way.gap !== null) along.set(way.gap, [...(along.get(way.gap) ?? []), at]);
+        });
+        for (const ats of along.values()) {
+          ats.forEach((at, nth) => {
+            const shift = (nth - (ats.length - 1) / 2) * 1.5;
+            const via = ways[at]!.via;
+            ways[at] = { ...ways[at]!, via: [via[0]!, ...via.slice(1).map((p) => ({ x: p.x, y: p.y + shift }))] };
+          });
+        }
+        asked.forEach((one, at) => {
+          const via = ways[at]!.via;
+          const route = routeLine(via[via.length - 1]!, one.end.at, area, phone, reserved);
+          if (!route) return;
+          found.push({ key: one.key, from: route.from, to: route.to, bend: route.bend, under: route.toward, on: one.end.on, target: one.target, label: labelFor(one.target), part: one.part, start: via[0]!, via: [...via.slice(0, -1), route.from] });
+        });
         /*
          * MANY LINES INTO ONE DISTRICT ARE ONE LINE (Graview HQ, Cloud's test
          * of Deep Time): each part keeps its own short line to the page's
@@ -1383,8 +1457,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           if (!route) continue;
           ats.forEach((at, nth) => {
             const line = found[at]!;
-            const start = phone ? { x: line.start.x, y: Math.max(line.start.y, route.from.y) } : { x: Math.max(line.start.x, route.from.x), y: line.start.y };
-            found[at] = { ...line, start, from: route.from, to: route.to, bend: route.bend, under: route.toward, on: end.on, gathered: { kind, count: ats.length, lead: nth === 0 } };
+            // Its own way to the page's edge, then along the edge to where they meet.
+            found[at] = { ...line, via: [...line.via, route.from], from: route.from, to: route.to, bend: route.bend, under: route.toward, on: end.on, gathered: { kind, count: ats.length, lead: nth === 0 } };
           });
         }
       }
@@ -1482,7 +1556,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         drawn.g.setAttribute("data-graview-line-bend", `${bend.x.toFixed(2)},${bend.y.toFixed(2)}`);
         if (line.under) drawn.g.setAttribute("data-graview-line-toward", `${line.under.x.toFixed(2)},${line.under.y.toFixed(2)}`);
         else drawn.g.removeAttribute("data-graview-line-toward");
-        const leg = `M${line.start.x.toFixed(2)},${line.start.y.toFixed(2)} L${from.x.toFixed(2)},${from.y.toFixed(2)}`;
+        const leg = line.via.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
         drawn.path.setAttribute("d", shared ? `${leg} Q${bend.x.toFixed(2)},${bend.y.toFixed(2)} ${to.x.toFixed(2)},${to.y.toFixed(2)}` : leg);
         drawn.dot.setAttribute("cx", line.start.x.toFixed(2));
         drawn.dot.setAttribute("cy", line.start.y.toFixed(2));
@@ -1514,13 +1588,28 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           drawn.ring.style.top = `${(to.y - size / 2).toFixed(2)}px`;
         } else {
           drawn.arrow.setAttribute("d", "");
+          /*
+           * A SHARED LINE'S COUNT IS ALWAYS SAID: where its district's middle
+           * has a board or a name beside it (which takes the press there), the
+           * count stands back along the line, at the nearest place clear of them.
+           */
+          let at = to;
+          if (gathered?.lead && besidePressable(to)) {
+            for (let t = 0.95; t >= 0.4; t -= 0.05) {
+              const p = { x: (1 - t) ** 2 * from.x + 2 * (1 - t) * t * bend.x + t * t * to.x, y: (1 - t) ** 2 * from.y + 2 * (1 - t) * t * bend.y + t * t * to.y };
+              if (!besidePressable(p)) {
+                at = p;
+                break;
+              }
+            }
+          }
           // An end under the bar, or under the control at the foot, is not offered: they stand over it.
-          const under = control && to.x > control.left - 10 && to.x < control.right + 10 && to.y > control.top - 10 && to.y < control.bottom + 10;
-          const crowded = ringsAt.some((p) => Math.hypot(p.x - to.x, p.y - to.y) < 28) || besidePressable(to);
-          drawn.ring.style.display = to.y < (state.current.view.top ?? 0) + 8 || under || crowded ? "none" : "";
-          if (!crowded) ringsAt.push(to);
-          drawn.ring.style.left = `${(to.x - wide / 2).toFixed(2)}px`;
-          drawn.ring.style.top = `${(to.y - size / 2).toFixed(2)}px`;
+          const under = control && at.x > control.left - 10 && at.x < control.right + 10 && at.y > control.top - 10 && at.y < control.bottom + 10;
+          const crowded = ringsAt.some((p) => Math.hypot(p.x - at.x, p.y - at.y) < 28) || besidePressable(at);
+          drawn.ring.style.display = at.y < (state.current.view.top ?? 0) + 8 || under || crowded ? "none" : "";
+          if (!crowded) ringsAt.push(at);
+          drawn.ring.style.left = `${(at.x - wide / 2).toFixed(2)}px`;
+          drawn.ring.style.top = `${(at.y - size / 2).toFixed(2)}px`;
         }
         if (gathered) {
           const plural = pluralOf(store, gathered.kind);
