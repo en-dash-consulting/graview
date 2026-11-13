@@ -49,7 +49,7 @@ const STRIPS = resolve(repoRoot, "docs/one-face");
 
 const report = { at: new Date().toISOString(), engines, app: "apps/todo", checks: {} };
 const errors = [];
-const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], shortcuts: [], keysTurnOff: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [], richClear: [], richNamed: [], richWords: [], richLegend: [], richViews: [], richRecords: [], richNearbyViews: [], richControls: [], richOwnDistrict: [], richLegible: [], richHomeNearby: [], richOneLevel: [], richSmooth: [], richFocusSeen: [], richProblems: [] };
+const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], shortcuts: [], keysTurnOff: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [], richClear: [], richNamed: [], richWords: [], richLegend: [], richViews: [], richRecords: [], richNearbyViews: [], richControls: [], richOwnDistrict: [], richLegible: [], richHomeNearby: [], richOneLevel: [], richSmooth: [], richFocusSeen: [], richProblems: [], richHand: [] };
 
 /* ------------------------------------------------------------------ */
 /* In the page                                                         */
@@ -1321,7 +1321,9 @@ const overlapOf = (a, b) => Math.max(0, Math.min(a.x + a.width, b.x + b.width) -
  * NO BOARD AND NO NAME LEAPS: across a move and once it has arrived, a
  * board or a district's name seen in two frames running moves no more than
  * the camera carries it — never one step of more than 30 pixels that is
- * a third of its whole way.
+ * a third of its whole way, made at well over the speed of the frames
+ * either side of it (a camera moving fast on a slow machine takes long
+ * steps, every one, over long frames).
  */
 function signJumps(frames) {
   const leaps = [];
@@ -1335,9 +1337,15 @@ function signJumps(frames) {
       const xs = seenIn.map(({ one }) => one.box.x + one.box.width / 2);
       const ys = seenIn.map(({ one }) => one.box.y + one.box.height / 2);
       const travel = Math.hypot(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
+      // Its steps, frame to frame: a leap is one far past how it moves in the frames round it, not a fast camera on a slow machine.
+      // How fast it went between each two frames, in pixels a millisecond: a slow machine's frames come unevenly, and a step over a long frame is a long step.
+      const speeds = seenIn.slice(1).map((_, i) => Math.hypot(xs[i + 1] - xs[i], ys[i + 1] - ys[i]) / Math.max(1, seenIn[i + 1].f.t - seenIn[i].f.t));
       for (let i = 1; i < seenIn.length; i++) {
         if (seenIn[i].i !== seenIn[i - 1].i + 1) continue;
         const step = Math.hypot(xs[i] - xs[i - 1], ys[i] - ys[i - 1]);
+        const neighbors = [speeds[i - 2], speeds[i]].filter((one) => one !== undefined);
+        // Seen alone between frames it was not (coming up, put away): nothing to judge a step against. Going no faster than the frames either side of it, the camera carried it.
+        if (neighbors.length === 0 || speeds[i - 1] <= Math.max(...neighbors) * 2.5 + 0.05) continue;
         const still = Math.abs(seenIn[i].f.altitude - seenIn[i - 1].f.altitude) < 0.001;
         if (step > 30 && step > travel / 3) leaps.push({ which, key, step: Math.round(step), altitude: Number(seenIn[i].f.altitude.toFixed(3)), still, from: [Math.round(xs[i - 1]), Math.round(ys[i - 1])], to: [Math.round(xs[i]), Math.round(ys[i])], frame: seenIn[i].i, of: frames.length });
       }
@@ -1473,6 +1481,65 @@ async function rich(browser, device) {
      * problems beside the city.
      */
     /*
+     * A HAND ON A BOARD MOVES THE CITY: a drag that begins on a view's board
+     * pans the city by as far as the hand goes (and opens nothing), by a
+     * pointer at a desk and by a finger on a phone; a press that does not
+     * move opens the view.
+     */
+    if (device.width === 1280 || device.width === 390) {
+      await page.goto(`${richHost.url}/formations/formation-3?theme=dark`, { waitUntil: "load" });
+      await ready(page);
+      await page.keyboard.press("3");
+      await restAt(page, 2, 15_000);
+      await page.waitForTimeout(700);
+      const pick = () =>
+        page.evaluate(() => {
+          const shown = [...document.querySelectorAll("[data-graview-board]")].filter((b) => Number(b.style.opacity || 0) > 0.9 && !b.hasAttribute("aria-current") && !b.hasAttribute("data-graview-under") && b.getAttribute("data-graview-board") !== "home");
+          const inside = shown.map((b) => ({ b, r: b.getBoundingClientRect() })).filter(({ r }) => r.left > 20 && r.right < innerWidth - 20 && r.top > 120 && r.bottom < innerHeight - 140);
+          const one = inside[0];
+          if (!one) return null;
+          const tile = document.querySelector('[data-testid="one-place-city"] [data-graview-plot] .graview-plot-tile')?.getBoundingClientRect();
+          return { key: one.b.getAttribute("data-graview-board"), path: one.b.getAttribute("data-graview-board-path"), x: one.r.left + one.r.width / 2, y: one.r.top + one.r.height / 2, tile: tile ? { x: tile.left, y: tile.top } : null };
+        });
+      const before = await pick();
+      const by = { x: 90, y: 40 };
+      const touch = device.width <= 600;
+      if (before) {
+        if (!touch) {
+          await page.mouse.move(before.x, before.y);
+          await page.mouse.down();
+          for (let i = 1; i <= 10; i++) await page.mouse.move(before.x + (by.x * i) / 10, before.y + (by.y * i) / 10);
+          await page.mouse.up();
+        } else {
+          // A finger's drag, as the page hears it: pointer events of a touch, on the board it began on.
+          await page.evaluate(({ key, x, y, by }) => {
+            const el = document.querySelector(`[data-graview-board="${CSS.escape(key)}"]`);
+            const at = (type, dx, dy) => el.dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, composed: true, pointerId: 7, pointerType: "touch", isPrimary: true, clientX: x + dx, clientY: y + dy }));
+            at("pointerdown", 0, 0);
+            for (let i = 1; i <= 10; i++) at("pointermove", (by.x * i) / 10, (by.y * i) / 10);
+            at("pointerup", by.x, by.y);
+            el.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, clientX: x + by.x, clientY: y + by.y }));
+          }, { key: before.key, x: before.x, y: before.y, by });
+        }
+        await page.waitForTimeout(700);
+      }
+      const after = await page.evaluate(() => {
+        const tile = document.querySelector('[data-testid="one-place-city"] [data-graview-plot] .graview-plot-tile')?.getBoundingClientRect();
+        return { tile: tile ? { x: tile.left, y: tile.top } : null, url: location.pathname, level: Number(document.querySelector("[data-graview-one-place]")?.getAttribute("data-graview-one-place")) };
+      });
+      const panned = before?.tile && after.tile ? { x: Math.round(after.tile.x - before.tile.x), y: Math.round(after.tile.y - before.tile.y) } : null;
+      // And a press that does not move: the view opens, beside the city.
+      const press = await pick();
+      if (press) {
+        if (touch) await page.touchscreen.tap(press.x, press.y);
+        else await page.mouse.click(press.x, press.y);
+        await page.waitForTimeout(400);
+        await restAt(page, 1, 15_000).catch(() => {});
+      }
+      const opened = { url: new URL(page.url()).pathname, level: await levelOf(page), wanted: press?.path ?? null };
+      result.handOnABoard = { how: touch ? "touch" : "pointer", from: before?.key ?? null, panned, by, stayed: after.url.endsWith("/formations/formation-3") && after.level === 2, opened, ok: Boolean(before && panned && Math.abs(panned.x - by.x) <= 8 && Math.abs(panned.y - by.y) <= 8 && after.url.endsWith("/formations/formation-3") && after.level === 2 && press && opened.url.endsWith(press.path.split("?")[0]) && opened.level === 1) };
+    }
+    /*
      * AFTER A HAND'S PAN AT NEARBY, TOO: the city dragged under the page and
      * the bar, nothing of its own — a district's controls, a board — stands
      * under the bar, the page or the level control.
@@ -1547,6 +1614,8 @@ async function rich(browser, device) {
   seen.richLegend.push({ where, ...result.legend, ok: Boolean(result.legend && result.legend.firstVisit.every((open) => !open) && !result.legend.secondVisit && result.legend.opened.pane && result.legend.opened.expanded === "true" && result.legend.keptOpen) });
   seen.richSmooth.push({ where, moves: result.moved, ok: Boolean(result.moved?.length === 2 && result.moved.every((one) => one.leaps.length === 0)) });
   seen.richFocusSeen.push({ where, city: city.unseenFocus, nearby: nearby.unseenFocus, ok: !result.error && city.unseenFocus?.length === 0 && nearby.unseenFocus?.length === 0 });
+  if (result.handOnABoard) seen.richHand.push({ where, ...result.handOnABoard });
+  else if (device.width === 1280 || device.width === 390) seen.richHand.push({ where, error: result.error, ok: false });
   if (result.problemsOpen) seen.richProblems.push({ where, opens: result.problemsOpen, ok: result.problemsOpen.every((one) => one.there && one.url.endsWith("/problems") && one.level === 1) });
   seen.richOwnDistrict.push({ where, city: city.astray, nearby: nearby.astray, pageCoversADistrict: nearby.underThePage, ok: !result.error && city.astray?.length === 0 && nearby.astray?.length === 0 && (where.device !== "1280×800" || (nearby.underThePage?.length ?? 0) > 0) });
   // On a small window (a phone, or one on its side) a board's words are never smaller than 9 pixels: the City pans rather than shrink them, and beside a page a board stands only where it can be read.
@@ -1677,6 +1746,7 @@ try {
   report.checks.noBoardOrDistrictNameLeapsBetweenFrames = { held: seen.richSmooth, ok: every(seen.richSmooth) };
   report.checks.everythingTheKeyboardReachesInTheCityIsSeen = { held: seen.richFocusSeen, ok: every(seen.richFocusSeen) };
   report.checks.aDistrictsProblemsOpenFromTheCityAndNearbyByPointerAndKeyboard = { held: seen.richProblems, ok: every(seen.richProblems) };
+  report.checks.aDragBegunOnABoardPansTheCityAndAPressOpensTheView = { held: seen.richHand, ok: every(seen.richHand) };
   report.checks.eachViewsBoardIsDrawnAsThatViewAndNoTwoAlike = { held: seen.richViews, ok: every(seen.richViews) };
   report.checks.atNearbyEveryBuildingInSightIsSeenAndEveryLineEndsOnOne = { held: seen.richRecords, ok: every(seen.richRecords) };
   report.checks.atNearbyEveryViewOfADistrictInSightHasABoard = { held: seen.richNearbyViews, ok: every(seen.richNearbyViews) };

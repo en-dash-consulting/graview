@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-13T15:07:40.779Z",
+  "at": "2026-11-13T15:55:52.143Z",
   "engines": [
     "chromium"
   ],
@@ -57,7 +57,7 @@
                   "pressed": true
                 },
                 {
-                  "w": 62.90625,
+                  "w": 62.921875,
                   "h": 26,
                   "name": "Nearby: this page beside the tasks district",
                   "words": "Nearby",
@@ -96,7 +96,7 @@
                   "pressed": false
                 },
                 {
-                  "w": 63.4375,
+                  "w": 63.453125,
                   "h": 26,
                   "name": "Nearby: you are here",
                   "words": "Nearby",
@@ -135,7 +135,7 @@
                   "pressed": false
                 },
                 {
-                  "w": 62.90625,
+                  "w": 62.921875,
                   "h": 26,
                   "name": "Nearby: “Pay the deposit” beside its place in the city",
                   "words": "Nearby",
@@ -153,7 +153,7 @@
               ],
               "said": "Altitude: city, 3 of 3",
               "key": true,
-              "sheetTop": 390.3800048828125,
+              "sheetTop": 389.97998046875,
               "controlBottom": 884
             }
           ],
@@ -286,7 +286,7 @@
               ],
               "said": "Altitude: city, 3 of 3",
               "key": true,
-              "sheetTop": 407.0859069824219,
+              "sheetTop": 404.6459045410156,
               "controlBottom": 823
             }
           ],
@@ -309,12 +309,12 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 210,
-          "moved": 151,
+          "frames": 175,
+          "moved": 133,
           "same": true,
           "jump": {
-            "worst": 0.123,
-            "at": 2
+            "worst": 0.143,
+            "at": 67
           },
           "ok": true
         },
@@ -323,8 +323,8 @@
             "engine": "chromium",
             "device": "Pixel 7"
           },
-          "frames": 209,
-          "moved": 151,
+          "frames": 185,
+          "moved": 140,
           "same": true,
           "jump": {
             "worst": 0.193,
@@ -342,8 +342,8 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "worst": 0.48,
-          "counted": 352,
+          "worst": 0.49,
+          "counted": 262,
           "examples": [],
           "ok": true
         },
@@ -353,7 +353,7 @@
             "device": "Pixel 7"
           },
           "worst": 0.49,
-          "counted": 500,
+          "counted": 416,
           "examples": [],
           "ok": true
         }
@@ -373,8 +373,8 @@
               "to": 1,
               "how": "control",
               "arrived": true,
-              "moved": 34,
-              "frames": 86,
+              "moved": 29,
+              "frames": 83,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -383,8 +383,8 @@
               "to": 2,
               "how": "control",
               "arrived": true,
-              "moved": 34,
-              "frames": 81,
+              "moved": 27,
+              "frames": 140,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -394,7 +394,7 @@
               "how": "keys",
               "arrived": true,
               "moved": 34,
-              "frames": 160,
+              "frames": 222,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -403,8 +403,8 @@
               "to": 0,
               "how": "keys",
               "arrived": true,
-              "moved": 33,
-              "frames": 78,
+              "moved": 28,
+              "frames": 244,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -413,8 +413,8 @@
               "to": 2,
               "how": "control",
               "arrived": true,
-              "moved": 34,
-              "frames": 83,
+              "moved": 33,
+              "frames": 385,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -423,8 +423,8 @@
               "to": 0,
               "how": "control",
               "arrived": true,
-              "moved": 35,
-              "frames": 81,
+              "moved": 32,
+              "frames": 408,
               "zoomBack": 0,
               "widthBack": 0
             }
@@ -443,7 +443,7 @@
               "how": "control",
               "arrived": true,
               "moved": 34,
-              "frames": 100,
+              "frames": 91,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -453,7 +453,7 @@
               "how": "control",
               "arrived": true,
               "moved": 38,
-              "frames": 81,
+              "frames": 152,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -463,7 +463,7 @@
               "how": "keys",
               "arrived": true,
               "moved": 34,
-              "frames": 160,
+              "frames": 225,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -472,8 +472,8 @@
               "to": 0,
               "how": "keys",
               "arrived": true,
-              "moved": 33,
-              "frames": 237,
+              "moved": 32,
+              "frames": 268,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -482,8 +482,8 @@
               "to": 2,
               "how": "control",
               "arrived": true,
-              "moved": 36,
-              "frames": 83,
+              "moved": 35,
+              "frames": 390,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -493,7 +493,7 @@
               "how": "control",
               "arrived": true,
               "moved": 34,
-              "frames": 82,
+              "frames": 72,
               "zoomBack": 0,
               "widthBack": 0
             }
@@ -510,7 +510,7 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 210,
+          "frames": 175,
           "sheared": 0,
           "first": null,
           "reachedTheCity": true,
@@ -521,7 +521,7 @@
             "engine": "chromium",
             "device": "Pixel 7"
           },
-          "frames": 209,
+          "frames": 185,
           "sheared": 0,
           "first": null,
           "reachedTheCity": true,
@@ -1200,11 +1200,11 @@
                 2,
                 1
               ],
-              "start": 0,
+              "start": 0.1,
               "same": true,
               "jump": {
-                "worst": 0.08,
-                "at": 24
+                "worst": 0.119,
+                "at": 14
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
@@ -1222,7 +1222,7 @@
                 2,
                 1
               ],
-              "start": 0,
+              "start": 0.1,
               "same": true,
               "jump": {
                 "worst": 0.08,
@@ -1244,11 +1244,11 @@
                 2,
                 1
               ],
-              "start": 0,
+              "start": 0.1,
               "same": true,
               "jump": {
                 "worst": 0.08,
-                "at": 23
+                "at": 25
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
@@ -1270,7 +1270,7 @@
               "same": true,
               "jump": {
                 "worst": 0.08,
-                "at": 24
+                "at": 25
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
@@ -1290,20 +1290,20 @@
               "start": null,
               "same": true,
               "jump": {
-                "worst": 0,
-                "at": -1
+                "worst": 0.282,
+                "at": 1
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
                 "level": 1
               },
-              "ok": true
+              "ok": false
             }
           ],
-          "ok": true
+          "ok": false
         }
       ],
-      "ok": true
+      "ok": false
     },
     "clickingTheGroundDeselectsAndStaysAtCity": {
       "held": [
@@ -1398,7 +1398,7 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 142,
+          "frames": 135,
           "madeRises": true,
           "droppedRisesGoingBack": true,
           "madeSinksGoingBack": true,
@@ -1493,7 +1493,7 @@
             "device": "desk 1440×900"
           },
           "worst": 0,
-          "counted": 191,
+          "counted": 376,
           "examples": [],
           "ok": true
         },
@@ -1503,7 +1503,7 @@
             "device": "Pixel 7"
           },
           "worst": 0,
-          "counted": 342,
+          "counted": 402,
           "examples": [],
           "ok": true
         }
@@ -1610,7 +1610,7 @@
             "device": "desk 1440×900"
           },
           "path": "/pages/tasks/t-deposit",
-          "counted": 270,
+          "counted": 201,
           "crossed": 0,
           "examples": [],
           "ok": true
@@ -1621,7 +1621,7 @@
             "device": "desk 1440×900"
           },
           "path": "resizing",
-          "counted": 171,
+          "counted": 312,
           "crossed": 0,
           "examples": [],
           "ok": true
@@ -1633,7 +1633,7 @@
           },
           "path": "/pages/tasks/t-book",
           "pointed": 1,
-          "counted": 156,
+          "counted": 123,
           "crossed": 0,
           "examples": [],
           "ok": true
@@ -1644,7 +1644,7 @@
             "device": "Pixel 7"
           },
           "path": "/pages/tasks",
-          "counted": 250,
+          "counted": 208,
           "crossed": 0,
           "examples": [],
           "ok": true
@@ -1655,7 +1655,7 @@
             "device": "Pixel 7"
           },
           "path": "resizing",
-          "counted": 171,
+          "counted": 201,
           "crossed": 0,
           "examples": [],
           "ok": true
@@ -1812,18 +1812,18 @@
           "altitudes": [
             0,
             0,
-            0,
-            0,
-            0.36,
-            0.84,
-            1.32,
+            0.57,
+            0.76,
+            0.95,
+            1.14,
+            1.33,
             1.52,
             1.71,
             1.9,
             2,
             2
           ],
-          "between": 5,
+          "between": 7,
           "settled": true,
           "word": "City",
           "ok": true
@@ -1836,9 +1836,9 @@
           "altitudes": [
             0,
             0,
-            0,
-            0,
-            0.6,
+            0.57,
+            0.76,
+            0.95,
             1.14,
             1.33,
             1.52,
@@ -1847,7 +1847,7 @@
             2,
             2
           ],
-          "between": 5,
+          "between": 7,
           "settled": true,
           "word": "City",
           "ok": true
@@ -2308,16 +2308,34 @@
           "moves": [
             {
               "to": 1,
-              "leaps": [],
-              "frames": 110
+              "leaps": [
+                {
+                  "which": "names",
+                  "key": "formation",
+                  "step": 39,
+                  "altitude": 0.87,
+                  "still": false,
+                  "from": [
+                    351,
+                    466
+                  ],
+                  "to": [
+                    312,
+                    468
+                  ],
+                  "frame": 38,
+                  "of": 75
+                }
+              ],
+              "frames": 75
             },
             {
               "to": 2,
               "leaps": [],
-              "frames": 89
+              "frames": 60
             }
           ],
-          "ok": true
+          "ok": false
         },
         {
           "where": {
@@ -2327,12 +2345,12 @@
             {
               "to": 1,
               "leaps": [],
-              "frames": 111
+              "frames": 77
             },
             {
               "to": 2,
               "leaps": [],
-              "frames": 90
+              "frames": 60
             }
           ],
           "ok": true
@@ -2345,12 +2363,12 @@
             {
               "to": 1,
               "leaps": [],
-              "frames": 110
+              "frames": 77
             },
             {
               "to": 2,
               "leaps": [],
-              "frames": 90
+              "frames": 66
             }
           ],
           "ok": true
@@ -2363,12 +2381,12 @@
             {
               "to": 1,
               "leaps": [],
-              "frames": 109
+              "frames": 78
             },
             {
               "to": 2,
               "leaps": [],
-              "frames": 88
+              "frames": 63
             }
           ],
           "ok": true
@@ -2381,12 +2399,12 @@
             {
               "to": 1,
               "leaps": [],
-              "frames": 111
+              "frames": 75
             },
             {
               "to": 2,
               "leaps": [],
-              "frames": 90
+              "frames": 68
             }
           ],
           "ok": true
@@ -2399,18 +2417,18 @@
             {
               "to": 1,
               "leaps": [],
-              "frames": 110
+              "frames": 81
             },
             {
               "to": 2,
               "leaps": [],
-              "frames": 89
+              "frames": 71
             }
           ],
           "ok": true
         }
       ],
-      "ok": true
+      "ok": false
     },
     "everythingTheKeyboardReachesInTheCityIsSeen": {
       "held": [
@@ -2501,6 +2519,55 @@
               "level": 1
             }
           ],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aDragBegunOnABoardPansTheCityAndAPressOpensTheView": {
+      "held": [
+        {
+          "where": {
+            "device": "1280×800"
+          },
+          "how": "pointer",
+          "from": "kind:eon",
+          "panned": {
+            "x": 90,
+            "y": 40
+          },
+          "by": {
+            "x": 90,
+            "y": 40
+          },
+          "stayed": true,
+          "opened": {
+            "url": "/pages/eons",
+            "level": 1,
+            "wanted": "/eons"
+          },
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "390×844"
+          },
+          "how": "touch",
+          "from": "kind:era",
+          "panned": {
+            "x": 90,
+            "y": 40
+          },
+          "by": {
+            "x": 90,
+            "y": 40
+          },
+          "stayed": true,
+          "opened": {
+            "url": "/pages/eons",
+            "level": 1,
+            "wanted": "/eons"
+          },
           "ok": true
         }
       ],
@@ -3239,5 +3306,5 @@
     "docs/one-face/desk-dark.png",
     "docs/one-face/phone-dark.png"
   ],
-  "passed": true
+  "passed": false
 }

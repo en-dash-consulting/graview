@@ -874,6 +874,7 @@ const ONE_PLACE_CSS = `
 .graview-one-place-edge[aria-orientation="horizontal"]::after { top: 11px; left: 50%; height: 5px; width: 40px; margin-left: -20px; }
 .graview-one-place-edge:hover::after, .graview-one-place-edge:focus-visible::after { background: var(--graview-accent); }
 .graview-one-place-edge:focus-visible { outline: none; }
+.graview-one-place-board { touch-action: none; }
 .graview-one-place-board::after { content: ""; position: absolute; left: 50%; top: 100%; width: 2px; height: var(--graview-sign-post, 10px); margin-left: -1px; background: color-mix(in srgb, var(--graview-ink) 35%, transparent); }
 .graview-one-place-board::before { content: ""; position: absolute; left: 50%; top: calc(100% + var(--graview-sign-post, 10px)); width: 18px; height: 6px; margin: -3px 0 0 -9px; border-radius: 50%; background: rgba(0,0,0,0.28); }
 .graview-one-place-board[data-graview-rising] { transform-origin: 50% 100%; transform: scaleY(1); transition: transform ${RISE_MS}ms cubic-bezier(.33,0,.2,1); }

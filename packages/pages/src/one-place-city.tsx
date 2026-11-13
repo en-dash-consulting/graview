@@ -3,7 +3,7 @@ import { EMPTY_VIEW, toUrl, withOverview, type ViewState } from "@graview/layout
 import { Scene, type SceneCamera } from "@graview/react";
 import { useGraview, useNavigation, useViolations } from "@graview/react/provider";
 import { useOneFace } from "./one-place-control.js";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { aimAt, altitudeAt, anchorOf, BOARD_ASPECT, boardFaceWidth, boardLeast, boardWidthFor, fitBeside, fitCamera, SIGN_GAP, SIGN_POST, signRoom, cameraBetween, cameraPutting, CITY, cityArea, footOf, leaveFrom, routeLine, LEVEL_LIVE, levelZooms, PAGE, pageBox, PANEL, panelBox, PHONE, project, restingLevel, SHEET_ORIGIN, standingAt, standingCss, unionOf, type Box, type Live, type PageWhere, type Point } from "./one-place-geometry.js";
 import type { OnePlaceCityProps } from "./one-place.js";
 import { placeSigns } from "./one-place-signs.js";
@@ -65,7 +65,7 @@ const CITY_CSS = `
 [data-testid="one-place-city"] .graview-kind-face { filter: opacity(var(--graview-one-face-plates, 1)); }
 [data-testid="one-place-city"][data-graview-names-said] .graview-kind-face { visibility: hidden !important; pointer-events: none !important; }
 .graview-one-place-district { position: fixed; left: 0; top: 0; display: flex; gap: 4px; align-items: stretch; width: max-content; max-width: none; font-size: 0.75rem; line-height: 1.4; white-space: nowrap; }
-.graview-one-place-district > button { display: inline-flex; align-items: center; gap: 0.4em; box-sizing: border-box; min-height: 24px; min-width: 24px; margin: 0; padding: 1px 6px 2px; border: 1px solid var(--graview-edge); border-radius: 5px; background: var(--graview-panel, Canvas); color: var(--graview-ink); font: inherit; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,0.25); cursor: pointer; }
+.graview-one-place-district > button { touch-action: none; display: inline-flex; align-items: center; gap: 0.4em; box-sizing: border-box; min-height: 24px; min-width: 24px; margin: 0; padding: 1px 6px 2px; border: 1px solid var(--graview-edge); border-radius: 5px; background: var(--graview-panel, Canvas); color: var(--graview-ink); font: inherit; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,0.25); cursor: pointer; }
 .graview-one-place-district > button:hover { border-color: var(--graview-accent); }
 .graview-one-place-district > button:focus-visible { outline: 2px solid var(--graview-accent); outline-offset: 1px; }
 .graview-one-place-district > [data-graview-district-problems] { color: var(--graview-warn); font-weight: 600; letter-spacing: 0; font-variant-numeric: tabular-nums; }
@@ -205,7 +205,17 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
   const tagEls = useRef(new Map<string, HTMLElement>());
   const tagLayer = useRef<HTMLDivElement>(null);
   const state = useRef({ where, out, view, lessMotion, resolve, onAltitude, boards, current });
-  state.current = { where, out, view, lessMotion, resolve, onAltitude, boards, current };
+  /*
+   * WHAT THE FRAME READS IS WHAT IS DRAWN. Written as the render ran, a
+   * render React paused part way (a route drawn as a transition) handed the
+   * frame a place whose page was not yet on the screen: the move began from
+   * the new place's board while the old page still stood there, and the new
+   * page came in a long task later, a leap inside the move. Written once the
+   * render is committed, the frame moves only what is drawn.
+   */
+  useLayoutEffect(() => {
+    state.current = { where, out, view, lessMotion, resolve, onAltitude, boards, current };
+  });
 
   useEffect(() => {
     let frame = 0;
@@ -255,6 +265,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
      * inside it.
      */
     let calmRun = 0;
+    /** The page a board was last placed for at once: one with no place to stand is not placed again every frame. */
+    let placedFor = "";
     let placeSeenAt = 0;
     let placeSeen = "";
     const drawnSince = (placeKey: string, now: number): boolean => {
@@ -675,6 +687,17 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           lastRead = now;
           lastReadKey = readKey;
         }
+      }
+      /*
+       * A NEW PAGE'S BOARD IS PLACED THE FRAME IT IS DRAWN. Chosen by Find, a
+       * link or a building, the page is its own board until it moves — and
+       * with no place yet it stood a frame on its district's middle, then on
+       * its board: a jump before the move began. Placed at once, where the
+       * camera rests.
+       */
+      if (world.plots.size > 0 && rest !== PAGE && !move && level(painted) && !slots.has(at.current) && placedFor !== at.current) {
+        placedFor = at.current;
+        standAll(world, cam.zoom(), LEVEL_LIVE, shownAt(rest), rest);
       }
       const anchor = world.plots.size > 0 ? anchorIn(at.where, world) : null;
       const zooms = levelZooms(at.where, at.view);
@@ -1171,6 +1194,107 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       for (const drawn of lines.values()) {
         drawn.g.remove();
         drawn.ring.remove();
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /*
+   * A HAND ON A SIGN MOVES THE CITY. The boards, the districts' names and
+   * their chips, and the rings at the lines' ends stand over the city in a
+   * layer of their own, so a drag, a wheel or a pinch that began on one of
+   * them reached nothing: the city stalled under the pointer. Begun there, a
+   * drag past a few pixels pans the city's own camera by as far as the hand
+   * goes (and the press that began it opens nothing), two fingers zoom it
+   * about their middle, and the wheel pans or, with ctrl, zooms it — as over
+   * open ground. A press that does not move still opens what it is on.
+   */
+  useEffect(() => {
+    const layers = [boardLayer.current, tagLayer.current, rings.current].filter((el): el is HTMLDivElement => el !== null);
+    const DRAG = 6;
+    const down = new Map<number, { x: number; y: number }>();
+    let dragging = false;
+    let pinchFrom: number | null = null;
+    let swallow = false;
+    const spread = () => {
+      const [a, b] = [...down.values()];
+      return a && b ? Math.hypot(a.x - b.x, a.y - b.y) : 0;
+    };
+    const onDown = (event: PointerEvent) => {
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      down.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      dragging = false;
+      pinchFrom = down.size === 2 ? spread() : null;
+    };
+    const onMove = (event: PointerEvent) => {
+      const was = down.get(event.pointerId);
+      const cam = camera.current;
+      if (!was || !cam) return;
+      const dx = event.clientX - was.x;
+      const dy = event.clientY - was.y;
+      if (down.size >= 2) {
+        down.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        const now = spread();
+        if (pinchFrom && now > 0) {
+          const [a, b] = [...down.values()];
+          cam.zoomTo(cam.zoom() * (now / pinchFrom), (a!.x + b!.x) / 2, (a!.y + b!.y) / 2);
+          pinchFrom = now;
+          dragging = true;
+        }
+        return;
+      }
+      if (!dragging && Math.hypot(dx, dy) < DRAG) return;
+      if (!dragging) {
+        dragging = true;
+        try {
+          (event.target as Element | null)?.setPointerCapture?.(event.pointerId);
+        } catch {
+          // A pointer the page did not see go down keeps no capture; the moves still come here.
+        }
+      }
+      cam.panBy(dx, dy);
+      down.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    };
+    const onUp = (event: PointerEvent) => {
+      if (!down.has(event.pointerId)) return;
+      down.delete(event.pointerId);
+      if (dragging) swallow = true;
+      if (down.size === 0) {
+        dragging = false;
+        pinchFrom = null;
+      }
+    };
+    // The press that ended a drag opens nothing.
+    const onClick = (event: MouseEvent) => {
+      if (!swallow) return;
+      swallow = false;
+      event.preventDefault();
+      event.stopPropagation();
+    };
+    const onWheel = (event: WheelEvent) => {
+      const cam = camera.current;
+      if (!cam) return;
+      event.preventDefault();
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? 400 : 1;
+      if (event.ctrlKey || event.metaKey) cam.zoomTo(cam.zoom() * Math.exp(-event.deltaY * unit * 0.01), event.clientX, event.clientY);
+      else cam.panBy(-event.deltaX * unit, -event.deltaY * unit);
+    };
+    for (const layer of layers) {
+      layer.addEventListener("pointerdown", onDown, true);
+      layer.addEventListener("pointermove", onMove, true);
+      layer.addEventListener("pointerup", onUp, true);
+      layer.addEventListener("pointercancel", onUp, true);
+      layer.addEventListener("click", onClick, true);
+      layer.addEventListener("wheel", onWheel, { passive: false });
+    }
+    return () => {
+      for (const layer of layers) {
+        layer.removeEventListener("pointerdown", onDown, true);
+        layer.removeEventListener("pointermove", onMove, true);
+        layer.removeEventListener("pointerup", onUp, true);
+        layer.removeEventListener("pointercancel", onUp, true);
+        layer.removeEventListener("click", onClick, true);
+        layer.removeEventListener("wheel", onWheel);
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
