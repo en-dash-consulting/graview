@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-13T17:41:59.859Z",
+  "at": "2026-11-13T20:36:10.716Z",
   "engines": [
     "chromium"
   ],
@@ -32,8 +32,8 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 68,
-          "counted": 325,
+          "frames": 66,
+          "counted": 315,
           "worst": 0,
           "examples": [],
           "scrolled": 720,
@@ -61,7 +61,7 @@
             "device": "desk 1440×900"
           },
           "frames": 110,
-          "counted": 238,
+          "counted": 244,
           "worst": 0,
           "examples": [],
           "framesDrawnBetweenLevels": 24,
@@ -182,9 +182,9 @@
             "ok": true
           },
           "pageScrolled": {
-            "frames": 55,
+            "frames": 52,
             "moved": true,
-            "counted": 97,
+            "counted": 156,
             "worst": 0,
             "examples": []
           },
@@ -221,16 +221,16 @@
             "device": "desk 1440×900"
           },
           "view": {
-            "left": 930,
-            "top": 272,
-            "right": 1408,
-            "bottom": 480.61
+            "left": 652,
+            "top": 248,
+            "right": 1412,
+            "bottom": 456.61
           },
           "line": {
             "on": "building",
             "part": {
-              "x": 1169,
-              "y": 376.3
+              "x": 1032,
+              "y": 352.3
             }
           },
           "ok": true
@@ -289,7 +289,7 @@
           },
           "boxes": 200,
           "coldMedianMs": 0.9,
-          "coldWorstMs": 1.1,
+          "coldWorstMs": 1,
           "warmMs": 0.025,
           "ok": true
         }
@@ -357,13 +357,13 @@
           "pointed": 0,
           "own": {
             "building": {
-              "left": 34.79999923706055,
-              "top": 207.5,
-              "right": 41.5,
-              "bottom": 214.40000915527344
+              "left": 60.5,
+              "top": 218.39999389648438,
+              "right": 69.19999694824219,
+              "bottom": 227.3000030517578
             },
             "panel": {
-              "left": 178,
+              "left": 262,
               "top": 103,
               "right": 598,
               "bottom": 348
@@ -376,8 +376,8 @@
               "key": "r4",
               "on": "kind:request",
               "to": {
-                "x": 129.6,
-                "y": 181.6
+                "x": 183.8,
+                "y": 175.6
               },
               "under": false
             },
@@ -385,8 +385,8 @@
               "key": "r6",
               "on": "kind:request",
               "to": {
-                "x": 129.6,
-                "y": 181.6
+                "x": 183.8,
+                "y": 175.6
               },
               "under": false
             },
@@ -394,8 +394,8 @@
               "key": "r5",
               "on": "kind:request",
               "to": {
-                "x": 129.6,
-                "y": 181.6
+                "x": 183.8,
+                "y": 175.6
               },
               "under": false
             },
@@ -403,8 +403,8 @@
               "key": "r1",
               "on": "kind:request",
               "to": {
-                "x": 129.6,
-                "y": 181.6
+                "x": 183.8,
+                "y": 175.6
               },
               "under": false
             },
@@ -412,8 +412,8 @@
               "key": "r3",
               "on": "kind:request",
               "to": {
-                "x": 129.6,
-                "y": 181.6
+                "x": 183.8,
+                "y": 175.6
               },
               "under": false
             },
@@ -421,8 +421,8 @@
               "key": "r7",
               "on": "kind:request",
               "to": {
-                "x": 129.6,
-                "y": 181.6
+                "x": 183.8,
+                "y": 175.6
               },
               "under": false
             },
@@ -430,8 +430,8 @@
               "key": "r8",
               "on": "kind:request",
               "to": {
-                "x": 129.6,
-                "y": 181.6
+                "x": 183.8,
+                "y": 175.6
               },
               "under": false
             },
@@ -439,8 +439,8 @@
               "key": "r2",
               "on": "kind:request",
               "to": {
-                "x": 129.6,
-                "y": 181.6
+                "x": 183.8,
+                "y": 175.6
               },
               "under": false
             }
@@ -458,27 +458,27 @@
             "device": "desk 1440×900"
           },
           "before": {
-            "zoom": "1.1500",
+            "zoom": "1.0200",
             "transform": null,
             "r1": {
-              "x": 464,
-              "y": 324
+              "x": 326,
+              "y": 344
             }
           },
           "panned": {
-            "zoom": "1.1500",
+            "zoom": "1.0200",
             "transform": null,
             "r1": {
-              "x": 584,
-              "y": 404
+              "x": 446,
+              "y": 424
             }
           },
           "after": {
-            "zoom": "1.1500",
+            "zoom": "1.0200",
             "transform": null,
             "r1": {
-              "x": 584,
-              "y": 404
+              "x": 446,
+              "y": 424
             }
           },
           "f7": true,
@@ -495,7 +495,7 @@
             "device": "desk 1440×900"
           },
           "cards": 5,
-          "panelLeft": 910,
+          "panelLeft": 636,
           "astray": [],
           "ok": true
         }
@@ -521,6 +521,22 @@
             "shown": true
           },
           "alone": [],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "insideThePanelNoLineCrossesAnotherPillOrRow": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "pills": 8,
+          "rows": 2,
+          "pieces": 22,
+          "crossings": [],
           "ok": true
         }
       ],

@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-13T17:43:22.347Z",
+  "at": "2026-11-13T19:57:02.328Z",
   "engines": [
     "chromium"
   ],
@@ -153,7 +153,7 @@
               ],
               "said": "Altitude: city, 3 of 3",
               "key": true,
-              "sheetTop": 390.8916015625,
+              "sheetTop": 422.867919921875,
               "controlBottom": 884
             }
           ],
@@ -286,7 +286,7 @@
               ],
               "said": "Altitude: city, 3 of 3",
               "key": true,
-              "sheetTop": 407.2959289550781,
+              "sheetTop": 425.2059020996094,
               "controlBottom": 823
             }
           ],
@@ -309,11 +309,11 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 212,
-          "moved": 152,
+          "frames": 209,
+          "moved": 150,
           "same": true,
           "jump": {
-            "worst": 0.121,
+            "worst": 0.095,
             "at": 2
           },
           "ok": true
@@ -323,11 +323,11 @@
             "engine": "chromium",
             "device": "Pixel 7"
           },
-          "frames": 223,
-          "moved": 152,
+          "frames": 222,
+          "moved": 150,
           "same": true,
           "jump": {
-            "worst": 0.193,
+            "worst": 0.189,
             "at": 2
           },
           "ok": true
@@ -343,7 +343,7 @@
             "device": "desk 1440×900"
           },
           "worst": 0.49,
-          "counted": 442,
+          "counted": 436,
           "examples": [],
           "ok": true
         },
@@ -353,7 +353,7 @@
             "device": "Pixel 7"
           },
           "worst": 0.49,
-          "counted": 500,
+          "counted": 512,
           "examples": [],
           "ok": true
         }
@@ -374,7 +374,7 @@
               "how": "control",
               "arrived": true,
               "moved": 34,
-              "frames": 101,
+              "frames": 88,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -383,8 +383,8 @@
               "to": 2,
               "how": "control",
               "arrived": true,
-              "moved": 34,
-              "frames": 81,
+              "moved": 33,
+              "frames": 160,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -394,7 +394,7 @@
               "how": "keys",
               "arrived": true,
               "moved": 34,
-              "frames": 79,
+              "frames": 80,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -443,7 +443,7 @@
               "how": "control",
               "arrived": true,
               "moved": 34,
-              "frames": 100,
+              "frames": 102,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -452,8 +452,8 @@
               "to": 2,
               "how": "control",
               "arrived": true,
-              "moved": 35,
-              "frames": 81,
+              "moved": 36,
+              "frames": 164,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -463,7 +463,7 @@
               "how": "keys",
               "arrived": true,
               "moved": 34,
-              "frames": 160,
+              "frames": 237,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -473,7 +473,7 @@
               "how": "keys",
               "arrived": true,
               "moved": 33,
-              "frames": 240,
+              "frames": 79,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -482,8 +482,8 @@
               "to": 2,
               "how": "control",
               "arrived": true,
-              "moved": 36,
-              "frames": 336,
+              "moved": 34,
+              "frames": 168,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -493,7 +493,7 @@
               "how": "control",
               "arrived": true,
               "moved": 34,
-              "frames": 82,
+              "frames": 249,
               "zoomBack": 0,
               "widthBack": 0
             }
@@ -510,7 +510,7 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 212,
+          "frames": 209,
           "sheared": 0,
           "first": null,
           "reachedTheCity": true,
@@ -521,7 +521,7 @@
             "engine": "chromium",
             "device": "Pixel 7"
           },
-          "frames": 223,
+          "frames": 222,
           "sheared": 0,
           "first": null,
           "reachedTheCity": true,
@@ -1203,8 +1203,8 @@
               "start": 0,
               "same": true,
               "jump": {
-                "worst": 0.08,
-                "at": 24
+                "worst": 0.112,
+                "at": 26
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
@@ -1225,8 +1225,8 @@
               "start": 0,
               "same": true,
               "jump": {
-                "worst": 0.08,
-                "at": 24
+                "worst": 0.112,
+                "at": 26
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
@@ -1247,8 +1247,8 @@
               "start": 0,
               "same": true,
               "jump": {
-                "worst": 0.08,
-                "at": 24
+                "worst": 0.113,
+                "at": 27
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
@@ -1269,8 +1269,8 @@
               "start": 0,
               "same": true,
               "jump": {
-                "worst": 0.08,
-                "at": 24
+                "worst": 0.134,
+                "at": 19
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
@@ -1285,13 +1285,14 @@
                 "level": 1
               },
               "levels": [
+                2,
                 1
               ],
               "start": null,
               "same": true,
               "jump": {
-                "worst": 0,
-                "at": -1
+                "worst": 0.149,
+                "at": 16
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
@@ -1332,7 +1333,7 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "before": 0.9639,
+          "before": 0.9435,
           "closer": 3,
           "levels": [
             2
@@ -1373,8 +1374,8 @@
             },
             {
               "path": "/pages/places/the-lists",
-              "shown": 14,
-              "lines": 14,
+              "shown": 15,
+              "lines": 15,
               "missing": [],
               "ok": true
             },
@@ -1398,7 +1399,7 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 143,
+          "frames": 144,
           "madeRises": true,
           "droppedRisesGoingBack": true,
           "madeSinksGoingBack": true,
@@ -1448,11 +1449,11 @@
             "device": "desk 1440×900"
           },
           "before": {
-            "width": 518,
+            "width": 792,
             "height": 828
           },
           "dragged": {
-            "width": 699,
+            "width": 973,
             "height": 828
           },
           "role": "separator",
@@ -1492,7 +1493,7 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "worst": 0.1,
+          "worst": 0.43,
           "counted": 285,
           "examples": [],
           "ok": true
@@ -1503,7 +1504,7 @@
             "device": "Pixel 7"
           },
           "worst": 0,
-          "counted": 360,
+          "counted": 342,
           "examples": [],
           "ok": true
         }
@@ -1564,7 +1565,7 @@
           "found": true,
           "roof": "rgb(79, 70, 229)",
           "sameRoof": 0,
-          "lift": -7,
+          "lift": 0,
           "words": 0,
           "listed": [],
           "repeated": [],
@@ -1610,7 +1611,7 @@
             "device": "desk 1440×900"
           },
           "path": "/pages/tasks/t-deposit",
-          "counted": 273,
+          "counted": 270,
           "crossed": 0,
           "examples": [],
           "ok": true
@@ -1645,7 +1646,7 @@
             "device": "Pixel 7"
           },
           "path": "/pages/tasks",
-          "counted": 250,
+          "counted": 256,
           "crossed": 0,
           "examples": [],
           "ok": true
@@ -1656,7 +1657,7 @@
             "device": "Pixel 7"
           },
           "path": "resizing",
-          "counted": 180,
+          "counted": 171,
           "crossed": 0,
           "examples": [],
           "ok": true
@@ -1672,7 +1673,7 @@
             "device": "desk 1440×900"
           },
           "path": "/pages/tasks/t-book at 610×760",
-          "lines": 3,
+          "lines": 2,
           "pointed": 1,
           "ownInSight": true,
           "ok": true
@@ -1831,8 +1832,8 @@
             0,
             0,
             0,
-            0.6,
-            1.08,
+            0.84,
+            1.14,
             1.33,
             1.52,
             1.71,
@@ -1855,8 +1856,8 @@
             0,
             0,
             0,
-            0.6,
-            1.08,
+            0.84,
+            1.14,
             1.33,
             1.52,
             1.71,
@@ -2014,14 +2015,15 @@
             "onGround": []
           },
           "nearby": {
-            "clash": [
-              "the site name × the expedition name"
-            ],
+            "clash": [],
             "underPanel": [],
             "outside": [],
             "onGround": []
           },
-          "ok": false
+          "homeNearby": {
+            "clash": []
+          },
+          "ok": true
         },
         {
           "where": {
@@ -2037,6 +2039,9 @@
             "underPanel": [],
             "outside": [],
             "onGround": []
+          },
+          "homeNearby": {
+            "clash": []
           },
           "ok": true
         },
@@ -2055,6 +2060,9 @@
             "outside": [],
             "onGround": []
           },
+          "homeNearby": {
+            "clash": []
+          },
           "ok": true
         },
         {
@@ -2071,6 +2079,9 @@
             "underPanel": [],
             "outside": [],
             "onGround": []
+          },
+          "homeNearby": {
+            "clash": []
           },
           "ok": true
         },
@@ -2089,6 +2100,9 @@
             "outside": [],
             "onGround": []
           },
+          "homeNearby": {
+            "clash": []
+          },
           "ok": true
         },
         {
@@ -2106,10 +2120,13 @@
             "outside": [],
             "onGround": []
           },
+          "homeNearby": {
+            "clash": []
+          },
           "ok": true
         }
       ],
-      "ok": false
+      "ok": true
     },
     "everyDistrictAtTheCityNamesItsKind": {
       "held": [
@@ -2328,12 +2345,12 @@
             {
               "to": 1,
               "leaps": [],
-              "frames": 110
+              "frames": 108
             },
             {
               "to": 2,
               "leaps": [],
-              "frames": 91
+              "frames": 90
             }
           ],
           "ok": true
@@ -2346,12 +2363,12 @@
             {
               "to": 1,
               "leaps": [],
-              "frames": 110
+              "frames": 109
             },
             {
               "to": 2,
               "leaps": [],
-              "frames": 90
+              "frames": 89
             }
           ],
           "ok": true
@@ -2382,12 +2399,12 @@
             {
               "to": 1,
               "leaps": [],
-              "frames": 111
+              "frames": 110
             },
             {
               "to": 2,
               "leaps": [],
-              "frames": 90
+              "frames": 91
             }
           ],
           "ok": true
@@ -2400,12 +2417,12 @@
             {
               "to": 1,
               "leaps": [],
-              "frames": 110
+              "frames": 109
             },
             {
               "to": 2,
               "leaps": [],
-              "frames": 91
+              "frames": 89
             }
           ],
           "ok": true
@@ -2423,7 +2440,7 @@
             {
               "to": 2,
               "leaps": [],
-              "frames": 90
+              "frames": 91
             }
           ],
           "ok": true
@@ -2494,30 +2511,82 @@
             {
               "from": "City",
               "how": "pointer",
+              "start": "/specimens",
               "there": true,
               "url": "/pages/problems",
-              "level": 1
+              "kind": "specimen",
+              "level": 1,
+              "of": "specimen",
+              "named": [
+                "specimens",
+                "specimens",
+                "specimens",
+                "specimens"
+              ]
             },
             {
               "from": "City",
               "how": "keyboard",
+              "start": "/specimens",
               "there": true,
               "url": "/pages/problems",
-              "level": 1
+              "kind": "specimen",
+              "level": 1,
+              "of": "specimen",
+              "named": [
+                "specimens",
+                "specimens",
+                "specimens",
+                "specimens"
+              ]
             },
             {
               "from": "Nearby",
               "how": "pointer",
+              "start": "/specimens",
               "there": true,
               "url": "/pages/problems",
-              "level": 1
+              "kind": "specimen",
+              "level": 1,
+              "of": "specimen",
+              "named": [
+                "specimens",
+                "specimens",
+                "specimens",
+                "specimens"
+              ]
             },
             {
               "from": "Nearby",
               "how": "keyboard",
+              "start": "/specimens",
               "there": true,
               "url": "/pages/problems",
-              "level": 1
+              "kind": "specimen",
+              "level": 1,
+              "of": "specimen",
+              "named": [
+                "specimens",
+                "specimens",
+                "specimens",
+                "specimens"
+              ]
+            },
+            {
+              "from": "Nearby",
+              "how": "pointer",
+              "start": "/problems",
+              "there": true,
+              "url": "/pages/problems",
+              "kind": "specimen",
+              "level": 1,
+              "of": "specimen",
+              "named": [
+                "specimens",
+                "specimens",
+                "specimens",
+                "specimens"
+              ]
             }
           ],
           "ok": true
@@ -2531,6 +2600,7 @@
           "where": {
             "device": "1280×800"
           },
+          "at": "City",
           "how": "pointer",
           "from": "kind:eon",
           "panned": {
@@ -2551,8 +2621,32 @@
         },
         {
           "where": {
+            "device": "1280×800"
+          },
+          "at": "Nearby",
+          "how": "pointer",
+          "from": "kind:period",
+          "panned": {
+            "x": 90,
+            "y": 40
+          },
+          "by": {
+            "x": 90,
+            "y": 40
+          },
+          "stayed": true,
+          "opened": {
+            "url": "/pages/periods",
+            "level": 1,
+            "wanted": "/periods"
+          },
+          "ok": true
+        },
+        {
+          "where": {
             "device": "390×844"
           },
+          "at": "City",
           "how": "touch",
           "from": "kind:era",
           "panned": {
@@ -2568,6 +2662,29 @@
             "url": "/pages/eons",
             "level": 1,
             "wanted": "/eons"
+          },
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "390×844"
+          },
+          "at": "Nearby",
+          "how": "touch",
+          "from": "name:epoch",
+          "panned": {
+            "x": 90,
+            "y": 40
+          },
+          "by": {
+            "x": 90,
+            "y": 40
+          },
+          "stayed": true,
+          "opened": {
+            "url": "/pages/periods",
+            "level": 1,
+            "wanted": "/periods"
           },
           "ok": true
         }
@@ -2626,15 +2743,14 @@
           "where": {
             "device": "844×390"
           },
-          "underThePansBar": [
-            "place:event:extinctions"
-          ],
+          "underThePansBar": [],
           "boards": [
             "View · periods · Timeline",
             "View · species · Tree of life",
-            "View · sites · Dig map"
+            "View · sites · Dig map",
+            "View · events · Extinctions"
           ],
-          "asThemselves": 3,
+          "asThemselves": 4,
           "alike": [],
           "ok": true
         },
@@ -2658,12 +2774,12 @@
             "device": "360×640"
           },
           "underThePansBar": [
-            "place:site:dig-map"
+            "place:event:extinctions"
           ],
           "boards": [
             "View · periods · Timeline",
             "View · species · Tree of life",
-            "View · events · Extinctions"
+            "View · sites · Dig map"
           ],
           "asThemselves": 3,
           "alike": [],
@@ -2678,11 +2794,7 @@
           "where": {
             "device": "1520×900"
           },
-          "hidden": [
-            "species-65 under the specimen name",
-            "species-59 under the specimen name",
-            "species-66 under the specimen name"
-          ],
+          "hidden": [],
           "districtsInSight": [
             "epoch",
             "era",
@@ -2697,7 +2809,7 @@
           ],
           "lines": 2,
           "lineEndsNotOnABuilding": [],
-          "ok": false
+          "ok": true
         },
         {
           "where": {
@@ -2731,7 +2843,7 @@
             "site",
             "species"
           ],
-          "lines": 1,
+          "lines": 2,
           "lineEndsNotOnABuilding": [],
           "ok": true
         },
@@ -2787,7 +2899,7 @@
           "ok": true
         }
       ],
-      "ok": false
+      "ok": true
     },
     "atNearbyEveryViewOfADistrictInSightHasABoard": {
       "held": [
@@ -2800,15 +2912,18 @@
             "event",
             "formation",
             "period",
-            "site"
+            "site",
+            "species"
           ],
           "owed": [
             "period:timeline",
+            "species:tree-of-life",
             "site:dig-map",
             "event:extinctions"
           ],
           "standing": [
             "Timeline",
+            "Tree of life",
             "Dig map",
             "Extinctions"
           ],
@@ -2824,10 +2939,12 @@
             "event",
             "formation",
             "period",
-            "site"
+            "site",
+            "species"
           ],
           "owed": [
             "period:timeline",
+            "species:tree-of-life",
             "site:dig-map",
             "event:extinctions"
           ],
@@ -2836,8 +2953,10 @@
             "Dig map",
             "Extinctions"
           ],
-          "missing": [],
-          "ok": true
+          "missing": [
+            "species:tree-of-life"
+          ],
+          "ok": false
         },
         {
           "where": {
@@ -2870,9 +2989,10 @@
             "period:timeline",
             "site:dig-map"
           ],
-          "standing": [],
+          "standing": [
+            "Timeline"
+          ],
           "missing": [
-            "period:timeline",
             "site:dig-map"
           ],
           "ok": true
@@ -2890,6 +3010,9 @@
             "event:extinctions"
           ],
           "standing": [
+            "Timeline",
+            "Tree of life",
+            "Dig map",
             "Extinctions"
           ],
           "missing": [],
@@ -2913,7 +3036,7 @@
           "ok": true
         }
       ],
-      "ok": true
+      "ok": false
     },
     "noDistrictControlStandsUnderTheBarThePageOrTheLevelControl": {
       "held": [
@@ -2978,7 +3101,8 @@
           "city": [],
           "nearby": [],
           "pageCoversADistrict": [
-            "expedition"
+            "expedition",
+            "specimen"
           ],
           "ok": true
         },
@@ -3022,8 +3146,6 @@
           "nearby": [],
           "pageCoversADistrict": [
             "expedition",
-            "site",
-            "species",
             "specimen"
           ],
           "ok": true
@@ -3047,37 +3169,35 @@
             "device": "1520×900"
           },
           "city": [
-            "“Home” 5.9px",
-            "“Eons” 5.6px",
-            "“Eras” 5.6px",
-            "“Periods” 5.6px",
-            "“Epochs” 5.6px",
-            "“Events” 5.6px",
-            "“Species” 5.6px",
-            "“Sites” 3.9px",
-            "“Formations” 3.9px",
-            "“Researchers” 3.9px",
-            "“Expeditions” 3.9px",
-            "“Specimens” 5.6px",
-            "“Timeline” 5.9px",
-            "“Tree of life” 5.9px",
-            "“Dig map” 5.9px",
-            "“Extinctions” 5.9px",
-            "“Connections” 5.9px"
+            "“Home” 3.6px",
+            "“Eons” 3.4px",
+            "“Eras” 3.4px",
+            "“Periods” 3.4px",
+            "“Epochs” 3.4px",
+            "“Events” 3.4px",
+            "“Species” 3.4px",
+            "“Sites” 2.4px",
+            "“Formations” 2.4px",
+            "“Researchers” 2.4px",
+            "“Expeditions” 2.4px",
+            "“Specimens” 3.4px",
+            "“Timeline” 3.6px",
+            "“Tree of life” 3.6px",
+            "“Dig map” 3.6px",
+            "“Extinctions” 3.6px",
+            "“Connections” 3.6px"
           ],
           "nearby": [
-            "“Eras” 4.1px",
-            "“Periods” 5.9px",
-            "“Epochs” 5.9px",
-            "“Events” 5.9px",
-            "“Species” 4.1px",
-            "“Sites” 5.9px",
-            "“Formations” 5.0px",
-            "“Researchers” 4.1px",
-            "“Expeditions” 4.1px",
-            "“Timeline” 6.2px",
-            "“Dig map” 6.2px",
-            "“Extinctions” 5.3px"
+            "“Periods” 3.8px",
+            "“Epochs” 3.3px",
+            "“Events” 3.8px",
+            "“Species” 1.9px",
+            "“Sites” 2.7px",
+            "“Formations” 1.9px",
+            "“Timeline” 4.1px",
+            "“Tree of life” 2.0px",
+            "“Dig map” 3.5px",
+            "“Extinctions” 4.1px"
           ],
           "ok": true
         },
@@ -3086,33 +3206,34 @@
             "device": "1280×800"
           },
           "city": [
-            "“Home” 6.8px",
-            "“Eons” 6.4px",
-            "“Eras” 6.4px",
-            "“Periods” 6.4px",
-            "“Epochs” 6.4px",
-            "“Events” 6.4px",
-            "“Species” 6.4px",
-            "“Sites” 4.5px",
-            "“Formations” 4.5px",
-            "“Researchers” 4.5px",
-            "“Expeditions” 4.5px",
-            "“Specimens” 6.4px",
-            "“Timeline” 6.8px",
-            "“Tree of life” 6.8px",
-            "“Dig map” 6.8px",
-            "“Extinctions” 6.8px",
-            "“Connections” 6.8px"
+            "“Home” 4.7px",
+            "“Eons” 4.4px",
+            "“Eras” 4.4px",
+            "“Periods” 4.4px",
+            "“Epochs” 4.4px",
+            "“Events” 4.4px",
+            "“Species” 4.4px",
+            "“Sites” 3.1px",
+            "“Formations” 3.1px",
+            "“Researchers” 3.1px",
+            "“Expeditions” 3.1px",
+            "“Specimens” 4.4px",
+            "“Timeline” 4.7px",
+            "“Tree of life” 3.3px",
+            "“Dig map” 4.7px",
+            "“Extinctions” 4.7px",
+            "“Connections” 4.7px"
           ],
           "nearby": [
-            "“Periods” 7.0px",
-            "“Epochs” 7.0px",
-            "“Events” 7.0px",
-            "“Species” 4.9px",
-            "“Sites” 7.0px",
-            "“Timeline” 7.4px",
-            "“Dig map” 6.3px",
-            "“Extinctions” 6.3px"
+            "“Periods” 4.6px",
+            "“Epochs” 3.9px",
+            "“Events” 4.6px",
+            "“Species” 3.2px",
+            "“Sites” 3.9px",
+            "“Formations” 2.7px",
+            "“Timeline” 4.8px",
+            "“Dig map” 4.1px",
+            "“Extinctions” 4.8px"
           ],
           "ok": true
         },
@@ -3137,29 +3258,32 @@
             "device": "768×1024"
           },
           "city": [
-            "“Home” 5.8px",
-            "“Eons” 5.5px",
-            "“Eras” 5.5px",
-            "“Periods” 5.5px",
-            "“Epochs” 5.5px",
-            "“Events” 5.5px",
-            "“Species” 5.5px",
-            "“Sites” 5.5px",
-            "“Formations” 3.8px",
-            "“Researchers” 3.8px",
-            "“Expeditions” 5.5px",
-            "“Specimens” 5.5px",
-            "“Timeline” 5.8px",
-            "“Tree of life” 5.8px",
-            "“Dig map” 4.0px",
-            "“Extinctions” 5.8px",
-            "“Connections” 5.8px"
+            "“Home” 6.8px",
+            "“Eons” 6.4px",
+            "“Eras” 6.4px",
+            "“Periods” 6.4px",
+            "“Epochs” 6.4px",
+            "“Events” 6.4px",
+            "“Species” 6.4px",
+            "“Sites” 6.4px",
+            "“Formations” 4.5px",
+            "“Researchers” 4.5px",
+            "“Expeditions” 6.4px",
+            "“Specimens” 6.4px",
+            "“Timeline” 6.8px",
+            "“Tree of life” 6.8px",
+            "“Dig map” 4.7px",
+            "“Extinctions” 6.8px",
+            "“Connections” 6.8px"
           ],
           "nearby": [
-            "“Epochs” 7.7px",
-            "“Events” 7.7px",
-            "“Formations” 6.5px",
-            "“Extinctions” 8.1px"
+            "“Periods” 8.9px",
+            "“Epochs” 6.2px",
+            "“Events” 8.9px",
+            "“Species” 6.2px",
+            "“Sites” 6.2px",
+            "“Formations” 4.4px",
+            "“Dig map” 6.6px"
           ],
           "ok": true
         },
@@ -3174,91 +3298,205 @@
       ],
       "ok": true
     },
-    "atNearbyTheHomeFramesTheCityBesideThePage": {
+    "atNearbyTheHomeFramesTheWholeCityBesideThePageOrWhereItCannotItsViewsDistrictsAndAsNearTheMiddleAsThatAllows": {
       "held": [
         {
           "where": {
             "device": "1520×900"
           },
-          "behind": [],
-          "districts": 11,
-          "free": {
-            "width": 961,
-            "height": 852
+          "fits": false,
+          "centered": true,
+          "centeredOn": {
+            "x": true,
+            "y": true
           },
-          "held": true,
-          "ok": true
-        },
-        {
-          "where": {
-            "device": "1280×800"
+          "side": {
+            "x": 8,
+            "y": 56,
+            "width": 656,
+            "height": 836
           },
-          "behind": [],
-          "districts": 11,
-          "free": {
-            "width": 807,
-            "height": 752
+          "city": {
+            "x": -243.5,
+            "y": 243.70001220703125,
+            "right": 796.5999755859375,
+            "bottom": 852.9000244140625
           },
-          "held": true,
-          "ok": true
-        },
-        {
-          "where": {
-            "device": "390×844"
-          },
-          "behind": [],
-          "districts": 11,
-          "free": {
-            "width": 390,
-            "height": 300
-          },
-          "held": false,
-          "ok": true
-        },
-        {
-          "where": {
-            "device": "844×390"
-          },
-          "behind": [],
-          "districts": 11,
-          "free": {
-            "width": 412,
-            "height": 342
-          },
-          "held": false,
-          "ok": true
-        },
-        {
-          "where": {
-            "device": "768×1024"
-          },
+          "underPage": [],
           "behind": [
             "expedition",
             "specimen"
           ],
           "districts": 11,
           "free": {
-            "width": 336,
+            "width": 672,
+            "height": 852
+          },
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "1280×800"
+          },
+          "fits": false,
+          "centered": true,
+          "centeredOn": {
+            "x": true,
+            "y": true
+          },
+          "side": {
+            "x": 8,
+            "y": 56,
+            "width": 548,
+            "height": 736
+          },
+          "city": {
+            "x": -212.5,
+            "y": 230.5,
+            "right": 668.9000244140625,
+            "bottom": 746.5
+          },
+          "underPage": [],
+          "behind": [
+            "expedition",
+            "specimen"
+          ],
+          "districts": 11,
+          "free": {
+            "width": 564,
+            "height": 752
+          },
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "390×844"
+          },
+          "fits": false,
+          "centered": true,
+          "centeredOn": {
+            "x": true,
+            "y": true
+          },
+          "side": {
+            "x": 8,
+            "y": 101,
+            "width": 374,
+            "height": 226
+          },
+          "city": {
+            "x": -163.1999969482422,
+            "y": 72.60000610351562,
+            "right": 463.6999816894531,
+            "bottom": 439
+          },
+          "underPage": [],
+          "behind": [],
+          "districts": 11,
+          "free": {
+            "width": 390,
+            "height": 300
+          },
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "844×390"
+          },
+          "fits": true,
+          "centered": true,
+          "centeredOn": {
+            "x": true,
+            "y": true
+          },
+          "side": {
+            "x": 8,
+            "y": 56,
+            "width": 452,
+            "height": 326
+          },
+          "city": {
+            "x": 24.000001907348633,
+            "y": 96.20001220703125,
+            "right": 444,
+            "bottom": 341.70001220703125
+          },
+          "underPage": [],
+          "behind": [],
+          "districts": 11,
+          "free": {
+            "width": 468,
+            "height": 342
+          },
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "768×1024"
+          },
+          "fits": false,
+          "centered": true,
+          "centeredOn": {
+            "x": true,
+            "y": true
+          },
+          "side": {
+            "x": 8,
+            "y": 56,
+            "width": 380,
+            "height": 960
+          },
+          "city": {
+            "x": -143.5,
+            "y": 403.8999938964844,
+            "right": 462.20001220703125,
+            "bottom": 758.2999877929688
+          },
+          "underPage": [],
+          "behind": [
+            "expedition",
+            "specimen"
+          ],
+          "districts": 11,
+          "free": {
+            "width": 396,
             "height": 976
           },
-          "held": false,
           "ok": true
         },
         {
           "where": {
             "device": "360×640"
           },
+          "fits": false,
+          "centered": false,
+          "centeredOn": {
+            "x": false,
+            "y": true
+          },
+          "side": {
+            "x": 8,
+            "y": 101,
+            "width": 344,
+            "height": 145
+          },
+          "city": {
+            "x": -27.399999618530273,
+            "y": 88.69999694824219,
+            "right": 335.6000061035156,
+            "bottom": 300.79998779296875
+          },
+          "underPage": [],
           "behind": [],
           "districts": 11,
           "free": {
             "width": 360,
             "height": 219
           },
-          "held": false,
-          "ok": true
+          "ok": false
         }
       ],
-      "ok": true
+      "ok": false
     },
     "atNearbyOnTheHomeEveryDistrictItsViewsShowStandsOnTheCitysSide": {
       "held": [
@@ -3333,6 +3571,118 @@
             "species"
           ],
           "behind": [],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "atNearbyOnTheHomeNoNameOrBoardStandsOnAnotherOrOnADistrictsCount": {
+      "held": [
+        {
+          "where": {
+            "device": "1520×900"
+          },
+          "clash": [],
+          "names": 10,
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "1280×800"
+          },
+          "clash": [],
+          "names": 6,
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "390×844"
+          },
+          "clash": [],
+          "names": 4,
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "844×390"
+          },
+          "clash": [],
+          "names": 11,
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "768×1024"
+          },
+          "clash": [],
+          "names": 6,
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "360×640"
+          },
+          "clash": [],
+          "names": 7,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "atNearbyOnARichPageNoLineCrossesAnotherPartInThePanel": {
+      "held": [
+        {
+          "where": {
+            "device": "1520×900"
+          },
+          "parts": 4,
+          "pieces": 3,
+          "crossings": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "1280×800"
+          },
+          "parts": 4,
+          "pieces": 3,
+          "crossings": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "390×844"
+          },
+          "parts": 3,
+          "pieces": 2,
+          "crossings": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "844×390"
+          },
+          "parts": 2,
+          "pieces": 0,
+          "crossings": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "768×1024"
+          },
+          "parts": 4,
+          "pieces": 3,
+          "crossings": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "360×640"
+          },
+          "parts": 1,
+          "pieces": 0,
+          "crossings": [],
           "ok": true
         }
       ],
@@ -3517,6 +3867,748 @@
             ],
             "tip": []
           },
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aRecordOpenedInTheCityIsLitWhereItStandsInItsDistrictAndTheCameraStaysWhereEverythingItFramesIsInSight": {
+      "held": [
+        {
+          "where": {
+            "device": "1280×800",
+            "how": "pointer"
+          },
+          "by": "a press on its building",
+          "opened": "species-16",
+          "landed": "/pages/species/species-16",
+          "moved": [],
+          "inItsDistrict": [],
+          "everythingInSight": true,
+          "cameraMoved": false,
+          "lit": [
+            "species-16"
+          ],
+          "chosenOnTheScene": [],
+          "faded": {
+            "afterThePress": 0,
+            "mostWhileItMoved": 0,
+            "freshLoad": 0
+          },
+          "words": [],
+          "freshMoved": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "1280×800",
+            "how": "pointer"
+          },
+          "by": "a link in the page",
+          "opened": "period-13",
+          "landed": "/pages/periods/period-13",
+          "moved": [],
+          "lit": [
+            "period-13"
+          ],
+          "chosenOnTheScene": [],
+          "faded": {
+            "afterThePress": 0,
+            "mostWhileItMoved": 0,
+            "freshLoad": 0
+          },
+          "words": [],
+          "freshMoved": [],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "whetherTheRestOfTheCityFadesIsOneRuleOnAFreshLoadAndAfterAPress": {
+      "held": [
+        {
+          "where": {
+            "device": "1280×800",
+            "how": "pointer"
+          },
+          "by": "a press on its building",
+          "faded": {
+            "afterThePress": 0,
+            "mostWhileItMoved": 0,
+            "freshLoad": 0
+          },
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "1280×800",
+            "how": "pointer"
+          },
+          "by": "a link in the page",
+          "faded": {
+            "afterThePress": 0,
+            "mostWhileItMoved": 0,
+            "freshLoad": 0
+          },
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "noLinksWordsFloatOverTheCityAfterARecordIsOpenedThere": {
+      "held": [
+        {
+          "where": {
+            "device": "1280×800",
+            "how": "pointer"
+          },
+          "by": "a press on its building",
+          "words": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "1280×800",
+            "how": "pointer"
+          },
+          "by": "a link in the page",
+          "words": [],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "thePageIsDrawnOnceAndItsElementsFocusAndTypedWordSurviveTheOneFacesArrival": {
+      "held": [
+        {
+          "where": {
+            "device": "1280×800"
+          },
+          "heldBack": 1,
+          "meanwhile": {
+            "arriving": true,
+            "find": true,
+            "focused": true,
+            "stillArriving": true
+          },
+          "after": {
+            "sameMain": true,
+            "sameBar": true,
+            "keyboardInFind": true,
+            "typed": "fern",
+            "inTheSheet": true,
+            "barInTheSlot": true,
+            "mains": 1
+          },
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "noBoardsPostCrossesADistrictsName": {
+      "held": [
+        {
+          "where": {
+            "device": "1520×900"
+          },
+          "acrossNames": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "1280×800"
+          },
+          "acrossNames": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "390×844"
+          },
+          "acrossNames": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "844×390"
+          },
+          "acrossNames": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "768×1024"
+          },
+          "acrossNames": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "360×640"
+          },
+          "acrossNames": [],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aPostCrossesABoardOnlyUnderIt": {
+      "held": [
+        {
+          "where": {
+            "device": "1520×900"
+          },
+          "crossings": [
+            {
+              "post": "Tree of life",
+              "across": "“Dig map”",
+              "under": true
+            },
+            {
+              "post": "Solnhofen",
+              "across": "“Formations”",
+              "under": true
+            }
+          ],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "1280×800"
+          },
+          "crossings": [
+            {
+              "post": "Dig map",
+              "across": "“Tree of life”",
+              "under": true
+            },
+            {
+              "post": "Solnhofen",
+              "across": "“Formations”",
+              "under": true
+            },
+            {
+              "post": "Species",
+              "across": "“Dig map”",
+              "under": true
+            },
+            {
+              "post": "Dig map",
+              "across": "“Sites”",
+              "under": true
+            }
+          ],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "390×844"
+          },
+          "crossings": [
+            {
+              "post": "Events",
+              "across": "“Solnhofen”",
+              "under": true
+            },
+            {
+              "post": "Formations",
+              "across": "“Events”",
+              "under": true
+            },
+            {
+              "post": "Formations",
+              "across": "“Extinctions”",
+              "under": true
+            },
+            {
+              "post": "Formations",
+              "across": "“Solnhofen”",
+              "under": true
+            },
+            {
+              "post": "Researchers",
+              "across": "“Eras”",
+              "under": true
+            },
+            {
+              "post": "Specimens",
+              "across": "“Expeditions”",
+              "under": true
+            },
+            {
+              "post": "Timeline",
+              "across": "“Periods”",
+              "under": true
+            },
+            {
+              "post": "Tree of life",
+              "across": "“Sites”",
+              "under": true
+            },
+            {
+              "post": "Extinctions",
+              "across": "“Events”",
+              "under": true
+            },
+            {
+              "post": "Extinctions",
+              "across": "“Solnhofen”",
+              "under": true
+            }
+          ],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "844×390"
+          },
+          "crossings": [
+            {
+              "post": "Formations",
+              "across": "“Solnhofen”",
+              "under": true
+            },
+            {
+              "post": "Timeline",
+              "across": "“Periods”",
+              "under": true
+            },
+            {
+              "post": "Extinctions",
+              "across": "“Solnhofen”",
+              "under": true
+            },
+            {
+              "post": "Timeline",
+              "across": "“Periods”",
+              "under": true
+            }
+          ],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "768×1024"
+          },
+          "crossings": [
+            {
+              "post": "Events",
+              "across": "“Solnhofen”",
+              "under": true
+            },
+            {
+              "post": "Species",
+              "across": "“Sites”",
+              "under": true
+            },
+            {
+              "post": "Sites",
+              "across": "“Dig map”",
+              "under": true
+            },
+            {
+              "post": "Specimens",
+              "across": "“Expeditions”",
+              "under": true
+            },
+            {
+              "post": "Timeline",
+              "across": "“Periods”",
+              "under": true
+            },
+            {
+              "post": "Tree of life",
+              "across": "“Species”",
+              "under": true
+            },
+            {
+              "post": "Tree of life",
+              "across": "“Sites”",
+              "under": true
+            },
+            {
+              "post": "Extinctions",
+              "across": "“Events”",
+              "under": true
+            },
+            {
+              "post": "Extinctions",
+              "across": "“Solnhofen”",
+              "under": true
+            },
+            {
+              "post": "Solnhofen",
+              "across": "“Formations”",
+              "under": true
+            },
+            {
+              "post": "Species",
+              "across": "“Dig map”",
+              "under": true
+            },
+            {
+              "post": "Timeline",
+              "across": "“Periods”",
+              "under": true
+            },
+            {
+              "post": "Tree of life",
+              "across": "“Species”",
+              "under": true
+            },
+            {
+              "post": "Tree of life",
+              "across": "“Dig map”",
+              "under": true
+            },
+            {
+              "post": "Dig map",
+              "across": "“Sites”",
+              "under": true
+            },
+            {
+              "post": "Extinctions",
+              "across": "“Events”",
+              "under": true
+            }
+          ],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "360×640"
+          },
+          "crossings": [
+            {
+              "post": "Events",
+              "across": "“Solnhofen”",
+              "under": true
+            },
+            {
+              "post": "Formations",
+              "across": "“Events”",
+              "under": true
+            },
+            {
+              "post": "Formations",
+              "across": "“Solnhofen”",
+              "under": true
+            },
+            {
+              "post": "Specimens",
+              "across": "“Expeditions”",
+              "under": true
+            },
+            {
+              "post": "Timeline",
+              "across": "“Periods”",
+              "under": true
+            }
+          ],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aDistrictsWarningChipOpensTheProblemsOfThatKindAlone": {
+      "held": [
+        {
+          "where": {
+            "device": "1280×800"
+          },
+          "opens": [
+            {
+              "from": "City",
+              "how": "pointer",
+              "start": "/specimens",
+              "kind": "specimen",
+              "of": "specimen",
+              "named": [
+                "specimens"
+              ]
+            },
+            {
+              "from": "City",
+              "how": "keyboard",
+              "start": "/specimens",
+              "kind": "specimen",
+              "of": "specimen",
+              "named": [
+                "specimens"
+              ]
+            },
+            {
+              "from": "Nearby",
+              "how": "pointer",
+              "start": "/specimens",
+              "kind": "specimen",
+              "of": "specimen",
+              "named": [
+                "specimens"
+              ]
+            },
+            {
+              "from": "Nearby",
+              "how": "keyboard",
+              "start": "/specimens",
+              "kind": "specimen",
+              "of": "specimen",
+              "named": [
+                "specimens"
+              ]
+            },
+            {
+              "from": "Nearby",
+              "how": "pointer",
+              "start": "/problems",
+              "kind": "specimen",
+              "of": "specimen",
+              "named": [
+                "specimens"
+              ]
+            }
+          ],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "atNearbyAPinchOverTheCityZoomsItAndThePanelAndTheLevelStay": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "framed": 1.3869,
+          "closer": 3,
+          "further": 0.8014,
+          "levels": [
+            1
+          ],
+          "frames": 182,
+          "boxMoved": 0,
+          "offLevel": 0,
+          "lines": {
+            "worst": 0.31,
+            "counted": 700,
+            "examples": []
+          },
+          "altitude": 1,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "atNearbyADragOrAScrollOverTheCityPansIt": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "scrolled": {
+            "x": -120,
+            "y": -240
+          },
+          "dragged": {
+            "x": 60,
+            "y": 40
+          },
+          "ground": {
+            "x": 40,
+            "y": 740
+          },
+          "level": 1,
+          "box": {
+            "x": 636,
+            "y": 60,
+            "width": 792,
+            "height": 828
+          },
+          "url": "/pages/tasks/t-deposit",
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "atNearbyTheLevelControlAndItsKeyBringTheCameraBackToNearby": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "framed": {
+            "zoom": 1.3869,
+            "district": {
+              "x": 376,
+              "y": 447,
+              "width": 232
+            }
+          },
+          "back": [
+            {
+              "how": "control",
+              "away": 2.6608,
+              "zoom": 1.3869,
+              "district": {
+                "x": 376,
+                "y": 450,
+                "width": 232
+              },
+              "level": 1
+            },
+            {
+              "how": "key",
+              "away": 3,
+              "zoom": 1.3869,
+              "district": {
+                "x": 376,
+                "y": 450,
+                "width": 232
+              },
+              "level": 1
+            }
+          ],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "atNearbyAPinchOverThePanelStepsTheLevelAndAScrollScrollsThePage": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "up": true,
+          "down": true,
+          "scroll": {
+            "from": 0,
+            "to": 241,
+            "level": 1,
+            "altitude": 1
+          },
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "onAPhoneTheCityAboveTheSheetTakesAPinchAndADrag": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "spot": {
+            "x": 60,
+            "y": 213
+          },
+          "zoom0": 1.02,
+          "zoomed": 3,
+          "levels": [
+            1
+          ],
+          "panned": {
+            "x": 0,
+            "y": 30
+          },
+          "after": {
+            "level": 1,
+            "altitude": 1,
+            "box": {
+              "x": 8,
+              "y": 391,
+              "width": 396,
+              "height": 440
+            }
+          },
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aDesksPanelOpensAt55PercentHeldTo1192AndKeepsTheWidthDragged": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "wide": 1192,
+          "opened": 792,
+          "wanted": 792,
+          "dragged": 613,
+          "kept": 613,
+          "keys": [
+            "graview.one-face.panel.desk./pages|todo"
+          ],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "thePageInThePanelTakesAPanelsGutterAndSaysSo": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "full": {
+            "inPanel": false,
+            "gutter": "20px",
+            "column": {
+              "top": 40,
+              "left": 20,
+              "right": 20,
+              "bottom": 96
+            }
+          },
+          "panel": {
+            "inPanel": true,
+            "gutter": "16px",
+            "column": {
+              "top": 16,
+              "left": 16,
+              "right": 16,
+              "bottom": 24
+            }
+          },
+          "again": {
+            "inPanel": false,
+            "gutter": "20px",
+            "column": {
+              "top": 40,
+              "left": 20,
+              "right": 20,
+              "bottom": 96
+            }
+          },
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aViewsRootSaysItIsInThePanelAtNearbyAndNotOnAFullPage": {
+      "held": [
+        {
+          "where": {
+            "device": "1280×800",
+            "app": "rich"
+          },
+          "atPage": [
+            false
+          ],
+          "atNearby": [
+            true
+          ],
+          "back": [
+            false
+          ],
           "ok": true
         }
       ],

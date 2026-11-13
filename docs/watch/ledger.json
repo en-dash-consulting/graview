@@ -1,6 +1,6 @@
 {
-  "at": "2026-11-13T17:48:33.147Z",
-  "open": 1,
+  "at": "2026-11-13T20:44:31.525Z",
+  "open": 0,
   "problems": {
     "keyboard-lands-nowhere|a press on <div> \"#:#Pay the deposit\" left the keyboard on <body>": {
       "rule": "keyboard-lands-nowhere",
@@ -446,7 +446,8 @@
       "firstSeen": "2026-11-13T16:57:29.938Z",
       "flaps": 1,
       "lastSeen": "2026-11-13T17:48:33.147Z",
-      "status": "open"
+      "status": "fixed",
+      "fixedAt": "2026-11-13T20:03:33.873Z"
     },
     "target-too-small|<button data-testid=\"one-place-ring\" aria-label=\"Open Siderian\"> is #×# pixels at # wide, within # pixels of <button aria-label=\"Periods, list\"> \"# periodsPeriodsSiderian\"": {
       "rule": "target-too-small",
@@ -486,6 +487,32 @@
       "lastSeen": "2026-11-13T17:12:16.770Z",
       "status": "fixed",
       "fixedAt": "2026-11-13T17:28:54.445Z"
+    },
+    "control-covered|<button aria-label=\"Tasks, list, the one you were on\"> is covered by <button aria-label=\"What is left, view\"> \"View · tasksWhat is left\" at # wide — a press there lands on the other": {
+      "rule": "control-covered",
+      "detail": "<button aria-label=\"Tasks, list, the one you were on\"> in [data-testid=\"one-place-boards\"] is covered by <button aria-label=\"What is left, view\"> \"View · tasksWhat is left\" in [data-testid=\"one-place-boards\"] at 1440 wide — a press there lands on the other",
+      "at": "tasks?today=2026-09-01",
+      "harnesses": [
+        "verify-one-face"
+      ],
+      "firstSeen": "2026-11-13T20:03:33.873Z",
+      "flaps": 0,
+      "lastSeen": "2026-11-13T20:03:33.873Z",
+      "status": "fixed",
+      "fixedAt": "2026-11-13T20:19:11.151Z"
+    },
+    "control-covered|<button aria-label=\"The month, view\"> \"View · tasksThe month\" is covered by <button aria-label=\"The week, view\"> \"View · tasksThe week\" at # wide — a press there lands on the other": {
+      "rule": "control-covered",
+      "detail": "<button aria-label=\"The month, view\"> \"View · tasksThe month\" in [data-testid=\"one-place-boards\"] is covered by <button aria-label=\"The week, view\"> \"View · tasksThe week\" in [data-testid=\"one-place-boards\"] at 1440 wide — a press there lands on the other",
+      "at": "tasks?today=2026-09-01",
+      "harnesses": [
+        "verify-one-face"
+      ],
+      "firstSeen": "2026-11-13T20:03:33.873Z",
+      "flaps": 0,
+      "lastSeen": "2026-11-13T20:03:33.873Z",
+      "status": "fixed",
+      "fixedAt": "2026-11-13T20:19:11.151Z"
     }
   }
 }
