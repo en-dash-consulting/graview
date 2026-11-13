@@ -5,7 +5,8 @@ import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages"
 import { AppBar, appKeyOf, barPlaceAt, barPlaces, FirstLookDoor, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useThemeColor, useViewportHeight, type AppMenuRow, type BarAction, type BarFaces, type BarFind, type BarGo, type BarScheme, type BarShare, type BarStatus, type FirstLook, type HostAction, type NoticeBoard, type NoticeReport, type NoticeReporting } from "@graview/primitives/frame";
 import { layerViews, useGraph, useTidiedViews, useGraview, useTheKeyboardLandsSomewhere, type AwaySummary, type ErrorReport, type FieldTyping, type KeepLensHost, type ProposeChangeHost, type ComposeChangeHost, type DraftChangeHost, type MenuSectionSource, type OnExport, type HostNotification, type ReactViewRegistry, type ReaderMemory, type Scheme, type WorkflowRuns } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
-import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
+import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ErrorInfo, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { fontsLink } from "./fonts.js";
 import { useForkedViews } from "./draft.js";
 import { storeOf, useHostScheme } from "./frame-light.js";
@@ -230,6 +231,20 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    * product's own shell, its places, Find, the standing and the person kept.
    */
   readonly bar?: boolean | EmbedBar;
+  /**
+   * PAGES AND THE SCENE AS ONE FACE (FR-239), for a host whose page IS the
+   * app: the routed face stands over the Scene's own city, drawn with the
+   * `views` it already has, and one control moves the same page from Page
+   * to Nearby to City (the keys 1, 2, 3, `[` and `]` too). There is then no
+   * scene face to switch to: `face` names the pages (a picture stays a
+   * picture), the overview's address is the City over the home, and the
+   * bar offers no Scene/Pages switch. The bar stands in the one face's slot,
+   * fixed at the window's top (`[data-graview-one-face-bar]`), at every
+   * level; the page is in the window's flow and the window scrolls it, so
+   * the embed is as tall as its page, at least `height`. Off unless given:
+   * without it every face draws as before.
+   */
+  readonly sceneUnderPages?: boolean;
   /**
    * THE PAGE'S ICON (FR-124): `true` when the host's page IS the app (a
    * hosted app on its own address), so the page wears the brand's
@@ -833,6 +848,28 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
        reader settings: the reader's own text size and motion, on somebody else's page too. */
     app: props.app,
   };
+}
+
+/**
+ * THE FRAME'S ROOT, as every face draws it: its own stacking context, so
+ * every layer inside it is ordered inside it and never over the host's
+ * page, and the face's box at the height asked for. On the one face
+ * (`sceneUnderPages`, FR-239) the page is in the window's flow and the
+ * window scrolls it, so the root is at least that height, as tall as its
+ * page, and clips nothing.
+ */
+export function rootStyle(height: number | string, auto: boolean, oneFace: boolean): CSSProperties {
+  if (oneFace) return { position: "relative", isolation: "isolate", minHeight: auto ? 0 : height, display: "flex", flexDirection: "column", borderRadius: "var(--graview-radius, 12px)" };
+  return { position: "relative", isolation: "isolate", height, minHeight: auto ? 0 : 320, display: "flex", flexDirection: "column", overflow: "hidden", borderRadius: "var(--graview-radius, 12px)" };
+}
+
+/**
+ * THE BAR WHERE THE FACE KEEPS IT: in the one face's slot, fixed at the
+ * window's top over the page and the city (FR-239), once the face has drawn
+ * it; in the frame's flow until then, and on every other face.
+ */
+export function InBarSlot({ slot, children }: { readonly slot: HTMLElement | null; readonly children: ReactNode }) {
+  return <>{slot ? createPortal(children, slot) : children}</>;
 }
 
 /**

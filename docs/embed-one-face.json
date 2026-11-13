@@ -1,0 +1,412 @@
+{
+  "at": "2026-11-13T05:06:30.621Z",
+  "engine": "chromium",
+  "document": "packages/core/tests/document/fixtures/tasks.gdd.json",
+  "checks": {
+    "drawsTheOneFaceOnDesk": {
+      "root": "pages",
+      "oneFace": 1,
+      "control": 1,
+      "sceneSwitch": 0,
+      "ok": true
+    },
+    "barStandsInTheSlotOnDesk": {
+      "bars": 1,
+      "inSlot": 1,
+      "testid": true,
+      "ok": true
+    },
+    "pageKeepsItsRoomUnderTheBarOnDesk": {
+      "barBottom": 48,
+      "titleTop": 88,
+      "ok": true
+    },
+    "theWindowScrollsThePageOnDesk": {
+      "overflow": "visible",
+      "tall": 1354,
+      "window": 800,
+      "scrolled": 400,
+      "barTop": 0,
+      "ok": true
+    },
+    "barVisibleAndPressableAtPageOnDesk": {
+      "controls": {
+        "name": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "places": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "find": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "notices": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "share": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "person": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        }
+      },
+      "personMenuOpens": true,
+      "ok": true
+    },
+    "barVisibleAndPressableAtNearbyOnDesk": {
+      "controls": {
+        "name": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "places": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "find": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "notices": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "share": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "person": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        }
+      },
+      "personMenuOpens": true,
+      "ok": true
+    },
+    "barVisibleAndPressableAtCityOnDesk": {
+      "controls": {
+        "name": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "places": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "find": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "notices": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "share": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "person": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        }
+      },
+      "personMenuOpens": true,
+      "ok": true
+    },
+    "keysMoveTheLevelsOnDesk": {
+      "keys": [
+        {
+          "key": "2",
+          "want": 1,
+          "rested": true
+        },
+        {
+          "key": "3",
+          "want": 2,
+          "rested": true
+        },
+        {
+          "key": "[",
+          "want": 1,
+          "rested": true
+        },
+        {
+          "key": "]",
+          "want": 2,
+          "rested": true
+        },
+        {
+          "key": "1",
+          "want": 0,
+          "rested": true
+        }
+      ],
+      "ok": true
+    },
+    "drawsTheOneFaceOnPhone": {
+      "root": "pages",
+      "oneFace": 1,
+      "control": 1,
+      "sceneSwitch": 0,
+      "ok": true
+    },
+    "barStandsInTheSlotOnPhone": {
+      "bars": 1,
+      "inSlot": 1,
+      "testid": true,
+      "ok": true
+    },
+    "pageKeepsItsRoomUnderTheBarOnPhone": {
+      "barBottom": 93,
+      "titleTop": 133,
+      "ok": true
+    },
+    "theWindowScrollsThePageOnPhone": {
+      "overflow": "visible",
+      "tall": 1863,
+      "window": 844,
+      "scrolled": 400,
+      "barTop": 0,
+      "ok": true
+    },
+    "barVisibleAndPressableAtPageOnPhone": {
+      "controls": {
+        "name": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "places": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "find": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "notices": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "share": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "person": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        }
+      },
+      "personMenuOpens": true,
+      "ok": true
+    },
+    "barVisibleAndPressableAtNearbyOnPhone": {
+      "controls": {
+        "name": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "places": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "find": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "notices": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "share": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "person": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        }
+      },
+      "personMenuOpens": true,
+      "ok": true
+    },
+    "barVisibleAndPressableAtCityOnPhone": {
+      "controls": {
+        "name": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "places": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "find": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "notices": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "share": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        },
+        "person": {
+          "drawn": true,
+          "inside": true,
+          "lands": true,
+          "inSlot": true,
+          "ok": true
+        }
+      },
+      "personMenuOpens": true,
+      "ok": true
+    },
+    "keysMoveTheLevelsOnPhone": {
+      "keys": [
+        {
+          "key": "2",
+          "want": 1,
+          "rested": true
+        },
+        {
+          "key": "3",
+          "want": 2,
+          "rested": true
+        },
+        {
+          "key": "[",
+          "want": 1,
+          "rested": true
+        },
+        {
+          "key": "]",
+          "want": 2,
+          "rested": true
+        },
+        {
+          "key": "1",
+          "want": 0,
+          "rested": true
+        }
+      ],
+      "ok": true
+    },
+    "noPageThrew": {
+      "errors": [],
+      "ok": true
+    }
+  },
+  "passed": true
+}

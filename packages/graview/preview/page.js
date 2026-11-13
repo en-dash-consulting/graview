@@ -106,6 +106,8 @@ async function whole() {
     label: app.name,
     heading: 1,
     keptViews,
+    // Pages and the Scene as one face (FR-239), as Graview Cloud draws an app that has moved: `?city=1` on the address it opens at.
+    ...(new URLSearchParams(location.search).get("city") === "1" ? { sceneUnderPages: true } : {}),
     // A view proposed and not kept (`--view` and `--manifest`, FR-187), drawn where it attaches and marked as a draft.
     ...(handed.draftView ? { draftView: handed.draftView } : {}),
   });

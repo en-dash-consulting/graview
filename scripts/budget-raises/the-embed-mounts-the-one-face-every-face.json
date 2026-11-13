@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 900,
+  "gzipped": 0,
+  "note": "Raised when mount came to take sceneUnderPages (FR-239): the root and bar drawn for the one face, its bar in the one face's slot, every face but a picture drawn as the pages, and the address read as the one face's. Measured at 3_304_046 / 1_199_932 against 3_303_117 / 1_199_627."
+}
