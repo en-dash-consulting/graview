@@ -696,7 +696,8 @@ async function chosenRecord(page, where) {
     const shown = new Set([...sheet.querySelectorAll("[data-graview-pick], [data-graview-record], [data-record]")].filter((el) => !box?.contains(el)).map((el) => el.getAttribute("data-graview-pick") ?? el.getAttribute("data-graview-record") ?? el.getAttribute("data-record")));
     return { found: Boolean(chosen), roof: chosen ? roofOf(chosen) : null, sameRoof: others.filter((b) => roofOf(b) === (chosen ? roofOf(chosen) : "")).length, lift, words, listed, repeated: listed.filter((id) => shown.has(id)), sticky: box ? getComputedStyle(box).position : null };
   });
-  seen.standsOut.push({ where, ...read, ok: read.found && read.sameRoof === 0 && read.lift < -2 });
+  // Lit by its color and outline where it stands, never lifted: a lit record changes no geometry.
+  seen.standsOut.push({ where, ...read, ok: read.found && read.sameRoof === 0 && Math.abs(read.lift) < 0.5 });
   seen.noCityWords.push({ where, words: read.words, ok: read.words === 0 });
   seen.connected.push({ where, listed: read.listed, repeated: read.repeated, position: read.sticky, ok: read.repeated.length === 0 && read.sticky !== "sticky" && read.sticky !== "fixed" });
   return { where, ok: true };
@@ -1339,7 +1340,13 @@ const readRich = (page) =>
         const other = rect(o);
         if (!across(other)) continue;
         const y = (Math.max(post.y, other.y) + Math.min(post.y + post.height, other.y + other.height)) / 2;
+        // Both taking the pointer for the reading (a board put away or still arriving takes none): whichever is drawn on top is what is found there.
+        const was = [b.style.pointerEvents, o.style.pointerEvents];
+        b.style.pointerEvents = "auto";
+        o.style.pointerEvents = "auto";
         const seenThere = document.elementFromPoint(post.x + 1, y)?.closest("[data-graview-board]");
+        b.style.pointerEvents = was[0];
+        o.style.pointerEvents = was[1];
         postCrossings.push({ post: b.getAttribute("title"), across: `“${o.getAttribute("title")}”`, under: seenThere === o });
       }
       for (const t of tags) if (across(t.box)) postCrossings.push({ post: b.getAttribute("title"), across: `the ${t.kind} name`, under: null });
@@ -1688,7 +1695,11 @@ async function rich(browser, device) {
  * species' page goes to Nearby, another species' building is pressed, and
  * then one of the records its page links to is pressed in the page beside
  * the city: each time the district's buildings stand where they stood (read
- * in the district's own ground, so the camera's move is not counted), what
+ * in the district's own ground, so a camera's move to a record out of sight
+ * is not counted) — and for the press, with the building in sight, every
+ * building of the district, the pressed one too, keeps its box on the
+ * screen, x, y, width and height, within a pixel (the lit state changes no
+ * geometry: it is a color and an outline, never a lift or a camera move) — what
  * is faded is what a fresh load of that page fades, no line's words stand
  * over the city, and the record opened is the one lit.
  */
@@ -1712,6 +1723,12 @@ const readDistrict = (page, kind) =>
       return [Math.round(((dx * v[1] - dy * v[0]) / det) * 1000) / 1000, Math.round(((u[0] * dy - u[1] * dx) / det) * 1000) / 1000];
     };
     const at = {};
+    // And each one's box on the screen, as a person sees it.
+    const boxes = {};
+    for (const b of city?.querySelectorAll(`[data-graview-plot="kind:${CSS.escape(kind)}"] [data-graview-building]`) ?? []) {
+      const r = b.getBoundingClientRect();
+      boxes[b.getAttribute("data-graview-building")] = [r.left, r.top, r.width, r.height];
+    }
     for (const b of city?.querySelectorAll(`[data-graview-plot="kind:${CSS.escape(kind)}"] [data-graview-building]`) ?? []) {
       // Where it meets the ground: its left face's lowest corner, as the plot draws it (a lift is a translate, not its points).
       const pts = (b.querySelector(".graview-iso-left")?.getAttribute("points") ?? "").trim().split(/\s+/).map((pair) => pair.split(",").map(Number));
@@ -1727,8 +1744,10 @@ const readDistrict = (page, kind) =>
     const words = [...document.querySelectorAll(".graview-record-link-said")].filter((el) => el.getBoundingClientRect().width > 0 && getComputedStyle(el).display !== "none" && getComputedStyle(el).visibility !== "hidden").map((el) => el.textContent);
     const lit = [...(city?.querySelectorAll("[data-graview-building][data-graview-here]") ?? [])].map((b) => b.getAttribute("data-graview-building"));
     const chosenOnTheScene = [...(city?.querySelectorAll("[data-graview-building][data-graview-selected]") ?? [])].map((b) => b.getAttribute("data-graview-building"));
-    return { at, faded, words, lit, chosenOnTheScene, url: location.pathname, level: Number(document.querySelector("[data-graview-one-place]")?.getAttribute("data-graview-one-place")) };
+    return { at, boxes, faded, words, lit, chosenOnTheScene, url: location.pathname, level: Number(document.querySelector("[data-graview-one-place]")?.getAttribute("data-graview-one-place")) };
   }, kind);
+/** What of a district moved or changed its size on the screen by more than a pixel: x, y, width or height. */
+const reshaped = (before, after) => Object.keys(before).filter((id) => after[id] && before[id].some((v, i) => Math.abs(after[id][i] - v) > 1)).map((id) => `${id} ${before[id].map((v) => Math.round(v)).join(",")} → ${after[id].map((v) => Math.round(v)).join(",")}`);
 /** What of a district moved, in its own ground's measure. */
 const movedIn = (before, after) => Object.keys(before).filter((id) => after[id] && Math.hypot(after[id][0] - before[id][0], after[id][1] - before[id][1]) > 0.02);
 /** The most buildings faded in any one frame from now until it is read: a fade that comes and goes is a fade. */
@@ -1787,7 +1806,7 @@ async function recordInPlace(browser) {
       const most = await mostFaded(page);
       await nearby(`/species/${target.id}`);
       const fresh = await readDistrict(page, "species");
-      runs.push({ by: "a press on its building", opened: target.id, landed: after.url, moved: movedIn(before.at, after.at), lit: after.lit, chosenOnTheScene: after.chosenOnTheScene, faded: { afterThePress: after.faded, mostWhileItMoved: most, freshLoad: fresh.faded }, words: after.words, freshMoved: movedIn(after.at, fresh.at) });
+      runs.push({ by: "a press on its building", opened: target.id, landed: after.url, moved: movedIn(before.at, after.at), onTheScreen: reshaped(before.boxes, after.boxes), lit: after.lit, chosenOnTheScene: after.chosenOnTheScene, faded: { afterThePress: after.faded, mostWhileItMoved: most, freshLoad: fresh.faded }, words: after.words, freshMoved: movedIn(after.at, fresh.at) });
     } else runs.push({ by: "a press on its building", error: "no building of another species to press" });
     // And a link in the page beside the city: one of the records the species' page links to.
     await nearby(`/species/${RECORD_FROM}`);
@@ -1816,7 +1835,7 @@ async function recordInPlace(browser) {
   await context.close().catch(() => {});
   for (const run of runs) {
     const done = !run.error;
-    seen.recordInPlace.push({ where, ...run, ok: done && run.landed.endsWith(`/${run.opened}`) && run.moved.length === 0 && run.freshMoved.length === 0 && run.lit.includes(run.opened) && run.chosenOnTheScene.length === 0 });
+    seen.recordInPlace.push({ where, ...run, ok: done && run.landed.endsWith(`/${run.opened}`) && run.moved.length === 0 && (run.onTheScreen ?? []).length === 0 && run.freshMoved.length === 0 && run.lit.includes(run.opened) && run.chosenOnTheScene.length === 0 });
     seen.oneRuleFades.push({ where, by: run.by, faded: run.faded, error: run.error, ok: done && run.faded.afterThePress === run.faded.freshLoad && run.faded.mostWhileItMoved <= run.faded.freshLoad });
     seen.noWordsAfterPress.push({ where, by: run.by, words: run.words, error: run.error, ok: done && run.words.length === 0 });
   }

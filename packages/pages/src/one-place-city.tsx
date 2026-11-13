@@ -53,12 +53,13 @@ const recordShownBy = (element: Element): string | null => element.getAttribute(
  * the Scene's lines and words from a chosen record to what it is linked
  * to: the page beside the city says those, and its lines leave from where
  * it says them. The record the page is about stands out from the rest —
- * lifted off its plot and lit in the accent — while what it is linked to
+ * lit in the accent and outlined, where it stands: lit changes no geometry,
+ * so a building pressed keeps its box to the pixel — while what it is linked to
  * stays lit as the Scene lights it, and everything else is quiet.
  */
 const CITY_CSS = `
 [data-testid="one-place-city"] .graview-zoom, [data-testid="one-place-city"] .graview-edge-sign, [data-testid="one-place-city"] .graview-record-links, [data-testid="one-place-city"] .graview-drive-in { display: none; }
-[data-testid="one-place-city"] .graview-building[data-graview-here] { translate: 0 -7px; }
+[data-testid="one-place-city"] .graview-building[data-graview-here] polygon { stroke: var(--graview-ink); stroke-width: 1.2; stroke-opacity: 1; }
 [data-testid="one-place-city"] .graview-building[data-graview-here] .graview-iso-roof { fill: var(--graview-accent); }
 [data-testid="one-place-city"] .graview-building[data-graview-here] .graview-iso-left { fill: color-mix(in srgb, var(--graview-accent) 55%, black); }
 [data-testid="one-place-city"] .graview-building[data-graview-here] .graview-iso-right { fill: color-mix(in srgb, var(--graview-accent) 72%, black); }
@@ -90,6 +91,8 @@ const keyOf = (where: PageWhere): string => (where.type === "record" ? `record:$
 const ease = (t: number) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
 const level = (live: Live) => Math.abs(live.s - 1) < 1e-4 && Math.abs(live.x) < 0.05 && Math.abs(live.y) < 0.05;
 const clamp01 = (t: number) => Math.max(0, Math.min(1, t));
+/** Whether a point stands inside a box. */
+const inside = (p: Point, box: Box): boolean => p.x >= box.x && p.x <= box.x + box.width && p.y >= box.y && p.y <= box.y + box.height;
 
 /** The city as it is laid out, read when the camera is at a level: each district's tile and each building, in the picture's own pixels. */
 interface World {
@@ -862,8 +865,21 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       // Moving to another place at a level above the page: the camera flies there and stays at that level.
       if (rest !== PAGE && !move && !asking.scrubbing && anchor && placeKey !== lastPlace && !settling && calm && holder.querySelector("[data-graview-settled]") && drawnSince(placeKey, now)) {
         lastPlace = placeKey;
-        // Chosen at the city — a Find result, a link — a page lands beside the city, as a view chosen there does.
-        moveTo(cam, rest === CITY ? PANEL : rest, anchor, now);
+        /*
+         * A RECORD OPENED BESIDE THE CITY WHERE IT IS SEEN IS LIT WHERE IT
+         * STANDS. Pressed at Nearby (or opened by a link or a pill) with its
+         * building in the part of the city the page leaves, the camera does
+         * not move: every building keeps its box to the pixel, and only the
+         * boards and names go over a moment to where they stand for it.
+         */
+        const building = at.where.type === "record" ? world.buildings.get(at.where.id) : undefined;
+        if (rest === PANEL && building && level(painted) && inside(project(painted, { x: building.x + building.width / 2, y: building.y + building.height / 2 }), nearbyShown())) {
+          settle = { slots: drawnSlots(now), names: drawnNames(now), start: now };
+          standAll(world, zoomNow, LEVEL_LIVE, shownAt(rest), rest);
+        } else {
+          // Chosen at the city — a Find result, a link — a page lands beside the city, as a view chosen there does.
+          moveTo(cam, rest === CITY ? PANEL : rest, anchor, now);
+        }
       }
 
       /* THE PAGE: its box from the altitude, then — past the panel — moved and scaled into its board, as the camera has it this frame. */
