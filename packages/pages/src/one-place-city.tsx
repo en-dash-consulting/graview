@@ -1,4 +1,5 @@
 import { labelOf, ONE_FACE_LAYERS } from "@graview/core";
+import { RECORD_BOXES_ATTRIBUTE, recordBoxesOf } from "@graview/core/record-boxes";
 import { EMPTY_VIEW, toUrl, withOverview, type ViewState } from "@graview/layout/view";
 import { Scene, type SceneCamera } from "@graview/react";
 import { useGraview, useNavigation } from "@graview/react/provider";
@@ -42,6 +43,17 @@ import type { OnePlaceCityProps } from "./one-place.js";
  * line, not three. A part scrolled out of the page draws none.
  */
 const RECORD_PARTS = "[data-graview-pick], [data-graview-record], [data-record]";
+/*
+ * AND WHAT A VIEW DRAWN WHERE THE PAGE CANNOT READ SAYS IT SHOWS (Graview
+ * HQ feature:f-one-face-lines-from-frame-views): a worker view's shadow
+ * root, a frame guest's document. The element it is drawn in holds its
+ * records' boxes, judged by its host (`RECORD_BOXES`), in its own pixels;
+ * each is carried through that element's box in this frame, so a line
+ * leaves it as it leaves a part of the page's own. A record page drawn by
+ * a view that names none of the records it draws still has its one line,
+ * from the view to the record it is about.
+ */
+const VIEW_PARTS = `[${RECORD_BOXES_ATTRIBUTE}]`;
 const recordShownBy = (element: Element): string | null => element.getAttribute("data-graview-pick") ?? element.getAttribute("data-graview-record") ?? element.getAttribute("data-record");
 
 /*
@@ -101,6 +113,8 @@ interface Drawn {
   readonly on: string;
   readonly target: { readonly type: "record"; readonly id: string } | { readonly type: "list"; readonly kind: string };
   readonly label: string;
+  /** The middle of the part it leaves from, in the window. */
+  readonly part: Point;
 }
 
 export function OnePlaceCity({ where, out, sheet, connected, boards, current, boardEls, boardLayer, fab, view, lessMotion, resolve, openRecord, openKind, onGround, motion, onAltitude }: OnePlaceCityProps) {
@@ -758,11 +772,69 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           const node = store.graph.getNode(target.id);
           return node ? labelOf(store.schema.tryDefinition(node.kind as string), node as never) : target.id;
         };
-        // The page's own parts first — a link to a record's page, a row that names one — then the Connected rows for what the page does not show.
-        const parts = [...plane.querySelectorAll<HTMLElement>(`a[href], ${RECORD_PARTS}`)].sort((x, y) => Number(x.closest("[data-graview-connected]") !== null) - Number(y.closest("[data-graview-connected]") !== null));
+        /* The page's box in sight, read once a frame for every part on it. */
+        const ports = new Map<Element, DOMRect>();
+        const portOf = (element: Element): DOMRect | null => {
+          const port = element.closest("[data-graview-one-place]");
+          if (!port) return null;
+          let box = ports.get(port);
+          if (!box) ports.set(port, (box = port.getBoundingClientRect()));
+          return box;
+        };
+        /* One line a record: from where it is shown, in sight on the page, to where it stands. */
+        const offer = (target: Drawn["target"], part: Point, visible: DOMRect) => {
+          const key = target.type === "record" ? target.id : `kind:${target.kind}`;
+          if (taken.has(key)) return;
+          // Only what is in sight on the page: a part scrolled past, or under the page's own edge, draws none.
+          if (part.x < visible.left || part.x > visible.right || part.y < visible.top || part.y > visible.bottom) return;
+          // The line leaves the page's edge that faces the city, level with the part: never across the page's words.
+          const from = leaveFrom(part, pageRect, phone);
+          const end = endOf(target);
+          if (!end) return;
+          taken.add(key);
+          const route = routeLine(from, end.at, area, phone, reserved);
+          if (!route) return;
+          found.push({ key, from: route.from, to: route.to, bend: route.bend, under: route.toward, on: end.on, target, label: labelFor(target), part });
+        };
+        /* The record page drawn by a view that names no other record: where its one line to the record leaves from. */
+        let aboutPart: { readonly part: Point; readonly visible: DOMRect } | null = null;
+        // The page's own parts first — a link to a record's page, a row that names one, a view's records — then the Connected rows for what the page does not show.
+        const parts = [...plane.querySelectorAll<HTMLElement>(`a[href], ${RECORD_PARTS}, ${VIEW_PARTS}`)].sort((x, y) => Number(x.closest("[data-graview-connected]") !== null) - Number(y.closest("[data-graview-connected]") !== null));
         for (const element of parts) {
           if (found.length >= MOST_LINES) break;
           if (element.closest("nav, header, [role=navigation], [role=banner]")) continue;
+          const visible = portOf(element);
+          if (!visible) continue;
+          const boxes = recordBoxesOf(element);
+          if (boxes) {
+            const rect = element.getBoundingClientRect();
+            if (rect.width < 1 || rect.height < 1) continue;
+            // Its pixels carried through its box as this frame paints it: the page scales as it moves a level.
+            const scale = element.offsetWidth > 0 ? rect.width / element.offsetWidth : 1;
+            let named = false;
+            let about: Point | null = null;
+            for (const box of boxes()) {
+              if (found.length >= MOST_LINES) break;
+              if (!store.graph.getNode(box.id)) continue;
+              const part = { x: rect.left + (box.x + box.width / 2) * scale, y: rect.top + (box.y + box.height / 2) * scale };
+              if (box.id === subjectId) {
+                about ??= part;
+                continue;
+              }
+              named = true;
+              offer({ type: "record", id: box.id }, part, visible);
+            }
+            if (!named && subjectId !== null && aboutPart === null) {
+              // From the middle of what is in sight of it, or the record's own part where it drew one.
+              const top = Math.max(rect.top, visible.top);
+              const bottom = Math.min(rect.bottom, visible.bottom);
+              const left = Math.max(rect.left, visible.left);
+              const right = Math.min(rect.right, visible.right);
+              if (about) aboutPart = { part: about, visible };
+              else if (bottom - top >= 1 && right - left >= 1) aboutPart = { part: { x: (left + right) / 2, y: (top + bottom) / 2 }, visible };
+            }
+            continue;
+          }
           const named = recordShownBy(element);
           let target: Drawn["target"] | null = null;
           if (named !== null && store.graph.getNode(named)) target = { type: "record", id: named };
@@ -771,24 +843,11 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
             target = resolved?.type === "record" ? { type: "record", id: resolved.id } : resolved?.type === "list" ? { type: "list", kind: resolved.kind } : null;
           }
           if (!target || (target.type === "record" && target.id === subjectId)) continue;
-          const key = target.type === "record" ? target.id : `kind:${target.kind}`;
-          if (taken.has(key)) continue;
           const rect = element.getBoundingClientRect();
           if (rect.width < 1 || rect.height < 1) continue;
-          const part = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-          // Only what is in sight on the page: a part scrolled past, or under the page's own edge, draws none.
-          const port = element.closest("[data-graview-one-place]");
-          const visible = port ? port.getBoundingClientRect() : null;
-          if (!visible || part.x < visible.left || part.x > visible.right || part.y < visible.top || part.y > visible.bottom) continue;
-          // The line leaves the page's edge that faces the city, level with the part: never across the page's words.
-          const from = leaveFrom(part, pageRect, phone);
-          const end = endOf(target);
-          if (!end) continue;
-          taken.add(key);
-          const route = routeLine(from, end.at, area, phone, reserved);
-          if (!route) continue;
-          found.push({ key, from: route.from, to: route.to, bend: route.bend, under: route.toward, on: end.on, target, label: labelFor(target) });
+          offer(target, { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }, visible);
         }
+        if (aboutPart && subjectId !== null && found.length < MOST_LINES) offer({ type: "record", id: subjectId }, aboutPart.part, aboutPart.visible);
       }
       draw(found, shown);
 
@@ -860,6 +919,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         drawn.g.setAttribute("data-graview-line-on", line.on);
         drawn.g.toggleAttribute("data-graview-line-under", line.under !== null);
         drawn.g.setAttribute("data-graview-line-from", `${from.x.toFixed(2)},${from.y.toFixed(2)}`);
+        drawn.g.setAttribute("data-graview-line-part", `${line.part.x.toFixed(2)},${line.part.y.toFixed(2)}`);
         drawn.g.setAttribute("data-graview-line-to", `${to.x.toFixed(2)},${to.y.toFixed(2)}`);
         drawn.g.setAttribute("data-graview-line-bend", `${bend.x.toFixed(2)},${bend.y.toFixed(2)}`);
         if (line.under) drawn.g.setAttribute("data-graview-line-toward", `${line.under.x.toFixed(2)},${line.under.y.toFixed(2)}`);

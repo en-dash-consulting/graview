@@ -107,6 +107,8 @@ export const OWN = {
   "long-text-host": 5271,
   /** `calendar-sync-demo`'s meetings app, kept in step with the Google test calendar for a person to try by hand. */
   "calendar-sync-demo": 5267,
+  /** The host's page `verify-frame-lines` draws a roadmap's pages over its city into, with a worker view and a frame guest that mark their records, to hold the lines from them to their buildings. */
+  "frame-lines-host": 5244,
   /** The host's page `verify-viewport` mounts the embed into at the screen's height, to turn a phone and back (FR-165). */
   "viewport-host": 5266,
   /** The host's page `verify-a11y` mounts Cloud's two shapes of app into, inside `#graview-app`, for axe. */

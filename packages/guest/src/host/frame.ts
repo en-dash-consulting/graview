@@ -1,4 +1,5 @@
 import type { AnySchema, Principal, Store } from "@graview/core";
+import { holdRecordBoxes, judgeRecordBoxes, recordBoxesMoved, type RecordBox } from "@graview/core/record-boxes";
 import { GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN, isGuestReady, type GuestFont, type GuestPlace, type GuestTheme, type HostHello, type HostMessage } from "../protocol.js";
 import { mintNonce } from "./nonce.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestReads, type GuestStats, type GuestViewInput } from "./session.js";
@@ -284,7 +285,29 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
     iframe.setAttribute("data-guest-view-failed", "silent");
   }, options.limits?.readyMs ?? 8_000);
 
+  /*
+   * WHERE ITS RECORDS ARE (Graview HQ feature:f-one-face-lines-from-frame-views):
+   * what the guest last said of its `data-record` elements, judged as it
+   * arrives — inside the frame, a record the seat may see, no more than
+   * the most — and judged again each time a page reads it, against the
+   * frame's size and the seat's sight then. A page that draws lines to
+   * records (the one face) reads it off the frame (`RECORD_BOXES`); the
+   * guest is told nothing of it.
+   */
+  let reported: readonly RecordBox[] = [];
+  const seesNow = () => {
+    const graph = options.store.seenBy(options.principal).graph;
+    return (id: string) => graph.has(id);
+  };
+  const report = (boxes: readonly RecordBox[]) => {
+    const was = reported;
+    reported = boxes;
+    if (was.length !== boxes.length || was.some((box, at) => box.id !== boxes[at]!.id)) recordBoxesMoved(iframe);
+  };
+  holdRecordBoxes(iframe, () => (reported.length === 0 ? [] : judgeRecordBoxes(reported, { width: iframe.clientWidth, height: iframe.clientHeight, sees: seesNow() })));
+
   const end = () => {
+    report([]);
     tally();
     session?.dispose();
     port?.close();
@@ -333,6 +356,7 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
       ...(options.onNavigate ? { onNavigate: options.onNavigate } : {}),
       ...(options.onArrive ? { onArrive: options.onArrive } : options.goTo ? { onArrive: (to: Arrival) => arriveAt(options.goTo!(), to) } : {}),
       ...(options.onLost ? { onLost: options.onLost } : {}),
+      onRecords: (boxes) => report(judgeRecordBoxes(boxes, { width: iframe.clientWidth, height: iframe.clientHeight, sees: seesNow() })),
       onSize: (height) => {
         if (options.onSize) options.onSize(height);
         else iframe.style.height = `${height}px`;
@@ -388,6 +412,7 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
       stopPictures();
       pictures?.dispose();
       window.removeEventListener("message", onMessage);
+      holdRecordBoxes(iframe, undefined);
       iframe.remove();
     },
   };

@@ -105,6 +105,16 @@ export interface GuestHostOptions<S extends AnySchema> {
   /** The guest asked for a height, and was not held (`onHeld`). */
   readonly onSize?: (height: number) => void;
   /**
+   * A frame said where the records it draws are (`records`, Graview HQ
+   * feature:f-one-face-lines-from-frame-views): what it said, unjudged, for
+   * the host to clamp to the frame and hold to the seat's sight
+   * (`judgeRecordBoxes`). Within an allowance of its own, beside the
+   * frame's messages: a frame scrolled sends one a frame and spends none
+   * of what its acts and its height are asked with. Without it, `records`
+   * is dropped unread.
+   */
+  readonly onRecords?: (boxes: unknown) => void;
+  /**
    * THE GROWTH GUARD (Roadmap f-guest-growth-guard): the guest's height was
    * held, because each height it asked for tracked the one it was last
    * given — a page sized by its own frame (`100vh`) grows with it to the
@@ -175,6 +185,8 @@ export interface GuestHostOptions<S extends AnySchema> {
 export interface GuestLimiter {
   act(): boolean;
   message(): boolean;
+  /** Where its records are, said (`records`): 60 a second, apart from `message`. */
+  records?(): boolean;
 }
 
 /** What a frame has been refused, for a host that wants to show or log it. */
@@ -220,11 +232,15 @@ function windowed(limit: number, span: number, now: () => number): () => boolean
   };
 }
 
+/** How often a frame may say where its records are: once an animation frame, and no more. */
+export const RECORDS_A_SECOND = 60;
+
 /** One frame's allowance, per `GuestLimits`. */
 export function createGuestLimiter(limits: GuestLimits = {}, now: () => number = Date.now): GuestLimiter {
   return {
     act: windowed(limits.acts ?? 30, limits.actWindowMs ?? 60_000, now),
     message: windowed(limits.messages ?? 120, limits.messageWindowMs ?? 1_000, now),
+    records: windowed(RECORDS_A_SECOND, 1_000, now),
   };
 }
 
@@ -396,6 +412,7 @@ export const GROWTH_QUIET_MS = 600;
  */
 export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S>): GuestHost {
   const limiter = options.limiter ?? createGuestLimiter(options.limits, options.now);
+  const recordsAllowed = limiter.records ?? windowed(RECORDS_A_SECOND, 1_000, options.now ?? Date.now);
   const maxHeight = options.limits?.maxHeight ?? 4_000;
   const via = `view:${options.view}` as const;
   const stats: GuestStats = { applied: 0, refused: 0, dropped: 0 };
@@ -554,6 +571,12 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
     receive(data) {
       if (disposed) return;
       const answers = isRecord(data) && data.nonce === options.nonce && data.type === "pushed" && typeof data.push === "number" && unanswered.delete(data.push);
+      /* Where its records are: its own allowance, never the one its acts and its height are asked with. */
+      if (isRecord(data) && data.type === "records" && options.onRecords) {
+        if (data.nonce !== options.nonce || !recordsAllowed()) stats.dropped += 1;
+        else options.onRecords(data.boxes);
+        return;
+      }
       if (!answers && !limiter.message()) {
         stats.dropped += 1;
         options.onFlood?.();

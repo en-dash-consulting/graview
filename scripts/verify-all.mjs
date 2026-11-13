@@ -143,6 +143,8 @@ const CHAIN = [
   ["scene-hands", "verify-scene-hands.mjs"],
   // Pages and the Scene as one face: no switch, one control at the foot that says the level, the same page moving from Page to Nearby to the City with its lines exact and no overshoot, every view standing in the city clear of the districts and their names, anything chosen there landing Nearby, the bar usable at every level, the history rising and falling, and a duplicate view found.
   ["one-face", "verify-one-face.mjs"],
+  // A view drawn where the page cannot read has its lines to the city: a worker view's cards and a frame guest's rows each a line within 2 px of its box at Nearby, kept on them every frame as the page or the frame scrolls, a record page drawn by a view that names no record still its one line, and Connected not repeating what a frame shows.
+  ["frame-lines", "verify-frame-lines.mjs"],
   // The studio's whole path, on a scratch copy of seedbed: said, rewritten, written, compiled, migrated.
   ["rehearsal", "rehearse-studio.mjs"],
   ["remember", "verify-remember.mjs"],
@@ -177,7 +179,7 @@ const CHAIN = [
  * hold no state of a harness's (each opens its own browser context), and
  * runs side by side.
  */
-const ALONE = new Set(["lines", "panning", "first-load", "scale", "scene-at-scale", "scene-hands", "one-face", "renderer", "who", "journeys", "create"]);
+const ALONE = new Set(["lines", "panning", "first-load", "scale", "scene-at-scale", "scene-hands", "one-face", "frame-lines", "renderer", "who", "journeys", "create"]);
 
 /** Where the last run's verdicts are kept, for `--failed`. */
 const LAST_RUN = resolve(repoRoot, "docs/watch/last-run.json");

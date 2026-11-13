@@ -17,6 +17,7 @@ import * as fieldSight from "../../src/field-sight.js";
 import * as forms from "../../src/forms.js";
 import * as friction from "../../src/friction.js";
 import * as head from "../../src/head.js";
+import * as recordBoxes from "../../src/record-boxes.js";
 import * as history from "../../src/history.js";
 import * as jobs from "../../src/jobs.js";
 import * as devices from "../../src/devices.js";
@@ -61,6 +62,8 @@ const OFF_THE_PAGE = {
   // Roadmap f-navigate-filters: where a view's navigate goes, as an address — the worker view's host and the routed face's alone.
   "@graview/core/navigate": { from: navigate, names: ["narrowedPath", "sectionSlug", "placeNamesFrom", "placeNamesOf"] },
   // Roadmap f-app-icons-home-screen: an app on a home screen — its head tags, its manifest and the files a host serves; a face's theme-color.
+  // Graview HQ feature:f-one-face-lines-from-frame-views: where a view drawn where the page cannot read shows its records — the one face's and a guest host's, fetched with them.
+  "@graview/core/record-boxes": { from: recordBoxes, names: ["holdRecordBoxes", "judgeRecordBoxes", "MOST_RECORD_BOXES", "RECORD_BOXES", "RECORD_BOXES_ATTRIBUTE", "RECORD_BOXES_MOVED", "recordBoxesMoved", "recordBoxesOf"] },
   "@graview/core/head": { from: head, names: ["headHtml", "homeScreenOf", "MANIFEST_PATH", "themeColorsOf"] },
   // Roadmap f-playback: the timeline around the past, fetched with it when somebody opens the past.
   "@graview/core/history": { from: history, names: ["declarationSentence", "digestWords", "foldDigests", "typedRowWords", "historyInWords", "makerOf", "makerWords", "restoreBatches", "ticksOf", "typedCounts", "typedRun", "typedSpans", "typingSentence", "typingWords", "unpublished"] },

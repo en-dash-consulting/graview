@@ -14,6 +14,7 @@
  *   guest → host     { type: "navigate", nonce, to, section? }       (over the port: go to a record)
  *   guest → host     { type: "navigate", nonce, place, where?, section? } (over the port: go to a named place or a kind's list, by its slug, narrowed)
  *   guest → host     { type: "size", nonce, height }                 (over the port: the height it wants)
+ *   guest → host     { type: "records", nonce, boxes }               (over the port: where its `data-record` elements are, in its own pixels, again as they move)
  *   host  → guest    { type: "answer", id, ok, … }                   (over the port: what became of an act)
  *
  * A GUEST IN A WORKER (FR-68) says the same things. Its `guest-ready` goes
@@ -577,6 +578,15 @@ export type GuestRequest =
    */
   | { readonly type: "navigate"; readonly nonce: string; readonly place: string; readonly where?: GuestWhere; readonly section?: string }
   | { readonly type: "size"; readonly nonce: string; readonly height: number }
+  /**
+   * Where the records a frame draws are (Graview HQ
+   * feature:f-one-face-lines-from-frame-views): each element it marks with
+   * `data-record`, in the frame's own CSS pixels from its top left, sent
+   * again as they move and only when they do. The host keeps what is inside
+   * the frame and names a record the seat may see, to draw a line to it,
+   * and nothing more: it is never answered.
+   */
+  | { readonly type: "records"; readonly nonce: string; readonly boxes: readonly GuestRecordBox[] }
   /** A worker guest's drawing: Remote DOM mutation records, with each listener sent as `{ listener: id }`. */
   | { readonly type: "render"; readonly nonce: string; readonly records: readonly unknown[] }
   /** The runtime's answer to a heartbeat, with the beat it was asked. */
@@ -585,6 +595,15 @@ export type GuestRequest =
   | { readonly type: "style"; readonly nonce: string; readonly sheets: readonly string[] }
   /** An open-kit view's runtime has drawn props push `push`, its listeners taking `ms` (FR-94). */
   | { readonly type: "pushed"; readonly nonce: string; readonly push: number; readonly ms: number };
+
+/** One record a frame drew (`data-record`), in the frame's own CSS pixels. */
+export interface GuestRecordBox {
+  readonly id: string;
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
 
 /** Whether a window message is a guest saying it is ready. */
 export function isGuestReady(data: unknown): data is GuestReady {

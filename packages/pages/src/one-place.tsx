@@ -1,4 +1,5 @@
 import { OVERVIEW_PATH, ONE_FACE_LAYERS, hueFor, labelOf, type AnySchema } from "@graview/core";
+import { RECORD_BOXES_ATTRIBUTE, RECORD_BOXES_MOVED, recordBoxesOf } from "@graview/core/record-boxes";
 import { retryingImport } from "@graview/core/retry";
 import { barPlaces, HOME_KEY, PastBar } from "@graview/primitives/pages";
 import { lazyPart, useGraview, usePlayback } from "@graview/react/provider";
@@ -1309,8 +1310,14 @@ function Connected({ store, id, box, sheet, openRecord }: { readonly store: Page
     if (!plane) return;
     const read = () => {
       const shown = new Set<string>();
-      for (const part of plane.querySelectorAll("[data-graview-pick], [data-graview-record], [data-record], a[href]")) {
+      for (const part of plane.querySelectorAll(`[data-graview-pick], [data-graview-record], [data-record], a[href], [${RECORD_BOXES_ATTRIBUTE}]`)) {
         if (box.current?.contains(part)) continue;
+        /* A view drawn where the page cannot read (a worker view, a frame): the records its host says it shows. */
+        const drawn = recordBoxesOf(part);
+        if (drawn) {
+          for (const one of drawn()) shown.add(one.id);
+          continue;
+        }
         const marked = part.getAttribute("data-graview-pick") ?? part.getAttribute("data-graview-record") ?? part.getAttribute("data-record");
         if (marked) shown.add(marked);
         else if (part instanceof HTMLAnchorElement) {
@@ -1328,7 +1335,11 @@ function Connected({ store, id, box, sheet, openRecord }: { readonly store: Page
     read();
     const watch = typeof MutationObserver === "undefined" ? null : new MutationObserver(read);
     watch?.observe(plane, { childList: true, subtree: true });
-    return () => watch?.disconnect();
+    plane.addEventListener(RECORD_BOXES_MOVED, read);
+    return () => {
+      watch?.disconnect();
+      plane.removeEventListener(RECORD_BOXES_MOVED, read);
+    };
   }, [sheet, box, id, tick]);
   const groups = (facts?.links ?? []).map((group) => ({ ...group, targets: group.targets.filter((target) => !onPage?.has(target.id)) })).filter((group) => group.targets.length > 0);
   const total = groups.reduce((sum, group) => sum + group.targets.length, 0);

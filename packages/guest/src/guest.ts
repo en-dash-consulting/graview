@@ -1,5 +1,6 @@
 import { openGuest, type Guest } from "./channel.js";
 import type { GuestFont, HostMessage } from "./protocol.js";
+import { reportRecords } from "./record-report.js";
 
 /** The window a guest runs in, as far as the SDK reads it. */
 interface GuestWindow {
@@ -62,7 +63,14 @@ function frameFonts(): (message: HostMessage) => void {
  */
 export function connectGuest(options: ConnectGuestOptions = {}): Guest {
   const at = options.window ?? (globalThis as unknown as GuestWindow);
-  return openGuest(
+  const fonts = frameFonts();
+  /* Where its records are, said once the host has said hello, and again as they move (record-report.ts): what a line to each is drawn from. A window that lays nothing out says nothing. */
+  let reporting: (() => void) | undefined;
+  const laidOut = at as unknown as Window & typeof globalThis;
+  const report = () => {
+    if (!reporting && laidOut.document && "ResizeObserver" in laidOut && "MutationObserver" in laidOut && "requestAnimationFrame" in laidOut) reporting = reportRecords(laidOut, (boxes) => opened.send({ type: "records", boxes }));
+  };
+  const opened = openGuest(
     {
       listen(heard) {
         at.addEventListener("message", heard);
@@ -71,6 +79,15 @@ export function connectGuest(options: ConnectGuestOptions = {}): Guest {
       fromHost: (event) => event.source === (at.parent as unknown) && (options.hostOrigin === undefined || event.origin === options.hostOrigin),
       ready: (message) => at.parent?.postMessage(message, "*"),
     },
-    { onMessage: frameFonts() },
-  ).guest;
+    {
+      onMessage: (message) => {
+        fonts(message);
+        report();
+      },
+    },
+  );
+  const { guest } = opened;
+  const close = guest.close;
+  guest.close = () => (reporting?.(), close());
+  return guest;
 }
