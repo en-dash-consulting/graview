@@ -670,6 +670,7 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
       }
     : { display: "contents", ["--graview-one-face-bar" as string]: `${barHeight}px` };
   const subject = where.type === "record" ? where.id : null;
+  const whole = useWholeView(sheet, `${where.type}:${subject ?? ""}`);
   const panel = panelBox(view);
 
   /* The arrow keys among the boards: the nearest that way. */
@@ -698,9 +699,11 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
       </Suspense>
       <div ref={sheet} data-graview-one-place={now.level} data-graview-standing-on={where.type === "record" ? where.id : where.type === "list" ? `kind:${where.kind}` : where.type} style={sheetStyle}>
         <div {...(now.level >= CITY ? { inert: true } : {})} style={away ? { minHeight: "100%", display: "flex", flexDirection: "column" } : { display: "contents" }}>
+          {/* Over a view that is the record's whole page, what it is linked to comes first: seen, and reached by the keyboard and a screen reader, before the view. */}
+          {away && subject && whole ? <Connected store={store} id={subject} box={connected} sheet={sheet} openRecord={openRecord} whole /> : null}
           {children}
           {/* What the record is linked to, grown into the page as it becomes the panel: its rows the lines leave from. */}
-          {away && subject ? <Connected store={store} id={subject} box={connected} sheet={sheet} openRecord={openRecord} /> : null}
+          {away && subject && !whole ? <Connected store={store} id={subject} box={connected} sheet={sheet} openRecord={openRecord} whole={false} /> : null}
           {/* Room at the page's foot only where the control would stand over the page's last words: none where the foot is empty beside it. */}
           {away ? null : <FootRoom fab={fab} sheet={sheet} />}
         </div>
@@ -1307,14 +1310,27 @@ function CityKey({ close }: { readonly close: () => void }) {
  * line leaves from the view's own part for a record where that part is in
  * sight, and from here where it is not.
  */
-function Connected({ store, id, box, sheet, openRecord }: { readonly store: PageContext<AnySchema>["store"]; readonly id: string; readonly box: RefObject<HTMLDivElement | null>; readonly sheet: RefObject<HTMLDivElement | null>; readonly openRecord: (id: string, level: number) => void }) {
+/** Whether the page the sheet holds is a view's whole (`data-graview-whole-view`), as it is drawn now. */
+function useWholeView(sheet: RefObject<HTMLDivElement | null>, at: string): boolean {
+  const [whole, setWhole] = useState(false);
+  useLayoutEffect(() => {
+    const plane = sheet.current;
+    if (!plane) return;
+    const read = () => setWhole(plane.querySelector("[data-graview-whole-view]") !== null);
+    read();
+    const watch = typeof MutationObserver === "undefined" ? null : new MutationObserver(read);
+    watch?.observe(plane, { childList: true, subtree: true });
+    return () => watch?.disconnect();
+  }, [sheet, at]);
+  return whole;
+}
+
+function Connected({ store, id, box, sheet, openRecord, whole }: { readonly store: PageContext<AnySchema>["store"]; readonly id: string; readonly box: RefObject<HTMLDivElement | null>; readonly sheet: RefObject<HTMLDivElement | null>; readonly openRecord: (id: string, level: number) => void; readonly whole: boolean }) {
   const tick = useStoreTick(store);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const facts = useMemo(() => recordFacts(store, id), [store, id, tick]);
   /* What the page shows already: every record a part of it marks, outside this list. */
   const [onPage, setOnPage] = useState<ReadonlySet<string> | null>(null);
-  /* Whether the page is a view's whole. */
-  const [whole, setWhole] = useState(false);
   useLayoutEffect(() => {
     const plane = sheet.current;
     if (!plane) return;
@@ -1341,7 +1357,6 @@ function Connected({ store, id, box, sheet, openRecord }: { readonly store: Page
         }
       }
       setOnPage((was) => (was && was.size === shown.size && [...shown].every((one) => was.has(one)) ? was : shown));
-      setWhole(plane.querySelector("[data-graview-whole-view]") !== null);
     };
     read();
     const watch = typeof MutationObserver === "undefined" ? null : new MutationObserver(read);
@@ -1357,7 +1372,7 @@ function Connected({ store, id, box, sheet, openRecord }: { readonly store: Page
   if (onPage === null || total === 0) return <div ref={box} data-graview-connected-box="" hidden />;
   if (whole) {
     return (
-      <div ref={box} data-graview-connected-box="" data-graview-connected-at="top" style={{ order: -1, height: 0, opacity: 0, overflow: "hidden", background: "var(--graview-panel, Canvas)", borderBottom: "1px solid var(--graview-edge)", flex: "0 0 auto" }}>
+      <div ref={box} data-graview-connected-box="" data-graview-connected-at="top" style={{ height: 0, opacity: 0, overflow: "hidden", background: "var(--graview-panel, Canvas)", borderBottom: "1px solid var(--graview-edge)", flex: "0 0 auto" }}>
         <section data-graview-connected={total} aria-label="Connected" style={{ padding: "8px 18px 10px" }}>
           <h2 style={{ margin: "0 0 6px", fontSize: "0.95rem" }}>
             Connected <span style={{ fontWeight: 400, color: "var(--graview-ink-faint)" }}>· {total}</span>

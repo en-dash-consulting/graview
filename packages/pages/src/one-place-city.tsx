@@ -1,5 +1,5 @@
 import { labelOf, ONE_FACE_LAYERS } from "@graview/core";
-import { RECORD_BOXES_ATTRIBUTE, recordBoxesOf } from "@graview/core/record-boxes";
+import { RECORD_BOXES_ATTRIBUTE, RECORD_BOXES_MOVED, recordBoxesOf } from "@graview/core/record-boxes";
 import { EMPTY_VIEW, toUrl, withOverview, type ViewState } from "@graview/layout/view";
 import { Scene, type SceneCamera } from "@graview/react";
 import { useGraview, useNavigation } from "@graview/react/provider";
@@ -216,6 +216,13 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
      * still, and the move there is the one move, as any level's is.
      */
     let nearbyZoom: number | null = null;
+    /* What the last Nearby framing took in; a view that says its records after the move began is framed again, once, from where the camera is. */
+    let framedKey = "";
+    let reframeAsked = false;
+    const askReframe = () => {
+      reframeAsked = true;
+    };
+    const framingKeyNow = (id: string): string => `${id}|${[...new Set([id, ...store.graph.neighbors(id).map((node) => node.id as string), ...markedOnPage()])].sort().join(" ")}`;
     const zoomsOf = (where: PageWhere, view: OnePlaceCityProps["view"]): readonly [number, number, number] => {
       const zooms = levelZooms(where, view);
       return nearbyZoom !== null && where.type === "record" ? [zooms[0], nearbyZoom, zooms[2]] : zooms;
@@ -241,6 +248,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       const view = now.view;
       const base = cameraPutting(anchor, aimAt(PANEL, view, footRoom()), most);
       const ids = new Set([id, ...store.graph.neighbors(id).map((node) => node.id as string), ...markedOnPage()]);
+      framedKey = `${id}|${[...ids].sort().join(" ")}`;
       const kinds = new Set<string>();
       const boxes = [...ids].flatMap((one) => {
         const building = world.buildings.get(one);
@@ -269,8 +277,15 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       // Never as far back as the City, nor past what the camera can be written at.
       const least = Math.max(1.15 / zoomNow, (camera.current?.range.min ?? 0) / zoomNow);
       if (fit.s >= least) return fit;
+      /* More than the least zoom holds: the record's own building first, in the city's side, and as much else around it as fits. */
       const middleOf = { x: around.x + around.width / 2, y: around.y + around.height / 2 };
-      return cameraPutting(middleOf, project(fit, middleOf), least);
+      const held = cameraPutting(middleOf, project(fit, middleOf), least);
+      const own = world.buildings.get(id);
+      if (!own) return held;
+      const lo = project(held, { x: own.x, y: own.y });
+      const hi = project(held, { x: own.x + own.width, y: own.y + own.height });
+      const shift = (low: number, high: number, from: number, to: number) => (low < from ? from - low : high > to ? to - high : 0);
+      return { s: held.s, x: held.x + shift(lo.x, hi.x, area.x + margin, area.x + area.width - margin), y: held.y + shift(lo.y, hi.y, area.y + margin, area.y + area.height - margin) };
     };
     /** The camera between stops this frame, as painted — the last one seen while the view takes in a move just let go. */
     let painted: Live = LEVEL_LIVE;
@@ -631,6 +646,12 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         if (anchor) moveTo(cam, restingLevel(altitude), anchor, now);
       }
 
+      /* A VIEW'S RECORDS SAID AFTER NEARBY WAS FRAMED: framed again, the one camera moving there from where it is. */
+      if (reframeAsked && !move && !asking.scrubbing && !settling && calm && anchor) {
+        reframeAsked = false;
+        if (rest === PANEL && at.where.type === "record" && framingKeyNow(at.where.id) !== framedKey) moveTo(cam, PANEL, anchor, now);
+      }
+
       /* A MOVE UNDER WAY: the camera set from how far it has got. */
       if (move) {
         /*
@@ -667,7 +688,16 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
          * nearest level.
          */
         const effective = zoomNow * painted.s;
-        const atZoom = altitudeAt(effective, zooms);
+        let atZoom = altitudeAt(effective, zooms);
+        /*
+         * A NEARBY THAT STANDS BACK is close to the City's zoom: a hand's small
+         * zoom out from it is judged on the level's own spacing, so a little
+         * pinch does not settle at the City.
+         */
+        if (rest === PANEL && nearbyZoom !== null && effective < nearbyZoom) {
+          const own = levelZooms(at.where, at.view);
+          atZoom = Math.min(CITY, PANEL + Math.log(nearbyZoom / effective) / Math.log(own[PANEL]! / own[CITY]!));
+        }
         // The zoom a move just written into the view settles a beat later: it is the face's own once it is still.
         if (ownZoom === null && calm) ownZoom = effective;
         /*
@@ -1030,8 +1060,11 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     };
 
     frame = requestAnimationFrame(tick);
+    const said = sheet.current;
+    said?.addEventListener(RECORD_BOXES_MOVED, askReframe);
     return () => {
       cancelAnimationFrame(frame);
+      said?.removeEventListener(RECORD_BOXES_MOVED, askReframe);
       for (const drawn of lines.values()) {
         drawn.g.remove();
         drawn.ring.remove();

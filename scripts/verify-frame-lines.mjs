@@ -75,7 +75,7 @@ const SIGHT = [
 /* A worker view over every feature: tall cards, each marked with its record, and one marked with no record at all. */
 const BOARD = {
   manifest: { name: "feature-board", title: "Feature board", attach: "feature", cardinality: "many", reads: { kinds: ["feature"] } },
-  source: `graview.style(".card{display:block;box-sizing:border-box;height:132px;margin:0 0 12px;padding:12px;border:1px solid var(--graview-edge);border-radius:8px} h3{margin:0 0 6px;font-size:1rem}");
+  source: `graview.style(".card{display:block;box-sizing:border-box;height:132px;margin:0 0 12px;padding:12px;border:1px solid var(--graview-edge);border-radius:8px} h3{margin:0 0 6px;font-size:1rem} #card-f2{transition:transform 900ms linear} #cards:hover #card-f2{transform:translate(-60px, 50px)}");
 graview.onProps((props) => graview.render(graview.html\`<div id="cards">\${props.nodes.map((node) => graview.html\`<div class="card" data-record=\${node.id} id=\${"card-" + node.id}><h3>\${node.label}</h3><p>\${node.summary ?? ""}</p></div>\`)}<div class="card" data-record="nobody-here" id="card-nobody"><h3>Not a record</h3></div></div>\`));`,
 };
 /*
@@ -91,6 +91,12 @@ graview.onProps((props) => {
   const story = Array.from({ length: became.length > 0 ? 14 : 1 }, (_, at) => graview.html\`<p class="story">Part \${at + 1} of the story of \${node.label}, told at length so the page is tall.</p>\`);
   graview.render(graview.html\`<article id="period"><h2>\${node.label}</h2>\${story}<div id="pills">\${became.map((one) => graview.html\`<a class="pill" data-record=\${one.id} id=\${"pill-" + one.id}>\${one.label}</a>\`)}</div></article>\`);
 });`,
+};
+/* A worker view of every request whose first row moves of itself, forever: its line stays on it every frame. */
+const MOTION = {
+  manifest: { name: "request-motion", title: "Request motion", attach: "request", cardinality: "many", reads: { kinds: ["request"] } },
+  source: `graview.style("@keyframes bob{from{transform:translateY(0)}to{transform:translateY(60px)}} .row{display:block;height:48px;margin:6px 0;padding:8px;border:1px solid var(--graview-edge);border-radius:6px} #row-r1{animation:bob 700ms ease-in-out infinite alternate}");
+graview.onProps((props) => graview.render(graview.html\`<div id="rows">\${props.nodes.slice(0, 4).map((node) => graview.html\`<div class="row" data-record=\${node.id} id=\${"row-" + node.id}>\${node.label}</div>\`)}</div>\`));`,
 };
 /* A worker view of every person, deep and wide: what one measure of it costs. */
 const DEEP = {
@@ -158,7 +164,7 @@ async function buildHost() {
         const store = new Store({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], snapshot: ${JSON.stringify(SEED)}, policy });
         const seat = new URLSearchParams(location.search).get("seat") === "reader" ? { kind: "human", id: "u:reader", roles: ["reader"] } : { kind: "human", id: "u:owner", roles: ["owner"] };
         let views = registerDefaultViews(app.schema, createViews(app.schema));
-        for (const one of [${JSON.stringify(BOARD)}, ${JSON.stringify(PERIOD)}, ${JSON.stringify(DEEP)}]) views = registerWorkerView(views, { manifest: one.manifest, worker: { source: one.source } });
+        for (const one of [${JSON.stringify(BOARD)}, ${JSON.stringify(PERIOD)}, ${JSON.stringify(DEEP)}, ${JSON.stringify(MOTION)}]) views = registerWorkerView(views, { manifest: one.manifest, worker: { source: one.source } });
         views = views.register("request", { cardinality: "one", fidelity: "full" }, guestView({ url: "/frame.html", name: "request-card", title: "What this might become", reads: { kinds: ["feature", "person"] } }));
         createRoot(document.getElementById("app")).render(createElement(PagesApp, { context: { store, app, principal: seat, views, sceneUnderPages: true } }));`,
       resolveDir: resolve(repoRoot, "packages/pages"),
@@ -519,6 +525,63 @@ async function tallPills(page, where) {
   return { where, ...held, linesPastTheWindow: out, ok: held.ok && out.length === 0 };
 }
 
+async function transitioning(page, where) {
+  await nearby(page, "/places/feature-board", boardDrawn);
+  await record(page, "feature-board");
+  // The pointer over the cards: the second slides away under its transition, its line with it.
+  const box = await page.locator('[data-worker-view="feature-board"]').locator("#card-f3").boundingBox();
+  await page.mouse.move(box.x + 20, box.y + 20);
+  await page.waitForTimeout(1_200);
+  const frames = await stopRecording(page);
+  const measured = everyFrameOnMarks(frames);
+  const moved = frames.map((frame) => frame.marks.f2?.left).filter((x) => x !== undefined);
+  const traveled = moved.length > 1 ? Math.abs(moved.at(-1) - moved[0]) : 0;
+  const between = new Set(moved.map((x) => Math.round(x))).size;
+  return { where, ...measured, traveled: Number(traveled.toFixed(1)), positionsSeen: between, ok: measured.counted > 0 && measured.worst <= NEAR && traveled > 40 && between > 5 };
+}
+
+async function animating(page, where) {
+  await nearby(page, "/places/request-motion", () => (document.querySelector('[data-worker-view="request-motion"]')?.shadowRoot?.querySelectorAll("[data-record]").length ?? 0) >= 2);
+  await record(page, "request-motion");
+  await page.waitForTimeout(1_500);
+  const frames = await stopRecording(page);
+  const measured = everyFrameOnMarks(frames);
+  const tops = frames.map((frame) => frame.marks.r1?.top).filter((y) => y !== undefined);
+  const traveled = tops.length > 1 ? Math.max(...tops) - Math.min(...tops) : 0;
+  const onIt = frames.filter((frame) => frame.lines.some((line) => line.key === "r1")).length;
+  return { where, ...measured, traveled: Number(traveled.toFixed(1)), framesWithItsLine: onIt, ok: measured.counted > 0 && measured.worst <= NEAR && traveled > 40 && onIt > frames.length / 2 };
+}
+
+/* A little zoom out with the hand over the city, at a Nearby that stands back: it settles at Nearby, not the City. */
+async function smallZoomOut(page, where) {
+  await nearby(page, "/features/f3", periodDrawn);
+  await page.mouse.move(200, 400);
+  await page.keyboard.down("Control");
+  await page.mouse.wheel(0, 30);
+  await page.keyboard.up("Control");
+  await page.waitForTimeout(1_500);
+  const level = await page.evaluate(() => ({ sheet: Number(document.querySelector("[data-graview-one-place]")?.getAttribute("data-graview-one-place")), altitude: Number(document.querySelector('[data-testid="one-place-city"]')?.getAttribute("data-graview-altitude-now")) }));
+  return { where, ...level, ok: level.sheet === 1 && Math.abs(level.altitude - 1) < 0.01 };
+}
+
+/* Where the city's side cannot hold what a page is connected to (a phone), the record's own building is in it, and a line from its edge points toward one out of sight. */
+async function outOfSight(page, where) {
+  await nearby(page, "/features/f3", periodDrawn);
+  const lines = await linesNow(page);
+  const size = page.viewportSize();
+  const own = await page.evaluate(() => {
+    const r = document.querySelector('[data-graview-building="f3"]')?.getBoundingClientRect();
+    const panel = document.querySelector("[data-graview-one-place]")?.getBoundingClientRect();
+    return r && panel ? { building: { left: r.left, top: r.top, right: r.right, bottom: r.bottom }, panel: { left: panel.left, top: panel.top, right: panel.right, bottom: panel.bottom } } : null;
+  });
+  const pointed = lines.filter((line) => line.under).length;
+  const b = own?.building;
+  const p = own?.panel;
+  const clear = b && p && (b.right <= p.left + 2 || b.left >= p.right - 2 || b.bottom <= p.top + 2 || b.top >= p.bottom - 2);
+  const ownInSight = Boolean(b && clear && b.top >= 0 && b.left >= 0 && b.right <= size.width && b.bottom <= size.height);
+  return { where, lines: lines.length, pointed, own, ownInSight, ok: pointed > 0 && ownInSight };
+}
+
 async function deepView(page, where) {
   await page.goto(`${at("frame-lines-host")}/places/deep-view`, { waitUntil: "load" });
   await page.waitForFunction(() => (document.querySelector('[data-worker-view="deep-view"]')?.shadowRoot?.querySelectorAll("[data-record]").length ?? 0) >= 400, null, { timeout: 30_000 });
@@ -550,14 +613,14 @@ async function deepView(page, where) {
 
 const report = { at: new Date().toISOString(), engines, checks: {} };
 const errors = [];
-const seen = { cards: [], cardsScroll: [], levelMove: [], awayAndBack: [], rows: [], rowsScroll: [], unseen: [], quiet: [], tall: [], pills: [], deep: [] };
+const seen = { cards: [], cardsScroll: [], levelMove: [], awayAndBack: [], rows: [], rowsScroll: [], unseen: [], quiet: [], tall: [], pills: [], deep: [], transition: [], animation: [], zoomOut: [], outOfSight: [] };
 let host;
 let browser;
 try {
   host = await buildHost();
   for (const engine of engines) {
     browser = await launchEngine(engine);
-    for (const [list, drive] of [
+    for (const [list, drive, options] of [
       [seen.cards, workerCards],
       [seen.cardsScroll, workerScroll],
       [seen.levelMove, levelMove],
@@ -569,11 +632,15 @@ try {
       [seen.tall, tallPage],
       [seen.pills, tallPills],
       [seen.deep, deepView],
+      [seen.transition, transitioning],
+      [seen.animation, animating],
+      [seen.zoomOut, smallZoomOut],
+      [seen.outOfSight, outOfSight, { viewport: { width: 610, height: 360 } }],
     ]) {
-      const context = await browser.newContext({ viewport: DESK });
+      const context = await browser.newContext(options ?? { viewport: DESK });
       const page = await context.newPage();
       page.on("pageerror", (error) => errors.push(`${engine}: ${error.message}`));
-      const where = { engine, device: "desk 1440×900" };
+      const where = { engine, device: options ? `${options.viewport.width}×${options.viewport.height}` : "desk 1440×900" };
       try {
         list.push(await drive(page, where));
       } catch (error) {
@@ -597,6 +664,10 @@ try {
   report.checks.onATallViewThatIsTheWholePageItsConnectedRecordsAreInTheFirstWindowAndEveryLineEndsInIt = { held: seen.tall, ok: every(seen.tall) };
   report.checks.aTallViewsOwnPillsHaveTheirLinesWhenScrolledTo = { held: seen.pills, ok: every(seen.pills) };
   report.checks.aDeepWideViewIsMeasuredWithinItsBudget = { budgetMs: DEEP_MS, held: seen.deep, ok: every(seen.deep) };
+  report.checks.aWorkerViewsRecordMovingUnderATransitionKeepsItsLineOnItEveryFrame = { held: seen.transition, ok: every(seen.transition) };
+  report.checks.aWorkerViewsRecordUnderAnEndlessAnimationKeepsItsLineOnItEveryFrame = { held: seen.animation, ok: every(seen.animation) };
+  report.checks.aLittleZoomOutAtANearbyThatStandsBackSettlesAtNearby = { held: seen.zoomOut, ok: every(seen.zoomOut) };
+  report.checks.whereTheCitysSideCannotHoldItAllTheRecordsBuildingIsInSightAndALinePointsTowardTheRest = { held: seen.outOfSight, ok: every(seen.outOfSight) };
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
   report.passed = Object.values(report.checks).every((check) => check.ok);
 } catch (error) {

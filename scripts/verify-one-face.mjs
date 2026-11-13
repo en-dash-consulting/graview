@@ -42,7 +42,7 @@ const STRIPS = resolve(repoRoot, "docs/one-face");
 
 const report = { at: new Date().toISOString(), engines, app: "apps/todo", checks: {} };
 const errors = [];
-const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], shortcuts: [], keysTurnOff: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [] };
+const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], pointsOut: [], shortcuts: [], keysTurnOff: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [] };
 
 /* ------------------------------------------------------------------ */
 /* In the page                                                         */
@@ -690,6 +690,22 @@ async function offSight(page, where) {
   const pointed = last.filter((line) => line.under).length;
   const inSight = last.filter((line) => !line.under && line.to.x >= 0 && line.to.y >= 0 && line.to.x <= size.width && line.to.y <= size.height).length;
   seen.crossing.push({ where, path: "/pages/tasks/t-book", pointed, inSight, ...crossing, ok: crossing.counted > 0 && crossing.crossed === 0 && pointed === 0 && inSight > 0 });
+  // In a window too small for Nearby to take it all in: the record's own building stays in the city's side, and a line points from its edge toward what is out of sight.
+  await page.setViewportSize({ width: 610, height: 760 });
+  await page.goto(`${at("todo")}/pages/tasks/t-book?${DAY}`, { waitUntil: "load" });
+  await ready(page);
+  await press(page, '[data-testid="altitude-stop-1"]');
+  await restAt(page, 1);
+  await page.waitForTimeout(400);
+  const small = await page.evaluate(() => {
+    const lines = [...document.querySelectorAll("[data-graview-line]")];
+    const r = document.querySelector('[data-graview-building="t-book"]')?.getBoundingClientRect();
+    const p = document.querySelector("[data-graview-one-place]")?.getBoundingClientRect();
+    const clear = r && p && (r.right <= p.left + 2 || r.left >= p.right - 2 || r.bottom <= p.top + 2 || r.top >= p.bottom - 2);
+    return { lines: lines.length, pointed: lines.filter((g) => g.hasAttribute("data-graview-line-under")).length, ownInSight: Boolean(r && clear && r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight) };
+  });
+  seen.pointsOut.push({ where, path: "/pages/tasks/t-book at 610×760", ...small, ok: small.pointed > 0 && small.ownInSight });
+  await page.setViewportSize(size);
   return { where, ok: true };
 }
 
@@ -1299,6 +1315,7 @@ try {
   report.checks.atNearbyNoCitySideConnectionLabelsForTheSelectedRecord = { held: seen.noCityWords, ok: every(seen.noCityWords) };
   report.checks.connectedNeverRepeatsOrCoversThePage = { held: seen.connected, ok: every(seen.connected) };
   report.checks.noLineCrossesTheNearbyPanel = { held: seen.crossing, ok: every(seen.crossing) };
+  report.checks.whereNearbyCannotTakeItAllInTheRecordStaysInSightAndALinePointsTowardTheRest = { held: seen.pointsOut, ok: every(seen.pointsOut) };
   report.checks.levelShortcutsMoveLevelsAndAreShown = { held: seen.shortcuts, ok: every(seen.shortcuts) };
   report.checks.theLevelKeysTurnOffAndTheLegendSaysSo = { held: seen.keysTurnOff, ok: every(seen.keysTurnOff) };
   report.checks.browserZoomKeysAreNotTaken = { held: seen.zoomKeys, ok: every(seen.zoomKeys) };

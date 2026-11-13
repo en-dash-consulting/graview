@@ -75,7 +75,26 @@ export function createViewRecords(region: HTMLElement, root: ShadowRoot, mayName
     }
     return { boxes, shows };
   };
-  const now = () => (measured ??= measure());
+  /*
+   * WHILE ANYTHING IN IT MOVES OF ITSELF — a transition, an animation, one
+   * that never ends — it is measured again every frame it is read in, and
+   * no more than once a frame: the frame's time, the same for every read in
+   * it, says whether this one was measured already.
+   */
+  let measuredAt: number | null | undefined;
+  const frameTime = () => (region.ownerDocument.timeline?.currentTime ?? null) as number | null;
+  const moving = () => (root.getAnimations?.().length ?? 0) > 0;
+  const now = () => {
+    if (measured && moving()) {
+      const time = frameTime();
+      if (time === null || time !== measuredAt) measured = undefined;
+    }
+    if (!measured) {
+      measured = measure();
+      measuredAt = frameTime();
+    }
+    return measured;
+  };
   const dirty = () => {
     measured = undefined;
   };
@@ -85,9 +104,12 @@ export function createViewRecords(region: HTMLElement, root: ShadowRoot, mayName
   });
   const changes = window?.MutationObserver ? new window.MutationObserver(dirty) : undefined;
   changes?.observe(root, { childList: true, subtree: true, attributes: true, characterData: true });
+  // The app's look changed (its scheme, its brand): what the view drew is laid out again inside a region of the same size.
+  changes?.observe(region.ownerDocument.documentElement, { attributes: true });
   const sizes = window?.ResizeObserver ? new window.ResizeObserver(dirty) : undefined;
   sizes?.observe(region);
-  const events = ["scroll", "load", "transitionend", "animationend"];
+  // What moves its records without a change to what it drew: a scroll in it, a picture, a transition or an animation starting or ending, a pointer over it and the keyboard in it (:hover, :focus-within).
+  const events = ["scroll", "load", "transitionrun", "transitionend", "transitioncancel", "animationstart", "animationend", "animationcancel", "pointerover", "pointerout", "focusin", "focusout"];
   for (const type of events) root.addEventListener(type, dirty, true);
   /* A face arriving lays words out again without anything else moving. */
   const fonts = region.ownerDocument.fonts as FontFaceSet | undefined;
@@ -96,7 +118,8 @@ export function createViewRecords(region: HTMLElement, root: ShadowRoot, mayName
     moved() {
       dirty();
       /* Which records it shows, said again only when that changed: a list beside it is read again. */
-      const said = [...root.querySelectorAll("[data-record]")].slice(0, MOST_RECORD_BOXES * 2).map((one) => one.getAttribute("data-record")).join(" ");
+      const marked = root.querySelectorAll("[data-record]");
+      const said = Array.from({ length: Math.min(marked.length, MOST_RECORD_BOXES * 2) }, (_, at) => marked[at]!.getAttribute("data-record")).join(" ");
       if (said === showsSaid) return;
       showsSaid = said;
       recordBoxesMoved(region);

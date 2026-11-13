@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-13T07:09:20.836Z",
+  "at": "2026-11-13T08:05:28.930Z",
   "engines": [
     "chromium"
   ],
@@ -32,8 +32,8 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 63,
-          "counted": 296,
+          "frames": 69,
+          "counted": 328,
           "worst": 0,
           "examples": [],
           "scrolled": 720,
@@ -60,8 +60,8 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 108,
-          "counted": 233,
+          "frames": 110,
+          "counted": 238,
           "worst": 0,
           "examples": [],
           "framesDrawnBetweenLevels": 24,
@@ -182,9 +182,9 @@
             "ok": true
           },
           "pageScrolled": {
-            "frames": 51,
+            "frames": 58,
             "moved": true,
-            "counted": 82,
+            "counted": 108,
             "worst": 0,
             "examples": []
           },
@@ -289,8 +289,87 @@
           },
           "boxes": 200,
           "coldMedianMs": 0.9,
-          "coldWorstMs": 1.3,
-          "warmMs": 0.022,
+          "coldWorstMs": 1.1,
+          "warmMs": 0.023,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aWorkerViewsRecordMovingUnderATransitionKeepsItsLineOnItEveryFrame": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "frames": 73,
+          "counted": 365,
+          "worst": 0,
+          "examples": [],
+          "traveled": 60,
+          "positionsSeen": 55,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aWorkerViewsRecordUnderAnEndlessAnimationKeepsItsLineOnItEveryFrame": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "frames": 90,
+          "counted": 360,
+          "worst": 0,
+          "examples": [],
+          "traveled": 60,
+          "framesWithItsLine": 90,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aLittleZoomOutAtANearbyThatStandsBackSettlesAtNearby": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "sheet": 1,
+          "altitude": 1,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "whereTheCitysSideCannotHoldItAllTheRecordsBuildingIsInSightAndALinePointsTowardTheRest": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "610×360"
+          },
+          "lines": 8,
+          "pointed": 8,
+          "own": {
+            "building": {
+              "left": 39.79999923706055,
+              "top": 71.69999694824219,
+              "right": 45.89999771118164,
+              "bottom": 78
+            },
+            "panel": {
+              "left": 178,
+              "top": 103,
+              "right": 598,
+              "bottom": 348
+            }
+          },
+          "ownInSight": true,
           "ok": true
         }
       ],

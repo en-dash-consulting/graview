@@ -412,7 +412,7 @@ export const GROWTH_QUIET_MS = 600;
 export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S>): GuestHost {
   const limiter = options.limiter ?? createGuestLimiter(options.limits, options.now);
   const recordsAllowed = limiter.records ?? windowed(RECORDS_A_SECOND, 1_000, options.now ?? Date.now);
-  /* The latest said past the allowance, kept and taken once it allows: only the newest counts, and it is never lost. */
+  /* What a frame says of its records reaches the host as the latest it said: a line is never left where it was. */
   let laterRecords: { boxes: unknown; shows: unknown } | undefined;
   let laterTimer: ReturnType<typeof setTimeout> | undefined;
   const records = (data: Record<string, unknown>) => {

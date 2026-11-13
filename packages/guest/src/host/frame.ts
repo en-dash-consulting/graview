@@ -305,8 +305,8 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
   let showsSaid = "";
   const report = (boxes: unknown, shows: unknown) => {
     saidBoxes = Array.isArray(boxes) ? boxes.slice(0, MOST_RECORD_BOXES * 2) : [];
-    saidShows = Array.isArray(shows) ? shows.slice(0, MOST_RECORD_BOXES * 2) : [];
-    const now = saidShows.join(" ");
+    saidShows = Array.isArray(shows) ? shows.slice(0, MOST_RECORD_BOXES * 2).filter((one): one is string => typeof one === "string" && one.length <= 200) : [];
+    const now = (saidShows as string[]).join(" ");
     if (now !== showsSaid) {
       showsSaid = now;
       recordBoxesMoved(iframe);

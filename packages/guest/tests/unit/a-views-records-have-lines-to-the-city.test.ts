@@ -8,13 +8,12 @@ import { GUEST_PROTOCOL, type HostHello } from "../../src/protocol.js";
 import { bethan, settle, showroom } from "./showroom.js";
 
 /**
- * WHERE A FRAME'S RECORDS ARE (Graview HQ
+ * A VIEW'S RECORDS HAVE LINES TO THE CITY (Graview HQ
  * feature:f-one-face-lines-from-frame-views). The one face draws a line from
- * each record a page shows to its building; a frame guest is another origin,
- * so it says where its `data-record` elements are, and its host keeps of it
- * only what is inside the frame and names a record the seat may see, no more
- * than the most, for drawing and nothing else. That the lines land on them
- * in a browser is `scripts/verify-frame-lines.mjs`.
+ * each record a page shows to its building; a worker view and a frame guest
+ * say which records they mark and where, and a host gets lines from the
+ * records the view was handed. That the lines land on them in a browser is
+ * `scripts/verify-frame-lines.mjs`.
  */
 const sees = (id: string) => id !== "secret";
 

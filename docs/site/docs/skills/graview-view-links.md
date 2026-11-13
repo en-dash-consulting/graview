@@ -24,7 +24,7 @@ In SVG the same `<a data-record>` is a link — a timeline's dot, a map's pin �
 
 ### A card that opens
 
-Any element with `data-record` or `data-place` is a link, not only an `<a>`. The same mark draws a line: at Nearby on the one face, each `data-record` element in sight has one from the page's edge to that record's building, as a built-in page's rows do — none for an id that is no record or one the seat cannot see — and a view of one record that marks nothing still has its one line, to that record. Put an `<a>` to the same record on its heading:
+Any element with `data-record` or `data-place` is a link, not only an `<a>`. The same mark draws a line: at Nearby on the one face, each `data-record` element in sight has one from the page's edge to that record's building, as a built-in page's rows do — none for an id that is no record or one the seat cannot see — and a view of one record that marks nothing still has its one line, to that record. A `data-record` element counts as shown even when hidden, so the Connected list does not say it again. Put an `<a>` to the same record on its heading:
 
 ```html
 <div class="card" data-record="threat:7">
