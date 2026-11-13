@@ -32,6 +32,7 @@ export default defineConfig({
       "@graview/core/shown": fileURLToPath(new URL("./packages/core/src/shown.ts", import.meta.url)),
       "@graview/core/markdown": fileURLToPath(new URL("./packages/core/src/markdown.ts", import.meta.url)),
       "@graview/core/seat": fileURLToPath(new URL("./packages/core/src/seat.ts", import.meta.url)),
+      "@graview/core/binding": fileURLToPath(new URL("./packages/core/src/binding.ts", import.meta.url)),
       "@graview/core/field-sight": fileURLToPath(new URL("./packages/core/src/field-sight.ts", import.meta.url)),
       "@graview/core/publishing": fileURLToPath(new URL("./packages/core/src/publishing.ts", import.meta.url)),
       "@graview/core/typing": fileURLToPath(new URL("./packages/core/src/typing.ts", import.meta.url)),

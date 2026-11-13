@@ -45,7 +45,7 @@ import type { Principal } from "./permissions/types.js";
 import { actTitle, fieldWords, humanizeField, labelOf, nounOf, pluralOf, withArticle } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
 import { readsPublished } from "./publish.js";
-import { seatLens, seenBy } from "./seen.js";
+import { namedAuthors, seatLens, seenBy } from "./seen.js";
 import type { Store } from "./store.js";
 import { nameOfAuthor } from "./who.js";
 
@@ -351,9 +351,10 @@ function matchBatches(any: Store<AnySchema>, batches: readonly (readonly Operati
        * they may not see is withheld from them: it says nothing of who or
        * why, and carries only the changes to records they may see (none, for
        * a record they cannot see at all) — so it can match what changed, and
-       * never an act, and its maker is "Someone".
+       * never an act, and its maker is "Someone". A maker bound to a person
+       * is that person's record, never the account (`namedAuthors`).
        */
-      const served = redact(batch, lens);
+      const served = [...namedAuthors(any, lens, redact(batch, lens))];
       if (served.every((op) => op.primitives.length === 0)) continue;
       const seen = seenBy(any, who);
       const records = matchOne(any, seen, subscription, served);
@@ -361,8 +362,9 @@ function matchBatches(any: Store<AnySchema>, batches: readonly (readonly Operati
       const last = batch.at(-1)!;
       const open = served.filter((op) => !isWithheld(op));
       const whole = open.length === served.length;
-      const shownBy = whole ? by : WITHHELD_AUTHOR;
-      const byName = whole ? nameOfAuthor(by, { graph: seen.graph as never, schema: any.schema, ...(options.seats ? { seats: options.seats } : {}) }) : (WITHHELD_AUTHOR.name ?? "Someone");
+      const told = served[0]!.author;
+      const shownBy = whole ? told : WITHHELD_AUTHOR;
+      const byName = whole ? nameOfAuthor(told, { graph: seen.graph as never, schema: any.schema, ...(options.seats ? { seats: options.seats } : {}) }) : (WITHHELD_AUTHOR.name ?? "Someone");
       // A run of typing is said as one: "Wrote in Kitchen's notes (+5 −1)", read over what the subscriber is served.
       const typed = whole ? typedRun(served) : undefined;
       const intent = typed ? typingWords(typed, any.schema, seen.graph) : ((whole ? first.batchIntent : undefined) ?? (open.length > 0 ? open.map((op) => op.intent).join("; ") : recordsSaid(records)));

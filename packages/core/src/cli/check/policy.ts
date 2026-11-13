@@ -4,6 +4,9 @@ import { derivedVia } from "../../mutations/derive-edits.js";
 import { nodeRefKinds } from "../../mutations/node-ref.js";
 import { nearestAct } from "../../mutations/act-spelling.js";
 import type { AnySchema } from "../../schema/schema.js";
+import { BIND_PERSON } from "../../binding-served.js";
+import { BINDING_UNGRANTED } from "../../binding-ungranted.js";
+import type { Grant } from "../../permissions/types.js";
 
 /**
  * `note` is a QUESTION ASKED OUT LOUD, not a problem.
@@ -31,6 +34,10 @@ export function checkPolicy<S extends AnySchema>(ctx: CheckContext<S>): void {
    * like a role whose grants are elsewhere. The person who finds either is
    * otherwise the person standing in front of a button they cannot press.
    */
+  // An act of the app's own under the name binding goes by would stand in its place, and bind nobody.
+  if ((app.mutations ?? []).some((mutation) => mutation.name === BIND_PERSON)) {
+    add({ severity: "error", code: "binding-act-taken", where: `mutations.${BIND_PERSON}`, message: `The app declares its own "${BIND_PERSON}" act, so the store keeps it in place of the host's: nobody could be bound to the person entered for them.`, fix: `Rename the app's "${BIND_PERSON}" act.` });
+  }
   if (app.policy) {
     const roles = rolesOf(app.policy);
     for (const mutation of app.mutations ?? []) {
@@ -100,9 +107,25 @@ export function checkPolicy<S extends AnySchema>(ctx: CheckContext<S>): void {
     }
 
     for (const grant of app.policy.grants) {
+      /*
+       * BINDING AN ACCOUNT TO A PERSON IS THE HOST'S (Roadmap
+       * f-invite-binds-existing-person): it runs `bind-person` as its own
+       * seat when an invitation is accepted, for the app's owner. A role
+       * granted it — or let propose it — could bind any account to any
+       * person, its own among them, so no grant may name it.
+       */
+      if (givesBinding(grant)) {
+        add({
+          severity: "error",
+          code: "grant-gives-binding",
+          where: "policy.grants",
+          message: `${BINDING_UNGRANTED}.`,
+          fix: `Drop "${BIND_PERSON}" from the grant. The host binds with bindPerson (@graview/core/binding) as its own seat.`,
+        });
+      }
       if (grant.mutations === "*") continue;
       for (const name of grant.mutations) {
-        if (mutations.has(name)) continue;
+        if (mutations.has(name) || name === BIND_PERSON) continue;
         /*
          * A grant written in code is matched by the act's own name, as it
          * is written: `connect-threat-partOf` grants nothing, so it is
@@ -200,4 +223,10 @@ export function checkPolicy<S extends AnySchema>(ctx: CheckContext<S>): void {
       }
     }
   }
+}
+
+/** Whether a grant names binding a person, to run or to propose. */
+export function givesBinding(grant: Pick<Grant, "mutations" | "propose">): boolean {
+  const names = (list: unknown) => Array.isArray(list) && list.includes(BIND_PERSON);
+  return names(grant.mutations) || names(grant.propose);
 }

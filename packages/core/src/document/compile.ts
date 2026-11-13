@@ -1,6 +1,8 @@
 import type { FarAppResolver } from "../workflows/far.js";
 import type { HostView } from "../views/types.js";
 import { derivedActOf } from "../mutations/derived-names.js";
+import { BIND_PERSON } from "../binding-served.js";
+import { BINDING_UNGRANTED } from "../binding-ungranted.js";
 import { documentRelationActOf } from "./relation-acts.js";
 import { actsSpelledAsGiven, didYouMeanAct } from "./act-spellings.js";
 import { brandOf } from "./brand.js";
@@ -413,13 +415,20 @@ function validate(document: GraviewDocument): Finding[] {
     });
   }
 
+  // An act of the document's own under the name binding goes by would stand in its place, and bind nobody (`binding-act-taken`).
+  if (Object.hasOwn(acts, BIND_PERSON)) findings.push(error("binding-act-taken", `acts.${BIND_PERSON}`, `"${BIND_PERSON}" is the host's act, binding an account to the person entered for it: an act of the document's own by that name would stand in its place`, "give the act another name"));
   const policy = document.policy;
   if (policy) {
     policy.grants.forEach((grant, i) => {
       if (grant.roles !== "*" && roles.size > 0) for (const r of grant.roles) if (!roles.has(r)) findings.push(error("grant-role", `policy.grants.${i}.roles`, `"${r}" is not one of the document's roles`));
       for (const key of ["mutations", "propose"] as const) {
         const named = grant[key];
-        if (named !== undefined && named !== "*") for (const m of named) if (!acts[m] && !derivedActOf(m) && !documentRelationActOf(m, document.kinds)) findings.push(error("grant-act", `policy.grants.${i}.${key}`, `"${m}" is not an act this document declares`, didYouMeanAct(m, document)));
+        if (named === undefined || named === "*") continue;
+        for (const m of named) {
+          // Binding an account to a person is the host's, as an invitation is accepted: no grant gives it (`grant-gives-binding`).
+          if (m === BIND_PERSON) findings.push(error("grant-gives-binding", `policy.grants.${i}.${key}`, BINDING_UNGRANTED, `remove "${BIND_PERSON}" from the grant`));
+          else if (!acts[m] && !derivedActOf(m) && !documentRelationActOf(m, document.kinds)) findings.push(error("grant-act", `policy.grants.${i}.${key}`, `"${m}" is not an act this document declares`, didYouMeanAct(m, document)));
+        }
       }
     });
     (policy.sees ?? []).forEach((sight, i) => {
