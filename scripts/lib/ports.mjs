@@ -118,6 +118,8 @@ export const OWN = {
   /** `verify-first-load`'s two previews of Cloud's shell: the roadmap at the Roadmap's size, and a small team's tasks. */
   "first-load-roadmap": 5250,
   "first-load-tasks": 5251,
+  /** `graview preview` of a small team's tasks mounted whole as the one face (`sceneUnderPages`), for `verify-embed-one-face`. */
+  "embed-one-face": 5272,
   /** The OpenAI-shaped stand-in `verify-studio` points the studio's remote model at. */
   "studio-model": 5289,
 };

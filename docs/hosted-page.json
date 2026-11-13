@@ -1,15 +1,15 @@
 {
-  "at": "2026-10-23T06:00:18.700Z",
+  "at": "2026-11-13T05:41:58.131Z",
   "page": "openRemote + mount(…, { studio: false }) over the vendors document, built as Graview Cloud's packages/client/bundles.mjs builds its shell",
   "checks": {
     "atMostTheBudgetMinifiedUpFront": {
-      "kb": 597,
-      "budgetKb": 597,
+      "kb": 676,
+      "budgetKb": 676,
       "ok": true
     },
     "atMostTheBudgetGzippedUpFront": {
-      "kb": 208,
-      "budgetKb": 209,
+      "kb": 234,
+      "budgetKb": 234,
       "ok": true
     },
     "atMost150KbOfZodUpFront": {
@@ -21,13 +21,13 @@
       "ok": true
     },
     "handedACompiledAppAtMostItsBudgetUpFront": {
-      "kb": 548,
-      "budgetKb": 548,
+      "kb": 620,
+      "budgetKb": 620,
       "ok": true
     },
     "handedACompiledAppAtMostItsBudgetGzippedUpFront": {
-      "kb": 191,
-      "budgetKb": 191,
+      "kb": 215,
+      "budgetKb": 215,
       "ok": true
     },
     "handedACompiledAppCarriesNoCompilerUpFront": {
@@ -36,19 +36,19 @@
     }
   },
   "upFront": {
-    "kb": 597,
-    "gzippedKb": 208,
-    "bytes": 611122,
-    "gzippedBytes": 213321,
+    "kb": 676,
+    "gzippedKb": 234,
+    "bytes": 691981,
+    "gzippedBytes": 239684,
     "chunks": 13,
     "packagesKb": {
-      "@graview/core": 231,
+      "@graview/core": 289,
       "react-dom": 176,
-      "@graview/primitives": 47,
-      "@graview/react": 35,
+      "@graview/primitives": 57,
+      "@graview/react": 39,
       "zod": 35,
-      "@graview/embed": 25,
-      "@graview/ship": 18,
+      "@graview/embed": 29,
+      "@graview/ship": 20,
       "react": 8,
       "@graview/layout": 4,
       "scheduler": 4,
@@ -56,58 +56,119 @@
       "(the page)": 1,
       "@graview/tools": 0
     },
-    "ownNeedKb": 583
+    "ownNeedKb": 658
   },
   "budget": {
-    "minified": 611246,
-    "gzipped": 213612,
+    "minified": 692071,
+    "gzipped": 239761,
     "raises": [
+      "a-bare-app-looks-designed-hosted-page.json",
       "a-board-moves-without-buttons-a-hosted-page.json",
+      "a-brand-suggestion-passes-the-whole-palette-hosted-page.json",
       "a-change-from-elsewhere-is-heard-a-hosted-page.json",
       "a-change-is-said-in-words-a-hosted-page.json",
+      "a-choice-takes-several-of-its-options-a-hosted-page.json",
       "a-compacted-store-serves-no-unseen-id-hosted-page.json",
+      "a-compaction-asked-for-format-1-hosted-page.json",
+      "a-connection-pass-says-whom-it-invited-hosted-page.json",
+      "a-count-of-one-relation-is-read-hosted-page.json",
+      "a-date-may-know-only-its-year-or-its-month-a-hosted-page.json",
+      "a-day-changed-apart-mints-no-id-from-a-kept-field-hosted-page.json",
       "a-declared-row-names-its-record-a-hosted-page.json",
+      "a-deleted-view-never-draws-hosted-page.json",
       "a-draft-view-is-swapped-in-place-a-hosted-page.json",
       "a-drop-reads-upload-at-a-hosted-page.json",
       "a-field-typed-together-is-edited-live-hosted-page.json",
       "a-form-for-a-visitor-a-hosted-page.json",
       "a-frame-guest-holds-back-the-drawn-signal-a-hosted-page.json",
       "a-grant-to-make-a-kind-takes-out-only-what-you-made-a-hosted-page.json",
+      "a-graph-put-back-keeps-where-things-stood-hosted-page.json",
+      "a-hosts-buttons-stand-on-the-app-bar-a-hosted-page.json",
+      "a-hosts-status-on-the-bar-hosted-page.json",
       "a-kept-view-is-a-place-in-the-nav-hosted-page.json",
+      "a-list-is-exported-as-it-is-shown-a-hosted-page.json",
       "a-logo-for-each-scheme-a-hosted-page.json",
       "a-long-headline-a-hosted-page.json",
+      "a-member-is-bound-to-their-person-hosted-page.json",
+      "a-notion-connection-makes-the-properties-it-needs-a-hosted-page.json",
       "a-page-opened-on-a-draft-view-a-hosted-page.json",
       "a-page-opens-on-a-short-tail-a-hosted-page.json",
       "a-part-is-waited-for-until-it-has-drawn-a-hosted-page.json",
+      "a-person-proposes-for-review-hosted-page.json",
       "a-place-is-tidied-from-its-menu-a-hosted-page.json",
+      "a-planted-duplicate-steers-no-merge-hosted-page.json",
+      "a-record-follows-the-record-it-derives-from-hosted-page.json",
       "a-record-holds-a-video-a-hosted-page.json",
+      "a-removed-id-is-never-made-again-hosted-page.json",
+      "a-rule-covers-every-record-hosted-page.json",
       "a-rules-today-is-the-apps-day-hosted-page.json",
+      "a-seat-acting-for-a-person-reads-another-app-as-that-person-hosted-page.json",
+      "a-shared-seat-cannot-vote-hosted-page.json",
+      "a-store-never-names-a-change-with-an-id-its-log-holds-hosted-page.json",
+      "a-suggestion-takes-a-vote-hosted-page.json",
+      "a-text-block-says-how-many-lines-it-shows-a-hosted-page.json",
       "a-text-field-takes-a-splice-hosted-page.json",
       "a-view-is-as-tall-as-it-draws-a-hosted-page.json",
+      "a-view-knows-what-its-seat-cannot-see-hosted-page.json",
+      "a-view-links-to-the-scene-a-hosted-page.json",
       "a-view-that-bleeds-a-hosted-page.json",
       "a-views-link-carries-the-hosts-address-a-hosted-page.json",
       "a-views-place-flows-a-hosted-page.json",
       "a-visitor-is-told-how-to-get-in-hosted-page.json",
+      "a-visitors-view-is-not-stopped-by-the-link-check-hosted-page.json",
+      "a-workflow-archives-and-asks-as-one-hosted-page.json",
+      "a-workflow-stands-on-the-map-hosted-page.json",
+      "a-year-or-a-month-alone-is-kept-compared-and-drawn-a-hosted-page.json",
+      "act-clears-a-field-guard-reads-the-record-hosted-page.json",
       "act-names-edit-refusals-and-capitals-a-hosted-page.json",
       "an-act-in-another-spelling-hosted-page.json",
+      "an-app-stands-on-a-ground-of-its-own-a-hosted-page.json",
+      "an-apps-opening-screen-is-in-its-declaration-hosted-page.json",
       "an-edge-sign-steps-past-a-districts-name-a-hosted-page.json",
+      "an-id-never-quotes-a-field-a-sight-keeps-hosted-page.json",
+      "an-ipad-bar-fits-and-the-scene-holds-still-hosted-page.json",
+      "an-undo-keeps-to-what-a-seat-may-see-hosted-page.json",
+      "an-undo-offered-is-an-undo-taken-hosted-page.json",
+      "apps-improve-from-use-hosted-page.json",
       "blocks-lay-out-as-written-a-hosted-page.json",
+      "brand-marks-under-an-app-base-and-home-screen-icons-hosted.json",
       "built-in-views-look-designed-a-hosted-page.json",
+      "compaction-carries-what-readers-were-served-hosted-page.json",
+      "computed-format-and-clear-in-place-hosted-page.json",
+      "data-is-never-code-a-hosted-page.json",
       "dates-and-the-quick-ask-together-a-hosted-page.json",
       "datetimes-in-the-apps-time-zone-hosted-page.json",
+      "device-screens-hosted-page.json",
       "edge-fields-client-ids-opaque-cursor-hosted-page.json",
       "edits-reach-readers-when-published-a-hosted-page.json",
       "every-form-asks-in-one-order-hosted-page.json",
       "every-relation-comes-with-its-connect-and-disconnect-hosted-page.json",
+      "every-view-takes-the-apps-stylesheet-hosted-page.json",
+      "faces-lent-to-frames-hosted-page.json",
       "first-draw-chunks-hosted-page.json",
       "formats-fail-closed-hosted-page.json",
+      "formulas-and-linked-sets-hosted-page.json",
+      "going-into-a-district-on-a-phone-reads-clean-hosted-page.json",
+      "guest-growth-guard-hosted-page.json",
+      "history-opens-from-the-app-menu-hosted-page.json",
+      "inbox-opens-on-what-needs-you-hosted-page.json",
       "inline-ai-finish-hosted-page.json",
       "lenses-and-views-a-hosted-page.json",
+      "make-any-page-better-hosted-page.json",
+      "make-any-page-better-presses-hosted-page.json",
+      "make-any-page-better-scene-menu-hosted-page.json",
       "navigate-filters-and-hidden-lenses-a-hosted-page.json",
       "not-now-and-a-nights-run-a-hosted-page.json",
       "nothing-stands-over-a-control-a-hosted-page.json",
+      "notices-without-the-side-accent-and-a-hosts-report-this-a-hosted-page.json",
+      "notion-connections-land-through-the-right-acts-hosted-page.json",
+      "offered-acts-apply-hosted-page.json",
+      "one-face-pages-and-the-scene-hosted-page.json",
       "ops-carry-their-value-once-hosted-page.json",
       "playback-reads-the-archive-a-hosted-page.json",
+      "replacing-view-own-heading-hosted-page.json",
+      "serve-run-key-hosted-page.json",
+      "start-fresh-is-asked-for-in-its-own-tab-hosted-page.json",
       "suggestion-and-lineage-shapes-a-hosted-page.json",
       "templates-cards-and-bar-a-hosted-page.json",
       "text-is-typed-together-hosted-page.json",
@@ -118,392 +179,525 @@
       "the-0-1-37-batch-merged-a-hosted-page.json",
       "the-0-1-37-harness-reds-hosted-page.json",
       "the-0-1-42-batch-merged-hosted-page.json",
+      "the-0-1-61-batch-holds-together-hosted-page.json",
+      "the-0-1-70-batch-holds-together-hosted-page.json",
+      "the-0-1-71-batch-holds-together-hosted-page.json",
+      "the-0-1-74-batch-holds-together-hosted-page.json",
+      "the-account-pane-says-a-visitor-is-not-signed-in-hosted-page.json",
+      "the-actor-withdraws-its-own-suggestions-hosted-page.json",
+      "the-actors-basis-tells-a-seat-no-field-it-keeps-hosted-page.json",
+      "the-app-bar-is-calmer-hosted-page.json",
       "the-bar-holds-still-a-hosted-page.json",
       "the-document-builds-its-shapes-on-first-use-hosted-page.json",
+      "the-embed-mounts-the-one-face-hosted-page.json",
       "the-first-load-waits-on-less-a-hosted-page.json",
+      "the-friction-log-hosted-page.json",
       "the-inline-ai-a-hosted-page.json",
+      "the-jobs-with-the-friction-log-hosted-page.json",
       "the-keyboard-reaches-a-long-list-a-hosted-page.json",
       "the-lazy-past-declaration-a-hosted-page.json",
       "the-notify-me-a-hosted-page.json",
       "the-page-says-when-a-place-has-drawn-a-hosted-page.json",
       "the-quick-ask-a-hosted-page.json",
+      "the-scene-keeps-up-with-a-hand-a-hosted-page.json",
       "the-scene-opens-on-the-overview-a-hosted-page.json",
       "the-scene-strip-tells-the-watch-a-hosted-page.json",
       "the-scene-under-a-hosts-bar-a-hosted-page.json",
+      "the-seat-proposes-a-change-to-the-app-hosted-page.json",
+      "the-store-judges-what-an-act-rides-hosted-page.json",
       "the-tenth-walk-a-hosted-page.json",
       "the-twelfth-walk-hosted-page.json",
-      "views-take-a-drop-hosted-page.json"
+      "time-of-day-and-may-run-hosted-page.json",
+      "type-in-the-right-click-menu-hosted-page.json",
+      "typing-rides-a-typescript-act-only-where-it-would-run-hosted-page.json",
+      "typing-together-converges-whatever-the-network-does-hosted-page.json",
+      "view-authoring-friction-hosted-page.json",
+      "viewer-state-and-seat-profile-hosted-page.json",
+      "views-take-a-drop-hosted-page.json",
+      "what-lifelogics-estimates-found-hosted-page.json",
+      "workspace-state-kept-past-a-compaction-hosted-page.json"
     ]
   },
   "whenAsked": {
-    "kb": 1394,
-    "chunks": 145,
+    "kb": 2200,
+    "chunks": 197,
     "packagesKb": {
-      "@graview/primitives": 492,
-      "@graview/guest": 199,
-      "@graview/core": 163,
-      "@graview/react": 125,
-      "@graview/tools": 124,
-      "@graview/pages": 121,
-      "react-router": 44,
-      "@graview/layout": 33,
+      "@graview/primitives": 690,
+      "@graview/guest": 436,
+      "@graview/core": 269,
+      "@graview/tools": 226,
+      "@graview/pages": 220,
+      "@graview/react": 154,
+      "react-router": 42,
+      "@graview/layout": 34,
       "@graview/render": 23,
       "@graview/embed": 5,
-      "@graview/ship": 2,
+      "@graview/ship": 3,
       "(the page)": 0
     },
     "doors": [
       {
-        "module": "primitives/src/draft-frame.tsx",
-        "kb": 513,
+        "module": "primitives/src/display-options-switch.tsx",
+        "kb": 724,
         "packagesKb": {
-          "@graview/primitives": 189,
-          "@graview/core": 120,
-          "@graview/react": 99,
-          "@graview/tools": 50,
-          "@graview/layout": 33,
+          "@graview/primitives": 224,
+          "@graview/core": 168,
+          "@graview/tools": 155,
+          "@graview/react": 119,
+          "@graview/layout": 34,
+          "@graview/render": 7
+        }
+      },
+      {
+        "module": "primitives/src/draft-frame.tsx",
+        "kb": 582,
+        "packagesKb": {
+          "@graview/primitives": 203,
+          "@graview/core": 144,
+          "@graview/react": 119,
+          "@graview/tools": 58,
+          "@graview/layout": 34,
           "@graview/render": 7
         }
       },
       {
         "module": "primitives/src/kind-stop.tsx",
-        "kb": 509,
+        "kb": 560,
         "packagesKb": {
-          "@graview/primitives": 213,
-          "@graview/react": 99,
-          "@graview/core": 94,
-          "@graview/tools": 48,
-          "@graview/layout": 33,
+          "@graview/primitives": 233,
+          "@graview/react": 119,
+          "@graview/core": 101,
+          "@graview/tools": 49,
+          "@graview/layout": 34,
           "@graview/render": 7
         }
       },
       {
         "module": "primitives/src/declared-lenses.tsx",
-        "kb": 435,
+        "kb": 479,
         "packagesKb": {
-          "@graview/primitives": 172,
-          "@graview/react": 99,
-          "@graview/core": 93,
-          "@graview/layout": 33,
+          "@graview/primitives": 185,
+          "@graview/react": 119,
+          "@graview/core": 101,
+          "@graview/layout": 34,
           "@graview/tools": 18,
           "@graview/render": 7
         }
       },
       {
         "module": "embed/src/pages-content.tsx",
-        "kb": 375,
+        "kb": 440,
         "packagesKb": {
-          "@graview/pages": 114,
-          "@graview/primitives": 103,
-          "@graview/core": 67,
-          "react-router": 44,
+          "@graview/pages": 149,
+          "@graview/primitives": 114,
+          "@graview/core": 78,
+          "react-router": 42,
           "@graview/tools": 18,
+          "@graview/react": 7,
           "@graview/render": 7,
-          "@graview/react": 6,
           "@graview/embed": 1,
           "@graview/layout": 1
         }
       },
       {
         "module": "embed/src/picture-face.tsx",
-        "kb": 374,
+        "kb": 439,
         "packagesKb": {
-          "@graview/pages": 114,
-          "@graview/primitives": 103,
-          "@graview/core": 67,
-          "react-router": 44,
+          "@graview/pages": 149,
+          "@graview/primitives": 114,
+          "@graview/core": 78,
+          "react-router": 42,
           "@graview/tools": 18,
+          "@graview/react": 7,
           "@graview/render": 7,
-          "@graview/react": 6,
           "@graview/layout": 1,
           "@graview/embed": 1
         }
       },
       {
         "module": "primitives/src/workbench/inspector.tsx",
-        "kb": 350,
+        "kb": 422,
         "packagesKb": {
-          "@graview/core": 117,
-          "@graview/react": 99,
-          "@graview/tools": 50,
-          "@graview/layout": 33,
-          "@graview/primitives": 33,
+          "@graview/core": 141,
+          "@graview/react": 119,
+          "@graview/tools": 58,
+          "@graview/primitives": 50,
+          "@graview/layout": 34,
           "@graview/render": 7
         }
       },
       {
         "module": "embed/src/scene-face.tsx",
-        "kb": 329,
+        "kb": 376,
         "packagesKb": {
-          "@graview/primitives": 107,
-          "@graview/react": 99,
-          "@graview/core": 55,
-          "@graview/layout": 33,
+          "@graview/primitives": 124,
+          "@graview/react": 119,
+          "@graview/core": 61,
+          "@graview/layout": 34,
           "@graview/tools": 18,
           "@graview/render": 7,
           "@graview/embed": 1
         }
       },
       {
-        "module": "primitives/src/map-panel.tsx",
-        "kb": 266,
+        "module": "pages/src/one-place.tsx",
+        "kb": 331,
         "packagesKb": {
-          "@graview/react": 99,
+          "@graview/primitives": 114,
           "@graview/core": 68,
-          "@graview/layout": 33,
-          "@graview/primitives": 33,
+          "@graview/pages": 56,
+          "react-router": 42,
+          "@graview/tools": 18,
+          "@graview/react": 7,
+          "@graview/render": 7,
+          "@graview/layout": 1
+        }
+      },
+      {
+        "module": "guest/src/headless/pressed-here.ts",
+        "kb": 317,
+        "packagesKb": {
+          "@graview/guest": 258,
+          "@graview/core": 54
+        }
+      },
+      {
+        "module": "primitives/src/map-panel.tsx",
+        "kb": 304,
+        "packagesKb": {
+          "@graview/react": 119,
+          "@graview/core": 74,
+          "@graview/primitives": 42,
+          "@graview/layout": 34,
           "@graview/tools": 18,
           "@graview/render": 7
         }
       },
       {
-        "module": "pages/src/page-draft.tsx",
-        "kb": 249,
+        "module": "guest/src/headless/index.ts",
+        "kb": 301,
         "packagesKb": {
-          "@graview/primitives": 103,
-          "@graview/core": 61,
-          "react-router": 44,
-          "@graview/pages": 16,
+          "@graview/guest": 243,
+          "@graview/core": 54
+        }
+      },
+      {
+        "module": "primitives/src/page-better.tsx",
+        "kb": 278,
+        "packagesKb": {
+          "@graview/tools": 105,
+          "@graview/core": 94,
+          "@graview/primitives": 58,
+          "@graview/react": 7,
           "@graview/render": 7,
-          "@graview/react": 6,
-          "@graview/layout": 1,
-          "@graview/tools": 1
+          "@graview/layout": 1
+        }
+      },
+      {
+        "module": "pages/src/page-draft.tsx",
+        "kb": 275,
+        "packagesKb": {
+          "@graview/primitives": 114,
+          "@graview/core": 67,
+          "react-router": 42,
+          "@graview/pages": 18,
+          "@graview/react": 7,
+          "@graview/render": 7,
+          "@graview/tools": 1,
+          "@graview/layout": 1
+        }
+      },
+      {
+        "module": "pages/src/one-place-city.tsx",
+        "kb": 267,
+        "packagesKb": {
+          "@graview/react": 119,
+          "@graview/core": 56,
+          "@graview/layout": 34,
+          "@graview/pages": 26,
+          "@graview/tools": 18,
+          "@graview/render": 7
+        }
+      },
+      {
+        "module": "primitives/src/section-better.tsx",
+        "kb": 260,
+        "packagesKb": {
+          "@graview/tools": 105,
+          "@graview/core": 94,
+          "@graview/primitives": 40,
+          "@graview/react": 7,
+          "@graview/render": 7,
+          "@graview/layout": 1
+        }
+      },
+      {
+        "module": "primitives/src/section-menu.tsx",
+        "kb": 244,
+        "packagesKb": {
+          "@graview/core": 106,
+          "@graview/tools": 105,
+          "@graview/primitives": 12,
+          "@graview/react": 7,
+          "@graview/render": 7,
+          "@graview/layout": 1
         }
       },
       {
         "module": "pages/src/take-back.tsx",
-        "kb": 196,
+        "kb": 216,
         "packagesKb": {
-          "@graview/primitives": 103,
-          "@graview/core": 61,
+          "@graview/primitives": 114,
+          "@graview/core": 67,
           "@graview/pages": 7,
+          "@graview/react": 7,
           "@graview/render": 7,
-          "@graview/react": 6,
-          "@graview/layout": 1,
-          "@graview/tools": 1
-        }
-      },
-      {
-        "module": "primitives/src/home-view.tsx",
-        "kb": 143,
-        "packagesKb": {
-          "@graview/core": 61,
-          "@graview/primitives": 61,
-          "@graview/render": 7,
-          "@graview/react": 6,
-          "@graview/layout": 1,
-          "@graview/tools": 1
-        }
-      },
-      {
-        "module": "primitives/src/framework-views.ts",
-        "kb": 143,
-        "packagesKb": {
-          "@graview/core": 61,
-          "@graview/primitives": 61,
-          "@graview/render": 7,
-          "@graview/react": 6,
-          "@graview/layout": 1,
-          "@graview/tools": 1
-        }
-      },
-      {
-        "module": "tools/src/seat-model.ts",
-        "kb": 129,
-        "packagesKb": {
-          "@graview/core": 74,
-          "@graview/tools": 50
+          "@graview/tools": 1,
+          "@graview/layout": 1
         }
       },
       {
         "module": "primitives/src/quick-ask.tsx",
-        "kb": 114,
+        "kb": 180,
         "packagesKb": {
-          "@graview/core": 56,
-          "@graview/tools": 32,
-          "@graview/primitives": 23
+          "@graview/tools": 76,
+          "@graview/core": 67,
+          "@graview/primitives": 33
         }
       },
       {
-        "module": "primitives/src/several-bar.tsx",
-        "kb": 108,
+        "module": "tools/src/seat-model.ts",
+        "kb": 176,
         "packagesKb": {
-          "@graview/core": 63,
-          "@graview/tools": 21,
-          "@graview/primitives": 19
+          "@graview/core": 109,
+          "@graview/tools": 62
         }
       },
       {
-        "module": "primitives/src/bar-panes.tsx",
-        "kb": 96,
+        "module": "primitives/src/home-view.tsx",
+        "kb": 161,
         "packagesKb": {
-          "@graview/primitives": 49,
-          "@graview/core": 28,
+          "@graview/primitives": 70,
+          "@graview/core": 67,
+          "@graview/react": 7,
           "@graview/render": 7,
-          "@graview/react": 6,
+          "@graview/tools": 1,
+          "@graview/layout": 1
+        }
+      },
+      {
+        "module": "primitives/src/framework-views.ts",
+        "kb": 161,
+        "packagesKb": {
+          "@graview/primitives": 70,
+          "@graview/core": 67,
+          "@graview/react": 7,
+          "@graview/render": 7,
           "@graview/tools": 1,
           "@graview/layout": 1
         }
       },
       {
         "module": "primitives/src/hover-chip.tsx",
-        "kb": 90,
+        "kb": 146,
         "packagesKb": {
-          "@graview/core": 40,
-          "@graview/tools": 32,
-          "@graview/primitives": 15
+          "@graview/tools": 76,
+          "@graview/core": 50,
+          "@graview/primitives": 16
         }
       },
       {
         "module": "primitives/src/several-ai.tsx",
-        "kb": 89,
+        "kb": 144,
         "packagesKb": {
-          "@graview/core": 40,
-          "@graview/tools": 32,
+          "@graview/tools": 76,
+          "@graview/core": 50,
+          "@graview/primitives": 14
+        }
+      },
+      {
+        "module": "primitives/src/inline-ai-menu.tsx",
+        "kb": 143,
+        "packagesKb": {
+          "@graview/tools": 76,
+          "@graview/core": 50,
           "@graview/primitives": 13
         }
       },
       {
         "module": "guest/src/host/worker.ts",
-        "kb": 87,
+        "kb": 129,
         "packagesKb": {
-          "@graview/guest": 85,
-          "@graview/core": 0
+          "@graview/guest": 89,
+          "@graview/core": 37
         }
       },
       {
-        "module": "primitives/src/inline-ai-menu.tsx",
-        "kb": 87,
+        "module": "primitives/src/bar-panes.tsx",
+        "kb": 124,
         "packagesKb": {
-          "@graview/core": 40,
-          "@graview/tools": 32,
-          "@graview/primitives": 12
+          "@graview/primitives": 68,
+          "@graview/core": 33,
+          "@graview/react": 7,
+          "@graview/render": 7,
+          "@graview/tools": 1,
+          "@graview/layout": 1
+        }
+      },
+      {
+        "module": "primitives/src/several-bar.tsx",
+        "kb": 117,
+        "packagesKb": {
+          "@graview/core": 69,
+          "@graview/tools": 22,
+          "@graview/primitives": 20
         }
       },
       {
         "module": "tools/src/several.ts",
-        "kb": 87,
+        "kb": 96,
         "packagesKb": {
-          "@graview/core": 63,
-          "@graview/tools": 21
-        }
-      },
-      {
-        "module": "tools/src/draft.ts",
-        "kb": 82,
-        "packagesKb": {
-          "@graview/core": 48,
-          "@graview/tools": 31
+          "@graview/core": 69,
+          "@graview/tools": 22
         }
       },
       {
         "module": "primitives/src/record-interactions.tsx",
-        "kb": 81,
+        "kb": 91,
         "packagesKb": {
-          "@graview/primitives": 37,
-          "@graview/core": 26,
+          "@graview/primitives": 38,
+          "@graview/core": 31,
+          "@graview/react": 7,
           "@graview/render": 7,
-          "@graview/react": 6,
+          "@graview/tools": 1,
+          "@graview/layout": 1
+        }
+      },
+      {
+        "module": "tools/src/draft.ts",
+        "kb": 89,
+        "packagesKb": {
+          "@graview/core": 54,
+          "@graview/tools": 31
+        }
+      },
+      {
+        "module": "primitives/src/app-link.tsx",
+        "kb": 86,
+        "packagesKb": {
+          "@graview/core": 43,
+          "@graview/primitives": 23,
+          "@graview/react": 7,
+          "@graview/render": 7,
+          "@graview/tools": 1,
+          "@graview/layout": 1
+        }
+      },
+      {
+        "module": "primitives/src/files.tsx",
+        "kb": 83,
+        "packagesKb": {
+          "@graview/core": 43,
+          "@graview/primitives": 20,
+          "@graview/react": 7,
+          "@graview/render": 7,
           "@graview/tools": 1,
           "@graview/layout": 1
         }
       },
       {
         "module": "tools/src/go.ts",
-        "kb": 77,
+        "kb": 82,
         "packagesKb": {
-          "@graview/core": 52,
-          "@graview/tools": 21
+          "@graview/core": 57,
+          "@graview/tools": 22
         }
       },
       {
-        "module": "primitives/src/files.tsx",
-        "kb": 73,
+        "module": "primitives/src/suggested.tsx",
+        "kb": 81,
         "packagesKb": {
-          "@graview/core": 37,
-          "@graview/primitives": 19,
-          "@graview/render": 7,
-          "@graview/react": 6,
-          "@graview/tools": 1,
-          "@graview/layout": 1
+          "@graview/core": 43,
+          "@graview/primitives": 34
         }
       },
       {
         "module": "primitives/src/arrange-lists.tsx",
-        "kb": 72,
+        "kb": 77,
         "packagesKb": {
-          "@graview/core": 42,
+          "@graview/core": 46,
           "@graview/primitives": 28
         }
       },
       {
-        "module": "primitives/src/app-link.tsx",
-        "kb": 71,
+        "module": "guest/src/host/views.ts",
+        "kb": 76,
         "packagesKb": {
-          "@graview/core": 37,
-          "@graview/primitives": 16,
+          "@graview/guest": 31,
+          "@graview/core": 24,
+          "@graview/react": 7,
           "@graview/render": 7,
-          "@graview/react": 6,
           "@graview/tools": 1,
           "@graview/layout": 1
         }
       },
       {
         "module": "guest/src/host/view-runtime.generated.ts",
-        "kb": 62,
+        "kb": 67,
         "packagesKb": {
-          "@graview/guest": 62
+          "@graview/guest": 67
+        }
+      },
+      {
+        "module": "guest/src/host/open-draw.ts",
+        "kb": 65,
+        "packagesKb": {
+          "@graview/core": 35,
+          "@graview/guest": 29
         }
       },
       {
         "module": "core/src/describe.ts",
-        "kb": 57,
+        "kb": 63,
         "packagesKb": {
-          "@graview/core": 54
+          "@graview/core": 60
         }
       },
       {
         "module": "primitives/src/arrange-bar.tsx",
-        "kb": 56,
+        "kb": 60,
         "packagesKb": {
-          "@graview/core": 42,
+          "@graview/core": 46,
           "@graview/primitives": 11
         }
       },
       {
-        "module": "primitives/src/suggested.tsx",
-        "kb": 51,
+        "module": "guest/src/host/fonts.ts",
+        "kb": 56,
         "packagesKb": {
-          "@graview/core": 26,
-          "@graview/primitives": 23
+          "@graview/core": 35,
+          "@graview/guest": 21
         }
       },
       {
         "module": "primitives/src/linked-record.tsx",
-        "kb": 43,
+        "kb": 49,
         "packagesKb": {
-          "@graview/core": 21,
+          "@graview/core": 24,
+          "@graview/react": 7,
           "@graview/render": 7,
           "@graview/primitives": 6,
-          "@graview/react": 6,
           "@graview/tools": 1,
           "@graview/layout": 1
         }
       },
       {
-        "module": "guest/src/host/open-draw.ts",
-        "kb": 43,
-        "packagesKb": {
-          "@graview/guest": 42
-        }
-      },
-      {
         "module": "primitives/src/repeat-picker.tsx",
-        "kb": 41,
+        "kb": 47,
         "packagesKb": {
-          "@graview/core": 21,
+          "@graview/core": 24,
+          "@graview/react": 7,
           "@graview/render": 7,
-          "@graview/react": 6,
           "@graview/primitives": 4,
           "@graview/tools": 1,
           "@graview/layout": 1
@@ -511,56 +705,88 @@
       },
       {
         "module": "react/src/ribbons-layer.tsx",
-        "kb": 38,
+        "kb": 46,
         "packagesKb": {
-          "@graview/core": 25,
-          "@graview/react": 11
+          "@graview/core": 31,
+          "@graview/react": 13
+        }
+      },
+      {
+        "module": "primitives/src/told-ui.ts",
+        "kb": 41,
+        "packagesKb": {
+          "@graview/core": 28,
+          "@graview/primitives": 12
+        }
+      },
+      {
+        "module": "guest/src/host/press.ts",
+        "kb": 36,
+        "packagesKb": {
+          "@graview/guest": 35
+        }
+      },
+      {
+        "module": "guest/src/host/drop.ts",
+        "kb": 35,
+        "packagesKb": {
+          "@graview/guest": 34
         }
       },
       {
         "module": "react/src/record-links-layer.tsx",
-        "kb": 29,
+        "kb": 33,
         "packagesKb": {
-          "@graview/core": 21,
+          "@graview/core": 24,
           "@graview/react": 7
         }
       },
       {
         "module": "guest/src/host/media.ts",
-        "kb": 27,
+        "kb": 31,
         "packagesKb": {
-          "@graview/core": 21,
-          "@graview/guest": 5
+          "@graview/core": 24,
+          "@graview/guest": 6
         }
       },
       {
         "module": "primitives/src/when-input.tsx",
-        "kb": 26,
+        "kb": 30,
         "packagesKb": {
-          "@graview/core": 21,
+          "@graview/core": 24,
           "@graview/primitives": 4
         }
       },
       {
         "module": "tools/src/agent/reads.ts",
-        "kb": 26,
+        "kb": 29,
         "packagesKb": {
-          "@graview/core": 21,
+          "@graview/core": 24,
           "@graview/tools": 4
         }
       },
       {
-        "module": "guest/src/host/drop.ts",
-        "kb": 25,
+        "module": "primitives/src/states-bar.tsx",
+        "kb": 26,
         "packagesKb": {
-          "@graview/guest": 24
+          "@graview/core": 24,
+          "@graview/primitives": 1
         }
       },
       {
-        "module": "guest/src/host/press.ts",
+        "module": "guest/src/host/computed.ts",
+        "kb": 26,
+        "packagesKb": {
+          "@graview/core": 24,
+          "@graview/guest": 0
+        }
+      },
+      {
+        "module": "primitives/src/quick-ask-plan.ts",
         "kb": 25,
         "packagesKb": {
-          "@graview/guest": 24
+          "@graview/core": 20,
+          "@graview/primitives": 4
         }
       },
       {
@@ -571,48 +797,78 @@
         }
       },
       {
-        "module": "primitives/src/states-bar.tsx",
-        "kb": 23,
+        "module": "react/src/plots.tsx",
+        "kb": 22,
         "packagesKb": {
-          "@graview/core": 21,
-          "@graview/primitives": 1
+          "@graview/react": 15,
+          "@graview/core": 7
         }
       },
       {
-        "module": "guest/src/host/views.ts",
-        "kb": 21,
+        "module": "guest/src/audit/index.ts",
+        "kb": 20,
         "packagesKb": {
-          "@graview/guest": 19
+          "@graview/guest": 20
+        }
+      },
+      {
+        "module": "tools/src/reshape.ts",
+        "kb": 18,
+        "packagesKb": {
+          "@graview/core": 14,
+          "@graview/tools": 4
+        }
+      },
+      {
+        "module": "guest/src/host/frame.ts",
+        "kb": 18,
+        "packagesKb": {
+          "@graview/guest": 17
         }
       },
       {
         "module": "core/src/lines.ts",
         "kb": 17,
         "packagesKb": {
-          "@graview/core": 16
-        }
-      },
-      {
-        "module": "react/src/plots.tsx",
-        "kb": 14,
-        "packagesKb": {
-          "@graview/react": 9,
-          "@graview/core": 4
-        }
-      },
-      {
-        "module": "guest/src/host/frame.ts",
-        "kb": 12,
-        "packagesKb": {
-          "@graview/guest": 12
+          "@graview/core": 17
         }
       },
       {
         "module": "guest/src/host/links.ts",
+        "kb": 15,
+        "packagesKb": {
+          "@graview/guest": 12,
+          "@graview/core": 3
+        }
+      },
+      {
+        "module": "primitives/src/timeline.tsx",
+        "kb": 13,
+        "packagesKb": {
+          "@graview/primitives": 7,
+          "@graview/core": 5
+        }
+      },
+      {
+        "module": "ship/src/remote-typing.ts",
+        "kb": 12,
+        "packagesKb": {
+          "@graview/core": 8,
+          "@graview/ship": 3
+        }
+      },
+      {
+        "module": "core/src/past.ts",
         "kb": 11,
         "packagesKb": {
-          "@graview/guest": 10,
-          "@graview/core": 0
+          "@graview/core": 10
+        }
+      },
+      {
+        "module": "primitives/src/live-prose-editor.tsx",
+        "kb": 10,
+        "packagesKb": {
+          "@graview/primitives": 10
         }
       },
       {
@@ -624,55 +880,46 @@
         }
       },
       {
-        "module": "ship/src/remote-typing.ts",
-        "kb": 9,
-        "packagesKb": {
-          "@graview/core": 7,
-          "@graview/ship": 2
-        }
-      },
-      {
-        "module": "primitives/src/live-prose-editor.tsx",
-        "kb": 9,
-        "packagesKb": {
-          "@graview/primitives": 9
-        }
-      },
-      {
-        "module": "core/src/past.ts",
-        "kb": 9,
-        "packagesKb": {
-          "@graview/core": 8
-        }
-      },
-      {
-        "module": "primitives/src/timeline.tsx",
+        "module": "guest/src/host/pictures.ts",
         "kb": 8,
         "packagesKb": {
-          "@graview/primitives": 7,
-          "@graview/core": 1
+          "@graview/guest": 8
         }
       },
       {
         "module": "primitives/src/notify-sheet.tsx",
-        "kb": 7,
+        "kb": 8,
         "packagesKb": {
           "@graview/primitives": 5,
-          "@graview/core": 2
+          "@graview/core": 3
         }
       },
       {
         "module": "primitives/src/first-look.tsx",
         "kb": 7,
         "packagesKb": {
-          "@graview/primitives": 6
+          "@graview/primitives": 7
         }
       },
       {
         "module": "primitives/src/notice-stacks.tsx",
         "kb": 6,
         "packagesKb": {
+          "@graview/primitives": 6
+        }
+      },
+      {
+        "module": "primitives/src/workbench/ai-entries.tsx",
+        "kb": 6,
+        "packagesKb": {
           "@graview/primitives": 5
+        }
+      },
+      {
+        "module": "guest/src/host/sections.ts",
+        "kb": 6,
+        "packagesKb": {
+          "@graview/guest": 6
         }
       },
       {
@@ -683,13 +930,6 @@
         }
       },
       {
-        "module": "guest/src/host/pictures.ts",
-        "kb": 5,
-        "packagesKb": {
-          "@graview/guest": 5
-        }
-      },
-      {
         "module": "guest/src/host/gestures.ts",
         "kb": 5,
         "packagesKb": {
@@ -697,10 +937,11 @@
         }
       },
       {
-        "module": "primitives/src/workbench/ai-entries.tsx",
+        "module": "tools/src/agent/subscribe-run.ts",
         "kb": 5,
         "packagesKb": {
-          "@graview/primitives": 4
+          "@graview/core": 3,
+          "@graview/tools": 2
         }
       },
       {
@@ -718,10 +959,9 @@
         }
       },
       {
-        "module": "tools/src/agent/subscribe-run.ts",
-        "kb": 4,
+        "module": "core/src/csv.ts",
+        "kb": 2,
         "packagesKb": {
-          "@graview/tools": 2,
           "@graview/core": 2
         }
       },
@@ -740,13 +980,6 @@
         }
       },
       {
-        "module": "primitives/src/scene-way-back-door.ts",
-        "kb": 2,
-        "packagesKb": {
-          "@graview/primitives": 2
-        }
-      },
-      {
         "module": "primitives/src/map-key.tsx",
         "kb": 2,
         "packagesKb": {
@@ -754,65 +987,145 @@
         }
       },
       {
+        "module": "primitives/src/scene-way-back-door.ts",
+        "kb": 2,
+        "packagesKb": {
+          "@graview/primitives": 2
+        }
+      },
+      {
         "module": "react/src/tidy-views.ts",
-        "kb": 1,
+        "kb": 2,
         "packagesKb": {
           "@graview/react": 1
+        }
+      },
+      {
+        "module": "react/src/view-sections.ts",
+        "kb": 2,
+        "packagesKb": {
+          "@graview/react": 1
+        }
+      },
+      {
+        "module": "guest/src/host/refused-note.ts",
+        "kb": 1,
+        "packagesKb": {
+          "@graview/guest": 1
         }
       }
     ]
   },
   "handedACompiledApp": {
-    "kb": 548,
-    "gzippedKb": 191,
-    "bytes": 561210,
-    "gzippedBytes": 195732,
+    "kb": 620,
+    "gzippedKb": 215,
+    "bytes": 635186,
+    "gzippedBytes": 220112,
     "budget": {
-      "minified": 561338,
-      "gzipped": 196009,
+      "minified": 635277,
+      "gzipped": 220179,
       "raises": [
+        "a-bare-app-looks-designed-hosted-page-compiled.json",
         "a-board-moves-without-buttons-a-hosted-page-handed-a-compiled-app.json",
+        "a-brand-suggestion-passes-the-whole-palette-hosted-page-compiled.json",
         "a-change-from-elsewhere-is-heard-a-hosted-page-handed-a-compiled-app.json",
         "a-change-is-said-in-words-a-hosted-page-handed-a-compiled-app.json",
+        "a-choice-takes-several-of-its-options-a-hosted-page-handed-a-compiled-app.json",
         "a-compacted-store-serves-no-unseen-id-hosted-page-compiled.json",
+        "a-compaction-asked-for-format-1-hosted-page-compiled.json",
+        "a-connection-pass-says-whom-it-invited-hosted-page-compiled.json",
+        "a-connection-refused-says-why-in-plain-words-a-hosted-page-handed-a-compiled-app.json",
+        "a-count-of-one-relation-is-read-hosted-page-compiled.json",
+        "a-date-may-know-only-its-year-or-its-month-a-hosted-page-handed-a-compiled-app.json",
+        "a-day-changed-apart-mints-no-id-from-a-kept-field-hosted-page-compiled.json",
         "a-declared-row-names-its-record-a-hosted-page-compiled.json",
+        "a-deleted-view-never-draws-hosted-page-compiled.json",
         "a-draft-view-is-swapped-in-place-a-hosted-page-compiled.json",
         "a-drop-reads-upload-at-a-hosted-page-handed-a-compiled-app.json",
         "a-field-typed-together-is-edited-live-hosted-page-compiled.json",
         "a-form-for-a-visitor-a-hosted-page-compiled.json",
         "a-frame-guest-holds-back-the-drawn-signal-a-hosted-page-compiled.json",
         "a-grant-to-make-a-kind-takes-out-only-what-you-made-a-hosted-page-handed-a-compiled-app.json",
+        "a-graph-put-back-keeps-where-things-stood-hosted-page-compiled.json",
+        "a-hosts-buttons-stand-on-the-app-bar-a-hosted-page-handed-a-compiled-app.json",
+        "a-hosts-status-on-the-bar-hosted-page-compiled.json",
         "a-kept-view-is-a-place-in-the-nav-hosted-page-compiled.json",
+        "a-list-is-exported-as-it-is-shown-a-hosted-page-handed-a-compiled-app.json",
         "a-logo-for-each-scheme-a-hosted-page-compiled.json",
+        "a-member-is-bound-to-their-person-hosted-page-compiled.json",
         "a-page-opened-on-a-draft-view-a-hosted-page-handed-a-compiled-app.json",
         "a-page-opens-on-a-short-tail-a-hosted-page-handed-a-compiled-app.json",
         "a-part-is-waited-for-until-it-has-drawn-a-hosted-page-handed-a-compiled-app.json",
+        "a-person-proposes-for-review-hosted-page-compiled.json",
         "a-place-is-tidied-from-its-menu-a-hosted-page-handed-a-compiled-app.json",
+        "a-planted-duplicate-steers-no-merge-hosted-page-compiled.json",
+        "a-record-follows-the-record-it-derives-from-hosted-page-compiled.json",
         "a-record-holds-a-video-a-hosted-page-handed-a-compiled-app.json",
+        "a-removed-id-is-never-made-again-hosted-page-compiled.json",
+        "a-rule-covers-every-record-hosted-page-compiled.json",
         "a-rules-today-is-the-apps-day-hosted-compiled.json",
+        "a-seat-acting-for-a-person-reads-another-app-as-that-person-hosted-page-compiled.json",
+        "a-shared-seat-cannot-vote-hosted-page-compiled.json",
+        "a-store-never-names-a-change-with-an-id-its-log-holds-hosted-page-compiled.json",
+        "a-suggestion-takes-a-vote-hosted-page-compiled.json",
         "a-text-field-takes-a-splice-hosted-page-compiled.json",
         "a-view-is-as-tall-as-it-draws-a-hosted-page-compiled.json",
+        "a-view-knows-what-its-seat-cannot-see-hosted-page-compiled.json",
+        "a-view-links-to-the-scene-a-hosted-page-handed-a-compiled-app.json",
         "a-view-that-bleeds-a-hosted-page-compiled.json",
         "a-views-link-carries-the-hosts-address-a-hosted-page-compiled.json",
         "a-visitor-is-told-how-to-get-in-hosted-compiled.json",
+        "a-visitors-view-is-not-stopped-by-the-link-check-hosted-page-compiled.json",
+        "a-workflow-archives-and-asks-as-one-hosted-page-compiled.json",
+        "a-workflow-stands-on-the-map-hosted-page-compiled.json",
+        "a-year-or-a-month-alone-is-kept-compared-and-drawn-a-hosted-page-handed-a-compiled-app.json",
+        "act-clears-a-field-guard-reads-the-record-hosted-page-compiled.json",
         "act-names-edit-refusals-and-capitals-a-hosted-page-handed-a-compiled-app.json",
+        "an-app-stands-on-a-ground-of-its-own-a-hosted-page-compiled.json",
         "an-edge-sign-steps-past-a-districts-name-a-hosted-page-handed-a-compiled-app.json",
+        "an-id-never-quotes-a-field-a-sight-keeps-hosted-page-compiled.json",
+        "an-ipad-bar-fits-and-the-scene-holds-still-hosted-page-compiled.json",
+        "an-undo-keeps-to-what-a-seat-may-see-hosted-page-compiled.json",
+        "an-undo-offered-is-an-undo-taken-hosted-page-compiled.json",
+        "apps-improve-from-use-hosted-page-compiled.json",
         "blocks-lay-out-as-written-a-hosted-page-handed-a-compiled-app.json",
+        "brand-marks-under-an-app-base-and-home-screen-icons-hosted-compiled.json",
         "built-in-views-look-designed-a-hosted-page-compiled.json",
+        "compaction-carries-what-readers-were-served-hosted-page-compiled.json",
+        "computed-format-and-clear-in-place-hosted-page-compiled.json",
+        "data-is-never-code-a-hosted-page-handed-a-compiled-app.json",
         "dates-and-the-quick-ask-together-a-hosted-page-handed-a-compiled-app.json",
         "datetimes-in-the-apps-time-zone-hosted-compiled.json",
+        "device-screens-hosted-page-compiled.json",
         "edge-fields-client-ids-opaque-cursor-hosted-page-compiled.json",
         "edits-reach-readers-when-published-a-hosted-page-compiled.json",
         "every-form-asks-in-one-order-hosted-page-compiled.json",
         "every-relation-comes-with-its-connect-and-disconnect-hosted-page-compiled.json",
+        "every-view-takes-the-apps-stylesheet-hosted-page-compiled.json",
+        "faces-lent-to-frames-hosted-page-compiled.json",
         "first-draw-chunks-hosted-page-compiled.json",
         "formats-fail-closed-hosted-page-compiled.json",
+        "formulas-and-linked-sets-hosted-page-compiled.json",
+        "going-into-a-district-on-a-phone-reads-clean-hosted-page-compiled.json",
+        "guest-growth-guard-hosted-page-compiled.json",
+        "history-opens-from-the-app-menu-hosted-page-compiled.json",
+        "inbox-opens-on-what-needs-you-hosted-page-compiled.json",
         "inline-ai-finish-hosted-page-compiled.json",
         "lenses-and-views-a-hosted-page-handed-a-compiled-app.json",
+        "make-any-page-better-hosted-page-compiled.json",
+        "make-any-page-better-presses-hosted-page-compiled.json",
+        "make-any-page-better-scene-menu-hosted-page-compiled.json",
         "navigate-filters-and-hidden-lenses-a-hosted-page-handed-a-compiled-app.json",
         "not-now-and-a-nights-run-a-hosted-page-compiled.json",
+        "notices-without-the-side-accent-and-a-hosts-report-this-a-hosted-page-handed-a-compiled-app.json",
+        "notion-connections-land-through-the-right-acts-hosted-page-compiled.json",
+        "offered-acts-apply-hosted-page-compiled.json",
+        "one-face-pages-and-the-scene-hosted-page-compiled.json",
         "ops-carry-their-value-once-hosted-page-compiled.json",
         "playback-reads-the-archive-a-hosted-page-handed-a-compiled-app.json",
+        "replacing-view-own-heading-hosted-page-compiled.json",
+        "serve-run-key-hosted-page-compiled.json",
+        "start-fresh-is-asked-for-in-its-own-tab-hosted-page-compiled.json",
         "suggestion-and-lineage-shapes-a-hosted-page-compiled.json",
         "templates-cards-and-bar-a-hosted-page-handed-a-compiled-app.json",
         "text-is-typed-together-hosted-page-compiled.json",
@@ -822,32 +1135,54 @@
         "the-0-1-37-batch-merged-a-hosted-page-handed-a-compiled-app.json",
         "the-0-1-37-harness-reds-hosted-page-compiled.json",
         "the-0-1-42-batch-merged-hosted-page-compiled.json",
+        "the-0-1-61-batch-holds-together-hosted-page-compiled.json",
+        "the-0-1-70-batch-holds-together-hosted-page-compiled.json",
+        "the-0-1-71-batch-holds-together-hosted-page-compiled.json",
+        "the-0-1-72-batch-holds-together-hosted-page-compiled.json",
+        "the-0-1-73-batch-holds-together-hosted-compiled.json",
+        "the-0-1-74-batch-holds-together-hosted-compiled.json",
+        "the-account-pane-says-a-visitor-is-not-signed-in-hosted-page-compiled.json",
+        "the-actors-basis-tells-a-seat-no-field-it-keeps-hosted-page-compiled.json",
+        "the-app-bar-is-calmer-hosted-page-compiled.json",
         "the-bar-holds-still-a-hosted-page-compiled.json",
         "the-document-builds-its-shapes-on-first-use-hosted-page-compiled.json",
+        "the-embed-mounts-the-one-face-hosted-page-compiled.json",
         "the-first-load-waits-on-less-a-hosted-page-handed-a-compiled-app.json",
+        "the-friction-log-hosted-page-compiled.json",
         "the-inline-ai-a-hosted-page-handed-a-compiled-app.json",
+        "the-jobs-with-the-friction-log-hosted-page-compiled.json",
         "the-keyboard-reaches-a-long-list-a-hosted-page-handed-a-compiled-app.json",
         "the-lazy-past-declaration-a-hosted-page-handed-a-compiled-app.json",
         "the-notify-me-a-hosted-page-handed-a-compiled-app.json",
         "the-page-says-when-a-place-has-drawn-a-hosted-page-handed-a-compiled-app.json",
         "the-quick-ask-a-hosted-page-handed-a-compiled-app.json",
+        "the-scene-keeps-up-with-a-hand-a-hosted-page-compiled.json",
         "the-scene-opens-on-the-overview-a-hosted-page-handed-a-compiled-app.json",
         "the-scene-strip-tells-the-watch-a-hosted-page-compiled.json",
         "the-scene-under-a-hosts-bar-a-hosted-page-compiled.json",
+        "the-seat-proposes-a-change-to-the-app-hosted-page-compiled.json",
+        "the-store-judges-what-an-act-rides-hosted-page-compiled.json",
         "the-tenth-walk-a-hosted-page-handed-a-compiled-app.json",
         "the-twelfth-walk-hosted-page-compiled.json",
-        "views-take-a-drop-hosted-page-compiled.json"
+        "time-of-day-and-may-run-hosted-page-compiled.json",
+        "type-in-the-right-click-menu-hosted-page-compiled.json",
+        "typing-rides-a-typescript-act-only-where-it-would-run-hosted-page-compiled.json",
+        "typing-together-converges-whatever-the-network-does-hosted-page-compiled.json",
+        "viewer-state-and-seat-profile-hosted-page-compiled.json",
+        "views-take-a-drop-hosted-page-compiled.json",
+        "what-lifelogics-estimates-found-hosted-page-compiled.json",
+        "workspace-state-kept-past-a-compaction-hosted-page-compiled.json"
       ]
     },
-    "savedKb": 49,
+    "savedKb": 55,
     "packagesKb": {
-      "@graview/core": 183,
+      "@graview/core": 234,
       "react-dom": 176,
-      "@graview/primitives": 47,
-      "@graview/react": 35,
+      "@graview/primitives": 57,
+      "@graview/react": 39,
       "zod": 35,
-      "@graview/embed": 25,
-      "@graview/ship": 18,
+      "@graview/embed": 29,
+      "@graview/ship": 20,
       "react": 8,
       "@graview/layout": 4,
       "scheduler": 4,
@@ -858,12 +1193,12 @@
   },
   "beforeEachFaceDraws": {
     "scene": {
-      "kb": 993,
-      "fetchedKb": 397
+      "kb": 1130,
+      "fetchedKb": 454
     },
     "pages": {
-      "kb": 973,
-      "fetchedKb": 376
+      "kb": 1117,
+      "fetchedKb": 441
     }
   },
   "passed": true

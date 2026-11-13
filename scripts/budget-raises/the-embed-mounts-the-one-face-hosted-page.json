@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 1400,
+  "gzipped": 500,
+  "note": "Raised when mount came to take sceneUnderPages (FR-239): the frame's root drawn for the one face, its bar drawn once into an element the frame owns and moved into the one face's slot and back, and every face but a picture drawn as the pages. Measured at 691_981 / 239_684 against 690_428 / 239_158.",
+  "changeset": "the-embed-mounts-the-one-face.md"
+}

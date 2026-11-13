@@ -14,7 +14,7 @@ const pagesViews = <S extends AnySchema>(schema: S, specs: Parameters<typeof reg
   registerViewSpecs(registerDefaultViews(schema, createViews(schema)), schema, specs) as unknown as ReactViewRegistry<S>;
 import { flushSync } from "react-dom";
 import { createNoticeBoard, frameworkVoice, NoticeBoardContext, type Notice, type NoticeHandle } from "@graview/primitives/frame";
-import { barLeaves, FaceBoundary, FrameBar, FrameFirstLook, FrameNotices, hostBarOf, hostBarProps, type HostBar, placeOfPath, providerProps, storeOf, titleBelow, useErrorReport, useFrame, useIntrinsicHeight, useReady, useSteering, useViews, type EmbedHostContext, type FrameOptions } from "./frame.js";
+import { barLeaves, FaceBoundary, FrameBar, FrameFirstLook, FrameNotices, hostBarOf, InBarSlot, rootStyle, hostBarProps, type HostBar, placeOfPath, providerProps, storeOf, titleBelow, useErrorReport, useFrame, useIntrinsicHeight, useReady, useSteering, useViews, type EmbedHostContext, type FrameOptions } from "./frame.js";
 import { addressOf, pathWithin } from "@graview/core";
 import { appKeyOf, BarFindContext, type AppMenuRow, type BarFind, type BarScheme, type BarShare, type BarStatus } from "@graview/primitives/frame";
 
@@ -88,6 +88,9 @@ function PagesDrawing<S extends AnySchema>(props: PagesEmbedProps<S>) {
   const notices = props.notices ?? ownBoard;
   // What the pages say on it is the framework's, which a host's Report this may answer (FR-237).
   const voice = useMemo(() => frameworkVoice(notices), [notices]);
+  // Pages and the Scene as one face (FR-239): the bar stands in the face's slot once the face has drawn it.
+  const oneFace = props.sceneUnderPages === true;
+  const [barSlot, setBarSlot] = useState<HTMLElement | null>(null);
   return (
     <section
       ref={rootRef}
@@ -96,7 +99,7 @@ function PagesDrawing<S extends AnySchema>(props: PagesEmbedProps<S>) {
       data-graview-embed="pages"
       data-graview-scheme={scheme}
       // Its own stacking context: every layer inside it (the scene's corner control, a panel) is ordered inside it, never over the host's page.
-      style={{ position: "relative", isolation: "isolate", height, minHeight: auto ? 0 : 320, display: "flex", flexDirection: "column", overflow: "hidden", borderRadius: "var(--graview-radius, 12px)" }}
+      style={rootStyle(height, auto, oneFace)}
     >
       <style>{css}</style>
       <ErrorReportContext.Provider value={report}>
@@ -107,6 +110,7 @@ function PagesDrawing<S extends AnySchema>(props: PagesEmbedProps<S>) {
           <GraviewProvider store={store} views={views} scheme={scheme} {...providerProps(props, presence, brand)} {...(props.onSeat ? { onSeat: props.onSeat } : {})}>
             {bar ? (
               <FaceBoundary module="@graview/embed" report={report}>
+                <InBarSlot oneFace={oneFace} slot={oneFace ? barSlot : null}>
                 <FrameBar
                   name={brand?.name ?? app.name}
                   heading={props.heading ?? 2}
@@ -125,12 +129,13 @@ function PagesDrawing<S extends AnySchema>(props: PagesEmbedProps<S>) {
                   status={props.status}
                   onFind={setBarFind}
                 />
+                </InBarSlot>
               </FaceBoundary>
             ) : null}
             <BarFindContext.Provider value={barFind}>
               <NoticeBoardContext.Provider value={voice}>
               <FaceBoundary module="@graview/pages" report={report} content>
-                <PagesContent<S> store={store} views={views} presence={presence} auto={auto} brand={brand} steering={steering} scope={scope} titleLevel={titleBelow(props.heading ?? 2)} props={props} />
+                <PagesContent<S> store={store} views={views} presence={presence} auto={auto} brand={brand} steering={steering} scope={scope} titleLevel={titleBelow(props.heading ?? 2)} onBarSlot={setBarSlot} props={props} />
               </FaceBoundary>
               </NoticeBoardContext.Provider>
             </BarFindContext.Provider>

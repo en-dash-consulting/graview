@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 1400,
+  "gzipped": 500,
+  "note": "Raised with the hosted page's own, when mount came to take sceneUnderPages (FR-239). Measured at 635_186 / 220_112 against 633_633 / 219_594.",
+  "changeset": "the-embed-mounts-the-one-face.md"
+}

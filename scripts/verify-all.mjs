@@ -143,6 +143,8 @@ const CHAIN = [
   ["scene-hands", "verify-scene-hands.mjs"],
   // Pages and the Scene as one face: no switch, one control at the foot that says the level, the same page moving from Page to Nearby to the City with its lines exact and no overshoot, every view standing in the city clear of the districts and their names, anything chosen there landing Nearby, the bar usable at every level, the history rising and falling, and a duplicate view found.
   ["one-face", "verify-one-face.mjs"],
+  // The one face mounted whole through the embed, as Graview Cloud mounts it: its bar in the one face's slot, seen and pressed at Page, Nearby and City, at a desk and on a phone; the window scrolls the page; 1, 2, 3, [ and ] move the levels (FR-239).
+  ["embed-one-face", "verify-embed-one-face.mjs"],
   // The studio's whole path, on a scratch copy of seedbed: said, rewritten, written, compiled, migrated.
   ["rehearsal", "rehearse-studio.mjs"],
   ["remember", "verify-remember.mjs"],
@@ -177,7 +179,7 @@ const CHAIN = [
  * hold no state of a harness's (each opens its own browser context), and
  * runs side by side.
  */
-const ALONE = new Set(["lines", "panning", "first-load", "scale", "scene-at-scale", "scene-hands", "one-face", "renderer", "who", "journeys", "create"]);
+const ALONE = new Set(["lines", "panning", "first-load", "scale", "scene-at-scale", "scene-hands", "one-face", "embed-one-face", "renderer", "who", "journeys", "create"]);
 
 /** Where the last run's verdicts are kept, for `--failed`. */
 const LAST_RUN = resolve(repoRoot, "docs/watch/last-run.json");

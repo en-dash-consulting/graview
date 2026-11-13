@@ -307,6 +307,13 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
     watch.observe(bar);
     return () => watch.disconnect();
   }, [bar]);
+  /* A host that draws the bar itself (an embed's) is handed the slot, and draws its bar there. */
+  const toldSlot = context.onBarSlot;
+  useLayoutEffect(() => {
+    if (!toldSlot) return;
+    toldSlot(bar);
+    return () => toldSlot(null);
+  }, [bar, toldSlot]);
   /*
    * THE PANEL AS THE PERSON SIZED IT: dragged by its inner edge, or stepped
    * by the arrow keys there — a desk's panel's width, a phone's sheet's
@@ -751,12 +758,14 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
   return (
     <OneFaceContext.Provider value={face}>
       {/* THE APP'S BAR, fixed at the window's top over the page and the city alike: the shell draws it here (`page-shell.tsx`). First in the document, as the derived pages have it, so Tab reaches the bar before the page's own links at every level; its layer, not its place, sets it over the rest. */}
-      <div ref={setBar} data-testid="one-place-bar" style={{ position: "fixed", left: 0, right: 0, top: 0, zIndex: ONE_FACE_LAYERS.bar, background: "var(--graview-ground, Canvas)" }} />
+      <div ref={setBar} data-testid="one-place-bar" data-graview-one-face-bar="" style={{ position: "fixed", left: 0, right: 0, top: 0, zIndex: ONE_FACE_LAYERS.bar, background: "var(--graview-ground, Canvas)" }} />
       <Suspense fallback={null}>
         <OnePlaceCity where={where} out={now.away} sheet={sheet} connected={connected} boards={standing} current={current} boardEls={boardEls} boardLayer={boardLayer} fab={fab} view={view} lessMotion={lessMotion()} resolve={resolve} openRecord={openRecord} openKind={openKind} onGround={onGround} motion={motion} onAltitude={onAltitude} />
       </Suspense>
       <div ref={sheet} data-graview-one-place={now.level} data-graview-standing-on={where.type === "record" ? where.id : where.type === "list" ? `kind:${where.kind}` : where.type} style={sheetStyle}>
         <div {...(now.level >= CITY ? { inert: true } : {})} style={away ? { minHeight: "100%", display: "flex", flexDirection: "column" } : { display: "contents" }}>
+          {/* Under a host's bar (an embed's, in the slot) the shell keeps no room for it: the page keeps it here. */}
+          {context.embedded ? <div aria-hidden="true" data-graview-bar-room="" style={{ height: "var(--graview-one-face-bar, 0px)", flex: "0 0 auto" }} /> : null}
           {children}
           {/* What the record is linked to, grown into the page as it becomes the panel: its rows the lines leave from. */}
           {away && subject ? <Connected store={store} id={subject} box={connected} sheet={sheet} openRecord={openRecord} /> : null}
