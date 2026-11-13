@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 100,
+  "gzipped": 50,
+  "note": "Raised when the 0.2.1 batch's three branches were merged (mount taking sceneUnderPages; lines from framed views; a City that reads clean): each measured its own growth against main, and together they come to 77 bytes minified and 27 gzipped over their summed raises (789_317 / 286_248 against 789_240 / 286_221), held for a few bytes either side."
+}

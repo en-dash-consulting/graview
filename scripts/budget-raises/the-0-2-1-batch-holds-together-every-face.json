@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 0,
+  "gzipped": 600,
+  "note": "Raised when the 0.2.1 batch's three branches were merged (mount taking sceneUnderPages; lines from framed views; a City that reads clean): each measured its own growth against main, and together they compress 545 bytes worse than their summed raises, the minified within them (3_332_887 / 1_210_634 against 3_333_027 / 1_210_089), held for the spread a split build gzips to from build to build."
+}
