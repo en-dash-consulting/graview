@@ -29,6 +29,9 @@
  *   keysMoveTheLevels               1, 2, 3, [ and ] move the levels;
  *   keysTypedInFindLeaveTheLevel    typed into Find, in the slot, they are
  *                                   words and the level stays;
+ *   thePanelOptionSetsTheDesksPanel mounted with `panel: 0.6` the page
+ *                                   beside the city is 60% of the window
+ *                                   (55% unsaid), in the panel's gutter;
  *   noPageThrew.
  *
  *   node scripts/verify-embed-one-face.mjs
@@ -246,6 +249,36 @@ async function profile(browser, url, { name, options }, errors) {
   return checks;
 }
 
+/*
+ * THE MOUNT'S `panel` SETS THE DESK'S PANEL: mounted with `panel: 0.6`, the
+ * page beside the city at Nearby is 60% of a 1280 window, says it is in the
+ * panel and takes a panel's gutter; mounted without it, 55%.
+ */
+async function panelOption(browser, url, errors) {
+  const widthAt = async (search) => {
+    const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, colorScheme: "light" });
+    const page = await context.newPage();
+    page.on("pageerror", (error) => errors.push(`panel option: ${error.message}`));
+    try {
+      await page.goto(`${url}/tasks?graview-one-face=1${search}`, { waitUntil: "load" });
+      await page.waitForFunction(() => window.__graviewReady === true, null, { timeout: 60_000 });
+      await page.waitForSelector("[data-graview-one-place]", { timeout: 30_000 });
+      await blur(page);
+      await page.keyboard.press("2");
+      await restAt(page, 1);
+      return await page.evaluate(() => {
+        const sheet = document.querySelector("[data-graview-one-place]");
+        return { width: Math.round(sheet.getBoundingClientRect().width), inPanel: sheet.hasAttribute("data-graview-in-panel"), gutter: getComputedStyle(sheet).getPropertyValue("--graview-gutter").trim() };
+      });
+    } finally {
+      await context.close();
+    }
+  };
+  const asked = await widthAt("&graview-one-face-panel=0.6");
+  const unsaid = await widthAt("");
+  return { asked, unsaid, ok: Math.abs(asked.width - 768) <= 1 && Math.abs(unsaid.width - 704) <= 1 && asked.inPanel && asked.gutter === "16px" };
+}
+
 const report = { at: new Date().toISOString(), engine: "chromium", document: DOCUMENT, checks: {} };
 const errors = [];
 let browser;
@@ -256,6 +289,7 @@ try {
   const url = `http://localhost:${preview.served.port}`;
   browser = await launchEngine("chromium");
   for (const one of PROFILES) Object.assign(report.checks, await profile(browser, url, one, errors));
+  report.checks.thePanelOptionSetsTheDesksPanel = await panelOption(browser, url, errors).catch((error) => ({ error: String(error?.message ?? error), ok: false }));
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
   report.passed = Object.values(report.checks).every((check) => check.ok);
 } catch (error) {

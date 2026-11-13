@@ -66,7 +66,7 @@ export function PagesContent<S extends AnySchema>({
             ...(props.bar !== false ? { barAbove: true } : {}),
             ...(overview && !oneFace ? { overview } : {}),
             /* Pages and the Scene as one face (FR-239): the city under the page, the frame's bar in its slot. */
-            ...(oneFace ? { sceneUnderPages: true, ...(onBarSlot ? { onBarSlot } : {}) } : {}),
+            ...(oneFace ? { sceneUnderPages: true, ...(onBarSlot ? { onBarSlot } : {}), ...(props.panel !== undefined ? { panel: props.panel } : {}) } : {}),
             titleLevel,
             views,
             settings: props.app.settings ?? [],

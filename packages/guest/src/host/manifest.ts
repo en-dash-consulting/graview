@@ -134,7 +134,7 @@ export interface WorkerViewManifest {
    * EDGE TO EDGE ON A PHONE: `true`, and where the pages face draws the
    * view — the home's body, a place, a record's page — on a phone (a face 680 pixels
    * wide or less), the view's box takes back the page's side gutter (20px
-   * either side, `--graview-page-gutter`) and keeps the device's safe areas,
+   * either side, `--graview-gutter`) and keeps the device's safe areas,
    * so it is the phone's width less those. At a desk it is the column's
    * width, as any view is. Left out, the view is drawn inside the gutter,
    * and what it draws past its box is clipped there, a negative margin

@@ -11,7 +11,7 @@ import { pluralOf } from "./page-typography.js";
 import { kindOfSlug, recordPath, pluralSlug } from "./registry.js";
 import { OneFaceContext, type OneFace } from "./one-place-control.js";
 import { HeldHere } from "./held-element.js";
-import { BOARD_ASPECT, boardFaceWidth, smallWindow, CITY, LEVEL_NAMES, nearestThatWay, PAGE, PANEL, panelBox, panelRange, PHONE, type Box, type PageWhere, type View } from "./one-place-geometry.js";
+import { BOARD_ASPECT, boardFaceWidth, frameSpacing, smallWindow, CITY, LEVEL_NAMES, nearestThatWay, PAGE, PANEL, panelBox, panelRange, panelStoreKey, PHONE, type Box, type PageWhere, type View } from "./one-place-geometry.js";
 
 /**
  * PAGES AND THE SCENE ARE ONE PLACE (Graview HQ feature:f-page-zooms-out-to-the-city).
@@ -35,9 +35,11 @@ import { BOARD_ASPECT, boardFaceWidth, smallWindow, CITY, LEVEL_NAMES, nearestTh
  *
  * One button at the window's bottom left rises and comes down a level and
  * says which level this is; Alt and the arrows, and Escape for down, do the
- * same from the keyboard; a pinch or ctrl and the wheel scrub the camera,
- * and the page with it, as far as the hand goes, settling to the nearest
- * level when let go. A drag pans the camera. The address is the page's
+ * same from the keyboard; a pinch or ctrl and the wheel over the page beside
+ * the city scrub the camera, and the page with it, as far as the hand goes,
+ * settling to the nearest level when let go. Over the city, at Nearby and
+ * the City, a pinch zooms the camera and a drag pans it, and the level
+ * stays. The address is the page's
  * route at every level, so Back and Forward work.
  *
  * The city's part (`one-place-city.tsx`) — the Scene, the camera, the
@@ -96,7 +98,7 @@ export interface OnePlaceCityProps {
   readonly boardLayer: RefObject<HTMLDivElement | null>;
   /** The button that moves a level: a phone's rides above the sheet. */
   readonly fab: RefObject<HTMLDivElement | null>;
-  readonly view: { readonly width: number; readonly height: number; readonly top: number; readonly panel?: number };
+  readonly view: { readonly width: number; readonly height: number; readonly top: number; readonly panel?: number; readonly share?: number };
   readonly lessMotion: boolean;
   /** What an address on the page is: a record, a kind's list, or nothing of the city's. */
   readonly resolve: (pathname: string) => PageWhere | null;
@@ -332,14 +334,17 @@ export function OnePlace<S extends AnySchema>({
   /*
    * THE PANEL AS THE PERSON SIZED IT: dragged by its inner edge, or stepped
    * by the arrow keys there — a desk's panel's width, a phone's sheet's
-   * height (the share of the window above it). Kept in this browser, for
-   * the moves between levels to start and end from.
+   * height (the share of the window above it). Kept in this browser for
+   * this app (its address and its name: two apps on one host keep their
+   * own), for the moves between levels to start and end from, and over the
+   * width the panel opens at (`context.panel`, 55% of a desk's window).
    */
   const phoneNow = size.width <= PHONE;
-  const panelKey = `graview.one-face.panel.${phoneNow ? "phone" : "desk"}`;
+  const appKey = `${base || "/"}|${context.app?.name ?? context.brand?.name ?? (schema.kinds as readonly string[]).join(",")}`;
+  const panelKey = panelStoreKey(appKey, phoneNow);
   const [panelSize, setPanelSize] = useState<number | undefined>(() => {
     try {
-      const kept = typeof window === "undefined" ? null : window.localStorage.getItem(`graview.one-face.panel.${windowSize().width <= PHONE ? "phone" : "desk"}`);
+      const kept = typeof window === "undefined" ? null : window.localStorage.getItem(panelStoreKey(appKey, windowSize().width <= PHONE));
       return kept === null ? undefined : Number(kept) || undefined;
     } catch {
       return undefined;
@@ -367,7 +372,8 @@ export function OnePlace<S extends AnySchema>({
       // A browser that keeps nothing keeps the size for this visit.
     }
   }, [panelKey]);
-  const view = useMemo(() => ({ ...size, top: barHeight, ...(panelSize !== undefined ? { panel: panelSize } : {}) }), [size, barHeight, panelSize]);
+  const share = context.panel;
+  const view = useMemo(() => ({ ...size, top: barHeight, ...(panelSize !== undefined ? { panel: panelSize } : {}), ...(share !== undefined ? { share } : {}) }), [size, barHeight, panelSize, share]);
   const motion = useRef<Motion>({ level: where.type === "overview" ? CITY : null, scrub: 0, scrubbing: false, held: false, resizing: false });
   // What the camera says: the level rested at or headed for, and whether the page is out of the window.
   const [now, setNow] = useState<{ level: number; away: boolean; moving: boolean }>({ level: PAGE, away: where.type === "overview", moving: false });
@@ -565,8 +571,8 @@ export function OnePlace<S extends AnySchema>({
   /*
    * A PINCH, OR CTRL AND THE WHEEL, SCRUBS THE ALTITUDE: on the page and on
    * the panel this face moves the camera itself, as far as the hand goes;
-   * over the city the Scene's own hand zooms it, and the altitude is read
-   * off its zoom. Nothing snaps: let go, it settles to the nearest level.
+   * over the city the Scene's own hand zooms it, and the level stays.
+   * Nothing snaps: let go, it settles to the nearest level.
    * Alt and the up arrow rise a level, Alt and the down arrow (or Escape)
    * come down one — never while the keys are writing in a field.
    */
@@ -628,6 +634,61 @@ export function OnePlace<S extends AnySchema>({
       motion.current.held = event.touches.length > 0;
       if (event.touches.length < 2) pinch = null;
     };
+    /*
+     * A TRACKPAD'S PINCH OVER THE PANEL (ctrl and the wheel, as the browser
+     * says one) steps the level, as two fingers on a phone's sheet do: it
+     * scrubs the altitude, Page↔Nearby↔City, settling to the nearest when let
+     * go. Over the city beside it the same pinch is the city's own and only
+     * zooms the camera (`one-place-city.tsx`); a plain scroll over the panel
+     * scrolls the page. At Page the pinch is the browser's own.
+     */
+    /*
+     * SAFARI'S TRACKPAD PINCH is a GestureEvent, its `scale` how far the
+     * fingers have gone since they began: over the panel it scrubs the
+     * altitude as a pinch on a phone's sheet does (and the page is not
+     * zoomed by the browser while it is out of the window). Two fingers on
+     * glass are the touches' (above), never read twice.
+     */
+    let gestureFrom: number | null = null;
+    const gestureStart = (event: Event) => {
+      const now = latest.current.now;
+      if (!onPage(event.target) || !now.away || pinch !== null) return;
+      event.preventDefault();
+      gestureFrom = now.level === PANEL && !now.moving ? 1 : null;
+    };
+    const gestureChange = (event: Event) => {
+      if (!onPage(event.target) || !latest.current.now.away || pinch !== null) return;
+      event.preventDefault();
+      if (gestureFrom === null) return;
+      const scale = (event as Event & { scale?: number }).scale ?? 1;
+      if (!(scale > 0)) return;
+      begin();
+      motion.current.held = true;
+      // Fingers together is out: the altitude rises as far as they have closed.
+      motion.current.scrub += Math.log(gestureFrom / scale) * 1.6;
+      gestureFrom = scale;
+    };
+    const gestureEnd = () => {
+      if (gestureFrom !== null) motion.current.held = false;
+      gestureFrom = null;
+    };
+    const wheel = (event: WheelEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || !onPage(event.target)) return;
+      // Safari says a pinch as a gesture as well: read once, from the gesture.
+      if (gestureFrom !== null) {
+        event.preventDefault();
+        return;
+      }
+      const now = latest.current.now;
+      if (!now.away) return;
+      // Out of the window, the browser never zooms the page under the hand: the pinch is the face's.
+      event.preventDefault();
+      if (!motion.current.scrubbing && (now.level !== PANEL || now.moving)) return;
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? 400 : 1;
+      begin();
+      // Fingers together (the wheel's down) is out: the altitude rises as far as the camera's zoom would fall.
+      motion.current.scrub += event.deltaY * unit * 0.016;
+    };
     const key = (event: KeyboardEvent) => {
       // Never with the browser's own chords (its zoom is Cmd or Ctrl and plus, minus, 0), never while the keys are writing, never into a view's frame.
       const target = (event.composedPath()[0] ?? event.target) as EventTarget | null;
@@ -643,7 +704,8 @@ export function OnePlace<S extends AnySchema>({
       const stop = !event.altKey ? LEVEL_KEYS.indexOf(event.key) : -1;
       if (stop >= 0) {
         event.preventDefault();
-        if (stop !== level) latest.current.goTo(stop);
+        // The level's own key, at Nearby or the City, brings the camera back to that level's framing after a hand moved it.
+        if (stop !== level || level > PAGE) latest.current.goTo(stop);
         return;
       }
       const up = (event.altKey && event.key === "ArrowUp") || (!event.altKey && event.key === "]");
@@ -668,12 +730,20 @@ export function OnePlace<S extends AnySchema>({
     window.addEventListener("touchmove", touchMove, { passive: false, capture: true });
     window.addEventListener("touchend", touchEnd, { capture: true });
     window.addEventListener("touchcancel", touchEnd, { capture: true });
+    window.addEventListener("wheel", wheel, { passive: false, capture: true });
+    window.addEventListener("gesturestart", gestureStart, { passive: false, capture: true });
+    window.addEventListener("gesturechange", gestureChange, { passive: false, capture: true });
+    window.addEventListener("gestureend", gestureEnd, { capture: true });
     document.addEventListener("keydown", key);
     return () => {
       window.removeEventListener("touchstart", touchStart, { capture: true });
       window.removeEventListener("touchmove", touchMove, { capture: true });
       window.removeEventListener("touchend", touchEnd, { capture: true });
       window.removeEventListener("touchcancel", touchEnd, { capture: true });
+      window.removeEventListener("wheel", wheel, { capture: true });
+      window.removeEventListener("gesturestart", gestureStart, { capture: true });
+      window.removeEventListener("gesturechange", gestureChange, { capture: true });
+      window.removeEventListener("gestureend", gestureEnd, { capture: true });
       document.removeEventListener("keydown", key);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -734,6 +804,13 @@ export function OnePlace<S extends AnySchema>({
   useLayoutEffect(() => () => onFace?.(null), [onFace]);
 
   const away = now.away;
+  /*
+   * IN THE PANEL: out of the window and at Nearby or above (headed there,
+   * or resting) — the page as a column beside the city, not a full page. The
+   * page says so (`data-graview-in-panel`, which each worker view's root
+   * takes too), and its gutter and its room above and below are a panel's.
+   */
+  const inPanel = away && now.level >= PANEL;
   // The page as one element: in the page's own flow while it is read, the window's box and then the panel's once it moves (`one-place-city.tsx` sets its box each frame).
   const sheetStyle: CSSProperties = away
     ? {
@@ -755,8 +832,9 @@ export function OnePlace<S extends AnySchema>({
         containerType: "inline-size",
         // Out of the window's flow the page is under the bar already: the room it kept for it is none.
         ["--graview-one-face-bar" as string]: "0px",
+        // Its gutter and its room above and below: set each frame by the city part, from the altitude (`frameSpacingAt`), so they move with the page's box.
       }
-    : { display: "contents", ["--graview-one-face-bar" as string]: `${barHeight}px` };
+    : { display: "contents", ["--graview-one-face-bar" as string]: `${barHeight}px`, ...(frameSpacing(false) as CSSProperties) };
   const subject = where.type === "record" ? where.id : null;
   const whole = useWholeView(sheet, `${where.type}:${subject ?? ""}`);
 
@@ -784,7 +862,7 @@ export function OnePlace<S extends AnySchema>({
       <Suspense fallback={null}>
         <OnePlaceCity where={where} out={now.away} sheet={sheet} connected={connected} boards={standing} current={current} boardEls={boardEls} boardLayer={boardLayer} fab={fab} view={view} lessMotion={lessMotion()} resolve={resolve} openRecord={openRecord} openKind={openKind} onGround={onGround} motion={motion} onAltitude={onAltitude} />
       </Suspense>
-      <div ref={sheet} data-graview-one-place={now.level} data-graview-standing-on={where.type === "record" ? where.id : where.type === "list" ? `kind:${where.kind}` : where.type} style={sheetStyle}>
+      <div ref={sheet} data-graview-one-place={now.level} {...(inPanel ? { "data-graview-in-panel": "" } : {})} data-graview-standing-on={where.type === "record" ? where.id : where.type === "list" ? `kind:${where.kind}` : where.type} style={sheetStyle}>
         <div {...(now.level >= CITY ? { inert: true } : {})} style={away ? { minHeight: "100%", display: "flex", flexDirection: "column" } : { display: "contents" }}>
           {/* Under a host's bar (an embed's, in the slot) the shell keeps no room for it: the page keeps it here. */}
           {context.embedded ? <div aria-hidden="true" data-graview-bar-room="" style={{ height: "var(--graview-one-face-bar, 0px)", flex: "0 0 auto" }} /> : null}
@@ -1093,7 +1171,8 @@ function Altitude({
               event.preventDefault();
               stopTips[stop]!.onPointerDown(event);
             }}
-            onClick={() => (stop === level ? undefined : goTo(stop))}
+            // The level it is at, pressed at Nearby or the City, brings the camera back to that level's framing.
+            onClick={() => (stop === level && level === PAGE ? undefined : goTo(stop))}
           >
             {LEVEL_NAMES[stop]}
             {/* With the Key open, each stop's key stands over it. */}

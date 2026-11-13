@@ -1,0 +1,212 @@
+{
+  "at": "2026-11-13T18:22:02.175Z",
+  "fast": "jev-latest",
+  "light": "grok-4.20-0309-non-reasoning",
+  "score": 1,
+  "bar": 0.9,
+  "medianMs": 375,
+  "p90Ms": 2739,
+  "jevAlone": 0.6,
+  "rows": [
+    {
+      "app": "todo",
+      "on": "week",
+      "said": "could you please mark everything on this list as finished",
+      "expected": "finish over held",
+      "got": "finish × 5, saying: Mark the 5 tasks in This week done.",
+      "ok": true,
+      "ms": 513,
+      "stages": "fast 359"
+    },
+    {
+      "app": "todo",
+      "on": "week",
+      "said": "these are all done now",
+      "expected": "finish over held",
+      "got": "finish × 5, saying: Mark the 5 tasks in This week done.",
+      "ok": true,
+      "ms": 371,
+      "stages": "fast 367"
+    },
+    {
+      "app": "todo",
+      "on": "t-book",
+      "said": "done with this one, thanks",
+      "expected": "finish over itself",
+      "got": "finish × 1, saying: Finish “Book the van”.",
+      "ok": true,
+      "ms": 375,
+      "stages": "fast 369"
+    },
+    {
+      "app": "todo",
+      "on": "t-book",
+      "said": "this one can wait till friday",
+      "expected": "reschedule over itself",
+      "got": "reschedule × 1, saying: Move “Book the van” to Saturday, Sep 5.",
+      "ok": true,
+      "ms": 1326,
+      "stages": "fast 351, light 859"
+    },
+    {
+      "app": "todo",
+      "on": "week",
+      "said": "push everything here back by a week",
+      "expected": "reschedule over held",
+      "got": "reschedule × 6, saying: Move the date of the 6 tasks in This week to Wednesday, Sep 9.",
+      "ok": true,
+      "ms": 1162,
+      "stages": "fast 134, light 871"
+    },
+    {
+      "app": "todo",
+      "on": "t-book",
+      "said": "put it on the someday list",
+      "expected": "move-to-list over itself",
+      "got": "move-to-list × 1, saying: Move “Book the van” to Someday.",
+      "ok": true,
+      "ms": 247,
+      "stages": "fast 243"
+    },
+    {
+      "app": "todo",
+      "on": "week",
+      "said": "finish the open ones and archive the done ones",
+      "expected": "finish|archive-task over held",
+      "got": "finish+archive-task × 6, saying: Mark the 5 open tasks in This week done. Archive “Order boxes”.",
+      "ok": true,
+      "ms": 233,
+      "stages": "fast 230"
+    },
+    {
+      "app": "todo",
+      "on": "week",
+      "said": "i'd like to get rid of this list",
+      "expected": "remove-list|archive-list over itself",
+      "got": "remove-list × 1, saying: Remove “This week”.",
+      "ok": true,
+      "ms": 142,
+      "stages": "fast 139"
+    },
+    {
+      "app": "todo",
+      "on": "t-deposit",
+      "said": "the deposit is paid",
+      "expected": "finish over itself",
+      "got": "finish × 1, saying: Finish “Pay the deposit”.",
+      "ok": true,
+      "ms": 169,
+      "stages": "fast 164"
+    },
+    {
+      "app": "todo",
+      "on": "week",
+      "said": "Sam should take care of these",
+      "expected": "missing link",
+      "got": "missing link: Tasks have no one assigned to them. (who Sam)",
+      "ok": true,
+      "ms": 115,
+      "stages": "fast 113"
+    },
+    {
+      "app": "todo",
+      "on": "t-book",
+      "said": "make this nora's job",
+      "expected": "missing link",
+      "got": "missing link: Tasks have no one assigned to them. (who Nora)",
+      "ok": true,
+      "ms": 93,
+      "stages": "fast 90"
+    },
+    {
+      "app": "todo",
+      "on": "week",
+      "said": "list name should be Moving week",
+      "expected": "rename over itself",
+      "got": "rename × 1, saying: Rename to “Moving week”.",
+      "ok": true,
+      "ms": 112,
+      "stages": "fast 108"
+    },
+    {
+      "app": "todo",
+      "on": "t-quote",
+      "said": "actually this isn't finished",
+      "expected": "reopen over itself",
+      "got": "reopen × 1, saying: Reopen “Get the second quote”.",
+      "ok": true,
+      "ms": 106,
+      "stages": "fast 102"
+    },
+    {
+      "app": "todo",
+      "on": "week",
+      "said": "anything here overdue",
+      "expected": "a true answer",
+      "got": "answer: No overdue tasks in This week. [facts said 1/1, given 1: /\\b(no|none|nothing|not)\\b/i]",
+      "ok": true,
+      "ms": 893,
+      "stages": "fast 141, light 631"
+    },
+    {
+      "app": "todo",
+      "on": "t-book",
+      "said": "what's blocking this",
+      "expected": "a true answer",
+      "got": "answer: Get the second quote is blocking it. [facts said 1/1, given 1: quote]",
+      "ok": true,
+      "ms": 899,
+      "stages": "fast 107, light 702"
+    },
+    {
+      "app": "rota",
+      "on": "s-mon-open",
+      "said": "bo can do this one instead",
+      "expected": "cover over itself",
+      "got": "cover × 1, saying: Bo Ferreira covers “Monday open up”.",
+      "ok": true,
+      "ms": 2238,
+      "stages": "fast 96, light 2046"
+    },
+    {
+      "app": "rota",
+      "on": "v-cass",
+      "said": "cass needs a break for a few weeks",
+      "expected": "step-back over itself",
+      "got": "step-back × 1, saying: Cass Whitley steps back.",
+      "ok": true,
+      "ms": 139,
+      "stages": "fast 135"
+    },
+    {
+      "app": "rota",
+      "on": "s-wed-food",
+      "said": "who's covering?",
+      "expected": "a true answer",
+      "got": "answer: Bo Ferreira is covering the Wednesday food bank shift. [facts said 1/1, given 1: Bo]",
+      "ok": true,
+      "ms": 1931,
+      "stages": "fast 133, light 1699"
+    },
+    {
+      "app": "rota",
+      "on": "s-tue-craft",
+      "said": "shift this to wednesday please",
+      "expected": "move-shift over itself",
+      "got": "move-shift × 1, saying: Move “Tuesday craft group” to Wednesday, Sep 16.",
+      "ok": true,
+      "ms": 2739,
+      "stages": "fast 1707, light 875"
+    },
+    {
+      "app": "discography",
+      "on": "song:cloudy-eyed-stroll",
+      "said": "which album is this from",
+      "expected": "a true answer",
+      "got": "answer: It is on the Cloudy-Eyed Stroll/Mitch Bade release. [facts said 1/1, given 1: Cloudy-Eyed]",
+      "ok": true,
+      "ms": 2804,
+      "stages": "fast 157, light 831"
+    }
+  ]
+}

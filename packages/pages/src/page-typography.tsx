@@ -34,8 +34,9 @@ export const column: React.CSSProperties = {
   maxWidth: 760,
   margin: "0 auto",
   // The end clears what stands over the foot: what stands there says its measured height (`--graview-foot-room`), a phone its home bar.
-  // The sides are the page's gutter (`--graview-page-gutter`), which a view that bleeds takes back on a phone (`Bleed`).
-  padding: "40px var(--graview-page-gutter, 20px) max(96px, calc(var(--graview-foot-room, 0px) + env(safe-area-inset-bottom, 0px)))",
+  // The sides are the page's gutter (`--graview-gutter`), which a view that bleeds takes back on a phone (`Bleed`).
+  // In the one face's panel the frame sets a panel's gutter and its room above and below (`frameSpacing`, `one-place-geometry.ts`).
+  padding: "var(--graview-frame-top, 40px) var(--graview-gutter, 20px) max(var(--graview-frame-foot, 96px), calc(var(--graview-foot-room, 0px) + env(safe-area-inset-bottom, 0px)))",
   display: "grid",
   /*
    * A TRACK THAT MAY BE NARROWER THAN WHAT IS IN IT.

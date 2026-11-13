@@ -31,6 +31,7 @@ import type { RefusalNotes } from "./refused-note.js";
 import { createGuestLogo, readTheme, themeWithBrand, watchTheme, type GuestBrand } from "./theme.js";
 
 import { codeOf, type WorkerViewCode, type WorkerViewLoad } from "./code-of.js";
+import { followInPanel } from "./in-panel.js";
 export type { WorkerViewCode, WorkerViewLoad } from "./code-of.js";
 
 /**
@@ -439,6 +440,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
    */
   let contentHeight: number | undefined;
   let heights: ResizeObserver | undefined;
+  /* Whether the page it is drawn on is the one face's panel, carried onto its root (in-panel.ts). */
+  let unfollowPanel = () => {};
   const watchHeight = () => {
     const root = shadow.querySelector<HTMLElement>("[data-graview-view-root]");
     const Observer = window.ResizeObserver;
@@ -490,6 +493,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     failed = true;
     stop();
     unwatchHeight();
+    unfollowPanel();
     drawing?.dispose();
     const said = why(reason, limits, detail);
     region.removeAttribute("data-worker-view-drawn");
@@ -1123,6 +1127,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     dress();
     for (const one of waiting.splice(0)) draw(one);
     watchHeight();
+    unfollowPanel();
+    unfollowPanel = followInPanel(region, () => shadow.querySelector("[data-graview-view-root]"));
     mark();
   },
   // The drawing did not arrive (the network away as it was drawn): the plain face says so, and it is asked for again as the view is drawn again (FR-139).
@@ -1327,6 +1333,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         failed = true;
         stop();
         heights?.disconnect();
+        unfollowPanel();
         drawing?.dispose();
         records.dispose();
         region.remove();

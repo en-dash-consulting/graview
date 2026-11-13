@@ -352,7 +352,7 @@ export function useSceneDrag({
   readonly panned: { readonly x: number; readonly y: number };
   /** How far the camera may go, for the frame as it is now. */
   readonly limit: () => { readonly x: number; readonly y: number };
-  readonly panWithin: (limit: { x: number; y: number }, wanted: { x: number; y: number }) => { x: number; y: number };
+  readonly panWithin: (limit: { x: number; y: number }, wanted: { x: number; y: number }, from?: { x: number; y: number }) => { x: number; y: number };
   /** The DOM path paints the pan as a transform; the GPU path writes the view. */
   readonly moveByTransform: boolean;
   readonly setView: (update: (current: ViewState) => ViewState) => void;
@@ -478,7 +478,7 @@ export function useSceneDrag({
     }
     if (drag.kind === "pan") {
       // A little way over a picture that fits, and as far as the city reaches when it is bigger.
-      const wanted = panWithin(limit(), { x: drag.baseX + dx, y: drag.baseY + dy });
+      const wanted = panWithin(limit(), { x: drag.baseX + dx, y: drag.baseY + dy }, { x: drag.baseX, y: drag.baseY });
       if (moveByTransform) shift.shiftTo(wanted, view.pan ?? { x: 0, y: 0 });
       else setView((current) => withPan(current, wanted));
     } else if (drag.id) {

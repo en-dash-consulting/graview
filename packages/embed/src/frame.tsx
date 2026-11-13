@@ -246,6 +246,15 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    */
   readonly sceneUnderPages?: boolean;
   /**
+   * THE SHARE OF A DESK'S WINDOW THE ONE FACE'S PANEL OPENS AT, beside the
+   * city at Nearby (Graview HQ feature:f-one-face-wider-panel): `0.55`
+   * unsaid, held to 0.25–0.75, and never wider than 1192 pixels or than
+   * leaves the city 480. A width the person drags the panel to is kept for
+   * the app in that browser and wins over it; a phone's sheet is not this.
+   * Read only with `sceneUnderPages`.
+   */
+  readonly panel?: number;
+  /**
    * THE PAGE'S ICON (FR-124): `true` when the host's page IS the app (a
    * hosted app on its own address), so the page wears the brand's
    * favicon while the embed is mounted. Off by default: an embed on
