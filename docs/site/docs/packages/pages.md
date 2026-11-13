@@ -34,11 +34,11 @@ The traditional face: a routed webapp derived from the same declaration that dri
 
 The host applies `themeCss` from `@graview/primitives` (or supplies its own `--graview-*` tokens); the default pages render entirely from those tokens.
 
-## What it exports (64)
+## What it exports (65)
 
 Read off the package's own barrel, so this is what is there today.
 
-`actsBeyondFacts`, `ARRANGE_FROM`, `beginningsFor`, `beginningsFrom`, `blankWritable`, `createPageRegistry`, `DefaultHomePage`, `DefaultListPage`, `DefaultMapPage`, `DefaultPlacePage`, `DefaultPlacesPage`, `DefaultProblemsPage`, `DefaultRecordPage`, `DefaultSearchPage`, `DefaultShell`, `DerivedForm`, `FactSheet`, `foldedActs`, `Gallery`, `GalleryCard`, `galleryOf`, `kindFacts`, `kindMap`, `KindMapSection`, `kindOfSlug`, `LARGE_LIST`, `lastChangeOf`, `Link`, `ListPage`, `MemoryRouter`, `NavLink`, `PageFind`, `PageMain`, `PageQuickAsk`, `PagesApp`, `PagesRoutes`, `pageStyles`, `PageTrail`, `PageUndo`, `pathOfPlace`, `PlaceCard`, `placeHere`, `placeHref`, `placePath`, `PlacePicture`, `pluralSlug`, `rankedRepairs`, `recordFacts`, `RecordField`, `recordPath`, `relationFacts`, `Repairs`, `SceneLink`, `SearchToCreate`, `spatialHref`, `StartFreshLink`, `titleFieldOf`, `useLocation`, `useNavigate`, `useParams`, `usePlaceHere`, `useSearchParams`, `useStoreTick`, `WhyLine`
+`actsBeyondFacts`, `ARRANGE_FROM`, `beginningsFor`, `beginningsFrom`, `blankWritable`, `createPageRegistry`, `DefaultHomePage`, `DefaultListPage`, `DefaultMapPage`, `DefaultPlacePage`, `DefaultPlacesPage`, `DefaultProblemsPage`, `DefaultRecordPage`, `DefaultSearchPage`, `DefaultShell`, `DerivedForm`, `FactSheet`, `foldedActs`, `Gallery`, `GalleryCard`, `galleryOf`, `kindFacts`, `kindMap`, `KindMapSection`, `kindOfSlug`, `LARGE_LIST`, `lastChangeOf`, `Link`, `ListPage`, `MemoryRouter`, `NavLink`, `ONE_FACE_ARRIVING`, `PageFind`, `PageMain`, `PageQuickAsk`, `PagesApp`, `PagesRoutes`, `pageStyles`, `PageTrail`, `PageUndo`, `pathOfPlace`, `PlaceCard`, `placeHere`, `placeHref`, `placePath`, `PlacePicture`, `pluralSlug`, `rankedRepairs`, `recordFacts`, `RecordField`, `recordPath`, `relationFacts`, `Repairs`, `SceneLink`, `SearchToCreate`, `spatialHref`, `StartFreshLink`, `titleFieldOf`, `useLocation`, `useNavigate`, `useParams`, `usePlaceHere`, `useSearchParams`, `useStoreTick`, `WhyLine`
 
 ---
 
