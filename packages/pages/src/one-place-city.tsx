@@ -4,7 +4,7 @@ import { EMPTY_VIEW, toUrl, withOverview, type ViewState } from "@graview/layout
 import { Scene, type SceneCamera } from "@graview/react";
 import { useGraview, useNavigation } from "@graview/react/provider";
 import { useEffect, useMemo, useRef } from "react";
-import { aimAt, altitudeAt, anchorOf, BOARD_ASPECT, boardWidthFor, fitBeside, SIGN_GAP, SIGN_POST, signFeet, signRoom, cameraBetween, cameraPutting, CITY, cityArea, footOf, leaveFrom, routeLine, LEVEL_LIVE, levelZooms, PAGE, pageBox, PANEL, panelBox, PHONE, project, restingLevel, SHEET_ORIGIN, standingAt, standingCss, unionOf, type Box, type Live, type PageWhere, type Point } from "./one-place-geometry.js";
+import { aimAt, altitudeAt, anchorOf, BOARD_ASPECT, boardWidthFor, fitBeside, fitCamera, SIGN_GAP, SIGN_POST, signFeet, signRoom, cameraBetween, cameraPutting, CITY, cityArea, footOf, leaveFrom, routeLine, LEVEL_LIVE, levelZooms, PAGE, pageBox, PANEL, panelBox, PHONE, project, restingLevel, SHEET_ORIGIN, standingAt, standingCss, unionOf, type Box, type Live, type PageWhere, type Point } from "./one-place-geometry.js";
 import type { OnePlaceCityProps } from "./one-place.js";
 
 /*
@@ -205,6 +205,73 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
   useEffect(() => {
     let frame = 0;
     let world: World = { plots: new Map(), buildings: new Map(), plates: new Map(), named: new Map() };
+    /*
+     * NEARBY FRAMES WHAT THE RECORD IS CONNECTED TO (Graview HQ brief
+     * b-cloud-2026-11-13-connected-under-a-view): a record's page at Nearby
+     * is aimed beside the panel at the level's own zoom, unless the
+     * buildings of what it is linked to and what its page shows would fall
+     * outside the city's side of the window; then the camera stands back,
+     * no further than it must, to take them all in. That zoom is this
+     * page's Nearby, so the altitude read from the camera is the level's
+     * still, and the move there is the one move, as any level's is.
+     */
+    let nearbyZoom: number | null = null;
+    const zoomsOf = (where: PageWhere, view: OnePlaceCityProps["view"]): readonly [number, number, number] => {
+      const zooms = levelZooms(where, view);
+      return nearbyZoom !== null && where.type === "record" ? [zooms[0], nearbyZoom, zooms[2]] : zooms;
+    };
+    /** The records a page shows, by what its parts mark and what a view drawn in it says. */
+    const markedOnPage = (): string[] => {
+      const plane = sheet.current;
+      if (!plane) return [];
+      const ids: string[] = [];
+      for (const part of plane.querySelectorAll(`${RECORD_PARTS}, ${VIEW_PARTS}`)) {
+        const view = recordBoxesOf(part);
+        if (view) ids.push(...view.shows());
+        else {
+          const named = recordShownBy(part);
+          if (named) ids.push(named);
+        }
+        if (ids.length > 400) break;
+      }
+      return ids;
+    };
+    const nearbyFraming = (id: string, anchor: Point, most: number, zoomNow: number): Live => {
+      const now = state.current;
+      const view = now.view;
+      const base = cameraPutting(anchor, aimAt(PANEL, view, footRoom()), most);
+      const ids = new Set([id, ...store.graph.neighbors(id).map((node) => node.id as string), ...markedOnPage()]);
+      const kinds = new Set<string>();
+      const boxes = [...ids].flatMap((one) => {
+        const building = world.buildings.get(one);
+        if (!building) return [];
+        const kind = store.graph.getNode(one)?.kind as string | undefined;
+        if (kind) kinds.add(kind);
+        return [building];
+      });
+      // And each of their districts' names, with what is said beside it: a district's marks stay in sight with its buildings.
+      const named = [...kinds].flatMap((kind) => {
+        const plate = world.plates.get(kind) ?? world.named.get(kind);
+        return plate ? [plate] : [];
+      });
+      const around = boxes.length > 1 ? unionOf([...boxes, ...named]) : null;
+      if (!around) return base;
+      // The city's side of the window at Nearby: beside the panel above what stands at the foot, or above a phone's sheet and the control riding on it.
+      const bar = view.top ?? 0;
+      const panel = panelBox(view);
+      const dock = footNow().rest[0];
+      const area: Box = view.width <= PHONE ? { x: 0, y: bar, width: view.width, height: Math.max(1, panel.y - bar - footRoom()) } : { x: 0, y: bar, width: panel.x, height: Math.max(1, (dock ? dock.y : view.height) - bar) };
+      const margin = 28;
+      const a = project(base, { x: around.x, y: around.y });
+      const b = project(base, { x: around.x + around.width, y: around.y + around.height });
+      if (a.x >= area.x + margin && a.y >= area.y + margin && b.x <= area.x + area.width - margin && b.y <= area.y + area.height - margin) return base;
+      const fit = fitCamera(around, area, margin, most);
+      // Never as far back as the City, nor past what the camera can be written at.
+      const least = Math.max(1.15 / zoomNow, (camera.current?.range.min ?? 0) / zoomNow);
+      if (fit.s >= least) return fit;
+      const middleOf = { x: around.x + around.width / 2, y: around.y + around.height / 2 };
+      return cameraPutting(middleOf, project(fit, middleOf), least);
+    };
     /** The camera between stops this frame, as painted — the last one seen while the view takes in a move just let go. */
     let painted: Live = LEVEL_LIVE;
     /** The level the camera rests at, and the altitude this frame. */
@@ -393,7 +460,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     /** The camera a level asks for, against the view's own: how much closer than now, and the place where that level aims it. */
     const cameraFor = (lvl: number, anchor: Point, zoomNow: number): Live => {
       const now = state.current;
-      const zooms = levelZooms(now.where, now.view);
+      const zooms = zoomsOf(now.where, now.view);
       const s = zooms[lvl]! / zoomNow;
       if (lvl === CITY) {
         /*
@@ -418,6 +485,12 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         const middleOfCity = city ? middle(city) : anchor;
         return cameraPutting(middleOfCity, aimAt(CITY, now.view), s);
       }
+      if (lvl === PANEL && now.where.type === "record") {
+        const framed = nearbyFraming(now.where.id, anchor, s, zoomNow);
+        nearbyZoom = zoomNow * framed.s;
+        return framed;
+      }
+      if (lvl === PANEL) nearbyZoom = null;
       return cameraPutting(anchor, aimAt(lvl === PAGE ? PANEL : lvl, now.view, footRoom()), s);
     };
 
@@ -513,7 +586,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         }
       }
       const anchor = world.plots.size > 0 ? anchorIn(at.where, world) : null;
-      const zooms = levelZooms(at.where, at.view);
+      const zooms = zoomsOf(at.where, at.view);
       const zoomNow = cam.zoom();
       const placeKey = `${keyOf(at.where)}|${at.view.width}x${at.view.height}`;
 
@@ -813,7 +886,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
             const scale = element.offsetWidth > 0 ? rect.width / element.offsetWidth : 1;
             let named = false;
             let about: Point | null = null;
-            for (const box of boxes()) {
+            for (const box of boxes.boxes()) {
               if (found.length >= MOST_LINES) break;
               if (!store.graph.getNode(box.id)) continue;
               const part = { x: rect.left + (box.x + box.width / 2) * scale, y: rect.top + (box.y + box.height / 2) * scale };

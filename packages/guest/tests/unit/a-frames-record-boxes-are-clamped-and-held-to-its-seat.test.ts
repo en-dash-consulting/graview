@@ -3,6 +3,7 @@ import { judgeRecordBoxes, MOST_RECORD_BOXES, RECORD_BOXES_ATTRIBUTE, RECORD_BOX
 import { describe, expect, it, vi } from "vitest";
 import { mountGuestView } from "../../src/host/frame.js";
 import { createGuestHost, RECORDS_A_SECOND } from "../../src/host/session.js";
+import { createViewRecords } from "../../src/host/view-records.js";
 import { GUEST_PROTOCOL, type HostHello } from "../../src/protocol.js";
 import { bethan, settle, showroom } from "./showroom.js";
 
@@ -68,7 +69,8 @@ describe("a frame's records, as its host keeps them", () => {
   function opened() {
     const element = document.createElement("div");
     document.body.appendChild(element);
-    const frame = mountGuestView(element, { url: "https://cards.example/card.html", view: "card", store: showroom(), principal: bethan, input: () => ({ node: { id: "car:golf" } }) });
+    // Handed the Golf and the shoppers Bethan may see: herself, and never Freya.
+    const frame = mountGuestView(element, { url: "https://cards.example/card.html", view: "card", store: showroom(), principal: bethan, input: () => ({ node: { id: "car:golf" } }), reads: { kinds: ["shopper"] } });
     // jsdom lays nothing out: the frame is as wide and as tall as a page would make it.
     Object.defineProperty(frame.iframe, "clientWidth", { value: 400, configurable: true });
     Object.defineProperty(frame.iframe, "clientHeight", { value: 300, configurable: true });
@@ -78,11 +80,11 @@ describe("a frame's records, as its host keeps them", () => {
     return { frame, element, port: ports[0]!, nonce: hello.nonce };
   }
 
-  it("holds what the frame said inside it, of records its seat may see, and says when they change", async () => {
+  it("holds what the frame said inside it, of records it was handed as its seat sees them, and says when which it shows changes", async () => {
     const { frame, element, port, nonce } = opened();
     expect(frame.iframe.hasAttribute(RECORD_BOXES_ATTRIBUTE)).toBe(true);
     const read = recordBoxesOf(frame.iframe)!;
-    expect(read()).toEqual([]);
+    expect(read.boxes()).toEqual([]);
     const moved = vi.fn();
     element.addEventListener(RECORD_BOXES_MOVED, moved);
     port.postMessage({
@@ -96,53 +98,97 @@ describe("a frame's records, as its host keeps them", () => {
         // Past the frame's foot: clamped to it.
         { id: "shopper:bethan", x: 10, y: 280, width: 500, height: 60 },
       ],
+      shows: ["car:golf", "shopper:freya", "nobody", "shopper:bethan", "car:golf"],
     });
-    await vi.waitFor(() => expect(read()).toHaveLength(2));
-    expect(read()).toEqual([
+    await vi.waitFor(() => expect(read.boxes()).toHaveLength(2));
+    expect(read.boxes()).toEqual([
       { id: "car:golf", x: 10, y: 20, width: 380, height: 40 },
       { id: "shopper:bethan", x: 10, y: 280, width: 390, height: 20 },
     ]);
+    expect(read.shows()).toEqual(["car:golf", "shopper:bethan"]);
     expect(moved).toHaveBeenCalledTimes(1);
-    // Said again the same, nothing has moved for a list of them.
-    port.postMessage({ type: "records", nonce, boxes: [{ id: "car:golf", x: 10, y: 30, width: 380, height: 40 }, { id: "shopper:bethan", x: 10, y: 200, width: 100, height: 20 }] });
-    await vi.waitFor(() => expect(read()[0]!.y).toBe(30));
+    // A row scrolled out of sight: its box goes, what it shows does not, and nothing has moved for a list of them.
+    port.postMessage({ type: "records", nonce, boxes: [{ id: "car:golf", x: 10, y: 30, width: 380, height: 40 }], shows: ["car:golf", "shopper:freya", "nobody", "shopper:bethan", "car:golf"] });
+    await vi.waitFor(() => expect(read.boxes()[0]!.y).toBe(30));
+    expect(read.boxes()).toHaveLength(1);
+    expect(read.shows()).toEqual(["car:golf", "shopper:bethan"]);
     expect(moved).toHaveBeenCalledTimes(1);
     // Under another nonce: no one's.
-    port.postMessage({ type: "records", nonce: "f".repeat(32), boxes: [] });
+    port.postMessage({ type: "records", nonce: "f".repeat(32), boxes: [], shows: [] });
     await settle();
-    expect(read()).toHaveLength(2);
+    expect(read.boxes()).toHaveLength(1);
     frame.dispose();
     expect(recordBoxesOf(frame.iframe), "a frame that has gone holds nothing").toBeUndefined();
   });
 
-  it("is judged again against the frame's size as it is read", async () => {
-    const { frame, port, nonce } = opened();
-    port.postMessage({ type: "records", nonce, boxes: [{ id: "car:golf", x: 0, y: 250, width: 400, height: 40 }] });
+  it("never names a record of a kind it was not handed, though the seat may see it", async () => {
+    const element = document.createElement("div");
+    document.body.appendChild(element);
+    const frame = mountGuestView(element, { url: "https://cards.example/card.html", view: "card", store: showroom(), principal: bethan, input: () => ({ node: { id: "car:golf" } }) });
+    Object.defineProperty(frame.iframe, "clientWidth", { value: 400, configurable: true });
+    Object.defineProperty(frame.iframe, "clientHeight", { value: 300, configurable: true });
+    const posted = vi.spyOn(frame.iframe.contentWindow!, "postMessage");
+    window.dispatchEvent(new MessageEvent("message", { data: ready, origin: "null", source: frame.iframe.contentWindow }));
+    const [hello, , ports] = posted.mock.calls[0]! as unknown as [HostHello, string, MessagePort[]];
+    ports[0]!.postMessage({ type: "records", nonce: hello.nonce, boxes: [{ id: "shopper:bethan", x: 0, y: 0, width: 10, height: 10 }, { id: "car:golf", x: 0, y: 20, width: 10, height: 10 }], shows: ["shopper:bethan", "car:golf"] });
     const read = recordBoxesOf(frame.iframe)!;
-    await vi.waitFor(() => expect(read()).toHaveLength(1));
+    await vi.waitFor(() => expect(read.boxes()).toHaveLength(1));
+    expect(read.boxes()[0]!.id).toBe("car:golf");
+    expect(read.shows()).toEqual(["car:golf"]);
+    frame.dispose();
+  });
+
+  it("is judged again as it is read: against the frame's size, and the records there are now", async () => {
+    const store = showroom();
+    const element = document.createElement("div");
+    document.body.appendChild(element);
+    const frame = mountGuestView(element, { url: "https://cards.example/card.html", view: "card", store, principal: bethan, input: () => ({ node: { id: "car:golf" } }), reads: { kinds: ["shopper"] } });
+    Object.defineProperty(frame.iframe, "clientWidth", { value: 400, configurable: true });
+    Object.defineProperty(frame.iframe, "clientHeight", { value: 300, configurable: true });
+    const posted = vi.spyOn(frame.iframe.contentWindow!, "postMessage");
+    window.dispatchEvent(new MessageEvent("message", { data: ready, origin: "null", source: frame.iframe.contentWindow }));
+    const [hello, , ports] = posted.mock.calls[0]! as unknown as [HostHello, string, MessagePort[]];
+    ports[0]!.postMessage({ type: "records", nonce: hello.nonce, boxes: [{ id: "car:golf", x: 0, y: 250, width: 400, height: 40 }, { id: "shopper:bethan", x: 0, y: 10, width: 400, height: 40 }], shows: ["car:golf", "shopper:bethan"] });
+    const read = recordBoxesOf(frame.iframe)!;
+    await vi.waitFor(() => expect(read.boxes()).toHaveLength(2));
     Object.defineProperty(frame.iframe, "clientHeight", { value: 260, configurable: true });
-    expect(read()).toEqual([{ id: "car:golf", x: 0, y: 250, width: 400, height: 10 }]);
+    expect(read.boxes()[0]).toEqual({ id: "car:golf", x: 0, y: 250, width: 400, height: 10 });
     Object.defineProperty(frame.iframe, "clientHeight", { value: 200, configurable: true });
-    expect(read()).toEqual([]);
+    expect(read.boxes().map((box) => box.id)).toEqual(["shopper:bethan"]);
+    // A record gone since it was said: no line to it, without the frame saying anything again.
+    Object.defineProperty(frame.iframe, "clientHeight", { value: 300, configurable: true });
+    store.apply({ name: "retire-car", args: { carId: "car:golf" } }, { author: { kind: "human", id: "staff:rhian", roles: ["staff"] } });
+    await vi.waitFor(() => expect(read.boxes().map((box) => box.id)).toEqual(["shopper:bethan"]));
+    expect(read.shows()).toEqual(["shopper:bethan"]);
     frame.dispose();
   });
 });
 
 describe("a frame's records have an allowance of their own", () => {
-  it("never spends what its acts and its height are asked with, and past its own is dropped", () => {
-    let now = 0;
-    const heard: unknown[] = [];
-    const sizes: number[] = [];
-    const host = createGuestHost({ store: showroom(), principal: bethan, view: "card", nonce: "n", send: () => {}, now: () => now, limits: { messages: 5 }, onRecords: (boxes) => heard.push(boxes), onSize: (height) => sizes.push(height) });
-    for (let at = 0; at < RECORDS_A_SECOND + 10; at += 1) host.receive({ type: "records", nonce: "n", boxes: [at] });
-    expect(heard).toHaveLength(RECORDS_A_SECOND);
-    expect(host.stats.dropped).toBe(10);
-    host.receive({ type: "size", nonce: "n", height: 120 });
-    expect(sizes, "its height is still asked for").toEqual([120]);
-    now += 1_001;
-    host.receive({ type: "records", nonce: "n", boxes: [] });
-    expect(heard).toHaveLength(RECORDS_A_SECOND + 1);
-    host.dispose();
+  it("never spends what its acts and its height are asked with, and past its own the latest is kept and taken once it allows", () => {
+    vi.useFakeTimers();
+    try {
+      let now = 0;
+      const heard: unknown[] = [];
+      const sizes: number[] = [];
+      const host = createGuestHost({ store: showroom(), principal: bethan, view: "card", nonce: "n", send: () => {}, now: () => now, limits: { messages: 5 }, onRecords: (boxes) => heard.push(boxes), onSize: (height) => sizes.push(height) });
+      for (let at = 0; at < RECORDS_A_SECOND + 10; at += 1) host.receive({ type: "records", nonce: "n", boxes: [at] });
+      expect(heard).toHaveLength(RECORDS_A_SECOND);
+      host.receive({ type: "size", nonce: "n", height: 120 });
+      expect(sizes, "its height is still asked for").toEqual([120]);
+      // Within the window nothing more is taken; once it moves, the last said is, and only it.
+      vi.advanceTimersByTime(200);
+      expect(heard).toHaveLength(RECORDS_A_SECOND);
+      now += 1_001;
+      vi.advanceTimersByTime(100);
+      expect(heard).toHaveLength(RECORDS_A_SECOND + 1);
+      expect(heard.at(-1)).toEqual([RECORDS_A_SECOND + 9]);
+      vi.advanceTimersByTime(1_000);
+      expect(heard).toHaveLength(RECORDS_A_SECOND + 1);
+      host.dispose();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("is dropped unread by a host that draws no lines", () => {
@@ -150,5 +196,56 @@ describe("a frame's records have an allowance of their own", () => {
     host.receive({ type: "records", nonce: "n", boxes: [] });
     expect(host.stats.dropped).toBe(1);
     host.dispose();
+  });
+});
+
+describe("a worker view's records, as its host measures them", () => {
+  /* A region and a shadow root laid out by hand: jsdom lays nothing out. */
+  function region(marks: readonly { id: string; top: number; height?: number; inside?: "list" }[]) {
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    Object.defineProperty(host, "offsetWidth", { value: 400, configurable: true });
+    Object.defineProperty(host, "offsetHeight", { value: 600, configurable: true });
+    const rect = (top: number, height: number, left = 0, width = 400) => ({ left, top, right: left + width, bottom: top + height, width, height, x: left, y: top, toJSON: () => ({}) }) as DOMRect;
+    host.getBoundingClientRect = () => rect(100, 600);
+    const shadow = host.attachShadow({ mode: "open" });
+    const list = document.createElement("div");
+    list.style.overflowX = "hidden";
+    list.style.overflowY = "hidden";
+    list.getBoundingClientRect = () => rect(100, 200);
+    shadow.append(list);
+    let measured = 0;
+    for (const mark of marks) {
+      const element = document.createElement("div");
+      element.setAttribute("data-record", mark.id);
+      element.getBoundingClientRect = () => (measured++, rect(mark.top, mark.height ?? 40));
+      (mark.inside === "list" ? list : shadow).append(element);
+    }
+    return { host, shadow, measured: () => measured };
+  }
+
+  it("names only records it was handed as its seat sees them, says every one it shows in sight or not, and measures again only once something moved", async () => {
+    const handed = new Set(["car:golf", "car:polo"]);
+    const { host, shadow, measured } = region([
+      { id: "car:golf", top: 120, inside: "list" },
+      // Scrolled out of its list: shown, not in sight.
+      { id: "car:polo", top: 400, inside: "list" },
+      // Not handed, or not the seat's to see: never named.
+      { id: "shopper:freya", top: 500 },
+    ]);
+    const records = createViewRecords(host, shadow, (id) => handed.has(id));
+    const held = recordBoxesOf(host)!;
+    expect(held.boxes()).toEqual([{ id: "car:golf", x: 0, y: 20, width: 400, height: 40 }]);
+    expect(held.shows()).toEqual(["car:golf", "car:polo"]);
+    const once = measured();
+    held.boxes();
+    held.boxes();
+    expect(measured(), "read again, not measured again").toBe(once);
+    shadow.querySelector("[data-record]")!.setAttribute("data-moved", "");
+    await Promise.resolve();
+    held.boxes();
+    expect(measured(), "measured again once something in it moved").toBeGreaterThan(once);
+    records.dispose();
+    expect(recordBoxesOf(host)).toBeUndefined();
   });
 });

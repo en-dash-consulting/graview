@@ -11,12 +11,11 @@ const MOST = 200;
  * scrolled out of its list says nothing), said again whenever one moves (a
  * scroll, a resize, a redraw, a picture that arrived) and only when what
  * it would say has changed: a frame at rest sends nothing, and a frame
- * scrolled says it once an animation frame at most, never faster than the
- * host takes it. The host keeps what is inside the frame and names a
- * record the seat may see, to draw a line from it to that record.
+ * scrolled says it once an animation frame at most. With it, every record
+ * it marks, in sight or not. The host draws a line from each to its record.
  * Returns the stop.
  */
-export function reportRecords(at: Window & typeof globalThis, send: (boxes: readonly GuestRecordBox[]) => void): () => void {
+export function reportRecords(at: Window & typeof globalThis, send: (boxes: readonly GuestRecordBox[], shows: readonly string[]) => void): () => void {
   const document = at.document;
   let said = "";
   let frame = 0;
@@ -26,11 +25,14 @@ export function reportRecords(at: Window & typeof globalThis, send: (boxes: read
     // A display faster than sixty a second: the rest of this one waits for the next frame.
     if (now - last < 16) return schedule();
     const boxes: GuestRecordBox[] = [];
+    const shows: string[] = [];
     const clips = new Map<Element, DOMRect | null>();
     const round = (value: number) => Math.round(value * 10) / 10;
     for (const element of document.querySelectorAll("[data-record]")) {
-      if (boxes.length >= MOST) break;
+      if (shows.length >= MOST) break;
       const id = element.getAttribute("data-record");
+      if (!id) continue;
+      shows.push(id);
       let { left, top, right, bottom } = element.getBoundingClientRect();
       // Cut by every box above it that clips what it holds.
       for (let up = element.parentElement; up; up = up.parentElement) {
@@ -49,13 +51,13 @@ export function reportRecords(at: Window & typeof globalThis, send: (boxes: read
       top = Math.max(top, 0);
       right = Math.min(right, at.innerWidth);
       bottom = Math.min(bottom, at.innerHeight);
-      if (id && right - left >= 1 && bottom - top >= 1) boxes.push({ id, x: round(left), y: round(top), width: round(right - left), height: round(bottom - top) });
+      if (right - left >= 1 && bottom - top >= 1) boxes.push({ id, x: round(left), y: round(top), width: round(right - left), height: round(bottom - top) });
     }
-    const text = JSON.stringify(boxes);
+    const text = JSON.stringify([boxes, shows]);
     if (text === said) return;
     said = text;
     last = now;
-    send(boxes);
+    send(boxes, shows);
   };
   const schedule = () => {
     frame ||= at.requestAnimationFrame(measure);

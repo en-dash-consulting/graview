@@ -36,7 +36,7 @@ describe("the client", () => {
     expect(() => new Script(file)).not.toThrow();
     expect(file).toMatch(/^\/\*![^\n]*\*\/\n"use strict";/);
     expect(file).not.toMatch(/\bimport\s*\(|\bimportScripts\b|\bimport\s+[{*\w]/);
-    // 4 000 until the client said where its records are, for the one face's lines (Graview HQ feature:f-one-face-lines-from-frame-views): about 1.4 KB more.
+    // 4 000 until the client said which records it marks, for the one face's lines (Graview HQ feature:f-one-face-lines-from-frame-views): about 1.5 KB more.
     expect(file.length).toBeLessThan(5_000);
   });
 

@@ -1,26 +1,29 @@
 #!/usr/bin/env node
 /**
  * A VIEW DRAWN WHERE THE PAGE CANNOT READ HAS ITS LINES TO THE CITY
- * (Graview HQ feature:f-one-face-lines-from-frame-views).
+ * (Graview HQ feature:f-one-face-lines-from-frame-views, brief
+ * b-cloud-2026-11-13-connected-under-a-view).
  *
  * At Nearby the one face draws a line from each record a page shows to
- * that record's building. A built-in page's records are read off its own
- * marks; a worker view draws in a shadow root and a frame guest in a
- * document of another origin, so the page floated beside the city tied to
- * nothing. Now the element each is drawn in holds its records' boxes,
- * judged by its host, and the face carries them through that element's
- * box every frame. Held here, on a roadmap's pages over its city:
+ * that record's building. A worker view draws in a shadow root and a frame
+ * guest in a document of another origin, so the page floated beside the
+ * city tied to nothing. Held here, on a roadmap's pages over its city:
  *
  *   · a worker view's `data-record` cards each have their line, its end
  *     within 2 px of the card's box, and a card naming no record has none;
- *   · scrolling the page keeps every line on its card, every frame;
- *   · a frame guest's `data-record` rows have their lines, within 2 px of
- *     each row as the frame draws it, and scrolling the frame's own list
- *     keeps them on the rows in sight and drops the rows scrolled away;
- *   · scrolling the page keeps the frame's lines on its rows, every frame;
- *   · a record page drawn by a view that names no record of its own still
- *     has its one line, from the view to the record it is about;
- *   · Connected does not repeat a record a view already shows.
+ *     scrolling the page keeps every line on its card, every frame; and so
+ *     does a move to the City and back, every frame;
+ *   · going to a record and back at Nearby, the lines come back;
+ *   · a frame guest's `data-record` rows have their lines within 2 px of
+ *     each row; scrolling the frame's own list keeps them on the rows in
+ *     sight, and scrolling the page keeps them on, every frame;
+ *   · a seat that cannot see a record a frame marks gets no line to it;
+ *   · a record page drawn by a view that names no record still has its one
+ *     line, from the view to the record it is about;
+ *   · a tall view that is a record's whole page: what the record is
+ *     connected to is said in the first window, its pills have their lines
+ *     when scrolled to, and every line at Nearby ends inside the window;
+ *   · a deep, wide view is measured within a budget.
  *
  *   node scripts/verify-frame-lines.mjs [--engine=chromium|webkit|firefox]   (Chromium by default)
  *
@@ -44,23 +47,30 @@ const DESK = { width: 1440, height: 900 };
 const ROADMAP = resolve(repoRoot, "scripts/fixtures/growing/roadmap.gdd.json");
 /** How far a line's end may be from the element it leaves from. */
 const NEAR = 2;
+/** The most one measure of a deep, wide view may take, in milliseconds. */
+const DEEP_MS = Number(process.env["GRAVIEW_SLOW"] ?? 1) > 1 ? 8 : 2;
 
 /* ── the app ─────────────────────────────────────────────────────────── */
 
 const FEATURES = ["Printable boards", "Shared drafts", "Weekly digest", "Offline pages", "Bulk edit", "Saved filters", "Public forms", "Calendar sync"];
+const REQUESTS = ["Let me print a board", "Work without a connection", "Print in color", "A board on the wall", "Export a board", "Board as a poster", "Print one week", "Print the backlog"];
 const SEED = {
   nodes: [
     ...FEATURES.map((name, at) => ({ id: `f${at + 1}`, kind: "feature", name, stage: ["idea", "planned", "building", "shipped"][at % 4], area: ["pages", "scene", "core", "cloud"][at % 4], summary: `What ${name.toLowerCase()} would do.` })),
-    { id: "r1", kind: "request", name: "Let me print a board", status: "planned", summary: "Asked twice." },
-    { id: "r2", kind: "request", name: "Work without a connection", status: "new", summary: "On a train." },
+    ...REQUESTS.map((name, at) => ({ id: `r${at + 1}`, kind: "request", name, status: "new", summary: "Asked." })),
     { id: "p1", kind: "person", name: "Ada Brennan" },
   ],
   edges: [
     { kind: "became", from: "r1", to: "f1" },
+    ...REQUESTS.map((_, at) => ({ kind: "became", from: `r${at + 1}`, to: "f3" })),
     { kind: "votes", from: "p1", to: "r1" },
-    { kind: "votes", from: "p1", to: "r2" },
   ],
 };
+/* Two seats: the owner sees everything; a reader sees features and requests, and nobody's people. */
+const SIGHT = [
+  { roles: "*", kinds: ["feature", "request"] },
+  { roles: ["owner"], kinds: ["person"] },
+];
 
 /* A worker view over every feature: tall cards, each marked with its record, and one marked with no record at all. */
 const BOARD = {
@@ -68,20 +78,34 @@ const BOARD = {
   source: `graview.style(".card{display:block;box-sizing:border-box;height:132px;margin:0 0 12px;padding:12px;border:1px solid var(--graview-edge);border-radius:8px} h3{margin:0 0 6px;font-size:1rem}");
 graview.onProps((props) => graview.render(graview.html\`<div id="cards">\${props.nodes.map((node) => graview.html\`<div class="card" data-record=\${node.id} id=\${"card-" + node.id}><h3>\${node.label}</h3><p>\${node.summary ?? ""}</p></div>\`)}<div class="card" data-record="nobody-here" id="card-nobody"><h3>Not a record</h3></div></div>\`));`,
 };
-/* A worker view that is a feature's whole page and names no record: the page still has its one line, to the feature. */
-const NOTE = {
-  manifest: { name: "feature-note", title: "Feature note", attach: "feature", cardinality: "one", replaces: "page", reads: { kinds: ["feature"] } },
-  source: `graview.onProps((props) => graview.render(graview.html\`<p id="note" style="margin:0;padding:24px 12px;font-size:1.1rem">A note on \${props.node.label}, drawn by a view.</p>\`));`,
+/*
+ * A worker view that is a feature's whole page, as Deep Time's period pages are: a long story, then a
+ * pill for each request that became the feature. On a feature nothing became, it marks nothing at all.
+ */
+const PERIOD = {
+  manifest: { name: "feature-period", title: "Feature period", attach: "feature", cardinality: "one", replaces: "page", reads: { kinds: ["feature", "request"], edges: ["became"] } },
+  source: `graview.style(".story{margin:0 0 14px;line-height:1.6;min-height:120px} .pill{display:inline-block;margin:4px;padding:6px 10px;border:1px solid var(--graview-edge);border-radius:999px}");
+graview.onProps((props) => {
+  const node = props.node;
+  const became = props.edges.filter((edge) => edge.kind === "became" && edge.to === node.id).map((edge) => props.nodes.find((one) => one.id === edge.from)).filter(Boolean);
+  const story = Array.from({ length: became.length > 0 ? 14 : 1 }, (_, at) => graview.html\`<p class="story">Part \${at + 1} of the story of \${node.label}, told at length so the page is tall.</p>\`);
+  graview.render(graview.html\`<article id="period"><h2>\${node.label}</h2>\${story}<div id="pills">\${became.map((one) => graview.html\`<a class="pill" data-record=\${one.id} id=\${"pill-" + one.id}>\${one.label}</a>\`)}</div></article>\`);
+});`,
+};
+/* A worker view of every person, deep and wide: what one measure of it costs. */
+const DEEP = {
+  manifest: { name: "deep-view", title: "Deep view", attach: "person", cardinality: "many", reads: { kinds: ["feature"] } },
+  source: `graview.onProps((props) => {
+  const ids = props.nodes.filter((node) => node.kind === "feature").map((node) => node.id);
+  const marks = Array.from({ length: 400 }, (_, at) => graview.html\`<span data-record=\${ids[at % ids.length]} style="display:inline-block;width:10px;height:10px">.</span>\`);
+  let inner = graview.html\`<div id="marks">\${marks}</div>\`;
+  for (let depth = 0; depth < 50; depth++) inner = graview.html\`<div style="overflow:hidden;padding:1px">\${inner}</div>\`;
+  graview.render(inner);
+});`,
 };
 
-/* A worker view that is a person's whole page and shows one of the two requests they voted for: Connected says the other, not that one. */
-const VOTER = {
-  manifest: { name: "voter", title: "Voter", attach: "person", cardinality: "one", replaces: "page", reads: { kinds: ["person"] } },
-  source: `graview.onProps((props) => graview.render(graview.html\`<h2 style="margin:0 0 8px">\${props.node.label}</h2><a id="voted" data-record="r1">The request they voted for first</a>\`));`,
-};
-
-/* A frame guest on a request's page: what it became and what it might become, rows marked with their records in a list that scrolls. */
-const FRAME_ROWS = ["f1", "f2", "f3", "f4", "f5", "f6", "nobody-here"];
+/* A frame guest on a request's page: features and a person, rows marked with their records in a list that scrolls. */
+const FRAME_ROWS = ["f1", "f2", "p1", "f3", "f4", "f5", "f6", "nobody-here"];
 const guestPage = (client) => `<!doctype html><html><head><meta charset="utf-8"><style>
 body{margin:0;font:15px system-ui,sans-serif;color:#222;background:#fff}
 h3{margin:0;padding:10px 12px;font-size:1rem}
@@ -99,7 +123,7 @@ guest.subscribe(() => {
     row.className = "row";
     row.id = "row-" + id;
     row.setAttribute("data-record", id);
-    row.textContent = id === "nobody-here" ? "Not a record" : "Feature " + id.slice(1);
+    row.textContent = id === "nobody-here" ? "Not a record" : "Row " + id;
     list.appendChild(row);
   }
   guest.size(300);
@@ -130,18 +154,13 @@ async function buildHost() {
         const compiled = compileDocumentWithoutCheck(roadmap, { today: () => "2026-11-12" });
         if (!compiled.ok) throw new Error(compiled.findings.map((finding) => finding.message).join("; "));
         const app = compiled.app;
-        const store = new Store({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], snapshot: ${JSON.stringify(SEED)}, ...(app.policy ? { policy: app.policy } : {}) });
-        const board = ${JSON.stringify(BOARD)};
-        const note = ${JSON.stringify(NOTE)};
-        const voter = ${JSON.stringify(VOTER)};
+        const policy = { ...(app.policy ?? {}), sees: ${JSON.stringify(SIGHT)} };
+        const store = new Store({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], snapshot: ${JSON.stringify(SEED)}, policy });
+        const seat = new URLSearchParams(location.search).get("seat") === "reader" ? { kind: "human", id: "u:reader", roles: ["reader"] } : { kind: "human", id: "u:owner", roles: ["owner"] };
         let views = registerDefaultViews(app.schema, createViews(app.schema));
-        views = registerWorkerView(views, { manifest: board.manifest, worker: { source: board.source } });
-        views = registerWorkerView(views, { manifest: note.manifest, worker: { source: note.source } });
-        views = registerWorkerView(views, { manifest: voter.manifest, worker: { source: voter.source } });
-        views = views.register("request", { cardinality: "one", fidelity: "full" }, guestView({ url: "/frame.html", name: "request-card", title: "What this might become" }));
-        createRoot(document.getElementById("app")).render(
-          createElement(PagesApp, { context: { store, app, principal: { kind: "human", id: "u:owner", roles: ["owner"] }, views, sceneUnderPages: true } }),
-        );`,
+        for (const one of [${JSON.stringify(BOARD)}, ${JSON.stringify(PERIOD)}, ${JSON.stringify(DEEP)}]) views = registerWorkerView(views, { manifest: one.manifest, worker: { source: one.source } });
+        views = views.register("request", { cardinality: "one", fidelity: "full" }, guestView({ url: "/frame.html", name: "request-card", title: "What this might become", reads: { kinds: ["feature", "person"] } }));
+        createRoot(document.getElementById("app")).render(createElement(PagesApp, { context: { store, app, principal: seat, views, sceneUnderPages: true } }));`,
       resolveDir: resolve(repoRoot, "packages/pages"),
       loader: "js",
     },
@@ -193,69 +212,104 @@ async function restAt(page, level, timeout = 15_000) {
   await page.waitForTimeout(300);
 }
 
+const goLevel = async (page, level) => {
+  await page.locator(`[data-testid="altitude-stop-${level}"]`).first().click();
+  await restAt(page, level);
+};
+
 /** Open a page and go to Nearby, once what is on it has drawn. */
 async function nearby(page, path, drawn) {
   await page.goto(`${at("frame-lines-host")}${path}`, { waitUntil: "load" });
   await page.waitForSelector("[data-graview-one-place]", { timeout: 60_000 });
   await page.waitForFunction(drawn, null, { timeout: 30_000 });
-  await page.locator('[data-testid="altitude-stop-1"]').first().click();
-  await restAt(page, 1);
+  await goLevel(page, 1);
   await page.waitForTimeout(300);
 }
 
-/** The lines drawn now: each one's record and the middle of the part it leaves from. */
+/** The lines drawn now: each one's record, the middle of the part it leaves from, its far end, and whether it points past the city's side. */
 const linesNow = (page) =>
   page.evaluate(() =>
     [...document.querySelectorAll("[data-graview-line]")].map((g) => {
-      const [x, y] = (g.getAttribute("data-graview-line-part") ?? "NaN,NaN").split(",").map(Number);
-      return { key: g.getAttribute("data-graview-line"), on: g.getAttribute("data-graview-line-on"), part: { x, y } };
+      const pair = (name) => (g.getAttribute(name) ?? "NaN,NaN").split(",").map(Number);
+      const [x, y] = pair("data-graview-line-part");
+      const [tx, ty] = pair("data-graview-line-to");
+      return { key: g.getAttribute("data-graview-line"), on: g.getAttribute("data-graview-line-on"), part: { x, y }, to: { x: tx, y: ty }, under: g.hasAttribute("data-graview-line-under") };
     }),
   );
 
 const within = (point, box, near = NEAR) => point.x >= box.left - near && point.x <= box.right + near && point.y >= box.top - near && point.y <= box.bottom + near;
 const round = (box) => box && Object.fromEntries(Object.entries(box).map(([key, value]) => [key, Number(Number(value).toFixed(2))]));
 
-/** The board's cards as the page sees them, in the window's pixels, and what of each is in sight on the panel. */
-const cardsNow = (page) =>
-  page.evaluate(() => {
-    const region = document.querySelector('[data-worker-view="feature-board"]');
+/** A worker view's marked elements as the page sees them, in the window's pixels, and whether each one's middle is in sight on the panel. */
+const marksNow = (page, view) =>
+  page.evaluate((view) => {
+    const region = document.querySelector(`[data-worker-view="${view}"]`);
     const port = region?.closest("[data-graview-one-place]")?.getBoundingClientRect();
     return [...(region?.shadowRoot?.querySelectorAll("[data-record]") ?? [])].map((card) => {
       const r = card.getBoundingClientRect();
       const mid = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
       return { id: card.getAttribute("data-record"), box: { left: r.left, top: r.top, right: r.right, bottom: r.bottom }, inSight: Boolean(port && mid.y >= port.top && mid.y <= port.bottom && mid.x >= port.left && mid.x <= port.right) };
     });
-  });
+  }, view);
 
-/** Every frame from now: each line's part, and each card's box, read after the face has drawn that frame. */
-const record = (page) =>
-  page.evaluate(() => {
+/** Every mark in sight has its line on it, and nothing marked "nobody-here" has one. */
+function marksHeld(marks, lines) {
+  const inSight = marks.filter((mark) => mark.inSight && mark.id !== "nobody-here");
+  const missing = inSight.filter((mark) => !lines.some((line) => line.key === mark.id && within(line.part, mark.box))).map((mark) => ({ id: mark.id, box: round(mark.box), line: lines.find((line) => line.key === mark.id)?.part ?? null }));
+  return { inSight: inSight.map((mark) => mark.id), missing, stray: lines.filter((line) => line.key === "nobody-here").length, ok: inSight.length >= 2 && missing.length === 0 && !lines.some((line) => line.key === "nobody-here") };
+}
+
+/** Every frame from now: each line's part, and each worker view mark's box, read after the face has drawn that frame. */
+const record = (page, view) =>
+  page.evaluate((view) => {
     window.__frames = [];
     window.__stop = false;
     const tick = () => {
       if (window.__stop) return;
       requestAnimationFrame(tick);
-      const region = document.querySelector('[data-worker-view="feature-board"]');
+      const region = view ? document.querySelector(`[data-worker-view="${view}"]`) : null;
       const frame = document.querySelector('iframe[data-guest-view="request-card"]');
-      const cards = Object.fromEntries([...(region?.shadowRoot?.querySelectorAll("[data-record]") ?? [])].map((card) => {
+      const marks = Object.fromEntries([...(region?.shadowRoot?.querySelectorAll("[data-record]") ?? [])].map((card) => {
         const r = card.getBoundingClientRect();
         return [card.getAttribute("data-record"), { left: r.left, top: r.top, right: r.right, bottom: r.bottom }];
       }));
       const f = frame?.getBoundingClientRect();
+      const svg = document.querySelector('[data-testid="one-place-lines"]');
       window.__frames.push({
+        opacity: Number(svg ? getComputedStyle(svg).opacity : 0),
+        altitude: Number(document.querySelector('[data-testid="one-place-city"]')?.getAttribute("data-graview-altitude-now") ?? 0),
         lines: [...document.querySelectorAll("[data-graview-line]")].map((g) => {
           const [x, y] = (g.getAttribute("data-graview-line-part") ?? "NaN,NaN").split(",").map(Number);
           return { key: g.getAttribute("data-graview-line"), part: { x, y } };
         }),
-        cards,
+        marks,
         frame: f ? { left: f.left, top: f.top } : null,
       });
     };
     requestAnimationFrame(tick);
-  });
+  }, view);
 const stopRecording = (page) => page.evaluate(() => ((window.__stop = true), window.__frames ?? []));
 
-/** Wheel the panel the page is in, over the element named, a few steps. */
+/** Every line on its worker view mark, every frame recorded while the lines are drawn. */
+function everyFrameOnMarks(frames) {
+  let worst = 0;
+  let counted = 0;
+  const examples = [];
+  for (const frame of frames) {
+    if (frame.opacity < 0.05) continue;
+    for (const line of frame.lines) {
+      const mark = frame.marks[line.key];
+      if (!mark) continue;
+      counted++;
+      const miss = Math.hypot(Math.max(mark.left - line.part.x, 0, line.part.x - mark.right), Math.max(mark.top - line.part.y, 0, line.part.y - mark.bottom));
+      if (miss > worst) worst = miss;
+      if (miss > NEAR && examples.length < 4) examples.push({ key: line.key, miss: Number(miss.toFixed(2)), altitude: frame.altitude });
+    }
+  }
+  return { frames: frames.length, counted, worst: Number(worst.toFixed(2)), examples };
+}
+
+/** Wheel the page over the element named, a few steps. */
 async function wheelOver(page, selector, steps, by) {
   const box = await page.locator(selector).first().boundingBox();
   await page.mouse.move(box.x + box.width / 2, Math.min(box.y + 40, DESK.height - 60));
@@ -266,62 +320,68 @@ async function wheelOver(page, selector, steps, by) {
   await page.waitForTimeout(500);
 }
 
-/** The scroll of the panel the page is in, read off the element that scrolls. */
 const pageScroll = (page, selector) =>
   page.evaluate((selector) => {
     for (let at = document.querySelector(selector); at; at = at.parentElement) if (at.scrollTop > 0) return at.scrollTop;
     return document.scrollingElement?.scrollTop ?? 0;
   }, selector);
 
+const boardDrawn = () => (document.querySelector('[data-worker-view="feature-board"]')?.shadowRoot?.querySelectorAll("[data-record]").length ?? 0) > 3;
+const frameDrawn = () => document.querySelector('iframe[data-guest-view="request-card"]')?.hasAttribute("data-guest-view-drawn") ?? false;
+const periodDrawn = () => document.querySelector('[data-worker-view="feature-period"]')?.hasAttribute("data-worker-view-drawn") ?? false;
+
 /* ── the claims' drives ──────────────────────────────────────────────── */
 
 async function workerCards(page, where) {
-  await nearby(page, "/places/feature-board", () => (document.querySelector('[data-worker-view="feature-board"]')?.shadowRoot?.querySelectorAll("[data-record]").length ?? 0) > 3);
-  const cards = await cardsNow(page);
-  const lines = await linesNow(page);
-  const inSight = cards.filter((card) => card.inSight && card.id !== "nobody-here");
-  const misses = inSight.map((card) => {
-    const line = lines.find((one) => one.key === card.id);
-    return { id: card.id, line: Boolean(line), on: line?.on ?? null, near: line ? within(line.part, card.box) : false, part: line ? round(line.part) : null, box: round(card.box) };
-  });
-  const stray = lines.filter((line) => line.key === "nobody-here");
-  return { where, cards: cards.length, inSight: inSight.length, misses: misses.filter((one) => !one.line || !one.near), noLineForWhatIsNoRecord: stray.length === 0, ok: inSight.length >= 2 && misses.every((one) => one.line && one.near) && stray.length === 0 };
+  await nearby(page, "/places/feature-board", boardDrawn);
+  return { where, ...marksHeld(await marksNow(page, "feature-board"), await linesNow(page)) };
 }
 
 async function workerScroll(page, where) {
-  await nearby(page, "/places/feature-board", () => (document.querySelector('[data-worker-view="feature-board"]')?.shadowRoot?.querySelectorAll("[data-record]").length ?? 0) > 3);
-  const before = new Set((await linesNow(page)).map((line) => line.key));
-  await record(page);
+  await nearby(page, "/places/feature-board", boardDrawn);
+  await record(page, "feature-board");
   await wheelOver(page, '[data-worker-view="feature-board"]', 6, 120);
-  const frames = await stopRecording(page);
+  const measured = everyFrameOnMarks(await stopRecording(page));
   const scrolled = await pageScroll(page, '[data-worker-view="feature-board"]');
-  let worst = 0;
-  let counted = 0;
-  const examples = [];
-  for (const frame of frames) {
-    for (const line of frame.lines) {
-      const card = frame.cards[line.key];
-      if (!card) continue;
-      counted++;
-      const dx = Math.max(card.left - line.part.x, 0, line.part.x - card.right);
-      const dy = Math.max(card.top - line.part.y, 0, line.part.y - card.bottom);
-      const miss = Math.hypot(dx, dy);
-      if (miss > worst) worst = miss;
-      if (miss > NEAR && examples.length < 4) examples.push({ key: line.key, miss: Number(miss.toFixed(2)), part: round(line.part), card: round(card) });
-    }
-  }
-  const after = new Set((await linesNow(page)).map((line) => line.key));
-  const cards = await cardsNow(page);
-  const lines = await linesNow(page);
-  const settled = cards.filter((card) => card.inSight && card.id !== "nobody-here").every((card) => lines.some((line) => line.key === card.id && within(line.part, card.box)));
-  return { where, frames: frames.length, counted, worst: Number(worst.toFixed(2)), examples, scrolled, before: [...before], after: [...after], settled, ok: frames.length > 10 && counted > 0 && worst <= NEAR && scrolled > 0 && settled };
+  const settled = marksHeld(await marksNow(page, "feature-board"), await linesNow(page));
+  return { where, ...measured, scrolled, settled, ok: measured.frames > 10 && measured.counted > 0 && measured.worst <= NEAR && scrolled > 0 && settled.ok };
 }
 
-/** The frame's rows as its own document draws them, in the window's pixels: the frame's box, and what of each row is in sight in its list. */
+async function levelMove(page, where) {
+  await nearby(page, "/places/feature-board", boardDrawn);
+  await record(page, "feature-board");
+  await goLevel(page, 2);
+  await goLevel(page, 1);
+  const frames = await stopRecording(page);
+  const measured = everyFrameOnMarks(frames);
+  const moving = frames.filter((frame) => frame.altitude > 1.01 && frame.altitude < 1.99 && frame.opacity >= 0.05).length;
+  const settled = marksHeld(await marksNow(page, "feature-board"), await linesNow(page));
+  return { where, ...measured, framesDrawnBetweenLevels: moving, settled, ok: measured.counted > 0 && measured.worst <= NEAR && moving > 2 && settled.ok };
+}
+
+async function awayAndBack(page, where) {
+  await nearby(page, "/places/feature-board", boardDrawn);
+  const before = marksHeld(await marksNow(page, "feature-board"), await linesNow(page));
+  await page.locator('[data-worker-view="feature-board"]').locator("#card-f1 h3").click();
+  await page.waitForFunction(() => location.pathname.endsWith("/features/f1"), null, { timeout: 15_000 });
+  await page.waitForFunction(periodDrawn, null, { timeout: 30_000 });
+  await restAt(page, 1);
+  const there = (await linesNow(page)).map((line) => line.key);
+  await page.goBack();
+  await page.waitForFunction(() => location.pathname.endsWith("/places/feature-board"), null, { timeout: 15_000 });
+  await page.waitForFunction(boardDrawn, null, { timeout: 30_000 });
+  await restAt(page, 1);
+  await page.waitForTimeout(400);
+  const after = marksHeld(await marksNow(page, "feature-board"), await linesNow(page));
+  return { where, before, there, after, ok: before.ok && there.includes("r1") && after.ok };
+}
+
+/** The frame's rows as its own document draws them, in the window's pixels. */
 async function rowsNow(page) {
   const frameBox = await page.evaluate(() => {
-    const r = document.querySelector('iframe[data-guest-view="request-card"]')?.getBoundingClientRect();
-    const port = document.querySelector('iframe[data-guest-view="request-card"]')?.closest("[data-graview-one-place]")?.getBoundingClientRect();
+    const frame = document.querySelector('iframe[data-guest-view="request-card"]');
+    const r = frame?.getBoundingClientRect();
+    const port = frame?.closest("[data-graview-one-place]")?.getBoundingClientRect();
     return r ? { left: r.left, top: r.top, right: r.right, bottom: r.bottom, port: port ? { top: port.top, bottom: port.bottom } : null } : null;
   });
   const guest = page.frames().find((one) => one.url().endsWith("/frame.html"));
@@ -345,16 +405,14 @@ async function rowsNow(page) {
   };
 }
 
-const frameDrawn = () => document.querySelector('iframe[data-guest-view="request-card"]')?.hasAttribute("data-guest-view-drawn") ?? false;
-
-/** Every row of the frame in sight has its line on it; no line leaves the frame for a row scrolled out of its list, nor for a row naming no record. */
-function rowsHeld({ frameBox, rows }, lines) {
-  const shown = rows.filter((row) => row.inSight && row.id !== "nobody-here");
+/** Every row of the frame in sight that the seat may see has its line on it; no line leaves the frame for a row out of sight, one naming no record, or one the seat cannot see. */
+function rowsHeld({ frameBox, rows }, lines, unseen = []) {
+  const shown = rows.filter((row) => row.inSight && row.id !== "nobody-here" && !unseen.includes(row.id));
   const missing = shown.filter((row) => !lines.some((line) => line.key === row.id && within(line.part, row.box))).map((row) => ({ id: row.id, box: round(row.box), line: lines.find((line) => line.key === row.id)?.part ?? null }));
   const hiddenIds = new Set(rows.filter((row) => !row.shown).map((row) => row.id));
   // The page's own parts may name the same record (r1 became f1): only a line leaving from inside the frame is the frame's.
   const fromFrame = (line) => frameBox && within(line.part, frameBox, 0);
-  const strays = lines.filter((line) => fromFrame(line) && (line.key === "nobody-here" || (hiddenIds.has(line.key) && !shown.some((row) => row.id === line.key)))).map((line) => line.key);
+  const strays = lines.filter((line) => fromFrame(line) && (line.key === "nobody-here" || unseen.includes(line.key) || (hiddenIds.has(line.key) && !shown.some((row) => row.id === line.key)))).map((line) => line.key);
   return { shown: shown.map((row) => row.id), missing, strays, ok: shown.length >= 2 && missing.length === 0 && strays.length === 0 };
 }
 
@@ -363,7 +421,7 @@ async function frameRows(page, where) {
   await page.waitForTimeout(300);
   const now = await rowsNow(page);
   const held = rowsHeld(now, await linesNow(page));
-  return { where, rows: now.rows.length, ...held };
+  return { where, rows: now.rows.length, ...held, ok: held.ok && held.shown.includes("p1") };
 }
 
 async function frameScroll(page, where) {
@@ -371,7 +429,7 @@ async function frameScroll(page, where) {
   await page.waitForTimeout(300);
   const guest = page.frames().find((one) => one.url().endsWith("/frame.html"));
   const before = rowsHeld(await rowsNow(page), await linesNow(page));
-  // Its own list scrolled, as a person would with a wheel over it: the rows in sight now have the lines.
+  // Its own list scrolled: the rows in sight now have the lines.
   await guest.evaluate(() => {
     document.getElementById("list").scrollTop = 150;
   });
@@ -383,13 +441,13 @@ async function frameScroll(page, where) {
   await page.waitForTimeout(400);
   const toItsEnd = rowsHeld(await rowsNow(page), await linesNow(page));
   // The page scrolled under it: read every frame, each line on its row as the frame's box carries it then.
-  const local = (await rowsNow(page)).rows.map((row) => ({ ...row }));
+  const local = (await rowsNow(page)).rows;
   const frameAt = await page.evaluate(() => {
     const r = document.querySelector('iframe[data-guest-view="request-card"]').getBoundingClientRect();
     return { left: r.left, top: r.top };
   });
-  await record(page);
-  await wheelOver(page, '[data-testid="one-place-bar"] ~ * [data-graview-one-place], [data-graview-one-place]', 4, 80);
+  await record(page, null);
+  await wheelOver(page, "[data-graview-one-place]", 4, 80);
   const frames = await stopRecording(page);
   let worst = 0;
   let counted = 0;
@@ -409,14 +467,25 @@ async function frameScroll(page, where) {
     }
   }
   const moved = frames.length > 1 && frames.some((frame) => frame.frame && Math.abs(frame.frame.top - frameAt.top) > 4);
-  return { where, before, inFrame, toItsEnd, pageScrolled: { frames: frames.length, moved, counted, worst: Number(worst.toFixed(2)), examples }, ok: before.ok && inFrame.ok && toItsEnd.ok && counted > 0 && worst <= NEAR && JSON.stringify(inFrame.shown) !== JSON.stringify(before.shown) };
+  return { where, before, inFrame, toItsEnd, pageScrolled: { frames: frames.length, moved, counted, worst: Number(worst.toFixed(2)), examples }, ok: before.ok && inFrame.ok && toItsEnd.ok && moved && counted > 0 && worst <= NEAR && JSON.stringify(inFrame.shown) !== JSON.stringify(before.shown) };
+}
+
+async function unseenRow(page, where) {
+  await page.goto(`${at("frame-lines-host")}/requests/r1?seat=reader`, { waitUntil: "load" });
+  await page.waitForSelector("[data-graview-one-place]", { timeout: 60_000 });
+  await page.waitForFunction(frameDrawn, null, { timeout: 30_000 });
+  await goLevel(page, 1);
+  await page.waitForTimeout(400);
+  const now = await rowsNow(page);
+  const lines = await linesNow(page);
+  const held = rowsHeld(now, lines, ["p1"]);
+  return { where, ...held, p1: lines.some((line) => line.key === "p1"), ok: held.ok && !lines.some((line) => line.key === "p1") && now.rows.some((row) => row.id === "p1" && row.inSight) };
 }
 
 async function quietRecordPage(page, where) {
-  await nearby(page, "/features/f2", () => document.querySelector('[data-worker-view="feature-note"]')?.hasAttribute("data-worker-view-drawn") ?? false);
+  await nearby(page, "/features/f2", periodDrawn);
   const view = await page.evaluate(() => {
-    const region = document.querySelector('[data-worker-view="feature-note"]');
-    const r = region?.getBoundingClientRect();
+    const r = document.querySelector('[data-worker-view="feature-period"]')?.getBoundingClientRect();
     return r ? { left: r.left, top: r.top, right: r.right, bottom: r.bottom } : null;
   });
   const lines = await linesNow(page);
@@ -424,25 +493,64 @@ async function quietRecordPage(page, where) {
   return { where, view: round(view), line: line ? { on: line.on, part: round(line.part) } : null, ok: Boolean(view && line && line.on === "building" && within(line.part, view)) };
 }
 
-async function connected(page, where) {
-  await nearby(page, "/people/p1", () => document.querySelector('[data-worker-view="voter"]')?.hasAttribute("data-worker-view-drawn") ?? false);
-  await page.waitForTimeout(500);
-  const said = await page.evaluate(() => [...document.querySelectorAll("[data-graview-connected] [data-graview-record]")].map((row) => row.getAttribute("data-graview-record")));
-  const view = await page.evaluate(() => {
-    const r = document.querySelector('[data-worker-view="voter"]')?.shadowRoot?.getElementById("voted")?.getBoundingClientRect();
-    return r ? { left: r.left, top: r.top, right: r.right, bottom: r.bottom } : null;
+/** A tall view that is the record's whole page: what it is connected to is said in the first window; and every line ends inside the window. */
+async function tallPage(page, where) {
+  await nearby(page, "/features/f3", periodDrawn);
+  const said = await page.evaluate(() => {
+    const top = document.querySelector('[data-testid="one-place-bar"]')?.getBoundingClientRect().bottom ?? 0;
+    return [...document.querySelectorAll("[data-graview-connected] [data-graview-record]")].map((chip) => {
+      const r = chip.getBoundingClientRect();
+      return { id: chip.getAttribute("data-graview-record"), inFirstWindow: r.top >= top - 1 && r.bottom <= innerHeight + 1 && r.height > 0 };
+    });
   });
+  const connected = Array.from({ length: 8 }, (_, at) => `r${at + 1}`);
+  const missing = connected.filter((id) => !said.some((one) => one.id === id && one.inFirstWindow));
   const lines = await linesNow(page);
-  const fromView = lines.find((line) => line.key === "r1");
-  // The view shows r1: Connected says r2 alone, and r1's line leaves from the view's link to it.
-  return { where, connected: said, r1: fromView ? round(fromView.part) : null, r2: lines.some((line) => line.key === "r2"), ok: said.includes("r2") && !said.includes("r1") && Boolean(view && fromView && within(fromView.part, view)) };
+  const out = lines.filter((line) => line.under || line.to.x < 0 || line.to.y < 0 || line.to.x > DESK.width || line.to.y > DESK.height).map((line) => line.key);
+  return { where, said: said.length, missing, lines: lines.length, linesPastTheWindow: out, ok: missing.length === 0 && lines.length >= 8 && out.length === 0 };
+}
+
+async function tallPills(page, where) {
+  await nearby(page, "/features/f3", periodDrawn);
+  await wheelOver(page, '[data-worker-view="feature-period"]', 20, 200);
+  const held = marksHeld(await marksNow(page, "feature-period"), await linesNow(page));
+  const lines = await linesNow(page);
+  const out = lines.filter((line) => line.under || line.to.x < 0 || line.to.y < 0 || line.to.x > DESK.width || line.to.y > DESK.height).map((line) => line.key);
+  return { where, ...held, linesPastTheWindow: out, ok: held.ok && out.length === 0 };
+}
+
+async function deepView(page, where) {
+  await page.goto(`${at("frame-lines-host")}/places/deep-view`, { waitUntil: "load" });
+  await page.waitForFunction(() => (document.querySelector('[data-worker-view="deep-view"]')?.shadowRoot?.querySelectorAll("[data-record]").length ?? 0) >= 400, null, { timeout: 30_000 });
+  return {
+    where,
+    ...(await page.evaluate(async () => {
+      const region = document.querySelector('[data-worker-view="deep-view"]');
+      const held = region[Symbol.for("graview.record-boxes")];
+      const first = held.boxes().length;
+      const cold = [];
+      for (let at = 0; at < 7; at++) {
+        // Something in the view moved: the next read measures it again.
+        region.shadowRoot.querySelector("#marks").setAttribute("data-moved", String(at));
+        await new Promise((done) => setTimeout(done, 0));
+        const start = performance.now();
+        held.boxes();
+        cold.push(performance.now() - start);
+      }
+      const start = performance.now();
+      for (let at = 0; at < 60; at++) held.boxes();
+      const warm = (performance.now() - start) / 60;
+      cold.sort((a, b) => a - b);
+      return { boxes: first, coldMedianMs: Number(cold[3].toFixed(3)), coldWorstMs: Number(cold[6].toFixed(3)), warmMs: Number(warm.toFixed(3)) };
+    })),
+  };
 }
 
 /* ── the run ─────────────────────────────────────────────────────────── */
 
 const report = { at: new Date().toISOString(), engines, checks: {} };
 const errors = [];
-const seen = { cards: [], cardsScroll: [], rows: [], rowsScroll: [], quiet: [], connected: [] };
+const seen = { cards: [], cardsScroll: [], levelMove: [], awayAndBack: [], rows: [], rowsScroll: [], unseen: [], quiet: [], tall: [], pills: [], deep: [] };
 let host;
 let browser;
 try {
@@ -452,10 +560,15 @@ try {
     for (const [list, drive] of [
       [seen.cards, workerCards],
       [seen.cardsScroll, workerScroll],
+      [seen.levelMove, levelMove],
+      [seen.awayAndBack, awayAndBack],
       [seen.rows, frameRows],
       [seen.rowsScroll, frameScroll],
+      [seen.unseen, unseenRow],
       [seen.quiet, quietRecordPage],
-      [seen.connected, connected],
+      [seen.tall, tallPage],
+      [seen.pills, tallPills],
+      [seen.deep, deepView],
     ]) {
       const context = await browser.newContext({ viewport: DESK });
       const page = await context.newPage();
@@ -471,13 +584,19 @@ try {
     await browser.close();
     browser = undefined;
   }
+  for (const run of seen.deep) run.ok = run.boxes > 0 && run.coldMedianMs <= DEEP_MS && run.warmMs <= 0.5;
   const every = (list) => list.length > 0 && list.every((one) => one.ok);
   report.checks.aWorkerViewsRecordsHaveLinesWithinTwoPixelsOfTheirBoxes = { held: seen.cards, ok: every(seen.cards) };
   report.checks.scrollingThePageKeepsAWorkerViewsLinesOnItsRecordsEveryFrame = { held: seen.cardsScroll, ok: every(seen.cardsScroll) };
+  report.checks.aMoveToTheCityAndBackKeepsAWorkerViewsLinesOnItsRecordsEveryFrame = { held: seen.levelMove, ok: every(seen.levelMove) };
+  report.checks.goingToARecordAndBackAtNearbyBringsTheLinesBack = { held: seen.awayAndBack, ok: every(seen.awayAndBack) };
   report.checks.aFrameGuestsRecordsHaveLinesWithinTwoPixelsOfTheirBoxes = { held: seen.rows, ok: every(seen.rows) };
-  report.checks.scrollingTheFrameOrThePageKeepsItsLinesOnItsRecords = { held: seen.rowsScroll, ok: every(seen.rowsScroll) };
+  report.checks.scrollingTheFrameKeepsItsLinesOnItsRowsAndScrollingThePageEveryFrame = { held: seen.rowsScroll, ok: every(seen.rowsScroll) };
+  report.checks.aSeatThatCannotSeeAMarkedRecordGetsNoLineToIt = { held: seen.unseen, ok: every(seen.unseen) };
   report.checks.aRecordPageDrawnByAViewThatNamesNoRecordHasItsOneLine = { held: seen.quiet, ok: every(seen.quiet) };
-  report.checks.connectedDoesNotRepeatWhatAFrameShows = { held: seen.connected, ok: every(seen.connected) };
+  report.checks.onATallViewThatIsTheWholePageItsConnectedRecordsAreInTheFirstWindowAndEveryLineEndsInIt = { held: seen.tall, ok: every(seen.tall) };
+  report.checks.aTallViewsOwnPillsHaveTheirLinesWhenScrolledTo = { held: seen.pills, ok: every(seen.pills) };
+  report.checks.aDeepWideViewIsMeasuredWithinItsBudget = { budgetMs: DEEP_MS, held: seen.deep, ok: every(seen.deep) };
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
   report.passed = Object.values(report.checks).every((check) => check.ok);
 } catch (error) {

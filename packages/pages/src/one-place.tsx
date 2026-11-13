@@ -1298,6 +1298,14 @@ function CityKey({ close }: { readonly close: () => void }) {
  * it for that record's building. Nothing at all when the page shows every
  * one. What the Scene's own record view said under the record ("why this is
  * here", "the list it is on") is here when the page does not say it.
+ *
+ * A PAGE THAT IS A VIEW'S WHOLE (Graview HQ brief
+ * b-cloud-2026-11-13-connected-under-a-view): a tall view can put what the
+ * record is connected to far below the first window, or under nothing that
+ * says it is there. Then Connected stands at the page's top, every record
+ * it is linked to said there at once, small, under how many there are; a
+ * line leaves from the view's own part for a record where that part is in
+ * sight, and from here where it is not.
  */
 function Connected({ store, id, box, sheet, openRecord }: { readonly store: PageContext<AnySchema>["store"]; readonly id: string; readonly box: RefObject<HTMLDivElement | null>; readonly sheet: RefObject<HTMLDivElement | null>; readonly openRecord: (id: string, level: number) => void }) {
   const tick = useStoreTick(store);
@@ -1305,6 +1313,8 @@ function Connected({ store, id, box, sheet, openRecord }: { readonly store: Page
   const facts = useMemo(() => recordFacts(store, id), [store, id, tick]);
   /* What the page shows already: every record a part of it marks, outside this list. */
   const [onPage, setOnPage] = useState<ReadonlySet<string> | null>(null);
+  /* Whether the page is a view's whole. */
+  const [whole, setWhole] = useState(false);
   useLayoutEffect(() => {
     const plane = sheet.current;
     if (!plane) return;
@@ -1312,10 +1322,10 @@ function Connected({ store, id, box, sheet, openRecord }: { readonly store: Page
       const shown = new Set<string>();
       for (const part of plane.querySelectorAll(`[data-graview-pick], [data-graview-record], [data-record], a[href], [${RECORD_BOXES_ATTRIBUTE}]`)) {
         if (box.current?.contains(part)) continue;
-        /* A view drawn where the page cannot read (a worker view, a frame): the records its host says it shows. */
+        /* A view drawn where the page cannot read (a worker view, a frame): the records its host says it shows, in sight or not. */
         const drawn = recordBoxesOf(part);
         if (drawn) {
-          for (const one of drawn()) shown.add(one.id);
+          for (const one of drawn.shows()) shown.add(one);
           continue;
         }
         const marked = part.getAttribute("data-graview-pick") ?? part.getAttribute("data-graview-record") ?? part.getAttribute("data-record");
@@ -1331,6 +1341,7 @@ function Connected({ store, id, box, sheet, openRecord }: { readonly store: Page
         }
       }
       setOnPage((was) => (was && was.size === shown.size && [...shown].every((one) => was.has(one)) ? was : shown));
+      setWhole(plane.querySelector("[data-graview-whole-view]") !== null);
     };
     read();
     const watch = typeof MutationObserver === "undefined" ? null : new MutationObserver(read);
@@ -1341,9 +1352,34 @@ function Connected({ store, id, box, sheet, openRecord }: { readonly store: Page
       plane.removeEventListener(RECORD_BOXES_MOVED, read);
     };
   }, [sheet, box, id, tick]);
-  const groups = (facts?.links ?? []).map((group) => ({ ...group, targets: group.targets.filter((target) => !onPage?.has(target.id)) })).filter((group) => group.targets.length > 0);
+  const groups = (facts?.links ?? []).map((group) => ({ ...group, targets: whole ? group.targets : group.targets.filter((target) => !onPage?.has(target.id)) })).filter((group) => group.targets.length > 0);
   const total = groups.reduce((sum, group) => sum + group.targets.length, 0);
   if (onPage === null || total === 0) return <div ref={box} data-graview-connected-box="" hidden />;
+  if (whole) {
+    return (
+      <div ref={box} data-graview-connected-box="" data-graview-connected-at="top" style={{ order: -1, height: 0, opacity: 0, overflow: "hidden", background: "var(--graview-panel, Canvas)", borderBottom: "1px solid var(--graview-edge)", flex: "0 0 auto" }}>
+        <section data-graview-connected={total} aria-label="Connected" style={{ padding: "8px 18px 10px" }}>
+          <h2 style={{ margin: "0 0 6px", fontSize: "0.95rem" }}>
+            Connected <span style={{ fontWeight: 400, color: "var(--graview-ink-faint)" }}>· {total}</span>
+          </h2>
+          {groups.map((group) => (
+            <div key={`${group.edgeKind}|${group.direction}`} style={{ marginTop: 4 }}>
+              <div style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>{group.description ?? group.edgeKind}</div>
+              <ul style={{ listStyle: "none", margin: "2px 0 0", padding: 0, display: "flex", flexWrap: "wrap", gap: 4 }}>
+                {group.targets.map((target) => (
+                  <li key={target.id}>
+                    <button type="button" data-graview-record={target.id} onClick={() => openRecord(target.id, PANEL)} style={{ display: "inline-flex", alignItems: "center", minHeight: 26, padding: "2px 8px", border: "1px solid var(--graview-edge)", borderRadius: 999, background: "none", color: "var(--graview-ink)", font: "inherit", fontSize: "0.8125rem", cursor: "pointer" }}>
+                      {target.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </section>
+      </div>
+    );
+  }
   return (
     <div ref={box} data-graview-connected-box="" style={{ height: 0, opacity: 0, overflow: "hidden", background: "var(--graview-panel, Canvas)", borderTop: "1px solid var(--graview-edge)", flex: "0 0 auto" }}>
       <section data-graview-connected={total} aria-label="Also connected" style={{ padding: "10px 18px 12px" }}>

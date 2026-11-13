@@ -255,7 +255,8 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
       {node && isLeftAlone(store, id) ? <LeftAloneSaid context={context} id={id} kind={facts.kind} /> : null}
 
       {PageView && node ? (
-        <section data-testid="record-view" style={{ display: "grid", minWidth: 0 }}>
+        // The whole page a view's (`whole`): the one face puts what the record is connected to where it is seen without scrolling past the view.
+        <section data-testid="record-view" {...(whole ? { "data-graview-whole-view": "" } : {})} style={{ display: "grid", minWidth: 0 }}>
           <DefaultViewElsewhere>
             {/* Edge to edge on a phone, where the view says `bleed` (Bleed). */}
             <Bleed when={bleeds(ownPage)} full={full}>

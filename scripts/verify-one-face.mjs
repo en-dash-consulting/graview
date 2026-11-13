@@ -671,8 +671,13 @@ async function chosenRecord(page, where) {
 }
 
 
-/* Book the van, beside the city: the list it is on stands out of sight, and its line points there from the city's edge. */
+/*
+ * Book the van, beside the city: no line crosses the panel. Its list once stood out of sight and its line
+ * pointed there from the city's edge; Nearby now stands back to take in what a record's page is connected to
+ * (brief b-cloud-2026-11-13-connected-under-a-view), so the list is in sight and its line ends on it.
+ */
 async function offSight(page, where) {
+  const size = page.viewportSize();
   await page.goto(`${at("todo")}/pages/tasks/t-book?${DAY}`, { waitUntil: "load" });
   await ready(page);
   await startRecording(page);
@@ -681,8 +686,10 @@ async function offSight(page, where) {
   await page.waitForTimeout(400);
   const frames = await stopRecording(page);
   const crossing = linesInside(frames);
-  const pointed = frames.at(-1)?.lines.filter((line) => line.under).length ?? 0;
-  seen.crossing.push({ where, path: "/pages/tasks/t-book", pointed, ...crossing, ok: crossing.counted > 0 && crossing.crossed === 0 && pointed > 0 });
+  const last = frames.at(-1)?.lines ?? [];
+  const pointed = last.filter((line) => line.under).length;
+  const inSight = last.filter((line) => !line.under && line.to.x >= 0 && line.to.y >= 0 && line.to.x <= size.width && line.to.y <= size.height).length;
+  seen.crossing.push({ where, path: "/pages/tasks/t-book", pointed, inSight, ...crossing, ok: crossing.counted > 0 && crossing.crossed === 0 && pointed === 0 && inSight > 0 });
   return { where, ok: true };
 }
 

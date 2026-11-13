@@ -63,7 +63,7 @@ const OFF_THE_PAGE = {
   "@graview/core/navigate": { from: navigate, names: ["narrowedPath", "sectionSlug", "placeNamesFrom", "placeNamesOf"] },
   // Roadmap f-app-icons-home-screen: an app on a home screen — its head tags, its manifest and the files a host serves; a face's theme-color.
   // Graview HQ feature:f-one-face-lines-from-frame-views: where a view drawn where the page cannot read shows its records — the one face's and a guest host's, fetched with them.
-  "@graview/core/record-boxes": { from: recordBoxes, names: ["holdRecordBoxes", "judgeRecordBoxes", "MOST_RECORD_BOXES", "RECORD_BOXES", "RECORD_BOXES_ATTRIBUTE", "RECORD_BOXES_MOVED", "recordBoxesMoved", "recordBoxesOf"] },
+  "@graview/core/record-boxes": { from: recordBoxes, names: ["holdRecordBoxes", "judgeRecordBoxes", "judgeRecordIds", "MOST_RECORD_BOXES", "RECORD_BOXES", "RECORD_BOXES_ATTRIBUTE", "RECORD_BOXES_MOVED", "recordBoxesMoved", "recordBoxesOf"] },
   "@graview/core/head": { from: head, names: ["headHtml", "homeScreenOf", "MANIFEST_PATH", "themeColorsOf"] },
   // Roadmap f-playback: the timeline around the past, fetched with it when somebody opens the past.
   "@graview/core/history": { from: history, names: ["declarationSentence", "digestWords", "foldDigests", "typedRowWords", "historyInWords", "makerOf", "makerWords", "restoreBatches", "ticksOf", "typedCounts", "typedRun", "typedSpans", "typingSentence", "typingWords", "unpublished"] },

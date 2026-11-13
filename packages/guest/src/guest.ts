@@ -68,7 +68,7 @@ export function connectGuest(options: ConnectGuestOptions = {}): Guest {
   let reporting: (() => void) | undefined;
   const laidOut = at as unknown as Window & typeof globalThis;
   const report = () => {
-    if (!reporting && laidOut.document && "ResizeObserver" in laidOut && "MutationObserver" in laidOut && "requestAnimationFrame" in laidOut) reporting = reportRecords(laidOut, (boxes) => opened.send({ type: "records", boxes }));
+    if (!reporting && laidOut.document && "ResizeObserver" in laidOut && "MutationObserver" in laidOut && "requestAnimationFrame" in laidOut) reporting = reportRecords(laidOut, (boxes, shows) => opened.send({ type: "records", boxes, shows }));
   };
   const opened = openGuest(
     {

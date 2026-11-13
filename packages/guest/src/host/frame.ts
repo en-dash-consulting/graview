@@ -1,5 +1,5 @@
 import type { AnySchema, Principal, Store } from "@graview/core";
-import { holdRecordBoxes, judgeRecordBoxes, recordBoxesMoved, type RecordBox } from "@graview/core/record-boxes";
+import { holdRecordBoxes, judgeRecordBoxes, judgeRecordIds, MOST_RECORD_BOXES, recordBoxesMoved } from "@graview/core/record-boxes";
 import { GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN, isGuestReady, type GuestFont, type GuestPlace, type GuestTheme, type HostHello, type HostMessage } from "../protocol.js";
 import { mintNonce } from "./nonce.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestReads, type GuestStats, type GuestViewInput } from "./session.js";
@@ -287,27 +287,38 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
 
   /*
    * WHERE ITS RECORDS ARE (Graview HQ feature:f-one-face-lines-from-frame-views):
-   * what the guest last said of its `data-record` elements, judged as it
-   * arrives — inside the frame, a record the seat may see, no more than
-   * the most — and judged again each time a page reads it, against the
-   * frame's size and the seat's sight then. A page that draws lines to
-   * records (the one face) reads it off the frame (`RECORD_BOXES`); the
-   * guest is told nothing of it.
+   * what the guest last said of its `data-record` elements, kept as said
+   * and judged each time a page reads
+   * it, against the frame and the records it was handed as its seat sees
+   * them then: a record the seat comes to see has its line without the
+   * guest saying it again. A page that draws lines to records (the one
+   * face) reads it off the frame (`RECORD_BOXES`); the guest is told
+   * nothing of it.
    */
-  let reported: readonly RecordBox[] = [];
-  const seesNow = () => {
+  let saidBoxes: readonly unknown[] = [];
+  let saidShows: readonly unknown[] = [];
+  const mayName = () => {
     const graph = options.store.seenBy(options.principal).graph;
-    return (id: string) => graph.has(id);
+    const handed = session?.handed;
+    return (id: string) => handed !== undefined && handed.has(id) && graph.has(id);
   };
-  const report = (boxes: readonly RecordBox[]) => {
-    const was = reported;
-    reported = boxes;
-    if (was.length !== boxes.length || was.some((box, at) => box.id !== boxes[at]!.id)) recordBoxesMoved(iframe);
+  let showsSaid = "";
+  const report = (boxes: unknown, shows: unknown) => {
+    saidBoxes = Array.isArray(boxes) ? boxes.slice(0, MOST_RECORD_BOXES * 2) : [];
+    saidShows = Array.isArray(shows) ? shows.slice(0, MOST_RECORD_BOXES * 2) : [];
+    const now = saidShows.join(" ");
+    if (now !== showsSaid) {
+      showsSaid = now;
+      recordBoxesMoved(iframe);
+    }
   };
-  holdRecordBoxes(iframe, () => (reported.length === 0 ? [] : judgeRecordBoxes(reported, { width: iframe.clientWidth, height: iframe.clientHeight, sees: seesNow() })));
+  holdRecordBoxes(iframe, {
+    boxes: () => (saidBoxes.length === 0 ? [] : judgeRecordBoxes(saidBoxes, { width: iframe.clientWidth, height: iframe.clientHeight, sees: mayName() })),
+    shows: () => (saidShows.length === 0 ? [] : judgeRecordIds(saidShows, mayName())),
+  });
 
   const end = () => {
-    report([]);
+    report([], []);
     tally();
     session?.dispose();
     port?.close();
@@ -356,7 +367,7 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
       ...(options.onNavigate ? { onNavigate: options.onNavigate } : {}),
       ...(options.onArrive ? { onArrive: options.onArrive } : options.goTo ? { onArrive: (to: Arrival) => arriveAt(options.goTo!(), to) } : {}),
       ...(options.onLost ? { onLost: options.onLost } : {}),
-      onRecords: (boxes) => report(judgeRecordBoxes(boxes, { width: iframe.clientWidth, height: iframe.clientHeight, sees: seesNow() })),
+      onRecords: report,
       onSize: (height) => {
         if (options.onSize) options.onSize(height);
         else iframe.style.height = `${height}px`;

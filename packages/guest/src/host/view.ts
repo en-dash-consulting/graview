@@ -1,7 +1,6 @@
 import { imageRefusedWords } from "./open-judge.js";
 import { keepClicked } from "./clicked.js";
 import { guestPlacesOf } from "./links-words.js";
-import { holdRecordBoxes, judgeRecordBoxes, MOST_RECORD_BOXES, recordBoxesMoved } from "@graview/core/record-boxes";
 import { actingAs, meOf, type AnySchema, type FileValue, type HostFiles, type PagesArrangement, type Principal, type SignIn, type Store, type ViewerState } from "@graview/core";
 import { readsOnlyUnseen, unseenOf, viewKinds } from "./unseen.js";
 import { createMine, keptForTheVisit, visitOf } from "./mine.js";
@@ -9,7 +8,7 @@ import { storedFilesOf } from "./marks.js";
 import { retryingImport } from "@graview/core/retry";
 import type { GuestDomEvent, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
 import { PART_SHARE } from "../part.js";
-import { visibleBox } from "../visible-box.js";
+import { createViewRecords } from "./view-records.js";
 import { checkManifest, edgesReadWithoutTheirKindsSaid, readsComputed, workerViewProps, type ComputedOn, type WorkerViewManifest } from "./manifest.js";
 import type { OpenDrawing, ViewRefusal } from "./open-draw.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestStats, type GuestViewInput } from "./session.js";
@@ -398,14 +397,12 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   let drawing: OpenDrawing | undefined;
   let failed = false;
   /*
-   * WHERE ITS RECORDS ARE (Graview HQ feature:f-one-face-lines-from-frame-views):
-   * each element it drew marked with `data-record` — the mark a link to a
-   * record already is — measured when a page asks, in the frame it asks in,
-   * so a line to it is on it every frame however the page moves; inside
-   * the region, a record the seat may see, no more than the most. A page
-   * that draws lines to records (the one face) reads it off the region
-   * (`RECORD_BOXES`), since what the view drew is in a shadow root the
-   * page's own reading does not reach. Nothing of it goes to the view.
+   * WHERE ITS RECORDS ARE (Graview HQ feature:f-one-face-lines-from-frame-views,
+   * view-records.ts): each element it drew marked with `data-record`, of a
+   * record it was handed as its seat sees it. A page that draws lines to
+   * records (the one face) reads it off the region (`RECORD_BOXES`), since
+   * what the view drew is in a shadow root the page's own reading does not
+   * reach. Nothing of it goes to the view.
    */
   let seenFor: GuestProps | undefined;
   const seenNow = new Map<string, boolean>();
@@ -418,30 +415,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     if (one === undefined) seenNow.set(id, (one = seesNow(id)));
     return one;
   };
-  let recordsSaid = "";
-  const recordsMoved = () => {
-    const now = failed ? "" : [...shadow.querySelectorAll("[data-record]")].slice(0, MOST_RECORD_BOXES).map((one) => one.getAttribute("data-record")).join(" ");
-    if (now === recordsSaid) return;
-    recordsSaid = now;
-    recordBoxesMoved(region);
-  };
-  holdRecordBoxes(region, () => {
-    if (failed) return [];
-    const marked = shadow.querySelectorAll("[data-record]");
-    if (marked.length === 0) return [];
-    const box = region.getBoundingClientRect();
-    /* The page may be scaled as it moves a level: the region's own pixels are its layout's. */
-    const scale = region.offsetWidth > 0 && box.width > 0 ? box.width / region.offsetWidth : 1;
-    const said: { id: string | null; x: number; y: number; width: number; height: number }[] = [];
-    const clips = new Map<Element, boolean>();
-    for (const one of marked) {
-      if (said.length >= MOST_RECORD_BOXES * 2) break;
-      // What of it is in sight: a row scrolled out of a list the view scrolls draws no line.
-      const at = visibleBox(one, region, clips, (element) => window.getComputedStyle(element));
-      if (at) said.push({ id: one.getAttribute("data-record"), x: (at.left - box.left) / scale, y: (at.top - box.top) / scale, width: (at.right - at.left) / scale, height: (at.bottom - at.top) / scale });
-    }
-    return judgeRecordBoxes(said, { width: region.offsetWidth, height: region.offsetHeight, sees: seesHere });
-  });
+  const records = createViewRecords(region, shadow, (id) => !failed && shown.has(id) && seesHere(id));
+  const recordsMoved = () => records.moved();
   let counted: GuestStats = { applied: 0, refused: 0, dropped: 0 };
   /* What came before the drawing's module did: drawn, in order, once it has. */
   const waiting: (["render", unknown] | ["style", readonly string[]])[] = [];
@@ -1353,7 +1328,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         stop();
         heights?.disconnect();
         drawing?.dispose();
-        holdRecordBoxes(region, undefined);
+        records.dispose();
         region.remove();
         author?.remove();
       },
