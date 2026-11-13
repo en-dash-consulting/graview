@@ -225,7 +225,8 @@ describe("a hosted page", () => {
     // 1125 KB since a bare app came to look designed by default (Roadmap f-better-bare-app-defaults): a blocks home's derived row says its kind's glance, a glance leads with its kind's date and names a moment's zone only to a reader elsewhere, a warning carries its mark, its words or its pattern: the scene face measured 1_151_234 B.
     // 1128 KB with the whole 0.1.74 batch together (2026-11-11): a place drawn for an e-ink device's screen, a field that keeps a time of day and what a seat may run, and a bare app that looks designed, each measured against main: the scene face measured 1_154_955 B, 2_955 over 1125 KB.
     // 1129 KB since the page and the city came to be one face a host turns on (`sceneUnderPages`, 0.2.0): the level control, its keys and legend, and lines kept off what stands at the foot: the scene face measured 1_155_787 B, 832 over the whole 0.1.74 batch (1_154_955).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1129 * 1024);
+    // 1131 KB since mount came to take `sceneUnderPages` (FR-239): the frame's root drawn for the one face, its bar drawn once and moved into the one face's slot and back, and every face but a picture drawn as the pages: the scene face measured 1_157_339 B, 1_553 over 0.2.0 (1_155_786).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1131 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

@@ -57,6 +57,16 @@ export interface PageContext<S extends AnySchema> {
    * Needs `views`, the registry the Scene draws with. Off unless given.
    */
   readonly sceneUnderPages?: boolean;
+  /**
+   * WHERE A HOST'S OWN BAR GOES ON THE ONE FACE (FR-239): handed the bar's
+   * slot, fixed at the window's top over the page and the city, above every
+   * layer of the one face (`[data-graview-one-face-bar]`), once it is drawn,
+   * and null once it is gone. A host that draws the app's bar itself (the
+   * embed's, with `barAbove`) draws it there, so it stays at Page, Nearby
+   * and City, and the page keeps its room under it. Read only where
+   * `sceneUnderPages` is.
+   */
+  readonly onBarSlot?: (slot: HTMLElement | null) => void;
   readonly invariantContext?: Readonly<Record<string, unknown>>;
   /**
    * Whether this browser remembers the edits (a ship browser adapter behind

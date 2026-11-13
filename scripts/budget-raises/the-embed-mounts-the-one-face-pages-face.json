@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 1200,
+  "gzipped": 300,
+  "note": "Raised when @graview/embed/pages came to take sceneUnderPages (FR-239): the frame's root drawn for the one face, and its bar drawn once into an element the frame owns and moved into the one face's slot and back. Measured at 788_847 / 285_744 against 787_586 / 285_388."
+}
