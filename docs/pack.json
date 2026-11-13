@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-13T19:46:52.994Z",
+  "at": "2026-11-13T21:05:02.886Z",
   "packages": {
     "@graview/core": {
       "files": 1716,
@@ -13,17 +13,17 @@
     },
     "@graview/embed": {
       "files": 63,
-      "tarballBytes": 108662,
+      "tarballBytes": 108661,
       "ok": true
     },
     "graview": {
       "files": 237,
-      "tarballBytes": 1064513,
+      "tarballBytes": 1064819,
       "ok": true
     },
     "@graview/guest": {
       "files": 384,
-      "tarballBytes": 570192,
+      "tarballBytes": 570190,
       "ok": true
     },
     "@graview/layout": {
@@ -33,17 +33,17 @@
     },
     "@graview/pages": {
       "files": 191,
-      "tarballBytes": 392414,
+      "tarballBytes": 392570,
       "ok": true
     },
     "@graview/primitives": {
       "files": 770,
-      "tarballBytes": 1088279,
+      "tarballBytes": 1088280,
       "ok": true
     },
     "@graview/react": {
       "files": 343,
-      "tarballBytes": 430506,
+      "tarballBytes": 430507,
       "ok": true
     },
     "@graview/render": {
@@ -63,12 +63,12 @@
     },
     "@graview/studio": {
       "files": 75,
-      "tarballBytes": 154218,
+      "tarballBytes": 154221,
       "ok": true
     },
     "@graview/tools": {
       "files": 347,
-      "tarballBytes": 583170,
+      "tarballBytes": 583171,
       "ok": true
     }
   },
@@ -80,7 +80,7 @@
       "name": "the pages face alone",
       "load": "first",
       "minified": 794807,
-      "gzipped": 288261,
+      "gzipped": 288260,
       "chunks": 49,
       "budget": {
         "minified": 794879,
@@ -149,7 +149,7 @@
       "name": "embed without the studio",
       "load": "first",
       "minified": 449546,
-      "gzipped": 156585,
+      "gzipped": 156588,
       "chunks": 10,
       "budget": {
         "minified": 727953,
@@ -175,8 +175,8 @@
     {
       "name": "every face",
       "load": "all",
-      "minified": 3349511,
-      "gzipped": 1216656,
+      "minified": 3349577,
+      "gzipped": 1216683,
       "chunks": 224,
       "budget": {
         "minified": 3349587,
@@ -203,7 +203,7 @@
       "name": "embed with the studio handed in",
       "load": "first",
       "minified": 2006388,
-      "gzipped": 702730,
+      "gzipped": 702728,
       "chunks": 98,
       "budget": {
         "minified": 2027531,

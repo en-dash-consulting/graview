@@ -124,7 +124,8 @@ export function placeSigns(asked: SignsAsked): SignsPlaced {
   const postOf = (foot: Point, length: number): Box => ({ x: foot.x - 1, y: foot.y, width: 2, height: Math.max(0, length) });
   const nameBoxes = [...names.values()];
   /** What a board's card and post would stand on, weighed: another board or a name most, then ground, then what is kept clear. */
-  const covers = (foot: Point, length: number, ground: readonly Box[], blocks: readonly Box[], scale = 1, near?: { readonly stood: readonly Box[]; readonly posts: readonly Box[]; readonly names: readonly Box[] }): number => {
+  // Past `bound` the sum is not finished: a place already worse than the best found is not weighed to the end.
+  const covers = (foot: Point, length: number, ground: readonly Box[], blocks: readonly Box[], scale = 1, near?: { readonly stood: readonly Box[]; readonly posts: readonly Box[]; readonly names: readonly Box[] }, bound = Infinity): number => {
     const face = card(foot, scale);
     const cardBox = grow(face, gap / 2);
     const whole = taken(face, length);
@@ -146,12 +147,14 @@ export function placeSigns(asked: SignsAsked): SignsPlaced {
     let sum = crossed * POST_CROSSING;
     for (const other of near?.stood ?? stood) sum += overlap(cardBox, other) * 4;
     for (const other of near?.names ?? nameBoxes) sum += overlap(named, other) * 4;
+    if (sum > bound) return sum;
     // A district's ground is its diamond: the bare corners of its box are the street.
     for (const other of ground) {
       if (overlap(face, other) === 0) continue;
       const reach = diamondReach(face, other);
       if (reach < 1) sum += (1 - reach) * overlap(face, other) + 1;
     }
+    if (sum > bound) return sum;
     for (const other of blocks) sum += overlap(face, other);
     for (const other of reserved) sum += overlap(whole, other) * 2;
     return sum + outside(whole) * 4;
@@ -254,7 +257,8 @@ export function placeSigns(asked: SignsAsked): SignsPlaced {
       const ground = { x: middleX + side * half.w, y: middleY - half.h * (1 - Math.abs(side)) * 0.6 };
       const foot = { x: ground.x, y: top - gap - raise * ((height * scale) / 2) };
       const length = ground.y - foot.y;
-      const cost = covers(foot, length, groundNear, blocksNear, scale, near) * 1e6 + prefer;
+      const bound: number = best ? (best.cost - prefer) / 1e6 : Infinity;
+      const cost: number = covers(foot, length, groundNear, blocksNear, scale, near, bound) * 1e6 + prefer;
       if (!best || cost < best.cost) best = { foot, length, scale, cost };
     }
     if (!best || (asked.dropCovered && best.cost >= 1e6)) return;
