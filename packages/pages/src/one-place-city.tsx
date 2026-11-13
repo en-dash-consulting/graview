@@ -91,6 +91,8 @@ const keyOf = (where: PageWhere): string => (where.type === "record" ? `record:$
 const ease = (t: number) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
 const level = (live: Live) => Math.abs(live.s - 1) < 1e-4 && Math.abs(live.x) < 0.05 && Math.abs(live.y) < 0.05;
 const clamp01 = (t: number) => Math.max(0, Math.min(1, t));
+/** The same ids, in the same order. */
+const sameIds = (a: readonly string[], b: readonly string[]): boolean => a.length === b.length && a.every((id, at) => id === b[at]);
 /** Whether a point stands inside a box. */
 const inside = (p: Point, box: Box): boolean => p.x >= box.x && p.x <= box.x + box.width && p.y >= box.y && p.y <= box.y + box.height;
 
@@ -174,9 +176,9 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     // While the page is read the view is the page's own, and none of this is the Scene's.
     if (!latestOut.current || toUrl(seen) === asked.current) return;
     const picked = seen.selection ?? [];
+    // What the page chose is the page's — none, too, on a page of no one record — had back when it comes in again.
+    if (kept.current && (picked.length > 0 || (kept.current.selection ?? []).length > 0) && !sameIds(picked, kept.current.selection ?? [])) kept.current = { ...kept.current, selection: picked };
     if (seen.overview && seen.focusId === null && picked.length === 0) return;
-    // What the page chose is the page's: had back when it comes in again.
-    if (picked.length > 0 && kept.current) kept.current = { ...kept.current, selection: picked };
     const focus = seen.focusId;
     const back = { ...wanted, ...(seen.pan ? { pan: seen.pan } : {}) };
     asked.current = toUrl(back);

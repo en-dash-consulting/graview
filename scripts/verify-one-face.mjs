@@ -1344,7 +1344,9 @@ const readRich = (page) =>
         const was = [b.style.pointerEvents, o.style.pointerEvents];
         b.style.pointerEvents = "auto";
         o.style.pointerEvents = "auto";
-        const seenThere = document.elementFromPoint(post.x + 1, y)?.closest("[data-graview-board]");
+        // Of the two, whichever is drawn higher at that point: something else over both (a name, a ring) says nothing of their order.
+        const stack = document.elementsFromPoint(post.x + 1, y).map((el) => el.closest("[data-graview-board]")).filter((one) => one === b || one === o);
+        const seenThere = stack[0];
         b.style.pointerEvents = was[0];
         o.style.pointerEvents = was[1];
         postCrossings.push({ post: b.getAttribute("title"), across: `“${o.getAttribute("title")}”`, under: seenThere === o });
@@ -1600,8 +1602,9 @@ async function rich(browser, device) {
     }
     if (device.width === 1280) {
       const opens = [];
-      for (const [from, how] of [[2, "pointer"], [2, "keyboard"], [1, "pointer"], [1, "keyboard"]]) {
-        await page.goto(`${richHost.url}/specimens?theme=dark`, { waitUntil: "load" });
+      // And from the problems page itself, beside the city: the chip narrows the page it is on.
+      for (const [from, how, start] of [[2, "pointer", "/specimens"], [2, "keyboard", "/specimens"], [1, "pointer", "/specimens"], [1, "keyboard", "/specimens"], [1, "pointer", "/problems"]]) {
+        await page.goto(`${richHost.url}${start}?theme=dark`, { waitUntil: "load" });
         await ready(page);
         await page.keyboard.press(String(from + 1));
         await restAt(page, from, 15_000);
@@ -1621,11 +1624,12 @@ async function rich(browser, device) {
           const sheet = document.querySelector("[data-graview-one-place]");
           return {
             of: sheet?.querySelector("[data-graview-problems-of]")?.getAttribute("data-graview-problems-of") ?? null,
-            named: [...(sheet?.querySelectorAll("main section:not([data-testid=rules]) a[href]") ?? [])].map((a) => new URL(a.href).pathname.split("/").at(-2)),
+            // Each problem listed, and whether it names a specimen among the records it links.
+            named: [...(sheet?.querySelectorAll("main [data-graview-problem]") ?? [])].map((one) => ([...one.querySelectorAll("a[href]")].some((a) => new URL(a.href).pathname.split("/").at(-2) === "specimens") ? "specimens" : "another kind")),
           };
         });
         const at = new URL(page.url());
-        opens.push({ from: from === 2 ? "City" : "Nearby", how, there, url: at.pathname, kind: at.searchParams.get("kind"), level: await levelOf(page), ...listed });
+        opens.push({ from: from === 2 ? "City" : "Nearby", how, start, there, url: at.pathname, kind: at.searchParams.get("kind"), level: await levelOf(page), ...listed });
       }
       result.problemsOpen = opens;
     }
@@ -1665,7 +1669,7 @@ async function rich(browser, device) {
   else if (device.width === 1280 || device.width === 390) seen.richHand.push({ where, error: result.error, ok: false });
   if (result.problemsOpen) seen.richProblems.push({ where, opens: result.problemsOpen, ok: result.problemsOpen.every((one) => one.there && one.url.endsWith("/problems") && one.level === 1) });
   // The specimens' "⚠ n" opens the problems narrowed to specimens: the page says so, and every problem it lists names a specimen.
-  if (result.problemsOpen) seen.richProblemsOfKind.push({ where, opens: result.problemsOpen.map(({ from, how, kind, of, named }) => ({ from, how, kind, of, named: [...new Set(named)] })), ok: result.problemsOpen.every((one) => one.there && one.kind === "specimen" && one.of === "specimen" && one.named.length > 0 && one.named.every((plural) => plural === "specimens")) });
+  if (result.problemsOpen) seen.richProblemsOfKind.push({ where, opens: result.problemsOpen.map(({ from, how, start, kind, of, named }) => ({ from, how, start, kind, of, named: [...new Set(named)] })), ok: result.problemsOpen.every((one) => one.there && one.kind === "specimen" && one.of === "specimen" && one.named.length > 0 && one.named.every((plural) => plural === "specimens")) });
   /*
    * A board's post never runs across a district's name, at the City and
    * beside a page. Across another board it runs only where no place by its
@@ -1759,7 +1763,12 @@ const watchFading = (page) =>
       if (!window.__fadeWatch) return;
       const city = document.querySelector('[data-testid="one-place-city"]');
       let faded = 0;
-      for (const b of city?.querySelectorAll("[data-graview-building]") ?? []) if (Number(getComputedStyle(b).opacity) < 0.95) faded++;
+      for (const b of city?.querySelectorAll("[data-graview-building]") ?? []) {
+        // As seen: its own opacity and every one it is drawn inside.
+        let o = 1;
+        for (let el = b; el && el !== city; el = el.parentElement) o *= Number(getComputedStyle(el).opacity);
+        if (o < 0.95) faded++;
+      }
       window.__mostFaded = Math.max(window.__mostFaded, faded);
       requestAnimationFrame(tick);
     };

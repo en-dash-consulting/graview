@@ -65,6 +65,7 @@ export function DefaultProblemsPage<S extends AnySchema>({ context }: { context:
         return (
           <section
             key={index}
+            data-graview-problem={violation.invariant}
             style={{
               display: "grid",
               gap: 10,

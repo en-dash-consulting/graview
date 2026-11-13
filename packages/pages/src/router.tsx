@@ -654,7 +654,8 @@ function OneFacePage({ context, registry }: { readonly context: PageContext<AnyS
   const [face, setFace] = useState<OneFace | null>(null);
   // Gone with the face: where it was last put while nothing held it.
   useEffect(() => () => host?.remove(), [host]);
-  const page = <PagesRoutes context={context} {...(registry ? { registry } : {})} />;
+  // One element across the face's changes: a level moved re-renders the face, never the whole page (`setFace`).
+  const page = useMemo(() => <PagesRoutes context={context} {...(registry ? { registry } : {})} />, [context, registry]);
   // Drawn on a server, nothing moves: the page as the fallback draws it.
   if (!host)
     return (
@@ -666,7 +667,7 @@ function OneFacePage({ context, registry }: { readonly context: PageContext<AnyS
     );
   return (
     <OneFaceComing.Provider value={true}>
-      <OneFaceContext.Provider value={face}>{createPortal(page, host)}</OneFaceContext.Provider>
+      {/* The place first, the page after: the element is in the document before the page's own refs, focus and measures run. */}
       <Suspense
         fallback={
           <OneFaceArriving>
@@ -676,6 +677,7 @@ function OneFacePage({ context, registry }: { readonly context: PageContext<AnyS
       >
         <OnePlace context={context} page={host} onFace={setFace} />
       </Suspense>
+      <OneFaceContext.Provider value={face}>{createPortal(page, host)}</OneFaceContext.Provider>
     </OneFaceComing.Provider>
   );
 }
@@ -703,7 +705,7 @@ function OneFaceArriving({ children }: { readonly children: ReactNode }) {
   return <>{children}</>;
 }
 
-/** Said on `<html>` while the one face's part is on its way and the page drawn meanwhile will be drawn again. */
+/** Said on `<html>` while the one face's part is on its way; the page drawn meanwhile is the page that stays, moved into the face when it comes. */
 export const ONE_FACE_ARRIVING = "data-graview-one-face-arriving";
 
 /** Where a first look finds the controls of a face that owns the page. */

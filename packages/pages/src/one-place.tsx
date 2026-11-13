@@ -494,7 +494,8 @@ export function OnePlace<S extends AnySchema>({
   }, [location.pathname]);
   const openAt = useCallback(
     (path: string, level: number) => {
-      if (path.split("?")[0] === location.pathname) return goLevel(level);
+      // The page this is (asked by its path alone, or narrowed as it is): only the level moves. Narrowed otherwise (`/problems?kind=…` from `/problems`), it is gone to.
+      if (path.includes("?") ? path === `${location.pathname}${location.search}` : path === location.pathname) return goLevel(level);
       if (level > PAGE) keep();
       kept.current = level > PAGE ? { scrollY: 0, address: path } : null;
       pendingLevel.current = { path: path.split("?")[0]!, level };
