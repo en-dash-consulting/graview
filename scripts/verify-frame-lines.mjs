@@ -23,7 +23,11 @@
  *   · a tall view that is a record's whole page: what the record is
  *     connected to is said in the first window, its pills have their lines
  *     when scrolled to, and every line at Nearby ends inside the window;
- *   · a deep, wide view is measured within a budget.
+ *   · a deep, wide view is measured within a budget;
+ *   · at Nearby each line starts on its own card, on the edge that faces
+ *     the city, never on the page's edge;
+ *   · many lines into one district are one line into it with their count,
+ *     each part's own short line meeting it at the page's edge.
  *
  *   node scripts/verify-frame-lines.mjs [--engine=chromium|webkit|firefox]   (Chromium by default)
  *
@@ -232,14 +236,17 @@ async function nearby(page, path, drawn) {
   await page.waitForTimeout(300);
 }
 
-/** The lines drawn now: each one's record, the middle of the part it leaves from, its far end, and whether it points past the city's side. */
+/** The lines drawn now: each one's record, the middle of the part it leaves from and where on it the line starts, where it leaves the page, its far end, whether it points past the city's side, and the district it is gathered into with how many. */
 const linesNow = (page) =>
   page.evaluate(() =>
     [...document.querySelectorAll("[data-graview-line]")].map((g) => {
       const pair = (name) => (g.getAttribute(name) ?? "NaN,NaN").split(",").map(Number);
       const [x, y] = pair("data-graview-line-part");
       const [tx, ty] = pair("data-graview-line-to");
-      return { key: g.getAttribute("data-graview-line"), on: g.getAttribute("data-graview-line-on"), part: { x, y }, to: { x: tx, y: ty }, under: g.hasAttribute("data-graview-line-under") };
+      const [sx, sy] = pair("data-graview-line-start");
+      const [fx, fy] = pair("data-graview-line-from");
+      const count = g.getAttribute("data-graview-line-count");
+      return { key: g.getAttribute("data-graview-line"), on: g.getAttribute("data-graview-line-on"), part: { x, y }, start: { x: sx, y: sy }, from: { x: fx, y: fy }, to: { x: tx, y: ty }, under: g.hasAttribute("data-graview-line-under"), gathered: g.getAttribute("data-graview-line-gathered"), count: count === null ? null : Number(count) };
     }),
   );
 
@@ -564,7 +571,7 @@ async function smallZoomOut(page, where) {
   return { where, ...level, ok: level.sheet === 1 && Math.abs(level.altitude - 1) < 0.01 };
 }
 
-/* Where the city's side cannot hold what a page is connected to (a phone), the record's own building is in it, and a line from its edge points toward one out of sight. */
+/* Where the city's side cannot hold what a page is connected to (a phone), the record's own building is in it, and every line ends in that side or, its end under the page, points toward it from the page's edge. */
 async function outOfSight(page, where) {
   await nearby(page, "/features/f3", periodDrawn);
   const lines = await linesNow(page);
@@ -579,7 +586,43 @@ async function outOfSight(page, where) {
   const p = own?.panel;
   const clear = b && p && (b.right <= p.left + 2 || b.left >= p.right - 2 || b.bottom <= p.top + 2 || b.top >= p.bottom - 2);
   const ownInSight = Boolean(b && clear && b.top >= 0 && b.left >= 0 && b.right <= size.width && b.bottom <= size.height);
-  return { where, lines: lines.length, pointed, own, ownInSight, ok: pointed > 0 && ownInSight };
+  const side = own?.panel ? { left: 0, top: 0, right: own.panel.left, bottom: size.height } : { left: 0, top: 0, right: size.width, bottom: size.height };
+  const astray = lines.filter((line) => !line.under && !within(line.to, side, 0)).map((line) => line.key);
+  return { where, lines: lines.length, pointed, own, ownInSight, astray, ends: lines.map((line) => ({ key: line.key, on: line.on, to: round(line.to), under: line.under })), ok: lines.length > 0 && astray.length === 0 && ownInSight };
+}
+
+/* At Nearby each line starts on its own card, on the card's edge facing the city: never on the page's edge, away from what it is for. */
+async function leavesFromItsCard(page, where) {
+  await nearby(page, "/places/feature-board", boardDrawn);
+  const marks = (await marksNow(page, "feature-board")).filter((mark) => mark.inSight && mark.id !== "nobody-here");
+  const lines = await linesNow(page);
+  const panel = await page.evaluate(() => {
+    const r = document.querySelector("[data-graview-one-place]")?.getBoundingClientRect();
+    return r ? { left: r.left, top: r.top, right: r.right, bottom: r.bottom } : null;
+  });
+  const astray = marks
+    .map((mark) => ({ mark, line: lines.find((one) => one.key === mark.id) }))
+    .filter(({ mark, line }) => !line || !within(line.start, mark.box) || !panel || Math.abs(line.start.x - panel.left) < 4)
+    .map(({ mark, line }) => ({ id: mark.id, box: round(mark.box), start: line ? round(line.start) : null }));
+  return { where, cards: marks.length, panelLeft: panel?.left ?? null, astray, ok: marks.length >= 2 && astray.length === 0 };
+}
+
+/* Many lines into one district gather: a feature's page shows eight requests, and their lines come to one line into the requests' district with the count on it, each pill's own short line meeting it at the page's edge. */
+async function gatheredIntoOne(page, where) {
+  await nearby(page, "/features/f3", periodDrawn);
+  await wheelOver(page, '[data-worker-view="feature-period"]', 20, 200);
+  await page.waitForTimeout(300);
+  const lines = await linesNow(page);
+  const into = lines.filter((line) => line.gathered === "kind:request");
+  const leads = into.filter((line) => line.count !== null);
+  const meet = new Set(into.map((line) => `${Math.round(line.from.x)},${Math.round(line.from.y)}`));
+  const ends = new Set(into.map((line) => `${Math.round(line.to.x)},${Math.round(line.to.y)}`));
+  const ring = await page.evaluate(() => {
+    const el = document.querySelector('[data-testid="one-place-ring"][data-graview-to="kind:request"]');
+    return el ? { says: el.textContent.trim(), label: el.getAttribute("aria-label"), shown: el.style.display !== "none" && el.getBoundingClientRect().width > 0 } : null;
+  });
+  const own = lines.filter((line) => line.key.startsWith("r") && !line.gathered).map((line) => line.key);
+  return { where, gathered: into.length, counts: leads.map((line) => line.count), meetAt: meet.size, endAt: ends.size, ring, alone: own, ok: into.length >= 4 && leads.length === 1 && leads[0].count === into.length && meet.size === 1 && ends.size === 1 && own.length === 0 && Boolean(ring && ring.shown && ring.says === String(into.length)) };
 }
 
 /* At Nearby the person moves the camera by hand; then the frame shows one more record: the camera stays where they left it. */
@@ -647,7 +690,7 @@ async function deepView(page, where) {
 
 const report = { at: new Date().toISOString(), engines, checks: {} };
 const errors = [];
-const seen = { cards: [], cardsScroll: [], levelMove: [], awayAndBack: [], rows: [], rowsScroll: [], unseen: [], quiet: [], tall: [], pills: [], deep: [], transition: [], animation: [], zoomOut: [], outOfSight: [], panKept: [] };
+const seen = { cards: [], cardsScroll: [], levelMove: [], awayAndBack: [], rows: [], rowsScroll: [], unseen: [], quiet: [], tall: [], pills: [], deep: [], transition: [], animation: [], zoomOut: [], outOfSight: [], panKept: [], startsOnCard: [], gathered: [] };
 let host;
 let browser;
 try {
@@ -670,6 +713,8 @@ try {
       [seen.animation, animating],
       [seen.zoomOut, smallZoomOut],
       [seen.panKept, panKept],
+      [seen.startsOnCard, leavesFromItsCard],
+      [seen.gathered, gatheredIntoOne],
       [seen.outOfSight, outOfSight, { viewport: { width: 610, height: 360 } }],
     ]) {
       const context = await browser.newContext(options ?? { viewport: DESK });
@@ -702,8 +747,10 @@ try {
   report.checks.aWorkerViewsRecordMovingUnderATransitionKeepsItsLineOnItEveryFrame = { held: seen.transition, ok: every(seen.transition) };
   report.checks.aWorkerViewsRecordUnderAnEndlessAnimationKeepsItsLineOnItEveryFrame = { held: seen.animation, ok: every(seen.animation) };
   report.checks.aLittleZoomOutAtANearbyThatStandsBackSettlesAtNearby = { held: seen.zoomOut, ok: every(seen.zoomOut) };
-  report.checks.whereTheCitysSideCannotHoldItAllTheRecordsBuildingIsInSightAndALinePointsTowardTheRest = { held: seen.outOfSight, ok: every(seen.outOfSight) };
+  report.checks.whereTheCitysSideCannotHoldItAllTheRecordsBuildingIsInSightAndEveryLineEndsThereOrPointsTowardIt = { held: seen.outOfSight, ok: every(seen.outOfSight) };
   report.checks.aCameraMovedByHandAtNearbyStaysWhereItWasLeftWhenAViewShowsMore = { held: seen.panKept, ok: every(seen.panKept) };
+  report.checks.atNearbyEachLineStartsOnItsOwnCardNotOnThePagesEdge = { held: seen.startsOnCard, ok: every(seen.startsOnCard) };
+  report.checks.manyLinesIntoOneDistrictGatherIntoOneLineWithItsCount = { held: seen.gathered, ok: every(seen.gathered) };
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
   report.passed = Object.values(report.checks).every((check) => check.ok);
 } catch (error) {

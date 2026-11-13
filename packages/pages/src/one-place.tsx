@@ -781,9 +781,11 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
         * THE BOARDS: every page and view of the app, standing on its place
         * at the city. Placed each frame by the city part; this page's own
         * is laid over the page as it stands there, clear, so the keyboard
-        * and a press reach it.
+        * and a press reach it. Under the lines: a line to a building behind
+        * a board is drawn over it, never cut by it. Over the page all the
+        * same: they follow it in the document, on its layer.
         */}
-      <div ref={boardLayer} role="group" aria-label="The app's views" data-testid="one-place-boards" tabIndex={-1} onKeyDown={boardKeys} hidden={now.level < PANEL && !now.moving} style={{ position: "fixed", left: 0, top: 0, width: 0, height: 0, zIndex: ONE_FACE_LAYERS.marks }}>
+      <div ref={boardLayer} role="group" aria-label="The app's views" data-testid="one-place-boards" tabIndex={-1} onKeyDown={boardKeys} hidden={now.level < PANEL && !now.moving} style={{ position: "fixed", left: 0, top: 0, width: 0, height: 0, zIndex: ONE_FACE_LAYERS.page }}>
         {standing.map((board) => (
           <button
             key={board.key}

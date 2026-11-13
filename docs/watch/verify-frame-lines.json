@@ -1,18 +1,7 @@
 {
-  "at": "2026-11-13T08:34:27.653Z",
+  "at": "2026-11-13T17:43:22.114Z",
   "harness": "verify-frame-lines",
   "engine": "chromium",
-  "open": 2,
-  "violations": [
-    {
-      "rule": "control-covered",
-      "detail": "<button data-testid=\"open-person\" aria-label=\"See the people in here\"> \"open ▾\" in [data-testid=\"one-place-city\"] in view \"kind:person\" is covered by <div> \"GraviewHomeFeaturesRequestsPeopleFeature\" in [data-testid=\"app-bar\"] at 1440 wide — a press there lands on the other",
-      "at": "f3"
-    },
-    {
-      "rule": "control-covered",
-      "detail": "<button data-testid=\"open-person\" aria-label=\"See the people in here\"> \"open ▾\" in [data-testid=\"one-place-city\"] in view \"kind:person\" is covered by <main> \"RequestsLet me print a boardLet me print\" at 1440 wide — a press there lands on the other",
-      "at": "r1"
-    }
-  ]
+  "open": 0,
+  "violations": []
 }

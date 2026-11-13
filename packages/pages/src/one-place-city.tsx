@@ -89,6 +89,8 @@ const zoomNowOf = (cam: SceneCamera): string => cam.zoom().toFixed(4);
 
 /** The most lines drawn from a page's parts: past this a list's lines are a hatch. */
 const MOST_LINES = 40;
+/** As many lines into one district as this, and they are one line into it with their count on it. */
+const GATHER = 4;
 /** How long one level's move takes. A person who asked for less motion is cut straight there. */
 export const MOVE_MS = 560;
 /** A hand that has stopped zooming for this long has let go: the altitude settles to the nearest level. */
@@ -116,6 +118,10 @@ interface Drawn {
   readonly to: Point;
   /** The line ends at the page's edge, the building under the page: the arrow points this way. */
   readonly under: Point | null;
+  /** Where the line starts: on the part's own edge facing the city, a short line from it to the page's edge (`from`). */
+  readonly start: Point;
+  /** Gathered with the other lines into its district: how many, and whether this one draws the line they share and its count. */
+  readonly gathered?: { readonly kind: string; readonly count: number; readonly lead: boolean };
   /** The curve's control point, out from the page's edge, inside the city's part. */
   readonly bend: Point;
   readonly on: string;
@@ -403,7 +409,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     const drawnSlots = (now: number) => { const g = goneAt(now); return new Map([...slots].map(([key, at]) => [key, blend(g.slots?.get(key), at, g.t) ?? at] as const)); };
     const drawnNames = (now: number) => { const g = goneAt(now); return new Map([...names].map(([key, at]) => [key, blend(g.names?.get(key), at, g.t) ?? at] as const)); };
     const QUIET_MS = 220;
-    const lines = new Map<string, { g: SVGGElement; path: SVGPathElement; dot: SVGCircleElement; arrow: SVGPathElement; ring: HTMLButtonElement }>();
+    const lines = new Map<string, { g: SVGGElement; path: SVGPathElement; dot: SVGCircleElement; arrow: SVGPathElement; ring: HTMLButtonElement; open: () => void }>();
 
     /** The picture as laid out now, read while nothing is painted over it. */
     const readWorld = (holder: HTMLElement): World => {
@@ -633,7 +639,21 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         const city = unionOf([...world.plots.values()]);
         if (city) {
           const shown = nearbyShown();
-          return fitCamera(city, shown, 16, s);
+          const fit = fitCamera(city, shown, 16, s);
+          // Never past what the camera can be written at: there the whole city does not fit beside the page, and the districts the home's views show are what stands in the city's side.
+          const least = (camera.current?.range.min ?? 0) / zoomNow;
+          if (fit.s >= least) return fit;
+          const kinds = new Set(markedOnPage().flatMap((id) => {
+            const kind = store.graph.getNode(id)?.kind as string | undefined;
+            return kind ? [kind] : [];
+          }));
+          const own = unionOf([...kinds].flatMap((kind) => {
+            const plot = world.plots.get(kind);
+            return plot ? [plot] : [];
+          }));
+          const what = own ?? city;
+          const close = fitCamera(what, shown, 16, s);
+          return close.s >= least ? close : cameraPutting(middle(what), middle(shown), least);
         }
       }
       if (lvl === CITY || now.where.type === "home" || now.where.type === "overview") {
@@ -1193,22 +1213,23 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           return box;
         };
         /* One line a record: from where it is shown, in sight on the page, to where it stands. */
-        const offer = (target: Drawn["target"], part: Point, visible: DOMRect) => {
+        const offer = (target: Drawn["target"], part: Point, visible: DOMRect, partBox: Box) => {
           const key = target.type === "record" ? target.id : `kind:${target.kind}`;
           if (taken.has(key)) return;
           // Only what is in sight on the page: a part scrolled past, or under the page's own edge, draws none.
           if (part.x < visible.left || part.x > visible.right || part.y < visible.top || part.y > visible.bottom) return;
-          // The line leaves the page's edge that faces the city, level with the part: never across the page's words.
+          // The line starts on the part itself, on its edge that faces the city, and leaves the page at its edge level with it.
           const from = leaveFrom(part, pageRect, phone);
+          const start = phone ? { x: part.x, y: Math.max(partBox.y, visible.top, from.y) } : { x: Math.max(partBox.x, visible.left, from.x), y: part.y };
           const end = endOf(target);
           if (!end) return;
           taken.add(key);
           const route = routeLine(from, end.at, area, phone, reserved);
           if (!route) return;
-          found.push({ key, from: route.from, to: route.to, bend: route.bend, under: route.toward, on: end.on, target, label: labelFor(target), part });
+          found.push({ key, from: route.from, to: route.to, bend: route.bend, under: route.toward, on: end.on, target, label: labelFor(target), part, start });
         };
         /* The record page drawn by a view that names no other record: where its one line to the record leaves from. */
-        let aboutPart: { readonly part: Point; readonly visible: DOMRect } | null = null;
+        let aboutPart: { readonly part: Point; readonly visible: DOMRect; readonly box: Box } | null = null;
         // The page's own parts first — a link to a record's page, a row that names one, a view's records — then the Connected rows for what the page does not show.
         const parts = [...plane.querySelectorAll<HTMLElement>(`a[href], ${RECORD_PARTS}, ${VIEW_PARTS}`)].sort((x, y) => Number(x.closest("[data-graview-connected]") !== null) - Number(y.closest("[data-graview-connected]") !== null));
         for (const element of parts) {
@@ -1228,12 +1249,13 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
               if (found.length >= MOST_LINES) break;
               if (!store.graph.getNode(box.id)) continue;
               const part = { x: rect.left + (box.x + box.width / 2) * scale, y: rect.top + (box.y + box.height / 2) * scale };
+              const partBox = { x: rect.left + box.x * scale, y: rect.top + box.y * scale, width: box.width * scale, height: box.height * scale };
               if (box.id === subjectId) {
                 about ??= part;
                 continue;
               }
               named = true;
-              offer({ type: "record", id: box.id }, part, visible);
+              offer({ type: "record", id: box.id }, part, visible, partBox);
             }
             if (!named && subjectId !== null && aboutPart === null) {
               // From the middle of what is in sight of it, or the record's own part where it drew one.
@@ -1241,8 +1263,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
               const bottom = Math.min(rect.bottom, visible.bottom);
               const left = Math.max(rect.left, visible.left);
               const right = Math.min(rect.right, visible.right);
-              if (about) aboutPart = { part: about, visible };
-              else if (bottom - top >= 1 && right - left >= 1) aboutPart = { part: { x: (left + right) / 2, y: (top + bottom) / 2 }, visible };
+              if (about) aboutPart = { part: about, visible, box: { ...about, width: 0, height: 0 } };
+              else if (bottom - top >= 1 && right - left >= 1) aboutPart = { part: { x: (left + right) / 2, y: (top + bottom) / 2 }, visible, box: { x: left, y: top, width: right - left, height: bottom - top } };
             }
             continue;
           }
@@ -1256,9 +1278,34 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           if (!target || (target.type === "record" && target.id === subjectId)) continue;
           const rect = element.getBoundingClientRect();
           if (rect.width < 1 || rect.height < 1) continue;
-          offer(target, { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }, visible);
+          offer(target, { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }, visible, boxOf(rect));
         }
-        if (aboutPart && subjectId !== null && found.length < MOST_LINES) offer({ type: "record", id: subjectId }, aboutPart.part, aboutPart.visible);
+        if (aboutPart && subjectId !== null && found.length < MOST_LINES) offer({ type: "record", id: subjectId }, aboutPart.part, aboutPart.visible, aboutPart.box);
+        /*
+         * MANY LINES INTO ONE DISTRICT ARE ONE LINE (Graview HQ, Cloud's test
+         * of Deep Time): each part keeps its own short line to the page's
+         * edge, where they meet, level with the middle of them, and one line
+         * goes on from there into the district with how many it carries.
+         */
+        const into = new Map<string, number[]>();
+        found.forEach((line, at) => {
+          const kind = line.target.type === "record" ? (store.graph.getNode(line.target.id)?.kind as string | undefined) : line.target.kind;
+          if (kind) into.set(kind, [...(into.get(kind) ?? []), at]);
+        });
+        for (const [kind, ats] of into) {
+          if (ats.length < GATHER) continue;
+          const end = endOf({ type: "list", kind });
+          if (!end) continue;
+          const parts = ats.map((at) => found[at]!.part);
+          const meet = leaveFrom({ x: parts.reduce((sum, p) => sum + p.x, 0) / parts.length, y: parts.reduce((sum, p) => sum + p.y, 0) / parts.length }, pageRect, phone);
+          const route = routeLine(meet, end.at, area, phone, reserved);
+          if (!route) continue;
+          ats.forEach((at, nth) => {
+            const line = found[at]!;
+            const start = phone ? { x: line.start.x, y: Math.max(line.start.y, route.from.y) } : { x: Math.max(line.start.x, route.from.x), y: line.start.y };
+            found[at] = { ...line, start, from: route.from, to: route.to, bend: route.bend, under: route.toward, on: end.on, gathered: { kind, count: ats.length, lead: nth === 0 } };
+          });
+        }
       }
       draw(found, shown);
 
@@ -1318,27 +1365,51 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           ring.type = "button";
           ring.setAttribute("data-testid", "one-place-ring");
           ring.style.cssText = "position:fixed;width:16px;height:16px;padding:0;border-radius:8px;border:2px solid var(--graview-accent);background:color-mix(in srgb, var(--graview-accent) 18%, transparent);cursor:pointer;";
-          const target = line.target;
-          ring.addEventListener("click", () => (target.type === "record" ? latest.current.openRecord(target.id, PANEL) : latest.current.openKind(target.kind, PANEL)));
+          const key = line.key;
+          ring.addEventListener("click", () => lines.get(key)?.open());
           ringLayer.append(ring);
-          drawn = { g, path, dot, arrow, ring };
+          drawn = { g, path, dot, arrow, ring, open: () => {} };
           lines.set(line.key, drawn);
         }
+        const target = line.target;
+        const gathered = line.gathered;
+        drawn.open = gathered ? () => latest.current.openKind(gathered.kind, PANEL) : () => (target.type === "record" ? latest.current.openRecord(target.id, PANEL) : latest.current.openKind(target.kind, PANEL));
+        // Gathered, only the first of them draws the line they share, and its count; the rest draw their own short line to where they meet.
+        const shared = !gathered || gathered.lead;
         const { from, to } = line;
         const bend = line.bend;
         drawn.g.setAttribute("data-graview-line", line.key);
         drawn.g.setAttribute("data-graview-line-on", line.on);
         drawn.g.toggleAttribute("data-graview-line-under", line.under !== null);
         drawn.g.setAttribute("data-graview-line-from", `${from.x.toFixed(2)},${from.y.toFixed(2)}`);
+        drawn.g.setAttribute("data-graview-line-start", `${line.start.x.toFixed(2)},${line.start.y.toFixed(2)}`);
+        if (gathered) drawn.g.setAttribute("data-graview-line-gathered", `kind:${gathered.kind}`);
+        else drawn.g.removeAttribute("data-graview-line-gathered");
+        if (gathered?.lead) drawn.g.setAttribute("data-graview-line-count", String(gathered.count));
+        else drawn.g.removeAttribute("data-graview-line-count");
         drawn.g.setAttribute("data-graview-line-part", `${line.part.x.toFixed(2)},${line.part.y.toFixed(2)}`);
         drawn.g.setAttribute("data-graview-line-to", `${to.x.toFixed(2)},${to.y.toFixed(2)}`);
         drawn.g.setAttribute("data-graview-line-bend", `${bend.x.toFixed(2)},${bend.y.toFixed(2)}`);
         if (line.under) drawn.g.setAttribute("data-graview-line-toward", `${line.under.x.toFixed(2)},${line.under.y.toFixed(2)}`);
         else drawn.g.removeAttribute("data-graview-line-toward");
-        drawn.path.setAttribute("d", `M${from.x.toFixed(2)},${from.y.toFixed(2)} Q${bend.x.toFixed(2)},${bend.y.toFixed(2)} ${to.x.toFixed(2)},${to.y.toFixed(2)}`);
-        drawn.dot.setAttribute("cx", from.x.toFixed(2));
-        drawn.dot.setAttribute("cy", from.y.toFixed(2));
-        if (line.under) {
+        const leg = `M${line.start.x.toFixed(2)},${line.start.y.toFixed(2)} L${from.x.toFixed(2)},${from.y.toFixed(2)}`;
+        drawn.path.setAttribute("d", shared ? `${leg} Q${bend.x.toFixed(2)},${bend.y.toFixed(2)} ${to.x.toFixed(2)},${to.y.toFixed(2)}` : leg);
+        drawn.dot.setAttribute("cx", line.start.x.toFixed(2));
+        drawn.dot.setAttribute("cy", line.start.y.toFixed(2));
+        // The shared line's marker says how many it carries: wide enough for the number, and a fingertip's size.
+        const size = gathered?.lead ? 22 : 16;
+        const wide = gathered?.lead ? Math.max(22, 10 + 7 * String(gathered.count).length) : 16;
+        drawn.ring.textContent = gathered?.lead ? String(gathered.count) : "";
+        drawn.ring.style.width = `${wide}px`;
+        drawn.ring.style.height = `${size}px`;
+        drawn.ring.style.borderRadius = `${size / 2}px`;
+        drawn.ring.style.font = gathered?.lead ? "600 11px/1 system-ui, sans-serif" : "";
+        drawn.ring.style.color = gathered?.lead ? "var(--graview-ink)" : "";
+        drawn.ring.style.background = gathered?.lead ? "var(--graview-panel, Canvas)" : "color-mix(in srgb, var(--graview-accent) 18%, transparent)";
+        if (!shared) {
+          drawn.arrow.setAttribute("d", "");
+          drawn.ring.style.display = "none";
+        } else if (line.under) {
           // An arrow at the page's edge, pointing on toward the building under the page.
           const angle = Math.atan2(line.under.y - to.y, line.under.x - to.x);
           const tip = { x: to.x + Math.cos(angle) * 7, y: to.y + Math.sin(angle) * 7 };
@@ -1349,8 +1420,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           const crowded = ringsAt.some((p) => Math.hypot(p.x - to.x, p.y - to.y) < 28);
           drawn.ring.style.display = crowded ? "none" : "";
           if (!crowded) ringsAt.push(to);
-          drawn.ring.style.left = `${(to.x - 8).toFixed(2)}px`;
-          drawn.ring.style.top = `${(to.y - 8).toFixed(2)}px`;
+          drawn.ring.style.left = `${(to.x - wide / 2).toFixed(2)}px`;
+          drawn.ring.style.top = `${(to.y - size / 2).toFixed(2)}px`;
         } else {
           drawn.arrow.setAttribute("d", "");
           // An end under the bar, or under the control at the foot, is not offered: they stand over it.
@@ -1358,12 +1429,19 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           const crowded = ringsAt.some((p) => Math.hypot(p.x - to.x, p.y - to.y) < 28);
           drawn.ring.style.display = to.y < (state.current.view.top ?? 0) + 8 || under || crowded ? "none" : "";
           if (!crowded) ringsAt.push(to);
-          drawn.ring.style.left = `${(to.x - 8).toFixed(2)}px`;
-          drawn.ring.style.top = `${(to.y - 8).toFixed(2)}px`;
+          drawn.ring.style.left = `${(to.x - wide / 2).toFixed(2)}px`;
+          drawn.ring.style.top = `${(to.y - size / 2).toFixed(2)}px`;
         }
-        drawn.ring.setAttribute("data-graview-to", line.target.type === "record" ? line.target.id : `kind:${line.target.kind}`);
-        drawn.ring.setAttribute("aria-label", line.target.type === "record" ? `Open ${line.label}` : `Open the ${line.label} list`);
-        drawn.ring.title = line.label;
+        if (gathered) {
+          const plural = pluralOf(store, gathered.kind);
+          drawn.ring.setAttribute("data-graview-to", `kind:${gathered.kind}`);
+          drawn.ring.setAttribute("aria-label", `${gathered.count} ${plural.toLowerCase()} here: open the ${plural} list`);
+          drawn.ring.title = `${gathered.count} ${plural.toLowerCase()}`;
+        } else {
+          drawn.ring.setAttribute("data-graview-to", line.target.type === "record" ? line.target.id : `kind:${line.target.kind}`);
+          drawn.ring.setAttribute("aria-label", line.target.type === "record" ? `Open ${line.label}` : `Open the ${line.label} list`);
+          drawn.ring.title = line.label;
+        }
       }
     };
 

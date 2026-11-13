@@ -1,7 +1,13 @@
 {
-  "at": "2026-11-12T14:19:23.120Z",
+  "at": "2026-11-13T17:48:33.140Z",
   "harness": "verify-one-face",
   "engine": "chromium",
-  "open": 0,
-  "violations": []
+  "open": 1,
+  "violations": [
+    {
+      "rule": "control-covered",
+      "detail": "<button aria-label=\"Periods, 22: open the list\"> \"Periods 22\" in [data-testid=\"one-place-names\"] is covered by <button aria-label=\"4 problems in Specimens\"> \"⚠ 4\" in [data-testid=\"one-place-names\"] at 844 wide — a press there lands on the other",
+      "at": "/?theme=dark"
+    }
+  ]
 }

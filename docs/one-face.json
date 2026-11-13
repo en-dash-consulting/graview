@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-13T15:55:52.143Z",
+  "at": "2026-11-13T17:43:22.347Z",
   "engines": [
     "chromium"
   ],
@@ -57,7 +57,7 @@
                   "pressed": true
                 },
                 {
-                  "w": 62.921875,
+                  "w": 62.90625,
                   "h": 26,
                   "name": "Nearby: this page beside the tasks district",
                   "words": "Nearby",
@@ -96,7 +96,7 @@
                   "pressed": false
                 },
                 {
-                  "w": 63.453125,
+                  "w": 63.4375,
                   "h": 26,
                   "name": "Nearby: you are here",
                   "words": "Nearby",
@@ -135,7 +135,7 @@
                   "pressed": false
                 },
                 {
-                  "w": 62.921875,
+                  "w": 62.90625,
                   "h": 26,
                   "name": "Nearby: “Pay the deposit” beside its place in the city",
                   "words": "Nearby",
@@ -153,7 +153,7 @@
               ],
               "said": "Altitude: city, 3 of 3",
               "key": true,
-              "sheetTop": 389.97998046875,
+              "sheetTop": 390.8916015625,
               "controlBottom": 884
             }
           ],
@@ -286,7 +286,7 @@
               ],
               "said": "Altitude: city, 3 of 3",
               "key": true,
-              "sheetTop": 404.6459045410156,
+              "sheetTop": 407.2959289550781,
               "controlBottom": 823
             }
           ],
@@ -309,12 +309,12 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 175,
-          "moved": 133,
+          "frames": 212,
+          "moved": 152,
           "same": true,
           "jump": {
-            "worst": 0.143,
-            "at": 67
+            "worst": 0.121,
+            "at": 2
           },
           "ok": true
         },
@@ -323,12 +323,12 @@
             "engine": "chromium",
             "device": "Pixel 7"
           },
-          "frames": 185,
-          "moved": 140,
+          "frames": 223,
+          "moved": 152,
           "same": true,
           "jump": {
             "worst": 0.193,
-            "at": 3
+            "at": 2
           },
           "ok": true
         }
@@ -343,7 +343,7 @@
             "device": "desk 1440×900"
           },
           "worst": 0.49,
-          "counted": 262,
+          "counted": 442,
           "examples": [],
           "ok": true
         },
@@ -353,7 +353,7 @@
             "device": "Pixel 7"
           },
           "worst": 0.49,
-          "counted": 416,
+          "counted": 500,
           "examples": [],
           "ok": true
         }
@@ -373,8 +373,8 @@
               "to": 1,
               "how": "control",
               "arrived": true,
-              "moved": 29,
-              "frames": 83,
+              "moved": 34,
+              "frames": 101,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -383,8 +383,8 @@
               "to": 2,
               "how": "control",
               "arrived": true,
-              "moved": 27,
-              "frames": 140,
+              "moved": 34,
+              "frames": 81,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -394,7 +394,7 @@
               "how": "keys",
               "arrived": true,
               "moved": 34,
-              "frames": 222,
+              "frames": 79,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -403,8 +403,8 @@
               "to": 0,
               "how": "keys",
               "arrived": true,
-              "moved": 28,
-              "frames": 244,
+              "moved": 33,
+              "frames": 156,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -413,8 +413,8 @@
               "to": 2,
               "how": "control",
               "arrived": true,
-              "moved": 33,
-              "frames": 385,
+              "moved": 34,
+              "frames": 83,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -423,8 +423,8 @@
               "to": 0,
               "how": "control",
               "arrived": true,
-              "moved": 32,
-              "frames": 408,
+              "moved": 35,
+              "frames": 82,
               "zoomBack": 0,
               "widthBack": 0
             }
@@ -443,7 +443,7 @@
               "how": "control",
               "arrived": true,
               "moved": 34,
-              "frames": 91,
+              "frames": 100,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -452,8 +452,8 @@
               "to": 2,
               "how": "control",
               "arrived": true,
-              "moved": 38,
-              "frames": 152,
+              "moved": 35,
+              "frames": 81,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -463,7 +463,7 @@
               "how": "keys",
               "arrived": true,
               "moved": 34,
-              "frames": 225,
+              "frames": 160,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -472,8 +472,8 @@
               "to": 0,
               "how": "keys",
               "arrived": true,
-              "moved": 32,
-              "frames": 268,
+              "moved": 33,
+              "frames": 240,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -482,8 +482,8 @@
               "to": 2,
               "how": "control",
               "arrived": true,
-              "moved": 35,
-              "frames": 390,
+              "moved": 36,
+              "frames": 336,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -493,7 +493,7 @@
               "how": "control",
               "arrived": true,
               "moved": 34,
-              "frames": 72,
+              "frames": 82,
               "zoomBack": 0,
               "widthBack": 0
             }
@@ -510,7 +510,7 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 175,
+          "frames": 212,
           "sheared": 0,
           "first": null,
           "reachedTheCity": true,
@@ -521,7 +521,7 @@
             "engine": "chromium",
             "device": "Pixel 7"
           },
-          "frames": 185,
+          "frames": 223,
           "sheared": 0,
           "first": null,
           "reachedTheCity": true,
@@ -1200,11 +1200,11 @@
                 2,
                 1
               ],
-              "start": 0.1,
+              "start": 0,
               "same": true,
               "jump": {
-                "worst": 0.119,
-                "at": 14
+                "worst": 0.08,
+                "at": 24
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
@@ -1222,11 +1222,11 @@
                 2,
                 1
               ],
-              "start": 0.1,
+              "start": 0,
               "same": true,
               "jump": {
                 "worst": 0.08,
-                "at": 25
+                "at": 24
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
@@ -1244,11 +1244,11 @@
                 2,
                 1
               ],
-              "start": 0.1,
+              "start": 0,
               "same": true,
               "jump": {
                 "worst": 0.08,
-                "at": 25
+                "at": 24
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
@@ -1270,7 +1270,7 @@
               "same": true,
               "jump": {
                 "worst": 0.08,
-                "at": 25
+                "at": 24
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
@@ -1290,20 +1290,20 @@
               "start": null,
               "same": true,
               "jump": {
-                "worst": 0.282,
-                "at": 1
+                "worst": 0,
+                "at": -1
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
                 "level": 1
               },
-              "ok": false
+              "ok": true
             }
           ],
-          "ok": false
+          "ok": true
         }
       ],
-      "ok": false
+      "ok": true
     },
     "clickingTheGroundDeselectsAndStaysAtCity": {
       "held": [
@@ -1398,7 +1398,7 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 135,
+          "frames": 143,
           "madeRises": true,
           "droppedRisesGoingBack": true,
           "madeSinksGoingBack": true,
@@ -1492,8 +1492,8 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "worst": 0,
-          "counted": 376,
+          "worst": 0.1,
+          "counted": 285,
           "examples": [],
           "ok": true
         },
@@ -1503,7 +1503,7 @@
             "device": "Pixel 7"
           },
           "worst": 0,
-          "counted": 402,
+          "counted": 360,
           "examples": [],
           "ok": true
         }
@@ -1610,7 +1610,7 @@
             "device": "desk 1440×900"
           },
           "path": "/pages/tasks/t-deposit",
-          "counted": 201,
+          "counted": 273,
           "crossed": 0,
           "examples": [],
           "ok": true
@@ -1621,7 +1621,7 @@
             "device": "desk 1440×900"
           },
           "path": "resizing",
-          "counted": 312,
+          "counted": 171,
           "crossed": 0,
           "examples": [],
           "ok": true
@@ -1632,8 +1632,9 @@
             "device": "desk 1440×900"
           },
           "path": "/pages/tasks/t-book",
-          "pointed": 1,
-          "counted": 123,
+          "pointed": 0,
+          "inSight": 3,
+          "counted": 156,
           "crossed": 0,
           "examples": [],
           "ok": true
@@ -1644,7 +1645,7 @@
             "device": "Pixel 7"
           },
           "path": "/pages/tasks",
-          "counted": 208,
+          "counted": 250,
           "crossed": 0,
           "examples": [],
           "ok": true
@@ -1655,9 +1656,25 @@
             "device": "Pixel 7"
           },
           "path": "resizing",
-          "counted": 201,
+          "counted": 180,
           "crossed": 0,
           "examples": [],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "whereNearbyCannotTakeItAllInTheRecordStaysInSightAndALinePointsTowardTheRest": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "path": "/pages/tasks/t-book at 610×760",
+          "lines": 3,
+          "pointed": 1,
+          "ownInSight": true,
           "ok": true
         }
       ],
@@ -1812,10 +1829,10 @@
           "altitudes": [
             0,
             0,
-            0.57,
-            0.76,
-            0.95,
-            1.14,
+            0,
+            0,
+            0.6,
+            1.08,
             1.33,
             1.52,
             1.71,
@@ -1823,7 +1840,7 @@
             2,
             2
           ],
-          "between": 7,
+          "between": 5,
           "settled": true,
           "word": "City",
           "ok": true
@@ -1836,10 +1853,10 @@
           "altitudes": [
             0,
             0,
-            0.57,
-            0.76,
-            0.95,
-            1.14,
+            0,
+            0,
+            0.6,
+            1.08,
             1.33,
             1.52,
             1.71,
@@ -1847,7 +1864,7 @@
             2,
             2
           ],
-          "between": 7,
+          "between": 5,
           "settled": true,
           "word": "City",
           "ok": true
@@ -1997,12 +2014,14 @@
             "onGround": []
           },
           "nearby": {
-            "clash": [],
+            "clash": [
+              "the site name × the expedition name"
+            ],
             "underPanel": [],
             "outside": [],
             "onGround": []
           },
-          "ok": true
+          "ok": false
         },
         {
           "where": {
@@ -2090,7 +2109,7 @@
           "ok": true
         }
       ],
-      "ok": true
+      "ok": false
     },
     "everyDistrictAtTheCityNamesItsKind": {
       "held": [
@@ -2308,34 +2327,16 @@
           "moves": [
             {
               "to": 1,
-              "leaps": [
-                {
-                  "which": "names",
-                  "key": "formation",
-                  "step": 39,
-                  "altitude": 0.87,
-                  "still": false,
-                  "from": [
-                    351,
-                    466
-                  ],
-                  "to": [
-                    312,
-                    468
-                  ],
-                  "frame": 38,
-                  "of": 75
-                }
-              ],
-              "frames": 75
+              "leaps": [],
+              "frames": 110
             },
             {
               "to": 2,
               "leaps": [],
-              "frames": 60
+              "frames": 91
             }
           ],
-          "ok": false
+          "ok": true
         },
         {
           "where": {
@@ -2345,12 +2346,12 @@
             {
               "to": 1,
               "leaps": [],
-              "frames": 77
+              "frames": 110
             },
             {
               "to": 2,
               "leaps": [],
-              "frames": 60
+              "frames": 90
             }
           ],
           "ok": true
@@ -2363,12 +2364,12 @@
             {
               "to": 1,
               "leaps": [],
-              "frames": 77
+              "frames": 113
             },
             {
               "to": 2,
               "leaps": [],
-              "frames": 66
+              "frames": 90
             }
           ],
           "ok": true
@@ -2381,12 +2382,12 @@
             {
               "to": 1,
               "leaps": [],
-              "frames": 78
+              "frames": 111
             },
             {
               "to": 2,
               "leaps": [],
-              "frames": 63
+              "frames": 90
             }
           ],
           "ok": true
@@ -2399,12 +2400,12 @@
             {
               "to": 1,
               "leaps": [],
-              "frames": 75
+              "frames": 110
             },
             {
               "to": 2,
               "leaps": [],
-              "frames": 68
+              "frames": 91
             }
           ],
           "ok": true
@@ -2417,18 +2418,18 @@
             {
               "to": 1,
               "leaps": [],
-              "frames": 81
+              "frames": 112
             },
             {
               "to": 2,
               "leaps": [],
-              "frames": 71
+              "frames": 90
             }
           ],
           "ok": true
         }
       ],
-      "ok": false
+      "ok": true
     },
     "everythingTheKeyboardReachesInTheCityIsSeen": {
       "held": [
@@ -2677,6 +2678,50 @@
           "where": {
             "device": "1520×900"
           },
+          "hidden": [
+            "species-65 under the specimen name",
+            "species-59 under the specimen name",
+            "species-66 under the specimen name"
+          ],
+          "districtsInSight": [
+            "epoch",
+            "era",
+            "event",
+            "expedition",
+            "formation",
+            "period",
+            "researcher",
+            "site",
+            "species",
+            "specimen"
+          ],
+          "lines": 2,
+          "lineEndsNotOnABuilding": [],
+          "ok": false
+        },
+        {
+          "where": {
+            "device": "1280×800"
+          },
+          "hidden": [],
+          "districtsInSight": [
+            "epoch",
+            "era",
+            "event",
+            "formation",
+            "period",
+            "researcher",
+            "site",
+            "species"
+          ],
+          "lines": 2,
+          "lineEndsNotOnABuilding": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "390×844"
+          },
           "hidden": [],
           "districtsInSight": [
             "epoch",
@@ -2692,13 +2737,31 @@
         },
         {
           "where": {
-            "device": "1280×800"
+            "device": "844×390"
           },
           "hidden": [],
           "districtsInSight": [
             "epoch",
             "event",
             "formation",
+            "period",
+            "site",
+            "species"
+          ],
+          "lines": 0,
+          "lineEndsNotOnABuilding": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "768×1024"
+          },
+          "hidden": [],
+          "districtsInSight": [
+            "epoch",
+            "event",
+            "formation",
+            "period",
             "site",
             "species"
           ],
@@ -2708,60 +2771,23 @@
         },
         {
           "where": {
-            "device": "390×844"
-          },
-          "hidden": [],
-          "districtsInSight": [
-            "epoch"
-          ],
-          "lines": 0,
-          "lineEndsNotOnABuilding": [],
-          "ok": true
-        },
-        {
-          "where": {
-            "device": "844×390"
-          },
-          "hidden": [],
-          "districtsInSight": [
-            "epoch",
-            "event",
-            "formation",
-            "site"
-          ],
-          "lines": 0,
-          "lineEndsNotOnABuilding": [],
-          "ok": true
-        },
-        {
-          "where": {
-            "device": "768×1024"
-          },
-          "hidden": [],
-          "districtsInSight": [
-            "epoch",
-            "event",
-            "formation",
-            "species"
-          ],
-          "lines": 0,
-          "lineEndsNotOnABuilding": [],
-          "ok": true
-        },
-        {
-          "where": {
             "device": "360×640"
           },
           "hidden": [],
           "districtsInSight": [
-            "epoch"
+            "epoch",
+            "event",
+            "formation",
+            "period",
+            "site",
+            "species"
           ],
           "lines": 0,
           "lineEndsNotOnABuilding": [],
           "ok": true
         }
       ],
-      "ok": true
+      "ok": false
     },
     "atNearbyEveryViewOfADistrictInSightHasABoard": {
       "held": [
@@ -2770,11 +2796,21 @@
             "device": "1520×900"
           },
           "districtsInSight": [
-            "formation"
+            "epoch",
+            "event",
+            "formation",
+            "period",
+            "site"
           ],
-          "owed": [],
+          "owed": [
+            "period:timeline",
+            "site:dig-map",
+            "event:extinctions"
+          ],
           "standing": [
-            "Dig map"
+            "Timeline",
+            "Dig map",
+            "Extinctions"
           ],
           "missing": [],
           "ok": true
@@ -2784,11 +2820,21 @@
             "device": "1280×800"
           },
           "districtsInSight": [
-            "formation"
+            "epoch",
+            "event",
+            "formation",
+            "period",
+            "site"
           ],
-          "owed": [],
+          "owed": [
+            "period:timeline",
+            "site:dig-map",
+            "event:extinctions"
+          ],
           "standing": [
-            "Dig map"
+            "Timeline",
+            "Dig map",
+            "Extinctions"
           ],
           "missing": [],
           "ok": true
@@ -2798,11 +2844,16 @@
             "device": "390×844"
           },
           "districtsInSight": [
-            "formation"
+            "formation",
+            "period"
           ],
-          "owed": [],
+          "owed": [
+            "period:timeline"
+          ],
           "standing": [],
-          "missing": [],
+          "missing": [
+            "period:timeline"
+          ],
           "ok": true
         },
         {
@@ -2810,11 +2861,20 @@
             "device": "844×390"
           },
           "districtsInSight": [
-            "formation"
+            "epoch",
+            "formation",
+            "period",
+            "site"
           ],
-          "owed": [],
+          "owed": [
+            "period:timeline",
+            "site:dig-map"
+          ],
           "standing": [],
-          "missing": [],
+          "missing": [
+            "period:timeline",
+            "site:dig-map"
+          ],
           "ok": true
         },
         {
@@ -2822,6 +2882,7 @@
             "device": "768×1024"
           },
           "districtsInSight": [
+            "epoch",
             "event",
             "formation"
           ],
@@ -2838,10 +2899,17 @@
           "where": {
             "device": "360×640"
           },
-          "districtsInSight": [],
-          "owed": [],
+          "districtsInSight": [
+            "formation",
+            "period"
+          ],
+          "owed": [
+            "period:timeline"
+          ],
           "standing": [],
-          "missing": [],
+          "missing": [
+            "period:timeline"
+          ],
           "ok": true
         }
       ],
@@ -2921,7 +2989,8 @@
           "city": [],
           "nearby": [],
           "pageCoversADistrict": [
-            "expedition"
+            "expedition",
+            "specimen"
           ],
           "ok": true
         },
@@ -2940,7 +3009,9 @@
           },
           "city": [],
           "nearby": [],
-          "pageCoversADistrict": [],
+          "pageCoversADistrict": [
+            "expedition"
+          ],
           "ok": true
         },
         {
@@ -2976,29 +3047,37 @@
             "device": "1520×900"
           },
           "city": [
-            "“Home” 5.3px",
-            "“Eons” 5.0px",
-            "“Eras” 5.0px",
-            "“Periods” 5.0px",
-            "“Epochs” 5.0px",
-            "“Events” 5.0px",
-            "“Species” 5.0px",
-            "“Sites” 3.5px",
-            "“Formations” 3.5px",
-            "“Researchers” 3.5px",
-            "“Expeditions” 3.5px",
-            "“Specimens” 5.0px",
-            "“Timeline” 5.3px",
-            "“Tree of life” 5.3px",
-            "“Dig map” 5.3px",
-            "“Extinctions” 5.3px",
-            "“Connections” 5.3px"
+            "“Home” 5.9px",
+            "“Eons” 5.6px",
+            "“Eras” 5.6px",
+            "“Periods” 5.6px",
+            "“Epochs” 5.6px",
+            "“Events” 5.6px",
+            "“Species” 5.6px",
+            "“Sites” 3.9px",
+            "“Formations” 3.9px",
+            "“Researchers” 3.9px",
+            "“Expeditions” 3.9px",
+            "“Specimens” 5.6px",
+            "“Timeline” 5.9px",
+            "“Tree of life” 5.9px",
+            "“Dig map” 5.9px",
+            "“Extinctions” 5.9px",
+            "“Connections” 5.9px"
           ],
           "nearby": [
+            "“Eras” 4.1px",
+            "“Periods” 5.9px",
             "“Epochs” 5.9px",
+            "“Events” 5.9px",
+            "“Species” 4.1px",
             "“Sites” 5.9px",
-            "“Formations” 5.9px",
-            "“Dig map” 4.4px"
+            "“Formations” 5.0px",
+            "“Researchers” 4.1px",
+            "“Expeditions” 4.1px",
+            "“Timeline” 6.2px",
+            "“Dig map” 6.2px",
+            "“Extinctions” 5.3px"
           ],
           "ok": true
         },
@@ -3007,29 +3086,33 @@
             "device": "1280×800"
           },
           "city": [
-            "“Home” 6.5px",
-            "“Eons” 6.1px",
-            "“Eras” 6.1px",
-            "“Periods” 6.1px",
-            "“Epochs” 6.1px",
-            "“Events” 6.1px",
-            "“Species” 6.1px",
-            "“Sites” 4.3px",
-            "“Formations” 4.3px",
-            "“Researchers” 4.3px",
-            "“Expeditions” 4.3px",
-            "“Specimens” 6.1px",
-            "“Timeline” 6.5px",
-            "“Tree of life” 6.5px",
-            "“Dig map” 6.5px",
-            "“Extinctions” 6.5px",
-            "“Connections” 6.5px"
+            "“Home” 6.8px",
+            "“Eons” 6.4px",
+            "“Eras” 6.4px",
+            "“Periods” 6.4px",
+            "“Epochs” 6.4px",
+            "“Events” 6.4px",
+            "“Species” 6.4px",
+            "“Sites” 4.5px",
+            "“Formations” 4.5px",
+            "“Researchers” 4.5px",
+            "“Expeditions” 4.5px",
+            "“Specimens” 6.4px",
+            "“Timeline” 6.8px",
+            "“Tree of life” 6.8px",
+            "“Dig map” 6.8px",
+            "“Extinctions” 6.8px",
+            "“Connections” 6.8px"
           ],
           "nearby": [
+            "“Periods” 7.0px",
             "“Epochs” 7.0px",
+            "“Events” 7.0px",
+            "“Species” 4.9px",
             "“Sites” 7.0px",
-            "“Formations” 7.0px",
-            "“Dig map” 5.2px"
+            "“Timeline” 7.4px",
+            "“Dig map” 6.3px",
+            "“Extinctions” 6.3px"
           ],
           "ok": true
         },
@@ -3062,17 +3145,18 @@
             "“Events” 5.5px",
             "“Species” 5.5px",
             "“Sites” 5.5px",
-            "“Formations” 3.9px",
-            "“Researchers” 3.9px",
+            "“Formations” 3.8px",
+            "“Researchers” 3.8px",
             "“Expeditions” 5.5px",
             "“Specimens” 5.5px",
             "“Timeline” 5.8px",
             "“Tree of life” 5.8px",
-            "“Dig map” 4.1px",
+            "“Dig map” 4.0px",
             "“Extinctions” 5.8px",
             "“Connections” 5.8px"
           ],
           "nearby": [
+            "“Epochs” 7.7px",
             "“Events” 7.7px",
             "“Formations” 6.5px",
             "“Extinctions” 8.1px"
@@ -3150,8 +3234,6 @@
           },
           "behind": [
             "expedition",
-            "site",
-            "species",
             "specimen"
           ],
           "districts": 11,
@@ -3166,17 +3248,162 @@
           "where": {
             "device": "360×640"
           },
-          "behind": [
-            "eon",
-            "era",
-            "researcher"
-          ],
+          "behind": [],
           "districts": 11,
           "free": {
             "width": 360,
             "height": 219
           },
           "held": false,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "atNearbyOnTheHomeEveryDistrictItsViewsShowStandsOnTheCitysSide": {
+      "held": [
+        {
+          "where": {
+            "device": "1520×900"
+          },
+          "kinds": [
+            "period",
+            "event",
+            "species",
+            "site"
+          ],
+          "behind": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "1280×800"
+          },
+          "kinds": [
+            "period",
+            "event",
+            "species",
+            "site"
+          ],
+          "behind": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "390×844"
+          },
+          "kinds": [
+            "period",
+            "event",
+            "species",
+            "site"
+          ],
+          "behind": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "844×390"
+          },
+          "kinds": [
+            "period"
+          ],
+          "behind": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "768×1024"
+          },
+          "kinds": [
+            "period",
+            "event",
+            "species"
+          ],
+          "behind": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "360×640"
+          },
+          "kinds": [
+            "period",
+            "event",
+            "species"
+          ],
+          "behind": [],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "theBoardsStandUnderTheLines": {
+      "held": [
+        {
+          "where": {
+            "device": "1520×900"
+          },
+          "found": true,
+          "lines": 3,
+          "boards": 2,
+          "linesLater": false,
+          "over": true,
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "1280×800"
+          },
+          "found": true,
+          "lines": 3,
+          "boards": 2,
+          "linesLater": false,
+          "over": true,
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "390×844"
+          },
+          "found": true,
+          "lines": 3,
+          "boards": 2,
+          "linesLater": false,
+          "over": true,
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "844×390"
+          },
+          "found": true,
+          "lines": 3,
+          "boards": 2,
+          "linesLater": false,
+          "over": true,
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "768×1024"
+          },
+          "found": true,
+          "lines": 3,
+          "boards": 2,
+          "linesLater": false,
+          "over": true,
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "360×640"
+          },
+          "found": true,
+          "lines": 3,
+          "boards": 2,
+          "linesLater": false,
+          "over": true,
           "ok": true
         }
       ],

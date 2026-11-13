@@ -49,7 +49,7 @@ const STRIPS = resolve(repoRoot, "docs/one-face");
 
 const report = { at: new Date().toISOString(), engines, app: "apps/todo", checks: {} };
 const errors = [];
-const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], pointsOut: [], shortcuts: [], keysTurnOff: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [], richClear: [], richNamed: [], richWords: [], richLegend: [], richViews: [], richRecords: [], richNearbyViews: [], richControls: [], richOwnDistrict: [], richLegible: [], richHomeNearby: [], richOneLevel: [], richSmooth: [], richFocusSeen: [], richProblems: [], richHand: [] };
+const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], pointsOut: [], shortcuts: [], keysTurnOff: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [], richClear: [], richNamed: [], richWords: [], richLegend: [], richViews: [], richRecords: [], richNearbyViews: [], richControls: [], richOwnDistrict: [], richLegible: [], richHomeNearby: [], richOneLevel: [], richSmooth: [], richFocusSeen: [], richProblems: [], richHand: [], richHomeViews: [], richBoardsUnder: [] };
 
 /* ------------------------------------------------------------------ */
 /* In the page                                                         */
@@ -1318,9 +1318,10 @@ const readRich = (page) =>
     const bar = document.querySelector('[data-testid="one-place-bar"]').getBoundingClientRect().bottom;
     // Each building in sight, and each line's building end: what Nearby is for.
     const buildings = [...document.querySelectorAll('[data-testid="one-place-city"] [data-graview-building]')].map((b) => ({ id: b.getAttribute("data-graview-building"), kind: (b.closest("[data-graview-plot]")?.getAttribute("data-graview-plot") ?? "").replace(/^kind:/, ""), box: rect(b) })).filter((b) => b.box.width > 2 && b.box.x + b.box.width > 0 && b.box.x < innerWidth && b.box.y + b.box.height > 0 && b.box.y < innerHeight);
-    const lines = [...document.querySelectorAll("[data-graview-line]")].filter((g) => Number(getComputedStyle(g.ownerSVGElement).opacity) > 0.5 && g.getAttribute("data-graview-line-on") === "building" && !g.hasAttribute("data-graview-line-under")).map((g) => {
+    // A line gathered with others into a district counts once, by the one that draws the line they share, and ends on its district.
+    const lines = [...document.querySelectorAll("[data-graview-line]")].filter((g) => Number(getComputedStyle(g.ownerSVGElement).opacity) > 0.5 && (g.getAttribute("data-graview-line-on") === "building" || g.hasAttribute("data-graview-line-count")) && !g.hasAttribute("data-graview-line-under")).map((g) => {
       const [x, y] = (g.getAttribute("data-graview-line-to") ?? "0,0").split(",").map(Number);
-      return { key: g.getAttribute("data-graview-line"), to: { x, y } };
+      return { key: g.getAttribute("data-graview-line"), to: { x, y }, into: g.hasAttribute("data-graview-line-count") ? (g.getAttribute("data-graview-line-gathered") ?? "").replace(/^kind:/, "") : null };
     });
     // A district's own controls — "open", its problems — where any is drawn: never under the bar, the page or the level control.
     const controls = [...document.querySelectorAll('[data-testid="one-place-city"] .graview-kind-open, [data-testid="one-place-city"] .graview-district-problems, [data-graview-district-open], [data-graview-district-problems]')].filter((el) => getComputedStyle(el).visibility !== "hidden" && Number(getComputedStyle(el).opacity) > 0.1 && el.getBoundingClientRect().width > 0).map((el) => ({ what: el.getAttribute("aria-label") ?? el.textContent, box: rect(el) }));
@@ -1423,8 +1424,11 @@ async function rich(browser, device) {
       // What covers a building: a name, a board, a district's card.
       const covering = [...tags, ...boards, ...plates];
       const hidden = seenNow.buildings.filter((b) => (!seenNow.panel || overlapOf(b.box, seenNow.panel) < b.box.width * b.box.height * 0.5) && covering.some((c) => overlapOf(b.box, c.box) > b.box.width * b.box.height * 0.3)).map((b) => `${b.id} under ${covering.find((c) => overlapOf(b.box, c.box) > b.box.width * b.box.height * 0.3).name}`);
-      const kindsInSight = [...new Set(seenNow.buildings.filter((b) => !seenNow.panel || b.box.x + b.box.width < seenNow.panel.x).map((b) => b.kind))];
-      const lineEnds = seenNow.lines.filter((line) => !seenNow.buildings.some((b) => line.to.x >= b.box.x - 1 && line.to.x <= b.box.x + b.box.width + 1 && line.to.y >= b.box.y - 1 && line.to.y <= b.box.y + b.box.height + 1) || covering.some((c) => line.to.x > c.box.x && line.to.x < c.box.x + c.box.width && line.to.y > c.box.y && line.to.y < c.box.y + c.box.height)).map((line) => line.key);
+      // The city's side of the window: left of the panel on a desk, above the sheet on a phone.
+      const citySide = (box) => !seenNow.panel || (seenNow.width <= 600 ? box.y + box.height < seenNow.panel.y : box.x + box.width < seenNow.panel.x);
+      const kindsInSight = [...new Set(seenNow.buildings.filter((b) => citySide(b.box)).map((b) => b.kind))];
+      const onItsDistrict = (line) => { const tile = line.into ? seenNow.district[line.into] : null; return Boolean(tile && line.to.x >= tile.x - 1 && line.to.x <= tile.x + tile.width + 1 && line.to.y >= tile.y - 1 && line.to.y <= tile.y + tile.height + 1); };
+      const lineEnds = seenNow.lines.filter((line) => line.into ? !onItsDistrict(line) : !seenNow.buildings.some((b) => line.to.x >= b.box.x - 1 && line.to.x <= b.box.x + b.box.width + 1 && line.to.y >= b.box.y - 1 && line.to.y <= b.box.y + b.box.height + 1) || covering.some((c) => line.to.x > c.box.x && line.to.x < c.box.x + c.box.width && line.to.y > c.box.y && line.to.y < c.box.y + c.box.height)).map((line) => line.key);
       const keepOut = [{ name: "the bar", box: { x: 0, y: 0, width: seenNow.width, height: seenNow.bar } }, ...(seenNow.panel ? [{ name: "the page", box: seenNow.panel }] : []), ...(seenNow.dock ? [{ name: "the level control", box: seenNow.dock }] : [])];
       const controlsCovered = seenNow.controls.flatMap((c) => keepOut.filter((k) => overlapOf(c.box, k.box) > 1).map((k) => `${c.what} under ${k.name}`));
       const outside = [...tags, ...boards].filter((t) => t.box.x < 0 || t.box.x + t.box.width > seenNow.width || t.box.y < seenNow.bar || t.box.y + t.box.height > seenNow.height).map((t) => t.name);
@@ -1493,6 +1497,29 @@ async function rich(browser, device) {
     await page.mouse.move(2, Math.round(device.height / 2));
     await page.screenshot({ path: resolve(STRIPS, `rich-${device.width}-home-nearby.png`) });
     const home = await readRich(page);
+    // What the home's views show: each record a part of the page or a view in it marks, by its kind (the fixture's ids are "<kind>-<n>").
+    const homeKinds = await page.evaluate(() => {
+      const sheet = document.querySelector("[data-graview-one-place]");
+      const ids = [];
+      const read = (root) => ids.push(...[...root.querySelectorAll("[data-record], [data-graview-record]")].map((el) => el.getAttribute("data-record") ?? el.getAttribute("data-graview-record")));
+      if (sheet) {
+        read(sheet);
+        for (const host of sheet.querySelectorAll("[data-worker-view]")) if (host.shadowRoot) read(host.shadowRoot);
+      }
+      return [...new Set(ids.filter(Boolean).map((id) => id.replace(/-\d+$/, "")))];
+    });
+    const sideOf = home.panel ? (home.width <= 600 ? { x: 0, y: home.bar, width: home.width, height: home.panel.y - home.bar } : { x: 0, y: home.bar, width: home.panel.x, height: home.height - home.bar }) : null;
+    const viewsKinds = homeKinds.filter((kind) => home.district[kind]);
+    result.homeViews = { kinds: viewsKinds, behind: sideOf ? viewsKinds.filter((kind) => { const tile = home.district[kind]; const mid = { x: tile.x + tile.width / 2, y: tile.y + tile.height / 2 }; return overlapOf(tile, home.panel) > tile.width * tile.height * 0.15 || mid.x < sideOf.x || mid.x > sideOf.x + sideOf.width || mid.y < sideOf.y || mid.y > sideOf.y + sideOf.height; }) : ["no panel"] };
+    /* THE BOARDS UNDER THE LINES: the lines' layer paints over the boards' — higher, or the same and later in the document. */
+    result.boardsUnderLines = await page.evaluate(() => {
+      const lines = document.querySelector('[data-testid="one-place-lines"]');
+      const boards = document.querySelector('[data-testid="one-place-boards"]');
+      if (!lines || !boards) return { found: false, over: false };
+      const z = (el) => Number(getComputedStyle(el).zIndex) || 0;
+      const later = Boolean(boards.compareDocumentPosition(lines) & Node.DOCUMENT_POSITION_FOLLOWING);
+      return { found: true, lines: z(lines), boards: z(boards), linesLater: later, over: z(lines) > z(boards) || (z(lines) === z(boards) && later) };
+    });
     // Where the part the page leaves the city is too small to take the whole city in at the camera's furthest (a narrow tablet, a small phone), the city cannot help standing partly behind the page: held where it can.
     const free = home.panel ? (home.width <= 600 ? { width: home.width, height: home.panel.y - home.bar } : { width: home.panel.x, height: home.height - home.bar }) : { width: home.width, height: home.height };
     result.home = { behind: home.panel ? Object.entries(home.district).filter(([, tile]) => overlapOf(tile, home.panel) > tile.width * tile.height * 0.15).map(([kind]) => kind) : [], districts: Object.keys(home.district).length, free, held: free.width >= 480 && free.height >= 300 };
@@ -1644,6 +1671,8 @@ async function rich(browser, device) {
   // On a small window (a phone, or one on its side) a board's words are never smaller than 9 pixels: the City pans rather than shrink them, and beside a page a board stands only where it can be read.
   const small = device.width <= 600 || device.height <= 600;
   seen.richLegible.push({ where, city: city.small, nearby: nearby.small, ok: !result.error && (!small || (city.small?.length === 0 && nearby.small?.length === 0)) });
+  seen.richHomeViews.push({ where, ...result.homeViews, ok: Boolean(result.homeViews && result.homeViews.kinds.length > 0 && result.homeViews.behind.length === 0) });
+  seen.richBoardsUnder.push({ where, ...result.boardsUnderLines, ok: Boolean(result.boardsUnderLines?.over) });
   seen.richHomeNearby.push({ where, ...result.home, ok: Boolean(result.home && result.home.districts > 0 && (!result.home.held || result.home.behind.length === 0)) });
   seen.richOneLevel.push({ where, nearby: { chosen: nearby.chosenLooking, tip: nearby.tipUp }, city: { chosen: city.chosenLooking, tip: city.tipUp }, ok: !result.error && nearby.chosenLooking?.length === 1 && city.chosenLooking?.length === 1 && nearby.tipUp?.length === 0 && city.tipUp?.length === 0 });
   seen.richViews.push({ where, ...result.views, ok: Boolean(result.views && result.views.boards.length + (device.width <= 600 || device.height <= 600 ? result.views.underThePansBar.length : 0) === 4 && result.views.asThemselves === result.views.boards.length && result.views.alike.length === 0) });
@@ -1778,6 +1807,8 @@ try {
   report.checks.everyKindsBoardStandsOnItsOwnDistrictEvenWhereThePageCoversOne = { held: seen.richOwnDistrict, ok: every(seen.richOwnDistrict) };
   report.checks.noBoardsWordsAreSmallerThanNinePixels = { held: seen.richLegible, ok: every(seen.richLegible) };
   report.checks.atNearbyTheHomeFramesTheCityBesideThePage = { held: seen.richHomeNearby, ok: every(seen.richHomeNearby) };
+  report.checks.atNearbyOnTheHomeEveryDistrictItsViewsShowStandsOnTheCitysSide = { held: seen.richHomeViews, ok: every(seen.richHomeViews) };
+  report.checks.theBoardsStandUnderTheLines = { held: seen.richBoardsUnder, ok: every(seen.richBoardsUnder) };
   report.checks.theLevelControlShowsOneChosenLevelAfterTheKeys = { held: seen.richOneLevel, ok: every(seen.richOneLevel) };
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
   report.passed = Object.values(report.checks).every((check) => check.ok);

@@ -1,6 +1,6 @@
 {
-  "at": "2026-11-10T19:23:58.326Z",
-  "open": 0,
+  "at": "2026-11-13T17:48:33.147Z",
+  "open": 1,
   "problems": {
     "keyboard-lands-nowhere|a press on <div> \"#:#Pay the deposit\" left the keyboard on <body>": {
       "rule": "keyboard-lands-nowhere",
@@ -435,6 +435,57 @@
       "lastSeen": "2026-10-03T04:13:27.762Z",
       "status": "fixed",
       "fixedAt": "2026-10-03T04:29:38.019Z"
+    },
+    "control-covered|<button aria-label=\"Periods, #: open the list\"> \"Periods #\" is covered by <button aria-label=\"# problems in Specimens\"> \"⚠ #\" at # wide — a press there lands on the other": {
+      "rule": "control-covered",
+      "detail": "<button aria-label=\"Periods, 22: open the list\"> \"Periods 22\" in [data-testid=\"one-place-names\"] is covered by <button aria-label=\"4 problems in Specimens\"> \"⚠ 4\" in [data-testid=\"one-place-names\"] at 844 wide — a press there lands on the other",
+      "at": "/?theme=dark",
+      "harnesses": [
+        "verify-one-face"
+      ],
+      "firstSeen": "2026-11-13T16:57:29.938Z",
+      "flaps": 1,
+      "lastSeen": "2026-11-13T17:48:33.147Z",
+      "status": "open"
+    },
+    "target-too-small|<button data-testid=\"one-place-ring\" aria-label=\"Open Siderian\"> is #×# pixels at # wide, within # pixels of <button aria-label=\"Periods, list\"> \"# periodsPeriodsSiderian\"": {
+      "rule": "target-too-small",
+      "detail": "<button data-testid=\"one-place-ring\" aria-label=\"Open Siderian\"> is 16×16 pixels at 768 wide, within 12 pixels of <button aria-label=\"Periods, list\"> \"22 periodsPeriodsSiderian\" in [data-testid=\"one-place-boards\"]",
+      "at": "/?theme=dark",
+      "harnesses": [
+        "verify-one-face"
+      ],
+      "firstSeen": "2026-11-13T16:57:29.938Z",
+      "flaps": 0,
+      "lastSeen": "2026-11-13T17:12:16.770Z",
+      "status": "fixed",
+      "fixedAt": "2026-11-13T17:28:54.445Z"
+    },
+    "target-too-small|<button data-testid=\"one-place-ring\" aria-label=\"Open Cambrian explosion\"> is #×# pixels at # wide, within # pixels of <button aria-label=\"Events, list\"> \"# eventsEventsCambrian explosion\"": {
+      "rule": "target-too-small",
+      "detail": "<button data-testid=\"one-place-ring\" aria-label=\"Open Cambrian explosion\"> is 16×16 pixels at 768 wide, within 12 pixels of <button aria-label=\"Events, list\"> \"20 eventsEventsCambrian explosion\" in [data-testid=\"one-place-boards\"]",
+      "at": "/?theme=dark",
+      "harnesses": [
+        "verify-one-face"
+      ],
+      "firstSeen": "2026-11-13T16:57:29.938Z",
+      "flaps": 0,
+      "lastSeen": "2026-11-13T17:12:16.770Z",
+      "status": "fixed",
+      "fixedAt": "2026-11-13T17:28:54.445Z"
+    },
+    "target-too-small|<button data-testid=\"one-place-ring\" aria-label=\"Open Triassic\"> is #×# pixels at # wide, within # pixels of <button aria-label=\"Epochs, #: open the list\"> \"Epochs #\"": {
+      "rule": "target-too-small",
+      "detail": "<button data-testid=\"one-place-ring\" aria-label=\"Open Triassic\"> is 16×16 pixels at 768 wide, within 12 pixels of <button aria-label=\"Epochs, 34: open the list\"> \"Epochs 34\" in [data-testid=\"one-place-names\"]",
+      "at": "formation-3?theme=dark",
+      "harnesses": [
+        "verify-one-face"
+      ],
+      "firstSeen": "2026-11-13T17:12:16.770Z",
+      "flaps": 0,
+      "lastSeen": "2026-11-13T17:12:16.770Z",
+      "status": "fixed",
+      "fixedAt": "2026-11-13T17:28:54.445Z"
     }
   }
 }

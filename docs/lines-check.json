@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-24T05:43:13.125Z",
+  "at": "2026-11-13T17:31:48.429Z",
   "engine": "chromium",
   "checks": {
     "everyLineIsDrawable": true,
@@ -66,6 +66,7 @@
     }
   ],
   "recordLinks": 2,
+  "astray": [],
   "groundAtRest": 0,
   "groundChosen": 8,
   "words": [

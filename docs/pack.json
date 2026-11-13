@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-13T16:41:22.625Z",
+  "at": "2026-11-13T17:29:57.703Z",
   "packages": {
     "@graview/core": {
       "files": 1712,
@@ -13,12 +13,12 @@
     },
     "@graview/embed": {
       "files": 63,
-      "tarballBytes": 108171,
+      "tarballBytes": 108174,
       "ok": true
     },
     "graview": {
       "files": 237,
-      "tarballBytes": 1057296,
+      "tarballBytes": 1057817,
       "ok": true
     },
     "@graview/guest": {
@@ -33,7 +33,7 @@
     },
     "@graview/pages": {
       "files": 187,
-      "tarballBytes": 373606,
+      "tarballBytes": 375788,
       "ok": true
     },
     "@graview/primitives": {
@@ -63,12 +63,12 @@
     },
     "@graview/studio": {
       "files": 75,
-      "tarballBytes": 154220,
+      "tarballBytes": 154217,
       "ok": true
     },
     "@graview/tools": {
       "files": 347,
-      "tarballBytes": 583170,
+      "tarballBytes": 583171,
       "ok": true
     }
   },
@@ -80,7 +80,7 @@
       "name": "the pages face alone",
       "load": "first",
       "minified": 789317,
-      "gzipped": 286246,
+      "gzipped": 286247,
       "chunks": 49,
       "budget": {
         "minified": 789340,
@@ -149,7 +149,7 @@
       "name": "embed without the studio",
       "load": "first",
       "minified": 446769,
-      "gzipped": 155550,
+      "gzipped": 155552,
       "chunks": 10,
       "budget": {
         "minified": 725187,
@@ -175,12 +175,12 @@
     {
       "name": "every face",
       "load": "all",
-      "minified": 3332887,
-      "gzipped": 1210641,
+      "minified": 3335337,
+      "gzipped": 1211425,
       "chunks": 224,
       "budget": {
-        "minified": 3333027,
-        "gzipped": 1210689
+        "minified": 3335527,
+        "gzipped": 1211489
       },
       "carries": [],
       "defers": [],
@@ -203,7 +203,7 @@
       "name": "embed with the studio handed in",
       "load": "first",
       "minified": 1999537,
-      "gzipped": 700261,
+      "gzipped": 700263,
       "chunks": 98,
       "budget": {
         "minified": 2023521,
