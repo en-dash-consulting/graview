@@ -115,11 +115,24 @@ const phoneOf = (view: View) => view.width <= PHONE;
  */
 export function levelZooms(where: PageWhere, view: View): readonly [number, number, number] {
   if (where.type === "record") {
-    const panel = phoneOf(view) ? 2 : 2.2;
+    const panel = phoneOf(view) ? 2 : Math.max(1.25, 2.2 * besideShare(view));
     return [Math.min(2.9, panel * 1.3), panel, 1];
   }
   if (where.type === "home" || where.type === "overview") return [1.8, 1.4, 1];
-  return [2.1, 1.6, 1];
+  return [2.1, Math.max(1.25, 1.6 * besideShare(view)), 1];
+}
+
+/**
+ * HOW MUCH OF A DESK'S CITY THE PANEL LEAVES, against the band it left at
+ * a third of the window, where Nearby's zooms were set: a wider panel leaves
+ * a narrower band of city, and the camera stands back by as much (no more
+ * than a little over a quarter), so what a record is linked to is still in
+ * sight beside it rather than behind the page. A phone's sheet is not this.
+ */
+export function besideShare(view: View): number {
+  if (phoneOf(view)) return 1;
+  const band = panelBox(view).x;
+  return Math.max(0.72, Math.min(1, band / (view.width * 0.62)));
 }
 
 /**
@@ -164,7 +177,19 @@ export const GUTTER = { page: 20, panel: 16 } as const;
  */
 export function frameSpacing(inPanel: boolean): Readonly<Record<string, string>> {
   if (!inPanel) return { "--graview-gutter": `${GUTTER.page}px` };
-  return { "--graview-gutter": `${GUTTER.panel}px`, "--graview-frame-top": `${GUTTER.panel}px`, "--graview-frame-foot": "24px" };
+  return frameSpacingAt(PANEL);
+}
+
+/**
+ * AND BETWEEN THE TWO, AS THE PAGE MOVES: from a full page's at the page
+ * (altitude 0) to a panel's at Nearby and above, every step drawn, so the
+ * page's words never jump 24 pixels as it narrows into the panel or widens
+ * out of it. Whole pixels, so a step between frames is never a fraction.
+ */
+export function frameSpacingAt(altitude: number): Readonly<Record<string, string>> {
+  const t = Math.max(0, Math.min(1, altitude));
+  const at = (page: number, panel: number) => `${Math.round(page + (panel - page) * t)}px`;
+  return { "--graview-gutter": at(GUTTER.page, GUTTER.panel), "--graview-frame-top": at(40, GUTTER.panel), "--graview-frame-foot": at(96, 24) };
 }
 
 /**

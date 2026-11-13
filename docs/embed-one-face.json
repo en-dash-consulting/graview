@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-13T05:56:16.809Z",
+  "at": "2026-11-13T17:27:29.808Z",
   "engine": "chromium",
   "document": "packages/core/tests/document/fixtures/tasks.gdd.json",
   "checks": {
@@ -421,6 +421,19 @@
       "value": "13]",
       "level": 1,
       "inBox": true,
+      "ok": true
+    },
+    "thePanelOptionSetsTheDesksPanel": {
+      "asked": {
+        "width": 768,
+        "inPanel": true,
+        "gutter": "16px"
+      },
+      "unsaid": {
+        "width": 704,
+        "inPanel": true,
+        "gutter": "16px"
+      },
       "ok": true
     },
     "noPageThrew": {

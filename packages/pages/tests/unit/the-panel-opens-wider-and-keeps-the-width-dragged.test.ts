@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CITY_LEAST, deskPanelWidth, frameSpacing, GUTTER, PANEL_MOST, PANEL_SHARE, panelBox, panelRange, panelStoreKey } from "../../src/one-place-geometry.js";
+import { besideShare, CITY_LEAST, deskPanelWidth, frameSpacing, frameSpacingAt, GUTTER, levelZooms, PANEL_MOST, PANEL_SHARE, panelBox, panelRange, panelStoreKey } from "../../src/one-place-geometry.js";
 
 const laptop = { width: 1440, height: 900, top: 48 };
 
@@ -77,5 +77,35 @@ describe("the page in the panel takes a panel's spacing, and the frame says the 
     expect(foot).toBeLessThan(96);
     expect(GUTTER.panel).toBeGreaterThanOrEqual(16);
     expect(GUTTER.panel).toBeLessThanOrEqual(20);
+  });
+
+  it("moves from a full page's to a panel's step by step as the page narrows, in whole pixels", () => {
+    expect(frameSpacingAt(0)).toEqual({ "--graview-gutter": "20px", "--graview-frame-top": "40px", "--graview-frame-foot": "96px" });
+    expect(frameSpacingAt(1)).toEqual(frameSpacing(true));
+    expect(frameSpacingAt(2)).toEqual(frameSpacing(true));
+    const half = frameSpacingAt(0.5);
+    expect(half["--graview-frame-top"]).toBe("28px");
+    let last = 40;
+    for (let a = 0; a <= 1.0001; a += 0.05) {
+      const top = Number.parseFloat(frameSpacingAt(a)["--graview-frame-top"]!);
+      expect(top).toBeLessThanOrEqual(last);
+      expect(last - top).toBeLessThanOrEqual(2);
+      last = top;
+    }
+  });
+});
+
+describe("with the city beside a wider panel narrower, the camera at Nearby stands back by as much", () => {
+  const record = { type: "record", id: "r", kind: "k" } as const;
+  it("leaves the zoom as it was where the panel left the city its old band, and stands back no further than 72%", () => {
+    expect(besideShare({ width: 1280, height: 800, panel: 461 })).toBe(1);
+    expect(besideShare({ width: 1280, height: 800 })).toBeCloseTo(0.72, 2);
+    expect(besideShare({ width: 390, height: 844 })).toBe(1);
+    const zooms = levelZooms(record, { width: 1280, height: 800 });
+    expect(zooms[1]).toBeLessThan(2.2);
+    expect(zooms[1]).toBeGreaterThanOrEqual(1.25);
+    expect(zooms[0]).toBeGreaterThan(zooms[1]);
+    expect(zooms[1]).toBeGreaterThan(zooms[2]);
+    expect(levelZooms(record, { width: 390, height: 844 })[1]).toBe(2);
   });
 });

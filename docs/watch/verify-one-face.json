@@ -1,7 +1,23 @@
 {
-  "at": "2026-11-13T17:16:03.755Z",
+  "at": "2026-11-13T17:34:37.402Z",
   "harness": "verify-one-face",
   "engine": "chromium",
-  "open": 0,
-  "violations": []
+  "open": 3,
+  "violations": [
+    {
+      "rule": "target-too-small",
+      "detail": "<button data-testid=\"one-place-ring\" aria-label=\"Open The landlord holds the date for 48 hours once\"> is 16×16 pixels at 1440 wide, within 12 pixels of <button aria-label=\"Lists, list\"> \"3 listsListsToday\" in [data-testid=\"one-place-boards\"]",
+      "at": "t-deposit?today=2026-09-01"
+    },
+    {
+      "rule": "control-covered",
+      "detail": "<button data-testid=\"one-place-ring\" aria-label=\"Open The landlord holds the date for 48 hours once\"> is covered by <button aria-label=\"Lists, list\"> \"3 listsListsToday\" in [data-testid=\"one-place-boards\"] at 1440 wide — a press there lands on the other",
+      "at": "t-deposit?today=2026-09-01"
+    },
+    {
+      "rule": "control-covered",
+      "detail": "<button aria-label=\"Expeditions, 16: open the list\"> \"Expeditions 16\" in [data-testid=\"one-place-names\"] is covered by <span> \"Specimens 16⚠ 4\" in [data-testid=\"one-place-names\"] at 844 wide — a press there lands on the other",
+      "at": "/?theme=dark"
+    }
+  ]
 }

@@ -1548,7 +1548,8 @@ async function rich(browser, device) {
         await restAt(page, 1, 15_000).catch(() => {});
       }
       const opened = { url: new URL(page.url()).pathname, level: await levelOf(page), wanted: press?.path ?? press?.key ?? null };
-      const openedIt = Boolean(press) && (press.path ? opened.url.endsWith(press.path.split("?")[0]) : !opened.url.endsWith("/formations/formation-3"));
+      // A district's name opens its kind's list: the address names the kind.
+      const openedIt = Boolean(press) && (press.path ? opened.url.endsWith(press.path.split("?")[0]) : !opened.url.endsWith("/formations/formation-3") && opened.url.includes(press.key.slice("name:".length)));
       result.handOnABoard.push({ at: level === 2 ? "City" : "Nearby", how: touch ? "touch" : "pointer", from: before?.key ?? null, panned, by, stayed: after.url.endsWith("/formations/formation-3") && after.level === level, opened, ok: Boolean(before && panned && Math.abs(panned.x - by.x) <= 8 && Math.abs(panned.y - by.y) <= 8 && after.url.endsWith("/formations/formation-3") && after.level === level && openedIt && opened.level === 1) });
       }
     }
@@ -2081,7 +2082,9 @@ try {
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
   // A run of some claims alone (`--only=nearbyZoom,panelWidth`, while working on them) says only those.
   if (only) for (const [name, check] of Object.entries(report.checks)) if (name !== "noPageThrew" && Array.isArray(check.held) && check.held.length === 0) delete report.checks[name];
-  report.passed = Object.values(report.checks).every((check) => check.ok);
+  // A run of some claims alone is never the verdict: it says what it ran, and does not pass.
+  report.passed = !only && Object.values(report.checks).every((check) => check.ok);
+  if (only) report.only = only;
 } catch (error) {
   report.error = String(error?.stack ?? error);
   report.passed = false;

@@ -626,8 +626,43 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
      * zooms the camera (`one-place-city.tsx`); a plain scroll over the panel
      * scrolls the page. At Page the pinch is the browser's own.
      */
+    /*
+     * SAFARI'S TRACKPAD PINCH is a GestureEvent, its `scale` how far the
+     * fingers have gone since they began: over the panel it scrubs the
+     * altitude as a pinch on a phone's sheet does (and the page is not
+     * zoomed by the browser while it is out of the window). Two fingers on
+     * glass are the touches' (above), never read twice.
+     */
+    let gestureFrom: number | null = null;
+    const gestureStart = (event: Event) => {
+      const now = latest.current.now;
+      if (!onPage(event.target) || !now.away || pinch !== null) return;
+      event.preventDefault();
+      gestureFrom = now.level === PANEL && !now.moving ? 1 : null;
+    };
+    const gestureChange = (event: Event) => {
+      if (!onPage(event.target) || !latest.current.now.away || pinch !== null) return;
+      event.preventDefault();
+      if (gestureFrom === null) return;
+      const scale = (event as Event & { scale?: number }).scale ?? 1;
+      if (!(scale > 0)) return;
+      begin();
+      motion.current.held = true;
+      // Fingers together is out: the altitude rises as far as they have closed.
+      motion.current.scrub += Math.log(gestureFrom / scale) * 1.6;
+      gestureFrom = scale;
+    };
+    const gestureEnd = () => {
+      if (gestureFrom !== null) motion.current.held = false;
+      gestureFrom = null;
+    };
     const wheel = (event: WheelEvent) => {
       if (!(event.ctrlKey || event.metaKey) || !onPage(event.target)) return;
+      // Safari says a pinch as a gesture as well: read once, from the gesture.
+      if (gestureFrom !== null) {
+        event.preventDefault();
+        return;
+      }
       const now = latest.current.now;
       if (!now.away) return;
       // Out of the window, the browser never zooms the page under the hand: the pinch is the face's.
@@ -680,6 +715,9 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
     window.addEventListener("touchend", touchEnd, { capture: true });
     window.addEventListener("touchcancel", touchEnd, { capture: true });
     window.addEventListener("wheel", wheel, { passive: false, capture: true });
+    window.addEventListener("gesturestart", gestureStart, { passive: false, capture: true });
+    window.addEventListener("gesturechange", gestureChange, { passive: false, capture: true });
+    window.addEventListener("gestureend", gestureEnd, { capture: true });
     document.addEventListener("keydown", key);
     return () => {
       window.removeEventListener("touchstart", touchStart, { capture: true });
@@ -687,6 +725,9 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
       window.removeEventListener("touchend", touchEnd, { capture: true });
       window.removeEventListener("touchcancel", touchEnd, { capture: true });
       window.removeEventListener("wheel", wheel, { capture: true });
+      window.removeEventListener("gesturestart", gestureStart, { capture: true });
+      window.removeEventListener("gesturechange", gestureChange, { capture: true });
+      window.removeEventListener("gestureend", gestureEnd, { capture: true });
       document.removeEventListener("keydown", key);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -770,7 +811,7 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
         containerType: "inline-size",
         // Out of the window's flow the page is under the bar already: the room it kept for it is none.
         ["--graview-one-face-bar" as string]: "0px",
-        ...(frameSpacing(inPanel) as CSSProperties),
+        // Its gutter and its room above and below: set each frame by the city part, from the altitude (`frameSpacingAt`), so they move with the page's box.
       }
     : { display: "contents", ["--graview-one-face-bar" as string]: `${barHeight}px`, ...(frameSpacing(false) as CSSProperties) };
   const subject = where.type === "record" ? where.id : null;

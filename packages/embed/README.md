@@ -296,8 +296,9 @@ the bar reads the slot's box. Without the option every face draws as before.
 panel opens beside the city at Nearby, never wider than 1192 px or than
 leaves the city 480; a width the person drags it to is kept for that app in
 that browser and wins. While the page is in the panel it and each worker
-view's root carry `data-graview-in-panel`, and the frame sets
-`--graview-gutter` (20px on a full page, 16 in the panel).
+view's root carry `data-graview-in-panel`, and the one face sets
+`--graview-gutter` (20px on a full page, 16 in the panel; elsewhere it is
+unset, so read it as `var(--graview-gutter, 20px)`).
 
 ## When the declaration changes
 

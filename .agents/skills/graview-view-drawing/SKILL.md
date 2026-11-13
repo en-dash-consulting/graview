@@ -74,10 +74,9 @@ app's draws. What is refused is said, with its code.
 
 ## Its box, and the gutter
 
-On Pages a view draws in the page's column, within its box (a negative
-margin is clipped), its gutter `--graview-gutter`. Beside the city your
-root has `data-graview-in-panel` and the gutter is 16px: space by
-`@container`, never `vw`. `bleed: true`: on a phone (≤680px) it takes the
+On Pages a view draws in the page's column, within its box (negative
+margins clipped). Beside the city your root has `data-graview-in-panel`
+and `var(--graview-gutter, 20px)` is 16px: space by `@container`, not `vw`. `bleed: true`: on a phone (≤680px) it takes the
 gutter back, keeping safe areas; `"full"`: the window's width; a home (or
 `heading: "own"`) is flush under the bar.
 

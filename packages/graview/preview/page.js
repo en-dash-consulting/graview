@@ -98,7 +98,7 @@ async function whole() {
   const opening = new URL(location.href);
   const oneFace = opening.searchParams.get("graview-one-face") === "1";
   // The share of a desk's window the one face's panel opens at, as a host hands it (`panel`): `?graview-one-face-panel=0.6`.
-  const panel = Number(opening.searchParams.get("graview-one-face-panel") ?? NaN);
+  const panel = Number(opening.searchParams.get("graview-one-face-panel") || NaN);
   if (opening.searchParams.has("graview-one-face") || opening.searchParams.has("graview-one-face-panel")) {
     opening.searchParams.delete("graview-one-face");
     opening.searchParams.delete("graview-one-face-panel");

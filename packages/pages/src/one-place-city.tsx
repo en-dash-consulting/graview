@@ -4,7 +4,7 @@ import { Scene, type SceneCamera } from "@graview/react";
 import { useGraview, useNavigation, useViolations } from "@graview/react/provider";
 import { useOneFace } from "./one-place-control.js";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
-import { aimAt, anchorOf, BOARD_ASPECT, boardFaceWidth, boardLeast, boardWidthFor, fitBeside, fitCamera, SIGN_GAP, SIGN_POST, signRoom, cameraBetween, cameraPutting, CITY, cityArea, footOf, leaveFrom, routeLine, LEVEL_LIVE, levelZooms, PAGE, pageBox, PANEL, panelBox, PHONE, project, restingLevel, SHEET_ORIGIN, standingAt, standingCss, unionOf, type Box, type Live, type PageWhere, type Point } from "./one-place-geometry.js";
+import { aimAt, anchorOf, BOARD_ASPECT, frameSpacingAt, boardFaceWidth, boardLeast, boardWidthFor, fitBeside, fitCamera, SIGN_GAP, SIGN_POST, signRoom, cameraBetween, cameraPutting, CITY, cityArea, footOf, leaveFrom, routeLine, LEVEL_LIVE, levelZooms, PAGE, pageBox, PANEL, panelBox, PHONE, project, restingLevel, SHEET_ORIGIN, standingAt, standingCss, unionOf, type Box, type Live, type PageWhere, type Point } from "./one-place-geometry.js";
 import type { OnePlaceCityProps } from "./one-place.js";
 import { placeSigns } from "./one-place-signs.js";
 import { pluralOf } from "./page-typography.js";
@@ -652,6 +652,9 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           plane.style.transform = "";
           plane.style.opacity = "";
           plane.style.borderRadius = "";
+          // A full page's room above and below again: the shell's own (the gutter the frame sets itself).
+          plane.style.removeProperty("--graview-frame-top");
+          plane.style.removeProperty("--graview-frame-foot");
           draw([], 0);
         }
         return;
@@ -897,6 +900,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         // As a board its corners are a board's, the camera's scale undone.
         plane.style.borderRadius = `${(a >= PANEL ? 10 / (standing?.scale ?? 1) : 10 * a).toFixed(2)}px`;
         if (standing && plane.scrollTop !== 0 && a > 1.9) plane.scrollTop = 0;
+        // Its gutter and its room above and below, a full page's at the page and a panel's beside the city, every step between drawn (written only when a pixel changes).
+        for (const [name, value] of Object.entries(frameSpacingAt(a))) if (plane.style.getPropertyValue(name) !== value) plane.style.setProperty(name, value);
       } else {
         plane.style.transform = "";
         plane.style.opacity = "";
@@ -1294,12 +1299,13 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
      * two-finger scroll that happened to start over a district moved
      * nothing. On this face a district scrolls nothing of its own: the
      * scroll pans the city, as over open ground. A part that does scroll (a
-     * scroll region, a pane) keeps its own wheel.
+     * scroll region, a pane, a worker view drawn there, whose own scroll this
+     * face cannot see into) keeps its own wheel.
      */
     const holder = box.current;
     const onPlotWheel = (event: WheelEvent) => {
       const target = event.target as Element | null;
-      if (event.ctrlKey || event.metaKey || !target?.closest("[data-graview-plot]") || target.closest(".graview-scroll, [data-graview-overlay], .graview-zoom")) return;
+      if (event.ctrlKey || event.metaKey || !target?.closest("[data-graview-plot]") || target.closest(".graview-scroll, [data-graview-overlay], .graview-zoom, [data-worker-view]")) return;
       const cam = camera.current;
       if (!cam) return;
       event.preventDefault();

@@ -1,6 +1,6 @@
 {
-  "at": "2026-11-10T19:23:58.326Z",
-  "open": 0,
+  "at": "2026-11-13T17:34:37.415Z",
+  "open": 3,
   "problems": {
     "keyboard-lands-nowhere|a press on <div> \"#:#Pay the deposit\" left the keyboard on <body>": {
       "rule": "keyboard-lands-nowhere",
@@ -435,6 +435,42 @@
       "lastSeen": "2026-10-03T04:13:27.762Z",
       "status": "fixed",
       "fixedAt": "2026-10-03T04:29:38.019Z"
+    },
+    "target-too-small|<button data-testid=\"one-place-ring\" aria-label=\"Open The landlord holds the date for # hours once\"> is #×# pixels at # wide, within # pixels of <button aria-label=\"Lists, list\"> \"# listsListsToday\"": {
+      "rule": "target-too-small",
+      "detail": "<button data-testid=\"one-place-ring\" aria-label=\"Open The landlord holds the date for 48 hours once\"> is 16×16 pixels at 1440 wide, within 12 pixels of <button aria-label=\"Lists, list\"> \"3 listsListsToday\" in [data-testid=\"one-place-boards\"]",
+      "at": "t-deposit?today=2026-09-01",
+      "harnesses": [
+        "verify-one-face"
+      ],
+      "firstSeen": "2026-11-13T17:34:37.415Z",
+      "flaps": 0,
+      "lastSeen": "2026-11-13T17:34:37.415Z",
+      "status": "open"
+    },
+    "control-covered|<button data-testid=\"one-place-ring\" aria-label=\"Open The landlord holds the date for # hours once\"> is covered by <button aria-label=\"Lists, list\"> \"# listsListsToday\" at # wide — a press there lands on the other": {
+      "rule": "control-covered",
+      "detail": "<button data-testid=\"one-place-ring\" aria-label=\"Open The landlord holds the date for 48 hours once\"> is covered by <button aria-label=\"Lists, list\"> \"3 listsListsToday\" in [data-testid=\"one-place-boards\"] at 1440 wide — a press there lands on the other",
+      "at": "t-deposit?today=2026-09-01",
+      "harnesses": [
+        "verify-one-face"
+      ],
+      "firstSeen": "2026-11-13T17:34:37.415Z",
+      "flaps": 0,
+      "lastSeen": "2026-11-13T17:34:37.415Z",
+      "status": "open"
+    },
+    "control-covered|<button aria-label=\"Expeditions, #: open the list\"> \"Expeditions #\" is covered by <span> \"Specimens #⚠ #\" at # wide — a press there lands on the other": {
+      "rule": "control-covered",
+      "detail": "<button aria-label=\"Expeditions, 16: open the list\"> \"Expeditions 16\" in [data-testid=\"one-place-names\"] is covered by <span> \"Specimens 16⚠ 4\" in [data-testid=\"one-place-names\"] at 844 wide — a press there lands on the other",
+      "at": "/?theme=dark",
+      "harnesses": [
+        "verify-one-face"
+      ],
+      "firstSeen": "2026-11-13T17:34:37.415Z",
+      "flaps": 0,
+      "lastSeen": "2026-11-13T17:34:37.415Z",
+      "status": "open"
     }
   }
 }
