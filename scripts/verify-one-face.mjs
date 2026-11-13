@@ -1377,6 +1377,8 @@ const readRich = (page) =>
         const other = rect(o);
         if (!across(other)) continue;
         const y = (Math.max(post.y, other.y) + Math.min(post.y + post.height, other.y + other.height)) / 2;
+        // A crossing past the window's edge (a small window's City pans) is not seen, and the page cannot be asked what is drawn there.
+        if (post.x + 1 < 0 || post.x + 1 >= innerWidth || y < 0 || y >= innerHeight) continue;
         // Both taking the pointer for the reading (a board put away or still arriving takes none): whichever is drawn on top is what is found there.
         const was = [b.style.pointerEvents, o.style.pointerEvents];
         b.style.pointerEvents = "auto";
@@ -1636,9 +1638,37 @@ async function rich(browser, device) {
       const counts = home.rests.map((one) => ({ name: `the count ${one.text}`, box: { x: one.box.x - 2, y: one.box.y - 2, width: one.box.width + 4, height: one.box.height + 4 } }));
       result.homeClear = { clash: [...onEachOther([...tags, ...boards]), ...counts.flatMap((count) => [...tags, ...boards].filter((t) => overlapOf(t.box, count.box) > 2).map((t) => `${t.name} × ${count.name}`))], names: tags.length };
     }
-    const sideOf = home.panel ? (home.width <= 600 ? { x: 0, y: home.bar, width: home.width, height: home.panel.y - home.bar } : { x: 0, y: home.bar, width: home.panel.x, height: home.height - home.bar }) : null;
+    // The city's side as the one face frames it: inside the window by 8 pixels, beside the panel on a desk, and on a phone above the sheet and the level control riding on it.
+    const sideOf = home.panel ? (home.width <= 600 ? { x: 8, y: home.bar + 8, width: home.width - 16, height: Math.min(home.panel.y, home.dock ? home.dock.y : home.panel.y) - home.bar - 16 } : { x: 8, y: home.bar + 8, width: home.panel.x - 16, height: home.height - home.bar - 16 }) : null;
     const viewsKinds = homeKinds.filter((kind) => home.district[kind]);
     result.homeViews = { kinds: viewsKinds, behind: sideOf ? viewsKinds.filter((kind) => { const tile = home.district[kind]; const mid = { x: tile.x + tile.width / 2, y: tile.y + tile.height / 2 }; return overlapOf(tile, home.panel) > tile.width * tile.height * 0.15 || mid.x < sideOf.x || mid.x > sideOf.x + sideOf.width || mid.y < sideOf.y || mid.y > sideOf.y + sideOf.height; }) : ["no panel"] };
+    /*
+     * WHERE THE WHOLE CITY CANNOT STAND BESIDE THE PAGE at Nearby's furthest
+     * zoom (the city says so), the home holds when every district its views
+     * show stands on the city's side, nothing said stands under the page, and
+     * the city is as near the middle of its side as that lets it be: its
+     * middle at the side's, or one of those districts at the side's edge.
+     */
+    const fits = await page.evaluate(() => document.querySelector('[data-testid="one-place-city"]')?.hasAttribute("data-graview-nearby-holds-the-city") ?? false);
+    const tiles = Object.values(home.district);
+    /*
+     * On each axis the city does not fit whole: its middle at its side's, or
+     * as near as it can be — moved the rest of the way, one of the views'
+     * districts would leave the side.
+     */
+    const axis = (lo, size) => {
+      if (!tiles.length || !sideOf) return false;
+      const from = Math.min(...tiles.map((t) => t[lo]));
+      const to = Math.max(...tiles.map((t) => t[lo] + t[size]));
+      if (from >= sideOf[lo] - 1 && to <= sideOf[lo] + sideOf[size] + 1) return true;
+      const delta = sideOf[lo] + sideOf[size] / 2 - (from + to) / 2;
+      if (Math.abs(delta) < 8) return true;
+      return viewsKinds.some((kind) => { const t = home.district[kind]; return t[lo] + delta < sideOf[lo] - 1 || t[lo] + t[size] + delta > sideOf[lo] + sideOf[size] + 1; });
+    };
+    const centeredOn = { x: axis("x", "width"), y: axis("y", "height") };
+    const centered = centeredOn.x && centeredOn.y;
+    const underPage = home.panel ? [...home.tags.map((t) => ({ name: `the ${t.kind} name`, box: t.box })), ...home.boards.filter((b) => !b.own).map((b) => ({ name: `“${b.label}”`, box: b.box }))].filter((t) => overlapOf(t.box, home.panel) > 2).map((t) => t.name) : [];
+    result.home = { ...result.home, fits, centered, centeredOn, side: sideOf, city: tiles.length ? { x: Math.min(...tiles.map((t) => t.x)), y: Math.min(...tiles.map((t) => t.y)), right: Math.max(...tiles.map((t) => t.x + t.width)), bottom: Math.max(...tiles.map((t) => t.y + t.height)) } : null, underPage };
     /* THE BOARDS UNDER THE LINES: the lines' layer paints over the boards' — higher, or the same and later in the document. */
     result.boardsUnderLines = await page.evaluate(() => {
       const lines = document.querySelector('[data-testid="one-place-lines"]');
@@ -1650,7 +1680,7 @@ async function rich(browser, device) {
     });
     // Where the part the page leaves the city is too small to take the whole city in at the camera's furthest (a narrow tablet, a small phone), the city cannot help standing partly behind the page: held where it can.
     const free = home.panel ? (home.width <= 600 ? { width: home.width, height: home.panel.y - home.bar } : { width: home.panel.x, height: home.height - home.bar }) : { width: home.width, height: home.height };
-    result.home = { behind: home.panel ? Object.entries(home.district).filter(([, tile]) => overlapOf(tile, home.panel) > tile.width * tile.height * 0.15).map(([kind]) => kind) : [], districts: Object.keys(home.district).length, free, held: free.width >= 480 && free.height >= 300 };
+    result.home = { ...result.home, behind: home.panel ? Object.entries(home.district).filter(([, tile]) => overlapOf(tile, home.panel) > tile.width * tile.height * 0.15).map(([kind]) => kind) : [], districts: Object.keys(home.district).length, free };
     /*
      * AND THERE TOO NOTHING SAID STANDS ON ANYTHING ELSE: the home's Nearby,
      * where the city is framed in the part the page leaves it — on a phone a
@@ -1852,7 +1882,8 @@ async function rich(browser, device) {
   seen.richPanelCrossings.push({ where, ...result.panelCrossings, error: result.error, ok: Boolean(result.panelCrossings && (device.width < 1000 || result.panelCrossings.pieces > 0) && result.panelCrossings.crossings.length === 0) });
   seen.richHomeViews.push({ where, ...result.homeViews, ok: Boolean(result.homeViews && result.homeViews.kinds.length > 0 && result.homeViews.behind.length === 0) });
   seen.richBoardsUnder.push({ where, ...result.boardsUnderLines, ok: Boolean(result.boardsUnderLines?.over) });
-  seen.richHomeNearby.push({ where, ...result.home, ok: Boolean(result.home && result.home.districts > 0 && (!result.home.held || result.home.behind.length === 0)) });
+  // Where the whole city stands beside the page, no district is behind it; where it cannot, the home's views' districts are on the city's side, nothing said is under the page, and the city is as near the middle as that allows.
+  seen.richHomeNearby.push({ where, ...result.home, ok: Boolean(result.home && result.home.districts > 0 && (result.home.fits ? result.home.behind.length === 0 : (result.homeViews?.behind.length ?? 1) === 0 && result.home.underPage.length === 0 && result.home.centered)) });
   seen.richOneLevel.push({ where, nearby: { chosen: nearby.chosenLooking, tip: nearby.tipUp }, city: { chosen: city.chosenLooking, tip: city.tipUp }, ok: !result.error && nearby.chosenLooking?.length === 1 && city.chosenLooking?.length === 1 && nearby.tipUp?.length === 0 && city.tipUp?.length === 0 });
   seen.richViews.push({ where, ...result.views, ok: Boolean(result.views && result.views.boards.length + (device.width <= 600 || device.height <= 600 ? result.views.underThePansBar.length : 0) === 4 && result.views.asThemselves === result.views.boards.length && result.views.alike.length === 0) });
 }
@@ -2553,7 +2584,7 @@ try {
   report.checks.noDistrictControlStandsUnderTheBarThePageOrTheLevelControl = { held: seen.richControls, ok: every(seen.richControls) };
   report.checks.everyKindsBoardStandsOnItsOwnDistrictEvenWhereThePageCoversOne = { held: seen.richOwnDistrict, ok: every(seen.richOwnDistrict) };
   report.checks.noBoardsWordsAreSmallerThanNinePixels = { held: seen.richLegible, ok: every(seen.richLegible) };
-  report.checks.atNearbyTheHomeFramesTheCityBesideThePage = { held: seen.richHomeNearby, ok: every(seen.richHomeNearby) };
+  report.checks.atNearbyTheHomeFramesTheWholeCityBesideThePageOrWhereItCannotItsViewsDistrictsAndAsNearTheMiddleAsThatAllows = { held: seen.richHomeNearby, ok: every(seen.richHomeNearby) };
   report.checks.atNearbyOnTheHomeEveryDistrictItsViewsShowStandsOnTheCitysSide = { held: seen.richHomeViews, ok: every(seen.richHomeViews) };
   report.checks.atNearbyOnTheHomeNoNameOrBoardStandsOnAnotherOrOnADistrictsCount = { held: seen.richHomeClear, ok: every(seen.richHomeClear) };
   report.checks.atNearbyOnARichPageNoLineCrossesAnotherPartInThePanel = { held: seen.richPanelCrossings, ok: every(seen.richPanelCrossings) };

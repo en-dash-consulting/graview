@@ -564,9 +564,11 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           // Beside the page on a small window a board too small to read, or with no clear place on its district, is not drawn: the bar reaches every view.
           // Beside a page a board with no clear place on its district stands nowhere: the City stands every view, on a small window as high over its district as it takes (the City pans there).
           dropCovered: lvl === PANEL,
-          reach: lvl === CITY ? (cramped() ? 30 : 16) : 12,
-          // On a small window a board is never drawn smaller than its words can be read.
-          shrink: !cramped(),
+          // Beside a page on a desk a view's board may stand higher over its own district before it stands nowhere.
+          reach: lvl === CITY ? (cramped() ? 30 : 16) : cramped() ? 12 : 24,
+          // A board drawn smaller where it must; beside a page as small as its floor (`boardLeast`) before it stands nowhere.
+          shrink: lvl === PANEL || !cramped(),
+          ...(lvl === PANEL ? { least: boardLeast(view) } : {}),
           // Beside the page the plaza is behind the city: only the views that stand on a district stand there.
           plaza: lvl !== PANEL,
         });
@@ -703,6 +705,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           const fit = fitCamera(city, shown, 16, s);
           // Never past what the camera can be written at: there the whole city does not fit beside the page, and the districts the home's views show are what stands in the city's side.
           const least = (camera.current?.range.min ?? 0) / zoomNow;
+          // Said on the city, for a reader of the page: whether the whole city stands beside the page here.
+          box.current?.toggleAttribute("data-graview-nearby-holds-the-city", fit.s >= least);
           if (fit.s >= least) return fit;
           const kinds = new Set(markedOnPage().flatMap((id) => {
             const kind = store.graph.getNode(id)?.kind as string | undefined;

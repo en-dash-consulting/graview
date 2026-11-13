@@ -56,6 +56,8 @@ export interface SignsAsked {
   readonly dropCovered?: boolean;
   /** Whether a board may be drawn a little smaller to stand on its own district: not where its words would drop below reading. */
   readonly shrink?: boolean;
+  /** The narrowest a board may be drawn (`boardLeast`, where a small window's words are still read): a board is drawn as small as this, or half its size, before it stands nowhere. */
+  readonly least?: number;
   /** How many half-boards up over its district a board may stand: a small window's City, which pans, takes them higher. */
   readonly reach?: number;
   /** Whether the views of no one kind stand on the plaza: not beside a page, where the plaza is behind the city. */
@@ -219,13 +221,16 @@ export function placeSigns(asked: SignsAsked): SignsPlaced {
    * clear, the place that covers least — or, asked (a phone), none.
    */
   const tries: { scale: number; raise: number; side: number; prefer: number }[] = [];
-  for (const scale of asked.shrink === false ? [1] : [1, 0.85, 0.7]) for (let raise = 0; raise <= (asked.reach ?? 12); raise++) for (const side of [0, -0.3, 0.3, -0.55, 0.55, -0.8, 0.8]) tries.push({ scale, raise, side, prefer: raise * 10 + Math.abs(side) * 30 + (1 - scale) * 120 });
+  // Smaller, as far as its words are still read, before a board with no clear place stands nowhere.
+  const smaller = asked.shrink === false ? [1] : [1, 0.85, 0.7, 0.6, 0.5, 0.42, 0.35].filter((scale) => scale === 1 || (asked.least !== undefined ? scale >= 0.5 && width * scale >= asked.least : scale >= 0.7));
+  for (const scale of smaller) for (let raise = 0; raise <= (asked.reach ?? 12); raise++) for (const side of [0, -0.3, 0.3, -0.55, 0.55, -0.8, 0.8]) tries.push({ scale, raise, side, prefer: raise * 10 + Math.abs(side) * 30 + (1 - scale) * 120 });
   tries.sort((a, b) => a.prefer - b.prefer);
   const standOn = (key: string, kind: string) => {
     // A district with many views stops looking long before it has tried every place for the last of them.
     const cap = (ofKind(kind).length > 6 ? 48 : Infinity);
     const tile = tiles.get(kind)!;
-    if (!inSight(tile)) return;
+    // A district any of which is seen keeps its views' boards: they stand where it is seen.
+    if (bounds && overlap(tile, bounds) < tile.width * tile.height * 0.05) return;
     const half = { w: tile.width / 2, h: tile.height / 2 };
     const middleX = tile.x + half.w;
     const middleY = tile.y + half.h;
