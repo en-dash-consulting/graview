@@ -633,6 +633,32 @@ export function PagesRoutes<S extends AnySchema>({
   );
 }
 
+/**
+ * THE ONE FACE ON ITS WAY. While the one face's part is fetched the page is
+ * drawn as the routed face draws it, and once it arrives that page is drawn
+ * again inside it: its bar, links and fields are new elements. Until then the
+ * document says so (`data-graview-one-face-arriving` on `<html>`), so a host,
+ * a harness or a screenshot that waits for the page waits for the page that
+ * stays — the same signal for every face on the page, counted.
+ */
+let arriving = 0;
+function OneFaceArriving({ children }: { readonly children: ReactNode }) {
+  useLayoutEffect(() => {
+    const root = typeof document === "undefined" ? null : document.documentElement;
+    if (!root) return undefined;
+    arriving += 1;
+    root.setAttribute(ONE_FACE_ARRIVING, "");
+    return () => {
+      arriving -= 1;
+      if (arriving === 0) root.removeAttribute(ONE_FACE_ARRIVING);
+    };
+  }, []);
+  return <>{children}</>;
+}
+
+/** Said on `<html>` while the one face's part is on its way and the page drawn meanwhile will be drawn again. */
+export const ONE_FACE_ARRIVING = "data-graview-one-face-arriving";
+
 /** Where a first look finds the controls of a face that owns the page. */
 const thePage = (): Element | null => (typeof document === "undefined" ? null : document.body);
 
@@ -700,7 +726,7 @@ export function PagesApp<S extends AnySchema>({
       {context.presence || outer ? <SaysWhere context={context} to={outer} /> : null}
       {context.sceneUnderPages && context.views ? (
         // The page over the Scene's own city: one place at every altitude (one-place.tsx). While its part is fetched the page is drawn as the routed face draws it, never a blank window.
-        <Suspense fallback={<PagesRoutes context={context} {...(registry ? { registry } : {})} />}>
+        <Suspense fallback={<OneFaceArriving><PagesRoutes context={context} {...(registry ? { registry } : {})} /></OneFaceArriving>}>
           <OnePlace context={context as unknown as PageContext<AnySchema>}>
             <PagesRoutes context={context} {...(registry ? { registry } : {})} />
           </OnePlace>
