@@ -128,6 +128,15 @@ async function ready(page) {
     { timeout: 60_000 },
   );
   await page.waitForTimeout(600);
+  /*
+   * THE PAGE THAT STAYS. Where the routed face stands over the city, the
+   * one face's part arrives after the app says it is ready and the page is
+   * drawn again inside it; on the nightly's runner that was after the 600 ms
+   * above, and a journey pressed a link in the page that was going ("no link
+   * to the Albums", "element was detached"). The document says when the page
+   * drawn meanwhile is gone (`data-graview-one-face-arriving`).
+   */
+  await page.waitForFunction(() => !document.documentElement.hasAttribute("data-graview-one-face-arriving"), null, { timeout: 60_000 });
 }
 
 /** What every job of one app is told: its addresses, its records' names, its seats. */
