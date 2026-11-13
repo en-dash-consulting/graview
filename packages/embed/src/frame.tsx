@@ -893,6 +893,10 @@ export function InBarSlot({ oneFace, slot, children }: { readonly oneFace: boole
     const to = slot ?? where.current;
     if (to && host) moveInto(to, host);
   }, [slot, host]);
+  // Off, the bar is drawn in the frame's flow: no empty holder is left in the slot.
+  useLayoutEffect(() => {
+    if (!oneFace) host?.remove();
+  }, [oneFace, host]);
   useEffect(() => () => host?.remove(), [host]);
   if (!oneFace || !host) return <>{children}</>;
   return (

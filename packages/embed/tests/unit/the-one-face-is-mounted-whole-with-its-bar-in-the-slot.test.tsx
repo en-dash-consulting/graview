@@ -167,6 +167,35 @@ describe("the one face's bar slot (FR-239)", () => {
     slot.remove();
   });
 
+  it("leaves no empty holder in the slot once the one face is turned off", async () => {
+    const page = document.createElement("div");
+    const slot = document.createElement("div");
+    document.body.append(page, slot);
+    let turn: (on: boolean) => void = () => {};
+    function Frame() {
+      const [on, setOn] = useState(true);
+      turn = setOn;
+      return (
+        <InBarSlot oneFace={on} slot={on ? slot : null}>
+          <nav data-graview-app-bar="" />
+        </InBarSlot>
+      );
+    }
+    const root = createRoot(page);
+    await act(async () => root.render(<Frame />));
+    expect(slot.querySelector("[data-graview-bar-host] [data-graview-app-bar]")).not.toBeNull();
+    await act(async () => turn(false));
+    expect(document.querySelector("[data-graview-bar-host]")).toBeNull();
+    expect(slot.childElementCount).toBe(0);
+    expect(page.querySelectorAll("[data-graview-app-bar]")).toHaveLength(1);
+    // On again, the holder comes back into the slot.
+    await act(async () => turn(true));
+    expect(slot.querySelector("[data-graview-bar-host] [data-graview-app-bar]")).not.toBeNull();
+    await act(async () => root.unmount());
+    page.remove();
+    slot.remove();
+  });
+
   it("keeps the bar where it was across a real mount: the node in the slot is the one first drawn", async () => {
     const { host } = await whole({ sceneUnderPages: true });
     // Drawn first in the frame's flow, while the one face's part is fetched; the node that ends in the slot is the same one.
