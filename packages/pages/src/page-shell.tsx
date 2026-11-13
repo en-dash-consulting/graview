@@ -8,7 +8,8 @@ import { useHostAssets } from "@graview/react/provider";
 import type { BarFind } from "@graview/primitives/pages";
 import type { ReactNode } from "react";
 import { kindOfSlug } from "./registry.js";
-import { useOneFace } from "./one-place-control.js";
+import { useOneFace, useOneFaceComing } from "./one-place-control.js";
+import { heldHost, HeldHere, moveInto } from "./held-element.js";
 import { createPortal } from "react-dom";
 import { type PageContext, StartFreshLink, useStoreTick } from "./page-context.js";
 import { usePlacedOnTheFace } from "./face-placed.js";
@@ -36,6 +37,10 @@ export function DefaultShell<S extends AnySchema>({
   const { store, brand } = context;
   useStoreTick(store);
   const bar = useOneFace()?.bar ?? null;
+  // Where the one face is on its way the bar is drawn once, into an element of its own that moves into the face's slot when it comes.
+  const coming = useOneFaceComing();
+  const [barHost] = useState(() => (coming ? heldHost("data-graview-bar-host") : null));
+  useEffect(() => () => barHost?.remove(), [barHost]);
   // On its own the routed face owns the page, and wears the brand's icon where the host serves it, and its colors; embedded, the host's page keeps its own (FR-124).
   const providedAssetsAt = useHostAssets();
   useFavicon(context.embedded ? undefined : assetSrc(context.assetsAt ?? providedAssetsAt, faviconHref(brand)));
@@ -60,7 +65,14 @@ export function DefaultShell<S extends AnySchema>({
         lineHeight: 1.5,
       }}
     >
-      {context.embedded ? null : bar ? (
+      {context.embedded ? null : barHost ? (
+        <>
+          {/* The one face here or on its way: the bar drawn once, in the page's flow until the face's slot is there, then moved into it. */}
+          {createPortal(<OwnBar context={context} />, barHost)}
+          {bar ? <InSlot slot={bar} host={barHost} /> : <HeldHere host={barHost} />}
+          {bar ? <div aria-hidden="true" data-graview-bar-room="" style={{ height: "var(--graview-one-face-bar, 0px)", flex: "0 0 auto" }} /> : null}
+        </>
+      ) : bar ? (
         <>
           {/* On the one face the bar stands fixed at the window's top, outside the page that moves; the page keeps its room. */}
           {createPortal(<OwnBar context={context} />, bar)}
@@ -98,6 +110,17 @@ export function DefaultShell<S extends AnySchema>({
       ) : null}
     </div>
   );
+}
+
+/** The bar's own element in the one face's slot, for as long as the slot stands; set down at the page's end as it goes, for its place in the page to take back. */
+function InSlot({ slot, host }: { readonly slot: HTMLElement; readonly host: HTMLElement }) {
+  useLayoutEffect(() => {
+    moveInto(slot, host);
+    return () => {
+      if (host.parentNode === slot && document.body) moveInto(document.body, host);
+    };
+  }, [slot, host]);
+  return null;
 }
 
 /**

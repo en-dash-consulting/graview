@@ -10,6 +10,7 @@ import { useStoreTick, type PageContext } from "./page-context.js";
 import { pluralOf } from "./page-typography.js";
 import { kindOfSlug, recordPath, pluralSlug } from "./registry.js";
 import { OneFaceContext, type OneFace } from "./one-place-control.js";
+import { HeldHere } from "./held-element.js";
 import { BOARD_ASPECT, boardFaceWidth, smallWindow, CITY, LEVEL_NAMES, nearestThatWay, PAGE, PANEL, panelBox, panelRange, PHONE, type Box, type PageWhere, type View } from "./one-place-geometry.js";
 
 /**
@@ -283,7 +284,20 @@ const keysOn = (): boolean => {
 /** Typing somewhere: the keys are the field's, not the altitude's. */
 const typingIn = (target: EventTarget | null): boolean => target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement || (target instanceof HTMLElement && target.isContentEditable);
 
-export function OnePlace<S extends AnySchema>({ context, children }: { readonly context: PageContext<S>; readonly children: ReactNode }) {
+export function OnePlace<S extends AnySchema>({
+  context,
+  page,
+  onFace,
+  children,
+}: {
+  readonly context: PageContext<S>;
+  /** The routed page, drawn once into this element before the face arrived: moved into the sheet, never drawn again (`router.tsx`). */
+  readonly page?: HTMLElement | null | undefined;
+  /** Told the face once it is here, and null once it goes: the page, drawn where it was first drawn, reads the face through it. */
+  readonly onFace?: ((face: OneFace | null) => void) | undefined;
+  /** The page, where it is drawn here (a server's drawing, where nothing moves). */
+  readonly children?: ReactNode;
+}) {
   const { views } = useGraview<S>();
   const store = context.store as unknown as PageContext<AnySchema>["store"];
   const schema = store.schema as AnySchema;
@@ -488,7 +502,8 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
   }, [location.pathname]);
   const openAt = useCallback(
     (path: string, level: number) => {
-      if (path.split("?")[0] === location.pathname) return goLevel(level);
+      // The page this is (asked by its path alone, or narrowed as it is): only the level moves. Narrowed otherwise (`/problems?kind=…` from `/problems`), it is gone to.
+      if (path.includes("?") ? path === `${location.pathname}${location.search}` : path === location.pathname) return goLevel(level);
       if (level > PAGE) keep();
       kept.current = level > PAGE ? { scrollY: 0, address: path } : null;
       pendingLevel.current = { path: path.split("?")[0]!, level };
@@ -712,6 +727,11 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
   }, [now.level, now.moving, current, bar]);
 
   const face = useMemo<OneFace>(() => ({ level: now.level, goLevel, openRecord, openPath: openAt, bar }), [now.level, goLevel, openRecord, openAt, bar]);
+  // The page drawn where it was first drawn reads the face from there: told it as it changes, before the frame is painted.
+  useLayoutEffect(() => {
+    onFace?.(face);
+  }, [face, onFace]);
+  useLayoutEffect(() => () => onFace?.(null), [onFace]);
 
   const away = now.away;
   // The page as one element: in the page's own flow while it is read, the window's box and then the panel's once it moves (`one-place-city.tsx` sets its box each frame).
@@ -770,7 +790,7 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
           {context.embedded ? <div aria-hidden="true" data-graview-bar-room="" style={{ height: "var(--graview-one-face-bar, 0px)", flex: "0 0 auto" }} /> : null}
           {/* Over a view that is the record's whole page, what it is linked to comes first: seen, and reached by the keyboard and a screen reader, before the view. */}
           {away && subject && whole ? <Connected store={store} id={subject} box={connected} sheet={sheet} openRecord={openRecord} whole /> : null}
-          {children}
+          {page ? <HeldHere host={page} /> : children}
           {/* What the record is linked to, grown into the page as it becomes the panel: its rows the lines leave from. */}
           {away && subject && !whole ? <Connected store={store} id={subject} box={connected} sheet={sheet} openRecord={openRecord} whole={false} /> : null}
           {/* Room at the page's foot only where the control would stand over the page's last words: none where the foot is empty beside it. */}
@@ -806,7 +826,8 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
               chosen.current = board.key;
             }}
             className="graview-one-place-board"
-            style={{ position: "fixed", left: 0, top: 0, width: 0, height: 0, padding: 0, margin: 0, border: "none", background: "none", cursor: "pointer", overflow: "visible", display: "block", opacity: 0, color: "inherit", font: "inherit", textAlign: "start" }}
+            // In the layer's own box, not each a layer of its own: every board's post is drawn under every board (its `z-index: -1`), so a post that has to cross another board runs behind its words, never over them.
+            style={{ position: "absolute", left: 0, top: 0, width: 0, height: 0, padding: 0, margin: 0, border: "none", background: "none", cursor: "pointer", overflow: "visible", display: "block", opacity: 0, color: "inherit", font: "inherit", textAlign: "start" }}
           >
             {board.key === current ? null : <BoardFace board={board} width={boardFaceWidth(view)} height={boardFaceWidth(view) / BOARD_ASPECT} small={smallWindow(view)} />}
           </button>
@@ -890,8 +911,8 @@ const ONE_PLACE_CSS = `
 .graview-one-place-edge:hover::after, .graview-one-place-edge:focus-visible::after { background: var(--graview-accent); }
 .graview-one-place-edge:focus-visible { outline: none; }
 .graview-one-place-board { touch-action: none; }
-.graview-one-place-board::after { content: ""; position: absolute; left: 50%; top: 100%; width: 2px; height: var(--graview-sign-post, 10px); margin-left: -1px; background: color-mix(in srgb, var(--graview-ink) 35%, transparent); }
-.graview-one-place-board::before { content: ""; position: absolute; left: 50%; top: calc(100% + var(--graview-sign-post, 10px)); width: 18px; height: 6px; margin: -3px 0 0 -9px; border-radius: 50%; background: rgba(0,0,0,0.28); }
+.graview-one-place-board::after { content: ""; position: absolute; z-index: -1; left: 50%; top: 100%; width: 2px; height: var(--graview-sign-post, 10px); margin-left: -1px; background: color-mix(in srgb, var(--graview-ink) 35%, transparent); }
+.graview-one-place-board::before { content: ""; position: absolute; z-index: -1; left: 50%; top: calc(100% + var(--graview-sign-post, 10px)); width: 18px; height: 6px; margin: -3px 0 0 -9px; border-radius: 50%; background: rgba(0,0,0,0.28); }
 .graview-one-place-board[data-graview-rising] { transform-origin: 50% 100%; transform: scaleY(1); transition: transform ${RISE_MS}ms cubic-bezier(.33,0,.2,1); }
 @starting-style { .graview-one-place-board[data-graview-rising] { transform: scaleY(0); } }
 .graview-one-place-board[data-graview-rising][data-graview-leaving] { transform: scaleY(0); pointer-events: none; }

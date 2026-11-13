@@ -1,7 +1,7 @@
-import { brokenWords, labelOf, violationsTouching, type AnySchema, type Brand, type Principal, type Repair, type Store, type Violation } from "@graview/core";
+import { brokenWords, labelOf, pluralLabel, violationsTouching, type AnySchema, type Brand, type Principal, type Repair, type Store, type Violation } from "@graview/core";
 import { failureWords } from "@graview/core/words";
 import { ownSentence, problemTitle, RuleLineView, useLined, useRuleLines } from "@graview/primitives/pages";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { useRef, useState, type ReactNode } from "react";
 import { DerivedForm } from "./form.js";
 import { recordPath } from "./registry.js";
@@ -18,19 +18,38 @@ import { PageMain, PageTitle } from "./page-shell.js";
 export function DefaultProblemsPage<S extends AnySchema>({ context }: { context: PageContext<S> }) {
   const { store, brand, invariantContext, principal } = context;
   useStoreTick(store);
-  const violations = store.violations(invariantContext);
-  const rules = store.allInvariants();
+  /*
+   * NARROWED TO ONE KIND (`/problems?kind=<kind>`): what a district's "⚠ n"
+   * at the City opens — the problems that name one of that kind's records,
+   * and the rules about it — with the way to every problem beside it.
+   */
+  const [search] = useSearchParams();
+  const asked = search.get("kind");
+  const narrowed = asked !== null && store.schema.tryDefinition(asked) ? asked : null;
+  const about = (violation: Violation) => violation.nodeIds.some((id) => store.graph.getNode(id)?.kind === narrowed);
+  const every = store.violations(invariantContext);
+  const violations = narrowed ? every.filter(about) : every;
+  const all = store.allInvariants();
+  const rules = narrowed ? all.filter((one) => (one.scope !== "graph" && one.scope.kind === narrowed) || violations.some((violation) => violation.invariant === one.name)) : all;
   // Each problem with its rule's line, where the rule has a shape.
   const lined = useLined(store, violations);
   const ruleLines = useRuleLines(store.schema, rules);
+  const plural = narrowed ? pluralLabel(store.schema, narrowed) : null;
   return (
     <PageMain context={context}>
-      <header style={{ display: "grid", gap: 12 }}>
+      <header style={{ display: "grid", gap: 12 }} {...(narrowed ? { "data-graview-problems-of": narrowed } : {})}>
         {/* The count said once, quietly under the title: no eyebrow repeating the head. */}
-        <PageTitle context={context}>{violations.length === 0 ? "All rules hold" : "What is broken"}</PageTitle>
+        <PageTitle context={context}>{violations.length === 0 ? (plural ? `All rules hold for ${plural.toLowerCase()}` : "All rules hold") : plural ? `What is broken in ${plural.toLowerCase()}` : "What is broken"}</PageTitle>
         <p style={lede} data-testid="problems-count">
-          {violations.length === 0 ? "Every declared rule is satisfied by what is here." : brokenWords(violations)}
+          {violations.length === 0 ? (plural ? `Every rule about ${plural.toLowerCase()} is satisfied by what is here.` : "Every declared rule is satisfied by what is here.") : brokenWords(violations)}
         </p>
+        {narrowed && every.length > violations.length ? (
+          <p style={{ margin: 0 }}>
+            <Link to="/problems" data-testid="problems-every" style={link}>
+              {`See every problem (${every.length})`}
+            </Link>
+          </p>
+        ) : null}
       </header>
       {/*
         * AND WHAT THE SEAT ASKED. The problems page is the face's inbox:
@@ -46,6 +65,7 @@ export function DefaultProblemsPage<S extends AnySchema>({ context }: { context:
         return (
           <section
             key={index}
+            data-graview-problem={violation.invariant}
             style={{
               display: "grid",
               gap: 10,
