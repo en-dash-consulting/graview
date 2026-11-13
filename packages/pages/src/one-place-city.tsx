@@ -77,6 +77,8 @@ const zoomNowOf = (cam: SceneCamera): string => cam.zoom().toFixed(4);
 
 /** The most lines drawn from a page's parts: past this a list's lines are a hatch. */
 const MOST_LINES = 40;
+/** What a district's "+n" is kept under among the picture's buildings: never a record's id. */
+const REST_KEY = "\u0000rest:";
 /** How long one level's move takes. A person who asked for less motion is cut straight there. */
 export const MOVE_MS = 560;
 /** A hand that has stopped zooming for this long has let go: the altitude settles to the nearest level. */
@@ -287,7 +289,23 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     /** A camera written in the frame before: what stood where the move ended is carried into the new pixels as this frame begins, the view drawing them now. */
     let rebaseNext: Live | null = null;
     const SETTLE_MS = 300;
-    const blend = <T extends Point>(from: T | undefined, to: T | undefined, t: number): T | undefined => (to && from ? { ...to, x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t } : to);
+    /*
+     * A name's box is carried whole: its size too, which differs between
+     * levels (a size on the screen is many times wider in the picture far
+     * out). Carried with the size it is going to, a box caught part way —
+     * a move begun again when what stands at the foot changed — had its
+     * middle moved by half the difference in one frame: a name leapt a
+     * hundred pixels sideways.
+     */
+    const blend = <T extends Point>(from: T | undefined, to: T | undefined, t: number): T | undefined => {
+      if (!to || !from) return to;
+      const at = { ...to, x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t };
+      if ("width" in to && "width" in from && "height" in to && "height" in from) {
+        const [a, b] = [from as unknown as Box, to as unknown as Box];
+        return { ...at, width: a.width + (b.width - a.width) * t, height: a.height + (b.height - a.height) * t };
+      }
+      return at;
+    };
     /** How far a move or a settle has gone, this frame: 1 when nothing is under way. */
     const goneAt = (now: number): { readonly t: number; readonly slots: ReadonlyMap<string, Point> | null; readonly names: ReadonlyMap<string, Box> | null } =>
       move ? { t: ease(clamp01((now - move.start) / MOVE_MS)), slots: move.slots, names: move.names } : settle && now - settle.start < SETTLE_MS ? { t: ease((now - settle.start) / SETTLE_MS), slots: settle.slots, names: settle.names } : { t: 1, slots: null, names: null };
@@ -307,6 +325,15 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       }
       const buildings = new Map<string, Box>();
       for (const building of holder.querySelectorAll("[data-graview-building]")) buildings.set(building.getAttribute("data-graview-building")!, boxOf(building.getBoundingClientRect()));
+      /*
+       * A district's "+n" — the buildings its plot has no room for — is words
+       * in the picture, as a building's name is: stood clear of as a building
+       * is, so no district's name runs into it ("+43PLANTS 10").
+       */
+      holder.querySelectorAll(".graview-village-rest").forEach((rest, i) => {
+        const box = boxOf(rest.getBoundingClientRect());
+        if (box.width > 0) buildings.set(`${REST_KEY}${i}`, box);
+      });
       return { plots, buildings };
     };
 
@@ -369,6 +396,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       const round = (n: number) => Math.round(n / 2) * 2;
       const rel = (box: Box) => [round(box.x - origin.x), round(box.y - origin.y), round(box.width), round(box.height)];
       const buildingsOnScreen = [...w.buildings.values()].map(onScreen);
+      const restsOnScreen = [...w.buildings].filter(([key]) => key.startsWith(REST_KEY)).map(([, box]) => onScreen(box));
       // What decides the placing, the city's own lattice taken from where it stands: a pan of fewer than 24 pixels places nothing again.
       const key = JSON.stringify([lvl, view.width, view.height, round(width), [...tiles].map(([kind, box]) => [kind, ...rel(box)]), buildingsOnScreen.length, buildingsOnScreen.reduce((sum, box) => sum + rel(box)[0]! + rel(box)[1]! * 3, 0), [...sizes].map(([kind, size]) => [kind, size.width, size.height]), signs.map((one) => [one.key, one.kind, one.building ? rel(one.building) : null]), bounds ? [Math.round((bounds.x - origin.x) / 24), Math.round((bounds.y - origin.y) / 24), Math.round(bounds.width / 24), Math.round(bounds.height / 24)] : null, reserved.map((box) => rel(box).map((n) => Math.round(n / 12)))]);
       let placed: ReturnType<typeof placeSigns>;
@@ -381,6 +409,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           tiles,
           buildings: buildingsOnScreen,
           names: sizes,
+          words: restsOnScreen,
           signs,
           board: { width, height: width / BOARD_ASPECT, post: SIGN_POST * zoomNow * cam.s * k, gap: SIGN_GAP * zoomNow * cam.s * k },
           ...(bounds ? { bounds } : {}),
@@ -678,12 +707,24 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
          */
         const readKey = `${at.view.width}x${at.view.height}|${at.boards.length}|${at.current}|${zoomNowOf(cam)}|${holder.querySelector(".graview-plots > g")?.getAttribute("transform") ?? ""}|${footNow().key}`;
         // An empty city is read again every frame until it has laid out; a pan moves the city's own transform, which is in the key.
-        if (world.plots.size === 0 || readKey !== lastReadKey || committedAt > lastRead || now - lastRead > 500) {
+        /*
+         * NEVER PLACED AGAIN FOR WHERE A MOVE LEFT. The first frame of a move
+         * paints the camera it starts from, which is a level's: read again
+         * there (a slow machine's frame long past the half-second), the
+         * level being left was placed again over the one headed for, without
+         * the part beside the page it is placed inside — and the names, slid
+         * along to stay in it, leapt sideways. Under way, the city is placed
+         * only for where the move ends.
+         */
+        if (world.plots.size === 0 || (!move && (readKey !== lastReadKey || committedAt > lastRead || now - lastRead > 500))) {
           world = readWorld(holder);
-          const drawnBefore = { slots: drawnSlots(now), names: drawnNames(now) };
-          // At the City everything stands inside what the camera shows; the camera was fitted to it.
-          standAll(world, cam.zoom(), LEVEL_LIVE, move ? undefined : shownAt(rest), rest);
-          if (!move) settle = { ...drawnBefore, start: now };
+          if (move) placeFor(move.toAltitude, move.to, cam.zoom());
+          else {
+            const drawnBefore = { slots: drawnSlots(now), names: drawnNames(now) };
+            // At the City everything stands inside what the camera shows; the camera was fitted to it.
+            standAll(world, cam.zoom(), LEVEL_LIVE, shownAt(rest), rest);
+            settle = { ...drawnBefore, start: now };
+          }
           lastRead = now;
           lastReadKey = readKey;
         }
@@ -932,6 +973,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
             ...(dockRect && dockRect.width > 0 ? [boxOf(dockRect)] : []),
           ];
       const under = (b: Box) => keepOut.some((k) => Math.min(b.x + b.width, k.x + k.width) - Math.max(b.x, k.x) > 1 && Math.min(b.y + b.height, k.y + k.height) - Math.max(b.y, k.y) > 1);
+      // Every board and name a press reaches this frame: a line's ring under or against one of them is not offered.
+      pressable.length = 0;
       for (const [key, button] of boardEls.current ?? []) {
         /*
          * A board that had no place where the move began (its district out
@@ -967,6 +1010,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         button.style.opacity = key === at.current ? (shownOwn > 0.001 ? "1" : "0") : seen.toFixed(3);
         button.style.setProperty("--graview-sign-post", `${((posts.get(key) ?? SIGN_POST * zoomNow) * painted.s).toFixed(2)}px`);
         button.style.pointerEvents = reached ? "auto" : "none";
+        if (reached) pressable.push({ x: foot.x - w / 2, y: foot.y - h, width: w, height: h });
         const face = button.firstElementChild as HTMLElement | null;
         if (face) face.style.transform = `scale(${(w / boardFaceWidth(at.view)).toFixed(5)})`;
       }
@@ -1008,6 +1052,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         el.style.top = `${top.y.toFixed(2)}px`;
         const covered = under({ x: top.x - el.offsetWidth / 2, y: top.y, width: el.offsetWidth, height: el.offsetHeight });
         el.toggleAttribute("data-graview-under", covered);
+        if (!covered && reached) pressable.push({ x: top.x - el.offsetWidth / 2, y: top.y, width: el.offsetWidth, height: el.offsetHeight });
         if (covered) {
           el.style.visibility = "hidden";
           el.inert = true;
@@ -1100,6 +1145,15 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       holder.setAttribute("data-graview-camera-zoom", (zoomNow * painted.s).toFixed(4));
     };
 
+    /*
+     * A RING IS NEVER UNDER A BOARD OR A NAME, NOR AGAINST ONE: a line's end
+     * that a board or a district's name stands over (or within a fingertip
+     * of) offers no ring of its own — a press there landed on the board, and
+     * one beside it was a small target crowded by a larger one. The line
+     * still ends there; the board or the name is what is pressed.
+     */
+    const pressable: Box[] = [];
+    const besidePressable = (to: Point): boolean => pressable.some((b) => to.x > b.x - 20 && to.x < b.x + b.width + 20 && to.y > b.y - 20 && to.y < b.y + b.height + 20);
     /* The overlay, written in the frame it is measured in: no React state per frame. */
     const draw = (found: readonly Drawn[], opacity: number) => {
       const control = fab.current?.querySelector('[data-graview-one-face-dock]')?.getBoundingClientRect() ?? null;
@@ -1167,7 +1221,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           const right = { x: to.x + Math.cos(angle - 2.4) * 6, y: to.y + Math.sin(angle - 2.4) * 6 };
           drawn.arrow.setAttribute("d", `M${tip.x.toFixed(2)},${tip.y.toFixed(2)} L${left.x.toFixed(2)},${left.y.toFixed(2)} L${right.x.toFixed(2)},${right.y.toFixed(2)} Z`);
           // The marker toward a building out of sight is the way to it: its name said, a press flies there.
-          const crowded = ringsAt.some((p) => Math.hypot(p.x - to.x, p.y - to.y) < 28);
+          const crowded = ringsAt.some((p) => Math.hypot(p.x - to.x, p.y - to.y) < 28) || besidePressable(to);
           drawn.ring.style.display = crowded ? "none" : "";
           if (!crowded) ringsAt.push(to);
           drawn.ring.style.left = `${(to.x - 8).toFixed(2)}px`;
@@ -1176,7 +1230,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           drawn.arrow.setAttribute("d", "");
           // An end under the bar, or under the control at the foot, is not offered: they stand over it.
           const under = control && to.x > control.left - 10 && to.x < control.right + 10 && to.y > control.top - 10 && to.y < control.bottom + 10;
-          const crowded = ringsAt.some((p) => Math.hypot(p.x - to.x, p.y - to.y) < 28);
+          const crowded = ringsAt.some((p) => Math.hypot(p.x - to.x, p.y - to.y) < 28) || besidePressable(to);
           drawn.ring.style.display = to.y < (state.current.view.top ?? 0) + 8 || under || crowded ? "none" : "";
           if (!crowded) ringsAt.push(to);
           drawn.ring.style.left = `${(to.x - 8).toFixed(2)}px`;

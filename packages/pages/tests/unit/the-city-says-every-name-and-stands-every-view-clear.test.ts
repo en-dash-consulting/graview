@@ -90,6 +90,41 @@ describe("the City says every district's name and stands every view clear of eve
     expect(inside.names.has("era")).toBe(false);
   });
 
+  /*
+   * A SMALL WINDOW BESIDE A PAGE: a dozen districts and their names, each
+   * with its count and its problems, in the strip the page leaves the city.
+   * Where no place by a district was clear, a name stood on another's —
+   * "OUR FOSSIL FINDS" half under "FOSSIL PLACES", a chip taking the next
+   * name's presses. Two hundred such cities: no name ever touches another.
+   */
+  it("never stands one district's name on another's, in a strip too small for every name to sit by its district", () => {
+    let crowded = 0;
+    for (let seed = 1; seed <= 200; seed++) {
+      let state = seed;
+      const random = () => (state = (state * 16807) % 2147483647) / 2147483647;
+      const lots = new Map<string, Box>();
+      const used = new Set<string>();
+      const count = 10 + Math.floor(random() * 4);
+      for (let i = 0; i < count; i++) {
+        let col: number;
+        let row: number;
+        do {
+          col = Math.floor(random() * 5);
+          row = Math.floor(random() * 5);
+        } while (used.has(`${col},${row}`));
+        used.add(`${col},${row}`);
+        lots.set(`k${i}`, { x: 170 + (col - row) * 40, y: 80 + (col + row) * 20, width: 40, height: 20 });
+      }
+      const sizes = new Map([...lots.keys()].map((kind) => [kind, { width: 80 + Math.floor(random() * 70), height: 24 }]));
+      const placedHere = placeSigns({ tiles: lots, buildings: [], names: sizes, signs: [], board: { width: 70, height: 46, post: 10, gap: 8 }, bounds: { x: 8, y: 60, width: 390, height: 322 }, reach: 12, dropCovered: true, plaza: false });
+      const boxes = [...placedHere.names];
+      if (boxes.length < lots.size) crowded++;
+      for (const [kind, box] of boxes) for (const [other, theirs] of boxes) if (other !== kind) expect(overlap(box, theirs), `seed ${seed}: ${kind} × ${other}`).toBe(0);
+    }
+    // Most of them still name every district.
+    expect(crowded).toBeLessThan(40);
+  });
+
   it("fits around all of it", () => {
     for (const box of [...tiles.values(), ...placed.names.values(), ...[...placed.feet].map(([key, foot]) => card(foot, placed.scales.get(key) ?? 1))]) {
       expect(box.x).toBeGreaterThanOrEqual(placed.whole!.x - 1e-6);

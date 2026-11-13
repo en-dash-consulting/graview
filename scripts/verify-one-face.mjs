@@ -536,7 +536,16 @@ async function chosen(page, where) {
     await restAt(page, 1).catch(() => {});
     await page.waitForTimeout(1500);
     const frames = await stopRecording(page);
-    const after = frames.findIndex((f) => f.url.endsWith(goal) && f.standing !== null && !f.standing.startsWith("t-deposit"));
+    /*
+     * Find goes by its own page: the search, which starts the move down,
+     * then the result, which the move carries on to. On a slow machine the
+     * result is chosen while that move is still under way: judged from the
+     * result alone, the move's last few frames were the whole of its way, and
+     * an ordinary step of its tail a third of it. From the frame before
+     * the move down began.
+     */
+    const left = frames.findIndex((f) => f.standing !== null && !f.standing.startsWith("t-deposit") && f.altitude < frames[0].altitude - 0.001);
+    const after = how === "find" ? (left > 0 ? left - 1 : left) : frames.findIndex((f) => f.url.endsWith(goal) && f.standing !== null && !f.standing.startsWith("t-deposit"));
     const first = after >= 0 ? frames[after] : null;
     // From what was pressed: a building's page leaves from its board, which stands over the building on a post as tall as it needs — above the press, never off to one side.
     const start = first && from ? Math.hypot(first.box.x + first.box.width / 2 - (from.x + from.width / 2), how === "building" ? Math.max(0, first.box.y + first.box.height - (from.y + from.height)) : first.box.y + first.box.height - (from.y + from.height)) : null;
@@ -1253,6 +1262,8 @@ const readRich = (page) =>
       return { key: b.getAttribute("data-graview-board"), label: b.getAttribute("title"), aria: b.getAttribute("aria-label"), box, stem: { x: box.x + box.width / 2, y: box.y + box.height + post }, smallest, title: title?.textContent ?? null, says: says?.textContent ?? null, lines: face ? face.querySelectorAll("[data-graview-board-says] ~ div > div").length : 0, own: b.hasAttribute("aria-current") };
     });
     const tags = [...document.querySelectorAll("[data-graview-district-tag]")].filter(shown).map((t) => ({ kind: t.getAttribute("data-graview-district-tag"), text: t.textContent, box: rect(t) }));
+    // A district's "+n", the buildings its plot has no room to show: drawn in the picture, and read as words beside a name.
+    const rests = [...document.querySelectorAll('[data-testid="one-place-city"] .graview-village-rest')].filter((el) => el.getBoundingClientRect().width > 0 && getComputedStyle(el).visibility !== "hidden").map((el) => ({ kind: (el.closest("[data-graview-plot]")?.getAttribute("data-graview-plot") ?? "").replace(/^kind:/, ""), text: el.lastChild?.textContent ?? el.textContent, box: rect(el) })).filter((r) => r.box.x + r.box.width > 0 && r.box.x < innerWidth && r.box.y + r.box.height > 0 && r.box.y < innerHeight);
     const plots = [...document.querySelectorAll('[data-testid="one-place-city"] [data-graview-plot] .graview-plot-tile')].map((tile) => ({ kind: (tile.closest("[data-graview-plot]").getAttribute("data-graview-plot") ?? "").replace(/^kind:/, ""), box: rect(tile) }));
     // The Scene's own district names, where any is still drawn on this face.
     const plates = [...document.querySelectorAll('[data-testid="one-place-city"] .graview-kind-face')].filter((face) => getComputedStyle(face).visibility !== "hidden" && face.getAttribute("data-graview-nameplate") !== "none" && face.getBoundingClientRect().width > 0).map((face) => ({ kind: face.closest("[data-graview-view]")?.getAttribute("data-graview-view"), box: rect(face) }));
@@ -1313,7 +1324,7 @@ const readRich = (page) =>
     // On a phone's City, which pans, the views put away under the bar or the control until panned to: they stand all the same.
     const under = [...document.querySelectorAll("[data-graview-board][data-graview-under]")].map((b) => b.getAttribute("data-graview-board"));
     const namesUnder = (innerWidth <= 600 || innerHeight <= 600) ? [...document.querySelectorAll("[data-graview-district-tag][data-graview-under]")].map((t) => ({ kind: t.getAttribute("data-graview-district-tag"), text: t.textContent })) : [];
-    return { boards, under, namesUnder, tags, plots, plates, problems, buildings, lines, controls, unseenFocus, chosenLooking, tipUp, district, dock: dock ? rect(dock) : null, level, panel: level === 1 && panelEl ? rect(panelEl) : null, legend, bar, width: innerWidth, height: innerHeight };
+    return { boards, under, namesUnder, tags, rests, plots, plates, problems, buildings, lines, controls, unseenFocus, chosenLooking, tipUp, district, dock: dock ? rect(dock) : null, level, panel: level === 1 && panelEl ? rect(panelEl) : null, legend, bar, width: innerWidth, height: innerHeight };
   });
 
 const overlapOf = (a, b) => Math.max(0, Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x)) * Math.max(0, Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y));
@@ -1360,6 +1371,20 @@ function onEachOther(things) {
   for (let i = 0; i < things.length; i++) for (let j = i + 1; j < things.length; j++) if (overlapOf(things[i].box, things[j].box) > 2) out.push(`${things[i].name} × ${things[j].name}`);
   return out;
 }
+/*
+ * WORDS NEVER TOUCH: a district's name with its count and its "⚠ n", and a
+ * district's "+n", each a pixel clear of every other one and of every board
+ * — two run together read as one line of words.
+ */
+const grown = (box, by) => ({ x: box.x - by, y: box.y - by, width: box.width + by * 2, height: box.height + by * 2 });
+function touching(words, others) {
+  const out = [];
+  for (let i = 0; i < words.length; i++) {
+    for (let j = i + 1; j < words.length; j++) if (words[i].kind !== words[j].kind && overlapOf(grown(words[i].box, 1), words[j].box) > 0.5) out.push(`${words[i].name} × ${words[j].name}`);
+    for (const other of others) if (overlapOf(grown(words[i].box, 1), other.box) > 0.5) out.push(`${words[i].name} × ${other.name}`);
+  }
+  return out;
+}
 
 async function rich(browser, device) {
   const phone = device.width <= 600;
@@ -1390,7 +1415,8 @@ async function rich(browser, device) {
       // The views stand at Nearby as at the City (the page's own is the page there).
       const boards = seenNow.boards.filter((b) => level === 2 || !b.own).map((b) => ({ name: `“${b.label}”`, box: b.box }));
       const plates = seenNow.plates.map((p) => ({ name: `the Scene's ${p.kind} name`, box: p.box }));
-      const clash = onEachOther([...tags, ...boards, ...plates]);
+      const words = [...seenNow.tags.map((t) => ({ kind: t.kind, name: `the ${t.kind} name`, box: t.box })), ...seenNow.rests.map((r) => ({ kind: r.kind, name: `the ${r.kind} ${r.text}`, box: r.box }))];
+      const clash = [...onEachOther([...tags, ...boards, ...plates]), ...touching(words, boards)];
       // At Nearby nothing this face says stands under the page beside the city.
       const underPanel = seenNow.panel ? [...tags, ...plates, ...boards].filter((t) => overlapOf(t.box, seenNow.panel) > 2).map((t) => t.name) : [];
       // A board beside its district, never on it: on no district's ground.
@@ -1473,6 +1499,18 @@ async function rich(browser, device) {
     // Where the part the page leaves the city is too small to take the whole city in at the camera's furthest (a narrow tablet, a small phone), the city cannot help standing partly behind the page: held where it can.
     const free = home.panel ? (home.width <= 600 ? { width: home.width, height: home.panel.y - home.bar } : { width: home.panel.x, height: home.height - home.bar }) : { width: home.width, height: home.height };
     result.home = { behind: home.panel ? Object.entries(home.district).filter(([, tile]) => overlapOf(tile, home.panel) > tile.width * tile.height * 0.15).map(([kind]) => kind) : [], districts: Object.keys(home.district).length, free, held: free.width >= 480 && free.height >= 300 };
+    /*
+     * AND THERE TOO NOTHING SAID STANDS ON ANYTHING ELSE: the home's Nearby,
+     * where the city is framed in the part the page leaves it — on a phone a
+     * strip over the sheet — each name with its count and its problems, each
+     * "+n", and each board clear of the others.
+     */
+    {
+      const homeBoards = home.boards.filter((b) => !b.own).map((b) => ({ name: `“${b.label}”`, box: b.box }));
+      const homeTags = home.tags.map((t) => ({ name: `the ${t.kind} name`, box: t.box }));
+      const homeWords = [...home.tags.map((t) => ({ kind: t.kind, name: `the ${t.kind} name`, box: t.box })), ...home.rests.map((r) => ({ kind: r.kind, name: `the ${r.kind} ${r.text}`, box: r.box }))];
+      result.homeClash = [...onEachOther([...homeTags, ...homeBoards]), ...touching(homeWords, homeBoards)];
+    }
     result.moved = moved;
     /*
      * A DISTRICT'S PROBLEMS OPEN FROM THE CITY AND FROM NEARBY, by a press
@@ -1603,7 +1641,7 @@ async function rich(browser, device) {
   await context.close().catch(() => {});
   const city = result.city ?? { clash: ["not read"], underPanel: [], outside: [], problems: [] };
   const nearby = result.nearby ?? { clash: ["not read"], underPanel: [], outside: [], problems: [] };
-  seen.richClear.push({ where, city: { clash: city.clash, outside: city.outside, onGround: city.onGround }, nearby: { clash: nearby.clash, underPanel: nearby.underPanel, outside: nearby.outside, onGround: nearby.onGround }, error: result.error, ok: !result.error && city.clash.length === 0 && city.outside.length === 0 && city.onGround.length === 0 && nearby.clash.length === 0 && nearby.underPanel.length === 0 && nearby.outside.length === 0 && nearby.onGround.length === 0 });
+  seen.richClear.push({ where, city: { clash: city.clash, outside: city.outside, onGround: city.onGround }, nearby: { clash: nearby.clash, underPanel: nearby.underPanel, outside: nearby.outside, onGround: nearby.onGround }, homeNearby: { clash: result.homeClash ?? null }, error: result.error, ok: !result.error && city.clash.length === 0 && city.outside.length === 0 && city.onGround.length === 0 && nearby.clash.length === 0 && nearby.underPanel.length === 0 && nearby.outside.length === 0 && nearby.onGround.length === 0 && Array.isArray(result.homeClash) && result.homeClash.length === 0 });
   // A desk's Nearby draws the formation page's lines: there are some to hold, and a run with none fails.
   const roomy = device.width >= 1000 && device.height > 600;
   seen.richRecords.push({ where, hidden: nearby.hidden, districtsInSight: nearby.kindsInSight, lines: nearby.lines, lineEndsNotOnABuilding: nearby.lineEnds, ok: !result.error && nearby.hidden?.length === 0 && (nearby.kindsInSight?.length ?? 0) >= 1 && (!roomy || nearby.lines > 0) && nearby.lineEnds?.length === 0 });

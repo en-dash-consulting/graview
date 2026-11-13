@@ -48,6 +48,8 @@ export interface SignsAsked {
   readonly board: { readonly width: number; readonly height: number; readonly post: number; readonly gap: number };
   /** What nothing stands on. */
   readonly reserved?: readonly Box[];
+  /** Words the picture draws itself (a district's "+n"): no name touches them, as none touches another name. */
+  readonly words?: readonly Box[];
   /** What the camera can show: past it is covered, as far as it reaches past. */
   readonly bounds?: Box;
   /** A board with no clear place by its district stands nowhere, rather than smaller than can be read or over something (a phone). */
@@ -92,6 +94,7 @@ const gapTo = (p: Point, b: Box): number => Math.hypot(Math.max(b.x - p.x, 0, p.
 export function placeSigns(asked: SignsAsked): SignsPlaced {
   const { tiles, buildings, board } = asked;
   const reserved = asked.reserved ?? [];
+  const words = asked.words ?? [];
   const bounds = asked.bounds;
   /** How much of a box the camera cannot show. */
   const outside = (box: Box): number => (bounds ? box.width * box.height - overlap(box, bounds) : 0);
@@ -285,11 +288,11 @@ export function placeSigns(asked: SignsAsked): SignsPlaced {
     };
     const tries: Box[] = [...middle.map(inside), ...middle];
     const cost = (box: Box) =>
-      [...names.values()].reduce((sum, other) => sum + overlap(grow(box, 3), other), 0) +
+      [...names.values(), ...words].reduce((sum, other) => sum + overlap(grow(box, 3), other) * 8, 0) +
       reserved.reduce((sum, other) => sum + overlap(box, other), 0) +
       outside(box) * 2 +
       roofs.reduce((sum, roof) => sum + overlap(box, roof), 0) +
-      signRooms.reduce((sum, room) => sum + overlap(grow(box, 2), room) * 4, 0) +
+      signRooms.reduce((sum, room) => sum + overlap(grow(box, 2), room) * 8, 0) +
       kinds.reduce((sum, other) => sum + (other !== kind && diamondReach(box, tiles.get(other)!) < 1 ? (1 - diamondReach(box, tiles.get(other)!)) * size.width * size.height : 0), 0);
     let best = tries[0]!;
     let least = Infinity;
@@ -326,6 +329,35 @@ export function placeSigns(asked: SignsAsked): SignsPlaced {
     if (bounds && outside(best) > 0.5) {
       best = { ...best, x: Math.max(bounds.x, Math.min(bounds.x + bounds.width - best.width, best.x)), y: Math.max(bounds.y, Math.min(bounds.y + bounds.height - best.height, best.y)) };
       if (best.x > tile.x + tile.width || best.x + best.width < tile.x) continue;
+    }
+    /*
+     * NEVER ON ANOTHER NAME, NOR A BOARD. A name and its problems are
+     * controls: one standing on another took the other's presses. Where
+     * every place by its district is taken (a small window beside a page),
+     * the nearest place clear of them both, inside what is shown, on a
+     * district's ground if it must be; with none, the district says no name
+     * here rather than one over another.
+     */
+    const onAnother = (box: Box) => [...names.values(), ...words].some((other) => overlap(grow(box, 2), other) > 0.5) || signRooms.some((room) => overlap(grow(box, 2), room) > 0.5);
+    if (onAnother(best)) {
+      let clear: Box | null = null;
+      let leastClear = Infinity;
+      for (let ring = 1; ring <= 10 && !clear; ring++) {
+        for (let row = -ring; row <= ring; row++) {
+          for (let col = -ring; col <= ring; col++) {
+            if (Math.max(Math.abs(row), Math.abs(col)) !== ring) continue;
+            const box = { x: best.x + (col * (size.width + 6)) / 3, y: best.y + row * (size.height + 4), ...size };
+            if ((bounds && outside(box) > 0.5) || onAnother(box)) continue;
+            const c = cost(box);
+            if (c < leastClear) {
+              leastClear = c;
+              clear = box;
+            }
+          }
+        }
+      }
+      if (!clear) continue;
+      best = clear;
     }
     names.set(kind, best);
   }
