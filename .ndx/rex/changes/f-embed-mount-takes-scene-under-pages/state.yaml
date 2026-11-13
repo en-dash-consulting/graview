@@ -1,6 +1,7 @@
 schema: "rex/v2"
 items:
   "b1b10bfc-bf14-41a8-8227-b6493c5a8a91":
-    status: "pending"
+    status: "in_progress"
+    startedAt: "2026-11-13T04:30:00.000Z"
     lastModified: "2026-11-13T04:30:00.000Z"
     lastModifiedBy: "Nick Daniel <nick@endash.us>"
