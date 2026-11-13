@@ -425,10 +425,11 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
   const theOne = (face: EmbedFace): EmbedFace => (oneFace && face !== "picture" ? "pages" : face);
   const [opened] = useState<EmbedFace>(() => {
     const given = props.at?.face;
-    if (given) return theOne(given);
+    if (given) return given;
     const decided = stop === undefined && opensOnTheHome(app, views as ReactViewRegistry<S>) ? "pages" : faceOf(stop);
-    const face = theOne(faceAtAddress({ ...routed, face: decided }));
-    if (props.face === undefined) props.onOpening?.(face);
+    const face = faceAtAddress({ ...routed, face: decided });
+    // Kept as it opened, so a host that turns the one face off later is drawn the face it would have opened on; told as drawn.
+    if (props.face === undefined) props.onOpening?.(theOne(face));
     return face;
   });
   const [homeFirst, setHomeFirst] = useState(() => props.face !== undefined && props.face !== "pages" && !props.at && stop === undefined && atTheBareHome(routed) && opensOnTheHome(app, views as ReactViewRegistry<S>));
@@ -526,7 +527,8 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
     window.history.replaceState(window.history.state, "", `${addressAt(OVERVIEW_PATH)}${search}${hash}`);
   });
   useIntrinsicHeight(rootRef, shown, props.onIntrinsicHeight);
-  useOtherFaceWhenIdle(shown, width);
+  // The one face draws no other face: nothing to fetch while the page is idle.
+  useOtherFaceWhenIdle(oneFace ? "picture" : shown, width);
   const report = useErrorReport(props.onError, shown);
   const ready = useReady(props.onReady, shown);
   const drawnTold = useRef(props.onFaceDrawn);
@@ -667,7 +669,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
           */}
         {bar && shown !== "picture" ? (
           <FaceBoundary module="@graview/embed" report={report}>
-            <InBarSlot slot={oneFace && shown === "pages" ? barSlot : null}>
+            <InBarSlot oneFace={oneFace && shown === "pages"} slot={oneFace && shown === "pages" ? barSlot : null}>
             <FrameBar
               name={brand?.name ?? app.name}
               heading={heading}
@@ -1149,8 +1151,8 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
     setStop: (stop) => flushSync(() => setters?.stop(stop)),
     setPath: (path) =>
       flushSync(() => {
-        // The overview's path is the scene; any other path is a page (FR-132).
-        if (isOverview(path)) {
+        // The overview's path is the scene; any other path is a page (FR-132). On the one face it is the City over the home, a page of the routed face (FR-239).
+        if (isOverview(path) && options.sceneUnderPages !== true) {
           if (asked === "pages" || asked === "picture") {
             asked = "scene";
             historyDoor.unsettle();

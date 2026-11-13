@@ -867,9 +867,64 @@ export function rootStyle(height: number | string, auto: boolean, oneFace: boole
  * THE BAR WHERE THE FACE KEEPS IT: in the one face's slot, fixed at the
  * window's top over the page and the city (FR-239), once the face has drawn
  * it; in the frame's flow until then, and on every other face.
+ *
+ * ONE BAR ACROSS THE MOVE. The one face's part is fetched after the page
+ * first draws, and is fetched again when it suspends, so the slot comes and
+ * goes under a bar already in use. The bar is drawn into one element the
+ * frame owns, and that element is what moves — into the slot and back to
+ * its place in the frame's flow — so the bar is never drawn again: the
+ * keyboard stays where it was, and a word typed in Find or an open menu is
+ * kept. Where the browser can move a node without taking it out of the
+ * page (`moveBefore`) it does; elsewhere the keyboard is put back.
  */
-export function InBarSlot({ slot, children }: { readonly slot: HTMLElement | null; readonly children: ReactNode }) {
-  return <>{slot ? createPortal(children, slot) : children}</>;
+export function InBarSlot({ oneFace, slot, children }: { readonly oneFace: boolean; readonly slot: HTMLElement | null; readonly children: ReactNode }) {
+  const [host] = useState(() => (typeof document === "undefined" ? null : barHost()));
+  const where = useRef<HTMLElement | null>(null);
+  const toSlot = useRef(slot);
+  toSlot.current = slot;
+  const place = useCallback(
+    (el: HTMLDivElement | null) => {
+      where.current = el;
+      if (el && host) moveInto(toSlot.current ?? el, host);
+    },
+    [host],
+  );
+  useLayoutEffect(() => {
+    const to = slot ?? where.current;
+    if (to && host) moveInto(to, host);
+  }, [slot, host]);
+  useEffect(() => () => host?.remove(), [host]);
+  if (!oneFace || !host) return <>{children}</>;
+  return (
+    <>
+      <div ref={place} data-graview-bar-place="" style={{ display: "contents" }} />
+      {createPortal(children, host)}
+    </>
+  );
+}
+
+/** The element the one face's bar is drawn into: no box of its own. */
+function barHost(): HTMLElement {
+  const host = document.createElement("div");
+  host.setAttribute("data-graview-bar-host", "");
+  host.style.display = "contents";
+  return host;
+}
+
+/** `host` to the end of `to`, the keyboard kept on what had it inside. */
+function moveInto(to: HTMLElement, host: HTMLElement): void {
+  if (host.parentNode === to) return;
+  const active = document.activeElement;
+  const held = active instanceof HTMLElement && host.contains(active) ? active : null;
+  const keeping = to as HTMLElement & { moveBefore?: (node: Node, child: Node | null) => void };
+  if (typeof keeping.moveBefore === "function" && host.isConnected && to.isConnected) {
+    try {
+      keeping.moveBefore(host, null);
+    } catch {
+      to.appendChild(host);
+    }
+  } else to.appendChild(host);
+  if (held && held.isConnected && document.activeElement !== held) held.focus({ preventScroll: true });
 }
 
 /**

@@ -10,7 +10,7 @@
  * face's slot (`[data-graview-one-face-bar]`), fixed at the window's top
  * above every layer of the face. Held here at a desk (1280 × 800) and on a
  * phone (390 × 844), over `graview preview` of a small team's tasks, mounted
- * as Cloud mounts it (whole page, address routing, `?city=1`):
+ * as Cloud mounts it (whole page, address routing, `?graview-one-face=1`):
  *
  *   drawsTheOneFace                 the one face is drawn, the embed's root is
  *                                   the pages', and the bar offers no switch
@@ -27,6 +27,8 @@
  *   theWindowScrollsThePage         the page is in the window's flow: the
  *                                   window scrolls it, the bar stays;
  *   keysMoveTheLevels               1, 2, 3, [ and ] move the levels;
+ *   keysTypedInFindLeaveTheLevel    typed into Find, in the slot, they are
+ *                                   words and the level stays;
  *   noPageThrew.
  *
  *   node scripts/verify-embed-one-face.mjs
@@ -39,6 +41,7 @@ import { fileURLToPath } from "node:url";
 import { createMemoryAdapter } from "../packages/core/dist/index.js";
 import { servePreview } from "../packages/ship/dist/index.js";
 import { launchEngine } from "./lib/engine.mjs";
+import { closeAppMenu } from "./lib/bar.mjs";
 import { portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -132,7 +135,7 @@ async function profile(browser, url, { name, options }, errors) {
   const checks = {};
   const at = (what) => `${what}On${name[0].toUpperCase()}${name.slice(1)}`;
   try {
-    await page.goto(`${url}/tasks?city=1`, { waitUntil: "load" });
+    await page.goto(`${url}/tasks?graview-one-face=1`, { waitUntil: "load" });
     await page.waitForFunction(() => window.__graviewReady === true, null, { timeout: 60_000 });
     // What Cloud hands the bar: its Share and a notification, so both stand on it.
     await page.evaluate(() => {
@@ -148,15 +151,19 @@ async function profile(browser, url, { name, options }, errors) {
       oneFace: document.querySelectorAll("[data-graview-one-place]").length,
       control: document.querySelectorAll('[data-testid="altitude"]').length,
     }));
-    const switches = await page.locator('[data-testid="app-menu-open"]').locator("visible=true").first().click({ timeout: 5_000 }).then(
+    // The app menu opened as a person opens it, its rows drawn, before the switch is looked for: a menu that never opened fails the claim.
+    const menu = await page.locator('[data-testid="app-menu-open"]').locator("visible=true").first().click({ timeout: 5_000 }).then(
       async () => {
-        const count = await page.locator('[data-testid="app-face-scene"]').count();
-        await page.keyboard.press("Escape");
-        return count;
+        // Its rows drawn (History, at least, where the one face leaves no Scene or Pages), before the switch is looked for.
+        await page.locator('[data-testid="app-menu"] button').locator("visible=true").first().waitFor({ state: "visible", timeout: 10_000 });
+        const rows = await page.locator('[data-testid="app-menu"]').locator("visible=true").first().evaluate((el) => el.querySelectorAll("button, a").length);
+        const scene = await page.locator('[data-testid="app-face-scene"]').count();
+        await closeAppMenu(page);
+        return { opened: true, rows, scene };
       },
-      () => 0,
+      (error) => ({ opened: false, rows: 0, scene: null, error: String(error?.message ?? error) }),
     );
-    checks[at("drawsTheOneFace")] = { ...drawn, sceneSwitch: switches, ok: drawn.root === "pages" && drawn.oneFace === 1 && drawn.control === 1 && switches === 0 };
+    checks[at("drawsTheOneFace")] = { ...drawn, menu, ok: drawn.root === "pages" && drawn.oneFace === 1 && drawn.control === 1 && menu.opened && menu.rows > 0 && menu.scene === 0 };
 
     const slot = await page.evaluate(() => ({
       bars: document.querySelectorAll("[data-graview-app-bar]").length,
@@ -212,6 +219,25 @@ async function profile(browser, url, { name, options }, errors) {
       keys.push({ key, want, rested });
     }
     checks[at("keysMoveTheLevels")] = { keys, ok: keys.every((one) => one.rested) };
+
+    // Typed into Find, in the slot, the level keys are words: at Nearby, "1", "3" and "]" go into the box and the level stays.
+    await blur(page);
+    await page.keyboard.press("2");
+    await restAt(page, 1);
+    const opener = page.locator('[data-testid="app-find-open"]').locator("visible=true").first();
+    if ((await opener.count()) > 0) await opener.click({ timeout: 5_000 });
+    const box = page.locator('[data-graview-one-face-bar] [data-testid="find-box"], [data-graview-one-face-bar] [data-testid="nav-find"]').locator("visible=true").first();
+    await box.click({ timeout: 5_000 });
+    await page.keyboard.type("13]", { delay: 60 });
+    await page.waitForTimeout(900);
+    const typed = {
+      value: await box.inputValue(),
+      level: await page.evaluate(() => Number(document.querySelector("[data-graview-one-place]")?.getAttribute("data-graview-one-place"))),
+      inBox: await box.evaluate((el) => document.activeElement === el),
+    };
+    checks[at("keysTypedInFindLeaveTheLevel")] = { ...typed, ok: typed.value.includes("13]") && typed.level === 1 && typed.inBox };
+    await box.fill("");
+    await blur(page);
   } catch (error) {
     checks[at("ran")] = { error: String(error?.stack ?? error), ok: false };
   } finally {

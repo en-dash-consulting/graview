@@ -1,11 +1,13 @@
 // @vitest-environment jsdom
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 import { capabilities, createSchema, defineApp, defineNode, z } from "@graview/core";
-import { act } from "react";
+import { act, useState } from "react";
+import { createRoot } from "react-dom/client";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { mount, preload, type EmbedHandle, type EmbedOptions } from "../../src/index.js";
 import { mount as mountPages, type PagesEmbedHandle, type PagesEmbedOptions } from "../../src/pages.js";
 import { openAppMenu } from "../support/the-app-menu.js";
+import { InBarSlot } from "../../src/frame.js";
 
 /**
  * THE ONE FACE, MOUNTED WHOLE THROUGH THE EMBED (FR-239).
@@ -120,6 +122,73 @@ describe("mount takes sceneUnderPages (FR-239)", () => {
 });
 
 describe("the one face's bar slot (FR-239)", () => {
+  it("keeps the one bar, the keyboard on it and what was typed, as the slot arrives and leaves", async () => {
+    const page = document.createElement("div");
+    const slot = document.createElement("div");
+    slot.setAttribute("data-graview-one-face-bar", "");
+    document.body.append(page, slot);
+    let drawnAgain = 0;
+    function Bar() {
+      useState(() => void (drawnAgain += 1));
+      return <input data-graview-app-bar="" aria-label="Find anything" />;
+    }
+    let put: (to: HTMLElement | null) => void = () => {};
+    function Frame() {
+      const [at, setAt] = useState<HTMLElement | null>(null);
+      put = setAt;
+      return (
+        <InBarSlot oneFace slot={at}>
+          <Bar />
+        </InBarSlot>
+      );
+    }
+    const root = createRoot(page);
+    await act(async () => root.render(<Frame />));
+    const bar = page.querySelector<HTMLInputElement>("[data-graview-app-bar]")!;
+    bar.focus();
+    bar.value = "the venue";
+    // The slot arrives, as the one face's part draws: the same element, still focused, still holding its words.
+    await act(async () => put(slot));
+    expect(slot.querySelector("[data-graview-app-bar]")).toBe(bar);
+    expect(page.querySelector("[data-graview-app-bar]")).toBeNull();
+    expect(document.activeElement).toBe(bar);
+    expect(bar.value).toBe("the venue");
+    // It leaves, as the part suspends again, and comes back.
+    await act(async () => put(null));
+    expect(page.querySelector("[data-graview-app-bar]")).toBe(bar);
+    expect(document.activeElement).toBe(bar);
+    await act(async () => put(slot));
+    expect(slot.querySelector("[data-graview-app-bar]")).toBe(bar);
+    expect(document.activeElement).toBe(bar);
+    expect(drawnAgain).toBe(1);
+    await act(async () => root.unmount());
+    expect(slot.childElementCount).toBe(0);
+    page.remove();
+    slot.remove();
+  });
+
+  it("keeps the bar where it was across a real mount: the node in the slot is the one first drawn", async () => {
+    const { host } = await whole({ sceneUnderPages: true });
+    // Drawn first in the frame's flow, while the one face's part is fetched; the node that ends in the slot is the same one.
+    const first = host.querySelector("[data-graview-app-bar]");
+    await until(() => barInSlot(host) !== null);
+    expect(barInSlot(host)).toBe(first);
+  });
+
+  it("goes to the overview's path as the City over the home, under memory routing", async () => {
+    const { host, handle } = await whole({ sceneUnderPages: true });
+    await until(() => barInSlot(host) !== null);
+    await act(async () => handle.setPath("/places/overview"));
+    const sheet = () => host.querySelector<HTMLElement>("[data-graview-one-place]");
+    await until(() => sheet()?.style.position === "fixed");
+    // The page has left the window for the city, the one face's way of standing at the overview, over the home.
+    expect(sheet()?.style.position).toBe("fixed");
+    expect(root(host).getAttribute("data-graview-embed")).toBe("pages");
+    expect(handle.where().face).toBe("pages");
+    expect(handle.where().path).toBe("/");
+    expect(host.querySelectorAll("[data-graview-one-place]")).toHaveLength(1);
+  });
+
   it("carries a public attribute a host may lean on, beside its test id", async () => {
     const { host } = await whole({ sceneUnderPages: true });
     await until(() => barInSlot(host) !== null);

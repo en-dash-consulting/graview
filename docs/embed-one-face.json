@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-13T05:06:30.621Z",
+  "at": "2026-11-13T05:56:16.809Z",
   "engine": "chromium",
   "document": "packages/core/tests/document/fixtures/tasks.gdd.json",
   "checks": {
@@ -7,7 +7,11 @@
       "root": "pages",
       "oneFace": 1,
       "control": 1,
-      "sceneSwitch": 0,
+      "menu": {
+        "opened": true,
+        "rows": 1,
+        "scene": 0
+      },
       "ok": true
     },
     "barStandsInTheSlotOnDesk": {
@@ -203,11 +207,21 @@
       ],
       "ok": true
     },
+    "keysTypedInFindLeaveTheLevelOnDesk": {
+      "value": "13]",
+      "level": 1,
+      "inBox": true,
+      "ok": true
+    },
     "drawsTheOneFaceOnPhone": {
       "root": "pages",
       "oneFace": 1,
       "control": 1,
-      "sceneSwitch": 0,
+      "menu": {
+        "opened": true,
+        "rows": 1,
+        "scene": 0
+      },
       "ok": true
     },
     "barStandsInTheSlotOnPhone": {
@@ -401,6 +415,12 @@
           "rested": true
         }
       ],
+      "ok": true
+    },
+    "keysTypedInFindLeaveTheLevelOnPhone": {
+      "value": "13]",
+      "level": 1,
+      "inBox": true,
       "ok": true
     },
     "noPageThrew": {

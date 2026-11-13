@@ -1,6 +1,6 @@
 {
   "budget": "embed with the studio handed in",
   "minified": 0,
-  "gzipped": 200,
-  "note": "Raised when mount came to take sceneUnderPages (FR-239). Measured at 1_998_168 / 699_462 against 1_997_576 / 699_275."
+  "gzipped": 500,
+  "note": "Raised when mount came to take sceneUnderPages (FR-239). Measured at 1_998_995 / 699_790 against 1_997_576 / 699_275."
 }

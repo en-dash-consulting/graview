@@ -94,6 +94,13 @@ async function whole() {
     },
   });
   await Promise.all([facing, keptViews.ready]);
+  // Read once and taken off the address, so no list reads it as a narrowing of its own.
+  const opening = new URL(location.href);
+  const oneFace = opening.searchParams.get("graview-one-face") === "1";
+  if (opening.searchParams.has("graview-one-face")) {
+    opening.searchParams.delete("graview-one-face");
+    history.replaceState(history.state, "", `${opening.pathname}${opening.search}${opening.hash}`);
+  }
   handle = mount(root, {
     app,
     remote,
@@ -106,8 +113,8 @@ async function whole() {
     label: app.name,
     heading: 1,
     keptViews,
-    // Pages and the Scene as one face (FR-239), as Graview Cloud draws an app that has moved: `?city=1` on the address it opens at.
-    ...(new URLSearchParams(location.search).get("city") === "1" ? { sceneUnderPages: true } : {}),
+    // Pages and the Scene as one face (FR-239), as Graview Cloud draws an app that has moved: `?graview-one-face=1` on the address it opens at.
+    ...(oneFace ? { sceneUnderPages: true } : {}),
     // A view proposed and not kept (`--view` and `--manifest`, FR-187), drawn where it attaches and marked as a draft.
     ...(handed.draftView ? { draftView: handed.draftView } : {}),
   });

@@ -1,10 +1,10 @@
 {
-  "at": "2026-11-13T04:48:09.092Z",
+  "at": "2026-11-13T05:41:58.131Z",
   "page": "openRemote + mount(…, { studio: false }) over the vendors document, built as Graview Cloud's packages/client/bundles.mjs builds its shell",
   "checks": {
     "atMostTheBudgetMinifiedUpFront": {
-      "kb": 675,
-      "budgetKb": 675,
+      "kb": 676,
+      "budgetKb": 676,
       "ok": true
     },
     "atMostTheBudgetGzippedUpFront": {
@@ -21,8 +21,8 @@
       "ok": true
     },
     "handedACompiledAppAtMostItsBudgetUpFront": {
-      "kb": 619,
-      "budgetKb": 619,
+      "kb": 620,
+      "budgetKb": 620,
       "ok": true
     },
     "handedACompiledAppAtMostItsBudgetGzippedUpFront": {
@@ -36,10 +36,10 @@
     }
   },
   "upFront": {
-    "kb": 675,
+    "kb": 676,
     "gzippedKb": 234,
-    "bytes": 691042,
-    "gzippedBytes": 239376,
+    "bytes": 691981,
+    "gzippedBytes": 239684,
     "chunks": 13,
     "packagesKb": {
       "@graview/core": 289,
@@ -56,11 +56,11 @@
       "(the page)": 1,
       "@graview/tools": 0
     },
-    "ownNeedKb": 657
+    "ownNeedKb": 658
   },
   "budget": {
-    "minified": 691071,
-    "gzipped": 239461,
+    "minified": 692071,
+    "gzipped": 239761,
     "raises": [
       "a-bare-app-looks-designed-hosted-page.json",
       "a-board-moves-without-buttons-a-hosted-page.json",
@@ -1017,13 +1017,13 @@
     ]
   },
   "handedACompiledApp": {
-    "kb": 619,
+    "kb": 620,
     "gzippedKb": 215,
-    "bytes": 634247,
-    "gzippedBytes": 219808,
+    "bytes": 635186,
+    "gzippedBytes": 220112,
     "budget": {
-      "minified": 634277,
-      "gzipped": 219879,
+      "minified": 635277,
+      "gzipped": 220179,
       "raises": [
         "a-bare-app-looks-designed-hosted-page-compiled.json",
         "a-board-moves-without-buttons-a-hosted-page-handed-a-compiled-app.json",
@@ -1193,11 +1193,11 @@
   },
   "beforeEachFaceDraws": {
     "scene": {
-      "kb": 1129,
+      "kb": 1130,
       "fetchedKb": 454
     },
     "pages": {
-      "kb": 1116,
+      "kb": 1117,
       "fetchedKb": 441
     }
   },

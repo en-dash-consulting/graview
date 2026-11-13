@@ -110,7 +110,7 @@ function PagesDrawing<S extends AnySchema>(props: PagesEmbedProps<S>) {
           <GraviewProvider store={store} views={views} scheme={scheme} {...providerProps(props, presence, brand)} {...(props.onSeat ? { onSeat: props.onSeat } : {})}>
             {bar ? (
               <FaceBoundary module="@graview/embed" report={report}>
-                <InBarSlot slot={oneFace ? barSlot : null}>
+                <InBarSlot oneFace={oneFace} slot={oneFace ? barSlot : null}>
                 <FrameBar
                   name={brand?.name ?? app.name}
                   heading={props.heading ?? 2}
