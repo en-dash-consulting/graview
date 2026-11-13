@@ -171,8 +171,21 @@ export function pageBox(altitude: number, view: View): Box {
 
 /** A board's width in the city's own pixels, at the city's zoom (1). */
 export const BOARD_WIDTH = 96;
-/** A board's width at the city's zoom on this window: a fifth of a phone's width, at most `BOARD_WIDTH`. The city is fitted to the window, so the boards are sized with it. */
-export const boardWidthFor = (view: View): number => Math.round(Math.max(64, Math.min(BOARD_WIDTH, view.width * 0.18)));
+/** A board's width at the city's zoom on this window: a seventh of a phone's width, at most `BOARD_WIDTH`. The city is fitted to the window, so the boards are sized with it: on a phone a fifth left a rich app's City wider than the camera reaches. */
+export const boardWidthFor = (view: View): number => Math.round(Math.max(52, Math.min(BOARD_WIDTH, view.width * 0.14)));
+/*
+ * A BOARD'S WORDS ARE READ. Its face is drawn at a width of its own and
+ * scaled to the board: on a desk the panel's, so a board and the page that
+ * becomes one read alike; on a phone a narrower face, and a board never
+ * drawn narrower than `BOARD_LEAST_ON_A_PHONE`, so what it says is never
+ * smaller than 9 pixels. A phone's City drops a board it has no room for
+ * rather than draw it smaller (the bar reaches every view).
+ */
+export const BOARD_LEAST_ON_A_PHONE = 68;
+/** A window too small for a desk's boards: a phone, or one turned on its side. */
+export const smallWindow = (view: View): boolean => view.width <= PHONE || view.height <= 600;
+export const boardFaceWidth = (view: View): number => (smallWindow(view) ? 240 : panelBox(view).width);
+export const boardLeast = (view: View): number => (smallWindow(view) ? BOARD_LEAST_ON_A_PHONE : 0);
 /** A board is this much wider than it is tall. */
 export const BOARD_ASPECT = 1.5;
 
