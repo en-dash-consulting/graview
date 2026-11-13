@@ -27,7 +27,9 @@
  *   · at Nearby each line starts on its own card, on the edge that faces
  *     the city, never on the page's edge;
  *   · many lines into one district are one line into it with their count,
- *     each part's own short line meeting it at the page's edge.
+ *     each part's own short line meeting it at the page's edge;
+ *   · inside the panel no line crosses another pill or row: each runs
+ *     through the gaps between the rows to the panel's edge.
  *
  *   node scripts/verify-frame-lines.mjs [--engine=chromium|webkit|firefox]   (Chromium by default)
  *
@@ -625,6 +627,61 @@ async function gatheredIntoOne(page, where) {
   return { where, gathered: into.length, counts: leads.map((line) => line.count), meetAt: meet.size, endAt: ends.size, ring, alone: own, ok: into.length >= 4 && leads.length === 1 && leads[0].count === into.length && meet.size === 1 && ends.size === 1 && own.length === 0 && Boolean(ring && ring.shown && ring.says === String(into.length)) };
 }
 
+/*
+ * INSIDE THE PANEL A LINE CROSSES NO ONE ELSE'S WORDS: a feature's page
+ * shows eight requests as pills that wrap into rows, and each pill's line
+ * runs from it to the panel's edge through the gaps between the rows,
+ * never across another pill (Graview Cloud's Deep Time, where a row's later
+ * pills struck through the earlier ones).
+ */
+async function crossesNoOtherPill(page, where) {
+  await nearby(page, "/features/f3", periodDrawn);
+  await wheelOver(page, '[data-worker-view="feature-period"]', 20, 200);
+  await page.waitForTimeout(300);
+  const drawn = await page.evaluate(() => {
+    const region = document.querySelector('[data-worker-view="feature-period"]');
+    const panel = document.querySelector("[data-graview-one-place]")?.getBoundingClientRect();
+    const pills = [...(region?.shadowRoot?.querySelectorAll("[data-record]") ?? [])].map((el) => {
+      const r = el.getBoundingClientRect();
+      return { id: el.getAttribute("data-record"), x: r.left, y: r.top, width: r.width, height: r.height };
+    }).filter((one) => panel && one.y + one.height > panel.top && one.y < panel.bottom);
+    // Each straight piece of each line's path, as drawn: M and L points (the curve beyond the panel's edge is the city's).
+    const crossings = [];
+    let pieces = 0;
+    for (const g of document.querySelectorAll("[data-graview-line]")) {
+      const key = g.getAttribute("data-graview-line");
+      const d = g.querySelector("path")?.getAttribute("d") ?? "";
+      const points = [];
+      for (const [, cmd, rest] of d.matchAll(/([MLQ])([^MLQ]*)/g)) {
+        const nums = rest.trim().split(/[ ,]+/).map(Number);
+        if (cmd === "Q") break;
+        points.push({ cmd, x: nums[0], y: nums[1] });
+      }
+      for (let i = 1; i < points.length; i++) {
+        if (points[i].cmd !== "L") continue;
+        const a = points[i - 1];
+        const b = points[i];
+        pieces++;
+        for (const pill of pills) {
+          if (pill.id === key) continue;
+          // Sampled along the piece: any point well inside another pill's box is a crossing.
+          for (let t = 0; t <= 1; t += 0.02) {
+            const x = a.x + (b.x - a.x) * t;
+            const y = a.y + (b.y - a.y) * t;
+            if (x > pill.x + 1 && x < pill.x + pill.width - 1 && y > pill.y + 1 && y < pill.y + pill.height - 1) {
+              crossings.push(`${key} across ${pill.id}`);
+              break;
+            }
+          }
+        }
+      }
+    }
+    const rows = new Set(pills.map((one) => Math.round(one.y))).size;
+    return { pills: pills.length, rows, pieces, crossings: [...new Set(crossings)] };
+  });
+  return { where, ...drawn, ok: drawn.pills >= 4 && drawn.rows >= 2 && drawn.pieces > 0 && drawn.crossings.length === 0 };
+}
+
 /* At Nearby the person moves the camera by hand; then the frame shows one more record: the camera stays where they left it. */
 async function panKept(page, where) {
   await nearby(page, "/requests/r1", frameDrawn);
@@ -690,7 +747,7 @@ async function deepView(page, where) {
 
 const report = { at: new Date().toISOString(), engines, checks: {} };
 const errors = [];
-const seen = { cards: [], cardsScroll: [], levelMove: [], awayAndBack: [], rows: [], rowsScroll: [], unseen: [], quiet: [], tall: [], pills: [], deep: [], transition: [], animation: [], zoomOut: [], outOfSight: [], panKept: [], startsOnCard: [], gathered: [] };
+const seen = { cards: [], cardsScroll: [], levelMove: [], awayAndBack: [], rows: [], rowsScroll: [], unseen: [], quiet: [], tall: [], pills: [], deep: [], transition: [], animation: [], zoomOut: [], outOfSight: [], panKept: [], startsOnCard: [], gathered: [], noOtherPill: [] };
 let host;
 let browser;
 try {
@@ -715,6 +772,7 @@ try {
       [seen.panKept, panKept],
       [seen.startsOnCard, leavesFromItsCard],
       [seen.gathered, gatheredIntoOne],
+      [seen.noOtherPill, crossesNoOtherPill],
       [seen.outOfSight, outOfSight, { viewport: { width: 610, height: 360 } }],
     ]) {
       const context = await browser.newContext(options ?? { viewport: DESK });
@@ -751,6 +809,7 @@ try {
   report.checks.aCameraMovedByHandAtNearbyStaysWhereItWasLeftWhenAViewShowsMore = { held: seen.panKept, ok: every(seen.panKept) };
   report.checks.atNearbyEachLineStartsOnItsOwnCardNotOnThePagesEdge = { held: seen.startsOnCard, ok: every(seen.startsOnCard) };
   report.checks.manyLinesIntoOneDistrictGatherIntoOneLineWithItsCount = { held: seen.gathered, ok: every(seen.gathered) };
+  report.checks.insideThePanelNoLineCrossesAnotherPillOrRow = { held: seen.noOtherPill, ok: every(seen.noOtherPill) };
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
   report.passed = Object.values(report.checks).every((check) => check.ok);
 } catch (error) {
