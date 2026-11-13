@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-13T08:05:28.930Z",
+  "at": "2026-11-13T08:33:41.297Z",
   "engines": [
     "chromium"
   ],
@@ -32,8 +32,8 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 69,
-          "counted": 328,
+          "frames": 68,
+          "counted": 324,
           "worst": 0,
           "examples": [],
           "scrolled": 720,
@@ -60,8 +60,8 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 110,
-          "counted": 238,
+          "frames": 108,
+          "counted": 233,
           "worst": 0,
           "examples": [],
           "framesDrawnBetweenLevels": 24,
@@ -182,9 +182,9 @@
             "ok": true
           },
           "pageScrolled": {
-            "frames": 58,
+            "frames": 51,
             "moved": true,
-            "counted": 108,
+            "counted": 87,
             "worst": 0,
             "examples": []
           },
@@ -289,8 +289,8 @@
           },
           "boxes": 200,
           "coldMedianMs": 0.9,
-          "coldWorstMs": 1.1,
-          "warmMs": 0.023,
+          "coldWorstMs": 1.3,
+          "warmMs": 0.027,
           "ok": true
         }
       ],
@@ -370,6 +370,43 @@
             }
           },
           "ownInSight": true,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aCameraMovedByHandAtNearbyStaysWhereItWasLeftWhenAViewShowsMore": {
+      "held": [
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "desk 1440×900"
+          },
+          "before": {
+            "zoom": "1.1500",
+            "transform": null,
+            "r1": {
+              "x": 464,
+              "y": 225
+            }
+          },
+          "panned": {
+            "zoom": "1.1500",
+            "transform": null,
+            "r1": {
+              "x": 584,
+              "y": 305
+            }
+          },
+          "after": {
+            "zoom": "1.1500",
+            "transform": null,
+            "r1": {
+              "x": 584,
+              "y": 305
+            }
+          },
+          "f7": true,
           "ok": true
         }
       ],

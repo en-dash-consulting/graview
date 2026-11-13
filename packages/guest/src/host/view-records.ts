@@ -83,7 +83,15 @@ export function createViewRecords(region: HTMLElement, root: ShadowRoot, mayName
    */
   let measuredAt: number | null | undefined;
   const frameTime = () => (region.ownerDocument.timeline?.currentTime ?? null) as number | null;
-  const moving = () => (root.getAnimations?.().length ?? 0) > 0;
+  /* Only what moves a record counts: an animation on a marked element or on what holds one, never a spinner beside them. */
+  const moving = () => {
+    const running = root.getAnimations?.() ?? [];
+    for (const animation of running) {
+      const target = (animation.effect as KeyframeEffect | null)?.target;
+      if (target && (target.hasAttribute("data-record") || target.querySelector("[data-record]") !== null)) return true;
+    }
+    return false;
+  };
   const now = () => {
     if (measured && moving()) {
       const time = frameTime();

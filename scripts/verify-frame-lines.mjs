@@ -582,6 +582,40 @@ async function outOfSight(page, where) {
   return { where, lines: lines.length, pointed, own, ownInSight, ok: pointed > 0 && ownInSight };
 }
 
+/* At Nearby the person moves the camera by hand; then the frame shows one more record: the camera stays where they left it. */
+async function panKept(page, where) {
+  await nearby(page, "/requests/r1", frameDrawn);
+  await page.waitForTimeout(400);
+  const camera = () =>
+    page.evaluate(() => {
+      const city = document.querySelector('[data-testid="one-place-city"]');
+      const plots = city?.querySelector(".graview-plots > g, .graview-plots");
+      const building = city?.querySelector('[data-graview-building="r1"]')?.getBoundingClientRect();
+      return { zoom: city?.getAttribute("data-graview-camera-zoom") ?? null, transform: plots?.getAttribute("transform") ?? null, r1: building ? { x: Math.round(building.left), y: Math.round(building.top) } : null };
+    });
+  const before = await camera();
+  await page.mouse.move(260, 520);
+  await page.mouse.down();
+  await page.mouse.move(320, 560, { steps: 8 });
+  await page.mouse.move(380, 600, { steps: 8 });
+  await page.mouse.up();
+  await page.waitForTimeout(900);
+  const panned = await camera();
+  const guest = page.frames().find((one) => one.url().endsWith("/frame.html"));
+  await guest.evaluate(() => {
+    const row = document.createElement("div");
+    row.className = "row";
+    row.setAttribute("data-record", "f7");
+    row.textContent = "Row f7";
+    document.getElementById("list").prepend(row);
+  });
+  await page.waitForTimeout(1_800);
+  const after = await camera();
+  const lines = await linesNow(page);
+  const moved = JSON.stringify(panned) !== JSON.stringify(before);
+  return { where, before, panned, after, f7: lines.some((line) => line.key === "f7"), ok: moved && JSON.stringify(after) === JSON.stringify(panned) };
+}
+
 async function deepView(page, where) {
   await page.goto(`${at("frame-lines-host")}/places/deep-view`, { waitUntil: "load" });
   await page.waitForFunction(() => (document.querySelector('[data-worker-view="deep-view"]')?.shadowRoot?.querySelectorAll("[data-record]").length ?? 0) >= 400, null, { timeout: 30_000 });
@@ -613,7 +647,7 @@ async function deepView(page, where) {
 
 const report = { at: new Date().toISOString(), engines, checks: {} };
 const errors = [];
-const seen = { cards: [], cardsScroll: [], levelMove: [], awayAndBack: [], rows: [], rowsScroll: [], unseen: [], quiet: [], tall: [], pills: [], deep: [], transition: [], animation: [], zoomOut: [], outOfSight: [] };
+const seen = { cards: [], cardsScroll: [], levelMove: [], awayAndBack: [], rows: [], rowsScroll: [], unseen: [], quiet: [], tall: [], pills: [], deep: [], transition: [], animation: [], zoomOut: [], outOfSight: [], panKept: [] };
 let host;
 let browser;
 try {
@@ -635,6 +669,7 @@ try {
       [seen.transition, transitioning],
       [seen.animation, animating],
       [seen.zoomOut, smallZoomOut],
+      [seen.panKept, panKept],
       [seen.outOfSight, outOfSight, { viewport: { width: 610, height: 360 } }],
     ]) {
       const context = await browser.newContext(options ?? { viewport: DESK });
@@ -668,6 +703,7 @@ try {
   report.checks.aWorkerViewsRecordUnderAnEndlessAnimationKeepsItsLineOnItEveryFrame = { held: seen.animation, ok: every(seen.animation) };
   report.checks.aLittleZoomOutAtANearbyThatStandsBackSettlesAtNearby = { held: seen.zoomOut, ok: every(seen.zoomOut) };
   report.checks.whereTheCitysSideCannotHoldItAllTheRecordsBuildingIsInSightAndALinePointsTowardTheRest = { held: seen.outOfSight, ok: every(seen.outOfSight) };
+  report.checks.aCameraMovedByHandAtNearbyStaysWhereItWasLeftWhenAViewShowsMore = { held: seen.panKept, ok: every(seen.panKept) };
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
   report.passed = Object.values(report.checks).every((check) => check.ok);
 } catch (error) {

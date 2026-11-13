@@ -219,8 +219,20 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     /* What the last Nearby framing took in; a view that says its records after the move began is framed again, once, from where the camera is. */
     let framedKey = "";
     let reframeAsked = false;
+    /*
+     * ONCE A MOVE, AND NEVER OVER A HAND: armed as a move to a record's Nearby
+     * begins, taken by the first word from a view of what it shows after
+     * that, and put away once taken or the moment the person moves the
+     * camera themselves. A list a view grows later never takes the camera
+     * from where somebody left it.
+     */
+    let reframeArmed = false;
     const askReframe = () => {
-      reframeAsked = true;
+      if (reframeArmed) reframeAsked = true;
+    };
+    const byHand = () => {
+      reframeArmed = false;
+      reframeAsked = false;
     };
     const framingKeyNow = (id: string): string => `${id}|${[...new Set([id, ...store.graph.neighbors(id).map((node) => node.id as string), ...markedOnPage()])].sort().join(" ")}`;
     const zoomsOf = (where: PageWhere, view: OnePlaceCityProps["view"]): readonly [number, number, number] => {
@@ -510,7 +522,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     };
 
     /** Start a move of the camera to a level. */
-    const moveTo = (cam: SceneCamera, toLevel: number, anchor: Point, now: number) => {
+    const moveTo = (cam: SceneCamera, toLevel: number, anchor: Point, now: number, arm = true) => {
+      reframeArmed = arm && toLevel === PANEL && state.current.where.type === "record";
       const from = painted;
       const to = cameraFor(toLevel, anchor, cam.zoom());
       const fromAltitude = altitude;
@@ -643,13 +656,16 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       }
       if (asking.scrubbing && !asking.held && now - handSince > LET_GO_MS && !settling && calm) {
         asking.scrubbing = false;
-        if (anchor) moveTo(cam, restingLevel(altitude), anchor, now);
+        if (anchor) moveTo(cam, restingLevel(altitude), anchor, now, false);
       }
 
       /* A VIEW'S RECORDS SAID AFTER NEARBY WAS FRAMED: framed again, the one camera moving there from where it is. */
       if (reframeAsked && !move && !asking.scrubbing && !settling && calm && anchor) {
         reframeAsked = false;
-        if (rest === PANEL && at.where.type === "record" && framingKeyNow(at.where.id) !== framedKey) moveTo(cam, PANEL, anchor, now);
+        if (rest === PANEL && at.where.type === "record" && framingKeyNow(at.where.id) !== framedKey) {
+          reframeArmed = false;
+          moveTo(cam, PANEL, anchor, now, false);
+        }
       }
 
       /* A MOVE UNDER WAY: the camera set from how far it has got. */
@@ -733,7 +749,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
             handSince = now;
           }
           altitude = atZoom;
-          if (now - handSince > LET_GO_MS && !asking.held && anchor && calm) moveTo(cam, restingLevel(atZoom), anchor, now);
+          if (now - handSince > LET_GO_MS && !asking.held && anchor && calm) moveTo(cam, restingLevel(atZoom), anchor, now, false);
         } else if (!(rest !== PAGE && placeKey !== lastPlace)) altitude = rest;
       }
 
@@ -1062,9 +1078,14 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     frame = requestAnimationFrame(tick);
     const said = sheet.current;
     said?.addEventListener(RECORD_BOXES_MOVED, askReframe);
+    // The person's own hand on the city: a press, a drag, a wheel, a pinch.
+    const city = box.current;
+    const hands = ["pointerdown", "wheel", "touchstart"] as const;
+    for (const type of hands) city?.addEventListener(type, byHand, { capture: true, passive: true });
     return () => {
       cancelAnimationFrame(frame);
       said?.removeEventListener(RECORD_BOXES_MOVED, askReframe);
+      for (const type of hands) city?.removeEventListener(type, byHand, { capture: true });
       for (const drawn of lines.values()) {
         drawn.g.remove();
         drawn.ring.remove();
