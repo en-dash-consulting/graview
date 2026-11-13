@@ -68,7 +68,7 @@ describe("on Pages", () => {
     const said = await page({ ...brief, bleed: true });
     expect(said).toMatchObject({ view: true, bleeds: true });
     expect(said.rule).toContain("max-width:680px");
-    expect(said.rule).toContain("env(safe-area-inset-left,0px) - var(--graview-page-gutter,20px)");
+    expect(said.rule).toContain("env(safe-area-inset-left,0px) - var(--graview-gutter,20px)");
   });
   it("draws any other view inside the gutter, as it was", async () => {
     expect(await page(brief)).toEqual({ view: true, bleeds: false, rule: "" });

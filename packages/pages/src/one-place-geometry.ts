@@ -39,14 +39,47 @@ export interface View {
   readonly top?: number;
   /** The panel as the person sized it: its width at a desk, the share of the window under the bar a phone's sheet leaves above it. Unsaid, the default. */
   readonly panel?: number;
+  /** The share of a desk's window its panel opens at when the person has sized none (a host's `panel`). Unsaid, `PANEL_SHARE`. */
+  readonly share?: number;
 }
+
+/** The share of a desk's window its panel opens at: a page read at its own measure beside the city on a laptop. */
+export const PANEL_SHARE = 0.55;
+/** The shares a host may ask the panel to open at: below, a page too narrow to read; above, a city too narrow to see. */
+export const PANEL_SHARES = { min: 0.25, max: 0.75 } as const;
+/**
+ * THE WIDEST A DESK'S PANEL OPENS: the page's wide measure (`WIDE`, 1160,
+ * the home's gallery and a picture at full width) and the panel's gutters
+ * either side. Past it a wider panel gives the page nothing — its columns
+ * stop at their measure and the rest is margin — and takes it from the
+ * city: on a 2560 monitor 55% would be 1408 pixels of page; held here it is
+ * 1192, and the city keeps the other 1350.
+ */
+export const PANEL_MOST = 1192;
+/** The band of city a desk's panel opens beside, at least: room for a district, its name and its views to be read beside the page. */
+export const CITY_LEAST = 480;
+/** The narrowest a desk's panel opens, where the window has room for it: a page's column at a phone's width. */
+const PANEL_LEAST = 360;
 
 /** How wide a desk's panel may be, and how high a phone's sheet may stand (the share above it), on this window. */
 export function panelRange(view: View): { readonly min: number; readonly max: number; readonly default: number } {
   // A phone's sheet never rises so far that the city above it is lost under the control: it keeps the control's room and a band of city.
   if (phoneOf(view)) return { min: Math.min(0.4, Math.max(0.15, (CONTROL_ROOM + 180) / Math.max(1, view.height - (view.top ?? 0)))), max: 0.7, default: 0.4 };
-  const fallback = Math.round(Math.max(420, Math.min(760, view.width * 0.36)));
-  return { min: Math.min(fallback, 360), max: Math.max(fallback, Math.round(view.width * 0.72)), default: fallback };
+  const fallback = deskPanelWidth(view);
+  return { min: Math.min(fallback, PANEL_LEAST), max: Math.max(fallback, Math.round(view.width * 0.72)), default: fallback };
+}
+
+/**
+ * THE WIDTH A DESK'S PANEL OPENS AT: its share of the window (55% unless a
+ * host says otherwise), no wider than `PANEL_MOST` and leaving the city at
+ * least `CITY_LEAST` — and, on a window too narrow for both, never narrower
+ * than `PANEL_LEAST` (or the share, if that is less).
+ */
+export function deskPanelWidth(view: View): number {
+  const share = view.share === undefined || !Number.isFinite(view.share) ? PANEL_SHARE : Math.max(PANEL_SHARES.min, Math.min(PANEL_SHARES.max, view.share));
+  const asked = view.width * share;
+  const most = Math.min(PANEL_MOST, view.width - CITY_LEAST);
+  return Math.round(Math.max(Math.min(PANEL_LEAST, asked), Math.min(asked, most)));
 }
 
 /** What a page address is in the city. */
@@ -115,6 +148,24 @@ export function zoomAtAltitude(altitude: number, zooms: readonly number[]): numb
 
 /** The level an altitude rests at when let go: the nearest. */
 export const restingLevel = (altitude: number): number => Math.max(PAGE, Math.min(CITY, Math.round(altitude)));
+
+/** Where this browser keeps the panel as the person sized it: for this app, a desk's width and a phone's sheet apart. */
+export const panelStoreKey = (app: string, phone: boolean): string => `graview.one-face.panel.${phone ? "phone" : "desk"}.${app}`;
+
+/** The page's gutter at its sides: a full page's, and a panel's. */
+export const GUTTER = { page: 20, panel: 16 } as const;
+
+/**
+ * THE PAGE'S SPACING, AS THE FRAME SETS IT: `--graview-gutter` at both, so
+ * a page and a view read the gutter they stand in; in the panel the gutter,
+ * the room above the page's first words and the room under its last are a
+ * panel's, not a full page's 40, 20 and 96 (the room the control keeps at
+ * a full page's foot stands beside the panel, not over it).
+ */
+export function frameSpacing(inPanel: boolean): Readonly<Record<string, string>> {
+  if (!inPanel) return { "--graview-gutter": `${GUTTER.page}px` };
+  return { "--graview-gutter": `${GUTTER.panel}px`, "--graview-frame-top": `${GUTTER.panel}px`, "--graview-frame-foot": "24px" };
+}
 
 /**
  * THE PANEL'S BOX: on a desk a column at the window's right, the city to

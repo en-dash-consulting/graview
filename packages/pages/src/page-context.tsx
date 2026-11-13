@@ -67,6 +67,15 @@ export interface PageContext<S extends AnySchema> {
    * `sceneUnderPages` is.
    */
   readonly onBarSlot?: (slot: HTMLElement | null) => void;
+  /**
+   * THE SHARE OF A DESK'S WINDOW THE ONE FACE'S PANEL OPENS AT (Graview HQ
+   * feature:f-one-face-wider-panel): `0.55` unsaid, held to 0.25–0.75, and
+   * never wider than 1192 pixels or than leaves the city 480. A width the
+   * person drags the panel to is kept for the app in that browser and wins
+   * over it. A phone's sheet is not this. Read only where
+   * `sceneUnderPages` is.
+   */
+  readonly panel?: number;
   readonly invariantContext?: Readonly<Record<string, unknown>>;
   /**
    * Whether this browser remembers the edits (a ship browser adapter behind

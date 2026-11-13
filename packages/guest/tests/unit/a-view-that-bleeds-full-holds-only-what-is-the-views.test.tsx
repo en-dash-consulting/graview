@@ -122,8 +122,8 @@ describe("what stands in the slot with a view that bleeds full", () => {
     const said = await on(withBlocks(), "/deliverables/deliverable%3Aemail", (host) => ({ under: Boolean(host.querySelector('[data-testid="the-blocks"]')?.closest("[data-worker-view-beside-under]")), slot: slotRule(host) }));
     expect(said.under).toBe(true);
     expect(said.slot).toContain("[data-worker-view-beside-under]{");
-    expect(said.slot).toContain("max-width:calc(760px + 2*var(--graview-page-gutter,20px))");
-    expect(said.slot).toContain("padding-inline:var(--graview-page-gutter,20px)");
+    expect(said.slot).toContain("max-width:calc(760px + 2*var(--graview-gutter,20px))");
+    expect(said.slot).toContain("padding-inline:var(--graview-gutter,20px)");
   });
   it("leaves the blocks of a view that does not bleed full as they were", async () => {
     const views = base();
@@ -134,7 +134,7 @@ describe("what stands in the slot with a view that bleeds full", () => {
   it("gives a draft's line the page's gutter", async () => {
     const said = await on(registerWorkerView(base(), { manifest: hero, worker: { source: SOURCE }, draft: true }), "/", (host) => ({ line: Boolean(host.querySelector('[data-testid="draft-view-line"]')), slot: slotRule(host) }));
     expect(said.line).toBe(true);
-    expect(said.slot).toContain('[data-testid="draft-view-line"]{padding-inline:var(--graview-page-gutter,20px)');
+    expect(said.slot).toContain('[data-testid="draft-view-line"]{padding-inline:var(--graview-gutter,20px)');
   });
 });
 

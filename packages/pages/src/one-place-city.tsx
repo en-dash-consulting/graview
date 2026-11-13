@@ -4,7 +4,7 @@ import { Scene, type SceneCamera } from "@graview/react";
 import { useGraview, useNavigation, useViolations } from "@graview/react/provider";
 import { useOneFace } from "./one-place-control.js";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
-import { aimAt, altitudeAt, anchorOf, BOARD_ASPECT, boardFaceWidth, boardLeast, boardWidthFor, fitBeside, fitCamera, SIGN_GAP, SIGN_POST, signRoom, cameraBetween, cameraPutting, CITY, cityArea, footOf, leaveFrom, routeLine, LEVEL_LIVE, levelZooms, PAGE, pageBox, PANEL, panelBox, PHONE, project, restingLevel, SHEET_ORIGIN, standingAt, standingCss, unionOf, type Box, type Live, type PageWhere, type Point } from "./one-place-geometry.js";
+import { aimAt, anchorOf, BOARD_ASPECT, boardFaceWidth, boardLeast, boardWidthFor, fitBeside, fitCamera, SIGN_GAP, SIGN_POST, signRoom, cameraBetween, cameraPutting, CITY, cityArea, footOf, leaveFrom, routeLine, LEVEL_LIVE, levelZooms, PAGE, pageBox, PANEL, panelBox, PHONE, project, restingLevel, SHEET_ORIGIN, standingAt, standingCss, unionOf, type Box, type Live, type PageWhere, type Point } from "./one-place-geometry.js";
 import type { OnePlaceCityProps } from "./one-place.js";
 import { placeSigns } from "./one-place-signs.js";
 import { pluralOf } from "./page-typography.js";
@@ -231,8 +231,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     let cityFoot = "";
     /** Where the camera stood when it came to rest at the City: a hand that moved it since keeps it. */
     let cityAt = "";
-    /** A zoom the person's own hand made on the Scene, and when it last moved. */
-    let handZoom = 0;
+    /** The camera at the level rested at as a scrub began: the person's own, kept for the scrub to leave from. */
+    let restCam: Live | null = null;
     /*
      * THE ZOOM THIS FACE LAST LEFT THE CAMERA AT. Only a zoom that differs
      * from it is a hand's: a new address at rest asks the camera for a
@@ -700,7 +700,6 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         standAll(world, cam.zoom(), LEVEL_LIVE, shownAt(rest), rest);
       }
       const anchor = world.plots.size > 0 ? anchorIn(at.where, world) : null;
-      const zooms = levelZooms(at.where, at.view);
       const zoomNow = cam.zoom();
       const placeKey = `${keyOf(at.where)}|${at.view.width}x${at.view.height}`;
 
@@ -720,7 +719,12 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       if (ready && calm && anchor && asking.level !== null && !move && !settling && (placeKey === lastPlace || drawnSince(placeKey, now))) {
         const toLevel = asking.level;
         asking.level = null;
-        if (toLevel !== rest || placeKey !== lastPlace) moveTo(cam, toLevel, anchor, now);
+        // The level it rests at, asked again: back to that level's framing, if a hand has moved the camera from it.
+        const offFraming = () => {
+          const want = cameraFor(rest, anchor, zoomNow);
+          return Math.hypot(want.x - painted.x, want.y - painted.y) + Math.abs(want.s - painted.s) * 100 > 2;
+        };
+        if (toLevel !== rest || placeKey !== lastPlace || (rest !== PAGE && offFraming())) moveTo(cam, toLevel, anchor, now);
         lastPlace = placeKey;
       }
       if (ready && calm && anchor && asking.scrub !== 0 && !settling) {
@@ -732,7 +736,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         // The cameras of the levels either side, the one rested at as it is (a pan the person made is kept).
         const lower = Math.floor(target);
         const upper = Math.min(CITY, lower + 1);
-        const camOf = (lvl: number) => (lvl === rest ? cameraFor(rest, anchor, zoomNow) : cameraFor(lvl, anchor, zoomNow));
+        // The level rested at is the camera as the person left it there — a pinch or a pan over the city beside the page kept — so the scrub leaves from where it is, never from a jump back to the framing.
+        const camOf = (lvl: number) => (lvl === rest && rest !== PAGE ? (restCam ??= painted) : cameraFor(lvl, anchor, zoomNow));
         const placed = cameraBetween(camOf(lower), camOf(upper), anchor, target - lower);
         cam.liveTo(placed);
         painted = placed;
@@ -742,6 +747,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       }
       if (asking.scrubbing && !asking.held && now - handSince > LET_GO_MS && !settling && calm) {
         asking.scrubbing = false;
+        restCam = null;
         if (anchor) moveTo(cam, restingLevel(altitude), anchor, now);
       }
 
@@ -779,12 +785,10 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       } else if (!asking.scrubbing && !settling) {
         /*
          * AT REST, OR THE PERSON'S OWN HAND ON THE SCENE: a pinch or a
-         * ctrl+wheel over the city zooms its camera, and the altitude is
-         * where that zoom is — every step of it. Let go, it settles to the
-         * nearest level.
+         * ctrl+wheel over the city zooms its camera and moves no level — at
+         * Nearby and the City alike. A level is the page's to step.
          */
         const effective = zoomNow * painted.s;
-        const atZoom = altitudeAt(effective, zooms);
         // The zoom a move just written into the view settles a beat later: it is the face's own once it is still.
         if (ownZoom === null && calm) ownZoom = effective;
         /*
@@ -814,13 +818,18 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
             if (where === cityAt) moveTo(cam, CITY, anchor, now);
           }
           if (ownZoom !== null && Math.abs(Math.log(effective / ownZoom)) > 0.001) ownZoom = effective;
-        } else if (rest !== PAGE && ownZoom !== null && Math.abs(Math.log(effective / ownZoom)) > 0.03) {
-          if (handZoom !== effective) {
-            handZoom = effective;
-            handSince = now;
-          }
-          altitude = atZoom;
-          if (now - handSince > LET_GO_MS && !asking.held && anchor && calm) moveTo(cam, restingLevel(atZoom), anchor, now);
+        } else if (rest === PANEL) {
+          /*
+           * AT NEARBY THE CAMERA IS FREE TOO (Graview HQ
+           * feature:f-one-face-explore-city-beside-panel). A pinch or a
+           * ctrl+wheel over the city beside the page moves closer to what is
+           * under the hand and back out, a drag or a scroll pans it, and the
+           * page and the level stay where they are: a level is stepped by a
+           * pinch over the page, the control or the keys — and the control
+           * and the keys at Nearby bring the camera back to its framing.
+           */
+          if (ownZoom !== null && Math.abs(Math.log(effective / ownZoom)) > 0.001) ownZoom = effective;
+          if (placeKey === lastPlace) altitude = PANEL;
         } else if (!(rest !== PAGE && placeKey !== lastPlace)) altitude = rest;
       }
 
@@ -1279,6 +1288,26 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       if (event.ctrlKey || event.metaKey) cam.zoomTo(cam.zoom() * Math.exp(-event.deltaY * unit * 0.01), event.clientX, event.clientY);
       else cam.panBy(-event.deltaX * unit, -event.deltaY * unit);
     };
+    /*
+     * A SCROLL OVER A DISTRICT PANS TOO. The Scene leaves a lens's wheel to
+     * the lens, and a district's plot is a view of its own there, so a
+     * two-finger scroll that happened to start over a district moved
+     * nothing. On this face a district scrolls nothing of its own: the
+     * scroll pans the city, as over open ground. A part that does scroll (a
+     * scroll region, a pane) keeps its own wheel.
+     */
+    const holder = box.current;
+    const onPlotWheel = (event: WheelEvent) => {
+      const target = event.target as Element | null;
+      if (event.ctrlKey || event.metaKey || !target?.closest("[data-graview-plot]") || target.closest(".graview-scroll, [data-graview-overlay], .graview-zoom")) return;
+      const cam = camera.current;
+      if (!cam) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? 400 : 1;
+      cam.panBy(-event.deltaX * unit, -event.deltaY * unit);
+    };
+    holder?.addEventListener("wheel", onPlotWheel, { passive: false, capture: true });
     for (const layer of layers) {
       layer.addEventListener("pointerdown", onDown, true);
       layer.addEventListener("pointermove", onMove, true);
@@ -1288,6 +1317,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       layer.addEventListener("wheel", onWheel, { passive: false });
     }
     return () => {
+      holder?.removeEventListener("wheel", onPlotWheel, { capture: true });
       for (const layer of layers) {
         layer.removeEventListener("pointerdown", onDown, true);
         layer.removeEventListener("pointermove", onMove, true);

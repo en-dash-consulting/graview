@@ -74,11 +74,12 @@ app's draws. What is refused is said, with its code.
 
 ## Its box, and the gutter
 
-On Pages a view is drawn in the page's column, and nothing it draws passes
-its box (a negative margin is clipped). `bleed: true` in the manifest: on a
-phone (680px or less) it takes the gutter back, keeping the safe areas.
-`bleed: "full"`: the window's width at every width; a home (or a place with
-`heading: "own"`) starts flush under the bar, below any trail.
+On Pages a view draws in the page's column, within its box (a negative
+margin is clipped), its gutter `--graview-gutter`. Beside the city your
+root has `data-graview-in-panel` and the gutter is 16px: space by
+`@container`, never `vw`. `bleed: true`: on a phone (≤680px) it takes the
+gutter back, keeping safe areas; `"full"`: the window's width; a home (or
+`heading: "own"`) is flush under the bar.
 
 ## The images a view may show
 
