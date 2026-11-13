@@ -248,8 +248,8 @@ const NAMED_FROM = 34;
 const NAME_LETTER = 6;
 const NAME_ABOVE = 9;
 const NAME_BELOW = 3;
-/** The clear space kept around a name, so two never touch. */
-const NAME_CLEAR = 2;
+/** The clear space kept around a name, so two never touch: two at two pixels apart read as one run of words. */
+const NAME_CLEAR = 5;
 
 /** A block's name as it is written over it: whole while the block is wide enough for it, else cut with an ellipsis. */
 function nameOver(block: { readonly name: string; readonly width: number }, whole: boolean): string {
@@ -508,7 +508,7 @@ function groundCss(scheme: Scheme): string {
 .graview-building[data-graview-own] .graview-iso-roof{stroke:var(--graview-ink);stroke-width:1.4;stroke-opacity:1}
 .graview-building[data-graview-selected] polygon{stroke:var(--graview-accent);stroke-width:1.4;stroke-opacity:1}
 .graview-building[data-graview-selected] .graview-iso-roof{fill:${mix("45%", "var(--graview-accent)")}}
-.graview-building-name{font-size:.625rem;fill:var(--graview-ink);paint-order:stroke;stroke:var(--graview-ground);stroke-width:3px}
+.graview-building-name{font-size:.625rem;font-weight:500;fill:var(--graview-ink);paint-order:stroke;stroke:var(--graview-ground);stroke-width:3px}
 .graview-ground:has(> .graview-plots[data-graview-named]) [data-graview-plot] .graview-kind-landmark{opacity:.3;transition:opacity 240ms}
 .graview-village-rest{font-size:.6875rem;font-variant-numeric:tabular-nums;fill:var(--graview-ink-muted)}`;
 }

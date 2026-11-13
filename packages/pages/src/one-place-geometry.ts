@@ -171,8 +171,8 @@ export function pageBox(altitude: number, view: View): Box {
 
 /** A board's width in the city's own pixels, at the city's zoom (1). */
 export const BOARD_WIDTH = 96;
-/** A board's width at the city's zoom on this window: a fifth of a phone's width, at most `BOARD_WIDTH`. The city is fitted to the window, so the boards are sized with it. */
-export const boardWidthFor = (view: View): number => Math.round(Math.max(64, Math.min(BOARD_WIDTH, view.width * 0.18)));
+/** A board's width at the city's zoom on this window: a seventh of a phone's width, at most `BOARD_WIDTH`. The city is fitted to the window, so the boards are sized with it: on a phone a fifth left a rich app's City wider than the camera reaches. */
+export const boardWidthFor = (view: View): number => Math.round(Math.max(52, Math.min(BOARD_WIDTH, view.width * 0.14)));
 /** A board is this much wider than it is tall. */
 export const BOARD_ASPECT = 1.5;
 

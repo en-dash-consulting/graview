@@ -1,4 +1,4 @@
-import { OVERVIEW_PATH, ONE_FACE_LAYERS, hueFor, labelOf, type AnySchema } from "@graview/core";
+import { OVERVIEW_PATH, ONE_FACE_LAYERS, counted, hueFor, labelOf, type AnySchema } from "@graview/core";
 import { retryingImport } from "@graview/core/retry";
 import { barPlaces, HOME_KEY, PastBar } from "@graview/primitives/pages";
 import { lazyPart, useGraview, usePlayback } from "@graview/react/provider";
@@ -66,10 +66,11 @@ export interface Board {
   readonly label: string;
   /** Its path on this face. */
   readonly path: string;
-  /** What it is, said over its title: the home, a list, a view, a record. */
   /** What it is, said to a screen reader: the home, a list, a view, a record's page. */
   readonly eyebrow: string;
-  /** What it shows, live: the first few of its records' names, drawn on its sign. */
+  /** What it is, drawn over its title: "90 species", "View of species", "Front page". */
+  readonly says: string;
+  /** What a list shows, live: the first few of its records' names, drawn on its sign. A view draws its own picture, so says none of them. */
   readonly lines: readonly string[];
   readonly kind?: string | undefined;
   readonly where: PageWhere;
@@ -369,18 +370,44 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
    */
   const boards = useMemo<readonly Board[]>(() => {
     const places = barPlaces({ store: store as never, principal: context.principal, views: context.views }).filter((place) => !place.hidden);
-    const out: Board[] = places.map((place) => ({
-      key: place.key,
-      label: place.label,
-      path: place.path,
-      eyebrow: place.group === "home" ? "home" : place.group === "lists" ? "list" : "view",
-      lines: firstOf(store, place.kind ? [place.kind] : (store.schema.kinds as readonly string[]).slice(0, 1)),
-      kind: place.kind,
-      where: whereOf(schema, has, place.path.split("?")[0]!, placeKinds),
-    }));
+    /*
+     * WHAT EACH BOARD SAYS IT IS. A view's board listed the first records of
+     * its kind, as its kind's list did: ten views on a rich app drew alike,
+     * and none looked like itself. A list's board says how many it holds
+     * and its first few; a view's says whose view it is, over its own
+     * title; the home's and the connections' say what they are.
+     */
+    const out: Board[] = places.map((place) => {
+      const where = whereOf(schema, has, place.path.split("?")[0]!, placeKinds);
+      const list = where.type === "list";
+      const kind = place.kind as string | undefined;
+      const count = kind ? store.graph.count(kind as never) : 0;
+      const says =
+        place.group === "home"
+          ? "Front page"
+          : place.key === "connections"
+            ? "The kinds, linked"
+            : list && kind
+              ? count === 0
+                ? `No ${pluralOf(store, kind).toLowerCase()} yet`
+                : counted(store.schema, kind, count)
+              : kind
+                ? `View of ${pluralOf(store, kind).toLowerCase()}`
+                : "A view";
+      return {
+        key: place.key,
+        label: place.label,
+        path: place.path,
+        eyebrow: place.group === "home" ? "home" : place.group === "lists" ? "list" : "view",
+        says,
+        lines: list && kind ? firstOf(store, [kind]).slice(0, 1) : [],
+        kind: place.kind,
+        where,
+      };
+    });
     if (where.type === "record") {
       const node = store.graph.getNode(where.id);
-      out.push({ key: `record:${where.id}`, label: node ? labelOf(store.schema.tryDefinition(node.kind as string), node as never) : where.id, path: recordPath(schema, where.kind, where.id), eyebrow: "page", lines: [], kind: where.kind, where });
+      out.push({ key: `record:${where.id}`, label: node ? labelOf(store.schema.tryDefinition(node.kind as string), node as never) : where.id, path: recordPath(schema, where.kind, where.id), eyebrow: "page", says: "", lines: [], kind: where.kind, where });
     }
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -748,19 +775,25 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
  * A BOARD'S FACE: the top of its page as the page draws it — what it is,
  * its title — at the page's own size, scaled by the city part
  * with the camera, so a board and the page that becomes one read alike.
+ * A title too long for it is cut whole, with an ellipsis; the board's own
+ * name (`title`, and what a screen reader is told) is the whole of it.
  */
 function BoardFace({ board, width, height }: { readonly board: Board; readonly width: number; readonly height: number }) {
   const hue = board.kind ? `hsl(${Math.round(hueFor(board.kind))} 55% 52%)` : "var(--graview-accent)";
+  const view = board.eyebrow === "view";
   return (
     <div data-graview-board-face="" aria-hidden="true" style={{ position: "absolute", left: 0, top: 0, width, height, transformOrigin: "0 0", background: "var(--graview-ground, Canvas)", border: "3px solid var(--graview-edge)", borderTop: `10px solid ${hue}`, borderRadius: 18, overflow: "hidden", boxShadow: "0 18px 40px rgba(0,0,0,0.28)", pointerEvents: "none" }}>
-      <div style={{ padding: "26px 34px 0" }}>
-        <div style={{ fontSize: "4rem", lineHeight: 1.08, fontWeight: 650, color: "var(--graview-ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{board.label}</div>
-        {/* What it shows, live: the first of its records, as a page would list them. */}
-        <div style={{ marginTop: 18, display: "grid", gap: 12 }}>
+      {/* A view's board is drawn as a view: a band of its kind's color behind what it is, where a list's is a plain card. */}
+      <div style={{ padding: "22px 34px 0", ...(view ? { background: `linear-gradient(color-mix(in srgb, ${hue} 16%, transparent), transparent 85%)`, height: "100%", boxSizing: "border-box" } : {}) }}>
+        <div data-graview-board-says="" style={{ fontSize: "2.25rem", lineHeight: 1.2, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: view ? hue : "var(--graview-ink-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{board.says}</div>
+        {/* Two lines before it is cut: "Connections" and "Cited facts" whole, never "Connec…". */}
+        <div data-graview-board-title="" style={{ marginTop: 6, fontSize: "3.5rem", lineHeight: 1.15, fontWeight: 650, color: "var(--graview-ink)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", overflowWrap: "anywhere" }}>{board.label}</div>
+        {/* What a list shows, live: the first of its records, as its page lists them. */}
+        <div style={{ marginTop: 16, display: "grid", gap: 12 }}>
           {board.lines.map((line, index) => (
             <div key={index} style={{ display: "flex", alignItems: "center", gap: 16, padding: "10px 16px", borderRadius: 12, border: "2px solid var(--graview-edge)", fontSize: "2.125rem", color: "var(--graview-ink-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               <span style={{ flex: "0 0 auto", width: 18, height: 18, borderRadius: 9, border: `3px solid ${hue}` }} />
-              {line}
+              <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>{line}</span>
             </div>
           ))}
         </div>
@@ -915,19 +948,19 @@ function Altitude({
     return "City: every page and view of the app";
   };
   /*
-   * THE LEGEND: shown by default beside the city and at the City, where it
-   * says what is on the screen, and put away there as the person chooses,
-   * kept in this browser; on the page, where there is no city to explain,
-   * only when asked for.
+   * THE LEGEND IS A BUTTON. It starts put away — the Key, the control's
+   * last stop, opens it — beside the city and on the page alike: open by
+   * default it stood over a quarter of a desk's window at the City on the
+   * first visit, over the districts it was there to explain. Opened beside
+   * the city, it is kept open in this browser until it is put away, and
+   * kept put away after; read from this browser as the control mounts, so
+   * the swap of the pages' plain routes for this face keeps it.
    */
-  // A phone has no room beside the city for it: there it starts put away, until it is asked for — and then it is kept.
   const [legendCity, setLegendCity] = useState<boolean>(() => {
-    const roomy = typeof window === "undefined" || window.innerWidth > PHONE;
     try {
-      const kept = window.localStorage.getItem(LEGEND_KEY);
-      return kept === null ? roomy : kept !== "hidden";
+      return window.localStorage.getItem(LEGEND_KEY) === "shown";
     } catch {
-      return roomy;
+      return false;
     }
   });
   const [legendPage, setLegendPage] = useState(false);

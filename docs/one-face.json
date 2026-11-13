@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-12T17:11:34.689Z",
+  "at": "2026-11-13T07:25:19.105Z",
   "engines": [
     "chromium"
   ],
@@ -92,7 +92,7 @@
                   "h": 26,
                   "name": "Page: this page alone",
                   "words": "Page",
-                  "keycap": "1",
+                  "keycap": null,
                   "pressed": false
                 },
                 {
@@ -100,7 +100,7 @@
                   "h": 26,
                   "name": "Nearby: you are here",
                   "words": "Nearby",
-                  "keycap": "2",
+                  "keycap": null,
                   "pressed": true
                 },
                 {
@@ -108,7 +108,7 @@
                   "h": 26,
                   "name": "City: every page and view of the app",
                   "words": "City",
-                  "keycap": "3",
+                  "keycap": null,
                   "pressed": false
                 }
               ],
@@ -131,7 +131,7 @@
                   "h": 26,
                   "name": "Page: this page alone",
                   "words": "Page",
-                  "keycap": "1",
+                  "keycap": null,
                   "pressed": false
                 },
                 {
@@ -139,7 +139,7 @@
                   "h": 26,
                   "name": "Nearby: “Pay the deposit” beside its place in the city",
                   "words": "Nearby",
-                  "keycap": "2",
+                  "keycap": null,
                   "pressed": false
                 },
                 {
@@ -147,13 +147,13 @@
                   "h": 26,
                   "name": "City: you are here",
                   "words": "City",
-                  "keycap": "3",
+                  "keycap": null,
                   "pressed": true
                 }
               ],
               "said": "Altitude: city, 3 of 3",
               "key": true,
-              "sheetTop": 357.996337890625,
+              "sheetTop": 388.020751953125,
               "controlBottom": 884
             }
           ],
@@ -286,7 +286,7 @@
               ],
               "said": "Altitude: city, 3 of 3",
               "key": true,
-              "sheetTop": 432.39678955078125,
+              "sheetTop": 403.140625,
               "controlBottom": 823
             }
           ],
@@ -309,12 +309,12 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 208,
+          "frames": 224,
           "moved": 136,
           "same": true,
           "jump": {
-            "worst": 0.133,
-            "at": 2
+            "worst": 0.124,
+            "at": 3
           },
           "ok": true
         },
@@ -323,12 +323,12 @@
             "engine": "chromium",
             "device": "Pixel 7"
           },
-          "frames": 221,
+          "frames": 224,
           "moved": 136,
           "same": true,
           "jump": {
-            "worst": 0.168,
-            "at": 2
+            "worst": 0.159,
+            "at": 3
           },
           "ok": true
         }
@@ -343,7 +343,7 @@
             "device": "desk 1440×900"
           },
           "worst": 0.49,
-          "counted": 352,
+          "counted": 356,
           "examples": [],
           "ok": true
         },
@@ -353,7 +353,7 @@
             "device": "Pixel 7"
           },
           "worst": 0.49,
-          "counted": 500,
+          "counted": 512,
           "examples": [],
           "ok": true
         }
@@ -374,7 +374,7 @@
               "how": "control",
               "arrived": true,
               "moved": 34,
-              "frames": 85,
+              "frames": 100,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -384,7 +384,7 @@
               "how": "control",
               "arrived": true,
               "moved": 34,
-              "frames": 81,
+              "frames": 162,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -404,7 +404,7 @@
               "how": "keys",
               "arrived": true,
               "moved": 33,
-              "frames": 160,
+              "frames": 78,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -414,7 +414,7 @@
               "how": "control",
               "arrived": true,
               "moved": 34,
-              "frames": 84,
+              "frames": 83,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -424,7 +424,7 @@
               "how": "control",
               "arrived": true,
               "moved": 35,
-              "frames": 83,
+              "frames": 82,
               "zoomBack": 0,
               "widthBack": 0
             }
@@ -443,7 +443,7 @@
               "how": "control",
               "arrived": true,
               "moved": 34,
-              "frames": 99,
+              "frames": 100,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -452,7 +452,7 @@
               "to": 2,
               "how": "control",
               "arrived": true,
-              "moved": 34,
+              "moved": 35,
               "frames": 81,
               "zoomBack": 0,
               "widthBack": 0
@@ -473,7 +473,7 @@
               "how": "keys",
               "arrived": true,
               "moved": 33,
-              "frames": 158,
+              "frames": 78,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -482,8 +482,8 @@
               "to": 2,
               "how": "control",
               "arrived": true,
-              "moved": 34,
-              "frames": 83,
+              "moved": 35,
+              "frames": 168,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -493,7 +493,7 @@
               "how": "control",
               "arrived": true,
               "moved": 34,
-              "frames": 82,
+              "frames": 83,
               "zoomBack": 0,
               "widthBack": 0
             }
@@ -510,7 +510,7 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 208,
+          "frames": 224,
           "sheared": 0,
           "first": null,
           "reachedTheCity": true,
@@ -521,7 +521,7 @@
             "engine": "chromium",
             "device": "Pixel 7"
           },
-          "frames": 221,
+          "frames": 224,
           "sheared": 0,
           "first": null,
           "reachedTheCity": true,
@@ -1126,19 +1126,24 @@
           },
           "names": [
             {
-              "kind": "kind:list",
+              "kind": "list",
               "covered": [],
-              "size": 15
+              "size": 12
             },
             {
-              "kind": "kind:reason",
+              "kind": "task",
               "covered": [],
-              "size": 15
+              "size": 12
             },
             {
-              "kind": "kind:rule",
+              "kind": "rule",
               "covered": [],
-              "size": 15
+              "size": 12
+            },
+            {
+              "kind": "reason",
+              "covered": [],
+              "size": 12
             }
           ],
           "ok": true
@@ -1150,19 +1155,24 @@
           },
           "names": [
             {
-              "kind": "kind:list",
+              "kind": "list",
               "covered": [],
-              "size": 15
+              "size": 9
             },
             {
-              "kind": "kind:reason",
+              "kind": "task",
               "covered": [],
-              "size": 15
+              "size": 9
             },
             {
-              "kind": "kind:rule",
+              "kind": "rule",
               "covered": [],
-              "size": 15
+              "size": 9
+            },
+            {
+              "kind": "reason",
+              "covered": [],
+              "size": 9
             }
           ],
           "ok": true
@@ -1185,13 +1195,14 @@
                 "level": 1
               },
               "levels": [
+                2,
                 1
               ],
-              "start": 0.5,
+              "start": 0,
               "same": true,
               "jump": {
-                "worst": 0.081,
-                "at": 19
+                "worst": 0.08,
+                "at": 21
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
@@ -1206,13 +1217,14 @@
                 "level": 1
               },
               "levels": [
+                2,
                 1
               ],
-              "start": 0.5,
+              "start": 0,
               "same": true,
               "jump": {
-                "worst": 0.081,
-                "at": 19
+                "worst": 0.08,
+                "at": 21
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
@@ -1227,13 +1239,14 @@
                 "level": 1
               },
               "levels": [
+                2,
                 1
               ],
-              "start": 0.5,
+              "start": 0,
               "same": true,
               "jump": {
-                "worst": 0.082,
-                "at": 20
+                "worst": 0.08,
+                "at": 21
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
@@ -1248,13 +1261,14 @@
                 "level": 1
               },
               "levels": [
+                2,
                 1
               ],
-              "start": 9.1,
+              "start": 33.6,
               "same": true,
               "jump": {
-                "worst": 0.092,
-                "at": 20
+                "worst": 0.099,
+                "at": 22
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
@@ -1316,7 +1330,7 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "before": 0.6399,
+          "before": 0.9145,
           "closer": 3,
           "levels": [
             2
@@ -1382,7 +1396,7 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 143,
+          "frames": 144,
           "madeRises": true,
           "droppedRisesGoingBack": true,
           "madeSinksGoingBack": true,
@@ -1477,7 +1491,7 @@
             "device": "desk 1440×900"
           },
           "worst": 0,
-          "counted": 191,
+          "counted": 195,
           "examples": [],
           "ok": true
         },
@@ -1594,7 +1608,7 @@
             "device": "desk 1440×900"
           },
           "path": "/pages/tasks/t-deposit",
-          "counted": 270,
+          "counted": 273,
           "crossed": 0,
           "examples": [],
           "ok": true
@@ -1605,7 +1619,7 @@
             "device": "desk 1440×900"
           },
           "path": "resizing",
-          "counted": 171,
+          "counted": 174,
           "crossed": 0,
           "examples": [],
           "ok": true
@@ -1617,7 +1631,7 @@
           },
           "path": "/pages/tasks/t-book",
           "pointed": 1,
-          "counted": 156,
+          "counted": 159,
           "crossed": 0,
           "examples": [],
           "ok": true
@@ -1628,7 +1642,7 @@
             "device": "Pixel 7"
           },
           "path": "/pages/tasks",
-          "counted": 250,
+          "counted": 256,
           "crossed": 0,
           "examples": [],
           "ok": true
@@ -1794,11 +1808,11 @@
             "device": "desk 1440×900"
           },
           "altitudes": [
-            0.19,
-            0.38,
-            0.57,
-            0.76,
-            0.95,
+            0,
+            0,
+            0,
+            0.12,
+            0.6,
             1.14,
             1.33,
             1.52,
@@ -1807,7 +1821,7 @@
             2,
             2
           ],
-          "between": 9,
+          "between": 5,
           "settled": true,
           "word": "City",
           "ok": true
@@ -1821,9 +1835,9 @@
             0,
             0,
             0,
-            0,
-            0.48,
-            1.08,
+            0.36,
+            0.84,
+            1.14,
             1.33,
             1.52,
             1.71,
@@ -1831,7 +1845,7 @@
             2,
             2
           ],
-          "between": 5,
+          "between": 6,
           "settled": true,
           "word": "City",
           "ok": true
@@ -1964,6 +1978,358 @@
             }
           ],
           "fixedLeaves": 0,
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aRichAppsCityAndNearbyHaveNothingStandingOnAnythingElse": {
+      "held": [
+        {
+          "where": {
+            "device": "1520×900"
+          },
+          "city": {
+            "clash": [],
+            "outside": [],
+            "onGround": []
+          },
+          "nearby": {
+            "clash": [],
+            "underPanel": [],
+            "outside": [],
+            "onGround": []
+          },
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "1280×800"
+          },
+          "city": {
+            "clash": [],
+            "outside": [],
+            "onGround": []
+          },
+          "nearby": {
+            "clash": [],
+            "underPanel": [],
+            "outside": [],
+            "onGround": []
+          },
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "390×844"
+          },
+          "city": {
+            "clash": [],
+            "outside": [],
+            "onGround": []
+          },
+          "nearby": {
+            "clash": [],
+            "underPanel": [],
+            "outside": [],
+            "onGround": []
+          },
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "everyDistrictAtTheCityNamesItsKind": {
+      "held": [
+        {
+          "where": {
+            "device": "1520×900"
+          },
+          "districts": 11,
+          "unnamed": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "1280×800"
+          },
+          "districts": 11,
+          "unnamed": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "390×844"
+          },
+          "districts": 11,
+          "unnamed": [],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "noNameOrTitleIsCutOffOrWrapsAt1280Or390": {
+      "held": [
+        {
+          "where": {
+            "device": "1520×900"
+          },
+          "city": [],
+          "nearby": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "1280×800"
+          },
+          "city": [],
+          "nearby": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "390×844"
+          },
+          "city": [],
+          "nearby": [],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "theLegendIsClosedOnEveryVisitAndOpensFromItsButton": {
+      "held": [
+        {
+          "where": {
+            "device": "1520×900"
+          },
+          "firstVisit": [
+            false,
+            false
+          ],
+          "secondVisit": false,
+          "opened": {
+            "pane": true,
+            "expanded": "true"
+          },
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "1280×800"
+          },
+          "firstVisit": [
+            false,
+            false
+          ],
+          "secondVisit": false,
+          "opened": {
+            "pane": true,
+            "expanded": "true"
+          },
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "390×844"
+          },
+          "firstVisit": [
+            false,
+            false
+          ],
+          "secondVisit": false,
+          "opened": {
+            "pane": true,
+            "expanded": "true"
+          },
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "eachViewsBoardIsDrawnAsThatViewAndNoTwoAlike": {
+      "held": [
+        {
+          "where": {
+            "device": "1520×900"
+          },
+          "boards": [
+            "View of periods · Timeline",
+            "View of species · Tree of life",
+            "View of sites · Dig map",
+            "View of events · Extinctions"
+          ],
+          "asThemselves": 4,
+          "alike": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "1280×800"
+          },
+          "boards": [
+            "View of periods · Timeline",
+            "View of species · Tree of life",
+            "View of sites · Dig map",
+            "View of events · Extinctions"
+          ],
+          "asThemselves": 4,
+          "alike": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "390×844"
+          },
+          "boards": [
+            "View of periods · Timeline",
+            "View of species · Tree of life",
+            "View of sites · Dig map",
+            "View of events · Extinctions"
+          ],
+          "asThemselves": 4,
+          "alike": [],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "atNearbyEveryBuildingInSightIsSeenAndEveryLineEndsOnOne": {
+      "held": [
+        {
+          "where": {
+            "device": "1520×900"
+          },
+          "hidden": [],
+          "districtsInSight": [
+            "event",
+            "expedition",
+            "formation",
+            "site",
+            "species",
+            "specimen"
+          ],
+          "lines": 0,
+          "lineEndsNotOnABuilding": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "1280×800"
+          },
+          "hidden": [],
+          "districtsInSight": [
+            "event",
+            "expedition",
+            "formation",
+            "site",
+            "species",
+            "specimen"
+          ],
+          "lines": 0,
+          "lineEndsNotOnABuilding": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "390×844"
+          },
+          "hidden": [],
+          "districtsInSight": [
+            "event",
+            "formation"
+          ],
+          "lines": 0,
+          "lineEndsNotOnABuilding": [],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "atNearbyEveryViewOfADistrictInSightHasABoard": {
+      "held": [
+        {
+          "where": {
+            "device": "1520×900"
+          },
+          "districtsInSight": [
+            "event",
+            "expedition",
+            "site",
+            "species",
+            "specimen"
+          ],
+          "standing": [
+            "Tree of life",
+            "Dig map",
+            "Extinctions"
+          ],
+          "missing": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "1280×800"
+          },
+          "districtsInSight": [
+            "event",
+            "expedition",
+            "site",
+            "species",
+            "specimen"
+          ],
+          "standing": [
+            "Tree of life",
+            "Dig map",
+            "Extinctions"
+          ],
+          "missing": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "390×844"
+          },
+          "districtsInSight": [
+            "event",
+            "expedition",
+            "species",
+            "specimen"
+          ],
+          "standing": [
+            "Tree of life",
+            "Extinctions"
+          ],
+          "missing": [],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "noDistrictControlStandsUnderTheBarThePageOrTheLevelControl": {
+      "held": [
+        {
+          "where": {
+            "device": "1520×900"
+          },
+          "city": [],
+          "nearby": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "1280×800"
+          },
+          "city": [],
+          "nearby": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "device": "390×844"
+          },
+          "city": [],
+          "nearby": [],
           "ok": true
         }
       ],

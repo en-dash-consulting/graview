@@ -73,6 +73,8 @@ export const OWN = {
   "section-host": 5213,
   /** The host's page `verify-page-better` mounts the tasks into with a door to change the app and the host's views, to make a built-in page better (Roadmap f-make-any-page-better). */
   "page-better-host": 5214,
+  /** Deep Time at its size on the one face — eleven kinds, 294 records, ten worker views — for `verify-one-face` to hold City and Nearby to reading clean (`lib/one-face-rich-host.mjs`). */
+  "one-face-rich": 5226,
   /** The host's page `verify-told` mounts a document into whose sight keeps the people from a member (Roadmap f-menu-learns). */
   "told-host": 5247,
   /** The host's page `verify-address` serves an app at under a base path, and an article beside it (FR-106). */
