@@ -247,6 +247,25 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     /** When the last frame was drawn: a move does not count a stall between two as time gone by. */
     let lastTick = 0;
     /*
+     * THE PAGE CHOSEN IS DRAWN BEFORE IT MOVES. A new place's page is drawn
+     * by its route — on a slow machine, in tasks long enough to stall the
+     * frames after it — so a move to another place begins only once two
+     * frames running have come quickly (or a while has gone by, whatever the
+     * page is still doing): the page's drawing lands before the move, not
+     * inside it.
+     */
+    let calmRun = 0;
+    let placeSeenAt = 0;
+    let placeSeen = "";
+    const drawnSince = (placeKey: string, now: number): boolean => {
+      if (placeKey !== placeSeen) {
+        placeSeen = placeKey;
+        placeSeenAt = now;
+        calmRun = 0;
+      }
+      return calmRun >= 2 || now - placeSeenAt > 700;
+    };
+    /*
      * A PLACE READ AGAIN AT REST IS GONE TO, NOT JUMPED TO. Once the camera
      * is written the Scene lays the city out again at that zoom, and a board
      * or a name placed from it may stand a little elsewhere: it goes there
@@ -525,8 +544,22 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     };
     const moveTo = (cam: SceneCamera, toLevel: number, anchor: Point, now: number) => {
       const from = painted;
+      /*
+       * A PAGE CHOSEN AT REST LEAVES FROM WHERE ITS BOARD STANDS THERE. A
+       * building pressed at the City makes its record the page, and that page's
+       * board was placed nowhere yet: it would have started from where it will
+       * stand beside the page, forty pixels from the building pressed. Placed
+       * first where the camera rests, so the move carries it from there.
+       */
+      // Where everything is drawn now is where it moves from: the page's own board, placed only now, joins them from where it stands at rest.
       const namesFrom = drawnNames(now);
       const slotsFrom = drawnSlots(now);
+      const own = state.current.current;
+      if (rest !== PAGE && !move && !slots.has(own) && level(painted)) {
+        standAll(world, cam.zoom(), LEVEL_LIVE, shownAt(rest), rest);
+        const at = slots.get(own);
+        if (at) slotsFrom.set(own, at);
+      }
       settle = null;
       const to = cameraFor(toLevel, anchor, cam.zoom());
       placeFor(toLevel, to, cam.zoom());
@@ -580,6 +613,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         if (move) move.start += lost;
         if (settle) settle.start += lost;
       }
+      calmRun = lastTick > 0 && now - lastTick < 50 ? calmRun + 1 : 0;
       lastTick = now;
       if (rebaseNext) {
         rebase(rebaseNext);
@@ -660,7 +694,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       }
 
       /* WHAT IS ASKED: a level (Up, Down, a press), or a scrub of the altitude by a hand on the page. */
-      if (ready && calm && anchor && asking.level !== null && !move && !settling) {
+      if (ready && calm && anchor && asking.level !== null && !move && !settling && (placeKey === lastPlace || drawnSince(placeKey, now))) {
         const toLevel = asking.level;
         asking.level = null;
         if (toLevel !== rest || placeKey !== lastPlace) moveTo(cam, toLevel, anchor, now);
@@ -790,7 +824,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       }
 
       // Moving to another place at a level above the page: the camera flies there and stays at that level.
-      if (rest !== PAGE && !move && !asking.scrubbing && anchor && placeKey !== lastPlace && !settling && calm && holder.querySelector("[data-graview-settled]")) {
+      if (rest !== PAGE && !move && !asking.scrubbing && anchor && placeKey !== lastPlace && !settling && calm && holder.querySelector("[data-graview-settled]") && drawnSince(placeKey, now)) {
         lastPlace = placeKey;
         // Chosen at the city — a Find result, a link — a page lands beside the city, as a view chosen there does.
         moveTo(cam, rest === CITY ? PANEL : rest, anchor, now);
@@ -938,8 +972,15 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         }
         el.style.visibility = "visible";
         el.style.opacity = seen.toFixed(3);
-        const said = { x: was.x + (place.x - was.x) * along, y: was.y + (place.y - was.y) * along, width: place.width, height: place.height };
-        const top = project(painted, { x: said.x + said.width / 2, y: said.y });
+        /*
+         * The name's middle goes from where it was to where it will be. Its box
+         * at the end of a move is the size it is in the picture there — a size
+         * on the screen taken through a camera much further out is many times
+         * wider in the picture — so the middle is carried, never the left edge
+         * with the width at the end: that put a name a hundred pixels off in
+         * the first frame of a move to the City.
+         */
+        const top = project(painted, { x: was.x + was.width / 2 + (place.x + place.width / 2 - (was.x + was.width / 2)) * along, y: was.y + (place.y - was.y) * along });
         el.style.left = `${(top.x - el.offsetWidth / 2).toFixed(2)}px`;
         el.style.top = `${top.y.toFixed(2)}px`;
         const covered = under({ x: top.x - el.offsetWidth / 2, y: top.y, width: el.offsetWidth, height: el.offsetHeight });

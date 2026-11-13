@@ -461,12 +461,29 @@ export function OnePlace<S extends AnySchema>({ context, children }: { readonly 
   }, [where.type]);
 
   /** Another place, at a level: its address, and the camera asked to that level there. */
+  /*
+   * THE PAGE CHOSEN IS DRAWN FIRST, THEN IT MOVES. Asked for at the same
+   * moment as the address, the level began to move the page that was being
+   * left while the chosen one's route was still drawing — on a slow machine
+   * one long task, which landed inside the move as a leap. The level is
+   * asked once the new address has drawn and been painted.
+   */
+  const pendingLevel = useRef<{ readonly path: string; readonly level: number } | null>(null);
+  useEffect(() => {
+    const pending = pendingLevel.current;
+    if (!pending || pending.path !== location.pathname) return;
+    pendingLevel.current = null;
+    const frame = requestAnimationFrame(() => {
+      motion.current.level = pending.level;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [location.pathname]);
   const openAt = useCallback(
     (path: string, level: number) => {
       if (path.split("?")[0] === location.pathname) return goLevel(level);
       if (level > PAGE) keep();
       kept.current = level > PAGE ? { scrollY: 0, address: path } : null;
-      motion.current.level = level;
+      pendingLevel.current = { path: path.split("?")[0]!, level };
       if (level > PAGE) setNow((was) => (was.away ? was : { ...was, away: true }));
       navigate(path);
     },

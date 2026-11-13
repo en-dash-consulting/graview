@@ -1339,7 +1339,7 @@ function signJumps(frames) {
         if (seenIn[i].i !== seenIn[i - 1].i + 1) continue;
         const step = Math.hypot(xs[i] - xs[i - 1], ys[i] - ys[i - 1]);
         const still = Math.abs(seenIn[i].f.altitude - seenIn[i - 1].f.altitude) < 0.001;
-        if (step > 30 && step > travel / 3) leaps.push({ which, key, step: Math.round(step), altitude: Number(seenIn[i].f.altitude.toFixed(3)), still });
+        if (step > 30 && step > travel / 3) leaps.push({ which, key, step: Math.round(step), altitude: Number(seenIn[i].f.altitude.toFixed(3)), still, from: [Math.round(xs[i - 1]), Math.round(ys[i - 1])], to: [Math.round(xs[i]), Math.round(ys[i])], frame: seenIn[i].i, of: frames.length });
       }
     }
   }

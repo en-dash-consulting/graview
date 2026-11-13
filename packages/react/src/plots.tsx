@@ -138,7 +138,7 @@ export function Plots({ frame, width, height, pan, pinned, close, today, swallow
     const members = node.aggregate?.memberIds ?? [];
     const state = districtState(store.schema, node.kind);
     const valueOf = (id: string) => (state ? (store.graph.getNode(id) as Record<string, unknown> | undefined)?.[state.field] : undefined);
-    /* A chosen record is never one of the "+504": it stands first in its row, so its building is there to light and to draw its links from. */
+    /* A chosen record is never one of the "+504": where it would be, it stands first in its row, so its building is there to light and to draw its links from... */
     const first = members.filter((id) => chosen.includes(id));
     const key = `${cell}|${tilt}|${node.plot!.col},${node.plot!.row},${node.plot!.side}|${first.join(",")}|${members.map((id) => `${id}=${String(valueOf(id))}`).join(",")}`;
     const held = drawn.current.get(node.id);
@@ -157,8 +157,18 @@ export function Plots({ frame, width, height, pan, pinned, close, today, swallow
       names.set(id, name);
       return name;
     };
-    const { lanes, tiers } = districtLanes(state, members, valueOf, first);
-    const { blocks, rests } = districtBlocks(node.plot!, lanes, tiers.map((tier) => TIER_HEIGHT[tier]));
+    /*
+     * ...AND ONLY WHERE IT WOULD NOT STAND OTHERWISE. A chosen record whose
+     * building is drawn where it is keeps its place: brought to the front of
+     * its row whenever it was chosen, a building pressed in the city moved
+     * forty pixels under the press as its page opened, and the page left
+     * from where the building no longer stood.
+     */
+    const plain = districtLanes(state, members, valueOf, []);
+    const plainBlocks = districtBlocks(node.plot!, plain.lanes, plain.tiers.map((tier) => TIER_HEIGHT[tier]));
+    const standing = first.every((id) => plainBlocks.blocks.some((block) => block.id === id));
+    const { lanes, tiers } = standing ? plain : districtLanes(state, members, valueOf, first);
+    const { blocks, rests } = standing ? plainBlocks : districtBlocks(node.plot!, lanes, tiers.map((tier) => TIER_HEIGHT[tier]));
     const corners = tileCorners(node.plot!, at0, none);
     // A record's due date past and not done: overdue, lit like a problem.
     const due = state ? dueField(store.schema, node.kind) : undefined;

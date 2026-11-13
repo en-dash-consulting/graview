@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-13T11:50:16.631Z",
+  "at": "2026-11-13T15:07:40.779Z",
   "engines": [
     "chromium"
   ],
@@ -309,7 +309,7 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 222,
+          "frames": 210,
           "moved": 151,
           "same": true,
           "jump": {
@@ -323,12 +323,12 @@
             "engine": "chromium",
             "device": "Pixel 7"
           },
-          "frames": 221,
+          "frames": 209,
           "moved": 151,
           "same": true,
           "jump": {
             "worst": 0.193,
-            "at": 2
+            "at": 3
           },
           "ok": true
         }
@@ -342,7 +342,7 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "worst": 0.49,
+          "worst": 0.48,
           "counted": 352,
           "examples": [],
           "ok": true
@@ -374,7 +374,7 @@
               "how": "control",
               "arrived": true,
               "moved": 34,
-              "frames": 100,
+              "frames": 86,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -394,7 +394,7 @@
               "how": "keys",
               "arrived": true,
               "moved": 34,
-              "frames": 79,
+              "frames": 160,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -404,7 +404,7 @@
               "how": "keys",
               "arrived": true,
               "moved": 33,
-              "frames": 160,
+              "frames": 78,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -414,7 +414,7 @@
               "how": "control",
               "arrived": true,
               "moved": 34,
-              "frames": 252,
+              "frames": 83,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -424,7 +424,7 @@
               "how": "control",
               "arrived": true,
               "moved": 35,
-              "frames": 324,
+              "frames": 81,
               "zoomBack": 0,
               "widthBack": 0
             }
@@ -443,7 +443,7 @@
               "how": "control",
               "arrived": true,
               "moved": 34,
-              "frames": 101,
+              "frames": 100,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -453,7 +453,7 @@
               "how": "control",
               "arrived": true,
               "moved": 38,
-              "frames": 162,
+              "frames": 81,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -463,7 +463,7 @@
               "how": "keys",
               "arrived": true,
               "moved": 34,
-              "frames": 79,
+              "frames": 160,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -473,7 +473,7 @@
               "how": "keys",
               "arrived": true,
               "moved": 33,
-              "frames": 79,
+              "frames": 237,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -483,7 +483,7 @@
               "how": "control",
               "arrived": true,
               "moved": 36,
-              "frames": 168,
+              "frames": 83,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -493,7 +493,7 @@
               "how": "control",
               "arrived": true,
               "moved": 34,
-              "frames": 246,
+              "frames": 82,
               "zoomBack": 0,
               "widthBack": 0
             }
@@ -510,7 +510,7 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 222,
+          "frames": 210,
           "sheared": 0,
           "first": null,
           "reachedTheCity": true,
@@ -521,7 +521,7 @@
             "engine": "chromium",
             "device": "Pixel 7"
           },
-          "frames": 221,
+          "frames": 209,
           "sheared": 0,
           "first": null,
           "reachedTheCity": true,
@@ -1204,7 +1204,7 @@
               "same": true,
               "jump": {
                 "worst": 0.08,
-                "at": 21
+                "at": 24
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
@@ -1219,13 +1219,14 @@
                 "level": 1
               },
               "levels": [
+                2,
                 1
               ],
-              "start": 0.4,
+              "start": 0,
               "same": true,
               "jump": {
                 "worst": 0.08,
-                "at": 21
+                "at": 25
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
@@ -1240,13 +1241,14 @@
                 "level": 1
               },
               "levels": [
+                2,
                 1
               ],
-              "start": 0.4,
+              "start": 0,
               "same": true,
               "jump": {
-                "worst": 0.081,
-                "at": 20
+                "worst": 0.08,
+                "at": 23
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
@@ -1264,17 +1266,17 @@
                 2,
                 1
               ],
-              "start": 40.3,
+              "start": 0,
               "same": true,
               "jump": {
                 "worst": 0.08,
-                "at": 16
+                "at": 24
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
                 "level": 1
               },
-              "ok": false
+              "ok": true
             },
             {
               "how": "find",
@@ -1298,10 +1300,10 @@
               "ok": true
             }
           ],
-          "ok": false
+          "ok": true
         }
       ],
-      "ok": false
+      "ok": true
     },
     "clickingTheGroundDeselectsAndStaysAtCity": {
       "held": [
@@ -1396,7 +1398,7 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 143,
+          "frames": 142,
           "madeRises": true,
           "droppedRisesGoingBack": true,
           "madeSinksGoingBack": true,
@@ -1501,7 +1503,7 @@
             "device": "Pixel 7"
           },
           "worst": 0,
-          "counted": 348,
+          "counted": 342,
           "examples": [],
           "ok": true
         }
@@ -1653,7 +1655,7 @@
             "device": "Pixel 7"
           },
           "path": "resizing",
-          "counted": 174,
+          "counted": 171,
           "crossed": 0,
           "examples": [],
           "ok": true
@@ -1812,9 +1814,9 @@
             0,
             0,
             0,
-            0.48,
-            1.08,
-            1.33,
+            0.36,
+            0.84,
+            1.32,
             1.52,
             1.71,
             1.9,
@@ -2307,12 +2309,12 @@
             {
               "to": 1,
               "leaps": [],
-              "frames": 107
+              "frames": 110
             },
             {
               "to": 2,
               "leaps": [],
-              "frames": 90
+              "frames": 89
             }
           ],
           "ok": true
@@ -2325,12 +2327,12 @@
             {
               "to": 1,
               "leaps": [],
-              "frames": 108
+              "frames": 111
             },
             {
               "to": 2,
               "leaps": [],
-              "frames": 91
+              "frames": 90
             }
           ],
           "ok": true
@@ -2343,12 +2345,12 @@
             {
               "to": 1,
               "leaps": [],
-              "frames": 108
+              "frames": 110
             },
             {
               "to": 2,
               "leaps": [],
-              "frames": 89
+              "frames": 90
             }
           ],
           "ok": true
@@ -2361,12 +2363,12 @@
             {
               "to": 1,
               "leaps": [],
-              "frames": 107
+              "frames": 109
             },
             {
               "to": 2,
               "leaps": [],
-              "frames": 89
+              "frames": 88
             }
           ],
           "ok": true
@@ -2379,7 +2381,7 @@
             {
               "to": 1,
               "leaps": [],
-              "frames": 108
+              "frames": 111
             },
             {
               "to": 2,
@@ -2402,7 +2404,7 @@
             {
               "to": 2,
               "leaps": [],
-              "frames": 90
+              "frames": 89
             }
           ],
           "ok": true
@@ -3237,5 +3239,5 @@
     "docs/one-face/desk-dark.png",
     "docs/one-face/phone-dark.png"
   ],
-  "passed": false
+  "passed": true
 }
