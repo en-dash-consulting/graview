@@ -6,7 +6,7 @@
 - Start a product: `npm create graview@latest my-app` (Node 22 or later)
 - License: Elastic License 2.0 — source-available, free to build with and to ship products on
 - Source: https://github.com/en-dash-consulting/graview
-- npm: https://www.npmjs.com/package/graview — 14 packages, one version ()
+- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.2.2)
 - Hosted: Graview Cloud, https://graview.cloud (private alpha, invite-only)
 
 ## Questions, answered plainly
@@ -904,6 +904,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.2.2`](https://graview.dev/docs/releases.html#v0-2-2)
 - [`0.2.1`](https://graview.dev/docs/releases.html#v0-2-1)
 - [`0.2.0`](https://graview.dev/docs/releases.html#v0-2-0)
 - [`0.1.74`](https://graview.dev/docs/releases.html#v0-1-74)
@@ -977,6 +978,23 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.3`](https://graview.dev/docs/releases.html#v0-1-3)
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
+
+## 0.2.2
+
+Published November 14, 2026 · the current version
+
+The one face knows when the city's side is narrow: every view in sight keeps its board, each district's name stands beside its own district, the home's city is centered on a small phone, and a phone's lines leave the sheet through the gaps between rows.
+
+- **Every view keeps its board.** Beside a page the app's views stand before the kinds' own lists, so a view whose district is in sight keeps its board where a wide panel leaves little city.
+- **A name stands beside its district.** At Nearby a district's name stands within a name's height of its own district and never over its records. Where nothing that near is clear, it isn't drawn there, and its list's board and the bar still reach it.
+- **Centered on a small phone.** The home's city at Nearby stands as near the middle of its side as its views' districts allow.
+- **Lines through the gaps.** On a phone every line drops into the gap above its row, clear of a group's label or a heading, and goes up the sheet's margin; the lines into one district rise as one. In a worker view or a frame, lines keep to the gap below their row.
+- **Security and reliability fixes for suggestions.**
+- Later: at Nearby beside a wide panel, a rich app's home frames its whole city, so on a desk its boards can be small to read.
+
+**Before you upgrade:** Breaks: nothing a host calls changes shape. A call about a suggestion may now be refused that was taken before, may be kept with less of the lineage it was given, and what a seat is served of who did something may read differently. On the one face only, a kind's list board may give its place to a view or a district's name, a name with no clear place beside its district isn't drawn, and lines in the panel take other gaps. Stored formats, ops, the wire, derived tool names and their input schemas are unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.2.2) · [The full changelog for 0.2.2](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#022)
 
 ## 0.2.1
 
@@ -8190,7 +8208,7 @@ Source: https://graview.dev/docs/site.html
 
 # This site is a Graview app
 
-graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 500 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
+graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 501 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
 
 ## The site, running
 
@@ -8215,7 +8233,7 @@ This is that declaration, compiled in your browser by the same compiler `graview
 | `chapter` | A step of the garden, grown: a declaration that passes its own check, opened in a browser on every push. | 16 |
 | `example` | An example app in the repository, described by its own package.json. | 5 |
 | `question` | A question the front page answers plainly, read off its FAQ. | 7 |
-| `release` | A version every package shares, as the releases page says it: when npm published it, what came in it in a few plain lines, and what a host must know before upgrading. Written by hand with the Version packages pull request (apps/site/releases.json). | 78 |
+| `release` | A version every package shares, as the releases page says it: when npm published it, what came in it in a few plain lines, and what a host must know before upgrading. Written by hand with the Version packages pull request (apps/site/releases.json). | 79 |
 | `scaffold` | What graview create writes, read from the generator itself. | 1 |
 
 ## How a page is made
