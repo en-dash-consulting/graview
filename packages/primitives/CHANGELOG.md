@@ -1,5 +1,21 @@
 # @graview/primitives
 
+## 0.2.1
+
+### Patch Changes
+
+- Updated dependencies [e50ba5e]
+- Updated dependencies [acbf763]
+- Updated dependencies [eaba7d8]
+- Updated dependencies [87cf987]
+- Updated dependencies [c928319]
+- Updated dependencies [57deebd]
+  - @graview/core@0.2.1
+  - @graview/react@0.2.1
+  - @graview/layout@0.2.1
+  - @graview/render@0.2.1
+  - @graview/tools@0.2.1
+
 ## 0.2.0
 
 ### Minor Changes
