@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-14T17:52:55.941Z",
+  "at": "2026-11-14T18:13:09.804Z",
   "engines": [
     "chromium"
   ],
@@ -32,8 +32,8 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 65,
-          "counted": 309,
+          "frames": 67,
+          "counted": 319,
           "worst": 0,
           "examples": [],
           "scrolled": 720,
@@ -290,8 +290,8 @@
           },
           "boxes": 200,
           "coldMedianMs": 0.8,
-          "coldWorstMs": 1.3,
-          "warmMs": 0.023,
+          "coldWorstMs": 1,
+          "warmMs": 0.025,
           "ok": true
         }
       ],

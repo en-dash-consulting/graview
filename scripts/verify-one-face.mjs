@@ -1602,7 +1602,7 @@ async function rich(browser, device) {
         const missing = owed.filter((one) => !views.some((b) => b.key === `place:${one}`));
         // A phone's sheet leaves the city a strip: there a view in sight is owed its board, and none has to be.
         // On a small window (a phone, or one on its side) a board stands only where it can be read: there none is owed.
-        result.nearbyNames = { names: seenNow.tags.length, astray: namesAstray(seenNow) };
+        result.nearbyNames = { names: seenNow.tags.length, astray: namesAstray(seenNow), unnamed: seenKinds ? [...seenKinds].filter((kind) => !seenNow.tags.some((t) => t.kind === kind)) : [] };
         result.nearbyViews = { districtsInSight: [...seenKinds], owed, standing: views.map((b) => b.label), missing, ok: sheet || seenNow.height <= 600 || missing.length === 0 };
       }
       if (level === 2) {
@@ -1990,7 +1990,7 @@ async function richPhoneLines(browser, device) {
             for (let t = 0; t <= 1; t += 0.02) {
               const x = a.x + (b.x - a.x) * t;
               const y = a.y + (b.y - a.y) * t;
-              if (x > w.x + 1 && x < w.x + w.width - 1 && y > w.y + 1 && y < w.y + w.height - 1) {
+              if (x > w.x + 0.5 && x < w.x + w.width - 0.5 && y > w.y + 0.5 && y < w.y + w.height - 0.5) {
                 across.push(`${key} across “${w.text}”`);
                 break;
               }

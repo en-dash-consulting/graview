@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-14T17:46:26.745Z",
+  "at": "2026-11-14T18:06:40.853Z",
   "engines": [
     "chromium"
   ],
@@ -57,7 +57,7 @@
                   "pressed": true
                 },
                 {
-                  "w": 62.90625,
+                  "w": 62.921875,
                   "h": 26,
                   "name": "Nearby: this page beside the tasks district",
                   "words": "Nearby",
@@ -96,7 +96,7 @@
                   "pressed": false
                 },
                 {
-                  "w": 63.4375,
+                  "w": 63.453125,
                   "h": 26,
                   "name": "Nearby: you are here",
                   "words": "Nearby",
@@ -135,7 +135,7 @@
                   "pressed": false
                 },
                 {
-                  "w": 62.90625,
+                  "w": 62.921875,
                   "h": 26,
                   "name": "Nearby: “Pay the deposit” beside its place in the city",
                   "words": "Nearby",
@@ -153,7 +153,7 @@
               ],
               "said": "Altitude: city, 3 of 3",
               "key": true,
-              "sheetTop": 422.9079284667969,
+              "sheetTop": 416.617919921875,
               "controlBottom": 884
             }
           ],
@@ -309,7 +309,7 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 209,
+          "frames": 211,
           "moved": 152,
           "same": true,
           "jump": {
@@ -324,7 +324,7 @@
             "device": "Pixel 7"
           },
           "frames": 211,
-          "moved": 152,
+          "moved": 151,
           "same": true,
           "jump": {
             "worst": 0.189,
@@ -343,7 +343,7 @@
             "device": "desk 1440×900"
           },
           "worst": 0.49,
-          "counted": 441,
+          "counted": 446,
           "examples": [],
           "ok": true
         },
@@ -353,7 +353,7 @@
             "device": "Pixel 7"
           },
           "worst": 0.49,
-          "counted": 518,
+          "counted": 524,
           "examples": [],
           "ok": true
         }
@@ -374,7 +374,7 @@
               "how": "control",
               "arrived": true,
               "moved": 34,
-              "frames": 86,
+              "frames": 87,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -384,75 +384,6 @@
               "how": "control",
               "arrived": true,
               "moved": 34,
-              "frames": 82,
-              "zoomBack": 0,
-              "widthBack": 0
-            },
-            {
-              "from": 2,
-              "to": 1,
-              "how": "keys",
-              "arrived": true,
-              "moved": 34,
-              "frames": 158,
-              "zoomBack": 0,
-              "widthBack": 0
-            },
-            {
-              "from": 1,
-              "to": 0,
-              "how": "keys",
-              "arrived": true,
-              "moved": 33,
-              "frames": 78,
-              "zoomBack": 0,
-              "widthBack": 0
-            },
-            {
-              "from": 0,
-              "to": 2,
-              "how": "control",
-              "arrived": true,
-              "moved": 34,
-              "frames": 84,
-              "zoomBack": 0,
-              "widthBack": 0
-            },
-            {
-              "from": 2,
-              "to": 0,
-              "how": "control",
-              "arrived": true,
-              "moved": 35,
-              "frames": 164,
-              "zoomBack": 0,
-              "widthBack": 0
-            }
-          ],
-          "ok": true
-        },
-        {
-          "where": {
-            "engine": "chromium",
-            "device": "Pixel 7"
-          },
-          "moves": [
-            {
-              "from": 0,
-              "to": 1,
-              "how": "control",
-              "arrived": true,
-              "moved": 34,
-              "frames": 88,
-              "zoomBack": 0,
-              "widthBack": 0
-            },
-            {
-              "from": 1,
-              "to": 2,
-              "how": "control",
-              "arrived": true,
-              "moved": 36,
               "frames": 162,
               "zoomBack": 0,
               "widthBack": 0
@@ -483,7 +414,76 @@
               "how": "control",
               "arrived": true,
               "moved": 34,
-              "frames": 83,
+              "frames": 252,
+              "zoomBack": 0,
+              "widthBack": 0
+            },
+            {
+              "from": 2,
+              "to": 0,
+              "how": "control",
+              "arrived": true,
+              "moved": 35,
+              "frames": 332,
+              "zoomBack": 0,
+              "widthBack": 0
+            }
+          ],
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "Pixel 7"
+          },
+          "moves": [
+            {
+              "from": 0,
+              "to": 1,
+              "how": "control",
+              "arrived": true,
+              "moved": 34,
+              "frames": 87,
+              "zoomBack": 0,
+              "widthBack": 0
+            },
+            {
+              "from": 1,
+              "to": 2,
+              "how": "control",
+              "arrived": true,
+              "moved": 36,
+              "frames": 164,
+              "zoomBack": 0,
+              "widthBack": 0
+            },
+            {
+              "from": 2,
+              "to": 1,
+              "how": "keys",
+              "arrived": true,
+              "moved": 34,
+              "frames": 237,
+              "zoomBack": 0,
+              "widthBack": 0
+            },
+            {
+              "from": 1,
+              "to": 0,
+              "how": "keys",
+              "arrived": true,
+              "moved": 33,
+              "frames": 78,
+              "zoomBack": 0,
+              "widthBack": 0
+            },
+            {
+              "from": 0,
+              "to": 2,
+              "how": "control",
+              "arrived": true,
+              "moved": 34,
+              "frames": 170,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -493,7 +493,7 @@
               "how": "control",
               "arrived": true,
               "moved": 34,
-              "frames": 82,
+              "frames": 246,
               "zoomBack": 0,
               "widthBack": 0
             }
@@ -510,7 +510,7 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 209,
+          "frames": 211,
           "sheared": 0,
           "first": null,
           "reachedTheCity": true,
@@ -1204,7 +1204,7 @@
               "same": true,
               "jump": {
                 "worst": 0.117,
-                "at": 27
+                "at": 26
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
@@ -1225,7 +1225,7 @@
               "start": 0,
               "same": true,
               "jump": {
-                "worst": 0.116,
+                "worst": 0.117,
                 "at": 26
               },
               "back": {
@@ -1611,7 +1611,7 @@
             "device": "desk 1440×900"
           },
           "path": "/pages/tasks/t-deposit",
-          "counted": 273,
+          "counted": 276,
           "crossed": 0,
           "examples": [],
           "ok": true
@@ -1635,7 +1635,7 @@
           "path": "/pages/tasks/t-book",
           "pointed": 0,
           "inSight": 3,
-          "counted": 156,
+          "counted": 159,
           "crossed": 0,
           "examples": [],
           "ok": true
@@ -1646,7 +1646,7 @@
             "device": "Pixel 7"
           },
           "path": "/pages/tasks",
-          "counted": 259,
+          "counted": 262,
           "crossed": 0,
           "examples": [],
           "ok": true
@@ -1832,7 +1832,7 @@
             0,
             0,
             0.12,
-            0.72,
+            0.84,
             1.14,
             1.33,
             1.52,
@@ -1855,7 +1855,7 @@
             0,
             0,
             0,
-            0,
+            0.12,
             0.72,
             1.14,
             1.33,
@@ -2350,7 +2350,7 @@
             {
               "to": 2,
               "leaps": [],
-              "frames": 90
+              "frames": 91
             }
           ],
           "ok": true
@@ -2381,7 +2381,7 @@
             {
               "to": 1,
               "leaps": [],
-              "frames": 111
+              "frames": 112
             },
             {
               "to": 2,
@@ -2404,7 +2404,7 @@
             {
               "to": 2,
               "leaps": [],
-              "frames": 91
+              "frames": 90
             }
           ],
           "ok": true
@@ -2440,7 +2440,7 @@
             {
               "to": 2,
               "leaps": [],
-              "frames": 89
+              "frames": 91
             }
           ],
           "ok": true
@@ -2950,7 +2950,8 @@
           },
           "page": {
             "names": 9,
-            "astray": []
+            "astray": [],
+            "unnamed": []
           },
           "ok": true
         },
@@ -2964,7 +2965,10 @@
           },
           "page": {
             "names": 5,
-            "astray": []
+            "astray": [],
+            "unnamed": [
+              "species"
+            ]
           },
           "ok": true
         },
@@ -2978,7 +2982,8 @@
           },
           "page": {
             "names": 5,
-            "astray": []
+            "astray": [],
+            "unnamed": []
           },
           "ok": true
         },
@@ -2992,7 +2997,8 @@
           },
           "page": {
             "names": 5,
-            "astray": []
+            "astray": [],
+            "unnamed": []
           },
           "ok": true
         },
@@ -3006,7 +3012,8 @@
           },
           "page": {
             "names": 5,
-            "astray": []
+            "astray": [],
+            "unnamed": []
           },
           "ok": true
         },
@@ -3020,7 +3027,8 @@
           },
           "page": {
             "names": 4,
-            "astray": []
+            "astray": [],
+            "unnamed": []
           },
           "ok": true
         }
@@ -4562,12 +4570,12 @@
           "levels": [
             1
           ],
-          "frames": 182,
+          "frames": 183,
           "boxMoved": 0,
           "offLevel": 0,
           "lines": {
             "worst": 0.31,
-            "counted": 700,
+            "counted": 704,
             "examples": []
           },
           "altitude": 1,

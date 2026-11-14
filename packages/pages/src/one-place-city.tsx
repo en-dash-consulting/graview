@@ -100,6 +100,8 @@ const SHEET_SIDE = 6;
  * pill's margin): words set closer under a row than this are crossed.
  */
 const FRAMED_GAP = 4;
+/** And on a phone's page: a group's label stands a few pixels over its row of pills, and a line along the gap over the row passes under its words. */
+const PHONE_GAP = 2.5;
 /** How far inside the city's side the home keeps its views' districts while bringing the city to the middle: a district's edge never on the window's or the sheet's. */
 const HOME_EDGE = 8;
 /** How far from its own district a name may stand beside a page, edge to edge: a name's height and a little air. Past it, a name reads as another district's. */
@@ -1482,13 +1484,13 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
             const above = beside.filter((o) => o.y + o.height <= rowTop + 1).reduce((most, o) => Math.max(most, o.y + o.height), -Infinity);
             const below = beside.filter((o) => o.y >= rowBottom - 1).reduce((least, o) => Math.min(least, o.y), Infinity);
             // In a view, and on a phone, no further from the row than its own spacing: what lies past that (a view's words, a group's label) the page does not go round.
-            const off = (room: number) => (one.framed || phone ? Math.min(Number.isFinite(room) ? room / 2 : FRAMED_GAP, FRAMED_GAP) : Number.isFinite(room) ? room / 2 : 4);
+            const off = (room: number) => (one.framed ? Math.min(Number.isFinite(room) ? room / 2 : FRAMED_GAP, FRAMED_GAP) : phone ? Math.min(Number.isFinite(room) ? room / 2 : PHONE_GAP, PHONE_GAP) : Number.isFinite(room) ? room / 2 : 4);
             const gaps = [
               { y: rowTop - off(rowTop - above), leave: b.y },
               { y: rowBottom + off(below - rowBottom), leave: b.y + b.height },
             ].filter((g) => g.y > one.visible.top && g.y < one.visible.bottom);
             // On a phone the gap above first, toward the sheet's top edge; in a view the gap below first; on a desk's page toward where it is going first — up for a building above the part, down for one below.
-            if (!phone && (one.framed || one.end.at.y > one.part.y)) gaps.reverse();
+            if (one.framed || (!phone && one.end.at.y > one.part.y)) gaps.reverse();
             const wayAlong = (gap: (typeof gaps)[number]): Way => {
               const leave = { x, y: gap.leave };
               const down = { x, y: gap.y };
@@ -1521,7 +1523,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           }
           for (const keys of byGap.values()) {
             keys.forEach((key, nth) => {
-              const shift = (nth - (keys.length - 1) / 2) * 1.5;
+              const shift = (nth - (keys.length - 1) / 2) * 1;
               for (const at of along.get(key)!) {
                 const via = ways[at]!.via;
                 ways[at] = { ...ways[at]!, via: via.map((p, i) => (i === 0 || i === via.length - 1 ? p : { x: p.x, y: p.y + shift })) };
