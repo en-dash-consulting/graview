@@ -1832,7 +1832,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         * are a chip beside it that opens them — what the Scene's district
         * card offered, said by this face where it stands.
         */}
-      <div ref={tagLayer} role="group" aria-label="The districts" data-testid="one-place-names" style={{ position: "fixed", left: 0, top: 0, width: 0, height: 0, zIndex: ONE_FACE_LAYERS.marks }}>
+      <div ref={tagLayer} role="region" aria-label="The districts" data-testid="one-place-names" style={{ position: "fixed", left: 0, top: 0, width: 0, height: 0, zIndex: ONE_FACE_LAYERS.marks }}>
         {districtNames.map((one) => (
           <span
             key={one.kind}
