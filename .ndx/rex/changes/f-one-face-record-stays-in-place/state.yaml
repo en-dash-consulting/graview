@@ -1,7 +1,10 @@
 schema: "rex/v2"
 items:
   "ec14523f-a8e4-456b-bcd6-34a9420ed909":
-    status: "in_progress"
-    startedAt: "2026-11-13T16:35:00.000Z"
-    lastModified: "2026-11-13T16:35:00.000Z"
+    status: "completed"
+    startedAt: "2026-11-13T12:00:00.000Z"
+    completedAt: "2026-11-14T17:30:00.000Z"
+    lastModified: "2026-11-14T17:30:00.000Z"
     lastModifiedBy: "Nick Daniel <nick@endash.us>"
+    resolutionType: "code-change"
+    resolutionDetail: "A record opened from the city is outlined where it stands; its district keeps its order and fades the same way on a fresh load and after a press. PR #594, landed in batch/0-2-1 (#596), released in 0.2.1 (#591)."
