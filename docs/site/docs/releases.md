@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.2.2`](https://graview.dev/docs/releases.html#v0-2-2)
 - [`0.2.1`](https://graview.dev/docs/releases.html#v0-2-1)
 - [`0.2.0`](https://graview.dev/docs/releases.html#v0-2-0)
 - [`0.1.74`](https://graview.dev/docs/releases.html#v0-1-74)
@@ -78,9 +79,26 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
+## 0.2.2
+
+Published November 14, 2026 · the current version
+
+The one face knows when the city's side is narrow: every view in sight keeps its board, each district's name stands beside its own district, the home's city is centered on a small phone, and a phone's lines leave the sheet through the gaps between rows.
+
+- **Every view keeps its board.** Beside a page the app's views stand before the kinds' own lists, so a view whose district is in sight keeps its board where a wide panel leaves little city.
+- **A name stands beside its district.** At Nearby a district's name stands within a name's height of its own district and never over its records. Where nothing that near is clear, it isn't drawn there, and its list's board and the bar still reach it.
+- **Centered on a small phone.** The home's city at Nearby stands as near the middle of its side as its views' districts allow.
+- **Lines through the gaps.** On a phone every line drops into the gap above its row, clear of a group's label or a heading, and goes up the sheet's margin; the lines into one district rise as one. In a worker view or a frame, lines keep to the gap below their row.
+- **Security and reliability fixes for suggestions.**
+- Later: at Nearby beside a wide panel, a rich app's home frames its whole city, so on a desk its boards can be small to read.
+
+**Before you upgrade:** Breaks: nothing a host calls changes shape. A call about a suggestion may now be refused that was taken before, may be kept with less of the lineage it was given, and what a seat is served of who did something may read differently. On the one face only, a kind's list board may give its place to a view or a district's name, a name with no clear place beside its district isn't drawn, and lines in the panel take other gaps. Stored formats, ops, the wire, derived tool names and their input schemas are unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.2.2) · [The full changelog for 0.2.2](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#022)
+
 ## 0.2.1
 
-Published November 13, 2026 · the current version
+Published November 13, 2026
 
 The one face reads clean on a rich app: the City's boards and names never stand on each other, a page's lines leave from its own records, Nearby opens wider and can be explored, and a host mounts the one face through the embed.
 

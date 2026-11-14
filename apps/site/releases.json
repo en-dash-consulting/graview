@@ -2,6 +2,14 @@
   "about": "The release records of graview.dev: one per version in packages/core/CHANGELOG.md, newest first, written with the Version packages pull request. A version npm never got says which version carried it (shippedIn) and is said inside that version's section. The date is the day npm published it (UTC). tests/the-releases-page-says-what-each-version-brought.test.ts fails while a version in the changelog has no record here.",
   "releases": [
     {
+      "version": "0.2.2",
+      "date": "2026-11-14",
+      "headline": "The one face knows when the city's side is narrow: every view in sight keeps its board, each district's name stands beside its own district, the home's city is centered on a small phone, and a phone's lines leave the sheet through the gaps between rows.",
+      "summary": "- **Every view keeps its board.** Beside a page the app's views stand before the kinds' own lists, so a view whose district is in sight keeps its board where a wide panel leaves little city.\n- **A name stands beside its district.** At Nearby a district's name stands within a name's height of its own district and never over its records. Where nothing that near is clear, it isn't drawn there, and its list's board and the bar still reach it.\n- **Centered on a small phone.** The home's city at Nearby stands as near the middle of its side as its views' districts allow.\n- **Lines through the gaps.** On a phone every line drops into the gap above its row, clear of a group's label or a heading, and goes up the sheet's margin; the lines into one district rise as one. In a worker view or a frame, lines keep to the gap below their row.\n- **Security and reliability fixes for suggestions.**\n- Later: at Nearby beside a wide panel, a rich app's home frames its whole city, so on a desk its boards can be small to read.",
+      "compatibility": "Breaks: nothing a host calls changes shape. A call about a suggestion may now be refused that was taken before, may be kept with less of the lineage it was given, and what a seat is served of who did something may read differently. On the one face only, a kind's list board may give its place to a view or a district's name, a name with no clear place beside its district isn't drawn, and lines in the panel take other gaps. Stored formats, ops, the wire, derived tool names and their input schemas are unchanged.",
+      "published": true
+    },
+    {
       "version": "0.2.1",
       "date": "2026-11-13",
       "headline": "The one face reads clean on a rich app: the City's boards and names never stand on each other, a page's lines leave from its own records, Nearby opens wider and can be explored, and a host mounts the one face through the embed.",
