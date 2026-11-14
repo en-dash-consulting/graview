@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "0ef121ee-66d5-4b83-b725-b604068a7207":
+    status: "completed"
+    startedAt: "2026-11-14T12:35:00.000Z"
+    completedAt: "2026-11-14T22:30:00.000Z"
+    lastModified: "2026-11-14T22:30:00.000Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"
+    resolutionType: "code-change"
+    resolutionDetail: "Views stand before the kinds' lists beside a page; names placed right after the views, beside their district or not there; the home's Nearby centered; phone lines through the gap above their row with one riser per district; a view's lines in the gap below its row. PR #598 (two rounds, retested by Cloud twice), landed in batch/0-2-2 (#600), released in 0.2.2 (#601)."
