@@ -11,6 +11,7 @@ import { actingAs, grantsTo, isSystem, meOf, profileOf, seatedIn, seatPersonOf }
 import { PERSON_SEAT } from "./graph/archived.js";
 import { isUnset } from "./graph/primitives.js";
 import { seatsKept, unseated } from "./binding-served.js";
+import { presentOf } from "./seat-of.js";
 import { FIELD_SIGHT, fieldsJudged, partialSight, recordsOf, sees, type Judged, type Records } from "./permissions/sight.js";
 import type { Principal } from "./permissions/types.js";
 import { diffSnapshots } from "./graph/diff.js";
@@ -577,6 +578,30 @@ const EVER_BOUND = new WeakMap<object, { horizon: number; length: number; readon
  * the account again once it was said as a record. Read once a growth.
  */
 function everBound(store: Judged): ReadonlyMap<string, string> {
+  const own = boundInLog(store);
+  // A moment of the past: what the present's log bound too, so nothing it says as a record is said as the account at an earlier seq.
+  const present = presentOf(store) as Judged | undefined;
+  if (!present) return own;
+  const now = boundInLog(present);
+  if (now.size === 0) return own;
+  const lengths = `${logLength(store)}:${logLength(present)}`;
+  const held = PAST_BOUND.get(store);
+  if (held && held.lengths === lengths) return held.bound;
+  const bound = new Map([...now, ...own]);
+  PAST_BOUND.set(store, { lengths, bound });
+  return bound;
+}
+
+/** A past's bindings read with the present's, kept while neither log grew. */
+const PAST_BOUND = new WeakMap<object, { readonly lengths: string; readonly bound: ReadonlyMap<string, string> }>();
+
+const logLength = (store: Judged): number => {
+  const log = store.log as { readonly length?: number; all(): readonly Operation[] };
+  return log.length ?? log.all().length;
+};
+
+/** Each seat this store's own log bound to a person, as `everBound` reads it. */
+function boundInLog(store: Judged): ReadonlyMap<string, string> {
   const log = store.log as { readonly horizon?: number; readonly length?: number; all(): readonly Operation[] };
   const horizon = log.horizon ?? 0;
   const length = log.length ?? log.all().length;

@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 1950,
+  "gzipped": 628,
+  "note": "Raised with the security and reliability fixes for suggestions (.changeset/security-and-reliability-fixes-for-suggestions.md). 1950 / 628 more. Measured at 2_008_338 / 703_358 against 2_006_388 / 702_730."
+}
