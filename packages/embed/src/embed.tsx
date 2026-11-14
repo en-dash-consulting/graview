@@ -21,6 +21,8 @@ import {
   FrameFirstLook,
   FrameNotices,
   hostBarOf,
+  InBarSlot,
+  rootStyle,
   hostBarProps,
   type HostBar,
   placeOfPath,
@@ -413,12 +415,21 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
   // The app's own address for a path within it, under address routing.
   const addressAt = (path: string) => addressOf(path, based);
   const routed = { ...(props.routing ? { routing: props.routing } : {}), ...based };
+  /*
+   * PAGES AND THE SCENE AS ONE FACE (FR-239): the routed face over the
+   * Scene's own city, so there is no scene face to open on or switch to —
+   * the overview is the City over the home — and only a picture is drawn
+   * as itself.
+   */
+  const oneFace = props.sceneUnderPages === true;
+  const theOne = (face: EmbedFace): EmbedFace => (oneFace && face !== "picture" ? "pages" : face);
   const [opened] = useState<EmbedFace>(() => {
     const given = props.at?.face;
     if (given) return given;
     const decided = stop === undefined && opensOnTheHome(app, views as ReactViewRegistry<S>) ? "pages" : faceOf(stop);
     const face = faceAtAddress({ ...routed, face: decided });
-    if (props.face === undefined) props.onOpening?.(face);
+    // Kept as it opened, so a host that turns the one face off later is drawn the face it would have opened on; told as drawn.
+    if (props.face === undefined) props.onOpening?.(theOne(face));
     return face;
   });
   const [homeFirst, setHomeFirst] = useState(() => props.face !== undefined && props.face !== "pages" && !props.at && stop === undefined && atTheBareHome(routed) && opensOnTheHome(app, views as ReactViewRegistry<S>));
@@ -429,7 +440,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
     toldHome.current?.("pages");
     setHomeFirst(false);
   }, [homeFirst]);
-  const face = homeFirst ? "pages" : (props.face ?? opened);
+  const face = homeFirst ? "pages" : theOne(props.face ?? opened);
   const kinds = app.schema.kinds as readonly string[];
   const address = props.routing === "address";
   const at = useMemo(() => (props.at ? settling!.settleAt(props as never, store.seenBy(principal ?? { kind: "human" }) as never, (views as ReactViewRegistry<S>).places()) : undefined), []);
@@ -463,7 +474,8 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
    * page of the routed face: it is the scene (FR-132).
    */
   const pagesAt = useRef<{ path: string; asked: string | undefined }>(undefined as never);
-  const pageOf = (path: string | undefined): string => (path === undefined || isOverview(path) ? "/" : path);
+  // On the one face the overview's address is the routed face's own: the City over the home (FR-239).
+  const pageOf = (path: string | undefined): string => (path === undefined || (isOverview(path) && !oneFace) ? "/" : path);
   pagesAt.current ??= { path: pageOf(at?.path ?? (address ? (face === "pages" ? (pathWithin(window.location.pathname, props.basePath) ?? "/") + window.location.search : "/") : props.path)), asked: props.path };
   if (props.path !== pagesAt.current.asked) pagesAt.current = { path: pageOf(props.path), asked: props.path };
   const told = useRef(props.onNavigate);
@@ -515,7 +527,8 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
     window.history.replaceState(window.history.state, "", `${addressAt(OVERVIEW_PATH)}${search}${hash}`);
   });
   useIntrinsicHeight(rootRef, shown, props.onIntrinsicHeight);
-  useOtherFaceWhenIdle(shown, width);
+  // The one face draws no other face: nothing to fetch while the page is idle.
+  useOtherFaceWhenIdle(oneFace ? "picture" : shown, width);
   const report = useErrorReport(props.onError, shown);
   const ready = useReady(props.onReady, shown);
   const drawnTold = useRef(props.onFaceDrawn);
@@ -525,6 +538,8 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
     drawnTold.current?.(asked);
   }, [ready]);
   const [barFind, setBarFind] = useState<BarFind | null>(null);
+  // The one face's bar slot, once the face has drawn it: the bar stands there (FR-239).
+  const [barSlot, setBarSlot] = useState<HTMLElement | null>(null);
   const places = (views as ReactViewRegistry<S>).places();
 
   /*
@@ -624,7 +639,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
       data-graview-scheme={scheme}
       {...(narrow ? { "data-graview-embed-narrow": "" } : {})}
       // Its own stacking context: every layer inside it (the scene's corner control, a panel) is ordered inside it, never over the host's page.
-      style={{ position: "relative", isolation: "isolate", height, minHeight: auto ? 0 : 320, display: "flex", flexDirection: "column", overflow: "hidden", borderRadius: "var(--graview-radius, 12px)" }}
+      style={rootStyle(height, auto, oneFace && shown === "pages")}
     >
       <style>{css}</style>
       <ErrorReportContext.Provider value={report}>
@@ -644,7 +659,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
         <Watch into={spot} />
         <DrawnSignal rootRef={rootRef} face={face} shown={shown} path={pageAt} stop={stop} draft={draft.n} onDrawn={props.onDrawn} parts={parts} />
         {/* THE ADDRESS BAR, when the host's page is the app (FR-106): the face follows it, and the scene, drawn, keeps its stop in the fragment. */}
-        {address ? <AddressBar pagesWere={at?.path} basePath={props.basePath} shown={shown} onFace={props.onFace} toggle={toggled} kinds={kinds} places={places} opens={opens} landed={landed} /> : null}
+        {address ? <AddressBar pagesWere={at?.path} basePath={props.basePath} shown={shown} onFace={props.onFace} toggle={toggled} kinds={kinds} places={places} opens={opens} landed={landed} oneFace={oneFace} /> : null}
         {/*
           * THE ONE APP BAR (FR-131): the app's name, said once as the
           * heading — the workbench says its name to a reader moving by
@@ -654,12 +669,14 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
           */}
         {bar && shown !== "picture" ? (
           <FaceBoundary module="@graview/embed" report={report}>
+            <InBarSlot oneFace={oneFace && shown === "pages"} slot={oneFace && shown === "pages" ? barSlot : null}>
             <FrameBar
               name={brand?.name ?? app.name}
               heading={heading}
               named={barLeaves(bar).name !== false}
               history={barLeaves(bar).history !== false}
-              faces={barLeaves(bar).faces === false ? undefined : {
+              // On the one face there is nothing to switch to: the city is the camera rising (FR-239).
+              faces={barLeaves(bar).faces === false || oneFace ? undefined : {
                 scene: { label: sceneTitle(arrangement), current: !onPages, go: () => toOverview(), reach: () => void preload(sceneFace.current) },
                 // The pages, back at the page the reader was on.
                 pages: { label: pagesTitle(arrangement), current: onPages, go: () => toPage(pagesAt.current.path), reach: () => void preload("pages") },
@@ -678,6 +695,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
               keeping={onPages ? undefined : <Keeping app={app} studio={props.studio} report={report} />}
               onFind={setBarFind}
             />
+            </InBarSlot>
           </FaceBoundary>
         ) : null}
         <BarFindContext.Provider value={barFind}>
@@ -697,6 +715,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
                 scope={scope}
                 titleLevel={titleBelow(heading)}
                 quickAsk={quickAskOf(props.quickAsk)}
+                onBarSlot={setBarSlot}
                 props={{ ...props, onNavigate, ...(address ? {} : { path: pagesAt.current.path }) } as never}
               />
             ) : (
@@ -1015,12 +1034,14 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
   const namedFace = options.at?.face ?? options.face;
   const opening: EmbedFace | undefined = namedFace === undefined ? undefined : faceAtAddress({ ...options, face: namedFace });
   let asked: EmbedFace = opening ?? faceOf(options.stop);
+  // On the one face every face asked for but a picture is drawn as the pages (FR-239).
+  const drawnAs = (face: EmbedFace): EmbedFace => (options.sceneUnderPages === true && face !== "picture" ? "pages" : face);
   let drawnFace: EmbedFace | null = null;
   let waiting: (() => void)[] = [];
   const onFaceDrawn = (face: EmbedFace) => {
     historyDoor.settle();
     drawnFace = face;
-    if (face !== asked) return;
+    if (face !== drawnAs(asked)) return;
     const done = waiting;
     waiting = [];
     for (const resolve of done) resolve();
@@ -1094,8 +1115,8 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
     const focus = here.view?.focusId;
     const kind = focus ? store.graph.getNode(focus)?.kind : undefined;
     // On the scene the place is the overview, and its stop rides on it (FR-132).
-    const onScene = (here.shown ?? asked) === "scene" || (here.shown ?? asked) === "graview";
-    return { face: asked, path: onScene ? OVERVIEW_PATH : (here.pages?.() ?? options.path ?? "/"), stop: here.view ? toUrl(here.view) : (options.stop ?? "#"), ...(kind ? { kind } : {}) };
+    const onScene = (here.shown ?? drawnAs(asked)) === "scene" || (here.shown ?? drawnAs(asked)) === "graview";
+    return { face: drawnAs(asked), path: onScene ? OVERVIEW_PATH : (here.pages?.() ?? options.path ?? "/"), stop: here.view ? toUrl(here.view) : (options.stop ?? "#"), ...(kind ? { kind } : {}) };
   };
   const root: Root = createRoot(element);
   flushSync(() => root.render(<Host />));
@@ -1130,8 +1151,8 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
     setStop: (stop) => flushSync(() => setters?.stop(stop)),
     setPath: (path) =>
       flushSync(() => {
-        // The overview's path is the scene; any other path is a page (FR-132).
-        if (isOverview(path)) {
+        // The overview's path is the scene; any other path is a page (FR-132). On the one face it is the City over the home, a page of the routed face (FR-239).
+        if (isOverview(path) && options.sceneUnderPages !== true) {
           if (asked === "pages" || asked === "picture") {
             asked = "scene";
             historyDoor.unsettle();
@@ -1167,7 +1188,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
     setSchemeChoice: (schemeChoice) => flushSync(() => setters?.hostBar({ schemeChoice })),
     setNotifications: (notifications) => flushSync(() => setters?.hostBar({ notifications })),
     /* Drawn is the face asked for — below `pagesBelow`, drawn as the pages that stand in for it. */
-    drawn: () => swapping.then(() => (drawnFace === asked ? undefined : new Promise<void>((resolve) => waiting.push(resolve)))),
+    drawn: () => swapping.then(() => (drawnFace === drawnAs(asked) ? undefined : new Promise<void>((resolve) => waiting.push(resolve)))),
     notify: (notice) => {
       let said: NoticeHandle | undefined;
       flushSync(() => {

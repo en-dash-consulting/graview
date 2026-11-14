@@ -25,7 +25,7 @@ describe("a page stands on its place in the Scene's city, one altitude from page
     const half = pageBox(0.5, desk);
     expect(half.width).toBeLessThan(desk.width);
     expect(half.width).toBeGreaterThan(panelBox(desk).width);
-    expect(panelBox(desk).x).toBeGreaterThan(desk.width / 2);
+    expect(panelBox(desk).x).toBeGreaterThan(desk.width * 0.4);
     expect(panelBox(desk).y).toBeGreaterThanOrEqual(desk.top);
     expect(panelBox(phone).y).toBeGreaterThan(phone.height / 3);
   });

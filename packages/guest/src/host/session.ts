@@ -105,6 +105,13 @@ export interface GuestHostOptions<S extends AnySchema> {
   /** The guest asked for a height, and was not held (`onHeld`). */
   readonly onSize?: (height: number) => void;
   /**
+   * A frame said which records it marks and where (`records`, Graview HQ
+   * feature:f-one-face-lines-from-frame-views): what it said, as it said
+   * it, for the host to judge (`judgeRecordBoxes`). Without it, `records`
+   * is dropped unread.
+   */
+  readonly onRecords?: (boxes: unknown, shows: unknown) => void;
+  /**
    * THE GROWTH GUARD (Roadmap f-guest-growth-guard): the guest's height was
    * held, because each height it asked for tracked the one it was last
    * given — a page sized by its own frame (`100vh`) grows with it to the
@@ -175,6 +182,8 @@ export interface GuestHostOptions<S extends AnySchema> {
 export interface GuestLimiter {
   act(): boolean;
   message(): boolean;
+  /** Where its records are, said (`records`): 60 a second, apart from `message`. */
+  records?(): boolean;
 }
 
 /** What a frame has been refused, for a host that wants to show or log it. */
@@ -204,6 +213,8 @@ export interface GuestHost {
   change(calls: readonly { readonly name: string; readonly args: Record<string, unknown> }[], intent?: string): { readonly ok: true; readonly intent: string } | { readonly ok: false; readonly reason: GuestRefusal; readonly message: string };
   /** Push what the viewer sees now. Called on every change to the store, and by a host when the view's input moves. */
   push(): void;
+  /** The records the guest was last handed: the one it is drawn over and every one it reads. */
+  readonly handed: ReadonlySet<string>;
   readonly stats: Readonly<GuestStats>;
   dispose(): void;
 }
@@ -220,11 +231,15 @@ function windowed(limit: number, span: number, now: () => number): () => boolean
   };
 }
 
+/** How often a frame may say where its records are: once an animation frame, and no more. */
+export const RECORDS_A_SECOND = 60;
+
 /** One frame's allowance, per `GuestLimits`. */
 export function createGuestLimiter(limits: GuestLimits = {}, now: () => number = Date.now): GuestLimiter {
   return {
     act: windowed(limits.acts ?? 30, limits.actWindowMs ?? 60_000, now),
     message: windowed(limits.messages ?? 120, limits.messageWindowMs ?? 1_000, now),
+    records: windowed(RECORDS_A_SECOND, 1_000, now),
   };
 }
 
@@ -396,6 +411,25 @@ export const GROWTH_QUIET_MS = 600;
  */
 export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S>): GuestHost {
   const limiter = options.limiter ?? createGuestLimiter(options.limits, options.now);
+  const recordsAllowed = limiter.records ?? windowed(RECORDS_A_SECOND, 1_000, options.now ?? Date.now);
+  /* What a frame says of its records reaches the host as the latest it said: a line is never left where it was. */
+  let laterRecords: { boxes: unknown; shows: unknown } | undefined;
+  let laterTimer: ReturnType<typeof setTimeout> | undefined;
+  const records = (data: Record<string, unknown>) => {
+    if (recordsAllowed()) {
+      laterRecords = undefined;
+      return options.onRecords?.(data.boxes, data.shows);
+    }
+    laterRecords = { boxes: data.boxes, shows: data.shows };
+    laterTimer ??= setTimeout(function again() {
+      laterTimer = undefined;
+      if (disposed || !laterRecords) return;
+      if (!recordsAllowed()) return void (laterTimer = setTimeout(again, 1_000 / RECORDS_A_SECOND));
+      const latest = laterRecords;
+      laterRecords = undefined;
+      options.onRecords?.(latest.boxes, latest.shows);
+    }, 1_000 / RECORDS_A_SECOND);
+  };
   const maxHeight = options.limits?.maxHeight ?? 4_000;
   const via = `view:${options.view}` as const;
   const stats: GuestStats = { applied: 0, refused: 0, dropped: 0 };
@@ -476,6 +510,7 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
    * as any message. The last 100 are kept, for a guest that never answers.
    */
   const unanswered = new Set<number>();
+  let handed: ReadonlySet<string> = new Set();
   const push = () => {
     if (disposed) return;
     pushes += 1;
@@ -484,6 +519,7 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
     unanswered.add(pushes);
     if (unanswered.size > 100) unanswered.delete(unanswered.values().next().value!);
     const now = props();
+    handed = new Set([...(now.node ? [now.node.id] : []), ...(now.nodes ?? []).map((node) => node.id)]);
     options.send({ type: "props", props: options.hand ? options.hand(now) : now, push: pushes });
   };
 
@@ -554,6 +590,12 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
     receive(data) {
       if (disposed) return;
       const answers = isRecord(data) && data.nonce === options.nonce && data.type === "pushed" && typeof data.push === "number" && unanswered.delete(data.push);
+      /* Where its records are: its own allowance, never the one its acts and its height are asked with. */
+      if (isRecord(data) && data.type === "records" && options.onRecords) {
+        if (data.nonce !== options.nonce) stats.dropped += 1;
+        else records(data);
+        return;
+      }
       if (!answers && !limiter.message()) {
         stats.dropped += 1;
         options.onFlood?.();
@@ -634,6 +676,9 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
       stats.dropped += 1;
     },
     push,
+    get handed() {
+      return handed;
+    },
     pressed(judged) {
       if (disposed) return { ok: false, reason: "refused", message: "The view has gone." };
       if (!judged.ok) {
@@ -651,6 +696,7 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
     },
     dispose() {
       disposed = true;
+      clearTimeout(laterTimer);
       growth.dispose();
       off();
     },

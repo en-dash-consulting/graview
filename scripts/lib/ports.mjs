@@ -73,6 +73,8 @@ export const OWN = {
   "section-host": 5213,
   /** The host's page `verify-page-better` mounts the tasks into with a door to change the app and the host's views, to make a built-in page better (Roadmap f-make-any-page-better). */
   "page-better-host": 5214,
+  /** Deep Time at its size on the one face — eleven kinds, 294 records, ten worker views — for `verify-one-face` to hold City and Nearby to reading clean (`lib/one-face-rich-host.mjs`). */
+  "one-face-rich": 5226,
   /** The host's page `verify-told` mounts a document into whose sight keeps the people from a member (Roadmap f-menu-learns). */
   "told-host": 5247,
   /** The host's page `verify-address` serves an app at under a base path, and an article beside it (FR-106). */
@@ -107,6 +109,8 @@ export const OWN = {
   "long-text-host": 5271,
   /** `calendar-sync-demo`'s meetings app, kept in step with the Google test calendar for a person to try by hand. */
   "calendar-sync-demo": 5267,
+  /** The host's page `verify-frame-lines` draws a roadmap's pages over its city into, with a worker view and a frame guest that mark their records, to hold the lines from them to their buildings. */
+  "frame-lines-host": 5244,
   /** The host's page `verify-viewport` mounts the embed into at the screen's height, to turn a phone and back (FR-165). */
   "viewport-host": 5266,
   /** The host's page `verify-a11y` mounts Cloud's two shapes of app into, inside `#graview-app`, for axe. */
@@ -116,6 +120,8 @@ export const OWN = {
   /** `verify-first-load`'s two previews of Cloud's shell: the roadmap at the Roadmap's size, and a small team's tasks. */
   "first-load-roadmap": 5250,
   "first-load-tasks": 5251,
+  /** `graview preview` of a small team's tasks mounted whole as the one face (`sceneUnderPages`), for `verify-embed-one-face`. */
+  "embed-one-face": 5272,
   /** The OpenAI-shaped stand-in `verify-studio` points the studio's remote model at. */
   "studio-model": 5289,
 };

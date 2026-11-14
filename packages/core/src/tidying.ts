@@ -572,7 +572,8 @@ export function acceptSuggestion<S extends AnySchema>(store: Store<S>, id: strin
   // The places it took, when it took less than the whole of what was suggested: the rest still wait.
   const suggested = whole.log.get(id)?.suggests?.length ?? items.length;
   const some = items.length < suggested ? { items: items.map((item) => item.at) } : {};
-  return whole.applyAll(suggestion.calls, { ...applying, author, lineage: { ...waiting.lineage!, suggestion: id, ...some } });
+  // The lineage the store keeps, never as the acceptor's seat is told it: who proposed it stays who did.
+  return whole.applyAll(suggestion.calls, { ...applying, author, lineage: { ...(whole.log.get(id)?.lineage ?? waiting.lineage!), suggestion: id, ...some } });
 }
 
 /**

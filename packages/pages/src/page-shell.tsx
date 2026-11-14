@@ -8,7 +8,8 @@ import { useHostAssets } from "@graview/react/provider";
 import type { BarFind } from "@graview/primitives/pages";
 import type { ReactNode } from "react";
 import { kindOfSlug } from "./registry.js";
-import { useOneFace } from "./one-place-control.js";
+import { useOneFace, useOneFaceComing } from "./one-place-control.js";
+import { heldHost, HeldHere, moveInto } from "./held-element.js";
 import { createPortal } from "react-dom";
 import { type PageContext, StartFreshLink, useStoreTick } from "./page-context.js";
 import { usePlacedOnTheFace } from "./face-placed.js";
@@ -36,6 +37,10 @@ export function DefaultShell<S extends AnySchema>({
   const { store, brand } = context;
   useStoreTick(store);
   const bar = useOneFace()?.bar ?? null;
+  // Where the one face is on its way the bar is drawn once, into an element of its own that moves into the face's slot when it comes.
+  const coming = useOneFaceComing();
+  const [barHost] = useState(() => (coming ? heldHost("data-graview-bar-host") : null));
+  useEffect(() => () => barHost?.remove(), [barHost]);
   // On its own the routed face owns the page, and wears the brand's icon where the host serves it, and its colors; embedded, the host's page keeps its own (FR-124).
   const providedAssetsAt = useHostAssets();
   useFavicon(context.embedded ? undefined : assetSrc(context.assetsAt ?? providedAssetsAt, faviconHref(brand)));
@@ -60,7 +65,14 @@ export function DefaultShell<S extends AnySchema>({
         lineHeight: 1.5,
       }}
     >
-      {context.embedded ? null : bar ? (
+      {context.embedded ? null : barHost ? (
+        <>
+          {/* The one face here or on its way: the bar drawn once, in the page's flow until the face's slot is there, then moved into it. */}
+          {createPortal(<OwnBar context={context} />, barHost)}
+          {bar ? <InSlot slot={bar} host={barHost} /> : <HeldHere host={barHost} />}
+          {bar ? <div aria-hidden="true" data-graview-bar-room="" style={{ height: "var(--graview-one-face-bar, 0px)", flex: "0 0 auto" }} /> : null}
+        </>
+      ) : bar ? (
         <>
           {/* On the one face the bar stands fixed at the window's top, outside the page that moves; the page keeps its room. */}
           {createPortal(<OwnBar context={context} />, bar)}
@@ -98,6 +110,17 @@ export function DefaultShell<S extends AnySchema>({
       ) : null}
     </div>
   );
+}
+
+/** The bar's own element in the one face's slot, for as long as the slot stands; set down at the page's end as it goes, for its place in the page to take back. */
+function InSlot({ slot, host }: { readonly slot: HTMLElement; readonly host: HTMLElement }) {
+  useLayoutEffect(() => {
+    moveInto(slot, host);
+    return () => {
+      if (host.parentNode === slot && document.body) moveInto(document.body, host);
+    };
+  }, [slot, host]);
+  return null;
 }
 
 /**
@@ -306,13 +329,13 @@ export function Bleed({ when, full, children }: { readonly when: boolean; readon
  * width the page's content is, its gutter either side), a draft's line the gutter.
  */
 const SLOT_OF_A_VIEW_THAT_DREW = `[data-graview-bleed=full]:not(:has(${DID_NOT_DRAW}))`;
-const BLEED_FULL_CSS = `${SLOT_OF_A_VIEW_THAT_DREW}{margin-left:calc(50% - 50cqw + env(safe-area-inset-left,0px));margin-right:calc(50% - 50cqw + env(safe-area-inset-right,0px))}${SLOT_OF_A_VIEW_THAT_DREW} [data-worker-view-beside-under]{box-sizing:border-box;width:100%;max-width:calc(760px + 2*var(--graview-page-gutter,20px));margin-inline:auto;padding-inline:var(--graview-page-gutter,20px)}${SLOT_OF_A_VIEW_THAT_DREW} [data-testid="draft-view-line"]{padding-inline:var(--graview-page-gutter,20px)}`;
+const BLEED_FULL_CSS = `${SLOT_OF_A_VIEW_THAT_DREW}{margin-left:calc(50% - 50cqw + env(safe-area-inset-left,0px));margin-right:calc(50% - 50cqw + env(safe-area-inset-right,0px))}${SLOT_OF_A_VIEW_THAT_DREW} [data-worker-view-beside-under]{box-sizing:border-box;width:100%;max-width:calc(760px + 2*var(--graview-gutter,20px));margin-inline:auto;padding-inline:var(--graview-gutter,20px)}${SLOT_OF_A_VIEW_THAT_DREW} [data-testid="draft-view-line"]{padding-inline:var(--graview-gutter,20px)}`;
 /*
  * What a view that did not draw left in its slot (`data-worker-view-fallback`, or the panel for a React view that threw) keeps the gutter: the bleed was the view's.
  * Each side takes its own safe area, whichever way the page reads: the insets are the device's, not the text's (Roadmap f-bleed-phone-rule-rtl).
  */
 const LEFT_IN_ITS_SLOT = "[data-worker-view-fallback],[data-graview-view-error]";
-const BLEED_CSS = `@media (max-width:680px){[data-graview-bleed=""]:not(:has(>:is(${LEFT_IN_ITS_SLOT}))){margin-left:min(0px,calc(env(safe-area-inset-left,0px) - var(--graview-page-gutter,20px)));margin-right:min(0px,calc(env(safe-area-inset-right,0px) - var(--graview-page-gutter,20px)))}}`;
+const BLEED_CSS = `@media (max-width:680px){[data-graview-bleed=""]:not(:has(>:is(${LEFT_IN_ITS_SLOT}))){margin-left:min(0px,calc(env(safe-area-inset-left,0px) - var(--graview-gutter,20px)));margin-right:min(0px,calc(env(safe-area-inset-right,0px) - var(--graview-gutter,20px)))}}`;
 
 const UNSEEN: React.CSSProperties = { position: "absolute", width: 1, height: 1, margin: -1, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap" };
 

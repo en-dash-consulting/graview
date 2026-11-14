@@ -9,7 +9,8 @@ import type { FrameOptions } from "./frame.js";
 /**
  * The routed face in the frame. The page scrolls inside the embed's box,
  * unless the embed is sized from its content: then the page is as tall as
- * it is, and the height the host is told is the whole of it.
+ * it is, and the height the host is told is the whole of it. On the one
+ * face (`sceneUnderPages`) the window scrolls it.
  */
 export function PagesContent<S extends AnySchema>({
   store,
@@ -22,6 +23,7 @@ export function PagesContent<S extends AnySchema>({
   scope,
   titleLevel = 2,
   quickAsk,
+  onBarSlot,
   props,
 }: {
   readonly store: Store<S>;
@@ -40,11 +42,15 @@ export function PagesContent<S extends AnySchema>({
   readonly titleLevel?: 2 | 3 | 4 | 5 | 6;
   /** The quick ask, as the app set it for the scene too. */
   readonly quickAsk?: boolean | undefined;
+  /** Handed the one face's bar slot, for the frame's bar to stand in (FR-239). */
+  readonly onBarSlot?: ((slot: HTMLElement | null) => void) | undefined;
   readonly props: FrameOptions<S>;
 }) {
   const css = useMemo(() => viewsCss({ scope: `.${scope}` }), [scope]);
+  // The one face reads its page in the window's flow, the window scrolling it: the box scrolls nothing of its own (FR-239).
+  const oneFace = props.sceneUnderPages === true;
   return (
-    <div data-embed-content="" style={auto ? { flex: "0 0 auto", background: "var(--graview-ground)" } : { flex: "1 1 auto", minHeight: 0, overflow: "auto", background: "var(--graview-ground)" }}>
+    <div data-embed-content="" style={auto || oneFace ? { flex: "0 0 auto", background: "var(--graview-ground)" } : { flex: "1 1 auto", minHeight: 0, overflow: "auto", background: "var(--graview-ground)" }}>
       <style>{css}</style>
       <div data-embed-measure="" style={{ display: "flow-root" }}>
         <PagesApp<S>
@@ -58,7 +64,9 @@ export function PagesContent<S extends AnySchema>({
             embedded: true,
             /* The bar above says the app, its places, Find and the standing: the face does not say them again (FR-131). */
             ...(props.bar !== false ? { barAbove: true } : {}),
-            ...(overview ? { overview } : {}),
+            ...(overview && !oneFace ? { overview } : {}),
+            /* Pages and the Scene as one face (FR-239): the city under the page, the frame's bar in its slot. */
+            ...(oneFace ? { sceneUnderPages: true, ...(onBarSlot ? { onBarSlot } : {}), ...(props.panel !== undefined ? { panel: props.panel } : {}) } : {}),
             titleLevel,
             views,
             settings: props.app.settings ?? [],

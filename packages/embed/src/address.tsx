@@ -92,6 +92,7 @@ export function AddressBar({
   places,
   opens,
   landed,
+  oneFace = false,
 }: {
   readonly basePath: string | undefined;
   /** The page the routed face had before a new declaration (FR-116), to go back to. */
@@ -111,6 +112,8 @@ export function AddressBar({
    * reload on the scene — rather than the page the reader was last on (FR-137).
    */
   readonly landed?: ((path: string) => void) | undefined;
+  /** Pages and the Scene as one face (FR-239): every address is the routed face's, the overview's the City over the home. */
+  readonly oneFace?: boolean;
 }) {
   const { view, go } = useNavigation();
   const latest = useRef({ shown, view, onFace, landed });
@@ -145,7 +148,7 @@ export function AddressBar({
     const onPop = () => {
       if (pathWithin(window.location.pathname, basePath) === null) return;
       // Past arrival, a bare home is the routed face's.
-      const named = faceNamed(basePath) ?? "pages";
+      const named = oneFace ? "pages" : (faceNamed(basePath) ?? "pages");
       const { shown: from, onFace: tell, landed: land } = latest.current;
       if (named === "pages") {
         leaving();
@@ -160,7 +163,7 @@ export function AddressBar({
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
-  }, [basePath, go, places]);
+  }, [basePath, go, places, oneFace]);
   return null;
 }
 

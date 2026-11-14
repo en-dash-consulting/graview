@@ -15,9 +15,20 @@
  * of a choice and the camera free at the City; every view that shows
  * records drawing their lines; the history rising and sinking with the
  * scrub, the same element throughout; and a duplicate view found by
- * `graview check`, its edit removing it.
+ * `graview check`, its edit removing it. And on a rich app — Deep Time at
+ * its size, eleven kinds, 294 records, ten worker views — the City and
+ * Nearby read clean: nothing said stands on anything else said, every
+ * district names its kind, no word is cut off or wraps, the legend is
+ * closed until its button opens it, and each view's board is that view.
+ * There, too, a record opened in the city by a press or a link is lit where
+ * it stands with its district in its order and nothing faded but what a
+ * fresh load fades; a board's post crosses no name and runs under any board
+ * it has to cross; a district's "⚠ n" opens that kind's problems alone; and
+ * the page is drawn once, its elements, keyboard and typed word kept as the
+ * one face arrives.
  *
- * Frame strips (desk and phone, light and dark) are written to
+ * Frame strips (desk and phone, light and dark), and the rich app's City
+ * and Nearby at 1280 and 390 wide (`rich-*.png`), are written to
  * docs/one-face/ for a person to look at.
  *
  *   node scripts/verify-one-face.mjs [--engine=chromium|webkit]   (Chromium by default)
@@ -31,10 +42,14 @@ import { chromium, devices } from "playwright";
 import { launchEngine } from "./lib/engine.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { serving } from "./lib/serve.mjs";
+import { serveRich } from "./lib/one-face-rich-host.mjs";
+import { document as deepTime, seed as deepTimeSeed } from "./fixtures/one-face-rich/deep-time.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const asked = process.argv.find((arg) => arg.startsWith("--engine="))?.slice("--engine=".length);
 const engines = asked ? [asked] : ["chromium"];
+/** Some claims alone, by the name of what they hold (`--only=nearbyZoom,panelWidth,rich`): for working on them; the chain runs them all. */
+const only = process.argv.find((arg) => arg.startsWith("--only="))?.slice("--only=".length).split(",");
 const DESK = { width: 1440, height: 900 };
 const PHONE = "Pixel 7";
 const DAY = "today=2026-09-01";
@@ -42,7 +57,7 @@ const STRIPS = resolve(repoRoot, "docs/one-face");
 
 const report = { at: new Date().toISOString(), engines, app: "apps/todo", checks: {} };
 const errors = [];
-const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], shortcuts: [], keysTurnOff: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [] };
+const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], pointsOut: [], shortcuts: [], keysTurnOff: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [], richClear: [], richNamed: [], richWords: [], richLegend: [], richViews: [], richRecords: [], richNearbyViews: [], richControls: [], richOwnDistrict: [], richLegible: [], richHomeNearby: [], richOneLevel: [], richSmooth: [], richFocusSeen: [], richProblems: [], richHand: [], richHomeViews: [], richPanelCrossings: [], richBoardsUnder: [], richHomeClear: [], richProblemsOfKind: [], richPosts: [], richPostsUnder: [], recordInPlace: [], oneRuleFades: [], noWordsAfterPress: [], drawnOnce: [], nearbyZoom: [], nearbyPan: [], nearbyBack: [], panelPinch: [], phoneCity: [], panelWidth: [], panelSpacing: [], viewInPanel: [] };
 
 /* ------------------------------------------------------------------ */
 /* In the page                                                         */
@@ -112,6 +127,8 @@ function startRecording(page) {
           return { key, on, under, from: { x: fx, y: fy }, to: { x: tx, y: ty }, bend: { x: bx, y: by }, building: building ? rect(building) : null, opacity: Number(getComputedStyle(g.ownerSVGElement).opacity) };
         });
       const boards = [...document.querySelectorAll("[data-graview-board]")].map((b) => ({ key: b.getAttribute("data-graview-board"), path: b.getAttribute("data-graview-board-path"), box: rect(b), opacity: Number(b.style.opacity || 0), face: b.firstElementChild ? matrixOf(b.firstElementChild) : null, own: b.hasAttribute("aria-current") }));
+      // Each district's name as this face draws it, and how much of it is seen.
+      const names = [...document.querySelectorAll("[data-graview-district-tag]")].map((t) => ({ key: t.getAttribute("data-graview-district-tag"), box: rect(t), opacity: t.style.visibility === "hidden" ? 0 : Number(t.style.opacity || 1) * Number(getComputedStyle(t.parentElement).opacity) }));
       // Read while it is in the window's flow, the page is the window: the box it fills.
       const inFlow = getComputedStyle(now).display === "contents";
       const bar = document.querySelector('[data-testid="one-place-bar"]')?.getBoundingClientRect();
@@ -119,6 +136,7 @@ function startRecording(page) {
       const dock = [document.querySelector("[data-graview-one-face-dock]"), document.querySelector("[data-graview-past-slot] > *")].filter(Boolean).map((el) => el.getBoundingClientRect());
       const control = dock.length ? dock.reduce((a, b) => new DOMRect(Math.min(a.left, b.left), Math.min(a.top, b.top), Math.max(a.right, b.right) - Math.min(a.left, b.left), Math.max(a.bottom, b.bottom) - Math.min(a.top, b.top))) : null;
       frames.push({
+        names,
         bar: bar ? { x: bar.left, y: bar.top, width: bar.width, height: bar.height } : null,
         control: control ? { x: control.left, y: control.top, width: control.width, height: control.height } : null,
         t: performance.now(),
@@ -265,7 +283,7 @@ async function theButton(page, where, phone) {
       const stops = [0, 1, 2].map((n) => {
         const b = document.querySelector(`[data-testid="altitude-stop-${n}"]`);
         const r = b?.getBoundingClientRect();
-        // The stop's own word, read without the keycap that stands over it while the legend is open (the legend says the keys, and is open by default beside the city).
+        // The stop's own word, read without the keycap that stands over it while the legend is open (the legend says the keys).
         const cap = b?.querySelector("kbd");
         const words = b ? [...b.childNodes].filter((node) => node !== cap).map((node) => node.textContent).join("").trim() : null;
         return b ? { w: r.width, h: r.height, name: b.getAttribute("aria-label"), words, keycap: cap ? cap.textContent.trim() : null, pressed: b.getAttribute("aria-pressed") === "true" } : null;
@@ -400,24 +418,27 @@ async function views(page, where) {
     };
     const overlap = (a, b) => Math.max(0, Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x)) * Math.max(0, Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y));
     const city = document.querySelector('[data-testid="one-place-city"]');
-    const signs = [...document.querySelectorAll("[data-graview-board]")].filter((b) => !b.getAttribute("data-graview-board").startsWith("record:")).map((b) => ({ key: b.getAttribute("data-graview-board"), path: b.getAttribute("data-graview-board-path").split("?")[0], label: b.getAttribute("title"), box: rect(b), shown: Number(b.style.opacity) > 0.9 }));
+    // Each view, and where its post meets the ground: what it stands on.
+    // A phone's City pans: a view placed where the bar or the control stands over it is put away until the City is panned to it, and stands all the same.
+    const signs = [...document.querySelectorAll("[data-graview-board]")].filter((b) => !b.getAttribute("data-graview-board").startsWith("record:")).map((b) => ({ key: b.getAttribute("data-graview-board"), path: b.getAttribute("data-graview-board-path").split("?")[0], label: b.getAttribute("title"), box: rect(b), stem: (parseFloat(b.style.getPropertyValue("--graview-sign-post")) || 0), shown: Number(b.style.opacity) > 0.9 || (innerWidth <= 600 && b.hasAttribute("data-graview-under")) }));
     const tiles = [...city.querySelectorAll("[data-graview-plot] .graview-plot-tile")].map((tile) => ({ kind: tile.closest("[data-graview-plot]").getAttribute("data-graview-plot"), box: rect(tile) }));
     const buildings = [...city.querySelectorAll("[data-graview-building]")].map(rect);
-    const names = [...city.querySelectorAll(".graview-kind-face[data-graview-nameplate]")].filter((face) => face.getAttribute("data-graview-nameplate") !== "none").map((face) => {
-      const box = rect(face);
-      const points = [[0.5, 0.5], [0.2, 0.5], [0.8, 0.5]].map(([fx, fy]) => document.elementFromPoint(box.x + box.width * fx, box.y + box.height * fy));
-      const name = face.querySelector("[data-graview-district-name]");
-      return { kind: face.closest("[data-graview-view]")?.getAttribute("data-graview-view"), box, covered: points.filter((top) => top && !face.contains(top)).map((top) => top.closest("[data-graview-board]")?.getAttribute("title") ?? top.tagName), size: name ? parseFloat(getComputedStyle(name).fontSize) : 0 };
+    // Each district's name as this face says it (the Scene's own stand down under it): what stands on it is what a board's box meets.
+    const boardBoxes = [...document.querySelectorAll("[data-graview-board]")].filter((b) => Number(b.style.opacity || 0) > 0.5).map((b) => ({ title: b.getAttribute("title"), box: rect(b) }));
+    const names = [...document.querySelectorAll("[data-graview-district-tag]")].filter((tag) => getComputedStyle(tag).visibility !== "hidden").map((tag) => {
+      const box = rect(tag);
+      return { kind: tag.getAttribute("data-graview-district-tag"), box, covered: boardBoxes.filter((b) => overlap(b.box, box) > 2).map((b) => b.title), size: parseFloat(getComputedStyle(tag).fontSize) };
     });
     const bar = document.querySelector('[data-testid="one-place-bar"]').getBoundingClientRect().bottom;
     const control = document.querySelector('[data-testid="altitude"] [role="group"]').getBoundingClientRect().top;
     // What a view stands on: the district its kind is, the nearest tile to its foot.
     // From the view's foot to the nearest edge of each district's ground.
     const gap = (p, b) => Math.hypot(Math.max(b.x - p.x, 0, p.x - (b.x + b.width)), Math.max(b.y - p.y, 0, p.y - (b.y + b.height)));
-    const nearest = (box) => tiles.reduce((best, tile) => { const d = gap({ x: box.x + box.width / 2, y: box.y + box.height }, tile.box); return !best || d < best.d ? { kind: tile.kind, d } : best; }, null);
+    const nearest = (box, stem = 0) => tiles.reduce((best, tile) => { const d = gap({ x: box.x + box.width / 2, y: box.y + box.height + stem }, tile.box); return !best || d < best.d ? { kind: tile.kind, d } : best; }, null);
     return {
-      signs: signs.map((sign) => ({ ...sign, near: nearest(sign.box)?.kind ?? null })),
-      covers: signs.flatMap((sign) => [...tiles.map((t) => t.box), ...buildings, ...names.map((n) => n.box)].some((box) => overlap(sign.box, box) > 4) ? [sign.label] : []),
+      signs: signs.map((sign) => ({ ...sign, near: nearest(sign.box, sign.stem)?.kind ?? null })),
+      // A district's ground is its diamond (its box's bare corners are the street): no view stands on it, on a building or on a name.
+      covers: signs.flatMap((sign) => tiles.some((t) => { const cx = t.box.x + t.box.width / 2; const cy = t.box.y + t.box.height / 2; const near = (lo, hi, v) => Math.max(lo, Math.min(hi, v)); return Math.abs(near(sign.box.x, sign.box.x + sign.box.width, cx) - cx) / (t.box.width / 2) + Math.abs(near(sign.box.y, sign.box.y + sign.box.height, cy) - cy) / (t.box.height / 2) < 0.97; }) || [...buildings, ...names.map((n) => n.box)].some((box) => overlap(sign.box, box) > 4) ? [sign.label] : []),
       onEachOther: signs.flatMap((a, i) => signs.slice(i + 1).filter((b) => overlap(a.box, b.box) > 4).map((b) => `${a.label} × ${b.label}`)),
       outside: signs.filter((sign) => sign.box.y < bar || sign.box.y + sign.box.height > control || sign.box.x < 0 || sign.box.x + sign.box.width > innerWidth).map((sign) => sign.label),
       names,
@@ -431,8 +452,10 @@ async function views(page, where) {
   const checked = seenNow.signs.filter((sign) => kindOf[sign.path]).length;
   seen.stand.push({ where, checked, astray, ok: checked > 0 && astray.length === 0 });
   seen.cover.push({ where, covers: seenNow.covers, onEachOther: seenNow.onEachOther, ok: seenNow.covers.length === 0 && seenNow.onEachOther.length === 0 });
-  seen.inside.push({ where, outside: seenNow.outside, ok: seenNow.outside.length === 0 });
-  seen.names.push({ where, names: seenNow.names.map((n) => ({ kind: n.kind, covered: n.covered, size: n.size })), ok: seenNow.names.length > 0 && seenNow.names.every((n) => n.covered.length === 0 && n.size >= 11) });
+  // A phone's City pans rather than shrink its views' words past reading: there a view may stand past the window's edge.
+  seen.inside.push({ where, outside: seenNow.outside, ok: seenNow.outside.length === 0 || !where.device.startsWith("desk") });
+  // A phone's names are a size smaller, as the rest of its City is.
+  seen.names.push({ where, names: seenNow.names.map((n) => ({ kind: n.kind, covered: n.covered, size: n.size })), ok: seenNow.names.length > 0 && seenNow.names.every((n) => n.covered.length === 0 && n.size >= (where.device.includes("desk") ? 11 : 9)) });
   return { where, offered, views: seenNow.signs.map((sign) => sign.label), missing, ok: offered.length >= 3 && missing.length === 0 };
 }
 
@@ -458,12 +481,16 @@ async function chosen(page, where) {
     if (how === "press") await page.locator('[data-graview-board][title="The week"]').click();
     else if (how === "building") {
       const spot = await page.evaluate(() => {
-        const signs = [...document.querySelectorAll("[data-graview-board]")].map((b) => b.getBoundingClientRect());
+        // Clear of every board and the post it stands on, and every district's name, which take a press of their own.
+        const signs = [...document.querySelectorAll("[data-graview-board], [data-graview-district-tag]")].map((b) => { const r = b.getBoundingClientRect(); const post = parseFloat(b.style.getPropertyValue("--graview-sign-post")) || 0; return new DOMRect(r.left - 4, r.top, r.width + 8, r.height + post + 4); });
         for (const building of document.querySelectorAll("[data-graview-building]")) {
           const r = building.getBoundingClientRect();
           const p = { x: r.left + r.width / 2, y: r.top + r.height * 0.6 };
           if (r.width < 6 || p.y < 60 || p.y > innerHeight - 80 || signs.some((b) => p.x >= b.left && p.x <= b.right && p.y >= b.top && p.y <= b.bottom)) continue;
           if (building.getAttribute("data-graview-building") === "t-deposit") continue;
+          // The building a press there lands on is the front-most whose box holds the point, as the face finds it: this one.
+          const front = [...document.querySelectorAll("[data-graview-building]")].filter((one) => { const q = one.getBoundingClientRect(); return p.x >= q.left && p.x <= q.right && p.y >= q.top && p.y <= q.bottom; }).sort((one, two) => two.getBoundingClientRect().bottom - one.getBoundingClientRect().bottom)[0];
+          if (front !== building) continue;
           return { id: building.getAttribute("data-graview-building"), ...p };
         }
         return null;
@@ -487,16 +514,22 @@ async function chosen(page, where) {
       await page.keyboard.press("Enter");
     } else {
       let reached = false;
+      // As a person walks the arrows toward it: the way it lies most, and the other way where that comes back to a view already passed.
+      const passed = new Set();
       for (let step = 0; step < 24 && !reached && target; step++) {
-        reached = await page.evaluate(() => document.activeElement?.getAttribute("title") === "The week");
+        const here = await page.evaluate(() => document.activeElement?.getAttribute("title") ?? "");
+        reached = here === "The week";
         if (reached) break;
-        const way = await page.evaluate((goal) => {
+        const again = passed.has(here);
+        passed.add(here);
+        const way = await page.evaluate(([goal, other]) => {
           const at = document.activeElement?.getBoundingClientRect();
           if (!at) return "ArrowLeft";
           const dx = goal.x + goal.width / 2 - (at.left + at.width / 2);
           const dy = goal.y + goal.height / 2 - (at.top + at.height / 2);
-          return Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "ArrowRight" : "ArrowLeft") : dy > 0 ? "ArrowDown" : "ArrowUp";
-        }, target.box);
+          const across = Math.abs(dx) > Math.abs(dy);
+          return across !== other ? (dx > 0 ? "ArrowRight" : "ArrowLeft") : dy > 0 ? "ArrowDown" : "ArrowUp";
+        }, [target.box, again]);
         await page.keyboard.press(way);
       }
       if (!reached) {
@@ -511,9 +544,19 @@ async function chosen(page, where) {
     await restAt(page, 1).catch(() => {});
     await page.waitForTimeout(1500);
     const frames = await stopRecording(page);
-    const after = frames.findIndex((f) => f.url.endsWith(goal) && f.standing !== null && !f.standing.startsWith("t-deposit"));
+    /*
+     * Find goes by its own page: the search, which starts the move down,
+     * then the result, which the move carries on to. On a slow machine the
+     * result is chosen while that move is still under way: judged from the
+     * result alone, the move's last few frames were the whole of its way, and
+     * an ordinary step of its tail a third of it. From the frame before
+     * the move down began.
+     */
+    const left = frames.findIndex((f) => f.standing !== null && !f.standing.startsWith("t-deposit") && f.altitude < frames[0].altitude - 0.001);
+    const after = how === "find" ? (left > 0 ? left - 1 : left) : frames.findIndex((f) => f.url.endsWith(goal) && f.standing !== null && !f.standing.startsWith("t-deposit"));
     const first = after >= 0 ? frames[after] : null;
-    const start = first && from ? Math.hypot(first.box.x + first.box.width / 2 - (from.x + from.width / 2), first.box.y + first.box.height - (from.y + from.height)) : null;
+    // From what was pressed: a building's page leaves from its board, which stands over the building on a post as tall as it needs — above the press, never off to one side.
+    const start = first && from ? Math.hypot(first.box.x + first.box.width / 2 - (from.x + from.width / 2), how === "building" ? Math.max(0, first.box.y + first.box.height - (from.y + from.height)) : first.box.y + first.box.height - (from.y + from.height)) : null;
     const landed = { url: new URL(page.url()).pathname, level: await levelOf(page) };
     const levels = [...new Set(frames.slice(Math.max(0, after)).map((f) => f.level))];
     // Back, from there: the page before, at the level it was left at, and still there.
@@ -664,15 +707,21 @@ async function chosenRecord(page, where) {
     const shown = new Set([...sheet.querySelectorAll("[data-graview-pick], [data-graview-record], [data-record]")].filter((el) => !box?.contains(el)).map((el) => el.getAttribute("data-graview-pick") ?? el.getAttribute("data-graview-record") ?? el.getAttribute("data-record")));
     return { found: Boolean(chosen), roof: chosen ? roofOf(chosen) : null, sameRoof: others.filter((b) => roofOf(b) === (chosen ? roofOf(chosen) : "")).length, lift, words, listed, repeated: listed.filter((id) => shown.has(id)), sticky: box ? getComputedStyle(box).position : null };
   });
-  seen.standsOut.push({ where, ...read, ok: read.found && read.sameRoof === 0 && read.lift < -2 });
+  // Lit by its color and outline where it stands, never lifted: a lit record changes no geometry.
+  seen.standsOut.push({ where, ...read, ok: read.found && read.sameRoof === 0 && Math.abs(read.lift) < 0.5 });
   seen.noCityWords.push({ where, words: read.words, ok: read.words === 0 });
   seen.connected.push({ where, listed: read.listed, repeated: read.repeated, position: read.sticky, ok: read.repeated.length === 0 && read.sticky !== "sticky" && read.sticky !== "fixed" });
   return { where, ok: true };
 }
 
 
-/* Book the van, beside the city: the list it is on stands out of sight, and its line points there from the city's edge. */
+/*
+ * Book the van, beside the city: no line crosses the panel. Its list once stood out of sight and its line
+ * pointed there from the city's edge; Nearby now stands back to take in what a record's page is connected to
+ * (brief b-cloud-2026-11-13-connected-under-a-view), so the list is in sight and its line ends on it.
+ */
 async function offSight(page, where) {
+  const size = page.viewportSize();
   await page.goto(`${at("todo")}/pages/tasks/t-book?${DAY}`, { waitUntil: "load" });
   await ready(page);
   await startRecording(page);
@@ -681,8 +730,26 @@ async function offSight(page, where) {
   await page.waitForTimeout(400);
   const frames = await stopRecording(page);
   const crossing = linesInside(frames);
-  const pointed = frames.at(-1)?.lines.filter((line) => line.under).length ?? 0;
-  seen.crossing.push({ where, path: "/pages/tasks/t-book", pointed, ...crossing, ok: crossing.counted > 0 && crossing.crossed === 0 && pointed > 0 });
+  const last = frames.at(-1)?.lines ?? [];
+  const pointed = last.filter((line) => line.under).length;
+  const inSight = last.filter((line) => !line.under && line.to.x >= 0 && line.to.y >= 0 && line.to.x <= size.width && line.to.y <= size.height).length;
+  seen.crossing.push({ where, path: "/pages/tasks/t-book", pointed, inSight, ...crossing, ok: crossing.counted > 0 && crossing.crossed === 0 && pointed === 0 && inSight > 0 });
+  // In a window too small for Nearby to take it all in: the record's own building stays in the city's side, and a line points from its edge toward what is out of sight.
+  await page.setViewportSize({ width: 610, height: 760 });
+  await page.goto(`${at("todo")}/pages/tasks/t-book?${DAY}`, { waitUntil: "load" });
+  await ready(page);
+  await press(page, '[data-testid="altitude-stop-1"]');
+  await restAt(page, 1);
+  await page.waitForTimeout(400);
+  const small = await page.evaluate(() => {
+    const lines = [...document.querySelectorAll("[data-graview-line]")];
+    const r = document.querySelector('[data-graview-building="t-book"]')?.getBoundingClientRect();
+    const p = document.querySelector("[data-graview-one-place]")?.getBoundingClientRect();
+    const clear = r && p && (r.right <= p.left + 2 || r.left >= p.right - 2 || r.bottom <= p.top + 2 || r.top >= p.bottom - 2);
+    return { lines: lines.length, pointed: lines.filter((g) => g.hasAttribute("data-graview-line-under")).length, ownInSight: Boolean(r && clear && r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight) };
+  });
+  seen.pointsOut.push({ where, path: "/pages/tasks/t-book at 610×760", ...small, ok: small.pointed > 0 && small.ownInSight });
+  await page.setViewportSize(size);
   return { where, ok: true };
 }
 
@@ -706,7 +773,7 @@ async function shortcuts(page, where) {
   const named = await page.evaluate(() => [0, 1, 2].map((n) => ({ title: document.querySelector(`[data-testid="altitude-stop-${n}"]`)?.getAttribute("title"), keys: document.querySelector(`[data-testid="altitude-stop-${n}"]`)?.getAttribute("aria-keyshortcuts") })));
   await press(page, '[data-testid="altitude-stop-1"]');
   await restAt(page, 1);
-  // The legend shows by default beside the city: opened only if it is not.
+  // The legend is a button: opened here, unless it is open already.
   if ((await page.locator('[data-testid="altitude-key"]').first().getAttribute("aria-expanded")) !== "true") await press(page, '[data-testid="altitude-key"]');
   await page.waitForTimeout(200);
   const caps = await page.evaluate(() => ({ caps: [0, 1, 2].map((n) => document.querySelector(`[data-testid="altitude-keycap-${n}"]`)?.textContent ?? null), listed: document.querySelector('[data-testid="altitude-key-keys"]')?.textContent ?? "" }));
@@ -1191,18 +1258,1207 @@ async function strip(browser, options, name) {
   return out;
 }
 
+
+/*
+ * A RICH APP'S CITY AND NEARBY READ CLEAN (Graview HQ
+ * feature:f-one-face-city-reads-clean). Deep Time at its size — eleven
+ * kinds, 294 records, ten worker views (lib/one-face-rich-host.mjs) — dark,
+ * at 1280 wide and at 390: at the City and at Nearby nothing this face
+ * says stands on anything else it says (the views' boards, the districts'
+ * names, the page's own board); every district at the City says its kind;
+ * no name, title or line is cut off by its box or wraps out of it — one
+ * too long is cut whole, with an ellipsis, and the whole of it is the
+ * board's own name; the legend is closed on arrival, on every visit, and
+ * opens from its button; and each view's board is drawn as that view — its
+ * title and whose view it is, no two alike, none listing records as a list.
+ */
+const RICH_PLURALS = Object.fromEntries(Object.entries(deepTime.kinds).map(([kind, one]) => [kind, one.plural]));
+
+/** What this face draws at rest, read in the page: boards, names, the panel, and what is cut or wrapped. */
+const readRich = (page) =>
+  page.evaluate(() => {
+    const rect = (el) => {
+      const r = el.getBoundingClientRect();
+      return { x: r.left, y: r.top, width: r.width, height: r.height };
+    };
+    const shown = (el) => el.getBoundingClientRect().width > 0 && getComputedStyle(el).visibility !== "hidden" && Number(getComputedStyle(el).opacity) > 0.5 && Number(getComputedStyle(el.parentElement).opacity) > 0.5;
+    const boards = [...document.querySelectorAll("[data-graview-board]")].filter((b) => Number(b.style.opacity || 0) > 0.9).map((b) => {
+      const face = b.querySelector("[data-graview-board-face]");
+      const title = face?.querySelector("[data-graview-board-title]");
+      const says = face?.querySelector("[data-graview-board-says]");
+      // Where its post meets the ground, and the smallest of its words as drawn on the screen.
+      const box = rect(b);
+      const post = parseFloat(b.style.getPropertyValue("--graview-sign-post")) || 0;
+      const scale = face ? box.width / (face.offsetWidth || box.width) : 1;
+      const smallest = face ? Math.min(...[...face.querySelectorAll("[data-graview-board-title], [data-graview-board-says], [data-graview-board-face] span:not([style*='border-radius'])")].filter((el) => el.textContent.trim()).map((el) => parseFloat(getComputedStyle(el).fontSize) * scale)) : Infinity;
+      return { key: b.getAttribute("data-graview-board"), label: b.getAttribute("title"), aria: b.getAttribute("aria-label"), box, stem: { x: box.x + box.width / 2, y: box.y + box.height + post }, smallest, title: title?.textContent ?? null, says: says?.textContent ?? null, lines: face ? face.querySelectorAll("[data-graview-board-says] ~ div > div").length : 0, own: b.hasAttribute("aria-current") };
+    });
+    const tags = [...document.querySelectorAll("[data-graview-district-tag]")].filter(shown).map((t) => ({ kind: t.getAttribute("data-graview-district-tag"), text: t.textContent, box: rect(t) }));
+    // A district's "+n", the buildings its plot has no room to show: drawn in the picture, and read as words beside a name.
+    const rests = [...document.querySelectorAll('[data-testid="one-place-city"] .graview-village-rest')].filter((el) => el.getBoundingClientRect().width > 0 && getComputedStyle(el).visibility !== "hidden").map((el) => ({ kind: (el.closest("[data-graview-plot]")?.getAttribute("data-graview-plot") ?? "").replace(/^kind:/, ""), text: el.lastChild?.textContent ?? el.textContent, box: rect(el) })).filter((r) => r.box.x + r.box.width > 0 && r.box.x < innerWidth && r.box.y + r.box.height > 0 && r.box.y < innerHeight);
+    const plots = [...document.querySelectorAll('[data-testid="one-place-city"] [data-graview-plot] .graview-plot-tile')].map((tile) => ({ kind: (tile.closest("[data-graview-plot]").getAttribute("data-graview-plot") ?? "").replace(/^kind:/, ""), box: rect(tile) }));
+    // The Scene's own district names, where any is still drawn on this face.
+    const plates = [...document.querySelectorAll('[data-testid="one-place-city"] .graview-kind-face')].filter((face) => getComputedStyle(face).visibility !== "hidden" && face.getAttribute("data-graview-nameplate") !== "none" && face.getBoundingClientRect().width > 0).map((face) => ({ kind: face.closest("[data-graview-view]")?.getAttribute("data-graview-view"), box: rect(face) }));
+    /*
+     * CUT OR WRAPPED: every piece of words this face draws at the City and
+     * beside it — a name, a board's title, what it says it is, its lines,
+     * the control's stops. Cut is wider than its box with no ellipsis, or
+     * with one where the board's own name is not the whole of it; wrapped is
+     * taller than one line.
+     */
+    const words = [
+      ...[...document.querySelectorAll("[data-graview-district-tag]")].filter(shown).map((el) => ({ el, whole: el.getAttribute("title") })),
+      ...[...document.querySelectorAll("[data-graview-board]")].filter((b) => Number(b.style.opacity || 0) > 0.9).flatMap((b) => [...b.querySelectorAll("[data-graview-board-title], [data-graview-board-says], [data-graview-board-face] span:not([style*='border-radius'])")].map((el) => ({ el, whole: el.matches("[data-graview-board-title]") ? b.getAttribute("title") : null }))),
+      ...[...document.querySelectorAll('[data-testid="altitude"] button')].filter((el) => el.getBoundingClientRect().width > 0 && el.textContent.trim()).map((el) => ({ el, whole: null })),
+    ];
+    const problems = [];
+    for (const { el, whole } of words) {
+      const style = getComputedStyle(el);
+      const line = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.3;
+      const text = el.textContent.trim();
+      if (!text) continue;
+      const cut = el.scrollWidth > el.clientWidth + 1;
+      const ellipsis = style.textOverflow === "ellipsis";
+      if (cut && !ellipsis) problems.push({ text, why: "cut without an ellipsis" });
+      else if (cut && whole !== null && whole !== text) problems.push({ text, why: `cut, and the board's name "${whole}" is not the whole of it` });
+      else if (cut && whole === null && el.matches("[data-graview-district-tag]")) problems.push({ text, why: "a district's name cut" });
+      // Wrapped: its words fall on more than one line — read off the lines the browser drew them on, not the box, which a fingertip's control makes taller than its line.
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const rows = [...range.getClientRects()].filter((one) => one.width > 0).reduce((tops, one) => (tops.some((top) => Math.abs(top - one.top) < one.height / 2) ? tops : [...tops, one.top]), []);
+      // A board's title takes two lines before it is cut; nothing else takes more than one.
+      const most = el.matches("[data-graview-board-title]") ? 2 : 1;
+      const clipped = el.matches("[data-graview-board-title]") && el.scrollHeight > el.clientHeight + 1;
+      if (rows.length > most && !clipped) problems.push({ text, why: `wraps onto ${rows.length} lines (a ${line}px line)` });
+      if (clipped && whole !== text) problems.push({ text, why: `cut, and the board's name "${whole}" is not the whole of it` });
+    }
+    const panelEl = document.querySelector("[data-graview-one-place]");
+    const level = Number(panelEl?.getAttribute("data-graview-one-place"));
+    const legend = Boolean(document.querySelector('[data-testid="altitude-key-pane"]'));
+    const bar = document.querySelector('[data-testid="one-place-bar"]').getBoundingClientRect().bottom;
+    // Each building in sight, and each line's building end: what Nearby is for.
+    const buildings = [...document.querySelectorAll('[data-testid="one-place-city"] [data-graview-building]')].map((b) => ({ id: b.getAttribute("data-graview-building"), kind: (b.closest("[data-graview-plot]")?.getAttribute("data-graview-plot") ?? "").replace(/^kind:/, ""), box: rect(b) })).filter((b) => b.box.width > 2 && b.box.x + b.box.width > 0 && b.box.x < innerWidth && b.box.y + b.box.height > 0 && b.box.y < innerHeight);
+    // A line gathered with others into a district counts once, by the one that draws the line they share, and ends on its district.
+    const lines = [...document.querySelectorAll("[data-graview-line]")].filter((g) => Number(getComputedStyle(g.ownerSVGElement).opacity) > 0.5 && (g.getAttribute("data-graview-line-on") === "building" || g.hasAttribute("data-graview-line-count")) && !g.hasAttribute("data-graview-line-under")).map((g) => {
+      const [x, y] = (g.getAttribute("data-graview-line-to") ?? "0,0").split(",").map(Number);
+      return { key: g.getAttribute("data-graview-line"), to: { x, y }, into: g.hasAttribute("data-graview-line-count") ? (g.getAttribute("data-graview-line-gathered") ?? "").replace(/^kind:/, "") : null };
+    });
+    // A district's own controls — "open", its problems — where any is drawn: never under the bar, the page or the level control.
+    const controls = [...document.querySelectorAll('[data-testid="one-place-city"] .graview-kind-open, [data-testid="one-place-city"] .graview-district-problems, [data-graview-district-open], [data-graview-district-problems]')].filter((el) => getComputedStyle(el).visibility !== "hidden" && Number(getComputedStyle(el).opacity) > 0.1 && el.getBoundingClientRect().width > 0).map((el) => ({ what: el.getAttribute("aria-label") ?? el.textContent, box: rect(el) }));
+    const dock = document.querySelector("[data-graview-one-face-dock]");
+    // Everything the keyboard reaches in the city's layers — the boards, the districts' names and their controls — is seen.
+    const seenAll = (el) => { for (let at = el; at && at !== document.body; at = at.parentElement) { const style = getComputedStyle(at); if (style.visibility === "hidden" || style.display === "none" || Number(style.opacity) < 0.5) return false; } const r = el.getBoundingClientRect(); return r.width > 1 && r.height > 1; };
+    const unseenFocus = [...document.querySelectorAll('[data-testid="one-place-boards"] button, [data-testid="one-place-names"] button')].filter((el) => !el.closest("[inert]") && el.tabIndex >= 0 && !seenAll(el)).map((el) => el.getAttribute("aria-label") ?? el.textContent.trim());
+    // The level control: how many of its levels look chosen — pressed, or lit by a focus ring — and whether a tooltip is up.
+    const stops = [...document.querySelectorAll('[data-testid^="altitude-stop-"]')];
+    const chosenLooking = stops.filter((el) => el.getAttribute("aria-pressed") === "true" || el.matches(":focus-visible")).map((el) => el.textContent.trim());
+    const tipUp = [...document.querySelectorAll("[data-graview-one-face-tip][data-graview-shown]")].map((el) => el.textContent.trim()).filter(Boolean);
+    const district = Object.fromEntries([...document.querySelectorAll('[data-testid="one-place-city"] [data-graview-plot] .graview-plot-tile')].map((tile) => [(tile.closest("[data-graview-plot]").getAttribute("data-graview-plot") ?? "").replace(/^kind:/, ""), rect(tile)]));
+    // On a phone's City, which pans, the views put away under the bar or the control until panned to: they stand all the same.
+    const under = [...document.querySelectorAll("[data-graview-board][data-graview-under]")].map((b) => b.getAttribute("data-graview-board"));
+    const namesUnder = (innerWidth <= 600 || innerHeight <= 600) ? [...document.querySelectorAll("[data-graview-district-tag][data-graview-under]")].map((t) => ({ kind: t.getAttribute("data-graview-district-tag"), text: t.textContent })) : [];
+    /*
+     * EACH BOARD'S POST, from the foot of its card down to the ground: what
+     * other board or district's name it runs across, and, where it does,
+     * whether it is drawn under that board — the board, not the post, is
+     * what is seen where they cross.
+     */
+    // Beside a page its own board is the page, laid over it clear: not a board standing in the city.
+    const besidePage = Number(document.querySelector("[data-graview-one-place]")?.getAttribute("data-graview-one-place")) === 1;
+    const standing = [...document.querySelectorAll("[data-graview-board]")].filter((b) => Number(b.style.opacity || 0) > 0.9 && !b.hasAttribute("data-graview-under") && !(besidePage && b.hasAttribute("aria-current")));
+    const postCrossings = [];
+    for (const b of standing) {
+      const box = rect(b);
+      const length = parseFloat(b.style.getPropertyValue("--graview-sign-post")) || 0;
+      const post = { x: box.x + box.width / 2 - 1, y: box.y + box.height, width: 2, height: length };
+      const across = (other) => Math.max(0, Math.min(post.x + post.width, other.x + other.width) - Math.max(post.x, other.x)) > 0 && Math.min(post.y + post.height, other.y + other.height) - Math.max(post.y, other.y) > 1;
+      for (const o of standing) {
+        if (o === b) continue;
+        const other = rect(o);
+        if (!across(other)) continue;
+        const y = (Math.max(post.y, other.y) + Math.min(post.y + post.height, other.y + other.height)) / 2;
+        // A crossing past the window's edge (a small window's City pans) is not seen, and the page cannot be asked what is drawn there.
+        if (post.x + 1 < 0 || post.x + 1 >= innerWidth || y < 0 || y >= innerHeight) continue;
+        // Both taking the pointer for the reading (a board put away or still arriving takes none): whichever is drawn on top is what is found there.
+        const was = [b.style.pointerEvents, o.style.pointerEvents];
+        b.style.pointerEvents = "auto";
+        o.style.pointerEvents = "auto";
+        // Of the two, whichever is drawn higher at that point: something else over both (a name, a ring) says nothing of their order.
+        const stack = document.elementsFromPoint(post.x + 1, y).map((el) => el.closest("[data-graview-board]")).filter((one) => one === b || one === o);
+        const seenThere = stack[0];
+        b.style.pointerEvents = was[0];
+        o.style.pointerEvents = was[1];
+        postCrossings.push({ post: b.getAttribute("title"), across: `“${o.getAttribute("title")}”`, under: seenThere === o });
+      }
+      for (const t of tags) if (across(t.box)) postCrossings.push({ post: b.getAttribute("title"), across: `the ${t.kind} name`, under: null });
+    }
+    return { boards, under, namesUnder, tags, rests, plots, plates, problems, buildings, lines, controls, unseenFocus, chosenLooking, tipUp, district, postCrossings, dock: dock ? rect(dock) : null, level, panel: level === 1 && panelEl ? rect(panelEl) : null, legend, bar, width: innerWidth, height: innerHeight };
+  });
+
+const overlapOf = (a, b) => Math.max(0, Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x)) * Math.max(0, Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y));
+/*
+ * NO BOARD AND NO NAME LEAPS: across a move and once it has arrived, a
+ * board or a district's name seen in two frames running moves no more than
+ * the camera carries it — never one step of more than 30 pixels that is
+ * a third of its whole way, made at well over the speed of the frames
+ * either side of it (a camera moving fast on a slow machine takes long
+ * steps, every one, over long frames).
+ */
+function signJumps(frames) {
+  const leaps = [];
+  for (const which of ["boards", "names"]) {
+    const keys = new Set(frames.flatMap((f) => (f[which] ?? []).map((one) => one.key)));
+    for (const key of keys) {
+      // Two frames running in which it is seen: one put away and seen again elsewhere has not leapt.
+      const all = frames.map((f, i) => ({ i, f, one: (f[which] ?? []).find((o) => o.key === key) }));
+      const seenIn = all.filter(({ one }) => one && one.opacity > 0.5 && one.box.width > 0);
+      if (seenIn.length < 2) continue;
+      const xs = seenIn.map(({ one }) => one.box.x + one.box.width / 2);
+      const ys = seenIn.map(({ one }) => one.box.y + one.box.height / 2);
+      const travel = Math.hypot(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
+      // Its steps, frame to frame: a leap is one far past how it moves in the frames round it, not a fast camera on a slow machine.
+      // How fast it went between each two frames, in pixels a millisecond: a slow machine's frames come unevenly, and a step over a long frame is a long step.
+      const speeds = seenIn.slice(1).map((_, i) => Math.hypot(xs[i + 1] - xs[i], ys[i + 1] - ys[i]) / Math.max(1, seenIn[i + 1].f.t - seenIn[i].f.t));
+      for (let i = 1; i < seenIn.length; i++) {
+        if (seenIn[i].i !== seenIn[i - 1].i + 1) continue;
+        const step = Math.hypot(xs[i] - xs[i - 1], ys[i] - ys[i - 1]);
+        const neighbors = [speeds[i - 2], speeds[i]].filter((one) => one !== undefined);
+        // Seen alone between frames it was not (coming up, put away): nothing to judge a step against. Going no faster than the frames either side of it, the camera carried it.
+        if (neighbors.length === 0 || speeds[i - 1] <= Math.max(...neighbors) * 2.5 + 0.05) continue;
+        const still = Math.abs(seenIn[i].f.altitude - seenIn[i - 1].f.altitude) < 0.001;
+        if (step > 30 && step > travel / 3) leaps.push({ which, key, step: Math.round(step), altitude: Number(seenIn[i].f.altitude.toFixed(3)), still, from: [Math.round(xs[i - 1]), Math.round(ys[i - 1])], to: [Math.round(xs[i]), Math.round(ys[i])], frame: seenIn[i].i, of: frames.length });
+      }
+    }
+  }
+  return { leaps: leaps.slice(0, 8), frames: frames.length };
+}
+
+/** Every pair of things said that stand on each other, by name. */
+function onEachOther(things) {
+  const out = [];
+  for (let i = 0; i < things.length; i++) for (let j = i + 1; j < things.length; j++) if (overlapOf(things[i].box, things[j].box) > 2) out.push(`${things[i].name} × ${things[j].name}`);
+  return out;
+}
+/*
+ * WORDS NEVER TOUCH: a district's name with its count and its "⚠ n", and a
+ * district's "+n", each a pixel clear of every other one and of every board
+ * — two run together read as one line of words.
+ */
+const grown = (box, by) => ({ x: box.x - by, y: box.y - by, width: box.width + by * 2, height: box.height + by * 2 });
+function touching(words, others) {
+  const out = [];
+  for (let i = 0; i < words.length; i++) {
+    for (let j = i + 1; j < words.length; j++) if (words[i].kind !== words[j].kind && overlapOf(grown(words[i].box, 1), words[j].box) > 0.5) out.push(`${words[i].name} × ${words[j].name}`);
+    for (const other of others) if (overlapOf(grown(words[i].box, 1), other.box) > 0.5) out.push(`${words[i].name} × ${other.name}`);
+  }
+  return out;
+}
+
+async function rich(browser, device) {
+  const phone = device.width <= 600;
+  const where = { device: `${device.width}×${device.height}` };
+  const context = await browser.newContext({ viewport: device, colorScheme: "dark", ...(phone ? { isMobile: true, hasTouch: true, deviceScaleFactor: 2 } : {}) });
+  const page = await context.newPage();
+  page.on("pageerror", (error) => errors.push(`rich ${where.device}: ${error.message}`));
+  const result = { where };
+  try {
+    // A formation's page: the framework's own, its sites and its period linked, so lines run from it at Nearby.
+    await page.goto(`${richHost.url}/formations/formation-3?theme=dark`, { waitUntil: "load" });
+    await ready(page);
+    const legendAt = [];
+    const moved = [];
+    for (const level of [1, 2]) {
+      // By the keys, as a person moves a level: 2, then 3.
+      await startRecording(page);
+      await page.keyboard.press(String(level + 1));
+      await restAt(page, level, 15_000);
+      await page.waitForTimeout(700);
+      moved.push({ to: level, ...signJumps(await stopRecording(page)) });
+      const seenNow = await readRich(page);
+      /*
+       * INSIDE THE PANEL NO LINE CROSSES ANOTHER PART: each straight piece of
+       * each line's path inside the page, against every part that names a
+       * record there — a link, a row, a pill — but its own.
+       */
+      if (level === 1) result.panelCrossings = await page.evaluate(() => {
+        const sheet = document.querySelector("[data-graview-one-place]");
+        const panel = sheet?.getBoundingClientRect();
+        if (!sheet || !panel) return null;
+        const parts = [];
+        const read = (root) => {
+          for (const el of root.querySelectorAll("a[href], [data-graview-record], [data-record], [data-graview-pick]")) {
+            const r = el.getBoundingClientRect();
+            if (r.width < 1 || r.height < 1 || r.bottom < panel.top || r.top > panel.bottom) continue;
+            parts.push({ el, id: el.getAttribute("data-graview-record") ?? el.getAttribute("data-record") ?? el.getAttribute("data-graview-pick") ?? el.getAttribute("href"), box: { x: r.left, y: r.top, width: r.width, height: r.height } });
+          }
+        };
+        read(sheet);
+        for (const host of sheet.querySelectorAll("[data-worker-view]")) if (host.shadowRoot) read(host.shadowRoot);
+        const crossings = [];
+        let pieces = 0;
+        for (const g of document.querySelectorAll("[data-graview-line]")) {
+          const key = g.getAttribute("data-graview-line");
+          const [sx, sy] = (g.getAttribute("data-graview-line-start") ?? "NaN,NaN").split(",").map(Number);
+          const points = [];
+          for (const [, cmd, rest] of (g.querySelector("path")?.getAttribute("d") ?? "").matchAll(/([MLQ])([^MLQ]*)/g)) {
+            if (cmd === "Q") break;
+            const [x, y] = rest.trim().split(/[ ,]+/).map(Number);
+            points.push({ cmd, x, y });
+          }
+          for (let i = 1; i < points.length; i++) {
+            if (points[i].cmd !== "L") continue;
+            pieces++;
+            const a = points[i - 1];
+            const b = points[i];
+            for (const part of parts) {
+              const o = part.box;
+              // Its own part: the one it starts on.
+              if (sx >= o.x - 1 && sx <= o.x + o.width + 1 && sy >= o.y - 1 && sy <= o.y + o.height + 1) continue;
+              for (let t = 0; t <= 1; t += 0.02) {
+                const x = a.x + (b.x - a.x) * t;
+                const y = a.y + (b.y - a.y) * t;
+                if (x > o.x + 1 && x < o.x + o.width - 1 && y > o.y + 1 && y < o.y + o.height - 1) {
+                  crossings.push(`${key} across ${part.id}`);
+                  break;
+                }
+              }
+            }
+          }
+        }
+        return { parts: parts.length, pieces, crossings: [...new Set(crossings)] };
+      });
+      await page.mouse.move(2, Math.round(device.height / 2));
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: resolve(STRIPS, `rich-${device.width}-${level === 1 ? "nearby" : "city"}.png`) });
+      legendAt.push(seenNow.legend);
+      const tags = seenNow.tags.map((t) => ({ name: `the ${t.kind} name`, box: t.box }));
+      // The views stand at Nearby as at the City (the page's own is the page there).
+      const boards = seenNow.boards.filter((b) => level === 2 || !b.own).map((b) => ({ name: `“${b.label}”`, box: b.box }));
+      const plates = seenNow.plates.map((p) => ({ name: `the Scene's ${p.kind} name`, box: p.box }));
+      const words = [...seenNow.tags.map((t) => ({ kind: t.kind, name: `the ${t.kind} name`, box: t.box })), ...seenNow.rests.map((r) => ({ kind: r.kind, name: `the ${r.kind} ${r.text}`, box: r.box }))];
+      // And no name on a district's "+n": a name butting against one reads as one run of words.
+      const counts = seenNow.rests.map((one) => ({ name: `the ${one.kind} ${one.text}`, box: { x: one.box.x - 2, y: one.box.y - 2, width: one.box.width + 4, height: one.box.height + 4 } }));
+      const clash = [...onEachOther([...tags, ...boards, ...plates]), ...touching(words, boards), ...counts.flatMap((count) => tags.filter((t) => overlapOf(t.box, count.box) > 2).map((t) => `${t.name} × ${count.name}`))];
+      // At Nearby nothing this face says stands under the page beside the city.
+      const underPanel = seenNow.panel ? [...tags, ...plates, ...boards].filter((t) => overlapOf(t.box, seenNow.panel) > 2).map((t) => t.name) : [];
+      // A board beside its district, never on it: on no district's ground.
+      // A district's ground is its diamond (the least of |dx|/half-width + |dy|/half-height over the board under 1); the bare corners of its box are street.
+      const onDiamond = (box, tile) => { const cx = tile.x + tile.width / 2; const cy = tile.y + tile.height / 2; const near = (a, b, v) => Math.max(a, Math.min(b, v)); return Math.abs(near(box.x, box.x + box.width, cx) - cx) / (tile.width / 2) + Math.abs(near(box.y, box.y + box.height, cy) - cy) / (tile.height / 2) < 0.97; };
+      const onGround = boards.flatMap((b) => seenNow.plots.filter((p) => onDiamond(b.box, p.box)).map((p) => `${b.name} on ${p.kind}`)).filter((said) => !seenNow.boards.some((one) => one.own && said.startsWith(`“${one.label}”`)));
+      // What covers a building: a name, a board, a district's card.
+      const covering = [...tags, ...boards, ...plates];
+      const hidden = seenNow.buildings.filter((b) => (!seenNow.panel || overlapOf(b.box, seenNow.panel) < b.box.width * b.box.height * 0.5) && covering.some((c) => overlapOf(b.box, c.box) > b.box.width * b.box.height * 0.3)).map((b) => `${b.id} under ${covering.find((c) => overlapOf(b.box, c.box) > b.box.width * b.box.height * 0.3).name}`);
+      // The city's side of the window: left of the panel on a desk, above the sheet on a phone.
+      const citySide = (box) => !seenNow.panel || (seenNow.width <= 600 ? box.y + box.height < seenNow.panel.y : box.x + box.width < seenNow.panel.x);
+      const kindsInSight = [...new Set(seenNow.buildings.filter((b) => citySide(b.box)).map((b) => b.kind))];
+      const onItsDistrict = (line) => { const tile = line.into ? seenNow.district[line.into] : null; return Boolean(tile && line.to.x >= tile.x - 1 && line.to.x <= tile.x + tile.width + 1 && line.to.y >= tile.y - 1 && line.to.y <= tile.y + tile.height + 1); };
+      const lineEnds = seenNow.lines.filter((line) => line.into ? !onItsDistrict(line) : !seenNow.buildings.some((b) => line.to.x >= b.box.x - 1 && line.to.x <= b.box.x + b.box.width + 1 && line.to.y >= b.box.y - 1 && line.to.y <= b.box.y + b.box.height + 1) || covering.some((c) => line.to.x > c.box.x && line.to.x < c.box.x + c.box.width && line.to.y > c.box.y && line.to.y < c.box.y + c.box.height)).map((line) => line.key);
+      const keepOut = [{ name: "the bar", box: { x: 0, y: 0, width: seenNow.width, height: seenNow.bar } }, ...(seenNow.panel ? [{ name: "the page", box: seenNow.panel }] : []), ...(seenNow.dock ? [{ name: "the level control", box: seenNow.dock }] : [])];
+      const controlsCovered = seenNow.controls.flatMap((c) => keepOut.filter((k) => overlapOf(c.box, k.box) > 1).map((k) => `${c.what} under ${k.name}`));
+      const outside = [...tags, ...boards].filter((t) => t.box.x < 0 || t.box.x + t.box.width > seenNow.width || t.box.y < seenNow.bar || t.box.y + t.box.height > seenNow.height).map((t) => t.name);
+      /*
+       * A KIND'S BOARD STANDS ON ITS OWN DISTRICT: where its post meets the
+       * ground is on that district's plate (its diamond, or its edge), and
+       * nearer it than any other's. And what any board says is never drawn
+       * smaller than 9 pixels.
+       */
+      const reach = (p, tile) => Math.abs(p.x - (tile.x + tile.width / 2)) / (tile.width / 2) + Math.abs(p.y - (tile.y + tile.height / 2)) / (tile.height / 2);
+      const kindOfBoard = (key) => (key.startsWith("kind:") ? key.slice(5) : key.startsWith("place:") ? key.split(":")[1] : null);
+      const astray = seenNow.boards.filter((b) => !b.own && kindOfBoard(b.key) && seenNow.district[kindOfBoard(b.key)]).flatMap((b) => {
+        const own = reach(b.stem, seenNow.district[kindOfBoard(b.key)]);
+        const nearer = Object.entries(seenNow.district).filter(([kind, tile]) => kind !== kindOfBoard(b.key) && reach(b.stem, tile) < own).map(([kind]) => kind);
+        return own > 1.08 || nearer.length > 0 ? [`“${b.label}” stands at ${own.toFixed(2)} of its district${nearer.length ? `, nearer ${nearer.join(", ")}` : ""}`] : [];
+      });
+      const small = seenNow.boards.filter((b) => !b.own && b.smallest < 8.9).map((b) => `“${b.label}” ${b.smallest.toFixed(1)}px`);
+      // The page beside the city covers a district (half of it or more): the case a board was found beside another district in.
+      const underThePage = seenNow.panel ? Object.entries(seenNow.district).filter(([, tile]) => overlapOf(tile, seenNow.panel) >= tile.width * tile.height * 0.5).map(([kind]) => kind) : [];
+      // A small window's City pans rather than shrink its words past reading: there it may run past the window's edge.
+      const pans = level === 2 && (device.width <= 600 || device.height <= 600);
+      result[level === 2 ? "city" : "nearby"] = { unseenFocus: seenNow.unseenFocus, clash, underPanel, outside: pans ? [] : outside, onGround, hidden, kindsInSight, lineEnds, lines: seenNow.lines.length, controlsCovered, astray, small, underThePage, chosenLooking: seenNow.chosenLooking, tipUp: seenNow.tipUp, problems: seenNow.problems, postCrossings: seenNow.postCrossings };
+      if (level === 1) {
+        /*
+         * Every view whose district is in sight beside the page stands there as
+         * a board, as at the City; one whose district is past the window's
+         * edge stands where its district is, out of sight with it.
+         */
+        const sheet = seenNow.width <= 600;
+        const shownPart = { x: 0, y: seenNow.bar, width: seenNow.panel && !sheet ? seenNow.panel.x : seenNow.width, height: seenNow.panel && sheet ? (seenNow.dock ? seenNow.dock.y : seenNow.panel.y) - seenNow.bar : seenNow.height - seenNow.bar };
+        // In sight with room over its back for a board: a district at the top edge of what is seen has none.
+        const seenKinds = new Set(seenNow.plots.filter((p) => overlapOf(p.box, shownPart) >= p.box.width * p.box.height * 0.15 && p.box.y - 80 >= shownPart.y && p.box.x >= shownPart.x && p.box.x + p.box.width <= shownPart.x + shownPart.width).map((p) => p.kind));
+        const views = seenNow.boards.filter((b) => b.key.startsWith("place:"));
+        const owed = ["period:timeline", "species:tree-of-life", "site:dig-map", "event:extinctions"].filter((one) => seenKinds.has(one.split(":")[0]));
+        const missing = owed.filter((one) => !views.some((b) => b.key === `place:${one}`));
+        // A phone's sheet leaves the city a strip: there a view in sight is owed its board, and none has to be.
+        // On a small window (a phone, or one on its side) a board stands only where it can be read: there none is owed.
+        result.nearbyViews = { districtsInSight: [...seenKinds], owed, standing: views.map((b) => b.label), missing, ok: sheet || seenNow.height <= 600 || missing.length === 0 };
+      }
+      if (level === 2) {
+        // Every district at the City says its kind, by its plural, inside the window.
+        // On a small window's City, which pans, a name the bar or the control stands over is put away until panned to: it is said all the same.
+        const named = seenNow.plots.map((plot) => ({ kind: plot.kind, said: seenNow.tags.find((t) => t.kind === plot.kind)?.text ?? seenNow.namesUnder.find((t) => t.kind === plot.kind)?.text ?? null })).map((one) => ({ ...one, ok: one.said !== null && one.said.toLowerCase().includes(String(RICH_PLURALS[one.kind] ?? one.kind).toLowerCase()) }));
+        result.named = { districts: named.length, unnamed: named.filter((one) => !one.ok).map((one) => one.kind) };
+        // Each view's board drawn as that view: its own title and whose view it is, no two alike, no record lines.
+        // The app's views: the places it declared (its worker views here), not how the kinds connect.
+        const views = seenNow.boards.filter((b) => b.key.startsWith("place:"));
+        const read = views.map((b) => `${b.says} · ${b.title}`);
+        result.views = {
+          underThePansBar: seenNow.under.filter((key) => key.startsWith("place:")),
+          boards: read,
+          asThemselves: views.filter((b) => b.title === b.label && /^view · /i.test(b.says ?? "") && b.lines === 0).length,
+          alike: read.filter((one, i) => read.indexOf(one) !== i),
+        };
+      }
+    }
+    /*
+     * THE HOME BESIDE THE CITY: at Nearby on the home the city is framed in
+     * the part the page leaves it, so no district stands behind the page.
+     */
+    await page.goto(`${richHost.url}/?theme=dark`, { waitUntil: "load" });
+    await ready(page);
+    await page.keyboard.press("2");
+    await restAt(page, 1, 15_000);
+    await page.waitForTimeout(700);
+    await page.mouse.move(2, Math.round(device.height / 2));
+    await page.screenshot({ path: resolve(STRIPS, `rich-${device.width}-home-nearby.png`) });
+    const home = await readRich(page);
+    // What the home's views show: each record a part of the page or a view in it marks, by its kind (the fixture's ids are "<kind>-<n>").
+    const homeKinds = await page.evaluate(() => {
+      const sheet = document.querySelector("[data-graview-one-place]");
+      const ids = [];
+      const read = (root) => ids.push(...[...root.querySelectorAll("[data-record], [data-graview-record]")].map((el) => el.getAttribute("data-record") ?? el.getAttribute("data-graview-record")));
+      if (sheet) {
+        read(sheet);
+        for (const host of sheet.querySelectorAll("[data-worker-view]")) if (host.shadowRoot) read(host.shadowRoot);
+      }
+      return [...new Set(ids.filter(Boolean).map((id) => id.replace(/-\d+$/, "")))];
+    });
+    {
+      const tags = home.tags.map((t) => ({ name: `the ${t.kind} name`, box: t.box }));
+      const boards = home.boards.map((b) => ({ name: `“${b.label}”`, box: b.box }));
+      const counts = home.rests.map((one) => ({ name: `the count ${one.text}`, box: { x: one.box.x - 2, y: one.box.y - 2, width: one.box.width + 4, height: one.box.height + 4 } }));
+      result.homeClear = { clash: [...onEachOther([...tags, ...boards]), ...counts.flatMap((count) => [...tags, ...boards].filter((t) => overlapOf(t.box, count.box) > 2).map((t) => `${t.name} × ${count.name}`))], names: tags.length };
+    }
+    // The city's side as the one face frames it: inside the window by 8 pixels, beside the panel on a desk, and on a phone above the sheet and the level control riding on it.
+    const sideOf = home.panel ? (home.width <= 600 ? { x: 8, y: home.bar + 8, width: home.width - 16, height: Math.min(home.panel.y, home.dock ? home.dock.y : home.panel.y) - home.bar - 16 } : { x: 8, y: home.bar + 8, width: home.panel.x - 16, height: home.height - home.bar - 16 }) : null;
+    const viewsKinds = homeKinds.filter((kind) => home.district[kind]);
+    result.homeViews = { kinds: viewsKinds, behind: sideOf ? viewsKinds.filter((kind) => { const tile = home.district[kind]; const mid = { x: tile.x + tile.width / 2, y: tile.y + tile.height / 2 }; return overlapOf(tile, home.panel) > tile.width * tile.height * 0.15 || mid.x < sideOf.x || mid.x > sideOf.x + sideOf.width || mid.y < sideOf.y || mid.y > sideOf.y + sideOf.height; }) : ["no panel"] };
+    /*
+     * WHERE THE WHOLE CITY CANNOT STAND BESIDE THE PAGE at Nearby's furthest
+     * zoom (the city says so), the home holds when every district its views
+     * show stands on the city's side, nothing said stands under the page, and
+     * the city is as near the middle of its side as that lets it be: its
+     * middle at the side's, or one of those districts at the side's edge.
+     */
+    const fits = await page.evaluate(() => document.querySelector('[data-testid="one-place-city"]')?.hasAttribute("data-graview-nearby-holds-the-city") ?? false);
+    const tiles = Object.values(home.district);
+    /*
+     * On each axis the city does not fit whole: its middle at its side's, or
+     * as near as it can be — moved the rest of the way, one of the views'
+     * districts would leave the side.
+     */
+    const axis = (lo, size) => {
+      if (!tiles.length || !sideOf) return false;
+      const from = Math.min(...tiles.map((t) => t[lo]));
+      const to = Math.max(...tiles.map((t) => t[lo] + t[size]));
+      if (from >= sideOf[lo] - 1 && to <= sideOf[lo] + sideOf[size] + 1) return true;
+      const delta = sideOf[lo] + sideOf[size] / 2 - (from + to) / 2;
+      if (Math.abs(delta) < 8) return true;
+      return viewsKinds.some((kind) => { const t = home.district[kind]; return t[lo] + delta < sideOf[lo] - 1 || t[lo] + t[size] + delta > sideOf[lo] + sideOf[size] + 1; });
+    };
+    const centeredOn = { x: axis("x", "width"), y: axis("y", "height") };
+    const centered = centeredOn.x && centeredOn.y;
+    const underPage = home.panel ? [...home.tags.map((t) => ({ name: `the ${t.kind} name`, box: t.box })), ...home.boards.filter((b) => !b.own).map((b) => ({ name: `“${b.label}”`, box: b.box }))].filter((t) => overlapOf(t.box, home.panel) > 2).map((t) => t.name) : [];
+    result.home = { ...result.home, fits, centered, centeredOn, side: sideOf, city: tiles.length ? { x: Math.min(...tiles.map((t) => t.x)), y: Math.min(...tiles.map((t) => t.y)), right: Math.max(...tiles.map((t) => t.x + t.width)), bottom: Math.max(...tiles.map((t) => t.y + t.height)) } : null, underPage };
+    /* THE BOARDS UNDER THE LINES: the lines' layer paints over the boards' — higher, or the same and later in the document. */
+    result.boardsUnderLines = await page.evaluate(() => {
+      const lines = document.querySelector('[data-testid="one-place-lines"]');
+      const boards = document.querySelector('[data-testid="one-place-boards"]');
+      if (!lines || !boards) return { found: false, over: false };
+      const z = (el) => Number(getComputedStyle(el).zIndex) || 0;
+      const later = Boolean(boards.compareDocumentPosition(lines) & Node.DOCUMENT_POSITION_FOLLOWING);
+      return { found: true, lines: z(lines), boards: z(boards), linesLater: later, over: z(lines) > z(boards) || (z(lines) === z(boards) && later) };
+    });
+    // Where the part the page leaves the city is too small to take the whole city in at the camera's furthest (a narrow tablet, a small phone), the city cannot help standing partly behind the page: held where it can.
+    const free = home.panel ? (home.width <= 600 ? { width: home.width, height: home.panel.y - home.bar } : { width: home.panel.x, height: home.height - home.bar }) : { width: home.width, height: home.height };
+    result.home = { ...result.home, behind: home.panel ? Object.entries(home.district).filter(([, tile]) => overlapOf(tile, home.panel) > tile.width * tile.height * 0.15).map(([kind]) => kind) : [], districts: Object.keys(home.district).length, free };
+    /*
+     * AND THERE TOO NOTHING SAID STANDS ON ANYTHING ELSE: the home's Nearby,
+     * where the city is framed in the part the page leaves it — on a phone a
+     * strip over the sheet — each name with its count and its problems, each
+     * "+n", and each board clear of the others.
+     */
+    {
+      const homeBoards = home.boards.filter((b) => !b.own).map((b) => ({ name: `“${b.label}”`, box: b.box }));
+      const homeTags = home.tags.map((t) => ({ name: `the ${t.kind} name`, box: t.box }));
+      const homeWords = [...home.tags.map((t) => ({ kind: t.kind, name: `the ${t.kind} name`, box: t.box })), ...home.rests.map((r) => ({ kind: r.kind, name: `the ${r.kind} ${r.text}`, box: r.box }))];
+      result.homeClash = [...onEachOther([...homeTags, ...homeBoards]), ...touching(homeWords, homeBoards)];
+    }
+    result.moved = moved;
+    /*
+     * A DISTRICT'S PROBLEMS OPEN FROM THE CITY AND FROM NEARBY, by a press
+     * and by the keyboard: the specimens break a rule (a specimen with no
+     * catalog number), and their district's "⚠ n" beside its name opens the
+     * problems beside the city.
+     */
+    /*
+     * A HAND ON A BOARD MOVES THE CITY: a drag that begins on a view's board
+     * pans the city by as far as the hand goes (and opens nothing), by a
+     * pointer at a desk and by a finger on a phone; a press that does not
+     * move opens the view.
+     */
+    if (device.width === 1280 || device.width === 390) {
+      result.handOnABoard = [];
+      // At the City, and beside the page at Nearby, where the city is the hand's as well (f-one-face-explore-city-beside-panel).
+      for (const level of [2, 1]) {
+      await page.goto(`${richHost.url}/formations/formation-3?theme=dark`, { waitUntil: "load" });
+      await ready(page);
+      await page.keyboard.press(String(level + 1));
+      await restAt(page, level, 15_000);
+      await page.waitForTimeout(700);
+      const pick = () =>
+        page.evaluate((level) => {
+          // Beside the page, only what stands over the city: never under the page.
+          const sheet = document.querySelector("[data-graview-one-place]").getBoundingClientRect();
+          const phone = innerWidth <= 600;
+          const clear = (r) => r.width > 0 && r.left > 20 && r.right < innerWidth - 20 && r.top > 120 && r.bottom < innerHeight - 140 && (level === 2 || (phone ? r.bottom < sheet.top - 20 : r.right < sheet.left - 20));
+          const shown = [...document.querySelectorAll("[data-graview-board]")].filter((b) => Number(b.style.opacity || 0) > 0.9 && !b.hasAttribute("aria-current") && !b.hasAttribute("data-graview-under") && b.getAttribute("data-graview-board") !== "home");
+          const boards = shown.map((b) => ({ r: b.getBoundingClientRect(), path: b.getAttribute("data-graview-board-path"), key: b.getAttribute("data-graview-board") }));
+          // Where no view stands in sight beside the page, a district's name: a drag begun there pans too.
+          const names = [...document.querySelectorAll("[data-graview-district-open]")].filter((el) => getComputedStyle(el).visibility !== "hidden").map((b) => ({ r: b.getBoundingClientRect(), path: null, key: `name:${b.getAttribute("data-graview-district-open")}` }));
+          const one = [...boards, ...names].find(({ r }) => clear(r));
+          if (!one) return null;
+          const tile = document.querySelector('[data-testid="one-place-city"] [data-graview-plot] .graview-plot-tile')?.getBoundingClientRect();
+          return { key: one.key, path: one.path, x: one.r.left + one.r.width / 2, y: one.r.top + one.r.height / 2, tile: tile ? { x: tile.left, y: tile.top } : null };
+        }, level);
+      const before = await pick();
+      const by = { x: 90, y: 40 };
+      const touch = device.width <= 600;
+      if (before) {
+        if (!touch) {
+          await page.mouse.move(before.x, before.y);
+          await page.mouse.down();
+          for (let i = 1; i <= 10; i++) await page.mouse.move(before.x + (by.x * i) / 10, before.y + (by.y * i) / 10);
+          await page.mouse.up();
+        } else {
+          // A finger's drag, as the page hears it: pointer events of a touch, on the board it began on.
+          await page.evaluate(({ key, x, y, by }) => {
+            const el = key.startsWith("name:") ? document.querySelector(`[data-graview-district-open="${CSS.escape(key.slice(5))}"]`) : document.querySelector(`[data-graview-board="${CSS.escape(key)}"]`);
+            const at = (type, dx, dy) => el.dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, composed: true, pointerId: 7, pointerType: "touch", isPrimary: true, clientX: x + dx, clientY: y + dy }));
+            at("pointerdown", 0, 0);
+            for (let i = 1; i <= 10; i++) at("pointermove", (by.x * i) / 10, (by.y * i) / 10);
+            at("pointerup", by.x, by.y);
+            el.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, clientX: x + by.x, clientY: y + by.y }));
+          }, { key: before.key, x: before.x, y: before.y, by });
+        }
+        await page.waitForTimeout(700);
+      }
+      const after = await page.evaluate(() => {
+        const tile = document.querySelector('[data-testid="one-place-city"] [data-graview-plot] .graview-plot-tile')?.getBoundingClientRect();
+        return { tile: tile ? { x: tile.left, y: tile.top } : null, url: location.pathname, level: Number(document.querySelector("[data-graview-one-place]")?.getAttribute("data-graview-one-place")) };
+      });
+      const panned = before?.tile && after.tile ? { x: Math.round(after.tile.x - before.tile.x), y: Math.round(after.tile.y - before.tile.y) } : null;
+      // And a press that does not move: the view opens, beside the city.
+      const press = await pick();
+      if (press) {
+        if (touch) await page.touchscreen.tap(press.x, press.y);
+        else await page.mouse.click(press.x, press.y);
+        await page.waitForTimeout(400);
+        await restAt(page, 1, 15_000).catch(() => {});
+      }
+      const opened = { url: new URL(page.url()).pathname, level: await levelOf(page), wanted: press?.path ?? press?.key ?? null };
+      // A district's name opens its kind's list: the address names the kind.
+      const openedIt = Boolean(press) && (press.path ? opened.url.endsWith(press.path.split("?")[0]) : !opened.url.endsWith("/formations/formation-3") && opened.url.includes(press.key.slice("name:".length)));
+      result.handOnABoard.push({ at: level === 2 ? "City" : "Nearby", how: touch ? "touch" : "pointer", from: before?.key ?? null, panned, by, stayed: after.url.endsWith("/formations/formation-3") && after.level === level, opened, ok: Boolean(before && panned && Math.abs(panned.x - by.x) <= 8 && Math.abs(panned.y - by.y) <= 8 && after.url.endsWith("/formations/formation-3") && after.level === level && openedIt && opened.level === 1) });
+      }
+    }
+    /*
+     * AFTER A HAND'S PAN AT NEARBY, TOO: the city dragged under the page and
+     * the bar, nothing of its own — a district's controls, a board — stands
+     * under the bar, the page or the level control.
+     */
+    if (device.width === 1280) {
+      await page.goto(`${richHost.url}/formations/formation-3?theme=dark`, { waitUntil: "load" });
+      await ready(page);
+      await page.keyboard.press("2");
+      await restAt(page, 1, 15_000);
+      await page.waitForTimeout(500);
+      await page.mouse.move(300, 420);
+      await page.mouse.down();
+      for (let i = 1; i <= 12; i++) await page.mouse.move(300 + i * 40, 420 - i * 22);
+      await page.mouse.up();
+      await page.waitForTimeout(900);
+      const panned = await readRich(page);
+      const keep = [{ name: "the bar", box: { x: 0, y: 0, width: panned.width, height: panned.bar } }, ...(panned.panel ? [{ name: "the page", box: panned.panel }] : []), ...(panned.dock ? [{ name: "the level control", box: panned.dock }] : [])];
+      const things = [...panned.controls.map((c) => ({ name: c.what, box: c.box })), ...panned.boards.filter((b) => !b.own).map((b) => ({ name: `“${b.label}”`, box: b.box }))];
+      result.panned = things.flatMap((t) => keep.filter((k) => overlapOf(t.box, k.box) > 1).map((k) => `${t.name} under ${k.name}`));
+    }
+    if (device.width === 1280) {
+      const opens = [];
+      // And from the problems page itself, beside the city: the chip narrows the page it is on.
+      for (const [from, how, start] of [[2, "pointer", "/specimens"], [2, "keyboard", "/specimens"], [1, "pointer", "/specimens"], [1, "keyboard", "/specimens"], [1, "pointer", "/problems"]]) {
+        await page.goto(`${richHost.url}${start}?theme=dark`, { waitUntil: "load" });
+        await ready(page);
+        await page.keyboard.press(String(from + 1));
+        await restAt(page, from, 15_000);
+        await page.waitForTimeout(500);
+        const chip = page.locator('[data-graview-district-problems="specimen"]');
+        const there = await chip.isVisible().catch(() => false);
+        if (there) {
+          if (how === "pointer") await chip.click();
+          else {
+            await chip.focus();
+            await page.keyboard.press("Enter");
+          }
+          await restAt(page, 1, 15_000).catch(() => {});
+        }
+        // What the page beside the city lists: whose problems it says it is, and the kind of every record a problem there names.
+        const listed = await page.evaluate(() => {
+          const sheet = document.querySelector("[data-graview-one-place]");
+          return {
+            of: sheet?.querySelector("[data-graview-problems-of]")?.getAttribute("data-graview-problems-of") ?? null,
+            // Each problem listed, and whether it names a specimen among the records it links.
+            named: [...(sheet?.querySelectorAll("main [data-graview-problem]") ?? [])].map((one) => ([...one.querySelectorAll("a[href]")].some((a) => new URL(a.href).pathname.split("/").at(-2) === "specimens") ? "specimens" : "another kind")),
+          };
+        });
+        const at = new URL(page.url());
+        opens.push({ from: from === 2 ? "City" : "Nearby", how, start, there, url: at.pathname, kind: at.searchParams.get("kind"), level: await levelOf(page), ...listed });
+      }
+      result.problemsOpen = opens;
+    }
+    // A second visit, in the same browser: the legend still closed; the Key opens it; and once opened, the visit after finds it open.
+    await page.goto(`${richHost.url}/formations/formation-3?theme=dark`, { waitUntil: "load" });
+    await ready(page);
+    await press(page, '[data-testid="altitude-stop-2"]');
+    await restAt(page, 2, 15_000);
+    const again = await page.evaluate(() => Boolean(document.querySelector('[data-testid="altitude-key-pane"]')));
+    await press(page, '[data-testid="altitude-key"]');
+    await page.waitForTimeout(200);
+    const opened = await page.evaluate(() => ({ pane: Boolean(document.querySelector('[data-testid="altitude-key-pane"]')), expanded: document.querySelector('[data-testid="altitude-key"]')?.getAttribute("aria-expanded") }));
+    await page.reload({ waitUntil: "load" });
+    await ready(page);
+    await press(page, '[data-testid="altitude-stop-2"]');
+    await restAt(page, 2, 15_000);
+    const keptOpen = await page.evaluate(() => Boolean(document.querySelector('[data-testid="altitude-key-pane"]')));
+    result.legend = { firstVisit: legendAt, secondVisit: again, opened, keptOpen };
+  } catch (error) {
+    result.error = String(error?.message ?? error);
+  }
+  await context.close().catch(() => {});
+  const city = result.city ?? { clash: ["not read"], underPanel: [], outside: [], problems: [] };
+  const nearby = result.nearby ?? { clash: ["not read"], underPanel: [], outside: [], problems: [] };
+  seen.richClear.push({ where, city: { clash: city.clash, outside: city.outside, onGround: city.onGround }, nearby: { clash: nearby.clash, underPanel: nearby.underPanel, outside: nearby.outside, onGround: nearby.onGround }, homeNearby: { clash: result.homeClash ?? null }, error: result.error, ok: !result.error && city.clash.length === 0 && city.outside.length === 0 && city.onGround.length === 0 && nearby.clash.length === 0 && nearby.underPanel.length === 0 && nearby.outside.length === 0 && nearby.onGround.length === 0 && Array.isArray(result.homeClash) && result.homeClash.length === 0 });
+  // A desk's Nearby draws the formation page's lines: there are some to hold, and a run with none fails.
+  const roomy = device.width >= 1000 && device.height > 600;
+  seen.richRecords.push({ where, hidden: nearby.hidden, districtsInSight: nearby.kindsInSight, lines: nearby.lines, lineEndsNotOnABuilding: nearby.lineEnds, ok: !result.error && nearby.hidden?.length === 0 && (nearby.kindsInSight?.length ?? 0) >= 1 && (!roomy || nearby.lines > 0) && nearby.lineEnds?.length === 0 });
+  seen.richNearbyViews.push({ where, ...result.nearbyViews, ok: Boolean(result.nearbyViews?.ok) });
+  seen.richControls.push({ where, city: city.controlsCovered, nearby: nearby.controlsCovered, afterAPan: result.panned, ok: !result.error && city.controlsCovered?.length === 0 && nearby.controlsCovered?.length === 0 && (result.panned?.length ?? 0) === 0 });
+  seen.richNamed.push({ where, ...result.named, ok: Boolean(result.named && result.named.districts === Object.keys(RICH_PLURALS).length && result.named.unnamed.length === 0) });
+  seen.richWords.push({ where, city: city.problems, nearby: nearby.problems, ok: !result.error && city.problems.length === 0 && nearby.problems.length === 0 });
+  seen.richLegend.push({ where, ...result.legend, ok: Boolean(result.legend && result.legend.firstVisit.every((open) => !open) && !result.legend.secondVisit && result.legend.opened.pane && result.legend.opened.expanded === "true" && result.legend.keptOpen) });
+  seen.richSmooth.push({ where, moves: result.moved, ok: Boolean(result.moved?.length === 2 && result.moved.every((one) => one.leaps.length === 0)) });
+  seen.richFocusSeen.push({ where, city: city.unseenFocus, nearby: nearby.unseenFocus, ok: !result.error && city.unseenFocus?.length === 0 && nearby.unseenFocus?.length === 0 });
+  if (result.handOnABoard?.length === 2) for (const one of result.handOnABoard) seen.richHand.push({ where, ...one });
+  else if (device.width === 1280 || device.width === 390) seen.richHand.push({ where, error: result.error, ok: false });
+  if (result.problemsOpen) seen.richProblems.push({ where, opens: result.problemsOpen, ok: result.problemsOpen.every((one) => one.there && one.url.endsWith("/problems") && one.level === 1) });
+  // The specimens' "⚠ n" opens the problems narrowed to specimens: the page says so, and every problem it lists names a specimen.
+  if (result.problemsOpen) seen.richProblemsOfKind.push({ where, opens: result.problemsOpen.map(({ from, how, start, kind, of, named }) => ({ from, how, start, kind, of, named: [...new Set(named)] })), ok: result.problemsOpen.every((one) => one.there && one.kind === "specimen" && one.of === "specimen" && one.named.length > 0 && one.named.every((plural) => plural === "specimens")) });
+  /*
+   * A board's post never runs across a district's name, at the City and
+   * beside a page. Across another board it runs only where no place by its
+   * district stands clear of every board, name and ground (held by the
+   * placement's own tests), and there the board is what is seen where they
+   * cross: the post is drawn under it, never over its words.
+   */
+  const acrossNames = [...(city.postCrossings ?? []), ...(nearby.postCrossings ?? [])].filter((one) => one.under === null);
+  seen.richPosts.push({ where, acrossNames, error: result.error, ok: !result.error && Array.isArray(city.postCrossings) && Array.isArray(nearby.postCrossings) && acrossNames.length === 0 });
+  const crossingBoards = [...(city.postCrossings ?? []), ...(nearby.postCrossings ?? [])].filter((one) => one.under !== null);
+  seen.richPostsUnder.push({ where, crossings: crossingBoards, error: result.error, ok: !result.error && crossingBoards.every((one) => one.under) });
+  seen.richOwnDistrict.push({ where, city: city.astray, nearby: nearby.astray, pageCoversADistrict: nearby.underThePage, ok: !result.error && city.astray?.length === 0 && nearby.astray?.length === 0 && (where.device !== "1280×800" || (nearby.underThePage?.length ?? 0) > 0) });
+  // On a small window (a phone, or one on its side) a board's words are never smaller than 9 pixels: the City pans rather than shrink them, and beside a page a board stands only where it can be read.
+  const small = device.width <= 600 || device.height <= 600;
+  seen.richLegible.push({ where, city: city.small, nearby: nearby.small, ok: !result.error && (!small || (city.small?.length === 0 && nearby.small?.length === 0)) });
+  seen.richHomeClear.push({ where, ...result.homeClear, ok: Boolean(result.homeClear && result.homeClear.names > 0 && result.homeClear.clash.length === 0) });
+  // A desk's Nearby draws lines from the formation's page: there are some to hold. A small window may draw none.
+  seen.richPanelCrossings.push({ where, ...result.panelCrossings, error: result.error, ok: Boolean(result.panelCrossings && (device.width < 1000 || result.panelCrossings.pieces > 0) && result.panelCrossings.crossings.length === 0) });
+  seen.richHomeViews.push({ where, ...result.homeViews, ok: Boolean(result.homeViews && result.homeViews.kinds.length > 0 && result.homeViews.behind.length === 0) });
+  seen.richBoardsUnder.push({ where, ...result.boardsUnderLines, ok: Boolean(result.boardsUnderLines?.over) });
+  // Where the whole city stands beside the page, no district is behind it; where it cannot, the home's views' districts are on the city's side, nothing said is under the page, and the city is as near the middle as that allows.
+  seen.richHomeNearby.push({ where, ...result.home, ok: Boolean(result.home && result.home.districts > 0 && (result.home.fits ? result.home.behind.length === 0 : (result.homeViews?.behind.length ?? 1) === 0 && result.home.underPage.length === 0 && result.home.centered)) });
+  seen.richOneLevel.push({ where, nearby: { chosen: nearby.chosenLooking, tip: nearby.tipUp }, city: { chosen: city.chosenLooking, tip: city.tipUp }, ok: !result.error && nearby.chosenLooking?.length === 1 && city.chosenLooking?.length === 1 && nearby.tipUp?.length === 0 && city.tipUp?.length === 0 });
+  seen.richViews.push({ where, ...result.views, ok: Boolean(result.views && result.views.boards.length + (device.width <= 600 || device.height <= 600 ? result.views.underThePansBar.length : 0) === 4 && result.views.asThemselves === result.views.boards.length && result.views.alike.length === 0) });
+}
+
+/*
+ * A RECORD OPENED IN THE CITY IS LIT WHERE IT STANDS. Nick pressed a
+ * record's building at Nearby: it was chosen, but its building moved to its
+ * district's top corner, the others laid out again around it, the rest of
+ * the city faded, and a line's words floated over the city — where loading
+ * that record's page fresh lit it in place with nothing faded. Here a
+ * species' page goes to Nearby, another species' building is pressed, and
+ * then one of the records its page links to is pressed in the page beside
+ * the city: each time the district's buildings stand where they stood (read
+ * in the district's own ground, so a camera's move to a record out of sight
+ * is not counted) — and for the press, with the building in sight, every
+ * building of the district, the pressed one too, keeps its box on the
+ * screen, x, y, width and height, within a pixel (the lit state changes no
+ * geometry: it is a color and an outline, never a lift or a camera move) — what
+ * is faded is what a fresh load of that page fades, no line's words stand
+ * over the city, and the record opened is the one lit.
+ */
+const RECORD_FROM = "species-1";
+/** Every building of one district, where it stands on its own ground (its tile's corners as the frame), what of the city is faded, and the words over the city. */
+const readDistrict = (page, kind) =>
+  page.evaluate((kind) => {
+    const city = document.querySelector('[data-testid="one-place-city"]');
+    const tile = city?.querySelector(`[data-graview-plot="kind:${CSS.escape(kind)}"] .graview-plot-tile`);
+    const corners = (tile?.getAttribute("points") ?? "").trim().split(/\s+/).map((pair) => pair.split(",").map(Number));
+    // The diamond's top, right and left corners: the district's own two axes.
+    const top = corners.reduce((a, b) => (b[1] < a[1] ? b : a), [0, Infinity]);
+    const right = corners.reduce((a, b) => (b[0] > a[0] ? b : a), [-Infinity, 0]);
+    const left = corners.reduce((a, b) => (b[0] < a[0] ? b : a), [Infinity, 0]);
+    const u = [right[0] - top[0], right[1] - top[1]];
+    const v = [left[0] - top[0], left[1] - top[1]];
+    const det = u[0] * v[1] - u[1] * v[0] || 1;
+    const onGround = (x, y) => {
+      const dx = x - top[0];
+      const dy = y - top[1];
+      return [Math.round(((dx * v[1] - dy * v[0]) / det) * 1000) / 1000, Math.round(((u[0] * dy - u[1] * dx) / det) * 1000) / 1000];
+    };
+    const at = {};
+    /*
+     * And each one's box as its district has it: from the district's tile,
+     * in pixels of the tile as it was first read — a camera that moves or
+     * zooms moves the whole district, which is no re-layout.
+     */
+    const boxes = {};
+    const plate = tile?.getBoundingClientRect();
+    const unit = plate && plate.width > 0 ? plate.width : 1;
+    for (const b of city?.querySelectorAll(`[data-graview-plot="kind:${CSS.escape(kind)}"] [data-graview-building]`) ?? []) {
+      const r = b.getBoundingClientRect();
+      boxes[b.getAttribute("data-graview-building")] = plate ? [(r.left - plate.left) / unit, (r.top - plate.top) / unit, r.width / unit, r.height / unit] : [r.left, r.top, r.width, r.height];
+    }
+    // Where every building stands on the screen, and the city's side of the window: whether a framing had anything to bring into sight.
+    const panelBox = document.querySelector("[data-graview-one-place]")?.getBoundingClientRect();
+    const onScreen = {};
+    for (const b of city?.querySelectorAll("[data-graview-building]") ?? []) {
+      const r = b.getBoundingClientRect();
+      onScreen[b.getAttribute("data-graview-building")] = [r.left, r.top, r.width, r.height];
+    }
+    const side = { left: 0, top: document.querySelector('[data-testid="one-place-bar"]')?.getBoundingClientRect().bottom ?? 0, right: panelBox ? panelBox.left : innerWidth, bottom: innerHeight };
+    const ends = [...document.querySelectorAll("[data-graview-line]")].map((g) => g.getAttribute("data-graview-line"));
+    for (const b of city?.querySelectorAll(`[data-graview-plot="kind:${CSS.escape(kind)}"] [data-graview-building]`) ?? []) {
+      // Where it meets the ground: its left face's lowest corner, as the plot draws it (a lift is a translate, not its points).
+      const pts = (b.querySelector(".graview-iso-left")?.getAttribute("points") ?? "").trim().split(/\s+/).map((pair) => pair.split(",").map(Number));
+      const foot = pts.reduce((a, p) => (p[1] > a[1] ? p : a), [0, -Infinity]);
+      at[b.getAttribute("data-graview-building")] = onGround(foot[0], foot[1]);
+    }
+    let faded = 0;
+    for (const b of city?.querySelectorAll("[data-graview-building]") ?? []) {
+      let o = 1;
+      for (let el = b; el && el !== city; el = el.parentElement) o *= Number(getComputedStyle(el).opacity);
+      if (o < 0.95) faded++;
+    }
+    const words = [...document.querySelectorAll(".graview-record-link-said")].filter((el) => el.getBoundingClientRect().width > 0 && getComputedStyle(el).display !== "none" && getComputedStyle(el).visibility !== "hidden").map((el) => el.textContent);
+    const lit = [...(city?.querySelectorAll("[data-graview-building][data-graview-here]") ?? [])].map((b) => b.getAttribute("data-graview-building"));
+    const chosenOnTheScene = [...(city?.querySelectorAll("[data-graview-building][data-graview-selected]") ?? [])].map((b) => b.getAttribute("data-graview-building"));
+    return { at, boxes, unit, onScreen, side, ends, faded, words, lit, chosenOnTheScene, url: location.pathname, level: Number(document.querySelector("[data-graview-one-place]")?.getAttribute("data-graview-one-place")) };
+  }, kind);
+/** What of a district moved or changed its size within the district by more than a pixel of its tile as first read: x, y, width or height. */
+const reshaped = (before, after, unit = 1) => Object.keys(before).filter((id) => after[id] && before[id].some((v, i) => Math.abs(after[id][i] - v) * unit > 1)).map((id) => `${id} ${before[id].map((v) => (v * unit).toFixed(1)).join(",")} → ${after[id].map((v) => (v * unit).toFixed(1)).join(",")}`);
+/** Whether, before it was opened, the record's building, every record it is connected to and every building its page draws a line to stood in the city's side: then the camera had nothing to bring into sight. */
+const neighborsOf = (id) => deepTimeSeed.edges.flatMap((edge) => (edge.from === id ? [edge.to] : edge.to === id ? [edge.from] : []));
+const allInSight = (before, after, opened) => [opened, ...neighborsOf(opened), ...after.ends].every((id) => { const box = before.onScreen[id]; return box && box[0] >= before.side.left && box[1] >= before.side.top && box[0] + box[2] <= before.side.right && box[1] + box[3] <= before.side.bottom; });
+/** Whether the camera moved: any building's box on the screen changed by more than a pixel. */
+const cameraMoved = (before, after) => Object.keys(before.onScreen).some((id) => after.onScreen[id] && before.onScreen[id].some((v, i) => Math.abs(after.onScreen[id][i] - v) > 1));
+/** What of a district moved, in its own ground's measure. */
+const movedIn = (before, after) => Object.keys(before).filter((id) => after[id] && Math.hypot(after[id][0] - before[id][0], after[id][1] - before[id][1]) > 0.02);
+/** The most buildings faded in any one frame from now until it is read: a fade that comes and goes is a fade. */
+const watchFading = (page) =>
+  page.evaluate(() => {
+    window.__mostFaded = 0;
+    window.__fadeWatch = true;
+    const tick = () => {
+      if (!window.__fadeWatch) return;
+      const city = document.querySelector('[data-testid="one-place-city"]');
+      let faded = 0;
+      for (const b of city?.querySelectorAll("[data-graview-building]") ?? []) {
+        // As seen: its own opacity and every one it is drawn inside.
+        let o = 1;
+        for (let el = b; el && el !== city; el = el.parentElement) o *= Number(getComputedStyle(el).opacity);
+        if (o < 0.95) faded++;
+      }
+      window.__mostFaded = Math.max(window.__mostFaded, faded);
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+const mostFaded = (page) => page.evaluate(() => ((window.__fadeWatch = false), window.__mostFaded));
+
+async function recordInPlace(browser) {
+  const where = { device: "1280×800", how: "pointer" };
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, colorScheme: "dark" });
+  const page = await context.newPage();
+  page.on("pageerror", (error) => errors.push(`record in place: ${error.message}`));
+  const runs = [];
+  try {
+    const nearby = async (path) => {
+      await page.goto(`${richHost.url}${path}?theme=dark`, { waitUntil: "load" });
+      await ready(page);
+      await page.keyboard.press("2");
+      await restAt(page, 1, 15_000);
+      await page.waitForTimeout(700);
+    };
+    await nearby(`/species/${RECORD_FROM}`);
+    // A building of another species, pressed where it stands: one nothing else stands over, beside the page.
+    const target = await page.evaluate((from) => {
+      const panel = document.querySelector("[data-graview-one-place]").getBoundingClientRect();
+      for (const b of document.querySelectorAll('[data-testid="one-place-city"] [data-graview-plot="kind:species"] [data-graview-building]')) {
+        if (b.getAttribute("data-graview-building") === from) continue;
+        const r = b.getBoundingClientRect();
+        const x = r.left + r.width / 2;
+        const y = r.top + r.height * 0.6;
+        if (x < 20 || x > panel.left - 20 || y < 80 || y > innerHeight - 120) continue;
+        if (document.elementFromPoint(x, y)?.closest('[data-testid="one-place-city"]')) return { id: b.getAttribute("data-graview-building"), x, y };
+      }
+      return null;
+    }, RECORD_FROM);
+    const before = await readDistrict(page, "species");
+    if (target) {
+      await watchFading(page);
+      await page.mouse.click(target.x, target.y);
+      await page.waitForTimeout(300);
+      await restAt(page, 1, 15_000).catch(() => {});
+      await page.waitForTimeout(900);
+      const after = await readDistrict(page, "species");
+      const most = await mostFaded(page);
+      await nearby(`/species/${target.id}`);
+      const fresh = await readDistrict(page, "species");
+      const stays = allInSight(before, after, target.id);
+      runs.push({ by: "a press on its building", opened: target.id, landed: after.url, moved: movedIn(before.at, after.at), inItsDistrict: reshaped(before.boxes, after.boxes, before.unit), everythingInSight: stays, cameraMoved: cameraMoved(before, after), lit: after.lit, chosenOnTheScene: after.chosenOnTheScene, faded: { afterThePress: after.faded, mostWhileItMoved: most, freshLoad: fresh.faded }, words: after.words, freshMoved: movedIn(after.at, fresh.at) });
+    } else runs.push({ by: "a press on its building", error: "no building of another species to press" });
+    // And a link in the page beside the city: one of the records the species' page links to.
+    await nearby(`/species/${RECORD_FROM}`);
+    const link = await page.evaluate(() => {
+      const button = document.querySelector("[data-graview-connected-box] [data-graview-record]");
+      return button ? button.getAttribute("data-graview-record") : null;
+    });
+    const linkKind = link ? await page.evaluate((id) => document.querySelector(`[data-graview-building="${CSS.escape(id)}"]`)?.closest("[data-graview-plot]")?.getAttribute("data-graview-plot")?.replace(/^kind:/, "") ?? null, link) : null;
+    if (link && linkKind) {
+      const beforeLink = await readDistrict(page, linkKind);
+      await watchFading(page);
+      await page.locator(`[data-graview-connected-box] [data-graview-record="${link}"]`).first().click();
+      await page.waitForTimeout(300);
+      await restAt(page, 1, 15_000).catch(() => {});
+      await page.waitForTimeout(900);
+      const after = await readDistrict(page, linkKind);
+      const most = await mostFaded(page);
+      const path = new URL(page.url()).pathname.replace(/^\/pages/, "");
+      await nearby(path);
+      const fresh = await readDistrict(page, linkKind);
+      runs.push({ by: "a link in the page", opened: link, landed: after.url, moved: movedIn(beforeLink.at, after.at), lit: after.lit, chosenOnTheScene: after.chosenOnTheScene, faded: { afterThePress: after.faded, mostWhileItMoved: most, freshLoad: fresh.faded }, words: after.words, freshMoved: movedIn(after.at, fresh.at) });
+    } else runs.push({ by: "a link in the page", error: "no linked record with a building beside the page" });
+  } catch (error) {
+    runs.push({ error: String(error?.message ?? error) });
+  }
+  await context.close().catch(() => {});
+  for (const run of runs) {
+    const done = !run.error;
+    // The camera may move to frame what the record is connected to (Nearby's framing); it stays only where all of that already stood in sight.
+    seen.recordInPlace.push({ where, ...run, ok: done && run.landed.endsWith(`/${run.opened}`) && run.moved.length === 0 && (run.inItsDistrict ?? []).length === 0 && !(run.everythingInSight && run.cameraMoved) && run.freshMoved.length === 0 && run.lit.includes(run.opened) && run.chosenOnTheScene.length === 0 });
+    seen.oneRuleFades.push({ where, by: run.by, faded: run.faded, error: run.error, ok: done && run.faded.afterThePress === run.faded.freshLoad && run.faded.mostWhileItMoved <= run.faded.freshLoad });
+    seen.noWordsAfterPress.push({ where, by: run.by, words: run.words, error: run.error, ok: done && run.words.length === 0 });
+  }
+}
+
+/*
+ * THE PAGE IS DRAWN ONCE. With the one face on, its part is fetched as the
+ * page first draws, and it arrived some 300 ms later: the page and its bar
+ * drawn again as new elements, and a press, the keyboard and a word typed
+ * in that time lost. Here its part is held back a while, as a slow network
+ * would; meanwhile the keyboard goes into Find and a word is typed there,
+ * which goes to what it finds; once the one face has come, that page's
+ * main, the bar and Find are the same elements, the keyboard still in Find,
+ * the word as typed, the page in the one face's sheet and the bar in its
+ * slot.
+ */
+async function drawnOnce(browser) {
+  const where = { device: "1280×800" };
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const page = await context.newPage();
+  page.on("pageerror", (error) => errors.push(`drawn once: ${error.message}`));
+  let held = 0;
+  // The one face's part, told by what it draws: held back 2.5 s.
+  await page.route("**/*.js", async (route) => {
+    const response = await route.fetch();
+    const body = await response.text();
+    if (body.includes("data-graview-one-place") && body.includes("one-place-bar")) {
+      held++;
+      await new Promise((resolve) => setTimeout(resolve, 2_500));
+    }
+    await route.fulfill({ response, body });
+  });
+  const result = { where };
+  try {
+    await page.goto(`${richHost.url}/species/${RECORD_FROM}`, { waitUntil: "commit" });
+    await page.waitForSelector("[data-graview-app-bar]", { timeout: 30_000 });
+    const meanwhile = await page.evaluate(async () => {
+      const arriving = document.documentElement.hasAttribute("data-graview-one-face-arriving") && !document.querySelector("[data-graview-one-place]");
+      const bar = document.querySelector("[data-graview-app-bar]");
+      if (bar) bar.__drawnOnce = 1;
+      // Find, as a person reaches it: its box, or the button that opens it.
+      let find = bar?.querySelector('[data-testid="app-find"] input, input[data-testid="nav-find"], input[type="search"]');
+      if (!find) {
+        bar?.querySelector('[data-testid="app-find-open"]')?.click();
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        find = bar?.querySelector('[data-testid="app-find"] input, input[data-testid="nav-find"], input[type="search"]');
+      }
+      if (find) find.__drawnOnce = 1;
+      find?.focus();
+      return { arriving, find: Boolean(find), focused: document.activeElement === find };
+    });
+    if (meanwhile.find) await page.keyboard.type("fern", { delay: 20 });
+    // A word in Find goes to what it finds: that page, drawn while the one face is still on its way, is the page that has to stay.
+    await page.waitForTimeout(300);
+    const stillArriving = await page.evaluate(() => {
+      const main = document.querySelector("main");
+      if (main) main.__drawnOnce = 1;
+      return document.documentElement.hasAttribute("data-graview-one-face-arriving") && !document.querySelector("[data-graview-one-place]");
+    });
+    meanwhile.stillArriving = stillArriving;
+    await page.waitForFunction(() => !document.documentElement.hasAttribute("data-graview-one-face-arriving") && document.querySelector("[data-graview-one-place]"), null, { timeout: 30_000 });
+    await page.waitForTimeout(400);
+    const after = await page.evaluate(() => {
+      const main = document.querySelector("main");
+      const bar = document.querySelector("[data-graview-app-bar]");
+      const active = document.activeElement;
+      return {
+        sameMain: main?.__drawnOnce === 1,
+        sameBar: bar?.__drawnOnce === 1,
+        keyboardInFind: active?.__drawnOnce === 1,
+        typed: active instanceof HTMLInputElement ? active.value : null,
+        inTheSheet: Boolean(main && document.querySelector("[data-graview-one-place]")?.contains(main)),
+        barInTheSlot: Boolean(bar && document.querySelector('[data-testid="one-place-bar"]')?.contains(bar)),
+        mains: document.querySelectorAll("main").length,
+      };
+    });
+    Object.assign(result, { heldBack: held, meanwhile, after });
+  } catch (error) {
+    result.error = String(error?.message ?? error);
+  }
+  await context.close().catch(() => {});
+  const a = result.after;
+  seen.drawnOnce.push({ ...result, ok: Boolean(!result.error && result.heldBack > 0 && result.meanwhile?.arriving && result.meanwhile.stillArriving && result.meanwhile.find && a?.sameMain && a.sameBar && a.keyboardInFind && a.typed === "fern" && a.inTheSheet && a.barInTheSlot && a.mains === 1) });
+}
+
+/* ------------------------------------------------------------------ */
+/* The city beside the panel, the panel's width, the panel's spacing    */
+/* (Graview HQ f-one-face-explore-city-beside-panel, -wider-panel,      */
+/* -panel-padding)                                                      */
+/* ------------------------------------------------------------------ */
+
+const cameraZoom = (page) => page.evaluate(() => Number(document.querySelector('[data-testid="one-place-city"]')?.getAttribute("data-graview-camera-zoom") ?? 0));
+const altitudeNow = (page) => page.evaluate(() => Number(document.querySelector('[data-testid="one-place-city"]')?.getAttribute("data-graview-altitude-now") ?? 0));
+const sheetBox = (page) =>
+  page.evaluate(() => {
+    const r = document.querySelector("[data-graview-one-place]").getBoundingClientRect();
+    return { x: Math.round(r.left), y: Math.round(r.top), width: Math.round(r.width), height: Math.round(r.height) };
+  });
+/** Where the city's first district stands on the window: it moves as the camera pans or zooms. */
+const districtAt = (page) =>
+  page.evaluate(() => {
+    const tile = document.querySelector('[data-testid="one-place-city"] [data-graview-plot] .graview-plot-tile')?.getBoundingClientRect();
+    return tile ? { x: Math.round(tile.left), y: Math.round(tile.top), width: Math.round(tile.width) } : null;
+  });
+const sameBox = (a, b, slack = 1.5) => Math.abs(a.x - b.x) <= slack && Math.abs(a.y - b.y) <= slack && Math.abs(a.width - b.width) <= slack && Math.abs(a.height - b.height) <= slack;
+/** The ctrl key held through a few turns of the wheel: a trackpad's pinch, as the browser says one. */
+async function ctrlWheel(page, at, deltaY, turns, read) {
+  await page.mouse.move(at.x, at.y);
+  const levels = [];
+  for (let i = 0; i < turns; i++) {
+    await page.keyboard.down("Control");
+    await page.mouse.wheel(0, deltaY);
+    await page.keyboard.up("Control");
+    await page.waitForTimeout(50);
+    if (read) levels.push(await levelOf(page));
+  }
+  return levels;
+}
+
+/*
+ * AT NEARBY THE CITY IS THE HAND'S: over the city beside the page a pinch
+ * (ctrl and the wheel) zooms the camera in and out, a drag and a scroll pan
+ * it, and the panel and the level stay where they are every frame, the
+ * lines exact on their buildings; the level's control, and its key, bring
+ * the camera back to Nearby's framing.
+ */
+async function nearbyByHand(page, where) {
+  await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
+  await ready(page);
+  await press(page, '[data-testid="altitude-stop-1"]');
+  await restAt(page, 1);
+  await page.waitForTimeout(400);
+  const box = await sheetBox(page);
+  const city = { x: Math.round(box.x / 2), y: Math.round(box.y + box.height * 0.5) };
+  const framed = { zoom: await cameraZoom(page), district: await districtAt(page) };
+
+  // A scroll over the city pans it, and a drag on its ground does; the level stays.
+  const before = await districtAt(page);
+  await page.mouse.move(city.x, city.y);
+  for (let i = 0; i < 3; i++) {
+    await page.mouse.wheel(40, 80);
+    await page.waitForTimeout(60);
+  }
+  await page.waitForTimeout(600);
+  const scrolled = await districtAt(page);
+  const ground = await page.evaluate((box) => {
+    for (let y = innerHeight - 160; y > 140; y -= 23)
+      for (let x = 40; x < box.x - 40; x += 31) {
+        const top = document.elementFromPoint(x, y);
+        if (top && top.closest('[data-testid="one-place-city"]') && !top.closest("[data-graview-plot], .graview-kind-card, button, a, [data-graview-building]")) return { x, y };
+      }
+    return null;
+  }, box);
+  let dragged = null;
+  if (ground) {
+    const from = await districtAt(page);
+    await page.mouse.move(ground.x, ground.y);
+    await page.mouse.down();
+    for (let i = 1; i <= 10; i++) await page.mouse.move(ground.x + i * 6, ground.y + i * 4);
+    await page.mouse.up();
+    await page.waitForTimeout(600);
+    const to = await districtAt(page);
+    dragged = from && to ? { x: to.x - from.x, y: to.y - from.y } : null;
+  }
+  const panned = { scrolled: before && scrolled ? { x: scrolled.x - before.x, y: scrolled.y - before.y } : null, dragged, ground, level: await levelOf(page), box: await sheetBox(page), url: new URL(page.url()).pathname };
+  const moved = (d) => d !== null && Math.hypot(d.x, d.y) > 20;
+  seen.nearbyPan.push({ where, ...panned, ok: moved(panned.scrolled) && moved(panned.dragged) && panned.level === 1 && sameBox(panned.box, box) && panned.url.endsWith("/tasks/t-deposit") });
+
+  // A pinch in and out over the city: the camera's zoom, every frame the page's box and the level as they were, every line on its building.
+  await startRecording(page);
+  const levels = [...(await ctrlWheel(page, city, -60, 8, true))];
+  await page.waitForTimeout(900);
+  const closer = await cameraZoom(page);
+  levels.push(...(await ctrlWheel(page, city, 60, 4, true)));
+  await page.waitForTimeout(900);
+  const further = await cameraZoom(page);
+  levels.push(await levelOf(page));
+  const frames = await stopRecording(page);
+  const boxMoved = frames.filter((f) => !sameBox(f.box, box)).length;
+  const offLevel = frames.filter((f) => f.level !== 1 || Math.abs(f.altitude - 1) > 0.002).length;
+  const misses = lineMisses(frames, false);
+  const zoomed = { framed: framed.zoom, closer, further, levels: [...new Set(levels)], frames: frames.length, boxMoved, offLevel, lines: misses, altitude: await altitudeNow(page) };
+  const zoomClaim = { where, ...zoomed, ok: closer > framed.zoom * 1.1 && further < closer && zoomed.levels.every((one) => one === 1) && boxMoved === 0 && offLevel === 0 && misses.counted > 0 && misses.worst <= 2 && Math.abs(zoomed.altitude - 1) < 0.002 };
+
+  // Back to Nearby's framing: by the control, and again by its key.
+  const back = [];
+  for (const how of ["control", "key"]) {
+    await ctrlWheel(page, city, -60, 5, false);
+    await page.waitForTimeout(700);
+    const away = await cameraZoom(page);
+    if (how === "control") await press(page, '[data-testid="altitude-stop-1"]');
+    else {
+      await page.evaluate(() => (document.activeElement instanceof HTMLElement ? document.activeElement.blur() : undefined));
+      await page.keyboard.press("2");
+    }
+    await page.waitForTimeout(900);
+    await restAt(page, 1).catch(() => {});
+    const district = await districtAt(page);
+    back.push({ how, away, zoom: await cameraZoom(page), district, level: await levelOf(page) });
+  }
+  seen.nearbyBack.push({ where, framed, back, ok: back.every((one) => one.level === 1 && Math.abs(one.away / framed.zoom - 1) > 0.08 && Math.abs(one.zoom / framed.zoom - 1) < 0.02 && one.district && framed.district && Math.abs(one.district.x - framed.district.x) <= 3 && Math.abs(one.district.y - framed.district.y) <= 16 && Math.abs(one.district.y - back[0].district.y) <= 1) });
+  return zoomClaim;
+}
+
+/*
+ * OVER THE PANEL A PINCH STEPS THE LEVEL: ctrl and the wheel over the page
+ * beside the city scrub it, fingers together up to the City and apart down
+ * to the page, settling at the level; a plain scroll there scrolls the page
+ * and moves no level.
+ */
+async function panelByHand(page, where) {
+  await page.goto(`${at("todo")}/pages/tasks?${DAY}`, { waitUntil: "load" });
+  await ready(page);
+  await page.keyboard.press("2");
+  await restAt(page, 1);
+  const box = await sheetBox(page);
+  const over = { x: box.x + Math.round(box.width / 2), y: box.y + Math.round(box.height / 2) };
+  await ctrlWheel(page, over, 60, 6, false);
+  const up = await restAt(page, 2).then(() => true, () => false);
+  await page.keyboard.press("2");
+  await restAt(page, 1);
+  await ctrlWheel(page, over, -60, 6, false);
+  const down = await restAt(page, 0).then(() => true, () => false);
+  await page.keyboard.press("2");
+  await restAt(page, 1);
+  const top = await page.evaluate(() => document.querySelector("[data-graview-one-place]").scrollTop);
+  await page.mouse.move(over.x, over.y);
+  for (let i = 0; i < 4; i++) {
+    await page.mouse.wheel(0, 120);
+    await page.waitForTimeout(60);
+  }
+  await page.waitForTimeout(700);
+  const scroll = { from: top, to: await page.evaluate(() => document.querySelector("[data-graview-one-place]").scrollTop), level: await levelOf(page), altitude: await altitudeNow(page) };
+  return { where, up, down, scroll, ok: up && down && scroll.to > scroll.from + 40 && scroll.level === 1 && Math.abs(scroll.altitude - 1) < 0.002 };
+}
+
+/*
+ * ON A PHONE THE CITY ABOVE THE SHEET IS THE HAND'S TOO: two fingers apart
+ * there zoom the camera and one finger's drag pans it, and the sheet and the
+ * level stay where they are.
+ */
+async function phoneCityByHand(page, where) {
+  await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
+  await ready(page);
+  await press(page, '[data-testid="altitude-stop-1"]');
+  await restAt(page, 1);
+  await page.waitForTimeout(400);
+  const box = await sheetBox(page);
+  const bar = await page.evaluate(() => Math.round(document.querySelector('[data-testid="one-place-bar"]').getBoundingClientRect().bottom));
+  const dock = await page.evaluate(() => Math.round(document.querySelector("[data-graview-one-face-dock]")?.getBoundingClientRect().top ?? innerHeight));
+  // Bare city between the bar and the control above the sheet.
+  const spot = await page.evaluate(({ from, to }) => {
+    for (let y = Math.round((from + to) / 2); y > from + 20; y -= 13)
+      for (let x = 60; x < innerWidth - 60; x += 23) {
+        const top = document.elementFromPoint(x, y);
+        if (top && top.closest('[data-testid="one-place-city"]') && !top.closest("button, a, [data-graview-board], [data-graview-district-tag]")) return { x, y };
+      }
+    return null;
+  }, { from: bar, to: Math.min(dock, box.y) });
+  if (!spot) return { where, ok: false, error: "no bare city above the sheet" };
+  const cdp = await page.context().newCDPSession(page);
+  const zoom0 = await cameraZoom(page);
+  const levels = [];
+  const points = (gap) => [{ x: spot.x - gap, y: spot.y }, { x: spot.x + gap, y: spot.y }];
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: points(30) });
+  for (let i = 1; i <= 10; i++) {
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: points(30 + i * 9) });
+    levels.push(await levelOf(page));
+  }
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await page.waitForTimeout(900);
+  const zoomed = await cameraZoom(page);
+  levels.push(await levelOf(page));
+  const from = await districtAt(page);
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: spot.x, y: spot.y }] });
+  for (let i = 1; i <= 10; i++) await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: spot.x + i * 8, y: spot.y + i * 3 }] });
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await page.waitForTimeout(800);
+  const to = await districtAt(page);
+  const panned = from && to ? { x: to.x - from.x, y: to.y - from.y } : null;
+  const after = { level: await levelOf(page), altitude: await altitudeNow(page), box: await sheetBox(page) };
+  return { where, spot, zoom0, zoomed, levels: [...new Set(levels)], panned, after, ok: zoomed > zoom0 * 1.1 && levels.every((one) => one === 1) && panned !== null && Math.hypot(panned.x, panned.y) > 20 && after.level === 1 && Math.abs(after.altitude - 1) < 0.002 && sameBox(after.box, box) };
+}
+
+/*
+ * A DESK'S PANEL OPENS AT 55% OF THE WINDOW, held to 1192 pixels on a wide
+ * monitor; a width dragged to is kept for this app in this browser and the
+ * panel opens at it again after a reload.
+ */
+async function panelWidth(page, where) {
+  await page.setViewportSize({ width: 2560, height: 1440 });
+  await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
+  await ready(page);
+  await page.keyboard.press("2");
+  await restAt(page, 1);
+  const wide = (await sheetBox(page)).width;
+  await page.setViewportSize(DESK);
+  await page.reload({ waitUntil: "load" });
+  await ready(page);
+  await page.keyboard.press("2");
+  await restAt(page, 1);
+  const opened = (await sheetBox(page)).width;
+  const edge = await page.locator('[data-testid="one-place-panel-edge"]').boundingBox();
+  await page.mouse.move(edge.x + edge.width / 2, edge.y + edge.height / 2);
+  await page.mouse.down();
+  for (let i = 1; i <= 10; i++) await page.mouse.move(edge.x + edge.width / 2 + i * 18, edge.y + edge.height / 2);
+  await page.mouse.up();
+  await page.waitForTimeout(700);
+  const dragged = (await sheetBox(page)).width;
+  const keys = await page.evaluate(() => Object.keys(localStorage).filter((key) => key.startsWith("graview.one-face.panel.")));
+  await page.reload({ waitUntil: "load" });
+  await ready(page);
+  await page.keyboard.press("2");
+  await restAt(page, 1);
+  const kept = (await sheetBox(page)).width;
+  return { where, wide, opened, wanted: Math.round(DESK.width * 0.55), dragged, kept, keys, ok: wide === 1192 && Math.abs(opened - Math.round(DESK.width * 0.55)) <= 1 && dragged < opened - 100 && Math.abs(kept - dragged) <= 1 && keys.length === 1 && keys[0].startsWith("graview.one-face.panel.desk.") };
+}
+
+/*
+ * THE PAGE IN THE PANEL TAKES A PANEL'S SPACING: at Page the page's column
+ * keeps a full page's 40 above and 20 at its sides and the frame says
+ * `--graview-gutter: 20px`; beside the city the page says
+ * `data-graview-in-panel`, its gutter is 16, and its column keeps 16 above
+ * and less than 96 below.
+ */
+async function panelSpacing(page, where) {
+  // A derived page, its column the frame's own (the todo example draws its pages in a design of its own): Deep Time's specimens.
+  await page.goto(`${richHost.url}/specimens`, { waitUntil: "load" });
+  await ready(page);
+  await restAt(page, 0, 15_000);
+  const read = () =>
+    page.evaluate(() => {
+      const sheet = document.querySelector("[data-graview-one-place]");
+      const column = sheet.querySelector("[data-graview-page-main]");
+      const style = column ? getComputedStyle(column) : null;
+      return {
+        inPanel: sheet.hasAttribute("data-graview-in-panel"),
+        gutter: (style ?? getComputedStyle(sheet)).getPropertyValue("--graview-gutter").trim(),
+        column: style ? { top: parseFloat(style.paddingTop), left: parseFloat(style.paddingLeft), right: parseFloat(style.paddingRight), bottom: parseFloat(style.paddingBottom) } : null,
+      };
+    });
+  const full = await read();
+  await page.keyboard.press("2");
+  await restAt(page, 1, 15_000);
+  const panel = await read();
+  await page.keyboard.press("1");
+  await restAt(page, 0, 15_000);
+  const again = await read();
+  const fullOk = (one) => !one.inPanel && one.gutter === "20px" && one.column && one.column.top === 40 && one.column.left === 20;
+  return { where, full, panel, again, ok: fullOk(full) && fullOk(again) && panel.inPanel && panel.gutter === "16px" && panel.column && panel.column.top === 16 && panel.column.left === 16 && panel.column.right === 16 && panel.column.bottom < 96 };
+}
+
+/* And a worker view drawn as the page: its own root says it is in the panel at Nearby, and not at Page. */
+async function viewRootInPanel(browser) {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const page = await context.newPage();
+  page.on("pageerror", (error) => errors.push(`view in panel: ${error.message}`));
+  const where = { device: "1280×800", app: "rich" };
+  try {
+    await page.goto(`${richHost.url}/sites/site-3`, { waitUntil: "load" });
+    await ready(page);
+    await page.waitForSelector("[data-worker-view][data-worker-view-drawn]", { timeout: 20_000 });
+    const roots = () => page.evaluate(() => [...document.querySelectorAll("[data-graview-one-place] [data-worker-view]")].map((view) => view.shadowRoot?.querySelector("[data-graview-view-root]")?.hasAttribute("data-graview-in-panel") ?? null));
+    const atPage = await roots();
+    await page.keyboard.press("2");
+    await restAt(page, 1, 15_000);
+    await page.waitForTimeout(200);
+    const atNearby = await roots();
+    await page.keyboard.press("1");
+    await restAt(page, 0, 15_000);
+    await page.waitForTimeout(200);
+    const back = await roots();
+    return { where, atPage, atNearby, back, ok: atPage.length > 0 && atPage.every((one) => one === false) && atNearby.length > 0 && atNearby.every((one) => one === true) && back.every((one) => one === false) };
+  } catch (error) {
+    return { where, ok: false, error: String(error?.message ?? error) };
+  } finally {
+    await context.close().catch(() => {});
+  }
+}
+
 /* ------------------------------------------------------------------ */
 /* The run                                                             */
 /* ------------------------------------------------------------------ */
 
 let browser;
 const todo = await serving("todo", portFor("todo"), repoRoot);
+const richHost = await serveRich(repoRoot);
 try {
   mkdirSync(STRIPS, { recursive: true });
   for (const engine of engines) {
     browser = await launchEngine(engine);
     const run = async (options, device, gestures) => {
       for (const [list, gesture] of gestures) {
+        if (only && !only.includes(Object.keys(seen).find((key) => seen[key] === list))) continue;
         const context = await browser.newContext(options);
         const page = await context.newPage();
         page.on("pageerror", (error) => errors.push(`${engine} ${device}: ${error.message}`));
@@ -1232,6 +2488,10 @@ try {
       [seen.shortcutsRun, (page, where) => shortcuts(page, where)],
       [seen.sliderRun, (page, where) => slider(page, where)],
       [seen.legend, (page, where) => legend(page, where)],
+      [seen.nearbyZoom, (page, where) => nearbyByHand(page, where)],
+      [seen.panelPinch, (page, where) => panelByHand(page, where)],
+      [seen.panelWidth, (page, where) => panelWidth(page, where)],
+      [seen.panelSpacing, (page, where) => panelSpacing(page, where)],
     ]);
     const phone = { ...devices[PHONE], ...(engine === "chromium" ? {} : { isMobile: false }) };
     await run(phone, PHONE, [
@@ -1243,9 +2503,16 @@ try {
       [seen.resize, (page, where) => resize(page, where, true)],
       ...(engine === "chromium" ? [[seen.pinch, (page, where) => pinch(page, where)]] : []),
       [seen.sliderRun, (page, where) => slider(page, where)],
+      ...(engine === "chromium" ? [[seen.phoneCity, (page, where) => phoneCityByHand(page, where)]] : []),
     ]);
-    seen.switch.push(await rootIsTheOneFace(browser, { engine, device: "desk 1440×900" }).catch((error) => ({ ok: false, error: String(error?.message ?? error) })));
-    if (engine === "chromium") {
+    if (!only || only.includes("viewInPanel")) seen.viewInPanel.push(await viewRootInPanel(browser));
+    if (!only || only.includes("switch")) seen.switch.push(await rootIsTheOneFace(browser, { engine, device: "desk 1440×900" }).catch((error) => ({ ok: false, error: String(error?.message ?? error) })));
+    if (!only || only.includes("rich")) for (const device of [{ width: 1520, height: 900 }, { width: 1280, height: 800 }, { width: 390, height: 844 }, { width: 844, height: 390 }, { width: 768, height: 1024 }, { width: 360, height: 640 }]) await rich(browser, device);
+    if (engine === "chromium" && (!only || only.includes("rich"))) {
+      await recordInPlace(browser);
+      await drawnOnce(browser);
+    }
+    if (engine === "chromium" && !only) {
       report.strips = [];
       for (const scheme of ["light", "dark"]) {
         report.strips.push(await strip(browser, { viewport: DESK, colorScheme: scheme }, `desk-${scheme}`));
@@ -1256,7 +2523,7 @@ try {
     await browser.close();
     browser = undefined;
   }
-  seen.duplicate.push(await duplicate().catch((error) => ({ ok: false, error: String(error?.message ?? error) })));
+  if (!only) seen.duplicate.push(await duplicate().catch((error) => ({ ok: false, error: String(error?.message ?? error) })));
 
   // One run of the history holds three claims.
   for (const run of seen.risen.splice(0)) {
@@ -1292,6 +2559,7 @@ try {
   report.checks.atNearbyNoCitySideConnectionLabelsForTheSelectedRecord = { held: seen.noCityWords, ok: every(seen.noCityWords) };
   report.checks.connectedNeverRepeatsOrCoversThePage = { held: seen.connected, ok: every(seen.connected) };
   report.checks.noLineCrossesTheNearbyPanel = { held: seen.crossing, ok: every(seen.crossing) };
+  report.checks.whereNearbyCannotTakeItAllInTheRecordStaysInSightAndALinePointsTowardTheRest = { held: seen.pointsOut, ok: every(seen.pointsOut) };
   report.checks.levelShortcutsMoveLevelsAndAreShown = { held: seen.shortcuts, ok: every(seen.shortcuts) };
   report.checks.theLevelKeysTurnOffAndTheLegendSaysSo = { held: seen.keysTurnOff, ok: every(seen.keysTurnOff) };
   report.checks.browserZoomKeysAreNotTaken = { held: seen.zoomKeys, ok: every(seen.zoomKeys) };
@@ -1302,14 +2570,54 @@ try {
   report.checks.theLegendAndTooltipsAreReachableInBothStates = { held: seen.legend, ok: every(seen.legend) };
   report.checks.theCollapsedChoiceIsKept = { held: seen.keptChoice, ok: every(seen.keptChoice) };
   report.checks.aDuplicateViewIsFound = { held: seen.duplicate, ok: every(seen.duplicate) };
+  report.checks.aRichAppsCityAndNearbyHaveNothingStandingOnAnythingElse = { held: seen.richClear, ok: every(seen.richClear) };
+  report.checks.everyDistrictAtTheCityNamesItsKind = { held: seen.richNamed, ok: every(seen.richNamed) };
+  report.checks.noNameOrTitleIsCutOffOrWrapsAt1280Or390 = { held: seen.richWords, ok: every(seen.richWords) };
+  report.checks.theLegendIsClosedUntilOpenedAndOnceOpenedStaysOpenOnLaterVisits = { held: seen.richLegend, ok: every(seen.richLegend) };
+  report.checks.noBoardOrDistrictNameLeapsBetweenFrames = { held: seen.richSmooth, ok: every(seen.richSmooth) };
+  report.checks.everythingTheKeyboardReachesInTheCityIsSeen = { held: seen.richFocusSeen, ok: every(seen.richFocusSeen) };
+  report.checks.aDistrictsProblemsOpenFromTheCityAndNearbyByPointerAndKeyboard = { held: seen.richProblems, ok: every(seen.richProblems) };
+  report.checks.aDragBegunOnABoardPansTheCityAndAPressOpensTheView = { held: seen.richHand, ok: every(seen.richHand) };
+  report.checks.eachViewsBoardIsDrawnAsThatViewAndNoTwoAlike = { held: seen.richViews, ok: every(seen.richViews) };
+  report.checks.atNearbyEveryBuildingInSightIsSeenAndEveryLineEndsOnOne = { held: seen.richRecords, ok: every(seen.richRecords) };
+  report.checks.atNearbyEveryViewOfADistrictInSightHasABoard = { held: seen.richNearbyViews, ok: every(seen.richNearbyViews) };
+  report.checks.noDistrictControlStandsUnderTheBarThePageOrTheLevelControl = { held: seen.richControls, ok: every(seen.richControls) };
+  report.checks.everyKindsBoardStandsOnItsOwnDistrictEvenWhereThePageCoversOne = { held: seen.richOwnDistrict, ok: every(seen.richOwnDistrict) };
+  report.checks.noBoardsWordsAreSmallerThanNinePixels = { held: seen.richLegible, ok: every(seen.richLegible) };
+  report.checks.atNearbyTheHomeFramesTheWholeCityBesideThePageOrWhereItCannotItsViewsDistrictsAndAsNearTheMiddleAsThatAllows = { held: seen.richHomeNearby, ok: every(seen.richHomeNearby) };
+  report.checks.atNearbyOnTheHomeEveryDistrictItsViewsShowStandsOnTheCitysSide = { held: seen.richHomeViews, ok: every(seen.richHomeViews) };
+  report.checks.atNearbyOnTheHomeNoNameOrBoardStandsOnAnotherOrOnADistrictsCount = { held: seen.richHomeClear, ok: every(seen.richHomeClear) };
+  report.checks.atNearbyOnARichPageNoLineCrossesAnotherPartInThePanel = { held: seen.richPanelCrossings, ok: every(seen.richPanelCrossings) };
+  report.checks.theBoardsStandUnderTheLines = { held: seen.richBoardsUnder, ok: every(seen.richBoardsUnder) };
+  report.checks.theLevelControlShowsOneChosenLevelAfterTheKeys = { held: seen.richOneLevel, ok: every(seen.richOneLevel) };
+  report.checks.aRecordOpenedInTheCityIsLitWhereItStandsInItsDistrictAndTheCameraStaysWhereEverythingItFramesIsInSight = { held: seen.recordInPlace, ok: every(seen.recordInPlace) };
+  report.checks.whetherTheRestOfTheCityFadesIsOneRuleOnAFreshLoadAndAfterAPress = { held: seen.oneRuleFades, ok: every(seen.oneRuleFades) };
+  report.checks.noLinksWordsFloatOverTheCityAfterARecordIsOpenedThere = { held: seen.noWordsAfterPress, ok: every(seen.noWordsAfterPress) };
+  report.checks.thePageIsDrawnOnceAndItsElementsFocusAndTypedWordSurviveTheOneFacesArrival = { held: seen.drawnOnce, ok: every(seen.drawnOnce) };
+  report.checks.noBoardsPostCrossesADistrictsName = { held: seen.richPosts, ok: every(seen.richPosts) };
+  report.checks.aPostCrossesABoardOnlyUnderIt = { held: seen.richPostsUnder, ok: every(seen.richPostsUnder) };
+  report.checks.aDistrictsWarningChipOpensTheProblemsOfThatKindAlone = { held: seen.richProblemsOfKind, ok: every(seen.richProblemsOfKind) };
+  report.checks.atNearbyAPinchOverTheCityZoomsItAndThePanelAndTheLevelStay = { held: seen.nearbyZoom, ok: every(seen.nearbyZoom) };
+  report.checks.atNearbyADragOrAScrollOverTheCityPansIt = { held: seen.nearbyPan, ok: every(seen.nearbyPan) };
+  report.checks.atNearbyTheLevelControlAndItsKeyBringTheCameraBackToNearby = { held: seen.nearbyBack, ok: every(seen.nearbyBack) };
+  report.checks.atNearbyAPinchOverThePanelStepsTheLevelAndAScrollScrollsThePage = { held: seen.panelPinch, ok: every(seen.panelPinch) };
+  report.checks.onAPhoneTheCityAboveTheSheetTakesAPinchAndADrag = { held: seen.phoneCity, ok: every(seen.phoneCity) };
+  report.checks.aDesksPanelOpensAt55PercentHeldTo1192AndKeepsTheWidthDragged = { held: seen.panelWidth, ok: every(seen.panelWidth) };
+  report.checks.thePageInThePanelTakesAPanelsGutterAndSaysSo = { held: seen.panelSpacing, ok: every(seen.panelSpacing) };
+  report.checks.aViewsRootSaysItIsInThePanelAtNearbyAndNotOnAFullPage = { held: seen.viewInPanel, ok: every(seen.viewInPanel) };
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
-  report.passed = Object.values(report.checks).every((check) => check.ok);
+  // A run of some claims alone (`--only=nearbyZoom,panelWidth`, while working on them) says only those.
+  if (only) for (const [name, check] of Object.entries(report.checks)) if (name !== "noPageThrew" && Array.isArray(check.held) && check.held.length === 0) delete report.checks[name];
+  // A run of some claims alone is never the verdict: it says what it ran, and does not pass.
+  report.passed = !only && Object.values(report.checks).every((check) => check.ok);
+  if (only) report.only = only;
 } catch (error) {
   report.error = String(error?.stack ?? error);
   report.passed = false;
 } finally {
   await browser?.close();
   todo.stop();
+  richHost.stop();
 }
 
 writeFileSync(resolve(repoRoot, "docs/one-face.json"), `${JSON.stringify(report, null, 2)}\n`);

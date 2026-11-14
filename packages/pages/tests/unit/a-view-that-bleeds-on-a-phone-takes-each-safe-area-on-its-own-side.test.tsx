@@ -39,8 +39,8 @@ describe("a view that bleeds on a phone takes each safe area on its own side", (
   it("the left inset on the left and the right inset on the right, whichever way the page reads", async () => {
     const rule = await phoneRule();
     expect(rule).toContain("@media (max-width:680px)");
-    expect(rule).toMatch(/margin-left:min\(0px,calc\(env\(safe-area-inset-left,0px\) - var\(--graview-page-gutter,20px\)\)\)/);
-    expect(rule).toMatch(/margin-right:min\(0px,calc\(env\(safe-area-inset-right,0px\) - var\(--graview-page-gutter,20px\)\)\)/);
+    expect(rule).toMatch(/margin-left:min\(0px,calc\(env\(safe-area-inset-left,0px\) - var\(--graview-gutter,20px\)\)\)/);
+    expect(rule).toMatch(/margin-right:min\(0px,calc\(env\(safe-area-inset-right,0px\) - var\(--graview-gutter,20px\)\)\)/);
     expect(rule).not.toContain("margin-inline");
   });
 });

@@ -94,6 +94,16 @@ async function whole() {
     },
   });
   await Promise.all([facing, keptViews.ready]);
+  // Read once and taken off the address, so no list reads it as a narrowing of its own.
+  const opening = new URL(location.href);
+  const oneFace = opening.searchParams.get("graview-one-face") === "1";
+  // The share of a desk's window the one face's panel opens at, as a host hands it (`panel`): `?graview-one-face-panel=0.6`.
+  const panel = Number(opening.searchParams.get("graview-one-face-panel") || NaN);
+  if (opening.searchParams.has("graview-one-face") || opening.searchParams.has("graview-one-face-panel")) {
+    opening.searchParams.delete("graview-one-face");
+    opening.searchParams.delete("graview-one-face-panel");
+    history.replaceState(history.state, "", `${opening.pathname}${opening.search}${opening.hash}`);
+  }
   handle = mount(root, {
     app,
     remote,
@@ -106,6 +116,8 @@ async function whole() {
     label: app.name,
     heading: 1,
     keptViews,
+    // Pages and the Scene as one face (FR-239), as Graview Cloud draws an app that has moved: `?graview-one-face=1` on the address it opens at.
+    ...(oneFace ? { sceneUnderPages: true, ...(Number.isFinite(panel) ? { panel } : {}) } : {}),
     // A view proposed and not kept (`--view` and `--manifest`, FR-187), drawn where it attaches and marked as a draft.
     ...(handed.draftView ? { draftView: handed.draftView } : {}),
   });

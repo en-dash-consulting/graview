@@ -100,6 +100,8 @@ const CSS = `
 .th-main { padding: 2.2rem 2.6rem max(5rem, var(--graview-foot-room, 0px)); max-width: 68rem; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; }
 .th-under { grid-template-columns: minmax(0, 1fr); }
 .th-under .th-main { width: 100%; box-sizing: border-box; margin: 0 auto; padding-top: 1.4rem; }
+/* Beside the city, in the one face's panel: a panel's spacing, the frame's gutter at the sides. */
+[data-graview-in-panel] .th-main { padding: var(--graview-gutter) var(--graview-gutter) 1.5rem; }
 .th-eyebrow { font-size: 0.6875rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--graview-ink-muted); margin: 0 0 0.5rem; }
 /* An eyebrow that is a LINK is a control, and a control is at least 24px
    tall however small its words are — WCAG 2.5.8, and the one audit-ui

@@ -39,14 +39,47 @@ export interface View {
   readonly top?: number;
   /** The panel as the person sized it: its width at a desk, the share of the window under the bar a phone's sheet leaves above it. Unsaid, the default. */
   readonly panel?: number;
+  /** The share of a desk's window its panel opens at when the person has sized none (a host's `panel`). Unsaid, `PANEL_SHARE`. */
+  readonly share?: number;
 }
+
+/** The share of a desk's window its panel opens at: a page read at its own measure beside the city on a laptop. */
+export const PANEL_SHARE = 0.55;
+/** The shares a host may ask the panel to open at: below, a page too narrow to read; above, a city too narrow to see. */
+export const PANEL_SHARES = { min: 0.25, max: 0.75 } as const;
+/**
+ * THE WIDEST A DESK'S PANEL OPENS: the page's wide measure (`WIDE`, 1160,
+ * the home's gallery and a picture at full width) and the panel's gutters
+ * either side. Past it a wider panel gives the page nothing — its columns
+ * stop at their measure and the rest is margin — and takes it from the
+ * city: on a 2560 monitor 55% would be 1408 pixels of page; held here it is
+ * 1192, and the city keeps the other 1350.
+ */
+export const PANEL_MOST = 1192;
+/** The band of city a desk's panel opens beside, at least: room for a district, its name and its views to be read beside the page. */
+export const CITY_LEAST = 480;
+/** The narrowest a desk's panel opens, where the window has room for it: a page's column at a phone's width. */
+const PANEL_LEAST = 360;
 
 /** How wide a desk's panel may be, and how high a phone's sheet may stand (the share above it), on this window. */
 export function panelRange(view: View): { readonly min: number; readonly max: number; readonly default: number } {
   // A phone's sheet never rises so far that the city above it is lost under the control: it keeps the control's room and a band of city.
   if (phoneOf(view)) return { min: Math.min(0.4, Math.max(0.15, (CONTROL_ROOM + 180) / Math.max(1, view.height - (view.top ?? 0)))), max: 0.7, default: 0.4 };
-  const fallback = Math.round(Math.max(420, Math.min(760, view.width * 0.36)));
-  return { min: Math.min(fallback, 360), max: Math.max(fallback, Math.round(view.width * 0.72)), default: fallback };
+  const fallback = deskPanelWidth(view);
+  return { min: Math.min(fallback, PANEL_LEAST), max: Math.max(fallback, Math.round(view.width * 0.72)), default: fallback };
+}
+
+/**
+ * THE WIDTH A DESK'S PANEL OPENS AT: its share of the window (55% unless a
+ * host says otherwise), no wider than `PANEL_MOST` and leaving the city at
+ * least `CITY_LEAST` — and, on a window too narrow for both, never narrower
+ * than `PANEL_LEAST` (or the share, if that is less).
+ */
+export function deskPanelWidth(view: View): number {
+  const share = view.share === undefined || !Number.isFinite(view.share) ? PANEL_SHARE : Math.max(PANEL_SHARES.min, Math.min(PANEL_SHARES.max, view.share));
+  const asked = view.width * share;
+  const most = Math.min(PANEL_MOST, view.width - CITY_LEAST);
+  return Math.round(Math.max(Math.min(PANEL_LEAST, asked), Math.min(asked, most)));
 }
 
 /** What a page address is in the city. */
@@ -82,11 +115,24 @@ const phoneOf = (view: View) => view.width <= PHONE;
  */
 export function levelZooms(where: PageWhere, view: View): readonly [number, number, number] {
   if (where.type === "record") {
-    const panel = phoneOf(view) ? 2 : 2.2;
+    const panel = phoneOf(view) ? 2 : Math.max(1.25, 2.2 * besideShare(view));
     return [Math.min(2.9, panel * 1.3), panel, 1];
   }
   if (where.type === "home" || where.type === "overview") return [1.8, 1.4, 1];
-  return [2.1, 1.6, 1];
+  return [2.1, Math.max(1.25, 1.6 * besideShare(view)), 1];
+}
+
+/**
+ * HOW MUCH OF A DESK'S CITY THE PANEL LEAVES, against the band it left at
+ * a third of the window, where Nearby's zooms were set: a wider panel leaves
+ * a narrower band of city, and the camera stands back by as much (no more
+ * than a little over a quarter), so what a record is linked to is still in
+ * sight beside it rather than behind the page. A phone's sheet is not this.
+ */
+export function besideShare(view: View): number {
+  if (phoneOf(view)) return 1;
+  const band = panelBox(view).x;
+  return Math.max(0.72, Math.min(1, band / (view.width * 0.62)));
 }
 
 /**
@@ -115,6 +161,36 @@ export function zoomAtAltitude(altitude: number, zooms: readonly number[]): numb
 
 /** The level an altitude rests at when let go: the nearest. */
 export const restingLevel = (altitude: number): number => Math.max(PAGE, Math.min(CITY, Math.round(altitude)));
+
+/** Where this browser keeps the panel as the person sized it: for this app, a desk's width and a phone's sheet apart. */
+export const panelStoreKey = (app: string, phone: boolean): string => `graview.one-face.panel.${phone ? "phone" : "desk"}.${app}`;
+
+/** The page's gutter at its sides: a full page's, and a panel's. */
+export const GUTTER = { page: 20, panel: 16 } as const;
+
+/**
+ * THE PAGE'S SPACING, AS THE FRAME SETS IT: `--graview-gutter` at both, so
+ * a page and a view read the gutter they stand in; in the panel the gutter,
+ * the room above the page's first words and the room under its last are a
+ * panel's, not a full page's 40, 20 and 96 (the room the control keeps at
+ * a full page's foot stands beside the panel, not over it).
+ */
+export function frameSpacing(inPanel: boolean): Readonly<Record<string, string>> {
+  if (!inPanel) return { "--graview-gutter": `${GUTTER.page}px` };
+  return frameSpacingAt(PANEL);
+}
+
+/**
+ * AND BETWEEN THE TWO, AS THE PAGE MOVES: from a full page's at the page
+ * (altitude 0) to a panel's at Nearby and above, every step drawn, so the
+ * page's words never jump 24 pixels as it narrows into the panel or widens
+ * out of it. Whole pixels, so a step between frames is never a fraction.
+ */
+export function frameSpacingAt(altitude: number): Readonly<Record<string, string>> {
+  const t = Math.max(0, Math.min(1, altitude));
+  const at = (page: number, panel: number) => `${Math.round(page + (panel - page) * t)}px`;
+  return { "--graview-gutter": at(GUTTER.page, GUTTER.panel), "--graview-frame-top": at(40, GUTTER.panel), "--graview-frame-foot": at(96, 24) };
+}
 
 /**
  * THE PANEL'S BOX: on a desk a column at the window's right, the city to
@@ -171,8 +247,36 @@ export function pageBox(altitude: number, view: View): Box {
 
 /** A board's width in the city's own pixels, at the city's zoom (1). */
 export const BOARD_WIDTH = 96;
-/** A board's width at the city's zoom on this window: a fifth of a phone's width, at most `BOARD_WIDTH`. The city is fitted to the window, so the boards are sized with it. */
-export const boardWidthFor = (view: View): number => Math.round(Math.max(64, Math.min(BOARD_WIDTH, view.width * 0.18)));
+/** A board's width at the city's zoom on this window: a seventh of a phone's width, at most `BOARD_WIDTH`. The city is fitted to the window, so the boards are sized with it: on a phone a fifth left a rich app's City wider than the camera reaches. */
+export const boardWidthFor = (view: View): number => Math.round(Math.max(52, Math.min(BOARD_WIDTH, view.width * 0.14)));
+/*
+ * A BOARD'S WORDS ARE READ. Its face is drawn at a width of its own and
+ * scaled to the board: on a desk the panel's, so a board and the page that
+ * becomes one read alike; on a phone a narrower face, and a board never
+ * drawn narrower than `BOARD_LEAST_ON_A_PHONE`, so what it says is never
+ * smaller than 9 pixels. A phone's City drops a board it has no room for
+ * rather than draw it smaller (the bar reaches every view).
+ */
+export const BOARD_LEAST_ON_A_PHONE = 68;
+/** A window too small for a desk's boards: a phone, or one turned on its side. */
+export const smallWindow = (view: View): boolean => view.width <= PHONE || view.height <= 600;
+/**
+ * THE WIDEST A BOARD IS DRAWN, AT A ZOOM: `boardWidthFor` at the City, and
+ * beside the page on a desk as much narrower as the camera stood back for
+ * the wider panel (`besideShare`), so a board keeps its size against its
+ * district and still finds room over it. Between, as far between as the
+ * zoom is: never a jump as the camera moves. A small window's are never
+ * narrower: their words are already as small as can be read.
+ */
+export function boardMost(view: View, where: PageWhere, zoom: number): number {
+  const most = boardWidthFor(view);
+  if (smallWindow(view)) return most;
+  const nearby = levelZooms(where, view)[PANEL];
+  const t = nearby > 1 ? Math.max(0, Math.min(1, (zoom - 1) / (nearby - 1))) : 0;
+  return most * (1 - (1 - besideShare(view)) * t);
+}
+export const boardFaceWidth = (view: View): number => (smallWindow(view) ? 240 : panelBox(view).width);
+export const boardLeast = (view: View): number => (smallWindow(view) ? BOARD_LEAST_ON_A_PHONE : 0);
 /** A board is this much wider than it is tall. */
 export const BOARD_ASPECT = 1.5;
 

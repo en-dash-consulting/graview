@@ -20,6 +20,7 @@ export type {
   GuestWhere,
   GuestReady,
   GuestRefusal,
+  GuestRecordBox,
   GuestRequest,
   HostHello,
   HostMessage,

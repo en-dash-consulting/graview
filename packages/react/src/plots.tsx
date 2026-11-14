@@ -138,7 +138,7 @@ export function Plots({ frame, width, height, pan, pinned, close, today, swallow
     const members = node.aggregate?.memberIds ?? [];
     const state = districtState(store.schema, node.kind);
     const valueOf = (id: string) => (state ? (store.graph.getNode(id) as Record<string, unknown> | undefined)?.[state.field] : undefined);
-    /* A chosen record is never one of the "+504": it stands first in its row, so its building is there to light and to draw its links from. */
+    /* A chosen record is never one of the "+504": where it would be, it stands first in its row, so its building is there to light and to draw its links from... */
     const first = members.filter((id) => chosen.includes(id));
     const key = `${cell}|${tilt}|${node.plot!.col},${node.plot!.row},${node.plot!.side}|${first.join(",")}|${members.map((id) => `${id}=${String(valueOf(id))}`).join(",")}`;
     const held = drawn.current.get(node.id);
@@ -157,8 +157,18 @@ export function Plots({ frame, width, height, pan, pinned, close, today, swallow
       names.set(id, name);
       return name;
     };
-    const { lanes, tiers } = districtLanes(state, members, valueOf, first);
-    const { blocks, rests } = districtBlocks(node.plot!, lanes, tiers.map((tier) => TIER_HEIGHT[tier]));
+    /*
+     * ...AND ONLY WHERE IT WOULD NOT STAND OTHERWISE. A chosen record whose
+     * building is drawn where it is keeps its place: brought to the front of
+     * its row whenever it was chosen, a building pressed in the city moved
+     * forty pixels under the press as its page opened, and the page left
+     * from where the building no longer stood.
+     */
+    const plain = districtLanes(state, members, valueOf, []);
+    const plainBlocks = districtBlocks(node.plot!, plain.lanes, plain.tiers.map((tier) => TIER_HEIGHT[tier]));
+    const standing = first.every((id) => plainBlocks.blocks.some((block) => block.id === id));
+    const { lanes, tiers } = standing ? plain : districtLanes(state, members, valueOf, first);
+    const { blocks, rests } = standing ? plainBlocks : districtBlocks(node.plot!, lanes, tiers.map((tier) => TIER_HEIGHT[tier]));
     const corners = tileCorners(node.plot!, at0, none);
     // A record's due date past and not done: overdue, lit like a problem.
     const due = state ? dueField(store.schema, node.kind) : undefined;
@@ -244,12 +254,12 @@ interface PlotDrawing {
 
 /** A block's name is written over it once the block is this wide on the screen: coming down, the blocks are named. */
 const NAMED_FROM = 34;
-/** How wide a letter of a block's name is taken to be, and how far above and below its baseline it reaches (`.graview-building-name`: .625rem). */
-const NAME_LETTER = 6;
+/** How wide a letter of a block's name is taken to be — at weight 500, a little wider than the plain weight's 6 — and how far above and below its baseline it reaches (`.graview-building-name`: .625rem). */
+const NAME_LETTER = 6.4;
 const NAME_ABOVE = 9;
 const NAME_BELOW = 3;
-/** The clear space kept around a name, so two never touch. */
-const NAME_CLEAR = 2;
+/** The clear space kept around a name, so two never touch: two at two pixels apart read as one run of words. */
+const NAME_CLEAR = 5;
 
 /** A block's name as it is written over it: whole while the block is wide enough for it, else cut with an ellipsis. */
 function nameOver(block: { readonly name: string; readonly width: number }, whole: boolean): string {
@@ -508,7 +518,7 @@ function groundCss(scheme: Scheme): string {
 .graview-building[data-graview-own] .graview-iso-roof{stroke:var(--graview-ink);stroke-width:1.4;stroke-opacity:1}
 .graview-building[data-graview-selected] polygon{stroke:var(--graview-accent);stroke-width:1.4;stroke-opacity:1}
 .graview-building[data-graview-selected] .graview-iso-roof{fill:${mix("45%", "var(--graview-accent)")}}
-.graview-building-name{font-size:.625rem;fill:var(--graview-ink);paint-order:stroke;stroke:var(--graview-ground);stroke-width:3px}
+.graview-building-name{font-size:.625rem;font-weight:500;fill:var(--graview-ink);paint-order:stroke;stroke:var(--graview-ground);stroke-width:3px}
 .graview-ground:has(> .graview-plots[data-graview-named]) [data-graview-plot] .graview-kind-landmark{opacity:.3;transition:opacity 240ms}
 .graview-village-rest{font-size:.6875rem;font-variant-numeric:tabular-nums;fill:var(--graview-ink-muted)}`;
 }
