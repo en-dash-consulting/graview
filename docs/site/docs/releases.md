@@ -79,7 +79,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.2.0
 
-Published November 12, 2026 · the current version
+Published November 12, 2026
 
 Pages and the Scene become one face, opt-in per app: a page rises on one camera from Page to Nearby to City, every view stands as a billboard in the city, and graview check finds two views that show the same thing.
 
