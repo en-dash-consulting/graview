@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "46c7b001-1616-4aef-880f-1677769fe652":
+    status: "completed"
+    startedAt: "2026-11-14T12:35:00.000Z"
+    completedAt: "2026-11-14T22:30:00.000Z"
+    lastModified: "2026-11-14T22:30:00.000Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"
+    resolutionType: "code-change"
+    resolutionDetail: "Security and reliability fixes for suggestions. PR #597, landed in batch/0-2-2 (#600), released in 0.2.2 (#601)."
