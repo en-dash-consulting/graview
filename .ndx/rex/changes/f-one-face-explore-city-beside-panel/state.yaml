@@ -1,6 +1,10 @@
 schema: "rex/v2"
 items:
   "b9e7743f-03e0-4f0b-8538-874ede19601b":
-    status: "pending"
-    lastModified: "2026-11-13T16:35:00.000Z"
+    status: "completed"
+    startedAt: "2026-11-13T18:00:00.000Z"
+    completedAt: "2026-11-14T17:30:00.000Z"
+    lastModified: "2026-11-14T17:30:00.000Z"
     lastModifiedBy: "Nick Daniel <nick@endash.us>"
+    resolutionType: "code-change"
+    resolutionDetail: "Over the city at Nearby a pinch or wheel zooms and a drag pans, also when it starts on a board or a name; over the panel a pinch still moves a level. PR #593, landed in batch/0-2-1 (#596), released in 0.2.1 (#591)."

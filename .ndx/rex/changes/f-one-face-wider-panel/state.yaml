@@ -1,6 +1,10 @@
 schema: "rex/v2"
 items:
   "017185e7-77f8-44f9-9544-05ba0ce2bb84":
-    status: "pending"
-    lastModified: "2026-11-13T16:35:00.000Z"
+    status: "completed"
+    startedAt: "2026-11-13T18:00:00.000Z"
+    completedAt: "2026-11-14T17:30:00.000Z"
+    lastModified: "2026-11-14T17:30:00.000Z"
     lastModifiedBy: "Nick Daniel <nick@endash.us>"
+    resolutionType: "code-change"
+    resolutionDetail: "On a desk the panel opens at 55% of the window (at most 1,192 px), keeps a dragged width and takes a host's panel share. PR #593, landed in batch/0-2-1 (#596), released in 0.2.1 (#591)."
