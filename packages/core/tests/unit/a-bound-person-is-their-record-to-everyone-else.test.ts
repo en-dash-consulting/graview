@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { bindPerson } from "../../src/binding.js";
+import { pastOf } from "../../src/past.js";
 import { answerSeenBy } from "../../src/seat.js";
 import { matchSubscriptions } from "../../src/subscriptions.js";
 import { acceptSuggestion, suggest, suggestions } from "../../src/tidying.js";
@@ -189,6 +190,20 @@ describe("a bound person's acts, read by another member", () => {
     bindPerson(store, bud, "participant:bud", { author: host });
     expect(tells(store.seenBy(ann).log.all())).toBe(false);
     expect(store.seenBy(ann).log.all()[0]!.author.id).toBe("participant:bud");
+  });
+
+  it("are his record's in the app as it stood before the binding, read as a member", () => {
+    const store = family();
+    store.apply({ name: "add-gift", args: { title: "A top" } }, { author: bud });
+    const before = store.log.length;
+    bindPerson(store, bud, "participant:bud", { author: host });
+    const past = pastOf(store.seenBy(ann), before);
+    expect(past.log.all()).toHaveLength(before);
+    expect(tells(past.log.all())).toBe(false);
+    expect(past.log.all()[0]!.author.id).toBe("participant:bud");
+    // Bud himself, and the host, are told his account there as they are now.
+    expect(pastOf(store.seenBy(bud), before).log.all()[0]!.author.id).toBe("acct-bud");
+    expect(pastOf(store, before).log.all()[0]!.author.id).toBe("acct-bud");
   });
 
   it("go back to his account once the binding is undone, as he is then nobody's record", () => {

@@ -233,7 +233,8 @@ export function takenIn(ops: readonly Operation[]): ReadonlyMap<string, "all" | 
   const taken = new Map<string, "all" | Set<number>>();
   for (const op of ops) {
     const id = op.lineage?.suggestion;
-    if (id === undefined) continue;
+    // A suggestion, an undo or a vote answers none, whatever its lineage says.
+    if (id === undefined || op.suggests || op.undoes !== undefined || op.vote !== undefined) continue;
     const items = op.lineage!.items;
     const had = taken.get(id);
     if (had === "all") continue;

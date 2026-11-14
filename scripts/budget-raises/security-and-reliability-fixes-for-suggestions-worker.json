@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 4917,
+  "note": "Raised with the security and reliability fixes for suggestions (.changeset/security-and-reliability-fixes-for-suggestions.md). Measured at 2_742_887 B against 2_737_970 B."
+}

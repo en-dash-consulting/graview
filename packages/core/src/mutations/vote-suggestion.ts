@@ -112,6 +112,13 @@ export interface VotingServed {
    * made.
    */
   accepting?: (store: object, vote: Operation) => { readonly calls: readonly MutationCall[]; readonly author: Principal; readonly lineage: Lineage } | undefined;
+  /**
+   * What of a suggestion still waits for this author, as `acceptSuggestion`
+   * finds it: each call still waiting by its place, and how many it
+   * suggested. Undefined when it waits for them no longer, or never did —
+   * so a change's lineage names a suggestion only when it answers one.
+   */
+  waiting?: (store: object, id: string, author: Principal) => { readonly items: readonly { readonly at: number; readonly call: MutationCall }[]; readonly suggested: number } | undefined;
 }
 /*
  * One object for the store and `@graview/core/tidying`, found by a key

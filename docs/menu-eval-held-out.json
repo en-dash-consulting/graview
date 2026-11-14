@@ -1,11 +1,11 @@
 {
-  "at": "2026-11-13T18:22:02.175Z",
+  "at": "2026-11-14T14:38:20.310Z",
   "fast": "jev-latest",
   "light": "grok-4.20-0309-non-reasoning",
-  "score": 1,
+  "score": 0.95,
   "bar": 0.9,
-  "medianMs": 375,
-  "p90Ms": 2739,
+  "medianMs": 196,
+  "p90Ms": 1194,
   "jevAlone": 0.6,
   "rows": [
     {
@@ -15,8 +15,8 @@
       "expected": "finish over held",
       "got": "finish × 5, saying: Mark the 5 tasks in This week done.",
       "ok": true,
-      "ms": 513,
-      "stages": "fast 359"
+      "ms": 214,
+      "stages": "fast 186"
     },
     {
       "app": "todo",
@@ -25,8 +25,8 @@
       "expected": "finish over held",
       "got": "finish × 5, saying: Mark the 5 tasks in This week done.",
       "ok": true,
-      "ms": 371,
-      "stages": "fast 367"
+      "ms": 188,
+      "stages": "fast 185"
     },
     {
       "app": "todo",
@@ -35,8 +35,8 @@
       "expected": "finish over itself",
       "got": "finish × 1, saying: Finish “Book the van”.",
       "ok": true,
-      "ms": 375,
-      "stages": "fast 369"
+      "ms": 196,
+      "stages": "fast 189"
     },
     {
       "app": "todo",
@@ -45,8 +45,8 @@
       "expected": "reschedule over itself",
       "got": "reschedule × 1, saying: Move “Book the van” to Saturday, Sep 5.",
       "ok": true,
-      "ms": 1326,
-      "stages": "fast 351, light 859"
+      "ms": 822,
+      "stages": "fast 139, light 598"
     },
     {
       "app": "todo",
@@ -55,8 +55,8 @@
       "expected": "reschedule over held",
       "got": "reschedule × 6, saying: Move the date of the 6 tasks in This week to Wednesday, Sep 9.",
       "ok": true,
-      "ms": 1162,
-      "stages": "fast 134, light 871"
+      "ms": 845,
+      "stages": "fast 91, light 635"
     },
     {
       "app": "todo",
@@ -65,8 +65,8 @@
       "expected": "move-to-list over itself",
       "got": "move-to-list × 1, saying: Move “Book the van” to Someday.",
       "ok": true,
-      "ms": 247,
-      "stages": "fast 243"
+      "ms": 100,
+      "stages": "fast 95"
     },
     {
       "app": "todo",
@@ -75,8 +75,8 @@
       "expected": "finish|archive-task over held",
       "got": "finish+archive-task × 6, saying: Mark the 5 open tasks in This week done. Archive “Order boxes”.",
       "ok": true,
-      "ms": 233,
-      "stages": "fast 230"
+      "ms": 115,
+      "stages": "fast 113"
     },
     {
       "app": "todo",
@@ -85,8 +85,8 @@
       "expected": "remove-list|archive-list over itself",
       "got": "remove-list × 1, saying: Remove “This week”.",
       "ok": true,
-      "ms": 142,
-      "stages": "fast 139"
+      "ms": 85,
+      "stages": "fast 83"
     },
     {
       "app": "todo",
@@ -95,8 +95,8 @@
       "expected": "finish over itself",
       "got": "finish × 1, saying: Finish “Pay the deposit”.",
       "ok": true,
-      "ms": 169,
-      "stages": "fast 164"
+      "ms": 88,
+      "stages": "fast 85"
     },
     {
       "app": "todo",
@@ -105,8 +105,8 @@
       "expected": "missing link",
       "got": "missing link: Tasks have no one assigned to them. (who Sam)",
       "ok": true,
-      "ms": 115,
-      "stages": "fast 113"
+      "ms": 86,
+      "stages": "fast 85"
     },
     {
       "app": "todo",
@@ -115,8 +115,8 @@
       "expected": "missing link",
       "got": "missing link: Tasks have no one assigned to them. (who Nora)",
       "ok": true,
-      "ms": 93,
-      "stages": "fast 90"
+      "ms": 98,
+      "stages": "fast 94"
     },
     {
       "app": "todo",
@@ -125,8 +125,8 @@
       "expected": "rename over itself",
       "got": "rename × 1, saying: Rename to “Moving week”.",
       "ok": true,
-      "ms": 112,
-      "stages": "fast 108"
+      "ms": 79,
+      "stages": "fast 78"
     },
     {
       "app": "todo",
@@ -135,8 +135,8 @@
       "expected": "reopen over itself",
       "got": "reopen × 1, saying: Reopen “Get the second quote”.",
       "ok": true,
-      "ms": 106,
-      "stages": "fast 102"
+      "ms": 83,
+      "stages": "fast 78"
     },
     {
       "app": "todo",
@@ -145,8 +145,8 @@
       "expected": "a true answer",
       "got": "answer: No overdue tasks in This week. [facts said 1/1, given 1: /\\b(no|none|nothing|not)\\b/i]",
       "ok": true,
-      "ms": 893,
-      "stages": "fast 141, light 631"
+      "ms": 972,
+      "stages": "fast 81, light 809"
     },
     {
       "app": "todo",
@@ -155,8 +155,8 @@
       "expected": "a true answer",
       "got": "answer: Get the second quote is blocking it. [facts said 1/1, given 1: quote]",
       "ok": true,
-      "ms": 899,
-      "stages": "fast 107, light 702"
+      "ms": 712,
+      "stages": "fast 106, light 539"
     },
     {
       "app": "rota",
@@ -165,8 +165,8 @@
       "expected": "cover over itself",
       "got": "cover × 1, saying: Bo Ferreira covers “Monday open up”.",
       "ok": true,
-      "ms": 2238,
-      "stages": "fast 96, light 2046"
+      "ms": 1252,
+      "stages": "fast 86, light 1087"
     },
     {
       "app": "rota",
@@ -175,18 +175,18 @@
       "expected": "step-back over itself",
       "got": "step-back × 1, saying: Cass Whitley steps back.",
       "ok": true,
-      "ms": 139,
-      "stages": "fast 135"
+      "ms": 80,
+      "stages": "fast 78"
     },
     {
       "app": "rota",
       "on": "s-wed-food",
       "said": "who's covering?",
       "expected": "a true answer",
-      "got": "answer: Bo Ferreira is covering the Wednesday food bank shift. [facts said 1/1, given 1: Bo]",
-      "ok": true,
-      "ms": 1931,
-      "stages": "fast 133, light 1699"
+      "got": "answer: Ada Nowak is covering it this week. [facts said 0/1, given 1: Bo]",
+      "ok": false,
+      "ms": 977,
+      "stages": "fast 76, light 818"
     },
     {
       "app": "rota",
@@ -195,8 +195,8 @@
       "expected": "move-shift over itself",
       "got": "move-shift × 1, saying: Move “Tuesday craft group” to Wednesday, Sep 16.",
       "ok": true,
-      "ms": 2739,
-      "stages": "fast 1707, light 875"
+      "ms": 889,
+      "stages": "fast 98, light 719"
     },
     {
       "app": "discography",
@@ -205,8 +205,8 @@
       "expected": "a true answer",
       "got": "answer: It is on the Cloudy-Eyed Stroll/Mitch Bade release. [facts said 1/1, given 1: Cloudy-Eyed]",
       "ok": true,
-      "ms": 2804,
-      "stages": "fast 157, light 831"
+      "ms": 1194,
+      "stages": "fast 79, light 466"
     }
   ]
 }

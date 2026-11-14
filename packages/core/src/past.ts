@@ -22,7 +22,7 @@ import type { Epoch } from "./ops/log.js";
 import type { Author, Operation } from "./ops/types.js";
 import type { Principal } from "./permissions/types.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
-import { seatOf } from "./seat-of.js";
+import { markPresent, seatOf } from "./seat-of.js";
 import type { PastDeclaration, Store, StoreOptions } from "./store.js";
 // And how a reader of an app that publishes is served, which folds the past: a page fetches the two together, when it first looks back or draws an app that publishes (Roadmap f-publishing-lifecycle).
 import "./publishing.js";
@@ -202,7 +202,7 @@ function made<S extends AnySchema>(
   const inside = openedOf(store);
   // The store's own class, so this entry imports none of it (`seat-of.ts` says why).
   const Made = store.constructor as new (options: StoreOptions<S>) => Store<S>;
-  return new Made({
+  const past = new Made({
     schema: (declared?.schema ?? store.schema) as S,
     invariants: (declared?.invariants ?? inside.invariants) as readonly InvariantDefinition<S>[],
     invariantOptions: inside.invariantOptions,
@@ -220,6 +220,9 @@ function made<S extends AnySchema>(
     now: inside.now,
     past: { seq: moment.seq, ...given("at", moment.at), foldedFrom: moment.from, folded: moment.seq - moment.from },
   });
+  // Whom a seat was ever bound to is the present's to say: a seat's view of this moment names its authors as the present does.
+  markPresent(past, store);
+  return past;
 }
 
 /** The graph a base is, judged as the store judges, so a default filled in on the way in is filled in again; a base the declaration no longer fits is held as written. */

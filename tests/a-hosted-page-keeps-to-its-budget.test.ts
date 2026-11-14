@@ -226,7 +226,8 @@ describe("a hosted page", () => {
     // 1128 KB with the whole 0.1.74 batch together (2026-11-11): a place drawn for an e-ink device's screen, a field that keeps a time of day and what a seat may run, and a bare app that looks designed, each measured against main: the scene face measured 1_154_955 B, 2_955 over 1125 KB.
     // 1129 KB since the page and the city came to be one face a host turns on (`sceneUnderPages`, 0.2.0): the level control, its keys and legend, and lines kept off what stands at the foot: the scene face measured 1_155_787 B, 832 over the whole 0.1.74 batch (1_154_955).
     // 1134 KB since the 0.2.1 batch brought together mount taking `sceneUnderPages` (FR-239; 1131 KB alone, 1_553 over 0.2.0's 1_155_786), the security and reliability fixes for bound people (1132 KB alone, at 1_158_341) and the one face's own changes: the scene face measured 1_160_785 B on the batch.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1134 * 1024);
+    // 1136 KB since the security and reliability fixes for suggestions: the scene face measured 1_162_402 B, 1_617 over the 0.2.1 batch (1_160_785).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1136 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

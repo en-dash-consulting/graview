@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form alone",
+  "minified": 1617,
+  "gzipped": 570,
+  "note": "Raised with the security and reliability fixes for suggestions (.changeset/security-and-reliability-fixes-for-suggestions.md). 1617 / 570 more. Measured at 290_101 / 104_803 against 288_484 / 104_233."
+}

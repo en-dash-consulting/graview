@@ -87,15 +87,19 @@ graview.onProps((props) => graview.render(graview.html\`<div id="cards">\${props
 /*
  * A worker view that is a feature's whole page, as Deep Time's period pages are: a long story, then a
  * pill for each request that became the feature. On a feature nothing became, it marks nothing at all.
+ * Between the story and the pills, as on Graview Cloud's Family tree, a link to another feature and a
+ * paragraph under it: the gap between that link and the pills holds words, and no line runs through it.
  */
 const PERIOD = {
   manifest: { name: "feature-period", title: "Feature period", attach: "feature", cardinality: "one", replaces: "page", reads: { kinds: ["feature", "request"], edges: ["became"] } },
-  source: `graview.style(".story{margin:0 0 14px;line-height:1.6;min-height:120px} .pill{display:inline-block;margin:4px;padding:6px 10px;border:1px solid var(--graview-edge);border-radius:999px}");
+  source: `graview.style(".story{margin:0 0 14px;line-height:1.6;min-height:120px} .note{margin:6px 0 10px;line-height:1.5} .pill{display:inline-block;margin:4px;padding:6px 10px;border:1px solid var(--graview-edge);border-radius:999px}");
 graview.onProps((props) => {
   const node = props.node;
   const became = props.edges.filter((edge) => edge.kind === "became" && edge.to === node.id).map((edge) => props.nodes.find((one) => one.id === edge.from)).filter(Boolean);
   const story = Array.from({ length: became.length > 0 ? 14 : 1 }, (_, at) => graview.html\`<p class="story">Part \${at + 1} of the story of \${node.label}, told at length so the page is tall.</p>\`);
-  graview.render(graview.html\`<article id="period"><h2>\${node.label}</h2>\${story}<div id="pills">\${became.map((one) => graview.html\`<a class="pill" data-record=\${one.id} id=\${"pill-" + one.id}>\${one.label}</a>\`)}</div></article>\`);
+  const next = became.length > 0 ? props.nodes.find((one) => one.kind === "feature" && one.id !== node.id) : null;
+  const lead = next ? graview.html\`<p class="lead"><a class="pill" data-record=\${next.id} id="lead">\${next.label}</a></p><p class="note" id="note">What came of these requests, said in a paragraph between the link above and the pills below it, long enough to run over two lines of the page.</p>\` : "";
+  graview.render(graview.html\`<article id="period"><h2>\${node.label}</h2>\${story}\${lead}<div id="pills">\${became.map((one) => graview.html\`<a class="pill" data-record=\${one.id} id=\${"pill-" + one.id}>\${one.label}</a>\`)}</div></article>\`);
 });`,
 };
 /* A worker view of every request whose first row moves of itself, forever: its line stays on it every frame. */
@@ -636,18 +640,46 @@ async function gatheredIntoOne(page, where) {
  */
 async function crossesNoOtherPill(page, where) {
   await nearby(page, "/features/f3", periodDrawn);
-  await wheelOver(page, '[data-worker-view="feature-period"]', 20, 200);
+  /*
+   * And no line runs through the view's words: between the link above the
+   * pills and the pills is a paragraph (Graview Cloud's Family tree, where
+   * the lines from a pill row rose into the paragraph above it). On a phone
+   * a line goes the same way toward the sheet's top edge, never straight up
+   * across the rows above.
+   */
+  if (where.phone) {
+    await page.evaluate(() => document.querySelector('[data-worker-view="feature-period"]')?.shadowRoot?.querySelector("#pills")?.scrollIntoView({ block: "center" }));
+    await page.waitForTimeout(800);
+  } else await wheelOver(page, '[data-worker-view="feature-period"]', 20, 200);
   await page.waitForTimeout(300);
   const drawn = await page.evaluate(() => {
     const region = document.querySelector('[data-worker-view="feature-period"]');
     const panel = document.querySelector("[data-graview-one-place]")?.getBoundingClientRect();
-    const pills = [...(region?.shadowRoot?.querySelectorAll("[data-record]") ?? [])].map((el) => {
+    const seen = (one) => panel && one.y + one.height > panel.top && one.y < panel.bottom;
+    const boxOf = (el) => {
       const r = el.getBoundingClientRect();
-      return { id: el.getAttribute("data-record"), x: r.left, y: r.top, width: r.width, height: r.height };
-    }).filter((one) => panel && one.y + one.height > panel.top && one.y < panel.bottom);
+      return { x: r.left, y: r.top, width: r.width, height: r.height };
+    };
+    const pills = [...(region?.shadowRoot?.querySelectorAll("[data-record]") ?? [])].map((el) => ({ id: el.getAttribute("data-record"), ...boxOf(el) })).filter(seen);
+    // The words the view draws: each paragraph and heading, as much of it as the panel shows (scrolled past its edge, it is hidden).
+    const clip = (one) => {
+      const top = Math.max(one.y, panel.top);
+      const bottom = Math.min(one.y + one.height, panel.bottom);
+      return { ...one, y: top, height: bottom - top };
+    };
+    const words = [...(region?.shadowRoot?.querySelectorAll("p.story, p.note, h2") ?? [])].map((el) => ({ id: el.id ? `#${el.id}` : el.className || el.tagName.toLowerCase(), ...boxOf(el) })).filter(seen).map(clip);
     // Each straight piece of each line's path, as drawn: M and L points (the curve beyond the panel's edge is the city's).
     const crossings = [];
+    const throughWords = [];
     let pieces = 0;
+    const across = (a, b, box) => {
+      for (let t = 0; t <= 1; t += 0.02) {
+        const x = a.x + (b.x - a.x) * t;
+        const y = a.y + (b.y - a.y) * t;
+        if (x > box.x + 1 && x < box.x + box.width - 1 && y > box.y + 1 && y < box.y + box.height - 1) return true;
+      }
+      return false;
+    };
     for (const g of document.querySelectorAll("[data-graview-line]")) {
       const key = g.getAttribute("data-graview-line");
       const d = g.querySelector("path")?.getAttribute("d") ?? "";
@@ -662,24 +694,14 @@ async function crossesNoOtherPill(page, where) {
         const a = points[i - 1];
         const b = points[i];
         pieces++;
-        for (const pill of pills) {
-          if (pill.id === key) continue;
-          // Sampled along the piece: any point well inside another pill's box is a crossing.
-          for (let t = 0; t <= 1; t += 0.02) {
-            const x = a.x + (b.x - a.x) * t;
-            const y = a.y + (b.y - a.y) * t;
-            if (x > pill.x + 1 && x < pill.x + pill.width - 1 && y > pill.y + 1 && y < pill.y + pill.height - 1) {
-              crossings.push(`${key} across ${pill.id}`);
-              break;
-            }
-          }
-        }
+        for (const pill of pills) if (pill.id !== key && across(a, b, pill)) crossings.push(`${key} across ${pill.id}`);
+        for (const one of words) if (across(a, b, one)) throughWords.push(`${key} through ${one.id}`);
       }
     }
     const rows = new Set(pills.map((one) => Math.round(one.y))).size;
-    return { pills: pills.length, rows, pieces, crossings: [...new Set(crossings)] };
+    return { pills: pills.length, rows, words: words.map((one) => one.id), pieces, crossings: [...new Set(crossings)], throughWords: [...new Set(throughWords)] };
   });
-  return { where, ...drawn, ok: drawn.pills >= 4 && drawn.rows >= 2 && drawn.pieces > 0 && drawn.crossings.length === 0 };
+  return { where, ...drawn, ok: drawn.pills >= 4 && drawn.rows >= 2 && drawn.words.includes("#note") && drawn.pieces > 0 && drawn.crossings.length === 0 && drawn.throughWords.length === 0 };
 }
 
 /* At Nearby the person moves the camera by hand; then the frame shows one more record: the camera stays where they left it. */
@@ -773,12 +795,13 @@ try {
       [seen.startsOnCard, leavesFromItsCard],
       [seen.gathered, gatheredIntoOne],
       [seen.noOtherPill, crossesNoOtherPill],
+      [seen.noOtherPill, crossesNoOtherPill, { viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 }],
       [seen.outOfSight, outOfSight, { viewport: { width: 610, height: 360 } }],
     ]) {
       const context = await browser.newContext(options ?? { viewport: DESK });
       const page = await context.newPage();
       page.on("pageerror", (error) => errors.push(`${engine}: ${error.message}`));
-      const where = { engine, device: options ? `${options.viewport.width}×${options.viewport.height}` : "desk 1440×900" };
+      const where = { engine, device: options ? `${options.viewport.width}×${options.viewport.height}` : "desk 1440×900", ...(options?.isMobile ? { phone: true } : {}) };
       try {
         list.push(await drive(page, where));
       } catch (error) {

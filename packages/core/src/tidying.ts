@@ -336,8 +336,10 @@ const given = <K extends string, V>(key: K, value: V | undefined) => (value === 
 export function suggest<S extends AnySchema>(store: Store<S>, calls: readonly MutationCall[], options: SuggestOptions): Operation | undefined {
   const whole = seatOf(store)?.store ?? store;
   const kept = keptOf(whole);
-  const lineage = lineageOf(options.lineage);
-  if (lineage === undefined) throw new GraphError("A suggestion says what it is based on: { basis, confidence? }");
+  // A suggestion answers none: which one a change accepted is the store's to say (`acceptSuggestion`).
+  const asked = lineageOf(options.lineage);
+  if (asked === undefined) throw new GraphError("A suggestion says what it is based on: { basis, confidence? }");
+  const { suggestion: _answers, items: _took, ...lineage } = asked;
   const author = options.author ?? kept.by;
   if (options.expiresAt !== undefined && Number.isNaN(Date.parse(options.expiresAt))) throw new GraphError(`A suggestion expires at a time: "${options.expiresAt}" is not one (an ISO time, like 2026-10-23T06:00:00Z).`);
   // The same change, however it is spelled, is the one that waits — even one a person said "not now" to.
@@ -767,6 +769,19 @@ VOTING.op = (held, made, call, batch, author, options) => {
  * store queues them in the vote's own gesture, having rehearsed that the
  * actor would be let.
  */
+/*
+ * WHAT OF A SUGGESTION A CHANGE MAY SAY IT ANSWERS (`VOTING.waiting`): what
+ * still waits for this author, as `acceptSuggestion` finds it — so a change
+ * that names a suggestion it does not make, or one not waiting for its
+ * author, names none.
+ */
+VOTING.waiting = (held, id, author) => {
+  const store = held as Store<AnySchema>;
+  const found = suggestions(store, author).find((one) => one.id === id);
+  const suggested = found && store.log.get(id)?.suggests?.length;
+  return found && suggested !== undefined ? { items: found.items.map(({ at, call }) => ({ at, call })), suggested } : undefined;
+};
+
 VOTING.accepting = (held, vote) => {
   const store = held as Store<AnySchema>;
   const at = store.tidying?.autoAcceptAt;

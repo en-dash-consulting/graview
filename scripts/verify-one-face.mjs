@@ -57,7 +57,7 @@ const STRIPS = resolve(repoRoot, "docs/one-face");
 
 const report = { at: new Date().toISOString(), engines, app: "apps/todo", checks: {} };
 const errors = [];
-const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], pointsOut: [], shortcuts: [], keysTurnOff: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [], richClear: [], richNamed: [], richWords: [], richLegend: [], richViews: [], richRecords: [], richNearbyViews: [], richControls: [], richOwnDistrict: [], richLegible: [], richHomeNearby: [], richOneLevel: [], richSmooth: [], richFocusSeen: [], richProblems: [], richHand: [], richHomeViews: [], richPanelCrossings: [], richBoardsUnder: [], richHomeClear: [], richProblemsOfKind: [], richPosts: [], richPostsUnder: [], recordInPlace: [], oneRuleFades: [], noWordsAfterPress: [], drawnOnce: [], nearbyZoom: [], nearbyPan: [], nearbyBack: [], panelPinch: [], phoneCity: [], panelWidth: [], panelSpacing: [], viewInPanel: [] };
+const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], pointsOut: [], shortcuts: [], keysTurnOff: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [], richClear: [], richNamed: [], richWords: [], richLegend: [], richViews: [], richRecords: [], richNearbyViews: [], richPhoneLines: [], richNamesBeside: [], richHomeScale: [], richControls: [], richOwnDistrict: [], richLegible: [], richHomeNearby: [], richOneLevel: [], richSmooth: [], richFocusSeen: [], richProblems: [], richHand: [], richHomeViews: [], richPanelCrossings: [], richBoardsUnder: [], richHomeClear: [], richProblemsOfKind: [], richPosts: [], richPostsUnder: [], recordInPlace: [], oneRuleFades: [], noWordsAfterPress: [], drawnOnce: [], nearbyZoom: [], nearbyPan: [], nearbyBack: [], panelPinch: [], phoneCity: [], panelWidth: [], panelSpacing: [], viewInPanel: [] };
 
 /* ------------------------------------------------------------------ */
 /* In the page                                                         */
@@ -1395,6 +1395,18 @@ const readRich = (page) =>
     return { boards, under, namesUnder, tags, rests, plots, plates, problems, buildings, lines, controls, unseenFocus, chosenLooking, tipUp, district, postCrossings, dock: dock ? rect(dock) : null, level, panel: level === 1 && panelEl ? rect(panelEl) : null, legend, bar, width: innerWidth, height: innerHeight };
   });
 
+/** From one box to another, edge to edge: none where they meet. */
+const gapBetween = (a, b) => Math.hypot(Math.max(b.x - (a.x + a.width), 0, a.x - (b.x + b.width)), Math.max(b.y - (a.y + a.height), 0, a.y - (b.y + b.height)));
+/** How far from its own district a name may stand and still read as its: a name's height and a little air. */
+const NAME_NEAR = 34;
+/** Each district's name that stands further than that from its own district (Graview Cloud's Deep Time at 1280: "Plants" under the Tree of life's district). */
+const namesAstray = (seenNow) => seenNow.tags.filter((t) => seenNow.district[t.kind] && gapBetween(t.box, seenNow.district[t.kind]) > NAME_NEAR).map((t) => `${t.kind} ${Math.round(gapBetween(t.box, seenNow.district[t.kind]))} px off`);
+/*
+ * THE HOME'S NEARBY CAMERA AT 0.2.1 (13ae2dfba, the batch merged to main), on
+ * this fixture at each size: the home's Nearby city draws no smaller than
+ * this, where 0.2.1's framing already fit.
+ */
+const HOME_NEARBY_ZOOM_AT_0_2_1 = { "1520×900": 0.9875, "1280×800": 0.984, "390×844": 1.2038, "844×390": 0.7785, "768×1024": 0.8534, "360×640": 0.6818 };
 const overlapOf = (a, b) => Math.max(0, Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x)) * Math.max(0, Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y));
 /*
  * NO BOARD AND NO NAME LEAPS: across a move and once it has arrived, a
@@ -1590,6 +1602,7 @@ async function rich(browser, device) {
         const missing = owed.filter((one) => !views.some((b) => b.key === `place:${one}`));
         // A phone's sheet leaves the city a strip: there a view in sight is owed its board, and none has to be.
         // On a small window (a phone, or one on its side) a board stands only where it can be read: there none is owed.
+        result.nearbyNames = { names: seenNow.tags.length, astray: namesAstray(seenNow), unnamed: seenKinds ? [...seenKinds].filter((kind) => !seenNow.tags.some((t) => t.kind === kind)) : [] };
         result.nearbyViews = { districtsInSight: [...seenKinds], owed, standing: views.map((b) => b.label), missing, ok: sheet || seenNow.height <= 600 || missing.length === 0 };
       }
       if (level === 2) {
@@ -1621,6 +1634,12 @@ async function rich(browser, device) {
     await page.mouse.move(2, Math.round(device.height / 2));
     await page.screenshot({ path: resolve(STRIPS, `rich-${device.width}-home-nearby.png`) });
     const home = await readRich(page);
+    result.homeNames = { names: home.tags.length, astray: namesAstray(home) };
+    {
+      const zoom = await page.evaluate(() => Number(document.querySelector('[data-testid="one-place-city"]')?.getAttribute("data-graview-camera-zoom") ?? 0));
+      const was = HOME_NEARBY_ZOOM_AT_0_2_1[where.device] ?? null;
+      result.homeScale = { zoom, at021: was };
+    }
     // What the home's views show: each record a part of the page or a view in it marks, by its kind (the fixture's ids are "<kind>-<n>").
     const homeKinds = await page.evaluate(() => {
       const sheet = document.querySelector("[data-graview-one-place]");
@@ -1850,6 +1869,8 @@ async function rich(browser, device) {
   // A desk's Nearby draws the formation page's lines: there are some to hold, and a run with none fails.
   const roomy = device.width >= 1000 && device.height > 600;
   seen.richRecords.push({ where, hidden: nearby.hidden, districtsInSight: nearby.kindsInSight, lines: nearby.lines, lineEndsNotOnABuilding: nearby.lineEnds, ok: !result.error && nearby.hidden?.length === 0 && (nearby.kindsInSight?.length ?? 0) >= 1 && (!roomy || nearby.lines > 0) && nearby.lineEnds?.length === 0 });
+  seen.richNamesBeside.push({ where, home: result.homeNames, page: result.nearbyNames, ok: Boolean(result.homeNames && result.nearbyNames && result.homeNames.names > 0 && result.nearbyNames.names > 0 && result.homeNames.astray.length === 0 && result.nearbyNames.astray.length === 0) });
+  seen.richHomeScale.push({ where, ...result.homeScale, ok: Boolean(result.homeScale && result.homeScale.at021 !== null && result.homeScale.zoom >= result.homeScale.at021 - 0.002) });
   seen.richNearbyViews.push({ where, ...result.nearbyViews, ok: Boolean(result.nearbyViews?.ok) });
   seen.richControls.push({ where, city: city.controlsCovered, nearby: nearby.controlsCovered, afterAPan: result.panned, ok: !result.error && city.controlsCovered?.length === 0 && nearby.controlsCovered?.length === 0 && (result.panned?.length ?? 0) === 0 });
   seen.richNamed.push({ where, ...result.named, ok: Boolean(result.named && result.named.districts === Object.keys(RICH_PLURALS).length && result.named.unnamed.length === 0) });
@@ -1905,6 +1926,89 @@ async function rich(browser, device) {
  * is faded is what a fresh load of that page fades, no line's words stand
  * over the city, and the record opened is the one lit.
  */
+/*
+ * ON A PHONE, ONE RISER A DISTRICT, AND NO LINE ACROSS WORDS (Graview
+ * Cloud's Deep Time, Cretaceous at Nearby on a 390 phone: each row's line
+ * rose up the sheet's right edge on its own, ten verticals side by side,
+ * and the first row's lines ran across "Connected · 59" and a group's
+ * label). A period's page here has the same groups: a label over each row
+ * of pills. Each line's straight pieces inside the sheet cross no words the
+ * page draws (a heading, a label: text not part of a record's own pill),
+ * and the lines into one district go up the sheet as one.
+ */
+async function richPhoneLines(browser, device) {
+  const where = { device: `${device.width}×${device.height}` };
+  const context = await browser.newContext({ viewport: device, colorScheme: "dark", isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
+  const page = await context.newPage();
+  page.on("pageerror", (error) => errors.push(`rich phone lines ${where.device}: ${error.message}`));
+  try {
+    await page.goto(`${richHost.url}/periods/period-18?theme=dark`, { waitUntil: "load" });
+    await ready(page);
+    await page.keyboard.press("2");
+    await restAt(page, 1, 15_000);
+    await page.waitForTimeout(900);
+    await page.screenshot({ path: resolve(STRIPS, `rich-${device.width}-period-nearby.png`) });
+    const read = await page.evaluate(() => {
+      const sheet = document.querySelector("[data-graview-one-place]");
+      const panel = sheet?.getBoundingClientRect();
+      if (!sheet || !panel) return null;
+      const PARTS = "a[href], [data-graview-record], [data-record], [data-graview-pick], button";
+      // Every line of words the page draws in sight, outside a record's own part: a heading, a group's label, a sentence.
+      const words = [];
+      const walker = document.createTreeWalker(sheet, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        if (!node.textContent.trim() || node.parentElement?.closest(PARTS)) continue;
+        if (getComputedStyle(node.parentElement).visibility === "hidden") continue;
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        for (const r of range.getClientRects()) {
+          if (r.width < 2 || r.height < 2 || r.bottom < panel.top || r.top > panel.bottom) continue;
+          words.push({ text: node.textContent.trim().slice(0, 24), x: r.left, y: Math.max(r.top, panel.top), width: r.width, height: Math.min(r.bottom, panel.bottom) - Math.max(r.top, panel.top) });
+        }
+      }
+      const across = [];
+      const risers = {};
+      let lines = 0;
+      for (const g of document.querySelectorAll("[data-graview-line]")) {
+        const key = g.getAttribute("data-graview-line");
+        const points = [];
+        for (const [, cmd, rest] of (g.querySelector("path")?.getAttribute("d") ?? "").matchAll(/([MLQ])([^MLQ]*)/g)) {
+          if (cmd === "Q") break;
+          const [x, y] = rest.trim().split(/[ ,]+/).map(Number);
+          points.push({ cmd, x, y });
+        }
+        lines++;
+        // The district it goes into: a gathered line's, or its record's kind (the fixture's ids are "<kind>-<n>").
+        const kind = (g.getAttribute("data-graview-line-gathered") ?? "").replace(/^kind:/, "") || key.replace(/^kind:/, "").replace(/-\d+$/, "");
+        for (let i = 1; i < points.length; i++) {
+          if (points[i].cmd !== "L") continue;
+          const a = points[i - 1];
+          const b = points[i];
+          // A riser: a piece that comes up to the sheet's top edge.
+          if (Math.abs(b.y - panel.top) <= 2 && Math.abs(b.x - a.x) < 0.5 && a.y > b.y + 4) (risers[kind] ??= new Set()).add(Math.round(b.x * 2) / 2);
+          for (const w of words) {
+            for (let t = 0; t <= 1; t += 0.02) {
+              const x = a.x + (b.x - a.x) * t;
+              const y = a.y + (b.y - a.y) * t;
+              if (x > w.x + 0.5 && x < w.x + w.width - 0.5 && y > w.y + 0.5 && y < w.y + w.height - 0.5) {
+                across.push(`${key} across “${w.text}”`);
+                break;
+              }
+            }
+          }
+        }
+      }
+      return { lines, words: words.length, across: [...new Set(across)], risers: Object.fromEntries(Object.entries(risers).map(([kind, xs]) => [kind, xs.size])) };
+    });
+    const many = read ? Object.entries(read.risers).filter(([, n]) => n > 1).map(([kind, n]) => `${kind}: ${n} risers`) : ["nothing read"];
+    return { where, ...read, many, ok: Boolean(read && read.lines >= 4 && read.words > 0 && read.across.length === 0 && many.length === 0) };
+  } catch (error) {
+    return { where, ok: false, error: String(error?.message ?? error) };
+  } finally {
+    await context.close().catch(() => {});
+  }
+}
+
 const RECORD_FROM = "species-1";
 /** Every building of one district, where it stands on its own ground (its tile's corners as the frame), what of the city is faded, and the words over the city. */
 const readDistrict = (page, kind) =>
@@ -2508,6 +2612,7 @@ try {
     if (!only || only.includes("viewInPanel")) seen.viewInPanel.push(await viewRootInPanel(browser));
     if (!only || only.includes("switch")) seen.switch.push(await rootIsTheOneFace(browser, { engine, device: "desk 1440×900" }).catch((error) => ({ ok: false, error: String(error?.message ?? error) })));
     if (!only || only.includes("rich")) for (const device of [{ width: 1520, height: 900 }, { width: 1280, height: 800 }, { width: 390, height: 844 }, { width: 844, height: 390 }, { width: 768, height: 1024 }, { width: 360, height: 640 }]) await rich(browser, device);
+    if (!only || only.includes("rich")) for (const device of [{ width: 390, height: 844 }, { width: 412, height: 915 }]) seen.richPhoneLines.push(await richPhoneLines(browser, device));
     if (engine === "chromium" && (!only || only.includes("rich"))) {
       await recordInPlace(browser);
       await drawnOnce(browser);
@@ -2580,6 +2685,9 @@ try {
   report.checks.aDragBegunOnABoardPansTheCityAndAPressOpensTheView = { held: seen.richHand, ok: every(seen.richHand) };
   report.checks.eachViewsBoardIsDrawnAsThatViewAndNoTwoAlike = { held: seen.richViews, ok: every(seen.richViews) };
   report.checks.atNearbyEveryBuildingInSightIsSeenAndEveryLineEndsOnOne = { held: seen.richRecords, ok: every(seen.richRecords) };
+  report.checks.onAPhoneTheLinesIntoOneDistrictRiseAsOneAndNoLineCrossesAHeadingOrALabel = { held: seen.richPhoneLines, ok: every(seen.richPhoneLines) };
+  report.checks.atNearbyEachDistrictsNameStandsBesideItsOwnDistrictOnTheHomeAndARichPage = { held: seen.richNamesBeside, ok: every(seen.richNamesBeside) };
+  report.checks.atNearbyTheHomesCityDrawsNoSmallerThanIn021 = { held: seen.richHomeScale, ok: every(seen.richHomeScale) };
   report.checks.atNearbyEveryViewOfADistrictInSightHasABoard = { held: seen.richNearbyViews, ok: every(seen.richNearbyViews) };
   report.checks.noDistrictControlStandsUnderTheBarThePageOrTheLevelControl = { held: seen.richControls, ok: every(seen.richControls) };
   report.checks.everyKindsBoardStandsOnItsOwnDistrictEvenWhereThePageCoversOne = { held: seen.richOwnDistrict, ok: every(seen.richOwnDistrict) };
