@@ -378,6 +378,10 @@ export interface AppendOp {
 /** `{ [key]: value }` where the value is said, and nothing where it is not: an optional key left off rather than undefined. */
 const given = <K extends string, V>(key: K, value: V | undefined) => (value === undefined ? {} : { [key]: value }) as { readonly [P in K]?: V };
 
+/** A call's arguments written out the same however their keys were ordered: what says two calls ask the same. */
+const canonicalArgs = (value: unknown): string =>
+  JSON.stringify(value, (_, one: unknown) => (one && typeof one === "object" && !Array.isArray(one) ? Object.fromEntries(Object.keys(one).sort().map((key) => [key, (one as Record<string, unknown>)[key]])) : one)) ?? "";
+
 const HUMAN: Author = { kind: "human" };
 /** The host itself, which sees what it keeps: the principal a question is asked as when no seat is named. */
 const SYSTEM: Principal = { kind: "system" };
@@ -959,13 +963,57 @@ export class Store<S extends AnySchema> {
    * a change only as the suggestion it accepts says it, and names voters
    * only from the host's own seat — so no seat writes an account into the
    * log to see what it is served back as.
+   *
+   * AND SO IS WHICH SUGGESTION A CHANGE ANSWERS: a lineage names one
+   * (`suggestion`, and the places it took, `items`) only on a change that
+   * makes exactly what of it still waits for this author, as
+   * `acceptSuggestion` makes it — permitted to them, or the change is
+   * refused. Anywhere else, an undo and a host's primitives among them, it
+   * is said of nothing, so a suggestion stops waiting only when it is
+   * answered. Ops a host made itself (`append`) are the host's word, kept
+   * as it said them.
    */
-  private heldLineage(lineage: Lineage | undefined, author: Author): Lineage | undefined {
-    if (!lineage || (lineage.proposedBy === undefined && lineage.voters === undefined)) return lineage;
-    const { proposedBy: _by, voters, ...rest } = lineage;
-    const proposed = lineage.suggestion === undefined ? undefined : this.log.get(lineage.suggestion)?.lineage?.proposedBy;
+  private heldLineage(lineage: Lineage | undefined, author: Author, calls?: readonly MutationCall[]): Lineage | undefined {
+    if (!lineage || (lineage.proposedBy === undefined && lineage.voters === undefined && lineage.suggestion === undefined && lineage.items === undefined)) return lineage;
+    const { proposedBy: _by, voters, suggestion, items, ...rest } = lineage;
+    const answers = suggestion !== undefined && calls !== undefined && this.answersSuggestion(suggestion, items, calls, author);
+    const proposed = answers ? this.log.get(suggestion)?.lineage?.proposedBy : undefined;
     const system = isSystem(author as Principal);
-    return { ...rest, ...(proposed !== undefined ? { proposedBy: proposed } : {}), ...(system && voters !== undefined ? { voters } : {}) } as Lineage;
+    return {
+      ...rest,
+      ...(answers ? { suggestion, ...(items !== undefined ? { items } : {}) } : {}),
+      ...(proposed !== undefined ? { proposedBy: proposed } : {}),
+      ...(system && voters !== undefined ? { voters } : {}),
+    } as Lineage;
+  }
+
+  /**
+   * A batch a caller names, unless it is a suggestion's: a suggestion is
+   * answered as itself, so no change joins its batch to be taken back with
+   * it — or to stand in the way of taking it back.
+   */
+  private ownBatch(batch: string | undefined): string | undefined {
+    if (batch !== undefined && this.log.opsInBatch(batch).some((op) => op.suggests !== undefined)) throw new GraphError("That batch is a suggestion's: a change is a batch of its own.");
+    return batch;
+  }
+
+  /** Whether these calls are what of the suggestion still waits for this author, at these places (all of it, unsaid), in its order. */
+  private answersSuggestion(id: string, items: readonly number[] | undefined, calls: readonly MutationCall[], author: Author): boolean {
+    let waiting: ReturnType<NonNullable<typeof VOTING.waiting>>;
+    try {
+      waiting = VOTING.waiting?.(this, id, author as Principal);
+    } catch {
+      waiting = undefined;
+    }
+    if (!waiting) return false;
+    const places = items ?? Array.from({ length: waiting.suggested }, (_, at) => at);
+    if (places.length !== calls.length || new Set(places).size !== places.length) return false;
+    const held = new Map(waiting.items.map((item) => [item.at, item.call]));
+    const said = (call: MutationCall) => `${this.spelled(call.name)}\u0000${canonicalArgs(call.args)}`;
+    return places.every((at, index) => {
+      const call = held.get(at);
+      return call !== undefined && said(call) === said(calls[index]!);
+    });
   }
 
   /** A call with its act's name as the store spells it, so the log and every check read the one name. */
@@ -2122,9 +2170,9 @@ export class Store<S extends AnySchema> {
     // Each act by the name the store gives it, however the call spelled it.
     const calls = asked.map((call) => this.spelledCall(call));
     this.stillNow();
-    const batch = options.batch ?? this.mintBatch("batch");
+    const batch = this.ownBatch(options.batch) ?? this.mintBatch("batch");
     const author = withValidProfile(options.author ?? this.by);
-    const lineage = this.heldLineage(lineageOf(options.lineage), author);
+    const lineage = this.heldLineage(lineageOf(options.lineage), author, calls);
     const ops: Operation[] = [];
     const allPrimitives: Primitive[] = [];
     const reads = new Set<string>();
@@ -2480,7 +2528,7 @@ export class Store<S extends AnySchema> {
    */
   applyPrimitives(primitives: readonly Primitive[], options: ApplyOptions = {}): ApplyResult<S> {
     this.stillNow();
-    const batch = options.batch ?? this.mintBatch("batch");
+    const batch = this.ownBatch(options.batch) ?? this.mintBatch("batch");
     const author = withValidProfile(options.author ?? this.by);
     const before = this.violations();
     const rollback = this.graph.snapshot();
@@ -2622,7 +2670,7 @@ export class Store<S extends AnySchema> {
       );
     }
 
-    const batch = options.batch ?? this.mintBatch("undo");
+    const batch = this.ownBatch(options.batch) ?? this.mintBatch("undo");
     const lineage = this.heldLineage(lineageOf(options.lineage, true), author);
 
     /*

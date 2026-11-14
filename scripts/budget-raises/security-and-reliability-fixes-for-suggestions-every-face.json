@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 1950,
+  "gzipped": 660,
+  "note": "Raised with the security and reliability fixes for suggestions (.changeset/security-and-reliability-fixes-for-suggestions.md). 1950 / 660 more. Measured at 3_351_528 / 1_217_267 (1_217_335 gzipped in the embed's test) against 3_349_578 / 1_216_689."
+}

@@ -137,7 +137,7 @@ export function declinesIn(ops: readonly Operation[], meanings?: ActMeanings, ke
   for (const [key, one] of Object.entries(kept ?? {})) if (!undone.has(one.id) && !lifted.has(one.id)) declines.set(key, one);
   // The calls of a suggestion a person accepted one by one before declining the rest: those were said yes to (Roadmap f-job-approvals).
   const took = new Map<string, number[]>();
-  for (const op of ops) if (op.lineage?.suggestion !== undefined && op.lineage.items) took.set(op.lineage.suggestion, [...(took.get(op.lineage.suggestion) ?? []), ...op.lineage.items]);
+  for (const op of ops) if (op.lineage?.suggestion !== undefined && op.lineage.items && !op.suggests && op.undoes === undefined && op.vote === undefined) took.set(op.lineage.suggestion, [...(took.get(op.lineage.suggestion) ?? []), ...op.lineage.items]);
   for (const op of ops) {
     const live = !undone.has(op.id) && !op.withheld;
     const person = op.author.kind === "human";

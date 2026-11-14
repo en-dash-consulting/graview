@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 1623,
+  "gzipped": 562,
+  "changeset": "security-and-reliability-fixes-for-suggestions.md",
+  "note": "Raised with the security and reliability fixes for suggestions (.changeset/security-and-reliability-fixes-for-suggestions.md). Measured at 639_619 / 221_751 against 637_996 / 221_189 minified and gzipped."
+}

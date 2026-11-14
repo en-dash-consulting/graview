@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 1617,
+  "gzipped": 578,
+  "note": "Raised with the security and reliability fixes for suggestions (.changeset/security-and-reliability-fixes-for-suggestions.md). 1617 / 578 more. Measured at 796_424 / 288_838 against 794_807 / 288_260."
+}

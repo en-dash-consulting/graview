@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form handed a compiled app",
+  "minified": 1617,
+  "gzipped": 568,
+  "note": "Raised with the security and reliability fixes for suggestions (.changeset/security-and-reliability-fixes-for-suggestions.md). 1617 / 568 more. Measured at 377_624 / 137_147 against 376_007 / 136_579."
+}
