@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-14T14:51:47.079Z",
+  "at": "2026-11-14T17:41:44.001Z",
   "engines": [
     "chromium"
   ],
@@ -182,9 +182,9 @@
             "ok": true
           },
           "pageScrolled": {
-            "frames": 53,
+            "frames": 55,
             "moved": true,
-            "counted": 159,
+            "counted": 165,
             "worst": 0,
             "examples": []
           },
@@ -291,7 +291,7 @@
           "boxes": 200,
           "coldMedianMs": 0.8,
           "coldWorstMs": 1,
-          "warmMs": 0.025,
+          "warmMs": 0.027,
           "ok": true
         }
       ],
