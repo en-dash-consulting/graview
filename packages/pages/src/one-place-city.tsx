@@ -92,6 +92,10 @@ const zoomNowOf = (cam: SceneCamera): string => cam.zoom().toFixed(4);
 const MOST_LINES = 40;
 /** As many lines into one district as this, and they are one line into it with their count on it. */
 const GATHER = 4;
+/** How far inside a phone's sheet a line goes up its side to the top edge: in the sheet's own margin, clear of its words. */
+const SHEET_SIDE = 6;
+/** The furthest from its row a line in a view runs along a gap: a row's own spacing, which holds no words. */
+const FRAMED_GAP = 4;
 /** What a district's "+n" is kept under among the picture's buildings: never a record's id. */
 const REST_KEY = "\u0000rest:";
 /** How long one level's move takes. A person who asked for less motion is cut straight there. */
@@ -537,6 +541,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         key: board.key,
         kind: board.where.type === "record" ? board.where.kind : signKindOf(board.where),
         building: board.where.type === "record" && w.buildings.has(board.where.id) ? onScreen(w.buildings.get(board.where.id)!) : null,
+        // Beside a page, where the city's side is narrow, the app's views stand before the kinds' own lists: a view whose district is in sight keeps its board. Under the page too, so a move from it to Nearby carries each board from a place in the same order, never a leap halfway.
+        first: lvl !== CITY && board.where.type === "place",
       }));
       const reserved = footNow().now.map((box) => ({ x: box.x - 6, y: box.y - 6, width: box.width + 12, height: box.height + 12 }));
       const round = (n: number) => Math.round(n / 2) * 2;
@@ -717,10 +723,15 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
             return plot ? [plot] : [];
           }));
           const what = own ?? city;
+          /*
+           * THE CITY AS NEAR THE MIDDLE OF ITS SIDE AS ITS VIEWS' DISTRICTS
+           * LET IT, they in the side whole: at the zoom that fits them where
+           * they fit on their own (a small phone's strip over the sheet), else
+           * as far out as the camera goes. Fitted on them alone, the city stood
+           * off to one side of a narrow strip with room to come to its middle.
+           */
           const close = fitCamera(what, shown, 16, s);
-          if (close.s >= least) return close;
-          // As far out as the camera goes: the city as near the middle of its side as its views' districts let it, they in the side whole.
-          const held = cameraPutting(middle(city), middle(shown), least);
+          const held = cameraPutting(middle(city), middle(shown), Math.max(close.s, least));
           const lo = project(held, { x: what.x, y: what.y });
           const hi = project(held, { x: what.x + what.width, y: what.y + what.height });
           const shift = (low: number, high: number, from: number, to: number) => (low < from ? from - low : high > to ? to - high : 0);
@@ -1318,10 +1329,11 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           return box;
         };
         /* One line a record: from where it is shown, in sight on the page, to where it stands — gathered first, routed once every part is known. */
-        const asked: { key: string; target: Drawn["target"]; part: Point; box: Box; visible: DOMRect; end: { at: Point; on: string } }[] = [];
+        const asked: { key: string; target: Drawn["target"]; part: Point; box: Box; visible: DOMRect; end: { at: Point; on: string }; framed: boolean }[] = [];
         /** Every part's box on the page in sight: what a line inside the page goes round. */
         const words: Box[] = [];
-        const offer = (target: Drawn["target"], part: Point, visible: DOMRect, partBox: Box) => {
+        // `framed`: drawn by a view (a worker view, a frame), whose words between its records the page cannot read.
+        const offer = (target: Drawn["target"], part: Point, visible: DOMRect, partBox: Box, framed = false) => {
           const key = target.type === "record" ? target.id : `kind:${target.kind}`;
           // Only what is in sight on the page: a part scrolled past, or under the page's own edge, draws none.
           if (part.x < visible.left || part.x > visible.right || part.y < visible.top || part.y > visible.bottom) return;
@@ -1330,7 +1342,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           const end = endOf(target);
           if (!end) return;
           taken.add(key);
-          asked.push({ key, target, part, box: partBox, visible, end });
+          asked.push({ key, target, part, box: partBox, visible, end, framed });
         };
         /* The record page drawn by a view that names no other record: where its one line to the record leaves from. */
         let aboutPart: { readonly part: Point; readonly visible: DOMRect; readonly box: Box } | null = null;
@@ -1360,7 +1372,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
                 continue;
               }
               named = true;
-              offer({ type: "record", id: box.id }, part, visible, partBox);
+              offer({ type: "record", id: box.id }, part, visible, partBox, true);
             }
             if (!named && subjectId !== null && aboutPart === null) {
               // From the middle of what is in sight of it, or the record's own part where it drew one.
@@ -1394,44 +1406,90 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
          * into the gap above or below its row — the one toward where it is
          * going first — runs along it to the edge, and goes on from there.
          * Lines along one gap stand a pixel or two apart.
+         *
+         * ON A PHONE THE SAME, toward the sheet's top edge: along the gap to
+         * the sheet's side, clear of its words, and up that side to the top —
+         * never straight up across the rows above.
+         *
+         * IN A VIEW (a worker view, a frame) the page cannot read the words
+         * between its records: the middle of a gap between two rows may be a
+         * paragraph (Graview Cloud's Family tree, where the lines from a pill
+         * row rose into the paragraph above it and drew a box through it). A
+         * line there takes the gap below its row first, and keeps to its
+         * row's own edge — never further from it than the rows' own spacing —
+         * so it never runs along a gap that holds words. On a phone it never
+         * goes straight up through them either.
          */
         const hits = (a: Point, b: Point, own: Box) =>
           words.some((o) => o !== own && Math.max(a.x, b.x) > o.x + 1 && Math.min(a.x, b.x) < o.x + o.width - 1 && Math.max(a.y, b.y) > o.y + 1 && Math.min(a.y, b.y) < o.y + o.height - 1);
         const edgeX = pageRect.x;
-        const wayIn = (one: (typeof asked)[number]): { via: Point[]; gap: number | null } => {
+        /** The sheet's two sides on a phone, inside its own margin: where a line goes up to its top edge. */
+        const sides = [pageRect.x + SHEET_SIDE, pageRect.x + pageRect.width - SHEET_SIDE];
+        /** Something standing on the sheet's top edge there (the control riding on it): a line up that side would leave the edge somewhere else. */
+        const standsOnTheEdge = (x: number) => reserved.some((box) => x >= box.x - 3 && x <= box.x + box.width + 3 && box.y + box.height >= pageRect.y - 43 && box.y - 3 <= pageRect.y);
+        type Way = { readonly via: Point[]; readonly gap: number | null; readonly side: number | null };
+        const wayIn = (one: (typeof asked)[number]): Way => {
           const b = one.box;
           const from = leaveFrom(one.part, pageRect, phone);
           const straight = phone ? { x: one.part.x, y: Math.max(b.y, one.visible.top, from.y) } : { x: Math.max(b.x, one.visible.left, from.x), y: one.part.y };
-          if (phone || !hits(straight, from, b)) return { via: [straight, from], gap: null };
-          const beside = words.filter((o) => o !== b && o.x < b.x + b.width && o.x + o.width > edgeX);
-          const above = beside.filter((o) => o.y + o.height <= b.y + 1).reduce((most, o) => Math.max(most, o.y + o.height), -Infinity);
-          const below = beside.filter((o) => o.y >= b.y + b.height - 1).reduce((least, o) => Math.min(least, o.y), Infinity);
-          const gaps = [
-            { y: Number.isFinite(above) ? (above + b.y) / 2 : b.y - 4, leave: b.y },
-            { y: Number.isFinite(below) ? (b.y + b.height + below) / 2 : b.y + b.height + 4, leave: b.y + b.height },
-          ].filter((g) => g.y > one.visible.top && g.y < one.visible.bottom);
-          // Toward where it is going first: up for a building above the part, down for one below.
-          if (one.end.at.y > one.part.y) gaps.reverse();
+          const plain: Way = { via: [straight, from], gap: null, side: null };
+          if (!(phone && one.framed) && !hits(straight, from, b)) return plain;
+          // The row it stands in: every part level with it and of a row's size, never a view's whole box.
+          const level = words.filter((o) => o !== b && o.height <= b.height * 2 + 8 && o.y < b.y + b.height - 1 && o.y + o.height > b.y + 1);
+          const rowTop = Math.min(b.y, ...level.map((o) => o.y));
+          const rowBottom = Math.max(b.y + b.height, ...level.map((o) => o.y + o.height));
           const x = b.x + Math.min(10, b.width / 2);
-          for (const gap of gaps) {
-            const leave = { x, y: gap.leave };
-            const down = { x, y: gap.y };
-            const out = { x: edgeX, y: gap.y };
-            if (!hits(leave, down, b) && !hits(down, out, b)) return { via: [leave, down, out], gap: Math.round(gap.y) };
+          const ends = phone ? sides.filter((side) => !standsOnTheEdge(side)).sort((p, q) => Math.abs(p - x) - Math.abs(q - x)) : [edgeX];
+          for (const end of ends) {
+            // What stands across the way along the gap: between the part and the edge it runs to.
+            const lo = Math.min(end, b.x);
+            const hi = Math.max(end, b.x + b.width);
+            const beside = words.filter((o) => o !== b && o.x < hi && o.x + o.width > lo);
+            const above = beside.filter((o) => o.y + o.height <= rowTop + 1).reduce((most, o) => Math.max(most, o.y + o.height), -Infinity);
+            const below = beside.filter((o) => o.y >= rowBottom - 1).reduce((least, o) => Math.min(least, o.y), Infinity);
+            // In a view, no further from the row than its own spacing: what lies past that the page cannot see.
+            const off = (room: number) => (one.framed ? Math.min(Number.isFinite(room) ? room / 2 : FRAMED_GAP, FRAMED_GAP) : Number.isFinite(room) ? room / 2 : 4);
+            const gaps = [
+              { y: rowTop - off(rowTop - above), leave: b.y },
+              { y: rowBottom + off(below - rowBottom), leave: b.y + b.height },
+            ].filter((g) => g.y > one.visible.top && g.y < one.visible.bottom);
+            // In a view the gap below first; on the page toward where it is going first — up for a building above the part, down for one below.
+            if (one.framed || one.end.at.y > one.part.y) gaps.reverse();
+            for (const gap of gaps) {
+              const leave = { x, y: gap.leave };
+              const down = { x, y: gap.y };
+              const out = { x: end, y: gap.y };
+              if (hits(leave, down, b) || hits(down, out, b)) continue;
+              if (!phone) return { via: [leave, down, out], gap: Math.round(gap.y), side: null };
+              const top = { x: end, y: pageRect.y };
+              if (!hits(out, top, b)) return { via: [leave, down, out, top], gap: Math.round(gap.y), side: end };
+            }
           }
-          return { via: [straight, from], gap: null };
+          return plain;
         };
         const ways = asked.map(wayIn);
-        // Lines along one gap: a pixel and a half apart, about its middle.
+        // Lines along one gap: a pixel and a half apart, about its middle; up one side of a phone's sheet, the same about the side.
         const along = new Map<number, number[]>();
+        const up = new Map<number, number[]>();
         ways.forEach((way, at) => {
           if (way.gap !== null) along.set(way.gap, [...(along.get(way.gap) ?? []), at]);
+          if (way.side !== null) up.set(way.side, [...(up.get(way.side) ?? []), at]);
         });
         for (const ats of along.values()) {
           ats.forEach((at, nth) => {
             const shift = (nth - (ats.length - 1) / 2) * 1.5;
             const via = ways[at]!.via;
-            ways[at] = { ...ways[at]!, via: [via[0]!, ...via.slice(1).map((p) => ({ x: p.x, y: p.y + shift }))] };
+            // Along the gap only: a phone's last point is on the sheet's top edge, and stays there.
+            ways[at] = { ...ways[at]!, via: via.map((p, i) => (i === 0 || (phone && i === via.length - 1) ? p : { x: p.x, y: p.y + shift })) };
+          });
+        }
+        for (const ats of up.values()) {
+          // Inside the sheet's margin however many there are: never more than its side's own room either way.
+          const apart = ats.length > 1 ? Math.min(1.5, (2 * (SHEET_SIDE - 2)) / (ats.length - 1)) : 0;
+          ats.forEach((at, nth) => {
+            const shift = (nth - (ats.length - 1) / 2) * apart;
+            const via = ways[at]!.via;
+            ways[at] = { ...ways[at]!, via: via.map((p, i) => (i >= via.length - 2 ? { x: p.x + shift, y: p.y } : p)) };
           });
         }
         asked.forEach((one, at) => {

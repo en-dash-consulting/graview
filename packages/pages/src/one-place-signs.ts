@@ -35,6 +35,8 @@ export interface SignAsked {
   readonly kind: string | null;
   /** The building it stands on: the page of one record. */
   readonly building?: Box | null;
+  /** Stood before the others of no building: beside a page, a view before a kind's own list. */
+  readonly first?: boolean;
 }
 
 export interface SignsAsked {
@@ -266,8 +268,19 @@ export function placeSigns(asked: SignsAsked): SignsPlaced {
   };
   // A kind's views first, the kinds with most of them first: they have one district to stand on, the plaza's have the whole back edge.
   const ofKind = (kind: string) => asked.signs.filter((one) => !one.building && one.kind === kind);
+  /*
+   * THE BOARDS ASKED FIRST STAND FIRST (beside a page, the app's views
+   * before the kinds' own lists): where the city's side is narrow, a
+   * district's view is not left without room by a neighbor's list board
+   * climbing over it. The district with least room over its back — the
+   * nearest the top of what is shown — first: its neighbors in front have
+   * room to stand higher, it has none.
+   */
+  const firsts = asked.signs.filter((one) => one.first && !one.building && one.kind !== null && tiles.has(one.kind));
+  const roomOver = (kind: string) => tiles.get(kind)!.y - (bounds?.y ?? 0);
+  for (const sign of [...firsts].sort((a, b) => roomOver(a.kind!) - roomOver(b.kind!))) standOn(sign.key, sign.kind!);
   for (const kind of [...kinds].sort((a, b) => ofKind(b).length - ofKind(a).length)) {
-    for (const sign of ofKind(kind)) standOn(sign.key, kind);
+    for (const sign of ofKind(kind)) if (!sign.first) standOn(sign.key, kind);
   }
   const plaza = asked.plaza === false ? [] : asked.signs.filter((sign) => !sign.building && (sign.kind === null || !tiles.has(sign.kind)));
   if (city) {

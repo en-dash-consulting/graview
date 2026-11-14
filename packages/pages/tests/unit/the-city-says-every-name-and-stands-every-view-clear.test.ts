@@ -138,6 +138,21 @@ describe("the City says every district's name and stands every view clear of eve
     expect(crowded).toBeLessThan(40);
   });
 
+  it("beside a page, where the city's side is narrow, stands every view whose district is in sight, the views asked first", () => {
+    // What the one face asked at Nearby on Deep Time's Solnhofen at 1280×800: the Tree of life had no board, a neighbor's list having climbed over its district.
+    const asked = JSON.parse(readFileSync(new URL("./fixtures/deep-time-formation-nearby-1280.json", import.meta.url), "utf8"));
+    const views = ["place:period:timeline", "place:species:tree-of-life", "place:site:dig-map", "place:event:extinctions"];
+    const signs = asked.signs.map((one: { key: string }) => ({ ...one, first: one.key.startsWith("place:") }));
+    const narrow = placeSigns({ ...asked, signs, tiles: new Map(asked.tiles), names: new Map(asked.names) });
+    expect(views.filter((key) => !narrow.feet.has(key))).toEqual([]);
+    // And still clear of one another.
+    const cards = [...narrow.feet].filter(([key]) => !key.startsWith("record:")).map(([key, foot]) => {
+      const scale = narrow.scales.get(key) ?? 1;
+      return [key, { x: foot.x - (asked.board.width * scale) / 2, y: foot.y - asked.board.height * scale, width: asked.board.width * scale, height: asked.board.height * scale }] as const;
+    });
+    for (const [key, box] of cards) for (const [other, theirs] of cards) if (other !== key) expect(overlap(box, theirs), `${key} × ${other}`).toBe(0);
+  });
+
   it("fits around all of it", () => {
     for (const box of [...tiles.values(), ...placed.names.values(), ...[...placed.feet].map(([key, foot]) => card(foot, placed.scales.get(key) ?? 1))]) {
       expect(box.x).toBeGreaterThanOrEqual(placed.whole!.x - 1e-6);

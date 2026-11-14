@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-13T20:36:10.716Z",
+  "at": "2026-11-14T14:13:46.715Z",
   "engines": [
     "chromium"
   ],
@@ -32,8 +32,8 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 66,
-          "counted": 315,
+          "frames": 69,
+          "counted": 330,
           "worst": 0,
           "examples": [],
           "scrolled": 720,
@@ -262,6 +262,7 @@
             "device": "desk 1440×900"
           },
           "inSight": [
+            "f1",
             "r1",
             "r2",
             "r3",
@@ -288,7 +289,7 @@
             "device": "desk 1440×900"
           },
           "boxes": 200,
-          "coldMedianMs": 0.9,
+          "coldMedianMs": 0.7,
           "coldWorstMs": 1,
           "warmMs": 0.025,
           "ok": true
@@ -533,10 +534,36 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "pills": 8,
-          "rows": 2,
-          "pieces": 22,
+          "pills": 9,
+          "rows": 3,
+          "words": [
+            "story",
+            "story",
+            "story",
+            "story",
+            "story",
+            "#note"
+          ],
+          "pieces": 23,
           "crossings": [],
+          "throughWords": [],
+          "ok": true
+        },
+        {
+          "where": {
+            "engine": "chromium",
+            "device": "412×915",
+            "phone": true
+          },
+          "pills": 9,
+          "rows": 6,
+          "words": [
+            "story",
+            "#note"
+          ],
+          "pieces": 35,
+          "crossings": [],
+          "throughWords": [],
           "ok": true
         }
       ],
