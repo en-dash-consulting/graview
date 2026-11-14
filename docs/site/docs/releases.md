@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.2.1`](https://graview.dev/docs/releases.html#v0-2-1)
 - [`0.2.0`](https://graview.dev/docs/releases.html#v0-2-0)
 - [`0.1.74`](https://graview.dev/docs/releases.html#v0-1-74)
 - [`0.1.73`](https://graview.dev/docs/releases.html#v0-1-73)
@@ -76,6 +77,26 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.3`](https://graview.dev/docs/releases.html#v0-1-3)
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
+
+## 0.2.1
+
+Published November 13, 2026 · the current version
+
+The one face reads clean on a rich app: the City's boards and names never stand on each other, a page's lines leave from its own records, Nearby opens wider and can be explored, and a host mounts the one face through the embed.
+
+- **Through the embed.** The embed's mount takes `sceneUnderPages` and puts the host's bar in the one face's bar slot, seen at every level.
+- **A City that reads clean.** One placement pass stands each kind's views over their own district and each district's name beside it: no board, name, count or chip stands on another, nothing is cut or wrapped, and on a small window the City pans rather than shrink its words. A district's name opens its list, and its warning chip opens that kind's problems. The legend is a button, closed until opened.
+- **Nearby shows its records.** Districts are labels on the ground, not cards over their buildings, and the views stand there as at the City.
+- **Lines from custom views.** A worker view's or a frame's records have lines to their buildings. Each line starts on its own card or row and runs in the gap between rows to the panel's edge; four or more into one district become one line with a count; lines draw over boards.
+- **A record is lit where it stands.** Opening a record from the city outlines its building in place; the district keeps its order and fades the same way on a fresh load and after a press.
+- **The page is drawn once.** The page drawn while the one face loads is the page that stays, so a press, focus and typed words survive its arrival.
+- **A wider panel you can explore beside.** On a desk the panel opens at 55% of the window (at most 1,192 px), keeps the width you drag it to, and takes a host's `panel` share. Over the city a pinch or wheel zooms and a drag pans; over the panel a pinch still moves between levels. A page in the panel keeps panel-sized margins, and a view can tell it is there.
+- **Security and reliability fixes for bound people.**
+- Not on the one face: the "+n past" and "n match" chips, since its city has no search and no history horizon. Where the city's side is narrow, three things come later: on a phone, lines still leave the sheet straight up rather than through the gaps between rows; on a rich app a view can still go without a board beside a wide panel; and on a small phone, the home's city can sit a little off center.
+
+**Before you upgrade:** Breaks: the page gutter variable is renamed `--graview-page-gutter` → `--graview-gutter`, with no alias; a view writes `var(--graview-gutter, 20px)`. Binding a person is the host's alone: `bindPerson` takes the host's system seat as its author, and `graview check` refuses a grant that names `bind-person` (`grant-gives-binding`). The one face's panel opens wider on a desk. Gains, nothing taken away: the embed mount's `sceneUnderPages` and `panel`, `PageContext.panel`, `data-graview-in-panel` on a view's root in the panel, `LOCAL_LAYERS.beneath`, and `/problems?kind=`. Stored formats, ops, the wire, derived tool names and their input schemas are unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.2.1) · [The full changelog for 0.2.1](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#021)
 
 ## 0.2.0
 
