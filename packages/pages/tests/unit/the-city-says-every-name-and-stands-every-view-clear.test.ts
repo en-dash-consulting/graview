@@ -145,6 +145,9 @@ describe("the City says every district's name and stands every view clear of eve
     const signs = asked.signs.map((one: { key: string }) => ({ ...one, first: one.key.startsWith("place:") }));
     const narrow = placeSigns({ ...asked, signs, tiles: new Map(asked.tiles), names: new Map(asked.names) });
     expect(views.filter((key) => !narrow.feet.has(key))).toEqual([]);
+    // No kind's own list gives up its board for it: the same lists stand as when the views were not asked first.
+    const lists = (placed: ReturnType<typeof placeSigns>) => [...placed.feet.keys()].filter((key) => key.startsWith("kind:")).sort();
+    expect(lists(narrow)).toEqual(lists(placeSigns({ ...asked, tiles: new Map(asked.tiles), names: new Map(asked.names) })));
     // And still clear of one another.
     const cards = [...narrow.feet].filter(([key]) => !key.startsWith("record:")).map(([key, foot]) => {
       const scale = narrow.scales.get(key) ?? 1;

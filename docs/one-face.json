@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-14T14:14:48.269Z",
+  "at": "2026-11-14T14:45:17.509Z",
   "engines": [
     "chromium"
   ],
@@ -309,7 +309,7 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 225,
+          "frames": 211,
           "moved": 152,
           "same": true,
           "jump": {
@@ -323,8 +323,8 @@
             "engine": "chromium",
             "device": "Pixel 7"
           },
-          "frames": 224,
-          "moved": 151,
+          "frames": 209,
+          "moved": 149,
           "same": true,
           "jump": {
             "worst": 0.189,
@@ -342,7 +342,7 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "worst": 0.49,
+          "worst": 0.5,
           "counted": 441,
           "examples": [],
           "ok": true
@@ -353,7 +353,7 @@
             "device": "Pixel 7"
           },
           "worst": 0.49,
-          "counted": 518,
+          "counted": 512,
           "examples": [],
           "ok": true
         }
@@ -374,7 +374,7 @@
               "how": "control",
               "arrived": true,
               "moved": 34,
-              "frames": 103,
+              "frames": 100,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -384,7 +384,7 @@
               "how": "control",
               "arrived": true,
               "moved": 33,
-              "frames": 162,
+              "frames": 82,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -394,7 +394,7 @@
               "how": "keys",
               "arrived": true,
               "moved": 34,
-              "frames": 240,
+              "frames": 160,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -403,8 +403,8 @@
               "to": 0,
               "how": "keys",
               "arrived": true,
-              "moved": 33,
-              "frames": 316,
+              "moved": 32,
+              "frames": 231,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -414,7 +414,7 @@
               "how": "control",
               "arrived": true,
               "moved": 34,
-              "frames": 420,
+              "frames": 84,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -424,7 +424,7 @@
               "how": "control",
               "arrived": true,
               "moved": 35,
-              "frames": 82,
+              "frames": 164,
               "zoomBack": 0,
               "widthBack": 0
             }
@@ -443,7 +443,7 @@
               "how": "control",
               "arrived": true,
               "moved": 34,
-              "frames": 87,
+              "frames": 88,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -452,8 +452,8 @@
               "to": 2,
               "how": "control",
               "arrived": true,
-              "moved": 36,
-              "frames": 164,
+              "moved": 35,
+              "frames": 162,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -463,7 +463,7 @@
               "how": "keys",
               "arrived": true,
               "moved": 34,
-              "frames": 243,
+              "frames": 237,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -473,7 +473,7 @@
               "how": "keys",
               "arrived": true,
               "moved": 33,
-              "frames": 316,
+              "frames": 78,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -482,8 +482,8 @@
               "to": 2,
               "how": "control",
               "arrived": true,
-              "moved": 33,
-              "frames": 420,
+              "moved": 34,
+              "frames": 84,
               "zoomBack": 0,
               "widthBack": 0
             },
@@ -493,7 +493,7 @@
               "how": "control",
               "arrived": true,
               "moved": 34,
-              "frames": 504,
+              "frames": 166,
               "zoomBack": 0,
               "widthBack": 0
             }
@@ -510,7 +510,7 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 225,
+          "frames": 211,
           "sheared": 0,
           "first": null,
           "reachedTheCity": true,
@@ -521,7 +521,7 @@
             "engine": "chromium",
             "device": "Pixel 7"
           },
-          "frames": 224,
+          "frames": 209,
           "sheared": 0,
           "first": null,
           "reachedTheCity": true,
@@ -1203,8 +1203,8 @@
               "start": 0,
               "same": true,
               "jump": {
-                "worst": 0.116,
-                "at": 26
+                "worst": 0.117,
+                "at": 27
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
@@ -1225,8 +1225,8 @@
               "start": 0,
               "same": true,
               "jump": {
-                "worst": 0.117,
-                "at": 27
+                "worst": 0.118,
+                "at": 26
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
@@ -1247,7 +1247,7 @@
               "start": 0,
               "same": true,
               "jump": {
-                "worst": 0.118,
+                "worst": 0.117,
                 "at": 26
               },
               "back": {
@@ -1270,7 +1270,7 @@
               "same": true,
               "jump": {
                 "worst": 0.134,
-                "at": 17
+                "at": 18
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
@@ -1292,7 +1292,7 @@
               "same": true,
               "jump": {
                 "worst": 0.149,
-                "at": 16
+                "at": 17
               },
               "back": {
                 "url": "/pages/tasks/t-deposit",
@@ -1399,7 +1399,7 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 144,
+          "frames": 145,
           "madeRises": true,
           "droppedRisesGoingBack": true,
           "madeSinksGoingBack": true,
@@ -1646,7 +1646,7 @@
             "device": "Pixel 7"
           },
           "path": "/pages/tasks",
-          "counted": 259,
+          "counted": 256,
           "crossed": 0,
           "examples": [],
           "ok": true
@@ -1831,7 +1831,7 @@
             0,
             0,
             0,
-            0.24,
+            0,
             0.84,
             1.14,
             1.33,
@@ -1841,7 +1841,7 @@
             2,
             2
           ],
-          "between": 6,
+          "between": 5,
           "settled": true,
           "word": "City",
           "ok": true
@@ -1855,7 +1855,7 @@
             0,
             0,
             0,
-            0,
+            0.12,
             0.72,
             1.14,
             1.33,
@@ -2363,7 +2363,7 @@
             {
               "to": 1,
               "leaps": [],
-              "frames": 109
+              "frames": 110
             },
             {
               "to": 2,
@@ -2381,12 +2381,12 @@
             {
               "to": 1,
               "leaps": [],
-              "frames": 111
+              "frames": 114
             },
             {
               "to": 2,
               "leaps": [],
-              "frames": 91
+              "frames": 89
             }
           ],
           "ok": true
@@ -2404,7 +2404,7 @@
             {
               "to": 2,
               "leaps": [],
-              "frames": 91
+              "frames": 90
             }
           ],
           "ok": true
@@ -2417,7 +2417,7 @@
             {
               "to": 1,
               "leaps": [],
-              "frames": 110
+              "frames": 109
             },
             {
               "to": 2,
@@ -2435,12 +2435,12 @@
             {
               "to": 1,
               "leaps": [],
-              "frames": 111
+              "frames": 112
             },
             {
               "to": 2,
               "leaps": [],
-              "frames": 90
+              "frames": 91
             }
           ],
           "ok": true
@@ -3317,9 +3317,9 @@
             "height": 836
           },
           "city": {
-            "x": -227.5,
+            "x": -235.5,
             "y": 169.29998779296875,
-            "right": 812.5999755859375,
+            "right": 804.5999755859375,
             "bottom": 778.5
           },
           "underPage": [],
@@ -3351,9 +3351,9 @@
             "height": 736
           },
           "city": {
-            "x": -196.5,
+            "x": -204.5,
             "y": 166,
-            "right": 684.9000244140625,
+            "right": 676.9000244140625,
             "bottom": 682
           },
           "underPage": [],
@@ -3385,10 +3385,10 @@
             "height": 226
           },
           "city": {
-            "x": -147.1999969482422,
-            "y": 52.100006103515625,
-            "right": 479.6999816894531,
-            "bottom": 418.5
+            "x": -155.1999969482422,
+            "y": 60.100006103515625,
+            "right": 471.6999816894531,
+            "bottom": 426.5
           },
           "underPage": [],
           "behind": [],
@@ -3447,9 +3447,9 @@
             "height": 960
           },
           "city": {
-            "x": -127.5,
+            "x": -135.5,
             "y": 358.8000183105469,
-            "right": 478.20001220703125,
+            "right": 470.20001220703125,
             "bottom": 713.2000122070312
           },
           "underPage": [],
@@ -3482,9 +3482,9 @@
           },
           "city": {
             "x": -1.4999995231628418,
-            "y": 72.69999694824219,
+            "y": 80.69999694824219,
             "right": 361.5,
-            "bottom": 284.79998779296875
+            "bottom": 292.79998779296875
           },
           "underPage": [],
           "behind": [],
@@ -3615,7 +3615,7 @@
             "device": "768×1024"
           },
           "clash": [],
-          "names": 8,
+          "names": 6,
           "ok": true
         },
         {
@@ -3623,7 +3623,7 @@
             "device": "360×640"
           },
           "clash": [],
-          "names": 7,
+          "names": 8,
           "ok": true
         }
       ],

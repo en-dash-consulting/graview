@@ -94,8 +94,14 @@ const MOST_LINES = 40;
 const GATHER = 4;
 /** How far inside a phone's sheet a line goes up its side to the top edge: in the sheet's own margin, clear of its words. */
 const SHEET_SIDE = 6;
-/** The furthest from its row a line in a view runs along a gap: a row's own spacing, which holds no words. */
+/**
+ * The furthest from its row a line in a view runs along a gap. The page
+ * cannot read a view's words, so this is a guess at a row's own spacing (a
+ * pill's margin): words set closer under a row than this are crossed.
+ */
 const FRAMED_GAP = 4;
+/** How far inside the city's side the home keeps its views' districts while bringing the city to the middle: a district's edge never on the window's or the sheet's. */
+const HOME_EDGE = 8;
 /** What a district's "+n" is kept under among the picture's buildings: never a record's id. */
 const REST_KEY = "\u0000rest:";
 /** How long one level's move takes. A person who asked for less motion is cut straight there. */
@@ -735,7 +741,9 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           const lo = project(held, { x: what.x, y: what.y });
           const hi = project(held, { x: what.x + what.width, y: what.y + what.height });
           const shift = (low: number, high: number, from: number, to: number) => (low < from ? from - low : high > to ? to - high : 0);
-          return { s: held.s, x: held.x + shift(lo.x, hi.x, shown.x, shown.x + shown.width), y: held.y + shift(lo.y, hi.y, shown.y, shown.y + shown.height) };
+          // Kept a little off the side's edge, as the fit is: never so far in that the city could come nearer the middle than it does.
+          const keep = HOME_EDGE;
+          return { s: held.s, x: held.x + shift(lo.x, hi.x, shown.x + keep, shown.x + shown.width - keep), y: held.y + shift(lo.y, hi.y, shown.y + keep, shown.y + shown.height - keep) };
         }
       }
       if (lvl === CITY || now.where.type === "home" || now.where.type === "overview") {
@@ -1483,11 +1491,13 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
             ways[at] = { ...ways[at]!, via: via.map((p, i) => (i === 0 || (phone && i === via.length - 1) ? p : { x: p.x, y: p.y + shift })) };
           });
         }
-        for (const ats of up.values()) {
+        for (const [side, ats] of up) {
           // Inside the sheet's margin however many there are: never more than its side's own room either way.
           const apart = ats.length > 1 ? Math.min(1.5, (2 * (SHEET_SIDE - 2)) / (ats.length - 1)) : 0;
-          ats.forEach((at, nth) => {
-            const shift = (nth - (ats.length - 1) / 2) * apart;
+          // The lower a line's row, the further out it goes up: its way up passes outside every run along a row above it, never across one.
+          const outward = side < pageRect.x + pageRect.width / 2 ? -1 : 1;
+          [...ats].sort((a, b) => (ways[a]!.gap ?? 0) - (ways[b]!.gap ?? 0)).forEach((at, nth) => {
+            const shift = outward * (nth - (ats.length - 1) / 2) * apart;
             const via = ways[at]!.via;
             ways[at] = { ...ways[at]!, via: via.map((p, i) => (i >= via.length - 2 ? { x: p.x + shift, y: p.y } : p)) };
           });

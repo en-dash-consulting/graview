@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-14T14:13:46.715Z",
+  "at": "2026-11-14T14:51:47.079Z",
   "engines": [
     "chromium"
   ],
@@ -32,8 +32,8 @@
             "engine": "chromium",
             "device": "desk 1440×900"
           },
-          "frames": 69,
-          "counted": 330,
+          "frames": 68,
+          "counted": 324,
           "worst": 0,
           "examples": [],
           "scrolled": 720,
@@ -182,9 +182,9 @@
             "ok": true
           },
           "pageScrolled": {
-            "frames": 52,
+            "frames": 53,
             "moved": true,
-            "counted": 156,
+            "counted": 159,
             "worst": 0,
             "examples": []
           },
@@ -289,7 +289,7 @@
             "device": "desk 1440×900"
           },
           "boxes": 200,
-          "coldMedianMs": 0.7,
+          "coldMedianMs": 0.8,
           "coldWorstMs": 1,
           "warmMs": 0.025,
           "ok": true
