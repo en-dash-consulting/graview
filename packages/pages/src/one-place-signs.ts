@@ -35,6 +35,8 @@ export interface SignAsked {
   readonly kind: string | null;
   /** The building it stands on: the page of one record. */
   readonly building?: Box | null;
+  /** Stood before the others of no building: beside a page, a view before a kind's own list. */
+  readonly first?: boolean;
 }
 
 export interface SignsAsked {
@@ -62,6 +64,10 @@ export interface SignsAsked {
   readonly reach?: number;
   /** Whether the views of no one kind stand on the plaza: not beside a page, where the plaza is behind the city. */
   readonly plaza?: boolean;
+  /** Whether the districts' names stand before the boards, which then keep clear of them (beside a page): else after, in the room the boards leave. */
+  readonly namesFirst?: boolean;
+  /** How far from its district a name may stand, edge to edge: past it, none (beside a page). */
+  readonly nameReach?: number;
 }
 
 export interface SignsPlaced {
@@ -89,6 +95,9 @@ export function diamondReach(box: Box, tile: Box): number {
   const dy = Math.abs(nearest(box.y, box.y + box.height, cy) - cy) / Math.max(1, tile.height / 2);
   return dx + dy;
 }
+
+/** From one box to another, edge to edge: none where they meet. */
+const boxGap = (a: Box, b: Box): number => Math.hypot(Math.max(b.x - (a.x + a.width), 0, a.x - (b.x + b.width)), Math.max(b.y - (a.y + a.height), 0, a.y - (b.y + b.height)));
 
 /** From a point to the nearest edge of a box: none inside it. */
 const gapTo = (p: Point, b: Box): number => Math.hypot(Math.max(b.x - p.x, 0, p.x - (b.x + b.width)), Math.max(b.y - p.y, 0, p.y - (b.y + b.height)));
@@ -122,7 +131,8 @@ export function placeSigns(asked: SignsAsked): SignsPlaced {
   const taken = (box: Box, length: number) => ({ ...box, height: box.height + length });
   /** A board's post, from its foot down, as wide as it is drawn. */
   const postOf = (foot: Point, length: number): Box => ({ x: foot.x - 1, y: foot.y, width: 2, height: Math.max(0, length) });
-  const nameBoxes = [...names.values()];
+  /** Each name as it stands: what a board weighs where the names stand first. */
+  let nameBoxes: Box[] = [];
   /** What a board's card and post would stand on, weighed: another board or a name most, then ground, then what is kept clear. */
   // Past `bound` the sum is not finished: a place already worse than the best found is not weighed to the end.
   const covers = (foot: Point, length: number, ground: readonly Box[], blocks: readonly Box[], scale = 1, near?: { readonly stood: readonly Box[]; readonly posts: readonly Box[]; readonly names: readonly Box[] }, bound = Infinity): number => {
@@ -167,6 +177,146 @@ export function placeSigns(asked: SignsAsked): SignsPlaced {
     stoodPosts.push(postOf(foot, length));
   };
   const allTiles = [...tiles.values()];
+
+  const placeNames = () => {
+    /*
+     * THE NAMES, LAST (or, asked, before the lists): beside the district, else under its front corner,
+     * and only where none of those is clear on the district's own ground —
+     * never over its buildings and their names, which are what Nearby is
+     * for: a name drawn as a card over its records hid them.
+     */
+    const roofs = buildings.map((one) => ({ x: one.x - 4, y: one.y - 14, width: one.width + 8, height: one.height + 14 }));
+    // And never on a board, nor across the post it stands on: the views stood first, where they belong; a name has more places to go.
+    const signRooms = [...feet].flatMap(([key, foot]) => {
+      const face = card(foot, scales.get(key) ?? 1);
+      return [face, { x: foot.x - 3, y: foot.y, width: 6, height: posts.get(key) ?? post }];
+    });
+    const byFront = [...kinds].sort((a, b) => tiles.get(b)!.y + tiles.get(b)!.height - (tiles.get(a)!.y + tiles.get(a)!.height));
+    for (const kind of byFront) {
+      const size = asked.names.get(kind);
+      if (!size) continue;
+      const tile = tiles.get(kind)!;
+      // A district the camera does not show says nothing: its name past the edge is a name cut off.
+      if (bounds && overlap(tile, bounds) < tile.width * tile.height * 0.15) continue;
+      const cx = tile.x + tile.width / 2;
+      // Beside it first: the ground over its back and under its front is where its views and its front neighbor's stand.
+      const middle: Box[] = [
+        { x: tile.x + tile.width + 2, y: tile.y + tile.height / 2 - size.height / 2, ...size },
+        { x: tile.x - size.width - 2, y: tile.y + tile.height / 2 - size.height / 2, ...size },
+        { x: cx - size.width / 2, y: tile.y + tile.height + 2, ...size },
+        { x: cx - size.width * 0.9, y: tile.y + tile.height + 2, ...size },
+        { x: cx - size.width * 0.1, y: tile.y + tile.height + 2, ...size },
+        { x: tile.x + tile.width + 2, y: tile.y + tile.height * 0.8 - size.height / 2, ...size },
+        { x: tile.x - size.width - 2, y: tile.y + tile.height * 0.8 - size.height / 2, ...size },
+        { x: cx - size.width / 2, y: tile.y + tile.height + size.height + 6, ...size },
+        { x: tile.x + tile.width + 2, y: tile.y + tile.height / 2 - size.height * 1.5 - 2, ...size },
+        { x: tile.x - size.width - 2, y: tile.y + tile.height / 2 - size.height * 1.5 - 2, ...size },
+        { x: tile.x + tile.width + 2, y: tile.y + tile.height / 2 + size.height / 2 + 2, ...size },
+        { x: tile.x - size.width - 2, y: tile.y + tile.height / 2 + size.height / 2 + 2, ...size },
+        { x: cx - size.width / 2, y: tile.y + tile.height * 0.72 - size.height / 2, ...size },
+        { x: cx - size.width / 2, y: tile.y + tile.height / 2 - size.height / 2, ...size },
+      ];
+      /*
+       * At the edge of what is shown — a district half under the page beside
+       * the city — each slid along inside it, as far as it stays under its own
+       * district: the name whole, never cut by the edge.
+       */
+      const inside = (box: Box): Box => {
+        if (!bounds) return box;
+        const least = Math.max(bounds.x, tile.x + 24 - box.width);
+        const most = Math.min(bounds.x + bounds.width - box.width, tile.x + tile.width - 24);
+        return least <= most ? { ...box, x: Math.max(least, Math.min(most, box.x)) } : box;
+      };
+      const tries: Box[] = [...middle.map(inside), ...middle];
+      /*
+       * BESIDE ITS OWN DISTRICT OR NOWHERE (beside a page, `nameReach`): a
+       * name hundreds of pixels off, over another district, named the wrong
+       * one (Graview Cloud's Deep Time at 1280, "Plants" under the Tree of
+       * life's district). Where no clear place is that near, the district
+       * says no name here; its list's board and the bar still reach it.
+       */
+      const nearEnough = (box: Box) => asked.nameReach === undefined || boxGap(box, tile) <= asked.nameReach;
+      const cost = (box: Box) =>
+        [...names.values(), ...words].reduce((sum, other) => sum + overlap(grow(box, 3), other) * 8, 0) +
+        reserved.reduce((sum, other) => sum + overlap(box, other), 0) +
+        outside(box) * 2 +
+        roofs.reduce((sum, roof) => sum + overlap(box, roof), 0) +
+        signRooms.reduce((sum, room) => sum + overlap(grow(box, 2), room) * 8, 0) +
+        kinds.reduce((sum, other) => sum + (other !== kind && diamondReach(box, tiles.get(other)!) < 1 ? (1 - diamondReach(box, tiles.get(other)!)) * size.width * size.height : 0), 0);
+      let best = tries[0]!;
+      let least = Infinity;
+      for (const box of tries) {
+        if (!nearEnough(box)) continue;
+        const c = cost(box);
+        if (c < least - 0.5) {
+          least = c;
+          best = box;
+        }
+        if (c <= 0.5) break;
+      }
+      /*
+       * Where every place by the district is taken (a small window's City,
+       * the lattice dense), the nearest clear place round it: a little further
+       * from its district, never over another name.
+       */
+      if (least > 0.5) {
+        search: for (let ring = 1; ring <= 10; ring++) {
+          for (let row = -ring; row <= ring; row++) {
+            for (let col = -ring; col <= ring; col++) {
+              if (Math.max(Math.abs(row), Math.abs(col)) !== ring) continue;
+              const box = { x: cx - size.width / 2 + (col * (size.width + 6)) / 2, y: tile.y + tile.height / 2 - size.height / 2 + row * (size.height + 4), ...size };
+              if (!nearEnough(box)) continue;
+              const c = cost(box);
+              if (c < least - 0.5) {
+                least = c;
+                best = box;
+              }
+              if (c <= 0.5) break search;
+            }
+          }
+        }
+      }
+      // Never past the edge of what is shown: kept inside it, as near its district as it can stand.
+      if (bounds && outside(best) > 0.5) {
+        best = { ...best, x: Math.max(bounds.x, Math.min(bounds.x + bounds.width - best.width, best.x)), y: Math.max(bounds.y, Math.min(bounds.y + bounds.height - best.height, best.y)) };
+        if (best.x > tile.x + tile.width || best.x + best.width < tile.x) continue;
+      }
+      if (!nearEnough(best)) continue;
+      /*
+       * NEVER ON ANOTHER NAME, NOR A BOARD. A name and its problems are
+       * controls: one standing on another took the other's presses. Where
+       * every place by its district is taken (a small window beside a page),
+       * the nearest place clear of them both, inside what is shown, on a
+       * district's ground if it must be; with none, the district says no name
+       * here rather than one over another.
+       */
+      const onAnother = (box: Box) => [...names.values(), ...words].some((other) => overlap(grow(box, 2), other) > 0.5) || signRooms.some((room) => overlap(grow(box, 2), room) > 0.5);
+      if (onAnother(best)) {
+        let clear: Box | null = null;
+        let leastClear = Infinity;
+        for (let ring = 1; ring <= 10 && !clear; ring++) {
+          for (let row = -ring; row <= ring; row++) {
+            for (let col = -ring; col <= ring; col++) {
+              if (Math.max(Math.abs(row), Math.abs(col)) !== ring) continue;
+              const box = { x: best.x + (col * (size.width + 6)) / 3, y: best.y + row * (size.height + 4), ...size };
+              if ((bounds && outside(box) > 0.5) || onAnother(box) || !nearEnough(box)) continue;
+              const c = cost(box);
+              if (c < leastClear) {
+                leastClear = c;
+                clear = box;
+              }
+            }
+          }
+        }
+        if (!clear) continue;
+        best = clear;
+      }
+      // Kept beside its district, a name never stands over records instead: with nothing clear that near, none.
+      if (asked.nameReach !== undefined && roofs.some((roof) => overlap(best, roof) > 0.5)) continue;
+      names.set(kind, best);
+    }
+    nameBoxes = [...names.values()];
+  };
 
   /* THE PAGE BEING READ, ON ITS BUILDING: straight over it, on the shortest post that stands its card clear — never to one side, where its post would come down on another building. */
   for (const sign of asked.signs) {
@@ -266,137 +416,35 @@ export function placeSigns(asked: SignsAsked): SignsPlaced {
   };
   // A kind's views first, the kinds with most of them first: they have one district to stand on, the plaza's have the whole back edge.
   const ofKind = (kind: string) => asked.signs.filter((one) => !one.building && one.kind === kind);
+  /*
+   * THE BOARDS ASKED FIRST STAND FIRST (beside a page, the app's views
+   * before the kinds' own lists): where the city's side is narrow, a
+   * district's view is not left without room by a neighbor's list board
+   * climbing over it. The district with least room over its back — the
+   * nearest the top of what is shown — first: its neighbors in front have
+   * room to stand higher, it has none.
+   */
+  const firsts = asked.signs.filter((one) => one.first && !one.building && one.kind !== null && tiles.has(one.kind));
+  const roomOver = (kind: string) => tiles.get(kind)!.y - (bounds?.y ?? 0);
+  for (const sign of [...firsts].sort((a, b) => roomOver(a.kind!) - roomOver(b.kind!))) standOn(sign.key, sign.kind!);
+  /*
+   * THE NAMES BEFORE THE LISTS (beside a page, where the city's side is
+   * narrow): each beside its own district, right after the views, and the
+   * kinds' list boards weighed against them. Placed after every board, a
+   * district at the back found every place by it taken, and its name went
+   * hundreds of pixels off over another district.
+   */
+  if (asked.namesFirst) placeNames();
   for (const kind of [...kinds].sort((a, b) => ofKind(b).length - ofKind(a).length)) {
-    for (const sign of ofKind(kind)) standOn(sign.key, kind);
+    for (const sign of ofKind(kind)) if (!sign.first) standOn(sign.key, kind);
   }
   const plaza = asked.plaza === false ? [] : asked.signs.filter((sign) => !sign.building && (sign.kind === null || !tiles.has(sign.kind)));
   if (city) {
     plaza.forEach((sign, index) => standNear(sign.key, null, { x: city.x + city.width / 2 + (index - (plaza.length - 1) / 2) * stepX, y: city.y - post - 6 }));
   }
 
-  /*
-   * THE NAMES, LAST: beside the district, else under its front corner,
-   * and only where none of those is clear on the district's own ground —
-   * never over its buildings and their names, which are what Nearby is
-   * for: a name drawn as a card over its records hid them.
-   */
-  const roofs = buildings.map((one) => ({ x: one.x - 4, y: one.y - 14, width: one.width + 8, height: one.height + 14 }));
-  // And never on a board, nor across the post it stands on: the views stood first, where they belong; a name has more places to go.
-  const signRooms = [...feet].flatMap(([key, foot]) => {
-    const face = card(foot, scales.get(key) ?? 1);
-    return [face, { x: foot.x - 3, y: foot.y, width: 6, height: posts.get(key) ?? post }];
-  });
-  const byFront = [...kinds].sort((a, b) => tiles.get(b)!.y + tiles.get(b)!.height - (tiles.get(a)!.y + tiles.get(a)!.height));
-  for (const kind of byFront) {
-    const size = asked.names.get(kind);
-    if (!size) continue;
-    const tile = tiles.get(kind)!;
-    // A district the camera does not show says nothing: its name past the edge is a name cut off.
-    if (bounds && overlap(tile, bounds) < tile.width * tile.height * 0.15) continue;
-    const cx = tile.x + tile.width / 2;
-    // Beside it first: the ground over its back and under its front is where its views and its front neighbor's stand.
-    const middle: Box[] = [
-      { x: tile.x + tile.width + 2, y: tile.y + tile.height / 2 - size.height / 2, ...size },
-      { x: tile.x - size.width - 2, y: tile.y + tile.height / 2 - size.height / 2, ...size },
-      { x: cx - size.width / 2, y: tile.y + tile.height + 2, ...size },
-      { x: cx - size.width * 0.9, y: tile.y + tile.height + 2, ...size },
-      { x: cx - size.width * 0.1, y: tile.y + tile.height + 2, ...size },
-      { x: tile.x + tile.width + 2, y: tile.y + tile.height * 0.8 - size.height / 2, ...size },
-      { x: tile.x - size.width - 2, y: tile.y + tile.height * 0.8 - size.height / 2, ...size },
-      { x: cx - size.width / 2, y: tile.y + tile.height + size.height + 6, ...size },
-      { x: tile.x + tile.width + 2, y: tile.y + tile.height / 2 - size.height * 1.5 - 2, ...size },
-      { x: tile.x - size.width - 2, y: tile.y + tile.height / 2 - size.height * 1.5 - 2, ...size },
-      { x: tile.x + tile.width + 2, y: tile.y + tile.height / 2 + size.height / 2 + 2, ...size },
-      { x: tile.x - size.width - 2, y: tile.y + tile.height / 2 + size.height / 2 + 2, ...size },
-      { x: cx - size.width / 2, y: tile.y + tile.height * 0.72 - size.height / 2, ...size },
-      { x: cx - size.width / 2, y: tile.y + tile.height / 2 - size.height / 2, ...size },
-    ];
-    /*
-     * At the edge of what is shown — a district half under the page beside
-     * the city — each slid along inside it, as far as it stays under its own
-     * district: the name whole, never cut by the edge.
-     */
-    const inside = (box: Box): Box => {
-      if (!bounds) return box;
-      const least = Math.max(bounds.x, tile.x + 24 - box.width);
-      const most = Math.min(bounds.x + bounds.width - box.width, tile.x + tile.width - 24);
-      return least <= most ? { ...box, x: Math.max(least, Math.min(most, box.x)) } : box;
-    };
-    const tries: Box[] = [...middle.map(inside), ...middle];
-    const cost = (box: Box) =>
-      [...names.values(), ...words].reduce((sum, other) => sum + overlap(grow(box, 3), other) * 8, 0) +
-      reserved.reduce((sum, other) => sum + overlap(box, other), 0) +
-      outside(box) * 2 +
-      roofs.reduce((sum, roof) => sum + overlap(box, roof), 0) +
-      signRooms.reduce((sum, room) => sum + overlap(grow(box, 2), room) * 8, 0) +
-      kinds.reduce((sum, other) => sum + (other !== kind && diamondReach(box, tiles.get(other)!) < 1 ? (1 - diamondReach(box, tiles.get(other)!)) * size.width * size.height : 0), 0);
-    let best = tries[0]!;
-    let least = Infinity;
-    for (const box of tries) {
-      const c = cost(box);
-      if (c < least - 0.5) {
-        least = c;
-        best = box;
-      }
-      if (c <= 0.5) break;
-    }
-    /*
-     * Where every place by the district is taken (a small window's City,
-     * the lattice dense), the nearest clear place round it: a little further
-     * from its district, never over another name.
-     */
-    if (least > 0.5) {
-      search: for (let ring = 1; ring <= 10; ring++) {
-        for (let row = -ring; row <= ring; row++) {
-          for (let col = -ring; col <= ring; col++) {
-            if (Math.max(Math.abs(row), Math.abs(col)) !== ring) continue;
-            const box = { x: cx - size.width / 2 + (col * (size.width + 6)) / 2, y: tile.y + tile.height / 2 - size.height / 2 + row * (size.height + 4), ...size };
-            const c = cost(box);
-            if (c < least - 0.5) {
-              least = c;
-              best = box;
-            }
-            if (c <= 0.5) break search;
-          }
-        }
-      }
-    }
-    // Never past the edge of what is shown: kept inside it, as near its district as it can stand.
-    if (bounds && outside(best) > 0.5) {
-      best = { ...best, x: Math.max(bounds.x, Math.min(bounds.x + bounds.width - best.width, best.x)), y: Math.max(bounds.y, Math.min(bounds.y + bounds.height - best.height, best.y)) };
-      if (best.x > tile.x + tile.width || best.x + best.width < tile.x) continue;
-    }
-    /*
-     * NEVER ON ANOTHER NAME, NOR A BOARD. A name and its problems are
-     * controls: one standing on another took the other's presses. Where
-     * every place by its district is taken (a small window beside a page),
-     * the nearest place clear of them both, inside what is shown, on a
-     * district's ground if it must be; with none, the district says no name
-     * here rather than one over another.
-     */
-    const onAnother = (box: Box) => [...names.values(), ...words].some((other) => overlap(grow(box, 2), other) > 0.5) || signRooms.some((room) => overlap(grow(box, 2), room) > 0.5);
-    if (onAnother(best)) {
-      let clear: Box | null = null;
-      let leastClear = Infinity;
-      for (let ring = 1; ring <= 10 && !clear; ring++) {
-        for (let row = -ring; row <= ring; row++) {
-          for (let col = -ring; col <= ring; col++) {
-            if (Math.max(Math.abs(row), Math.abs(col)) !== ring) continue;
-            const box = { x: best.x + (col * (size.width + 6)) / 3, y: best.y + row * (size.height + 4), ...size };
-            if ((bounds && outside(box) > 0.5) || onAnother(box)) continue;
-            const c = cost(box);
-            if (c < leastClear) {
-              leastClear = c;
-              clear = box;
-            }
-          }
-        }
-      }
-      if (!clear) continue;
-      best = clear;
-    }
-    names.set(kind, best);
-  }
+
+  if (!asked.namesFirst) placeNames();
 
   const boxes: Box[] = [...allTiles, ...names.values(), ...[...feet].map(([key, foot]) => taken(card(foot, scales.get(key) ?? 1), posts.get(key) ?? post))];
   const whole = boxes.length === 0 ? null : boxes.reduce((a, b) => ({ x: Math.min(a.x, b.x), y: Math.min(a.y, b.y), width: Math.max(a.x + a.width, b.x + b.width) - Math.min(a.x, b.x), height: Math.max(a.y + a.height, b.y + b.height) - Math.min(a.y, b.y) }));

@@ -1,74 +1,74 @@
 {
-  "at": "2026-11-13T21:05:02.886Z",
+  "at": "2026-11-14T17:46:06.006Z",
   "packages": {
     "@graview/core": {
       "files": 1716,
-      "tarballBytes": 2206359,
+      "tarballBytes": 2206363,
       "ok": true
     },
     "create-graview": {
       "files": 11,
-      "tarballBytes": 3657,
+      "tarballBytes": 3661,
       "ok": true
     },
     "@graview/embed": {
       "files": 63,
-      "tarballBytes": 108661,
+      "tarballBytes": 108666,
       "ok": true
     },
     "graview": {
       "files": 237,
-      "tarballBytes": 1064819,
+      "tarballBytes": 1063919,
       "ok": true
     },
     "@graview/guest": {
       "files": 384,
-      "tarballBytes": 570190,
+      "tarballBytes": 570197,
       "ok": true
     },
     "@graview/layout": {
       "files": 67,
-      "tarballBytes": 110408,
+      "tarballBytes": 110411,
       "ok": true
     },
     "@graview/pages": {
       "files": 191,
-      "tarballBytes": 392570,
+      "tarballBytes": 396770,
       "ok": true
     },
     "@graview/primitives": {
       "files": 770,
-      "tarballBytes": 1088280,
+      "tarballBytes": 1088283,
       "ok": true
     },
     "@graview/react": {
       "files": 343,
-      "tarballBytes": 430507,
+      "tarballBytes": 430510,
       "ok": true
     },
     "@graview/render": {
       "files": 55,
-      "tarballBytes": 63985,
+      "tarballBytes": 63990,
       "ok": true
     },
     "@graview/ship": {
       "files": 227,
-      "tarballBytes": 355192,
+      "tarballBytes": 355194,
       "ok": true
     },
     "@graview/skills": {
       "files": 48,
-      "tarballBytes": 125801,
+      "tarballBytes": 125804,
       "ok": true
     },
     "@graview/studio": {
       "files": 75,
-      "tarballBytes": 154221,
+      "tarballBytes": 154222,
       "ok": true
     },
     "@graview/tools": {
       "files": 347,
-      "tarballBytes": 583171,
+      "tarballBytes": 583176,
       "ok": true
     }
   },
@@ -80,7 +80,7 @@
       "name": "the pages face alone",
       "load": "first",
       "minified": 794807,
-      "gzipped": 288260,
+      "gzipped": 288263,
       "chunks": 49,
       "budget": {
         "minified": 794879,
@@ -104,7 +104,7 @@
       "name": "a visitor's form alone",
       "load": "first",
       "minified": 288484,
-      "gzipped": 104233,
+      "gzipped": 104230,
       "chunks": 8,
       "budget": {
         "minified": 288529,
@@ -126,7 +126,7 @@
       "name": "a visitor's form handed a compiled app",
       "load": "first",
       "minified": 376007,
-      "gzipped": 136579,
+      "gzipped": 136584,
       "chunks": 10,
       "budget": {
         "minified": 376056,
@@ -149,7 +149,7 @@
       "name": "embed without the studio",
       "load": "first",
       "minified": 449546,
-      "gzipped": 156588,
+      "gzipped": 156585,
       "chunks": 10,
       "budget": {
         "minified": 727953,
@@ -175,12 +175,12 @@
     {
       "name": "every face",
       "load": "all",
-      "minified": 3349577,
-      "gzipped": 1216683,
+      "minified": 3351541,
+      "gzipped": 1217386,
       "chunks": 224,
       "budget": {
-        "minified": 3349587,
-        "gzipped": 1216699
+        "minified": 3352187,
+        "gzipped": 1217699
       },
       "carries": [],
       "defers": [],
@@ -203,7 +203,7 @@
       "name": "embed with the studio handed in",
       "load": "first",
       "minified": 2006388,
-      "gzipped": 702728,
+      "gzipped": 702666,
       "chunks": 98,
       "budget": {
         "minified": 2027531,

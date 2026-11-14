@@ -138,6 +138,36 @@ describe("the City says every district's name and stands every view clear of eve
     expect(crowded).toBeLessThan(40);
   });
 
+  it("beside a page, where the city's side is narrow, stands every view whose district is in sight, the views asked first", () => {
+    // What the one face asked at Nearby on Deep Time's Solnhofen at 1280×800: the Tree of life had no board, a neighbor's list having climbed over its district.
+    const asked = JSON.parse(readFileSync(new URL("./fixtures/deep-time-formation-nearby-1280.json", import.meta.url), "utf8"));
+    const views = ["place:period:timeline", "place:species:tree-of-life", "place:site:dig-map", "place:event:extinctions"];
+    const signs = asked.signs.map((one: { key: string }) => ({ ...one, first: one.key.startsWith("place:") }));
+    const narrow = placeSigns({ ...asked, signs, tiles: new Map(asked.tiles), names: new Map(asked.names) });
+    expect(views.filter((key) => !narrow.feet.has(key))).toEqual([]);
+    // No kind's own list gives up its board for it: the same lists stand as when the views were not asked first.
+    const lists = (placed: ReturnType<typeof placeSigns>) => [...placed.feet.keys()].filter((key) => key.startsWith("kind:")).sort();
+    expect(lists(narrow)).toEqual(lists(placeSigns({ ...asked, tiles: new Map(asked.tiles), names: new Map(asked.names) })));
+    // And still clear of one another.
+    const cards = [...narrow.feet].filter(([key]) => !key.startsWith("record:")).map(([key, foot]) => {
+      const scale = narrow.scales.get(key) ?? 1;
+      return [key, { x: foot.x - (asked.board.width * scale) / 2, y: foot.y - asked.board.height * scale, width: asked.board.width * scale, height: asked.board.height * scale }] as const;
+    });
+    for (const [key, box] of cards) for (const [other, theirs] of cards) if (other !== key) expect(overlap(box, theirs), `${key} × ${other}`).toBe(0);
+  });
+
+  it("beside a page, stands each district's name beside its own district or nowhere, and every view still has its board", () => {
+    // Placed after every board, the species name stood 136 px off by the event district (Graview Cloud's Deep Time: "Plants" under the Tree of life's district).
+    const asked = JSON.parse(readFileSync(new URL("./fixtures/deep-time-formation-nearby-1280.json", import.meta.url), "utf8"));
+    const signs = asked.signs.map((one: { key: string }) => ({ ...one, first: one.key.startsWith("place:") }));
+    const tilesHere = new Map<string, Box>(asked.tiles);
+    const beside = placeSigns({ ...asked, signs, tiles: tilesHere, names: new Map(asked.names), namesFirst: true, nameReach: 32 });
+    const gap = (a: Box, b: Box) => Math.hypot(Math.max(b.x - (a.x + a.width), 0, a.x - (b.x + b.width)), Math.max(b.y - (a.y + a.height), 0, a.y - (b.y + b.height)));
+    expect(beside.names.size).toBeGreaterThanOrEqual(4);
+    for (const [kind, box] of beside.names) expect(gap(box, tilesHere.get(kind)!), kind).toBeLessThanOrEqual(32);
+    expect(["place:period:timeline", "place:species:tree-of-life", "place:site:dig-map", "place:event:extinctions"].filter((key) => !beside.feet.has(key))).toEqual([]);
+  });
+
   it("fits around all of it", () => {
     for (const box of [...tiles.values(), ...placed.names.values(), ...[...placed.feet].map(([key, foot]) => card(foot, placed.scales.get(key) ?? 1))]) {
       expect(box.x).toBeGreaterThanOrEqual(placed.whole!.x - 1e-6);

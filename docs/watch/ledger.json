@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-13T20:44:31.525Z",
+  "at": "2026-11-14T18:22:06.474Z",
   "open": 0,
   "problems": {
     "keyboard-lands-nowhere|a press on <div> \"#:#Pay the deposit\" left the keyboard on <body>": {
@@ -496,10 +496,10 @@
         "verify-one-face"
       ],
       "firstSeen": "2026-11-13T20:03:33.873Z",
-      "flaps": 0,
-      "lastSeen": "2026-11-13T20:03:33.873Z",
+      "flaps": 1,
+      "lastSeen": "2026-11-14T13:12:31.208Z",
       "status": "fixed",
-      "fixedAt": "2026-11-13T20:19:11.151Z"
+      "fixedAt": "2026-11-14T13:27:10.506Z"
     },
     "control-covered|<button aria-label=\"The month, view\"> \"View · tasksThe month\" is covered by <button aria-label=\"The week, view\"> \"View · tasksThe week\" at # wide — a press there lands on the other": {
       "rule": "control-covered",
@@ -509,10 +509,10 @@
         "verify-one-face"
       ],
       "firstSeen": "2026-11-13T20:03:33.873Z",
-      "flaps": 0,
-      "lastSeen": "2026-11-13T20:03:33.873Z",
+      "flaps": 1,
+      "lastSeen": "2026-11-14T13:12:31.208Z",
       "status": "fixed",
-      "fixedAt": "2026-11-13T20:19:11.151Z"
+      "fixedAt": "2026-11-14T13:27:10.506Z"
     }
   }
 }
