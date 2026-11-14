@@ -1,7 +1,10 @@
 schema: "rex/v2"
 items:
   "7ad5edc7-8114-4c57-a4df-1009ccdf4710":
-    status: "in_progress"
+    status: "completed"
     startedAt: "2026-11-13T04:30:00.000Z"
-    lastModified: "2026-11-13T04:30:00.000Z"
+    completedAt: "2026-11-14T17:30:00.000Z"
+    lastModified: "2026-11-14T17:30:00.000Z"
     lastModifiedBy: "Nick Daniel <nick@endash.us>"
+    resolutionType: "code-change"
+    resolutionDetail: "A worker view's or frame's records report their boxes and get lines to their buildings, each from its own card or row through the gaps between rows; four or more into one district become one line with a count. PR #588, landed in batch/0-2-1 (#596), released in 0.2.1 (#591)."
