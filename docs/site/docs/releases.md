@@ -80,7 +80,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.2.1
 
-Published November 13, 2026 · the current version
+Published November 13, 2026
 
 The one face reads clean on a rich app: the City's boards and names never stand on each other, a page's lines leave from its own records, Nearby opens wider and can be explored, and a host mounts the one face through the embed.
 
