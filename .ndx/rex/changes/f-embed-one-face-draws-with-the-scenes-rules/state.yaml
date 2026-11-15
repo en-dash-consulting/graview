@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "997008c3-dc0a-4ea2-ad15-9a0a21265454":
+    status: "completed"
+    startedAt: "2026-11-14T23:47:50.000Z"
+    completedAt: "2026-11-15T02:20:00.000Z"
+    lastModified: "2026-11-15T02:20:00.000Z"
+    lastModifiedBy: "Nick Daniel <nick@endash.us>"
+    resolutionType: "code-change"
+    resolutionDetail: "PageContext.sceneRules carries the scheme and scope; the city's lazy part writes the Scene's sheet; the embed's pages content passes them; the ribbon band says fill=\"none\" on itself; new embed-one-face claims in light and dark at Nearby and City. PR #605 (retested by Cloud on Deep Time, 13/13 bands unfilled), released in 0.2.3 (#604)."
