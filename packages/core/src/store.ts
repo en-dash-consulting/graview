@@ -713,6 +713,8 @@ export class Store<S extends AnySchema> {
       if (this.mutations.has(mutation.name)) {
         throw new GraphError(`Duplicate mutation "${mutation.name}"`);
       }
+      // A name the framework keeps for an act of its own is never an app's (`binding-act-taken`): the framework's answers it.
+      if (mutation.name === BIND_PERSON) continue;
       this.mutations.set(mutation.name, mutation);
     }
     /*
@@ -950,7 +952,7 @@ export class Store<S extends AnySchema> {
     // "Type text" (Roadmap f-collab-text): answered by every store once `@graview/core/typing` is loaded, and offered by no list.
     if (name === TYPE_TEXT && !this.typer && TYPING.typeText && !this.past && !this.mutations.has(name)) this.mutations.set(name, (this.typer = TYPING.typeText(this)));
     // "Bind a person" (Roadmap f-invite-binds-existing-person): answered where a kind is the people once the host loads `@graview/core/binding`, and offered by no list.
-    if (name === BIND_PERSON && !this.binder && BINDING.act && !this.past && !this.mutations.has(name)) {
+    if (name === BIND_PERSON && !this.binder && BINDING.act && !this.past) {
       const binder = BINDING.act(this) as AnyMutationDefinition<S> | undefined;
       if (binder) this.mutations.set(name, (this.binder = binder));
     }

@@ -34,9 +34,9 @@ export function checkPolicy<S extends AnySchema>(ctx: CheckContext<S>): void {
    * like a role whose grants are elsewhere. The person who finds either is
    * otherwise the person standing in front of a button they cannot press.
    */
-  // An act of the app's own under the name binding goes by would stand in its place, and bind nobody.
+  // A name the framework keeps for an act of its own is never the app's.
   if ((app.mutations ?? []).some((mutation) => mutation.name === BIND_PERSON)) {
-    add({ severity: "error", code: "binding-act-taken", where: `mutations.${BIND_PERSON}`, message: `The app declares its own "${BIND_PERSON}" act, so the store keeps it in place of the host's: nobody could be bound to the person entered for them.`, fix: `Rename the app's "${BIND_PERSON}" act.` });
+    add({ severity: "error", code: "binding-act-taken", where: `mutations.${BIND_PERSON}`, message: `The app declares its own "${BIND_PERSON}" act, a name the framework keeps for an act of its own: the store answers it with the framework's, and the app's is never run.`, fix: `Rename the app's "${BIND_PERSON}" act.` });
   }
   if (app.policy) {
     const roles = rolesOf(app.policy);
