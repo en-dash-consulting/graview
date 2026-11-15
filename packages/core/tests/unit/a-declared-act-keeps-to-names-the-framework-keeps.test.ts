@@ -39,6 +39,13 @@ describe("a declared act keeps to names the framework keeps", () => {
     expect(JSON.stringify(edited.ok ? [] : edited.findings)).toContain("binding-act-taken");
   });
 
+  it("is never what an act named for a kind becomes as the kind is renamed", () => {
+    const named = { ...doc, acts: { "bind-member": ownAct } };
+    const edited = editDocument(named as never, [{ op: "rename-kind", kind: "member", to: "person" }] as never);
+    expect(edited.ok).toBe(true);
+    expect(Object.keys((edited.ok ? edited.document : named).acts ?? {})).not.toContain(BIND_PERSON);
+  });
+
   it("is answered by the framework's own act in a store, whatever the app declares", () => {
     let ran = 0;
     const declared = { name: BIND_PERSON, title: "Mine", input: z.object({}).passthrough(), apply: () => { ran += 1; return []; } };

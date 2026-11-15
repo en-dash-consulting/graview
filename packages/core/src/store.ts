@@ -725,7 +725,7 @@ export class Store<S extends AnySchema> {
      * invariants — and by the policy, through the acts that already write or
      * create the kind (see `permits`). Nothing an app declares is replaced.
      */
-    for (const mutation of options.past ? [] : deriveMutations(options.schema, options.mutations ?? [])) {
+    for (const mutation of options.past ? [] : deriveMutations(options.schema, (options.mutations ?? []).filter((mutation) => mutation.name !== BIND_PERSON))) {
       this.mutations.set(mutation.name, mutation);
     }
     // "Keep this link" (FR-172): answered by every store, offered by no list. An app's own `keep-link` keeps its name.
