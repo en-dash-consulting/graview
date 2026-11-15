@@ -81,7 +81,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.2.2
 
-Published November 14, 2026 · the current version
+Published November 14, 2026
 
 The one face knows when the city's side is narrow: every view in sight keeps its board, each district's name stands beside its own district, the home's city is centered on a small phone, and a phone's lines leave the sheet through the gaps between rows.
 

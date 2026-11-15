@@ -1,5 +1,20 @@
 # @graview/pages
 
+## 0.2.3
+
+### Patch Changes
+
+- 0c4cf9a: The one face's city draws through the embed as it does under `PagesApp`. Graview Cloud mounts every app with `face: "pages"` and `sceneUnderPages: true`, and at Nearby and the City large black shapes covered the ground between districts, in either scheme. `PagesApp`'s page writes `themeCss`, the frame's rules and the Scene's together; the embed's frame writes only the frame's (`themeBaseCss`), and wrote the Scene's only beside a Scene face, which the one face never draws. So the city under the page was the Scene drawn with none of its rules: each ribbon between two districts, an SVG path whose `fill: none` is the Scene's, was filled black, and the ground's gradient and the districts' plates were not drawn as they are under `PagesApp`. `PageContext` now takes `sceneRules` (`{ scheme, scope }`), and where it is said the city's part writes `sceneCss` for that scheme and scope as it is fetched, before the city's own rules, so they are never in a page's first load and a routed face without `sceneUnderPages` never carries them; the embed says it on the one face, from `mount` and from `@graview/embed/pages`, for the scheme it draws in and its own scope. A ribbon's band also says `fill="none"` on the element itself, so it is never a black shape where no sheet says otherwise; the Scene's rules say the same and win. Held by new claims in `embed-one-face` — `noRibbonIsFilledAtNearbyInLight`, `…AtCityInLight`, `…AtNearbyInDark` and `…AtCityInDark`, and `theCityDrawsAsUnderPagesAppAtNearbyInLight` and its three others, which read every element of the city, a ribbon's band, a building's faces and a district's name among them, once as the embed draws it and once with the embed's sheets put aside and `themeCss` adopted as the examples adopt it, and find them the same — and by a unit test of the embed (`the-one-faces-city-draws-with-the-scenes-rules`). A hosted page carries nothing more up front; the pages face alone grows by 403 / 635 bytes and every face by 565 / 238, by chunks fetched later only, under raises named `the-one-faces-city-draws-with-the-scenes-rules-*` in `scripts/budget-raises/`.
+  
+  Compatibility: ops and primitives, stored formats, the wire, the declaration and check finding codes, and derived tool names and input schemas — unchanged. The JavaScript API is additive (`PageContext.sceneRules`). The look (not a surface): the one face through the embed is drawn as under `PagesApp`; everything else is unchanged. What Graview Cloud does: nothing; the city is drawn right once it takes this version.
+- Updated dependencies [0c4cf9a]
+- Updated dependencies [7059f3b]
+  - @graview/react@0.2.3
+  - @graview/tools@0.2.3
+  - @graview/primitives@0.2.3
+  - @graview/core@0.2.3
+  - @graview/layout@0.2.3
+
 ## 0.2.2
 
 ### Patch Changes
