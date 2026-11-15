@@ -30,15 +30,17 @@ export interface HeadlessSeat {
  * holding the `visitor` role where the policy names it. The app has a
  * visitor where its policy names that role, or grants or shows anything
  * to everybody (`"*"`). With no policy, every seat sees all of it: the
- * owner alone. A policy's own `owner` role is that first seat, never a
- * second one made up for it.
+ * owner alone. Where the owner handed holds the policy's own `owner`
+ * role, it is that role's seat, and none is made up for it a second time.
  */
 export function seatsOfPolicy(policy: Policy | undefined, owner: Principal): readonly HeadlessSeat[] {
   const seats: HeadlessSeat[] = [{ name: "owner", principal: owner }];
   if (!policy) return seats;
   const named = new Set<string>(rolesOf(policy));
   for (const sight of policy.sees ?? []) if (sight.roles !== "*") for (const role of sight.roles) named.add(role);
-  for (const role of [...named].sort()) if (role !== VISITOR_ROLE && role !== OWNER_ROLE) seats.push({ name: role, principal: { kind: "human", id: `view-as:${role}`, roles: [role] } });
+  /* The owner handed, where it holds the policy's own `owner` role, is that role's seat: it is not made up a second time. */
+  const ownerHeld = owner.roles?.includes(OWNER_ROLE) === true;
+  for (const role of [...named].sort()) if (role !== VISITOR_ROLE && !(ownerHeld && role === OWNER_ROLE)) seats.push({ name: role, principal: { kind: "human", id: `view-as:${role}`, roles: [role] } });
   const toEverybody = [...policy.grants, ...(policy.sees ?? [])].some((one) => one.roles === "*");
   if (named.has(VISITOR_ROLE) || toEverybody) seats.push({ name: "visitor", principal: { kind: "human", shared: true, roles: named.has(VISITOR_ROLE) ? [VISITOR_ROLE] : [] } });
   return seats;

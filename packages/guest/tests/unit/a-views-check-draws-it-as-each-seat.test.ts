@@ -35,6 +35,13 @@ describe("a view's check, as each seat", () => {
     expect(seats.some((seat) => seat.principal.id === "view-as:owner")).toBe(false);
   });
 
+  it("still checks the owner role as its own seat when the owner handed does not hold it", () => {
+    const system: Principal = { kind: "system", id: "graview-view-check" };
+    const seats = seatsOfPolicy({ ...clubPolicy, roles: ["owner", "member", "parent"] }, system);
+    expect(seats.map((seat) => seat.name)).toEqual(["owner", "member", "owner", "parent", "visitor"]);
+    expect(seats[2]!.principal).toEqual({ kind: "human", id: "view-as:owner", roles: ["owner"] });
+  });
+
   it("says for each seat whether it drew, and what it reads that the seat is not handed", async () => {
     const checked = await runWorkerViewForEachSeat({ store: club(), manifest: players, source: playersSource, run, owner: member });
     const by = Object.fromEntries(checked.seats.map((seat) => [seat.seat, seat]));
