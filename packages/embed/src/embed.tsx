@@ -713,6 +713,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
                 steering={steering}
                 overview={toOverview}
                 scope={scope}
+                scheme={scheme}
                 titleLevel={titleBelow(heading)}
                 quickAsk={quickAskOf(props.quickAsk)}
                 onBarSlot={setBarSlot}

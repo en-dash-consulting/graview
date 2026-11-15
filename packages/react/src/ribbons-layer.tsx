@@ -219,7 +219,8 @@ export function Ribbons({ frame, width, height, pan, store, graphVersion: nodes,
                 data-graview-lit={lit && !receded ? "" : undefined}
                 data-graview-receded={receded ? "" : undefined}
               >
-                <path className="graview-ribbon-band" d={d} style={{ strokeWidth: wide }} />
+                {/* Unfilled where no sheet says so: a band is a stroke, and an SVG path with no fill said is filled black. The Scene's rules say the same, and win. */}
+                <path className="graview-ribbon-band" d={d} fill="none" style={{ strokeWidth: wide }} />
               </g>
             );
           })}

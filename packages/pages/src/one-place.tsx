@@ -110,6 +110,8 @@ export interface OnePlaceCityProps {
   readonly motion: { readonly current: Motion };
   /** Told as the level rested at or headed for, whether the page is out of the window, or whether it is moving, changes. */
   readonly onAltitude: (now: { readonly level: number; readonly away: boolean; readonly moving: boolean }) => void;
+  /** The Scene's own rules, for a host whose sheet has none of them (`PageContext.sceneRules`): written with the city. */
+  readonly sceneRules?: PageContext<AnySchema>["sceneRules"];
 }
 
 /** What the page's address is in the city. */
@@ -860,7 +862,7 @@ export function OnePlace<S extends AnySchema>({
       {/* THE APP'S BAR, fixed at the window's top over the page and the city alike: the shell draws it here (`page-shell.tsx`). First in the document, as the derived pages have it, so Tab reaches the bar before the page's own links at every level; its layer, not its place, sets it over the rest. */}
       <div ref={setBar} data-testid="one-place-bar" data-graview-one-face-bar="" style={{ position: "fixed", left: 0, right: 0, top: 0, zIndex: ONE_FACE_LAYERS.bar, background: "var(--graview-ground, Canvas)" }} />
       <Suspense fallback={null}>
-        <OnePlaceCity where={where} out={now.away} sheet={sheet} connected={connected} boards={standing} current={current} boardEls={boardEls} boardLayer={boardLayer} fab={fab} view={view} lessMotion={lessMotion()} resolve={resolve} openRecord={openRecord} openKind={openKind} onGround={onGround} motion={motion} onAltitude={onAltitude} />
+        <OnePlaceCity where={where} out={now.away} sheet={sheet} connected={connected} boards={standing} current={current} boardEls={boardEls} boardLayer={boardLayer} fab={fab} view={view} lessMotion={lessMotion()} resolve={resolve} openRecord={openRecord} openKind={openKind} onGround={onGround} motion={motion} onAltitude={onAltitude} {...(context.sceneRules ? { sceneRules: context.sceneRules } : {})} />
       </Suspense>
       <div ref={sheet} data-graview-one-place={now.level} {...(inPanel ? { "data-graview-in-panel": "" } : {})} data-graview-standing-on={where.type === "record" ? where.id : where.type === "list" ? `kind:${where.kind}` : where.type} style={sheetStyle}>
         <div {...(now.level >= CITY ? { inert: true } : {})} style={away ? { minHeight: "100%", display: "flex", flexDirection: "column" } : { display: "contents" }}>

@@ -135,7 +135,7 @@ function PagesDrawing<S extends AnySchema>(props: PagesEmbedProps<S>) {
             <BarFindContext.Provider value={barFind}>
               <NoticeBoardContext.Provider value={voice}>
               <FaceBoundary module="@graview/pages" report={report} content>
-                <PagesContent<S> store={store} views={views} presence={presence} auto={auto} brand={brand} steering={steering} scope={scope} titleLevel={titleBelow(props.heading ?? 2)} onBarSlot={setBarSlot} props={props} />
+                <PagesContent<S> store={store} views={views} presence={presence} auto={auto} brand={brand} steering={steering} scope={scope} scheme={scheme} titleLevel={titleBelow(props.heading ?? 2)} onBarSlot={setBarSlot} props={props} />
               </FaceBoundary>
               </NoticeBoardContext.Provider>
             </BarFindContext.Provider>
