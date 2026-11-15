@@ -711,7 +711,7 @@ export function DefaultPlacePage<S extends AnySchema>({ context, asList }: { con
         {ownHeading ? null : (
           <p style={{ ...quiet, margin: 0, display: "flex", flexWrap: "wrap", gap: "4px 16px" }}>
             {kindsOfPlace(context, place).filter((kind) => !(isTheList && kind === place.kind)).map((kind, index) => (
-              <Link key={kind} to={`/${pluralSlug(store.schema, kind)}${context.views?.arrangement?.()?.lists?.[kind]?.opens !== undefined ? `?drawn=${BUILT_IN}${narrowedTo && kind === place.kind ? `&filter=${encodeURIComponent(narrowedTo)}` : ""}` : narrowedTo && kind === place.kind ? `?filter=${encodeURIComponent(narrowedTo)}` : ""}`} style={{ ...onward, ...quiet }} {...(index === 0 ? { "data-testid": "place-as-list" } : {})}>
+              <Link key={kind} to={`/${pluralSlug(store.schema, kind)}${context.views?.arrangement?.()?.lists?.[kind]?.opens !== undefined || (context.views !== undefined && listPageViewOf(context.views, kind) !== undefined) ? `?drawn=${BUILT_IN}${narrowedTo && kind === place.kind ? `&filter=${encodeURIComponent(narrowedTo)}` : ""}` : narrowedTo && kind === place.kind ? `?filter=${encodeURIComponent(narrowedTo)}` : ""}`} style={{ ...onward, ...quiet }} {...(index === 0 ? { "data-testid": "place-as-list" } : {})}>
                 <Onward>All {(kind === place.kind ? plural : pluralOf(store, kind)).toLowerCase()} as a list</Onward>
               </Link>
             ))}

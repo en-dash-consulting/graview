@@ -55,8 +55,11 @@ describe("a kind's list page with a view that replaces it and another registered
     expect(html).toContain('data-testid="records"');
   });
 
-  it("offers no way to the list from the place that is the list, and does from the other", () => {
+  it("offers no way to the list from the place that is the list, and from the other the list itself", () => {
     expect(draw("/places/deliverables", views())).not.toContain("All deliverables as a list");
-    expect(draw("/places/status", views())).toContain("All deliverables as a list");
+    const status = draw("/places/status", views());
+    expect(status).toContain("All deliverables as a list");
+    // The list it offers is the list itself, not the view that is the list page.
+    expect(status).toMatch(/href="\/deliverables\?drawn=built-in"[^>]*data-testid="place-as-list"|data-testid="place-as-list"[^>]*href="\/deliverables\?drawn=built-in"/);
   });
 });

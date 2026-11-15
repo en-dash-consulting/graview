@@ -61,6 +61,24 @@ describe("which view a kind's list page draws", () => {
     expect(listPageViewOf(titled, "deliverable")).toBeUndefined();
     const untitled = createViews(schema).register("deliverable", many, view(true)).register("deliverable", many, view(false));
     expect(listPageViewOf(untitled, "deliverable")).toBeUndefined();
+    const renamed = createViews(schema).register("deliverable", many, view(true), { title: "Board", name: "board" }).register("deliverable", many, view(false), { title: "Kanban", name: "board" });
+    expect(listPageViewOf(renamed, "deliverable")).toBeUndefined();
+    const forgotten = createViews(schema).register("deliverable", many, view(true), { title: "Board", name: "board" });
+    forgotten.forget?.("deliverable", "board");
+    expect(listPageViewOf(forgotten, "deliverable")).toBeUndefined();
+  });
+
+  it("is an untitled view that replaces it, though a titled view of many registered after it", () => {
+    const roll = view(true);
+    const views = createViews(schema).register("deliverable", many, roll, { name: "roll" }).register("deliverable", many, view(false), { title: "Status", name: "status" });
+    expect(listPageViewOf(views, "deliverable")?.view).toBe(roll);
+  });
+
+  it("is the view whose place shares its title with one the host deleted", () => {
+    const views = createViews(schema).register("deliverable", many, view(true), { title: "Board", name: "a" }).register("deliverable", many, view(false), { title: "Board", name: "b" });
+    expect(listPageViewOf(views, "deliverable")).toBeUndefined();
+    const tidied = tidyViews(views, { hidden: [], removed: [{ name: "b", title: "Board", at: "2026-11-15T00:00:00.000Z", until: "2026-12-15T00:00:00.000Z" }] });
+    expect(listPageViewOf(tidied, "deliverable")?.name).toBe("a");
   });
 
   it("is none for a view beside the kind's pictures or kept off the lists", () => {
