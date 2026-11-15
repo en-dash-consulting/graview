@@ -6,7 +6,7 @@
 - Start a product: `npm create graview@latest my-app` (Node 22 or later)
 - License: Elastic License 2.0 — source-available, free to build with and to ship products on
 - Source: https://github.com/en-dash-consulting/graview
-- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.2.2)
+- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.2.3)
 - Hosted: Graview Cloud, https://graview.cloud (private alpha, invite-only)
 
 ## Questions, answered plainly
@@ -904,6 +904,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.2.3`](https://graview.dev/docs/releases.html#v0-2-3)
 - [`0.2.2`](https://graview.dev/docs/releases.html#v0-2-2)
 - [`0.2.1`](https://graview.dev/docs/releases.html#v0-2-1)
 - [`0.2.0`](https://graview.dev/docs/releases.html#v0-2-0)
@@ -979,9 +980,23 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
-## 0.2.2
+## 0.2.3
 
 Published November 14, 2026 · the current version
+
+The one face's city draws through the embed as it does in a routed app: no black bands on the ground where the districts' ribbons run.
+
+- **The city through the embed.** A host that mounts the one face through `@graview/embed` (`sceneUnderPages`) now gets the city drawn with the Scene's own rules, fetched with the city's own part after the page's first draw. Before, the bands joining related districts were filled black, and the ground and the districts' plates lost their look.
+- A ribbon's band says `fill="none"` on itself, so it is never filled even without the Scene's rules.
+- The several bar's timing test holds on a shared runner; the several bar itself is unchanged.
+
+**Before you upgrade:** Breaks: nothing. Gains: `PageContext.sceneRules` (`{ scheme, scope }`), which the embed sets so the one face's city writes the Scene's rules in its scope. The look of the one face through the embed is now as under `PagesApp`; everything else, stored formats, ops, the wire, derived tool names and their input schemas, is unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.2.3) · [The full changelog for 0.2.3](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#023)
+
+## 0.2.2
+
+Published November 14, 2026
 
 The one face knows when the city's side is narrow: every view in sight keeps its board, each district's name stands beside its own district, the home's city is centered on a small phone, and a phone's lines leave the sheet through the gaps between rows.
 
@@ -8208,7 +8223,7 @@ Source: https://graview.dev/docs/site.html
 
 # This site is a Graview app
 
-graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 501 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
+graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 502 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
 
 ## The site, running
 
@@ -8233,7 +8248,7 @@ This is that declaration, compiled in your browser by the same compiler `graview
 | `chapter` | A step of the garden, grown: a declaration that passes its own check, opened in a browser on every push. | 16 |
 | `example` | An example app in the repository, described by its own package.json. | 5 |
 | `question` | A question the front page answers plainly, read off its FAQ. | 7 |
-| `release` | A version every package shares, as the releases page says it: when npm published it, what came in it in a few plain lines, and what a host must know before upgrading. Written by hand with the Version packages pull request (apps/site/releases.json). | 79 |
+| `release` | A version every package shares, as the releases page says it: when npm published it, what came in it in a few plain lines, and what a host must know before upgrading. Written by hand with the Version packages pull request (apps/site/releases.json). | 80 |
 | `scaffold` | What graview create writes, read from the generator itself. | 1 |
 
 ## How a page is made
