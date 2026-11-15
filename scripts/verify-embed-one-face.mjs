@@ -32,6 +32,20 @@
  *   thePanelOptionSetsTheDesksPanel mounted with `panel: 0.6` the page
  *                                   beside the city is 60% of the window
  *                                   (55% unsaid), in the panel's gutter;
+ *   noRibbonIsFilledAt…In…          at Nearby and City, in light and dark,
+ *                                   every ribbon between districts is drawn
+ *                                   with no fill, and a band at rest with
+ *                                   the scheme's stroke opacity, which only
+ *                                   the Scene's rules say: they come with
+ *                                   the city, so no band is a black
+ *                                   polygon on the ground;
+ *   theCityDrawsAsUnderPagesAppAt…  at Nearby and City, in light and dark,
+ *                                   every element of the city — a ribbon's
+ *                                   band, a building's faces, a district's
+ *                                   name — has the computed styles it has
+ *                                   once the embed's sheets are put aside
+ *                                   and `PagesApp`'s own (`themeCss`) is
+ *                                   adopted, as the examples adopt it;
  *   noPageThrew.
  *
  *   node scripts/verify-embed-one-face.mjs
@@ -42,6 +56,10 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createMemoryAdapter } from "../packages/core/dist/index.js";
+import { appFromOrCompile } from "../packages/core/dist/compiled.js";
+import { themeBaseCss } from "../packages/primitives/dist/theme.js";
+import { viewsCss } from "../packages/primitives/dist/views-css.js";
+import { sceneCss, themeCss } from "../packages/primitives/dist/scene-css.js";
 import { servePreview } from "../packages/ship/dist/index.js";
 import { launchEngine } from "./lib/engine.mjs";
 import { closeAppMenu } from "./lib/bar.mjs";
@@ -279,6 +297,146 @@ async function panelOption(browser, url, errors) {
   return { asked, unsaid, ok: Math.abs(asked.width - 768) <= 1 && Math.abs(unsaid.width - 704) <= 1 && asked.inPanel && asked.gutter === "16px" };
 }
 
+/** What the city's styles are read as: every property a sheet of the Scene's, the frame's or the city's own may set on what it draws. */
+const STYLED = ["display", "visibility", "opacity", "fill", "fill-opacity", "stroke", "stroke-opacity", "stroke-width", "stroke-dasharray", "stroke-linejoin", "stroke-linecap", "paint-order", "color", "background-color", "background-image", "font-family", "font-size", "font-weight", "font-style", "letter-spacing", "text-transform", "text-shadow", "border-top-width", "border-top-style", "border-top-color", "border-radius", "padding-top", "padding-left", "box-shadow", "filter", "mix-blend-mode", "pointer-events", "cursor"];
+/** What the claim names by role, and where each is found in the city. */
+const NAMED = {
+  ribbonBand: '[data-testid="one-place-city"] .graview-ribbon-band',
+  buildingRoof: '[data-testid="one-place-city"] .graview-building .graview-iso-roof',
+  buildingLeft: '[data-testid="one-place-city"] .graview-building .graview-iso-left',
+  buildingRight: '[data-testid="one-place-city"] .graview-building .graview-iso-right',
+  districtName: '[data-testid="one-place-names"] .graview-one-place-district',
+  districtNameButton: '[data-testid="one-place-names"] .graview-one-place-district button',
+};
+
+/** Every element the city draws — the Scene under the page and the districts' names over it — each with its computed styles. */
+const cityStyles = (page) =>
+  page.evaluate(
+    ({ styled, named }) => {
+      const read = (el) => {
+        const style = getComputedStyle(el);
+        return Object.fromEntries(styled.map((name) => [name, style.getPropertyValue(name)]));
+      };
+      const all = [...document.querySelectorAll('[data-testid="one-place-city"] *, [data-testid="one-place-names"] *')].filter((el) => el.tagName !== "STYLE");
+      return {
+        all: all.map((el) => ({ what: `${el.tagName.toLowerCase()}${el.getAttribute("class") ? `.${el.getAttribute("class").trim().split(/\s+/).join(".")}` : ""}`, style: read(el) })),
+        named: Object.fromEntries(
+          Object.entries(named).map(([role, selector]) => {
+            const el = document.querySelector(selector);
+            return [role, el ? read(el) : null];
+          }),
+        ),
+        bands: [...document.querySelectorAll('[data-testid="one-place-city"] .graview-ribbon-band')].map((el) => {
+          const style = getComputedStyle(el);
+          const ribbon = el.closest(".graview-ribbon");
+          return { fill: style.fill, strokeOpacity: style.strokeOpacity, at: ribbon?.hasAttribute("data-graview-lit") || ribbon?.hasAttribute("data-graview-receded") ? "marked" : "rest" };
+        }),
+      };
+    },
+    { styled: STYLED, named: NAMED },
+  );
+
+/** The embed's own sheets put aside, and `PagesApp`'s whole sheet adopted in their place, as the examples adopt it (`apps/todo/src/main.tsx`). */
+const asUnderPagesApp = (page, sheets, whole) =>
+  page.evaluate(
+    ({ sheets, whole }) => {
+      const put = [];
+      for (const style of document.querySelectorAll("[data-graview-embed] style")) {
+        if (sheets.includes(style.textContent)) {
+          style.media = "not all";
+          put.push(style);
+        }
+      }
+      const sheet = new CSSStyleSheet();
+      sheet.replaceSync(whole);
+      document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+      window.__graviewPutAside = { put, sheet };
+      return put.length;
+    },
+    { sheets, whole },
+  );
+
+const backToTheEmbeds = (page) =>
+  page.evaluate(() => {
+    const { put, sheet } = window.__graviewPutAside;
+    for (const style of put) style.media = "";
+    document.adoptedStyleSheets = document.adoptedStyleSheets.filter((one) => one !== sheet);
+  });
+
+/*
+ * THE ONE FACE'S CITY DRAWS WITH THE SCENE'S RULES. `PagesApp`'s page writes
+ * `themeCss` — the frame's rules, the views' and the Scene's — where the
+ * embed's frame writes the frame's and the views'. At Nearby and at the
+ * City, in each scheme: no ribbon band is filled, and every element of the
+ * city reads as it does once the embed's sheets are put aside and the whole
+ * `themeCss` is adopted, as `PagesApp` is hosted. Motion is stilled for both
+ * readings, so nothing is read halfway through a transition.
+ */
+async function sceneRules(browser, url, scheme, app, errors) {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, colorScheme: scheme, reducedMotion: "no-preference" });
+  const page = await context.newPage();
+  page.on("pageerror", (error) => errors.push(`scene rules, ${scheme}: ${error.message}`));
+  const checks = {};
+  const Scheme = `${scheme[0].toUpperCase()}${scheme.slice(1)}`;
+  try {
+    await page.goto(`${url}/tasks?graview-one-face=1`, { waitUntil: "load" });
+    await page.waitForFunction(() => window.__graviewReady === true, null, { timeout: 60_000 });
+    await page.waitForSelector("[data-graview-one-place]", { timeout: 30_000 });
+    await page.addStyleTag({ content: "*, *::before, *::after { transition: none !important; animation: none !important; }" });
+    const scope = await page.evaluate(() => [...document.querySelector("[data-graview-embed]").classList].find((one) => one.startsWith("graview-embed-")));
+    const at = { scope: `.${scope}` };
+    // The embed's own sheets, as it writes them: the frame's, the views', and the Scene's where it writes them.
+    const sheets = [themeBaseCss(scheme, app.brand, at), viewsCss(at), sceneCss(scheme, at)];
+    const whole = themeCss(scheme, app.brand);
+    for (const [level, word] of [[1, "Nearby"], [2, "City"]]) {
+      await blur(page);
+      await page.keyboard.press(String(level + 1));
+      await restAt(page, level);
+      const embed = await cityStyles(page);
+      // Unfilled, and drawn by the Scene's own rule: a band at rest takes the scheme's stroke opacity, which only `sceneCss` says (the element's own `fill="none"` alone would leave the fill right and the rest of the band unstyled).
+      const restOpacity = scheme === "light" ? "0.2" : "0.3";
+      const atRest = embed.bands.filter((band) => band.at === "rest");
+      checks[`noRibbonIsFilledAt${word}In${Scheme}`] = {
+        bands: embed.bands.length,
+        filled: embed.bands.filter((band) => band.fill !== "none").map((band) => band.fill),
+        notTheScenes: atRest.filter((band) => band.strokeOpacity !== restOpacity).map((band) => band.strokeOpacity),
+        ok: embed.bands.length > 0 && embed.bands.every((band) => band.fill === "none") && atRest.length > 0 && atRest.every((band) => band.strokeOpacity === restOpacity),
+      };
+      const putAside = await asUnderPagesApp(page, sheets, whole);
+      await page.waitForTimeout(150);
+      const pagesApp = await cityStyles(page);
+      await backToTheEmbeds(page);
+      const differ = [];
+      for (let i = 0; i < Math.min(embed.all.length, pagesApp.all.length); i++) {
+        const one = embed.all[i];
+        const other = pagesApp.all[i];
+        for (const name of STYLED) if (one.style[name] !== other.style[name]) differ.push({ what: one.what, property: name, embed: one.style[name], pagesApp: other.style[name] });
+      }
+      const named = Object.fromEntries(
+        Object.keys(NAMED).map((role) => {
+          const one = embed.named[role];
+          const other = pagesApp.named[role];
+          const off = one && other ? STYLED.filter((name) => one[name] !== other[name]).map((name) => ({ property: name, embed: one[name], pagesApp: other[name] })) : null;
+          return [role, { drawn: one !== null, same: off !== null && off.length === 0, ...(off && off.length > 0 ? { off } : {}) }];
+        }),
+      );
+      checks[`theCityDrawsAsUnderPagesAppAt${word}In${Scheme}`] = {
+        putAside,
+        elements: { embed: embed.all.length, pagesApp: pagesApp.all.length },
+        named,
+        differ: differ.length,
+        first: differ.slice(0, 12),
+        ok: putAside === sheets.length && embed.all.length === pagesApp.all.length && differ.length === 0 && Object.values(named).every((one) => one.drawn && one.same),
+      };
+    }
+  } catch (error) {
+    checks[`sceneRulesRanIn${Scheme}`] = { error: String(error?.stack ?? error), ok: false };
+  } finally {
+    await context.close();
+  }
+  return checks;
+}
+
 const report = { at: new Date().toISOString(), engine: "chromium", document: DOCUMENT, checks: {} };
 const errors = [];
 let browser;
@@ -290,6 +448,9 @@ try {
   browser = await launchEngine("chromium");
   for (const one of PROFILES) Object.assign(report.checks, await profile(browser, url, one, errors));
   report.checks.thePanelOptionSetsTheDesksPanel = await panelOption(browser, url, errors).catch((error) => ({ error: String(error?.message ?? error), ok: false }));
+  const compiled = await appFromOrCompile({ document });
+  if (!compiled.ok) throw new Error(`${DOCUMENT} does not compile`);
+  for (const scheme of ["light", "dark"]) Object.assign(report.checks, await sceneRules(browser, url, scheme, compiled.app, errors));
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
   report.passed = Object.values(report.checks).every((check) => check.ok);
 } catch (error) {

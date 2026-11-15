@@ -1,6 +1,6 @@
 import type { HistoryHost } from "@graview/core/history";
 import type { DisplayOptionsHost } from "@graview/core";
-import { freshAddress, sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ViewerState, type ResolveApp, type LinkedRecords, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration, type SignIn, type SubscriptionStore, type DismissalStore, type KeptViews } from "@graview/core";
+import { freshAddress, sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ViewerState, type ResolveApp, type LinkedRecords, type Person, type Principal, type Scheme, type Store, type PresenceChannel, type SettingDeclaration, type SignIn, type SubscriptionStore, type DismissalStore, type KeptViews } from "@graview/core";
 import { useCallback, useRef, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import type { AwaySummary, FieldTyping, KeepLensHost, ProposeChangeHost, ComposeChangeHost, DraftChangeHost, MenuSectionSource, OnExport, ReactViewRegistry } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
@@ -76,6 +76,17 @@ export interface PageContext<S extends AnySchema> {
    * `sceneUnderPages` is.
    */
   readonly panel?: number;
+  /**
+   * THE SCENE'S OWN RULES UNDER THE ONE FACE, WHERE THE HOST'S SHEET HAS NONE.
+   * A page that writes `themeCss` carries the Scene's rules already and
+   * leaves this unsaid. A host whose sheet is `themeBaseCss` — the embed's
+   * frame — says its scheme and scope here, and the city's part writes
+   * `sceneCss` for them as it is fetched, after the page's first draw and
+   * before the city's own rules: the city then draws as it does under
+   * `themeCss`, and they are never in the page's first load. Read only
+   * where `sceneUnderPages` is.
+   */
+  readonly sceneRules?: { readonly scheme: Scheme; readonly scope?: string };
   readonly invariantContext?: Readonly<Record<string, unknown>>;
   /**
    * Whether this browser remembers the edits (a ship browser adapter behind

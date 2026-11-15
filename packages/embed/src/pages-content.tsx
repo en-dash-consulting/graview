@@ -1,4 +1,4 @@
-import type { AnySchema, Brand, PresenceChannel, Store } from "@graview/core";
+import type { AnySchema, Brand, PresenceChannel, Scheme, Store } from "@graview/core";
 import { basePathOf } from "@graview/core";
 import { PagesApp, type PagesSteering } from "@graview/pages";
 import type { ReactViewRegistry } from "@graview/react/provider";
@@ -21,6 +21,7 @@ export function PagesContent<S extends AnySchema>({
   steering,
   overview,
   scope,
+  scheme,
   titleLevel = 2,
   quickAsk,
   onBarSlot,
@@ -38,6 +39,8 @@ export function PagesContent<S extends AnySchema>({
   readonly overview?: ((stop?: string) => void) | undefined;
   /** The embed's scope, for the views' own sheet (FR-131). */
   readonly scope: string;
+  /** The scheme the frame draws in: the Scene's rules the one face's city is drawn with are this scheme's. */
+  readonly scheme: Scheme;
   /** The level a page's own title is said at: one below the app's name on the bar (FR-131). */
   readonly titleLevel?: 2 | 3 | 4 | 5 | 6;
   /** The quick ask, as the app set it for the scene too. */
@@ -49,6 +52,14 @@ export function PagesContent<S extends AnySchema>({
   const css = useMemo(() => viewsCss({ scope: `.${scope}` }), [scope]);
   // The one face reads its page in the window's flow, the window scrolling it: the box scrolls nothing of its own (FR-239).
   const oneFace = props.sceneUnderPages === true;
+  /*
+   * THE SCENE'S RULES UNDER THE ONE FACE. The frame's sheet is
+   * `themeBaseCss`, which has none of the Scene's, and the city under the
+   * page is the Scene's own: its part writes them, for this scheme and
+   * scope, as it is fetched (`sceneRules`), so it draws as under `PagesApp`
+   * and its `themeCss` — a ribbon's band unfilled, not a black polygon.
+   */
+  const sceneRules = useMemo(() => ({ scheme, scope: `.${scope}` }), [scheme, scope]);
   return (
     <div data-embed-content="" style={auto || oneFace ? { flex: "0 0 auto", background: "var(--graview-ground)" } : { flex: "1 1 auto", minHeight: 0, overflow: "auto", background: "var(--graview-ground)" }}>
       <style>{css}</style>
@@ -66,7 +77,7 @@ export function PagesContent<S extends AnySchema>({
             ...(props.bar !== false ? { barAbove: true } : {}),
             ...(overview && !oneFace ? { overview } : {}),
             /* Pages and the Scene as one face (FR-239): the city under the page, the frame's bar in its slot. */
-            ...(oneFace ? { sceneUnderPages: true, ...(onBarSlot ? { onBarSlot } : {}), ...(props.panel !== undefined ? { panel: props.panel } : {}) } : {}),
+            ...(oneFace ? { sceneUnderPages: true, sceneRules, ...(onBarSlot ? { onBarSlot } : {}), ...(props.panel !== undefined ? { panel: props.panel } : {}) } : {}),
             titleLevel,
             views,
             settings: props.app.settings ?? [],

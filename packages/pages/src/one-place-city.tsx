@@ -2,6 +2,7 @@ import { labelOf, ONE_FACE_LAYERS } from "@graview/core";
 import { RECORD_BOXES_ATTRIBUTE, RECORD_BOXES_MOVED, recordBoxesOf } from "@graview/core/record-boxes";
 import { EMPTY_VIEW, toUrl, withOverview, type ViewState } from "@graview/layout/view";
 import { Scene, type SceneCamera } from "@graview/react";
+import { sceneCss } from "@graview/primitives/scene";
 import { useGraview, useNavigation, useViolations } from "@graview/react/provider";
 import { useOneFace } from "./one-place-control.js";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
@@ -154,7 +155,14 @@ interface Drawn {
   readonly part: Point;
 }
 
-export function OnePlaceCity({ where, out, sheet, connected, boards, current, boardEls, boardLayer, fab, view, lessMotion, resolve, openRecord, openKind, onGround, motion, onAltitude }: OnePlaceCityProps) {
+export function OnePlaceCity({ where, out, sheet, connected, boards, current, boardEls, boardLayer, fab, view, lessMotion, resolve, openRecord, openKind, onGround, motion, onAltitude, sceneRules }: OnePlaceCityProps) {
+  /*
+   * THE SCENE'S OWN RULES, where the host's sheet has none (the embed's
+   * frame writes `themeBaseCss`): fetched with this part, after the page's
+   * first draw, so they are never in its first load, and written before
+   * the city's own, where `themeCss` has them.
+   */
+  const sceneSheet = useMemo(() => (sceneRules ? sceneCss(sceneRules.scheme, sceneRules.scope === undefined ? {} : { scope: sceneRules.scope }) : null), [sceneRules?.scheme, sceneRules?.scope]);
   const { store } = useGraview();
   const { view: seen, go } = useNavigation();
   const box = useRef<HTMLDivElement>(null);
@@ -1927,6 +1935,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       >
         {/* One set of lines on this face: nothing is chosen on the Scene, so it draws no lines of its own from a choice and no outline of one. */}
         {/* The Scene's own zoom and its signs past the edge are not this face's: the control at the foot and the camera are. */}
+        {sceneSheet === null ? null : <style>{sceneSheet}</style>}
         <style>{CITY_CSS}</style>
         <Scene renderer="dom" blur={false} animate={false} camera={camera} options={sceneOptions} style={{ width: "100%", height: "100%" }} />
       </div>
