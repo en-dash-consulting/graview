@@ -396,7 +396,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     let rest = PAGE;
     let altitude = PAGE;
     /** A move of the camera this face is making: from one camera to another, about the place. */
-    let move: { from: Live; to: Live; fromAltitude: number; toAltitude: number; about: Point; start: number; foot: string; names: ReadonlyMap<string, Box>; slots: ReadonlyMap<string, Point>; done: () => void } | null = null;
+    let move: { from: Live; to: Live; fromAltitude: number; toAltitude: number; about: Point; start: number; foot: string; names: ReadonlyMap<string, Box>; slots: ReadonlyMap<string, Point>; scales: ReadonlyMap<string, number>; done: () => void } | null = null;
     /** What stood at the foot when the City was last fitted: the legend opened or put away there fits it again. */
     let cityFoot = "";
     /** Where the camera stood when it came to rest at the City: a hand that moved it since keeps it. */
@@ -453,9 +453,11 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
      * or a name placed from it may stand a little elsewhere: it goes there
      * over a moment, from where it was drawn.
      */
-    let settle: { slots: ReadonlyMap<string, Point>; names: ReadonlyMap<string, Box>; start: number } | null = null;
+    let settle: { slots: ReadonlyMap<string, Point>; names: ReadonlyMap<string, Box>; scales: ReadonlyMap<string, number>; start: number } | null = null;
     /** A camera written in the frame before: what stood where the move ended is carried into the new pixels as this frame begins, the view drawing them now. */
     let rebaseNext: Live | null = null;
+    /** The camera the last frame drew the city through, between stops, until the view has taken it (or the face rebased onto it). */
+    let drawnThrough: Live | null = null;
     const SETTLE_MS = 300;
     /*
      * A name's box is carried whole: its size too, which differs between
@@ -475,10 +477,21 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       return at;
     };
     /** How far a move or a settle has gone, this frame: 1 when nothing is under way. */
-    const goneAt = (now: number): { readonly t: number; readonly slots: ReadonlyMap<string, Point> | null; readonly names: ReadonlyMap<string, Box> | null } =>
-      move ? { t: ease(clamp01((now - move.start) / MOVE_MS)), slots: move.slots, names: move.names } : settle && now - settle.start < SETTLE_MS ? { t: ease((now - settle.start) / SETTLE_MS), slots: settle.slots, names: settle.names } : { t: 1, slots: null, names: null };
+    const goneAt = (now: number): { readonly t: number; readonly slots: ReadonlyMap<string, Point> | null; readonly names: ReadonlyMap<string, Box> | null; readonly scales: ReadonlyMap<string, number> | null } =>
+      move ? { t: ease(clamp01((now - move.start) / MOVE_MS)), slots: move.slots, names: move.names, scales: move.scales } : settle && now - settle.start < SETTLE_MS ? { t: ease((now - settle.start) / SETTLE_MS), slots: settle.slots, names: settle.names, scales: settle.scales } : { t: 1, slots: null, names: null, scales: null };
     /** Every board and name where it is drawn this frame. */
     const drawnSlots = (now: number) => { const g = goneAt(now); return new Map([...slots].map(([key, at]) => [key, blend(g.slots?.get(key), at, g.t) ?? at] as const)); };
+    /*
+     * And each board's size as drawn: a board placed again a little smaller
+     * (or back to its full size) goes there over the same moment as its foot,
+     * never one frame from one size to the other.
+     */
+    const scaleFrom = (g: ReturnType<typeof goneAt>, key: string): number => {
+      const to = scales.get(key) ?? 1;
+      const from = g.scales?.get(key);
+      return from === undefined || !slots.has(key) || !g.slots?.has(key) ? to : from + (to - from) * g.t;
+    };
+    const drawnScales = (now: number) => { const g = goneAt(now); return new Map([...slots.keys()].map((key) => [key, scaleFrom(g, key)] as const)); };
     const drawnNames = (now: number) => { const g = goneAt(now); return new Map([...names].map(([key, at]) => [key, blend(g.names?.get(key), at, g.t) ?? at] as const)); };
     const QUIET_MS = 220;
     const lines = new Map<string, { g: SVGGElement; path: SVGPathElement; dot: SVGCircleElement; arrow: SVGPathElement; ring: HTMLButtonElement; open: () => void }>();
@@ -538,6 +551,17 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     /** The city and every view standing in it, as last read: what the city's camera fits. */
     let whole: Box | null = null;
     let kept: { key: string; body: string; origin: Point; placed: ReturnType<typeof placeSigns> } | null = null;
+    /** What nothing of the city's is drawn under at rest: the bar, the page beside the city, the level control. */
+    const keptOutNow = (): Box[] => {
+      const view = state.current.view;
+      const plane = sheet.current;
+      const dockRect = fab.current?.querySelector("[data-graview-one-face-dock]")?.getBoundingClientRect();
+      return [
+        { x: 0, y: 0, width: view.width, height: view.top ?? 0 },
+        ...(plane && altitude > 0.5 && altitude < 1.5 ? [boxOf(plane.getBoundingClientRect())] : []),
+        ...(dockRect && dockRect.width > 0 ? [boxOf(dockRect)] : []),
+      ];
+    };
     /** A window too small for a board beside every district: a phone, or one turned on its side. */
     const cramped = () => state.current.view.width <= PHONE || state.current.view.height <= 600;
     /**
@@ -546,7 +570,9 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
      * of. Where the pan changed nothing but what is in sight, they stay
      * there, and only what had no place is placed round them.
      */
-    const standAll = (w: World, zoomNow: number, cam: Live, bounds: Box | undefined, lvl: number, held?: { readonly slots: ReadonlyMap<string, Point>; readonly names: ReadonlyMap<string, Box> }) => {
+    const standAll = (w: World, zoomNow: number, cam: Live, bounds: Box | undefined, lvl: number, held?: { readonly slots: ReadonlyMap<string, Point>; readonly names: ReadonlyMap<string, Box>; readonly scales: ReadonlyMap<string, number> }): ReadonlySet<string> => {
+      /** What was held where it stood: boards by key, names by kind. */
+      const holds = new Set<string>();
       const view = state.current.view;
       const onScreen = (box: Box): Box => ({ x: box.x * cam.s + cam.x, y: box.y * cam.s + cam.y, width: box.width * cam.s, height: box.height * cam.s });
       const tiles = new Map([...w.plots].map(([kind, box]) => [kind, onScreen(box)] as const));
@@ -590,6 +616,32 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
        * again — and only a board or a name with no place yet is placed.
        */
       const holding = held && kept && kept.key !== key && kept.body === body;
+      /*
+       * Only what is seen is held: one the pan took out of the window, or
+       * under the bar, the page or the control, is not drawn, and is placed
+       * again — coming up where it lands — as it was before a pan held
+       * anything.
+       */
+      const out = keptOutNow();
+      const win = { x: 0, y: 0, width: view.width, height: view.height };
+      const across = (a: Box, b: Box) => Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x) > 1 && Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y) > 1;
+      const seenAt = (box: Box) => across(box, win) && !out.some((k) => across(box, k));
+      const heldFeet = new Map<string, Point>();
+      const heldNames = new Map<string, Box>();
+      if (holding) {
+        for (const [one, p] of held.slots) {
+          const foot = project(cam, p);
+          const scale = held.scales.get(one) ?? 1;
+          const cardWidth = width * scale;
+          if (one === state.current.current || seenAt({ x: foot.x - cardWidth / 2, y: foot.y - (cardWidth / BOARD_ASPECT), width: cardWidth, height: cardWidth / BOARD_ASPECT })) heldFeet.set(one, foot);
+        }
+        for (const [kind, b] of held.names) {
+          const box = { ...project(cam, b), width: b.width * cam.s, height: b.height * cam.s };
+          if (seenAt(box)) heldNames.set(kind, box);
+        }
+        for (const one of heldFeet.keys()) holds.add(one);
+        for (const kind of heldNames.keys()) holds.add(`name:${kind}`);
+      }
       let placed: ReturnType<typeof placeSigns>;
       let shift = { x: 0, y: 0 };
       if (kept && kept.key === key) {
@@ -600,10 +652,10 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           ...(holding
             ? {
                 held: {
-                  feet: new Map([...held.slots].map(([one, p]) => [one, project(cam, p)] as const)),
+                  feet: heldFeet,
                   posts: new Map([...posts].map(([one, length]) => [one, length * cam.s] as const)),
-                  scales,
-                  names: new Map([...held.names].map(([kind, box]) => [kind, { ...project(cam, box), width: box.width * cam.s, height: box.height * cam.s }] as const)),
+                  scales: held.scales,
+                  names: heldNames,
                 },
               }
             : {}),
@@ -646,6 +698,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       scales = new Map(placed.scales);
       names = new Map([...placed.names].map(([kind, box]) => [kind, backBox(box)] as const));
       whole = placed.whole ? backBox(placed.whole) : null;
+      return holds;
     };
 
     /*
@@ -821,6 +874,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       names = new Map([...names].map(([key, b]) => [key, box(b)] as const));
       whole = whole ? box(whole) : null;
       settle = null;
+      drawnThrough = null;
       world = { plots: new Map([...world.plots].map(([key, b]) => [key, box(b)] as const)), buildings: new Map([...world.buildings].map(([key, b]) => [key, box(b)] as const)) };
     };
     const moveTo = (cam: SceneCamera, toLevel: number, anchor: Point, now: number, arm = true) => {
@@ -836,6 +890,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       // Where everything is drawn now is where it moves from: the page's own board, placed only now, joins them from where it stands at rest.
       const namesFrom = drawnNames(now);
       const slotsFrom = drawnSlots(now);
+      const scalesFrom = drawnScales(now);
       const own = state.current.current;
       if (rest !== PAGE && !move && !slots.has(own) && level(painted)) {
         standAll(world, cam.zoom(), LEVEL_LIVE, shownAt(rest), rest);
@@ -868,6 +923,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         foot: footNow().key,
         names: namesFrom,
         slots: slotsFrom,
+        scales: scalesFrom,
         done: () => {
           rest = toLevel;
           altitude = toLevel;
@@ -941,7 +997,10 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       const settling = cam.moving() && !between;
       // Written too recently for a new move to be painted safely: the Scene settles what is painted a beat after a commit.
       const calm = now - committedAt >= QUIET_MS;
-      if (between) painted = live;
+      if (between) {
+        painted = live;
+        drawnThrough = live;
+      }
       else if (!settling) {
         painted = LEVEL_LIVE;
         /*
@@ -976,13 +1035,17 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
              * the districts say moved, they stand where the last frame drew
              * them, and settle from there.
              */
-            const carry = carriedBetween(before.plots, world.plots);
-            const drawnBefore = carry ? { slots: carriedThrough(carry, drawnSlots(now)), names: carriedThrough(carry, drawnNames(now)) } : { slots: drawnSlots(now), names: drawnNames(now) };
+            // Where the districts disagree (one grew under a record added as the hand panned), the camera the last frame drew through says it.
+            const carry = carriedBetween(before.plots, world.plots) ?? drawnThrough;
+            const drawnBefore = carry ? { slots: carriedThrough(carry, drawnSlots(now)), names: carriedThrough(carry, drawnNames(now)), scales: drawnScales(now) } : { slots: drawnSlots(now), names: drawnNames(now), scales: drawnScales(now) };
             // At the City everything stands inside what the camera shows; the camera was fitted to it.
             // A pan, not a zoom: a name is a size on the screen, and at another zoom it is placed again for it.
             const panned = carry !== null && carry !== LEVEL_LIVE && Math.abs(carry.s - 1) < 1e-3;
-            standAll(world, cam.zoom(), LEVEL_LIVE, shownAt(rest), rest, panned ? drawnBefore : undefined);
-            settle = { ...drawnBefore, start: now };
+            const holds = standAll(world, cam.zoom(), LEVEL_LIVE, shownAt(rest), rest, panned ? drawnBefore : undefined);
+            // What a pan let go of put away and placed again comes up where it lands, as one placed for the first time does: it was not seen where it stood.
+            const from = panned && holds.size > 0 ? { slots: new Map([...drawnBefore.slots].filter(([one]) => holds.has(one))), names: new Map([...drawnBefore.names].filter(([kind]) => holds.has(`name:${kind}`))), scales: drawnBefore.scales } : drawnBefore;
+            settle = { ...from, start: now };
+            drawnThrough = null;
           }
           lastRead = now;
           lastReadKey = readKey;
@@ -1077,6 +1140,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           move.start = now;
           move.names = drawnNames(now);
           move.slots = drawnSlots(now);
+          move.scales = drawnScales(now);
           move.to = cameraFor(move.toAltitude, move.about, cam.zoom());
           placeFor(move.toAltitude, move.to, cam.zoom());
         }
@@ -1176,7 +1240,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
          */
         const building = at.where.type === "record" ? world.buildings.get(at.where.id) : undefined;
         if (rest === PANEL && building && level(painted) && inside(project(painted, { x: building.x + building.width / 2, y: building.y + building.height / 2 }), nearbyShown())) {
-          settle = { slots: drawnSlots(now), names: drawnNames(now), start: now };
+          settle = { slots: drawnSlots(now), names: drawnNames(now), scales: drawnScales(now), start: now };
           standAll(world, zoomNow, LEVEL_LIVE, shownAt(rest), rest);
         } else {
           // Chosen at the city — a Find result, a link — a page lands beside the city, as a view chosen there does.
@@ -1256,14 +1320,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
        * has brought under one of them is put away (unseen, unreached) until
        * it comes out again.
        */
-      const dockRect = fab.current?.querySelector("[data-graview-one-face-dock]")?.getBoundingClientRect();
-      const keepOut: Box[] = move
-        ? []
-        : [
-            { x: 0, y: 0, width: at.view.width, height: at.view.top ?? 0 },
-            ...(a > 0.5 && a < 1.5 ? [boxOf(plane.getBoundingClientRect())] : []),
-            ...(dockRect && dockRect.width > 0 ? [boxOf(dockRect)] : []),
-          ];
+      const keepOut: readonly Box[] = move ? [] : keptOutNow();
       const under = (b: Box) => keepOut.some((k) => Math.min(b.x + b.width, k.x + k.width) - Math.max(b.x, k.x) > 1 && Math.min(b.y + b.height, k.y + k.height) - Math.max(b.y, k.y) > 1);
       // Every board and name a press reaches this frame: a line's ring under or against one of them is not offered.
       pressable.length = 0;
@@ -1279,7 +1336,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         const arriving = gone.slots !== null && goal !== undefined && was === undefined ? carried : 1;
         const leaving = gone.slots !== null && goal === undefined && was !== undefined ? 1 - carried : 1;
         const slot = goal ? slotNow(key) : gone.slots && was ? was : undefined;
-        const w = boardWidth * (scales.get(key) ?? 1);
+        const w = boardWidth * scaleFrom(gone, key);
         const h = w / BOARD_ASPECT;
         const footAt = slot ? project(painted, slot) : null;
         const covered = key !== at.current && footAt !== null && under({ x: footAt.x - w / 2, y: footAt.y - h, width: w, height: h });

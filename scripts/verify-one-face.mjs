@@ -25,7 +25,9 @@
  * fresh load fades; a board's post crosses no name and runs under any board
  * it has to cross; a district's "⚠ n" opens that kind's problems alone; and
  * the page is drawn once, its elements, keyboard and typed word kept as the
- * one face arrives.
+ * one face arrives. And a pan let go of, at Nearby and the City, moves
+ * nothing: every board and name stays where the last frame drew it; a zoom
+ * let go of goes on from there, never back to where it began.
  *
  * Frame strips (desk and phone, light and dark), and the rich app's City
  * and Nearby at 1280 and 390 wide (`rich-*.png`), are written to
@@ -2556,10 +2558,11 @@ function goesOnAfter(frames, released) {
   return { firstStep: Number(firstStep.toFixed(2)), firstAt, leap: Number(leap.toFixed(3)), leapAt, frames: after.length, boxes: Object.keys(last.items).length };
 }
 async function panStill(page, where, { level, phone }) {
+  where = { ...where, level };
   await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
   await ready(page);
   await press(page, `[data-testid="altitude-stop-${level}"]`);
-  await restAt(page, level);
+  await restAt(page, level, 15_000);
   await page.waitForTimeout(700);
   const bar = await page.evaluate(() => Math.round(document.querySelector('[data-testid="one-place-bar"]')?.getBoundingClientRect().bottom ?? 0));
   /** Bare ground of the city, clear of the page, the boards, the names and the control. */
@@ -2574,6 +2577,23 @@ async function panStill(page, where, { level, phone }) {
           const el = document.elementFromPoint(x, y);
           if (el && el.closest('[data-testid="one-place-city"]') && !el.closest("[data-graview-plot], .graview-kind-card, button, a, [data-graview-building], [data-graview-board], [data-graview-district-tag]")) return { x, y };
         }
+      return null;
+    }, bar);
+  /** Bare ground as near the middle of the city's side as there is: two fingers there zoom what is in sight, not the window's edge. */
+  const bareInTheMiddle = () =>
+    page.evaluate((top) => {
+      const sheet = document.querySelector("[data-graview-one-place]")?.getBoundingClientRect();
+      const dock = document.querySelector("[data-graview-one-face-dock]")?.getBoundingClientRect();
+      const right = sheet && sheet.left > 100 ? sheet.left : innerWidth;
+      const foot = Math.min(sheet && sheet.top > top + 100 ? sheet.top : innerHeight, dock ? dock.top : innerHeight);
+      const middle = { x: right / 2, y: (top + foot) / 2 };
+      const spots = [];
+      for (let y = top + 50; y < foot - 50; y += 11) for (let x = 60; x < right - 60; x += 13) spots.push({ x, y });
+      spots.sort((a, b) => Math.hypot(a.x - middle.x, a.y - middle.y) - Math.hypot(b.x - middle.x, b.y - middle.y));
+      for (const { x, y } of spots) {
+        const el = document.elementFromPoint(x, y);
+        if (el && el.closest('[data-testid="one-place-city"]') && !el.closest("[data-graview-plot], .graview-kind-card, button, a, [data-graview-building], [data-graview-board], [data-graview-district-tag]")) return { x, y };
+      }
       return null;
     }, bar);
   const aBoard = () =>
@@ -2602,20 +2622,31 @@ async function panStill(page, where, { level, phone }) {
     }, bar);
   const releasedAt = () => page.evaluate(() => performance.now());
   const runs = [];
-  const run = async (way, spot, gesture, zoom = false) => {
+  const run = async (way, spot, gesture, zoom = false, least = zoom ? 3 : 4) => {
     if (!spot) {
       runs.push({ way, ok: false, error: "nowhere to begin it" });
       return;
     }
-    await startStillRecording(page);
-    await page.waitForTimeout(120);
-    const released = await gesture(spot);
-    await page.waitForTimeout(STILL_MS + 150);
-    const frames = await stopStillRecording(page);
+    let released;
+    let frames;
+    try {
+      await startStillRecording(page);
+      await page.waitForTimeout(120);
+      released = await gesture(spot);
+      await page.waitForTimeout(STILL_MS + 150);
+      frames = await stopStillRecording(page);
+    } catch (error) {
+      runs.push({ way, zoom, spot, ok: false, error: String(error?.message ?? error) });
+      return;
+    }
     const held = zoom ? goesOnAfter(frames, released) : stillAfter(frames, released);
+    // How far the gesture took the ground, and what was measured: never a gesture that moved nothing, nor a window with nothing on it.
+    const lastPan = frames.filter((frame) => frame.t < released).at(-1);
+    const groundMoved = frames[0]?.items.ground && lastPan?.items.ground ? Math.round(farthest(lastPan.items.ground, frames[0].items.ground)) : 0;
+    const measured = lastPan ? Object.keys(lastPan.items).filter((key) => key !== "ground").length : 0;
     // A step past a third of the way in one frame is a jump: an eased settle takes about a tenth, a stalled frame twice that.
-    const ok = held.frames > 10 && held.boxes > 1 && (zoom ? held.firstStep <= 1 && held.leap <= 0.34 : held.worst <= 1 && held.putAway.length === 0);
-    runs.push({ way, zoom, spot, ...held, ok });
+    const ok = held.frames > 10 && measured >= least && groundMoved >= (zoom ? 8 : 20) && (zoom ? held.firstStep <= 1 && held.leap <= 0.34 : held.worst <= 1 && held.putAway.length === 0);
+    runs.push({ way, zoom, spot, groundMoved, measured, ...held, ok });
     // Each gesture begins at rest where the last left the city.
     await page.waitForTimeout(300);
   };
@@ -2633,24 +2664,29 @@ async function panStill(page, where, { level, phone }) {
       await touch("touchEnd", []);
       return t;
     });
-    await run("two fingers apart", await bare(), async (s) => {
+    // Two fingers together, then apart: further out, and closer.
+    const pinch = (by) => async (s) => {
       const points = (gap) => [{ x: s.x - gap, y: s.y }, { x: s.x + gap, y: s.y }];
-      await touch("touchStart", points(30));
-      for (let i = 1; i <= 8; i++) {
-        await touch("touchMove", points(30 + i * 6));
+      await touch("touchStart", points(60));
+      for (let i = 1; i <= 5; i++) {
+        await touch("touchMove", points(60 + i * by));
         await page.waitForTimeout(16);
       }
       await page.waitForTimeout(80);
       const t = await releasedAt();
       await touch("touchEnd", []);
       return t;
-    }, true);
+    };
+    // The City is as far out as the camera goes: there two fingers only go closer.
+    if (level === 1) await run("two fingers together", await bareInTheMiddle(), pinch(-5), true);
+    // Closer beside the page, a phone's whole city side fades as its districts leave sight (unchanged here): closer is held at the City.
+    if (level === 2) await run("two fingers apart", await bareInTheMiddle(), pinch(4), true);
   } else {
-    const drag = async (s) => {
+    const drag = (dx, dy) => async (s) => {
       await page.mouse.move(s.x, s.y);
       await page.mouse.down();
       for (let i = 1; i <= 12; i++) {
-        await page.mouse.move(s.x + i * 8, s.y + i * 5);
+        await page.mouse.move(s.x + (i * dx) / 12, s.y + (i * dy) / 12);
         await page.waitForTimeout(16);
       }
       await page.waitForTimeout(80);
@@ -2658,12 +2694,14 @@ async function panStill(page, where, { level, phone }) {
       await page.mouse.up();
       return t;
     };
-    await run("a drag on the ground", await bare(), drag);
-    await run("a drag begun on a board", await aBoard(), drag);
+    await run("a drag on the ground", await bare(), drag(96, 60));
+    await run("a drag begun on a board", await aBoard(), drag(96, 60));
+    // Toward the page beside the city: what goes under it is put away, and what stays in sight stays where it is.
+    await run("a drag toward the page", await bare(), drag(220, 0), false, 2);
     await run("a scroll", await bare(), async (s) => {
       await page.mouse.move(s.x, s.y);
       for (let i = 0; i < 6; i++) {
-        await page.mouse.wheel(30, 50);
+        await page.mouse.wheel(50, 50);
         await page.waitForTimeout(30);
       }
       await page.waitForTimeout(40);
@@ -2679,19 +2717,21 @@ async function panStill(page, where, { level, phone }) {
       await page.waitForTimeout(40);
       return releasedAt();
     });
-    await run("ctrl and the wheel", await bare(), async (s) => {
+    const ctrlWheel = (deltaY) => async (s) => {
       await page.mouse.move(s.x, s.y);
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 2; i++) {
         await page.keyboard.down("Control");
-        await page.mouse.wheel(0, -40);
+        await page.mouse.wheel(0, deltaY);
         await page.keyboard.up("Control");
         await page.waitForTimeout(30);
       }
       await page.waitForTimeout(40);
       return releasedAt();
-    }, true);
+    };
+    await run("ctrl and the wheel, closer", await bare(), ctrlWheel(-40), true);
+    await run("ctrl and the wheel over a district, further", await overADistrict(), ctrlWheel(40), true);
   }
-  return { where: { ...where, level }, runs };
+  return { where, runs };
 }
 
 /*
