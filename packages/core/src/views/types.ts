@@ -298,6 +298,13 @@ export interface ViewRegistry<S extends AnySchema, V = unknown> {
    * seat and then taken back goes this way.
    */
   forget?(kind: string, as: string): ViewRegistry<S, V>;
+  /**
+   * WHETHER THE HOST'S TIDYING TOOK A REGISTRATION AWAY (FR-238): deleted,
+   * or a titled one hidden — what `registrations()`, every registration as
+   * it was made, does not say. A registry nothing tidies has none, and
+   * takes nothing away.
+   */
+  tidied?(registration: ViewRegistration<V>): boolean;
 }
 
 const key = (kind: string, cell: ViewCell, as = "") =>

@@ -2,7 +2,7 @@ import { counted, isCurrent, labelOf, onePerPicture, placeLabel, placeSlug, shar
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { kindFacts } from "./facts.js";
 import { ViewBoundary } from "@graview/react/drawing";
-import { bleeds, bleedsFull, isDefaultView, replacesPage, type ViewProps } from "@graview/react/provider";
+import { bleeds, bleedsFull, isDefaultView, listPageViewOf, type ViewProps } from "@graview/react/provider";
 import { arrange, arrangeable, formatArrangement, parseArrangement } from "@graview/core/arrange";
 import { useLayoutEffect, useRef, useState, type ComponentType, type RefObject } from "react";
 import { DerivedForm } from "./form.js";
@@ -654,7 +654,7 @@ export function DefaultPlacePage<S extends AnySchema>({ context, asList }: { con
   const creates = drawnBy?.creates !== false;
   const headline = ledeOf(context, (drawnBy as { lede?: unknown } | undefined)?.lede);
   /* A view that is its kind's list page as well (FR-203): its list is this picture again, so it is not offered as another way to see them. */
-  const isTheList = replacesPage(drawnBy) && context.views?.lookup(place.kind, { cardinality: "many", fidelity: "full" }) === drawnBy;
+  const isTheList = drawnBy !== undefined && context.views !== undefined && listPageViewOf(context.views, place.kind)?.view === drawnBy;
   const facts = kindFacts(store, place.kind, {
     ...(principal ? { principal } : {}),
     ...(context.invariantContext ? { context: context.invariantContext } : {}),
