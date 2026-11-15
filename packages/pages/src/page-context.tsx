@@ -81,10 +81,10 @@ export interface PageContext<S extends AnySchema> {
    * A page that writes `themeCss` carries the Scene's rules already and
    * leaves this unsaid. A host whose sheet is `themeBaseCss` — the embed's
    * frame — says its scheme and scope here, and the city's part writes
-   * `sceneCss` for them as it is fetched, before the city's own rules: the
-   * city then draws as it does under `themeCss`, and a page that never
-   * rises to the city never carries them. Read only where
-   * `sceneUnderPages` is.
+   * `sceneCss` for them as it is fetched, after the page's first draw and
+   * before the city's own rules: the city then draws as it does under
+   * `themeCss`, and they are never in the page's first load. Read only
+   * where `sceneUnderPages` is.
    */
   readonly sceneRules?: { readonly scheme: Scheme; readonly scope?: string };
   readonly invariantContext?: Readonly<Record<string, unknown>>;

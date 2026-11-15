@@ -79,12 +79,32 @@ describe("the one face's city under the embed draws with the Scene's rules", () 
     expect(cityIn(host)).toBe(true);
     expect(sceneSheetsIn(host, "light")).toBe(1);
     // Within the embed's element only: none of the Scene's rules is written unscoped.
-    expect([...document.querySelectorAll("style")].filter((style) => style.textContent === sceneCss("light"))).toHaveLength(0);
+    expect([...document.querySelectorAll("style")].filter((style) => /(^|\n)\.graview-ribbon-band\s*\{/.test(style.textContent ?? ""))).toHaveLength(0);
   });
 
   it("writes them for the scheme it draws in", async () => {
     const host = await whole({ sceneUnderPages: true, scheme: "dark" });
     await until(() => cityIn(host));
+    expect(sceneSheetsIn(host, "dark")).toBe(1);
+    expect(sceneSheetsIn(host, "light")).toBe(0);
+  });
+
+  it("writes them again for a scheme the host changes to, and keeps none of the last one's", async () => {
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    let handle: EmbedHandle | undefined;
+    await act(async () => {
+      handle = mount(host, { app, seed, fonts: false, studio: false, face: "pages", path: "/tasks", sceneUnderPages: true, scheme: "light" } as EmbedOptions);
+    });
+    mounted.push(async () => {
+      await act(async () => handle!.unmount());
+      host.remove();
+    });
+    await act(async () => handle!.drawn());
+    await until(() => cityIn(host));
+    expect(sceneSheetsIn(host, "light")).toBe(1);
+    await act(async () => handle!.setScheme("dark"));
+    await until(() => sceneSheetsIn(host, "dark") === 1);
     expect(sceneSheetsIn(host, "dark")).toBe(1);
     expect(sceneSheetsIn(host, "light")).toBe(0);
   });

@@ -725,7 +725,7 @@ export function useFrame<S extends AnySchema>(props: FrameOptions<S>) {
   const told = props.hostContext?.theme;
   const followed = useHostScheme(askedScheme === "auto" && told === undefined, brand?.scheme);
   const scheme: Scheme = askedScheme === "auto" ? (told ?? followed) : askedScheme;
-  /* Every face's sheet; the scene face draws the scene's own rules beside it (`sceneCss`, FR-104). */
+  /* Every face's sheet; the scene face draws the scene's own rules beside it (`sceneCss`, FR-104), and the one face's city with it (`sceneRules`). */
   const css = useMemo(() => themeBaseCss(scheme, brand, { scope: `.${scope}` }), [scheme, brand, scope]);
 
   // The page's icon, only when the host said its page is the app's (FR-124).

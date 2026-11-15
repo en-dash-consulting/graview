@@ -34,8 +34,10 @@
  *                                   (55% unsaid), in the panel's gutter;
  *   noRibbonIsFilledAt…In…          at Nearby and City, in light and dark,
  *                                   every ribbon between districts is drawn
- *                                   with no fill: the Scene's rules come
- *                                   with the city, so no band is a black
+ *                                   with no fill, and a band at rest with
+ *                                   the scheme's stroke opacity, which only
+ *                                   the Scene's rules say: they come with
+ *                                   the city, so no band is a black
  *                                   polygon on the ground;
  *   theCityDrawsAsUnderPagesAppAt…  at Nearby and City, in light and dark,
  *                                   every element of the city — a ribbon's
@@ -296,7 +298,7 @@ async function panelOption(browser, url, errors) {
 }
 
 /** What the city's styles are read as: every property a sheet of the Scene's, the frame's or the city's own may set on what it draws. */
-const STYLED = ["display", "visibility", "opacity", "fill", "fill-opacity", "stroke", "stroke-opacity", "stroke-width", "stroke-dasharray", "stroke-linejoin", "paint-order", "color", "background-color", "background-image", "font-family", "font-size", "font-weight", "font-style", "letter-spacing", "text-transform", "text-shadow", "border-top-width", "border-top-style", "border-top-color", "border-radius", "padding-top", "padding-left", "box-shadow", "filter", "mix-blend-mode", "pointer-events", "cursor"];
+const STYLED = ["display", "visibility", "opacity", "fill", "fill-opacity", "stroke", "stroke-opacity", "stroke-width", "stroke-dasharray", "stroke-linejoin", "stroke-linecap", "paint-order", "color", "background-color", "background-image", "font-family", "font-size", "font-weight", "font-style", "letter-spacing", "text-transform", "text-shadow", "border-top-width", "border-top-style", "border-top-color", "border-radius", "padding-top", "padding-left", "box-shadow", "filter", "mix-blend-mode", "pointer-events", "cursor"];
 /** What the claim names by role, and where each is found in the city. */
 const NAMED = {
   ribbonBand: '[data-testid="one-place-city"] .graview-ribbon-band',
@@ -324,7 +326,11 @@ const cityStyles = (page) =>
             return [role, el ? read(el) : null];
           }),
         ),
-        bands: [...document.querySelectorAll('[data-testid="one-place-city"] .graview-ribbon-band')].map((el) => getComputedStyle(el).fill),
+        bands: [...document.querySelectorAll('[data-testid="one-place-city"] .graview-ribbon-band')].map((el) => {
+          const style = getComputedStyle(el);
+          const ribbon = el.closest(".graview-ribbon");
+          return { fill: style.fill, strokeOpacity: style.strokeOpacity, at: ribbon?.hasAttribute("data-graview-lit") || ribbon?.hasAttribute("data-graview-receded") ? "marked" : "rest" };
+        }),
       };
     },
     { styled: STYLED, named: NAMED },
@@ -387,7 +393,15 @@ async function sceneRules(browser, url, scheme, app, errors) {
       await page.keyboard.press(String(level + 1));
       await restAt(page, level);
       const embed = await cityStyles(page);
-      checks[`noRibbonIsFilledAt${word}In${Scheme}`] = { bands: embed.bands.length, filled: embed.bands.filter((fill) => fill !== "none"), ok: embed.bands.length > 0 && embed.bands.every((fill) => fill === "none") };
+      // Unfilled, and drawn by the Scene's own rule: a band at rest takes the scheme's stroke opacity, which only `sceneCss` says (the element's own `fill="none"` alone would leave the fill right and the rest of the band unstyled).
+      const restOpacity = scheme === "light" ? "0.2" : "0.3";
+      const atRest = embed.bands.filter((band) => band.at === "rest");
+      checks[`noRibbonIsFilledAt${word}In${Scheme}`] = {
+        bands: embed.bands.length,
+        filled: embed.bands.filter((band) => band.fill !== "none").map((band) => band.fill),
+        notTheScenes: atRest.filter((band) => band.strokeOpacity !== restOpacity).map((band) => band.strokeOpacity),
+        ok: embed.bands.length > 0 && embed.bands.every((band) => band.fill === "none") && atRest.length > 0 && atRest.every((band) => band.strokeOpacity === restOpacity),
+      };
       const putAside = await asUnderPagesApp(page, sheets, whole);
       await page.waitForTimeout(150);
       const pagesApp = await cityStyles(page);
@@ -412,7 +426,7 @@ async function sceneRules(browser, url, scheme, app, errors) {
         named,
         differ: differ.length,
         first: differ.slice(0, 12),
-        ok: putAside >= 2 && embed.all.length === pagesApp.all.length && differ.length === 0 && Object.values(named).every((one) => one.drawn && one.same),
+        ok: putAside === sheets.length && embed.all.length === pagesApp.all.length && differ.length === 0 && Object.values(named).every((one) => one.drawn && one.same),
       };
     }
   } catch (error) {

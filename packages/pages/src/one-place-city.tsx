@@ -158,9 +158,9 @@ interface Drawn {
 export function OnePlaceCity({ where, out, sheet, connected, boards, current, boardEls, boardLayer, fab, view, lessMotion, resolve, openRecord, openKind, onGround, motion, onAltitude, sceneRules }: OnePlaceCityProps) {
   /*
    * THE SCENE'S OWN RULES, where the host's sheet has none (the embed's
-   * frame writes `themeBaseCss`): fetched with this part, so a page that
-   * never rises carries none of them, and written before the city's own,
-   * where `themeCss` has them.
+   * frame writes `themeBaseCss`): fetched with this part, after the page's
+   * first draw, so they are never in its first load, and written before
+   * the city's own, where `themeCss` has them.
    */
   const sceneSheet = useMemo(() => (sceneRules ? sceneCss(sceneRules.scheme, sceneRules.scope === undefined ? {} : { scope: sceneRules.scope }) : null), [sceneRules?.scheme, sceneRules?.scope]);
   const { store } = useGraview();
