@@ -2,6 +2,14 @@
   "about": "The release records of graview.dev: one per version in packages/core/CHANGELOG.md, newest first, written with the Version packages pull request. A version npm never got says which version carried it (shippedIn) and is said inside that version's section. The date is the day npm published it (UTC). tests/the-releases-page-says-what-each-version-brought.test.ts fails while a version in the changelog has no record here.",
   "releases": [
     {
+      "version": "0.2.3",
+      "date": "2026-11-14",
+      "headline": "The one face's city draws through the embed as it does in a routed app: no black bands on the ground where the districts' ribbons run.",
+      "summary": "- **The city through the embed.** A host that mounts the one face through `@graview/embed` (`sceneUnderPages`) now gets the city drawn with the Scene's own rules, fetched with the city's own part after the page's first draw. Before, the bands joining related districts were filled black, and the ground and the districts' plates lost their look.\n- A ribbon's band says `fill=\"none\"` on itself, so it is never filled even without the Scene's rules.\n- The several bar's timing test holds on a shared runner; the several bar itself is unchanged.",
+      "compatibility": "Breaks: nothing. Gains: `PageContext.sceneRules` (`{ scheme, scope }`), which the embed sets so the one face's city writes the Scene's rules in its scope. The look of the one face through the embed is now as under `PagesApp`; everything else, stored formats, ops, the wire, derived tool names and their input schemas, is unchanged.",
+      "published": true
+    },
+    {
       "version": "0.2.2",
       "date": "2026-11-14",
       "headline": "The one face knows when the city's side is narrow: every view in sight keeps its board, each district's name stands beside its own district, the home's city is centered on a small phone, and a phone's lines leave the sheet through the gaps between rows.",

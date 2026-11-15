@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.2.3`](https://graview.dev/docs/releases.html#v0-2-3)
 - [`0.2.2`](https://graview.dev/docs/releases.html#v0-2-2)
 - [`0.2.1`](https://graview.dev/docs/releases.html#v0-2-1)
 - [`0.2.0`](https://graview.dev/docs/releases.html#v0-2-0)
@@ -78,6 +79,20 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.3`](https://graview.dev/docs/releases.html#v0-1-3)
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
+
+## 0.2.3
+
+Published November 14, 2026 · the current version
+
+The one face's city draws through the embed as it does in a routed app: no black bands on the ground where the districts' ribbons run.
+
+- **The city through the embed.** A host that mounts the one face through `@graview/embed` (`sceneUnderPages`) now gets the city drawn with the Scene's own rules, fetched with the city's own part after the page's first draw. Before, the bands joining related districts were filled black, and the ground and the districts' plates lost their look.
+- A ribbon's band says `fill="none"` on itself, so it is never filled even without the Scene's rules.
+- The several bar's timing test holds on a shared runner; the several bar itself is unchanged.
+
+**Before you upgrade:** Breaks: nothing. Gains: `PageContext.sceneRules` (`{ scheme, scope }`), which the embed sets so the one face's city writes the Scene's rules in its scope. The look of the one face through the embed is now as under `PagesApp`; everything else, stored formats, ops, the wire, derived tool names and their input schemas, is unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.2.3) · [The full changelog for 0.2.3](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#023)
 
 ## 0.2.2
 
