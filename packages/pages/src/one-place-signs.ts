@@ -68,6 +68,19 @@ export interface SignsAsked {
   readonly namesFirst?: boolean;
   /** How far from its district a name may stand, edge to edge: past it, none (beside a page). */
   readonly nameReach?: number;
+  /**
+   * WHAT ALREADY STANDS, KEPT WHERE IT STANDS (a pan let go of: Graview HQ
+   * feature:f-one-face-pan-stops-still). A pan moves the camera, not the
+   * city, so every board and name it carried stays where the last frame
+   * drew it; only a board or a name with no place yet — a district the pan
+   * brought into sight — is placed, round them.
+   */
+  readonly held?: {
+    readonly feet: ReadonlyMap<string, Point>;
+    readonly posts: ReadonlyMap<string, number>;
+    readonly scales: ReadonlyMap<string, number>;
+    readonly names: ReadonlyMap<string, Box>;
+  };
 }
 
 export interface SignsPlaced {
@@ -177,6 +190,16 @@ export function placeSigns(asked: SignsAsked): SignsPlaced {
     stoodPosts.push(postOf(foot, length));
   };
   const allTiles = [...tiles.values()];
+  /* What already stands (`held`) stands first, where it is, and nothing is placed again for it. */
+  const held = asked.held;
+  if (held) {
+    for (const sign of asked.signs) {
+      const foot = held.feet.get(sign.key);
+      if (foot) stand(sign.key, foot, held.posts.get(sign.key) ?? post, held.scales.get(sign.key) ?? 1);
+    }
+    for (const [kind, box] of held.names) if (tiles.has(kind) && asked.names.has(kind)) names.set(kind, box);
+    nameBoxes = [...names.values()];
+  }
 
   const placeNames = () => {
     /*
@@ -194,7 +217,7 @@ export function placeSigns(asked: SignsAsked): SignsPlaced {
     const byFront = [...kinds].sort((a, b) => tiles.get(b)!.y + tiles.get(b)!.height - (tiles.get(a)!.y + tiles.get(a)!.height));
     for (const kind of byFront) {
       const size = asked.names.get(kind);
-      if (!size) continue;
+      if (!size || names.has(kind)) continue;
       const tile = tiles.get(kind)!;
       // A district the camera does not show says nothing: its name past the edge is a name cut off.
       if (bounds && overlap(tile, bounds) < tile.width * tile.height * 0.15) continue;
@@ -320,7 +343,7 @@ export function placeSigns(asked: SignsAsked): SignsPlaced {
 
   /* THE PAGE BEING READ, ON ITS BUILDING: straight over it, on the shortest post that stands its card clear — never to one side, where its post would come down on another building. */
   for (const sign of asked.signs) {
-    if (!sign.building) continue;
+    if (!sign.building || feet.has(sign.key)) continue;
     const roof = { x: sign.building.x + sign.building.width / 2, y: sign.building.y };
     const own = sign.kind ? tiles.get(sign.kind) : undefined;
     const ground = allTiles.filter((tile) => tile !== own);
@@ -346,6 +369,7 @@ export function placeSigns(asked: SignsAsked): SignsPlaced {
   /** A district the camera shows enough of to stand anything by: one past the edge says nothing, and its views stand where it is seen. */
   const inSight = (box: Box) => !bounds || overlap(box, bounds) >= box.width * box.height * 0.15;
   const standNear = (key: string, kind: string | null, want: Point) => {
+    if (feet.has(key)) return;
     const own = kind ? tiles.get(kind) : undefined;
     // Where it belongs is out of sight (a district past the window at Nearby, the plaza behind it): it stands where that is seen, not shoved into view over something else.
     if (own ? !inSight(own) : bounds && !inSight({ x: want.x - width / 2, y: want.y - height, width, height })) return;
@@ -379,6 +403,7 @@ export function placeSigns(asked: SignsAsked): SignsPlaced {
   for (const scale of smaller) for (let raise = 0; raise <= (asked.reach ?? 12); raise++) for (const side of [0, -0.3, 0.3, -0.55, 0.55, -0.8, 0.8]) tries.push({ scale, raise, side, prefer: raise * 10 + Math.abs(side) * 30 + (1 - scale) * 120 });
   tries.sort((a, b) => a.prefer - b.prefer);
   const standOn = (key: string, kind: string) => {
+    if (feet.has(key)) return;
     // A district with many views stops looking long before it has tried every place for the last of them.
     const cap = (ofKind(kind).length > 6 ? 48 : Infinity);
     const tile = tiles.get(kind)!;

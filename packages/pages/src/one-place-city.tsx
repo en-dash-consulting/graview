@@ -6,7 +6,7 @@ import { sceneCss } from "@graview/primitives/scene";
 import { useGraview, useNavigation, useViolations } from "@graview/react/provider";
 import { useOneFace } from "./one-place-control.js";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
-import { aimAt, anchorOf, BOARD_ASPECT, frameSpacingAt, boardFaceWidth, boardLeast, boardMost, boardWidthFor, fitBeside, fitCamera, SIGN_GAP, SIGN_POST, signRoom, cameraBetween, cameraPutting, CITY, cityArea, footOf, leaveFrom, routeLine, LEVEL_LIVE, levelZooms, PAGE, pageBox, PANEL, panelBox, PHONE, project, restingLevel, SHEET_ORIGIN, standingAt, standingCss, unionOf, type Box, type Live, type PageWhere, type Point } from "./one-place-geometry.js";
+import { aimAt, anchorOf, BOARD_ASPECT, carriedBetween, carriedThrough, frameSpacingAt, boardFaceWidth, boardLeast, boardMost, boardWidthFor, fitBeside, fitCamera, SIGN_GAP, SIGN_POST, signRoom, cameraBetween, cameraPutting, CITY, cityArea, footOf, leaveFrom, routeLine, LEVEL_LIVE, levelZooms, PAGE, pageBox, PANEL, panelBox, PHONE, project, restingLevel, SHEET_ORIGIN, standingAt, standingCss, unionOf, type Box, type Live, type PageWhere, type Point } from "./one-place-geometry.js";
 import type { OnePlaceCityProps } from "./one-place.js";
 import { placeSigns } from "./one-place-signs.js";
 import { pluralOf } from "./page-typography.js";
@@ -537,10 +537,16 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     let names = new Map<string, Box>();
     /** The city and every view standing in it, as last read: what the city's camera fits. */
     let whole: Box | null = null;
-    let kept: { key: string; origin: Point; placed: ReturnType<typeof placeSigns> } | null = null;
+    let kept: { key: string; body: string; origin: Point; placed: ReturnType<typeof placeSigns> } | null = null;
     /** A window too small for a board beside every district: a phone, or one turned on its side. */
     const cramped = () => state.current.view.width <= PHONE || state.current.view.height <= 600;
-    const standAll = (w: World, zoomNow: number, cam: Live, bounds: Box | undefined, lvl: number) => {
+    /**
+     * `held`: every board's foot and name's box where the last frame drew
+     * them, carried into the picture as it is laid out now — a pan let go
+     * of. Where the pan changed nothing but what is in sight, they stay
+     * there, and only what had no place is placed round them.
+     */
+    const standAll = (w: World, zoomNow: number, cam: Live, bounds: Box | undefined, lvl: number, held?: { readonly slots: ReadonlyMap<string, Point>; readonly names: ReadonlyMap<string, Box> }) => {
       const view = state.current.view;
       const onScreen = (box: Box): Box => ({ x: box.x * cam.s + cam.x, y: box.y * cam.s + cam.y, width: box.width * cam.s, height: box.height * cam.s });
       const tiles = new Map([...w.plots].map(([kind, box]) => [kind, onScreen(box)] as const));
@@ -568,7 +574,22 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       const buildingsOnScreen = [...w.buildings.values()].map(onScreen);
       const restsOnScreen = [...w.buildings].filter(([key]) => key.startsWith(REST_KEY)).map(([, box]) => onScreen(box));
       // What decides the placing, the city's own lattice taken from where it stands: a pan of fewer than 24 pixels places nothing again.
+      /*
+       * What a pan leaves as it was — the level, the window, the boards'
+       * size, the districts, the names and the views — beside where the city
+       * stands against what the window shows and keeps clear, which it moves.
+       */
+      const body = JSON.stringify([lvl, view.width, view.height, round(width), [...tiles.keys()], buildingsOnScreen.length, [...sizes].map(([kind, size]) => [kind, size.width, size.height]), signs.map((one) => [one.key, one.kind, one.building !== null])]);
       const key = JSON.stringify([lvl, view.width, view.height, round(width), [...tiles].map(([kind, box]) => [kind, ...rel(box)]), buildingsOnScreen.length, buildingsOnScreen.reduce((sum, box) => sum + rel(box)[0]! + rel(box)[1]! * 3, 0), [...sizes].map(([kind, size]) => [kind, size.width, size.height]), signs.map((one) => [one.key, one.kind, one.building ? rel(one.building) : null]), bounds ? [Math.round((bounds.x - origin.x) / 24), Math.round((bounds.y - origin.y) / 24), Math.round(bounds.width / 24), Math.round(bounds.height / 24)] : null, reserved.map((box) => rel(box).map((n) => Math.round(n / 12)))]);
+      /*
+       * A PAN LET GO OF PLACES NOTHING AGAIN (Graview HQ
+       * feature:f-one-face-pan-stops-still): the same city, the same window
+       * and the same views, only panned against what the window shows. What
+       * stood stays where the last frame drew it — one the pan brought under
+       * the bar, the page or the control is put away until it comes out
+       * again — and only a board or a name with no place yet is placed.
+       */
+      const holding = held && kept && kept.key !== key && kept.body === body;
       let placed: ReturnType<typeof placeSigns>;
       let shift = { x: 0, y: 0 };
       if (kept && kept.key === key) {
@@ -576,6 +597,16 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         shift = { x: origin.x - kept.origin.x, y: origin.y - kept.origin.y };
       } else {
         placed = placeSigns({
+          ...(holding
+            ? {
+                held: {
+                  feet: new Map([...held.slots].map(([one, p]) => [one, project(cam, p)] as const)),
+                  posts: new Map([...posts].map(([one, length]) => [one, length * cam.s] as const)),
+                  scales,
+                  names: new Map([...held.names].map(([kind, box]) => [kind, { ...project(cam, box), width: box.width * cam.s, height: box.height * cam.s }] as const)),
+                },
+              }
+            : {}),
           tiles,
           buildings: buildingsOnScreen,
           names: sizes,
@@ -598,7 +629,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           // Beside a page (and under it, so a move to Nearby carries each name from a place found the same way) each district's name stands right after the views, before the kinds' lists, and beside its own district or nowhere.
           ...(lvl !== CITY ? { namesFirst: true, nameReach: NAME_REACH } : {}),
         });
-        kept = { key, origin, placed };
+        kept = { key, body, origin, placed };
       }
       // Back into the picture's own pixels, as the view lays it out now.
       const back = (p: Point): Point => ({ x: (p.x + shift.x - cam.x) / cam.s, y: (p.y + shift.y - cam.y) / cam.s });
@@ -930,12 +961,27 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
          * only for where the move ends.
          */
         if (world.plots.size === 0 || (!move && (readKey !== lastReadKey || committedAt > lastRead || now - lastRead > 500))) {
+          const before = world;
           world = readWorld(holder);
           if (move) placeFor(move.toAltitude, move.to, cam.zoom());
           else {
-            const drawnBefore = { slots: drawnSlots(now), names: drawnNames(now) };
+            /*
+             * LETTING GO OF A PAN, NOTHING MOVES (Graview HQ
+             * feature:f-one-face-pan-stops-still). What was drawn was placed
+             * in the picture's pixels as last read; a pan or a zoom written
+             * into the view since (the hand's, let go of; a drag begun on a
+             * board, a scroll) has laid the city out again elsewhere, and
+             * the old numbers drawn now stood where the pan began — every
+             * board and name snapped back and slid over. Carried by what
+             * the districts say moved, they stand where the last frame drew
+             * them, and settle from there.
+             */
+            const carry = carriedBetween(before.plots, world.plots);
+            const drawnBefore = carry ? { slots: carriedThrough(carry, drawnSlots(now)), names: carriedThrough(carry, drawnNames(now)) } : { slots: drawnSlots(now), names: drawnNames(now) };
             // At the City everything stands inside what the camera shows; the camera was fitted to it.
-            standAll(world, cam.zoom(), LEVEL_LIVE, shownAt(rest), rest);
+            // A pan, not a zoom: a name is a size on the screen, and at another zoom it is placed again for it.
+            const panned = carry !== null && carry !== LEVEL_LIVE && Math.abs(carry.s - 1) < 1e-3;
+            standAll(world, cam.zoom(), LEVEL_LIVE, shownAt(rest), rest, panned ? drawnBefore : undefined);
             settle = { ...drawnBefore, start: now };
           }
           lastRead = now;
