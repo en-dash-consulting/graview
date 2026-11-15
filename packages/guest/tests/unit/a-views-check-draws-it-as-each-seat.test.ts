@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { Principal } from "@graview/core";
 import type { WorkerViewManifest } from "../../src/host/manifest.js";
 import { runWorkerViewForEachSeat, seatsOfPolicy } from "../../src/headless/index.js";
 import { nodeIsolate } from "../../src/headless/node.js";
@@ -24,6 +25,14 @@ describe("a view's check, as each seat", () => {
     expect(seatsOfPolicy(clubPolicy, member).map((seat) => seat.name)).toEqual(["owner", "member", "parent", "visitor"]);
     expect(seatsOfPolicy(clubPolicy, member).find((seat) => seat.name === "parent")!.principal).toEqual({ kind: "human", id: "view-as:parent", roles: ["parent"] });
     expect(seatsOfPolicy(undefined, member).map((seat) => seat.name)).toEqual(["owner"]);
+  });
+
+  it("names the owner once where the app's policy has an owner role", () => {
+    const owner: Principal = { kind: "human", id: "owner:olu", roles: ["owner"] };
+    const seats = seatsOfPolicy({ ...clubPolicy, roles: ["owner", "member", "parent"] }, owner);
+    expect(seats.map((seat) => seat.name)).toEqual(["owner", "member", "parent", "visitor"]);
+    expect(seats[0]!.principal).toBe(owner);
+    expect(seats.some((seat) => seat.principal.id === "view-as:owner")).toBe(false);
   });
 
   it("says for each seat whether it drew, and what it reads that the seat is not handed", async () => {
