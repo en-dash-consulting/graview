@@ -1,4 +1,5 @@
 import { GraphError } from "../graph/graph.js";
+import { knownAcrossCopies } from "../across-copies.js";
 
 /*
  * A file of its own (FR-179): every act refuses its arguments with this, up
@@ -19,3 +20,6 @@ export class InvalidArguments extends GraphError {
     this.name = "InvalidArguments";
   }
 }
+
+// Known by what it is from whichever copy of core made it (`across-copies.ts`).
+knownAcrossCopies(InvalidArguments, "InvalidArguments");

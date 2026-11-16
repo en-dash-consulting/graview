@@ -18,7 +18,7 @@ export type ComposedAppChange = { readonly ok: true; readonly document: GraviewD
 /** The edits applied to a document: the changed document and what each edit said, or the refusal. */
 export function editedForChange(document: GraviewDocument, edits: readonly unknown[]): { readonly ok: true; readonly document: GraviewDocument; readonly said: string[] } | { readonly ok: false; readonly refused: string } {
   const edited = editDocument(document, edits);
-  if (!edited.ok) return { ok: false, refused: `It could not be written: ${edited.findings[0]?.message ?? "an edit was refused"}.` };
+  if (!edited.ok) return { ok: false, refused: `It could not be written: ${(edited.findings[0]?.message ?? "an edit was refused").replace(/\.$/, "")}.` };
   return { ok: true, document: edited.document, said: [...edited.said] };
 }
 
@@ -53,7 +53,7 @@ export function compiledForChange(document: GraviewDocument, said: readonly stri
   const compiled = compile(document);
   if (!compiled.ok) {
     const finding = compiled.findings.find((one) => one.severity === "error") ?? compiled.findings[0];
-    return { ok: false, refused: `${refusal}${finding ? `: ${finding.message}` : ""}.` };
+    return { ok: false, refused: `${refusal}${finding ? `: ${finding.message.replace(/\.$/, "")}` : ""}.` };
   }
   return { ok: true, document, app: compiled.app as GraviewApp<AnySchema>, said };
 }

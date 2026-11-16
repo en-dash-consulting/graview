@@ -14,20 +14,25 @@
  * This is the part of it a page needs: the edits a plan names applied
  * (`editDocument`), who may run and see what they add granted as the app's
  * widest grant is, and the changed document compiled the way the page
- * compiles its own (`compileDocumentWithoutCheck`): its own sentences judged,
- * view specs and rules among them, the framework's checker not asked. The
- * app it makes is built by the shell's own core, so the store that rehearses
- * the plan reads its errors as its own. The checker stays where a change is
- * kept: the host's `onProposeChange` judges it again before it applies it,
- * and `@graview/core/compose` is the composer that judges with the checker,
- * for a host's server. Imported here: nothing of the checker, nothing of a
- * reshape's traits; the edits and the compile are the page's.
+ * compiles its own, then judged by the checks a change made on a page can
+ * fail (`compileForAChange`): its acts, rules, computed values, formats,
+ * links, jobs, aliases and view keys, and of the framework's checks the
+ * pages' routes and the lenses' bindings, so nothing is offered that the
+ * host would then refuse. The app it makes is built by the shell's own
+ * core, so the store that rehearses the plan reads its errors as its own.
+ * The whole checker stays where a change is kept: the host's
+ * `onProposeChange` judges it again before it applies it, and
+ * `@graview/core/compose` is the composer that judges with all of it, for
+ * a host's server. Imported here: nothing of the city, the look or a
+ * reshape's traits.
  */
-import { compileDocumentWithoutCheck } from "./document/compile.js";
+import { compileForAChange } from "./composer-check.js";
 import type { GraviewDocument } from "./document/schema.js";
 import { compiledForChange, editedForChange, grantedWhatItAdds, type ComposedAppChange } from "./compose-change.js";
 
 export type { ComposedAppChange } from "./compose-change.js";
+/** A changed document, compiled and judged by the checks a change made on a page can fail. */
+export { compileForAChange } from "./composer-check.js";
 
 /**
  * A CHANGE TO THE APP, COMPOSED AND COMPILED, FOR A PAGE (`composeChange` on
@@ -41,5 +46,5 @@ export function composeAppChange(change: { readonly document: GraviewDocument; r
   const edited = editedForChange(change.document, change.edits);
   if (!edited.ok) return edited;
   const said = edited.said;
-  return compiledForChange(grantedWhatItAdds(change.document, edited.document, said), said, (document) => compileDocumentWithoutCheck(document), "It would not compile");
+  return compiledForChange(grantedWhatItAdds(change.document, edited.document, said), said, compileForAChange, "It would not pass the checks a page asks");
 }

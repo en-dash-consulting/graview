@@ -7,6 +7,7 @@ import type { Expr } from "./parse.js";
 import { ARG_NAME, SUBJECT_NAME } from "./subject.js";
 import { linkedReaderOf, linkedRefsOf, type LinkedReader, type LinkedRecord, type LinkedRecordRef, type LinkedRelation } from "../../schema/linked.js";
 import { addMinutesTo, datetimeAt, formatWhen, isWeekday, minutesOfTime, startOfWeekOf, weekdayOfWhen, whenOf, zoneOf, type When } from "./when.js";
+import { knownAcrossCopies } from "../../across-copies.js";
 
 /*
  * THE RULE LANGUAGE, JUDGED.
@@ -715,3 +716,7 @@ export const FUNCTIONS = [
   "contains", "startsWith", "lower", "today", "now", "date", "days", "hours", "if", "first", "sort", "either", "fact", "archived", "round",
   "concat", "format", "datetime", "at", "addMinutes", "weekday", "startOfWeek",
 ] as const;
+
+// Known by what it is from whichever copy of core made it (`across-copies.ts`).
+knownAcrossCopies(ExprEvalError, "ExprEvalError");
+knownAcrossCopies(ExprBudgetError, "ExprBudgetError");

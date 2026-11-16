@@ -98,7 +98,7 @@ These are pinned by tests, not by convention:
   to a model, and the one door a page records through (`frictionEvent`,
   `frictionOf`, `ownFriction`, `frictionDigest`, `recordFriction`) on `/friction`,
   one design proposed whole from the declaration (`composeDesign`,
-  `inferJobs`, `accentFor`, and a seat's reading composed as edits, `composeReshape`, and a change to the app checked by the checker, `composeAppChange`) on `/compose`, on no page — a change to the app composed with the compile a page already has, the checker left to the host that keeps it (`composeAppChange`), on `/composer`, which an owner's or an editor's page fetches — the trait
+  `inferJobs`, `accentFor`, and a seat's reading composed as edits, `composeReshape`, and a change to the app checked by the checker, `composeAppChange`) on `/compose`, on no page — a change to the app composed with the compile a page already has and the checks a change made on a page can fail, the whole checker left to the host that keeps it (`composeAppChange`, `compileForAChange`), on `/composer`, which an owner's or an editor's page fetches — the trait
   vocabulary and a document's reading alone (`TRAITS`, `TRAIT_WORDS`, `TRAIT_BRINGS`, `traitsOfDocument`) on `/traits`, which a page may fetch,
   the screens a device offers and the checker's words for one it cannot
   (`deviceScreensOf`, `screenPlaceOf`, `deviceFindings`) on `/devices`, on no page,

@@ -57,6 +57,20 @@ describe("the composer a page fetches", () => {
     if (!refused.ok) expect(refused.refused).toMatch(/^It could not be written: /);
   });
 
+  it("refuses what the host's checker would refuse of a page's own changes: a lens bound to nothing, a page's address taken", () => {
+    const changes: Record<string, unknown[]> = {
+      aBoardBoundToNoField: [{ op: "add-lens", title: "By owner", lens: "board", on: "task", bindings: { column: "nope" } }],
+      aCalendarOnADateNothingDeclares: [{ op: "add-lens", title: "Cal", lens: "calendar", on: "task", bindings: { date: "label" } }],
+      aKindWhosePagesTakeAnAddress: [{ op: "add-kind", kind: "tasks", noun: "task", plural: "tasks", fields: { label: { type: "string", required: true } } }],
+    };
+    for (const [name, edits] of Object.entries(changes)) {
+      const checked = composeChecked({ document: lean, edits });
+      const light = composeAppChange({ document: lean, edits });
+      expect({ name, ok: light.ok }).toEqual({ name, ok: checked.ok });
+      expect({ name, ok: light.ok }).toEqual({ name, ok: false });
+    }
+  });
+
   it("leaves a reshape's traits to the host, said in words", () => {
     const refused = composeAppChange({ document: lean, add: ["people"] });
     expect(refused).toEqual({ ok: false, refused: "Only a change written as edits can be composed here; a reshape is composed by the host." });

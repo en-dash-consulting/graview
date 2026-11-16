@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { ActRefusal, GraphError, MissingRecordError, PermissionDeniedError, refusalOf, SchemaError, Store, createSchema, defineNode } from "../../src/index.js";
+import { ExprEvalError } from "../../src/document/expr/evaluate.js";
+import { ActRefusal, GraphError, InvalidArguments, MissingRecordError, PermissionDeniedError, refusalOf, SchemaError, Store, createSchema, defineNode } from "../../src/index.js";
 
 /**
  * A STORE RECOGNIZES THE ERRORS OF ANOTHER COPY OF CORE (Roadmap
@@ -25,13 +26,22 @@ describe("the errors of another copy of core", () => {
     expect(twin.SchemaError).not.toBe(SchemaError);
   });
 
-  it("are known by this copy's instanceof: a schema error, a missing record, a refusal, a permission denied", async () => {
+  it("are known by this copy's instanceof: a schema error, a missing record, an act's arguments refused, a rule that could not be read, a refusal", async () => {
     const twin = await anotherCopy();
     expect(new twin.SchemaError("no such kind")).toBeInstanceOf(SchemaError);
     const missing = new twin.MissingRecordError("t1", "That record is not there to change.");
     expect(missing).toBeInstanceOf(MissingRecordError);
     expect(missing).toBeInstanceOf(GraphError);
     expect(new twin.ActRefusal("Not on a Sunday.")).toBeInstanceOf(ActRefusal);
+    const invalid = new twin.InvalidArguments("finish", [{ path: ["taskId"], message: "Required" }]);
+    expect(invalid).toBeInstanceOf(InvalidArguments);
+    expect(invalid).toBeInstanceOf(GraphError);
+    expect(invalid).not.toBeInstanceOf(MissingRecordError);
+    vi.resetModules();
+    const twinRules = await import("../../src/document/expr/evaluate.js");
+    vi.resetModules();
+    expect(twinRules.ExprEvalError).not.toBe(ExprEvalError);
+    expect(new twinRules.ExprEvalError("no such field", 0)).toBeInstanceOf(ExprEvalError);
     expect(refusalOf(missing).reason).toBe("missing");
     expect(refusalOf(new twin.ActRefusal("Not on a Sunday."))).toEqual({ reason: "refused", sentence: "Not on a Sunday." });
   });

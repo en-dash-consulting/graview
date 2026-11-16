@@ -722,16 +722,22 @@ const byModuleName = (input) => input.replace(/^.*node_modules\//, "").replace(/
  * bundled it apart instead, about 660 KB with a second copy of core whose
  * errors the shell's store did not recognize.
  *
- * `@graview/core/composer` is the edits, the grants and the compile the page
- * already has: measured at 273_193 / 92_888 behind its door (the edits
- * themselves 119_541 of it), and 8_088 / 2_864 up front once the edits'
- * shapes were written in zod/mini as the document's are. What it may cost,
- * minified and gzipped, each with room for ordinary growth; and what it must
- * not carry: the checker, a reshape's traits, the checked composer.
+ * `@graview/core/composer` is the edits, the grants, the compile the page
+ * already has and the checks a change made on a page can fail (the pages'
+ * routes and the lenses' bindings of the framework's, beside the document's
+ * own): measured at 315_695 / 107_690 behind its door (the edits themselves
+ * 119_541 of it, those checks about 42_500), and 8_751 / 3_039 up front once
+ * the edits' shapes were written in zod/mini as the document's are. What it
+ * may cost, minified and gzipped, each with room for ordinary growth; and
+ * what it must not carry: the whole checker, the checked compile, a
+ * reshape's traits, the checked composer, and of the framework's checks any
+ * but the routes and the lenses.
  */
 export const COMPOSER_ENTRY = `${HOSTED_PAGE_COMPILED_ENTRY}\nglobalThis.composer = () => import("@graview/core/composer");\n`;
-export const COMPOSER_BUDGET = { door: { minified: 285_000, gzipped: 97_000 }, upFront: { minified: 10_000, gzipped: 3_600, zod: 2_048 } };
+export const COMPOSER_BUDGET = { door: { minified: 330_000, gzipped: 113_000 }, upFront: { minified: 10_000, gzipped: 3_600, zod: 2_048 } };
 export const COMPOSER_LACKS = ["core/src/cli/check.ts", "core/src/document/compile-checked.ts", "core/src/starting-document.ts", "core/src/traits.ts", "core/src/compose.ts"];
+/** The framework's own checks a page's composer asks: every other file under `cli/check/` stays with the host. */
+export const COMPOSER_CHECKS = ["core/src/cli/check/context-of.ts", "core/src/cli/check/context.ts", "core/src/cli/check/lenses.ts", "core/src/cli/check/routes.ts"];
 
 /** What a composer door costs Cloud's shell handed a compiled app: behind the door, the modules there, and what the page loads first beside the page without it. */
 export async function measureComposerDoor(repo, { subpath = "composer" } = {}) {

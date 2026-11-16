@@ -3,7 +3,7 @@ import { BIND_PERSON } from "../binding-served.js";
 import { BINDING_UNGRANTED } from "../binding-ungranted.js";
 import { DERIVED_ACTS, derivedActOf, derivedActsOf, givenWhenNeverArchived, givenWhenNeverTidied, RELATION_ACTS, relationActName, relationActsOf } from "../mutations/derived-names.js";
 import { documentRelations, givesRelationAct, renamedRelationAct } from "./relation-acts.js";
-import * as z from "zod/mini";
+import * as z from "../schema/zod.js";
 import type { Expr } from "./expr/parse.js";
 import { ExprSyntaxError, parseExpr } from "./expr/parse.js";
 import { printExpr } from "./expr/print.js";
