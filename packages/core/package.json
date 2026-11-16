@@ -129,6 +129,10 @@
       "types": "./dist/compose.d.ts",
       "default": "./dist/compose.js"
     },
+    "./composer": {
+      "types": "./dist/composer.d.ts",
+      "default": "./dist/composer.js"
+    },
     "./traits": {
       "types": "./dist/trait-vocabulary.d.ts",
       "default": "./dist/trait-vocabulary.js"

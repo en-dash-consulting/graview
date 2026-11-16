@@ -16,7 +16,7 @@ This is that declaration, compiled in your browser by the same compiler `graview
 | --- | --- | --- |
 | `page` | An address graview.dev serves: a web page, the Markdown twin beside it, or a file for crawlers and models. | 71 |
 | `package` | An npm package Graview ships, read off its package.json, its README.md and its barrel. | 14 |
-| `entry` | One subpath a package exports, as a product imports it. | 124 |
+| `entry` | One subpath a package exports, as a product imports it. | 125 |
 | `skill` | An authoring skill an assistant reads before it changes a Graview app, read off its SKILL.md. | 31 |
 | `check` | A thing graview check can say, read out of the checker's source. | 130 |
 | `command` | A graview subcommand, read off the help the CLI prints. | 13 |

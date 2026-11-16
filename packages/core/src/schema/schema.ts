@@ -7,6 +7,7 @@ import type {
   NodeOf,
   ValidateEdgeTargets,
 } from "./types.js";
+import { knownAcrossCopies } from "../across-copies.js";
 
 export interface EdgeKindInfo {
   readonly kind: string;
@@ -194,3 +195,6 @@ export function createSchema<const Defs extends readonly AnyNodeDefinition[]>(
     __node: undefined as never,
   };
 }
+
+// Known by what it is from whichever copy of core made it (`across-copies.ts`).
+knownAcrossCopies(SchemaError, "SchemaError");

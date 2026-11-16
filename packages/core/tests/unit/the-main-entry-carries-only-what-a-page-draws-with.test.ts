@@ -10,6 +10,7 @@ import * as shown from "../../src/shown.js";
 import * as revisions from "../../src/revisions.js";
 import * as check from "../../src/check.js";
 import * as compose from "../../src/compose.js";
+import * as composer from "../../src/composer.js";
 import * as describePlaces from "../../src/describe.js";
 import * as document from "../../src/document/index.js";
 import * as figures from "../../src/figures.js";
@@ -111,6 +112,8 @@ const OFF_THE_PAGE = {
   "@graview/core/told": { from: told, names: ["TELLING_OUTCOMES", "TELLING_OUTCOME_WORDS", "TELLING_SLOTS", "TOLD_KEPT_MOST", "TOLD_LIMITS", "TOLD_PATH", "TOLD_RETENTION_DAYS", "agreedLessons", "changedTelling", "curatesOnly", "keptTold", "memoryTold", "ownTold", "recordsOfTelling", "similarTellings", "teachingTold", "tellingChange", "tellingDidWords", "tellingExamples", "tellingId", "tellingOf", "tellingWordsOf", "tellingWorked", "tellsOnly", "toldAfter", "toldFor", "toldMatching", "toldOver", "toldSeenBy", "toldTeachingWords"] },
   // Roadmap f-design-composer: jobs inferred and one design proposed whole — a host's, on no page; f-document-traits: what a declaration is made of, in a closed vocabulary; f-compose-from-parts: a starting document composed from a template's parts and trait modules; a kind's noun and plural as the declaration spells them, for a host that writes about its kinds (the starter); f-seat-reshape: a change to the app composed from the reading a seat proposed, its breaking changes in words — a host's, on no page (the vocabulary a page says it in is on /traits).
   "@graview/core/compose": { from: compose, names: ["ACCENT_PALETTE", "accentFor", "composeDesign", "inferJobs", "MOST_INFERRED_JOBS", "hasTrait", "nounWords", "pluralWords", "TRAIT_WORDS", "TRAITS", "traitsOf", "traitWords", "startingDocument", "composeReshape", "breakingOf", "TRAIT_BRINGS", "traitsOfDocument", "composeAppChange", "glanceFromDeclaration", "homeFromDeclaration", "MOST_HOME_LISTS", "rowFromDeclaration"] },
+  // Roadmap f-light-composer: a change to the app composed with the compile a page already has, fetched by an owner or editor page that asks for one.
+  "@graview/core/composer": { from: composer, names: ["compileForAChange", "composeAppChange"] },
   "@graview/core/catalog": { from: catalog, names: ["aiContextOf", "aiTargetOf", "catalogOf", "existingViewsOf", "interactionBy", "interactionCost", "interactionTouches", "mergeInteractions", "recordsOfTarget", "schemaDigestOf", "planEdits"] },
   // The app's own actor's suggestions — made, accepted, declined — and what reads it back: the suggestions and declines in a store or a log, what the declaration lets it tidy, and Activity's digest.
   "@graview/core/tidying": {

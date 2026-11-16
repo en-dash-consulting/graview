@@ -1,4 +1,5 @@
 import type { Author } from "../ops/types.js";
+import { knownAcrossCopies } from "../across-copies.js";
 
 /**
  * Who is acting, and what they are allowed to be.
@@ -182,3 +183,6 @@ export class PermissionDeniedError extends Error {
     this.refusal = refusal;
   }
 }
+
+// Known by what it is from whichever copy of core made it (`across-copies.ts`).
+knownAcrossCopies(PermissionDeniedError, "PermissionDeniedError");

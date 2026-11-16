@@ -1,6 +1,5 @@
 import type { HostView } from "../views/types.js";
 import type { GraviewApp } from "../app.js";
-import { deriveEditMutations, deriveMutations, deriveRemoveMutations } from "../mutations/derive-edits.js";
 import type { AnySchema } from "../schema/schema.js";
 import { designFindings } from "../document/design-findings.js";
 import { moreLines } from "../document/findings.js";
@@ -58,6 +57,7 @@ import {
   checkTidying,
 } from "./check/index.js";
 import type { CheckContext, Finding } from "./check/context.js";
+import { checkContextOf } from "./check/context-of.js";
 
 export type { Finding, Severity } from "./check/context.js";
 
@@ -97,23 +97,8 @@ export interface CheckOptions {
  */
 export function checkApp<S extends AnySchema>(app: GraviewApp<S>, options: CheckOptions = {}): CheckResult {
   const findings: Finding[] = [];
-  const kinds = new Set<string>(app.schema.kinds as readonly string[]);
-  const declaredMutations = app.mutations ?? [];
-  const derivedEdits = deriveEditMutations(app.schema, declaredMutations);
-  const derivedRemoves = deriveRemoveMutations(app.schema, declaredMutations);
-  /*
-   * Declared and derived, as the store derives them: its own list
-   * (`deriveMutations`), so a grant or a repair may name any act the store
-   * registers — `edit-`, `remove-`, `archive-`, `unarchive-`, `merge-`,
-   * `leave-alone-` and `allow-tidying-<kind>`, a repeat's `skip-`, `detach-`
-   * and `split-<kind>`, a relation's `connect-` and `disconnect-<kind>-<relation>`
-   * — and a list kept here by hand cannot fall behind it again.
-   */
-  const mutations = new Map([...declaredMutations, ...deriveMutations(app.schema, declaredMutations)].map((m) => [m.name, m]));
-  const invariants = new Map((app.invariants ?? []).map((i) => [i.name, i]));
-
   const add = (f: Finding) => findings.push(f);
-  const ctx: CheckContext<S> = { app, kinds, declaredMutations, derivedEdits, derivedRemoves, mutations, invariants, add, ...(options.views ? { views: options.views } : {}) };
+  const ctx: CheckContext<S> = checkContextOf(app, add, options.views);
 
   checkRoutes(ctx);
   checkShippedLenses(ctx);
