@@ -9,6 +9,14 @@ the agent tool surface and the accessibility labels from that declaration.
 `graview` is the tool a person installs. `@graview/*` is the framework a
 product imports. All fourteen packages share one version.
 
+## How work flows
+
+The loop from an ask on Graview HQ to npm and Graview Cloud, its gates and
+who acts at each, is [`docs/process.md`](docs/process.md). The rules every
+agent follows on every change are [`.ndx/rex/workflow.md`](.ndx/rex/workflow.md),
+whether it was started by `ndx work`, by the `dev-sync` pass, or from a brief
+by hand. Read both before your first commit.
+
 ## Layout
 
 ```
