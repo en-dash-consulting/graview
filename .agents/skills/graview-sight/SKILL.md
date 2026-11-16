@@ -120,7 +120,9 @@ carry it only where a host trusts them; otherwise it is the host's `seatOf`.
 A person entered before they joined is bound, not made twice:
 `bindPerson(store, joining, "person:bud", { author })` (`@graview/core/binding`);
 `$me`, `own` and `self` then read that record. Only the host's system seat
-binds; no grant may name `bind-person` (`grant-gives-binding`). A seat sees
+binds; no grant may name `bind-person` (`grant-gives-binding`). When a member
+leaves, `unbindPerson(store, leaving, { author })` ends the binding: their acts
+stay the record's, and nobody else is bound there. A seat sees
 its own binding, the host all; others read its acts as the record's. A host
 reads through `seenBy` each time and keeps none of its methods, and forwards a
 change through `answerSeenBy`: re-read, never pass on, what a listener is handed.

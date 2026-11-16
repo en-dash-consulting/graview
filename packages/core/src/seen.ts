@@ -628,7 +628,8 @@ function boundInLog(store: Judged): ReadonlyMap<string, string> {
         const seat = (primitive.after as Record<string, unknown>)[PERSON_SEAT];
         const was = (primitive.before as Record<string, unknown>)[PERSON_SEAT];
         if (typeof seat === "string" && !isUnset(seat)) held.bound.set(seat, primitive.id);
-        else if (typeof was === "string" && held.bound.get(was) === primitive.id) held.bound.delete(was);
+        // Only a binding taken back makes the seat nobody's again: one ended keeps what its seat did said as the person (Roadmap f-unbind-person).
+        else if (typeof was === "string" && held.bound.get(was) === primitive.id && ops[at]!.undoes !== undefined) held.bound.delete(was);
       }
     }
   }

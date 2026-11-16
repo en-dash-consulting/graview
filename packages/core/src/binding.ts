@@ -9,7 +9,7 @@
  */
 import { BIND_PERSON, BINDING } from "./binding-served.js";
 import { PERSON_SEAT, personSeatOf } from "./graph/archived.js";
-import { isUnset } from "./graph/primitives.js";
+import { isUnset, UNSET } from "./graph/primitives.js";
 import { MissingRecordError, NO_SUCH_RECORD } from "./graph/graph.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
 import { signedOutSeat } from "./mutations/vote-suggestion.js";
@@ -70,16 +70,27 @@ function bindPersonMutation(store: Held): AnyMutationDefinition | undefined {
     description: `The account that joined is this ${noun} from now on: what it does is done as them, and no second ${noun} is made.`,
     subject: { kinds: [people.kind], arg: "record" },
     idempotent: true,
-    input: z.object({ record: z.string().check(z.minLength(1)), seat: z.string().check(z.regex(SEAT)) }) as never,
+    input: z.object({ record: z.string().check(z.minLength(1)), seat: z.string().check(z.regex(SEAT)), end: z.optional(z.literal(true)) }) as never,
     describe: (args, graph) => {
       const node = graph.getNode(String((args as { record: unknown }).record)) as Node | undefined;
-      return `Bind ${node ? named(node) : `the ${noun}`} to the account that joined`;
+      const who = node ? named(node) : `the ${noun}`;
+      return (args as { end?: unknown }).end === true ? `End ${who}'s binding to the account that joined` : `Bind ${who} to the account that joined`;
     },
     apply(ctx, args) {
-      const { record, seat } = args as { record: string; seat: string };
+      const { record, seat, end } = args as { record: string; seat: string; end?: true };
       const full = store.graph;
       const node = full.getNode(record) as Node | undefined;
       if (!node || !ctx.graph.getNode(record)) throw new MissingRecordError(record, NO_SUCH_RECORD.change);
+      /*
+       * ENDING A BINDING (Roadmap f-unbind-person): the seat is this record no
+       * more, and what it did as them stays theirs — the log says who it was
+       * then, and nobody else is bound here after (below).
+       */
+      if (end === true) {
+        if (personSeatOf(node) !== seat) throw new ActRefusal(`That account is not ${named(node)} here.`);
+        ctx.patchNode(record, { [PERSON_SEAT]: UNSET });
+        return;
+      }
       const definition = schema.tryDefinition(node.kind) as { readonly people?: boolean; readonly noun?: string } | undefined;
       if (!definition?.people) throw new ActRefusal(`${named(node)} is ${withArticle(nounOf(definition, node.kind))}, not ${withArticle(noun)}: only ${withArticle(noun)} can be someone's record here.`);
       const bound = personSeatOf(node);
@@ -90,6 +101,10 @@ function bindPersonMutation(store: Held): AnyMutationDefinition | undefined {
       const other = full.personBoundTo(seat);
       const theirs = other === undefined ? undefined : (full.getNode(other) as Node | undefined);
       if (theirs) throw new ActRefusal(`That account is already ${named(theirs)} here.`);
+      // A seat whose binding ended stays the record it acted as: bound elsewhere, what it did would be said as somebody else.
+      const was = doneAs(store).find((one) => one.seat === seat && one.record !== seat && one.record !== record);
+      const before = was === undefined ? undefined : (full.getNode(was.record) as Node | undefined);
+      if (was) throw new ActRefusal(`That account was ${before ? named(before) : `another ${noun}`} here: bind it to them again.`);
       const own = full.getNode(seat) as Node | undefined;
       if (own && (schema.tryDefinition(own.kind) as { readonly people?: boolean } | undefined)?.people) throw new ActRefusal(`That account already has its own record here, ${named(own)}: merge the two instead.`);
       ctx.patchNode(record, { [PERSON_SEAT]: seat });
@@ -129,11 +144,21 @@ function judgedBinding(_store: object, call: MutationCall, principal: Principal)
   return refused(call, "Not permitted: only the host binds an account to a record here, as an invitation is accepted.");
 }
 
-/** Why a binding may not be taken back: the seat has acted as the record since, and unbinding would hand what it did to somebody else. */
+/**
+ * Why a binding may not be taken back: the seat has acted as the record
+ * since, and unbinding would hand what it did to somebody else. An ended
+ * binding comes back only while neither the seat nor the record is
+ * anybody else's.
+ */
 function bindingKept(store: object, op: Operation): string | undefined {
   const held = store as Held;
-  const args = (op.mutation?.args ?? {}) as { readonly record?: unknown; readonly seat?: unknown };
+  const args = (op.mutation?.args ?? {}) as { readonly record?: unknown; readonly seat?: unknown; readonly end?: unknown };
   if (typeof args.record !== "string" || typeof args.seat !== "string") return undefined;
+  if (args.end === true) {
+    const bound = held.graph.personBoundTo(args.seat);
+    const node = held.graph.getNode(args.record) as Node | undefined;
+    return (bound !== undefined && bound !== args.record) || (node !== undefined && personSeatOf(node) !== undefined && personSeatOf(node) !== args.seat) ? "This cannot be taken back: that account, or this record, is someone else's here now." : undefined;
+  }
   if (!doneAs(held).some((one) => one.seq > op.seq && one.seat === args.seat && one.record === args.record)) return undefined;
   const node = held.graph.getNode(args.record) as Node | undefined;
   const name = node ? labelOf(held.schema.tryDefinition(node.kind), node as never) : "They";
@@ -159,4 +184,21 @@ export function bindPerson<S extends AnySchema>(store: Store<S>, joining: Princi
   const seat = bindable(withValidProfile(joining)) ? seatPersonOf(withValidProfile(joining)) : undefined;
   if (seat === undefined) throw new ActRefusal("Only somebody who signed in can be bound to a record here.");
   return store.apply({ name: BIND_PERSON, args: { record, seat } }, options);
+}
+
+/**
+ * END A SEAT'S BINDING (Roadmap f-unbind-person): what a host calls when a
+ * member leaves. `leaving` is the seat as the host served it; the record it
+ * is bound to is its record no more — not its `$me`, its sight or its own
+ * acts — while what it did there is still said as that person, and nobody
+ * else is bound to the record after it. The `bind-person` act, ending, run
+ * as `options.author`, the host's system seat, as a binding is; undone like
+ * any act, which binds the seat again. Refused (`ActRefusal`, or
+ * `PermissionDeniedError` for who may) in a sentence a host can show.
+ */
+export function unbindPerson<S extends AnySchema>(store: Store<S>, leaving: Principal, options: ApplyOptions = {}): ApplyResult<S> {
+  const seat = bindable(withValidProfile(leaving)) ? seatPersonOf(withValidProfile(leaving)) : undefined;
+  const record = seat === undefined ? undefined : store.graph.personBoundTo(seat);
+  if (seat === undefined || record === undefined) throw new ActRefusal("That account is nobody's record here.");
+  return store.apply({ name: BIND_PERSON, args: { record, seat, end: true } }, options);
 }

@@ -1,0 +1,8 @@
+---
+"@graview/core": patch
+"@graview/skills": patch
+---
+
+A host can end a person's binding. Graview Cloud binds a joining account to the person an organizer entered for it (`bindPerson`, `@graview/core/binding`) and takes a wrong one back by undoing it. That undo was refused as soon as anybody edited the record, the organizer's own edit among them, in a sentence that named ops and batches. Taking a binding back is now judged by whether the account has acted as the record: an edit of the record, or of a record linked to it, stands in nobody's way, and a binding the account acted as, or one whose record was removed since, is refused in plain words a host can show an owner. And when a member leaves, `unbindPerson(store, leaving, { author })`, run as the host's system seat, ends their binding: the account is that record no more, wherever the app opens to it, while what they did is still said as that person and nobody else is bound to the record after them. Undoing it binds them again. Held by a new unit test of core (`a-host-can-end-a-binding`); the `graview-sight` skill says how.
+
+Compatibility: ops and primitives — an op's format is unchanged; an undo of a `bind-person` op is blocked only by a later op that made, removed or rebound its record. Stored formats, the wire, the declaration and check finding codes, and derived tool names and input schemas — unchanged. The JavaScript API is additive (`unbindPerson` on `@graview/core/binding`, and an `end` argument to the host's `bind-person` act). What Graview Cloud does: undo a binding as it does now, and call `unbindPerson` when a member is removed.

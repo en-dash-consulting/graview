@@ -1,3 +1,5 @@
+import { BIND_PERSON } from "../binding-served.js";
+import { PERSON_SEAT } from "../graph/archived.js";
 import { GraphError } from "../graph/graph.js";
 import type { Primitive } from "../graph/primitives.js";
 import { madeOwnPerson } from "../permissions/policy.js";
@@ -201,6 +203,7 @@ export function checkUndo(
    */
   const seqOf = new Map(log.all().map((op) => [op.id, op.seq]));
   const targetPrimitives = ops.flatMap((op) => op.primitives);
+  const seatOnly = seatOnlyIn(targetPrimitives);
   const blockedBy: UndoBlock[] = [];
   for (const op of log.all()) {
     if (op.seq <= earliest) continue;
@@ -210,11 +213,26 @@ export function checkUndo(
     // Typing on text the undo only typed stands aside, where `@graview/core/typing` carries the undo over it; text written whole since blocks (`aside`).
     const typed = TYPING.aside?.(targetPrimitives, op);
     if (typed === true) continue;
-    const overlap = [...new Set([...op.reads.filter((id) => writes.has(id)), ...(typed ?? [])])];
+    const overlap = [...new Set([...op.reads.filter((id) => writes.has(id) && (!seatOnly.has(id) || movesSeat(op, id))), ...(typed ?? [])])];
     if (overlap.length > 0) blockedBy.push({ op, overlap });
   }
 
   if (blockedBy.length === 0) return { ok: true, ops };
+
+  /*
+   * A BINDING IN THE WAY IS SAID IN WORDS (Roadmap f-unbind-person): only
+   * whose record it is, or the record itself, can stand in its way, and a
+   * host shows the sentence to an owner.
+   */
+  if (ops.every((op) => op.undoes === undefined && op.mutation?.name === BIND_PERSON)) {
+    return {
+      ok: false,
+      ops,
+      blockedBy,
+      includeBatches: [],
+      message: "This cannot be taken back: the record was removed, or whose record it is changed, since.",
+    };
+  }
 
   /*
    * A LATER CHANGE YOU CANNOT SEE is said to be one, and nothing more: not
@@ -244,6 +262,30 @@ export function checkUndo(
       .map((id) => `batch ${id}`)
       .join(", ")} to undo them together.`,
   };
+}
+
+/**
+ * THE RECORDS AN UNDO ONLY SAYS WHOSE RECORD THEY ARE OF (Roadmap
+ * f-unbind-person): each one its primitives touch only by the seat mark.
+ * Taking that back changes nothing a later edit of the record read, so such
+ * an edit does not stand in its way; a later op that moved the mark, made
+ * the record or removed it still does.
+ */
+function seatOnlyIn(primitives: readonly Primitive[]): ReadonlySet<string> {
+  const only = new Map<string, boolean>();
+  const onlySeat = (fields: object) => Object.keys(fields).every((field) => field === PERSON_SEAT);
+  for (const primitive of primitives) {
+    if (primitive.op === "patch-node") only.set(primitive.id, (only.get(primitive.id) ?? true) && onlySeat(primitive.after) && onlySeat(primitive.before));
+    else if (primitive.op === "add-node" || primitive.op === "remove-node") only.set(primitive.node.id, false);
+    else if (primitive.op === "add-edge" || primitive.op === "remove-edge") for (const end of [primitive.edge.from, primitive.edge.to]) only.set(end, false);
+    else only.set(primitive.id, false);
+  }
+  return new Set([...only].filter(([, seat]) => seat).map(([id]) => id));
+}
+
+/** Whether an op made, removed or moved the seat mark of this record. */
+function movesSeat(op: Operation, id: string): boolean {
+  return op.primitives.some((primitive) => ((primitive.op === "add-node" || primitive.op === "remove-node") && primitive.node.id === id) || (primitive.op === "patch-node" && primitive.id === id && (Object.hasOwn(primitive.after, PERSON_SEAT) || Object.hasOwn(primitive.before, PERSON_SEAT))));
 }
 
 /**

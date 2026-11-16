@@ -2662,6 +2662,9 @@ export class Store<S extends AnySchema> {
       if (!seen.ok) throw new UndoBlockedError(seen);
     }
     const check = this.canUndo(ids);
+    // A binding its seat has acted as says so first to the host, which alone takes one back, whatever else stands in the way (Roadmap f-unbind-person).
+    const keptBinding = check.ok || !isSystem(author as Principal) ? undefined : this.bindingKept(check.ops);
+    if (keptBinding) this.refuse(keptBinding, author.id, true);
     if (!check.ok) {
       throw new UndoBlockedError(
         sighted
@@ -2747,9 +2750,21 @@ export class Store<S extends AnySchema> {
     const kept = DECLINES.liftRefusal?.(this, typeof batchIds === "string" ? [batchIds] : batchIds, principal);
     if (kept) return kept.refusal ? { ok: false, refusal: kept.refusal } : { ok: true };
     const check = this.canUndo(batchIds);
+    const keptBinding = check.ok || !isSystem(principal) ? undefined : this.bindingKept(check.ops);
+    if (keptBinding) return { ok: false, refusal: keptBinding };
     if (!check.ok) return { ok: false, check };
     const refusal = this.undoRefusal(check.ops, principal);
     return refusal ? { ok: false, refusal } : { ok: true };
+  }
+
+  /** Why a binding among these ops stays (`BINDING.undo`), or nothing. */
+  private bindingKept(ops: readonly Operation[]): Refusal | undefined {
+    for (const target of ops) {
+      if (target.undoes !== undefined || target.mutation?.name !== BIND_PERSON) continue;
+      const kept = BINDING.undo ? BINDING.undo(this, target) : "This binding cannot be taken back here.";
+      if (kept) return { mutation: "undo", wouldNeed: [], message: kept };
+    }
+    return undefined;
   }
 
   /** What refuses `author` taking these ops back, or nothing: what you may undo is what you may have done. */
@@ -2763,11 +2778,8 @@ export class Store<S extends AnySchema> {
      * did to whoever is bound there next. Judged by `@graview/core/binding`;
      * a store that has not loaded it takes no binding back.
      */
-    for (const target of ops) {
-      if (target.undoes !== undefined || target.mutation?.name !== BIND_PERSON) continue;
-      const kept = BINDING.undo ? BINDING.undo(this, target) : "This binding cannot be taken back here.";
-      if (kept) return { mutation: "undo", wouldNeed: [], message: kept };
-    }
+    const kept = this.bindingKept(ops);
+    if (kept) return kept;
     if (this.policy || this.publisher) {
       for (const target of ops) {
         /*
