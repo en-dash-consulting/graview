@@ -97,7 +97,7 @@ export const CITY = 2;
 export const LEVELS = CITY;
 
 /** What each level is called, where a person is told it. */
-export const LEVEL_NAMES: readonly [string, string, string] = ["Page", "Nearby", "City"];
+export const LEVEL_NAMES: readonly [string, string, string] = ["Page", "Nearby", "Map"];
 
 /** The height the control at the foot keeps on a phone, above the sheet, with its margin. */
 export const CONTROL_ROOM = 72;

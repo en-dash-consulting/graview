@@ -2086,7 +2086,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       </div>
       <svg ref={overlay} aria-hidden="true" data-testid="one-place-lines" width={view.width} height={view.height} style={{ position: "fixed", left: 0, top: 0, zIndex: ONE_FACE_LAYERS.marks, pointerEvents: "none", overflow: "visible", opacity: 0 }} />
       {/* Each line's end, a ring the keyboard and the pointer reach: that record, in the panel. */}
-      <div ref={rings} hidden role="group" aria-label="What this page shows, in the city" style={{ position: "fixed", left: 0, top: 0, width: 0, height: 0, zIndex: ONE_FACE_LAYERS.marks, opacity: 0 }} />
+      <div ref={rings} hidden role="group" aria-label="What this page shows, on the map" style={{ position: "fixed", left: 0, top: 0, width: 0, height: 0, zIndex: ONE_FACE_LAYERS.marks, opacity: 0 }} />
       {/*
         * EACH DISTRICT'S NAME, AND ITS OWN CONTROLS: the name opens the
         * district's list beside the city; its problems, where it has any,

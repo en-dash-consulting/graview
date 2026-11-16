@@ -418,7 +418,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
   /*
    * PAGES AND THE SCENE AS ONE FACE (FR-239): the routed face over the
    * Scene's own city, so there is no scene face to open on or switch to —
-   * the overview is the City over the home — and only a picture is drawn
+   * the overview is the Map over the home — and only a picture is drawn
    * as itself.
    */
   const oneFace = props.sceneUnderPages === true;
@@ -474,7 +474,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
    * page of the routed face: it is the scene (FR-132).
    */
   const pagesAt = useRef<{ path: string; asked: string | undefined }>(undefined as never);
-  // On the one face the overview's address is the routed face's own: the City over the home (FR-239).
+  // On the one face the overview's address is the routed face's own: the Map over the home (FR-239).
   const pageOf = (path: string | undefined): string => (path === undefined || (isOverview(path) && !oneFace) ? "/" : path);
   pagesAt.current ??= { path: pageOf(at?.path ?? (address ? (face === "pages" ? (pathWithin(window.location.pathname, props.basePath) ?? "/") + window.location.search : "/") : props.path)), asked: props.path };
   if (props.path !== pagesAt.current.asked) pagesAt.current = { path: pageOf(props.path), asked: props.path };
@@ -1152,7 +1152,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
     setStop: (stop) => flushSync(() => setters?.stop(stop)),
     setPath: (path) =>
       flushSync(() => {
-        // The overview's path is the scene; any other path is a page (FR-132). On the one face it is the City over the home, a page of the routed face (FR-239).
+        // The overview's path is the scene; any other path is a page (FR-132). On the one face it is the Map over the home, a page of the routed face (FR-239).
         if (isOverview(path) && options.sceneUnderPages !== true) {
           if (asked === "pages" || asked === "picture") {
             asked = "scene";

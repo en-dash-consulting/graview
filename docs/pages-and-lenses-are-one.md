@@ -16,18 +16,18 @@ same element all the way:
 |---|---|---|
 | 0 | Page | The page, the whole window under the bar. |
 | 1 | Nearby | The same page as a panel (a sheet from the foot on a phone), the city beside it, a line from each part of the page that shows a record to that record's building, and a Connected list grown into its foot. |
-| 2 | City | The whole city. Every page and view of the app stands as a view on its district (a view of several kinds, or of none, on the plaza at the city's back edge). The page you came from shrinks into its own. |
+| 2 | Map | The whole city. Every page and view of the app stands as a view on its district (a view of several kinds, or of none, on the plaza at the city's back edge). The page you came from shrinks into its own. |
 
 - The bar (the app's name and menu, Find, the inbox, the standing, the
   person) stays fixed at the window's top at every level.
-- One control at the bottom left, `Page · Nearby · City` and a Key, says
+- One control at the bottom left, `Page · Nearby · Map` and a Key, says
   where you are and goes to any level. Alt+↑ and Alt+↓ move one level.
-  Escape comes down a level from Nearby, and at the City it lets go of the
+  Escape comes down a level from Nearby, and on the Map it lets go of the
   chosen view.
 - A wheel with ctrl, or a pinch, scrubs between Page and Nearby on the page.
-  At the City the camera is free: it zooms toward the pointer and never
+  On the Map the camera is free: it zooms toward the pointer and never
   goes down a level. Going down a level is choosing something.
-- Anything chosen at the City (a view, a building, a Find result) lands at
+- Anything chosen on the Map (a view, a building, a Find result) lands at
   Nearby for that view or record.
 - The Scene's own record "drive-in" (the dark card with "Why this is here" /
   "The list it is on" tiles, the district shelf, Up and Key) is not drawn on
@@ -46,7 +46,7 @@ same element all the way:
 Today a kind has derived routed pages (its list at `/<plural>`, a record at
 `/<plural>/<id>`) and, separately, lenses declared as places (`lenses[]`
 with a `title`, at `/places/<as>`). Both are now the same thing to the face:
-each is a view that stands at the City and comes down to Nearby and Page. The
+each is a view that stands on the Map and comes down to Nearby and Page. The
 level system and the control read the bar's places (`barPlaces`), so lists
 and lenses are handled alike. Nothing is special-cased per face.
 
@@ -244,7 +244,7 @@ app compile side by side, and reading a document twice changes nothing.
 - **embed-one-face-in-a-box**: the one face drawn inside a host's element.
   It positions against the window today, so `@graview/embed` draws the plain
   routed face, and Cloud's embedded pages get no city yet.
-- **close-up-live-views**: a view up close at the City as its live,
+- **close-up-live-views**: a view up close on the Map as its live,
   interactive page.
 - **format-2**: `views.items` in the stored format, done by `UPGRADES[1]`.
 - **scene-harnesses-onto-the-one-face**: the Scene-face harnesses
@@ -260,7 +260,7 @@ app compile side by side, and reading a document twice changes nothing.
   React view, and a pages-design app.
 - **calendar-labels**: the calendar's time labels, and building names that
   collide at Nearby.
-- **crowded-cities**: the City with many views (rota, the discography) on a
+- **crowded-cities**: the Map with many views (rota, the discography) on a
   phone draws the city small, and a district's name may go unsaid there.
   (A phone's view standing nearer the wrong district is fixed in 0.2.0: the
   layout holds the room under each district's name for its views.)
@@ -282,4 +282,4 @@ app compile side by side, and reading a document twice changes nothing.
   names over the buildings can still overlap at Nearby. Those are fixes in
   the calendar lens and in the Scene's `namesWithRoom`.
 - On a phone, an app with many views (rota, 13) needs more room than the city
-  beside them: the City fits all of it and the city is drawn small.
+  beside them: the Map fits all of it and the city is drawn small.
