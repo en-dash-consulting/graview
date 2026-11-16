@@ -1,6 +1,7 @@
 import type { Completion } from "../intelligence.js";
 import {
   actSpelledAs,
+  BIND_PERSON,
   FIELD_SIGHT,
   meOf,
   sees,
@@ -894,7 +895,8 @@ export function toolDefinitions<S extends AnySchema>(
   principal: Principal = { kind: "agent" },
   options: ToolDefinitionsOptions = {},
 ): { readonly definitions: readonly ToolDefinition[]; readonly hash: string } {
-  const declared = (app.mutations ?? []) as unknown as readonly AnyMutationDefinition[];
+  // A name the framework keeps for an act of its own is never an app's, as the store keeps it (`binding-act-taken`).
+  const declared = ((app.mutations ?? []) as unknown as readonly AnyMutationDefinition[]).filter((act) => act.name !== BIND_PERSON);
   // And "Publish", as the store adds it to an app that publishes (Roadmap f-publishing-lifecycle).
   const publishes = onPublish(app.publishing) && !declared.some((act) => act.name === PUBLISH);
   const every = [...declared, ...deriveMutations(app.schema as AnySchema, declared as never), ...(publishes ? [publishMutation() as unknown as AnyMutationDefinition] : [])] as AnyMutationDefinition[];

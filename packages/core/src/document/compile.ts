@@ -415,8 +415,8 @@ function validate(document: GraviewDocument): Finding[] {
     });
   }
 
-  // An act of the document's own under the name binding goes by would stand in its place, and bind nobody (`binding-act-taken`).
-  if (Object.hasOwn(acts, BIND_PERSON)) findings.push(error("binding-act-taken", `acts.${BIND_PERSON}`, `"${BIND_PERSON}" is the host's act, binding an account to the person entered for it: an act of the document's own by that name would stand in its place`, "give the act another name"));
+  // A name the framework keeps for an act of its own is never the document's (`binding-act-taken`).
+  if (Object.hasOwn(acts, BIND_PERSON)) findings.push(error("binding-act-taken", `acts.${BIND_PERSON}`, `"${BIND_PERSON}" is a name the framework keeps for an act of its own, the host's binding of an account to the person entered for it: no act of the document's may take it`, "give the act another name"));
   const policy = document.policy;
   if (policy) {
     policy.grants.forEach((grant, i) => {

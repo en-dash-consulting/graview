@@ -2634,7 +2634,7 @@ class Editor {
       const act = this.doc.acts[name];
       if (!(asArray(act.on).includes(to) || act.creates === to || (act.effects ?? []).some((x: Doc) => x.create === to))) continue;
       const next = swapToken(name, from, to);
-      if (next !== name && !this.doc.acts[next] && NAME.test(next)) {
+      if (next !== name && next !== BIND_PERSON && !this.doc.acts[next] && NAME.test(next)) {
         this.renameAct(name, next);
         touched.push(`act ${name} → ${next}`);
       }
@@ -3131,6 +3131,7 @@ class Editor {
 
   private addAct(i: number, e: Doc) {
     const { op: _op, act, replace, ...rest } = e;
+    if (act === BIND_PERSON) return this.failAs("binding-act-taken", i, "act", `"${BIND_PERSON}" is a name the framework keeps for an act of its own`, "give the act another name");
     if (this.doc.acts?.[act] && !replace) return this.fail(i, "act", `there is already an act "${act}"`, "pass replace: true to change it, or pick another name");
     const parsed = ActSpec.safeParse(rest);
     if (!parsed.success) {
@@ -3320,7 +3321,7 @@ class Editor {
     if (r.t === "field") {
       for (const name of [...renamedArgs.keys()]) {
         const next = swapToken(name, kebab(r.from), kebab(r.to));
-        if (next !== name && !doc.acts[next] && NAME.test(next)) {
+        if (next !== name && next !== BIND_PERSON && !doc.acts[next] && NAME.test(next)) {
           this.renameAct(name, next);
           const at = touched.indexOf(`act ${name}`);
           if (at >= 0) touched[at] = `act ${name} (now ${next})`;
