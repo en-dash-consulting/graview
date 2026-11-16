@@ -328,6 +328,19 @@ export const LEVEL_LIVE: Live = { x: 0, y: 0, s: 1 };
 /** Where the camera puts a point of the picture. */
 export const project = (live: Live, p: Point): Point => ({ x: p.x * live.s + live.x, y: p.y * live.s + live.y });
 
+/**
+ * Where the camera puts words drawn in the picture at a size of their own
+ * on the screen — a district's "+n", anchored at its right end
+ * (`text-anchor="end"`), its type a size in pixels whatever the zoom: the
+ * anchor goes where the picture takes it, the box keeps its size. Grown
+ * with the picture, a "+26" read at Nearby was placed round at the City as
+ * 16 by 9 pixels where it was drawn 23 by 13, and a board stood on it.
+ */
+export const wordOnScreen = (live: Live, box: Box): Box => {
+  const end = project(live, { x: box.x + box.width, y: box.y + box.height / 2 });
+  return { x: end.x - box.width, y: end.y - box.height / 2, width: box.width, height: box.height };
+};
+
 /** The camera that grows the picture by `s` and puts its point `p` at the window's point `at`. */
 export const cameraPutting = (p: Point, at: Point, s: number): Live => ({ s, x: at.x - p.x * s, y: at.y - p.y * s });
 

@@ -62,6 +62,19 @@ describe("the City says every district's name and stands every view clear of eve
     }
   });
 
+  it("stands every board a few pixels clear of a district's \"+n\", never butting against it", () => {
+    // What the one face asked at Nearby on Deep Time's home at 768 wide, in a Linux runner's type: the Extinctions board stood 1.8 px from the species' "+26", and read as "Extinctions+26".
+    const asked = JSON.parse(readFileSync(new URL("./fixtures/deep-time-home-nearby-768.json", import.meta.url), "utf8"));
+    const placedHere = placeSigns({ ...asked, tiles: new Map(asked.tiles), names: new Map(asked.names) });
+    const gapBetween = (a: Box, b: Box) => Math.max(b.x - (a.x + a.width), a.x - (b.x + b.width), b.y - (a.y + a.height), a.y - (b.y + b.height));
+    expect(placedHere.feet.has("place:event:extinctions")).toBe(true);
+    for (const [key, foot] of placedHere.feet) {
+      const scale = placedHere.scales.get(key) ?? 1;
+      const box = { x: foot.x - (asked.board.width * scale) / 2, y: foot.y - asked.board.height * scale, width: asked.board.width * scale, height: asked.board.height * scale };
+      for (const word of asked.words as Box[]) expect(gapBetween(box, word), `${key} beside a district's "+n"`).toBeGreaterThanOrEqual(3);
+    }
+  });
+
   it("stands no board on another, on a name, or on a district's ground; the page's own on its building", () => {
     const cards = [...placed.feet].map(([key, foot]) => ({ key, box: card(foot, placed.scales.get(key) ?? 1) }));
     expect(cards.map((one) => one.key).sort()).toEqual(asked.signs.map((one) => one.key).sort());

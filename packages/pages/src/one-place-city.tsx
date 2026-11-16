@@ -6,7 +6,7 @@ import { sceneCss } from "@graview/primitives/scene";
 import { useGraview, useNavigation, useViolations } from "@graview/react/provider";
 import { useOneFace } from "./one-place-control.js";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
-import { aimAt, anchorOf, BOARD_ASPECT, carriedBetween, carriedThrough, frameSpacingAt, boardFaceWidth, boardLeast, boardMost, boardWidthFor, fitBeside, fitCamera, SIGN_GAP, SIGN_POST, signRoom, cameraBetween, cameraPutting, CITY, cityArea, footOf, leaveFrom, routeLine, LEVEL_LIVE, levelZooms, PAGE, pageBox, PANEL, panelBox, PHONE, project, restingLevel, SHEET_ORIGIN, standingAt, standingCss, unionOf, type Box, type Live, type PageWhere, type Point } from "./one-place-geometry.js";
+import { aimAt, anchorOf, BOARD_ASPECT, carriedBetween, carriedThrough, frameSpacingAt, boardFaceWidth, boardLeast, boardMost, boardWidthFor, fitBeside, fitCamera, SIGN_GAP, SIGN_POST, signRoom, cameraBetween, cameraPutting, CITY, cityArea, footOf, leaveFrom, routeLine, LEVEL_LIVE, levelZooms, PAGE, pageBox, PANEL, panelBox, PHONE, project, restingLevel, SHEET_ORIGIN, standingAt, standingCss, unionOf, wordOnScreen, type Box, type Live, type PageWhere, type Point } from "./one-place-geometry.js";
 import type { OnePlaceCityProps } from "./one-place.js";
 import { placeSigns } from "./one-place-signs.js";
 import { pluralOf } from "./page-typography.js";
@@ -418,6 +418,14 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     let lastPanel = "";
     /** When the city was last read, and what it was read for. */
     let lastRead = -Infinity;
+    /*
+     * When the city was last read moved by a hand: a scroll's or a drag's
+     * last step can reach the picture a frame after the read that took the
+     * hand's word for it (the face's layers pan the camera, the Scene
+     * paints it next frame). Read within the let-go time of one, the move
+     * is still the hand's.
+     */
+    let handAt = -Infinity;
     let lastReadKey = "";
     let resized = false;
 
@@ -611,8 +619,9 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       const reserved = footNow().now.map((box) => ({ x: box.x - 6, y: box.y - 6, width: box.width + 12, height: box.height + 12 }));
       const round = (n: number) => Math.round(n / 2) * 2;
       const rel = (box: Box) => [round(box.x - origin.x), round(box.y - origin.y), round(box.width), round(box.height)];
-      const buildingsOnScreen = [...w.buildings.values()].map(onScreen);
-      const restsOnScreen = [...w.buildings].filter(([key]) => key.startsWith(REST_KEY)).map(([, box]) => onScreen(box));
+      // A district's "+n" keeps its size on the screen as the picture zooms (`wordOnScreen`); a building grows with it.
+      const buildingsOnScreen = [...w.buildings].map(([key, box]) => (key.startsWith(REST_KEY) ? wordOnScreen(cam, box) : onScreen(box)));
+      const restsOnScreen = [...w.buildings].filter(([key]) => key.startsWith(REST_KEY)).map(([, box]) => wordOnScreen(cam, box));
       // What decides the placing, the city's own lattice taken from where it stands: a pan of fewer than 24 pixels places nothing again.
       /*
        * What a pan leaves as it was — the level, the window, the boards'
@@ -894,7 +903,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       whole = whole ? box(whole) : null;
       settle = null;
       drawnThrough = null;
-      world = { plots: new Map([...world.plots].map(([key, b]) => [key, box(b)] as const)), buildings: new Map([...world.buildings].map(([key, b]) => [key, box(b)] as const)) };
+      handAt = -Infinity;
+      world = { plots: new Map([...world.plots].map(([key, b]) => [key, box(b)] as const)), buildings: new Map([...world.buildings].map(([key, b]) => [key, key.startsWith(REST_KEY) ? wordOnScreen(to, b) : box(b)] as const)) };
     };
     const moveTo = (cam: SceneCamera, toLevel: number, anchor: Point, now: number, arm = true) => {
       reframeArmed = arm && toLevel === PANEL && state.current.where.type === "record";
@@ -1066,7 +1076,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
              * own camera, and the city settling a pixel or two from it after
              * is placed fresh for the level, as it always was.
              */
-            const byHand = drawnThrough !== null || nudged.current;
+            const byHand = drawnThrough !== null || nudged.current || now - handAt < LET_GO_MS;
+            if (drawnThrough !== null || nudged.current) handAt = now;
             nudged.current = false;
             const panned = byHand && carry !== null && carry !== LEVEL_LIVE && Math.abs(carry.s - 1) < 1e-3;
             /*
@@ -1261,6 +1272,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         cam.commit();
         // A panel sized by hand is not a hand's pan of the city: what it leaves beside the page is placed afresh for it, as the districts say it moved.
         drawnThrough = null;
+        handAt = -Infinity;
         committedAt = performance.now();
         ownZoom = null;
       }
