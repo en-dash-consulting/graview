@@ -82,7 +82,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.2.3
 
-Published November 14, 2026 · the current version
+Published November 14, 2026
 
 The one face's city draws through the embed as it does in a routed app: no black bands on the ground where the districts' ribbons run.
 
