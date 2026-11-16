@@ -761,7 +761,6 @@ export function aiContextOf<S extends AnySchema>(given: Store<S>, target: AiTarg
       for (const edge of Object.keys(edgesOf(schema, of))) for (const other of seen.graph.in(record.id, edge) as unknown as Node[]) if (other.kind === of && nodeOf(other.id)) neighbors.push({ ...brief(other), relation: edge, direction: "in" });
     }
   }
-  /** Who made a change: a person as the record they are, as this viewer may see it, else by the name they gave. */
   /** Every account a person here was ever bound through, its own or a profile's: read from the log and the graph as it stands. */
   let everSeated: Set<string> | undefined;
   const seatedAccount = (account: string): boolean => {
@@ -780,6 +779,7 @@ export function aiContextOf<S extends AnySchema>(given: Store<S>, target: AiTarg
     }
     return everSeated.has(account);
   };
+  /** Who made a change: a person as the record they are, as this viewer may see it, else by the name they gave. */
   const saidBy = (author: Author): string => {
     if (author.kind !== "human") return byWords(author);
     const seat = seatPersonOf(author);
