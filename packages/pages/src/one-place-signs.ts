@@ -109,8 +109,40 @@ export function diamondReach(box: Box, tile: Box): number {
   return dx + dy;
 }
 
-/** From one box to another, edge to edge: none where they meet. */
-const boxGap = (a: Box, b: Box): number => Math.hypot(Math.max(b.x - (a.x + a.width), 0, a.x - (b.x + b.width)), Math.max(b.y - (a.y + a.height), 0, a.y - (b.y + b.height)));
+/**
+ * FROM A BOX TO A DISTRICT'S GROUND, its diamond, in pixels: none where
+ * they meet. The corners of a district's box are street, not its ground: a
+ * name standing at one stood half a plot from the district it named
+ * (Graview HQ feature:f-one-face-home-nearby-reads-at-size).
+ */
+export function groundGap(box: Box, tile: Box): number {
+  const c = { x: tile.x + tile.width / 2, y: tile.y + tile.height / 2 };
+  const ground: Point[] = [{ x: c.x, y: tile.y }, { x: tile.x + tile.width, y: c.y }, { x: c.x, y: tile.y + tile.height }, { x: tile.x, y: c.y }];
+  const corners: Point[] = [{ x: box.x, y: box.y }, { x: box.x + box.width, y: box.y }, { x: box.x + box.width, y: box.y + box.height }, { x: box.x, y: box.y + box.height }];
+  const onGround = (p: Point) => Math.abs(p.x - c.x) / Math.max(1e-6, tile.width / 2) + Math.abs(p.y - c.y) / Math.max(1e-6, tile.height / 2) <= 1;
+  const inBox = (p: Point) => p.x >= box.x && p.x <= box.x + box.width && p.y >= box.y && p.y <= box.y + box.height;
+  const toSegment = (p: Point, a: Point, b: Point) => {
+    const length = (b.x - a.x) ** 2 + (b.y - a.y) ** 2;
+    const t = length === 0 ? 0 : Math.max(0, Math.min(1, ((p.x - a.x) * (b.x - a.x) + (p.y - a.y) * (b.y - a.y)) / length));
+    return Math.hypot(p.x - (a.x + t * (b.x - a.x)), p.y - (a.y + t * (b.y - a.y)));
+  };
+  const cross = (a: Point, b: Point, p: Point, q: Point) => {
+    const side = (u: Point, v: Point, w: Point) => (v.x - u.x) * (w.y - u.y) - (v.y - u.y) * (w.x - u.x);
+    return side(a, b, p) * side(a, b, q) < 0 && side(p, q, a) * side(p, q, b) < 0;
+  };
+  if (corners.some(onGround) || ground.some(inBox)) return 0;
+  let least = Infinity;
+  for (let i = 0; i < 4; i++) {
+    const a = ground[i]!;
+    const b = ground[(i + 1) % 4]!;
+    const p = corners[i]!;
+    const q = corners[(i + 1) % 4]!;
+    for (let j = 0; j < 4; j++) if (cross(a, b, corners[j]!, corners[(j + 1) % 4]!)) return 0;
+    for (const one of corners) least = Math.min(least, toSegment(one, a, b));
+    for (const one of ground) least = Math.min(least, toSegment(one, p, q));
+  }
+  return least;
+}
 
 /** From a point to the nearest edge of a box: none inside it. */
 const gapTo = (p: Point, b: Box): number => Math.hypot(Math.max(b.x - p.x, 0, p.x - (b.x + b.width)), Math.max(b.y - p.y, 0, p.y - (b.y + b.height)));
@@ -258,7 +290,7 @@ export function placeSigns(asked: SignsAsked): SignsPlaced {
        * life's district). Where no clear place is that near, the district
        * says no name here; its list's board and the bar still reach it.
        */
-      const nearEnough = (box: Box) => asked.nameReach === undefined || boxGap(box, tile) <= asked.nameReach;
+      const nearEnough = (box: Box) => asked.nameReach === undefined || groundGap(box, tile) <= asked.nameReach;
       const cost = (box: Box) =>
         [...names.values(), ...words].reduce((sum, other) => sum + overlap(grow(box, 3), other) * 8, 0) +
         reserved.reduce((sum, other) => sum + overlap(box, other), 0) +

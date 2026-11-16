@@ -27,7 +27,11 @@
  * the page is drawn once, its elements, keyboard and typed word kept as the
  * one face arrives. And a pan let go of, at Nearby and the City, moves
  * nothing: every board and name stays where the last frame drew it; a zoom
- * let go of goes on from there, never back to where it began.
+ * let go of goes on from there, never back to where it began. And at
+ * Nearby the home draws its city at a size its plots and boards are read
+ * at — on Deep Time and on the Harbor, a fixture of the same shape on a
+ * shallower map — every name in sight by its own
+ * district's ground and every view's board on its own district.
  *
  * Frame strips (desk and phone, light and dark), and the rich app's City
  * and Nearby at 1280 and 390 wide (`rich-*.png`), are written to
@@ -59,7 +63,7 @@ const STRIPS = resolve(repoRoot, "docs/one-face");
 
 const report = { at: new Date().toISOString(), engines, app: "apps/todo", checks: {} };
 const errors = [];
-const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], pointsOut: [], shortcuts: [], keysTurnOff: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [], richClear: [], richNamed: [], richWords: [], richLegend: [], richViews: [], richRecords: [], richNearbyViews: [], richPhoneLines: [], richNamesBeside: [], richHomeScale: [], richControls: [], richOwnDistrict: [], richLegible: [], richHomeNearby: [], richOneLevel: [], richSmooth: [], richFocusSeen: [], richProblems: [], richHand: [], richHomeViews: [], richPanelCrossings: [], richBoardsUnder: [], richHomeClear: [], richProblemsOfKind: [], richPosts: [], richPostsUnder: [], recordInPlace: [], oneRuleFades: [], noWordsAfterPress: [], drawnOnce: [], nearbyZoom: [], nearbyPan: [], nearbyBack: [], panelPinch: [], phoneCity: [], panelWidth: [], panelSpacing: [], viewInPanel: [], panStill: [] };
+const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], pointsOut: [], shortcuts: [], keysTurnOff: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [], richClear: [], richNamed: [], richWords: [], richLegend: [], richViews: [], richRecords: [], richNearbyViews: [], richPhoneLines: [], richNamesBeside: [], richHomeScale: [], richControls: [], richOwnDistrict: [], richLegible: [], richHomeNearby: [], richOneLevel: [], richSmooth: [], richFocusSeen: [], richProblems: [], richHand: [], richHomeViews: [], richPanelCrossings: [], richBoardsUnder: [], richHomeClear: [], richProblemsOfKind: [], richPosts: [], richPostsUnder: [], recordInPlace: [], oneRuleFades: [], noWordsAfterPress: [], drawnOnce: [], nearbyZoom: [], nearbyPan: [], nearbyBack: [], panelPinch: [], phoneCity: [], panelWidth: [], panelSpacing: [], viewInPanel: [], panStill: [], homeReadSize: [], homeReadBeside: [] };
 
 /* ------------------------------------------------------------------ */
 /* In the page                                                         */
@@ -1662,7 +1666,18 @@ async function rich(browser, device) {
     // The city's side as the one face frames it: inside the window by 8 pixels, beside the panel on a desk, and on a phone above the sheet and the level control riding on it.
     const sideOf = home.panel ? (home.width <= 600 ? { x: 8, y: home.bar + 8, width: home.width - 16, height: Math.min(home.panel.y, home.dock ? home.dock.y : home.panel.y) - home.bar - 16 } : { x: 8, y: home.bar + 8, width: home.panel.x - 16, height: home.height - home.bar - 16 }) : null;
     const viewsKinds = homeKinds.filter((kind) => home.district[kind]);
-    result.homeViews = { kinds: viewsKinds, behind: sideOf ? viewsKinds.filter((kind) => { const tile = home.district[kind]; const mid = { x: tile.x + tile.width / 2, y: tile.y + tile.height / 2 }; return overlapOf(tile, home.panel) > tile.width * tile.height * 0.15 || mid.x < sideOf.x || mid.x > sideOf.x + sideOf.width || mid.y < sideOf.y || mid.y > sideOf.y + sideOf.height; }) : ["no panel"] };
+    /*
+     * The home reads at a size (Graview HQ feature:f-one-face-home-nearby-reads-at-size):
+     * where its views' districts cannot all stand beside the page at that
+     * size, as many as can do, and the rest are a pan away. Each district
+     * one of its views shows stands on the city's side, or could not stand
+     * there with those that do: together they would be wider or taller than
+     * the side.
+     */
+    const onSide = (kind) => { const tile = home.district[kind]; const mid = { x: tile.x + tile.width / 2, y: tile.y + tile.height / 2 }; return !(overlapOf(tile, home.panel) > tile.width * tile.height * 0.15 || mid.x < sideOf.x || mid.x > sideOf.x + sideOf.width || mid.y < sideOf.y || mid.y > sideOf.y + sideOf.height); };
+    const framedKinds = sideOf ? viewsKinds.filter(onSide) : [];
+    const tooMany = (kind) => { const all = [...framedKinds, kind].map((one) => home.district[one]); const width = Math.max(...all.map((t) => t.x + t.width)) - Math.min(...all.map((t) => t.x)); const height = Math.max(...all.map((t) => t.y + t.height)) - Math.min(...all.map((t) => t.y)); return width > sideOf.width - 33 || height > sideOf.height - 33; };
+    result.homeViews = { kinds: viewsKinds, framed: framedKinds, behind: sideOf ? viewsKinds.filter((kind) => !onSide(kind) && !tooMany(kind)) : ["no panel"] };
     /*
      * WHERE THE WHOLE CITY CANNOT STAND BESIDE THE PAGE at Nearby's furthest
      * zoom (the city says so), the home holds when every district its views
@@ -1684,7 +1699,7 @@ async function rich(browser, device) {
       if (from >= sideOf[lo] - 1 && to <= sideOf[lo] + sideOf[size] + 1) return true;
       const delta = sideOf[lo] + sideOf[size] / 2 - (from + to) / 2;
       if (Math.abs(delta) < 8) return true;
-      return viewsKinds.some((kind) => { const t = home.district[kind]; return t[lo] + delta < sideOf[lo] - 1 || t[lo] + t[size] + delta > sideOf[lo] + sideOf[size] + 1; });
+      return framedKinds.some((kind) => { const t = home.district[kind]; return t[lo] + delta < sideOf[lo] - 1 || t[lo] + t[size] + delta > sideOf[lo] + sideOf[size] + 1; });
     };
     const centeredOn = { x: axis("x", "width"), y: axis("y", "height") };
     const centered = centeredOn.x && centeredOn.y;
@@ -1903,7 +1918,7 @@ async function rich(browser, device) {
   seen.richHomeClear.push({ where, ...result.homeClear, ok: Boolean(result.homeClear && result.homeClear.names > 0 && result.homeClear.clash.length === 0) });
   // A desk's Nearby draws lines from the formation's page: there are some to hold. A small window may draw none.
   seen.richPanelCrossings.push({ where, ...result.panelCrossings, error: result.error, ok: Boolean(result.panelCrossings && (device.width < 1000 || result.panelCrossings.pieces > 0) && result.panelCrossings.crossings.length === 0) });
-  seen.richHomeViews.push({ where, ...result.homeViews, ok: Boolean(result.homeViews && result.homeViews.kinds.length > 0 && result.homeViews.behind.length === 0) });
+  seen.richHomeViews.push({ where, ...result.homeViews, ok: Boolean(result.homeViews && result.homeViews.framed.length > 0 && result.homeViews.behind.length === 0) });
   seen.richBoardsUnder.push({ where, ...result.boardsUnderLines, ok: Boolean(result.boardsUnderLines?.over) });
   // Where the whole city stands beside the page, no district is behind it; where it cannot, the home's views' districts are on the city's side, nothing said is under the page, and the city is as near the middle as that allows.
   seen.richHomeNearby.push({ where, ...result.home, ok: Boolean(result.home && result.home.districts > 0 && (result.home.fits ? result.home.behind.length === 0 : (result.homeViews?.behind.length ?? 1) === 0 && result.home.underPage.length === 0 && result.home.centered)) });
@@ -2862,6 +2877,103 @@ async function viewRootInPanel(browser) {
   }
 }
 
+/*
+ * THE HOME AT NEARBY READS AT A SIZE (Graview HQ
+ * feature:f-one-face-home-nearby-reads-at-size). On each rich app — Deep
+ * Time, and the Harbor, the same shape on a shallower map, which the home
+ * drew at the camera's furthest (and on a short window fitted whole there,
+ * as Graview Cloud's retests found) — the home at Nearby, then the Map, on
+ * the same window:
+ *
+ * - every district's plot is drawn at least `HOME_READS` times as wide as
+ *   the Map draws it. A record's page beside the city draws its district
+ *   at 1.6 times the Map's on a 1280 desk (2 on a phone) before it stands
+ *   back for its links, a kind's list at 1.25: three quarters of a record
+ *   page's. The home was framed whole at three fifths of it, and its
+ *   boards' words could not be read.
+ * - every district's name in sight stands within `NAME_NEAR` of its own
+ *   district, and every view's board in sight stands on its own district,
+ *   nearer it than any other.
+ */
+const HOME_READS = 1.2;
+/** How far a box stands from a district's ground, its diamond: none where they meet. */
+function gapToGround(box, tile) {
+  const c = { x: tile.x + tile.width / 2, y: tile.y + tile.height / 2 };
+  const corners = [{ x: c.x, y: tile.y }, { x: tile.x + tile.width, y: c.y }, { x: c.x, y: tile.y + tile.height }, { x: tile.x, y: c.y }];
+  const toGround = (p) => {
+    if (Math.abs(p.x - c.x) / (tile.width / 2) + Math.abs(p.y - c.y) / (tile.height / 2) <= 1) return 0;
+    let least = Infinity;
+    for (let i = 0; i < 4; i++) {
+      const a = corners[i];
+      const b = corners[(i + 1) % 4];
+      const t = Math.max(0, Math.min(1, ((p.x - a.x) * (b.x - a.x) + (p.y - a.y) * (b.y - a.y)) / ((b.x - a.x) ** 2 + (b.y - a.y) ** 2)));
+      least = Math.min(least, Math.hypot(p.x - (a.x + t * (b.x - a.x)), p.y - (a.y + t * (b.y - a.y))));
+    }
+    return least;
+  };
+  // The ground's corners inside the box: they meet.
+  if (corners.some((p) => p.x >= box.x && p.x <= box.x + box.width && p.y >= box.y && p.y <= box.y + box.height)) return 0;
+  let least = Infinity;
+  for (let i = 0; i <= 40; i++) {
+    const f = i / 40;
+    for (const p of [{ x: box.x + f * box.width, y: box.y }, { x: box.x + f * box.width, y: box.y + box.height }, { x: box.x, y: box.y + f * box.height }, { x: box.x + box.width, y: box.y + f * box.height }]) least = Math.min(least, toGround(p));
+  }
+  return least;
+}
+async function homeReads(browser, device, app) {
+  const phone = device.width <= 600;
+  const where = { app, device: `${device.width}×${device.height}` };
+  const context = await browser.newContext({ viewport: device, colorScheme: "dark", ...(phone ? { isMobile: true, hasTouch: true, deviceScaleFactor: 2 } : {}) });
+  const page = await context.newPage();
+  page.on("pageerror", (error) => errors.push(`home reads ${app} ${where.device}: ${error.message}`));
+  try {
+    await page.goto(`${richHost.url}/?theme=dark${app === "harbor" ? "&app=harbor" : ""}`, { waitUntil: "load" });
+    await ready(page);
+    await page.keyboard.press("2");
+    await restAt(page, 1, 15_000);
+    await page.waitForTimeout(700);
+    await page.mouse.move(2, Math.round(device.height / 2));
+    await page.screenshot({ path: resolve(STRIPS, `rich-${app}-${device.width}-home-nearby.png`) });
+    const nearby = await readRich(page);
+    const zoom = await page.evaluate(() => Number(document.querySelector('[data-testid="one-place-city"]')?.getAttribute("data-graview-camera-zoom") ?? 0));
+    await page.keyboard.press("3");
+    await restAt(page, 2, 15_000);
+    await page.waitForTimeout(500);
+    const map = await readRich(page);
+    // Each district's plot beside the page against the Map's.
+    const sizes = Object.entries(nearby.district).filter(([kind]) => map.district[kind]).map(([kind, tile]) => ({ kind, nearby: Math.round(tile.width), map: Math.round(map.district[kind].width), times: Number((tile.width / map.district[kind].width).toFixed(2)) }));
+    const least = sizes.reduce((low, one) => (!low || one.times < low.times ? one : low), null);
+    // In sight: on the city's side of the window, under the bar.
+    const side = nearby.panel ? (phone ? { x: 0, y: nearby.bar, width: nearby.width, height: (nearby.dock ? nearby.dock.y : nearby.panel.y) - nearby.bar } : { x: 0, y: nearby.bar, width: nearby.panel.x, height: nearby.height - nearby.bar }) : { x: 0, y: nearby.bar, width: nearby.width, height: nearby.height - nearby.bar };
+    const seenIn = (box) => overlapOf(box, side) > box.width * box.height * 0.5;
+    // From its own district's ground — its diamond, not the box round it, whose corners are street (Cloud's "Fossil places", 40–60 pixels off the ground it names).
+    const names = nearby.tags.filter((t) => seenIn(t.box) && nearby.district[t.kind]).flatMap((t) => {
+      const off = gapToGround(t.box, nearby.district[t.kind]);
+      return off > NAME_NEAR ? [`${t.kind} ${Math.round(off)} px off its ground`] : [];
+    });
+    const reach = (p, tile) => Math.abs(p.x - (tile.x + tile.width / 2)) / (tile.width / 2) + Math.abs(p.y - (tile.y + tile.height / 2)) / (tile.height / 2);
+    const kindOfBoard = (key) => (key.startsWith("kind:") ? key.slice(5) : key.startsWith("place:") ? key.split(":")[1] : null);
+    const boards = nearby.boards.filter((b) => !b.own && seenIn(b.box) && kindOfBoard(b.key) && nearby.district[kindOfBoard(b.key)]).flatMap((b) => {
+      const own = reach(b.stem, nearby.district[kindOfBoard(b.key)]);
+      const nearer = Object.entries(nearby.district).filter(([kind, tile]) => kind !== kindOfBoard(b.key) && reach(b.stem, tile) < own).map(([kind]) => kind);
+      return own > 1.08 || nearer.length > 0 ? [`“${b.label}” stands at ${own.toFixed(2)} of its district${nearer.length ? `, nearer ${nearer.join(", ")}` : ""}`] : [];
+    });
+    return {
+      where,
+      zoom,
+      least,
+      sizes,
+      // And, said for whoever reads the verdict, the districts in sight, wholly, that say no name: a name kept to its ground has fewer places to stand.
+      names: { seen: nearby.tags.filter((t) => seenIn(t.box)).length, astray: names, unnamed: Object.entries(nearby.district).filter(([kind, tile]) => overlapOf(tile, side) >= tile.width * tile.height * 0.95 && !nearby.tags.some((t) => t.kind === kind)).map(([kind]) => kind) },
+      boards: { seen: nearby.boards.filter((b) => !b.own && seenIn(b.box)).length, astray: boards },
+    };
+  } catch (error) {
+    return { where, error: String(error?.message ?? error) };
+  } finally {
+    await context.close().catch(() => {});
+  }
+}
+
 /* ------------------------------------------------------------------ */
 /* The run                                                             */
 /* ------------------------------------------------------------------ */
@@ -2929,6 +3041,13 @@ try {
     if (!only || only.includes("switch")) seen.switch.push(await rootIsTheOneFace(browser, { engine, device: "desk 1440×900" }).catch((error) => ({ ok: false, error: String(error?.message ?? error) })));
     if (!only || only.includes("rich")) for (const device of [{ width: 1520, height: 900 }, { width: 1280, height: 800 }, { width: 390, height: 844 }, { width: 844, height: 390 }, { width: 768, height: 1024 }, { width: 360, height: 640 }]) await rich(browser, device);
     if (!only || only.includes("rich")) for (const device of [{ width: 390, height: 844 }, { width: 412, height: 915 }]) seen.richPhoneLines.push(await richPhoneLines(browser, device));
+    if (!only || only.includes("rich") || only.includes("homeReads"))
+      for (const app of ["deep-time", "harbor"])
+        for (const device of [{ width: 1520, height: 900 }, { width: 1280, height: 800 }, { width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 844, height: 390 }]) {
+          const read = await homeReads(browser, device, app);
+          seen.homeReadSize.push({ where: read.where, zoom: read.zoom, least: read.least, error: read.error, ok: Boolean(!read.error && read.least && read.least.times >= HOME_READS) });
+          seen.homeReadBeside.push({ where: read.where, names: read.names, boards: read.boards, error: read.error, ok: Boolean(!read.error && read.names.seen > 0 && read.names.astray.length === 0 && read.names.unnamed.length === 0 && read.boards.astray.length === 0) });
+        }
     if (engine === "chromium" && (!only || only.includes("rich"))) {
       await recordInPlace(browser);
       await drawnOnce(browser);
@@ -3004,12 +3123,14 @@ try {
   report.checks.onAPhoneTheLinesIntoOneDistrictRiseAsOneAndNoLineCrossesAHeadingOrALabel = { held: seen.richPhoneLines, ok: every(seen.richPhoneLines) };
   report.checks.atNearbyEachDistrictsNameStandsBesideItsOwnDistrictOnTheHomeAndARichPage = { held: seen.richNamesBeside, ok: every(seen.richNamesBeside) };
   report.checks.atNearbyTheHomesCityDrawsNoSmallerThanIn021 = { held: seen.richHomeScale, ok: every(seen.richHomeScale) };
+  report.checks.atNearbyTheHomesPlotsAreDrawnLargeEnoughToRead = { held: seen.homeReadSize, ok: every(seen.homeReadSize) };
+  report.checks.atNearbyOnARichHomeEveryNameAndViewInSightStandsBesideItsOwnDistrict = { held: seen.homeReadBeside, ok: every(seen.homeReadBeside) };
   report.checks.atNearbyEveryViewOfADistrictInSightHasABoard = { held: seen.richNearbyViews, ok: every(seen.richNearbyViews) };
   report.checks.noDistrictControlStandsUnderTheBarThePageOrTheLevelControl = { held: seen.richControls, ok: every(seen.richControls) };
   report.checks.everyKindsBoardStandsOnItsOwnDistrictEvenWhereThePageCoversOne = { held: seen.richOwnDistrict, ok: every(seen.richOwnDistrict) };
   report.checks.noBoardsWordsAreSmallerThanNinePixels = { held: seen.richLegible, ok: every(seen.richLegible) };
   report.checks.atNearbyTheHomeFramesTheWholeCityBesideThePageOrWhereItCannotItsViewsDistrictsAndAsNearTheMiddleAsThatAllows = { held: seen.richHomeNearby, ok: every(seen.richHomeNearby) };
-  report.checks.atNearbyOnTheHomeEveryDistrictItsViewsShowStandsOnTheCitysSide = { held: seen.richHomeViews, ok: every(seen.richHomeViews) };
+  report.checks.atNearbyOnTheHomeTheDistrictsItsViewsShowStandOnTheCitysSideAsManyAsFitThereAtAReadableSize = { held: seen.richHomeViews, ok: every(seen.richHomeViews) };
   report.checks.atNearbyOnTheHomeNoNameOrBoardStandsOnAnotherOrOnADistrictsCount = { held: seen.richHomeClear, ok: every(seen.richHomeClear) };
   report.checks.atNearbyOnARichPageNoLineCrossesAnotherPartInThePanel = { held: seen.richPanelCrossings, ok: every(seen.richPanelCrossings) };
   report.checks.theBoardsStandUnderTheLines = { held: seen.richBoardsUnder, ok: every(seen.richBoardsUnder) };

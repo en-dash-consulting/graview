@@ -6,7 +6,7 @@ import { sceneCss } from "@graview/primitives/scene";
 import { useGraview, useNavigation, useViolations } from "@graview/react/provider";
 import { useOneFace } from "./one-place-control.js";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
-import { aimAt, anchorOf, BOARD_ASPECT, carriedBetween, carriedThrough, frameSpacingAt, boardFaceWidth, boardLeast, boardMost, boardWidthFor, fitBeside, fitCamera, SIGN_GAP, SIGN_POST, signRoom, cameraBetween, cameraPutting, CITY, cityArea, footOf, leaveFrom, routeLine, LEVEL_LIVE, levelZooms, PAGE, pageBox, PANEL, panelBox, PHONE, project, restingLevel, SHEET_ORIGIN, standingAt, standingCss, unionOf, type Box, type Live, type PageWhere, type Point } from "./one-place-geometry.js";
+import { aimAt, anchorOf, BOARD_ASPECT, carriedBetween, carriedThrough, frameSpacingAt, boardFaceWidth, framedTogether, homeReadableZoom, boardLeast, boardMost, boardWidthFor, fitBeside, fitCamera, SIGN_GAP, SIGN_POST, signRoom, cameraBetween, cameraPutting, CITY, cityArea, footOf, leaveFrom, routeLine, LEVEL_LIVE, levelZooms, PAGE, pageBox, PANEL, panelBox, PHONE, project, restingLevel, SHEET_ORIGIN, standingAt, standingCss, unionOf, type Box, type Live, type PageWhere, type Point } from "./one-place-geometry.js";
 import type { OnePlaceCityProps } from "./one-place.js";
 import { placeSigns } from "./one-place-signs.js";
 import { pluralOf } from "./page-typography.js";
@@ -826,32 +826,43 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
        * THE HOME BESIDE THE CITY: the city framed in the part the page leaves
        * it — left of the panel on a desk, over the sheet on a phone — never
        * the whole window, where the districts nearest the page stood behind it.
+       *
+       * AND READ AT A SIZE (Graview HQ feature:f-one-face-home-nearby-reads-at-size):
+       * never further out than `homeReadableZoom`. Where the whole city
+       * stands beside the page at that zoom or closer, it is framed whole;
+       * where it does not, the districts the home's views show are framed,
+       * and the rest of the city is a pan away. Fitted whole at any zoom the
+       * camera reaches, a rich app's plots were drawn at three fifths of a
+       * record page's, and its boards could not be read.
        */
       if (lvl === PANEL && (now.where.type === "home" || now.where.type === "overview")) {
         const city = unionOf([...world.plots.values()]);
         if (city) {
           const shown = nearbyShown();
           const fit = fitCamera(city, shown, 16, s);
-          // Never past what the camera can be written at: there the whole city does not fit beside the page, and the districts the home's views show are what stands in the city's side.
-          const least = (camera.current?.range.min ?? 0) / zoomNow;
+          const least = Math.max(homeReadableZoom(now.view), camera.current?.range.min ?? 0) / zoomNow;
           // Said on the city, for a reader of the page: whether the whole city stands beside the page here.
           box.current?.toggleAttribute("data-graview-nearby-holds-the-city", fit.s >= least);
           if (fit.s >= least) return fit;
-          const kinds = new Set(markedOnPage().flatMap((id) => {
+          // The districts the home's views show, in the order the page shows them.
+          const kinds = [...new Set(markedOnPage().flatMap((id) => {
             const kind = store.graph.getNode(id)?.kind as string | undefined;
             return kind ? [kind] : [];
-          }));
-          const own = unionOf([...kinds].flatMap((kind) => {
+          }))];
+          const plots = kinds.flatMap((kind) => {
             const plot = world.plots.get(kind);
             return plot ? [plot] : [];
-          }));
-          const what = own ?? city;
+          });
+          // As many of them as stand beside the page together at the least zoom: the first the page shows first.
+          const what = framedTogether(plots, shown, least);
+          // A page that shows no records: the city's middle in the middle of its side, the rest a pan away.
+          if (!what) return cameraPutting(middle(city), middle(shown), least);
           /*
            * THE CITY AS NEAR THE MIDDLE OF ITS SIDE AS ITS VIEWS' DISTRICTS
            * LET IT, they in the side whole: at the zoom that fits them where
-           * they fit on their own (a small phone's strip over the sheet), else
-           * as far out as the camera goes. Fitted on them alone, the city stood
-           * off to one side of a narrow strip with room to come to its middle.
+           * they fit closer (never closer than the home's Nearby), else at the
+           * least. Fitted on them alone, the city stood off to one side of a
+           * narrow strip with room to come to its middle.
            */
           const close = fitCamera(what, shown, 16, s);
           const held = cameraPutting(middle(city), middle(shown), Math.max(close.s, least));
