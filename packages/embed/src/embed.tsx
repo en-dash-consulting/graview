@@ -293,7 +293,7 @@ export interface EmbedOptions<S extends AnySchema = AnySchema> extends FrameOpti
   readonly draftView?: EmbedDraftView | null;
 }
 
-export type { EmbedDraftView } from "./draft.js";
+export type { EmbedDraftView, ForkedViewDefaults } from "./draft.js";
 
 /** The studio an embed offers, for a host that keeps the declaration itself. */
 export interface EmbedStudio {

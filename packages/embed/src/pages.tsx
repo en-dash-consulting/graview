@@ -290,7 +290,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
 
 export { hostScheme } from "./frame.js";
 export { DRAWN_ATTRIBUTE } from "./drawn.js";
-export type { EmbedDraftView } from "./draft.js";
+export type { EmbedDraftView, ForkedViewDefaults } from "./draft.js";
 export type { EmbedWhere } from "./where.js";
 export type { EmbedBar, EmbedError, EmbedErrorWhere, EmbedHostContext, EmbedReady, EmbedRemote } from "./frame.js";
 export type { HostAction } from "@graview/primitives/frame";
