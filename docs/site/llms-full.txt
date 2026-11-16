@@ -6,7 +6,7 @@
 - Start a product: `npm create graview@latest my-app` (Node 22 or later)
 - License: Elastic License 2.0 — source-available, free to build with and to ship products on
 - Source: https://github.com/en-dash-consulting/graview
-- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.2.3)
+- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.2.4)
 - Hosted: Graview Cloud, https://graview.cloud (private alpha, invite-only)
 
 ## Questions, answered plainly
@@ -904,6 +904,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.2.4`](https://graview.dev/docs/releases.html#v0-2-4)
 - [`0.2.3`](https://graview.dev/docs/releases.html#v0-2-3)
 - [`0.2.2`](https://graview.dev/docs/releases.html#v0-2-2)
 - [`0.2.1`](https://graview.dev/docs/releases.html#v0-2-1)
@@ -980,9 +981,29 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
+## 0.2.4
+
+Published November 16, 2026 · the current version
+
+Letting go of a pan or a zoom leaves the map where it stands, the third level is called Map, and a host gets the view and binding tools Graview Cloud asked for.
+
+- **Letting go stays put.** At Nearby and Map, every board and name stays where the last frame drew it when a pan or a zoom ends. Before, they jumped back to where the gesture began and slid over. A board that comes into sight with no clear room has the map placed afresh, so every view in sight keeps its board.
+- **Page · Nearby · Map.** The one face’s third level is called Map wherever a person reads it: the level control, the keys, the right-click menu and the docs.
+- **A list page draws the view that replaces it** (`replaces: "page"`), whatever other view of the kind registered after it, and a host can ask which one with `listPageViewOf`.
+- **A view’s problems say a code** beside the sentence (`VIEW_PROBLEM_CODES`), so a host can count them.
+- **A host can refuse a view’s own fonts** with `ownFaces: false`; the fonts the host lends still draw.
+- **Pictures say their shape**: a view is handed each picture’s width, height, aspect, whether it is a cutout, and its focal point.
+- **Binding a person, as a host needs it**: `mayBind` asks whether a record may be bound before there is a seat, `unbindPerson` ends a binding while keeping what the person did said as them, and `seatsKept` is exported.
+- A view’s check as each seat names the owner once.
+- Security and reliability fixes.
+
+**Before you upgrade:** Breaks: a person reads Map where they read City on the one face’s level control and keys. A view’s `onProblem` is now called with a second argument (`{ code, part }`), and `createGuestHost`’s `onHeld` with a third; one-argument callbacks are unchanged. `seatsOfPolicy` lists the owner once. A document may not declare an act under a name the framework keeps for itself, and a call may now be refused that was taken before. Gains: `listPageViewOf`, `VIEW_PROBLEM_CODES`, `ownFaces`, a picture’s `width`, `height`, `aspect`, `cutout` and `focus` (and `focus` and `cutout` on a file value, optional), `mayBind`, `unbindPerson` and `seatsKept`. Stored formats gain only those optional file fields; ops, the wire and derived tool names are otherwise unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.2.4) · [The full changelog for 0.2.4](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#024)
+
 ## 0.2.3
 
-Published November 14, 2026 · the current version
+Published November 14, 2026
 
 The one face's city draws through the embed as it does in a routed app: no black bands on the ground where the districts' ribbons run.
 
@@ -8257,7 +8278,7 @@ Source: https://graview.dev/docs/site.html
 
 # This site is a Graview app
 
-graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 502 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
+graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 503 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
 
 ## The site, running
 
@@ -8282,7 +8303,7 @@ This is that declaration, compiled in your browser by the same compiler `graview
 | `chapter` | A step of the garden, grown: a declaration that passes its own check, opened in a browser on every push. | 16 |
 | `example` | An example app in the repository, described by its own package.json. | 5 |
 | `question` | A question the front page answers plainly, read off its FAQ. | 7 |
-| `release` | A version every package shares, as the releases page says it: when npm published it, what came in it in a few plain lines, and what a host must know before upgrading. Written by hand with the Version packages pull request (apps/site/releases.json). | 80 |
+| `release` | A version every package shares, as the releases page says it: when npm published it, what came in it in a few plain lines, and what a host must know before upgrading. Written by hand with the Version packages pull request (apps/site/releases.json). | 81 |
 | `scaffold` | What graview create writes, read from the generator itself. | 1 |
 
 ## How a page is made
