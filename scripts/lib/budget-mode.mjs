@@ -37,10 +37,13 @@ export function budgetMode(env = process.env) {
 }
 
 /** How many bytes a measure is over its budget, minified and gzipped: 0 for a size within it, or one the budget does not hold. */
-export function bytesOver({ minified, gzipped, budget }) {
+export function bytesOver({ name, minified, gzipped, budget }) {
+  // A measure that broke is not a size within its budget, nor one to warn of: it fails, saying so.
+  if (!Number.isFinite(minified) || !Number.isFinite(budget?.minified)) throw new Error(`${name}: measured ${minified} B minified against ${budget?.minified}, which is not a measure`);
+  if (budget.gzipped !== undefined && (!Number.isFinite(gzipped) || !Number.isFinite(budget.gzipped))) throw new Error(`${name}: measured ${gzipped} B gzipped against ${budget.gzipped}, which is not a measure`);
   return {
-    minified: budget.minified === undefined ? 0 : Math.max(0, Math.ceil(minified - budget.minified)),
-    gzipped: budget.gzipped === undefined || gzipped === undefined ? 0 : Math.max(0, Math.ceil(gzipped - budget.gzipped)),
+    minified: Math.max(0, Math.ceil(minified - budget.minified)),
+    gzipped: budget.gzipped === undefined ? 0 : Math.max(0, Math.ceil(gzipped - budget.gzipped)),
   };
 }
 
@@ -74,9 +77,9 @@ export function holdBytes(measure, { env = process.env, warn = reportOver } = {}
  * A warning, where CI shows one: a line kept in `GRAVIEW_BUDGET_REPORT`
  * when it names a file, or an annotation on the step when it does not. The
  * tests run in workers whose output the runner may not read as
- * annotations, and two shards may measure one entry, so ci.yml keeps the
- * file and reads it after them (`scripts/budget-report.mjs`), saying each
- * over once, in the summary and as an annotation.
+ * annotations, and two files of one job may measure one entry, so ci.yml
+ * keeps the file per job and reads it after the step (`scripts/budget-report.mjs`),
+ * saying each over once in that job's summary and as an annotation.
  */
 export function reportOver(record, env = process.env) {
   const over = record.over ?? bytesOver(record);
@@ -88,14 +91,24 @@ export function reportOver(record, env = process.env) {
 }
 
 /** One over as a GitHub annotation. */
-export const annotation = (record) => `::warning title=Over a byte budget: ${record.name}::${overSentence(record, record.over)}. A pull request warns; the batch raises it (scripts/budget-raises/).`;
+export const annotation = (record) => `::warning title=${escapeProperty(`Over a byte budget: ${record.name}`)}::${escapeData(`${overSentence(record, record.over)}. A pull request warns; the batch raises it (scripts/budget-raises/).`)}`;
+
+/* A workflow command's escapes: an entry's name has commas ("the guest host, drawing a worker"), which end a property. */
+const escapeData = (text) => String(text).replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
+const escapeProperty = (text) => escapeData(text).replace(/:/g, "%3A").replace(/,/g, "%2C");
 
 /** The kept warnings, one per entry (the largest over when it was measured twice). */
 export function keptOvers(text) {
   const byName = new Map();
   for (const line of text.split("\n")) {
     if (!line.trim()) continue;
-    const one = JSON.parse(line);
+    let one;
+    try {
+      one = JSON.parse(line);
+    } catch {
+      // A worker stopped mid-line: what it would have said is said by the test that failed with it.
+      continue;
+    }
     const was = byName.get(one.name);
     if (!was || one.over.minified + one.over.gzipped > was.over.minified + was.over.gzipped) byName.set(one.name, one);
   }

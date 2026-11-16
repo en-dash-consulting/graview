@@ -22,7 +22,8 @@ concurrency:
 # summary and as an annotation, and passes; the batch writes the raise, and
 # fails while it is over, as main, Nightly and the release do (nothing sets
 # it there). What a bundle carries that it must not fails everywhere
-# (scripts/lib/budget-mode.mjs).
+# (scripts/lib/budget-mode.mjs). Each job says the overs it measured in its
+# own summary (scripts/budget-report.mjs).
 env:
   GRAVIEW_BUDGET: ${{ (github.event_name == 'pull_request' && github.base_ref == 'main' && !startsWith(github.head_ref, 'batch/') && !startsWith(github.head_ref, 'changeset-release/')) && 'warn' || 'fail' }}
 

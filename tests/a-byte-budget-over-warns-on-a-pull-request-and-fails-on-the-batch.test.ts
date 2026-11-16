@@ -4,7 +4,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 // @ts-expect-error — a plain .mjs module, without types.
-import { budgetMode, bytesOver, holdBytes, keptOvers, oversMarkdown, reportOver } from "../scripts/lib/budget-mode.mjs";
+import { annotation, budgetMode, bytesOver, holdBytes, keptOvers, oversMarkdown, reportOver } from "../scripts/lib/budget-mode.mjs";
 // @ts-expect-error — a plain .mjs module, without types.
 import { budgetFailures } from "../scripts/lib/bundle-budget.mjs";
 
@@ -34,6 +34,11 @@ describe("the switch", () => {
     expect(bytesOver(over)).toEqual({ minified: 234, gzipped: 56 });
     expect(bytesOver(within)).toEqual({ minified: 0, gzipped: 0 });
     expect(bytesOver({ name: "Cloud's worker", minified: 1500, budget: { minified: 1000 } })).toEqual({ minified: 500, gzipped: 0 });
+  });
+
+  it("fails a measure that broke, warned or not, rather than call it within or over", () => {
+    expect(() => holdBytes({ ...over, minified: undefined }, { env: { GRAVIEW_BUDGET: "warn" } })).toThrow(/every face: measured undefined B minified/);
+    expect(() => holdBytes({ ...over, gzipped: Number.NaN }, { env: {} })).toThrow(/NaN B gzipped/);
   });
 
   it("fails a byte ceiling over on the batch, on main, in Nightly and in the release, saying the entry and the bytes", () => {
@@ -90,7 +95,13 @@ describe("the warning, said once", () => {
     } finally {
       process.stdout.write = write;
     }
-    expect(writes.join("")).toMatch(/^::warning title=Over a byte budget: every face::every face is 234 B minified/);
+    expect(writes.join("")).toMatch(/^::warning title=Over a byte budget%3A every face::every face is 234 B minified/);
+  });
+
+  it("keeps an entry's comma in its annotation's title, and skips a line a stopped worker left half written", () => {
+    const named = { ...over, name: "the guest host, drawing a worker" };
+    expect(annotation({ ...named, over: bytesOver(named) })).toMatch(/^::warning title=Over a byte budget%3A the guest host%2C drawing a worker::the guest host, drawing a worker is/);
+    expect(keptOvers(`${JSON.stringify({ ...over, over: bytesOver(over) })}\n{"name":"every fa`)).toHaveLength(1);
   });
 });
 
