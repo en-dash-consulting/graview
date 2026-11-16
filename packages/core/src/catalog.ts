@@ -31,7 +31,8 @@ import { nodeRefArgs } from "./mutations/node-ref.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
 import type { Author } from "./ops/types.js";
 import { isWithheld } from "./ops/withheld.js";
-import { seatPersonOf } from "./permissions/policy.js";
+import { actingAs, seatPersonOf } from "./permissions/policy.js";
+import { PERSON_SEAT } from "./graph/archived.js";
 import type { Principal } from "./permissions/types.js";
 import { fieldWords, humanizeField, labelOf, nounOf, pluralOf } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
@@ -761,12 +762,32 @@ export function aiContextOf<S extends AnySchema>(given: Store<S>, target: AiTarg
     }
   }
   /** Who made a change: a person as the record they are, as this viewer may see it, else by the name they gave. */
+  /** Every account a person here was ever bound through, its own or a profile's: read from the log and the graph as it stands. */
+  let everSeated: Set<string> | undefined;
+  const seatedAccount = (account: string): boolean => {
+    if (!everSeated) {
+      everSeated = new Set<string>();
+      const add = (value: unknown) => {
+        if (typeof value === "string" && value !== "") everSeated!.add(value.split("~")[0]!);
+      };
+      for (const op of whole.log.all()) {
+        for (const primitive of op.primitives) {
+          if (primitive.op === "add-node" || primitive.op === "remove-node") add((primitive.node as Record<string, unknown>)[PERSON_SEAT]);
+          else if (primitive.op === "patch-node") add(primitive.after[PERSON_SEAT]);
+        }
+      }
+      for (const node of whole.graph.allNodes({ archived: "all" }) as readonly Record<string, unknown>[]) add(node[PERSON_SEAT]);
+    }
+    return everSeated.has(account);
+  };
   const saidBy = (author: Author): string => {
-    const seat = author.kind === "human" ? seatPersonOf(author) : undefined;
+    if (author.kind !== "human") return byWords(author);
+    const seat = seatPersonOf(author);
     const bound = seat === undefined ? undefined : whole.graph.personBoundTo(seat);
-    const node = bound !== undefined ? nodeOf(bound) : author.kind === "human" && author.id !== undefined ? nodeOf(author.id) : undefined;
+    const node = (bound !== undefined ? nodeOf(bound) : undefined) ?? (seat !== undefined ? nodeOf(seat) : undefined) ?? (author.id !== undefined ? nodeOf(author.id) : undefined);
     if (node) return nameOf(schema, node);
-    return bound !== undefined ? (author.name ?? "someone") : byWords(author);
+    const account = actingAs(author as Principal).id;
+    return bound !== undefined || (account !== undefined && seatedAccount(account)) ? (author.name ?? (author as { readonly profile?: { readonly name?: string } }).profile?.name ?? "someone") : byWords(author);
   };
   const recent = seen
     .batches()

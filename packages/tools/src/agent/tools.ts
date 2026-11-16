@@ -1418,7 +1418,8 @@ function withoutSeats<T>(value: T): T {
       delete out[key];
       continue;
     }
-    const next = withoutSeats(one);
+    // A changed record's list of fields names no mark either.
+    const next = key === "fields" && Array.isArray(one) && one.includes(PERSON_SEAT) ? one.filter((field) => field !== PERSON_SEAT) : withoutSeats(one);
     if (next !== one) (out ??= { ...(value as Record<string, unknown>) })[key] = next;
   }
   return (out ?? value) as T;

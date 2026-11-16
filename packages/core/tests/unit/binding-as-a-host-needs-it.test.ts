@@ -108,4 +108,19 @@ describe("a bound person, as the app says them", () => {
       }
     }
   });
+
+  it("says who changed a record as the person they are, with a profile or without, whoever reads", () => {
+    const store = family();
+    bindPerson(store, bud, "participant:bud", { author: host });
+    store.apply({ name: "edit-gift", args: { id: "gift:kite", title: "A red kite" } }, { author: bud });
+    store.apply({ name: "edit-gift", args: { id: "gift:kite", title: "A blue kite" } }, { author: { ...bud, profile: { id: "kid", name: "Kiddo" } } as Principal });
+    const undone = bindPerson(store, ann, "participant:ann", { author: host });
+    store.undo(undone.batch, { author: host });
+    store.apply({ name: "edit-gift", args: { id: "gift:kite", title: "A green kite" } }, { author: ann });
+    for (const principal of [host, bud, ann]) {
+      const said = aiContextOf(store, { on: "record", id: "gift:kite" }, { principal, recent: 20 });
+      expect(JSON.stringify(said), principal.id).not.toMatch(/acct-|\$seat/);
+    }
+    expect(aiContextOf(store, { on: "record", id: "gift:kite" }, { principal: host, recent: 20 }).recent.map((one) => one.by)).toEqual(expect.arrayContaining(["Bud", "Kiddo"]));
+  });
 });
