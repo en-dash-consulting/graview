@@ -1,3 +1,4 @@
+import { PERSON_SEAT } from "../graph/archived.js";
 import { dayAsRead, DATE_VALUE, isMoment, ISO_MOMENT, momentAsRead, momentAtAGlance } from "../days.js";
 import { kindDateField, type DatedField } from "../kind-date.js";
 import { fieldWords, labelOf, nounOf, type ReadableField } from "./define-node.js";
@@ -93,8 +94,8 @@ export function describeNode(
 }
 
 
-/** Never shown: identity and the name, which the heading already is. */
-const NOT_A_FIELD = new Set(["id", "kind", "label"]);
+/** Never shown: identity, the name, which the heading already is, and whose record a person is, which is the seat's and the host's to know. */
+const NOT_A_FIELD = new Set(["id", "kind", "label", PERSON_SEAT]);
 
 
 /** Whether `line` carries `value` as whole words: "2027 Subaru Forester" says "Subaru" and "2027", not "Sub". */
