@@ -18,6 +18,8 @@ import {
 } from "../scripts/lib/hosted-page.mjs";
 // @ts-expect-error — a plain .mjs module, without types.
 import { hostedPageMarkdown } from "../scripts/lib/hosted-page-notes.mjs";
+// @ts-expect-error — a plain .mjs module, without types.
+import { holdBytes } from "../scripts/lib/budget-mode.mjs";
 
 /**
  * A HOSTED PAGE KEEPS TO ITS BUDGET (FR-57). Graview Cloud's shell —
@@ -46,9 +48,8 @@ describe("a hosted page", () => {
   });
 
   it("carries at most its budget up front, minified and gzipped: 537.5 KB and 186.4 KB since the headroom after 0.1.29, and only a raise that names its changeset adds to either", () => {
-    expect(measured.upFront.minified, `${(measured.upFront.minified / 1024).toFixed(1)} KB`).toBeLessThanOrEqual(HOSTED_PAGE_BUDGET.minified);
-    expect(measured.upFront.gzipped, `${(measured.upFront.gzipped / 1024).toFixed(1)} KB gzipped`).toBeLessThanOrEqual(HOSTED_PAGE_BUDGET.gzipped);
-    expect(measured.over).toBe(false);
+    // A byte ceiling: over on a pull request that is not a batch, a warning (GRAVIEW_BUDGET=warn); its zod is held below, everywhere.
+    expect(holdBytes({ name: "a hosted page", minified: measured.upFront.minified, gzipped: measured.upFront.gzipped, budget: HOSTED_PAGE_BUDGET })).toEqual([]);
   });
 
   it("carries at most 150 KB of zod up front", () => {
@@ -229,7 +230,8 @@ describe("a hosted page", () => {
     // 1136 KB since the security and reliability fixes for suggestions: the scene face measured 1_162_402 B, 1_617 over the 0.2.1 batch (1_160_785).
     // 1138 KB since a host came to end a person's binding: an undo of a binding blocked only by what moved its record: the scene face measured 1_164_362 B, 1_960 over the 1_162_402 before it.
     // 1139 KB with the whole 0.2.4 batch together (2026-11-15): a host ending a person's binding and asking whether a record may be bound, a kind's list page drawing the view that replaces it, a view's problems said by code and its pictures saying their shape, each measured against main: the scene face measured 1_165_440 B, 1_078 over the 1_164_362 before them.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1139 * 1024);
+    // A byte ceiling, raised on the batch: over on a pull request that is not a batch, a warning (GRAVIEW_BUDGET=warn).
+    for (const [face, one] of Object.entries(measured.beforeDrawn)) expect(holdBytes({ name: `a hosted page before its ${face} face draws`, minified: one.minified, budget: { minified: 1139 * 1024 - 1 } })).toEqual([]);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {
@@ -417,8 +419,7 @@ describe("a hosted page", () => {
  */
 describe("a hosted page handed a compiled app", () => {
   it(`carries at most its budget up front: ${(HOSTED_PAGE_COMPILED_BUDGET.minified / 1024).toFixed(1)} KB minified and ${(HOSTED_PAGE_COMPILED_BUDGET.gzipped / 1024).toFixed(1)} KB gzipped`, () => {
-    expect(handed.upFront.minified, `${(handed.upFront.minified / 1024).toFixed(1)} KB`).toBeLessThanOrEqual(HOSTED_PAGE_COMPILED_BUDGET.minified);
-    expect(handed.upFront.gzipped, `${(handed.upFront.gzipped / 1024).toFixed(1)} KB gzipped`).toBeLessThanOrEqual(HOSTED_PAGE_COMPILED_BUDGET.gzipped);
+    expect(holdBytes({ name: "a hosted page handed a compiled app", minified: handed.upFront.minified, gzipped: handed.upFront.gzipped, budget: HOSTED_PAGE_COMPILED_BUDGET })).toEqual([]);
   });
 
   it("carries no compiler up front: no reader, validator, expression or template parser, view checker or document schema", () => {

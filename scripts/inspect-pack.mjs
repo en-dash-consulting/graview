@@ -18,7 +18,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { exportsOf, unexported } from "./lib/readme-exports.mjs";
-import { measureBudgets } from "./lib/bundle-budget.mjs";
+import { budgetFailures, measureBudgets } from "./lib/bundle-budget.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "..");
@@ -183,9 +183,11 @@ for (const one of unpacked) {
  */
 report.budgets = await measureBudgets(repoRoot);
 for (const one of report.budgets) {
-  if (one.over) failures += 1;
+  // A byte ceiling over on a pull request that is not a batch warns (GRAVIEW_BUDGET=warn); what it carries that it must not fails everywhere.
+  const failed = budgetFailures(one);
+  if (failed.length > 0) failures += 1;
   process.stdout.write(
-    `${one.over ? "FAIL" : "ok  "} ${`@graview/embed: ${one.name}`.padEnd(36)} ${(one.minified / 1024).toFixed(0)}K minified (budget ${(one.budget.minified / 1024).toFixed(0)}K), ${(one.gzipped / 1024).toFixed(0)}K gzipped (budget ${(one.budget.gzipped / 1024).toFixed(0)}K)\n`,
+    `${failed.length > 0 ? "FAIL" : one.over ? "warn" : "ok  "} ${`@graview/embed: ${one.name}`.padEnd(36)} ${(one.minified / 1024).toFixed(0)}K minified (budget ${(one.budget.minified / 1024).toFixed(0)}K), ${(one.gzipped / 1024).toFixed(0)}K gzipped (budget ${(one.budget.gzipped / 1024).toFixed(0)}K)${failed.length > 0 ? ` — ${failed.join("; ")}` : ""}\n`,
   );
 }
 

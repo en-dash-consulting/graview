@@ -172,8 +172,15 @@ landing page is not a pull request's to write: the Version packages step and
 the Pages deploy fill it in (`site-numbers.mjs --release`), so a PR never
 touches `docs/site/index.html` or the sitemap just because it added tests.
 A bundle budget raise is a file of its own in `scripts/budget-raises/`
-(see `scripts/lib/bundle-budget.mjs`), never an edit to an entry's numbers;
-from 0.2.5 the batch writes it, never a build's PR.
+(see `scripts/lib/bundle-budget.mjs`), never an edit to an entry's numbers,
+and from 0.2.5 the batch writes it, never a build's PR: on a pull request into main whose head is
+not `batch/*`, CI sets `GRAVIEW_BUDGET=warn`, so a byte ceiling it is over
+is a warning in the job's summary and an annotation, not a failure. The
+`batch/*` branch writes one raise for what its branches add together, and
+fails while it is over, as main, Nightly and the release do. What a budget
+guards against a mistake (a package a bundle must not carry, one left in a
+lazy chunk that must load at once, the studio or a compiler up front, zod's
+share, a chunk count) fails everywhere (`scripts/lib/budget-mode.mjs`).
 
 Run `npx playwright install chromium webkit firefox` once. Playwright is
 pinned at 1.49.1 on purpose.

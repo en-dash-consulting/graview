@@ -13,6 +13,19 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# A BYTE BUDGET OVER, ON A PULL REQUEST THAT IS NOT A BATCH: A WARNING.
+# Each pull request wrote its own raise for what it added over main, and
+# batched the raises did not sum to what the branches added together: the
+# 0.2.4 batch needed five more, and three of its pull requests went red on a
+# budget first. So a pull request into main whose head is not `batch/*` (nor
+# the Version packages branch) says a byte ceiling it is over in the job's
+# summary and as an annotation, and passes; the batch writes the raise, and
+# fails while it is over, as main, Nightly and the release do (nothing sets
+# it there). What a bundle carries that it must not fails everywhere
+# (scripts/lib/budget-mode.mjs).
+env:
+  GRAVIEW_BUDGET: ${{ (github.event_name == 'pull_request' && github.base_ref == 'main' && !startsWith(github.head_ref, 'batch/') && !startsWith(github.head_ref, 'changeset-release/')) && 'warn' || 'fail' }}
+
 jobs:
   # SIDE BY SIDE, NOT ONE AFTER ANOTHER. One runner taking every step in turn
   # was about twelve minutes a pull request (the tests six and a half of
@@ -54,6 +67,12 @@ jobs:
 
       - name: Test
         run: pnpm vitest run --shard=${{ matrix.shard }}/3
+        env:
+          GRAVIEW_BUDGET_REPORT: ${{ runner.temp }}/budget-over.jsonl
+
+      - name: The byte budgets over, as warnings
+        if: always()
+        run: node scripts/budget-report.mjs "$RUNNER_TEMP/budget-over.jsonl"
 
   packages:
     name: typecheck, build and the tarballs
@@ -97,6 +116,12 @@ jobs:
       # and the way it fails is silent.
       - name: Inspect the packed tarballs
         run: node scripts/inspect-pack.mjs
+        env:
+          GRAVIEW_BUDGET_REPORT: ${{ runner.temp }}/budget-over.jsonl
+
+      - name: The byte budgets over, as warnings
+        if: always()
+        run: node scripts/budget-report.mjs "$RUNNER_TEMP/budget-over.jsonl"
 
       # And whether a stranger can install them. Inside the workspace every
       # import resolves through a symlink and a path mapping, so an exports
