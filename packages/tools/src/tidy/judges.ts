@@ -1,4 +1,4 @@
-import { fieldInPassing, isArchived, isCurrent, isLeftAlone, labelOf, nameKey, nodeRefArgs, nounOf, type AnySchema, type MutationCall, type Store } from "@graview/core";
+import { fieldInPassing, PERSON_SEAT, isArchived, isCurrent, isLeftAlone, labelOf, nameKey, nodeRefArgs, nounOf, type AnySchema, type MutationCall, type Store } from "@graview/core";
 import { districtState } from "@graview/core/city";
 import { fold } from "@graview/core/search";
 import { tidyingOf } from "@graview/core/tidying";
@@ -95,7 +95,7 @@ export function nameRead(schema: AnySchema, node: Node): string[] {
 }
 
 /** Every field a record holds a value in, `<id>#<field>`: what a basis that read the whole record read. */
-export const wholeRead = (node: Node): string[] => Object.keys(node).filter((field) => field !== "id" && field !== "kind" && node[field] !== undefined && node[field] !== null && node[field] !== "").map((field) => fieldRead(node, field));
+export const wholeRead = (node: Node): string[] => Object.keys(node).filter((field) => field !== "id" && field !== "kind" && field !== PERSON_SEAT && node[field] !== undefined && node[field] !== null && node[field] !== "").map((field) => fieldRead(node, field));
 export const noun = (schema: AnySchema, kind: string): string => nounOf(schema.tryDefinition(kind), kind);
 /** A field as a sentence names it in passing: its declared label, else its id in words ("its supplier", "its apple music", "its Apple Music"). */
 export const fieldInWords = (schema: AnySchema, kind: string, field: string): string => fieldInPassing(schema.tryDefinition(kind) as never, field);

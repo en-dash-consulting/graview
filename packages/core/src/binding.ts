@@ -27,6 +27,8 @@ import type { ApplyOptions, ApplyResult, Store } from "./store.js";
 const SEAT = /^[^~]+(~[\w-]{1,64})?$/;
 
 type Held = Store<AnySchema>;
+
+const NOBODY_BINDABLE = "Nobody here can be bound to a record: this app says of no kind that it is its people.";
 type Node = { readonly id: string; readonly kind: string } & Record<string, unknown>;
 
 /**
@@ -57,6 +59,23 @@ function doneAs(store: Held): readonly { readonly seq: number; readonly seat: st
   return done;
 }
 
+/**
+ * Why this record may not be anybody's (else `seat`'s) here, in the sentence
+ * a binding gives: not the people, or somebody's already — bound to another
+ * seat, a profile's own person, or a record somebody else was ever done as.
+ */
+function recordRefusal(store: Held, node: Node, seat?: string): string | undefined {
+  const schema = store.schema;
+  const people = schema.definitions.find((definition) => definition.people);
+  const noun = people ? nounOf(people, people.kind) : "person";
+  const named = labelOf(schema.tryDefinition(node.kind), node as never);
+  const definition = schema.tryDefinition(node.kind) as { readonly people?: boolean; readonly noun?: string } | undefined;
+  if (!definition?.people) return `${named} is ${withArticle(nounOf(definition, node.kind))}, not ${withArticle(noun)}: only ${withArticle(noun)} can be someone's record here.`;
+  const bound = personSeatOf(node);
+  if ((bound !== undefined && bound !== seat) || node.id.includes("~") || doneAs(store).some((one) => one.record === node.id && one.seat !== seat)) return `${named} is already someone else's record here.`;
+  return undefined;
+}
+
 /** The `bind-person` act for a store, where a kind is its people. */
 function bindPersonMutation(store: Held): AnyMutationDefinition | undefined {
   const schema = store.schema;
@@ -80,13 +99,11 @@ function bindPersonMutation(store: Held): AnyMutationDefinition | undefined {
       const full = store.graph;
       const node = full.getNode(record) as Node | undefined;
       if (!node || !ctx.graph.getNode(record)) throw new MissingRecordError(record, NO_SUCH_RECORD.change);
-      const definition = schema.tryDefinition(node.kind) as { readonly people?: boolean; readonly noun?: string } | undefined;
-      if (!definition?.people) throw new ActRefusal(`${named(node)} is ${withArticle(nounOf(definition, node.kind))}, not ${withArticle(noun)}: only ${withArticle(noun)} can be someone's record here.`);
       const bound = personSeatOf(node);
       // Bound to this seat already, or this seat's own record: nothing to do.
-      if (bound === seat || (bound === undefined && record === seat)) return;
-      // Somebody's already: bound to another seat, a profile's own person, or a record somebody else was ever done as here.
-      if (bound !== undefined || record.includes("~") || doneAs(store).some((one) => one.record === record && one.seat !== seat)) throw new ActRefusal(`${named(node)} is already someone else's record here.`);
+      if ((schema.tryDefinition(node.kind) as { readonly people?: boolean } | undefined)?.people && (bound === seat || (bound === undefined && record === seat))) return;
+      const refused = recordRefusal(store, node, seat);
+      if (refused) throw new ActRefusal(refused);
       const other = full.personBoundTo(seat);
       const theirs = other === undefined ? undefined : (full.getNode(other) as Node | undefined);
       if (theirs) throw new ActRefusal(`That account is already ${named(theirs)} here.`);
@@ -155,8 +172,25 @@ BINDING.undo = bindingKept;
  * host can show.
  */
 export function bindPerson<S extends AnySchema>(store: Store<S>, joining: Principal, record: string, options: ApplyOptions = {}): ApplyResult<S> {
-  if (!store.schema.definitions.some((definition) => definition.people)) throw new ActRefusal("Nobody here can be bound to a record: this app says of no kind that it is its people.");
+  if (!store.schema.definitions.some((definition) => definition.people)) throw new ActRefusal(NOBODY_BINDABLE);
   const seat = bindable(withValidProfile(joining)) ? seatPersonOf(withValidProfile(joining)) : undefined;
   if (seat === undefined) throw new ActRefusal("Only somebody who signed in can be bound to a record here.");
   return store.apply({ name: BIND_PERSON, args: { record, seat } }, options);
+}
+
+/**
+ * WHETHER A RECORD MAY BE BOUND, ASKED BEFORE THERE IS A SEAT TO BIND
+ * (Roadmap f-binding-dry-run-and-seat-rules): what a host asks as it offers
+ * an invitation for a person already entered. `{ ok: true }` where the
+ * record may be someone's here, else the sentence `bindPerson` would refuse
+ * it with. Nothing is applied or rehearsed; what depends on the account that
+ * joins — one already somebody here — is asked by `bindPerson` itself.
+ */
+export function mayBind<S extends AnySchema>(store: Store<S>, record: string): { readonly ok: true } | { readonly ok: false; readonly reason: string } {
+  const held = store as unknown as Held;
+  if (!held.schema.definitions.some((definition) => definition.people)) return { ok: false, reason: NOBODY_BINDABLE };
+  const node = held.graph.getNode(record) as Node | undefined;
+  if (!node) return { ok: false, reason: NO_SUCH_RECORD.change };
+  const refused = recordRefusal(held, node);
+  return refused ? { ok: false, reason: refused } : { ok: true };
 }
