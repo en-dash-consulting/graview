@@ -45,7 +45,7 @@ import { INSTALLATION_MODULE } from "./installation.js";
 
 export type { DocumentEdit } from "./document/edit.js";
 /** A plain document's first home, a kind's row and its glance, each proposed only where the document has none (Roadmap f-compose-home-from-declaration): what `composeDesign` proposes, one at a time. */
-export { glanceFromDeclaration, homeFromDeclaration, MOST_HOME_LISTS, rowFromDeclaration } from "./compose-home.js";
+export { belongsTo, choiceOfKind, glanceFromDeclaration, homeFromDeclaration, MOST_COUNTED, MOST_DATED_LISTED, MOST_HOME_LISTS, MOST_LISTED, rowFromDeclaration } from "./compose-home.js";
 export type { ComposedPart } from "./compose-home.js";
 /** A kind said by its noun and its plural, as the declaration spells them — for a host that writes about a document's kinds (the starter), never from the kind's id alone. */
 export { nounWords, pluralWords } from "./document/policy-words.js";
@@ -240,9 +240,11 @@ const MOST_ROUNDS = 40;
  *      list answering each (the critic's `design-job-unanswered` edit);
  *   1b. what a plain document is missing (`homeFromDeclaration`,
  *      `glanceFromDeclaration`, `rowFromDeclaration`): a home of a count
- *      headline and a list per kind, dated kinds first, where it has none;
- *      a glance and a row for each kind with none, leading with its date
- *      and its status — a declared home, row or glance is kept;
+ *      headline (up to five kinds, the most linked first) and a list per
+ *      kind, dated kinds first and from today on, where it has none; a
+ *      glance and a row for each named kind with none, leading with its
+ *      date, its choice and the record it belongs to — a declared home,
+ *      row or glance is kept, and the people kind is never designed;
  *   2. the critic's own edits (`designFindings`), asked again after each
  *      until it has no warning left: places that repeat removed, more than
  *      a person scans kept off the bar, the home given one thing to read
@@ -286,9 +288,11 @@ export function composeDesign(source: GraviewDocument | GraviewApp<AnySchema>, o
   /*
    * WHAT A PLAIN DOCUMENT IS MISSING (Roadmap f-compose-home-from-declaration):
    * a home of a count headline and a list per kind, dated kinds first; a
-   * glance and a row for each kind that has none, leading with its date and
-   * its status. A declared home, row or glance is kept: only what is
-   * missing is proposed, before the critic is asked, so it judges these too.
+   * glance and a row for each named kind that has none, leading with its
+   * date, its choice and the record it belongs to. A declared home, row or
+   * glance is kept: only what is missing is proposed, before the critic is
+   * asked, so it judges these too. A document's people kind (`people: true`)
+   * is the members, and is left out by the parts themselves.
    */
   // A TypeScript app's installation kinds (its people and invitations) are the framework's, never the product's to design.
   const skip = new Set(isDocument(source) ? [] : Object.entries(source.modules ?? {}).flatMap(([name, module]) => (name === INSTALLATION_MODULE ? (module.kinds ?? []) : [])));
