@@ -1,3 +1,4 @@
+import { PERSON_SEAT } from "../graph/archived.js";
 import type { Primitive } from "../graph/primitives.js";
 import type { Operation } from "./types.js";
 
@@ -57,14 +58,21 @@ export interface FieldConflict {
 
 const key = (node: string, field: string) => `${node}\u0000${field}`;
 
+/**
+ * Whether a field has a revision: not identity, and not whose record a
+ * person is (Roadmap f-binding-dry-run-and-seat-rules), which no call
+ * claims to have seen and which is the seat's and the host's to know.
+ */
+const revised = (field: string): boolean => field !== "id" && field !== "kind" && field !== PERSON_SEAT;
+
 /** The fields one primitive writes, by record. */
 export function fieldsWritten(primitive: Primitive): readonly (readonly [string, string])[] {
   if (primitive.op === "add-node") {
     return Object.keys(primitive.node)
-      .filter((field) => field !== "id" && field !== "kind")
+      .filter(revised)
       .map((field) => [primitive.node.id, field] as const);
   }
-  if (primitive.op === "patch-node") return Object.keys(primitive.after).map((field) => [primitive.id, field] as const);
+  if (primitive.op === "patch-node") return Object.keys(primitive.after).filter(revised).map((field) => [primitive.id, field] as const);
   // A splice moves its field's revision as any write does: a whole-value write made against the text before it is stale.
   if (primitive.op === "splice-text") return [[primitive.id, primitive.field]];
   return [];
@@ -122,7 +130,7 @@ export class FieldRevisions {
       for (const primitive of op.primitives) {
         if (primitive.op === "add-node") created.add(primitive.node.id);
         if (primitive.op !== "patch-node" || created.has(primitive.id) || skip.has(primitive.id)) continue;
-        for (const field of Object.keys(primitive.after)) {
+        for (const field of Object.keys(primitive.after).filter(revised)) {
           const at = key(primitive.id, field);
           if (skip.has(at) || base.has(at) || collaborative?.(primitive.id, field)) continue;
           base.set(at, { node: primitive.id, field, rev: this.of(primitive.id, field) });

@@ -23,11 +23,30 @@ export interface BindingServed {
   act?: (store: object) => unknown;
   /** Whether this seat may run this binding: the host's system seat alone, acting for the app's owner; no grant gives it. */
   judged?: (store: object, call: MutationCall, principal: Principal) => { readonly ok: true } | { readonly ok: false; readonly refusal: Refusal };
-  /** Why this binding's op may not be taken back, in a sentence; undefined when it may. */
-  undo?: (store: object, op: Operation) => string | undefined;
+  /** Why this op of a binding's (`root` the change its undo chain begins with) may not be taken back, in a sentence; undefined when it may. */
+  undo?: (store: object, op: Operation, root: Operation) => string | undefined;
 }
 /* One object for the store and `@graview/core/binding`, found by a key every copy agrees on. */
 export const BINDING: BindingServed = ((globalThis as Record<symbol, BindingServed | undefined>)[Symbol.for("@graview/core:binding")] ??= {});
+
+/** The op an undo chain begins with: the change itself, however often it was taken back and put back. */
+export function rootOfChain(op: Operation, get: (id: string) => Operation | undefined): Operation {
+  let at = op;
+  for (let next = at.undoes === undefined ? undefined : get(at.undoes); next !== undefined; next = at.undoes === undefined ? undefined : get(at.undoes)) at = next;
+  return at;
+}
+
+/**
+ * Whether an op that takes a seat off a record TAKES A BINDING BACK (Roadmap
+ * f-unbind-person) — the seat is nobody's again, as if never bound — rather
+ * than ending one, or a host's own repair, after which what the seat did
+ * there stays said as that person.
+ */
+export function takesBindingBack(op: Operation, get: (id: string) => Operation | undefined): boolean {
+  if (op.undoes === undefined) return false;
+  const root = rootOfChain(op, get);
+  return root.mutation?.name === BIND_PERSON && (root.mutation.args as Record<string, unknown> | undefined)?.["end"] !== true;
+}
 
 /** Which seats a reader may be told a record is bound to: none (`NO_SEAT`), its own, or all of them. */
 export type KeepsSeat = (seat: string) => boolean;

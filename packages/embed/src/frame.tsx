@@ -235,9 +235,9 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    * PAGES AND THE SCENE AS ONE FACE (FR-239), for a host whose page IS the
    * app: the routed face stands over the Scene's own city, drawn with the
    * `views` it already has, and one control moves the same page from Page
-   * to Nearby to City (the keys 1, 2, 3, `[` and `]` too). There is then no
+   * to Nearby to Map (the keys 1, 2, 3, `[` and `]` too). There is then no
    * scene face to switch to: `face` names the pages (a picture stays a
-   * picture), the overview's address is the City over the home, and the
+   * picture), the overview's address is the Map over the home, and the
    * bar offers no Scene/Pages switch. The bar stands in the one face's slot,
    * fixed at the window's top (`[data-graview-one-face-bar]`), at every
    * level; the page is in the window's flow and the window scrolls it, so

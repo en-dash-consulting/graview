@@ -54,6 +54,7 @@ function started(limits: WorkerViewLimits = {}) {
   const element = document.createElement("div");
   document.body.appendChild(element);
   const problems: string[] = [];
+  const codes: unknown[] = [];
   const failures: string[] = [];
   const view = mountWorkerView(element, {
     manifest,
@@ -62,7 +63,7 @@ function started(limits: WorkerViewLimits = {}) {
     principal: lin,
     places: () => places,
     limits: { silentMs: 5_000, ...limits },
-    onProblem: (said) => problems.push(said),
+    onProblem: (said, problem) => (problems.push(said), codes.push(problem)),
     onFailure: (reason) => failures.push(reason),
   });
   live.push(view);
@@ -76,7 +77,7 @@ function started(limits: WorkerViewLimits = {}) {
     if (data.type === "props" && typeof data.push === "number") port.postMessage({ type: "pushed", nonce: hello.nonce, push: data.push, ms: 3 });
   };
   const say = (message: Record<string, unknown>) => port.postMessage({ ...message, nonce: hello.nonce });
-  return { problems, failures, worker, say };
+  return { problems, codes, failures, worker, say };
 }
 
 describe("a view's navigate", () => {
@@ -105,9 +106,10 @@ describe("a view's navigate", () => {
   });
 
   it("quotes a destination of 80 characters or fewer whole", async () => {
-    const { problems, say } = started();
+    const { problems, codes, say } = started();
     say({ type: "navigate", to: "z".repeat(80) });
     await wait(50);
+    expect(codes).toEqual([{ code: "link-goes-nowhere" }]);
     expect(problems).toEqual([`"${"z".repeat(80)}" is no record this viewer may see and is no place of this app: it goes nowhere. Its places: "home" (Home), "overview" (Scene), "the-packages" (The packages). Its lists: "parties", "offers", "packages", "what-we-heard".`]);
   });
 

@@ -52,6 +52,21 @@ export interface FileValue {
    * lastModified, which a copy, a download or a sync changes.
    */
   readonly at?: string;
+  /**
+   * WHERE A PICTURE'S SUBJECT IS (HQ f-view-picture-shape): `x` from its
+   * left and `y` from its top, each from 0 to 1, as a host worked it out or
+   * a person set it. What a view draws a cropped picture around
+   * (`object-position: x% y%`); unsaid, the middle.
+   */
+  readonly focus?: { readonly x: number; readonly y: number };
+  /**
+   * WHETHER A PICTURE IS A CUTOUT (HQ f-view-picture-shape): drawn on no
+   * ground of its own — transparent, or on one plain color — so a view
+   * draws it whole on its own ground rather than cropping it. Where the
+   * host's upload judged it; a view's host judges it from the pixels
+   * otherwise.
+   */
+  readonly cutout?: boolean;
 }
 
 /**
@@ -102,6 +117,14 @@ export const fileSrc = (files: HostFiles | undefined, href: string): string => f
 export const safeFileHref = (href: unknown): href is string =>
   typeof href === "string" && href.length < 2049 && /^(?![^/?#]*:|\/\/)(?!(?:.*\/)?\.\.?(?:[/?#]|$))(?!.*%2e)[^\\\s]+$/i.test(href);
 
+/** A picture's focus: `x` and `y`, each a number from 0 to 1, and nothing else. */
+export const isFocus = (focus: unknown): focus is { readonly x: number; readonly y: number } => {
+  if (typeof focus !== "object" || focus === null || Array.isArray(focus)) return false;
+  const { x, y, ...rest } = focus as Record<string, unknown>;
+  const unit = (n: unknown) => typeof n === "number" && Number.isFinite(n) && n >= 0 && n <= 1;
+  return unit(x) && unit(y) && Object.keys(rest).length === 0;
+};
+
 /** A whole number at least `least`, or nothing at all where `least` is 1 (a size in pixels may be unsaid). */
 const count = (n: unknown, least = 1) => (least > 0 && n === undefined) || (Number.isInteger(n) && (n as number) >= least);
 
@@ -120,7 +143,9 @@ export function isFileValue(value: unknown): value is FileValue {
     (v.poster === undefined || safeFileHref(v.poster)) &&
     (v.captions === undefined || safeFileHref(v.captions)) &&
     (v.duration === undefined || (typeof v.duration === "number" && Number.isFinite(v.duration) && v.duration > 0)) &&
-    (v.at === undefined || fileAt(v.at) !== undefined)
+    (v.at === undefined || fileAt(v.at) !== undefined) &&
+    (v.focus === undefined || isFocus(v.focus)) &&
+    (v.cutout === undefined || typeof v.cutout === "boolean")
   );
 }
 
@@ -188,6 +213,8 @@ export const fileShape = () => ({
   duration: z.optional(z.number()),
   captions: z.optional(z.string()),
   at: z.optional(z.string()),
+  focus: z.optional(z.object({ x: z.number().check(z.gte(0), z.lte(1)), y: z.number().check(z.gte(0), z.lte(1)) })),
+  cutout: z.optional(z.boolean()),
 });
 
 /** A document's `image`, `video` or `file` field, in zod/mini. */

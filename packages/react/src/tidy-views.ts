@@ -79,6 +79,8 @@ export function tidyViews<S extends AnySchema, V>(registry: ViewRegistry<S, V>, 
       return cellOf(kind, cell);
     },
     all: () => registry.all().filter((one) => !(one.name !== undefined && gone.has(one.name))),
+    // What the list page reads to pass over a view taken away (FR-238), this tidying's and any beneath it.
+    tidied: (one) => tidied(one) || registry.tidied?.(one) === true,
     /*
      * THE HOME, AS THE HOST KEEPS ITS VIEWS: the last home view given that
      * is not deleted, or the derived home where every one is. Hidden is a

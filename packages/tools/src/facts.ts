@@ -1,4 +1,4 @@
-import { humanizeField, labelOf, type AnySchema, type Principal, type Store } from "@graview/core";
+import { humanizeField, labelOf, PERSON_SEAT, type AnySchema, type Principal, type Store } from "@graview/core";
 
 /**
  * WHAT IS TRUE OF THE RECORDS, AS THE SEAT SEES THEM (Roadmap
@@ -30,7 +30,7 @@ export function factsOf<S extends AnySchema>(store: Store<S>, principal: Princip
     if (!node) return [];
     const fields = Object.fromEntries(
       Object.entries(node)
-        .filter(([key, value]) => !["id", "kind", "label"].includes(key) && !key.startsWith("_") && value !== undefined && value !== null && (typeof value !== "object" || Array.isArray(value)) && JSON.stringify(value).length <= 200)
+        .filter(([key, value]) => !["id", "kind", "label", PERSON_SEAT].includes(key) && !key.startsWith("_") && value !== undefined && value !== null && (typeof value !== "object" || Array.isArray(value)) && JSON.stringify(value).length <= 200)
         // A day said against today, as code reckons it: a light model's date arithmetic is not to be trusted.
         .map(([key, value]) => [key, typeof value === "string" && today ? relativeDay(value, today) : value]),
     );

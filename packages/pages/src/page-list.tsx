@@ -21,7 +21,7 @@ import {
 import { describeSearched, matchNode, parseQuery } from "@graview/core/search";
 import { readableFields } from "@graview/core/words";
 import { fieldSpecOf, firstPicture, withComputed } from "@graview/core/blocks";
-import { bleeds, bleedsFull, isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
+import { bleeds, bleedsFull, isDefaultView, listPageViewOf, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
 import { ViewBoundary } from "@graview/react/drawing";
 import { useCallback, useId, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
@@ -118,11 +118,13 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
    * A VIEW OF MANY THAT SAYS IT IS THE LIST PAGE (FR-203: a worker view
    * whose manifest says `replaces: "page"`) is drawn under the list's
    * heading in place of the list, as a view of one that says so is a
-   * record's page (FR-149). Whichever view the kind draws at many × full,
-   * as the host's tidying leaves the registry: a view it deleted or hid
-   * stands in for nothing, and the list is the app's own again.
+   * record's page (FR-149). The last view of many over the kind that says
+   * so and is still registered, whatever won the kind's default cell
+   * (FR-238, `listPageViewOf`), as the host's tidying leaves the registry:
+   * a view it deleted or hid stands in for nothing, and the list is the
+   * app's own again.
    */
-  const own = context.views?.lookup(kind, { cardinality: "many", fidelity: "full" });
+  const own = context.views ? listPageViewOf(context.views, kind)?.view : undefined;
   /*
    * A LIST THE DECLARATION OPENS AS A PLACE (`pages.lists.<kind>.opens`,
    * Roadmap f-display-options-switch): that place's page, under the list's
@@ -137,7 +139,7 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
     return <DefaultPlacePage context={context} asList={place} />;
   }
   /* The list the app draws by itself stays reached under "Also as" (Roadmap f-make-any-page-better): `?drawn=built-in`. */
-  if (own !== undefined && replacesPage(own) && !builtIn) return <ListOfView context={context} kind={kind} view={own as ComponentType<ViewProps<S>>} />;
+  if (own !== undefined && !builtIn) return <ListOfView context={context} kind={kind} view={own as ComponentType<ViewProps<S>>} />;
   return <ListPage context={context} kind={kind} />;
 }
 

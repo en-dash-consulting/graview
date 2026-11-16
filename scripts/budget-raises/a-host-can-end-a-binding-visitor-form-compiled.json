@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form handed a compiled app",
+  "minified": 1432,
+  "gzipped": 434,
+  "note": "Raised when a host came to end a person's binding and to take a wrong one back after the record was edited: an undo of a binding is blocked only by a later op that made, removed or rebound its record, and what a seat did stays said as the person after its binding ends. 1384 / 386 over, raised by 1432 / 434 for the few bytes a build moves from one run to the next. Measured at 379057 / 137559 against a budget of 377673 / 137173."
+}

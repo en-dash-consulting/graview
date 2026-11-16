@@ -1,3 +1,4 @@
+import type { ViewProblemSaid } from "./problems.js";
 import type { AnySchema, KindOfSchema, PagesArrangement, Principal, Store } from "@graview/core";
 import { DefaultDrawnElsewhere, HomeFallsBack, isDefaultView, markBleeds, markPreviews, markReplacesPage, useGoTo, useGraviewIfAny, useHostAssets, useHostFiles, useHostViewerState, usePlayback, ViewContentHeight, type GoTo, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { setViewPlace } from "@graview/react/drawing";
@@ -31,8 +32,14 @@ export interface WorkerViewDefinition {
    * worker hears `start`, the sentence naming the directive.
    */
   readonly onFailure?: (reason: WorkerViewFailure, detail?: string) => void;
-  /** Each thing it did that went nowhere, and why (FR-93): a link or `graview.navigate` to no record and no place, naming the places there are. */
-  readonly onProblem?: (said: string) => void;
+  /**
+   * Each thing it did that went nowhere, and why (FR-93): a link or
+   * `graview.navigate` to no record and no place, naming the places there
+   * are; a part that failed; what of it the host refused. Beside the
+   * sentence, a code from `VIEW_PROBLEM_CODES` that stays when the words
+   * change, and the part's name where a part failed (`mountWorkerView`).
+   */
+  readonly onProblem?: ViewProblemSaid;
   /** Where an image the app holds (`/graview/assets/<sha256>.<ext>`) is loaded from, so the view may draw it by that path (WorkerViewOptions.asset). */
   readonly asset?: (path: string) => string | undefined;
   /** Where a record's file (`FileValue.href`) is fetched for the pictures the view is handed, so a host serving the app under a base answers `base + href` (WorkerViewOptions.file). The page's host's files say where by default (`HostFiles.src`). */
@@ -41,6 +48,8 @@ export interface WorkerViewDefinition {
   readonly images?: { readonly origins: readonly string[] };
   /** The `https:` origins the faces its app lends it may come from by address (WorkerViewOptions.fonts): none by default, and none taken from `images`. */
   readonly fonts?: { readonly origins: readonly string[] };
+  /** `false`: none of the view's own faces is drawn, each said as refused, while the faces the app lends still draw (WorkerViewOptions.ownFaces). `true` by default. */
+  readonly ownFaces?: boolean;
   /** The `https:` origins its links may go to beyond what it was handed (WorkerViewOptions.links): none by default. */
   readonly links?: { readonly origins: readonly string[] };
   /**
@@ -185,6 +194,7 @@ function WorkerViewMount({ definition: given, store, principal, input, goTo, pla
         ...(file ? { file } : {}),
         ...(definition.images ? { images: definition.images } : {}),
         ...(definition.fonts ? { fonts: definition.fonts } : {}),
+        ...(definition.ownFaces === false ? { ownFaces: false } : {}),
         ...(definition.links ? { links: definition.links } : {}),
         /* What a file dropped on what the view drew is stored through (FR-193): the page's host's files, as they are now. */
         files: () => latest.current.hostFiles,

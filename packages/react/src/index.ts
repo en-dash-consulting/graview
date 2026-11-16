@@ -26,6 +26,8 @@ export type { ReaderMemory } from "./settings.js";
 export { createViews, layerViews } from "./view-registry.js";
 export { KeptViewsProvider, useTidiedViews } from "./tidied-views.js";
 export { BLEEDS, bleeds, bleedsFull, DEFAULT_VIEW, isDefaultView, markBleeds, markDefaultView, markPreviews, markReplacesPage, PREVIEWS, previewOf, REPLACES_PAGE, replacesPage, type ScenePreviewing } from "./view-marks.js";
+// Which view a kind's list page draws (FR-238).
+export { listPageViewOf } from "./list-page-view.js";
 export { DefaultDrawnElsewhere } from "./default-elsewhere.js";
 export { HomeFallsBack } from "./home-falls-back.js";
 export { PageDoorContext, ViewContentHeight, type PageDoor } from "./content-height.js";

@@ -81,6 +81,8 @@ export const NOT_EXPORTS = new Map([
   ["edgesAfter", "a field of a PlannedChange, not an export"],
   ["applyAll", "a method of a Store, not an export"],
   ["onFailure", "an option of mountGuestWorker and mountWorkerView, not an export"],
+  ["onProblem", "an option of mountWorkerView, mountGuestView and a registered worker view, not an export"],
+  ["onLost", "an option of mountGuestView, not an export"],
   ["maxNodes", "a limit of mountGuestWorker and mountWorkerView, not an export"],
   ["maxSourceBytes", "a limit of mountWorkerView, not an export"],
   ["messageWindowMs", "a limit of a guest's host, not an export"],

@@ -170,6 +170,16 @@ const NEST_SOURCE = `graview.onProps(() => graview.render(graview.html\`<p class
 const STORY = { name: "eagles-story", attach: "home", cardinality: "many" };
 const STORY_SOURCE = `graview.onProps(() => graview.render(graview.html\`<p class="story">The story, deleted this morning</p>\`));`;
 const STORY_REMOVED = { name: "eagles-story", title: "The story", at: "2026-10-22T09:00:00.000Z", until: "2026-11-21T09:00:00.000Z" };
+/*
+ * A KIND'S LIST PAGE DRAWS THE VIEW THAT REPLACES IT (FR-238), though a
+ * second titled view of many on the kind registered after it wins the
+ * kind's default cell, as on Graview Cloud's `deliverables-board` and its
+ * "Status" view.
+ */
+const PEOPLE_BOARD = { name: "people-board", title: "People", attach: "person", cardinality: "many", replaces: "page" };
+const PEOPLE_BOARD_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<p class="board">\${props.nodes.length} on the board</p>\`));`;
+const PEOPLE_STATUS = { name: "people-status", title: "Status", attach: "person", cardinality: "many" };
+const PEOPLE_STATUS_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<p class="status">\${props.nodes.length} by status</p>\`));`;
 /** Where the tasks are served with views that bleed full: across the whole window at every width (Roadmap f-views-bleed-full-width). */
 const SPANNING_BASE = "/apps/a7";
 const SPREAD = { name: "spread", attach: "home", cardinality: "many", bleed: "full" };
@@ -412,7 +422,7 @@ async function buildHost() {
           ...(homes
             ? {
                 views: (schema, registry) =>
-                  [[${JSON.stringify(NEST)}, ${JSON.stringify(NEST_SOURCE)}], [${JSON.stringify(STORY)}, ${JSON.stringify(STORY_SOURCE)}]].reduce(
+                  [[${JSON.stringify(NEST)}, ${JSON.stringify(NEST_SOURCE)}], [${JSON.stringify(STORY)}, ${JSON.stringify(STORY_SOURCE)}], [${JSON.stringify(PEOPLE_BOARD)}, ${JSON.stringify(PEOPLE_BOARD_SOURCE)}], [${JSON.stringify(PEOPLE_STATUS)}, ${JSON.stringify(PEOPLE_STATUS_SOURCE)}]].reduce(
                     (views, [manifest, source]) => registerWorkerView(views, { manifest, worker: { source } }),
                     registry,
                   ),
@@ -1336,6 +1346,20 @@ try {
       } catch (error) {
         one.homesError = String(error?.message ?? error);
       }
+      /* FR-238: the people's list page is the view that replaces it, though "Status" registered after it. */
+      try {
+        await go(`${HOMES_BASE}/people`);
+        await tab.waitForFunction(() => Boolean(document.querySelector("[data-worker-view]")?.shadowRoot?.querySelector("p")), null, { timeout: 20_000 }).catch(() => null);
+        await tab.waitForTimeout(400);
+        one.replacingList = await tab.evaluate(() => ({
+          drawn: [...document.querySelectorAll("[data-worker-view]")].map((view) => view.getAttribute("data-worker-view")),
+          says: [...document.querySelectorAll("[data-worker-view]")].map((view) => view.shadowRoot?.textContent?.trim() ?? ""),
+          listView: document.querySelector('[data-testid="list-view"]') !== null,
+          rows: document.querySelector('[data-testid="records"]') !== null,
+        }));
+      } catch (error) {
+        one.replacingListError = String(error?.message ?? error);
+      }
       /*
        * A VISITOR'S FORM OVER A COMPILED APP (FR-201) still refuses an answer
        * that does not fit, in words, and lands one that does.
@@ -2016,6 +2040,14 @@ try {
   report.checks.aDeletedHomeViewNeverDrawsOverTheLiveOne = {
     seen: homesSeen,
     ok: pagesAt.length === engines.length * SIZES.length && pagesAt.every(([, one]) => !one.homesError && one.homes.drawn.includes("eagles-nest") && !one.homes.drawn.includes("eagles-story") && one.homes.says.some((said) => said.includes("The nest, live")) && !one.homes.says.some((said) => said.includes("deleted"))),
+  };
+  /* FR-238: a kind's list page draws the view of many that replaces it, though another titled view of many registered after it wins the kind's cell. */
+  const replacingSeen = Object.fromEntries(pagesAt.map(([name, one]) => [name, one.replacingListError ? { error: one.replacingListError } : one.replacingList]));
+  report.checks.aKindsListPageDrawsTheViewThatReplacesItThoughAnotherViewOfManyRegisteredAfter = {
+    seen: replacingSeen,
+    ok:
+      pagesAt.length === engines.length * SIZES.length &&
+      pagesAt.every(([, one]) => !one.replacingListError && one.replacingList.listView && !one.replacingList.rows && one.replacingList.drawn.includes("people-board") && !one.replacingList.drawn.includes("people-status") && one.replacingList.says.some((said) => said.includes("on the board"))),
   };
   /* FR-201: a visitor's form read from a compiled app refuses an answer that does not fit and lands one that does. */
   const formSeen = Object.fromEntries(pagesAt.map(([name, one]) => [name, one.formError ? { error: one.formError } : one.form]));

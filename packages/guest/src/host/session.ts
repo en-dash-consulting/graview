@@ -1,3 +1,4 @@
+import type { ViewProblem } from "./problems.js";
 import { choiceWords, InvalidArguments, isoToday, localeFor, PermissionDeniedError, timeZoneFor, unseated, type AnySchema, type Principal, type Store } from "@graview/core";
 import type { GuestPictureLimits } from "./pictures.js";
 import type { Arrival, Destination } from "./links.js";
@@ -115,9 +116,11 @@ export interface GuestHostOptions<S extends AnySchema> {
    * THE GROWTH GUARD (Roadmap f-guest-growth-guard): the guest's height was
    * held, because each height it asked for tracked the one it was last
    * given — a page sized by its own frame (`100vh`) grows with it to the
-   * cap. Said once, in a sentence, with the height it is held at.
+   * cap. Said once, in a sentence, with the height it is held at, and what
+   * it is (`{ code: "held-by-growth-guard" }`, which stays when the words
+   * change).
    */
-  readonly onHeld?: (said: string, height: number) => void;
+  readonly onHeld?: (said: string, height: number, problem: ViewProblem) => void;
   /** The guest asked to go to a named place of the app, one `places` lists (FR-93). */
   readonly onNavigatePlace?: (as: string) => void;
   /**
@@ -498,7 +501,7 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
     };
   };
 
-  const growth = growthGuard(options.view, { say: (said, height) => options.onHeld?.(said, height), apply: (height) => !disposed && options.onSize?.(height) });
+  const growth = growthGuard(options.view, { say: (said, height) => options.onHeld?.(said, height, { code: "held-by-growth-guard" }), apply: (height) => !disposed && options.onSize?.(height) });
   let disposed = false;
   let pushes = 0;
   /*

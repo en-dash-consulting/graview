@@ -71,9 +71,11 @@ describe("a guest view in a frame", () => {
   it("says what its host held to the host, and in the console whether or not the host listens", async () => {
     const warned = vi.spyOn(console, "warn").mockImplementation(() => {});
     const problems: string[] = [];
-    const done = await draw(guestView({ url: "https://guest.example/view.html", name: "jobs", onProblem: (said) => problems.push(said) }));
-    mounted.frames[0]!.options.onProblem!("The view \"jobs\" … is held at 224px.");
+    const codes: unknown[] = [];
+    const done = await draw(guestView({ url: "https://guest.example/view.html", name: "jobs", onProblem: (said, problem) => (problems.push(said), codes.push(problem)) }));
+    mounted.frames[0]!.options.onProblem!("The view \"jobs\" … is held at 224px.", { code: "held-by-growth-guard" });
     expect(problems).toEqual(['The view "jobs" … is held at 224px.']);
+    expect(codes).toEqual([{ code: "held-by-growth-guard" }]);
     expect(warned).toHaveBeenCalledWith('jobs: The view "jobs" … is held at 224px.');
     await done();
   });

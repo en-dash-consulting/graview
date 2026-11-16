@@ -58,10 +58,11 @@ function page(shrinkTo: (size: number) => number = (size) => Math.ceil(size / 10
 function host(principal: Principal, manifest: WorkerViewManifest, limits?: GuestPictureLimits, shrinkTo?: (size: number) => number) {
   const shrink = page(shrinkTo);
   const said: string[] = [];
+  const codes: unknown[] = [];
   const sent: GuestProps[] = [];
   const live = store();
   let session: ReturnType<typeof createGuestHost> | undefined;
-  const pictures = manifest.pictures ? createGuestPictures(window, { as: "data", view: `"${manifest.title ?? manifest.name}"`, pictures: manifest.pictures, ...(limits ? { limits } : {}), shrink, moved: () => session?.push(), onLeft: (one) => said.push(one) }) : undefined;
+  const pictures = manifest.pictures ? createGuestPictures(window, { as: "data", view: `"${manifest.title ?? manifest.name}"`, pictures: manifest.pictures, ...(limits ? { limits } : {}), shrink, moved: () => session?.push(), onLeft: (one, problem) => (said.push(one), codes.push(problem)) }) : undefined;
   session = createGuestHost({
     store: live,
     principal,
@@ -74,7 +75,7 @@ function host(principal: Principal, manifest: WorkerViewManifest, limits?: Guest
     ...(pictures ? { hand: pictures.hand } : {}),
   });
   session.push();
-  return { sent, said, last: () => sent[sent.length - 1]!, pictures };
+  return { sent, said, codes, last: () => sent[sent.length - 1]!, pictures };
 }
 
 /* Every fetch answered, and the push for the pictures that settled after the first, which waits out the span pushes go together in (FR-207). */
@@ -133,12 +134,13 @@ describe("a view that asks for pictures", () => {
   });
 
   it("leaves out a picture heavier than one may be, saying why in the view's words", async () => {
-    const { last, said } = host(sam, photos, { pictureBytes: 1_000 }, (size) => size);
+    const { last, said, codes } = host(sam, photos, { pictureBytes: 1_000 }, (size) => size);
     await settled();
     const porch = job(last(), "job:porch")!.photos[0]!;
     expect(porch.src).toBeUndefined();
     expect(porch.left).toBe('The picture "porch.png" on "Porch repair" is left out: made as small as the 400 pixels across the view "Job photos" draws a picture at, it is still more than the 1,000 bytes one picture is handed.');
     expect(said).toContain(porch.left);
+    expect(codes).toContainEqual({ code: "picture-left-out" });
     expect(job(last(), "job:porch")!.photos[1]!.src).toMatch(/^data:/);
   });
 

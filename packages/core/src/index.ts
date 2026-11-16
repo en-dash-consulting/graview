@@ -27,7 +27,7 @@ export type { ZodDef } from "./schema/zod.js";
 // Schema — the single declaration everything else derives from.
 export { defineNode, isCurrent, labelOf } from "./schema/define-node.js";
 // A picture or a document on a record (FR-162), and the host that stores them (FR-163).
-export { fileAt, fileKindOf, fileSrc, filesOf, isFileValue, isImage, isVideo, safeFileHref, videoWords } from "./schema/files.js";
+export { fileAt, fileKindOf, fileSrc, filesOf, isFileValue, isFocus, isImage, isVideo, safeFileHref, videoWords } from "./schema/files.js";
 export type { FileKind, FileValue, HostFiles } from "./schema/files.js";
 export type { ViewerState, ViewerStateAnswer } from "./viewer-state.js";
 export { fileField, imageField, videoField } from "./schema/file-field.js";
@@ -223,7 +223,7 @@ export type { HasLog, LinkProvenance, LinkRef } from "./ops/provenance.js";
 export { KEEP_LINK } from "./mutations/keep-link.js";
 // A vote on a suggestion (Roadmap f-suggestion-votes): the act every store answers to, what its op keeps, and what the app says of suggestions as a whole.
 export { PROPOSE_CHANGES, type ProposeChangesArgs } from "./mutations/propose-changes.js";
-export { BIND_PERSON, unseated, unseatedOp, unseatedSnapshot } from "./binding-served.js";
+export { BIND_PERSON, seatsKept, unseated, unseatedOp, unseatedSnapshot, type KeepsSeat } from "./binding-served.js";
 export { VOTE_SUGGESTION, type AppTidying, type SuggestionVote, type Vote, type VotesOptions } from "./mutations/vote-suggestion.js";
 // Typing into a field typed together (Roadmap f-collab-text): the act every store answers to, and whether a field is one.
 export { TYPE_TEXT } from "./text/typing-hook.js";

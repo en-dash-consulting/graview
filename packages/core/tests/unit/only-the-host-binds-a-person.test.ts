@@ -43,7 +43,7 @@ describe("graview check refuses a grant that gives binding", () => {
     expect(found.filter((one) => one.code === "grant-gives-binding")).toHaveLength(1);
   });
 
-  it("refuses an act of the app's own under binding's name, which would stand in its place", () => {
+  it("refuses an act of the app's own under a name the framework keeps for itself", () => {
     const own = { name: BIND_PERSON, title: "Bind", input: z.object({}), apply: () => undefined };
     const found = checkApp(defineApp({ name: "binding", schema, mutations: [own] as never }) as never).findings;
     expect(found.filter((one) => one.code === "binding-act-taken" && one.severity === "error")).toHaveLength(1);

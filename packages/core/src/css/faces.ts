@@ -137,7 +137,7 @@ export interface ViewFace {
 }
 
 /** What was wrong with a face, as `CssRefusal.name` says it where its reason is `font-face`. */
-export type ViewFaceProblem = "where" | "unreadable" | "family" | "src" | "address" | "local" | "type" | "encoding" | "bytes" | "size" | "total" | "count" | "descriptor" | "value" | "lent";
+export type ViewFaceProblem = "where" | "unreadable" | "family" | "src" | "address" | "local" | "type" | "encoding" | "bytes" | "size" | "total" | "count" | "descriptor" | "value" | "lent" | "host";
 
 /** The types a font's `data:` URL may say: the four of `font/`, and the older names servers still give a font, as a lent face's file may be served. */
 export function isFontType(type: string): boolean {

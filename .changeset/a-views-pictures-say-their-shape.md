@@ -1,0 +1,16 @@
+---
+"@graview/core": patch
+"@graview/guest": patch
+"@graview/skills": patch
+---
+
+A view's pictures say their shape, so a view can draw each one well. On a Graview Cloud demo, pictures in a view's tiles were cropped badly: a skull cut at the jaw, a long drawing reduced to a sliver. A view was handed `{ name, type, bytes, src }` and had to guess. Each picture a view is handed (`GuestFile`) now carries:
+
+- `width` and `height`, both as the record says them or, where it does not say both, as the host measured the picture it hands (`src`);
+- `aspect`, the width over the height to four places (a video's too);
+- `cutout: true` when the picture sits on no ground of its own: a quarter of its edge transparent, or nearly all of its edge one plain color. A view draws it whole on its own ground and crops only the rest. The host reads it from the picture it hands, already made smaller, at 32 by 32 on a canvas; a photograph whose edge is one dark or plain color reads as one too;
+- `focus { x, y }`, where the subject is, each from 0 to 1, for `object-position`.
+
+A record's file value may keep `focus` and `cutout` (`FileValue`, `isFileValue`, the file field's schema; `isFocus` on `@graview/core`), so a host may work them out at upload or a person may set them. What the record says wins over what the host reads of the pixels, and where the record says all of `width`, `height` and `cutout`, no pixels are read; no host writes `cutout` yet, so today each picture handed is read once more, small. A headless run reads no pixels and hands what the record says, as the page does where the record says it. The `graview-view-drawing` skill says how to size a tile by `aspect`, draw a `cutout` whole and crop the rest around `focus`. A thumb cropped to a shape around the focus (`pictures.thumb { width, aspect }`) is not part of this. Held by a unit test of the guest (`a-views-pictures-say-their-shape`). A hosted page carries 0.4 KB more up front (364 / 124 bytes: the file value's `isFocus` and its schema), and 0.4 KB handed a compiled app (361 / 126). A page that hosts guest views loads 283 / 107 bytes more before a worker is drawn, the chunks that draw one up to 1_635 / 660 more, every face 1_790 / 783, the embed with the studio handed in 363 / 184, and Cloud's worker 1_213 bytes, under raises named `a-views-pictures-say-their-shape-*` in `scripts/budget-raises/`.
+
+Compatibility: the wire — additive: a picture handed to a view (`GuestFile`) carries `aspect`, `cutout` and `focus` where they are known, and `width` and `height` where the host measured them; a view that reads none of them is drawn as before. Stored formats — additive: a file value may keep `focus` and `cutout`, and one without them is read as before; one with a `focus` out of shape is refused, as a malformed `width` is. Derived tool names and input schemas — an image, video or file field's input takes the two optional properties `focus` and `cutout`; nothing is renamed or required. Ops and primitives, and the declaration and check finding codes — unchanged. What Graview Cloud does: nothing to keep drawing; to crop well, set `focus` (and, where it knows, `cutout`) on a picture's file value at upload or from a person.

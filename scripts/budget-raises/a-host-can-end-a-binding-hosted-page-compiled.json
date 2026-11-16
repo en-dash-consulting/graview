@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 1460,
+  "gzipped": 418,
+  "changeset": "a-host-can-end-a-binding.md",
+  "note": "Raised when a host came to end a person's binding and to take a wrong one back after the record was edited: an undo of a binding is blocked only by a later op that made, removed or rebound its record, and what a seat did stays said as the person after its binding ends. 1412 / 370 over, raised by 1460 / 418 for the few bytes a build moves from one run to the next. Measured at 641061 / 222157 against a budget of 639649 / 221787."
+}

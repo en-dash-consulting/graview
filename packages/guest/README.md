@@ -374,6 +374,18 @@ says what of the stylesheet the open kit leaves out (`brand-views-css`),
 and a headless run (`runWorkerViewHeadless`'s `brand`) draws it in the same
 layers in its `css`, so a picture of the view is dressed as the page dresses it.
 
+A view may also declare a face of its own, an `@font-face` whose source is a
+`data:` font, which the host loads into the page from its bytes, under a name
+of the view's own. A host that lends its views only the faces it lists says
+`ownFaces: false` on `mountWorkerView` or on a registered worker view's
+definition (a draft's too), and `runWorkerViewHeadless` takes the same
+option. Then each such `@font-face` is refused and said once, to the
+view's console and to `onProblem`, naming the face and what a view is drawn
+in instead (`view-font-face-host`). Nothing of it is loaded, and the rest of
+the view's sheet is drawn as before. The faces the brand lends still draw.
+`sanitizeStylesheets(sheets, max, { faces: { refused: true } })` is the open
+kit's half of this. Without the option, a view's own faces draw as they always did.
+
 ### A link out goes only where the view was handed
 
 `<a href="${record.url}">` is drawn where its address is one a record the
@@ -814,6 +826,46 @@ timed per push. A view that busies its own worker for just under
 reader's machine for as long as it is shown. That is the worker's thread,
 not the page's; the page stays responsive.
 
+### What a view's host says went wrong, by a code
+
+Every problem a view's host reports is a sentence for a person and, beside
+it, what it is: `onProblem(said, { code, part })` on `mountWorkerView`, a
+registered worker view's definition, `mountGuestView` and `guestView`, and
+`onHeld(said, height, { code })` on `createGuestHost`. A frame guest's
+navigate that goes nowhere is told to `onLost` as before, and to `onProblem`
+as `link-goes-nowhere`. Count problems by
+`code`, never by the words: a sentence may be reworded in any version, a
+code may not, and a new kind of problem gets a new one. `part` names the
+part for `part-failed`. The list is `VIEW_PROBLEM_CODES` (with the types
+`ViewProblemCode` and `ViewProblem`), exported from `@graview/guest/host/frame`,
+`/host/worker` and `/host/views` (the types also from `/host`):
+
+| Code | What went wrong |
+|------|-----------------|
+| `part-failed` | A part (`graview.part`) threw or took too long; its note is drawn in its place. |
+| `held-by-growth-guard` | A frame guest grew only with its own frame, and is held at a height. |
+| `far-kind-not-handed` | A relation the view reads joins a kind its manifest never hands it. |
+| `views-stylesheet-draws-nothing` | The app's stylesheet for its views draws nothing in the open kit. |
+| `face-not-lent` | A face the app lends its views is not lent: past the most, a name it may not take, or from nowhere this host serves faces. |
+| `face-not-loaded` | A lent face's file failed, is too large, or is not a font. |
+| `face-late` | A face lent to a frame did not arrive in time; the frame is drawn without it until it does. |
+| `face-several-files` | One name is lent from several files; this says which draws. |
+| `own-face-refused` | A face the view's own stylesheet declares was refused by the open kit. |
+| `own-face-not-loaded` | A face the view's own stylesheet declares could not be read as a font. |
+| `picture-left-out` | A picture on a record the view is handed was left out. |
+| `picture-thumb-unsound` | The thumb the host asked pictures be made at is no sound one. |
+| `image-refused` | An image the view drew by address was refused. |
+| `link-refused` | A link out the view drew goes nowhere it was handed or the host lists. |
+| `link-goes-nowhere` | A link or `graview.navigate` names no record the viewer sees and no place. |
+| `jump-goes-nowhere` | A jump within the view names no element it drew. |
+| `file-link-goes-nowhere` | A file link is not followed: it is not an `<a>`, names no record the view was shown, or names no field holding a file. |
+| `media-not-drawn` | A record's video or the full-screen viewer is not drawn. |
+| `drop-not-offered` | A drop target the view drew is not offered. |
+| `gestures-not-declared` | The view listens for a gesture its manifest does not say it hears. |
+| `press-refused` | A press was refused, and the note beside it could not be drawn. |
+| `viewer-state-refused` | What the view keeps for its viewer (`graview.mine`) could not be read or kept. |
+| `host-part-not-loaded` | A part of the host the view needs (its player, its drop, its jumps) could not be loaded. |
+
 ### A view with no build
 
 A view is handed over as its plain source, `{ source }`: one script
@@ -870,6 +922,20 @@ leave out before fetching it — heavier than the host fetches, or past the
 view's budget for its pictures, as `limits` says them — comes with
 no `src` and the page's sentence in `left`, said among the problems at
 `pictures` (FR-192).
+
+A picture says its shape, so a view crops it well (HQ f-view-picture-shape).
+Each `GuestFile` that is a picture carries `width` and `height`, as the
+record says them or as the host measured the picture it hands, and `aspect`,
+the first over the second. It carries `cutout: true` when the picture sits
+on no ground of its own: a quarter of its edge transparent, or nearly all
+its edge one plain color. Draw such a picture whole, with `object-fit:
+contain`, on the view's own ground, and crop only the rest. It also carries
+`focus { x, y }` from 0 to 1, where the subject is, as the record keeps it.
+A host may work that out or a person may set it on the file value
+(`FileValue.focus`), and a view crops around it with `object-position:
+${x * 100}% ${y * 100}%`. The record's own `cutout` wins over the host's
+reading of the pixels. A headless run reads no pixels, so it hands what the
+record says of each.
 
 A view never runs in the host's own context. The host supplies the
 isolate: `run` is handed one script and one JSON string (`HeadlessPayload`),

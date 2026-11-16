@@ -55,7 +55,7 @@ describe("a view that chooses the kinds whose pictures it draws", () => {
     const handed = host.hand(props);
     expect(fileOf(handed, "circuit:monza", "map").src).toMatch(/^data:image\/png;base64,/);
     expect(fileOf(handed, "circuit:spa", "photo").src).toMatch(/^data:image\/png;base64,/);
-    expect(fileOf(handed, "driver:0", "portrait")).toEqual({ name: "portrait-0.png", type: "image/png", bytes: 5_000, width: 200, height: 100 });
+    expect(fileOf(handed, "driver:0", "portrait")).toEqual({ name: "portrait-0.png", type: "image/png", bytes: 5_000, width: 200, height: 100, aspect: 2 });
     expect(fetched.sort()).toEqual(["monza-map.png", "monza-photo.png", "spa-map.png", "spa-photo.png"]);
   });
 

@@ -97,7 +97,7 @@ export const CITY = 2;
 export const LEVELS = CITY;
 
 /** What each level is called, where a person is told it. */
-export const LEVEL_NAMES: readonly [string, string, string] = ["Page", "Nearby", "City"];
+export const LEVEL_NAMES: readonly [string, string, string] = ["Page", "Nearby", "Map"];
 
 /** The height the control at the foot keeps on a phone, above the sheet, with its margin. */
 export const CONTROL_ROOM = 72;
@@ -341,6 +341,45 @@ export function cameraBetween(from: Live, to: Live, about: Point, t: number): Li
   const b = project(to, about);
   const s = Math.exp(lerp(Math.log(from.s), Math.log(to.s), t));
   return cameraPutting(about, { x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t) }, s);
+}
+
+/*
+ * HOW THE PICTURE'S PIXELS MOVED BETWEEN TWO READINGS OF THE CITY. A pan or
+ * a zoom written into the view lays the city out again where the hand left
+ * it: every district moved by the same pan and grown by the same zoom. Read
+ * off the districts as they were and as they are, that is the camera which
+ * takes a point of the old picture to where it stands in the new, so what
+ * was drawn over the old is carried into the new and stays where the last
+ * frame drew it. A city laid out differently — a district grown by a record
+ * added, one gone — was not moved, and says so with null.
+ */
+export function carriedBetween(before: ReadonlyMap<string, Box>, after: ReadonlyMap<string, Box>): Live | null {
+  if (before.size === 0 || before.size !== after.size) return null;
+  const pairs = [...before].map(([key, was]) => [was, after.get(key)] as const);
+  if (pairs.some(([, now]) => now === undefined)) return null;
+  const was = unionOf(pairs.map(([box]) => box))!;
+  const now = unionOf(pairs.map(([, box]) => box!))!;
+  if (was.width <= 0 || now.width <= 0) return null;
+  const s = now.width / was.width;
+  const live: Live = { s, x: now.x - was.x * s, y: now.y - was.y * s };
+  // Each district where that camera puts it, to a pixel: a pan and a zoom move them all alike.
+  const near = (a: number, b: number) => Math.abs(a - b) <= 1;
+  for (const [box, there] of pairs) {
+    const at = project(live, box);
+    if (!near(at.x, there!.x) || !near(at.y, there!.y) || !near(box.width * s, there!.width) || !near(box.height * s, there!.height)) return null;
+  }
+  return Math.abs(s - 1) < 1e-6 && Math.abs(live.x) < 1e-3 && Math.abs(live.y) < 1e-3 ? LEVEL_LIVE : live;
+}
+
+/** Points, or boxes, carried by a camera: a box grows with the picture, as it was drawn. */
+export function carriedThrough<T extends Point>(live: Live, at: ReadonlyMap<string, T>): Map<string, T> {
+  return new Map(
+    [...at].map(([key, p]) => {
+      const moved = { ...p, ...project(live, p) };
+      if ("width" in p && "height" in p) Object.assign(moved, { width: (p as unknown as Box).width * live.s, height: (p as unknown as Box).height * live.s });
+      return [key, moved] as const;
+    }),
+  );
 }
 
 /** The smallest box around boxes, or null for none. */

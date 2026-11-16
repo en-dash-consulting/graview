@@ -1,6 +1,8 @@
 import type { Completion } from "../intelligence.js";
 import {
   actSpelledAs,
+  BIND_PERSON,
+  PERSON_SEAT,
   FIELD_SIGHT,
   meOf,
   sees,
@@ -894,7 +896,8 @@ export function toolDefinitions<S extends AnySchema>(
   principal: Principal = { kind: "agent" },
   options: ToolDefinitionsOptions = {},
 ): { readonly definitions: readonly ToolDefinition[]; readonly hash: string } {
-  const declared = (app.mutations ?? []) as unknown as readonly AnyMutationDefinition[];
+  // A name the framework keeps for an act of its own is never an app's, as the store keeps it (`binding-act-taken`).
+  const declared = ((app.mutations ?? []) as unknown as readonly AnyMutationDefinition[]).filter((act) => act.name !== BIND_PERSON);
   // And "Publish", as the store adds it to an app that publishes (Roadmap f-publishing-lifecycle).
   const publishes = onPublish(app.publishing) && !declared.some((act) => act.name === PUBLISH);
   const every = [...declared, ...deriveMutations(app.schema as AnySchema, declared as never), ...(publishes ? [publishMutation() as unknown as AnyMutationDefinition] : [])] as AnyMutationDefinition[];
@@ -1385,7 +1388,7 @@ export function createToolRuntime<S extends AnySchema>(
         );
         return result;
       };
-      const result = await run(name, args);
+      const result = withoutSeats(await run(name, args));
       // No read hands a model more than a read may (FR-167): what does not fit is cut, and says so.
       return settle(result.ok && !mutating ? { ...result, data: (await reads()).withinReadChars(name, result.data) } : result);
     },
@@ -1393,6 +1396,36 @@ export function createToolRuntime<S extends AnySchema>(
 }
 
 export { applyAffordance };
+
+/**
+ * A TOOL'S ANSWER SAYS A PERSON AS THEIR RECORD (Roadmap
+ * f-binding-dry-run-and-seat-rules), with no mark of the account bound to
+ * it, which is the host's to know. The value itself where it holds none.
+ */
+function withoutSeats<T>(value: T): T {
+  if (Array.isArray(value)) {
+    let changed = false;
+    const out = value.map((one) => {
+      const next = withoutSeats(one);
+      if (next !== one) changed = true;
+      return next;
+    });
+    return (changed ? out : value) as T;
+  }
+  if (value === null || typeof value !== "object" || Object.getPrototypeOf(value) !== Object.prototype) return value;
+  let out: Record<string, unknown> | undefined;
+  for (const [key, one] of Object.entries(value as Record<string, unknown>)) {
+    if (key === PERSON_SEAT) {
+      out ??= { ...(value as Record<string, unknown>) };
+      delete out[key];
+      continue;
+    }
+    // A changed record's list of fields names no mark either.
+    const next = key === "fields" && Array.isArray(one) && one.includes(PERSON_SEAT) ? one.filter((field) => field !== PERSON_SEAT) : withoutSeats(one);
+    if (next !== one) (out ??= { ...(value as Record<string, unknown>) })[key] = next;
+  }
+  return (out ?? value) as T;
+}
 
 /** The channel a runtime's change came through right now, as `ApplyOptions` spells it. */
 function viaNow(via: ToolRuntimeOptions<AnySchema>["via"]): { readonly via?: string } {

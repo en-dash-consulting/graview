@@ -1,3 +1,4 @@
+import type { ViewProblemSaid } from "./problems.js";
 import type { AnySchema, Principal, Store } from "@graview/core";
 import { holdRecordBoxes, judgeRecordBoxes, judgeRecordIds, MOST_RECORD_BOXES, recordBoxesMoved } from "@graview/core/record-boxes";
 import { GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN, isGuestReady, type GuestFont, type GuestPlace, type GuestTheme, type HostHello, type HostMessage } from "../protocol.js";
@@ -27,6 +28,9 @@ export const FACES_WAIT_MS = 2_000;
 export { createGuestHost, createGuestLimiter, readAcross } from "./session.js";
 export { readTheme } from "./theme.js";
 export { GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN } from "../protocol.js";
+/* What a view's host says went wrong, by a code that stays when the words change (HQ f-view-problem-codes). */
+export { VIEW_PROBLEM_CODES } from "./problems.js";
+export type { ViewProblem, ViewProblemCode, ViewProblemSaid } from "./problems.js";
 
 export interface MountGuestViewOptions<S extends AnySchema> {
   /** Where the guest's code is served. Where that is, and its CSP, are the host's business. */
@@ -83,8 +87,12 @@ export interface MountGuestViewOptions<S extends AnySchema> {
   readonly asset?: (path: string) => string | undefined;
   /** The `https:` origins a lent face may be read from by address, as a worker view's `fonts` says: none by default. */
   readonly fonts?: { readonly origins: readonly string[] };
-  /** What the host could not do for the frame, in a sentence: a face it did not lend, and why; the guest's height held (`onSize`). */
-  readonly onProblem?: (said: string) => void;
+  /**
+   * What the host could not do for the frame, in a sentence: a face it did
+   * not lend, and why; the guest's height held (`onSize`). Beside it, what
+   * it is: a code from `VIEW_PROBLEM_CODES` that stays when the words change.
+   */
+  readonly onProblem?: ViewProblemSaid;
   /** The app's named places: what the guest is told of (`props.places`), and may ask to go to by slug. None by default. */
   readonly places?: () => readonly GuestPlace[];
   readonly onNavigate?: (id: string) => void;
@@ -92,7 +100,7 @@ export interface MountGuestViewOptions<S extends AnySchema> {
   readonly onNavigatePlace?: (as: string) => void;
   /** Where the guest asked to go, judged — a record, a place or a kind's list, narrowed and to a section — in place of `onNavigate` and `onNavigatePlace` (`GuestHostOptions.onArrive`). */
   readonly onArrive?: (to: Arrival) => void;
-  /** A navigate went nowhere: the sentence saying why. */
+  /** A navigate went nowhere: the sentence saying why. `onProblem` is told it too, as `link-goes-nowhere`. */
   readonly onLost?: (said: string) => void;
   /** The face's own way of going (`useGoTo`), read when the guest goes: where `onArrive` is not given, the arrival is gone to by it. */
   readonly goTo?: () => GoTo | undefined;
@@ -209,13 +217,13 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
         fontsLate = setTimeout(() => {
           if (reading.stopped || fontsReading !== reading) return;
           const late = lending.waiting();
-          if (late.length > 0) options.onProblem?.(`The app's ${late.length === 1 ? "face" : "faces"} ${late.map((family) => `"${family}"`).join(", ")} for its views did not arrive in ${FACES_WAIT_MS / 1_000} seconds, so the frame is drawn without ${late.length === 1 ? "it" : "them"} and handed ${late.length === 1 ? "it" : "them"} once ${late.length === 1 ? "it arrives" : "they arrive"}.`);
+          if (late.length > 0) options.onProblem?.(`The app's ${late.length === 1 ? "face" : "faces"} ${late.map((family) => `"${family}"`).join(", ")} for its views did not arrive in ${FACES_WAIT_MS / 1_000} seconds, so the frame is drawn without ${late.length === 1 ? "it" : "them"} and handed ${late.length === 1 ? "it" : "them"} once ${late.length === 1 ? "it arrives" : "they arrive"}.`, { code: "face-late" });
           fontsReading = undefined;
           drew();
         }, FACES_WAIT_MS);
         return lending.read.then(({ fonts: read, said }) => {
           if (reading.stopped) return;
-          for (const one of said) options.onProblem?.(one);
+          for (const [one, problem] of said) options.onProblem?.(one, problem);
           lentFonts = read;
           sendFonts();
           done();
@@ -366,7 +374,15 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
       ...(options.onNavigatePlace ? { onNavigatePlace: options.onNavigatePlace } : {}),
       ...(options.onNavigate ? { onNavigate: options.onNavigate } : {}),
       ...(options.onArrive ? { onArrive: options.onArrive } : options.goTo ? { onArrive: (to: Arrival) => arriveAt(options.goTo!(), to) } : {}),
-      ...(options.onLost ? { onLost: options.onLost } : {}),
+      /* A navigate that went nowhere is the host's problem as well, with its code, as a worker view's is. */
+      ...(options.onLost || options.onProblem
+        ? {
+            onLost: (said: string) => {
+              options.onLost?.(said);
+              options.onProblem?.(said, { code: "link-goes-nowhere" });
+            },
+          }
+        : {}),
       onRecords: report,
       onSize: (height) => {
         if (options.onSize) options.onSize(height);
@@ -374,9 +390,9 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
         drew();
       },
       /* Held, growing only with its own frame (Roadmap f-guest-growth-guard): said, and worn on the frame with the height it is held at. */
-      onHeld: (said, height) => {
+      onHeld: (said, height, problem) => {
         iframe.setAttribute("data-guest-view-held", `${height}px`);
-        options.onProblem?.(said);
+        options.onProblem?.(said, problem);
         drew();
       },
       ...(options.limits ? { limits: options.limits } : {}),
