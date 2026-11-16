@@ -2,7 +2,7 @@ import { compileDocument } from "./compile-checked.js";
 import type { CompileOptions } from "./compile.js";
 import { checkTemplate, expandSetup, readGraviewTemplate, resolveAnswers, shiftSeed, withDefaults, type InstantiatedTemplate, type RefusedTemplate, type TemplateSeed } from "./graview-template.js";
 import type { Finding } from "./findings.js";
-import { uncitedValues } from "../cited.js";
+import { seedLinks, uncitedValues } from "../cited.js";
 import { uncitedFinding } from "./uncited-findings.js";
 
 /**
@@ -13,7 +13,7 @@ import { uncitedFinding } from "./uncited-findings.js";
 function seedUncitedFindings(seed: TemplateSeed, compiled: Extract<ReturnType<typeof compileDocument>, { ok: true }>): Finding[] {
   const schema = compiled.app.schema;
   const index = new Map(seed.nodes.map((node, i) => [node.id, i]));
-  return uncitedValues(schema, seed.nodes.filter((node) => schema.tryDefinition(node.kind)) as never, (id, relation) => seed.edges.filter((edge) => edge.from === id && edge.kind === relation).length).map((one) => uncitedFinding(one, `seed.nodes.${index.get(one.record)}.${one.field}`));
+  return uncitedValues(schema, seed.nodes.filter((node) => schema.tryDefinition(node.kind)) as never, seedLinks(seed.nodes, seed.edges)).map((one) => uncitedFinding(one, `seed.nodes.${index.get(one.record)}.${one.field}`));
 }
 
 /*

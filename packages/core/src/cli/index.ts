@@ -23,7 +23,7 @@ import { describeApp } from "./describe.js";
 import { describePlace } from "../document/describe-place.js";
 import { Store } from "../store.js";
 import { readSnapshot } from "../snapshot.js";
-import { uncitedValues, type UncitedValue } from "../cited.js";
+import { seedLinks, uncitedValues, type UncitedValue } from "../cited.js";
 import { uncitedFinding } from "../document/uncited-findings.js";
 import { generateAgentsMd, generateLlmsTxt } from "./docs.js";
 import { figureBrief, figureFaults, FIGURE_NAMES, FIGURES } from "../schema/figures.js";
@@ -203,12 +203,27 @@ function flag(argv: readonly string[], name: string): string | undefined {
   return argv[index + 1] ?? "";
 }
 
-/** The values a seed's records hold in a cited field with nothing cited (`--seed <snapshot.json>`, Roadmap f-field-cites-marker), each at its place in the seed. */
-function seedUncited(schema: AnySchema, seedFile: string | undefined): { readonly one: UncitedValue; readonly at: string }[] {
-  if (!seedFile) return [];
-  const { nodes, edges } = readSnapshot(readFileSync(resolve(process.cwd(), seedFile), "utf8")).snapshot;
+type SeedRead = { readonly file: string; readonly snapshot: ReturnType<typeof readSnapshot>["snapshot"] } | { readonly file?: undefined } | { readonly refused: string };
+
+/** The seed `--seed <snapshot.json>` names, read; nothing when none is named; or why it cannot be read, in words. */
+function readSeedFlag(argv: readonly string[]): SeedRead {
+  const file = flag(argv, "--seed");
+  if (file === undefined) return {};
+  if (file === "" || file.startsWith("--")) return { refused: "--seed names a snapshot file to read, like --seed seed.json" };
+  try {
+    return { file, snapshot: readSnapshot(readFileSync(resolve(process.cwd(), file), "utf8")).snapshot };
+  } catch (error) {
+    const code = (error as { code?: string }).code;
+    return { refused: `the seed ${file} could not be read: ${code === "ENOENT" ? "there is no such file" : error instanceof Error ? error.message.split("\n")[0] : String(error)}` };
+  }
+}
+
+/** The values a seed's records hold in a cited field with nothing cited (Roadmap f-field-cites-marker), each at its place in the seed. */
+function seedUncited(schema: AnySchema, seed: SeedRead): { readonly one: UncitedValue; readonly at: string }[] {
+  if (!("snapshot" in seed)) return [];
+  const { nodes, edges } = seed.snapshot;
   const index = new Map(nodes.map((node, i) => [node.id, i]));
-  return uncitedValues(schema, nodes as never, (id, relation) => edges.filter((edge) => edge.from === id && edge.kind === relation).length).map((one) => ({ one, at: `${seedFile}: nodes.${index.get(one.record)}.${one.field}` }));
+  return uncitedValues(schema, nodes as never, seedLinks(nodes, edges)).map((one) => ({ one, at: `${seed.file}: nodes.${index.get(one.record)}.${one.field}` }));
 }
 
 export async function main(argv: string[]): Promise<number> {
@@ -298,6 +313,12 @@ export async function main(argv: string[]): Promise<number> {
       return 0;
     }
     case "check": {
+      // The seed a check reads beside the declaration, read before anything is checked: a name it cannot read is said, not thrown.
+      const seed = readSeedFlag(argv);
+      if ("refused" in seed) {
+        process.stderr.write(`graview check: ${seed.refused}\n`);
+        return 2;
+      }
       /*
        * A DOCUMENT IS CHECKED AS A DOCUMENT: its own findings — a rule that
        * sweeps every record for every record, a field a template names and
@@ -314,7 +335,7 @@ export async function main(argv: string[]): Promise<number> {
         const template = templateIn(entry);
         const own = template === undefined ? [] : templateFindings(template, compiled.ok ? compiled : undefined);
         // The records a seed holds, where one is named: which hold a cited value with nothing cited (Roadmap f-field-cites-marker).
-        const seeded = compiled.ok ? seedUncited(compiled.app.schema, flag(argv, "--seed")).map(({ one, at }) => uncitedFinding(one, at)) : [];
+        const seeded = compiled.ok ? seedUncited(compiled.app.schema, seed).map(({ one, at }) => uncitedFinding(one, at)) : [];
         const findings = [...compiled.findings, ...own, ...seeded];
         const ok = compiled.ok && !own.some((f) => f.severity === "error");
         if (argv.includes("--json")) process.stdout.write(`${JSON.stringify({ ok, findings }, null, 2)}\n`);
@@ -326,7 +347,7 @@ export async function main(argv: string[]): Promise<number> {
       const root = projectRootOf(resolve(process.cwd(), entry));
       const face = flag(argv, "--face");
       const faceFindings = face ? auditFace(root ?? process.cwd(), resolve(process.cwd(), face)) : root ? auditFace(root) : [];
-      const seeded = seedUncited(app.schema as AnySchema, flag(argv, "--seed")).map(({ one, at }) => {
+      const seeded = seedUncited(app.schema as AnySchema, seed).map(({ one, at }) => {
         const said = uncitedFinding(one, at);
         return { severity: "warning" as const, code: said.code, where: at, message: said.message, fix: said.fix ?? "" };
       });

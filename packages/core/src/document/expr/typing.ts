@@ -118,6 +118,7 @@ export function typeOfExpr(expr: Expr, fieldTypeOf: (name: string) => string | u
           case "contains":
           case "startsWith":
           case "archived":
+          case "uncited":
             return "boolean";
           case "out":
           case "in":

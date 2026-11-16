@@ -168,7 +168,8 @@ data; `fieldRoles` for the timeline); `apps/seedbed/src/domain/schema.ts` (a
   `markCites(z.number(), "source")`). The check refuses one naming nothing
   (`field-cites`), and warns of each record in `--seed` or a template's
   seed with the value and no citation (`field-uncited`); `dream` reports
-  them as `uncited`; a view reads `graview.cite(node, "population")`.
+  them as `uncited` and says them; a declared view flags one with
+  `uncited('population')`, a worker view with `graview.cite`.
 
 ## Then find out whether it worked
 

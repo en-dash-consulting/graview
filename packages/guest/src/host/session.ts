@@ -1,5 +1,5 @@
 import type { ViewProblem } from "./problems.js";
-import { choiceWords, citedFieldsOf, InvalidArguments, isoToday, localeFor, PermissionDeniedError, timeZoneFor, unseated, type AnySchema, type Principal, type Store } from "@graview/core";
+import { choiceWords, citedFieldsOf, holdsValue, InvalidArguments, isSystem, sightMayKeep, isoToday, localeFor, PermissionDeniedError, timeZoneFor, unseated, type AnySchema, type Policy, type Principal, type Store } from "@graview/core";
 import type { GuestPictureLimits } from "./pictures.js";
 import type { Arrival, Destination } from "./links.js";
 import type { Mine } from "./mine.js";
@@ -256,17 +256,23 @@ export function choicesOf(schema: AnySchema, nodes: readonly unknown[]): Pick<Gu
   return Object.keys(choices).length > 0 ? { choices } : {};
 }
 
-/** Whether a value says anything: not undefined, null, blank words or an empty list. */
-const holds = (value: unknown): boolean => !(value === undefined || value === null || (typeof value === "string" && value.trim() === "") || (Array.isArray(value) && value.length === 0));
-
 /**
  * WHAT CITES WHAT, AND WHAT IS UNCITED (Roadmap f-field-cites-marker): for
  * the handed records' kinds, each cited field and the field or relation
  * that cites it (`cites`), and each handed record's cited fields holding a
  * value with nothing cited (`uncited`), judged over the viewer's graph,
- * whose links the view may not be handed. Nothing when no kind cites.
+ * whose links the view may not be handed. A link to a record set aside
+ * cites nothing; a citing field some sight may keep from this seat is not
+ * judged, so a value is never called uncited for what the seat cannot see.
+ * Nothing when no kind cites.
  */
-export function citesFor(store: { readonly schema: AnySchema; readonly graph: { outEdges(id: string, kind?: string): readonly unknown[] } }, nodes: readonly unknown[]): Pick<GuestProps, "cites" | "uncited"> {
+export function citesFor(
+  store: { readonly schema: AnySchema; readonly policy?: Policy | undefined; readonly graph: { out(id: string, kind?: string): readonly unknown[] } },
+  principal: Principal,
+  nodes: readonly unknown[],
+): Pick<GuestProps, "cites" | "uncited"> {
+  const narrowed = !isSystem(principal);
+  const holds = holdsValue;
   const cites: Record<string, Record<string, { readonly by: string; readonly relation: boolean }>> = {};
   const uncited: Record<string, string[]> = {};
   for (const node of nodes) {
@@ -277,7 +283,8 @@ export function citesFor(store: { readonly schema: AnySchema; readonly graph: { 
       cites[kind] = Object.fromEntries(Object.entries(citedFieldsOf(store.schema, kind)).map(([field, by]) => [field, { by, relation: Object.prototype.hasOwnProperty.call(edges, by) }]));
     }
     for (const [field, { by, relation }] of Object.entries(cites[kind]!)) {
-      if (!holds(node[field]) || (relation ? store.graph.outEdges(node["id"], by).length > 0 : holds(node[by]))) continue;
+      if (!holds(node[field]) || (!relation && narrowed && sightMayKeep(store.policy, kind, by))) continue;
+      if (relation ? store.graph.out(node["id"], by).length > 0 : holds(node[by])) continue;
       (uncited[node["id"]] ??= []).push(field);
     }
   }
@@ -526,7 +533,7 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
       // Each option of the handed records' choices, by its label (Roadmap f-option-labels).
       ...choicesOf(options.store.schema, [...(node ? [node] : []), ...(listed ?? [])]),
       // What cites what, and which handed records hold a value with nothing cited (Roadmap f-field-cites-marker).
-      ...citesFor(store, [...(node ? [node] : []), ...(listed ?? [])]),
+      ...citesFor(store, options.principal, [...(node ? [node] : []), ...(listed ?? [])]),
       ...(options.placesShown ?{ places: options.placesShown().map(({ as, title, kind }) => ({ as, title, kind })) } : {}),
       ...unseenFor(options.reads?.kinds ?? []),
     };

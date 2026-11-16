@@ -123,7 +123,7 @@ Words and moments too: `concat(name, ' · ', place)`; `format(start,
 'EEE d MMM · h:mm a')` by a closed pattern (`EEE`, `EEEE`, `d`, `MMM`,
 `MMMM`, `yyyy`, `h:mm a`, `HH:mm`, quoted words) in `brand.locale` on
 `brand.timeZone`; `datetime(due, '09:30')` (or `at`); `addMinutes`;
-`weekday` (`mon`…`sun`); `startOfWeek`. `graview check` types them
+`weekday` (`mon`…`sun`); `startOfWeek`; `uncited('f')`. `graview check` types them
 (`expr-type`, `format-pattern`). `out(S, 'edge')` and `in(S, 'edge')` walk from every member of a set
 and give each record reached once; sets meet with `&`, join with `|` and part
 with `-` — LifeLogics' coverage is one figure,

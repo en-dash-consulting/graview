@@ -30,6 +30,7 @@ describe("a run of the app's own actor", () => {
     const report = await dream(store, { now: "2026-11-16T09:00:00.000Z" });
     expect(report.uncited.map(({ record, field, words }) => ({ record, field, words }))).toEqual([{ record: "c1", field: "figure", words: "Rainfall's figure cites no source" }]);
     expect(report.outcomes.filter((one) => one.outcome === "suggested")).toEqual([]);
+    expect(report.said).toBe("Nothing to tidy. One value says nowhere where it came from, which only a person can add: Rainfall's figure cites no source.");
     expect(store.log.all()).toEqual([]);
   });
 });

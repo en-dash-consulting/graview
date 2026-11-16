@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { runWorkerViewHeadless } from "../../src/headless/index.js";
 import { nodeIsolate } from "../../src/headless/node.js";
 import { workerViewProps, type WorkerViewManifest } from "../../src/host/manifest.js";
+import { citesFor } from "../../src/host/session.js";
 
 /*
  * A VIEW SAYS WHERE A CITED VALUE CAME FROM (Roadmap f-field-cites-marker).
@@ -70,5 +71,23 @@ describe("graview.cite and graview.uncited", () => {
     if (!result.ok) throw new Error(`${result.reason}: ${result.detail}`);
     expect(result.description.text).toContain("Lagos: uncited · population, founded · undefined");
     expect(result.description.text).toContain("Accra: cited by https://example.org/accra · all cited · undefined");
+  });
+});
+
+describe("what a seat is told is uncited", () => {
+  it("is never a value whose citing field some sight may keep from the seat, and never counts a link to a record set aside", () => {
+    const lagos = { id: "lagos", kind: "city", name: "Lagos", population: 15_000_000, founded: "15th century" };
+    const keptSource = { roles: ["reader"], kinds: ["city"], hide: ["source"] };
+    const out = (id: string, kind?: string) => (id === "lagos" && kind === "references" ? [] : []);
+    const told = citesFor({ schema: app.schema, policy: { grants: [], sees: [keptSource] } as never, graph: { out } }, reader, [lagos]);
+    expect(told.uncited).toEqual({ lagos: ["founded"] });
+    // The app's own actor sees every field: the same value is uncited to it.
+    expect(citesFor({ schema: app.schema, policy: { grants: [], sees: [keptSource] } as never, graph: { out } }, { kind: "system", id: "tidying" }, [lagos]).uncited).toEqual({ lagos: ["population", "founded"] });
+  });
+
+  it("counts a citation through the viewer's graph, where a record set aside is not linked", () => {
+    const at = store().graph.snapshot();
+    const live = new Store<AnySchema>({ schema: app.schema, snapshot: { ...at, nodes: at.nodes.map((one) => (one.id === "r1" ? { ...one, $archived: true } : one)) } as never });
+    expect(workerViewProps(live, reader, { manifest: cities }).uncited).toEqual({ lagos: ["population", "founded"], accra: ["founded"] });
   });
 });

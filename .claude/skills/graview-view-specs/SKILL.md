@@ -101,6 +101,9 @@ fields, edges, label, roles — is `graview-node-kind`.
    (with `addMinutes`, `weekday`, `startOfWeek` beside them), said in the
    app's `brand.locale` on its `brand.timeZone` — see graview-invariant for
    the pattern pieces and what `graview check` refuses.
+   A card flags a value nothing cites (a field that says `cites`,
+   graview-node-kind) with `when: "uncited('population')"`, or
+   `uncited()` for any of the record's cited fields.
    `{ expr, format: "percent" }` (or `"money"`, `"duration"`, a `unit`;
    `set-format` sets it) says it so on its page, cards and CSV;
    `round(x, 3)` rounds; `hidden: true` keeps a helper off its page, cards

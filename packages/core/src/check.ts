@@ -26,5 +26,6 @@ export { generateAgentsMd, generateLlmsTxt } from "./cli/docs.js";
 export { clockReaders } from "./clock-readers.js";
 export type { ClockReaders } from "./clock-readers.js";
 // Which records hold a value in a cited field with nothing cited (Roadmap f-field-cites-marker), as `graview check --seed` says them.
-export { uncitedIn, uncitedValues } from "./cited.js";
+export { seedLinks, uncitedIn, uncitedValues } from "./cited.js";
+export { citesOf } from "./schema/cites.js";
 export type { UncitedValue } from "./cited.js";

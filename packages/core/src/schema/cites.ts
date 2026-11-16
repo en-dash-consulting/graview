@@ -60,3 +60,15 @@ export function citedFieldsOf(schema: Schemaish, kind: string): Readonly<Record<
 
 /** Whether a value says anything: not undefined, null, blank words or an empty list. */
 export const holdsValue = (value: unknown): boolean => !(value === undefined || value === null || (typeof value === "string" && value.trim() === "") || (Array.isArray(value) && value.length === 0));
+
+type Sights = { readonly sees?: readonly { readonly kinds: readonly string[]; readonly fields?: readonly string[]; readonly hide?: readonly string[] }[] } | undefined;
+
+/**
+ * Whether some sight of the policy could keep this field of a kind from a
+ * seat (`hide` names it, or `fields` leaves it out): a citation held there
+ * may be one the seat cannot see, so a value is never called uncited to a
+ * seat on that field's word. Judged of the declaration, never of a value.
+ */
+export function sightMayKeep(policy: Sights, kind: string, field: string): boolean {
+  return (policy?.sees ?? []).some((sight) => sight.kinds.includes(kind) && ((sight.hide?.includes(field) ?? false) || (sight.fields !== undefined && !sight.fields.includes(field))));
+}

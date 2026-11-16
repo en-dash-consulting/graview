@@ -230,7 +230,7 @@ export { TYPE_TEXT } from "./text/typing-hook.js";
 export type { TypeTextArgs } from "./mutations/type-text.js";
 export { markCollaborative } from "./schema/collaborative.js";
 // A field that says where its value came from (Roadmap f-field-cites-marker): marked, and read as a page hands a view what cites what.
-export { citedFieldsOf, citesOf, markCites } from "./schema/cites.js";
+export { citedFieldsOf, holdsValue, markCites, sightMayKeep } from "./schema/cites.js";
 // Whether a record is left alone and an author is the app's own actor, which a page draws with; the rest is `@graview/core/tidying`'s.
 export { isAutomated, isLeftAlone } from "./ops/tidying.js";
 export type { Dismissal, DismissalStore, Suggestion, SuggestionTally } from "./ops/suggestions.js";
