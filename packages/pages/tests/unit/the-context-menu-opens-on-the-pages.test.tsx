@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 import { bindSchema, createSchema, defineNode, nodeRef, Store, type AnySchema, type GraviewApp, type Policy, type Principal } from "@graview/core";
 import { compileDocument } from "@graview/core/check";
 import { declaredViews, fetchDeclaredLenses } from "@graview/primitives";
-import { createViews, type MenuSectionSource } from "@graview/react";
+import { createViews, type HostMenuAt, type HostMenuItem, type MenuSectionSource } from "@graview/react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -58,7 +58,7 @@ afterEach(async () => {
   cleanup = undefined;
 });
 
-async function rendered(path: string, also: { principal?: Principal; menuSections?: readonly MenuSectionSource[] } = {}) {
+async function rendered(path: string, also: { principal?: Principal; menuSections?: readonly MenuSectionSource[]; menuItems?: readonly HostMenuItem[] } = {}) {
   const store = new Store({
     schema,
     mutations: [add, finish, remove],
@@ -71,7 +71,7 @@ async function rendered(path: string, also: { principal?: Principal; menuSection
       edges: [],
     },
   });
-  const context: PageContext<typeof schema> = { store, views: createViews(schema), ...(also.principal ? { principal: also.principal } : {}), ...(also.menuSections ? { menuSections: also.menuSections } : {}) };
+  const context: PageContext<typeof schema> = { store, views: createViews(schema), ...(also.principal ? { principal: also.principal } : {}), ...(also.menuSections ? { menuSections: also.menuSections } : {}), ...(also.menuItems ? { menuItems: also.menuItems } : {}) };
   const host = document.createElement("div");
   document.body.appendChild(host);
   const root = createRoot(host);
@@ -257,6 +257,61 @@ describe("the context menu on the routed face", () => {
   });
 });
 
+/*
+ * A HOST'S OWN ROWS (Roadmap f-host-context-menu-items): Cloud's "Make
+ * changes in your own AI", given as `menuItems`, is drawn after every row of
+ * the framework's, a labeled button like theirs, and is run with the record
+ * id or place slug under the pointer and the app's link.
+ */
+describe("a host's own rows in the context menu", () => {
+  const ownAi = (pressed: HostMenuAt[]): HostMenuItem => ({ id: "own-ai", label: "Make changes in your own AI", run: (at) => void pressed.push(at) });
+
+  it("draws the host's row after every row of the framework's, and runs it with the record under the pointer and the app's link", async () => {
+    const pressed: HostMenuAt[] = [];
+    const { host } = await rendered("/tasks", { menuItems: [ownAi(pressed)] });
+    await rightClick(host.querySelector('[data-graview-record="book"] a')!);
+    const row = menu()!.querySelector<HTMLButtonElement>('[data-menu-item="own-ai"]')!;
+    expect(row).not.toBeNull();
+    expect(row.tagName).toBe("BUTTON");
+    expect(row.textContent).toBe("Make changes in your own AI");
+    // Last of the menu's rows and after every act: nothing of the framework's below it.
+    const everything = [...menu()!.querySelectorAll("[data-menu-item], [data-affordance]")];
+    expect(everything.at(-1)).toBe(row);
+    expect(rows()).toEqual(expect.arrayContaining(["open", "open-in-a-new-tab"]));
+    await act(async () => row.click());
+    await closed();
+    expect(pressed).toEqual([{ face: "pages", record: "book", kind: "task", href: `${location.origin}/tasks/book`, link: `${location.origin}/` }]);
+  });
+
+  it("runs it with nothing but the app's link on a page's own ground", async () => {
+    const pressed: HostMenuAt[] = [];
+    const { host } = await rendered("/tasks", { menuItems: [ownAi(pressed)] });
+    await rightClick(host.querySelector("main h1, main h2")!);
+    await act(async () => menu()!.querySelector<HTMLButtonElement>('[data-menu-item="own-ai"]')!.click());
+    expect(pressed).toEqual([{ face: "pages", kind: "task", link: `${location.origin}/` }]);
+  });
+
+  it("is offered under a finger resting on the page, as the menu is", async () => {
+    const pressed: HostMenuAt[] = [];
+    const { host } = await rendered("/tasks/deposit", { menuItems: [ownAi(pressed)] });
+    const link = host.querySelector<HTMLAnchorElement>('main a[href="/tasks"]')!;
+    await act(async () => void link.dispatchEvent(Object.assign(new MouseEvent("pointerdown", { bubbles: true, clientX: 30, clientY: 30 }), { pointerType: "touch", isPrimary: true })));
+    await act(async () => new Promise((done) => setTimeout(done, 650)));
+    await opened();
+    expect(rows().at(-1)).toBe("own-ai");
+  });
+
+  it("leaves out a row the host says is not offered there", async () => {
+    const { host } = await rendered("/tasks", { menuItems: [{ ...ownAi([]), offered: (at) => at.record !== "book" }] });
+    await rightClick(host.querySelector('[data-graview-record="book"] a')!);
+    expect(rows()).not.toContain("own-ai");
+    await act(async () => void document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
+    await closed();
+    await rightClick(host.querySelector('[data-graview-record="deposit"] a')!);
+    expect(rows()).toContain("own-ai");
+  });
+});
+
 /* A PICTURE'S MARKS AND ITS GROUND: the every-lens hall, each lens a page of its own. */
 const hall = JSON.parse(readFileSync(resolve(import.meta.dirname, "../../../core/tests/document/fixtures/every-lens.gdd.json"), "utf8"));
 const compiled = compileDocument(hall, { today: () => "2026-09-01" });
@@ -278,12 +333,12 @@ const seed = {
 };
 beforeAll(() => fetchDeclaredLenses());
 
-async function aPlace(as: string) {
+async function aPlace(as: string, menuItems?: readonly HostMenuItem[]) {
   const store = new Store<AnySchema>({ schema: app.schema, mutations: app.mutations ?? [], ...(app.policy ? { policy: app.policy } : {}), snapshot: seed as never });
   const host = document.createElement("div");
   document.body.appendChild(host);
   const root = createRoot(host);
-  await act(async () => root.render(<PagesApp context={{ store, views: declaredViews(app), principal: { kind: "human", id: "m1", roles: ["keeper"] } }} initialPath={`/places/${as}`} />));
+  await act(async () => root.render(<PagesApp context={{ store, views: declaredViews(app), principal: { kind: "human", id: "m1", roles: ["keeper"] }, ...(menuItems ? { menuItems } : {}) }} initialPath={`/places/${as}`} />));
   await drawn(host);
   cleanup = async () => {
     await act(async () => root.unmount());
@@ -310,5 +365,15 @@ describe("the context menu on a picture's page", () => {
     expect(menu()!.textContent).toContain(place.title);
     expect(rows()).toEqual(expect.arrayContaining(["in-the-scene", "find"]));
     expect(rows()).not.toContain("open");
+  });
+
+  it("runs a host's own row with the place's slug under the pointer (Roadmap f-host-context-menu-items)", async () => {
+    const place = declaredViews(app).places().find((one) => one.kind === "shift")!;
+    const pressed: HostMenuAt[] = [];
+    const host = await aPlace(place.as, [{ id: "own-ai", label: "Make changes in your own AI", run: (at) => void pressed.push(at) }]);
+    await rightClick(host.querySelector('[data-testid="place-lens"]')!);
+    expect(rows().at(-1)).toBe("own-ai");
+    await act(async () => menu()!.querySelector<HTMLButtonElement>('[data-menu-item="own-ai"]')!.click());
+    expect(pressed).toEqual([expect.objectContaining({ face: "pages", place: place.as, link: `${location.origin}/` })]);
   });
 });

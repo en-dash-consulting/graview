@@ -2,15 +2,16 @@ import { argumentsTaken, fieldWords, humanizeField, layer, nounOf, pluralLabel, 
 import { narrowedPath } from "@graview/core/navigate";
 import { aggregateId } from "@graview/layout/view";
 import { GhostDoor, Inspector, NotifyDoor, SectionBetterDoor, useBoardMoveSection, useDisplayOptionsSection, useInlineAiSection, useNotifySection, useSectionBetterSection, useViewTidyingSection } from "@graview/primitives/pages";
-import { MenuSections, partsWanted, sectionsArrive, sectionsWanted, sectionUnderNow } from "@graview/react/drawing";
+import { HostMenuItems, MenuSections, partsWanted, sectionsArrive, sectionsWanted, sectionUnderNow } from "@graview/react/drawing";
 import { PLACE_MENU_EVENT, useGraview, useGraviewIfAny, type MenuColumn, type MenuItem, type MenuSectionSource, type MenuTarget, type PointerMenu } from "@graview/react/provider";
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { useHref, useLocation, useNavigate } from "react-router";
 import type { PageContext } from "./page-context.js";
 import { addressAsksForTheList, BUILT_IN, listOpensAs, pathOfPlace } from "./page-places.js";
 import { kindMap } from "./facts.js";
 import { kindOfSlug, pluralSlug, recordPath, type PageRegistry } from "./registry.js";
 import { useOneFace } from "./one-place-control.js";
+import { HrefOfContext } from "./href-of.js";
 
 /**
  * THE CONTEXT MENU ON THE ROUTED FACE — the scene's own menu (`Inspector`
@@ -489,9 +490,17 @@ function Menu<S extends AnySchema>({ context, root, registry, children }: { read
   /* "Other ways to show this" on a kind's list or a place, for a seat that may change the app, with AI on or off (Roadmap f-display-options-switch). */
   const otherWays = useDisplayOptionsSection(listStandsAsItIs(registry as never, search, (kind) => kindMap(store).relations.filter((relation) => relation.from === kind || relation.to === kind).map((relation) => relation.edgeKind), (kind) => listOpensAs(context, kind)?.flows ?? true), new URLSearchParams(search).get("filter"));
   const sections = useMemo(() => [copy, change, board, own, ...(tidy ? [tidy] : []), ...(notify ? [notify] : []), ...(better ? [better] : []), ...(otherWays ? [otherWays] : []), ...(inlineAi ? [inlineAi] : [])], [copy, change, board, own, tidy, notify, better, inlineAi]);
+  /*
+   * The app's link a host's own row is handed (Roadmap f-host-context-menu-items): these pages' home, whole, at the host's own
+   * address for it where it says one. Where the face's paths are no page of the host's (memory routing), the provider's link
+   * (`mount`'s: the host's page) and no address of what was under the pointer.
+   */
+  const hostHref = useContext(HrefOfContext);
+  const appLink = useMemo(() => (hostHref === false ? undefined : () => new URL((hostHref ? hostHref("/") : undefined) ?? `${base}/`, location.href).href), [hostHref, base]);
 
   return (
     <MenuSections sections={sections}>
+      <HostMenuItems items={context.menuItems} link={appLink} addresses={hostHref !== false}>
       <div
         data-graview-menu-ground=""
         style={{ display: "contents" }}
@@ -567,6 +576,7 @@ function Menu<S extends AnySchema>({ context, root, registry, children }: { read
       <p role="status" data-testid="menu-said" style={said ? SAID : HIDDEN}>
         {said?.sentence ?? ""}
       </p>
+      </HostMenuItems>
     </MenuSections>
   );
 }

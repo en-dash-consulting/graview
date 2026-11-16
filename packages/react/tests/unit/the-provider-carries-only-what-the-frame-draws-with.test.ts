@@ -17,6 +17,8 @@ const DRAWN_ONLY = [
   "kitConnector",
   // A face's own sections of the context menu: drawn only once a menu is.
   "MenuSections",
+  // A host's own rows of the context menu, given around a face (Roadmap f-host-context-menu-items).
+  "HostMenuItems",
   "NOTHING_FOUND",
   "alsoWhenSectionsArrive",
   "placeOthers",

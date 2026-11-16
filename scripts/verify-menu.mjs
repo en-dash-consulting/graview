@@ -158,6 +158,8 @@ async function serveMenuHost() {
           // A host's own row below the AI's, as Homeflow's "Send feedback" is: the row the jumpy menu moved.
           ai: window.__todoAi,
           menuSections: [() => ({ id: "host", items: [{ id: "send-feedback", label: "Send feedback", run: () => (window.__feedback = (window.__feedback ?? 0) + 1) }] })],
+          // And Cloud's own row, after every row of the framework's (Roadmap f-host-context-menu-items).
+          menuItems: [{ id: "own-ai", label: "Make changes in your own AI", run: (at) => (window.__ownAi = (window.__ownAi ?? []).concat([at])) }],
         });
         window.__handle.drawn().then(() => { window.__ready = true; });
       `,
@@ -1765,6 +1767,100 @@ try {
       ok: thinkingAtFirst && before !== null && after !== null && before.y === after.y && before.x === after.x && hovered && arrived > 0 && pressedIt,
     };
     await context.close();
+  }
+
+  /*
+   * A HOST'S OWN ROW COMES LAST, AND IS RUN WITH WHAT IS UNDER THE POINTER
+   * (Roadmap f-host-context-menu-items). Cloud's "Make changes in your own
+   * AI", given to `mount` as `menuItems`: shown as the menu opens, never
+   * behind More…, and, with More… pressed, still the last row, after every
+   * row of the framework's and the host's own sections. On the pages at a
+   * desk it is a labeled button the keyboard reaches with Tab from the
+   * menu's field and runs with Enter, handed the record's id and the app's
+   * link (its home on the host's page); on a phone a finger resting on a
+   * value on the record's page opens the menu with it there, and a tap runs
+   * it; on the scene of the same mount a right-click on the record offers
+   * it, run with the same record and the same link.
+   */
+  reach("aHostsOwnRowComesLastAndIsRunWithWhatIsUnderThePointer");
+  {
+    const said = {};
+    for (const leg of ["desk", "phone", "scene"]) {
+      const phone = leg === "phone";
+      const context = await browser.newContext({ viewport: phone ? { width: 390, height: 844 } : { width: 1560, height: 940 }, ...(phone ? { hasTouch: true, isMobile: true } : {}) });
+      const on = await context.newPage();
+      on.on("pageerror", (error) => errors.push(`own row ${leg}: ${error.message}`));
+      if (!menuHost) menuHost = await serveMenuHost();
+      // A list that chooses keeps a phone's long press for choosing, so on a phone the finger rests on a value on the record's page.
+      const path = leg === "phone" ? "/tasks/t1" : leg === "scene" ? "/places/overview" : "/tasks";
+      const target = leg === "phone" ? '[data-testid="record-fields"] [data-graview-editable][data-graview-field]' : leg === "scene" ? '[data-graview-pick="t1"]' : '[data-graview-record="t1"]';
+      await on.goto(`http://localhost:${portFor("menu-host")}${MENU_BASE}${path}`, { waitUntil: "load" });
+      await on.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+      await on.waitForSelector(target, { timeout: 30_000 });
+      if (leg === "scene") await on.waitForTimeout(800);
+      let how = "right-click";
+      if (phone) {
+        const box = await on.evaluate((selector) => {
+          const at = document.querySelector(selector)?.getBoundingClientRect();
+          return at ? { x: Math.round(at.left + Math.min(12, at.width / 2)), y: Math.round(at.top + at.height / 2) } : null;
+        }, target);
+        how = box ? await restAt(context, on, box) : "nowhere";
+      } else {
+        await on.click(target, { button: "right" });
+      }
+      await on.waitForSelector(MENU, { timeout: 10_000 }).catch(() => undefined);
+      await on.waitForTimeout(200);
+      const OWN = `${MENU} [data-menu-item="own-ai"]`;
+      const rowsShown = () =>
+        on.evaluate(({ menu, own }) => {
+          const rows = [...document.querySelectorAll(`${menu} [data-menu-item], ${menu} [data-affordance]`)].filter((one) => one.getClientRects().length > 0);
+          const row = document.querySelector(own);
+          return { rows: rows.map((one) => one.getAttribute("data-menu-item") ?? `act:${one.getAttribute("data-affordance")}`), button: row?.tagName === "BUTTON", label: row?.textContent ?? null };
+        }, { menu: MENU, own: OWN });
+      const atOpen = await rowsShown();
+      await unfold(on);
+      await on.waitForTimeout(200);
+      const shown = await rowsShown();
+      let reached = null;
+      if (phone) {
+        await on.tap(OWN).catch(() => undefined);
+      } else if (leg === "scene") {
+        await on.click(OWN).catch(() => undefined);
+      } else {
+        // The keyboard: back to the menu's field, then Tab until it lands on the row, then Enter.
+        await on.focus(`${MENU} [data-testid="menu-type"]`).catch(() => undefined);
+        for (let step = 0; step < 60 && reached === null; step++) {
+          await on.keyboard.press("Tab");
+          if (await on.evaluate((own) => document.activeElement === document.querySelector(own), OWN)) reached = step + 1;
+          if (!(await on.$(MENU))) break;
+        }
+        if (reached !== null) await on.keyboard.press("Enter");
+      }
+      await on.waitForTimeout(300);
+      const ran = await on.evaluate(() => window.__ownAi ?? []);
+      const link = `http://localhost:${portFor("menu-host")}${MENU_BASE}/`;
+      said[leg] = {
+        how,
+        atOpen: atOpen.rows,
+        ...shown,
+        reached,
+        ran,
+        ok:
+          atOpen.rows.at(-1) === "own-ai" &&
+          shown.rows.at(-1) === "own-ai" &&
+          shown.rows.some((row) => row.startsWith("act:")) &&
+          (leg === "scene" || shown.rows.includes("send-feedback")) &&
+          shown.button &&
+          shown.label === "Make changes in your own AI" &&
+          (leg !== "desk" || reached !== null) &&
+          ran.length === 1 &&
+          ran[0].face === (leg === "scene" ? "scene" : "pages") &&
+          ran[0].record === "t1" &&
+          ran[0].link === link,
+      };
+      await context.close();
+    }
+    report.checks.aHostsOwnRowComesLastAndIsRunWithWhatIsUnderThePointer = { ...said, ok: said.desk.ok && said.phone.ok && said.scene.ok };
   }
 
   /*

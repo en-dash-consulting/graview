@@ -336,6 +336,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
             ...affordances.map((affordance) => ({ key: `act:${affordance.id}`, label: affordance.label })),
             ...beside.end.flatMap((section) => (section.items ?? []).map((item) => ({ key: `item:${item.id}`, label: item.label }))),
             ...toldLike.map((one) => ({ key: one.key, label: one.label })),
+            ...beside.last.flatMap((section) => (section.items ?? []).map((item) => ({ key: `item:${item.id}`, label: item.label }))),
           ],
     [menuAt, beside, affordances, toldLike],
   );
@@ -645,6 +646,8 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
   const folded = atPointer && !expanded && words === "";
   const startSections = narrowed(beside.start).filter((section) => (section.items?.length ?? 0) > 0 || section.render);
   const endSections = narrowed(beside.end).filter((section) => (section.items?.length ?? 0) > 0 || section.render);
+  /* A host's own rows (`menuItems`): after every row of the framework's, never waiting behind More…. */
+  const lastSections = narrowed(beside.last).filter((section) => (section.items?.length ?? 0) > 0 || section.render);
   /* Which acts wait behind More…: past the first few, while folded. Drawn, and hidden — no stop for the keyboard, nothing a screen reader is told — until More… is pressed. */
   const behindMore = new Set(folded ? shown.slice(fits).map((entry) => entry.id) : []);
   /* What this seat may not do waits behind More… only where the first acts fill the room; a seat offered little is told at once what is not theirs. */
@@ -666,6 +669,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
     ...shown.filter((entry) => !entry.destructive).map((entry) => `act:${entry.id}`),
     ...endSections.flatMap((section) => (section.items ?? []).map((item) => `item:${item.id}`)),
     ...toldShown.map((one) => one.key),
+    ...lastSections.flatMap((section) => (section.items ?? []).map((item) => `item:${item.id}`)),
   ];
   const ranked = fastRank === null ? undefined : [...shownKeys].sort((a, b) => (fastRank.get(b) ?? 0) - (fastRank.get(a) ?? 0)).find((key) => (fastRank.get(key) ?? 0) >= MENU_RANK_FLOOR);
   const lit =
@@ -675,6 +679,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
         startSections.flatMap((section) => (section.items ?? []).map((item) => `item:${item.id}`))[0] ??
         shown.filter((entry) => !entry.destructive).map((entry) => `act:${entry.id}`)[0] ??
         endSections.flatMap((section) => (section.items ?? []).map((item) => `item:${item.id}`))[0] ??
+        lastSections.flatMap((section) => (section.items ?? []).map((item) => `item:${item.id}`))[0] ??
         (askRow && modeLit ? "mode" : null));
   const ask = (asked: string = words) => {
     if (!menuAt) return;
@@ -1041,7 +1046,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
               event.preventDefault();
               (litRow() ?? walkable()[0])?.focus();
             } else if (event.key === "ArrowUp") {
-              // Round to the last row, as a menu's arrows go: More… where the rest wait behind it.
+              // Round to the last row, as a menu's arrows go: a host's own row where one is drawn, else More… where the rest wait behind it.
               event.preventDefault();
               walkable().at(-1)?.focus();
             } else if (event.key === "Enter" && !litRow() && modeLit) {
@@ -1666,6 +1671,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
           Nothing here matches “{words}”.
         </p>
       ) : null}
+      {atPointer ? lastSections.map((section) => <SectionDrawn key={section.id} section={section} lit={lit} close={() => setMenuAt(null)} />) : null}
 
       {/* The arguments appear in place, under the action that asked for them,
           rather than turning the strip into a form. */}
