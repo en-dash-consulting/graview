@@ -161,7 +161,8 @@ landing page is not a pull request's to write: the Version packages step and
 the Pages deploy fill it in (`site-numbers.mjs --release`), so a PR never
 touches `docs/site/index.html` or the sitemap just because it added tests.
 A bundle budget raise is a file of its own in `scripts/budget-raises/`
-(see `scripts/lib/bundle-budget.mjs`), never an edit to an entry's numbers.
+(see `scripts/lib/bundle-budget.mjs`), never an edit to an entry's numbers;
+from 0.2.5 the batch writes it, never a build's PR.
 
 Run `npx playwright install chromium webkit firefox` once. Playwright is
 pinned at 1.49.1 on purpose.

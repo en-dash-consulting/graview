@@ -8,8 +8,15 @@ loop is the `dev-sync` skill ([`.claude/skills/dev-sync/SKILL.md`](../.claude/sk
 
 Steps marked **(new in 0.2.5)** arrive with the builds `ci/harnesses-run-on-github`,
 `ci/budgets-raised-on-the-batch` and `ci/release-without-a-version-pr`. Until
-they are on main, do those steps the 0.2.4 way: harnesses locally, raise files
-on each PR, a Version packages PR before publish.
+they are on main, do those steps the 0.2.4 way:
+- a build runs its full harnesses locally (`pnpm verify <names>`) and writes
+  its own budget raise file on its PR;
+- the batch runs `pnpm test`, `pnpm verify`, `pnpm engines` and
+  `node scripts/progression.mjs` locally, and a Nightly on its head;
+- merging the batch opens the "Version packages" PR, where the release record
+  is written by hand and `pnpm site:build:all` run; once that PR merges,
+  dispatch Nightly on main and wait for it green before Nick approves, since
+  today's publish job checks the last finished Nightly on main.
 
 ## The loop
 
@@ -48,8 +55,9 @@ flowchart TD
    and runs `pnpm release:prepare`: the changesets versioned, the release
    record taken in and the site rebuilt **(new in 0.2.5)**.
 5. **Release.** Merging the batch starts the `publish` job directly
-   **(new in 0.2.5)**. It waits for Nick's approval, then checks a Nightly on
-   the same tree, publishes all fourteen packages, tags them and writes the
+   **(new in 0.2.5)**. It waits for Nick's approval, then checks a green
+   Nightly on the same tree **(new in 0.2.5; today, the last one on main)**,
+   publishes all fourteen packages, tags them and writes the
    GitHub releases. A changeset merged outside a batch still goes through the
    "Version packages" PR.
 6. **HQ booking.** The release, each feature `shipped`, each request
@@ -71,7 +79,7 @@ flowchart TD
 | Nightly on a PR | `nightly.yml` dispatched on the frozen head: every harness in nine shards, the GPU leg | 27–34 min | harness, render and focus changes, before they merge | the dev-sync pass dispatches it |
 | The batch | merge in order, budget raises **(new in 0.2.5)**, `pnpm release:prepare` **(new in 0.2.5)**, PR CI, a Nightly on its head | about 80 min on 0.2.4 | the PRs hold together | the holder of `phase:release` |
 | Publish | `release.yml` in the `npm` environment: build, typecheck, tests, a green Nightly on the same tree **(new in 0.2.5)**, trusted publish, tags, releases | about 12 min of tests, then the publish | nothing reaches npm untested or unapproved | Nick approves; the workflow does the rest |
-| Nightly on main | `nightly.yml` every day at 07:17 UTC, WebKit and Firefox on Mondays | 27–34 min | main stays green between releases | automatic; red on main is fixed first |
+| Nightly on main | `nightly.yml` every day at 07:17 UTC; Mondays at 09:17 also WebKit and Firefox | 27–34 min | main stays green between releases | automatic; red on main is fixed first |
 | Pages | `pages.yml` on every push to main | a few minutes | graview.dev says what main has | automatic |
 
 Measured on 0.2.4 (2026-11-15/16): builds took 3–10.5 h, mostly in local
@@ -118,13 +126,17 @@ may take it after that.
 | Resource | Held by | For | Until | Renewed by |
 |---|---|---|---|---|
 | `phase:triage` | the dev-sync pass | reconciling HQ and writing the PRD | +45 min | the pass, at each step |
-| `feature:<id>` | the pass takes it, the build holds it | building that feature | +4 h | the build, at each step boundary |
+| `feature:<id>` (`brief:` or `request:` when there is no feature) | the pass takes it, the build holds it | building that feature | +4 h | the build, at each step boundary |
 | `slot:build-1` … `slot:build-3` | the pass takes it, the build holds it | one build's ports and CPU on this machine | +3 h | the build, at each step boundary |
 | `phase:release` | the pass doing the release | the batch, publish and HQ booking | +3 h | that pass, at each step |
 
-A build releases its slot when its local harnesses are done, and its feature
-lease once its PR is green and frozen: from then on the open PR is the claim,
-and triage skips a feature with one. A build that stops early releases both.
+A build releases its slot when its local harness runs are done (a run on
+GitHub needs no slot), and its feature lease once its PR is green and frozen:
+from then on the open PR is the claim, and triage skips a feature with one.
+The PR body names the feature as `hq:<feature id>`, the same tag its PRD
+change carries, so triage can match them. A build that stops early releases
+both. Between the batch merge and HQ booking, `phase:release` covers every
+feature in the batch.
 
 ## What Nick decides
 
@@ -134,7 +146,9 @@ and triage skips a feature with one. A build that stops early releases both.
 - **Product calls**: an ask HQ cannot settle (a priority, a shape, what a
   release promises) is held and listed for him.
 
-Nothing else waits for him. Agents merge on green, run and re-run workflows,
-and book HQ themselves.
+Nothing else waits for him. A build merges nothing; the holder of
+`phase:release` merges the builds' PRs into the batch, and the batch and PRD
+PRs into main, on green. Agents run and re-run workflows and book HQ
+themselves.
 
 Graview is source-available under the Elastic License 2.0.

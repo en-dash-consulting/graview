@@ -139,6 +139,7 @@ dispatch `nightly.yml` on its head if it touches harnesses, render or focus.
 ### 4. Release (hold `phase:release`)
 
 When the open PRs are green and reviewed, or something urgent stands:
+- From 0.2.5 the batch runs `pnpm release:prepare` and its merge starts publish (`docs/process.md`).
 - **Batch.** One `batch/0-1-NN` off main merging them in order. Re-measure
   budgets as raise files. Full `pnpm test`, `pnpm verify`, `pnpm engines`,
   `node scripts/progression.mjs`; nightly on its head; merge on green.
@@ -156,7 +157,7 @@ When the open PRs are green and reviewed, or something urgent stands:
 
 ### 5. Book it on HQ
 
-- `draft-release` (`id release:r-0-1-NN`, product framework, public notes per
+- `draft-release` (`id release:r-0-N-NN`, product framework, public notes per
   HQ's rules), `follows-release`, a `ship-in-release` per feature, then
   `publish`.
 - `mark-shipped` each feature, and `mark-delivered` each request it closes.
