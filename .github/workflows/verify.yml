@@ -25,7 +25,7 @@ on:
   workflow_dispatch:
     inputs:
       harnesses:
-        description: "Harnesses, space-separated as `pnpm verify` takes them; empty for the whole chain (without shrunk, panning and scale, as Nightly)"
+        description: "Harnesses, space-separated as `pnpm verify` takes them; empty for the whole chain but shrunk, panning and scale, which need a GPU or Chrome Canary"
         type: string
         default: ""
       quick:
@@ -76,13 +76,18 @@ jobs:
     needs: plan
     name: ${{ matrix.label }}
     runs-on: ubuntu-24.04
-    # Nightly's: installing the engines alone has taken 32–42 minutes on a slow day.
-    timeout-minutes: 90
+    # Installing the engines alone has taken 32–42 minutes on a slow day, and a shard's harnesses each get a second look.
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
+      # What the harnesses write from here on is this run's: the summary
+      # keeps only files changed after this moment, and a shard that stops
+      # before its harnesses reports none of the checkout's own verdicts.
+      - name: The moment the shard begins
+        run: echo "VERIFY_SINCE=$(date +%s%3N)" >> "$GITHUB_ENV"
 
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
@@ -123,11 +128,6 @@ jobs:
           unzip -q "$RUNNER_TEMP/chrome.zip" -d "$RUNNER_TEMP"
           "$RUNNER_TEMP/chrome-linux64/chrome" --version | grep -q "$CHROME_PIN"
           echo "GRAVIEW_BROWSER=$RUNNER_TEMP/chrome-linux64/chrome" >> "$GITHUB_ENV"
-
-      # What the harnesses write from here on is this run's: the summary
-      # keeps only files changed after this moment.
-      - name: The moment the harnesses begin
-        run: echo "VERIFY_SINCE=$(node -e 'console.log(Date.now())')" >> "$GITHUB_ENV"
 
       # One at a time within a shard, as Nightly: each shard is its own
       # machine, so its ports and its CPU are its own. Names reach the

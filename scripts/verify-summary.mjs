@@ -26,7 +26,8 @@ const asked = (process.env.VERIFY_NAMES ?? "").split(/\s+/).filter(Boolean);
 
 const lastRunFile = resolve(repoRoot, "docs/watch/last-run.json");
 const lastRun = existsSync(lastRunFile) ? JSON.parse(readFileSync(lastRunFile, "utf8")) : null;
-const written = writtenSince(repoRoot, since);
+// No moment (the shard stopped before its harnesses) is nothing written: the checkout's own docs are not this run's.
+const written = since > 0 ? writtenSince(repoRoot, since) : [];
 const { harnesses } = summarizeShard({ root: repoRoot, since, asked, lastRun, written });
 
 mkdirSync(out, { recursive: true });

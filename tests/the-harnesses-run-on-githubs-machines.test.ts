@@ -57,6 +57,11 @@ describe("a verdict's failing claims, by name", () => {
     expect(falseClaims([false])).toEqual([]);
   });
 
+  it("reads a verdict's own booleans, a part's booleans and a list of named results", () => {
+    expect(falseClaims({ verdict: { reachedEveryChapter: false, opened: true }, passed: false })).toEqual(["reachedEveryChapter"]);
+    expect(falseClaims({ npm: { installed: false, built: true }, products: [{ name: "squad", ok: true }, { name: "pod", ok: false }] })).toEqual(["npm.installed", "products: pod"]);
+  });
+
   it("reads every verdict in docs/ without throwing", () => {
     for (const file of writtenSince(repo, 0) as { path: string }[]) {
       if (!file.path.endsWith(".json")) continue;
@@ -118,6 +123,9 @@ describe("a shard's summary", () => {
     const lastRun = { at: new Date(since - 86_400_000).toISOString(), results: [{ name: "one-face", code: 0, took: 1, verdict: "held" }] };
     const { harnesses } = summarizeShard({ root, since, asked: ["one-face"], lastRun, written: [] }) as { harnesses: Harness[] };
     expect(harnesses[0]!.verdict).toBe("no verdict");
+    // A shard that stopped before its harnesses has no moment they began: the checkout's own last run is not its.
+    const fresh = { at: new Date().toISOString(), results: lastRun.results };
+    expect((summarizeShard({ root, since: 0, asked: ["one-face"], lastRun: fresh, written: [] }) as { harnesses: Harness[] }).harnesses[0]!.verdict).toBe("no verdict");
   });
 
   it("never brings back a shard's own record over the checkout's", () => {

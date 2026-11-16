@@ -31,7 +31,8 @@
  * fix, reproduced by the command itself.
  */
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync, writeSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync, writeSync } from "node:fs";
+import { homedir, tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { updateLedger } from "./lib/ledger.mjs";
@@ -458,9 +459,11 @@ mkdirSync(resolve(repoRoot, "docs/watch"), { recursive: true });
  * runners (verify.yml) credits each harness with the files written while it
  * ran, and says the claims it missed by name (lib/on-github.mjs).
  */
+// The file is committed: a path of this machine's said in a harness's last line is not.
+const scrubbed = (text) => [repoRoot, homedir(), tmpdir(), realpathSync(tmpdir())].reduce((said, path) => said.split(path).join(path === repoRoot ? "." : "~"), String(text ?? ""));
 writeFileSync(
   LAST_RUN,
-  `${JSON.stringify({ at: new Date().toISOString(), results: results.map(({ name, code, took, began, verdict, gist: said, missed, output }) => ({ name, code, took, began, verdict, ...(verdict === "held" ? {} : { gist: said, missed: missed ?? missedClaims(output ?? "") }) })) }, null, 2)}\n`,
+  `${JSON.stringify({ at: new Date().toISOString(), results: results.map(({ name, code, took, began, verdict, gist: said, missed, output }) => ({ name, code, took, began, verdict, ...(verdict === "held" ? {} : { gist: scrubbed(said), missed: (missed ?? missedClaims(output ?? "")).map(scrubbed) }) })) }, null, 2)}\n`,
 );
 const spent = results.reduce((sum, one) => sum + one.took, 0);
 say(

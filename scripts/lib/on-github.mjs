@@ -31,11 +31,12 @@ export const NOT_ON_A_RUNNER = ["shrunk", "panning", "scale"];
 
 /*
  * ROUGHLY HOW LONG EACH TAKES ON A RUNNER, in seconds, from Nightly's run on
- * main of 2026-10-18 (its comment in nightly.yml). A harness not listed is
+ * main of 2026-10-18 (its comment in nightly.yml; journeys there is four
+ * apps of the five, so here it is more). A harness not listed is
  * taken to be two minutes. It only has to be good enough to keep one
  * runner from holding every long harness.
  */
-export const RUNNER_SECONDS = { site: 823, gauntlet: 721, journeys: 808, a11y: 261, audit: 221, pages: 198, lines: 179, survey: 200, create: 300, quiet: 900 };
+export const RUNNER_SECONDS = { site: 823, gauntlet: 721, journeys: 1500, a11y: 261, audit: 221, pages: 198, lines: 179, survey: 200, create: 300, quiet: 900 };
 const secondsOf = (name) => RUNNER_SECONDS[name] ?? 120;
 
 /**
@@ -81,7 +82,7 @@ export function askedHarnesses(input, chain) {
 }
 
 /** Where claims are kept in a verdict, by the names the harnesses use for them. */
-const CLAIM_HOLDERS = ["checks", "claims", "criteria", "steps"];
+const CLAIM_HOLDERS = ["checks", "claims", "criteria", "steps", "verdict", "result"];
 /** Keys that are a verdict's own summary, not one of its claims. */
 const NOT_CLAIMS = new Set(["ok", "passed", "held", "quick"]);
 const isFalse = (value) => value === false || (value !== null && typeof value === "object" && !Array.isArray(value) && (value.ok === false || value.passed === false));
@@ -98,7 +99,14 @@ export function falseClaims(verdict) {
     if (NOT_CLAIMS.has(key)) continue;
     if (CLAIM_HOLDERS.includes(key) && value !== null && typeof value === "object" && !Array.isArray(value)) {
       for (const [claim, held] of Object.entries(value)) if (!NOT_CLAIMS.has(claim) && isFalse(held)) found.add(claim);
+    } else if (Array.isArray(value)) {
+      // A list of `{ name, ok }`: each that failed, by its name.
+      for (const [index, entry] of value.entries()) if (isFalse(entry) && typeof entry === "object") found.add(`${key}: ${entry.name ?? entry.id ?? entry.label ?? `#${index + 1}`}`);
     } else if (isFalse(value)) found.add(key);
+    else if (value !== null && typeof value === "object") {
+      // A part of the verdict whose own claims are said as booleans (`npm: { installed: false }`).
+      for (const [claim, held] of Object.entries(value)) if (!NOT_CLAIMS.has(claim) && held === false) found.add(`${key}.${claim}`);
+    }
   }
   return [...found];
 }
@@ -145,7 +153,9 @@ export const SHARD_OWN = ["docs/watch/last-run.json", "docs/watch/ledger.json", 
  * and those its verdicts say are, and the watch's open problems.
  */
 export function summarizeShard({ root, since, asked, lastRun, written }) {
-  const ran = lastRun && Date.parse(lastRun.at) >= since ? lastRun.results : [];
+  // No moment the harnesses began (the shard stopped before them) is no harness run, whatever the checkout's last run says.
+  const ran = since > 0 && lastRun && Date.parse(lastRun.at) >= since ? lastRun.results : [];
+  const starts = ran.map((one) => (one.began ? Date.parse(one.began) : null)).filter((at) => at !== null);
   const harnesses = asked.map((name) => {
     const result = ran.find((one) => one.name === name);
     if (!result) return { name, verdict: "no verdict", took: null, claims: ["wrote no verdict: the shard stopped before it ran or finished"], files: [] };
@@ -153,7 +163,11 @@ export function summarizeShard({ root, since, asked, lastRun, written }) {
     const files =
       began === null
         ? []
-        : written.filter((file) => file.at >= began - 1000 && file.at <= began + (result.took + 5) * 1000 && !SHARD_OWN.includes(file.path)).map((file) => file.path);
+        : (() => {
+            // Until the next harness began, or a little past its own end when it was the last.
+            const next = Math.min(...starts.filter((at) => at > began), began + (result.took + 5) * 1000);
+            return written.filter((file) => file.at >= began - 1000 && file.at < next && !SHARD_OWN.includes(file.path)).map((file) => file.path);
+          })();
     const claims = new Set(result.verdict === "held" ? [] : (result.missed ?? []));
     if (result.verdict !== "held") {
       for (const file of files.filter((path) => path.endsWith(".json"))) {

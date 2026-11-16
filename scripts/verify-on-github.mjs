@@ -54,7 +54,9 @@ const ref = valueOf("--ref");
 const slow = valueOf("--slow");
 const renderer = valueOf("--renderer") ?? "dom";
 const shards = valueOf("--shards");
-const minutes = Number(valueOf("--minutes") ?? 180);
+const minutesSaid = valueOf("--minutes") ?? "180";
+if (!/^\d+$/.test(minutesSaid) || Number(minutesSaid) <= 0) stop(`--minutes takes a whole number above 0, not ${minutesSaid}`);
+const minutes = Number(minutesSaid);
 const quick = args.includes("--quick");
 const unknownFlags = args.filter((arg) => arg.startsWith("-") && arg !== "--quick");
 if (unknownFlags.length > 0) stop(`Not a flag verify:github takes: ${unknownFlags.join(", ")}`);
@@ -62,14 +64,20 @@ if (slow !== undefined && !/^\d+(\.\d+)?$/.test(slow)) stop(`--slow takes a numb
 if (!["dom", "gpu"].includes(renderer)) stop(`--renderer is dom or gpu, not ${renderer}`);
 if (shards !== undefined && !/^\d+$/.test(shards)) stop(`--shards takes a whole number, not ${shards}`);
 
-const chain = sh("node", [resolve(repoRoot, "scripts/verify-all.mjs"), "--list"]).split("\n").filter(Boolean);
+/*
+ * THE NAMES, checked against this checkout's chain — unless the run is on
+ * another branch (--ref), whose chain may differ: then the run's own plan
+ * job checks them, and the harnesses reported are those its shards say.
+ */
+const named = args.some((arg) => !arg.startsWith("-"));
 let names;
 try {
-  names = askedHarnesses(args.filter((arg) => !arg.startsWith("-")).join(" "), chain);
+  const given = args.filter((arg) => !arg.startsWith("-")).join(" ");
+  const chain = ref ? given.split(/[\s,]+/).filter(Boolean) : sh("node", [resolve(repoRoot, "scripts/verify-all.mjs"), "--list"]).split("\n").filter(Boolean);
+  names = ref && !named ? [] : askedHarnesses(given, chain);
 } catch (error) {
   stop(error.message);
 }
-const named = args.some((arg) => !arg.startsWith("-"));
 
 try {
   gh("auth", "status");
@@ -103,9 +111,11 @@ if (shards !== undefined) fields.push("-f", `shards=${shards}`);
 try {
   gh("workflow", "run", WORKFLOW, "--ref", branch, ...fields);
 } catch (error) {
-  stop(`gh workflow run ${WORKFLOW} failed: ${(error.stderr || error.message).trim()}`);
+  const said = (error.stderr || error.message).trim();
+  // A dispatch finds the workflow on the default branch, and runs the ref's copy: a branch cut before verify.yml has none.
+  stop(`gh workflow run ${WORKFLOW} failed: ${said}${/404|422|not found/i.test(said) ? `\n${branch} may predate ${WORKFLOW}: rebase it onto main and push` : ""}`);
 }
-say(`asked  ${named ? names.join(", ") : `the whole chain (${names.length} harnesses)`}${quick ? ", quick" : ""} on ${branch} at ${remoteSha.slice(0, 8)} [${request}]`);
+say(`asked  ${named ? names.join(", ") : ref ? "the whole chain" : `the whole chain (${names.length} harnesses)`}${quick ? ", quick" : ""} on ${branch} at ${remoteSha.slice(0, 8)} [${request}]`);
 
 // THE RUN, found by the token in its name: a dispatch answers with nothing to find it by.
 let run;
@@ -122,6 +132,7 @@ const deadline = Date.now() + minutes * 60_000;
 const told = new Set();
 let view;
 for (;;) {
+  if (Date.now() > deadline) stop(`Still running after ${minutes} minutes, or gh could not say: ${run.url} (--minutes to wait longer)`, 1);
   try {
     view = JSON.parse(gh("run", "view", String(run.databaseId), "--json", "status,conclusion,jobs,headSha"));
   } catch {
@@ -135,7 +146,6 @@ for (;;) {
     }
   }
   if (view.status === "completed") break;
-  if (Date.now() > deadline) stop(`Still running after ${minutes} minutes: ${run.url} (--minutes to wait longer)`, 1);
   await wait(30_000);
 }
 
@@ -175,7 +185,7 @@ try {
 
 // A harness asked for and in no shard's summary did not run: that is not a hold.
 for (const name of names) if (!harnesses.some((one) => one.name === name)) harnesses.push({ name, verdict: "no verdict", took: null, claims: ["no shard said anything of it: read the run"], files: [] });
-const ordered = names.map((name) => harnesses.find((one) => one.name === name));
+const ordered = names.length > 0 ? names.map((name) => harnesses.find((one) => one.name === name)) : harnesses;
 for (const line of terminalLines(ordered)) say(line);
 const held = allHeld(ordered) && view.conclusion === "success";
 const broken = ordered.filter((one) => one.verdict !== "held" && one.verdict !== "flaky").length;
