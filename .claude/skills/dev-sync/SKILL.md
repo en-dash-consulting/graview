@@ -18,8 +18,12 @@ keeps the two in step and both in step with git and npm.
 
 ## Ground rules (from AGENTS.md, CLAUDE.md and HQ's rules — read them)
 
+The loop this pass runs is `docs/process.md`; the rules every build follows
+are `.ndx/rex/workflow.md`. Don't restate them in a brief: point at them.
+
 - Branches and PRs, never main. Merge only on a green JSON
-  `statusCheckRollup`, and run `nightly.yml` on the branch first for
+  `statusCheckRollup`. Dispatch `nightly.yml` only on a frozen head (CI
+  green, the build has reported, nothing more will be pushed) and only for
   harness, render or focus changes. Nick approves the npm `publish` job;
   nothing else needs him.
 - The repo is **public**. A security fault's mechanism never goes in a
@@ -48,14 +52,16 @@ exactly one worker wins.
   with "held by …" means someone else has it: **skip it, don't wait.**
 - **Renew** (`renew-lease {id, by, until}`) at every step boundary. A hold
   lapses at `until` and anyone may then take it, so never let one lapse
-  mid-work. **Release** (`release-lease {id, by}`) the moment you finish
+  mid-work. Whoever does the work renews: the pass its `phase:` leases, a
+  build its own feature and slot leases (it is handed their ids and the
+  `by` name). The pass makes no renewals on a build's behalf. **Release** (`release-lease {id, by}`) the moment you finish
   or give up. The last holder's name stays on the record.
 - **What to hold.**
   | Resource | Held for | Until |
   |---|---|---|
   | `phase:triage` | reconciling HQ and ingesting into the PRD | +45 min |
-  | `feature:<id>` (or `brief:` / `request:` when no feature) | building it | +4 h, renewed |
-  | `slot:build-1` … `slot:build-3` | one worktree build's harness ports and CPU | +3 h, renewed |
+  | `feature:<id>` (or `brief:` / `request:` when no feature) | building it, until its PR is green and frozen | +4 h, renewed by the build |
+  | `slot:build-1` … `slot:build-3` | one worktree build's harness ports and CPU | +3 h, renewed by the build |
   | `phase:release` | the batch merge, the Version PR, publish, HQ booking | +3 h, renewed |
 - A build slot is the machine's semaphore: three builds at most, and slot
   *N* runs every harness on `GRAVIEW_PORT_BASE=5600+100*N`, so two workers
@@ -115,21 +121,25 @@ If no actionable item is free and no release is due, add a `job-run` with
 
 ### 3. Build (hold the feature, then a slot)
 
-For each actionable feature in priority order: take its lease (skip it if
-held), `start-building` on HQ, and mark its PRD change `in_progress`. Take
-a free `slot:build-N`, then build in a worktree as a subagent with the
-brief AGENTS.md wants (goal, files, what's ruled out, `GRAVIEW_PORT_BASE`
-for its slot, the public-text rule, push the branch, open a PR, merge
-nothing). Several at once, three at most.
+For each actionable feature in priority order, skipping one that already
+has an open PR: take its lease (skip it if held), `start-building` on HQ,
+and mark its PRD change `in_progress`. Take a free `slot:build-N`, then
+build in a worktree as a subagent. The brief says the goal, the files,
+what's ruled out, `GRAVIEW_PORT_BASE` for its slot, the two lease ids and
+the `by` name, and "follow `.ndx/rex/workflow.md`" (it holds the review,
+the freeze, the harness, budget and public-text rules; don't restate
+them). Several at once, three at most.
 
-Each build ends with an independent adversarial review that is handed the
-code, not your conclusions. Fix what is real, review again, and stop when
-it converges. Release the slot when the build's harnesses are done. Keep
-the feature lease until it ships, renewing it.
+The build renews its feature and slot leases at each of its step
+boundaries, releases the slot when its local harnesses are done, and
+releases the feature lease once its PR is green, frozen and reported: from
+then on the open PR is the claim. Once a build has reported, and only then,
+dispatch `nightly.yml` on its head if it touches harnesses, render or focus.
 
 ### 4. Release (hold `phase:release`)
 
 When the open PRs are green and reviewed, or something urgent stands:
+- From 0.2.5 the batch runs `pnpm release:prepare` and its merge starts publish (`docs/process.md`).
 - **Batch.** One `batch/0-1-NN` off main merging them in order. Re-measure
   budgets as raise files. Full `pnpm test`, `pnpm verify`, `pnpm engines`,
   `node scripts/progression.mjs`; nightly on its head; merge on green.
@@ -147,7 +157,7 @@ When the open PRs are green and reviewed, or something urgent stands:
 
 ### 5. Book it on HQ
 
-- `draft-release` (`id release:r-0-1-NN`, product framework, public notes per
+- `draft-release` (`id release:r-0-N-NN`, product framework, public notes per
   HQ's rules), `follows-release`, a `ship-in-release` per feature, then
   `publish`.
 - `mark-shipped` each feature, and `mark-delivered` each request it closes.

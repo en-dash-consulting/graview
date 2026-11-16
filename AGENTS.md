@@ -9,6 +9,14 @@ the agent tool surface and the accessibility labels from that declaration.
 `graview` is the tool a person installs. `@graview/*` is the framework a
 product imports. All fourteen packages share one version.
 
+## How work flows
+
+The loop from an ask on Graview HQ to npm and Graview Cloud, its gates and
+who acts at each, is [`docs/process.md`](docs/process.md). The rules every
+agent follows on every change are [`.ndx/rex/workflow.md`](.ndx/rex/workflow.md),
+whether it was started by `ndx work`, by the `dev-sync` pass, or from a brief
+by hand. Read both before your first commit.
+
 ## Layout
 
 ```
@@ -153,7 +161,8 @@ landing page is not a pull request's to write: the Version packages step and
 the Pages deploy fill it in (`site-numbers.mjs --release`), so a PR never
 touches `docs/site/index.html` or the sitemap just because it added tests.
 A bundle budget raise is a file of its own in `scripts/budget-raises/`
-(see `scripts/lib/bundle-budget.mjs`), never an edit to an entry's numbers.
+(see `scripts/lib/bundle-budget.mjs`), never an edit to an entry's numbers;
+from 0.2.5 the batch writes it, never a build's PR.
 
 Run `npx playwright install chromium webkit firefox` once. Playwright is
 pinned at 1.49.1 on purpose.
