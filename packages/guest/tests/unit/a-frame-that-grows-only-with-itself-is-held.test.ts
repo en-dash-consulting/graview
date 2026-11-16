@@ -154,10 +154,10 @@ describe("a frame whose guest is sized by its own frame", () => {
     frame = undefined;
   });
 
-  const mounted = (problems: string[]) => {
+  const mounted = (problems: string[], codes: unknown[] = []) => {
     const element = document.createElement("div");
     document.body.appendChild(element);
-    frame = mountGuestView(element, { url: "https://cards.example/card.html", view: "card", store: showroom(), principal: bethan, input: () => ({ node: { id: "car:golf" } }), limits: { maxHeight: CAP }, onProblem: (said) => problems.push(said) });
+    frame = mountGuestView(element, { url: "https://cards.example/card.html", view: "card", store: showroom(), principal: bethan, input: () => ({ node: { id: "car:golf" } }), limits: { maxHeight: CAP }, onProblem: (said, problem) => (problems.push(said), codes.push(problem)) });
     frame.iframe.style.height = "160px";
     const posted = vi.spyOn(frame.iframe.contentWindow!, "postMessage");
     window.dispatchEvent(new MessageEvent("message", { data: { graview: "guest-ready", protocol: GUEST_PROTOCOL }, origin: "null", source: frame.iframe.contentWindow }));
@@ -170,7 +170,8 @@ describe("a frame whose guest is sized by its own frame", () => {
 
   it("stops growing a few rounds in, wears the height it is held at, and says why to the host", async () => {
     const problems: string[] = [];
-    const { iframe, ask } = mounted(problems);
+    const codes: unknown[] = [];
+    const { iframe, ask } = mounted(problems, codes);
     /* A page as tall as its frame and a margin: it asks again whenever its frame moves. */
     for (let round = 0; round < 200 && !iframe.hasAttribute("data-guest-view-held"); round += 1) {
       ask(height(iframe) + 16);
@@ -180,11 +181,13 @@ describe("a frame whose guest is sized by its own frame", () => {
     expect(problems).toHaveLength(1);
     expect(iframe.getAttribute("data-guest-view-held")).toBe(iframe.style.height);
     expect(problems[0]).toContain('The view "card" asked to be 16px taller than its frame each time its frame was made taller');
+    expect(codes).toEqual([{ code: "held-by-growth-guard" }]);
   });
 
   it("is given all of a gallery whose pictures of one height stop arriving just where it would be held, and says nothing", async () => {
     const problems: string[] = [];
-    const { iframe, ask } = mounted(problems);
+    const codes: unknown[] = [];
+    const { iframe, ask } = mounted(problems, codes);
     for (const content of [100, 300, 500, 700, 900]) {
       ask(content);
       await tick();
@@ -197,7 +200,8 @@ describe("a frame whose guest is sized by its own frame", () => {
 
   it("grows to the cap where its content grows, and is not held", async () => {
     const problems: string[] = [];
-    const { iframe, ask } = mounted(problems);
+    const codes: unknown[] = [];
+    const { iframe, ask } = mounted(problems, codes);
     for (let content = 1_001; content <= 25_025; content += 1_001) {
       ask(content);
       await tick();

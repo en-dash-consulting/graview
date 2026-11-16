@@ -64,13 +64,17 @@ describe("the host reads the faces an app lends a frame", () => {
 
   it("takes a file only as a font or as bytes that say nothing more, and says one that answered as a page", async () => {
     const said: string[] = [];
-    expect(await frameFonts([PAGE], { asset: at, fetch: fetcher }, (one) => said.push(one))).toEqual([]);
+    const codes: unknown[] = [];
+    expect(await frameFonts([PAGE], { asset: at, fetch: fetcher }, (one, problem) => (said.push(one), codes.push(problem)))).toEqual([]);
+    expect(codes).toEqual([{ code: "face-not-loaded" }]);
     expect(said).toEqual([`The app's face "Sign In" for its views is not loaded: ${at(PAGE.src)} answered text/html, not a font.`]);
   });
 
   it("hands the file lent last under a shared name, and says which", async () => {
     const said: string[] = [];
-    const fonts = await frameFonts([ROCK, ROCK_AGAIN], { asset: at, fetch: fetcher }, (one) => said.push(one));
+    const codes: unknown[] = [];
+    const fonts = await frameFonts([ROCK, ROCK_AGAIN], { asset: at, fetch: fetcher }, (one, problem) => (said.push(one), codes.push(problem)));
+    expect(codes).toEqual([{ code: "face-several-files" }]);
     expect(fonts).toHaveLength(1);
     expect(bytesOf(fonts[0]!)).toEqual(new Array(200).fill(2));
     expect(said).toEqual([`The app's face "Rock Face" for its views is lent from 2 files, and the one drawn in the frame is ${at(ROCK_AGAIN.src)}.`]);
@@ -87,7 +91,9 @@ describe("the host reads the faces an app lends a frame", () => {
 
   it("reads nothing from an origin the host does not list, nor a held file where it says no asset, and says each", async () => {
     const said: string[] = [];
-    expect(await frameFonts([ELSEWHERE, ROCK], { fetch: fetcher }, (one) => said.push(one))).toEqual([]);
+    const codes: unknown[] = [];
+    expect(await frameFonts([ELSEWHERE, ROCK], { fetch: fetcher }, (one, problem) => (said.push(one), codes.push(problem)))).toEqual([]);
+    expect(codes).toEqual([{ code: "face-not-lent" }, { code: "face-not-lent" }]);
     expect(asked).toEqual([]);
     expect(said).toHaveLength(2);
     expect(said[0]).toContain("is no origin this host lists for the faces its views are lent");
@@ -164,10 +170,10 @@ describe("frames on one page lent the same faces", () => {
     vi.useRealTimers();
   });
   /** A frame drawn in `brand`, said ready, with what its port hears and what its host is told. */
-  const drawn = (brand: () => { name: string; views: { fonts: readonly { family: string; src: string }[] } }, problems: string[] = []) => {
+  const drawn = (brand: () => { name: string; views: { fonts: readonly { family: string; src: string }[] } }, problems: string[] = [], codes: unknown[] = []) => {
     const element = document.createElement("div");
     document.body.appendChild(element);
-    const frame = mountGuestView(element, { url: "https://cards.example/card.html", view: "card", store: showroom(), principal: bethan, input: () => ({ node: { id: "car:golf" } }), brand, asset: at, onProblem: (said) => problems.push(said) });
+    const frame = mountGuestView(element, { url: "https://cards.example/card.html", view: "card", store: showroom(), principal: bethan, input: () => ({ node: { id: "car:golf" } }), brand, asset: at, onProblem: (said, problem) => (problems.push(said), codes.push(problem)) });
     frames.push(frame);
     const posted = vi.spyOn(frame.iframe.contentWindow!, "postMessage");
     window.dispatchEvent(new MessageEvent("message", { data: { graview: "guest-ready", protocol: GUEST_PROTOCOL }, origin: "null", source: frame.iframe.contentWindow }));
@@ -218,12 +224,14 @@ describe("frames on one page lent the same faces", () => {
     vi.spyOn(window, "fetch").mockImplementation((() => new Promise<Response>((done) => (arrive = () => done(new Response(new Uint8Array(64).fill(6), { headers: WOFF2 }))))) as never);
     const stalled = { family: "Stalled Face", src: `/graview/assets/${SHA("f")}.woff2` };
     const problems: string[] = [];
-    const { frame, size, lent } = drawn(() => ({ name: "Quarry", views: { fonts: [stalled] } }), problems);
+    const codes: unknown[] = [];
+    const { frame, size, lent } = drawn(() => ({ name: "Quarry", views: { fonts: [stalled] } }), problems, codes);
     size(220);
     await new Promise((done) => setTimeout(done, FACES_WAIT_MS - 300));
     expect(frame.iframe.hasAttribute("data-guest-view-drawn")).toBe(false);
     await vi.waitFor(() => expect(frame.iframe.hasAttribute("data-guest-view-drawn")).toBe(true), { timeout: 2_000 });
     expect(problems).toEqual([`The app's face "Stalled Face" for its views did not arrive in ${FACES_WAIT_MS / 1_000} seconds, so the frame is drawn without it and handed it once it arrives.`]);
+    expect(codes).toEqual([{ code: "face-late" }]);
     arrive();
     await vi.waitFor(() => expect(lent()).toHaveLength(1));
   });

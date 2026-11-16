@@ -148,6 +148,7 @@ afterEach(() => {
 /** A view past its ready, whose runtime the test speaks for, dressed in `brand` where given. */
 function mounted(brand?: () => { readonly name: string; readonly views?: { readonly fonts?: readonly { family: string; src: string }[] } }) {
   const problems: string[] = [];
+  const codes: unknown[] = [];
   const view = mountWorkerView(document.body.appendChild(document.createElement("div")), {
     manifest: { name: "packages", title: "The packages", attach: "package", cardinality: "many" },
     worker: { script: "/* the view */" },
@@ -155,7 +156,7 @@ function mounted(brand?: () => { readonly name: string; readonly views?: { reado
     principal: lin,
     limits: { silentMs: 5_000 },
     ...(brand ? { brand, asset: (path: string) => path } : {}),
-    onProblem: (said) => problems.push(said),
+    onProblem: (said, problem) => (problems.push(said), codes.push(problem)),
   });
   const worker = FakeWorker.made.at(-1)!;
   worker.say({ graview: "guest-ready", protocol: GUEST_PROTOCOL });
@@ -168,12 +169,12 @@ function mounted(brand?: () => { readonly name: string; readonly views?: { reado
   };
   const style = (sheets: readonly string[]) => port.postMessage({ type: "style", sheets, nonce: hello.nonce });
   const drawnCss = () => view.shadow.querySelector("[data-graview-view-style]")?.textContent ?? "";
-  return { view, problems, style, drawnCss };
+  return { view, problems, codes, style, drawnCss };
 }
 
 describe("a worker view on a page", () => {
   it("draws in the face its stylesheet declares, under its own name for it, says a face past its size once, and gives its face back when it goes", async () => {
-    const { view, problems, style, drawnCss } = mounted();
+    const { view, problems, codes, style, drawnCss } = mounted();
     const sheets = [sheet("Shout"), sheet("Too Big", 60_000), ".title { font-family: Shout, serif }"];
     style(sheets);
     await until(() => fonts.size === 1 && problems.length > 0);
@@ -182,6 +183,7 @@ describe("a worker view on a page", () => {
     expect(drawnCss()).toContain(`.title { font-family: "${family}", serif; }`);
     expect(fetched).toEqual([]);
     expect(problems).toEqual([expect.stringMatching(/"Too Big".*more than the 50 KB.*\(view-font-face-size\)\.$/)]);
+    expect(codes).toEqual([{ code: "own-face-refused" }]);
     /* The view gives the same sheets again, and one more rule: the face is not loaded twice, nor the refusal said twice. */
     style([...sheets, ".x { color: red }"]);
     await wait(50);

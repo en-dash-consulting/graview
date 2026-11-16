@@ -1,3 +1,4 @@
+import type { ViewProblemCode, ViewProblemSaid } from "./problems.js";
 import type { FileValue } from "@graview/core";
 import type { GuestDomEvent } from "../protocol.js";
 import { storedFilesOf } from "./marks.js";
@@ -48,7 +49,7 @@ export interface GuestSectionsOptions {
   readonly record: (id: string) => Readonly<Record<string, unknown>> | undefined;
   /** Where the page fetches a record's file (`FileValue.href`), as the view's host says it. */
   readonly file?: (href: string) => string | undefined;
-  readonly onProblem?: (said: string) => void;
+  readonly onProblem?: ViewProblemSaid;
 }
 
 export interface GuestSections {
@@ -117,10 +118,10 @@ export function createGuestSections(window: Window & typeof globalThis, options:
   const { shadow } = options;
   const region = shadow.host;
   const told = new Set<string>();
-  const say = (said: string) => {
+  const say = (said: string, code: ViewProblemCode = "file-link-goes-nowhere") => {
     if (told.has(said)) return;
     told.add(said);
-    options.onProblem?.(said);
+    options.onProblem?.(said, { code });
   };
   const byId = (id: string): Element | null => {
     try {
@@ -234,7 +235,7 @@ export function createGuestSections(window: Window & typeof globalThis, options:
       const id = (jump.getAttribute("href") ?? "").slice(1);
       const target = id ? byId(id) : null;
       if (!target || !root.contains(target)) {
-        say(`The jump "#${id}" goes nowhere: the view drew no element with that id.`);
+        say(`The jump "#${id}" goes nowhere: the view drew no element with that id.`, "jump-goes-nowhere");
         return true;
       }
       /* At once, where the person asked for less motion; as the view's own `scroll-behavior` says, elsewhere. */

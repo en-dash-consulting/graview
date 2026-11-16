@@ -24,3 +24,10 @@ export type { GuestViewOptions } from "./react.js";
  * page that draws only frames carries none of it.
  */
 export type { GuestFile, GuestFont, GuestPlace, GuestProps, GuestTheme, GuestUnseen } from "../protocol.js";
+/*
+ * What a view's host says went wrong, by a code that stays when the words
+ * change (HQ f-view-problem-codes): the types here, the list itself
+ * (`VIEW_PROBLEM_CODES`) on `/host/frame`, `/host/worker` and `/host/views`,
+ * so a page carries none of it up front.
+ */
+export type { ViewProblem, ViewProblemCode, ViewProblemSaid } from "./problems.js";

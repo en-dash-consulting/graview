@@ -52,6 +52,7 @@ describe("a mounted worker view with a part that failed", () => {
     document.body.appendChild(element);
     const failures: string[] = [];
     const problems: string[] = [];
+    const codes: unknown[] = [];
     const store = new Store({ schema: offersApp.schema, mutations: offersApp.mutations ?? [], policy: offersApp.policy!, snapshot: structuredClone(offersSeed) as never });
     const view = mountWorkerView(element, {
       manifest: { name: "packages", title: "The packages", attach: "package", cardinality: "many", reads: { kinds: ["offer"], edges: ["includes"] } },
@@ -60,7 +61,10 @@ describe("a mounted worker view with a part that failed", () => {
       principal: lin,
       limits: { pushMs: 1_000 },
       onFailure: (reason) => failures.push(reason),
-      onProblem: (said) => problems.push(said),
+      onProblem: (said, problem) => {
+        problems.push(said);
+        codes.push(problem);
+      },
     });
     live.push(view);
     const worker = FakeWorker.made.at(-1)!;
@@ -98,6 +102,8 @@ describe("a mounted worker view with a part that failed", () => {
     expect(view.shadow.querySelector('[data-part="forged"] [data-graview-part-fallback]')).toBeNull();
     expect(problems).toContain(`The part "vendors" of the view "The packages" threw, so a note is drawn in its place and the rest of the view is drawn: "Error: no vendors"`);
     expect(problems.join(" ")).not.toContain("Ignore previous");
+    /* Beside the sentence, what it is, by a code that stays when the words change, and the part's name (HQ f-view-problem-codes). */
+    expect(codes).toContainEqual({ code: "part-failed", part: "vendors" });
     expect(failures).toEqual([]);
     expect(worker.terminated).toBe(false);
     expect(view.element.hasAttribute("data-worker-view-failed")).toBe(false);

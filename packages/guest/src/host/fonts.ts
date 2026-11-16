@@ -4,6 +4,7 @@ import { imageOriginsOf } from "./open-judge.js";
 /* A view's own face refused by the open kit, said as the page says it: fetched with the faces (view.ts). */
 export { viewFaceRefusedWords } from "@graview/core/css";
 import type { GuestFont } from "../protocol.js";
+import type { ViewProblem, ViewProblemCode, ViewProblemSaid } from "./problems.js";
 
 /*
  * THE FACES AN APP LENDS ITS VIEWS, LOADED (Roadmap
@@ -110,7 +111,7 @@ async function readHeld(fetcher: typeof fetch, url: string, signal: AbortSignal,
 
 /** One view's lending: what it says to, and whether a newer lending of the same view is about to give it back. */
 interface Lending {
-  readonly say: (said: string) => void;
+  readonly say: ViewProblemSaid;
   going: boolean;
 }
 /** One file lent under a name: the lendings holding it (each with the face as it said it: `The app's face "X" for its views`), and its face once it has loaded. `shown`: the file as it is said. */
@@ -168,7 +169,7 @@ function draw(document: Document, name: Name) {
     for (const [lending, face] of one.holders) {
       if (lending.going || told.has(lending)) continue;
       told.add(lending);
-      lending.say(`${face} is lent from ${staying.length} files on this page, and the one drawn in every view is ${drawing.shown}.`);
+      lending.say(`${face} is lent from ${staying.length} files on this page, and the one drawn in every view is ${drawing.shown}.`, { code: "face-several-files" });
     }
   }
 }
@@ -180,13 +181,13 @@ function draw(document: Document, name: Name) {
  * failed, so the view is not left without a face meanwhile and a face both
  * lend is never let go between them.
  */
-export function loadViewFonts(document: Document, fonts: readonly ViewFont[], options: ViewFontsOptions, say: (said: string) => void, replacing?: () => void): () => void {
+export function loadViewFonts(document: Document, fonts: readonly ViewFont[], options: ViewFontsOptions, say: ViewProblemSaid, replacing?: () => void): () => void {
   const asks: Ask[] = [];
-  if (fonts.length > VIEW_FONTS_MOST) say(`The app lends its views ${fonts.length} faces and at most ${VIEW_FONTS_MOST} are loaded, so ${fonts.slice(VIEW_FONTS_MOST).map((font) => `"${font.family}"`).join(", ")} ${fonts.length - VIEW_FONTS_MOST === 1 ? "is" : "are"} not.`);
+  if (fonts.length > VIEW_FONTS_MOST) say(`The app lends its views ${fonts.length} faces and at most ${VIEW_FONTS_MOST} are loaded, so ${fonts.slice(VIEW_FONTS_MOST).map((font) => `"${font.family}"`).join(", ")} ${fonts.length - VIEW_FONTS_MOST === 1 ? "is" : "are"} not.`, { code: "face-not-lent" });
   for (const font of fonts.slice(0, VIEW_FONTS_MOST)) {
     const at = viewFontAddress(font, options);
     if ("refused" in at) {
-      say(at.refused);
+      say(at.refused, { code: "face-not-lent" });
       continue;
     }
     const isHeld = "asset" in viewFontSource(font.src)!;
@@ -197,6 +198,7 @@ export function loadViewFonts(document: Document, fonts: readonly ViewFont[], op
       url: at.url,
       shown: at.url,
       descriptors: { display: "swap", ...(font.weight !== undefined ? { weight: weightOf(font) } : {}), ...(font.style ? { style: font.style.toLowerCase() } : {}) },
+      failed: "face-not-loaded",
       source: isHeld ? { held: at.url } : { address: at.url },
     });
   }
@@ -234,7 +236,7 @@ export interface ViewFacesOptions {
  * again holds the one file. What it answers gives them back; `replacing`
  * as for `loadViewFonts`.
  */
-export function loadViewFaces(document: Document, faces: readonly ViewFace[], options: ViewFacesOptions, say: (said: string) => void, replacing?: () => void): () => void {
+export function loadViewFaces(document: Document, faces: readonly ViewFace[], options: ViewFacesOptions, say: ViewProblemSaid, replacing?: () => void): () => void {
   const asks: Ask[] = [];
   for (const face of faces) {
     const weight = face.weight === undefined ? undefined : face.weight === "normal" ? "400" : face.weight === "bold" ? "700" : face.weight;
@@ -246,6 +248,7 @@ export function loadViewFaces(document: Document, faces: readonly ViewFace[], op
       url: `own:${face.size}`,
       shown: `the ${(face.size / 1_000).toLocaleString("en-US", { maximumFractionDigits: 1 })} KB data: font the view's stylesheet declared last`,
       descriptors: { display: (face.display ?? "swap") as FontDisplay, ...(weight ? { weight } : {}), ...(face.style ? { style: face.style } : {}), ...(face.stretch ? { stretch: face.stretch } : {}), ...(face.unicodeRange ? { unicodeRange: face.unicodeRange } : {}) },
+      failed: "own-face-not-loaded",
       source: { bytes: face.sources.map((one) => one.bytes.slice().buffer as ArrayBuffer) },
     });
   }
@@ -260,12 +263,14 @@ interface Ask {
   readonly url: string;
   readonly shown: string;
   readonly descriptors: FontFaceDescriptors;
+  /** What a face that could not be loaded is said as: a lent face's, or the view's own. */
+  readonly failed: ViewProblemCode;
   /** An address the engine loads; a file the app holds, read here to its bound; or the bytes themselves, tried in order. */
   readonly source: { readonly address: string } | { readonly held: string } | { readonly bytes: readonly ArrayBuffer[] };
 }
 
 /** Lend the page each face asked: one file a name, the last lent drawn (`draw`). What it answers gives them back. */
-function lend(document: Document, asks: readonly Ask[], say: (said: string) => void, replacing?: () => void): () => void {
+function lend(document: Document, asks: readonly Ask[], say: ViewProblemSaid, replacing?: () => void): () => void {
   const page = document.defaultView as (Window & { FontFace?: typeof FontFace; fetch?: typeof fetch }) | null;
   const names = held.get(document) ?? new Map<string, Name>();
   held.set(document, names);
@@ -303,7 +308,7 @@ function lend(document: Document, asks: readonly Ask[], say: (said: string) => v
       const index = name.files.indexOf(one);
       if (index >= 0) name.files.splice(index, 1);
       /* Not to a lending about to be given back: the view lending it again hears it once, there. */
-      for (const [lending, face] of one.holders) if (!lending.going) lending.say(words(face));
+      for (const [lending, face] of one.holders) if (!lending.going) lending.say(words(face), { code: ask.failed });
       draw(document, name);
       if (name.files.length === 0 && names.get(key) === name) names.delete(key);
     };
@@ -388,14 +393,14 @@ function base64Of(bytes: ArrayBuffer): string {
  * which. What is refused, too large or unreadable is said, naming the face,
  * as it is for a worker view.
  */
-export async function frameFonts(fonts: readonly ViewFont[], options: ViewFontsOptions & { readonly fetch: typeof fetch; readonly signal?: AbortSignal; readonly settled?: (family: string) => void }, say: (said: string) => void): Promise<readonly GuestFont[]> {
-  if (fonts.length > VIEW_FONTS_MOST) say(`The app lends its views ${fonts.length} faces and at most ${VIEW_FONTS_MOST} are loaded, so ${fonts.slice(VIEW_FONTS_MOST).map((font) => `"${font.family}"`).join(", ")} ${fonts.length - VIEW_FONTS_MOST === 1 ? "is" : "are"} not.`);
+export async function frameFonts(fonts: readonly ViewFont[], options: ViewFontsOptions & { readonly fetch: typeof fetch; readonly signal?: AbortSignal; readonly settled?: (family: string) => void }, say: ViewProblemSaid): Promise<readonly GuestFont[]> {
+  if (fonts.length > VIEW_FONTS_MOST) say(`The app lends its views ${fonts.length} faces and at most ${VIEW_FONTS_MOST} are loaded, so ${fonts.slice(VIEW_FONTS_MOST).map((font) => `"${font.family}"`).join(", ")} ${fonts.length - VIEW_FONTS_MOST === 1 ? "is" : "are"} not.`, { code: "face-not-lent" });
   /* Each name's files in the order they were lent, a file lent twice counted where it was lent last. */
   const names = new Map<string, { readonly font: ViewFont; readonly url: string }[]>();
   for (const font of fonts.slice(0, VIEW_FONTS_MOST)) {
     const at = viewFontAddress(font, options);
     if ("refused" in at) {
-      say(at.refused);
+      say(at.refused, { code: "face-not-lent" });
       continue;
     }
     const key = nameOf(font);
@@ -413,18 +418,18 @@ export async function frameFonts(fonts: readonly ViewFont[], options: ViewFontsO
           const read = await readHeld(options.fetch, url, signal, isHeld ? "same-origin" : "omit").catch(() => "failed" as const);
           if (signal.aborted) return undefined;
           if (read === "failed") {
-            say(`${named(font.family)} could not be loaded from ${url}.`);
+            say(`${named(font.family)} could not be loaded from ${url}.`, { code: "face-not-loaded" });
             continue;
           }
           if (read === "over") {
-            say(`${named(font.family)} is not loaded: its file, ${url}, is more than ${VIEW_FONT_MOST_BYTES / 1_000_000} MB, the most a file may be as a face for the app's views.`);
+            say(`${named(font.family)} is not loaded: its file, ${url}, is more than ${VIEW_FONT_MOST_BYTES / 1_000_000} MB, the most a file may be as a face for the app's views.`, { code: "face-not-loaded" });
             continue;
           }
           if (!(read instanceof ArrayBuffer)) {
-            say(notAFont(font.family, url, read.type));
+            say(notAFont(font.family, url, read.type), { code: "face-not-loaded" });
             continue;
           }
-          if (files.length > 1) say(`${named(font.family)} is lent from ${files.length} files, and the one drawn in the frame is ${url}.`);
+          if (files.length > 1) say(`${named(font.family)} is lent from ${files.length} files, and the one drawn in the frame is ${url}.`, { code: "face-several-files" });
           return { family: font.family, ...(font.weight !== undefined ? { weight: weightOf(font) } : {}), ...(font.style ? { style: font.style.toLowerCase() } : {}), src: `data:${fontType(url)};base64,${base64Of(read)}` };
         }
         return undefined;
@@ -439,7 +444,7 @@ export async function frameFonts(fonts: readonly ViewFont[], options: ViewFontsO
 /** One reading of a brand's faces, shared by every frame on a page lent them. */
 export interface FrameFontsReading {
   /** The faces as frames are handed them, and what was said of them, once all are read. */
-  readonly read: Promise<{ readonly fonts: readonly GuestFont[]; readonly said: readonly string[] }>;
+  readonly read: Promise<{ readonly fonts: readonly GuestFont[]; readonly said: readonly (readonly [string, ViewProblem])[] }>;
   /** The families still being read. */
   waiting(): readonly string[];
 }
@@ -463,10 +468,10 @@ export function readFrameFonts(window: Window & typeof globalThis, fonts: readon
   readings.set(window, page);
   const had = page.get(key);
   if (had) return had;
-  const said: string[] = [];
+  const said: (readonly [string, ViewProblem])[] = [];
   const waiting = new Set<string>();
   for (const font of fonts.slice(0, VIEW_FONTS_MOST)) if (!("refused" in viewFontAddress(font, options))) waiting.add(font.family);
-  const read = frameFonts(fonts, { ...options, fetch: window.fetch.bind(window), settled: (family) => waiting.delete(family) }, (one) => said.push(one)).then((lent) => ({ fonts: lent, said }));
+  const read = frameFonts(fonts, { ...options, fetch: window.fetch.bind(window), settled: (family) => waiting.delete(family) }, (one, problem) => said.push([one, problem])).then((lent) => ({ fonts: lent, said }));
   const reading: FrameFontsReading = { read, waiting: () => [...waiting] };
   page.set(key, reading);
   if (page.size > READINGS_KEPT) page.delete(page.keys().next().value!);

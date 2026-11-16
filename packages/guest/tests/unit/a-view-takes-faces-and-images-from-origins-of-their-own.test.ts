@@ -64,6 +64,7 @@ afterEach(() => {
 /** The view on a page, dressed in a brand lending Fredoka from fonts.gstatic.com, drawing one image from that origin. */
 async function onThePage(extra: Partial<MountWorkerViewOptions<AnySchema>>) {
   const problems: string[] = [];
+  const codes: unknown[] = [];
   const view = mountWorkerView(document.body.appendChild(document.createElement("div")), {
     manifest: { name: "card", attach: "car", cardinality: "one" },
     worker: { script: "/* the view */" },
@@ -71,7 +72,7 @@ async function onThePage(extra: Partial<MountWorkerViewOptions<AnySchema>>) {
     principal: reader,
     input: () => ({ node: { id: "car:golf" } }),
     brand: () => ({ name: "Cars", views: { fonts: [FREDOKA] } }),
-    onProblem: (said) => problems.push(said),
+    onProblem: (said, problem) => (problems.push(said), codes.push(problem)),
     ...extra,
   });
   live.push(view);
@@ -93,7 +94,7 @@ async function onThePage(extra: Partial<MountWorkerViewOptions<AnySchema>>) {
   for (let i = 0; i < 50 && !view.shadow.querySelector("#picture"); i += 1) await wait(10);
   for (let i = 0; i < 20 && fonts.size === 0 && !problems.some((said) => said.includes("Fredoka")); i += 1) await wait(10);
   await wait(20);
-  return { src: view.shadow.querySelector("#picture")?.getAttribute("src") ?? null, problems };
+  return { src: view.shadow.querySelector("#picture")?.getAttribute("src") ?? null, problems, codes };
 }
 
 describe("a face lent to a view and a view's image", () => {
@@ -104,15 +105,17 @@ describe("a face lent to a view and a view's image", () => {
   });
 
   it("an origin listed only in images.origins admits no face, and the refusal names fonts.origins", async () => {
-    const { problems } = await onThePage({ images: { origins: GSTATIC } });
+    const { problems, codes } = await onThePage({ images: { origins: GSTATIC } });
     expect(fonts.size).toBe(0);
     expect(problems).toContainEqual(expect.stringContaining("is no origin this host lists for the faces its views are lent (`fonts.origins`)"));
+    expect(codes).toContainEqual({ code: "face-not-lent" });
   });
 
   it("an origin listed only in fonts.origins admits no <img> from it", async () => {
-    const { src, problems } = await onThePage({ fonts: { origins: GSTATIC } });
+    const { src, problems, codes } = await onThePage({ fonts: { origins: GSTATIC } });
     expect(src).toBeNull();
     expect(problems).toContainEqual(expect.stringContaining(`"${PICTURE}" was not drawn`));
+    expect(codes).toContainEqual({ code: "image-refused" });
   });
 
   it("an origin in both lists admits a face and an image", async () => {
