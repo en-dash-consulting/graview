@@ -1,7 +1,10 @@
 schema: "rex/v2"
 items:
   "eb19b250-7cee-40dd-9659-2b6551d304a1":
-    status: "in_progress"
+    status: "completed"
     startedAt: "2026-11-15T10:00:00.000Z"
-    lastModified: "2026-11-15T10:00:00.000Z"
+    completedAt: "2026-11-16T07:00:00.000Z"
+    lastModified: "2026-11-16T07:00:00.000Z"
     lastModifiedBy: "Nick Daniel <nick@endash.us>"
+    resolutionType: "code-change"
+    resolutionDetail: "The list page draws the last untidied view of many that replaces it; listPageViewOf; FR-238 in capabilities().shipped. PR #609, in batch #617, released in 0.2.4 (#618)."

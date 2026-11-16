@@ -1,7 +1,10 @@
 schema: "rex/v2"
 items:
   "10c8348d-b15f-45f3-857d-f3d3af947205":
-    status: "in_progress"
+    status: "completed"
     startedAt: "2026-11-15T14:40:00.000Z"
-    lastModified: "2026-11-15T15:06:43.000Z"
+    completedAt: "2026-11-16T07:00:00.000Z"
+    lastModified: "2026-11-16T07:00:00.000Z"
     lastModifiedBy: "Nick Daniel <nick@endash.us>"
+    resolutionType: "code-change"
+    resolutionDetail: "Letting go of a pan or zoom carries what was drawn by how the districts moved; a newcomer with no clear room places the map afresh; a panel resize is not a pan. PR #608 (two reviews), in batch #617, released in 0.2.4 (#618)."

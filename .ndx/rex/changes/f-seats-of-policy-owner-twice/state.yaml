@@ -1,7 +1,10 @@
 schema: "rex/v2"
 items:
   "0a50f2ff-1ddb-46c5-871d-3048e8792cff":
-    status: "in_progress"
+    status: "completed"
     startedAt: "2026-11-15T09:45:00.000Z"
-    lastModified: "2026-11-15T09:45:00.000Z"
+    completedAt: "2026-11-16T07:00:00.000Z"
+    lastModified: "2026-11-16T07:00:00.000Z"
     lastModifiedBy: "Nick Daniel <nick@endash.us>"
+    resolutionType: "code-change"
+    resolutionDetail: "seatsOfPolicy names the owner once when the owner handed holds the role. PR #607, in batch #617, released in 0.2.4 (#618)."

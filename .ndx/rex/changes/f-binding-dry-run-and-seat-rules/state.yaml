@@ -1,6 +1,9 @@
 schema: "rex/v2"
 items:
   "3eb46cb2-9ba7-46b1-9822-2b4501a0b424":
-    status: "in_progress"
-    lastModified: "2026-11-16T05:30:00.000Z"
+    status: "completed"
+    completedAt: "2026-11-16T07:00:00.000Z"
+    lastModified: "2026-11-16T07:00:00.000Z"
     lastModifiedBy: "Nick Daniel <nick@endash.us>"
+    resolutionType: "code-change"
+    resolutionDetail: "mayBind, seatsKept exported, binding kept out of revisions and what a model reads. PR #615, in batch #617, released in 0.2.4 (#618)."

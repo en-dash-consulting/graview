@@ -1,6 +1,9 @@
 schema: "rex/v2"
 items:
   "01616e5a-4b88-44ec-80fd-f9bf607f4ac2":
-    status: "in_progress"
-    lastModified: "2026-11-16T04:40:00.000Z"
+    status: "completed"
+    completedAt: "2026-11-16T07:00:00.000Z"
+    lastModified: "2026-11-16T07:00:00.000Z"
     lastModifiedBy: "Nick Daniel <nick@endash.us>"
+    resolutionType: "code-change"
+    resolutionDetail: "A host can end a person’s binding (unbindPerson); undoing a binding is judged by what the seat did. PR #613, in batch #617, released in 0.2.4 (#618)."
