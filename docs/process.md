@@ -6,12 +6,6 @@ and Graview Cloud. The rules every build follows are in
 [`.ndx/rex/workflow.md`](../.ndx/rex/workflow.md); the pass that drives the
 loop is the `dev-sync` skill ([`.claude/skills/dev-sync/SKILL.md`](../.claude/skills/dev-sync/SKILL.md)).
 
-Steps marked **(new in 0.2.5)** arrive with the build `ci/harnesses-run-on-github`.
-Until it is on main, do those steps the 0.2.4 way:
-- a build runs its full harnesses locally (`pnpm verify <names>`);
-- the batch runs `pnpm test`, `pnpm verify`, `pnpm engines` and
-  `node scripts/progression.mjs` locally, and a Nightly on its head.
-
 How a release is carried and published is said once, in AGENTS.md's
 [Releasing](../AGENTS.md#releasing) section and the dev-sync skill's step 4;
 steps 4 and 5 below are its outline.
@@ -80,13 +74,19 @@ flowchart TD
 |---|---|---|---|---|
 | Local, while building | the failing test, `pnpm test` for what it touches, `pnpm typecheck`, `pnpm check`, `pnpm verify <name> --quick` | minutes per run | the claim the change makes | the build |
 | Review before the first push | an independent reviewer handed the diff | one review, again after real fixes | what the builder cannot see in their own work | the build spawns it |
-| Full harnesses **(new in 0.2.5)** | `pnpm verify:github <names>` on GitHub runners (`verify.yml`) | not yet measured | every screen of the harnesses the change touches, without the laptop's ports and power | the build |
+| Full harnesses | `pnpm verify:github <names>` on GitHub runners (`verify.yml`) | not yet measured | every screen of the harnesses the change touches, without the laptop's ports and power | the build |
 | PR CI | `ci.yml`: tests in three shards, typecheck, build, workerd, `graview check`, tarballs, scaffold, progression, first load, changeset | 6–13 min | what main's ruleset requires (`verify`, `changeset`) | automatic; the build reads it |
 | Nightly on a PR | `nightly.yml` dispatched on the frozen head: every harness in ten shards, the GPU leg | 27–34 min | harness, render and focus changes, before they merge | the dev-sync pass dispatches it |
 | The batch | merge in order, budget raises, `pnpm release:prepare` and the release record, PR CI, a Nightly on its head after the last push | about 80 min on 0.2.4 | the PRs hold together | the holder of `phase:release` |
 | Publish | `release.yml` in the `npm` environment: build, typecheck, tests, a green Nightly on the same tree, trusted publish, tags, releases | about 12 min of tests, then the publish | nothing reaches npm untested or unapproved | Nick approves; the workflow does the rest |
 | Nightly on main | `nightly.yml` every day at 07:17 UTC; Mondays at 09:17 also WebKit and Firefox | 27–34 min | main stays green between releases | automatic; red on main is fixed first |
 | Pages | `pages.yml` on every push to main | a few minutes | graview.dev says what main has | automatic |
+
+An agent whose command guard refuses `pnpm verify:github` dispatches the
+same run itself, `gh workflow run verify.yml -f harnesses="<names>" -f
+quick=true --ref <branch>` (the branch pushed first), then reads the run's
+`verdicts-*` artifacts (`gh run download <run id>`) for the claims that
+failed, by name.
 
 Measured on 0.2.4 (2026-11-15/16): builds took 3–10.5 h, mostly in local
 harnesses on a laptop; the gates after the batch took about 80 min; the whole
@@ -102,7 +102,7 @@ after it reported done. The rules below are written against those numbers.
 | The rules every build follows | [`.ndx/rex/workflow.md`](../.ndx/rex/workflow.md) |
 | The project, its packages, commands and dependency rules | [`AGENTS.md`](../AGENTS.md) |
 | One pass of the loop, the leases | [`.claude/skills/dev-sync/SKILL.md`](../.claude/skills/dev-sync/SKILL.md) |
-| CI, Nightly, release, Pages | `.github/workflows/ci.yml`, `nightly.yml`, `release.yml`, `pages.yml`; `verify.yml` **(new in 0.2.5)** |
+| CI, Nightly, release, Pages | `.github/workflows/ci.yml`, `nightly.yml`, `release.yml`, `pages.yml`, `verify.yml` |
 | A harness's verdict | `docs/<name>.json`, named claims; on GitHub, the run's `verdicts-*` artifacts |
 | Problems the watch saw, across harnesses and runs | `docs/watch/ledger.json` |
 | A bundle budget raise | `scripts/budget-raises/<what-raised-it>.json`, one file per raise, written on the batch; what warns and what fails, `scripts/lib/budget-mode.mjs` |
