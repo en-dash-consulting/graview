@@ -122,7 +122,7 @@ Each page the routed face opens is pushed, and Back returns. The scene keeps its
 
 ### Pages and the Scene as one face
 
-A host whose page is the app may draw Pages and the Scene as one place (FR-239): the routed page over the Scene's own city, drawn with the `views` the embed already has, and one control at the window's bottom left that moves the same page from Page to Nearby (the page beside its place in the city) to City (every page and view of the app standing on its district). The keys 1, 2 and 3 go to a level, `[` and `]` down and up one.
+A host whose page is the app may draw Pages and the Scene as one place (FR-239): the routed page over the Scene's own city, drawn with the `views` the embed already has, and one control at the window's bottom left that moves the same page from Page to Nearby (the page beside its place on the map) to Map (every page and view of the app standing on its district). The keys 1, 2 and 3 go to a level, `[` and `]` down and up one.
 
 ```ts
 const handle = mount(root, {
@@ -133,7 +133,7 @@ const handle = mount(root, {
 });
 ```
 
-`mount`, `<Embed>` and `@graview/embed/pages` take it. There is then no scene face: the bar offers no Scene or Pages, a `face` other than a picture is drawn as the pages, and the overview's address is the City over the home. The bar stands in the one face's bar slot, `[data-graview-one-face-bar]`, fixed at the window's top above every layer of the face, so the app's name, its places, Find, the inbox, a host's Share and the person are there at every level. The page is in the window's flow and the window scrolls it, so the embed is as tall as its page and at least its `height`; the root is still its own stacking context. A host that lays something of its own along the bar reads the slot's box. Without the option every face draws as before.
+`mount`, `<Embed>` and `@graview/embed/pages` take it. There is then no scene face: the bar offers no Scene or Pages, a `face` other than a picture is drawn as the pages, and the overview's address is the Map over the home. The bar stands in the one face's bar slot, `[data-graview-one-face-bar]`, fixed at the window's top above every layer of the face, so the app's name, its places, Find, the inbox, a host's Share and the person are there at every level. The page is in the window's flow and the window scrolls it, so the embed is as tall as its page and at least its `height`; the root is still its own stacking context. A host that lays something of its own along the bar reads the slot's box. Without the option every face draws as before.
 
 `panel` (a share, `0.55` unsaid, held to 0.25–0.75) is how wide a desk's panel opens beside the city at Nearby, never wider than 1192 px or than leaves the city 480; a width the person drags it to is kept for that app in that browser and wins. While the page is in the panel it and each worker view's root carry `data-graview-in-panel`, and the one face sets `--graview-gutter` (20px on a full page, 16 in the panel; elsewhere it is unset, so read it as `var(--graview-gutter, 20px)`).
 

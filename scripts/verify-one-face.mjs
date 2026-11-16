@@ -355,7 +355,7 @@ async function theButton(page, where, phone) {
   // Named stops a person reads, the one here lit; a thumb's size on a phone, the bar's own size at a desk.
   const sized = (l) => l.stops.every((stop) => stop && Boolean(stop.name) && (phone ? stop.h >= 44 && stop.w >= 44 : stop.h <= 30));
   const lit = (l) => l.stops.map((stop) => stop?.pressed).join() === [0, 1, 2].map((n) => n === l.level).join();
-  const words = (l) => l.stops.map((stop) => stop?.words).join("·") === "Page·Nearby·City";
+  const words = (l) => l.stops.map((stop) => stop?.words).join("·") === "Page·Nearby·Map";
   // A keycap, where one stands over a stop, names that stop's own key.
   const caps = (l) => l.stops.every((stop, n) => stop?.keycap === null || stop?.keycap === String(n + 1));
   // At the bottom left — a phone's rides above the sheet at Nearby.
@@ -851,7 +851,7 @@ async function slider(page, where) {
   const settled = await restAt(page, 2, 10_000).then(() => true, () => false);
   const between = altitudes.filter((a) => a > 0.15 && a < 1.85).length;
   const word = await page.evaluate(() => document.querySelector('[data-testid="altitude-word"]')?.textContent);
-  seen.dragged.push({ where, altitudes: altitudes.map((a) => Number(a.toFixed(2))), between, settled, word, ok: between >= 3 && settled && word === "City" });
+  seen.dragged.push({ where, altitudes: altitudes.map((a) => Number(a.toFixed(2))), between, settled, word, ok: between >= 3 && settled && word === "Map" });
   await page.reload({ waitUntil: "load" });
   await ready(page);
   const kept = await page.evaluate(() => Boolean(document.querySelector('[data-testid="altitude-slider"]')));

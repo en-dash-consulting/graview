@@ -112,7 +112,7 @@ export function AddressBar({
    * reload on the scene — rather than the page the reader was last on (FR-137).
    */
   readonly landed?: ((path: string) => void) | undefined;
-  /** Pages and the Scene as one face (FR-239): every address is the routed face's, the overview's the City over the home. */
+  /** Pages and the Scene as one face (FR-239): every address is the routed face's, the overview's the Map over the home. */
   readonly oneFace?: boolean;
 }) {
   const { view, go } = useNavigation();

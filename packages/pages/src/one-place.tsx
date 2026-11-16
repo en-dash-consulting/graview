@@ -1097,8 +1097,8 @@ function Altitude({
   const saying = (stop: number): string => {
     if (stop === level) return `${LEVEL_NAMES[stop]}: you are here`;
     if (stop === PAGE) return level === CITY && into && into.key !== current ? `Page: “${into.label}”, alone` : "Page: this page alone";
-    if (stop === PANEL) return level === CITY ? `Nearby: ${into ? `“${into.label}”` : "this page"} beside its place in the city` : `Nearby: this page beside ${kind ? `the ${pluralOf(store, kind).toLowerCase()} district` : "the city"}`;
-    return "City: every page and view of the app";
+    if (stop === PANEL) return level === CITY ? `Nearby: ${into ? `“${into.label}”` : "this page"} beside its place on the map` : `Nearby: this page beside ${kind ? `the ${pluralOf(store, kind).toLowerCase()} district` : "the map"}`;
+    return "Map: every page and view of the app";
   };
   /*
    * THE LEGEND IS A BUTTON. It starts put away — the Key, the control's
@@ -1141,7 +1141,7 @@ function Altitude({
       {small ? (
         <div role="group" aria-label="Level" data-graview-one-face-mini="" data-graview-tip-host="" style={{ pointerEvents: "auto", position: "relative" }}>
           {/* The level's name, in the stops' own type: pressed, it opens the legend, as the Key does when the levels are shown whole. */}
-          <button type="button" data-testid="altitude-key" data-graview-mini-word="" aria-expanded={keyOpen} aria-label={`${LEVEL_NAMES[level]}: show the legend, what the city's marks mean and the keys`} {...intent.on("Legend")} onClick={() => setKeyOpen((open) => !open)} onKeyDown={(event) => {
+          <button type="button" data-testid="altitude-key" data-graview-mini-word="" aria-expanded={keyOpen} aria-label={`${LEVEL_NAMES[level]}: show the legend, what the map's marks mean and the keys`} {...intent.on("Legend")} onClick={() => setKeyOpen((open) => !open)} onKeyDown={(event) => {
             if (event.key !== "Escape" || !keyOpen) return;
             event.preventDefault();
             event.stopPropagation();
@@ -1185,7 +1185,7 @@ function Altitude({
             ) : null}
           </button>
         ))}
-        <button type="button" data-testid="altitude-key" data-graview-key-stop="" aria-expanded={keyOpen} aria-label="Key: what the city's marks mean" {...intent.on("Key: what the city's marks mean")} onClick={() => setKeyOpen((open) => !open)} onKeyDown={(event) => {
+        <button type="button" data-testid="altitude-key" data-graview-key-stop="" aria-expanded={keyOpen} aria-label="Key: what the map's marks mean" {...intent.on("Key: what the map's marks mean")} onClick={() => setKeyOpen((open) => !open)} onKeyDown={(event) => {
               // The Key's Escape is the Key's: it puts the Key away, and nothing moves a level.
               if (event.key !== "Escape" || !keyOpen) return;
               event.preventDefault();
@@ -1426,7 +1426,7 @@ function KeysLine() {
   return (
     <p data-testid="altitude-key-keys" data-graview-keys={on ? "on" : "off"} style={{ margin: "0 0 6px", color: "var(--graview-ink-muted)" }}>
       <strong style={{ fontWeight: 600, color: "var(--graview-ink)" }}>Keys</strong>
-      {on ? ": 1 Page · 2 Nearby · 3 City · [ down · ] up" : " are off: Alt ↑ up · Alt ↓ down"}
+      {on ? ": 1 Page · 2 Nearby · 3 Map · [ down · ] up" : " are off: Alt ↑ up · Alt ↓ down"}
       {button}
     </p>
   );
@@ -1446,7 +1446,7 @@ function CityKey({ close }: { readonly close: () => void }) {
   return (
     <div
       role="region"
-      aria-label="What the city's marks mean"
+      aria-label="What the map's marks mean"
       data-testid="altitude-key-pane"
       onKeyDown={(event) => {
         if (event.key !== "Escape") return;

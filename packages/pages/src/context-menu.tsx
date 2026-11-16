@@ -416,7 +416,7 @@ function Menu<S extends AnySchema>({ context, root, registry, children }: { read
       const face = oneFace.current;
       if (face && (node || place || kind)) {
         // One face: the city is the camera rising, the record (or the list, or the view) beside it.
-        items.push({ id: "in-the-scene", label: "Show in the city", run: () => (node ? face.openRecord(node.id, 1) : face.openPath(place ? pathOfPlace(context, place) : `/${pluralSlug(schema, kind!)}`, 1)) });
+        items.push({ id: "in-the-scene", label: "Show on the map", run: () => (node ? face.openRecord(node.id, 1) : face.openPath(place ? pathOfPlace(context, place) : `/${pluralSlug(schema, kind!)}`, 1)) });
       } else if (stop !== undefined && (context.overview || !context.embedded)) {
         const scene = context.overview;
         items.push({ id: "in-the-scene", label: "Show in the scene", run: () => (scene ? scene(stop) : location.assign(`${context.sceneHref ?? "/"}${stop}`)) });

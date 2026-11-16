@@ -63,7 +63,7 @@ export interface PageContext<S extends AnySchema> {
    * layer of the one face (`[data-graview-one-face-bar]`), once it is drawn,
    * and null once it is gone. A host that draws the app's bar itself (the
    * embed's, with `barAbove`) draws it there, so it stays at Page, Nearby
-   * and City, and the page keeps its room under it. Read only where
+   * and Map, and the page keeps its room under it. Read only where
    * `sceneUnderPages` is.
    */
   readonly onBarSlot?: (slot: HTMLElement | null) => void;
