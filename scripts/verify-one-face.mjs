@@ -163,23 +163,58 @@ const stopRecording = (page) =>
     return window.__oneFaceFrames ?? [];
   });
 
-/** No frame of the page's box moves more than this share of the whole way it went. */
+/*
+ * No frame of the page's box moves more than this share of the whole way it
+ * went — further than the move itself went in that frame. The box goes
+ * between levels with the camera, and the altitude each frame was drawn at
+ * says how far the move got: a step of the box counts when it is more than
+ * twice the share of the move's way that frame took (the callers hold the
+ * worst such step to a quarter). A runner draws a move in half a laptop's
+ * frames (no GPU), and holds a long frame where the move takes a long step
+ * with it: every eased step of the box was then twice the share, the
+ * steepest 0.23-0.30 of the way against 0.25 — each one no more than the
+ * altitude took. A box that leaps while the move barely moves, or moves
+ * at all while it stands still, is a jump at any frame rate. And two jumps
+ * a move could hide: one cut over in two frames, by `steepest`, the
+ * largest share any step took, held under a half; and a box drawn for one
+ * frame somewhere else and back, by `flash`, a step of more than a tenth
+ * of the way (and 8 pixels) undone at once by at least half as much the
+ * other way. The move itself is held too, or a cut would license the
+ * box's: no frame takes the altitude more than a quarter of a level
+ * (`altitudeLeap`) — an eased frame on a runner takes about a tenth, and
+ * the face takes a stalled frame's time out of the move.
+ */
 function jumps(frames) {
   const travel = (key) => Math.max(...frames.map((f) => f.box[key])) - Math.min(...frames.map((f) => f.box[key]));
+  const altitudes = frames.map((f) => f.altitude ?? 0);
+  const climb = Math.max(...altitudes) - Math.min(...altitudes);
   let worst = 0;
   let at = -1;
-  for (let i = 1; i < frames.length; i++) {
-    for (const key of ["x", "y", "width", "height"]) {
-      const whole = travel(key);
-      if (whole < 4) continue;
-      const step = Math.abs(frames[i].box[key] - frames[i - 1].box[key]) / whole;
+  let steepest = 0;
+  let flash = null;
+  let altitudeLeap = null;
+  for (let i = 1; i < altitudes.length; i++) if (altitudeLeap === null && Math.abs(altitudes[i] - altitudes[i - 1]) > 0.25) altitudeLeap = { at: i, from: altitudes[i - 1], to: altitudes[i] };
+  // A side the box hardly travels along (its left edge, as it grows from a board to a page 700 pixels wide, moves 50) is measured against an eighth of its longest travel: 14 pixels there were a quarter of that side's way and a fiftieth of the box's.
+  const longest = Math.max(...["x", "y", "width", "height"].map(travel));
+  for (const key of ["x", "y", "width", "height"]) {
+    if (travel(key) < 4) continue;
+    const whole = Math.max(travel(key), longest / 8);
+    for (let i = 1; i < frames.length; i++) {
+      const out = frames[i].box[key] - frames[i - 1].box[key];
+      const step = Math.abs(out) / whole;
+      steepest = Math.max(steepest, step);
+      const back = i + 1 < frames.length ? frames[i + 1].box[key] - frames[i].box[key] : 0;
+      if (flash === null && step > 0.1 && Math.abs(out) > 8 && Math.sign(back) === -Math.sign(out) && Math.abs(back) >= Math.abs(out) / 2) flash = { key, at: i, out: Math.round(out), back: Math.round(back) };
+      // How far the move went in this frame, as a share of all it went.
+      const moved = climb > 0.001 ? Math.abs(altitudes[i] - altitudes[i - 1]) / climb : 0;
+      if (step <= moved * 2) continue;
       if (step > worst) {
         worst = step;
         at = i;
       }
     }
   }
-  return { worst: Number(worst.toFixed(3)), at };
+  return { worst: Number(worst.toFixed(3)), at, steepest: Number(steepest.toFixed(3)), flash, altitudeLeap };
 }
 
 /** Whether a transform moves and scales alike in both directions, and nothing else. */
@@ -390,7 +425,7 @@ async function sameNode(page, where, phone) {
   seen.crossing.push({ where, path: phone ? "/pages/tasks" : "/pages/tasks/t-deposit", ...crossing, ok: crossing.counted > 0 && crossing.crossed === 0 });
   const shear = frames.filter((f) => !shearless(f.matrix) || f.boards.some((b) => b.face && !shearless(b.face)));
   seen.shear.push({ where, frames: frames.length, sheared: shear.length, first: shear[0] ? { altitude: shear[0].altitude, matrix: shear[0].matrix } : null, reachedTheCity: frames.some((f) => f.altitude > 1.99), ok: shear.length === 0 && frames.some((f) => f.altitude > 1.99) });
-  return { where, frames: frames.length, moved: moving.length, same: frames.every((f) => f.same), jump, ok: frames.length > 30 && frames.every((f) => f.same) && jump.worst <= 0.25 && moving.length > 20 };
+  return { where, frames: frames.length, moved: moving.length, same: frames.every((f) => f.same), jump, ok: frames.length > 30 && frames.every((f) => f.same) && jump.worst <= 0.25 && jump.steepest < 0.5 && jump.flash === null && jump.altitudeLeap === null && moving.length > 20 };
 }
 
 /** Up to the city from a page, by the control. */
@@ -565,7 +600,7 @@ async function chosen(page, where) {
     await page.goBack();
     await page.waitForTimeout(1600);
     const back = { url: new URL(page.url()).pathname, level: await levelOf(page) };
-    results.push({ how, landed, levels, start: start === null ? null : Number(start.toFixed(1)), same: frames.every((f) => f.same), jump: jumps(frames.slice(Math.max(0, after))), back, ok: landed.url.endsWith(goal) && landed.level === 1 && !levels.includes(0) && levels.at(-1) === 1 && frames.every((f) => f.same) && (start === null || start <= 40) && jumps(frames.slice(Math.max(0, after))).worst <= 0.25 && back.url.endsWith("/tasks/t-deposit") && back.level >= 1 });
+    results.push({ how, landed, levels, start: start === null ? null : Number(start.toFixed(1)), same: frames.every((f) => f.same), jump: jumps(frames.slice(Math.max(0, after))), back, ok: landed.url.endsWith(goal) && landed.level === 1 && !levels.includes(0) && levels.at(-1) === 1 && frames.every((f) => f.same) && (start === null || start <= 40) && jumps(frames.slice(Math.max(0, after))).worst <= 0.25 && jumps(frames.slice(Math.max(0, after))).steepest < 0.5 && jumps(frames.slice(Math.max(0, after))).flash === null && jumps(frames.slice(Math.max(0, after))).altitudeLeap === null && back.url.endsWith("/tasks/t-deposit") && back.level >= 1 });
   }
   return { where, results, ok: results.every((one) => one.ok) };
 }
@@ -1324,10 +1359,23 @@ const readRich = (page) =>
       if (cut && !ellipsis) problems.push({ text, why: "cut without an ellipsis" });
       else if (cut && whole !== null && whole !== text) problems.push({ text, why: `cut, and the board's name "${whole}" is not the whole of it` });
       else if (cut && whole === null && el.matches("[data-graview-district-tag]")) problems.push({ text, why: "a district's name cut" });
-      // Wrapped: its words fall on more than one line — read off the lines the browser drew them on, not the box, which a fingertip's control makes taller than its line.
-      const range = document.createRange();
-      range.selectNodeContents(el);
-      const rows = [...range.getClientRects()].filter((one) => one.width > 0).reduce((tops, one) => (tops.some((top) => Math.abs(top - one.top) < one.height / 2) ? tops : [...tops, one.top]), []);
+      /*
+       * Wrapped: its words fall on more than one line — read off the lines
+       * the browser drew its text on, and only its text. A range over the
+       * whole element also gives the border box of each control inside it,
+       * which a fingertip's 24 pixels make taller than its line: where the
+       * typeface is short (DejaVu, a Linux runner's system-ui), the words sat
+       * more than half their height below the box's top and read as a
+       * second line ("EONS 4" at 390, drawn on one). Two pieces of text are
+       * on one line when their middles are within half the shorter's height.
+       */
+      const texts = [];
+      for (const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); walk.nextNode(); ) {
+        const range = document.createRange();
+        range.selectNodeContents(walk.currentNode);
+        texts.push(...[...range.getClientRects()].filter((one) => one.width > 0 && one.height > 0));
+      }
+      const rows = texts.reduce((lines, one) => (lines.some((line) => Math.abs(line.middle - (one.top + one.height / 2)) < Math.min(line.height, one.height) / 2) ? lines : [...lines, { middle: one.top + one.height / 2, height: one.height }]), []);
       // A board's title takes two lines before it is cut; nothing else takes more than one.
       const most = el.matches("[data-graview-board-title]") ? 2 : 1;
       const clipped = el.matches("[data-graview-board-title]") && el.scrollHeight > el.clientHeight + 1;
