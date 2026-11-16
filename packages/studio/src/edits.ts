@@ -52,6 +52,43 @@ const EDGE_PROPERTIES = ["description", "inverse", "cardinality", "appendOnly", 
 const ACT_PROPERTIES = ["title", "description", "fromTheOtherEnd", "destructive", "writes", "onAny"] as const;
 const OTHER_SORTS = ["role", "lens", "brand"] as const;
 
+interface Rename {
+  readonly from: string;
+  readonly to: string;
+}
+
+/**
+ * RENAMES IN AN ORDER EACH CAN BE APPLIED IN. `editDocument` renames one at
+ * a time and refuses a name still taken, so "a to b" goes after "b to c",
+ * and a cycle — two names swapped, three turned round — goes through a name
+ * of its own (`spare(name, n)`, the first not among `names`): the first of
+ * the cycle steps aside, the rest move up, and it takes the last place. Each
+ * step carries the rename it began as (`origin`).
+ */
+function inOrder(renames: readonly Rename[], names: ReadonlySet<string>, spare: (name: string, n: number) => string): (Rename & { readonly origin: string })[] {
+  const pending = renames.map((rename) => ({ from: rename.from, to: rename.to, origin: rename.from }));
+  // Two renames to one name cannot both be applied in any order; said as they are, `editDocument` refuses the second in its own words.
+  if (new Set(renames.map((rename) => rename.to)).size < renames.length) return pending;
+  const taken = new Set([...names, ...renames.flatMap((rename) => [rename.from, rename.to])]);
+  const ordered: (Rename & { readonly origin: string })[] = [];
+  while (pending.length > 0) {
+    const free = pending.findIndex((rename) => !pending.some((other) => other !== rename && other.from === rename.to));
+    if (free >= 0) {
+      ordered.push(pending.splice(free, 1)[0]!);
+      continue;
+    }
+    // Every name left is wanted by another: a cycle. The first steps aside.
+    const first = pending[0]!;
+    let n = 0;
+    while (taken.has(spare(first.from, n))) n++;
+    const aside = spare(first.from, n);
+    taken.add(aside);
+    ordered.push({ from: first.from, to: aside, origin: first.origin });
+    pending[0] = { from: aside, to: first.to, origin: first.origin };
+  }
+  return ordered;
+}
+
 /** The studio's changes from `before` to `after`, as edits to `document` — the document `before` was read from. */
 export function documentEdits(document: GraviewDocument, before: Reading, after: Reading): StudioEdits {
   const was = new Read(before);
@@ -85,10 +122,16 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
   for (const [id, kind] of kindsBefore) if (!kindsAfter.has(id)) edits.push({ op: "remove-kind", kind: label(kind) });
 
   // ── what is called something else: kinds, fields, relations ──
+  const kindNames = new Set([...kindsBefore.values(), ...kindsAfter.values()].map((kind) => label(kind)));
+  const kindRenames: Rename[] = [];
   for (const [id, kind] of kindsAfter) {
     const old = kindsBefore.get(id);
-    if (old && label(old) !== label(kind)) edits.push({ op: "rename-kind", kind: label(old), to: label(kind) });
+    if (old && label(old) !== label(kind)) kindRenames.push({ from: label(old), to: label(kind) });
   }
+  for (const { from, to } of inOrder(kindRenames, kindNames, (name, n) => `${name}-renaming${n === 0 ? "" : `-${n}`}`)) edits.push({ op: "rename-kind", kind: from, to });
+  const renamedFields = new Map<string, Rename[]>();
+  /** Each field rename, in the order the edits say them, by the kind's name before. */
+  const fieldSteps: { readonly what: "field"; readonly kind: string; readonly from: string; readonly to: string }[] = [];
   for (const [id, field] of fieldsAfter) {
     const old = fieldsBefore.get(id);
     const kind = ownerOf(now, field);
@@ -97,16 +140,43 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
       findings.push(unsaid(`kinds.${label(kind)}.fields.${label(field)}`, `${label(field)} moved to ${label(kind)}; an edit cannot move a field from one kind to another`));
       continue;
     }
-    if (label(old) !== label(field)) edits.push({ op: "rename-field", kind: label(kind), field: label(old), to: label(field) });
+    if (label(old) !== label(field)) {
+      const renames = renamedFields.get(kind.id) ?? [];
+      renames.push({ from: label(old), to: label(field) });
+      renamedFields.set(kind.id, renames);
+    }
+  }
+  for (const [kindId, renames] of renamedFields) {
+    const kind = label(kindsAfter.get(kindId)!);
+    // A field's name is taken by another field of its kind or a relation it declares.
+    const names = new Set(
+      [
+        ...[...fieldsBefore.values()].filter((field) => ownerOf(was, field)?.id === kindId),
+        ...[...fieldsAfter.values()].filter((field) => ownerOf(now, field)?.id === kindId),
+        ...[...edgesBefore.values()].filter((edge) => declaredOn(was, edge)?.id === kindId),
+        ...[...edgesAfter.values()].filter((edge) => declaredOn(now, edge)?.id === kindId),
+      ].map((node) => label(node)),
+    );
+    for (const { from, to } of inOrder(renames, names, (name, n) => `${name}Renaming${n === 0 ? "" : n}`)) {
+      edits.push({ op: "rename-field", kind, field: from, to });
+      fieldSteps.push({ what: "field", kind: label(kindsBefore.get(kindId)!), from, to });
+    }
   }
   const renamedRelations = new Set<string>();
+  const relationRenames: (Rename & { readonly kind: string })[] = [];
   for (const [id, edge] of edgesAfter) {
     const old = edgesBefore.get(id);
     const kind = declaredOn(now, edge);
     if (!old || !kind || !kindsBefore.has(kind.id) || label(old) === label(edge) || renamedRelations.has(label(old))) continue;
     // A relation's name is app-wide: one rename moves it on every kind that declares it.
     renamedRelations.add(label(old));
-    edits.push({ op: "rename-relation", kind: label(kind), relation: label(old), to: label(edge) });
+    relationRenames.push({ from: label(old), to: label(edge), kind: label(kind) });
+  }
+  // A relation's name is app-wide, and a kebab-case one steps aside in kebab-case, a camelCase one in camelCase.
+  const relationNames = new Set([...edgesBefore.values(), ...edgesAfter.values(), ...fieldsBefore.values(), ...fieldsAfter.values()].map((node) => label(node)));
+  const kindOfRelation = new Map(relationRenames.map((rename) => [rename.from, rename.kind]));
+  for (const { from, to, origin } of inOrder(relationRenames, relationNames, (name, n) => (name.includes("-") ? `${name}-renaming${n === 0 ? "" : `-${n}`}` : `${name}Renaming${n === 0 ? "" : n}`))) {
+    edits.push({ op: "rename-relation", kind: kindOfRelation.get(origin)!, relation: from, to });
   }
 
   // ── what a field that stays now says ──
@@ -271,12 +341,8 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
     if (changed.length > 0) findings.push(unsaid(`acts.${label(act)}`, `the act ${label(act)} changed (${changed.join(", ")}); an edit adds or removes an act whole — remove it and add it again as it should be`));
   }
 
-  /** Every field the studio renamed, by the names it had. */
-  const fieldRenames = [...fieldsAfter].flatMap(([id, field]) => {
-    const old = fieldsBefore.get(id);
-    const kind = old ? ownerOf(was, old) : undefined;
-    return old && kind && label(old) !== label(field) && ownerOf(now, field)?.id === kind.id ? [{ what: "field" as const, kind: label(kind), from: label(old), to: label(field) }] : [];
-  });
+  /** Every field the studio renamed, by the names it had, in the order they can be walked one at a time. */
+  const fieldRenames = fieldSteps;
   /** A rule's words as the studio's renames alone would leave them — its rename-field's own walk, over the declaration it opened on. */
   const renamedRule = (rule: Node, over: string): { require?: string | undefined; when?: string | undefined; says?: string | undefined } => {
     const text = { require: str(rule, "require"), when: str(rule, "when"), says: str(rule, "says") };
