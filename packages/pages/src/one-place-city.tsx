@@ -439,6 +439,11 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     let calmRun = 0;
     /** The page a board was last placed for at once: one with no place to stand is not placed again every frame. */
     let placedFor = "";
+    /** A zoom the hand wrote, carried and not yet placed for; and when a hand last moved the city. */
+    let regrow = false;
+    /** What a pan holds was stopped half-way through a settle: two held on each other are placed afresh. */
+    let heldHalfWay = false;
+    let handAt = -Infinity;
     let placeSeenAt = 0;
     let placeSeen = "";
     const drawnSince = (placeKey: string, now: number): boolean => {
@@ -563,6 +568,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       };
       const all = [...[...placed.feet].map(([key, foot]) => ({ key, box: cardOf(key, foot) })), ...[...placed.names].map(([kind, box]) => ({ key: `name:${kind}`, box }))];
       const standing = all.filter((one) => holds.has(one.key));
+      // And held where a settle stopped half-way, one held on another: never kept so.
+      if (heldHalfWay && standing.some((one, at) => standing.some((other, then) => then > at && across(one.box, other.box)))) return true;
       return all.some((one) => !holds.has(one.key) && standing.some((other) => across(one.box, other.box)));
     };
     /** What nothing of the city's is drawn under at rest: the bar, the page beside the city, the level control. */
@@ -897,6 +904,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       world = { plots: new Map([...world.plots].map(([key, b]) => [key, box(b)] as const)), buildings: new Map([...world.buildings].map(([key, b]) => [key, box(b)] as const)) };
     };
     const moveTo = (cam: SceneCamera, toLevel: number, anchor: Point, now: number, arm = true) => {
+      regrow = false;
       reframeArmed = arm && toLevel === PANEL && state.current.where.type === "record";
       const from = painted;
       /*
@@ -1017,6 +1025,23 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       // Written too recently for a new move to be painted safely: the Scene settles what is painted a beat after a commit.
       const calm = now - committedAt >= QUIET_MS;
       if (between) {
+        /*
+         * A HAND ON THE CITY MID-SETTLE: what was going over to a new place
+         * stops where it is drawn, fastened to the ground the hand moves —
+         * a settle carried on under a pan slid every board and name across
+         * the ground while the hand had it (Graview HQ
+         * feature:f-one-face-pinch-and-pan-together-holds). The pan let go
+         * of holds them there, as any pan does — unless, stopped half-way
+         * between two placings, two stand on each other: then the city is
+         * placed afresh, each going on from where it is drawn.
+         */
+        if (!move && !asking.scrubbing && settle && now - settle.start < SETTLE_MS) {
+          slots = drawnSlots(now);
+          names = drawnNames(now);
+          scales = drawnScales(now);
+          settle = null;
+          heldHalfWay = true;
+        }
         painted = live;
         drawnThrough = live;
       }
@@ -1068,18 +1093,45 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
              */
             const byHand = drawnThrough !== null || nudged.current;
             nudged.current = false;
+            // A hand that writes each move into the view (a drag begun on a sign) is a hand on the city too.
+            if (byHand) handAt = now;
             const panned = byHand && carry !== null && carry !== LEVEL_LIVE && Math.abs(carry.s - 1) < 1e-3;
             /*
              * What is held is where each stands, not where a settle caught part
              * way had it: two boards half-way between two placings may stand on
-             * each other, and held there they would stay so. A pan let go of
-             * mid-settle lets the settle finish.
+             * each other, and held there they would stay so. A settle a hand
+             * came on in the middle of stopped where it was drawn: held there,
+             * unless two stand on each other (`heldHalfWay`).
              */
-            const goals = { slots: carriedThrough(carry ?? LEVEL_LIVE, slots), names: carriedThrough(carry ?? LEVEL_LIVE, names), scales: new Map(scales) };
-            const holds = standAll(world, cam.zoom(), LEVEL_LIVE, shownAt(rest), rest, panned ? goals : undefined);
-            // What a pan let go of put away and placed again comes up where it lands, as one placed for the first time does: it was not seen where it stood.
-            const from = panned && holds.size > 0 ? { slots: new Map([...drawnBefore.slots].filter(([one]) => holds.has(one))), names: new Map([...drawnBefore.names].filter(([kind]) => holds.has(`name:${kind}`))), scales: drawnBefore.scales } : drawnBefore;
-            settle = { ...from, start: now };
+            /*
+             * A HAND'S ZOOM WRITTEN WHILE THE HAND IS STILL ON (Graview HQ
+             * feature:f-one-face-pinch-and-pan-together-holds): a pinch a
+             * beat still, a wheel's zoom with a pan straight after, two
+             * fingers let go of and one put down again. Placed again for the
+             * new zoom there and then, the boards and names went off over a
+             * settle while the hand moved the ground on under them. Carried
+             * by the zoom instead — where the last frame drew them, fastened
+             * to the ground — and placed again for the zoom only once the
+             * hand has been off the city a moment (`regrow`); a zoom written
+             * before that is carried the same.
+             */
+            if (byHand && carry !== null && carry !== LEVEL_LIVE && (!panned || regrow)) {
+              slots = new Map(drawnBefore.slots);
+              names = new Map(drawnBefore.names);
+              scales = new Map(drawnBefore.scales);
+              posts = new Map([...posts].map(([one, length]) => [one, length * carry.s] as const));
+              whole = whole ? { ...project(carry, whole), width: whole.width * carry.s, height: whole.height * carry.s } : null;
+              settle = null;
+              regrow = true;
+            } else {
+              const goals = { slots: carriedThrough(carry ?? LEVEL_LIVE, slots), names: carriedThrough(carry ?? LEVEL_LIVE, names), scales: new Map(scales) };
+              const holds = standAll(world, cam.zoom(), LEVEL_LIVE, shownAt(rest), rest, panned ? goals : undefined);
+              // What a pan let go of put away and placed again comes up where it lands, as one placed for the first time does: it was not seen where it stood.
+              const from = panned && holds.size > 0 ? { slots: new Map([...drawnBefore.slots].filter(([one]) => holds.has(one))), names: new Map([...drawnBefore.names].filter(([kind]) => holds.has(`name:${kind}`))), scales: drawnBefore.scales } : drawnBefore;
+              settle = { ...from, start: now };
+              regrow = false;
+            }
+            heldHalfWay = false;
             drawnThrough = null;
           }
           lastRead = now;
@@ -1093,6 +1145,18 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
        * its board: a jump before the move began. Placed at once, where the
        * camera rests.
        */
+      /*
+       * THE HAND OFF THE CITY A MOMENT, a zoom it wrote is placed for: each
+       * board and name goes from where it is drawn to where it stands at the
+       * new zoom, as a zoom let go of always did — once nothing is moving
+       * the ground under them.
+       */
+      if (between || settling || cam.pinching()) handAt = now;
+      if (regrow && world.plots.size > 0 && rest !== PAGE && !move && !asking.scrubbing && level(painted) && now - handAt >= LET_GO_MS) {
+        regrow = false;
+        settle = { slots: drawnSlots(now), names: drawnNames(now), scales: drawnScales(now), start: now };
+        standAll(world, cam.zoom(), LEVEL_LIVE, shownAt(rest), rest);
+      }
       if (world.plots.size > 0 && rest !== PAGE && !move && level(painted) && !slots.has(at.current) && placedFor !== at.current) {
         placedFor = at.current;
         standAll(world, cam.zoom(), LEVEL_LIVE, shownAt(rest), rest);
@@ -1923,9 +1987,33 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       const [a, b] = [...down.values()];
       return a && b ? Math.hypot(a.x - b.x, a.y - b.y) : 0;
     };
+    /*
+     * A FINGER ON A SIGN IS ONE OF THE HAND'S (Graview HQ
+     * feature:f-one-face-pinch-and-pan-together-holds). Two fingers, one on
+     * a board and one on the ground beside it, were two gestures: the one on
+     * the board panned the city's view, a layout a move, the one on the
+     * ground dragged its picture, and nothing zoomed — the boards and names,
+     * placed through the picture, stood still while the view moved the
+     * ground under them. Every touch here is handed to the Scene's own hand,
+     * read with those on the ground: two fingers anywhere over the city are
+     * one pinch, which zooms and pans the picture together, and the boards
+     * and names are drawn through it every frame. One finger alone on a sign
+     * still drags the city from here.
+     */
+    const handed = (event: PointerEvent): boolean => {
+      const cam = camera.current;
+      if (event.pointerType !== "touch" || !cam) return false;
+      cam.finger(event);
+      return cam.pinching();
+    };
     const onDown = (event: PointerEvent) => {
       if (event.pointerType === "mouse" && event.button !== 0) return;
       down.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (handed(event)) {
+        dragging = true;
+        pinchFrom = null;
+        return;
+      }
       dragging = false;
       pinchFrom = down.size === 2 ? spread() : null;
     };
@@ -1933,6 +2021,12 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       const was = down.get(event.pointerId);
       const cam = camera.current;
       if (!was || !cam) return;
+      // Two fingers over the city are the Scene's pinch: it zooms and pans the picture, and nothing here moves the view.
+      if (handed(event)) {
+        dragging = true;
+        down.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        return;
+      }
       const dx = event.clientX - was.x;
       const dy = event.clientY - was.y;
       if (down.size >= 2) {
@@ -1961,6 +2055,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     };
     const onUp = (event: PointerEvent) => {
       if (!down.has(event.pointerId)) return;
+      handed(event);
       down.delete(event.pointerId);
       if (dragging) swallow = true;
       if (down.size === 0) {

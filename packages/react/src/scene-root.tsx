@@ -177,6 +177,14 @@ export interface SceneCamera {
   commit(): boolean;
   /** Whether the picture is between stops, or settling into one. */
   moving(): boolean;
+  /**
+   * A touch that came down on a host's layer over the city — its down, its
+   * moves and its lift — read with the fingers on the ground, so a finger on
+   * a board and one beside it are one pinch.
+   */
+  finger(event: PointerEvent): void;
+  /** Whether two fingers are on the city (one of them handed over by `finger`, or both on the ground): they zoom and pan it together. */
+  pinching(): boolean;
 }
 
 type Point = { x: number; y: number };
@@ -968,7 +976,7 @@ export function Scene<S extends AnySchema>({
   const unit = useRootUnit();
 
   // Pinch and ctrl+wheel: altitude from the ground, zoom about the pointer from above; the plain wheel pans. See scene-hand.ts.
-  const { zoomAbout, panBy, pinchBy, pinchDone, pinching } = useWheelAndPinch({ stage: wrapperRef, view, setView });
+  const { zoomAbout, panBy, pinchBy, pinchDone, pinching, feed } = useWheelAndPinch({ stage: wrapperRef, view, setView });
 
   // `nodes` is a cached snapshot that only changes when the graph does, so
   // the layout is recomputed exactly when the picture could have changed.
@@ -1183,6 +1191,8 @@ export function Scene<S extends AnySchema>({
         return shift.settle();
       },
       moving: () => shift.settling.current || shift.offset().s !== 1 || shift.offset().x !== 0 || shift.offset().y !== 0,
+      finger: (event) => feed.current(event),
+      pinching: () => pinching.current,
     };
   }
   panBy.current = (dx, dy) => {

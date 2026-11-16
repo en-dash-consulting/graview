@@ -556,6 +556,13 @@ export function useWheelAndPinch({
   const pinchDone = useRef<() => void>(() => {});
   /** Whether two fingers are on the scene, from the second one down until the last one lifts. */
   const pinching = useRef(false);
+  /**
+   * A FINGER THAT CAME DOWN ON A HOST'S LAYER OVER THE GROUND (a routed
+   * page's board or a district's name standing on the city) is the same
+   * hand: handed here, it is read with the fingers on the ground, so one
+   * on a board and one beside it pinch as two on the ground do.
+   */
+  const feed = useRef<(event: PointerEvent) => void>(() => {});
   /** The fingers on the scene, where they last were, and what their moves owe the view this frame. */
   const touch = useRef<{
     readonly fingers: Map<number, { x: number; y: number }>;
@@ -692,6 +699,12 @@ export function useWheelAndPinch({
       const at = event as Event & { clientX?: number; clientY?: number };
       zoomAbout.current(ratio, at.clientX, at.clientY);
     };
+    feed.current = (event) => {
+      if (event.pointerType !== "touch") return;
+      if (event.type === "pointerdown") onFingerDown(event);
+      else if (event.type === "pointermove") onFingerMove(event);
+      else if (event.type === "pointerup" || event.type === "pointercancel") onFingerUp(event);
+    };
     element.addEventListener("wheel", onWheel, { passive: false });
     element.addEventListener("gesturestart", onGestureStart);
     element.addEventListener("gesturechange", onGesture);
@@ -714,5 +727,5 @@ export function useWheelAndPinch({
       element.removeEventListener("gesturechange", onGesture);
     };
   }, [setView, stage]);
-  return { zoomAbout, panBy, pinchBy, pinchDone, pinching };
+  return { zoomAbout, panBy, pinchBy, pinchDone, pinching, feed };
 }

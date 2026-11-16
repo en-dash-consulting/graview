@@ -27,7 +27,9 @@
  * the page is drawn once, its elements, keyboard and typed word kept as the
  * one face arrives. And a pan let go of, at Nearby and the City, moves
  * nothing: every board and name stays where the last frame drew it; a zoom
- * let go of goes on from there, never back to where it began.
+ * let go of goes on from there, never back to where it began. And during a
+ * pinch that pans, a finger on a board or not, and a pan straight after a
+ * zoom, every board and name stays fastened to its district frame by frame.
  *
  * Frame strips (desk and phone, light and dark), and the rich app's City
  * and Nearby at 1280 and 390 wide (`rich-*.png`), are written to
@@ -59,7 +61,7 @@ const STRIPS = resolve(repoRoot, "docs/one-face");
 
 const report = { at: new Date().toISOString(), engines, app: "apps/todo", checks: {} };
 const errors = [];
-const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], pointsOut: [], shortcuts: [], keysTurnOff: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [], richClear: [], richNamed: [], richWords: [], richLegend: [], richViews: [], richRecords: [], richNearbyViews: [], richPhoneLines: [], richNamesBeside: [], richHomeScale: [], richControls: [], richOwnDistrict: [], richLegible: [], richHomeNearby: [], richOneLevel: [], richSmooth: [], richFocusSeen: [], richProblems: [], richHand: [], richHomeViews: [], richPanelCrossings: [], richBoardsUnder: [], richHomeClear: [], richProblemsOfKind: [], richPosts: [], richPostsUnder: [], recordInPlace: [], oneRuleFades: [], noWordsAfterPress: [], drawnOnce: [], nearbyZoom: [], nearbyPan: [], nearbyBack: [], panelPinch: [], phoneCity: [], panelWidth: [], panelSpacing: [], viewInPanel: [], panStill: [] };
+const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], pointsOut: [], shortcuts: [], keysTurnOff: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [], richClear: [], richNamed: [], richWords: [], richLegend: [], richViews: [], richRecords: [], richNearbyViews: [], richPhoneLines: [], richNamesBeside: [], richHomeScale: [], richControls: [], richOwnDistrict: [], richLegible: [], richHomeNearby: [], richOneLevel: [], richSmooth: [], richFocusSeen: [], richProblems: [], richHand: [], richHomeViews: [], richPanelCrossings: [], richBoardsUnder: [], richHomeClear: [], richProblemsOfKind: [], richPosts: [], richPostsUnder: [], recordInPlace: [], oneRuleFades: [], noWordsAfterPress: [], drawnOnce: [], nearbyZoom: [], nearbyPan: [], nearbyBack: [], panelPinch: [], phoneCity: [], panelWidth: [], panelSpacing: [], viewInPanel: [], panStill: [], pinchPan: [] };
 
 /* ------------------------------------------------------------------ */
 /* In the page                                                         */
@@ -2862,6 +2864,225 @@ async function viewRootInPanel(browser) {
   }
 }
 
+/*
+ * A PINCH THAT PANS HOLDS EVERYTHING TO THE GROUND (Graview HQ
+ * feature:f-one-face-pinch-and-pan-together-holds). On a phone, at Nearby
+ * and the Map, two fingers that zoom and pan at once — apart, their middle
+ * moving (and together, at Nearby); one finger on a board and one on the
+ * ground beside it, apart and moving; and two fingers apart, let go of, and
+ * one finger's pan straight after — every frame of the gesture, each
+ * board's foot and each district's name stands where its district carried
+ * it, by no more than `FASTENED` pixels from where the frame before had it
+ * in its district's own frame. With a finger on a board the two were two
+ * gestures, and the boards stood still while the ground went; a zoom's
+ * placing ran on under the pan that followed it.
+ */
+const FASTENED = 1;
+function startFastenedRecording(page) {
+  return page.evaluate(() => {
+    const frames = [];
+    window.__fastFrames = frames;
+    window.__fastStop = false;
+    const shown = (el) => {
+      const r = el.getBoundingClientRect();
+      return el.style.visibility !== "hidden" && Number(el.style.opacity || 1) > 0.5 && !el.hasAttribute("data-graview-under") && r.width > 0 && r.right > 0 && r.bottom > 0 && r.left < innerWidth && r.top < innerHeight;
+    };
+    const kindOf = (key) => (key.startsWith("kind:") ? key.slice(5) : key.startsWith("place:") ? key.split(":")[1] : null);
+    const tick = () => {
+      if (window.__fastStop) return;
+      requestAnimationFrame(tick);
+      const tiles = {};
+      for (const plot of document.querySelectorAll('[data-testid="one-place-city"] [data-graview-plot]')) {
+        const tile = plot.querySelector(".graview-plot-tile")?.getBoundingClientRect();
+        if (tile && tile.width > 0) tiles[(plot.getAttribute("data-graview-plot") ?? "").replace(/^kind:/, "")] = [tile.left, tile.top, tile.width, tile.height];
+      }
+      const points = {};
+      // A board stands on its foot, the middle of its lower edge; a name hangs from the middle of its top.
+      for (const el of document.querySelectorAll("[data-graview-board]")) {
+        const kind = kindOf(el.getAttribute("data-graview-board") ?? "");
+        if (!kind || !shown(el)) continue;
+        const r = el.getBoundingClientRect();
+        points[`board ${el.getAttribute("data-graview-board")}`] = { kind, at: [r.left + r.width / 2, r.bottom] };
+      }
+      for (const el of document.querySelectorAll("[data-graview-district-tag]")) {
+        if (!shown(el) || getComputedStyle(el.parentElement).opacity === "0") continue;
+        const r = el.getBoundingClientRect();
+        const kind = el.getAttribute("data-graview-district-tag");
+        points[`name ${kind}`] = { kind, at: [r.left + r.width / 2, r.top] };
+      }
+      frames.push({ t: performance.now(), tiles, points });
+    };
+    requestAnimationFrame(tick);
+  });
+}
+const stopFastenedRecording = (page) =>
+  page.evaluate(() => {
+    window.__fastStop = true;
+    return window.__fastFrames ?? [];
+  });
+/** Frame to frame, between `from` and `to`: how far each point went from where its district carried it. */
+function fastened(frames, from, to) {
+  const during = frames.filter((frame) => frame.t >= from && frame.t <= to);
+  let worst = 0;
+  let worstAt = null;
+  let pairs = 0;
+  let zoomed = 1;
+  let groundMoved = 0;
+  const astray = [];
+  for (let i = 1; i < during.length; i++) {
+    const [a, b] = [during[i - 1], during[i]];
+    for (const [key, now] of Object.entries(b.points)) {
+      const was = a.points[key];
+      const t0 = a.tiles[now.kind];
+      const t1 = b.tiles[now.kind];
+      if (!was || !t0 || !t1) continue;
+      pairs++;
+      // Where its district carried it: the same place in the district's own frame.
+      const u = (was.at[0] - t0[0]) / t0[2];
+      const v = (was.at[1] - t0[1]) / t0[3];
+      const off = Math.hypot(now.at[0] - (t1[0] + u * t1[2]), now.at[1] - (t1[1] + v * t1[3]));
+      if (off > FASTENED && astray.length < 6) astray.push(`${key} ${off.toFixed(1)} px at ${Math.round(b.t - from)} ms: its district ${t0.map(Math.round)} → ${t1.map(Math.round)}, it ${was.at.map(Math.round)} → ${now.at.map(Math.round)}`);
+      if (off > worst) {
+        worst = off;
+        worstAt = { key, frame: i, of: during.length, at: Math.round(b.t - from), off: Number(off.toFixed(1)) };
+      }
+    }
+  }
+  const first = during[0];
+  const last = during.at(-1);
+  if (first && last) {
+    const kinds = Object.keys(first.tiles).filter((kind) => last.tiles[kind]);
+    if (kinds.length) {
+      const k = kinds[0];
+      zoomed = last.tiles[k][2] / first.tiles[k][2];
+      groundMoved = Math.round(Math.hypot(last.tiles[k][0] - first.tiles[k][0], last.tiles[k][1] - first.tiles[k][1]));
+    }
+  }
+  return { worst: Number(worst.toFixed(2)), worstAt, astray, pairs, frames: during.length, zoomed: Number(zoomed.toFixed(3)), groundMoved };
+}
+async function pinchAndPan(page, where, { level }) {
+  where = { ...where, level };
+  await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
+  await ready(page);
+  await press(page, `[data-testid="altitude-stop-${level}"]`);
+  await restAt(page, level, 15_000);
+  await page.waitForTimeout(700);
+  const cdp = await page.context().newCDPSession(page);
+  const touch = (type, touchPoints) => cdp.send("Input.dispatchTouchEvent", { type, touchPoints });
+  const now = () => page.evaluate(() => performance.now());
+  /*
+   * Bare ground near the middle of the city above the sheet, with room round
+   * it for two fingers: clear of every board and name by a fingertip all
+   * round, for a browser moves a touch that lands beside a control onto it.
+   * That is what made this gesture come and go when it was first written:
+   * one finger landed on a board, and the two were two gestures.
+   */
+  const bareOf = (gap) =>
+    page.evaluate((gap) => {
+      const top = document.querySelector('[data-testid="one-place-bar"]')?.getBoundingClientRect().bottom ?? 0;
+      const sheet = document.querySelector("[data-graview-one-place]")?.getBoundingClientRect();
+      const dock = document.querySelector("[data-graview-one-face-dock]")?.getBoundingClientRect();
+      const foot = Math.min(sheet && sheet.top > top + 100 ? sheet.top : innerHeight, dock ? dock.top : innerHeight);
+      const middle = { x: innerWidth / 2, y: (top + foot) / 2 };
+      const spots = [];
+      for (let y = top + 40; y < foot - 40; y += 7) for (let x = gap + 30; x < innerWidth - gap - 30; x += 9) spots.push({ x, y });
+      spots.sort((a, b) => Math.hypot(a.x - middle.x, a.y - middle.y) - Math.hypot(b.x - middle.x, b.y - middle.y));
+      const bareAt = (x, y) => {
+        const el = document.elementFromPoint(x, y);
+        return Boolean(el && el.closest('[data-testid="one-place-city"]') && !el.closest("button, a, [data-graview-board], [data-graview-district-tag]"));
+      };
+      const bare = (x, y) => [[0, 0], [-16, 0], [16, 0], [0, -16], [0, 16]].every(([dx, dy]) => bareAt(x + dx, y + dy));
+      return spots.find(({ x, y }) => bare(x - gap, y) && bare(x + gap, y)) ?? null;
+    }, gap);
+  /** A board in sight above the sheet, and bare ground beside it: one finger on each. */
+  const onABoard = () =>
+    page.evaluate(() => {
+      const top = document.querySelector('[data-testid="one-place-bar"]')?.getBoundingClientRect().bottom ?? 0;
+      const bareAt = (x, y) => {
+        const el = document.elementFromPoint(x, y);
+        return Boolean(el && el.closest('[data-testid="one-place-city"]') && !el.closest("button, a, [data-graview-board], [data-graview-district-tag]"));
+      };
+      for (const el of document.querySelectorAll("[data-graview-board]:not([aria-current])")) {
+        const r = el.getBoundingClientRect();
+        const board = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+        if (r.width === 0 || board.y < top + 20 || document.elementFromPoint(board.x, board.y)?.closest("[data-graview-board]") !== el) continue;
+        for (const dx of [90, -90, 120, -120]) {
+          const ground = { x: board.x + dx, y: board.y };
+          if (ground.x > 20 && ground.x < innerWidth - 20 && [[0, 0], [-16, 0], [16, 0], [0, -16], [0, 16]].every(([ex, ey]) => bareAt(ground.x + ex, ground.y + ey))) return { board, ground };
+        }
+      }
+      return null;
+    });
+  const runs = [];
+  const gesture = async (way, spot, moves) => {
+    if (!spot) {
+      runs.push({ way, ok: false, error: "nowhere to begin it" });
+      return;
+    }
+    await startFastenedRecording(page);
+    await page.waitForTimeout(120);
+    const from = await now();
+    await moves(spot);
+    const to = await now();
+    await touch("touchEnd", []);
+    await page.waitForTimeout(900);
+    const frames = await stopFastenedRecording(page);
+    const held = fastened(frames, from, to);
+    // A gesture that zoomed and moved the ground, with boxes to measure, every frame.
+    const ok = held.frames >= 8 && held.pairs >= 20 && Math.abs(held.zoomed - 1) > 0.04 && held.groundMoved >= 20 && held.worst <= FASTENED;
+    runs.push({ way, spot, ...held, ok });
+    // Back where the level frames it, for the next.
+    await press(page, `[data-testid="altitude-stop-${level}"]`);
+    await restAt(page, level, 15_000).catch(() => {});
+    await page.waitForTimeout(600);
+  };
+  const two = (a, b) => [{ ...a, id: 1 }, { ...b, id: 2 }];
+  const pair = (s, gap, dx, dy) => two({ x: s.x - gap + dx, y: s.y + dy }, { x: s.x + gap + dx, y: s.y + dy });
+  // Two fingers apart, their middle moving: a zoom and a pan in one.
+  await gesture("two fingers apart, their middle moving", await bareOf(40), async (s) => {
+    await touch("touchStart", pair(s, 40, 0, 0));
+    for (let i = 1; i <= 14; i++) {
+      await touch("touchMove", pair(s, 40 + i * 3, i * 4, i * 2));
+      await page.waitForTimeout(20);
+    }
+  });
+  // Together while their middle moves the other way: further out and across. The Map is as far out as the camera goes: there two fingers only go closer.
+  if (level === 1)
+    await gesture("two fingers together, their middle moving", await bareOf(70), async (s) => {
+      await touch("touchStart", pair(s, 70, 0, 0));
+      for (let i = 1; i <= 14; i++) {
+        await touch("touchMove", pair(s, 70 - i * 2, -i * 4, i * 2));
+        await page.waitForTimeout(20);
+      }
+    });
+  // One finger on a board and one on the ground beside it, apart and moving: one pinch, as two on the ground are.
+  await gesture("one finger on a board, one beside it, apart and moving", await onABoard(), async ({ board, ground }) => {
+    const away = { x: Math.sign(ground.x - board.x), y: 0 };
+    const at = (i) => two({ x: board.x - away.x * i * 2 + i * 3, y: board.y + i * 2 }, { x: ground.x + away.x * i * 2 + i * 3, y: ground.y + i * 2 });
+    await touch("touchStart", at(0));
+    for (let i = 1; i <= 14; i++) {
+      await touch("touchMove", at(i));
+      await page.waitForTimeout(20);
+    }
+  });
+  // Two fingers apart and let go of, and one finger's drag at once: a pan within a breath of a zoom.
+  await gesture("a pinch let go of, and a pan straight after", await bareOf(40), async (s) => {
+    await touch("touchStart", pair(s, 40, 0, 0));
+    for (let i = 1; i <= 7; i++) {
+      await touch("touchMove", pair(s, 40 + i * 4, 0, 0));
+      await page.waitForTimeout(20);
+    }
+    await touch("touchEnd", []);
+    await page.waitForTimeout(60);
+    await touch("touchStart", [{ x: s.x, y: s.y, id: 3 }]);
+    for (let i = 1; i <= 12; i++) {
+      await touch("touchMove", [{ x: s.x + i * 6, y: s.y + i * 3, id: 3 }]);
+      await page.waitForTimeout(20);
+    }
+  });
+  return { where, runs, ok: runs.length > 0 && runs.every((one) => one.ok) };
+}
+
 /* ------------------------------------------------------------------ */
 /* The run                                                             */
 /* ------------------------------------------------------------------ */
@@ -2924,6 +3145,7 @@ try {
       [seen.sliderRun, (page, where) => slider(page, where)],
       ...(engine === "chromium" ? [[seen.phoneCity, (page, where) => phoneCityByHand(page, where)]] : []),
       ...(engine === "chromium" ? [[seen.panStill, (page, where) => panStill(page, where, { level: 1, phone: true })], [seen.panStill, (page, where) => panStill(page, where, { level: 2, phone: true })]] : []),
+      ...(engine === "chromium" ? [[seen.pinchPan, (page, where) => pinchAndPan(page, where, { level: 1 })], [seen.pinchPan, (page, where) => pinchAndPan(page, where, { level: 2 })]] : []),
     ]);
     if (!only || only.includes("viewInPanel")) seen.viewInPanel.push(await viewRootInPanel(browser));
     if (!only || only.includes("switch")) seen.switch.push(await rootIsTheOneFace(browser, { engine, device: "desk 1440×900" }).catch((error) => ({ ok: false, error: String(error?.message ?? error) })));
@@ -3033,6 +3255,7 @@ try {
   const ofRuns = (zoom) => seen.panStill.map((one) => ({ ...one, runs: (one.runs ?? []).filter((run) => run.zoom === zoom), ok: !one.error && (one.runs ?? []).some((run) => run.zoom === zoom) && (one.runs ?? []).filter((run) => run.zoom === zoom).every((run) => run.ok) }));
   const pans = ofRuns(false);
   const zooms = ofRuns(true);
+  report.checks.duringAPinchThatPansEveryBoardAndNameStaysFastenedToItsDistrictEveryFrame = { held: seen.pinchPan, ok: every(seen.pinchPan) };
   report.checks.letGoOfAPanEveryBoardAndNameStaysWhereTheLastFrameDrewIt = { held: pans, ok: every(pans) };
   report.checks.letGoOfAZoomEveryBoardAndNameGoesOnFromWhereTheLastFrameDrewIt = { held: zooms, ok: every(zooms) };
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
