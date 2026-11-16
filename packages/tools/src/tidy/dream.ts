@@ -1,5 +1,5 @@
 import { isAutomated, type AnySchema, type Author, type Store, type Via } from "@graview/core";
-import { declined, isTidyingActor, stoppedKind, suggest, suggestionKey, suggestions, withdrawSuggestion } from "@graview/core/tidying";
+import { declined, isTidyingActor, stoppedKind, suggest, suggestionKey, suggestions, uncitedIn, withdrawSuggestion, type UncitedValue } from "@graview/core/tidying";
 import type { HostAi } from "../ai.js";
 import { askAll, type DreamBudget, type DreamCache, type DreamUsage } from "./asking.js";
 import { blocksOf } from "./blocking.js";
@@ -125,6 +125,13 @@ export interface DreamReport {
   readonly applying: string;
   /** "Suggested 3 changes and applied 1." */
   readonly said: string;
+  /**
+   * WHAT IT SAW HELD WITH NOTHING CITED (Roadmap f-field-cites-marker):
+   * each record holding a value in a cited field whose citing field or
+   * relation is empty, as the actor sees them. Said, never changed: only a
+   * person knows where a value came from.
+   */
+  readonly uncited: readonly UncitedValue[];
 }
 
 /** When each record was made and by whom, from the log: the first op that added it. */
@@ -337,5 +344,6 @@ export async function dream<S extends AnySchema>(store: Store<S>, options: Dream
             .filter(Boolean)
             .join(" and ")
             .replace(/^[aw]/, (first) => first.toUpperCase()) + ".",
+    uncited: uncitedIn(context.store),
   };
 }

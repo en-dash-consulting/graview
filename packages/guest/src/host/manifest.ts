@@ -3,7 +3,7 @@ import { fileFieldKind } from "./marks.js";
 import type { GuestAct, GuestEdge, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
 import type { GuestPictures } from "./pictures.js";
 import { THUMB_REFUSED, thumbIsSound } from "./picture-thumb.js";
-import { choicesOf, plainNode, readAcross, type GuestViewInput } from "./session.js";
+import { choicesOf, citesFor, plainNode, readAcross, type GuestViewInput } from "./session.js";
 import { unseenOf, viewKinds } from "./unseen.js";
 
 /*
@@ -538,6 +538,8 @@ export function workerViewProps<S extends AnySchema>(store: Store<S>, principal:
     today: store.today() ?? isoToday(),
     // Each option of the handed records' choices, by its label (Roadmap f-option-labels).
     ...choicesOf(store.schema, [...own, ...listed.values()]),
+    // What cites what, and which handed records hold a value with nothing cited (Roadmap f-field-cites-marker).
+    ...citesFor(seen, [...own, ...listed.values()]),
     // A link names a place by its slug, so each slug once: a picture over several kinds is one place to a view.
     ...(given.places ? { places: given.places.filter((place, at, all) => all.findIndex((other) => other.as === place.as) === at).map(({ as, title, kind }) => ({ as, title, kind })) } : {}),
     // What its seat is kept from, of what it reads, and only what the seat may know of it (Roadmap f-view-knows-what-its-seat-cannot-see).

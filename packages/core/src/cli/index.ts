@@ -23,6 +23,8 @@ import { describeApp } from "./describe.js";
 import { describePlace } from "../document/describe-place.js";
 import { Store } from "../store.js";
 import { readSnapshot } from "../snapshot.js";
+import { uncitedValues, type UncitedValue } from "../cited.js";
+import { uncitedFinding } from "../document/uncited-findings.js";
 import { generateAgentsMd, generateLlmsTxt } from "./docs.js";
 import { figureBrief, figureFaults, FIGURE_NAMES, FIGURES } from "../schema/figures.js";
 import { scaffoldLens, validateLensOptions, type LensScaffoldOptions } from "../scaffold/lens.js";
@@ -32,7 +34,7 @@ export const USAGE = `graview — start a product, check its declaration, write 
 
 ${CREATE_USAGE}
 
-  graview check <entry> [--views <module>] [--face <dir>] [--json]
+  graview check <entry> [--views <module>] [--face <dir>] [--seed <snapshot.json>] [--json]
       Loads <entry> (a module whose default export, or \`app\` export, is a
       GraviewApp) and reports schema problems. Exits 1 on any error. Reads
       the face too — the project's src/ (the nearest package.json up from
@@ -40,6 +42,8 @@ ${CREATE_USAGE}
       imports, loads or fetches a JSON file of the project's for content
       (face-reads-content-beside-the-graph): what it shows from there is on
       no record. The declaration, a seed and a template are read where they are.
+      With --seed, warns of each record there holding a value in a cited
+      field (cites) with nothing in the field or relation that cites it.
 
   --document <file>
       Any command that takes an <entry> takes a declaration document instead
@@ -199,6 +203,14 @@ function flag(argv: readonly string[], name: string): string | undefined {
   return argv[index + 1] ?? "";
 }
 
+/** The values a seed's records hold in a cited field with nothing cited (`--seed <snapshot.json>`, Roadmap f-field-cites-marker), each at its place in the seed. */
+function seedUncited(schema: AnySchema, seedFile: string | undefined): { readonly one: UncitedValue; readonly at: string }[] {
+  if (!seedFile) return [];
+  const { nodes, edges } = readSnapshot(readFileSync(resolve(process.cwd(), seedFile), "utf8")).snapshot;
+  const index = new Map(nodes.map((node, i) => [node.id, i]));
+  return uncitedValues(schema, nodes as never, (id, relation) => edges.filter((edge) => edge.from === id && edge.kind === relation).length).map((one) => ({ one, at: `${seedFile}: nodes.${index.get(one.record)}.${one.field}` }));
+}
+
 export async function main(argv: string[]): Promise<number> {
   const command = argv[0];
   const entry = entryArg(argv, 1);
@@ -301,7 +313,9 @@ export async function main(argv: string[]): Promise<number> {
          */
         const template = templateIn(entry);
         const own = template === undefined ? [] : templateFindings(template, compiled.ok ? compiled : undefined);
-        const findings = [...compiled.findings, ...own];
+        // The records a seed holds, where one is named: which hold a cited value with nothing cited (Roadmap f-field-cites-marker).
+        const seeded = compiled.ok ? seedUncited(compiled.app.schema, flag(argv, "--seed")).map(({ one, at }) => uncitedFinding(one, at)) : [];
+        const findings = [...compiled.findings, ...own, ...seeded];
         const ok = compiled.ok && !own.some((f) => f.severity === "error");
         if (argv.includes("--json")) process.stdout.write(`${JSON.stringify({ ok, findings }, null, 2)}\n`);
         else process.stdout.write(`${findings.length > 0 ? sayFindings(findings) : template !== undefined ? "✓ the template and its document compile and check clean" : "✓ the document compiles and checks clean"}\n`);
@@ -312,7 +326,11 @@ export async function main(argv: string[]): Promise<number> {
       const root = projectRootOf(resolve(process.cwd(), entry));
       const face = flag(argv, "--face");
       const faceFindings = face ? auditFace(root ?? process.cwd(), resolve(process.cwd(), face)) : root ? auditFace(root) : [];
-      const result = withFaceFindings(checkApp(app), faceFindings);
+      const seeded = seedUncited(app.schema as AnySchema, flag(argv, "--seed")).map(({ one, at }) => {
+        const said = uncitedFinding(one, at);
+        return { severity: "warning" as const, code: said.code, where: at, message: said.message, fix: said.fix ?? "" };
+      });
+      const result = withFaceFindings(checkApp(app), [...faceFindings, ...seeded]);
       if (argv.includes("--json")) {
         process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
       } else {

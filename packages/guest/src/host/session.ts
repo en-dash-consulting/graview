@@ -1,5 +1,5 @@
 import type { ViewProblem } from "./problems.js";
-import { choiceWords, InvalidArguments, isoToday, localeFor, PermissionDeniedError, timeZoneFor, unseated, type AnySchema, type Principal, type Store } from "@graview/core";
+import { choiceWords, citedFieldsOf, InvalidArguments, isoToday, localeFor, PermissionDeniedError, timeZoneFor, unseated, type AnySchema, type Principal, type Store } from "@graview/core";
 import type { GuestPictureLimits } from "./pictures.js";
 import type { Arrival, Destination } from "./links.js";
 import type { Mine } from "./mine.js";
@@ -256,6 +256,35 @@ export function choicesOf(schema: AnySchema, nodes: readonly unknown[]): Pick<Gu
   return Object.keys(choices).length > 0 ? { choices } : {};
 }
 
+/** Whether a value says anything: not undefined, null, blank words or an empty list. */
+const holds = (value: unknown): boolean => !(value === undefined || value === null || (typeof value === "string" && value.trim() === "") || (Array.isArray(value) && value.length === 0));
+
+/**
+ * WHAT CITES WHAT, AND WHAT IS UNCITED (Roadmap f-field-cites-marker): for
+ * the handed records' kinds, each cited field and the field or relation
+ * that cites it (`cites`), and each handed record's cited fields holding a
+ * value with nothing cited (`uncited`), judged over the viewer's graph,
+ * whose links the view may not be handed. Nothing when no kind cites.
+ */
+export function citesFor(store: { readonly schema: AnySchema; readonly graph: { outEdges(id: string, kind?: string): readonly unknown[] } }, nodes: readonly unknown[]): Pick<GuestProps, "cites" | "uncited"> {
+  const cites: Record<string, Record<string, { readonly by: string; readonly relation: boolean }>> = {};
+  const uncited: Record<string, string[]> = {};
+  for (const node of nodes) {
+    if (!isRecord(node) || typeof node["kind"] !== "string" || typeof node["id"] !== "string") continue;
+    const kind = node["kind"];
+    if (!(kind in cites)) {
+      const edges = (store.schema.tryDefinition(kind) as { readonly edges?: Readonly<Record<string, unknown>> } | undefined)?.edges ?? {};
+      cites[kind] = Object.fromEntries(Object.entries(citedFieldsOf(store.schema, kind)).map(([field, by]) => [field, { by, relation: Object.prototype.hasOwnProperty.call(edges, by) }]));
+    }
+    for (const [field, { by, relation }] of Object.entries(cites[kind]!)) {
+      if (!holds(node[field]) || (relation ? store.graph.outEdges(node["id"], by).length > 0 : holds(node[by]))) continue;
+      (uncited[node["id"]] ??= []).push(field);
+    }
+  }
+  for (const kind of Object.keys(cites)) if (Object.keys(cites[kind]!).length === 0) delete cites[kind];
+  return { ...(Object.keys(cites).length > 0 ? { cites } : {}), ...(Object.keys(uncited).length > 0 ? { uncited } : {}) };
+}
+
 /**
  * A record as a guest is handed it: plain data, with its `label` as the host
  * labels it (the kind's own `label`, else its label field, else its id) —
@@ -496,6 +525,8 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
       today: options.store.today() ?? isoToday(),
       // Each option of the handed records' choices, by its label (Roadmap f-option-labels).
       ...choicesOf(options.store.schema, [...(node ? [node] : []), ...(listed ?? [])]),
+      // What cites what, and which handed records hold a value with nothing cited (Roadmap f-field-cites-marker).
+      ...citesFor(store, [...(node ? [node] : []), ...(listed ?? [])]),
       ...(options.placesShown ?{ places: options.placesShown().map(({ as, title, kind }) => ({ as, title, kind })) } : {}),
       ...unseenFor(options.reads?.kinds ?? []),
     };
