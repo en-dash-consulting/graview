@@ -25,7 +25,9 @@
  * fresh load fades; a board's post crosses no name and runs under any board
  * it has to cross; a district's "⚠ n" opens that kind's problems alone; and
  * the page is drawn once, its elements, keyboard and typed word kept as the
- * one face arrives.
+ * one face arrives. And a pan let go of, at Nearby and the City, moves
+ * nothing: every board and name stays where the last frame drew it; a zoom
+ * let go of goes on from there, never back to where it began.
  *
  * Frame strips (desk and phone, light and dark), and the rich app's City
  * and Nearby at 1280 and 390 wide (`rich-*.png`), are written to
@@ -57,7 +59,7 @@ const STRIPS = resolve(repoRoot, "docs/one-face");
 
 const report = { at: new Date().toISOString(), engines, app: "apps/todo", checks: {} };
 const errors = [];
-const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], pointsOut: [], shortcuts: [], keysTurnOff: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [], richClear: [], richNamed: [], richWords: [], richLegend: [], richViews: [], richRecords: [], richNearbyViews: [], richPhoneLines: [], richNamesBeside: [], richHomeScale: [], richControls: [], richOwnDistrict: [], richLegible: [], richHomeNearby: [], richOneLevel: [], richSmooth: [], richFocusSeen: [], richProblems: [], richHand: [], richHomeViews: [], richPanelCrossings: [], richBoardsUnder: [], richHomeClear: [], richProblemsOfKind: [], richPosts: [], richPostsUnder: [], recordInPlace: [], oneRuleFades: [], noWordsAfterPress: [], drawnOnce: [], nearbyZoom: [], nearbyPan: [], nearbyBack: [], panelPinch: [], phoneCity: [], panelWidth: [], panelSpacing: [], viewInPanel: [] };
+const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], pointsOut: [], shortcuts: [], keysTurnOff: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [], richClear: [], richNamed: [], richWords: [], richLegend: [], richViews: [], richRecords: [], richNearbyViews: [], richPhoneLines: [], richNamesBeside: [], richHomeScale: [], richControls: [], richOwnDistrict: [], richLegible: [], richHomeNearby: [], richOneLevel: [], richSmooth: [], richFocusSeen: [], richProblems: [], richHand: [], richHomeViews: [], richPanelCrossings: [], richBoardsUnder: [], richHomeClear: [], richProblemsOfKind: [], richPosts: [], richPostsUnder: [], recordInPlace: [], oneRuleFades: [], noWordsAfterPress: [], drawnOnce: [], nearbyZoom: [], nearbyPan: [], nearbyBack: [], panelPinch: [], phoneCity: [], panelWidth: [], panelSpacing: [], viewInPanel: [], panStill: [] };
 
 /* ------------------------------------------------------------------ */
 /* In the page                                                         */
@@ -2454,6 +2456,317 @@ async function phoneCityByHand(page, where) {
 }
 
 /*
+ * LETTING GO OF A PAN, NOTHING MOVES (Graview HQ
+ * feature:f-one-face-pan-stops-still). At Nearby and at the City a hand pans
+ * the city — a drag on its ground, a drag begun on a board, a scroll, a
+ * finger on a phone — holds still a moment and lets go: from the last frame
+ * the hand drew, for 600 ms after, every board's and every district name's
+ * box on the screen, and the ground under them, stays where that frame drew
+ * it, to the pixel, and none is put away; one the pan brought into sight
+ * stands still from the frame it comes up in. They used to snap back to
+ * where the pan began and slide over to where it was let go. Where one the
+ * pan brought into sight has no clear room round what stood, the page says
+ * the city was placed afresh, and everything goes on from where it was
+ * drawn, never jumping. After each, at rest, no board or name stands on
+ * another, and at the City every view has its board.
+ *
+ * AND A ZOOM LET GO OF GOES ON FROM WHERE IT WAS DRAWN. Ctrl and the wheel,
+ * or two fingers apart, and let go: the city at its new zoom places its
+ * boards and names again (a name is a size on the screen), and each goes
+ * there from where the last frame of the zoom drew it — the first frame
+ * after letting go draws it there, and no frame moves it more than a step
+ * of the way. It used to jump back to where the zoom began.
+ */
+const STILL_MS = 600;
+function startStillRecording(page) {
+  return page.evaluate(() => {
+    const frames = [];
+    window.__stillFrames = frames;
+    window.__stillStop = false;
+    const box = (el) => {
+      const r = el.getBoundingClientRect();
+      return [r.left, r.top, r.width, r.height];
+    };
+    // What a person sees: drawn, not faded out, and on the window.
+    const shown = (el) => {
+      const r = el.getBoundingClientRect();
+      return el.style.visibility !== "hidden" && Number(el.style.opacity || 1) > 0.05 && r.width > 0 && r.right > 0 && r.bottom > 0 && r.left < innerWidth && r.top < innerHeight;
+    };
+    const tick = () => {
+      if (window.__stillStop) return;
+      requestAnimationFrame(tick);
+      const items = {};
+      for (const el of document.querySelectorAll("[data-graview-board]")) if (shown(el)) items[`board ${el.getAttribute("data-graview-board")}`] = box(el);
+      for (const el of document.querySelectorAll("[data-graview-district-tag]")) if (shown(el) && getComputedStyle(el.parentElement).opacity !== "0") items[`name ${el.getAttribute("data-graview-district-tag")}`] = box(el);
+      const tile = document.querySelector('[data-testid="one-place-city"] [data-graview-plot] .graview-plot-tile');
+      if (tile) items.ground = box(tile);
+      frames.push({ t: performance.now(), items });
+    };
+    requestAnimationFrame(tick);
+  });
+}
+const stopStillRecording = (page) =>
+  page.evaluate(() => {
+    window.__stillStop = true;
+    return window.__stillFrames ?? [];
+  });
+const farthest = (a, b) => Math.max(...a.map((n, i) => Math.abs(n - b[i])));
+/** From the last frame drawn before `released`, for STILL_MS after: how far each box went from where that frame drew it (one that came up after, from its first frame). */
+function stillAfter(frames, released) {
+  const last = frames.filter((frame) => frame.t < released).at(-1);
+  if (!last) return { worst: Infinity, frames: 0, error: "no frame before the hand let go" };
+  const after = frames.filter((frame) => frame.t >= released && frame.t <= released + STILL_MS);
+  const first = { ...last.items };
+  let worst = 0;
+  let what = null;
+  for (const frame of after)
+    for (const [key, now] of Object.entries(frame.items)) {
+      first[key] ??= now;
+      const moved = farthest(now, first[key]);
+      if (moved > worst) {
+        worst = moved;
+        what = { key, at: Math.round(frame.t - released), from: first[key].map(Math.round), to: now.map(Math.round) };
+      }
+    }
+  const cameUp = Object.keys(first).filter((key) => !(key in last.items));
+  const putAway = Object.keys(last.items).filter((key) => after.some((frame) => !(key in frame.items)));
+  return { worst: Number(worst.toFixed(2)), worstAt: what, frames: after.length, boxes: Object.keys(last.items).length, cameUp, putAway };
+}
+/** From the last frame drawn before `released`: how far the first frame after moved each box, and the biggest share of its whole way after that one frame took. */
+function goesOnAfter(frames, released) {
+  const last = frames.filter((frame) => frame.t < released).at(-1);
+  if (!last) return { firstStep: Infinity, frames: 0, error: "no frame before the hand let go" };
+  const after = frames.filter((frame) => frame.t >= released && frame.t <= released + STILL_MS);
+  let firstStep = 0;
+  let firstAt = null;
+  let leap = 0;
+  let leapAt = null;
+  for (const [key, was] of Object.entries(last.items)) {
+    const path = [was, ...after.map((frame) => frame.items[key]).filter(Boolean)];
+    if (path.length < 2) continue;
+    const step = farthest(path[1], was);
+    if (step > firstStep) {
+      firstStep = step;
+      firstAt = { key, from: was.map(Math.round), to: path[1].map(Math.round) };
+    }
+    const whole = farthest(path.at(-1), was);
+    if (whole < 8) continue;
+    for (let i = 1; i < path.length; i++) {
+      const share = farthest(path[i], path[i - 1]) / whole;
+      if (share > leap) {
+        leap = share;
+        leapAt = { key, whole: Math.round(whole), step: Math.round(farthest(path[i], path[i - 1])) };
+      }
+    }
+  }
+  return { firstStep: Number(firstStep.toFixed(2)), firstAt, leap: Number(leap.toFixed(3)), leapAt, frames: after.length, boxes: Object.keys(last.items).length };
+}
+async function panStill(page, where, { level, phone }) {
+  where = { ...where, level };
+  await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
+  await ready(page);
+  await press(page, `[data-testid="altitude-stop-${level}"]`);
+  await restAt(page, level, 15_000);
+  await page.waitForTimeout(700);
+  const bar = await page.evaluate(() => Math.round(document.querySelector('[data-testid="one-place-bar"]')?.getBoundingClientRect().bottom ?? 0));
+  /** Bare ground of the city, clear of the page, the boards, the names and the control. */
+  const bare = () =>
+    page.evaluate((top) => {
+      const sheet = document.querySelector("[data-graview-one-place]")?.getBoundingClientRect();
+      const dock = document.querySelector("[data-graview-one-face-dock]")?.getBoundingClientRect();
+      const right = sheet && sheet.left > 100 ? sheet.left - 40 : innerWidth - 40;
+      const foot = Math.min(sheet && sheet.top > top + 100 ? sheet.top : innerHeight, dock ? dock.top : innerHeight) - 30;
+      for (let y = Math.round((top + foot) / 2); y > top + 30; y -= 13)
+        for (let x = 40; x < right; x += 23) {
+          const el = document.elementFromPoint(x, y);
+          if (el && el.closest('[data-testid="one-place-city"]') && !el.closest("[data-graview-plot], .graview-kind-card, button, a, [data-graview-building], [data-graview-board], [data-graview-district-tag]")) return { x, y };
+        }
+      return null;
+    }, bar);
+  /** Bare ground as near the middle of the city's side as there is: two fingers there zoom what is in sight, not the window's edge. */
+  const bareInTheMiddle = () =>
+    page.evaluate((top) => {
+      const sheet = document.querySelector("[data-graview-one-place]")?.getBoundingClientRect();
+      const dock = document.querySelector("[data-graview-one-face-dock]")?.getBoundingClientRect();
+      const right = sheet && sheet.left > 100 ? sheet.left : innerWidth;
+      const foot = Math.min(sheet && sheet.top > top + 100 ? sheet.top : innerHeight, dock ? dock.top : innerHeight);
+      const middle = { x: right / 2, y: (top + foot) / 2 };
+      const spots = [];
+      for (let y = top + 50; y < foot - 50; y += 11) for (let x = 60; x < right - 60; x += 13) spots.push({ x, y });
+      spots.sort((a, b) => Math.hypot(a.x - middle.x, a.y - middle.y) - Math.hypot(b.x - middle.x, b.y - middle.y));
+      for (const { x, y } of spots) {
+        const el = document.elementFromPoint(x, y);
+        if (el && el.closest('[data-testid="one-place-city"]') && !el.closest("[data-graview-plot], .graview-kind-card, button, a, [data-graview-building], [data-graview-board], [data-graview-district-tag]")) return { x, y };
+      }
+      return null;
+    }, bar);
+  const aBoard = () =>
+    page.evaluate((top) => {
+      for (const el of document.querySelectorAll("[data-graview-board]:not([aria-current])")) {
+        const r = el.getBoundingClientRect();
+        const x = r.left + r.width / 2;
+        const y = r.top + r.height / 2;
+        if (r.width > 0 && el.style.visibility !== "hidden" && y > top + 20 && document.elementFromPoint(x, y)?.closest("[data-graview-board]") === el) return { x, y };
+      }
+      return null;
+    }, bar);
+  const overADistrict = () =>
+    page.evaluate((top) => {
+      for (const tile of document.querySelectorAll('[data-testid="one-place-city"] [data-graview-plot] .graview-plot-tile')) {
+        const r = tile.getBoundingClientRect();
+        for (const [fx, fy] of [[0.5, 0.5], [0.3, 0.5], [0.7, 0.5], [0.5, 0.3], [0.5, 0.7]]) {
+          const x = r.left + r.width * fx;
+          const y = r.top + r.height * fy;
+          if (y < top + 30 || x < 10 || x > innerWidth - 10 || y > innerHeight - 10) continue;
+          const el = document.elementFromPoint(x, y);
+          if (el?.closest("[data-graview-plot]") && !el.closest("button, a, [data-graview-building], [data-graview-board], [data-graview-district-tag]")) return { x, y };
+        }
+      }
+      return null;
+    }, bar);
+  const releasedAt = () => page.evaluate(() => performance.now());
+  const placedAfresh = () => page.evaluate(() => document.querySelector('[data-testid="one-place-city"]')?.getAttribute("data-graview-placed-afresh-after-a-pan") ?? "0");
+  const runs = [];
+  const run = async (way, spot, gesture, zoom = false, least = zoom ? 3 : 4) => {
+    if (!spot) {
+      runs.push({ way, ok: false, error: "nowhere to begin it" });
+      return;
+    }
+    let released;
+    let frames;
+    const afreshBefore = await placedAfresh();
+    try {
+      await startStillRecording(page);
+      await page.waitForTimeout(120);
+      released = await gesture(spot);
+      await page.waitForTimeout(STILL_MS + 150);
+      frames = await stopStillRecording(page);
+    } catch (error) {
+      runs.push({ way, zoom, spot, ok: false, error: String(error?.message ?? error) });
+      return;
+    }
+    // The city placed afresh after the pan (a board come into sight had no clear room round what stood): said by the page, and then everything goes on from where it was drawn, never jumping.
+    const afresh = !zoom && (await placedAfresh()) !== afreshBefore;
+    const held = zoom || afresh ? goesOnAfter(frames, released) : stillAfter(frames, released);
+    // And at rest after it: no board or name on another, and at the City every view's board drawn.
+    const after = await page.evaluate((city) => {
+      const shown = (el) => el.style.visibility !== "hidden" && Number(el.style.opacity || 1) > 0.5 && !el.hasAttribute("data-graview-under");
+      const boxes = [...document.querySelectorAll("[data-graview-board], [data-graview-district-tag]")].filter(shown).map((el) => ({ key: el.getAttribute("data-graview-board") ?? `name ${el.getAttribute("data-graview-district-tag")}`, r: el.getBoundingClientRect() }));
+      const on = [];
+      for (let i = 0; i < boxes.length; i++)
+        for (let j = i + 1; j < boxes.length; j++) {
+          const [a, b] = [boxes[i].r, boxes[j].r];
+          if (Math.min(a.right, b.right) - Math.max(a.left, b.left) > 2 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 2) on.push(`${boxes[i].key} × ${boxes[j].key}`);
+        }
+      // A view of one kind whose district is in sight, half of it at least: a district panned out of the window stands its views where it is seen, which is nowhere.
+      const inSight = (kind) => {
+        const tile = [...document.querySelectorAll('[data-testid="one-place-city"] [data-graview-plot]')].find((plot) => plot.getAttribute("data-graview-plot")?.endsWith(`:${kind}`) || plot.getAttribute("data-graview-plot") === kind)?.querySelector(".graview-plot-tile")?.getBoundingClientRect();
+        if (!tile || tile.width === 0) return false;
+        const w = Math.max(0, Math.min(tile.right, innerWidth) - Math.max(tile.left, 0));
+        const h = Math.max(0, Math.min(tile.bottom, innerHeight) - Math.max(tile.top, 0));
+        return w * h >= tile.width * tile.height * 0.5;
+      };
+      const kindOf = (key) => (key.startsWith("kind:") ? key.slice(5) : key.startsWith("place:") ? key.split(":")[1] : null);
+      const missing = city ? [...document.querySelectorAll("[data-graview-board]:not([aria-current])")].filter((el) => !shown(el) && !el.hasAttribute("data-graview-under") && kindOf(el.getAttribute("data-graview-board")) && inSight(kindOf(el.getAttribute("data-graview-board")))).map((el) => el.getAttribute("data-graview-board")) : [];
+      return { on, missing };
+    }, level === 2);
+    // How far the gesture took the ground, and what was measured: never a gesture that moved nothing, nor a window with nothing on it.
+    const lastPan = frames.filter((frame) => frame.t < released).at(-1);
+    const groundMoved = frames[0]?.items.ground && lastPan?.items.ground ? Math.round(farthest(lastPan.items.ground, frames[0].items.ground)) : 0;
+    const measured = lastPan ? Object.keys(lastPan.items).filter((key) => key !== "ground").length : 0;
+    // A step past a third of the way in one frame is a jump: an eased settle takes about a tenth, a stalled frame twice that.
+    // A zoom's claim is about the boxes it places again: at least one is seen going there.
+    const goesOn = held.firstStep <= 1 && held.leap <= 0.34 && (!zoom || held.leapAt !== null);
+    const ok = held.frames > 10 && measured >= least && groundMoved >= (zoom ? 8 : 20) && after.on.length === 0 && after.missing.length === 0 && (zoom || afresh ? goesOn : held.worst <= 1 && held.putAway.length === 0);
+    runs.push({ way, zoom, afresh, spot, groundMoved, measured, ...held, after, ok });
+    // Each gesture begins at rest where the last left the city.
+    await page.waitForTimeout(300);
+  };
+  if (phone) {
+    const cdp = await page.context().newCDPSession(page);
+    const touch = (type, touchPoints) => cdp.send("Input.dispatchTouchEvent", { type, touchPoints });
+    await run("a finger's drag", await bare(), async (s) => {
+      await touch("touchStart", [{ x: s.x, y: s.y }]);
+      for (let i = 1; i <= 12; i++) {
+        await touch("touchMove", [{ x: s.x + i * 7, y: s.y + i * 4 }]);
+        await page.waitForTimeout(16);
+      }
+      await page.waitForTimeout(80);
+      const t = await releasedAt();
+      await touch("touchEnd", []);
+      return t;
+    });
+    // Two fingers together, then apart: further out, and closer.
+    const pinch = (by) => async (s) => {
+      const points = (gap) => [{ x: s.x - gap, y: s.y }, { x: s.x + gap, y: s.y }];
+      await touch("touchStart", points(60));
+      for (let i = 1; i <= 5; i++) {
+        await touch("touchMove", points(60 + i * by));
+        await page.waitForTimeout(16);
+      }
+      await page.waitForTimeout(80);
+      const t = await releasedAt();
+      await touch("touchEnd", []);
+      return t;
+    };
+    // The City is as far out as the camera goes: there two fingers only go closer.
+    if (level === 1) await run("two fingers together", await bareInTheMiddle(), pinch(-5), true);
+    // Closer beside the page, a phone's whole city side fades as its districts leave sight (unchanged here): closer is held at the City.
+    if (level === 2) await run("two fingers apart", await bareInTheMiddle(), pinch(4), true);
+  } else {
+    const drag = (dx, dy) => async (s) => {
+      await page.mouse.move(s.x, s.y);
+      await page.mouse.down();
+      for (let i = 1; i <= 12; i++) {
+        await page.mouse.move(s.x + (i * dx) / 12, s.y + (i * dy) / 12);
+        await page.waitForTimeout(16);
+      }
+      await page.waitForTimeout(80);
+      const t = await releasedAt();
+      await page.mouse.up();
+      return t;
+    };
+    await run("a drag on the ground", await bare(), drag(96, 60));
+    await run("a drag begun on a board", await aBoard(), drag(96, 60));
+    // Toward the page beside the city: what goes under it is put away, and what stays in sight stays where it is.
+    await run("a drag toward the page", await bare(), drag(220, 0), false, 2);
+    await run("a scroll", await bare(), async (s) => {
+      await page.mouse.move(s.x, s.y);
+      for (let i = 0; i < 6; i++) {
+        await page.mouse.wheel(50, 50);
+        await page.waitForTimeout(30);
+      }
+      await page.waitForTimeout(40);
+      return releasedAt();
+    });
+    // Over a district the scroll is this face's own, not the Scene's: the same claim.
+    await run("a scroll over a district", await overADistrict(), async (s) => {
+      await page.mouse.move(s.x, s.y);
+      for (let i = 0; i < 6; i++) {
+        await page.mouse.wheel(-30, -40);
+        await page.waitForTimeout(30);
+      }
+      await page.waitForTimeout(40);
+      return releasedAt();
+    });
+    const ctrlWheel = (deltaY) => async (s) => {
+      await page.mouse.move(s.x, s.y);
+      for (let i = 0; i < 2; i++) {
+        await page.keyboard.down("Control");
+        await page.mouse.wheel(0, deltaY);
+        await page.keyboard.up("Control");
+        await page.waitForTimeout(30);
+      }
+      await page.waitForTimeout(40);
+      return releasedAt();
+    };
+    await run("ctrl and the wheel, closer", await bare(), ctrlWheel(-40), true);
+    await run("ctrl and the wheel over a district, further", await overADistrict(), ctrlWheel(40), true);
+  }
+  return { where, runs };
+}
+
+/*
  * A DESK'S PANEL OPENS AT 55% OF THE WINDOW, held to 1192 pixels on a wide
  * monitor; a width dragged to is kept for this app in this browser and the
  * panel opens at it again after a reload.
@@ -2596,6 +2909,8 @@ try {
       [seen.panelPinch, (page, where) => panelByHand(page, where)],
       [seen.panelWidth, (page, where) => panelWidth(page, where)],
       [seen.panelSpacing, (page, where) => panelSpacing(page, where)],
+      [seen.panStill, (page, where) => panStill(page, where, { level: 1, phone: false })],
+      [seen.panStill, (page, where) => panStill(page, where, { level: 2, phone: false })],
     ]);
     const phone = { ...devices[PHONE], ...(engine === "chromium" ? {} : { isMobile: false }) };
     await run(phone, PHONE, [
@@ -2608,6 +2923,7 @@ try {
       ...(engine === "chromium" ? [[seen.pinch, (page, where) => pinch(page, where)]] : []),
       [seen.sliderRun, (page, where) => slider(page, where)],
       ...(engine === "chromium" ? [[seen.phoneCity, (page, where) => phoneCityByHand(page, where)]] : []),
+      ...(engine === "chromium" ? [[seen.panStill, (page, where) => panStill(page, where, { level: 1, phone: true })], [seen.panStill, (page, where) => panStill(page, where, { level: 2, phone: true })]] : []),
     ]);
     if (!only || only.includes("viewInPanel")) seen.viewInPanel.push(await viewRootInPanel(browser));
     if (!only || only.includes("switch")) seen.switch.push(await rootIsTheOneFace(browser, { engine, device: "desk 1440×900" }).catch((error) => ({ ok: false, error: String(error?.message ?? error) })));
@@ -2713,6 +3029,12 @@ try {
   report.checks.aDesksPanelOpensAt55PercentHeldTo1192AndKeepsTheWidthDragged = { held: seen.panelWidth, ok: every(seen.panelWidth) };
   report.checks.thePageInThePanelTakesAPanelsGutterAndSaysSo = { held: seen.panelSpacing, ok: every(seen.panelSpacing) };
   report.checks.aViewsRootSaysItIsInThePanelAtNearbyAndNotOnAFullPage = { held: seen.viewInPanel, ok: every(seen.viewInPanel) };
+  // One run at each level holds two claims: the pans', and the zooms'.
+  const ofRuns = (zoom) => seen.panStill.map((one) => ({ ...one, runs: (one.runs ?? []).filter((run) => run.zoom === zoom), ok: !one.error && (one.runs ?? []).some((run) => run.zoom === zoom) && (one.runs ?? []).filter((run) => run.zoom === zoom).every((run) => run.ok) }));
+  const pans = ofRuns(false);
+  const zooms = ofRuns(true);
+  report.checks.letGoOfAPanEveryBoardAndNameStaysWhereTheLastFrameDrewIt = { held: pans, ok: every(pans) };
+  report.checks.letGoOfAZoomEveryBoardAndNameGoesOnFromWhereTheLastFrameDrewIt = { held: zooms, ok: every(zooms) };
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
   // A run of some claims alone (`--only=nearbyZoom,panelWidth`, while working on them) says only those.
   if (only) for (const [name, check] of Object.entries(report.checks)) if (name !== "noPageThrew" && Array.isArray(check.held) && check.held.length === 0) delete report.checks[name];
