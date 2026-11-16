@@ -7,7 +7,7 @@
  * store the `bind-person` act, that the host alone runs it, and when it may be taken back
  * (`BINDING`). Resolving a seat to its record is the main entry's.
  */
-import { BIND_PERSON, BINDING } from "./binding-served.js";
+import { BIND_PERSON, BINDING, takesBindingBack } from "./binding-served.js";
 import { PERSON_SEAT, personSeatOf } from "./graph/archived.js";
 import { isUnset, UNSET } from "./graph/primitives.js";
 import { MissingRecordError, NO_SUCH_RECORD } from "./graph/graph.js";
@@ -97,14 +97,15 @@ function bindPersonMutation(store: Held): AnyMutationDefinition | undefined {
       // Bound to this seat already, or this seat's own record: nothing to do.
       if (bound === seat || (bound === undefined && record === seat)) return;
       // Somebody's already: bound to another seat, a profile's own person, or a record somebody else was ever done as here.
-      if (bound !== undefined || record.includes("~") || doneAs(store).some((one) => one.record === record && one.seat !== seat)) throw new ActRefusal(`${named(node)} is already someone else's record here.`);
+      const ended = endedIn(store);
+      if (bound !== undefined || record.includes("~") || doneAs(store).some((one) => one.record === record && one.seat !== seat) || [...ended].some(([one, was]) => was === record && one !== seat)) throw new ActRefusal(`${named(node)} is already someone else's record here.`);
       const other = full.personBoundTo(seat);
       const theirs = other === undefined ? undefined : (full.getNode(other) as Node | undefined);
       if (theirs) throw new ActRefusal(`That account is already ${named(theirs)} here.`);
-      // A seat whose binding ended stays the record it acted as: bound elsewhere, what it did would be said as somebody else.
-      const was = doneAs(store).find((one) => one.seat === seat && one.record !== seat && one.record !== record);
-      const before = was === undefined ? undefined : (full.getNode(was.record) as Node | undefined);
-      if (was) throw new ActRefusal(`That account was ${before ? named(before) : `another ${noun}`} here: bind it to them again.`);
+      // A binding ended stays that person's: neither the seat nor the record is bound to another after it.
+      const was = ended.get(seat);
+      const before = was === undefined ? undefined : (full.getNode(was) as Node | undefined);
+      if (was !== undefined && was !== record) throw new ActRefusal(`That account was ${before ? named(before) : `another ${noun}`} here: bind it to them again.`);
       const own = full.getNode(seat) as Node | undefined;
       if (own && (schema.tryDefinition(own.kind) as { readonly people?: boolean } | undefined)?.people) throw new ActRefusal(`That account already has its own record here, ${named(own)}: merge the two instead.`);
       ctx.patchNode(record, { [PERSON_SEAT]: seat });
@@ -145,24 +146,50 @@ function judgedBinding(_store: object, call: MutationCall, principal: Principal)
 }
 
 /**
- * Why a binding may not be taken back: the seat has acted as the record
- * since, and unbinding would hand what it did to somebody else. An ended
- * binding comes back only while neither the seat nor the record is
- * anybody else's.
+ * Why an op of a binding may not be taken back (`root` the change its undo
+ * chain begins with). Taking a seat off its record is refused once the seat
+ * has acted as the record since, which would hand what it did to somebody
+ * else, unless it is an ending put back, ended again. Putting a seat back
+ * on its record is refused where either is somebody else's by then.
  */
-function bindingKept(store: object, op: Operation): string | undefined {
+function bindingKept(store: object, op: Operation, root: Operation): string | undefined {
   const held = store as Held;
-  const args = (op.mutation?.args ?? {}) as { readonly record?: unknown; readonly seat?: unknown; readonly end?: unknown };
+  const args = (root.mutation?.args ?? {}) as { readonly record?: unknown; readonly seat?: unknown; readonly end?: unknown };
   if (typeof args.record !== "string" || typeof args.seat !== "string") return undefined;
-  if (args.end === true) {
-    const bound = held.graph.personBoundTo(args.seat);
-    const node = held.graph.getNode(args.record) as Node | undefined;
-    return (bound !== undefined && bound !== args.record) || (node !== undefined && personSeatOf(node) !== undefined && personSeatOf(node) !== args.seat) ? "This cannot be taken back: that account, or this record, is someone else's here now." : undefined;
+  const record = args.record;
+  const seat = args.seat;
+  const node = held.graph.getNode(record) as Node | undefined;
+  const seated = op.primitives.some((one) => one.op === "patch-node" && one.id === record && typeof one.after[PERSON_SEAT] === "string" && !isUnset(one.after[PERSON_SEAT]));
+  if (!seated) {
+    const bound = held.graph.personBoundTo(seat);
+    const own = held.graph.getNode(seat) as Node | undefined;
+    const ownPerson = own !== undefined && (held.schema.tryDefinition(own.kind) as { readonly people?: boolean } | undefined)?.people === true;
+    return (bound !== undefined && bound !== record) || ownPerson || (node !== undefined && personSeatOf(node) !== undefined && personSeatOf(node) !== seat) ? "This cannot be taken back: that account, or this record, is someone else's here now." : undefined;
   }
-  if (!doneAs(held).some((one) => one.seq > op.seq && one.seat === args.seat && one.record === args.record)) return undefined;
-  const node = held.graph.getNode(args.record) as Node | undefined;
+  if (args.end === true) return undefined;
+  if (!doneAs(held).some((one) => one.seq > op.seq && one.seat === seat && one.record === record)) return undefined;
   const name = node ? labelOf(held.schema.tryDefinition(node.kind), node as never) : "They";
   return `${name} has acted here: unbinding would hand what they did to someone else.`;
+}
+
+/**
+ * THE BINDINGS ENDED, AND NOT TAKEN BACK (Roadmap f-unbind-person): each
+ * seat whose binding ended, and the record it was. What it did is said as
+ * that person still (`everBound`), so neither is bound to another.
+ */
+function endedIn(store: Held): ReadonlyMap<string, string> {
+  const ended = new Map<string, string>();
+  const get = (id: string) => store.log.get(id);
+  for (const op of store.log.all()) {
+    for (const primitive of op.primitives) {
+      if (primitive.op !== "patch-node" || !Object.hasOwn(primitive.after, PERSON_SEAT)) continue;
+      const seat = primitive.after[PERSON_SEAT];
+      const was = primitive.before[PERSON_SEAT];
+      if (typeof seat === "string" && !isUnset(seat)) ended.delete(seat);
+      else if (typeof was === "string" && !isUnset(was) && !takesBindingBack(op, get)) ended.set(was, primitive.id);
+    }
+  }
+  return ended;
 }
 
 BINDING.act = (store) => bindPersonMutation(store as Held);

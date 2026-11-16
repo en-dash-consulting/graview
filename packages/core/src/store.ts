@@ -30,7 +30,7 @@ import { OperationLog, type Epoch, type LogArchive } from "./ops/log.js";
 import type { Author, Batch, Operation, SentOut, Via } from "./ops/types.js";
 import { lineageOf, type Lineage } from "./ops/lineage.js";
 import { KEEP_LINK, keepLinkMutation, keepLinkVia } from "./mutations/keep-link.js";
-import { BIND_PERSON, BINDING } from "./binding-served.js";
+import { BIND_PERSON, BINDING, seatsKept, unseatedOp, type KeepsSeat } from "./binding-served.js";
 import { PERSON_SEAT } from "./graph/archived.js";
 import { ActRefusal } from "./refused.js";
 import { advisoryVoterOf, signedOutSeat, SIGN_IN_TO_VOTE, VOTE_SUGGESTION, VOTING, voteSuggestionMutation, type AppTidying, type VotesOptions } from "./mutations/vote-suggestion.js";
@@ -2752,7 +2752,8 @@ export class Store<S extends AnySchema> {
     const check = this.canUndo(batchIds);
     const keptBinding = check.ok || !isSystem(principal) ? undefined : this.bindingKept(check.ops);
     if (keptBinding) return { ok: false, refusal: keptBinding };
-    if (!check.ok) return { ok: false, check };
+    // What stands in the way, as this seat may be told it.
+    if (!check.ok) return { ok: false, check: isSystem(principal) ? check : seatedCheck(check, seatsKept(principal)) };
     const refusal = this.undoRefusal(check.ops, principal);
     return refusal ? { ok: false, refusal } : { ok: true };
   }
@@ -2760,8 +2761,10 @@ export class Store<S extends AnySchema> {
   /** Why a binding among these ops stays (`BINDING.undo`), or nothing. */
   private bindingKept(ops: readonly Operation[]): Refusal | undefined {
     for (const target of ops) {
-      if (target.undoes !== undefined || target.mutation?.name !== BIND_PERSON) continue;
-      const kept = BINDING.undo ? BINDING.undo(this, target) : "This binding cannot be taken back here.";
+      // Judged as the change its undo chain begins with, however often it was taken back and put back.
+      const root = this.rootOf(target);
+      if (root.mutation?.name !== BIND_PERSON) continue;
+      const kept = BINDING.undo ? BINDING.undo(this, target, root) : "This binding cannot be taken back here.";
       if (kept) return { mutation: "undo", wouldNeed: [], message: kept };
     }
     return undefined;
@@ -3422,3 +3425,7 @@ export interface CompactOptions {
   readonly format?: number;
 }
 
+/** An undo check with no seat a reader may not be told, in the ops it names. */
+function seatedCheck(check: UndoCheck & { readonly ok: false }, keeps: KeepsSeat): UndoCheck {
+  return { ...check, ops: check.ops.map((op) => unseatedOp(op, keeps)), blockedBy: check.blockedBy.map((block) => ({ ...block, op: unseatedOp(block.op, keeps) })) };
+}

@@ -194,3 +194,60 @@ describe("ending a binding", () => {
     expect(JSON.stringify(store.seenBy(organizer).log.all())).not.toContain("acct-bud");
   });
 });
+
+describe("a binding taken back, ended or put back again", () => {
+  const author = (store: Store<AnySchema>, reader: Principal, id: string) => store.seenBy(reader).log.all().find((one) => one.id === id)!.author;
+
+  it("keeps what the seat did said as the person through an ending taken back and made again", () => {
+    const store = family();
+    bindPerson(store, bud, "participant:bud", { author: host });
+    const given = store.apply({ name: "give-it", args: { id: "gift:kite" } }, { author: bud });
+    const ended = unbindPerson(store, bud, { author: host });
+    const back = store.undo(ended.batch, { author: host });
+    store.undo(back.batch, { author: host });
+    expect(store.personOf(bud)).toBe("acct-bud");
+    expect(author(store, ann, given.ops[0]!.id)).toMatchObject({ id: "participant:bud" });
+    expect(JSON.stringify(store.seenBy(ann).log.all())).not.toContain("acct-bud");
+  });
+
+  it("keeps a binding put back once its seat has acted as the record since", () => {
+    const store = family();
+    const done = bindPerson(store, bud, "participant:bud", { author: host });
+    const undone = store.undo(done.batch, { author: host });
+    const redone = store.undo(undone.batch, { author: host });
+    expect(store.personOf(bud)).toBe("participant:bud");
+    store.apply({ name: "give-it", args: { id: "gift:kite" } }, { author: bud });
+    expect(store.mayUndo(redone.batch, host)).toMatchObject({ ok: false, refusal: { message: "Bud has acted here: unbinding would hand what they did to someone else." } });
+    expect(() => store.undo(redone.batch, { author: host })).toThrow(/Bud has acted here/);
+    expect(JSON.stringify(store.seenBy(ann).log.all())).not.toContain("acct-bud");
+  });
+
+  it("binds nobody else to the record after an ending, though the seat never acted", () => {
+    const store = family();
+    bindPerson(store, bud, "participant:bud", { author: host });
+    unbindPerson(store, bud, { author: host });
+    expect(() => bindPerson(store, ann, "participant:bud", { author: host })).toThrow(/Bud is already someone else's record here/);
+    expect(() => bindPerson(store, bud, "participant:ann", { author: host })).toThrow(/That account was Bud here/);
+  });
+
+  it("is ended and put back by the host alone", () => {
+    const store = family();
+    bindPerson(store, bud, "participant:bud", { author: host });
+    const ended = unbindPerson(store, bud, { author: host });
+    expect(store.mayUndo(ended.batch, organizer).ok).toBe(false);
+    expect(() => store.undo(ended.batch, { author: organizer })).toThrow(PermissionDeniedError);
+    expect(() => store.undo(ended.batch, { author: bud })).toThrow(PermissionDeniedError);
+    expect(store.personOf(bud)).toBe("acct-bud");
+  });
+
+  it("says what stands in its way to a member with no account in it", () => {
+    const store = family();
+    const done = bindPerson(store, bud, "participant:bud", { author: host });
+    store.apply({ name: "remove-participant", args: { id: "participant:bud" } }, { author: organizer });
+    for (const reader of [ann, organizer]) {
+      const may = store.mayUndo(done.batch, reader);
+      expect(may.ok).toBe(false);
+      expect(JSON.stringify(may)).not.toContain("acct-bud");
+    }
+  });
+});
