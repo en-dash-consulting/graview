@@ -25,7 +25,7 @@ import {
 import { editableFields, type Affordance, type AffordanceSet, type EditableField } from "@graview/tools";
 import { useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation, useParams, useSearchParams } from "@graview/pages";
-import { replacesPage } from "@graview/react";
+import { listPageViewOf, replacesPage } from "@graview/react";
 import type { TodoSchema } from "../domain/schema.js";
 import { todoApp } from "../domain/app.js";
 import { today } from "./when.js";
@@ -1163,7 +1163,8 @@ const longDate = (day: string): string => dayAsRead(day);
  */
 function OwnOrThings({ context, kind, which }: { context: Ctx; kind: string; which: "list" | "record" }) {
   const builtIn = useSearchParams()[0].get("drawn") === "built-in";
-  const own = context.views?.lookup(kind as never, { cardinality: which === "list" ? "many" : "one", fidelity: "full" });
+  // A kind's list: the view of many that replaces it, whatever registered after it (FR-238, `listPageViewOf`).
+  const own = which === "list" ? (context.views ? listPageViewOf(context.views, kind)?.view : undefined) : context.views?.lookup(kind as never, { cardinality: "one", fidelity: "full" });
   if (own !== undefined && replacesPage(own) && !builtIn) return which === "list" ? <DefaultListPage context={context} /> : <DefaultRecordPage context={context} />;
   return which === "list" ? <KindList context={context} kind={kind} /> : <KindRecord context={context} kind={kind} />;
 }
