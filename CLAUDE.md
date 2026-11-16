@@ -21,7 +21,11 @@ What is specific to Claude Code:
   for `/p/<id>/...`; that is a connection problem to fix, not a missing tool.
 - **Harnesses in a session.** They hold ports; run one chain at a time per
   checkout. Iterate with `pnpm verify <name>`, `--failed` and `--quick`;
-  the whole chain is for the end of a piece of work. A subagent in a
+  the whole chain is for the end of a piece of work. A subagent runs the
+  unit tests and `pnpm verify <name> --quick` locally, and every full
+  harness with `pnpm verify:github <names>` (push the branch first): it
+  runs on GitHub's runners, downloads the verdicts into `docs/` and
+  prints each failing claim by name, so the laptop stays free. A subagent in a
   worktree runs every harness with `GRAVIEW_PORT_BASE=5600` (any free
   hundred), which puts all its servers on 5600–5699, never 5190–5289; a
   harness names what it serves and asks `scripts/lib/ports.mjs` for the
