@@ -1,4 +1,4 @@
-import { BIND_PERSON } from "../binding-served.js";
+import { BIND_PERSON, rootOfChain } from "../binding-served.js";
 import { PERSON_SEAT } from "../graph/archived.js";
 import { GraphError } from "../graph/graph.js";
 import type { Primitive } from "../graph/primitives.js";
@@ -224,7 +224,8 @@ export function checkUndo(
    * whose record it is, or the record itself, can stand in its way, and a
    * host shows the sentence to an owner.
    */
-  if (ops.every((op) => op.undoes === undefined && op.mutation?.name === BIND_PERSON)) {
+  const byId = new Map(log.all().map((op) => [op.id, op]));
+  if (ops.every((op) => rootOfChain(op, (id) => byId.get(id)).mutation?.name === BIND_PERSON)) {
     return {
       ok: false,
       ops,

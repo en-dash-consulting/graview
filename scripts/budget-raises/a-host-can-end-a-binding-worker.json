@@ -1,5 +1,5 @@
 {
   "budget": "Cloud's worker",
-  "bytes": 2150,
-  "note": "Raised when a host came to end a person's binding and to take a wrong one back after the record was edited: an undo of a binding is blocked only by a later op that made, removed or rebound its record, a binding taken back, ended or put back again is judged as the change its undo chain begins with, and what a seat did stays said as the person after its binding ends. Measured at 2_745_060 to 2_745_096 B against a budget of 2_742_977, given 2_150 for a bundle that differs by a few bytes from one build to the next."
+  "bytes": 2843,
+  "note": "Raised when a host came to end a person's binding and to take a wrong one back after the record was edited: an undo of a binding is blocked only by a later op that made, removed or rebound its record, and what a seat did stays said as the person after its binding ends. 2723 over, raised by 2843 for the few bytes a bundle moves from one build to the next. Measured at 2745700 B against a budget of 2742977."
 }

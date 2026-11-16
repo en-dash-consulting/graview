@@ -227,8 +227,8 @@ describe("a hosted page", () => {
     // 1129 KB since the page and the city came to be one face a host turns on (`sceneUnderPages`, 0.2.0): the level control, its keys and legend, and lines kept off what stands at the foot: the scene face measured 1_155_787 B, 832 over the whole 0.1.74 batch (1_154_955).
     // 1134 KB since the 0.2.1 batch brought together mount taking `sceneUnderPages` (FR-239; 1131 KB alone, 1_553 over 0.2.0's 1_155_786), the security and reliability fixes for bound people (1132 KB alone, at 1_158_341) and the one face's own changes: the scene face measured 1_160_785 B on the batch.
     // 1136 KB since the security and reliability fixes for suggestions: the scene face measured 1_162_402 B, 1_617 over the 0.2.1 batch (1_160_785).
-    // 1137 KB since a host came to end a person's binding: an undo of a binding judged as the change its chain begins with, and blocked only by what moved its record: the scene face measured 1_164_042 B, 1_640 over the 1_162_402 before it.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1137 * 1024);
+    // 1138 KB since a host came to end a person's binding: an undo of a binding blocked only by what moved its record: the scene face measured 1_164_362 B, 1_960 over the 1_162_402 before it.
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1138 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

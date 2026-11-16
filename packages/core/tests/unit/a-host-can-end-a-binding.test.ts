@@ -240,7 +240,7 @@ describe("a binding taken back, ended or put back again", () => {
     expect(store.personOf(bud)).toBe("acct-bud");
   });
 
-  it("says what stands in its way to a member with no account in it", () => {
+  it("says what stands in its way in words a member may read", () => {
     const store = family();
     const done = bindPerson(store, bud, "participant:bud", { author: host });
     store.apply({ name: "remove-participant", args: { id: "participant:bud" } }, { author: organizer });
@@ -249,5 +249,37 @@ describe("a binding taken back, ended or put back again", () => {
       expect(may.ok).toBe(false);
       expect(JSON.stringify(may)).not.toContain("acct-bud");
     }
+  });
+
+  it("says what stands in the way of a bound member's own undo in words they may read", () => {
+    const store = family();
+    const budOwner: Principal = { ...bud, roles: ["owner"] };
+    const annOwner: Principal = { ...ann, roles: ["owner"] };
+    bindPerson(store, budOwner, "participant:bud", { author: host });
+    bindPerson(store, annOwner, "participant:ann", { author: host });
+    const hers = store.apply({ name: "edit-gift", args: { id: "gift:kite", title: "A red kite" } }, { author: annOwner });
+    store.apply({ name: "edit-gift", args: { id: "gift:kite", title: "A blue kite" } }, { author: budOwner });
+    const may = store.mayUndo(hers.batch, annOwner);
+    expect(may.ok).toBe(false);
+    expect(JSON.stringify(may)).not.toMatch(/acct-/);
+  });
+
+  it("keeps a seat the record it acted as, though that record is gone", () => {
+    const store = family();
+    bindPerson(store, bud, "participant:bud", { author: host });
+    store.apply({ name: "give-it", args: { id: "gift:kite" } }, { author: bud });
+    store.apply({ name: "remove-participant", args: { id: "participant:bud" } }, { author: organizer });
+    expect(() => bindPerson(store, bud, "participant:ann", { author: host })).toThrow(ActRefusal);
+  });
+
+  it("refuses putting a binding back in plain words where whose record it is changed since", () => {
+    const store = family();
+    const done = bindPerson(store, bud, "participant:bud", { author: host });
+    const undone = store.undo(done.batch, { author: host });
+    bindPerson(store, ann, "participant:bud", { author: host });
+    const may = store.mayUndo(undone.batch, host);
+    expect(may.ok).toBe(false);
+    const said = may.ok ? "" : (may.refusal?.message ?? (may.check && !may.check.ok ? may.check.message : ""));
+    saysNoIds(store, said);
   });
 });

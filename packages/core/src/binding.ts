@@ -103,7 +103,7 @@ function bindPersonMutation(store: Held): AnyMutationDefinition | undefined {
       const theirs = other === undefined ? undefined : (full.getNode(other) as Node | undefined);
       if (theirs) throw new ActRefusal(`That account is already ${named(theirs)} here.`);
       // A binding ended stays that person's: neither the seat nor the record is bound to another after it.
-      const was = ended.get(seat);
+      const was = ended.get(seat) ?? doneAs(store).find((one) => one.seat === seat && one.record !== seat && one.record !== record)?.record;
       const before = was === undefined ? undefined : (full.getNode(was) as Node | undefined);
       if (was !== undefined && was !== record) throw new ActRefusal(`That account was ${before ? named(before) : `another ${noun}`} here: bind it to them again.`);
       const own = full.getNode(seat) as Node | undefined;
