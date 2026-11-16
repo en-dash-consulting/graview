@@ -8,6 +8,7 @@ import { diffSnapshots, diffTouched, type GraphDiff } from "./diff.js";
 import { edgeFieldsProblem } from "./edge-fields.js";
 import { isUnset, type Primitive } from "./primitives.js";
 import { edgeId, type GraphEdge, type GraphReader, type GraphSnapshot } from "./types.js";
+import { knownAcrossCopies } from "../across-copies.js";
 
 export interface GraphOptions {
   /**
@@ -784,3 +785,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
     return asked === "all" || (!asked && !this.archived.size) ? all : all.filter((one) => archived(one) === asked);
   }
 }
+
+// Known by what it is from whichever copy of core made it (`across-copies.ts`).
+knownAcrossCopies(GraphError, "GraphError");
+knownAcrossCopies(MissingRecordError, "MissingRecordError");

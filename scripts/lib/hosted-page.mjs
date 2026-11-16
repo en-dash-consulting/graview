@@ -709,3 +709,50 @@ export function doorsOpenAtOnce(files, metafile) {
 }
 
 const byModuleName = (input) => input.replace(/^.*node_modules\//, "").replace(/^.*packages\//, "");
+
+/*
+ * THE COMPOSER A HOSTED PAGE FETCHES (Roadmap f-light-composer). Graview
+ * Cloud lends `composeChange` to its owner and editor pages. Fetched from
+ * the shell when asked for, `@graview/core/compose` was 565_839 bytes
+ * (193_883 gzipped) on top of the page, the checker and a reshape's traits
+ * among them, and took 77_398 bytes more (22_651 gzipped) of zod and of the
+ * brand's rules into every visitor's first load: a bundler places a module
+ * in one chunk, with every part of it any chunk uses, so a door that uses
+ * more of a module the page imports up front makes the page carry it. Cloud
+ * bundled it apart instead, about 660 KB with a second copy of core whose
+ * errors the shell's store did not recognize.
+ *
+ * `@graview/core/composer` is the edits, the grants and the compile the page
+ * already has: measured at 273_193 / 92_888 behind its door (the edits
+ * themselves 119_541 of it), and 8_088 / 2_864 up front once the edits'
+ * shapes were written in zod/mini as the document's are. What it may cost,
+ * minified and gzipped, each with room for ordinary growth; and what it must
+ * not carry: the checker, a reshape's traits, the checked composer.
+ */
+export const COMPOSER_ENTRY = `${HOSTED_PAGE_COMPILED_ENTRY}\nglobalThis.composer = () => import("@graview/core/composer");\n`;
+export const COMPOSER_BUDGET = { door: { minified: 285_000, gzipped: 97_000 }, upFront: { minified: 10_000, gzipped: 3_600, zod: 2_048 } };
+export const COMPOSER_LACKS = ["core/src/cli/check.ts", "core/src/document/compile-checked.ts", "core/src/starting-document.ts", "core/src/traits.ts", "core/src/compose.ts"];
+
+/** What a composer door costs Cloud's shell handed a compiled app: behind the door, the modules there, and what the page loads first beside the page without it. */
+export async function measureComposerDoor(repo, { subpath = "composer" } = {}) {
+  const entry = COMPOSER_ENTRY.replace("@graview/core/composer", `@graview/core/${subpath}`);
+  const [page, withIt] = await Promise.all([measureHostedPage(repo, HOSTED_PAGE_COMPILED_ENTRY), measureHostedPage(repo, entry)]);
+  const outputs = withIt.metafile.outputs;
+  const closure = (from) => {
+    const found = new Set([from]);
+    for (const file of found) for (const one of outputs[file].imports) if (one.kind === "import-statement" && outputs[one.path]) found.add(one.path);
+    return found;
+  };
+  const [entryChunk] = Object.entries(outputs).find(([, output]) => output.entryPoint === "<stdin>");
+  const eager = closure(entryChunk);
+  const door = Object.keys(outputs).find((file) => outputs[file].entryPoint?.endsWith(`core/src/${subpath}.ts`));
+  if (!door) throw new Error(`the page imports @graview/core/${subpath} nowhere when asked`);
+  const behind = [...closure(door)].filter((file) => !eager.has(file));
+  const named = (file) => file.split("/").pop();
+  const gzipped = withIt.files.filter((file) => behind.some((one) => named(one) === file.path.split(sep).pop())).reduce((sum, file) => sum + gzipSync(file.contents, { level: 9 }).length, 0);
+  const modules = [...new Set(behind.flatMap((file) => Object.entries(outputs[file].inputs).filter(([, input]) => input.bytesInOutput > 0).map(([input]) => byModuleName(input))))].sort();
+  return {
+    door: { minified: behind.reduce((sum, file) => sum + outputs[file].bytes, 0), gzipped, chunks: behind.length, modules },
+    upFront: { minified: withIt.upFront.minified - page.upFront.minified, gzipped: withIt.upFront.gzipped - page.upFront.gzipped, zod: withIt.upFront.zod - page.upFront.zod },
+  };
+}
