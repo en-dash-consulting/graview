@@ -90,8 +90,8 @@ export interface MenuSection {
   readonly id: string;
   /** A heading over the section; none for a plain run of rows. */
   readonly heading?: string;
-  /** Before the acts (`"start"`) or after them (the default). */
-  readonly at?: "start" | "end";
+  /** Before the acts (`"start"`), after them (the default), or after every row of the menu and never folded behind More… (`"last"`: a host's own rows, `menuItems`). */
+  readonly at?: "start" | "end" | "last";
   readonly items?: readonly MenuItem[];
   /** Drawn in place of rows, for a section that needs more than rows. */
   readonly render?: (close: () => void) => ReactNode;
@@ -128,6 +128,48 @@ export interface MenuMode {
   readonly open: (words?: string) => void;
   /** What is worth suggesting here in this mode, in words: the act alone. */
   readonly nudges?: () => readonly string[];
+}
+
+/**
+ * WHERE A HOST'S OWN ROW WAS PRESSED (Roadmap f-host-context-menu-items):
+ * the record or the place under the pointer, the kind whose list it was,
+ * the address of what was under it, and the app's own link: what a host's
+ * "Make changes in your own AI" hands to somebody else's assistant.
+ */
+export interface HostMenuAt {
+  /** The face the menu was opened on. */
+  readonly face: "scene" | "pages";
+  /** The record under the pointer, by its id. */
+  readonly record?: string | undefined;
+  /** The relation under the pointer, on the scene, by its link's id. */
+  readonly edge?: string | undefined;
+  /** The place under the pointer, by its slug (the name its address carries, `/places/<slug>`). */
+  readonly place?: string | undefined;
+  /** The kind of the record under the pointer, or whose list, card or group on the map it was. */
+  readonly kind?: string | undefined;
+  /** The whole address of what was under the pointer, when it has one on the host's page (none under memory routing). */
+  readonly href?: string | undefined;
+  /** The app's own link: the whole address of its home. */
+  readonly link: string;
+}
+
+/**
+ * A ROW A HOST ADDS TO THE CONTEXT MENU (`menuItems` on `mount`, the
+ * provider, the Shell and `PagesApp`): drawn after the framework's own rows,
+ * a button like theirs (labeled, reached by the keyboard, pressed after a
+ * phone's long press) and called with what was under the pointer.
+ */
+export interface HostMenuItem {
+  /** Unique among the host's rows; carried as `data-menu-item`. */
+  readonly id: string;
+  /** What pressing it does, in the reader's words. */
+  readonly label: string;
+  /** Said beside the label, quietly. */
+  readonly hint?: string;
+  /** Pressed: told what was under the pointer and the app's link. */
+  readonly run: (at: HostMenuAt) => void;
+  /** Whether it is offered here; unsaid, everywhere the menu opens. */
+  readonly offered?: (at: HostMenuAt) => boolean;
 }
 
 /** A host's or a face's contribution: told what the menu is opened on, it answers a section or nothing. */

@@ -4,7 +4,8 @@ import { HOME_SLUG, openingOf, OVERVIEW_PATH, OVERVIEW_SLUG, sayIn } from "@grav
 import { narrowedPath } from "@graview/core/navigate";
 import { revealSection } from "./section.js";
 import { pluralSlug } from "./registry.js";
-import { createContext, Suspense, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
+import { Suspense, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
+import { HrefOfContext } from "./href-of.js";
 import { aggregateId } from "@graview/layout/view";
 import { GoToContext, GraviewProvider, lazyPart, hasLanded, HostAssetsContext, HostFilesContext, HostViewerStateContext, markLanded, PlaybackContext, useGraviewIfAny, useOwnPlayback, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type FieldTyping, type GoTo, type GoToAlso, type GoToTarget, type GraviewContextValue, type Playback } from "@graview/react/provider";
 import { PageQuickAsk } from "./quick-ask.js";
@@ -153,9 +154,6 @@ export interface PagesAppProps<S extends AnySchema> {
    */
   readonly typing?: (node: string, field: string) => Promise<FieldTyping>;
 }
-
-/** Where a view's link goes on the host's page (`PagesAppProps.hrefOf`); the face's own address when not said. */
-const HrefOfContext = createContext<((path: string) => string | undefined) | false | undefined>(undefined);
 
 /** What a bar drawn outside the router holds of it: where the face is, and the way to move it. */
 export interface PagesSteering {

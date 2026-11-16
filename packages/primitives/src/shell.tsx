@@ -1,5 +1,5 @@
 import { assetSrc, faviconHref, pagesTitle, sceneTitle, type AnySchema, type HostFiles, type ViewerState, type KeptViews, type ResolveApp } from "@graview/core";
-import { BesideTheMap, HostAssetsContext, HostFilesContext, HostViewerStateContext, KeptViewsProvider, PanFree, Scene, useGraview, useHostAssets, useNavigation, UrlSync, useTheKeyboardLandsSomewhere, type Scheme, type SceneProps } from "@graview/react";
+import { BesideTheMap, HostAssetsContext, HostMenuItems, HostFilesContext, HostViewerStateContext, KeptViewsProvider, PanFree, Scene, useGraview, useHostAssets, useNavigation, UrlSync, useTheKeyboardLandsSomewhere, type HostMenuItem, type Scheme, type SceneProps } from "@graview/react";
 import type { ToolCall } from "@graview/tools";
 import { useCallback, useMemo, useState, type ReactNode, useRef } from "react";
 import { withOverview } from "@graview/layout/view";
@@ -167,16 +167,25 @@ export interface ShellProps {
    * deleted.
    */
   readonly keptViews?: KeptViews;
+  /**
+   * THE HOST'S OWN ROWS OF THE CONTEXT MENU (Roadmap
+   * f-host-context-menu-items), added to the provider's: drawn after every
+   * row of the framework's, each `{ id, label, run, hint?, offered? }` run
+   * with the record id or place slug under the pointer and the app's link
+   * (`HostMenuAt`).
+   */
+  readonly menuItems?: readonly HostMenuItem[];
 }
 
-export function Shell<S extends AnySchema>({ keptViews, ...props }: ShellProps) {
-  return keptViews ? (
+export function Shell<S extends AnySchema>({ keptViews, menuItems, ...props }: ShellProps) {
+  const face = keptViews ? (
     <KeptViewsProvider keptViews={keptViews}>
       <ShellFace<S> {...props} />
     </KeptViewsProvider>
   ) : (
     <ShellFace<S> {...props} />
   );
+  return menuItems ? <HostMenuItems items={menuItems}>{face}</HostMenuItems> : face;
 }
 
 function ShellFace<S extends AnySchema>({
@@ -207,7 +216,7 @@ function ShellFace<S extends AnySchema>({
   assetsAt: ownAssetsAt,
   resolveApp,
   firstLook,
-}: Omit<ShellProps, "keptViews">) {
+}: Omit<ShellProps, "keptViews" | "menuItems">) {
   const { brand, views, store } = useGraview<S>();
   const { view, go } = useNavigation();
   /* The lenses this reader kept from the seat, beside the app's own places, before anything draws them. */

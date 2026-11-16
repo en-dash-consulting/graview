@@ -3,7 +3,7 @@ import type { DisplayOptionsHost } from "@graview/core";
 import { assetSrc, faviconHref, type Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type KeptViews, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal, type SignIn, type ViewerState, type SubscriptionStore, type DismissalStore } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
 import { AppBar, appKeyOf, barPlaceAt, barPlaces, FirstLookDoor, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useThemeColor, useViewportHeight, type AppMenuRow, type BarAction, type BarFaces, type BarFind, type BarGo, type BarScheme, type BarShare, type BarStatus, type FirstLook, type HostAction, type NoticeBoard, type NoticeReport, type NoticeReporting } from "@graview/primitives/frame";
-import { layerViews, useGraph, useTidiedViews, useGraview, useTheKeyboardLandsSomewhere, type AwaySummary, type ErrorReport, type FieldTyping, type KeepLensHost, type ProposeChangeHost, type ComposeChangeHost, type DraftChangeHost, type MenuSectionSource, type OnExport, type HostNotification, type ReactViewRegistry, type ReaderMemory, type Scheme, type WorkflowRuns } from "@graview/react/provider";
+import { layerViews, useGraph, useTidiedViews, useGraview, useTheKeyboardLandsSomewhere, type AwaySummary, type ErrorReport, type FieldTyping, type KeepLensHost, type ProposeChangeHost, type ComposeChangeHost, type DraftChangeHost, type HostMenuItem, type MenuSectionSource, type OnExport, type HostNotification, type ReactViewRegistry, type ReaderMemory, type Scheme, type WorkflowRuns } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ErrorInfo, type ReactNode } from "react";
 import { createPortal } from "react-dom";
@@ -546,6 +546,15 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    */
   readonly menuSections?: readonly MenuSectionSource[];
   /**
+   * THE HOST'S OWN ROWS OF THE CONTEXT MENU (Roadmap
+   * f-host-context-menu-items), on either face, after every row of the
+   * framework's: each `{ id, label, run, hint?, offered? }` is a row like
+   * theirs (reached by the keyboard, pressed after a phone's long press)
+   * and is run with the record id or place slug under the pointer and the
+   * app's link (`HostMenuAt`), "Make changes in your own AI", say.
+   */
+  readonly menuItems?: readonly HostMenuItem[];
+  /**
    * TOLD WHAT WENT WRONG (FR-24). A view, a page or the bar that throws
    * is contained where it threw, the rest of the embed keeps working, and
    * the host is told the error's class and the framework module that
@@ -865,6 +874,7 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
     onExport: props.onExport,
     signIn: props.signIn,
     menuSections: props.menuSections,
+    menuItems: props.menuItems,
     /* The app, so the seat's tools and a host's turn describe its places (`describe_place`), and its
        reader settings: the reader's own text size and motion, on somebody else's page too. */
     app: props.app,

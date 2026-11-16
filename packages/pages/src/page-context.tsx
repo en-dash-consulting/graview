@@ -2,7 +2,7 @@ import type { HistoryHost } from "@graview/core/history";
 import type { DisplayOptionsHost } from "@graview/core";
 import { freshAddress, sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ViewerState, type ResolveApp, type LinkedRecords, type Person, type Principal, type Scheme, type Store, type PresenceChannel, type SettingDeclaration, type SignIn, type SubscriptionStore, type DismissalStore, type KeptViews } from "@graview/core";
 import { useCallback, useRef, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
-import type { AwaySummary, FieldTyping, KeepLensHost, ProposeChangeHost, ComposeChangeHost, DraftChangeHost, MenuSectionSource, OnExport, ReactViewRegistry } from "@graview/react/provider";
+import type { AwaySummary, FieldTyping, KeepLensHost, ProposeChangeHost, ComposeChangeHost, DraftChangeHost, HostMenuItem, MenuSectionSource, OnExport, ReactViewRegistry } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
 import { Onward } from "./onward.js";
 
@@ -279,6 +279,14 @@ export interface PageContext<S extends AnySchema> {
    * the menu was opened on, answering rows or what it draws (`MenuSection`).
    */
   readonly menuSections?: readonly MenuSectionSource[];
+  /**
+   * THE HOST'S OWN ROWS OF THE CONTEXT MENU (Roadmap
+   * f-host-context-menu-items), drawn on these pages after every row of
+   * the framework's: each `{ id, label, run, hint?, offered? }` is pressed
+   * with the record id or place slug under the pointer and the app's link,
+   * the whole address of these pages' home (`HostMenuAt`).
+   */
+  readonly menuItems?: readonly HostMenuItem[];
   /**
    * The app these pages are of, for the provider under them when `views`
    * is given: the seat's tools and a host's turn describe its places with
