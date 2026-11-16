@@ -22,9 +22,6 @@ name: Verify
 run-name: "Verify ${{ inputs.harnesses || 'the whole chain' }}${{ inputs.quick && ' (quick)' || '' }} on ${{ github.ref_name }}${{ inputs.request && format(' [{0}]', inputs.request) || '' }}"
 
 on:
-  # TEMPORARY, to register the workflow before it is on main; removed before review.
-  push:
-    branches: [ci/harnesses-run-on-github]
   workflow_dispatch:
     inputs:
       harnesses:
@@ -58,7 +55,6 @@ permissions:
 
 jobs:
   plan:
-    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:

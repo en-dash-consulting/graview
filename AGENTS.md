@@ -141,7 +141,9 @@ unit tests and `pnpm verify <name> --quick` locally while iterating, and
 the nightly's throttle, `--renderer gpu` for the GPU leg). Three local
 chains beside each other's agents loaded the machine past ten, a wait
 that holds on a quiet machine timed out as a failure, and one full
-harness took four and a half hours.
+harness took four and a half hours. The run checks out the branch as
+pushed, and runs that branch's own : a branch cut before it has
+none, so rebase onto main first.
 
 The harnesses drive dev servers on fixed ports, so run **one harness chain
 at a time** per checkout; a second checkout (a worktree) runs its servers
