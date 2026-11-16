@@ -268,6 +268,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
   const districtNames = (store.schema.kinds as readonly string[]).map((kind) => ({ kind, plural: pluralOf(store, kind), count: store.graph.count(kind as never), problems: problemsOf.get(kind) ?? 0 }));
   const tagEls = useRef(new Map<string, HTMLElement>());
   const tagLayer = useRef<HTMLDivElement>(null);
+  /** A hand panned the city through this face's own layers (a drag begun on a board, a scroll over a district) since the city was last read. */
+  const nudged = useRef(false);
   const state = useRef({ where, out, view, lessMotion, resolve, onAltitude, boards, current });
   /*
    * WHAT THE FRAME READS IS WHAT IS DRAWN. Written as the render ran, a
@@ -551,6 +553,31 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     /** The city and every view standing in it, as last read: what the city's camera fits. */
     let whole: Box | null = null;
     let kept: { key: string; body: string; origin: Point; placed: ReturnType<typeof placeSigns> } | null = null;
+    /** What was placed, less each board or name placed afresh that stands on one held, or on another placed afresh before it. */
+    const withoutClashes = (placed: ReturnType<typeof placeSigns>, holds: ReadonlySet<string>, width: number): ReturnType<typeof placeSigns> => {
+      const across = (a: Box, b: Box) => Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x) > 1 && Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y) > 1;
+      const cardOf = (key: string, foot: Point): Box => {
+        const w = width * (placed.scales.get(key) ?? 1);
+        const h = w / BOARD_ASPECT;
+        return { x: foot.x - w / 2, y: foot.y - h, width: w, height: h };
+      };
+      const all = [...[...placed.feet].map(([key, foot]) => ({ key, box: cardOf(key, foot) })), ...[...placed.names].map(([kind, box]) => ({ key: `name:${kind}`, box }))];
+      const standing = all.filter((one) => holds.has(one.key)).map((one) => one.box);
+      const dropped = new Set<string>();
+      for (const one of all) {
+        if (holds.has(one.key)) continue;
+        if (standing.some((box) => across(one.box, box))) dropped.add(one.key);
+        else standing.push(one.box);
+      }
+      if (dropped.size === 0) return placed;
+      return {
+        ...placed,
+        feet: new Map([...placed.feet].filter(([key]) => !dropped.has(key))),
+        posts: new Map([...placed.posts].filter(([key]) => !dropped.has(key))),
+        scales: new Map([...placed.scales].filter(([key]) => !dropped.has(key))),
+        names: new Map([...placed.names].filter(([kind]) => !dropped.has(`name:${kind}`))),
+      };
+    };
     /** What nothing of the city's is drawn under at rest: the bar, the page beside the city, the level control. */
     const keptOutNow = (): Box[] => {
       const view = state.current.view;
@@ -648,17 +675,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         placed = kept.placed;
         shift = { x: origin.x - kept.origin.x, y: origin.y - kept.origin.y };
       } else {
-        placed = placeSigns({
-          ...(holding
-            ? {
-                held: {
-                  feet: heldFeet,
-                  posts: new Map([...posts].map(([one, length]) => [one, length * cam.s] as const)),
-                  scales: held.scales,
-                  names: heldNames,
-                },
-              }
-            : {}),
+        const asked: Parameters<typeof placeSigns>[0] = {
           tiles,
           buildings: buildingsOnScreen,
           names: sizes,
@@ -680,7 +697,16 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           plaza: lvl !== PANEL,
           // Beside a page (and under it, so a move to Nearby carries each name from a place found the same way) each district's name stands right after the views, before the kinds' lists, and beside its own district or nowhere.
           ...(lvl !== CITY ? { namesFirst: true, nameReach: NAME_REACH } : {}),
-        });
+        };
+        placed = holding ? placeSigns({ ...asked, held: { feet: heldFeet, posts: new Map([...posts].map(([one, length]) => [one, length * cam.s] as const)), scales: held.scales, names: heldNames } }) : placeSigns(asked);
+        /*
+         * HELD, NOTHING PLACED ON IT. Placed round what stands, one that came
+         * into sight may find no clear room and take the place that covers
+         * least — on a board or a name that stands. It stands nowhere until
+         * the city is placed again: never one control over another, and
+         * nothing that stood moved to make room for it.
+         */
+        if (holding) placed = withoutClashes(placed, holds, width);
         kept = { key, body, origin, placed };
       }
       // Back into the picture's own pixels, as the view lays it out now.
@@ -1040,7 +1066,16 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
             const drawnBefore = carry ? { slots: carriedThrough(carry, drawnSlots(now)), names: carriedThrough(carry, drawnNames(now)), scales: drawnScales(now) } : { slots: drawnSlots(now), names: drawnNames(now), scales: drawnScales(now) };
             // At the City everything stands inside what the camera shows; the camera was fitted to it.
             // A pan, not a zoom: a name is a size on the screen, and at another zoom it is placed again for it.
-            const panned = carry !== null && carry !== LEVEL_LIVE && Math.abs(carry.s - 1) < 1e-3;
+            /*
+             * A HAND'S PAN, not the city moved another way: the Scene's hand
+             * painted between stops (`drawnThrough`), or this face's layers
+             * panned the view. After a level move the face rebased onto its
+             * own camera, and the city settling a pixel or two from it after
+             * is placed fresh for the level, as it always was.
+             */
+            const byHand = drawnThrough !== null || nudged.current;
+            nudged.current = false;
+            const panned = byHand && carry !== null && carry !== LEVEL_LIVE && Math.abs(carry.s - 1) < 1e-3;
             /*
              * What is held is where each stands, not where a settle caught part
              * way had it: two boards half-way between two placings may stand on
@@ -1925,6 +1960,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           // A pointer the page did not see go down keeps no capture; the moves still come here.
         }
       }
+      nudged.current = true;
       cam.panBy(dx, dy);
       down.set(event.pointerId, { x: event.clientX, y: event.clientY });
     };
@@ -1950,7 +1986,10 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       event.preventDefault();
       const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? 400 : 1;
       if (event.ctrlKey || event.metaKey) cam.zoomTo(cam.zoom() * Math.exp(-event.deltaY * unit * 0.01), event.clientX, event.clientY);
-      else cam.panBy(-event.deltaX * unit, -event.deltaY * unit);
+      else {
+        nudged.current = true;
+        cam.panBy(-event.deltaX * unit, -event.deltaY * unit);
+      }
     };
     /*
      * A SCROLL OVER A DISTRICT PANS TOO. The Scene leaves a lens's wheel to
@@ -1970,6 +2009,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       event.preventDefault();
       event.stopPropagation();
       const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? 400 : 1;
+      nudged.current = true;
       cam.panBy(-event.deltaX * unit, -event.deltaY * unit);
     };
     holder?.addEventListener("wheel", onPlotWheel, { passive: false, capture: true });
