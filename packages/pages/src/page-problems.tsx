@@ -62,10 +62,12 @@ export function DefaultProblemsPage<S extends AnySchema>({ context }: { context:
       {lined.map((violation, index) => {
         const first = violation.nodeIds[0];
         const node = first ? store.graph.getNode(first) : undefined;
+        // The record it is about, named as a list's row names its own: the one face frames its district beside the page.
         return (
           <section
             key={index}
             data-graview-problem={violation.invariant}
+            {...(node ? { "data-graview-record": node.id } : {})}
             style={{
               display: "grid",
               gap: 10,

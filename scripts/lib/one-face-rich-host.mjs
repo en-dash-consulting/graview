@@ -6,7 +6,8 @@
  * over the Scene's own city (`sceneUnderPages`), bundled from the
  * workspace's sources with esbuild and served from a port of its own —
  * `one-face-rich`, moved with `GRAVIEW_PORT_BASE` — at `/pages/…`.
- * `?theme=dark` draws it dark, as Nick saw it.
+ * `?theme=dark` draws it dark, as Nick saw it. `?app=harbor` draws the
+ * Harbor (`harbor.mjs`) instead: the same shape on a shallower map.
  */
 import { createServer } from "node:http";
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -24,6 +25,7 @@ export async function serveRich(repoRoot) {
   const esbuild = require("esbuild");
   const out = mkdtempSync(join(tmpdir(), "graview-one-face-rich-"));
   const fixture = resolve(repoRoot, "scripts/fixtures/one-face-rich/deep-time.mjs");
+  const harbor = resolve(repoRoot, "scripts/fixtures/one-face-rich/harbor.mjs");
   await esbuild.build({
     stdin: {
       contents: `
@@ -35,15 +37,17 @@ export async function serveRich(repoRoot) {
         import { registerWorkerView } from "@graview/guest/host/views";
         import { compileDocumentWithoutCheck } from "@graview/core/document";
         import { Store } from "@graview/core";
-        import { document as deepTime, seed, workerViews } from ${JSON.stringify(fixture)};
+        import * as deepTimeApp from ${JSON.stringify(fixture)};
+        import * as harborApp from ${JSON.stringify(harbor)};
         const asked = new URLSearchParams(location.search);
+        const { document: deepTime, seed, workerViews } = asked.get("app") === "harbor" ? harborApp : deepTimeApp;
         const scheme = asked.get("theme") === "dark" ? "dark" : "light";
         const sheet = new CSSStyleSheet();
         sheet.replaceSync(themeCss(scheme));
         document.adoptedStyleSheets = [sheet];
         document.documentElement.dataset.graviewScheme = scheme;
         const compiled = compileDocumentWithoutCheck(deepTime, { today: () => "2026-09-01" });
-        if (!compiled.ok) throw new Error("Deep Time did not compile");
+        if (!compiled.ok) throw new Error(\`\${deepTime.name} did not compile\`);
         const app = compiled.app;
         const store = new Store({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], snapshot: seed });
         let views = registerDefaultViews(app.schema, createViews(app.schema));
