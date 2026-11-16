@@ -128,6 +128,7 @@ pnpm verify <name> [<name>]    # only these harnesses (pnpm verify --list)
 pnpm verify --failed           # only what failed last time
 pnpm verify --quick            # fewer widths, schemes and seats where a harness sweeps them
 GRAVIEW_SLOW=4 pnpm verify <name>  # every page's CPU throttled like the nightly's runner
+pnpm verify:github <name> [<name>] [--quick] [--ref <branch>]  # the same harnesses on GitHub's runners (verify.yml): the branch pushed, the verdicts downloaded into docs/, each failing claim printed by name; no names for the whole chain
 
 pnpm dev                       # apps/todo → http://localhost:5193
 ANTHROPIC_API_KEY=… pnpm dev   # the same, its seat lent a model by the dev server — or XAI_API_KEY or OPENAI_API_KEY (aiDevProxy; GRAVIEW_AI_PROVIDER when several, GRAVIEW_AI_MODEL to choose; TYPESAFE_API_KEY makes Jev the Fast slot; never in a build, never in a harness)
@@ -141,6 +142,16 @@ pnpm smoke:create              # graview create → install → its own verify �
 pnpm site:build:all            # regenerate docs/site (css, numbers, docs pages)
 pnpm skills                    # install the authoring skills into .claude/skills and .agents/skills
 ```
+
+**A build agent runs the full harnesses on GitHub, not on the laptop**:
+unit tests and `pnpm verify <name> --quick` locally while iterating, and
+`pnpm verify:github <names>` for a harness's whole verdict (`--slow 4` for
+the nightly's throttle, `--renderer gpu` for the GPU leg). Three local
+chains beside each other's agents loaded the machine past ten, a wait
+that holds on a quiet machine timed out as a failure, and one full
+harness took four and a half hours. The run checks out the branch as
+pushed, and runs that branch's own `verify.yml`: a branch cut before it has
+none, so rebase onto main first.
 
 The harnesses drive dev servers on fixed ports, so run **one harness chain
 at a time** per checkout; a second checkout (a worktree) runs its servers

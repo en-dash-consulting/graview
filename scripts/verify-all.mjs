@@ -31,11 +31,12 @@
  * fix, reproduced by the command itself.
  */
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync, writeSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync, writeSync } from "node:fs";
+import { homedir, tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { updateLedger } from "./lib/ledger.mjs";
-import { judge, recordFlakes } from "./lib/second-look.mjs";
+import { judge, missedClaims, recordFlakes } from "./lib/second-look.mjs";
 import { described, holders, listeners, serving } from "./lib/serve.mjs";
 import { watchFile } from "./lib/watch.mjs";
 import { namedPorts, PORT_FLOOR, portFor } from "./lib/ports.mjs";
@@ -381,7 +382,7 @@ const runOne = async ([name, file], again = false) => {
   const failed = code !== 0 ? code : open > 0 ? 1 : 0;
   const said = open > 0 ? `watch: ${open} open — docs/watch/${watch.split("/").pop()}` : gist(output);
   say(`${failed === 0 ? "ok  " : again ? "FAIL" : strict ? "FAIL" : "miss"} ${name.padEnd(12)} ${String(took).padStart(4)}s  ${said}\n`);
-  return { name, file, code: failed, took, gist: said, output };
+  return { name, file, code: failed, took, began: new Date(began).toISOString(), gist: said, output };
 };
 
 const started = Date.now();
@@ -453,7 +454,17 @@ if (ledger.fresh.length + ledger.still.length + ledger.fixed.length + ledger.fla
   if (ledger.flapping.length) say(`back after a fix — the check or its timing, before the product\n${ledger.flapping.map(line).join("")}`);
 }
 mkdirSync(resolve(repoRoot, "docs/watch"), { recursive: true });
-writeFileSync(LAST_RUN, `${JSON.stringify({ at: new Date().toISOString(), results: results.map(({ name, code, took, verdict }) => ({ name, code, took, verdict })) }, null, 2)}\n`);
+/*
+ * WHEN EACH RAN AND WHAT IT MISSED, kept with the verdict: a run on GitHub's
+ * runners (verify.yml) credits each harness with the files written while it
+ * ran, and says the claims it missed by name (lib/on-github.mjs).
+ */
+// The file is committed: a path of this machine's said in a harness's last line is not.
+const scrubbed = (text) => [repoRoot, homedir(), tmpdir(), realpathSync(tmpdir())].reduce((said, path) => said.split(path).join(path === repoRoot ? "." : "~"), String(text ?? ""));
+writeFileSync(
+  LAST_RUN,
+  `${JSON.stringify({ at: new Date().toISOString(), results: results.map(({ name, code, took, began, verdict, gist: said, missed, output }) => ({ name, code, took, began, verdict, ...(verdict === "held" ? {} : { gist: scrubbed(said), missed: (missed ?? missedClaims(output ?? "")).map(scrubbed) }) })) }, null, 2)}\n`,
+);
 const spent = results.reduce((sum, one) => sum + one.took, 0);
 say(
   `\n${results.length - broken.length} of ${results.length} harnesses hold${flakes.length > 0 ? `, ${flakes.length} on a second look` : ""} (${Math.round(wall / 60)}m, ${Math.round(spent / 60)}m of harness time)\n`,

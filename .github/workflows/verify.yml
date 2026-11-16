@@ -1,0 +1,168 @@
+# The browser harnesses on GitHub's machines, on the branch somebody asks for.
+#
+# A build agent ran the harnesses on the laptop it was started from, three
+# at a time beside other agents doing the same: the load climbed past ten
+# and sometimes past a hundred, a wait that holds on a quiet machine timed
+# out and read as a failure, and one full harness took four and a half
+# hours. This runs the same chain on runners of their own, split across
+# them the way Nightly splits it and set up as Nightly sets up, and says
+# each harness's verdict and every claim that failed, by name, in the run's
+# summary.
+#
+# `pnpm verify:github <names> [--quick]` (scripts/verify-on-github.mjs)
+# dispatches it on the current branch, waits, downloads the verdicts into
+# docs/ and prints the failing claims. By hand:
+#
+#   gh workflow run verify.yml --ref <branch> -f harnesses="one-face pages" -f quick=true
+#
+# Nothing here is secret and nothing is written back: the token reads the
+# code and keeps the verdicts as the run's artifacts.
+
+name: Verify
+run-name: "Verify ${{ inputs.harnesses || 'the whole chain' }}${{ inputs.quick && ' (quick)' || '' }} on ${{ github.ref_name }}${{ inputs.request && format(' [{0}]', inputs.request) || '' }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      harnesses:
+        description: "Harnesses, space-separated as `pnpm verify` takes them; empty for the whole chain but shrunk, panning and scale, which need a GPU or Chrome Canary"
+        type: string
+        default: ""
+      quick:
+        description: "--quick: fewer widths, schemes and seats where a harness sweeps them"
+        type: boolean
+        default: false
+      slow:
+        description: "GRAVIEW_SLOW: throttle every page's CPU by this factor (empty for none)"
+        type: string
+        default: ""
+      renderer:
+        description: "GRAVIEW_RENDERER: dom, or gpu in the pinned Google Chrome"
+        type: choice
+        options: [dom, gpu]
+        default: dom
+      shards:
+        description: "At most this many runners"
+        type: string
+        default: "8"
+      request:
+        description: "A token in the run's name, so whoever dispatched it can find it (verify-on-github.mjs sets it)"
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # A name the chain does not know fails here, before a runner installs a browser.
+      - name: Split the harnesses across runners
+        id: plan
+        env:
+          VERIFY_HARNESSES: ${{ inputs.harnesses }}
+          VERIFY_SHARDS: ${{ inputs.shards }}
+        run: node scripts/verify-shards.mjs
+
+  harnesses:
+    needs: plan
+    name: ${{ matrix.label }}
+    runs-on: ubuntu-24.04
+    # Installing the engines alone has taken 32–42 minutes on a slow day, and a shard's harnesses each get a second look.
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      # What the harnesses write from here on is this run's: the summary
+      # keeps only files changed after this moment, and a shard that stops
+      # before its harnesses reports none of the checkout's own verdicts.
+      - name: The moment the shard begins
+        run: echo "VERIFY_SINCE=$(date +%s%3N)" >> "$GITHUB_ENV"
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      # typecheck, not build, as Nightly: the same tsc -b over the packages
+      # AND the apps, whose dist/domain the desk and the journeys read.
+      - run: pnpm typecheck
+
+      # Nightly's engines, cached by the same key, so either workflow fills it for the other.
+      - name: The engines, cached
+        id: engines-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - name: The engines
+        run: npx playwright install --with-deps chromium webkit firefox
+      - name: The engines, kept
+        if: steps.engines-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+      # The GPU path's Chromium, pinned as Nightly pins it (its comment says
+      # why, and when the pin moves: move both together).
+      - name: Google Chrome 157, for the GPU path
+        if: inputs.renderer == 'gpu'
+        env:
+          CHROME_PIN: "157.0.8103.38"
+        run: |
+          npx playwright install-deps chromium
+          curl -fsSL -o "$RUNNER_TEMP/chrome.zip" "https://storage.googleapis.com/chrome-for-testing-public/$CHROME_PIN/linux64/chrome-linux64.zip"
+          unzip -q "$RUNNER_TEMP/chrome.zip" -d "$RUNNER_TEMP"
+          "$RUNNER_TEMP/chrome-linux64/chrome" --version | grep -q "$CHROME_PIN"
+          echo "GRAVIEW_BROWSER=$RUNNER_TEMP/chrome-linux64/chrome" >> "$GITHUB_ENV"
+
+      # One at a time within a shard, as Nightly: each shard is its own
+      # machine, so its ports and its CPU are its own. Names reach the
+      # shell through the environment, never through the expression.
+      - name: ${{ matrix.label }}
+        env:
+          NAMES: ${{ matrix.names }}
+          QUICK: ${{ inputs.quick && '--quick' || '' }}
+          SLOW: ${{ inputs.slow }}
+          GRAVIEW_JOURNEYS_PARALLEL: "2"
+          GRAVIEW_RENDERER: ${{ inputs.renderer }}
+        run: |
+          if [ -n "$SLOW" ]; then
+            case "$SLOW" in
+              *[!0-9.]*) echo "::error title=slow::GRAVIEW_SLOW must be a number, not $SLOW"; exit 2 ;;
+            esac
+            export GRAVIEW_SLOW="$SLOW"
+          fi
+          # shellcheck disable=SC2086 — the names are split on purpose, and were checked by the plan job.
+          node scripts/verify-all.mjs --serial $NAMES $QUICK
+
+      - name: Each harness's verdict, and every claim that failed
+        if: always()
+        env:
+          VERIFY_NAMES: ${{ matrix.names }}
+          LABEL: ${{ matrix.label }}
+        run: node scripts/verify-summary.mjs "$RUNNER_TEMP/verdicts" "$LABEL"
+
+      # docs/<name>.json, docs/watch/*.json and the shots the harnesses took,
+      # only what this run wrote, with the summary verify-on-github.mjs reads.
+      - name: The verdicts, for reading
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verdicts-${{ strategy.job-index }}
+          path: ${{ runner.temp }}/verdicts
+          if-no-files-found: ignore
+          retention-days: 14
