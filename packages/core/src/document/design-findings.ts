@@ -342,7 +342,8 @@ function mainKind(document: GraviewDocument): string | undefined {
     }
   }
   for (const lens of lensesOf(document)) if (listed(lens)) for (const kind of kindsOfLens(lens)) if (score.has(kind)) score.set(kind, score.get(kind)! + 1);
-  const ranked = [...score].sort((a, b) => b[1] - a[1]);
+  // The people kind (`people: true`) is the members, drawn by the framework: never the app's main kind, however much points at it.
+  const ranked = [...score].filter(([kind]) => (document.kinds[kind] as { readonly people?: boolean } | undefined)?.people !== true).sort((a, b) => b[1] - a[1]);
   if (ranked.length === 0 || ranked[0]![1] === 0 || ranked[1]?.[1] === ranked[0]![1]) return undefined;
   return ranked[0]![0];
 }
