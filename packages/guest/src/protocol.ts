@@ -195,9 +195,21 @@ export interface GuestFile {
   readonly type: string;
   /** Its size in bytes, as the record keeps it. */
   readonly bytes: number;
-  /** A picture's size in pixels, where the record says it. */
+  /** A picture's size in pixels: as the record says it, else as the host measured `src`, the picture it hands. */
   readonly width?: number;
   readonly height?: number;
+  /** Its width over its height, to four places (HQ f-view-picture-shape): `aspect-ratio` on what holds it. Wherever `width` and `height` are both said. */
+  readonly aspect?: number;
+  /**
+   * A picture drawn on no ground of its own (HQ f-view-picture-shape):
+   * transparent at its edges, or on one plain color. Draw it whole
+   * (`object-fit: contain`) on the view's own ground; crop only a picture
+   * that is not one. As the record says it, else as the host judged the
+   * pixels it fetched; unsaid where neither knows.
+   */
+  readonly cutout?: boolean;
+  /** Where its subject is (HQ f-view-picture-shape), `x` and `y` from 0 to 1, as the record keeps it: draw a cropped picture with `object-position: ${x * 100}% ${y * 100}%`. */
+  readonly focus?: { readonly x: number; readonly y: number };
   /** What a picture or a video shows, in words: its alt text. */
   readonly caption?: string;
   /**

@@ -923,6 +923,20 @@ view's budget for its pictures, as `limits` says them — comes with
 no `src` and the page's sentence in `left`, said among the problems at
 `pictures` (FR-192).
 
+A picture says its shape, so a view crops it well (HQ f-view-picture-shape).
+Each `GuestFile` that is a picture carries `width` and `height`, as the
+record says them or as the host measured the picture it hands, and `aspect`,
+the first over the second. It carries `cutout: true` when the picture sits
+on no ground of its own: a quarter of its edge transparent, or nearly all
+its edge one plain color. Draw such a picture whole, with `object-fit:
+contain`, on the view's own ground, and crop only the rest. It also carries
+`focus { x, y }` from 0 to 1, where the subject is, as the record keeps it.
+A host may work that out or a person may set it on the file value
+(`FileValue.focus`), and a view crops around it with `object-position:
+${x * 100}% ${y * 100}%`. The record's own `cutout` wins over the host's
+reading of the pixels. A headless run reads no pixels, so it hands what the
+record says of each.
+
 A view never runs in the host's own context. The host supplies the
 isolate: `run` is handed one script and one JSON string (`HeadlessPayload`),
 loads the script into an isolate of its choosing, calls the global it
