@@ -167,7 +167,7 @@ export type {
 } from "./search.js";
 
 // Mutations — the only writes.
-export { argumentsTaken, compileMutation, defineMutation, numbersSpelled, seatMark, takesAnId } from "./mutations/define-mutation.js";
+export { argumentsTaken, compileMutation, defineMutation, mintPersonId, numbersSpelled, seatMark, takesAnId } from "./mutations/define-mutation.js";
 export { wouldRun } from "./mutations/would-run.js";
 export type { CompiledMutation } from "./mutations/define-mutation.js";
 export {
@@ -241,7 +241,7 @@ export {
   meOf,
   seatPersonOf,
   profileOf,
-  profilePersonId,
+  asBoundTo,
   withValidProfile,
   isSystem,
   permits,

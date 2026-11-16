@@ -51,9 +51,13 @@ export function nameOfAuthor(
   const joined = author.kind === "human" ? seatPersonOf(author) : undefined;
   const bound = joined === undefined ? undefined : where.graph.personBoundTo?.(joined);
   const boundTo = bound === undefined ? undefined : where.graph.getNode(bound);
-  if (boundTo) return labelOf(where.schema.tryDefinition(boundTo.kind), boundTo);
-  /* WHO AT THE SCREEN: "Mia (Nick)"; on an account nothing here names, just "Mia". */
   const profile = author.profile && profileOf(author);
+  if (boundTo) {
+    const label = labelOf(where.schema.tryDefinition(boundTo.kind), boundTo);
+    // A profile's own person, to whoever is told the account (the seat itself, the host): "Mia (Nick)", as below.
+    if (!profile || label !== profile.name) return label;
+  }
+  /* WHO AT THE SCREEN: "Mia (Nick)"; on an account nothing here names, just "Mia". */
   if (profile) {
     const { profile: _said, ...account } = author;
     const named = nameOfAuthor(account, where);

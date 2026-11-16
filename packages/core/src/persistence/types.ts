@@ -88,4 +88,14 @@ export interface PersistenceAdapter<Scope = string> {
    */
   compact?(scope: Scope, checkpoint: Epoch): Promise<void>;
   loadArchive?(scope: Scope): Promise<LogArchive>;
+  /**
+   * Optional: replaces the scope's log — the ops from its horizon on, as
+   * `loadLog` returns them — with these, each at the seq it holds. What a
+   * migration of what a store keeps writes (`@graview/ship`'s
+   * `migrateProfilePeople`), the store closed; nothing else writes an op it
+   * did not append.
+   */
+  replaceLog?(scope: Scope, ops: readonly Operation[]): Promise<void>;
+  /** Optional: replaces what a compaction archived (`loadArchive`) with this, as `replaceLog` replaces the log. */
+  replaceArchive?(scope: Scope, archive: LogArchive): Promise<void>;
 }

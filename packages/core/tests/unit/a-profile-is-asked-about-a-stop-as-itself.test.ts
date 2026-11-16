@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bindSchema, createSchema, defineNode, nodeRef, profilePersonId, Store, z, type AnySchema, type Author, type Principal } from "../../src/index.js";
+import { bindSchema, createSchema, defineNode, nodeRef, Store, z, type AnySchema, type Author, type Principal } from "../../src/index.js";
 import { mayStopSuggesting, servedStops, stopSuggesting, suggest } from "../../src/tidying.js";
 
 /**
@@ -37,7 +37,7 @@ function suggested() {
   }) as unknown as Store<AnySchema>;
   store.apply({ name: "sign", args: { id: "rock:quartz" } }, { author: mia });
   store.apply({ name: "sign", args: { id: "rock:opal" } }, { author: leo });
-  store.apply({ name: "remove-explorer", args: { id: profilePersonId("user:nick", { id: "prf_leo" }) } }, { author: { kind: "system" } });
+  store.apply({ name: "remove-explorer", args: { id: store.personOf(leo)! } }, { author: { kind: "system" } });
   const suggestion = suggest(store, [JADE], { author: actor, lineage: { basis: "It was found together", confidence: 0.8 } })!;
   return { store, suggestion: { calls: suggestion.suggests!, author: suggestion.author, lineage: suggestion.lineage }, id: suggestion.id };
 }

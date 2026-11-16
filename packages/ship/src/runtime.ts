@@ -39,6 +39,8 @@ export type { ConnectionStates, ConnectionStateStore, ConnectionTokenRequest, Ru
 export { openStore } from "./open-store.js";
 export type { Compaction, OpenStoreOptions, OpenedStore } from "./open-store.js";
 export { migrateSnapshot, pendingMigrations } from "./migrations.js";
+export { migrateProfilePeople, profilePeopleCount, profilePeopleRenames, renameProfilePeople } from "./profile-people.js";
+export type { ProfilePeopleCount, ProfilePeopleMeta, ProfilePeopleOptions, ProfilePeopleRun, StoredParts } from "./profile-people.js";
 export type { MigrationRun } from "./migrations.js";
 export { countSteps, primitivesFor, primitivesForSteps, sayStep, stepsMigration } from "./steps.js";
 export type { MigrationStep, StepCount } from "./steps.js";

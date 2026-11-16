@@ -15,6 +15,8 @@ export {
 export type { BrowserAdapter, BrowserAdapterOptions, StorageLike } from "./browser-adapter.js";
 export type { IDBFactoryLike } from "./indexed-entries.js";
 export { migrateSnapshot, pendingMigrations } from "./migrations.js";
+export { migrateProfilePeople, profilePeopleCount, profilePeopleRenames, renameProfilePeople } from "./profile-people.js";
+export type { ProfilePeopleCount, ProfilePeopleMeta, ProfilePeopleOptions, ProfilePeopleRun, StoredParts } from "./profile-people.js";
 export { countSteps, primitivesFor, sayStep, stepsMigration } from "./steps.js";
 export type { MigrationStep, StepCount } from "./steps.js";
 export type { MigrationRun } from "./migrations.js";

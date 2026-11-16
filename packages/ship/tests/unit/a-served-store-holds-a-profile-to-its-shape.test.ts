@@ -1,4 +1,4 @@
-import { createMemoryAdapter, profilePersonId, type AnySchema, type GraviewApp, type Principal } from "@graview/core";
+import { createMemoryAdapter, type AnySchema, type GraviewApp, type Principal } from "@graview/core";
 import { compileDocument } from "@graview/core/check";
 import { describe, expect, it } from "vitest";
 import { createStoreHandler, presenceFrom, seatFromHeaders, SEAT_HEADERS, visitorPresence } from "../../src/runtime.js";
@@ -59,9 +59,9 @@ describe("a profile in a trusted header", () => {
   });
 });
 
-describe("a request for a profile's person's id", () => {
-  it("is refused over the wire, by id and ignored as a hint, and the profile's own first act makes it", async () => {
-    const person = profilePersonId("explorer:nick", { id: "prf_mia" });
+describe("a request for a profile's seat as an id", () => {
+  it("is refused over the wire, by id and ignored as a hint, and the profile's own first act makes its person under an id of its own", async () => {
+    const person = "explorer:nick~prf_mia";
     let at: Principal = { kind: "human", id: "explorer:ann", roles: ["family"] };
     const handler = await createStoreHandler({ app, adapter: createMemoryAdapter(), seed: seed as never, seatOf: () => at });
     const byId = await handler.handle(posted({}, [{ name: "add-explorer", args: { name: "Evil", id: person } }]));
@@ -70,6 +70,8 @@ describe("a request for a profile's person's id", () => {
     expect(handler.store.graph.has(person)).toBe(false);
     at = mia;
     await handler.handle(posted({}, [{ name: "find-rock", args: { id: "rock:quartz" } }]));
-    expect(handler.store.graph.getNode(person)).toMatchObject({ name: "Mia" });
+    expect(handler.store.graph.has(person)).toBe(false);
+    expect(handler.store.personOf(mia)).not.toContain("explorer:nick");
+    expect(handler.store.graph.getNode(handler.store.personOf(mia)!)).toMatchObject({ name: "Mia" });
   });
 });

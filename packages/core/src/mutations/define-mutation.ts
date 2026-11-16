@@ -120,7 +120,7 @@ export function numbersSpelled(input: unknown, given: unknown): unknown {
  */
 const validId = (id: unknown): id is string => typeof id === "string" && id.length <= 200 && /^[^\s\p{Cc}]+$/u.test(id);
 
-/** A `~` says a profile's person (`profilePersonId`), which only that profile's first act makes, and not through an act's own hands. */
+/** A `~` is the mark between an account and its profile in a seat (`seatPersonOf`), and no record's id. */
 function refuseProfileId(id: string, hostsOwn: boolean | undefined): void {
   if (!hostsOwn && id.includes("~")) throw new GraphError("An id cannot hold a ~", "Leave id out and let the act mint one, or ask for one without it.");
 }
@@ -170,6 +170,28 @@ export function seatMark(me: string): string {
   let hash = 0x811c9dc5;
   for (let at = 0; at < me.length; at++) hash = Math.imul(hash ^ me.charCodeAt(at), 0x01000193);
   return (hash >>> 0).toString(36).padStart(7, "0");
+}
+
+/** FNV-1a over a text from a starting value: seven letters and digits. */
+const markOf = (text: string, start: number): string => {
+  let hash = start;
+  for (let at = 0; at < text.length; at++) hash = Math.imul(hash ^ text.charCodeAt(at), 0x01000193);
+  return (hash >>> 0).toString(36).padStart(7, "0");
+};
+
+/**
+ * THE ID A PROFILE'S PERSON IS MADE UNDER: its kind's, and a mark of the
+ * batch it is made in and the profile's own id — the same wherever that
+ * batch is applied, a page first and then its host. The record is tied to
+ * its seat by its seat mark (`PERSON_SEAT`), never by what it is called.
+ * Stepped past an id something holds.
+ */
+export function mintPersonId(kind: string, batch: string, profile: string, held: (id: string) => boolean): string {
+  const said = `${batch}\u0000${profile}`;
+  const base = `${kind}:${markOf(said, 0x811c9dc5)}${markOf(said, 0x01000193)}`;
+  let id = base;
+  for (let n = 2; held(id); n++) id = `${base}-${n}`;
+  return id;
 }
 
 /**

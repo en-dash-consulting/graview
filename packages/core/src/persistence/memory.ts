@@ -62,6 +62,12 @@ export function createMemoryAdapter(
     async loadArchive(scope) {
       return clone(archives.get(scope) ?? { ops: [], epochs: [] });
     },
+    async replaceLog(scope, ops) {
+      logs.set(scope, clone([...ops]));
+    },
+    async replaceArchive(scope, archive) {
+      archives.set(scope, clone(archive));
+    },
   };
 }
 

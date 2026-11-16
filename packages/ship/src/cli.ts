@@ -11,6 +11,8 @@ import { fileTold } from "./file-told.js";
 import { fileViews } from "./file-views.js";
 import { LIVE_PATH } from "./live.js";
 import { openStore } from "./open-store.js";
+import { pendingMigrations } from "./migrations.js";
+import { profilePeopleCount } from "./profile-people.js";
 import { serveStore } from "./serve.js";
 import { SERVE_KEY } from "./seat-headers.js";
 import type { GraphSnapshot } from "./snapshot.js";
@@ -37,7 +39,7 @@ import { homeScreenAnswer } from "./home-screen.js";
  */
 export const SERVE_USAGE = `  graview serve <entry> [--data <dir>] [--port <n>] [--seed <file>] [--sqlite <file>]
                        [--host <address>] [--trust-seat-headers] [--allow-origin <origin>]
-                       [--no-sync] [--no-friction] [--no-told]
+                       [--no-sync] [--no-friction] [--no-told] [--dry-run [--json]]
       Serves the app's store over HTTP, and live over a WebSocket at
       /graview/live. The op log is the wire: a client sends calls, the
       store judges them under the caller's own seat, and the ops come back,
@@ -62,7 +64,11 @@ export const SERVE_USAGE = `  graview serve <entry> [--data <dir>] [--port <n>] 
       the counts, never a visitor's; --no-friction keeps none. What people
       told Graview from the answer card (the words, what was done, how it
       ended, 👍 or 👎) is kept for a year in told.json beside the data, read
-      back under each person's sight; --no-told keeps none.
+      back under each person's sight; --no-told keeps none. --dry-run
+      serves nothing and writes nothing: it says what opening the store
+      would migrate (the declaration's steps still to run, and the
+      profiles' people given ids of their own, with the links, records,
+      ops and epochs that name them), and --json says it as JSON.
 
   graview sync-seed <entry> --seed <file> [--data <dir> | --sqlite <file>]
                             [--apply] [--prune] [--json]
@@ -220,6 +226,35 @@ function readSeed(file: string): GraphSnapshot {
 }
 
 /** The entry module, or the reason it is not one — said before anything is opened. */
+/**
+ * WHAT OPENING THE STORE WOULD MIGRATE, WRITING NOTHING (`serve --dry-run`):
+ * the declaration's steps still to run, and the profiles' people that would
+ * be given ids of their own, with the links, records, ops and epochs that
+ * name them. What a host runs over a copy before it serves the store.
+ */
+async function dryRun(app: GraviewApp, backend: StoreBackend, json: boolean): Promise<number> {
+  const adapter = backend.adapter as StoreBackend["adapter"] & { loadMeta?(scope: string): StoredMeta | null | Promise<StoredMeta | null> };
+  const scope = app.name;
+  const meta = (await adapter.loadMeta?.(scope)) ?? null;
+  const stored = await adapter.load(scope);
+  const at = stored === null ? (app.version ?? 1) : (meta?.version ?? app.version ?? 1);
+  const steps = pendingMigrations(app, at).map((step) => ({ from: step.from, to: step.to, title: step.title }));
+  const { count } = await profilePeopleCount({ app, adapter, scope });
+  if (json) {
+    process.stdout.write(`${JSON.stringify({ scope, where: backend.where, version: at, steps, profilePeople: count }, null, 2)}\n`);
+    return 0;
+  }
+  const lines = [
+    `graview serve --dry-run: what opening "${scope}" at ${backend.where} would migrate; nothing was written.`,
+    steps.length === 0 ? "  The declaration: nothing to run." : `  The declaration: ${steps.map((step) => `${step.from}→${step.to} "${step.title}"`).join(", ")}.`,
+    count.records === 0 && count.ops === 0
+      ? "  Profiles' people: none to give an id of its own."
+      : `  Profiles' people: ${count.records} given an id of its own; ${count.links} links, ${count.fields} records, ${count.ops} ops and ${count.epochs} epochs that name them.`,
+  ];
+  process.stdout.write(`${lines.join("\n")}\n`);
+  return 0;
+}
+
 async function entryOf(argv: readonly string[], command: string, usage: string): Promise<GraviewApp | number> {
   const entry = entryArg(argv, 0);
   if (!entry) {
@@ -296,6 +331,7 @@ export async function serve(argv: readonly string[]): Promise<number> {
     return 1;
   }
   const backend = await backendFrom(argv);
+  if (argv.includes("--dry-run")) return dryRun(app, backend, argv.includes("--json"));
   const hold = holdBackend(backend, "serve", "Serving it a second time");
   if (!hold) return 1;
   const key = trust.keyed ? serveKey() : undefined;

@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { bindSchema, createSchema, defineNode, meOf, nameOfAuthor, nodeRef, permits, profilePersonId, Store, z, type AnySchema, type Policy, type Principal } from "../../src/index.js";
+import { bindSchema, createSchema, defineNode, meOf, nameOfAuthor, nodeRef, permits, PERSON_SEAT, seatPersonOf, Store, z, type AnySchema, type Policy, type Principal } from "../../src/index.js";
 import { compileDocument } from "../../src/check.js";
 import { ticksOf } from "../../src/history.js";
 
 /**
  * ONE ACCOUNT, SEVERAL PEOPLE AT ONE SCREEN (Roadmap
  * f-viewer-state-and-me-framework). A seat may carry a profile: `$me` is then
- * that profile's person, made on first use and linked to the account by its
- * id; what the seat may do stays the account's; history says who at the
+ * that profile's person, made on first use and tied to its seat by the
+ * seat's mark, under an id of its own; what the seat may do stays the account's; history says who at the
  * screen. Without one, nothing changes.
  */
 const board = {
@@ -55,18 +55,22 @@ function storeOf() {
 const nick: Principal = { kind: "human", id: "user:nick", name: "Nick", roles: ["family"] };
 const mia: Principal = { ...nick, profile: { id: "prf_mia", name: "Mia" } };
 const leo: Principal = { ...nick, profile: { id: "prf_leo", name: "Leo" } };
-const person = profilePersonId("user:nick", { id: "prf_mia" });
+/** Mia's person, where a store holds one: tied to her seat by its mark. */
+const personIn = (store: Store<AnySchema>, seat: Principal = mia): string => store.personOf(seat)!;
+/** A person a store opens holding, made before: bound to Mia's seat by its mark. */
+const person = "explorer:mia";
 const peopleOf = (store: Store<AnySchema>, rock: string) => store.graph.out(rock, "foundBy" as never).map((one) => one.id);
 const madeOf = (store: Store<AnySchema>, id: string) => store.log.all().filter((op) => op.primitives.some((one) => one.op === "add-node" && one.node.id === id));
 
 describe("$me on a seat that carries a profile", () => {
-  it("resolves to the profile's person, made once on first use and linked to the account by its id", () => {
+  it("resolves to the profile's person, made once on first use under an id of its own and tied to its seat", () => {
     const store = storeOf();
-    expect(store.graph.has(person)).toBe(false);
+    expect(store.personOf(mia)).toBeUndefined();
     store.apply({ name: "find-rock", args: { id: "rock:quartz" } }, { author: mia });
+    const person = personIn(store);
     expect(peopleOf(store, "rock:quartz")).toEqual([person]);
-    expect(store.graph.getNode(person)).toMatchObject({ kind: "explorer", name: "Mia" });
-    expect(person.startsWith("user:nick")).toBe(true);
+    expect(store.graph.getNode(person)).toMatchObject({ kind: "explorer", name: "Mia", [PERSON_SEAT]: "user:nick~prf_mia" });
+    expect(person).not.toContain("user:nick");
     store.apply({ name: "find-rock", args: { id: "rock:opal" } }, { author: mia });
     expect(peopleOf(store, "rock:opal")).toEqual([person]);
     expect(madeOf(store, person)).toHaveLength(1);
@@ -76,20 +80,23 @@ describe("$me on a seat that carries a profile", () => {
     const store = storeOf();
     store.apply({ name: "find-rock", args: { id: "rock:quartz" } }, { author: mia });
     store.apply({ name: "find-rock", args: { id: "rock:quartz" } }, { author: leo });
-    expect(peopleOf(store, "rock:quartz")).toEqual(expect.arrayContaining([person, profilePersonId("user:nick", { id: "prf_leo" })]));
+    expect(personIn(store)).not.toBe(personIn(store, leo));
+    expect(peopleOf(store, "rock:quartz")).toEqual(expect.arrayContaining([personIn(store), personIn(store, leo)]));
   });
 
   it("makes no person for a gesture that is refused", () => {
     const store = storeOf();
     const guest: Principal = { kind: "human", id: "user:gil", roles: ["guest"], profile: { id: "prf_mia", name: "Mia" } };
     expect(() => store.apply({ name: "find-rock", args: { id: "rock:quartz" } }, { author: guest })).toThrow();
-    expect(store.graph.has(profilePersonId("user:gil", { id: "prf_mia" }))).toBe(false);
+    expect(store.personOf(guest)).toBeUndefined();
+    expect(store.graph.allNodes().filter((one) => one.kind === "explorer")).toHaveLength(2);
     expect(store.log.all()).toHaveLength(0);
   });
 
   it("keeps the person when the gesture that made it is undone, and uses it again unmade", () => {
     const store = storeOf();
     const first = store.apply({ name: "find-rock", args: { id: "rock:quartz" } }, { author: mia });
+    const person = personIn(store);
     expect(store.canUndo(first.batch).ok).toBe(true);
     store.undo(first.batch, { author: mia });
     expect(peopleOf(store, "rock:quartz")).toEqual([]);
@@ -115,7 +122,7 @@ describe("$me on a seat that carries a profile", () => {
     const store = storeOf();
     expect(meOf({ ...nick, profile: { id: "user:ann", name: "Ann" } })).toBe("user:nick");
     const ann: Principal = { kind: "human", id: "user:ann", roles: ["family"], profile: { id: "prf_mia", name: "Mia" } };
-    expect(meOf(ann)).not.toBe(meOf(mia));
+    expect(seatPersonOf(ann)).not.toBe(seatPersonOf(mia));
     // A `~` is not a profile's: account "a" and profile "b~c" would be account "a~b" and profile "c".
     expect(meOf({ kind: "human", id: "a", profile: { id: "b~c", name: "x" } })).toBe("a");
     store.apply({ name: "find-rock", args: { id: "rock:quartz" } }, { author: { ...nick, profile: { id: "user:ann", name: "Ann" } } });
@@ -123,7 +130,10 @@ describe("$me on a seat that carries a profile", () => {
   });
 
   it("is the person an agent acts for, its own profile counting for nothing", () => {
-    expect(meOf({ kind: "agent", id: "claude", onBehalfOf: mia })).toBe(person);
+    const store = storeOf();
+    store.apply({ name: "find-rock", args: { id: "rock:quartz" } }, { author: mia });
+    expect(store.personOf({ kind: "agent", id: "claude", onBehalfOf: mia })).toBe(personIn(store));
+    expect(meOf({ kind: "agent", id: "claude", onBehalfOf: mia })).toBeUndefined();
     expect(meOf({ kind: "agent", id: "claude", profile: { id: "prf_x", name: "X" } })).toBe("claude");
   });
 
@@ -150,9 +160,13 @@ describe("what a seat may do with a profile", () => {
 
   it("holds a `self` grant on the account's record as it did, and never on another's", () => {
     expect(permits(policy, mia, "rename-explorer", undefined, undefined, "user:nick").ok).toBe(true);
-    expect(permits(policy, mia, "rename-explorer", undefined, undefined, person).ok).toBe(true);
     expect(permits(policy, mia, "rename-explorer", undefined, undefined, "user:ann").ok).toBe(false);
-    expect(permits(policy, mia, "rename-explorer", undefined, undefined, profilePersonId("user:ann", { id: "prf_mia" })).ok).toBe(false);
+    const store = storeOf();
+    store.apply({ name: "find-rock", args: { id: "rock:quartz" } }, { author: mia });
+    const ann: Principal = { kind: "human", id: "user:ann", roles: ["family"], profile: { id: "prf_mia", name: "Mia" } };
+    store.apply({ name: "find-rock", args: { id: "rock:quartz" } }, { author: ann });
+    expect(store.permits({ name: "rename-explorer", args: { id: personIn(store), name: "M" } }, mia).ok).toBe(true);
+    expect(store.permits({ name: "rename-explorer", args: { id: personIn(store, ann), name: "M" } }, mia).ok).toBe(false);
   });
 
   it("offers the same acts with a profile as without one", () => {
@@ -181,7 +195,7 @@ describe("a sight through the people, with a profile", () => {
       schema: compiled.app.schema,
       mutations: compiled.app.mutations as never,
       policy: compiled.app.policy!,
-      snapshot: { nodes: [{ id: "user:nick", kind: "explorer", name: "Nick" }, { id: "rock:quartz", kind: "rock", title: "Quartz" }, { id: "rock:opal", kind: "rock", title: "Opal" }, { id: person, kind: "explorer", name: "Mia" }], edges: [{ kind: "foundBy", from: "rock:quartz", to: person }, { kind: "foundBy", from: "rock:opal", to: "user:nick" }] } as never,
+      snapshot: { nodes: [{ id: "user:nick", kind: "explorer", name: "Nick" }, { id: "rock:quartz", kind: "rock", title: "Quartz" }, { id: "rock:opal", kind: "rock", title: "Opal" }, { id: person, kind: "explorer", name: "Mia", [PERSON_SEAT]: "user:nick~prf_mia" }], edges: [{ kind: "foundBy", from: "rock:quartz", to: person }, { kind: "foundBy", from: "rock:opal", to: "user:nick" }] } as never,
     });
   };
   const sees = [{ roles: ["family"], kinds: ["rock"], via: "foundBy" }, { roles: ["family"], kinds: ["explorer"] }];

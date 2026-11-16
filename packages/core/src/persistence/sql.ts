@@ -232,5 +232,21 @@ export function createSqlAdapter(options: SqlAdapterOptions): PersistenceAdapter
         epochs: epochsOf(key, 1),
       };
     },
+    async replaceLog(key, ops) {
+      ensureOpTable();
+      transaction(() => {
+        run(`DELETE FROM ${opTable} WHERE ${scope} = ?`, key);
+        for (const op of ops) run(`INSERT INTO ${opTable} (${scope}, seq, data) VALUES (?, ?, ?)`, key, op.seq, JSON.stringify(op));
+      });
+    },
+    async replaceArchive(key, archive) {
+      ensureOpTable();
+      transaction(() => {
+        run(`DELETE FROM ${archiveTable} WHERE ${scope} = ?`, key);
+        for (const op of archive.ops) run(`INSERT INTO ${archiveTable} (${scope}, seq, data) VALUES (?, ?, ?)`, key, op.seq, JSON.stringify(op));
+        run(`DELETE FROM ${epochTable} WHERE ${scope} = ? AND archived = 1`, key);
+        writeEpochs(key, 1, archive.epochs);
+      });
+    },
   };
 }
