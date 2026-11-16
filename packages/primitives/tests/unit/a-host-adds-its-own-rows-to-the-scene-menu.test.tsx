@@ -70,14 +70,14 @@ const press = (id: string) => act(async () => menu()!.querySelector<HTMLButtonEl
 const LINK = () => `${location.origin}${location.pathname}`;
 
 /** The Shell under a provider, each handed its rows, and the menu opened on `on`. */
-async function openedOn(on: string, provided: readonly HostMenuItem[], shell: readonly HostMenuItem[]) {
+async function openedOn(on: string, provided: readonly HostMenuItem[], shell: readonly HostMenuItem[], menuLink?: () => string) {
   const store = new Store({ schema, mutations: [finish], snapshot: SEED as never });
   const element = document.createElement("div");
   document.body.appendChild(element);
   const root = createRoot(element);
   await act(async () =>
     root.render(
-      <GraviewProvider store={store} views={registerDefaultViews(schema, createViews(schema))} initialView={{ ...EMPTY_VIEW, overview: true }} menuItems={provided}>
+      <GraviewProvider store={store} views={registerDefaultViews(schema, createViews(schema))} initialView={{ ...EMPTY_VIEW, overview: true }} menuItems={provided} {...(menuLink ? { menuLink } : {})}>
         <OpenOn on={on} />
         <Shell<typeof schema> scheme="light" onScheme={() => {}} menuItems={shell} />
       </GraviewProvider>,
@@ -122,6 +122,12 @@ describe("a host's own rows in the scene's menu", () => {
       { face: "scene", kind: "task", link: LINK() },
       { face: "scene", edge: "e1", link: LINK() },
     ]);
+  });
+
+  it("are handed the link the provider says, as mount says its home on the host's page", async () => {
+    await openedOn("t1", [], [row("own-ai")], () => "https://host.example/app/");
+    await press("own-ai");
+    expect(pressed.map(([, at]) => at.link)).toEqual(["https://host.example/app/"]);
   });
 
   it("draw a row once where the provider and the Shell both hand it", async () => {

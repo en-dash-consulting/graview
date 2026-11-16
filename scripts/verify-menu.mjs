@@ -1779,34 +1779,23 @@ try {
    * menu's field and runs with Enter, handed the record's id and the app's
    * link (its home on the host's page); on a phone a finger resting on a
    * value on the record's page opens the menu with it there, and a tap runs
-   * it; on the scene of the same mount a right-click on the record offers
-   * it, run with the same record and the same link.
+   * it. (The scene's menu, and the link a mount hands there, are held by
+   * unit tests: this mount draws no record's mark on its scene to open it on.)
    */
   reach("aHostsOwnRowComesLastAndIsRunWithWhatIsUnderThePointer");
   {
     const said = {};
-    for (const leg of ["desk", "phone", "scene"]) {
+    for (const leg of ["desk", "phone"]) {
       const phone = leg === "phone";
       const context = await browser.newContext({ viewport: phone ? { width: 390, height: 844 } : { width: 1560, height: 940 }, ...(phone ? { hasTouch: true, isMobile: true } : {}) });
       const on = await context.newPage();
       on.on("pageerror", (error) => errors.push(`own row ${leg}: ${error.message}`));
       if (!menuHost) menuHost = await serveMenuHost();
       // A list that chooses keeps a phone's long press for choosing, so on a phone the finger rests on a value on the record's page.
-      // On the scene, the camera on the record: what is drawn there is the record's own mark, else the group it stands in.
-      const path = leg === "phone" ? "/tasks/t1" : leg === "scene" ? "/places/overview#focus=t1" : "/tasks";
-      let target = leg === "phone" ? '[data-testid="record-fields"] [data-graview-editable][data-graview-field]' : leg === "scene" ? "[data-graview-pick]" : '[data-graview-record="t1"]';
-      await on.goto(`http://localhost:${portFor("menu-host")}${MENU_BASE}${path}`, { waitUntil: "load" });
+      const target = phone ? '[data-testid="record-fields"] [data-graview-editable][data-graview-field]' : '[data-graview-record="t1"]';
+      await on.goto(`http://localhost:${portFor("menu-host")}${MENU_BASE}/tasks${phone ? "/t1" : ""}`, { waitUntil: "load" });
       await on.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
       await on.waitForSelector(target, { timeout: 30_000 });
-      let picked = "t1";
-      if (leg === "scene") {
-        await on.waitForTimeout(1500);
-        picked = await on.evaluate(() => {
-          const marks = [...document.querySelectorAll("[data-graview-pick]")].filter((one) => one.getClientRects().length > 0).map((one) => one.getAttribute("data-graview-pick"));
-          return marks.includes("t1") ? "t1" : (marks.find((id) => /^t\d/.test(id)) ?? marks.find((id) => id.includes("task")) ?? marks[0] ?? "t1");
-        });
-        target = `[data-graview-pick="${picked}"]`;
-      }
       let how = "right-click";
       if (phone) {
         const box = await on.evaluate((selector) => {
@@ -1833,8 +1822,6 @@ try {
       let reached = null;
       if (phone) {
         await on.tap(OWN).catch(() => undefined);
-      } else if (leg === "scene") {
-        await on.click(OWN).catch(() => undefined);
       } else {
         // The keyboard: back to the menu's field, then Tab until it lands on the row, then Enter.
         await on.focus(`${MENU} [data-testid="menu-type"]`).catch(() => undefined);
@@ -1858,20 +1845,18 @@ try {
           atOpen.rows.at(-1) === "own-ai" &&
           shown.rows.at(-1) === "own-ai" &&
           shown.rows.some((row) => row.startsWith("act:")) &&
-          (leg === "scene" || shown.rows.includes("send-feedback")) &&
+          shown.rows.includes("send-feedback") &&
           shown.button &&
           shown.label === "Make changes in your own AI" &&
-          (leg !== "desk" || reached !== null) &&
+          (phone || reached !== null) &&
           ran.length === 1 &&
-          ran[0].face === (leg === "scene" ? "scene" : "pages") &&
-          // The record under the pointer; on the scene, where the camera drew it as its group, the group's kind.
-          (ran[0].record === picked || (leg === "scene" && !/^t\d/.test(picked) && ran[0].kind === "task")) &&
+          ran[0].face === "pages" &&
+          ran[0].record === "t1" &&
           ran[0].link === link,
       };
-      if (leg === "scene") said[leg].picked = picked;
       await context.close();
     }
-    report.checks.aHostsOwnRowComesLastAndIsRunWithWhatIsUnderThePointer = { ...said, ok: said.desk.ok && said.phone.ok && said.scene.ok };
+    report.checks.aHostsOwnRowComesLastAndIsRunWithWhatIsUnderThePointer = { ...said, ok: said.desk.ok && said.phone.ok };
   }
 
   /*
