@@ -1,4 +1,4 @@
-import type { FileValue } from "@graview/core";
+import { isFocus, type FileValue } from "@graview/core";
 import type { GuestFile, GuestNode, GuestProps } from "../protocol.js";
 import { THUMB_REFUSED, thumbIsSound } from "./picture-thumb.js";
 
@@ -162,7 +162,30 @@ export const PICTURE_FETCH_BYTES = 40_000_000;
 export const isGuestPicture = (file: { readonly type: string }): boolean => /^image\//i.test(file.type) && !/^image\/svg/i.test(file.type);
 
 /** A file as a guest is handed it, before the host has its bytes: no path, and for a picture its facts. */
-export function guestFileOf(file: FileValue, more: { readonly src?: string; readonly thumb?: string; readonly left?: string } = {}): GuestFile {
+/** What the host read of a picture's pixels: its size, and whether it is a cutout (`cutoutOf`). */
+export interface PictureLook {
+  readonly width: number;
+  readonly height: number;
+  readonly cutout?: boolean;
+}
+
+/** A picture's shape as a view is handed it (HQ f-view-picture-shape): its size, as the record says it or the host measured it, its aspect, whether it is a cutout and where its subject is. */
+function shapeOf(file: FileValue, look: PictureLook | undefined): Pick<GuestFile, "width" | "height" | "aspect" | "cutout" | "focus"> {
+  /* Both from one source: the record's where it says both, else the host's measure of what it hands. */
+  const said = file.width !== undefined && file.height !== undefined;
+  const width = said ? file.width : look?.width;
+  const height = said ? file.height : look?.height;
+  const cutout = file.cutout ?? look?.cutout;
+  return {
+    ...(width !== undefined ? { width } : {}),
+    ...(height !== undefined ? { height } : {}),
+    ...(width !== undefined && height !== undefined && width > 0 && height > 0 ? { aspect: Math.round((width / height) * 10_000) / 10_000 } : {}),
+    ...(cutout !== undefined ? { cutout } : {}),
+    ...(isFocus(file.focus) ? { focus: { x: file.focus.x, y: file.focus.y } } : {}),
+  };
+}
+
+export function guestFileOf(file: FileValue, more: { readonly src?: string; readonly thumb?: string; readonly left?: string; readonly look?: PictureLook } = {}): GuestFile {
   const base = { name: file.name, type: file.type, bytes: file.bytes };
   /* A video (0.1.37) is handed its facts, never an address: the host plays it where the view places `<graview-video>` (media.ts). Whether it has a poster is a fact (f-video-hero); the poster's path is not. */
   if (/^video\//i.test(file.type)) {
@@ -170,6 +193,7 @@ export function guestFileOf(file: FileValue, more: { readonly src?: string; read
       ...base,
       ...(file.width !== undefined ? { width: file.width } : {}),
       ...(file.height !== undefined ? { height: file.height } : {}),
+      ...(file.width && file.height ? { aspect: Math.round((file.width / file.height) * 10_000) / 10_000 } : {}),
       ...(file.caption !== undefined ? { caption: file.caption } : {}),
       ...(file.duration !== undefined ? { duration: file.duration } : {}),
       ...(file.poster ? { poster: true } : {}),
@@ -178,8 +202,7 @@ export function guestFileOf(file: FileValue, more: { readonly src?: string; read
   if (!isGuestPicture(file)) return base;
   return {
     ...base,
-    ...(file.width !== undefined ? { width: file.width } : {}),
-    ...(file.height !== undefined ? { height: file.height } : {}),
+    ...shapeOf(file, more.look),
     ...(file.caption !== undefined ? { caption: file.caption } : {}),
     ...(more.src !== undefined ? { src: more.src } : {}),
     ...(more.thumb !== undefined ? { thumb: more.thumb } : {}),
@@ -232,6 +255,8 @@ export interface GuestPicturesOptions {
   readonly file?: (href: string) => string | undefined;
   /** How the bytes are made smaller: to at most `width` pixels across, and `bytes` bytes. The canvas, by default. */
   readonly shrink?: (blob: Blob, width: number, bytes: number) => Promise<Blob | undefined>;
+  /** How a picture's pixels are read for its shape (HQ f-view-picture-shape): its size and whether it is a cutout. The canvas, by default (`lookOnCanvas`). */
+  readonly look?: (blob: Blob) => Promise<PictureLook | undefined>;
 }
 
 export interface GuestPictureHand {
@@ -254,7 +279,7 @@ export interface GuestPictureHand {
 type Entry =
   | { readonly state: "pending" }
   /* `url` is what the guest is handed; `drawn` what the page draws for it — the same, but where the page will not load its own `blob:` images. */
-  | { readonly state: "ready"; readonly url: string; readonly drawn: string; readonly thumb?: { readonly url: string; readonly drawn: string } }
+  | { readonly state: "ready"; readonly url: string; readonly drawn: string; readonly thumb?: { readonly url: string; readonly drawn: string }; readonly look?: PictureLook }
   | { readonly state: "left"; readonly said: string };
 
 const said = (n: number) => n.toLocaleString("en-US");
@@ -344,6 +369,7 @@ export function standInPictures(props: GuestProps, options: { readonly view: str
 export function createGuestPictures(window: Window & typeof globalThis, options: GuestPicturesOptions): GuestPictureHand {
   const { width, perFile, perView, need, thumbNeed, thumbIsSrc, reckon, chosen, most } = pictureBudget(options.pictures, options.limits, window.devicePixelRatio);
   const shrink = options.shrink ?? ((blob: Blob, across: number, bytes: number) => shrinkOnCanvas(window, blob, across, bytes));
+  const look = options.look ?? ((blob: Blob) => lookOnCanvas(window, blob));
   const entries = new Map<string, Entry>();
   /* Each `src` handed, to what the page draws for it. */
   const drawnFor = new Map<string, string>();
@@ -456,15 +482,24 @@ export function createGuestPictures(window: Window & typeof globalThis, options:
       else if (blob.size > perFile) return failed;
     }
     if (blob.size > perFile) return { state: "left", said: `${named(file, on)} is left out: made as small as the ${said(width)} pixels across the view ${options.view} draws a picture at, it is still more than the ${said(perFile)} bytes one picture is handed.` };
+    /*
+     * Its shape (HQ f-view-picture-shape), read from what is handed — already
+     * no wider than the view draws one, so it is small to decode — where the
+     * record does not say all of it: the size of `src`, and whether it is a
+     * cutout. A PNG made a JPEG lost its transparency for a plain ground,
+     * which still reads as one.
+     */
+    const seen = file.width !== undefined && file.height !== undefined && file.cutout !== undefined ? undefined : await look(blob).catch(() => undefined);
     const full = await addressOf(blob);
-    if (thumbNeed === undefined) return { state: "ready", ...full };
+    const shape = seen ? { look: seen } : {};
+    if (thumbNeed === undefined) return { state: "ready", ...full, ...shape };
     /*
      * Its second size (`thumb`): made from `src`'s bytes, already no wider than
      * the view draws one, so the picture as fetched — as large as 40 MB — is
      * decoded once and let go. Where it is no smaller than `src`, none.
      */
     const small = thumbIsSrc(file) ? undefined : await shrink(blob, thumbNeed, perFile).catch(() => undefined);
-    return { state: "ready", ...full, ...(small && small.size < blob.size ? { thumb: await addressOf(small) } : {}) };
+    return { state: "ready", ...full, ...shape, ...(small && small.size < blob.size ? { thumb: await addressOf(small) } : {}) };
   };
 
   const start = (file: FileValue, on: GuestNode) => {
@@ -526,7 +561,7 @@ export function createGuestPictures(window: Window & typeof globalThis, options:
         const entry = entries.get(file.href);
         if (entry?.state === "left") return guestFileOf(file, { left: entry.said });
         if (!entry) start(file, on);
-        return guestFileOf(file, entry?.state === "ready" ? { src: entry.url, ...(entry.thumb ? { thumb: entry.thumb.url } : {}) } : {});
+        return guestFileOf(file, entry?.state === "ready" ? { src: entry.url, ...(entry.thumb ? { thumb: entry.thumb.url } : {}), ...(entry.look ? { look: entry.look } : {}) } : {});
       });
       /* What no record handed holds any more is let go: its address, and a fetch still on its way. */
       for (const [href, entry] of entries) {
@@ -547,6 +582,47 @@ export function createGuestPictures(window: Window & typeof globalThis, options:
       drawnFor.clear();
     },
   };
+}
+
+/** The side of the square a picture is read at for whether it is a cutout: enough to see its edges, little to decode. */
+const LOOK_SIDE = 32;
+
+/**
+ * WHETHER A PICTURE IS A CUTOUT (HQ f-view-picture-shape), from its pixels
+ * read at `side` by `side` (RGBA, a row at a time): a quarter or more of its
+ * edge transparent, or nineteen in twenty of its edge transparent or one
+ * plain color — a drawing or a product on white, which a view draws whole
+ * rather than crops. A photograph's edge is neither; one whose edge is one
+ * dark or plain color reads as one, and is drawn whole.
+ */
+export function cutoutOf(pixels: ArrayLike<number>, side: number): boolean {
+  const edge: number[] = [];
+  for (let at = 0; at < side; at += 1) edge.push(at, (side - 1) * side + at);
+  for (let at = 1; at < side - 1; at += 1) edge.push(at * side, at * side + side - 1);
+  const clear = edge.filter((at) => pixels[at * 4 + 3]! < 250).length;
+  if (clear >= edge.length / 4) return true;
+  const opaque = edge.filter((at) => pixels[at * 4 + 3]! >= 250);
+  const mean = [0, 1, 2].map((channel) => opaque.reduce((sum, at) => sum + pixels[at * 4 + channel]!, 0) / opaque.length);
+  const plain = opaque.filter((at) => [0, 1, 2].reduce((sum, channel) => sum + Math.abs(pixels[at * 4 + channel]! - mean[channel]!), 0) <= 30).length;
+  return clear + plain >= edge.length * 0.95;
+}
+
+/** A picture's size and whether it is a cutout, read on a canvas: nothing where the browser cannot decode it. */
+export async function lookOnCanvas(window: Window & typeof globalThis, blob: Blob): Promise<PictureLook | undefined> {
+  if (typeof window.createImageBitmap !== "function") return undefined;
+  const bitmap = await window.createImageBitmap(blob);
+  try {
+    const { width, height } = bitmap;
+    const canvas = window.document.createElement("canvas");
+    canvas.width = LOOK_SIDE;
+    canvas.height = LOOK_SIDE;
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    if (!context) return { width, height };
+    context.drawImage(bitmap, 0, 0, LOOK_SIDE, LOOK_SIDE);
+    return { width, height, cutout: cutoutOf(context.getImageData(0, 0, LOOK_SIDE, LOOK_SIDE).data, LOOK_SIDE) };
+  } finally {
+    bitmap.close();
+  }
 }
 
 /**

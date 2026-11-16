@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 361,
+  "gzipped": 126,
+  "changeset": "a-views-pictures-say-their-shape.md",
+  "note": "Raised when each picture a view is handed came to say its shape \u2014 its size as the record says it or the host measured it, its aspect, whether it is a cutout (read from its edge on a canvas) and its focus (HQ f-view-picture-shape). 361 / 126 more. Measured at 639_666 / 221_787 minified and gzipped, against 639_305 / 221_661."
+}

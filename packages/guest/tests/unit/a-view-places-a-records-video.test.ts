@@ -108,7 +108,7 @@ describe("a <graview-video> the view places", () => {
   });
 
   it("is handed to the view as its facts, never an address", () => {
-    expect(guestFileOf(beach)).toEqual({ name: "beach.mov", type: "video/mp4", bytes: 18_400_000, width: 1920, height: 1080, caption: "The waves at dusk", duration: 45, poster: true });
+    expect(guestFileOf(beach)).toEqual({ name: "beach.mov", type: "video/mp4", bytes: 18_400_000, width: 1920, height: 1080, aspect: 1.7778, caption: "The waves at dusk", duration: 45, poster: true });
     expect(guestFileOf({ ...beach, poster: undefined })).not.toHaveProperty("poster");
   });
 });

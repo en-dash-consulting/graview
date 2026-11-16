@@ -81,7 +81,7 @@ describe("a view of one champion among 820 drivers with photos", () => {
     expect(fetched).toEqual([`/graview/files/driver-${CHAMPION}.jpg`]);
     expect(told).toEqual([]);
     /* The others are handed by their facts: the view can still say there is a photo. */
-    expect(portrait(props, "driver:3")).toEqual({ name: "driver-3.jpg", type: "image/jpeg", bytes: 200_000, width: 400, height: 500 });
+    expect(portrait(props, "driver:3")).toEqual({ name: "driver-3.jpg", type: "image/jpeg", bytes: 200_000, width: 400, height: 500, aspect: 0.8 });
   });
 
   it("chose by id, is handed that driver's photo alone, from the home that reads them all", async () => {
