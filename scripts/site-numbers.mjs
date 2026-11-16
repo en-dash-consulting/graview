@@ -18,7 +18,7 @@
  * current test count made every pull request rewrite the same line of
  * `index.html` (and the landing page's hash in the sitemap) and conflict
  * with the one merged before it. So the counts in `VOLATILE` are written
- * only with `--release`: by the Version packages step (`pnpm
+ * only with `--release`: by the release step (`pnpm release:prepare`, or `pnpm
  * version-packages`) and by the Pages deploy, which fills them in before it
  * uploads the site, so graview.dev always says the number main has. Without
  * `--release` they are left as the page has them, and `--check` holds every

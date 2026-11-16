@@ -62,7 +62,7 @@ exactly one worker wins.
   | `phase:triage` | reconciling HQ and ingesting into the PRD | +45 min |
   | `feature:<id>` (or `brief:` / `request:` when no feature) | building it, until its PR is green and frozen | +4 h, renewed by the build |
   | `slot:build-1` … `slot:build-3` | one worktree build's harness ports and CPU | +3 h, renewed by the build |
-  | `phase:release` | the batch merge, the Version PR, publish, HQ booking | +3 h, renewed |
+  | `phase:release` | the batch and its release, publish, HQ booking | +3 h, renewed |
 - A build slot is the machine's semaphore: three builds at most, and slot
   *N* runs every harness on `GRAVIEW_PORT_BASE=5600+100*N`, so two workers
   never share ports. Without a free slot, a build waits for the next pass.
@@ -139,15 +139,22 @@ dispatch `nightly.yml` on its head if it touches harnesses, render or focus.
 ### 4. Release (hold `phase:release`)
 
 When the open PRs are green and reviewed, or something urgent stands:
-- From 0.2.5 the batch runs `pnpm release:prepare` and its merge starts publish (`docs/process.md`).
 - **Batch.** One `batch/0-1-NN` off main merging them in order. Re-measure
   budgets as raise files. Full `pnpm test`, `pnpm verify`, `pnpm engines`,
-  `node scripts/progression.mjs`; nightly on its head; merge on green.
-- **Version packages PR.** Write the release record in
-  `apps/site/releases.json` (it leads with what breaks for a host), run
-  `pnpm site:build:all`, and run the budget tests. Dispatch Nightly on main.
-  Merge on green once that Nightly is green.
-- **Publish waits for Nick.** Tell him the run URL. In a loop, renew
+  `node scripts/progression.mjs`.
+- **The batch carries the release.** On the batch, `pnpm build && pnpm
+  release:prepare`: it spends the changesets, bumps the version and
+  scaffolds the record in `apps/site/releases.json`. Rewrite the record
+  (it leads with what breaks for a host; no `WRITE ME`, no FR numbers),
+  run `pnpm site:build:all` and the budget tests, commit, push. Dispatch
+  Nightly on the batch head after that last push, and merge on green while
+  main has not moved (the publish needs a green Nightly on the tree main
+  gets; if main moved, dispatch Nightly on main after the merge and re-run
+  the Release run). No Version packages PR is opened. One opens only for a
+  changeset merged outside a batch: write its record there, dispatch
+  Nightly on `changeset-release/main`, and merge it on green.
+- **Publish waits for Nick.** Nick approves the npm publish job; nothing
+  else needs him. Tell him the run URL. In a loop, renew
   `phase:release`, save the state in the job-run (`outcome: held`, "awaiting
   npm approval, run <url>"), and end the pass. The next pass picks up here.
 - **Once npm has it**, check all 14 packages with `npm view`. Then
