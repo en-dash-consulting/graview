@@ -67,7 +67,7 @@ describe("a pan let go of carries what was drawn with the ground", () => {
       signs: [{ key: "kind:task", kind: "task" }, { key: "kind:list", kind: "list" }, { key: "kind:rule", kind: "rule" }],
       board: { width: 90, height: 60, post: 10, gap: 8 },
     };
-    const fresh = placeSigns(asked);
+    const unheld = placeSigns(asked);
     // Where the last frame of a pan drew two of the boards and one name — not where a fresh placing would put them.
     const feet = new Map([["kind:task", { x: 120, y: 90 }], ["kind:list", { x: 700, y: 60 }]]);
     const names = new Map([["task", { x: 20, y: 400, width: 96, height: 19 }]]);
@@ -76,10 +76,15 @@ describe("a pan let go of carries what was drawn with the ground", () => {
     expect(kept.posts.get("kind:task")).toBe(14);
     expect(kept.feet.get("kind:list")).toEqual({ x: 700, y: 60 });
     expect(kept.names.get("task")).toEqual(names.get("task"));
-    // What had no place is placed, and clear of what stands.
+    // What had no place is placed, and clear of what stands: no card or name placed afresh on a held one.
     expect(kept.feet.has("kind:rule")).toBe(true);
     expect(kept.names.has("list")).toBe(true);
     expect(kept.names.has("rule")).toBe(true);
-    expect(fresh.feet.get("kind:task")).not.toEqual({ x: 120, y: 90 });
+    const card = (foot: { x: number; y: number }): Box => ({ x: foot.x - 45, y: foot.y - 60, width: 90, height: 60 });
+    const across = (a: Box, b: Box) => Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x) > 1 && Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y) > 1;
+    const heldBoxes = [card(feet.get("kind:task")!), card(feet.get("kind:list")!), names.get("task")!];
+    const fresh = [card(kept.feet.get("kind:rule")!), kept.names.get("list")!, kept.names.get("rule")!];
+    for (const one of fresh) for (const held of heldBoxes) expect(across(one, held)).toBe(false);
+    expect(unheld.feet.get("kind:task")).not.toEqual({ x: 120, y: 90 });
   });
 });

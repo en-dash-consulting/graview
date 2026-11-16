@@ -2464,7 +2464,11 @@ async function phoneCityByHand(page, where) {
  * box on the screen, and the ground under them, stays where that frame drew
  * it, to the pixel, and none is put away; one the pan brought into sight
  * stands still from the frame it comes up in. They used to snap back to
- * where the pan began and slide over to where it was let go.
+ * where the pan began and slide over to where it was let go. Where one the
+ * pan brought into sight has no clear room round what stood, the page says
+ * the city was placed afresh, and everything goes on from where it was
+ * drawn, never jumping. After each, at rest, no board or name stands on
+ * another, and at the City every view has its board.
  *
  * AND A ZOOM LET GO OF GOES ON FROM WHERE IT WAS DRAWN. Ctrl and the wheel,
  * or two fingers apart, and let go: the city at its new zoom places its
@@ -2621,6 +2625,7 @@ async function panStill(page, where, { level, phone }) {
       return null;
     }, bar);
   const releasedAt = () => page.evaluate(() => performance.now());
+  const placedAfresh = () => page.evaluate(() => document.querySelector('[data-testid="one-place-city"]')?.getAttribute("data-graview-placed-afresh-after-a-pan") ?? "0");
   const runs = [];
   const run = async (way, spot, gesture, zoom = false, least = zoom ? 3 : 4) => {
     if (!spot) {
@@ -2629,6 +2634,7 @@ async function panStill(page, where, { level, phone }) {
     }
     let released;
     let frames;
+    const afreshBefore = await placedAfresh();
     try {
       await startStillRecording(page);
       await page.waitForTimeout(120);
@@ -2639,14 +2645,40 @@ async function panStill(page, where, { level, phone }) {
       runs.push({ way, zoom, spot, ok: false, error: String(error?.message ?? error) });
       return;
     }
-    const held = zoom ? goesOnAfter(frames, released) : stillAfter(frames, released);
+    // The city placed afresh after the pan (a board come into sight had no clear room round what stood): said by the page, and then everything goes on from where it was drawn, never jumping.
+    const afresh = !zoom && (await placedAfresh()) !== afreshBefore;
+    const held = zoom || afresh ? goesOnAfter(frames, released) : stillAfter(frames, released);
+    // And at rest after it: no board or name on another, and at the City every view's board drawn.
+    const after = await page.evaluate((city) => {
+      const shown = (el) => el.style.visibility !== "hidden" && Number(el.style.opacity || 1) > 0.5 && !el.hasAttribute("data-graview-under");
+      const boxes = [...document.querySelectorAll("[data-graview-board], [data-graview-district-tag]")].filter(shown).map((el) => ({ key: el.getAttribute("data-graview-board") ?? `name ${el.getAttribute("data-graview-district-tag")}`, r: el.getBoundingClientRect() }));
+      const on = [];
+      for (let i = 0; i < boxes.length; i++)
+        for (let j = i + 1; j < boxes.length; j++) {
+          const [a, b] = [boxes[i].r, boxes[j].r];
+          if (Math.min(a.right, b.right) - Math.max(a.left, b.left) > 2 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 2) on.push(`${boxes[i].key} × ${boxes[j].key}`);
+        }
+      // A view of one kind whose district is in sight, half of it at least: a district panned out of the window stands its views where it is seen, which is nowhere.
+      const inSight = (kind) => {
+        const tile = [...document.querySelectorAll('[data-testid="one-place-city"] [data-graview-plot]')].find((plot) => plot.getAttribute("data-graview-plot")?.endsWith(`:${kind}`) || plot.getAttribute("data-graview-plot") === kind)?.querySelector(".graview-plot-tile")?.getBoundingClientRect();
+        if (!tile || tile.width === 0) return false;
+        const w = Math.max(0, Math.min(tile.right, innerWidth) - Math.max(tile.left, 0));
+        const h = Math.max(0, Math.min(tile.bottom, innerHeight) - Math.max(tile.top, 0));
+        return w * h >= tile.width * tile.height * 0.5;
+      };
+      const kindOf = (key) => (key.startsWith("kind:") ? key.slice(5) : key.startsWith("place:") ? key.split(":")[1] : null);
+      const missing = city ? [...document.querySelectorAll("[data-graview-board]:not([aria-current])")].filter((el) => !shown(el) && !el.hasAttribute("data-graview-under") && kindOf(el.getAttribute("data-graview-board")) && inSight(kindOf(el.getAttribute("data-graview-board")))).map((el) => el.getAttribute("data-graview-board")) : [];
+      return { on, missing };
+    }, level === 2);
     // How far the gesture took the ground, and what was measured: never a gesture that moved nothing, nor a window with nothing on it.
     const lastPan = frames.filter((frame) => frame.t < released).at(-1);
     const groundMoved = frames[0]?.items.ground && lastPan?.items.ground ? Math.round(farthest(lastPan.items.ground, frames[0].items.ground)) : 0;
     const measured = lastPan ? Object.keys(lastPan.items).filter((key) => key !== "ground").length : 0;
     // A step past a third of the way in one frame is a jump: an eased settle takes about a tenth, a stalled frame twice that.
-    const ok = held.frames > 10 && measured >= least && groundMoved >= (zoom ? 8 : 20) && (zoom ? held.firstStep <= 1 && held.leap <= 0.34 : held.worst <= 1 && held.putAway.length === 0);
-    runs.push({ way, zoom, spot, groundMoved, measured, ...held, ok });
+    // A zoom's claim is about the boxes it places again: at least one is seen going there.
+    const goesOn = held.firstStep <= 1 && held.leap <= 0.34 && (!zoom || held.leapAt !== null);
+    const ok = held.frames > 10 && measured >= least && groundMoved >= (zoom ? 8 : 20) && after.on.length === 0 && after.missing.length === 0 && (zoom || afresh ? goesOn : held.worst <= 1 && held.putAway.length === 0);
+    runs.push({ way, zoom, afresh, spot, groundMoved, measured, ...held, after, ok });
     // Each gesture begins at rest where the last left the city.
     await page.waitForTimeout(300);
   };

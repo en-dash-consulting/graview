@@ -553,8 +553,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     /** The city and every view standing in it, as last read: what the city's camera fits. */
     let whole: Box | null = null;
     let kept: { key: string; body: string; origin: Point; placed: ReturnType<typeof placeSigns> } | null = null;
-    /** What was placed, less each board or name placed afresh that stands on one held, or on another placed afresh before it. */
-    const withoutClashes = (placed: ReturnType<typeof placeSigns>, holds: ReadonlySet<string>, width: number): ReturnType<typeof placeSigns> => {
+    /** Whether a board or a name placed round what was held stands on one of them. */
+    const standsOnHeld = (placed: ReturnType<typeof placeSigns>, holds: ReadonlySet<string>, width: number): boolean => {
       const across = (a: Box, b: Box) => Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x) > 1 && Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y) > 1;
       const cardOf = (key: string, foot: Point): Box => {
         const w = width * (placed.scales.get(key) ?? 1);
@@ -562,21 +562,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         return { x: foot.x - w / 2, y: foot.y - h, width: w, height: h };
       };
       const all = [...[...placed.feet].map(([key, foot]) => ({ key, box: cardOf(key, foot) })), ...[...placed.names].map(([kind, box]) => ({ key: `name:${kind}`, box }))];
-      const standing = all.filter((one) => holds.has(one.key)).map((one) => one.box);
-      const dropped = new Set<string>();
-      for (const one of all) {
-        if (holds.has(one.key)) continue;
-        if (standing.some((box) => across(one.box, box))) dropped.add(one.key);
-        else standing.push(one.box);
-      }
-      if (dropped.size === 0) return placed;
-      return {
-        ...placed,
-        feet: new Map([...placed.feet].filter(([key]) => !dropped.has(key))),
-        posts: new Map([...placed.posts].filter(([key]) => !dropped.has(key))),
-        scales: new Map([...placed.scales].filter(([key]) => !dropped.has(key))),
-        names: new Map([...placed.names].filter(([kind]) => !dropped.has(`name:${kind}`))),
-      };
+      const standing = all.filter((one) => holds.has(one.key));
+      return all.some((one) => !holds.has(one.key) && standing.some((other) => across(one.box, other.box)));
     };
     /** What nothing of the city's is drawn under at rest: the bar, the page beside the city, the level control. */
     const keptOutNow = (): Box[] => {
@@ -638,9 +625,9 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
        * A PAN LET GO OF PLACES NOTHING AGAIN (Graview HQ
        * feature:f-one-face-pan-stops-still): the same city, the same window
        * and the same views, only panned against what the window shows. What
-       * stood stays where the last frame drew it — one the pan brought under
-       * the bar, the page or the control is put away until it comes out
-       * again — and only a board or a name with no place yet is placed.
+       * is seen stays where the last frame drew it; one the pan took out of
+       * the window or under the bar, the page or the control is placed
+       * again, as is a board or a name with no place yet.
        */
       const holding = held && kept && kept.key !== key && kept.body === body;
       /*
@@ -702,11 +689,17 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         /*
          * HELD, NOTHING PLACED ON IT. Placed round what stands, one that came
          * into sight may find no clear room and take the place that covers
-         * least — on a board or a name that stands. It stands nowhere until
-         * the city is placed again: never one control over another, and
-         * nothing that stood moved to make room for it.
+         * least — on a board or a name that stands. Neither one control over
+         * another nor a view with no board (kept so, it stood nowhere until
+         * the window or the level changed): the city is placed afresh, as it
+         * was before a pan held anything, and everything goes there from
+         * where the last frame drew it. The page says so, for a reader of it.
          */
-        if (holding) placed = withoutClashes(placed, holds, width);
+        if (holding && standsOnHeld(placed, holds, width)) {
+          placed = placeSigns(asked);
+          holds.clear();
+          box.current?.setAttribute("data-graview-placed-afresh-after-a-pan", String(Number(box.current.getAttribute("data-graview-placed-afresh-after-a-pan") ?? 0) + 1));
+        }
         kept = { key, body, origin, placed };
       }
       // Back into the picture's own pixels, as the view lays it out now.
@@ -1266,6 +1259,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       if (resized && !asking.resizing && !move && rest === PANEL) {
         resized = false;
         cam.commit();
+        // A panel sized by hand is not a hand's pan of the city: what it leaves beside the page is placed afresh for it, as the districts say it moved.
+        drawnThrough = null;
         committedAt = performance.now();
         ownZoom = null;
       }
