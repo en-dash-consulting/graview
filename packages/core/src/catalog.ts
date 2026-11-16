@@ -766,7 +766,7 @@ export function aiContextOf<S extends AnySchema>(given: Store<S>, target: AiTarg
     const bound = seat === undefined ? undefined : whole.graph.personBoundTo(seat);
     const node = bound !== undefined ? nodeOf(bound) : author.kind === "human" && author.id !== undefined ? nodeOf(author.id) : undefined;
     if (node) return nameOf(schema, node);
-    return author.kind === "human" ? (author.name ?? "someone") : byWords(author);
+    return bound !== undefined ? (author.name ?? "someone") : byWords(author);
   };
   const recent = seen
     .batches()
