@@ -82,7 +82,7 @@ const spoken = ({ line: _line, ...rest }: Violation): Omit<Violation, "line"> =>
 /** A record with each long text cut at `READ_TEXT` characters, saying how long it was. */
 function clipped<N extends object>(node: N): N {
   let out: Record<string, unknown> | undefined;
-  // Whose record a person is goes to no model, whoever reads (Roadmap f-binding-dry-run-and-seat-rules).
+  // A record as a tool reads it carries no mark of whose record it is (Roadmap f-binding-dry-run-and-seat-rules).
   if (Object.hasOwn(node, PERSON_SEAT)) {
     const { [PERSON_SEAT]: _seat, ...rest } = node as Record<string, unknown>;
     out = rest;

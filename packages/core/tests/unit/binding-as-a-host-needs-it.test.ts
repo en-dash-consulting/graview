@@ -8,7 +8,7 @@ import { createSchema, defineNode, FieldRevisions, fieldsWritten, PERSON_SEAT, s
  * BINDING A PERSON AS A HOST NEEDS IT (Roadmap f-binding-dry-run-and-seat-rules).
  * A host asks whether a record may be bound before it has a seat to bind
  * (`mayBind`), strips a raw log by the framework's own rule for a reader
- * (`seatsKept`), and keeps per-field revisions that say nothing of a seat.
+ * (`seatsKept`), and keeps per-field revisions of what a call may claim.
  */
 const participant = defineNode("participant", { people: true, label: (n: any) => n.name, fields: z.object({ name: z.string(), age: z.number() }) } as never);
 const gift = defineNode("gift", { label: (n: any) => n.title, fields: z.object({ title: z.string() }) } as never);
@@ -76,7 +76,7 @@ describe("a raw log stripped by the framework's own rule", () => {
 });
 
 describe("per-field revisions", () => {
-  it("say nothing of whose record a person is", () => {
+  it("are kept for the fields a call may claim to have seen", () => {
     const store = family();
     bindPerson(store, bud, "participant:bud", { author: host });
     store.apply({ name: "edit-participant", args: { id: "participant:bud", age: 13 } }, { author: host });
@@ -89,8 +89,8 @@ describe("per-field revisions", () => {
   });
 });
 
-describe("what is said of a bound person", () => {
-  it("never reads the seat as one of its fields, even to the host", () => {
+describe("a bound person, as the app says them", () => {
+  it("reads a bound person by the fields its kind declares, to the host too", () => {
     const store = family();
     bindPerson(store, bud, "participant:bud", { author: host });
     const node = store.graph.getNode("participant:bud")!;
@@ -98,7 +98,7 @@ describe("what is said of a bound person", () => {
     expect(JSON.stringify(readableFields(node, schema.tryDefinition("participant")))).not.toContain("acct-bud");
   });
 
-  it("tells a model nothing of a seat in the state the inline AI reads", () => {
+  it("is said as their record in the state the app is read in, whoever reads", () => {
     const store = family();
     bindPerson(store, bud, "participant:bud", { author: host });
     bindPerson(store, ann, "participant:ann", { author: host });

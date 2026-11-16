@@ -31,6 +31,7 @@ import { nodeRefArgs } from "./mutations/node-ref.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
 import type { Author } from "./ops/types.js";
 import { isWithheld } from "./ops/withheld.js";
+import { seatPersonOf } from "./permissions/policy.js";
 import type { Principal } from "./permissions/types.js";
 import { fieldWords, humanizeField, labelOf, nounOf, pluralOf } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
@@ -759,12 +760,20 @@ export function aiContextOf<S extends AnySchema>(given: Store<S>, target: AiTarg
       for (const edge of Object.keys(edgesOf(schema, of))) for (const other of seen.graph.in(record.id, edge) as unknown as Node[]) if (other.kind === of && nodeOf(other.id)) neighbors.push({ ...brief(other), relation: edge, direction: "in" });
     }
   }
+  /** Who made a change: a person as the record they are, as this viewer may see it, else by the name they gave. */
+  const saidBy = (author: Author): string => {
+    const seat = author.kind === "human" ? seatPersonOf(author) : undefined;
+    const bound = seat === undefined ? undefined : whole.graph.personBoundTo(seat);
+    const node = bound !== undefined ? nodeOf(bound) : author.kind === "human" && author.id !== undefined ? nodeOf(author.id) : undefined;
+    if (node) return nameOf(schema, node);
+    return author.kind === "human" ? (author.name ?? "someone") : byWords(author);
+  };
   const recent = seen
     .batches()
     .filter((batch) => !batch.ops.every(isWithheld))
     .slice(-(options.recent ?? 6))
     .reverse()
-    .map((batch) => ({ intent: batch.intent, at: batch.at, by: byWords(batch.author) }));
+    .map((batch) => ({ intent: batch.intent, at: batch.at, by: saidBy(batch.author) }));
   const jobs = (options.purpose?.jobs ?? []).filter((job) => jobIsFor(job, principal.roles) && visible.has(job.kind)).map((job) => ({ name: job.name, ask: job.ask, kind: job.kind }));
   const purpose = options.purpose && (options.purpose.for !== undefined || jobs.length > 0) ? { ...(options.purpose.for !== undefined ? { for: options.purpose.for } : {}), jobs } : undefined;
   return {
