@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.2.4`](https://graview.dev/docs/releases.html#v0-2-4)
 - [`0.2.3`](https://graview.dev/docs/releases.html#v0-2-3)
 - [`0.2.2`](https://graview.dev/docs/releases.html#v0-2-2)
 - [`0.2.1`](https://graview.dev/docs/releases.html#v0-2-1)
@@ -79,6 +80,26 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.3`](https://graview.dev/docs/releases.html#v0-1-3)
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
+
+## 0.2.4
+
+Published November 16, 2026 · the current version
+
+Letting go of a pan or a zoom leaves the map where it stands, the third level is called Map, and a host gets the view and binding tools Graview Cloud asked for.
+
+- **Letting go stays put.** At Nearby and Map, every board and name stays where the last frame drew it when a pan or a zoom ends. Before, they jumped back to where the gesture began and slid over. A board that comes into sight with no clear room has the map placed afresh, so every view in sight keeps its board.
+- **Page · Nearby · Map.** The one face’s third level is called Map wherever a person reads it: the level control, the keys, the right-click menu and the docs.
+- **A list page draws the view that replaces it** (`replaces: "page"`), whatever other view of the kind registered after it, and a host can ask which one with `listPageViewOf`.
+- **A view’s problems say a code** beside the sentence (`VIEW_PROBLEM_CODES`), so a host can count them.
+- **A host can refuse a view’s own fonts** with `ownFaces: false`; the fonts the host lends still draw.
+- **Pictures say their shape**: a view is handed each picture’s width, height, aspect, whether it is a cutout, and its focal point.
+- **Binding a person, as a host needs it**: `mayBind` asks whether a record may be bound before there is a seat, `unbindPerson` ends a binding while keeping what the person did said as them, and `seatsKept` is exported.
+- A view’s check as each seat names the owner once.
+- Security and reliability fixes.
+
+**Before you upgrade:** Breaks: a person reads Map where they read City on the one face’s level control and keys. A view’s `onProblem` is now called with a second argument (`{ code, part }`), and `createGuestHost`’s `onHeld` with a third; one-argument callbacks are unchanged. `seatsOfPolicy` lists the owner once. A document may not declare an act under a name the framework keeps for itself, and a call may now be refused that was taken before. Gains: `listPageViewOf`, `VIEW_PROBLEM_CODES`, `ownFaces`, a picture’s `width`, `height`, `aspect`, `cutout` and `focus` (and `focus` and `cutout` on a file value, optional), `mayBind`, `unbindPerson` and `seatsKept`. Stored formats gain only those optional file fields; ops, the wire and derived tool names are otherwise unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.2.4) · [The full changelog for 0.2.4](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#024)
 
 ## 0.2.3
 
