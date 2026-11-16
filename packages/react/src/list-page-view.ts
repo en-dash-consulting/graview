@@ -20,8 +20,18 @@ export function listPageViewOf<S extends AnySchema, V>(registry: ViewRegistry<S,
   const kept = (one: ViewRegistration<V>): boolean => registry.tidied?.(one) !== true;
   const replaced = (one: ViewRegistration<V>, at: number): boolean => {
     const slug = one.title !== undefined ? placeSlug(one.title) : undefined;
-    // A titled view whose place was taken away (`forget`) is no longer registered.
-    if (slug !== undefined && !registry.places().some((place) => place.kind === kind && place.as === slug)) return true;
+    /*
+     * A titled view whose place was taken away (`forget`) is no longer
+     * registered. Its place may be listed under an earlier registration's
+     * name the host deleted, so a place the registry still answers by the
+     * title with this view is held too.
+     */
+    if (
+      slug !== undefined &&
+      !registry.places().some((place) => place.kind === kind && place.as === slug) &&
+      registry.resolve(kind, { cardinality: "many", fidelity: one.fidelity }, slug)?.view !== one.view
+    )
+      return true;
     return every.slice(at + 1).some(
       (later) =>
         later.kind === kind &&

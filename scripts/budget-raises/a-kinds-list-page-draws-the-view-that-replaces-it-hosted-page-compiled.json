@@ -1,7 +1,7 @@
 {
   "budget": "a hosted page handed a compiled app",
-  "minified": 400,
-  "gzipped": 160,
-  "note": "Raised when a kind's list page came to draw the view of many that replaces it whatever registered after it (FR-238): `listPageViewOf`, the last such view still registered and not tidied away, and the tidied registry's `tidied`. Measured at 639_643 / 221_807 against 639_305 / 221_661.",
+  "minified": 700,
+  "gzipped": 280,
+  "note": "Raised when a kind's list page came to draw the view of many that replaces it whatever registered after it (FR-238): `listPageViewOf`, the last such view still registered and not tidied away, read by the list page and by another place's way to the list, and the tidied registry's `tidied`. Measured at 639_948 / 221_918 against 639_305 / 221_661.",
   "changeset": "a-kinds-list-page-draws-the-view-that-replaces-it.md"
 }
