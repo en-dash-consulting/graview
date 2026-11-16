@@ -1041,7 +1041,14 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
             // At the City everything stands inside what the camera shows; the camera was fitted to it.
             // A pan, not a zoom: a name is a size on the screen, and at another zoom it is placed again for it.
             const panned = carry !== null && carry !== LEVEL_LIVE && Math.abs(carry.s - 1) < 1e-3;
-            const holds = standAll(world, cam.zoom(), LEVEL_LIVE, shownAt(rest), rest, panned ? drawnBefore : undefined);
+            /*
+             * What is held is where each stands, not where a settle caught part
+             * way had it: two boards half-way between two placings may stand on
+             * each other, and held there they would stay so. A pan let go of
+             * mid-settle lets the settle finish.
+             */
+            const goals = { slots: carriedThrough(carry ?? LEVEL_LIVE, slots), names: carriedThrough(carry ?? LEVEL_LIVE, names), scales: new Map(scales) };
+            const holds = standAll(world, cam.zoom(), LEVEL_LIVE, shownAt(rest), rest, panned ? goals : undefined);
             // What a pan let go of put away and placed again comes up where it lands, as one placed for the first time does: it was not seen where it stood.
             const from = panned && holds.size > 0 ? { slots: new Map([...drawnBefore.slots].filter(([one]) => holds.has(one))), names: new Map([...drawnBefore.names].filter(([kind]) => holds.has(`name:${kind}`))), scales: drawnBefore.scales } : drawnBefore;
             settle = { ...from, start: now };
