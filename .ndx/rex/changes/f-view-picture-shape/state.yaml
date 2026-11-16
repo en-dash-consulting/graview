@@ -1,6 +1,9 @@
 schema: "rex/v2"
 items:
   "670744ef-8777-4fdf-ac2a-91df5b5c2089":
-    status: "in_progress"
-    lastModified: "2026-11-16T03:00:00.000Z"
+    status: "completed"
+    completedAt: "2026-11-16T07:00:00.000Z"
+    lastModified: "2026-11-16T07:00:00.000Z"
     lastModifiedBy: "Nick Daniel <nick@endash.us>"
+    resolutionType: "code-change"
+    resolutionDetail: "A picture handed to a view carries width, height, aspect, cutout and focus; FileValue gains focus and cutout. Thumbs cropped around the focus left open. PR #616, in batch #617, released in 0.2.4 (#618)."
