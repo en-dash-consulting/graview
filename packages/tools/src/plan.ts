@@ -106,6 +106,13 @@ const refusal = (mutation: string, message: string): Refusal => ({ mutation, mes
  * chain, so a zone is made before a feature even when nothing in the plan
  * says so. A reference to a name the plan never makes, and a cycle between
  * two of them, are refusals rather than a runtime surprise.
+ *
+ * The store is a real one. A question about the plan alone — what points at
+ * what, what goes with a declined line — is asked of a store made from the
+ * app's own declaration with nothing in it, never of an object shaped like
+ * part of one: a plan reads the store's acts, its policy and its graph (a
+ * plan's name equal to a record's id is refused), and which of those it reads
+ * is the plan's business.
  */
 export function planFrom<S extends AnySchema>(
   store: Store<S>,

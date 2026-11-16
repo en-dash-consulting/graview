@@ -20,6 +20,9 @@ export const missedClaims = (output) => {
   for (const line of output.split("\n")) {
     const said = /^\s*"([A-Za-z][\w-]*)":\s*false,?\s*$/.exec(line);
     if (said && said[1] !== "ok" && said[1] !== "passed") claims.add(said[1]);
+    // `FAIL name`, as a harness that says each claim on a line of its own prints it (one-face, embed-one-face).
+    const failed = /^FAIL\s+([A-Za-z][\w-]*)\s*$/.exec(line);
+    if (failed) claims.add(failed[1]);
   }
   return [...claims];
 };

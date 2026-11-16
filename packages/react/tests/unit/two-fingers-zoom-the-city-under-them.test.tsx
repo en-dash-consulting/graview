@@ -25,6 +25,7 @@ let stage: HTMLDivElement;
 let pinched: ReturnType<typeof vi.fn<Pinch>>;
 let done: ReturnType<typeof vi.fn<() => void>>;
 let pinching: { current: boolean };
+let feed: { current: (event: PointerEvent) => void };
 const overview: ViewState = { ...EMPTY_VIEW, overview: true };
 
 function Scene({ setView }: { readonly setView: (next: ViewState) => void }) {
@@ -33,15 +34,21 @@ function Scene({ setView }: { readonly setView: (next: ViewState) => void }) {
   hands.pinchBy.current = pinched;
   hands.pinchDone.current = done;
   pinching = hands.pinching;
+  feed = hands.feed;
   return null;
 }
 
 /** A finger as the browser says it: a pointer event of type touch. */
-const finger = (type: string, id: number, x: number, y: number, primary = id === 1) => {
+const touchOf = (type: string, id: number, x: number, y: number, primary = id === 1) => {
   const event = new MouseEvent(type, { bubbles: true, cancelable: true, clientX: x, clientY: y });
   Object.defineProperties(event, { pointerId: { value: id }, pointerType: { value: "touch" }, isPrimary: { value: primary } });
-  stage.dispatchEvent(event);
+  return event as unknown as PointerEvent;
 };
+const finger = (type: string, id: number, x: number, y: number, primary = id === 1) => {
+  stage.dispatchEvent(touchOf(type, id, x, y, primary));
+};
+/** A finger that came down on a host's layer over the city (a board), handed to the scene's hand rather than reaching the stage. */
+const handed = (type: string, id: number, x: number, y: number, primary = id === 1) => feed.current(touchOf(type, id, x, y, primary));
 const frames: FrameRequestCallback[] = [];
 /** The next frame: every payment owed runs. */
 const frame = () => {
@@ -87,6 +94,25 @@ describe("two fingers zoom the city under them", () => {
     expect(pinching.current).toBe(true);
     expect(done).not.toHaveBeenCalled();
     finger("pointerup", 2, 190, 200);
+    expect(pinching.current).toBe(false);
+    expect(done).toHaveBeenCalledTimes(1);
+  });
+
+  it("reads a finger handed over from a board with one on the ground as one pinch, which zooms and pans together", () => {
+    show();
+    handed("pointerdown", 1, 100, 200);
+    expect(pinching.current).toBe(false);
+    finger("pointerdown", 2, 160, 200);
+    expect(pinching.current).toBe(true);
+    handed("pointermove", 1, 70, 230);
+    finger("pointermove", 2, 190, 230);
+    frame();
+    const product = pinched.mock.calls.reduce((all, [factor]) => all * factor, 1);
+    expect(product).toBeCloseTo(2, 6);
+    const dy = pinched.mock.calls.reduce((all, call) => all + call[4], 0);
+    expect(dy).toBe(30);
+    handed("pointerup", 1, 70, 230);
+    finger("pointerup", 2, 190, 230);
     expect(pinching.current).toBe(false);
     expect(done).toHaveBeenCalledTimes(1);
   });

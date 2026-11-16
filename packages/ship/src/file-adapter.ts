@@ -170,6 +170,13 @@ export function createFileAdapter(root: string): FileAdapter {
     async loadArchive(scope) {
       return archiveOf(scope);
     },
+    async replaceLog(scope, ops) {
+      replace(place(scope, "log.jsonl"), jsonl(ops));
+    },
+    async replaceArchive(scope, archive) {
+      replace(place(scope, join("archive", "log.jsonl")), jsonl(archive.ops));
+      replace(place(scope, join("archive", "epochs.json")), json(archive.epochs));
+    },
     loadMeta(scope) {
       return read<StoredMeta>(place(scope, "meta.json"));
     },

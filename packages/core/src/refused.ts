@@ -1,3 +1,4 @@
+import { knownAcrossCopies } from "./across-copies.js";
 /**
  * WHY A CHANGE WAS REFUSED, AS A CODE A PROGRAM CAN BRANCH ON (FR-46).
  *
@@ -62,3 +63,6 @@ export class ActRefusal extends Error {
     this.name = "ActRefusal";
   }
 }
+
+// Known by what it is from whichever copy of core made it (`across-copies.ts`).
+knownAcrossCopies(ActRefusal, "ActRefusal");

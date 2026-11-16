@@ -3,9 +3,7 @@
 These apply to every agent that changes this repository: one started by
 `ndx work`, by the `dev-sync` pass, or from a brief by hand. The loop they sit
 in is [`docs/process.md`](../../docs/process.md); the project itself is
-[`AGENTS.md`](../../AGENTS.md). Steps marked (new in 0.2.5) apply once the
-builds that introduce them are on main; until then, do them the 0.2.4 way
-that `docs/process.md` describes.
+[`AGENTS.md`](../../AGENTS.md).
 
 1. **Work on a branch and open a pull request; never commit to main.**
    Main's ruleset refuses a direct push, and a PR is where CI and review see
@@ -27,10 +25,10 @@ that `docs/process.md` describes.
    focus changes** (a change under `scripts/`, `packages/render/`, or to
    how the keyboard or focus moves). The dev-sync pass dispatches it; a build
    started another way dispatches its own (`gh workflow run nightly.yml
-   --ref <branch>`) after it freezes. It takes about half an hour of nine runners; on a head
+   --ref <branch>`) after it freezes. It takes about half an hour of ten runners; on a head
    that will move, or a change no harness reads, it buys nothing.
 6. **Run unit tests and `pnpm verify <name> --quick` locally; run full
-   harnesses with `pnpm verify:github <names>` (new in 0.2.5).** Full runs on
+   harnesses with `pnpm verify:github <names>`.** Full runs on
    a power-limited laptop were most of a build's hours. Run one harness chain
    per machine at a time, on your slot's `GRAVIEW_PORT_BASE` (slot N is
    `5600+100*N`; a build with no slot picks a free hundred outside

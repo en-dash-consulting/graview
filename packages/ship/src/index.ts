@@ -19,6 +19,8 @@ export {
 export type { BrowserAdapter, BrowserAdapterOptions, StorageLike } from "./browser-adapter.js";
 export type { IDBFactoryLike } from "./indexed-entries.js";
 export { migrateSnapshot, pendingMigrations } from "./migrations.js";
+export { migrateProfilePeople, profilePeopleCount, profilePeopleRenames, renameProfilePeople } from "./profile-people.js";
+export type { ProfilePeopleCount, ProfilePeopleMeta, ProfilePeopleOptions, ProfilePeopleRun, StoredParts } from "./profile-people.js";
 export { countSteps, primitivesFor, primitivesForSteps, sayStep, stepsMigration } from "./steps.js";
 export { applySteps, contentOperation, SEED_SYNC_AUTHOR, sayRefusals, seedRefusals, seedSteps } from "./sync-seed.js";
 export type { SeedRefusal, SeedSyncOptions } from "./sync-seed.js";

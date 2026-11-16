@@ -99,6 +99,10 @@ jobs:
       # typecheck, not build, as Nightly: the same tsc -b over the packages
       # AND the apps, whose dist/domain the desk and the journeys read.
       - run: pnpm typecheck
+      # The page `graview preview` serves, which embed-one-face, preview,
+      # face-recipe, date-inputs and first-load open: `pnpm build` bundles it,
+      # typecheck does not, and those harnesses stopped before their first claim.
+      - run: node scripts/build-preview-page.mjs
 
       # Nightly's engines, cached by the same key, so either workflow fills it for the other.
       - name: The engines, cached

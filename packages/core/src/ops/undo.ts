@@ -9,6 +9,7 @@ import { inverseOf } from "./inverse.js";
 import type { LogReading } from "./log.js";
 import type { Operation } from "./types.js";
 import { isWithheld } from "./withheld.js";
+import { knownAcrossCopies } from "../across-copies.js";
 
 export interface UndoBlock {
   /** The op that read something the undo target wrote. */
@@ -310,3 +311,6 @@ export function undoPrimitives(ops: readonly Operation[], log?: readonly Operati
 export function undoneInverses(log: readonly Operation[], ops: readonly Operation[]): { readonly op: Operation; readonly primitives: readonly Primitive[] }[] {
   return TYPING.undone ? TYPING.undone(log, ops) : [...ops].sort((a, b) => b.seq - a.seq).map((op) => ({ op, primitives: inverseOf(op) }));
 }
+
+// Known by what it is from whichever copy of core made it (`across-copies.ts`).
+knownAcrossCopies(UndoBlockedError, "UndoBlockedError");

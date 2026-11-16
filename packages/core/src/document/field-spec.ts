@@ -19,6 +19,7 @@ type ZodLike = { readonly _zod?: { readonly def?: Record<string, unknown> } };
 const defOf = (schema: unknown): Record<string, unknown> | undefined => (schema as ZodLike | undefined)?._zod?.def;
 
 const COLLABORATIVE = Symbol.for("@graview/core:collaborative");
+const CITES = Symbol.for("@graview/core:cites");
 const DATE =/^\^\\d\{4\}-\\d\{2\}-\\d\{2\}\$$/;
 
 /** One zod field as a document field, or why it cannot be one. */
@@ -36,7 +37,10 @@ export function fieldOf(schema: unknown): { readonly spec: FieldSpec } | { reado
   }
   if (!def) return { why: "it is not a zod field" };
   const description = descriptionOf(schema);
-  const base = { ...(required ? { required: true } : {}), ...(fallback !== undefined ? { default: fallback } : {}), ...(description ? { description } : {}) };
+  // Where its value came from, where the declaration says (Roadmap f-field-cites-marker).
+  let cites: unknown;
+  for (let at = defOf(schema), depth = 0; at && cites === undefined && depth < 4; at = defOf(at["innerType"]), depth++) cites = (at as Record<symbol, unknown>)[CITES];
+  const base = { ...(required ? { required: true } : {}), ...(fallback !== undefined ? { default: fallback } : {}), ...(description ? { description } : {}), ...(typeof cites === "string" ? { cites } : {}) };
   const checks = ((def["checks"] as readonly ZodLike[] | undefined) ?? []).map((check) => defOf(check));
   // A picture or a document (FR-162): `imageField()`, `fileField()`.
   const file = fileKindOf(schema);

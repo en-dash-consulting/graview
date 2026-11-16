@@ -159,7 +159,9 @@ export type DraftChangeHost = (proposal: ReshapeProposal) => { readonly undo: ()
  * plan's edits (or a reshape's traits) applied to the app's document and
  * judged by the checker — the changed document, the app it compiles to and
  * what changed in words, or a refusal. `composeAppChange` from `@graview/core/compose` is
- * one; a host hands it (`composeChange`) so the quick ask can offer a
+ * one, judged by the whole checker; `composeAppChange` from
+ * `@graview/core/composer` is the one a page fetches, judged by the checks
+ * a change made on a page can fail (Roadmap f-light-composer). A host hands it (`composeChange`) so the quick ask can offer a
  * whole plan that finishes an ask, rehearsed before it is offered, while
  * the composer and the checker stay off the page. Unsaid, a missing
  * capability is said, and who could add it, without a plan.

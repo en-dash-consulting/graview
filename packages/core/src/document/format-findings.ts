@@ -26,6 +26,12 @@ export function formatFindings(document: GraviewDocument): readonly Finding[] {
       if (field.collaborative !== undefined && field.type !== "text" && field.type !== "string") {
         found.push(error("field-collaborative", `kinds.${kind}.fields.${name}.collaborative`, `${kind}'s ${name} is ${withArticle(field.type)} field, and only a text or string field is typed together`, 'leave "collaborative" out, or make the field {"type": "text"}'));
       }
+      // What cites it (Roadmap f-field-cites-marker) is another field or a relation of the same kind, never itself.
+      if (field.cites !== undefined) {
+        const at = `kinds.${kind}.fields.${name}.cites`;
+        if (field.cites === name) found.push(error("field-cites", at, `${kind}'s ${name} says it is cited by itself, so nothing says where its value came from`, `name the field or relation of ${kind} that holds where ${name} came from, like "source", or leave "cites" out`));
+        else if (!spec.fields[field.cites] && !spec.edges?.[field.cites]) found.push(error("field-cites", at, `${kind}'s ${name} is cited by "${field.cites}", which is no field or relation of ${kind}, so no record could cite it`, `name one of ${kind}'s fields or relations, or add a "${field.cites}" field to hold the citation`));
+      }
       const path = `kinds.${kind}.fields.${name}.format`;
       if (!field.format) continue;
       if (!formatFits(field.format, field.type)) {

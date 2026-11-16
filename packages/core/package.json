@@ -1,6 +1,6 @@
 {
   "name": "@graview/core",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -128,6 +128,10 @@
     "./compose": {
       "types": "./dist/compose.d.ts",
       "default": "./dist/compose.js"
+    },
+    "./composer": {
+      "types": "./dist/composer.d.ts",
+      "default": "./dist/composer.js"
     },
     "./traits": {
       "types": "./dist/trait-vocabulary.d.ts",

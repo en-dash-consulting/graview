@@ -330,16 +330,17 @@ if (asked.get("mode") === "fork") {
     const seat = { me: await text("quiz", "me"), score: await text("quiz", "score") };
     claim("through mount, a view drawn for a seat with a profile is told who is looking, and hands what it keeps from the host", seat.me === "Mia" && seat.score === "3", seat);
 
-    const beforePress = await tab.evaluate(() => window.__store.graph.getNode("user:nick~prf_mia") !== undefined);
+    /* Her person is tied to her seat by its mark. */
+    const beforePress = await tab.evaluate(() => window.__store.graph.allNodes().some((one) => one.$seat === "user:nick~prf_mia"));
     await view("quiz").locator("#found").click();
     await tab.waitForFunction(() => window.__store.log.length > 0, null, { timeout: 8_000 }).catch(() => {});
     const made = await tab.evaluate(() => ({
-      node: window.__store.graph.getNode("user:nick~prf_mia"),
+      node: window.__store.graph.allNodes().find((one) => one.$seat === "user:nick~prf_mia"),
       links: window.__store.graph.out("rock:quartz", "foundBy").map((one) => one.id),
       said: window.__said(),
       makes: window.__store.log.all().filter((op) => op.primitives.some((one) => one.op === "add-node")).length,
     }));
-    claim("a press on an act done as $me links the profile's person, made once on that first use, and history says Mia (Nick)", !beforePress && made.node?.name === "Mia" && made.links.join() === "user:nick~prf_mia" && made.makes === 1 && made.said.join() === "Mia (Nick)", { beforePress, made });
+    claim("a press on an act done as $me links the profile's person, made once on that first use under an id of its own, and history says Mia (Nick)", !beforePress && made.node?.name === "Mia" && made.links.join() === made.node.id && made.makes === 1 && made.said.join() === "Mia (Nick)", { beforePress, made });
     await context.close();
   } finally {
     server.close();

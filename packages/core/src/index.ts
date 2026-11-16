@@ -167,7 +167,7 @@ export type {
 } from "./search.js";
 
 // Mutations — the only writes.
-export { argumentsTaken, compileMutation, defineMutation, numbersSpelled, seatMark, takesAnId } from "./mutations/define-mutation.js";
+export { argumentsTaken, compileMutation, defineMutation, mintPersonId, numbersSpelled, seatMark, takesAnId } from "./mutations/define-mutation.js";
 export { wouldRun } from "./mutations/would-run.js";
 export type { CompiledMutation } from "./mutations/define-mutation.js";
 export {
@@ -229,6 +229,8 @@ export { VOTE_SUGGESTION, type AppTidying, type SuggestionVote, type Vote, type 
 export { TYPE_TEXT } from "./text/typing-hook.js";
 export type { TypeTextArgs } from "./mutations/type-text.js";
 export { markCollaborative } from "./schema/collaborative.js";
+// A field that says where its value came from (Roadmap f-field-cites-marker): marked, and read as a page hands a view what cites what.
+export { citedFieldsOf, holdsValue, markCites, sightMayKeep } from "./schema/cites.js";
 // Whether a record is left alone and an author is the app's own actor, which a page draws with; the rest is `@graview/core/tidying`'s.
 export { isAutomated, isLeftAlone } from "./ops/tidying.js";
 export type { Dismissal, DismissalStore, Suggestion, SuggestionTally } from "./ops/suggestions.js";
@@ -239,7 +241,7 @@ export {
   meOf,
   seatPersonOf,
   profileOf,
-  profilePersonId,
+  asBoundTo,
   withValidProfile,
   isSystem,
   permits,

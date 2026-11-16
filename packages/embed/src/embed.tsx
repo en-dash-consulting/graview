@@ -293,7 +293,7 @@ export interface EmbedOptions<S extends AnySchema = AnySchema> extends FrameOpti
   readonly draftView?: EmbedDraftView | null;
 }
 
-export type { EmbedDraftView } from "./draft.js";
+export type { EmbedDraftView, ForkedViewDefaults } from "./draft.js";
 
 /** The studio an embed offers, for a host that keeps the declaration itself. */
 export interface EmbedStudio {
@@ -610,6 +610,10 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
   /* The address a link to a page carries: the host's, where it says one; the app's own under address routing; none under memory routing, where a path of the face is no page of the host's. */
   const hostHref = props.hrefOf;
   const hrefOf = hostHref ?? (address ? addressAt : undefined);
+  /* The app's link a host's own row of the menu is handed, on either face (Roadmap f-host-context-menu-items): its home on the host's page, else the host's page itself. */
+  const homeHref = useRef(hrefOf);
+  homeHref.current = hrefOf;
+  const menuLink = useCallback(() => new URL(homeHref.current?.("/") ?? `${location.pathname}${location.search}`, location.href).href, []);
   /* Where the scene's preview of a view sends a reader for the whole of it (Roadmap f-view-content-height): its place, or the record's page, on the pages. */
   const pageDoor = useMemo<PageDoor>(
     () => ({ open: toPage, ...(hostHref ? { href: hostHref } : address ? { href: (path: string) => addressOf(path, props.basePath === undefined ? {} : { basePath: props.basePath }) } : {}) }),
@@ -653,7 +657,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
       <FrameFirstLook rootRef={rootRef} firstLook={props.firstLook} app={appKeyOf(brand ?? { name: app.name }, app.schema)} />
       <FaceBoundary module="@graview/react" report={report} content>
       <PartsWatchContext.Provider value={parts}>
-      <GraviewProvider store={store} views={views} initialView={initialView} scheme={scheme} {...providerProps(props, presence, brand)} {...(props.onSeat ? { onSeat: props.onSeat } : {})}>
+      <GraviewProvider store={store} views={views} initialView={initialView} scheme={scheme} {...providerProps(props, presence, brand)} menuLink={menuLink} {...(props.onSeat ? { onSeat: props.onSeat } : {})}>
         <NoticeBoardContext.Provider value={voice}>
         <Faces face={shown} stop={overviewStop ?? stop} kinds={kinds} places={places} opens={opens} />
         <Watch into={spot} />

@@ -27,7 +27,13 @@
  * the page is drawn once, its elements, keyboard and typed word kept as the
  * one face arrives. And a pan let go of, at Nearby and the City, moves
  * nothing: every board and name stays where the last frame drew it; a zoom
- * let go of goes on from there, never back to where it began.
+ * let go of goes on from there, never back to where it began. And at
+ * Nearby the home draws its city at a size its plots and boards are read
+ * at — on Deep Time and on the Harbor, a fixture of the same shape on a
+ * shallower map — every name in sight by its own
+ * district's ground and every view's board on its own district. And during
+ * a pinch that pans, a finger on a board or not, and a pan straight after a
+ * zoom, every board and name stays fastened to its district frame by frame.
  *
  * Frame strips (desk and phone, light and dark), and the rich app's City
  * and Nearby at 1280 and 390 wide (`rich-*.png`), are written to
@@ -59,7 +65,7 @@ const STRIPS = resolve(repoRoot, "docs/one-face");
 
 const report = { at: new Date().toISOString(), engines, app: "apps/todo", checks: {} };
 const errors = [];
-const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], pointsOut: [], shortcuts: [], keysTurnOff: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [], richClear: [], richNamed: [], richWords: [], richLegend: [], richViews: [], richRecords: [], richNearbyViews: [], richPhoneLines: [], richNamesBeside: [], richHomeScale: [], richControls: [], richOwnDistrict: [], richLegible: [], richHomeNearby: [], richOneLevel: [], richSmooth: [], richFocusSeen: [], richProblems: [], richHand: [], richHomeViews: [], richPanelCrossings: [], richBoardsUnder: [], richHomeClear: [], richProblemsOfKind: [], richPosts: [], richPostsUnder: [], recordInPlace: [], oneRuleFades: [], noWordsAfterPress: [], drawnOnce: [], nearbyZoom: [], nearbyPan: [], nearbyBack: [], panelPinch: [], phoneCity: [], panelWidth: [], panelSpacing: [], viewInPanel: [], panStill: [] };
+const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], pointsOut: [], shortcuts: [], keysTurnOff: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [], richClear: [], richNamed: [], richWords: [], richLegend: [], richViews: [], richRecords: [], richNearbyViews: [], richPhoneLines: [], richNamesBeside: [], richHomeScale: [], richControls: [], richOwnDistrict: [], richLegible: [], richHomeNearby: [], richOneLevel: [], richSmooth: [], richFocusSeen: [], richProblems: [], richHand: [], richHomeViews: [], richPanelCrossings: [], richBoardsUnder: [], richHomeClear: [], richProblemsOfKind: [], richPosts: [], richPostsUnder: [], recordInPlace: [], oneRuleFades: [], noWordsAfterPress: [], drawnOnce: [], nearbyZoom: [], nearbyPan: [], nearbyBack: [], panelPinch: [], phoneCity: [], panelWidth: [], panelSpacing: [], viewInPanel: [], panStill: [], homeReadSize: [], homeReadBeside: [], pinchPan: [] };
 
 /* ------------------------------------------------------------------ */
 /* In the page                                                         */
@@ -163,23 +169,58 @@ const stopRecording = (page) =>
     return window.__oneFaceFrames ?? [];
   });
 
-/** No frame of the page's box moves more than this share of the whole way it went. */
+/*
+ * No frame of the page's box moves more than this share of the whole way it
+ * went — further than the move itself went in that frame. The box goes
+ * between levels with the camera, and the altitude each frame was drawn at
+ * says how far the move got: a step of the box counts when it is more than
+ * twice the share of the move's way that frame took (the callers hold the
+ * worst such step to a quarter). A runner draws a move in half a laptop's
+ * frames (no GPU), and holds a long frame where the move takes a long step
+ * with it: every eased step of the box was then twice the share, the
+ * steepest 0.23-0.30 of the way against 0.25 — each one no more than the
+ * altitude took. A box that leaps while the move barely moves, or moves
+ * at all while it stands still, is a jump at any frame rate. And two jumps
+ * a move could hide: one cut over in two frames, by `steepest`, the
+ * largest share any step took, held under a half; and a box drawn for one
+ * frame somewhere else and back, by `flash`, a step of more than a tenth
+ * of the way (and 8 pixels) undone at once by at least half as much the
+ * other way. The move itself is held too, or a cut would license the
+ * box's: no frame takes the altitude more than a quarter of a level
+ * (`altitudeLeap`) — an eased frame on a runner takes about a tenth, and
+ * the face takes a stalled frame's time out of the move.
+ */
 function jumps(frames) {
   const travel = (key) => Math.max(...frames.map((f) => f.box[key])) - Math.min(...frames.map((f) => f.box[key]));
+  const altitudes = frames.map((f) => f.altitude ?? 0);
+  const climb = Math.max(...altitudes) - Math.min(...altitudes);
   let worst = 0;
   let at = -1;
-  for (let i = 1; i < frames.length; i++) {
-    for (const key of ["x", "y", "width", "height"]) {
-      const whole = travel(key);
-      if (whole < 4) continue;
-      const step = Math.abs(frames[i].box[key] - frames[i - 1].box[key]) / whole;
+  let steepest = 0;
+  let flash = null;
+  let altitudeLeap = null;
+  for (let i = 1; i < altitudes.length; i++) if (altitudeLeap === null && Math.abs(altitudes[i] - altitudes[i - 1]) > 0.25) altitudeLeap = { at: i, from: altitudes[i - 1], to: altitudes[i] };
+  // A side the box hardly travels along (its left edge, as it grows from a board to a page 700 pixels wide, moves 50) is measured against an eighth of its longest travel: 14 pixels there were a quarter of that side's way and a fiftieth of the box's.
+  const longest = Math.max(...["x", "y", "width", "height"].map(travel));
+  for (const key of ["x", "y", "width", "height"]) {
+    if (travel(key) < 4) continue;
+    const whole = Math.max(travel(key), longest / 8);
+    for (let i = 1; i < frames.length; i++) {
+      const out = frames[i].box[key] - frames[i - 1].box[key];
+      const step = Math.abs(out) / whole;
+      steepest = Math.max(steepest, step);
+      const back = i + 1 < frames.length ? frames[i + 1].box[key] - frames[i].box[key] : 0;
+      if (flash === null && step > 0.1 && Math.abs(out) > 8 && Math.sign(back) === -Math.sign(out) && Math.abs(back) >= Math.abs(out) / 2) flash = { key, at: i, out: Math.round(out), back: Math.round(back) };
+      // How far the move went in this frame, as a share of all it went.
+      const moved = climb > 0.001 ? Math.abs(altitudes[i] - altitudes[i - 1]) / climb : 0;
+      if (step <= moved * 2) continue;
       if (step > worst) {
         worst = step;
         at = i;
       }
     }
   }
-  return { worst: Number(worst.toFixed(3)), at };
+  return { worst: Number(worst.toFixed(3)), at, steepest: Number(steepest.toFixed(3)), flash, altitudeLeap };
 }
 
 /** Whether a transform moves and scales alike in both directions, and nothing else. */
@@ -390,7 +431,7 @@ async function sameNode(page, where, phone) {
   seen.crossing.push({ where, path: phone ? "/pages/tasks" : "/pages/tasks/t-deposit", ...crossing, ok: crossing.counted > 0 && crossing.crossed === 0 });
   const shear = frames.filter((f) => !shearless(f.matrix) || f.boards.some((b) => b.face && !shearless(b.face)));
   seen.shear.push({ where, frames: frames.length, sheared: shear.length, first: shear[0] ? { altitude: shear[0].altitude, matrix: shear[0].matrix } : null, reachedTheCity: frames.some((f) => f.altitude > 1.99), ok: shear.length === 0 && frames.some((f) => f.altitude > 1.99) });
-  return { where, frames: frames.length, moved: moving.length, same: frames.every((f) => f.same), jump, ok: frames.length > 30 && frames.every((f) => f.same) && jump.worst <= 0.25 && moving.length > 20 };
+  return { where, frames: frames.length, moved: moving.length, same: frames.every((f) => f.same), jump, ok: frames.length > 30 && frames.every((f) => f.same) && jump.worst <= 0.25 && jump.steepest < 0.5 && jump.flash === null && jump.altitudeLeap === null && moving.length > 20 };
 }
 
 /** Up to the city from a page, by the control. */
@@ -565,7 +606,7 @@ async function chosen(page, where) {
     await page.goBack();
     await page.waitForTimeout(1600);
     const back = { url: new URL(page.url()).pathname, level: await levelOf(page) };
-    results.push({ how, landed, levels, start: start === null ? null : Number(start.toFixed(1)), same: frames.every((f) => f.same), jump: jumps(frames.slice(Math.max(0, after))), back, ok: landed.url.endsWith(goal) && landed.level === 1 && !levels.includes(0) && levels.at(-1) === 1 && frames.every((f) => f.same) && (start === null || start <= 40) && jumps(frames.slice(Math.max(0, after))).worst <= 0.25 && back.url.endsWith("/tasks/t-deposit") && back.level >= 1 });
+    results.push({ how, landed, levels, start: start === null ? null : Number(start.toFixed(1)), same: frames.every((f) => f.same), jump: jumps(frames.slice(Math.max(0, after))), back, ok: landed.url.endsWith(goal) && landed.level === 1 && !levels.includes(0) && levels.at(-1) === 1 && frames.every((f) => f.same) && (start === null || start <= 40) && jumps(frames.slice(Math.max(0, after))).worst <= 0.25 && jumps(frames.slice(Math.max(0, after))).steepest < 0.5 && jumps(frames.slice(Math.max(0, after))).flash === null && jumps(frames.slice(Math.max(0, after))).altitudeLeap === null && back.url.endsWith("/tasks/t-deposit") && back.level >= 1 });
   }
   return { where, results, ok: results.every((one) => one.ok) };
 }
@@ -1324,10 +1365,23 @@ const readRich = (page) =>
       if (cut && !ellipsis) problems.push({ text, why: "cut without an ellipsis" });
       else if (cut && whole !== null && whole !== text) problems.push({ text, why: `cut, and the board's name "${whole}" is not the whole of it` });
       else if (cut && whole === null && el.matches("[data-graview-district-tag]")) problems.push({ text, why: "a district's name cut" });
-      // Wrapped: its words fall on more than one line — read off the lines the browser drew them on, not the box, which a fingertip's control makes taller than its line.
-      const range = document.createRange();
-      range.selectNodeContents(el);
-      const rows = [...range.getClientRects()].filter((one) => one.width > 0).reduce((tops, one) => (tops.some((top) => Math.abs(top - one.top) < one.height / 2) ? tops : [...tops, one.top]), []);
+      /*
+       * Wrapped: its words fall on more than one line — read off the lines
+       * the browser drew its text on, and only its text. A range over the
+       * whole element also gives the border box of each control inside it,
+       * which a fingertip's 24 pixels make taller than its line: where the
+       * typeface is short (DejaVu, a Linux runner's system-ui), the words sat
+       * more than half their height below the box's top and read as a
+       * second line ("EONS 4" at 390, drawn on one). Two pieces of text are
+       * on one line when their middles are within half the shorter's height.
+       */
+      const texts = [];
+      for (const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); walk.nextNode(); ) {
+        const range = document.createRange();
+        range.selectNodeContents(walk.currentNode);
+        texts.push(...[...range.getClientRects()].filter((one) => one.width > 0 && one.height > 0));
+      }
+      const rows = texts.reduce((lines, one) => (lines.some((line) => Math.abs(line.middle - (one.top + one.height / 2)) < Math.min(line.height, one.height) / 2) ? lines : [...lines, { middle: one.top + one.height / 2, height: one.height }]), []);
       // A board's title takes two lines before it is cut; nothing else takes more than one.
       const most = el.matches("[data-graview-board-title]") ? 2 : 1;
       const clipped = el.matches("[data-graview-board-title]") && el.scrollHeight > el.clientHeight + 1;
@@ -1662,7 +1716,18 @@ async function rich(browser, device) {
     // The city's side as the one face frames it: inside the window by 8 pixels, beside the panel on a desk, and on a phone above the sheet and the level control riding on it.
     const sideOf = home.panel ? (home.width <= 600 ? { x: 8, y: home.bar + 8, width: home.width - 16, height: Math.min(home.panel.y, home.dock ? home.dock.y : home.panel.y) - home.bar - 16 } : { x: 8, y: home.bar + 8, width: home.panel.x - 16, height: home.height - home.bar - 16 }) : null;
     const viewsKinds = homeKinds.filter((kind) => home.district[kind]);
-    result.homeViews = { kinds: viewsKinds, behind: sideOf ? viewsKinds.filter((kind) => { const tile = home.district[kind]; const mid = { x: tile.x + tile.width / 2, y: tile.y + tile.height / 2 }; return overlapOf(tile, home.panel) > tile.width * tile.height * 0.15 || mid.x < sideOf.x || mid.x > sideOf.x + sideOf.width || mid.y < sideOf.y || mid.y > sideOf.y + sideOf.height; }) : ["no panel"] };
+    /*
+     * The home reads at a size (Graview HQ feature:f-one-face-home-nearby-reads-at-size):
+     * where its views' districts cannot all stand beside the page at that
+     * size, as many as can do, and the rest are a pan away. Each district
+     * one of its views shows stands on the city's side, or could not stand
+     * there with those that do: together they would be wider or taller than
+     * the side.
+     */
+    const onSide = (kind) => { const tile = home.district[kind]; const mid = { x: tile.x + tile.width / 2, y: tile.y + tile.height / 2 }; return !(overlapOf(tile, home.panel) > tile.width * tile.height * 0.15 || mid.x < sideOf.x || mid.x > sideOf.x + sideOf.width || mid.y < sideOf.y || mid.y > sideOf.y + sideOf.height); };
+    const framedKinds = sideOf ? viewsKinds.filter(onSide) : [];
+    const tooMany = (kind) => { const all = [...framedKinds, kind].map((one) => home.district[one]); const width = Math.max(...all.map((t) => t.x + t.width)) - Math.min(...all.map((t) => t.x)); const height = Math.max(...all.map((t) => t.y + t.height)) - Math.min(...all.map((t) => t.y)); return width > sideOf.width - 33 || height > sideOf.height - 33; };
+    result.homeViews = { kinds: viewsKinds, framed: framedKinds, behind: sideOf ? viewsKinds.filter((kind) => !onSide(kind) && !tooMany(kind)) : ["no panel"] };
     /*
      * WHERE THE WHOLE CITY CANNOT STAND BESIDE THE PAGE at Nearby's furthest
      * zoom (the city says so), the home holds when every district its views
@@ -1684,7 +1749,7 @@ async function rich(browser, device) {
       if (from >= sideOf[lo] - 1 && to <= sideOf[lo] + sideOf[size] + 1) return true;
       const delta = sideOf[lo] + sideOf[size] / 2 - (from + to) / 2;
       if (Math.abs(delta) < 8) return true;
-      return viewsKinds.some((kind) => { const t = home.district[kind]; return t[lo] + delta < sideOf[lo] - 1 || t[lo] + t[size] + delta > sideOf[lo] + sideOf[size] + 1; });
+      return framedKinds.some((kind) => { const t = home.district[kind]; return t[lo] + delta < sideOf[lo] - 1 || t[lo] + t[size] + delta > sideOf[lo] + sideOf[size] + 1; });
     };
     const centeredOn = { x: axis("x", "width"), y: axis("y", "height") };
     const centered = centeredOn.x && centeredOn.y;
@@ -1903,7 +1968,7 @@ async function rich(browser, device) {
   seen.richHomeClear.push({ where, ...result.homeClear, ok: Boolean(result.homeClear && result.homeClear.names > 0 && result.homeClear.clash.length === 0) });
   // A desk's Nearby draws lines from the formation's page: there are some to hold. A small window may draw none.
   seen.richPanelCrossings.push({ where, ...result.panelCrossings, error: result.error, ok: Boolean(result.panelCrossings && (device.width < 1000 || result.panelCrossings.pieces > 0) && result.panelCrossings.crossings.length === 0) });
-  seen.richHomeViews.push({ where, ...result.homeViews, ok: Boolean(result.homeViews && result.homeViews.kinds.length > 0 && result.homeViews.behind.length === 0) });
+  seen.richHomeViews.push({ where, ...result.homeViews, ok: Boolean(result.homeViews && result.homeViews.framed.length > 0 && result.homeViews.behind.length === 0) });
   seen.richBoardsUnder.push({ where, ...result.boardsUnderLines, ok: Boolean(result.boardsUnderLines?.over) });
   // Where the whole city stands beside the page, no district is behind it; where it cannot, the home's views' districts are on the city's side, nothing said is under the page, and the city is as near the middle as that allows.
   seen.richHomeNearby.push({ where, ...result.home, ok: Boolean(result.home && result.home.districts > 0 && (result.home.fits ? result.home.behind.length === 0 : (result.homeViews?.behind.length ?? 1) === 0 && result.home.underPage.length === 0 && result.home.centered)) });
@@ -2862,6 +2927,322 @@ async function viewRootInPanel(browser) {
   }
 }
 
+/*
+ * THE HOME AT NEARBY READS AT A SIZE (Graview HQ
+ * feature:f-one-face-home-nearby-reads-at-size). On each rich app — Deep
+ * Time, and the Harbor, the same shape on a shallower map, which the home
+ * drew at the camera's furthest (and on a short window fitted whole there,
+ * as Graview Cloud's retests found) — the home at Nearby, then the Map, on
+ * the same window:
+ *
+ * - every district's plot is drawn at least `HOME_READS` times as wide as
+ *   the Map draws it. A record's page beside the city draws its district
+ *   at 1.6 times the Map's on a 1280 desk (2 on a phone) before it stands
+ *   back for its links, a kind's list at 1.25: three quarters of a record
+ *   page's. The home was framed whole at three fifths of it, and its
+ *   boards' words could not be read.
+ * - every district's name in sight stands within `NAME_NEAR` of its own
+ *   district, and every view's board in sight stands on its own district,
+ *   nearer it than any other.
+ */
+const HOME_READS = 1.2;
+/** How far a box stands from a district's ground, its diamond: none where they meet. */
+function gapToGround(box, tile) {
+  const c = { x: tile.x + tile.width / 2, y: tile.y + tile.height / 2 };
+  const corners = [{ x: c.x, y: tile.y }, { x: tile.x + tile.width, y: c.y }, { x: c.x, y: tile.y + tile.height }, { x: tile.x, y: c.y }];
+  const toGround = (p) => {
+    if (Math.abs(p.x - c.x) / (tile.width / 2) + Math.abs(p.y - c.y) / (tile.height / 2) <= 1) return 0;
+    let least = Infinity;
+    for (let i = 0; i < 4; i++) {
+      const a = corners[i];
+      const b = corners[(i + 1) % 4];
+      const t = Math.max(0, Math.min(1, ((p.x - a.x) * (b.x - a.x) + (p.y - a.y) * (b.y - a.y)) / ((b.x - a.x) ** 2 + (b.y - a.y) ** 2)));
+      least = Math.min(least, Math.hypot(p.x - (a.x + t * (b.x - a.x)), p.y - (a.y + t * (b.y - a.y))));
+    }
+    return least;
+  };
+  // The ground's corners inside the box: they meet.
+  if (corners.some((p) => p.x >= box.x && p.x <= box.x + box.width && p.y >= box.y && p.y <= box.y + box.height)) return 0;
+  let least = Infinity;
+  for (let i = 0; i <= 40; i++) {
+    const f = i / 40;
+    for (const p of [{ x: box.x + f * box.width, y: box.y }, { x: box.x + f * box.width, y: box.y + box.height }, { x: box.x, y: box.y + f * box.height }, { x: box.x + box.width, y: box.y + f * box.height }]) least = Math.min(least, toGround(p));
+  }
+  return least;
+}
+async function homeReads(browser, device, app) {
+  const phone = device.width <= 600;
+  const where = { app, device: `${device.width}×${device.height}` };
+  const context = await browser.newContext({ viewport: device, colorScheme: "dark", ...(phone ? { isMobile: true, hasTouch: true, deviceScaleFactor: 2 } : {}) });
+  const page = await context.newPage();
+  page.on("pageerror", (error) => errors.push(`home reads ${app} ${where.device}: ${error.message}`));
+  try {
+    await page.goto(`${richHost.url}/?theme=dark${app === "harbor" ? "&app=harbor" : ""}`, { waitUntil: "load" });
+    await ready(page);
+    await page.keyboard.press("2");
+    await restAt(page, 1, 15_000);
+    await page.waitForTimeout(700);
+    await page.mouse.move(2, Math.round(device.height / 2));
+    await page.screenshot({ path: resolve(STRIPS, `rich-${app}-${device.width}-home-nearby.png`) });
+    const nearby = await readRich(page);
+    const zoom = await page.evaluate(() => Number(document.querySelector('[data-testid="one-place-city"]')?.getAttribute("data-graview-camera-zoom") ?? 0));
+    await page.keyboard.press("3");
+    await restAt(page, 2, 15_000);
+    await page.waitForTimeout(500);
+    const map = await readRich(page);
+    // Each district's plot beside the page against the Map's.
+    const sizes = Object.entries(nearby.district).filter(([kind]) => map.district[kind]).map(([kind, tile]) => ({ kind, nearby: Math.round(tile.width), map: Math.round(map.district[kind].width), times: Number((tile.width / map.district[kind].width).toFixed(2)) }));
+    const least = sizes.reduce((low, one) => (!low || one.times < low.times ? one : low), null);
+    // In sight: on the city's side of the window, under the bar.
+    const side = nearby.panel ? (phone ? { x: 0, y: nearby.bar, width: nearby.width, height: (nearby.dock ? nearby.dock.y : nearby.panel.y) - nearby.bar } : { x: 0, y: nearby.bar, width: nearby.panel.x, height: nearby.height - nearby.bar }) : { x: 0, y: nearby.bar, width: nearby.width, height: nearby.height - nearby.bar };
+    const seenIn = (box) => overlapOf(box, side) > box.width * box.height * 0.5;
+    // From its own district's ground — its diamond, not the box round it, whose corners are street (Cloud's "Fossil places", 40–60 pixels off the ground it names).
+    const names = nearby.tags.filter((t) => seenIn(t.box) && nearby.district[t.kind]).flatMap((t) => {
+      const off = gapToGround(t.box, nearby.district[t.kind]);
+      return off > NAME_NEAR ? [`${t.kind} ${Math.round(off)} px off its ground`] : [];
+    });
+    const reach = (p, tile) => Math.abs(p.x - (tile.x + tile.width / 2)) / (tile.width / 2) + Math.abs(p.y - (tile.y + tile.height / 2)) / (tile.height / 2);
+    const kindOfBoard = (key) => (key.startsWith("kind:") ? key.slice(5) : key.startsWith("place:") ? key.split(":")[1] : null);
+    const boards = nearby.boards.filter((b) => !b.own && seenIn(b.box) && kindOfBoard(b.key) && nearby.district[kindOfBoard(b.key)]).flatMap((b) => {
+      const own = reach(b.stem, nearby.district[kindOfBoard(b.key)]);
+      const nearer = Object.entries(nearby.district).filter(([kind, tile]) => kind !== kindOfBoard(b.key) && reach(b.stem, tile) < own).map(([kind]) => kind);
+      return own > 1.08 || nearer.length > 0 ? [`“${b.label}” stands at ${own.toFixed(2)} of its district${nearer.length ? `, nearer ${nearer.join(", ")}` : ""}`] : [];
+    });
+    return {
+      where,
+      zoom,
+      least,
+      sizes,
+      // And, said for whoever reads the verdict, the districts in sight, wholly, that say no name: a name kept to its ground has fewer places to stand.
+      names: { seen: nearby.tags.filter((t) => seenIn(t.box)).length, astray: names, unnamed: Object.entries(nearby.district).filter(([kind, tile]) => overlapOf(tile, side) >= tile.width * tile.height * 0.95 && !nearby.tags.some((t) => t.kind === kind)).map(([kind]) => kind) },
+      boards: { seen: nearby.boards.filter((b) => !b.own && seenIn(b.box)).length, astray: boards },
+    };
+  } catch (error) {
+    return { where, error: String(error?.message ?? error) };
+  } finally {
+    await context.close().catch(() => {});
+  }
+}
+
+/*
+ * A PINCH THAT PANS HOLDS EVERYTHING TO THE GROUND (Graview HQ
+ * feature:f-one-face-pinch-and-pan-together-holds). On a phone, at Nearby
+ * and the Map, two fingers that zoom and pan at once — apart, their middle
+ * moving (and together, at Nearby); one finger on a board and one on the
+ * ground beside it, apart and moving; and two fingers apart, let go of, and
+ * one finger's pan straight after — every frame of the gesture, each
+ * board's foot and each district's name stands where its district carried
+ * it, by no more than `FASTENED` pixels from where the frame before had it
+ * in its district's own frame. With a finger on a board the two were two
+ * gestures, and the boards stood still while the ground went; a zoom's
+ * placing ran on under the pan that followed it.
+ */
+const FASTENED = 1;
+function startFastenedRecording(page) {
+  return page.evaluate(() => {
+    const frames = [];
+    window.__fastFrames = frames;
+    window.__fastStop = false;
+    const shown = (el) => {
+      const r = el.getBoundingClientRect();
+      return el.style.visibility !== "hidden" && Number(el.style.opacity || 1) > 0.5 && !el.hasAttribute("data-graview-under") && r.width > 0 && r.right > 0 && r.bottom > 0 && r.left < innerWidth && r.top < innerHeight;
+    };
+    const kindOf = (key) => (key.startsWith("kind:") ? key.slice(5) : key.startsWith("place:") ? key.split(":")[1] : null);
+    const tick = () => {
+      if (window.__fastStop) return;
+      requestAnimationFrame(tick);
+      const tiles = {};
+      for (const plot of document.querySelectorAll('[data-testid="one-place-city"] [data-graview-plot]')) {
+        const tile = plot.querySelector(".graview-plot-tile")?.getBoundingClientRect();
+        if (tile && tile.width > 0) tiles[(plot.getAttribute("data-graview-plot") ?? "").replace(/^kind:/, "")] = [tile.left, tile.top, tile.width, tile.height];
+      }
+      const points = {};
+      // A board stands on its foot, the middle of its lower edge; a name hangs from the middle of its top.
+      for (const el of document.querySelectorAll("[data-graview-board]")) {
+        const kind = kindOf(el.getAttribute("data-graview-board") ?? "");
+        if (!kind || !shown(el)) continue;
+        const r = el.getBoundingClientRect();
+        points[`board ${el.getAttribute("data-graview-board")}`] = { kind, at: [r.left + r.width / 2, r.bottom] };
+      }
+      for (const el of document.querySelectorAll("[data-graview-district-tag]")) {
+        if (!shown(el) || getComputedStyle(el.parentElement).opacity === "0") continue;
+        const r = el.getBoundingClientRect();
+        const kind = el.getAttribute("data-graview-district-tag");
+        points[`name ${kind}`] = { kind, at: [r.left + r.width / 2, r.top] };
+      }
+      frames.push({ t: performance.now(), tiles, points });
+    };
+    requestAnimationFrame(tick);
+  });
+}
+const stopFastenedRecording = (page) =>
+  page.evaluate(() => {
+    window.__fastStop = true;
+    return window.__fastFrames ?? [];
+  });
+/** Frame to frame, between `from` and `to`: how far each point went from where its district carried it. */
+function fastened(frames, from, to) {
+  const during = frames.filter((frame) => frame.t >= from && frame.t <= to);
+  let worst = 0;
+  let worstAt = null;
+  let pairs = 0;
+  let zoomed = 1;
+  let groundMoved = 0;
+  const astray = [];
+  for (let i = 1; i < during.length; i++) {
+    const [a, b] = [during[i - 1], during[i]];
+    for (const [key, now] of Object.entries(b.points)) {
+      const was = a.points[key];
+      const t0 = a.tiles[now.kind];
+      const t1 = b.tiles[now.kind];
+      if (!was || !t0 || !t1) continue;
+      pairs++;
+      // Where its district carried it: the same place in the district's own frame.
+      const u = (was.at[0] - t0[0]) / t0[2];
+      const v = (was.at[1] - t0[1]) / t0[3];
+      const off = Math.hypot(now.at[0] - (t1[0] + u * t1[2]), now.at[1] - (t1[1] + v * t1[3]));
+      if (off > FASTENED && astray.length < 6) astray.push(`${key} ${off.toFixed(1)} px at ${Math.round(b.t - from)} ms: its district ${t0.map(Math.round)} → ${t1.map(Math.round)}, it ${was.at.map(Math.round)} → ${now.at.map(Math.round)}`);
+      if (off > worst) {
+        worst = off;
+        worstAt = { key, frame: i, of: during.length, at: Math.round(b.t - from), off: Number(off.toFixed(1)) };
+      }
+    }
+  }
+  const first = during[0];
+  const last = during.at(-1);
+  if (first && last) {
+    const kinds = Object.keys(first.tiles).filter((kind) => last.tiles[kind]);
+    if (kinds.length) {
+      const k = kinds[0];
+      zoomed = last.tiles[k][2] / first.tiles[k][2];
+      groundMoved = Math.round(Math.hypot(last.tiles[k][0] - first.tiles[k][0], last.tiles[k][1] - first.tiles[k][1]));
+    }
+  }
+  return { worst: Number(worst.toFixed(2)), worstAt, astray, pairs, frames: during.length, zoomed: Number(zoomed.toFixed(3)), groundMoved };
+}
+async function pinchAndPan(page, where, { level }) {
+  where = { ...where, level };
+  await page.goto(`${at("todo")}/pages/tasks/t-deposit?${DAY}`, { waitUntil: "load" });
+  await ready(page);
+  await press(page, `[data-testid="altitude-stop-${level}"]`);
+  await restAt(page, level, 15_000);
+  await page.waitForTimeout(700);
+  const cdp = await page.context().newCDPSession(page);
+  const touch = (type, touchPoints) => cdp.send("Input.dispatchTouchEvent", { type, touchPoints });
+  const now = () => page.evaluate(() => performance.now());
+  /*
+   * Bare ground near the middle of the city above the sheet, with room round
+   * it for two fingers: clear of every board and name by a fingertip all
+   * round, for a browser moves a touch that lands beside a control onto it.
+   * That is what made this gesture come and go when it was first written:
+   * one finger landed on a board, and the two were two gestures.
+   */
+  const bareOf = (gap) =>
+    page.evaluate((gap) => {
+      const top = document.querySelector('[data-testid="one-place-bar"]')?.getBoundingClientRect().bottom ?? 0;
+      const sheet = document.querySelector("[data-graview-one-place]")?.getBoundingClientRect();
+      const dock = document.querySelector("[data-graview-one-face-dock]")?.getBoundingClientRect();
+      const foot = Math.min(sheet && sheet.top > top + 100 ? sheet.top : innerHeight, dock ? dock.top : innerHeight);
+      const middle = { x: innerWidth / 2, y: (top + foot) / 2 };
+      const spots = [];
+      for (let y = top + 40; y < foot - 40; y += 7) for (let x = gap + 30; x < innerWidth - gap - 30; x += 9) spots.push({ x, y });
+      spots.sort((a, b) => Math.hypot(a.x - middle.x, a.y - middle.y) - Math.hypot(b.x - middle.x, b.y - middle.y));
+      const bareAt = (x, y) => {
+        const el = document.elementFromPoint(x, y);
+        return Boolean(el && el.closest('[data-testid="one-place-city"]') && !el.closest("button, a, [data-graview-board], [data-graview-district-tag]"));
+      };
+      const bare = (x, y) => [[0, 0], [-16, 0], [16, 0], [0, -16], [0, 16]].every(([dx, dy]) => bareAt(x + dx, y + dy));
+      return spots.find(({ x, y }) => bare(x - gap, y) && bare(x + gap, y)) ?? null;
+    }, gap);
+  /** A board in sight above the sheet, and bare ground beside it: one finger on each. */
+  const onABoard = () =>
+    page.evaluate(() => {
+      const top = document.querySelector('[data-testid="one-place-bar"]')?.getBoundingClientRect().bottom ?? 0;
+      const bareAt = (x, y) => {
+        const el = document.elementFromPoint(x, y);
+        return Boolean(el && el.closest('[data-testid="one-place-city"]') && !el.closest("button, a, [data-graview-board], [data-graview-district-tag]"));
+      };
+      for (const el of document.querySelectorAll("[data-graview-board]:not([aria-current])")) {
+        const r = el.getBoundingClientRect();
+        const board = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+        if (r.width === 0 || board.y < top + 20 || document.elementFromPoint(board.x, board.y)?.closest("[data-graview-board]") !== el) continue;
+        for (const dx of [90, -90, 120, -120]) {
+          const ground = { x: board.x + dx, y: board.y };
+          if (ground.x > 20 && ground.x < innerWidth - 20 && [[0, 0], [-16, 0], [16, 0], [0, -16], [0, 16]].every(([ex, ey]) => bareAt(ground.x + ex, ground.y + ey))) return { board, ground };
+        }
+      }
+      return null;
+    });
+  const runs = [];
+  const gesture = async (way, spot, moves) => {
+    if (!spot) {
+      runs.push({ way, ok: false, error: "nowhere to begin it" });
+      return;
+    }
+    await startFastenedRecording(page);
+    await page.waitForTimeout(120);
+    const from = await now();
+    await moves(spot);
+    const to = await now();
+    await touch("touchEnd", []);
+    await page.waitForTimeout(900);
+    const frames = await stopFastenedRecording(page);
+    const held = fastened(frames, from, to);
+    // A gesture that zoomed and moved the ground, with boxes to measure, every frame.
+    const ok = held.frames >= 8 && held.pairs >= 20 && Math.abs(held.zoomed - 1) > 0.04 && held.groundMoved >= 20 && held.worst <= FASTENED;
+    runs.push({ way, spot, ...held, ok });
+    // Back where the level frames it, for the next.
+    await press(page, `[data-testid="altitude-stop-${level}"]`);
+    await restAt(page, level, 15_000).catch(() => {});
+    await page.waitForTimeout(600);
+  };
+  const two = (a, b) => [{ ...a, id: 1 }, { ...b, id: 2 }];
+  const pair = (s, gap, dx, dy) => two({ x: s.x - gap + dx, y: s.y + dy }, { x: s.x + gap + dx, y: s.y + dy });
+  // Two fingers apart, their middle moving: a zoom and a pan in one.
+  await gesture("two fingers apart, their middle moving", await bareOf(40), async (s) => {
+    await touch("touchStart", pair(s, 40, 0, 0));
+    for (let i = 1; i <= 14; i++) {
+      await touch("touchMove", pair(s, 40 + i * 3, i * 4, i * 2));
+      await page.waitForTimeout(20);
+    }
+  });
+  // Together while their middle moves the other way: further out and across. The Map is as far out as the camera goes: there two fingers only go closer.
+  if (level === 1)
+    await gesture("two fingers together, their middle moving", await bareOf(70), async (s) => {
+      await touch("touchStart", pair(s, 70, 0, 0));
+      for (let i = 1; i <= 14; i++) {
+        await touch("touchMove", pair(s, 70 - i * 2, -i * 4, i * 2));
+        await page.waitForTimeout(20);
+      }
+    });
+  // One finger on a board and one on the ground beside it, apart and moving: one pinch, as two on the ground are.
+  await gesture("one finger on a board, one beside it, apart and moving", await onABoard(), async ({ board, ground }) => {
+    const away = { x: Math.sign(ground.x - board.x), y: 0 };
+    const at = (i) => two({ x: board.x - away.x * i * 2 + i * 3, y: board.y + i * 2 }, { x: ground.x + away.x * i * 2 + i * 3, y: ground.y + i * 2 });
+    await touch("touchStart", at(0));
+    for (let i = 1; i <= 14; i++) {
+      await touch("touchMove", at(i));
+      await page.waitForTimeout(20);
+    }
+  });
+  // Two fingers apart and let go of, and one finger's drag at once: a pan within a breath of a zoom.
+  await gesture("a pinch let go of, and a pan straight after", await bareOf(40), async (s) => {
+    await touch("touchStart", pair(s, 40, 0, 0));
+    for (let i = 1; i <= 7; i++) {
+      await touch("touchMove", pair(s, 40 + i * 4, 0, 0));
+      await page.waitForTimeout(20);
+    }
+    await touch("touchEnd", []);
+    await page.waitForTimeout(60);
+    await touch("touchStart", [{ x: s.x, y: s.y, id: 3 }]);
+    for (let i = 1; i <= 12; i++) {
+      await touch("touchMove", [{ x: s.x + i * 6, y: s.y + i * 3, id: 3 }]);
+      await page.waitForTimeout(20);
+    }
+  });
+  return { where, runs, ok: runs.length > 0 && runs.every((one) => one.ok) };
+}
+
 /* ------------------------------------------------------------------ */
 /* The run                                                             */
 /* ------------------------------------------------------------------ */
@@ -2924,11 +3305,19 @@ try {
       [seen.sliderRun, (page, where) => slider(page, where)],
       ...(engine === "chromium" ? [[seen.phoneCity, (page, where) => phoneCityByHand(page, where)]] : []),
       ...(engine === "chromium" ? [[seen.panStill, (page, where) => panStill(page, where, { level: 1, phone: true })], [seen.panStill, (page, where) => panStill(page, where, { level: 2, phone: true })]] : []),
+      ...(engine === "chromium" ? [[seen.pinchPan, (page, where) => pinchAndPan(page, where, { level: 1 })], [seen.pinchPan, (page, where) => pinchAndPan(page, where, { level: 2 })]] : []),
     ]);
     if (!only || only.includes("viewInPanel")) seen.viewInPanel.push(await viewRootInPanel(browser));
     if (!only || only.includes("switch")) seen.switch.push(await rootIsTheOneFace(browser, { engine, device: "desk 1440×900" }).catch((error) => ({ ok: false, error: String(error?.message ?? error) })));
     if (!only || only.includes("rich")) for (const device of [{ width: 1520, height: 900 }, { width: 1280, height: 800 }, { width: 390, height: 844 }, { width: 844, height: 390 }, { width: 768, height: 1024 }, { width: 360, height: 640 }]) await rich(browser, device);
     if (!only || only.includes("rich")) for (const device of [{ width: 390, height: 844 }, { width: 412, height: 915 }]) seen.richPhoneLines.push(await richPhoneLines(browser, device));
+    if (!only || only.includes("rich") || only.includes("homeReads"))
+      for (const app of ["deep-time", "harbor"])
+        for (const device of [{ width: 1520, height: 900 }, { width: 1280, height: 800 }, { width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 844, height: 390 }]) {
+          const read = await homeReads(browser, device, app);
+          seen.homeReadSize.push({ where: read.where, zoom: read.zoom, least: read.least, error: read.error, ok: Boolean(!read.error && read.least && read.least.times >= HOME_READS) });
+          seen.homeReadBeside.push({ where: read.where, names: read.names, boards: read.boards, error: read.error, ok: Boolean(!read.error && read.names.seen > 0 && read.names.astray.length === 0 && read.names.unnamed.length === 0 && read.boards.astray.length === 0) });
+        }
     if (engine === "chromium" && (!only || only.includes("rich"))) {
       await recordInPlace(browser);
       await drawnOnce(browser);
@@ -3004,12 +3393,14 @@ try {
   report.checks.onAPhoneTheLinesIntoOneDistrictRiseAsOneAndNoLineCrossesAHeadingOrALabel = { held: seen.richPhoneLines, ok: every(seen.richPhoneLines) };
   report.checks.atNearbyEachDistrictsNameStandsBesideItsOwnDistrictOnTheHomeAndARichPage = { held: seen.richNamesBeside, ok: every(seen.richNamesBeside) };
   report.checks.atNearbyTheHomesCityDrawsNoSmallerThanIn021 = { held: seen.richHomeScale, ok: every(seen.richHomeScale) };
+  report.checks.atNearbyTheHomesPlotsAreDrawnLargeEnoughToRead = { held: seen.homeReadSize, ok: every(seen.homeReadSize) };
+  report.checks.atNearbyOnARichHomeEveryNameAndViewInSightStandsBesideItsOwnDistrict = { held: seen.homeReadBeside, ok: every(seen.homeReadBeside) };
   report.checks.atNearbyEveryViewOfADistrictInSightHasABoard = { held: seen.richNearbyViews, ok: every(seen.richNearbyViews) };
   report.checks.noDistrictControlStandsUnderTheBarThePageOrTheLevelControl = { held: seen.richControls, ok: every(seen.richControls) };
   report.checks.everyKindsBoardStandsOnItsOwnDistrictEvenWhereThePageCoversOne = { held: seen.richOwnDistrict, ok: every(seen.richOwnDistrict) };
   report.checks.noBoardsWordsAreSmallerThanNinePixels = { held: seen.richLegible, ok: every(seen.richLegible) };
   report.checks.atNearbyTheHomeFramesTheWholeCityBesideThePageOrWhereItCannotItsViewsDistrictsAndAsNearTheMiddleAsThatAllows = { held: seen.richHomeNearby, ok: every(seen.richHomeNearby) };
-  report.checks.atNearbyOnTheHomeEveryDistrictItsViewsShowStandsOnTheCitysSide = { held: seen.richHomeViews, ok: every(seen.richHomeViews) };
+  report.checks.atNearbyOnTheHomeTheDistrictsItsViewsShowStandOnTheCitysSideAsManyAsFitThereAtAReadableSize = { held: seen.richHomeViews, ok: every(seen.richHomeViews) };
   report.checks.atNearbyOnTheHomeNoNameOrBoardStandsOnAnotherOrOnADistrictsCount = { held: seen.richHomeClear, ok: every(seen.richHomeClear) };
   report.checks.atNearbyOnARichPageNoLineCrossesAnotherPartInThePanel = { held: seen.richPanelCrossings, ok: every(seen.richPanelCrossings) };
   report.checks.theBoardsStandUnderTheLines = { held: seen.richBoardsUnder, ok: every(seen.richBoardsUnder) };
@@ -3033,6 +3424,7 @@ try {
   const ofRuns = (zoom) => seen.panStill.map((one) => ({ ...one, runs: (one.runs ?? []).filter((run) => run.zoom === zoom), ok: !one.error && (one.runs ?? []).some((run) => run.zoom === zoom) && (one.runs ?? []).filter((run) => run.zoom === zoom).every((run) => run.ok) }));
   const pans = ofRuns(false);
   const zooms = ofRuns(true);
+  report.checks.duringAPinchThatPansEveryBoardAndNameStaysFastenedToItsDistrictEveryFrame = { held: seen.pinchPan, ok: every(seen.pinchPan) };
   report.checks.letGoOfAPanEveryBoardAndNameStaysWhereTheLastFrameDrewIt = { held: pans, ok: every(pans) };
   report.checks.letGoOfAZoomEveryBoardAndNameGoesOnFromWhereTheLastFrameDrewIt = { held: zooms, ok: every(zooms) };
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };

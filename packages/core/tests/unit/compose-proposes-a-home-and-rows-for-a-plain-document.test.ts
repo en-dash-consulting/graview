@@ -51,14 +51,14 @@ describe("composeDesign on a plain document with no home", () => {
 
   it("proposes a home of a count headline, said in English's plural where the declared one is not a count, and a list per kind, dated kinds first", () => {
     expect(home!.blocks[0]).toEqual({
-      headline: "{count(all('moment')) | words | capital} {count(all('moment')) | plural: 'schedule item'}, {count(all('dish')) | words} {count(all('dish')) | plural: 'dish', 'dishes'} and {count(all('room')) | words} {count(all('room')) | plural: 'room', 'rooms'}.",
+      headline: "{count(all('dish')) | words | capital} {all('dish') | plural: 'dish'}, {count(all('moment')) | words} {all('moment') | plural: 'schedule item'} and {count(all('room')) | words} {all('room') | plural: 'room'}.",
     });
     expect(home!.blocks.slice(1)).toEqual([
-      { when: "count(all('moment')) > 0", show: [{ title: "Schedule" }, { list: "all('moment')", as: "row", sort: "at" }] },
-      { when: "count(all('dish')) > 0", show: [{ title: "Dishes" }, { list: "all('dish')", as: "row" }] },
-      { when: "count(all('room')) > 0", show: [{ title: "Rooms" }, { list: "all('room')", as: "row" }] },
+      { when: "count(all('moment')) > 0", show: [{ title: "Schedule" }, { list: "all('moment') where not (at < today())", as: "row", sort: "at", limit: 5, empty: "No schedule ahead." }] },
+      { when: "count(all('dish')) > 0", show: [{ title: "Dishes" }, { list: "all('dish')", as: "row", sort: { by: "status", direction: "choices" }, limit: 10 }] },
+      { when: "count(all('room')) > 0", show: [{ title: "Rooms" }, { list: "all('room')", as: "row", limit: 10 }] },
     ]);
-    expect(said).toContain("The app has no home of its own, so it opens on how many schedule, dishes and rooms it holds, then a list of its schedule, dishes and rooms, the schedule first, by date.");
+    expect(said).toContain("The app has no home of its own, so it opens on how many dishes, schedule and rooms it holds, then a list of its schedule, dishes and rooms, the schedule first, from today on.");
   });
 
   it("and an app with nothing in it yet is described as the face draws it: its way in, not a page of noughts", () => {
@@ -91,9 +91,18 @@ describe("a row and a glance for each kind that has none", () => {
     expect(of(edits, "set-view", "dish")).toEqual({ op: "set-view", kind: "dish", slot: "row", blocks: [{ title: "{name}" }, { when: "present(status)", show: [{ text: "{status}" }] }] });
   });
 
-  it("and leave a kind with neither a date nor a status to the derived row and glance", () => {
-    expect(of(edits, "set-glance", "room")).toBeUndefined();
-    expect(of(edits, "set-view", "room")).toBeUndefined();
+  it("and give a kind with neither a date nor a choice the facts a glance would say", () => {
+    expect(of(edits, "set-glance", "room")).toEqual({ op: "set-glance", kind: "room", fields: ["seats"] });
+    expect(of(edits, "set-view", "room")).toEqual({ op: "set-view", kind: "room", slot: "row", blocks: [{ title: "{name}" }, { when: "present(seats)", show: [{ text: "{seats | glance}" }] }] });
+  });
+
+  it("and leave a kind with nothing past its name, or only a yes or no, to the derived row", () => {
+    const flagged = { ...plain, kinds: { tag: { fields: { name: { type: "string", required: true }, pinned: { type: "boolean" } } } } } as unknown as GraviewDocument;
+    expect(rowFromDeclaration(flagged, "tag")).toBeUndefined();
+    expect(glanceFromDeclaration(flagged, "tag")!.edit).toEqual({ op: "set-glance", kind: "tag", fields: ["pinned"] });
+    const named = { ...plain, kinds: { tag: { fields: { name: { type: "string", required: true } } } } } as unknown as GraviewDocument;
+    expect(rowFromDeclaration(named, "tag")).toBeUndefined();
+    expect(glanceFromDeclaration(named, "tag")).toBeUndefined();
   });
 
   it("each say what they are in the kind's and its fields' words", () => {
@@ -189,7 +198,7 @@ describe("the composed home keeps to what each seat sees", () => {
   it("and counts a kind a sight shows everyone", () => {
     const open = { ...office, policy: { ...office.policy, sees: [{ roles: ["owner"], kinds: ["review"] }, { roles: "*", kinds: ["task"] }] } } as unknown as GraviewDocument;
     const { home, as } = seats(open);
-    expect(home.blocks[0]).toEqual({ headline: "{count(all('task')) | words | capital} {count(all('task')) | plural: 'task', 'tasks'}." });
+    expect(home.blocks[0]).toEqual({ headline: "{count(all('task')) | words | capital} {all('task') | plural: 'task'}." });
     expect(as({ kind: "human", id: "u:v", roles: [] })).toMatch(/One task\./);
   });
 });

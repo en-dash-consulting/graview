@@ -222,7 +222,7 @@ export interface GuestFile {
   readonly poster?: true;
   /** A picture's address for `<img src>`, made by the host from the bytes. Smaller than the file where the view needs no more. */
   readonly src?: string;
-  /** Its second, smaller address, where the view asked for one (`pictures.thumb`): made from `src` at that width, for a chip or a grid, and a still. Absent where it would be no smaller than `src`: draw `thumb || src`. */
+  /** Its second, smaller address, where the view asked for one (`pictures.thumb`): made from `src` at that width, for a chip or a grid, and a still; cropped to the shape `thumb: { width, aspect }` asks around `focus`, but for a `cutout`, which is whole. Absent where a thumb made only smaller would be no smaller than `src`: draw `thumb || src`. */
   readonly thumb?: string;
   /** Why a picture was left out, in a sentence that names the view. */
   readonly left?: string;
@@ -282,6 +282,19 @@ export interface GuestProps {
    * ("State-sponsored").
    */
   readonly choices?: Readonly<Record<string, Readonly<Record<string, Readonly<Record<string, string>>>>>>;
+  /**
+   * WHAT CITES WHAT (Roadmap f-field-cites-marker), for the kinds of the
+   * records handed: kind → cited field → the field or relation (`relation:
+   * true`) that holds where its value came from. A view reads it with
+   * `graview.cite(node, field)`.
+   */
+  readonly cites?: Readonly<Record<string, Readonly<Record<string, { readonly by: string; readonly relation: boolean }>>>>;
+  /**
+   * WHICH HANDED RECORDS HOLD A VALUE WITH NOTHING CITED: record id → its
+   * cited fields holding a value whose citing field is empty or whose
+   * citing relation links nothing, as the viewer sees the graph.
+   */
+  readonly uncited?: Readonly<Record<string, readonly string[]>>;
   /**
    * WHAT THIS VIEW KEEPS FOR WHOEVER IS LOOKING (`graview.mine`), at draw
    * time, so a first draw needs no round trip. A worker view's own and no

@@ -2,7 +2,7 @@ import type { ViewProblem, ViewProblemSaid } from "./problems.js";
 import { imageRefusedWords } from "./open-judge.js";
 import { keepClicked } from "./clicked.js";
 import { guestPlacesOf } from "./links-words.js";
-import { actingAs, meOf, type AnySchema, type FileValue, type HostFiles, type PagesArrangement, type Principal, type SignIn, type Store, type ViewerState } from "@graview/core";
+import { actingAs, seatPersonOf, type AnySchema, type FileValue, type HostFiles, type PagesArrangement, type Principal, type SignIn, type Store, type ViewerState } from "@graview/core";
 import { readsOnlyUnseen, unseenOf, viewKinds } from "./unseen.js";
 import { createMine, keptForTheVisit, visitOf } from "./mine.js";
 import { storedFilesOf } from "./marks.js";
@@ -1155,8 +1155,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
    * problem says no value. Never the graph's.
    */
   const hostState = options.draft ? undefined : options.viewerState?.();
-  /* A seat whose id reads as a person's has no `meOf`, and is still nobody else: it never falls to the key of a seat with no id. */
-  const viewer = meOf(options.principal) ?? actingAs(options.principal).id ?? options.principal.visitorKey ?? "";
+  /* A seat, as a binding names it (`seatPersonOf`): a profile is its own viewer; a seat whose id holds a `~` has none, and is still nobody else, never falling to the key of a seat with no id. */
+  const viewer = seatPersonOf(options.principal) ?? actingAs(options.principal).id ?? options.principal.visitorKey ?? "";
   const mine = createMine({
     view: manifest.name,
     viewer,

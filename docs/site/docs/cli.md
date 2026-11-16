@@ -11,7 +11,7 @@ Or not at all: a project made by `graview create` has it as a devDependency, so 
 ## graview check
 
 ```text
-graview check <entry> [--views <module>] [--face <dir>] [--json]
+graview check <entry> [--views <module>] [--face <dir>] [--seed <snapshot.json>] [--json]
 
 --document <file>
     Any command that takes an <entry> takes a declaration document instead
@@ -22,7 +22,7 @@ graview check <entry> [--views <module>] [--face <dir>] [--json]
 
 ```
 
-Loads <entry> (a module whose default export, or `app` export, is a GraviewApp) and reports schema problems. Exits 1 on any error. Reads the face too — the project's src/ (the nearest package.json up from <entry>), or the directory --face names — and warns of a module that imports, loads or fetches a JSON file of the project's for content (face-reads-content-beside-the-graph): what it shows from there is on no record. The declaration, a seed and a template are read where they are.
+Loads <entry> (a module whose default export, or `app` export, is a GraviewApp) and reports schema problems. Exits 1 on any error. Reads the face too — the project's src/ (the nearest package.json up from <entry>), or the directory --face names — and warns of a module that imports, loads or fetches a JSON file of the project's for content (face-reads-content-beside-the-graph): what it shows from there is on no record. The declaration, a seed and a template are read where they are. With --seed, warns of each record there holding a value in a cited field (cites) with nothing in the field or relation that cites it.
 
 ## graview create
 
@@ -129,11 +129,15 @@ graview serve <entry> [--data <dir>] [--port <n>] [--seed <file>] [--sqlite <fil
     the counts, never a visitor's; --no-friction keeps none. What people
     told Graview from the answer card (the words, what was done, how it
     ended, 👍 or 👎) is kept for a year in told.json beside the data, read
-    back under each person's sight; --no-told keeps none.
+    back under each person's sight; --no-told keeps none. --dry-run
+    serves nothing and writes nothing: it says what opening the store
+    would migrate (the declaration's steps still to run, and the
+    profiles' people given ids of their own, with the links, records,
+    ops and epochs that name them), and --json says it as JSON.
 
 ```
 
-[--host <address>] [--trust-seat-headers] [--allow-origin <origin>] [--no-sync] [--no-friction] [--no-told] Serves the app's store over HTTP, and live over a WebSocket at /graview/live. The op log is the wire: a client sends calls, the store judges them under the caller's own seat, and the ops come back, pushed to every socket as they land. Data lives in <dir> (default ./data) as readable JSON, or in a SQLite file with --sqlite. It listens on 127.0.0.1 and believes the seat a request names in its headers, because only this machine can reach it — from a program, or from a page on its own origin; a page on another origin is refused unless --allow-origin names it (say it once per origin, as http://localhost:5195), and no header names the system's seat. Each run mints a key and prints it in the address it says: only a request carrying it is believed (a page opens that address, a program passes it whole as
+[--host <address>] [--trust-seat-headers] [--allow-origin <origin>] [--no-sync] [--no-friction] [--no-told] [--dry-run [--json]] Serves the app's store over HTTP, and live over a WebSocket at /graview/live. The op log is the wire: a client sends calls, the store judges them under the caller's own seat, and the ops come back, pushed to every socket as they land. Data lives in <dir> (default ./data) as readable JSON, or in a SQLite file with --sqlite. It listens on 127.0.0.1 and believes the seat a request names in its headers, because only this machine can reach it — from a program, or from a page on its own origin; a page on another origin is refused unless --allow-origin names it (say it once per origin, as http://localhost:5195), and no header names the system's seat. Each run mints a key and prints it in the address it says: only a request carrying it is believed (a page opens that address, a program passes it whole as
 
 ## graview shots
 

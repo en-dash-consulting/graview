@@ -1,6 +1,6 @@
 // mayRun on part of a call to a code act, and for a seat whose profile has no person yet, says what applying the filled call says.
 import { readFileSync } from "node:fs";
-import { ActRefusal, bindSchema, createSchema, defineNode, nodeRef, profilePersonId, refusalOf, Store, z, type AnySchema, type Principal } from "@graview/core";
+import { ActRefusal, bindSchema, createSchema, defineNode, nodeRef, refusalOf, Store, z, type AnySchema, type Principal } from "@graview/core";
 import { compileDocument } from "@graview/core/check";
 import { mayRun } from "@graview/core/seat";
 import { describe, expect, it } from "vitest";
@@ -49,7 +49,7 @@ describe("what mayRun says of part of a call, and of a seat whose person is not 
     expect(tryApply(store, { name: "size-idea", args: { id: "idea:1", reason: "r" } }, me)).toBe("ran");
   });
 
-  it("a profile seat whose person is not made yet: an act naming its own person record", () => {
+  it("a profile seat whose person is not made yet: an act done as it, then one naming its own person record", () => {
     const board = JSON.parse(readFileSync("packages/core/tests/document/fixtures/idea-board.gdd.json", "utf8"));
     board.kinds.idea.edges.ledBy = { to: ["member"], cardinality: "one", description: "who leads it", inverse: "what they lead" };
     board.acts.lead = { title: "Lead it", fromTheOtherEnd: "Lead this idea", on: "idea", effects: [{ connect: "ledBy", from: "$subject", to: "$leader" }] };
@@ -58,7 +58,10 @@ describe("what mayRun says of part of a call, and of a seat whose person is not 
     if (!compiled.ok) throw new Error("fixture");
     const store = new Store<AnySchema>({ schema: compiled.app.schema, mutations: compiled.app.mutations as never, policy: compiled.app.policy!, snapshot: { nodes: [{ id: "p_ann", kind: "member", name: "Ann" }, { id: "idea:picnic", kind: "idea", title: "A picnic" }], edges: [] } as never });
     const mia: Principal = { kind: "human", id: "p_ann", name: "Ann", roles: ["member"], profile: { id: "prf_mia", name: "Mia" } } as never;
-    const person = profilePersonId("p_ann", { id: "prf_mia" });
+    expect(mayRun(store, mia, { act: "vote-for", record: "idea:picnic" })).toMatchObject({ answer: "allowed" });
+    expect(tryApply(store, { name: "vote-for", args: { id: "idea:picnic" } }, mia)).toBe("ran");
+    const person = store.personOf(mia)!;
+    expect(person).not.toContain("p_ann");
     expect(mayRun(store, mia, { act: "lead", record: "idea:picnic", args: { leader: person } })).toMatchObject({ answer: "allowed" });
     expect(tryApply(store, { name: "lead", args: { id: "idea:picnic", leader: person } }, mia)).toBe("ran");
   });

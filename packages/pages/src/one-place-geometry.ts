@@ -123,6 +123,36 @@ export function levelZooms(where: PageWhere, view: View): readonly [number, numb
 }
 
 /**
+ * THE HOME READ BESIDE THE CITY (Graview HQ
+ * feature:f-one-face-home-nearby-reads-at-size): the furthest the home's
+ * Nearby stands back, as a zoom. A kind's list beside the city is written
+ * at its Nearby zoom, and a record's page at more (1.6 on a 1280 desk, 2 on
+ * a phone) before it stands back for its links: the home, a page over
+ * several kinds, draws its city no smaller than a kind's list does, and no
+ * closer than its own Nearby. Fitted whole further out, a rich app's plots
+ * were drawn at three fifths of a record page's and its boards' words could
+ * not be read.
+ */
+export const homeReadableZoom = (view: View): number => Math.min(levelZooms({ type: "home" }, view)[PANEL]!, levelZooms({ type: "list", kind: "" }, view)[PANEL]!);
+
+/**
+ * WHAT OF THE HOME'S VIEWS IS FRAMED AT A ZOOM: their districts, in the
+ * order the page shows them, each kept where it still fits in the area with
+ * the ones before it at that zoom (`s`, against the boxes' own pixels) and a
+ * margin. The rest stand past the edge, a pan away. Null for none.
+ */
+export function framedTogether(boxes: readonly Box[], area: Box, s: number, margin = 16): Box | null {
+  const room = { width: Math.max(1, area.width - 2 * margin), height: Math.max(1, area.height - 2 * margin) };
+  let framed: Box | null = null;
+  for (const box of boxes) {
+    const next: Box = framed ? unionOf([framed, box])! : box;
+    if (framed && (next.width * s > room.width + 0.5 || next.height * s > room.height + 0.5)) continue;
+    framed = next;
+  }
+  return framed;
+}
+
+/**
  * HOW MUCH OF A DESK'S CITY THE PANEL LEAVES, against the band it left at
  * a third of the window, where Nearby's zooms were set: a wider panel leaves
  * a narrower band of city, and the camera stands back by as much (no more
@@ -327,6 +357,19 @@ export const LEVEL_LIVE: Live = { x: 0, y: 0, s: 1 };
 
 /** Where the camera puts a point of the picture. */
 export const project = (live: Live, p: Point): Point => ({ x: p.x * live.s + live.x, y: p.y * live.s + live.y });
+
+/**
+ * Where the camera puts words drawn in the picture at a size of their own
+ * on the screen — a district's "+n", anchored at its right end
+ * (`text-anchor="end"`), its type a size in pixels whatever the zoom: the
+ * anchor goes where the picture takes it, the box keeps its size. Grown
+ * with the picture, a "+26" read at Nearby was placed round at the City as
+ * 16 by 9 pixels where it was drawn 23 by 13, and a board stood on it.
+ */
+export const wordOnScreen = (live: Live, box: Box): Box => {
+  const end = project(live, { x: box.x + box.width, y: box.y + box.height / 2 });
+  return { x: end.x - box.width, y: end.y - box.height / 2, width: box.width, height: box.height };
+};
 
 /** The camera that grows the picture by `s` and puts its point `p` at the window's point `at`. */
 export const cameraPutting = (p: Point, at: Point, s: number): Live => ({ s, x: at.x - p.x * s, y: at.y - p.y * s });

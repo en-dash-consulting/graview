@@ -69,6 +69,9 @@ export type { AppTidying, SuggestionVote, Vote, VotesOptions } from "./mutations
 export { digestWords, foldDigests, isSuggestionBatch, typedRowWords } from "./ops/digest.js";
 export type { ActivityRow, TypedRow } from "./ops/digest.js";
 export { LEFT_ALONE } from "./graph/archived.js";
+// Which records hold a value in a cited field with nothing cited (Roadmap f-field-cites-marker): what the app's own actor says of what it keeps.
+export { uncitedIn, uncitedValues } from "./cited.js";
+export type { UncitedValue } from "./cited.js";
 
 /**
  * WHAT `suggest` TAKES: who suggests, and — required — what it is based on

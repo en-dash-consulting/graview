@@ -11,6 +11,16 @@ import type { DraftOver } from "./frame.js";
  * when a draft is handed, and the registration over the app's views.
  */
 
+/**
+ * WHAT A FORKED VIEW TAKES FROM ITS HOST (Graview HQ
+ * f-forked-views-take-own-faces-off): the parts of a worker view's
+ * definition a host says for every view it registers — `ownFaces: false`,
+ * the origins its fonts, images and links may come from, its limits, where
+ * its problems are said — for the views the embed registers itself, a page
+ * a person made its own view of. The manifest and the code are the fork's.
+ */
+export type ForkedViewDefaults = Omit<WorkerViewDefinition, "manifest" | "worker" | "draft" | "keepsNothing">;
+
 /** A view proposed and not kept (FR-187): a worker view's definition, its code as `source` — a plain script against the `graview` global — or `worker`. */
 export type EmbedDraftView = Omit<WorkerViewDefinition, "worker" | "draft"> & ({ readonly source: string; readonly worker?: undefined } | { readonly worker: WorkerViewDefinition["worker"]; readonly source?: undefined });
 
@@ -75,7 +85,7 @@ export function useDraft(draft: EmbedDraftView | null | undefined): { readonly o
  * asked for it says it is one. The registry itself while it lists none.
  */
 const NO_FORKS: readonly ViewForkKept[] = [];
-export function useForkedViews<S extends AnySchema>(views: ReactViewRegistry<S>, keeper: KeptViews | undefined, schema: S): ReactViewRegistry<S> {
+export function useForkedViews<S extends AnySchema>(views: ReactViewRegistry<S>, keeper: KeptViews | undefined, schema: S, defaults?: ForkedViewDefaults): ReactViewRegistry<S> {
   const [forks, setForks] = useState(NO_FORKS);
   useEffect(() => {
     const heard = () => void fetchDraftHost().then(() => setForks(keeper!.forked!()));
@@ -84,7 +94,7 @@ export function useForkedViews<S extends AnySchema>(views: ReactViewRegistry<S>,
     return keeper.onChange?.(heard);
   }, [keeper]);
   return useMemo(
-    () => (forks.length > 0 && draftHost ? forks.reduce((over, fork) => draftHost!.registerWorkerView(over, { manifest: fork.manifest as never, worker: { source: fork.source }, ...(fork.draft ? { keepsNothing: true } : {}) }), layerViews(createViews(schema), views)) : views),
-    [views, forks, schema],
+    () => (forks.length > 0 && draftHost ? forks.reduce((over, fork) => draftHost!.registerWorkerView(over, { ...defaults, manifest: fork.manifest as never, worker: { source: fork.source }, ...(fork.draft ? { keepsNothing: true } : {}) }), layerViews(createViews(schema), views)) : views),
+    [views, forks, schema, defaults],
   );
 }

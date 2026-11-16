@@ -5,6 +5,7 @@
  */
 import { defineInvariant, RuleBudgetError, type AnyGraphNode, type AnySchema, type GraphReader, type InvariantDefinition, type Violation } from "../index.js";
 
+import { citedFieldsOf } from "../schema/cites.js";
 import { evaluateExpr, ExprBudgetError, ExprEvalError, GRAPH_FACTS, unreadSaid, type KindShape, type UnreadLink } from "./expr/evaluate.js";
 import { parseExpr } from "./expr/parse.js";
 import { renderTemplate } from "./template.js";
@@ -29,11 +30,14 @@ export function shapesOfSchema(schema: AnySchema): Map<string, KindShape> {
     const computed = parsedComputed(definition);
     // A relation to another app's kinds is a field the link is kept in, marked with the relation (FR-171).
     const linked = linkedRelations(definition);
+    // What cites each cited field (Roadmap f-field-cites-marker), which `uncited(…)` reads.
+    const cites = new Map(Object.entries(citedFieldsOf(schema, kind)));
     shapes.set(kind, {
       fields: new Set(Object.keys(definition?.fields?.shape ?? {})),
       edges: new Map(Object.entries(definition?.edges ?? {}).map(([name, edge]) => [name, edge.cardinality ?? "many"])),
       ...(computed ? { computed } : {}),
       ...(linked.size > 0 ? { linked } : {}),
+      ...(cites.size > 0 ? { cites } : {}),
     });
   }
   // And the whole graph's facts, which `fact('<name>')` reads: no record is of this shape.

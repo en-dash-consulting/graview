@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { compileDocument } from "../../src/check.js";
 import * as coreIndex from "../../src/index.js";
-import { bindSchema, createSchema, defineNode, meOf, nameOfAuthor, profileOf, profilePersonId, Store, z, type AnySchema, type Principal } from "../../src/index.js";
+import { bindSchema, createSchema, defineNode, meOf, mintPersonId, nameOfAuthor, profileOf, Store, z, type AnySchema, type Principal } from "../../src/index.js";
 
 /**
  * WHAT A PROFILE MAY NOT DO (Roadmap f-viewer-state-and-me-framework). A
@@ -23,22 +23,27 @@ const storeOf = () => new Store<AnySchema>({ schema: compiled.app.schema, mutati
 const ann: Principal = { kind: "human", id: "p_ann", name: "Ann", roles: ["member"] };
 const bo: Principal = { kind: "human", id: "p_bo", name: "Bo", roles: ["member"] };
 const mia: Principal = { ...ann, profile: { id: "prf_mia", name: "Mia" } };
-const person = profilePersonId("p_ann", { id: "prf_mia" });
+/** The person Mia's first act makes, where it lands in batch `first`: its id follows from the batch and the profile. */
+const FIRST = "batch:mia:1";
+const person = mintPersonId("member", FIRST, "prf_mia", () => false);
+const first = { author: mia, batch: FIRST };
 const leaderOf = (store: Store<AnySchema>) => store.graph.out("idea:picnic", "ledBy" as never).map((one) => one.id);
 
 describe("an own-end grant and a profile's first act", () => {
   it("does not let a profile's first act take a link from somebody else", () => {
     const store = storeOf();
     store.apply({ name: "lead", args: { id: "idea:picnic", leader: "p_bo" } }, { author: bo });
-    expect(() => store.apply({ name: "lead", args: { id: "idea:picnic", leader: person } }, { author: mia })).toThrow(/own end/);
+    expect(() => store.apply({ name: "lead", args: { id: "idea:picnic", leader: person } }, first)).toThrow(/own end/);
     expect(leaderOf(store)).toEqual(["p_bo"]);
     expect(store.graph.has(person)).toBe(false);
+    expect(store.personOf(mia)).toBeUndefined();
   });
 
   it("is refused the same before its person exists as after", () => {
     const store = storeOf();
     store.apply({ name: "lead", args: { id: "idea:picnic", leader: "p_bo" } }, { author: bo });
-    store.apply({ name: "vote-for", args: { id: "idea:picnic" } }, { author: mia });
+    store.apply({ name: "vote-for", args: { id: "idea:picnic" } }, first);
+    expect(store.personOf(mia)).toBe(person);
     expect(() => store.apply({ name: "lead", args: { id: "idea:picnic", leader: person } }, { author: mia })).toThrow(/own end/);
     expect(leaderOf(store)).toEqual(["p_bo"]);
   });
@@ -56,10 +61,10 @@ describe("an own-end grant and a profile's first act", () => {
   });
 });
 
-describe("a profile's person's id", () => {
-  // An id that says its kind, as `add-member` asks: the account's own id does, and so does its profile's person.
+describe("the seat a profile is", () => {
+  // An id that says its kind, as `add-member` asks: the account's own id does, and so does the seat of its profile.
   const nick: Principal = { kind: "human", id: "member:nick", name: "Nick", roles: ["member"], profile: { id: "prf_mia", name: "Mia" } };
-  const his = profilePersonId("member:nick", { id: "prf_mia" });
+  const his = "member:nick~prf_mia";
 
   it("is nobody's to ask for by id", () => {
     const store = storeOf();
@@ -67,20 +72,22 @@ describe("a profile's person's id", () => {
     expect(store.graph.has(his)).toBe(false);
   });
 
-  it("is nobody's to take by a client's hint, which is minted past, and $me lands on the profile's own", () => {
+  it("is nobody's to take by a client's hint, which is minted past, and $me lands on the profile's own, under an id of its own", () => {
     const store = storeOf();
     store.apply({ name: "add-member", args: { name: "Evil" }, mintedHint: his } as never, { author: bo });
     expect(store.graph.has(his)).toBe(false);
     store.apply({ name: "vote-for", args: { id: "idea:picnic" } }, { author: nick });
-    expect(store.graph.getNode(his)).toMatchObject({ name: "Mia" });
+    expect(store.graph.has(his)).toBe(false);
+    expect(store.personOf(nick)).not.toContain("member:nick");
+    expect(store.graph.getNode(store.personOf(nick)!)).toMatchObject({ name: "Mia" });
   });
 
   it("is never an account's whose own id holds a ~: that seat has no $me and owns nothing by id", () => {
-    const squatter: Principal = { kind: "human", id: person, roles: ["member"] };
+    const squatter: Principal = { kind: "human", id: "p_ann~prf_mia", roles: ["member"] };
     expect(meOf(squatter)).toBeUndefined();
     expect(profileOf({ ...squatter, profile: { id: "prf_x", name: "X" } })).toBeUndefined();
     const store = storeOf();
-    store.apply({ name: "vote-for", args: { id: "idea:picnic" } }, { author: mia });
+    store.apply({ name: "vote-for", args: { id: "idea:picnic" } }, first);
     expect(() => store.apply({ name: "take-back", args: { id: "idea:picnic", to: person } } as never, { author: squatter })).toThrow();
     expect(store.graph.out("idea:picnic", "votedBy" as never).map((one) => one.id)).toEqual([person]);
   });
@@ -121,7 +128,7 @@ describe("a person who was removed", () => {
   };
   it("stays removed: $me refuses in a sentence, is not offered, and no record comes back", () => {
     const store = removable();
-    store.apply({ name: "vote-for", args: { id: "idea:picnic" } }, { author: mia });
+    store.apply({ name: "vote-for", args: { id: "idea:picnic" } }, first);
     store.apply({ name: "remove-member", args: { id: person } }, { author: { kind: "system" } });
     expect(store.graph.has(person)).toBe(false);
     const ops = store.log.length;
@@ -142,7 +149,7 @@ describe("a first act that does nothing", () => {
     expect(result.ops).toEqual([]);
     expect(store.log.all()).toEqual([]);
     expect(store.batches()).toEqual([]);
-    expect(store.graph.has(person)).toBe(false);
+    expect(store.graph.allNodes()).toEqual([]);
   });
 });
 
@@ -166,7 +173,7 @@ describe("a seat's profile is held to its shape", () => {
     expect(act!.author.profile).toEqual({ id: "prf_long", name: "M".repeat(200) });
     expect(made!.author.profile!.name).toHaveLength(200);
     expect(made!.intent).toBe(`${"M".repeat(200)} joins`);
-    expect((store.graph.getNode(profilePersonId("p_ann", { id: "prf_long" })) as unknown as { name: string }).name).toHaveLength(200);
+    expect((store.graph.getNode(store.personOf(long)!) as unknown as { name: string }).name).toHaveLength(200);
     expect(nameOfAuthor(long, where())).toBe(`${"M".repeat(200)} (Ann)`);
   });
 

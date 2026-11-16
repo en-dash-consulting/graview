@@ -25,3 +25,7 @@ export { generateAgentsMd, generateLlmsTxt } from "./cli/docs.js";
 // What reads the clock (FR-176): the rules and computed fields a host's tick judges again when the day turns.
 export { clockReaders } from "./clock-readers.js";
 export type { ClockReaders } from "./clock-readers.js";
+// Which records hold a value in a cited field with nothing cited (Roadmap f-field-cites-marker), as `graview check --seed` says them.
+export { seedLinks, uncitedIn, uncitedValues } from "./cited.js";
+export { citesOf } from "./schema/cites.js";
+export type { UncitedValue } from "./cited.js";

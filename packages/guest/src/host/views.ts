@@ -19,6 +19,7 @@ export { viewScript } from "./view-script.js";
 export type { MountWorkerViewOptions, WorkerView, WorkerViewCode, WorkerViewFailure, WorkerViewLimits, WorkerViewLoad } from "./view.js";
 export type { GuestDroppedFile, GuestFile, GuestPlace, GuestTheme } from "../protocol.js";
 export type { GuestPictureLimits, GuestPictures } from "./pictures.js";
+export type { ThumbShape } from "./picture-thumb.js";
 export type { GuestBrand } from "./theme.js";
 /* What a view's host says went wrong, by a code that stays when the words change (HQ f-view-problem-codes). */
 export { VIEW_PROBLEM_CODES } from "./problems.js";

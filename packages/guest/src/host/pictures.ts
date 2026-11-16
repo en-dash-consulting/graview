@@ -1,7 +1,7 @@
 import type { ViewProblemSaid } from "./problems.js";
 import { isFocus, type FileValue } from "@graview/core";
 import type { GuestFile, GuestNode, GuestProps } from "../protocol.js";
-import { THUMB_REFUSED, thumbIsSound } from "./picture-thumb.js";
+import { cropAround, isThumbShape, thumbIsSound, thumbRefusal, thumbShapeOf, type ThumbShape } from "./picture-thumb.js";
 
 /*
  * THE PICTURES ON THE RECORDS A GUEST IS HANDED (FR-175).
@@ -54,6 +54,15 @@ import { THUMB_REFUSED, thumbIsSound } from "./picture-thumb.js";
  * string or a list under `thumb` names a kind called `thumb` and its
  * fields, as it always did; a number that is not a sound thumb
  * (`thumbIsSound`) asks for none, and is said.
+ *
+ * A THUMB OF A SHAPE (Graview HQ f-picture-thumb-around-focus): `thumb:
+ * { width, aspect }` hands each picture a thumb cropped to that width over
+ * height around its `focus` (its middle where the record says none), so a
+ * grid of square tiles is handed square pictures with the subject in them,
+ * not a downscale a tile crops at its middle. A cutout — said by the record,
+ * or read off the picture — is never cropped: its thumb is the whole of it
+ * at that width, and the view draws it whole. `{ width }` alone is
+ * `thumb: <width>`.
  */
 export type GuestPictures =
   | true
@@ -62,8 +71,8 @@ export type GuestPictures =
       readonly width?: number;
       readonly records?: PictureRecords | string | readonly string[];
       readonly most?: number | string | readonly string[];
-      readonly thumb?: number | string | readonly string[];
-      readonly [kind: string]: number | string | readonly string[] | PictureRecords | undefined;
+      readonly thumb?: number | ThumbShape | string | readonly string[];
+      readonly [kind: string]: number | string | readonly string[] | PictureRecords | ThumbShape | undefined;
     };
 
 /** The records whose pictures a view draws: its subject and what is linked to it, and/or these ids. */
@@ -105,15 +114,24 @@ const mostOf = (pictures: GuestPictures): number => (pictures === true || isKind
 /** A picture past the most a view said it is handed: handed by its facts and this sentence, said once for them all. */
 const pastTheMost = (view: string, most: number) => `The view ${view} is handed at most ${said(most)} ${most === 1 ? "picture" : "pictures"} ("most"), so those after, in the order its records are handed, come without an address.`;
 
+/** The thumb a guest asked for, as a width or a shape: a number or `{ width, aspect }` under `thumb`, never a kind called `thumb`'s fields. */
+const askedThumb = (pictures: GuestPictures): unknown => (pictures === true || isKindList(pictures) || !(typeof pictures.thumb === "number" || isThumbShape(pictures.thumb)) ? undefined : pictures.thumb);
+
+/** The second size a guest draws a picture at, where it asked for a sound one (`thumb`): its width in CSS pixels, and the shape it is cropped to. */
+export function pictureThumbShapeOf(pictures: GuestPictures): ThumbShape | undefined {
+  const thumb = askedThumb(pictures);
+  return thumb !== undefined && thumbIsSound(thumb, (pictures as { width?: unknown }).width) ? thumbShapeOf(thumb) : undefined;
+}
+
 /** The width a guest draws a picture small at, in CSS pixels, where it asked for a second size (`thumb`). */
 export function pictureThumbOf(pictures: GuestPictures): number | undefined {
-  if (pictures === true || isKindList(pictures) || typeof pictures.thumb !== "number") return undefined;
-  return thumbIsSound(pictures.thumb, pictures.width) ? pictures.thumb : undefined;
+  return pictureThumbShapeOf(pictures)?.width;
 }
 
 /** Where a guest's host asked for a thumb that is no sound one (a frame's, which no manifest check reads): what is said, once. */
 export function thumbProblemOf(pictures: GuestPictures): string | undefined {
-  return pictures !== true && !isKindList(pictures) && typeof pictures.thumb === "number" && pictureThumbOf(pictures) === undefined ? THUMB_REFUSED : undefined;
+  const thumb = askedThumb(pictures);
+  return thumb === undefined ? undefined : thumbRefusal(thumb, (pictures as { width?: unknown }).width);
 }
 
 /** The widest a guest draws a picture, in CSS pixels. */
@@ -254,8 +272,8 @@ export interface GuestPicturesOptions {
    * file out. The href, resolved against the page, by default.
    */
   readonly file?: (href: string) => string | undefined;
-  /** How the bytes are made smaller: to at most `width` pixels across, and `bytes` bytes. The canvas, by default. */
-  readonly shrink?: (blob: Blob, width: number, bytes: number) => Promise<Blob | undefined>;
+  /** How the bytes are made smaller: to at most `width` pixels across, and `bytes` bytes, cropped first to `crop` where a thumb of a shape asks it. The canvas, by default. */
+  readonly shrink?: (blob: Blob, width: number, bytes: number, crop?: ThumbCrop) => Promise<Blob | undefined>;
   /** How a picture's pixels are read for its shape (HQ f-view-picture-shape): its size and whether it is a cutout. The canvas, by default (`lookOnCanvas`). */
   readonly look?: (blob: Blob) => Promise<PictureLook | undefined>;
 }
@@ -275,6 +293,12 @@ export interface GuestPictureHand {
   waiting(): boolean;
   /** Let go of every address made. */
   dispose(): void;
+}
+
+/** What a thumb of a shape is cropped to: its width over its height, around where the subject is. */
+export interface ThumbCrop {
+  readonly aspect: number;
+  readonly focus: { readonly x: number; readonly y: number };
 }
 
 type Entry =
@@ -304,10 +328,16 @@ export function pictureBudget(pictures: GuestPictures, limits: GuestPictureLimit
   /* As many device pixels as the screen draws a CSS pixel with, up to two. */
   const need = Math.round(width * Math.min(2, Math.max(1, devicePixelRatio || 1)));
   const at = (file: FileValue, across: number) => Math.min(perFile, Math.ceil(file.bytes * (file.width && file.width > across ? (across / file.width) ** 2 : 1)));
-  const thumb = pictureThumbOf(pictures);
-  const thumbNeed = thumb === undefined ? undefined : Math.round(thumb * Math.min(2, Math.max(1, devicePixelRatio || 1)));
-  /* Whether a picture's thumb is its `src` itself: no wider than the thumb is drawn, so the one address serves both and is reckoned once. */
-  const thumbIsSrc = (file: FileValue) => thumbNeed !== undefined && file.width !== undefined && file.width <= thumbNeed;
+  const shape = pictureThumbShapeOf(pictures);
+  const thumbNeed = shape === undefined ? undefined : Math.round(shape.width * Math.min(2, Math.max(1, devicePixelRatio || 1)));
+  const aspect = shape?.aspect;
+  /*
+   * Whether a picture's thumb is its `src` itself: no wider than the thumb is
+   * drawn, so the one address serves both and is reckoned once. A thumb of a
+   * shape is its own picture, cropped, but for a cutout the record says is
+   * one, which is never cropped.
+   */
+  const thumbIsSrc = (file: FileValue) => thumbNeed !== undefined && file.width !== undefined && file.width <= thumbNeed && (aspect === undefined || file.cutout === true);
   /*
    * A picture and its thumb, together: both are handed, so both are counted,
    * before either is made. Erring high: a thumb the page then finds no
@@ -315,7 +345,7 @@ export function pictureBudget(pictures: GuestPictures, limits: GuestPictureLimit
    * record that says no width is counted at its bytes twice.
    */
   const reckon = (file: FileValue) => at(file, need) + (thumbNeed === undefined || thumbIsSrc(file) ? 0 : at(file, thumbNeed));
-  return { width, perFile, perView, need, thumbNeed, thumbIsSrc, reckon, chosen: picturesChosen(pictures), most: mostOf(pictures) };
+  return { width, perFile, perView, need, thumbNeed, aspect, thumbIsSrc, reckon, chosen: picturesChosen(pictures), most: mostOf(pictures) };
 }
 
 /** A picture heavier, as the record says it, than the host fetches for a view: left out unfetched. */
@@ -368,8 +398,8 @@ export function standInPictures(props: GuestProps, options: { readonly view: str
  * no more, and let go when no record handed holds them.
  */
 export function createGuestPictures(window: Window & typeof globalThis, options: GuestPicturesOptions): GuestPictureHand {
-  const { width, perFile, perView, need, thumbNeed, thumbIsSrc, reckon, chosen, most } = pictureBudget(options.pictures, options.limits, window.devicePixelRatio);
-  const shrink = options.shrink ?? ((blob: Blob, across: number, bytes: number) => shrinkOnCanvas(window, blob, across, bytes));
+  const { width, perFile, perView, need, thumbNeed, aspect, thumbIsSrc, reckon, chosen, most } = pictureBudget(options.pictures, options.limits, window.devicePixelRatio);
+  const shrink = options.shrink ?? ((blob: Blob, across: number, bytes: number, crop?: ThumbCrop) => shrinkOnCanvas(window, blob, across, bytes, crop));
   const look = options.look ?? ((blob: Blob) => lookOnCanvas(window, blob));
   const entries = new Map<string, Entry>();
   /* Each `src` handed, to what the page draws for it. */
@@ -499,8 +529,17 @@ export function createGuestPictures(window: Window & typeof globalThis, options:
      * the view draws one, so the picture as fetched — as large as 40 MB — is
      * decoded once and let go. Where it is no smaller than `src`, none.
      */
-    const small = thumbIsSrc(file) ? undefined : await shrink(blob, thumbNeed, perFile).catch(() => undefined);
-    return { state: "ready", ...full, ...shape, ...(small && small.size < blob.size ? { thumb: await addressOf(small) } : {}) };
+    /*
+     * Of a shape, where it asked one: cropped around the subject — its focus,
+     * else its middle — and whole for a cutout, as the record says it or the
+     * pixels read. A crop is its own picture, handed whatever it weighs
+     * beside `src`; a thumb that is only smaller, only where it is.
+     */
+    const cutout = file.cutout ?? seen?.cutout;
+    const crop: ThumbCrop | undefined = aspect !== undefined && cutout !== true ? { aspect, focus: isFocus(file.focus) ? file.focus : { x: 0.5, y: 0.5 } } : undefined;
+    const small = thumbIsSrc(file) && !crop ? undefined : await shrink(blob, thumbNeed, perFile, crop).catch(() => undefined);
+    const keep = small !== undefined && (crop ? small.size <= perFile : small.size < blob.size);
+    return { state: "ready", ...full, ...shape, ...(keep ? { thumb: await addressOf(small) } : {}) };
   };
 
   const start = (file: FileValue, on: GuestNode) => {
@@ -629,23 +668,25 @@ export async function lookOnCanvas(window: Window & typeof globalThis, blob: Blo
 /**
  * A PICTURE MADE SMALLER ON A CANVAS: at most `across` pixels wide, kept in
  * its own type where the canvas writes it (a JPEG stays a JPEG), and a JPEG
- * where that is still heavier than `bytes`. Nothing where the browser
- * cannot decode it.
+ * where that is still heavier than `bytes`; cropped first, where `crop`
+ * says, to that shape around its focus (`cropAround`). Nothing where the
+ * browser cannot decode it.
  */
-async function shrinkOnCanvas(window: Window & typeof globalThis, blob: Blob, across: number, bytes: number): Promise<Blob | undefined> {
+async function shrinkOnCanvas(window: Window & typeof globalThis, blob: Blob, across: number, bytes: number, crop?: ThumbCrop): Promise<Blob | undefined> {
   if (typeof window.createImageBitmap !== "function") return undefined;
   const bitmap = await window.createImageBitmap(blob);
   try {
-    if (bitmap.width <= across && blob.size <= bytes) return blob;
-    const scale = Math.min(1, across / bitmap.width);
-    const w = Math.max(1, Math.round(bitmap.width * scale));
-    const h = Math.max(1, Math.round(bitmap.height * scale));
+    if (!crop && bitmap.width <= across && blob.size <= bytes) return blob;
+    const part = crop ? cropAround(bitmap.width, bitmap.height, crop.aspect, crop.focus) : { x: 0, y: 0, width: bitmap.width, height: bitmap.height };
+    const scale = Math.min(1, across / part.width);
+    const w = Math.max(1, Math.round(part.width * scale));
+    const h = Math.max(1, Math.round(part.height * scale));
     const canvas = window.document.createElement("canvas");
     canvas.width = w;
     canvas.height = h;
     const context = canvas.getContext("2d");
     if (!context) return undefined;
-    context.drawImage(bitmap, 0, 0, w, h);
+    context.drawImage(bitmap, part.x, part.y, part.width, part.height, 0, 0, w, h);
     const write = (type: string) => new Promise<Blob | null>((done) => canvas.toBlob(done, type, 0.85));
     const own = /^image\/(jpeg|webp|png)$/i.test(blob.type) ? blob.type : "image/png";
     const first = await write(own);

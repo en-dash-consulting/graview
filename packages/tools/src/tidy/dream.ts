@@ -1,5 +1,5 @@
 import { isAutomated, type AnySchema, type Author, type Store, type Via } from "@graview/core";
-import { declined, isTidyingActor, stoppedKind, suggest, suggestionKey, suggestions, withdrawSuggestion } from "@graview/core/tidying";
+import { declined, isTidyingActor, stoppedKind, suggest, suggestionKey, suggestions, uncitedIn, withdrawSuggestion, type UncitedValue } from "@graview/core/tidying";
 import type { HostAi } from "../ai.js";
 import { askAll, type DreamBudget, type DreamCache, type DreamUsage } from "./asking.js";
 import { blocksOf } from "./blocking.js";
@@ -125,6 +125,13 @@ export interface DreamReport {
   readonly applying: string;
   /** "Suggested 3 changes and applied 1." */
   readonly said: string;
+  /**
+   * WHAT IT SAW HELD WITH NOTHING CITED (Roadmap f-field-cites-marker):
+   * each record holding a value in a cited field whose citing field or
+   * relation is empty, as the actor sees them. Said, never changed: only a
+   * person knows where a value came from.
+   */
+  readonly uncited: readonly UncitedValue[];
 }
 
 /** When each record was made and by whom, from the log: the first op that added it. */
@@ -316,6 +323,8 @@ export async function dream<S extends AnySchema>(store: Store<S>, options: Dream
     else if (one.outcome === "applied") tally.applied++;
     else tally.skipped++;
   }
+  // What a cited field holds with nothing cited, as the actor sees it (Roadmap f-field-cites-marker): said, never changed.
+  const uncited = uncitedIn(context.store, principal);
   const suggested = outcomes.filter((one) => one.outcome === "suggested").length;
   const applied = outcomes.filter((one) => one.outcome === "applied").length;
   const withdrawn = outcomes.filter((one) => one.outcome === "withdrawn").length;
@@ -331,11 +340,20 @@ export async function dream<S extends AnySchema>(store: Store<S>, options: Dream
         ? "Nothing was applied: the host did not let the actor apply on its own (applyAtLeast), so every change sure enough to ask about was suggested."
         : `Changes at least ${options.applyAtLeast} sure, and sure enough for how much they would undo, were applied where the app and its people allow it.`,
     said:
-      suggested + applied + withdrawn === 0
+      (suggested + applied + withdrawn === 0
         ? "Nothing to tidy."
         : [suggested > 0 ? `Suggested ${plural(suggested, "change")}` : "", applied > 0 ? `applied ${plural(applied, "change")}` : "", withdrawn > 0 ? `withdrew ${plural(withdrawn, "suggestion")} now below the bar` : ""]
             .filter(Boolean)
             .join(" and ")
-            .replace(/^[aw]/, (first) => first.toUpperCase()) + ".",
+            .replace(/^[aw]/, (first) => first.toUpperCase()) + ".") + uncitedSaid(uncited),
+    uncited,
   };
+}
+
+/** The uncited values, said after what the run did: a person reads which, up to three, and how many more. */
+function uncitedSaid(uncited: readonly UncitedValue[]): string {
+  if (uncited.length === 0) return "";
+  const named = uncited.slice(0, 3).map((one) => one.words);
+  const more = uncited.length - named.length;
+  return ` ${uncited.length === 1 ? "One value" : `${uncited.length} values`} ${uncited.length === 1 ? "says" : "say"} nowhere where ${uncited.length === 1 ? "it" : "they"} came from, which only a person can add: ${named.join("; ")}${more > 0 ? `; and ${more} more` : ""}.`;
 }

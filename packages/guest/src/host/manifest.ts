@@ -2,8 +2,8 @@ import { isSystem, isoToday, localeFor, profileOf, timeZoneFor, type AnySchema, 
 import { fileFieldKind } from "./marks.js";
 import type { GuestAct, GuestEdge, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
 import type { GuestPictures } from "./pictures.js";
-import { THUMB_REFUSED, thumbIsSound } from "./picture-thumb.js";
-import { choicesOf, plainNode, readAcross, type GuestViewInput } from "./session.js";
+import { thumbRefusal } from "./picture-thumb.js";
+import { choicesOf, citesFor, plainNode, readAcross, type GuestViewInput } from "./session.js";
 import { unseenOf, viewKinds } from "./unseen.js";
 
 /*
@@ -257,9 +257,10 @@ function picturesProblems<S extends AnySchema>(pictures: unknown, store: Store<S
       if (!(Number.isInteger(value) && (value as number) >= 1 && (value as number) <= 500)) problems.push("The view's pictures most is a whole number from 1 to 500: the most pictures it is handed, in the order its records are handed (view-pictures-most).");
       continue;
     }
-    /* A second, smaller size (Roadmap f-view-pictures-load-lazily-and-small): a number, never a kind called `thumb`'s fields. */
+    /* A second, smaller size (Roadmap f-view-pictures-load-lazily-and-small): a number, or a shape `{ width, aspect }` (HQ f-picture-thumb-around-focus), never a kind called `thumb`'s fields. */
     if (key === "thumb" && typeof value !== "string" && !Array.isArray(value)) {
-      if (!thumbIsSound(value, (pictures as { width?: unknown }).width)) problems.push(THUMB_REFUSED);
+      const refused = thumbRefusal(value, (pictures as { width?: unknown }).width);
+      if (refused) problems.push(refused);
       continue;
     }
     if (key === "width" && typeof value !== "string" && !Array.isArray(value)) {
@@ -509,13 +510,13 @@ export function workerViewProps<S extends AnySchema>(store: Store<S>, principal:
    */
   const computed = given.computed;
   const plain = (one: unknown) => (computed ? { ...plainNode(store, one), ...computed(graph, one) } : plainNode(store, one));
-  /* Who is looking, as `$me` reads them: the profile's person, known by its id before its first act makes it; else the seat's own record, in its sight. */
+  /* Who is looking, as `$me` reads them: the profile's person, by its id once its first act made it; else the seat's own record, in its sight. */
   const profile = profileOf(principal);
   const myId = store.personOf(principal);
   const myRecord = !isSystem(principal) && myId !== undefined ? graph.getNode(myId) : undefined;
   const myKind = myRecord && (store.schema.tryDefinition(myRecord.kind) as { people?: boolean } | undefined)?.people ? myRecord : undefined;
   const hasPeople = () => store.schema.definitions.some((definition) => (definition as { people?: boolean }).people);
-  const me = profile ? { ...(hasPeople() ? { id: myId! } : {}), name: profile.name } : myKind ? { id: myKind.id, name: plainNode(store, myKind).label ?? myKind.id } : undefined;
+  const me = profile ? { ...(hasPeople() && myId !== undefined ? { id: myId } : {}), name: profile.name } : myKind ? { id: myKind.id, name: plainNode(store, myKind).label ?? myKind.id } : undefined;
   return {
     view: manifest.name,
     ...(own[0] ? { node: plain(own[0]) } : {}),
@@ -538,6 +539,8 @@ export function workerViewProps<S extends AnySchema>(store: Store<S>, principal:
     today: store.today() ?? isoToday(),
     // Each option of the handed records' choices, by its label (Roadmap f-option-labels).
     ...choicesOf(store.schema, [...own, ...listed.values()]),
+    // What cites what, and which handed records hold a value with nothing cited (Roadmap f-field-cites-marker).
+    ...citesFor(seen, principal, [...own, ...listed.values()]),
     // A link names a place by its slug, so each slug once: a picture over several kinds is one place to a view.
     ...(given.places ? { places: given.places.filter((place, at, all) => all.findIndex((other) => other.as === place.as) === at).map(({ as, title, kind }) => ({ as, title, kind })) } : {}),
     // What its seat is kept from, of what it reads, and only what the seat may know of it (Roadmap f-view-knows-what-its-seat-cannot-see).

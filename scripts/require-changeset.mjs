@@ -76,11 +76,11 @@ const versionAt = (ref) => {
 };
 const carriedVersion = versionAt("HEAD") !== versionAt(mergeBase) ? versionAt("HEAD") : null;
 const addedChangesetText = new Map(
-  git("log", "--format=", "--name-only", "--diff-filter=A", `${mergeBase}..HEAD`, "--", ".changeset")
+  git("log", "--full-history", "--format=", "--name-only", "--diff-filter=A", `${mergeBase}..HEAD`, "--", ".changeset")
     .split("\n")
     .filter((file) => file.endsWith(".md") && !file.endsWith("README.md"))
     .map((file) => {
-      const last = git("log", "-1", "--format=%H", "--diff-filter=AM", `${mergeBase}..HEAD`, "--", file);
+      const last = git("log", "--full-history", "-1", "--format=%H", "--diff-filter=AM", `${mergeBase}..HEAD`, "--", file);
       return [file.replace(/^\.changeset\//, ""), git("show", `${last}:${file}`)];
     })
     // Spent only by a release: a pull request that carries none answers with the changesets it leaves on disk.

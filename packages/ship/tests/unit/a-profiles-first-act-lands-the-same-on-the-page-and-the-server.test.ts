@@ -1,4 +1,4 @@
-import { createMemoryAdapter, profilePersonId, type AnySchema, type GraviewApp, type Principal } from "@graview/core";
+import { createMemoryAdapter, type AnySchema, type GraviewApp, type Principal } from "@graview/core";
 import { compileDocument } from "@graview/core/check";
 import { describe, expect, it } from "vitest";
 import { createStoreHandler, openRemote } from "../../src/index.js";
@@ -34,7 +34,6 @@ const compiled = compileDocument(DOCUMENT);
 if (!compiled.ok) throw new Error(JSON.stringify(compiled.findings));
 const app = compiled.app as GraviewApp<AnySchema>;
 const mia: Principal = { kind: "human", id: "user:nick", name: "Nick", roles: ["family"], profile: { id: "prf_mia", name: "Mia" } };
-const person = profilePersonId("user:nick", { id: "prf_mia" });
 
 describe("a profile's first act over the wire", () => {
   it("makes its person once on the server, and the page's log and graph agree with it", async () => {
@@ -42,9 +41,13 @@ describe("a profile's first act over the wire", () => {
     const remote = await openRemote({ app, url: "http://store.test", fetch: ((url: string, init?: RequestInit) => handler.handle(new Request(url, init))) as typeof fetch, principal: mia, pollMs: 0 });
     const page = remote.store;
     page.apply({ name: "find-rock", args: { id: "rock:quartz" } });
+    const person = page.personOf(mia)!;
+    expect(person).not.toContain("user:nick");
     expect(page.graph.getNode(person)).toMatchObject({ name: "Mia" });
     await remote.settled();
     const held = handler.store;
+    expect(held.personOf(mia)).toBe(person);
+    expect(page.personOf(mia)).toBe(person);
     expect(held.graph.getNode(person)).toMatchObject({ kind: "explorer", name: "Mia" });
     expect(held.graph.out("rock:quartz", "foundBy" as never).map((one) => one.id)).toEqual([person]);
     expect(held.log.all().map((op) => op.intent)).toEqual(["Mia joins", "I found it: Quartz"]);

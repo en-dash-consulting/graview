@@ -1,4 +1,4 @@
-import { ActRefusal, bindSchema, nodeRef, profilePersonId, refusalOf, Store, z, type AnySchema, type Principal } from "@graview/core";
+import { ActRefusal, bindSchema, nodeRef, refusalOf, Store, z, type AnySchema, type Principal } from "@graview/core";
 import "@graview/core/field-sight";
 import { compileDocument } from "@graview/core/check";
 import { coach, MUTATIONS, parent, schema as rosterSchema, world } from "../packages/core/tests/support/hidden-phones.js";
@@ -408,12 +408,11 @@ describe("whether a seat may run an act on a record", () => {
   it("judges a seat whose profile's person is not made yet as the person applying makes first", () => {
     const store = ideas();
     const nia = { kind: "human", id: "acct-new", name: "Nia", roles: ["member"], profile: { id: "prf_nia", name: "Nia" } } as Principal;
-    const person = profilePersonId("acct-new", { id: "prf_nia" });
-    // Nia's own new idea: made as hers, and the person she is is the one `lead` may name at her end.
+    // Nia's own new idea: made as hers; an end that is not hers, refused alike.
     expect(mayRun(store, nia, { act: "add-idea", args: { title: "A walk" } })).toEqual({ answer: "allowed" });
     expect(applied(ideas, nia, "add-idea", { title: "A walk" })).toEqual({ ok: true });
-    const told = mayRun(store, nia, { act: "lead", record: "idea:fair", args: { leader: person } });
-    const did = applied(ideas, nia, "lead", { id: "idea:fair", leader: person });
+    const told = mayRun(store, nia, { act: "lead", record: "idea:fair", args: { leader: "member:mo" } });
+    const did = applied(ideas, nia, "lead", { id: "idea:fair", leader: "member:mo" });
     expect(told.answer === "allowed").toBe(did.ok);
   });
 

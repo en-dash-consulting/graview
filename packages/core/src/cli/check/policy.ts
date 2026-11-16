@@ -5,6 +5,11 @@ import { nodeRefKinds } from "../../mutations/node-ref.js";
 import { nearestAct } from "../../mutations/act-spelling.js";
 import type { AnySchema } from "../../schema/schema.js";
 import { BIND_PERSON } from "../../binding-served.js";
+import { KEEP_LINK } from "../../mutations/keep-link.js";
+import { PUBLISH } from "../../publish.js";
+import { PROPOSE_CHANGES } from "../../mutations/propose-changes.js";
+import { VOTE_SUGGESTION } from "../../mutations/vote-suggestion.js";
+import { TYPE_TEXT } from "../../text/typing-hook.js";
 import { BINDING_UNGRANTED } from "../../binding-ungranted.js";
 import type { Grant } from "../../permissions/types.js";
 
@@ -21,6 +26,17 @@ import type { Grant } from "../../permissions/types.js";
  * and never a failure.
  */
 import type { CheckContext } from "./context.js";
+
+/*
+ * THE ACTS EVERY STORE ANSWERS beside an app's own and those it derives per
+ * kind and relation. Keeping a link and typing into a field are judged by
+ * the policy, so a grant naming either grants it; a vote on a suggestion, a
+ * proposal and publishing are judged without a grant (by who may see the
+ * suggestion, by what each proposed call is, by `publishing.publishers`), so
+ * a grant naming any of them grants nothing.
+ */
+const GRANTED_STORE_ACTS: ReadonlySet<string> = new Set([KEEP_LINK, TYPE_TEXT]);
+const UNGRANTED_STORE_ACTS: ReadonlySet<string> = new Set([VOTE_SUGGESTION, PROPOSE_CHANGES, PUBLISH]);
 
 export function checkPolicy<S extends AnySchema>(ctx: CheckContext<S>): void {
   const { app, kinds, declaredMutations, mutations, add } = ctx;
@@ -125,7 +141,17 @@ export function checkPolicy<S extends AnySchema>(ctx: CheckContext<S>): void {
       }
       if (grant.mutations === "*") continue;
       for (const name of grant.mutations) {
-        if (mutations.has(name) || name === BIND_PERSON) continue;
+        if (mutations.has(name) || name === BIND_PERSON || GRANTED_STORE_ACTS.has(name)) continue;
+        if (UNGRANTED_STORE_ACTS.has(name)) {
+          add({
+            severity: "warning",
+            code: "grant-names-ungranted-act",
+            where: "policy.grants",
+            message: `Grants "${name}", which every store answers without a grant: ${name === VOTE_SUGGESTION ? "anybody who may see a suggestion may vote on it" : name === PUBLISH ? "who may publish is the roles publishing.publishers names" : "anybody may propose the calls they may run or may propose"}, so the grant gives nothing.`,
+            fix: name === PUBLISH ? `Drop "${name}" from the grant, and name who may publish in publishing.publishers.` : `Drop "${name}" from the grant.`,
+          });
+          continue;
+        }
         /*
          * A grant written in code is matched by the act's own name, as it
          * is written: `connect-threat-partOf` grants nothing, so it is

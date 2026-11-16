@@ -44,7 +44,7 @@ import {
 import { createPointerStore, type PointerStore, type ScenePoint } from "./pointer.js";
 import { HostAssetsContext, HostFilesContext, HostViewerStateContext } from "./files.js";
 import { useLinkedReads } from "./linked-reads.js";
-import type { MenuColumn, MenuPage, MenuSectionSource } from "./menu-types.js";
+import type { HostMenuItem, MenuColumn, MenuPage, MenuSectionSource } from "./menu-types.js";
 import type { MenuViewSection } from "./view-places.js";
 
 import { createMotionStore, type MotionStore } from "./motion-store.js";
@@ -316,6 +316,10 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly linkedRecords?: LinkedRecords | undefined;
   /** THE HOST'S SECTIONS OF THE CONTEXT MENU (`menuSections` on the provider, else the provider's around it). */
   readonly menuSections?: readonly MenuSectionSource[] | undefined;
+  /** THE HOST'S OWN ROWS OF THE CONTEXT MENU (`menuItems` on the provider, else the provider's around it). */
+  readonly menuItems?: readonly HostMenuItem[] | undefined;
+  /** THE APP'S LINK A HOST'S OWN ROW IS HANDED where no face says it (`menuLink` on the provider, else the provider's around it). */
+  readonly menuLink?: (() => string) | undefined;
   /** THE HOST'S VIEWS, AS THE PLACE MENU TIDIES THEM (`keptViews` on the provider, else the provider's around it): read with `useKeptViews` from `@graview/primitives`. */
   readonly keptViews?: KeptViews | undefined;
   /** WHERE "EXPORT CSV" SAVES A LIST (`onExport` on the provider, else the provider's around it); unsaid, the browser downloads it. */
@@ -706,6 +710,21 @@ export interface GraviewProviderProps<S extends AnySchema> {
    */
   readonly menuSections?: readonly MenuSectionSource[] | undefined;
   /**
+   * THE HOST'S OWN ROWS OF THE CONTEXT MENU (Roadmap
+   * f-host-context-menu-items), drawn after every row of the framework's on
+   * either face: each a `{ id, label, run, hint?, offered? }`, pressed with
+   * the record id or place slug under the pointer and the app's link
+   * (`HostMenuAt`). Unsaid, the provider around this one's.
+   */
+  readonly menuItems?: readonly HostMenuItem[] | undefined;
+  /**
+   * THE APP'S LINK A HOST'S OWN ROW IS HANDED (`HostMenuAt.link`), where no
+   * face says it: `mount` gives the whole address of the app's home on the
+   * host's page. Unsaid, the provider around this one's, else this page's
+   * address without its `#`.
+   */
+  readonly menuLink?: (() => string) | undefined;
+  /**
    * THE HOST'S VIEWS, AS THE PLACE MENU TIDIES THEM (Roadmap
    * f-place-menu-views): `{ current, onChange, hide, show, remove, restore,
    * lens? }` (`KeptViews` from `@graview/core`). Given, right-clicking a
@@ -868,6 +887,8 @@ export function GraviewProvider<S extends AnySchema>({
   history,
   linkedRecords,
   menuSections,
+  menuItems,
+  menuLink,
   keptViews: hostKeptViews,
   onExport: hostOnExport,
   subscriptions: hostSubscriptions,
@@ -884,6 +905,8 @@ export function GraviewProvider<S extends AnySchema>({
   // A provider inside another (the pages under an embed) keeps the host's menu sections when it was given none.
   const around = useContext(GraviewContext);
   const hostSections = menuSections ?? around?.menuSections;
+  const hostItems = menuItems ?? around?.menuItems;
+  const hostLink = menuLink ?? around?.menuLink;
   const signIn = hostSignIn ?? around?.signIn;
   const workflowRuns = hostWorkflowRuns ?? around?.workflowRuns;
   const keptViews = hostKeptViews ?? around?.keptViews;
@@ -1330,6 +1353,8 @@ export function GraviewProvider<S extends AnySchema>({
       resolveApp,
       linkedRecords,
       menuSections: hostSections,
+      ...(hostItems ? { menuItems: hostItems } : {}),
+      ...(hostLink ? { menuLink: hostLink } : {}),
       ...(keptViews ? { keptViews } : {}),
       ...(onExport ? { onExport } : {}),
       subscriptions,
@@ -1397,6 +1422,8 @@ export function GraviewProvider<S extends AnySchema>({
       resolveApp,
       linkedRecords,
       hostSections,
+      hostItems,
+      hostLink,
       keptViews,
       onExport,
       subscriptions,

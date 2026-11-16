@@ -42,10 +42,11 @@ import { compileDocument } from "./document/compile-checked.js";
 import { composeReshape } from "./starting-document.js";
 import { endingChoice, fromDeclaration } from "./compose-home.js";
 import { INSTALLATION_MODULE } from "./installation.js";
+import { compiledForChange, editedForChange, grantedWhatItAdds } from "./compose-change.js";
 
 export type { DocumentEdit } from "./document/edit.js";
 /** A plain document's first home, a kind's row and its glance, each proposed only where the document has none (Roadmap f-compose-home-from-declaration): what `composeDesign` proposes, one at a time. */
-export { glanceFromDeclaration, homeFromDeclaration, MOST_HOME_LISTS, rowFromDeclaration } from "./compose-home.js";
+export { belongsTo, choiceOfKind, glanceFromDeclaration, homeFromDeclaration, MOST_COUNTED, MOST_DATED_LISTED, MOST_HOME_LISTS, MOST_LISTED, rowFromDeclaration } from "./compose-home.js";
 export type { ComposedPart } from "./compose-home.js";
 /** A kind said by its noun and its plural, as the declaration spells them — for a host that writes about a document's kinds (the starter), never from the kind's id alone. */
 export { nounWords, pluralWords } from "./document/policy-words.js";
@@ -240,9 +241,11 @@ const MOST_ROUNDS = 40;
  *      list answering each (the critic's `design-job-unanswered` edit);
  *   1b. what a plain document is missing (`homeFromDeclaration`,
  *      `glanceFromDeclaration`, `rowFromDeclaration`): a home of a count
- *      headline and a list per kind, dated kinds first, where it has none;
- *      a glance and a row for each kind with none, leading with its date
- *      and its status — a declared home, row or glance is kept;
+ *      headline (up to five kinds, the most linked first) and a list per
+ *      kind, dated kinds first and from today on, where it has none; a
+ *      glance and a row for each named kind with none, leading with its
+ *      date, its choice and the record it belongs to — a declared home,
+ *      row or glance is kept, and the people kind is never designed;
  *   2. the critic's own edits (`designFindings`), asked again after each
  *      until it has no warning left: places that repeat removed, more than
  *      a person scans kept off the bar, the home given one thing to read
@@ -276,7 +279,8 @@ export function composeDesign(source: GraviewDocument | GraviewApp<AnySchema>, o
 
   const declared = Array.isArray(doc.purpose?.jobs) ? doc.purpose.jobs : [];
   if (declared.length === 0) {
-    for (const job of inferJobs(doc, options)) {
+    // The people kind is the members, the framework's to draw: no job of the app is proposed over them (Roadmap f-composer-covers-cloud-first-design).
+    for (const job of inferJobs(doc, options).filter((one) => (doc.kinds[one.kind] as { readonly people?: boolean } | undefined)?.people !== true)) {
       const title = job.act ? doc.acts?.[job.act]?.title : undefined;
       if (attempt({ op: "add-job", job: job as unknown as Record<string, unknown> }))
         reasons.push(`Nothing says what this app's people come to do, so its home said only what it holds: "${job.ask}" is a job it can answer from its ${pluralOf(doc, job.kind)}${title ? `, with "${title}" offered on each` : job.act ? ", with the act that answers it offered on each" : ""}.`);
@@ -286,9 +290,11 @@ export function composeDesign(source: GraviewDocument | GraviewApp<AnySchema>, o
   /*
    * WHAT A PLAIN DOCUMENT IS MISSING (Roadmap f-compose-home-from-declaration):
    * a home of a count headline and a list per kind, dated kinds first; a
-   * glance and a row for each kind that has none, leading with its date and
-   * its status. A declared home, row or glance is kept: only what is
-   * missing is proposed, before the critic is asked, so it judges these too.
+   * glance and a row for each named kind that has none, leading with its
+   * date, its choice and the record it belongs to. A declared home, row or
+   * glance is kept: only what is missing is proposed, before the critic is
+   * asked, so it judges these too. A document's people kind (`people: true`)
+   * is the members, and is left out by the parts themselves.
    */
   // A TypeScript app's installation kinds (its people and invitations) are the framework's, never the product's to design.
   const skip = new Set(isDocument(source) ? [] : Object.entries(source.modules ?? {}).flatMap(([name, module]) => (name === INSTALLATION_MODULE ? (module.kinds ?? []) : [])));
@@ -341,41 +347,14 @@ export function composeAppChange(change: { readonly document: GraviewDocument; r
   let changed: GraviewDocument;
   let said: string[];
   if (change.edits) {
-    const edited = editDocument(change.document, change.edits);
-    if (!edited.ok) return { ok: false, refused: `It could not be written: ${edited.findings[0]?.message ?? "an edit was refused"}.` };
+    const edited = editedForChange(change.document, change.edits);
+    if (!edited.ok) return edited;
     changed = edited.document;
-    said = [...edited.said];
+    said = edited.said;
   } else {
     const composed = composeReshape({ document: change.document, add: change.add ?? [], drop: change.drop ?? [] });
     changed = composed.document;
     said = composed.said.filter((line) => !line.startsWith("Not done"));
   }
-  /*
-   * WHO MAY RUN AND SEE WHAT IT ADDS: a policy that names its acts would
-   * leave the new ones unreachable — which the checker refuses — and one
-   * that names what each role sees would hide a new kind, so both are
-   * granted as the app's widest grant is, and said.
-   */
-  const policy = changed.policy;
-  const addedActs = Object.keys(changed.acts ?? {}).filter((name) => !(name in (change.document.acts ?? {})));
-  const addedKinds = Object.keys(changed.kinds).filter((name) => !(name in change.document.kinds));
-  const listing = (policy?.grants ?? []).filter((grant) => Array.isArray(grant.mutations) && !grant.self);
-  const widest = [...listing].sort((a, b) => (b.mutations as readonly string[]).length - (a.mutations as readonly string[]).length)[0];
-  const opens = (policy?.grants ?? []).some((grant) => grant.mutations === "*");
-  let document = changed;
-  if (policy && widest && addedActs.length > 0 && !opens) {
-    document = { ...document, policy: { ...document.policy!, grants: [...document.policy!.grants, { roles: widest.roles, mutations: addedActs }] } };
-    said.push(`Who may run what it adds: ${widest.roles === "*" ? "everybody" : (widest.roles as readonly string[]).join(" and ")}.`);
-  }
-  const sees = (document.policy as { readonly sees?: readonly { readonly roles?: unknown; readonly kinds?: readonly string[] }[] } | undefined)?.sees;
-  if (sees && addedKinds.length > 0) {
-    const roles = (document.roles as readonly string[] | undefined) ?? [...new Set(sees.flatMap((one) => (Array.isArray(one.roles) ? (one.roles as string[]) : [])))];
-    document = { ...document, policy: { ...document.policy!, sees: [...sees, { roles, kinds: addedKinds }] } as never };
-  }
-  const compiled = compileDocument(document);
-  if (!compiled.ok) {
-    const finding = compiled.findings.find((one) => one.severity === "error") ?? compiled.findings[0];
-    return { ok: false, refused: `It would not pass the checker${finding ? `: ${finding.message}` : ""}.` };
-  }
-  return { ok: true, document, app: compiled.app as GraviewApp<AnySchema>, said };
+  return compiledForChange(grantedWhatItAdds(change.document, changed, said), said, (document) => compileDocument(document), "It would not pass the checker");
 }

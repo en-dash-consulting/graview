@@ -1,5 +1,40 @@
 # @graview/embed
 
+## 0.2.5
+
+### Patch Changes
+
+- c50ab83: A page a person made its own view takes what the host says of every view. Graview Cloud says `ownFaces: false` on each worker view it registers, but a built-in page made its own view ("Make this page its own view") is registered by the embed itself, from what `keptViews.forked` lists, with the fork's manifest and code alone, so a forked view drew its own `@font-face` where the host's own views could not. `mount` (the whole embed and `@graview/embed/pages` alike) now takes `forkedViews`, the parts of a worker view's definition a host says for every view (`ForkedViewDefaults`: `ownFaces`, the `fonts`, `images` and `links` origins, `limits`, `onProblem` and the rest), and each forked view is registered with them. With `forkedViews: { ownFaces: false }`, a forked view's own face is refused and said as `own-face-refused`. Unsaid, a forked view is registered as before. Held by a unit test of the embed (`a-forked-view-takes-what-the-host-says-of-every-view`).
+  
+  Compatibility: ops and primitives, stored formats, the wire, the declaration and check finding codes, and derived tool names and input schemas — unchanged. The JavaScript API is additive (`forkedViews`, `ForkedViewDefaults`). What Graview Cloud does: pass `forkedViews` with what it passes on each worker view's definition (`ownFaces: false`, its origins, its `onProblem`).
+- c50ab83: A host adds its own rows to the right-click menu. Graview Cloud wants "Make changes in your own AI" there, handed what was under the pointer. `menuItems` on `mount`, on `GraviewProvider`, on the `Shell` and on a `PagesApp`'s context takes `{ id, label, run, hint?, offered? }` rows (`HostMenuItem`). They are drawn after every row of the framework's on either face, after the host's own `menuSections` too, and are shown as the menu opens rather than waiting behind More…. Each is a button like the framework's rows: labeled, reached by the keyboard, and pressed after a phone's long press wherever the menu opens on one. A row handed twice, by the provider and by a face, is drawn once. Pressed, it is run with `HostMenuAt`: the record id, the relation or the place slug under the pointer, the kind of what was there (a record, a kind's card, a list), the whole address of what was there where it has one on the host's page, and the app's link. The link is the app's home on the host's page: the pages' own home, the host's `hrefOf("/")` where it gives one, and under `mount` the same link on the scene as on the pages; under memory routing it is the host's page and no address is handed. `offered(at)` leaves a row out where it does not apply. A menu section may now say `at: "last"`, which the host's rows use. `HostMenuItems` on `@graview/react/drawing` gives rows to every menu drawn inside it, and `menuLink` on the provider says the link where no face does. Held by unit tests of pages (`the-context-menu-opens-on-the-pages`) and primitives (`a-host-adds-its-own-rows-to-the-scene-menu`), and by the menu harness's `aHostsOwnRowComesLastAndIsRunWithWhatIsUnderThePointer`: on the pages at a desk's width with the keyboard and at a phone's with a resting finger. The scene's menu and the link a mount hands there are held by the primitives test. A hosted page carries a few dozen bytes more up front.
+  
+  Compatibility: the JavaScript API is additive (`menuItems` on `mount`, `GraviewProvider`, `Shell` and `PageContext`; `menuLink` on `GraviewProvider`; `"last"` for a `MenuSection`'s `at`; `HostMenuItem`, `HostMenuAt` and `HostMenuItems` on `@graview/react`). `useMenuSections` answers a `last` list beside `start` and `end`. Ops and primitives, stored formats, the wire, the declaration and check finding codes, and derived tool names and input schemas are unchanged. What Graview Cloud does: pass its "Make changes in your own AI" as one of `menuItems` on `mount`, in place of a `menuSections` source that worked out the record itself.
+- a0b0cb9: The 0.2.5 batch holds together: each of its branches measured its own growth against main, and merged they spend 2.9 KB more up front on a hosted page (2,901 bytes minified, 944 gzipped) and 2.8 KB more up front on a hosted page handed a compiled app (2,789 minified, 918 gzipped), most of it a field that says it is cited, a host's own menu rows, the lighter composer and a profile's person record getting an id of its own. The batch files the raises for them.
+  
+  Compatibility: ops and primitives — unchanged. Stored formats — unchanged. The wire — unchanged. The declaration and check finding codes — unchanged. Derived tool names and input schemas — unchanged.
+- Updated dependencies [c50ab83]
+- Updated dependencies [c50ab83]
+- Updated dependencies [c50ab83]
+- Updated dependencies [c50ab83]
+- Updated dependencies [c50ab83]
+- Updated dependencies [c50ab83]
+- Updated dependencies [c50ab83]
+- Updated dependencies [c50ab83]
+- Updated dependencies [c50ab83]
+- Updated dependencies [c50ab83]
+- Updated dependencies [c50ab83]
+- Updated dependencies [c50ab83]
+- Updated dependencies [c50ab83]
+  - @graview/core@0.2.5
+  - @graview/tools@0.2.5
+  - @graview/guest@0.2.5
+  - @graview/react@0.2.5
+  - @graview/primitives@0.2.5
+  - @graview/pages@0.2.5
+  - @graview/studio@0.2.5
+  - @graview/layout@0.2.5
+
 ## 0.2.4
 
 ### Patch Changes

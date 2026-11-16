@@ -1,8 +1,5 @@
 import type { HostView } from "../views/types.js";
 import type { GraviewApp } from "../app.js";
-import { deriveArchiveMutations, deriveEditMutations, deriveRemoveMutations } from "../mutations/derive-edits.js";
-import { deriveRepeatMutations } from "../mutations/derive-repeats.js";
-import { deriveRelationMutations } from "../mutations/derive-relations.js";
 import type { AnySchema } from "../schema/schema.js";
 import { designFindings } from "../document/design-findings.js";
 import { moreLines } from "../document/findings.js";
@@ -26,6 +23,7 @@ import {
   checkDevices,
   checkWorkflows,
   checkAliases,
+  checkCites,
   checkActsFromEnds,
   checkBlankInstallation,
   checkEditableFields,
@@ -59,6 +57,7 @@ import {
   checkTidying,
 } from "./check/index.js";
 import type { CheckContext, Finding } from "./check/context.js";
+import { checkContextOf } from "./check/context-of.js";
 
 export type { Finding, Severity } from "./check/context.js";
 
@@ -98,16 +97,8 @@ export interface CheckOptions {
  */
 export function checkApp<S extends AnySchema>(app: GraviewApp<S>, options: CheckOptions = {}): CheckResult {
   const findings: Finding[] = [];
-  const kinds = new Set<string>(app.schema.kinds as readonly string[]);
-  const declaredMutations = app.mutations ?? [];
-  const derivedEdits = deriveEditMutations(app.schema, declaredMutations);
-  const derivedRemoves = deriveRemoveMutations(app.schema, declaredMutations);
-  // Declared and derived: a grant may name `edit-<kind>`, `remove-<kind>`, `archive-<kind>`, `unarchive-<kind>`, `merge-<kind>` or a relation's `connect-<kind>-<relation>` and `disconnect-<kind>-<relation>`, and a repair may too.
-  const mutations = new Map([...declaredMutations, ...derivedEdits, ...derivedRemoves, ...deriveArchiveMutations(app.schema, declaredMutations), ...deriveRepeatMutations(app.schema, declaredMutations), ...deriveRelationMutations(app.schema, declaredMutations)].map((m) => [m.name, m]));
-  const invariants = new Map((app.invariants ?? []).map((i) => [i.name, i]));
-
   const add = (f: Finding) => findings.push(f);
-  const ctx: CheckContext<S> = { app, kinds, declaredMutations, derivedEdits, derivedRemoves, mutations, invariants, add, ...(options.views ? { views: options.views } : {}) };
+  const ctx: CheckContext<S> = checkContextOf(app, add, options.views);
 
   checkRoutes(ctx);
   checkShippedLenses(ctx);
@@ -145,6 +136,7 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>, options: Check
   checkDevices(ctx);
   checkWorkflows(ctx);
   checkAliases(ctx);
+  checkCites(ctx);
   // The look: places that repeat, more than a person scans, a home with nothing to read first — judged of the app written as a document.
   if (options.design !== false) {
     for (const f of designFindings(toDocument(app).document)) add({ severity: f.severity, code: f.code, where: f.path, message: f.message, fix: f.fix ?? "", ...(f.edits ? { edits: f.edits } : {}) });

@@ -150,6 +150,34 @@ export function Timeline({ face }: { readonly face: TimelineFace }) {
   }, [playback.focusWanted, playback]);
 
   /*
+   * THE KEYBOARD GOES BACK WHERE THE TIMELINE WAS OPENED (Graview HQ
+   * f-playback-watch-problems). "Back to now" closes the timeline and goes
+   * with it, so a press on it left the keyboard on <body>. What had the
+   * keyboard as the timeline arrived has it again, a host's own button too;
+   * where that is gone — the app menu's History row, closed with its menu —
+   * the app menu's button of this face, within this timeline's own embed and
+   * never another app's on the page. Only where the keyboard was left nowhere: a person who went
+   * on elsewhere keeps their place.
+   */
+  useLayoutEffect(() => {
+    const active = document.activeElement;
+    const from = active && active !== document.body ? active : null;
+    const within = section.current?.closest("[data-graview-embed]") ?? document.body;
+    return () => {
+      queueMicrotask(() => {
+        const now = document.activeElement;
+        if (now !== null && now !== document.body && now.isConnected) return;
+        const shown = (one: Element | null | undefined): one is HTMLElement =>
+          one instanceof HTMLElement &&
+          one.isConnected &&
+          one.closest("[hidden],[inert],[aria-hidden='true']") === null &&
+          (typeof one.checkVisibility !== "function" || one.checkVisibility());
+        [from, ...within.querySelectorAll('[data-testid="app-menu-open"]')].find(shown)?.focus({ preventScroll: true });
+      });
+    };
+  }, []);
+
+  /*
    * ON THE SCENE IT STANDS OVER THE PICTURE'S FOOT, AND SAYS HOW TALL, as a
    * sheet does (`--graview-sheet`): the city is fitted above it and the
    * zoom stands over it. Laid over the city, it stood on a district's
@@ -259,7 +287,8 @@ export function Timeline({ face }: { readonly face: TimelineFace }) {
           setPlaying(false);
           playback.show(stops[Number(event.currentTarget.value)] ?? length);
         }}
-        style={{ width: "100%", margin: 0, accentColor: "var(--graview-accent)" }}
+        // A target a finger can hit (WCAG 2.5.8): a browser's range input is under 24 pixels tall, beside the ticks and the play button.
+        style={{ width: "100%", height: 24, margin: 0, accentColor: "var(--graview-accent)" }}
       />
 
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>

@@ -162,6 +162,14 @@ data; `fieldRoles` for the timeline); `apps/seedbed/src/domain/schema.ts` (a
   record in step in the same change as either side's edit: a field set
   from a source field as it is goes back, one worked out otherwise is
   flagged in `store.findings()`, and archiving the source archives it.
+- **`cites`** on a value somebody looked up (a population, a quote): the
+  field or relation of the kind that holds its citation, `"population":
+  { "type": "integer", "cites": "source" }` (in code,
+  `markCites(z.number(), "source")`). The check refuses one naming nothing
+  (`field-cites`), and warns of each record in `--seed` or a template's
+  seed with the value and no citation (`field-uncited`); `dream` reports
+  them as `uncited` and says them; a declared view flags one with
+  `uncited('population')`, a worker view with `graview.cite`.
 
 ## Then find out whether it worked
 

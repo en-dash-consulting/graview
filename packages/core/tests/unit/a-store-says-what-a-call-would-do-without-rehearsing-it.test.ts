@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { compileDocument } from "../../src/check.js";
-import { profilePersonId, Store, type AnySchema, type Principal } from "../../src/index.js";
+import { Store, type AnySchema, type Principal } from "../../src/index.js";
 
 /**
  * A STORE SAYS WHAT A CALL WOULD DO WITHOUT REHEARSING IT (`wouldDo`): that
@@ -57,12 +57,13 @@ describe("what a call would do", () => {
 
   it("for a profile whose person is not made yet, is what apply would do, and makes nobody", () => {
     const store = ideas();
-    const person = profilePersonId("p_ann", { id: "prf_kid" });
+    const people = store.graph.allNodes().length;
     expect(store.wouldDo([{ name: "vote-for", args: { id: "idea:a" } }, { name: "champion", args: { id: "idea:b" } }], kid)).toEqual(["changes", "changes"]);
-    expect(store.graph.has(person)).toBe(false);
+    expect(store.personOf(kid)).toBeUndefined();
+    expect(store.graph.allNodes()).toHaveLength(people);
     expect(store.log.all()).toEqual([]);
     store.apply({ name: "vote-for", args: { id: "idea:a" } }, { author: kid });
-    expect(store.graph.out("idea:a", "votedBy" as never).map((one) => one.id)).toEqual([person]);
+    expect(store.graph.out("idea:a", "votedBy" as never).map((one) => one.id)).toEqual([store.personOf(kid)]);
   });
 
   it("is judged under the author's sight: a record kept from it is no record", () => {
@@ -85,7 +86,8 @@ describe("what a call would do", () => {
     expect(store.wouldDo(call, family)).toEqual(["changes"]);
     // A family seat with a profile, its person not made yet: as apply would, the person first.
     expect(store.wouldDo(call, { ...family, profile: { id: "prf_mia", name: "Mia" } })).toEqual(["changes"]);
-    expect(store.graph.has(profilePersonId("user:nick", { id: "prf_mia" }))).toBe(false);
+    expect(store.personOf({ ...family, profile: { id: "prf_mia", name: "Mia" } })).toBeUndefined();
+    expect(store.graph.allNodes()).toHaveLength(2);
     const refused = store.wouldDo(call, { ...family, roles: ["guest"] })[0] as { refused: Error };
     expect(refused.refused.message).toMatch(/is done as you, and you have no record here/);
   });

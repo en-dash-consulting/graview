@@ -3,12 +3,12 @@ import type { DisplayOptionsHost } from "@graview/core";
 import { assetSrc, faviconHref, type Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type KeptViews, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal, type SignIn, type ViewerState, type SubscriptionStore, type DismissalStore } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
 import { AppBar, appKeyOf, barPlaceAt, barPlaces, FirstLookDoor, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useThemeColor, useViewportHeight, type AppMenuRow, type BarAction, type BarFaces, type BarFind, type BarGo, type BarScheme, type BarShare, type BarStatus, type FirstLook, type HostAction, type NoticeBoard, type NoticeReport, type NoticeReporting } from "@graview/primitives/frame";
-import { layerViews, useGraph, useTidiedViews, useGraview, useTheKeyboardLandsSomewhere, type AwaySummary, type ErrorReport, type FieldTyping, type KeepLensHost, type ProposeChangeHost, type ComposeChangeHost, type DraftChangeHost, type MenuSectionSource, type OnExport, type HostNotification, type ReactViewRegistry, type ReaderMemory, type Scheme, type WorkflowRuns } from "@graview/react/provider";
+import { layerViews, useGraph, useTidiedViews, useGraview, useTheKeyboardLandsSomewhere, type AwaySummary, type ErrorReport, type FieldTyping, type KeepLensHost, type ProposeChangeHost, type ComposeChangeHost, type DraftChangeHost, type HostMenuItem, type MenuSectionSource, type OnExport, type HostNotification, type ReactViewRegistry, type ReaderMemory, type Scheme, type WorkflowRuns } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ErrorInfo, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { fontsLink } from "./fonts.js";
-import { useForkedViews } from "./draft.js";
+import { useForkedViews, type ForkedViewDefaults } from "./draft.js";
 import { storeOf, useHostScheme } from "./frame-light.js";
 
 /*
@@ -509,6 +509,18 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    */
   readonly keptViews?: KeptViews;
   /**
+   * WHAT A PAGE MADE ITS OWN VIEW TAKES FROM THE HOST (Graview HQ
+   * f-forked-views-take-own-faces-off), on either face: the parts of a
+   * worker view's definition the host says for every view it registers
+   * (`ownFaces: false`, `fonts`, `images` and `links` origins, `limits`,
+   * `onProblem`, …), handed to each view `keptViews.forked` lists, which
+   * the embed registers itself. Unsaid, a forked view is registered with
+   * its manifest and code alone, as before. A host that draws the embed
+   * itself keeps the one object: a new one each draw registers each forked
+   * view again.
+   */
+  readonly forkedViews?: ForkedViewDefaults;
+  /**
    * WHERE "EXPORT CSV" SAVES A LIST (Roadmap f-view-export-csv), on either
    * face: handed the CSV text and the file name a place's list is written
    * as ("Tasks — 2026-10-23.csv"), for a host that saves files itself — a
@@ -533,6 +545,15 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    * it draws (`MenuSection`), or nothing.
    */
   readonly menuSections?: readonly MenuSectionSource[];
+  /**
+   * THE HOST'S OWN ROWS OF THE CONTEXT MENU (Roadmap
+   * f-host-context-menu-items), on either face, after every row of the
+   * framework's: each `{ id, label, run, hint?, offered? }` is a row like
+   * theirs (reached by the keyboard, pressed after a phone's long press)
+   * and is run with the record id or place slug under the pointer and the
+   * app's link (`HostMenuAt`), "Make changes in your own AI", say.
+   */
+  readonly menuItems?: readonly HostMenuItem[];
   /**
    * TOLD WHAT WENT WRONG (FR-24). A view, a page or the bar that throws
    * is contained where it threw, the rest of the embed keeps working, and
@@ -580,7 +601,7 @@ export function FrameFirstLook({ rootRef, firstLook, app }: { readonly rootRef: 
  * no views at all (FR-03). Every face draws from it, the pages too (FR-35).
  */
 export function useViews<S extends AnySchema>(
-  props: Pick<FrameOptions<S>, "app" | "views" | "brand" | "keptViews">,
+  props: Pick<FrameOptions<S>, "app" | "views" | "brand" | "keptViews" | "forkedViews">,
   /**
    * The framework's own views for the schema, its defaults with the
    * declaration's specs over them. The whole embed registers them behind
@@ -604,7 +625,7 @@ export function useViews<S extends AnySchema>(
     return (draft ? draft.register(views as never) : views) as ReactViewRegistry<S>;
   }, [props.views, app.schema, app.viewSpecs, app.lenses, app.pages, app.home, draft]);
   // The pages the host made views of their own (Roadmap f-make-any-page-better), and the one shown as a draft.
-  const forked = useForkedViews(views, props.keptViews, app.schema);
+  const forked = useForkedViews(views, props.keptViews, app.schema, props.forkedViews);
   // What the host lists as hidden or deleted (Roadmap f-place-menu-views), tidied out of every face at once.
   return useTidiedViews(forked, props.keptViews);
 }
@@ -853,6 +874,7 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
     onExport: props.onExport,
     signIn: props.signIn,
     menuSections: props.menuSections,
+    menuItems: props.menuItems,
     /* The app, so the seat's tools and a host's turn describe its places (`describe_place`), and its
        reader settings: the reader's own text size and motion, on somebody else's page too. */
     app: props.app,
