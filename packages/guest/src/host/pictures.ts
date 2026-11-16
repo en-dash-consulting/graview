@@ -1,3 +1,4 @@
+import type { ViewProblemSaid } from "./problems.js";
 import type { FileValue } from "@graview/core";
 import type { GuestFile, GuestNode, GuestProps } from "../protocol.js";
 import { THUMB_REFUSED, thumbIsSound } from "./picture-thumb.js";
@@ -223,7 +224,7 @@ export interface GuestPicturesOptions {
   /** A picture is ready, or was left out: push again. */
   readonly moved: () => void;
   /** A picture was left out, and why, said once. */
-  readonly onLeft?: (said: string) => void;
+  readonly onLeft?: ViewProblemSaid;
   /**
    * Where the page fetches a record's file (`FileValue.href`): a host that
    * serves the app under a base answers `base + href`; undefined leaves the
@@ -351,7 +352,7 @@ export function createGuestPictures(window: Window & typeof globalThis, options:
   let disposed = false;
   /* A thumb its host asked for that is no sound one: none is made, and it is said once. */
   const thumbProblem = thumbProblemOf(options.pictures);
-  if (thumbProblem) queueMicrotask(() => (options.onLeft ? options.onLeft(thumbProblem) : window.console.warn(thumbProblem)));
+  if (thumbProblem) queueMicrotask(() => (options.onLeft ? options.onLeft(thumbProblem, { code: "picture-thumb-unsound" }) : window.console.warn(thumbProblem)));
   /*
    * PUSHED AGAIN AT MOST ONCE IN `PICTURES_SETTLE_MS` (FR-207): each push is
    * the view's whole props, drawn and answered, so sixty pictures settling
@@ -378,7 +379,7 @@ export function createGuestPictures(window: Window & typeof globalThis, options:
   const tell = (text: string) => {
     if (told.has(text)) return;
     told.add(text);
-    options.onLeft?.(text);
+    options.onLeft?.(text, { code: "picture-left-out" });
   };
   const release = (entry: Entry | undefined) => {
     if (entry?.state !== "ready") return;

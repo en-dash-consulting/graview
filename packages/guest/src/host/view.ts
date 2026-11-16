@@ -1,3 +1,4 @@
+import type { ViewProblem, ViewProblemSaid } from "./problems.js";
 import { imageRefusedWords } from "./open-judge.js";
 import { keepClicked } from "./clicked.js";
 import { guestPlacesOf } from "./links-words.js";
@@ -209,9 +210,11 @@ export interface MountWorkerViewOptions<S extends AnySchema> {
    * Something the view did went nowhere, and why, as a sentence for the
    * host's problems: a link or `graview.navigate` to no record the viewer
    * may see and no place of the app, naming the places there are. The
-   * view's console is told the same.
+   * view's console is told the same. Beside the sentence, what it is: a
+   * code from `VIEW_PROBLEM_CODES` that stays when the words change, and the
+   * part's name where a part failed (`ViewProblem`).
    */
-  readonly onProblem?: (said: string) => void;
+  readonly onProblem?: ViewProblemSaid;
   /**
    * What is drawn in the view's place when it fails. By default the host
    * draws the plain face of what the view was shown — its title, each
@@ -541,7 +544,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     return handle();
   }
   /* A relation it reads whose far kind it is never handed (Roadmap f-view-authoring-friction-2026-11): drawn, and said to the host, as `graview view check` says it. */
-  for (const said of edgesReadWithoutTheirKindsSaid(options.store, manifest)) queueMicrotask(() => options.onProblem?.(said));
+  for (const said of edgesReadWithoutTheirKindsSaid(options.store, manifest)) queueMicrotask(() => options.onProblem?.(said, { code: "far-kind-not-handed" }));
   /* Its code is longer than it may be, or its own source loads something (FR-96): refused before it runs, with why. */
   const refusedCode = (code: WorkerViewCode): [WorkerViewFailure, string?] | undefined => {
     const bytes = "source" in code ? new TextEncoder().encode(code.source).length : "script" in code ? new TextEncoder().encode(code.script).length : 0;
@@ -593,7 +596,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       toldOfTheme = views?.css ?? "";
       const said = "The app's stylesheet for its views draws nothing: the open kit leaves all of it out, so views are drawn without it. graview check says which part (brand-views-css).";
       port?.postMessage({ type: "notice", text: said });
-      options.onProblem?.(said);
+      options.onProblem?.(said, { code: "views-stylesheet-draws-nothing" });
     }
     drawing?.motion(views?.motion ?? "none");
     /* The faces the app lends its views (Roadmap f-view-authoring-friction-2026-11), loaded into the page by the host as their brand changes (fonts.ts). */
@@ -618,9 +621,9 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     void fontsChunk().then(({ loadViewFonts }) => {
       if (asked !== lending) return;
       /* The new ones first, the last given back as they are held, so a face both brands lend is never let go between them (fonts.ts). */
-      giveFontsBack = loadViewFonts(document, fonts, { ...(options.asset ? { asset: options.asset } : {}), ...(options.fonts ? { origins: options.fonts.origins } : {}), ...(typography ? { typography } : {}) }, (said) => {
+      giveFontsBack = loadViewFonts(document, fonts, { ...(options.asset ? { asset: options.asset } : {}), ...(options.fonts ? { origins: options.fonts.origins } : {}), ...(typography ? { typography } : {}) }, (said, problem) => {
         port?.postMessage({ type: "notice", text: said });
-        options.onProblem?.(said);
+        options.onProblem?.(said, problem);
       }, giveFontsBack);
     });
   };
@@ -638,11 +641,11 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   let owning = 0;
   let giveOwnBack: (() => void) | undefined;
   const toldFaces = new Set<string>();
-  const sayFace = (said: string) => {
+  const sayFace = (said: string, problem: ViewProblem) => {
     if (toldFaces.has(said)) return;
     toldFaces.add(said);
     port?.postMessage({ type: "notice", text: said });
-    options.onProblem?.(said);
+    options.onProblem?.(said, problem);
   };
   const lendOwn = () => {
     const faces = drawing?.faces ?? [];
@@ -656,7 +659,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     }
     void fontsChunk().then(({ loadViewFaces, viewFaceRefusedWords }) => {
       if (asked !== owning) return;
-      for (const one of refused) sayFace(viewFaceRefusedWords(one));
+      for (const one of refused) sayFace(viewFaceRefusedWords(one), { code: "own-face-refused" });
       giveOwnBack = loadViewFaces(document, faces, { scope: faceScope }, sayFace, giveOwnBack);
     });
   };
@@ -696,9 +699,9 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
           ...(options.limits ? { limits: options.limits } : {}),
           ...(options.file ? { file: options.file } : {}),
           moved: () => session?.push(),
-          onLeft: (said) => {
+          onLeft: (said, problem) => {
             port?.postMessage({ type: "notice", text: said });
-            options.onProblem?.(said);
+            options.onProblem?.(said, problem);
           },
         });
       })
@@ -818,9 +821,9 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     /* A link's address: the host's own, or the face's where the face is how the view goes (0.1.47). */
     ...(options.hrefOf ? { hrefOf: options.hrefOf } : !options.onNavigate && options.goTo ? { hrefOf: (to: Arrival) => addressAt(options.goTo!(), to) } : {}),
     /* Said in the view's console, and to the host. */
-    onLost: (said) => {
+    onLost: (said, problem) => {
       port?.postMessage({ type: "notice", text: said });
-      options.onProblem?.(said);
+      options.onProblem?.(said, problem);
     },
   });
 
@@ -847,14 +850,14 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
           pictures: manifest.pictures !== undefined,
           shown: () => lastProps,
           ...(options.file ? { file: options.file } : {}),
-          onProblem: (said) => {
+          onProblem: (said, problem) => {
             port?.postMessage({ type: "notice", text: said });
-            options.onProblem?.(said);
+            options.onProblem?.(said, problem);
           },
         });
         media.refresh(shadow);
       },
-      () => options.onProblem?.(`The view "${manifest.title ?? manifest.name}" places a video or a full-screen viewer, and the host's player could not be loaded.`),
+      () => options.onProblem?.(`The view "${manifest.title ?? manifest.name}" places a video or a full-screen viewer, and the host's player could not be loaded.`, { code: "host-part-not-loaded" }),
     );
   };
   /*
@@ -890,15 +893,15 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
             return outcome;
           },
           handed: (file, drop) => handed.set(file.href, { file, drop }),
-          onProblem: (said) => {
+          onProblem: (said, problem) => {
             port?.postMessage({ type: "notice", text: said });
-            options.onProblem?.(said);
+            options.onProblem?.(said, problem);
           },
           onBusy: () => mark(),
         });
         drops.refresh();
       },
-      () => options.onProblem?.(`The view "${manifest.title ?? manifest.name}" takes files, and the host's drop could not be loaded.`),
+      () => options.onProblem?.(`The view "${manifest.title ?? manifest.name}" takes files, and the host's drop could not be loaded.`, { code: "host-part-not-loaded" }),
     );
   };
   /*
@@ -922,7 +925,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         if (manifest.gestures !== true) {
           const said = unheardWords(manifest.title ?? manifest.name);
           port?.postMessage({ type: "notice", text: said });
-          return options.onProblem?.(said);
+          return options.onProblem?.(said, { code: "gestures-not-declared" });
         }
         gestures = createGuestGestures(shadow, { root: () => shadow.querySelector("[data-graview-view-root]") ?? undefined, idOf: (one) => drawing?.renderer.idOf(one), send });
         gestures.bind(gesturesBound);
@@ -950,16 +953,16 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
           send,
           record: (id) => (shown.has(id) ? (options.store.seenBy(options.principal).graph.getNode(id) as Readonly<Record<string, unknown>> | undefined) : undefined),
           ...(options.file ? { file: options.file } : {}),
-          onProblem: (said) => {
+          onProblem: (said, problem) => {
             port?.postMessage({ type: "notice", text: said });
-            options.onProblem?.(said);
+            options.onProblem?.(said, problem);
           },
         });
         sections.refresh();
         return sections;
       },
       () => {
-        options.onProblem?.(`The view "${manifest.title ?? manifest.name}" draws a jump or a file link, and the host's part of it could not be loaded.`);
+        options.onProblem?.(`The view "${manifest.title ?? manifest.name}" draws a jump or a file link, and the host's part of it could not be loaded.`, { code: "host-part-not-loaded" });
         return undefined;
       },
     ));
@@ -998,7 +1001,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
           notes ??= createRefusalNotes(shadow);
           notes.say(bound, pressed.message ?? "That was not applied.");
         },
-        () => options.onProblem?.(`A press in the view "${manifest.title ?? manifest.name}" was refused: ${pressed.message ?? pressed.reason ?? "not applied"}`),
+        () => options.onProblem?.(`A press in the view "${manifest.title ?? manifest.name}" was refused: ${pressed.message ?? pressed.reason ?? "not applied"}`, { code: "press-refused" }),
       );
     };
     /* A field saved as the person types (FR-191): judged and applied as a press is. */
@@ -1057,13 +1060,13 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
           toldLinks.add(refusal.address);
           const said = linkRefusedWords(refusal.address, options.links?.origins);
           port?.postMessage({ type: "notice", text: said });
-          return options.onProblem?.(said);
+          return options.onProblem?.(said, { code: "link-refused" });
         }
         if (refusal.reason !== "url" || refusal.element !== "img" || refusal.address === undefined || toldImages.has(refusal.address)) return;
         toldImages.add(refusal.address);
         const said = imageRefusedWords(refusal.address, { ...(options.images ? { origins: options.images.origins } : {}), assets: options.asset !== undefined }, refusal.length);
         port?.postMessage({ type: "notice", text: said });
-        options.onProblem?.(said);
+        options.onProblem?.(said, { code: "image-refused" });
       },
       ...(options.limits?.maxNodes !== undefined ? { maxNodes: options.limits.maxNodes } : {}),
       onOverBudget: () => fail("nodes"),
@@ -1148,7 +1151,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     /* A draft's is its own, for as long as it is drawn: nothing the view it would replace keeps is its to read or write. */
     state: hostState ?? (options.draft ? keptForTheVisit() : visitOf(options.store, viewer)),
     onRefused: (sentence) => {
-      options.onProblem?.(sentence);
+      options.onProblem?.(sentence, { code: "viewer-state-refused" });
       if (session) port?.postMessage({ type: "notice", text: sentence });
     },
     onLate: () => session?.push(),

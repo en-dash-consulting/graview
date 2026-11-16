@@ -62,9 +62,11 @@ describe("a jump within the view", () => {
     const { shadow, root } = region();
     root.innerHTML = `<a href="#terms">Terms</a>`;
     const said: string[] = [];
-    const sections = createGuestSections(window, { shadow, idOf: () => "1", send: () => {}, record: () => undefined, onProblem: (one) => said.push(one) });
+    const codes: unknown[] = [];
+    const sections = createGuestSections(window, { shadow, idOf: () => "1", send: () => {}, record: () => undefined, onProblem: (one, problem) => (said.push(one), codes.push(problem)) });
     sections.jump(root.querySelector("a")!, root);
     expect(said).toEqual(['The jump "#terms" goes nowhere: the view drew no element with that id.']);
+    expect(codes).toEqual([{ code: "jump-goes-nowhere" }]);
     sections.dispose();
   });
 });
@@ -108,10 +110,12 @@ describe("a record's file, from a view", () => {
     const { shadow, root } = region();
     root.innerHTML = `<a id="a" data-file="placement:nobody" data-field="contract">View</a><a id="b" data-file="placement:omar" data-field="contract">View</a>`;
     const said: string[] = [];
-    const sections = createGuestSections(window, { shadow, idOf: () => undefined, send: () => {}, record: (id) => (id === "placement:omar" ? {} : undefined), onProblem: (one) => said.push(one) });
+    const codes: unknown[] = [];
+    const sections = createGuestSections(window, { shadow, idOf: () => undefined, send: () => {}, record: (id) => (id === "placement:omar" ? {} : undefined), onProblem: (one, problem) => (said.push(one), codes.push(problem)) });
     sections.refresh();
     expect([shadow.getElementById("a")!.hasAttribute("href"), shadow.getElementById("b")!.hasAttribute("href")]).toEqual([false, false]);
     expect(said).toEqual(['The file link to "placement:nobody" goes nowhere: it names no record this view was shown.', 'The file link to "placement:omar" goes nowhere: its "contract" holds no file.']);
+    expect(codes).toEqual([{ code: "file-link-goes-nowhere" }, { code: "file-link-goes-nowhere" }]);
     sections.dispose();
   });
 });

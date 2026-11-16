@@ -1,3 +1,4 @@
+import type { ViewProblemSaid } from "./problems.js";
 /*
  * A PART OF A VIEW THAT FAILS FALLS BACK ALONE (Roadmap f-view-part-fails-alone).
  *
@@ -36,7 +37,7 @@ export interface PartFallbackOptions {
   readonly view: string;
   /** The mark this mount handed the view's runtime: only a failed part that carries it is one. */
   readonly mark: string;
-  readonly onProblem?: (said: string) => void;
+  readonly onProblem?: ViewProblemSaid;
 }
 
 /** Why, as the runtime gave it: at most 300 characters, on one line, quoted. */
@@ -63,7 +64,7 @@ export function createPartFallbacks(shadow: ShadowRoot, options: PartFallbackOpt
         if (!told.has(key) && told.size < PART_PROBLEMS_SAID) {
           told.add(key);
           const why = part.getAttribute("data-part-why") ?? "";
-          options.onProblem?.(`The part "${name}" of the view ${options.view} ${slow ? "took too long" : "threw"}, so a note is drawn in its place and the rest of the view is drawn${why ? `: ${quotedWhy(why)}` : "."}`);
+          options.onProblem?.(`The part "${name}" of the view ${options.view} ${slow ? "took too long" : "threw"}, so a note is drawn in its place and the rest of the view is drawn${why ? `: ${quotedWhy(why)}` : "."}`, { code: "part-failed", part: name });
         }
         if (notes.has(part)) continue;
         const note = shadow.ownerDocument!.createElement("p");

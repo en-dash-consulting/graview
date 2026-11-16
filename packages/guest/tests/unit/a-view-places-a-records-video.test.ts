@@ -37,15 +37,16 @@ function page() {
   const window = dom.window as Window & typeof globalThis;
   const region = window.document.querySelector("main")!;
   const said: string[] = [];
+  const codes: unknown[] = [];
   const media = (pictures = true) =>
-    createGuestMedia(window, { view: '"Moments"', pictures, shown: () => shown, file: (href) => `/a/moments${href}`, onProblem: (line) => said.push(line) });
+    createGuestMedia(window, { view: '"Moments"', pictures, shown: () => shown, file: (href) => `/a/moments${href}`, onProblem: (line, problem) => (said.push(line), codes.push(problem)) });
   const place = (attributes: Record<string, string>) => {
     const element = window.document.createElement("graview-video");
     for (const [name, value] of Object.entries(attributes)) element.setAttribute(name, value);
     region.appendChild(element);
     return element;
   };
-  return { window, region, said, media, place };
+  return { window, region, said, codes, media, place };
 }
 
 describe("the open kit", () => {
@@ -138,7 +139,7 @@ describe("the full-screen viewer a view opens", () => {
   });
 
   it("opens nothing for a record the view was not shown, and says why", () => {
-    const { window, region, said, media } = page();
+    const { window, region, said, codes, media } = page();
     const button = window.document.createElement("button");
     button.setAttribute("data-lightbox", "");
     button.setAttribute("data-record", "moment:secret");
@@ -147,6 +148,7 @@ describe("the full-screen viewer a view opens", () => {
     expect(media().open(button)).toBe(false);
     expect(window.document.querySelector("dialog")).toBeNull();
     expect(said).toEqual(['The full-screen viewer in the view "Moments" was not drawn: it names a record it was not shown ("moment:secret").']);
+    expect(codes).toEqual([{ code: "media-not-drawn" }]);
   });
 });
 

@@ -100,10 +100,12 @@ describe("a face lent to a view", () => {
   it("is loaded at most eight to a brand, and what was left out is said", async () => {
     const nine = Array.from({ length: 9 }, (_, at) => ({ family: `Rock${"abcdefghi"[at]}`, src: BALOO.src }));
     const said: string[] = [];
-    lend(nine, { asset }, (one) => said.push(one));
+    const codes: unknown[] = [];
+    lend(nine, { asset }, (one, problem) => (said.push(one), codes.push(problem)));
     await settled();
     expect(fonts.size).toBe(8);
     expect(said).toEqual([expect.stringMatching(/at most 8.*Rocki/)]);
+    expect(codes).toEqual([{ code: "face-not-lent" }]);
   });
 
   it("goes from the page once no view holds it", async () => {
@@ -192,12 +194,14 @@ describe("a view on a page", () => {
       for (let i = 0; i < 100 && !test(); i += 1) await wait(10);
     };
     const said: string[] = [];
-    const view = mountWorkerView(document.body.appendChild(document.createElement("div")), { manifest: { name: "card", attach: "car", cardinality: "one" }, worker: { script: "/* the view */" }, store: store(), principal: reader, input: () => ({ node: { id: "car:golf" } }), brand: () => ({ name: "Cars", views: { css: "@import 'x.css';" } }), onProblem: (one) => said.push(one) });
+    const codes: unknown[] = [];
+    const view = mountWorkerView(document.body.appendChild(document.createElement("div")), { manifest: { name: "card", attach: "car", cardinality: "one" }, worker: { script: "/* the view */" }, store: store(), principal: reader, input: () => ({ node: { id: "car:golf" } }), brand: () => ({ name: "Cars", views: { css: "@import 'x.css';" } }), onProblem: (one, problem) => (said.push(one), codes.push(problem)) });
     FakeWorker.made.at(-1)!.say({ graview: "guest-ready", protocol: GUEST_PROTOCOL });
     await until(() => said.length > 0);
     view.update();
     await wait(30);
     expect(said.filter((one) => one.includes("stylesheet"))).toEqual([expect.stringContaining("The app's stylesheet for its views draws nothing")]);
+    expect(codes).toContainEqual({ code: "views-stylesheet-draws-nothing" });
     view.dispose();
   });
 });

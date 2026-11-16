@@ -1,3 +1,4 @@
+import type { ViewProblemSaid } from "./problems.js";
 import { isFileValue, isImage, isVideo, videoWords, type FileValue } from "@graview/core";
 import { videoClock } from "@graview/core/blocks";
 import type { GuestNode, GuestProps } from "../protocol.js";
@@ -53,7 +54,7 @@ export interface GuestMediaOptions {
   /** Where the page fetches a record's file (`FileValue.href`); undefined leaves it out. The href itself by default. */
   readonly file?: (href: string) => string | undefined;
   /** Something asked for was not drawn, and why, said once. */
-  readonly onProblem?: (said: string) => void;
+  readonly onProblem?: ViewProblemSaid;
 }
 
 export interface GuestMedia {
@@ -147,7 +148,7 @@ export function createGuestMedia(window: Window & typeof globalThis, options: Gu
   const say = (said: string) => {
     if (told.has(said)) return;
     told.add(said);
-    options.onProblem?.(said);
+    options.onProblem?.(said, { code: "media-not-drawn" });
   };
   /** A path on the host, as a record keeps one, where the host serves it, on this page's own origin only. */
   const at = (href: string): string | undefined => {

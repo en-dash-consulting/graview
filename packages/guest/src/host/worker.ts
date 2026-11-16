@@ -231,3 +231,6 @@ export type { ViewRefusal } from "./open-draw.js";
 export type { OpenRefusal, OpenRefusalReason } from "./open-judge.js";
 export type { CssRefusal, CssRefusalReason } from "./css.js";
 export type { Destination } from "./links.js";
+/* What a view's host says went wrong, by a code that stays when the words change (HQ f-view-problem-codes). */
+export { VIEW_PROBLEM_CODES } from "./problems.js";
+export type { ViewProblem, ViewProblemCode, ViewProblemSaid } from "./problems.js";

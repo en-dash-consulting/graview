@@ -1,3 +1,4 @@
+import type { ViewProblemSaid } from "./problems.js";
 import { fileAt, type AnySchema, type FileValue, type HostFiles, type MutationCall, type Principal, type Store } from "@graview/core";
 import type { GuestDomEvent, GuestDroppedFile, GuestRefusal } from "../protocol.js";
 import { fieldFor, planDrop, takes, type DropPlan } from "./drop-plan.js";
@@ -60,7 +61,7 @@ export interface GuestDropsOptions<S extends AnySchema> {
   /** Whether the pointer is coarse (a phone): then a tap on a drop target opens the picker. `(pointer: coarse)` by default. */
   readonly coarse?: () => boolean;
   /** Something about a drop target, said once for the host's problems: why an element marked `data-drop` is not one. */
-  readonly onProblem?: (said: string) => void;
+  readonly onProblem?: ViewProblemSaid;
   /** A drop began or settled: the region says it has drawn only once nothing is on its way. */
   readonly onBusy?: () => void;
 }
@@ -191,7 +192,7 @@ export function createGuestDrops<S extends AnySchema>(window: Window & typeof gl
       /* Said once a sentence: a seat that may not make the kind is no problem of the view's, and is not said. */
       if (!/^This seat may not|^This host takes no/.test(plan.says) && !told.has(plan.says)) {
         told.add(plan.says);
-        options.onProblem?.(`A drop target the view drew (data-drop="${kind}") is not offered: ${plan.says}`);
+        options.onProblem?.(`A drop target the view drew (data-drop="${kind}") is not offered: ${plan.says}`, { code: "drop-not-offered" });
       }
     }
     if (first) picker.accept = first.accept;

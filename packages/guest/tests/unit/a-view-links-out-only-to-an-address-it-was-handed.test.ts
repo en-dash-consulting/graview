@@ -102,7 +102,8 @@ async function onThePage(extra: Partial<MountWorkerViewOptions<AnySchema>> = {})
   const element = document.createElement("div");
   document.body.appendChild(element);
   const problems: string[] = [];
-  const view = mountWorkerView(element, { manifest, worker: { script: "/* the view */" }, store: store(), principal: reader, onProblem: (said) => problems.push(said), ...extra });
+  const codes: unknown[] = [];
+  const view = mountWorkerView(element, { manifest, worker: { script: "/* the view */" }, store: store(), principal: reader, onProblem: (said, problem) => (problems.push(said), codes.push(problem)), ...extra });
   live.push(view);
   const worker = FakeWorker.made.at(-1)!;
   worker.say({ graview: "guest-ready", protocol: GUEST_PROTOCOL });
@@ -121,7 +122,7 @@ async function onThePage(extra: Partial<MountWorkerViewOptions<AnySchema>> = {})
   port.postMessage({ type: "render", nonce: hello.nonce, records: records() });
   for (let i = 0; i < 50 && !view.shadow.querySelector("#handed"); i += 1) await wait(10);
   await wait(20);
-  return { at: (id: string) => view.shadow.querySelector(`#${id}`)!, problems, shadow: view.shadow };
+  return { at: (id: string) => view.shadow.querySelector(`#${id}`)!, problems, codes, shadow: view.shadow };
 }
 
 describe("a view's link out", () => {
@@ -147,8 +148,9 @@ describe("a view's link out", () => {
   });
 
   it("is refused for javascript:, data: and http: addresses, saying which schemes a link takes", async () => {
-    const { at, problems } = await onThePage();
+    const { at, problems, codes } = await onThePage();
     for (const id of ["script", "data", "plain"] as const) expect(at(id).hasAttribute("href"), id).toBe(false);
+    expect(codes).toContainEqual({ code: "link-refused" });
     expect(problems).toContain(`The link "${LINKS.script}" was not drawn: a view links only to an https:, mailto: or tel: address.`);
     expect(problems).toContain(`The link "${LINKS.data}" was not drawn: a view links only to an https:, mailto: or tel: address.`);
     expect(problems).toContain(`The link "${LINKS.plain}" was not drawn: a view links only to an https:, mailto: or tel: address.`);

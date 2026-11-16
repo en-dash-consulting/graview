@@ -1,3 +1,4 @@
+import type { ViewProblemSaid } from "./problems.js";
 import { kindPath, OVERVIEW_SLUG, type AnySchema, type PagesArrangement, type Place } from "@graview/core";
 import { placeNamesFrom, sectionSlug, type PlaceName } from "@graview/core/navigate";
 import { filterOfWhere } from "./where.js";
@@ -140,7 +141,7 @@ export interface LinksOptions {
    */
   readonly hrefOf?: (to: Arrival) => string | undefined;
   /** It went nowhere: the sentence saying why. */
-  readonly onLost?: (said: string) => void;
+  readonly onLost?: ViewProblemSaid;
 }
 
 export interface Links {
@@ -236,7 +237,7 @@ export function createLinks(options: LinksOptions): Links {
   const go = (to: Destination) => {
     const judged = judge(to);
     if (judged.ok) options.onNavigate?.(judged.arrival);
-    else options.onLost?.(judged.says);
+    else options.onLost?.(judged.says, { code: "link-goes-nowhere" });
     return judged.ok;
   };
   /** Where an element the view drew says to go, in the words `go` takes; nothing where it names nowhere. */
