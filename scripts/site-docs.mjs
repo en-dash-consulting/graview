@@ -335,7 +335,7 @@ const decodeHtml = (text) => text.replace(/&lt;/g, "<").replace(/&gt;/g, ">").re
 
 /**
  * The releases, as the releases page says them: the records in
- * apps/site/releases.json, written with each Version packages pull request
+ * apps/site/releases.json, written with each release (`pnpm release:prepare` scaffolds one on the batch that carries it)
  * (a test fails while a version in @graview/core's changelog has none), and
  * which of them the packages are at now.
  */

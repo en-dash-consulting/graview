@@ -168,8 +168,8 @@ keeps each problem once across harnesses and runs: a run ends by saying
 what is new, still open, fixed, and back after a fix. `tests/site.test.ts`
 checks that `docs/site` matches the tree — after changing package
 descriptions or skills, run `pnpm site:build:all`. The test count on the
-landing page is not a pull request's to write: the Version packages step and
-the Pages deploy fill it in (`site-numbers.mjs --release`), so a PR never
+landing page is not a pull request's to write: the release step
+(`pnpm release:prepare`, or the Version packages step) and the Pages deploy fill it in (`site-numbers.mjs --release`), so a PR never
 touches `docs/site/index.html` or the sitemap just because it added tests.
 A bundle budget raise is a file of its own in `scripts/budget-raises/`
 (see `scripts/lib/bundle-budget.mjs`), never an edit to an entry's numbers,
@@ -211,32 +211,60 @@ pinned at 1.49.1 on purpose.
 
 ## Releasing
 
-`.github/workflows/release.yml` turns merged changesets into a "Version
-packages" pull request (and dispatches CI on it, since a pull request the
-workflow's own token opens starts none). Merging it starts the `publish` job,
-which **waits in the `npm` environment for its required reviewer to approve
-it once in GitHub** — that one approval releases all fourteen packages. The
-job then builds, tests, checks the last Nightly on main is green, publishes
+**A batch carries its own release.** Once a `batch/0-2-N` branch has its last
+build merged in, `pnpm build && pnpm release:prepare`
+(`scripts/release-prepare.mjs`) spends the changesets (`changeset version`:
+the fixed group's next version, every changelog's section,
+`FRAMEWORK_VERSION`), keeps or scaffolds that version's record in
+`apps/site/releases.json`, and runs `site-numbers.mjs --release` and
+`pnpm site:build:all`. A scaffolded record says `WRITE ME` until a person
+rewrites it — headline, plain-words summary, and a compatibility line that
+leads with what breaks for a host — and a test fails until it does; then
+`pnpm site:build:all` again. It refuses a branch that already carries a
+version main lacks: revert that commit and run it once. The batch PR's CI and
+its Nightly, dispatched on its head after the last push, are the release's
+gates (`scripts/require-changeset.mjs` reads the spent changesets from the
+branch's history, and fails a release PR that leaves one unspent).
+
+**Main publishes what it has.** `.github/workflows/release.yml` asks
+`scripts/release-state.mjs` on every push to main (the rules are
+`scripts/lib/release.mjs`'s, held by
+`tests/a-release-runs-only-when-its-gates-hold.test.ts`). With nothing
+pending and a version npm lacks, the `publish` job runs, but only when a
+green Nightly ran on the same tree (`git rev-parse HEAD^{tree}` against the
+tree of the commit that Nightly ran on), so a merge of a green batch that
+conflicts with nothing counts. Without one, the run fails and says to
+dispatch Nightly on main (`gh workflow run nightly.yml --ref main`) and
+re-run it. The `publish` job **waits in the `npm` environment for its
+required reviewer to approve it once in GitHub** — that one approval releases
+all fourteen packages; Nick approves it, and nothing else needs him. It then
+asks the gate again (`release-state.mjs --gate`), builds, tests, publishes
 each package by npm trusted publishing (`scripts/release-publish.mjs`), tags
 `<name>@<version>` and writes a GitHub release each. Re-running the job
-finishes a release that stopped part way. Each package's trusted publisher on
-npmjs.com names repository `en-dash-consulting/graview`, workflow
-`release.yml`, environment `npm`, and allows publish;
-`pnpm release:trust --apply` (npm 12, logged in as an owner) sets that. A
-brand-new package can't have a trusted publisher until it exists, so its
-first version is published by hand.
+finishes a release that stopped part way; neither path publishes a version
+older than npm's `latest`. No Version packages pull request is
+opened for a batch, and one still open once nothing is pending is closed.
 
-The `publish` job runs only when no changeset is pending, so a Version
-packages merge followed by more changesets is released with the next one:
-0.1.13 was versioned and never published, and ships inside 0.1.14. Each
-GitHub release's notes carry the changelog sections of the versions before
-it that npm never had. A `Compatibility:` line on every changeset that
-touches a surface (`scripts/lib/surfaces.mjs`) is what `docs/stability.md`
-promises a host, and `capabilities().shipped` names the FR ids the
-changesets announce. The version's release record in `apps/site/releases.json`
-(headline, plain-words summary, what breaks for a host; graview.dev's
-Releases page) is written by hand in the Version packages pull request, then
-`pnpm site:build:all`; a test fails until it is.
+**A changeset merged outside a batch is never stranded.** While a changeset
+is pending on main, release.yml opens or updates the "Version packages" pull
+request (and dispatches CI on it, since a pull request the workflow's own
+token opens starts none). Write its release record there, run
+`pnpm site:build:all`, dispatch Nightly on `changeset-release/main` (or on
+main after the merge), and merge it; it is then published like a batch.
+
+Each package's trusted publisher on npmjs.com names repository
+`en-dash-consulting/graview`, workflow `release.yml`, environment `npm`, and
+allows publish; `pnpm release:trust --apply` (npm 12, logged in as an owner)
+sets that. A brand-new package can't have a trusted publisher until it
+exists, so its first version is published by hand.
+
+Nothing publishes while a changeset is pending, so a version merged and
+followed by more changesets is released with the next one: 0.1.13 was
+versioned and never published, and ships inside 0.1.14. Each GitHub
+release's notes carry the changelog sections of the versions before it that
+npm never had. A `Compatibility:` line on every changeset that touches a
+surface (`scripts/lib/surfaces.mjs`) is what `docs/stability.md` promises a
+host, and `capabilities().shipped` names the FR ids the changesets announce.
 
 `main` is protected by a ruleset: changes arrive by pull request, `verify`
 and `changeset` must pass, and nothing force-pushes or deletes it.

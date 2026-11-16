@@ -14,7 +14,7 @@
  *   node scripts/require-changeset.mjs [base-ref]
  */
 import { execFileSync } from "node:child_process";
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { saysCompatibility, surfacesTouched } from "./lib/surfaces.mjs";
@@ -26,7 +26,16 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 // The Version packages pull request is where changesets are spent: it bumps
 // every package and removes the changesets that asked for it.
 const head = process.env["GITHUB_HEAD_REF"] || process.env["GITHUB_REF_NAME"] || "";
-if (head.startsWith("changeset-release/")) {
+// Only this repository's own branch: a fork's pull request may name its branch anything.
+const headRepository = (() => {
+  try {
+    return JSON.parse(readFileSync(process.env["GITHUB_EVENT_PATH"] ?? "", "utf8")).pull_request?.head?.repo?.full_name ?? null;
+  } catch {
+    return null;
+  }
+})();
+const ownBranch = !process.env["GITHUB_EVENT_PATH"] || headRepository === process.env["GITHUB_REPOSITORY"];
+if (head.startsWith("changeset-release/") && ownBranch) {
   process.stdout.write("The Version packages pull request spends changesets; it needs none of its own.\n");
   process.exit(0);
 }
@@ -48,6 +57,67 @@ try {
 }
 
 const changed = git("diff", "--name-only", range).split("\n").filter(Boolean);
+const baseRef = range.split("...")[0];
+const mergeBase = git("merge-base", baseRef, "HEAD");
+
+/*
+ * A BATCH CARRIES ITS OWN RELEASE (`pnpm release:prepare`), so on its pull
+ * request the changesets its builds added are spent by the time CI runs:
+ * the version moved, the changelogs say them, and the files are gone. Each
+ * changeset any commit here added is read as it last stood, spent or not,
+ * so it still answers for what it says.
+ */
+const versionAt = (ref) => {
+  try {
+    return JSON.parse(git("show", `${ref}:packages/graview/package.json`)).version;
+  } catch {
+    return null;
+  }
+};
+const carriedVersion = versionAt("HEAD") !== versionAt(mergeBase) ? versionAt("HEAD") : null;
+const addedChangesetText = new Map(
+  git("log", "--format=", "--name-only", "--diff-filter=A", `${mergeBase}..HEAD`, "--", ".changeset")
+    .split("\n")
+    .filter((file) => file.endsWith(".md") && !file.endsWith("README.md"))
+    .map((file) => {
+      const last = git("log", "-1", "--format=%H", "--diff-filter=AM", `${mergeBase}..HEAD`, "--", file);
+      return [file.replace(/^\.changeset\//, ""), git("show", `${last}:${file}`)];
+    })
+    // Spent only by a release: a pull request that carries none answers with the changesets it leaves on disk.
+    .filter(([name]) => carriedVersion || existsSync(resolve(repoRoot, ".changeset", name))),
+);
+
+/*
+ * A VERSION MOVED IS A RELEASE ONLY WHEN IT WAS MADE AS ONE: changesets
+ * spent, every published package at the version, and every changelog
+ * saying it. A version edited by hand would otherwise skip every check
+ * above and below, and main would publish a release nobody described.
+ */
+if (carriedVersion) {
+  const spent = [
+    ...[...addedChangesetText.keys()].filter((name) => !existsSync(resolve(repoRoot, ".changeset", name))),
+    ...git("diff", "--name-only", "--diff-filter=D", range, "--", ".changeset").split("\n").filter((file) => file.endsWith(".md") && !file.endsWith("README.md")),
+  ];
+  const manifests = readdirSync(resolve(repoRoot, "packages"))
+    .filter((dir) => existsSync(resolve(repoRoot, "packages", dir, "package.json")))
+    .map((dir) => ({ dir, ...JSON.parse(readFileSync(resolve(repoRoot, "packages", dir, "package.json"), "utf8")) }))
+    .filter((manifest) => !manifest.private);
+  const wrong = [
+    ...(spent.length === 0 ? ["no changeset was spent for it"] : []),
+    ...manifests.filter((one) => one.version !== carriedVersion).map((one) => `${one.name} is at ${one.version}`),
+    ...manifests
+      .filter((one) => !readFileSync(resolve(repoRoot, "packages", one.dir, "CHANGELOG.md"), "utf8").includes(`\n## ${carriedVersion}\n`))
+      .map((one) => `packages/${one.dir}/CHANGELOG.md has no ${carriedVersion} section`),
+  ];
+  if (wrong.length > 0) {
+    process.stderr.write(
+      `This pull request moves the version to ${carriedVersion}, and it was not made as a release:\n` +
+        wrong.map((line) => `  ${line}\n`).join("") +
+        "\nPut the versions back and run `pnpm release:prepare`, which spends the changesets and writes every changelog.\n",
+    );
+    process.exit(1);
+  }
+}
 
 /*
  * A HOSTED PAGE SPENT ON PURPOSE, AND SAID (FR-179). A raise of a hosted
@@ -57,12 +127,11 @@ const changed = git("diff", "--name-only", range).split("\n").filter(Boolean);
  * first load than its own words say.
  */
 const addedHere = (dir) => git("diff", "--name-only", "--diff-filter=A", range, "--", dir).split("\n").filter(Boolean);
-const addedChangesets = new Set(addedHere(".changeset").map((file) => file.replace(/^\.changeset\//, "")));
 const hostedRaisesAdded = addedHere("scripts/budget-raises")
   .filter((file) => file.endsWith(".json"))
   .map((file) => ({ file, raise: JSON.parse(readFileSync(resolve(repoRoot, file), "utf8")) }))
   .filter(({ raise }) => HOSTED_BUDGET_NAMES.includes(raise.budget));
-const unsaid = hostedRaisesAdded.filter(({ raise }) => !addedChangesets.has(raise.changeset) || !readFileSync(resolve(repoRoot, ".changeset", raise.changeset), "utf8").includes(raiseSaid(raise)));
+const unsaid = hostedRaisesAdded.filter(({ raise }) => !addedChangesetText.get(raise.changeset)?.includes(raiseSaid(raise)));
 if (unsaid.length > 0) {
   process.stderr.write(
     `These raise a hosted page's budget, and no changeset this pull request adds says what they spend up front:\n` +
@@ -91,9 +160,27 @@ const pending = readdirSync(resolve(repoRoot, ".changeset")).filter(
   (file) => file.endsWith(".md") && file !== "README.md",
 );
 
-if (pending.length > 0) {
+/*
+ * A PULL REQUEST THAT CARRIES A RELEASE SPENDS EVERY CHANGESET. One left on
+ * disk would be pending on main after the merge, and the release workflow
+ * would open a Version packages pull request for it instead of publishing
+ * the version this one carries.
+ */
+if (carriedVersion && pending.length > 0) {
+  process.stderr.write(
+    `This pull request carries ${carriedVersion} and leaves ${pending.length} changeset(s) unspent:\n` +
+      pending.map((file) => `  .changeset/${file}\n`).join("") +
+      "\nThey came after `pnpm release:prepare`. Revert the commit that versioned the packages (its changesets come back),\n" +
+      "then run `pnpm release:prepare` once, so every change on the branch is in the one version.\n",
+  );
+  process.exit(1);
+}
+
+if (pending.length > 0 || carriedVersion) {
   process.stdout.write(
-    `${touchedPackages.join(", ")} changed; ${pending.length} changeset(s) present.\n`,
+    carriedVersion
+      ? `${touchedPackages.join(", ")} changed; this pull request carries ${carriedVersion}, which spent the ${addedChangesetText.size} changeset(s) its commits added.\n`
+      : `${touchedPackages.join(", ")} changed; ${pending.length} changeset(s) present.\n`,
   );
   /*
    * AND A CHANGE TO A SURFACE A HOST HOLDS US TO SAYS WHAT IT DID (FR-30).
@@ -104,10 +191,10 @@ if (pending.length > 0) {
    */
   const surfaces = surfacesTouched(changed);
   if (surfaces.length > 0) {
-    const added = git("diff", "--name-only", "--diff-filter=A", range, "--", ".changeset")
-      .split("\n")
-      .filter((file) => file.endsWith(".md") && !file.endsWith("README.md"));
-    const silent = added.filter((file) => !saysCompatibility(readFileSync(resolve(repoRoot, file), "utf8")));
+    // Read as each last stood, so a changeset a release spent still answers.
+    const silent = [...addedChangesetText]
+      .filter(([, text]) => !saysCompatibility(text))
+      .map(([name]) => `.changeset/${name}`);
     if (silent.length > 0) {
       process.stderr.write(
         `This change touches ${surfaces.join("; ")}.\nThese changesets do not say what it does to compatibility:\n` +

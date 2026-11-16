@@ -49,6 +49,9 @@ that `docs/process.md` describes.
    change without one; a bump other than `patch` is a claim somebody must
    make on purpose; the `Compatibility:` line is what `docs/stability.md`
    promises a host (surfaces are listed in `scripts/lib/surfaces.mjs`).
+   Leave it unspent: never run `pnpm release:prepare` or bump a version on
+   a build's branch. The batch spends every changeset at once, and CI
+   refuses a version moved any other way (AGENTS.md, Releasing).
 9. **Never put a security fault's mechanism in public text.** The repository
    is public, and public text is every commit message, changeset, PR title
    and body, the PRD (`.ndx/` included), test names and code comments. Say

@@ -7,11 +7,13 @@ import { describe, expect, it } from "vitest";
  *
  * graview.dev/docs/releases.html is written from the release records in
  * apps/site/releases.json: a headline and a few plain lines per version, by
- * hand, with the Version packages pull request. A record nobody wrote is a
- * version the page silently skips, so the changelog changesets writes is the
- * list it is held to. A pull request that only adds a changeset leaves the
- * changelog alone and so passes; the Version packages step adds a heading to
- * @graview/core's changelog, and this fails until that version has a record.
+ * hand, on the batch that carries the release (`pnpm release:prepare`
+ * scaffolds it, saying WRITE ME until a person writes it) or on a Version
+ * packages pull request. A record nobody wrote is a version the page silently
+ * skips, so the changelog changesets writes is the list it is held to. A pull
+ * request that only adds a changeset leaves the changelog alone and so
+ * passes; the release step adds a heading to @graview/core's changelog, and
+ * this fails until that version has a written record.
  */
 const root = resolve(import.meta.dirname, "..");
 type Release = { version: string; date?: string; headline: string; summary: string; compatibility?: string; published: boolean; shippedIn?: string };
@@ -47,6 +49,8 @@ describe("the release records", () => {
         expect(newer(carrier!.version, record.version), record.version).toBe(true);
       }
     }
+    // `pnpm release:prepare` scaffolds a record that says "WRITE ME" until a person writes it.
+    for (const record of records) expect(JSON.stringify(record), `${record.version}'s record in apps/site/releases.json is unwritten`).not.toContain("WRITE ME");
     // AGENTS.md's Releasing section: 0.1.13 was versioned and never published, and ships inside 0.1.14.
     expect(records.find((r) => r.version === "0.1.13")).toMatchObject({ published: false, shippedIn: "0.1.14" });
   });

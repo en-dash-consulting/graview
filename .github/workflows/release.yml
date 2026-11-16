@@ -1,18 +1,32 @@
-# Releases, through changesets.
+# Releases, carried by the batch that brings them.
 #
-# 1. A pull request merged to main with a `.changeset/` file runs this. The
-#    `version` job opens or updates the "Version packages" pull request: the
-#    bumps and the changelog entries, reviewable before anything is released.
-#    A pull request opened by this workflow's token starts no workflow of its
-#    own, so the job then dispatches CI on its branch; the checks main's rules
-#    require are then on it like any other pull request.
-# 2. Merging that pull request runs this again with nothing pending and a
-#    version npm does not have, so the `publish` job starts — and waits. It
-#    runs in the `npm` environment, whose required reviewer approves it once in
-#    GitHub. That approval is the release: nothing reaches npm before it.
-# 3. Approved, the job builds and tests, checks the last Nightly on main is
-#    green, publishes every package by npm trusted publishing
-#    (`scripts/release-publish.mjs`), then tags each and writes a GitHub release.
+# 1. A batch pull request carries its own release. `pnpm release:prepare`
+#    (scripts/release-prepare.mjs), run on the batch branch, spends the
+#    changesets, bumps the fourteen packages, writes the changelogs, keeps or
+#    scaffolds the version's record in apps/site/releases.json and rebuilds
+#    the site. The batch's CI and its Nightly, dispatched on its head after
+#    that, are the release's gates.
+# 2. Every push to main runs this. The `version` job asks
+#    `scripts/release-state.mjs` what the push releases (the rules are in
+#    scripts/lib/release.mjs, and tests/a-release-runs-only-when-its-gates-hold.test.ts
+#    holds them):
+#    - a changeset pending on main (a pull request merged outside a batch):
+#      it opens or updates the "Version packages" pull request, as before, and
+#      dispatches CI on its branch, since a pull request this workflow's token
+#      opens starts no workflow of its own. Nothing is stranded: that pull
+#      request's merge is then released like a batch's;
+#    - nothing pending and a package at the version npm does not have: the
+#      `publish` job, but only when a green Nightly ran on this very tree
+#      (`git rev-parse HEAD^{tree}` against the tree of the commit it ran on),
+#      so a merge of a green batch that conflicts with nothing counts. Without
+#      one the run fails and says to dispatch Nightly on main;
+#    - nothing pending and everything on npm: nothing.
+# 3. The `publish` job runs in the `npm` environment, whose required reviewer
+#    approves it once in GitHub. That approval is the release: nothing reaches
+#    npm before it. Approved, it asks the gate again, builds and tests,
+#    publishes every package by npm trusted publishing
+#    (`scripts/release-publish.mjs`), then tags each and writes a GitHub
+#    release. Re-running it finishes a release that stopped part way.
 #
 # The fourteen packages are one changesets `fixed` group, so they share a
 # version and `graview create` can write `^<version>` for every one of them
@@ -23,9 +37,6 @@
 # the "npm" environment, and allows publish (`node scripts/release-trust.mjs`
 # sets that). A brand-new package has no trusted publisher until it exists, so
 # its first version is published by hand.
-#
-# A merge with no changesets and every version already on npm (a PRD change, a
-# fix to a script) runs only the `version` job, which finds nothing to do.
 
 name: Release
 
@@ -44,11 +55,11 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-      # Dispatches CI on the Version packages branch.
+      # Dispatches CI on the Version packages branch, and reads the Nightly runs.
       actions: write
     outputs:
-      pending: ${{ steps.state.outputs.pending }}
-      unpublished: ${{ steps.state.outputs.unpublished }}
+      path: ${{ steps.state.outputs.path }}
+      version: ${{ steps.state.outputs.version }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -60,39 +71,24 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
 
-      - name: What there is to do
+      - name: What this push releases
         id: state
-        run: |
-          set -euo pipefail
-          if ls .changeset/*.md 2>/dev/null | grep -qv README.md; then PENDING=true; else PENDING=false; fi
-          VERSION=$(node -p "require('./packages/graview/package.json').version")
-          # Every package, not only the CLI: a publish npm cut off part way
-          # (0.1.45, 2026-10-22) leaves graview on npm and the rest missing.
-          UNPUBLISHED=false
-          for manifest in packages/*/package.json; do
-            NAME=$(node -p "const m = require('./${manifest}'); m.private ? '' : m.name")
-            [ -z "${NAME}" ] && continue
-            if ! npm view "${NAME}@${VERSION}" version --prefer-online >/dev/null 2>&1; then
-              echo "${NAME}@${VERSION} is not on npm"
-              UNPUBLISHED=true
-            fi
-          done
-          echo "Changesets pending: ${PENDING}; a package at ${VERSION} unpublished: ${UNPUBLISHED}"
-          echo "pending=${PENDING}" >> "$GITHUB_OUTPUT"
-          echo "unpublished=${UNPUBLISHED}" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/release-state.mjs
 
       # The version step regenerates the site's numbers and docs pages (they
       # name the release, and its llms files and structured data with them),
       # and the docs generator reads the built packages.
       - name: Build, for the site the version step regenerates
-        if: steps.state.outputs.pending == 'true'
+        if: steps.state.outputs.path == 'version-pr'
         run: pnpm build
 
       # changesets/action@v2, not v1: v1 learned what was published by scraping
       # `New tag:` lines that @changesets/cli v3 no longer prints. Here it only
       # versions; publishing is the next job's.
       - name: Open or update the Version packages pull request
-        if: steps.state.outputs.pending == 'true'
+        if: steps.state.outputs.path == 'version-pr'
         uses: changesets/action@v2
         with:
           version-script: pnpm version-packages
@@ -102,14 +98,28 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run CI on it
-        if: steps.state.outputs.pending == 'true'
+        if: steps.state.outputs.path == 'version-pr'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh workflow run ci.yml --ref changeset-release/main
 
+      # With nothing pending on main, a Version packages pull request still
+      # open was opened for changesets a batch has since spent: merged, it
+      # would version them a second time.
+      - name: Close a Version packages pull request nothing is pending for
+        if: steps.state.outputs.path == 'publish' || steps.state.outputs.path == 'nothing'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          OPEN=$(gh pr list --head changeset-release/main --state open --json number --jq '.[].number')
+          for NUMBER in ${OPEN}; do
+            gh pr close "${NUMBER}" --comment "No changeset is pending on main at ${GITHUB_SHA}: a batch released what this pull request would have versioned."
+          done
+
   publish:
     needs: version
-    if: needs.version.outputs.pending == 'false' && needs.version.outputs.unpublished == 'true'
+    if: needs.version.outputs.path == 'publish'
     runs-on: ubuntu-24.04
     # The required reviewer on this environment is the release's one approval.
     environment: npm
@@ -119,7 +129,7 @@ jobs:
     permissions:
       contents: write
       id-token: write
-      # Reads the last Nightly's conclusion before a publish.
+      # Reads the Nightly runs, for the gate.
       actions: read
     steps:
       - uses: actions/checkout@v4
@@ -131,6 +141,15 @@ jobs:
           node-version: 22
           cache: pnpm
           registry-url: https://registry.npmjs.org
+
+      # Asked again after the approval, which can come days later: still
+      # nothing pending, one version, and a green Nightly on this tree. It
+      # does not ask which packages npm has, so a re-run after a partial
+      # publish goes on; it refuses a version older than npm's latest.
+      - name: A green Nightly ran on this tree
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/release-state.mjs --gate
 
       # Trusted publishing and provenance need npm 11.5.1 or later; node 22
       # ships 10.x. Pinned to 11.15.0 because 11.16.0 broke `npm info`
@@ -146,24 +165,6 @@ jobs:
       # clean runner with "Cannot find module '@graview/rota'".
       - run: pnpm typecheck
       - run: pnpm test
-
-      # The browser harnesses are the Nightly's: the last finished one on main
-      # must be green before anything is published.
-      - name: The last nightly on main holds
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          RESULT=$(gh run list --workflow nightly.yml --branch main --status completed --limit 1 --json conclusion,headSha,url --jq '.[0] // empty | "\(.conclusion) \(.headSha[0:8]) \(.url)"')
-          if [ -z "$RESULT" ]; then
-            echo "::error::no finished Nightly on main — run it (Actions → Nightly → Run workflow), then re-run this job"
-            exit 1
-          fi
-          echo "Last nightly: $RESULT"
-          case "$RESULT" in
-            success*) ;;
-            *) echo "::error::the last Nightly on main is not green: $RESULT"; exit 1 ;;
-          esac
 
       - name: Publish, tag and release
         env:
