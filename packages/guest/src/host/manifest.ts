@@ -2,7 +2,7 @@ import { isSystem, isoToday, localeFor, profileOf, timeZoneFor, type AnySchema, 
 import { fileFieldKind } from "./marks.js";
 import type { GuestAct, GuestEdge, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
 import type { GuestPictures } from "./pictures.js";
-import { THUMB_REFUSED, thumbIsSound } from "./picture-thumb.js";
+import { thumbRefusal } from "./picture-thumb.js";
 import { choicesOf, plainNode, readAcross, type GuestViewInput } from "./session.js";
 import { unseenOf, viewKinds } from "./unseen.js";
 
@@ -257,9 +257,10 @@ function picturesProblems<S extends AnySchema>(pictures: unknown, store: Store<S
       if (!(Number.isInteger(value) && (value as number) >= 1 && (value as number) <= 500)) problems.push("The view's pictures most is a whole number from 1 to 500: the most pictures it is handed, in the order its records are handed (view-pictures-most).");
       continue;
     }
-    /* A second, smaller size (Roadmap f-view-pictures-load-lazily-and-small): a number, never a kind called `thumb`'s fields. */
+    /* A second, smaller size (Roadmap f-view-pictures-load-lazily-and-small): a number, or a shape `{ width, aspect }` (HQ f-picture-thumb-around-focus), never a kind called `thumb`'s fields. */
     if (key === "thumb" && typeof value !== "string" && !Array.isArray(value)) {
-      if (!thumbIsSound(value, (pictures as { width?: unknown }).width)) problems.push(THUMB_REFUSED);
+      const refused = thumbRefusal(value, (pictures as { width?: unknown }).width);
+      if (refused) problems.push(refused);
       continue;
     }
     if (key === "width" && typeof value !== "string" && !Array.isArray(value)) {

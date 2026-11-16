@@ -110,7 +110,7 @@ is refused, and said once in its console and to the host:
   document or SVG has no `src`: show its name, type and size. They share
   12 MB: choose kinds, `records: { subject: true }` or `{ ids }`, and
   `most: 12`. `thumb: 240` (< `width`) adds a smaller `thumb`: draw
-  `thumb || src`. All are fetched as handed.
+  `thumb || src`; `{ width: 240, aspect: 1 }` crops it around `focus`.
 
 ```js
 const photos = (job.photos || []).map((photo) => photo.src
