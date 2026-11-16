@@ -147,6 +147,7 @@ export const EDIT_OPS = [
   "set-required",
   "set-default",
   "set-repeats",
+  "set-cites",
   "remove-field",
   "add-relation",
   "rename-relation",
@@ -239,6 +240,7 @@ function buildShapes(): Record<EditOp, z.ZodType> {
     "set-required": z.object({ op: z.literal("set-required"), kind: kindName, field: fieldName, required: z.boolean() }).strict(),
     "set-default": z.object({ op: z.literal("set-default"), kind: kindName, field: fieldName, default: z.unknown() }).strict(),
     "set-repeats": z.object({ op: z.literal("set-repeats"), kind: kindName, field: fieldName, repeats: z.boolean() }).strict(),
+    "set-cites": z.object({ op: z.literal("set-cites"), kind: kindName, field: fieldName, cites: z.union([z.string().min(1).max(80), z.null()]) }).strict(),
     "remove-field": z.object({ op: z.literal("remove-field"), kind: kindName, field: fieldName }).strict(),
     "add-relation": z.object({ op: z.literal("add-relation"), kind: kindName, relation: edgeName }).passthrough(),
     "rename-relation": z.object({ op: z.literal("rename-relation"), kind: kindName, relation: edgeName, to: edgeName }).strict(),
@@ -1059,6 +1061,22 @@ class Editor {
         if (e.repeats) f.repeats = true;
         else delete f.repeats;
         this.said.push(e.repeats ? `${e.kind}'s ${e.field} may repeat: weekly, monthly, on chosen days, until a day.` : `${e.kind}'s ${e.field} no longer repeats.`);
+        return;
+      }
+      case "set-cites": {
+        // Where its value came from (Roadmap f-field-cites-marker): a field or relation of the same kind, never itself.
+        const f = this.field(i, e.kind, e.field);
+        if (!f) return;
+        if (e.cites === null) {
+          delete f.cites;
+          this.said.push(`${e.kind}'s ${e.field} no longer says what cites it.`);
+          return;
+        }
+        const spec = this.doc.kinds[e.kind];
+        if (e.cites === e.field) return this.fail(i, "cites", `${e.kind}'s ${e.field} cannot cite itself; name the field or relation that holds where it came from`);
+        if (!spec.fields[e.cites] && !spec.edges?.[e.cites]) return this.fail(i, "cites", `${e.kind} has no field or relation "${e.cites}" to hold the citation`);
+        f.cites = e.cites;
+        this.said.push(`${e.kind}'s ${e.field} is cited by its ${e.cites}: a record holding a ${e.field} with no ${e.cites} is said to be uncited.`);
         return;
       }
       case "remove-field":
@@ -2809,6 +2827,12 @@ class Editor {
     const fields: Doc = {};
     for (const [k, v] of Object.entries(spec.fields)) fields[k === field ? to : k] = v;
     spec.fields = fields;
+    // A field cited by this one is cited by it under its new name (Roadmap f-field-cites-marker).
+    for (const [name, other] of Object.entries(fields) as [string, Doc][]) {
+      if (other.cites !== field) continue;
+      other.cites = to;
+      touched.push(`${kind}'s ${name} citation`);
+    }
     const origin = this.fieldOrigin.get(`${kind}.${field}`);
     this.fieldOrigin.delete(`${kind}.${field}`);
     this.fieldOrigin.set(`${kind}.${to}`, origin);
@@ -3040,6 +3064,7 @@ class Editor {
       }
     }
     for (const x of [...this.fills]) if (x.kind === kind && (x.field === field || x.from === field)) this.fills.splice(this.fills.indexOf(x), 1);
+    gone.push(...dropCitesOf(spec, kind, field));
     this.said.push(`${kind} loses its ${field} field, and every value in it${gone.length ? `; ${listOf(gone)} ${gone.length === 1 ? "goes" : "go"} with it` : ""}.`);
   }
 
@@ -3092,6 +3117,12 @@ class Editor {
       this.edgeOrigin.set(`${k}.${to}`, origin);
       if (origin) edges[to].renamedFrom = origin;
       else delete edges[to].renamedFrom;
+      // A field this relation cites is cited by it under its new name (Roadmap f-field-cites-marker).
+      for (const [name, field] of Object.entries(s.fields) as [string, Doc][]) {
+        if (field.cites !== relation) continue;
+        field.cites = to;
+        touched.push(`${k}'s ${name} citation`);
+      }
     }
     this.said.push(`The "${relation}" relation is renamed to "${to}"; its links are kept${touched.length ? `, and ${listOf(touched)} follow${touched.length === 1 ? "s" : ""}` : ""}.`);
   }
@@ -3106,6 +3137,7 @@ class Editor {
     if (others.length === 0 && this.doc.policy?.sees?.some((sight: Doc) => sight.via === relation)) return this.fail(i, "relation", `a sight shows what "${relation}" joins to each seat's own record`, "change the policy's sight first");
     const gone: string[] = [];
     this.dropRelation(kind, relation, gone);
+    gone.push(...dropCitesOf(spec, kind, relation));
     this.said.push(`The "${relation}" relation from ${kind} is removed, with every link of that kind${gone.length ? `; ${listOf(gone)} ${gone.length === 1 ? "goes" : "go"} with it` : ""}.`);
   }
 
@@ -4132,4 +4164,15 @@ export function renameIn(kinds: DeclaredKinds, over: string | "graph", text: { r
 function renamedAct(act: string, from: string, to: string): string {
   const derived = derivedActOf(act);
   return derived && derived.kind === from ? `${derived.act}-${to}` : act;
+}
+
+/** A kind's fields that said this field or relation cites them say nothing now (Roadmap f-field-cites-marker): what goes, in words. */
+function dropCitesOf(spec: Doc, kind: string, name: string): string[] {
+  const gone: string[] = [];
+  for (const [field, f] of Object.entries(spec.fields ?? {}) as [string, Doc][]) {
+    if (f.cites !== name) continue;
+    delete f.cites;
+    gone.push(`${kind}'s ${field} citation`);
+  }
+  return gone;
 }

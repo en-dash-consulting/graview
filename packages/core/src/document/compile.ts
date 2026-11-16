@@ -174,11 +174,14 @@ export function kindShapes(document: GraviewDocument): Map<string, KindShape> {
   for (const [kind, spec] of Object.entries(document.kinds)) {
     const computed = parsedComputed(spec);
     const linked = linkedEdges(spec.edges);
+    // What cites each cited field (Roadmap f-field-cites-marker), which `uncited(…)` reads.
+    const cites = new Map(Object.entries(spec.fields).flatMap(([name, field]) => (field.cites ? [[name, field.cites] as const] : [])));
     shapes.set(kind, {
       fields: new Set([...Object.keys(spec.fields), ...linked.keys()]),
       edges: new Map(Object.entries(localEdges(spec.edges)).map(([name, e]) => [name, e.cardinality ?? "many"])),
       ...(computed ? { computed } : {}),
       ...(linked.size > 0 ? { linked } : {}),
+      ...(cites.size > 0 ? { cites } : {}),
     });
   }
   const facts = parsedComputed(document);

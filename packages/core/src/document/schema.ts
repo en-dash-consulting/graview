@@ -153,6 +153,13 @@ function build() {
        * `field-collaborative`).
        */
       collaborative: z.optional(z.boolean()),
+      /**
+       * Where its value came from (Roadmap f-field-cites-marker): the field
+       * or the relation of the same kind that holds its citation, by name
+       * (`"cites": "source"`). A record holding a value here with nothing
+       * there is uncited, which the checker and the app's own actor say.
+       */
+      cites: z.optional(str(1, 80)),
     })
     .check(
       z.superRefine((f, ctx) => {

@@ -49,6 +49,8 @@ export interface KindShape {
    * the option by its label, else its id spoken, never the id itself.
    */
   readonly choices?: ReadonlyMap<string, Readonly<Record<string, string>>>;
+  /** What cites each cited field, by field (Roadmap f-field-cites-marker): a field or a relation of the kind, which `uncited(…)` reads. */
+  readonly cites?: ReadonlyMap<string, string>;
 }
 
 /** A link an expression walked and could not read: the viewer may not open the far app, or its record is not read (yet, or at all). */
@@ -478,6 +480,27 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
         spend(nodes.length, e.at);
         return new NodeSet(nodes);
       }
+      case "uncited": {
+        /*
+         * WHETHER A CITED VALUE SAYS NOTHING OF WHERE IT CAME FROM (Roadmap
+         * f-field-cites-marker): uncited('population') of one field, uncited()
+         * of any the record's kind declares `cites` on. A field holding no
+         * value is no claim; a relation cites through a record not set aside.
+         */
+        arity(0, 1);
+        if (!subject) throw new ExprEvalError("uncited(…) needs a record to judge", e.at);
+        const shape = ctx.kinds.get(subject.kind);
+        const cited = shape?.cites;
+        if (!cited) return false;
+        const fields = e.args.length === 1 ? [word(0)] : [...cited.keys()];
+        const holds = (v: unknown) => !(v === undefined || v === null || v === "" || (Array.isArray(v) && v.length === 0));
+        const record = subject as unknown as Record<string, unknown>;
+        return fields.some((field) => {
+          const by = cited.get(field);
+          if (by === undefined || !holds(record[field])) return false;
+          return shape.edges.has(by) ? ctx.graph.out(subject.id, by).length === 0 : !holds(record[by]);
+        });
+      }
       case "archived": {
         // Whether a record is archived: the subject's own, or the one given (FR-173).
         arity(0, 1);
@@ -713,5 +736,5 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
 export const FUNCTIONS = [
   "out", "in", "all", "count", "exists", "every", "some", "sum", "min", "max", "present", "len",
   "contains", "startsWith", "lower", "today", "now", "date", "days", "hours", "if", "first", "sort", "either", "fact", "archived", "round",
-  "concat", "format", "datetime", "at", "addMinutes", "weekday", "startOfWeek",
+  "concat", "format", "datetime", "at", "addMinutes", "weekday", "startOfWeek", "uncited",
 ] as const;

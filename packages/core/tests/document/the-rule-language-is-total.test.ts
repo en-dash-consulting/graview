@@ -82,13 +82,13 @@ describe("null propagates, and every production says what it does with it", () =
     ["round(hours, 2)", null],
     // Roadmap f-formula-text-datetime: nothing joins as no words; a date function of nothing is nothing.
     ["concat(due, 'x')", "x"], ["format(due, 'EEE')", null], ["datetime(due, '09:30')", null], ["at(due, '09:30')", null], ["at(today(), due)", null],
-    ["addMinutes(due, 5)", null], ["addMinutes(today(), hours)", null], ["weekday(due)", null], ["startOfWeek(due)", null],
+    ["addMinutes(due, 5)", null], ["addMinutes(today(), hours)", null], ["weekday(due)", null], ["startOfWeek(due)", null], ["uncited()", false], ["uncited('hours')", false],
   ])("%s → %j", (source, expected) => {
     expect(on(source)).toEqual(expected);
   });
 
   it("names every function the language knows, and a test above reaches each with nothing", () => {
-    expect([...FUNCTIONS].sort()).toEqual(["addMinutes", "all", "archived", "at", "concat", "contains", "count", "date", "datetime", "days", "either", "every", "exists", "fact", "first", "format", "hours", "if", "in", "len", "lower", "max", "min", "now", "out", "present", "round", "some", "sort", "startOfWeek", "startsWith", "sum", "today", "weekday"]);
+    expect([...FUNCTIONS].sort()).toEqual(["addMinutes", "all", "archived", "at", "concat", "contains", "count", "date", "datetime", "days", "either", "every", "exists", "fact", "first", "format", "hours", "if", "in", "len", "lower", "max", "min", "now", "out", "present", "round", "some", "sort", "startOfWeek", "startsWith", "sum", "today", "uncited", "weekday"]);
   });
 });
 

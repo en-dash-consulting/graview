@@ -17,7 +17,7 @@ import { RemoteRootElement, remoteId, updateRemoteElementAttribute } from "@remo
 import type { Unsent } from "../channel.js";
 import { HTML_ELEMENTS, UNNAMED_ELEMENTS, openAttribute, svgElementName } from "../open-kit.js";
 import { PART_NAME, PART_REST_PUSHES, PART_SHARE } from "../part.js";
-import { GUEST_GESTURES, navigateRequest, type GuestAnswer, type GuestDomEvent, type GuestDroppedFile, type GuestGesture, type GuestNavigateTo, type GuestPressed, type GuestProps, type HostMessage } from "../protocol.js";
+import { GUEST_GESTURES, navigateRequest, type GuestAnswer, type GuestDomEvent, type GuestDroppedFile, type GuestGesture, type GuestNavigateTo, type GuestNode, type GuestPressed, type GuestProps, type HostMessage } from "../protocol.js";
 import { dayIn, fromToday } from "../from-today.js";
 import type { Hardening } from "./harden.js";
 import { createListenerLedger } from "./listeners.js";
@@ -101,6 +101,19 @@ const PART_ELEMENTS: ReadonlySet<string> = new Set(["div", "li", "article"]);
 /** An act's arguments, or a list of them: several of the act as one change, one undo (FR-193). */
 export type ActArgs = Readonly<Record<string, unknown>> | readonly Readonly<Record<string, unknown>>[];
 
+/** A cited field of a record, as `graview.cite` says it. */
+export interface ViewCite {
+  /** The field or relation that cites it. */
+  readonly by: string;
+  readonly relation: boolean;
+  /** Whether the record's value says where it came from; true for a field that holds no value. */
+  readonly cited: boolean;
+  /** The citing field's value, for a field. */
+  readonly source?: unknown;
+  /** The handed records the citing relation links, for a relation. */
+  readonly sources?: readonly GuestNode[];
+}
+
 export interface GraviewView {
   readonly props: GuestProps | undefined;
   onProps(listener: (props: GuestProps) => void): () => void;
@@ -127,6 +140,16 @@ export interface GraviewView {
   readonly today: string;
   /** A day or a moment said against today: "today", "tomorrow", "in 3 days", "2 weeks ago"; with `{ due: true }`, a past day is "overdue". */
   fromToday(day: string, options?: { readonly due?: boolean }): string;
+  /**
+   * WHERE A CITED VALUE CAME FROM (Roadmap f-field-cites-marker): for a
+   * field its kind declares `cites`, what cites it (`by`, a field or a
+   * relation), whether the record's value is cited, and the citation, the
+   * citing field's value or the handed records its relation links.
+   * Undefined for a field nothing cites.
+   */
+  cite(node: GuestNode | undefined, field: string): ViewCite | undefined;
+  /** The record's cited fields that hold a value with nothing cited, as the host judged them; `[]` for none. */
+  uncited(node: GuestNode | undefined): readonly string[];
   /**
    * WHAT THE VIEW KEEPS FOR WHOEVER IS LOOKING AT IT: strings of at most
    * 4 KB, by key, its own and no other view's, never the graph's. `props.mine`
@@ -612,6 +635,17 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
     fromToday(day: string, options?: { readonly due?: boolean }) {
       const on = dayIn(day, current?.timeZone);
       return on === undefined ? "" : fromToday(on, view.today, options);
+    },
+    cite(node: GuestNode | undefined, field: string) {
+      const said = node ? current?.cites?.[node.kind]?.[field] : undefined;
+      if (!node || !said) return undefined;
+      const cited = !(current?.uncited?.[node.id] ?? []).includes(field);
+      if (!said.relation) return { by: said.by, relation: false, cited, ...(node[said.by] !== undefined ? { source: node[said.by] } : {}) };
+      const linked = new Set((current?.edges ?? []).filter((edge) => edge.from === node.id && edge.kind === said.by).map((edge) => edge.to));
+      return { by: said.by, relation: true, cited, sources: (current?.nodes ?? []).filter((one) => linked.has(one.id)) };
+    },
+    uncited(node: GuestNode | undefined) {
+      return node ? (current?.uncited?.[node.id] ?? []) : [];
     },
     get refused() {
       return refusedLast;

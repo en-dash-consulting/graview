@@ -283,6 +283,19 @@ export interface GuestProps {
    */
   readonly choices?: Readonly<Record<string, Readonly<Record<string, Readonly<Record<string, string>>>>>>;
   /**
+   * WHAT CITES WHAT (Roadmap f-field-cites-marker), for the kinds of the
+   * records handed: kind → cited field → the field or relation (`relation:
+   * true`) that holds where its value came from. A view reads it with
+   * `graview.cite(node, field)`.
+   */
+  readonly cites?: Readonly<Record<string, Readonly<Record<string, { readonly by: string; readonly relation: boolean }>>>>;
+  /**
+   * WHICH HANDED RECORDS HOLD A VALUE WITH NOTHING CITED: record id → its
+   * cited fields holding a value whose citing field is empty or whose
+   * citing relation links nothing, as the viewer sees the graph.
+   */
+  readonly uncited?: Readonly<Record<string, readonly string[]>>;
+  /**
    * WHAT THIS VIEW KEEPS FOR WHOEVER IS LOOKING (`graview.mine`), at draw
    * time, so a first draw needs no round trip. A worker view's own and no
    * other's, always there for one drawn in a page, `{}` in a headless run.

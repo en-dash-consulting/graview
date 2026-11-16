@@ -24,6 +24,7 @@ import {
   checkDevices,
   checkWorkflows,
   checkAliases,
+  checkCites,
   checkActsFromEnds,
   checkBlankInstallation,
   checkEditableFields,
@@ -150,6 +151,7 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>, options: Check
   checkDevices(ctx);
   checkWorkflows(ctx);
   checkAliases(ctx);
+  checkCites(ctx);
   // The look: places that repeat, more than a person scans, a home with nothing to read first — judged of the app written as a document.
   if (options.design !== false) {
     for (const f of designFindings(toDocument(app).document)) add({ severity: f.severity, code: f.code, where: f.path, message: f.message, fix: f.fix ?? "", ...(f.edits ? { edits: f.edits } : {}) });
