@@ -10,7 +10,7 @@ import { labelOf } from "./schema/define-node.js";
 import { actingAs, grantsTo, isSystem, meOf, profileOf, seatedIn, seatPersonOf } from "./permissions/policy.js";
 import { PERSON_SEAT } from "./graph/archived.js";
 import { isUnset } from "./graph/primitives.js";
-import { seatsKept, unseated } from "./binding-served.js";
+import { seatsKept, takesBindingBack, unseated } from "./binding-served.js";
 import { presentOf } from "./seat-of.js";
 import { FIELD_SIGHT, fieldsJudged, partialSight, recordsOf, sees, type Judged, type Records } from "./permissions/sight.js";
 import type { Principal } from "./permissions/types.js";
@@ -619,6 +619,7 @@ function boundInLog(store: Judged): ReadonlyMap<string, string> {
     }
   }
   const ops = log.all();
+  const opOf = (id: string) => (log as { get?(id: string): Operation | undefined }).get?.(id);
   for (let at = held.length - horizon; at < ops.length; at++) {
     for (const primitive of ops[at]!.primitives) {
       if (primitive.op === "add-node") {
@@ -628,7 +629,8 @@ function boundInLog(store: Judged): ReadonlyMap<string, string> {
         const seat = (primitive.after as Record<string, unknown>)[PERSON_SEAT];
         const was = (primitive.before as Record<string, unknown>)[PERSON_SEAT];
         if (typeof seat === "string" && !isUnset(seat)) held.bound.set(seat, primitive.id);
-        else if (typeof was === "string" && held.bound.get(was) === primitive.id) held.bound.delete(was);
+        // A binding taken back makes the seat nobody's again; one ended keeps what its seat did said as the person (Roadmap f-unbind-person).
+        else if (typeof was === "string" && held.bound.get(was) === primitive.id && takesBindingBack(ops[at]!, opOf)) held.bound.delete(was);
       }
     }
   }
