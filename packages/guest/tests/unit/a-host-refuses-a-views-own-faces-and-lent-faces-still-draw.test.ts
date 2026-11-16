@@ -70,6 +70,7 @@ const LENDS = () => ({ name: "Offers", views: { fonts: [{ family: "Rock Face", s
 /** A view past its ready, dressed in a brand that lends "Rock Face", its own faces drawn or not as `ownFaces` says. */
 function mounted(ownFaces?: boolean) {
   const problems: string[] = [];
+  const codes: string[] = [];
   const view = mountWorkerView(document.body.appendChild(document.createElement("div")), {
     manifest: { name: "packages", title: "The packages", attach: "package", cardinality: "many" },
     worker: { script: "/* the view */" },
@@ -79,7 +80,10 @@ function mounted(ownFaces?: boolean) {
     brand: LENDS,
     asset: (path: string) => path,
     ...(ownFaces !== undefined ? { ownFaces } : {}),
-    onProblem: (said) => problems.push(said),
+    onProblem: (said, problem) => {
+      problems.push(said);
+      codes.push(problem.code);
+    },
   });
   const worker = FakeWorker.made.at(-1)!;
   worker.say({ graview: "guest-ready", protocol: GUEST_PROTOCOL });
@@ -92,7 +96,7 @@ function mounted(ownFaces?: boolean) {
   };
   const style = (sheets: readonly string[]) => port.postMessage({ type: "style", sheets, nonce: hello.nonce });
   const drawnCss = () => view.shadow.querySelector("[data-graview-view-style]")?.textContent ?? "";
-  return { view, problems, style, drawnCss };
+  return { view, problems, codes, style, drawnCss };
 }
 
 describe("a view's own faces, where its host refuses them", () => {
@@ -113,12 +117,13 @@ describe("a view's own faces, where its host refuses them", () => {
   });
 
   it("are not loaded into the page and are said to the host once each, while the face the app lends is loaded and drawn", async () => {
-    const { view, problems, style, drawnCss } = mounted(false);
+    const { view, problems, codes, style, drawnCss } = mounted(false);
     style([sheet("Shout"), `.title { font-family: Shout, serif }\n.lent { font-family: "Rock Face", serif }`]);
     await until(() => problems.length > 0 && fonts.size > 0);
     await wait(30);
     expect(familiesOnPage()).toEqual(["Rock Face"]);
     expect(problems).toEqual([expect.stringMatching(/^Not loaded: the @font-face "Shout"\. This host draws no face.*\(view-font-face-host\)\.$/)]);
+    expect(codes).toEqual(["own-face-refused"]);
     expect(drawnCss()).toContain(".title { font-family: Shout, serif; }");
     expect(drawnCss()).toContain('.lent { font-family: "Rock Face", serif; }');
     /* The same sheets again: said once. */
