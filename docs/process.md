@@ -6,11 +6,10 @@ and Graview Cloud. The rules every build follows are in
 [`.ndx/rex/workflow.md`](../.ndx/rex/workflow.md); the pass that drives the
 loop is the `dev-sync` skill ([`.claude/skills/dev-sync/SKILL.md`](../.claude/skills/dev-sync/SKILL.md)).
 
-Steps marked **(new in 0.2.5)** arrive with the builds `ci/harnesses-run-on-github`,
-`ci/budgets-raised-on-the-batch` and `ci/release-without-a-version-pr`. Until
-they are on main, do those steps the 0.2.4 way:
-- a build runs its full harnesses locally (`pnpm verify <names>`) and writes
-  its own budget raise file on its PR;
+Steps marked **(new in 0.2.5)** arrive with the builds `ci/harnesses-run-on-github`
+and `ci/release-without-a-version-pr`. Until they are on main, do those steps
+the 0.2.4 way:
+- a build runs its full harnesses locally (`pnpm verify <names>`);
 - the batch runs `pnpm test`, `pnpm verify`, `pnpm engines` and
   `node scripts/progression.mjs` locally, and a Nightly on its head;
 - merging the batch opens the "Version packages" PR, where the release record
@@ -51,7 +50,9 @@ flowchart TD
    branch and opens a pull request. Once CI is green and it has reported, the
    PR is frozen.
 4. **The batch** is one `batch/0-2-N` branch off main that merges the green
-   PRs in order, writes the budget raises for what they add **(new in 0.2.5)**,
+   PRs in order, writes the budget raises for what they add together (on a
+   PR that is not a batch, CI sets `GRAVIEW_BUDGET=warn` and a byte budget
+   that is over only warns; the batch fails while it is over),
    and runs `pnpm release:prepare`: the changesets versioned, the release
    record taken in and the site rebuilt **(new in 0.2.5)**.
 5. **Release.** Merging the batch starts the `publish` job directly
@@ -77,7 +78,7 @@ flowchart TD
 | Full harnesses **(new in 0.2.5)** | `pnpm verify:github <names>` on GitHub runners (`verify.yml`) | not yet measured | every screen of the harnesses the change touches, without the laptop's ports and power | the build |
 | PR CI | `ci.yml`: tests in three shards, typecheck, build, workerd, `graview check`, tarballs, scaffold, progression, first load, changeset | 6–13 min | what main's ruleset requires (`verify`, `changeset`) | automatic; the build reads it |
 | Nightly on a PR | `nightly.yml` dispatched on the frozen head: every harness in nine shards, the GPU leg | 27–34 min | harness, render and focus changes, before they merge | the dev-sync pass dispatches it |
-| The batch | merge in order, budget raises **(new in 0.2.5)**, `pnpm release:prepare` **(new in 0.2.5)**, PR CI, a Nightly on its head | about 80 min on 0.2.4 | the PRs hold together | the holder of `phase:release` |
+| The batch | merge in order, budget raises, `pnpm release:prepare` **(new in 0.2.5)**, PR CI, a Nightly on its head | about 80 min on 0.2.4 | the PRs hold together | the holder of `phase:release` |
 | Publish | `release.yml` in the `npm` environment: build, typecheck, tests, a green Nightly on the same tree **(new in 0.2.5)**, trusted publish, tags, releases | about 12 min of tests, then the publish | nothing reaches npm untested or unapproved | Nick approves; the workflow does the rest |
 | Nightly on main | `nightly.yml` every day at 07:17 UTC; Mondays at 09:17 also WebKit and Firefox | 27–34 min | main stays green between releases | automatic; red on main is fixed first |
 | Pages | `pages.yml` on every push to main | a few minutes | graview.dev says what main has | automatic |
@@ -99,7 +100,7 @@ after it reported done. The rules below are written against those numbers.
 | CI, Nightly, release, Pages | `.github/workflows/ci.yml`, `nightly.yml`, `release.yml`, `pages.yml`; `verify.yml` **(new in 0.2.5)** |
 | A harness's verdict | `docs/<name>.json`, named claims; on GitHub, the run's `verdicts-*` artifacts |
 | Problems the watch saw, across harnesses and runs | `docs/watch/ledger.json` |
-| A bundle budget raise | `scripts/budget-raises/<what-raised-it>.json`, one file per raise |
+| A bundle budget raise | `scripts/budget-raises/<what-raised-it>.json`, one file per raise, written on the batch; what warns and what fails, `scripts/lib/budget-mode.mjs` |
 | Versioning | `.changeset/` and [`.changeset/README.md`](../.changeset/README.md) |
 | What a version may change for a host | [`docs/stability.md`](stability.md) |
 | The release record (headline, summary, what breaks for a host) | `apps/site/releases.json`, shown on graview.dev's Releases page |

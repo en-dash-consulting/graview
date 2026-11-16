@@ -36,9 +36,14 @@ that `docs/process.md` describes.
    `5600+100*N`; a build with no slot picks a free hundred outside
    5190–5289): harnesses hold ports and CPU, and two chains on one machine
    fail each other.
-7. **Write no budget raise files on a PR; the batch writes them (new in
-   0.2.5).** On a PR the byte budget only warns. Raises written per PR
-   conflicted with each other and summed wrong once merged.
+7. **Write no budget raise files on a PR; the batch writes them.** On a PR
+   into main whose head is not `batch/*`, CI sets `GRAVIEW_BUDGET=warn`: a
+   byte budget that is over is a warning in the job's summary and an
+   annotation, and the `batch/*` branch, main, Nightly and the release fail
+   while it is over. What guards a mistake a PR can fix itself (a package a
+   bundle must not carry, one left in a lazy chunk, the studio or a compiler
+   up front, zod's share, a chunk count) fails on the PR too. Raises written
+   per PR conflicted with each other and summed wrong once merged.
 8. **Write a `patch` changeset for every change under `packages/`, with a
    `Compatibility:` line where a surface is touched.** CI refuses a package
    change without one; a bump other than `patch` is a claim somebody must
