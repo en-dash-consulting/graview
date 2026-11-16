@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 1093,
+  "gzipped": 312,
+  "changeset": "a-host-can-end-a-binding.md",
+  "note": "Raised when a host came to end a person's binding and to take a wrong one back after the record was edited: an undo of a binding is blocked only by a later op that made, removed or rebound its record, a binding taken back, ended or put back again is judged as the change its undo chain begins with, and what a seat did stays said as the person after its binding ends. 1093 / 312 more. Measured at 698037 / 241991 against a budget of 696944 / 241680."
+}

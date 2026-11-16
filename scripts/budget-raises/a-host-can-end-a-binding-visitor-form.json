@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form alone",
+  "minified": 1068,
+  "gzipped": 355,
+  "note": "Raised when a host came to end a person's binding and to take a wrong one back after the record was edited: an undo of a binding is blocked only by a later op that made, removed or rebound its record, a binding taken back, ended or put back again is judged as the change its undo chain begins with, and what a seat did stays said as the person after its binding ends. 1068 / 355 more. Measured at 291214 / 105162 against a budget of 290146 / 104807."
+}
