@@ -202,6 +202,47 @@ describe("7. composeDesign leaves the people kind to the framework", () => {
     expect(edits.filter((edit) => (edit as { kind?: string }).kind === "member")).toEqual([]);
     expect(JSON.stringify(edits.find((edit) => edit.op === "set-home"))).not.toContain("'member'");
   });
+
+  it("nor a job, nor the critic's glance for the kind most things point at, when that is the members", () => {
+    const team = {
+      format: "graview-document",
+      formatVersion: 1,
+      name: "Team",
+      kinds: {
+        member: { people: true, fields: { name: { type: "string", required: true }, bio: { type: "text" }, status: { type: "enum", options: ["pending", "active", "done"] }, dueAt: { type: "date" } } },
+        task: { fields: { name: { type: "string", required: true } }, edges: { assignee: { to: ["member"], cardinality: "one" }, reviewer: { to: ["member"], cardinality: "one" } } },
+        note: { fields: { name: { type: "string", required: true } }, edges: { author: { to: ["member"], cardinality: "one" } } },
+      },
+      acts: { "finish-member": { title: "Finish", on: "member", sets: { status: "done" } }, "add-task": { title: "Add a task", creates: "task" } },
+      roles: ["owner"],
+      policy: { grants: [{ roles: ["owner"], mutations: "*" }] },
+    } as unknown as GraviewDocument;
+    const { edits } = composeDesign(team);
+    expect(edits.filter((edit) => (edit as { kind?: string }).kind === "member" || JSON.stringify(edit).includes("'member'"))).toEqual([]);
+    // Assigned to a member is not belonging to one.
+    expect(belongsTo(team, "task")).toBeUndefined();
+    const document = applied(team, edits);
+    expect(designFindings(document).filter((finding) => finding.severity === "warning")).toEqual([]);
+  });
+});
+
+describe("a relation named with a hyphen, and a rule that forbids one", () => {
+  const kinds = supper.kinds as Record<string, Record<string, unknown>>;
+
+  it("is reached quoted, so the row still names whose it is", () => {
+    const hyphened = { ...supper, kinds: { ...kinds, dish: { ...kinds["dish"], edges: { "made-by": { to: ["household"], cardinality: "one" } } } } } as unknown as GraviewDocument;
+    expect(of(rowFromDeclaration(hyphened, "dish") ? [rowFromDeclaration(hyphened, "dish")!.edit] : [], "set-view", "dish")!["blocks"]).toContainEqual({ when: "present(out('made-by'))", show: [{ text: "{out('made-by')}" }] });
+    const { sections } = homeAs(hyphened, [riveras, { id: "d1", kind: "dish", name: "Pie", course: "dessert" }], [{ id: "e1", from: "d1", to: "h1", kind: "made-by" }]);
+    expect(sections["Dishes"]!.items[0]!.parts.map((part) => part.text)).toEqual(["Dessert", "The Riveras"]);
+  });
+
+  it("is not taken for one that requires it", () => {
+    const forbids = (require: string) =>
+      ({ ...supper, kinds: { ...kinds, guest: { ...kinds["guest"], edges: { seatedAt: { to: ["household"], cardinality: "one" }, household: { to: ["household"], cardinality: "one" } } } }, rules: { r: { over: "guest", require } } }) as unknown as GraviewDocument;
+    expect(belongsTo(forbids("not present(household)"), "guest")).toEqual({ edge: "seatedAt", kind: "household" });
+    expect(belongsTo(forbids("count(out('household')) == 0"), "guest")).toEqual({ edge: "seatedAt", kind: "household" });
+    expect(belongsTo(forbids("count(out('household')) > 0"), "guest")).toEqual({ edge: "household", kind: "household" });
+  });
 });
 
 describe("the composed supper", () => {

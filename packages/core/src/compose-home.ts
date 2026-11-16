@@ -122,8 +122,9 @@ const edgesOf = (spec: KindSpec | undefined) => Object.entries((spec?.edges ?? {
  *     records may share it, so that kind groups this one: the shape a
  *     foreign key has. Not one to the kind itself (a parent is a
  *     hierarchy, not an owner), not to another app's kind or to a choice of
- *     kinds, and not a pair: where the other kind holds one of this kind
- *     back, neither groups the other;
+ *     kinds, not to the people kind (a record assigned to a member is not
+ *     grouped by them), and not a pair: where the other kind holds one of
+ *     this kind back, neither groups the other;
  *   - of several such, the one a rule over the kind requires (its `require`
  *     names the relation: "every guest comes with a household") first, else
  *     the first declared.
@@ -132,22 +133,30 @@ export function belongsTo(document: GraviewDocument, kind: string): { readonly e
   const candidates = edgesOf(document.kinds[kind]).flatMap(([edge, one]): { edge: string; kind: string }[] => {
     if (one.cardinality !== "one" || !Array.isArray(one.to) || one.to.length !== 1) return [];
     const target = one.to[0]!;
-    if (target === kind || !Object.hasOwn(document.kinds, target)) return [];
+    // Not the people: a record assigned to a member is not grouped by them, and the members are the framework's.
+    if (target === kind || !Object.hasOwn(document.kinds, target) || isPeople(document.kinds[target])) return [];
     const paired = edgesOf(document.kinds[target]).some(([, back]) => back.cardinality === "one" && Array.isArray(back.to) && back.to.includes(kind));
     return paired ? [] : [{ edge, kind: target }];
   });
   const required = Object.values((document.rules ?? {}) as Readonly<Record<string, { readonly over?: string; readonly require?: string }>>).flatMap((rule) => (rule.over === kind && typeof rule.require === "string" ? [rule.require] : []));
-  // The relation named as a word of the rule: bare (`present(household)`), or quoted (`count(out('household'))`).
-  const names = (edge: string, rule: string) => rule.split(/[^A-Za-z0-9_-]+/).includes(edge);
-  return candidates.find((one) => required.some((rule) => names(one.edge, rule))) ?? candidates[0];
+  return candidates.find((one) => required.some((rule) => requires(rule, one.edge))) ?? candidates[0];
 }
 
-/** How many links a kind has to other kinds of this app — each relation from it to each kind it reaches, and each relation to it: what most of the app hangs on is linked most. */
+/** A rule's `require` that says the relation is there: `present(household)`, `present(out('household'))`, `exists(out('household'))`, or a count of it above nothing — said whole, never a part of a larger condition (which may as well forbid it). */
+function requires(rule: string, edge: string): boolean {
+  const escaped = edge.replace(/[-]/g, "\\-");
+  const reach = `(?:${escaped}|out\\(\\s*['"]${escaped}['"]\\s*\\))`;
+  const said = rule.replace(/\s+/g, " ").trim();
+  return new RegExp(`^(?:(?:present|exists)\\( ?${reach} ?\\)|count\\( ?${reach} ?\\) ?(?:> ?0|>= ?1))$`).test(said);
+}
+
+/** How many links a kind has to other kinds of this app, the people aside — each relation from it to each kind it reaches, and each relation to it: what most of the app hangs on is linked most. */
 function linksOf(document: GraviewDocument, kind: string): number {
   let links = 0;
   for (const [from, spec] of Object.entries(document.kinds)) {
+    if (isPeople(spec)) continue;
     for (const [, edge] of edgesOf(spec)) {
-      const targets = Array.isArray(edge.to) ? edge.to.filter((target) => Object.hasOwn(document.kinds, target) && target !== from) : [];
+      const targets = Array.isArray(edge.to) ? edge.to.filter((target) => Object.hasOwn(document.kinds, target) && target !== from && !isPeople(document.kinds[target])) : [];
       links += from === kind ? targets.length : targets.includes(kind) ? 1 : 0;
     }
   }
@@ -191,7 +200,9 @@ function counted(document: GraviewDocument, kind: string, first: boolean, figure
   const count = `count(all(${quoted(kind)}))`;
   const noun = nounWords(document.kinds, kind).toLowerCase();
   const plural = pluralWords(document.kinds, kind).toLowerCase();
-  const isPlural = plural !== noun && plural !== englishPlural(noun) && (/s$/.test(plural) || /^(people|children|men|women|staff|data|media|feet|teeth|geese|mice)$/.test(plural.split(" ").pop() ?? ""));
+  // A plural declared the same as its noun ("sheep") is one English would not make, and is said as declared.
+  const same = plural === noun && (document.kinds[kind] as { readonly plural?: string }).plural?.toLowerCase() === noun;
+  const isPlural = same || (plural !== noun && plural !== englishPlural(noun) && (/s$/.test(plural) || /^(people|children|men|women|staff|data|media|feet|teeth|geese|mice)$/.test(plural.split(" ").pop() ?? "")));
   // The noun counts the set itself (`plural` takes a set as it takes a number): a part a few characters shorter, so a fifth kind fits sooner.
   return `{${count}${figures ? "" : ` | words${first ? " | capital" : ""}`}} {all(${quoted(kind)}) | plural: ${isPlural ? `${quoted(noun)}, ${quoted(plural)}` : quoted(noun)}}`;
 }
@@ -271,6 +282,9 @@ export function homeFromDeclaration(document: GraviewDocument, options: FromDecl
   };
 }
 
+/** A relation as an expression reaches it: bare where its name is one word (`household`), else `out('made-by')`, which a bare `made-by` would read as a subtraction. */
+const reached = (edge: string) => (/^[a-z][A-Za-z0-9]*$/.test(edge) ? edge : `out(${quoted(edge)})`);
+
 /** Every field the record's name already says — its naming field, or each its label reads ("{first} {last}"): a row or a glance says what the name does not. */
 const namingFields = (spec: KindSpec) => new Set([defaultLabelField(spec) ?? "", ...[...(spec.label ?? "").matchAll(/\{\s*([A-Za-z][A-Za-z0-9_]*)/g)].map((match) => match[1]!)]);
 
@@ -303,7 +317,7 @@ export function rowFromDeclaration(document: GraviewDocument, kind: string, opti
   const parts: { readonly block: unknown; readonly words: string }[] = [
     ...(date && !naming.has(date.field) ? [{ block: shown(date.field, `{${date.field} | glance}`), words: `its ${fieldWords(spec, date.field)}` }] : []),
     ...(choice && !naming.has(choice) ? [{ block: shown(choice, `{${choice}}`), words: `its ${fieldWords(spec, choice)}` }] : []),
-    ...(owner ? [{ block: shown(owner.edge, `{${owner.edge}}`), words: `the ${nounWords(document.kinds, owner.kind).toLowerCase()} it belongs to` }] : []),
+    ...(owner ? [{ block: shown(reached(owner.edge), `{${reached(owner.edge)}}`), words: `the ${nounWords(document.kinds, owner.kind).toLowerCase()} it belongs to` }] : []),
   ];
   if (parts.length === 0) {
     // Not a yes or no: alone on a row, "true" says nothing of what it is.

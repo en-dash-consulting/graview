@@ -278,7 +278,8 @@ export function composeDesign(source: GraviewDocument | GraviewApp<AnySchema>, o
 
   const declared = Array.isArray(doc.purpose?.jobs) ? doc.purpose.jobs : [];
   if (declared.length === 0) {
-    for (const job of inferJobs(doc, options)) {
+    // The people kind is the members, the framework's to draw: no job of the app is proposed over them (Roadmap f-composer-covers-cloud-first-design).
+    for (const job of inferJobs(doc, options).filter((one) => (doc.kinds[one.kind] as { readonly people?: boolean } | undefined)?.people !== true)) {
       const title = job.act ? doc.acts?.[job.act]?.title : undefined;
       if (attempt({ op: "add-job", job: job as unknown as Record<string, unknown> }))
         reasons.push(`Nothing says what this app's people come to do, so its home said only what it holds: "${job.ask}" is a job it can answer from its ${pluralOf(doc, job.kind)}${title ? `, with "${title}" offered on each` : job.act ? ", with the act that answers it offered on each" : ""}.`);
