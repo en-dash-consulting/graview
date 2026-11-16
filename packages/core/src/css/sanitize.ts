@@ -719,6 +719,8 @@ interface FaceJudging {
   readonly lent?: readonly string[];
   /** Written again under the faces' names on the page: the faces were judged already, and are passed over. */
   readonly skip?: true;
+  /** The host refuses a view's own faces (`SanitizeOptions.faces.refused`): each is refused, and none kept. */
+  readonly refused?: true;
 }
 
 const PROPERTIES = new Set(CSS_PROPERTIES);
@@ -1025,6 +1027,20 @@ function judgeRule(rule: Rule, refuse: (refusal: CssRefusal) => void, depth: num
       refuse({ reason: "font-face", name: "unreadable" });
       return undefined;
     }
+    /*
+     * THE HOST REFUSES A VIEW'S OWN FACES (HQ f-host-turns-off-view-faces):
+     * each is refused, said by its family where it has one, and none kept.
+     * A face that would have been kept counts toward no budget, as a kept
+     * one does not, so the rest of the sheet is drawn as it would be.
+     */
+    if (faces.refused) {
+      let named: string | undefined;
+      const would = judgeFace(rule.prelude, blockItems(rule.block), { ...faces.budget }, (one) => void (named ??= one.family), faces.lent);
+      if (would.face) faces.data += would.data;
+      const family = would.face?.family ?? named;
+      refuse({ reason: "font-face", name: "host", ...(family !== undefined ? { family } : {}) });
+      return undefined;
+    }
     const judged = judgeFace(rule.prelude, blockItems(rule.block), faces.budget, refuse, faces.lent);
     /* Only a face kept is not counted toward the sheet's length: a refused one's text is the sheet's like any other. */
     if (judged.face) {
@@ -1086,10 +1102,13 @@ export interface SanitizedCss {
  * gives this view on its page, under which each face is drawn and every
  * `font-family` or `font` naming it is written (`viewFaceFamily`), so a face
  * a view declares draws in that view alone; `lent`, the families the app
- * lends its views, which a view's own face may not take.
+ * lends its views, which a view's own face may not take; `refused`, a host
+ * that draws none of a view's own faces (HQ f-host-turns-off-view-faces):
+ * each `@font-face` is refused (`{ reason: "font-face", name: "host" }`),
+ * none is kept, and the rest of the sheet is judged as it would be.
  */
 export interface SanitizeOptions {
-  readonly faces?: boolean | { readonly scope?: string; readonly lent?: readonly string[] };
+  readonly faces?: boolean | { readonly scope?: string; readonly lent?: readonly string[]; readonly refused?: boolean };
 }
 
 /** What a face named in a `font-family` or a `font` is written as while a view's sheets are written: its family, lowercased, to its name on the page. */
@@ -1156,7 +1175,7 @@ export function sanitizeStylesheets(sheets: readonly string[], maxLength = OPEN_
     }
     readSoFar += sheet.length;
     /* Judged against a copy: a sheet refused for its length spends nothing of the view's faces. */
-    const judging: FaceJudging | undefined = facing ? { budget: { ...budget }, kept: [], data: 0, ...(facing.lent ? { lent: facing.lent } : {}) } : undefined;
+    const judging: FaceJudging | undefined = facing ? { budget: { ...budget }, kept: [], data: 0, ...(facing.lent ? { lent: facing.lent } : {}), ...(facing.refused ? { refused: true as const } : {}) } : undefined;
     const judged = judgeSheet(sheet, judging);
     if (spent + judged.counted > maxLength) {
       /* Too long whole, said with what was wrong with the faces in it: a face past its size is said as that. */

@@ -95,6 +95,8 @@ export interface OpenDrawingOptions {
   readonly origin: string;
   /** The view's own name on its page, under which each face its sheets declare is drawn (core's `viewFaceFamily`): one no other view on the page has. */
   readonly faceScope?: string;
+  /** `false`: the host draws none of the view's own faces (HQ f-host-turns-off-view-faces), and each `@font-face` its sheets declare is refused and said. */
+  readonly ownFaces?: boolean;
   /** Where an image the app holds is loaded from (JudgeContext.asset). */
   readonly asset?: (path: string) => string | undefined;
   /** The origins an image may be loaded from by its `https:` address (JudgeContext.imageOrigins). */
@@ -319,7 +321,7 @@ export function createOpenDrawing(shadow: ShadowRoot, options: OpenDrawingOption
       fadeGuard = setTimeout(unfade, FADE_MS * 4);
     },
     style(given, lent) {
-      const judged = sanitizeStylesheets(given, undefined, { faces: { ...(options.faceScope ? { scope: options.faceScope } : {}), ...(lent ? { lent } : {}) } });
+      const judged = sanitizeStylesheets(given, undefined, { faces: { ...(options.faceScope ? { scope: options.faceScope } : {}), ...(lent ? { lent } : {}), ...(options.ownFaces === false ? { refused: true } : {}) } });
       faces = judged.faces;
       faceNames = options.faceScope && faces.length > 0 ? facesRenamed(faces, options.faceScope) : undefined;
       cssRefused.length = 0;

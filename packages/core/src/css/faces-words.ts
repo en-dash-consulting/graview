@@ -44,6 +44,8 @@ export function viewFaceRefusedWords(refusal: CssRefusal): string {
       return `Not kept: the ${refusal.descriptor ?? "descriptor"} of ${named}, a value a face does not take, so the face is drawn as if it said none (view-font-face-descriptor).`;
     case "lent":
       return `Not loaded: ${named}, since the app lends its views a face by that name (brand.views.fonts), and the app's face is the one drawn: call the view's own something else (view-font-face-lent).`;
+    case "host":
+      return `Not loaded: ${named}. This host draws no face a view's own stylesheet declares: a view is drawn in the faces the app lends its views (brand.views.fonts), or in a system stack (view-font-face-host).`;
     default:
       return `Not drawn: ${named} (view-font-face).`;
   }
