@@ -82,7 +82,7 @@ flowchart TD
 | Review before the first push | an independent reviewer handed the diff | one review, again after real fixes | what the builder cannot see in their own work | the build spawns it |
 | Full harnesses **(new in 0.2.5)** | `pnpm verify:github <names>` on GitHub runners (`verify.yml`) | not yet measured | every screen of the harnesses the change touches, without the laptop's ports and power | the build |
 | PR CI | `ci.yml`: tests in three shards, typecheck, build, workerd, `graview check`, tarballs, scaffold, progression, first load, changeset | 6–13 min | what main's ruleset requires (`verify`, `changeset`) | automatic; the build reads it |
-| Nightly on a PR | `nightly.yml` dispatched on the frozen head: every harness in nine shards, the GPU leg | 27–34 min | harness, render and focus changes, before they merge | the dev-sync pass dispatches it |
+| Nightly on a PR | `nightly.yml` dispatched on the frozen head: every harness in ten shards, the GPU leg | 27–34 min | harness, render and focus changes, before they merge | the dev-sync pass dispatches it |
 | The batch | merge in order, budget raises, `pnpm release:prepare` and the release record, PR CI, a Nightly on its head after the last push | about 80 min on 0.2.4 | the PRs hold together | the holder of `phase:release` |
 | Publish | `release.yml` in the `npm` environment: build, typecheck, tests, a green Nightly on the same tree, trusted publish, tags, releases | about 12 min of tests, then the publish | nothing reaches npm untested or unapproved | Nick approves; the workflow does the rest |
 | Nightly on main | `nightly.yml` every day at 07:17 UTC; Mondays at 09:17 also WebKit and Firefox | 27–34 min | main stays green between releases | automatic; red on main is fixed first |

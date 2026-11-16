@@ -27,7 +27,7 @@ that `docs/process.md` describes.
    focus changes** (a change under `scripts/`, `packages/render/`, or to
    how the keyboard or focus moves). The dev-sync pass dispatches it; a build
    started another way dispatches its own (`gh workflow run nightly.yml
-   --ref <branch>`) after it freezes. It takes about half an hour of nine runners; on a head
+   --ref <branch>`) after it freezes. It takes about half an hour of ten runners; on a head
    that will move, or a change no harness reads, it buys nothing.
 6. **Run unit tests and `pnpm verify <name> --quick` locally; run full
    harnesses with `pnpm verify:github <names>` (new in 0.2.5).** Full runs on
