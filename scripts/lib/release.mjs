@@ -18,7 +18,16 @@
  *     tree, so it counts. Without one the run fails and says to dispatch
  *     Nightly on main. The publish itself still waits for the `npm`
  *     environment's one approval.
+ *   - A version older than the one npm calls latest is never published: a
+ *     stale run re-run after a newer release would hand it `latest`.
  */
+
+/** Whether version `a` is newer than `b` (x.y.z). */
+export function newer(a, b) {
+  const [pa, pb] = [a.split(".").map(Number), b.split(".").map(Number)];
+  for (let i = 0; i < 3; i += 1) if (pa[i] !== pb[i]) return pa[i] > pb[i];
+  return false;
+}
 
 /** @typedef {{ id: number | string, url: string, event: string, conclusion: string | null, repository: string, headSha: string, tree: string }} NightlyRun */
 
@@ -51,13 +60,14 @@ export function nightlyOnTree(tree, runs, repository) {
 }
 
 /**
- * @param {{ versions: string[], pending: string[], unpublished: string[], nightly: NightlyRun | null }} facts
+ * @param {{ versions: string[], pending: string[], unpublished: string[], nightly: NightlyRun | null, latest?: string | null }} facts
  *   versions: every published package's version; pending: the changeset files;
  *   unpublished: the packages npm does not have at the version; nightly: the
- *   green Nightly on this tree, if one ran.
- * @returns {{ path: "broken" | "version-pr" | "nothing" | "publish" | "blocked", version: string | null, reason: string }}
+ *   green Nightly on this tree, if one ran; latest: the version npm tags
+ *   `latest` for graview.
+ * @returns {{ path: "broken" | "version-pr" | "nothing" | "publish" | "blocked" | "stale", version: string | null, reason: string }}
  */
-export function decide({ versions, pending, unpublished, nightly }) {
+export function decide({ versions, pending, unpublished, nightly, latest = null }) {
   const distinct = [...new Set(versions)];
   if (distinct.length !== 1) {
     return {
@@ -76,6 +86,13 @@ export function decide({ versions, pending, unpublished, nightly }) {
   }
   if (unpublished.length === 0) {
     return { path: "nothing", version, reason: `Every package at ${version} is on npm, and no changeset is pending.` };
+  }
+  if (latest && newer(latest, version)) {
+    return {
+      path: "stale",
+      version,
+      reason: `npm's latest is ${latest}, newer than ${version}: this run is older than a release since, and publishing ${version} now would hand it \`latest\`. Nothing is published.`,
+    };
   }
   if (!nightly) {
     return {

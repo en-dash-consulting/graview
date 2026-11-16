@@ -112,7 +112,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          for NUMBER in $(gh pr list --head changeset-release/main --state open --json number --jq '.[].number'); do
+          OPEN=$(gh pr list --head changeset-release/main --state open --json number --jq '.[].number')
+          for NUMBER in ${OPEN}; do
             gh pr close "${NUMBER}" --comment "No changeset is pending on main at ${GITHUB_SHA}: a batch released what this pull request would have versioned."
           done
 
@@ -143,7 +144,8 @@ jobs:
 
       # Asked again after the approval, which can come days later: still
       # nothing pending, one version, and a green Nightly on this tree. It
-      # does not ask npm, so a re-run after a partial publish goes on.
+      # does not ask which packages npm has, so a re-run after a partial
+      # publish goes on; it refuses a version older than npm's latest.
       - name: A green Nightly ran on this tree
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

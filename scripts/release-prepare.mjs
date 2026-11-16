@@ -45,6 +45,11 @@ const pending = readdirSync(join(root, ".changeset"))
   .map((name) => ({ name, text: readFileSync(join(root, ".changeset", name), "utf8") }));
 if (pending.length === 0) fail("No changeset is pending: there is nothing for this branch to release.");
 
+try {
+  quiet("git", ["fetch", "--quiet", "origin", "main"]);
+} catch {
+  console.warn("Could not fetch origin main; reading the copy of it this checkout has.");
+}
 let mainVersion = null;
 for (const ref of ["origin/main", "main"]) {
   try {
@@ -68,6 +73,11 @@ step("pnpm", ["exec", "changeset", "version"]);
 step("node", ["scripts/write-framework-version.mjs"]);
 const version = versionOf();
 if (version === before) fail(`changeset version left the packages at ${before}.`);
+let taken = false;
+try {
+  taken = quiet("npm", ["view", `graview@${version}`, "version"]) === version;
+} catch {}
+if (taken) fail(`npm already has graview ${version}: main moved past what this branch read. Discard these changes, merge main, and run this again.`);
 
 /* 2. The release record. */
 const recordsFile = join(root, "apps/site/releases.json");

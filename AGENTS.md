@@ -241,7 +241,8 @@ all fourteen packages; Nick approves it, and nothing else needs him. It then
 asks the gate again (`release-state.mjs --gate`), builds, tests, publishes
 each package by npm trusted publishing (`scripts/release-publish.mjs`), tags
 `<name>@<version>` and writes a GitHub release each. Re-running the job
-finishes a release that stopped part way. No Version packages pull request is
+finishes a release that stopped part way; neither path publishes a version
+older than npm's `latest`. No Version packages pull request is
 opened for a batch, and one still open once nothing is pending is closed.
 
 **A changeset merged outside a batch is never stranded.** While a changeset

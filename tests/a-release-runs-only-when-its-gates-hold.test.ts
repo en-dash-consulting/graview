@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 // @ts-expect-error — a plain .mjs module of the scripts, with no declarations.
-import { compatibilityOf, decide, firstSentence, nightlyOnTree, scaffoldRecord, UNWRITTEN, withRecord } from "../scripts/lib/release.mjs";
+import { compatibilityOf, decide, firstSentence, newer, nightlyOnTree, scaffoldRecord, UNWRITTEN, withRecord } from "../scripts/lib/release.mjs";
 
 /**
  * A RELEASE RUNS ONLY WHEN ITS GATES HOLD. A batch carries its own release
@@ -53,6 +53,16 @@ describe("which path a push to main takes", () => {
     expect(decision.path).toBe("blocked");
     expect(decision.reason).toContain("Dispatch Nightly on main");
     expect(decision.reason).toContain("gh workflow run nightly.yml --ref main");
+  });
+
+  it("never publishes a version older than npm's latest, as a stale run re-run after a newer release would", () => {
+    const facts = { versions: fourteen("0.2.5"), pending: [], unpublished: ["@graview/skills"], nightly: green() };
+    expect(decide({ ...facts, latest: "0.2.6" }).path).toBe("stale");
+    expect(decide({ ...facts, latest: "0.10.0" }).path).toBe("stale");
+    expect(decide({ ...facts, latest: "0.2.5" }).path).toBe("publish");
+    expect(decide({ ...facts, latest: "0.2.4" }).path).toBe("publish");
+    expect(newer("0.10.0", "0.9.9")).toBe(true);
+    expect(newer("0.2.5", "0.2.5")).toBe(false);
   });
 
   it("refuses packages that do not share one version, whatever else holds", () => {

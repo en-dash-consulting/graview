@@ -26,7 +26,16 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 // The Version packages pull request is where changesets are spent: it bumps
 // every package and removes the changesets that asked for it.
 const head = process.env["GITHUB_HEAD_REF"] || process.env["GITHUB_REF_NAME"] || "";
-if (head.startsWith("changeset-release/")) {
+// Only this repository's own branch: a fork's pull request may name its branch anything.
+const headRepository = (() => {
+  try {
+    return JSON.parse(readFileSync(process.env["GITHUB_EVENT_PATH"] ?? "", "utf8")).pull_request?.head?.repo?.full_name ?? null;
+  } catch {
+    return null;
+  }
+})();
+const ownBranch = headRepository === null || headRepository === process.env["GITHUB_REPOSITORY"];
+if (head.startsWith("changeset-release/") && ownBranch) {
   process.stdout.write("The Version packages pull request spends changesets; it needs none of its own.\n");
   process.exit(0);
 }
@@ -77,6 +86,38 @@ const addedChangesetText = new Map(
     // Spent only by a release: a pull request that carries none answers with the changesets it leaves on disk.
     .filter(([name]) => carriedVersion || existsSync(resolve(repoRoot, ".changeset", name))),
 );
+
+/*
+ * A VERSION MOVED IS A RELEASE ONLY WHEN IT WAS MADE AS ONE: changesets
+ * spent, every published package at the version, and every changelog
+ * saying it. A version edited by hand would otherwise skip every check
+ * above and below, and main would publish a release nobody described.
+ */
+if (carriedVersion) {
+  const spent = [
+    ...[...addedChangesetText.keys()].filter((name) => !existsSync(resolve(repoRoot, ".changeset", name))),
+    ...git("diff", "--name-only", "--diff-filter=D", range, "--", ".changeset").split("\n").filter((file) => file.endsWith(".md") && !file.endsWith("README.md")),
+  ];
+  const manifests = readdirSync(resolve(repoRoot, "packages"))
+    .filter((dir) => existsSync(resolve(repoRoot, "packages", dir, "package.json")))
+    .map((dir) => ({ dir, ...JSON.parse(readFileSync(resolve(repoRoot, "packages", dir, "package.json"), "utf8")) }))
+    .filter((manifest) => !manifest.private);
+  const wrong = [
+    ...(spent.length === 0 ? ["no changeset was spent for it"] : []),
+    ...manifests.filter((one) => one.version !== carriedVersion).map((one) => `${one.name} is at ${one.version}`),
+    ...manifests
+      .filter((one) => !readFileSync(resolve(repoRoot, "packages", one.dir, "CHANGELOG.md"), "utf8").includes(`\n## ${carriedVersion}\n`))
+      .map((one) => `packages/${one.dir}/CHANGELOG.md has no ${carriedVersion} section`),
+  ];
+  if (wrong.length > 0) {
+    process.stderr.write(
+      `This pull request moves the version to ${carriedVersion}, and it was not made as a release:\n` +
+        wrong.map((line) => `  ${line}\n`).join("") +
+        "\nPut the versions back and run `pnpm release:prepare`, which spends the changesets and writes every changelog.\n",
+    );
+    process.exit(1);
+  }
+}
 
 /*
  * A HOSTED PAGE SPENT ON PURPOSE, AND SAID (FR-179). A raise of a hosted

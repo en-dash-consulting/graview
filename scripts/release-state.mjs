@@ -13,9 +13,10 @@
  *   node scripts/release-state.mjs --gate   the publish job's check after approval:
  *                                           exit 1 unless nothing is pending, the
  *                                           versions agree and a green Nightly ran
- *                                           on this tree. It does not ask npm, so a
- *                                           re-run after every package landed still
- *                                           finishes the tags and releases.
+ *                                           on this tree, and nothing newer is npm's
+ *                                           latest. It does not ask which packages npm
+ *                                           has, so a re-run after every package landed
+ *                                           still finishes the tags and releases.
  *
  * Reads GITHUB_REPOSITORY and asks the GitHub API through `gh` (GH_TOKEN).
  * It only reads: nothing here writes to npm, git or GitHub.
@@ -47,10 +48,20 @@ const onNpm = (name, at) => {
   }
 };
 
-/* The hundred newest green Nightly runs, each with the tree of the commit it ran on (the API's head_commit.tree_id). */
+/* npm's latest graview, or undefined when npm cannot be asked. */
+const latestOnNpm = () => {
+  try {
+    return run("npm", ["view", "graview", "dist-tags.latest", "--prefer-online"]) || null;
+  } catch {
+    return undefined;
+  }
+};
+
+/* Every green Nightly run, newest first, each with the tree of the commit it ran on (the API's head_commit.tree_id). */
 function nightlies() {
   const listed = run("gh", [
     "api",
+    "--paginate",
     `repos/${repository}/actions/workflows/nightly.yml/runs?status=success&per_page=100`,
     "--jq",
     ".workflow_runs[] | {id, url: .html_url, event, conclusion, repository: .head_repository.full_name, headSha: .head_sha, tree: .head_commit.tree_id}",
@@ -65,8 +76,13 @@ console.log(`Tree ${tree.slice(0, 12)}; changesets pending: ${pending.length}; v
 
 if (gate) {
   /* After approval, asked again: the same rules, npm left out, as if a package were still to publish. */
+  const latest = latestOnNpm();
+  if (latest === undefined) {
+    console.log("::error::npm could not be asked which version is latest; re-run this job once it answers.");
+    process.exit(1);
+  }
   const nightly = nightlyOnTree(tree, nightlies(), repository);
-  const decision = decide({ versions, pending, unpublished: ["a package"], nightly });
+  const decision = decide({ versions, pending, unpublished: ["a package"], nightly, latest });
   if (decision.path !== "publish") {
     console.log(`::error::${decision.reason}`);
     process.exit(1);
@@ -81,12 +97,13 @@ for (const name of unpublished) console.log(`${name}@${version} is not on npm`);
 const needsNightly = pending.length === 0 && unpublished.length > 0;
 const nightly = needsNightly ? nightlyOnTree(tree, nightlies(), repository) : null;
 
-const decision = decide({ versions, pending, unpublished, nightly });
+const latest = needsNightly ? latestOnNpm() ?? null : null;
+const decision = decide({ versions, pending, unpublished, nightly, latest });
 console.log(`${decision.path}: ${decision.reason}`);
 if (process.env.GITHUB_OUTPUT) {
   appendFileSync(process.env.GITHUB_OUTPUT, `path=${decision.path}\nversion=${decision.version ?? ""}\n`);
 }
-if (decision.path === "blocked" || decision.path === "broken") {
+if (decision.path === "blocked" || decision.path === "broken" || decision.path === "stale") {
   console.log(`::error::${decision.reason}`);
   process.exit(1);
 }
