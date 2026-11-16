@@ -4,7 +4,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 // @ts-expect-error — a plain .mjs module, without types.
-import { BASES, BUDGETS, measureBudgets, readRaises, withRaises } from "../scripts/lib/bundle-budget.mjs";
+import { BASES, BUDGETS, budgetFailures, measureBudgets, readRaises, withRaises } from "../scripts/lib/bundle-budget.mjs";
 // @ts-expect-error — a plain .mjs module, without types.
 import { WORKER_BUDGET, workerRaises } from "../scripts/lib/import-cost.mjs";
 
@@ -26,7 +26,8 @@ const measuredOf = (...names: string[]) => measureBudgets(repo, (BUDGETS as { na
 describe("the embed's bundle budget", () => {
   it("holds the pages face alone under its budget, and well under every face", async () => {
     const measured = (await measureBudgets(repo)) as Measured[];
-    for (const one of measured) expect(one.over, `${one.name}: ${one.minified} B minified, ${one.gzipped} B gzipped`).toBe(false);
+    // What a bundle carries that it must not fails everywhere; its bytes over, on a pull request that is not a batch, warn (GRAVIEW_BUDGET=warn).
+    expect(measured.flatMap((one) => budgetFailures(one))).toEqual([]);
     const pages = measured.find((one) => one.name === "the pages face alone")!;
     const every = measured.find((one) => one.name === "every face")!;
     // No scene, no studio, no lenses: a quarter of the whole, at least.
@@ -58,7 +59,7 @@ describe("the embed's bundle budget", () => {
     const measured = (await measuredOf("embed with the studio handed in", "every face")) as (Measured & { lazy: string[]; defers: string[]; packages?: string[] })[];
     const handed = measured.find((one) => one.name === "embed with the studio handed in")!;
     const every = measured.find((one) => one.name === "every face")!;
-    expect(handed.over, `${handed.minified} B minified, ${handed.gzipped} B gzipped, deferring ${handed.defers.join(", ")}`).toBe(false);
+    expect(budgetFailures(handed)).toEqual([]);
     expect(handed.lazy).not.toContain("@graview/studio");
     // The measure can tell: the embed's own studio is a lazy chunk.
     expect(every.lazy).toContain("@graview/studio");
@@ -76,7 +77,7 @@ describe("the embed's bundle budget", () => {
     const measured = (await measureBudgets(repo, (BUDGETS as { name: string }[]).filter((one) => one.name === "a visitor's form handed a compiled app" || one.name === "the pages face alone"))) as Measured[];
     const form = measured.find((one) => one.name === "a visitor's form handed a compiled app")!;
     const pages = measured.find((one) => one.name === "the pages face alone")!;
-    expect(form.over, `${form.minified} B minified, ${form.gzipped} B gzipped`).toBe(false);
+    expect(budgetFailures(form)).toEqual([]);
     expect(form.minified).toBeLessThan(400_000);
     expect(form.minified).toBeLessThan(pages.minified * 0.6);
   }, 60_000);

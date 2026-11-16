@@ -5,6 +5,8 @@ import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 // @ts-expect-error — a plain .mjs module, without types.
 import { bundleEntry, IMPORT_BUDGET, machineFactor, measure, WORKER_BUDGET, WORKER_SHAPED } from "../scripts/lib/import-cost.mjs";
+// @ts-expect-error — a plain .mjs module, without types.
+import { holdBytes } from "../scripts/lib/budget-mode.mjs";
 
 /**
  * IMPORTING THE FRAMEWORK COSTS LITTLE (Roadmap f-smaller-worker). A Worker's
@@ -40,7 +42,8 @@ describe("importing the framework", () => {
   }, 60_000);
 
   it(`the names Cloud's worker imports come to at most ${WORKER_BUDGET.bytes / 1_000_000} MB, at most ${WORKER_BUDGET.zod / 1000} KB of it zod's`, () => {
-    expect(worker.bytes, `${Math.round(worker.bytes / 1024)} KB`).toBeLessThanOrEqual(WORKER_BUDGET.bytes);
+    // The bytes are a ceiling the batch raises (a warning on a pull request that is not a batch); zod's share is held everywhere.
+    expect(holdBytes({ name: "Cloud's worker", minified: worker.bytes, budget: { minified: WORKER_BUDGET.bytes } })).toEqual([]);
     expect(worker.zod, `${Math.round(worker.zod / 1024)} KB of zod`).toBeLessThanOrEqual(WORKER_BUDGET.zod);
   });
 

@@ -37,6 +37,13 @@
  * explain. Two pull requests that raise one entry write two files, and
  * neither conflicts with the other.
  *
+ * AND IT IS WRITTEN ON THE BATCH. Each pull request's raise was what it
+ * added over main alone, and batched they did not sum to what the branches
+ * added together. A pull request that is not a `batch/*` branch runs with
+ * `GRAVIEW_BUDGET=warn`, where an entry over its bytes is a warning
+ * (`budgetFailures`, `budget-mode.mjs`); the batch writes the raise. What
+ * an entry carries or defers that it must not fails everywhere.
+ *
  * A hosted page's budgets (`hosted-page.mjs`, FR-179) are not here, and
  * their base is never edited upward. A change that spends more of a hosted
  * page up front files a raise beside these, naming `"a hosted page"` or
@@ -50,6 +57,7 @@ import { createRequire } from "node:module";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { gzipSync } from "node:zlib";
+import { holdBytes } from "./budget-mode.mjs";
 import { graviewSources } from "./graview-sources.mjs";
 
 /** Bytes, minified and gzipped: each entry's base, before the raises in `scripts/budget-raises/`. */
@@ -1106,8 +1114,24 @@ export async function measureBudgets(repo, budgets = BUDGETS) {
     const carries = (budget.lacks ?? []).filter((name) => packages.includes(name) || vendors.includes(name));
     // A package that must not wait for a chunk of its own: any module of it fetched later fails the budget.
     const defers = (budget.lazyLacks ?? []).filter((name) => lazy.includes(name));
-    const over = size.minified > budget.minified || size.gzipped > budget.gzipped || carries.length > 0 || defers.length > 0;
-    measured.push({ name: budget.name, load: budget.load ?? "all", ...size, budget: { minified: budget.minified, gzipped: budget.gzipped }, carries, defers, lazy, over });
+    // Over its bytes, which a pull request that is not a batch only warns of (`budget-mode.mjs`), or carrying what it must not, which fails everywhere.
+    const overBytes = size.minified > budget.minified || size.gzipped > budget.gzipped;
+    const guarded = carries.length > 0 || defers.length > 0;
+    const over = overBytes || guarded;
+    measured.push({ name: budget.name, load: budget.load ?? "all", ...size, budget: { minified: budget.minified, gzipped: budget.gzipped }, carries, defers, lazy, overBytes, guarded, over });
   }
   return measured;
+}
+
+/**
+ * Why a measured budget fails here, in sentences: what it carries or defers
+ * that it must not, everywhere; and its bytes over, unless this run warns
+ * of them (`GRAVIEW_BUDGET=warn`, a pull request that is not a batch), when
+ * the over is said as a warning and is not a failure.
+ */
+export function budgetFailures(one, options) {
+  const failures = [];
+  if (one.carries.length > 0) failures.push(`${one.name} carries ${one.carries.join(", ")}, which it must not`);
+  if (one.defers.length > 0) failures.push(`${one.name} leaves ${one.defers.join(", ")} in a chunk fetched later, which must load at once`);
+  return [...failures, ...holdBytes(one, options)];
 }
