@@ -34,7 +34,7 @@ const headRepository = (() => {
     return null;
   }
 })();
-const ownBranch = headRepository === null || headRepository === process.env["GITHUB_REPOSITORY"];
+const ownBranch = !process.env["GITHUB_EVENT_PATH"] || headRepository === process.env["GITHUB_REPOSITORY"];
 if (head.startsWith("changeset-release/") && ownBranch) {
   process.stdout.write("The Version packages pull request spends changesets; it needs none of its own.\n");
   process.exit(0);

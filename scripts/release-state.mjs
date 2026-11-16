@@ -28,7 +28,7 @@ import { decide, nightlyOnTree } from "./lib/release.mjs";
 
 const root = resolve(import.meta.dirname, "..");
 const gate = process.argv.includes("--gate");
-const run = (cmd, args) => execFileSync(cmd, args, { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+const run = (cmd, args) => execFileSync(cmd, args, { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], maxBuffer: 256 * 1024 * 1024 }).trim();
 const repository = process.env.GITHUB_REPOSITORY || "en-dash-consulting/graview";
 
 const pending = readdirSync(join(root, ".changeset")).filter((file) => file.endsWith(".md") && file !== "README.md");
