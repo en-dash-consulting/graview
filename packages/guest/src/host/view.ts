@@ -256,6 +256,17 @@ export interface MountWorkerViewOptions<S extends AnySchema> {
    */
   readonly fonts?: { readonly origins: readonly string[] };
   /**
+   * WHETHER THE VIEW'S OWN FACES ARE DRAWN (HQ f-host-turns-off-view-faces):
+   * `false` for a host that lends its views only the faces it lists
+   * (`brand.views.fonts`, from `fonts.origins` or the app's files) and draws
+   * none a view's own stylesheet declares as a `data:` font, which the page
+   * would otherwise load from their bytes. Each such `@font-face` is refused
+   * and said once — in the view's console and to `onProblem`, naming the
+   * face and what a view is drawn in instead — and the rest of its sheet is
+   * drawn. The faces the app lends still draw. `true` by default.
+   */
+  readonly ownFaces?: boolean;
+  /**
    * WHERE A VIEW'S LINKS MAY GO BEYOND WHAT IT WAS HANDED (2026-10-21): the
    * `https:` origins the host lists (`["https://nvd.nist.gov"]`). A view's
    * `<a href>` is drawn where its address is one a record it was shown
@@ -1045,6 +1056,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     drawing = createOpenDrawing(shadow, {
       origin: options.origin ?? window.location.origin,
       faceScope,
+      ...(options.ownFaces === false ? { ownFaces: false } : {}),
       link: (value) => judgeLink(value, { handed: handed(), ...(options.links ? { origins: options.links.origins } : {}) }),
       ...(options.asset ? { asset: options.asset } : {}),
       ...(options.images ? { imageOrigins: options.images.origins } : {}),

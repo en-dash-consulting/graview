@@ -69,8 +69,8 @@ on an ancestor is only inherited.
 on an origin in `fonts.origins`. **The view's own face** is a `data:` font:
 `@font-face { font-family: "Shout"; src: url(data:font/woff2;base64,…) }`,
 50 KB a face, 200 KB a view, decoded; never an address or `local()`. It
-draws in this view alone, whatever its name; under a lent face's name, the
-app's draws. What is refused is said, with its code.
+draws in this view alone; under a lent face's name, the app's draws; a
+host may refuse it (`ownFaces: false`). Refusals are said, with a code.
 
 ## Its box, and the gutter
 

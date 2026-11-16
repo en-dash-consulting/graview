@@ -374,6 +374,18 @@ says what of the stylesheet the open kit leaves out (`brand-views-css`),
 and a headless run (`runWorkerViewHeadless`'s `brand`) draws it in the same
 layers in its `css`, so a picture of the view is dressed as the page dresses it.
 
+A view may also declare a face of its own, an `@font-face` whose source is a
+`data:` font, which the host loads into the page from its bytes, under a name
+of the view's own. A host that lends its views only the faces it lists says
+`ownFaces: false` on `mountWorkerView` or on a registered worker view's
+definition (a draft's too), and `runWorkerViewHeadless` takes the same
+option. Then each such `@font-face` is refused and said once, to the
+view's console and to `onProblem`, naming the face and what a view is drawn
+in instead (`view-font-face-host`). Nothing of it is loaded, and the rest of
+the view's sheet is drawn as before. The faces the brand lends still draw.
+`sanitizeStylesheets(sheets, max, { faces: { refused: true } })` is the open
+kit's half of this. Without the option, a view's own faces draw as they always did.
+
 ### A link out goes only where the view was handed
 
 `<a href="${record.url}">` is drawn where its address is one a record the

@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 523,
+  "gzipped": 169,
+  "note": "Raised when a host came to be able to refuse a view's own faces while the faces the app lends still draw (`ownFaces: false`, HQ f-host-turns-off-view-faces). 523 / 169 more. Measured at 299_828 / 115_299 against 299_305 / 115_130."
+}
