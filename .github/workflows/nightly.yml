@@ -8,13 +8,13 @@
 # nobody heard until a walk's review a day later. This is the run nobody has
 # to remember, and the release workflow will not publish while it is red.
 #
-# Chromium every night, across nine runners at once; WebKit and Firefox
+# Chromium every night, across ten runners at once; WebKit and Firefox
 # once a week, through `pnpm engines`, on a runner of their own. `shrunk`, `panning` and `scale` are left out: the GPU capture
 # path needs Chrome Canary, and the other two time frames against a GPU the
 # runner does not have.
 #
 # BOTH PATHS, where they differ. The scene draws on the GPU where a browser
-# can capture into WebGPU and on the DOM path elsewhere. Eight shards run
+# can capture into WebGPU and on the DOM path elsewhere. Nine shards run
 # with GRAVIEW_RENDERER=dom; one runs with GRAVIEW_RENDERER=gpu in
 # Google Chrome with element capture switched on and WebGPU on SwiftShader
 # (engine.mjs's GPU_ARGS). A runner whose Chrome cannot make an adapter, or
@@ -82,6 +82,8 @@ jobs:
           - { renderer: dom, shard: "a11y, lines, pages, navigation, scene-hands, drive-in", run: "node scripts/verify-all.mjs --serial a11y lines pages navigation scene-hands drive-in" }
           # address joined after it failed on main from 2026-10-15 to 10-19 with no Nightly to say so.
           - { renderer: dom, shard: "rota, calendar, desk, remember, studio, watch, who, seat, rehearsal, renderer, address", run: "node scripts/verify-all.mjs --serial rota calendar desk remember studio watch who seat rehearsal renderer address" }
+          # The one face joined after its claims were held only on a laptop until 0.2.4: on a runner five of them failed, and nothing nightly said so.
+          - { renderer: dom, shard: "one-face, embed-one-face", run: "node scripts/verify-all.mjs --serial one-face embed-one-face" }
           - { renderer: dom, shard: "journeys (gauntlet)", run: "node scripts/verify-journeys.mjs gauntlet" }
           - { renderer: dom, shard: "journeys (todo, seedbed)", run: "node scripts/verify-journeys.mjs todo seedbed" }
           - { renderer: dom, shard: "journeys (rota, discography)", run: "node scripts/verify-journeys.mjs rota discography" }
@@ -100,6 +102,10 @@ jobs:
       # whose dist/domain the desk and the journeys read. Shards that built
       # only the packages skipped four apps' journeys and lost the desk.
       - run: pnpm typecheck
+      # The page `graview preview` serves, which embed-one-face, preview,
+      # face-recipe, date-inputs and first-load open: `pnpm build` bundles it,
+      # typecheck does not, and those harnesses stopped before their first claim.
+      - run: node scripts/build-preview-page.mjs
 
       # quick-ask and a few others walk all three engines, so every shard has them.
       # The browsers are cached by the pinned Playwright version: a fresh

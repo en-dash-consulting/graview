@@ -36,7 +36,7 @@ export const NOT_ON_A_RUNNER = ["shrunk", "panning", "scale"];
  * taken to be two minutes. It only has to be good enough to keep one
  * runner from holding every long harness.
  */
-export const RUNNER_SECONDS = { site: 823, gauntlet: 721, journeys: 1500, a11y: 261, audit: 221, pages: 198, lines: 179, survey: 200, create: 300, quiet: 900 };
+export const RUNNER_SECONDS = { site: 823, gauntlet: 721, journeys: 1500, a11y: 261, audit: 221, pages: 198, lines: 179, survey: 200, create: 300, quiet: 900, "one-face": 600 };
 const secondsOf = (name) => RUNNER_SECONDS[name] ?? 120;
 
 /**

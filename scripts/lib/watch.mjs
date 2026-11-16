@@ -481,25 +481,60 @@ function watchInPage() {
     }
     return null;
   };
+  /*
+   * PRESSABLE, AND STANDING STILL. A control the page has faded out or
+   * turned off since it was first seen is not a press that lands anywhere;
+   * and one whose box, or its cover's, moved between the two looks was
+   * caught on its way somewhere — the one face's boards ease to their places
+   * after a pan, a resize or a level move, in frames of their own the
+   * Scene's settled mark does not cover, and a runner's slower frames kept
+   * two of them crossing at both looks. Looked at again once they stop —
+   * each pair a dozen times at most, and one still covered and still moving
+   * after that is said all the same: a control under something that never
+   * settles is covered for good.
+   */
+  const pressable = (el) => {
+    if (el.closest("[hidden],[aria-hidden='true'],[inert]") || !visible(el)) return false;
+    const style = getComputedStyle(el);
+    return !(style.pointerEvents === "none" || style.visibility === "hidden" || Number(style.opacity) === 0);
+  };
+  const boxOf = (el) => {
+    const r = el.getBoundingClientRect();
+    return [r.left, r.top, r.width, r.height];
+  };
+  const still = (was, now) => was.every((n, i) => Math.abs(n - now[i]) <= 1);
+  const moved = new Map();
   const covered = () => {
     const width = document.documentElement.clientWidth;
     const height = document.documentElement.clientHeight;
     const found = [];
     for (const el of document.querySelectorAll(CONTROL)) {
-      if (el.closest("[hidden],[aria-hidden='true'],[inert]") || !visible(el)) continue;
-      const style = getComputedStyle(el);
-      if (style.pointerEvents === "none" || style.visibility === "hidden" || Number(style.opacity) === 0) continue;
+      if (!pressable(el)) continue;
       const box = el.getBoundingClientRect();
       if (box.width < 8 || box.height < 8 || box.left < 0 || box.top < 0 || box.right > width || box.bottom > height) continue;
       const cover = coveredAt(el);
-      if (cover) found.push({ el, cover });
+      if (cover) found.push({ el, cover, boxes: [boxOf(el), boxOf(cover)] });
     }
+    // A pair no longer covered has stopped crossing: its count begins again, so passing crossings on the way are never added up into one.
+    const now = new Set(found.map(({ el, cover }) => `${describe(el)}|${describe(cover)}`));
+    for (const pair of [...moved.keys()]) if (!now.has(pair)) moved.delete(pair);
     if (found.length === 0) return;
     setTimeout(() => {
-      for (const { el, cover } of found) {
-        if (!el.isConnected || coveredAt(el) !== cover) continue;
-        report("control-covered", `${describe(el)} is covered by ${describe(cover)} at ${width} wide — a press there lands on the other`, `${location.pathname}|${describe(el)}|${describe(cover)}|${width}`);
+      let moving = false;
+      for (const { el, cover, boxes } of found) {
+        if (!el.isConnected || !pressable(el) || coveredAt(el) !== cover) continue;
+        const pair = `${describe(el)}|${describe(cover)}`;
+        const looks = moved.get(pair) ?? 0;
+        const stirring = !still(boxes[0], boxOf(el)) || !still(boxes[1], boxOf(cover));
+        if (stirring && looks < 12) {
+          moved.set(pair, looks + 1);
+          moving = true;
+          continue;
+        }
+        moved.delete(pair);
+        report("control-covered", `${describe(el)} is covered by ${describe(cover)} at ${width} wide${stirring ? ", and both keep moving" : ""} — a press there lands on the other`, `${location.pathname}|${describe(el)}|${describe(cover)}|${width}`);
       }
+      if (moving) setTimeout(schedule, 500);
     }, 700);
   };
   /*

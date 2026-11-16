@@ -63,6 +63,10 @@ describe("a harness that fails is looked at again, alone", () => {
     expect(missedClaims(`  "ok": false,\n  "passed": false\n  "bSeesAAtTheTasksPlot": false,`)).toEqual(["bSeesAAtTheTasksPlot"]);
   });
 
+  it("names the claims a harness printed as FAIL lines, as one-face prints them", () => {
+    expect(missedClaims("ok   theFaceOffersNoSwitch\nFAIL choosingAnythingAtCityLandsAtNearbyAndStays\nFAIL noPageThrew\nwrote docs/one-face.json\n")).toEqual(["choosingAnythingAtCityLandsAtNearbyAndStays", "noPageThrew"]);
+  });
+
   it("writes each flake down, newest first, with the commit and the renderer it flaked on", () => {
     const root = mkdtempSync(join(tmpdir(), "flakes-"));
     mkdirSync(join(root, "docs"));
