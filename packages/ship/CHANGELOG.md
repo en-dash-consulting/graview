@@ -1,23 +1,5 @@
 # @graview/ship
 
-## 0.2.5
-
-### Patch Changes
-
-- e5f27e5: A profile's person record gets an id of its own; a migration renames the ones stored. Security and reliability fixes.
-  
-  A profile's first act makes its person under an id of its own (`mintPersonId`: the people kind's, and a mark of the batch it lands in, so a page and its host make the same one), tied to the profile's seat by the seat's mark (`PERSON_SEAT`), as a person bound by an invitation is. `$me`, `own`, `self` and an act done as the profile read that record through the store (`store.personOf(seat)`); `meOf` alone says no record for a profile until the store seats it, and `seatPersonOf` names the seat. Before the first act there is no id to name: a view is told the profile's name, and its id once the record is made. A removed or unbound profile person stays so. As for a person bound by an invitation, a profile's acts are named to other members by its record, and an act of the bare account one of whose profiles has a person is named to them as someone.
-  
-  `openStore` gives profiles' people ids of their own in a store an earlier version kept: the graph, every link and every field that names one, every op and history entry, each epoch and checkpoint, and what a compaction archived, so history still says that person and undo still takes back what they did. The run is idempotent, leaves a store with no profiles as it is, and a run that stopped part way finishes with the same ids (the table of what became what is kept in the store's meta first). `graview serve <entry> --dry-run [--json]` says what opening a store would migrate and writes nothing; `profilePeopleCount` says the same per store for a host of many apps, and `migrateProfilePeople` runs it over an adapter. A link from another app to one of these people is renamed by handing that app's `openStore` the first run's `linked` (`profilePeople`). The `graview-ship` skill says so. Held by unit tests of core (`a-profiles-person-is-served-by-an-id-of-its-own`) and ship (`a-store-kept-before-gives-its-profile-people-ids-of-their-own`), and the profile tests brought to the new ids. A hosted page carries 495 / 192 bytes more up front (475 / 207 handed a compiled app), the pages face alone 435 / 87, a visitor's form 444 / 116, every face 341 minified, the embed with the studio handed in 160 gzipped, and Cloud's worker 1_315 bytes: over their budgets on this pull request, raised on the batch.
-  
-  Compatibility: stored formats — changed: the ids of profiles' people change, and a host runs the migration (`openStore` runs it on open; run `graview serve --dry-run` or `profilePeopleCount` on a copy first). A migrated profile person carries its seat's mark. The store's meta gains `profilePeople` (what was renamed, and that the run finished), the host's alone. `PersistenceAdapter` gains the optional `replaceLog` and `replaceArchive`, which the memory, SQL, file and browser adapters have; a host's own adapter that keeps a log needs them, and a store it holds that needs the migration is refused at open, saying so, until it has them. A run that stops part way (a write that fails) refuses the open too, and the next open finishes it with the ids it gave, from what was written, with or without a meta. A build before this one reads a migrated profile's person as a person bound to that profile's seat, as it reads one an invitation bound, and makes no second one; it names that person's acts by the record alone ("Mia" for "Mia (Nick)"). Ops and primitives — the op that makes a profile's person adds a record carrying the seat's mark; nothing else changes. The wire — a view's `me` carries an `id` for a profile only once its person is made. The declaration and check finding codes, and derived tool names and input schemas — unchanged. The JavaScript API — removed: `profilePersonId`; new: `mintPersonId`, `asBoundTo`, `migrateProfilePeople`, `profilePeopleCount`, `profilePeopleRenames`, `renameProfilePeople` and their types, `OpenStoreOptions.profilePeople`, `OpenedStore.profilePeople`, `StoredMeta.profilePeople`; `meOf` of a seat with a profile is the record a store bound it to, else none. What Graview Cloud does: run the dry run on staging per app, then open each app (its own profiles' people first, then apps whose relations reach them, handed `linked`), and reach a profile's person by `store.personOf(seat)`.
-- Updated dependencies [884e85e]
-- Updated dependencies [dc4f21c]
-- Updated dependencies [e5f27e5]
-- Updated dependencies [3b6b06e]
-- Updated dependencies [710c737]
-  - @graview/core@0.2.5
-
 ## 0.2.4
 
 ### Patch Changes

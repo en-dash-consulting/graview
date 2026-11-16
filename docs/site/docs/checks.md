@@ -1,6 +1,6 @@
 # What `graview check` says
 
-`graview check` reads a Graview app's declaration without a browser and reports what is wrong with it, in words. It can say 131 things, read here out of the checker's own source. An **error** should fail your build. A **warning** is a judgment call. A **note** is a question worth answering once.
+`graview check` reads a Graview app's declaration without a browser and reports what is wrong with it, in words. It can say 130 things, read here out of the checker's own source. An **error** should fail your build. A **warning** is a judgment call. A **note** is a question worth answering once.
 
 ## 88 errors
 
@@ -16,6 +16,6 @@
 
 ---
 
-Every one of the 131 things graview check can tell you, and how loudly.
+Every one of the 130 things graview check can tell you, and how loudly.
 
 The page: https://graview.dev/docs/checks.html · Every Graview docs page, for a model: https://graview.dev/llms.txt

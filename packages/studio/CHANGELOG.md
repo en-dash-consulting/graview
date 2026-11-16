@@ -1,31 +1,5 @@
 # @graview/studio
 
-## 0.2.5
-
-### Patch Changes
-
-- ddf3c59: The studio writes back names that swap. Renaming kind `a` to `tmp`, `b` to `a` and `tmp` to `b` left two kinds with each other's names, and `studio.document()` said that as "rename `a` to `b`, rename `b` to `a`": `editDocument` refused the first, since there was already a kind `b`, so no document came back. The studio's renames of kinds, of a kind's fields and of relations are now ordered so none lands on a name still taken, and a cycle of them (a swap, or three names turned one place round) goes through a name of its own (`a-renaming`, a field's `dueRenaming`, a camelCase relation's `growsNearRenaming`) that the document never keeps. Each field still continues the values of the one it was, and a rule over a field that swapped names is read in its new name with no change to the rule said. Held by a unit test of the studio (`the-studio-writes-back-names-that-swap`).
-  
-  Compatibility: ops and primitives, stored formats, the wire, the declaration and check finding codes, and derived tool names and input schemas — unchanged. The JavaScript API is unchanged; `studio.edits()` may now say a rename through a name of its own. What Graview Cloud does: nothing.
-- Updated dependencies [884e85e]
-- Updated dependencies [9810302]
-- Updated dependencies [dc4f21c]
-- Updated dependencies [951c8b5]
-- Updated dependencies [1ad6d81]
-- Updated dependencies [e5f27e5]
-- Updated dependencies [48c8c68]
-- Updated dependencies [3b6b06e]
-- Updated dependencies [710c737]
-- Updated dependencies [8eeffe9]
-- Updated dependencies [42330b5]
-  - @graview/core@0.2.5
-  - @graview/tools@0.2.5
-  - @graview/react@0.2.5
-  - @graview/primitives@0.2.5
-  - @graview/pages@0.2.5
-  - @graview/ship@0.2.5
-  - @graview/layout@0.2.5
-
 ## 0.2.4
 
 ### Patch Changes

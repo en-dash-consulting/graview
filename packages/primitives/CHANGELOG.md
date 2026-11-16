@@ -1,29 +1,5 @@
 # @graview/primitives
 
-## 0.2.5
-
-### Patch Changes
-
-- 9810302: A host adds its own rows to the right-click menu. Graview Cloud wants "Make changes in your own AI" there, handed what was under the pointer. `menuItems` on `mount`, on `GraviewProvider`, on the `Shell` and on a `PagesApp`'s context takes `{ id, label, run, hint?, offered? }` rows (`HostMenuItem`). They are drawn after every row of the framework's on either face, after the host's own `menuSections` too, and are shown as the menu opens rather than waiting behind More…. Each is a button like the framework's rows: labeled, reached by the keyboard, and pressed after a phone's long press wherever the menu opens on one. A row handed twice, by the provider and by a face, is drawn once. Pressed, it is run with `HostMenuAt`: the record id, the relation or the place slug under the pointer, the kind of what was there (a record, a kind's card, a list), the whole address of what was there where it has one on the host's page, and the app's link. The link is the app's home on the host's page: the pages' own home, the host's `hrefOf("/")` where it gives one, and under `mount` the same link on the scene as on the pages; under memory routing it is the host's page and no address is handed. `offered(at)` leaves a row out where it does not apply. A menu section may now say `at: "last"`, which the host's rows use. `HostMenuItems` on `@graview/react/drawing` gives rows to every menu drawn inside it, and `menuLink` on the provider says the link where no face does. Held by unit tests of pages (`the-context-menu-opens-on-the-pages`) and primitives (`a-host-adds-its-own-rows-to-the-scene-menu`), and by the menu harness's `aHostsOwnRowComesLastAndIsRunWithWhatIsUnderThePointer`: on the pages at a desk's width with the keyboard and at a phone's with a resting finger. The scene's menu and the link a mount hands there are held by the primitives test. A hosted page carries a few dozen bytes more up front.
-  
-  Compatibility: the JavaScript API is additive (`menuItems` on `mount`, `GraviewProvider`, `Shell` and `PageContext`; `menuLink` on `GraviewProvider`; `"last"` for a `MenuSection`'s `at`; `HostMenuItem`, `HostMenuAt` and `HostMenuItems` on `@graview/react`). `useMenuSections` answers a `last` list beside `start` and `end`. Ops and primitives, stored formats, the wire, the declaration and check finding codes, and derived tool names and input schemas are unchanged. What Graview Cloud does: pass its "Make changes in your own AI" as one of `menuItems` on `mount`, in place of a `menuSections` source that worked out the record itself.
-- 48c8c68: "Back to now" leaves the keyboard where the timeline was opened, and the timeline's scrubber is a target a finger can hit. The timeline closes when "Back to now" is pressed, and the button goes with it, so the keyboard was left on `<body>` and a person who pressed it had to find their place again from the top of the page. It now goes back to what had the keyboard as the timeline opened, a host's own button that called `showHistory()` among them, or, where that is gone (the app menu's History row, closed with its menu, or a row of Activity), to the app menu's button within that embed, never another app's on the page. "Restore to here" does the same. A person who went on elsewhere keeps their place. The scrubber, a browser's range input under 24 pixels tall beside the ticks and the play button, is 24 pixels tall. Both were open problems the watch kept on `verify-playback` (`keyboard-lands-nowhere`, `target-too-small` at 1440 wide). Held by a unit test of the embed (`back-to-now-leaves-the-keyboard-where-the-timeline-was-opened`), on both faces, and by `pnpm verify playback`.
-  
-  Compatibility: ops and primitives, stored formats, the wire, the declaration and check finding codes, and derived tool names and input schemas — unchanged. The JavaScript API is unchanged. What Graview Cloud does: nothing.
-- Updated dependencies [884e85e]
-- Updated dependencies [9810302]
-- Updated dependencies [dc4f21c]
-- Updated dependencies [951c8b5]
-- Updated dependencies [1ad6d81]
-- Updated dependencies [e5f27e5]
-- Updated dependencies [3b6b06e]
-- Updated dependencies [710c737]
-  - @graview/core@0.2.5
-  - @graview/tools@0.2.5
-  - @graview/react@0.2.5
-  - @graview/layout@0.2.5
-  - @graview/render@0.2.5
-
 ## 0.2.4
 
 ### Patch Changes
