@@ -15,7 +15,7 @@ const app = defineApp({ name: "reserved", schema, mutations: [declared] as never
 describe("a tool list", () => {
   it("offers no declared act under a name the framework keeps, as the runtime does", () => {
     const listed = toolDefinitions(app as never);
-    expect(listed.definitions.map((one) => one.name)).not.toContain(BIND_PERSON);
+    expect(listed.definitions.map((one) => one.name).filter((name) => /^bind[-_]person$/i.test(name))).toEqual([]);
     const runtime = createToolRuntime(new Store<AnySchema>({ schema, mutations: [declared] as never, snapshot: { nodes: [], edges: [] } } as never));
     expect(listed.hash).toBe(runtime.hash);
   });
