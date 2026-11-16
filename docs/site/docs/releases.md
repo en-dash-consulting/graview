@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.2.5`](https://graview.dev/docs/releases.html#v0-2-5)
 - [`0.2.4`](https://graview.dev/docs/releases.html#v0-2-4)
 - [`0.2.3`](https://graview.dev/docs/releases.html#v0-2-3)
 - [`0.2.2`](https://graview.dev/docs/releases.html#v0-2-2)
@@ -81,9 +82,35 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
-## 0.2.4
+## 0.2.5
 
 Published November 16, 2026 · the current version
+
+The one face holds its boards in place on a slower machine and under a pinch that pans, the composer proposes a whole first design, and a host can add its own rows to the right-click menu.
+
+- **The one face holds on a slower machine.** A pan’s last step that reaches the picture a frame late is still the hand’s, so every board and name stays where it stood. A district’s “+n” keeps its size on the screen as the map zooms, and a board stands clear of it.
+- **A pinch that pans holds.** Two fingers that zoom and pan at once, one of them on a board or both on the ground, are one pinch: every board and name stays fastened to its district, and is placed again for the new zoom once the hand is off the map.
+- **The home at Nearby reads at a size.** The home never draws its city further out than a kind’s list does. Where the whole city does not fit beside the page, the districts the home shows are framed and the rest is a pan away, and a district’s name stands by its own ground.
+- **The composer covers a first design.** A composed design gives every named kind a row and a glance, a row names the record it belongs to, the home’s lists run from today in their choice’s order, the headline names the most linked kinds, and nothing is proposed for the people kind.
+- **A lighter composer for a host’s pages**: `@graview/core/composer` composes a change to the app with the compile a page already has.
+- **A host adds its own rows to the right-click menu** with `menuItems`.
+- **A field says it is cited** (`cites`): a view is told where a value came from, and `graview check` and the app’s own actor say which values have no citation.
+- **A view’s thumb can be cropped around a picture’s focus** with `pictures.thumb: { width, aspect }`.
+- A page a person made its own view takes what the host says of every view (`forkedViews`).
+- “Back to now” and “Restore to here” leave the keyboard where the timeline was opened, and the timeline’s scrubber is a target a finger can hit.
+- `graview check` knows every act the store derives, so a grant or a repair may name any of them.
+- The studio writes back two names that swap.
+- A plan alone is asked of an empty store.
+- A profile’s person record gets an id of its own; a migration renames the ones stored.
+- Security and reliability fixes.
+
+**Before you upgrade:** Breaks: a stored format. A profile’s person record gets an id of its own, and a migration renames the ones stored when `openStore` opens the store; run `graview serve --dry-run` on a copy first, and give a host adapter of your own that keeps a log `replaceLog` and `replaceArchive`. `profilePersonId` is removed (`mintPersonId` and `store.personOf(seat)` instead). A composed design’s rows and sections change: every named kind gets a row and a glance, the home’s lists run from today in their choice’s order, and the people kind gets nothing proposed; a design composed and kept before is not touched. `graview check` now accepts a grant or a repair naming any act the store derives, and warns on a grant naming an act no grant gives. Gains: `menuItems` (a host’s own rows on the right-click menu), `forkedViews`, `@graview/core/composer` (`composeAppChange`, `compileForAChange`), a field’s `cites` (with the `set-cites` edit, the `field-cites` and `field-uncited` findings and the `uncited` rule function), and `pictures.thumb: { width, aspect }`. Ops, the wire and derived tool names are otherwise unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.2.5) · [The full changelog for 0.2.5](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#025)
+
+## 0.2.4
+
+Published November 16, 2026
 
 Letting go of a pan or a zoom leaves the map where it stands, the third level is called Map, and a host gets the view and binding tools Graview Cloud asked for.
 
