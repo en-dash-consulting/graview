@@ -4,7 +4,9 @@ import {
   BIND_PERSON,
   PERSON_SEAT,
   FIELD_SIGHT,
+  asBoundTo,
   meOf,
+  profileOf,
   sees,
   askedArguments,
   actTitle,
@@ -265,7 +267,10 @@ const keptFromEveryPerson = (schema: AnySchema, policy: GraviewApp<AnySchema>["p
   if (people === undefined || isSystem(principal)) return false;
   if (off.has(people)) return true;
   if ((policy?.sees ?? []).length === 0) return false;
-  return !sees(policy, principal, { id: meOf(principal) ?? "", kind: people }, { out: () => [], in: () => [] }, undefined, FIELD_SIGHT.on === true);
+  // A profile with no person yet is judged as the one its first act makes: its own.
+  const me = meOf(principal) ?? (profileOf(principal) ? "\u0000person" : "");
+  const judged = meOf(principal) === undefined && profileOf(principal) ? asBoundTo(principal, me) : principal;
+  return !sees(policy, judged, { id: me, kind: people }, { out: () => [], in: () => [] }, undefined, FIELD_SIGHT.on === true);
 };
 
 /** Whether an app has a relation to another app's kind. */

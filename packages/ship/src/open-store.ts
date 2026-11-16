@@ -21,6 +21,7 @@ import {
 import { frictionSinkTo, type FrictionStore } from "@graview/core/friction";
 import { rememberArchive } from "./export.js";
 import { migrateSnapshot } from "./migrations.js";
+import { profilePeopleOver, profilePeopleRenames, renameProfilePeople, type ProfilePeopleRun } from "./profile-people.js";
 import type { StoredMeta } from "./meta.js";
 import type { GraphSnapshot } from "./snapshot.js";
 
@@ -113,6 +114,12 @@ export interface OpenStoreOptions<S extends AnySchema> {
    * the host (`store.tick(now)`): one whose process sleeps through timers.
    */
   readonly tick?: boolean;
+  /**
+   * Ids of other apps' people as links here keep them, old to new: what
+   * opening those apps said in `profilePeople.linked`. The host's to keep
+   * and hand back; this store's own are renamed without it.
+   */
+  readonly profilePeople?: ReadonlyMap<string, string>;
 }
 
 /*
@@ -125,6 +132,13 @@ export interface OpenedStore<S extends AnySchema> {
   readonly store: Store<S>;
   /** Operations the opening appended: the migration run, when one happened. */
   readonly migrated: readonly Operation[];
+  /**
+   * What giving profiles' people ids of their own changed as the store
+   * opened (`migrateProfilePeople`), and what links from other apps to them
+   * are renamed by, read from what the store keeps on every open: the
+   * host's, never served to a seat. Absent when there is neither.
+   */
+  readonly profilePeople?: ProfilePeopleRun;
   /**
    * The epoch this opening began (FR-27), when it began one: the seed a new
    * scope starts from, the graph a migration run left (with the change in
@@ -176,12 +190,12 @@ export async function openStore<S extends AnySchema>(
   const scope = options.scope ?? app.name;
 
   if (options.fresh) await adapter.delete(scope);
-  const stored = (await adapter.load(scope)) as GraphSnapshot | null;
+  let stored = (await adapter.load(scope)) as GraphSnapshot | null;
   const loggedOps = (await adapter.loadLog?.(scope)) ?? [];
   const report = options.onPersistError ?? ((error: unknown) => console.error("graview ship: persistence failed", error));
   const replayed = await replayJournal(options, scope, stored, loggedOps, report);
-  const persisted = replayed?.log ?? loggedOps;
-  const epochs: Epoch[] = (await adapter.loadEpochs?.(scope)) ?? [];
+  let persisted = replayed?.log ?? loggedOps;
+  let epochs: Epoch[] = (await adapter.loadEpochs?.(scope)) ?? [];
   /*
    * A COMPACTED LOG BEGINS AT ITS HORIZON (FR-23): the adapter hands over
    * the checkpoint and the ops from its seq on, and nothing older is read.
@@ -219,7 +233,39 @@ export async function openStore<S extends AnySchema>(
       : // A migration run behind the horizon is archived; the checkpoint still says the version it stood at.
         Math.max(meta?.version ?? options.assumeVersion ?? target, migratedTo, checkpoint?.version ?? 0);
 
-  let snapshot: GraphSnapshot = replayed?.snapshot ?? stored ?? options.seed ?? { nodes: [], edges: [] };
+  /*
+   * A PROFILE'S PERSON UNDER AN ID OF ITS OWN (`migrateProfilePeople`): what
+   * a store kept by an earlier version holds is renamed before anything
+   * folds it, and written back, and every meta written after carries the
+   * run's mark. A store that cannot be written back is not opened: the
+   * refusal says why, and a run stopped part way is finished by the next
+   * open with the ids it gave (`profilePeopleRenames`).
+   */
+  const hasPeople = app.schema.definitions.some((one) => (one as { readonly people?: boolean }).people);
+  const also = options.profilePeople && options.profilePeople.size > 0 ? options.profilePeople : undefined;
+  const fresh = stored === null && persisted.length === 0;
+  let people: Awaited<ReturnType<typeof profilePeopleOver<S>>> | undefined;
+  let seeded: GraphSnapshot | undefined;
+  let seededAs: Record<string, string> = {};
+  if (fresh) {
+    // A first open: nothing kept to rename or write back, and its seed renamed in hand where it holds any.
+    if (options.seed && (hasPeople || also)) {
+      const parts = { snapshot: options.seed, log: [], epochs: [] };
+      const renames = profilePeopleRenames(app.schema, parts);
+      seeded = renameProfilePeople(parts, renames, also).parts.snapshot ?? undefined;
+      seededAs = Object.fromEntries([...renames].map(([from, { to }]) => [from, to]));
+    }
+  } else if (hasPeople || also) {
+    people = await profilePeopleOver({ app, adapter, scope, version: storedVersion, ...(also ? { also } : {}) }, scope, meta as never, { snapshot: replayed?.snapshot ?? stored, log: persisted, epochs });
+  }
+  if (people) {
+    persisted = [...people.parts.log];
+    epochs = [...people.parts.epochs];
+    stored = stored && (replayed?.snapshot ? people.renamed(stored) : (people.parts.snapshot ?? stored));
+  }
+  const peopleMark = people?.mark ?? (fresh && hasPeople ? { renamed: seededAs, done: true as const } : (meta as { profilePeople?: StoredMeta["profilePeople"] } | null)?.profilePeople);
+
+  let snapshot: GraphSnapshot = seeded ?? (people?.parts.snapshot as GraphSnapshot | null | undefined) ?? replayed?.snapshot ?? stored ?? options.seed ?? { nodes: [], edges: [] };
   let migrated: readonly Operation[] = [];
   if (storedVersion < target) {
     const run = migrateSnapshot(app, snapshot, storedVersion);
@@ -378,7 +424,7 @@ export async function openStore<S extends AnySchema>(
   try {
     if (stored === null || migrated.length > 0 || rebuilt || replayed?.folded) await adapter.save(scope, store.snapshot());
     // Stamped for the checkpoint it begins at: snapshot format 2 when that lies past what stood published, which a build before it would misread.
-    await adapter.saveMeta?.(scope, { version: target, ...formatStamp(store.log.horizonEpoch()) });
+    await adapter.saveMeta?.(scope, { version: target, ...formatStamp(store.log.horizonEpoch()), ...(peopleMark ? { profilePeople: peopleMark } : {}) });
   } catch (error) {
     report(error);
   }
@@ -428,6 +474,7 @@ export async function openStore<S extends AnySchema>(
   return {
     store,
     migrated,
+    ...(people && (people.run.count.records > 0 || people.run.linked.size > 0) ? { profilePeople: people.run } : {}),
     ...(epoch ? { epoch } : {}),
     ...(verified ? { verified } : {}),
     ...(rebuilt ? { rebuilt } : {}),
@@ -457,7 +504,7 @@ export async function openStore<S extends AnySchema>(
          * snapshot format 2, whose meta is written before the checkpoint lands, and one that is not, after — so a write
          * that fails between them leaves a store at most stamped newer than it is, never older.
          */
-        const stamp = { version: target, ...formatStamp(made) };
+        const stamp = { version: target, ...formatStamp(made), ...(peopleMark ? { profilePeople: peopleMark } : {}) };
         const newer = stamp.formats.snapshot > 1;
         if (newer) await adapter.saveMeta?.(scope, stamp);
         await adapter.compact(scope, made);

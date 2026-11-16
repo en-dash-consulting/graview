@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { compileDocument } from "../../src/check.js";
-import { bindSchema, createSchema, defineNode, nodeRef, profilePersonId, Store, z, type AnySchema, type Principal } from "../../src/index.js";
+import { bindSchema, createSchema, defineNode, nodeRef, Store, z, type AnySchema, type Principal } from "../../src/index.js";
 
 /**
  * AN ACT DONE AS `$me` IS OFFERED ONLY TO A SEAT THAT CAN BE SOMEBODY HERE.
@@ -62,14 +62,15 @@ describe("a seat whose sight keeps the people kind from it", () => {
 describe("a seat that can see its own person", () => {
   for (const [said, seat, person] of [
     ["without a profile", family, "user:nick"],
-    ["with a profile", profiled(family), profilePersonId("user:nick", { id: "prf_mia" })],
+    ["with a profile", profiled(family), undefined],
   ] as const) {
     it(`is offered an act done as $me and it lands, ${said}`, () => {
       const store = rocks();
       expect(store.permittedMutations(seat).map((one) => one.name)).toContain("find-rock");
       expect(store.permits(call, seat).ok).toBe(true);
       store.apply(call, { author: seat });
-      expect(store.graph.out("rock:q", "foundBy" as never).map((one) => one.id)).toEqual([person]);
+      expect(store.graph.out("rock:q", "foundBy" as never).map((one) => one.id)).toEqual([person ?? store.personOf(seat)]);
+      if (person === undefined) expect(store.personOf(seat)).not.toContain("user:nick");
     });
   }
 });

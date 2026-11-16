@@ -1,4 +1,4 @@
-import { hidesFrom, readingOf, seatLens, seenBy, seesEveryRecord, seesId, type SeenOptions } from "./seen.js";
+import { everBound, hidesFrom, readingOf, seatLens, seenBy, seesEveryRecord, seesId, type SeenOptions } from "./seen.js";
 import { isoToday } from "./days.js";
 import type { IntelligenceProviderDeclaration } from "./app.js";
 import { Graph, GraphError, MissingRecordError } from "./graph/graph.js";
@@ -18,7 +18,7 @@ import type {
   InvariantDefinition,
   Violation,
 } from "./invariants/types.js";
-import { compileMutation } from "./mutations/define-mutation.js";
+import { compileMutation, mintPersonId } from "./mutations/define-mutation.js";
 import { wouldRun } from "./mutations/would-run.js";
 import { actSpelledAs, nearestAct } from "./mutations/act-spelling.js";
 import { InvalidArguments } from "./mutations/invalid-arguments.js";
@@ -38,7 +38,7 @@ import { TYPE_TEXT, TYPING } from "./text/typing-hook.js";
 import type { FieldRevision } from "./ops/revisions.js";
 import { DECLINES, isAutomated, isTidyingActor, tidyingRefusal, type ActMeanings, type ServedStops } from "./ops/tidying.js";
 import { nameOfAuthor } from "./who.js";
-import { actingAs, boundPersonOf, grantsTo, isSystem, meIn, meOf, ownsId, permits, profileOf, rolesSaid, seatedIn, withValidProfile, permittedMutations, proposes, subjectKinds, type PolicyWords } from "./permissions/policy.js";
+import { actingAs, asBoundTo, bindable, boundPersonOf, grantsTo, isSystem, meIn, meOf, ownsId, permits, profileOf, rolesSaid, seatedIn, seatPersonOf, withValidProfile, permittedMutations, proposes, subjectKinds, type PolicyWords } from "./permissions/policy.js";
 import { MOST_PROPOSED, PROPOSE_CHANGES, proposeChangesMutation } from "./mutations/propose-changes.js";
 import { namesUnseen, redact } from "./ops/withheld.js";
 import { writersBehind } from "./ops/writers.js";
@@ -1047,7 +1047,7 @@ export class Store<S extends AnySchema> {
     if (mutation !== undefined && mutation === this.typer) {
       // Through an act that could run on this record now: its module on, its own rule holding for the record as this principal is served it (`wouldRun`).
       const served = principal === undefined || isSystem(principal) ? this.graph : seenBy(this, principal).graph;
-      const allows = (writer: AnyMutationDefinition<S>) => !this.mutationDisabled(writer) && wouldRun(writer, this.schema, served, call?.args["node"], call?.args["field"], principal && meIn(this.schema, principal));
+      const allows = (writer: AnyMutationDefinition<S>) => !this.mutationDisabled(writer) && wouldRun(writer, this.schema, served, call?.args["node"], call?.args["field"], principal && meIn(this.schema, this.seated(principal)));
       return TYPING.via!(this.schema, [...this.mutations.values()] as never, this.subjectKindOf(call!, principal), call?.args["field"], allows as never);
     }
     if (!mutation?.derived) return undefined;
@@ -1865,7 +1865,7 @@ export class Store<S extends AnySchema> {
   wouldDo(calls: readonly MutationCall[], author: Author | Principal = this.by): readonly ("changes" | "nothing" | { readonly refused: unknown })[] {
     const as = withValidProfile(author) as Principal;
     const person = this.personFor(as);
-    return person ? this.withPersonMade(as, person.id).compiledEach(calls, as) : this.compiledEach(calls, as);
+    return person ? this.withPersonMade(as).compiledEach(calls, as) : this.compiledEach(calls, as);
   }
 
   /**
@@ -1873,8 +1873,8 @@ export class Store<S extends AnySchema> {
    * while this store's `version` stands, so every call a face asks of it in
    * one look — each act over every chosen record — is judged on the same copy.
    */
-  private withPersonMade(author: Principal, person: string): Store<S> {
-    const key = JSON.stringify([this.version, this.log.length, actingAs(author).id, person, profileOf(author)?.name]);
+  private withPersonMade(author: Principal): Store<S> {
+    const key = JSON.stringify([this.version, this.log.length, actingAs(author).id, seatPersonOf(author), profileOf(author)?.name]);
     if (this.personMade?.key === key) return this.personMade.twin;
     const twin = this.rehearsal();
     const made = twin.personToMake(author, PREVIEW_BATCH, {});
@@ -1966,7 +1966,7 @@ export class Store<S extends AnySchema> {
   wouldApply(call: MutationCall, author: Author | Principal, land: (graph: Graph<S>, primitives: readonly Primitive[]) => unknown): unknown {
     const as = withValidProfile(author) as Principal;
     const person = this.personFor(as);
-    const store = person ? this.withPersonMade(as, person.id) : this;
+    const store = person ? this.withPersonMade(as) : this;
     const was = store.rehearsing;
     store.rehearsing = true;
     try {
@@ -2020,7 +2020,7 @@ export class Store<S extends AnySchema> {
   judgedAs(author: Author | Principal): Store<S> {
     const as = withValidProfile(author) as Principal;
     const person = this.personFor(as);
-    return person ? this.withPersonMade(as, person.id) : this;
+    return person ? this.withPersonMade(as) : this;
   }
 
   /**
@@ -2847,7 +2847,10 @@ export class Store<S extends AnySchema> {
          * it" is everybody's to run, and undoing Ann's was taking back her vote.
          */
         /* What the act wrote as them: the profile's person, where they were one. */
-        const names = (value: unknown) => JSON.stringify(value).includes(JSON.stringify(meOf(this.seated(judged.author))));
+        // Or the record the seat was bound to last, where it is bound to none now: what it did is still theirs.
+        const seatOfAuthor = seatPersonOf(judged.author);
+        const doneAs = meOf(this.seated(judged.author)) ?? (seatOfAuthor === undefined ? undefined : everBound(this as never).get(seatOfAuthor));
+        const names = (value: unknown) => doneAs !== undefined && (JSON.stringify(value) ?? "").includes(JSON.stringify(doneAs));
         const verdict =
           by !== undefined && by !== actingAs(author as Principal).id && !isSystem(author as Principal) && !names(judged.mutation.args) && names(judged.primitives)
             ? { ok: false as const, refusal: { mutation: judged.mutation.name, wouldNeed: [], message: "it was done as somebody else." } }
@@ -2875,25 +2878,32 @@ export class Store<S extends AnySchema> {
   }
 
   /**
-   * THE RECORD A PROFILE'S PERSON WOULD BE, where one can be made (`meOf`):
-   * of the people kind, its name in the kind's name field. As Graview Cloud
-   * makes a member's: the id and the name, and where the kind asks for more,
-   * none, since nobody is there to answer. And none where this id was ever a
-   * record: one removed stays removed.
+   * THE RECORD A PROFILE'S PERSON WOULD BE, where one can be made: of the
+   * people kind, its name in the kind's name field, and the seat as its mark
+   * (`PERSON_SEAT`), which is what ties it to the profile and is served to
+   * that seat and the host alone. Its id is its own (`mintPersonId`, from
+   * the batch it is made in). As Graview Cloud makes a
+   * member's: the id and the name, and where the kind asks for more, none,
+   * since nobody is there to answer. And none where the seat was ever bound
+   * to a record: one removed stays removed, one unbound stays unbound.
    */
-  private personFor(author: Author | Principal): { readonly id: string; readonly name: string; readonly node: unknown } | undefined {
+  private personFor(author: Author | Principal, batch: string = PREVIEW_BATCH): { readonly id: string; readonly name: string; readonly node: unknown } | undefined {
     author = this.seated(author);
     const profile = profileOf(author);
-    const id = meOf(author);
-    if (!profile || id === undefined) return undefined;
+    const seat = bindable(author) ? seatPersonOf(author) : undefined;
+    if (!profile || seat === undefined || meOf(author) !== undefined) return undefined;
     const people = this.schema.definitions.find((definition) => definition.people);
-    if (!people || this.graph.has(id) || recordsOf(this.log).kindOf(id) !== undefined) return undefined;
+    if (!people || this.graph.personBoundTo(seat) !== undefined || everBound(this as never).has(seat)) return undefined;
+    // A record an earlier version made, not yet migrated (`@graview/ship`'s `migrateProfilePeople`): never a second one beside it.
+    const records = recordsOf(this.log);
+    if (this.graph.has(seat) || records.kindOf(seat) !== undefined) return undefined;
+    const id = mintPersonId(people.kind, batch, profile.id, (one) => this.graph.has(one) || records.kindOf(one) !== undefined);
     const fields = people.fields as unknown as { readonly shape?: Readonly<Record<string, { safeParse(value: unknown): { readonly success: boolean } }>>; safeParse(value: unknown): { readonly success: boolean } };
     const shape = fields.shape ?? {};
     const words = Object.keys(shape).filter((field) => shape[field]!.safeParse("x").success && !shape[field]!.safeParse(1).success);
     const named = words.includes("name") ? "name" : (words.find((field) => !shape[field]!.safeParse(undefined).success) ?? words[0]);
     const node = { ...people.defaults, id, kind: people.kind, ...(named ? { [named]: profile.name } : {}) };
-    return fields.safeParse(node).success ? { id, name: profile.name, node } : undefined;
+    return fields.safeParse(node).success ? { id, name: profile.name, node: { ...node, [PERSON_SEAT]: seat } } : undefined;
   }
 
   /**
@@ -2915,9 +2925,9 @@ export class Store<S extends AnySchema> {
     const kept = (person: { readonly id: string; readonly kind: string }) => bySight && !this.seesOwnPerson(author as Principal, person);
     if (actingAs(author as Principal).id === undefined) return kept({ id: "", kind: people.kind });
     const id = meOf(author);
-    if (id === undefined) return true;
-    const kind = this.graph.getNode(id)?.kind as string | undefined;
-    if (kind !== undefined && this.schema.tryDefinition(kind)?.people) return kept({ id, kind });
+    if (id === undefined && !profileOf(author)) return true;
+    const kind = id === undefined ? undefined : (this.graph.getNode(id)?.kind as string | undefined);
+    if (id !== undefined && kind !== undefined && this.schema.tryDefinition(kind)?.people) return kept({ id, kind });
     if (!profileOf(author)) return false;
     const person = this.personFor(author);
     return !person || kept({ id: person.id, kind: (person.node as { readonly kind: string }).kind });
@@ -2927,7 +2937,8 @@ export class Store<S extends AnySchema> {
   private seesOwnPerson(author: Principal, person: { readonly id: string; readonly kind: string }): boolean {
     if (!hidesFrom(this, author)) return true;
     if (this.modules.disabledKinds.has(person.kind) && !isSystem(author)) return false;
-    return this.graph.has(person.id) ? seesId(this, author)(person.id) : sees(this.policy, author, person, { out: () => [], in: () => [] }, recordsOf(this.log), fieldsJudged(this));
+    // A person not made yet is judged as the seat's own: the seat bound to it, as it will be.
+    return this.graph.has(person.id) ? seesId(this, author)(person.id) : sees(this.policy, asBoundTo(author, person.id), person, { out: () => [], in: () => [] }, recordsOf(this.log), fieldsJudged(this));
   }
 
   /**
@@ -2942,7 +2953,7 @@ export class Store<S extends AnySchema> {
 
   /** The op that makes a profile's person on first use: by the account's own hand, so it is what the account made (`own`), and no other's. */
   private personToMake(author: Author | Principal, batch: string, options: ApplyOptions): Operation | undefined {
-    const person = this.personFor(author);
+    const person = this.personFor(author, batch);
     if (!person) return undefined;
     return {
       id: this.nextId(),

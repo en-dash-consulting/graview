@@ -10,4 +10,10 @@ export interface StoredMeta {
   readonly version: number;
   readonly framework?: string;
   readonly formats?: Partial<Record<FormatName, number>>;
+  /**
+   * What the run that gives profiles' people ids of their own did here
+   * (`migrateProfilePeople`): each id it renamed, old to new, and whether
+   * it finished. The host's alone, never served to a seat.
+   */
+  readonly profilePeople?: { readonly renamed: Readonly<Record<string, string>>; readonly done?: true };
 }

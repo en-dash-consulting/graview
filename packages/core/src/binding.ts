@@ -23,7 +23,7 @@ import * as z from "./schema/zod.js";
 import type { ApplyOptions, ApplyResult, Store } from "./store.js";
 
 
-/** A seat as a binding names it: an account's id, or an account's id and a profile's (`profilePersonId`). */
+/** A seat as a binding names it: an account's id, or an account's id and a profile's (`seatPersonOf`). */
 const SEAT = /^[^~]+(~[\w-]{1,64})?$/;
 
 type Held = Store<AnySchema>;
@@ -73,7 +73,7 @@ function recordRefusal(store: Held, node: Node, seat?: string): string | undefin
   const definition = schema.tryDefinition(node.kind) as { readonly people?: boolean; readonly noun?: string } | undefined;
   if (!definition?.people) return `${named} is ${withArticle(nounOf(definition, node.kind))}, not ${withArticle(noun)}: only ${withArticle(noun)} can be someone's record here.`;
   const bound = personSeatOf(node);
-  if ((bound !== undefined && bound !== seat) || node.id.includes("~") || doneAs(store).some((one) => one.record === node.id && one.seat !== seat) || [...endedIn(store)].some(([one, was]) => was === node.id && one !== seat)) return `${named} is already someone else's record here.`;
+  if ((bound !== undefined && bound !== seat) || doneAs(store).some((one) => one.record === node.id && one.seat !== seat) || [...endedIn(store)].some(([one, was]) => was === node.id && one !== seat)) return `${named} is already someone else's record here.`;
   return undefined;
 }
 

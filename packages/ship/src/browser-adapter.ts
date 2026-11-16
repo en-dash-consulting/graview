@@ -152,6 +152,8 @@ interface Backend {
   delete(scope: string): Promise<void>;
   loadLog(scope: string): Promise<Operation[]>;
   appendOps(scope: string, ops: readonly Operation[], options?: AppendOptions): Promise<void>;
+  /** The whole log, replaced: see `PersistenceAdapter.replaceLog`. */
+  replaceLog(scope: string, ops: readonly Operation[]): Promise<void>;
   loadMeta(scope: string): Promise<StoredMeta | null>;
   saveMeta(scope: string, meta: StoredMeta): Promise<void>;
 }
@@ -198,6 +200,7 @@ function adapterOver(keysFor: Keys, choose: () => Promise<Chosen>, journalIn: St
     delete: (scope) => queued(({ backend }) => backend.delete(scope)),
     loadLog: (scope) => queued(({ backend }) => backend.loadLog(scope)),
     appendOps: (scope, ops, options) => queued(({ backend }) => (ops.length === 0 ? Promise.resolve() : backend.appendOps(scope, ops, options))),
+    replaceLog: (scope, ops) => queued(({ backend }) => backend.replaceLog(scope, ops)),
     loadMeta: (scope) => queued(({ backend }) => backend.loadMeta(scope)),
     saveMeta: (scope, meta) => queued(({ backend }) => backend.saveMeta(scope, meta)),
   };
@@ -306,6 +309,15 @@ function journaled(
         prune(scope);
       });
     },
+    replaceLog: (scope, ops) => {
+      heard(scope, ops);
+      return queued(async ({ backend }) => {
+        await backend.replaceLog(scope, ops);
+        const state = stateOf(scope);
+        state.logged = Math.max(state.logged, newest(ops));
+        prune(scope);
+      });
+    },
     journal(scope, ops) {
       if (ops.length === 0) return;
       heard(scope, ops);
@@ -357,6 +369,9 @@ function localBackend(storage: StorageLike, keysFor: Keys): Backend {
       // One writer: another tab that appended since is seen, read now from storage (compare-and-set).
       assertHead(scope, ops, options, () => headOf(log));
       write(key, [...log, ...ops]);
+    },
+    async replaceLog(scope, ops) {
+      write(keysFor(scope).log, ops);
     },
     async loadMeta(scope) {
       return read<StoredMeta>(keysFor(scope).meta);
@@ -535,6 +550,18 @@ function indexedBackend(
         ]),
       );
       pieces.set(scope, n + 1);
+    },
+    async replaceLog(scope, ops) {
+      await settle(scope);
+      const n = await count(scope);
+      // One piece and its count in one transaction, the rest let go: a log never counts a piece it does not have.
+      const write = new Map<string, string | null>([
+        [piece(scope, 0), JSON.stringify(ops)],
+        [keysFor(scope).log, "1"],
+      ]);
+      for (let i = 1; i < n; i++) write.set(piece(scope, i), null);
+      await entries.write(write);
+      pieces.set(scope, 1);
     },
     async loadMeta(scope) {
       await settle(scope);

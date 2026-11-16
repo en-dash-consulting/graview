@@ -465,7 +465,7 @@ const VIEWS = new WeakMap<object, Map<string, unknown>>();
 function seatKey(principal: Principal): string {
   const judged = isSystem(principal) ? principal : actingAs(principal);
   // An agent's own id too: two agents for one person are two seats, and each view answers as its own (`seenFor`, `wouldChange`, `preview`).
-  return `${principal.kind}|${judged.id ?? ""}|${(judged.roles ?? []).join(",")}|${principal.onBehalfOf ? `for:${principal.id ?? ""}` : ""}${profileOf(principal) || meOf(principal) !== actingAs(principal).id ? `|as:${meOf(principal)}` : ""}`;
+  return `${principal.kind}|${judged.id ?? ""}|${(judged.roles ?? []).join(",")}|${principal.onBehalfOf ? `for:${principal.id ?? ""}` : ""}${profileOf(principal) || meOf(principal) !== actingAs(principal).id ? `|as:${seatPersonOf(principal) ?? ""}>${meOf(principal) ?? ""}` : ""}`;
 }
 
 /**
@@ -577,7 +577,7 @@ const EVER_BOUND = new WeakMap<object, { horizon: number; length: number; readon
  * record bound to the same seat — so what an author did is never said as
  * the account again once it was said as a record. Read once a growth.
  */
-function everBound(store: Judged): ReadonlyMap<string, string> {
+export function everBound(store: Judged): ReadonlyMap<string, string> {
   const own = boundInLog(store);
   // A moment of the past: what the present's log bound too, so nothing it says as a record is said as the account at an earlier seq.
   const present = presentOf(store) as Judged | undefined;

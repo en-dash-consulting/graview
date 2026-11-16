@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { compileDocument } from "../../src/check.js";
-import { bindSchema, createSchema, defineNode, meOf, nodeRef, profileOf, profilePersonId, Store, withValidProfile, z, type AnySchema, type Principal } from "../../src/index.js";
+import { bindSchema, createSchema, defineNode, meOf, mintPersonId, nodeRef, profileOf, Store, withValidProfile, z, type AnySchema, type Principal } from "../../src/index.js";
 
 /**
  * A PROFILE'S PERSON, AGAINST CODE AND RESTORES, AND WHAT IS NOT TAKEN AWAY
@@ -10,7 +10,8 @@ import { bindSchema, createSchema, defineNode, meOf, nodeRef, profileOf, profile
  * seat did it may still undo; and `permits` answers what `apply` would.
  */
 const mia: Principal = { kind: "human", id: "user:nick", name: "Nick", profile: { id: "prf_mia", name: "Mia" } };
-const person = profilePersonId("user:nick", { id: "prf_mia" });
+/** The seat Mia is, as a binding names it: no record's id. */
+const MIA_SEAT = "user:nick~prf_mia";
 
 function coded(fields: Record<string, z.ZodType> = { name: z.string() }) {
   const explorer = defineNode("explorer", { people: true, fields: z.object(fields) } as never);
@@ -45,21 +46,21 @@ const rocks = (extra: { fields?: Record<string, unknown>; acts?: Record<string, 
 const family = (seat: Principal): Principal => ({ ...seat, roles: ["family"] });
 
 describe("a code act", () => {
-  it("cannot make a record under a profile's person's id, by addNode, composed or emitted", () => {
+  it("cannot make a record under a profile's seat, by addNode, composed or emitted", () => {
     const store = coded();
-    for (const [name, key] of [["add-own-id", person], ["add-composed", "nick~prf_mia"], ["add-emitted", person]] as const) {
+    for (const [name, key] of [["add-own-id", MIA_SEAT], ["add-composed", "nick~prf_mia"], ["add-emitted", MIA_SEAT]] as const) {
       expect(() => store.apply({ name, args: { key } })).toThrow(/cannot hold a ~/);
-      expect(store.graph.has(person)).toBe(false);
+      expect(store.graph.has(MIA_SEAT)).toBe(false);
     }
     store.apply({ name: "find", args: { id: "rock:q" } }, { author: mia });
-    expect(store.graph.getNode(person)).toMatchObject({ kind: "explorer", name: "Mia" });
+    expect(store.graph.getNode(store.personOf(mia)!)).toMatchObject({ kind: "explorer", name: "Mia" });
   });
 });
 
-describe("a record of another kind at a person's id, from a restore or a host's primitives", () => {
-  it("is not read as the person: $me refuses in a sentence, and is not offered", () => {
+describe("a record under a profile's seat, from a restore or a host's primitives", () => {
+  it("is not read as the person, nor is a second one made beside it: $me refuses in a sentence, and is not offered", () => {
     const { store } = rocks();
-    store.applyPrimitives([{ op: "add-node", node: { id: person, kind: "rock", title: "squatted" } as never }], { author: { kind: "system", id: "sync" } });
+    store.applyPrimitives([{ op: "add-node", node: { id: MIA_SEAT, kind: "rock", title: "squatted" } as never }], { author: { kind: "system", id: "sync" } });
     const seat = family(mia);
     expect(store.permittedMutations(seat).map((one) => one.name)).not.toContain("find-rock");
     expect(store.permits({ name: "find-rock", args: { id: "rock:q" } }, seat)).toMatchObject({ ok: false, refusal: { message: expect.stringMatching(/you have no record here/) } });
@@ -78,7 +79,7 @@ describe("what a seat did, it may still undo", () => {
   it("is so for a profile undoing its own act after its person was removed", () => {
     const { store } = rocks();
     const done = store.apply({ name: "sign", args: { id: "rock:q" } }, { author: family(mia) });
-    store.applyPrimitives([{ op: "remove-node", node: store.graph.getNode(person) as never }], { author: { kind: "system", id: "people" } });
+    store.applyPrimitives([{ op: "remove-node", node: store.graph.getNode(store.personOf(family(mia))!) as never }], { author: { kind: "system", id: "people" } });
     expect(store.mayUndo(done.batch, family(mia))).toEqual({ ok: true });
     store.undo(done.batch, { author: family(mia) });
     expect((store.graph.getNode("rock:q") as unknown as { signed?: string }).signed).toBeUndefined();
@@ -120,23 +121,34 @@ describe("permits and apply", () => {
   const fresh = () => new Store<AnySchema>({ schema: compiled.app.schema, mutations: compiled.app.mutations as never, policy: compiled.app.policy!, snapshot: { nodes: [{ id: "p_ann", kind: "member", name: "Ann" }, { id: "p_bo", kind: "member", name: "Bo" }, { id: "idea:picnic", kind: "idea", title: "A picnic" }], edges: [] } as never });
   const ann: Principal = { kind: "human", id: "p_ann", roles: ["member"] };
   const seat: Principal = { ...ann, profile: { id: "prf_mia", name: "Mia" } };
-  const own = profilePersonId("p_ann", { id: "prf_mia" });
+  /* The person the profile's first act makes, in batch `first`: what a client that names the batch knows before it lands. */
+  const first = "batch:seat:1";
+  const own = mintPersonId("member", first, "prf_mia", () => false);
 
   it("agree before the person exists: refused where the link is somebody's, as apply refuses", () => {
     const store = fresh();
     store.apply({ name: "lead", args: { id: "idea:picnic", leader: "p_bo" } }, { author: { kind: "human", id: "p_bo", roles: ["member"] } });
     const call = { name: "lead", args: { id: "idea:picnic", leader: own } };
     expect(store.permits(call, seat).ok).toBe(false);
-    expect(() => store.apply(call, { author: seat })).toThrow(/own end/);
+    expect(() => store.apply(call, { author: seat, batch: first })).toThrow(/own end/);
   });
 
-  it("agree before the person exists: permitted where the link is free, as apply lands, and asking changes nothing", () => {
+  it("agree before the person exists: an act done as it is permitted, as apply lands, and asking changes nothing", () => {
     const store = fresh();
-    const call = { name: "lead", args: { id: "idea:picnic", leader: own } };
+    const call = { name: "vote-for", args: { id: "idea:picnic" } };
     const ops = store.log.length;
     expect(store.permits(call, seat).ok).toBe(true);
     expect(store.log.length).toBe(ops);
     expect(store.graph.has(own)).toBe(false);
+    store.apply(call, { author: seat, batch: first });
+    expect(store.graph.out("idea:picnic", "votedBy" as never).map((one) => one.id)).toEqual([own]);
+  });
+
+  it("agree once the person exists: permitted to lead as itself where the link is free, as apply lands", () => {
+    const store = fresh();
+    store.apply({ name: "vote-for", args: { id: "idea:picnic" } }, { author: seat, batch: first });
+    const call = { name: "lead", args: { id: "idea:picnic", leader: own } };
+    expect(store.permits(call, seat).ok).toBe(true);
     store.apply(call, { author: seat });
     expect(store.graph.out("idea:picnic", "ledBy" as never).map((one) => one.id)).toEqual([own]);
   });

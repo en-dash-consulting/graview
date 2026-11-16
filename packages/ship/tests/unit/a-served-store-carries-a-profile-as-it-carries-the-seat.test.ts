@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { meOf, profilePersonId, type Principal } from "@graview/core";
+import { meOf, seatPersonOf, type Principal } from "@graview/core";
 import { SEAT_HEADERS, seatFromHeaders } from "../../src/handler.js";
 import { seatHeaders } from "../../src/remote.js";
 
@@ -22,7 +22,7 @@ describe("the seat's headers", () => {
     const agent: Principal = { kind: "agent", id: "claude", onBehalfOf: mia };
     const seat = seatFromHeaders(request(seatHeaders(agent)));
     expect(seat.onBehalfOf?.profile).toEqual(mia.profile);
-    expect(meOf(seat)).toBe(profilePersonId("user:nick", { id: "prf_mia" }));
+    expect(seatPersonOf(seat)).toBe("user:nick~prf_mia");
   });
 
   it("say nothing of a profile on a seat with none, as they always did", () => {
@@ -36,8 +36,8 @@ describe("the seat's headers", () => {
 describe("a client naming a profile", () => {
   it("reaches only its own account's person, whichever profile it names", () => {
     const seat = seatFromHeaders(request({ [SEAT_HEADERS.seat]: "user:ann", [SEAT_HEADERS.profile]: "prf_mia", [SEAT_HEADERS.profileName]: "Mia" }));
-    expect(meOf(seat)).toBe(profilePersonId("user:ann", { id: "prf_mia" }));
-    expect(meOf(seat)).not.toBe(meOf(mia));
+    expect(seatPersonOf(seat)).toBe("user:ann~prf_mia");
+    expect(seatPersonOf(seat)).not.toBe(seatPersonOf(mia));
   });
 
   it("cannot name a member's record, or another account's profile's, as its profile", () => {

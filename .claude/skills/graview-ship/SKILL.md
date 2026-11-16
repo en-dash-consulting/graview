@@ -96,6 +96,9 @@ to it, or kept in step with a Google calendar is `graview-sync`.
    undone like any other. `openStore` runs the pending chain on load.
    `graview check` refuses a chain with a hole or a multi-version jump
    (`migration-gap`, `migration-not-single-step`) before deploy time finds it.
+   `openStore` also renames profiles' people an earlier version kept.
+   `graview serve <entry> --dry-run` says what opening would migrate,
+   writing nothing (`profilePeopleCount` per store).
 
 3. **Export is the exit.** `exportBundle(app, store)` — graph, attributed
    history and version in one JSON shape; `assertBundle` refuses someone

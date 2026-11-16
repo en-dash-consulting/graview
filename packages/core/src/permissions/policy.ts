@@ -4,6 +4,7 @@ import { humanizeField, withArticle } from "../schema/define-node.js";
 import { listed } from "../capital.js";
 import type { Author, Operation, SeatProfile } from "../ops/types.js";
 import type { Grant, Policy, Principal, Refusal } from "./types.js";
+import { personSeatOf } from "../graph/archived.js";
 
 const matches = (allowed: readonly string[] | "*", value: string): boolean =>
   allowed === "*" || allowed.includes(value);
@@ -56,36 +57,29 @@ export function withValidProfile<A extends Author>(seat: A): A {
 }
 
 /**
- * THE RECORD A PROFILE IS, ON ITS ACCOUNT. Its id is the account's and the
- * profile's together, so a profile is linked to the account's own by what it
- * is called, and no host's say of a profile — nor a client's it believed —
- * reaches a member's record or another account's profile. An id with a `~` is
- * this and nothing else: a profile's id cannot hold one, a record cannot be
- * asked for under one (`compileMutation`), and an account whose id holds one
- * is nobody's person (`meOf`).
- */
-export const profilePersonId = (account: string, profile: Pick<SeatProfile, "id">): string => `${account}~${profile.id}`;
-
-/**
  * WHO `$me` IS: the id of the principal's own record of the people kind.
  * The person's, for an agent acting for one (Roadmap f-act-as-me); the
- * profile's person, where the seat carries a profile; nobody, for a seat whose
- * own id reads as a profile's person.
+ * record the store bound the seat to (`seatedIn`), where it bound one — a
+ * profile's person is always that, made on first use with the seat as its
+ * mark (`PERSON_SEAT`); else the account's own id. A seat with a profile and
+ * no record bound to it is nobody yet, and a seat whose own id holds a `~`
+ * is nobody.
  */
 export function meOf(principal: Author): string | undefined {
-  return boundPersonOf(principal) ?? seatPersonOf(principal);
+  return boundPersonOf(principal) ?? (profileOf(principal) ? undefined : seatPersonOf(principal));
 }
 
 /**
- * THE PERSON A SEAT IS BEFORE ANY BINDING: its account's id, or its
- * profile's person (`profilePersonId`). What a binding is kept under
- * (`PERSON_SEAT`, `bind-person`): the seat, not the record.
+ * THE SEAT A BINDING NAMES, BEFORE ANY RECORD: its account's id, or — with
+ * a profile — the account's id and the profile's, `~` between. What a
+ * binding is kept under (`PERSON_SEAT`, `bind-person`), served to that seat
+ * and the host alone.
  */
 export function seatPersonOf(principal: Author): string | undefined {
   const account = actingAs(principal as Principal).id;
   if (account === undefined || account.includes("~")) return undefined;
   const profile = profileOf(principal);
-  return profile ? profilePersonId(account, profile) : account;
+  return profile ? `${account}~${profile.id}` : account;
 }
 
 /**
@@ -148,15 +142,25 @@ export function meIn(schema: { readonly definitions: readonly unknown[] }, princ
 
 /**
  * WHETHER AN ID IS THE PRINCIPAL'S OWN, as `self`, `ownEnd`, `own` and `via`
- * read it: the account's, always, so a profile narrows nothing; the
- * person of the profile it carries, which is the account's own and no other's;
- * and the record the store bound the seat to (`seatedIn`).
+ * read it: the account's, always, so a profile narrows nothing; and the
+ * record the store bound the seat to (`seatedIn`) — a profile's person among
+ * them, which is the account's own and no other's.
  */
 export function ownsId(principal: Principal, id: string | undefined): boolean {
   if (id === undefined) return false;
   const account = actingAs(principal).id;
   if (account === undefined || account.includes("~")) return false;
-  return id === account || id === boundPersonOf(principal) || (id.includes("~") && id === meOf(principal));
+  return id === account || id === boundPersonOf(principal);
+}
+
+/**
+ * A SEAT JUDGED AS THE PERSON IT IS ABOUT TO BE: the principal bound to
+ * `person`, a record its profile's first act would make, so a sight or a
+ * grant reads that record as its own before it is there (`own`, `self`).
+ * Nothing kept; a store seats the principal again each time it is asked.
+ */
+export function asBoundTo<P extends Author>(principal: P, person: string): P {
+  return { ...principal, [BOUND_PERSON]: person } as P;
 }
 
 /**
@@ -168,7 +172,8 @@ export function ownsId(principal: Principal, id: string | undefined): boolean {
 export const madeOwnPerson = (op: Pick<Operation, "author" | "mutation" | "primitives">): boolean => {
   if (op.mutation !== null || op.primitives.length !== 1 || !profileOf(op.author)) return false;
   const [made] = op.primitives;
-  return made!.op === "add-node" && made!.node.id === meOf(op.author);
+  const seat = seatPersonOf(op.author);
+  return made!.op === "add-node" && seat !== undefined && personSeatOf(made!.node) === seat;
 };
 
 /**

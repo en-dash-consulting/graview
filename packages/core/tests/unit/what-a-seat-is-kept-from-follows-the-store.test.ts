@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { bindSchema, createSchema, declareInstallation, defineNode, FIELD_SIGHT, INSTALLATION_MODULE, profilePersonId, Store, z, type AnySchema, type Principal } from "../../src/index.js";
+import { bindSchema, createSchema, declareInstallation, defineNode, FIELD_SIGHT, INSTALLATION_MODULE, PERSON_SEAT, Store, z, type AnySchema, type Principal } from "../../src/index.js";
 import { MUTATIONS, schema as phones } from "../support/hidden-phones.js";
 
 /*
@@ -77,7 +77,7 @@ describe("the seat's own person", () => {
     expect(camp.permittedMutations(mia).map((one) => one.name)).not.toContain("jot");
     expect(kept(camp, mia)).toEqual(["note"]);
     /* Her person, as a host's server holds it: no op of this store's made it, and the log is as long as it was. */
-    camp.adopt({ snapshot: { nodes: [{ id: profilePersonId("user:mia", { id: "prf_mia" }), kind: "explorer", name: "Mia", email: "mia@camp.test" }], edges: [] } as never, log: [] });
+    camp.adopt({ snapshot: { nodes: [{ id: "explorer:mia", kind: "explorer", name: "Mia", email: "mia@camp.test", [PERSON_SEAT]: "user:mia~prf_mia" }], edges: [] } as never, log: [] });
     expect(camp.permittedMutations(mia).map((one) => one.name)).toContain("jot");
     expect(kept(camp, mia)).toEqual(fresh(camp, mia));
     expect(kept(camp, mia)).toEqual([]);
