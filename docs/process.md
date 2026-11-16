@@ -6,16 +6,15 @@ and Graview Cloud. The rules every build follows are in
 [`.ndx/rex/workflow.md`](../.ndx/rex/workflow.md); the pass that drives the
 loop is the `dev-sync` skill ([`.claude/skills/dev-sync/SKILL.md`](../.claude/skills/dev-sync/SKILL.md)).
 
-Steps marked **(new in 0.2.5)** arrive with the builds `ci/harnesses-run-on-github`
-and `ci/release-without-a-version-pr`. Until they are on main, do those steps
-the 0.2.4 way:
+Steps marked **(new in 0.2.5)** arrive with the build `ci/harnesses-run-on-github`.
+Until it is on main, do those steps the 0.2.4 way:
 - a build runs its full harnesses locally (`pnpm verify <names>`);
 - the batch runs `pnpm test`, `pnpm verify`, `pnpm engines` and
-  `node scripts/progression.mjs` locally, and a Nightly on its head;
-- merging the batch opens the "Version packages" PR, where the release record
-  is written by hand and `pnpm site:build:all` run; once that PR merges,
-  dispatch Nightly on main and wait for it green before Nick approves, since
-  today's publish job checks the last finished Nightly on main.
+  `node scripts/progression.mjs` locally, and a Nightly on its head.
+
+How a release is carried and published is said once, in AGENTS.md's
+[Releasing](../AGENTS.md#releasing) section and the dev-sync skill's step 4;
+steps 4 and 5 below are its outline.
 
 ## The loop
 
@@ -53,14 +52,20 @@ flowchart TD
    PRs in order, writes the budget raises for what they add together (on a
    PR that is not a batch, CI sets `GRAVIEW_BUDGET=warn` and a byte budget
    that is over only warns; the batch fails while it is over),
-   and runs `pnpm release:prepare`: the changesets versioned, the release
-   record taken in and the site rebuilt **(new in 0.2.5)**.
-5. **Release.** Merging the batch starts the `publish` job directly
-   **(new in 0.2.5)**. It waits for Nick's approval, then checks a green
-   Nightly on the same tree **(new in 0.2.5; today, the last one on main)**,
-   publishes all fourteen packages, tags them and writes the
-   GitHub releases. A changeset merged outside a batch still goes through the
-   "Version packages" PR.
+   and carries the release: `pnpm build && pnpm release:prepare` spends the
+   changesets (the fixed group's next version, every changelog), scaffolds
+   the version's record in `apps/site/releases.json` and rebuilds the site.
+   A person rewrites the record (a test refuses one that still says
+   `WRITE ME`), runs `pnpm site:build:all`, pushes, and dispatches Nightly
+   on the batch head after that last push.
+5. **Release.** Merging the batch is the release: with no changeset pending
+   and a version npm lacks, `release.yml` starts the `publish` job directly,
+   provided a green Nightly ran on the same tree (the batch head's, when the
+   merge conflicts with nothing; otherwise dispatch Nightly on main and
+   re-run). It waits for Nick's approval, checks that gate again, then
+   publishes all fourteen packages, tags them and writes the GitHub
+   releases. No Version packages PR is opened for a batch; a changeset
+   merged outside a batch still goes through one.
 6. **HQ booking.** The release, each feature `shipped`, each request
    `delivered`, the leases released.
 7. **Cloud.** One private brief to Graview Cloud says what it does with each
@@ -78,8 +83,8 @@ flowchart TD
 | Full harnesses **(new in 0.2.5)** | `pnpm verify:github <names>` on GitHub runners (`verify.yml`) | not yet measured | every screen of the harnesses the change touches, without the laptop's ports and power | the build |
 | PR CI | `ci.yml`: tests in three shards, typecheck, build, workerd, `graview check`, tarballs, scaffold, progression, first load, changeset | 6–13 min | what main's ruleset requires (`verify`, `changeset`) | automatic; the build reads it |
 | Nightly on a PR | `nightly.yml` dispatched on the frozen head: every harness in nine shards, the GPU leg | 27–34 min | harness, render and focus changes, before they merge | the dev-sync pass dispatches it |
-| The batch | merge in order, budget raises, `pnpm release:prepare` **(new in 0.2.5)**, PR CI, a Nightly on its head | about 80 min on 0.2.4 | the PRs hold together | the holder of `phase:release` |
-| Publish | `release.yml` in the `npm` environment: build, typecheck, tests, a green Nightly on the same tree **(new in 0.2.5)**, trusted publish, tags, releases | about 12 min of tests, then the publish | nothing reaches npm untested or unapproved | Nick approves; the workflow does the rest |
+| The batch | merge in order, budget raises, `pnpm release:prepare` and the release record, PR CI, a Nightly on its head after the last push | about 80 min on 0.2.4 | the PRs hold together | the holder of `phase:release` |
+| Publish | `release.yml` in the `npm` environment: build, typecheck, tests, a green Nightly on the same tree, trusted publish, tags, releases | about 12 min of tests, then the publish | nothing reaches npm untested or unapproved | Nick approves; the workflow does the rest |
 | Nightly on main | `nightly.yml` every day at 07:17 UTC; Mondays at 09:17 also WebKit and Firefox | 27–34 min | main stays green between releases | automatic; red on main is fixed first |
 | Pages | `pages.yml` on every push to main | a few minutes | graview.dev says what main has | automatic |
 
