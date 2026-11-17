@@ -1,6 +1,8 @@
 schema: "rex/v2"
 items:
   "ac0ebe80-26b4-48ec-ab0c-b63b210ff88e":
-    status: "in_progress"
-    lastModified: "2026-11-16T06:30:00.000Z"
+    status: "completed"
+    completedAt: "2026-11-16T17:30:00.000Z"
+    lastModified: "2026-11-16T17:30:00.000Z"
+    resolutionDetail: "Shipped in 0.2.5 (#633, batch #638)."
     lastModifiedBy: "Nick Daniel <nick@endash.us>"
