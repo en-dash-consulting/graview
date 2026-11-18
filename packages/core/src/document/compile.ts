@@ -2,7 +2,7 @@ import type { FarAppResolver } from "../workflows/far.js";
 import type { HostView } from "../views/types.js";
 import { derivedActOf } from "../mutations/derived-names.js";
 import { BINDING_ACTS, isBindingAct } from "../binding-served.js";
-import { bindingUngranted } from "../binding-ungranted.js";
+import { bindingActTaken, bindingUngranted } from "../binding-ungranted.js";
 import { documentRelationActOf } from "./relation-acts.js";
 import { actsSpelledAsGiven, didYouMeanAct } from "./act-spellings.js";
 import { brandOf } from "./brand.js";
@@ -419,7 +419,7 @@ function validate(document: GraviewDocument): Finding[] {
   }
 
   // A name the framework keeps for an act of its own is never the document's (`binding-act-taken`).
-  for (const kept of BINDING_ACTS) if (Object.hasOwn(acts, kept)) findings.push(error("binding-act-taken", `acts.${kept}`, `"${kept}" is a name the framework keeps for an act of its own, the host's binding of an account to the person entered for it: no act of the document's may take it`, "give the act another name"));
+  for (const kept of BINDING_ACTS) if (Object.hasOwn(acts, kept)) findings.push(error("binding-act-taken", `acts.${kept}`, `${bindingActTaken(kept)}: no act of the document's may take it`, "give the act another name"));
   const policy = document.policy;
   if (policy) {
     policy.grants.forEach((grant, i) => {

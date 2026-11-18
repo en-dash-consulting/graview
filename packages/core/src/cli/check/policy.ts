@@ -10,7 +10,7 @@ import { PUBLISH } from "../../publish.js";
 import { PROPOSE_CHANGES } from "../../mutations/propose-changes.js";
 import { VOTE_SUGGESTION } from "../../mutations/vote-suggestion.js";
 import { TYPE_TEXT } from "../../text/typing-hook.js";
-import { bindingUngranted } from "../../binding-ungranted.js";
+import { bindingActTaken, bindingUngranted } from "../../binding-ungranted.js";
 import type { Grant } from "../../permissions/types.js";
 
 /**
@@ -53,7 +53,7 @@ export function checkPolicy<S extends AnySchema>(ctx: CheckContext<S>): void {
   // A name the framework keeps for an act of its own is never the app's.
   for (const kept of BINDING_ACTS) {
     if ((app.mutations ?? []).some((mutation) => mutation.name === kept)) {
-      add({ severity: "error", code: "binding-act-taken", where: `mutations.${kept}`, message: `The app declares its own "${kept}" act, a name the framework keeps for an act of its own.`, fix: `Rename the app's "${kept}" act.` });
+      add({ severity: "error", code: "binding-act-taken", where: `mutations.${kept}`, message: `The app declares its own "${kept}" act: ${bindingActTaken(kept)}.`, fix: `Rename the app's "${kept}" act.` });
     }
   }
   if (app.policy) {

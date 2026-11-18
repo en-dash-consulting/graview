@@ -6,7 +6,18 @@
  * say, as an invitation is accepted or a binding is corrected. Kept out of
  * what a page draws with.
  */
-import { BIND_PERSON, BIND_OWN_RECORD } from "./binding-served.js";
+import { BIND_PERSON, BIND_OWN_RECORD, REBIND_PERSON } from "./binding-served.js";
+
+/** What each act the framework keeps for binding does, in the words a refusal of an app's act of that name says it with. */
+export const bindingActDoes = (act: string): string =>
+  act === REBIND_PERSON
+    ? "the host's moving of a person bound to the wrong record to the right one"
+    : act === BIND_OWN_RECORD
+      ? "the host's merging of a member's own record into the person entered for them"
+      : "the host's binding of an account to the person entered for it";
+
+/** The sentence an app's or a document's own act under a kept binding name is refused with (`binding-act-taken`). */
+export const bindingActTaken = (act: string): string => `"${act}" is a name the framework keeps for an act of its own, ${bindingActDoes(act)}`;
 
 /** The sentence a grant that names a binding act is refused with. */
 export const bindingUngranted = (act: string = BIND_PERSON): string =>
