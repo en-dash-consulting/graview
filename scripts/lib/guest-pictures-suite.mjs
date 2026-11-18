@@ -259,7 +259,7 @@ window.__handle = mount(document.getElementById("app"), {
     const file = served[req.url.startsWith("/a/jobs/graview/files/") ? req.url.slice("/a/jobs".length) : req.url];
     if (file) {
       const signed = (req.headers.cookie ?? "").split(/;\s*/).includes(SESSION);
-      asked.push({ path: req.url, signed });
+      asked.push({ path: req.url, signed, ...(req.headers.range ? { range: req.headers.range } : {}) });
       if (!signed) {
         res.writeHead(401, { "content-type": "text/plain" });
         return res.end("Sign in to see this file.");
@@ -273,7 +273,12 @@ window.__handle = mount(document.getElementById("app"), {
         return res.end(file.body.subarray(start, end + 1));
       }
       const answer = () => {
-        res.writeHead(200, { "content-type": file.type, "cache-control": "no-store", ...(file.type.startsWith("video/") ? { "accept-ranges": "bytes" } : {}) });
+        /*
+         * Its length said, as the app's own file server says it (packages/ship/src/dev-files.ts): without it Node sends
+         * the bytes chunked, and WebKit on Linux (GStreamer) took a clip of unknown size for a stream with no end,
+         * duration Infinity at readyState 4, though the clip's header says one second (verify.yml 44342648996, 44342704302).
+         */
+        res.writeHead(200, { "content-type": file.type, "content-length": String(file.body.length), "cache-control": "no-store", ...(file.type.startsWith("video/") ? { "accept-ranges": "bytes" } : {}) });
         res.end(file.body);
       };
       if (file.at === undefined) return answer();
@@ -409,6 +414,7 @@ window.__handle = mount(document.getElementById("app"), {
         preload: video.getAttribute("preload"),
         label: video.getAttribute("aria-label"),
         duration: Math.round(video.duration),
+        read: { duration: String(video.duration), readyState: video.readyState, networkState: video.networkState, error: video.error?.code ?? null, webm: video.canPlayType('video/webm; codecs="vp8"') },
         wide: Math.round(box.getBoundingClientRect().width),
         said: root.querySelector("[data-said]")?.textContent ?? null,
         videos: root.querySelectorAll("video").length,
@@ -418,7 +424,7 @@ window.__handle = mount(document.getElementById("app"), {
     claim(
       "a view places the porch's clip and the host plays it there: its poster first, native controls, only its metadata fetched, said by what it shows and how long",
       player.src === "/graview/files/clip-5d0a.webm" && player.poster === "/graview/files/clip-5d0a.png" && player.controls && player.preload === "metadata" && player.label === "The porch, panned, a 1-second video" && player.duration === 1 && player.wide === 320,
-      player,
+      { ...player, asked: asked.filter((one) => one.path.endsWith(".webm")) },
     );
     claim("the view is handed the clip's facts, never its path, and its own drawing holds no <video>", player.said === "porch.webm 1" && player.named === 0 && player.videos === 0, { said: player.said, named: player.named, videos: player.videos });
     claim("the host fetched the clip with the reader's session", asked.some((one) => one.path === "/graview/files/clip-5d0a.webm") && asked.every((one) => one.signed), asked);
