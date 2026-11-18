@@ -157,7 +157,7 @@ function narrowedFrom<S extends AnySchema>(store: Store<S>, kinds: readonly stri
 function narrowed<S extends AnySchema, N extends { readonly id: string; readonly kind: string }>(store: Store<S>, members: readonly N[], filter: string | null | undefined, flagged: readonly string[]): readonly N[] {
   const conditions = filter ? (parseArrangement({ filter }).filter ?? []) : [];
   if (conditions.length === 0) return members;
-  return arrange(members as never, { filter: conditions }, { schema: store.schema, graph: store.graph as never, flagged: new Set(flagged) }).nodes as unknown as readonly N[];
+  return arrange(members as never, { filter: conditions }, { schema: store.schema, graph: store.graph as never, flagged: new Set(flagged), ...(store.appTimeZone ? { timeZone: store.appTimeZone } : {}) }).nodes as unknown as readonly N[];
 }
 
 /**

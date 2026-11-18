@@ -258,6 +258,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
     declaredGroup,
     flagged,
     ...(typeof invariantContext?.["today"] === "string" ? { today: invariantContext["today"] as string } : {}),
+    timeZone: store.appTimeZone,
     opened: openedGroups,
   });
   const { showingPast, arranged } = shown;

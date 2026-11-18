@@ -302,7 +302,7 @@ type Judged = { readonly ok: true; readonly value: Value } | { readonly ok: fals
 function judge(expr: Parsed<Expr>, ctx: BlockContext): Judged {
   if (!expr) return { ok: false, problem: "an expression that does not parse" };
   try {
-    return { ok: true, value: evaluateExpr(expr, { graph: ctx.graph ?? EMPTY_GRAPH, subject: ctx.node, kinds: ctx.kinds, today: ctx.today, budget: ctx.budget ?? BUDGET }) };
+    return { ok: true, value: evaluateExpr(expr, { graph: ctx.graph ?? EMPTY_GRAPH, subject: ctx.node, kinds: ctx.kinds, today: ctx.today, budget: ctx.budget ?? BUDGET, ...(ctx.money?.timeZone ? { timeZone: ctx.money.timeZone } : {}) }) };
   } catch (e) {
     return { ok: false, problem: e instanceof Error ? e.message : String(e) };
   }

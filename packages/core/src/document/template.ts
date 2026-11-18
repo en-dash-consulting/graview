@@ -237,7 +237,7 @@ export function optionsSaid(value: string | readonly unknown[], labels: Readonly
 }
 
 export function renderTemplate(parts: readonly TemplatePart[], ctx: RenderContext): string {
-  const today = ctx.today ?? isoToday();
+  const today = ctx.today ?? isoToday(ctx.money?.timeZone);
   const name = ctx.name ?? namerOf((ctx.graph as { readonly schema?: { tryDefinition(kind: string): unknown } } | undefined)?.schema);
   return parts
     .map((part) => {
@@ -249,6 +249,7 @@ export function renderTemplate(parts: readonly TemplatePart[], ctx: RenderContex
           kinds: ctx.kinds,
           today,
           budget: ctx.budget ?? 500,
+          ...(ctx.money?.timeZone ? { timeZone: ctx.money.timeZone } : {}),
           ...(ctx.bindings ? { bindings: ctx.bindings } : {}),
           ...(ctx.args ? { args: ctx.args } : {}),
         });

@@ -40,7 +40,7 @@ const asArgument = (value: Value): unknown => {
 export function workflowValue<S extends AnySchema>(value: WorkflowValue, record: AnyGraphNode | undefined, store: Store<S>, now: { readonly at: string; readonly today: string }): unknown {
   if (value !== null && typeof value === "object" && !Array.isArray(value) && "expr" in value) {
     const any = store as unknown as Store<AnySchema>;
-    return asArgument(evaluateExpr(parseExpr((value as { expr: string }).expr), { graph: any.graph as unknown as GraphReader, subject: record ?? null, kinds: shapesFor(any.schema), today: now.today, ...(record ? { bindings: { subject: record } } : {}) }));
+    return asArgument(evaluateExpr(parseExpr((value as { expr: string }).expr), { graph: any.graph as unknown as GraphReader, subject: record ?? null, kinds: shapesFor(any.schema), today: now.today, ...(any.appTimeZone ? { timeZone: any.appTimeZone } : {}), ...(record ? { bindings: { subject: record } } : {}) }));
   }
   if (typeof value === "string") {
     if (value.startsWith("$$")) return value.slice(1);

@@ -226,10 +226,11 @@ function nodeBefore(after: AnyGraphNode | undefined, id: string, primitives: rea
 }
 
 /** Whether a condition holds of a record, read as the subscriber sees the app; a mistake or a missing record is false. */
-function holds(condition: Expr, node: AnyGraphNode | undefined, graph: GraphReader, schema: AnySchema): boolean {
+function holds(condition: Expr, node: AnyGraphNode | undefined, graph: GraphReader, schema: AnySchema, clock: { readonly today?: string | undefined; readonly timeZone?: string | undefined } = {}): boolean {
   if (!node) return false;
   try {
-    return evaluateExpr(condition, { graph, subject: node, kinds: shapesFor(schema) }) === true;
+    // The app's day and clock, as the store judges its rules: a server matching a commit reads the day a page would.
+    return evaluateExpr(condition, { graph, subject: node, kinds: shapesFor(schema), ...(clock.today ? { today: clock.today } : {}), ...(clock.timeZone ? { timeZone: clock.timeZone } : {}) }) === true;
   } catch (error) {
     if (error instanceof ExprEvalError) return false;
     throw error;
@@ -581,7 +582,8 @@ function matchOne(store: Store<AnySchema>, seen: Store<AnySchema>, subscription:
         const servedAfter = after ? (seen.graph.getNode(id) === undefined ? undefined : servedAs(seen, after)) : undefined;
         const before = nodeBefore(after, id, primitives);
         const servedBefore = before ? servedAs(seen, before) : undefined;
-        return holds(condition, servedAfter, seen.graph as GraphReader, store.schema) && !holds(condition, servedBefore, seen.graph as GraphReader, store.schema);
+        const clock = { today: store.today(), timeZone: store.appTimeZone };
+        return holds(condition, servedAfter, seen.graph as GraphReader, store.schema, clock) && !holds(condition, servedBefore, seen.graph as GraphReader, store.schema, clock);
       });
       return reached.length > 0 ? records(reached) : undefined;
     }
