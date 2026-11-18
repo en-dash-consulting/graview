@@ -37,7 +37,7 @@ import { documentAppTs, documentBrandTs, documentJson, documentSchemaTs, documen
 import type { GraviewTemplate } from "../document/graview-template.js";
 
 export { pascal, slugify, titleCase, validateScaffoldOptions } from "./names.js";
-export { GRAVIEW_PACKAGES, LINKED_PACKAGES } from "./project.js";
+export { GRAVIEW_PACKAGES, LINKED_PACKAGES, LINKED_TYPES } from "./project.js";
 
 export interface ScaffoldOptions {
   /** The product's name, as a person would say it: "Field Notes". */
