@@ -11,7 +11,7 @@ import { pluralOf } from "./page-typography.js";
 import { kindOfSlug, recordPath, pluralSlug } from "./registry.js";
 import { OneFaceContext, type OneFace } from "./one-place-control.js";
 import { HeldHere } from "./held-element.js";
-import { BOARD_ASPECT, boardFaceWidth, sameFit, titleThatFits, frameSpacing, smallWindow, CITY, LEVEL_NAMES, nearestThatWay, PAGE, PANEL, panelBox, panelRange, panelStoreKey, PHONE, type Box, type PageWhere, type TitleFit, type View } from "./one-place-geometry.js";
+import { BOARD_ASPECT, boardFaceWidth, boardsInTheirPlaces, sameFit, titleThatFits, frameSpacing, smallWindow, CITY, LEVEL_NAMES, nearestThatWay, PAGE, PANEL, panelBox, panelRange, panelStoreKey, PHONE, type Box, type PageWhere, type TitleFit, type View } from "./one-place-geometry.js";
 
 /**
  * PAGES AND THE SCENE ARE ONE PLACE (Graview HQ feature:f-page-zooms-out-to-the-city).
@@ -448,8 +448,7 @@ export function OnePlace<S extends AnySchema>({
   const current = boardKeyOf(where, boards);
   /* While the history is played, a view that comes into being rises out of the city, and one that goes sinks back into it. */
   const rising = Boolean(usePlayback()?.open) && !lessMotion();
-  const leaving = useLeavingBoards(boards, rising);
-  const standing = useMemo(() => (leaving.length > 0 ? [...boards, ...leaving] : boards), [boards, leaving]);
+  const { drawn: standing, leaving, sunk } = useLeavingBoards(boards, rising, boardEls);
 
   /** Out of the window: where the page was scrolled, for the page as it moves and for the way back in. */
   const keep = () => {
@@ -896,7 +895,9 @@ export function OnePlace<S extends AnySchema>({
             type="button"
             data-graview-board={board.key}
             {...(rising ? { "data-graview-rising": "" } : {})}
-            {...(leaving.includes(board) ? { "data-graview-leaving": "", tabIndex: -1, "aria-hidden": true } : {})}
+            {...(leaving.has(board.key) ? { "data-graview-leaving": "", tabIndex: -1, "aria-hidden": true } : {})}
+            // A board going is gone once its sink has played out and it is flat: the sink's own end, not a clock, nor a rise's that ends in the frame it is marked going.
+            onTransitionEnd={leaving.has(board.key) ? (event) => void (event.target === event.currentTarget && event.propertyName === "transform" && flat(event.currentTarget) && sunk(board.key)) : undefined}
             data-graview-board-path={board.path}
             {...(board.key === current ? { "aria-current": "page" as const } : {})}
             aria-label={`${board.label}, ${board.eyebrow}${board.key === current ? ", the one you were on" : ""}`}
@@ -1008,31 +1009,100 @@ function measuringPen(): OffscreenCanvasRenderingContext2D | null {
 const RISE_MS = 420;
 
 /**
- * The views going while the history is played: kept as they were for as
- * long as they take to sink, unless they come back first. Worked out as
- * the list changes, in the render that changes it (state set from the
- * last render's list, as React has it), so a view going keeps its element.
+ * THE VIEWS GOING while the history is played: each board that was drawn
+ * and is no longer, kept as it last stood, where it stood among the others,
+ * until it has sunk — the same element, by its key — unless it comes back
+ * first, when it rises again from wherever it had got to. None kept now,
+ * outside playback. Worked out in the render the boards change in (state
+ * set from the last render's list, as React has it), so a view going keeps
+ * its element.
+ *
+ * GONE WHEN IT HAS COME DOWN, not on a clock started as it was worked out,
+ * as a building is (`useLeaving` in `@graview/react`'s plots): on a slow
+ * machine the render, the commit and the style a scrub sets off can take
+ * most of the sink's own time before the sink begins. Its sink's end takes
+ * it away; a clock started once the sink is on the page, twice the sink's
+ * length, is only for where none plays.
  */
-function useLeavingBoards(boards: readonly Board[], rising: boolean): readonly Board[] {
+function useLeavingBoards(boards: readonly Board[], rising: boolean, boardEls: RefObject<Map<string, HTMLButtonElement>>): { readonly drawn: readonly Board[]; readonly leaving: ReadonlySet<string>; readonly sunk: (key: string) => void } {
   const key = boards.map((board) => board.key).join("\n");
   const [seen, setSeen] = useState({ key, boards });
-  const [gone, setGone] = useState<ReadonlyMap<string, { readonly board: Board; readonly until: number }>>(new Map());
-  if (seen.key !== key) {
+  const [gone, setGone] = useState<ReadonlyMap<string, Board>>(new Map());
+  if (seen.boards !== boards) {
+    // The boards as last drawn, kept so one that goes sinks as it last stood.
     setSeen({ key, boards });
-    const here = new Set(boards.map((board) => board.key));
-    const next = new Map([...gone].filter(([one]) => !here.has(one)));
-    if (rising) for (const board of seen.boards) if (!here.has(board.key) && board.where.type !== "record" && !next.has(board.key)) next.set(board.key, { board, until: performance.now() + RISE_MS });
-    setGone(next);
+    if (seen.key !== key) {
+      const here = new Set(boards.map((board) => board.key));
+      const next = new Map([...gone].filter(([one]) => !here.has(one)));
+      if (rising) for (const board of seen.boards) if (!here.has(board.key) && board.where.type !== "record" && !next.has(board.key)) next.set(board.key, board);
+      setGone(next);
+    }
   }
+  // When each going board's sink was first on the page.
+  const began = useRef(new Map<string, number>());
   useEffect(() => {
     if (!rising && gone.size > 0) return setGone(new Map());
+    const now = performance.now();
+    for (const one of [...began.current.keys()]) if (!gone.has(one)) began.current.delete(one);
     if (gone.size === 0) return;
-    const next = Math.min(...[...gone.values()].map((one) => one.until));
-    const timer = window.setTimeout(() => setGone((was) => new Map([...was].filter(([, one]) => one.until > performance.now() + 4))), Math.max(0, next - performance.now()) + 8);
+    for (const one of gone.keys()) if (!began.current.has(one)) began.current.set(one, now);
+    const last = (one: string) => (began.current.get(one) ?? 0) + RISE_MS * 2;
+    const next = Math.min(...[...gone.keys()].map(last));
+    const timer = window.setTimeout(() => setGone((was) => new Map([...was].filter(([one]) => last(one) > performance.now() + 4))), Math.max(0, next - performance.now()) + 8);
     return () => window.clearTimeout(timer);
   }, [gone, rising]);
-  const kept = useMemo(() => [...gone.values()].map((one) => one.board), [gone]);
-  return rising ? kept : [];
+  const sunk = useCallback((one: string) => setGone((was) => (was.has(one) ? new Map([...was].filter(([other]) => other !== one)) : was)), []);
+  // The order last drawn, so a board going keeps its place among the others: an element moved is drawn anew, and its sink lost.
+  const before = useRef<readonly string[]>([]);
+  const drawn = useMemo(() => (rising ? boardsInTheirPlaces(boards, [...gone.values()], before.current) : boards), [boards, gone, rising]);
+  useEffect(() => {
+    before.current = drawn.map((board) => board.key);
+  }, [drawn]);
+  const leaving = useMemo(() => new Set<string>(rising ? gone.keys() : []), [gone, rising]);
+  /*
+   * Each sink and each rise back clocked from the first frame that draws
+   * it, as a building's is: a transition's clock starts at the style change
+   * that sets it off, and a scrub's render goes on in the same task after
+   * it, so on a slow machine a board taken back part way down stood full in
+   * a frame. And a board new to the city, rising from it, the same way.
+   */
+  const shownBefore = useRef<{ readonly leaving: ReadonlySet<string>; readonly drawn: ReadonlySet<string> } | null>(null);
+  useLayoutEffect(() => {
+    const was = shownBefore.current;
+    const keys = new Set(drawn.map((board) => board.key));
+    shownBefore.current = { leaving, drawn: keys };
+    // Outside playback nothing rises or sinks; the boards' first drawing is left as the browser starts it.
+    if (!rising || !was) return;
+    for (const one of keys) {
+      if (was.drawn.has(one) && leaving.has(one) === was.leaving.has(one)) continue;
+      const el = boardEls.current.get(one);
+      if (el) fromTheFirstFrame(el);
+    }
+  }, [drawn, leaving, rising, boardEls]);
+  return { drawn, leaving, sunk };
+}
+
+/**
+ * The transitions an element's style just set off, begun again from the
+ * frame that next draws it rather than from the task that set them off,
+ * however long that task runs on.
+ */
+function fromTheFirstFrame(el: Element): void {
+  if (typeof el.getAnimations !== "function" || typeof CSSTransition === "undefined") return;
+  // The style as committed, so what it sets off has begun.
+  void getComputedStyle(el).transform;
+  for (const one of el.getAnimations()) {
+    if (!(one instanceof CSSTransition)) continue;
+    one.pause();
+    one.currentTime = 0;
+    one.play();
+  }
+}
+
+/** Whether a board has sunk all the way: its height, as drawn now, none. */
+function flat(el: Element): boolean {
+  const transform = getComputedStyle(el).transform;
+  return transform !== "none" && Math.abs(new DOMMatrixReadOnly(transform).d) < 0.01;
 }
 
 const ONE_PLACE_CSS = `

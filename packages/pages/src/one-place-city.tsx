@@ -433,6 +433,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
 
     let handSince = 0;
     let lastPlace = "";
+    /** The place a scrub under way left from. */
+    let scrubbedFrom: string | null = null;
     let lastReported = "";
     /* When the camera was last written into the view: the Scene settles what is painted a beat after (its wheel's rule), so nothing new is painted until that beat has passed. */
     let committedAt = -Infinity;
@@ -1230,10 +1232,23 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         altitude = target;
         handSince = now;
         asking.scrubbing = true;
+        scrubbedFrom ??= placeKey;
       }
       if (asking.scrubbing && !asking.held && now - handSince > LET_GO_MS && !settling && calm) {
         asking.scrubbing = false;
         restCam = null;
+        /*
+         * SCRUBBED TO A LEVEL, THE PAGE IS AT HOME THERE. The place a scrub
+         * leaves from, still the place when it settles, is the place it
+         * settles at: said so, or the city read it as another place gone to
+         * at the City and took it down to Nearby (`moveTo(…PANEL…)` below) —
+         * the slider dragged from the Page up to the Map came back down to
+         * Nearby 0.8 s after it rested, on any machine (one-face's
+         * `draggingTheSliderScrubsTheLevels`, read once the face rests). A
+         * place chosen while the scrub went on is still gone to as one.
+         */
+        if (scrubbedFrom === placeKey) lastPlace = placeKey;
+        scrubbedFrom = null;
         if (anchor) moveTo(cam, restingLevel(altitude), anchor, now, false);
       }
 
