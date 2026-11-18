@@ -116,7 +116,7 @@ export function answerJob<S extends AnySchema>(given: Store<S>, job: Pick<JobDec
   const schema = seen.schema;
   const kinds = shapesFor(schema);
   const today = seen.today?.();
-  const read = (expr: Expr, node: AnyGraphNode): Value => evaluateExpr(expr, { graph, subject: node, kinds, ...(today ? { today } : {}) });
+  const read = (expr: Expr, node: AnyGraphNode): Value => evaluateExpr(expr, { graph, subject: node, kinds, ...(today ? { today } : {}), ...(store.timeZone ? { timeZone: store.timeZone } : {}) });
   const where = job.where === undefined ? undefined : parsed(job.where);
   if (where === null) return { count: 0, ids: [] };
   const records = graph.nodesOfKind(job.kind).filter((node) => {

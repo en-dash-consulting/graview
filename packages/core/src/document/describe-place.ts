@@ -365,7 +365,7 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
   const seat = principal.kind === "system" ? "the system" : (principal.roles ?? []).length > 0 ? (principal.roles ?? []).join(", ") : principal.kind;
   const variant = width < PHONE ? "phone" : "wide";
   // The home is about no one record, and so are the app's facts: said beside it, worked out over this seat's graph.
-  const facts = described.kind === null ? factsOf(schema, graph) : [];
+  const facts = described.kind === null ? factsOf(schema, graph, app.brand) : [];
   const description: Omit<PlaceDescription, "text"> = { ...(masthead ? { masthead } : {}), ...(facts.length > 0 ? { facts } : {}), place: described, seat, width, variant, drawnBy: drawnBy!, parts, ...(forms.length > 0 ? { forms } : {}), problems };
   return { ok: true, description: { ...description, text: placeText(description) } };
 }
@@ -391,8 +391,8 @@ function visitorFormPlace(schema: AnySchema, form: VisitorForm, width: number): 
  * as `factValues` reads them, from the record-less computed values, so the
  * module that exports it is reached only by what asks for it.
  */
-function factsOf(schema: AnySchema, graph: GraphReader): DescribedFact[] {
-  const worked = computedValues(schema, graph, null);
+function factsOf(schema: AnySchema, graph: GraphReader, brand?: { readonly timeZone?: string | undefined; readonly locale?: string | undefined }): DescribedFact[] {
+  const worked = computedValues(schema, graph, null, { timeZone: brand?.timeZone, locale: brand?.locale });
   const said = (value: PlainComputed): string =>
     Array.isArray(value) ? value.map(said).join(", ") : value === null ? "nothing" : typeof value === "boolean" ? (value ? "yes" : "no") : typeof value === "object" ? (value as ComputedRecord).label : String(value);
   return [...computedOf(schema)].map(([name, entry]) => {

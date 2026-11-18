@@ -158,8 +158,9 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
     if (steps < 0) throw new ExprBudgetError("this rule looks at too much of the graph to judge in one go", at);
   };
   const zone = zoneOf(ctx.timeZone);
-  // The day is the app's: the date in its zone, never UTC's where the app declares one.
-  const today = ctx.today ?? isoToday(zone);
+  // The day is the app's: the date in its zone, never UTC's where the app declares one — read only when asked, and without a clock for UTC.
+  let day = ctx.today;
+  const today = (): string => (day ??= zone === "UTC" ? new Date().toISOString().slice(0, 10) : isoToday(zone));
   const now = ctx.now ?? new Date().toISOString();
   /*
    * A COMPUTED FIELD IS WORKED OUT ONCE PER EVALUATION, and never while it
@@ -236,7 +237,7 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
     const own = Object.hasOwn(node, name);
     if (shape?.fields.has(name) || own) {
       // A date that repeats reads as its next occurrence on the day judged (`repeat.ts`).
-      const v = own ? dateOn(node, name, today) : undefined;
+      const v = own ? dateOn(node, name, today()) : undefined;
       return v === undefined ? null : (v as Value);
     }
     const card = shape?.edges.get(name);
@@ -677,7 +678,7 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
       }
       case "today":
         arity(0);
-        return today;
+        return today();
       case "now":
         arity(0);
         return now;
@@ -685,7 +686,7 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
         arity(1);
         // The day a moment is on in the app's zone: 23:30 in New York is that day there, not the next one in UTC.
         const given = arg(0);
-        const when = typeof given === "string" ? whenOf(given, zone) : undefined;
+        const when = typeof given === "string" && !(zone === "UTC" && isInstant(given)) ? whenOf(given, zone) : undefined;
         if (when) return when.day;
         const t = asDate(given, e.at, "date");
         return t === null ? null : new Date(t).toISOString().slice(0, 10);

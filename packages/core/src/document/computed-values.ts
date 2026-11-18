@@ -56,6 +56,9 @@ export function computedValues(
   options: {
     readonly budget?: number;
     readonly today?: string;
+    /** The app's zone and locale (`brand.timeZone`, `brand.locale`): the clock `today()`, `date()` and `format(…)` read. */
+    readonly timeZone?: string | undefined;
+    readonly locale?: string | undefined;
     /** How far records are read, as the viewer (FR-171); else the reader registered for the graph. */
     readonly linked?: LinkedReader;
   } = {},
@@ -75,7 +78,7 @@ export function computedValues(
   for (const [name, expr] of kinds.get(node ? node.kind : GRAPH_FACTS)?.computed ?? []) {
     try {
       const unread: UnreadLink[] = [];
-      const value = evaluateExpr(expr, { graph, subject: node, kinds, ...(options.today ? { today: options.today } : {}), ...(options.budget ? { budget: options.budget } : {}), ...(options.linked ? { linked: options.linked } : {}), onUnread: (u) => unread.push(u) });
+      const value = evaluateExpr(expr, { graph, subject: node, kinds, ...(options.today ? { today: options.today } : {}), ...(options.timeZone ? { timeZone: options.timeZone } : {}), ...(options.locale ? { locale: options.locale } : {}), ...(options.budget ? { budget: options.budget } : {}), ...(options.linked ? { linked: options.linked } : {}), onUnread: (u) => unread.push(u) });
       /*
        * A VALUE READ THROUGH A LINK THAT COULD NOT BE READ (FR-171) is said,
        * not guessed: nothing it could have been is shown, and why — the

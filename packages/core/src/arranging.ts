@@ -112,7 +112,7 @@ const compare = (a: unknown, b: unknown): number => {
 function sortValue(ctx: ArrangeContext, node: ArrangeNode, by: string): unknown {
   if (by === "label") return labelFor(ctx, node);
   const definition = ctx.schema.tryDefinition(node.kind);
-  if (definition && by in ((definition.fields.shape ?? {}) as Record<string, unknown>)) return dateOn(fields(node), by, ctx.today ?? isoToday());
+  if (definition && by in ((definition.fields.shape ?? {}) as Record<string, unknown>)) return dateOn(fields(node), by, ctx.today ?? isoToday(ctx.timeZone));
   // A computed field (a rank the kind works out), where the caller can work it out.
   if (definition?.computed?.[by] !== undefined) return ctx.read?.(node, by);
   const ends = farEnds(ctx.graph, node.id, by).map((end) => labelFor(ctx, end)).sort();

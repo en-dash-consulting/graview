@@ -1,7 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { compileDocument } from "../../src/check.js";
-import { evaluateExpr, parseExpr } from "../../src/document/index.js";
-import { sayIn, Store, tickEachDay, type AnySchema, type GraviewApp } from "../../src/index.js";
+import { computedValues } from "../../src/document/computed-values.js";
+import { evaluateExpr, expressionRule, parseExpr } from "../../src/document/index.js";
+import { sayIn, Store, tickEachDay, type AnySchema, type GraviewApp, type Operation } from "../../src/index.js";
+import { answerJob } from "../../src/jobs.js";
+import { matchSubscriptions, type Subscription } from "../../src/subscriptions.js";
+import { policyApplies, workflowValue } from "../../src/workflows.js";
 
 /**
  * A RULE'S today() AND date() READ THE DAY IN THE APP'S OWN ZONE. A
@@ -141,5 +145,66 @@ describe("a document whose brand declares its zone", () => {
     expect(ticks).toEqual(["2026-10-17"]);
     expect(problems(store)).toEqual(["not-past"]);
     stop();
+  });
+});
+
+describe("an instant against a wall time keeps its seconds", () => {
+  it("is after a wall time of the same minute, and before one later in it", () => {
+    expect(read("'2026-10-17T13:30:45Z' > '2026-10-17T09:30'", NY)).toBe(true);
+    expect(read("'2026-10-17T13:30:45Z' > '2026-10-17T09:30:30'", NY)).toBe(true);
+    expect(read("'2026-10-17T13:30:45Z' < '2026-10-17T09:30:50'", NY)).toBe(true);
+    expect(read("'2026-10-17T09:30:45.250Z' > '2026-10-17T09:30:45'")).toBe(true);
+    at("2026-10-17T09:30:45Z");
+    expect(read("now() > '2026-10-17T09:30'")).toBe(true);
+    expect(read("now() < '2026-10-17T09:30:50'")).toBe(true);
+  });
+});
+
+describe("what a server reads with no page drawn, in a store that knows its app's zone", () => {
+  const host = { kind: "system", id: "host" } as const;
+  const served = () => storeOf(appIn(NY), NY);
+
+  it("a workflow's value: date(starts) of a 10 PM event in New York is that day", () => {
+    const store = served();
+    const record = store.graph.getNode("event:supper") as never;
+    expect(workflowValue({ expr: "date(starts)" }, record, store, { at: "2026-10-17T03:00:00.000Z", today: "2026-10-16" })).toBe("2026-10-16");
+  });
+
+  it("a workflow policy's condition reads its day there", () => {
+    const store = served();
+    const record = store.graph.getNode("event:supper") as never;
+    const policy = { appliesTo: "date(starts) == '2026-10-16'" } as never;
+    expect(policyApplies(policy, record, store.graph as never, store.schema, "2026-10-16", NY)).toBe(true);
+    expect(policyApplies(policy, record, store.graph as never, store.schema, "2026-10-16")).toBe(false);
+  });
+
+  it("a job's where", () => {
+    expect(answerJob(served(), { kind: "event", where: "date(starts) == '2026-10-16'" }, host).count).toBe(1);
+    expect(answerJob(storeOf(appIn(NY)), { kind: "event", where: "date(starts) == '2026-10-16'" }, host).count).toBe(0);
+  });
+
+  it("a subscription's condition, matched against a commit", () => {
+    const store = served();
+    const heard: Operation[] = [];
+    const off = store.subscribe((_diff, ops) => heard.push(...ops));
+    store.apply({ name: "edit-event", args: { id: "event:supper", starts: "2026-10-17T02:30:00Z" } }, { author: { kind: "human", id: "acct-cook" } });
+    off();
+    const reaches = { id: "sub-1", who: host, app: "Evenings", when: { on: "reaches", kind: "event", condition: "date(starts) == '2026-10-16' && starts > '2026-10-16T22:15'" }, at: "2026-10-16T00:00:00.000Z" } as unknown as Subscription;
+    expect(matchSubscriptions(store, heard, [reaches])).toHaveLength(1);
+  });
+
+  it("a computed value worked out outside the record's own label", () => {
+    const store = served();
+    const node = store.graph.getNode("event:supper") as never;
+    expect(computedValues(store.schema, store.graph as never, node, { timeZone: NY }).values["day"]).toBe("2026-10-16");
+    expect(computedValues(store.schema, store.graph as never, node).values["day"]).toBe("2026-10-17");
+  });
+
+  it("a rule written in code, judged on the store's zone", () => {
+    const app = appIn();
+    const onItsDay = expressionRule("on-its-day", { over: "event", require: "date(starts) == '2026-10-16'" });
+    const make = (timeZone?: string) => new Store<AnySchema>({ schema: app.schema, invariants: [onItsDay] as never, snapshot: structuredClone(SEED) as never, ...(timeZone ? { timeZone } : {}) });
+    expect(problems(make(NY))).toEqual([]);
+    expect(problems(make())).toEqual(["on-its-day"]);
   });
 });

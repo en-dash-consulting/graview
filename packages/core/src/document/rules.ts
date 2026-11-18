@@ -94,11 +94,11 @@ export function expressionRule(
   const title = spec.title ?? name.replace(/-/g, " ");
   const today = options.today ?? isoToday;
   // The store's day when it hands one (pinned, or ticked: FR-176), else the clock.
-  const judge = (graph: GraphReader, subject: AnyGraphNode | null, day = today(), linked?: LinkedReader): Violation[] => {
+  const judge = (graph: GraphReader, subject: AnyGraphNode | null, day = today(), linked?: LinkedReader, timeZone?: string): Violation[] => {
     const shapes = (kinds ?? shapesOf(graph)) as Map<string, KindShape>;
     // A link to another app that could not be read (FR-171): a rule that does not hold without it cannot be judged, and says why.
     const unread: UnreadLink[] = [];
-    const ctx = { graph, subject, kinds: shapes, today: day, ...(linked ? { linked } : {}), onUnread: (u: UnreadLink) => unread.push(u) };
+    const ctx = { graph, subject, kinds: shapes, today: day, ...(timeZone ? { timeZone } : {}), ...(linked ? { linked } : {}), onUnread: (u: UnreadLink) => unread.push(u) };
     try {
       if (when && evaluateExpr(when, ctx) !== true) return [];
       if (evaluateExpr(require, ctx) === true) return [];
@@ -113,7 +113,7 @@ export function expressionRule(
         invariant: name,
         ...(subject ? { subjectId: subject.id } : {}),
         label: title,
-        message: says ? renderTemplate(says, { node: subject, kinds: shapes, graph, today: day }) : title,
+        message: says ? renderTemplate(says, { node: subject, kinds: shapes, graph, today: day, ...(timeZone ? { money: { timeZone } } : {}) }) : title,
         nodeIds: subject ? [subject.id] : [],
         repairs: (spec.repairs ?? []).map((mutation) => ({ mutation, label: mutation.replace(/-/g, " "), args: subject ? { id: subject.id } : {} })),
       },
@@ -130,8 +130,8 @@ export function expressionRule(
   };
   return (
     spec.over === "graph"
-      ? defineInvariant(name, { scope: "graph", ...common, evaluate: ({ graph, today: day, context }: { graph: unknown; today?: string; context?: { linked?: LinkedReader } }) => judge(graph as GraphReader, null, day, context?.linked) } as never)
-      : defineInvariant(name, { scope: { kind: spec.over }, ...common, evaluate: ({ graph, subject, today: day, context }: { graph: unknown; subject: unknown; today?: string; context?: { linked?: LinkedReader } }) => judge(graph as GraphReader, subject as AnyGraphNode, day, context?.linked) } as never)
+      ? defineInvariant(name, { scope: "graph", ...common, evaluate: ({ graph, today: day, timeZone, context }: { graph: unknown; today?: string; timeZone?: string; context?: { linked?: LinkedReader } }) => judge(graph as GraphReader, null, day, context?.linked, timeZone) } as never)
+      : defineInvariant(name, { scope: { kind: spec.over }, ...common, evaluate: ({ graph, subject, today: day, timeZone, context }: { graph: unknown; subject: unknown; today?: string; timeZone?: string; context?: { linked?: LinkedReader } }) => judge(graph as GraphReader, subject as AnyGraphNode, day, context?.linked, timeZone) } as never)
   ) as InvariantDefinition;
 }
 
@@ -183,9 +183,9 @@ export function coverageRule(name: string, spec: CoverageRuleSpec, options: { re
     if (typeof plan === "string") throw new Error(plan);
     return plan;
   };
-  const judge = (graph: GraphReader, subject: AnyGraphNode, day = today()): Violation[] => {
+  const judge = (graph: GraphReader, subject: AnyGraphNode, day = today(), timeZone?: string): Violation[] => {
     const shapes = shapesOf(graph);
-    const ctx = { graph, subject, kinds: shapes, today: day };
+    const ctx = { graph, subject, kinds: shapes, today: day, ...(timeZone ? { timeZone } : {}) };
     try {
       if (when && evaluateExpr(when, ctx) !== true) return [];
     } catch (error) {
@@ -201,7 +201,7 @@ export function coverageRule(name: string, spec: CoverageRuleSpec, options: { re
       invariant: name,
       subjectId: subject.id,
       label: title,
-      message: says ? renderTemplate(says, { node: subject, kinds: shapes, graph, today: day, bindings: { [subject.kind]: subject, [far.kind]: far } }) : `${label(subject)}: ${title} — ${label(far)}`,
+      message: says ? renderTemplate(says, { node: subject, kinds: shapes, graph, today: day, ...(timeZone ? { money: { timeZone } } : {}), bindings: { [subject.kind]: subject, [far.kind]: far } }) : `${label(subject)}: ${title} — ${label(far)}`,
       nodeIds: [subject.id, far.id],
       repairs: (spec.repairs ?? []).map((mutation) => ({ mutation, label: mutation.replace(/-/g, " "), args: { id: subject.id } })),
     }));
@@ -215,6 +215,6 @@ export function coverageRule(name: string, spec: CoverageRuleSpec, options: { re
     ...(spec.description ? { description: spec.description } : {}),
     ...(spec.repairs && spec.repairs.length > 0 ? { repairs: [...spec.repairs] } : {}),
     ...(spec.judgesPast ? { judgesPast: true } : {}),
-    evaluate: ({ graph, subject, today: day }: { graph: unknown; subject: unknown; today?: string }) => judge(graph as GraphReader, subject as AnyGraphNode, day),
+    evaluate: ({ graph, subject, today: day, timeZone }: { graph: unknown; subject: unknown; today?: string; timeZone?: string }) => judge(graph as GraphReader, subject as AnyGraphNode, day, timeZone),
   } as never) as InvariantDefinition;
 }

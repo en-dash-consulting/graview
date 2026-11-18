@@ -1730,7 +1730,7 @@ export class Store<S extends AnySchema> {
     // A rule written as a function reads the day from its context too, as `openStore` handed it (W-186): the app's, where the store knows its zone and the call hands no context of its own.
     const base = linking ?? given;
     const judged = this.timeZone && today !== undefined && context === undefined && !(base && "today" in base) ? { ...base, today } : linking;
-    return { ...this.invariantOptions, ...(judged === undefined ? {} : { context: judged }), ...(today === undefined ? {} : { today }) };
+    return { ...this.invariantOptions, ...(judged === undefined ? {} : { context: judged }), ...(today === undefined ? {} : { today }), ...(this.timeZone && this.invariantOptions.timeZone === undefined ? { timeZone: this.timeZone } : {}) };
   }
 
   /**
