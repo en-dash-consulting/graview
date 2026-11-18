@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bindPerson, mayBind, rebindPerson, unbindPerson } from "../../src/binding.js";
+import { bindPerson, hostSeat, mayBind, rebindPerson, unbindPerson } from "../../src/binding.js";
 import { checkApp, compileDocument } from "../../src/check.js";
 import { editDocument } from "../../src/document/index.js";
 import { ActRefusal, bindSchema, createSchema, defineApp, defineNode, nameOfAuthor, nodeRef, PermissionDeniedError, REBIND_PERSON, Store, z, type AnySchema, type Policy, type Principal } from "../../src/index.js";
@@ -16,21 +16,22 @@ import { ActRefusal, bindSchema, createSchema, defineApp, defineNode, nameOfAuth
  * rewritten: the move is an op of its own, read forward.
  */
 const participant = defineNode("participant", { people: true, label: (n: any) => n.name, fields: z.object({ name: z.string(), age: z.number() }) } as never);
-const gift = defineNode("gift", { label: (n: any) => n.title, fields: z.object({ title: z.string() }), edges: { givenBy: { to: ["participant"] } } } as never);
+const gift = defineNode("gift", { label: (n: any) => n.title, fields: z.object({ title: z.string(), claimedBy: z.string().optional() }), edges: { givenBy: { to: ["participant"] } } } as never);
 const schema = createSchema([participant, gift]);
 const { defineMutation } = bindSchema(schema);
 const giveIt = defineMutation("give-it", { title: "I'll give it", doneAsMe: true, subject: { kinds: ["gift"], arg: "id" }, input: z.object({ id: nodeRef(["gift"]) }), apply: (ctx: any, args: any) => ctx.addEdge({ kind: "givenBy", from: args.id, to: ctx.me }) } as never);
+const claimIt = defineMutation("claim-it", { title: "I'll claim it", doneAsMe: true, subject: { kinds: ["gift"], arg: "id" }, input: z.object({ id: nodeRef(["gift"]) }), apply: (ctx: any, args: any) => ctx.patchNode(args.id, { claimedBy: ctx.me }) } as never);
 
 const policy: Policy = {
   grants: [
     { roles: ["owner"], mutations: "*" },
-    { roles: ["member"], mutations: ["give-it"] },
+    { roles: ["member"], mutations: ["give-it", "claim-it"] },
     { roles: ["member"], mutations: ["edit-participant"], self: true },
   ],
   sees: [{ roles: ["owner", "member"], kinds: ["participant", "gift"] }],
 };
 
-const host: Principal = { kind: "system", id: "host" };
+const host: Principal = hostSeat({ id: "host" });
 const organizer: Principal = { kind: "human", id: "acct-org", roles: ["owner"] };
 const bud: Principal = { kind: "human", id: "acct-bud", roles: ["member"] };
 const ann: Principal = { kind: "human", id: "acct-ann", roles: ["member"] };
@@ -38,7 +39,7 @@ const ann: Principal = { kind: "human", id: "acct-ann", roles: ["member"] };
 function family(): Store<AnySchema> {
   return new Store<AnySchema>({
     schema,
-    mutations: [giveIt] as never,
+    mutations: [giveIt, claimIt] as never,
     policy,
     snapshot: {
       nodes: [
@@ -123,10 +124,10 @@ describe("moving a person who has acted", () => {
     expect(JSON.stringify(store.log.all().slice(0, length))).toBe(before);
   });
 
-  it("leaves what the acts wrote as they wrote it", () => {
+  it("leaves what the acts wrote naming a record as they wrote it, and takes what they linked as the person along", () => {
     const { store } = misbound();
     rebindPerson(store, bud, "participant:bud", { author: host });
-    expect(store.graph.out("gift:kite", "givenBy" as never).map((one) => one.id)).toEqual(["participant:ann"]);
+    expect(store.graph.out("gift:kite", "givenBy" as never).map((one) => one.id)).toEqual(["participant:bud"]);
     expect(store.graph.getNode("participant:ann")).toMatchObject({ age: 12 });
   });
 
@@ -200,7 +201,7 @@ describe("moving a person is the host's system seat alone", () => {
 
 describe("graview check knows the act", () => {
   it("refuses a grant of it as a binding no grant gives, never as an act nobody declared", () => {
-    const found = checkApp(defineApp({ name: "binding", schema, mutations: [giveIt] as never, policy: { ...policy, grants: [...policy.grants, { roles: ["member"], mutations: [REBIND_PERSON] }] } }) as never).findings;
+    const found = checkApp(defineApp({ name: "binding", schema, mutations: [giveIt, claimIt] as never, policy: { ...policy, grants: [...policy.grants, { roles: ["member"], mutations: [REBIND_PERSON] }] } }) as never).findings;
     const said = found.filter((one) => one.code === "grant-gives-binding");
     expect(said).toHaveLength(1);
     expect(said[0]!.message).toMatch(/no grant gives it/i);
@@ -237,11 +238,11 @@ describe("graview check knows the act", () => {
 describe("a move stands aside for undoing what was done before it", () => {
   const batchOf = (store: Store<AnySchema>, id: string) => store.log.all().find((one) => one.id === id)!.batch;
 
-  /** Bud's account bound to Ann's record, and one thing he did as her: the kite given by "me". */
+  /** Bud's account bound to Ann's record, and one thing he did as her: the kite claimed by "me". */
   const gaveAsAnn = () => {
     const store = family();
     bindPerson(store, bud, "participant:ann", { author: host });
-    const gave = store.apply({ name: "give-it", args: { id: "gift:kite" } }, { author: bud });
+    const gave = store.apply({ name: "claim-it", args: { id: "gift:kite" } }, { author: bud });
     return { store, gave: gave.batch };
   };
 
@@ -252,8 +253,8 @@ describe("a move stands aside for undoing what was done before it", () => {
     expect(store.mayUndo(batchOf(store, acted[1]!), organizer)).toEqual({ ok: true });
     store.undo(batchOf(store, acted[1]!), { author: organizer });
     expect(store.graph.getNode("participant:ann")).toMatchObject({ age: 40 });
-    // Ann's record is not Bud's any more, so editing it is not his to take back.
-    expect(store.mayUndo(batchOf(store, acted[0]!), host)).toEqual({ ok: true });
+    // What he linked as Ann went with him: giving the kite is not taken back on its own, nor the move brought along.
+    expect(store.mayUndo(batchOf(store, acted[0]!), host)).toMatchObject({ ok: false, check: { includeBatches: [], message: /what it linked was moved to another person's record since/ } });
   });
 
   it("offers nobody the move as a change to bring along", () => {
@@ -276,7 +277,7 @@ describe("a move stands aside for undoing what was done before it", () => {
     expect(() => store.undo(gave, { author: ann })).toThrow(PermissionDeniedError);
     expect(store.mayUndo(gave, bud)).toEqual({ ok: true });
     store.undo(gave, { author: bud });
-    expect(store.graph.out("gift:kite", "givenBy" as never)).toEqual([]);
+    expect(store.graph.getNode("gift:kite")).not.toHaveProperty("claimedBy");
   });
 });
 
@@ -309,7 +310,7 @@ describe("a store loaded with its people already bound", () => {
     const store = family();
     const fresh = new Store<AnySchema>({
       schema,
-      mutations: [giveIt] as never,
+      mutations: [giveIt, claimIt] as never,
       policy,
       snapshot: { nodes: store.graph.allNodes().map((node) => (node.id === "participant:ann" ? { ...node, $seat: "acct-bud" } : node)), edges: [] },
     } as never);
@@ -343,7 +344,7 @@ describe("a store loaded with its people already bound", () => {
         const at = store.checkpoint({ seq: store.log.length });
         store.compact(at!);
       }
-      const gave = store.apply({ name: "give-it", args: { id: "gift:kite" } }, { author: bud });
+      const gave = store.apply({ name: "claim-it", args: { id: "gift:kite" } }, { author: bud });
       rebindPerson(store, bud, "participant:bud", { author: host });
       bindPerson(store, ann, "participant:ann", { author: host });
       return { store, gave: gave.batch, ann: store.mayUndo(gave.batch, ann).ok, organizer: store.mayUndo(gave.batch, organizer).ok, bud: store.mayUndo(gave.batch, bud).ok };
@@ -352,14 +353,17 @@ describe("a store loaded with its people already bound", () => {
     const compacted = answers(true);
     expect(compacted.ann).toBe(false);
     expect(() => compacted.store.undo(compacted.gave, { author: ann })).toThrow(PermissionDeniedError);
-    expect(compacted.store.graph.out("gift:kite", "givenBy" as never).map((one) => one.id)).toEqual(["participant:ann"]);
+    expect(compacted.store.graph.getNode("gift:kite")).toMatchObject({ claimedBy: "participant:ann" });
     expect({ ann: compacted.ann, organizer: compacted.organizer, bud: compacted.bud }).toEqual({ ann: kept.ann, organizer: kept.organizer, bud: kept.bud });
   });
 });
 
 describe("a seat is not put back on a record set aside", () => {
   it("refuses taking a move back once the record it left is set aside, until it is brought back", () => {
-    const { store } = misbound();
+    // Bud only edited Ann as her: no link of his moves with him, so only the seat stands in the way.
+    const store = family();
+    bindPerson(store, bud, "participant:ann", { author: host });
+    store.apply({ name: "edit-participant", args: { id: "participant:ann", age: 12 } }, { author: bud });
     const moved = rebindPerson(store, bud, "participant:bud", { author: host });
     store.apply({ name: "archive-participant", args: { id: "participant:ann" } }, { author: organizer });
     expect(store.mayUndo(moved.batch, host)).toMatchObject({ ok: false, refusal: { message: "This cannot be taken back: Ann is set aside. Bring them back first." } });

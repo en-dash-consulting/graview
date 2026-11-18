@@ -1,5 +1,5 @@
 import { bindSchema, createSchema, defineApp, defineNode, Store, type AnySchema, type Operation, type Principal } from "@graview/core";
-import { bindPerson } from "@graview/core/binding";
+import { bindPerson, hostSeat } from "@graview/core/binding";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createStoreHandler, liveProtocol, presenceFrom, SEAT_HEADERS, visitorPresence, whoFor, type LivePeer, type LiveServerMessage } from "../../src/runtime.js";
@@ -20,7 +20,7 @@ const addGift = defineMutation("add-gift", { title: "Add a gift", creates: ["gif
 const policy = { roles: ["member"], grants: [{ roles: ["member"], mutations: ["add-gift"] }] };
 const app = defineApp({ name: "bound", schema, mutations: [addGift] as never, policy, version: 1 } as never);
 
-const host: Principal = { kind: "system", id: "host" };
+const host: Principal = hostSeat({ id: "host" });
 const bud: Principal = { kind: "human", id: "acct-bud", name: "budster", roles: ["member"] };
 const ann: Principal = { kind: "human", id: "acct-ann", roles: ["member"] };
 

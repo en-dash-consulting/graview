@@ -1,6 +1,6 @@
 import type { FarAppResolver } from "../workflows/far.js";
 import { isBindingAct } from "../binding-served.js";
-import { bindingUngranted } from "../binding-ungranted.js";
+import { bindingActTaken, bindingUngranted } from "../binding-ungranted.js";
 import { DERIVED_ACTS, derivedActOf, derivedActsOf, givenWhenNeverArchived, givenWhenNeverTidied, RELATION_ACTS, relationActName, relationActsOf } from "../mutations/derived-names.js";
 import { documentRelations, givesRelationAct, renamedRelationAct } from "./relation-acts.js";
 import * as z from "../schema/zod.js";
@@ -3145,7 +3145,7 @@ class Editor {
 
   private addAct(i: number, e: Doc) {
     const { op: _op, act, replace, ...rest } = e;
-    if (isBindingAct(act)) return this.failAs("binding-act-taken", i, "act", `"${act}" is a name the framework keeps for an act of its own`, "give the act another name");
+    if (isBindingAct(act)) return this.failAs("binding-act-taken", i, "act", bindingActTaken(act), "give the act another name");
     if (this.doc.acts?.[act] && !replace) return this.fail(i, "act", `there is already an act "${act}"`, "pass replace: true to change it, or pick another name");
     const parsed = ActSpec.safeParse(rest);
     if (!parsed.success) {

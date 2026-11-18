@@ -1,5 +1,5 @@
 import { bindSchema, createSchema, defineNode, nodeRef, PROPOSE_CHANGES, Store, z, type AnySchema, type Policy, type Principal } from "@graview/core";
-import { bindPerson } from "@graview/core/binding";
+import { bindPerson, hostSeat } from "@graview/core/binding";
 import { makerOf } from "@graview/core/history";
 import { acceptSuggestion, isProposal, suggest, suggestions } from "@graview/core/tidying";
 import { describe, expect, it } from "vitest";
@@ -21,7 +21,7 @@ const { defineMutation } = bindSchema(schema);
 const addGift = defineMutation("add-gift", { title: "Add a gift", creates: ["gift"], input: z.object({ title: z.string() }), apply: (ctx: any, args: any) => ctx.addNode({ id: ctx.freshId(args.title, "gift"), kind: "gift", title: args.title }) } as never);
 const rename = defineMutation("rename-gift", { title: "Rename", subject: { kinds: ["gift"], arg: "id" }, input: z.object({ id: nodeRef(["gift"]), title: z.string() }), apply: (ctx: any, args: any) => ctx.patchNode(args.id, { title: args.title }) } as never);
 
-const host: Principal = { kind: "system", id: "host" };
+const host: Principal = hostSeat({ id: "host" });
 const bud: Principal = { kind: "human", id: "acct-bud", name: "budster", roles: ["member"] };
 const budAtHome: Principal = { kind: "human", id: "acct-family", name: "The Smiths", roles: ["member"], profile: { id: "prf_bud", name: "Buddy" } };
 const ann: Principal = { kind: "human", id: "acct-ann", name: "Ann", roles: ["member"] };

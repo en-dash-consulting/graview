@@ -1,5 +1,5 @@
 import { createSchema, defineNode, Store, type AnySchema, type Principal } from "@graview/core";
-import { bindPerson } from "@graview/core/binding";
+import { bindPerson, hostSeat } from "@graview/core/binding";
 import { aiContextOf } from "@graview/core/catalog";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
@@ -19,7 +19,7 @@ const task = defineNode("task", { fields: z.object({ label: z.string(), notes: z
 const schema = createSchema([person, task]);
 const NOW = "2026-11-15T09:00:00.000Z";
 
-const host: Principal = { kind: "system", id: "host" };
+const host: Principal = hostSeat({ id: "host" });
 const ada: Principal = { kind: "human", id: "acct-ada-7f3", roles: ["member"] };
 const bea: Principal = { kind: "human", id: "acct-bea-9c1", roles: ["member"] };
 const forAda: Principal = { kind: "agent", id: "helper", onBehalfOf: ada } as Principal;
