@@ -1484,8 +1484,17 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         // Put away under the bar or the control by a pan (a phone's City is panned to reach it): said, for whoever reads the page.
         button.toggleAttribute("data-graview-under", covered);
         const seen = slot && !covered ? (key === at.current ? shownOwn : shownBoards) * arriving * leaving : 0;
+        /*
+         * This page's own board, drawn wherever it stands (it is the page on
+         * its way into a board), is not offered to a press where the bar or
+         * the control stands over it: a press there lands on them (the
+         * Harbor's home at the City, 844 wide, its board under the bar —
+         * the watch's control-covered, seen once one-face waited for the
+         * face to rest).
+         */
+        const ownUnder = key === at.current && footAt !== null && under({ x: footAt.x - w / 2, y: footAt.y - h, width: w, height: h });
         // Not seen, it is not reached: out of the keyboard's order and the pointer's, as a board going away is.
-        const reached = seen > 0.5 && (key === at.current ? a > 1.5 : a > 0.95) && !move;
+        const reached = seen > 0.5 && (key === at.current ? a > 1.5 && !ownUnder : a > 0.95) && !move;
         if (button.inert === reached) button.inert = !reached;
         if (!slot || seen <= 0.001) {
           if (button.style.opacity !== "0") button.style.opacity = "0";
