@@ -224,7 +224,7 @@ describe("what a server reads with no page drawn, in a store that knows its app'
 });
 
 describe("an app that declares no zone, served by a host on New York's clock", () => {
-  // The day turns at the host's midnight (`timeZone`), and the app declares no zone of its own (`appTimeZone: null`), as `openStore` opens it.
+  // The host's own zone is `timeZone`, and the app declares none of its own (`appTimeZone: null`), as `openStore` opens it: its day is UTC's.
   const hosted = (app: GraviewApp<AnySchema>, invariants: readonly unknown[] = app.invariants ?? []) =>
     new Store<AnySchema>({ schema: app.schema, mutations: (app.mutations ?? []) as never, invariants: invariants as never, snapshot: structuredClone(SEED) as never, timeZone: NY, appTimeZone: null });
 
@@ -237,6 +237,37 @@ describe("an app that declares no zone, served by a host on New York's clock", (
     expect(problems(store)).toEqual([]);
     expect(answerJob(store, { kind: "event", where: "date(starts) == '2026-10-17'" }, { kind: "system", id: "host" }).count).toBe(1);
     expect(labelOf(app, store)).toBe("Supper on Oct 17, 2026");
+  });
+
+  const eveningInUtc = (app: GraviewApp<AnySchema>) =>
+    new Store<AnySchema>({
+      schema: app.schema,
+      mutations: (app.mutations ?? []) as never,
+      invariants: (app.invariants ?? []) as never,
+      snapshot: { nodes: [{ id: "event:supper", kind: "event", title: "Supper", starts: "2026-10-16T20:00:00Z" }], edges: [] } as never,
+      timeZone: NY,
+      appTimeZone: null,
+    });
+
+  it("is judged on UTC's day, not the host's: an evening event in UTC is past at 03:30 UTC though New York is still on the day before", () => {
+    at("2026-10-17T03:30:00Z");
+    const store = eveningInUtc(appIn());
+    expect(store.dayTimeZone).toBe("UTC");
+    expect(store.today()).toBe("2026-10-17");
+    expect(problems(store)).toEqual(["not-past"]);
+    expect(answerJob(store, { kind: "event", where: "starts < today()" }, { kind: "system", id: "host" }).count).toBe(1);
+  });
+
+  it("turns its day at UTC's midnight, not the host's", () => {
+    at("2026-10-16T23:00:00Z");
+    const store = eveningInUtc(appIn());
+    const ticks: string[] = [];
+    const stop = tickEachDay(store, (tick) => ticks.push(tick.day));
+    expect(problems(store)).toEqual([]);
+    vi.advanceTimersByTime(HOUR + 1000);
+    expect(ticks).toEqual(["2026-10-17"]);
+    expect(problems(store)).toEqual(["not-past"]);
+    stop();
   });
 });
 

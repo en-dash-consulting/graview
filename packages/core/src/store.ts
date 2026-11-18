@@ -684,6 +684,16 @@ export class Store<S extends AnySchema> {
   readonly timeZone: string | undefined;
   /** The zone the app declares (`StoreOptions.appTimeZone`): what the rule language reads an instant on. */
   readonly appTimeZone: string | undefined;
+  /**
+   * THE ZONE THE STORE'S DAY IS IN: the app's, else UTC's where the host
+   * gave only its own clock (`timeZone` with `appTimeZone: null`), else none
+   * — the clock as it reads. What `today()` says, the day rules are judged
+   * on, and the midnight `tickEachDay` turns it at: an app with no zone keeps
+   * UTC's day on every host.
+   */
+  get dayTimeZone(): string | undefined {
+    return this.appTimeZone ?? (this.timeZone ? "UTC" : undefined);
+  }
   /** Where this store stands in the past, when it is one (`pastOf`): read, never changed. */
   readonly past: PastPoint | undefined;
   /** How often `pastOf` keeps a point to fold from, in ops (`StoreOptions.pastEvery`). */
@@ -701,7 +711,7 @@ export class Store<S extends AnySchema> {
     this.timeZone = options.timeZone;
     this.appTimeZone = options.appTimeZone === null ? undefined : (options.appTimeZone ?? options.timeZone);
     // A store that knows its app's zone begins on the day there, so the first turn of the day says what it moved.
-    if (this.timeZone) this.ticked = { day: isoToday(this.timeZone), on: isoToday(this.timeZone) };
+    if (this.dayTimeZone) this.ticked = { day: isoToday(this.dayTimeZone), on: isoToday(this.dayTimeZone) };
     this.policy = options.policy;
     this.publishing = options.publishing;
     this.tidying = options.tidying;
@@ -1722,7 +1732,8 @@ export class Store<S extends AnySchema> {
    * that day, and an app in New York about New York's.
    */
   today(): string | undefined {
-    return this.pinned() ?? (this.ticked && this.ticked.on === isoToday(this.timeZone) ? this.ticked.day : undefined) ?? (this.timeZone ? isoToday(this.timeZone) : undefined);
+    const zone = this.dayTimeZone;
+    return this.pinned() ?? (this.ticked && this.ticked.on === isoToday(zone) ? this.ticked.day : undefined) ?? (zone ? isoToday(zone) : undefined);
   }
 
   /** The day `invariantOptions` pins, if it pins one: a tick does not move it. */
@@ -1768,8 +1779,8 @@ export class Store<S extends AnySchema> {
   tick(now: Date | string | number = new Date()): Tick {
     const pinned = this.pinned();
     if (pinned !== undefined) return { day: pinned, was: pinned, appeared: [], cleared: [] };
-    const day = dayOf(now, this.timeZone);
-    const on = isoToday(this.timeZone);
+    const day = dayOf(now, this.dayTimeZone);
+    const on = isoToday(this.dayTimeZone);
     // What stood is judged on the day the store was last ticked to, even when the clock has just left it: the turn at midnight says what it moved.
     if (this.ticked) this.ticked = { day: this.ticked.day, on };
     const was = this.today();

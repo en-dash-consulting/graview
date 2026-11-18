@@ -9,7 +9,8 @@ import { openStore } from "../../src/index.js";
  * of its own. The browser apps handed one; `graview mcp`, `graview apply`
  * and `graview serve` opened their stores with none, so an agent at the
  * library's door saw nothing overdue where the pages listed nine. Ship's
- * `openStore` judges on the host's clock unless the host pins a day.
+ * `openStore` judges on the clock's day unless the host pins one: the app's,
+ * in `brand.timeZone`, else UTC's, wherever the host runs.
  */
 const loan = defineNode("loan", { fields: z.object({ label: z.string(), due: isoDate }), plural: "Loans" });
 const schema = createSchema([loan]);
@@ -25,17 +26,16 @@ const app = defineApp({ name: "library", schema, mutations: [], invariants: [bac
 const seed = { nodes: [{ id: "l1", kind: "loan", label: "Loan 0001", due: "2020-01-01" }], edges: [] };
 
 describe("a store opened by a host that says no day", () => {
-  it("is judged on the host's own day", async () => {
+  it("is judged on the clock's day, UTC's where the app declares no zone", async () => {
     const opened = await openStore({ app, adapter: createMemoryAdapter(), seed: seed as never });
-    const local = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
-    expect(opened.store.today()).toBe(local);
+    expect(opened.store.today()).toBe(new Date().toISOString().slice(0, 10));
     expect(opened.store.violations().map((violation) => violation.message)).toEqual(["Loan 0001 is overdue"]);
     opened.close();
   });
 
-  it("turns at the host's midnight, and its subscribers hear it", async () => {
+  it("turns at UTC's midnight, wherever the host runs, and its subscribers hear it", async () => {
     vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
-    const midnight = new Date(2026, 9, 17); // the host's own midnight, wherever it runs
+    const midnight = new Date(Date.UTC(2026, 9, 17));
     vi.setSystemTime(new Date(midnight.getTime() - 60_000));
     const opened = await openStore({ app, adapter: createMemoryAdapter(), seed: { nodes: [{ id: "l1", kind: "loan", label: "Loan 0001", due: "2026-10-16" }], edges: [] } as never });
     expect(opened.store.today()).toBe("2026-10-16");
@@ -95,10 +95,11 @@ describe("a store opened for an app that declares its time zone", () => {
 });
 
 describe("a store opened for an app that declares no zone", () => {
-  it("turns its day on the host's clock, and reads its rules' instants on UTC's calendar, as a document's own rules do", async () => {
+  it("keeps the host's zone for what is not a rule's day, and reads its day and its rules' instants on UTC's, as a document's own rules do", async () => {
     const opened = await openStore({ app, adapter: createMemoryAdapter(), seed: seed as never });
     expect(opened.store.timeZone).toBe(Intl.DateTimeFormat().resolvedOptions().timeZone);
     expect(opened.store.appTimeZone).toBeUndefined();
+    expect(opened.store.dayTimeZone).toBe("UTC");
     opened.close();
   });
 });

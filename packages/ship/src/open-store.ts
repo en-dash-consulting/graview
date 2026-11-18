@@ -352,10 +352,13 @@ export async function openStore<S extends AnySchema>(
    */
   const pinned = Boolean(judged?.today || (judged?.context as { today?: unknown } | undefined)?.today);
   /*
-   * AND ONE THAT SAYS NONE, ON THE HOST'S OWN ZONE: the same day the host's
-   * clock shows, held as a zone rather than a pinned day, so the store ticks
-   * at the host's midnight and its subscribers hear the day turn (a pinned
-   * day never turns, and a served app's overdue loans waited for a restart).
+   * AND ONE THAT SAYS NONE, ON UTC'S DAY: held as a zone rather than a pinned
+   * day, so the store ticks at UTC's midnight and its subscribers hear the
+   * day turn (a pinned day never turns, and a served app's overdue loans
+   * waited for a restart). The host's own zone is kept as `timeZone` for
+   * what is not a rule's day — a Google calendar event's zone — and the
+   * rules read the day and instants on UTC's (`appTimeZone: null`,
+   * `dayTimeZone`), as a document's own rules do on any host.
    */
   const declared = storeOptions.timeZone ?? app.brand?.timeZone;
   const timeZone = declared ?? (pinned ? undefined : Intl.DateTimeFormat().resolvedOptions().timeZone);
