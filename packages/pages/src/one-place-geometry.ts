@@ -714,6 +714,14 @@ export interface TitleFit {
 }
 
 /**
+ * Scripts written without spaces between words, which the browser breaks
+ * between characters (Chinese, Japanese, Korean) or by its own dictionary
+ * (Thai, Lao, Khmer, Burmese): a run in one of them is never measured as
+ * one word, and its lines are the browser's to break.
+ */
+export const BREAKS_BETWEEN_CHARACTERS = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}\p{Script=Lao}\p{Script=Khmer}\p{Script=Myanmar}]/u;
+
+/**
  * A BOARD'S TITLE, WORD BY WORD: its lines break only between words, on
  * every system's type — a Linux runner's DejaVu, wider than the Mac's,
  * broke "Researchers" mid-word where the browser could not hyphenate. The
@@ -722,11 +730,27 @@ export interface TitleFit {
  * wide at that is cut on its own line with an ellipsis, never broken
  * across two. `measure` is the width a run of text is drawn at in the
  * title's own size; the spaces between words are kept as they were.
+ *
+ * Words are what the browser breaks between: they are parted by the
+ * spaces a line breaks at (not a no-break space, which keeps "New York"
+ * one word), and a word breaks after its own hyphen or a zero-width space
+ * as the browser breaks it ("Well-" and "known" are measured apart). A
+ * word in a script written without spaces (`BREAKS_BETWEEN_CHARACTERS`) is
+ * left to the browser: neither measured nor cut.
  */
 export function titleThatFits(title: string, room: number, measure: (text: string) => number, least: number): TitleFit {
-  const words = title.split(/(\s+)/).filter((word) => word.length > 0);
+  const words = title.split(/([ \t\n\f\r]+)/).filter((word) => word.length > 0);
+  const spaced = (word: string) => word.trim() !== "" && !/^[ \t\n\f\r]+$/.test(word);
   if (!(room > 0)) return { size: 1, words: words.map((text) => ({ text, cut: false })) };
-  const widest = Math.max(0, ...words.filter((word) => word.trim()).map(measure));
+  // What of a word the browser keeps on one line: its pieces between hyphens and zero-width spaces, each with the break it ends at.
+  const pieces = (word: string) => (spaced(word) && !BREAKS_BETWEEN_CHARACTERS.test(word) ? (word.match(/[^-\u2010\u200b]*(?:[-\u2010\u200b]+|$)/g) ?? []).filter((piece) => piece.length > 0) : []);
+  const widestOf = (word: string) => Math.max(0, ...pieces(word).map(measure));
+  const widest = Math.max(0, ...words.map(widestOf));
   const size = widest > room ? Math.max(least, room / widest) : 1;
-  return { size, words: words.map((text) => ({ text, cut: Boolean(text.trim()) && measure(text) * size > room })) };
+  return { size, words: words.map((text) => ({ text, cut: widestOf(text) * size > room })) };
+}
+
+/** Whether two fits of a title draw alike: the same size, and the same words cut — by their words, so a title renamed is drawn anew. */
+export function sameFit(was: TitleFit | null, next: TitleFit): boolean {
+  return Boolean(was && was.size === next.size && was.words.length === next.words.length && was.words.every((word, i) => word.text === next.words[i]?.text && word.cut === next.words[i]?.cut));
 }

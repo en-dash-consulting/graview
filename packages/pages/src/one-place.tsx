@@ -11,7 +11,7 @@ import { pluralOf } from "./page-typography.js";
 import { kindOfSlug, recordPath, pluralSlug } from "./registry.js";
 import { OneFaceContext, type OneFace } from "./one-place-control.js";
 import { HeldHere } from "./held-element.js";
-import { BOARD_ASPECT, boardFaceWidth, titleThatFits, frameSpacing, smallWindow, CITY, LEVEL_NAMES, nearestThatWay, PAGE, PANEL, panelBox, panelRange, panelStoreKey, PHONE, type Box, type PageWhere, type TitleFit, type View } from "./one-place-geometry.js";
+import { BOARD_ASPECT, boardFaceWidth, sameFit, titleThatFits, frameSpacing, smallWindow, CITY, LEVEL_NAMES, nearestThatWay, PAGE, PANEL, panelBox, panelRange, panelStoreKey, PHONE, type Box, type PageWhere, type TitleFit, type View } from "./one-place-geometry.js";
 
 /**
  * PAGES AND THE SCENE ARE ONE PLACE (Graview HQ feature:f-page-zooms-out-to-the-city).
@@ -948,7 +948,7 @@ function BoardFace({ board, width, height, small }: { readonly board: Board; rea
       pen.font = `${style.fontStyle} ${style.fontWeight} ${parseFloat(sizes.title) * rem}px ${style.fontFamily}`;
       // A pixel spare: the page's own line and the pen's may round apart.
       const next = titleThatFits(board.label, el.clientWidth - 1, (text) => pen.measureText(text).width, parseFloat(sizes.least) / parseFloat(sizes.title));
-      setFit((was) => (was && was.size === next.size && was.words.length === next.words.length && was.words.every((word, i) => word.cut === next.words[i]?.cut) ? was : next));
+      setFit((was) => (sameFit(was, next) ? was : next));
     };
     measure();
     // The boards' layer is put away below Nearby, where the title has no width to measure: measured again once it has one.
@@ -959,9 +959,13 @@ function BoardFace({ board, width, height, small }: { readonly board: Board; rea
     void document.fonts?.ready.then(() => {
       if (live) measure();
     });
+    // And each typeface that loads later, as a page's own brand may.
+    const loaded = () => measure();
+    document.fonts?.addEventListener?.("loadingdone", loaded);
     return () => {
       live = false;
       shown?.disconnect();
+      document.fonts?.removeEventListener?.("loadingdone", loaded);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [board.label, width, small]);
@@ -977,7 +981,7 @@ function BoardFace({ board, width, height, small }: { readonly board: Board; rea
         {/* Two lines before it is cut, broken between words only: no system's type splits "Researchers" across them. */}
         <div ref={titleEl} data-graview-board-title="" style={{ marginTop: 6, fontSize: titleSize, lineHeight: 1.15, fontWeight: 650, color: "var(--graview-ink)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", overflowWrap: "normal", wordBreak: "normal", hyphens: "manual" }}>
           {/* A word still too wide is cut on its line, whole in the page's words: the board's name is all of it. */}
-          {fit?.words.some((word) => word.cut) ? fit.words.map((word, i) => (word.cut ? <span key={i} style={{ display: "inline-block", maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", verticalAlign: "top" }}>{word.text}</span> : word.text)) : board.label}
+          {fit && fit.words.map((word) => word.text).join("") === board.label && fit.words.some((word) => word.cut) ? fit.words.map((word, i) => (word.cut ? <span key={i} dir="auto" style={{ display: "inline-block", maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", verticalAlign: "top" }}>{word.text}</span> : word.text)) : board.label}
         </div>
         {/* What a list shows, live: the first of its records, as its page lists them — where the card has room for it under a title on two lines. */}
         <div style={{ marginTop: 16, display: "grid", gap: 12 }}>

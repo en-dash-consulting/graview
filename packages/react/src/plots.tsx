@@ -359,7 +359,8 @@ const PlotTile = memo(function PlotTile({
               data-graview-building={block.id}
               data-graview-leaving={leaving.has(block.id) ? "" : undefined}
               // A building going is gone once its sink has played out: the sink's own end, not a clock.
-              onTransitionEnd={leaving.has(block.id) ? (event) => void (event.target === event.currentTarget && event.propertyName === "transform" && sunk(block.id)) : undefined}
+              // Its sink's end, not a rise's that ends in the frame it is marked going: gone only once it is flat.
+              onTransitionEnd={leaving.has(block.id) ? (event) => void (event.target === event.currentTarget && event.propertyName === "transform" && flat(event.currentTarget) && sunk(block.id)) : undefined}
               data-graview-tier={block.tier}
               data-graview-flagged={broken.has(block.id) || block.overdue ? "" : undefined}
               data-graview-overdue={block.overdue ? "" : undefined}
@@ -515,6 +516,12 @@ function useLeaving<B extends { readonly id: string }>(buildings: readonly B[], 
   }, [drawn]);
   const leaving = useMemo(() => new Set(rising ? gone.keys() : []), [gone, rising]);
   return { drawn, leaving, sunk };
+}
+
+/** Whether a building has sunk all the way: its height, as drawn now, none. */
+function flat(el: Element): boolean {
+  const transform = getComputedStyle(el).transform;
+  return transform !== "none" && Math.abs(new DOMMatrixReadOnly(transform).d) < 0.01;
 }
 
 /**

@@ -1471,14 +1471,18 @@ const readRich = (page) =>
       const lines = [];
       let last = null;
       for (let i = 0; i < letters.length; i++) {
-        if (/\s/.test(letters[i].letter)) continue;
+        // A zero-width space is a break the title offers, as a space is.
+        if (/[\s\u200b]/.test(letters[i].letter)) continue;
         const range = document.createRange();
         range.setStart(letters[i].node, letters[i].at);
         range.setEnd(letters[i].node, letters[i].at + 1);
         const box = range.getClientRects()[0];
         if (!box || box.height === 0) continue;
         const middle = box.top + box.height / 2;
-        if (!last || Math.abs(middle - last.middle) >= box.height / 2) lines.push({ from: i, to: i + 1, splits: Boolean(last && last.to === i) });
+        // A break straight after a letter splits a word, but where the word breaks after its own hyphen, or in a script written without spaces, which breaks between characters.
+        const between = (letter) => /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}\p{Script=Lao}\p{Script=Khmer}\p{Script=Myanmar}]/u.test(letter);
+        const offered = last && (/[-\u2010]/.test(letters[i - 1].letter) || between(letters[i - 1].letter) || between(letters[i].letter));
+        if (!last || Math.abs(middle - last.middle) >= box.height / 2) lines.push({ from: i, to: i + 1, splits: Boolean(last && last.to === i && !offered) });
         else lines.at(-1).to = i + 1;
         last = { middle, to: i + 1 };
       }
