@@ -1,5 +1,32 @@
 # @graview/tools
 
+## 0.2.7
+
+### Patch Changes
+
+- 04fe790: The host can merge a member's own record into the person entered for them, and a move of a person to the right record covers an ended binding and what they linked as themselves. Every invited member gets a record of their own on joining, and anyone with a role gets one on first open, so `bindPerson` refused nearly everybody an organizer had entered ("That account already has its own record here, …"), and the framework had no way to do what it said. `mergePerson(store, person, record, { author })` on `@graview/core/binding` runs a new act the framework keeps for itself, `bind-own-record` (`{ seat, record }`):
+  
+  - the seat is `record` from now on (`$me`, `own`, `self`), and every act it did as its own record is said as `record`;
+  - its own record's links move to `record`, as merging a duplicate moves them, and its own record is set aside, not left as a second person;
+  - it is one change, which undo takes back whole: the own record, its links, who did what and the binding. Taking it back is refused once the person has acted as `record` ("Bud has acted here: undoing the merge would hand what they did to someone else.");
+  - refused in a sentence a host can show where the account has no record of its own, is somebody's already, or where `record` is not of the people, somebody else's or set aside. `bindPerson`'s refusal now names the merge: "… merge it into Bud instead."
+  
+  `rebindPerson` moves a binding that had ended as well: what the seat did as the wrong record is said as the right one, the wrong record is nobody's again, and the binding stays ended, on the right record. A move, of either kind, takes along the links the person's acts made as the wrong record where the act's call never named it (made through `$me`), in the same change, followed through every move and merge before it; what an act wrote naming a record stays as it was written, and so does a link between the two records. An earlier act whose link was moved is not taken back on its own after the move ("… what it linked was moved to another person's record since."), and the move is never offered to bring along.
+  
+  The binding acts — `bind-person`, `rebind-person` and `bind-own-record`, and taking one back, whether or not the app says who may do what — are run by the host's own seat alone: `hostSeat({ id, name })` on `@graview/core/binding` mints it. Every other system seat is refused. `graview check`, a compile and an edit refuse a grant that names `bind-own-record` (`grant-gives-binding`) and an app's own act of that name (`binding-act-taken`), as they do the other two; each of the three refusals of an app's own act under a kept name now says what that act does (`rebind-person`: the host's moving of a person bound to the wrong record to the right one), where every one said binding an account to the person entered for it. `BIND_OWN_RECORD` is on `@graview/core`. The `graview-sight` skill names `hostSeat` and `mergePerson`. Held by unit tests of core (`the-host-merges-a-members-own-record-into-their-person`, `a-move-covers-an-ended-binding-what-the-person-linked-and-only-the-host`).
+  
+  Compatibility: the declaration and check finding codes — `bind-own-record` is a name the framework keeps: an app's act of that name is refused as `binding-act-taken`, and a grant of it as `grant-gives-binding`; no code is added. Ops and primitives — a merge is a `bind-own-record` op of a seat-mark patch and a merge's primitives; a move now also carries the `remove-edge` and `add-edge` of each link it takes along; a move of an ended binding puts the seat mark on each record and takes it off again in its one op. Stored formats, the wire, and derived tool names and input schemas — unchanged; the act is offered by no list and no agent tool. What Graview Cloud does: mint its seat with `hostSeat` and pass it as the `author` of `bindPerson`, `unbindPerson`, `rebindPerson`, `mergePerson` and their undo (a plain `{ kind: "system" }` author is refused them now), and call `mergePerson` where `bindPerson` says the member has a record of their own.
+- 391df2a: Security fixes in what the packages depend on. Every package that depends on zod now asks for `^4.6.7`, so an install no longer resolves a zod version with a published high-severity advisory (GHSA-mrhx-c7xc-m3w5) alongside Graview. Each pull request and each release now fail on a high or critical advisory reaching a published package's dependencies and check every installed package's registry signature (`scripts/dependency-check.mjs`), and the lockfile takes no version published in the last seven days.
+  
+  Compatibility: the look, the JavaScript API, ops and primitives, stored formats, the wire, the declaration and check finding codes, derived tool names and input schemas — unchanged. A host that pins zod below 4.6.7 next to Graview moves to 4.6.7 or later.
+- Updated dependencies [c04f690]
+- Updated dependencies [c04f690]
+- Updated dependencies [04fe790]
+- Updated dependencies [391df2a]
+- Updated dependencies [c04f690]
+  - @graview/core@0.2.7
+  - @graview/ship@0.2.7
+
 ## 0.2.6
 
 ### Patch Changes

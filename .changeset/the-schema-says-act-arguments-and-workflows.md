@@ -1,8 +1,0 @@
----
-"@graview/core": patch
-"@graview/skills": patch
----
-
-The declaration's schema and the authoring skills say an act's `args` and a workflow's triggers, and a malformed trigger is refused by naming the shapes. An agent authoring a Thanksgiving app found nothing on `acts.args` in the guide Graview Cloud serves from `document.schema.json`, and `"when": [{}]` was refused with "Invalid input" alone. `@graview/core/document.schema.json` now describes what `args` holds — a field's shape, or `{ "required": false }` for an argument naming a record — alongside the triggers and steps of `workflows` it already carried. `graview check` refuses a trigger that names none of `every`, `cron`, `made`, `changed`, `synced` or `byHand` by listing them, with an example of each (`workflow-shape` at `workflows.<name>.when.<n>`); one that names a trigger and gets it wrong is still told what is wrong with that one. The `graview-node-kind` skill shows an act's `args` with an optional record, and `graview-workflows` says where every key of a workflow is written down. Held by unit tests of core (`the-document-schema-says-act-arguments-and-workflows`, `a-malformed-workflow-trigger-is-refused-naming-the-shapes`) and the skills' own test.
-
-Compatibility: the declaration and check finding codes — unchanged in shape: the JSON schema says more in its descriptions, and `workflow-shape` keeps its code with a clearer sentence and fix. Ops and primitives, stored formats, the wire, and derived tool names and input schemas — unchanged. What Graview Cloud does: nothing; `get_authoring_guide` read from the schema says `args` once it takes this version.
