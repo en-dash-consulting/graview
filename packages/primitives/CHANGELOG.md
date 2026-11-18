@@ -1,5 +1,30 @@
 # @graview/primitives
 
+## 0.2.6
+
+### Patch Changes
+
+- 48b7e0b: A rule's `today()` and `date()` read the day in the app's own time zone. A composed dated list says `where not (starts < today())`, and an instant was compared with the day by its letters, on UTC's calendar: at half past midnight in New York an event from 10 PM the evening before still read as ahead, and just after midnight in Tokyo an event at 8 AM that day read as gone. With `brand.timeZone` declared:
+  
+  - `today()` is the date there wherever the rule language is read: a document's rules, computed fields, labels, act conditions and values, a view's blocks and a template, and an expression evaluated with a `timeZone` and no `today` of its own;
+  - `date(x)` of an instant is the day it is on there (`date('2026-10-17T03:30:00Z')` is `2026-10-16` in New York); a day, a month or a year alone, and a wall time written without a zone, keep the day written;
+  - an instant compared with a day, a month alone or a wall time (`<`, `<=`, `>`, `>=`) is read on the app's clock, so `starts < today()` turns at the app's midnight, as a store with the app's zone is ticked (`tickEachDay`, `openStore`, `openRemote`).
+  
+  What a server reads with no page drawn reads the same day a page does, on the zone the app declares: a store's new `appTimeZone` (`StoreOptions.appTimeZone`; unsaid, `timeZone`; `null` where the app declares none). `openStore` sets it from `brand.timeZone`, and to none where the app declares no zone. The day a store reports (`today()`), hands its rules and turns at (`tickEachDay`) is in its new `dayTimeZone`: the declared zone, else UTC's. A served app that declares no zone turned its day at the host's midnight and read it on the host's calendar; it now keeps UTC's day on every host, as a document's own rules do, and the host's zone stays on `timeZone` only for what is not a rule's day (a Google calendar event's zone). A host that ticks a store from its own alarm sets it `untilTheDayTurns(now, store.dayTimeZone)` ahead. From that zone: a workflow's values, its keep and archive policies (`policyApplies` takes the zone) and its triggers' `where`; a job's `where` (`answerJob`); a subscription's condition as a commit is matched (`matchSubscriptions`, as `serve` tells subscribers); a rule's broken line; and a rule written in code (`expressionRule`), which the store now hands its zone (`timeZone` on an invariant's arguments and on `EvaluateOptions`) and whose sentence says an instant on that clock. A lifecycle that retires on a moment kept as an instant retires on the day it is on there (`isCurrent` takes the zone). `computedValues` and `withComputed` take `timeZone` and `locale`, and a place's facts and records, an agent's read of a record, a sync's outgoing record, a linked record and a view drawn headless pass the app's. A template's setup conditions read the template's own app's zone. A list's date filters, sorts and date groups read today in `ArrangeContext.timeZone` where no day is given (`shownList` takes it), and search, the lenses and the pages pass the app's. An instant compared with a wall time keeps its seconds, so `now()` at 09:30:45 is after a wall time of 09:30, and `09:30Z` is `09:30:00`. An expression asks the clock for today only when it reads it.
+  
+  An app that declares no zone reads all three on UTC's calendar, as before, with one change: an instant with an offset is now compared with a day or a wall time as the moment it is, on UTC's calendar (`'2026-10-17T01:00:00+02:00' < '2026-10-17'` is now true; by its letters it was false). Two instants are compared by their letters as before, whatever their offsets; `days()` and `hours()` measure as before; an instant today is not `<= today()`, as before; a wall time written with a space for its `T` is compared as written. The `graview-locale` skill says the zone is the app's day too. Held by a unit test of core (`a-rules-day-and-date-are-read-in-the-apps-zone`): New York at 23:30 and Tokyo at 00:30, both sides of each midnight, `date()` of an instant, the comparison, seconds against a wall time, an offset in an app with no zone, a document without a zone, an app with no zone on a host in New York reading UTC, a clock rule judged again at New York's midnight and not UTC's, and each server path above with no page drawn. A hosted page carries 1.0 KB more up front (985 / 290 bytes), 1.0 KB more handed a compiled app (985 / 262), and 1,238 bytes more before its scene face draws.
+  
+  Compatibility: the declaration and check finding codes — a document that declares `brand.timeZone` reads `date()` of an instant, and an instant compared with a day, on that zone's calendar rather than UTC's, so a rule or a computed field over a datetime may answer differently within hours of midnight; nothing is renamed, and no finding is added or taken away. Ops and primitives, stored formats, the wire, and derived tool names and input schemas — unchanged. What Graview Cloud does: nothing; an app with a zone reads its own day.
+- Updated dependencies [b85809b]
+- Updated dependencies [21c343b]
+- Updated dependencies [48b7e0b]
+- Updated dependencies [6f7e833]
+  - @graview/core@0.2.6
+  - @graview/react@0.2.6
+  - @graview/tools@0.2.6
+  - @graview/layout@0.2.6
+  - @graview/render@0.2.6
+
 ## 0.2.5
 
 ### Patch Changes
