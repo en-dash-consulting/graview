@@ -36,6 +36,14 @@ export const GRAVIEW_PACKAGES = [
  */
 export const LINKED_PACKAGES: readonly string[] = [...GRAVIEW_PACKAGES, "skills", "graview"];
 
+/**
+ * The type packages a linked project takes from the checkout's own
+ * `node_modules` rather than from npm: the ones the framework's `.d.ts`
+ * name, which a product's own code names too. Each must be installed in
+ * the checkout before `--link` can work.
+ */
+export const LINKED_TYPES: readonly string[] = ["@types/react", "@types/react-dom"];
+
 /*
  * THE PROJECT AROUND THE APP: its manifest, its compilers, its dev server,
  * its README, its CI and the harnesses its own verify runs.
@@ -173,6 +181,18 @@ export function packageJson(ids: Ids, workspace: boolean): string {
   const byPath = ids.packageManager === "npm" ? "file:" : "link:";
   const dep = (pkg: string) =>
     ids.link ? `${byPath}${ids.link}/packages/${pkg}` : ids.range;
+  /*
+   * REACT'S TYPES ARE THE CHECKOUT'S, LIKE REACT ITSELF. A linked
+   * framework's `.d.ts` name React through the checkout's own
+   * `@types/react`, and the project's code names it through the project's.
+   * Resolved apart, the two can carry different copies of csstype: the day
+   * csstype 3.2.4 reached npm while the checkout held 3.2.3, every linked
+   * project's pages failed tsc with "Type 'CSSProperties' is not assignable
+   * to type 'Properties<...>'". So link mode takes them by path from the
+   * checkout's `node_modules`, by package name and never by a version
+   * inside its store: one copy, whatever npm published today.
+   */
+  const types = (pkg: string) => (ids.link ? `${byPath}${ids.link}/node_modules/${pkg}` : "^19.2.0");
   const graview = Object.fromEntries(GRAVIEW_PACKAGES.map((pkg) => [`@graview/${pkg}`, dep(pkg)]));
   const run = ids.packageManager === "pnpm" ? "pnpm" : "npm run";
   const manifest = {
@@ -231,8 +251,8 @@ export function packageJson(ids: Ids, workspace: boolean): string {
       // framework is the @graview/* above; this is the command line over it.
       graview: dep("graview"),
       "@types/node": "^22.10.0",
-      "@types/react": "^19.2.0",
-      "@types/react-dom": "^19.2.0",
+      "@types/react": types("@types/react"),
+      "@types/react-dom": types("@types/react-dom"),
       typescript: "^5.7.2",
       vite: "^5.4.11",
       vitest: "^2.1.8",

@@ -1,4 +1,4 @@
-import { LINKED_PACKAGES } from "../../src/scaffold/index.js";
+import { LINKED_PACKAGES, LINKED_TYPES } from "../../src/scaffold/index.js";
 import { mkdtempSync, mkdirSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -21,6 +21,14 @@ afterEach(() => {
   process.chdir(cwd);
   rmSync(scratch, { recursive: true, force: true });
 });
+
+/** A pretend checkout's installed React types, which a linked project takes by path. */
+function installTypes() {
+  for (const pkg of LINKED_TYPES) {
+    mkdirSync(resolve(scratch, "fw/node_modules", pkg), { recursive: true });
+    writeFileSync(resolve(scratch, "fw/node_modules", pkg, "package.json"), `{"name":"${pkg}"}`);
+  }
+}
 
 function io({ identity = true }: { readonly identity?: boolean } = {}) {
   const out: string[] = [];
@@ -135,6 +143,7 @@ describe("graview create", () => {
       mkdirSync(resolve(scratch, `fw/packages/${pkg}/dist`), { recursive: true });
       writeFileSync(resolve(scratch, `fw/packages/${pkg}/dist/index.js`), "");
     }
+    installTypes();
     const t = io();
     const code = await create(["product", "--link", "fw", "--no-install"], t.handle);
     expect(code).toBe(0);
@@ -161,6 +170,18 @@ describe("graview create", () => {
     );
   });
 
+  it("refuses a framework whose React types are not installed, and says how to install them", async () => {
+    for (const pkg of LINKED_PACKAGES) {
+      mkdirSync(resolve(scratch, `fw/packages/${pkg}/dist`), { recursive: true });
+      writeFileSync(resolve(scratch, `fw/packages/${pkg}/dist/index.js`), "");
+    }
+    const t = io();
+    expect(await create(["product", "--link", "fw", "--no-install"], t.handle)).toBe(2);
+    expect(t.err()).toMatch(/not installed \(no @types\/react, @types\/react-dom in its node_modules\)/);
+    expect(t.err()).toMatch(/pnpm -C fw install/);
+    expect(readdirSync(scratch)).toEqual(["fw"]);
+  });
+
   it("refuses a framework that is not built, and says how to build it", async () => {
     mkdirSync(resolve(scratch, "fw/packages/core"), { recursive: true });
     const t = io();
@@ -176,6 +197,7 @@ describe("graview create", () => {
       mkdirSync(resolve(scratch, `fw/packages/${pkg}/dist`), { recursive: true });
       writeFileSync(resolve(scratch, `fw/packages/${pkg}/dist/index.js`), "");
     }
+    installTypes();
     const t = io();
     expect(await create(["fw/my-app", "--link", "fw", "--no-install", "--no-git"], t.handle)).toBe(0);
     expect(t.err()).toMatch(/inside the framework checkout/);
