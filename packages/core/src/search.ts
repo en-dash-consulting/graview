@@ -743,7 +743,7 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
   // A record some of whose fields its sight keeps is searched as the seat is served it: no hit on what it may not read (Roadmap f-field-sight).
   const served = FIELD_SIGHT.keptFrom?.(store, principal) && store.seenBy(principal).graph;
   const at = (path: string) => addressOf(path, options.basePath === undefined ? {} : { basePath: options.basePath });
-  const ctx: ArrangeContext = { schema, graph: store.graph as unknown as ArrangeGraph, flagged, ...(today ? { today } : {}) };
+  const ctx: ArrangeContext = { schema, graph: store.graph as unknown as ArrangeGraph, flagged, ...(today ? { today } : {}), ...(store.appTimeZone ? { timeZone: store.appTimeZone } : {}) };
 
   const ranked: Ranked[] = [];
   const byKind: Record<string, number> = {};

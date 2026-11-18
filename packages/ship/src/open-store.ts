@@ -357,8 +357,11 @@ export async function openStore<S extends AnySchema>(
    * at the host's midnight and its subscribers hear the day turn (a pinned
    * day never turns, and a served app's overdue loans waited for a restart).
    */
-  const timeZone = storeOptions.timeZone ?? app.brand?.timeZone ?? (pinned ? undefined : Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const declared = storeOptions.timeZone ?? app.brand?.timeZone;
+  const timeZone = declared ?? (pinned ? undefined : Intl.DateTimeFormat().resolvedOptions().timeZone);
   if (timeZone) (storeOptions as { timeZone?: string }).timeZone = timeZone;
+  // The host's clock turns the day; the rules read an instant on the zone the app declares, else UTC's calendar (`appTimeZone`).
+  if (storeOptions.appTimeZone === undefined) (storeOptions as { appTimeZone?: string | null }).appTimeZone = declared ?? null;
   const store = new Store<S>({
     schema: app.schema,
     mutations: app.mutations ?? [],

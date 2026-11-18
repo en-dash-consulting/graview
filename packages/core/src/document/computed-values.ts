@@ -99,8 +99,8 @@ export function computedValues(
  * surface shows (a record as its name, a set as their names) — for the
  * facts a page or an agent reads, never for a write.
  */
-export function withComputed(schema: AnySchema, graph: GraphReader, node: AnyGraphNode): AnyGraphNode {
-  const { values } = computedValues(schema, graph, node);
+export function withComputed(schema: AnySchema, graph: GraphReader, node: AnyGraphNode, options: Parameters<typeof computedValues>[3] = {}): AnyGraphNode {
+  const { values } = computedValues(schema, graph, node, options);
   if (Object.keys(values).length === 0) return node;
   const said = (v: PlainComputed): unknown => (Array.isArray(v) ? v.map(said) : v !== null && typeof v === "object" ? (v as ComputedRecord).label : v);
   return { ...node, ...Object.fromEntries(Object.entries(values).map(([k, v]) => [k, said(v)])) } as AnyGraphNode;

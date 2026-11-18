@@ -86,4 +86,19 @@ describe("a store opened for an app that declares its time zone", () => {
     expect(opened.store.violations().map((violation) => violation.message)).toEqual(["Loan 0001 is overdue"]);
     opened.close();
   });
+
+  it("reads its rules' instants on the zone it declares", async () => {
+    const opened = await openStore({ app: zoned, adapter: createMemoryAdapter(), seed: dueToday as never });
+    expect(opened.store.appTimeZone).toBe("America/New_York");
+    opened.close();
+  });
+});
+
+describe("a store opened for an app that declares no zone", () => {
+  it("turns its day on the host's clock, and reads its rules' instants on UTC's calendar, as a document's own rules do", async () => {
+    const opened = await openStore({ app, adapter: createMemoryAdapter(), seed: seed as never });
+    expect(opened.store.timeZone).toBe(Intl.DateTimeFormat().resolvedOptions().timeZone);
+    expect(opened.store.appTimeZone).toBeUndefined();
+    opened.close();
+  });
 });

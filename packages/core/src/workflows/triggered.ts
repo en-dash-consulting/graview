@@ -59,7 +59,7 @@ const holds = (where: string | undefined, node: AnyGraphNode | undefined, store:
   if (!node) return false;
   try {
     const today = store.today();
-    const value = evaluateExpr(parseExpr(where), { graph: store.graph as never, subject: node, kinds: shapesFor(store.schema), ...(today ? { today } : {}), ...(store.timeZone ? { timeZone: store.timeZone } : {}) });
+    const value = evaluateExpr(parseExpr(where), { graph: store.graph as never, subject: node, kinds: shapesFor(store.schema), ...(today ? { today } : {}), ...(store.appTimeZone ? { timeZone: store.appTimeZone } : {}) });
     return value === true;
   } catch (error) {
     if (error instanceof ExprEvalError) return false;

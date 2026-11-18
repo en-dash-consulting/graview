@@ -124,6 +124,15 @@ export interface StoreOptions<S extends AnySchema> {
    */
   readonly timeZone?: string;
   /**
+   * THE ZONE THE APP DECLARES, `brand.timeZone`: the clock the rule
+   * language reads an instant on — `date()`, a moment against a day — in
+   * rules, jobs, workflows and subscriptions. Unsaid, `timeZone`; `null`
+   * where the app declares none and `timeZone` is only the host's own clock
+   * the day turns on (`openStore`), so its rules read instants on UTC's
+   * calendar, as a document's own rules do.
+   */
+  readonly appTimeZone?: string | null;
+  /**
    * Who may run what. Absent means permission is not a concern here.
    *
    * It lives on the STORE and nowhere else. The tool runtime calls the same
@@ -673,6 +682,8 @@ export class Store<S extends AnySchema> {
   private ticked: { readonly day: string; readonly on: string } | undefined;
   /** The app's time zone (`StoreOptions.timeZone`): the day today() reads is the date there. */
   readonly timeZone: string | undefined;
+  /** The zone the app declares (`StoreOptions.appTimeZone`): what the rule language reads an instant on. */
+  readonly appTimeZone: string | undefined;
   /** Where this store stands in the past, when it is one (`pastOf`): read, never changed. */
   readonly past: PastPoint | undefined;
   /** How often `pastOf` keeps a point to fold from, in ops (`StoreOptions.pastEvery`). */
@@ -688,6 +699,7 @@ export class Store<S extends AnySchema> {
     this.invariants = options.invariants ?? [];
     this.invariantOptions = options.invariantOptions ?? {};
     this.timeZone = options.timeZone;
+    this.appTimeZone = options.appTimeZone === null ? undefined : (options.appTimeZone ?? options.timeZone);
     // A store that knows its app's zone begins on the day there, so the first turn of the day says what it moved.
     if (this.timeZone) this.ticked = { day: isoToday(this.timeZone), on: isoToday(this.timeZone) };
     this.policy = options.policy;
@@ -1730,7 +1742,7 @@ export class Store<S extends AnySchema> {
     // A rule written as a function reads the day from its context too, as `openStore` handed it (W-186): the app's, where the store knows its zone and the call hands no context of its own.
     const base = linking ?? given;
     const judged = this.timeZone && today !== undefined && context === undefined && !(base && "today" in base) ? { ...base, today } : linking;
-    return { ...this.invariantOptions, ...(judged === undefined ? {} : { context: judged }), ...(today === undefined ? {} : { today }), ...(this.timeZone && this.invariantOptions.timeZone === undefined ? { timeZone: this.timeZone } : {}) };
+    return { ...this.invariantOptions, ...(judged === undefined ? {} : { context: judged }), ...(today === undefined ? {} : { today }), ...(this.appTimeZone && this.invariantOptions.timeZone === undefined ? { timeZone: this.appTimeZone } : {}) };
   }
 
   /**

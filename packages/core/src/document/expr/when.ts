@@ -67,15 +67,14 @@ export function whenOf(value: string, zone: string): When | undefined {
  */
 export function wallMomentOf(value: string, zone: string): string {
   if (!namesInstant(value)) return value;
-  // On UTC's wall an instant written in UTC is its letters without the Z: seconds and all, and no clock asked.
-  if (zone === "UTC" && value.endsWith("Z")) return value.slice(0, -1);
   const stamp = Date.parse(value);
   if (Number.isNaN(stamp)) return value;
+  // Seconds and milliseconds are the instant's own (a zone is whole minutes from UTC): `now()` at 09:30:45 is after a wall time of 09:30, and 09:30Z is 09:30:00.
+  const iso = new Date(stamp).toISOString();
+  const seconds = `:${iso.slice(17, 19)}${iso.slice(20, 23) === "000" ? "" : `.${iso.slice(20, 23)}`}`;
+  if (zone === "UTC") return `${iso.slice(0, 16)}${seconds}`;
   const { day, minutes } = wallIn(stamp, zone);
-  // Seconds and milliseconds are the instant's own: a zone is whole minutes from UTC, so `now()` at 09:30:45 is after a wall time of 09:30.
-  const ms = ((stamp % 60_000) + 60_000) % 60_000;
-  const seconds = `${pad(Math.floor(ms / 1000))}${ms % 1000 === 0 ? "" : `.${String(ms % 1000).padStart(3, "0")}`}`;
-  return `${day}T${pad(Math.floor(minutes / 60))}:${pad(minutes % 60)}:${seconds}`;
+  return `${day}T${pad(Math.floor(minutes / 60))}:${pad(minutes % 60)}${seconds}`;
 }
 
 /** Whether a stored value names an instant, which a day or a wall time is compared with on the app's wall. */

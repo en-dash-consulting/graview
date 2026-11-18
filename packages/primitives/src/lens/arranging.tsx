@@ -104,6 +104,7 @@ export function useArranging<S extends AnySchema>(props: ViewProps<S>, options: 
   const arranged = arrange(subject, allow === false ? {} : arrangement, {
     schema: store.schema,
     graph: store.graph,
+    ...(store.appTimeZone ? { timeZone: store.appTimeZone } : {}),
     flagged: new Set(props.flagged ?? []),
     ...(options.search ? { searchIn: options.search } : {}),
   });

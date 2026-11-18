@@ -261,7 +261,7 @@ export function arrange<N extends ArrangeNode>(nodes: readonly N[], arrangement:
       );
   for (const node of ordered) {
     if (isField) {
-      const value = dateOn(fields(node), grouping.by, ctx.today ?? isoToday());
+      const value = dateOn(fields(node), grouping.by, ctx.today ?? isoToday(ctx.timeZone));
       if (value === undefined || value === null || value === "") {
         put("", none, node);
       } else if (type === "date") {

@@ -582,7 +582,7 @@ function matchOne(store: Store<AnySchema>, seen: Store<AnySchema>, subscription:
         const servedAfter = after ? (seen.graph.getNode(id) === undefined ? undefined : servedAs(seen, after)) : undefined;
         const before = nodeBefore(after, id, primitives);
         const servedBefore = before ? servedAs(seen, before) : undefined;
-        const clock = { today: store.today(), timeZone: store.timeZone };
+        const clock = { today: store.today(), timeZone: store.appTimeZone };
         return holds(condition, servedAfter, seen.graph as GraphReader, store.schema, clock) && !holds(condition, servedBefore, seen.graph as GraphReader, store.schema, clock);
       });
       return reached.length > 0 ? records(reached) : undefined;

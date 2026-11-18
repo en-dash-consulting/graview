@@ -144,7 +144,7 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
       return { id: node.id, kind: node.kind, title: titled ? first.text : title, parts: say(titled ? rest : said, depth, `views.${node.kind}.${as}`, ` (${node.id})`, titled ? 1 : 0) };
     }
     // The default card and row: its title, and what a glance at it says (FR-39, FR-83) — a row's on one line after its name (Roadmap f-better-bare-app-defaults).
-    const read = (definition as { computed?: object } | undefined)?.computed ? withComputed(schema, graph, node) : node;
+    const read = (definition as { computed?: object } | undefined)?.computed ? withComputed(schema, graph, node, { today, timeZone: app.brand?.timeZone, locale: app.brand?.locale }) : node;
     const fields = readableFields(read as Record<string, unknown>, definition, { limit: 3, said: [title], glance: true, noReader: true, locale: app.brand?.locale, timeZone: app.brand?.timeZone });
     if (as === "row") return { id: node.id, kind: node.kind, title, parts: fields.length > 0 ? [{ t: "text", text: fields.map((field) => (field.long ? excerptOf(field.stored, { markdown: field.markdown, most: 100 }) : field.alone)).join(" · ") }] : [] };
     return { id: node.id, kind: node.kind, title, parts: fields.map((field) => ({ t: "text", text: field.alone })) };
@@ -234,7 +234,7 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
       problems.push(...shadowedPageSlots(app as never, [view]));
     } else {
       if (page) parts.push(...say(resolved(record, { slot: "page" }), 1, `views.${record.kind}.page`));
-      const read = (definition as { computed?: object } | undefined)?.computed ? withComputed(schema, graph, record) : record;
+      const read = (definition as { computed?: object } | undefined)?.computed ? withComputed(schema, graph, record, { today, timeZone: app.brand?.timeZone, locale: app.brand?.locale }) : record;
       // In the order and the groups its page declares (FR-148), each value as stored: a draft's paragraphs kept (FR-146).
       for (const section of pageSections(definition, readableFields(read as Record<string, unknown>, definition, { said: [title], locale: app.brand?.locale, timeZone: app.brand?.timeZone }))) {
         if (section.title) parts.push({ t: "heading", level: 2, text: section.title });

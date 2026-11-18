@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { compileDocument } from "../../src/check.js";
-import { computedValues } from "../../src/document/computed-values.js";
+import { computedValues, withComputed } from "../../src/document/computed-values.js";
 import { evaluateExpr, expressionRule, parseExpr } from "../../src/document/index.js";
-import { sayIn, Store, tickEachDay, type AnySchema, type GraviewApp, type Operation } from "../../src/index.js";
+import { isCurrent, sayIn, Store, tickEachDay, type AnySchema, type GraviewApp, type Operation } from "../../src/index.js";
 import { answerJob } from "../../src/jobs.js";
 import { matchSubscriptions, type Subscription } from "../../src/subscriptions.js";
 import { policyApplies, workflowValue } from "../../src/workflows.js";
@@ -201,10 +201,50 @@ describe("what a server reads with no page drawn, in a store that knows its app'
   });
 
   it("a rule written in code, judged on the store's zone", () => {
-    const app = appIn();
+    const app = appIn(NY);
     const onItsDay = expressionRule("on-its-day", { over: "event", require: "date(starts) == '2026-10-16'" });
     const make = (timeZone?: string) => new Store<AnySchema>({ schema: app.schema, invariants: [onItsDay] as never, snapshot: structuredClone(SEED) as never, ...(timeZone ? { timeZone } : {}) });
     expect(problems(make(NY))).toEqual([]);
     expect(problems(make())).toEqual(["on-its-day"]);
+  });
+
+  it("a record's facts as a place says them, beside its computed values", () => {
+    const store = served();
+    const node = store.graph.getNode("event:supper") as never;
+    expect((withComputed(store.schema, store.graph as never, node, { timeZone: NY }) as Record<string, unknown>)["day"]).toBe("2026-10-16");
+  });
+
+  it("a lifecycle that retires on a moment, on the day the moment is on there", () => {
+    const definition = { lifecycle: { field: "ends", retired: "date" } } as never;
+    const node = { id: "event:supper", kind: "event", ends: "2026-10-17T02:00:00Z" };
+    expect(isCurrent(definition, node, "2026-10-17", NY)).toBe(false);
+    expect(isCurrent(definition, node, "2026-10-16", NY)).toBe(true);
+    expect(isCurrent(definition, node, "2026-10-17")).toBe(true);
+  });
+});
+
+describe("an app that declares no zone, served by a host on New York's clock", () => {
+  // The day turns at the host's midnight (`timeZone`), and the app declares no zone of its own (`appTimeZone: null`), as `openStore` opens it.
+  const hosted = (app: GraviewApp<AnySchema>, invariants: readonly unknown[] = app.invariants ?? []) =>
+    new Store<AnySchema>({ schema: app.schema, mutations: (app.mutations ?? []) as never, invariants: invariants as never, snapshot: structuredClone(SEED) as never, timeZone: NY, appTimeZone: null });
+
+  it("reads its rules' instants on UTC's calendar, a rule in code and the document's own alike", () => {
+    at("2026-10-17T03:30:00Z");
+    const app = appIn();
+    const onUtcDay = expressionRule("on-utc-day", { over: "event", require: "date(starts) == '2026-10-17'" });
+    const store = hosted(app, [...(app.invariants ?? []), onUtcDay]);
+    expect(store.appTimeZone).toBeUndefined();
+    expect(problems(store)).toEqual([]);
+    expect(answerJob(store, { kind: "event", where: "date(starts) == '2026-10-17'" }, { kind: "system", id: "host" }).count).toBe(1);
+    expect(labelOf(app, store)).toBe("Supper on Oct 17, 2026");
+  });
+});
+
+describe("an instant with an offset, in an app that declares no zone", () => {
+  it("is compared as the moment it is, and an instant in UTC equals the same wall time", () => {
+    expect(read("'2026-10-17T01:00:00+02:00' < '2026-10-17'")).toBe(true);
+    expect(read("'2026-10-17T09:30Z' < '2026-10-17T09:30:00'")).toBe(false);
+    expect(read("'2026-10-17T09:30Z' <= '2026-10-17T09:30:00'")).toBe(true);
+    expect(read("'2026-10-17T09:30Z' >= '2026-10-17T09:30:00'")).toBe(true);
   });
 });

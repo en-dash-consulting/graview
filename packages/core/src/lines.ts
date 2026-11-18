@@ -86,11 +86,12 @@ export function withLines<V extends Violation>(
     }
     try {
       // The store's day first, when it has one (pinned or ticked, FR-176): the day the rule was judged on.
-      const today = source.today?.() ?? shape.today?.() ?? isoToday();
+      const timeZone = (source as { readonly appTimeZone?: string | undefined }).appTimeZone;
+      const today = source.today?.() ?? shape.today?.() ?? isoToday(timeZone);
       // A coverage rule's problem names the pair: the record it does not reach is the line's.
       const farId = shape.covers ? violation.nodeIds.find((id) => id !== violation.subjectId) : undefined;
       const far = farId ? source.graph.getNode(farId) : undefined;
-      const line = brokenLineOf(shape, wordsOf(shape, source.schema), { graph: source.graph, subject: subject ?? null, kinds, today }, far);
+      const line = brokenLineOf(shape, wordsOf(shape, source.schema), { graph: source.graph, subject: subject ?? null, kinds, today, ...(timeZone ? { timeZone } : {}) }, far);
       // A rule's own sentence is left as written; so is a coverage pair's message, which names the record it does not reach already.
       return { ...violation, line, ...(shape.says || shape.covers ? {} : { message: `${violation.message} — ${line.text}` }) };
     } catch {

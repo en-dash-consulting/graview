@@ -84,7 +84,7 @@ export const runArchiveStep: StepRunner<ArchiveStep> = {
         passed.back++;
         continue;
       }
-      const rule = keeping.find((policy) => policyApplies(policy, node, store.graph as unknown as GraphReader, schema, context.today, (store as { readonly timeZone?: string | undefined }).timeZone));
+      const rule = keeping.find((policy) => policyApplies(policy, node, store.graph as unknown as GraphReader, schema, context.today, (store as { readonly appTimeZone?: string | undefined }).appTimeZone));
       if (rule) {
         passed.kept.push(rule.label);
         continue;

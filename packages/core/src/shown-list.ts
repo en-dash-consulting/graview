@@ -33,6 +33,8 @@ export interface ShownListOptions<N extends ArrangeNode> {
   readonly flagged?: ReadonlySet<string>;
   /** Today, YYYY-MM-DD, for the lifecycle. */
   readonly today?: string | undefined;
+  /** The app's time zone (`brand.timeZone`): the day a date filter, sort and group read when no `today` is given, and the clock a computed rank reads. */
+  readonly timeZone?: string | undefined;
   /** The closed groups a person opened (`?open=done`), by their declared value. */
   readonly opened?: ReadonlySet<string>;
 }
@@ -77,9 +79,10 @@ export function shownList<N extends ArrangeNode>(options: ShownListOptions<N>): 
     graph,
     ...(options.flagged ? { flagged: options.flagged } : {}),
     ...(options.today !== undefined ? { today: options.today } : {}),
+    ...(options.timeZone !== undefined ? { timeZone: options.timeZone } : {}),
     read: (node, key) => {
       let values = worked.get(node.id);
-      if (!values) worked.set(node.id, (values = withComputed(schema, graph as unknown as GraphReader, node as unknown as AnyGraphNode) as unknown as Record<string, unknown>));
+      if (!values) worked.set(node.id, (values = withComputed(schema, graph as unknown as GraphReader, node as unknown as AnyGraphNode, { ...(options.today !== undefined ? { today: options.today } : {}), timeZone: options.timeZone }) as unknown as Record<string, unknown>));
       return values[key];
     },
   });

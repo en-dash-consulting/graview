@@ -160,7 +160,7 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
   const zone = zoneOf(ctx.timeZone);
   // The day is the app's: the date in its zone, never UTC's where the app declares one — read only when asked, and without a clock for UTC.
   let day = ctx.today;
-  const today = (): string => (day ??= zone === "UTC" ? new Date().toISOString().slice(0, 10) : isoToday(zone));
+  const today = (): string => (day ??= isoToday(ctx.timeZone));
   const now = ctx.now ?? new Date().toISOString();
   /*
    * A COMPUTED FIELD IS WORKED OUT ONCE PER EVALUATION, and never while it
