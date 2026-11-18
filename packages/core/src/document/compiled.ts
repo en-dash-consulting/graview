@@ -107,7 +107,7 @@ export type ActEffect = EffectSpec | ReplaceEffect | LinkedSetEffect;
 /** One argument an act asks for: a field's value, a record of some kinds, or anything (a value set on a record of no known kind). */
 export type ArgPlan =
   | { readonly field: FieldSpec; readonly optional: boolean; readonly required: boolean }
-  | { readonly ref: readonly string[] | "*"; readonly required: boolean }
+  | { readonly ref: readonly string[] | "*"; readonly required: boolean; /** The question it asks, where the declaration says one. */ readonly description?: string }
   | { readonly any: true; readonly required: false };
 
 /** The argument of an act's that takes the record at the far end of what it ties, when it takes a `kind`: never its subject. */
@@ -326,7 +326,12 @@ const marks = (fields: Readonly<Record<string, unknown>>): void => {
   if (mark !== undefined) throw new ActRefusal(`"${mark}" is the framework's own mark, not a field: no act can set it`, "invalid");
 };
 
-const argSchema = (arg: ArgPlan, money: Money): z.ZodMiniType => ("field" in arg ? fieldSchema(arg.field, arg.optional, money) : "ref" in arg ? refTo(arg.ref) : z.optional(z.unknown()));
+// A record an act may be handed or not (Roadmap f-optional-record-input-in-create) is an optional reference: its picker offers an empty choice.
+const refArg = (arg: Extract<ArgPlan, { ref: unknown }>): z.ZodMiniType => {
+  const ref = arg.description ? refTo(arg.ref).check(z.describe(arg.description)) : refTo(arg.ref);
+  return arg.required ? ref : z.optional(ref);
+};
+const argSchema = (arg: ArgPlan, money: Money): z.ZodMiniType => ("field" in arg ? fieldSchema(arg.field, arg.optional, money) : "ref" in arg ? refArg(arg) : z.optional(z.unknown()));
 
 /*
  * An act's own refusal is the framework's typed one (FR-110), which a host
@@ -712,7 +717,22 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
               throw e;
             }
           };
+          /*
+           * A RECORD LEFT OUT IS NO LINK (Roadmap f-optional-record-input-in-create):
+           * an effect that reads an argument the act may be handed or not —
+           * a record's, or a value declared optional — and was not, is skipped — the dish is made, and
+           * linked to no household — rather than refused as "there is no
+           * record """.
+           */
+          const leftOut = (value: ValueSpec | undefined): boolean => {
+            const name = refName(value);
+            const arg = name === undefined ? undefined : args.get(name);
+            return arg !== undefined && !("any" in arg) && !arg.required && input[name!] === undefined;
+          };
           for (const effect of effects) {
+            if (("connect" in effect || "sever" in effect) && (leftOut(effect.from) || leftOut(effect.to))) continue;
+            if ("set" in effect && !("create" in effect) && !("through" in effect) && leftOut(effect.target)) continue;
+            if ("remove" in effect && leftOut(effect.remove)) continue;
             if ("create" in effect) {
               const kind = document.kinds[effect.create]!;
               const node = blank(effect.create);

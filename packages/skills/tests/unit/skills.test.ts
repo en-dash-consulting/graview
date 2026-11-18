@@ -122,6 +122,20 @@ describe("the skills package", () => {
     }
   });
 
+  it("teaches a document act's args with an optional record, and a workflow's trigger by example", () => {
+    /*
+     * An agent authoring its first document asked for a household that may
+     * be left out and found no word on `args` (Roadmap
+     * f-authoring-schemas-args-workflows): the skill shows the shape, and
+     * the workflows skill shows a trigger and where every key is said.
+     */
+    const kind = skills.find((skill) => skill.name === "graview-node-kind")!;
+    expect(kind.body).toMatch(/"args": \{ "to":\s+\{ "required": false \} \}/);
+    const workflows = skills.find((skill) => skill.name === "graview-workflows")!;
+    expect(workflows.body).toContain('"when": [{ "every": "sunday 18:00" }]');
+    expect(workflows.body).toMatch(/document\.schema\.json`\s+under `workflows`/);
+  });
+
   it("sends a page to the derivation for its act list, not to the mutations", () => {
     /*
      * A design that scans `store.allMutations()` by subject kind gets acts

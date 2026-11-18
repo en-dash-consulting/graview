@@ -173,6 +173,17 @@ export function barPlaces(input: {
    * `pages.hide` keeps off is marked `hidden`, and the bar offers it nowhere.
    */
   const arranged = arrangedEntries(live, arrangement?.order, seen);
+  /*
+   * A FORM FOR A KIND STANDS WITH ITS LIST (Roadmap f-frame-form-grouped-by-kind):
+   * a host's view that may ask for an act making its kind's records — "Add
+   * a dish", a view of the dishes pressing "add-dish" — is a way in to the
+   * kind, listed right after the kind's list rather than under Pictures. A
+   * view that only pictures, or changes records it did not make, stays a
+   * picture.
+   */
+  const makes = new Map(store.allMutations().map((act) => [act.name, (act.creates ?? []) as readonly string[]]));
+  const forms = onePerPicture(pictured).filter((place) => place.lens === "view" && (place.acts ?? []).some((act) => makes.get(act)?.includes(place.kind)) && !arranged.some((entry) => entry.view && samePicture(entry.view, place)));
+  const formsOf = (kind: string) => forms.filter((place) => place.kind === kind);
   for (const { kind, view } of arranged) {
     if (view) {
       out.push({ key: `place:${view.kind}:${view.as}`, label: placeLabel(view, all, store.schema), path: pathOf(view), group: "lists", kind, primary: declared ? declared.places.has(`${kind}|${view.as}`) : true });
@@ -181,6 +192,7 @@ export function barPlaces(input: {
     const label = pluralLabel(store.schema, kind);
     const named = titled.has(label.toLowerCase());
     out.push({ key: `kind:${kind}`, label: named ? allLabel(store.schema, kind) : label, path: kindPath(store.schema, kind), group: "lists", kind, primary: named || hidden.has(kind) ? false : stands(kind), ...(hidden.has(kind) ? { hidden: true } : {}) });
+    for (const form of formsOf(kind)) out.push({ key: `place:${form.kind}:${form.as}`, label: placeLabel(form, all, store.schema), path: pathOf(form), group: "lists", kind, primary: stands(kind, form.as), hidden: form.hidden });
   }
   /*
    * Each picture once: one over several kinds is one entry, under the first
@@ -189,7 +201,7 @@ export function barPlaces(input: {
    * (`offeredPlaces`, Roadmap f-hidden-view-leaves-the-bar).
    */
   for (const place of onePerPicture(pictured)) {
-    if (arranged.some((entry) => entry.view && samePicture(entry.view, place))) continue;
+    if (arranged.some((entry) => entry.view && samePicture(entry.view, place)) || forms.includes(place)) continue;
     const path = pathOf(place);
     const standing = [place.kind, ...(place.over ?? [])].some((kind) => live.includes(kind) && stands(kind, place.as));
     if (!out.some((held) => held.path === path)) out.push({ key: `place:${place.kind}:${place.as}`, label: placeLabel(place, all, store.schema), path, group: "pictures", kind: place.kind, primary: standing, hidden: place.hidden });

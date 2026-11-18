@@ -95,6 +95,11 @@ others that they show, is `graview-view-specs`.
 5. **Give it verbs.** A kind no mutation names as a subject can have nothing
    done to it, and the strip says so. Unless you meant that, add a mutation
    whose `subject.kinds` includes it (the rule shape: `graview-invariant`).
+   In a document an act's `args` says what its effects do not: a field's
+   shape, or, for a record an effect links, no type — `"args": { "to":
+   { "required": false } }` with `{ "connect": "broughtBy", "from":
+   "$new", "to": "$to" }` is a picker that may be left empty; left empty,
+   the record is made and the link skipped.
 
 6. **Let the fields be changed, or say why not.** A field you could set at
    creation, you can change: every settable field no mutation writes is

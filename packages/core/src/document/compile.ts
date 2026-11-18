@@ -13,10 +13,11 @@ import { ExprSyntaxError, parseExpr, type Expr } from "./expr/parse.js";
 import { error, hasErrors, warning, type Finding } from "./findings.js";
 import {
   DocumentSpec,
+  FieldSpec,
   MAX_DOCUMENT_BYTES,
+  isFieldArg,
   type ActSpec,
   type EffectSpec,
-  type FieldSpec,
   type GraviewDocument,
   type KindSpec,
   type ValueSpec,
@@ -127,10 +128,18 @@ export function readDocument(raw: unknown): { readonly document?: GraviewDocumen
     return {
       findings: parsed.error.issues.map((issue) => {
         const path = issue.path.map(String).join(".");
-        if (issue.code === "unrecognized_keys") return error("unknown-key", path, `${issue.keys.map((k) => `"${k}"`).join(", ")} ${issue.keys.length === 1 ? "is" : "are"} not part of a Graview document here`, "check the spelling against docs/declaration-document.md");
         if (issue.code === "invalid_union" && /\.effects\.\d+$/.test(path)) {
           return error("effect-shape", path, "this effect is not one Graview knows", 'an effect is one of {"create": kind, "as"?: name, "set"?: {field: value}}, {"set": {field: value, …}, "target"?: "$ref"}, {"connect"|"sever": relation, "from": "$ref", "to": "$ref"}, {"remove": "$ref"}');
         }
+        if ((issue.code === "invalid_union" || issue.code === "unrecognized_keys") && /^acts\.[^.]+\.args\.[^.]+$/.test(path)) {
+          // An argument is a field's shape or a record's: what is wrong is said as the field's where it says a type, else both shapes are named.
+          const given = issue.path.reduce<unknown>((at, key) => (at as Record<PropertyKey, unknown> | undefined)?.[key], raw);
+          const field = typeof given === "object" && given !== null && "type" in given ? FieldSpec.safeParse(given).error?.issues[0] : undefined;
+          if (field) return error(field.code === "unrecognized_keys" ? "unknown-key" : "shape", [path, ...field.path.map(String)].filter(Boolean).join("."), field.code === "unrecognized_keys" ? `${field.keys.map((k) => `"${k}"`).join(", ")} ${field.keys.length === 1 ? "is" : "are"} not part of a field` : field.message);
+          if (issue.code === "unrecognized_keys") return error("unknown-key", path, `${issue.keys.map((k) => `"${k}"`).join(", ")} ${issue.keys.length === 1 ? "is" : "are"} not part of an argument naming a record`, 'it says "required" and "description"; an argument for a field\'s value says its "type"');
+          return error("arg-shape", path, "this argument is not one Graview knows", 'an argument is a field\'s shape, like {"type": "string", "required": true}, or, for one naming a record an effect links, {"required": false} with no type');
+        }
+        if (issue.code === "unrecognized_keys") return error("unknown-key", path, `${issue.keys.map((k) => `"${k}"`).join(", ")} ${issue.keys.length === 1 ? "is" : "are"} not part of a Graview document here`, "check the spelling against docs/declaration-document.md");
         if (issue.code === "invalid_key") {
           const inner = (issue as unknown as { issues?: { message: string }[] }).issues?.[0]?.message;
           return error("shape", path, `the name "${String(issue.path.at(-1))}" is not allowed here${inner ? `: ${inner}` : ""}`);
@@ -476,8 +485,22 @@ function argsOf(act: ActSpec, effects: readonly ActEffect[], document: GraviewDo
     fed && d.type === fed.type && d.format === undefined && d.unit === undefined ? { ...ranged(d, fed), ...(fed.format ? { format: fed.format } : {}), ...(fed.unit ? { unit: fed.unit } : {}) } : ranged(d, fed);
   const note = (arg: string, schema: () => ArgPlan, fed?: FieldSpec) => {
     if (arg === SUBJECT_ARG || BUILTIN_REFS.has(arg) || created.has(arg) || args.has(arg)) return;
-    const d = declared[arg] ? withRangeOf(declared[arg], fed) : undefined;
-    args.set(arg, d ? { field: d, optional: !d.required, required: Boolean(d.required) } : schema());
+    const said = declared[arg];
+    if (!said) return void args.set(arg, schema());
+    /*
+     * AN ARGUMENT NAMING A RECORD, said with no type (Roadmap
+     * f-optional-record-input-in-create): its kinds are the relation's, and
+     * the declaration says only whether it may be left empty — a picker
+     * with an empty choice, its effect skipped when it is.
+     */
+    const planned = schema();
+    if (!isFieldArg(said)) {
+      if ("ref" in planned) return void args.set(arg, { ref: planned.ref, required: said.required ?? true, ...(said.description ? { description: said.description } : {}) });
+      const required = said.required ?? planned.required;
+      return void args.set(arg, "field" in planned ? { field: planned.field, optional: !required, required } : { ref: "*", required, ...(said.description ? { description: said.description } : {}) });
+    }
+    const d = withRangeOf(said, fed);
+    args.set(arg, { field: d, optional: !d.required, required: Boolean(d.required) });
   };
   for (const effect of effects) {
     if ("create" in effect) {
@@ -532,7 +555,7 @@ function argsOf(act: ActSpec, effects: readonly ActEffect[], document: GraviewDo
       if (arg) note(arg, () => ({ ref: "*", required: true }));
     }
   }
-  for (const [arg, d] of Object.entries(declared)) if (!args.has(arg)) args.set(arg, { field: d, optional: !d.required, required: Boolean(d.required) });
+  for (const [arg, d] of Object.entries(declared)) if (!args.has(arg)) args.set(arg, isFieldArg(d) ? { field: d, optional: !d.required, required: Boolean(d.required) } : { ref: "*", required: d.required ?? true, ...(d.description ? { description: d.description } : {}) });
   return args;
 }
 
@@ -575,7 +598,7 @@ function saidAsDeclared(parts: readonly TemplatePart[], fields: GraviewDocument[
     if (part.format || !e || (e.t !== "ident" && dollar !== "$subject" && dollar !== "$arg")) return part;
     const name = (e as { readonly name: string }).name;
     const worked = dollar === "$arg" ? undefined : computed?.[name];
-    const said: { readonly format?: string; readonly places?: number } | undefined = (dollar === "$arg" ? args?.[name] : undefined) ?? fields?.[name] ?? (typeof worked === "object" ? worked : undefined);
+    const said: { readonly format?: string; readonly places?: number } | undefined = (dollar === "$arg" ? (([args?.[name]].find((one) => one !== undefined && isFieldArg(one))) as FieldSpec | undefined) : undefined) ?? fields?.[name] ?? (typeof worked === "object" ? worked : undefined);
     const format = said?.format;
     // Money in whole units where the field says `"places": 0`, as `{x | money: 0}` says it.
     return format === "money" || format === "percent" ? { ...part, format, ...(format === "money" && said?.places === 0 ? { formatArgs: ["0"] } : {}) } : part;
