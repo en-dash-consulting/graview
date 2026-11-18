@@ -706,3 +706,27 @@ export function cityArea(page: Box, view: View, control: Box | null, phone: bool
   const right = phone ? view.width - 6 : page.x - 6;
   return { x: 6, y: top, width: Math.max(0, right - 6), height: Math.max(0, bottom - top) };
 }
+
+/** A board's title as drawn: the size its type is drawn at, as a share of its own, and its words, each marked where it is still too wide and is cut. */
+export interface TitleFit {
+  readonly size: number;
+  readonly words: readonly { readonly text: string; readonly cut: boolean }[];
+}
+
+/**
+ * A BOARD'S TITLE, WORD BY WORD: its lines break only between words, on
+ * every system's type — a Linux runner's DejaVu, wider than the Mac's,
+ * broke "Researchers" mid-word where the browser could not hyphenate. The
+ * title's type is drawn smaller, down to `least` of its size, until its
+ * widest word fits the line, so the word is read whole; a word still too
+ * wide at that is cut on its own line with an ellipsis, never broken
+ * across two. `measure` is the width a run of text is drawn at in the
+ * title's own size; the spaces between words are kept as they were.
+ */
+export function titleThatFits(title: string, room: number, measure: (text: string) => number, least: number): TitleFit {
+  const words = title.split(/(\s+)/).filter((word) => word.length > 0);
+  if (!(room > 0)) return { size: 1, words: words.map((text) => ({ text, cut: false })) };
+  const widest = Math.max(0, ...words.filter((word) => word.trim()).map(measure));
+  const size = widest > room ? Math.max(least, room / widest) : 1;
+  return { size, words: words.map((text) => ({ text, cut: Boolean(text.trim()) && measure(text) * size > room })) };
+}

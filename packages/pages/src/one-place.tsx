@@ -11,7 +11,7 @@ import { pluralOf } from "./page-typography.js";
 import { kindOfSlug, recordPath, pluralSlug } from "./registry.js";
 import { OneFaceContext, type OneFace } from "./one-place-control.js";
 import { HeldHere } from "./held-element.js";
-import { BOARD_ASPECT, boardFaceWidth, frameSpacing, smallWindow, CITY, LEVEL_NAMES, nearestThatWay, PAGE, PANEL, panelBox, panelRange, panelStoreKey, PHONE, type Box, type PageWhere, type View } from "./one-place-geometry.js";
+import { BOARD_ASPECT, boardFaceWidth, titleThatFits, frameSpacing, smallWindow, CITY, LEVEL_NAMES, nearestThatWay, PAGE, PANEL, panelBox, panelRange, panelStoreKey, PHONE, type Box, type PageWhere, type TitleFit, type View } from "./one-place-geometry.js";
 
 /**
  * PAGES AND THE SCENE ARE ONE PLACE (Graview HQ feature:f-page-zooms-out-to-the-city).
@@ -926,10 +926,47 @@ export function OnePlace<S extends AnySchema>({
  * with the camera, so a board and the page that becomes one read alike.
  * A title too long for it is cut whole, with an ellipsis; the board's own
  * name (`title`, and what a screen reader is told) is the whole of it.
+ * Its lines break only between words: where a word is too wide for the
+ * line its type is drawn smaller, as far as the face's smallest words,
+ * so the word is read whole; one wider still is cut on its own line with
+ * an ellipsis, never broken across two (`titleThatFits`).
  */
 function BoardFace({ board, width, height, small }: { readonly board: Board; readonly width: number; readonly height: number; readonly small: boolean }) {
-  // A small window's face is narrower and its words fewer to a line: its title on two lines, broken where a word must be, fits the card whole.
-  const sizes = small ? { pad: "16px 16px 0", says: "2.125rem", title: "2.25rem" } : { pad: "22px 34px 0", says: "2.25rem", title: "3.5rem" };
+  // A small window's face is narrower and its words fewer to a line: its title on two lines, broken between words.
+  // A title drawn smaller to keep a word whole goes no smaller than what the face says it is: a phone's board is drawn with that at 9 pixels.
+  const sizes = small ? { pad: "16px 16px 0", says: "2.125rem", title: "2.25rem", least: "2.125rem" } : { pad: "22px 34px 0", says: "2.25rem", title: "3.5rem", least: "2.25rem" };
+  const titleEl = useRef<HTMLDivElement>(null);
+  const [fit, setFit] = useState<TitleFit | null>(null);
+  useLayoutEffect(() => {
+    const el = titleEl.current;
+    if (!el) return;
+    const measure = () => {
+      const pen = measuringPen();
+      if (!pen || el.clientWidth === 0) return;
+      const style = getComputedStyle(el);
+      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      pen.font = `${style.fontStyle} ${style.fontWeight} ${parseFloat(sizes.title) * rem}px ${style.fontFamily}`;
+      // A pixel spare: the page's own line and the pen's may round apart.
+      const next = titleThatFits(board.label, el.clientWidth - 1, (text) => pen.measureText(text).width, parseFloat(sizes.least) / parseFloat(sizes.title));
+      setFit((was) => (was && was.size === next.size && was.words.length === next.words.length && was.words.every((word, i) => word.cut === next.words[i]?.cut) ? was : next));
+    };
+    measure();
+    // The boards' layer is put away below Nearby, where the title has no width to measure: measured again once it has one.
+    const shown = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => measure());
+    shown?.observe(el);
+    // A typeface still loading draws wider or narrower once it has: measured again then.
+    let live = true;
+    void document.fonts?.ready.then(() => {
+      if (live) measure();
+    });
+    return () => {
+      live = false;
+      shown?.disconnect();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [board.label, width, small]);
+  // In the reader's own units: the title's size, as much smaller as its widest word asked.
+  const titleSize = fit && fit.size < 1 ? `calc(${sizes.title} * ${fit.size.toFixed(4)})` : sizes.title;
   const hue = board.kind ? `hsl(${Math.round(hueFor(board.kind))} 55% 52%)` : "var(--graview-accent)";
   const view = board.eyebrow === "view";
   return (
@@ -937,8 +974,11 @@ function BoardFace({ board, width, height, small }: { readonly board: Board; rea
       {/* A view's board is drawn as a view: a band of its kind's color behind what it is, where a list's is a plain card. */}
       <div lang="en" style={{ padding: sizes.pad, ...(view ? { background: `linear-gradient(color-mix(in srgb, ${hue} 16%, transparent), transparent 85%)`, height: "100%", boxSizing: "border-box" } : {}) }}>
         <div data-graview-board-says="" style={{ fontSize: sizes.says, lineHeight: 1.2, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: view ? hue : "var(--graview-ink-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{board.says}</div>
-        {/* Two lines before it is cut: "Connections" and "Cited facts" whole, never "Connec…". */}
-        <div data-graview-board-title="" style={{ marginTop: 6, fontSize: sizes.title, lineHeight: 1.15, fontWeight: 650, color: "var(--graview-ink)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", overflowWrap: "break-word", hyphens: "auto" }}>{board.label}</div>
+        {/* Two lines before it is cut, broken between words only: no system's type splits "Researchers" across them. */}
+        <div ref={titleEl} data-graview-board-title="" style={{ marginTop: 6, fontSize: titleSize, lineHeight: 1.15, fontWeight: 650, color: "var(--graview-ink)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", overflowWrap: "normal", wordBreak: "normal", hyphens: "manual" }}>
+          {/* A word still too wide is cut on its line, whole in the page's words: the board's name is all of it. */}
+          {fit?.words.some((word) => word.cut) ? fit.words.map((word, i) => (word.cut ? <span key={i} style={{ display: "inline-block", maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", verticalAlign: "top" }}>{word.text}</span> : word.text)) : board.label}
+        </div>
         {/* What a list shows, live: the first of its records, as its page lists them — where the card has room for it under a title on two lines. */}
         <div style={{ marginTop: 16, display: "grid", gap: 12 }}>
           {(small ? [] : board.lines).map((line, index) => (
@@ -951,6 +991,13 @@ function BoardFace({ board, width, height, small }: { readonly board: Board; rea
       </div>
     </div>
   );
+}
+
+/** One pen for measuring every board's title in its type: none where the page has no canvas to measure with (a test's document). */
+let pen: OffscreenCanvasRenderingContext2D | null | undefined;
+function measuringPen(): OffscreenCanvasRenderingContext2D | null {
+  if (pen === undefined) pen = typeof OffscreenCanvas === "undefined" ? null : new OffscreenCanvas(1, 1).getContext("2d");
+  return pen;
 }
 
 /** How long a board takes to rise out of the city or sink into it, as a building does while the history plays. */
