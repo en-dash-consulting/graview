@@ -1,5 +1,10 @@
 schema: "rex/v2"
 items:
   "ce80f103-a023-4ccb-a742-0e78beafbc4d":
-    status: "pending"
-    lastModified: "2026-11-18T14:59:24.675Z"
+    status: "completed"
+    startedAt: "2026-11-18T15:23:00.000Z"
+    completedAt: "2026-11-18T15:45:00.000Z"
+    endedAt: "2026-11-18T15:45:00.000Z"
+    resolutionType: "code-change"
+    resolutionDetail: "Pull request from ci/dependency-security-gate: scripts/dependency-check.mjs, a dependencies job in CI and the publish job, minimum-release-age 10080, the lockfile past the listed advisories and zod ^4.6.7"
+    lastModified: "2026-11-18T15:45:00.000Z"

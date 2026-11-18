@@ -42,7 +42,7 @@
     "react-dom": ">=19.2.7"
   },
   "devDependencies": {
-    "zod": "^4.6.5"
+    "zod": "^4.6.7"
   },
   "description": "The traditional face: a routed webapp derived from the same declaration that drives the scene.",
   "keywords": [

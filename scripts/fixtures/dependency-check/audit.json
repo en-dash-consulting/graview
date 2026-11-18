@@ -1,0 +1,73 @@
+{
+  "actions": [],
+  "advisories": {
+    "1243066": {
+      "id": 1243066,
+      "github_advisory_id": "GHSA-mrhx-c7xc-m3w5",
+      "module_name": "zod",
+      "severity": "high",
+      "url": "https://github.com/advisories/GHSA-mrhx-c7xc-m3w5",
+      "vulnerable_versions": "<4.6.6",
+      "patched_versions": ">=4.6.6",
+      "findings": [{ "version": "4.6.5", "paths": ["apps__discography>zod"] }]
+    },
+    "1246368": {
+      "id": 1246368,
+      "github_advisory_id": "GHSA-4m76-xfj5-7975",
+      "module_name": "hono",
+      "severity": "moderate",
+      "url": "https://github.com/advisories/GHSA-4m76-xfj5-7975",
+      "vulnerable_versions": "<4.13.16",
+      "patched_versions": ">=4.13.16",
+      "findings": [{ "version": "4.13.12", "paths": ["packages__tools>@modelcontextprotocol/sdk>hono"] }]
+    },
+    "1243074": {
+      "id": 1243074,
+      "github_advisory_id": "GHSA-27r3-jxmh-p828",
+      "module_name": "body-parser",
+      "severity": "high",
+      "url": "https://github.com/advisories/GHSA-27r3-jxmh-p828",
+      "vulnerable_versions": ">=2.0.0 <2.4.0",
+      "patched_versions": ">=2.4.0",
+      "findings": [{ "version": "2.3.0", "paths": ["packages__tools>@modelcontextprotocol/sdk>express>body-parser"] }]
+    },
+    "1109208": {
+      "id": 1109208,
+      "github_advisory_id": "GHSA-7mvr-c777-76hp",
+      "module_name": "playwright",
+      "severity": "high",
+      "url": "https://github.com/advisories/GHSA-7mvr-c777-76hp",
+      "vulnerable_versions": "<1.55.1",
+      "patched_versions": ">=1.55.1",
+      "findings": [{ "version": "1.49.1", "paths": ["packages__guest>playwright"] }]
+    },
+    "1241260": {
+      "id": 1241260,
+      "github_advisory_id": "GHSA-5gmw-xhrv-c9v3",
+      "module_name": "tinypool",
+      "severity": "critical",
+      "url": "https://github.com/advisories/GHSA-5gmw-xhrv-c9v3",
+      "vulnerable_versions": "<=2.1.0",
+      "patched_versions": ">=2.1.1",
+      "findings": [{ "version": "1.1.1", "paths": [".>vitest>tinypool"] }]
+    },
+    "1242883": {
+      "id": 1242883,
+      "github_advisory_id": "GHSA-rxp7-6hxx-x8q5",
+      "module_name": "ip-address",
+      "severity": "moderate",
+      "url": "https://github.com/advisories/GHSA-rxp7-6hxx-x8q5",
+      "vulnerable_versions": "<=10.7.3",
+      "patched_versions": ">=10.7.4",
+      "findings": [{ "version": "10.7.3", "paths": ["packages__ship>ip-address"] }]
+    }
+  },
+  "muted": [],
+  "metadata": {
+    "vulnerabilities": { "info": 0, "low": 0, "moderate": 2, "high": 3, "critical": 1 },
+    "dependencies": 6,
+    "devDependencies": 0,
+    "optionalDependencies": 0,
+    "totalDependencies": 6
+  }
+}
