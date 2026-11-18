@@ -773,7 +773,7 @@ export function OnePlace<S extends AnySchema>({
       own?.focus({ preventScroll: true });
       // Its own board under the bar is not reached (inert): the keyboard goes to the first board that is, or to the level control, never left on the page's body.
       if (!own || document.activeElement !== own) {
-        const reached = [...boardEls.current.values()].find((el) => !el.inert && el.style.pointerEvents !== "none");
+        const reached = [...boardEls.current.values()].find((el) => !el.inert && el.style.pointerEvents !== "none" && !el.hasAttribute("data-graview-leaving"));
         (reached ?? fab.current?.querySelector<HTMLElement>("button, [role='slider']"))?.focus({ preventScroll: true });
       }
       return;
@@ -1424,6 +1424,12 @@ function LevelSlider({ level, goTo, motion, begin, describedBy, tip }: { readonl
         setDragging(null);
         motion.current.held = false;
         motion.current.scrub = 0;
+      }}
+      // The pointer lost with neither an up nor a cancel (the control drawn again under it): the hand is off all the same, or the city waits on it for good.
+      // (It also follows every up: there it only says again that the hand is off, and the scrub's last step is left to be taken.)
+      onLostPointerCapture={() => {
+        motion.current.held = false;
+        setDragging(null);
       }}
       data-graview-one-face-slider=""
       style={{ position: "relative", flex: "none", display: "inline-flex", alignItems: "center", width: TRACK, padding: 0, cursor: "pointer", touchAction: "none", outline: "none", borderRadius: 6 }}

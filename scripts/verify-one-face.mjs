@@ -299,7 +299,10 @@ function lineMisses(frames, phone) {
   let worst = 0;
   let counted = 0;
   const examples = [];
-  for (const frame of frames) {
+  // The worst building end as it was drawn: which frame, the line's end and the building's box, read when a line misses.
+  let worstAt = null;
+  let worstBuilding = 0;
+  for (const [index, frame] of frames.entries()) {
     for (const line of frame.lines) {
       if (line.opacity < 0.05) continue;
       if (line.building && !line.under) {
@@ -307,6 +310,10 @@ function lineMisses(frames, phone) {
         const miss = Math.hypot(mid.x - line.to.x, mid.y - line.to.y);
         counted++;
         if (miss > worst) worst = miss;
+        if (miss > worstBuilding) {
+          worstBuilding = miss;
+          worstAt = { key: line.key, frame: index, of: frames.length, ms: Math.round(frame.t - frames[0].t), to: [line.to.x, line.to.y].map(Math.round), building: [line.building.x, line.building.y, line.building.width, line.building.height].map(Math.round), opacity: line.opacity };
+        }
         if (miss > 2 && examples.length < 4) examples.push({ key: line.key, end: "building", miss: Number(miss.toFixed(2)), altitude: frame.altitude });
       }
       // The page end: on the page's edge facing the city, as the page's box is in this frame.
@@ -316,7 +323,7 @@ function lineMisses(frames, phone) {
       if (edge > 2 && examples.length < 4) examples.push({ key: line.key, end: "page", miss: Number(edge.toFixed(2)), altitude: frame.altitude });
     }
   }
-  return { worst: Number(worst.toFixed(2)), counted, examples };
+  return { worst: Number(worst.toFixed(2)), counted, examples, ...(worstBuilding > 2 ? { worstBuildingEnd: worstAt } : {}) };
 }
 
 
@@ -2703,6 +2710,12 @@ function startStillRecording(page) {
     const frames = [];
     window.__stillFrames = frames;
     window.__stillStop = false;
+    // How far every wheel the page has handled since turned, in pixels (a busy page may join two into one): a gesture is let go of once the page has had all of it.
+    window.__stillWheels = 0;
+    if (!window.__stillWheelsCounted) {
+      window.__stillWheelsCounted = true;
+      addEventListener("wheel", (event) => (window.__stillWheels = (window.__stillWheels ?? 0) + Math.abs(event.deltaX) + Math.abs(event.deltaY)), { capture: true, passive: true });
+    }
     const box = (el) => {
       const r = el.getBoundingClientRect();
       return [r.left, r.top, r.width, r.height];
@@ -2846,7 +2859,30 @@ async function panStill(page, where, { level, phone }) {
       }
       return null;
     }, bar);
-  const releasedAt = () => page.evaluate(() => performance.now());
+  /*
+   * When the hand let go, as the page has it: once it has handled all the
+   * wheel the gesture turned (`wheels`, its pixels across and down) and
+   * drawn two frames after the last.
+   * The wheel's events reach the page's main thread when it gets to them,
+   * and on a CPU slower still than GitHub's runner the last two of six were
+   * handled after the 40 ms this gave them: the ground panned on after the
+   * hand had let go, and a board with it, 80 px in a frame
+   * (letGoOfAPanEveryBoardAndNameStaysWhereTheLastFrameDrewIt, "a scroll
+   * over a district", run 44351512056; locally at GRAVIEW_SLOW=8).
+   */
+  const releasedAt = (wheels = 0) =>
+    page.evaluate(
+      (wheels) =>
+        new Promise((done) => {
+          const began = performance.now();
+          const wait = () => {
+            if ((window.__stillWheels ?? 0) >= wheels || performance.now() - began > 5_000) requestAnimationFrame(() => requestAnimationFrame(() => done(performance.now())));
+            else requestAnimationFrame(wait);
+          };
+          wait();
+        }),
+      wheels,
+    );
   const placedAfresh = () => page.evaluate(() => document.querySelector('[data-testid="one-place-city"]')?.getAttribute("data-graview-placed-afresh-after-a-pan") ?? "0");
   const runs = [];
   const run = async (way, spot, gesture, zoom = false, least = zoom ? 3 : 4) => {
@@ -2959,7 +2995,7 @@ async function panStill(page, where, { level, phone }) {
         await page.waitForTimeout(30);
       }
       await page.waitForTimeout(40);
-      return releasedAt();
+      return releasedAt(6 * (50 + 50));
     });
     // Over a district the scroll is this face's own, not the Scene's: the same claim.
     await run("a scroll over a district", await overADistrict(), async (s) => {
@@ -2969,7 +3005,7 @@ async function panStill(page, where, { level, phone }) {
         await page.waitForTimeout(30);
       }
       await page.waitForTimeout(40);
-      return releasedAt();
+      return releasedAt(6 * (30 + 40));
     });
     const ctrlWheel = (deltaY) => async (s) => {
       await page.mouse.move(s.x, s.y);
@@ -2980,7 +3016,7 @@ async function panStill(page, where, { level, phone }) {
         await page.waitForTimeout(30);
       }
       await page.waitForTimeout(40);
-      return releasedAt();
+      return releasedAt(2 * 40);
     };
     await run("ctrl and the wheel, closer", await bare(), ctrlWheel(-40), true);
     await run("ctrl and the wheel over a district, further", await overADistrict(), ctrlWheel(40), true);
