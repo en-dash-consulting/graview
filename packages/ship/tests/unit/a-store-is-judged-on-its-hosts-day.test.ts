@@ -102,4 +102,30 @@ describe("a store opened for an app that declares no zone", () => {
     expect(opened.store.dayTimeZone).toBe("UTC");
     opened.close();
   });
+
+  it("keeps UTC's day though the host passes its own zone, as a page reads it", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-17T01:30:00Z"));
+    const opened = await openStore({ app, adapter: createMemoryAdapter(), seed: seed as never, storeOptions: { timeZone: "America/New_York" } });
+    expect(opened.store.timeZone).toBe("America/New_York");
+    expect(opened.store.appTimeZone).toBeUndefined();
+    expect(opened.store.today()).toBe("2026-10-17");
+    opened.close();
+    vi.useRealTimers();
+  });
+});
+
+describe("a store opened for an app that declares its zone, by a host that passes another", () => {
+  it("keeps the app's day, as a page reads it, and the host's zone as its clock", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-17T01:30:00Z"));
+    const zoned = defineApp({ name: "library", schema, mutations: [], invariants: [backOnTime], brand: { name: "Library", schemes: SCHEMES, timeZone: "America/New_York" } });
+    const opened = await openStore({ app: zoned, adapter: createMemoryAdapter(), seed: seed as never, storeOptions: { timeZone: "Asia/Tokyo" } });
+    expect(opened.store.timeZone).toBe("Asia/Tokyo");
+    expect(opened.store.appTimeZone).toBe("America/New_York");
+    expect(opened.store.dayTimeZone).toBe("America/New_York");
+    expect(opened.store.today()).toBe("2026-10-16");
+    opened.close();
+    vi.useRealTimers();
+  });
 });

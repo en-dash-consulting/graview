@@ -360,11 +360,10 @@ export async function openStore<S extends AnySchema>(
    * rules read the day and instants on UTC's (`appTimeZone: null`,
    * `dayTimeZone`), as a document's own rules do on any host.
    */
-  const declared = storeOptions.timeZone ?? app.brand?.timeZone;
-  const timeZone = declared ?? (pinned ? undefined : Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const timeZone = storeOptions.timeZone ?? app.brand?.timeZone ?? (pinned ? undefined : Intl.DateTimeFormat().resolvedOptions().timeZone);
   if (timeZone) (storeOptions as { timeZone?: string }).timeZone = timeZone;
-  // The host's clock turns the day; the rules read an instant on the zone the app declares, else UTC's calendar (`appTimeZone`).
-  if (storeOptions.appTimeZone === undefined) (storeOptions as { appTimeZone?: string | null }).appTimeZone = declared ?? null;
+  // The day and the rules' instants are the app's own, from its brand alone, as a page reads them: a zone a host passes is its clock, never the app's day.
+  if (storeOptions.appTimeZone === undefined) (storeOptions as { appTimeZone?: string | null }).appTimeZone = app.brand?.timeZone ?? null;
   const store = new Store<S>({
     schema: app.schema,
     mutations: app.mutations ?? [],
