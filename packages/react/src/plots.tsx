@@ -333,7 +333,7 @@ const PlotTile = memo(function PlotTile({
   /** The history is being played: a building that goes sinks into the ground before it is gone. */
   readonly rising: boolean;
 }) {
-  const leaving = useLeaving(drawing.buildings, rising);
+  const { drawn, leaving, sunk } = useLeaving(drawing.buildings, rising);
   const chosen = new Set(chosenKey.split("\n"));
   const broken = new Set(flaggedKey.split("\n"));
   const recent = new Set(recentKey.split("\n"));
@@ -350,14 +350,17 @@ const PlotTile = memo(function PlotTile({
         }}
       />
       {/* THE BLOCKS: a row per value, back to front; a problem lit, a change since you were here aglow, your own marked. */}
-      {drawing.buildings.length + leaving.length > 0 ? (
+      {drawn.length > 0 ? (
         <g className="graview-village" data-graview-village={drawing.buildings.length} data-graview-rest={drawing.rests.reduce((sum, rest) => sum + rest.count, 0) || undefined}>
-          {[...drawing.buildings, ...leaving].map((block) => (
+          {drawn.map((block) => (
             <g
               key={block.id}
               className="graview-building"
               data-graview-building={block.id}
-              data-graview-leaving={leaving.includes(block) ? "" : undefined}
+              data-graview-leaving={leaving.has(block.id) ? "" : undefined}
+              // A building going is gone once its sink has played out: the sink's own end, not a clock.
+              // Its sink's end, not a rise's that ends in the frame it is marked going: gone only once it is flat.
+              onTransitionEnd={leaving.has(block.id) ? (event) => void (event.target === event.currentTarget && event.propertyName === "transform" && flat(event.currentTarget) && sunk(block.id)) : undefined}
               data-graview-tier={block.tier}
               data-graview-flagged={broken.has(block.id) || block.overdue ? "" : undefined}
               data-graview-overdue={block.overdue ? "" : undefined}
@@ -460,37 +463,94 @@ export const RISE_MS = 420;
 
 /**
  * THE BUILDINGS GOING, while the history is played: each block that was
- * drawn and is no longer, kept as it last stood for as long as it takes to
- * sink — the same element, by its key — unless it comes back first, when it
- * rises again from wherever it had got to. None kept now, outside playback.
- * Worked out in the render the blocks change in (state set from the last
- * render's blocks, as React has it), so a building going keeps its element.
+ * drawn and is no longer, kept as it last stood, where it stood among the
+ * others, until it has sunk — the same element, by its key — unless it
+ * comes back first, when it rises again from wherever it had got to. None
+ * kept now, outside playback. Worked out in the render the blocks change
+ * in (state set from the last render's blocks, as React has it), so a
+ * building going keeps its element.
+ *
+ * GONE WHEN IT HAS COME DOWN, not on a clock started as it was worked out:
+ * on a slow machine the render, the commit and the style a scrub sets off
+ * can take most of the sink's own time before the sink begins, and a
+ * building taken away that long after it was worked out vanished part way
+ * down (one-face's `aRemovedRecordComesDown`, under GRAVIEW_SLOW=4 on a
+ * runner). Its sink's end takes it away; a clock started once the sink is
+ * on the page, twice the sink's length, is only for where none plays
+ * (less motion draws a building going as nothing at once).
  */
-function useLeaving<B extends { readonly id: string }>(buildings: readonly B[], rising: boolean): readonly B[] {
+function useLeaving<B extends { readonly id: string }>(buildings: readonly B[], rising: boolean): { readonly drawn: readonly B[]; readonly leaving: ReadonlySet<string>; readonly sunk: (id: string) => void } {
   // Which blocks stand, said once: a plot drawn again with the same blocks changes nothing here.
   const key = buildings.map((block) => block.id).join("\n");
   const [seen, setSeen] = useState({ key, buildings });
-  const [gone, setGone] = useState<ReadonlyMap<string, { readonly block: B; readonly until: number }>>(new Map());
+  const [gone, setGone] = useState<ReadonlyMap<string, B>>(new Map());
   if (seen.buildings !== buildings) {
     // The blocks as last drawn, kept so one that goes sinks as it last stood.
     setSeen({ key, buildings });
     if (seen.key !== key) {
       const here = new Set(buildings.map((block) => block.id));
       const next = new Map([...gone].filter(([id]) => !here.has(id)));
-      if (rising) for (const block of seen.buildings) if (!here.has(block.id) && !next.has(block.id)) next.set(block.id, { block, until: performance.now() + RISE_MS });
+      if (rising) for (const block of seen.buildings) if (!here.has(block.id) && !next.has(block.id)) next.set(block.id, block);
       setGone(next);
     }
   }
+  // When each going building's sink was first on the page.
+  const began = useRef(new Map<string, number>());
   useEffect(() => {
     if (!rising && gone.size > 0) return setGone(new Map());
+    const now = performance.now();
+    for (const id of [...began.current.keys()]) if (!gone.has(id)) began.current.delete(id);
     if (gone.size === 0) return;
-    const next = Math.min(...[...gone.values()].map((one) => one.until));
-    const timer = window.setTimeout(() => setGone((was) => new Map([...was].filter(([, one]) => one.until > performance.now() + 4))), Math.max(0, next - performance.now()) + 8);
+    for (const id of gone.keys()) if (!began.current.has(id)) began.current.set(id, now);
+    const last = (id: string) => (began.current.get(id) ?? 0) + RISE_MS * 2;
+    const next = Math.min(...[...gone.keys()].map(last));
+    const timer = window.setTimeout(() => setGone((was) => new Map([...was].filter(([id]) => last(id) > performance.now() + 4))), Math.max(0, next - performance.now()) + 8);
     return () => window.clearTimeout(timer);
   }, [gone, rising]);
-  const kept = useMemo(() => [...gone.values()].map((one) => one.block), [gone]);
-  // The history put away: nothing is going, in this very render.
-  return rising ? kept : [];
+  const sunk = useCallback((id: string) => setGone((was) => (was.has(id) ? new Map([...was].filter(([one]) => one !== id)) : was)), []);
+  // The order last drawn, so a building going keeps its place among the others: an element moved is drawn anew, and its sink lost.
+  const before = useRef<readonly string[]>([]);
+  const drawn = useMemo(() => (rising ? inTheirPlaces(buildings, [...gone.values()], before.current) : buildings), [buildings, gone, rising]);
+  useEffect(() => {
+    before.current = drawn.map((block) => block.id);
+  }, [drawn]);
+  const leaving = useMemo(() => new Set(rising ? gone.keys() : []), [gone, rising]);
+  return { drawn, leaving, sunk };
+}
+
+/** Whether a building has sunk all the way: its height, as drawn now, none. */
+function flat(el: Element): boolean {
+  const transform = getComputedStyle(el).transform;
+  return transform !== "none" && Math.abs(new DOMMatrixReadOnly(transform).d) < 0.01;
+}
+
+/**
+ * The blocks standing, with those going each put back where it was last
+ * drawn — after the block it last stood behind that still stands — so no
+ * element is moved: a moved one is taken out of the page and put back,
+ * and a sink under way on it is lost (a building that went flat in a
+ * frame, instead of coming down). One not drawn before goes last.
+ */
+export function inTheirPlaces<B extends { readonly id: string }>(buildings: readonly B[], going: readonly B[], before: readonly string[]): readonly B[] {
+  if (going.length === 0) return buildings;
+  const here = new Set(buildings.map((block) => block.id));
+  const byId = new Map(going.map((block) => [block.id, block]));
+  const after = new Map<string | null, B[]>();
+  const placed = new Set<string>();
+  let behind: string | null = null;
+  for (const id of before) {
+    if (here.has(id)) behind = id;
+    else {
+      const block = byId.get(id);
+      if (!block || placed.has(id)) continue;
+      after.set(behind, [...(after.get(behind) ?? []), block]);
+      placed.add(id);
+    }
+  }
+  const out = [...(after.get(null) ?? [])];
+  for (const block of buildings) out.push(block, ...(after.get(block.id) ?? []));
+  for (const block of going) if (!placed.has(block.id)) out.push(block);
+  return out;
 }
 
 function groundCss(scheme: Scheme): string {

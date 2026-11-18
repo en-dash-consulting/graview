@@ -65,7 +65,7 @@ const STRIPS = resolve(repoRoot, "docs/one-face");
 
 const report = { at: new Date().toISOString(), engines, app: "apps/todo", checks: {} };
 const errors = [];
-const seen = { switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], pointsOut: [], shortcuts: [], keysTurnOff: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [], richClear: [], richNamed: [], richWords: [], richLegend: [], richViews: [], richRecords: [], richNearbyViews: [], richPhoneLines: [], richNamesBeside: [], richHomeScale: [], richControls: [], richOwnDistrict: [], richLegible: [], richHomeNearby: [], richOneLevel: [], richSmooth: [], richFocusSeen: [], richProblems: [], richHand: [], richHomeViews: [], richPanelCrossings: [], richBoardsUnder: [], richHomeClear: [], richProblemsOfKind: [], richPosts: [], richPostsUnder: [], recordInPlace: [], oneRuleFades: [], noWordsAfterPress: [], drawnOnce: [], nearbyZoom: [], nearbyPan: [], nearbyBack: [], panelPinch: [], phoneCity: [], panelWidth: [], panelSpacing: [], viewInPanel: [], panStill: [], homeReadSize: [], homeReadBeside: [], pinchPan: [] };
+const seen = { titleSplits: [], switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], pointsOut: [], shortcuts: [], keysTurnOff: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [], richClear: [], richNamed: [], richWords: [], richLegend: [], richViews: [], richRecords: [], richNearbyViews: [], richPhoneLines: [], richNamesBeside: [], richHomeScale: [], richControls: [], richOwnDistrict: [], richLegible: [], richHomeNearby: [], richOneLevel: [], richSmooth: [], richFocusSeen: [], richProblems: [], richHand: [], richHomeViews: [], richPanelCrossings: [], richBoardsUnder: [], richHomeClear: [], richProblemsOfKind: [], richPosts: [], richPostsUnder: [], recordInPlace: [], oneRuleFades: [], noWordsAfterPress: [], drawnOnce: [], nearbyZoom: [], nearbyPan: [], nearbyBack: [], panelPinch: [], phoneCity: [], panelWidth: [], panelSpacing: [], viewInPanel: [], panStill: [], homeReadSize: [], homeReadBeside: [], pinchPan: [] };
 
 /* ------------------------------------------------------------------ */
 /* In the page                                                         */
@@ -1244,11 +1244,13 @@ async function history(page, where) {
       const rest = list.slice(i + 1).filter(Boolean);
       const until = rest.findIndex((one) => !one.leaving);
       const going = until < 0 ? rest : rest.slice(0, until);
-      if (going.length > 2 && going.every((one) => one.node === list[i].node) && going.some((one) => one.height < 0.5)) return true;
+      // Seen on its way down, not flat in a frame — an element moved among its village's blocks loses its sink — and low before it is gone.
+      if (going.length > 2 && going.every((one) => one.node === list[i].node) && going.some((one) => one.height > 0.1 && one.height < 0.9) && going.some((one) => one.height < 0.5)) return true;
     }
     return false;
   };
   const nodes = (list) => new Set(list.filter(Boolean).map((one) => one.node));
+  const trail = (list) => list.map((one, i) => `${Math.round(frames[i].t)}:${one ? `${one.node}:${one.height.toFixed(2)}${one.leaving ? "L" : ""}` : "-"}`).join(" ");
   const came = of(reason);
   // Taken back mid-sink and forward again: the reason's node in the last frames is one it already had.
   const tail = came.filter(Boolean).at(-1);
@@ -1263,6 +1265,8 @@ async function history(page, where) {
     untouchedOneNode: nodes(of("reason-deposit")).size === 1 && of("reason-deposit").every((one) => one && one.height >= 0.999),
     takenBackMidSinkIsTheSameNode: kept,
     buttonMovesInThePast: down && stillPast,
+    // Each building's frames as drawn — milliseconds, element, height, L while going — read when a sink is not seen.
+    trails: { made: trail(came), dropped: trail(of("t-deposit")) },
     ok: false,
   };
 }
@@ -1448,7 +1452,43 @@ const readRich = (page) =>
       }
       for (const t of tags) if (across(t.box)) postCrossings.push({ post: b.getAttribute("title"), across: `the ${t.kind} name`, under: null });
     }
-    return { boards, under, namesUnder, tags, rests, plots, plates, problems, buildings, lines, controls, unseenFocus, chosenLooking, tipUp, district, postCrossings, dock: dock ? rect(dock) : null, level, panel: level === 1 && panelEl ? rect(panelEl) : null, legend, bar, width: innerWidth, height: innerHeight };
+    /*
+     * EACH BOARD'S TITLE, LINE BY LINE AS DRAWN: every letter's box, read
+     * off the page, gathered into the lines the browser put them on. A line
+     * that starts with a letter straight after the last line's last letter,
+     * no space between, split a word ("Research / ers", as DejaVu on a Linux
+     * runner had it). The lines the title is cut after count too.
+     */
+    const titles = [];
+    for (const b of document.querySelectorAll("[data-graview-board]")) {
+      if (Number(b.style.opacity || 0) <= 0.9) continue;
+      const el = b.querySelector("[data-graview-board-title]");
+      if (!el) continue;
+      // Every letter, in order, wherever it is drawn: a word cut on its line is a part of its own.
+      const letters = [];
+      for (const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); walk.nextNode(); ) for (let at = 0; at < walk.currentNode.textContent.length; at++) letters.push({ node: walk.currentNode, at, letter: walk.currentNode.textContent[at] });
+      const text = letters.map((one) => one.letter).join("");
+      const lines = [];
+      let last = null;
+      for (let i = 0; i < letters.length; i++) {
+        // A zero-width space is a break the title offers, as a space is.
+        if (/[\s\u200b]/.test(letters[i].letter)) continue;
+        const range = document.createRange();
+        range.setStart(letters[i].node, letters[i].at);
+        range.setEnd(letters[i].node, letters[i].at + 1);
+        const box = range.getClientRects()[0];
+        if (!box || box.height === 0) continue;
+        const middle = box.top + box.height / 2;
+        // A break straight after a letter splits a word, but where the word breaks after its own hyphen, or in a script written without spaces, which breaks between characters.
+        const between = (letter) => /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}\p{Script=Lao}\p{Script=Khmer}\p{Script=Myanmar}]/u.test(letter);
+        const offered = last && (/[-\u2010]/.test(letters[i - 1].letter) || between(letters[i - 1].letter) || between(letters[i].letter));
+        if (!last || Math.abs(middle - last.middle) >= box.height / 2) lines.push({ from: i, to: i + 1, splits: Boolean(last && last.to === i && !offered) });
+        else lines.at(-1).to = i + 1;
+        last = { middle, to: i + 1 };
+      }
+      titles.push({ title: b.getAttribute("title"), drawn: text, lines: lines.map((line) => text.slice(line.from, line.to)), split: lines.some((line) => line.splits) });
+    }
+    return { titles, boards, under, namesUnder, tags, rests, plots, plates, problems, buildings, lines, controls, unseenFocus, chosenLooking, tipUp, district, postCrossings, dock: dock ? rect(dock) : null, level, panel: level === 1 && panelEl ? rect(panelEl) : null, legend, bar, width: innerWidth, height: innerHeight };
   });
 
 /** From one box to another, edge to edge: none where they meet. */
@@ -1642,7 +1682,7 @@ async function rich(browser, device) {
       const underThePage = seenNow.panel ? Object.entries(seenNow.district).filter(([, tile]) => overlapOf(tile, seenNow.panel) >= tile.width * tile.height * 0.5).map(([kind]) => kind) : [];
       // A small window's City pans rather than shrink its words past reading: there it may run past the window's edge.
       const pans = level === 2 && (device.width <= 600 || device.height <= 600);
-      result[level === 2 ? "city" : "nearby"] = { unseenFocus: seenNow.unseenFocus, clash, underPanel, outside: pans ? [] : outside, onGround, hidden, kindsInSight, lineEnds, lines: seenNow.lines.length, controlsCovered, astray, small, underThePage, chosenLooking: seenNow.chosenLooking, tipUp: seenNow.tipUp, problems: seenNow.problems, postCrossings: seenNow.postCrossings };
+      result[level === 2 ? "city" : "nearby"] = { unseenFocus: seenNow.unseenFocus, clash, underPanel, outside: pans ? [] : outside, onGround, hidden, kindsInSight, lineEnds, lines: seenNow.lines.length, controlsCovered, astray, small, underThePage, chosenLooking: seenNow.chosenLooking, tipUp: seenNow.tipUp, problems: seenNow.problems, postCrossings: seenNow.postCrossings, titles: seenNow.titles };
       if (level === 1) {
         /*
          * Every view whose district is in sight beside the page stands there as
@@ -1942,6 +1982,9 @@ async function rich(browser, device) {
   seen.richControls.push({ where, city: city.controlsCovered, nearby: nearby.controlsCovered, afterAPan: result.panned, ok: !result.error && city.controlsCovered?.length === 0 && nearby.controlsCovered?.length === 0 && (result.panned?.length ?? 0) === 0 });
   seen.richNamed.push({ where, ...result.named, ok: Boolean(result.named && result.named.districts === Object.keys(RICH_PLURALS).length && result.named.unnamed.length === 0) });
   seen.richWords.push({ where, city: city.problems, nearby: nearby.problems, ok: !result.error && city.problems.length === 0 && nearby.problems.length === 0 });
+  // Every board's title at the Map and at Nearby breaks between words, never inside one: each title, the lines it was drawn on.
+  const split = (titles) => (titles ?? []).filter((one) => one.split).map((one) => ({ title: one.title, lines: one.lines }));
+  seen.titleSplits.push({ where, titles: { city: city.titles?.length ?? 0, nearby: nearby.titles?.length ?? 0 }, city: split(city.titles), nearby: split(nearby.titles), drawn: [...new Set([...(city.titles ?? []), ...(nearby.titles ?? [])].filter((one) => one.lines.length > 1).map((one) => one.lines.join(" / ")))], error: result.error, ok: !result.error && (city.titles?.length ?? 0) > 0 && split(city.titles).length === 0 && split(nearby.titles).length === 0 });
   seen.richLegend.push({ where, ...result.legend, ok: Boolean(result.legend && result.legend.firstVisit.every((open) => !open) && !result.legend.secondVisit && result.legend.opened.pane && result.legend.opened.expanded === "true" && result.legend.keptOpen) });
   seen.richSmooth.push({ where, moves: result.moved, ok: Boolean(result.moved?.length === 2 && result.moved.every((one) => one.leaps.length === 0)) });
   seen.richFocusSeen.push({ where, city: city.unseenFocus, nearby: nearby.unseenFocus, ok: !result.error && city.unseenFocus?.length === 0 && nearby.unseenFocus?.length === 0 });
@@ -3338,7 +3381,7 @@ try {
   // One run of the history holds three claims.
   for (const run of seen.risen.splice(0)) {
     seen.risen.push({ ...run, ok: Boolean(run.madeRises && run.droppedRisesGoingBack) });
-    seen.sunk.push({ where: run.where, ok: Boolean(run.droppedSinks && run.madeSinksGoingBack), droppedSinks: run.droppedSinks, madeSinksGoingBack: run.madeSinksGoingBack, error: run.error });
+    seen.sunk.push({ where: run.where, ok: Boolean(run.droppedSinks && run.madeSinksGoingBack), droppedSinks: run.droppedSinks, madeSinksGoingBack: run.madeSinksGoingBack, ...(run.droppedSinks && run.madeSinksGoingBack ? {} : { trails: run.trails }), error: run.error });
     seen.scrubbed.push({ where: run.where, ok: Boolean(run.untouchedOneNode && run.takenBackMidSinkIsTheSameNode && run.buttonMovesInThePast), untouchedOneNode: run.untouchedOneNode, takenBackMidSinkIsTheSameNode: run.takenBackMidSinkIsTheSameNode, buttonMovesInThePast: run.buttonMovesInThePast, error: run.error });
   }
   const every = (list) => list.length > 0 && list.every((one) => one.ok);
@@ -3383,6 +3426,7 @@ try {
   report.checks.aRichAppsCityAndNearbyHaveNothingStandingOnAnythingElse = { held: seen.richClear, ok: every(seen.richClear) };
   report.checks.everyDistrictAtTheCityNamesItsKind = { held: seen.richNamed, ok: every(seen.richNamed) };
   report.checks.noNameOrTitleIsCutOffOrWrapsAt1280Or390 = { held: seen.richWords, ok: every(seen.richWords) };
+  report.checks.noBoardTitleSplitsAWord = { held: seen.titleSplits, ok: every(seen.titleSplits) };
   report.checks.theLegendIsClosedUntilOpenedAndOnceOpenedStaysOpenOnLaterVisits = { held: seen.richLegend, ok: every(seen.richLegend) };
   report.checks.noBoardOrDistrictNameLeapsBetweenFrames = { held: seen.richSmooth, ok: every(seen.richSmooth) };
   report.checks.everythingTheKeyboardReachesInTheCityIsSeen = { held: seen.richFocusSeen, ok: every(seen.richFocusSeen) };
