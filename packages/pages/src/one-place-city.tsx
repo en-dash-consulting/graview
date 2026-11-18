@@ -1215,6 +1215,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         if (toLevel !== rest || placeKey !== lastPlace || (rest !== PAGE && offFraming())) moveTo(cam, toLevel, anchor, now);
         lastPlace = placeKey;
       }
+      // A scrub ended another way (a press without a drag, a pointer canceled) leaves no place it left from behind.
+      if (!asking.scrubbing) scrubbedFrom = null;
       if (ready && calm && anchor && asking.scrub !== 0 && !settling) {
         // As far as the hand has gone, but no more than a step a frame: a hand ahead of the camera is caught up with, never jumped to.
         const delta = Math.max(-0.12, Math.min(0.12, asking.scrub));
@@ -1495,6 +1497,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         const ownUnder = key === at.current && footAt !== null && under({ x: footAt.x - w / 2, y: footAt.y - h, width: w, height: h });
         // Not seen, it is not reached: out of the keyboard's order and the pointer's, as a board going away is.
         const reached = seen > 0.5 && (key === at.current ? a > 1.5 && !ownUnder : a > 0.95) && !move;
+        // The keyboard on its own board as the bar comes over it goes to the level control, not to the page's body.
+        if (ownUnder && !reached && document.activeElement === button) fab.current?.querySelector<HTMLElement>("[data-graview-one-face-dock] button, [data-graview-one-face-dock] [role='slider']")?.focus({ preventScroll: true });
         if (button.inert === reached) button.inert = !reached;
         if (!slot || seen <= 0.001) {
           if (button.style.opacity !== "0") button.style.opacity = "0";

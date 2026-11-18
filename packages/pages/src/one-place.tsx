@@ -769,7 +769,13 @@ export function OnePlace<S extends AnySchema>({
     cameFrom.current = now.level;
     if (now.level === CITY) {
       if (now.moving || onBoards || fab.current?.contains(active) || deselected.current || bar?.contains(active)) return;
-      boardEls.current.get(current)?.focus({ preventScroll: true });
+      const own = boardEls.current.get(current);
+      own?.focus({ preventScroll: true });
+      // Its own board under the bar is not reached (inert): the keyboard goes to the first board that is, or to the level control, never left on the page's body.
+      if (!own || document.activeElement !== own) {
+        const reached = [...boardEls.current.values()].find((el) => !el.inert && el.style.pointerEvents !== "none");
+        (reached ?? fab.current?.querySelector<HTMLElement>("button, [role='slider']"))?.focus({ preventScroll: true });
+      }
       return;
     }
     chosen.current = null;
