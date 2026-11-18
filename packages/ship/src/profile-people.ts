@@ -1,4 +1,4 @@
-import { BIND_PERSON, mintPersonId, PERSON_SEAT, profileOf, seatPersonOf, type AnySchema, type Epoch, type GraviewApp, type LogArchive, type Operation, type PersistenceAdapter } from "@graview/core";
+import { isBindingAct, mintPersonId, PERSON_SEAT, profileOf, seatPersonOf, type AnySchema, type Epoch, type GraviewApp, type LogArchive, type Operation, type PersistenceAdapter } from "@graview/core";
 import type { StoredMeta } from "./meta.js";
 import type { GraphSnapshot } from "./snapshot.js";
 
@@ -242,7 +242,7 @@ function renamedOp(op: Operation, at: Renaming): Operation {
         return node === (primitive.node as unknown) ? primitive : ({ ...primitive, node } as unknown as typeof primitive);
       });
       if (primitives.some((primitive, index) => primitive !== (one as unknown[])[index])) next = primitives;
-    } else if (key === "mutation" && (one as Operation["mutation"])?.name === BIND_PERSON) {
+    } else if (key === "mutation" && isBindingAct((one as Operation["mutation"])?.name)) {
       // Binding names a seat beside its record: the record renamed, the seat kept as it is.
       const mutation = one as NonNullable<Operation["mutation"]>;
       const { seat, ...args } = mutation.args as Record<string, unknown>;

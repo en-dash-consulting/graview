@@ -1,4 +1,4 @@
-import { BIND_PERSON, rootOfChain } from "../binding-served.js";
+import { isBindingAct, rootOfChain } from "../binding-served.js";
 import { PERSON_SEAT } from "../graph/archived.js";
 import { GraphError } from "../graph/graph.js";
 import type { Primitive } from "../graph/primitives.js";
@@ -205,6 +205,8 @@ export function checkUndo(
   const seqOf = new Map(log.all().map((op) => [op.id, op.seq]));
   const targetPrimitives = ops.flatMap((op) => op.primitives);
   const seatOnly = seatOnlyIn(targetPrimitives);
+  // The records whose seat mark the undo itself puts back: a later binding of one of them still stands in its way.
+  const seatsPutBack = new Set([...writes].filter((id) => ops.some((op) => movesSeat(op, id))));
   const blockedBy: UndoBlock[] = [];
   for (const op of log.all()) {
     if (op.seq <= earliest) continue;
@@ -214,7 +216,17 @@ export function checkUndo(
     // Typing on text the undo only typed stands aside, where `@graview/core/typing` carries the undo over it; text written whole since blocks (`aside`).
     const typed = TYPING.aside?.(targetPrimitives, op);
     if (typed === true) continue;
-    const overlap = [...new Set([...op.reads.filter((id) => writes.has(id) && (!seatOnly.has(id) || movesSeat(op, id))), ...(typed ?? [])])];
+    /*
+     * A LATER BINDING STANDS ASIDE (Roadmap f-rebind-after-acting): an op
+     * that only says whose record a person is — a binding, an ending, a
+     * move — changed nothing an earlier edit of the record wrote, so taking
+     * that edit back is as open as it was before, unless the undo puts a
+     * seat mark back itself.
+     */
+    const laterSeatOnly = seatOnlyIn(op.primitives);
+    // Served to a seat that may not be told whose record it is, a binding keeps its name and none of its primitives: it stands aside all the same.
+    const binds = isBindingAct(op.mutation?.name);
+    const overlap = [...new Set([...op.reads.filter((id) => writes.has(id) && (!seatOnly.has(id) || movesSeat(op, id)) && !((laterSeatOnly.has(id) || binds) && !seatsPutBack.has(id))), ...(typed ?? [])])];
     if (overlap.length > 0) blockedBy.push({ op, overlap });
   }
 
@@ -226,7 +238,7 @@ export function checkUndo(
    * host shows the sentence to an owner.
    */
   const byId = new Map(log.all().map((op) => [op.id, op]));
-  if (ops.every((op) => rootOfChain(op, (id) => byId.get(id)).mutation?.name === BIND_PERSON)) {
+  if (ops.every((op) => isBindingAct(rootOfChain(op, (id) => byId.get(id)).mutation?.name))) {
     return {
       ok: false,
       ops,

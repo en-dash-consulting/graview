@@ -4,13 +4,13 @@ import { derivedVia } from "../../mutations/derive-edits.js";
 import { nodeRefKinds } from "../../mutations/node-ref.js";
 import { nearestAct } from "../../mutations/act-spelling.js";
 import type { AnySchema } from "../../schema/schema.js";
-import { BIND_PERSON } from "../../binding-served.js";
+import { BIND_PERSON, BINDING_ACTS, isBindingAct } from "../../binding-served.js";
 import { KEEP_LINK } from "../../mutations/keep-link.js";
 import { PUBLISH } from "../../publish.js";
 import { PROPOSE_CHANGES } from "../../mutations/propose-changes.js";
 import { VOTE_SUGGESTION } from "../../mutations/vote-suggestion.js";
 import { TYPE_TEXT } from "../../text/typing-hook.js";
-import { BINDING_UNGRANTED } from "../../binding-ungranted.js";
+import { bindingUngranted } from "../../binding-ungranted.js";
 import type { Grant } from "../../permissions/types.js";
 
 /**
@@ -51,8 +51,10 @@ export function checkPolicy<S extends AnySchema>(ctx: CheckContext<S>): void {
    * otherwise the person standing in front of a button they cannot press.
    */
   // A name the framework keeps for an act of its own is never the app's.
-  if ((app.mutations ?? []).some((mutation) => mutation.name === BIND_PERSON)) {
-    add({ severity: "error", code: "binding-act-taken", where: `mutations.${BIND_PERSON}`, message: `The app declares its own "${BIND_PERSON}" act, a name the framework keeps for an act of its own.`, fix: `Rename the app's "${BIND_PERSON}" act.` });
+  for (const kept of BINDING_ACTS) {
+    if ((app.mutations ?? []).some((mutation) => mutation.name === kept)) {
+      add({ severity: "error", code: "binding-act-taken", where: `mutations.${kept}`, message: `The app declares its own "${kept}" act, a name the framework keeps for an act of its own.`, fix: `Rename the app's "${kept}" act.` });
+    }
   }
   if (app.policy) {
     const roles = rolesOf(app.policy);
@@ -130,18 +132,18 @@ export function checkPolicy<S extends AnySchema>(ctx: CheckContext<S>): void {
        * granted it — or let propose it — could bind any account to any
        * person, its own among them, so no grant may name it.
        */
-      if (givesBinding(grant)) {
+      for (const named of bindingActsIn(grant)) {
         add({
           severity: "error",
           code: "grant-gives-binding",
           where: "policy.grants",
-          message: `${BINDING_UNGRANTED}.`,
-          fix: `Drop "${BIND_PERSON}" from the grant. The host binds with bindPerson (@graview/core/binding) as its own seat.`,
+          message: `${bindingUngranted(named)}.`,
+          fix: `Drop "${named}" from the grant. The host ${named === BIND_PERSON ? "binds with bindPerson" : "moves a person with rebindPerson"} (@graview/core/binding) as its own seat.`,
         });
       }
       if (grant.mutations === "*") continue;
       for (const name of grant.mutations) {
-        if (mutations.has(name) || name === BIND_PERSON || GRANTED_STORE_ACTS.has(name)) continue;
+        if (mutations.has(name) || isBindingAct(name) || GRANTED_STORE_ACTS.has(name)) continue;
         if (UNGRANTED_STORE_ACTS.has(name)) {
           add({
             severity: "warning",
@@ -251,8 +253,13 @@ export function checkPolicy<S extends AnySchema>(ctx: CheckContext<S>): void {
   }
 }
 
-/** Whether a grant names binding a person, to run or to propose. */
+/** The binding acts a grant names, to run or to propose: each once. */
+function bindingActsIn(grant: Pick<Grant, "mutations" | "propose">): readonly string[] {
+  const named: unknown[] = [grant.mutations, grant.propose].flatMap((list) => (Array.isArray(list) ? list : []));
+  return BINDING_ACTS.filter((act) => named.includes(act));
+}
+
+/** Whether a grant names binding a person, or moving one, to run or to propose. */
 export function givesBinding(grant: Pick<Grant, "mutations" | "propose">): boolean {
-  const names = (list: unknown) => Array.isArray(list) && list.includes(BIND_PERSON);
-  return names(grant.mutations) || names(grant.propose);
+  return bindingActsIn(grant).length > 0;
 }
