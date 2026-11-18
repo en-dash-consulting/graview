@@ -337,7 +337,14 @@ const HARNESS_MINUTES = Number(process.env.GRAVIEW_HARNESS_MINUTES ?? 25);
  * and took 35 minutes on a machine running other agents' harnesses — so it
  * was stopped at 25 every time and never wrote a verdict after #257.
  */
-const LONGER = { quiet: 60 };
+/*
+ * And one-face on the GPU leg (`--renderer gpu`, the pinned Chrome on a
+ * runner): 1,275 s on fix/one-face-titles-and-slow-removal (run
+ * 44375675365), and past the 1,500 once it waits for the face to rest after
+ * each move rather than a fixed beat (`still`, verify-one-face.mjs), where
+ * the DOM leg went from 599 s to 706 s (runs 44248362642, 44362109115).
+ */
+const LONGER = { quiet: 60, "one-face": 35 };
 const minutesFor = (name) => Math.max(HARNESS_MINUTES, process.env.GRAVIEW_HARNESS_MINUTES ? 0 : (LONGER[name] ?? 0));
 const results = [];
 const runOne = async ([name, file], again = false) => {
