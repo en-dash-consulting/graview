@@ -9,7 +9,7 @@
  * acts, that the host alone runs them, and when they may be taken back
  * (`BINDING`). Resolving a seat to its record is the main entry's.
  */
-import { BIND_PERSON, BINDING, isBindingAct, REBIND_PERSON, takesBindingBack } from "./binding-served.js";
+import { BIND_PERSON, BINDING, boundAtHorizon, isBindingAct, REBIND_PERSON, takesBindingBack } from "./binding-served.js";
 import { isArchived, PERSON_SEAT, personSeatOf } from "./graph/archived.js";
 import { isUnset, UNSET } from "./graph/primitives.js";
 import { MissingRecordError, NO_SUCH_RECORD } from "./graph/graph.js";
@@ -50,35 +50,6 @@ function movesIn(op: Operation): readonly { readonly seat: string; readonly from
     else if (typeof was === "string" && !isUnset(was)) off.set(was, primitive.id);
   }
   return [...off].flatMap(([seat, from]) => (on.has(seat) && on.get(seat) !== from ? [{ seat, from, to: on.get(seat)! }] : []));
-}
-
-/**
- * WHOSE RECORD EACH WAS WHERE THE LOG BEGINS: the graph's bindings now, with
- * every binding the log holds taken back, newest first. A store loaded from
- * a snapshot, or compacted, bound people behind its horizon; what they did
- * after it is said as those records.
- */
-function boundAtHorizon(store: Held): Map<string, string> {
-  const seats = new Map<string, string>();
-  for (const node of (store.graph as unknown as { allNodes?(options: { archived: "all" }): readonly Node[] }).allNodes?.({ archived: "all" }) ?? []) {
-    const seat = personSeatOf(node);
-    if (seat !== undefined) seats.set(node.id, seat);
-  }
-  const ops = store.log.all();
-  for (let at = ops.length - 1; at >= 0; at--) {
-    const primitives = ops[at]!.primitives;
-    for (let one = primitives.length - 1; one >= 0; one--) {
-      const primitive = primitives[one]!;
-      if (primitive.op === "add-node" && personSeatOf(primitive.node)) seats.delete(primitive.node.id);
-      else if (primitive.op === "remove-node" && personSeatOf(primitive.node)) seats.set(primitive.node.id, personSeatOf(primitive.node)!);
-      else if (primitive.op === "patch-node" && Object.hasOwn(primitive.after, PERSON_SEAT)) {
-        const was = primitive.before[PERSON_SEAT];
-        if (typeof was === "string" && !isUnset(was)) seats.set(primitive.id, was);
-        else seats.delete(primitive.id);
-      }
-    }
-  }
-  return seats;
 }
 
 /**
@@ -286,13 +257,17 @@ function bindingKept(store: object, op: Operation, root: Operation): string | un
     const bound = held.graph.personBoundTo(seat);
     const own = held.graph.getNode(seat) as Node | undefined;
     const ownPerson = own !== undefined && (held.schema.tryDefinition(own.kind) as { readonly people?: boolean } | undefined)?.people === true;
-    return (bound !== undefined && bound !== record) || ownPerson || (node !== undefined && personSeatOf(node) !== undefined && personSeatOf(node) !== seat) ? "This cannot be taken back: that account, or this record, is someone else's here now." : undefined;
+    if ((bound !== undefined && bound !== record) || ownPerson || (node !== undefined && personSeatOf(node) !== undefined && personSeatOf(node) !== seat)) return "This cannot be taken back: that account, or this record, is someone else's here now.";
+    return node !== undefined && isArchived(node) ? setAside(held, node) : undefined;
   }
   if (args.end === true) return undefined;
   if (!doneAs(held).some((one) => one.seq > op.seq && one.seat === seat && one.record === record)) return undefined;
   const name = node ? labelOf(held.schema.tryDefinition(node.kind), node as never) : "They";
   return `${name} has acted here: unbinding would hand what they did to someone else.`;
 }
+
+/** Why a seat is not put back on a record set aside since: it is brought back first. */
+const setAside = (store: Held, node: Node): string => `This cannot be taken back: ${labelOf(store.schema.tryDefinition(node.kind), node as never)} is set aside. Bring them back first.`;
 
 /**
  * Why a move (Roadmap f-rebind-after-acting) may not be taken back, or put
@@ -311,6 +286,7 @@ function moveKept(store: Held, op: Operation): string | undefined {
     // Taking this op back puts the seat on the record it took it off.
     const node = store.graph.getNode(from) as Node | undefined;
     if (!node) return "This cannot be taken back: the record was removed since.";
+    if (isArchived(node)) return setAside(store, node);
     const bound = personSeatOf(node);
     if ((bound !== undefined && bound !== seat) || doneAs(store).some((one) => one.record === from && one.seat !== seat) || [...endedIn(store)].some(([one, was]) => was === from && one !== seat)) {
       return "This cannot be taken back: that record is someone else's here now.";

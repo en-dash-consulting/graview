@@ -8,7 +8,7 @@
  * host's entry's alone, so no page pays for them.
  */
 import { PERSON_SEAT } from "./graph/archived.js";
-import type { Primitive } from "./graph/primitives.js";
+import { isUnset, type Primitive } from "./graph/primitives.js";
 import type { MutationCall } from "./mutations/types.js";
 import type { Operation } from "./ops/types.js";
 import { bindable, isSystem, seatPersonOf } from "./permissions/policy.js";
@@ -55,6 +55,39 @@ export function takesBindingBack(op: Operation, get: (id: string) => Operation |
   if (op.undoes === undefined) return false;
   const root = rootOfChain(op, get);
   return root.mutation?.name === BIND_PERSON && (root.mutation.args as Record<string, unknown> | undefined)?.["end"] !== true;
+}
+
+/**
+ * WHOSE RECORD EACH WAS WHERE THE LOG BEGINS, record by record: the graph's
+ * bindings now, with every binding the log holds taken back, newest first.
+ * A store loaded from a snapshot, or compacted, bound people behind its
+ * horizon; what they did after it is theirs as those records.
+ */
+export function boundAtHorizon(store: { readonly graph: object; readonly log: { all(): readonly Operation[] } }): Map<string, string> {
+  const seats = new Map<string, string>();
+  const seatOf = (node: object): string | undefined => {
+    const seat = (node as Record<string, unknown>)[PERSON_SEAT];
+    return typeof seat === "string" && !isUnset(seat) ? seat : undefined;
+  };
+  for (const node of (store.graph as { allNodes?(options: { archived: "all" }): readonly { readonly id: string }[] }).allNodes?.({ archived: "all" }) ?? []) {
+    const seat = seatOf(node);
+    if (seat !== undefined) seats.set(node.id, seat);
+  }
+  const ops = store.log.all();
+  for (let at = ops.length - 1; at >= 0; at--) {
+    const primitives = ops[at]!.primitives;
+    for (let one = primitives.length - 1; one >= 0; one--) {
+      const primitive = primitives[one]!;
+      if (primitive.op === "add-node" && seatOf(primitive.node)) seats.delete(primitive.node.id);
+      else if (primitive.op === "remove-node" && seatOf(primitive.node)) seats.set(primitive.node.id, seatOf(primitive.node)!);
+      else if (primitive.op === "patch-node" && Object.hasOwn(primitive.after, PERSON_SEAT)) {
+        const was = seatOf(primitive.before);
+        if (was !== undefined) seats.set(primitive.id, was);
+        else seats.delete(primitive.id);
+      }
+    }
+  }
+  return seats;
 }
 
 /** Which seats a reader may be told a record is bound to: none (`NO_SEAT`), its own, or all of them. */

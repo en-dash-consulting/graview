@@ -30,7 +30,7 @@ import { OperationLog, type Epoch, type LogArchive } from "./ops/log.js";
 import type { Author, Batch, Operation, SentOut, Via } from "./ops/types.js";
 import { lineageOf, type Lineage } from "./ops/lineage.js";
 import { KEEP_LINK, keepLinkMutation, keepLinkVia } from "./mutations/keep-link.js";
-import { BINDING, isBindingAct } from "./binding-served.js";
+import { BINDING, boundAtHorizon, isBindingAct } from "./binding-served.js";
 import { PERSON_SEAT } from "./graph/archived.js";
 import { ActRefusal } from "./refused.js";
 import { advisoryVoterOf, signedOutSeat, SIGN_IN_TO_VOTE, VOTE_SUGGESTION, VOTING, voteSuggestionMutation, type AppTidying, type VotesOptions } from "./mutations/vote-suggestion.js";
@@ -2775,9 +2775,9 @@ export class Store<S extends AnySchema> {
     return { ok: false, ops: [], blockedBy: [], includeBatches: [], message, ...(check.reason ? { reason: check.reason } : {}) };
   }
 
-  /** The record the log had a seat bound to just before `seq`, where it holds the binding; undefined where it was bound to none. */
+  /** The record a seat was bound to just before `seq`: from the bindings where the log begins, through every one it holds since. Undefined where it was bound to none. */
   private boundWhen(seat: string, seq: number): string | undefined {
-    let record: string | undefined;
+    let record = [...boundAtHorizon(this)].find(([, one]) => one === seat)?.[0];
     for (const op of this.log.all()) {
       if (op.seq >= seq) break;
       for (const primitive of op.primitives) {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bindPerson, mayBind, rebindPerson } from "../../src/binding.js";
+import { bindPerson, mayBind, rebindPerson, unbindPerson } from "../../src/binding.js";
 import { checkApp, compileDocument } from "../../src/check.js";
 import { editDocument } from "../../src/document/index.js";
 import { ActRefusal, bindSchema, createSchema, defineApp, defineNode, nameOfAuthor, nodeRef, PermissionDeniedError, REBIND_PERSON, Store, z, type AnySchema, type Policy, type Principal } from "../../src/index.js";
@@ -333,5 +333,46 @@ describe("a store loaded with its people already bound", () => {
     const moved = store.log.all().find((one) => one.mutation?.name === REBIND_PERSON)!;
     expect(given.ops[0]!.seq).toBeGreaterThan(moved.seq);
     expect(store.mayUndo(moved.batch, host)).toMatchObject({ ok: false, refusal: { message: /Bud has acted here/ } });
+  });
+
+  it("keeps what the person did as the record they left theirs once the log is compacted, as it does before", () => {
+    const answers = (compacted: boolean) => {
+      const store = family();
+      bindPerson(store, bud, "participant:ann", { author: host });
+      if (compacted) {
+        const at = store.checkpoint({ seq: store.log.length });
+        store.compact(at!);
+      }
+      const gave = store.apply({ name: "give-it", args: { id: "gift:kite" } }, { author: bud });
+      rebindPerson(store, bud, "participant:bud", { author: host });
+      bindPerson(store, ann, "participant:ann", { author: host });
+      return { store, gave: gave.batch, ann: store.mayUndo(gave.batch, ann).ok, organizer: store.mayUndo(gave.batch, organizer).ok, bud: store.mayUndo(gave.batch, bud).ok };
+    };
+    const kept = answers(false);
+    const compacted = answers(true);
+    expect(compacted.ann).toBe(false);
+    expect(() => compacted.store.undo(compacted.gave, { author: ann })).toThrow(PermissionDeniedError);
+    expect(compacted.store.graph.out("gift:kite", "givenBy" as never).map((one) => one.id)).toEqual(["participant:ann"]);
+    expect({ ann: compacted.ann, organizer: compacted.organizer, bud: compacted.bud }).toEqual({ ann: kept.ann, organizer: kept.organizer, bud: kept.bud });
+  });
+});
+
+describe("a seat is not put back on a record set aside", () => {
+  it("refuses taking a move back once the record it left is set aside, until it is brought back", () => {
+    const { store } = misbound();
+    const moved = rebindPerson(store, bud, "participant:bud", { author: host });
+    store.apply({ name: "archive-participant", args: { id: "participant:ann" } }, { author: organizer });
+    expect(store.mayUndo(moved.batch, host)).toMatchObject({ ok: false, refusal: { message: "This cannot be taken back: Ann is set aside. Bring them back first." } });
+    expect(() => store.undo(moved.batch, { author: host })).toThrow(/Ann is set aside/);
+    store.apply({ name: "unarchive-participant", args: { id: "participant:ann" } }, { author: organizer });
+    expect(store.mayUndo(moved.batch, host)).toEqual({ ok: true });
+  });
+
+  it("refuses taking an ending back once the record is set aside", () => {
+    const store = family();
+    bindPerson(store, bud, "participant:bud", { author: host });
+    const ended = unbindPerson(store, bud, { author: host });
+    store.apply({ name: "archive-participant", args: { id: "participant:bud" } }, { author: organizer });
+    expect(store.mayUndo(ended.batch, host)).toMatchObject({ ok: false, refusal: { message: "This cannot be taken back: Bud is set aside. Bring them back first." } });
   });
 });
