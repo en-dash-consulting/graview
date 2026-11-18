@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form handed a compiled app",
+  "minified": 2232,
+  "gzipped": 762,
+  "note": "Raised when the 0.2.6 batch's four branches were merged (a rule's today() and date() reading the day in the app's own zone, an owner moving a person bound to the wrong record and what they did to the right one, a board's title breaking only between words with a removed record coming down on a slow machine, and a linked project taking React's types from the checkout): each measured its own growth against main, and together they come to 2132 / 662 over the budget, raised by 2232 / 762 for the spread a split build gzips to from build to build. Measured at 384_008 / 139_255 against 381_876 / 138_593."
+}
