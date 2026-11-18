@@ -1175,9 +1175,17 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
        * THE HAND OFF THE CITY A MOMENT, a zoom it wrote is placed for: each
        * board and name goes from where it is drawn to where it stands at the
        * new zoom, as a zoom let go of always did — once nothing is moving
-       * the ground under them.
+       * the ground under them. A finger down is a hand on the city, moving
+       * it or not yet: a pan put down straight after a pinch is let go of
+       * moves no ground until the browser has seen it move past a touch's
+       * slop, and on a slow phone that was past the moment, so the zoom was
+       * placed for under the finger and the boards slid off their districts
+       * as the pan began (one-face's
+       * `duringAPinchThatPansEveryBoardAndNameStaysFastenedToItsDistrictEveryFrame`,
+       * "a pinch let go of, and a pan straight after", under GRAVIEW_SLOW=4
+       * on GitHub's runner).
        */
-      if (between || settling || cam.pinching()) handAt = now;
+      if (between || settling || cam.pinching() || asking.held) handAt = now;
       if (regrow && world.plots.size > 0 && rest !== PAGE && !move && !asking.scrubbing && level(painted) && now - handAt >= LET_GO_MS) {
         regrow = false;
         settle = { slots: drawnSlots(now), names: drawnNames(now), scales: drawnScales(now), start: now };

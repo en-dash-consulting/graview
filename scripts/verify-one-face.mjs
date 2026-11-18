@@ -2040,6 +2040,13 @@ async function rich(browser, device) {
             await chip.focus();
             await page.keyboard.press("Enter");
           }
+          /*
+           * Until the problems page has drawn beside the city. From Nearby the
+           * level does not change, so resting there said nothing: on a CPU four
+           * times slower the page was read while its route still drew, and
+           * said whose problems it lists as no one's (run 44339134933).
+           */
+          await page.waitForFunction(() => document.querySelector("[data-graview-one-place] [data-graview-problems-of]") !== null, undefined, { timeout: 15_000 }).catch(() => {});
           await restAt(page, 1, 15_000).catch(() => {});
         }
         // What the page beside the city lists: whose problems it says it is, and the kind of every record a problem there names.
