@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bindPerson } from "../../src/binding.js";
+import { bindPerson, hostSeat } from "../../src/binding.js";
 import { checkApp } from "../../src/check.js";
 import { compileDocument } from "../../src/check.js";
 import { editDocument } from "../../src/document/index.js";
@@ -16,7 +16,7 @@ import { BIND_PERSON, createSchema, defineApp, defineNode, PermissionDeniedError
 const participant = defineNode("participant", { people: true, label: (n: any) => n.name, fields: z.object({ name: z.string() }) } as never);
 const schema = createSchema([participant]);
 
-const host: Principal = { kind: "system", id: "host" };
+const host: Principal = hostSeat({ id: "host" });
 const editor: Principal = { kind: "human", id: "acct-ed", roles: ["editor"] };
 const owner: Principal = { kind: "human", id: "acct-own", roles: ["owner"] };
 const bud: Principal = { kind: "human", id: "acct-bud", roles: ["member"] };

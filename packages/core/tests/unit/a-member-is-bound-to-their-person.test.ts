@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bindPerson } from "../../src/binding.js";
+import { bindPerson, hostSeat } from "../../src/binding.js";
 import { compileDocument } from "../../src/check.js";
 import { ActRefusal, BIND_PERSON, bindSchema, createSchema, defineNode, nameOfAuthor, nodeRef, PermissionDeniedError, Store, unseated, unseatedOp, unseatedSnapshot, z, type AnySchema, type Policy, type Principal } from "../../src/index.js";
 
@@ -40,7 +40,7 @@ const policy: Policy = {
 };
 
 const organizer: Principal = { kind: "human", id: "acct-org", roles: ["owner"] };
-const host: Principal = { kind: "system", id: "host" };
+const host: Principal = hostSeat({ id: "host" });
 const bud: Principal = { kind: "human", id: "acct-bud", roles: ["member"] };
 const ann: Principal = { kind: "human", id: "acct-ann", roles: ["member"] };
 const budAtHome: Principal = { kind: "human", id: "acct-family", roles: ["member"], profile: { id: "prf_bud", name: "Bud" } };

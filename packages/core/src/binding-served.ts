@@ -20,15 +20,18 @@ export const BIND_PERSON = "bind-person";
 /** The name of the act that moves a seat, and what it did, from the record it is bound to onto another (Roadmap f-rebind-after-acting). */
 export const REBIND_PERSON = "rebind-person";
 
+/** The name of the act that binds a seat with a record of its own to a person entered for it, the own record merged in (Roadmap f-merge-own-record-into-person). */
+export const BIND_OWN_RECORD = "bind-own-record";
+
 /** The acts that say whose record a person is: the framework's own, the host's alone, and never an app's. */
-export const BINDING_ACTS: readonly string[] = [BIND_PERSON, REBIND_PERSON];
+export const BINDING_ACTS: readonly string[] = [BIND_PERSON, REBIND_PERSON, BIND_OWN_RECORD];
 
 /** Whether a name is one of the binding acts (`BINDING_ACTS`). */
-export const isBindingAct = (name: string | undefined): boolean => name === BIND_PERSON || name === REBIND_PERSON;
+export const isBindingAct = (name: string | undefined): boolean => name === BIND_PERSON || name === REBIND_PERSON || name === BIND_OWN_RECORD;
 
 /** What `@graview/core/binding` teaches the store when it is loaded, as `PUBLISHING` does for a publish. */
 export interface BindingServed {
-  /** The binding act of this name (`bind-person`, `rebind-person`) for this store, or none where no kind is the people. */
+  /** The binding act of this name (`bind-person`, `rebind-person`, `bind-own-record`) for this store, or none where no kind is the people. */
   act?: (store: object, name: string) => unknown;
   /** Whether this seat may run this binding: the host's system seat alone, acting for the app's owner; no grant gives it. */
   judged?: (store: object, call: MutationCall, principal: Principal) => { readonly ok: true } | { readonly ok: false; readonly refusal: Refusal };
@@ -54,6 +57,8 @@ export function rootOfChain(op: Operation, get: (id: string) => Operation | unde
 export function takesBindingBack(op: Operation, get: (id: string) => Operation | undefined): boolean {
   if (op.undoes === undefined) return false;
   const root = rootOfChain(op, get);
+  // A merge taken back makes the seat its own record's again (Roadmap f-merge-own-record-into-person).
+  if (root.mutation?.name === BIND_OWN_RECORD) return true;
   return root.mutation?.name === BIND_PERSON && (root.mutation.args as Record<string, unknown> | undefined)?.["end"] !== true;
 }
 

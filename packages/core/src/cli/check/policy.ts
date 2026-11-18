@@ -4,7 +4,7 @@ import { derivedVia } from "../../mutations/derive-edits.js";
 import { nodeRefKinds } from "../../mutations/node-ref.js";
 import { nearestAct } from "../../mutations/act-spelling.js";
 import type { AnySchema } from "../../schema/schema.js";
-import { BIND_PERSON, BINDING_ACTS, isBindingAct } from "../../binding-served.js";
+import { BIND_PERSON, BINDING_ACTS, isBindingAct, BIND_OWN_RECORD } from "../../binding-served.js";
 import { KEEP_LINK } from "../../mutations/keep-link.js";
 import { PUBLISH } from "../../publish.js";
 import { PROPOSE_CHANGES } from "../../mutations/propose-changes.js";
@@ -138,7 +138,7 @@ export function checkPolicy<S extends AnySchema>(ctx: CheckContext<S>): void {
           code: "grant-gives-binding",
           where: "policy.grants",
           message: `${bindingUngranted(named)}.`,
-          fix: `Drop "${named}" from the grant. The host ${named === BIND_PERSON ? "binds with bindPerson" : "moves a person with rebindPerson"} (@graview/core/binding) as its own seat.`,
+          fix: `Drop "${named}" from the grant. The host ${named === BIND_PERSON ? "binds with bindPerson" : named === BIND_OWN_RECORD ? "merges a person's own record with mergePerson" : "moves a person with rebindPerson"} (@graview/core/binding) as its own seat.`,
         });
       }
       if (grant.mutations === "*") continue;

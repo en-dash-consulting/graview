@@ -224,9 +224,12 @@ export function checkUndo(
      * seat mark back itself.
      */
     const laterSeatOnly = seatOnlyIn(op.primitives);
-    // Served to a seat that may not be told whose record it is, a binding keeps its name and none of its primitives: it stands aside all the same.
-    const binds = isBindingAct(op.mutation?.name);
-    const overlap = [...new Set([...op.reads.filter((id) => writes.has(id) && (!seatOnly.has(id) || movesSeat(op, id)) && !((laterSeatOnly.has(id) || binds) && !seatsPutBack.has(id))), ...(typed ?? [])])];
+    // Served to a seat that may not be told whose record it is, a binding keeps its name and none of its primitives: it stands aside all the same. One that moved links as well (Roadmap f-rebind-follow-ups) changed what an earlier act wrote, and does not.
+    const binds = isBindingAct(op.mutation?.name) && op.primitives.every((primitive) => primitive.op === "patch-node" && seatOnlyIn([primitive]).has(primitive.id));
+    // The records a binding said whose they are, a person's link moved between them or not: an earlier edit of either stands as it was. The far end of a link it moved does not.
+    const named = isBindingAct(op.mutation?.name) ? ["from", "to", "record"].map((arg) => (op.mutation!.args as Record<string, unknown> | undefined)?.[arg]) : [];
+    const personOf = isBindingAct(op.mutation?.name) ? (id: string) => movesSeat(op, id) || named.includes(id) : () => false;
+    const overlap = [...new Set([...op.reads.filter((id) => writes.has(id) && (!seatOnly.has(id) || movesSeat(op, id)) && !((laterSeatOnly.has(id) || binds || personOf(id)) && !seatsPutBack.has(id))), ...(typed ?? [])])];
     if (overlap.length > 0) blockedBy.push({ op, overlap });
   }
 
@@ -246,6 +249,16 @@ export function checkUndo(
       includeBatches: [],
       message: "This cannot be taken back: the record was removed, or whose record it is changed, since.",
     };
+  }
+
+  /*
+   * A LATER MOVE OF A PERSON (Roadmap f-rebind-follow-ups) took what this
+   * act linked to them along to their right record. It is never brought
+   * along: taking back whose record a person is goes by its own rules.
+   */
+  const moved = blockedBy.find((b) => isBindingAct(b.op.mutation?.name));
+  if (moved) {
+    return { ok: false, ops, blockedBy, includeBatches: [], message: `Cannot undo "${ops[0]!.intent}" on its own: what it linked was moved to another person's record since.` };
   }
 
   /*

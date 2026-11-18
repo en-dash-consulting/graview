@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bindPerson } from "../../src/binding.js";
+import { bindPerson, hostSeat } from "../../src/binding.js";
 import { pastOf } from "../../src/past.js";
 import { answerSeenBy } from "../../src/seat.js";
 import { matchSubscriptions } from "../../src/subscriptions.js";
@@ -25,7 +25,7 @@ const addGift = defineMutation("add-gift", { title: "Add a gift", creates: ["gif
 const renameGift = defineMutation("rename-gift", { title: "Rename a gift", subject: { kinds: ["gift"], arg: "id" }, input: z.object({ id: nodeRef(["gift"]), title: z.string() }), apply: (ctx: any, args: any) => ctx.patchNode(args.id, { title: args.title }) } as never);
 const keepSecret = defineMutation("keep-secret", { title: "Keep a secret", creates: ["secret"], input: z.object({ title: z.string() }), apply: (ctx: any, args: any) => ctx.addNode({ id: ctx.freshId(args.title, "secret"), kind: "secret", title: args.title }) } as never);
 
-const host: Principal = { kind: "system", id: "host" };
+const host: Principal = hostSeat({ id: "host" });
 const bud: Principal = { kind: "human", id: "acct-bud", name: "budster", roles: ["member"] };
 const ann: Principal = { kind: "human", id: "acct-ann", name: "Ann A.", roles: ["member"] };
 const blind: Principal = { kind: "human", id: "acct-cy", roles: ["blind"] };

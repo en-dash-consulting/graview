@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bindPerson, mayBind } from "../../src/binding.js";
+import { bindPerson, hostSeat, mayBind } from "../../src/binding.js";
 import { aiContextOf } from "../../src/catalog.js";
 import { readableFields } from "../../src/schema/reading.js";
 import { createSchema, defineNode, FieldRevisions, fieldsWritten, PERSON_SEAT, seatsKept, Store, unseatedOp, writtenBy, z, type AnySchema, type Principal } from "../../src/index.js";
@@ -14,7 +14,7 @@ const participant = defineNode("participant", { people: true, label: (n: any) =>
 const gift = defineNode("gift", { label: (n: any) => n.title, fields: z.object({ title: z.string() }) } as never);
 const schema = createSchema([participant, gift]);
 
-const host: Principal = { kind: "system", id: "host" };
+const host: Principal = hostSeat({ id: "host" });
 const bud: Principal = { kind: "human", id: "acct-bud", roles: ["member"] };
 const ann: Principal = { kind: "human", id: "acct-ann", roles: ["member"] };
 
