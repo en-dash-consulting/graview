@@ -13,7 +13,9 @@ import { BIND_PERSON, bindSchema, createSchema, defineNode, BIND_OWN_RECORD, nam
 const participant = defineNode("participant", { people: true, label: (n: any) => n.name, fields: z.object({ name: z.string(), age: z.number() }) } as never);
 const gift = defineNode("gift", { label: (n: any) => n.title, fields: z.object({ title: z.string() }), edges: { givenBy: { to: ["participant"] } } } as never);
 const schema = createSchema([participant, gift]);
+const pal = defineNode("pal", { people: true, label: (n: any) => n.name, fields: z.object({ name: z.string() }), edges: { friendOf: { to: ["pal"] } } } as never);
 const { defineMutation } = bindSchema(schema);
+const befriend = defineMutation("befriend", { title: "Befriend", doneAsMe: true, input: z.object({ pal: nodeRef(["pal"]) }), apply: (ctx: any, args: any) => ctx.addEdge({ kind: "friendOf", from: ctx.me, to: args.pal }) } as never);
 const giveIt = defineMutation("give-it", { title: "I'll give it", doneAsMe: true, subject: { kinds: ["gift"], arg: "id" }, input: z.object({ id: nodeRef(["gift"]) }), apply: (ctx: any, args: any) => ctx.addEdge({ kind: "givenBy", from: args.id, to: ctx.me }) } as never);
 const giveFor = defineMutation("give-for", { title: "Give it for", subject: { kinds: ["gift"], arg: "id" }, input: z.object({ id: nodeRef(["gift"]), by: nodeRef(["participant"]) }), apply: (ctx: any, args: any) => ctx.addEdge({ kind: "givenBy", from: args.id, to: args.by }) } as never);
 
@@ -40,6 +42,7 @@ function family(): Store<AnySchema> {
       nodes: [
         { id: "participant:bud", kind: "participant", name: "Bud", age: 12 },
         { id: "participant:ann", kind: "participant", name: "Ann", age: 40 },
+        { id: "participant:cy", kind: "participant", name: "Cy", age: 9 },
         { id: "gift:kite", kind: "gift", title: "A kite" },
         { id: "gift:book", kind: "gift", title: "A book" },
       ],
@@ -134,6 +137,29 @@ describe("links the person's acts made as them move with them", () => {
     expect(store.personOf(bud)).toBe("participant:ann");
   });
 
+  it("follows them through a second move, and through a merge before it", () => {
+    const { store } = misbound();
+    rebindPerson(store, bud, "participant:cy", { author: host });
+    expect(givers(store, "gift:kite")).toEqual(["participant:cy"]);
+    rebindPerson(store, bud, "participant:bud", { author: host });
+    expect(givers(store, "gift:kite")).toEqual(["participant:bud"]);
+    const own = new Store<AnySchema>({ schema, mutations: [giveIt, giveFor] as never, policy, snapshot: { nodes: [{ id: "acct-bud", kind: "participant", name: "bud", age: 1 }, ...family().graph.allNodes()], edges: [] } } as never);
+    own.apply({ name: "give-it", args: { id: "gift:kite" } }, { author: bud });
+    mergePerson(own, bud, "participant:ann", { author: host });
+    expect(givers(own, "gift:kite")).toEqual(["participant:ann"]);
+    rebindPerson(own, bud, "participant:bud", { author: host });
+    expect(givers(own, "gift:kite")).toEqual(["participant:bud"]);
+  });
+
+  it("leaves a link between the two records where it is", () => {
+    const store = new Store<AnySchema>({ schema: createSchema([pal]), mutations: [befriend] as never, policy: { grants: [{ roles: ["member"], mutations: ["befriend"] }] }, snapshot: { nodes: [{ id: "pal:a", kind: "pal", name: "A" }, { id: "pal:b", kind: "pal", name: "B" }], edges: [] } } as never);
+    bindPerson(store, bud, "pal:a", { author: host });
+    const made = store.apply({ name: "befriend", args: { pal: "pal:b" } }, { author: bud });
+    rebindPerson(store, bud, "pal:b", { author: host });
+    expect(store.graph.out("pal:a", "friendOf" as never).map((one) => one.id)).toEqual(["pal:b"]);
+    expect(store.mayUndo(made.batch, bud)).toEqual({ ok: true });
+  });
+
   it("leaves a link nobody's act made as them, or one taken back since, where it is", () => {
     const store = family();
     bindPerson(store, bud, "participant:ann", { author: host });
@@ -168,11 +194,17 @@ describe("only the host's own seat runs the binding acts", () => {
     });
   }
 
-  it("refuses taking a binding back to every seat but the host's own", () => {
-    const store = family();
-    const bound = bindPerson(store, bud, "participant:bud", { author: host });
-    expect(store.mayUndo(bound.batch, { kind: "system", id: "host" }).ok).toBe(false);
-    expect(store.mayUndo(bound.batch, host)).toEqual({ ok: true });
+  it("refuses taking a binding back to every seat but the host's own, with a policy and without one", () => {
+    const bare = new Store<AnySchema>({ schema, mutations: [giveIt, giveFor] as never, snapshot: { nodes: family().graph.allNodes(), edges: [] } } as never);
+    for (const store of [family(), bare]) {
+      const bound = bindPerson(store, bud, "participant:bud", { author: host });
+      for (const who of [{ kind: "system", id: "host" }, organizer, bud] as Principal[]) {
+        expect(store.mayUndo(bound.batch, who).ok).toBe(false);
+        expect(() => store.undo(bound.batch, { author: who })).toThrow();
+      }
+      expect(store.personOf(bud)).toBe("participant:bud");
+      expect(store.mayUndo(bound.batch, host)).toEqual({ ok: true });
+    }
   });
 
   it("keeps the host's own seat its own: a copy made as a record is written is no host", () => {

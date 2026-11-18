@@ -11,7 +11,7 @@
  * (`hostSeat`) alone runs them, and when they may be taken back
  * (`BINDING`). Resolving a seat to its record is the main entry's.
  */
-import { BIND_PERSON, BINDING, boundAtHorizon, isBindingAct, BIND_OWN_RECORD, REBIND_PERSON, takesBindingBack } from "./binding-served.js";
+import { BIND_PERSON, BINDING, boundAtHorizon, isBindingAct, BIND_OWN_RECORD, REBIND_PERSON, rootOfChain, takesBindingBack } from "./binding-served.js";
 import { ARCHIVED, isArchived, PERSON_SEAT, personSeatOf } from "./graph/archived.js";
 import { edgeId, type GraphEdge } from "./graph/types.js";
 import { isUnset, UNSET } from "./graph/primitives.js";
@@ -231,46 +231,77 @@ function rebindPersonMutation(store: Held): AnyMutationDefinition | undefined {
           ctx.emit({ op: "patch-node", id, before: { [PERSON_SEAT]: seat }, after: { [PERSON_SEAT]: UNSET } });
         }
       }
-      moveLinks(ctx, store.graph, links, from, to);
+      moveLinks(ctx, store.graph, links, to);
     },
   } as AnyMutationDefinition;
 }
 
 type Edges = { outEdges(id: string): readonly GraphEdge[]; inEdges(id: string): readonly GraphEdge[] };
 
+/** A link, and which of its ends is the person's. */
+type PersonLink = { readonly edge: GraphEdge; readonly end: "from" | "to" };
+
 /**
  * THE LINKS A SEAT'S ACTS MADE AS A RECORD (Roadmap f-rebind-follow-ups):
- * each link an act it did as `record` added at that record, where the act's
- * call never named the record — made through `$me` — and that is still
- * there. A link a call named was the call's to make, and stays.
+ * each link an act it did as the person added at the person's end, where
+ * the act's call never named that end — made through `$me` — followed
+ * through every move and merge since (and their undo), and at `record`
+ * now. A link a call named was the call's to make, and stays. Read from the
+ * log: a link made behind its horizon (a store loaded from a snapshot, or
+ * compacted) is not found, and stays where it is.
  */
-function linksMadeAs(store: Held, seat: string, record: string): readonly GraphEdge[] {
-  const ops = new Map(store.log.all().map((op) => [op.seq, op]));
-  const named = JSON.stringify(record);
-  const found = new Map<string, GraphEdge>();
+function linksMadeAs(store: Held, seat: string, record: string): readonly PersonLink[] {
+  const all = store.log.all();
+  const at = new Map(all.map((op, index) => [op.seq, index]));
+  const get = (id: string) => store.log.get(id);
+  const found = new Map<string, PersonLink>();
   for (const one of doneAs(store)) {
     if (one.seat !== seat || one.record !== record) continue;
-    const op = ops.get(one.seq);
-    if (!op?.mutation || (JSON.stringify(op.mutation.args) ?? "").includes(named)) continue;
+    const index = at.get(one.seq);
+    const op = index === undefined ? undefined : all[index];
+    if (!op?.mutation) continue;
+    const args = JSON.stringify(op.mutation.args) ?? "";
     for (const primitive of op.primitives) {
-      if (primitive.op !== "add-edge" || (primitive.edge.from !== record && primitive.edge.to !== record)) continue;
-      const held = (store.graph as unknown as Edges).outEdges(primitive.edge.from).find((edge) => edgeId(edge) === edgeId(primitive.edge));
-      if (held) found.set(edgeId(held), held);
+      if (primitive.op !== "add-edge") continue;
+      for (const end of ["from", "to"] as const) {
+        if (args.includes(JSON.stringify(primitive.edge[end]))) continue;
+        const now = followed(all, index! + 1, get, primitive.edge, end);
+        if (now?.[end] !== record) continue;
+        const held = (store.graph as unknown as Edges).outEdges(now.from).find((edge) => edgeId(edge) === edgeId(now));
+        if (held) found.set(edgeId(held), { edge: held, end });
+      }
     }
   }
   return [...found.values()];
 }
 
-/** Each link moved from one record to another in the act being made, as a merge moves them: never onto itself or onto one the record has. */
-function moveLinks(ctx: { readonly graph: { getNode(id: string): unknown }; removeEdge(edge: GraphEdge): void; addEdge(edge: GraphEdge): void }, graph: Held["graph"], links: readonly GraphEdge[], from: string, to: string): void {
+/** Where a link is now: followed through each binding since (a move, a merge, their undo) that took it off one person's record onto another's at that end; undefined where one dropped it. */
+function followed(all: readonly Operation[], from: number, get: (id: string) => Operation | undefined, edge: GraphEdge, end: "from" | "to"): GraphEdge | undefined {
+  let now = edge;
+  const other = end === "from" ? "to" : "from";
+  for (let index = from; index < all.length; index++) {
+    const op = all[index]!;
+    if (!isBindingAct(rootOfChain(op, get).mutation?.name)) continue;
+    if (!op.primitives.some((one) => one.op === "remove-edge" && edgeId(one.edge) === edgeId(now))) continue;
+    const next = op.primitives.find((one): one is Extract<typeof one, { op: "add-edge" }> => one.op === "add-edge" && one.edge.kind === now.kind && one.edge[other] === now[other] && one.edge[end] !== now[end]);
+    if (!next) return undefined;
+    now = next.edge;
+  }
+  return now;
+}
+
+/** Each link moved from one record to another at its person's end in the act being made, as a merge moves them: never onto one the record has. */
+function moveLinks(ctx: { readonly graph: { getNode(id: string): unknown }; removeEdge(edge: GraphEdge): void; addEdge(edge: GraphEdge): void }, graph: Held["graph"], links: readonly PersonLink[], to: string): void {
   const edges = graph as unknown as Edges;
   const has = new Set([...edges.outEdges(to), ...edges.inEdges(to)].map(edgeId));
-  for (const edge of links) {
+  for (const { edge, end } of links) {
     ctx.graph.getNode(edge.from);
     ctx.graph.getNode(edge.to);
+    const next = { ...edge, [end]: to };
+    // A link between the two records stays: moved, it would be a link to itself.
+    if (next.from === next.to) continue;
     ctx.removeEdge(edge);
-    const next = { ...edge, from: edge.from === from ? to : edge.from, to: edge.to === from ? to : edge.to };
-    if (next.from !== next.to && !has.has(edgeId(next))) {
+    if (!has.has(edgeId(next))) {
       has.add(edgeId(next));
       ctx.addEdge(next);
     }

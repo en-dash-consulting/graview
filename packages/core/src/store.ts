@@ -2816,6 +2816,13 @@ export class Store<S extends AnySchema> {
      */
     const kept = this.bindingKept(ops);
     if (kept) return kept;
+    // Taken back by whoever may make it, with a policy or without one: the host's own seat (Roadmap f-rebind-follow-ups).
+    for (const target of ops) {
+      const root = this.rootOf(target);
+      if (!isBindingAct(root.mutation?.name) || !BINDING.judged) continue;
+      const verdict = BINDING.judged(this, root.mutation!, author as Principal);
+      if (!verdict.ok) return { ...verdict.refusal, message: `Not permitted to undo "${target.intent}": ${verdict.refusal.message}` };
+    }
     if (this.policy || this.publisher) {
       for (const target of ops) {
         /*
