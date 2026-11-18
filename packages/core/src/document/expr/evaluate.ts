@@ -6,7 +6,7 @@ import type { AnyGraphNode, GraphReader } from "../../graph/types.js";
 import type { Expr } from "./parse.js";
 import { ARG_NAME, SUBJECT_NAME } from "./subject.js";
 import { linkedReaderOf, linkedRefsOf, type LinkedReader, type LinkedRecord, type LinkedRecordRef, type LinkedRelation } from "../../schema/linked.js";
-import { addMinutesTo, datetimeAt, formatWhen, isWeekday, minutesOfTime, startOfWeekOf, weekdayOfWhen, whenOf, zoneOf, type When } from "./when.js";
+import { addMinutesTo, datetimeAt, formatWhen, isInstant, isWeekday, minutesOfTime, startOfWeekOf, wallMomentOf, weekdayOfWhen, whenOf, zoneOf, type When } from "./when.js";
 import { knownAcrossCopies } from "../../across-copies.js";
 
 /*
@@ -157,9 +157,11 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
     steps -= n;
     if (steps < 0) throw new ExprBudgetError("this rule looks at too much of the graph to judge in one go", at);
   };
-  const today = ctx.today ?? isoToday();
-  const now = ctx.now ?? new Date().toISOString();
   const zone = zoneOf(ctx.timeZone);
+  // The day is the app's: the date in its zone, never UTC's where the app declares one — read only when asked, and without a clock for UTC.
+  let day = ctx.today;
+  const today = (): string => (day ??= isoToday(ctx.timeZone));
+  const now = ctx.now ?? new Date().toISOString();
   /*
    * A COMPUTED FIELD IS WORKED OUT ONCE PER EVALUATION, and never while it
    * is being worked out: a cycle the check could not see (across kinds,
@@ -235,7 +237,7 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
     const own = Object.hasOwn(node, name);
     if (shape?.fields.has(name) || own) {
       // A date that repeats reads as its next occurrence on the day judged (`repeat.ts`).
-      const v = own ? dateOn(node, name, today) : undefined;
+      const v = own ? dateOn(node, name, today()) : undefined;
       return v === undefined ? null : (v as Value);
     }
     const card = shape?.edges.get(name);
@@ -396,7 +398,17 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
          * day is in. As written, "2006" < "2006-03-04" would have been true
          * by its letters alone.
          */
-        const spans = typeof a === "string" && typeof b === "string" ? spansOf(a, b) : undefined;
+        /*
+         * AN INSTANT AGAINST A DAY OR A WALL TIME IS READ ON THE APP'S WALL.
+         * `starts < today()` compared "2026-10-17T03:30:00Z" with New York's
+         * "2026-10-16" by its letters, which put an evening event on the UTC
+         * day after it: still ahead after it had passed, west of UTC, and
+         * gone before it came, east of it.
+         */
+        const walled = typeof a === "string" && typeof b === "string" && isInstant(a) !== isInstant(b);
+        const left = walled ? wallMomentOf(a as string, zone) : a;
+        const right = walled ? wallMomentOf(b as string, zone) : b;
+        const spans = typeof left === "string" && typeof right === "string" ? spansOf(left, right) : undefined;
         if (spans) {
           const [x, y] = spans;
           const before = x.to < y.from;
@@ -404,7 +416,7 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
           const same = x.from === y.from && x.to === y.to;
           return e.op === "<" ? before : e.op === "<=" ? before || same : e.op === ">" ? after : after || same;
         }
-        return e.op === "<" ? a < b : e.op === "<=" ? a <= b : e.op === ">" ? a > b : a >= b;
+        return e.op === "<" ? left < right : e.op === "<=" ? left <= right : e.op === ">" ? left > right : left >= right;
       }
       default: {
         if (a === null || b === null) return null;
@@ -666,13 +678,17 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
       }
       case "today":
         arity(0);
-        return today;
+        return today();
       case "now":
         arity(0);
         return now;
       case "date": {
         arity(1);
-        const t = asDate(arg(0), e.at, "date");
+        // The day a moment is on in the app's zone: 23:30 in New York is that day there, not the next one in UTC.
+        const given = arg(0);
+        const when = typeof given === "string" && !(zone === "UTC" && isInstant(given)) ? whenOf(given, zone) : undefined;
+        if (when) return when.day;
+        const t = asDate(given, e.at, "date");
         return t === null ? null : new Date(t).toISOString().slice(0, 10);
       }
       case "days":

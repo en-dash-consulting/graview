@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import { isoToday, numberAsRead } from "../days.js";
+import { dayZoneFor, isoToday, numberAsRead, wallIn } from "../days.js";
 import { capitalize, nameInPassing } from "../capital.js";
 import { humanizeField, humanizeValue } from "./humanize.js";
 import type { FileValue } from "./files.js";
@@ -41,6 +41,8 @@ export function isCurrent(
   definition: AnyNodeDefinition | undefined,
   node: { id: string; kind: string } & Record<string, unknown>,
   today?: string,
+  /** The app's time zone: the day a retiring moment kept as an instant is on. */
+  timeZone?: string,
 ): boolean {
   const lifecycle = definition?.lifecycle;
   if (!lifecycle) return true;
@@ -49,7 +51,13 @@ export function isCurrent(
     // No date means no expiry: an open-ended node is current for ever.
     if (typeof value !== "string" || value.length === 0) return true;
     // The clock is read only where a date decides: a search asks this of every record it looks through.
-    return value >= (today ?? isoToday());
+    const day = today ?? isoToday(timeZone);
+    // An instant retires on the day it is on in the app's zone, not by its letters in UTC.
+    if (/T\d\d:\d\d(:[\d.]+)?(Z|[+-]\d\d:?\d\d)$/.test(value)) {
+      const stamp = Date.parse(value);
+      if (!Number.isNaN(stamp)) return wallIn(stamp, dayZoneFor(timeZone) ?? "UTC").day >= day;
+    }
+    return value >= day;
   }
   return !lifecycle.retired.includes(value);
 }

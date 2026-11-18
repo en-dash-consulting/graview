@@ -499,7 +499,9 @@ export function expandSetup(template: GraviewTemplate, answers: Readonly<Record<
         if (item !== undefined) bindings[ITEM] = item as Value;
         let holds: Value;
         try {
-          holds = evaluateExpr(condition, { graph: EMPTY_GRAPH, subject: null, kinds: new Map(), bindings });
+          // On the template's own app's clock, as its rules will read the same day.
+          const timeZone = (template.document as { readonly brand?: { readonly timeZone?: string } } | undefined)?.brand?.timeZone;
+          holds = evaluateExpr(condition, { graph: EMPTY_GRAPH, subject: null, kinds: new Map(), bindings, ...(timeZone ? { timeZone } : {}) });
         } catch (e) {
           if (!(e instanceof ExprEvalError)) throw e;
           findings.push(setupFinding(i, ".if", `this condition could not be judged: ${e.sentence}`));

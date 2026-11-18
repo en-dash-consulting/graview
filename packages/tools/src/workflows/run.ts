@@ -186,7 +186,7 @@ export async function runWorkflow<S extends AnySchema>(options: RunWorkflowOptio
         run: id,
         principal,
         now,
-        today: dayIn(now, (options.app.brand as { timeZone?: string } | undefined)?.timeZone ?? store.timeZone),
+        today: dayIn(now, (options.app.brand as { timeZone?: string } | undefined)?.timeZone ?? store.appTimeZone ?? "UTC"),
         dry,
         approve,
         trigger,

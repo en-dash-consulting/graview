@@ -8,7 +8,7 @@
  * host's entry's alone, so no page pays for them.
  */
 import { PERSON_SEAT } from "./graph/archived.js";
-import type { Primitive } from "./graph/primitives.js";
+import { isUnset, type Primitive } from "./graph/primitives.js";
 import type { MutationCall } from "./mutations/types.js";
 import type { Operation } from "./ops/types.js";
 import { bindable, isSystem, seatPersonOf } from "./permissions/policy.js";
@@ -17,10 +17,19 @@ import type { Principal, Refusal } from "./permissions/types.js";
 /** The name of the act that binds a seat to a person already entered. */
 export const BIND_PERSON = "bind-person";
 
+/** The name of the act that moves a seat, and what it did, from the record it is bound to onto another (Roadmap f-rebind-after-acting). */
+export const REBIND_PERSON = "rebind-person";
+
+/** The acts that say whose record a person is: the framework's own, the host's alone, and never an app's. */
+export const BINDING_ACTS: readonly string[] = [BIND_PERSON, REBIND_PERSON];
+
+/** Whether a name is one of the binding acts (`BINDING_ACTS`). */
+export const isBindingAct = (name: string | undefined): boolean => name === BIND_PERSON || name === REBIND_PERSON;
+
 /** What `@graview/core/binding` teaches the store when it is loaded, as `PUBLISHING` does for a publish. */
 export interface BindingServed {
-  /** The `bind-person` act for this store, or none where no kind is the people. */
-  act?: (store: object) => unknown;
+  /** The binding act of this name (`bind-person`, `rebind-person`) for this store, or none where no kind is the people. */
+  act?: (store: object, name: string) => unknown;
   /** Whether this seat may run this binding: the host's system seat alone, acting for the app's owner; no grant gives it. */
   judged?: (store: object, call: MutationCall, principal: Principal) => { readonly ok: true } | { readonly ok: false; readonly refusal: Refusal };
   /** Why this op of a binding's (`root` the change its undo chain begins with) may not be taken back, in a sentence; undefined when it may. */
@@ -46,6 +55,39 @@ export function takesBindingBack(op: Operation, get: (id: string) => Operation |
   if (op.undoes === undefined) return false;
   const root = rootOfChain(op, get);
   return root.mutation?.name === BIND_PERSON && (root.mutation.args as Record<string, unknown> | undefined)?.["end"] !== true;
+}
+
+/**
+ * WHOSE RECORD EACH WAS WHERE THE LOG BEGINS, record by record: the graph's
+ * bindings now, with every binding the log holds taken back, newest first.
+ * A store loaded from a snapshot, or compacted, bound people behind its
+ * horizon; what they did after it is theirs as those records.
+ */
+export function boundAtHorizon(store: { readonly graph: object; readonly log: { all(): readonly Operation[] } }): Map<string, string> {
+  const seats = new Map<string, string>();
+  const seatOf = (node: object): string | undefined => {
+    const seat = (node as Record<string, unknown>)[PERSON_SEAT];
+    return typeof seat === "string" && !isUnset(seat) ? seat : undefined;
+  };
+  for (const node of (store.graph as { allNodes?(options: { archived: "all" }): readonly { readonly id: string }[] }).allNodes?.({ archived: "all" }) ?? []) {
+    const seat = seatOf(node);
+    if (seat !== undefined) seats.set(node.id, seat);
+  }
+  const ops = store.log.all();
+  for (let at = ops.length - 1; at >= 0; at--) {
+    const primitives = ops[at]!.primitives;
+    for (let one = primitives.length - 1; one >= 0; one--) {
+      const primitive = primitives[one]!;
+      if (primitive.op === "add-node" && seatOf(primitive.node)) seats.delete(primitive.node.id);
+      else if (primitive.op === "remove-node" && seatOf(primitive.node)) seats.set(primitive.node.id, seatOf(primitive.node)!);
+      else if (primitive.op === "patch-node" && Object.hasOwn(primitive.after, PERSON_SEAT)) {
+        const was = seatOf(primitive.before);
+        if (was !== undefined) seats.set(primitive.id, was);
+        else seats.delete(primitive.id);
+      }
+    }
+  }
+  return seats;
 }
 
 /** Which seats a reader may be told a record is bound to: none (`NO_SEAT`), its own, or all of them. */
@@ -93,8 +135,8 @@ export function unseatedPrimitive(primitive: Primitive, keeps: KeepsSeat = NO_SE
  * itself where it names none.
  */
 export function unseatedOp(op: Operation, keeps: KeepsSeat = NO_SEAT): Operation {
-  const seat = op.mutation?.name === BIND_PERSON ? (op.mutation.args as Record<string, unknown> | undefined)?.["seat"] : undefined;
-  const binds = op.mutation?.name === BIND_PERSON && Object.hasOwn(op.mutation.args ?? {}, "seat") && !(typeof seat === "string" && keeps(seat));
+  const seat = isBindingAct(op.mutation?.name) ? (op.mutation!.args as Record<string, unknown> | undefined)?.["seat"] : undefined;
+  const binds = isBindingAct(op.mutation?.name) && Object.hasOwn(op.mutation!.args ?? {}, "seat") && !(typeof seat === "string" && keeps(seat));
   const primitives = op.primitives.flatMap((one) => unseatedPrimitive(one, keeps) ?? []);
   const inverse = op.inverse?.flatMap((one) => unseatedPrimitive(one, keeps) ?? []);
   const same = !binds && primitives.length === op.primitives.length && primitives.every((one, at) => one === op.primitives[at]) && (op.inverse === undefined || (inverse!.length === op.inverse.length && inverse!.every((one, at) => one === op.inverse![at])));

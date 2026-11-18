@@ -352,13 +352,18 @@ export async function openStore<S extends AnySchema>(
    */
   const pinned = Boolean(judged?.today || (judged?.context as { today?: unknown } | undefined)?.today);
   /*
-   * AND ONE THAT SAYS NONE, ON THE HOST'S OWN ZONE: the same day the host's
-   * clock shows, held as a zone rather than a pinned day, so the store ticks
-   * at the host's midnight and its subscribers hear the day turn (a pinned
-   * day never turns, and a served app's overdue loans waited for a restart).
+   * AND ONE THAT SAYS NONE, ON UTC'S DAY: held as a zone rather than a pinned
+   * day, so the store ticks at UTC's midnight and its subscribers hear the
+   * day turn (a pinned day never turns, and a served app's overdue loans
+   * waited for a restart). The host's own zone is kept as `timeZone` for
+   * what is not a rule's day — a Google calendar event's zone — and the
+   * rules read the day and instants on UTC's (`appTimeZone: null`,
+   * `dayTimeZone`), as a document's own rules do on any host.
    */
   const timeZone = storeOptions.timeZone ?? app.brand?.timeZone ?? (pinned ? undefined : Intl.DateTimeFormat().resolvedOptions().timeZone);
   if (timeZone) (storeOptions as { timeZone?: string }).timeZone = timeZone;
+  // The day and the rules' instants are the app's own, from its brand alone, as a page reads them: a zone a host passes is its clock, never the app's day.
+  if (storeOptions.appTimeZone === undefined) (storeOptions as { appTimeZone?: string | null }).appTimeZone = app.brand?.timeZone ?? null;
   const store = new Store<S>({
     schema: app.schema,
     mutations: app.mutations ?? [],

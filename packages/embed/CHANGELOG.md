@@ -1,5 +1,26 @@
 # @graview/embed
 
+## 0.2.6
+
+### Patch Changes
+
+- 66f7e5c: The 0.2.6 batch holds together: each of its branches measured its own growth against main, and merged they spend 2.4 KB more up front on a hosted page (2,312 bytes minified, 762 gzipped) and 2.2 KB more up front on a hosted page handed a compiled app (2,137 minified, 678 gzipped), most of it a rule's day read in the app's own zone, an owner moving a person to the right record, and a board's title fitted between words. The batch files the raises for them.
+  
+  Compatibility: ops and primitives — unchanged. Stored formats — unchanged. The wire — unchanged. The declaration and check finding codes — unchanged. Derived tool names and input schemas — unchanged.
+- Updated dependencies [3169a77]
+- Updated dependencies [b85809b]
+- Updated dependencies [21c343b]
+- Updated dependencies [48b7e0b]
+- Updated dependencies [6f7e833]
+  - @graview/pages@0.2.6
+  - @graview/core@0.2.6
+  - @graview/react@0.2.6
+  - @graview/tools@0.2.6
+  - @graview/guest@0.2.6
+  - @graview/primitives@0.2.6
+  - @graview/studio@0.2.6
+  - @graview/layout@0.2.6
+
 ## 0.2.5
 
 ### Patch Changes

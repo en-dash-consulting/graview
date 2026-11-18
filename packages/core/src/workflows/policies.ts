@@ -85,7 +85,8 @@ export function policiesOf(graph: Pick<GraphReader, "getNode"> & { nodesOfKind(k
  * its plural) to that kind's; anything else is read as a condition in the
  * rule language with the record as its subject — a mistake applies to nothing.
  */
-export function policyApplies(policy: WorkflowPolicy, record: AnyGraphNode, graph: GraphReader, schema: AnySchema, today?: string): boolean {
+/** `timeZone` is the app's (`brand.timeZone`, the store's): the clock `today()`, `date()` and a moment against a day are read on. */
+export function policyApplies(policy: WorkflowPolicy, record: AnyGraphNode, graph: GraphReader, schema: AnySchema, today?: string, timeZone?: string): boolean {
   const said = policy.appliesTo;
   if (said === undefined) return true;
   const words = said.toLowerCase();
@@ -94,7 +95,7 @@ export function policyApplies(policy: WorkflowPolicy, record: AnyGraphNode, grap
   if (names(record.kind).includes(words)) return true;
   if (schema.definitions.some((one) => names(one.kind).includes(words))) return false;
   try {
-    const value = evaluateExpr(parseExpr(said), { graph, subject: record, kinds: shapesFor(schema), ...(today ? { today } : {}) });
+    const value = evaluateExpr(parseExpr(said), { graph, subject: record, kinds: shapesFor(schema), ...(today ? { today } : {}), ...(timeZone ? { timeZone } : {}) });
     return value instanceof NodeSet ? value.nodes.length > 0 : Array.isArray(value) ? value.length > 0 : value === true;
   } catch (error) {
     if (error instanceof ExprEvalError || error instanceof ExprSyntaxError) return false;

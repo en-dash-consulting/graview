@@ -362,6 +362,8 @@ export interface ArrangeContext {
   readonly flagged?: ReadonlySet<string>;
   /** For the lifecycle: today, as YYYY-MM-DD. */
   readonly today?: string;
+  /** The app's time zone (`brand.timeZone`): the day `today` is read in when it is not given. */
+  readonly timeZone?: string;
   /**
    * A value arranging cannot read off the record itself: a computed field,
    * worked out over the graph the reader holds. A list that sorts by a
@@ -420,7 +422,7 @@ export function conditionHolds(ctx: ArrangeContext, node: ArrangeNode, condition
   const shape = (definition?.fields.shape ?? {}) as Record<string, unknown>;
   if (condition.key in shape) {
     // A date that repeats is judged by its next occurrence.
-    const value = dateOn(fields(node), condition.key, ctx.today ?? isoToday());
+    const value = dateOn(fields(node), condition.key, ctx.today ?? isoToday(ctx.timeZone));
     const type = fieldType(shape[condition.key]);
     if (type === "date") {
       const [op, date] = condition.value.split(":");

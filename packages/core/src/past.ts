@@ -210,6 +210,7 @@ function made<S extends AnySchema>(
     ...given("modules", declared?.modules ?? inside.declaredModules),
     ...given("enabledModules", inside.startingModules),
     ...given("timeZone", store.timeZone),
+    appTimeZone: store.appTimeZone ?? null,
     intelligence: store.intelligence,
     principal: inside.by,
     log: [...moment.log],

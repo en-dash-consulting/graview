@@ -30,7 +30,7 @@ import { OperationLog, type Epoch, type LogArchive } from "./ops/log.js";
 import type { Author, Batch, Operation, SentOut, Via } from "./ops/types.js";
 import { lineageOf, type Lineage } from "./ops/lineage.js";
 import { KEEP_LINK, keepLinkMutation, keepLinkVia } from "./mutations/keep-link.js";
-import { BIND_PERSON, BINDING } from "./binding-served.js";
+import { BINDING, boundAtHorizon, isBindingAct } from "./binding-served.js";
 import { PERSON_SEAT } from "./graph/archived.js";
 import { ActRefusal } from "./refused.js";
 import { advisoryVoterOf, signedOutSeat, SIGN_IN_TO_VOTE, VOTE_SUGGESTION, VOTING, voteSuggestionMutation, type AppTidying, type VotesOptions } from "./mutations/vote-suggestion.js";
@@ -123,6 +123,15 @@ export interface StoreOptions<S extends AnySchema> {
    * `@graview/ship`'s `openStore` and `openRemote` pass the app's own.
    */
   readonly timeZone?: string;
+  /**
+   * THE ZONE THE APP DECLARES, `brand.timeZone`: the clock the rule
+   * language reads an instant on — `date()`, a moment against a day — in
+   * rules, jobs, workflows and subscriptions. Unsaid, `timeZone`; `null`
+   * where the app declares none and `timeZone` is only the host's own clock
+   * the day turns on (`openStore`), so its rules read instants on UTC's
+   * calendar, as a document's own rules do.
+   */
+  readonly appTimeZone?: string | null;
   /**
    * Who may run what. Absent means permission is not a concern here.
    *
@@ -615,8 +624,12 @@ export class Store<S extends AnySchema> {
   private voter: AnyMutationDefinition<S> | undefined;
   /** "Propose changes" (Roadmap f-proposals-for-review), when the app declared no act by that name. */
   private proposer: AnyMutationDefinition<S> | undefined;
-  /** "Bind a person" (Roadmap f-invite-binds-existing-person): answered where a kind is the people, offered by no list. */
-  private binder: AnyMutationDefinition<S> | undefined;
+  /** "Bind a person" and "Move a person" (Roadmap f-invite-binds-existing-person, f-rebind-after-acting), by name: answered where a kind is the people, offered by no list. */
+  private readonly binders = new Map<string, AnyMutationDefinition<S>>();
+  /** Whether an act is one `@graview/core/binding` made: judged by it, and offered by no list. */
+  private isBinder(mutation: AnyMutationDefinition<S> | undefined): boolean {
+    return mutation !== undefined && this.binders.get(mutation.name) === mutation;
+  }
   private readonly invariants: readonly InvariantDefinition<S>[];
   private readonly invariantOptions: EvaluateOptions<S>;
   readonly policy: Policy | undefined;
@@ -673,6 +686,18 @@ export class Store<S extends AnySchema> {
   private ticked: { readonly day: string; readonly on: string } | undefined;
   /** The app's time zone (`StoreOptions.timeZone`): the day today() reads is the date there. */
   readonly timeZone: string | undefined;
+  /** The zone the app declares (`StoreOptions.appTimeZone`): what the rule language reads an instant on. */
+  readonly appTimeZone: string | undefined;
+  /**
+   * THE ZONE THE STORE'S DAY IS IN: the app's, else UTC's where the host
+   * gave only its own clock (`timeZone` with `appTimeZone: null`), else none
+   * — the clock as it reads. What `today()` says, the day rules are judged
+   * on, and the midnight `tickEachDay` turns it at: an app with no zone keeps
+   * UTC's day on every host.
+   */
+  get dayTimeZone(): string | undefined {
+    return this.appTimeZone ?? (this.timeZone ? "UTC" : undefined);
+  }
   /** Where this store stands in the past, when it is one (`pastOf`): read, never changed. */
   readonly past: PastPoint | undefined;
   /** How often `pastOf` keeps a point to fold from, in ops (`StoreOptions.pastEvery`). */
@@ -688,8 +713,9 @@ export class Store<S extends AnySchema> {
     this.invariants = options.invariants ?? [];
     this.invariantOptions = options.invariantOptions ?? {};
     this.timeZone = options.timeZone;
+    this.appTimeZone = options.appTimeZone === null ? undefined : (options.appTimeZone ?? options.timeZone);
     // A store that knows its app's zone begins on the day there, so the first turn of the day says what it moved.
-    if (this.timeZone) this.ticked = { day: isoToday(this.timeZone), on: isoToday(this.timeZone) };
+    if (this.dayTimeZone) this.ticked = { day: isoToday(this.dayTimeZone), on: isoToday(this.dayTimeZone) };
     this.policy = options.policy;
     this.publishing = options.publishing;
     this.tidying = options.tidying;
@@ -714,7 +740,7 @@ export class Store<S extends AnySchema> {
         throw new GraphError(`Duplicate mutation "${mutation.name}"`);
       }
       // A name the framework keeps for an act of its own is never an app's (`binding-act-taken`): the framework's answers it.
-      if (mutation.name === BIND_PERSON) continue;
+      if (isBindingAct(mutation.name)) continue;
       this.mutations.set(mutation.name, mutation);
     }
     /*
@@ -725,7 +751,7 @@ export class Store<S extends AnySchema> {
      * invariants — and by the policy, through the acts that already write or
      * create the kind (see `permits`). Nothing an app declares is replaced.
      */
-    for (const mutation of options.past ? [] : deriveMutations(options.schema, (options.mutations ?? []).filter((mutation) => mutation.name !== BIND_PERSON))) {
+    for (const mutation of options.past ? [] : deriveMutations(options.schema, (options.mutations ?? []).filter((mutation) => !isBindingAct(mutation.name)))) {
       this.mutations.set(mutation.name, mutation);
     }
     // "Keep this link" (FR-172): answered by every store, offered by no list. An app's own `keep-link` keeps its name.
@@ -951,10 +977,13 @@ export class Store<S extends AnySchema> {
   private spelled(name: string): string {
     // "Type text" (Roadmap f-collab-text): answered by every store once `@graview/core/typing` is loaded, and offered by no list.
     if (name === TYPE_TEXT && !this.typer && TYPING.typeText && !this.past && !this.mutations.has(name)) this.mutations.set(name, (this.typer = TYPING.typeText(this)));
-    // "Bind a person" (Roadmap f-invite-binds-existing-person): answered where a kind is the people once the host loads `@graview/core/binding`, and offered by no list.
-    if (name === BIND_PERSON && !this.binder && BINDING.act && !this.past) {
-      const binder = BINDING.act(this) as AnyMutationDefinition<S> | undefined;
-      if (binder) this.mutations.set(name, (this.binder = binder));
+    // "Bind a person" and "Move a person" (Roadmap f-invite-binds-existing-person, f-rebind-after-acting): answered where a kind is the people once the host loads `@graview/core/binding`, and offered by no list.
+    if (isBindingAct(name) && !this.binders.has(name) && BINDING.act && !this.past) {
+      const binder = BINDING.act(this, name) as AnyMutationDefinition<S> | undefined;
+      if (binder) {
+        this.binders.set(name, binder);
+        this.mutations.set(name, binder);
+      }
     }
     return this.mutations.has(name) ? name : (actSpelledAs(name, this.mutations.keys()) ?? name);
   }
@@ -1031,7 +1060,7 @@ export class Store<S extends AnySchema> {
   }
 
   allMutations(): AnyMutationDefinition<S>[] {
-    return [...this.mutations.values(), ...(this.publisher ? [this.publisher] : [])].filter((mutation) => mutation !== this.keeper && mutation !== this.typer && mutation !== this.voter && mutation !== this.proposer && mutation !== this.binder && !this.mutationDisabled(mutation));
+    return [...this.mutations.values(), ...(this.publisher ? [this.publisher] : [])].filter((mutation) => mutation !== this.keeper && mutation !== this.typer && mutation !== this.voter && mutation !== this.proposer && !this.isBinder(mutation) && !this.mutationDisabled(mutation));
   }
 
   /** The declared acts a derived act resolves its permission through; keeping a link, those that make or break its relation. */
@@ -1140,7 +1169,7 @@ export class Store<S extends AnySchema> {
     const nobody = mutation && !undoing && this.noOneToBe(mutation, principal);
     if (nobody) return { ok: false, refusal: nobody } as ReturnType<typeof permits>;
     // Binding a seat to a person is judged by `@graview/core/binding`, which made the act: the host, or a grant that names it.
-    if (mutation && mutation === this.binder) return BINDING.judged!(this, call, principal) as ReturnType<typeof permits>;
+    if (mutation && this.isBinder(mutation)) return BINDING.judged!(this, call, principal) as ReturnType<typeof permits>;
     // Publishing is the declaration's `publishers`, not a grant's.
     if (mutation && mutation === this.publisher) return PUBLISHING.verdict!(this, principal) as ReturnType<typeof permits>;
     /*
@@ -1225,7 +1254,7 @@ export class Store<S extends AnySchema> {
     if (!this.policy || this.past || signedOutSeat(principal)) return false;
     call = this.spelledCall(call);
     const mutation = this.mutations.get(call.name);
-    if (!mutation || mutation === this.proposer || mutation === this.voter || mutation === this.binder || this.refusesAgent(call, principal) || this.namesTurnedOff(call, principal)) return false;
+    if (!mutation || mutation === this.proposer || mutation === this.voter || this.isBinder(mutation) || this.refusesAgent(call, principal) || this.namesTurnedOff(call, principal)) return false;
     return !this.permits(call, principal).ok && proposes(this.policy, principal, call.name, this.subjectKindOf(call, principal));
   }
 
@@ -1710,7 +1739,8 @@ export class Store<S extends AnySchema> {
    * that day, and an app in New York about New York's.
    */
   today(): string | undefined {
-    return this.pinned() ?? (this.ticked && this.ticked.on === isoToday(this.timeZone) ? this.ticked.day : undefined) ?? (this.timeZone ? isoToday(this.timeZone) : undefined);
+    const zone = this.dayTimeZone;
+    return this.pinned() ?? (this.ticked && this.ticked.on === isoToday(zone) ? this.ticked.day : undefined) ?? (zone ? isoToday(zone) : undefined);
   }
 
   /** The day `invariantOptions` pins, if it pins one: a tick does not move it. */
@@ -1730,7 +1760,7 @@ export class Store<S extends AnySchema> {
     // A rule written as a function reads the day from its context too, as `openStore` handed it (W-186): the app's, where the store knows its zone and the call hands no context of its own.
     const base = linking ?? given;
     const judged = this.timeZone && today !== undefined && context === undefined && !(base && "today" in base) ? { ...base, today } : linking;
-    return { ...this.invariantOptions, ...(judged === undefined ? {} : { context: judged }), ...(today === undefined ? {} : { today }) };
+    return { ...this.invariantOptions, ...(judged === undefined ? {} : { context: judged }), ...(today === undefined ? {} : { today }), ...(this.appTimeZone && this.invariantOptions.timeZone === undefined ? { timeZone: this.appTimeZone } : {}) };
   }
 
   /**
@@ -1756,8 +1786,8 @@ export class Store<S extends AnySchema> {
   tick(now: Date | string | number = new Date()): Tick {
     const pinned = this.pinned();
     if (pinned !== undefined) return { day: pinned, was: pinned, appeared: [], cleared: [] };
-    const day = dayOf(now, this.timeZone);
-    const on = isoToday(this.timeZone);
+    const day = dayOf(now, this.dayTimeZone);
+    const on = isoToday(this.dayTimeZone);
     // What stood is judged on the day the store was last ticked to, even when the clock has just left it: the turn at midnight says what it moved.
     if (this.ticked) this.ticked = { day: this.ticked.day, on };
     const was = this.today();
@@ -1904,7 +1934,7 @@ export class Store<S extends AnySchema> {
   private permittedTo(call: MutationCall, as: Author | Principal): void {
     // A vote is judged with no policy too: a shared seat's vote is refused whether or not the app says who may do what (Roadmap f-votes-shared-seat).
     const voting = this.voter !== undefined && this.mutations.get(call.name) === this.voter;
-    const binding = this.binder !== undefined && this.mutations.get(call.name) === this.binder;
+    const binding = this.isBinder(this.mutations.get(call.name));
     const verdict = this.policy || (this.publisher && call.name === PUBLISH) || voting || binding || this.mutations.get(call.name) === this.proposer ? this.judged(call, as as Principal) : undefined;
     // Rehearsing a proposal, an act its author may propose stands as the reviewer's would (Roadmap f-proposals-for-review).
     if (verdict && !verdict.ok && !(this.proposing && this.mayPropose(call, as as Principal))) this.refuse(verdict.refusal, as.id);
@@ -1926,7 +1956,7 @@ export class Store<S extends AnySchema> {
     const missing = this.missingFor(call, as as Principal);
     if (missing) throw missing;
     // An act takes only the kinds it names: its subject's, and each record argument's. Binding a person says its own refusal.
-    if (definition !== this.binder) this.keepsToItsKinds(definition, call);
+    if (!this.isBinder(definition)) this.keepsToItsKinds(definition, call);
     let compiled: ReturnType<typeof compileMutation>;
     try {
       compiled = compileMutation(this.graph, definition, call.args, { ...this.sighted(as as Principal), hint });
@@ -1936,7 +1966,7 @@ export class Store<S extends AnySchema> {
       throw error;
     }
     // Whose record a person is, only binding says (Roadmap f-invite-binds-existing-person): no other act writes the mark.
-    if (definition !== this.binder && compiled.primitives.some((one) => (one.op === "add-node" && Object.hasOwn(one.node, PERSON_SEAT)) || (one.op === "patch-node" && Object.hasOwn(one.after, PERSON_SEAT)))) {
+    if (!this.isBinder(definition) && compiled.primitives.some((one) => (one.op === "add-node" && Object.hasOwn(one.node, PERSON_SEAT)) || (one.op === "patch-node" && Object.hasOwn(one.after, PERSON_SEAT)))) {
       throw new ActRefusal(`"${definition.title ?? definition.name}" cannot say whose record a person is: only binding an account to it does.`);
     }
     if (isAutomated(as)) {
@@ -2768,12 +2798,28 @@ export class Store<S extends AnySchema> {
     return { ok: false, ops: [], blockedBy: [], includeBatches: [], message, ...(check.reason ? { reason: check.reason } : {}) };
   }
 
+  /** The record a seat was bound to just before `seq`: from the bindings where the log begins, through every one it holds since. Undefined where it was bound to none. */
+  private boundWhen(seat: string, seq: number): string | undefined {
+    let record = [...boundAtHorizon(this)].find(([, one]) => one === seat)?.[0];
+    for (const op of this.log.all()) {
+      if (op.seq >= seq) break;
+      for (const primitive of op.primitives) {
+        if (primitive.op === "add-node" && (primitive.node as Record<string, unknown>)[PERSON_SEAT] === seat) record = primitive.node.id;
+        else if (primitive.op === "patch-node" && Object.hasOwn(primitive.after, PERSON_SEAT)) {
+          if (primitive.after[PERSON_SEAT] === seat) record = primitive.id;
+          else if (record === primitive.id) record = undefined;
+        }
+      }
+    }
+    return record;
+  }
+
   /** Why a binding among these ops stays (`BINDING.undo`), or nothing. */
   private bindingKept(ops: readonly Operation[]): Refusal | undefined {
     for (const target of ops) {
       // Judged as the change its undo chain begins with, however often it was taken back and put back.
       const root = this.rootOf(target);
-      if (root.mutation?.name !== BIND_PERSON) continue;
+      if (!isBindingAct(root.mutation?.name)) continue;
       const kept = BINDING.undo ? BINDING.undo(this, target, root) : "This binding cannot be taken back here.";
       if (kept) return { mutation: "undo", wouldNeed: [], message: kept };
     }
@@ -2850,7 +2896,10 @@ export class Store<S extends AnySchema> {
         // Or the record the seat was bound to last, where it is bound to none now: what it did is still theirs.
         const seatOfAuthor = seatPersonOf(judged.author);
         const doneAs = meOf(this.seated(judged.author)) ?? (seatOfAuthor === undefined ? undefined : everBound(this as never).get(seatOfAuthor));
-        const names = (value: unknown) => doneAs !== undefined && (JSON.stringify(value) ?? "").includes(JSON.stringify(doneAs));
+        // And the record it was done as then: a person moved to another record since still did what they did as the first (Roadmap f-rebind-after-acting).
+        const doneAsThen = seatOfAuthor === undefined ? undefined : this.boundWhen(seatOfAuthor, judged.seq);
+        const named = (value: unknown, id: string | undefined) => id !== undefined && (JSON.stringify(value) ?? "").includes(JSON.stringify(id));
+        const names = (value: unknown) => named(value, doneAs) || (doneAsThen !== doneAs && named(value, doneAsThen));
         const verdict =
           by !== undefined && by !== actingAs(author as Principal).id && !isSystem(author as Principal) && !names(judged.mutation.args) && names(judged.primitives)
             ? { ok: false as const, refusal: { mutation: judged.mutation.name, wouldNeed: [], message: "it was done as somebody else." } }

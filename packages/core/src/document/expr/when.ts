@@ -59,6 +59,27 @@ export function whenOf(value: string, zone: string): When | undefined {
   return { ...wallIn(stamp, zone), stamp };
 }
 
+/**
+ * A STORED VALUE AS IT IS COMPARED WITH A DAY OR A WALL TIME: an instant
+ * (`…Z`, an offset) read on the app's wall, `YYYY-MM-DDTHH:MM`, so
+ * `starts < today()` puts a moment on the day it is in the app's zone and
+ * not on the day it is in UTC. Anything else is as it is.
+ */
+export function wallMomentOf(value: string, zone: string): string {
+  if (!namesInstant(value)) return value;
+  const stamp = Date.parse(value);
+  if (Number.isNaN(stamp)) return value;
+  // Seconds and milliseconds are the instant's own (a zone is whole minutes from UTC): `now()` at 09:30:45 is after a wall time of 09:30, and 09:30Z is 09:30:00.
+  const iso = new Date(stamp).toISOString();
+  const seconds = `:${iso.slice(17, 19)}${iso.slice(20, 23) === "000" ? "" : `.${iso.slice(20, 23)}`}`;
+  if (zone === "UTC") return `${iso.slice(0, 16)}${seconds}`;
+  const { day, minutes } = wallIn(stamp, zone);
+  return `${day}T${pad(Math.floor(minutes / 60))}:${pad(minutes % 60)}${seconds}`;
+}
+
+/** Whether a stored value names an instant, which a day or a wall time is compared with on the app's wall. */
+export const isInstant = namesInstant;
+
 /* THE PATTERN `format(when, pattern)` TAKES: a closed vocabulary, so a token it does not know is a finding, never a letter said as itself. */
 const TOKENS = ["EEEE", "EEE", "MMMM", "MMM", "yyyy", "HH", "mm", "h", "a", "d"] as const;
 type Token = (typeof TOKENS)[number];
