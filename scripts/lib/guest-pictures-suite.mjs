@@ -397,6 +397,14 @@ window.__handle = mount(document.getElementById("app"), {
       const video = root?.querySelector("graview-video")?.shadowRoot?.querySelector("video");
       return Boolean(video && video.readyState >= 1);
     }, "the porch's clip, played by the host in the reel view");
+    /*
+     * Its length, once the engine has read it: WebKit on Linux (GStreamer) says it has the metadata before it says
+     * how long, and `duration` read in between is not yet a number (null in verify.yml 44315293358, 44324221246,
+     * 44327255373, on a clip whose header says one second). Given as long again as the clip took to arrive.
+     */
+    await tab
+      .waitForFunction(() => Number.isFinite(document.querySelector('[data-worker-view="job-reel"]')?.shadowRoot?.querySelector("graview-video")?.shadowRoot?.querySelector("video")?.duration), null, { timeout: 15_000, polling: 100 })
+      .catch(() => {});
     const player = await tab.evaluate(() => {
       const root = document.querySelector('[data-worker-view="job-reel"]').shadowRoot;
       const box = root.querySelector("graview-video");
@@ -409,6 +417,7 @@ window.__handle = mount(document.getElementById("app"), {
         preload: video.getAttribute("preload"),
         label: video.getAttribute("aria-label"),
         duration: Math.round(video.duration),
+        read: { duration: String(video.duration), readyState: video.readyState, networkState: video.networkState, error: video.error?.code ?? null, webm: video.canPlayType('video/webm; codecs="vp8"') },
         wide: Math.round(box.getBoundingClientRect().width),
         said: root.querySelector("[data-said]")?.textContent ?? null,
         videos: root.querySelectorAll("video").length,
