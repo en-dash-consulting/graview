@@ -233,3 +233,105 @@ describe("graview check knows the act", () => {
     expect(JSON.stringify(edited.ok ? [] : edited.findings)).toMatch(/grant-gives-binding/);
   });
 });
+
+describe("a move stands aside for undoing what was done before it", () => {
+  const batchOf = (store: Store<AnySchema>, id: string) => store.log.all().find((one) => one.id === id)!.batch;
+
+  /** Bud's account bound to Ann's record, and one thing he did as her: the kite given by "me". */
+  const gaveAsAnn = () => {
+    const store = family();
+    bindPerson(store, bud, "participant:ann", { author: host });
+    const gave = store.apply({ name: "give-it", args: { id: "gift:kite" } }, { author: bud });
+    return { store, gave: gave.batch };
+  };
+
+  it("leaves an earlier edit of the record the person left open to whoever could take it back before", () => {
+    const { store, acted } = misbound();
+    rebindPerson(store, bud, "participant:bud", { author: host });
+    // The owner takes back the edit Bud made as Ann; before this, the move stood in the way of everybody.
+    expect(store.mayUndo(batchOf(store, acted[1]!), organizer)).toEqual({ ok: true });
+    store.undo(batchOf(store, acted[1]!), { author: organizer });
+    expect(store.graph.getNode("participant:ann")).toMatchObject({ age: 40 });
+    // Ann's record is not Bud's any more, so editing it is not his to take back.
+    expect(store.mayUndo(batchOf(store, acted[0]!), host)).toEqual({ ok: true });
+  });
+
+  it("offers nobody the move as a change to bring along", () => {
+    const { store, gave } = gaveAsAnn();
+    const moved = rebindPerson(store, bud, "participant:bud", { author: host });
+    for (const who of [ann, organizer, bud]) {
+      const said = JSON.stringify(store.mayUndo(gave, who));
+      expect(said).not.toContain(moved.batch);
+      expect(said).not.toContain(moved.ops[0]!.id);
+    }
+  });
+
+  it("keeps what the person did as the record they left theirs: another member may not take it back, and they may", () => {
+    const { store, gave } = gaveAsAnn();
+    rebindPerson(store, bud, "participant:bud", { author: host });
+    bindPerson(store, ann, "participant:ann", { author: host });
+    const refused = store.mayUndo(gave, ann);
+    expect(refused.ok).toBe(false);
+    expect(JSON.stringify(refused)).toMatch(/done as somebody else/);
+    expect(() => store.undo(gave, { author: ann })).toThrow(PermissionDeniedError);
+    expect(store.mayUndo(gave, bud)).toEqual({ ok: true });
+    store.undo(gave, { author: bud });
+    expect(store.graph.out("gift:kite", "givenBy" as never)).toEqual([]);
+  });
+});
+
+describe("a move taken back keeps what was done since with whoever did it", () => {
+  it("is refused once the person acted as the record they moved to, as an unbinding is", () => {
+    const { store } = misbound();
+    const moved = rebindPerson(store, bud, "participant:bud", { author: host });
+    store.apply({ name: "give-it", args: { id: "gift:book" } }, { author: bud });
+    expect(store.mayUndo(moved.batch, host)).toMatchObject({ ok: false, refusal: { message: "Bud has acted here: undoing the move would hand what they did to someone else." } });
+    expect(() => store.undo(moved.batch, { author: host })).toThrow(/Bud has acted here/);
+    expect(store.personOf(bud)).toBe("participant:bud");
+  });
+});
+
+describe("a record set aside is nobody's to be bound or moved to", () => {
+  it("refuses both, in words, until it is brought back", () => {
+    const { store } = misbound();
+    store.apply({ name: "archive-participant", args: { id: "participant:bud" } }, { author: organizer });
+    expect(() => rebindPerson(store, bud, "participant:bud", { author: host })).toThrow(/Bud is set aside/);
+    expect(() => bindPerson(store, { kind: "human", id: "acct-new", roles: ["member"] }, "participant:bud", { author: host })).toThrow(/Bud is set aside/);
+    expect(mayBind(store, "participant:bud").ok).toBe(false);
+    store.apply({ name: "unarchive-participant", args: { id: "participant:bud" } }, { author: organizer });
+    expect(rebindPerson(store, bud, "participant:bud", { author: host }).ops).toHaveLength(1);
+  });
+});
+
+describe("a store loaded with its people already bound", () => {
+  /** Bud's account bound to Ann's record before the log begins, as a snapshot or a compaction leaves it. */
+  const loaded = () => {
+    const store = family();
+    const fresh = new Store<AnySchema>({
+      schema,
+      mutations: [giveIt] as never,
+      policy,
+      snapshot: { nodes: store.graph.allNodes().map((node) => (node.id === "participant:ann" ? { ...node, $seat: "acct-bud" } : node)), edges: [] },
+    } as never);
+    return fresh;
+  };
+
+  it("says what the person did after it as the record bound before it, as a store whose log holds the binding does", () => {
+    for (const store of [loaded(), misbound().store]) {
+      store.apply({ name: "give-it", args: { id: "gift:book" } }, { author: bud });
+      store.apply({ name: "remove-participant", args: { id: "participant:ann" } }, { author: organizer });
+      expect(() => bindPerson(store, bud, "participant:bud", { author: host })).toThrow(/That account was another participant here: bind it to them again/);
+    }
+  });
+
+  it("moves what they did after it with them", () => {
+    const store = loaded();
+    store.apply({ name: "give-it", args: { id: "gift:book" } }, { author: bud });
+    rebindPerson(store, bud, "participant:bud", { author: host });
+    expect(mayBind(store, "participant:ann")).toEqual({ ok: true });
+    const given = store.apply({ name: "give-it", args: { id: "gift:kite" } }, { author: bud });
+    const moved = store.log.all().find((one) => one.mutation?.name === REBIND_PERSON)!;
+    expect(given.ops[0]!.seq).toBeGreaterThan(moved.seq);
+    expect(store.mayUndo(moved.batch, host)).toMatchObject({ ok: false, refusal: { message: /Bud has acted here/ } });
+  });
+});

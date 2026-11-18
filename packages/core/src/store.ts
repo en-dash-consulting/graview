@@ -2775,6 +2775,22 @@ export class Store<S extends AnySchema> {
     return { ok: false, ops: [], blockedBy: [], includeBatches: [], message, ...(check.reason ? { reason: check.reason } : {}) };
   }
 
+  /** The record the log had a seat bound to just before `seq`, where it holds the binding; undefined where it was bound to none. */
+  private boundWhen(seat: string, seq: number): string | undefined {
+    let record: string | undefined;
+    for (const op of this.log.all()) {
+      if (op.seq >= seq) break;
+      for (const primitive of op.primitives) {
+        if (primitive.op === "add-node" && (primitive.node as Record<string, unknown>)[PERSON_SEAT] === seat) record = primitive.node.id;
+        else if (primitive.op === "patch-node" && Object.hasOwn(primitive.after, PERSON_SEAT)) {
+          if (primitive.after[PERSON_SEAT] === seat) record = primitive.id;
+          else if (record === primitive.id) record = undefined;
+        }
+      }
+    }
+    return record;
+  }
+
   /** Why a binding among these ops stays (`BINDING.undo`), or nothing. */
   private bindingKept(ops: readonly Operation[]): Refusal | undefined {
     for (const target of ops) {
@@ -2857,7 +2873,10 @@ export class Store<S extends AnySchema> {
         // Or the record the seat was bound to last, where it is bound to none now: what it did is still theirs.
         const seatOfAuthor = seatPersonOf(judged.author);
         const doneAs = meOf(this.seated(judged.author)) ?? (seatOfAuthor === undefined ? undefined : everBound(this as never).get(seatOfAuthor));
-        const names = (value: unknown) => doneAs !== undefined && (JSON.stringify(value) ?? "").includes(JSON.stringify(doneAs));
+        // And the record it was done as then: a person moved to another record since still did what they did as the first (Roadmap f-rebind-after-acting).
+        const doneAsThen = seatOfAuthor === undefined ? undefined : this.boundWhen(seatOfAuthor, judged.seq);
+        const named = (value: unknown, id: string | undefined) => id !== undefined && (JSON.stringify(value) ?? "").includes(JSON.stringify(id));
+        const names = (value: unknown) => named(value, doneAs) || (doneAsThen !== doneAs && named(value, doneAsThen));
         const verdict =
           by !== undefined && by !== actingAs(author as Principal).id && !isSystem(author as Principal) && !names(judged.mutation.args) && names(judged.primitives)
             ? { ok: false as const, refusal: { mutation: judged.mutation.name, wouldNeed: [], message: "it was done as somebody else." } }
