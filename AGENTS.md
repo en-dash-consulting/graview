@@ -209,6 +209,24 @@ pinned at 1.49.1 on purpose.
 - **Node 22.** Top-level await in the scaffolded app, and the engines field
   on every package.
 
+## Dependencies
+
+A version waits a week before the lockfile takes it: `.npmrc` sets
+`minimum-release-age=10080` (pnpm counts minutes), so `pnpm install` and
+`pnpm update` resolve nothing published in the last seven days. Every pull
+request and the release job run `node scripts/dependency-check.mjs`, which
+fails on a high or critical advisory reaching a published package's own
+dependencies (examples, scripts, dev tooling and a package's devDependencies
+are reported, not failed) and lists the lockfile versions that changed, and
+`node scripts/dependency-check.mjs signatures`, which runs
+`npm audit signatures` over every package the lockfile installs.
+
+**An urgent fix taken sooner** is one package, in its own pull request: add
+`minimum-release-age-exclude[]=<name>` to `.npmrc`, update that package
+alone, and name the package, the version and the advisory it fixes in the
+pull request's body. Take the line out again in the next change that touches
+the lockfile once the version is a week old.
+
 ## Releasing
 
 **A batch carries its own release.** Once a `batch/0-2-N` branch has its last

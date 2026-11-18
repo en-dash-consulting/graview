@@ -1,0 +1,69 @@
+[
+  {
+    "name": "@graview/core",
+    "version": "0.2.6",
+    "path": "packages/core",
+    "private": false,
+    "dependencies": {
+      "zod": { "from": "zod", "version": "4.6.5" },
+      "better-sqlite3": {
+        "from": "better-sqlite3",
+        "version": "13.0.3",
+        "dependencies": {
+          "node-addon-api": { "from": "node-addon-api", "version": "8.9.2" },
+          "a-router": {
+            "from": "a-router",
+            "version": "2.0.0",
+            "dependencies": { "cookie-es": { "from": "cookie-es", "version": "3.1.1" } }
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "@graview/tools",
+    "version": "0.2.6",
+    "path": "packages/tools",
+    "private": false,
+    "dependencies": {
+      "@graview/core": {
+        "from": "@graview/core",
+        "version": "link:../core",
+        "dependencies": { "zod": { "from": "zod", "version": "4.6.5" } }
+      }
+    }
+  },
+  {
+    "name": "@graview/guest",
+    "version": "0.2.6",
+    "path": "packages/guest",
+    "private": false,
+    "dependencies": {
+      "playwright": { "from": "playwright", "version": "1.49.1" },
+      "@remote-dom/core": { "from": "@remote-dom/core", "version": "1.12.0" },
+      "a-router": { "from": "a-router", "version": "2.0.0", "deduped": true, "dedupedDependenciesCount": 1 }
+    }
+  },
+  {
+    "name": "@graview/ship",
+    "version": "0.2.6",
+    "path": "packages/ship",
+    "private": false,
+    "dependencies": {
+      "a-server": {
+        "from": "a-server",
+        "version": "1.0.0",
+        "dependencies": { "ip-address": { "from": "ip-address", "version": "10.7.3" } }
+      }
+    }
+  },
+  {
+    "name": "@graview/workbench",
+    "version": "0.2.6",
+    "path": "packages/workbench",
+    "private": true,
+    "dependencies": {
+      "vitest": { "from": "vitest", "version": "2.1.9", "dependencies": { "tinypool": { "from": "tinypool", "version": "1.1.1" } } }
+    }
+  }
+]
