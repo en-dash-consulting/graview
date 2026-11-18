@@ -3,11 +3,13 @@
  * THEM (Roadmap f-invite-binds-existing-person). An organizer enters Bud
  * before he joins — his household, his lists — and when his account accepts
  * an invitation, the host binds it to that record rather than making a
- * second Bud (`bindPerson`). A host's, on no page: loading it teaches every
- * store the `bind-person` act, that the host alone runs it, and when it may be taken back
+ * second Bud (`bindPerson`). Bound to the wrong record, he is moved to the
+ * right one with what he did there (`rebindPerson`). A host's, on no page:
+ * loading it teaches every store the `bind-person` and `rebind-person`
+ * acts, that the host alone runs them, and when they may be taken back
  * (`BINDING`). Resolving a seat to its record is the main entry's.
  */
-import { BIND_PERSON, BINDING, takesBindingBack } from "./binding-served.js";
+import { BIND_PERSON, BINDING, isBindingAct, REBIND_PERSON, takesBindingBack } from "./binding-served.js";
 import { PERSON_SEAT, personSeatOf } from "./graph/archived.js";
 import { isUnset, UNSET } from "./graph/primitives.js";
 import { MissingRecordError, NO_SUCH_RECORD } from "./graph/graph.js";
@@ -32,15 +34,41 @@ const NOBODY_BINDABLE = "Nobody here can be bound to a record: this app says of 
 type Node = { readonly id: string; readonly kind: string } & Record<string, unknown>;
 
 /**
+ * EACH SEAT ONE OP MOVED FROM ONE RECORD TO ANOTHER (Roadmap
+ * f-rebind-after-acting): the seat taken off one record and put on another
+ * in the same op — a `rebind-person`, its undo, or its redo. The op is the
+ * record of the move; nothing before it in the log is rewritten.
+ */
+function movesIn(op: Operation): readonly { readonly seat: string; readonly from: string; readonly to: string }[] {
+  const off = new Map<string, string>();
+  const on = new Map<string, string>();
+  for (const primitive of op.primitives) {
+    if (primitive.op !== "patch-node" || !Object.hasOwn(primitive.after, PERSON_SEAT)) continue;
+    const seat = primitive.after[PERSON_SEAT];
+    const was = primitive.before[PERSON_SEAT];
+    if (typeof seat === "string" && !isUnset(seat)) on.set(seat, primitive.id);
+    else if (typeof was === "string" && !isUnset(was)) off.set(was, primitive.id);
+  }
+  return [...off].flatMap(([seat, from]) => (on.has(seat) && on.get(seat) !== from ? [{ seat, from, to: on.get(seat)! }] : []));
+}
+
+/**
  * WHO WAS DONE AS WHICH RECORD, read from the log: each op's author as the
  * seat it was, and the record that seat was bound to then — followed through
  * every binding, its undo and a record put back — or the seat's own id where
  * it was bound to none. A binding's own op is the binder's, not the seat's.
+ * A seat moved to another record takes what it did as the first with it
+ * (`movesIn`), and a move taken back brings it back.
  */
 function doneAs(store: Held): readonly { readonly seq: number; readonly seat: string; readonly record: string }[] {
   const bound = new Map<string, string>();
-  const done: { seq: number; seat: string; record: string }[] = [];
+  let done: { seq: number; seat: string; record: string }[] = [];
   for (const op of store.log.all()) {
+    const moves = movesIn(op);
+    if (moves.length > 0) done = done.map((one) => {
+      const move = moves.find((it) => it.seat === one.seat && it.from === one.record);
+      return move ? { ...one, record: move.to } : one;
+    });
     for (const primitive of op.primitives) {
       if (primitive.op === "add-node" && personSeatOf(primitive.node)) bound.set(primitive.node.id, personSeatOf(primitive.node)!);
       else if (primitive.op === "remove-node") bound.delete(primitive.node.id);
@@ -50,7 +78,7 @@ function doneAs(store: Held): readonly { readonly seq: number; readonly seat: st
         else bound.set(primitive.id, seat);
       }
     }
-    if (op.mutation?.name === BIND_PERSON || (op.author.onBehalfOf ?? op.author).kind !== "human") continue;
+    if (isBindingAct(op.mutation?.name) || (op.author.onBehalfOf ?? op.author).kind !== "human") continue;
     const seat = seatPersonOf(op.author);
     if (seat === undefined) continue;
     const record = [...bound].find(([, one]) => one === seat)?.[0] ?? seat;
@@ -131,6 +159,48 @@ function bindPersonMutation(store: Held): AnyMutationDefinition | undefined {
   } as AnyMutationDefinition;
 }
 
+/**
+ * The `rebind-person` act for a store, where a kind is its people (Roadmap
+ * f-rebind-after-acting): the seat bound to `from` is `to`'s from now on,
+ * `from` is nobody's again, and what the seat did as `from` is done as
+ * `to` — read so from this op on (`doneAs`), with nothing before it
+ * rewritten. One change, which undo takes back whole.
+ */
+function rebindPersonMutation(store: Held): AnyMutationDefinition | undefined {
+  const schema = store.schema;
+  const people = schema.definitions.find((definition) => definition.people);
+  if (!people) return undefined;
+  const noun = nounOf(people, people.kind);
+  const named = (node: Node) => labelOf(schema.tryDefinition(node.kind), node as never);
+  return {
+    name: REBIND_PERSON,
+    title: `Move an account to this ${noun}`,
+    description: `The account bound to another ${noun} is this ${noun} from now on, and what it did as the other is done as this one; the other is nobody's again.`,
+    subject: { kinds: [people.kind], arg: "to" },
+    input: z.object({ seat: z.string().check(z.regex(SEAT)), from: z.string().check(z.minLength(1)), to: z.string().check(z.minLength(1)) }) as never,
+    describe: (args, graph) => {
+      const { from, to } = args as { from?: unknown; to?: unknown };
+      const was = graph.getNode(String(from)) as Node | undefined;
+      const now = graph.getNode(String(to)) as Node | undefined;
+      return `Move the account from ${was ? named(was) : `one ${noun}`} to ${now ? named(now) : `another ${noun}`}`;
+    },
+    apply(ctx, args) {
+      const { seat, from, to } = args as { seat: string; from: string; to: string };
+      const full = store.graph;
+      const was = full.getNode(from) as Node | undefined;
+      const now = full.getNode(to) as Node | undefined;
+      if (!was || !ctx.graph.getNode(from)) throw new MissingRecordError(from, NO_SUCH_RECORD.change);
+      if (!now || !ctx.graph.getNode(to)) throw new MissingRecordError(to, NO_SUCH_RECORD.change);
+      if (personSeatOf(was) !== seat) throw new ActRefusal(`That account is not ${named(was)} here.`);
+      if (from === to) throw new ActRefusal(`That account is ${named(was)} here already.`);
+      const refused = recordRefusal(store, now, seat);
+      if (refused) throw new ActRefusal(refused);
+      ctx.patchNode(from, { [PERSON_SEAT]: UNSET });
+      ctx.patchNode(to, { [PERSON_SEAT]: seat });
+    },
+  } as AnyMutationDefinition;
+}
+
 const refused = (call: MutationCall, message: string, wouldNeed: readonly string[] = []): { readonly ok: false; readonly refusal: Refusal } => ({ ok: false, refusal: { mutation: call.name, wouldNeed: [...wouldNeed], message } });
 
 /**
@@ -142,25 +212,28 @@ const refused = (call: MutationCall, message: string, wouldNeed: readonly string
  * signed out, an agent or anybody acting for another.
  */
 function judgedBinding(_store: object, call: MutationCall, principal: Principal): { readonly ok: true } | { readonly ok: false; readonly refusal: Refusal } {
-  if (signedOutSeat(principal)) return refused(call, "Sign in to bind an account to a record here.");
+  const moving = call.name === REBIND_PERSON;
+  const doing = moving ? "move an account from one record to another" : "bind an account to a record";
+  const hostOnly = moving ? "Not permitted: only the host moves an account from one record to another here." : "Not permitted: only the host binds an account to a record here, as an invitation is accepted.";
+  if (signedOutSeat(principal)) return refused(call, `Sign in to ${doing} here.`);
   // A person binds, never an agent nor anybody acting for one: what an agent reads in a record could steer it to.
-  if (principal.kind === "agent" || principal.onBehalfOf !== undefined) return refused(call, "An agent cannot bind an account to a record here: a person who runs this app does that.");
+  if (principal.kind === "agent" || principal.onBehalfOf !== undefined) return refused(call, `An agent cannot ${doing} here: a person who runs this app does that.`);
   /*
    * The host itself, and nothing else that writes as the system: never the
    * app's own actor or a workflow (`automated`), whose suggestion a vote
    * could carry in, nor another app's change arriving here.
    */
   if (isSystem(principal)) {
-    if (principal.automated === true || /^(workflow|app|template):/.test(principal.id ?? "")) return refused(call, "Not permitted: only the host binds an account to a record here, as an invitation is accepted.");
+    if (principal.automated === true || /^(workflow|app|template):/.test(principal.id ?? "")) return refused(call, hostOnly);
     return { ok: true };
   }
   const seat = call.args["seat"];
-  const record = call.args["record"];
+  const records = [call.args["record"], call.args["from"], call.args["to"]];
   const account = actingAs(principal).id;
-  if ((typeof seat === "string" && account !== undefined && (seat === account || seat.startsWith(`${account}~`))) || (typeof record === "string" && ownsId(principal, record))) {
-    return refused(call, "You cannot bind yourself to a record here: only the host does that, as an invitation is accepted.");
+  if ((typeof seat === "string" && account !== undefined && (seat === account || seat.startsWith(`${account}~`))) || records.some((record) => typeof record === "string" && ownsId(principal, record))) {
+    return refused(call, moving ? "You cannot move yourself to another record here: only the host does that." : "You cannot bind yourself to a record here: only the host does that, as an invitation is accepted.");
   }
-  return refused(call, "Not permitted: only the host binds an account to a record here, as an invitation is accepted.");
+  return refused(call, hostOnly);
 }
 
 /**
@@ -172,6 +245,7 @@ function judgedBinding(_store: object, call: MutationCall, principal: Principal)
  */
 function bindingKept(store: object, op: Operation, root: Operation): string | undefined {
   const held = store as Held;
+  if (root.mutation?.name === REBIND_PERSON) return moveKept(held, op);
   const args = (root.mutation?.args ?? {}) as { readonly record?: unknown; readonly seat?: unknown; readonly end?: unknown };
   if (typeof args.record !== "string" || typeof args.seat !== "string") return undefined;
   const record = args.record;
@@ -191,6 +265,25 @@ function bindingKept(store: object, op: Operation, root: Operation): string | un
 }
 
 /**
+ * Why a move (Roadmap f-rebind-after-acting) may not be taken back, or put
+ * back: the record it would put the seat on again is somebody else's by
+ * then — bound to another seat, or one another seat was done as or whose
+ * binding ended.
+ */
+function moveKept(store: Held, op: Operation): string | undefined {
+  for (const { seat, from } of movesIn(op)) {
+    // Taking this op back puts the seat on the record it took it off.
+    const node = store.graph.getNode(from) as Node | undefined;
+    if (!node) return "This cannot be taken back: the record was removed since.";
+    const bound = personSeatOf(node);
+    if ((bound !== undefined && bound !== seat) || doneAs(store).some((one) => one.record === from && one.seat !== seat) || [...endedIn(store)].some(([one, was]) => was === from && one !== seat)) {
+      return "This cannot be taken back: that record is someone else's here now.";
+    }
+  }
+  return undefined;
+}
+
+/**
  * THE BINDINGS ENDED, AND NOT TAKEN BACK (Roadmap f-unbind-person): each
  * seat whose binding ended, and the record it was. What it did is said as
  * that person still (`everBound`), so neither is bound to another.
@@ -199,18 +292,20 @@ function endedIn(store: Held): ReadonlyMap<string, string> {
   const ended = new Map<string, string>();
   const get = (id: string) => store.log.get(id);
   for (const op of store.log.all()) {
+    // A seat moved to another record ended nothing (Roadmap f-rebind-after-acting): the record it left is nobody's again.
+    const moved = new Set(movesIn(op).map((move) => move.seat));
     for (const primitive of op.primitives) {
       if (primitive.op !== "patch-node" || !Object.hasOwn(primitive.after, PERSON_SEAT)) continue;
       const seat = primitive.after[PERSON_SEAT];
       const was = primitive.before[PERSON_SEAT];
       if (typeof seat === "string" && !isUnset(seat)) ended.delete(seat);
-      else if (typeof was === "string" && !isUnset(was) && !takesBindingBack(op, get)) ended.set(was, primitive.id);
+      else if (typeof was === "string" && !isUnset(was) && !moved.has(was) && !takesBindingBack(op, get)) ended.set(was, primitive.id);
     }
   }
   return ended;
 }
 
-BINDING.act = (store) => bindPersonMutation(store as Held);
+BINDING.act = (store, name) => (name === REBIND_PERSON ? rebindPersonMutation(store as Held) : bindPersonMutation(store as Held));
 BINDING.judged = judgedBinding;
 BINDING.undo = bindingKept;
 
@@ -246,6 +341,27 @@ export function unbindPerson<S extends AnySchema>(store: Store<S>, leaving: Prin
   const record = seat === undefined ? undefined : store.graph.personBoundTo(seat);
   if (seat === undefined || record === undefined) throw new ActRefusal("That account is nobody's record here.");
   return store.apply({ name: BIND_PERSON, args: { record, seat, end: true } }, options);
+}
+
+/**
+ * MOVE A PERSON BOUND TO THE WRONG RECORD, AND WHAT THEY DID, TO THE RIGHT
+ * ONE (Roadmap f-rebind-after-acting): what a host calls when an owner says
+ * the account that joined is somebody else entered here. `person` is the
+ * seat as the host serves it; `record` the right record, of the people and
+ * nobody's. The seat is `record` from now on, the record it was bound to is
+ * nobody's again and may be bound to somebody else, and every act the seat
+ * did as that record is said as `record`. The `rebind-person` act, run as
+ * `options.author`, the host's system seat, as a binding is: one change,
+ * which undo takes back whole — the seat, the records and what it did as
+ * each. Refused (`ActRefusal`, or `PermissionDeniedError` for who may) in a
+ * sentence a host can show.
+ */
+export function rebindPerson<S extends AnySchema>(store: Store<S>, person: Principal, record: string, options: ApplyOptions = {}): ApplyResult<S> {
+  if (!store.schema.definitions.some((definition) => definition.people)) throw new ActRefusal(NOBODY_BINDABLE);
+  const seat = bindable(withValidProfile(person)) ? seatPersonOf(withValidProfile(person)) : undefined;
+  const from = seat === undefined ? undefined : store.graph.personBoundTo(seat);
+  if (seat === undefined || from === undefined) throw new ActRefusal("That account is nobody's record here.");
+  return store.apply({ name: REBIND_PERSON, args: { seat, from, to: record } }, options);
 }
 
 /**

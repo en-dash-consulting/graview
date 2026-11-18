@@ -117,12 +117,12 @@ removed, and a kind that requires more than a name has none for a profile
 (`people-unmakeable`): `$me` then refuses, and the act is not offered. The seat headers
 carry it only where a host trusts them; otherwise it is the host's `seatOf`.
 
-A person entered before they joined is bound, not made twice:
+A person entered before joining is bound, not made twice:
 `bindPerson(store, joining, "person:bud", { author })` (`@graview/core/binding`);
 `$me`, `own` and `self` then read that record. Only the host's system seat
-binds; no grant may name `bind-person` (`grant-gives-binding`);
-`unbindPerson(store, leaving, { author })` ends one. A seat sees its own
-binding, the host all; others read its acts, ended or not, as the record's.
+binds; no grant does (`grant-gives-binding`). `unbindPerson` ends one;
+`rebindPerson` moves it, acts and all, to the right one. A seat sees its
+own binding, the host all; others read its acts, ended or not, as the record's.
 A host reads through `seenBy` each time and forwards a change through
 `answerSeenBy`, never what a listener is handed.
 

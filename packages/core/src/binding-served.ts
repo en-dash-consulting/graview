@@ -17,10 +17,19 @@ import type { Principal, Refusal } from "./permissions/types.js";
 /** The name of the act that binds a seat to a person already entered. */
 export const BIND_PERSON = "bind-person";
 
+/** The name of the act that moves a seat, and what it did, from the record it is bound to onto another (Roadmap f-rebind-after-acting). */
+export const REBIND_PERSON = "rebind-person";
+
+/** The acts that say whose record a person is: the framework's own, the host's alone, and never an app's. */
+export const BINDING_ACTS: readonly string[] = [BIND_PERSON, REBIND_PERSON];
+
+/** Whether a name is one of the binding acts (`BINDING_ACTS`). */
+export const isBindingAct = (name: string | undefined): boolean => name === BIND_PERSON || name === REBIND_PERSON;
+
 /** What `@graview/core/binding` teaches the store when it is loaded, as `PUBLISHING` does for a publish. */
 export interface BindingServed {
-  /** The `bind-person` act for this store, or none where no kind is the people. */
-  act?: (store: object) => unknown;
+  /** The binding act of this name (`bind-person`, `rebind-person`) for this store, or none where no kind is the people. */
+  act?: (store: object, name: string) => unknown;
   /** Whether this seat may run this binding: the host's system seat alone, acting for the app's owner; no grant gives it. */
   judged?: (store: object, call: MutationCall, principal: Principal) => { readonly ok: true } | { readonly ok: false; readonly refusal: Refusal };
   /** Why this op of a binding's (`root` the change its undo chain begins with) may not be taken back, in a sentence; undefined when it may. */
@@ -93,8 +102,8 @@ export function unseatedPrimitive(primitive: Primitive, keeps: KeepsSeat = NO_SE
  * itself where it names none.
  */
 export function unseatedOp(op: Operation, keeps: KeepsSeat = NO_SEAT): Operation {
-  const seat = op.mutation?.name === BIND_PERSON ? (op.mutation.args as Record<string, unknown> | undefined)?.["seat"] : undefined;
-  const binds = op.mutation?.name === BIND_PERSON && Object.hasOwn(op.mutation.args ?? {}, "seat") && !(typeof seat === "string" && keeps(seat));
+  const seat = isBindingAct(op.mutation?.name) ? (op.mutation!.args as Record<string, unknown> | undefined)?.["seat"] : undefined;
+  const binds = isBindingAct(op.mutation?.name) && Object.hasOwn(op.mutation!.args ?? {}, "seat") && !(typeof seat === "string" && keeps(seat));
   const primitives = op.primitives.flatMap((one) => unseatedPrimitive(one, keeps) ?? []);
   const inverse = op.inverse?.flatMap((one) => unseatedPrimitive(one, keeps) ?? []);
   const same = !binds && primitives.length === op.primitives.length && primitives.every((one, at) => one === op.primitives[at]) && (op.inverse === undefined || (inverse!.length === op.inverse.length && inverse!.every((one, at) => one === op.inverse![at])));

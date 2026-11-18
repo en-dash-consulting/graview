@@ -1,4 +1,4 @@
-import { BIND_PERSON, rootOfChain } from "../binding-served.js";
+import { isBindingAct, rootOfChain } from "../binding-served.js";
 import { PERSON_SEAT } from "../graph/archived.js";
 import { GraphError } from "../graph/graph.js";
 import type { Primitive } from "../graph/primitives.js";
@@ -226,7 +226,7 @@ export function checkUndo(
    * host shows the sentence to an owner.
    */
   const byId = new Map(log.all().map((op) => [op.id, op]));
-  if (ops.every((op) => rootOfChain(op, (id) => byId.get(id)).mutation?.name === BIND_PERSON)) {
+  if (ops.every((op) => isBindingAct(rootOfChain(op, (id) => byId.get(id)).mutation?.name))) {
     return {
       ok: false,
       ops,
