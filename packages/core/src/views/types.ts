@@ -107,6 +107,12 @@ export interface ViewMeta {
   readonly lens?: string;
   /** The other kinds the picture reads beyond its own: a worker view's manifest `reads.kinds`. */
   readonly reads?: readonly string[];
+  /**
+   * The acts it may ask for, by name: a worker view's manifest `acts`. A view
+   * that may make its kind's records is a form for the kind, which the bar
+   * lists beside the kind's list (Roadmap f-frame-form-grouped-by-kind).
+   */
+  readonly acts?: readonly string[];
 }
 
 /** A named group view: somewhere to go, by name. */
@@ -140,6 +146,8 @@ export interface Place {
   readonly lens?: string;
   /** The other kinds it reads beyond its own (`ViewMeta.reads`). */
   readonly reads?: readonly string[];
+  /** The acts it may ask for (`ViewMeta.acts`). */
+  readonly acts?: readonly string[];
 }
 
 /**
@@ -376,7 +384,7 @@ export function createViewRegistry<S extends AnySchema, V = unknown>(
         const as = placeSlug(meta.title);
         entries.set(key(kind, cell, as), registration);
         if (cell.cardinality === "many" && !named.some((place) => place.kind === kind && place.as === as)) {
-          named.push({ kind, title: meta.title, as, ...(meta.across ? { across: meta.across } : {}), ...over, ...(meta.lens ? { lens: meta.lens } : {}), ...(meta.reads?.length ? { reads: meta.reads } : {}) });
+          named.push({ kind, title: meta.title, as, ...(meta.across ? { across: meta.across } : {}), ...over, ...(meta.lens ? { lens: meta.lens } : {}), ...(meta.reads?.length ? { reads: meta.reads } : {}), ...(meta.acts?.length ? { acts: meta.acts } : {}) });
         }
       }
       return registry;

@@ -420,7 +420,7 @@ export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry
     manifest.attach as KindOfSchema<S>,
     cell,
     view as unknown as ViewComponent<S>,
-    manifest.title ? { title: manifest.title, ...(draft ? {} : { name: manifest.name }), lens: "view", ...(manifest.reads?.kinds?.length ? { reads: manifest.reads.kinds } : {}) } : draft ? undefined : { name: manifest.name },
+    manifest.title ? { title: manifest.title, ...(draft ? {} : { name: manifest.name }), lens: "view", ...(manifest.reads?.kinds?.length ? { reads: manifest.reads.kinds } : {}), ...(manifest.acts?.length ? { acts: manifest.acts.map((one) => (typeof one === "string" ? one : one.act)) } : {}) } : draft ? undefined : { name: manifest.name },
   );
   return views;
 }

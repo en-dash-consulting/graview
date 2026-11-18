@@ -286,6 +286,17 @@ function build() {
     z.strictObject({ remove: ref }),
   ]);
 
+  /**
+   * AN ARGUMENT THAT NAMES A RECORD (Roadmap f-optional-record-input-in-create):
+   * one an effect's `from`, `to`, `target` or `remove` reads, declared with no
+   * type, since its kinds are the relation's. `"required": false` asks for it
+   * with a picker that may be left empty, and an effect that would read it
+   * is skipped when it is: `"to": { "required": false }` on an act that
+   * creates a dish and connects it to `$to` makes the dish, linked only when
+   * a household is chosen.
+   */
+  const RecordArgSpec = z.strictObject({ required: z.optional(z.boolean()), description: z.optional(sentence) });
+
   const ActSpec = z.strictObject({
     title: z.optional(str(1, 80)),
     description: z.optional(sentence),
@@ -321,7 +332,12 @@ function build() {
      */
     replaces: z.optional(z.union([z.literal(true), some(edgeName, 1, 10)])),
     removes: z.optional(z.literal(true)),
-    args: z.optional(z.record(fieldName, FieldSpec)),
+    /**
+     * What the act asks for, by argument, where the effects alone do not say
+     * it well: a field's shape (`{ "type": "string", "required": true }`), or,
+     * for an argument naming a record, `{ "required": false }` (`RecordArgSpec`).
+     */
+    args: z.optional(z.record(fieldName, z.union([RecordArgSpec, FieldSpec]))),
     effects: z.optional(some(EffectSpec, 1, 20)),
     allowedWhen: z.optional(expression),
     refusal: z.optional(template),
@@ -699,7 +715,7 @@ function build() {
      */
     tidying: z.optional(z.strictObject({ autoAcceptAt: z.optional(z.number().check(z.int(), z.minimum(1), z.maximum(10_000))) })),
   });
-  return { FieldSpec, EdgeSpec, ComputedSpec, KindSpec, ValueSpec, EffectSpec, ActSpec, RepairSpec, CoverSpec, RuleSpec, GrantSpec, SightSpec, PolicySpec, BrandSpec, PagesSpec, DocumentSpec };
+  return { FieldSpec, RecordArgSpec, EdgeSpec, ComputedSpec, KindSpec, ValueSpec, EffectSpec, ActSpec, RepairSpec, CoverSpec, RuleSpec, GrantSpec, SightSpec, PolicySpec, BrandSpec, PagesSpec, DocumentSpec };
 }
 
 let built: ReturnType<typeof build> | undefined;
@@ -707,6 +723,7 @@ let built: ReturnType<typeof build> | undefined;
 const shapes = () => (built ??= build());
 
 export const FieldSpec = z.lazy(() => shapes().FieldSpec);
+export const RecordArgSpec = z.lazy(() => shapes().RecordArgSpec);
 export const EdgeSpec = z.lazy(() => shapes().EdgeSpec);
 export const ComputedSpec = z.lazy(() => shapes().ComputedSpec);
 export const KindSpec = z.lazy(() => shapes().KindSpec);
@@ -724,6 +741,11 @@ export const PagesSpec = z.lazy(() => shapes().PagesSpec);
 export const DocumentSpec = z.lazy(() => shapes().DocumentSpec);
 
 export type FieldSpec = z.infer<typeof FieldSpec>;
+export type RecordArgSpec = z.infer<typeof RecordArgSpec>;
+/** One argument an act declares: a field's shape, or a record's (`RecordArgSpec`). */
+export type ArgSpec = FieldSpec | RecordArgSpec;
+/** Whether a declared argument is a field's value rather than a record's: it says its type. */
+export const isFieldArg = (arg: ArgSpec): arg is FieldSpec => "type" in arg && arg.type !== undefined;
 export type EdgeSpec = z.infer<typeof EdgeSpec>;
 export type ComputedSpec = z.infer<typeof ComputedSpec>;
 export type KindSpec = z.infer<typeof KindSpec>;
