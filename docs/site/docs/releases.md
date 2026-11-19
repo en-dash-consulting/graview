@@ -86,7 +86,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.2.7
 
-Published November 18, 2026 · the current version
+Published November 19, 2026 · the current version
 
 An owner can merge a member’s own record into the person entered for them, an act can ask for a record that may be left out, and a picture or video offers its download.
 
