@@ -1,6 +1,6 @@
 {
   "name": "@graview/studio",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "type": "module",
   "description": "The declaration itself as a graph: kinds, fields, edges, acts, rules, roles and grants as nodes, edited with ordinary mutations in Graview's own interface, checked before they are applied, migrated, and written back as the files graview create writes.",
   "keywords": [
@@ -31,7 +31,7 @@
     "@graview/react": "workspace:*",
     "@graview/ship": "workspace:*",
     "@graview/tools": "workspace:*",
-    "zod": "^4.6.5"
+    "zod": "^4.6.7"
   },
   "peerDependencies": {
     "react": ">=19.2.7",

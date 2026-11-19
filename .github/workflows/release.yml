@@ -158,6 +158,20 @@ jobs:
         run: npm install -g npm@11.15.0
 
       - run: pnpm install --frozen-lockfile
+
+      # What the release carries, checked again before it is built: no high
+      # or critical advisory reaching a published package, and every installed
+      # package's registry signature valid. The lockfile versions changed
+      # since the last release tagged before this commit go in the summary
+      # (scripts/dependency-check.mjs).
+      - name: No high or critical advisory reaches a published package
+        run: |
+          set -euo pipefail
+          BASE=$(git describe --tags --abbrev=0 --match '@graview/core@*' HEAD^1)
+          node scripts/dependency-check.mjs --base "$BASE"
+      - name: Every installed package carries a valid registry signature
+        run: node scripts/dependency-check.mjs signatures
+
       - run: pnpm build
       # The apps compile under typecheck (`tsc -b` over packages and apps), and
       # tests that typecheck Seedbed or read the launcher need the rota app's

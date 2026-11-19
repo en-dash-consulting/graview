@@ -26,6 +26,7 @@
 import { createServer } from "node:http";
 import { resolve } from "node:path";
 import { graviewSources } from "./graview-sources.mjs";
+import { pageFactor } from "./page-pace.mjs";
 
 const MANIFEST = { title: "The packages", attach: "package", cardinality: "many", reads: { kinds: ["offer"], edges: ["includes"] } };
 const PUSH_MS = 1_000;
@@ -51,7 +52,15 @@ export async function limitsSuite({ repoRoot, build, browser, claim, report, HOS
     /* Draws, then spins where no push is waiting: only the heartbeat can tell. */
     later: `let once = false; graview.onProps((props) => { ${draw} if (!once) { once = true; setTimeout(() => { for (;;) {} }, 50); } });`,
     /* Draws, then sends message after message. */
-    flood: `let once = false; graview.onProps((props) => { ${draw} if (!once) { once = true; let i = 0; setInterval(() => { for (let j = 0; j < 40; j += 1) graview.style(".x" + (i += 1) + " { color: red }"); }, 0); } });`,
+    /*
+     * Draws, then sends message after message, each one the host answers without drawing (an act its manifest does not
+     * declare, refused, and past the act allowance rate-limited):
+     * the message allowance is what is under test. A flood of new styles also costs the host its drawing — each
+     * `graview.style` sends every sheet so far — and on GitHub's runners that spent the 100 ms draw budget before
+     * the 121st message (stopped as slow at 219–562 ms, verify.yml 44315293358, 44327255373): the churn view holds
+     * the draw budget; this one holds the count.
+     */
+    flood: `let once = false; graview.onProps((props) => { ${draw} if (!once) { once = true; setInterval(() => { for (let j = 0; j < 40; j += 1) graview.act("no-such-act", {}).catch(() => {}); }, 0); } });`,
     /* 100 000 nodes in one render. */
     /* A hundred lists of a thousand: the polyfill appends in time proportional to a parent's children, so one list of 100 000 would test the polyfill, not the host. */
     nodes: `graview.onProps(() => { const lists = []; for (let l = 0; l < 100; l += 1) { const list = document.createElement("ul"); for (let i = 0; i < 1000; i += 1) list.appendChild(document.createElement("li")); lists.push(list); } graview.render(lists); });`,
@@ -129,8 +138,8 @@ const problems = {};
 const mounted = {};
 const began = performance.now();
 /* The page's own timer, every 50 ms: the longest it went between ticks while views spun. */
-const pulse = { last: performance.now(), longest: 0, ticks: 0 };
-setInterval(() => { const at = performance.now(); pulse.longest = Math.max(pulse.longest, at - pulse.last); pulse.last = at; pulse.ticks += 1; }, 50);
+const pulse = { last: performance.now(), longest: 0, ticks: 0, gaps: [] };
+setInterval(() => { const at = performance.now(); const gap = at - pulse.last; pulse.longest = Math.max(pulse.longest, gap); if (gap > 100) pulse.gaps.push([Math.round(at - began), Math.round(gap)]); pulse.last = at; pulse.ticks += 1; }, 50);
 for (const [name, script] of Object.entries(window.VIEWS)) {
   const holder = document.createElement("section");
   holder.id = name;
@@ -271,6 +280,9 @@ window.__host = {
 
   try {
     const context = await browser.newContext();
+    /* How much slower this machine's pages are than the one the timer's bound was set on (page-pace.mjs): the bound stretches by it, never shrinks. */
+    const machine = await pageFactor(context, engine, slowed);
+    report.machine = machine;
     const tab = await context.newPage();
     await slowed(tab);
     tab.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
@@ -322,7 +334,14 @@ window.__host = {
       host.running.parts === true && !host.failures.parts && (share >= PART_BUSY_MS ? parts.timeline?.text === "late" : parts.timeline?.failed === "slow" && parts.timeline.text === "This part could not be drawn." && /The part "timeline" .* took too long/.test(partsSaid)),
       { share, pace: host.pace.parts, timeline: parts.timeline, problems: host.problems?.parts },
     );
-    claim("the page's own timer kept time while views spun, never more than 250 ms between 50 ms ticks", host.pulse.ticks > 20 && host.pulse.longest < 250, host.pulse);
+    /*
+     * The longest gap is the host drawing a hostile view to its budget and then stopping it (churn, stopped ~190–220 ms
+     * in; 111–156 ms long on a laptop, 278 ms on WebKit on GitHub's runner): the budget is wall-clock and holds anywhere,
+     * the stopping is CPU work, so 250 ms holds on the machine it was set on and stretches by how much slower this one's
+     * pages are (page-pace.mjs).
+     */
+    const ticked = 250 * machine.factor;
+    claim("the page's own timer kept time while views spun, never more than 250 ms between 50 ms ticks at the reference's pace", host.pulse.ticks > 20 && host.pulse.longest < ticked, { ...host.pulse, bound: Math.round(ticked), machine });
     /*
      * The budget fits the device: the page measured its first worker's start
      * once, so every view that started (the long one never did) is at the

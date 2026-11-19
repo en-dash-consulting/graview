@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bindPerson } from "../../src/binding.js";
+import { bindPerson, hostSeat } from "../../src/binding.js";
 import { compileDocument } from "../../src/check.js";
 import { compileDocumentWithoutCheck, editDocument } from "../../src/document/index.js";
 import { BIND_PERSON, createSchema, defineNode, Store, z, type AnySchema, type Principal } from "../../src/index.js";
@@ -12,7 +12,7 @@ import { BIND_PERSON, createSchema, defineNode, Store, z, type AnySchema, type P
  */
 const participant = defineNode("participant", { people: true, label: (n: any) => n.name, fields: z.object({ name: z.string() }) } as never);
 const schema = createSchema([participant]);
-const host: Principal = { kind: "system", id: "host" };
+const host: Principal = hostSeat({ id: "host" });
 const bud: Principal = { kind: "human", id: "acct-bud" };
 
 const doc = {

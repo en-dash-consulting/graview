@@ -3,7 +3,7 @@ import { ConnectionSpec } from "../document/connection-spec.js";
 import { PurposeSpec } from "../document/purpose-spec.js";
 import { DevicesSpec } from "../document/devices-spec.js";
 import { WorkflowSpec } from "../document/workflow-spec.js";
-import { DocumentSpec, FieldSpec, KindSpec, RuleSpec } from "../document/schema.js";
+import { ActSpec, DocumentSpec, FieldSpec, KindSpec, RecordArgSpec, RuleSpec } from "../document/schema.js";
 import { BLOCK_KEYS, FIGURE_EMPHASES, FIGURE_FORMATS, LIST_AS, MAX_LIST_LIMIT, MAX_TEXT_LINES, VIEW_FIELD_FORMATS, VIEW_SLOTS, VIEW_TONES } from "../document/views.js";
 import { SHIPPED_LENSES, SHIPPED_LENS_NAMES } from "../places.js";
 
@@ -49,7 +49,7 @@ const built = (lazy: z.ZodMiniLazy): unknown => lazy._zod.innerType;
 const at = (schema: Json, ...path: string[]): Json => path.reduce<Json>((node, key) => (node[key] ?? {}) as Json, schema);
 
 export function documentJsonSchema(version: string): Json {
-  const [documentSpec, kindSpec, fieldSpec, ruleSpec] = [built(DocumentSpec), built(KindSpec), built(FieldSpec), built(RuleSpec)];
+  const [documentSpec, kindSpec, fieldSpec, ruleSpec, actSpec, recordArgSpec] = [built(DocumentSpec), built(KindSpec), built(FieldSpec), built(RuleSpec), built(ActSpec), built(RecordArgSpec)];
   const schema = z.toJSONSchema(documentSpec as z.ZodMiniType, {
     io: "input",
     unrepresentable: "any",
@@ -66,6 +66,8 @@ export function documentJsonSchema(version: string): Json {
         Object.assign(at(json, "properties", "edges"), { description: `The kind's relations, by name. ${NAMING}` });
         Object.assign(at(json, "properties", "computed"), { maxProperties: 20 });
       }
+      if (zodSchema === actSpec) Object.assign(at(json, "properties", "args"), { description: ACT_ARGS_SAID });
+      if (zodSchema === recordArgSpec) json["description"] = RECORD_ARG_SAID;
       if (zodSchema === ruleSpec) {
         // A rule is judged by what it requires or by what it covers, one or the other (Roadmap f-rule-covers-every); a coverage rule is over a kind.
         json["oneOf"] = [{ required: ["require"], not: { required: ["covers"] } }, { required: ["covers"], not: { required: ["require"] }, properties: { over: { not: { const: "graph" } } } }];
@@ -133,6 +135,11 @@ export function documentJsonSchema(version: string): Json {
     ...rest,
   };
 }
+
+/** What an act's `args` says, for an editor and an agent reading the schema (Roadmap f-authoring-schemas-args-workflows). */
+const ACT_ARGS_SAID =
+  'What the act asks for, by argument, where its effects alone do not say it well. A value for a field is a field\'s shape: { "type": "string", "required": true }, with its range or options. An argument an effect links or acts on ("$to" in { "connect": "broughtBy", "from": "$new", "to": "$to" }) names a record and says no type: { "required": false } asks for it with a picker that may be left empty, and the effects that read it are skipped when it is. Unsaid, an argument is asked for as the field or relation it fills.';
+const RECORD_ARG_SAID = 'An argument naming a record: its kinds are the relation\'s, so it says only whether it may be left out ("required", true unless said) and the question it asks ("description").';
 
 const LENSES_SAID = "The pictures the app draws beside its lists: each names a lens Graview ships, binds it to the kinds it stands on, and, with a title, is a place of its own.";
 

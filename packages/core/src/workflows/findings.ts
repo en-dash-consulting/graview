@@ -47,6 +47,11 @@ export interface WorkflowCheckOptions {
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
 const quoted = (names: Iterable<string>): string => [...names].map((name) => `"${name}"`).join(", ") || "none";
 
+/** The key each trigger is known by (`WorkflowTriggerSpec`), and each shape as an example. */
+const TRIGGER_KEYS = ["every", "cron", "made", "changed", "synced", "byHand"] as const;
+const TRIGGER_SHAPES =
+  'A trigger is one of { "every": "sunday 18:00" }, { "cron": "0 18 * * 0" }, { "made": "<kind>", "where"?: "<rule>" }, { "changed": "<kind>", "fields"?: ["<field>"], "where"?: "<rule>" }, { "synced": "<connection>" } or { "byHand": true }.';
+
 /** What is wrong with a value's shape, as zod says it, at paths under the workflow. */
 function shapeIssues(spec: { safeParse(value: unknown): { success: boolean; error?: { issues: readonly { path: readonly PropertyKey[]; message: string; keys?: readonly string[] }[] } } }, value: unknown, prefix: string): { path: string; message: string }[] {
   const parsed = spec.safeParse(value);
@@ -64,8 +69,17 @@ export function workflowFindingsOf(name: string, raw: unknown, world: WorkflowWo
     out.push({ code: "workflow-steps-empty", severity: "error", path: "steps", message: `${said} has no steps, so it would do nothing.`, fix: "Give it a step — run an act, or let a model propose — or remove it.", edits: [{ op: "remove-workflow", name }] });
   }
   // The shape of everything but the steps, then each step by its own kind's shape: a union's refusal names no kind.
-  const shaped = shapeIssues(WorkflowSpec as never, { ...raw, steps: [{ act: "x" }] }, "").filter((issue) => !issue.path.startsWith("steps"));
-  for (const issue of shaped) out.push({ code: "workflow-shape", severity: "error", path: issue.path, message: `${said}: ${issue.message}.`, fix: "A workflow says title, when, status, approve and steps." });
+  /*
+   * A TRIGGER THAT IS NONE OF THE SHAPES (Roadmap f-authoring-schemas-args-workflows):
+   * a union's refusal is "Invalid input", which names none of them, so a
+   * trigger naming no trigger's key is refused by saying what a trigger
+   * is. One that names a trigger is held to that one's shape, as zod says.
+   */
+  const when = Array.isArray(raw["when"]) ? (raw["when"] as unknown[]) : [];
+  const unread = new Set(when.flatMap((trigger, index) => (isRecord(trigger) && TRIGGER_KEYS.some((key) => key in trigger) ? [] : [index])));
+  for (const index of unread) out.push({ code: "workflow-shape", severity: "error", path: `when.${index}`, message: `${said}: trigger ${index + 1} is none of the triggers Graview runs: ${TRIGGER_KEYS.map((key) => `"${key}"`).join(", ")}.`, fix: TRIGGER_SHAPES });
+  const shaped = shapeIssues(WorkflowSpec as never, { ...raw, steps: [{ act: "x" }], ...(unread.size > 0 ? { when: when.map((trigger, index) => (unread.has(index) ? { byHand: true } : trigger)) } : {}) }, "").filter((issue) => !issue.path.startsWith("steps"));
+  for (const issue of shaped) out.push({ code: "workflow-shape", severity: "error", path: issue.path, message: `${said}: ${issue.message}.`, fix: /^when\.\d+$/.test(issue.path) ? TRIGGER_SHAPES : "A workflow says title, when, status, approve and steps." });
   const stepsOk: WorkflowStep[] = [];
   (Array.isArray(steps) ? steps : []).forEach((step, index) => {
     const kind = stepKindOf(step);

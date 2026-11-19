@@ -1,5 +1,29 @@
 # @graview/primitives
 
+## 0.2.7
+
+### Patch Changes
+
+- c04f690: A frame view that makes its kind's records is listed beside that kind's list in the app bar, not under Pictures. A Thanksgiving app's "Add a dish", a view of the dishes that presses "add-dish", stood under Pictures, away from the dishes it adds. A host's view whose manifest `acts` include one that creates the view's kind is now a way in to that kind (`barPlaces` lists it in the `lists` group, right after the kind's list); a view that only pictures, or changes records it does not make, stays under Pictures. A place carries the acts its view may ask for (`Place.acts`, `ViewMeta.acts`, from the manifest's `acts`), which is how the bar knows. Held by a unit test of primitives (`a-form-for-a-kind-stands-with-its-list`).
+  
+  Compatibility: unchanged on every surface — a place and a view's registration carry one more optional property (`acts`); a host's views are drawn and addressed as before, and only where the bar lists one moves.
+- c04f690: A video's figure and a picture opened full size each carry a Download link. A document's line had Open and Download; a video field's player had none, and a picture's full-size dialog had only Close, so a render could not be saved from a phone. Each now shows a Download link, named "Download <file name>" for a reader, to the file where the host serves it with `?download=1` (`&download=1` where the address already asks something, and before any `#`), which Graview Cloud is to answer as an attachment; in the dialog it stands beside Close. Both, and Close, are at least 44 px each way, a thumb's press. What the video's caption says (`data-graview-video-said`) is unchanged. Held by a unit test of primitives (`a-video-and-a-full-size-picture-offer-a-download`).
+  
+  Compatibility: unchanged on every surface. What Graview Cloud does: answer `?download=1` on a kept file with `Content-Disposition: attachment` (feature f-download-kept-files); until then the link opens the file.
+- 391df2a: Security fixes in what the packages depend on. Every package that depends on zod now asks for `^4.6.7`, so an install no longer resolves a zod version with a published high-severity advisory (GHSA-mrhx-c7xc-m3w5) alongside Graview. Each pull request and each release now fail on a high or critical advisory reaching a published package's dependencies and check every installed package's registry signature (`scripts/dependency-check.mjs`), and the lockfile takes no version published in the last seven days.
+  
+  Compatibility: the look, the JavaScript API, ops and primitives, stored formats, the wire, the declaration and check finding codes, derived tool names and input schemas — unchanged. A host that pins zod below 4.6.7 next to Graview moves to 4.6.7 or later.
+- Updated dependencies [c04f690]
+- Updated dependencies [c04f690]
+- Updated dependencies [04fe790]
+- Updated dependencies [391df2a]
+- Updated dependencies [c04f690]
+  - @graview/core@0.2.7
+  - @graview/tools@0.2.7
+  - @graview/layout@0.2.7
+  - @graview/react@0.2.7
+  - @graview/render@0.2.7
+
 ## 0.2.6
 
 ### Patch Changes
