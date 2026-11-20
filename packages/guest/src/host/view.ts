@@ -695,7 +695,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   /* Its records' computed values, beside their fields (Roadmap f-computed-in-views): the worker starts once they can be worked out. */
   const computedReady: Promise<unknown> = readsComputed(options.store, manifest)
     ? computedChunk().then(({ computedOn }) => {
-        computed = computedOn(options.store.schema);
+        computed = computedOn(options.store.schema, { timeZone: options.store.appTimeZone, today: () => options.store.today() });
       })
     : Promise.resolve();
   /* What is dropped on what it draws (FR-193): below, with the drawing. */

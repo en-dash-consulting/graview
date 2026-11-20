@@ -1,5 +1,48 @@
 # @graview/embed
 
+## 0.2.7
+
+### Patch Changes
+
+- e7a8a4f: The 0.2.7 batch holds together: each of its branches measured its own growth against main, and merged they spend 3.9 KB more up front on a hosted page (3,929 bytes minified, 1,084 gzipped) and 2.1 KB more up front on a hosted page handed a compiled app (2,062 minified, 611 gzipped), most of it an owner merging a member's own record into the person entered for them, an optional record argument offered as a picker, and a picture or video offering its download. The batch files the raises for them.
+  
+  Compatibility: ops and primitives — unchanged. Stored formats — unchanged. The wire — unchanged. The declaration and check finding codes — unchanged. Derived tool names and input schemas — unchanged.
+- Updated dependencies [c04f690]
+- Updated dependencies [c04f690]
+- Updated dependencies [c04f690]
+- Updated dependencies [04fe790]
+- Updated dependencies [391df2a]
+- Updated dependencies [c04f690]
+  - @graview/core@0.2.7
+  - @graview/guest@0.2.7
+  - @graview/primitives@0.2.7
+  - @graview/tools@0.2.7
+  - @graview/layout@0.2.7
+  - @graview/pages@0.2.7
+  - @graview/react@0.2.7
+  - @graview/studio@0.2.7
+
+## 0.2.6
+
+### Patch Changes
+
+- 66f7e5c: The 0.2.6 batch holds together: each of its branches measured its own growth against main, and merged they spend 2.4 KB more up front on a hosted page (2,312 bytes minified, 762 gzipped) and 2.2 KB more up front on a hosted page handed a compiled app (2,137 minified, 678 gzipped), most of it a rule's day read in the app's own zone, an owner moving a person to the right record, and a board's title fitted between words. The batch files the raises for them.
+  
+  Compatibility: ops and primitives — unchanged. Stored formats — unchanged. The wire — unchanged. The declaration and check finding codes — unchanged. Derived tool names and input schemas — unchanged.
+- Updated dependencies [3169a77]
+- Updated dependencies [b85809b]
+- Updated dependencies [21c343b]
+- Updated dependencies [48b7e0b]
+- Updated dependencies [6f7e833]
+  - @graview/pages@0.2.6
+  - @graview/core@0.2.6
+  - @graview/react@0.2.6
+  - @graview/tools@0.2.6
+  - @graview/guest@0.2.6
+  - @graview/primitives@0.2.6
+  - @graview/studio@0.2.6
+  - @graview/layout@0.2.6
+
 ## 0.2.5
 
 ### Patch Changes

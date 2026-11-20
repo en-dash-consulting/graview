@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "cbfaf470-07b8-4d24-b1bf-c1127d2579d1":
+    status: "completed"
+    startedAt: "2026-11-18T04:40:00.000Z"
+    completedAt: "2026-11-18T14:58:52.398Z"
+    endedAt: "2026-11-18T14:58:52.398Z"
+    resolutionType: "code-change"
+    resolutionDetail: "PR #645, released in 0.2.6 by batch #647"
+    lastModified: "2026-11-18T14:58:52.398Z"

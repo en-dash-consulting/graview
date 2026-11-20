@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 2237,
+  "gzipped": 778,
+  "changeset": "the-0-2-6-batch-holds-together.md",
+  "note": "Raised when the 0.2.6 batch's four branches were merged (a rule's today() and date() reading the day in the app's own zone, an owner moving a person bound to the wrong record and what they did to the right one, a board's title breaking only between words with a removed record coming down on a slow machine, and a linked project taking React's types from the checkout): each measured its own growth against main, and together they come to 2137 / 678 over the budget, raised by 2237 / 778 for the spread a split build gzips to from build to build. Measured at 647_196 / 224_307 against 645_059 / 223_629."
+}

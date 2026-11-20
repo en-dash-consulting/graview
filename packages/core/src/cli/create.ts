@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { LINKED_PACKAGES, scaffoldProject, validateScaffoldOptions, type ScaffoldOptions } from "../scaffold/index.js";
+import { LINKED_PACKAGES, LINKED_TYPES, scaffoldProject, validateScaffoldOptions, type ScaffoldOptions } from "../scaffold/index.js";
 import { templateViewSources } from "../scaffold/from-template.js";
 import type { GraviewTemplate } from "../document/graview-template.js";
 import { instantiateTemplate } from "../document/instantiate-template.js";
@@ -189,6 +189,14 @@ export async function create(argv: readonly string[], io: CreateIo = defaultIo):
       if (unbuilt.length > 0) {
         problems.push(
           `the framework at ${linkFlag} is not built (no dist in ${unbuilt.join(", ")}). Run: pnpm -C ${linkFlag} install && pnpm -C ${linkFlag} build`,
+        );
+      }
+      // React's types come from the checkout's node_modules by path, so an
+      // uninstalled checkout would fail later, in the project's own install.
+      const uninstalled = LINKED_TYPES.filter((pkg) => !existsSync(resolve(checkout, "node_modules", pkg, "package.json")));
+      if (unbuilt.length === 0 && uninstalled.length > 0) {
+        problems.push(
+          `the framework at ${linkFlag} is not installed (no ${uninstalled.join(", ")} in its node_modules). Run: pnpm -C ${linkFlag} install`,
         );
       }
     }

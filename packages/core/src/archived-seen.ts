@@ -145,6 +145,7 @@ function wholeOf<S extends AnySchema>(store: Store<S>, archive: ArchivedOps, val
     ...given("modules", inside.declaredModules),
     ...given("enabledModules", inside.startingModules),
     ...given("timeZone", store.timeZone),
+    appTimeZone: store.appTimeZone ?? null,
     principal: inside.by,
     log: ops,
     epochs: [...epochs.values()].sort((a, b) => a.seq - b.seq),

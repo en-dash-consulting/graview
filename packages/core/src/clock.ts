@@ -65,9 +65,9 @@ export function untilTheDayTurns(now: Date | number = Date.now(), timeZone?: str
  * `openStore` and `openRemote` do for the stores they open; a host that
  * keeps a store some other way — a Durable Object, which sleeps through
  * timers — calls `store.tick(now)` from its own alarm, set
- * `untilTheDayTurns(now, store.timeZone)` ahead.
+ * `untilTheDayTurns(now, store.dayTimeZone)` ahead.
  */
-export function tickEachDay(store: { tick(now?: Date): Tick; readonly timeZone?: string | undefined }, onTick?: (tick: Tick) => void): () => void {
+export function tickEachDay(store: { tick(now?: Date): Tick; readonly timeZone?: string | undefined; readonly dayTimeZone?: string | undefined }, onTick?: (tick: Tick) => void): () => void {
   let timer: ReturnType<typeof setTimeout>;
   const wait = () => {
     // A second past midnight: a timer that fires a hair early would tick to the day that is ending.
@@ -75,7 +75,7 @@ export function tickEachDay(store: { tick(now?: Date): Tick; readonly timeZone?:
       const ticked = store.tick(new Date());
       wait();
       onTick?.(ticked);
-    }, untilTheDayTurns(Date.now(), store.timeZone) + 1000);
+    }, untilTheDayTurns(Date.now(), "dayTimeZone" in store ? store.dayTimeZone : store.timeZone) + 1000);
     (timer as { unref?: () => void }).unref?.();
   };
   wait();

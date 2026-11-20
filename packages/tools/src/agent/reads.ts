@@ -170,7 +170,7 @@ export function nodeRead<S extends AnySchema>(seen: Store<S>, by: Authorship, id
     return { kind, id: other, label: at ? labelOf(seen.schema.tryDefinition(at.kind), at) : other, ...(isArchived(at) ? { archived: true } : {}) };
   };
   // Worked out over what this seat sees, never the store's whole graph (FR-83, FR-55).
-  const worked = computedValues(seen.schema, seen.graph as never, node as never);
+  const worked = computedValues(seen.schema, seen.graph as never, node as never, { timeZone: seen.appTimeZone });
   const problems = seen.violations().filter((violation) => violation.nodeIds.includes(id));
   const more = [
     moreSaid(outAll.length, offset, out.length, "get_node", "links out", `id "${id}" and `),

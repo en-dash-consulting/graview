@@ -121,7 +121,7 @@ export function evaluate<S extends AnySchema>(
   options: EvaluateOptions<S> = {},
 ): Violation[] {
   const context: InvariantContext = options.context ?? {};
-  const day = options.today === undefined ? {} : { today: options.today };
+  const day = { ...(options.today === undefined ? {} : { today: options.today }), ...(options.timeZone === undefined ? {} : { timeZone: options.timeZone }) };
   const onUnregistered = options.onUnregistered ?? "skip";
   const registered = new Set(invariants.map((i) => i.name));
   const violations: Violation[] = [];
@@ -158,7 +158,7 @@ export function evaluate<S extends AnySchema>(
      * is only examined by invariants that opted into the past. Graph-scoped
      * invariants read whatever they read — they have no subject to retire.
      */
-    const retired = !isCurrent(definition, node, options.today);
+    const retired = !isCurrent(definition, node, options.today, options.timeZone);
 
     for (const invariant of byKind.get(node.kind) ?? []) {
       if (retired && invariant.judgesPast !== true) continue;

@@ -444,7 +444,7 @@ export class SyncEngine<S extends AnySchema> {
 
   /** The record with the computed fields a connection sends, worked out over the store's graph (Roadmap f-keep-linked); a record or a set of them said by name. */
   private withWorkedOut(node: Record<string, unknown>, fields: readonly string[]): Record<string, unknown> {
-    const { values } = computedValues(this.options.store.schema as AnySchema, this.options.store.graph as GraphReader, node as AnyGraphNode);
+    const { values } = computedValues(this.options.store.schema as AnySchema, this.options.store.graph as GraphReader, node as AnyGraphNode, { timeZone: (this.options.store as { readonly appTimeZone?: string | undefined }).appTimeZone });
     const said = (value: unknown): unknown => (Array.isArray(value) ? value.map(said) : value !== null && typeof value === "object" ? (value as { label?: unknown }).label : value);
     return { ...node, ...Object.fromEntries(fields.map((field) => [field, said(values[field])])) };
   }

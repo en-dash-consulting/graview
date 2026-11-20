@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 0,
+  "gzipped": 1134,
+  "note": "Raised when the 0.2.6 batch's four branches were merged (a rule's today() and date() reading the day in the app's own zone, an owner moving a person bound to the wrong record and what they did to the right one, a board's title breaking only between words with a removed record coming down on a slow machine, and a linked project taking React's types from the checkout): each measured its own growth against main, and together they come to 0 / 1034 over the budget, raised by 0 / 1134 for the spread a split build gzips to from build to build. Measured at 2_019_341 / 707_620 against 2_029_759 / 706_586."
+}

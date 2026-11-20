@@ -23,7 +23,7 @@
  * Writes docs/create.json.
  */
 import { execFileSync, spawn } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -564,6 +564,22 @@ try {
   report.linked.said = linkOut.split("\n").filter((line) => line.startsWith("graview create:"));
   const linkedManifest = JSON.parse(readFileSync(resolve(linked, "package.json"), "utf8"));
   report.linked.consumesByPath = Object.values(linkedManifest.dependencies).some((spec) => String(spec).startsWith("link:"));
+  /*
+   * ONE COPY OF REACT'S TYPES, THE CHECKOUT'S. The framework's .d.ts name
+   * React through the checkout's @types/react; the project's code names it
+   * through its own. Resolved apart, a csstype npm published today split
+   * them (3.2.4 against the checkout's 3.2.3) and the project's pages failed
+   * tsc. Each must land on the very directory the checkout resolves.
+   */
+  const realOrNull = (path) => (existsSync(path) ? realpathSync(path) : null);
+  const typesShared = () =>
+    Object.fromEntries(
+      ["@types/react", "@types/react-dom"].map((pkg) => {
+        const own = realOrNull(resolve(linked, "node_modules", pkg));
+        return [pkg, { own, checkouts: realOrNull(resolve(repoRoot, "node_modules", pkg)), same: own !== null && own === realOrNull(resolve(repoRoot, "node_modules", pkg)) }];
+      }),
+    );
+  report.linked.reactTypes = { spec: linkedManifest.devDependencies["@types/react"], resolved: typesShared() };
   report.linked.skills = existsSync(resolve(linked, ".claude/skills/graview-ship/SKILL.md")) && existsSync(resolve(linked, ".agents/skills/graview-ship/SKILL.md"));
   /*
    * WHAT AN AGENT OPENING IT COLD FINDS: AGENTS.md at the root with the loop
@@ -684,6 +700,26 @@ process.stdout.write(JSON.stringify(out));
     stop(vite);
     vite = undefined;
   }
+
+  /*
+   * AND A CSSTYPE THE CHECKOUT DOES NOT HOLD. What split them was npm
+   * publishing a csstype the checkout's lockfile had not taken yet. Here the
+   * project's own install is told to take a different one outright, and its
+   * React types must still be the checkout's and its pages still typecheck.
+   * Last, because it changes the project the claims above judged.
+   */
+  const drifted = JSON.parse(readFileSync(resolve(linked, "package.json"), "utf8"));
+  drifted.pnpm = { ...(drifted.pnpm ?? {}), overrides: { csstype: "3.1.3" } };
+  writeFileSync(resolve(linked, "package.json"), `${JSON.stringify(drifted, null, 2)}\n`);
+  run("pnpm", ["install", "--silent", "--no-frozen-lockfile"], linked);
+  report.linked.drift = { csstype: "3.1.3", resolved: typesShared() };
+  try {
+    run("pnpm", ["typecheck"], linked);
+    report.linked.drift.typechecked = true;
+  } catch (error) {
+    report.linked.drift.typechecked = false;
+    report.linked.drift.tscSaid = String(error.stdout ?? "").split("\n").filter((line) => line.includes("error TS")).slice(0, 3);
+  }
 } catch (error) {
   report.error = trimmed(error);
 } finally {
@@ -763,6 +799,13 @@ report.verdict = {
     : report.linked.git?.commit === null && (report.linked.git?.staged ?? "").includes("AGENTS.md") && report.linked.said.some((line) => line.includes("user.name")),
   aLinkedProjectIsARepositoryWhoseCiCanBuildTheFramework:
     report.linked.gitInitialized === true && report.linked.ciChecksOutTheFramework === true,
+  // Its @types/react and @types/react-dom are the checkout's own directories, and stay so with another csstype forced on its install.
+  aLinkedProjectSharesTheCheckoutsReactTypes:
+    Object.values(report.linked.reactTypes?.resolved ?? {}).length === 2 &&
+    Object.values(report.linked.reactTypes.resolved).every((one) => one.same === true) &&
+    Object.values(report.linked.drift?.resolved ?? {}).length === 2 &&
+    Object.values(report.linked.drift.resolved).every((one) => one.same === true) &&
+    report.linked.drift?.typechecked === true,
   aLinkedProjectsDevServerResolvesEveryExportFromSource:
     (report.linked.exports?.count ?? 0) > 0 && report.linked.exports?.unresolved?.length === 0 && report.linked.exports?.notFromSource?.length === 0,
   ...(withBrowser

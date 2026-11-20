@@ -1,9 +1,28 @@
 /**
- * WHY NO GRANT NAMES `bind-person` (Roadmap f-invite-binds-existing-person),
- * as the checker, a compile and an edit say it: binding an account to the
- * person entered for it is the host's, as an invitation is accepted. Kept
- * out of what a page draws with.
+ * WHY NO GRANT NAMES `bind-person`, `rebind-person` OR `bind-own-record`
+ * (Roadmap f-invite-binds-existing-person, f-rebind-after-acting,
+ * f-merge-own-record-into-person), as the checker, a
+ * compile and an edit say it: whose record a person is is the host's to
+ * say, as an invitation is accepted or a binding is corrected. Kept out of
+ * what a page draws with.
  */
-import { BIND_PERSON } from "./binding-served.js";
+import { BIND_PERSON, BIND_OWN_RECORD, REBIND_PERSON } from "./binding-served.js";
 
-export const BINDING_UNGRANTED = `"${BIND_PERSON}" is the host's, and no grant gives it: only the host binds an account to the person entered for it, as an invitation is accepted`;
+/** What each act the framework keeps for binding does, in the words a refusal of an app's act of that name says it with. */
+export const bindingActDoes = (act: string): string =>
+  act === REBIND_PERSON
+    ? "the host's moving of a person bound to the wrong record to the right one"
+    : act === BIND_OWN_RECORD
+      ? "the host's merging of a member's own record into the person entered for them"
+      : "the host's binding of an account to the person entered for it";
+
+/** The sentence an app's or a document's own act under a kept binding name is refused with (`binding-act-taken`). */
+export const bindingActTaken = (act: string): string => `"${act}" is a name the framework keeps for an act of its own, ${bindingActDoes(act)}`;
+
+/** The sentence a grant that names a binding act is refused with. */
+export const bindingUngranted = (act: string = BIND_PERSON): string =>
+  act === BIND_PERSON
+    ? `"${BIND_PERSON}" is the host's, and no grant gives it: only the host binds an account to the person entered for it, as an invitation is accepted`
+    : act === BIND_OWN_RECORD
+      ? `"${act}" is the host's, and no grant gives it: only the host merges an account's own record into the person entered for it`
+      : `"${act}" is the host's, and no grant gives it: only the host moves an account, and what it did, from one person's record to another's`;

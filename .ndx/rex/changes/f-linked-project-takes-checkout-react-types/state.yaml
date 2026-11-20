@@ -1,0 +1,10 @@
+schema: "rex/v2"
+items:
+  "046dfde3-ca50-43ba-be63-0992572bbb0e":
+    status: "completed"
+    startedAt: "2026-11-18T04:40:00.000Z"
+    completedAt: "2026-11-18T14:58:52.398Z"
+    endedAt: "2026-11-18T14:58:52.398Z"
+    resolutionType: "code-change"
+    resolutionDetail: "PR #643, released in 0.2.6 by batch #647"
+    lastModified: "2026-11-18T14:58:52.398Z"

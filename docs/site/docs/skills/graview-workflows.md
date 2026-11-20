@@ -23,7 +23,7 @@ A person says one sentence — "fill out next week's events every Sunday" — an
 }
 ```
 
-`when` is one or several: `{ "every": "day 03:00" | "weekday 09:00" | "sunday 18:00" | "month 1 09:00" | "hour" }` or `{ "cron": "0 18 * * 0" }`, both on the brand's `timeZone`; `{ "made": "<kind>", "where"? }`, `{ "changed": "<kind>", "fields"? }`, `{ "synced": "<connection>" }`, `{ "byHand": true }`. A step is one of a closed set: `act` (run an act, once or `over` the records a rule picks), `agent` (a model proposes acts from a list), `generate` (dated records from a pattern), `archive` (set aside by a rule). Read `packages/core/src/workflow-shape.ts` for every key.
+`when` is one or several: `{ "every": "day 03:00" | "weekday 09:00" | "sunday 18:00" | "month 1 09:00" | "hour" }` or `{ "cron": "0 18 * * 0" }`, both on the brand's `timeZone`; `{ "made": "<kind>", "where"? }`, `{ "changed": "<kind>", "fields"? }`, `{ "synced": "<connection>" }`, `{ "byHand": true }`. A step is one of a closed set: `act` (run an act, once or `over` the records a rule picks), `agent` (a model proposes acts from a list), `generate` (dated records from a pattern), `archive` (set aside by a rule). Every key is in `@graview/core/dist/document.schema.json` under `workflows`; a trigger that is none of these (`[{}]`) is refused naming them.
 
 ### Do this
 

@@ -99,6 +99,8 @@ export interface InvariantEvalArgs<S extends AnySchema, Subject> {
    * reads the clock reads this first; absent, the clock as it is.
    */
   readonly today?: string;
+  /** The app's time zone, when the store knows it (`StoreOptions.timeZone`): the clock a rule reads `date()` and a moment against a day on. */
+  readonly timeZone?: string;
 }
 
 export interface InvariantDefinition<S extends AnySchema = AnySchema> {
@@ -155,6 +157,8 @@ export interface EvaluateOptions<S extends AnySchema = AnySchema> {
    * replays); a store passes the day it was last ticked to (FR-176).
    */
   readonly today?: string;
+  /** The app's time zone, handed to each rule as its `timeZone` (a store passes its own). */
+  readonly timeZone?: string;
   /** Filters subject nodes before evaluation, e.g. by effectivity window. */
   readonly subjectFilter?: (
     node: NodeOfSchema<S>,

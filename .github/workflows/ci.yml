@@ -240,6 +240,33 @@ jobs:
             if (failed.length > 0) process.exit(1);
           '
 
+  # WHAT THE LOCKFILE BRINGS. An advisory on a version a published package
+  # reaches, high or critical, fails; one only the examples, the scripts or
+  # the dev tooling reach is reported. Every installed package's registry
+  # signature is checked, and the lockfile versions this changes against
+  # main are listed in the summary (scripts/dependency-check.mjs). Not one of
+  # `verify`'s needs: whether it is required on main is the ruleset's to say.
+  dependencies:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # main, to compare the lockfile against.
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: No high or critical advisory reaches a published package
+        run: node scripts/dependency-check.mjs --base origin/main
+      # Said even when an advisory failed the step before.
+      - name: Every installed package carries a valid registry signature
+        if: success() || failure()
+        run: node scripts/dependency-check.mjs signatures
+
   changeset:
     # A version bump is a decision, and one nobody made is one nobody can
     # explain later. This asks for it while the change is still in front of

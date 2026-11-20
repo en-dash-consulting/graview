@@ -593,7 +593,7 @@ export function registerDefaultViews<S extends AnySchema>(
        * the arrangement holds at every fidelity, because the stop does.
        */
       const arrangement = arrangementOf(view);
-      const arranged = arrange(members, arrangement, { schema, graph: store.graph, flagged: new Set(props.flagged ?? []) });
+      const arranged = arrange(members, arrangement, { schema, graph: store.graph, flagged: new Set(props.flagged ?? []), ...(store.appTimeZone ? { timeZone: store.appTimeZone } : {}) });
       const item = (member: (typeof members)[number]) => ({
         id: member.id,
         label: labelOf(schema.tryDefinition(member.kind), member),

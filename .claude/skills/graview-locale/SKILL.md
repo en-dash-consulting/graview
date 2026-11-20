@@ -40,7 +40,11 @@ brand, the name, mark, typeface and palette, is `graview-brand`.
    kept without a zone is still the wall time written. A person's zone wins
    where a host passes one — `timeZone` on `GraviewProvider`, the embed and
    the pages face, beside `locale`. A worker view is handed `locale` and
-   `timeZone` rather than formatted strings (`graview-worker-view`).
+   `timeZone` rather than formatted strings (`graview-worker-view`). The
+   zone is the app's day too: `today()` is the date there, `date(starts)`
+   the day an instant is on there, and `starts < today()` reads the instant
+   on that clock, so last night's event is past at the app's midnight, not
+   UTC's. With no zone, all three are UTC's.
 
 5. **Say them in templates.** `{at | time}` ("10:47 AM"), `{at | datetime}`
    ("Oct 16, 2026, 10:47 AM EDT"), `{at | date}` and `relative` (an

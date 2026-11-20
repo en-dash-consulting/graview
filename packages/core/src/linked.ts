@@ -74,7 +74,7 @@ export function readLinkedRecord(store: Store<AnySchema>, ref: LinkedRecordRef, 
 
 function recordOf(seen: Store<AnySchema>, node: { id: string; kind: string } & Record<string, unknown>, address: string, options: { readonly href?: string; readonly app?: string }): LinkedRecord {
   const definition = seen.schema.tryDefinition(node.kind) as AnyNodeDefinition | undefined;
-  const { values } = computedValues(seen.schema, seen.graph as never, node as never);
+  const { values } = computedValues(seen.schema, seen.graph as never, node as never, { timeZone: seen.appTimeZone });
   const fields: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(node)) if (!NOT_A_FIELD.has(key) && value !== undefined) fields[key] = value;
   for (const [key, value] of Object.entries(values)) fields[key] = typeof value === "object" && value !== null && !Array.isArray(value) ? (value as { label: string }).label : value;

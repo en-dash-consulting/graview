@@ -1,6 +1,6 @@
 {
   "name": "@graview/render",
-  "version": "0.2.5",
+  "version": "0.2.7",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -30,7 +30,7 @@
     }
   },
   "devDependencies": {
-    "zod": "^4.6.5"
+    "zod": "^4.6.7"
   },
   "description": "The spatial renderer: the GPU capture path where the browser can capture into WebGPU, the DOM path everywhere else, one picture and one accessibility tree on both.",
   "keywords": [

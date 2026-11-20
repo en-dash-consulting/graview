@@ -322,6 +322,27 @@ function useLessMotion(): boolean {
   return less;
 }
 
+/** A press a thumb can make (Roadmap f-download-control-video-picture): at least 44 px each way. */
+const THUMB: CSSProperties = { display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: 44, minHeight: 44, boxSizing: "border-box" };
+
+/**
+ * A FILE'S DOWNLOAD (Roadmap f-download-control-video-picture): a link to
+ * the file where the host serves it, asking for it as an attachment
+ * (`?download=1`, which Graview Cloud answers with one), named for the
+ * file — "Download render.mp4" — and as big as a thumb's press. A video's
+ * figure and a picture opened full size each carry one; a document's line
+ * already did.
+ */
+function DownloadLink({ file }: { readonly file: FileValue }) {
+  const host = useHostFiles();
+  const [address = "", fragment] = fileSrc(host, file.href).split(/(?=#)/);
+  return (
+    <a data-graview-download={file.href} href={`${address}${address.includes("?") ? "&" : "?"}download=1${fragment ?? ""}`} download={file.name} aria-label={`Download ${file.name}`} style={{ ...THUMB, padding: "0 6px", color: "var(--graview-accent, inherit)" }}>
+      Download
+    </a>
+  );
+}
+
 /**
  * A VIDEO, PLAYED: its poster first, the browser's own controls — the
  * keyboard reaches them, and they open it full screen — the little it needs
@@ -374,8 +395,9 @@ function VideoPlayer({ file, autoplay = false, cover = false }: { readonly file:
         {file.captions ? <track kind="captions" src={fileSrc(host, file.captions)} srcLang="en" label="Captions" default /> : null}
       </video>
       {autoplay ? null : (
-        <figcaption data-graview-video-said="" style={QUIET}>
-          {[file.caption ?? file.name, ...(facts.duration !== undefined ? [videoClock(facts.duration)] : [])].join(" · ")}
+        <figcaption style={{ display: "flex", flexWrap: "wrap", gap: "0 12px", alignItems: "center", justifyContent: "space-between", minWidth: 0 }}>
+          <span data-graview-video-said="" style={{ ...QUIET, minWidth: 0, overflowWrap: "anywhere" }}>{[file.caption ?? file.name, ...(facts.duration !== undefined ? [videoClock(facts.duration)] : [])].join(" · ")}</span>
+          <DownloadLink file={file} />
         </figcaption>
       )}
     </figure>
@@ -527,12 +549,15 @@ function FilesShown({ files, label, autoplay, cover }: { readonly files: readonl
           <figure style={{ margin: 0, display: "grid", gap: 8, padding: 10 }}>
             <img src={at(shown)} alt={fileWords(shown)} style={{ maxWidth: "100%", maxHeight: "80vh", objectFit: "contain", display: "block", margin: "0 auto" }} />
             <figcaption style={{ display: "flex", gap: 12, alignItems: "center", justifyContent: "space-between" }}>
-              <span>{shown.caption ?? shown.name}</span>
-              <form method="dialog" style={{ margin: 0 }}>
-                <button type="submit" autoFocus>
-                  Close
-                </button>
-              </form>
+              <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>{shown.caption ?? shown.name}</span>
+              <span style={{ display: "flex", gap: 8, alignItems: "center", flex: "0 0 auto" }}>
+                <DownloadLink file={shown} />
+                <form method="dialog" style={{ margin: 0 }}>
+                  <button type="submit" autoFocus style={THUMB}>
+                    Close
+                  </button>
+                </form>
+              </span>
             </figcaption>
           </figure>
         </dialog>

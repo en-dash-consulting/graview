@@ -1,6 +1,6 @@
 {
   "name": "@graview/ship",
-  "version": "0.2.5",
+  "version": "0.2.7",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -33,7 +33,7 @@
     "@graview/core": "workspace:*"
   },
   "devDependencies": {
-    "zod": "^4.6.5"
+    "zod": "^4.6.7"
   },
   "description": "What every deployment needs, hosted or self-hosted: persistence wiring, op-log-native migrations, export, health.",
   "keywords": [

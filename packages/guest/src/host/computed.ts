@@ -12,12 +12,15 @@ import type { ComputedOn } from "./manifest.js";
  * view whose kinds have computed values starts, so registering a view
  * carries no evaluator.
  */
-export function computedOn(schema: AnySchema): ComputedOn {
+export function computedOn(schema: AnySchema, clock: { readonly timeZone?: string | undefined; readonly today?: () => string | undefined } = {}): ComputedOn {
   const names = new Map<string, number>();
   return (graph, node) => {
     const kind = (node as { readonly kind: string }).kind;
     let count = names.get(kind);
     if (count === undefined) names.set(kind, (count = computedNames(schema, kind).length));
-    return count === 0 ? {} : computedValues(schema, graph as never, node as never).values;
+    if (count === 0) return {};
+    // The app's day and clock, as the store judges on them: a view drawn headless in Node reads what a page does.
+    const today = clock.today?.();
+    return computedValues(schema, graph as never, node as never, { timeZone: clock.timeZone, ...(today ? { today } : {}) }).values;
   };
 }

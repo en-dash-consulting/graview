@@ -4,6 +4,8 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.2.7`](https://graview.dev/docs/releases.html#v0-2-7)
+- [`0.2.6`](https://graview.dev/docs/releases.html#v0-2-6)
 - [`0.2.5`](https://graview.dev/docs/releases.html#v0-2-5)
 - [`0.2.4`](https://graview.dev/docs/releases.html#v0-2-4)
 - [`0.2.3`](https://graview.dev/docs/releases.html#v0-2-3)
@@ -82,9 +84,44 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
+## 0.2.7
+
+Published November 19, 2026 · the current version
+
+An owner can merge a member’s own record into the person entered for them, an act can ask for a record that may be left out, and a picture or video offers its download.
+
+- **A member’s own record merges into the person entered for them.** Every member gets a record of their own on joining, so binding them to the person an organizer entered was refused; the host’s own seat now merges the two as one change that undo takes back (`mergePerson`), and `bindPerson`’s refusal says to merge instead.
+- **A move to the right record covers more.** `rebindPerson` moves a binding that had ended, and takes along the links the person made as themselves.
+- **An act may ask for a record that can be left out**, offered as a picker, and the act links it only when one is chosen.
+- **A form that makes a kind’s records stands beside that kind’s list** in the app bar, not under Pictures.
+- **A video and a picture opened full size each carry a Download link.**
+- The declaration’s schema and the authoring skills say an act’s `args` and a workflow’s triggers, and a malformed trigger is refused by naming the shapes it may take.
+- Security fixes in what the packages depend on: every package asks for zod `^4.6.7`, and each release checks its dependencies’ advisories and signatures.
+
+**Before you upgrade:** Breaks: who may run the binding acts. `bindPerson`, `unbindPerson`, `rebindPerson`, `mergePerson` and their undo are run by the host’s own seat alone, minted with `hostSeat({ id, name })` on `@graview/core/binding`; a plain `{ kind: "system" }` author is refused them now. `bind-own-record` is a name the framework keeps: an app’s act of that name is refused as `binding-act-taken`, and a grant of it as `grant-gives-binding`. A host that pins zod below 4.6.7 next to Graview moves to 4.6.7 or later. Gains: `mergePerson` (a `bind-own-record` op), and a move now also carries the `remove-edge` and `add-edge` of each link it takes along; an act’s `args` takes `{ "required"?, "description"? }` for a record argument, and a new finding code `arg-shape` refuses an argument of neither shape, where the compiler said “Invalid input”; an act whose optional argument was left out applies, where it was refused. The look: a form view is listed beside its kind’s list, and a full-size picture or video shows a Download link. Stored formats, the wire, and derived tool names and input schemas are unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.2.7) · [The full changelog for 0.2.7](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#027)
+
+## 0.2.6
+
+Published November 18, 2026
+
+A rule reads the day in the app’s own time zone, an owner can move a person bound to the wrong record to the right one, and a board’s title on the one face breaks only between words.
+
+- **A rule’s day is the app’s own.** In an app that declares `brand.timeZone`, `today()`, `date()` of an instant and an instant compared with a day read that zone’s calendar, not UTC’s, in rules, computed values, list filters and groups. An app that declares no zone keeps UTC’s day on every host.
+- **An owner can put a binding right.** When a person was bound to the wrong record and has already acted as it, the host’s own seat moves them, and what they did, to the right record as one change that undo takes back (`rebindPerson`); the wrong record is free to bind again.
+- **A board’s title breaks only between words**, on every system’s type: a word too wide for its line is drawn smaller, and one wider still is cut with an ellipsis, never split mid-word.
+- **A record taken away comes down on a slow machine too**: a building going sinks where it stood, all the way down, before it is removed.
+- A project linked to a framework checkout takes React’s types from the checkout, as it already takes React.
+- Security and reliability fixes.
+
+**Before you upgrade:** Breaks: the declaration’s reading of a day. In an app that declares `brand.timeZone`, `date()` of an instant and an instant compared with a day are read on that zone’s calendar rather than UTC’s, so a rule or a computed field over a datetime may answer differently within hours of midnight; nothing is renamed, and no finding is added or taken away. `rebind-person` is now a name the framework keeps: an app’s own act of that name is refused as `binding-act-taken`, and a grant of it as `grant-gives-binding`. Gains: `rebindPerson`, run from the host’s own seat (a `rebind-person` op of two `patch-node` primitives; a later binding no longer stands in the way of undoing an earlier op that wrote no seat mark, so an undo refused before may now pass). The look: a board’s title with a word too wide for its line is drawn smaller rather than broken, and a building going sinks where it stood. Stored formats, the wire, and derived tool names and input schemas are unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.2.6) · [The full changelog for 0.2.6](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#026)
+
 ## 0.2.5
 
-Published November 16, 2026 · the current version
+Published November 16, 2026
 
 The one face holds its boards in place on a slower machine and under a pinch that pans, the composer proposes a whole first design, and a host can add its own rows to the right-click menu.
 

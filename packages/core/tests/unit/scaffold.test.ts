@@ -7,6 +7,7 @@ import type { Diagnostic } from "typescript";
 import { describe, expect, it } from "vitest";
 import {
   GRAVIEW_PACKAGES,
+  LINKED_TYPES,
   scaffoldProject,
   slugify,
   validateScaffoldOptions,
@@ -373,7 +374,28 @@ describe("link mode", () => {
     };
     expect(manifest.dependencies["@graview/core"]).toBe("file:../graview/packages/core");
     expect(manifest.devDependencies["graview"]).toBe("file:../graview/packages/graview");
+    expect(manifest.devDependencies["@types/react"]).toBe("file:../graview/node_modules/@types/react");
+    expect(manifest.devDependencies["@types/react-dom"]).toBe("file:../graview/node_modules/@types/react-dom");
     expect(JSON.stringify(manifest)).not.toContain("link:");
+  });
+
+  /*
+   * One copy of React's types, the checkout's, the way React itself is one
+   * copy: csstype 3.2.4 reached npm while the checkout held 3.2.3, and every
+   * linked project's own @types/react disagreed with the framework's .d.ts.
+   * By package name, never by a version inside the checkout's store.
+   */
+  it("takes React's types from the checkout by path, not from npm", () => {
+    const manifest = JSON.parse(scaffoldProject({ name: "Linked", link: "../graview" }).files.find((f) => f.path === "package.json")!.contents) as {
+      devDependencies: Record<string, string>;
+    };
+    for (const pkg of LINKED_TYPES) expect(manifest.devDependencies[pkg]).toBe(`link:../graview/node_modules/${pkg}`);
+    expect(JSON.stringify(manifest)).not.toContain(".pnpm");
+    const installed = JSON.parse(scaffoldProject({ name: "Plain" }).files.find((f) => f.path === "package.json")!.contents) as {
+      devDependencies: Record<string, string>;
+    };
+    expect(installed.devDependencies["@types/react"]).toBe("^19.2.0");
+    expect(installed.devDependencies["@types/react-dom"]).toBe("^19.2.0");
   });
 
   it("consumes the framework by path, aliases its sources, and pins nothing", () => {
@@ -672,8 +694,10 @@ describe("a workspace, which is what a product actually is", () => {
     const linked = scaffoldProject({ name: "Field Notes", kind: "note", workspace: true, link: "../graview" });
     const app = JSON.parse(linked.files.find((f) => f.path === "app/package.json")!.contents) as {
       dependencies: Record<string, string>;
+      devDependencies: Record<string, string>;
     };
     expect(app.dependencies["@graview/core"]).toBe("link:../../graview/packages/core");
+    expect(app.devDependencies["@types/react"]).toBe("link:../../graview/node_modules/@types/react");
   });
 
   it("is not what you get unless you ask", () => {

@@ -1,6 +1,6 @@
 {
   "name": "@graview/tools",
-  "version": "0.2.5",
+  "version": "0.2.7",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -82,8 +82,8 @@
     "@graview/ship": "workspace:*"
   },
   "devDependencies": {
-    "@modelcontextprotocol/sdk": "^1.32.0",
-    "zod": "^4.6.5"
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "zod": "^4.6.7"
   },
   "description": "Derived affordances and the agent tool surface, generated from the same declarations; graview mcp and graview apply host it against a real store.",
   "keywords": [

@@ -1,6 +1,6 @@
 {
   "name": "@graview/core",
-  "version": "0.2.5",
+  "version": "0.2.7",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -227,7 +227,7 @@
     "build": "tsc -b && node scripts/write-document-schema.mjs"
   },
   "dependencies": {
-    "zod": "^4.6.5"
+    "zod": "^4.6.7"
   },
   "peerDependencies": {
     "better-sqlite3": "*"

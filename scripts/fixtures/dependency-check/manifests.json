@@ -1,0 +1,28 @@
+{
+  "packages/core": {
+    "name": "@graview/core",
+    "dependencies": { "zod": "^4.6.5" },
+    "peerDependencies": { "better-sqlite3": "*" },
+    "peerDependenciesMeta": { "better-sqlite3": { "optional": true } }
+  },
+  "packages/tools": {
+    "name": "@graview/tools",
+    "dependencies": { "@graview/core": "workspace:*" },
+    "devDependencies": { "@modelcontextprotocol/sdk": "^1.32.0" }
+  },
+  "packages/guest": {
+    "name": "@graview/guest",
+    "dependencies": { "@remote-dom/core": "1.12.0", "a-router": "^2.0.0" },
+    "peerDependencies": { "playwright": ">=1.40" },
+    "peerDependenciesMeta": { "playwright": { "optional": true } }
+  },
+  "packages/ship": {
+    "name": "@graview/ship",
+    "dependencies": { "a-server": "^1.0.0" }
+  },
+  "packages/workbench": {
+    "name": "@graview/workbench",
+    "private": true,
+    "dependencies": { "vitest": "^2.1.8" }
+  }
+}
