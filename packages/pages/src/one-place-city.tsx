@@ -394,6 +394,19 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     };
     /** The camera between stops this frame, as painted — the last one seen while the view takes in a move just let go. */
     let painted: Live = LEVEL_LIVE;
+    /*
+     * THE ZOOM THE PICTURE IS LAID OUT AT, which `painted` is over. Letting
+     * go writes the hand's zoom into the Scene's at once, while the city is
+     * still laid out at the old one under the transform held until React
+     * commits: a frame drawn in between counted the hand's zoom twice, and
+     * at Nearby a board as wide as the zoom allows drew a fifth wider for
+     * that one frame (one-face's
+     * `letGoOfAZoomEveryBoardAndNameGoesOnFromWhereTheLastFrameDrewIt`,
+     * "ctrl and the wheel over a district, further", under GRAVIEW_SLOW=4
+     * on GitHub's runner). While the view takes the move in, the zoom the
+     * last frame drew at is the one.
+     */
+    let laidZoom: number | null = null;
     /** The level the camera rests at, and the altitude this frame. */
     let rest = PAGE;
     let altitude = PAGE;
@@ -1196,7 +1209,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         standAll(world, cam.zoom(), LEVEL_LIVE, shownAt(rest), rest);
       }
       const anchor = world.plots.size > 0 ? anchorIn(at.where, world) : null;
-      const zoomNow = cam.zoom();
+      const zoomNow = settling && laidZoom !== null ? laidZoom : cam.zoom();
+      if (!settling) laidZoom = zoomNow;
       const placeKey = `${keyOf(at.where)}|${at.view.width}x${at.view.height}`;
 
       /* At the page, the camera waits where stepping out begins: aimed for each place before anything moves. */
