@@ -69,6 +69,8 @@ export interface DescribedProblem {
   /** Where: the block's path in the declaration (`views.home.3`, `lenses.1.options.blocks.0`, `views.offer.card.5`), with the record it was about. */
   readonly at: string;
   readonly says: string;
+  /** What names this one fault, the same in every version of the app and whatever `says` says, where it has one: a host files it once by this. A worker view's relation read without its far kind (`far-kind-not-handed:<view>:<relation>:<kinds joined by |>`). */
+  readonly key?: string;
 }
 
 /**

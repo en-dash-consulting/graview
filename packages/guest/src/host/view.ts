@@ -10,7 +10,7 @@ import { retryingImport } from "@graview/core/retry";
 import type { GuestDomEvent, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
 import { PART_SHARE } from "../part.js";
 import { createViewRecords } from "./view-records.js";
-import { checkManifest, edgesReadWithoutTheirKindsSaid, readsComputed, workerViewProps, type ComputedOn, type WorkerViewManifest } from "./manifest.js";
+import { checkManifest, checkProposedManifest, edgesReadWithoutTheirKindsProblems, readsComputed, workerViewProps, type ComputedOn, type WorkerViewManifest } from "./manifest.js";
 import type { OpenDrawing, ViewRefusal } from "./open-draw.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestStats, type GuestViewInput } from "./session.js";
 import { startWorker, type GuestWorkerSource, type StartedWorker } from "./worker-start.js";
@@ -549,13 +549,15 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     shadow.replaceChildren(face);
   };
 
-  const findings = checkManifest(manifest, options.store);
+  /* A draft, proposed and not kept, is refused a relation whose far kind it is never handed as well (HQ f-view-check-refuses-unread-relation-kind): a view kept already is drawn, and the fault said. */
+  const findings = options.draft ? checkProposedManifest(manifest, options.store) : checkManifest(manifest, options.store);
   if (findings.length > 0) {
     queueMicrotask(() => fail("manifest", findings.join(" ")));
     return handle();
   }
   /* A relation it reads whose far kind it is never handed (Roadmap f-view-authoring-friction-2026-11): drawn, and said to the host, as `graview view check` says it. */
-  for (const said of edgesReadWithoutTheirKindsSaid(options.store, manifest)) queueMicrotask(() => options.onProblem?.(said, { code: "far-kind-not-handed" }));
+  /* With the key a host files it by once, the same in every version of the app (`farKindKey`). */
+  for (const { says, key } of edgesReadWithoutTheirKindsProblems(options.store, manifest)) queueMicrotask(() => options.onProblem?.(says, { code: "far-kind-not-handed", key }));
   /* Its code is longer than it may be, or its own source loads something (FR-96): refused before it runs, with why. */
   const refusedCode = (code: WorkerViewCode): [WorkerViewFailure, string?] | undefined => {
     const bytes = "source" in code ? new TextEncoder().encode(code.source).length : "script" in code ? new TextEncoder().encode(code.script).length : 0;

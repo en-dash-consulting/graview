@@ -68,6 +68,15 @@ export interface ViewProblem {
   readonly code: ViewProblemCode;
   /** The part's name (`graview.part(name, …)`), for `part-failed`. */
   readonly part?: string;
+  /**
+   * What names this one fault, the same in every version of the app and
+   * whatever the sentence says (HQ f-view-check-refuses-unread-relation-kind):
+   * a host files a standing fault once by it, however often the view is
+   * opened. For `far-kind-not-handed`, the view, the relation and the kinds
+   * that would hand it, while the relation joins the same kinds (`far-kind-not-handed:phase-board:inPhase:chunk`,
+   * `farKindKey`).
+   */
+  readonly key?: string;
 }
 
 /** How a host is told of a problem: the sentence, and what it is. */

@@ -473,6 +473,23 @@ system prefers, and when the brand changes, revoking the last logo's URL. `check
 edge or an act the app does not declare, and the host refuses to start
 such a view (`onFailure` hears `manifest`).
 
+A view proposed is held to more than that: `checkProposedManifest` also
+refuses a relation it reads (`reads.edges`) whose far kind it is never
+handed, naming the relation and the kind to add ("\"phase-board\" reads the
+relation \"inPhase\", from chunk to step, and is handed no chunk, so no link
+of it reaches the view: add \"chunk\" to its manifest's reads.kinds."). A
+headless run (`runWorkerViewHeadless`, `graview view check`) is that check
+and refuses it `manifest`, as `mountWorkerView` does a `draft`. A relation
+to any kind (`to: "*"`) names no kind to add, and stays a problem said
+beside the drawing. A view already kept is still drawn: its page says the
+fault to `onProblem` as `far-kind-not-handed`, with a `key` of the view,
+the relation and the kind (`far-kind-not-handed:phase-board:inPhase:chunk`,
+`farKindKey`; kinds sorted and joined by `|` where any of several would
+hand it) that is the same in every version of the app while the relation
+joins the same kinds, so a host files it once however often it is opened; a headless run with `standing: true`
+judges a kept view so, and lists the fault among its problems with the same
+`key`, as `graview view check --standing` does.
+
 ### Writes that cannot leak
 
 A view runs for every member with that member's sight, and its author is
@@ -836,7 +853,9 @@ navigate that goes nowhere is told to `onLost` as before, and to `onProblem`
 as `link-goes-nowhere`. Count problems by
 `code`, never by the words: a sentence may be reworded in any version, a
 code may not, and a new kind of problem gets a new one. `part` names the
-part for `part-failed`. The list is `VIEW_PROBLEM_CODES` (with the types
+part for `part-failed`. `key`, where a problem has one, names that one
+fault the same in every version of the app — for `far-kind-not-handed`, the
+view, the relation and the kind — so a host files a standing fault once. The list is `VIEW_PROBLEM_CODES` (with the types
 `ViewProblemCode` and `ViewProblem`), exported from `@graview/guest/host/frame`,
 `/host/worker` and `/host/views` (the types also from `/host`):
 
