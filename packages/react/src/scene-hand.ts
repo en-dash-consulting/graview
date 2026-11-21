@@ -146,15 +146,25 @@ export function useWorldShift({
       put(live.current);
     });
   }, [put]);
+  /*
+   * THE OFFSET LET GO OF COMES OFF; A HAND'S SINCE STAYS ON. On a slow
+   * machine the view takes a let-go zoom or pan a frame or more after the
+   * next gesture has begun, and the transform came off whole when it did:
+   * the picture stood without the new hand's offset, which the hand's next
+   * move put back, while whoever read the camera (`live`) drew through it
+   * the whole time — a line's end stood off its building at Nearby under a
+   * second turn of a pinch (one-face's
+   * `atNearbyAPinchOverTheCityZoomsItAndThePanelAndTheLevelStay`, under
+   * GRAVIEW_SLOW=4 and on the GPU leg). What the hand has made since is
+   * painted again in the same breath.
+   */
   const clear = useCallback(() => {
     settling.current = false;
-    for (const layer of layers()) {
-      layer.style.transform = "";
-      layer.style.transformOrigin = "";
-    }
-    handOnTheGround(stage.current, 0, 0, 1);
+    if (painting.current !== 0) cancelAnimationFrame(painting.current);
+    painting.current = 0;
+    put(live.current);
     settledLive.current();
-  }, [layers, stage]);
+  }, [put]);
 
   /** Where the hand has taken the picture, against where the view says it is. */
   const shiftTo = useCallback(
