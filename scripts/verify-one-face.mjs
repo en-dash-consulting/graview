@@ -2886,7 +2886,9 @@ function goesOnAfter(frames, released) {
       }
     }
   }
-  return { firstStep: Number(firstStep.toFixed(2)), firstAt, leap: Number(leap.toFixed(3)), leapAt, frames: after.length, boxes: Object.keys(last.items).length };
+  // How far the ground itself went in that first frame, read beside a first step: a board carried by ground still moving under it, or one that moved on its own.
+  const groundStep = last.items.ground && after[0]?.items.ground ? Number(farthest(after[0].items.ground, last.items.ground).toFixed(2)) : null;
+  return { firstStep: Number(firstStep.toFixed(2)), firstAt, groundStep, firstAfterMs: after[0] ? Math.round(after[0].t - released) : null, leap: Number(leap.toFixed(3)), leapAt, frames: after.length, boxes: Object.keys(last.items).length };
 }
 async function panStill(page, where, { level, phone }) {
   where = { ...where, level };
@@ -2998,7 +3000,14 @@ async function panStill(page, where, { level, phone }) {
     // The city placed afresh after the pan (a board come into sight had no clear room round what stood): said by the page, and then everything goes on from where it was drawn, never jumping.
     const afresh = !zoom && (await placedAfresh()) !== afreshBefore;
     const held = zoom || afresh ? goesOnAfter(frames, released) : stillAfter(frames, released);
-    // And at rest after it: no board or name on another, and at the City every view's board drawn.
+    /*
+     * And at rest after it: no board or name on another, and at the City
+     * every view's board drawn. Read once the face rests (`still`): a zoom
+     * let go of is placed for over frames, and on the GPU leg's desk the
+     * boards were still on their way 600 ms after the hand let go, so two
+     * read part way there stood on each other (run 44951817719).
+     */
+    await still(page);
     const after = await page.evaluate((city) => {
       const shown = (el) => el.style.visibility !== "hidden" && Number(el.style.opacity || 1) > 0.5 && !el.hasAttribute("data-graview-under");
       const boxes = [...document.querySelectorAll("[data-graview-board], [data-graview-district-tag]")].filter(shown).map((el) => ({ key: el.getAttribute("data-graview-board") ?? `name ${el.getAttribute("data-graview-district-tag")}`, r: el.getBoundingClientRect() }));
