@@ -109,6 +109,8 @@ async function still(page, { quiet = 300, timeout = 12_000 } = {}) {
         let last = "";
         let calm = 0;
         let frames = 0;
+        // Every frame the wait saw, so a rest says the pace it was drawn at (`ms` over `drawn`).
+        let drawn = 0;
         let before = began;
         const box = (el) => {
           const r = el.getBoundingClientRect();
@@ -131,8 +133,9 @@ async function still(page, { quiet = 300, timeout = 12_000 } = {}) {
             frames++;
             calm += Math.min(gap, 50);
           }
-          if (frames >= 3 && calm >= quiet) return done({ ok: true, ms: Math.round(now - began) });
-          if (now - began > timeout) return done({ ok: false, ms: Math.round(now - began) });
+          drawn++;
+          if (frames >= 3 && calm >= quiet) return done({ ok: true, ms: Math.round(now - began), drawn });
+          if (now - began > timeout) return done({ ok: false, ms: Math.round(now - began), drawn });
           requestAnimationFrame(tick);
         };
         requestAnimationFrame(tick);
@@ -142,21 +145,72 @@ async function still(page, { quiet = 300, timeout = 12_000 } = {}) {
   rests.push({ at: new URL(page.url()).pathname, ...result });
   return result.ok;
 }
-const levelOf = (page) => page.evaluate(() => Number(document.querySelector("[data-graview-one-place]")?.getAttribute("data-graview-one-place")));
-/** Wait until the face rests at a level: the sheet says it and nothing is moving. */
-async function restAt(page, level, timeout = 8_000) {
-  await page.waitForFunction(
-    (want) => {
-      const sheet = document.querySelector("[data-graview-one-place]");
-      const city = document.querySelector('[data-testid="one-place-city"]');
-      const now = Number(city?.getAttribute("data-graview-altitude-now") ?? (want === 0 ? 0 : -1));
-      return Number(sheet?.getAttribute("data-graview-one-place")) === want && Math.abs(now - want) < 0.002;
-    },
-    level,
-    { timeout },
+/** Until the page has drawn `count` frames and `ms` have gone by, whichever is later: a wait for something seen over frames, on a machine whose frames are slow. */
+const framesPass = (page, count, ms) =>
+  page.evaluate(
+    ([count, ms]) =>
+      new Promise((done) => {
+        const began = performance.now();
+        let drawn = 0;
+        const tick = () => (++drawn >= count && performance.now() - began >= ms ? done(drawn) : requestAnimationFrame(tick));
+        requestAnimationFrame(tick);
+      }),
+    [count, ms],
   );
+const levelOf = (page) => page.evaluate(() => Number(document.querySelector("[data-graview-one-place]")?.getAttribute("data-graview-one-place")));
+/**
+ * Wait until the face rests at a level: the sheet says it and nothing is moving.
+ *
+ * BY FRAMES AS WELL AS BY THE CLOCK. A move is clocked by the frames it is
+ * drawn in, not the wall: a gap past 34 ms between two frames is taken out
+ * of its clock (`A STALL IS NOT A LEAP`, one-place-city.tsx), so a move
+ * takes at least its 34 frames however long each is. On the GPU leg —
+ * WebGPU on SwiftShader, on a two-core runner — a desk's frame took long
+ * enough that a level move ran past the 8 s this gave it, and every claim
+ * after the wait read as a failure of its own (run 44868606084: 24 claims,
+ * 14 of them this timeout at 1440×900, where the same claims held at the
+ * phone's size on the same run). So the wait ends at `timeout` only once
+ * the page has also drawn `frames` frames in it, the 8 s a quick machine
+ * draws in a little under 4; and never past `ceiling`, so a face that never
+ * arrives still fails. On a machine at 60 frames a second it is the wait it
+ * was. Every wait is kept (`arrivals`), with its frames, for the pace.
+ */
+const arrivals = [];
+async function restAt(page, level, timeout = 8_000, { frames = 240, ceiling = 60_000 } = {}) {
+  // A page drawn anew under the wait (a navigation) ends the page's own promise: waited for again in the page that replaced it, as waitForFunction would.
+  let arrived;
+  for (let tries = 0; tries < 3 && (!arrived || arrived.gone); tries++) arrived = await inThePage();
+  arrivals.push({ at: new URL(page.url()).pathname, level, ...arrived });
+  if (!arrived.ok) throw new Error(`the face did not come to level ${level} in ${arrived.ms} ms and ${arrived.drawn} frames${arrived.gone ? ` (${arrived.gone})` : ""}`);
   // And until what it places there has come to rest (`still`): the layout the level is read again in follows the move.
   await still(page);
+
+  function inThePage() {
+    return page
+    .evaluate(
+      ([want, timeout, least, ceiling]) =>
+        new Promise((done) => {
+          const began = performance.now();
+          let drawn = 0;
+          const there = () => {
+            const sheet = document.querySelector("[data-graview-one-place]");
+            const city = document.querySelector('[data-testid="one-place-city"]');
+            const now = Number(city?.getAttribute("data-graview-altitude-now") ?? (want === 0 ? 0 : -1));
+            return Number(sheet?.getAttribute("data-graview-one-place")) === want && Math.abs(now - want) < 0.002;
+          };
+          const tick = () => {
+            const spent = performance.now() - began;
+            if (there()) return done({ ok: true, ms: Math.round(spent), drawn });
+            if ((spent > timeout && drawn >= least) || spent > ceiling) return done({ ok: false, ms: Math.round(spent), drawn });
+            drawn++;
+            requestAnimationFrame(tick);
+          };
+          tick();
+        }),
+      [level, timeout, frames, ceiling],
+    )
+    .catch((error) => ({ ok: false, ms: 0, drawn: 0, gone: String(error?.message ?? error).split("\n")[0] }));
+  }
 }
 
 /**
@@ -1303,7 +1357,13 @@ async function history(page, where) {
     return Boolean(el?.hasAttribute("data-graview-leaving") && t && t !== "none" && new DOMMatrixReadOnly(t).d < 0.5);
   }, reason, { polling: "raf", timeout: 5_000 }).catch(() => {});
   await scrub(last);
-  await page.waitForTimeout(700);
+  /*
+   * And on, for 700 ms and for 30 frames, whichever is later: the same node
+   * is judged on the frames before the last twenty (`kept` below), and on
+   * the GPU leg's runner 700 ms was fewer than twenty frames, so the frames
+   * of it going were cut off with them and the claim read none.
+   */
+  await framesPass(page, 30, 700);
   const frames = await page.evaluate(() => {
     window.__heightsStop = true;
     return window.__heights;
@@ -3644,6 +3704,9 @@ try {
   // Every wait for the face to rest (`still`) came to an end, and how long the longest took.
   const unrested = rests.filter((one) => !one.ok);
   report.checks.theFaceComesToRestAfterEveryMove = { waits: rests.length, longest: Math.max(0, ...rests.map((one) => one.ms)), neverRested: unrested, ok: (rests.length > 0 || Boolean(only)) && unrested.length === 0 };
+  // How long each move to a level took, and in how many frames: the pace the page was drawn at, read when a wait for a level ran out.
+  const slowest = [...arrivals].sort((a, b) => b.ms - a.ms).slice(0, 5);
+  report.pace = { arrivals: arrivals.length, missed: arrivals.filter((one) => !one.ok).slice(0, 12), slowest, msPerFrame: Number((arrivals.reduce((sum, one) => sum + one.ms, 0) / Math.max(1, arrivals.reduce((sum, one) => sum + one.drawn, 0))).toFixed(1)) };
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
   // A run of some claims alone (`--only=nearbyZoom,panelWidth`, while working on them) says only those.
   if (only) for (const [name, check] of Object.entries(report.checks)) if (name !== "noPageThrew" && Array.isArray(check.held) && check.held.length === 0) delete report.checks[name];
