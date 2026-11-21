@@ -300,6 +300,14 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
   /** Whom each seat was ever bound to, as the store that holds this graph reads its log: set by that store. */
   everBound?: () => ReadonlyMap<string, string>;
 
+  /** Whether the store this graph is the state of was told by its server that its seat is told a record's four (`markServed`): set by the store; unsaid, nothing was said. */
+  servedTold?: () => boolean | undefined;
+
+  /** Whether what judges on this graph is told when each record was made and touched: false only where its server said its seat is not. */
+  get toldTouches(): boolean | undefined {
+    return this.servedTold?.();
+  }
+
   personBoundTo(seat: string): string | undefined {
     const ids = this.seats.get(seat);
     return ids?.size === 1 ? ids.values().next().value : undefined;

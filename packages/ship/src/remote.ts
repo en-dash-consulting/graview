@@ -1228,6 +1228,7 @@ async function opening<S extends AnySchema>(
         return;
       }
       case "ops":
+        if (typeof message.toldTouches === "boolean") markServed(store, message.toldTouches);
         land(message.ops ?? []);
         return;
       case "ack": {

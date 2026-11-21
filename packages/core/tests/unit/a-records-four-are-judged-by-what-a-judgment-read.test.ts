@@ -111,6 +111,31 @@ describe("a rule, for a seat told none of the four", () => {
   });
 });
 
+describe("a page's own store, told by its server its seat is told none of the four", () => {
+  const pageOf = (store: Store<AnySchema>, made: { readonly mutations?: unknown; readonly invariants?: unknown }, told: boolean) =>
+    markServed(new Store<AnySchema>({ schema: store.schema, mutations: made.mutations, invariants: made.invariants, policy: store.policy, principal: gus, snapshot: store.seenBy(gus).graph.snapshot() as never, now: clock() } as never), told);
+  const compiled = (extra: Record<string, unknown>) => {
+    const made = compileDocument(listDocument(extra) as never);
+    if (!made.ok) throw new Error(JSON.stringify(made.findings));
+    return made.app;
+  };
+
+  it("reports no rule its judgment read them for, as its server reports none", () => {
+    const app = compiled({ rules: { fresh: { title: "Fresh", over: "list", require: "present(updatedAt)" } } });
+    const { store } = opened({ rules: { fresh: { title: "Fresh", over: "list", require: "present(updatedAt)" } } });
+    expect(pageOf(store, app, false).violations().map((one) => one.invariant)).not.toContain("fresh");
+    expect(store.seenBy(gus).violations().map((one) => one.invariant)).not.toContain("fresh");
+  });
+
+  it("judges an act's condition as its server says its seat is told, not by the policy it holds", () => {
+    const acts = { acts: { close: { title: "Close", on: "list", allowedWhen: "updatedAt == null", effects: [{ set: { done: true } }] } } };
+    const { store } = opened(acts);
+    const app = compiled(acts);
+    expect(tried(pageOf(store, app, false), "close", gus)).toMatch(UNJUDGED);
+    expect(tried(pageOf(store, app, true), "close", gus)).toBe("applied");
+  });
+});
+
 describe("a seat's view", () => {
   const roles = () => {
     const made = compileDocument({
@@ -160,6 +185,24 @@ describe("a page", () => {
     const said = JSON.stringify(resolveBlocks(compileBlocks([{ text: "List by {list.updatedBy}; {concat('by ', updatedBy)}" }] as never), blockContextFor(store as never, ann, { id: "task:t", kind: "task" }, { slot: "page" })));
     expect(said).toContain("List by someone; by someone");
     expect(said).not.toContain("ann");
+  });
+
+  it("compares and counts who touched a record as it was read, and says it as the person only when it shows it", () => {
+    const participant = defineNode("participant", { people: true, label: (n: { name: string }) => n.name, fields: z.object({ name: z.string() }) } as never);
+    const gift = defineNode("gift", { label: (n: { title: string }) => n.title, fields: z.object({ title: z.string() }) } as never);
+    const schema = createSchema([participant, gift]);
+    const policy: Policy = { grants: [{ roles: ["owner"], mutations: "*" }, { roles: ["owner"], mutations: [BIND_PERSON] }, { roles: ["member"], mutations: ["edit-gift"] }], sees: [{ roles: ["member"], kinds: ["participant", "gift"] }] };
+    const bud: Principal = { kind: "human", id: "acct-bud", roles: ["member"] };
+    const store = new Store<AnySchema>({ schema, policy, now: clock(), snapshot: { nodes: [{ id: "participant:bud", kind: "participant", name: "Bud" }, { id: "gift:kite", kind: "gift", title: "A kite" }, { id: "gift:ball", kind: "gift", title: "A ball" }], edges: [] } } as never);
+    bindPerson(store, bud, "participant:bud", { author: hostSeat({ id: "host" }) });
+    store.apply({ name: "edit-gift", args: { id: "gift:kite", title: "Red" } }, { author: bud });
+    const said = JSON.stringify(
+      resolveBlocks(
+        compileBlocks([{ text: "{if(updatedBy == 'participant:bud', 'mine', 'theirs')} / {count(all('gift') where updatedBy == 'participant:bud')} / by {updatedBy}" }] as never),
+        blockContextFor(store as never, bud, { id: "gift:kite", kind: "gift" }, { slot: "page" }),
+      ),
+    );
+    expect(said).toContain("mine / 1 / by Bud");
   });
 
   it("holding what a seat is served answers as it was told, and a copy of it as the store it copies", () => {

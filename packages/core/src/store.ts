@@ -1,4 +1,5 @@
-import { everBound, hidesFrom, readingOf, seatLens, seenBy, seesEveryRecord, seesId, type SeenOptions, UNSEATED } from "./seen.js";
+import { judgedOnTouches } from "./graph/touched.js";
+import { everBound, hidesFrom, offersTouches, readingOf, seatLens, seenBy, seesEveryRecord, seesId, servedTold, type SeenOptions, UNSEATED } from "./seen.js";
 import { isoToday } from "./days.js";
 import type { IntelligenceProviderDeclaration } from "./app.js";
 import { Graph, GraphError, MissingRecordError } from "./graph/graph.js";
@@ -799,6 +800,7 @@ export class Store<S extends AnySchema> {
 
     // Whom each seat was ever bound to, so who touched a record is said as the person by whatever reads the graph (`personSaidFor`).
     this.graph.everBound = () => everBound(this as never);
+    this.graph.servedTold = () => servedTold(this);
 
     /*
      * A HYDRATED STORE COUNTS ON FROM WHERE THE LOG LEFT OFF.
@@ -1829,7 +1831,9 @@ export class Store<S extends AnySchema> {
    * judges them over another reading of this graph: a seat's (FR-55).
    */
   violations(context?: InvariantContext, over: Graph<S> = this.graph): Violation[] {
-    return evaluate(over, this.allInvariants(), this.judging(context)).map((violation) => this.asking(violation));
+    const judged = evaluate(over, this.allInvariants(), this.judging(context)).map((violation) => this.asking(violation));
+    // A store whose seat is told none of a record's four (a page's, as its server said) reports no rule its judgment read them for: it was judged on blanks.
+    return offersTouches(this) ? judged : judged.filter((violation) => !judgedOnTouches(violation));
   }
 
   /*

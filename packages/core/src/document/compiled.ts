@@ -601,7 +601,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     const valueOf = (value: ValueSpec, bindings: Record<string, unknown>, graph: GraphReader, subject: AnyGraphNode | null = null): unknown => {
       if (isRecord(value) && "expr" in value) {
         const worked = tracked(graph, (onTouched) => evaluateExpr(exprs.get(value.expr)!, { graph, subject, kinds: shapes, bindings: bindings as Record<string, Value>, args: bindings as Record<string, Value>, today: today(), ...saying, ...(onTouched ? { onTouched } : {}) }));
-        // A value worked out from one of the four, for a seat told none of them: never written where others read it.
+        // A value worked out from one of the four, by an actor told none of them: refused, so it is never written where others read it.
         if (worked.touched) throw new ActRefusal(unjudged(subject));
         return worked.value;
       }

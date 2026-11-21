@@ -1,7 +1,8 @@
 import { createSchema, defineApp, defineNode, offersTouches, Store, type Policy, type Principal } from "@graview/core";
+import { compileDocument } from "@graview/core/check";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { createStoreHandler, openRemote } from "../../src/index.js";
+import { createStoreHandler, liveProtocol, openRemote, type LivePeer, type LiveServerMessage } from "../../src/index.js";
 
 /**
  * A PAGE'S STORE IS OFFERED A RECORD'S FOUR AS ITS SEAT IS (Graview HQ
@@ -34,6 +35,40 @@ describe("a page's store", () => {
     expect(offersTouches(untold.store as never)).toBe(false);
     told.close();
     untold.close();
+  });
+
+  it("is told with every push whether its seat is told the four, as a binding or a role landing mid-session can change it", async () => {
+    const store = new Store({ schema, policy, snapshot: { nodes: [{ id: "task:a", kind: "task", label: "A" }], edges: [] } as never });
+    const live = liveProtocol({ store });
+    const heard: LiveServerMessage[] = [];
+    const peer: LivePeer = { ...live.open(gus, "web"), send: (text) => heard.push(JSON.parse(text) as LiveServerMessage) };
+    await live.receive(peer, JSON.stringify({ t: "hello", seq: "s0" }));
+    const landed = store.applyPrimitives([{ op: "add-node", node: { id: "task:b", kind: "task", label: "B" } }] as never, { author: ann });
+    live.publish(landed.ops, [peer]);
+    const pushed = heard.find((message) => message.t === "ops") as Extract<LiveServerMessage, { t: "ops" }>;
+    expect(pushed.toldTouches).toBe(false);
+  });
+
+  it("reports no rule it judged on the four it was not told, as its server reports none", async () => {
+    const made = compileDocument({
+      format: "graview-document",
+      formatVersion: 1,
+      name: "four",
+      kinds: { task: { noun: "task", plural: "tasks", label: "{label}", fields: { label: { type: "string", required: true }, note: { type: "string" } } } },
+      roles: ["member", "guest"],
+      policy: { grants: [{ roles: "*", mutations: "*" }], sees: [{ roles: ["member"], kinds: ["task"] }, { roles: ["guest"], kinds: ["task"], hide: ["note"] }] },
+      rules: { fresh: { title: "Fresh", over: "task", require: "present(updatedAt)" } },
+    } as never);
+    if (!made.ok) throw new Error(JSON.stringify(made.findings));
+    const ruled = { ...made.app, version: 1 } as never;
+    const store = new Store({ schema: made.app.schema, mutations: made.app.mutations, invariants: made.app.invariants, policy: made.app.policy, snapshot: { nodes: [], edges: [] } as never });
+    store.applyPrimitives([{ op: "add-node", node: { id: "task:a", kind: "task", label: "A" } }] as never, { author: ann });
+    const handler = await createStoreHandler({ app: ruled, store, seatOf: () => gus });
+    const fetcher = (async (url: string, init?: RequestInit) => handler.handle(new Request(url, init))) as typeof fetch;
+    const page = await openRemote({ app: ruled, url: "https://store.example", principal: gus, fetch: fetcher, pollMs: 0 });
+    expect(page.store.violations().map((one) => one.invariant)).not.toContain("fresh");
+    expect(store.violations().map((one) => one.invariant)).not.toContain("fresh");
+    page.close();
   });
 
   it("answers as its server says of its seat, never by the policy the page holds", async () => {

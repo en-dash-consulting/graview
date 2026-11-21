@@ -107,6 +107,22 @@ export function readsTouchedThrough(expr: unknown, names: ReadonlySet<string>): 
   return names.size > 0 && walk(expr);
 }
 
+/**
+ * A value as it is shown, each who it read (`EvalContext.onWho`) said as
+ * `say` says it: the whole value, an item of a list, or a word of a sentence
+ * worked out with it (`concat('by ', updatedBy)`). Only at show: what was
+ * compared and counted was the value as read.
+ */
+export function whoShown<V>(value: V, read: ReadonlySet<string>, say: (who: string) => string): V {
+  if (read.size === 0) return value;
+  if (Array.isArray(value)) return value.map((one) => whoShown(one, read, say)) as V;
+  if (typeof value !== "string") return value;
+  if (read.has(value)) return say(value) as V;
+  let shown: string = value;
+  for (const who of read) shown = shown.replace(new RegExp(`(?<![\\w:~-])${who.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\w:~-])`, "g"), () => say(who));
+  return shown as V;
+}
+
 /** The four, in the order they are said. */
 export const TOUCHED_FIELDS: readonly string[] = [CREATED_AT, CREATED_BY, UPDATED_AT, UPDATED_BY];
 const TOUCHED: ReadonlySet<string> = new Set(TOUCHED_FIELDS);

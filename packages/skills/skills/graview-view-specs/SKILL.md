@@ -128,7 +128,9 @@ fields, edges, label, roles — is `graview-node-kind`.
    `format(updatedAt, 'MMM d')`. `…By` is who acted, said as their record
    where the seat is bound to one, as an act's `$me` names them.
    They are kept as each seat may see them: a seat from whom a sight keeps
-   anything is told none, so a view says "—" there. Declare no field of
+   anything is told none, so a view says "—" there, and a rule or act in
+   the rule language that read them is not judged for it (an invariant
+   written in TypeScript reads what its code reads). Declare no field of
    those names: `touched-field-taken` refuses one, and a hand-kept "last
    touched" date misses links and imports.
 

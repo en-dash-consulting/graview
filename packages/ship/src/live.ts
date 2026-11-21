@@ -183,7 +183,7 @@ export type LiveServerMessage =
   /** A stale write: each field that moved since the call's base, theirs and yours. Nothing landed. */
   | { readonly t: "conflict"; readonly cid: string; readonly sentence: string; readonly conflicts: readonly FieldConflict[] }
   /** Ops that landed, everybody's, in seq order and none skipped; `seq` is the last of them. */
-  | { readonly t: "ops"; readonly seq: Cursor; readonly ops: readonly Operation[] }
+  | { readonly t: "ops"; readonly seq: Cursor; readonly ops: readonly Operation[]; /** Whether the seat is told when each record was made and touched (`toldTouches`); absent from a server before them. */ readonly toldTouches?: boolean }
   /** Who else is here now. */
   | { readonly t: "presence"; readonly who: readonly Presence[] }
   /**

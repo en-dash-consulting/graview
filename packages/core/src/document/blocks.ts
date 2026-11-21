@@ -1,3 +1,4 @@
+import { whoShown } from "../graph/touched.js";
 import type { AnyGraphNode, GraphReader } from "../graph/types.js";
 import type { AnySchema } from "../schema/schema.js";
 import { fieldWords, nounOf } from "../schema/define-node.js";
@@ -301,15 +302,15 @@ type Judged = { readonly ok: true; readonly value: Value } | { readonly ok: fals
 
 function judge(expr: Parsed<Expr>, ctx: BlockContext, said = false): Judged {
   if (!expr) return { ok: false, problem: "an expression that does not parse" };
-  // Said on the page: who made or touched a record, by whatever route it is read, is the person, else somebody — never a seat's id.
-  const sayWho = said
-    ? (who: string) => {
-        const person = ctx.graph?.getNode(who);
-        return person ? namerOf(ctx.schema)(person) : "someone";
-      }
-    : undefined;
+  // Said on the page: who made or touched a record, by whatever route it is read, is the person, else somebody — never a seat's id; worked out with the value as read.
+  const whos = new Set<string>();
+  const sayWho = (who: string) => {
+    const person = ctx.graph?.getNode(who);
+    return person ? namerOf(ctx.schema)(person) : "someone";
+  };
   try {
-    return { ok: true, value: evaluateExpr(expr, { graph: ctx.graph ?? EMPTY_GRAPH, subject: ctx.node, kinds: ctx.kinds, today: ctx.today, budget: ctx.budget ?? BUDGET, ...(ctx.money?.timeZone ? { timeZone: ctx.money.timeZone } : {}), ...(sayWho ? { sayWho } : {}) }) };
+    const value = evaluateExpr(expr, { graph: ctx.graph ?? EMPTY_GRAPH, subject: ctx.node, kinds: ctx.kinds, today: ctx.today, budget: ctx.budget ?? BUDGET, ...(ctx.money?.timeZone ? { timeZone: ctx.money.timeZone } : {}), ...(said ? { onWho: (who: string) => void whos.add(who) } : {}) });
+    return { ok: true, value: said ? whoShown(value, whos, sayWho) : value };
   } catch (e) {
     return { ok: false, problem: e instanceof Error ? e.message : String(e) };
   }

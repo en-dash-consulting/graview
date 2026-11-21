@@ -136,6 +136,9 @@ export function offersTouches(store: object): boolean {
 /** What `offersTouches` answered of a store, while its log is as long and ends on the same op. */
 const OFFERED = new WeakMap<object, { readonly length: number; readonly last: string | undefined; readonly told: boolean }>();
 
+/** What a store's server said of whether its seat is told a record's four (`markServed`); undefined where it said nothing, or it is no served store. */
+export const servedTold = (store: object): boolean | undefined => (store as { readonly [SERVED_STORE]?: { readonly told?: boolean } })[SERVED_STORE]?.told;
+
 /** Set on a store made from what a seat is served (`markServed`): never the host's own, whoever it was given. */
 const SERVED_STORE = Symbol.for("graview.store.served");
 
@@ -343,7 +346,7 @@ function lensFor(store: Judged, principal: Principal): { readonly lens: SeatLens
   let toldAt: { readonly at: unknown; readonly told: boolean } | undefined;
   const told = (): boolean => {
     const at = `${(store as { readonly version?: unknown }).version}:${(store.log as { readonly length?: number }).length ?? store.log.all().length}`;
-    if (toldAt?.at !== at) toldAt = { at, told: toldTouches(store as never, principal) };
+    if (toldAt?.at !== at) toldAt = { at, told: servedTold(store) ?? toldTouches(store as never, principal) };
     return toldAt.told;
   };
   /** A seat named as who made or touched a record, as this reader is told it: the person it is now bound to, unless it is the reader's own. */
@@ -1037,7 +1040,7 @@ export function seatView<T extends Viewed>(store: T, principal: Principal): T {
           return seenId;
         // Whether this seat is told when each record was made and touched (`toldTouches`): what judges an act's condition or a rule for it reads it.
         case "toldTouches":
-          return toldTouches(store as never, principal);
+          return servedTold(store) ?? toldTouches(store as never, principal);
         // Whom a seat is bound to, asked only of the seats this one may be told of (its own; every one is the host's alone), and only a record it is served.
         // Who a seat is said as, only a record this seat is served, or somebody; and never every seat's binding.
         case "personSaidFor":

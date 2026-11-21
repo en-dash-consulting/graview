@@ -1298,7 +1298,8 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
     }
     // The ops handed in, when they are the whole of what this peer is missing; the log otherwise.
     const after = (ops && ops.length > 0 && ops[0]!.seq <= from && ops.at(-1)!.seq >= last ? ops.filter((op) => op.seq >= from) : store.log.opsFrom(from)).filter((op) => op.seq <= last);
-    const text = after.length > 0 ? JSON.stringify({ t: "ops", seq: cursorAt(last), ops: opsFor(peer.opFormat, wire.shown(seat, after), served) } satisfies LiveServerMessage) : "";
+    // Whether the seat is told a record's four, with every push: a binding or a role that lands mid-session can change it.
+    const text = after.length > 0 ? JSON.stringify({ t: "ops", seq: cursorAt(last), ops: opsFor(peer.opFormat, wire.shown(seat, after), served), toldTouches: toldTouches(store as never, seat) } satisfies LiveServerMessage) : "";
     if (key !== undefined) sight!.texts.set(key, text);
     if (text.length > 0) sayText(peer, text);
   };

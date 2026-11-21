@@ -123,8 +123,13 @@ export interface EvalContext {
    * none of them can be withheld (`toldTouches`).
    */
   readonly onTouched?: () => void;
-  /** How who made or touched a record is said, where the evaluation is rendered: the person's name, never a seat's id. */
-  readonly sayWho?: (who: string) => string;
+  /**
+   * Told of each value read as who made or touched a record — the person
+   * a seat is bound to, else the seat — so what renders the evaluation can
+   * say it as the person when it shows it. The evaluation itself compares
+   * and counts the value as read.
+   */
+  readonly onWho?: (who: string) => void;
 }
 
 export class ExprEvalError extends Error {
@@ -250,7 +255,8 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
       const read = own ? dateOn(node, name, today()) : undefined;
       // Who made or touched it, as `$me` says a person: the record the seat is bound to, never the account (`touched.ts`).
       const who = typeof read === "string" && (name === "createdBy" || name === "updatedBy") ? ((ctx.graph as { personSaidFor?(seat: string): string | undefined }).personSaidFor?.(read) ?? (ctx.graph as { personBoundTo?(seat: string): string | undefined }).personBoundTo?.(read) ?? read) : undefined;
-      const v = who === undefined ? read : ctx.sayWho ? ctx.sayWho(who) : who;
+      if (who !== undefined) ctx.onWho?.(who);
+      const v = who === undefined ? read : who;
       return v === undefined ? null : (v as Value);
     }
     const card = shape?.edges.get(name);
