@@ -1,4 +1,4 @@
-import { counted, isCurrent, labelOf, onePerPicture, placeLabel, placeSlug, sharesItsName, type AnySchema, type Store, type Place } from "@graview/core";
+import { counted, isCurrent, offersTouches, labelOf, onePerPicture, placeLabel, placeSlug, sharesItsName, type AnySchema, type Store, type Place } from "@graview/core";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { kindFacts } from "./facts.js";
 import { ViewBoundary } from "@graview/react/drawing";
@@ -141,7 +141,7 @@ function LensOnPage<S extends AnySchema>({ context, place, chosen, filter, bled 
 function narrowedFrom<S extends AnySchema>(store: Store<S>, kinds: readonly string[], filter: string | null): { readonly filter: string | null; readonly said: readonly string[]; readonly dropped: readonly string[] } {
   const conditions = filter ? (parseArrangement({ filter }).filter ?? []) : [];
   if (conditions.length === 0) return { filter: null, said: [], dropped: [] };
-  const offers = kinds.map((kind) => arrangeable(store.schema, kind));
+  const offers = kinds.map((kind) => arrangeable(store.schema, kind, { touched: offersTouches(store) }));
   const kept = conditions.filter((condition) => offers.some((offer) => offer.filters.some((one) => one.key === condition.key)));
   const dropped = conditions.filter((condition) => !kept.includes(condition)).map((condition) => `filter ${condition.key}`);
   const said = kept.filter((condition) => !(condition.key === "is" && condition.value === "any")).map((condition) => (condition.key === "is" ? `that are ${condition.value}` : `where ${condition.key} is ${condition.value}`));

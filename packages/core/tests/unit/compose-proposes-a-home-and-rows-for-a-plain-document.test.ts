@@ -25,7 +25,7 @@ const plain: GraviewDocument = {
   name: "Thanksgiving",
   kinds: {
     dish: { noun: "dish", plural: "dishes", fields: { name: { type: "string", required: true }, status: { type: "enum", options: ["proposed", "confirmed"], default: "proposed" }, course: { type: "enum", options: ["main", "side", "dessert"] }, notes: { type: "text" } } },
-    moment: { noun: "schedule item", plural: "schedule", fields: { name: { type: "string", required: true }, who: { type: "string" }, at: { type: "datetime" }, updatedAt: { type: "datetime" } } },
+    moment: { noun: "schedule item", plural: "schedule", fields: { name: { type: "string", required: true }, who: { type: "string" }, at: { type: "datetime" }, modifiedAt: { type: "datetime" } } },
     room: { noun: "room", plural: "rooms", fields: { name: { type: "string", required: true }, seats: { type: "integer" } } },
   },
   acts: { "add-dish": { title: "Add a dish", creates: "dish" }, "add-moment": { title: "Add to the schedule", creates: "moment" }, "add-room": { title: "Add a room", creates: "room" } },

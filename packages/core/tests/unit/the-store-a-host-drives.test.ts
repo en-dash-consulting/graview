@@ -101,7 +101,8 @@ describe("the store a host drives", () => {
   });
 
   it("previewAll previews several calls without writing", () => {
-    const s = store();
+    // One clock, so the preview's stamps and the apply's are the same moment.
+    const s = store({ now: () => "2026-10-02T09:00:00.000Z" });
     s.apply({ name: "add", args: { id: "t1", label: "Pay the deposit" } });
     const before = JSON.stringify(s.snapshot());
     const length = s.log.length;

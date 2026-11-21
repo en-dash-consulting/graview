@@ -3,6 +3,7 @@ import {
   actSpelledAs,
   isBindingAct,
   PERSON_SEAT,
+  touchesSaid,
   FIELD_SIGHT,
   asBoundTo,
   meOf,
@@ -1393,7 +1394,7 @@ export function createToolRuntime<S extends AnySchema>(
         );
         return result;
       };
-      const result = withoutSeats(await run(name, args));
+      const result = withoutSeats(await run(name, args), touchesSaid(store as never));
       // No read hands a model more than a read may (FR-167): what does not fit is cut, and says so.
       return settle(result.ok && !mutating ? { ...result, data: (await reads()).withinReadChars(name, result.data) } : result);
     },
@@ -1407,17 +1408,19 @@ export { applyAffordance };
  * f-binding-dry-run-and-seat-rules), with no mark of the account bound to
  * it, which is the host's to know. The value itself where it holds none.
  */
-function withoutSeats<T>(value: T): T {
+function withoutSeats<T>(value: T, said?: <N extends object>(node: N) => N): T {
   if (Array.isArray(value)) {
     let changed = false;
     const out = value.map((one) => {
-      const next = withoutSeats(one);
+      const next = withoutSeats(one, said);
       if (next !== one) changed = true;
       return next;
     });
     return (changed ? out : value) as T;
   }
   if (value === null || typeof value !== "object" || Object.getPrototypeOf(value) !== Object.prototype) return value;
+  // Who made or touched a record, as a model is told it: the person, never the account.
+  if (said && (Object.hasOwn(value, "createdBy") || Object.hasOwn(value, "updatedBy"))) value = said(value as object) as T;
   let out: Record<string, unknown> | undefined;
   for (const [key, one] of Object.entries(value as Record<string, unknown>)) {
     if (key === PERSON_SEAT) {
@@ -1426,7 +1429,7 @@ function withoutSeats<T>(value: T): T {
       continue;
     }
     // A changed record's list of fields names no mark either.
-    const next = key === "fields" && Array.isArray(one) && one.includes(PERSON_SEAT) ? one.filter((field) => field !== PERSON_SEAT) : withoutSeats(one);
+    const next = key === "fields" && Array.isArray(one) && one.includes(PERSON_SEAT) ? one.filter((field) => field !== PERSON_SEAT) : withoutSeats(one, said);
     if (next !== one) (out ??= { ...(value as Record<string, unknown>) })[key] = next;
   }
   return (out ?? value) as T;

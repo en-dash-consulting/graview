@@ -122,7 +122,7 @@ describe("an agent is never answered an id it may not see", () => {
             ...(visible ? [{ name: "preview_mutation", arguments: { mutation: "point", args: { id: visible, ref: id } } }, { name: "point", arguments: { id: visible, ref: id } }] : []),
             { name: "get_graph", arguments: {} },
           ])
-        ).map((text) => text.split(id).join("<id>").replace(new RegExp(`(?<![A-Za-z0-9:-])${id.slice(id.indexOf(":") + 1)}(?![A-Za-z0-9-])`, "g"), "<rest>").replace(/batch:[a-z0-9]+:/g, "batch:minted:"));
+        ).map((text) => text.split(id).join("<id>").replace(new RegExp(`(?<![A-Za-z0-9:-])${id.slice(id.indexOf(":") + 1)}(?![A-Za-z0-9-])`, "g"), "<rest>").replace(/batch:[a-z0-9]+:/g, "batch:minted:").replace(/(createdAt|updatedAt)(\\*"):\s*(\\*")[^"\\]*\3/g, "$1$2:$3now$3"));
       expect(await answered(named), `seed ${seed}: ${named} answered unlike ${nothing}`).toEqual(await answered(nothing));
       probed++;
     }

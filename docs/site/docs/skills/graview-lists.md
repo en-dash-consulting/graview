@@ -16,7 +16,7 @@ A list that worked at twelve records stops working at three hundred: Filter list
 
 ```json "pages": { "lists": { "request": { "filters": ["status", "area", "became", "became.stage"] } } } ```
 
-In TypeScript, the same under `defineApp({ pages: { lists: … } })`. Each key is a field, a relation, `is`, or `<relation>.<field>` — a choice on the record at the far end ("The feature it became · Stage: Building"). The choice fields among them stand over the list as chips with counts; the rest are under Filter, each heading closed until pressed, with a box that finds a filter or a far record by a few letters. Unsaid, a list offers every way but a relation to a kind with more than forty records (offered by that kind's choices instead), and its first two choice fields as chips. An address says the same: `/requests?filter=status:open`.
+In TypeScript, the same under `defineApp({ pages: { lists: … } })`. Each key is a field, a relation, `is`, or `<relation>.<field>` — a choice on the record at the far end ("The feature it became · Stage: Building"). The choice fields among them stand over the list as chips with counts; the rest are under Filter, each heading closed until pressed, with a box that finds a filter or a far record by a few letters. Unsaid, a list offers every way but a relation to a kind with more than forty records (offered by that kind's choices instead), and its first two choice fields as chips. An address says the same: `/requests?filter=status:open`. Every kind is also sorted, filtered and grouped by when its records last changed and were added (`updatedAt`, `createdAt`, kept by the framework), by day on the app's clock: `?sort=updatedAt:desc`.
 
 **Say the order and grouping it opens in**, beside its filters:
 

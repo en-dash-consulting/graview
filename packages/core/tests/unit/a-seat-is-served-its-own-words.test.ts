@@ -21,7 +21,7 @@ const WORLDS = 1000;
 const unnamed = (text: string, id: string): string => text.split(/([\w:-]+)/).map((part) => (part === id ? "<id>" : part)).join("");
 /** Everything a seat is served, with one id written out of it. */
 const servedOf = (store: ReturnType<typeof storeOf>, viewer: Principal, id: string) =>
-  unnamed(JSON.stringify({ snapshot: store.seenBy(viewer).snapshot(), log: logSeenBy(store, viewer) }), id).replace(/batch:[a-z0-9]+:/g, "batch:minted:").replace(/"at":"[^"]*"/g, "\"at\":\"now\"");
+  unnamed(JSON.stringify({ snapshot: store.seenBy(viewer).snapshot(), log: logSeenBy(store, viewer) }), id).replace(/batch:[a-z0-9]+:/g, "batch:minted:").replace(/"(at|createdAt|updatedAt)":"[^"]*"/g, "\"$1\":\"now\"");
 
 describe("a seat is served its own words", () => {
   it("serves a record the seat made naming a hidden record exactly as one naming nothing", () => {

@@ -1,3 +1,4 @@
+import { isTouchedField, namesReadingTouched, readsTouchedThrough, TOUCHED_FIELDS, touchedTakenFix, touchedTakenSaid } from "../graph/touched.js";
 import type { FarAppResolver } from "../workflows/far.js";
 import type { HostView } from "../views/types.js";
 import { derivedActOf } from "../mutations/derived-names.js";
@@ -186,7 +187,7 @@ export function kindShapes(document: GraviewDocument): Map<string, KindShape> {
     // What cites each cited field (Roadmap f-field-cites-marker), which `uncited(…)` reads.
     const cites = new Map(Object.entries(spec.fields).flatMap(([name, field]) => (field.cites ? [[name, field.cites] as const] : [])));
     shapes.set(kind, {
-      fields: new Set([...Object.keys(spec.fields), ...linked.keys()]),
+      fields: new Set([...Object.keys(spec.fields), ...linked.keys(), ...TOUCHED_FIELDS]),
       edges: new Map(Object.entries(localEdges(spec.edges)).map(([name, e]) => [name, e.cardinality ?? "many"])),
       ...(computed ? { computed } : {}),
       ...(linked.size > 0 ? { linked } : {}),
@@ -273,12 +274,78 @@ function validate(document: GraviewDocument): Finding[] {
   const linkedHere = (kind: string, name: string) => linkedEdges(document.kinds[kind]?.edges).has(name);
   const linkedAnywhere = (name: string) => Object.keys(document.kinds).some((kind) => linkedHere(kind, name));
 
+  /*
+   * WHEN A RECORD WAS MADE OR TOUCHED IS KEPT AS EACH SEAT MAY SEE IT
+   * (`touched.ts`): a seat from whom a sight keeps anything is told none of
+   * the four, so a rule, an act's condition or a computed value that reads
+   * them cannot be judged for it. Said, not refused.
+   */
+  const sights = (document.policy as { readonly sees?: readonly Record<string, unknown>[] } | undefined)?.sees ?? [];
+  const keepsSomething = sights.some((sight) => sight["hide"] !== undefined || sight["fields"] !== undefined || sight["own"] !== undefined || sight["via"] !== undefined) ||
+    (sights.length > 0 && new Set(sights.flatMap((sight) => (Array.isArray(sight["kinds"]) ? (sight["kinds"] as string[]) : []))).size < Object.keys(document.kinds).length) ||
+    // A declared role no sight names sees nothing at all.
+    (sights.length > 0 && !sights.some((sight) => sight["roles"] === "*") && (document.roles ?? []).some((role) => !sights.some((sight) => Array.isArray(sight["roles"]) && (sight["roles"] as string[]).includes(role))));
+  const parsedOr = (source: unknown): unknown => {
+    if (typeof source !== "string") return undefined;
+    try {
+      return parseExpr(source);
+    } catch {
+      return undefined;
+    }
+  };
+  // Every computed value and fact that reads them, however it reaches them: a warning may say too much, never too little.
+  const sourceOf = (value: unknown): unknown => (typeof value === "string" ? value : (value as { readonly expr?: unknown } | undefined)?.expr);
+  const computedShapes = new Map<string, { readonly computed: ReadonlyMap<string, unknown> }>([
+    ...Object.entries(document.kinds).map(([kind, spec]) => [kind, { computed: new Map(Object.entries(spec.computed ?? {}).map(([name, value]) => [name, parsedOr(sourceOf(value))])) }] as const),
+    ["", { computed: new Map(Object.entries((document as { readonly computed?: Record<string, unknown> }).computed ?? {}).map(([name, value]) => [name, parsedOr(sourceOf(value))])) }],
+  ]);
+  const touchedNames = keepsSomething ? namesReadingTouched(computedShapes) : new Set<string>();
+  const readsKept = (source: unknown, path: string, what: string, template = false) => {
+    if (!keepsSomething || typeof source !== "string") return;
+    let parsed: unknown;
+    try {
+      parsed = template ? parseTemplate(source) : parseExpr(source);
+    } catch {
+      return;
+    }
+    if (readsTouchedThrough(parsed, touchedNames)) findings.push(warning("touched-read-kept", path, `${what} reads when a record was made or last touched, which a seat the policy keeps anything from is not told: it cannot be judged for that seat`, "judge by a field of the record's own, or keep nothing from the seats that act or read it"));
+  };
+  for (const [name, rule] of Object.entries(document.rules ?? {})) {
+    for (const key of ["when", "require"] as const) readsKept((rule as Record<string, unknown>)[key], `rules.${name}.${key}`, `The rule "${name}"`);
+    readsKept((rule as Record<string, unknown>)["says"], `rules.${name}.says`, `The rule "${name}"`, true);
+  }
+  for (const [at, job] of ((document as { readonly purpose?: { readonly jobs?: readonly Record<string, unknown>[] } }).purpose?.jobs ?? []).entries()) {
+    readsKept(job["where"], `purpose.jobs.${at}.where`, `The job "${String(job["name"] ?? at)}"`);
+    const by = typeof job["sort"] === "string" ? job["sort"] : (job["sort"] as { readonly by?: unknown } | undefined)?.by;
+    readsKept(by, `purpose.jobs.${at}.sort`, `The job "${String(job["name"] ?? at)}"`);
+  }
+  for (const [name, act] of Object.entries(document.acts ?? {})) {
+    const spec = act as Record<string, unknown>;
+    readsKept(spec["allowedWhen"], `acts.${name}.allowedWhen`, `The act "${name}"`);
+    readsKept(spec["refusal"], `acts.${name}.refusal`, `The act "${name}"`, true);
+    // A value an effect works out (`{ expr }`), wherever in its effects it is.
+    const exprsIn = (value: unknown, at: string): void => {
+      if (value === null || typeof value !== "object") return;
+      if (!Array.isArray(value) && typeof (value as { readonly expr?: unknown }).expr === "string") return readsKept((value as { readonly expr: string }).expr, at, `The act "${name}"`);
+      for (const [key, inner] of Object.entries(value)) exprsIn(inner, `${at}.${key}`);
+    };
+    exprsIn(spec["effects"], `acts.${name}.effects`);
+  }
+  for (const [kind, spec] of Object.entries(document.kinds)) for (const [name, value] of Object.entries(spec.computed ?? {})) readsKept(sourceOf(value), `kinds.${kind}.computed.${name}`, `${kind}'s ${name}`);
+  for (const [name, value] of Object.entries((document as { readonly computed?: Record<string, unknown> }).computed ?? {})) readsKept(sourceOf(value), `computed.${name}`, `The fact "${name}"`);
+
   for (const [kind, spec] of Object.entries(document.kinds)) {
     const at = `kinds.${kind}`;
     for (const [name, edge] of Object.entries(spec.edges ?? {})) {
       // One that reaches another app is judged with the checker (`linked-findings.ts`).
       if (!reachesAnotherApp(edge) && edge.to !== "*") for (const target of edge.to) if (!kinds.has(target)) findings.push(error("edge-target", `${at}.edges.${name}.to`, `"${target}" is not a kind this document declares`));
       if (spec.fields[name]) findings.push(error("edge-field-clash", `${at}.edges.${name}`, `"${name}" is both a field and a relation of ${kind}`, "rename one of them"));
+    }
+    // When a record was made and last touched, and by whom, is every record's own (`touched.ts`): no kind declares a second thing under one of those names.
+    for (const [part, names] of [["fields", Object.keys(spec.fields)], ["edges", Object.keys(spec.edges ?? {})], ["computed", Object.keys(spec.computed ?? {})]] as const) {
+      for (const name of names.filter(isTouchedField)) {
+        findings.push(error("touched-field-taken", `${at}.${part}.${name}`, touchedTakenSaid(kind, name), touchedTakenFix(name)));
+      }
     }
     if (spec.lifecycle && !spec.fields[spec.lifecycle.field]) findings.push(error("lifecycle-field", `${at}.lifecycle.field`, `${kind} has no field "${spec.lifecycle.field}"`));
     // A glance may say a computed field: the surfaces that draw a glance work it out over the seat's graph (FR-83).
@@ -294,7 +361,7 @@ function validate(document: GraviewDocument): Finding[] {
       for (const part of parts ?? []) {
         if (!part.expr) continue;
         for (const name of analyzeExpr(part.expr).names) {
-          if (spec.fields[name]) continue;
+          if (spec.fields[name] || isTouchedField(name)) continue;
           // A computed field worked out from the record alone is said like a field; one that reads beyond it cannot be, with no graph in hand.
           if (computedHere(name)) {
             if (!workedOutAlone(spec, name)) findings.push(error("template-field", `${at}.${key}`, `${kind}'s ${name} is worked out from beyond the record, and a ${key} is said with no graph to read`, `show it in a view instead, or name a computed field worked out from ${kind}'s own fields`));
@@ -410,7 +477,7 @@ function validate(document: GraviewDocument): Finding[] {
       const shape = analyzeExpr(expr);
       for (const n of shape.names) {
         if (rule.over === "graph") findings.push(error("rule-name", `${at}.${key}`, `"${n}" means nothing in a rule over the whole graph`, "name a kind in \"over\", or use all('kind')"));
-        else if (spec && !spec.fields[n] && !spec.edges?.[n] && spec.computed?.[n] === undefined) {
+        else if (spec && !spec.fields[n] && !isTouchedField(n) && !spec.edges?.[n] && spec.computed?.[n] === undefined) {
           const hyphenated = Object.keys(spec.edges ?? {}).find((e) => e.includes("-") && e.split("-").includes(n));
           findings.push(error("rule-name", `${at}.${key}`, `${rule.over} has no field or relation called "${n}"`, hyphenated ? `"${hyphenated}" reads as a subtraction in a rule; rename the relation to one camelCase word, like "${hyphenated.replace(/-([a-z0-9])/g, (_, c: string) => c.toUpperCase())}"` : undefined));
         }

@@ -254,7 +254,8 @@ export function chooseGrouping<N extends ArrangeNode>(
   const kind = members[0]!.kind;
   const ctx = { schema: options.schema, graph: options.graph as unknown as ArrangeGraph, ...(options.today ? { today: options.today } : {}) };
   const candidates: { by: string; bucket?: DateBucket }[] = [];
-  for (const offer of arrangeable(options.schema, kind).groups) {
+  // By what the records are about: when each was made or touched groups nothing a band means (`touched.ts`).
+  for (const offer of arrangeable(options.schema, kind, { touched: false }).groups) {
     if (offer.key === options.exclude) continue;
     if (offer.buckets) for (const bucket of ["decade", "year", "month"] as const) candidates.push({ by: offer.key, bucket });
     else candidates.push({ by: offer.key });

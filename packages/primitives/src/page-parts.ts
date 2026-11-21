@@ -80,7 +80,8 @@ export function lensNarrows(lens: { readonly name?: unknown; readonly options?: 
  */
 export function recordsShown<N extends { readonly id: string; readonly kind: string }>(schema: AnySchema, graph: ArrangeContext["graph"], kind: string, nodes: readonly N[], filter: string | undefined, flagged: ReadonlySet<string> = new Set()): readonly N[] {
   const asked = filter ? (parseArrangement({ filter }).filter ?? []) : [];
-  const offered = asked.length > 0 ? arrangeable(schema, kind).filters : [];
+  // When each was made and touched, only where its reader is told them (`toldTouches` on a seat's graph).
+  const offered = asked.length > 0 ? arrangeable(schema, kind, { touched: (graph as { readonly toldTouches?: boolean }).toldTouches !== false }).filters : [];
   const conditions = asked.filter((condition) => offered.some((one) => one.key === condition.key));
   if (conditions.length === 0) return nodes;
   return arrange(nodes as never, { filter: conditions }, { schema, graph, flagged }).nodes as unknown as readonly N[];

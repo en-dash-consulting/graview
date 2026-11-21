@@ -222,7 +222,11 @@ export function storeAt(w: World, count: number): Store<AnySchema> {
  */
 export function fold(schema: AnySchema, ops: readonly Operation[], from: GraphSnapshot = { nodes: [], edges: [] }): GraphSnapshot {
   const graph = Graph.from(schema, from as never);
-  for (const op of ops) graph.applyPrimitives(op.primitives, { restoring: op.undoes !== undefined });
+  // Each op stamps what it wrote as it lands, as a client's store does (`createdAt`, `updatedAt`).
+  for (const op of ops) {
+    graph.applyPrimitives(op.primitives, { restoring: op.undoes !== undefined });
+    graph.touch(op);
+  }
   return graph.snapshot();
 }
 

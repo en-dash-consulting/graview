@@ -55,7 +55,7 @@ function optionsOf(def: Def | undefined): readonly string[] | undefined {
 const words = (key: string) => key.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/[-_]/g, " ").replace(/^./, (first) => first.toUpperCase());
 
 /** What a kind filters by: its own fields, its relations either way, through each relation a far choice (a list's), and `is`. */
-export function filterKeysOf(schema: AnySchema, kind: string, through: boolean): readonly FilterKey[] {
+export function filterKeysOf(schema: AnySchema, kind: string, through: boolean, touched = true): readonly FilterKey[] {
   const definition = schema.tryDefinition(kind);
   if (!definition) return [];
   const hidden = new Set<string>(definition.display?.hide ?? []);
@@ -68,6 +68,8 @@ export function filterKeysOf(schema: AnySchema, kind: string, through: boolean):
     const options = optionsOf(def);
     out.push({ key: field, label: words(field), ...(options ? { options } : {}) });
   }
+  // When each record last changed and was added, which every record keeps (`createdAt`, `updatedAt`), as the kind's list offers them.
+  if (touched) out.push({ key: "updatedAt", label: "Last changed" }, { key: "createdAt", label: "Added" });
   const relations = new Map<string, readonly string[]>();
   for (const [edge, declared] of Object.entries(definition.edges ?? {})) relations.set(edge, declared.to === "*" ? [] : [...declared.to]);
   for (const other of schema.definitions) {
@@ -98,13 +100,13 @@ const listed = (said: readonly string[]) => (said.length <= 1 ? (said[0] ?? "") 
  * kinds offer: `through` for a kind's list, which also filters by a choice
  * at a relation's far end (`became.stage`). Nothing asked is no filter.
  */
-export function filterOfWhere(schema: AnySchema, kinds: readonly string[], where: unknown, options: { readonly through?: boolean } = {}): WhereJudged {
+export function filterOfWhere(schema: AnySchema, kinds: readonly string[], where: unknown, options: { readonly through?: boolean; readonly touched?: boolean } = {}): WhereJudged {
   if (where === undefined || where === null) return { ok: true };
   if (!isRecord(where)) return { ok: false, says: `A filter is an object of a field and the value it keeps, like { where: { stage: "building" } }.` };
   const entries = Object.entries(where);
   if (entries.length === 0) return { ok: true };
   const offers: FilterKey[] = [];
-  for (const kind of kinds) for (const offer of filterKeysOf(schema, kind, options.through === true)) if (!offers.some((held) => held.key === offer.key)) offers.push(offer);
+  for (const kind of kinds) for (const offer of filterKeysOf(schema, kind, options.through === true, options.touched !== false)) if (!offers.some((held) => held.key === offer.key)) offers.push(offer);
   const first = kinds[0] ? schema.tryDefinition(kinds[0]) : undefined;
   const plural = first ? (first.plural ?? `${words(first.kind)}s`) : "These";
   const said: string[] = [];

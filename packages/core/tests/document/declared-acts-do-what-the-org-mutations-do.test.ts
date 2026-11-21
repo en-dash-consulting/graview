@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { compileDocument } from "../../src/check.js";
+import { untouched } from "../../src/graph/touched.js";
 import { diffDocuments, editDocument, evaluateExpr, parseExpr, readDocument, type Finding, type GraviewDocument } from "../../src/document/index.js";
 import {
   defineMutation,
@@ -100,7 +101,8 @@ const tsShareOwnership = defineMutation("share-ownership", {
 const sorted = <T>(items: readonly T[]) => [...items].map((item) => JSON.stringify(item)).sort();
 const graphOf = (store: Store<AnySchema>) => {
   const snapshot = store.graph.snapshot() as { nodes: unknown[]; edges: { kind: string; from: string; to: string }[] };
-  return { nodes: sorted(snapshot.nodes), edges: sorted(snapshot.edges.map(({ kind, from, to }) => ({ kind, from, to }))) };
+  // When each record was last touched is the store's clock, not what either act did.
+  return { nodes: sorted(snapshot.nodes.map((node) => untouched(node as object))), edges: sorted(snapshot.edges.map(({ kind, from, to }) => ({ kind, from, to }))) };
 };
 const changesOf = (primitives: readonly Primitive[]) => sorted(primitives.map((p) => ("edge" in p ? { op: p.op, kind: p.edge.kind, from: p.edge.from, to: p.edge.to } : p)));
 

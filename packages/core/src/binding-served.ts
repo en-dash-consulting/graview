@@ -7,6 +7,7 @@
  * entry's; making a binding, judging who may and taking one back are the
  * host's entry's alone, so no page pays for them.
  */
+import { untouched } from "./graph/touched.js";
 import { PERSON_SEAT } from "./graph/archived.js";
 import { isUnset, type Primitive } from "./graph/primitives.js";
 import type { MutationCall } from "./mutations/types.js";
@@ -151,8 +152,17 @@ export function unseatedOp(op: Operation, keeps: KeepsSeat = NO_SEAT): Operation
 }
 
 /** A snapshot with no record bound to a seat: what leaves this installation (an export, a seed, a template). */
-export function unseatedSnapshot<T extends { readonly nodes: readonly unknown[] }>(snapshot: T): T {
-  return snapshot.nodes.some((node) => unseated(node) !== node) ? { ...snapshot, nodes: snapshot.nodes.map((node) => unseated(node)) } : snapshot;
+export function unseatedSnapshot<T extends { readonly nodes: readonly unknown[] }>(snapshot: T, options: { readonly touched?: "kept" } = {}): T {
+  /*
+   * And, but for an export of this installation (`touched: "kept"`), without
+   * when each record was made and last touched and by whom (`touched.ts`):
+   * a seed or a template begins another app, whose records are made there.
+   */
+  const bare = (node: unknown) => {
+    const one = unseated(node);
+    return options.touched === "kept" || one === null || typeof one !== "object" ? one : untouched(one as object);
+  };
+  return snapshot.nodes.some((node) => bare(node) !== node) ? { ...snapshot, nodes: snapshot.nodes.map(bare) } : snapshot;
 }
 
 /** The seats a reader may be told a record is bound to: every one for the host, which binds people; its own for a person; none for anybody else. */

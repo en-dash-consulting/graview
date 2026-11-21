@@ -3,6 +3,7 @@
  * from the engine's own file, the rules made the engine a chunk of its own
  * on a hosted page, half a kilobyte more up front (docs/hosted-page.md).
  */
+import { readTouched, TOUCHED_FIELDS } from "../graph/touched.js";
 import { defineInvariant, RuleBudgetError, type AnyGraphNode, type AnySchema, type GraphReader, type InvariantDefinition, type Violation } from "../index.js";
 
 import { citedFieldsOf } from "../schema/cites.js";
@@ -33,7 +34,7 @@ export function shapesOfSchema(schema: AnySchema): Map<string, KindShape> {
     // What cites each cited field (Roadmap f-field-cites-marker), which `uncited(…)` reads.
     const cites = new Map(Object.entries(citedFieldsOf(schema, kind)));
     shapes.set(kind, {
-      fields: new Set(Object.keys(definition?.fields?.shape ?? {})),
+      fields: new Set([...Object.keys(definition?.fields?.shape ?? {}), ...TOUCHED_FIELDS]),
       edges: new Map(Object.entries(definition?.edges ?? {}).map(([name, edge]) => [name, edge.cardinality ?? "many"])),
       ...(computed ? { computed } : {}),
       ...(linked.size > 0 ? { linked } : {}),
@@ -51,6 +52,11 @@ const SHAPES = new WeakMap<object, Map<string, KindShape>>();
 function shapesOf(graph: GraphReader): Map<string, KindShape> {
   const schema = (graph as { readonly schema?: AnySchema }).schema;
   if (!schema) throw new Error("a rule judged in words needs its kinds: pass them, or judge a Graph, which carries its schema");
+  return heldShapesOf(schema);
+}
+
+/** A schema's shapes, worked out once per schema. */
+export function heldShapesOf(schema: AnySchema): Map<string, KindShape> {
   let shapes = SHAPES.get(schema);
   if (!shapes) SHAPES.set(schema, (shapes = shapesOfSchema(schema)));
   return shapes;
@@ -98,7 +104,9 @@ export function expressionRule(
     const shapes = (kinds ?? shapesOf(graph)) as Map<string, KindShape>;
     // A link to another app that could not be read (FR-171): a rule that does not hold without it cannot be judged, and says why.
     const unread: UnreadLink[] = [];
-    const ctx = { graph, subject, kinds: shapes, today: day, ...(timeZone ? { timeZone } : {}), ...(linked ? { linked } : {}), onUnread: (u: UnreadLink) => unread.push(u) };
+    let touched = false;
+    const onTouched = () => void (touched = true);
+    const ctx = { graph, subject, kinds: shapes, today: day, ...(timeZone ? { timeZone } : {}), ...(linked ? { linked } : {}), onUnread: (u: UnreadLink) => unread.push(u), onTouched };
     try {
       if (when && evaluateExpr(when, ctx) !== true) return [];
       if (evaluateExpr(require, ctx) === true) return [];
@@ -108,15 +116,19 @@ export function expressionRule(
       if (error instanceof ExprEvalError) throw new Error(error.sentence);
       throw error;
     }
+    const message = says ? renderTemplate(says, { node: subject, kinds: shapes, graph, today: day, ...(timeZone ? { money: { timeZone } } : {}), onTouched }) : title;
     return [
-      {
-        invariant: name,
-        ...(subject ? { subjectId: subject.id } : {}),
-        label: title,
-        message: says ? renderTemplate(says, { node: subject, kinds: shapes, graph, today: day, ...(timeZone ? { money: { timeZone } } : {}) }) : title,
-        nodeIds: subject ? [subject.id] : [],
-        repairs: (spec.repairs ?? []).map((mutation) => ({ mutation, label: mutation.replace(/-/g, " "), args: subject ? { id: subject.id } : {} })),
-      },
+      readTouched(
+        {
+          invariant: name,
+          ...(subject ? { subjectId: subject.id } : {}),
+          label: title,
+          message,
+          nodeIds: subject ? [subject.id] : [],
+          repairs: (spec.repairs ?? []).map((mutation) => ({ mutation, label: mutation.replace(/-/g, " "), args: subject ? { id: subject.id } : {} })),
+        },
+        touched,
+      ),
     ];
   };
   const common = {
@@ -185,7 +197,9 @@ export function coverageRule(name: string, spec: CoverageRuleSpec, options: { re
   };
   const judge = (graph: GraphReader, subject: AnyGraphNode, day = today(), timeZone?: string): Violation[] => {
     const shapes = shapesOf(graph);
-    const ctx = { graph, subject, kinds: shapes, today: day, ...(timeZone ? { timeZone } : {}) };
+    let touched = false;
+    const onTouched = () => void (touched = true);
+    const ctx = { graph, subject, kinds: shapes, today: day, ...(timeZone ? { timeZone } : {}), onTouched };
     try {
       if (when && evaluateExpr(when, ctx) !== true) return [];
     } catch (error) {
@@ -197,14 +211,20 @@ export function coverageRule(name: string, spec: CoverageRuleSpec, options: { re
       const definition = (graph as { readonly schema?: AnySchema }).schema?.tryDefinition(node.kind) as { label?: (n: AnyGraphNode) => string } | undefined;
       return definition?.label?.(node) ?? node.id;
     };
-    return uncovered(graph, subject, planOf(graph)).map((far) => ({
-      invariant: name,
-      subjectId: subject.id,
-      label: title,
-      message: says ? renderTemplate(says, { node: subject, kinds: shapes, graph, today: day, ...(timeZone ? { money: { timeZone } } : {}), bindings: { [subject.kind]: subject, [far.kind]: far } }) : `${label(subject)}: ${title} — ${label(far)}`,
-      nodeIds: [subject.id, far.id],
-      repairs: (spec.repairs ?? []).map((mutation) => ({ mutation, label: mutation.replace(/-/g, " "), args: { id: subject.id } })),
-    }));
+    return uncovered(graph, subject, planOf(graph)).map((far) => {
+      const message = says ? renderTemplate(says, { node: subject, kinds: shapes, graph, today: day, ...(timeZone ? { money: { timeZone } } : {}), bindings: { [subject.kind]: subject, [far.kind]: far }, onTouched }) : `${label(subject)}: ${title} — ${label(far)}`;
+      return readTouched(
+        {
+          invariant: name,
+          subjectId: subject.id,
+          label: title,
+          message,
+          nodeIds: [subject.id, far.id],
+          repairs: (spec.repairs ?? []).map((mutation) => ({ mutation, label: mutation.replace(/-/g, " "), args: { id: subject.id } })),
+        },
+        touched,
+      );
+    });
   };
   return defineInvariant(name, {
     scope: { kind: spec.over },

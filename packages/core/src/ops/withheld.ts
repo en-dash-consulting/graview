@@ -1,4 +1,5 @@
 import { UNSET, writesOf, type Primitive } from "../graph/primitives.js";
+import { untouchedPrimitive } from "../graph/touched.js";
 import type { AnyGraphNode, GraphEdge } from "../graph/types.js";
 import { actingAs } from "../permissions/policy.js";
 import type { Principal } from "../permissions/types.js";
@@ -77,6 +78,10 @@ export interface SeatLens {
    * seat that may see everything.
    */
   readonly hides?: () => boolean;
+  /** Whether the seat is told when each record was made and last touched, and by whom (`toldTouches`): absent, it is. */
+  readonly toldTouches?: () => boolean;
+  /** A record whose four name a seat since bound to a person, said as that person (`seatView`). */
+  readonly reboundTouches?: <N extends object>(node: N) => N;
 }
 
 /** Whether any field of a record — not its id or kind — names what `sees` says no to. */
@@ -219,7 +224,19 @@ export function redact(ops: readonly Operation[], seeing: SeatLens | ((id: strin
   if (given.hides?.() === false) return [...ops];
   const lens = given.pin?.() ?? given;
   // And no seat a person is bound to, in any op: that is the host's alone (Roadmap f-invite-binds-existing-person).
-  return undoesFollow(judgedOps(ops, lens), lens).map((op) => unseatedOp(op, lens.keepsSeat));
+  return undoesFollow(judgedOps(ops, lens), lens).map((op) => unseatedOp(op, lens.keepsSeat)).map((op) => (lens.toldTouches?.() === false ? untouchedOp(op) : op));
+}
+
+/**
+ * NOR WHEN A RECORD WAS MADE OR TOUCHED, AND BY WHOM (`touched.ts`), to a
+ * seat that is told none of them (`toldTouches`): none rides in what an op
+ * carries, and each op says it stamps nothing (`stamps: false`), so what
+ * the seat folds of its log holds none either, as what it is served does.
+ */
+function untouchedOp(op: Operation): Operation {
+  const primitives = op.primitives.map(untouchedPrimitive);
+  const inverse = op.inverse?.map(untouchedPrimitive);
+  return { ...op, primitives, ...(inverse ? { inverse } : {}), stamps: false };
 }
 
 /**
@@ -242,6 +259,8 @@ function undoesFollow(served: readonly Operation[], lens: SeatLens): Operation[]
     }
     return false;
   };
+  // A seat from whom nothing is kept (`toldTouches`) may be told any sentence: an undo is served it as it is, whatever it took back.
+  if (lens.toldTouches?.() === true) return [...served];
   return served.map((op) => (op.undoes === undefined || op.withheld || DECLINES.liftTold?.(op, lens as never) || !kept(op) ? op : withhold(op, lens, op.primitives)));
 }
 

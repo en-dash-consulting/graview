@@ -1,4 +1,5 @@
 import { PERSON_SEAT } from "../graph/archived.js";
+import { isTouchedField } from "../graph/touched.js";
 import { dayAsRead, DATE_VALUE, isMoment, ISO_MOMENT, momentAsRead, momentAtAGlance } from "../days.js";
 import { kindDateField, type DatedField } from "../kind-date.js";
 import { fieldWords, labelOf, nounOf, type ReadableField } from "./define-node.js";
@@ -214,6 +215,8 @@ export function readableFields(
   const entries = keys.map((key) => [key, node[key]] as const);
   for (const [key, value] of entries) {
     if (skip.has(key)) continue;
+    // When it was made and last touched, and by whom (`touched.ts`), is said where the declaration asks for it, and not as one of the record's own fields.
+    if (isTouchedField(key) && !chosen.includes(key)) continue;
     // A computed field kept off what a record says of itself (FR-217): still worked out for a sort, a rule or a view.
     if (workedOutHidden(definition, key)) continue;
     /*

@@ -1,5 +1,6 @@
 import {
   Graph,
+  isTouchedField,
   normalize,
   writesOf,
   unseatedSnapshot,
@@ -69,7 +70,8 @@ export function seedSteps(given: GraphSnapshot, live: GraphSnapshot, options: Se
     }
     const fields: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(wanted)) {
-      if (key === "id" || key === "kind" || same(have[key], value)) continue;
+      // When a record was made and last touched is the store's own to keep (`createdAt`, `updatedAt`): a seed never changes it.
+      if (key === "id" || key === "kind" || isTouchedField(key) || same(have[key], value)) continue;
       fields[key] = value;
     }
     if (Object.keys(fields).length > 0) steps.push({ what: "patch-node", id: wanted.id, fields });

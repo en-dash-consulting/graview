@@ -4,6 +4,7 @@
  * split the page's first chunks differently, a third of a kilobyte more up
  * front (docs/hosted-page.md).
  */
+import { readTouched, TOUCHED_FIELDS } from "../graph/touched.js";
 import {
   createSchema,
   defineInvariant,
@@ -413,7 +414,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     // What cites each cited field (Roadmap f-field-cites-marker), which `uncited(…)` reads.
     const cites = new Map(Object.entries(spec.fields).flatMap(([name, f]) => (f.cites ? [[name, f.cites] as const] : [])));
     shapes.set(kind, {
-      fields: new Set([...Object.keys(spec.fields), ...linked.keys()]),
+      fields: new Set([...Object.keys(spec.fields), ...linked.keys(), ...TOUCHED_FIELDS]),
       edges: new Map(Object.entries(localEdges(spec.edges)).map(([name, e]) => [name, e.cardinality ?? "many"])),
       ...(computed ? { computed: new Map(computed) } : {}),
       ...(linked.size > 0 ? { linked } : {}),
@@ -543,6 +544,21 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
   for (const [name, act] of Object.entries(document.acts ?? {})) {
     const planned = plan.acts[name]!;
     const { title, effects, guard, refusal, destructive, idempotent, creates, connects, severs, writes, writesOther, sets } = planned;
+    /*
+     * WHAT A SEAT TOLD NONE OF A RECORD'S FOUR CANNOT BE JUDGED BY
+     * (`toldTouches`): whether a judgment read one, by any route, is known as
+     * it is made, not guessed from what it says. For such a seat, a condition,
+     * its refusal or a value an act works out that read one is refused.
+     */
+    const untoldBy = (graph: GraphReader): boolean => (graph as { readonly toldTouches?: boolean }).toldTouches === false;
+    const unjudged = (subject: AnyGraphNode | null) => `"${title}" asks when ${subject ? labelFor(subject) : "a record"} was made or last changed, which is not said to you here, so it cannot be judged for you`;
+    /** What `run` worked out, and whether it read one of the four, for a seat told none of them; any other seat is never asked. */
+    const tracked = <T>(graph: GraphReader, run: (onTouched?: () => void) => T): { readonly value: T; readonly touched: boolean } => {
+      if (!untoldBy(graph)) return { value: run(), touched: false };
+      let touched = false;
+      const value = run(() => (touched = true));
+      return { value, touched };
+    };
     // What it carries to the records linked to its subject, by relation (Roadmap f-acts-update-linked): the store judges each far record's own edit.
     const writesLinked: Record<string, readonly string[]> = {};
     for (const e of effects) if ("through" in e) writesLinked[e.through] = [...new Set([...(writesLinked[e.through] ?? []), ...Object.keys(e.set)])];
@@ -565,19 +581,30 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
      * so the two cannot say different things. Undefined where it holds.
      */
     const refusedBy = (graph: GraphReader, subject: AnyGraphNode, bindings: Record<string, Value>): string | undefined => {
-      let allowed: Value;
+      let allowed: { readonly value: Value; readonly touched: boolean };
       try {
-        allowed = evaluateExpr(guard!, { graph, subject, kinds: shapes, bindings, args: bindings, today: today(), ...saying });
+        allowed = tracked(graph, (onTouched) => evaluateExpr(guard!, { graph, subject, kinds: shapes, bindings, args: bindings, today: today(), ...saying, ...(onTouched ? { onTouched } : {}) }));
       } catch (e) {
         if (e instanceof ExprEvalError) throw new ActRefusal(`"${title}" could not be judged: ${e.sentence}`);
         throw e;
       }
-      if (allowed === true) return undefined;
-      return refusal ? renderTemplate(refusal, { node: subject, kinds: shapes, graph, bindings, args: bindings, today: today(), money }) : `"${title}" is not allowed for ${labelFor(subject)} right now`;
+      // A condition that read when a record was made or touched, for a seat told none of them: it cannot be judged here, and says so.
+      if (allowed.touched) return unjudged(subject);
+      if (allowed.value === true) return undefined;
+      const plain = `"${title}" is not allowed for ${labelFor(subject)} right now`;
+      if (!refusal) return plain;
+      // Its words, unless what they say is one of the four a seat told none of them is not told.
+      const said = tracked(graph, (onTouched) => renderTemplate(refusal, { node: subject, kinds: shapes, graph, bindings, args: bindings, today: today(), money, ...(onTouched ? { onTouched } : {}) }));
+      return said.touched ? plain : said.value;
     };
     /** What an effect's value is, as the act works it out: an expression, a literal (`$$` saying one `$`), the time or an argument. */
     const valueOf = (value: ValueSpec, bindings: Record<string, unknown>, graph: GraphReader, subject: AnyGraphNode | null = null): unknown => {
-      if (isRecord(value) && "expr" in value) return evaluateExpr(exprs.get(value.expr)!, { graph, subject, kinds: shapes, bindings: bindings as Record<string, Value>, args: bindings as Record<string, Value>, today: today(), ...saying });
+      if (isRecord(value) && "expr" in value) {
+        const worked = tracked(graph, (onTouched) => evaluateExpr(exprs.get(value.expr)!, { graph, subject, kinds: shapes, bindings: bindings as Record<string, Value>, args: bindings as Record<string, Value>, today: today(), ...saying, ...(onTouched ? { onTouched } : {}) }));
+        // A value worked out from one of the four, by an actor told none of them: refused, so it is never written where others read it.
+        if (worked.touched) throw new ActRefusal(unjudged(subject));
+        return worked.value;
+      }
       const ref = refName(value);
       return ref === undefined ? (typeof value === "string" && value.startsWith("$$") ? value.slice(1) : value) : ref === "now" ? new Date().toISOString() : ref === "today" ? today() : bindings[ref];
     };
@@ -634,7 +661,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
                 const subject = graph.getNode(id);
                 if (!subject || (subjectKinds.length > 0 && !subjectKinds.includes(subject.kind))) return false;
                 try {
-                  return evaluateExpr(guard, { graph, subject, kinds: shapes, bindings: {}, today: today(), ...saying }) === true;
+                  const allowed = tracked(graph, (onTouched) => evaluateExpr(guard, { graph, subject, kinds: shapes, bindings: {}, today: today(), ...saying, ...(onTouched ? { onTouched } : {}) }));
+                  return !allowed.touched && allowed.value === true;
                 } catch {
                   return false;
                 }
@@ -840,7 +868,10 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     const judge = (graph: GraphReader, subject: AnyGraphNode | null, day = today(), linked?: LinkedReader): Violation[] => {
       // A link to another app that could not be read is noted (FR-171): a rule that holds without it holds; one that does not cannot be judged, and says why.
       const unread: UnreadLink[] = [];
-      const ctx = { graph, subject, kinds: shapes, today: day, ...saying, ...(linked ? { linked } : {}), onUnread: (u: UnreadLink) => unread.push(u) };
+      // Whether judging it, or saying it, read when a record was made or touched, or who did (`READ_TOUCHED`): never shown to a seat told none of them.
+      let touched = false;
+      const onTouched = () => void (touched = true);
+      const ctx = { graph, subject, kinds: shapes, today: day, ...saying, ...(linked ? { linked } : {}), onUnread: (u: UnreadLink) => unread.push(u), onTouched };
       let holds: boolean;
       /*
        * A RULE THAT CANNOT ANSWER IS THE ENGINE'S TO SAY (FR-29). Out of
@@ -893,27 +924,15 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
          * may say either by its kind's name — "{candidate} has no stance on
          * {issue}" — bound beside the subject's own fields.
          */
-        return missing.map((far) => ({
-          invariant: name,
-          subjectId: subject.id,
-          label: title,
-          message: says
-            ? renderTemplate(says, { node: subject, kinds: shapes, graph, today: day, money, bindings: { [subject.kind]: subject, [far.kind]: far } })
-            : `${labelFor(subject)}: ${title} — ${labelFor(far)}`,
-          nodeIds: [subject.id, far.id],
-          repairs: repairList,
-        }));
+        return missing.map((far) => {
+          const message = says
+            ? renderTemplate(says, { node: subject, kinds: shapes, graph, today: day, money, bindings: { [subject.kind]: subject, [far.kind]: far }, onTouched })
+            : `${labelFor(subject)}: ${title} — ${labelFor(far)}`;
+          return readTouched({ invariant: name, subjectId: subject.id, label: title, message, nodeIds: [subject.id, far.id], repairs: repairList }, touched);
+        });
       }
-      return [
-        {
-          invariant: name,
-          ...(subject ? { subjectId: subject.id } : {}),
-          label: title,
-          message: says ? renderTemplate(says, { node: subject, kinds: shapes, graph, today: day, money }) : subject ? `${labelFor(subject)}: ${title}` : title,
-          nodeIds: subject ? [subject.id] : [],
-          repairs: repairList,
-        },
-      ];
+      const message = says ? renderTemplate(says, { node: subject, kinds: shapes, graph, today: day, money, onTouched }) : subject ? `${labelFor(subject)}: ${title}` : title;
+      return [readTouched({ invariant: name, ...(subject ? { subjectId: subject.id } : {}), label: title, message, nodeIds: subject ? [subject.id] : [], repairs: repairList }, touched)];
     };
     const declared = {
       label: title,

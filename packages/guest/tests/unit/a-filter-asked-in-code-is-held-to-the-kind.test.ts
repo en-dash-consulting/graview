@@ -28,7 +28,7 @@ describe("a filter asked for in code", () => {
   });
 
   it("refuses a field the kind does not have, in a sentence naming the ones it does", () => {
-    expect(filterOfWhere(schema, ["feature"], { stag: "building" })).toEqual({ ok: false, says: 'Features have no field "stag" to filter by; they filter by stage, effort, done, team, owned and is.' });
+    expect(filterOfWhere(schema, ["feature"], { stag: "building" })).toEqual({ ok: false, says: 'Features have no field "stag" to filter by; they filter by stage, effort, done, team, updatedAt, createdAt, owned and is.' });
   });
 
   it("refuses a choice the field does not offer, and a value that is not one value", () => {

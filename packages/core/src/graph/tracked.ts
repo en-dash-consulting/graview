@@ -14,6 +14,11 @@ export class TrackedReader<N extends GraphNodeBase> implements GraphReader<N> {
 
   constructor(private readonly inner: GraphReader<N>) {}
 
+  /** Whether the graph it reads is told when each record was made and touched (a seat's, `toldTouches`): absent, it is. */
+  get toldTouches(): boolean | undefined {
+    return (this.inner as { readonly toldTouches?: boolean }).toldTouches;
+  }
+
   /** The ids this mutation read, in insertion order. */
   reads(): string[] {
     return [...this.seen];
