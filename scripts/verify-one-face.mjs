@@ -2783,6 +2783,20 @@ async function phoneCityByHand(page, where) {
  * of the way. It used to jump back to where the zoom began.
  */
 const STILL_MS = 600;
+/*
+ * And at least STILL_FRAMES frames after it, however long they take: what is
+ * judged is frames, each a step of what was drawn, and a runner whose frames
+ * came 220 ms apart after the hand let go (the GPU leg's desk, run
+ * 44868606084) drew eight in 600 ms, so the claim read "too few frames" —
+ * or a settle cut off part way, its whole way short and so each step a
+ * bigger share of it. The window runs to the later of the two.
+ */
+const STILL_FRAMES = 16;
+const afterRelease = (frames, released) => {
+  const from = frames.filter((frame) => frame.t >= released);
+  const until = Math.max(released + STILL_MS, from[STILL_FRAMES - 1]?.t ?? -Infinity);
+  return from.filter((frame) => frame.t <= until);
+};
 function startStillRecording(page) {
   return page.evaluate(() => {
     const frames = [];
@@ -2822,11 +2836,11 @@ const stopStillRecording = (page) =>
     return window.__stillFrames ?? [];
   });
 const farthest = (a, b) => Math.max(...a.map((n, i) => Math.abs(n - b[i])));
-/** From the last frame drawn before `released`, for STILL_MS after: how far each box went from where that frame drew it (one that came up after, from its first frame). */
+/** From the last frame drawn before `released`, for STILL_MS and STILL_FRAMES after: how far each box went from where that frame drew it (one that came up after, from its first frame). */
 function stillAfter(frames, released) {
   const last = frames.filter((frame) => frame.t < released).at(-1);
   if (!last) return { worst: Infinity, frames: 0, error: "no frame before the hand let go" };
-  const after = frames.filter((frame) => frame.t >= released && frame.t <= released + STILL_MS);
+  const after = afterRelease(frames, released);
   const first = { ...last.items };
   let worst = 0;
   let what = null;
@@ -2847,7 +2861,7 @@ function stillAfter(frames, released) {
 function goesOnAfter(frames, released) {
   const last = frames.filter((frame) => frame.t < released).at(-1);
   if (!last) return { firstStep: Infinity, frames: 0, error: "no frame before the hand let go" };
-  const after = frames.filter((frame) => frame.t >= released && frame.t <= released + STILL_MS);
+  const after = afterRelease(frames, released);
   let firstStep = 0;
   let firstAt = null;
   let leap = 0;
@@ -2975,7 +2989,7 @@ async function panStill(page, where, { level, phone }) {
       await startStillRecording(page);
       await page.waitForTimeout(120);
       released = await gesture(spot);
-      await page.waitForTimeout(STILL_MS + 150);
+      await framesPass(page, STILL_FRAMES + 2, STILL_MS + 150);
       frames = await stopStillRecording(page);
     } catch (error) {
       runs.push({ way, zoom, spot, ok: false, error: String(error?.message ?? error) });
