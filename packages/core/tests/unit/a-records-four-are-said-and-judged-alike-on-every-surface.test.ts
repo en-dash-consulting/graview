@@ -65,6 +65,16 @@ describe("a view spec's text", () => {
     bindPerson(store, bud, "participant:bud", { author: host });
     expect(said()).toContain("Changed by Bud");
   });
+
+  it("says who before any format, so a format never shows the seat", () => {
+    const store = familyStore();
+    store.apply({ name: "edit-gift", args: { id: "gift:kite", title: "Red" } }, { author: bud });
+    const said = () => JSON.stringify(resolveBlocks(compileBlocks([{ text: "By {updatedBy | upper}" }] as never), blockContextFor(store as never, amy, { id: "gift:kite", kind: "gift" }, { slot: "page" })));
+    expect(said()).toContain("By SOMEONE");
+    bindPerson(store, bud, "participant:bud", { author: host });
+    expect(said()).toContain("By BUD");
+    expect(said()).not.toContain("ACCT-BUD");
+  });
 });
 
 describe("a store's offer of the four", () => {
@@ -80,11 +90,23 @@ describe("a store's offer of the four", () => {
     const schema = createSchema([defineNode("task", { fields: z.object({ label: z.string() }) })]);
     const store = new Store<AnySchema>({ schema } as never);
     for (let at = 0; at < 2000; at++) store.applyPrimitives([{ op: "add-node", node: { id: `task:${at}`, kind: "task", label: "A" } }] as never, { author: ann });
-    const all = store.log.all.bind(store.log);
-    let read = 0;
-    (store.log as { all: () => unknown }).all = () => ((read += 1), all());
+    // Scanned once: what it holds is read again only when the log moves.
+    const ops = store.log.all() as unknown[];
+    let scanned = 0;
+    const some = ops.some.bind(ops);
+    Object.defineProperty(ops, "some", { value: (...args: Parameters<typeof some>) => ((scanned += 1), some(...args)) });
     for (let at = 0; at < 50; at++) offersTouches(store);
-    expect(read).toBeLessThanOrEqual(1);
+    expect(scanned).toBeLessThanOrEqual(1);
+  });
+
+  it("is worked out again when its log is replaced by one as long that ends on another op", () => {
+    const schema = createSchema([defineNode("task", { fields: z.object({ label: z.string() }) })]);
+    const store = new Store<AnySchema>({ schema } as never);
+    store.applyPrimitives([{ op: "add-node", node: { id: "task:a", kind: "task", label: "A" } }] as never, { author: ann });
+    expect(offersTouches(store)).toBe(true);
+    const [op] = store.log.all();
+    (store.log as { all: () => unknown }).all = () => [{ ...op, id: "op:other", stamps: false }];
+    expect(offersTouches(store)).toBe(false);
   });
 });
 
@@ -116,8 +138,54 @@ describe("a seat told none of the four", () => {
   });
 });
 
+describe("a reading of the four through another kind's computed value", () => {
+  const listDocument = (extra: Record<string, unknown>) => ({
+    format: "graview-document",
+    formatVersion: 1,
+    name: "L",
+    kinds: {
+      list: { noun: "list", plural: "lists", label: "{title}", fields: { title: { type: "string", required: true }, done: { type: "boolean" } } },
+      task: { noun: "task", plural: "tasks", label: "{title}", fields: { title: { type: "string", required: true }, note: { type: "string" } }, computed: { stale: { expr: "present(updatedAt)" } } },
+    },
+    roles: ["member", "guest"],
+    policy: { grants: [{ roles: "*", mutations: "*" }], sees: [{ roles: ["member"], kinds: ["list", "task"] }, { roles: ["guest"], kinds: ["list", "task"], hide: ["note"] }] },
+    ...extra,
+  });
+  const listed = (extra: Record<string, unknown>) => {
+    const made = compileDocument(listDocument(extra) as never);
+    if (!made.ok) throw new Error(JSON.stringify(made.findings));
+    const store = new Store<AnySchema>({ schema: made.app.schema, mutations: made.app.mutations, invariants: made.app.invariants, policy: made.app.policy, now: clock() } as never);
+    store.applyPrimitives([{ op: "add-node", node: { id: "list:l", kind: "list", title: "L" } }, { op: "add-node", node: { id: "task:t", kind: "task", title: "T" } }] as never, { author: ann });
+    return store;
+  };
+
+  it("is an act's condition a seat told none of the four is refused by, as one told them is judged by", () => {
+    const store = listed({ acts: { close: { title: "Close", on: "list", allowedWhen: "count(all('task') where stale) == 0", effects: [{ set: { done: true } }] } } });
+    expect(store.seenBy(gus).wouldDo([{ name: "close", args: { id: "list:l" } }] as never)[0]).not.toBe("changes");
+    expect(() => store.apply({ name: "close", args: { id: "list:l" } }, { author: gus })).toThrow(/cannot be judged for you/);
+    expect(store.graph.getNode("list:l")).not.toMatchObject({ done: true });
+    expect(() => store.apply({ name: "close", args: { id: "list:l" } }, { author: ann })).toThrow();
+  });
+
+  it("is a rule over the graph a seat told none of the four is not judged by", () => {
+    const store = listed({ rules: { none: { title: "None stale", over: "graph", require: "count(all('task') where stale) == 0" } } });
+    expect(store.seenBy(ann).violations().map((one) => one.invariant)).toContain("none");
+    expect(store.seenBy(gus).violations().map((one) => one.invariant)).not.toContain("none");
+  });
+});
+
+describe("a seat's view", () => {
+  it("acts as its seat when an act says no author, never as the store's own seat", () => {
+    const store = new Store<AnySchema>({ schema: family, policy: familyRules, principal: host, now: clock(), snapshot: { nodes: [{ id: "participant:bud", kind: "participant", name: "Bud" }, { id: "gift:kite", kind: "gift", title: "A kite" }], edges: [] } } as never);
+    const result = store.seenBy(bud).apply({ name: "edit-gift", args: { id: "gift:kite", title: "Red" } } as never) as unknown as { ops: { author?: { id?: string } }[] };
+    expect(result.ops.at(-1)?.author?.id).toBe("acct-bud");
+    expect(store.graph.getNode("gift:kite")).toMatchObject({ updatedBy: "acct-bud" });
+    expect(() => store.seenBy(amy).apply({ name: "bind-person", args: {} } as never)).toThrow();
+  });
+});
+
 describe("a seat's graph", () => {
-  it("hands out no seat's binding, and says whom another seat is only as a record it is served", () => {
+  it("hands out no seat's binding, and says whom another seat is only as a record it is served, else somebody", () => {
     const store = familyStore();
     bindPerson(store, bud, "participant:bud", { author: host });
     const told = store.seenBy(amy).graph as unknown as { everBound?: unknown; personSaidFor(seat: string): string | undefined };
@@ -126,7 +194,8 @@ describe("a seat's graph", () => {
     const policy: Policy = { ...familyRules, sees: [{ roles: ["member"], kinds: ["gift"] }] };
     const narrow = new Store<AnySchema>({ schema: family, policy, now: clock(), snapshot: store.snapshot() } as never);
     bindPerson(narrow, bud, "participant:bud", { author: host });
-    expect((narrow.seenBy(amy).graph as unknown as { personSaidFor(seat: string): string | undefined }).personSaidFor("acct-bud")).toBeUndefined();
+    expect((narrow.seenBy(amy).graph as unknown as { personSaidFor(seat: string): string | undefined }).personSaidFor("acct-bud")).toBe("someone");
+    expect((narrow.seenBy(amy).graph as unknown as { personSaidFor(seat: string): string | undefined }).personSaidFor("acct-nobody")).toBeUndefined();
   });
 
   it("says an account's profile as someone where the account is bound, as a seat's view does", () => {

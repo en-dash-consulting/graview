@@ -260,9 +260,11 @@ export function renderTemplate(parts: readonly TemplatePart[], ctx: RenderContex
         const labels = !part.format && named !== undefined && ctx.node ? ctx.kinds.get(ctx.node.kind)?.choices?.get(named) : undefined;
         if (labels && (typeof value === "string" || Array.isArray(value))) return capitalized(part, optionsSaid(value, labels, parts.length === 1));
         // Who made or touched it, as a page names an author: the person's record by its label, else somebody — never a seat's id.
-        if (named !== undefined && (named === "createdBy" || named === "updatedBy") && typeof value === "string" && !part.format) {
+        // Before any format, so `{updatedBy | upper}` says the person in capitals, not the seat.
+        if (named !== undefined && (named === "createdBy" || named === "updatedBy") && typeof value === "string") {
           const person = (ctx.graph ?? EMPTY_GRAPH).getNode(value);
-          return capitalized(part, person ? name(person) : "someone");
+          const who = person ? name(person) : "someone";
+          return capitalized(part, part.format ? show(who, part.format, today, part.formatArgs, ctx.money, name) : who);
         }
         if (part.format === "glance") return capitalized(part, glanced(value, named !== undefined && ctx.node ? ctx.kinds.get(ctx.node.kind)?.choices?.get(named) : undefined, today, ctx.money));
         return capitalized(part, show(value, part.format, today, part.formatArgs, ctx.money, name));

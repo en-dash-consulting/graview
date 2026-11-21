@@ -14,8 +14,9 @@ import { seatsKept, takesBindingBack, unseated } from "./binding-served.js";
 import { presentOf } from "./seat-of.js";
 import { FIELD_SIGHT, fieldsJudged, partialSight, recordsOf, sees, type Judged, type Records } from "./permissions/sight.js";
 import type { Principal } from "./permissions/types.js";
+import type { AnySchema } from "./schema/schema.js";
 import { diffSnapshots } from "./graph/diff.js";
-import { CREATED_BY, isTouchedField, readsTouchedThrough, TOUCHED_FIELDS, UPDATED_BY } from "./graph/touched.js";
+import { CREATED_BY, isTouchedField, namesReadingTouched, readsTouchedThrough, SCHEMA_SHAPES, TOUCHED_FIELDS, UPDATED_BY } from "./graph/touched.js";
 import { nodeRefKinds } from "./mutations/node-ref.js";
 import { PUBLISHING, readsPublished, type Publishing } from "./publish.js";
 
@@ -109,13 +110,14 @@ export function touchesSaid(store: Judged): <N extends object>(node: N) => N {
 }
 
 /** Whether a rule reads when a record was made or touched (`readsTouched`): one a seat told none of them cannot be judged for. */
-export function readsTouchedRule(store: { allInvariants?(): readonly { readonly name: string; readonly shape?: { readonly over?: string; readonly when?: unknown; readonly require?: unknown; readonly says?: unknown; readonly kinds?: ReadonlyMap<string, { readonly computed?: ReadonlyMap<string, unknown> }> } }[] }, name: string): boolean {
+export function readsTouchedRule(store: { readonly schema?: AnySchema; allInvariants?(): readonly { readonly name: string; readonly shape?: { readonly when?: unknown; readonly require?: unknown; readonly says?: unknown; readonly kinds?: ReadonlyMap<string, { readonly computed?: ReadonlyMap<string, unknown> }> } }[] }, name: string): boolean {
   const rule = store.allInvariants?.().find((one) => one.name === name);
   const shape = rule?.shape;
   if (shape === undefined) return false;
-  // What it judges by and what it says, through the computed values of the kind it is over.
-  const computed = (field: string) => (shape.over === undefined ? undefined : shape.kinds?.get(shape.over)?.computed?.get(field));
-  return readsTouchedThrough(shape.when, computed) || readsTouchedThrough(shape.require, computed) || readsTouchedThrough(shape.says, computed);
+  // What it judges by and what it says, through any computed value of any kind that reads them.
+  const kinds = shape.kinds ?? (store.schema ? SCHEMA_SHAPES.of?.(store.schema) : undefined);
+  const names = kinds ? namesReadingTouched(kinds) : new Set<string>();
+  return readsTouchedThrough(shape.when, names) || readsTouchedThrough(shape.require, names) || readsTouchedThrough(shape.says, names);
 }
 
 /**
@@ -130,16 +132,27 @@ export function offersTouches(store: object): boolean {
   if (seat !== undefined) return toldTouches(seat.store, seat.principal);
   // A store made from what a seat is served (a page's own): told none where its ops say they stamp nothing, or where its own policy keeps something from the seat it was given.
   const own = store as { readonly log?: { all(): readonly Operation[]; readonly length?: number }; readonly policy?: unknown; readonly by?: Principal; readonly graph?: unknown; readonly schema?: unknown };
-  const length = own.log?.length ?? own.log?.all().length ?? 0;
+  const ops = own.log?.all() ?? [];
+  const last = ops[ops.length - 1]?.id;
   const held = OFFERED.get(store);
-  if (held && held.length === length) return held.told;
-  const told = !own.log?.all().some((op) => op.stamps === false) && (own.policy === undefined || own.by === undefined || own.graph === undefined || givenNone(own.by) || toldTouches(own as never, own.by));
-  OFFERED.set(store, { length, told });
+  if (held && held.length === ops.length && held.last === last) return held.told;
+  const host = own.by !== undefined && givenNone(own.by) && !(store as { readonly [SERVED_STORE]?: true })[SERVED_STORE];
+  const told = !ops.some((op) => op.stamps === false) && (own.policy === undefined || own.by === undefined || own.graph === undefined || host || (!givenNone(own.by) && toldTouches(own as never, own.by)));
+  OFFERED.set(store, { length: ops.length, last, told });
   return told;
 }
 
-/** What `offersTouches` answered of a store, while its log is as long. */
-const OFFERED = new WeakMap<object, { readonly length: number; readonly told: boolean }>();
+/** What `offersTouches` answered of a store, while its log is as long and ends on the same op. */
+const OFFERED = new WeakMap<object, { readonly length: number; readonly last: string | undefined; readonly told: boolean }>();
+
+/** Set on a store made from what a seat is served (`markServed`): never the host's own, whoever it was given. */
+const SERVED_STORE = Symbol.for("graview.store.served");
+
+/** Mark a store made from what a seat is served, so it is never read as the host's own store (`offersTouches`). */
+export function markServed<T extends object>(store: T): T {
+  Object.defineProperty(store, SERVED_STORE, { value: true, enumerable: false });
+  return store;
+}
 
 /** Whom a store given no seat of its own acts as: the host's store, told everything, not somebody it was made for. */
 export const UNSEATED: Principal = Object.freeze({ kind: "human" }) as Principal;
@@ -1035,7 +1048,9 @@ export function seatView<T extends Viewed>(store: T, principal: Principal): T {
         case "personSaidFor":
           return (seat: string) => {
             const id = (target as { personSaidFor?(seat: string): string | undefined }).personSaidFor?.(seat);
-            return id !== undefined && (id === SOMEONE.id || seenId(id)) ? id : undefined;
+            if (id === undefined) return undefined;
+            // Somebody, whatever it is bound to that this seat is not served: what it answers says nothing of whom another seat is.
+            return seenId(id) ? id : SOMEONE.id;
           };
         case "everBound":
           return undefined;
@@ -1120,8 +1135,24 @@ export function seatView<T extends Viewed>(store: T, principal: Principal): T {
     },
   });
 
+  // An act through a seat's view is the seat's own unless it says whose: never the store's default seat.
+  const asSeat = (options: { readonly author?: unknown } | undefined) => ({ author: principal, ...options });
+  type Acts = Record<"apply" | "applyAll" | "applyPrimitives" | "previewAll" | "undo" | "wouldDo" | "mayUndo" | "mayPropose" | "missingFor", (...args: unknown[]) => unknown>;
+  const acting: Partial<Record<PropertyKey, (target: Acts) => unknown>> = {
+    apply: (target) => (call: never, options?: object) => target.apply(call, asSeat(options) as never),
+    applyAll: (target) => (calls: never, options?: object) => target.applyAll(calls, asSeat(options) as never),
+    applyPrimitives: (target) => (primitives: never, options?: object) => target.applyPrimitives(primitives, asSeat(options) as never),
+    previewAll: (target) => (calls: never, options?: object) => target.previewAll(calls, asSeat(options) as never),
+    undo: (target) => (batchIds: never, options?: object) => target.undo(batchIds, asSeat(options) as never),
+    wouldDo: (target) => (calls: never, author?: Principal) => target.wouldDo(calls, author ?? principal),
+    mayUndo: (target) => (batchIds: never, other?: Principal) => target.mayUndo(batchIds, other ?? principal),
+    mayPropose: (target) => (call: never, other?: Principal) => target.mayPropose(call, other ?? principal),
+    missingFor: (target) => (call: never, other?: Principal) => target.missingFor(call, other ?? principal),
+  };
   const view = new Proxy(store, {
     get(target, prop) {
+      const act = acting[prop];
+      if (act) return act(target as unknown as Acts);
       if (prop !== SEAT && prop !== "seenFor" && prop !== "seenBy" && prop !== "graph" && prop !== "log" && open()) return bound(target, prop);
       switch (prop) {
         // Whose view this is (`seatOf`): read by what reads a store from outside it — the past, the suggestions — without importing this module.

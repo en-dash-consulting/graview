@@ -3,7 +3,7 @@
  * from the engine's own file, the rules made the engine a chunk of its own
  * on a hosted page, half a kilobyte more up front (docs/hosted-page.md).
  */
-import { TOUCHED_FIELDS } from "../graph/touched.js";
+import { SCHEMA_SHAPES, TOUCHED_FIELDS } from "../graph/touched.js";
 import { defineInvariant, RuleBudgetError, type AnyGraphNode, type AnySchema, type GraphReader, type InvariantDefinition, type Violation } from "../index.js";
 
 import { citedFieldsOf } from "../schema/cites.js";
@@ -52,10 +52,16 @@ const SHAPES = new WeakMap<object, Map<string, KindShape>>();
 function shapesOf(graph: GraphReader): Map<string, KindShape> {
   const schema = (graph as { readonly schema?: AnySchema }).schema;
   if (!schema) throw new Error("a rule judged in words needs its kinds: pass them, or judge a Graph, which carries its schema");
+  return heldShapesOf(schema);
+}
+
+/** A schema's shapes, worked out once per schema; lent to what judges a seat without the rule language (`SCHEMA_SHAPES`). */
+export function heldShapesOf(schema: AnySchema): Map<string, KindShape> {
   let shapes = SHAPES.get(schema);
   if (!shapes) SHAPES.set(schema, (shapes = shapesOfSchema(schema)));
   return shapes;
 }
+SCHEMA_SHAPES.of = heldShapesOf as never;
 
 /** A rule whose judgment is written in the rule language rather than as a function. */
 export interface ExpressionRuleSpec {

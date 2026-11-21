@@ -4,7 +4,7 @@
  * split the page's first chunks differently, a third of a kilobyte more up
  * front (docs/hosted-page.md).
  */
-import { readsTouchedThrough, TOUCHED_FIELDS } from "../graph/touched.js";
+import { namesReadingTouched, readsTouchedThrough, TOUCHED_FIELDS } from "../graph/touched.js";
 import {
   createSchema,
   defineInvariant,
@@ -544,7 +544,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
   for (const [name, act] of Object.entries(document.acts ?? {})) {
     const planned = plan.acts[name]!;
     const { title, effects, guard, refusal, destructive, idempotent, creates, connects, severs, writes, writesOther, sets } = planned;
-    const guardReadsTouched = guard !== undefined && readsTouchedThrough(guard, (field) => [act.on ?? []].flat().map((kind) => shapes.get(kind as string)?.computed?.get(field)).find((one) => one !== undefined));
+    // Through any computed value of any kind, however it reaches it (`namesReadingTouched`).
+    const guardReadsTouched = guard !== undefined && readsTouchedThrough(guard, namesReadingTouched(shapes));
     // What it carries to the records linked to its subject, by relation (Roadmap f-acts-update-linked): the store judges each far record's own edit.
     const writesLinked: Record<string, readonly string[]> = {};
     for (const e of effects) if ("through" in e) writesLinked[e.through] = [...new Set([...(writesLinked[e.through] ?? []), ...Object.keys(e.set)])];

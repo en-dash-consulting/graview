@@ -27,6 +27,7 @@ import {
   type Lineage,
   type WireRefusal,
   EMPTY_DIFF,
+  markServed,
 } from "@graview/core";
 import type { ServedStops } from "@graview/core/tidying";
 import type { StorageLike } from "./browser-adapter.js";
@@ -672,6 +673,8 @@ async function opening<S extends AnySchema>(
     schema: app.schema,
     mutations: app.mutations ?? [],
     invariants: app.invariants ?? [],
+    // Whose page this is: what it offers and judges is that seat's, never a host's.
+    ...(options.principal ? { principal: options.principal } : {}),
     ...(app.policy ? { policy: app.policy } : {}), ...(app.publishing ? { publishing: app.publishing } : {}), ...(app.tidying ? { tidying: app.tidying } : {}),
     ...(app.modules ? { modules: app.modules } : {}),
     ...(enabledModules ? { enabledModules } : {}),
@@ -704,6 +707,8 @@ async function opening<S extends AnySchema>(
     ids: localIds(),
     ...(options.storeOptions ?? {}),
   });
+  // Made from what its seat is served: never read as the host's own store, whoever it was given (`offersTouches`).
+  markServed(store);
   /*
    * What the host served this seat is what it may see: a sight that hides a
    * field was judged there (Roadmap f-field-sight). THIS store shows what it

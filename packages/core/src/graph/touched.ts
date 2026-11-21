@@ -51,22 +51,53 @@ export function readsTouched(expr: unknown): boolean {
   return Object.values(one).some(readsTouched);
 }
 
+/** The kinds' computed values, by kind, as a schema's shapes hold them. */
+type ComputedShapes = ReadonlyMap<string, { readonly computed?: ReadonlyMap<string, unknown> }>;
+
+const NAMES_READING = new WeakMap<object, ReadonlySet<string>>();
+
+/** A schema's shapes, lent by the rule language when it is loaded (`document/rules.ts`), so a page that reads none carries none of it. */
+export const SCHEMA_SHAPES: { of?: (schema: object) => ComputedShapes } = {};
+
 /**
- * Whether an expression reads one of the four, itself or through a
- * computed value it names (`computed` gives each by name, parsed), however
- * deep: what a rule, an act's condition or a job reads, as it is judged.
+ * The names of every computed value, of any kind or of the whole graph,
+ * that reads one of the four, itself or through another computed value of
+ * any kind it names, however deep, across `all(<kind>)`, relations and
+ * aggregates alike. A name counts wherever any kind's value of that name
+ * reads them: what a seat told none of them cannot be judged by. Worked out
+ * once per schema's shapes.
  */
-export function readsTouchedThrough(expr: unknown, computed: (name: string) => unknown, seen: Set<string> = new Set()): boolean {
-  if (readsTouched(expr)) return true;
-  if (expr === null || typeof expr !== "object") return false;
-  if (Array.isArray(expr)) return expr.some((one) => readsTouchedThrough(one, computed, seen));
-  const one = expr as Record<string, unknown>;
-  if (one["t"] === "ident" && typeof one["name"] === "string" && !seen.has(one["name"])) {
-    seen.add(one["name"]);
-    const worked = computed(one["name"]);
-    if (worked !== undefined && readsTouchedThrough(worked, computed, seen)) return true;
+export function namesReadingTouched(kinds: ComputedShapes): ReadonlySet<string> {
+  const held = NAMES_READING.get(kinds);
+  if (held) return held;
+  const entries = [...kinds.values()].flatMap((shape) => [...(shape.computed ?? new Map<string, unknown>())]);
+  const names = new Set<string>();
+  for (let grew = true; grew; ) {
+    grew = false;
+    for (const [name, expr] of entries) {
+      if (names.has(name) || !readsTouchedThrough(expr, names)) continue;
+      names.add(name);
+      grew = true;
+    }
   }
-  return Object.values(one).some((inner) => readsTouchedThrough(inner, computed, seen));
+  NAMES_READING.set(kinds, names);
+  return names;
+}
+
+/**
+ * Whether an expression reads one of the four, itself or through a name in
+ * `names` (`namesReadingTouched`): an identifier, or a string naming one, as
+ * `fact('<name>')` does; a word that happens to match only says too much.
+ */
+export function readsTouchedThrough(expr: unknown, names: ReadonlySet<string>): boolean {
+  if (readsTouched(expr)) return true;
+  const walk = (value: unknown): boolean => {
+    if (typeof value === "string") return names.has(value);
+    if (value === null || typeof value !== "object") return false;
+    if (Array.isArray(value)) return value.some(walk);
+    return Object.entries(value as Record<string, unknown>).some(([key, inner]) => key !== "t" && walk(inner));
+  };
+  return names.size > 0 && walk(expr);
 }
 
 /** The four, in the order they are said. */
