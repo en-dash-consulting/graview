@@ -51,6 +51,24 @@ export function readsTouched(expr: unknown): boolean {
   return Object.values(one).some(readsTouched);
 }
 
+/**
+ * Whether an expression reads one of the four, itself or through a
+ * computed value it names (`computed` gives each by name, parsed), however
+ * deep: what a rule, an act's condition or a job reads, as it is judged.
+ */
+export function readsTouchedThrough(expr: unknown, computed: (name: string) => unknown, seen: Set<string> = new Set()): boolean {
+  if (readsTouched(expr)) return true;
+  if (expr === null || typeof expr !== "object") return false;
+  if (Array.isArray(expr)) return expr.some((one) => readsTouchedThrough(one, computed, seen));
+  const one = expr as Record<string, unknown>;
+  if (one["t"] === "ident" && typeof one["name"] === "string" && !seen.has(one["name"])) {
+    seen.add(one["name"]);
+    const worked = computed(one["name"]);
+    if (worked !== undefined && readsTouchedThrough(worked, computed, seen)) return true;
+  }
+  return Object.values(one).some((inner) => readsTouchedThrough(inner, computed, seen));
+}
+
 /** The four, in the order they are said. */
 export const TOUCHED_FIELDS: readonly string[] = [CREATED_AT, CREATED_BY, UPDATED_AT, UPDATED_BY];
 const TOUCHED: ReadonlySet<string> = new Set(TOUCHED_FIELDS);

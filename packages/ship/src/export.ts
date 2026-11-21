@@ -1,4 +1,4 @@
-import { assertReadable, bareOp, formatStamp, unseatedOp, unseatedSnapshot, type AnySchema, type Epoch, type FormatStamp, type GraviewApp, type LogArchive, type Operation, type Store, touchesSaid } from "@graview/core";
+import { assertReadable, bareOp, formatStamp, unseatedOp, unseatedSnapshot, type AnySchema, type Epoch, type FormatStamp, type GraviewApp, type LogArchive, type Operation, type Store } from "@graview/core";
 import type { GraphSnapshot } from "./snapshot.js";
 
 /**
@@ -93,9 +93,7 @@ export function exportBundle<S extends AnySchema>(
   // The persisted log when the caller has one (it holds migration runs and
   // prior sessions); the in-memory log otherwise.
   const log = options.log ?? store.log.all();
-  // Who made or touched each record, as the person, never the account; and nothing of whom each seat was bound to: that stays in the installation (`touchesSaid`, `Epoch.bound`).
-  const telling = touchesSaid(store as never);
-  const said = (snapshot: GraphSnapshot): GraphSnapshot => ({ ...snapshot, nodes: snapshot.nodes.map((node) => telling(node)) });
+  // Who made or touched each record as the store keeps it, the seat, as an op's author is kept; and nothing of whom each seat was bound to, which stays in the installation (`Epoch.bound`).
   const withoutBindings = ({ bound: _bound, ...epoch }: Epoch): Epoch => epoch;
   const bundle = (log: readonly Operation[], horizon: number, checkpoint?: Epoch): AppBundle => ({
     format: "graview-bundle",
@@ -106,11 +104,11 @@ export function exportBundle<S extends AnySchema>(
     // Snapshot format 2 when the checkpoint it begins at lies past what stood published (FR-31).
     ...formatStamp(horizon > 0 && checkpoint?.seq === horizon ? checkpoint : undefined),
     // Never whose record a person is: bindings and account ids stay in the installation that made them (Roadmap f-invite-binds-existing-person).
-    snapshot: said(unseatedSnapshot(store.snapshot() as GraphSnapshot, { touched: "kept" })),
+    snapshot: unseatedSnapshot(store.snapshot() as GraphSnapshot, { touched: "kept" }),
     // Stamped op format 2, and so written: a persisted or archived op from format 1 goes without an inverse its primitives already say.
     log: log.map((op) => unseatedOp(bareOp(op))),
     ...(horizon > 0 ? { horizon } : {}),
-    ...(horizon > 0 && checkpoint?.seq === horizon ? { checkpoint: { ...withoutBindings(checkpoint), base: said(unseatedSnapshot(checkpoint.base, { touched: "kept" })) } } : {}),
+    ...(horizon > 0 && checkpoint?.seq === horizon ? { checkpoint: { ...withoutBindings(checkpoint), base: unseatedSnapshot(checkpoint.base, { touched: "kept" }) } } : {}),
   });
   const horizon = log[0]?.seq ?? store.log.horizon;
   const own = store.log.epochs().find((epoch) => epoch.horizon && epoch.seq === horizon);

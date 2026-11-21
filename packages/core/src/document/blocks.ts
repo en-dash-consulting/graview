@@ -354,6 +354,11 @@ function say(parts: Parsed<readonly TemplatePart[]>, ctx: BlockContext, prose?: 
         const repeated = typeof judged.value === "string" ? repeatingDateAsRead(judged.value, ctx.node?.[`${field}Repeat`], { today: ctx.today, locale: ctx.money?.locale }) : undefined;
         return capitalized(part, repeated ?? glanced(judged.value, labels, ctx.today, ctx.money));
       }
+      // Who made or touched it, as a page names an author: the person's record by its label, else somebody — never a seat's id.
+      if (!part.format && part.expr?.t === "ident" && (part.expr.name === "createdBy" || part.expr.name === "updatedBy") && typeof judged.value === "string") {
+        const person = ctx.graph?.getNode(judged.value);
+        return capitalized(part, person ? namerOf(ctx.schema)(person) : "someone");
+      }
       // A choice named bare (`{status}`), in a badge, a title or a line, is said by its option's label (Roadmap f-option-labels), as a field block says it.
       const choice = !part.format && part.expr?.t === "ident" && ctx.fields[part.expr.name]?.type === "enum" ? part.expr.name : undefined;
       if (choice && (typeof judged.value === "string" || Array.isArray(judged.value))) return capitalized(part, optionsSaid(judged.value, labelsOf(ctx, choice), parts.length === 1));

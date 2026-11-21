@@ -282,18 +282,28 @@ function validate(document: GraviewDocument): Finding[] {
    */
   const sights = (document.policy as { readonly sees?: readonly Record<string, unknown>[] } | undefined)?.sees ?? [];
   const keepsSomething = sights.some((sight) => sight["hide"] !== undefined || sight["fields"] !== undefined || sight["own"] !== undefined || sight["via"] !== undefined) ||
-    (sights.length > 0 && new Set(sights.flatMap((sight) => (Array.isArray(sight["kinds"]) ? (sight["kinds"] as string[]) : []))).size < Object.keys(document.kinds).length);
-  const readsKept = (source: unknown, path: string, what: string) => {
+    (sights.length > 0 && new Set(sights.flatMap((sight) => (Array.isArray(sight["kinds"]) ? (sight["kinds"] as string[]) : []))).size < Object.keys(document.kinds).length) ||
+    // A declared role no sight names sees nothing at all.
+    (sights.length > 0 && !sights.some((sight) => sight["roles"] === "*") && (document.roles ?? []).some((role) => !sights.some((sight) => Array.isArray(sight["roles"]) && (sight["roles"] as string[]).includes(role))));
+  const readsKept = (source: unknown, path: string, what: string, template = false) => {
     if (!keepsSomething || typeof source !== "string") return;
     let parsed: unknown;
     try {
-      parsed = parseExpr(source);
+      parsed = template ? parseTemplate(source) : parseExpr(source);
     } catch {
       return;
     }
     if (readsTouched(parsed)) findings.push(warning("touched-read-kept", path, `${what} reads when a record was made or last touched, which a seat the policy keeps anything from is not told: it cannot be judged for that seat`, "judge by a field of the record's own, or keep nothing from the seats that act or read it"));
   };
-  for (const [name, rule] of Object.entries(document.rules ?? {})) for (const key of ["when", "require"] as const) readsKept((rule as Record<string, unknown>)[key], `rules.${name}.${key}`, `The rule "${name}"`);
+  for (const [name, rule] of Object.entries(document.rules ?? {})) {
+    for (const key of ["when", "require"] as const) readsKept((rule as Record<string, unknown>)[key], `rules.${name}.${key}`, `The rule "${name}"`);
+    readsKept((rule as Record<string, unknown>)["says"], `rules.${name}.says`, `The rule "${name}"`, true);
+  }
+  for (const [at, job] of ((document as { readonly purpose?: { readonly jobs?: readonly Record<string, unknown>[] } }).purpose?.jobs ?? []).entries()) {
+    readsKept(job["where"], `purpose.jobs.${at}.where`, `The job "${String(job["name"] ?? at)}"`);
+    const by = typeof job["sort"] === "string" ? job["sort"] : (job["sort"] as { readonly by?: unknown } | undefined)?.by;
+    readsKept(by, `purpose.jobs.${at}.sort`, `The job "${String(job["name"] ?? at)}"`);
+  }
   for (const [name, act] of Object.entries(document.acts ?? {})) readsKept((act as Record<string, unknown>)["allowedWhen"], `acts.${name}.allowedWhen`, `The act "${name}"`);
   for (const [kind, spec] of Object.entries(document.kinds)) for (const [name, value] of Object.entries(spec.computed ?? {})) readsKept(typeof value === "string" ? value : (value as { readonly expr?: unknown }).expr, `kinds.${kind}.computed.${name}`, `${kind}'s ${name}`);
 

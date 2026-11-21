@@ -15,7 +15,7 @@ import { presentOf } from "./seat-of.js";
 import { FIELD_SIGHT, fieldsJudged, partialSight, recordsOf, sees, type Judged, type Records } from "./permissions/sight.js";
 import type { Principal } from "./permissions/types.js";
 import { diffSnapshots } from "./graph/diff.js";
-import { CREATED_BY, isTouchedField, readsTouched, TOUCHED_FIELDS, UPDATED_BY } from "./graph/touched.js";
+import { CREATED_BY, isTouchedField, readsTouchedThrough, TOUCHED_FIELDS, UPDATED_BY } from "./graph/touched.js";
 import { nodeRefKinds } from "./mutations/node-ref.js";
 import { PUBLISHING, readsPublished, type Publishing } from "./publish.js";
 
@@ -109,9 +109,13 @@ export function touchesSaid(store: Judged): <N extends object>(node: N) => N {
 }
 
 /** Whether a rule reads when a record was made or touched (`readsTouched`): one a seat told none of them cannot be judged for. */
-function readsTouchedRule(store: { allInvariants?(): readonly { readonly name: string; readonly shape?: { readonly when?: unknown; readonly require?: unknown } }[] }, name: string): boolean {
+export function readsTouchedRule(store: { allInvariants?(): readonly { readonly name: string; readonly shape?: { readonly over?: string; readonly when?: unknown; readonly require?: unknown; readonly says?: unknown; readonly kinds?: ReadonlyMap<string, { readonly computed?: ReadonlyMap<string, unknown> }> } }[] }, name: string): boolean {
   const rule = store.allInvariants?.().find((one) => one.name === name);
-  return rule?.shape !== undefined && (readsTouched(rule.shape.when) || readsTouched(rule.shape.require));
+  const shape = rule?.shape;
+  if (shape === undefined) return false;
+  // What it judges by and what it says, through the computed values of the kind it is over.
+  const computed = (field: string) => (shape.over === undefined ? undefined : shape.kinds?.get(shape.over)?.computed?.get(field));
+  return readsTouchedThrough(shape.when, computed) || readsTouchedThrough(shape.require, computed) || readsTouchedThrough(shape.says, computed);
 }
 
 /**
@@ -124,11 +128,22 @@ function readsTouchedRule(store: { allInvariants?(): readonly { readonly name: s
 export function offersTouches(store: object): boolean {
   const seat = (store as { readonly [SEAT]?: { readonly store: Judged & { readonly schema: { readonly kinds: readonly string[] } }; readonly principal: Principal } })[SEAT];
   if (seat !== undefined) return toldTouches(seat.store, seat.principal);
-  // A store made from what a seat is served (a page's own): told none where its ops say they stamp nothing, or where its own policy keeps something from its own seat.
-  const own = store as { readonly log?: { all(): readonly Operation[] }; readonly policy?: unknown; readonly by?: Principal; readonly graph?: unknown; readonly schema?: unknown };
-  if (own.log?.all().some((op) => op.stamps === false)) return false;
-  return own.policy === undefined || own.by === undefined || own.graph === undefined || toldTouches(own as never, own.by);
+  // A store made from what a seat is served (a page's own): told none where its ops say they stamp nothing, or where its own policy keeps something from the seat it was given.
+  const own = store as { readonly log?: { all(): readonly Operation[]; readonly length?: number }; readonly policy?: unknown; readonly by?: Principal; readonly graph?: unknown; readonly schema?: unknown };
+  const length = own.log?.length ?? own.log?.all().length ?? 0;
+  const held = OFFERED.get(store);
+  if (held && held.length === length) return held.told;
+  const told = !own.log?.all().some((op) => op.stamps === false) && (own.policy === undefined || own.by === undefined || own.graph === undefined || givenNone(own.by) || toldTouches(own as never, own.by));
+  OFFERED.set(store, { length, told });
+  return told;
 }
+
+/** What `offersTouches` answered of a store, while its log is as long. */
+const OFFERED = new WeakMap<object, { readonly length: number; readonly told: boolean }>();
+
+/** Whom a store given no seat of its own acts as: the host's store, told everything, not somebody it was made for. */
+export const UNSEATED: Principal = Object.freeze({ kind: "human" }) as Principal;
+const givenNone = (by: Principal): boolean => by === UNSEATED;
 
 /**
  * WHO MADE OR TOUCHED A RECORD, AS ONE READER IS TOLD THEM (Roadmap
@@ -1016,6 +1031,14 @@ export function seatView<T extends Viewed>(store: T, principal: Principal): T {
         case "toldTouches":
           return toldTouches(store as never, principal);
         // Whom a seat is bound to, asked only of the seats this one may be told of (its own; every one is the host's alone), and only a record it is served.
+        // Who a seat is said as, only a record this seat is served, or somebody; and never every seat's binding.
+        case "personSaidFor":
+          return (seat: string) => {
+            const id = (target as { personSaidFor?(seat: string): string | undefined }).personSaidFor?.(seat);
+            return id !== undefined && (id === SOMEONE.id || seenId(id)) ? id : undefined;
+          };
+        case "everBound":
+          return undefined;
         case "personBoundTo":
           return (seat: string) => {
             if (!lens.keepsSeat?.(seat)) return undefined;

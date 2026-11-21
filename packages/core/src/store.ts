@@ -1,4 +1,4 @@
-import { everBound, hidesFrom, readingOf, seatLens, seenBy, seesEveryRecord, seesId, type SeenOptions } from "./seen.js";
+import { everBound, hidesFrom, readingOf, seatLens, seenBy, seesEveryRecord, seesId, type SeenOptions, UNSEATED } from "./seen.js";
 import { isoToday } from "./days.js";
 import type { IntelligenceProviderDeclaration } from "./app.js";
 import { Graph, GraphError, MissingRecordError } from "./graph/graph.js";
@@ -727,7 +727,7 @@ export class Store<S extends AnySchema> {
     this.publishing = options.publishing;
     this.tidying = options.tidying;
     this.votes = options.votes;
-    this.by = options.principal ?? HUMAN;
+    this.by = options.principal ?? UNSEATED;
     this.intelligence = options.intelligence ?? [];
     for (const provider of options.intelligence ?? []) {
       if (provider.may) this.may.set(provider.name, new Set(provider.may));

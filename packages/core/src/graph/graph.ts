@@ -288,7 +288,13 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
    * holds now.
    */
   personSaidFor(seat: string): string | undefined {
-    return this.personBoundTo(seat) ?? this.everBound?.().get(seat);
+    const person = this.personBoundTo(seat) ?? this.everBound?.().get(seat);
+    if (person !== undefined) return person;
+    // An account's profile where the account is somebody's record, or an account one of whose profiles is: nobody to be said (`touchesRebound`).
+    const bound = this.everBound?.();
+    if (!bound) return undefined;
+    const [account, profile] = seat.split("~");
+    return (profile !== undefined ? bound.has(account!) : [...bound.keys()].some((one) => one.startsWith(`${seat}~`))) ? "someone" : undefined;
   }
 
   /** Whom each seat was ever bound to, as the store that holds this graph reads its log: set by that store. */
