@@ -1349,10 +1349,17 @@ async function history(page, where) {
       scrubber.dispatchEvent(new Event("change", { bubbles: true }));
     }, index);
   const last = await page.evaluate(() => Number(document.querySelector('[data-testid="scrubber"]').max));
+  /*
+   * Each scrub played out, for 700 ms and 30 frames: a rise and a sink go
+   * through a stall rather than leap it (`stallsTakenOut`, @graview/react's
+   * plots), so on the GPU leg's runner they took longer than 700 ms. A
+   * building not yet full when the next scrub took it away had no full
+   * frame to sink from, and its sink was not counted (run 44955541626).
+   */
   await scrub(0);
-  await page.waitForTimeout(700);
+  await framesPass(page, 30, 700);
   await scrub(last);
-  await page.waitForTimeout(700);
+  await framesPass(page, 30, 700);
   // Back before the reason, and forward again before it has sunk: the same building rises from where it had got to.
   await scrub(0);
   // Half way down, by what is drawn rather than a clock: on a CPU four times slower 160 ms is before the sink has begun. From half way the rise back takes half the sink's time, long enough for frames of it to be drawn on a sparse runner.
