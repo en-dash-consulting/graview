@@ -590,7 +590,6 @@ export const bound = (target: object, prop: PropertyKey): unknown => {
  * promised to be one object per principal: the view is kept to save
  * judging again, keyed by what serving depends on (`viewKey`).
  */
-/* The key a seat's view answers with the store it is of and the seat (`SEAT`, `served-touches.ts`): `seatOf`, `@graview/core/seat-of`, reads it, and `offersTouches`. */
 
 /**
  * WHAT A SEAT'S VIEW IS A VIEW OF: a store as `seenBy` reads it — beyond
