@@ -415,12 +415,52 @@ export function edgesReadWithoutTheirKinds<S extends AnySchema>(store: Pick<Stor
 
 /** Each relation a view reads and is never handed, said with what to add to `reads.kinds`; empty when every one can reach it. */
 export function edgesReadWithoutTheirKindsSaid<S extends AnySchema>(store: Pick<Store<S>, "schema">, manifest: Pick<WorkerViewManifest, "name" | "attach" | "cardinality" | "reads">): readonly string[] {
+  return edgesReadWithoutTheirKindsProblems(store, manifest).map((one) => one.says);
+}
+
+/**
+ * WHAT NAMES ONE STANDING FAULT OF A VIEW, THE SAME IN EVERY VERSION
+ * (HQ f-view-check-refuses-unread-relation-kind): the view's name, the
+ * relation and the kinds any one of which would hand it, sorted and joined
+ * by `|` (`*` where it goes to any kind and the author is to say which),
+ * never the sentence, which may be reworded. A host that files what a page
+ * reports files it once by this, however often the view is opened and
+ * whichever version of the app it is opened in, while the relation joins
+ * the same kinds: `far-kind-not-handed:phase-board:inPhase:chunk`.
+ */
+export function farKindKey(view: string, edge: string, kinds: readonly string[]): string {
+  return `far-kind-not-handed:${view}:${edge}:${kinds.length === 0 ? "*" : [...kinds].sort().join("|")}`;
+}
+
+/** Each relation a view reads and is never handed, said, with the key a host files it by (`farKindKey`). */
+export function edgesReadWithoutTheirKindsProblems<S extends AnySchema>(store: Pick<Store<S>, "schema">, manifest: Pick<WorkerViewManifest, "name" | "attach" | "cardinality" | "reads">): readonly { readonly edge: string; readonly kinds: readonly string[]; readonly says: string; readonly key: string }[] {
   return edgesReadWithoutTheirKinds(store, manifest).map(({ edge, kinds }) => {
     const info = store.schema.edge(edge)!;
     const ends = `${info.from.join(" or ")} to ${info.to === "*" ? "any kind" : info.to.join(" or ")}`;
-    if (kinds.length === 0) return `"${manifest.name}" reads the relation "${edge}", from ${ends}, and is handed no other kind, so no link of it reaches the view: name the kinds it links to in its manifest's reads.kinds.`;
-    return `"${manifest.name}" reads the relation "${edge}", from ${ends}, and is handed no ${kinds.join(" or ")}, so no link of it reaches the view: add ${kinds.map((kind) => `"${kind}"`).join(" or ")} to its manifest's reads.kinds.`;
+    const says =
+      kinds.length === 0
+        ? `"${manifest.name}" reads the relation "${edge}", from ${ends}, and is handed no other kind, so no link of it reaches the view: name the kinds it links to in its manifest's reads.kinds.`
+        : `"${manifest.name}" reads the relation "${edge}", from ${ends}, and is handed no ${kinds.join(" or ")}, so no link of it reaches the view: add ${kinds.map((kind) => `"${kind}"`).join(" or ")} to its manifest's reads.kinds.`;
+    return { edge, kinds, says, key: farKindKey(manifest.name, edge, kinds) };
   });
+}
+
+/**
+ * WHAT IS WRONG WITH A VIEW PROPOSED, BEFORE IT IS KEPT (HQ
+ * f-view-check-refuses-unread-relation-kind): `checkManifest`'s findings,
+ * and each relation it reads whose far kind its manifest never hands it,
+ * with the kind to add. A view reading `inPhase` (chunk to step) on the
+ * steps without `chunk` in `reads.kinds` was kept, and then said at every
+ * open that no link of it reached the view; now it is refused when it is
+ * proposed or checked (`runWorkerViewHeadless`, a draft on the page). A
+ * relation to any kind (`to: "*"`) names no kind to add, and stays a
+ * problem said beside the drawing. A view already kept is still drawn,
+ * the fault said to the host with its key (`farKindKey`).
+ */
+export function checkProposedManifest<S extends AnySchema>(manifest: WorkerViewManifest, store: Store<S>): readonly string[] {
+  const findings = checkManifest(manifest, store);
+  if (findings.length > 0) return findings;
+  return edgesReadWithoutTheirKindsProblems(store, manifest).flatMap((one) => (one.kinds.length > 0 ? [one.says] : []));
 }
 
 export interface WorkerViewPropsInput {

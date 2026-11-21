@@ -29,7 +29,7 @@ import type { PlaceDescription } from "@graview/core/describe";
 // Static, not fetched: the headless run is itself fetched where a page presses a draft, and a door to the seat's file from there split the page's first chunk.
 import { placesFrom, placesOf, viewPlaceOf } from "@graview/core/seat";
 import { datesPinned } from "@graview/core/revisions";
-import { checkManifest, edgesReadWithoutTheirKindsSaid, manifestActs, readsComputed, workerViewProps, type WorkerViewManifest } from "../host/manifest.js";
+import { checkManifest, checkProposedManifest, edgesReadWithoutTheirKindsProblems, manifestActs, readsComputed, workerViewProps, type WorkerViewManifest } from "../host/manifest.js";
 import { PICTURE_STAND_IN, standInPictures } from "../host/pictures.js";
 import { judgeDestination, listsOf, placeVocabulary } from "../host/links.js";
 import { guestPlacesOf, placeNamed } from "../host/links-words.js";
@@ -152,6 +152,15 @@ export interface RunWorkerViewHeadlessOptions<S extends AnySchema> {
    */
   readonly views?: readonly { readonly name: string; readonly title?: string; readonly attach: string; readonly cardinality?: "one" | "many"; readonly hidden?: boolean }[];
   readonly limits?: HeadlessLimits;
+  /**
+   * The view is one already kept, judged as it stands (HQ
+   * f-view-check-refuses-unread-relation-kind): a relation it reads whose
+   * far kind its manifest never hands it is among its problems, with the
+   * key a host files it by once (`farKindKey`), as its page says it. By
+   * default a run is a check before a view is kept, and refuses it, naming
+   * the relation and the kind to add to `reads.kinds`.
+   */
+  readonly standing?: boolean;
   /** The `https:` origins a view's images may come from by address, as the live host lists them (WorkerViewOptions.images). */
   readonly images?: { readonly origins: readonly string[] };
   /** The `https:` origins a view's links may go to beyond what it was handed, as the live host lists them (WorkerViewOptions.links). */
@@ -373,7 +382,8 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
     pushMs: options.limits?.pushMs ?? 1_000,
     runMs: options.limits?.runMs ?? 5_000,
   };
-  const findings = checkManifest(manifest, store);
+  /* A check before a view is kept refuses a relation it reads whose far kind it is never handed; a run of a view kept already says it among its problems, with its key (HQ f-view-check-refuses-unread-relation-kind). */
+  const findings = options.standing ? checkManifest(manifest, store) : checkProposedManifest(manifest, store);
   if (findings.length > 0) return failed("manifest", findings.join(" "));
   if (typeof source !== "string") return failed("source", "A view's source is text.");
   if (new TextEncoder().encode(source).length > limits.maxSourceBytes) return failed("source", `Its code is longer than the ${limits.maxSourceBytes.toLocaleString("en-US")} bytes a view may be.`);
@@ -506,7 +516,7 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
   const title = manifest.title ?? manifest.name;
   /* A day the source pins — `TODAY = "2026-11-01"`, "Tomorrow · Mon 2 Nov" — said against the app's today, so a view frozen on the day it was written is caught (Roadmap f-views-know-today). */
   const pinned = props.today ? datesPinned(source, { today: props.today, title: manifest.attach === "home" ? "Home" : title, ...(props.locale ? { locale: props.locale } : {}) }) : [];
-  const problems = [...edgesReadWithoutTheirKindsSaid(store, manifest).map((says) => ({ at: "reads", says })), ...handed.left.map((says) => ({ at: "pictures", says })), ...judged.problems, ...narrowing, ...gestureProblems(manifest, transcript), ...pressProblems, ...(presses?.problems ?? []).map((one) => ({ at: `press ${one.control}`, says: one.says })), ...pinned.map(({ at, says }) => ({ at, says }))];
+  const problems = [...edgesReadWithoutTheirKindsProblems(store, manifest).map(({ says, key }) => ({ at: "reads", says, key })), ...handed.left.map((says) => ({ at: "pictures", says })), ...judged.problems, ...narrowing, ...gestureProblems(manifest, transcript), ...pressProblems, ...(presses?.problems ?? []).map((one) => ({ at: `press ${one.control}`, says: one.says })), ...pinned.map(({ at, says }) => ({ at, says }))];
   const slug = manifest.title ? slugOf(manifest.title) : manifest.name;
   const kind = manifest.attach === "home" ? null : manifest.attach;
   const description: Omit<PlaceDescription, "text"> = {
