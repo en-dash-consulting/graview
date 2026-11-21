@@ -164,7 +164,9 @@ async function restAt(page, level, timeout = 8_000) {
  * the page's element and its box and transform, each line's two ends with
  * the building and the page edge it should meet, and each board's box and
  * its face's transform. Registered after the face's own frame, so it reads
- * what the face wrote in the same frame.
+ * what the face wrote in the same frame. Each frame keeps both the time it
+ * was read (`t`) and the time the frame is for (`frameAt`, which the face
+ * moves by).
  */
 function startRecording(page) {
   return page.evaluate(() => {
@@ -184,7 +186,7 @@ function startRecording(page) {
       const r = el.getBoundingClientRect();
       return { x: r.left, y: r.top, width: r.width, height: r.height };
     };
-    const tick = () => {
+    const tick = (frameAt) => {
       if (window.__oneFaceStop) return;
       requestAnimationFrame(tick);
       const now = document.querySelector("[data-graview-one-place]");
@@ -216,6 +218,7 @@ function startRecording(page) {
         bar: bar ? { x: bar.left, y: bar.top, width: bar.width, height: bar.height } : null,
         control: control ? { x: control.left, y: control.top, width: control.width, height: control.height } : null,
         t: performance.now(),
+        frameAt,
         same: now.__oneFace === token,
         level: Number(now.getAttribute("data-graview-one-place")),
         altitude: Number(city?.getAttribute("data-graview-altitude-now") ?? 0),
@@ -1638,7 +1641,22 @@ function signJumps(frames) {
       const travel = Math.hypot(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
       // Its steps, frame to frame: a leap is one far past how it moves in the frames round it, not a fast camera on a slow machine.
       // How fast it went between each two frames, in pixels a millisecond: a slow machine's frames come unevenly, and a step over a long frame is a long step.
-      const speeds = seenIn.slice(1).map((_, i) => Math.hypot(xs[i + 1] - xs[i], ys[i + 1] - ys[i]) / Math.max(1, seenIn[i + 1].f.t - seenIn[i].f.t));
+      /*
+       * Clocked by the frame, as the face moves by it (`frameAt`, the time
+       * requestAnimationFrame hands both): not by when the recorder came to
+       * run, after however long the face's own frame took. On a CPU four
+       * times slower frames begin 17 and 33 ms apart by turns, and each
+       * carried the camera as far as its time — while the recorder, after
+       * the work, read them all about 24 ms apart, so a 33 ms frame's step
+       * was judged twice as fast as the next and a board coming up as the
+       * move went on "leapt" (kind:period at 1520×900, Nightly 44844431747,
+       * and main's 44347666965). And a frame past 34 ms carries the move
+       * only a frame's length on, as the face takes a stall out of its
+       * clock: counted so here too.
+       */
+      const at = (one) => one.f.frameAt ?? one.f.t;
+      const carried = (gap) => (gap > 34 ? 1000 / 60 : gap);
+      const speeds = seenIn.slice(1).map((_, i) => Math.hypot(xs[i + 1] - xs[i], ys[i + 1] - ys[i]) / Math.max(1, carried(at(seenIn[i + 1]) - at(seenIn[i]))));
       for (let i = 1; i < seenIn.length; i++) {
         if (seenIn[i].i !== seenIn[i - 1].i + 1) continue;
         const step = Math.hypot(xs[i] - xs[i - 1], ys[i] - ys[i - 1]);
