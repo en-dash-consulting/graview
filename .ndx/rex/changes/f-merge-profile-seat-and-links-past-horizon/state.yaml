@@ -1,5 +1,10 @@
 schema: "rex/v2"
 items:
   "6295bf4f-de44-45dc-81d6-d1161a3325ad":
-    status: "pending"
-    lastModified: "2026-11-20T22:20:00.000Z"
+    status: "completed"
+    startedAt: "2026-11-20T22:20:00.000Z"
+    completedAt: "2026-11-21T03:00:00.000Z"
+    endedAt: "2026-11-21T03:00:00.000Z"
+    resolutionType: "code-change"
+    resolutionDetail: "PR #658, released in 0.2.8 by batch #659"
+    lastModified: "2026-11-21T03:00:00.000Z"
