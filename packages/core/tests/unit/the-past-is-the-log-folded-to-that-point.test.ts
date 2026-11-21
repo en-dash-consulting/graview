@@ -5,6 +5,7 @@ import { compileDocument } from "../../src/check.js";
 import { bindSchema, createSchema, defineNode, nodeRef, PastError, Store, type AnySchema, type Principal } from "../../src/index.js";
 import { declarationSentence, makerOf, restoreBatches, ticksOf, type HistoryHost } from "../../src/history.js";
 import { askDeclaration, declarationAt, pastAt, pastOf, seqAt } from "../../src/past.js";
+import { untouched } from "../../src/graph/touched.js";
 
 /**
  * THE PAST IS THE LOG FOLDED TO THAT POINT (Roadmap f-playback). A person
@@ -223,16 +224,18 @@ describe("restore to here", () => {
     const store = built(12);
     const seq = 5;
     store.undo(store.batches()[7]!.id, { author: me });
-    const now = sorted(store.graph.snapshot());
+    // What the records hold: when each was last touched is the restore's own, now (`updatedAt`).
+    const held = (snapshot: Parameters<typeof sorted>[0]) => sorted({ ...snapshot, nodes: snapshot.nodes.map(untouched) });
+    const now = held(store.graph.snapshot());
     const batches = restoreBatches(store, seq);
     const check = store.canUndo(batches);
     expect(check.ok, check.ok ? "" : check.message).toBe(true);
     const result = store.undo(batches, { author: me });
-    expect(sorted(store.graph.snapshot())).toEqual(sorted(pastOf(store, seq).graph.snapshot()));
+    expect(held(store.graph.snapshot())).toEqual(held(pastOf(store, seq).graph.snapshot()));
     // One change, and undone as one.
     expect(new Set(result.ops.map((op) => op.batch)).size).toBe(1);
     store.undo(result.batch, { author: me });
-    expect(sorted(store.graph.snapshot())).toEqual(now);
+    expect(held(store.graph.snapshot())).toEqual(now);
   });
 });
 

@@ -1,3 +1,4 @@
+import { isTouchedField } from "../graph/touched.js";
 import type { ComputedField } from "../schema/types.js";
 import { analyzeExpr, costDegree } from "./expr/analyze.js";
 import { ExprSyntaxError, parseExpr, type Expr } from "./expr/parse.js";
@@ -95,7 +96,7 @@ export function validateComputed(kinds: ReadonlyMap<string, ComputedKind>, at: (
       for (const fn of shape.unknownFunctions) findings.push(error("unknown-function", path, `"${fn}" is not a function the rule language knows`, "see the rule language in the graview-invariant skill"));
       for (const n of shape.names) {
         // A fact of the whole graph has no record to read a name from, not even another fact's: it reads them with all() and fact().
-        if (kind !== WHOLE_GRAPH && (n === "id" || spec.fields.has(n) || spec.edges.has(n) || spec.computed.has(n))) continue;
+        if (kind !== WHOLE_GRAPH && (n === "id" || isTouchedField(n) || spec.fields.has(n) || spec.edges.has(n) || spec.computed.has(n))) continue;
         findings.push(error("computed-name", path, `${kind} has no field, relation or computed field called "${n}"`, kind === WHOLE_GRAPH ? "read records with all('<kind>'), and a fact with fact('<name>')" : undefined));
       }
       for (const e of shape.edges) if (!edges.has(e)) findings.push(error("computed-edge", path, `"${e}" is not a relation any kind declares`));

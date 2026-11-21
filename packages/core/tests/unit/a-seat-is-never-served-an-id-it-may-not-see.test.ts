@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createSchema, defineNode, isWithheld, logSeenBy, OperationLog, Store, type AnySchema, type Primitive, type Principal } from "../../src/index.js";
 import { canonical, fold, leaked, oracle, rng, SCHEMA, schemaOf, storeAt, storeOf, unsaidUnseen, unseenIds, world } from "../support/unseen-worlds.js";
+import { untouched } from "../../src/graph/touched.js";
 
 /**
  * A SEAT IS NEVER SERVED AN ID IT MAY NOT SEE (FR-55).
@@ -118,7 +119,8 @@ describe("a seat is never served an id it may not see", () => {
           expect(shown.has(node.id), `seed ${seed}: served ${node.id}, whose required ref names an unseen record`).toBe(false);
           continue;
         }
-        expect(shown.get(node.id), `seed ${seed}: lost ${node.id}`).toEqual(names ? Object.fromEntries(Object.entries(node).filter(([key]) => key !== "ref")) : node);
+        // Its fields as written; when it was made and touched is its served log's, which the payloads above are judged for.
+        expect(untouched(shown.get(node.id) ?? {}), `seed ${seed}: lost ${node.id}`).toEqual(names ? Object.fromEntries(Object.entries(node).filter(([key]) => key !== "ref")) : node);
         if (names) cleared++;
       }
       // Everything served fits its own declaration, so a client loads it.

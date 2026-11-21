@@ -54,6 +54,15 @@ export interface Epoch {
    */
   readonly creators?: Readonly<Record<string, string>>;
   /**
+   * WHOM EACH SEAT WAS BOUND TO BEHIND IT, on a checkpoint (`horizon`, Roadmap
+   * f-invite-binds-existing-person): seat to the record of the people kind,
+   * a binding since ended included, so who made or touched a record is said
+   * as that person after the ops that bound them went to the archive.
+   * Written by `store.checkpoint`, never served to a seat. Optional: a
+   * checkpoint without it knows only the bindings its graph still holds.
+   */
+  readonly bound?: Readonly<Record<string, string>>;
+  /**
    * WHAT EACH RECORD BEHIND IT WAS, on a checkpoint (`horizon`, FR-199):
    * record id to kind, for every record made or removed before its seq that
    * its graph does not hold — the ones removed behind the horizon. A store
@@ -399,15 +408,16 @@ export class OperationLog {
  * accepted and this one does not is held as written (FR-28).
  */
 export function foldOp<S extends AnySchema>(graph: Graph<S>, op: Operation): void {
-  if (op.undoes !== undefined) {
-    graph.applyPrimitives(op.primitives, { restoring: true });
-    return;
+  if (op.undoes !== undefined) graph.applyPrimitives(op.primitives, { restoring: true });
+  else {
+    try {
+      graph.applyPrimitives(op.primitives);
+    } catch {
+      graph.applyPrimitives(op.primitives, { restoring: true });
+    }
   }
-  try {
-    graph.applyPrimitives(op.primitives);
-  } catch {
-    graph.applyPrimitives(op.primitives, { restoring: true });
-  }
+  // Each record it wrote says when, and who, as it did when the op was made (`touched.ts`).
+  graph.touch(op);
 }
 
 /**

@@ -1,4 +1,4 @@
-import { diffSnapshots, isEmptyDiff, Store, type AnySchema, type Batch, type GraphSnapshot, type GraviewApp, type MigrationDeclaration, type MutationCall, type Principal } from "@graview/core";
+import { diffSnapshots, isEmptyDiff, Store, untouched, type AnySchema, type Batch, type GraphSnapshot, type GraviewApp, type MigrationDeclaration, type MutationCall, type Principal } from "@graview/core";
 import { checkApp, type CheckResult, compileDocument } from "@graview/core/check";
 import { documentOf, toDocument, warning, type CompiledDocument, type RefusedDocument, type DocumentEdit, type EditOutcome, type Fill, type Finding, type GraviewDocument } from "@graview/core/document";
 import { resolveProposal } from "@graview/tools";
@@ -129,6 +129,16 @@ export interface StudioOptions {
   readonly document?: GraviewDocument;
 }
 
+/**
+ * The declaration as the studio's graph holds it: its records without when
+ * each was made and last touched (`createdAt`, `updatedAt`), which the store
+ * keeps of every record and no declaration says.
+ */
+function held(store: { snapshot(): unknown }): GraphSnapshot {
+  const snapshot = store.snapshot() as GraphSnapshot;
+  return { ...snapshot, nodes: snapshot.nodes.map((node) => untouched(node)) };
+}
+
 export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: StudioOptions = {}): Studio<S> {
   const app = studioApp(options.name ?? `${base.name} studio`);
   const seed = declarationToGraph(base) as GraphSnapshot;
@@ -140,7 +150,7 @@ export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: 
     ...(options.principal ? { principal: options.principal } : {}),
   });
   const since = store.batches().length;
-  const declaration = () => graphToDeclaration(store.snapshot() as GraphSnapshot, { base: base, name: base.name });
+  const declaration = () => graphToDeclaration(held(store), { base: base, name: base.name });
   const isAgent = (batch: Batch) => batch.author.kind === "agent";
   // The document the app was compiled from, if it was; the edits are read against it, or against what toDocument can say of a TypeScript app.
   const opened = options.document ?? documentOf(base);
@@ -154,7 +164,7 @@ export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: 
       );
   let against: GraviewDocument | undefined;
   const reference = () => opened ?? (against ??= toDocument(base).document);
-  const made = () => documentEdits(reference(), seed, store.snapshot() as GraphSnapshot);
+  const made = () => documentEdits(reference(), seed, held(store));
   const document = (): EditOutcome | undefined => (opened ? documentAfter(opened, made()) : undefined);
   /*
    * ONE JUDGE, AND FOR A DOCUMENT IT IS THE DOCUMENT'S. The studio's own
@@ -184,7 +194,7 @@ export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: 
     store,
     base,
     declaration,
-    check: () => judge(store.snapshot() as GraphSnapshot).check,
+    check: () => judge(held(store)).check,
     changes: () => store.batches().slice(since),
     proposals: () => store.batches().slice(since).filter((batch) => isAgent(batch) && !batch.undone),
     propose(call, agent, intent) {
@@ -224,10 +234,10 @@ export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: 
       } catch (error) {
         return { ok: false, reason: error instanceof Error ? error.message : String(error) };
       }
-      return { ok: true, check: judge(trial.snapshot() as GraphSnapshot).check };
+      return { ok: true, check: judge(held(trial)).check };
     },
     apply() {
-      const graph = store.snapshot() as GraphSnapshot;
+      const graph = held(store);
       const judged = judge(graph);
       if (judged.check.errors > 0) return { ok: false, check: judged.check };
       const migration = migrationBetween(base, graph);
@@ -253,12 +263,12 @@ export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: 
       return { ok: true, app, migration, ...(noDocument ? { documentFindings: [noDocument] } : {}) };
     },
     files: (sourceOptions) =>
-      declarationFiles(store.snapshot() as GraphSnapshot, { name: base.name, base: base, ...sourceOptions }),
+      declarationFiles(held(store), { name: base.name, base: base, ...sourceOptions }),
     edits: () => made().edits,
-    unchanged: () => isEmptyDiff(diffSnapshots(seed, store.snapshot() as GraphSnapshot) as never),
+    unchanged: () => isEmptyDiff(diffSnapshots(seed, held(store)) as never),
     document,
     whyNoDocument: () => noDocument,
-    sourceChanges: () => sourceChanges(seed, store.snapshot() as GraphSnapshot, base),
+    sourceChanges: () => sourceChanges(seed, held(store), base),
   };
 }
 

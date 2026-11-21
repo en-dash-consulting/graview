@@ -12,6 +12,8 @@
  * command line and a test import the checker from here.
  */
 export { checkApp, formatFindings } from "./cli/check.js";
+// The names every record keeps of its own, and the code a kind declaring one is refused with (Graview HQ feature:f-record-last-touched), for a host's release gate.
+export { CREATED_AT, CREATED_BY, TOUCHED_FIELD_TAKEN, TOUCHED_FIELDS, UPDATED_AT, UPDATED_BY } from "./graph/touched.js";
 export { arrangementFindings } from "./app-places.js";
 export type { CheckOptions, CheckResult, Finding, Severity } from "./cli/check.js";
 export { compileDocument } from "./document/compile-checked.js";

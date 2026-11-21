@@ -119,6 +119,21 @@ fields, edges, label, roles — is `graview-node-kind`.
    value in code (`momentAsRead(node.startsAt)`), and
    `describe-template-in-code` warns of `{field}` returned there.
 
+6. **Say when a record changed from what it keeps.** Every record holds
+   `createdAt`, `createdBy`, `updatedAt` and `updatedBy`, written by every
+   change that touches it (a field, a file, a link at either end, an
+   import, tidying, an undo) and by no act. Read them as fields:
+   `"Changed {updatedAt | relative}, on {updatedAt | date}"` (in the app's
+   `brand.timeZone`), `when: "present(updatedAt)"`, a computed
+   `format(updatedAt, 'MMM d')`. `…By` is who acted, said as their record
+   where the seat is bound to one, as an act's `$me` names them.
+   They are kept as each seat may see them: a seat from whom a sight keeps
+   anything is told none, so a view says "—" there, and a rule or act in
+   the rule language that read them is not judged for it (an invariant
+   written in TypeScript reads what its code reads). Declare no field of
+   those names: `touched-field-taken` refuses one, and a hand-kept "last
+   touched" date misses links and imports.
+
 ## When a person makes a page better
 
 A right-click anywhere on a page the app draws by itself — a row, the

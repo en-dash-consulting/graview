@@ -17,6 +17,7 @@ import {
   type Arrangement,
   type Condition,
   type NodeOfSchema,
+  offersTouches,
 } from "@graview/core";
 import { describeSearched, matchNode, parseQuery } from "@graview/core/search";
 import { readableFields } from "@graview/core/words";
@@ -213,7 +214,8 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
    * list" is a link somebody may have sent.
    */
   // Its kind's own, through each relation the far end's choices (`became.stage`), and what it works out to sort by (a rank).
-  const offers = withWorkedOut(store.schema, throughEdges(store.schema, arrangeable(store.schema, kind)));
+  // When each record was made and touched, only to a seat told them (`offersTouches`).
+  const offers = withWorkedOut(store.schema, throughEdges(store.schema, arrangeable(store.schema, kind, { touched: offersTouches(store) })));
   const edgeKinds = relations.map((relation) => relation.edgeKind);
   const asked = arrangementFromSearch(search, offers, edgeKinds);
   // What the address says, or — saying nothing — how the design opens the list, or a large list's meaningful order.

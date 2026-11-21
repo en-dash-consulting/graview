@@ -1,5 +1,5 @@
 import type { ViewProblem } from "./problems.js";
-import { choiceWords, citedFieldsOf, holdsValue, InvalidArguments, isSystem, sightMayKeep, isoToday, localeFor, PermissionDeniedError, timeZoneFor, unseated, type AnySchema, type Policy, type Principal, type Store } from "@graview/core";
+import { choiceWords, citedFieldsOf, holdsValue, InvalidArguments, isSystem, sightMayKeep, isoToday, localeFor, offersTouches, PermissionDeniedError, timeZoneFor, unseated, type AnySchema, type Policy, type Principal, type Store } from "@graview/core";
 import type { GuestPictureLimits } from "./pictures.js";
 import type { Arrival, Destination } from "./links.js";
 import type { Mine } from "./mine.js";
@@ -655,7 +655,7 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
           if (disposed) return;
           const kept = new Set([...options.store.kindsKeptFrom(options.principal), ...options.store.modules.disabledKinds]);
           /* The one vocabulary (FR-235): the Scene, the home, each kind's list and each titled place, as a worker view's host and the headless check read them. */
-          const judged = judgeDestination(to, { sees: (id) => seen().graph.has(id), places: placeVocabulary(options.store.schema, options.placesShown?.() ?? [], { kept }), lists: listsOf(options.store.schema, kept), schema: options.store.schema });
+          const judged = judgeDestination(to, { sees: (id) => seen().graph.has(id), places: placeVocabulary(options.store.schema, options.placesShown?.() ?? [], { kept }), lists: listsOf(options.store.schema, kept), schema: options.store.schema, touched: offersTouches(seen()) });
           if (judged.ok) arrive(judged.arrival);
           else {
             stats.dropped += 1;

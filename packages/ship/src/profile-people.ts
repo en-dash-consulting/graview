@@ -1,4 +1,4 @@
-import { isBindingAct, mintPersonId, PERSON_SEAT, profileOf, seatPersonOf, type AnySchema, type Epoch, type GraviewApp, type LogArchive, type Operation, type PersistenceAdapter } from "@graview/core";
+import { isBindingAct, isTouchedField, mintPersonId, PERSON_SEAT, profileOf, seatPersonOf, type AnySchema, type Epoch, type GraviewApp, type LogArchive, type Operation, type PersistenceAdapter } from "@graview/core";
 import type { StoredMeta } from "./meta.js";
 import type { GraphSnapshot } from "./snapshot.js";
 
@@ -216,7 +216,8 @@ function renamedSnapshot(snapshot: GraphSnapshot, at: Renaming, count?: { record
     changed = true;
     if (count) {
       if (at.people.has(node.id)) count.records++;
-      if (Object.entries(node).some(([key, one]) => key !== "id" && at.rename(one) !== one)) count.fields++;
+      // Who made or last touched it (`createdBy`, `updatedBy`) is renamed with the rest, and is no field a person wrote.
+      if (Object.entries(node).some(([key, one]) => key !== "id" && !isTouchedField(key) && at.rename(one) !== one)) count.fields++;
     }
     return next as unknown as typeof node;
   });

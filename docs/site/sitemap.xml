@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://graview.dev/</loc><lastmod>2026-11-21</lastmod><!-- 84bd3fee41bf --></url>
+  <url><loc>https://graview.dev/</loc><lastmod>2026-11-21</lastmod><!-- 9929ae73815f --></url>
   <url><loc>https://graview.dev/progression.html</loc><lastmod>2026-10-15</lastmod><!-- a9fc3167449d --></url>
   <url><loc>https://graview.dev/tour.html</loc><lastmod>2026-10-29</lastmod><!-- 8986622159cb --></url>
   <url><loc>https://graview.dev/docs/agents.html</loc><lastmod>2026-10-29</lastmod><!-- 4f3681e90349 --></url>
-  <url><loc>https://graview.dev/docs/checks.html</loc><lastmod>2026-11-16</lastmod><!-- e57857367aa8 --></url>
+  <url><loc>https://graview.dev/docs/checks.html</loc><lastmod>2026-11-21</lastmod><!-- e5b8c6628068 --></url>
   <url><loc>https://graview.dev/docs/cli.html</loc><lastmod>2026-11-16</lastmod><!-- 61bba1ead8df --></url>
   <url><loc>https://graview.dev/docs/concepts.html</loc><lastmod>2026-10-09</lastmod><!-- e1a8c1574366 --></url>
   <url><loc>https://graview.dev/docs/demos.html</loc><lastmod>2026-10-16</lastmod><!-- aeb697db7947 --></url>
   <url><loc>https://graview.dev/docs/getting-started.html</loc><lastmod>2026-11-12</lastmod><!-- 7d95e7795895 --></url>
-  <url><loc>https://graview.dev/docs/index.html</loc><lastmod>2026-11-16</lastmod><!-- 1c85de681250 --></url>
+  <url><loc>https://graview.dev/docs/index.html</loc><lastmod>2026-11-21</lastmod><!-- fd76ba77ae2d --></url>
   <url><loc>https://graview.dev/docs/packages.html</loc><lastmod>2026-10-16</lastmod><!-- e26e3ef702d9 --></url>
-  <url><loc>https://graview.dev/docs/packages/core.html</loc><lastmod>2026-11-18</lastmod><!-- c3e06616f849 --></url>
+  <url><loc>https://graview.dev/docs/packages/core.html</loc><lastmod>2026-11-21</lastmod><!-- 50878ddd736f --></url>
   <url><loc>https://graview.dev/docs/packages/create-graview.html</loc><lastmod>2026-10-13</lastmod><!-- fa515f35ebbf --></url>
   <url><loc>https://graview.dev/docs/packages/embed.html</loc><lastmod>2026-11-16</lastmod><!-- 6327834bcd4c --></url>
   <url><loc>https://graview.dev/docs/packages/graview.html</loc><lastmod>2026-10-27</lastmod><!-- 449a62c1847e --></url>
@@ -30,8 +30,8 @@
   <url><loc>https://graview.dev/docs/recipes/decisions.html</loc><lastmod>2026-10-18</lastmod><!-- b1bf7e2c74d6 --></url>
   <url><loc>https://graview.dev/docs/recipes/dependencies.html</loc><lastmod>2026-10-15</lastmod><!-- d9150a746ffe --></url>
   <url><loc>https://graview.dev/docs/recipes/docs.html</loc><lastmod>2026-10-15</lastmod><!-- ee8dd9450879 --></url>
-  <url><loc>https://graview.dev/docs/releases.html</loc><lastmod>2026-11-21</lastmod><!-- 27ebefa9f764 --></url>
-  <url><loc>https://graview.dev/docs/site.html</loc><lastmod>2026-11-21</lastmod><!-- c7c6e87748bc --></url>
+  <url><loc>https://graview.dev/docs/releases.html</loc><lastmod>2026-11-21</lastmod><!-- ab3876f490c3 --></url>
+  <url><loc>https://graview.dev/docs/site.html</loc><lastmod>2026-11-21</lastmod><!-- eabac11c4fe2 --></url>
   <url><loc>https://graview.dev/docs/skills.html</loc><lastmod>2026-10-29</lastmod><!-- d22af730c862 --></url>
   <url><loc>https://graview.dev/docs/skills/graview-agent-seat.html</loc><lastmod>2026-10-29</lastmod><!-- f89ebc4b2a89 --></url>
   <url><loc>https://graview.dev/docs/skills/graview-brand.html</loc><lastmod>2026-11-07</lastmod><!-- d6d99beafe4d --></url>
@@ -41,7 +41,7 @@
   <url><loc>https://graview.dev/docs/skills/graview-invariant.html</loc><lastmod>2026-11-16</lastmod><!-- 3d460ee1bf14 --></url>
   <url><loc>https://graview.dev/docs/skills/graview-lens.html</loc><lastmod>2026-10-29</lastmod><!-- 276911f09463 --></url>
   <url><loc>https://graview.dev/docs/skills/graview-linked-records.html</loc><lastmod>2026-10-29</lastmod><!-- 20a818a71c87 --></url>
-  <url><loc>https://graview.dev/docs/skills/graview-lists.html</loc><lastmod>2026-11-12</lastmod><!-- 85c2789339fa --></url>
+  <url><loc>https://graview.dev/docs/skills/graview-lists.html</loc><lastmod>2026-11-21</lastmod><!-- 8c2fd202d3d1 --></url>
   <url><loc>https://graview.dev/docs/skills/graview-locale.html</loc><lastmod>2026-11-18</lastmod><!-- 66b2ecbdae4a --></url>
   <url><loc>https://graview.dev/docs/skills/graview-logo.html</loc><lastmod>2026-11-03</lastmod><!-- 624316e25960 --></url>
   <url><loc>https://graview.dev/docs/skills/graview-new-app.html</loc><lastmod>2026-11-03</lastmod><!-- 00a66ccac962 --></url>
@@ -60,9 +60,9 @@
   <url><loc>https://graview.dev/docs/skills/graview-view-drawing.html</loc><lastmod>2026-11-16</lastmod><!-- 7418da2a6001 --></url>
   <url><loc>https://graview.dev/docs/skills/graview-view-forms.html</loc><lastmod>2026-11-08</lastmod><!-- 55444d27e10c --></url>
   <url><loc>https://graview.dev/docs/skills/graview-view-links.html</loc><lastmod>2026-11-13</lastmod><!-- b8997ed245c2 --></url>
-  <url><loc>https://graview.dev/docs/skills/graview-view-specs.html</loc><lastmod>2026-11-16</lastmod><!-- 4d2d98d2c3e2 --></url>
+  <url><loc>https://graview.dev/docs/skills/graview-view-specs.html</loc><lastmod>2026-11-21</lastmod><!-- 61f0fa953259 --></url>
   <url><loc>https://graview.dev/docs/skills/graview-visitor-forms.html</loc><lastmod>2026-10-29</lastmod><!-- 6ecb58add9b6 --></url>
   <url><loc>https://graview.dev/docs/skills/graview-worker-view.html</loc><lastmod>2026-11-16</lastmod><!-- fcecc07ccd61 --></url>
   <url><loc>https://graview.dev/docs/skills/graview-workflows.html</loc><lastmod>2026-11-18</lastmod><!-- 49aa2d14476e --></url>
-  <url><loc>https://graview.dev/docs/stability.html</loc><lastmod>2026-11-20</lastmod><!-- d7d12b5d82c6 --></url>
+  <url><loc>https://graview.dev/docs/stability.html</loc><lastmod>2026-11-21</lastmod><!-- 0aced2e386ee --></url>
 </urlset>

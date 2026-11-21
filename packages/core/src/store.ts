@@ -1,10 +1,13 @@
-import { everBound, hidesFrom, readingOf, seatLens, seenBy, seesEveryRecord, seesId, type SeenOptions } from "./seen.js";
+import { judgedOnTouches } from "./graph/touched.js";
+import { everBound, hidesFrom, readingOf, seatLens, seenBy, seesEveryRecord, seesId, toldTouches, type SeenOptions } from "./seen.js";
+import { offersTouches, servedTold, TOLD_TO, UNSEATED } from "./served-touches.js";
 import { isoToday } from "./days.js";
 import type { IntelligenceProviderDeclaration } from "./app.js";
 import { Graph, GraphError, MissingRecordError } from "./graph/graph.js";
 import { resolveModules, type ModuleMap, type ModuleProjection } from "./modules.js";
 import { diffSnapshots, diffTouched, EMPTY_DIFF, isEmptyDiff, type GraphDiff } from "./graph/diff.js";
 import { normalize, writesOf, type Primitive } from "./graph/primitives.js";
+import { untouched } from "./graph/touched.js";
 import { keepLinked, keepsLinked } from "./keep-linked.js";
 import { bareOp, inverseOf } from "./ops/inverse.js";
 import { LabelIndex, refusalFor, type RefCandidate, type RefResolution } from "./labels.js";
@@ -391,6 +394,12 @@ const given = <K extends string, V>(key: K, value: V | undefined) => (value === 
 const canonicalArgs = (value: unknown): string =>
   JSON.stringify(value, (_, one: unknown) => (one && typeof one === "object" && !Array.isArray(one) ? Object.fromEntries(Object.keys(one).sort().map((key) => [key, (one as Record<string, unknown>)[key]])) : one)) ?? "";
 
+/** A record an act adds, without what it said of when it was made and touched: the op that lands it says that (`touched.ts`). */
+const madeBare = (primitive: Primitive): Primitive => (primitive.op === "add-node" ? { ...primitive, node: untouched(primitive.node) } : primitive);
+
+/** What a host hands as an op, without what it says of when a record was made or touched, an add's or a removal's: the framework's own ops say that. */
+const hostBare = (primitive: Primitive): Primitive => (primitive.op === "add-node" || primitive.op === "remove-node" ? { ...primitive, node: untouched(primitive.node) } : primitive);
+
 const HUMAN: Author = { kind: "human" };
 /** The host itself, which sees what it keeps: the principal a question is asked as when no seat is named. */
 const SYSTEM: Principal = { kind: "system" };
@@ -720,7 +729,7 @@ export class Store<S extends AnySchema> {
     this.publishing = options.publishing;
     this.tidying = options.tidying;
     this.votes = options.votes;
-    this.by = options.principal ?? HUMAN;
+    this.by = options.principal ?? UNSEATED;
     this.intelligence = options.intelligence ?? [];
     for (const provider of options.intelligence ?? []) {
       if (provider.may) this.may.set(provider.name, new Set(provider.may));
@@ -779,6 +788,8 @@ export class Store<S extends AnySchema> {
       this.graph = options.snapshot
         ? Graph.from(options.schema, options.snapshot, validate)
         : this.log.fold(options.schema, { ...validate, ...(last ? { from: last } : {}) });
+      // A graph stored before records kept when they were touched says so from the ops its log still holds, and no more (`touched.ts`).
+      if (options.snapshot) this.graph.touchFrom(this.log.all());
     } else {
       this.log = OperationLog.from(
         [],
@@ -787,6 +798,10 @@ export class Store<S extends AnySchema> {
       );
       this.graph = Graph.from(options.schema, options.snapshot ?? { nodes: [], edges: [] }, validate);
     }
+
+    // Whom each seat was ever bound to, so who touched a record is said as the person by whatever reads the graph (`personSaidFor`).
+    this.graph.everBound = () => everBound(this as never);
+    this.graph.servedTold = () => servedTold(this);
 
     /*
      * A HYDRATED STORE COUNTS ON FROM WHERE THE LOG LEFT OFF.
@@ -905,6 +920,11 @@ export class Store<S extends AnySchema> {
       held && said === held.said ? held.projection : resolveModules(this.declaredModules, said ?? this.startingModules);
     this.projected = { projection, length: all.length, last, said };
     return projection;
+  }
+
+  /** Whether a seat this store was given is told a record's four (`toldTouches`), the judgment `offersTouches` asks of it without importing it. */
+  [TOLD_TO](by: Principal): boolean {
+    return toldTouches(this as never, by);
   }
 
   /**
@@ -1817,7 +1837,9 @@ export class Store<S extends AnySchema> {
    * judges them over another reading of this graph: a seat's (FR-55).
    */
   violations(context?: InvariantContext, over: Graph<S> = this.graph): Violation[] {
-    return evaluate(over, this.allInvariants(), this.judging(context)).map((violation) => this.asking(violation));
+    const judged = evaluate(over, this.allInvariants(), this.judging(context)).map((violation) => this.asking(violation));
+    // A store whose seat is told none of a record's four (a page's, as its server said) reports no rule its judgment read them for: it was judged on blanks.
+    return offersTouches(this) ? judged : judged.filter((violation) => !judgedOnTouches(violation));
   }
 
   /*
@@ -1911,6 +1933,7 @@ export class Store<S extends AnySchema> {
     if (made) {
       twin.graph.applyPrimitives(made.primitives);
       twin.log.append(made);
+      twin.graph.touch(made);
     }
     this.personMade = { key, twin };
     return twin;
@@ -2278,6 +2301,7 @@ export class Store<S extends AnySchema> {
       if (person) {
         this.graph.applyPrimitives(person.primitives);
         this.log.append(person);
+        this.graph.touch(person);
         ops.push(person);
         allPrimitives.push(...person.primitives);
         writes.add(person.writes[0]!);
@@ -2339,7 +2363,8 @@ export class Store<S extends AnySchema> {
          * to one of those goes back to its source — in this op, so one undo
          * takes both back. Applied to the graph as they are worked out.
          */
-        const made = this.asSplices(compiled.primitives, options.base).map(normalize);
+        // A record an act adds is made by this op, whatever it said of its making (`touched.ts`).
+        const made = this.asSplices(compiled.primitives, options.base).map(normalize).map(madeBare);
         this.graph.applyPrimitives(made);
         const following = keepsLinked(this.schema) ? keepLinked(this.schema, this.graph, made, { mayWriteBack: this.writesBack(as as Principal) }).map(normalize) : [];
         madeIds[at] =compiled.primitives.find((primitive): primitive is Extract<Primitive, { op: "add-node" }> => primitive.op === "add-node")?.node.id;
@@ -2374,6 +2399,8 @@ export class Store<S extends AnySchema> {
           ...given("lineage", lined),
         };
         this.log.append(op);
+        // Every record it wrote says when, and who (`touched.ts`).
+        this.graph.touch(op);
         ops.push(op);
         allPrimitives.push(...op.primitives);
         for (const id of op.reads) reads.add(id);
@@ -2477,6 +2504,8 @@ export class Store<S extends AnySchema> {
     for (const [index, op] of fresh.entries()) {
       const here = bareOp({ ...op, seq: seq + index });
       this.log.append(here);
+      // Stamped as it was made, applied here before or not: a client's own stamp gives way to the server's.
+      this.graph.touch(here);
       landed.push(here);
     }
     this.countPast(landed);
@@ -2508,7 +2537,8 @@ export class Store<S extends AnySchema> {
     const taken = new Set(this.log.all().map((op) => op.id));
     let batch: string | undefined;
     const built: Operation[] = ops.map((made, index) => {
-      const primitives = made.primitives.map(normalize);
+      // A host says nothing of when a record was made, an undo it makes included: only the framework's own undo puts one back as it was (`touched.ts`).
+      const primitives = made.primitives.map(normalize).map(hostBare);
       const op: Operation = {
         id: made.id ?? this.nextId(),
         seq: this.log.length + index,
@@ -2540,7 +2570,10 @@ export class Store<S extends AnySchema> {
         throw new ReceiveError(op, error);
       }
     }
-    for (const op of built) this.log.append(op);
+    for (const op of built) {
+      this.log.append(op);
+      this.graph.touch(op);
+    }
     // An id or batch the host named is the log's now: the next one minted counts past it (FR-204).
     this.countPast(built);
     for (const op of built) tellTheWatchOfAnAuthor(op.author.id);
@@ -2593,6 +2626,7 @@ export class Store<S extends AnySchema> {
         ...given("lineage", lineage),
       };
       this.log.append(op);
+      this.graph.touch(op);
       ops.push(op);
       tellTheWatchOfAnAuthor(author.id);
     }
@@ -2751,6 +2785,8 @@ export class Store<S extends AnySchema> {
       };
       this.graph.applyPrimitives(op.primitives, { restoring: putsBack(target) });
       this.log.append(op);
+      // An undo touches what it puts back: now, by whoever took it back.
+      this.graph.touch(op);
       ops.push(op);
     }
 
@@ -3173,8 +3209,14 @@ export class Store<S extends AnySchema> {
     try {
       // 1. Back to the confirmed prefix, putting back exactly what each op took.
       // In place: what a pending op took out goes back where it stood, or this copy and the server's disagree on order.
-      for (const op of [...tail].reverse()) this.graph.applyPrimitives(inverseOf(op), { restoring: true, inPlace: true });
+      // Each taken back with its touch (`touched.ts`): what a record said before it, where the graph remembers; the rest by the log.
+      const forgotten = new Set<string>();
+      for (const op of [...tail].reverse()) {
+        this.graph.applyPrimitives(inverseOf(op), { restoring: true, inPlace: true });
+        for (const id of this.graph.untouch(op)) forgotten.add(id);
+      }
       this.log.truncate(cut);
+      if (forgotten.size > 0) this.graph.retouch(forgotten, this.log.all());
 
       // 2. What the server says, in its order.
       const known = new Set(this.log.all().map((op) => op.id));
@@ -3187,6 +3229,7 @@ export class Store<S extends AnySchema> {
         }
         const here = bareOp({ ...op, seq: this.log.length });
         this.log.append(here);
+        this.graph.touch(here);
         known.add(op.id);
         landed.push(here);
       }
@@ -3423,7 +3466,7 @@ export class Store<S extends AnySchema> {
   private epochAt(seq: number): Epoch {
     const ops = this.log.all();
     // What the store keeps of who made what and what was removed is written here, from the log, never carried over from an epoch.
-    const { creators: _creators, removed: _removed, writers: _writers, published: _published, declines: _declines, ...checkpoint } = this.log.checkpointAt(this.schema, seq, { validate: this.validate });
+    const { creators: _creators, removed: _removed, writers: _writers, published: _published, declines: _declines, bound: _bound, ...checkpoint } = this.log.checkpointAt(this.schema, seq, { validate: this.validate });
     /*
      * Who made each record behind it, so a store opened on it still knows (an `own` sight reads the log for it);
      * what each record removed behind it was, so a field naming one is still judged as naming it; and who wrote
@@ -3445,6 +3488,8 @@ export class Store<S extends AnySchema> {
     return {
       ...checkpoint,
       ...(kept(creators) && { creators }),
+      // Whom each seat was bound to, ended bindings too: who made or touched a record is still said as the person (`touchesRebound`).
+      ...(this.schema.definitions.some((definition) => (definition as { readonly people?: boolean }).people === true) && kept(Object.fromEntries(everBound(this as never))) && { bound: Object.fromEntries(everBound(this as never)) }),
       ...(removed && { removed }),
       ...(kept(writers) && { writers }),
       ...(kept(declines) && { declines }),

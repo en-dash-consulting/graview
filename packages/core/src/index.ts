@@ -82,6 +82,8 @@ export type {
 // Graph — the reactive in-memory model the framework owns.
 export { Graph, GraphError, MissingRecordError } from "./graph/graph.js";
 export { ARCHIVED, archivedFrom, isArchived, PERSON_SEAT } from "./graph/archived.js";
+export { CREATED_AT, CREATED_BY, isTouchedField, TOUCHED_FIELD_TAKEN, TOUCHED_FIELDS, touchedOf, toucherOf, untouched, UPDATED_AT, UPDATED_BY } from "./graph/touched.js";
+export type { Touched } from "./graph/touched.js";
 export type { Archived, ArchivedOption } from "./graph/archived.js";
 export type { ApplyPrimitivesOptions, GraphListener, GraphOptions } from "./graph/graph.js";
 export { diffSnapshots, EMPTY_DIFF, isEmptyDiff } from "./graph/diff.js";
@@ -352,7 +354,9 @@ export type { Grant, Policy, Principal, Refusal, Sight } from "./permissions/typ
 export { FIELD_SIGHT, recordsOf, sees, sightedKinds } from "./permissions/sight.js";
 export { writersOf, type Writers } from "./ops/writers.js";
 export type { FieldsKept, RecordedLog, Records } from "./permissions/sight.js";
-export { boundPeopleFor, hidesFrom, logSeenBy, namedAuthors, seatLens, seenBy, seesId, servesReaders, type SeenOptions } from "./seen.js";
+export { boundPeopleFor, hidesFrom, toldTouches, touchesSaid, logSeenBy, namedAuthors, seatLens, seenBy, seesId, servesReaders, type SeenOptions } from "./seen.js";
+// Asked by a page and a guest without the seat's judging (`served-touches.ts`).
+export { markServed, offersTouches } from "./served-touches.js";
 export { onPublish, PUBLISH, readsPublished, type Publishing } from "./publish.js";
 // Notify me (Roadmap f-notify-subscriptions): what a subscription is, and the store a page keeps them in; the matcher and their words are `@graview/core/subscriptions`.
 export { keptSubscription, memorySubscriptions, subscriberOf, subscriptionId } from "./subscription-shape.js";

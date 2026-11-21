@@ -1,4 +1,5 @@
 import type { FarAppResolver } from "../workflows/far.js";
+import { isTouchedField } from "../graph/touched.js";
 import { isBindingAct } from "../binding-served.js";
 import { bindingActTaken, bindingUngranted } from "../binding-ungranted.js";
 import { DERIVED_ACTS, derivedActOf, derivedActsOf, givenWhenNeverArchived, givenWhenNeverTidied, RELATION_ACTS, relationActName, relationActsOf } from "../mutations/derived-names.js";
@@ -2479,7 +2480,7 @@ class Editor {
     for (const key of sight ? (["fields", "hide"] as const) : []) {
       for (const [n, field] of ((part[key] as string[] | undefined) ?? []).entries()) {
         const kinds = part.kinds as string[];
-        if (kinds.some((kind) => this.doc.kinds[kind]?.fields[field])) continue;
+        if (isTouchedField(field) || kinds.some((kind) => this.doc.kinds[kind]?.fields[field])) continue;
         return this.failAs("sight-field", i, `${key}.${n}`, `"${field}" is not a field of ${kinds.join(" or ")}`, `one of ${[...new Set(kinds.flatMap((kind) => Object.keys(this.doc.kinds[kind]?.fields ?? {})))].join(", ")}`);
       }
     }
