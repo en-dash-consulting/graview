@@ -281,6 +281,19 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
    * none: an account is never one of two people, and `validateGraph` says
    * so (`person-seat-shared`).
    */
+  /**
+   * THE PERSON A SEAT IS SAID AS (`touched.ts`): the record it is bound to,
+   * or was, where the store that holds this graph has said whom each seat
+   * was ever bound to (`everBound`); a graph alone knows the bindings it
+   * holds now.
+   */
+  personSaidFor(seat: string): string | undefined {
+    return this.personBoundTo(seat) ?? this.everBound?.().get(seat);
+  }
+
+  /** Whom each seat was ever bound to, as the store that holds this graph reads its log: set by that store. */
+  everBound?: () => ReadonlyMap<string, string>;
+
   personBoundTo(seat: string): string | undefined {
     const ids = this.seats.get(seat);
     return ids?.size === 1 ? ids.values().next().value : undefined;
@@ -437,7 +450,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
         const op = ops[at]!;
         // As `touch` reads an op: what it wrote, as its primitives and it say, and a migration's touching nothing.
         if (wrote === undefined && !isMigration(op.author) && (op.writes?.includes(id) || op.primitives.some((primitive) => writesOf(primitive).includes(id)))) wrote = op;
-        if (added === undefined && op.primitives.some((primitive) => primitive.op === "add-node" && primitive.node.id === id)) added = op;
+        if (added === undefined && !isMigration(op.author) && op.primitives.some((primitive) => primitive.op === "add-node" && primitive.node.id === id)) added = op;
       }
       if (added && added.stamps !== false) this.stamp(id, touchOf(added), makingIn(added).get(id));
       if (wrote) {

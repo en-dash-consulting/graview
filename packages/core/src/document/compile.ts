@@ -1,4 +1,4 @@
-import { isTouchedField, TOUCHED_FIELDS } from "../graph/touched.js";
+import { isTouchedField, readsTouched, TOUCHED_FIELDS, touchedTakenFix, touchedTakenSaid } from "../graph/touched.js";
 import type { FarAppResolver } from "../workflows/far.js";
 import type { HostView } from "../views/types.js";
 import { derivedActOf } from "../mutations/derived-names.js";
@@ -274,6 +274,29 @@ function validate(document: GraviewDocument): Finding[] {
   const linkedHere = (kind: string, name: string) => linkedEdges(document.kinds[kind]?.edges).has(name);
   const linkedAnywhere = (name: string) => Object.keys(document.kinds).some((kind) => linkedHere(kind, name));
 
+  /*
+   * WHEN A RECORD WAS MADE OR TOUCHED IS KEPT AS EACH SEAT MAY SEE IT
+   * (`touched.ts`): a seat from whom a sight keeps anything is told none of
+   * the four, so a rule, an act's condition or a computed value that reads
+   * them cannot be judged for it. Said, not refused.
+   */
+  const sights = (document.policy as { readonly sees?: readonly Record<string, unknown>[] } | undefined)?.sees ?? [];
+  const keepsSomething = sights.some((sight) => sight["hide"] !== undefined || sight["fields"] !== undefined || sight["own"] !== undefined || sight["via"] !== undefined) ||
+    (sights.length > 0 && new Set(sights.flatMap((sight) => (Array.isArray(sight["kinds"]) ? (sight["kinds"] as string[]) : []))).size < Object.keys(document.kinds).length);
+  const readsKept = (source: unknown, path: string, what: string) => {
+    if (!keepsSomething || typeof source !== "string") return;
+    let parsed: unknown;
+    try {
+      parsed = parseExpr(source);
+    } catch {
+      return;
+    }
+    if (readsTouched(parsed)) findings.push(warning("touched-read-kept", path, `${what} reads when a record was made or last touched, which a seat the policy keeps anything from is not told: it cannot be judged for that seat`, "judge by a field of the record's own, or keep nothing from the seats that act or read it"));
+  };
+  for (const [name, rule] of Object.entries(document.rules ?? {})) for (const key of ["when", "require"] as const) readsKept((rule as Record<string, unknown>)[key], `rules.${name}.${key}`, `The rule "${name}"`);
+  for (const [name, act] of Object.entries(document.acts ?? {})) readsKept((act as Record<string, unknown>)["allowedWhen"], `acts.${name}.allowedWhen`, `The act "${name}"`);
+  for (const [kind, spec] of Object.entries(document.kinds)) for (const [name, value] of Object.entries(spec.computed ?? {})) readsKept(typeof value === "string" ? value : (value as { readonly expr?: unknown }).expr, `kinds.${kind}.computed.${name}`, `${kind}'s ${name}`);
+
   for (const [kind, spec] of Object.entries(document.kinds)) {
     const at = `kinds.${kind}`;
     for (const [name, edge] of Object.entries(spec.edges ?? {})) {
@@ -284,7 +307,7 @@ function validate(document: GraviewDocument): Finding[] {
     // When a record was made and last touched, and by whom, is every record's own (`touched.ts`): no kind declares a second thing under one of those names.
     for (const [part, names] of [["fields", Object.keys(spec.fields)], ["edges", Object.keys(spec.edges ?? {})], ["computed", Object.keys(spec.computed ?? {})]] as const) {
       for (const name of names.filter(isTouchedField)) {
-        findings.push(error("touched-field-taken", `${at}.${part}.${name}`, `${kind} declares "${name}", which every record already keeps: when it was made and last touched, and by whom (createdAt, createdBy, updatedAt, updatedBy), written by the framework as each change lands`, `read the record's own ${name} wherever a field is read, and take the declared one out, or give it another name if it means something else`));
+        findings.push(error("touched-field-taken", `${at}.${part}.${name}`, touchedTakenSaid(kind, name), touchedTakenFix(name)));
       }
     }
     if (spec.lifecycle && !spec.fields[spec.lifecycle.field]) findings.push(error("lifecycle-field", `${at}.lifecycle.field`, `${kind} has no field "${spec.lifecycle.field}"`));

@@ -4,7 +4,7 @@
  * split the page's first chunks differently, a third of a kilobyte more up
  * front (docs/hosted-page.md).
  */
-import { TOUCHED_FIELDS } from "../graph/touched.js";
+import { readsTouched, TOUCHED_FIELDS } from "../graph/touched.js";
 import {
   createSchema,
   defineInvariant,
@@ -544,6 +544,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
   for (const [name, act] of Object.entries(document.acts ?? {})) {
     const planned = plan.acts[name]!;
     const { title, effects, guard, refusal, destructive, idempotent, creates, connects, severs, writes, writesOther, sets } = planned;
+    const guardReadsTouched = readsTouched(guard);
     // What it carries to the records linked to its subject, by relation (Roadmap f-acts-update-linked): the store judges each far record's own edit.
     const writesLinked: Record<string, readonly string[]> = {};
     for (const e of effects) if ("through" in e) writesLinked[e.through] = [...new Set([...(writesLinked[e.through] ?? []), ...Object.keys(e.set)])];
@@ -566,6 +567,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
      * so the two cannot say different things. Undefined where it holds.
      */
     const refusedBy = (graph: GraphReader, subject: AnyGraphNode, bindings: Record<string, Value>): string | undefined => {
+      // A condition on when a record was made or touched, for a seat told none of them (`toldTouches`): it cannot be judged here, and says so.
+      if (guardReadsTouched && (graph as { readonly toldTouches?: boolean }).toldTouches === false) return `"${title}" asks when ${labelFor(subject)} was made or last changed, which is not said to you here, so it cannot be judged for you`;
       let allowed: Value;
       try {
         allowed = evaluateExpr(guard!, { graph, subject, kinds: shapes, bindings, args: bindings, today: today(), ...saying });

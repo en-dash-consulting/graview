@@ -378,6 +378,8 @@ export interface ArrangeGraph {
 
 export interface ArrangeContext {
   readonly schema: AnySchema;
+  /** Whether when each record was made and touched may be asked of here (`offersTouches`): absent, it may. */
+  readonly touched?: boolean;
   readonly graph: ArrangeGraph;
   /** Node ids the rules currently implicate, for `is:flagged` and `is:clear`. */
   readonly flagged?: ReadonlySet<string>;

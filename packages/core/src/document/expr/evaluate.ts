@@ -239,7 +239,7 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
       // A date that repeats reads as its next occurrence on the day judged (`repeat.ts`).
       const read = own ? dateOn(node, name, today()) : undefined;
       // Who made or touched it, as `$me` says a person: the record the seat is bound to, never the account (`touched.ts`).
-      const v = typeof read === "string" && (name === "createdBy" || name === "updatedBy") ? ((ctx.graph as { personBoundTo?(seat: string): string | undefined }).personBoundTo?.(read) ?? read) : read;
+      const v = typeof read === "string" && (name === "createdBy" || name === "updatedBy") ? ((ctx.graph as { personSaidFor?(seat: string): string | undefined }).personSaidFor?.(read) ?? (ctx.graph as { personBoundTo?(seat: string): string | undefined }).personBoundTo?.(read) ?? read) : read;
       return v === undefined ? null : (v as Value);
     }
     const card = shape?.edges.get(name);

@@ -15,7 +15,7 @@ import { presentOf } from "./seat-of.js";
 import { FIELD_SIGHT, fieldsJudged, partialSight, recordsOf, sees, type Judged, type Records } from "./permissions/sight.js";
 import type { Principal } from "./permissions/types.js";
 import { diffSnapshots } from "./graph/diff.js";
-import { CREATED_BY, isTouchedField, TOUCHED_FIELDS, UPDATED_BY } from "./graph/touched.js";
+import { CREATED_BY, isTouchedField, readsTouched, TOUCHED_FIELDS, UPDATED_BY } from "./graph/touched.js";
 import { nodeRefKinds } from "./mutations/node-ref.js";
 import { PUBLISHING, readsPublished, type Publishing } from "./publish.js";
 
@@ -98,7 +98,20 @@ export function toldTouches(store: Judged & { readonly schema: { readonly kinds:
  * since no account is said to a model (`touchesRebound`).
  */
 export function touchesSaid(store: Judged): <N extends object>(node: N) => N {
-  return touchesRebound(store, { kind: "system" }, store, () => false);
+  const rebound = touchesRebound(store, { kind: "system" }, store, () => false);
+  // A seat bound to no person is nobody a model is told of: "someone", as an author nothing names is.
+  const named = (value: unknown) => typeof value !== "string" || value === SOMEONE.id || (store.graph as { has?(id: string): boolean }).has?.(value) === true || ["human", "agent", "rule", "system", "visitor"].includes(value);
+  return (node) => {
+    const out = rebound(node) as Record<string, unknown>;
+    const nobody = [CREATED_BY, UPDATED_BY].filter((field) => Object.hasOwn(out, field) && !named(out[field]));
+    return (nobody.length > 0 ? { ...out, ...Object.fromEntries(nobody.map((field) => [field, SOMEONE.id])) } : out) as typeof node;
+  };
+}
+
+/** Whether a rule reads when a record was made or touched (`readsTouched`): one a seat told none of them cannot be judged for. */
+function readsTouchedRule(store: { allInvariants?(): readonly { readonly name: string; readonly shape?: { readonly when?: unknown; readonly require?: unknown } }[] }, name: string): boolean {
+  const rule = store.allInvariants?.().find((one) => one.name === name);
+  return rule?.shape !== undefined && (readsTouched(rule.shape.when) || readsTouched(rule.shape.require));
 }
 
 /**
@@ -110,7 +123,11 @@ export function touchesSaid(store: Judged): <N extends object>(node: N) => N {
  */
 export function offersTouches(store: object): boolean {
   const seat = (store as { readonly [SEAT]?: { readonly store: Judged & { readonly schema: { readonly kinds: readonly string[] } }; readonly principal: Principal } })[SEAT];
-  return seat === undefined || toldTouches(seat.store, seat.principal);
+  if (seat !== undefined) return toldTouches(seat.store, seat.principal);
+  // A store made from what a seat is served (a page's own): told none where its ops say they stamp nothing, or where its own policy keeps something from its own seat.
+  const own = store as { readonly log?: { all(): readonly Operation[] }; readonly policy?: unknown; readonly by?: Principal; readonly graph?: unknown; readonly schema?: unknown };
+  if (own.log?.all().some((op) => op.stamps === false)) return false;
+  return own.policy === undefined || own.by === undefined || own.graph === undefined || toldTouches(own as never, own.by);
 }
 
 /**
@@ -995,6 +1012,9 @@ export function seatView<T extends Viewed>(store: T, principal: Principal): T {
           return (id: string) => served(target.getNode(id));
         case "has":
           return seenId;
+        // Whether this seat is told when each record was made and touched (`toldTouches`): what judges an act's condition or a rule for it reads it.
+        case "toldTouches":
+          return toldTouches(store as never, principal);
         // Whom a seat is bound to, asked only of the seats this one may be told of (its own; every one is the host's alone), and only a record it is served.
         case "personBoundTo":
           return (seat: string) => {
@@ -1104,7 +1124,7 @@ export function seatView<T extends Viewed>(store: T, principal: Principal): T {
          * may not see never makes, mends or words one of its problems.
          */
         case "violations":
-          return (context?: never) => target.violations(context as never, graph as never).filter((violation) => violationShown(lens, (id) => full.has(id), violation));
+          return (context?: never) => target.violations(context as never, graph as never).filter((violation) => violationShown(lens, (id) => full.has(id), violation) && (!readsTouchedRule(target as never, (violation as unknown as { readonly invariant: string }).invariant) || toldTouches(store as never, principal)));
         // What no longer fits, about records this seat is served and naming none it may not see (FR-55).
         case "findings":
           return () =>

@@ -163,6 +163,8 @@ export interface JudgeDestinationInput {
   readonly places: readonly NamedPlace[];
   /** The kinds' lists by slug and name, where `places` does not already name them. */
   readonly lists: readonly GuestList[];
+  /** Whether when each record was made and touched may be asked of here (`offersTouches`): absent, it may. */
+  readonly touched?: boolean;
   readonly schema?: AnySchema;
 }
 
@@ -205,7 +207,7 @@ export function judgeDestination(to: Destination, input: JudgeDestinationInput):
   let filter: string | undefined;
   if (to.where !== undefined && to.where !== null) {
     if (!input.schema || kinds.length === 0) return { ok: false, says: `The place ${quoted(asked)} cannot be narrowed here: it goes nowhere.` };
-    const judged = filterOfWhere(input.schema, kinds, to.where, { through: listKind !== undefined });
+    const judged = filterOfWhere(input.schema, kinds, to.where, { through: listKind !== undefined, touched: input.touched !== false });
     if (!judged.ok) return { ok: false, says: `The filter on ${quoted(asked)} goes nowhere: ${judged.says}` };
     filter = judged.filter;
   }

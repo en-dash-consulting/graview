@@ -259,6 +259,11 @@ export function renderTemplate(parts: readonly TemplatePart[], ctx: RenderContex
         const named = e.t === "ident" ? e.name : e.t === "member" && e.object.t === "ident" && e.object.name[0] === "$" ? e.name : undefined;
         const labels = !part.format && named !== undefined && ctx.node ? ctx.kinds.get(ctx.node.kind)?.choices?.get(named) : undefined;
         if (labels && (typeof value === "string" || Array.isArray(value))) return capitalized(part, optionsSaid(value, labels, parts.length === 1));
+        // Who made or touched it, as a page names an author: the person's record by its label, else somebody — never a seat's id.
+        if (named !== undefined && (named === "createdBy" || named === "updatedBy") && typeof value === "string" && !part.format) {
+          const person = (ctx.graph ?? EMPTY_GRAPH).getNode(value);
+          return capitalized(part, person ? name(person) : "someone");
+        }
         if (part.format === "glance") return capitalized(part, glanced(value, named !== undefined && ctx.node ? ctx.kinds.get(ctx.node.kind)?.choices?.get(named) : undefined, today, ctx.money));
         return capitalized(part, show(value, part.format, today, part.formatArgs, ctx.money, name));
       } catch (error) {

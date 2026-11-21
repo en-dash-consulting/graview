@@ -1,5 +1,5 @@
 import { documentOf } from "../../document/to-document.js";
-import { TOUCHED_FIELDS } from "../../graph/touched.js";
+import { TOUCHED_FIELDS, touchedTakenFix as fixOfTaken, touchedTakenSaid as saidOfTaken } from "../../graph/touched.js";
 import type { AnySchema } from "../../schema/schema.js";
 import type { CheckContext } from "./context.js";
 
@@ -31,8 +31,9 @@ export function checkTouchedNames<S extends AnySchema>(ctx: CheckContext<S>): vo
 }
 
 /** Why a kind may not declare one of the four, in a sentence. */
-export const touchedTakenSaid = (kind: string, name: string): string =>
-  `${kind} declares "${name}", which every record already keeps: when it was made and last touched, and by whom (createdAt, createdBy, updatedAt, updatedBy), written by the framework as each change lands.`;
+export const touchedTakenSaid = (kind: string, name: string): string => `${saidOfTaken(kind, name)}.`;
 
 /** What to do instead. */
-export const touchedTakenFix = (name: string): string => `Read the record's own ${name} wherever a field is read, and take the declared one out, or give it another name if it means something else.`;
+export const touchedTakenFix = (name: string): string => `${capitalized(fixOfTaken(name))}.`;
+
+const capitalized = (said: string): string => said.charAt(0).toUpperCase() + said.slice(1);

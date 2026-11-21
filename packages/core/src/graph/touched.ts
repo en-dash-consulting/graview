@@ -35,6 +35,22 @@ export const UPDATED_BY = "updatedBy";
 /** The code `graview check` refuses a kind with, that declares one of the four (`touched-field-taken`). */
 export const TOUCHED_FIELD_TAKEN = "touched-field-taken";
 
+/** Why a kind may not declare one of the four, in a sentence: the one source the checker and the compiler say it from. */
+export const touchedTakenSaid = (kind: string, name: string): string =>
+  `${kind} declares "${name}", which every record already keeps: when it was made and last touched, and by whom (createdAt, createdBy, updatedAt, updatedBy), written by the framework as each change lands`;
+
+/** What to do instead. */
+export const touchedTakenFix = (name: string): string => `read the record's own ${name} wherever a field is read, and take the declared one out, or give it another name if it means something else`;
+
+/** Whether a parsed expression reads one of the four, by name, anywhere in it. */
+export function readsTouched(expr: unknown): boolean {
+  if (expr === null || typeof expr !== "object") return false;
+  if (Array.isArray(expr)) return expr.some(readsTouched);
+  const one = expr as Record<string, unknown>;
+  if ((one["t"] === "ident" || one["t"] === "member") && typeof one["name"] === "string" && TOUCHED.has(one["name"])) return true;
+  return Object.values(one).some(readsTouched);
+}
+
 /** The four, in the order they are said. */
 export const TOUCHED_FIELDS: readonly string[] = [CREATED_AT, CREATED_BY, UPDATED_AT, UPDATED_BY];
 const TOUCHED: ReadonlySet<string> = new Set(TOUCHED_FIELDS);

@@ -186,7 +186,7 @@ function matcherFor(ctx: ArrangeContext, query: string): (node: ArrangeNode) => 
   const offered = (kind: string): ReadonlySet<string> => {
     let held = offers.get(kind);
     if (!held) {
-      held = new Set(arrangeable(ctx.schema, kind).filters.map((offer) => offer.key));
+      held = new Set(arrangeable(ctx.schema, kind, { touched: ctx.touched !== false }).filters.map((offer) => offer.key));
       offers.set(kind, held);
     }
     return held;

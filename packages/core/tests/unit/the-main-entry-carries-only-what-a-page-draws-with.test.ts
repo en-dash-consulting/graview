@@ -128,7 +128,7 @@ const OFF_THE_PAGE = {
  * with, beside the checker, for a host's release gate (Graview HQ
  * feature:f-record-last-touched). Values, not code: nothing more loads.
  */
-const ALSO_ON_THE_PAGE: Readonly<Record<string, readonly string[]>> = { "@graview/core/check": ["TOUCHED_FIELDS", "TOUCHED_FIELD_TAKEN"] };
+const ALSO_ON_THE_PAGE: Readonly<Record<string, readonly string[]>> = { "@graview/core/check": ["CREATED_AT", "CREATED_BY", "TOUCHED_FIELDS", "TOUCHED_FIELD_TAKEN", "UPDATED_AT", "UPDATED_BY"] };
 
 describe("the entries a hosted page imports up front", () => {
   for (const [subpath, { from, names }] of Object.entries(OFF_THE_PAGE)) {

@@ -395,6 +395,9 @@ const canonicalArgs = (value: unknown): string =>
 /** A record an act adds, without what it said of when it was made and touched: the op that lands it says that (`touched.ts`). */
 const madeBare = (primitive: Primitive): Primitive => (primitive.op === "add-node" ? { ...primitive, node: untouched(primitive.node) } : primitive);
 
+/** What a host hands as an op, without what it says of when a record was made or touched, an add's or a removal's: the framework's own ops say that. */
+const hostBare = (primitive: Primitive): Primitive => (primitive.op === "add-node" || primitive.op === "remove-node" ? { ...primitive, node: untouched(primitive.node) } : primitive);
+
 const HUMAN: Author = { kind: "human" };
 /** The host itself, which sees what it keeps: the principal a question is asked as when no seat is named. */
 const SYSTEM: Principal = { kind: "system" };
@@ -793,6 +796,9 @@ export class Store<S extends AnySchema> {
       );
       this.graph = Graph.from(options.schema, options.snapshot ?? { nodes: [], edges: [] }, validate);
     }
+
+    // Whom each seat was ever bound to, so who touched a record is said as the person by whatever reads the graph (`personSaidFor`).
+    this.graph.everBound = () => everBound(this as never);
 
     /*
      * A HYDRATED STORE COUNTS ON FROM WHERE THE LOG LEFT OFF.
@@ -2522,7 +2528,7 @@ export class Store<S extends AnySchema> {
     let batch: string | undefined;
     const built: Operation[] = ops.map((made, index) => {
       // A host says nothing of when a record was made, an undo it makes included: only the framework's own undo puts one back as it was (`touched.ts`).
-      const primitives = made.primitives.map(normalize).map(madeBare);
+      const primitives = made.primitives.map(normalize).map(hostBare);
       const op: Operation = {
         id: made.id ?? this.nextId(),
         seq: this.log.length + index,
@@ -3473,7 +3479,7 @@ export class Store<S extends AnySchema> {
       ...checkpoint,
       ...(kept(creators) && { creators }),
       // Whom each seat was bound to, ended bindings too: who made or touched a record is still said as the person (`touchesRebound`).
-      ...(kept(Object.fromEntries(everBound(this as never))) && { bound: Object.fromEntries(everBound(this as never)) }),
+      ...(this.schema.definitions.some((definition) => (definition as { readonly people?: boolean }).people === true) && kept(Object.fromEntries(everBound(this as never))) && { bound: Object.fromEntries(everBound(this as never)) }),
       ...(removed && { removed }),
       ...(kept(writers) && { writers }),
       ...(kept(declines) && { declines }),
