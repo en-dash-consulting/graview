@@ -7,7 +7,7 @@ import { Graph, GraphError, MissingRecordError } from "./graph/graph.js";
 import { resolveModules, type ModuleMap, type ModuleProjection } from "./modules.js";
 import { diffSnapshots, diffTouched, EMPTY_DIFF, isEmptyDiff, type GraphDiff } from "./graph/diff.js";
 import { normalize, writesOf, type Primitive } from "./graph/primitives.js";
-import { untouched } from "./graph/touched.js";
+import { keptMaking, untouched } from "./graph/touched.js";
 import { keepLinked, keepsLinked } from "./keep-linked.js";
 import { bareOp, inverseOf } from "./ops/inverse.js";
 import { LabelIndex, refusalFor, type RefCandidate, type RefResolution } from "./labels.js";
@@ -2472,7 +2472,8 @@ export class Store<S extends AnySchema> {
   receive(ops: readonly Operation[], options: { readonly applied?: boolean } = {}): readonly Operation[] {
     this.stillNow();
     const known = new Set(this.log.all().map((op) => op.id));
-    const fresh = ops.filter((op) => !known.has(op.id));
+    // Each record an op adds kept without what its payload said of its making: the op that lands it here says that (`keptMaking`).
+    const fresh = ops.filter((op) => !known.has(op.id)).map(keptMaking);
     if (fresh.length === 0) return [];
     const before = this.graph.snapshot();
     const landed: Operation[] = [];
@@ -2599,7 +2600,7 @@ export class Store<S extends AnySchema> {
     const rollback = this.graph.snapshot();
     const intent = options.intent ?? "Apply a change";
     const lineage = this.heldLineage(lineageOf(options.lineage), author);
-    const handed = this.asSplices(primitives, options.base).map(normalize);
+    const handed = keptMaking({ primitives: this.asSplices(primitives, options.base).map(normalize) }).primitives;
     // What follows it (Roadmap f-keep-linked), worked out on the graph as it lands: the host's change keeps derived records in step too.
     this.graph.applyPrimitives(handed);
     let recorded = handed;
@@ -3220,8 +3221,9 @@ export class Store<S extends AnySchema> {
 
       // 2. What the server says, in its order.
       const known = new Set(this.log.all().map((op) => op.id));
-      for (const op of change.confirmed) {
-        if (known.has(op.id)) continue;
+      for (const handed of change.confirmed) {
+        if (known.has(handed.id)) continue;
+        const op = keptMaking(handed);
         try {
           this.graph.applyPrimitives(op.primitives, { restoring: op.undoes !== undefined });
         } catch (error) {
