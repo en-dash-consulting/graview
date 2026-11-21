@@ -394,6 +394,19 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
     };
     /** The camera between stops this frame, as painted — the last one seen while the view takes in a move just let go. */
     let painted: Live = LEVEL_LIVE;
+    /*
+     * THE ZOOM THE PICTURE IS LAID OUT AT, which `painted` is over. Letting
+     * go writes the hand's zoom into the Scene's at once, while the city is
+     * still laid out at the old one under the transform held until React
+     * commits: a frame drawn in between counted the hand's zoom twice, and
+     * at Nearby a board as wide as the zoom allows drew a fifth wider for
+     * that one frame (one-face's
+     * `letGoOfAZoomEveryBoardAndNameGoesOnFromWhereTheLastFrameDrewIt`,
+     * "ctrl and the wheel over a district, further", under GRAVIEW_SLOW=4
+     * on GitHub's runner). While the view takes the move in, the zoom the
+     * last frame drew at is the one.
+     */
+    let laidZoom: number | null = null;
     /** The level the camera rests at, and the altitude this frame. */
     let rest = PAGE;
     let altitude = PAGE;
@@ -433,6 +446,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
 
     let handSince = 0;
     let lastPlace = "";
+    /** The place a scrub under way left from. */
+    let scrubbedFrom: string | null = null;
     let lastReported = "";
     /* When the camera was last written into the view: the Scene settles what is painted a beat after (its wheel's rule), so nothing new is painted until that beat has passed. */
     let committedAt = -Infinity;
@@ -1173,9 +1188,17 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
        * THE HAND OFF THE CITY A MOMENT, a zoom it wrote is placed for: each
        * board and name goes from where it is drawn to where it stands at the
        * new zoom, as a zoom let go of always did — once nothing is moving
-       * the ground under them.
+       * the ground under them. A finger down is a hand on the city, moving
+       * it or not yet: a pan put down straight after a pinch is let go of
+       * moves no ground until the browser has seen it move past a touch's
+       * slop, and on a slow phone that was past the moment, so the zoom was
+       * placed for under the finger and the boards slid off their districts
+       * as the pan began (one-face's
+       * `duringAPinchThatPansEveryBoardAndNameStaysFastenedToItsDistrictEveryFrame`,
+       * "a pinch let go of, and a pan straight after", under GRAVIEW_SLOW=4
+       * on GitHub's runner).
        */
-      if (between || settling || cam.pinching()) handAt = now;
+      if (between || settling || cam.pinching() || asking.held) handAt = now;
       if (regrow && world.plots.size > 0 && rest !== PAGE && !move && !asking.scrubbing && level(painted) && now - handAt >= LET_GO_MS) {
         regrow = false;
         settle = { slots: drawnSlots(now), names: drawnNames(now), scales: drawnScales(now), start: now };
@@ -1186,7 +1209,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         standAll(world, cam.zoom(), LEVEL_LIVE, shownAt(rest), rest);
       }
       const anchor = world.plots.size > 0 ? anchorIn(at.where, world) : null;
-      const zoomNow = cam.zoom();
+      const zoomNow = settling && laidZoom !== null ? laidZoom : cam.zoom();
+      if (!settling) laidZoom = zoomNow;
       const placeKey = `${keyOf(at.where)}|${at.view.width}x${at.view.height}`;
 
       /* At the page, the camera waits where stepping out begins: aimed for each place before anything moves. */
@@ -1213,6 +1237,8 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         if (toLevel !== rest || placeKey !== lastPlace || (rest !== PAGE && offFraming())) moveTo(cam, toLevel, anchor, now);
         lastPlace = placeKey;
       }
+      // A scrub ended another way (a press without a drag, a pointer canceled) leaves no place it left from behind.
+      if (!asking.scrubbing) scrubbedFrom = null;
       if (ready && calm && anchor && asking.scrub !== 0 && !settling) {
         // As far as the hand has gone, but no more than a step a frame: a hand ahead of the camera is caught up with, never jumped to.
         const delta = Math.max(-0.12, Math.min(0.12, asking.scrub));
@@ -1230,10 +1256,23 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         altitude = target;
         handSince = now;
         asking.scrubbing = true;
+        scrubbedFrom ??= placeKey;
       }
       if (asking.scrubbing && !asking.held && now - handSince > LET_GO_MS && !settling && calm) {
         asking.scrubbing = false;
         restCam = null;
+        /*
+         * SCRUBBED TO A LEVEL, THE PAGE IS AT HOME THERE. The place a scrub
+         * leaves from, still the place when it settles, is the place it
+         * settles at: said so, or the city read it as another place gone to
+         * at the City and took it down to Nearby (`moveTo(…PANEL…)` below) —
+         * the slider dragged from the Page up to the Map came back down to
+         * Nearby 0.8 s after it rested, on any machine (one-face's
+         * `draggingTheSliderScrubsTheLevels`, read once the face rests). A
+         * place chosen while the scrub went on is still gone to as one.
+         */
+        if (scrubbedFrom === placeKey) lastPlace = placeKey;
+        scrubbedFrom = null;
         if (anchor) moveTo(cam, restingLevel(altitude), anchor, now, false);
       }
 
@@ -1469,8 +1508,19 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         // Put away under the bar or the control by a pan (a phone's City is panned to reach it): said, for whoever reads the page.
         button.toggleAttribute("data-graview-under", covered);
         const seen = slot && !covered ? (key === at.current ? shownOwn : shownBoards) * arriving * leaving : 0;
+        /*
+         * This page's own board, drawn wherever it stands (it is the page on
+         * its way into a board), is not offered to a press where the bar or
+         * the control stands over it: a press there lands on them (the
+         * Harbor's home at the City, 844 wide, its board under the bar —
+         * the watch's control-covered, seen once one-face waited for the
+         * face to rest).
+         */
+        const ownUnder = key === at.current && footAt !== null && under({ x: footAt.x - w / 2, y: footAt.y - h, width: w, height: h });
         // Not seen, it is not reached: out of the keyboard's order and the pointer's, as a board going away is.
-        const reached = seen > 0.5 && (key === at.current ? a > 1.5 : a > 0.95) && !move;
+        const reached = seen > 0.5 && (key === at.current ? a > 1.5 && !ownUnder : a > 0.95) && !move;
+        // The keyboard on its own board as the bar comes over it goes to the level control, not to the page's body.
+        if (ownUnder && !reached && document.activeElement === button) fab.current?.querySelector<HTMLElement>("[data-graview-one-face-dock] button, [data-graview-one-face-dock] [role='slider']")?.focus({ preventScroll: true });
         if (button.inert === reached) button.inert = !reached;
         if (!slot || seen <= 0.001) {
           if (button.style.opacity !== "0") button.style.opacity = "0";

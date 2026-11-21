@@ -65,7 +65,7 @@ const STRIPS = resolve(repoRoot, "docs/one-face");
 
 const report = { at: new Date().toISOString(), engines, app: "apps/todo", checks: {} };
 const errors = [];
-const seen = { titleSplits: [], switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], pointsOut: [], shortcuts: [], keysTurnOff: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [], richClear: [], richNamed: [], richWords: [], richLegend: [], richViews: [], richRecords: [], richNearbyViews: [], richPhoneLines: [], richNamesBeside: [], richHomeScale: [], richControls: [], richOwnDistrict: [], richLegible: [], richHomeNearby: [], richOneLevel: [], richSmooth: [], richFocusSeen: [], richProblems: [], richHand: [], richHomeViews: [], richPanelCrossings: [], richBoardsUnder: [], richHomeClear: [], richProblemsOfKind: [], richPosts: [], richPostsUnder: [], recordInPlace: [], oneRuleFades: [], noWordsAfterPress: [], drawnOnce: [], nearbyZoom: [], nearbyPan: [], nearbyBack: [], panelPinch: [], phoneCity: [], panelWidth: [], panelSpacing: [], viewInPanel: [], panStill: [], homeReadSize: [], homeReadBeside: [], pinchPan: [] };
+const seen = { titleSplits: [], switch: [], button: [], node: [], lines: [], views: [], chosen: [], shear: [], duplicate: [], risen: [], sunk: [], scrubbed: [], takenBack: [], stand: [], cover: [], inside: [], names: [], ground: [], free: [], overshoot: [], bar: [], viewLines: [], resize: [], resizeLines: [], resizeKept: [], pinch: [], standsOut: [], noCityWords: [], connected: [], chosenRecord: [], crossing: [], offSight: [], pointsOut: [], shortcuts: [], keysTurnOff: [], zoomKeys: [], inField: [], shortcutsRun: [], folds: [], dragged: [], keptChoice: [], sliderRun: [], small: [], legend: [], richClear: [], richNamed: [], richWords: [], richLegend: [], richViews: [], richRecords: [], richNearbyViews: [], richPhoneLines: [], richNamesBeside: [], richHomeScale: [], richControls: [], richOwnDistrict: [], richLegible: [], richHomeNearby: [], richOneLevel: [], richSmooth: [], richFocusSeen: [], richProblems: [], richHand: [], richHomeViews: [], richPanelCrossings: [], richBoardsUnder: [], richHomeClear: [], richProblemsOfKind: [], richPosts: [], richPostsUnder: [], recordInPlace: [], oneRuleFades: [], noWordsAfterPress: [], drawnOnce: [], nearbyZoom: [], nearbyPan: [], nearbyBack: [], panelPinch: [], phoneCity: [], panelWidth: [], panelSpacing: [], viewInPanel: [], panStill: [], homeReadSize: [], homeReadBeside: [], pinchPan: [] };
 
 /* ------------------------------------------------------------------ */
 /* In the page                                                         */
@@ -74,7 +74,74 @@ const seen = { titleSplits: [], switch: [], button: [], node: [], lines: [], vie
 const ready = async (page) => {
   await page.waitForSelector("[data-graview-one-place]", { timeout: 60_000 });
   await page.waitForTimeout(600);
+  await still(page);
 };
+/**
+ * Wait until nothing the face places is moving: every board, every
+ * district's name, the page's box and the camera's zoom drawn the same for
+ * `quiet` milliseconds of frames running. The face reaches a level, then
+ * lays the city out again at the zoom it arrived at and carries each board
+ * and name there over a moment (`SETTLE_MS`, one-place-city.tsx). On a CPU
+ * four times slower that layout is a long task after the move, and the
+ * carry ran past the fixed wait this harness gave it: measured locally at
+ * 390×844, the boards were still on their way 810 ms after the City was
+ * reached, against 960 ms given, and on GitHub's runner later still, where
+ * what was read was a frame part way there — boards on each other and a
+ * district or more from their own (aRichAppsCityAndNearbyHaveNothingStandingOnAnythingElse,
+ * everyKindsBoardStandsOnItsOwnDistrictEvenWhereThePageCoversOne,
+ * noBoardsPostCrossesADistrictsName). A picture read at rest is read once
+ * it rests. Gives up after `timeout` and says so (false), so a face that
+ * never rests is judged by what it drew then — and named: every wait is
+ * kept (`rests`), and one that ran out is `theFaceComesToRestAfterEveryMove`'s
+ * failure. Quiet is frames that ran: each gap between two frames counts
+ * for no more than 50 ms of it, so a long task (the layout itself) is not
+ * taken for rest and the frame after it, where a carry begins drawing the
+ * old places, is still watched; a page whose every frame is long still
+ * comes to rest, over more frames. A wait cut short by the page going
+ * (`gone`) is kept and said, not counted as a rest.
+ */
+const rests = [];
+async function still(page, { quiet = 300, timeout = 12_000 } = {}) {
+  const result = await page.evaluate(
+    ([quiet, timeout]) =>
+      new Promise((done) => {
+        const began = performance.now();
+        let last = "";
+        let calm = 0;
+        let frames = 0;
+        let before = began;
+        const box = (el) => {
+          const r = el.getBoundingClientRect();
+          return `${Math.round(r.left * 2)},${Math.round(r.top * 2)},${Math.round(r.width * 2)},${Math.round(r.height * 2)}`;
+        };
+        const tick = () => {
+          const now = performance.now();
+          const city = document.querySelector('[data-testid="one-place-city"]');
+          const sheet = document.querySelector("[data-graview-one-place]");
+          const parts = [city?.getAttribute("data-graview-camera-zoom") ?? "", city?.getAttribute("data-graview-altitude-now") ?? "", sheet ? box(sheet) : ""];
+          for (const el of document.querySelectorAll("[data-graview-board], [data-graview-district-tag]")) parts.push(`${el.getAttribute("data-graview-board") ?? el.getAttribute("data-graview-district-tag")}:${box(el)}:${el.style.opacity}:${el.style.visibility}`);
+          const said = parts.join("|");
+          const gap = now - before;
+          before = now;
+          if (said !== last) {
+            last = said;
+            calm = 0;
+            frames = 0;
+          } else {
+            frames++;
+            calm += Math.min(gap, 50);
+          }
+          if (frames >= 3 && calm >= quiet) return done({ ok: true, ms: Math.round(now - began) });
+          if (now - began > timeout) return done({ ok: false, ms: Math.round(now - began) });
+          requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }),
+    [quiet, timeout],
+  ).catch((error) => ({ ok: false, ms: 0, gone: String(error?.message ?? error).split("\n")[0] }));
+  rests.push({ at: new URL(page.url()).pathname, ...result });
+  return result.ok;
+}
 const levelOf = (page) => page.evaluate(() => Number(document.querySelector("[data-graview-one-place]")?.getAttribute("data-graview-one-place")));
 /** Wait until the face rests at a level: the sheet says it and nothing is moving. */
 async function restAt(page, level, timeout = 8_000) {
@@ -88,7 +155,8 @@ async function restAt(page, level, timeout = 8_000) {
     level,
     { timeout },
   );
-  await page.waitForTimeout(260);
+  // And until what it places there has come to rest (`still`): the layout the level is read again in follows the move.
+  await still(page);
 }
 
 /**
@@ -231,7 +299,10 @@ function lineMisses(frames, phone) {
   let worst = 0;
   let counted = 0;
   const examples = [];
-  for (const frame of frames) {
+  // The worst building end as it was drawn: which frame, the line's end and the building's box, read when a line misses.
+  let worstAt = null;
+  let worstBuilding = 0;
+  for (const [index, frame] of frames.entries()) {
     for (const line of frame.lines) {
       if (line.opacity < 0.05) continue;
       if (line.building && !line.under) {
@@ -239,6 +310,10 @@ function lineMisses(frames, phone) {
         const miss = Math.hypot(mid.x - line.to.x, mid.y - line.to.y);
         counted++;
         if (miss > worst) worst = miss;
+        if (miss > worstBuilding) {
+          worstBuilding = miss;
+          worstAt = { key: line.key, frame: index, of: frames.length, ms: Math.round(frame.t - frames[0].t), to: [line.to.x, line.to.y].map(Math.round), building: [line.building.x, line.building.y, line.building.width, line.building.height].map(Math.round), opacity: line.opacity };
+        }
         if (miss > 2 && examples.length < 4) examples.push({ key: line.key, end: "building", miss: Number(miss.toFixed(2)), altitude: frame.altitude });
       }
       // The page end: on the page's edge facing the city, as the page's box is in this frame.
@@ -248,7 +323,7 @@ function lineMisses(frames, phone) {
       if (edge > 2 && examples.length < 4) examples.push({ key: line.key, end: "page", miss: Number(edge.toFixed(2)), altitude: frame.altitude });
     }
   }
-  return { worst: Number(worst.toFixed(2)), counted, examples };
+  return { worst: Number(worst.toFixed(2)), counted, examples, ...(worstBuilding > 2 ? { worstBuildingEnd: worstAt } : {}) };
 }
 
 
@@ -551,7 +626,9 @@ async function chosen(page, where) {
       from = null;
       await page.locator('[data-testid="one-place-bar"] [data-testid="nav-find"]:visible, [data-testid="one-place-bar"] [data-testid="app-find-open"]:visible').first().click();
       await page.keyboard.type("Book the van");
-      await page.waitForTimeout(600);
+      // Until Find offers it: on a CPU four times slower the words are typed and searched after a fixed 600 ms had gone, and Enter chose the search page itself.
+      await page.waitForFunction(() => document.querySelector('[data-testid="find-hit"]')?.textContent?.includes("Book the van"), undefined, { timeout: 15_000 }).catch(() => {});
+      await page.waitForTimeout(150);
       // The first thing Find offers, chosen as a person would: the arrow onto it, and Enter.
       await page.keyboard.press("ArrowDown");
       await page.keyboard.press("Enter");
@@ -606,7 +683,11 @@ async function chosen(page, where) {
     await page.goBack();
     await page.waitForTimeout(1600);
     const back = { url: new URL(page.url()).pathname, level: await levelOf(page) };
-    results.push({ how, landed, levels, start: start === null ? null : Number(start.toFixed(1)), same: frames.every((f) => f.same), jump: jumps(frames.slice(Math.max(0, after))), back, ok: landed.url.endsWith(goal) && landed.level === 1 && !levels.includes(0) && levels.at(-1) === 1 && frames.every((f) => f.same) && (start === null || start <= 40) && jumps(frames.slice(Math.max(0, after))).worst <= 0.25 && jumps(frames.slice(Math.max(0, after))).steepest < 0.5 && jumps(frames.slice(Math.max(0, after))).flash === null && jumps(frames.slice(Math.max(0, after))).altitudeLeap === null && back.url.endsWith("/tasks/t-deposit") && back.level >= 1 });
+    const jump = jumps(frames.slice(Math.max(0, after)));
+    const ok = landed.url.endsWith(goal) && landed.level === 1 && !levels.includes(0) && levels.at(-1) === 1 && frames.every((f) => f.same) && (start === null || start <= 40) && jump.worst <= 0.25 && jump.steepest < 0.5 && jump.flash === null && jump.altitudeLeap === null && back.url.endsWith("/tasks/t-deposit") && back.level >= 1;
+    // Each frame as drawn — milliseconds, altitude, the page's box — read when a move is not as it should be.
+    const trail = ok ? undefined : frames.slice(Math.max(0, after)).map((f) => `${Math.round(f.t)}:${f.altitude.toFixed(3)}:${[f.box.x, f.box.y, f.box.width, f.box.height].map(Math.round).join(",")}`).join(" ");
+    results.push({ how, landed, levels, start: start === null ? null : Number(start.toFixed(1)), same: frames.every((f) => f.same), jump, back, ok, ...(trail ? { trail } : {}) });
   }
   return { where, results, ok: results.every((one) => one.ok) };
 }
@@ -1212,7 +1293,12 @@ async function history(page, where) {
   await page.waitForTimeout(700);
   // Back before the reason, and forward again before it has sunk: the same building rises from where it had got to.
   await scrub(0);
-  await page.waitForTimeout(160);
+  // Half way down, by what is drawn rather than a clock: on a CPU four times slower 160 ms is before the sink has begun. From half way the rise back takes half the sink's time, long enough for frames of it to be drawn on a sparse runner.
+  await page.waitForFunction((id) => {
+    const el = document.querySelector(`[data-graview-building="${CSS.escape(id)}"]`);
+    const t = el && getComputedStyle(el).transform;
+    return Boolean(el?.hasAttribute("data-graview-leaving") && t && t !== "none" && new DOMMatrixReadOnly(t).d < 0.5);
+  }, reason, { polling: "raf", timeout: 5_000 }).catch(() => {});
   await scrub(last);
   await page.waitForTimeout(700);
   const frames = await page.evaluate(() => {
@@ -1249,6 +1335,31 @@ async function history(page, where) {
     }
     return false;
   };
+  /*
+   * Taken back part way down, it rises from the height it had reached: it
+   * is seen on its way up, the same element, at a height above where it
+   * was taken back and short of full, before it stands full — never full in
+   * the frame it comes back or the one after. Measured on a
+   * CPU four times slower before the face clocked a rise back from the
+   * frame that draws it: 0.72, then 0.74, then full in the next frame, 28 ms
+   * on — the rise's clock had run through the scrub's long task.
+   */
+  const risesFromWhereItGot = (list) => {
+    for (let i = 1; i < list.length; i++) {
+      const was = list[i - 1];
+      if (!was?.leaving || !list[i] || list[i].leaving || list[i].node !== was.node) continue;
+      const rest = [];
+      for (const one of list.slice(i)) {
+        if (!one || one.node !== was.node || one.leaving) break;
+        rest.push(one);
+      }
+      const full = rest.findIndex((one) => one.height >= 0.98);
+      // Up from where it was by a margin (0.05, against the 0.02 the first frame back drew in the measured fault), and short of full: a frame of the rise itself.
+      const partWay = rest.slice(0, full < 0 ? rest.length : full).some((one) => one.height > was.height + 0.05);
+      return { from: was.height, first: rest[0]?.height ?? null, framesToFull: full, ok: was.height < 0.9 && full > 0 && partWay };
+    }
+    return { from: null, ok: false };
+  };
   const nodes = (list) => new Set(list.filter(Boolean).map((one) => one.node));
   const trail = (list) => list.map((one, i) => `${Math.round(frames[i].t)}:${one ? `${one.node}:${one.height.toFixed(2)}${one.leaving ? "L" : ""}` : "-"}`).join(" ");
   const came = of(reason);
@@ -1264,6 +1375,7 @@ async function history(page, where) {
     droppedSinks: sinks(of("t-deposit")),
     untouchedOneNode: nodes(of("reason-deposit")).size === 1 && of("reason-deposit").every((one) => one && one.height >= 0.999),
     takenBackMidSinkIsTheSameNode: kept,
+    takenBack: risesFromWhereItGot(came),
     buttonMovesInThePast: down && stillPast,
     // Each building's frames as drawn — milliseconds, element, height, L while going — read when a sink is not seen.
     trails: { made: trail(came), dropped: trail(of("t-deposit")) },
@@ -1935,6 +2047,13 @@ async function rich(browser, device) {
             await chip.focus();
             await page.keyboard.press("Enter");
           }
+          /*
+           * Until the problems page has drawn beside the city. From Nearby the
+           * level does not change, so resting there said nothing: on a CPU four
+           * times slower the page was read while its route still drew, and
+           * said whose problems it lists as no one's (run 44339134933).
+           */
+          await page.waitForFunction(() => document.querySelector("[data-graview-one-place] [data-graview-problems-of]") !== null, undefined, { timeout: 15_000 }).catch(() => {});
           await restAt(page, 1, 15_000).catch(() => {});
         }
         // What the page beside the city lists: whose problems it says it is, and the kind of every record a problem there names.
@@ -2591,6 +2710,12 @@ function startStillRecording(page) {
     const frames = [];
     window.__stillFrames = frames;
     window.__stillStop = false;
+    // How far every wheel the page has handled since turned, in pixels (a busy page may join two into one): a gesture is let go of once the page has had all of it.
+    window.__stillWheels = 0;
+    if (!window.__stillWheelsCounted) {
+      window.__stillWheelsCounted = true;
+      addEventListener("wheel", (event) => (window.__stillWheels = (window.__stillWheels ?? 0) + Math.abs(event.deltaX) + Math.abs(event.deltaY)), { capture: true, passive: true });
+    }
     const box = (el) => {
       const r = el.getBoundingClientRect();
       return [r.left, r.top, r.width, r.height];
@@ -2663,7 +2788,9 @@ function goesOnAfter(frames, released) {
       const share = farthest(path[i], path[i - 1]) / whole;
       if (share > leap) {
         leap = share;
-        leapAt = { key, whole: Math.round(whole), step: Math.round(farthest(path[i], path[i - 1])) };
+        // And the way it went, frame by frame from the last one the hand drew — milliseconds after the hand let go, then its box — read when a leap is too long.
+        const way = [[last.t, was], ...after.filter((frame) => frame.items[key]).map((frame) => [frame.t, frame.items[key]])].map(([t, box]) => `${Math.round(t - released)}:${box.map(Math.round).join(",")}`).join(" ");
+        leapAt = { key, whole: Math.round(whole), step: Math.round(farthest(path[i], path[i - 1])), way };
       }
     }
   }
@@ -2732,7 +2859,30 @@ async function panStill(page, where, { level, phone }) {
       }
       return null;
     }, bar);
-  const releasedAt = () => page.evaluate(() => performance.now());
+  /*
+   * When the hand let go, as the page has it: once it has handled all the
+   * wheel the gesture turned (`wheels`, its pixels across and down) and
+   * drawn two frames after the last.
+   * The wheel's events reach the page's main thread when it gets to them,
+   * and on a CPU slower still than GitHub's runner the last two of six were
+   * handled after the 40 ms this gave them: the ground panned on after the
+   * hand had let go, and a board with it, 80 px in a frame
+   * (letGoOfAPanEveryBoardAndNameStaysWhereTheLastFrameDrewIt, "a scroll
+   * over a district", run 44351512056; locally at GRAVIEW_SLOW=8).
+   */
+  const releasedAt = (wheels = 0) =>
+    page.evaluate(
+      (wheels) =>
+        new Promise((done) => {
+          const began = performance.now();
+          const wait = () => {
+            if ((window.__stillWheels ?? 0) >= wheels || performance.now() - began > 5_000) requestAnimationFrame(() => requestAnimationFrame(() => done(performance.now())));
+            else requestAnimationFrame(wait);
+          };
+          wait();
+        }),
+      wheels,
+    );
   const placedAfresh = () => page.evaluate(() => document.querySelector('[data-testid="one-place-city"]')?.getAttribute("data-graview-placed-afresh-after-a-pan") ?? "0");
   const runs = [];
   const run = async (way, spot, gesture, zoom = false, least = zoom ? 3 : 4) => {
@@ -2845,7 +2995,7 @@ async function panStill(page, where, { level, phone }) {
         await page.waitForTimeout(30);
       }
       await page.waitForTimeout(40);
-      return releasedAt();
+      return releasedAt(6 * (50 + 50));
     });
     // Over a district the scroll is this face's own, not the Scene's: the same claim.
     await run("a scroll over a district", await overADistrict(), async (s) => {
@@ -2855,7 +3005,7 @@ async function panStill(page, where, { level, phone }) {
         await page.waitForTimeout(30);
       }
       await page.waitForTimeout(40);
-      return releasedAt();
+      return releasedAt(6 * (30 + 40));
     });
     const ctrlWheel = (deltaY) => async (s) => {
       await page.mouse.move(s.x, s.y);
@@ -2866,7 +3016,7 @@ async function panStill(page, where, { level, phone }) {
         await page.waitForTimeout(30);
       }
       await page.waitForTimeout(40);
-      return releasedAt();
+      return releasedAt(2 * 40);
     };
     await run("ctrl and the wheel, closer", await bare(), ctrlWheel(-40), true);
     await run("ctrl and the wheel over a district, further", await overADistrict(), ctrlWheel(40), true);
@@ -3383,6 +3533,7 @@ try {
     seen.risen.push({ ...run, ok: Boolean(run.madeRises && run.droppedRisesGoingBack) });
     seen.sunk.push({ where: run.where, ok: Boolean(run.droppedSinks && run.madeSinksGoingBack), droppedSinks: run.droppedSinks, madeSinksGoingBack: run.madeSinksGoingBack, ...(run.droppedSinks && run.madeSinksGoingBack ? {} : { trails: run.trails }), error: run.error });
     seen.scrubbed.push({ where: run.where, ok: Boolean(run.untouchedOneNode && run.takenBackMidSinkIsTheSameNode && run.buttonMovesInThePast), untouchedOneNode: run.untouchedOneNode, takenBackMidSinkIsTheSameNode: run.takenBackMidSinkIsTheSameNode, buttonMovesInThePast: run.buttonMovesInThePast, error: run.error });
+    seen.takenBack.push({ where: run.where, ok: Boolean(run.takenBack?.ok), ...run.takenBack, ...(run.takenBack?.ok ? {} : { trail: run.trails?.made }), error: run.error });
   }
   const every = (list) => list.length > 0 && list.every((one) => one.ok);
   report.checks.theFaceOffersNoSwitch = { held: seen.switch, ok: every(seen.switch) };
@@ -3404,6 +3555,7 @@ try {
   report.checks.aRecordMadeInTheRangeRisesAsTheScrubCrossesIt = { held: seen.risen, ok: every(seen.risen) };
   report.checks.aRemovedRecordComesDown = { held: seen.sunk, ok: every(seen.sunk) };
   report.checks.theSameNodeIsKeptWhileScrubbing = { held: seen.scrubbed, ok: every(seen.scrubbed) };
+  report.checks.aBuildingTakenBackMidSinkRisesFromTheHeightItReached = { held: seen.takenBack, ok: every(seen.takenBack) };
   report.checks.theNearbyPanelResizesByDragAndKeyboard = { held: seen.resize, ok: every(seen.resize) };
   report.checks.linesStayExactWhileResizing = { held: seen.resizeLines, ok: every(seen.resizeLines) };
   report.checks.theChosenWidthIsKeptAcrossLevelMoves = { held: seen.resizeKept, ok: every(seen.resizeKept) };
@@ -3471,6 +3623,9 @@ try {
   report.checks.duringAPinchThatPansEveryBoardAndNameStaysFastenedToItsDistrictEveryFrame = { held: seen.pinchPan, ok: every(seen.pinchPan) };
   report.checks.letGoOfAPanEveryBoardAndNameStaysWhereTheLastFrameDrewIt = { held: pans, ok: every(pans) };
   report.checks.letGoOfAZoomEveryBoardAndNameGoesOnFromWhereTheLastFrameDrewIt = { held: zooms, ok: every(zooms) };
+  // Every wait for the face to rest (`still`) came to an end, and how long the longest took.
+  const unrested = rests.filter((one) => !one.ok);
+  report.checks.theFaceComesToRestAfterEveryMove = { waits: rests.length, longest: Math.max(0, ...rests.map((one) => one.ms)), neverRested: unrested, ok: (rests.length > 0 || Boolean(only)) && unrested.length === 0 };
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
   // A run of some claims alone (`--only=nearbyZoom,panelWidth`, while working on them) says only those.
   if (only) for (const [name, check] of Object.entries(report.checks)) if (name !== "noPageThrew" && Array.isArray(check.held) && check.held.length === 0) delete report.checks[name];
