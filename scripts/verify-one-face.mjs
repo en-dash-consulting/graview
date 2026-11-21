@@ -154,6 +154,8 @@ const framesPass = (page, count, ms) =>
         let drawn = 0;
         const tick = () => (++drawn >= count && performance.now() - began >= ms ? done(drawn) : requestAnimationFrame(tick));
         requestAnimationFrame(tick);
+        // A page that draws no frames at all (put away, its renderer gone) ends the wait by the clock: never a harness held for good.
+        setTimeout(() => done(drawn), ms + 30_000);
       }),
     [count, ms],
   );
@@ -163,15 +165,16 @@ const levelOf = (page) => page.evaluate(() => Number(document.querySelector("[da
  *
  * BY FRAMES AS WELL AS BY THE CLOCK. A move is clocked by the frames it is
  * drawn in, not the wall: a gap past 34 ms between two frames is taken out
- * of its clock (`A STALL IS NOT A LEAP`, one-place-city.tsx), so a move
- * takes at least its 34 frames however long each is. On the GPU leg —
+ * of its clock (`A STALL IS NOT A LEAP`, one-place-city.tsx), so where every
+ * frame is longer than that a move takes its 34 frames however long each
+ * is. On the GPU leg —
  * WebGPU on SwiftShader, on a two-core runner — a desk's frame took long
  * enough that a level move ran past the 8 s this gave it, and every claim
  * after the wait read as a failure of its own (run 44868606084: 24 claims,
  * 14 of them this timeout at 1440×900, where the same claims held at the
  * phone's size on the same run). So the wait ends at `timeout` only once
- * the page has also drawn `frames` frames in it, the 8 s a quick machine
- * draws in a little under 4; and never past `ceiling`, so a face that never
+ * the page has also drawn `frames` frames in it (240: four seconds of a
+ * quick machine's, half the 8 s); and never past `ceiling`, so a face that never
  * arrives still fails. On a machine at 60 frames a second it is the wait it
  * was. Every wait is kept (`arrivals`), with its frames, for the pace.
  */
@@ -206,6 +209,8 @@ async function restAt(page, level, timeout = 8_000, { frames = 240, ceiling = 60
             requestAnimationFrame(tick);
           };
           tick();
+          // And the ceiling by the clock alone, should the page draw no frame to read it in.
+          setTimeout(() => done({ ok: there(), ms: Math.round(performance.now() - began), drawn }), ceiling + 1_000);
         }),
       [level, timeout, frames, ceiling],
     )

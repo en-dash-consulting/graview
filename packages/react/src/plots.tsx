@@ -507,7 +507,7 @@ function useLeaving<B extends { readonly id: string }>(buildings: readonly B[], 
     // A sink still under way is let play out: one slowed through a stall (`stallsTakenOut`) runs past the clock, and its own end takes it away.
     const sinking = (id: string) => {
       const el = holder.current?.querySelector(`[data-graview-building="${CSS.escape(id)}"]`);
-      return Boolean(el && typeof el.getAnimations === "function" && el.getAnimations().some((one) => one.playState === "running"));
+      return Boolean(el && typeof el.getAnimations === "function" && typeof CSSTransition !== "undefined" && el.getAnimations().some((one) => one instanceof CSSTransition && one.playState === "running"));
     };
     let timer = 0;
     const check = () => {
@@ -588,7 +588,10 @@ const watched = new WeakSet<Element>();
  * path's capture on a runner's software GPU, 230 ms) took it from nearly
  * full to flat in a frame: never seen on its way down (one-face's
  * `aRemovedRecordComesDown`, on the GPU leg). Watched from the frame that
- * draws it until nothing on it plays.
+ * draws it until nothing on it plays. The rewind runs in a frame callback,
+ * so what the frame paints is rewound, while a callback that ran before it
+ * in the same frame read the time as the clock had it; and a stall longer
+ * than what was left of the transition has ended it before any callback.
  */
 function stallsTakenOut(el: Element): void {
   if (watched.has(el) || typeof requestAnimationFrame !== "function") return;
