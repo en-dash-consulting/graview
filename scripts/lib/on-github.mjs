@@ -170,7 +170,8 @@ export function summarizeShard({ root, since, asked, lastRun, written }) {
           })();
     const claims = new Set(result.verdict === "held" ? [] : (result.missed ?? []));
     if (result.verdict !== "held") {
-      for (const file of files.filter((path) => path.endsWith(".json"))) {
+      // A first look kept beside the second (docs/first-look/, lib/second-look.mjs) is listed with its files, and its claims are already `missed`.
+      for (const file of files.filter((path) => path.endsWith(".json") && !path.startsWith("docs/first-look/"))) {
         let verdict;
         try {
           verdict = JSON.parse(readFileSync(join(root, file), "utf8"));
