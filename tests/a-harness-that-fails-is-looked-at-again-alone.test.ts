@@ -95,6 +95,14 @@ describe("a harness that fails is looked at again, alone", () => {
     expect(JSON.parse(readFileSync(join(root, "docs/one-face.json"), "utf8"))).toEqual({ ok: true });
   });
 
+  it("keeps the first look of a harness whose verdict is named otherwise than its script (pages writes pages-face)", () => {
+    const root = mkdtempSync(join(tmpdir(), "first-look-pages-"));
+    mkdirSync(join(root, "docs"), { recursive: true });
+    const began = new Date(Date.now() - 1000).toISOString();
+    writeFileSync(join(root, "docs/pages-face.json"), JSON.stringify({ ok: false }));
+    expect(keepFirstLook(root, { name: "pages", file: "verify-pages.mjs", began })).toEqual(["docs/first-look/pages-face.json"]);
+  });
+
   it("writes each flake down, newest first, with the commit and the renderer it flaked on", () => {
     const root = mkdtempSync(join(tmpdir(), "flakes-"));
     mkdirSync(join(root, "docs"));

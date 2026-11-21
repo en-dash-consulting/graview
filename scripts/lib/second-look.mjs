@@ -13,7 +13,7 @@
  */
 import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { writtenSince } from "./on-github.mjs";
+import { ownedBy, writtenSince } from "./on-github.mjs";
 
 /** The claims a harness printed as false: `"name": false` lines, and `FAIL name` lines from a nested chain. */
 export const missedClaims = (output) => {
@@ -45,7 +45,7 @@ export const judge = (first, again) => {
  * over the first: a run whose first look failed and whose second held kept
  * only the look that held, and the frames of the failure were gone
  * (one-face's pinch on 2a116268c). Before the second look, what the first
- * wrote of its own (docs/<name>.json, docs/<name>/…, and its
+ * wrote of its own (docs/<name>.json, docs/<name>/…, and its (`ownedBy`, on-github.mjs)
  * watch) is copied under docs/first-look/ at the same paths, and an earlier
  * run's copy of that harness is cleared first.
  */
@@ -54,9 +54,7 @@ export const FIRST_LOOK = "docs/first-look";
 /** The first look's own files copied under docs/first-look/, by path; `first` is runOne's answer (`file`, `began`). */
 export const keepFirstLook = (repoRoot, first) => {
   const base = first.file.replace(/^verify-/, "").replace(/\.mjs$/, "");
-  const watch = first.file.replace(/\.mjs$/, "");
-  // docs/<name>.json, docs/<name>.*, docs/<name>/…, and docs/watch/verify-<name>.json; never docs/<name>-*, which is another harness's (chrome-quiet beside chrome).
-  const own = (path) => path === `docs/watch/${watch}.json` || (!path.startsWith("docs/watch/") && [".", "/"].some((after) => path.startsWith(`docs/${base}${after}`)));
+  const own = (path) => ownedBy(base, path);
   const copyOf = (path) => resolve(repoRoot, FIRST_LOOK, path.slice("docs/".length));
   // An earlier run's first look of this harness is not this run's.
   const earlier = writtenSince(repoRoot, 0, FIRST_LOOK).map((file) => `docs/${file.path.slice(FIRST_LOOK.length + 1)}`);
