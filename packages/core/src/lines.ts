@@ -9,7 +9,7 @@
  * a page that judges rules on its first load does not carry them, and the
  * problems' rows, the problems page and the seat fetch them as they draw.
  */
-import { offersTouches } from "./seen.js";
+import { offersTouches } from "./served-touches.js";
 import { judgedOnTouches } from "./graph/touched.js";
 import type { AnySchema } from "./schema/schema.js";
 import { isoToday } from "./days.js";

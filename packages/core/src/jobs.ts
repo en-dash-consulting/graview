@@ -13,7 +13,7 @@
  * An entry of its own: a page that draws no job carries none of it, and the
  * checker's sentences about jobs (`job-*`) are `graview check`'s.
  */
-import { offersTouches } from "./seen.js";
+import { offersTouches } from "./served-touches.js";
 import type { GraviewApp } from "./app.js";
 import { shapesFor } from "./document/computed-values.js";
 import { evaluateExpr, ExprEvalError, NodeSet, type Value } from "./document/expr/evaluate.js";
