@@ -1,6 +1,6 @@
 {
   "budget": "a visitor's form alone",
-  "minified": 9581,
-  "gzipped": 4345,
-  "note": "Raised when the 0.2.10 batch's one branch was merged (every record saying when it was made and last changed and by whom, kept as each seat may see them, in lists, templates, rules, computed values and jobs): it comes to 9481 / 4245 over the budget, raised by 9581 / 4345 for the spread a split build gzips to from build to build. Measured at 306_093 / 111_175 against 296_612 / 106_930."
+  "minified": 9670,
+  "gzipped": 4397,
+  "note": "Raised when the 0.2.10 batch's two branches were merged (every record saying when it was made and last changed and by whom, kept as each seat may see them, in lists, templates, rules, computed values and jobs, and the guest host and a page reading whether a seat is told them from a small module of their own): together they come to 9570 / 4297 over the budget, raised by 9670 / 4397 for the spread a split build gzips to from build to build. Measured at 306_182 / 111_227 against 296_612 / 106_930."
 }

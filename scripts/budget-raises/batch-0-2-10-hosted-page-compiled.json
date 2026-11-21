@@ -1,7 +1,7 @@
 {
   "budget": "a hosted page handed a compiled app",
-  "minified": 11923,
-  "gzipped": 5301,
+  "minified": 12000,
+  "gzipped": 5319,
   "changeset": "the-0-2-10-batch-holds-together.md",
-  "note": "Raised when the 0.2.10 batch's one branch was merged (every record saying when it was made and last changed and by whom, kept as each seat may see them, in lists, templates, rules, computed values and jobs): it comes to 11823 / 5201 over the budget, raised by 11923 / 5301 for the spread a split build gzips to from build to build. Measured at 661_281 / 230_319 against 649_458 / 225_118."
+  "note": "Raised when the 0.2.10 batch's two branches were merged (every record saying when it was made and last changed and by whom, kept as each seat may see them, in lists, templates, rules, computed values and jobs, and the guest host and a page reading whether a seat is told them from a small module of their own): together they come to 11900 / 5219 over the budget, raised by 12000 / 5319 for the spread a split build gzips to from build to build. Measured at 661_358 / 230_337 against 649_458 / 225_118."
 }

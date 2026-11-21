@@ -1,6 +1,6 @@
 {
   "budget": "the pages face alone",
-  "minified": 11409,
-  "gzipped": 5160,
-  "note": "Raised when the 0.2.10 batch's one branch was merged (every record saying when it was made and last changed and by whom, kept as each seat may see them, in lists, templates, rules, computed values and jobs): it comes to 11309 / 5060 over the budget, raised by 11409 / 5160 for the spread a split build gzips to from build to build. Measured at 819_426 / 298_427 against 808_117 / 293_367."
+  "minified": 11486,
+  "gzipped": 5210,
+  "note": "Raised when the 0.2.10 batch's two branches were merged (every record saying when it was made and last changed and by whom, kept as each seat may see them, in lists, templates, rules, computed values and jobs, and the guest host and a page reading whether a seat is told them from a small module of their own): together they come to 11386 / 5110 over the budget, raised by 11486 / 5210 for the spread a split build gzips to from build to build. Measured at 819_503 / 298_477 against 808_117 / 293_367."
 }
