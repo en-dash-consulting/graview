@@ -9,6 +9,7 @@ import {
   type ArrangeOption,
   type Arrangement,
   type NodeOfSchema,
+  offersTouches,
 } from "@graview/core";
 import { useGraview, useNavigation, type ViewProps } from "@graview/react";
 import { withPast } from "@graview/layout/view-moves";
@@ -99,7 +100,7 @@ export function useArranging<S extends AnySchema>(props: ViewProps<S>, options: 
   const kind = options.kind ?? subject[0]?.kind;
   const allow = both(options.allow, options.lensAllows);
 
-  const offers = kind ? arrangeable(store.schema, String(kind)) : undefined;
+  const offers = kind ? arrangeable(store.schema, String(kind), { touched: offersTouches(store) }) : undefined;
   const arrangement = offers ? admitArrangement(asked, offers).arrangement : {};
   const arranged = arrange(subject, allow === false ? {} : arrangement, {
     schema: store.schema,

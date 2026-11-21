@@ -93,6 +93,27 @@ export function toldTouches(store: Judged & { readonly schema: { readonly kinds:
 }
 
 /**
+ * WHO MADE OR TOUCHED A RECORD, AS WHAT LEAVES FOR A MODEL SAYS IT: the
+ * person a seat is bound to for every reader, the host's own included,
+ * since no account is said to a model (`touchesRebound`).
+ */
+export function touchesSaid(store: Judged): <N extends object>(node: N) => N {
+  return touchesRebound(store, { kind: "system" }, store, () => false);
+}
+
+/**
+ * WHETHER A STORE AS ITS READER HOLDS IT SAYS WHEN EACH RECORD WAS MADE AND
+ * TOUCHED: a seat's view only to a seat that is told them (`toldTouches`),
+ * any other store always. What a list offers to sort, filter and group by
+ * reads it (`arrangeable(…, { touched })`), so a seat told none of them is
+ * offered no way to ask.
+ */
+export function offersTouches(store: object): boolean {
+  const seat = (store as { readonly [SEAT]?: { readonly store: Judged & { readonly schema: { readonly kinds: readonly string[] } }; readonly principal: Principal } })[SEAT];
+  return seat === undefined || toldTouches(seat.store, seat.principal);
+}
+
+/**
  * WHO MADE OR TOUCHED A RECORD, AS ONE READER IS TOLD THEM (Roadmap
  * f-invite-binds-existing-person): a seat bound to a person is that
  * person's record; an account's profile where the account is somebody's
@@ -100,8 +121,7 @@ export function toldTouches(store: Judged & { readonly schema: { readonly kinds:
  * of, as an op's author is (`namedAuthors`); the reader's own seat is its
  * own. Read with the bindings `bindings` knows, the store's by default.
  */
-export function touchesRebound(store: Judged, principal: Principal, bindings: Judged = store): <N extends object>(node: N) => N {
-  const keepsSeat = seatsKept(principal);
+export function touchesRebound(store: Judged, principal: Principal, bindings: Judged = store, keepsSeat: (seat: string) => boolean = seatsKept(principal)): <N extends object>(node: N) => N {
   const rebind = (seat: string): string | undefined => {
     if (keepsSeat(seat) || !anyBound(bindings)) return undefined;
     const bound = everBound(bindings);
@@ -111,13 +131,20 @@ export function touchesRebound(store: Judged, principal: Principal, bindings: Ju
     const nobody = profile !== undefined ? bound.has(account!) : [...bound.keys()].some((one) => one.startsWith(`${seat}~`));
     return nobody ? SOMEONE.id : undefined;
   };
+  // The same record said the same way is the same object while nobody is bound or unbound, so a view read twice is equal by identity.
+  const said = new WeakMap<object, { readonly at: unknown; readonly node: unknown }>();
   return (node) => {
+    const at = (bindings as { readonly version?: unknown }).version ?? (bindings.log as { readonly length?: number }).length;
+    const held = said.get(node);
+    if (held && held.at === at) return held.node as typeof node;
     const record = node as Record<string, unknown>;
     const rebound = [CREATED_BY, UPDATED_BY].flatMap((field) => {
-      const said = typeof record[field] === "string" ? rebind(record[field] as string) : undefined;
-      return said === undefined ? [] : [[field, said] as const];
+      const person = typeof record[field] === "string" ? rebind(record[field] as string) : undefined;
+      return person === undefined || person === record[field] ? [] : [[field, person] as const];
     });
-    return rebound.length > 0 ? { ...node, ...Object.fromEntries(rebound) } : node;
+    const out = rebound.length > 0 ? { ...node, ...Object.fromEntries(rebound) } : node;
+    said.set(node, { at, node: out });
+    return out;
   };
 }
 
@@ -678,7 +705,9 @@ function boundInLog(store: Judged): ReadonlyMap<string, string> {
   else {
     held = { horizon, length: horizon, bound: new Map() };
     EVER_BOUND.set(log, held);
-    // Behind a horizon, the graph's own bindings stand for what the archive said.
+    // Behind a horizon, what the checkpoint kept of whom each seat was bound to, ended bindings too, and the graph's own bindings, stand for what the archive said.
+    const kept = (store.log as { horizonEpoch?(): { readonly bound?: Readonly<Record<string, string>> } | undefined }).horizonEpoch?.()?.bound;
+    for (const [seat, person] of Object.entries(kept ?? {})) held.bound.set(seat, person);
     for (const node of (store.graph as { allNodes?(): readonly { readonly id: string }[] }).allNodes?.() ?? []) {
       const seat = (node as Record<string, unknown>)[PERSON_SEAT];
       if (typeof seat === "string") held.bound.set(seat, node.id);
@@ -783,7 +812,7 @@ export function boundPeopleFor(store: Judged, principal: Principal): (seat: stri
  * to nobody is as it was. Kept for one reading of the log while the store
  * tells nothing new.
  */
-export function namedAuthors(store: Judged, lens: Pick<SeatLens, "shows" | "served" | "keepsSeat">, ops: readonly Operation[]): readonly Operation[] {
+export function namedAuthors(store: Judged, lens: Pick<SeatLens, "shows" | "served" | "keepsSeat" | "reboundTouches">, ops: readonly Operation[]): readonly Operation[] {
   if (!anyBound(store)) return ops;
   const graph = store.graph;
   const told = (store as { readonly version?: unknown }).version ?? store.log.all().length;
@@ -809,7 +838,16 @@ export function namedAuthors(store: Judged, lens: Pick<SeatLens, "shows" | "serv
     return { seat, account, bound };
   };
   let changed = false;
-  const named = ops.map((op) => {
+  // What an op carries of who made and touched a record, said as the reader is told who they are now (`touchesRebound`): read after the served log is kept, so a later binding is heard.
+  const rebind = lens.reboundTouches;
+  const rebound = (op: Operation): Operation => {
+    if (!rebind) return op;
+    const primitives = op.primitives.map((primitive) => ((primitive.op === "add-node" || primitive.op === "remove-node") && rebind(primitive.node) !== primitive.node ? { ...primitive, node: rebind(primitive.node) } : primitive));
+    return primitives.every((primitive, at) => primitive === op.primitives[at]) ? op : { ...op, primitives };
+  };
+  const named = ops.map((given) => {
+    const op = rebound(given);
+    if (op !== given) changed = true;
     if (isWithheld(op)) return op;
     let out = op;
     const author = op.author;
@@ -924,7 +962,7 @@ export function seatView<T extends Viewed>(store: T, principal: Principal): T {
   const servedEpoch = <E extends { readonly seq: number; readonly base: GraphSnapshot; readonly creators?: Readonly<Record<string, string>>; readonly removed?: unknown; readonly writers?: unknown }>(epoch: E): E => {
     // What each record removed behind a checkpoint was, and who wrote what, are the store's own to judge by, never the seat's (FR-199): they name every record.
     // So is the app as readers were served it behind the checkpoint (Roadmap f-publishing-lifecycle): a reader is served it through its own view of that past.
-    const { removed: _removed, writers: _writers, published: _published, declines: _declines, ...rest } = epoch as E & { readonly published?: unknown; readonly declines?: unknown };
+    const { removed: _removed, writers: _writers, published: _published, declines: _declines, bound: _bound, ...rest } = epoch as E & { readonly published?: unknown; readonly declines?: unknown; readonly bound?: unknown };
     const base = servedGraph(epoch.base, epoch.seq);
     if (!epoch.creators) return { ...rest, base } as unknown as E;
     const kept = new Set(base.nodes.map((node) => node.id));

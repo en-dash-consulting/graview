@@ -7,10 +7,10 @@ import { isArchived, MARKS, PERSON_SEAT, personSeatOf, type ArchivedOption } fro
 import { diffSnapshots, diffTouched, type GraphDiff } from "./diff.js";
 import { edgeFieldsProblem } from "./edge-fields.js";
 import { isUnset, writesOf, type Primitive } from "./primitives.js";
-import { CREATED_AT, CREATED_BY, isTouchedField, madeOf, makingIn, TOUCHED_FIELDS, touchedOf, touchOf, UPDATED_AT, UPDATED_BY, withTouches, type Touch, type Touched } from "./touched.js";
+import { CREATED_AT, CREATED_BY, isMigration, isTouchedField, lastOf, madeOf, makingIn, TOUCHED_FIELDS, touchedOf, touchOf, UPDATED_AT, UPDATED_BY, withTouches, type Touch, type Touched } from "./touched.js";
 
 /** An op as a graph stamps it (`touched.ts`). */
-type TouchingOp = { readonly id?: string; readonly primitives: readonly Primitive[]; readonly at: string; readonly author: Author; readonly undoes?: string; readonly withheld?: true; readonly stamps?: false };
+type TouchingOp = { readonly id?: string; readonly primitives: readonly Primitive[]; readonly writes?: readonly string[]; readonly at: string; readonly author: Author; readonly undoes?: string; readonly withheld?: true; readonly stamps?: false };
 import type { Author } from "../ops/types.js";
 import { edgeId, type GraphEdge, type GraphReader, type GraphSnapshot } from "./types.js";
 import { knownAcrossCopies } from "../across-copies.js";
@@ -383,8 +383,9 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
    * (`stamps: false`) takes them off what it wrote instead.
    */
   touch(op: TouchingOp): void {
-    if (op.primitives.length === 0) return;
-    const ids = new Set(op.primitives.flatMap(writesOf));
+    // What it wrote, as its primitives say and as it says: a binding served without the mark it set still wrote the person.
+    const ids = new Set([...op.primitives.flatMap(writesOf), ...(op.writes ?? [])]);
+    if (ids.size === 0) return;
     // What each record said before, for a while, so an op taken back in place (`untouch`) puts it back exactly; a record the op removed comes back as its removal carried it.
     if (op.id !== undefined) {
       this.priors.set(op.id, new Map([...ids].flatMap((id) => (this.nodes.has(id) ? [[id, touchedOf(this.nodes.get(id))] as const] : []))));
@@ -396,6 +397,11 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
     }
     const touch = touchOf(op);
     const making = makingIn(op);
+    // A migration reshapes records and touches none: what it makes again keeps its making, and when each was last touched stands.
+    if (isMigration(op.author)) {
+      for (const [id, made] of making) if (made) this.stampAs(id, { ...made, ...lastOf(this.nodes.get(id)) });
+      return;
+    }
     for (const id of ids) this.stamp(id, touch, making.get(id));
   }
 
@@ -429,7 +435,8 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
       let added: TouchingOp | undefined;
       for (let at = ops.length - 1; at >= 0 && (wrote === undefined || added === undefined); at--) {
         const op = ops[at]!;
-        if (wrote === undefined && op.primitives.some((primitive) => writesOf(primitive).includes(id))) wrote = op;
+        // As `touch` reads an op: what it wrote, as its primitives and it say, and a migration's touching nothing.
+        if (wrote === undefined && !isMigration(op.author) && (op.writes?.includes(id) || op.primitives.some((primitive) => writesOf(primitive).includes(id)))) wrote = op;
         if (added === undefined && op.primitives.some((primitive) => primitive.op === "add-node" && primitive.node.id === id)) added = op;
       }
       if (added && added.stamps !== false) this.stamp(id, touchOf(added), makingIn(added).get(id));
@@ -451,8 +458,8 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
     const bare = new Set([...this.nodes.keys()].filter((id) => !this.hasTouched(id)));
     if (bare.size === 0) return;
     for (const op of ops) {
-      if (op.stamps === false) continue;
-      const writes = op.primitives.flatMap(writesOf).filter((id) => bare.has(id));
+      if (op.stamps === false || isMigration(op.author)) continue;
+      const writes = [...op.primitives.flatMap(writesOf), ...(op.writes ?? [])].filter((id) => bare.has(id));
       if (writes.length === 0) continue;
       const touch = touchOf(op);
       const making = makingIn(op);
@@ -467,9 +474,8 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
   private stamp(id: string, touch: Touch, making: Touched | null | undefined): void {
     const node = this.nodes.get(id);
     if (!node) return;
-    // A seat bound to a person entered for it is that person, as `$me` is (Roadmap f-invite-binds-existing-person): the record, never the account.
-    const bound = touch.by === undefined ? undefined : this.personBoundTo(touch.by);
-    const by = bound ?? touch.by;
+    // Who, as an op's author is kept: the seat itself, said as the person it is bound to on the way out (`touchesRebound`).
+    const by = touch.by;
     const made: Touched = making === null ? { [CREATED_AT]: touch.at, ...(by !== undefined ? { [CREATED_BY]: by } : {}) } : (making ?? madeOf(node));
     this.stampAs(id, { ...made, [UPDATED_AT]: touch.at, ...(by !== undefined ? { [UPDATED_BY]: by } : {}) });
   }

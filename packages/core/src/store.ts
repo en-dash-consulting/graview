@@ -2521,7 +2521,8 @@ export class Store<S extends AnySchema> {
     const taken = new Set(this.log.all().map((op) => op.id));
     let batch: string | undefined;
     const built: Operation[] = ops.map((made, index) => {
-      const primitives = made.primitives.map(normalize);
+      // A host says nothing of when a record was made, an undo it makes included: only the framework's own undo puts one back as it was (`touched.ts`).
+      const primitives = made.primitives.map(normalize).map(madeBare);
       const op: Operation = {
         id: made.id ?? this.nextId(),
         seq: this.log.length + index,
@@ -3449,7 +3450,7 @@ export class Store<S extends AnySchema> {
   private epochAt(seq: number): Epoch {
     const ops = this.log.all();
     // What the store keeps of who made what and what was removed is written here, from the log, never carried over from an epoch.
-    const { creators: _creators, removed: _removed, writers: _writers, published: _published, declines: _declines, ...checkpoint } = this.log.checkpointAt(this.schema, seq, { validate: this.validate });
+    const { creators: _creators, removed: _removed, writers: _writers, published: _published, declines: _declines, bound: _bound, ...checkpoint } = this.log.checkpointAt(this.schema, seq, { validate: this.validate });
     /*
      * Who made each record behind it, so a store opened on it still knows (an `own` sight reads the log for it);
      * what each record removed behind it was, so a field naming one is still judged as naming it; and who wrote
@@ -3471,6 +3472,8 @@ export class Store<S extends AnySchema> {
     return {
       ...checkpoint,
       ...(kept(creators) && { creators }),
+      // Whom each seat was bound to, ended bindings too: who made or touched a record is still said as the person (`touchesRebound`).
+      ...(kept(Object.fromEntries(everBound(this as never))) && { bound: Object.fromEntries(everBound(this as never)) }),
       ...(removed && { removed }),
       ...(kept(writers) && { writers }),
       ...(kept(declines) && { declines }),

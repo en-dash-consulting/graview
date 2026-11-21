@@ -111,8 +111,8 @@ export function untouched<N extends object>(node: N): N {
  * HOW AN OP SAYS EACH RECORD IT ADDS WAS MADE: `null`, made by this op;
  * otherwise when and by whom it was made, kept. A record an undo puts back
  * keeps what its payload says — the framework's own, as the record was
- * removed — and one an op removes and adds again (a kind renamed) keeps
- * what its removal carried. Any other add is made by its op, whatever its
+ * removed, and none where it says none — and one an op removes and adds
+ * again (a kind renamed) keeps what its removal carried. Any other add is made by its op, whatever its
  * payload says: no act, host or import writes them. What an op says is
  * its own, so every copy that folds it says the same.
  */
@@ -124,10 +124,20 @@ export function makingIn(op: { readonly primitives: readonly Primitive[]; readon
     if (primitive.op !== "add-node") continue;
     const id = primitive.node.id;
     const said = madeOf(primitive.node);
-    making.set(id, op.undoes !== undefined ? (said.createdAt !== undefined ? said : null) : (removed.get(id) ?? null));
+    // Put back by an undo: as its payload says, and none where it says none, never the undo's own time.
+    making.set(id, op.undoes !== undefined ? said : (removed.get(id) ?? null));
   }
   return making;
 }
+
+/** When and by whom a record says it was last touched, alone. */
+export const lastOf = (node: unknown): Touched => {
+  const { updatedAt, updatedBy } = touchedOf(node);
+  return updatedAt === undefined ? {} : { updatedAt, ...(updatedBy !== undefined ? { updatedBy } : {}) };
+};
+
+/** Whether an op is a migration's, which reshapes records and touches none (`ship:migration`, as `nameOfAuthor` reads it). */
+export const isMigration = (author: { readonly kind: string; readonly id?: string }): boolean => author.kind === "system" && author.id !== undefined && /(^|:)migration$/.test(author.id);
 
 /** When and by whom a record says it was made, alone. */
 export const madeOf = (node: unknown): Touched => {

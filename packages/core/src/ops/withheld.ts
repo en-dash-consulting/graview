@@ -224,16 +224,7 @@ export function redact(ops: readonly Operation[], seeing: SeatLens | ((id: strin
   if (given.hides?.() === false) return [...ops];
   const lens = given.pin?.() ?? given;
   // And no seat a person is bound to, in any op: that is the host's alone (Roadmap f-invite-binds-existing-person).
-  return undoesFollow(judgedOps(ops, lens), lens).map((op) => unseatedOp(op, lens.keepsSeat)).map((op) => (lens.toldTouches?.() === false ? untouchedOp(op) : reboundOp(op, lens)));
-}
-
-/** What an op carries of who made and touched each record, said as the reader is told who they are now. */
-function reboundOp(op: Operation, lens: SeatLens): Operation {
-  const rebind = lens.reboundTouches;
-  if (!rebind) return op;
-  const one = (primitive: Primitive): Primitive => ((primitive.op === "add-node" || primitive.op === "remove-node") && rebind(primitive.node) !== primitive.node ? { ...primitive, node: rebind(primitive.node) } : primitive);
-  const primitives = op.primitives.map(one);
-  return primitives.every((primitive, at) => primitive === op.primitives[at]) ? op : { ...op, primitives };
+  return undoesFollow(judgedOps(ops, lens), lens).map((op) => unseatedOp(op, lens.keepsSeat)).map((op) => (lens.toldTouches?.() === false ? untouchedOp(op) : op));
 }
 
 /**

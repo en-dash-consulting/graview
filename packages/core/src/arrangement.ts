@@ -201,7 +201,7 @@ export function asksForThePast(
  * the declaration hides is not offered — an ordering key is not a thing a
  * person groups by.
  */
-export function arrangeable(schema: AnySchema, kind: string): Arrangeable {
+export function arrangeable(schema: AnySchema, kind: string, options: { readonly touched?: boolean } = {}): Arrangeable {
   const definition = schema.tryDefinition(kind);
   if (!definition) return { kind, sorts: [], filters: [], groups: [] };
   const hidden = new Set(definition.display?.hide ?? []);
@@ -239,7 +239,8 @@ export function arrangeable(schema: AnySchema, kind: string): Arrangeable {
   }
 
   // When each record was last changed and made (`touched.ts`): every kind's, sorted, filtered and grouped by as days.
-  for (const offer of TOUCHED_OFFERS) {
+  // Not to a seat told none of them (`touched: false`, `toldTouches`): it is offered no way to read them.
+  for (const offer of options.touched === false ? [] : TOUCHED_OFFERS) {
     sorts.push(offer);
     filters.push(offer);
     groups.push({ ...offer, buckets: ["day", "week", "month", "year"] });

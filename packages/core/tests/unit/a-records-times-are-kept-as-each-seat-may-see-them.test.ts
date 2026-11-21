@@ -3,6 +3,11 @@ import { z } from "zod";
 import "../../src/field-sight.js";
 import { bindPerson, hostSeat } from "../../src/binding.js";
 import { archivedSeenBy, archiveFrom } from "../../src/seat.js";
+import { answerJob } from "../../src/jobs.js";
+import { arrangeable } from "../../src/arrange.js";
+import { shapesOfSchema } from "../../src/document/rules.js";
+import { evaluateExpr, parseExpr } from "../../src/document/index.js";
+import { offersTouches } from "../../src/index.js";
 import { planMigration, templateSeedPrimitives, type GraviewDocument } from "../../src/document/index.js";
 import { BIND_PERSON, bindSchema, createSchema, defineNode, nodeRef, Store, touchedOf, unseatedSnapshot, type AnySchema, type Policy, type Principal } from "../../src/index.js";
 
@@ -169,11 +174,49 @@ describe("a value a kind kept under one of the names is no stamp", () => {
     expect(touchedOf({ id: "c1", kind: "chore", updatedAt: "2025-01-01", updatedBy: "Nick" })).toEqual({});
   });
 
-  it("renamed away, its value moves to the new field, and the record is stamped by the migration", () => {
+  it("renamed away, its value moves to the new field and is no stamp; the migration touches nothing", () => {
     const chore = defineNode("chore", { fields: z.object({ title: z.string(), lastSwept: z.string().optional() }) });
     const store = new Store<AnySchema>({ schema: createSchema([chore]), now: clock(), snapshot: { nodes: [{ id: "c1", kind: "chore", title: "Sweep", updatedAt: "2025-01-01" }], edges: [] } } as never);
     const plan = planMigration(before, after, { nodes: [{ id: "c1", kind: "chore", title: "Sweep", updatedAt: "2025-01-01" }], edges: [] } as never);
-    const applied = store.applyPrimitives(plan.primitives, { author: { kind: "system", id: "ship:migration" } });
-    expect(store.graph.getNode("c1")).toMatchObject({ lastSwept: "2025-01-01", updatedAt: applied.ops[0]!.at, updatedBy: "ship:migration" });
+    store.applyPrimitives(plan.primitives, { author: { kind: "system", id: "ship:migration" } });
+    expect(store.graph.getNode("c1")).toMatchObject({ lastSwept: "2025-01-01" });
+    expect(touchedOf(store.graph.getNode("c1"))).toEqual({});
+  });
+
+  it("a migration that reshapes a record leaves when it was made and last touched as they were", () => {
+    const store = opened();
+    const id = store.apply({ name: "add-task", args: { label: "Book the van" } }, { author: ann }).minted![0]!;
+    const was = touchedOf(store.graph.getNode(id));
+    store.applyPrimitives([{ op: "patch-node", id, before: { done: false }, after: { done: true } }], { author: { kind: "system", id: "ship:migration" } });
+    expect(store.graph.getNode(id)).toMatchObject({ done: true });
+    expect(touchedOf(store.graph.getNode(id))).toEqual(was);
+  });
+});
+
+describe("only the framework's own undo puts back when a record was made", () => {
+  it("an undo a host appends is not believed of a record's making", () => {
+    const store = opened();
+    store.append([{ author: { kind: "system", id: "host" }, intent: "Put back", undoes: "op0", primitives: [{ op: "add-node", node: { id: "task:kept", kind: "task", label: "Kept", done: false, createdAt: "1999-01-01T00:00:00.000Z", createdBy: "ann" } }] } as never]);
+    expect(touchedOf(store.graph.getNode("task:kept")).createdAt).toBeUndefined();
+  });
+
+  it("an undo of the removal of a record from before them says none of its making, never the undo's time", () => {
+    const store = new Store<AnySchema>({ schema, mutations: [addTask], policy, now: clock(), snapshot: { nodes: [{ id: "task:old", kind: "task", label: "Old", done: false }], edges: [] } } as never);
+    const removed = store.apply({ name: "remove-task", args: { id: "task:old" } }, { author: ann });
+    const back = store.undo(removed.batch, { author: ann });
+    expect(touchedOf(store.graph.getNode("task:old"))).toEqual({ updatedAt: back.ops[0]!.at, updatedBy: "ann" });
+  });
+});
+
+describe("a seat told none of the four reads none, wherever it reads", () => {
+  it("a job it asks, a computed value worked out over what it sees, and a list it is offered", () => {
+    const store = opened();
+    store.apply({ name: "add-task", args: { label: "Book the van" } }, { author: ann });
+    const seen = store.seenBy(gus);
+    const node = seen.graph.nodesOfKind("task")[0]!;
+    expect(answerJob(store, { kind: "task", where: "present(updatedAt)" }, gus).ids).toEqual([]);
+    expect(answerJob(store, { kind: "task", where: "present(updatedAt)" }, ann).count).toBe(1);
+    expect(evaluateExpr(parseExpr("updatedAt"), { graph: seen.graph as never, subject: node as never, kinds: shapesOfSchema(schema) })).toBeNull();
+    expect(arrangeable(schema, "task", { touched: offersTouches(seen) }).sorts.map((offer) => offer.key)).not.toContain("updatedAt");
   });
 });

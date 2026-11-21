@@ -15,8 +15,7 @@ import {
   type PagesArrangement,
   type Place,
   type Principal,
-  type Store,
-} from "@graview/core";
+  type Store, offersTouches } from "@graview/core";
 import { edgeWords } from "@graview/core/words";
 import { placesFrom } from "@graview/core/seat";
 import { readableFields } from "@graview/core/words";
@@ -262,6 +261,8 @@ export function resolveAsk<S extends AnySchema>(store: Store<S>, text: string, c
   const principal: Principal = context.principal ?? { kind: "human" };
   const seen = store.seenBy(principal);
   const schema = seen.schema as AnySchema;
+  // When each record was made and touched, only to a seat told them (`offersTouches`).
+  const touched = offersTouches(seen);
   // The day asked about: the one handed in, else the day the store is judged on, else the real one.
   const today = context.today ?? (store as { today?(): string | undefined }).today?.() ?? isoToday();
   const weekStartsOn = context.weekStartsOn ?? 1;
@@ -438,7 +439,7 @@ export function resolveAsk<S extends AnySchema>(store: Store<S>, text: string, c
 
   /** The date field an ask reads: the one its words name, a date role, or the kind's only date. */
   const dateFieldOf = (kind: string, words: readonly string[]): ArrangeOffer | undefined => {
-    const dates = arrangeable(schema, kind).filters.filter((offer) => offer.about === "field" && offer.type === "date");
+    const dates = arrangeable(schema, kind, { touched }).filters.filter((offer) => offer.about === "field" && offer.type === "date");
     if (dates.length === 0) return undefined;
     const named = dates.find((offer) => words.some((word) => fold(offer.key) === word || fold(offer.label) === word));
     if (named) return named;
@@ -455,7 +456,7 @@ export function resolveAsk<S extends AnySchema>(store: Store<S>, text: string, c
   /** "Not finished", in the arrangement's words when it can be said; undefined when it cannot. */
   const unfinishedOf = (kind: string): { conditions: Condition[]; holds: (node: AnyNode) => boolean } | "unsayable" => {
     const definition = definitionOf(kind);
-    const offers = arrangeable(schema, kind).filters;
+    const offers = arrangeable(schema, kind, { touched }).filters;
     const lifecycle = definition?.lifecycle;
     if (lifecycle) {
       return { conditions: [{ key: "is", value: "current" }], holds: (node) => conditionHolds(ctx, node, { key: "is", value: "current" }) };
@@ -515,7 +516,7 @@ export function resolveAsk<S extends AnySchema>(store: Store<S>, text: string, c
       kind = only[0]!;
     }
     if (!kind) return undefined;
-    const offers = arrangeable(schema, kind).filters;
+    const offers = arrangeable(schema, kind, { touched }).filters;
     const conditions: Condition[] = [];
     /* How it is said: "overdue tasks", "open decisions", "tasks due this week". */
     const phrases: string[] = [];
@@ -684,7 +685,7 @@ export function resolveAsk<S extends AnySchema>(store: Store<S>, text: string, c
       .filter((kind) => (filteredNamed ? kind === filteredNamed : kind !== target))
       .flatMap((kind) => {
         // A kind with several dates and none named: its first, which is when it happened ("planted" is when it was sown).
-        const field = dateFieldOf(kind, words.split(" ")) ?? arrangeable(schema, kind).filters.find((offer) => offer.about === "field" && offer.type === "date");
+        const field = dateFieldOf(kind, words.split(" ")) ?? arrangeable(schema, kind, { touched }).filters.find((offer) => offer.about === "field" && offer.type === "date");
         if (!field) return [];
         return relationsOf(kind)
           .filter((relation) => (target ? relation.far === target : personLike(relation.far)) && relation.far !== kind)
