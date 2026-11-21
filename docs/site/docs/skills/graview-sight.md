@@ -8,7 +8,7 @@ Installed into a project by `graview skills install .`, and read by whichever as
 
 ## Say who sees what
 
-A grant says who may DO an act; a sight says who may SEE a record, and which of its fields. It is the same kind of declaration — once, in the policy — and the store is what enforces it: every surface a seat reads (the scene, the pages, Find, the log, an agent's tools, the wire) is handed the seat's view, `store.seenBy(principal)`, so none of them has to remember.
+A grant says who may DO an act; a sight says who may SEE a record, and which of its fields. Both are said once, in the policy, and the store enforces them: every surface a seat reads (the scene, the pages, Find, the log, an agent's tools, the wire) is handed the seat's view, `store.seenBy(principal)`, so none of them has to remember.
 
 ### Do this
 
@@ -18,7 +18,7 @@ A grant says who may DO an act; a sight says who may SEE a record, and which of 
 
 A served store sends a seat only what it sees, withholds the rest of the log in place, and refuses an act that names a record it may not see exactly as one that names nothing — a document's `setsOther` target too; an act's `setsLinked` reaches only the linked records the seat sees, and is refused, naming the record, where one of them is not the seat's to change. A record whose required reference names a kind its seat may not see is withheld whole (`sight-hides-required-ref`): let the role see the target, or make the field optional.
 
-1. **Hide a field, not only a kind.** A roster where parents see every player's name and not their phone number:
+1. **Hide a field, not only a kind.** A roster: parents see every player's name, not their phone:
 
 ```ts sees: [ { roles: ["coach"], kinds: ["player"] }, { roles: ["parent"], kinds: ["player"], hide: ["phone", "medical"] }, { roles: ["parent"], kinds: ["player"], own: true }, // their own child, whole ] ```
 
@@ -34,9 +34,9 @@ A served store sends a seat only what it sees, withholds the rest of the log in 
 
 ### One sign-in, several people at the screen
 
-A host says who at a shared screen on the seat: `principal: { ..., profile: { id: "prf_mia", name: "Mia" } }` (an id of letters, digits, `_` and `-`). `$me`, a sight `via` the people or `own`, and a view's `props.me` then read Mia's person, a record of the people kind made on her first act, its id `<account>~prf_mia`, so it can only ever be that account's. It is a name, not a seat: the roles, grants and `seatOf` stay the account's, and everything the account could reach it still reaches. History says "Mia (Nick)". Without a profile, nothing changes. A person removed stays removed, and a kind that requires more than a name has none for a profile (`people-unmakeable`): `$me` then refuses, and the act is not offered. The seat headers carry it only where a host trusts them; otherwise it is the host's `seatOf`.
+A host says who at a shared screen on the seat: `principal: { ..., profile: { id: "prf_mia", name: "Mia" } }` (an id of letters, digits, `_` and `-`). `$me`, a sight `via` the people or `own`, and a view's `props.me` then read Mia's person, a record of the people kind made on her first act, its id `<account>~prf_mia`, so it can only ever be that account's. It is a name, not a seat: the roles, grants and `seatOf` stay the account's, and everything the account could reach it still reaches. History says "Mia (Nick)". Without a profile, nothing changes. A person removed stays removed, and a kind that requires more than a name has none for a profile (`people-unmakeable`): `$me` then refuses, and the act is not offered. The seat headers carry it only where a host trusts them; else it is the host's `seatOf`.
 
-A person entered before joining is bound, not made twice: `bindPerson(store, joining, "person:bud", { author })` (`@graview/core/binding`); `$me`, `own`, `self` then read it. Only `hostSeat()` binds; no grant does (`grant-gives-binding`). `unbindPerson` ends one, `rebindPerson` moves it, `mergePerson` folds a joiner's own record in. A seat sees its own binding, the host all; others read its acts, ended or not, as the record's. A host reads through `seenBy` each time and forwards a change through `answerSeenBy`, never what a listener is handed.
+A person entered before joining is bound, not made twice: `bindPerson(store, joining, "person:bud", { author })` (`@graview/core/binding`); `$me`, `own`, `self` then read it. `unbindPerson` ends it, `rebindPerson` moves it, `mergePerson` folds in a joiner's own record. Only `hostSeat()` binds (no grant: `grant-gives-binding`); JSON or RPC loses it, so a host calls `hostSeat()` on its own side of the wire. A seat sees its own binding, the host all; others read its acts as its record's. A host always reads through `seenBy` and forwards a change through `answerSeenBy`, never what a listener is handed.
 
 What a view keeps for that viewer (`graview.mine`, `graview-view-forms`) goes where the host says, for the viewer it knows, handed to `mount`, `<Embed>` and `PagesApp` as `viewerState`:
 
