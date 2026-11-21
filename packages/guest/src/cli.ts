@@ -27,7 +27,7 @@ export const VIEW_USAGE = `  graview view check <view.js> --app <app> --manifest
                      [--seed <file>] [--record <id>] [--as <id>] [--roles a,b]
                      [--width <px>] [--press <selector> [--type name=value]…]
                      [--audit [--browser]] [--no-presses] [--json]
-                     [--seats [owner,<role>,visitor]]
+                     [--seats [owner,<role>,visitor]] [--standing]
       run a worker view once, headless, with no network, seated as one
       member (the system, unless --as or --roles say who), and say what it
       drew, or why it will not do; a view of one record is run over the
@@ -52,7 +52,10 @@ export const VIEW_USAGE = `  graview view check <view.js> --app <app> --manifest
       it reads that the seat is not handed; it fails where a seat is stopped
       or falls back for anything but having nothing it reads in sight; what
       it says of each seat is for someone who may see as every seat — the
-      app's owner — never for one of the seats
+      app's owner — never for one of the seats; a check is of a view
+      proposed, and refuses one that reads a relation whose far kind its
+      manifest lacks: --standing judges a view already kept, which says it
+      among its problems instead
 `;
 
 function flag(argv: readonly string[], name: string): string | undefined {
@@ -107,6 +110,7 @@ export async function view(argv: readonly string[]): Promise<number> {
     }
     const checked = await runWorkerViewForEachSeat({
       store,
+      ...(argv.includes("--standing") ? { standing: true } : {}),
       manifest,
       owner: principal,
       ...(wanted ? { seats: every.filter((seat) => wanted.includes(seat.name)) } : {}),
@@ -141,6 +145,8 @@ export async function view(argv: readonly string[]): Promise<number> {
   }
   const result = await runWorkerViewHeadless({
     store,
+    /* A view already kept (HQ f-view-check-refuses-unread-relation-kind): a relation it reads without its far kind is said, not refused. */
+    ...(argv.includes("--standing") ? { standing: true } : {}),
     principal,
     manifest,
     ...(input ? { input } : {}),

@@ -1,5 +1,20 @@
 # @graview/pages
 
+## 0.2.8
+
+### Patch Changes
+
+- e043651: A view that goes while the history plays comes down on a slow machine too, as a building does, and a building or a view taken back part way down rises from the height it reached. A board going was kept for the sink's length counted from the render that found it gone, and was drawn after every board that stays, so React moved its element and the sink under way on it was lost: on a CPU four times slower it was taken away part way down, or went flat in a frame. A board going now stays where it stood among the others (`boardsInTheirPlaces`), and is taken away by its sink's own end once it is drawn flat; a clock of twice the sink's length is only for where none plays. And a transition's clock starts at the style change that sets it off, while a scrub's render goes on in the same task after it: a building taken back at 0.72 of its height drew 0.74, then full in the next frame. Each sink, each rise back and each new rise while the history plays is now begun again from the frame that next draws it. And the slider dragged up to the Map no longer comes back down to Nearby 0.8 s after it rests, on any machine: the city took the page a scrub settles on for another place gone to at the City. And a page's own board at the City is not offered to a press where the bar or the level control stands over it (the Harbor's home, 844 wide, under the bar): a press there landed on the bar. And a finger down on the city is a hand on it: a zoom let go of is placed for only once no finger is down, so a pan put down straight after a pinch on a slow phone no longer slides the boards off their districts. And a zoom let go of goes on from where the last frame drew it on a slow machine too: the frame drawn while the view took the zoom in counted it twice, and at Nearby a board drew a fifth wider for that frame. One-face, the harness, reads a picture at rest once what the face places has come to rest rather than after a fixed wait, says so by name when it never does (`theFaceComesToRestAfterEveryMove`), waits for Find to offer what it types, judges whether a board or a name leapt by the time each frame is for rather than when the harness came to read it (on a CPU four times slower a move's frames come 17 and 33 ms apart by turns, and a board coming up as the move went on was read as leaping), and holds a new claim, `aBuildingTakenBackMidSinkRisesFromTheHeightItReached`. Nothing a host calls changes.
+  Compatibility: the look — a board going sinks where it stood, all the way down, a building or a board taken back rises from where it got to, and a level scrubbed to stays. The JavaScript API, ops and primitives, stored formats, the wire, the declaration and check finding codes, and derived tool names and input schemas — unchanged.
+- Updated dependencies [e043651]
+- Updated dependencies [682506f]
+- Updated dependencies [197ee5b]
+  - @graview/react@0.2.8
+  - @graview/core@0.2.8
+  - @graview/primitives@0.2.8
+  - @graview/layout@0.2.8
+  - @graview/tools@0.2.8
+
 ## 0.2.7
 
 ### Patch Changes

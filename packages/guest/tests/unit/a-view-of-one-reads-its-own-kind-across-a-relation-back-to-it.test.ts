@@ -87,10 +87,10 @@ describe("a relation a view reads and is never handed", () => {
     expect(edgesReadWithoutTheirKinds(store(), { ...near, cardinality: "many" })).toEqual([]);
   });
 
-  it("is among a headless check's problems", async () => {
+  it("is among the problems of a headless run of a view already kept", async () => {
     const source = `graview.onProps((props) => graview.render(graview.html\`<h1>\${props.node.label}</h1>\`));`;
-    const result = await runWorkerViewHeadless({ store: store(), principal: child, manifest: unread, input: { node: { id: "rock:granite" } }, source, run: nodeIsolate() });
+    const result = await runWorkerViewHeadless({ store: store(), principal: child, manifest: unread, input: { node: { id: "rock:granite" } }, source, run: nodeIsolate(), standing: true });
     if (!result.ok) throw new Error(result.detail);
-    expect(result.description.problems).toContainEqual({ at: "reads", says: edgesReadWithoutTheirKindsSaid(store(), unread)[0] });
+    expect(result.description.problems).toContainEqual({ at: "reads", says: edgesReadWithoutTheirKindsSaid(store(), unread)[0], key: "far-kind-not-handed:rock-page:foundIn:place" });
   });
 });

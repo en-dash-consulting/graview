@@ -6,8 +6,8 @@ description: Say who sees which records of a Graview app, and which of their fie
 # Say who sees what
 
 A grant says who may DO an act; a sight says who may SEE a record, and
-which of its fields. It is the same kind of declaration — once, in the
-policy — and the store is what enforces it: every surface a seat reads
+which of its fields. Both are said once, in the policy, and the store
+enforces them: every surface a seat reads
 (the scene, the pages, Find, the log, an agent's tools, the wire) is
 handed the seat's view, `store.seenBy(principal)`, so none of them has
 to remember.
@@ -35,8 +35,8 @@ to remember.
    see is withheld whole (`sight-hides-required-ref`): let the role see
    the target, or make the field optional.
 
-2. **Hide a field, not only a kind.** A roster where parents see every
-   player's name and not their phone number:
+2. **Hide a field, not only a kind.** A roster: parents see every
+   player's name, not their phone:
 
    ```ts
    sees: [
@@ -115,15 +115,16 @@ the account's, and everything the account could reach it still reaches. History
 says "Mia (Nick)". Without a profile, nothing changes. A person removed stays
 removed, and a kind that requires more than a name has none for a profile
 (`people-unmakeable`): `$me` then refuses, and the act is not offered. The seat headers
-carry it only where a host trusts them; otherwise it is the host's `seatOf`.
+carry it only where a host trusts them; else it is the host's `seatOf`.
 
 A person entered before joining is bound, not made twice:
 `bindPerson(store, joining, "person:bud", { author })` (`@graview/core/binding`);
-`$me`, `own`, `self` then read it. Only `hostSeat()` binds; no grant
-does (`grant-gives-binding`). `unbindPerson` ends one, `rebindPerson`
-moves it, `mergePerson` folds a joiner's own record in. A seat sees its
-own binding, the host all; others read its acts, ended or not, as the record's.
-A host reads through `seenBy` each time and forwards a change through
+`$me`, `own`, `self` then read it. `unbindPerson` ends it, `rebindPerson`
+moves it, `mergePerson` folds in a joiner's own record. Only `hostSeat()`
+binds (no grant: `grant-gives-binding`); JSON or RPC loses it, so a
+host calls `hostSeat()` on its own side of the wire. A seat sees its own
+binding, the host all; others read its acts as its record's.
+A host always reads through `seenBy` and forwards a change through
 `answerSeenBy`, never what a listener is handed.
 
 What a view keeps for that viewer (`graview.mine`, `graview-view-forms`) goes

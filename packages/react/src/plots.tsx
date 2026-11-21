@@ -1,7 +1,7 @@
 import { labelOf, numberAsRead, SCENE_LAYERS, type Brand, type Scheme } from "@graview/core";
 import { districtBlocks, districtLanes, districtState, TIER_HEIGHT, toIso, type Building, type StateTier } from "@graview/core/scene";
 import type { InterpolatedLayout } from "@graview/layout";
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactElement } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactElement, type RefObject } from "react";
 import { usePlayback } from "./past.js";
 import { useGraph, useGraview } from "./context.js";
 import { useFlagged } from "./emphasis.js";
@@ -333,7 +333,8 @@ const PlotTile = memo(function PlotTile({
   /** The history is being played: a building that goes sinks into the ground before it is gone. */
   readonly rising: boolean;
 }) {
-  const { drawn, leaving, sunk } = useLeaving(drawing.buildings, rising);
+  const village = useRef<SVGGElement>(null);
+  const { drawn, leaving, sunk } = useLeaving(drawing.buildings, rising, village);
   const chosen = new Set(chosenKey.split("\n"));
   const broken = new Set(flaggedKey.split("\n"));
   const recent = new Set(recentKey.split("\n"));
@@ -351,7 +352,7 @@ const PlotTile = memo(function PlotTile({
       />
       {/* THE BLOCKS: a row per value, back to front; a problem lit, a change since you were here aglow, your own marked. */}
       {drawn.length > 0 ? (
-        <g className="graview-village" data-graview-village={drawing.buildings.length} data-graview-rest={drawing.rests.reduce((sum, rest) => sum + rest.count, 0) || undefined}>
+        <g ref={village} className="graview-village" data-graview-village={drawing.buildings.length} data-graview-rest={drawing.rests.reduce((sum, rest) => sum + rest.count, 0) || undefined}>
           {drawn.map((block) => (
             <g
               key={block.id}
@@ -479,7 +480,7 @@ export const RISE_MS = 420;
  * on the page, twice the sink's length, is only for where none plays
  * (less motion draws a building going as nothing at once).
  */
-function useLeaving<B extends { readonly id: string }>(buildings: readonly B[], rising: boolean): { readonly drawn: readonly B[]; readonly leaving: ReadonlySet<string>; readonly sunk: (id: string) => void } {
+function useLeaving<B extends { readonly id: string }>(buildings: readonly B[], rising: boolean, holder: RefObject<SVGGElement | null>): { readonly drawn: readonly B[]; readonly leaving: ReadonlySet<string>; readonly sunk: (id: string) => void } {
   // Which blocks stand, said once: a plot drawn again with the same blocks changes nothing here.
   const key = buildings.map((block) => block.id).join("\n");
   const [seen, setSeen] = useState({ key, buildings });
@@ -515,7 +516,48 @@ function useLeaving<B extends { readonly id: string }>(buildings: readonly B[], 
     before.current = drawn.map((block) => block.id);
   }, [drawn]);
   const leaving = useMemo(() => new Set(rising ? gone.keys() : []), [gone, rising]);
+  /*
+   * EACH SINK AND EACH RISE BACK CLOCKED FROM THE FIRST FRAME THAT DRAWS IT.
+   * A transition's clock starts at the style change that sets it off, and a
+   * scrub's render and commit go on in the same task after it: on a slow
+   * machine a building taken back part way down had its rise back (as
+   * short as the way it had come down) over before a frame drew it, and
+   * stood full in a frame. Started again as the next frame draws it, it
+   * rises from the height it reached (one-face's
+   * `aBuildingTakenBackMidSinkRisesFromTheHeightItReached`). And a building
+   * new to the page, rising from the ground, the same way.
+   */
+  const shownBefore = useRef<{ readonly leaving: ReadonlySet<string>; readonly drawn: ReadonlySet<string> } | null>(null);
+  useLayoutEffect(() => {
+    const was = shownBefore.current;
+    const ids = new Set(drawn.map((block) => block.id));
+    shownBefore.current = { leaving, drawn: ids };
+    // Outside playback nothing rises or sinks; a tile's first drawing is left as the browser starts it.
+    if (!rising || !was) return;
+    for (const id of ids) {
+      if (was.drawn.has(id) && leaving.has(id) === was.leaving.has(id)) continue;
+      const el = holder.current?.querySelector(`[data-graview-building="${CSS.escape(id)}"]`);
+      if (el) fromTheFirstFrame(el);
+    }
+  }, [drawn, leaving, rising, holder]);
   return { drawn, leaving, sunk };
+}
+
+/**
+ * The transitions an element's style just set off, begun again from the
+ * frame that next draws it rather than from the task that set them off,
+ * however long that task runs on.
+ */
+function fromTheFirstFrame(el: Element): void {
+  if (typeof el.getAnimations !== "function" || typeof CSSTransition === "undefined") return;
+  // The style as committed, so what it sets off has begun.
+  void getComputedStyle(el).transform;
+  for (const one of el.getAnimations()) {
+    if (!(one instanceof CSSTransition)) continue;
+    one.pause();
+    one.currentTime = 0;
+    one.play();
+  }
 }
 
 /** Whether a building has sunk all the way: its height, as drawn now, none. */

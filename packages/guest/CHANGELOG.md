@@ -1,5 +1,18 @@
 # @graview/guest
 
+## 0.2.8
+
+### Patch Changes
+
+- 197ee5b: A view that reads a relation whose far kind its manifest never hands it is refused when it is proposed, and the fault a kept one says carries a key (HQ f-view-check-refuses-unread-relation-kind). A view of a plan's steps that read `inPhase` (chunk to step) without `chunk` in `reads.kinds` was kept, then said at every open that no link of it reached the view, and people filed that once for each version of the app. Now `checkProposedManifest` on `@graview/guest/host/views` refuses it, naming the relation and the kind to add ("\"phase-board\" reads the relation \"inPhase\", from chunk to step, and is handed no chunk, so no link of it reaches the view: add \"chunk\" to its manifest's reads.kinds."); a headless run (`runWorkerViewHeadless`, `graview view check`) is that check and refuses it `manifest`, as `mountWorkerView` refuses a `draft`. A relation to any kind (`to: "*"`) names no kind to add, and stays a problem. A view already kept is still drawn: its page says the fault to `onProblem` as `far-kind-not-handed` with `key: "far-kind-not-handed:phase-board:inPhase:chunk"` (`farKindKey(view, relation, kinds)`), made of names alone (several kinds sorted and joined by `|`), so it is the same in every version of the app while the relation joins the same kinds, whatever the sentence says. `runWorkerViewHeadless(…, { standing: true })`, and `graview view check --standing`, judges a kept view so, and lists the fault among its problems with the same `key` (`DescribedProblem.key`). Guest's test holds the steps view refused by the check, the headless run and a draft, the same view with `chunk` handed passing, a relation to any kind passing, and the kept view drawn with its key the same in a later version of the app.
+  
+  Compatibility: the wire — additive: a view's problem may carry `key` (`ViewProblem.key`, and `key` on a headless run's problem); a host that reads only `code` reads what it read. Changed: a headless run, by default, refuses a view whose `reads.edges` names a relation with a far kind `reads.kinds` lacks, where it drew it and listed a problem; a draft on a page is refused the same way, a revision of a kept view drawn as a draft included, until its manifest hands the kind. `checkManifest`, and so a page mounting a view already kept, refuses nothing it passed. Ops and primitives, stored formats, the declaration and check finding codes, and derived tool names and input schemas — unchanged. The JavaScript API is additive (`checkProposedManifest`, `farKindKey`, `edgesReadWithoutTheirKindsProblems` on `@graview/guest/host/views`; `standing` on `runWorkerViewHeadless` and `--standing` on `graview view check`). What Graview Cloud does: in propose_view, nothing — its headless check refuses the view and says what to add; every other headless run of a view already kept (get_problems, a place's description, a picture of it) passes `standing: true`, or a kept view with this fault is refused `manifest` there instead of drawn; and it files a view's problem once by its `key`.
+- Updated dependencies [e043651]
+- Updated dependencies [682506f]
+- Updated dependencies [197ee5b]
+  - @graview/react@0.2.8
+  - @graview/core@0.2.8
+
 ## 0.2.7
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @graview/ship
 
+## 0.2.8
+
+### Patch Changes
+
+- Updated dependencies [682506f]
+- Updated dependencies [197ee5b]
+  - @graview/core@0.2.8
+
 ## 0.2.7
 
 ### Patch Changes

@@ -754,3 +754,33 @@ export function titleThatFits(title: string, room: number, measure: (text: strin
 export function sameFit(was: TitleFit | null, next: TitleFit): boolean {
   return Boolean(was && was.size === next.size && was.words.length === next.words.length && was.words.every((word, i) => word.text === next.words[i]?.text && word.cut === next.words[i]?.cut));
 }
+
+/**
+ * The boards standing, with those going each put back where it was last
+ * drawn — after the board it last stood behind that still stands — so no
+ * element is moved: a moved one is taken out of the page and put back, and
+ * a sink under way on it is lost (a view that went flat in a frame instead
+ * of coming down, as a building did: `inTheirPlaces` in
+ * `@graview/react`'s plots). One not drawn before goes last.
+ */
+export function boardsInTheirPlaces<B extends { readonly key: string }>(boards: readonly B[], going: readonly B[], before: readonly string[]): readonly B[] {
+  if (going.length === 0) return boards;
+  const here = new Set(boards.map((board) => board.key));
+  const byKey = new Map(going.map((board) => [board.key, board]));
+  const after = new Map<string | null, B[]>();
+  const placed = new Set<string>();
+  let behind: string | null = null;
+  for (const key of before) {
+    if (here.has(key)) behind = key;
+    else {
+      const board = byKey.get(key);
+      if (!board || placed.has(key)) continue;
+      after.set(behind, [...(after.get(behind) ?? []), board]);
+      placed.add(key);
+    }
+  }
+  const out = [...(after.get(null) ?? [])];
+  for (const board of boards) out.push(board, ...(after.get(board.key) ?? []));
+  for (const board of going) if (!placed.has(board.key)) out.push(board);
+  return out;
+}

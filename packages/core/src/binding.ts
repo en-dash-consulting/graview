@@ -22,7 +22,7 @@ import type { Operation } from "./ops/types.js";
 import { actingAs, bindable, isSystem, ownsId, seatPersonOf, withValidProfile } from "./permissions/policy.js";
 import type { Principal, Refusal } from "./permissions/types.js";
 import { ActRefusal } from "./refused.js";
-import { labelOf, nounOf, withArticle } from "./schema/define-node.js";
+import { humanizeField, labelOf, nounOf, withArticle } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
 import * as z from "./schema/zod.js";
 import type { ApplyOptions, ApplyResult, Store } from "./store.js";
@@ -309,6 +309,95 @@ function moveLinks(ctx: { readonly graph: { getNode(id: string): unknown }; remo
 }
 
 /**
+ * THE LINKS A MOVE OR A MERGE LEFT BEHIND (Roadmap
+ * f-merge-profile-seat-and-links-past-horizon): what a host shows an owner
+ * after `rebindPerson` or `mergePerson`. `count` links stayed on the record
+ * the person left, `relations` says how many of each relation, and
+ * `sentence` says so in words; none when nothing was left (`count` 0,
+ * `relations` empty, no `sentence`).
+ */
+export interface LinksLeftBehind {
+  readonly count: number;
+  readonly relations: Readonly<Record<string, number>>;
+  readonly sentence?: string;
+}
+
+/** What `rebindPerson` and `mergePerson` answer: the change, and the links it left behind (`LinksLeftBehind`). */
+export type PersonMoved<S extends AnySchema> = ApplyResult<S> & { readonly leftBehind: LinksLeftBehind };
+
+/** The links as they stood where the log begins: the graph's now, with every link the log adds or removes taken back, newest first. */
+function edgesAtHorizon(store: Held): readonly GraphEdge[] {
+  const edges = store.graph as unknown as Edges & { allNodes(options: { archived: "all" }): readonly { readonly id: string }[] };
+  const at = new Map<string, GraphEdge>();
+  for (const node of edges.allNodes({ archived: "all" })) for (const edge of edges.outEdges(node.id)) at.set(edgeId(edge), edge);
+  const ops = store.log.all();
+  for (let index = ops.length - 1; index >= 0; index--) {
+    const primitives = ops[index]!.primitives;
+    for (let one = primitives.length - 1; one >= 0; one--) {
+      const primitive = primitives[one]!;
+      if (primitive.op === "add-edge") at.delete(edgeId(primitive.edge));
+      else if (primitive.op === "remove-edge") at.set(edgeId(primitive.edge), primitive.edge);
+    }
+  }
+  return [...at.values()];
+}
+
+/**
+ * Whether the log made this link as it is held now: its last add is an act's
+ * own (a call that named its ends, or one put back by a redo), not a move or
+ * merge carrying it, nor a change that took it off being taken back.
+ */
+function madeSince(all: readonly Operation[], get: (id: string) => Operation | undefined, id: string): boolean {
+  for (let index = all.length - 1; index >= 0; index--) {
+    const op = all[index]!;
+    if (!op.primitives.some((one) => one.op === "add-edge" && edgeId(one.edge) === id)) continue;
+    const root = rootOfChain(op, get);
+    if (isBindingAct(root.mutation?.name)) return false;
+    return !root.primitives.some((one) => one.op === "remove-edge" && edgeId(one.edge) === id);
+  }
+  return false;
+}
+
+/**
+ * The links a move just made left on `from` that the seat may have made as
+ * it: those older than the log, on a record the seat was at the log's
+ * horizon (bound to it, or its own record), followed through every move and
+ * merge since to `from`, and held there still. The log cannot say who made
+ * them, or whether through `$me`, so the move took none of them
+ * (`linksMadeAs`). A link between the two records stays by design, and is
+ * not counted.
+ */
+function leftBehindBy(store: Held, seat: string, from: string, to: string): LinksLeftBehind {
+  const none: LinksLeftBehind = { count: 0, relations: {} };
+  const theirs = new Set([seat, ...[...boundAtHorizon(store)].flatMap(([record, one]) => (one === seat ? [record] : []))]);
+  const all = store.log.all();
+  const get = (id: string) => store.log.get(id);
+  const edges = store.graph as unknown as Edges;
+  const older = new Map<string, GraphEdge>();
+  for (const edge of edgesAtHorizon(store)) {
+    for (const end of ["from", "to"] as const) {
+      if (!theirs.has(edge[end])) continue;
+      const now = followed(all, 0, get, edge, end);
+      if (now === undefined || now[end] !== from || now.from === to || now.to === to) continue;
+      const held = edges.outEdges(now.from).find((one) => edgeId(one) === edgeId(now));
+      if (held && !madeSince(all, get, edgeId(held))) older.set(edgeId(held), held);
+    }
+  }
+  if (older.size === 0) return none;
+  const relations: Record<string, number> = {};
+  for (const edge of older.values()) relations[edge.kind] = (relations[edge.kind] ?? 0) + 1;
+  const named = (id: string) => {
+    const node = store.graph.getNode(id) as Node | undefined;
+    return node ? labelOf(store.schema.tryDefinition(node.kind), node as never) : "the record";
+  };
+  const one = older.size === 1;
+  const them = one ? "it" : "them";
+  const each = Object.entries(relations).sort(([a], [b]) => (a < b ? -1 : 1)).map(([relation, count]) => `${humanizeField(relation).toLowerCase()} (${count})`).join(", ");
+  const sentence = `${older.size} ${one ? "link" : "links"} on ${named(from)} ${one ? "is" : "are"} older than this app's history, so the move could not tell whether ${named(to)} made ${them} and left ${them} on ${named(from)}: ${each}.`;
+  return { count: older.size, relations, sentence };
+}
+
+/**
  * The `bind-own-record` act for a store, where a kind is its people (Roadmap
  * f-merge-own-record-into-person): a seat with a record of its own — the
  * record whose id is the seat's, made as it joined or first opened the app
@@ -369,6 +458,12 @@ const HOST = Symbol.for("@graview/core:host-seat");
  * as. Every other system seat is refused those: one a sync or another app
  * writes as, a migration, the app's own actor, a workflow, and one that is
  * only called what the host is. `id` and `name` say who it is in the log.
+ *
+ * Its mark is a Symbol, kept by the object this returns and its copies in
+ * memory, and lost to anything that crosses JSON or RPC: a seat sent from
+ * one process to another arrives as an ordinary system seat, and every
+ * binding act refuses it. A host calls `hostSeat()` on the side of the wire
+ * where the store is, as it runs the binding, and never sends one.
  */
 export function hostSeat(seat: { readonly id?: string; readonly name?: string } = {}): Principal {
   return Object.freeze({ kind: "system" as const, ...(seat.id !== undefined ? { id: seat.id } : {}), ...(seat.name !== undefined ? { name: seat.name } : {}), [HOST]: true }) as Principal;
@@ -545,13 +640,14 @@ export function unbindPerson<S extends AnySchema>(store: Store<S>, leaving: Prin
  * each. Refused (`ActRefusal`, or `PermissionDeniedError` for who may) in a
  * sentence a host can show.
  */
-export function rebindPerson<S extends AnySchema>(store: Store<S>, person: Principal, record: string, options: ApplyOptions = {}): ApplyResult<S> {
+export function rebindPerson<S extends AnySchema>(store: Store<S>, person: Principal, record: string, options: ApplyOptions = {}): PersonMoved<S> {
   if (!store.schema.definitions.some((definition) => definition.people)) throw new ActRefusal(NOBODY_BINDABLE);
   const seat = bindable(withValidProfile(person)) ? seatPersonOf(withValidProfile(person)) : undefined;
   // Bound now, or bound last to a record whose binding ended (Roadmap f-rebind-follow-ups).
   const from = seat === undefined ? undefined : (store.graph.personBoundTo(seat) ?? endedIn(store as unknown as Held).get(seat));
   if (seat === undefined || from === undefined) throw new ActRefusal("That account is nobody's record here.");
-  return store.apply({ name: REBIND_PERSON, args: { seat, from, to: record } }, options);
+  const moved = store.apply({ name: REBIND_PERSON, args: { seat, from, to: record } }, options);
+  return { ...moved, leftBehind: leftBehindBy(store as unknown as Held, seat, from, record) };
 }
 
 /**
@@ -567,11 +663,12 @@ export function rebindPerson<S extends AnySchema>(store: Store<S>, person: Princ
  * `record`. Refused (`ActRefusal`, or `PermissionDeniedError` for who may)
  * in a sentence a host can show.
  */
-export function mergePerson<S extends AnySchema>(store: Store<S>, person: Principal, record: string, options: ApplyOptions = {}): ApplyResult<S> {
+export function mergePerson<S extends AnySchema>(store: Store<S>, person: Principal, record: string, options: ApplyOptions = {}): PersonMoved<S> {
   if (!store.schema.definitions.some((definition) => definition.people)) throw new ActRefusal(NOBODY_BINDABLE);
   const seat = bindable(withValidProfile(person)) ? seatPersonOf(withValidProfile(person)) : undefined;
   if (seat === undefined) throw new ActRefusal("Only somebody who signed in can be bound to a record here.");
-  return store.apply({ name: BIND_OWN_RECORD, args: { seat, record } }, options);
+  const merged = store.apply({ name: BIND_OWN_RECORD, args: { seat, record } }, options);
+  return { ...merged, leftBehind: leftBehindBy(store as unknown as Held, seat, seat, record) };
 }
 
 /**
