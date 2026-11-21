@@ -72,7 +72,7 @@ describe("a view's navigate, narrowed and to a section", () => {
     expect(made.go({ place: "offers", section: "   " })).toBe(false);
     expect(went).toEqual([]);
     expect(lost).toEqual([
-      'The filter on "offers" goes nowhere: Offers have no field "stag" to filter by; they filter by list, units, stage, cost, for, includes, for.role, includes.standing and is.',
+      'The filter on "offers" goes nowhere: Offers have no field "stag" to filter by; they filter by list, units, stage, cost, updatedAt, createdAt, for, includes, for.role, includes.standing and is.',
       'The filter on "offers" goes nowhere: Stage has no choice "someday"; its choices are "start" and "later".',
       '"offer:strategy" is one record, and a filter narrows a list or a place: it goes nowhere. Go to { place, where } for a list narrowed.',
       'The section "   " names nothing on a page: a section is a heading\'s words or an element\'s id, like "shipping-soon". It goes nowhere.',

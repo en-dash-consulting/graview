@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createSchema, defineNode, GraphError, OperationLog, repairPlan, Store, type GraphSnapshot, type Operation } from "../../src/index.js";
+import { untouched } from "../../src/graph/touched.js";
 
 /**
  * FR-28. A declaration changes; records stored under the old one stay. A
@@ -71,26 +72,26 @@ describe("a store holds records that no longer fit", () => {
       at: "2026-10-02T00:00:00Z",
     };
     const folded = new Store({ schema, mutations: [], log: [add] });
-    expect(folded.snapshot().nodes).toEqual([{ id: "p1", kind: "person", label: "Ada", email: "not-an-address" }]);
+    expect(folded.snapshot().nodes.map(untouched)).toEqual([{ id: "p1", kind: "person", label: "Ada", email: "not-an-address" }]);
     expect(folded.findings().map((f) => `${f.code} ${f.id} ${f.detail}`)).toEqual(["node-shape p1 email"]);
-    expect(OperationLog.from([add]).fold(schema).getNode("p1")).toEqual({ id: "p1", kind: "person", label: "Ada", email: "not-an-address" });
+    expect(untouched(OperationLog.from([add]).fold(schema).getNode("p1")!)).toEqual({ id: "p1", kind: "person", label: "Ada", email: "not-an-address" });
   });
 
   it("a new write still fits as it always did: a default is filled in on the way in", () => {
     const store = new Store({ schema, mutations: [], snapshot: copy() as never });
     store.applyPrimitives([{ op: "add-node", node: { id: "p3", kind: "person", label: "Linus" } }]);
-    expect(store.graph.getNode("p3")).toEqual({ id: "p3", kind: "person", label: "Linus", role: "member" });
+    expect(untouched(store.graph.getNode("p3")!)).toEqual({ id: "p3", kind: "person", label: "Linus", role: "member" });
   });
 
   it("an edit that fits is taken on a record that holds an old misfit, and leaves the rest of the record as stored", () => {
     const store = new Store({ schema, mutations: [], snapshot: copy() as never });
     store.apply({ name: "edit-team", args: { id: "t1", label: "Weekend rota" } });
-    expect(store.graph.getNode("t1")).toEqual({ id: "t1", kind: "team", label: "Weekend rota", size: "two" });
+    expect(untouched(store.graph.getNode("t1")!)).toEqual({ id: "t1", kind: "team", label: "Weekend rota", size: "two" });
     store.applyPrimitives([{ op: "patch-node", id: "p1", before: { label: "Ada" }, after: { label: "Ada Lovelace" } }]);
-    expect(store.graph.getNode("p1")).toEqual({ id: "p1", kind: "person", label: "Ada Lovelace", email: "not-an-address", role: "chair" });
+    expect(untouched(store.graph.getNode("p1")!)).toEqual({ id: "p1", kind: "person", label: "Ada Lovelace", email: "not-an-address", role: "chair" });
     // Nothing the edit did not write is parsed into something else: no default filled, no field stripped.
     store.applyPrimitives([{ op: "patch-node", id: "p2", before: { label: "Grace" }, after: { label: "Grace Hopper" } }]);
-    expect(store.graph.getNode("p2")).toEqual({ id: "p2", kind: "person", label: "Grace Hopper", nickname: "Amazing" });
+    expect(untouched(store.graph.getNode("p2")!)).toEqual({ id: "p2", kind: "person", label: "Grace Hopper", nickname: "Amazing" });
     // But writing the misfit field itself must fit.
     expect(() => store.applyPrimitives([{ op: "patch-node", id: "t1", before: { size: "two" }, after: { size: "three" } }])).toThrow(GraphError);
   });
@@ -104,6 +105,6 @@ describe("a store holds records that no longer fit", () => {
     store.undo(repair.batch);
     expect(codes(store)).toEqual(before);
     const byId = (a: { id: string }, b: { id: string }) => (a.id < b.id ? -1 : 1);
-    expect([...store.snapshot().nodes].sort(byId)).toEqual([...stored.nodes].sort(byId));
+    expect([...store.snapshot().nodes].map(untouched).sort(byId)).toEqual([...stored.nodes].sort(byId));
   });
 });

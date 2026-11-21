@@ -12,6 +12,7 @@ import {
   type Epoch,
   type Operation,
 } from "../../src/index.js";
+import { untouched } from "../../src/graph/touched.js";
 
 /**
  * FR-27. A log that spans a declaration change cannot be folded from
@@ -88,7 +89,7 @@ describe("log.fold({ from })", () => {
     const { log, migrated, epoch } = spanningTwoVersions();
     const after: Operation = { ...log[0]!, id: "later", seq: log.length, primitives: [{ op: "patch-node", id: "back", before: { label: "Back bed" }, after: { label: "Far bed" } }], inverse: [] };
     const folded = OperationLog.from([...log, after], [epoch]).fold(v2, { from: epoch });
-    expect(folded.getNode("back")).toEqual({ id: "back", kind: "plot", label: "Far bed", beds: 6 });
+    expect(untouched(folded.getNode("back")!)).toEqual({ id: "back", kind: "plot", label: "Far bed", beds: 6 });
     expect(folded.size.nodes).toBe(migrated.nodes.length);
   });
 

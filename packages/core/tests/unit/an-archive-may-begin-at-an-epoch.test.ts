@@ -3,6 +3,11 @@ import "../../src/field-sight.js";
 import { logSeenBy, Store, type AnySchema, type Epoch, type LogArchive } from "../../src/index.js";
 import { archivedSeenBy, archiveFrom } from "../../src/seat.js";
 import { canonical, fold, leaked, MUTATIONS, policyOf, rng, schemaOf, storeAt, unsaidUnseen, world } from "../support/unseen-worlds.js";
+import { untouched } from "../../src/graph/touched.js";
+import type { GraphSnapshot } from "../../src/index.js";
+
+/** A graph as `canonical` says it, without when each record was made and touched: an archive that begins at an epoch tells a seat those from its own log onto that epoch, not from the whole history. */
+const fields = (snapshot: GraphSnapshot) => canonical({ ...snapshot, nodes: snapshot.nodes.map((node) => untouched(node)) });
 
 /**
  * AN ARCHIVE MAY BEGIN AT AN EPOCH (FR-214). `archivedSeenBy` judged a
@@ -69,7 +74,7 @@ describe("an archive may begin at an epoch", () => {
         for (const epoch of answer.epochs) {
           expect(epoch.seq).toBeGreaterThanOrEqual(Math.max(from, begins.seq));
           // Each epoch is what the seat's ops fold to there, the epoch the archive begins at included.
-          expect(canonical(epoch.base), `seed ${seed}, epoch ${epoch.seq}`).toBe(canonical(fold(schema, served.slice(0, epoch.seq))));
+          expect(fields(epoch.base), `seed ${seed}, epoch ${epoch.seq}`).toBe(fields(fold(schema, served.slice(0, epoch.seq))));
         }
         if (begins.seq >= from && begins.seq < to) expect(answer.epochs.map((epoch) => epoch.seq)).toContain(begins.seq);
       }
@@ -81,7 +86,7 @@ describe("an archive may begin at an epoch", () => {
         expect(answer.keptFrom).toBe(begins.seq);
         expect(answer.epochs.map((epoch) => epoch.seq)).toEqual(stops.map((epoch) => epoch.seq));
         expect(leaked(answer, unseen), `seed ${seed}, the stops behind the window`).toBeUndefined();
-        for (const epoch of answer.epochs) expect(canonical(epoch.base), `seed ${seed}, stop ${epoch.seq}`).toBe(canonical(fold(schema, served.slice(0, epoch.seq))));
+        for (const epoch of answer.epochs) expect(fields(epoch.base), `seed ${seed}, stop ${epoch.seq}`).toBe(fields(fold(schema, served.slice(0, epoch.seq))));
         stopped++;
       }
       // The epoch made later from the window is the one the whole archive makes there.

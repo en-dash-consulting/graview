@@ -3,6 +3,7 @@
  * from the engine's own file, the rules made the engine a chunk of its own
  * on a hosted page, half a kilobyte more up front (docs/hosted-page.md).
  */
+import { TOUCHED_FIELDS } from "../graph/touched.js";
 import { defineInvariant, RuleBudgetError, type AnyGraphNode, type AnySchema, type GraphReader, type InvariantDefinition, type Violation } from "../index.js";
 
 import { citedFieldsOf } from "../schema/cites.js";
@@ -33,7 +34,7 @@ export function shapesOfSchema(schema: AnySchema): Map<string, KindShape> {
     // What cites each cited field (Roadmap f-field-cites-marker), which `uncited(…)` reads.
     const cites = new Map(Object.entries(citedFieldsOf(schema, kind)));
     shapes.set(kind, {
-      fields: new Set(Object.keys(definition?.fields?.shape ?? {})),
+      fields: new Set([...Object.keys(definition?.fields?.shape ?? {}), ...TOUCHED_FIELDS]),
       edges: new Map(Object.entries(definition?.edges ?? {}).map(([name, edge]) => [name, edge.cardinality ?? "many"])),
       ...(computed ? { computed } : {}),
       ...(linked.size > 0 ? { linked } : {}),

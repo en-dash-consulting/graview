@@ -5,7 +5,8 @@ import type { AnySchema } from "./schema/schema.js";
 import type { AnyNodeDefinition } from "./schema/types.js";
 import { capitalize } from "./capital.js";
 import { dateOn } from "./repeat.js";
-import { isoToday } from "./days.js";
+import { dayOfMoment, isoToday } from "./days.js";
+import { CREATED_AT, TOUCHED_MOMENTS, UPDATED_AT } from "./graph/touched.js";
 
 /**
  * ARRANGEMENT IS A CAPABILITY OF THE DECLARATION, not of a view.
@@ -98,6 +99,18 @@ export interface ArrangeOffer {
   readonly buckets?: readonly DateBucket[];
   /** For an edge: the kinds at the far end, and how it reads from this kind. */
   readonly far?: readonly string[];
+}
+
+/** The two moments every record keeps (`touched.ts`), as a list offers them. */
+export const TOUCHED_OFFERS: readonly ArrangeOffer[] = [
+  { key: UPDATED_AT, label: "Last changed", about: "field", type: "date" },
+  { key: CREATED_AT, label: "Added", about: "field", type: "date" },
+];
+
+/** A record's day by one of the two moments it keeps, on the app's clock: what a list filters and groups it by. */
+export function touchedDay(node: ArrangeNode, key: string, timeZone?: string): string | undefined {
+  const at = (node as unknown as Record<string, unknown>)[key];
+  return typeof at === "string" ? (dayOfMoment(at, timeZone) ?? at.slice(0, 10)) : undefined;
 }
 
 export interface Arrangeable {
@@ -223,6 +236,13 @@ export function arrangeable(schema: AnySchema, kind: string): Arrangeable {
     filters.push(offer);
     if (type === "boolean" || type === "choice") groups.push(offer);
     if (type === "date") groups.push({ ...offer, buckets: ["day", "week", "month", "year", "decade"] });
+  }
+
+  // When each record was last changed and made (`touched.ts`): every kind's, sorted, filtered and grouped by as days.
+  for (const offer of TOUCHED_OFFERS) {
+    sorts.push(offer);
+    filters.push(offer);
+    groups.push({ ...offer, buckets: ["day", "week", "month", "year"] });
   }
 
   for (const edge of edgesOf(schema, kind)) {
@@ -420,6 +440,13 @@ export function conditionHolds(ctx: ArrangeContext, node: ArrangeNode, condition
     }
   }
   const shape = (definition?.fields.shape ?? {}) as Record<string, unknown>;
+  // Last changed or made (`touched.ts`): on the day it was, on the app's clock; a record from before they were kept, on none.
+  if (TOUCHED_MOMENTS.includes(condition.key)) {
+    const [op, date] = condition.value.split(":");
+    const day = touchedDay(node, condition.key, ctx.timeZone);
+    if (day === undefined || !date) return false;
+    return op === "before" ? day < date : op === "after" ? day > date : day === date;
+  }
   if (condition.key in shape) {
     // A date that repeats is judged by its next occurrence.
     const value = dateOn(fields(node), condition.key, ctx.today ?? isoToday(ctx.timeZone));

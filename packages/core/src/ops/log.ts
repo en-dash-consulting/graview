@@ -399,15 +399,16 @@ export class OperationLog {
  * accepted and this one does not is held as written (FR-28).
  */
 export function foldOp<S extends AnySchema>(graph: Graph<S>, op: Operation): void {
-  if (op.undoes !== undefined) {
-    graph.applyPrimitives(op.primitives, { restoring: true });
-    return;
+  if (op.undoes !== undefined) graph.applyPrimitives(op.primitives, { restoring: true });
+  else {
+    try {
+      graph.applyPrimitives(op.primitives);
+    } catch {
+      graph.applyPrimitives(op.primitives, { restoring: true });
+    }
   }
-  try {
-    graph.applyPrimitives(op.primitives);
-  } catch {
-    graph.applyPrimitives(op.primitives, { restoring: true });
-  }
+  // Each record it wrote says when, and who, as it did when the op was made (`touched.ts`).
+  graph.touch(op);
 }
 
 /**

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { bindPerson, hostSeat, mergePerson, mayBind } from "../../src/binding.js";
 import { checkApp, compileDocument } from "../../src/check.js";
 import { editDocument } from "../../src/document/index.js";
+import { untouched } from "../../src/graph/touched.js";
 import { ActRefusal, bindSchema, createSchema, defineApp, defineNode, BIND_OWN_RECORD, nameOfAuthor, nodeRef, PermissionDeniedError, Store, z, type AnySchema, type Policy, type Principal } from "../../src/index.js";
 
 /**
@@ -98,7 +99,8 @@ describe("the host merges a member's own record into the person entered for them
 
   it("is one change, which undo takes back whole: the own record, its links, who did what and the binding", () => {
     const { store, gave } = joinedTwice();
-    const before = { nodes: store.graph.allNodes({ archived: "all" }), edges: edgesOf(store) };
+    // The undo stamps what it put back with its own touch; every other field is as it was.
+    const before = { nodes: store.graph.allNodes({ archived: "all" }).map(untouched), edges: edgesOf(store) };
     const merged = mergePerson(store, bud, "participant:bud", { author: host });
     expect(merged.ops).toHaveLength(1);
     expect(merged.ops[0]).toMatchObject({ mutation: { name: BIND_OWN_RECORD }, author: { kind: "system", id: "host" } });
@@ -107,7 +109,7 @@ describe("the host merges a member's own record into the person entered for them
     expect(store.personOf(bud)).toBe("acct-bud");
     expect(store.graph.getNode("acct-bud")).not.toHaveProperty("$archived");
     expect(store.graph.getNode("participant:bud")).not.toHaveProperty("$seat");
-    expect({ nodes: store.graph.allNodes({ archived: "all" }), edges: edgesOf(store) }).toEqual(before);
+    expect({ nodes: store.graph.allNodes({ archived: "all" }).map(untouched), edges: edgesOf(store) }).toEqual(before);
     expect(saidAs(store, organizer, gave)).toMatchObject({ id: "acct-bud" });
     expect(mayBind(store, "participant:bud")).toEqual({ ok: true });
   });

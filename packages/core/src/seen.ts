@@ -15,6 +15,16 @@ import { presentOf } from "./seat-of.js";
 import { FIELD_SIGHT, fieldsJudged, partialSight, recordsOf, sees, type Judged, type Records } from "./permissions/sight.js";
 import type { Principal } from "./permissions/types.js";
 import { diffSnapshots } from "./graph/diff.js";
+import { CREATED_AT, foldedTouches, isTouchedField, TOUCHED_FIELDS, touchedOf, UPDATED_AT, withTouches, type Touched } from "./graph/touched.js";
+
+/** When a seat's log, as served, says each record was made and touched (`seatView`), worked out once for each moment asked of it. */
+const TOLD = new WeakMap<readonly Operation[], Map<number, ReadonlyMap<string, Touched>>>();
+
+/** When a record was made and last touched, and not by whom: what the epoch a seat's log begins at tells it, its makers being no part of its log. */
+const atsOf = (node: object): Touched => {
+  const { createdAt, updatedAt } = touchedOf(node);
+  return { ...(createdAt !== undefined ? { [CREATED_AT]: createdAt } : {}), ...(updatedAt !== undefined ? { [UPDATED_AT]: updatedAt } : {}) };
+};
 import { nodeRefKinds } from "./mutations/node-ref.js";
 import { PUBLISHING, readsPublished, type Publishing } from "./publish.js";
 
@@ -241,13 +251,16 @@ function lensFor(store: Judged, principal: Principal): { readonly lens: SeatLens
       if (!sees(node.id)) return undefined;
       let without: string[] | undefined;
       for (const field in node) {
-        if (!Object.hasOwn(node, field) || field === "id" || field === "kind" || !namesUnseen(node[field], sees)) continue;
+        // The four are taken off below, whatever they name: never a reason to keep a record from the seat.
+        if (!Object.hasOwn(node, field) || field === "id" || field === "kind" || isTouchedField(field) || !namesUnseen(node[field], sees)) continue;
         if (actor !== undefined && writer(field) === actor) continue;
         if (!optional(node.kind, field)) return undefined;
         (without ??= []).push(field);
       }
       // The seat a person is bound to, unless it is this seat's own or this seat binds people.
       if (Object.hasOwn(node, PERSON_SEAT) && unseated(node, keepsSeat) !== node) (without ??= []).push(PERSON_SEAT);
+      // Nor when it was made and touched, and by whom, as the store says it: a seat is told them by its own log (`seatView`), not by what the store holds.
+      for (const field of TOUCHED_FIELDS) if (Object.hasOwn(node, field) && !without?.includes(field)) (without ??= []).push(field);
       if (!without) return node;
       const key = without.join("\u0000");
       const held = cleared.get(node);
@@ -819,6 +832,65 @@ export function seatView<T extends Viewed>(store: T, principal: Principal): T {
 
   const full = store.graph;
   /*
+   * WHEN EACH RECORD WAS MADE AND TOUCHED, AND BY WHOM, AS THIS SEAT'S OWN
+   * LOG SAYS IT (`touched.ts`): the four folded from the ops it is served,
+   * onto the epoch its log begins at — the time of an op it is served
+   * withheld, never its author, and nothing of a change it was served none
+   * of — so a copy that folds what it is served says what it is served. A
+   * record's own say of them is not the seat's: it was stamped by ops the
+   * seat may not have been told of, and by accounts it may not be told.
+   */
+  // A seat bound to a person is that person, as the store stamps it (`Graph.touch`): the record, never the account.
+  const boundOf = (seat: string): string | undefined => (full as { personBoundTo?(seat: string): string | undefined }).personBoundTo?.(seat) ?? everBound(store as never).get(seat);
+  const toldNodes = new WeakMap<object, { readonly told: Touched | undefined; readonly node: unknown }>();
+  /** What the log says at its head, folded on from where it was last read while the log only grew. */
+  let head: { readonly start: number; readonly ops: readonly Operation[]; readonly told: Map<string, Touched>; readonly at: unknown } | undefined;
+  // Where the store stands: nothing a seat is served moves but by an op.
+  const standing = (): unknown => (store as { readonly version?: unknown }).version ?? (store.log as { readonly length?: number }).length ?? store.log.all().length;
+  const toldAt = (seq = Number.POSITIVE_INFINITY): ReadonlyMap<string, Touched> => {
+    const start = (store.log as { readonly horizon?: number }).horizon ?? 0;
+    // Read once a moment, not once a record.
+    if (seq === Number.POSITIVE_INFINITY && head?.start === start && head.at === standing()) return head.told;
+    const all = ops();
+    if (seq === Number.POSITIVE_INFINITY && head?.start === start && head.ops === all) return (head = { ...head, at: standing() }).told;
+    // Grown, and every op it was read from served as it was: what the new ones say, folded on.
+    const was = head?.ops;
+    if (seq === Number.POSITIVE_INFINITY && head?.start === start && was !== undefined && was.length < all.length && was.every((op, at) => all[at] === op)) {
+      foldedTouches([], all.slice(was.length), Number.POSITIVE_INFINITY, head.told, boundOf);
+      head = { start, ops: all, told: head.told, at: standing() };
+      return head.told;
+    }
+    let held = TOLD.get(all);
+    if (!held) TOLD.set(all, (held = new Map()));
+    let told = held.get(seq);
+    if (!told) {
+      const first = store.log.epochs().find((epoch) => epoch.seq === start);
+      held.set(seq, (told = foldedTouches((first?.base.nodes ?? []).map((node) => withTouches(node, atsOf(node))), all, seq, undefined, boundOf)));
+    }
+    if (seq === Number.POSITIVE_INFINITY) head = { start, ops: all, told: new Map(told), at: standing() };
+    return seq === Number.POSITIVE_INFINITY ? head!.told : told;
+  };
+  /** A record as the seat is served it, its four as its log says them and as its sight shows them. */
+  const touchedFor = <N>(seat: SeatLens, node: N | undefined, seq?: number): N | undefined => {
+    if (node === undefined) return undefined;
+    const record = node as unknown as AnyGraphNode;
+    const told = toldAt(seq).get(record.id);
+    let kept = toldNodes.get(record);
+    if (kept && kept.told === told) return kept.node as N;
+    const own = record as Record<string, unknown>;
+    const same = (shown: Readonly<Record<string, string>>) => TOUCHED_FIELDS.every((field) => own[field] === shown[field]);
+    // What it was served already says them, judged by its sight: the record itself, so a view read twice is equal by identity.
+    if (same((told ?? {}) as Record<string, string>)) {
+      toldNodes.set(record, { told, node: record });
+      return node;
+    }
+    const hidden = seat.kept?.(record);
+    const shown = Object.fromEntries(Object.entries(told ?? {}).filter(([field, value]) => !hidden?.(field) && !namesUnseen(value, seat.sees))) as Record<string, string>;
+    kept = { told, node: same(shown) ? record : withTouches(record, shown) };
+    toldNodes.set(record, kept);
+    return kept.node as N;
+  };
+  /*
    * WHAT THIS SEAT IS SERVED (FR-55): a record its sight reaches, with any
    * field that names one it may not see cleared — or, when that field is
    * one the record cannot do without, not the record at all.
@@ -830,7 +902,7 @@ export function seatView<T extends Viewed>(store: T, principal: Principal): T {
    * for that one reading, each id and record judged once in it.
    */
   const judging = (seat: SeatLens) => {
-    const served = <N>(node: N | undefined): N | undefined => (node === undefined ? undefined : (seat.served(node as never) as N | undefined));
+    const served = <N>(node: N | undefined): N | undefined => (node === undefined ? undefined : touchedFor(seat, seat.served(node as never) as N | undefined));
     const seenNode = (node: { id: string; kind: string } | undefined): boolean => served(node) !== undefined;
     const seenId = (id: string): boolean => seenNode(full.getNode(id) as never);
     const seenEdge = (edge: GraphEdge): boolean => seenId(edge.from) && seenId(edge.to) && !namesUnseen(edge, seat.sees);
@@ -843,7 +915,7 @@ export function seatView<T extends Viewed>(store: T, principal: Principal): T {
   const servedGraph = (snapshot: GraphSnapshot, seq: number): GraphSnapshot => {
     const writers = writersOf(store.log as never);
     const seat = lens.pin?.() ?? lens;
-    const nodes = snapshot.nodes.flatMap((node) => seat.servedWith(node, (field) => writers.writerAt(node.id, field, seq)) ?? []);
+    const nodes = snapshot.nodes.flatMap((node) => touchedFor(seat, seat.servedWith(node, (field) => writers.writerAt(node.id, field, seq)), seq) ?? []);
     const kept = new Set(nodes.map((node) => node.id));
     return { nodes, edges: snapshot.edges.filter((edge) => kept.has(edge.from) && kept.has(edge.to) && !namesUnseen(edge, seat.sees)) };
   };

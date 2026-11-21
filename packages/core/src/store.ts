@@ -5,6 +5,7 @@ import { Graph, GraphError, MissingRecordError } from "./graph/graph.js";
 import { resolveModules, type ModuleMap, type ModuleProjection } from "./modules.js";
 import { diffSnapshots, diffTouched, EMPTY_DIFF, isEmptyDiff, type GraphDiff } from "./graph/diff.js";
 import { normalize, writesOf, type Primitive } from "./graph/primitives.js";
+import { untouched } from "./graph/touched.js";
 import { keepLinked, keepsLinked } from "./keep-linked.js";
 import { bareOp, inverseOf } from "./ops/inverse.js";
 import { LabelIndex, refusalFor, type RefCandidate, type RefResolution } from "./labels.js";
@@ -390,6 +391,9 @@ const given = <K extends string, V>(key: K, value: V | undefined) => (value === 
 /** A call's arguments written out the same however their keys were ordered: what says two calls ask the same. */
 const canonicalArgs = (value: unknown): string =>
   JSON.stringify(value, (_, one: unknown) => (one && typeof one === "object" && !Array.isArray(one) ? Object.fromEntries(Object.keys(one).sort().map((key) => [key, (one as Record<string, unknown>)[key]])) : one)) ?? "";
+
+/** A record an act adds, without what it said of when it was made and touched: the op that lands it says that (`touched.ts`). */
+const madeBare = (primitive: Primitive): Primitive => (primitive.op === "add-node" ? { ...primitive, node: untouched(primitive.node) } : primitive);
 
 const HUMAN: Author = { kind: "human" };
 /** The host itself, which sees what it keeps: the principal a question is asked as when no seat is named. */
@@ -779,6 +783,8 @@ export class Store<S extends AnySchema> {
       this.graph = options.snapshot
         ? Graph.from(options.schema, options.snapshot, validate)
         : this.log.fold(options.schema, { ...validate, ...(last ? { from: last } : {}) });
+      // A graph stored before records kept when they were touched says so from the ops its log still holds, and no more (`touched.ts`).
+      if (options.snapshot) this.graph.touchFrom(this.log.all());
     } else {
       this.log = OperationLog.from(
         [],
@@ -1911,6 +1917,7 @@ export class Store<S extends AnySchema> {
     if (made) {
       twin.graph.applyPrimitives(made.primitives);
       twin.log.append(made);
+      twin.graph.touch(made);
     }
     this.personMade = { key, twin };
     return twin;
@@ -2278,6 +2285,7 @@ export class Store<S extends AnySchema> {
       if (person) {
         this.graph.applyPrimitives(person.primitives);
         this.log.append(person);
+        this.graph.touch(person);
         ops.push(person);
         allPrimitives.push(...person.primitives);
         writes.add(person.writes[0]!);
@@ -2339,7 +2347,8 @@ export class Store<S extends AnySchema> {
          * to one of those goes back to its source — in this op, so one undo
          * takes both back. Applied to the graph as they are worked out.
          */
-        const made = this.asSplices(compiled.primitives, options.base).map(normalize);
+        // A record an act adds is made by this op, whatever it said of its making (`touched.ts`).
+        const made = this.asSplices(compiled.primitives, options.base).map(normalize).map(madeBare);
         this.graph.applyPrimitives(made);
         const following = keepsLinked(this.schema) ? keepLinked(this.schema, this.graph, made, { mayWriteBack: this.writesBack(as as Principal) }).map(normalize) : [];
         madeIds[at] =compiled.primitives.find((primitive): primitive is Extract<Primitive, { op: "add-node" }> => primitive.op === "add-node")?.node.id;
@@ -2374,6 +2383,8 @@ export class Store<S extends AnySchema> {
           ...given("lineage", lined),
         };
         this.log.append(op);
+        // Every record it wrote says when, and who (`touched.ts`).
+        this.graph.touch(op);
         ops.push(op);
         allPrimitives.push(...op.primitives);
         for (const id of op.reads) reads.add(id);
@@ -2477,6 +2488,8 @@ export class Store<S extends AnySchema> {
     for (const [index, op] of fresh.entries()) {
       const here = bareOp({ ...op, seq: seq + index });
       this.log.append(here);
+      // Stamped as it was made, applied here before or not: a client's own stamp gives way to the server's.
+      this.graph.touch(here);
       landed.push(here);
     }
     this.countPast(landed);
@@ -2540,7 +2553,10 @@ export class Store<S extends AnySchema> {
         throw new ReceiveError(op, error);
       }
     }
-    for (const op of built) this.log.append(op);
+    for (const op of built) {
+      this.log.append(op);
+      this.graph.touch(op);
+    }
     // An id or batch the host named is the log's now: the next one minted counts past it (FR-204).
     this.countPast(built);
     for (const op of built) tellTheWatchOfAnAuthor(op.author.id);
@@ -2593,6 +2609,7 @@ export class Store<S extends AnySchema> {
         ...given("lineage", lineage),
       };
       this.log.append(op);
+      this.graph.touch(op);
       ops.push(op);
       tellTheWatchOfAnAuthor(author.id);
     }
@@ -2751,6 +2768,8 @@ export class Store<S extends AnySchema> {
       };
       this.graph.applyPrimitives(op.primitives, { restoring: putsBack(target) });
       this.log.append(op);
+      // An undo touches what it puts back: now, by whoever took it back.
+      this.graph.touch(op);
       ops.push(op);
     }
 
@@ -3173,8 +3192,14 @@ export class Store<S extends AnySchema> {
     try {
       // 1. Back to the confirmed prefix, putting back exactly what each op took.
       // In place: what a pending op took out goes back where it stood, or this copy and the server's disagree on order.
-      for (const op of [...tail].reverse()) this.graph.applyPrimitives(inverseOf(op), { restoring: true, inPlace: true });
+      // Each taken back with its touch (`touched.ts`): what a record said before it, where the graph remembers; the rest by the log.
+      const forgotten = new Set<string>();
+      for (const op of [...tail].reverse()) {
+        this.graph.applyPrimitives(inverseOf(op), { restoring: true, inPlace: true });
+        for (const id of this.graph.untouch(op)) forgotten.add(id);
+      }
       this.log.truncate(cut);
+      if (forgotten.size > 0) this.graph.retouch(forgotten, this.log.all());
 
       // 2. What the server says, in its order.
       const known = new Set(this.log.all().map((op) => op.id));
@@ -3187,6 +3212,7 @@ export class Store<S extends AnySchema> {
         }
         const here = bareOp({ ...op, seq: this.log.length });
         this.log.append(here);
+        this.graph.touch(here);
         known.add(op.id);
         landed.push(here);
       }

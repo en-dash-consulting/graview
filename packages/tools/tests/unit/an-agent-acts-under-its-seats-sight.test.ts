@@ -30,6 +30,8 @@ const alike = (text: string) =>
     .replace(/(batch|op):[a-z0-9:]+/g, "$1:minted")
     .replace(/"at":"[^"]*"/g, '"at":"now"')
     .replace(/\\"at\\":\\"[^"\\]*\\"/g, '\\"at\\":\\"now\\"')
+    // When a record was made and last touched is each world's own clock, however deep it is quoted.
+    .replace(/(createdAt|updatedAt)(\\*"):\s*(\\*")[^"\\]*\3/g, "$1$2:$3now$3")
     .replace(/(\\?)"ms\1":\s*[\d.]+/g, '$1"ms$1":0');
 
 async function toldThroughTools(store: Store<AnySchema>, seat: Principal): Promise<string[]> {

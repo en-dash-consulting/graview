@@ -68,6 +68,8 @@ export function filterKeysOf(schema: AnySchema, kind: string, through: boolean):
     const options = optionsOf(def);
     out.push({ key: field, label: words(field), ...(options ? { options } : {}) });
   }
+  // When each record last changed and was added, which every record keeps (`createdAt`, `updatedAt`), as the kind's list offers them.
+  out.push({ key: "updatedAt", label: "Last changed" }, { key: "createdAt", label: "Added" });
   const relations = new Map<string, readonly string[]>();
   for (const [edge, declared] of Object.entries(definition.edges ?? {})) relations.set(edge, declared.to === "*" ? [] : [...declared.to]);
   for (const other of schema.definitions) {

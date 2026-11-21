@@ -4,6 +4,7 @@ import { tellApart } from "./schema/reading.js";
 import { matchNode, parseQuery } from "./search.js";
 import { dayAsRead, isoToday, monthAsRead, PARTIAL_DAY } from "./days.js";
 import { dateOn } from "./repeat.js";
+import { TOUCHED_MOMENTS } from "./graph/touched.js";
 import {
   arrangeable,
   asRecord,
@@ -14,6 +15,8 @@ import {
   fields,
   fieldType,
   readingOf,
+  touchedDay,
+  TOUCHED_OFFERS,
   type ArrangeContext,
   type Arrangeable,
   type Arranged,
@@ -111,6 +114,8 @@ const compare = (a: unknown, b: unknown): number => {
 /** What a node sorts by, for a key: its label, a field, or its first far end's label. */
 function sortValue(ctx: ArrangeContext, node: ArrangeNode, by: string): unknown {
   if (by === "label") return labelFor(ctx, node);
+  // Last changed or made (`touched.ts`): instants, which sort as they are written.
+  if (TOUCHED_MOMENTS.includes(by)) return fields(node)[by];
   const definition = ctx.schema.tryDefinition(node.kind);
   if (definition && by in ((definition.fields.shape ?? {}) as Record<string, unknown>)) return dateOn(fields(node), by, ctx.today ?? isoToday(ctx.timeZone));
   // A computed field (a rank the kind works out), where the caller can work it out.
@@ -239,9 +244,10 @@ export function arrange<N extends ArrangeNode>(nodes: readonly N[], arrangement:
   const first = ordered[0];
   const definition = first ? ctx.schema.tryDefinition(first.kind) : undefined;
   const shape = (definition?.fields.shape ?? {}) as Record<string, unknown>;
-  const reading = definition ? readingOf(definition, grouping.by) : humanizeField(grouping.by);
-  const isField = grouping.by in shape;
-  const type = isField ? fieldType(shape[grouping.by]) : undefined;
+  const touched = TOUCHED_OFFERS.find((offer) => offer.key === grouping.by);
+  const reading = touched ? touched.label : definition ? readingOf(definition, grouping.by) : humanizeField(grouping.by);
+  const isField = grouping.by in shape || touched !== undefined;
+  const type = touched ? "date" : isField ? fieldType(shape[grouping.by]) : undefined;
   const edgeReading = edgesOf(ctx.schema, first?.kind ?? "").find((offer) => offer.key === grouping.by)?.label;
   // "No due date" for a field; an edge reads as a sentence, so "Without the list it is on".
   const none = isField
@@ -261,7 +267,8 @@ export function arrange<N extends ArrangeNode>(nodes: readonly N[], arrangement:
       );
   for (const node of ordered) {
     if (isField) {
-      const value = dateOn(fields(node), grouping.by, ctx.today ?? isoToday(ctx.timeZone));
+      // Last changed or made: by the day it was on the app's clock.
+      const value = touched ? touchedDay(node, grouping.by, ctx.timeZone) : dateOn(fields(node), grouping.by, ctx.today ?? isoToday(ctx.timeZone));
       if (value === undefined || value === null || value === "") {
         put("", none, node);
       } else if (type === "date") {

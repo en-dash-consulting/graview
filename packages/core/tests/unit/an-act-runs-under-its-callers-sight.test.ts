@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { compileDocument } from "../../src/check.js";
 import { refusalOf, Store, type AnySchema, type GraviewApp, type MutationCall, type Principal } from "../../src/index.js";
 import { answerSeenBy } from "../../src/seat.js";
+import { untouched } from "../../src/graph/touched.js";
 import { guest, keeper, MUTATIONS, policy, said, schema, world } from "../support/hidden-holds.js";
 
 /**
@@ -30,7 +31,7 @@ function told(store: Store<AnySchema>, call: MutationCall, author: Principal): s
     answer = { refused: refusalOf(error) };
   }
   const after = { snapshot: store.seenBy(author).snapshot(), problems: store.seenBy(author).violations() };
-  return JSON.stringify({ answer, after }).replace(/(batch|op):[a-z0-9:]+/g, "$1:minted").replace(/"at":"[^"]*"/g, '"at":"now"');
+  return JSON.stringify({ answer, after }).replace(/(batch|op):[a-z0-9:]+/g, "$1:minted").replace(/"(at|createdAt|updatedAt)":"[^"]*"/g, '"$1":"now"');
 }
 
 const CALLS: readonly MutationCall[] = [
@@ -94,7 +95,7 @@ describe("an act runs under its caller's sight", () => {
     const undoneBy = (held: boolean) => {
       const one = world(held);
       one.undo(one.apply(CLOSE, { author: guest }).batch, { author: keeper });
-      return JSON.stringify(one.seenBy(guest).log.all()).replace(/(batch|op|undo):[a-z0-9:]+/g, "$1:minted").replace(/"at":"[^"]*"/g, '"at":"now"');
+      return JSON.stringify(one.seenBy(guest).log.all()).replace(/(batch|op|undo):[a-z0-9:]+/g, "$1:minted").replace(/"(at|createdAt|updatedAt)":"[^"]*"/g, '"$1":"now"');
     };
     expect(undoneBy(true)).toBe(undoneBy(false));
   });
@@ -122,7 +123,7 @@ describe("an act runs under its caller's sight", () => {
     const done = store.apply(CALLS[0]!, { author: guest });
     expect(store.graph.getNode("room:blue")).toMatchObject({ booked: true, note: "hold:freya" });
     store.undo(done.batch, { author: guest });
-    expect(store.graph.getNode("room:blue")).toEqual({ id: "room:blue", kind: "room", name: "Blue", note: "hold:freya" });
+    expect(untouched(store.graph.getNode("room:blue")!)).toEqual({ id: "room:blue", kind: "room", name: "Blue", note: "hold:freya" });
   });
 
   it("never mints an id a record it may not see holds", () => {

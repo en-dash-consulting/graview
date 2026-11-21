@@ -4,6 +4,7 @@
  * split the page's first chunks differently, a third of a kilobyte more up
  * front (docs/hosted-page.md).
  */
+import { TOUCHED_FIELDS } from "../graph/touched.js";
 import {
   createSchema,
   defineInvariant,
@@ -413,7 +414,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     // What cites each cited field (Roadmap f-field-cites-marker), which `uncited(…)` reads.
     const cites = new Map(Object.entries(spec.fields).flatMap(([name, f]) => (f.cites ? [[name, f.cites] as const] : [])));
     shapes.set(kind, {
-      fields: new Set([...Object.keys(spec.fields), ...linked.keys()]),
+      fields: new Set([...Object.keys(spec.fields), ...linked.keys(), ...TOUCHED_FIELDS]),
       edges: new Map(Object.entries(localEdges(spec.edges)).map(([name, e]) => [name, e.cardinality ?? "many"])),
       ...(computed ? { computed: new Map(computed) } : {}),
       ...(linked.size > 0 ? { linked } : {}),

@@ -1,4 +1,5 @@
 import { UNSET, writesOf, type Primitive } from "../graph/primitives.js";
+import { untouchedPrimitive } from "../graph/touched.js";
 import type { AnyGraphNode, GraphEdge } from "../graph/types.js";
 import { actingAs } from "../permissions/policy.js";
 import type { Principal } from "../permissions/types.js";
@@ -219,7 +220,20 @@ export function redact(ops: readonly Operation[], seeing: SeatLens | ((id: strin
   if (given.hides?.() === false) return [...ops];
   const lens = given.pin?.() ?? given;
   // And no seat a person is bound to, in any op: that is the host's alone (Roadmap f-invite-binds-existing-person).
-  return undoesFollow(judgedOps(ops, lens), lens).map((op) => unseatedOp(op, lens.keepsSeat));
+  return undoesFollow(judgedOps(ops, lens), lens).map((op) => untouchedOp(unseatedOp(op, lens.keepsSeat)));
+}
+
+/**
+ * NOR WHEN A RECORD WAS MADE OR TOUCHED, AND BY WHOM, AS A PAYLOAD CARRIED
+ * IT (`touched.ts`): a removed record's, or one put back. A seat is told the
+ * four by its log's ops as each lands — the time of a withheld one, never
+ * its author — so what it folds is what it is served.
+ */
+function untouchedOp(op: Operation): Operation {
+  const primitives = op.primitives.map(untouchedPrimitive);
+  const inverse = op.inverse?.map(untouchedPrimitive);
+  const same = primitives.every((one, at) => one === op.primitives[at]) && (inverse === undefined || inverse.every((one, at) => one === op.inverse![at]));
+  return same ? op : { ...op, primitives, ...(inverse ? { inverse } : {}) };
 }
 
 /**

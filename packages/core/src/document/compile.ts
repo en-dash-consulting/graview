@@ -1,3 +1,4 @@
+import { isTouchedField, TOUCHED_FIELDS } from "../graph/touched.js";
 import type { FarAppResolver } from "../workflows/far.js";
 import type { HostView } from "../views/types.js";
 import { derivedActOf } from "../mutations/derived-names.js";
@@ -186,7 +187,7 @@ export function kindShapes(document: GraviewDocument): Map<string, KindShape> {
     // What cites each cited field (Roadmap f-field-cites-marker), which `uncited(…)` reads.
     const cites = new Map(Object.entries(spec.fields).flatMap(([name, field]) => (field.cites ? [[name, field.cites] as const] : [])));
     shapes.set(kind, {
-      fields: new Set([...Object.keys(spec.fields), ...linked.keys()]),
+      fields: new Set([...Object.keys(spec.fields), ...linked.keys(), ...TOUCHED_FIELDS]),
       edges: new Map(Object.entries(localEdges(spec.edges)).map(([name, e]) => [name, e.cardinality ?? "many"])),
       ...(computed ? { computed } : {}),
       ...(linked.size > 0 ? { linked } : {}),
@@ -280,6 +281,12 @@ function validate(document: GraviewDocument): Finding[] {
       if (!reachesAnotherApp(edge) && edge.to !== "*") for (const target of edge.to) if (!kinds.has(target)) findings.push(error("edge-target", `${at}.edges.${name}.to`, `"${target}" is not a kind this document declares`));
       if (spec.fields[name]) findings.push(error("edge-field-clash", `${at}.edges.${name}`, `"${name}" is both a field and a relation of ${kind}`, "rename one of them"));
     }
+    // When a record was made and last touched, and by whom, is every record's own (`touched.ts`): no kind declares a second thing under one of those names.
+    for (const [part, names] of [["fields", Object.keys(spec.fields)], ["edges", Object.keys(spec.edges ?? {})], ["computed", Object.keys(spec.computed ?? {})]] as const) {
+      for (const name of names.filter(isTouchedField)) {
+        findings.push(error("touched-field-taken", `${at}.${part}.${name}`, `${kind} declares "${name}", which every record already keeps: when it was made and last touched, and by whom (createdAt, createdBy, updatedAt, updatedBy), written by the framework as each change lands`, `read the record's own ${name} wherever a field is read, and take the declared one out, or give it another name if it means something else`));
+      }
+    }
     if (spec.lifecycle && !spec.fields[spec.lifecycle.field]) findings.push(error("lifecycle-field", `${at}.lifecycle.field`, `${kind} has no field "${spec.lifecycle.field}"`));
     // A glance may say a computed field: the surfaces that draw a glance work it out over the seat's graph (FR-83).
     const computedHere = (name: string) => spec.computed !== undefined && Object.hasOwn(spec.computed, name);
@@ -294,7 +301,7 @@ function validate(document: GraviewDocument): Finding[] {
       for (const part of parts ?? []) {
         if (!part.expr) continue;
         for (const name of analyzeExpr(part.expr).names) {
-          if (spec.fields[name]) continue;
+          if (spec.fields[name] || isTouchedField(name)) continue;
           // A computed field worked out from the record alone is said like a field; one that reads beyond it cannot be, with no graph in hand.
           if (computedHere(name)) {
             if (!workedOutAlone(spec, name)) findings.push(error("template-field", `${at}.${key}`, `${kind}'s ${name} is worked out from beyond the record, and a ${key} is said with no graph to read`, `show it in a view instead, or name a computed field worked out from ${kind}'s own fields`));
@@ -410,7 +417,7 @@ function validate(document: GraviewDocument): Finding[] {
       const shape = analyzeExpr(expr);
       for (const n of shape.names) {
         if (rule.over === "graph") findings.push(error("rule-name", `${at}.${key}`, `"${n}" means nothing in a rule over the whole graph`, "name a kind in \"over\", or use all('kind')"));
-        else if (spec && !spec.fields[n] && !spec.edges?.[n] && spec.computed?.[n] === undefined) {
+        else if (spec && !spec.fields[n] && !isTouchedField(n) && !spec.edges?.[n] && spec.computed?.[n] === undefined) {
           const hyphenated = Object.keys(spec.edges ?? {}).find((e) => e.includes("-") && e.split("-").includes(n));
           findings.push(error("rule-name", `${at}.${key}`, `${rule.over} has no field or relation called "${n}"`, hyphenated ? `"${hyphenated}" reads as a subtraction in a rule; rename the relation to one camelCase word, like "${hyphenated.replace(/-([a-z0-9])/g, (_, c: string) => c.toUpperCase())}"` : undefined));
         }

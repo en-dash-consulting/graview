@@ -4,6 +4,11 @@ import { z } from "zod";
 import "../../src/field-sight.js";
 import { createSchema, defineNode, logSeenBy, Store, type AnySchema, type Epoch, type Principal } from "../../src/index.js";
 import { canonical, leaked, MUTATIONS, policyOf, rng, schemaOf, storeAt, unsaidUnseen, world, type World } from "../support/unseen-worlds.js";
+import { untouched } from "../../src/graph/touched.js";
+import type { GraphSnapshot } from "../../src/index.js";
+
+/** A seat's graph as `canonical` says it, without when each record was made and touched: a compacted store tells a seat those from its own log onto the checkpoint, which says when and never by whom, so they are not the never-compacted store's. */
+const fields = (snapshot: GraphSnapshot) => canonical({ ...snapshot, nodes: snapshot.nodes.map((node) => untouched(node)) });
 
 /**
  * A COMPACTED STORE SERVES NO UNSEEN ID (FR-199).
@@ -67,7 +72,7 @@ describe("a compacted store serves no unseen id", () => {
       // What a seat kept from anything is served of an epoch is its graph and its makers: never the store's own record of what was behind it.
       if (w.sights) for (const epoch of served.epochs) for (const kept of ["removed", "writers", "declines"]) expect(Object.keys(epoch), `seed ${seed}`).not.toContain(kept);
       // The same view the never-compacted store serves the seat: its graph, and its log from the horizon on.
-      if (canonical(served.snapshot) !== canonical(whole.seenBy(w.viewer).snapshot())) differing.push(`seed ${seed}: the seat's graph`);
+      if (fields(served.snapshot) !== fields(whole.seenBy(w.viewer).snapshot())) differing.push(`seed ${seed}: the seat's graph`);
       else if (!isDeepStrictEqual(served.log, logSeenBy(whole, w.viewer).slice(horizon))) differing.push(`seed ${seed}: the seat's log`);
     }
     expect(leaking).toEqual([]);
@@ -106,7 +111,7 @@ describe("a compacted store serves no unseen id", () => {
       expect(canonical(mended.base), `seed ${seed}: the same graph`).toBe(canonical(old!.base));
       const opened = new Store<AnySchema>({ schema: schemaOf(w), mutations: MUTATIONS as never, policy: policyOf(w), log: s.log.all(), epochs: [mended, ...after] });
       const never = storeAt(w, w.ops.length);
-      expect(canonical(opened.seenBy(w.viewer).snapshot()), `seed ${seed}: the seat's graph`).toBe(canonical(never.seenBy(w.viewer).snapshot()));
+      expect(fields(opened.seenBy(w.viewer).snapshot()), `seed ${seed}: the seat's graph`).toBe(fields(never.seenBy(w.viewer).snapshot()));
       expect(isDeepStrictEqual(logSeenBy(opened, w.viewer), logSeenBy(never, w.viewer).slice(opened.log.horizon)), `seed ${seed}: the seat's log`).toBe(true);
     }
   }, 300_000);
@@ -142,8 +147,8 @@ describe("a compacted store serves no unseen id", () => {
     expect(opened.log.horizon).toBe(2);
     const served = opened.seenBy(viewer).snapshot();
     expect(JSON.stringify(served)).not.toContain("secret:s0");
-    expect(served.nodes).toContainEqual({ id: "pub:p0", kind: "pub", title: "Seeded, renamed" });
-    expect(canonical(served)).toBe(canonical(never.seenBy(viewer).snapshot()));
+    expect(served.nodes.map((node) => untouched(node))).toContainEqual({ id: "pub:p0", kind: "pub", title: "Seeded, renamed" });
+    expect(fields(served)).toBe(fields(never.seenBy(viewer).snapshot()));
     // The store itself still holds the field: only what the seat is served goes without it.
     expect(opened.graph.getNode("pub:p0")).toMatchObject({ ref: "secret:s0" });
 
