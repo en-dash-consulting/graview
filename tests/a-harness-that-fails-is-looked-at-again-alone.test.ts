@@ -1,9 +1,9 @@
-import { mkdtempSync, readFileSync, mkdirSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 // @ts-expect-error — a plain .mjs module, typed by its use here.
-import { judge, lookTwice, missedClaims, missedOf, recordFlakes } from "../scripts/lib/second-look.mjs";
+import { judge, keepFirstLook, lookTwice, missedClaims, missedOf, recordFlakes } from "../scripts/lib/second-look.mjs";
 
 /** A cell of the engine matrix (scripts/verify-engines.mjs) whose looks answer in turn. */
 const answering = (...looks: Array<Record<string, unknown>>) => {
@@ -65,6 +65,42 @@ describe("a harness that fails is looked at again, alone", () => {
 
   it("names the claims a harness printed as FAIL lines, as one-face prints them", () => {
     expect(missedClaims("ok   theFaceOffersNoSwitch\nFAIL choosingAnythingAtCityLandsAtNearbyAndStays\nFAIL noPageThrew\nwrote docs/one-face.json\n")).toEqual(["choosingAnythingAtCityLandsAtNearbyAndStays", "noPageThrew"]);
+  });
+
+  it("keeps the first look's verdict and frames beside the second's, and only that harness's", () => {
+    const root = mkdtempSync(join(tmpdir(), "first-look-"));
+    mkdirSync(join(root, "docs/one-face"), { recursive: true });
+    mkdirSync(join(root, "docs/watch"), { recursive: true });
+    mkdirSync(join(root, "docs/first-look/one-face"), { recursive: true });
+    // An earlier run's first look of one-face, and a frame of it this run never wrote.
+    writeFileSync(join(root, "docs/first-look/one-face/old-strip.png"), "earlier");
+    const began = new Date(Date.now() - 1000).toISOString();
+    const firstVerdict = { checks: { duringAPinchThatPansEveryBoardAndNameStaysFastenedToItsDistrictEveryFrame: { ok: false, held: [{ worst: 18.9 }] } }, ok: false };
+    writeFileSync(join(root, "docs/one-face.json"), JSON.stringify(firstVerdict));
+    writeFileSync(join(root, "docs/one-face/phone-dark.png"), "first look's strip");
+    writeFileSync(join(root, "docs/watch/verify-one-face.json"), "{}");
+    // Another harness's files, written at the same time beside it.
+    writeFileSync(join(root, "docs/embed-one-face.json"), "{}");
+    writeFileSync(join(root, "docs/one-face-elsewhere.json"), "{}");
+
+    const kept = keepFirstLook(root, { name: "one-face", file: "verify-one-face.mjs", began });
+    expect(kept.sort()).toEqual(["docs/first-look/one-face.json", "docs/first-look/one-face/phone-dark.png", "docs/first-look/watch/verify-one-face.json"]);
+    expect(existsSync(join(root, "docs/first-look/one-face/old-strip.png"))).toBe(false);
+
+    // The second look writes over its own paths, and the first stays beside it.
+    writeFileSync(join(root, "docs/one-face.json"), JSON.stringify({ ok: true }));
+    writeFileSync(join(root, "docs/one-face/phone-dark.png"), "second look's strip");
+    expect(JSON.parse(readFileSync(join(root, "docs/first-look/one-face.json"), "utf8"))).toEqual(firstVerdict);
+    expect(readFileSync(join(root, "docs/first-look/one-face/phone-dark.png"), "utf8")).toBe("first look's strip");
+    expect(JSON.parse(readFileSync(join(root, "docs/one-face.json"), "utf8"))).toEqual({ ok: true });
+  });
+
+  it("keeps the first look of a harness whose verdict is named otherwise than its script (pages writes pages-face)", () => {
+    const root = mkdtempSync(join(tmpdir(), "first-look-pages-"));
+    mkdirSync(join(root, "docs"), { recursive: true });
+    const began = new Date(Date.now() - 1000).toISOString();
+    writeFileSync(join(root, "docs/pages-face.json"), JSON.stringify({ ok: false }));
+    expect(keepFirstLook(root, { name: "pages", file: "verify-pages.mjs", began })).toEqual(["docs/first-look/pages-face.json"]);
   });
 
   it("writes each flake down, newest first, with the commit and the renderer it flaked on", () => {

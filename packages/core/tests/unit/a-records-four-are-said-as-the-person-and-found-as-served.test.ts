@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import "../../src/field-sight.js";
 import { bindPerson, hostSeat, unbindPerson } from "../../src/binding.js";
+import { evaluateExpr, parseExpr } from "../../src/document/index.js";
+import { shapesOfSchema } from "../../src/document/rules.js";
 import { BIND_PERSON, bindSchema, createSchema, defineNode, Store, touchedOf, type AnySchema, type Policy, type Principal } from "../../src/index.js";
 
 const clock = (start = Date.UTC(2026, 10, 20, 12, 0)) => { let at = start; return () => new Date((at += 60_000)).toISOString(); };
@@ -233,6 +235,21 @@ describe("a seat told none of the four cannot find records by them", () => {
     // Nor is it offered them.
     expect(arrangeable(schema, "task", { touched: offersTouches(store.seenBy(gus)) }).filters.map((offer) => offer.key)).not.toContain("updatedAt");
     expect(arrangeable(schema, "task", { touched: offersTouches(store.seenBy(ann)) }).filters.map((offer) => offer.key)).toContain("updatedAt");
+  });
+});
+
+describe("the store's own reading compares who touched a record as the person", () => {
+  it("a rule over the store's graph reads a member bound since as their record, as `$me` names them", () => {
+    const store = home();
+    store.apply({ name: "edit-gift", args: { id: "gift:kite", title: "A red kite" } }, { author: bud });
+    bindPerson(store, bud, "participant:bud", { author: host });
+    const node = store.graph.getNode("gift:kite")!;
+    // The store keeps the seat, as an op's author is kept.
+    expect(touchedOf(node).updatedBy).toBe("acct-bud");
+    const read = (source: string) => evaluateExpr(parseExpr(source), { graph: store.graph as never, subject: node as never, kinds: shapesOfSchema(family) });
+    expect(read("updatedBy == 'participant:bud'")).toBe(true);
+    expect(read("createdBy")).toBe(null);
+    expect(read("updatedBy")).toBe("participant:bud");
   });
 });
 

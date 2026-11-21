@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.2.9`](https://graview.dev/docs/releases.html#v0-2-9)
 - [`0.2.8`](https://graview.dev/docs/releases.html#v0-2-8)
 - [`0.2.7`](https://graview.dev/docs/releases.html#v0-2-7)
 - [`0.2.6`](https://graview.dev/docs/releases.html#v0-2-6)
@@ -85,9 +86,23 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
-## 0.2.8
+## 0.2.9
 
 Published November 21, 2026 · the current version
+
+The one face holds a pinch on a machine four times slower: a line stays on its building at Nearby, and a pan straight after a pinch keeps the boards on their districts.
+
+- **A pinch at Nearby keeps its lines on their buildings.** On a CPU four times slower than a laptop’s, the second turn of a pinch over the city drew a line’s end tens of pixels off its building until the hand let go. The Scene now keeps painted the offset a hand has made since it let go when the view takes the earlier one (`useWorldShift`), where it used to take the whole transform off until the hand moved again.
+- **A pan right after a pinch keeps the boards on their districts.** On a phone at the Map, a pinch let go of with a pan straight after slid every board 1 to 3 pixels a frame off its district. The one face now reads the city again when it is laid out anew under a hand’s offset, and carries what it drew along with what the districts say moved.
+- **A stalled frame no longer counts for the whole wait.** A stall counts as at most half the moment the hand must be off the city, so a zoom is never placed while the finger that starts the pan is still waiting to be heard.
+
+**Before you upgrade:** Breaks: nothing. The wire, stored formats, ops and primitives, derived tool names and their input schemas, and the declaration and check finding codes are unchanged, and nothing a host calls changes shape. The look: on the one face, a pinch at Nearby keeps its lines on their buildings, and a pan right after a pinch keeps the boards on their districts, on a CPU four times slower.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.2.9) · [The full changelog for 0.2.9](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#029)
+
+## 0.2.8
+
+Published November 21, 2026
 
 A view that reads a relation is refused until it is handed the kind at the other end, a move or a merge of a person says which links it left behind, and the one face holds on a machine four times slower.
 

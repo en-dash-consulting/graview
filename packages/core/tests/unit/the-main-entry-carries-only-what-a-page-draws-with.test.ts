@@ -122,10 +122,20 @@ const OFF_THE_PAGE = {
   },
 } as const;
 
+/**
+ * What an entry also says of the main entry's, by name, on purpose: the
+ * names every record keeps and the code a kind declaring one is refused
+ * with, beside the checker, for a host's release gate (Graview HQ
+ * feature:f-record-last-touched). Values, not code: nothing more loads.
+ */
+const ALSO_ON_THE_PAGE: Readonly<Record<string, readonly string[]>> = { "@graview/core/check": ["TOUCHED_FIELDS", "TOUCHED_FIELD_TAKEN"] };
+
 describe("the entries a hosted page imports up front", () => {
   for (const [subpath, { from, names }] of Object.entries(OFF_THE_PAGE)) {
     it(`leave what ${subpath} holds to ${subpath}: neither @graview/core nor @graview/core/document exports it`, () => {
-      expect(Object.keys(from).sort()).toEqual([...names].sort());
+      const also = ALSO_ON_THE_PAGE[subpath] ?? [];
+      for (const name of also) expect((from as Record<string, unknown>)[name], name).toBe((main as Record<string, unknown>)[name]);
+      expect(Object.keys(from).filter((name) => !also.includes(name)).sort()).toEqual([...names].sort());
       expect(names.filter((name) => name in main)).toEqual([]);
       expect(names.filter((name) => name in document)).toEqual([]);
     });

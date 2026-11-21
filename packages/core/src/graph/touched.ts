@@ -32,6 +32,9 @@ export const CREATED_BY = "createdBy";
 export const UPDATED_AT = "updatedAt";
 export const UPDATED_BY = "updatedBy";
 
+/** The code `graview check` refuses a kind with, that declares one of the four (`touched-field-taken`). */
+export const TOUCHED_FIELD_TAKEN = "touched-field-taken";
+
 /** The four, in the order they are said. */
 export const TOUCHED_FIELDS: readonly string[] = [CREATED_AT, CREATED_BY, UPDATED_AT, UPDATED_BY];
 const TOUCHED: ReadonlySet<string> = new Set(TOUCHED_FIELDS);

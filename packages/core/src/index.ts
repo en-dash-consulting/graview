@@ -82,7 +82,7 @@ export type {
 // Graph — the reactive in-memory model the framework owns.
 export { Graph, GraphError, MissingRecordError } from "./graph/graph.js";
 export { ARCHIVED, archivedFrom, isArchived, PERSON_SEAT } from "./graph/archived.js";
-export { CREATED_AT, CREATED_BY, isTouchedField, TOUCHED_FIELDS, touchedOf, toucherOf, untouched, UPDATED_AT, UPDATED_BY } from "./graph/touched.js";
+export { CREATED_AT, CREATED_BY, isTouchedField, TOUCHED_FIELD_TAKEN, TOUCHED_FIELDS, touchedOf, toucherOf, untouched, UPDATED_AT, UPDATED_BY } from "./graph/touched.js";
 export type { Touched } from "./graph/touched.js";
 export type { Archived, ArchivedOption } from "./graph/archived.js";
 export type { ApplyPrimitivesOptions, GraphListener, GraphOptions } from "./graph/graph.js";

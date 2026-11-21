@@ -549,6 +549,15 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
       });
       return { plots, buildings };
     };
+    /** What says the city was laid out again: its plots' own offset, which the view's pan and zoom write. */
+    const laidOut = (holder: HTMLElement): string => holder.querySelector(".graview-plots > g")?.getAttribute("transform") ?? "";
+    /** The offset the city was last read at. */
+    let laidAt = "";
+    /** The picture read with a hand's camera painted over it, back in the picture's own pixels. */
+    const beneath = (w: World, cam: Live): World => {
+      const back = (b: Box): Box => ({ x: (b.x - cam.x) / cam.s, y: (b.y - cam.y) / cam.s, width: b.width / cam.s, height: b.height / cam.s });
+      return { plots: new Map([...w.plots].map(([key, b]) => [key, back(b)] as const)), buildings: new Map([...w.buildings].map(([key, b]) => [key, back(b)] as const)) };
+    };
 
     /** What a page stands on in the picture as it is laid out. */
     const placeIn = (at: PageWhere, w: World) => ({
@@ -1015,6 +1024,20 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         const lost = now - lastTick - 1000 / 60;
         if (move) move.start += lost;
         if (settle) settle.start += lost;
+        /*
+         * And the moment the hand has been off the city: a stall is no time
+         * the hand was seen off it. A finger put down in a stall reaches the
+         * page only after the frame that ends it, so counted, a pinch let go
+         * of and a pan begun straight after (on a slow phone, as the zoom is
+         * laid out) had been "off a moment" before the pan's finger was
+         * heard: the zoom was placed for under it, and every board slid off
+         * its district as the ground began to move (one-face's
+         * `duringAPinchThatPansEveryBoardAndNameStaysFastenedToItsDistrictEveryFrame`,
+         * "a pinch let go of, and a pan straight after", under GRAVIEW_SLOW=4).
+         * One frame counts as half the moment at most, so no single stall
+         * lets go, and a machine whose every frame is slow lets go as soon.
+         */
+        handAt += Math.max(0, now - lastTick - LET_GO_MS / 2);
       }
       calmRun = lastTick > 0 && now - lastTick < 50 ? calmRun + 1 : 0;
       lastTick = now;
@@ -1080,6 +1103,35 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
           settle = null;
           heldHalfWay = true;
         }
+        /*
+         * THE CITY LAID OUT AGAIN UNDER THE HAND. On a slow machine the view
+         * takes a let-go zoom or pan after the next gesture has begun — a
+         * second turn of a pinch, a pan straight after one — and the city is
+         * laid out anew beneath the hand's offset. Drawn on through the city
+         * as last read, a line's end stood off its building and every board
+         * off its district until the hand let go (one-face's
+         * `atNearbyAPinchOverTheCityZoomsItAndThePanelAndTheLevelStay` and
+         * `duringAPinchThatPansEveryBoardAndNameStaysFastenedToItsDistrictEveryFrame`,
+         * under GRAVIEW_SLOW=4). Read again through the camera painted now,
+         * and what was drawn carried by what the districts say moved; a zoom
+         * among it is placed for once the hand is off, as any hand's zoom is.
+         */
+        const laid = laidOut(holder);
+        if (!move && !asking.scrubbing && world.plots.size > 0 && laid !== laidAt) {
+          const before = world;
+          world = beneath(readWorld(holder), live);
+          laidAt = laid;
+          const carry = carriedBetween(before.plots, world.plots);
+          if (carry) {
+            slots = carriedThrough(carry, drawnSlots(now));
+            names = carriedThrough(carry, drawnNames(now));
+            scales = drawnScales(now);
+            posts = new Map([...posts].map(([one, length]) => [one, length * carry.s] as const));
+            whole = whole ? { ...project(carry, whole), width: whole.width * carry.s, height: whole.height * carry.s } : null;
+            settle = null;
+            if (Math.abs(carry.s - 1) >= 1e-3) regrow = true;
+          }
+        }
         painted = live;
         drawnThrough = live;
       }
@@ -1104,6 +1156,7 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
         if (world.plots.size === 0 || (!move && (readKey !== lastReadKey || committedAt > lastRead || now - lastRead > 500))) {
           const before = world;
           world = readWorld(holder);
+          laidAt = laidOut(holder);
           if (move) placeFor(move.toAltitude, move.to, cam.zoom());
           else {
             /*

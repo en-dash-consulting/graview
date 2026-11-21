@@ -237,7 +237,9 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
     const own = Object.hasOwn(node, name);
     if (shape?.fields.has(name) || own) {
       // A date that repeats reads as its next occurrence on the day judged (`repeat.ts`).
-      const v = own ? dateOn(node, name, today()) : undefined;
+      const read = own ? dateOn(node, name, today()) : undefined;
+      // Who made or touched it, as `$me` says a person: the record the seat is bound to, never the account (`touched.ts`).
+      const v = typeof read === "string" && (name === "createdBy" || name === "updatedBy") ? ((ctx.graph as { personBoundTo?(seat: string): string | undefined }).personBoundTo?.(read) ?? read) : read;
       return v === undefined ? null : (v as Value);
     }
     const card = shape?.edges.get(name);
