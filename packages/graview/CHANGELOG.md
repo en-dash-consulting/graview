@@ -1,5 +1,15 @@
 # graview
 
+## 0.2.9
+
+### Patch Changes
+
+- @graview/guest@0.2.9
+  - @graview/core@0.2.9
+  - @graview/ship@0.2.9
+  - @graview/skills@0.2.9
+  - @graview/tools@0.2.9
+
 ## 0.2.8
 
 ### Patch Changes
