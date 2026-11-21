@@ -6,7 +6,7 @@
 - Start a product: `npm create graview@latest my-app` (Node 22 or later)
 - License: Elastic License 2.0 — source-available, free to build with and to ship products on
 - Source: https://github.com/en-dash-consulting/graview
-- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.2.10)
+- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.2.9)
 - Hosted: Graview Cloud, https://graview.cloud (private alpha, invite-only)
 
 ## Questions, answered plainly
@@ -913,7 +913,6 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
-- [`0.2.10`](https://graview.dev/docs/releases.html#v0-2-10)
 - [`0.2.9`](https://graview.dev/docs/releases.html#v0-2-9)
 - [`0.2.8`](https://graview.dev/docs/releases.html#v0-2-8)
 - [`0.2.7`](https://graview.dev/docs/releases.html#v0-2-7)
@@ -996,25 +995,9 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
-## 0.2.10
-
-Published November 22, 2026 · the current version
-
-Every record says when it was made and last changed, and by whom, in lists, templates, rules and jobs, kept as each seat may see them.
-
-- **Every record says when it was made and last changed, and by whom.** The framework keeps `createdAt`, `createdBy`, `updatedAt` and `updatedBy` on every record. Every op that touches one stamps it as it lands — a field, a file, a link at either end, an import, a host’s own ops, the app’s own tidying, an undo — and the op that adds it stamps all four. Who is said to a reader as the person a seat is bound to. A snapshot, a checkpoint, the archive and an export carry them.
-- **Lists sort, filter and group by them.** “Last changed” and “Added” are offered on every kind’s list, by day on the app’s clock (`?sort=updatedAt:desc`).
-- **Templates, rules, computed values and jobs read them like any field.** `{updatedAt | relative}` and `{updatedAt | date}` in a card or a page, in the app’s own time zone; a rule’s condition, a computed value, a job’s `where` and `sort`.
-- **They are kept as each seat may see them.** A seat from whom anything is kept is told none of the four, and a judgment that would read them for that seat is not made.
-- **`graview check` knows them.** It refuses a kind that declares one of the four names (`touched-field-taken`), and warns of a rule, computed value or job that reads them in an app whose policy keeps anything from a seat (`touched-read-kept`). `@graview/core/check` exports the names and the code, so a host’s release gate reads the framework’s own list.
-
-**Before you upgrade:** Breaks: four names are now the framework’s. `createdAt`, `createdBy`, `updatedAt` and `updatedBy` are on every record, and `graview check` refuses a kind that declares a field, relation or computed value of one of them (`touched-field-taken`); rename it before taking this version. The op payload of a removal, and of an undo that puts a record back, carries the four, and an op served to a seat may say `stamps: false`; a build before this one reads those as keys no kind declares and refuses one into a kind declared `.strict()`, so a client and its server take this version together. A seat’s view (`store.seenBy(seat)`) refuses `applyPrimitives`, and acts as its seat where a call names no author or principal. Gains: the four on every record, in lists (“Last changed”, “Added”), templates (`{updatedAt | relative}`), rules, computed values and jobs; `TOUCHED_FIELDS`, `CREATED_AT`, `CREATED_BY`, `UPDATED_AT`, `UPDATED_BY` and `TOUCHED_FIELD_TAKEN` on `@graview/core/check` as well as the main entry; a new warning, `touched-read-kept`; the state, the welcome, each push and each answer say `toldTouches`. Stored formats: no format number moves, and a store from before opens with what its log holds and no time made up; `snapshotHash` leaves the four out. Derived tool names and input schemas are unchanged.
-
-[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.2.10) · [The full changelog for 0.2.10](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0210)
-
 ## 0.2.9
 
-Published November 21, 2026
+Published November 21, 2026 · the current version
 
 The one face holds a pinch on a machine four times slower: a line stays on its building at Nearby, and a pan straight after a pinch keeps the boards on their districts.
 
@@ -8404,7 +8387,7 @@ Source: https://graview.dev/docs/site.html
 
 # This site is a Graview app
 
-graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 513 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
+graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 512 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
 
 ## The site, running
 
@@ -8429,7 +8412,7 @@ This is that declaration, compiled in your browser by the same compiler `graview
 | `chapter` | A step of the garden, grown: a declaration that passes its own check, opened in a browser on every push. | 16 |
 | `example` | An example app in the repository, described by its own package.json. | 5 |
 | `question` | A question the front page answers plainly, read off its FAQ. | 7 |
-| `release` | A version every package shares, as the releases page says it: when npm published it, what came in it in a few plain lines, and what a host must know before upgrading. Written by hand with the Version packages pull request (apps/site/releases.json). | 87 |
+| `release` | A version every package shares, as the releases page says it: when npm published it, what came in it in a few plain lines, and what a host must know before upgrading. Written by hand with the Version packages pull request (apps/site/releases.json). | 86 |
 | `scaffold` | What graview create writes, read from the generator itself. | 1 |
 
 ## How a page is made
