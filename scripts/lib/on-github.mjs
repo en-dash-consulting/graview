@@ -183,7 +183,9 @@ export function summarizeShard({ root, since, asked, lastRun, written }) {
             // Until the next harness began, or a little past its own end when it was the last.
             const next = Math.min(...starts.filter((at) => at > began), began + (result.took + 5) * 1000);
             // A first look kept beside the second (docs/first-look/) is this harness's by its path, never by when it was copied.
-            const kept = written.filter((file) => file.path.startsWith("docs/first-look/") && firstLookOf(file.path) === name);
+            // Kept by its script's name (verify-hosted-page.mjs is the chain's `hosted`), which the run's record says.
+            const script = result.file ? result.file.replace(/^verify-/, "").replace(/\.mjs$/, "") : name;
+            const kept = written.filter((file) => file.path.startsWith("docs/first-look/") && firstLookOf(file.path) === script);
             return [...kept, ...written.filter((file) => file.at >= began - 1000 && file.at < next && !SHARD_OWN.includes(file.path) && !file.path.startsWith("docs/first-look/"))].map((file) => file.path);
           })();
     const claims = new Set(result.verdict === "held" ? [] : (result.missed ?? []));

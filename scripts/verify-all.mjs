@@ -475,7 +475,7 @@ mkdirSync(resolve(repoRoot, "docs/watch"), { recursive: true });
 const scrubbed = (text) => [repoRoot, homedir(), tmpdir(), realpathSync(tmpdir())].reduce((said, path) => said.split(path).join(path === repoRoot ? "." : "~"), String(text ?? ""));
 writeFileSync(
   LAST_RUN,
-  `${JSON.stringify({ at: new Date().toISOString(), results: results.map(({ name, code, took, began, verdict, gist: said, missed, output }) => ({ name, code, took, began, verdict, ...(verdict === "held" ? {} : { gist: scrubbed(said), missed: (missed ?? missedClaims(output ?? "")).map(scrubbed) }) })) }, null, 2)}\n`,
+  `${JSON.stringify({ at: new Date().toISOString(), results: results.map(({ name, file, code, took, began, verdict, gist: said, missed, output }) => ({ name, file, code, took, began, verdict, ...(verdict === "held" ? {} : { gist: scrubbed(said), missed: (missed ?? missedClaims(output ?? "")).map(scrubbed) }) })) }, null, 2)}\n`,
 );
 const spent = results.reduce((sum, one) => sum + one.took, 0);
 say(

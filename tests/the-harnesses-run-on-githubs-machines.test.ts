@@ -138,6 +138,12 @@ describe("a shard's summary", () => {
     expect(face!.claims).toEqual(["noPageThrew"]);
     expect(pages!.files).toEqual(["docs/first-look/pages-face.json", "docs/first-look/watch/verify-pages.json", "docs/pages-face.json"]);
     expect(pages!.claims).toEqual(["theBarFits"]);
+
+    // A chain name its script does not share: `hosted` is verify-hosted-page.mjs, and its first look is kept by the script's name.
+    write("docs/first-look/hosted-page.json", { ok: false }, since + 199_500);
+    const hostedRun = { at: lastRun.at, results: [{ name: "hosted", file: "verify-hosted-page.mjs", code: 0, took: 50, began: new Date(began.pages).toISOString(), verdict: "flaky", missed: [] }] };
+    const [hosted] = (summarizeShard({ root, since, asked: ["hosted"], lastRun: hostedRun, written: writtenSince(root, since) }) as { harnesses: Harness[] }).harnesses;
+    expect(hosted!.files).toContain("docs/first-look/hosted-page.json");
   });
 
   it("takes no verdict from a last run older than the shard", () => {
