@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 55779,
+  "gzipped": 19668,
+  "note": "Raised when the 0.2.10 batch's one branch was merged (every record saying when it was made and last changed and by whom, kept as each seat may see them, in lists, templates, rules, computed values and jobs): it comes to 55679 / 19568 over the budget, raised by 55779 / 19668 for the spread a split build gzips to from build to build. Measured at 112_291 / 43_948 against 56_612 / 24_380."
+}

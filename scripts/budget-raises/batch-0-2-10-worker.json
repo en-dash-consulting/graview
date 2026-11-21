@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 33327,
+  "note": "Raised when the 0.2.10 batch's one branch was merged (every record saying when it was made and last changed and by whom, kept as each seat may see them, in lists, templates, rules, computed values and jobs): it comes to 33227 bytes over the budget, raised by 33327 for the spread a split build gzips to from build to build. Measured at 2_813_995 against 2_780_768."
+}

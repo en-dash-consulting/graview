@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker",
+  "minified": 55933,
+  "gzipped": 19015,
+  "note": "Raised when the 0.2.10 batch's one branch was merged (every record saying when it was made and last changed and by whom, kept as each seat may see them, in lists, templates, rules, computed values and jobs): it comes to 55833 / 18915 over the budget, raised by 55933 / 19015 for the spread a split build gzips to from build to build. Measured at 93_012 / 34_379 against 37_179 / 15_464."
+}

@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 14248,
+  "gzipped": 8622,
+  "note": "Raised when the 0.2.10 batch's one branch was merged (every record saying when it was made and last changed and by whom, kept as each seat may see them, in lists, templates, rules, computed values and jobs): it comes to 14148 / 8522 over the budget, raised by 14248 / 8622 for the spread a split build gzips to from build to build. Measured at 2_043_907 / 717_755 against 2_029_759 / 709_233."
+}

@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 11923,
+  "gzipped": 5301,
+  "changeset": "the-0-2-10-batch-holds-together.md",
+  "note": "Raised when the 0.2.10 batch's one branch was merged (every record saying when it was made and last changed and by whom, kept as each seat may see them, in lists, templates, rules, computed values and jobs): it comes to 11823 / 5201 over the budget, raised by 11923 / 5301 for the spread a split build gzips to from build to build. Measured at 661_281 / 230_319 against 649_458 / 225_118."
+}

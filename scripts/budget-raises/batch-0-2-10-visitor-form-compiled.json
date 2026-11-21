@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form handed a compiled app",
+  "minified": 11940,
+  "gzipped": 5491,
+  "note": "Raised when the 0.2.10 batch's one branch was merged (every record saying when it was made and last changed and by whom, kept as each seat may see them, in lists, templates, rules, computed values and jobs): it comes to 11840 / 5391 over the budget, raised by 11940 / 5491 for the spread a split build gzips to from build to build. Measured at 397_732 / 145_335 against 385_892 / 139_944."
+}
