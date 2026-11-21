@@ -143,6 +143,22 @@ export function copyInto(root, files, into) {
  * own record, the ledger and the flakes; brought back from several shards
  * they would overwrite each other and the checkout's own `--failed`.
  */
+/** The harnesses whose verdict is named otherwise than the script (verify-pages.mjs writes docs/pages-face.json). */
+export const VERDICT_NAMES = { pages: ["pages-face"], lines: ["lines-check"], shrunk: ["shrunk-interface"], watch: ["watch-check"], site: ["site-check"], notion: ["notion-stub"] };
+
+/** Whether a path under docs/ is harness `name`'s own: docs/<name>.*, docs/<name>/…, its watch; never docs/<name>-* by itself, which is another harness's (chrome-quiet beside chrome). */
+export const ownedBy = (name, path) =>
+  path === `docs/watch/verify-${name}.json` || (!path.startsWith("docs/watch/") && [name, ...(VERDICT_NAMES[name] ?? [])].some((one) => [".", "/"].some((after) => path.startsWith(`docs/${one}${after}`))));
+
+/** The harness a first look's copy (docs/first-look/…) was kept for, or null. */
+const firstLookOf = (path) => {
+  const original = `docs/${path.slice("docs/first-look/".length)}`;
+  const script = /^docs\/watch\/verify-(.+)\.json$/.exec(original)?.[1];
+  if (script) return script;
+  const head = original.slice("docs/".length).split(/[./]/)[0];
+  return Object.entries(VERDICT_NAMES).find(([, names]) => names.includes(head))?.[0] ?? head;
+};
+
 export const SHARD_OWN = ["docs/watch/last-run.json", "docs/watch/ledger.json", "docs/flakes.json"];
 
 /**
@@ -166,11 +182,16 @@ export function summarizeShard({ root, since, asked, lastRun, written }) {
         : (() => {
             // Until the next harness began, or a little past its own end when it was the last.
             const next = Math.min(...starts.filter((at) => at > began), began + (result.took + 5) * 1000);
-            return written.filter((file) => file.at >= began - 1000 && file.at < next && !SHARD_OWN.includes(file.path)).map((file) => file.path);
+            // A first look kept beside the second (docs/first-look/) is this harness's by its path, never by when it was copied.
+            // Kept by its script's name (verify-hosted-page.mjs is the chain's `hosted`), which the run's record says.
+            const script = result.file ? result.file.replace(/^verify-/, "").replace(/\.mjs$/, "") : name;
+            const kept = written.filter((file) => file.path.startsWith("docs/first-look/") && firstLookOf(file.path) === script);
+            return [...kept, ...written.filter((file) => file.at >= began - 1000 && file.at < next && !SHARD_OWN.includes(file.path) && !file.path.startsWith("docs/first-look/"))].map((file) => file.path);
           })();
     const claims = new Set(result.verdict === "held" ? [] : (result.missed ?? []));
     if (result.verdict !== "held") {
-      for (const file of files.filter((path) => path.endsWith(".json"))) {
+      // A first look kept beside the second (docs/first-look/, lib/second-look.mjs) is listed with its files, and its claims are already `missed`.
+      for (const file of files.filter((path) => path.endsWith(".json") && !path.startsWith("docs/first-look/"))) {
         let verdict;
         try {
           verdict = JSON.parse(readFileSync(join(root, file), "utf8"));

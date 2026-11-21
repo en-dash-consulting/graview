@@ -117,6 +117,35 @@ describe("a shard's summary", () => {
     expect(terminalLines(harnesses).join("\n")).toMatch(/FAIL\s+pages[\s\S]*aPhoneReadsTheRecord/);
   });
 
+  it("credits a first look kept beside the second to its own harness by its path, and takes no claim from it", () => {
+    root = mkdtempSync(join(tmpdir(), "verify-on-github-"));
+    const since = Date.parse("2026-11-15T10:00:00Z");
+    // pages ran first and failed; its first look was copied just before its second, inside one-face's time.
+    const began = { "one-face": since + 10_000, pages: since + 200_000 };
+    write("docs/first-look/pages-face.json", { checks: { theBarFits: { ok: false } } }, since + 199_500);
+    write("docs/first-look/watch/verify-pages.json", { open: 0 }, since + 199_500);
+    write("docs/pages-face.json", { checks: { theBarFits: { ok: true } } }, began.pages + 30_000);
+    const lastRun = {
+      at: new Date(since + 300_000).toISOString(),
+      results: [
+        { name: "one-face", code: 1, took: 195, began: new Date(began["one-face"]).toISOString(), verdict: "failed", missed: ["noPageThrew"] },
+        { name: "pages", code: 0, took: 50, began: new Date(began.pages).toISOString(), verdict: "flaky", missed: ["theBarFits"] },
+      ],
+    };
+    const written = writtenSince(root, since) as { path: string; at: number }[];
+    const [face, pages] = (summarizeShard({ root, since, asked: ["one-face", "pages"], lastRun, written }) as { harnesses: Harness[] }).harnesses;
+    expect(face!.files).toEqual([]);
+    expect(face!.claims).toEqual(["noPageThrew"]);
+    expect(pages!.files).toEqual(["docs/first-look/pages-face.json", "docs/first-look/watch/verify-pages.json", "docs/pages-face.json"]);
+    expect(pages!.claims).toEqual(["theBarFits"]);
+
+    // A chain name its script does not share: `hosted` is verify-hosted-page.mjs, and its first look is kept by the script's name.
+    write("docs/first-look/hosted-page.json", { ok: false }, since + 199_500);
+    const hostedRun = { at: lastRun.at, results: [{ name: "hosted", file: "verify-hosted-page.mjs", code: 0, took: 50, began: new Date(began.pages).toISOString(), verdict: "flaky", missed: [] }] };
+    const [hosted] = (summarizeShard({ root, since, asked: ["hosted"], lastRun: hostedRun, written: writtenSince(root, since) }) as { harnesses: Harness[] }).harnesses;
+    expect(hosted!.files).toContain("docs/first-look/hosted-page.json");
+  });
+
   it("takes no verdict from a last run older than the shard", () => {
     root = mkdtempSync(join(tmpdir(), "verify-on-github-"));
     const since = Date.now();
