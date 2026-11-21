@@ -255,6 +255,13 @@ export interface Operation {
    * change that touched nothing.
    */
   readonly sentOut?: SentOut;
+  /**
+   * IT STAMPS NOTHING (`touched.ts`): set on every op a store serves a seat
+   * from whom anything is kept, which is told no record's `createdAt`,
+   * `createdBy`, `updatedAt` or `updatedBy`; folded, it takes them off what
+   * it wrote. Absent on every op a store makes, which stamps what it writes.
+   */
+  readonly stamps?: false;
 }
 
 /** What one pass sent out for one record: how many guests it invited and took off, and whether the other system refused it. */

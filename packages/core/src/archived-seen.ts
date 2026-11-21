@@ -28,6 +28,7 @@
  * view's modules — it makes the whole store with the store's own class.
  */
 import type { ArchivedOps } from "./history.js";
+import { touchesRebound } from "./seen.js";
 import type { EvaluateOptions, InvariantDefinition } from "./invariants/types.js";
 import type { ModuleMap } from "./modules.js";
 import type { Epoch, LogArchive } from "./ops/log.js";
@@ -178,7 +179,9 @@ function servedAlone<S extends AnySchema>(store: Store<S>, epoch: Epoch, princip
   });
   // What only the store judges by is never the seat's, whether or not its view is kept from anything (FR-199).
   const { removed: _removed, writers: _writers, declines: _declines, ...served } = unmarked(alone.seenBy(principal).log.epochs()[0]!);
-  return served;
+  // Who made or touched each record, as the store now binds them: a store opened on that epoch alone knows none of the bindings made since.
+  const rebound = touchesRebound(store as never, principal);
+  return { ...served, base: { ...served.base, nodes: served.base.nodes.map((node) => rebound(node)) } };
 }
 
 /**

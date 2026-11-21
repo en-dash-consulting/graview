@@ -306,7 +306,8 @@ export function planMigration(before: GraviewDocument, after: GraviewDocument, g
     // A record a person said to leave alone stays so, whatever its kind is called now.
     if ((node as Record<string, unknown>)[LEFT_ALONE] === true) next[LEFT_ALONE] = true;
     // When it was made and last touched goes with it, a record made again under a renamed kind too (`touched.ts`): a migration that changes nothing of it touches nothing.
-    Object.assign(next, touchedOf(node));
+    // A field the kind kept under one of the names before this version is its own, renamed or cleared above, and never taken for a stamp.
+    for (const [key, value] of Object.entries(touchedOf(node))) if (!(key in was)) next[key] = value;
     // A person bound to an account stays theirs while their kind is still the people (Roadmap f-invite-binds-existing-person).
     if (personSeatOf(node) !== undefined && after.kinds[newKind]!.people === true) next[PERSON_SEAT] = personSeatOf(node);
     if (isArchived(node)) {

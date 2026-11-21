@@ -6,11 +6,6 @@ import type { HistoryHost } from "../../src/history.js";
 import { askArchived, pastAt } from "../../src/past.js";
 import { archivedSeenBy } from "../../src/seat.js";
 import { canonical, fold, leaked, MUTATIONS, policyOf, rng, schemaOf, storeAt, unsaidUnseen, world } from "../support/unseen-worlds.js";
-import { untouched } from "../../src/graph/touched.js";
-import type { GraphSnapshot } from "../../src/index.js";
-
-/** A graph as `canonical` says it, without when each record was made and touched: an epoch served on its own tells a seat when, never by whom, its makers being no part of the seat's log. */
-const fields = (snapshot: GraphSnapshot) => canonical({ ...snapshot, nodes: snapshot.nodes.map((node) => untouched(node)) });
 
 /**
  * THE ARCHIVE IS SERVED AS THE SEAT MAY SEE IT (FR-198).
@@ -147,12 +142,7 @@ describe("an archive is served as the seat may see it", () => {
     expect(answer.ops.map((op) => op.seq)).toEqual([0, 1, 2, 3, 4, 5]);
     expect(answer.epochs.map((epoch) => epoch.seq)).toEqual([3]);
     const [epoch] = answer.epochs;
-    // An epoch behind the horizon is served on its own: when each record was made and touched, never by whom.
-    for (const node of epoch!.base.nodes) {
-      expect(node).not.toHaveProperty("createdBy");
-      expect(node).not.toHaveProperty("updatedBy");
-    }
-    expect(new Set(epoch!.base.nodes.map((node) => untouched(node)))).toEqual(
+    expect(new Set(epoch!.base.nodes)).toEqual(
       new Set([
         { id: "person:ann", kind: "person", name: "Ann" },
         { id: "person:bob", kind: "person", name: "Bob" },
@@ -162,8 +152,8 @@ describe("an archive is served as the seat may see it", () => {
     );
     expect(epoch!.base.edges).toEqual([{ kind: "givenBy", from: "match:mine", to: "person:ann" }]);
     // The epoch is what the seat's ops fold to there, and the rest fold on from it.
-    expect(fields(fold(schema, answer.ops.slice(0, 3)))).toBe(fields(epoch!.base));
-    expect(fields(fold(schema, answer.ops.slice(3), epoch!.base))).toBe(fields(fold(schema, answer.ops)));
+    expect(canonical(fold(schema, answer.ops.slice(0, 3)))).toBe(canonical(epoch!.base));
+    expect(canonical(fold(schema, answer.ops.slice(3), epoch!.base))).toBe(canonical(fold(schema, answer.ops)));
   });
 
   it("refuses an archive with a gap behind the horizon, rather than judge what the gap held by nothing", () => {
@@ -228,9 +218,7 @@ describe("an archive is served as the seat may see it", () => {
     const past = pastAt(page, 1, hostOf);
     // Folded from the seed's epoch, served to the seat without the hidden record or the field that named it.
     expect(past.past).toMatchObject({ seq: 1, foldedFrom: 0, folded: 1 });
-    // The op that made pub:p1 also made the hidden record, so it is served withheld: when, and not by whom.
-    expect(past.graph.getNode("pub:p1")).not.toHaveProperty("createdBy");
-    expect(new Set(past.graph.snapshot().nodes.map((node) => untouched(node)))).toEqual(
+    expect(new Set(past.graph.snapshot().nodes)).toEqual(
       new Set([
         { id: "pub:p0", kind: "pub", title: "Seeded" },
         { id: "pub:p1", kind: "pub", title: "One" },

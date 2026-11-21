@@ -78,6 +78,10 @@ export interface SeatLens {
    * seat that may see everything.
    */
   readonly hides?: () => boolean;
+  /** Whether the seat is told when each record was made and last touched, and by whom (`toldTouches`): absent, it is. */
+  readonly toldTouches?: () => boolean;
+  /** A record whose four name a seat since bound to a person, said as that person (`seatView`). */
+  readonly reboundTouches?: <N extends object>(node: N) => N;
 }
 
 /** Whether any field of a record — not its id or kind — names what `sees` says no to. */
@@ -220,20 +224,28 @@ export function redact(ops: readonly Operation[], seeing: SeatLens | ((id: strin
   if (given.hides?.() === false) return [...ops];
   const lens = given.pin?.() ?? given;
   // And no seat a person is bound to, in any op: that is the host's alone (Roadmap f-invite-binds-existing-person).
-  return undoesFollow(judgedOps(ops, lens), lens).map((op) => untouchedOp(unseatedOp(op, lens.keepsSeat)));
+  return undoesFollow(judgedOps(ops, lens), lens).map((op) => unseatedOp(op, lens.keepsSeat)).map((op) => (lens.toldTouches?.() === false ? untouchedOp(op) : reboundOp(op, lens)));
+}
+
+/** What an op carries of who made and touched each record, said as the reader is told who they are now. */
+function reboundOp(op: Operation, lens: SeatLens): Operation {
+  const rebind = lens.reboundTouches;
+  if (!rebind) return op;
+  const one = (primitive: Primitive): Primitive => ((primitive.op === "add-node" || primitive.op === "remove-node") && rebind(primitive.node) !== primitive.node ? { ...primitive, node: rebind(primitive.node) } : primitive);
+  const primitives = op.primitives.map(one);
+  return primitives.every((primitive, at) => primitive === op.primitives[at]) ? op : { ...op, primitives };
 }
 
 /**
- * NOR WHEN A RECORD WAS MADE OR TOUCHED, AND BY WHOM, AS A PAYLOAD CARRIED
- * IT (`touched.ts`): a removed record's, or one put back. A seat is told the
- * four by its log's ops as each lands — the time of a withheld one, never
- * its author — so what it folds is what it is served.
+ * NOR WHEN A RECORD WAS MADE OR TOUCHED, AND BY WHOM (`touched.ts`), to a
+ * seat that is told none of them (`toldTouches`): none rides in what an op
+ * carries, and each op says it stamps nothing (`stamps: false`), so what
+ * the seat folds of its log holds none either, as what it is served does.
  */
 function untouchedOp(op: Operation): Operation {
   const primitives = op.primitives.map(untouchedPrimitive);
   const inverse = op.inverse?.map(untouchedPrimitive);
-  const same = primitives.every((one, at) => one === op.primitives[at]) && (inverse === undefined || inverse.every((one, at) => one === op.inverse![at]));
-  return same ? op : { ...op, primitives, ...(inverse ? { inverse } : {}) };
+  return { ...op, primitives, ...(inverse ? { inverse } : {}), stamps: false };
 }
 
 /**
@@ -256,6 +268,8 @@ function undoesFollow(served: readonly Operation[], lens: SeatLens): Operation[]
     }
     return false;
   };
+  // A seat from whom nothing is kept (`toldTouches`) may be told any sentence: an undo is served it as it is, whatever it took back.
+  if (lens.toldTouches?.() === true) return [...served];
   return served.map((op) => (op.undoes === undefined || op.withheld || DECLINES.liftTold?.(op, lens as never) || !kept(op) ? op : withhold(op, lens, op.primitives)));
 }
 

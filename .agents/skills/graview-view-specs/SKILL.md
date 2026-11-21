@@ -125,9 +125,11 @@ fields, edges, label, roles — is `graview-node-kind`.
    import, tidying, an undo) and by no act. Read them as fields:
    `"Changed {updatedAt | relative}, on {updatedAt | date}"` (in the app's
    `brand.timeZone`), `when: "updatedBy == $me"`, a computed
-   `format(updatedAt, 'MMM d')`. `…By` is who acted, as `$me` says them. Declare no field
-   of those names: `touched-field-taken` refuses one, and a hand-kept
-   "last touched" date misses links and imports.
+   `format(updatedAt, 'MMM d')`. `…By` is who acted, as `$me` says them.
+   They are kept as each seat may see them: a seat from whom a sight keeps
+   anything is told none, so a view says "—" there. Declare no field of
+   those names: `touched-field-taken` refuses one, and a hand-kept "last
+   touched" date misses links and imports.
 
 ## When a person makes a page better
 

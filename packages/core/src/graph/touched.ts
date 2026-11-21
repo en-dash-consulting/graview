@@ -1,5 +1,4 @@
-import { writesOf, type Primitive } from "./primitives.js";
-import type { AnyGraphNode } from "./types.js";
+import type { Primitive } from "./primitives.js";
 
 /**
  * WHEN A RECORD WAS MADE AND LAST TOUCHED, AND BY WHOM (Graview HQ
@@ -68,8 +67,15 @@ export function toucherOf(author: TouchingAuthor): string {
 
 /** The touch an op makes: its time, and its author as kept — none, for an op served withheld, whose author is not the seat's to be told. */
 export function touchOf(op: { readonly at: string; readonly author: TouchingAuthor; readonly withheld?: true }): Touch {
-  return op.withheld ? { at: op.at } : { at: op.at, by: toucherOf(op.author) };
+  // A visitor answering a form is said by no token (Roadmap f-public-forms): what it makes says when, and not who.
+  return op.withheld || op.author.kind === "visitor" ? { at: op.at } : { at: op.at, by: toucherOf(op.author) };
 }
+
+/** An instant as the framework writes one: what `createdAt` and `updatedAt` hold; a day or a word a kind kept under the name is not one. */
+const INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})$/;
+
+/** Whether a value is a stamp the framework could have written: an instant for a time, a word for who. */
+const isStamp = (key: string, value: unknown): boolean => typeof value === "string" && (key === CREATED_AT || key === UPDATED_AT ? INSTANT.test(value) : value.length > 0);
 
 /** What a record says of when it was made and last touched: only what it holds, never a time made up. */
 export interface Touched {
@@ -83,7 +89,12 @@ export interface Touched {
 export function touchedOf(node: unknown): Touched {
   const record = (node ?? {}) as Record<string, unknown>;
   const out: Record<string, string> = {};
-  for (const key of TOUCHED_FIELDS) if (typeof record[key] === "string") out[key] = record[key] as string;
+  // Who, only beside when: a word a kind kept under one of these names is not a stamp.
+  for (const [at, by] of [[CREATED_AT, CREATED_BY], [UPDATED_AT, UPDATED_BY]] as const) {
+    if (!isStamp(at, record[at])) continue;
+    out[at] = record[at] as string;
+    if (isStamp(by, record[by])) out[by] = record[by] as string;
+  }
   return out as Touched;
 }
 
@@ -97,88 +108,32 @@ export function untouched<N extends object>(node: N): N {
 }
 
 /**
- * A record stamped by a touch. `made`: the op added it as a write, and its
- * making is this touch's; otherwise what it says of its making stays as it
- * holds it — a record an undo put back keeps when it was first made, and a
- * record from before these were kept says none rather than a time made up.
+ * HOW AN OP SAYS EACH RECORD IT ADDS WAS MADE: `null`, made by this op;
+ * otherwise when and by whom it was made, kept. A record an undo puts back
+ * keeps what its payload says — the framework's own, as the record was
+ * removed — and one an op removes and adds again (a kind renamed) keeps
+ * what its removal carried. Any other add is made by its op, whatever its
+ * payload says: no act, host or import writes them. What an op says is
+ * its own, so every copy that folds it says the same.
  */
-export function stamped<N extends AnyGraphNode>(node: N, touch: Touch, made: boolean): N {
-  const record = node as Record<string, unknown>;
-  if (!made && record[UPDATED_AT] === touch.at && record[UPDATED_BY] === touch.by) return node;
-  const out: Record<string, unknown> = { ...node, ...(made ? { [CREATED_AT]: touch.at } : {}), [UPDATED_AT]: touch.at };
-  for (const [key, made_] of [[CREATED_BY, made], [UPDATED_BY, true]] as const) {
-    if (!made_) continue;
-    if (touch.by === undefined) delete out[key];
-    else out[key] = touch.by;
+export function makingIn(op: { readonly primitives: readonly Primitive[]; readonly undoes?: string }): Map<string, Touched | null> {
+  const removed = new Map<string, Touched>();
+  for (const primitive of op.primitives) if (primitive.op === "remove-node") removed.set(primitive.node.id, madeOf(primitive.node));
+  const making = new Map<string, Touched | null>();
+  for (const primitive of op.primitives) {
+    if (primitive.op !== "add-node") continue;
+    const id = primitive.node.id;
+    const said = madeOf(primitive.node);
+    making.set(id, op.undoes !== undefined ? (said.createdAt !== undefined ? said : null) : (removed.get(id) ?? null));
   }
-  return out as N;
+  return making;
 }
 
-/**
- * THE RECORDS AN OP MAKES: each it adds with no word of when it was made.
- * One it adds saying so — a record an undo puts back, as it was removed —
- * keeps that; one added bare, by an act, or by an undo whose payload never
- * held them (a record from before they were kept, an act's add put back),
- * is made by this op. What an op makes is its own, so every copy that
- * folds it says the same.
- */
-export function madeIn(op: { readonly primitives: readonly Primitive[] }): Set<string> {
-  const made = new Set<string>();
-  for (const primitive of op.primitives) if (primitive.op === "add-node" && typeof (primitive.node as Record<string, unknown>)[CREATED_AT] !== "string") made.add(primitive.node.id);
-  return made;
-}
-
-/** An op as `foldedTouches` reads one. */
-interface TouchingOp {
-  readonly primitives: readonly Primitive[];
-  readonly at: string;
-  readonly author: TouchingAuthor;
-  readonly undoes?: string;
-  readonly withheld?: true;
-}
-
-/**
- * WHAT FOLDING `ops` ONTO `base` SAYS OF EACH RECORD'S FOUR, as
- * `Graph.touch` says them, without folding anything else: the records
- * `base` holds and the ops add, each with what it was last stamped, up to
- * the op before seq `until`. What a seat is served is worked out so (`seatView`),
- * so a copy that folds the log it is served says what it is served.
- */
-export function foldedTouches(
-  base: readonly AnyGraphNode[],
-  ops: readonly (TouchingOp & { readonly seq: number })[],
-  until = Infinity,
-  onto?: Map<string, Touched>,
-  /** The record a seat is bound to, as `Graph.touch` reads it: the person, never the account. */
-  bound: (seat: string) => string | undefined = () => undefined,
-): Map<string, Touched> {
-  // Onto what an earlier read folded, where the log only grew since: changed in place.
-  const held = onto ?? new Map<string, Touched>();
-  for (const node of base) held.set(node.id, touchedOf(node));
-  for (const op of ops) {
-    if (op.seq >= until) break;
-    for (const primitive of op.primitives) {
-      if (primitive.op === "remove-node") held.delete(primitive.node.id);
-      else if (primitive.op === "add-node") held.set(primitive.node.id, touchedOf(primitive.node));
-    }
-    const touch = touchOf(op);
-    const at = touch.at;
-    const by = touch.by === undefined ? undefined : (bound(touch.by) ?? touch.by);
-    const whom = by === undefined ? {} : { [UPDATED_BY]: by };
-    const makes = madeIn(op);
-    for (const primitive of op.primitives) {
-      for (const id of writesOf(primitive)) {
-        const was = held.get(id);
-        if (!was) continue;
-        // Made by this op: all four are its own; otherwise when it was made stays as it was.
-        const made = primitive.op === "add-node" && makes.has(id);
-        const making = made ? { [CREATED_AT]: at, ...(by === undefined ? {} : { [CREATED_BY]: by }) } : was.createdAt === undefined ? {} : { [CREATED_AT]: was.createdAt, ...(was.createdBy === undefined ? {} : { [CREATED_BY]: was.createdBy }) };
-        held.set(id, { ...making, [UPDATED_AT]: at, ...whom } as Touched);
-      }
-    }
-  }
-  return held;
-}
+/** When and by whom a record says it was made, alone. */
+export const madeOf = (node: unknown): Touched => {
+  const { createdAt, createdBy } = touchedOf(node);
+  return createdAt === undefined ? {} : { createdAt, ...(createdBy !== undefined ? { createdBy } : {}) };
+};
 
 /** A record with its four as `told` says them, the ones it says nothing of taken off. */
 export function withTouches<N extends object>(node: N, told: Touched | undefined): N {

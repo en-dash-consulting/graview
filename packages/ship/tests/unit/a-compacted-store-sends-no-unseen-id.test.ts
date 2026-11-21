@@ -1,4 +1,4 @@
-import { createSchema, defineApp, defineNode, Store, untouched, type AnySchema, type GraviewApp, type Operation, type Principal } from "@graview/core";
+import { createSchema, defineApp, defineNode, Store, type AnySchema, type GraviewApp, type Operation, type Principal } from "@graview/core";
 import { isDeepStrictEqual } from "node:util";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
@@ -62,11 +62,9 @@ describe("a compacted store sends no unseen id", () => {
         if (id !== undefined) leaking.push(`seed ${seed}: ${where} names unseen ${id}`);
       }
       // The same state the store that was never compacted opens the seat with: its graph, and its log from the horizon on.
-      // When and by whom each record was touched is the seat's served log's own, and that log begins at the horizon: left out (`updatedAt`).
       const never = (await welcomeOf(storeAt(w, w.ops.length), w.viewer)).welcome.state!;
       const state = welcome.state!;
-      const records = (snapshot: { readonly nodes: readonly object[]; readonly edges: readonly unknown[] }) => canonical({ ...snapshot, nodes: snapshot.nodes.map(untouched) } as never);
-      if (records(state.snapshot) !== records(never.snapshot)) differing.push(`seed ${seed}: the welcome's graph`);
+      if (canonical(state.snapshot as never) !== canonical(never.snapshot as never)) differing.push(`seed ${seed}: the welcome's graph`);
       else if (!isDeepStrictEqual(state.log, (never.log as Operation[]).slice(opened.log.horizon))) differing.push(`seed ${seed}: the welcome's log`);
     }
     expect(leaking).toEqual([]);

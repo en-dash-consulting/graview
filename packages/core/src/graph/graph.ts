@@ -7,7 +7,10 @@ import { isArchived, MARKS, PERSON_SEAT, personSeatOf, type ArchivedOption } fro
 import { diffSnapshots, diffTouched, type GraphDiff } from "./diff.js";
 import { edgeFieldsProblem } from "./edge-fields.js";
 import { isUnset, writesOf, type Primitive } from "./primitives.js";
-import { CREATED_AT, CREATED_BY, isTouchedField, madeIn, stamped, touchedOf, touchOf, UPDATED_AT, withTouches, type Touch, type Touched } from "./touched.js";
+import { CREATED_AT, CREATED_BY, isTouchedField, madeOf, makingIn, TOUCHED_FIELDS, touchedOf, touchOf, UPDATED_AT, UPDATED_BY, withTouches, type Touch, type Touched } from "./touched.js";
+
+/** An op as a graph stamps it (`touched.ts`). */
+type TouchingOp = { readonly id?: string; readonly primitives: readonly Primitive[]; readonly at: string; readonly author: Author; readonly undoes?: string; readonly withheld?: true; readonly stamps?: false };
 import type { Author } from "../ops/types.js";
 import { edgeId, type GraphEdge, type GraphReader, type GraphSnapshot } from "./types.js";
 import { knownAcrossCopies } from "../across-copies.js";
@@ -373,23 +376,27 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
   /**
    * THE RECORDS AN OP WROTE, STAMPED WITH ITS TIME AND AUTHOR (`touched.ts`):
    * `updatedAt` and `updatedBy` on each record it added, patched, or linked
-   * or unlinked at either end; `createdAt` and `createdBy` too on one it
-   * added as a write. Called as the op lands, after its primitives: silent,
-   * since what it changed was said by their diff, and a touch alone is no
-   * change (`diffSnapshots`).
+   * or unlinked at either end; `createdAt` and `createdBy` as `makingIn`
+   * says. Called as the op lands, after its primitives: silent, since what
+   * it changed was said by their diff, and a touch alone is no change
+   * (`diffSnapshots`). An op served to a seat that is told none of them
+   * (`stamps: false`) takes them off what it wrote instead.
    */
-  touch(op: { readonly id?: string; readonly primitives: readonly Primitive[]; readonly at: string; readonly author: Author; readonly undoes?: string; readonly withheld?: true }): void {
+  touch(op: TouchingOp): void {
     if (op.primitives.length === 0) return;
-    const touch = touchOf(op);
-    const made = madeIn(op);
     const ids = new Set(op.primitives.flatMap(writesOf));
-    // What each record said before, for a while, so an op taken back in place (`untouch`) puts it back exactly.
+    // What each record said before, for a while, so an op taken back in place (`untouch`) puts it back exactly; a record the op removed comes back as its removal carried it.
     if (op.id !== undefined) {
-      // A record the op removed is put back as its removal carried it, four and all.
       this.priors.set(op.id, new Map([...ids].flatMap((id) => (this.nodes.has(id) ? [[id, touchedOf(this.nodes.get(id))] as const] : []))));
       if (this.priors.size > 4096) this.priors.delete(this.priors.keys().next().value!);
     }
-    for (const id of ids) this.stamp(id, touch, made.has(id));
+    if (op.stamps === false) {
+      for (const id of ids) this.stampAs(id, {});
+      return;
+    }
+    const touch = touchOf(op);
+    const making = makingIn(op);
+    for (const id of ids) this.stamp(id, touch, making.get(id));
   }
 
   /** What each record an op touched said before it, kept for the recent ops (`touch`). */
@@ -404,41 +411,32 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
     const prior = this.priors.get(op.id);
     const ids = [...new Set(op.primitives.flatMap(writesOf))];
     if (!prior) return ids;
-    for (const [id, said] of prior) {
-      const node = this.nodes.get(id);
-      if (node) this.nodes.set(id, withTouches(node, said) as NodeOfSchema<S>);
-    }
+    for (const [id, said] of prior) this.stampAs(id, said);
     // A record the op removed is back as its removal carried it, and that may not have said when it was made: for the log to say.
     return ids.filter((id) => !prior.has(id));
   }
 
   /**
    * THE RECORDS `ids` STAMPED AGAIN FROM `ops`, after ops were taken back in
-   * place (`Store.rebase`): touched by the last of `ops` that wrote each, and
-   * made by the last that added it — as its payload says, or by that op. A
-   * record none of them wrote keeps what it holds.
+   * place (`Store.rebase`): made as the last of `ops` that added each says,
+   * and touched by the last that wrote it. A record none of them wrote keeps
+   * what it holds.
    */
-  retouch(ids: Iterable<string>, ops: readonly { readonly primitives: readonly Primitive[]; readonly at: string; readonly author: Author; readonly withheld?: true }[]): void {
+  retouch(ids: Iterable<string>, ops: readonly TouchingOp[]): void {
     for (const id of ids) {
-      const node = this.nodes.get(id);
-      if (!node) continue;
-      let wrote: (typeof ops)[number] | undefined;
-      let added: { readonly op: (typeof ops)[number]; readonly node: { readonly id: string } } | undefined;
+      if (!this.nodes.has(id)) continue;
+      let wrote: TouchingOp | undefined;
+      let added: TouchingOp | undefined;
       for (let at = ops.length - 1; at >= 0 && (wrote === undefined || added === undefined); at--) {
         const op = ops[at]!;
         if (wrote === undefined && op.primitives.some((primitive) => writesOf(primitive).includes(id))) wrote = op;
-        const adding = added === undefined ? op.primitives.find((primitive): primitive is Extract<Primitive, { op: "add-node" }> => primitive.op === "add-node" && primitive.node.id === id) : undefined;
-        if (adding) added = { op, node: adding.node };
+        if (added === undefined && op.primitives.some((primitive) => primitive.op === "add-node" && primitive.node.id === id)) added = op;
       }
-      if (added) {
-        const said = touchedOf(added.node);
-        if (said.createdAt === undefined) this.stamp(id, touchOf(added.op), true);
-        else {
-          const { [CREATED_BY]: _was, ...rest } = node as Record<string, unknown>;
-          this.nodes.set(id, { ...rest, [CREATED_AT]: said.createdAt, ...(said.createdBy !== undefined ? { [CREATED_BY]: said.createdBy } : {}) } as unknown as NodeOfSchema<S>);
-        }
+      if (added && added.stamps !== false) this.stamp(id, touchOf(added), makingIn(added).get(id));
+      if (wrote) {
+        if (wrote.stamps === false) this.stampAs(id, {});
+        else this.stamp(id, touchOf(wrote), undefined);
       }
-      if (wrote) this.stamp(id, touchOf(wrote), false);
     }
   }
 
@@ -449,32 +447,45 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
    * still holds that one, and otherwise said to be made at no time at all,
    * never at a time made up. A record no op of `ops` wrote stays as stored.
    */
-  touchFrom(ops: readonly { readonly primitives: readonly Primitive[]; readonly at: string; readonly author: Author; readonly undoes?: string; readonly withheld?: true }[]): void {
+  touchFrom(ops: readonly TouchingOp[]): void {
     const bare = new Set([...this.nodes.keys()].filter((id) => !this.hasTouched(id)));
     if (bare.size === 0) return;
     for (const op of ops) {
+      if (op.stamps === false) continue;
       const writes = op.primitives.flatMap(writesOf).filter((id) => bare.has(id));
       if (writes.length === 0) continue;
       const touch = touchOf(op);
-      const made = madeIn(op);
-      for (const id of new Set(writes)) this.stamp(id, touch, made.has(id));
+      const making = makingIn(op);
+      for (const id of new Set(writes)) this.stamp(id, touch, making.get(id));
     }
   }
 
-  private stamp(id: string, touch: Touch, made: boolean): void {
+  /**
+   * One record stamped: touched now, and — where the op adds it — made now
+   * (`null`) or as it says it was (`making`). Absent, its making stays.
+   */
+  private stamp(id: string, touch: Touch, making: Touched | null | undefined): void {
     const node = this.nodes.get(id);
     if (!node) return;
     // A seat bound to a person entered for it is that person, as `$me` is (Roadmap f-invite-binds-existing-person): the record, never the account.
     const bound = touch.by === undefined ? undefined : this.personBoundTo(touch.by);
-    const next = stamped(node, bound === undefined ? touch : { ...touch, by: bound }, made);
-    if (next !== node) this.nodes.set(id, next);
+    const by = bound ?? touch.by;
+    const made: Touched = making === null ? { [CREATED_AT]: touch.at, ...(by !== undefined ? { [CREATED_BY]: by } : {}) } : (making ?? madeOf(node));
+    this.stampAs(id, { ...made, [UPDATED_AT]: touch.at, ...(by !== undefined ? { [UPDATED_BY]: by } : {}) });
+  }
+
+  /** One record's four, exactly these: the record itself where it already says them. */
+  private stampAs(id: string, said: Touched): void {
+    const node = this.nodes.get(id);
+    if (!node) return;
+    const record = node as Record<string, unknown>;
+    if (TOUCHED_FIELDS.every((key) => record[key] === (said as Record<string, unknown>)[key])) return;
+    this.nodes.set(id, withTouches(node, said) as NodeOfSchema<S>);
   }
 
   /** Whether a record holds when it was last touched (`touched.ts`): one from before they were kept may not. */
   hasTouched(id: string): boolean {
-    const node = this.nodes.get(id) as Record<string, unknown> | undefined;
-    // When alone is enough: a seat may be served when and not who, and that is not a record from before.
-    return typeof node?.[UPDATED_AT] === "string";
+    return touchedOf(this.nodes.get(id)).updatedAt !== undefined;
   }
 
   subscribe(listener: GraphListener<S>): () => void {
@@ -600,8 +611,8 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
         }
         assertKnownValues(primitive.after);
         const next = { ...current } as Record<string, unknown>;
-        // When it was made and last touched is the fold's to write (`touched.ts`), never a patch's.
-        const keys = Object.keys(primitive.after).filter((key) => !isTouchedField(key));
+        // When it was made and last touched is the fold's to write (`touched.ts`), never a patch's — but for clearing a value a kind once kept under one of the names, which is no stamp.
+        const keys = Object.keys(primitive.after).filter((key) => !isTouchedField(key) || (isUnset(primitive.after[key]) && Object.hasOwn(current, key) && (touchedOf(current) as Record<string, unknown>)[key] === undefined));
         for (const key of keys) {
           const value = primitive.after[key];
           // `undefined` in memory, `UNSET` once written down: both mean the

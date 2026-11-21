@@ -241,15 +241,12 @@ describe("a store from before them reads with no time made up", () => {
 });
 
 describe("a seat's view judges them by sight, like any field", () => {
-  it("a member sees them; a guest whose sight hides who touched a record sees when, and not who", () => {
+  it("a member, from whom nothing is kept, sees them; a guest, from whom a field is kept, is told none of them", () => {
     const store = opened();
     const id = store.apply({ name: "add-task", args: { label: "Book the van" } }, { author: ann }).minted![0]!;
     expect(touchedOf(store.seenBy(bo).graph.getNode(id))).toMatchObject({ createdBy: "ann", updatedBy: "ann" });
-    const seen = touchedOf(store.seenBy(guest).graph.getNode(id));
-    expect(seen.updatedAt).toBeDefined();
-    expect(seen.createdAt).toBeDefined();
-    expect(seen.updatedBy).toBeUndefined();
-    expect(seen.createdBy).toBeUndefined();
+    expect(store.seenBy(guest).graph.getNode(id)).toMatchObject({ label: "Book the van" });
+    expect(touchedOf(store.seenBy(guest).graph.getNode(id))).toEqual({});
   });
 
   it("graview check takes a sight that names them as naming fields of the kind", () => {
