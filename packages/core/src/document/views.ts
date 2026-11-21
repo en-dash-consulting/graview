@@ -1,3 +1,4 @@
+import { isTouchedField } from "../graph/touched.js";
 import { analyzeExpr } from "./expr/analyze.js";
 import { SUBJECT_NAME } from "./expr/subject.js";
 import { ExprSyntaxError, parseExpr, type Expr } from "./expr/parse.js";
@@ -211,7 +212,7 @@ function names(expr: Expr, path: string, scope: Scope) {
       scope.findings.push(error("view-name", path, `"${n}" names nothing here: these blocks are about no one record`, "reach records with all('<kind>'), like count(all('offer')) or first(all('party') where role == 'client').name"));
       continue;
     }
-    if (n === "id" || scope.spec.field(n) || scope.spec.relation(n)) continue;
+    if (n === "id" || isTouchedField(n) || scope.spec.field(n) || scope.spec.relation(n)) continue;
     scope.findings.push(error("view-name", path, `${scope.kind} has no field or relation called "${n}"`));
   }
   for (const e of shape.edges) if (!scope.edges.has(e)) scope.findings.push(error("view-edge", path, `"${e}" is not a relation any kind declares`));

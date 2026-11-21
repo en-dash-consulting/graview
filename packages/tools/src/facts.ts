@@ -1,4 +1,4 @@
-import { humanizeField, labelOf, PERSON_SEAT, type AnySchema, type Principal, type Store } from "@graview/core";
+import { humanizeField, labelOf, PERSON_SEAT, touchesSaid, type AnySchema, type Principal, type Store } from "@graview/core";
 
 /**
  * WHAT IS TRUE OF THE RECORDS, AS THE SEAT SEES THEM (Roadmap
@@ -20,14 +20,17 @@ export interface RecordFacts {
 /** The records' fields and links, as the person sees them, at most `limit` records and 12 links each. */
 export function factsOf<S extends AnySchema>(store: Store<S>, principal: Principal, ids: readonly string[], today?: string, limit = 40): readonly RecordFacts[] {
   const seen = store.seenBy(principal).graph;
+  const said = touchesSaid(store as never);
   const schema = store.schema as AnySchema;
   const name = (id: string) => {
     const node = seen.getNode(id);
     return node ? labelOf(schema.tryDefinition(node.kind), node as never) : undefined;
   };
   return ids.slice(0, limit).flatMap((id) => {
-    const node = seen.getNode(id) as (Record<string, unknown> & { id: string; kind: string }) | undefined;
-    if (!node) return [];
+    const held = seen.getNode(id) as (Record<string, unknown> & { id: string; kind: string }) | undefined;
+    if (!held) return [];
+    // Who made or touched it, as a model is told it: the person, never the account (`touchesSaid`).
+    const node = said(held);
     const fields = Object.fromEntries(
       Object.entries(node)
         .filter(([key, value]) => !["id", "kind", "label", PERSON_SEAT].includes(key) && !key.startsWith("_") && value !== undefined && value !== null && (typeof value !== "object" || Array.isArray(value)) && JSON.stringify(value).length <= 200)

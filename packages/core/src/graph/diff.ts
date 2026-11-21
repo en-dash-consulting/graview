@@ -1,6 +1,7 @@
 import type { Primitive } from "./primitives.js";
 import type { AnyGraphNode, GraphEdge, GraphNodeBase } from "./types.js";
 import { edgeId } from "./types.js";
+import { isTouchedField } from "./touched.js";
 
 export interface NodeChange<N extends GraphNodeBase = AnyGraphNode> {
   readonly before: N;
@@ -42,6 +43,8 @@ function changedFields(before: GraphNodeBase, after: GraphNodeBase): string[] {
   const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
   const fields: string[] = [];
   for (const key of keys) {
+    // When it was last touched is not a change of its own: a record a link reached has not changed.
+    if (isTouchedField(key)) continue;
     const a = (before as unknown as Record<string, unknown>)[key];
     const b = (after as unknown as Record<string, unknown>)[key];
     if (JSON.stringify(a) !== JSON.stringify(b)) fields.push(key);

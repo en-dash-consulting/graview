@@ -139,11 +139,11 @@ describe("the list's line", () => {
     const pane = host.querySelector<HTMLElement>('[data-testid="arrange-list"]')!;
     expect(pane.querySelector(`[data-testid="${line}-filter-find"]`)).not.toBeNull();
     const headings = [...pane.querySelectorAll<HTMLElement>(`[data-testid="${line}-section"]`)];
-    // The status is a chip, not a heading.
-    expect(headings.map((heading) => heading.getAttribute("data-key"))).toEqual(["votes", "became.stage", "is"]);
+    // The status is a chip, not a heading; when each request last changed and was added are headings every list offers.
+    expect(headings.map((heading) => heading.getAttribute("data-key"))).toEqual(["updatedAt", "createdAt", "votes", "became.stage", "is"]);
     expect(headings.every((heading) => heading.getAttribute("aria-expanded") === "false")).toBe(true);
     expect(pane.querySelectorAll(".graview-arrange-item").length).toBe(0);
-    press(headings[1]!);
+    press(headings.find((heading) => heading.getAttribute("data-key") === "became.stage")!);
     expect([...pane.querySelectorAll(".graview-arrange-item")].map((item) => item.getAttribute("data-value"))).toEqual(["became.stage:idea", "became.stage:building", "became.stage:shipped"]);
   });
 });

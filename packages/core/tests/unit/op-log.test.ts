@@ -9,6 +9,7 @@ import {
   Store,
   type Author,
 } from "../../src/index.js";
+import { untouched } from "../../src/graph/touched.js";
 
 const person = defineNode("person", {
   fields: z.object({ label: z.string() }),
@@ -139,7 +140,7 @@ describe("operation log", () => {
       snapshot: { nodes: [{ id: "n1", kind: "note", label: "One", pinned: "top" }] as never, edges: [] },
     });
     store.apply({ name: "unpin", args: { id: "n1" } });
-    expect(store.graph.getNode("n1")).toEqual({ id: "n1", kind: "note", label: "One" });
+    expect(untouched(store.graph.getNode("n1")!)).toEqual({ id: "n1", kind: "note", label: "One" });
 
     const recorded = store.log.all()[0]!;
     const written = JSON.parse(JSON.stringify(recorded)) as typeof recorded;

@@ -578,15 +578,16 @@ async function replayJournal<S extends AnySchema>(
 
 /** One op folded as `OperationLog.fold` lands each: an undo puts back what was there, and a write an older declaration accepted is held as written. */
 function foldJournaled<S extends AnySchema>(graph: Graph<S>, op: Operation): void {
-  if (op.undoes !== undefined) {
-    graph.applyPrimitives(op.primitives, { restoring: true });
-    return;
+  if (op.undoes !== undefined) graph.applyPrimitives(op.primitives, { restoring: true });
+  else {
+    try {
+      graph.applyPrimitives(op.primitives);
+    } catch {
+      graph.applyPrimitives(op.primitives, { restoring: true });
+    }
   }
-  try {
-    graph.applyPrimitives(op.primitives);
-  } catch {
-    graph.applyPrimitives(op.primitives, { restoring: true });
-  }
+  // What it wrote says when, and who, as the store that made it said (`createdAt`, `updatedAt`).
+  graph.touch(op);
 }
 
 /** Whether a log with no epochs folds from empty to exactly what is stored. */

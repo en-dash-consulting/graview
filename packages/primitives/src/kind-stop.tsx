@@ -1,5 +1,5 @@
 import { arrange, arrangeable, throughEdges } from "@graview/core/arrange";
-import { counted, dayAsRead, fieldWords, isoToday, labelOf, numberAsRead, pluralLabel, type AnySchema, type Arrangement, type GraviewApp, type NodeOfSchema } from "@graview/core";
+import { counted, dayAsRead, offersTouches, fieldWords, isoToday, labelOf, numberAsRead, pluralLabel, type AnySchema, type Arrangement, type GraviewApp, type NodeOfSchema } from "@graview/core";
 import { failureWords } from "@graview/core/words";
 import { kindCardId, withFocus, withOverview, withWithin, type ViewState } from "@graview/layout/view";
 import { withPast } from "@graview/layout/view-moves";
@@ -208,10 +208,10 @@ export function KindStop<S extends AnySchema>({ kind, members: given, flagged = 
   const arrangement: Arrangement = opening ? { ...chosen, sort: opening } : chosen;
   const flaggedSet = useMemo(() => new Set(flagged), [flagged]);
   const arranged = useMemo(
-    () => arrange(members as never[], arrangement, { schema, graph: store.graph as never, flagged: flaggedSet, today }),
+    () => arrange(members as never[], arrangement, { schema, graph: store.graph as never, flagged: flaggedSet, today, touched: offersTouches(store) }),
     [members, arrangement, schema, store, flaggedSet, today, graph], // eslint-disable-line react-hooks/exhaustive-deps
   );
-  const offers = useMemo(() => throughEdges(schema, arrangeable(schema, kind)), [schema, kind]);
+  const offers = useMemo(() => throughEdges(schema, arrangeable(schema, kind, { touched: offersTouches(store) })), [schema, kind, store]);
   const named = views.arrangement?.()?.lists?.[kind]?.filters;
   const rearrange = (next: Arrangement) => go(withArrangement(stop, next));
 

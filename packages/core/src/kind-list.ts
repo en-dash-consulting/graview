@@ -1,3 +1,4 @@
+import { TOUCHED_MOMENTS } from "./graph/touched.js";
 import type { ArrangedGroup, ArrangeNode, Grouping, ListFields, Sort } from "./arrangement.js";
 import type { KindList, KindListGroup } from "./views/types.js";
 
@@ -149,7 +150,7 @@ export function kindListWords(list: KindList, typeOf: (key: string) => "choice" 
  */
 export function kindListFindings(kind: string, list: KindList, shape: ListFields, at = `pages.lists.${kind}`): ListFinding[] {
   const out: ListFinding[] = [];
-  const sortable = ["label", ...Object.entries(shape.fields).filter(([, field]) => field.type !== "other").map(([name]) => name), ...shape.computed];
+  const sortable = ["label", ...Object.entries(shape.fields).filter(([, field]) => field.type !== "other").map(([name]) => name), ...shape.computed, ...TOUCHED_MOMENTS];
   if (list.sort !== undefined) {
     const sort = listSort(list.sort)!;
     const keys: [string, string][] = [[sort.by, `${at}.sort${typeof list.sort === "string" ? "" : ".by"}`]];

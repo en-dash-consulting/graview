@@ -24,6 +24,7 @@
 import "./field-sight.js";
 import "./publishing.js";
 import { labelOf } from "./schema/define-node.js";
+import { isTouchedField } from "./graph/touched.js";
 import { humanizeField } from "./schema/define-node.js";
 import { readableFields } from "./schema/reading.js";
 import { computedValues } from "./document/computed-values.js";
@@ -136,7 +137,8 @@ export function linkedRecordsOver(homes: Readonly<Record<string, LinkedHome>>, o
 /** The fields whose values differ between two readings of one far record, in the order the later one holds them. */
 export function linkedChange(before: LinkedRecord, after: LinkedRecord): readonly string[] {
   const keys = [...new Set([...Object.keys(after.fields), ...Object.keys(before.fields)])];
-  return keys.filter((key) => JSON.stringify(before.fields[key]) !== JSON.stringify(after.fields[key]));
+  // When it was last touched changes with every change, and is no change of its own (`touched.ts`).
+  return keys.filter((key) => !isTouchedField(key) && JSON.stringify(before.fields[key]) !== JSON.stringify(after.fields[key]));
 }
 
 /** A far record's change, as its host tells the app that reads it. */

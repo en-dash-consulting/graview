@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { bindPerson, hostSeat } from "../../src/binding.js";
 import { compileDocument } from "../../src/check.js";
+import { untouched } from "../../src/graph/touched.js";
 import { ActRefusal, BIND_PERSON, bindSchema, createSchema, defineNode, nameOfAuthor, nodeRef, PermissionDeniedError, Store, unseated, unseatedOp, unseatedSnapshot, z, type AnySchema, type Policy, type Principal } from "../../src/index.js";
 
 /**
@@ -327,7 +328,7 @@ describe("the seat a person is bound to is served to that person and the host al
     bindPerson(store, bud, "participant:bud", { author: host });
     expect(leaks(unseatedSnapshot(store.snapshot()))).toBe(false);
     expect(leaks(store.log.all().map((op) => unseatedOp(op)))).toBe(false);
-    expect(unseated(store.graph.getNode("participant:bud"))).toEqual({ id: "participant:bud", kind: "participant", name: "Bud", age: 12 });
+    expect(untouched(unseated(store.graph.getNode("participant:bud"))!)).toEqual({ id: "participant:bud", kind: "participant", name: "Bud", age: 12 });
   });
 });
 

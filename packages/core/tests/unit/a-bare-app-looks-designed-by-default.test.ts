@@ -88,15 +88,15 @@ describe("a derived row whose kind's date is a datetime", () => {
     const kinds = (fields: Record<string, unknown>, fieldRoles?: Record<string, string>) =>
       compiled({ ...thanksgiving, kinds: { task: { fields: { name: { type: "string", required: true }, ...fields }, ...(fieldRoles ? { fieldRoles } : {}) } }, acts: { "add-task": { title: "Add a task", creates: "task" } } } as unknown as GraviewDocument).schema.tryDefinition("task");
     const keys = (definition: ReturnType<typeof kinds>, one: Record<string, unknown>) => readableFields({ id: "t", kind: "task", name: "Book van", ...one }, definition, { limit: 3, said: ["Book van"], glance: true }).map((field) => field.key);
-    const bookkeeping = kinds({ status: { type: "enum", options: ["open", "done"] }, priority: { type: "enum", options: ["low", "high"] }, due: { type: "date" }, updatedAt: { type: "datetime" } });
-    expect(keys(bookkeeping, { status: "open", priority: "high", due: "2026-11-20", updatedAt: "2026-11-10T08:00:00Z" })).toEqual(["due", "status", "priority"]);
+    const bookkeeping = kinds({ status: { type: "enum", options: ["open", "done"] }, priority: { type: "enum", options: ["low", "high"] }, due: { type: "date" }, modifiedAt: { type: "datetime" } });
+    expect(keys(bookkeeping, { status: "open", priority: "high", due: "2026-11-20", modifiedAt: "2026-11-10T08:00:00Z" })).toEqual(["due", "status", "priority"]);
     const dayFirst = kinds({ due: { type: "date" }, remindAt: { type: "datetime" } });
     expect(keys(dayFirst, { due: "2026-11-20", remindAt: "2026-11-19T08:00:00Z" })).toEqual(["due", "remindAt"]);
     // A date a person sets is the kind's date, whatever it is called: only what a store writes as it keeps a record is bookkeeping.
-    const serviced = kinds({ lastService: { type: "date" }, createdAt: { type: "datetime" } });
-    expect(keys(serviced, { lastService: "2026-10-01", createdAt: "2026-11-10T08:00:00Z" })[0]).toBe("lastService");
+    const serviced = kinds({ lastService: { type: "date" }, createdOn: { type: "datetime" } });
+    expect(keys(serviced, { lastService: "2026-10-01", createdOn: "2026-11-10T08:00:00Z" })[0]).toBe("lastService");
     for (const name of ["lastVisit", "lastDay", "seen", "archivedOn"]) expect(keys(kinds({ [name]: { type: "date" } }), { [name]: "2026-10-01" })).toEqual([name]);
-    for (const name of ["createdAt", "updatedOn", "modified", "lastModified"]) expect(keys(kinds({ [name]: { type: "date" }, due: { type: "date" } }), { [name]: "2026-10-01", due: "2026-12-01" })[0]).toBe("due");
+    for (const name of ["editedAt", "updatedOn", "modified", "lastModified"]) expect(keys(kinds({ [name]: { type: "date" }, due: { type: "date" } }), { [name]: "2026-10-01", due: "2026-12-01" })[0]).toBe("due");
     const roled = kinds({ due: { type: "date" }, remindAt: { type: "datetime" } }, { when: "remindAt" });
     expect(keys(roled, { due: "2026-11-20", remindAt: "2026-11-19T08:00:00Z" })).toEqual(["remindAt", "due"]);
   });

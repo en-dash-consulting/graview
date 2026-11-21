@@ -3,6 +3,7 @@ import { z } from "zod";
 import { admitArrangement, arrange, arrangeable, arrangeAllows, bucketStart, formatArrangement, parseArrangement } from "../../src/arrange.js";
 import { createSchema, defineNode, Graph, isoDate } from "../../src/index.js";
 import { awkwardApp } from "../../src/testing.js";
+import { TOUCHED_MOMENTS } from "../../src/graph/touched.js";
 
 /**
  * What a kind can be sorted, filtered and grouped by is in its declaration
@@ -52,20 +53,24 @@ const ids = (nodes: readonly { id: string }[]) => nodes.map((node) => node.id);
 describe("what a kind can be arranged by", () => {
   it("offers its scalar fields, its edges from either end, and its standing — in the declaration's words", () => {
     const offers = arrangeable(schema, "task");
-    expect(offers.sorts.map((offer) => offer.key)).toEqual(["label", "done", "due", "size", "notes", "holds"]);
+    expect(offers.sorts.map((offer) => offer.key)).toEqual(["label", "done", "due", "size", "notes", "updatedAt", "createdAt", "holds"]);
     expect(offers.sorts.find((offer) => offer.key === "due")?.label).toBe("Due date");
     // The edge is declared on the LIST; from the task it reads by its inverse.
     expect(offers.sorts.find((offer) => offer.key === "holds")).toMatchObject({ about: "edge", label: "The list it is on", far: ["list"] });
     // A word field is a filter too (its values are the graph's, listed by a surface): the seventh walk.
-    expect(offers.filters.map((offer) => offer.key)).toEqual(["done", "due", "size", "notes", "holds", "is"]);
+    expect(offers.filters.map((offer) => offer.key)).toEqual(["done", "due", "size", "notes", "updatedAt", "createdAt", "holds", "is"]);
     expect(offers.filters.find((offer) => offer.key === "is")?.options).toEqual(["current", "past", "any", "flagged", "clear"]);
-    expect(offers.groups.map((offer) => offer.key)).toEqual(["done", "due", "size", "holds"]);
+    expect(offers.groups.map((offer) => offer.key)).toEqual(["done", "due", "size", "updatedAt", "createdAt", "holds"]);
     expect(offers.groups.find((offer) => offer.key === "due")?.buckets).toEqual(["day", "week", "month", "year", "decade"]);
+    // Every record says when it was last changed and added, after the kind's own fields and before its edges.
+    expect(offers.sorts.find((offer) => offer.key === "updatedAt")).toMatchObject({ about: "field", label: "Last changed", type: "date" });
+    expect(offers.sorts.find((offer) => offer.key === "createdAt")).toMatchObject({ about: "field", label: "Added", type: "date" });
+    expect(offers.groups.find((offer) => offer.key === "updatedAt")?.buckets).toEqual(["day", "week", "month", "year"]);
     expect(offers.natural).toEqual({ by: "due", direction: "asc" });
 
     const lists = arrangeable(schema, "list");
     // A hidden field is not an arrangement; a kind with no lifecycle has only its standing.
-    expect(lists.sorts.map((offer) => offer.key)).toEqual(["label", "holds"]);
+    expect(lists.sorts.map((offer) => offer.key)).toEqual(["label", "updatedAt", "createdAt", "holds"]);
     expect(lists.filters.find((offer) => offer.key === "is")?.options).toEqual(["flagged", "clear"]);
     expect(lists.natural).toBeUndefined();
   });
@@ -78,7 +83,7 @@ describe("what a kind can be arranged by", () => {
         const shape = Object.keys(definition.fields.shape as Record<string, unknown>);
         const offers = arrangeable(app.schema, kind);
         for (const offer of [...offers.sorts, ...offers.filters, ...offers.groups]) {
-          if (offer.about === "field") expect(shape, `${kind}.${offer.key}`).toContain(offer.key);
+          if (offer.about === "field") expect([...shape, ...TOUCHED_MOMENTS], `${kind}.${offer.key}`).toContain(offer.key);
           if (offer.about === "edge") expect(app.schema.edgeKinds, `${kind} ${offer.key}`).toContain(offer.key);
         }
       }
@@ -212,6 +217,6 @@ describe("the checker and the readers", () => {
     expect(described).toContain("The calendar lens opens with group=holds and sort=color.");
     const llms = generateLlmsTxt(app);
     expect(llms).toContain("## Arranging a picture");
-    expect(llms).toMatch(/- arranged by: sort label \| done \| due \| size \| notes \| holds; filter done \| due \| size \| notes \| holds \| is; group done \| due \| size \| holds; due unless asked/);
+    expect(llms).toMatch(/- arranged by: sort label \| done \| due \| size \| notes \| updatedAt \| createdAt \| holds; filter done \| due \| size \| notes \| updatedAt \| createdAt \| holds \| is; group done \| due \| size \| updatedAt \| createdAt \| holds; due unless asked/);
   });
 });

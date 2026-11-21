@@ -1,4 +1,4 @@
-import { labelOf, type AnySchema, type Principal, type Store, type Violation } from "@graview/core";
+import { labelOf, untouched, type AnySchema, type Principal, type Store, type Violation } from "@graview/core";
 import type { ToolCall } from "./agent/tools.js";
 import type { ChatReply } from "./conversation.js";
 import { applyPlan, planFrom, type PlanOptions, type PlannedCall } from "./plan.js";
@@ -82,7 +82,8 @@ export interface LoopResult {
 /** The graph as a string that is the same for the same graph. */
 function stateKey<S extends AnySchema>(store: Store<S>): string {
   const snapshot = store.graph.snapshot();
-  const nodes = [...snapshot.nodes].map((node) => JSON.stringify(node, Object.keys(node).sort())).sort();
+  // When each record was last touched moves with every repair, and says nothing of the state it is in (`updatedAt`).
+  const nodes = [...snapshot.nodes].map((node) => untouched(node)).map((node) => JSON.stringify(node, Object.keys(node).sort())).sort();
   const edges = [...snapshot.edges].map((edge) => JSON.stringify(edge, Object.keys(edge).sort())).sort();
   return `${nodes.join("\n")}\n--\n${edges.join("\n")}`;
 }

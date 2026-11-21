@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { compileDocument } from "../../src/check.js";
 import { describeApp } from "../../src/cli/describe.js";
+import { untouched } from "../../src/graph/touched.js";
 import { editDocument, type GraviewDocument } from "../../src/document/index.js";
 import { refusalOf, Store, unwrittenFields, type AnySchema, type GraviewApp, type Principal } from "../../src/index.js";
 
@@ -113,7 +114,9 @@ describe("applied", () => {
     expect(store.graph.getNode("ev1")).toMatchObject({ title: "Picnic in the park" });
     expect(store.graph.getNode("ev2")).toMatchObject({ title: "Picnic in the park" });
     store.undo(batch);
-    expect(store.graph.snapshot()).toEqual(before);
+    // Every field is put back; when each record was last touched is the undo's own.
+    const fields = (snapshot: typeof before) => ({ ...snapshot, nodes: snapshot.nodes.map((node) => untouched(node)) });
+    expect(fields(store.graph.snapshot())).toEqual(fields(before));
   });
 
   it("takes an argument, a literal and an expression that reads the subject with the far record as `to`", () => {

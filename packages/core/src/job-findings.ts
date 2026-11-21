@@ -1,3 +1,4 @@
+import { isTouchedField, TOUCHED_MOMENTS } from "./graph/touched.js";
 import { listFieldsOf, type ListFields } from "./arrangement.js";
 import type { GraviewApp } from "./app.js";
 import { documentRelationActOf } from "./document/relation-acts.js";
@@ -77,7 +78,7 @@ export function conditionProblems(where: string, kindName: string, kind: JobKind
   for (const fn of shape.unknownFunctions) problems.push(`its where calls "${fn}", which is not a function the rule language knows`);
   const edges = new Set([...world.kinds.values()].flatMap((k) => [...k.edges]));
   for (const name of shape.names) {
-    if (name.startsWith("$") || name === "id" || name === "label" || kind.fields[name] || kind.edges.has(name) || kind.computed.includes(name)) continue;
+    if (name.startsWith("$") || name === "id" || name === "label" || isTouchedField(name) || kind.fields[name] || kind.edges.has(name) || kind.computed.includes(name)) continue;
     problems.push(`its where reads "${name}", and ${job.kind} has no field, relation or computed field called that`);
   }
   for (const edge of shape.edges) if (!edges.has(edge)) problems.push(`its where walks "${edge}", which is not a relation any kind declares`);
@@ -105,7 +106,7 @@ export function jobFindings(purpose: AppPurpose | undefined, world: JobWorld): J
     } else {
       for (const problem of whereProblems(job, kind, world)) out.push({ code: "job-where", index, key: "where", message: `${said} cannot be answered: ${problem}.`, fix: `Write it in the rule language over the fields of "${job.kind}" (${quotedList(Object.keys(kind.fields))}) and relations.` });
       if (job.sort !== undefined) {
-        const sortable = ["label", ...Object.entries(kind.fields).filter(([, field]) => field.type !== "other").map(([name]) => name), ...kind.computed];
+        const sortable = ["label", ...Object.entries(kind.fields).filter(([, field]) => field.type !== "other").map(([name]) => name), ...kind.computed, ...TOUCHED_MOMENTS];
         const by = gridSortOf(job.sort)?.by;
         if (by === undefined || !sortable.includes(by)) {
           const field = by === undefined ? undefined : kind.fields[by];

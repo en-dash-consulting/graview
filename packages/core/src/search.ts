@@ -10,7 +10,7 @@ import { readableFields, tellApart } from "./schema/reading.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { AnyNodeDefinition } from "./schema/types.js";
 import { FIELD_SIGHT } from "./permissions/sight.js";
-import { hidesFrom, seesId } from "./seen.js";
+import { hidesFrom, seesId, toldTouches } from "./seen.js";
 import type { Store } from "./store.js";
 import { kindPath, onePerPicture, placePath, sharesItsName, type Place } from "./views/types.js";
 import { capitalize, listed } from "./capital.js";
@@ -710,11 +710,13 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
       (kindWords.length === 0 || kindWords.some((value) => named(kind, value))),
   );
 
+  // When each record was made and last touched is offered to a seat that is told them (`toldTouches`), and to no other.
+  const told = toldTouches(store as never, principal);
   // The rest of the conditions narrow the kinds whose declaration offers them.
   const narrowing = parsed.conditions.filter((condition) => condition.key !== "kind");
   const conditions: SearchCondition[] = narrowing.map((condition) => ({
     ...condition,
-    admittedBy: kinds.filter((kind) => arrangeable(schema, kind).filters.some((offer) => offer.key === condition.key)),
+    admittedBy: kinds.filter((kind) => arrangeable(schema, kind, { touched: told }).filters.some((offer) => offer.key === condition.key)),
   }));
   const fieldConditions = conditions.filter((condition) => condition.key !== "is");
   // `is:flagged`, `is:clear` and `is:past` narrow on their own; `is:any` and `is:current` only say which horizon.
@@ -741,7 +743,8 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
    */
   const sighted = hidesFrom(store, principal) ? seesId(store, principal) : undefined;
   // A record some of whose fields its sight keeps is searched as the seat is served it: no hit on what it may not read (Roadmap f-field-sight).
-  const served = FIELD_SIGHT.keptFrom?.(store, principal) && store.seenBy(principal).graph;
+  // And one told none of when each was made and touched is searched as it is served them: none of the four (`toldTouches`).
+  const served = (FIELD_SIGHT.keptFrom?.(store, principal) || !told) && store.seenBy(principal).graph;
   const at = (path: string) => addressOf(path, options.basePath === undefined ? {} : { basePath: options.basePath });
   const ctx: ArrangeContext = { schema, graph: store.graph as unknown as ArrangeGraph, flagged, ...(today ? { today } : {}), ...(store.appTimeZone ? { timeZone: store.appTimeZone } : {}) };
 

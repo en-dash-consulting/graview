@@ -1,4 +1,5 @@
 import type { Policy, Sight } from "../../permissions/types.js";
+import { isTouchedField } from "../../graph/touched.js";
 import { rolesOf } from "../../permissions/policy.js";
 import type { AnySchema } from "../../schema/schema.js";
 import type { AnyNodeDefinition } from "../../schema/types.js";
@@ -66,7 +67,7 @@ export function checkFieldSight<S extends AnySchema>(ctx: CheckContext<S>): void
 
   for (const sight of sights) {
     for (const field of [...(sight.fields ?? []), ...(sight.hide ?? [])]) {
-      if (sight.kinds.some((kind) => definition(kind) && fieldsOf(definition(kind)!).has(field))) continue;
+      if (isTouchedField(field) || sight.kinds.some((kind) => definition(kind) && fieldsOf(definition(kind)!).has(field))) continue;
       ctx.add({
         severity: "error",
         code: "sight-names-an-unknown-field",

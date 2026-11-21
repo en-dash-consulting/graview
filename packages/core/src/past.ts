@@ -18,7 +18,8 @@ import type { ArchivedOps, DeclarationMark, HistoryHost } from "./history.js";
 import type { EvaluateOptions, InvariantDefinition } from "./invariants/types.js";
 import type { ModuleMap } from "./modules.js";
 import { inverseOf } from "./ops/inverse.js";
-import type { Epoch } from "./ops/log.js";
+import { foldOp, type Epoch } from "./ops/log.js";
+import { untouched } from "./graph/touched.js";
 import type { Author, Operation } from "./ops/types.js";
 import type { Principal } from "./permissions/types.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
@@ -459,7 +460,9 @@ function rewound<S extends AnySchema>(store: Store<S>): GraphSnapshot {
       // An inverse that lands on nothing is passed over, as a fold passes over an op that does.
     }
   }
-  const base = graph.snapshot();
+  // When each record was touched is the fold's to say again from here (`touched.ts`): what the graph holds now is later than the moment, and before the log there is nothing to say it from.
+  const now = graph.snapshot();
+  const base = { ...now, nodes: now.nodes.map(untouched) };
   REWOUND.set(store, { firstId, base });
   return base;
 }
@@ -479,15 +482,5 @@ export function pastAt<S extends AnySchema>(store: Store<S>, when: number | stri
   return pastOf(store, seq, { declaration });
 }
 
-/** One op folded onto a graph as `OperationLog.fold` lands each (`foldOp`): an undo puts back what was there, and a write an older declaration accepted and this one does not is held as written. */
-function fold<S extends AnySchema>(graph: Graph<S>, op: Operation): void {
-  if (op.undoes !== undefined) {
-    graph.applyPrimitives(op.primitives, { restoring: true });
-    return;
-  }
-  try {
-    graph.applyPrimitives(op.primitives);
-  } catch {
-    graph.applyPrimitives(op.primitives, { restoring: true });
-  }
-}
+/** One op folded onto a graph as `OperationLog.fold` lands each: an undo puts back what was there, a write an older declaration accepted and this one does not is held as written, and what it wrote says when (`touched.ts`). */
+const fold = foldOp;

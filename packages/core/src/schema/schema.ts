@@ -1,4 +1,5 @@
 import { MARKS, PERSON_SEAT, personSeatOf } from "../graph/archived.js";
+import { isTouchedField } from "../graph/touched.js";
 import * as z from "./zod.js";
 import type {
   AnyNodeDefinition,
@@ -184,7 +185,10 @@ export function createSchema<const Defs extends readonly AnyNodeDefinition[]>(
       const fields: Record<string, unknown> = {};
       const marks: Record<string, true | string> = {};
       for (const [key, value] of Object.entries(node as Record<string, unknown>)) {
-        if (!MARKS.has(key)) fields[key] = value;
+        // When it was made and last touched, and by whom (`touched.ts`): the framework's, kept as words, never judged.
+        if (isTouchedField(key)) {
+          if (typeof value === "string") marks[key] = value;
+        } else if (!MARKS.has(key)) fields[key] = value;
         else if (value === true) marks[key] = true;
         // The seat a person is bound to is a word, not a flag (`PERSON_SEAT`).
         else if (key === PERSON_SEAT && personSeatOf(node) !== undefined) marks[key] = value as string;

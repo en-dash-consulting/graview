@@ -190,7 +190,8 @@ const SENT = new Map<string, { words: Set<string>; latest: Arrangement | null; a
 export function ArrangeBar(props: ArrangeBarProps) {
   const { schema, graph, kind, arrangement: given, onChange } = props;
   // A list hands its own (through its relations to their far ends, `throughEdges`); a lens's are its kind's.
-  const offers = props.offers ?? arrangeable(schema, kind);
+  // When each was made and touched, only where its reader is told them (`toldTouches` on a seat's graph).
+  const offers = props.offers ?? arrangeable(schema, kind, { touched: (graph as { readonly toldTouches?: boolean } | undefined)?.toldTouches !== false });
   const id = props.testId ?? "arrange";
   const canSort = arrangeAllows(props.allow, "sort") && offers.sorts.length > 1;
   const canGroup = arrangeAllows(props.allow, "group") && offers.groups.length > 0;
