@@ -32,7 +32,7 @@ async function served(phone: string | undefined) {
 }
 
 /** What a seat is sent, its clocks, batches and minted ids said alike. */
-const alike = (value: unknown) => JSON.stringify(value).replace(/"(at|exportedAt)":"[^"]*"/g, '"$1":"now"').replace(/(batch|op|withheld):[a-z0-9:]+/g, "$1:minted").replace(/"(lastSeq|seq|version)":\d+/g, '"$1":0');
+const alike = (value: unknown) => JSON.stringify(value).replace(/"(at|exportedAt|createdAt|updatedAt)":"[^"]*"/g, '"$1":"now"').replace(/(batch|op|withheld):[a-z0-9:]+/g, "$1:minted").replace(/"(lastSeq|seq|version)":\d+/g, '"$1":0');
 
 describe("a field a seat may not see, on the wire", () => {
   it("is in nothing the routes send a parent, and they send the same with a phone number as without", async () => {

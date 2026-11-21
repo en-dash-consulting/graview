@@ -61,6 +61,9 @@ const dangle = (store: Store<AnySchema>, edge: GraphEdge): void => {
   for (const [index, end] of [[graph.outIndex, edge.from], [graph.inIndex, edge.to]] as const) index.set(end, new Set([...(index.get(end) ?? []), edgeId(edge)]));
 };
 
+/** Ops as they were made: a seat from whom anything is kept is also told each stamps nothing of when records were touched (`stamps`). */
+const bare = (ops: readonly Operation[]): Operation[] => ops.map(({ stamps: _stamps, ...op }) => op);
+
 describe("an op naming no record is served as it is", () => {
   it("serves a repair removing a dangling link to a seat from whom nothing is hidden, unchanged: Cloud's reproduction", () => {
     const ops = logOf([{ op: "remove-edge", edge: GHOST }]);
@@ -70,7 +73,7 @@ describe("an op naming no record is served as it is", () => {
     expect(seesId(store, seat)("category:ghost")).toBe(true);
 
     const served = redact(store.log.all(), seatLens(store, seat));
-    expect(served).toEqual(store.log.all());
+    expect(bare(served)).toEqual(store.log.all());
     expect(served.some(isWithheld)).toBe(false);
     expect(logSeenBy(store, seat).some(isWithheld)).toBe(false);
   });
@@ -80,15 +83,15 @@ describe("an op naming no record is served as it is", () => {
     const store = new Store<AnySchema>({ schema, snapshot: { nodes: [BLOOM], edges: [] }, log: ops });
     const seat: Principal = { kind: "human", id: "u3", roles: ["anyone"] };
     expect(hidesFrom(store, seat)).toBe(false);
-    expect(redact(store.log.all(), seatLens(store, seat))).toEqual(store.log.all());
+    expect(bare(redact(store.log.all(), seatLens(store, seat)))).toEqual(store.log.all());
   });
 
   it("serves it as it is to a seat with sights that sees the link's one record", () => {
     const ops = logOf([{ op: "remove-edge", edge: GHOST }]);
     const store = new Store<AnySchema>({ schema, policy: SIGHTED, snapshot: { nodes: [BLOOM], edges: [] }, log: ops });
     expect(hidesFrom(store, viewer)).toBe(true);
-    expect(redact(store.log.all(), seatLens(store, viewer))).toEqual(store.log.all());
-    expect(logSeenBy(store, viewer)).toEqual(store.log.all());
+    expect(bare(redact(store.log.all(), seatLens(store, viewer)))).toEqual(store.log.all());
+    expect(bare(logSeenBy(store, viewer))).toEqual(store.log.all());
   });
 
   it("serves the repair as it is when it lands on a graph that holds the dangling link, to the owner and the viewer alike", () => {
@@ -97,8 +100,8 @@ describe("an op naming no record is served as it is", () => {
     const { ops } = store.applyPrimitives([{ op: "remove-edge", edge: GHOST }], { author: { kind: "system", id: "repair" }, intent: "Remove a link to a record that is not there" });
     expect(store.graph.allEdges()).toEqual([]);
     for (const seat of [owner, viewer]) {
-      expect(redact(ops, seatLens(store, seat))).toEqual(ops);
-      expect(logSeenBy(store, seat)).toEqual(store.log.all());
+      expect(bare(redact(ops, seatLens(store, seat)))).toEqual(ops);
+      expect(bare(logSeenBy(store, seat))).toEqual(store.log.all());
     }
   });
 
@@ -109,7 +112,7 @@ describe("an op naming no record is served as it is", () => {
     expect(served.map(isWithheld)).toEqual([true, true, true]);
     expect(JSON.stringify({ served, log: logSeenBy(store, viewer), snapshot: store.seenBy(viewer).snapshot() })).not.toContain("category:hidden");
     // The owner sees all of it, as it is.
-    expect(redact(store.log.all(), seatLens(store, owner))).toEqual(store.log.all());
+    expect(bare(redact(store.log.all(), seatLens(store, owner)))).toEqual(store.log.all());
   });
 
   for (const order of ["the link first", "the record first"] as const) {

@@ -41,6 +41,7 @@ import {
   type Lineage,
   type SeatLens,
   profileOf,
+  toldTouches,
 } from "@graview/core";
 // What a seat is served keeps the fields its sight keeps (Roadmap f-field-sight): the protocol judges them.
 import "@graview/core/field-sight";
@@ -805,7 +806,7 @@ export interface Wire<S extends AnySchema> {
    */
   behind(principal: Principal, seq: number): boolean;
   /** `{ servedThrough }` for a seat of an app that publishes, as a cursor (the position after the last op it is served); nothing otherwise. */
-  servedOf(principal: Principal, stops?: boolean): { servedThrough?: Cursor; stops?: ServedStops["stops"]; stoppedKinds?: ServedStops["kinds"] };
+  servedOf(principal: Principal, stops?: boolean): { servedThrough?: Cursor; stops?: ServedStops["stops"]; stoppedKinds?: ServedStops["kinds"]; toldTouches: boolean };
   /** The store as the seat sees it. */
   seenFor(principal: Principal): Store<S>;
   /** The store's log as the seat sees it: every op in place, withheld ones under an opaque batch. */
@@ -1045,6 +1046,8 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
         ...(store.publishing?.mode === "on-publish" ? { servedThrough: cursorAt(servedTo(principal) - 1) } : {}),
         ...(stopped?.stops.length ? { stops: stopped.stops } : {}),
         ...(stopped?.kinds.length ? { stoppedKinds: stopped.kinds } : {}),
+        // Whether this seat is told when each record was made and touched (`toldTouches`): its page answers by this, not by its own reading of the policy.
+        toldTouches: toldTouches(store as never, principal),
       };
     },
     seenFor: (principal) => seenBy(store, principal),
@@ -1295,7 +1298,8 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
     }
     // The ops handed in, when they are the whole of what this peer is missing; the log otherwise.
     const after = (ops && ops.length > 0 && ops[0]!.seq <= from && ops.at(-1)!.seq >= last ? ops.filter((op) => op.seq >= from) : store.log.opsFrom(from)).filter((op) => op.seq <= last);
-    const text = after.length > 0 ? JSON.stringify({ t: "ops", seq: cursorAt(last), ops: opsFor(peer.opFormat, wire.shown(seat, after), served) } satisfies LiveServerMessage) : "";
+    // Whether the seat is told a record's four, with every push: a binding or a role that lands mid-session can change it.
+    const text = after.length > 0 ? JSON.stringify({ t: "ops", seq: cursorAt(last), ops: opsFor(peer.opFormat, wire.shown(seat, after), served), toldTouches: toldTouches(store as never, seat) } satisfies LiveServerMessage) : "";
     if (key !== undefined) sight!.texts.set(key, text);
     if (text.length > 0) sayText(peer, text);
   };

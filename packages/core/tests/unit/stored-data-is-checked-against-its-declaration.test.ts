@@ -12,6 +12,7 @@ import {
   type GraphFinding,
   type GraphSnapshot,
 } from "../../src/index.js";
+import { untouched } from "../../src/graph/touched.js";
 
 /**
  * FR-21. A declaration changes; what was stored under the old one stays.
@@ -216,7 +217,8 @@ describe("repairPlan", () => {
 function sorted(snapshot: GraphSnapshot) {
   const keyed = (value: Record<string, unknown>) => Object.fromEntries(Object.entries(value).sort(([a], [b]) => (a < b ? -1 : 1)));
   return {
-    nodes: [...snapshot.nodes].map(keyed).sort((a, b) => ((a.id as string) < (b.id as string) ? -1 : 1)),
+    // When each record was last touched is not what the repair and its undo are judged by.
+    nodes: [...snapshot.nodes].map((node) => keyed(untouched(node))).sort((a, b) => ((a.id as string) < (b.id as string) ? -1 : 1)),
     edges: [...snapshot.edges].map((e) => `${e.kind} ${e.from} ${e.to}`).sort(),
   };
 }

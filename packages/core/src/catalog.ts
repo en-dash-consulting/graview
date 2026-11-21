@@ -33,6 +33,7 @@ import type { Author } from "./ops/types.js";
 import { isWithheld } from "./ops/withheld.js";
 import { actingAs, seatPersonOf } from "./permissions/policy.js";
 import { PERSON_SEAT } from "./graph/archived.js";
+import { touchesSaid } from "./seen.js";
 import type { Principal } from "./permissions/types.js";
 import { fieldWords, humanizeField, labelOf, nounOf, pluralOf } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
@@ -731,9 +732,11 @@ export function aiContextOf<S extends AnySchema>(given: Store<S>, target: AiTarg
   const seen = whole.seenBy(principal);
   const schema = whole.schema;
   const visible = kindsSeen(whole, principal);
+  // Who made or touched each, as a model is told it: the person, never the account (`touchesSaid`).
+  const said = touchesSaid(whole as never);
   const nodeOf = (id: string): Node | undefined => {
     const node = seen.graph.getNode(id) as Node | undefined;
-    return node && visible.has(node.kind) ? node : undefined;
+    return node && visible.has(node.kind) ? said(node) : undefined;
   };
   const brief = (node: Node): AiRecordBrief => ({ id: node.id, kind: node.kind, label: nameOf(schema, node) });
   const ids = recordsOfTarget(target);

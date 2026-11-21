@@ -1,4 +1,4 @@
-import { Store, type AnySchema, type GraviewApp, type Scheme } from "@graview/core";
+import { markServed, Store, type AnySchema, type GraviewApp, type Scheme } from "@graview/core";
 import { useEffect, useState } from "react";
 
 /*
@@ -10,7 +10,8 @@ import { useEffect, useState } from "react";
 
 /** A store from a declaration and a seed: the app's own policy, in memory. */
 export function storeOf<S extends AnySchema>(app: GraviewApp<S>, seed: { readonly nodes: readonly unknown[]; readonly edges: readonly unknown[] } | undefined): Store<S> {
-  return new Store<S>({
+  // Made from what a page was handed: never read as a host's own store (`offersTouches`).
+  return markServed(new Store<S>({
     schema: app.schema,
     mutations: app.mutations ?? [],
     invariants: app.invariants ?? [],
@@ -19,7 +20,7 @@ export function storeOf<S extends AnySchema>(app: GraviewApp<S>, seed: { readonl
     ...(app.intelligence ? { intelligence: app.intelligence } : {}),
     // The app's day: today() is the date in its zone, as a server's store reads it (Roadmap f-app-time-zone).
     ...(app.brand?.timeZone ? { timeZone: app.brand.timeZone } : {}),
-  } as never);
+  } as never));
 }
 
 /**

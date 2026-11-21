@@ -93,6 +93,8 @@ export function exportBundle<S extends AnySchema>(
   // The persisted log when the caller has one (it holds migration runs and
   // prior sessions); the in-memory log otherwise.
   const log = options.log ?? store.log.all();
+  // Who made or touched each record as the store keeps it, the seat, as an op's author is kept; and nothing of whom each seat was bound to, which stays in the installation (`Epoch.bound`).
+  const withoutBindings = ({ bound: _bound, ...epoch }: Epoch): Epoch => epoch;
   const bundle = (log: readonly Operation[], horizon: number, checkpoint?: Epoch): AppBundle => ({
     format: "graview-bundle",
     bundleVersion: 1,
@@ -102,11 +104,11 @@ export function exportBundle<S extends AnySchema>(
     // Snapshot format 2 when the checkpoint it begins at lies past what stood published (FR-31).
     ...formatStamp(horizon > 0 && checkpoint?.seq === horizon ? checkpoint : undefined),
     // Never whose record a person is: bindings and account ids stay in the installation that made them (Roadmap f-invite-binds-existing-person).
-    snapshot: unseatedSnapshot(store.snapshot() as GraphSnapshot),
+    snapshot: unseatedSnapshot(store.snapshot() as GraphSnapshot, { touched: "kept" }),
     // Stamped op format 2, and so written: a persisted or archived op from format 1 goes without an inverse its primitives already say.
     log: log.map((op) => unseatedOp(bareOp(op))),
     ...(horizon > 0 ? { horizon } : {}),
-    ...(horizon > 0 && checkpoint?.seq === horizon ? { checkpoint: { ...checkpoint, base: unseatedSnapshot(checkpoint.base) } } : {}),
+    ...(horizon > 0 && checkpoint?.seq === horizon ? { checkpoint: { ...withoutBindings(checkpoint), base: unseatedSnapshot(checkpoint.base, { touched: "kept" }) } } : {}),
   });
   const horizon = log[0]?.seq ?? store.log.horizon;
   const own = store.log.epochs().find((epoch) => epoch.horizon && epoch.seq === horizon);

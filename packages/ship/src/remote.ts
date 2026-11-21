@@ -27,6 +27,7 @@ import {
   type Lineage,
   type WireRefusal,
   EMPTY_DIFF,
+  markServed,
 } from "@graview/core";
 import type { ServedStops } from "@graview/core/tidying";
 import type { StorageLike } from "./browser-adapter.js";
@@ -93,6 +94,8 @@ export interface RemoteState {
   readonly build?: string;
   /** The host's hold, in its sentence (FR-66); absent while it takes changes, or from a server before it. */
   readonly held?: string;
+  /** Whether this seat is told when each record was made and touched, and by whom (`toldTouches`); absent from a server before them. */
+  readonly toldTouches?: boolean;
 }
 
 export interface RemoteOptions<S extends AnySchema> {
@@ -672,6 +675,8 @@ async function opening<S extends AnySchema>(
     schema: app.schema,
     mutations: app.mutations ?? [],
     invariants: app.invariants ?? [],
+    // Whose page this is: what it offers and judges is that seat's, never a host's.
+    ...(options.principal ? { principal: options.principal } : {}),
     ...(app.policy ? { policy: app.policy } : {}), ...(app.publishing ? { publishing: app.publishing } : {}), ...(app.tidying ? { tidying: app.tidying } : {}),
     ...(app.modules ? { modules: app.modules } : {}),
     ...(enabledModules ? { enabledModules } : {}),
@@ -704,6 +709,8 @@ async function opening<S extends AnySchema>(
     ids: localIds(),
     ...(options.storeOptions ?? {}),
   });
+  // Made from what its seat is served: never read as the host's own store, whoever it was given; told the four as its server says (`offersTouches`).
+  markServed(store, state.toldTouches);
   /*
    * What the host served this seat is what it may see: a sight that hides a
    * field was judged there (Roadmap f-field-sight). THIS store shows what it
@@ -850,7 +857,8 @@ async function opening<S extends AnySchema>(
    * again.
    */
   /** What the host says of the stops this page's log does not hold: for its tray, its bell and its way back. */
-  const hearStops = (said: Pick<RemoteState, "stops" | "stoppedKinds">): void => {
+  const hearStops = (said: Pick<RemoteState, "stops" | "stoppedKinds" | "toldTouches">): void => {
+    if (typeof said.toldTouches === "boolean") markServed(store, said.toldTouches);
     const stops = said.stops ?? [];
     const kinds = said.stoppedKinds ?? [];
     if (stops.length === 0 && kinds.length === 0 && !store.stopsServed) return;
@@ -920,10 +928,11 @@ async function opening<S extends AnySchema>(
 
   const since = async (seq: number): Promise<Operation[]> => {
     const response = await reach(`${options.url}/graview/since?seq=${cursorAt(seq)}&opFormat=${FORMATS.op}`, { headers });
-    const answer = (await response.json()) as { ops?: Operation[]; version?: number; build?: string; reset?: boolean; stops?: RemoteState["stops"]; stoppedKinds?: RemoteState["stoppedKinds"] };
+    const answer = (await response.json()) as { ops?: Operation[]; version?: number; build?: string; reset?: boolean; stops?: RemoteState["stops"]; stoppedKinds?: RemoteState["stoppedKinds"]; toldTouches?: boolean };
     if (moved(answer)) return [];
     // Said on an answer that brings ops: one with none says nothing of stops, and what was said stands.
     if ((answer.ops?.length ?? 0) > 0) hearStops(answer);
+    else if (typeof answer.toldTouches === "boolean") markServed(store, answer.toldTouches);
     // The ops cannot catch this client up (behind the horizon, or past where its seat is now served): it takes the state.
     if (answer.reset === true) {
       resync();
@@ -1219,6 +1228,7 @@ async function opening<S extends AnySchema>(
         return;
       }
       case "ops":
+        if (typeof message.toldTouches === "boolean") markServed(store, message.toldTouches);
         land(message.ops ?? []);
         return;
       case "ack": {

@@ -100,7 +100,7 @@ function told(store: Store<AnySchema>, call: MutationCall, author: Principal): s
   const after = { snapshot: seen.snapshot(), log: seen.log.all(), problems: seen.violations() };
   return JSON.stringify({ answer, after })
     .replace(/(batch|op):[a-z0-9:]+/g, "$1:minted")
-    .replace(/"at":"[^"]*"/g, '"at":"now"')
+    .replace(/"(at|createdAt|updatedAt)":"[^"]*"/g, '"$1":"now"')
     .replace(MINTED, "-minted");
 }
 

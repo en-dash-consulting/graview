@@ -1,4 +1,4 @@
-import { defineApp, type AnySchema, type MutationCall, type Principal } from "@graview/core";
+import { defineApp, untouched, type AnySchema, type MutationCall, type Principal } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { guest, keeper, MUTATIONS, policy, said, schema, world } from "../../../core/tests/support/hidden-holds.js";
 import { createStoreHandler, LIVE_PATH, openRemote, type LiveServerMessage, type LiveSocketLike, type RemoteRefusal, type StoreHandler } from "../../src/index.js";
@@ -27,7 +27,7 @@ const CALLS: readonly MutationCall[] = [
 const alike = (value: unknown) =>
   JSON.stringify(value)
     .replace(/(batch|op|preview):[a-z0-9:-]+/g, "$1:minted")
-    .replace(/"(at|build|server|token|epoch|participant)":"[^"]*"/g, '"$1":"-"');
+    .replace(/"(at|createdAt|updatedAt|build|server|token|epoch|participant)":"[^"]*"/g, '"$1":"-"');
 
 const served = (held: boolean, seat: Principal) => createStoreHandler({ app: app as never, store: world(held) as never, seatOf: () => seat }) as Promise<StoreHandler<AnySchema>>;
 
@@ -100,6 +100,9 @@ function wired(handler: StoreHandler<AnySchema>) {
   return { fetch: fetcher, socket, sent: () => sent };
 }
 
+/** A record as it holds what was written, without when it was touched, which is each world's own clock (`updatedAt`). */
+const held4 = <N extends object>(node: N | undefined): N | undefined => (node === undefined ? undefined : untouched(node));
+
 describe("an act on the wire runs under its seat's sight", () => {
   it("answers POST /graview/ops alike — status, body and the state after — whether a hold the seat may not see exists", async () => {
     const [held, none] = [await posted(true, guest), await posted(false, guest)];
@@ -134,7 +137,7 @@ describe("an act on the wire runs under its seat's sight", () => {
         remote.store.apply({ name: "book-room", args: { id: ROOM } });
         const shown = remote.store.graph.getNode(ROOM);
         await remote.settled();
-        seen[String(held)] = { refusals, shown, after: remote.store.graph.getNode(ROOM), sent: wire.sent() - before, host: handler.store.graph.getNode(ROOM) };
+        seen[String(held)] = { refusals, shown: held4(shown), after: held4(remote.store.graph.getNode(ROOM)), sent: wire.sent() - before, host: held4(handler.store.graph.getNode(ROOM)) };
         remote.close();
       }
       expect(seen["true"]).toEqual(seen["false"]);

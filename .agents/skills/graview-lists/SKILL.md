@@ -30,6 +30,9 @@ own actor tidying are `graview-tidying`.
    offers every way but a relation to a kind with more than forty records
    (offered by that kind's choices instead), and its first two choice
    fields as chips. An address says the same: `/requests?filter=status:open`.
+   Every kind is also sorted, filtered and grouped by when its records
+   last changed and were added (`updatedAt`, `createdAt`, kept by the
+   framework), by day on the app's clock: `?sort=updatedAt:desc`.
 
    **Say the order and grouping it opens in**, beside its filters:
 

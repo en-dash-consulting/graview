@@ -1,3 +1,4 @@
+import { whoShown } from "../graph/touched.js";
 import type { AnyGraphNode, GraphReader } from "../graph/types.js";
 import { evaluateExpr, ExprEvalError, NodeSet, type KindShape, type Value } from "./expr/evaluate.js";
 import type { Expr } from "./expr/parse.js";
@@ -228,6 +229,8 @@ export interface RenderContext {
   readonly money?: Money;
   /** How a record is said; unsaid, by the labels of the schema the graph carries (`namerOf`). */
   readonly name?: Namer;
+  /** Told when what it says reads when a record was made or touched, or who did (`EvalContext.onTouched`). */
+  readonly onTouched?: () => void;
 }
 
 /** Render a parsed template. A part that cannot be judged renders as "—" rather than failing the whole sentence. */
@@ -242,8 +245,14 @@ export function renderTemplate(parts: readonly TemplatePart[], ctx: RenderContex
   return parts
     .map((part) => {
       if (part.text !== undefined) return part.text;
+      // Who made or touched a record, wherever the part read it — bare, `$subject.updatedBy`, `{list.updatedBy}`, inside a sentence it works out — is said as the person, else somebody, when it is shown.
+      const whos = new Set<string>();
+      const sayWho = (who: string) => {
+        const person = (ctx.graph ?? EMPTY_GRAPH).getNode(who);
+        return person ? name(person) : "someone";
+      };
       try {
-        const value = evaluateExpr(part.expr!, {
+        const read = evaluateExpr(part.expr!, {
           graph: ctx.graph ?? EMPTY_GRAPH,
           subject: ctx.node,
           kinds: ctx.kinds,
@@ -252,13 +261,17 @@ export function renderTemplate(parts: readonly TemplatePart[], ctx: RenderContex
           ...(ctx.money?.timeZone ? { timeZone: ctx.money.timeZone } : {}),
           ...(ctx.bindings ? { bindings: ctx.bindings } : {}),
           ...(ctx.args ? { args: ctx.args } : {}),
+          ...(ctx.onTouched ? { onTouched: ctx.onTouched } : {}),
+          onWho: (who: string) => void whos.add(who),
         });
+        const value = whoShown(read, whos, sayWho);
         // A choice field named bare (`{status}`) is said by its option's label, else its id spoken — alone as a chip says it, among other words in lower case — never the id.
         // `$subject.status`, and `$arg.status` for the field it fills, are said as `{status}` is.
         const e = part.expr!;
         const named = e.t === "ident" ? e.name : e.t === "member" && e.object.t === "ident" && e.object.name[0] === "$" ? e.name : undefined;
         const labels = !part.format && named !== undefined && ctx.node ? ctx.kinds.get(ctx.node.kind)?.choices?.get(named) : undefined;
         if (labels && (typeof value === "string" || Array.isArray(value))) return capitalized(part, optionsSaid(value, labels, parts.length === 1));
+        // Who made or touched it, as a page names an author: the person's record by its label, else somebody — never a seat's id.
         if (part.format === "glance") return capitalized(part, glanced(value, named !== undefined && ctx.node ? ctx.kinds.get(ctx.node.kind)?.choices?.get(named) : undefined, today, ctx.money));
         return capitalized(part, show(value, part.format, today, part.formatArgs, ctx.money, name));
       } catch (error) {

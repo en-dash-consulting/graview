@@ -13,6 +13,7 @@
  * An entry of its own: a page that draws no job carries none of it, and the
  * checker's sentences about jobs (`job-*`) are `graview check`'s.
  */
+import { offersTouches } from "./seen.js";
 import type { GraviewApp } from "./app.js";
 import { shapesFor } from "./document/computed-values.js";
 import { evaluateExpr, ExprEvalError, NodeSet, type Value } from "./document/expr/evaluate.js";
@@ -116,7 +117,11 @@ export function answerJob<S extends AnySchema>(given: Store<S>, job: Pick<JobDec
   const schema = seen.schema;
   const kinds = shapesFor(schema);
   const today = seen.today?.();
-  const read = (expr: Expr, node: AnyGraphNode): Value => evaluateExpr(expr, { graph, subject: node, kinds, ...(today ? { today } : {}), ...(store.appTimeZone ? { timeZone: store.appTimeZone } : {}) });
+  // A seat told none of a record's four is answered by no `where` or order that read one (`toldTouches`): it cannot be judged for it.
+  const untold = !offersTouches(seen as never);
+  let touched = false;
+  const onTouched = untold ? () => void (touched = true) : undefined;
+  const read = (expr: Expr, node: AnyGraphNode): Value => evaluateExpr(expr, { graph, subject: node, kinds, ...(today ? { today } : {}), ...(store.appTimeZone ? { timeZone: store.appTimeZone } : {}), ...(onTouched ? { onTouched } : {}) });
   const where = job.where === undefined ? undefined : parsed(job.where);
   if (where === null) return { count: 0, ids: [] };
   const records = graph.nodesOfKind(job.kind).filter((node) => {
@@ -128,6 +133,7 @@ export function answerJob<S extends AnySchema>(given: Store<S>, job: Pick<JobDec
       return false;
     }
   });
+  if (touched) return { count: 0, ids: [] };
   const sort = gridSortOf(job.sort);
   const key = sort && sort.by !== "label" ? parsed(sort.by) : undefined;
   const ordered = !sort
@@ -142,6 +148,6 @@ export function answerJob<S extends AnySchema>(given: Store<S>, job: Pick<JobDec
           return undefined;
         }
       });
-  const ids = ordered.map((node) => node.id);
+  const ids = (touched ? records : ordered).map((node) => node.id);
   return { count: ids.length, ids };
 }

@@ -3,6 +3,7 @@ import { refusalOf, Store, type AnySchema, type MutationCall, type Principal } f
 import { search } from "../../src/search.js";
 import "../../src/field-sight.js";
 import { answerSeenBy } from "../../src/seat.js";
+import { untouched } from "../../src/graph/touched.js";
 import { coach, parent, world } from "../support/hidden-phones.js";
 
 /**
@@ -36,7 +37,7 @@ function reads(store: Store<AnySchema>, seat: Principal): string {
     names: [store.resolveRef({ name: "id", kinds: ["contact"] }, "Doc", seat), store.resolveRef({ name: "id", kinds: ["contact"] }, "Doc (555", seat)],
   })
     .replace(/(batch|op):[a-z0-9:]+/g, "$1:minted")
-    .replace(/"at":"[^"]*"/g, '"at":"now"');
+    .replace(/"(at|createdAt|updatedAt)":"[^"]*"/g, '"$1":"now"');
 }
 
 /** What a seat is told of one call: its answer as served, or its refusal. */
@@ -47,13 +48,13 @@ function told(store: Store<AnySchema>, call: MutationCall, author: Principal): s
   } catch (error) {
     answer = { refused: refusalOf(error) };
   }
-  return JSON.stringify({ answer, after: reads(store, author) }).replace(/(batch|op):[a-z0-9:]+/g, "$1:minted").replace(/"at":"[^"]*"/g, '"at":"now"');
+  return JSON.stringify({ answer, after: reads(store, author) }).replace(/(batch|op):[a-z0-9:]+/g, "$1:minted").replace(/"(at|createdAt|updatedAt)":"[^"]*"/g, '"$1":"now"');
 }
 
 describe("a sight can hide a field", () => {
   it("serves a parent every player's name and no phone number or medical note: the record is there, the fields are not", () => {
     const view = world("555 0101").seenBy(parent);
-    expect(view.graph.getNode("player:ann")).toEqual({ id: "player:ann", kind: "player", name: "Annie", team: "called" });
+    expect(untouched(view.graph.getNode("player:ann")!)).toEqual({ id: "player:ann", kind: "player", name: "Annie", team: "called" });
     expect(view.graph.nodesOfKind("player" as never).map((node: { id: string }) => node.id)).toEqual(expect.arrayContaining(["player:ann", "player:bea"]));
   });
 

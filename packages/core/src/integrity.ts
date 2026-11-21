@@ -1,5 +1,6 @@
 import { Graph } from "./graph/graph.js";
 import { edgeId, type GraphSnapshot } from "./graph/types.js";
+import { untouched } from "./graph/touched.js";
 import { inverseOf } from "./ops/inverse.js";
 import type { Operation } from "./ops/types.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
@@ -37,7 +38,8 @@ const byKey = (a: { key: string }, b: { key: string }) => (a.key < b.key ? -1 : 
 
 /** The graph in the one form two equal graphs share. */
 function canonicalSnapshot(snapshot: GraphSnapshot): string {
-  const nodes = snapshot.nodes.map((node) => ({ key: node.id, value: node })).sort(byKey);
+  // When each record was made and last touched (`touched.ts`) is left out: a graph from before they were kept hashes as the same graph folded now.
+  const nodes = snapshot.nodes.map((node) => ({ key: node.id, value: untouched(node) })).sort(byKey);
   const edges = snapshot.edges
     // A link's own id and data (reserved) count when it carries them; a graph without them hashes as it always did.
     .map((edge) => ({ key: edgeId(edge), value: { kind: edge.kind, from: edge.from, to: edge.to, id: edge.id, data: edge.data } }))

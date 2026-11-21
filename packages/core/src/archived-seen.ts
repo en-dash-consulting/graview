@@ -28,6 +28,7 @@
  * view's modules — it makes the whole store with the store's own class.
  */
 import type { ArchivedOps } from "./history.js";
+import { touchesRebound } from "./seen.js";
 import type { EvaluateOptions, InvariantDefinition } from "./invariants/types.js";
 import type { ModuleMap } from "./modules.js";
 import type { Epoch, LogArchive } from "./ops/log.js";
@@ -177,8 +178,10 @@ function servedAlone<S extends AnySchema>(store: Store<S>, epoch: Epoch, princip
     now: inside.now,
   });
   // What only the store judges by is never the seat's, whether or not its view is kept from anything (FR-199).
-  const { removed: _removed, writers: _writers, declines: _declines, ...served } = unmarked(alone.seenBy(principal).log.epochs()[0]!);
-  return served;
+  const { removed: _removed, writers: _writers, declines: _declines, bound: _bound, ...served } = unmarked(alone.seenBy(principal).log.epochs()[0]!) as Epoch;
+  // Who made or touched each record, as the store now binds them: a store opened on that epoch alone knows none of the bindings made since.
+  const rebound = touchesRebound(store as never, principal);
+  return { ...served, base: { ...served.base, nodes: served.base.nodes.map((node) => rebound(node)) } };
 }
 
 /**
@@ -256,7 +259,7 @@ export function archiveFrom<S extends AnySchema>(store: Store<S>, archive: Archi
   // Where the archive begins is its own beginning: the epoch that keeps all it must, or the app before anything was made.
   const beginning = (): Epoch => {
     if (begins > 0) return whole.log.epochs()[0]!;
-    const { creators: _creators, removed: _removed, writers: _writers, declines: _declines, ...start } = whole.log.checkpointAt(whole.schema, 0, { validate: (store as unknown as Opened<S>).validate });
+    const { creators: _creators, removed: _removed, writers: _writers, declines: _declines, bound: _bound, ...start } = whole.log.checkpointAt(whole.schema, 0, { validate: (store as unknown as Opened<S>).validate });
     return { ...start, removed: {} };
   };
   const epoch = (seq > begins ? whole.checkpoint({ seq }) : undefined) ?? beginning();
