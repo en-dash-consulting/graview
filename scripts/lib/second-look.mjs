@@ -11,8 +11,9 @@
  * written down by name with the claims it missed so it is fixed rather
  * than forgotten. `--strict` (or GRAVIEW_STRICT=1) takes one look only.
  */
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { ownedBy, writtenSince } from "./on-github.mjs";
 
 /** The claims a harness printed as false: `"name": false` lines, and `FAIL name` lines from a nested chain. */
 export const missedClaims = (output) => {
@@ -36,6 +37,36 @@ export const judge = (first, again) => {
   if (!again) return { ...first, verdict: "failed" };
   if (again.code !== 0) return { ...again, verdict: "failed", missed: missedClaims(first.output) };
   return { ...again, verdict: "flaky", missed: missedClaims(first.output) };
+};
+
+/*
+ * THE FIRST LOOK, KEPT BESIDE THE SECOND. A harness writes its verdict and
+ * its frames to the same paths each time it runs, so the second look wrote
+ * over the first: a run whose first look failed and whose second held kept
+ * only the look that held, and the frames of the failure were gone
+ * (one-face's pinch on 2a116268c). Before the second look, what the first
+ * wrote of its own (docs/<name>.json, docs/<name>/…, and its (`ownedBy`, on-github.mjs)
+ * watch) is copied under docs/first-look/ at the same paths, and an earlier
+ * run's copy of that harness is cleared first.
+ */
+export const FIRST_LOOK = "docs/first-look";
+
+/** The first look's own files copied under docs/first-look/, by path; `first` is runOne's answer (`file`, `began`). */
+export const keepFirstLook = (repoRoot, first) => {
+  const base = first.file.replace(/^verify-/, "").replace(/\.mjs$/, "");
+  const own = (path) => ownedBy(base, path);
+  const copyOf = (path) => resolve(repoRoot, FIRST_LOOK, path.slice("docs/".length));
+  // An earlier run's first look of this harness is not this run's.
+  const earlier = writtenSince(repoRoot, 0, FIRST_LOOK).map((file) => `docs/${file.path.slice(FIRST_LOOK.length + 1)}`);
+  for (const path of earlier.filter(own)) rmSync(copyOf(path), { force: true });
+  const kept = writtenSince(repoRoot, Date.parse(first.began))
+    .map((file) => file.path)
+    .filter((path) => !path.startsWith(`${FIRST_LOOK}/`) && own(path));
+  for (const path of kept) {
+    mkdirSync(dirname(copyOf(path)), { recursive: true });
+    copyFileSync(resolve(repoRoot, path), copyOf(path));
+  }
+  return kept.map((path) => `${FIRST_LOOK}/${path.slice("docs/".length)}`);
 };
 
 /** Kept across runs, newest first, a hundred at most: what flaked, where, and which claims. */

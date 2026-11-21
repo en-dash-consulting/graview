@@ -36,7 +36,7 @@ import { homedir, tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { updateLedger } from "./lib/ledger.mjs";
-import { judge, missedClaims, recordFlakes } from "./lib/second-look.mjs";
+import { judge, keepFirstLook, missedClaims, recordFlakes } from "./lib/second-look.mjs";
 import { described, holders, listeners, serving } from "./lib/serve.mjs";
 import { watchFile } from "./lib/watch.mjs";
 import { namedPorts, PORT_FLOOR, portFor } from "./lib/ports.mjs";
@@ -414,7 +414,12 @@ for (const one of alone) firsts.push(await runOne(one));
 const missed = strict ? [] : firsts.filter((one) => one.code !== 0);
 if (missed.length > 0) say(`\nsecond look, alone: ${missed.map((one) => one.name).join(", ")}\n`);
 const seconds = new Map();
-for (const one of missed) seconds.set(one.name, await runOne([one.name, one.file], true));
+for (const one of missed) {
+  // The first look's verdict and frames, kept under docs/first-look/ before the second writes over them (lib/second-look.mjs).
+  const kept = keepFirstLook(repoRoot, one);
+  if (kept.length > 0) say(`first look of ${one.name} kept: ${kept.join(", ")}\n`);
+  seconds.set(one.name, await runOne([one.name, one.file], true));
+}
 for (const one of firsts) results.push(judge(one, seconds.get(one.name)));
 for (const server of servers) server.stop();
 const wall = Math.round((Date.now() - started) / 1000);
@@ -470,7 +475,7 @@ mkdirSync(resolve(repoRoot, "docs/watch"), { recursive: true });
 const scrubbed = (text) => [repoRoot, homedir(), tmpdir(), realpathSync(tmpdir())].reduce((said, path) => said.split(path).join(path === repoRoot ? "." : "~"), String(text ?? ""));
 writeFileSync(
   LAST_RUN,
-  `${JSON.stringify({ at: new Date().toISOString(), results: results.map(({ name, code, took, began, verdict, gist: said, missed, output }) => ({ name, code, took, began, verdict, ...(verdict === "held" ? {} : { gist: scrubbed(said), missed: (missed ?? missedClaims(output ?? "")).map(scrubbed) }) })) }, null, 2)}\n`,
+  `${JSON.stringify({ at: new Date().toISOString(), results: results.map(({ name, file, code, took, began, verdict, gist: said, missed, output }) => ({ name, file, code, took, began, verdict, ...(verdict === "held" ? {} : { gist: scrubbed(said), missed: (missed ?? missedClaims(output ?? "")).map(scrubbed) }) })) }, null, 2)}\n`,
 );
 const spent = results.reduce((sum, one) => sum + one.took, 0);
 say(
