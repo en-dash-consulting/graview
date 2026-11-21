@@ -1,5 +1,6 @@
 import { judgedOnTouches } from "./graph/touched.js";
-import { everBound, hidesFrom, offersTouches, readingOf, seatLens, seenBy, seesEveryRecord, seesId, servedTold, type SeenOptions, UNSEATED } from "./seen.js";
+import { everBound, hidesFrom, readingOf, seatLens, seenBy, seesEveryRecord, seesId, toldTouches, type SeenOptions } from "./seen.js";
+import { offersTouches, servedTold, TOLD_TO, UNSEATED } from "./served-touches.js";
 import { isoToday } from "./days.js";
 import type { IntelligenceProviderDeclaration } from "./app.js";
 import { Graph, GraphError, MissingRecordError } from "./graph/graph.js";
@@ -919,6 +920,11 @@ export class Store<S extends AnySchema> {
       held && said === held.said ? held.projection : resolveModules(this.declaredModules, said ?? this.startingModules);
     this.projected = { projection, length: all.length, last, said };
     return projection;
+  }
+
+  /** Whether a seat this store was given is told a record's four (`toldTouches`), the judgment `offersTouches` asks of it without importing it. */
+  [TOLD_TO](by: Principal): boolean {
+    return toldTouches(this as never, by);
   }
 
   /**

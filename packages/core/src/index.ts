@@ -354,7 +354,9 @@ export type { Grant, Policy, Principal, Refusal, Sight } from "./permissions/typ
 export { FIELD_SIGHT, recordsOf, sees, sightedKinds } from "./permissions/sight.js";
 export { writersOf, type Writers } from "./ops/writers.js";
 export type { FieldsKept, RecordedLog, Records } from "./permissions/sight.js";
-export { boundPeopleFor, hidesFrom, markServed, offersTouches, toldTouches, touchesSaid, logSeenBy, namedAuthors, seatLens, seenBy, seesId, servesReaders, type SeenOptions } from "./seen.js";
+export { boundPeopleFor, hidesFrom, toldTouches, touchesSaid, logSeenBy, namedAuthors, seatLens, seenBy, seesId, servesReaders, type SeenOptions } from "./seen.js";
+// Asked by a page and a guest without the seat's judging (`served-touches.ts`).
+export { markServed, offersTouches } from "./served-touches.js";
 export { onPublish, PUBLISH, readsPublished, type Publishing } from "./publish.js";
 // Notify me (Roadmap f-notify-subscriptions): what a subscription is, and the store a page keeps them in; the matcher and their words are `@graview/core/subscriptions`.
 export { keptSubscription, memorySubscriptions, subscriberOf, subscriptionId } from "./subscription-shape.js";
