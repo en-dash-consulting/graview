@@ -7,7 +7,7 @@ The one face's pinch holds on a slow machine. On a CPU four times slower than a 
 
 - the Scene keeps the offset a hand has made since it let go painted when the view takes the earlier one (`useWorldShift`), where it used to take the whole transform off until the hand moved again;
 - the one face reads the city again when it is laid out anew under a hand's offset, and carries what it drew along with what the districts say moved;
-- a stall in the frames no longer counts as time the hand was off the city, so a zoom is never placed while the finger that starts the pan is still waiting to be heard.
+- a stall in the frames no longer counts as more than half the moment the hand must be off the city, so a zoom is never placed while the finger that starts the pan is still waiting to be heard.
 
 Held by one-face's `atNearbyAPinchOverTheCityZoomsItAndThePanelAndTheLevelStay` and `duringAPinchThatPansEveryBoardAndNameStaysFastenedToItsDistrictEveryFrame`, under `GRAVIEW_SLOW=4` and on the GPU leg.
 

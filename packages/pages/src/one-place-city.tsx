@@ -1034,8 +1034,10 @@ export function OnePlaceCity({ where, out, sheet, connected, boards, current, bo
          * its district as the ground began to move (one-face's
          * `duringAPinchThatPansEveryBoardAndNameStaysFastenedToItsDistrictEveryFrame`,
          * "a pinch let go of, and a pan straight after", under GRAVIEW_SLOW=4).
+         * One frame counts as half the moment at most, so no single stall
+         * lets go, and a machine whose every frame is slow lets go as soon.
          */
-        handAt += lost;
+        handAt += Math.max(0, now - lastTick - LET_GO_MS / 2);
       }
       calmRun = lastTick > 0 && now - lastTick < 50 ? calmRun + 1 : 0;
       lastTick = now;
