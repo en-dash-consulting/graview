@@ -228,6 +228,8 @@ export interface RenderContext {
   readonly money?: Money;
   /** How a record is said; unsaid, by the labels of the schema the graph carries (`namerOf`). */
   readonly name?: Namer;
+  /** Told when what it says reads when a record was made or touched, or who did (`EvalContext.onTouched`). */
+  readonly onTouched?: () => void;
 }
 
 /** Render a parsed template. A part that cannot be judged renders as "—" rather than failing the whole sentence. */
@@ -252,6 +254,12 @@ export function renderTemplate(parts: readonly TemplatePart[], ctx: RenderContex
           ...(ctx.money?.timeZone ? { timeZone: ctx.money.timeZone } : {}),
           ...(ctx.bindings ? { bindings: ctx.bindings } : {}),
           ...(ctx.args ? { args: ctx.args } : {}),
+          ...(ctx.onTouched ? { onTouched: ctx.onTouched } : {}),
+          // Who made or touched a record, wherever it is read — bare, `$subject.updatedBy`, `{list.updatedBy}`: as the person, else somebody.
+          sayWho: (who: string) => {
+            const person = (ctx.graph ?? EMPTY_GRAPH).getNode(who);
+            return person ? name(person) : "someone";
+          },
         });
         // A choice field named bare (`{status}`) is said by its option's label, else its id spoken — alone as a chip says it, among other words in lower case — never the id.
         // `$subject.status`, and `$arg.status` for the field it fills, are said as `{status}` is.
@@ -260,12 +268,6 @@ export function renderTemplate(parts: readonly TemplatePart[], ctx: RenderContex
         const labels = !part.format && named !== undefined && ctx.node ? ctx.kinds.get(ctx.node.kind)?.choices?.get(named) : undefined;
         if (labels && (typeof value === "string" || Array.isArray(value))) return capitalized(part, optionsSaid(value, labels, parts.length === 1));
         // Who made or touched it, as a page names an author: the person's record by its label, else somebody — never a seat's id.
-        // Before any format, so `{updatedBy | upper}` says the person in capitals, not the seat.
-        if (named !== undefined && (named === "createdBy" || named === "updatedBy") && typeof value === "string") {
-          const person = (ctx.graph ?? EMPTY_GRAPH).getNode(value);
-          const who = person ? name(person) : "someone";
-          return capitalized(part, part.format ? show(who, part.format, today, part.formatArgs, ctx.money, name) : who);
-        }
         if (part.format === "glance") return capitalized(part, glanced(value, named !== undefined && ctx.node ? ctx.kinds.get(ctx.node.kind)?.choices?.get(named) : undefined, today, ctx.money));
         return capitalized(part, show(value, part.format, today, part.formatArgs, ctx.money, name));
       } catch (error) {

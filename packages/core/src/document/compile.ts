@@ -1,4 +1,4 @@
-import { isTouchedField, readsTouched, TOUCHED_FIELDS, touchedTakenFix, touchedTakenSaid } from "../graph/touched.js";
+import { isTouchedField, namesReadingTouched, readsTouchedThrough, TOUCHED_FIELDS, touchedTakenFix, touchedTakenSaid } from "../graph/touched.js";
 import type { FarAppResolver } from "../workflows/far.js";
 import type { HostView } from "../views/types.js";
 import { derivedActOf } from "../mutations/derived-names.js";
@@ -285,6 +285,21 @@ function validate(document: GraviewDocument): Finding[] {
     (sights.length > 0 && new Set(sights.flatMap((sight) => (Array.isArray(sight["kinds"]) ? (sight["kinds"] as string[]) : []))).size < Object.keys(document.kinds).length) ||
     // A declared role no sight names sees nothing at all.
     (sights.length > 0 && !sights.some((sight) => sight["roles"] === "*") && (document.roles ?? []).some((role) => !sights.some((sight) => Array.isArray(sight["roles"]) && (sight["roles"] as string[]).includes(role))));
+  const parsedOr = (source: unknown): unknown => {
+    if (typeof source !== "string") return undefined;
+    try {
+      return parseExpr(source);
+    } catch {
+      return undefined;
+    }
+  };
+  // Every computed value and fact that reads them, however it reaches them: a warning may say too much, never too little.
+  const sourceOf = (value: unknown): unknown => (typeof value === "string" ? value : (value as { readonly expr?: unknown } | undefined)?.expr);
+  const computedShapes = new Map<string, { readonly computed: ReadonlyMap<string, unknown> }>([
+    ...Object.entries(document.kinds).map(([kind, spec]) => [kind, { computed: new Map(Object.entries(spec.computed ?? {}).map(([name, value]) => [name, parsedOr(sourceOf(value))])) }] as const),
+    ["", { computed: new Map(Object.entries((document as { readonly computed?: Record<string, unknown> }).computed ?? {}).map(([name, value]) => [name, parsedOr(sourceOf(value))])) }],
+  ]);
+  const touchedNames = keepsSomething ? namesReadingTouched(computedShapes) : new Set<string>();
   const readsKept = (source: unknown, path: string, what: string, template = false) => {
     if (!keepsSomething || typeof source !== "string") return;
     let parsed: unknown;
@@ -293,7 +308,7 @@ function validate(document: GraviewDocument): Finding[] {
     } catch {
       return;
     }
-    if (readsTouched(parsed)) findings.push(warning("touched-read-kept", path, `${what} reads when a record was made or last touched, which a seat the policy keeps anything from is not told: it cannot be judged for that seat`, "judge by a field of the record's own, or keep nothing from the seats that act or read it"));
+    if (readsTouchedThrough(parsed, touchedNames)) findings.push(warning("touched-read-kept", path, `${what} reads when a record was made or last touched, which a seat the policy keeps anything from is not told: it cannot be judged for that seat`, "judge by a field of the record's own, or keep nothing from the seats that act or read it"));
   };
   for (const [name, rule] of Object.entries(document.rules ?? {})) {
     for (const key of ["when", "require"] as const) readsKept((rule as Record<string, unknown>)[key], `rules.${name}.${key}`, `The rule "${name}"`);
@@ -304,8 +319,20 @@ function validate(document: GraviewDocument): Finding[] {
     const by = typeof job["sort"] === "string" ? job["sort"] : (job["sort"] as { readonly by?: unknown } | undefined)?.by;
     readsKept(by, `purpose.jobs.${at}.sort`, `The job "${String(job["name"] ?? at)}"`);
   }
-  for (const [name, act] of Object.entries(document.acts ?? {})) readsKept((act as Record<string, unknown>)["allowedWhen"], `acts.${name}.allowedWhen`, `The act "${name}"`);
-  for (const [kind, spec] of Object.entries(document.kinds)) for (const [name, value] of Object.entries(spec.computed ?? {})) readsKept(typeof value === "string" ? value : (value as { readonly expr?: unknown }).expr, `kinds.${kind}.computed.${name}`, `${kind}'s ${name}`);
+  for (const [name, act] of Object.entries(document.acts ?? {})) {
+    const spec = act as Record<string, unknown>;
+    readsKept(spec["allowedWhen"], `acts.${name}.allowedWhen`, `The act "${name}"`);
+    readsKept(spec["refusal"], `acts.${name}.refusal`, `The act "${name}"`, true);
+    // A value an effect works out (`{ expr }`), wherever in its effects it is.
+    const exprsIn = (value: unknown, at: string): void => {
+      if (value === null || typeof value !== "object") return;
+      if (!Array.isArray(value) && typeof (value as { readonly expr?: unknown }).expr === "string") return readsKept((value as { readonly expr: string }).expr, at, `The act "${name}"`);
+      for (const [key, inner] of Object.entries(value)) exprsIn(inner, `${at}.${key}`);
+    };
+    exprsIn(spec["effects"], `acts.${name}.effects`);
+  }
+  for (const [kind, spec] of Object.entries(document.kinds)) for (const [name, value] of Object.entries(spec.computed ?? {})) readsKept(sourceOf(value), `kinds.${kind}.computed.${name}`, `${kind}'s ${name}`);
+  for (const [name, value] of Object.entries((document as { readonly computed?: Record<string, unknown> }).computed ?? {})) readsKept(sourceOf(value), `computed.${name}`, `The fact "${name}"`);
 
   for (const [kind, spec] of Object.entries(document.kinds)) {
     const at = `kinds.${kind}`;

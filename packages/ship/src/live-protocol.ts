@@ -41,6 +41,7 @@ import {
   type Lineage,
   type SeatLens,
   profileOf,
+  toldTouches,
 } from "@graview/core";
 // What a seat is served keeps the fields its sight keeps (Roadmap f-field-sight): the protocol judges them.
 import "@graview/core/field-sight";
@@ -805,7 +806,7 @@ export interface Wire<S extends AnySchema> {
    */
   behind(principal: Principal, seq: number): boolean;
   /** `{ servedThrough }` for a seat of an app that publishes, as a cursor (the position after the last op it is served); nothing otherwise. */
-  servedOf(principal: Principal, stops?: boolean): { servedThrough?: Cursor; stops?: ServedStops["stops"]; stoppedKinds?: ServedStops["kinds"] };
+  servedOf(principal: Principal, stops?: boolean): { servedThrough?: Cursor; stops?: ServedStops["stops"]; stoppedKinds?: ServedStops["kinds"]; toldTouches: boolean };
   /** The store as the seat sees it. */
   seenFor(principal: Principal): Store<S>;
   /** The store's log as the seat sees it: every op in place, withheld ones under an opaque batch. */
@@ -1045,6 +1046,8 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
         ...(store.publishing?.mode === "on-publish" ? { servedThrough: cursorAt(servedTo(principal) - 1) } : {}),
         ...(stopped?.stops.length ? { stops: stopped.stops } : {}),
         ...(stopped?.kinds.length ? { stoppedKinds: stopped.kinds } : {}),
+        // Whether this seat is told when each record was made and touched (`toldTouches`): its page answers by this, not by its own reading of the policy.
+        toldTouches: toldTouches(store as never, principal),
       };
     },
     seenFor: (principal) => seenBy(store, principal),

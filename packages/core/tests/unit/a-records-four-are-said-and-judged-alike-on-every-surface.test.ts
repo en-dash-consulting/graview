@@ -185,7 +185,7 @@ describe("a seat's view", () => {
 });
 
 describe("a seat's graph", () => {
-  it("hands out no seat's binding, and says whom another seat is only as a record it is served, else somebody", () => {
+  it("hands out no seat's binding, and says whom another seat is only as a record it is served, and the same of one bound to a record it is not served as of one bound to nobody", () => {
     const store = familyStore();
     bindPerson(store, bud, "participant:bud", { author: host });
     const told = store.seenBy(amy).graph as unknown as { everBound?: unknown; personSaidFor(seat: string): string | undefined };
@@ -194,7 +194,7 @@ describe("a seat's graph", () => {
     const policy: Policy = { ...familyRules, sees: [{ roles: ["member"], kinds: ["gift"] }] };
     const narrow = new Store<AnySchema>({ schema: family, policy, now: clock(), snapshot: store.snapshot() } as never);
     bindPerson(narrow, bud, "participant:bud", { author: host });
-    expect((narrow.seenBy(amy).graph as unknown as { personSaidFor(seat: string): string | undefined }).personSaidFor("acct-bud")).toBe("someone");
+    expect((narrow.seenBy(amy).graph as unknown as { personSaidFor(seat: string): string | undefined }).personSaidFor("acct-bud")).toBeUndefined();
     expect((narrow.seenBy(amy).graph as unknown as { personSaidFor(seat: string): string | undefined }).personSaidFor("acct-nobody")).toBeUndefined();
   });
 

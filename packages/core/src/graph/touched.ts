@@ -56,16 +56,23 @@ type ComputedShapes = ReadonlyMap<string, { readonly computed?: ReadonlyMap<stri
 
 const NAMES_READING = new WeakMap<object, ReadonlySet<string>>();
 
-/** A schema's shapes, lent by the rule language when it is loaded (`document/rules.ts`), so a page that reads none carries none of it. */
-export const SCHEMA_SHAPES: { of?: (schema: object) => ComputedShapes } = {};
+/** Set on a violation whose judgment read one of the four, by any route (`EvalContext.onTouched`): kept with it through every copy, said on no wire. */
+export const READ_TOUCHED: unique symbol = Symbol.for("graview.violation.readTouched") as never;
+
+/** A violation, marked when the judgment that made it read one of the four. */
+export function readTouched<V extends object>(violation: V, touched: boolean): V {
+  return touched ? { ...violation, [READ_TOUCHED]: true } : violation;
+}
+
+/** Whether a violation's judgment read one of the four: never shown to a seat told none of them. */
+export const judgedOnTouches = (violation: object): boolean => (violation as { readonly [READ_TOUCHED]?: true })[READ_TOUCHED] === true;
 
 /**
  * The names of every computed value, of any kind or of the whole graph,
  * that reads one of the four, itself or through another computed value of
- * any kind it names, however deep, across `all(<kind>)`, relations and
- * aggregates alike. A name counts wherever any kind's value of that name
- * reads them: what a seat told none of them cannot be judged by. Worked out
- * once per schema's shapes.
+ * any kind it names: what `graview check` warns of (`touched-read-kept`).
+ * A verdict is never judged by it, but by what an evaluation read
+ * (`EvalContext.onTouched`). Worked out once per schema's shapes.
  */
 export function namesReadingTouched(kinds: ComputedShapes): ReadonlySet<string> {
   const held = NAMES_READING.get(kinds);

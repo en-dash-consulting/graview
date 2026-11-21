@@ -14,9 +14,8 @@ import { seatsKept, takesBindingBack, unseated } from "./binding-served.js";
 import { presentOf } from "./seat-of.js";
 import { FIELD_SIGHT, fieldsJudged, partialSight, recordsOf, sees, type Judged, type Records } from "./permissions/sight.js";
 import type { Principal } from "./permissions/types.js";
-import type { AnySchema } from "./schema/schema.js";
 import { diffSnapshots } from "./graph/diff.js";
-import { CREATED_BY, isTouchedField, namesReadingTouched, readsTouchedThrough, SCHEMA_SHAPES, TOUCHED_FIELDS, UPDATED_BY } from "./graph/touched.js";
+import { CREATED_BY, isTouchedField, judgedOnTouches, TOUCHED_FIELDS, UPDATED_BY } from "./graph/touched.js";
 import { nodeRefKinds } from "./mutations/node-ref.js";
 import { PUBLISHING, readsPublished, type Publishing } from "./publish.js";
 
@@ -109,17 +108,6 @@ export function touchesSaid(store: Judged): <N extends object>(node: N) => N {
   };
 }
 
-/** Whether a rule reads when a record was made or touched (`readsTouched`): one a seat told none of them cannot be judged for. */
-export function readsTouchedRule(store: { readonly schema?: AnySchema; allInvariants?(): readonly { readonly name: string; readonly shape?: { readonly when?: unknown; readonly require?: unknown; readonly says?: unknown; readonly kinds?: ReadonlyMap<string, { readonly computed?: ReadonlyMap<string, unknown> }> } }[] }, name: string): boolean {
-  const rule = store.allInvariants?.().find((one) => one.name === name);
-  const shape = rule?.shape;
-  if (shape === undefined) return false;
-  // What it judges by and what it says, through any computed value of any kind that reads them.
-  const kinds = shape.kinds ?? (store.schema ? SCHEMA_SHAPES.of?.(store.schema) : undefined);
-  const names = kinds ? namesReadingTouched(kinds) : new Set<string>();
-  return readsTouchedThrough(shape.when, names) || readsTouchedThrough(shape.require, names) || readsTouchedThrough(shape.says, names);
-}
-
 /**
  * WHETHER A STORE AS ITS READER HOLDS IT SAYS WHEN EACH RECORD WAS MADE AND
  * TOUCHED: a seat's view only to a seat that is told them (`toldTouches`),
@@ -132,6 +120,9 @@ export function offersTouches(store: object): boolean {
   if (seat !== undefined) return toldTouches(seat.store, seat.principal);
   // A store made from what a seat is served (a page's own): told none where its ops say they stamp nothing, or where its own policy keeps something from the seat it was given.
   const own = store as { readonly log?: { all(): readonly Operation[]; readonly length?: number }; readonly policy?: unknown; readonly by?: Principal; readonly graph?: unknown; readonly schema?: unknown };
+  // What its server said of this seat, where it said: never judged here by a policy read against the seat's roles as the page holds them.
+  const served = (store as { readonly [SERVED_STORE]?: { readonly told?: boolean } })[SERVED_STORE];
+  if (typeof served?.told === "boolean") return served.told;
   const ops = own.log?.all() ?? [];
   const last = ops[ops.length - 1]?.id;
   const held = OFFERED.get(store);
@@ -148,9 +139,13 @@ const OFFERED = new WeakMap<object, { readonly length: number; readonly last: st
 /** Set on a store made from what a seat is served (`markServed`): never the host's own, whoever it was given. */
 const SERVED_STORE = Symbol.for("graview.store.served");
 
-/** Mark a store made from what a seat is served, so it is never read as the host's own store (`offersTouches`). */
-export function markServed<T extends object>(store: T): T {
-  Object.defineProperty(store, SERVED_STORE, { value: true, enumerable: false });
+/**
+ * Mark a store made from what a seat is served, so it is never read as the
+ * host's own store (`offersTouches`); `told`, where its server said whether
+ * that seat is told a record's four (`toldTouches`), is what it answers.
+ */
+export function markServed<T extends object>(store: T, told?: boolean): T {
+  Object.defineProperty(store, SERVED_STORE, { value: typeof told === "boolean" ? { told } : {}, enumerable: false, configurable: true, writable: false });
   return store;
 }
 
@@ -1048,9 +1043,8 @@ export function seatView<T extends Viewed>(store: T, principal: Principal): T {
         case "personSaidFor":
           return (seat: string) => {
             const id = (target as { personSaidFor?(seat: string): string | undefined }).personSaidFor?.(seat);
-            if (id === undefined) return undefined;
-            // Somebody, whatever it is bound to that this seat is not served: what it answers says nothing of whom another seat is.
-            return seenId(id) ? id : SOMEONE.id;
+            // Only a record this seat is served: an account bound to one it is not, and one bound to nobody, answer alike, so it says nothing of whether another seat is bound.
+            return id !== undefined && seenId(id) ? id : undefined;
           };
         case "everBound":
           return undefined;
@@ -1136,18 +1130,26 @@ export function seatView<T extends Viewed>(store: T, principal: Principal): T {
   });
 
   // An act through a seat's view is the seat's own unless it says whose: never the store's default seat.
-  const asSeat = (options: { readonly author?: unknown } | undefined) => ({ author: principal, ...options });
-  type Acts = Record<"apply" | "applyAll" | "applyPrimitives" | "previewAll" | "undo" | "wouldDo" | "mayUndo" | "mayPropose" | "missingFor", (...args: unknown[]) => unknown>;
+  const asSeat = (options: { readonly author?: unknown } | undefined) => ({ ...options, author: options?.author ?? principal });
+  type Acts = Record<"apply" | "applyAll" | "previewAll" | "undo" | "wouldDo" | "mayUndo" | "mayPropose" | "missingFor" | "permits" | "permittedMutations" | "kindsKeptFrom" | "mayAdminister" | "resolveRef", (...args: unknown[]) => unknown>;
   const acting: Partial<Record<PropertyKey, (target: Acts) => unknown>> = {
     apply: (target) => (call: never, options?: object) => target.apply(call, asSeat(options) as never),
     applyAll: (target) => (calls: never, options?: object) => target.applyAll(calls, asSeat(options) as never),
-    applyPrimitives: (target) => (primitives: never, options?: object) => target.applyPrimitives(primitives, asSeat(options) as never),
     previewAll: (target) => (calls: never, options?: object) => target.previewAll(calls, asSeat(options) as never),
     undo: (target) => (batchIds: never, options?: object) => target.undo(batchIds, asSeat(options) as never),
+    // Primitives are the host's alone: a seat's view writes only by acts.
+    applyPrimitives: () => () => {
+      throw new Error("a seat's view changes the app only by its acts: primitives are applied by the host, to the store itself");
+    },
     wouldDo: (target) => (calls: never, author?: Principal) => target.wouldDo(calls, author ?? principal),
     mayUndo: (target) => (batchIds: never, other?: Principal) => target.mayUndo(batchIds, other ?? principal),
     mayPropose: (target) => (call: never, other?: Principal) => target.mayPropose(call, other ?? principal),
     missingFor: (target) => (call: never, other?: Principal) => target.missingFor(call, other ?? principal),
+    permits: (target) => (call: never, other?: Principal) => target.permits(call, other ?? principal),
+    permittedMutations: (target) => (other?: Principal) => target.permittedMutations(other ?? principal),
+    kindsKeptFrom: (target) => (other?: Principal) => target.kindsKeptFrom(other ?? principal),
+    mayAdminister: (target) => (module: never, other?: Principal) => target.mayAdminister(module, other ?? principal),
+    resolveRef: (target) => (arg: never, given: never, other?: Principal) => target.resolveRef(arg, given, other ?? principal),
   };
   const view = new Proxy(store, {
     get(target, prop) {
@@ -1178,7 +1180,7 @@ export function seatView<T extends Viewed>(store: T, principal: Principal): T {
          * may not see never makes, mends or words one of its problems.
          */
         case "violations":
-          return (context?: never) => target.violations(context as never, graph as never).filter((violation) => violationShown(lens, (id) => full.has(id), violation) && (!readsTouchedRule(target as never, (violation as unknown as { readonly invariant: string }).invariant) || toldTouches(store as never, principal)));
+          return (context?: never) => target.violations(context as never, graph as never).filter((violation) => violationShown(lens, (id) => full.has(id), violation) && (!judgedOnTouches(violation) || toldTouches(store as never, principal)));
         // What no longer fits, about records this seat is served and naming none it may not see (FR-55).
         case "findings":
           return () =>

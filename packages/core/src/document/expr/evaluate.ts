@@ -116,6 +116,15 @@ export interface EvalContext {
   readonly linked?: LinkedReader;
   /** Told of each link walked that could not be read, so its reader can say so: the expression reads nothing there and goes on. */
   readonly onUnread?: (unread: UnreadLink) => void;
+  /**
+   * Told whenever the evaluation reads when a record was made or last
+   * touched, or who did, on any record by any route — a member, a relation,
+   * an aggregate, a computed value or a fact — so a verdict for a seat told
+   * none of them can be withheld (`toldTouches`).
+   */
+  readonly onTouched?: () => void;
+  /** How who made or touched a record is said, where the evaluation is rendered: the person's name, never a seat's id. */
+  readonly sayWho?: (who: string) => string;
 }
 
 export class ExprEvalError extends Error {
@@ -212,6 +221,7 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
 
   const field = (node: AnyGraphNode, name: string, at: number): Value => {
     spend(1, at);
+    if (name === "createdAt" || name === "createdBy" || name === "updatedAt" || name === "updatedBy") ctx.onTouched?.();
     const shape = ctx.kinds.get(node.kind);
     const worksOut = shape?.computed?.get(name);
     if (worksOut) return computed(node, name, worksOut, at);
@@ -239,7 +249,8 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
       // A date that repeats reads as its next occurrence on the day judged (`repeat.ts`).
       const read = own ? dateOn(node, name, today()) : undefined;
       // Who made or touched it, as `$me` says a person: the record the seat is bound to, never the account (`touched.ts`).
-      const v = typeof read === "string" && (name === "createdBy" || name === "updatedBy") ? ((ctx.graph as { personSaidFor?(seat: string): string | undefined }).personSaidFor?.(read) ?? (ctx.graph as { personBoundTo?(seat: string): string | undefined }).personBoundTo?.(read) ?? read) : read;
+      const who = typeof read === "string" && (name === "createdBy" || name === "updatedBy") ? ((ctx.graph as { personSaidFor?(seat: string): string | undefined }).personSaidFor?.(read) ?? (ctx.graph as { personBoundTo?(seat: string): string | undefined }).personBoundTo?.(read) ?? read) : undefined;
+      const v = who === undefined ? read : ctx.sayWho ? ctx.sayWho(who) : who;
       return v === undefined ? null : (v as Value);
     }
     const card = shape?.edges.get(name);

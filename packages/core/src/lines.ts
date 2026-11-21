@@ -9,7 +9,8 @@
  * a page that judges rules on its first load does not carry them, and the
  * problems' rows, the problems page and the seat fetch them as they draw.
  */
-import { offersTouches, readsTouchedRule } from "./seen.js";
+import { offersTouches } from "./seen.js";
+import { judgedOnTouches } from "./graph/touched.js";
 import type { AnySchema } from "./schema/schema.js";
 import { isoToday } from "./days.js";
 import type { GraphReader } from "./graph/types.js";
@@ -138,7 +139,7 @@ export function judgedForASeat(store: Store<AnySchema>, seat: Store<AnySchema>, 
   }
   // A rule that reads when a record was made or touched is not judged for a seat told none of them (`toldTouches`).
   const told = offersTouches(seat);
-  const judged = (graph: Graph<AnySchema>) => store.violations(undefined, graph).filter((violation) => told || !readsTouchedRule(store as never, violation.invariant));
+  const judged = (graph: Graph<AnySchema>) => store.violations(undefined, graph).filter((violation) => told || !judgedOnTouches(violation));
   const before = judged(made ? other : (now as Graph<AnySchema>));
   const after = judged(made ? (now as Graph<AnySchema>) : other);
   return { ...problemsMoved(store.allInvariants(), before, after), violationsAfter: after };

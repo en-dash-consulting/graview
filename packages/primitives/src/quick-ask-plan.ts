@@ -1,4 +1,4 @@
-import { nounOf, pluralOf, Store, type AnySchema, type MutationCall } from "@graview/core";
+import { markServed, nounOf, offersTouches, pluralOf, Store, type AnySchema, type MutationCall } from "@graview/core";
 import { planEdits, type PlannedEdits } from "@graview/core/catalog";
 import type { GraviewDocument } from "@graview/core/document";
 import type { AnswerMissing } from "@graview/tools/inline-ai";
@@ -141,7 +141,8 @@ export async function planFor(env: InlineEnv, options: { readonly said: string; 
   if (!composed.ok) return { refused: `${missing.said} That change could not be made here.` };
   const app = composed.app as { readonly schema: AnySchema; readonly mutations?: readonly unknown[]; readonly invariants?: readonly unknown[]; readonly policy?: unknown };
   try {
-    const scratch = new Store<AnySchema>({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], ...(app.policy ? { policy: app.policy } : {}), snapshot: env.store.graph.snapshot() as never } as never);
+    // Told a record's four as the page's own store is (`offersTouches`).
+    const scratch = markServed(new Store<AnySchema>({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], ...(app.policy ? { policy: app.policy } : {}), snapshot: env.store.graph.snapshot() as never } as never), offersTouches(env.store as never));
     scratch.previewAll(records, { author: env.principal });
   } catch {
     return { refused: `${missing.said} I could not make that work here.` };

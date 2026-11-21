@@ -155,6 +155,8 @@ export type LiveServerMessage =
       /** The stops standing that the log it is sent may not hold, as this seat may be told (`servedStops`); absent where there are none. */
       readonly stops?: ServedStops["stops"];
       readonly stoppedKinds?: ServedStops["kinds"];
+      /** Whether this seat is told when each record was made and touched, and by whom (`toldTouches`); absent from a server before them. */
+      readonly toldTouches?: boolean;
       /** `horizon`: the seq `log` begins at, when the store was compacted (FR-23); absent, 0. */
       readonly state?: { readonly version: number; readonly snapshot: GraphSnapshot; readonly log: readonly Operation[]; readonly migrated: readonly string[]; readonly enabledModules?: readonly string[]; readonly horizon?: number };
     }

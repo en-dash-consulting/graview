@@ -1,5 +1,5 @@
 import "@graview/core"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
-import { labelOf, Store, type AnySchema } from "@graview/core";
+import { labelOf, markServed, offersTouches, Store, type AnySchema } from "@graview/core";
 import { checkPresses, type PressCheck, type PressFinding } from "./presses.js";
 import { browserIsolate } from "./browser.js";
 import { runWorkerViewHeadless, type HeadlessResult, type RunWorkerViewHeadlessOptions } from "./index.js";
@@ -56,13 +56,15 @@ const attribute = (element: string, name: string) => new RegExp(`\\s${name}="([^
 
 /** A copy of a store's records and rules, for an act nobody sees. */
 function copyOf<S extends AnySchema>(store: Store<S>): Store<S> {
-  return new Store<S>({
+  // Told a record's four as the store it copies is (`offersTouches`).
+  const told = offersTouches(store);
+  return markServed(new Store<S>({
     schema: store.schema,
     mutations: store.allMutations() as never,
     invariants: store.allInvariants() as never,
     ...(store.policy ? { policy: store.policy } : {}),
     snapshot: store.graph.snapshot() as never,
-  } as never);
+  } as never), told);
 }
 
 /** What the records a press is bound to are in: their yes-or-no fields, so a finished task and an open one are pressed apart. */
