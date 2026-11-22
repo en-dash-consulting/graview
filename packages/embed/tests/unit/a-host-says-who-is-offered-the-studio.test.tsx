@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 import type { AnySchema, GraviewApp, Principal } from "@graview/core";
 import { compileDocumentWithoutCheck, type GraviewDocument } from "@graview/core/document";
 import { act } from "react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { mount, type EmbedHandle, type EmbedOptions } from "../../src/index.js";
 
 /**
@@ -28,6 +28,16 @@ const EDITOR: Principal = { kind: "human", id: "editor", roles: ["viewer"] };
 const OWNER: Principal = { kind: "human", id: "owner", roles: ["owner"] };
 
 const handles: EmbedHandle[] = [];
+/*
+ * The studio's chunk, loaded once before any test: on a cold run its first
+ * load is transformed as it is asked for and took longer than the wait
+ * below gives a drawn studio, so the first test to want it saw none. The
+ * same module the embed's lazy import reaches, so each test then waits on
+ * the drawing alone.
+ */
+beforeAll(async () => {
+  await import("@graview/studio");
+}, 60_000);
 afterEach(async () => {
   for (const handle of handles.splice(0)) await act(async () => handle.unmount());
   document.body.innerHTML = "";

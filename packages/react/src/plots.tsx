@@ -504,10 +504,25 @@ function useLeaving<B extends { readonly id: string }>(buildings: readonly B[], 
     if (gone.size === 0) return;
     for (const id of gone.keys()) if (!began.current.has(id)) began.current.set(id, now);
     const last = (id: string) => (began.current.get(id) ?? 0) + RISE_MS * 2;
-    const next = Math.min(...[...gone.keys()].map(last));
-    const timer = window.setTimeout(() => setGone((was) => new Map([...was].filter(([id]) => last(id) > performance.now() + 4))), Math.max(0, next - performance.now()) + 8);
+    // A sink still under way is let play out: one slowed through a stall (`stallsTakenOut`) runs past the clock, and its own end takes it away.
+    const sinking = (id: string) => {
+      const el = holder.current?.querySelector(`[data-graview-building="${CSS.escape(id)}"]`);
+      return Boolean(el && typeof el.getAnimations === "function" && typeof CSSTransition !== "undefined" && el.getAnimations().some((one) => one instanceof CSSTransition && one.playState === "running"));
+    };
+    let timer = 0;
+    const check = () => {
+      const now = performance.now();
+      const due = [...gone.keys()].filter((id) => last(id) <= now + 4);
+      const playing = due.filter(sinking);
+      for (const id of playing) began.current.set(id, now - RISE_MS);
+      const drop = new Set(due.filter((id) => !playing.includes(id)));
+      if (drop.size > 0) setGone((was) => new Map([...was].filter(([id]) => !drop.has(id))));
+      const next = Math.min(...[...gone.keys()].filter((id) => !drop.has(id)).map(last));
+      if (Number.isFinite(next)) timer = window.setTimeout(check, Math.max(0, next - performance.now()) + 8);
+    };
+    timer = window.setTimeout(check, Math.max(0, Math.min(...[...gone.keys()].map(last)) - performance.now()) + 8);
     return () => window.clearTimeout(timer);
-  }, [gone, rising]);
+  }, [gone, rising, holder]);
   const sunk = useCallback((id: string) => setGone((was) => (was.has(id) ? new Map([...was].filter(([one]) => one !== id)) : was)), []);
   // The order last drawn, so a building going keeps its place among the others: an element moved is drawn anew, and its sink lost.
   const before = useRef<readonly string[]>([]);
@@ -558,6 +573,44 @@ function fromTheFirstFrame(el: Element): void {
     one.currentTime = 0;
     one.play();
   }
+  stallsTakenOut(el);
+}
+
+/** The elements whose rise or sink is watched for stalls now: one watch each. */
+const watched = new WeakSet<Element>();
+
+/**
+ * A STALL IS NOT A LEAP, for a building's rise and sink as for the camera's
+ * moves (one-place-city.tsx): a gap past 34 ms between two frames is taken
+ * out of the transitions under way, so they go on from where the last
+ * frame drew them rather than jump. A transition is clocked by the wall,
+ * and on a slow machine one long frame while a building sank (the GPU
+ * path's capture on a runner's software GPU, 230 ms) took it from nearly
+ * full to flat in a frame: never seen on its way down (one-face's
+ * `aRemovedRecordComesDown`, on the GPU leg). Watched from the frame that
+ * draws it until nothing on it plays. The rewind runs in a frame callback,
+ * so what the frame paints is rewound, while a callback that ran before it
+ * in the same frame read the time as the clock had it; and a stall longer
+ * than what was left of the transition has ended it before any callback.
+ */
+function stallsTakenOut(el: Element): void {
+  if (watched.has(el) || typeof requestAnimationFrame !== "function") return;
+  watched.add(el);
+  let last = -1;
+  const tick = (now: number) => {
+    const playing = el.isConnected ? el.getAnimations().filter((one) => one instanceof CSSTransition && one.playState === "running") : [];
+    if (playing.length === 0) {
+      watched.delete(el);
+      return;
+    }
+    if (last >= 0 && now - last > 34) {
+      const lost = now - last - 1000 / 60;
+      for (const one of playing) one.currentTime = Math.max(0, Number(one.currentTime ?? 0) - lost);
+    }
+    last = now;
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
 }
 
 /** Whether a building has sunk all the way: its height, as drawn now, none. */
