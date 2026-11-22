@@ -29,11 +29,11 @@ import { frictionDigest, type FrictionDigest, type FrictionEvent } from "./frict
 import { fieldWriters, subjectKindsOf } from "./mutations/derive-edits.js";
 import { nodeRefArgs } from "./mutations/node-ref.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
-import type { Author } from "./ops/types.js";
+import { authorKindOf, type Author, type AuthorKind, type Batch } from "./ops/types.js";
 import { isWithheld } from "./ops/withheld.js";
-import { actingAs, seatPersonOf } from "./permissions/policy.js";
-import { PERSON_SEAT } from "./graph/archived.js";
-import { touchesSaid } from "./seen.js";
+import { actingAs, profileOf, seatPersonOf } from "./permissions/policy.js";
+import { everBound, namedAuthors, seatLens, touchesSaid } from "./seen.js";
+import { nameOfAuthor } from "./who.js";
 import type { Principal } from "./permissions/types.js";
 import { fieldWords, humanizeField, labelOf, nounOf, pluralOf } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
@@ -718,8 +718,8 @@ export function schemaDigestOf<S extends AnySchema>(given: Store<S>, principal: 
   return digest;
 }
 
-/** Who made a change, in the state's words: their own name, else their id, else what they are. */
-const byWords = (author: Author): string => author.name ?? author.id ?? author.kind;
+/** An author who is not a person, by what they are, where they gave no name. */
+const AUTHOR_WORDS: Readonly<Record<AuthorKind, string>> = { human: "someone", visitor: "a visitor", agent: "an agent", rule: "a rule", system: "the system" };
 
 /**
  * THE STATE FOR A TARGET, as this viewer may see it. A record it may not
@@ -764,40 +764,42 @@ export function aiContextOf<S extends AnySchema>(given: Store<S>, target: AiTarg
       for (const edge of Object.keys(edgesOf(schema, of))) for (const other of seen.graph.in(record.id, edge) as unknown as Node[]) if (other.kind === of && nodeOf(other.id)) neighbors.push({ ...brief(other), relation: edge, direction: "in" });
     }
   }
-  /** Every account a person here was ever bound through, its own or a profile's: read from the log and the graph as it stands. */
-  let everSeated: Set<string> | undefined;
-  const seatedAccount = (account: string): boolean => {
-    if (!everSeated) {
-      everSeated = new Set<string>();
-      const add = (value: unknown) => {
-        if (typeof value === "string" && value !== "") everSeated!.add(value.split("~")[0]!);
-      };
-      for (const op of whole.log.all()) {
-        for (const primitive of op.primitives) {
-          if (primitive.op === "add-node" || primitive.op === "remove-node") add((primitive.node as Record<string, unknown>)[PERSON_SEAT]);
-          else if (primitive.op === "patch-node") add(primitive.after[PERSON_SEAT]);
-        }
-      }
-      for (const node of whole.graph.allNodes({ archived: "all" }) as readonly Record<string, unknown>[]) add(node[PERSON_SEAT]);
-    }
-    return everSeated.has(account);
+  /*
+   * WHO MADE A CHANGE, AS THIS SEAT'S OWN LOG SAYS THEM (Roadmap
+   * f-model-context-says-authors-as-people): each author read through
+   * `namedAuthors`, as the seat's log is, and said by `nameOfAuthor` only
+   * where that names a person this seat may see; anybody else is "someone".
+   */
+  const lens = seatLens(whole as never, principal);
+  const personSeen = (author: Author): Node | undefined => {
+    const record = (id: string | undefined) => (id !== undefined ? nodeOf(id) : undefined);
+    // The reader's own seat and the host's keep the account (`namedAuthors`): its person is the one it is bound to, else the one the log last bound it to, as the log names it.
+    const bound = (seat: string | undefined) => (seat !== undefined ? record(seen.graph.personBoundTo?.(seat) ?? everBound(whole as never).get(seat)) : undefined);
+    return record(author.id) ?? bound(seatPersonOf(author)) ?? (profileOf(author) !== undefined ? bound(actingAs(author as Principal).id) : undefined);
   };
-  /** Who made a change: a person as the record they are, as this viewer may see it, else by the name they gave. */
   const saidBy = (author: Author): string => {
-    if (author.kind !== "human") return byWords(author);
-    const seat = seatPersonOf(author);
-    const bound = seat === undefined ? undefined : whole.graph.personBoundTo(seat);
-    const node = (bound !== undefined ? nodeOf(bound) : undefined) ?? (seat !== undefined ? nodeOf(seat) : undefined) ?? (author.id !== undefined ? nodeOf(author.id) : undefined);
-    if (node) return nameOf(schema, node);
+    // An agent, a rule, the app itself: by the name it gave, else by what it is, never by an id — and for whom, as the log says it ("Claude, for Bud").
+    if (author.kind !== "human") {
+      const itself = author.name ?? AUTHOR_WORDS[authorKindOf(author)];
+      return author.onBehalfOf ? `${itself}, for ${saidBy(author.onBehalfOf)}` : itself;
+    }
+    const person = personSeen(author);
+    if (!person) return "someone";
+    const words = nameOfAuthor(author, { graph: seen.graph as never, schema });
+    // A person whose record gives no name of its own is still never said by the account.
     const account = actingAs(author as Principal).id;
-    return bound !== undefined || (account !== undefined && seatedAccount(account)) ? (author.name ?? (author as { readonly profile?: { readonly name?: string } }).profile?.name ?? "someone") : byWords(author);
+    return account !== undefined && words.includes(account) ? nameOf(schema, person) : words;
+  };
+  const authorOf = (batch: Batch): Author => {
+    const told = namedAuthors(whole as never, lens, batch.ops).find((op) => !isWithheld(op));
+    return told?.author ?? batch.author;
   };
   const recent = seen
     .batches()
     .filter((batch) => !batch.ops.every(isWithheld))
     .slice(-(options.recent ?? 6))
     .reverse()
-    .map((batch) => ({ intent: batch.intent, at: batch.at, by: saidBy(batch.author) }));
+    .map((batch) => ({ intent: batch.intent, at: batch.at, by: saidBy(authorOf(batch)) }));
   const jobs = (options.purpose?.jobs ?? []).filter((job) => jobIsFor(job, principal.roles) && visible.has(job.kind)).map((job) => ({ name: job.name, ask: job.ask, kind: job.kind }));
   const purpose = options.purpose && (options.purpose.for !== undefined || jobs.length > 0) ? { ...(options.purpose.for !== undefined ? { for: options.purpose.for } : {}), jobs } : undefined;
   return {

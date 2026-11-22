@@ -121,6 +121,6 @@ describe("a bound person, as the app says them", () => {
       const said = aiContextOf(store, { on: "record", id: "gift:kite" }, { principal, recent: 20 });
       expect(JSON.stringify(said), principal.id).not.toMatch(/acct-|\$seat/);
     }
-    expect(aiContextOf(store, { on: "record", id: "gift:kite" }, { principal: host, recent: 20 }).recent.map((one) => one.by)).toEqual(expect.arrayContaining(["Bud", "Kiddo"]));
+    expect(aiContextOf(store, { on: "record", id: "gift:kite" }, { principal: host, recent: 20 }).recent.map((one) => one.by)).toEqual(expect.arrayContaining(["Bud", "Kiddo (Bud)", "someone"]));
   });
 });
