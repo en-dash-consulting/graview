@@ -1323,9 +1323,22 @@ async function history(page, where) {
     window.__heights = [];
     window.__tokens = new WeakMap();
     let n = 0;
+    /*
+     * Each frame's heights read once the frame has been drawn (a task after
+     * its frame callbacks), as it was painted: a rise or a sink is rewound
+     * through a stall in a frame callback of its own (`stallsTakenOut`,
+     * @graview/react's plots), registered after this recorder's, and read
+     * before it the frame after a stall said a height never painted — full,
+     * where the frame drew 0.55 (aBuildingTakenBackMidSinkRisesFromTheHeightItReached,
+     * run 44960240131's first look).
+     */
     const tick = () => {
       if (window.__heightsStop) return;
       requestAnimationFrame(tick);
+      setTimeout(read, 0);
+    };
+    const read = () => {
+      if (window.__heightsStop) return;
       const frame = { t: performance.now() };
       for (const id of ids) {
         const el = document.querySelector(`[data-graview-building="${CSS.escape(id)}"]`);
