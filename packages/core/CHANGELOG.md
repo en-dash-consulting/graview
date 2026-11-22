@@ -1,5 +1,16 @@
 # @graview/core
 
+## 0.2.11
+
+### Patch Changes
+
+- 0803abb: An add keeps only the record times its own op stamps. Since 0.2.10 every record keeps when it was made and last touched, and by whom (`createdAt`, `createdBy`, `updatedAt`, `updatedBy`), and the op that adds a record stamps it with its own time and author whatever the add's payload said. The op as kept now says the same: from this version, a record an op adds is kept without the four its payload carried, on every way an op enters a store (`receive`, a rebase's confirmed ops, `applyPrimitives`, as acts, a host's own ops and an import already were), so the log, a seat's log, the history, an export and a push say only what this store stamped. An undo that puts a record back keeps what its payload says, as the fold already did, and an op that removes a record and adds it again is kept saying when and by whom its removal says the record was made, which is what the fold makes it. A log kept before this version is read as it was. Held by a new unit test of core (`an-add-keeps-only-the-record-times-its-own-op-stamps`).
+  
+  Compatibility: ops and primitives — an op's format is unchanged, but the payload of an `add-node` in an op with no `undoes` is kept without `createdAt`, `createdBy`, `updatedAt` and `updatedBy`, and one the same op removes says only the `createdAt` and `createdBy` its removal carried; a host that reads the log reads a record's four from the record, as it already could. The graph each op folds to is unchanged. Stored formats, the wire, the declaration and check finding codes, the JavaScript API, and derived tool names and input schemas — unchanged. What Graview Cloud does: nothing; a remix seed it receives is kept without the source's record times.
+- d2cbbc3: What a model is told of recent changes names each author as a person. `aiContextOf` on `@graview/core/catalog` says `recent[].by` the way the seat's own log says the author: the person they are bound to, by that record's label, where the seat may see that person ("Kiddo (Bud)" for a profile on the seat of a person the seat may see, as Activity says it), and "someone" for an author bound to nobody or to a person the seat may not see. An agent, a rule or the app itself is said by the name it gave, else by what it is ("an agent", "a rule", "the system"), and an agent acting for a person with that person said the same way ("Claude, for Bud"). It reads the author through `namedAuthors` and says it with `nameOfAuthor`, the same as a seat's log and its subscriptions, rather than a reading of its own. Held by a new unit test of core (`a-model-is-told-each-author-as-a-person`).
+  
+  Compatibility: the JavaScript API's shape is unchanged; `AiContextState.recent[].by` now says "someone" where it said an author's id or own name, and a profile's person as "Mia (Nick)" where it said the profile’s name alone, and an agent acting for a person as "Claude, for Bud" where it said the agent alone. Ops and primitives, stored formats, the wire, the declaration and check finding codes, and derived tool names and input schemas — unchanged. What Graview Cloud does: nothing, unless it matched `recent[].by` against an id.
+
 ## 0.2.10
 
 ### Patch Changes

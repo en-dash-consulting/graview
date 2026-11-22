@@ -1,12 +1,12 @@
 {
-  "at": "2026-11-18T15:37:26.717Z",
+  "at": "2026-11-22T00:39:49.662Z",
   "fast": "jev-latest",
   "light": "grok-4.20-0309-non-reasoning",
   "score": 1,
   "bar": 0.9,
-  "medianMs": 104,
-  "p90Ms": 1735,
-  "jevAlone": 0.6370370370370371,
+  "medianMs": 93,
+  "p90Ms": 1231,
+  "jevAlone": 0.6296296296296297,
   "rows": [
     {
       "app": "todo",
@@ -15,8 +15,8 @@
       "expected": "finish over held",
       "got": "finish × 5, saying: Mark the 5 tasks in This week done.",
       "ok": true,
-      "ms": 261,
-      "stages": "fast 230"
+      "ms": 211,
+      "stages": "fast 185"
     },
     {
       "app": "todo",
@@ -25,8 +25,8 @@
       "expected": "finish over held",
       "got": "finish × 5, saying: Mark the 5 tasks in This week done.",
       "ok": true,
-      "ms": 219,
-      "stages": "fast 215"
+      "ms": 147,
+      "stages": "fast 141"
     },
     {
       "app": "todo",
@@ -35,8 +35,8 @@
       "expected": "finish over held",
       "got": "finish × 5, saying: Mark the 5 tasks in This week done.",
       "ok": true,
-      "ms": 203,
-      "stages": "fast 198"
+      "ms": 148,
+      "stages": "fast 144"
     },
     {
       "app": "todo",
@@ -45,8 +45,8 @@
       "expected": "an answer",
       "got": "answer: Nothing to change: “Order boxes” is already done.",
       "ok": true,
-      "ms": 225,
-      "stages": "fast 223"
+      "ms": 124,
+      "stages": "fast 121"
     },
     {
       "app": "todo",
@@ -55,8 +55,8 @@
       "expected": "finish over held",
       "got": "finish × 5, saying: Mark the 5 tasks in This week done.",
       "ok": true,
-      "ms": 70,
-      "stages": "fast 65"
+      "ms": 74,
+      "stages": "fast 69"
     },
     {
       "app": "todo",
@@ -65,8 +65,8 @@
       "expected": "finish over held",
       "got": "finish × 5, saying: Mark the 5 tasks in This week done.",
       "ok": true,
-      "ms": 86,
-      "stages": "fast 83"
+      "ms": 70,
+      "stages": "fast 66"
     },
     {
       "app": "todo",
@@ -75,8 +75,8 @@
       "expected": "finish over held",
       "got": "finish × 5, saying: Mark the 5 tasks in This week done.",
       "ok": true,
-      "ms": 74,
-      "stages": "fast 71"
+      "ms": 101,
+      "stages": "fast 98"
     },
     {
       "app": "todo",
@@ -85,8 +85,8 @@
       "expected": "finish over held",
       "got": "finish × 2, saying: Mark the 2 tasks in Today done.",
       "ok": true,
-      "ms": 94,
-      "stages": "fast 92"
+      "ms": 83,
+      "stages": "fast 80"
     },
     {
       "app": "todo",
@@ -95,8 +95,8 @@
       "expected": "finish over held",
       "got": "finish × 5, saying: Mark the 5 tasks in This week done.",
       "ok": true,
-      "ms": 137,
-      "stages": "fast 134"
+      "ms": 99,
+      "stages": "fast 97"
     },
     {
       "app": "todo",
@@ -105,8 +105,8 @@
       "expected": "finish over held",
       "got": "finish × 5, saying: Mark the 5 tasks in This week done.",
       "ok": true,
-      "ms": 87,
-      "stages": "fast 85"
+      "ms": 97,
+      "stages": "fast 94"
     },
     {
       "app": "todo",
@@ -115,8 +115,8 @@
       "expected": "finish over open",
       "got": "finish × 5, saying: Mark the 5 open tasks in This week done.",
       "ok": true,
-      "ms": 88,
-      "stages": "fast 86"
+      "ms": 68,
+      "stages": "fast 66"
     },
     {
       "app": "todo",
@@ -125,8 +125,8 @@
       "expected": "finish over itself",
       "got": "finish × 1, saying: Finish “Book the van”.",
       "ok": true,
-      "ms": 110,
-      "stages": "fast 100"
+      "ms": 104,
+      "stages": "fast 94"
     },
     {
       "app": "todo",
@@ -135,8 +135,8 @@
       "expected": "finish over itself",
       "got": "finish × 1, saying: Finish “Book the van”.",
       "ok": true,
-      "ms": 87,
-      "stages": "fast 83"
+      "ms": 79,
+      "stages": "fast 75"
     },
     {
       "app": "todo",
@@ -145,8 +145,8 @@
       "expected": "finish over itself",
       "got": "finish × 1, saying: Finish “Book the van”.",
       "ok": true,
-      "ms": 72,
-      "stages": "fast 69"
+      "ms": 79,
+      "stages": "fast 76"
     },
     {
       "app": "todo",
@@ -155,8 +155,8 @@
       "expected": "finish over itself",
       "got": "finish × 1, saying: Finish “Book the van”.",
       "ok": true,
-      "ms": 72,
-      "stages": "fast 67"
+      "ms": 80,
+      "stages": "fast 76"
     },
     {
       "app": "todo",
@@ -165,8 +165,8 @@
       "expected": "reopen over itself",
       "got": "reopen × 1, saying: Reopen “Get the second quote”.",
       "ok": true,
-      "ms": 2529,
-      "stages": "fast 83, light 2327"
+      "ms": 91,
+      "stages": "fast 86"
     },
     {
       "app": "todo",
@@ -175,8 +175,8 @@
       "expected": "reopen over itself",
       "got": "reopen × 1, saying: Reopen “Get the second quote”.",
       "ok": true,
-      "ms": 72,
-      "stages": "fast 69"
+      "ms": 54,
+      "stages": "fast 50"
     },
     {
       "app": "todo",
@@ -185,8 +185,8 @@
       "expected": "reopen over done",
       "got": "reopen × 1, saying: Reopen “Get the second quote”.",
       "ok": true,
-      "ms": 79,
-      "stages": "fast 77"
+      "ms": 72,
+      "stages": "fast 71"
     },
     {
       "app": "todo",
@@ -195,8 +195,8 @@
       "expected": "move-to-list|reschedule over held",
       "got": "move-to-list × 6, saying: Move the 6 tasks in This week to Today.",
       "ok": true,
-      "ms": 80,
-      "stages": "fast 77"
+      "ms": 76,
+      "stages": "fast 71"
     },
     {
       "app": "todo",
@@ -205,8 +205,8 @@
       "expected": "reschedule over held",
       "got": "reschedule × 5, saying: Move the date of the 5 tasks in This week to Wednesday, Sep 2.",
       "ok": true,
-      "ms": 996,
-      "stages": "fast 117, light 788"
+      "ms": 733,
+      "stages": "fast 57, light 612"
     },
     {
       "app": "todo",
@@ -215,8 +215,8 @@
       "expected": "reschedule|move-to-list over itself",
       "got": "reschedule × 1, saying: Move “Book the van” to Tuesday, Sep 8.",
       "ok": true,
-      "ms": 874,
-      "stages": "fast 76, light 733"
+      "ms": 710,
+      "stages": "fast 59, light 585"
     },
     {
       "app": "todo",
@@ -225,8 +225,8 @@
       "expected": "move-to-list over itself",
       "got": "move-to-list × 1, saying: Move “Book the van” to Someday.",
       "ok": true,
-      "ms": 77,
-      "stages": "fast 74"
+      "ms": 80,
+      "stages": "fast 77"
     },
     {
       "app": "todo",
@@ -235,8 +235,8 @@
       "expected": "reschedule over itself",
       "got": "reschedule × 1, saying: Move “Book the van” to Saturday, Sep 5.",
       "ok": true,
-      "ms": 1027,
-      "stages": "fast 99, light 867"
+      "ms": 959,
+      "stages": "fast 97, light 792"
     },
     {
       "app": "todo",
@@ -245,8 +245,8 @@
       "expected": "reschedule over itself",
       "got": "reschedule × 1, saying: Move “Book the van” to Wednesday, Sep 2.",
       "ok": true,
-      "ms": 847,
-      "stages": "fast 83, light 706"
+      "ms": 715,
+      "stages": "fast 61, light 589"
     },
     {
       "app": "todo",
@@ -255,8 +255,8 @@
       "expected": "drop|remove-task over done",
       "got": "drop × 1, saying: Drop “Order boxes”.",
       "ok": true,
-      "ms": 73,
-      "stages": "fast 72"
+      "ms": 78,
+      "stages": "fast 75"
     },
     {
       "app": "todo",
@@ -265,8 +265,8 @@
       "expected": "drop|remove-task over itself",
       "got": "remove-task × 1, saying: Remove “Book the van”.",
       "ok": true,
-      "ms": 67,
-      "stages": "fast 64"
+      "ms": 68,
+      "stages": "fast 65"
     },
     {
       "app": "todo",
@@ -275,8 +275,8 @@
       "expected": "drop|remove-task over held",
       "got": "drop × 6, saying: Drop the 6 tasks in This week.",
       "ok": true,
-      "ms": 100,
-      "stages": "fast 97"
+      "ms": 66,
+      "stages": "fast 63"
     },
     {
       "app": "todo",
@@ -285,8 +285,8 @@
       "expected": "archive-list over itself",
       "got": "archive-list × 1, saying: Archive “This week”.",
       "ok": true,
-      "ms": 103,
-      "stages": "fast 100"
+      "ms": 66,
+      "stages": "fast 63"
     },
     {
       "app": "todo",
@@ -295,8 +295,8 @@
       "expected": "archive-task over held",
       "got": "archive-task × 6, saying: Archive the 6 tasks in This week.",
       "ok": true,
-      "ms": 87,
-      "stages": "fast 85"
+      "ms": 64,
+      "stages": "fast 62"
     },
     {
       "app": "todo",
@@ -305,8 +305,8 @@
       "expected": "rename over itself",
       "got": "rename × 1, saying: Rename to “Packing”.",
       "ok": true,
-      "ms": 92,
-      "stages": "fast 88"
+      "ms": 76,
+      "stages": "fast 75"
     },
     {
       "app": "todo",
@@ -315,8 +315,8 @@
       "expected": "rename over itself",
       "got": "rename × 1, saying: Rename to “Book the big van”.",
       "ok": true,
-      "ms": 87,
-      "stages": "fast 79"
+      "ms": 68,
+      "stages": "fast 64"
     },
     {
       "app": "todo",
@@ -325,8 +325,8 @@
       "expected": "wait-for over itself",
       "got": "wait-for × 1, saying: “Pay the deposit” waits for “Book the van”.",
       "ok": true,
-      "ms": 89,
-      "stages": "fast 86"
+      "ms": 107,
+      "stages": "fast 104"
     },
     {
       "app": "todo",
@@ -335,18 +335,18 @@
       "expected": "a true answer",
       "got": "answer: Pay the deposit is overdue (due 4 days ago). [facts said 1/1, given 1: Pay the deposit]",
       "ok": true,
-      "ms": 740,
-      "stages": "fast 62, light 604"
+      "ms": 758,
+      "stages": "fast 71, light 631"
     },
     {
       "app": "todo",
       "on": "week",
       "said": "what's left this week?",
       "expected": "a true answer",
-      "got": "answer: 5 undone tasks held by This week: Give notice on the flat (due tomorrow), Read the meters and Redirect the post (both in 2 days), Move the broadband (in 3 days), Hand back the keys (in 4 days). Order boxes is already done. [facts said 5/5, given 5: flat, meters, post, broadband, keys]",
+      "got": "answer: 5 undone tasks remain this week: Give notice on the flat (tomorrow), Read the meters and Redirect the post (in 2 days), Move the broadband (in 3 days), Hand back the keys (in 4 days). Order boxes is already done. [facts said 5/5, given 5: flat, meters, post, broadband, keys]",
       "ok": true,
-      "ms": 2323,
-      "stages": "fast 65, light 2201"
+      "ms": 761,
+      "stages": "fast 101, light 613"
     },
     {
       "app": "todo",
@@ -355,8 +355,8 @@
       "expected": "a true answer",
       "got": "answer: There are 6 tasks in This week. [facts said 1/1, given 1: /\\b(6|six)\\b/i]",
       "ok": true,
-      "ms": 754,
-      "stages": "fast 75, light 609"
+      "ms": 720,
+      "stages": "fast 61, light 593"
     },
     {
       "app": "todo",
@@ -365,28 +365,28 @@
       "expected": "a true answer",
       "got": "answer: Give notice on the flat is due tomorrow. [facts said 1/1, given 1: the flat]",
       "ok": true,
-      "ms": 643,
-      "stages": "fast 86, light 501"
+      "ms": 763,
+      "stages": "fast 69, light 582"
     },
     {
       "app": "todo",
       "on": "t-deposit",
       "said": "is this late?",
       "expected": "a true answer",
-      "got": "answer: Yes, it is late: its due date of 2026-08-28 was 4 days ago. [facts said 1/1, given 1: /\\b(yes|late|overdue)\\b/i]",
+      "got": "answer: Yes, it is late (due 4 days ago). [facts said 1/1, given 1: /\\b(yes|late|overdue)\\b/i]",
       "ok": true,
-      "ms": 2339,
-      "stages": "fast 80, light 2188"
+      "ms": 652,
+      "stages": "fast 63, light 542"
     },
     {
       "app": "todo",
       "on": "week",
       "said": "undo that",
       "expected": "an answer",
-      "got": "answer: Nothing to undo here.",
+      "got": "answer: Undone via app history.",
       "ok": true,
-      "ms": 636,
-      "stages": "fast 82, light 486"
+      "ms": 617,
+      "stages": "fast 69, light 473"
     },
     {
       "app": "todo",
@@ -395,8 +395,8 @@
       "expected": "missing link",
       "got": "missing link: Tasks have no one assigned to them. (who Sam)",
       "ok": true,
-      "ms": 80,
-      "stages": "fast 78"
+      "ms": 109,
+      "stages": "fast 107"
     },
     {
       "app": "todo",
@@ -405,8 +405,8 @@
       "expected": "missing link",
       "got": "missing link: Tasks have no one assigned to them. (who Nora)",
       "ok": true,
-      "ms": 122,
-      "stages": "fast 119"
+      "ms": 62,
+      "stages": "fast 59"
     },
     {
       "app": "todo",
@@ -415,8 +415,8 @@
       "expected": "missing link",
       "got": "missing link: Tasks have no one assigned to them. (who Sam)",
       "ok": true,
-      "ms": 77,
-      "stages": "fast 76"
+      "ms": 66,
+      "stages": "fast 64"
     },
     {
       "app": "todo",
@@ -425,18 +425,18 @@
       "expected": "missing field",
       "got": "missing field: Tasks have no urgency field yet.",
       "ok": true,
-      "ms": 1367,
-      "stages": "fast 77, light 602, light 635"
+      "ms": 3052,
+      "stages": "fast 51, light 2462, light 494"
     },
     {
       "app": "todo",
       "on": "week",
       "said": "give these a priority of high",
       "expected": "missing field",
-      "got": "missing field: Tasks have no priority yet.",
+      "got": "missing field: The app is missing a way to set priority on tasks.",
       "ok": true,
-      "ms": 1486,
-      "stages": "fast 83, light 632, light 688"
+      "ms": 834,
+      "stages": "fast 104, light 674"
     },
     {
       "app": "todo",
@@ -445,8 +445,8 @@
       "expected": "missing link",
       "got": "missing link: Tasks have no one assigned to them. (who Nora)",
       "ok": true,
-      "ms": 89,
-      "stages": "fast 88"
+      "ms": 67,
+      "stages": "fast 66"
     },
     {
       "app": "todo",
@@ -455,8 +455,8 @@
       "expected": "missing link",
       "got": "missing link: Tasks have no one assigned to them. (who Nora) [taking “her” as Nora]",
       "ok": true,
-      "ms": 81,
-      "stages": "fast 78"
+      "ms": 57,
+      "stages": "fast 54"
     },
     {
       "app": "todo",
@@ -465,8 +465,8 @@
       "expected": "missing link",
       "got": "missing link: Tasks have no one assigned to them. (who Sam) [taking “him” as Sam]",
       "ok": true,
-      "ms": 92,
-      "stages": "fast 91"
+      "ms": 72,
+      "stages": "fast 70"
     },
     {
       "app": "rota",
@@ -475,8 +475,8 @@
       "expected": "cover over itself",
       "got": "cover × 1, saying: Ada Nowak covers “Friday repair cafe”.",
       "ok": true,
-      "ms": 96,
-      "stages": "fast 91"
+      "ms": 106,
+      "stages": "fast 101"
     },
     {
       "app": "rota",
@@ -485,8 +485,8 @@
       "expected": "uncover over itself",
       "got": "uncover × 1, saying: Ada Nowak hands back “Monday open up”.",
       "ok": true,
-      "ms": 90,
-      "stages": "fast 85"
+      "ms": 80,
+      "stages": "fast 77"
     },
     {
       "app": "rota",
@@ -495,8 +495,8 @@
       "expected": "uncover over itself",
       "got": "uncover × 1, saying: Ada Nowak hands back “Thursday baby group”.",
       "ok": true,
-      "ms": 96,
-      "stages": "fast 92"
+      "ms": 66,
+      "stages": "fast 62"
     },
     {
       "app": "todo",
@@ -505,8 +505,8 @@
       "expected": "finish over held",
       "got": "finish × 5, saying: Mark the 5 tasks in This week done.",
       "ok": true,
-      "ms": 93,
-      "stages": "fast 91"
+      "ms": 61,
+      "stages": "fast 57"
     },
     {
       "app": "todo",
@@ -515,8 +515,8 @@
       "expected": "drop|remove-task|archive-task over itself",
       "got": "drop × 1, saying: Drop “Book the van”.",
       "ok": true,
-      "ms": 73,
-      "stages": "fast 71"
+      "ms": 695,
+      "stages": "fast 58, light 580"
     },
     {
       "app": "todo",
@@ -525,18 +525,18 @@
       "expected": "reschedule over held",
       "got": "reschedule × 6, saying: Move the date of the 6 tasks in This week to Monday, Sep 7.",
       "ok": true,
-      "ms": 1024,
-      "stages": "fast 79, light 871"
+      "ms": 757,
+      "stages": "fast 58, light 633"
     },
     {
       "app": "todo",
       "on": "week",
       "said": "get rid of the done ones",
       "expected": "drop|remove-task|archive-task over done",
-      "got": "remove-task × 1, saying: Remove “Order boxes”.",
+      "got": "drop × 1, saying: Drop “Order boxes”.",
       "ok": true,
-      "ms": 88,
-      "stages": "fast 87"
+      "ms": 91,
+      "stages": "fast 88"
     },
     {
       "app": "todo",
@@ -545,18 +545,18 @@
       "expected": "rename over itself",
       "got": "rename × 1, saying: Rename to “Moving week”.",
       "ok": true,
-      "ms": 78,
-      "stages": "fast 76"
+      "ms": 72,
+      "stages": "fast 70"
     },
     {
       "app": "todo",
       "on": "week",
       "said": "what should I do first?",
       "expected": "an answer",
-      "got": "answer: The overdue Order boxes is already done. Next, Give notice on the flat is due tomorrow and blocks nothing.",
+      "got": "answer: Finish Give notice on the flat first (due tomorrow), then Read the meters and Redirect the post (both due Thursday).",
       "ok": true,
-      "ms": 983,
-      "stages": "fast 88, light 792"
+      "ms": 835,
+      "stages": "fast 62, light 709"
     },
     {
       "app": "todo",
@@ -565,8 +565,8 @@
       "expected": "archive-task over held",
       "got": "archive-task × 6, saying: Archive the 6 tasks in This week.",
       "ok": true,
-      "ms": 109,
-      "stages": "fast 104"
+      "ms": 74,
+      "stages": "fast 71"
     },
     {
       "app": "rota",
@@ -575,8 +575,8 @@
       "expected": "cover over itself",
       "got": "cover × 1, saying: Ada Nowak covers “Friday repair cafe”.",
       "ok": true,
-      "ms": 99,
-      "stages": "fast 95"
+      "ms": 80,
+      "stages": "fast 76"
     },
     {
       "app": "rota",
@@ -585,18 +585,18 @@
       "expected": "move-shift over itself",
       "got": "move-shift × 1, saying: Move “Monday open up” to Saturday, Sep 19.",
       "ok": true,
-      "ms": 982,
-      "stages": "fast 118, light 793"
+      "ms": 1059,
+      "stages": "fast 74, light 421, light 516"
     },
     {
       "app": "todo",
       "on": "week",
       "said": "could you close these for me",
       "expected": "finish over held",
-      "got": "finish × 5, saying: Mark the 5 tasks in This week done.",
+      "got": "finish × 5, saying: Mark the 5 open tasks in This week done.",
       "ok": true,
-      "ms": 882,
-      "stages": "fast 79, light 713"
+      "ms": 821,
+      "stages": "fast 55, light 700"
     },
     {
       "app": "todo",
@@ -605,8 +605,8 @@
       "expected": "finish over itself",
       "got": "finish × 1, saying: Finish “Book the van”.",
       "ok": true,
-      "ms": 94,
-      "stages": "fast 89"
+      "ms": 80,
+      "stages": "fast 76"
     },
     {
       "app": "todo",
@@ -615,8 +615,8 @@
       "expected": "archive-task over held",
       "got": "archive-task × 6, saying: Archive the 6 tasks in This week.",
       "ok": true,
-      "ms": 820,
-      "stages": "fast 113, light 649"
+      "ms": 1210,
+      "stages": "fast 54, light 1072"
     },
     {
       "app": "todo",
@@ -625,8 +625,8 @@
       "expected": "reschedule over itself",
       "got": "reschedule × 1, saying: Move “Book the van” to Monday, Sep 7.",
       "ok": true,
-      "ms": 950,
-      "stages": "fast 72, light 805"
+      "ms": 679,
+      "stages": "fast 63, light 546"
     },
     {
       "app": "todo",
@@ -635,8 +635,8 @@
       "expected": "finish over held",
       "got": "finish × 5, saying: Mark the 5 tasks in This week done.",
       "ok": true,
-      "ms": 96,
-      "stages": "fast 94"
+      "ms": 80,
+      "stages": "fast 75"
     },
     {
       "app": "rota",
@@ -645,8 +645,8 @@
       "expected": "drop-shift over itself",
       "got": "drop-shift × 1, saying: Drop “Monday open up”.",
       "ok": true,
-      "ms": 73,
-      "stages": "fast 70"
+      "ms": 59,
+      "stages": "fast 55"
     },
     {
       "app": "todo",
@@ -655,8 +655,8 @@
       "expected": "archive-task over done + finish over open",
       "got": "archive-task+finish × 6, saying: Archive “Order boxes”. Mark the 5 open tasks in This week done.",
       "ok": true,
-      "ms": 103,
-      "stages": "fast 100"
+      "ms": 79,
+      "stages": "fast 76"
     },
     {
       "app": "todo",
@@ -665,8 +665,8 @@
       "expected": "drop|remove-task over done + finish over open",
       "got": "drop+finish × 6, saying: Drop “Order boxes”. Mark the 5 open tasks in This week done.",
       "ok": true,
-      "ms": 118,
-      "stages": "fast 116"
+      "ms": 68,
+      "stages": "fast 66"
     },
     {
       "app": "todo",
@@ -675,8 +675,8 @@
       "expected": "finish over itself + move-to-list over itself",
       "got": "finish+move-to-list × 2, saying: Finish “Book the van”. Move “Book the van” to Someday.",
       "ok": true,
-      "ms": 92,
-      "stages": "fast 89"
+      "ms": 76,
+      "stages": "fast 73"
     },
     {
       "app": "todo",
@@ -685,8 +685,8 @@
       "expected": "missing link",
       "got": "missing link: Tasks have no one assigned to them. (who Nora)",
       "ok": true,
-      "ms": 129,
-      "stages": "fast 128"
+      "ms": 94,
+      "stages": "fast 93"
     },
     {
       "app": "todo",
@@ -695,8 +695,8 @@
       "expected": "missing link",
       "got": "missing link: Tasks have no one assigned to them. (who Sam)",
       "ok": true,
-      "ms": 97,
-      "stages": "fast 96"
+      "ms": 53,
+      "stages": "fast 51"
     },
     {
       "app": "todo",
@@ -705,8 +705,8 @@
       "expected": "missing link",
       "got": "missing link: Tasks have no one assigned to them. (who Nora)",
       "ok": true,
-      "ms": 86,
-      "stages": "fast 83"
+      "ms": 63,
+      "stages": "fast 61"
     },
     {
       "app": "rota",
@@ -715,8 +715,8 @@
       "expected": "cover over itself",
       "got": "cover × 1, saying: Bo Ferreira covers “Friday repair cafe”.",
       "ok": true,
-      "ms": 65,
-      "stages": "fast 61"
+      "ms": 76,
+      "stages": "fast 72"
     },
     {
       "app": "rota",
@@ -725,8 +725,8 @@
       "expected": "cover over itself",
       "got": "cover × 1, saying: Cass Whitley covers “Friday repair cafe”.",
       "ok": true,
-      "ms": 101,
-      "stages": "fast 98"
+      "ms": 71,
+      "stages": "fast 69"
     },
     {
       "app": "todo",
@@ -735,8 +735,8 @@
       "expected": "rename over itself",
       "got": "rename × 1, saying: Rename to “Packing week”.",
       "ok": true,
-      "ms": 85,
-      "stages": "fast 83"
+      "ms": 75,
+      "stages": "fast 75"
     },
     {
       "app": "todo",
@@ -745,8 +745,8 @@
       "expected": "rename over itself",
       "got": "rename × 1, saying: Rename to “Book the small van”.",
       "ok": true,
-      "ms": 108,
-      "stages": "fast 104"
+      "ms": 66,
+      "stages": "fast 64"
     },
     {
       "app": "todo",
@@ -755,8 +755,8 @@
       "expected": "rename over itself",
       "got": "rename × 1, saying: Rename to “Moving days”.",
       "ok": true,
-      "ms": 97,
-      "stages": "fast 96"
+      "ms": 93,
+      "stages": "fast 93"
     },
     {
       "app": "todo",
@@ -765,8 +765,8 @@
       "expected": "a true answer",
       "got": "answer: It waits for Get the second quote. [facts said 1/1, given 1: quote]",
       "ok": true,
-      "ms": 717,
-      "stages": "fast 107, light 537"
+      "ms": 812,
+      "stages": "fast 81, light 672"
     },
     {
       "app": "todo",
@@ -775,8 +775,8 @@
       "expected": "a true answer",
       "got": "answer: Get the second quote is holding it up. [facts said 1/1, given 1: quote]",
       "ok": true,
-      "ms": 816,
-      "stages": "fast 82, light 637"
+      "ms": 729,
+      "stages": "fast 79, light 575"
     },
     {
       "app": "rota",
@@ -785,8 +785,8 @@
       "expected": "a true answer",
       "got": "answer: Cass Whitley is covering the Saturday market shift. [facts said 1/1, given 1: Cass]",
       "ok": true,
-      "ms": 2611,
-      "stages": "fast 84, light 2463"
+      "ms": 554,
+      "stages": "fast 62, light 391"
     },
     {
       "app": "todo",
@@ -795,8 +795,8 @@
       "expected": "drop|remove-task over done",
       "got": "drop × 1, saying: Drop “Order boxes”.",
       "ok": true,
-      "ms": 78,
-      "stages": "fast 76"
+      "ms": 59,
+      "stages": "fast 57"
     },
     {
       "app": "todo",
@@ -805,8 +805,8 @@
       "expected": "archive-task over done",
       "got": "archive-task × 1, saying: Archive “Order boxes”.",
       "ok": true,
-      "ms": 79,
-      "stages": "fast 77"
+      "ms": 68,
+      "stages": "fast 64"
     },
     {
       "app": "todo",
@@ -815,8 +815,8 @@
       "expected": "finish over open",
       "got": "finish × 5, saying: Mark the 5 open tasks in This week done.",
       "ok": true,
-      "ms": 95,
-      "stages": "fast 91"
+      "ms": 81,
+      "stages": "fast 72"
     },
     {
       "app": "todo",
@@ -825,8 +825,8 @@
       "expected": "finish over open",
       "got": "finish × 5, saying: Mark the 5 open tasks in This week done.",
       "ok": true,
-      "ms": 104,
-      "stages": "fast 102"
+      "ms": 62,
+      "stages": "fast 60"
     },
     {
       "app": "todo",
@@ -835,8 +835,8 @@
       "expected": "finish over open",
       "got": "finish × 5, saying: Mark the 5 open tasks in This week done.",
       "ok": true,
-      "ms": 87,
-      "stages": "fast 84"
+      "ms": 83,
+      "stages": "fast 81"
     },
     {
       "app": "todo",
@@ -845,8 +845,8 @@
       "expected": "drop|remove-task|archive-task over done",
       "got": "drop × 1, saying: Drop “Order boxes”.",
       "ok": true,
-      "ms": 79,
-      "stages": "fast 78"
+      "ms": 67,
+      "stages": "fast 66"
     },
     {
       "app": "todo",
@@ -855,8 +855,8 @@
       "expected": "a question back: which?",
       "got": "answer: Which of the 6 tasks in This week should I drop? Say which, or “all”.",
       "ok": true,
-      "ms": 84,
-      "stages": "fast 83"
+      "ms": 75,
+      "stages": "fast 74"
     },
     {
       "app": "todo",
@@ -875,8 +875,8 @@
       "expected": "a true answer",
       "got": "answer: No, Book the van is not done. [facts said 1/1, given 1: /\\b(no|not)\\b/i]",
       "ok": true,
-      "ms": 802,
-      "stages": "fast 89, light 638"
+      "ms": 1430,
+      "stages": "fast 72, light 1285"
     },
     {
       "app": "todo",
@@ -885,18 +885,18 @@
       "expected": "a true answer",
       "got": "answer: Yes, it is finished. [facts said 1/1, given 1: /\\b(yes|done|finished)\\b/i]",
       "ok": true,
-      "ms": 604,
-      "stages": "fast 66, light 468"
+      "ms": 641,
+      "stages": "fast 64, light 512"
     },
     {
       "app": "todo",
       "on": "t-book",
       "said": "who has it?",
       "expected": "an answer",
-      "got": "answer: Ada Nowak covers it and holds it this week.",
+      "got": "answer: Ada Nowak holds it: This week. No one else has it.",
       "ok": true,
-      "ms": 683,
-      "stages": "fast 72, light 541"
+      "ms": 662,
+      "stages": "fast 68, light 499"
     },
     {
       "app": "rota",
@@ -905,18 +905,18 @@
       "expected": "a true answer",
       "got": "answer: Yes, it is covered by Ada Nowak. [facts said 1/1, given 1: /\\b(yes|ada)\\b/i]",
       "ok": true,
-      "ms": 2506,
-      "stages": "fast 150, light 2280"
+      "ms": 571,
+      "stages": "fast 51, light 465"
     },
     {
       "app": "todo",
       "on": "t-book",
       "said": "has this been finished already",
       "expected": "a true answer",
-      "got": "answer: No, Book the van has not been finished. [facts said 1/1, given 1: /\\b(no|not)\\b/i]",
+      "got": "answer: No, Book the van is not finished (done is false). [facts said 1/1, given 1: /\\b(no|not)\\b/i]",
       "ok": true,
-      "ms": 716,
-      "stages": "fast 71, light 564"
+      "ms": 856,
+      "stages": "fast 75, light 708"
     },
     {
       "app": "todo",
@@ -925,8 +925,8 @@
       "expected": "a true answer",
       "got": "answer: Yes, it is already marked done. [facts said 1/1, given 1: /\\b(yes|done|closed|finished)\\b/i]",
       "ok": true,
-      "ms": 658,
-      "stages": "fast 79, light 489"
+      "ms": 584,
+      "stages": "fast 110, light 421"
     },
     {
       "app": "todo",
@@ -935,8 +935,8 @@
       "expected": "a true answer",
       "got": "answer: No, it is not done. [facts said 1/1, given 1: /\\b(no|not)\\b/i]",
       "ok": true,
-      "ms": 671,
-      "stages": "fast 87, light 497"
+      "ms": 599,
+      "stages": "fast 86, light 423"
     },
     {
       "app": "todo",
@@ -945,18 +945,18 @@
       "expected": "a true answer",
       "got": "answer: It is done. [facts said 1/1, given 1: /\\b(yes|done)\\b/i]",
       "ok": true,
-      "ms": 649,
-      "stages": "fast 64, light 524"
+      "ms": 522,
+      "stages": "fast 46, light 392"
     },
     {
       "app": "todo",
       "on": "week",
       "said": "delete all the ones that are finished",
       "expected": "drop|remove-task over done",
-      "got": "drop × 1, saying: Drop “Order boxes”.",
+      "got": "remove-task × 1, saying: Remove “Order boxes”.",
       "ok": true,
-      "ms": 94,
-      "stages": "fast 93"
+      "ms": 72,
+      "stages": "fast 71"
     },
     {
       "app": "todo",
@@ -965,28 +965,28 @@
       "expected": "archive-task over done",
       "got": "archive-task × 1, saying: Archive “Order boxes”.",
       "ok": true,
-      "ms": 74,
-      "stages": "fast 73"
+      "ms": 59,
+      "stages": "fast 58"
     },
     {
       "app": "todo",
       "on": "week",
       "said": "bin everything except the done one",
       "expected": "drop|remove-task over open",
-      "got": "answer: Should I drop all 5 tasks in This week? Say “all” to go ahead, or say which.",
+      "got": "answer: Should I drop all 5 of them? Say “all” to go ahead, or say which.",
       "ok": true,
-      "ms": 74,
-      "stages": "fast 73"
+      "ms": 921,
+      "stages": "fast 306, light 511"
     },
     {
       "app": "todo",
       "on": "week",
       "said": "wipe out all the tasks that are already finished",
       "expected": "drop|remove-task over done",
-      "got": "remove-task × 1, saying: Remove “Order boxes”.",
+      "got": "drop × 1, saying: Drop “Order boxes”.",
       "ok": true,
-      "ms": 83,
-      "stages": "fast 81"
+      "ms": 72,
+      "stages": "fast 70"
     },
     {
       "app": "todo",
@@ -995,8 +995,8 @@
       "expected": "move-to-list over itself",
       "got": "move-to-list × 1, saying: Move “Move the broadband” to Someday.",
       "ok": true,
-      "ms": 112,
-      "stages": "fast 110"
+      "ms": 73,
+      "stages": "fast 70"
     },
     {
       "app": "todo",
@@ -1005,8 +1005,8 @@
       "expected": "missing link",
       "got": "missing link: Tasks have no one assigned to them. (who Sam)",
       "ok": true,
-      "ms": 74,
-      "stages": "fast 72"
+      "ms": 63,
+      "stages": "fast 60"
     },
     {
       "app": "todo",
@@ -1015,8 +1015,8 @@
       "expected": "missing link",
       "got": "missing link: Tasks have no one assigned to them. (who Nora)",
       "ok": true,
-      "ms": 84,
-      "stages": "fast 83"
+      "ms": 63,
+      "stages": "fast 62"
     },
     {
       "app": "rota",
@@ -1025,8 +1025,8 @@
       "expected": "cover over itself",
       "got": "cover × 1, saying: Cass Whitley covers “Friday repair cafe”.",
       "ok": true,
-      "ms": 77,
-      "stages": "fast 74"
+      "ms": 80,
+      "stages": "fast 77"
     },
     {
       "app": "rota",
@@ -1035,8 +1035,8 @@
       "expected": "cover over itself",
       "got": "cover × 1, saying: Dev Ramanan covers “Saturday market”.",
       "ok": true,
-      "ms": 102,
-      "stages": "fast 99"
+      "ms": 63,
+      "stages": "fast 61"
     },
     {
       "app": "rota",
@@ -1045,8 +1045,8 @@
       "expected": "a true answer",
       "got": "answer: Nothing to change: Ada Nowak's status is already available. [facts said 2/2, given 2: /\\bAda Nowak\\b/, /already/i]",
       "ok": true,
-      "ms": 126,
-      "stages": "fast 123"
+      "ms": 84,
+      "stages": "fast 81"
     },
     {
       "app": "todo",
@@ -1055,8 +1055,8 @@
       "expected": "a true answer",
       "got": "answer: Nothing to change: “Get the second quote” is already done. [facts said 1/1, given 1: /already done/i]",
       "ok": true,
-      "ms": 80,
-      "stages": "fast 76"
+      "ms": 98,
+      "stages": "fast 96"
     },
     {
       "app": "rota",
@@ -1065,18 +1065,18 @@
       "expected": "a change, a plan, or words that it could not",
       "got": "uncover × 1, saying: Ada Nowak hands back “Monday open up”.",
       "ok": true,
-      "ms": 158,
-      "stages": "fast 75, fast 81"
+      "ms": 155,
+      "stages": "fast 83, fast 69"
     },
     {
       "app": "todo",
       "on": "t-book",
       "said": "send this to my accountant",
       "expected": "a change, a plan, or words that it could not",
-      "got": "missing link: Tasks have no accountant or send feature yet.",
+      "got": "answer: There is no accountant or send action here.",
       "ok": true,
-      "ms": 1387,
-      "stages": "fast 69, light 499, light 738"
+      "ms": 1284,
+      "stages": "fast 99, light 609, light 524"
     },
     {
       "app": "rota",
@@ -1085,8 +1085,8 @@
       "expected": "outside the app, said plainly",
       "got": "answer: I can't send messages from here: this app keeps your records, and doing that happens outside it.",
       "ok": true,
-      "ms": 1675,
-      "stages": "fast 75, light 643, light 861"
+      "ms": 1220,
+      "stages": "fast 83, light 639, light 428"
     },
     {
       "app": "todo",
@@ -1095,8 +1095,8 @@
       "expected": "outside the app, said plainly",
       "got": "answer: I can't send email from here: this app keeps your records, and doing that happens outside it.",
       "ok": true,
-      "ms": 68,
-      "stages": "fast 66"
+      "ms": 76,
+      "stages": "fast 73"
     },
     {
       "app": "todo",
@@ -1105,8 +1105,8 @@
       "expected": "outside the app, said plainly",
       "got": "answer: I can't make calls from here: this app keeps your records, and doing that happens outside it.",
       "ok": true,
-      "ms": 82,
-      "stages": "fast 80"
+      "ms": 85,
+      "stages": "fast 83"
     },
     {
       "app": "todo",
@@ -1115,8 +1115,8 @@
       "expected": "outside the app, said plainly",
       "got": "answer: I can't make payments from here: this app keeps your records, and doing that happens outside it.",
       "ok": true,
-      "ms": 88,
-      "stages": "fast 85"
+      "ms": 63,
+      "stages": "fast 61"
     },
     {
       "app": "todo",
@@ -1125,8 +1125,8 @@
       "expected": "outside the app, said plainly",
       "got": "answer: I can't post outside this app from here: this app keeps your records, and doing that happens outside it.",
       "ok": true,
-      "ms": 79,
-      "stages": "fast 78"
+      "ms": 84,
+      "stages": "fast 83"
     },
     {
       "app": "rota",
@@ -1135,8 +1135,8 @@
       "expected": "outside the app, said plainly",
       "got": "answer: I can't make calls from here: this app keeps your records, and doing that happens outside it.",
       "ok": true,
-      "ms": 131,
-      "stages": "fast 127"
+      "ms": 88,
+      "stages": "fast 85"
     },
     {
       "app": "todo",
@@ -1145,8 +1145,8 @@
       "expected": "a true answer",
       "got": "answer: Yes, Sam is one of the users here. [facts said 1/1, given 1: /\\b(yes|sam)\\b/i]",
       "ok": true,
-      "ms": 688,
-      "stages": "fast 95, light 479"
+      "ms": 530,
+      "stages": "fast 73, light 395"
     },
     {
       "app": "rota",
@@ -1155,8 +1155,8 @@
       "expected": "a true answer",
       "got": "answer: Yes, Jo Harding is in the app. [facts said 1/1, given 1: /\\b(yes|jo)\\b/i]",
       "ok": true,
-      "ms": 1919,
-      "stages": "fast 120, light 512, light 1201"
+      "ms": 1584,
+      "stages": "fast 69, light 551, light 868"
     },
     {
       "app": "rota",
@@ -1165,8 +1165,8 @@
       "expected": "a true answer",
       "got": "answer: No, Cass is not covering Monday open up. [facts said 1/1, given 1: /\\b(yes|cass)\\b/i]",
       "ok": true,
-      "ms": 823,
-      "stages": "fast 88, light 614"
+      "ms": 596,
+      "stages": "fast 82, light 429"
     },
     {
       "app": "rota",
@@ -1175,8 +1175,8 @@
       "expected": "cover over itself",
       "got": "cover × 1, saying: Bo Ferreira covers “Monday open up”.",
       "ok": true,
-      "ms": 122,
-      "stages": "fast 119"
+      "ms": 81,
+      "stages": "fast 79"
     },
     {
       "app": "rota",
@@ -1185,8 +1185,8 @@
       "expected": "move-shift over itself",
       "got": "move-shift × 1, saying: Move “Monday open up” to Friday, Sep 18.",
       "ok": true,
-      "ms": 1735,
-      "stages": "fast 85, light 1564"
+      "ms": 1315,
+      "stages": "fast 68, light 1177"
     },
     {
       "app": "rota",
@@ -1195,8 +1195,8 @@
       "expected": "drop-shift over itself",
       "got": "drop-shift × 1, saying: Drop “Monday open up”.",
       "ok": true,
-      "ms": 88,
-      "stages": "fast 85"
+      "ms": 68,
+      "stages": "fast 65"
     },
     {
       "app": "rota",
@@ -1205,18 +1205,18 @@
       "expected": "step-back over itself",
       "got": "step-back × 1, saying: Ada Nowak steps back.",
       "ok": true,
-      "ms": 100,
-      "stages": "fast 98"
+      "ms": 74,
+      "stages": "fast 72"
     },
     {
       "app": "rota",
       "on": "s-mon-open",
       "said": "who is on this?",
       "expected": "a true answer",
-      "got": "answer: Ada Nowak is covering it. [facts said 1/1, given 1: Ada]",
+      "got": "answer: Ada Nowak is covering Monday open up. [facts said 1/1, given 1: Ada]",
       "ok": true,
-      "ms": 1872,
-      "stages": "fast 64, light 1706"
+      "ms": 1672,
+      "stages": "fast 65, light 1549"
     },
     {
       "app": "discography",
@@ -1225,8 +1225,8 @@
       "expected": "a true answer",
       "got": "answer: Yes, Cloudy-Eyed Stroll is released. [facts said 1/1, given 1: /\\byes\\b|is released|has been released/i]",
       "ok": true,
-      "ms": 2700,
-      "stages": "fast 1492, light 510"
+      "ms": 2357,
+      "stages": "fast 1289, light 538"
     },
     {
       "app": "discography",
@@ -1235,8 +1235,8 @@
       "expected": "scrap-song over itself",
       "got": "scrap-song × 1, saying: Scrap “Cloudy-Eyed Stroll”.",
       "ok": true,
-      "ms": 1512,
-      "stages": "fast 940"
+      "ms": 1273,
+      "stages": "fast 771"
     },
     {
       "app": "discography",
@@ -1245,38 +1245,38 @@
       "expected": "scrap-song over itself",
       "got": "scrap-song × 1, saying: Scrap “Cloudy-Eyed Stroll”.",
       "ok": true,
-      "ms": 1101,
-      "stages": "fast 573"
+      "ms": 759,
+      "stages": "fast 222"
     },
     {
       "app": "discography",
       "on": "album:cloudy-eyed-stroll-mitch-bade",
       "said": "what's on this album?",
       "expected": "a true answer",
-      "got": "answer: The songs on it: Cloudy-Eyed Stroll, Mitch Bade. [facts said 2/2, given 2: Cloudy-Eyed Stroll, Mitch Bade]",
+      "got": "answer: The songs on it: Cloudy-Eyed Stroll and Mitch Bade. [facts said 2/2, given 2: Cloudy-Eyed Stroll, Mitch Bade]",
       "ok": true,
-      "ms": 1372,
-      "stages": "fast 181, light 718"
+      "ms": 842,
+      "stages": "fast 86, light 472"
     },
     {
       "app": "todo",
       "on": "t-book",
       "said": "which list is this on?",
       "expected": "a true answer",
-      "got": "answer: This task is on the Today list. It is held by Today and due today on Tuesday 1 September 2026. [facts said 1/1, given 1: Today]",
+      "got": "answer: This is on the Today list. It is covered by Ada Nowak and holds it this week. [facts said 1/1, given 1: Today]",
       "ok": true,
-      "ms": 2154,
-      "stages": "fast 121, light 516, light 1420"
+      "ms": 1268,
+      "stages": "fast 65, light 539, light 593"
     },
     {
       "app": "todo",
       "on": "t-book",
       "said": "what is this waiting for?",
       "expected": "a true answer",
-      "got": "answer: It waits for Get the second quote. [facts said 1/1, given 1: quote]",
+      "got": "answer: Book the van is waiting for Get the second quote. [facts said 1/1, given 1: quote]",
       "ok": true,
-      "ms": 2821,
-      "stages": "fast 60, light 2670"
+      "ms": 1342,
+      "stages": "fast 66, light 598, light 593"
     },
     {
       "app": "todo",
@@ -1285,8 +1285,8 @@
       "expected": "a true answer",
       "got": "answer: It is due today, 2026-09-01. [facts said 1/1, given 1: /2026-09-01|september 1|1 september|sept?\\.? 1\\b|\\btoday\\b/i]",
       "ok": true,
-      "ms": 918,
-      "stages": "fast 74, light 753"
+      "ms": 1191,
+      "stages": "fast 152, light 992"
     },
     {
       "app": "todo",
@@ -1295,8 +1295,8 @@
       "expected": "a true answer",
       "got": "answer: 1 of these 6 tasks is done. [facts said 1/1, given 1: /\\b(1|one)\\b/i]",
       "ok": true,
-      "ms": 669,
-      "stages": "fast 85, light 533"
+      "ms": 1255,
+      "stages": "fast 73, light 1098"
     },
     {
       "app": "rota",
@@ -1305,8 +1305,8 @@
       "expected": "a true answer",
       "got": "answer: It is held at The hall. [facts said 1/1, given 1: hall]",
       "ok": true,
-      "ms": 681,
-      "stages": "fast 86, light 524"
+      "ms": 1228,
+      "stages": "fast 82, light 1069"
     },
     {
       "app": "rota",
@@ -1315,28 +1315,28 @@
       "expected": "a true answer",
       "got": "answer: Bo covers 3 shifts. [facts said 1/1, given 1: /\\b(3|three)\\b/i]",
       "ok": true,
-      "ms": 653,
-      "stages": "fast 72, light 508"
+      "ms": 532,
+      "stages": "fast 65, light 420"
     },
     {
       "app": "rota",
       "on": "s-mon-open",
       "said": "what day is this on?",
       "expected": "a true answer",
-      "got": "answer: This is on Monday 2026-09-14. [facts said 1/1, given 1: /monday|2026-09-14|14 september|september 14/i]",
+      "got": "answer: This is on Monday, 2026-09-14. [facts said 1/1, given 1: /monday|2026-09-14|14 september|september 14/i]",
       "ok": true,
-      "ms": 2009,
-      "stages": "fast 72, light 1206"
+      "ms": 1231,
+      "stages": "fast 65, light 569"
     },
     {
       "app": "rota",
       "on": "s-fri-repair",
       "said": "is anyone on this?",
       "expected": "a true answer",
-      "got": "answer: No one is covering the Friday repair cafe shift. [facts said 1/1, given 1: /\\b(no|nobody|no one|not|isn't|uncovered|empty)\\b/i]",
+      "got": "answer: No one is covering the Friday repair cafe shift yet. [facts said 1/1, given 1: /\\b(no|nobody|no one|not|isn't|uncovered|empty)\\b/i]",
       "ok": true,
-      "ms": 3786,
-      "stages": "fast 769, light 2516"
+      "ms": 1458,
+      "stages": "fast 587, light 590"
     },
     {
       "app": "discography",
@@ -1345,8 +1345,8 @@
       "expected": "a true answer",
       "got": "answer: Tech N9ne made Cloudy-Eyed Stroll. [facts said 1/1, given 1: Tech N9ne]",
       "ok": true,
-      "ms": 1782,
-      "stages": "fast 412, light 606"
+      "ms": 1520,
+      "stages": "fast 282, light 530"
     },
     {
       "app": "discography",
@@ -1355,8 +1355,8 @@
       "expected": "a true answer",
       "got": "answer: There are 2 songs on this album. [facts said 1/1, given 1: /\\b(2|two)\\b/i]",
       "ok": true,
-      "ms": 1116,
-      "stages": "fast 92, light 583"
+      "ms": 918,
+      "stages": "fast 141, light 476"
     }
   ]
 }

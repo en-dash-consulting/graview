@@ -1,5 +1,14 @@
 # @graview/tools
 
+## 0.2.11
+
+### Patch Changes
+
+- Updated dependencies [0803abb]
+- Updated dependencies [d2cbbc3]
+  - @graview/core@0.2.11
+  - @graview/ship@0.2.11
+
 ## 0.2.10
 
 ### Patch Changes

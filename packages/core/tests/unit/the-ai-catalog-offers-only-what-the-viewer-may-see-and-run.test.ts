@@ -165,7 +165,7 @@ describe("the state a model reads", () => {
     expect(state.place).toBe("the-board");
     expect(state.target).toEqual({ on: "record", record: { id: "t-1", kind: "task", label: "Book the van", fields: { status: "doing" } } });
     expect(state.selection.map((one) => one.id)).toEqual(["t-2"]);
-    expect(state.recent).toEqual([expect.objectContaining({ by: "u-mo" })]);
+    expect(state.recent).toEqual([expect.objectContaining({ by: "someone" })]);
     expect(state.schema.kinds.map((kind) => kind.kind).sort()).toEqual(["person", "task"]);
     expect(state.schema.kinds.find((kind) => kind.kind === "task")?.fields["status"]).toBe("enum:todo|doing|done");
     expect(JSON.stringify(state)).not.toContain("surprise");

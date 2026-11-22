@@ -2,6 +2,14 @@
   "about": "The release records of graview.dev: one per version in packages/core/CHANGELOG.md, newest first, written with the Version packages pull request. A version npm never got says which version carried it (shippedIn) and is said inside that version's section. The date is the day npm published it (UTC). tests/the-releases-page-says-what-each-version-brought.test.ts fails while a version in the changelog has no record here.",
   "releases": [
     {
+      "version": "0.2.11",
+      "date": "2026-11-22",
+      "headline": "The one face keeps its moves whole on a slow machine, what a model is told of recent changes names each author as a person, and an add keeps only the record times its own op stamps.",
+      "summary": "- **The one face keeps its moves whole on a slow machine.** A building that rises or sinks goes on from where the last frame drew it when a frame comes late, as the camera already does, instead of jumping.\n- **What a model is told of recent changes names each author as a person.** `aiContextOf`’s `recent[].by` says the author the way the seat’s own log does: the person they are bound to, where the seat may see that person, and “someone” otherwise; an agent by the name it gave, and one acting for a person as “Claude, for Bud”.\n- **An add keeps only the record times its own op stamps.** A record an op adds is kept without the `createdAt`, `createdBy`, `updatedAt` and `updatedBy` its payload carried, on every way an op enters a store, so the log, the history, an export and a push say only what this store stamped. An undo that puts a record back keeps its own.",
+      "compatibility": "Breaks: nothing for a host that reads a record’s four from the record. A host that read them from an op’s `add-node` payload in the log reads them from the record instead: from this version that payload is kept without them, except in an undo, and a record one op removes and adds again keeps the `createdAt` and `createdBy` its removal carried. `AiContextState.recent[].by` now says “someone” where it said an author’s id or own name, so a host that matched it against an id stops matching. Gains: a model is told who changed what as people. Ops’ format, the graph each op folds to, stored formats, the wire, the declaration and check finding codes, and derived tool names and input schemas are unchanged.",
+      "published": true
+    },
+    {
       "version": "0.2.10",
       "date": "2026-11-21",
       "headline": "Every record says when it was made and last changed, and by whom, in lists, templates, rules and jobs, kept as each seat may see them.",

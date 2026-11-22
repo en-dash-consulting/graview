@@ -221,6 +221,39 @@ export function makingIn(op: { readonly primitives: readonly Primitive[]; readon
   return making;
 }
 
+/**
+ * AN OP AS IT IS KEPT: each record it adds without the four its payload
+ * said, where `makingIn` passes them over — so the log, its history, an
+ * export and a push say of a record's making only what the fold stamps.
+ * What `makingIn` honors is kept: an undo's put-back as it came, and an add
+ * of an id the same op removes saying what its removal carried of its
+ * making. The op itself where nothing changes.
+ */
+export function keptMaking<O extends { readonly primitives: readonly Primitive[]; readonly undoes?: string }>(op: O): O {
+  if (op.undoes !== undefined) return op;
+  const removed = new Map<string, Touched>();
+  for (const primitive of op.primitives) if (primitive.op === "remove-node") removed.set(primitive.node.id, madeOf(primitive.node));
+  const kept = new Map<string, Record<string, unknown>>();
+  const primitives = op.primitives.map((primitive) => {
+    if (primitive.op !== "add-node") return primitive;
+    const node = primitive.node as Record<string, unknown>;
+    const carried = removed.get(primitive.node.id);
+    // Removed and added again: when and by whom its removal says it was made, as the fold makes it, and nothing more.
+    const said = carried === undefined ? untouched(node) : withTouches(node, carried);
+    if (JSON.stringify(touchedOf(said)) === JSON.stringify(touchedOf(node)) && TOUCHED_FIELDS.every((key) => Object.hasOwn(said, key) === Object.hasOwn(node, key))) return primitive;
+    kept.set(primitive.node.id, said);
+    return { ...primitive, node: said } as Primitive;
+  });
+  if (kept.size === 0) return op;
+  // An inverse written out (format 1) takes the same records back as they are now kept: its removal of each says what the add now says.
+  const inverse = (op as { readonly inverse?: readonly Primitive[] }).inverse?.map((primitive) => {
+    if (primitive.op !== "remove-node") return primitive;
+    const said = kept.get(primitive.node.id);
+    return said === undefined ? primitive : ({ ...primitive, node: withTouches(primitive.node, touchedOf(said)) } as Primitive);
+  });
+  return { ...op, primitives, ...(inverse ? { inverse } : {}) };
+}
+
 /** When and by whom a record says it was last touched, alone. */
 export const lastOf = (node: unknown): Touched => {
   const { updatedAt, updatedBy } = touchedOf(node);

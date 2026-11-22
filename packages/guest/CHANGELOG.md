@@ -1,5 +1,15 @@
 # @graview/guest
 
+## 0.2.11
+
+### Patch Changes
+
+- Updated dependencies [1d8637d]
+- Updated dependencies [0803abb]
+- Updated dependencies [d2cbbc3]
+  - @graview/react@0.2.11
+  - @graview/core@0.2.11
+
 ## 0.2.10
 
 ### Patch Changes
