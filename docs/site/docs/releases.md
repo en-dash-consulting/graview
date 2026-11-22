@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.2.11`](https://graview.dev/docs/releases.html#v0-2-11)
 - [`0.2.10`](https://graview.dev/docs/releases.html#v0-2-10)
 - [`0.2.9`](https://graview.dev/docs/releases.html#v0-2-9)
 - [`0.2.8`](https://graview.dev/docs/releases.html#v0-2-8)
@@ -87,9 +88,23 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
+## 0.2.11
+
+Published November 22, 2026 · the current version
+
+The one face keeps its moves whole on a slow machine, what a model is told of recent changes names each author as a person, and an add keeps only the record times its own op stamps.
+
+- **The one face keeps its moves whole on a slow machine.** A building that rises or sinks goes on from where the last frame drew it when a frame comes late, as the camera already does, instead of jumping.
+- **What a model is told of recent changes names each author as a person.** `aiContextOf`’s `recent[].by` says the author the way the seat’s own log does: the person they are bound to, where the seat may see that person, and “someone” otherwise; an agent by the name it gave, and one acting for a person as “Claude, for Bud”.
+- **An add keeps only the record times its own op stamps.** A record an op adds is kept without the `createdAt`, `createdBy`, `updatedAt` and `updatedBy` its payload carried, on every way an op enters a store, so the log, the history, an export and a push say only what this store stamped. An undo that puts a record back keeps its own.
+
+**Before you upgrade:** Breaks: nothing for a host that reads a record’s four from the record. A host that read them from an op’s `add-node` payload in the log reads them from the record instead: from this version that payload is kept without them, except in an undo, and a record one op removes and adds again keeps the `createdAt` and `createdBy` its removal carried. `AiContextState.recent[].by` now says “someone” where it said an author’s id or own name, so a host that matched it against an id stops matching. Gains: a model is told who changed what as people. Ops’ format, the graph each op folds to, stored formats, the wire, the declaration and check finding codes, and derived tool names and input schemas are unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.2.11) · [The full changelog for 0.2.11](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0211)
+
 ## 0.2.10
 
-Published November 21, 2026 · the current version
+Published November 21, 2026
 
 Every record says when it was made and last changed, and by whom, in lists, templates, rules and jobs, kept as each seat may see them.
 

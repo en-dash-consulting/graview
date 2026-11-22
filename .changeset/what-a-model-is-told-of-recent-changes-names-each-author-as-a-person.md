@@ -1,7 +1,0 @@
----
-"@graview/core": patch
----
-
-What a model is told of recent changes names each author as a person. `aiContextOf` on `@graview/core/catalog` says `recent[].by` the way the seat's own log says the author: the person they are bound to, by that record's label, where the seat may see that person ("Kiddo (Bud)" for a profile on the seat of a person the seat may see, as Activity says it), and "someone" for an author bound to nobody or to a person the seat may not see. An agent, a rule or the app itself is said by the name it gave, else by what it is ("an agent", "a rule", "the system"), and an agent acting for a person with that person said the same way ("Claude, for Bud"). It reads the author through `namedAuthors` and says it with `nameOfAuthor`, the same as a seat's log and its subscriptions, rather than a reading of its own. Held by a new unit test of core (`a-model-is-told-each-author-as-a-person`).
-
-Compatibility: the JavaScript API's shape is unchanged; `AiContextState.recent[].by` now says "someone" where it said an author's id or own name, and a profile's person as "Mia (Nick)" where it said the profile’s name alone, and an agent acting for a person as "Claude, for Bud" where it said the agent alone. Ops and primitives, stored formats, the wire, the declaration and check finding codes, and derived tool names and input schemas — unchanged. What Graview Cloud does: nothing, unless it matched `recent[].by` against an id.
