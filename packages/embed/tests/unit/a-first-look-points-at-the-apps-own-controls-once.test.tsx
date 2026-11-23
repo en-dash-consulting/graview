@@ -120,7 +120,7 @@ async function walk(host: Element): Promise<{ anchor: string; title: string; cov
 
 describe("a first look points at the app's own controls, once", { timeout: 60_000 }, () => {
   it("names its anchors as a small set a host can name", () => {
-    expect([...FIRST_LOOK_ANCHORS]).toEqual(["faces", "problems", "activity", "ask", "find", "profile", "home"]);
+    expect([...FIRST_LOOK_ANCHORS]).toEqual(["faces", "problems", "activity", "ask", "find", "profile", "home", "menu"]);
   });
 
   it("shows the hints once, and not on a second visit", async () => {
@@ -160,9 +160,11 @@ describe("a first look points at the app's own controls, once", { timeout: 60_00
     // The quick ask's hint stands by Find, where the host gave a model and a quick ask is drawn.
     const scene = await embed({ firstLook: { seen: false }, ai: { fast: stubFast() } });
     const onScene = await walk(scene.host);
-    expect(onScene.map((one) => one.anchor)).toEqual(["faces", "problems", "ask"]);
+    // Where the host gave the app AI, the menu on a record is pointed at too (Roadmap f-jev-fast-polish).
+    expect(onScene.map((one) => one.anchor)).toEqual(["faces", "problems", "menu", "ask"]);
     expect(onScene[0]!.title).toBe("Scene or Pages");
-    expect(onScene[2]!.title).toBe("Tell Graview");
+    expect(onScene[2]!.title).toBe("Right-click a record");
+    expect(onScene[3]!.title).toBe("Tell Graview");
     for (const one of onScene) expect(one.covers, one.anchor).toBe(false);
     await scene.done();
 
@@ -174,7 +176,7 @@ describe("a first look points at the app's own controls, once", { timeout: 60_00
 
     const whole = await shell({ seen: false });
     const onShell = await walk(whole.host);
-    expect(onShell.map((one) => one.anchor)).toEqual(["faces", "problems", "ask"]);
+    expect(onShell.map((one) => one.anchor)).toEqual(["faces", "problems", "menu", "ask"]);
     await whole.done();
   });
 
@@ -190,8 +192,31 @@ describe("a first look points at the app's own controls, once", { timeout: 60_00
     const busy = store();
     busy.apply({ name: "add-note", args: { label: "Second" } });
     const lively = await embed({ store: busy, quickAsk: false, ai: { fast: stubFast() }, firstLook: { seen: false } } as never);
-    expect((await walk(lively.host)).map((one) => one.anchor)).toEqual(["faces", "problems", "activity"]);
+    expect((await walk(lively.host)).map((one) => one.anchor)).toEqual(["faces", "problems", "activity", "menu"]);
     await lively.done();
+  });
+
+  it("points at the menu on a record — a right-click, a long press and the hover chip — only where the host gave the app AI", async () => {
+    const said = async (options: Partial<EmbedOptions>) => {
+      const shown = await embed({ firstLook: { seen: false }, ...options });
+      const words: Record<string, string> = {};
+      for (let turn = 0; turn < 10; turn++) {
+        const one = await hintArrives(shown.host);
+        if (!one) break;
+        words[one.getAttribute("data-first-look-anchor")!] = one.textContent ?? "";
+        await act(async () => one.querySelector<HTMLButtonElement>('[data-testid="first-look-next"], [data-testid="first-look-done"]')!.click());
+      }
+      await shown.done();
+      return words;
+    };
+    const chips = await said({ ai: { fast: stubFast(), hoverChips: true } });
+    expect(chips["menu"]).toMatch(/Right-click any record/);
+    expect(chips["menu"]).toMatch(/press and hold it on a touch screen/);
+    expect(chips["menu"]).toMatch(/Rest the pointer on one/);
+    // No hover chips offered: none pointed at.
+    expect((await said({ ai: { fast: stubFast() } }))["menu"]).not.toMatch(/Rest the pointer/);
+    // No AI: no menu hint at all.
+    expect(await said({})).not.toHaveProperty("menu");
   });
 
   it("ends on Escape, and gives the keyboard back where it was", async () => {
@@ -221,7 +246,7 @@ describe("a first look points at the app's own controls, once", { timeout: 60_00
     const shown = await embed({ ai: { fast: stubFast() }, firstLook: { seen: false, steps: [{ anchor: "profile", title: "You", words: "Your name, your seat and your own settings are here." }] } });
     const said = await walk(shown.host);
     expect(said.at(-1)).toMatchObject({ anchor: "profile", title: "You", covers: false });
-    expect(said.map((one) => one.anchor)).toEqual(["faces", "problems", "ask", "profile"]);
+    expect(said.map((one) => one.anchor)).toEqual(["faces", "problems", "menu", "ask", "profile"]);
     await shown.done();
   });
 });

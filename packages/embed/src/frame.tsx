@@ -589,9 +589,9 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
  * embeds on a page each point at their own controls, and kept across a
  * change of face.
  */
-export function FrameFirstLook({ rootRef, firstLook, app }: { readonly rootRef: { readonly current: HTMLElement | null }; readonly firstLook: FirstLook | undefined; readonly app: string }) {
+export function FrameFirstLook({ rootRef, firstLook, app, ai }: { readonly rootRef: { readonly current: HTMLElement | null }; readonly firstLook: FirstLook | undefined; readonly app: string; readonly ai?: HostAi | undefined }) {
   const root = useCallback(() => rootRef.current, [rootRef]);
-  return firstLook ? <FirstLookDoor firstLook={firstLook} root={root} app={app} /> : null;
+  return firstLook ? <FirstLookDoor firstLook={firstLook} root={root} app={app} {...(ai ? { ai } : {})} /> : null;
 }
 
 /*

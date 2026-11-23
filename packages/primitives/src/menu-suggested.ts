@@ -1,4 +1,5 @@
 import type { HostAi } from "@graview/tools";
+import { pickFloorOf } from "@graview/tools/frame";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 /*
@@ -20,6 +21,10 @@ export interface MenuSuggestion {
   readonly label: string;
   readonly mode: "chat" | "better";
   readonly source: "told" | "act" | "nudge";
+  /** How sure the Fast slot was of it, once it ranked it; none before, or where it was not asked. */
+  readonly confidence?: number;
+  /** The model that ranked it. */
+  readonly model?: string;
 }
 
 /** An act as the menu's rows offer it: its label, what it still asks, and what it was asked of. */
@@ -84,7 +89,7 @@ export const SUGGESTED_MOST = 3;
 /** The Fast slot the host gave, or its `decide`, where AI is not off. */
 const fastOf = (ai: HostAi | undefined) => (ai === undefined || ai.off || ai.suggestOnOpen === false ? undefined : (ai.fast ?? (ai.decide ? { model: ai.name ?? "decide", decide: ai.decide } : undefined)));
 
-type Answer = { readonly said: string; readonly order: readonly string[]; readonly modes: ReadonlyMap<string, MenuSuggestion["mode"]> };
+type Answer = { readonly said: string; readonly order: readonly string[]; readonly modes: ReadonlyMap<string, MenuSuggestion["mode"]>; readonly chances: ReadonlyMap<string, number>; readonly model: string };
 /*
  * ASKED ONCE PER THING AND ITS STATE (as the inline AI's suggestions are,
  * FR-186): a menu opened again on the same record — the same object until
@@ -117,7 +122,12 @@ export function useSuggested(ai: HostAi | undefined, candidates: readonly MenuSu
   useEffect(() => {
     if (answered(asked.depends, said)) return;
     setAnswer(null);
-    if (!fast || candidates.length === 0 || asked.opened === null || asked.opened === undefined) return;
+    /*
+     * NO CALL FOR WHAT ALL FITS (Roadmap f-jev-fast-polish): three or fewer
+     * are all shown whatever the Fast slot would say of their order, so it
+     * is not asked; each keeps the way its source gives it.
+     */
+    if (!fast || candidates.length <= SUGGESTED_MOST || asked.opened === null || asked.opened === undefined) return;
     let live = true;
     const keyed = new Map(candidates.map((one, at) => [`s${at + 1}`, one]));
     const questions: Record<string, unknown> = {
@@ -137,13 +147,17 @@ export function useSuggested(ai: HostAi | undefined, candidates: readonly MenuSu
         if (!live) return;
         const pick = decided.answers["pick"];
         const chance = (key: string) => (pick?.type === "choice" ? (pick.probabilities[key] ?? (pick.choice === key ? pick.confidence : 0)) : 0);
-        const order = [...keyed.keys()].sort((a, b) => chance(b) - chance(a)).map((key) => keyed.get(key)!.key);
+        // Only what it was sure enough of (`HostAi.pickFloor`): fewer suggestions, or none, rather than a guess said as one.
+        const floor = pickFloorOf(ai);
+        const order = [...keyed.keys()].filter((key) => chance(key) >= floor).sort((a, b) => chance(b) - chance(a)).map((key) => keyed.get(key)!.key);
         const modes = new Map<string, MenuSuggestion["mode"]>();
+        const chances = new Map<string, number>();
         for (const [key, one] of keyed) {
+          chances.set(one.key, chance(key));
           const about = decided.answers[`about_${key}`];
           if (about?.type === "choice") modes.set(one.key, about.choice === "look" ? "better" : "chat");
         }
-        const one = { said, order, modes };
+        const one: Answer = { said, order, modes, chances, model: fast.model };
         if (asked.depends) {
           const kept = ANSWERS.get(asked.depends) ?? new Map<string, Answer>();
           kept.set(said, one);
@@ -160,7 +174,11 @@ export function useSuggested(ai: HostAi | undefined, candidates: readonly MenuSu
   }, [said, asked.opened, asked.depends, fast === undefined]);
   const shown = useMemo(() => {
     const ordered = answer && answer.said === said ? answer.order.map((key) => candidates.find((one) => one.key === key)!).filter(Boolean) : firstOrder(candidates);
-    return ordered.slice(0, SUGGESTED_MOST).map((one) => ({ ...one, mode: answer?.modes.get(one.key) ?? one.mode }));
+    const ranking = answer && answer.said === said ? answer : undefined;
+    return ordered.slice(0, SUGGESTED_MOST).map((one): MenuSuggestion => {
+      const confidence = ranking?.chances.get(one.key);
+      return { ...one, mode: answer?.modes.get(one.key) ?? one.mode, ...(confidence !== undefined && ranking ? { confidence, model: ranking.model } : {}) };
+    });
   }, [answer, said, candidates]);
   /* Nothing moves under a resting pointer: what was drawn stays until it leaves the rows. */
   const held = useRef(shown);

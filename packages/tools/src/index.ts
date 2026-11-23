@@ -80,9 +80,9 @@ export type { AskAbout, AskAnswer, AskContext, SeatMove, SeatOffer } from "./go.
 export { completionFor, decideFor, localCompletion, openAiCompatibleCompletion, seatResponder, WEBLLM_URL, xaiCompletion } from "./local.js";
 export type { LocalStatus } from "./local.js";
 // The AI the host gave a seat: decided once, in code, never chosen by a reader.
-export { aiOff, aiTalks, ANSWERED_WITH_AI, fastGiven, HOVER_CHIP_CONFIDENCE, hoverChipsOn, inlineAiOn, NO_AI, NO_AI_SAID, suggestsOnOpen } from "./ai.js";
+export { aiOff, aiTalks, ANSWERED_WITH_AI, FAST_ONLY_PICKED, FAST_ONLY_SAID, fastGiven, HOVER_CHIP_CONFIDENCE, hoverChipsOn, inlineAiOn, NO_AI, NO_AI_SAID, PICK_FLOOR, pickFloorOf, prefetchesOnRest, suggestsOnOpen, tellPickOutcome } from "./ai.js";
 export { aiVia } from "./local.js";
-export type { AiInteractionHost, AiPrice, AnswerProvider, AnswerReply, AnswerRequest, CouldNotFind, FastProvider, HostAi, HostTurn, ThinkingProvider, ThinkingReply, ThinkingRequest, TurnMessage } from "./ai.js";
+export type { AiInteractionHost, AiPrice, AnswerProvider, AnswerReply, AnswerRequest, CouldNotFind, FastProvider, HostAi, HostTurn, PickOutcome, ThinkingProvider, ThinkingReply, ThinkingRequest, TurnMessage } from "./ai.js";
 export type { DraftChecked, DraftFinding, FindingKind } from "./draft-check.js";
 // The tool loop a host's `turn` runs over one Messages API request at a time (FR-160).
 export { TURN_STEPS, turnThroughMessages } from "./turn.js";

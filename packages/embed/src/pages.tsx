@@ -104,7 +104,7 @@ function PagesDrawing<S extends AnySchema>(props: PagesEmbedProps<S>) {
       <style>{css}</style>
       <ErrorReportContext.Provider value={report}>
         <FrameNotices rootRef={rootRef} board={notices} onReport={props.onReport} where={() => placeOfPath(at)} />
-        <FrameFirstLook rootRef={rootRef} firstLook={props.firstLook} app={appKeyOf(brand ?? { name: app.name }, app.schema)} />
+        <FrameFirstLook rootRef={rootRef} firstLook={props.firstLook} app={appKeyOf(brand ?? { name: app.name }, app.schema)} ai={props.ai} />
         <FaceBoundary module="@graview/react" report={report} content>
           <PartsWatchContext.Provider value={parts}>
           <GraviewProvider store={store} views={views} scheme={scheme} {...providerProps(props, presence, brand)} {...(props.onSeat ? { onSeat: props.onSeat } : {})}>

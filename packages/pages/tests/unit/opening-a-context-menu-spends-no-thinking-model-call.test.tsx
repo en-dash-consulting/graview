@@ -147,12 +147,13 @@ describe("opening a context menu spends no thinking-model call", () => {
     expect(item("ai-suggest")).toBeNull();
   });
 
-  it("with a Fast slot, the menu's Suggested asks it once as it opens, and nothing else does", async () => {
+  it("with a Fast slot, the menu's Suggested draws what fits its rows without asking it, and nothing else asks", async () => {
+    // Three suggestions or fewer are all shown whatever their order (Roadmap f-jev-fast-polish): nothing for the Fast slot to pick among.
     const { calls, fast, thinking } = counted();
     const { host } = await rendered({ fast, thinking });
     await openOn(host);
     await settle();
-    expect(calls).toEqual({ fast: 1, thinking: 0 });
+    expect(calls).toEqual({ fast: 0, thinking: 0 });
     expect(suggestedRows()).toBeGreaterThan(0);
     expect(offers()).toBe(0);
   });
