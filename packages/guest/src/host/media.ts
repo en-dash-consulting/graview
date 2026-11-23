@@ -2,7 +2,7 @@ import type { ViewProblemSaid } from "./problems.js";
 import { isFileValue, isImage, isVideo, previewOf, videoWords, type AppVideo, type FileValue } from "@graview/core";
 import { videoClock } from "@graview/core/blocks";
 import type { GuestNode, GuestProps } from "../protocol.js";
-import { reelFacts, reelType } from "./theme.js";
+import { reelAddressOk, reelFacts, reelType } from "./theme.js";
 
 /*
  * A RECORD'S VIDEO IN A WORKER VIEW, AND A FULL-SCREEN VIEWER (0.1.37).
@@ -236,13 +236,8 @@ export function createGuestMedia(window: Window & typeof globalThis, options: Gu
    * where the host serves files, as a record's is.
    */
   const reelAt = (href: string): string | undefined => {
-    if (!/^[a-z][a-z0-9+.-]*:/i.test(href.trim())) return at(href);
-    try {
-      const url = new window.URL(href.trim());
-      return url.protocol === "https:" || (url.protocol === "http:" && url.origin === window.location.origin) ? url.href : undefined;
-    } catch {
-      return undefined;
-    }
+    if (!reelAddressOk(href)) return undefined;
+    return /^https:/i.test(href.trim()) ? new window.URL(href.trim()).href : at(href);
   };
 
   return {

@@ -89,6 +89,18 @@ export function themeWithBrand(read: () => GuestTheme, brand: (() => GuestBrand 
 /** The sources every browser plays (what a host's upload transcodes to). */
 const PLAYED = new Set(["video/mp4", "video/webm", "video/ogg"]);
 
+/** An address a reel may be played from: a path, which the host serves as a record's file, or an `https:` address the host gave. */
+export const reelAddressOk = (href: string): boolean => {
+  const given = href.trim();
+  if (given === "") return false;
+  if (!/^[a-z][a-z0-9+.-]*:/i.test(given)) return !given.startsWith("//");
+  try {
+    return new URL(given).protocol === "https:";
+  } catch {
+    return false;
+  }
+};
+
 /** The media type of the app's reel: as the host said it, else MP4. */
 export const reelType = (reel: AppVideo): string => (typeof reel.type === "string" && /^video\/[\w.+-]{1,60}$/i.test(reel.type) ? reel.type : "video/mp4");
 
@@ -97,10 +109,11 @@ export const reelType = (reel: AppVideo): string => (typeof reel.type === "strin
  * facts — what it is, how long, whether it has a poster and whether it
  * plays — and never `href`, `poster` or `captions`, which the host plays
  * where the view places `<graview-video data-app="reel">`. Undefined where
- * the host handed none, or one with no address.
+ * the host handed none, or one at no address a page plays it from
+ * (`reelAddressOk`), so the view, the page and a headless run agree.
  */
 export function reelFacts(reel: AppVideo | undefined): GuestReel | undefined {
-  if (!reel || typeof reel.href !== "string" || reel.href.trim() === "") return undefined;
+  if (!reel || typeof reel.href !== "string" || !reelAddressOk(reel.href)) return undefined;
   const type = reelType(reel);
   const poster = typeof reel.poster === "string" && reel.poster.trim() !== "";
   const caption = typeof reel.caption === "string" && reel.caption.trim() ? reel.caption.trim() : undefined;

@@ -73,6 +73,7 @@ export function viewPlaceHandle({ element, definition, mounted, optionsFor, draw
         principal: options.principal,
         ...(options.input ? { input: options.input() } : {}),
         ...(options.places ? { places: options.places() } : {}),
+        ...(options.reel ? { reel: options.reel() } : {}),
       });
       if (!ran.ok) {
         const problem = { control: "the view", element: "", does: "nothing", ok: false, says: ran.detail };

@@ -218,7 +218,9 @@ function WorkerViewMount({ definition: given, store, principal, input, goTo, pla
       mounted.current = null;
     };
   }, [definition, store, principal]);
-  useEffect(() => mounted.current?.update(), [scheme, served, reel, tick]);
+  /* The reel by what it says, so a host that hands a new object each render with the same facts pushes nothing. */
+  const reelSaid = reel ? JSON.stringify(reel) : "";
+  useEffect(() => mounted.current?.update(), [scheme, served, reelSaid, tick]);
   /* Never wider than what holds it (Roadmap f-view-place-min-width): a grid item at its content's min-content width took a phone's page past its edge. */
   const place = <div ref={holder} data-worker-view-place={definition.manifest.name} style={{ minWidth: 0 }} />;
   if (!definition.draft) return place;

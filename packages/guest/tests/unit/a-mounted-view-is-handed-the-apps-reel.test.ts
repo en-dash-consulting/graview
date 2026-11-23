@@ -65,6 +65,10 @@ describe("a worker view on the page", () => {
     const first = pushed.at(-1);
     expect(first?.theme?.reel).toEqual({ name: "reel", type: "video/mp4", duration: 30, poster: true, playable: true });
     expect(JSON.stringify(first)).not.toContain("/graview/files/");
+    reel = { href: "/graview/files/other.webm", type: "video/webm", duration: 12 };
+    view.update();
+    await wait(50);
+    expect(pushed.at(-1)?.theme?.reel).toEqual({ name: "reel", type: "video/webm", duration: 12, playable: false });
     reel = undefined;
     view.update();
     await wait(50);

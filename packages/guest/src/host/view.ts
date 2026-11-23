@@ -689,6 +689,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     pushed = JSON.stringify(theme());
     dress();
     session?.push();
+    /* The app's reel may have moved with the theme (HQ f-view-names-app-video): its player is drawn again whether or not the view draws again. */
+    media?.refresh(shadow);
   };
   const looked = () => {
     if (session && JSON.stringify(theme()) !== pushed) push();

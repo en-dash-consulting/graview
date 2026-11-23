@@ -95,7 +95,7 @@ describe("<graview-video data-app=\"reel\">", () => {
     const element = odd.place({ "data-app": "reel" });
     odd.media.refresh(odd.region);
     expect(element.shadowRoot!.querySelector("video")).toBeNull();
-    expect(odd.said).toEqual(['The video in the view "Home" was not drawn: it names the app\'s reel, whose address this host does not serve on this page.']);
+    expect(odd.said).toEqual(['The video in the view "Home" was not drawn: it names the app\'s reel, which this host did not hand it: a host hands the app\'s reel as reel (mount, <Embed>, GraviewProvider, the Shell or the routed face).']);
   });
 });
 
@@ -112,6 +112,11 @@ describe("the reel's facts in props.theme.reel", () => {
     expect(reelFacts({ href: "/r.mp4", poster: "/r.jpg", playable: false })?.playable).toBe(false);
     expect(reelFacts(undefined)).toBeUndefined();
     expect(reelFacts({ href: " " })).toBeUndefined();
+  });
+
+  it("are not handed for a reel at no address a page plays it from, so the view, the page and a headless run agree", () => {
+    for (const href of ["javascript:alert(1)", "ftp://media.example/reel.mp4", "http://media.example/reel.mp4", "//media.example/reel.mp4", "data:video/mp4;base64,AAAA"]) expect(reelFacts({ href, poster: "/r.jpg" }), href).toBeUndefined();
+    expect(reelFacts({ href: "https://media.example/reel.mp4" })).toBeDefined();
   });
 
   it("ride in the theme a host pushes, beside the brand, and are absent where no reel was handed", () => {

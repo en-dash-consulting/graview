@@ -15,7 +15,8 @@ import type { EmbedOptions } from "../../src/index.js";
  */
 const reel: AppVideo = { href: "/graview/files/reel.mp4", poster: "/graview/files/reel.jpg", duration: 30, playable: true };
 const moment = defineNode("moment", { fields: z.object({ label: z.string() }), plural: "Moments" });
-const store = () => new Store<AnySchema>({ schema: createSchema([moment]) as AnySchema, mutations: [] });
+const schema = createSchema([moment]) as AnySchema;
+const store = () => new Store<AnySchema>({ schema, mutations: [] });
 
 function Said() {
   const handed = useHostReel();
@@ -31,7 +32,7 @@ describe("the app's reel, as a host hands it", () => {
   it("reaches what is drawn under the provider, and is absent where none was handed", () => {
     const drawn = (handed?: AppVideo) =>
       renderToStaticMarkup(
-        <GraviewProvider store={store()} views={createViews()} {...(handed ? { reel: handed } : {})}>
+        <GraviewProvider store={store()} views={createViews(schema)} {...(handed ? { reel: handed } : {})}>
           <Said />
         </GraviewProvider>,
       );

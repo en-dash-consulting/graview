@@ -83,10 +83,12 @@ export interface FileValue {
  * `reel`, and to a headless run as its `reel`. A worker view places it with
  * `<graview-video data-app="reel">` and reads its facts in `props.theme.reel`
  * (duration, whether it has a poster, whether it plays); the host draws the
- * player, so the view never holds `href` or `poster`.
+ * player, so the view never holds `href` or `poster`. It is the host's own
+ * fact, never filled from a record's field a person wrote. Captions on
+ * another origin load only where that origin allows them (CORS).
  */
 export interface AppVideo {
-  /** Where the page fetches the video: a path on the page's origin, or an `https:` address the host serves it from. */
+  /** Where the page fetches the video: a path, fetched where the host serves files, or an `https:` address. Anything else is no reel. */
   readonly href: string;
   /** The picture drawn before it plays, and where a person asked for less motion: an address as `href` is. */
   readonly poster?: string;
