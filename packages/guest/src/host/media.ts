@@ -73,7 +73,7 @@ export function namedAppVideo(element: Element, reel: AppVideo | undefined): { r
   const app = element.getAttribute("data-app") ?? "";
   if (app !== "reel") return { why: `names the app's "${app.slice(0, 80)}", which is no video of the app: the app's own video is data-app="reel"` };
   const facts = reelFacts(reel);
-  if (!reel || !facts) return { why: "names the app's reel, which this host did not hand it: a host hands the app's reel as reel (mount, <Embed>, GraviewProvider, the Shell or the routed face)" };
+  if (!reel || !facts) return { why: "names the app's reel, which this host did not hand it, or handed at no address a page plays it from: a host hands the app's reel as reel (mount, <Embed>, GraviewProvider, the Shell or the routed face)" };
   const file: FileValue = {
     href: reel.href.trim(),
     name: facts.name,

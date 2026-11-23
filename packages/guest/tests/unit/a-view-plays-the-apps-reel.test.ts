@@ -80,7 +80,7 @@ describe("<graview-video data-app=\"reel\">", () => {
     const element = place({ "data-app": "reel" });
     media.refresh(region);
     expect(element.shadowRoot!.querySelector("video")).toBeNull();
-    expect(said).toEqual(['The video in the view "Home" was not drawn: it names the app\'s reel, which this host did not hand it: a host hands the app\'s reel as reel (mount, <Embed>, GraviewProvider, the Shell or the routed face).']);
+    expect(said).toEqual(['The video in the view "Home" was not drawn: it names the app\'s reel, which this host did not hand it, or handed at no address a page plays it from: a host hands the app\'s reel as reel (mount, <Embed>, GraviewProvider, the Shell or the routed face).']);
     expect(codes).toEqual([{ code: "media-not-drawn" }]);
   });
 
@@ -95,7 +95,7 @@ describe("<graview-video data-app=\"reel\">", () => {
     const element = odd.place({ "data-app": "reel" });
     odd.media.refresh(odd.region);
     expect(element.shadowRoot!.querySelector("video")).toBeNull();
-    expect(odd.said).toEqual(['The video in the view "Home" was not drawn: it names the app\'s reel, which this host did not hand it: a host hands the app\'s reel as reel (mount, <Embed>, GraviewProvider, the Shell or the routed face).']);
+    expect(odd.said).toEqual(['The video in the view "Home" was not drawn: it names the app\'s reel, which this host did not hand it, or handed at no address a page plays it from: a host hands the app\'s reel as reel (mount, <Embed>, GraviewProvider, the Shell or the routed face).']);
   });
 });
 
