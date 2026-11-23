@@ -198,7 +198,8 @@ export function arrangementFindings<S extends AnySchema>(app: GraviewApp<S>, opt
  */
 export function viewPlaceOf(view: HostView): Place | undefined {
   if (view.attach === "home" || view.cardinality === "one" || !view.title) return undefined;
-  return { kind: view.attach, title: view.title, as: placeSlug(view.title), name: view.name, lens: "view", ...(view.hidden ? { hidden: true } : {}) };
+  // Its acts and what it reads, as the place a page registers for it says them (`registerWorkerView`), so the bar and the seat agree.
+  return { kind: view.attach, title: view.title, as: placeSlug(view.title), name: view.name, lens: "view", ...(view.hidden ? { hidden: true } : {}), ...(view.reads?.kinds?.length ? { reads: view.reads.kinds } : {}), ...(view.acts?.length ? { acts: view.acts.map((one) => (typeof one === "string" ? one : one.act)) } : {}) };
 }
 
 /** The places a declaration's lenses make, with any its registered views name, and the host's views it is told of. */

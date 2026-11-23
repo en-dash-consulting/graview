@@ -755,7 +755,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
           const leftOut = (value: ValueSpec | undefined): boolean => {
             const name = refName(value);
             const arg = name === undefined ? undefined : args.get(name);
-            return arg !== undefined && !("any" in arg) && !arg.required && input[name!] === undefined;
+            // "" names no record: an empty choice, as an agent sends one (HQ f-forms-and-downloads-follow-ups).
+            return arg !== undefined && !("any" in arg) && !arg.required && (input[name!] === undefined || input[name!] === "");
           };
           for (const effect of effects) {
             if (("connect" in effect || "sever" in effect) && (leftOut(effect.from) || leftOut(effect.to))) continue;

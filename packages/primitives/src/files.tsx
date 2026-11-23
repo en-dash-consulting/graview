@@ -328,19 +328,24 @@ function useLessMotion(): boolean {
 /** A press a thumb can make (Roadmap f-download-control-video-picture): at least 44 px each way. */
 const THUMB: CSSProperties = { display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: 44, minHeight: 44, boxSizing: "border-box" };
 
+/** A file's address asking the host for it as an attachment: `?download=1`, joined to what it already asks, before any `#`. */
+function asAttachment(src: string): string {
+  const [address = "", fragment] = src.split(/(?=#)/);
+  return `${address}${address.includes("?") ? "&" : "?"}download=1${fragment ?? ""}`;
+}
+
 /**
  * A FILE'S DOWNLOAD (Roadmap f-download-control-video-picture): a link to
  * the file where the host serves it, asking for it as an attachment
  * (`?download=1`, which Graview Cloud answers with one), named for the
  * file — "Download render.mp4" — and as big as a thumb's press. A video's
  * figure and a picture opened full size each carry one; a document's line
- * already did.
+ * asks the same of its own Download (`asAttachment`).
  */
 function DownloadLink({ file }: { readonly file: FileValue }) {
   const host = useHostFiles();
-  const [address = "", fragment] = fileSrc(host, file.href).split(/(?=#)/);
   return (
-    <a data-graview-download={file.href} href={`${address}${address.includes("?") ? "&" : "?"}download=1${fragment ?? ""}`} download={file.name} aria-label={`Download ${file.name}`} style={{ ...THUMB, padding: "0 6px", color: "var(--graview-accent, inherit)" }}>
+    <a data-graview-download={file.href} href={asAttachment(fileSrc(host, file.href))} download={file.name} aria-label={`Download ${file.name}`} style={{ ...THUMB, padding: "0 6px", color: "var(--graview-accent, inherit)" }}>
       Download
     </a>
   );
@@ -543,13 +548,13 @@ function FilesShown({ files, label, autoplay, cover }: { readonly files: readonl
                   <span style={QUIET} aria-hidden="true">
                     /
                   </span>{" "}
-                  <a href={at(file)} download={file.name}>
+                  <a href={asAttachment(at(file))} download={file.name}>
                     Download
                   </a>
                 </span>
               ) : (
                 <span style={{ display: "flex", flexWrap: "wrap", gap: "2px 10px", alignItems: "baseline", minWidth: 0, overflowWrap: "anywhere" }}>
-                  <a href={at(file)} download={file.name}>
+                  <a href={asAttachment(at(file))} download={file.name}>
                     {file.name}
                   </a>
                   <span style={QUIET}>

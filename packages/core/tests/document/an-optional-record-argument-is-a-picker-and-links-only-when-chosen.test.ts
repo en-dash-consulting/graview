@@ -79,6 +79,14 @@ describe.each([
     expect(store.graph.out(pie.id, "broughtBy" as never).map((n) => n.id)).toEqual(["smiths"]);
   });
 
+  it("sent as \"\", as an agent sends a choice left empty, is no value: the act applies and makes no link", () => {
+    const store = storeOf(app);
+    store.apply({ name: "add-dish", args: { name: "Pie", to: "" } });
+    const pie = store.graph.nodesOfKind("dish" as never)[0] as unknown as { readonly id: string };
+    expect(pie).toMatchObject({ name: "Pie" });
+    expect(store.graph.out(pie.id, "broughtBy" as never)).toEqual([]);
+  });
+
   it("a preview without it does not fail", () => {
     const preview = storeOf(app).preview({ name: "add-dish", args: { name: "Pie" } });
     expect(preview.diff.addedNodes.map((n) => n.kind)).toEqual(["dish"]);
@@ -111,6 +119,27 @@ describe("graview check on an optional record argument", () => {
     const app = compiled({});
     const fields = formFields(app.mutations!.find((m) => m.name === "add-dish")!.input as never);
     expect(fields.find((f) => f.name === "to")).toMatchObject({ control: "node", optional: false });
+  });
+
+  it("still refuses \"\" for a record argument that must be chosen", () => {
+    const store = storeOf(compiled({}));
+    expect(() => store.apply({ name: "add-dish", args: { name: "Pie", to: "" } })).toThrow();
+    expect(store.graph.nodesOfKind("dish" as never)).toEqual([]);
+  });
+
+  it("warns of an argument with no type that no effect reads, which would be a choice of any record of any kind", () => {
+    const document = thanksgiving({ required: false });
+    (document.acts["add-dish"].args as Record<string, unknown>)["helper"] = { required: false };
+    const result = compileDocument(document);
+    expect(result.ok).toBe(true);
+    expect(result.findings.filter((f) => f.code === "act-arg-unread")).toEqual([
+      expect.objectContaining({
+        severity: "warning",
+        path: "acts.add-dish.args.helper",
+        message: '"add-dish" declares "helper" with no type, and no effect links it, so it is asked as a choice of any record of any kind',
+      }),
+    ]);
+    expect(compileDocument(thanksgiving({ required: false })).findings.filter((f) => f.code === "act-arg-unread")).toEqual([]);
   });
 
   it("refuses an argument of neither shape by naming both", () => {
