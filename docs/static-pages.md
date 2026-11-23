@@ -53,8 +53,7 @@ markup. It is not a second reading of the declaration.
 - **No DOM, no React.** The entry imports only `@graview/core` and a few of its
   entries. A test bundles it and renders in a bare context with no `window`,
   `document`, `process` or `require` (`packages/pages/tests/unit/a-place-is-rendered-to-static-html.test.ts`).
-  Bundled for a Worker it is about 83 KB minified, 31 KB gzipped, most of it
-  zod. Nothing on a hosted page imports it, so a page's up-front weight is
+  Bundled for a Worker, most of what it weighs is zod. Nothing on a hosted page imports it, so a page's up-front weight is
   unchanged.
 
 ## A record's pictures
@@ -112,7 +111,11 @@ const pdf = await page.pdf({ format: "A4", printBackground: true });
 ```
 
 `waitUntil: "networkidle"` lets the pictures load first, since each is fetched
-from where the host serves it.
+from where the host serves it. A page set as content, or a file opened from a
+disk, has no address of its own for a path to resolve against: for a file that
+leaves the host, `files.src` answers whole addresses
+(`(href) => \`https://app.example${href}\``), or the host puts a `<base>` in
+the document.
 
 ## A fixed screen: an e-ink reader (Roadmap f-eink-display-profile)
 

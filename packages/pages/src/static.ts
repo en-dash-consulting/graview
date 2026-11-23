@@ -27,6 +27,7 @@
 import "@graview/core/publishing";
 import {
   fileSrc,
+  filesOf,
   humanizeField,
   isCurrent,
   isImage,
@@ -55,7 +56,7 @@ import {
   type Store,
   type ThemeTokens,
 } from "@graview/core";
-import { fileWords, firstPicture, sizeWords, typeWords, videoClock } from "@graview/core/blocks";
+import { fileFieldsOf, fileWords, firstPicture, sizeWords, typeWords, videoClock } from "@graview/core/blocks";
 import { describeNode } from "@graview/core/words";
 import type { DescribedItem, DescribedPart, PlaceDescription } from "@graview/core/describe";
 import { markdownHtml } from "@graview/core/markdown";
@@ -258,21 +259,27 @@ export function renderSite<S extends AnySchema>(store: Store<S>, declaration: Gr
 /** A page's id in a site's file, from its address on the routed face: `/tasks/task-1` is `page/tasks/task-1`, the home `page/`. */
 export const pageAnchor = (address: string): string => `page${address.split(/[?#]/)[0]}`;
 
-/* A link written before the file knows which pages it holds: a number between two marks no text holds, said once every page is written. */
-const HELD = /\u0001(\d+)\u0002/g;
-
 function siteRendered<S extends AnySchema>(store: Store<S>, declaration: GraviewApp<S>, options: RenderSiteOptions): RenderedSite {
   const viewer: Principal = options.viewer ?? { kind: "human" };
   const { seen, kept } = sightOf(store, viewer);
   const schema = seen.schema as AnySchema;
+  /*
+   * A LINK WRITTEN BEFORE THE FILE KNOWS WHICH PAGES IT HOLDS: a number
+   * between marks made for this render, which no record's text can know,
+   * said once every page is written. A mark a record's text holds anyway
+   * names no link this render made, and is left as it was written.
+   */
+  const mark = `\u0001${Math.random().toString(36).slice(2)}:`;
   const linked: string[] = [];
-  const link = (path: string) => `\u0001${linked.push(path.split(/[?#]/)[0]!) - 1}\u0002`;
+  const link = (path: string) => `${mark}${linked.push(path.split(/[?#]/)[0]!) - 1}\u0002`;
+  // One reading of the app for every page, so a design that reads every record reads it once.
+  const site = staticSite(seen, kept, link);
   const written = new Map<string, { readonly title: string; readonly main: string; readonly place: boolean }>();
   const tried = new Set<string>();
   const write = (place: string | AppPlace, address: string, isPlace: boolean) => {
     if (tried.has(address)) return;
     tried.add(address);
-    const page = pageOf(store, declaration, place, { ...options, viewer }, link);
+    const page = pageOf(store, declaration, place, { ...options, viewer }, link, site);
     if (page.found) written.set(address, { title: page.title, main: page.main, place: isPlace });
   };
   // The places, in the order the routed face lists them; then every record this seat may see, kind by kind.
@@ -287,16 +294,38 @@ function siteRendered<S extends AnySchema>(store: Store<S>, declaration: Graview
   // An address a page links that is none of those — a record set aside that a relation still reaches, say — is written too, where the seat may see it.
   for (let at = 0; at < linked.length; at++) write(linked[at]!, linked[at]!, false);
 
-  const frame = pageOf(store, declaration, "home", { ...options, viewer }, link);
+  const frame = pageOf(store, declaration, "home", { ...options, viewer }, link, site);
   const pages: SitePage[] = [...written].map(([address, page]) => ({ address, title: page.title, anchor: pageAnchor(address) }));
   const contents = pages.filter((page) => written.get(page.address)!.place);
   const nav = contents.length > 1 ? `<nav class="gv-contents" aria-label="Pages"><ul class="gv-names">${contents.map((page) => `<li><a href="#${esc(page.anchor)}">${esc(page.title)}</a></li>`).join("")}</ul></nav>\n` : "";
   const articles = pages.map((page) => `<article class="gv-site-page" id="${esc(page.anchor)}">\n${written.get(page.address)!.main}\n</article>`).join("\n");
   const said = documentOf({ title: frame.appName, lang: frame.lang, scheme: frame.scheme, css: frame.css, body: `${frame.masthead}\n${nav}<main>\n${articles}\n</main>`, site: true });
-  // Each link as the file's own: to a page it holds, or, to one it does not, no link at all.
+  /*
+   * Each link as the file's own: to a page it holds; to one it does not, no
+   * link at all — or, where a design wrote the address anywhere but a plain
+   * href, an anchor that goes nowhere.
+   */
+  const held = (n: string): string | undefined => {
+    const address = linked[Number(n)];
+    return address !== undefined && written.has(address) ? `#${esc(pageAnchor(address))}` : undefined;
+  };
   const html = said
-    .replace(/ href="\u0001(\d+)\u0002"/g, (_, n: string) => (written.has(linked[Number(n)]!) ? ` href="#${esc(pageAnchor(linked[Number(n)]!))}"` : ""))
-    .replace(HELD, (_, n: string) => `#${esc(pageAnchor(linked[Number(n)]!))}`);
+    .split(` href="${mark}`)
+    .map((piece, index) => {
+      if (index === 0) return piece;
+      const [, n = "", rest = ""] = /^(\d+)\u0002"([\s\S]*)$/.exec(piece) ?? [];
+      if (!n) return ` href="${mark}${piece}`;
+      const to = held(n);
+      return to ? ` href="${to}"${rest}` : rest;
+    })
+    .join("")
+    .split(mark)
+    .map((piece, index) => {
+      if (index === 0) return piece;
+      const [, n = "", rest = ""] = /^(\d+)\u0002([\s\S]*)$/.exec(piece) ?? [];
+      return n && linked[Number(n)] !== undefined ? `${held(n) ?? "#"}${rest}` : `${mark}${piece}`;
+    })
+    .join("");
   return { html, css: frame.css, title: frame.appName, pages };
 }
 
@@ -313,7 +342,7 @@ function documentOf({ title, lang, scheme, css, body, site = false }: { title: s
 }
 
 /** One page, written: what it says and what goes around it, every address it names put through `link`. */
-function pageOf<S extends AnySchema>(store: Store<S>, declaration: GraviewApp<S>, place: string | AppPlace, options: RenderPlaceOptions, link: (path: string) => string) {
+function pageOf<S extends AnySchema>(store: Store<S>, declaration: GraviewApp<S>, place: string | AppPlace, options: RenderPlaceOptions, link: (path: string) => string, shared?: StaticSite) {
   // What the place holds for this seat, read as the device's screen reads it (`./static-read.ts`).
   const { brand, locale, seen, kept, described, there } = readPlace(store, declaration, place, { viewer: options.viewer, brand: options.look?.brand, locale: options.locale, today: options.today });
   const scheme: Scheme = options.look?.scheme ?? (brand.scheme === "dark" || brand.scheme === "light" ? brand.scheme : "light");
@@ -326,11 +355,14 @@ function pageOf<S extends AnySchema>(store: Store<S>, declaration: GraviewApp<S>
   const pictureOf = (item: DescribedItem, as: "card" | "row"): FileValue | undefined => {
     if (specs[item.kind]?.[as]) return undefined;
     const node = seen.graph.getNode(item.id);
-    const picture = node ? firstPicture(node as Record<string, unknown>, seen.schema.tryDefinition(item.kind)) : undefined;
-    return picture && pictured(picture) ? picture : undefined;
+    if (!node) return undefined;
+    const definition = seen.schema.tryDefinition(item.kind);
+    const picture = firstPicture(node as Record<string, unknown>, definition);
+    // A video with no poster is not drawn small: the next of its files that is.
+    return picture && pictured(picture) ? picture : fileFieldsOf(definition).flatMap((key) => filesOf((node as Record<string, unknown>)[key])).find(pictured);
   };
   const write = new Writer(link, seen.schema as AnySchema, options.files, pictureOf);
-  const site = staticSite(store_, kept, link);
+  const site = shared ?? staticSite(store_, kept, link);
   let title: string;
   let record: StaticRecord | undefined;
   if (!described.ok || !there) {

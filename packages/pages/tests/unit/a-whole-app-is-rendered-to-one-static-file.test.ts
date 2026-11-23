@@ -115,6 +115,21 @@ describe("an app with a sight", () => {
     for (const href of hrefs(site.html)) expect(held.has(href.slice(1)), href).toBe(true);
   });
 
+  it("answers a design's address to a page the file does not hold, wherever the design wrote it, with an anchor that goes nowhere", () => {
+    const stranger: Principal = { kind: "human", id: "browsing", roles: [] };
+    const site = renderSite(showroomStore(), showroom, {
+      viewer: stranger,
+      design: { records: { car: (_, at) => `<a href='${at.href("/shoppers/shopper%3Abethan")}'>Who shortlisted it</a><a href='${at.href("/cars")}'>All cars</a>` } },
+    });
+    expect(site.html).toContain(`<a href='#'>Who shortlisted it</a><a href='#${pageAnchor("/cars")}'>All cars</a>`);
+  });
+
+  it("says a record's text as it was written, though it holds what looks like a link the file holds", () => {
+    const store = new Store({ schema, policy, snapshot: { nodes: [{ id: "car:odd", kind: "car", label: "Odd \u00010\u0002 and \u000199\u0002 car", status: "listed" }] as never, edges: [] } });
+    const site = renderSite(store, showroom, { viewer: { kind: "human", id: "browsing", roles: [] } });
+    expect(site.html).toContain("Odd \u00010\u0002 and \u000199\u0002 car");
+  });
+
   it("holds the shoppers for the staff, linked both ways", () => {
     const staff: Principal = { kind: "human", id: "staff:rhian", roles: ["staff"] };
     const site = renderSite(showroomStore(), showroom, { viewer: staff });
