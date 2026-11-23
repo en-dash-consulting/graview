@@ -20,6 +20,7 @@ import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { firstDrawChunks } from "../packages/embed/dist/first-draw.js";
+import { writePreviewInputs } from "./lib/coverage.mjs";
 import { doorsOpenAtOnce, englishOnly, noStudio, preloadLinks, workspaceSources } from "./lib/hosted-page.mjs";
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -64,6 +65,8 @@ const built = await esbuild.build({
   logLevel: "warning",
 });
 for (const file of doorsOpenAtOnce(built.outputFiles, built.metafile)) writeFileSync(file.path, file.text);
+// What the page was built from: a harness that opens it read every one of these (lib/coverage.mjs, for `pnpm verify --changed`).
+writePreviewInputs(built.metafile, repo);
 // The head names the pages face's chunks and what it opens as it first draws (FR-194), as a host names them from its own build.
 const head = preloadLinks(built.metafile, { entry: "page.js", faces: ["pages"], fetches: ["/graview/document"], chunks: firstDrawChunks(built.metafile, "pages") });
 writeFileSync(join(out, "index.html"), PAGE.replace("<!--preloads-->", head));

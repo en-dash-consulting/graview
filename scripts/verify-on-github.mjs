@@ -27,7 +27,8 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, 
 import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { allHeld, askedHarnesses, SHARD_OWN, terminalLines } from "./lib/on-github.mjs";
+import { allHeld, askedHarnesses, SHARD_OWN, shardUnits, terminalLines } from "./lib/on-github.mjs";
+import { PARTS, writeMerged } from "./lib/parts.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const WORKFLOW = "verify.yml";
@@ -178,12 +179,18 @@ try {
     };
     walk(root);
   }
+  // A harness run in parts on several runners, made whole here once every part came back (lib/parts.mjs).
+  for (const name of Object.keys(PARTS)) {
+    const merged = writeMerged(repoRoot, name);
+    if (merged) say(`merged ${merged} from its parts`);
+  }
   say(`\nbrought ${brought.length} file${brought.length === 1 ? "" : "s"} into docs/ from ${view.headSha?.slice(0, 8) ?? run.headSha.slice(0, 8)}\n`);
 } finally {
   rmSync(into, { recursive: true, force: true });
 }
 
-// A harness asked for and in no shard's summary did not run: that is not a hold.
+// A harness asked for and in no shard's summary did not run: that is not a hold. A harness run in parts is said part by part, as the shards ran it.
+names = shardUnits(names);
 for (const name of names) if (!harnesses.some((one) => one.name === name)) harnesses.push({ name, verdict: "no verdict", took: null, claims: ["no shard said anything of it: read the run"], files: [] });
 const ordered = names.length > 0 ? names.map((name) => harnesses.find((one) => one.name === name)) : harnesses;
 for (const line of terminalLines(ordered)) say(line);

@@ -17,9 +17,10 @@
  */
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
+import { allUnits, unitsOf } from "./parts.mjs";
 
-/** A harness name as `pnpm verify` takes one, and nothing a shell would read as more. */
-export const HARNESS_NAME = /^[a-z][a-z0-9-]*$/;
+/** A harness name as `pnpm verify` takes one, or one part of one (`quiet.webkit`, lib/parts.mjs), and nothing a shell would read as more. */
+export const HARNESS_NAME = /^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)?$/;
 
 /*
  * What Nightly leaves out of the whole chain, and so does a run that names
@@ -30,14 +31,54 @@ export const HARNESS_NAME = /^[a-z][a-z0-9-]*$/;
 export const NOT_ON_A_RUNNER = ["shrunk", "panning", "scale"];
 
 /*
- * ROUGHLY HOW LONG EACH TAKES ON A RUNNER, in seconds, from Nightly's run on
- * main of 2026-10-18 (its comment in nightly.yml; journeys there is four
- * apps of the five, so here it is more). A harness not listed is
- * taken to be two minutes. It only has to be good enough to keep one
- * runner from holding every long harness.
+ * ROUGHLY HOW LONG EACH TAKES ON A RUNNER, in seconds, from the whole chain
+ * run on main on 2026-11-23 (verify.yml, run 45108152203, one at a time a
+ * shard): every harness over a minute and a half. quiet took 2,909 s whole,
+ * and runs as a part per engine and section (lib/parts.mjs), guessed here
+ * from what each part took on a laptop; address, scene-hands and
+ * drawn-once a part per engine; journeys took 1,357 s two runs at a time,
+ * and runs four. A harness not listed is taken to be a minute. It only has
+ * to be good enough to keep one runner from holding every long harness.
  */
-export const RUNNER_SECONDS = { site: 823, gauntlet: 721, journeys: 1500, a11y: 261, audit: 221, pages: 198, lines: 179, survey: 200, create: 300, quiet: 900, "one-face": 600 };
-const secondsOf = (name) => RUNNER_SECONDS[name] ?? 120;
+export const RUNNER_SECONDS = {
+  ...Object.fromEntries(
+    ["chromium", "webkit", "firefox"].flatMap((engine) =>
+      Object.entries({ steady: engine === "chromium" ? 250 : 100, standing: 110, picks: 60, boxes: 180, notices: 150, rest: 330 }).map(([section, seconds]) => [`quiet.${engine}-${section}`, seconds]),
+    ),
+  ),
+  journeys: 750,
+  gauntlet: 732,
+  "one-face": 699,
+  "address.chromium": 260, "address.webkit": 200, "address.firefox": 200,
+  "scene-hands.chromium": 320, "scene-hands.webkit": 300,
+  site: 611,
+  guest: 459,
+  "drawn-once.chromium": 140, "drawn-once.webkit": 130, "drawn-once.firefox": 130,
+  a11y: 362,
+  drawn: 303,
+  chrome: 297,
+  "long-text": 286,
+  pages: 271,
+  declared: 270,
+  growing: 228,
+  lines: 223,
+  "first-load": 180,
+  menu: 177,
+  audit: 153,
+  brand: 146,
+  viewport: 144,
+  create: 138,
+  survey: 128,
+  "kind-stop": 127,
+  files: 124,
+  "page-better": 122,
+  facts: 120,
+  navigation: 114,
+  playback: 101,
+  "screen-reader": 95,
+  watch: 93,
+};
+const secondsOf = (name) => RUNNER_SECONDS[name] ?? 60;
 
 /**
  * The names split across at most `shards` runners, longest first onto the
@@ -75,10 +116,20 @@ export function askedHarnesses(input, chain) {
     .filter(Boolean);
   const malformed = names.filter((name) => !HARNESS_NAME.test(name));
   if (malformed.length > 0) throw new Error(`Not a harness name: ${malformed.join(", ")}`);
-  const unknown = names.filter((name) => !chain.includes(name));
-  if (unknown.length > 0) throw new Error(`No harness called ${unknown.join(", ")}. Known: ${chain.join(", ")}`);
+  const known = allUnits(chain);
+  const unknown = names.filter((name) => !known.includes(name));
+  if (unknown.length > 0) throw new Error(`No harness called ${unknown.join(", ")}. Known: ${known.join(", ")}`);
   if (names.length > 0) return [...new Set(names)];
   return chain.filter((name) => !NOT_ON_A_RUNNER.includes(name));
+}
+
+/**
+ * What a run's shards take: each harness asked, a harness run in parts as
+ * each of its parts (lib/parts.mjs), so one long harness is not one runner's
+ * whole run.
+ */
+export function shardUnits(names) {
+  return [...new Set(unitsOf(names))];
 }
 
 /** Where claims are kept in a verdict, by the names the harnesses use for them. */
@@ -159,7 +210,7 @@ const firstLookOf = (path) => {
   return Object.entries(VERDICT_NAMES).find(([, names]) => names.includes(head))?.[0] ?? head;
 };
 
-export const SHARD_OWN = ["docs/watch/last-run.json", "docs/watch/ledger.json", "docs/flakes.json"];
+export const SHARD_OWN = ["docs/watch/last-run.json", "docs/watch/ledger.json", "docs/flakes.json", "docs/watch/times.json", "docs/watch/coverage.json"];
 
 /**
  * What one shard ran, harness by harness: its verdict, how long it took,

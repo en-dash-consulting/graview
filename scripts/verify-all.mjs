@@ -12,17 +12,26 @@
  * So: one command, one exit code, and a line per harness saying what it
  * cost and whether it holds.
  *
- *   node scripts/verify-all.mjs              every harness
+ *   node scripts/verify-all.mjs              every harness (on main, a batch or CI; on a branch, --changed)
+ *   node scripts/verify-all.mjs --all        every harness, wherever it runs
+ *   node scripts/verify-all.mjs --changed    the harnesses this branch's change can reach, and a smoke set (lib/changed.mjs)
+ *   node scripts/verify-all.mjs --changed --dry-run   which those are, and why, without running them
  *   node scripts/verify-all.mjs menu pages   only these
  *   node scripts/verify-all.mjs --list       the names, and nothing else
  *   node scripts/verify-all.mjs --except=shrunk   every harness but these
  *   node scripts/verify-all.mjs --failed     only what failed last time
  *   node scripts/verify-all.mjs --quick      fewer widths where a harness sweeps them (iteration)
- *   node scripts/verify-all.mjs --jobs=1     one at a time, as it used to be
+ *   node scripts/verify-all.mjs --jobs=4     this many workers (default: one a core, at most sixteen; GRAVIEW_VERIFY_JOBS)
+ *   node scripts/verify-all.mjs --serial     one at a time, as Nightly and verify.yml run a shard
  *   node scripts/verify-all.mjs --strict     one look: a harness that fails is not run again alone (lib/second-look.mjs)
  *
- * Run in series on purpose: they drive the same dev servers on the same
- * ports, and a parallel run is a harness measuring another harness's app.
+ * Side by side, each worker on a block of ports of its own (lib/pool.mjs):
+ * the harnesses drive dev servers, and a worker's harnesses drive only its
+ * own, which it starts once and keeps warm for the run. The harnesses that
+ * time something never run two at once. Each harness's wall time, CPU,
+ * server start-up and fixed waits are kept in its verdict and in
+ * docs/watch/last-run.json (lib/timing.mjs), and what it read in
+ * docs/watch/coverage.json (lib/coverage.mjs), which `--changed` reads.
  *
  * Every line is written with `writeSync` rather than `process.stdout.write`.
  * Node block-buffers stdout when it is not a terminal, so piped to a file or
@@ -31,13 +40,19 @@
  * fix, reproduced by the command itself.
  */
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync, writeSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync, writeSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
-import { dirname, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { changedFiles, currentBranch, forkPoint, headSha, mentionsIn, movedBetween, selectHarnesses } from "./lib/changed.mjs";
+import { COVERAGE_ENV, COVERAGE_NO_FS_ENV, mergeCoverage, readCoverage, readRecorded, withHook, withoutHook, writeCoverage } from "./lib/coverage.mjs";
 import { updateLedger } from "./lib/ledger.mjs";
+import { ownedBy, writtenSince } from "./lib/on-github.mjs";
+import { allUnits, PART_ENV, partOf, partPath, PARTS, splitUnit, unitsOf, writeMerged } from "./lib/parts.mjs";
+import { claimBlocks, defaultJobs, lockBlock, longestFirst, POOL_BASES, runPool } from "./lib/pool.mjs";
 import { judge, keepFirstLook, missedClaims, recordFlakes } from "./lib/second-look.mjs";
 import { described, holders, listeners, serving } from "./lib/serve.mjs";
+import { cpuOf, readTimingLines, stampVerdicts, summarizeTiming, TIMING_ENV } from "./lib/timing.mjs";
 import { watchFile } from "./lib/watch.mjs";
 import { namedPorts, PORT_FLOOR, portFor } from "./lib/ports.mjs";
 
@@ -175,17 +190,25 @@ const CHAIN = [
 ];
 
 /*
- * ALONE: the harnesses that time something — frames, a presence
- * time-to-live, an animation settling — or that load the machine on their
- * own (create installs three projects). They run after the others, one at a
- * time, on a quiet machine. Everything else shares the dev servers, which
- * hold no state of a harness's (each opens its own browser context), and
- * runs side by side.
+ * TIMING: the harnesses that time frames or a time-to-live against a
+ * budget — frames a second, a first load, a presence that lapses. They ran
+ * after everything else, one at a time, with the ones that only wait for a
+ * picture to settle (lines, one-face, embed-one-face, frame-lines) and the
+ * ones that load the machine (journeys, create) beside them: a line of
+ * thirteen that was an hour of the 0.1.74 batch's hour and a half. Now the
+ * ones that wait for a settle run with everything else, as their waits are
+ * for the picture to rest and not a fixed beat; and the seven that time
+ * against a budget (scene-hands holds its frames at a quarter of the CPU)
+ * run in the pool too, never two at once. One that fails
+ * beside the others is looked at again alone (lib/second-look.mjs) before
+ * it fails the run.
  */
-const ALONE = new Set(["lines", "panning", "first-load", "scale", "scene-at-scale", "scene-hands", "one-face", "embed-one-face", "frame-lines", "renderer", "who", "journeys", "create"]);
+const TIMING = new Set(["panning", "first-load", "scale", "scene-at-scale", "scene-hands", "renderer", "who"]);
 
 /** Where the last run's verdicts are kept, for `--failed`. */
 const LAST_RUN = resolve(repoRoot, "docs/watch/last-run.json");
+/** What each harness took the last time it ran, whole and quick, kept so the next run starts the longest first. */
+const TIMES = resolve(repoRoot, "docs/watch/times.json");
 
 /*
  * AN APP OF ONE'S OWN. A walk builds its app beside the framework
@@ -196,9 +219,10 @@ const LAST_RUN = resolve(repoRoot, "docs/watch/last-run.json");
  */
 const isPath = (arg) => arg.includes("/") || arg.startsWith(".");
 const TAKES_AN_APP = new Set(["journeys"]);
-const appPaths = process.argv.slice(2).filter((arg) => !arg.startsWith("-") && isPath(arg)).map((arg) => resolve(arg));
-const asked = process.argv.slice(2).filter((arg) => !arg.startsWith("-") && !isPath(arg));
-if (process.argv.includes("--list")) {
+const argv = process.argv.slice(2);
+const appPaths = argv.filter((arg) => !arg.startsWith("-") && isPath(arg)).map((arg) => resolve(arg));
+const asked = argv.filter((arg) => !arg.startsWith("-") && !isPath(arg));
+if (argv.includes("--list")) {
   say(`${CHAIN.map(([name]) => name).join("\n")}\n`);
   process.exit(0);
 }
@@ -206,33 +230,82 @@ if (process.argv.includes("--list")) {
  * `--except=shrunk,scale` leaves those out: the nightly runner has no Chrome
  * Canary for the GPU capture path, and says so here rather than failing it.
  */
-const except = (process.argv.find((arg) => arg.startsWith("--except="))?.slice("--except=".length) ?? "").split(",").filter(Boolean);
+const except = (argv.find((arg) => arg.startsWith("--except="))?.slice("--except=".length) ?? "").split(",").filter(Boolean);
+// A harness by name, or one part of one run in parts (lib/parts.mjs: `quiet.webkit`).
+const KNOWN = allUnits(CHAIN.map(([name]) => name));
+const unknown = [...asked, ...except].filter((name) => !KNOWN.includes(name));
+if (unknown.length > 0) {
+  say(`No harness called ${unknown.join(", ")}. Known: ${KNOWN.join(", ")}\n`);
+  process.exit(2);
+}
 /*
  * `--failed`: what failed last time, and nothing else. Iterating on a fix
  * reran the whole chain — twenty-three minutes — to learn whether the two
  * harnesses that had failed now held.
  */
-const lastFailed = process.argv.includes("--failed") && existsSync(LAST_RUN)
+const lastFailed = argv.includes("--failed") && existsSync(LAST_RUN)
   ? JSON.parse(readFileSync(LAST_RUN, "utf8")).results.filter((one) => one.code !== 0).map((one) => one.name)
   : null;
-const chain = (asked.length > 0 ? CHAIN.filter(([name]) => asked.includes(name)) : lastFailed ? CHAIN.filter(([name]) => lastFailed.includes(name)) : CHAIN).filter(([name]) => !except.includes(name));
-const jobs = process.argv.includes("--serial") ? 1 : Number(process.argv.find((arg) => arg.startsWith("--jobs="))?.slice("--jobs=".length) ?? 3);
-const quick = process.argv.includes("--quick");
-const strict = process.argv.includes("--strict") || process.env.GRAVIEW_STRICT === "1";
-const unknown = [...asked, ...except].filter((name) => !CHAIN.some(([known]) => known === name));
-if (unknown.length > 0) {
-  say(`No harness called ${unknown.join(", ")}. Known: ${CHAIN.map(([n]) => n).join(", ")}\n`);
-  process.exit(2);
+/*
+ * `--changed`: only the harnesses this branch's change can reach, by what
+ * each read the last time it ran (lib/changed.mjs, docs/watch/coverage.json),
+ * and the smoke set. It is what `pnpm verify` with no names does on a
+ * branch; `--all` runs every harness there, and on main or a batch, and on
+ * a CI runner, no names is every harness, as it was.
+ */
+const branch = currentBranch(repoRoot);
+const changedAsked = argv.includes("--changed") || (asked.length === 0 && !lastFailed && !argv.includes("--all") && !process.env.CI && branch !== null && branch !== "main" && !branch.startsWith("batch/"));
+let selection = null;
+if (changedAsked && asked.length === 0 && !lastFailed) {
+  const from = forkPoint(repoRoot);
+  if (from === null) {
+    say("note  no merge base with origin/main or main, so every harness runs\n");
+  } else {
+    const changes = changedFiles(repoRoot, from);
+    selection = selectHarnesses(changes, { chain: CHAIN.map(([name]) => name), movedSince: movedBetween(repoRoot, from), mentions: mentionsIn(repoRoot) });
+    selection.from = from;
+    selection.changes = changes.length;
+  }
 }
+/*
+ * WHAT RUNS: units, each a harness or a part of one, in the chain's order.
+ * A harness run in parts (lib/parts.mjs) is each of its parts, side by side.
+ */
+const inChainOrder = (wanted) => {
+  const order = KNOWN.filter((unit) => wanted.includes(unit));
+  return order;
+};
+const quickRun = argv.includes("--quick");
+const units = inChainOrder(
+  unitsOf(asked.length > 0 ? asked : lastFailed ? lastFailed.filter((unit) => KNOWN.includes(unit)) : selection ? selection.names : CHAIN.map(([name]) => name)),
+)
+  .filter((unit) => !except.includes(unit) && !except.includes(splitUnit(unit).name))
+  // --quick is Chromium alone where a harness sweeps engines: so are its parts, unless a part was named.
+  .filter((unit) => !quickRun || asked.includes(unit) || !splitUnit(unit).part || (partOf(splitUnit(unit).name, splitUnit(unit).part)?.engine ?? "chromium") === "chromium");
+const chain = CHAIN.filter(([name]) => units.some((unit) => splitUnit(unit).name === name));
+const serial = argv.includes("--serial");
+const jobsSaid = argv.find((arg) => arg.startsWith("--jobs="))?.slice("--jobs=".length);
+const jobs = serial ? 1 : jobsSaid ? Math.max(1, Number(jobsSaid) || 1) : defaultJobs();
+const quick = argv.includes("--quick");
+const strict = argv.includes("--strict") || process.env.GRAVIEW_STRICT === "1";
+// What each harness read is kept from a laptop's runs; a CI runner keeps nothing of it, so it records nothing (GRAVIEW_COVERAGE=1 to make it).
+const keepCoverage = process.env.GRAVIEW_COVERAGE === "1" || (process.env.GRAVIEW_COVERAGE !== "0" && !process.env.CI);
 const missing = appPaths.filter((path) => !existsSync(resolve(path, "vite.config.ts")));
 if (missing.length > 0) {
   say(`No app at ${missing.join(", ")} (an app is a directory with a vite.config.ts)\n`);
   process.exit(2);
 }
 if (appPaths.length > 0 && !chain.some(([name]) => TAKES_AN_APP.has(name))) {
-  say(`An app was named, and only ${[...TAKES_AN_APP].join(", ")} drives one it is told about: pnpm verify journeys ${process.argv.slice(2).filter(isPath).join(" ")}\n`);
+  say(`An app was named, and only ${[...TAKES_AN_APP].join(", ")} drives one it is told about: pnpm verify journeys ${argv.filter(isPath).join(" ")}\n`);
   process.exit(2);
 }
+if (selection) {
+  say(`changed  ${selection.changes} file${selection.changes === 1 ? "" : "s"} since ${selection.from.slice(0, 9)}${selection.everything ? `; ${selection.everything} reaches every harness` : ""}: ${chain.length} of ${CHAIN.length} harnesses (--all for every one)\n`);
+  for (const [name] of chain) say(`         ${name.padEnd(14)} ${selection.why.get(name).join("; ").slice(0, 110)}\n`);
+  if (selection.unreached.length > 0) say(`         reached by no harness: ${selection.unreached.slice(0, 8).join(", ")}${selection.unreached.length > 8 ? ` and ${selection.unreached.length - 8} more` : ""}\n`);
+  say("\n");
+}
+if (argv.includes("--dry-run")) process.exit(0);
 
 /** The last line a harness printed that says anything — its own summary. */
 const gist = (text) => {
@@ -266,7 +339,8 @@ const gist = (text) => {
  * (GRAVIEW_PORT_BASE), says so, and stops nothing: the chain was run for a
  * verdict on this checkout, and the other server is somebody's work.
  */
-const FREE_BASES = Array.from({ length: 10 }, (_, step) => 5600 + step * 100);
+const FREE_BASES = [...Array.from({ length: 4 }, (_, step) => 5600 + step * 100), ...POOL_BASES];
+const releases = [];
 let found = await holders(namedPorts());
 const foreign = found.filter((one) => !one.ours);
 if (foreign.length > 0) {
@@ -274,6 +348,9 @@ if (foreign.length > 0) {
   let movedTo = null;
   for (const base of FREE_BASES) {
     if (String(base) === was) continue;
+    // Locked, as the pool's blocks are (lib/pool.mjs): another chain on this machine does not take it too.
+    const release = lockBlock(base);
+    if (!release) continue;
     process.env.GRAVIEW_PORT_BASE = String(base);
     const there = await holders(namedPorts());
     // A block another checkout's chain is using holds ports no harness here names, too: that block is not free either.
@@ -281,8 +358,10 @@ if (foreign.length > 0) {
     if (there.every((one) => one.ours) && strangers.length === 0) {
       movedTo = base;
       found = there;
+      releases.push(release);
       break;
     }
+    release();
   }
   for (const one of foreign) {
     say(`held  port ${one.port} (${one.app ? `apps/${one.name}` : one.name}) is held by ${described(one.holder)}, which is not this checkout's.\n`);
@@ -307,27 +386,66 @@ if (answering.length > 0) {
 }
 
 /*
- * THE SHARED SERVERS, started once. Every harness borrows a server already
- * answering its port (lib/serve.mjs), so starting them here is what lets
- * harnesses run side by side instead of racing to start the same vite.
+ * THE WORKERS, each on a block of ports of its own (lib/pool.mjs): the
+ * first on the run's block, the others on free hundreds from 6000, locked
+ * for the run. A worker's harnesses drive its own dev servers, never
+ * another worker's, so side by side is never a harness measuring another
+ * harness's app.
  */
-const SHARED = [
-  "todo",
-  "seedbed",
-  "rota",
-  "launcher",
-];
-const servers = [];
-if (chain.length > 1) {
-  for (const app of SHARED) {
-    const port = portFor(app);
+const together = units.length;
+const claimed = claimBlocks(Math.min(jobs, Math.max(1, together)));
+releases.push(claimed.release);
+const bases = claimed.bases;
+const baseOf = (worker) => bases[worker] ?? null;
+if (bases.length < Math.min(jobs, together)) say(`note  ${bases.length} block${bases.length === 1 ? "" : "s"} of ports free for ${Math.min(jobs, together)} workers: the pool is ${bases.length} wide\n`);
+
+/** The port `name` is served on in a worker's block. */
+const portIn = (name, base) => {
+  const was = process.env.GRAVIEW_PORT_BASE;
+  if (base === null) delete process.env.GRAVIEW_PORT_BASE;
+  else process.env.GRAVIEW_PORT_BASE = String(base);
+  try {
+    return portFor(name);
+  } finally {
+    if (was === undefined) delete process.env.GRAVIEW_PORT_BASE;
+    else process.env.GRAVIEW_PORT_BASE = was;
+  }
+};
+
+/*
+ * WARM SERVERS, per worker. Every harness borrows a server already answering
+ * its port that is this checkout's (lib/serve.mjs), so a worker starts the
+ * apps a harness names the first time one needs them and keeps them for the
+ * rest of the run: a vite started once and transformed once, not once per
+ * harness. Each counts what it serves toward the harnesses that used it
+ * (coverage.mjs).
+ */
+const APPS = new Set(readdirSync(resolve(repoRoot, "apps")).filter((name) => existsSync(resolve(repoRoot, "apps", name, "vite.config.ts"))));
+const appsOf = (file) => {
+  const text = readFileSync(resolve(repoRoot, "scripts", file), "utf8");
+  const named = [...text.matchAll(/\b(?:serving|portFor|at)\(\s*"([a-z0-9-]+)"/g)].map((match) => match[1]);
+  return [...new Set(named)].filter((name) => APPS.has(name) && name !== "site");
+};
+const scratch = mkdtempSync(join(tmpdir(), "graview-chain-"));
+const serverCoverage = (app) => join(scratch, `server-${app}.cov`);
+const warm = bases.map(() => new Map());
+const serverTimes = [];
+const warmUp = async (worker, apps) => {
+  for (const app of apps) {
+    if (warm[worker].has(app)) continue;
+    const port = portIn(app, baseOf(worker));
+    const began = Date.now();
     try {
-      servers.push(await serving(app, port, repoRoot));
+      // The worker's own block, so a page that links to other ports (the desk's, `__GRAVIEW_PORTS__`) links to this worker's servers.
+      const env = { ...(baseOf(worker) === null ? {} : { GRAVIEW_PORT_BASE: String(baseOf(worker)) }), ...(keepCoverage ? { NODE_OPTIONS: withHook(withoutHook(process.env.NODE_OPTIONS ?? "")), [COVERAGE_ENV]: serverCoverage(app), [COVERAGE_NO_FS_ENV]: "1" } : {}) };
+      warm[worker].set(app, await serving(app, port, repoRoot, { env }));
+      serverTimes.push({ worker, app, port, ms: Date.now() - began });
     } catch (error) {
+      warm[worker].set(app, null);
       say(`note  ${app} did not start on ${port} (${error.message}); its harnesses will try themselves.\n`);
     }
   }
-}
+};
 
 /** The longest any one harness may run; the slowest (gauntlet) takes about eleven minutes on the nightly. */
 const HARNESS_MINUTES = Number(process.env.GRAVIEW_HARNESS_MINUTES ?? 25);
@@ -346,16 +464,75 @@ const HARNESS_MINUTES = Number(process.env.GRAVIEW_HARNESS_MINUTES ?? 25);
  */
 const LONGER = { quiet: 60, "one-face": 35 };
 const minutesFor = (name) => Math.max(HARNESS_MINUTES, process.env.GRAVIEW_HARNESS_MINUTES ? 0 : (LONGER[name] ?? 0));
-const results = [];
-const runOne = async ([name, file], again = false) => {
+
+/*
+ * EACH HARNESS IN A PROCESS GROUP OF ITS OWN, under a shell that says what
+ * it spent: `times` after the harness ends prints the CPU of every process
+ * it waited for (its browsers, its servers) on descriptor 3. A harness
+ * stopped past its limit is stopped with its whole group; Ctrl-C here stops
+ * every group.
+ */
+const running = new Set();
+const stopAll = (signal) => {
+  for (const child of running) {
+    try {
+      process.kill(-child.pid, "SIGTERM");
+    } catch {
+      // Gone already.
+    }
+  }
+  for (const servers of warm) for (const server of servers.values()) server?.stop();
+  for (const release of releases) release();
+  process.exit(signal === "SIGINT" ? 130 : 143);
+};
+process.once("SIGINT", () => stopAll("SIGINT"));
+process.once("SIGTERM", () => stopAll("SIGTERM"));
+// The harnesses run in groups of their own, which a closed terminal does not reach: closing it stops them here.
+process.once("SIGHUP", () => stopAll("SIGHUP"));
+process.once("uncaughtException", (error) => {
+  say(`\nstopped: ${error?.stack ?? error}\n`);
+  stopAll("SIGTERM");
+});
+process.once("unhandledRejection", (error) => {
+  say(`\nstopped: ${error?.stack ?? error}\n`);
+  stopAll("SIGTERM");
+});
+
+const CHILD_KEYS = { ANTHROPIC_API_KEY: "", XAI_API_KEY: "", OPENAI_API_KEY: "", TYPESAFE_API_KEY: "", JEV_API_KEY: "" };
+const scriptName = (file) => file.replace(/\.mjs$/, "");
+const verdictOwner = (name, file) => [name, scriptName(file).replace(/^verify-/, "")];
+let looks = 0;
+const runOne = async (unit, worker, again = false) => {
+  const { name, part } = splitUnit(unit);
+  const file = CHAIN.find(([known]) => known === name)[1];
+  const piece = part ? partOf(name, part) : null;
+  const base = baseOf(worker);
+  await warmUp(worker, appsOf(file));
+  looks += 1;
+  const timingFile = join(scratch, `${unit}.${looks}.timing`);
+  const coverageFile = join(scratch, `${unit}.${looks}.cov`);
   const began = Date.now();
-  const { code, output } = await new Promise((done) => {
-    const child = spawn("node", [resolve(repoRoot, "scripts", file), ...(TAKES_AN_APP.has(name) ? appPaths : [])], {
+  const env = {
+    ...process.env,
+    // No model key reaches a harness's dev servers: a harness judges the app, never a model's answer of the day.
+    ...CHILD_KEYS,
+    ...(quick ? { GRAVIEW_QUICK: "1" } : {}),
+    [TIMING_ENV]: timingFile,
+    ...(part ? { [PART_ENV]: part } : { [PART_ENV]: "" }),
+    ...(keepCoverage ? { [COVERAGE_ENV]: coverageFile, NODE_OPTIONS: withHook(withoutHook(process.env.NODE_OPTIONS ?? "")) } : {}),
+  };
+  if (base === null) delete env.GRAVIEW_PORT_BASE;
+  else env.GRAVIEW_PORT_BASE = String(base);
+  const { code, output, cpu } = await new Promise((done) => {
+    const child = spawn("bash", ["-c", 'node "$@" 3>&-; code=$?; times >&3; exit $code', "harness", resolve(repoRoot, "scripts", file), ...(piece?.args ?? []), ...(TAKES_AN_APP.has(name) ? appPaths : [])], {
       cwd: repoRoot,
-      // No model key reaches a harness's dev servers: a harness judges the app, never a model's answer of the day.
-      env: { ...process.env, ANTHROPIC_API_KEY: "", XAI_API_KEY: "", OPENAI_API_KEY: "", TYPESAFE_API_KEY: "", JEV_API_KEY: "", ...(quick ? { GRAVIEW_QUICK: "1" } : {}) },
+      env,
+      detached: true,
+      stdio: ["ignore", "pipe", "pipe", "pipe"],
     });
+    running.add(child);
     let output = "";
+    let times = "";
     /*
      * A HARNESS THAT NEVER ENDS ENDS HERE. verify-menu waited forever on an
      * ask it could not answer, and the nightly's shard ran out its sixty
@@ -366,14 +543,36 @@ const runOne = async ([name, file], again = false) => {
      */
     const stopped = setTimeout(() => {
       output += `\nstopped after ${minutesFor(name)} minutes: ${name} wrote no verdict in time (GRAVIEW_HARNESS_MINUTES)\n`;
-      child.kill("SIGTERM");
-      setTimeout(() => child.kill("SIGKILL"), 15_000).unref();
+      try {
+        process.kill(-child.pid, "SIGTERM");
+      } catch {
+        child.kill("SIGTERM");
+      }
+      setTimeout(() => {
+        try {
+          process.kill(-child.pid, "SIGKILL");
+        } catch {
+          // Gone.
+        }
+      }, 15_000).unref();
     }, minutesFor(name) * 60_000);
     child.stdout.on("data", (chunk) => (output += chunk));
     child.stderr.on("data", (chunk) => (output += chunk));
+    child.stdio[3].on("data", (chunk) => (times += chunk));
+    /*
+     * ENDED WHEN THE SHELL EXITS, its output read until its pipes close or
+     * for three seconds more: a process the harness left behind holding its
+     * stdout must not keep the chain waiting forever.
+     */
     child.on("exit", (code) => {
       clearTimeout(stopped);
-      done({ code: code ?? 1, output });
+      const finish = () => {
+        if (!running.has(child)) return;
+        running.delete(child);
+        done({ code: code ?? 1, output, cpu: cpuOf(times) });
+      };
+      child.once("close", finish);
+      setTimeout(finish, 3_000).unref();
     });
   });
   const took = Math.round((Date.now() - began) / 1000);
@@ -383,45 +582,89 @@ const runOne = async ([name, file], again = false) => {
    * whose claims all pass over a screen that left the keyboard on <body>
    * does not hold.
    */
-  const watch = watchFile(file.replace(/\.mjs$/, ""));
-  const seen = existsSync(watch) ? JSON.parse(readFileSync(watch, "utf8")) : null;
+  // A part in another engine writes that engine's watch (lib/watch.mjs).
+  const watch = watchFile(scriptName(file), piece?.engine ?? "chromium", part ?? "");
+  let seen = null;
+  try {
+    seen = existsSync(watch) ? JSON.parse(readFileSync(watch, "utf8")) : null;
+  } catch {
+    // Unreadable is not clean: the harness's own report says nothing the chain can trust.
+    seen = { at: new Date().toISOString(), open: 1 };
+  }
   const open = seen && Date.parse(seen.at) >= began ? seen.open : 0;
   const failed = code !== 0 ? code : open > 0 ? 1 : 0;
   const said = open > 0 ? `watch: ${open} open — docs/watch/${watch.split("/").pop()}` : gist(output);
-  say(`${failed === 0 ? "ok  " : again ? "FAIL" : strict ? "FAIL" : "miss"} ${name.padEnd(12)} ${String(took).padStart(4)}s  ${said}\n`);
-  return { name, file, code: failed, took, began: new Date(began).toISOString(), gist: said, output };
+  const lines = readTimingLines(timingFile);
+  const timing = { wall: took, cpu: cpu?.total ?? null, ...summarizeTiming(lines), worker, ...(again ? { look: "second" } : {}) };
+  // Kept with the verdict, too: what it cost beside what it claims.
+  const owners = verdictOwner(name, file);
+  const written = part
+    ? [{ path: partPath(PARTS[name].verdict, part) }].filter((one) => existsSync(resolve(repoRoot, one.path)))
+    : writtenSince(repoRoot, began - 1000).filter((one) => one.path.endsWith(".json") && !one.path.startsWith("docs/watch/") && !one.path.startsWith("docs/first-look/") && !one.path.includes(".part-") && owners.some((owner) => ownedBy(owner, one.path)));
+  stampVerdicts(repoRoot, written.map((one) => one.path), timing);
+  const cost = `${String(took).padStart(4)}s${cpu ? ` ${String(Math.round(cpu.total)).padStart(4)}s cpu` : ""}`;
+  say(`${failed === 0 ? "ok  " : again ? "FAIL" : strict ? "FAIL" : "miss"} ${unit.padEnd(14)} ${cost}  ${said}\n`);
+  return { name: unit, harness: name, file, code: failed, took, began: new Date(began).toISOString(), gist: said, output, timing, coverage: readRecorded(coverageFile) };
 };
 
 const started = Date.now();
-const firsts = [];
-const together = chain.filter(([name]) => !ALONE.has(name));
-const alone = chain.filter(([name]) => ALONE.has(name));
-say(`${together.length} side by side (${jobs} at a time), then ${alone.length} alone${quick ? ", quick" : ""}\n`);
-// Longest first, so the slow ones are not what is left at the end.
-const queue = [...together];
-await Promise.all(
-  Array.from({ length: Math.min(jobs, queue.length) }, async () => {
-    for (let next = queue.shift(); next; next = queue.shift()) firsts.push(await runOne(next));
-  }),
-);
-for (const one of alone) firsts.push(await runOne(one));
+// A part file an earlier run left is not this run's: each part about to run starts without one (lib/parts.mjs).
+for (const unit of units) {
+  const { name, part } = splitUnit(unit);
+  if (part && PARTS[name]) rmSync(resolve(repoRoot, partPath(PARTS[name].verdict, part)), { force: true });
+}
+const recorded = existsSync(TIMES) ? JSON.parse(readFileSync(TIMES, "utf8")) : {};
+const tookBefore = new Map(Object.entries(recorded).map(([name, one]) => [name, (quick ? one.quick : one.whole) ?? one.whole ?? one.quick]).filter(([, seconds]) => typeof seconds === "number"));
+const timesSomething = new Set(units.filter((unit) => TIMING.has(splitUnit(unit).name)));
+const order = longestFirst(units, { took: tookBefore, guess: (unit) => (timesSomething.has(unit) ? 300 : 60) });
+const timingCount = order.filter((unit) => timesSomething.has(unit)).length;
+say(`${order.length} harness${order.length === 1 ? "" : "es"} and parts, ${bases.length} at a time on ${bases.map((base) => base ?? PORT_FLOOR).join(", ")}${timingCount > 0 ? `; ${timingCount} that time something, one at a time beside the rest` : ""}${quick ? ", quick" : ""}\n`);
+const firsts = await runPool(order, { jobs: bases.length, timing: timesSomething, run: (unit, worker) => runOne(unit, worker) });
 /*
- * THE SECOND LOOK (lib/second-look.mjs): what failed is run again, one at a
- * time, with nothing beside it. Failing twice fails the run; holding the
- * second time is a flake — the run holds, and the flake is written down by
- * name in docs/flakes.json and raised as a warning where CI shows one.
+ * THE SECOND LOOK (lib/second-look.mjs): what failed is run again once the
+ * first pass is over, with nothing of it beside it. Failing twice fails the
+ * run; holding the second time is a flake — the run holds, and the flake is
+ * written down by name in docs/flakes.json and raised as a warning where CI
+ * shows one.
+ *
+ * A few at a time, each on its own worker's ports, and the ones that time
+ * something one at a time after them: one by one, five second looks of
+ * harnesses that also fail on main (guest, chrome, playback) were twenty
+ * minutes of a run whose first pass took twenty-five.
+ * GRAVIEW_SECOND_LOOKS=1 looks at each one alone.
  */
 const missed = strict ? [] : firsts.filter((one) => one.code !== 0);
-if (missed.length > 0) say(`\nsecond look, alone: ${missed.map((one) => one.name).join(", ")}\n`);
+const lookWidth = Math.min(bases.length, Math.max(1, Number(process.env.GRAVIEW_SECOND_LOOKS) || Math.min(4, Math.ceil(bases.length / 3))));
+if (missed.length > 0) say(`\nsecond look, ${lookWidth === 1 ? "alone" : `${lookWidth} at a time`}: ${missed.map((one) => one.name).join(", ")}\n`);
 const seconds = new Map();
 for (const one of missed) {
   // The first look's verdict and frames, kept under docs/first-look/ before the second writes over them (lib/second-look.mjs).
   const kept = keepFirstLook(repoRoot, one);
   if (kept.length > 0) say(`first look of ${one.name} kept: ${kept.join(", ")}\n`);
-  seconds.set(one.name, await runOne([one.name, one.file], true));
 }
-for (const one of firsts) results.push(judge(one, seconds.get(one.name)));
-for (const server of servers) server.stop();
+const looksAgain = missed.map((one) => one.name);
+const besides = looksAgain.filter((unit) => !timesSomething.has(unit));
+for (const again of await runPool(besides, { jobs: lookWidth, run: (unit, worker) => runOne(unit, worker, true) })) seconds.set(again.name, again);
+for (const unit of looksAgain.filter((one) => timesSomething.has(one))) seconds.set(unit, await runOne(unit, 0, true));
+const results = [];
+// In the chain's order, as the record always was.
+for (const unit of units) {
+  const one = firsts.find((first) => first.name === unit);
+  if (one) results.push({ ...judge(one, seconds.get(unit)), timing: (seconds.get(unit) ?? one).timing, firstTiming: seconds.has(unit) ? one.timing : undefined });
+}
+/*
+ * A HARNESS RUN IN PARTS, MADE WHOLE: once every part ran, its verdict is
+ * written from theirs (lib/parts.mjs), with what each part cost. A run that
+ * took only some parts leaves them for whoever runs the rest.
+ */
+for (const name of Object.keys(PARTS)) {
+  const ran = results.filter((one) => one.harness === name);
+  if (ran.length === 0) continue;
+  const whole = PARTS[name].parts.every(({ part }) => units.includes(`${name}.${part}`));
+  const path = writeMerged(repoRoot, name, { whole, since: started });
+  if (path) stampVerdicts(repoRoot, [path], { wall: ran.reduce((sum, one) => sum + (one.timing?.wall ?? 0), 0), cpu: ran.reduce((sum, one) => sum + (one.timing?.cpu ?? 0), 0), parts: Object.fromEntries(ran.map((one) => [splitUnit(one.name).part, one.timing])) });
+}
+for (const servers of warm) for (const server of servers.values()) server?.stop();
 const wall = Math.round((Date.now() - started) / 1000);
 
 const broken = results.filter((one) => one.verdict === "failed");
@@ -456,7 +699,7 @@ if (broken.length > 0) {
  * says what is wrong — each problem once however many screens showed it,
  * and whether it is new, still there, or fixed since the last run.
  */
-const ledger = updateLedger(repoRoot, { since: started, ran: new Set(results.map((one) => one.file.replace(/\.mjs$/, ""))) });
+const ledger = updateLedger(repoRoot, { since: started, ran: new Set(results.map((one) => scriptName(one.file))) });
 const line = (entry) => `  ${entry.rule.padEnd(22)} ${entry.detail.slice(0, 150)}  (${entry.harnesses.join(", ")})\n`;
 if (ledger.fresh.length + ledger.still.length + ledger.fixed.length + ledger.flapping.length > 0) {
   say(`\nproblems: ${ledger.fresh.length} new, ${ledger.still.length} still open, ${ledger.fixed.length} fixed, ${ledger.flapping.length} back after a fix\n`);
@@ -466,19 +709,90 @@ if (ledger.fresh.length + ledger.still.length + ledger.fixed.length + ledger.fla
   if (ledger.flapping.length) say(`back after a fix — the check or its timing, before the product\n${ledger.flapping.map(line).join("")}`);
 }
 mkdirSync(resolve(repoRoot, "docs/watch"), { recursive: true });
+
+/*
+ * WHAT EACH READ, kept for the next branch's `--changed` (lib/coverage.mjs):
+ * a harness that held is recorded with what it and its processes read, and
+ * what the dev servers it used served; one that failed keeps its old
+ * record, since a harness that stopped early read less than it covers.
+ */
+if (keepCoverage) {
+  // By harness: a harness run in parts read what all its parts read, and one part that failed keeps the harness's old record.
+  const ran = new Map();
+  const fileSeen = new Map();
+  const isFile = (path) => {
+    if (!fileSeen.has(path)) {
+      try {
+        fileSeen.set(path, statSync(resolve(repoRoot, path)).isFile());
+      } catch {
+        fileSeen.set(path, false);
+      }
+    }
+    return fileSeen.get(path);
+  };
+  const failedHarnesses = new Set(results.filter((result) => result.verdict === "failed").map((result) => result.harness));
+  for (const one of results.filter((result) => !failedHarnesses.has(result.harness))) {
+    const first = firsts.find((result) => result.name === one.name);
+    const read = new Set([...(ran.get(one.harness) ?? []), ...(first?.coverage ?? []), ...(seconds.get(one.name)?.coverage ?? [])]);
+    const used = new Set(appsOf(one.file));
+    for (const path of read) if (path.startsWith("apps/")) used.add(path.split("/")[1]);
+    for (const app of used) for (const path of readRecorded(serverCoverage(app))) read.add(path);
+    // Only files of the checkout (or a whole package, `packages/core/`): not a page's address that looked like a path, nor a config's passing timestamp copy.
+    const files = [...read].filter((path) => !/\.timestamp-\d+/.test(path) && (path.endsWith("/") ? existsSync(resolve(repoRoot, path)) : isFile(path)));
+    if (files.length > 0) ran.set(one.harness, files);
+  }
+  /*
+   * A harness's record is replaced only by a whole look at it: every part,
+   * not --quick, no app named. Anything less — one part, fewer widths, a
+   * walk's own app — read less than the harness reaches, and adds to its
+   * record instead.
+   */
+  const whole = new Set([...ran.keys()].filter((name) => !quick && appPaths.length === 0 && (!PARTS[name] || PARTS[name].parts.every(({ part }) => units.includes(`${name}.${part}`)))));
+  if (ran.size > 0) writeCoverage(mergeCoverage(readCoverage(repoRoot), ran, { sha: headSha(repoRoot) ?? "", whole }), repoRoot);
+}
+// And what each took, for the next run's order.
+for (const one of results) {
+  const at = (recorded[one.name] ??= {});
+  at[quick ? "quick" : "whole"] = one.timing?.wall ?? one.took;
+}
+writeFileSync(TIMES, `${JSON.stringify(Object.fromEntries(Object.entries(recorded).sort(([a], [b]) => a.localeCompare(b))), null, 2)}\n`);
+
 /*
  * WHEN EACH RAN AND WHAT IT MISSED, kept with the verdict: a run on GitHub's
  * runners (verify.yml) credits each harness with the files written while it
- * ran, and says the claims it missed by name (lib/on-github.mjs).
+ * ran, and says the claims it missed by name (lib/on-github.mjs). And what
+ * each cost, slowest first, with what the run itself cost.
  */
 // The file is committed: a path of this machine's said in a harness's last line is not.
 const scrubbed = (text) => [repoRoot, homedir(), tmpdir(), realpathSync(tmpdir())].reduce((said, path) => said.split(path).join(path === repoRoot ? "." : "~"), String(text ?? ""));
+const spent = results.reduce((sum, one) => sum + one.took, 0);
+const slowest = [...results].sort((a, b) => (b.timing?.wall ?? 0) - (a.timing?.wall ?? 0)).slice(0, 12).map((one) => ({ name: one.name, wall: one.timing?.wall ?? one.took, cpu: one.timing?.cpu ?? null, serverStartup: one.timing?.serverStartup ?? 0, fixedWaits: one.timing?.fixedWaits ?? 0 }));
 writeFileSync(
   LAST_RUN,
-  `${JSON.stringify({ at: new Date().toISOString(), results: results.map(({ name, file, code, took, began, verdict, gist: said, missed, output }) => ({ name, file, code, took, began, verdict, ...(verdict === "held" ? {} : { gist: scrubbed(said), missed: (missed ?? missedClaims(output ?? "")).map(scrubbed) }) })) }, null, 2)}\n`,
+  `${JSON.stringify(
+    {
+      at: new Date().toISOString(),
+      run: { wall, harnessTime: spent, workers: bases.length, quick, ...(selection ? { changed: { from: selection.from, files: selection.changes, ran: chain.length, of: CHAIN.length } } : {}), servers: serverTimes.map(({ worker, app, ms }) => ({ worker, app, ms })), slowest },
+      results: results.map(({ name, file, code, took, began, verdict, gist: said, missed, output, timing, firstTiming }) => ({
+        name,
+        file,
+        code,
+        took,
+        began,
+        verdict,
+        timing,
+        ...(firstTiming ? { firstTiming } : {}),
+        ...(verdict === "held" ? {} : { gist: scrubbed(said), missed: (missed ?? missedClaims(output ?? "")).map(scrubbed) }),
+      })),
+    },
+    null,
+    2,
+  )}\n`,
 );
-const spent = results.reduce((sum, one) => sum + one.took, 0);
+for (const release of releases) release();
+rmSync(scratch, { recursive: true, force: true });
+say(`\nslowest: ${slowest.slice(0, 6).map((one) => `${one.name} ${one.wall}s`).join(", ")}\n`);
 say(
-  `\n${results.length - broken.length} of ${results.length} harnesses hold${flakes.length > 0 ? `, ${flakes.length} on a second look` : ""} (${Math.round(wall / 60)}m, ${Math.round(spent / 60)}m of harness time)\n`,
+  `\n${results.length - broken.length} of ${results.length} harnesses hold${flakes.length > 0 ? `, ${flakes.length} on a second look` : ""} (${Math.floor(wall / 60)}m${String(wall % 60).padStart(2, "0")}s, ${Math.round(spent / 60)}m of harness time, ${bases.length} at a time)\n`,
 );
 process.exit(broken.length > 0 ? 1 : 0);
