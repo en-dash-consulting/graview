@@ -31,7 +31,7 @@ const tracker = (): GraviewDocument =>
     },
   }) as unknown as GraviewDocument;
 
-type Kept = HostView & { readonly source?: string; readonly [key: string]: unknown };
+type Kept = HostView & { readonly [key: string]: unknown };
 
 /** A manifest act with what the view calls it (`ManifestAct.as`). */
 const assign = { act: "connect-check-updated-by", as: "assign" };
@@ -67,10 +67,10 @@ describe("a rename and the kept views that read the renamed key", () => {
     const diff = diffDocuments(tracker(), edited.document, { views: kept });
     expect(diff.breaking).toBe(true);
     expect(diff.brokenViews.map((view) => [view.name, view.reads])).toEqual([
-      ["check-board", ["updatedBy"]],
+      ["check-board", ["updatedBy", "connect-check-updated-by"]],
       ["site-list", ["updatedBy"]],
     ]);
-    expect(diff.sentences).toContain('The view "Check board" reads updatedBy, which this change takes away: its manifest would no longer fit the app.');
+    expect(diff.sentences).toContain('The view "Check board" reads updatedBy and connect-check-updated-by, which this change takes away: its manifest would no longer fit the app.');
     // Without the views, the change is what it was: nothing stored stops fitting.
     expect(diffDocuments(tracker(), edited.document).breaking).toBe(false);
   });
@@ -133,6 +133,53 @@ describe("a rename and the kept views that read the renamed key", () => {
     });
     expect(diffDocuments(tracker(), edited.document, { views: edited.views }).brokenViews).toEqual([]);
     const uncarried = diffDocuments(tracker(), edited.document, { views: kept });
-    expect(uncarried.brokenViews.find((view) => view.name === "check-board")?.reads).toEqual(["check", "check's photo", "add-check"]);
+    expect(uncarried.brokenViews.find((view) => view.name === "check-board")?.reads).toEqual(["check", "check's photo", "add-check", "connect-check-updated-by"]);
+  });
+
+  it("counts a view that names only a derived act the rename moves, and carries it", () => {
+    const home: Kept = { name: "assigner", attach: "home", cardinality: "many", reads: { kinds: ["check", "person"] }, acts: ["connect-check-updated-by"] };
+    const edited = editDocument(tracker(), renameRelation, { views: [home] });
+    if (!edited.ok) throw new Error("refused");
+    expect(diffDocuments(tracker(), edited.document, { views: [home] }).brokenViews).toEqual([{ name: "assigner", reads: ["connect-check-updated-by"] }]);
+    expect(edited.views?.[0]?.acts).toEqual(["connect-check-rechecked-by"]);
+  });
+
+  it("says a view whose source reads a renamed field of a kind it is handed, though its manifest never names the field", () => {
+    const list: Kept = { name: "check-list", attach: "check", cardinality: "many", source: "for (const c of G.nodes('check')) draw(c.photo);" };
+    const edited = editDocument(tracker(), [{ op: "rename-field", kind: "check", field: "photo", to: "picture" }], { views: [list] });
+    if (!edited.ok) throw new Error("refused");
+    expect(edited.carried).toEqual([{ name: "check-list", was: { name: "check-list", attach: "check", cardinality: "many" }, manifest: { name: "check-list", attach: "check", cardinality: "many" }, moved: [], sourceNames: ["photo"] }]);
+    expect(edited.said).toContain('The view "check-list"\'s source still names photo: change it there too, or the view reads nothing by that name.');
+    // A view of another kind is not told of this kind's field.
+    const people = editDocument(tracker(), [{ op: "rename-field", kind: "check", field: "photo", to: "picture" }], { views: [{ name: "people", attach: "person", cardinality: "many", source: "x.photo" }] });
+    if (!people.ok) throw new Error("refused");
+    expect(people.carried).toEqual([]);
+  });
+
+  it("hands a view renamed in the same change back by its new name", () => {
+    const edited = editDocument(
+      tracker(),
+      [
+        { op: "rename-view", view: "view:check-board", to: "inspection-board" },
+        { op: "rename-kind", kind: "check", to: "inspection" },
+      ],
+      { views: kept },
+    );
+    if (!edited.ok) throw new Error(JSON.stringify(edited.findings));
+    expect(edited.views?.[0]).toMatchObject({ name: "inspection-board", attach: "inspection" });
+    expect(edited.carried?.[0]).toMatchObject({ name: "check-board", manifest: { name: "inspection-board" } });
+  });
+
+  it("carries nothing for a name renamed and renamed back in one change", () => {
+    const edited = editDocument(
+      tracker(),
+      [
+        { op: "rename-relation", kind: "check", relation: "updatedBy", to: "recheckedBy" },
+        { op: "rename-relation", kind: "check", relation: "recheckedBy", to: "updatedBy" },
+      ],
+      { views: kept },
+    );
+    if (!edited.ok) throw new Error(JSON.stringify(edited.findings));
+    expect(edited.carried).toEqual([]);
   });
 });

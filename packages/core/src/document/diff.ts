@@ -12,6 +12,8 @@ import { homeOf, VIEW_SLOTS, viewsOf } from "./views.js";
 import { capitalize, listed, lowerFirst } from "../capital.js";
 import { kindListWords, sortTypeOfDocumentField } from "../kind-list.js";
 import type { HostView, KindList } from "../views/types.js";
+import { derivedActsOf, RELATION_ACTS, relationActName } from "../mutations/derived-names.js";
+import { documentRelations } from "./relation-acts.js";
 import { FIRST_GRANT, FIRST_SIGHT, grantGone, grantSentence, NO_GRANT_LEFT, NO_SIGHT_LEFT, appTidyingSentence, archivesSentence, tidyingSentence, peopleSentence, sightGone, sightSentence, whoWords } from "./policy-words.js";
 
 /*
@@ -252,10 +254,10 @@ export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument
 
 /**
  * WHAT A KEPT VIEW READS THAT A CHANGE TAKES AWAY: each kind, field,
- * relation and declared act its manifest names that the stored document
- * declares and the proposed one does not. What the stored document never
- * had — another app's kind, a derived act, a name already wrong — is not
- * this change's to answer for.
+ * relation and act — declared, or derived for a kind or a relation — its
+ * manifest names that the stored document has and the proposed one does
+ * not. What the stored document never had — another app's kind, a name
+ * already wrong — is not this change's to answer for.
  */
 function viewReadsTakenAway(view: HostView, before: GraviewDocument, after: GraviewDocument): string[] {
   const out: string[] = [];
@@ -264,7 +266,7 @@ function viewReadsTakenAway(view: HostView, before: GraviewDocument, after: Grav
   };
   const hasEdge = (doc: GraviewDocument, edge: string) => Object.values(doc.kinds).some((spec) => spec.edges?.[edge] !== undefined);
   const pictures = view.pictures;
-  const pictureKinds = Array.isArray(pictures) ? pictures.filter((kind): kind is string => typeof kind === "string") : pictures && typeof pictures === "object" ? Object.keys(pictures).filter((key) => !["width", "records", "most", "thumb"].includes(key)) : [];
+  const pictureKinds = Array.isArray(pictures) ? pictures.filter((kind): kind is string => typeof kind === "string") : pictures && typeof pictures === "object" ? Object.entries(pictures).filter(([key, value]) => !["width", "records", "most", "thumb"].includes(key) || typeof value === "string" || Array.isArray(value)).map(([key]) => key) : [];
   const kinds = [...(view.attach === "home" ? [] : [view.attach]), ...(view.reads?.kinds ?? []), ...(view.accepts ?? []).map((accept) => accept.kind), ...pictureKinds];
   for (const kind of kinds) if (before.kinds[kind] && !after.kinds[kind]) add(kind);
   const fields: [string, string][] = [...(view.accepts ?? []).map((accept): [string, string] => [accept.kind, accept.field])];
@@ -275,9 +277,11 @@ function viewReadsTakenAway(view: HostView, before: GraviewDocument, after: Grav
     }
   for (const [kind, field] of fields) if (before.kinds[kind]?.fields[field] && !after.kinds[kind]?.fields[field]) add(`${kind}'s ${field}`);
   for (const edge of view.reads?.edges ?? []) if (hasEdge(before, edge) && !hasEdge(after, edge)) add(edge);
+  const actsOf = (doc: GraviewDocument) => new Set([...Object.keys(doc.acts ?? {}), ...Object.keys(doc.kinds).flatMap(derivedActsOf), ...documentRelations(doc.kinds as never).flatMap(([kind, relations]) => relations.flatMap((relation) => RELATION_ACTS.map((act) => relationActName(act, kind, relation))))]);
+  const [had, has] = [actsOf(before), actsOf(after)];
   for (const one of view.acts ?? []) {
     const act = typeof one === "string" ? one : one.act;
-    if (before.acts?.[act] && !after.acts?.[act]) add(act);
+    if (had.has(act) && !has.has(act)) add(act);
   }
   return out;
 }

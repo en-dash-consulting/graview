@@ -2233,6 +2233,11 @@ class Editor {
     return this.options.views?.map((view) => (this.renamedViews.has(view.name) ? { ...view, name: this.renamedViews.get(view.name)! } : view));
   }
 
+  /** The name a view the host keeps by `name` has once this change is made (`rename-view`). */
+  viewNameNow(name: string): string {
+    return this.renamedViews.get(name) ?? name;
+  }
+
   /** Each view this batch renamed: its name as the host keeps it, to the name it has now. */
   private readonly renamedViews = new Map<string, string>();
 
@@ -4190,12 +4195,15 @@ export function editDocument(document: GraviewDocument, edits: readonly unknown[
   const carried: CarriedView[] = [];
   for (const view of options.views) {
     const one = carryView(view, editor.moves);
-    views.push(one.manifest);
-    if (one.moved.length === 0) continue;
+    // A view renamed in the same change (`rename-view`) is handed back by the name the arrangement now says.
+    const name = editor.viewNameNow(view.name);
+    const manifest = name === view.name ? one.manifest : { ...one.manifest, name };
+    views.push(manifest);
+    if (one.moved.length === 0 && one.sourceNames.length === 0) continue;
     const { source: _source, ...was } = view;
-    carried.push({ name: view.name, ...(view.title !== undefined ? { title: view.title } : {}), was, manifest: one.manifest, moved: one.moved, sourceNames: one.sourceNames });
+    carried.push({ name: view.name, ...(view.title !== undefined ? { title: view.title } : {}), was, manifest, moved: one.moved, sourceNames: one.sourceNames });
     const called = `The view "${view.title ?? view.name}"`;
-    editor.said.push(`${called} read ${listOf([...new Set(one.moved.map((move) => move.from))])}; its manifest now reads ${listOf([...new Set(one.moved.map((move) => move.to))])}.`);
+    if (one.moved.length > 0) editor.said.push(`${called} read ${listOf(one.moved.map((move) => move.from))}; its manifest now reads ${listOf(one.moved.map((move) => move.to))}.`);
     if (one.sourceNames.length > 0) editor.said.push(`${called}'s source still names ${listOf(one.sourceNames)}: change it there too, or the view reads nothing by ${one.sourceNames.length === 1 ? "that name" : "those names"}.`);
   }
   return { ok: true, document: editor.doc as GraviewDocument, said: editor.said, fills: editor.fills, views, carried };
@@ -4208,8 +4216,12 @@ type Move =
   | { readonly t: "edge"; readonly from: string; readonly to: string }
   | { readonly t: "act"; readonly from: string; readonly to: string };
 
-/** What a view's `pictures` keeps besides the kinds it chooses (`GuestPictures`). */
-const PICTURE_KEYS = new Set(["width", "records", "most", "thumb"]);
+/**
+ * Whether a key of a view's `pictures` is one of its options rather than a
+ * kind it chooses: as the guest reads it, `width`, `records`, `most` and
+ * `thumb` are options unless they hold a field's name or a list of them.
+ */
+const pictureOption = (key: string, value: unknown): boolean => ["width", "records", "most", "thumb"].includes(key) && typeof value !== "string" && !Array.isArray(value);
 
 /** Whether a script says a name whole, never as part of a longer one. */
 function namedIn(source: string, name: string): boolean {
@@ -4217,24 +4229,39 @@ function namedIn(source: string, name: string): boolean {
   return new RegExp(`(?<![\\w$-])${escaped}(?![\\w$-])`).test(source);
 }
 
+/** Names followed through a change, each from what it was first called to what it is called last; a name moved and moved back is none. */
+class NetMoves {
+  private readonly now = new Map<string, string>();
+  move(from: string, to: string) {
+    const first = [...this.now].find(([, current]) => current === from)?.[0] ?? from;
+    this.now.set(first, to);
+  }
+  pairs(): { from: string; to: string }[] {
+    return [...this.now].filter(([from, to]) => from !== to).map(([from, to]) => ({ from, to }));
+  }
+}
+
 /**
  * One kept view's manifest with each move applied, in order: the kind it is
  * attached to, the kinds and relations it reads, the fields files dropped on
  * it go in, the pictures it chooses and the acts it may ask for. Its other
- * keys stay as the host wrote them; its source is left out of the manifest
- * and read for the old names it still says.
+ * keys stay as the host wrote them; its source is left out of the manifest.
+ * What it read is said net — a name moved and moved back is not moved — and
+ * its source is read for every old name the change reaches it with: any
+ * kind, relation or act, and a field of a kind it is handed, named in its
+ * manifest or not, since most views read their fields only in their script.
  */
 function carryView(view: HostView, moves: readonly Move[]): { manifest: HostView; moved: { from: string; to: string }[]; sourceNames: string[] } {
   const { source, ...rest } = view;
   const m: Doc = clone(rest);
-  const moved: { from: string; to: string }[] = [];
-  const say = (from: string, to: string) => {
-    if (!moved.some((one) => one.from === from && one.to === to)) moved.push({ from, to });
-  };
+  const read = new NetMoves();
+  const reached = new NetMoves();
   const swap = (list: readonly unknown[], from: string, to: string): unknown[] => list.map((x) => (x === from ? to : x));
+  const handed = (): Set<string> => new Set([m.attach, ...(m.reads?.kinds ?? []), ...(m.accepts ?? []).map((accept: Doc) => accept.kind)]);
   for (const move of moves) {
     let hit = false;
     if (move.t === "kind") {
+      reached.move(move.from, move.to);
       if (m.attach === move.from) {
         m.attach = move.to;
         hit = true;
@@ -4251,17 +4278,19 @@ function carryView(view: HostView, moves: readonly Move[]): { manifest: HostView
       if (Array.isArray(m.pictures) && m.pictures.includes(move.from)) {
         m.pictures = swap(m.pictures, move.from, move.to);
         hit = true;
-      } else if (isObject(m.pictures) && move.from in m.pictures && !PICTURE_KEYS.has(move.from)) {
+      } else if (isObject(m.pictures) && move.from in m.pictures && !pictureOption(move.from, m.pictures[move.from])) {
         m.pictures = Object.fromEntries(Object.entries(m.pictures).map(([key, value]) => [key === move.from ? move.to : key, value]));
         hit = true;
       }
     } else if (move.t === "field") {
+      const pictured = isObject(m.pictures) && move.kind in m.pictures && !pictureOption(move.kind, m.pictures[move.kind]);
+      if (handed().has(move.kind) || pictured) reached.move(move.from, move.to);
       for (const accept of m.accepts ?? [])
         if (accept.kind === move.kind && accept.field === move.from) {
           accept.field = move.to;
           hit = true;
         }
-      if (isObject(m.pictures) && !PICTURE_KEYS.has(move.kind)) {
+      if (pictured) {
         const chosen = m.pictures[move.kind];
         if (chosen === move.from) {
           m.pictures[move.kind] = move.to;
@@ -4272,28 +4301,30 @@ function carryView(view: HostView, moves: readonly Move[]): { manifest: HostView
         }
       }
     } else if (move.t === "edge") {
+      reached.move(move.from, move.to);
       if (Array.isArray(m.reads?.edges) && m.reads.edges.includes(move.from)) {
         m.reads.edges = swap(m.reads.edges, move.from, move.to);
         hit = true;
       }
-    } else if (Array.isArray(m.acts)) {
-      m.acts = m.acts.map((act: unknown) => {
-        if (act === move.from) {
-          hit = true;
-          return move.to;
-        }
-        if (isObject(act) && act["act"] === move.from) {
-          hit = true;
-          return { ...act, act: move.to };
-        }
-        return act;
-      });
+    } else {
+      reached.move(move.from, move.to);
+      if (Array.isArray(m.acts))
+        m.acts = m.acts.map((act: unknown) => {
+          if (act === move.from) {
+            hit = true;
+            return move.to;
+          }
+          if (isObject(act) && act["act"] === move.from) {
+            hit = true;
+            return { ...act, act: move.to };
+          }
+          return act;
+        });
     }
-    if (hit) say(move.from, move.to);
+    if (hit) read.move(move.from, move.to);
   }
-  // An old name is still said only where nothing the change moved is now called by it.
-  const sourceNames = typeof source === "string" ? [...new Set(moved.map((one) => one.from))].filter((from) => !moved.some((one) => one.to === from) && namedIn(source, from)) : [];
-  return { manifest: m as HostView, moved, sourceNames };
+  const sourceNames = typeof source === "string" ? [...new Set(reached.pairs().map((pair) => pair.from))].filter((from) => namedIn(source, from)) : [];
+  return { manifest: m as HostView, moved: read.pairs(), sourceNames };
 }
 
 /** What a document's places are made of, as one string: its kinds and their words, its lenses, its jobs and its arrangement. */
