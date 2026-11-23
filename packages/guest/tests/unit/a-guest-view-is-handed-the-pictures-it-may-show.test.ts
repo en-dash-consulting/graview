@@ -94,8 +94,8 @@ describe("a view that asks for pictures", () => {
     expect(porch.photos[0]!.src).toMatch(/^data:image\/png;base64,/);
     expect(porch.photos[1]!.src).toMatch(/^data:image\/png;base64,/);
     expect(porch.photos[0]).toMatchObject({ name: "porch.png", type: "image/png", bytes: 2_400, width: 1_600, height: 1_000, caption: "The porch before" });
-    expect(JSON.stringify(last())).not.toContain("/graview/files/");
-    expect(JSON.stringify(last())).not.toContain("href");
+    for (const path of [FILES.porch, FILES.step, FILES.plan]) expect(JSON.stringify(last())).not.toContain(path);
+    expect(porch.photos.some((one) => "href" in one)).toBe(false);
   });
 
   it("is pushed again when a picture is ready: the first push has it without its address", async () => {
@@ -106,11 +106,11 @@ describe("a view that asks for pictures", () => {
     expect(sent.length).toBeGreaterThan(1);
   });
 
-  it("is handed a document, and an SVG, as its name, type and size alone, and never has it fetched", async () => {
+  it("is handed an SVG as its name, type and size alone, a document as the record keeps it (HQ f-file-values-carry-a-preview), and never has either fetched", async () => {
     const { last } = host(sam, photos);
     await settled();
     const porch = job(last(), "job:porch")!;
-    expect(porch.papers).toEqual([{ name: "quote.pdf", type: "application/pdf", bytes: 1_800 }]);
+    expect(porch.papers).toEqual([{ href: FILES.quote, name: "quote.pdf", type: "application/pdf", bytes: 1_800 }]);
     expect(porch.photos[2]).toEqual({ name: "plan.svg", type: "image/svg+xml", bytes: 200 });
     expect(fetched).not.toContain(FILES.quote);
     expect(fetched).not.toContain(FILES.plan);
@@ -221,7 +221,7 @@ describe("a frame whose host asks for pictures", () => {
     const last = heard[heard.length - 1]!;
     expect(job(last, "job:porch")!.photos[1]!.src).toMatch(/^data:image\/png;base64,/);
     expect(job(last, "job:roof")).toBeUndefined();
-    for (const props of heard) expect(JSON.stringify(props)).not.toContain("/graview/files/");
+    for (const props of heard) for (const path of [FILES.porch, FILES.step, FILES.plan]) expect(JSON.stringify(props)).not.toContain(path);
     expect(fetched).not.toContain(FILES.roof);
     port.close();
     frame.dispose();

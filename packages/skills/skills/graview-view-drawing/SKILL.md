@@ -100,14 +100,15 @@ is refused, and said once in its console and to the host:
   headless run), asked for with no referrer.
   Unlisted, a URL on a record is refused.
 - **A picture on a record.** Say `pictures: true` in the manifest, or
-  `{ width: 400 }`, the widest it draws one. Each file on a record is then
+  `{ width: 400 }`, the widest it draws one. Each picture is then
   `{ name, type, bytes, width, height, aspect, cutout, focus, caption, src,
   thumb, left }`, never the host's path. Size a tile by `aspect`; draw a
   `cutout` (transparent, or on a plain ground) whole (`object-fit:
   contain`) and crop the rest (`cover`) at `object-position: ${x*100}%
   ${y*100}%` of `focus`. `src` is fetched as the reader, made smaller to
-  `width`; absent until a later push. `left` says why one never will. A
-  document or SVG has no `src`: show its name, type and size. They share
+  `width`; absent until later. `left` says why one never will. An
+  SVG has no `src`; a document keeps its `href`, plus `src` where its
+  host made a `preview`. They share
   12 MB: choose kinds, `records: { subject: true }` or `{ ids }`, and
   `most: 12`. `thumb: 240` (< `width`) adds a smaller `thumb`: draw
   `thumb || src`; `{ width: 240, aspect: 1 }` crops it around `focus`.

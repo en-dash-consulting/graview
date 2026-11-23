@@ -175,9 +175,17 @@ export interface GuestTheme {
 /**
  * A FILE ON A RECORD, AS A GUEST THAT ASKED FOR PICTURES IS HANDED IT
  * (FR-175). Where the record keeps a file (`FileValue`, FR-162), a guest
- * that declared `pictures` is handed this in its place, never the host's
- * path to it: a sandboxed frame or a worker cannot load that path with the
- * reader's credentials, and should not learn it.
+ * that declared `pictures` is handed this in place of each picture and
+ * video, never the host's path to it: a sandboxed frame or a worker cannot
+ * load that path with the reader's credentials.
+ *
+ * A DOCUMENT — any file that is not an image or a video — comes as the
+ * record keeps it, `href` and all, as it does to a guest that asks for no
+ * pictures (HQ f-file-values-carry-a-preview): asking for pictures takes
+ * nothing from a PDF. Where its host made a preview (`FileValue.preview`,
+ * a PDF's first page) and the guest draws that field's pictures, it
+ * carries the preview as a picture does — `src`, `thumb`, `width`,
+ * `height`, `aspect`, `left` — and the preview's own path stays the host's.
  *
  * A picture (`image/*`, not SVG) carries `src`, an address for
  * `<img src>` the host made from the bytes it fetched as the reader: a
@@ -185,10 +193,19 @@ export interface GuestTheme {
  * frame, as the brand's logo is (FR-127). It is absent while the host is
  * making it (the guest is pushed again when it has), and where the picture
  * was left out — past the view's budget, past one picture's, or not
- * loaded — `left` says why. A document, and an SVG, is its name, type and
- * size alone.
+ * loaded — `left` says why.
  */
 export interface GuestFile {
+  /**
+   * A document's path on the host, as the record keeps it (HQ
+   * f-file-values-carry-a-preview): a document comes as the record keeps it
+   * — this, its name, type, size, caption and `at` — whether or not the view
+   * asks for pictures, so it can hand it to an act. Never a picture's or a
+   * video's.
+   */
+  readonly href?: string;
+  /** When a document was made, as the record keeps it (`FileValue.at`). */
+  readonly at?: string;
   /** What it was called when it was put on the record: `porch.jpg`. */
   readonly name: string;
   /** Its media type, as the record keeps it. */

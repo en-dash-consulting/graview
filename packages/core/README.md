@@ -26,7 +26,10 @@ Everything a Graview app declares, and the checker that verifies it.
   path on the host, uploaded through the page's `HostFiles` and drawn where
   the host serves it (`fileSrc`). A video's value may say its `poster`, its
   `duration` in seconds and its `captions` (a WebVTT file on the host), and
-  is said "a 45-second video" (`videoWords`).
+  is said "a 45-second video" (`videoWords`). A document's may carry the
+  `preview` its host made — `{ src, thumb?, width?, height? }`, a PDF's
+  first page as a path on the host — drawn on its page, and on its card
+  and its row where the record holds no picture (`isPictured`).
 - **Theme** — the token contract, the two shipped palettes, and a contrast
   checker that measures a brand's palette before it ships. The rest of the
   look is data beside them — `SHAPE`, `TYPOGRAPHY` and `isoShade(scheme)`,

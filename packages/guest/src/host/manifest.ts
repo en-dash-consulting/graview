@@ -95,11 +95,14 @@ export interface WorkerViewManifest {
   /**
    * The pictures on the records it is handed (FR-175): `true`, or
    * `{ width }`, the widest it draws a picture in CSS pixels (1 200 by
-   * default). Each file a record holds is then handed as a `GuestFile` —
-   * a picture with `src`, an address the host made from the bytes, made
-   * smaller where it is wider than `width`; a document by its name, type
-   * and size — never as the host's path to it. Left out, a file is handed
-   * as the record keeps it. It may choose which pictures it draws
+   * default). Each picture a record holds is then handed as a `GuestFile`
+   * with `src`, an address the host made from the bytes, made smaller
+   * where it is wider than `width`, never as the host's path to it, and a
+   * video by its facts. A document comes as the record keeps it, `href`
+   * and all, as it does where `pictures` is left out; one with a preview
+   * its host made (HQ f-file-values-carry-a-preview) carries the preview's
+   * `src` beside, as a picture does. Left out, a file is handed as the
+   * record keeps it. It may choose which pictures it draws
    * (FR-220): the kinds, `["circuit"]`, or the fields by kind beside
    * `width`, `{ circuit: "photo" }`; a picture it did not choose is handed
    * by its facts alone, never fetched nor reckoned against its budget.
