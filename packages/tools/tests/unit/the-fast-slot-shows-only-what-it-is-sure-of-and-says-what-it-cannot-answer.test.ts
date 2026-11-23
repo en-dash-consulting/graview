@@ -8,10 +8,11 @@ import type { Answer } from "../../src/fast.js";
 /**
  * JEV'S QUICK AI, POLISHED (Roadmap f-jev-fast-polish). With the Thinking
  * slot off, the Fast slot is the only AI most people meet, so it says only
- * what it is sure of: a pick or a fill under the floor is not shown; where
- * everything one press takes fits the menu's rows, nothing is asked; and a
+ * what it is sure of: a pick or a fill under the floor is not shown; and a
  * question in words it cannot answer is said to be beyond it, with Find
  * offered for the words — never "These fit", nor that the AI had no answer.
+ * (The menu's Suggested rows skip the call for three or fewer: held by the
+ * primitives' own test.)
  */
 const task = defineNode("task", {
   fields: z.object({ label: z.string(), status: z.enum(["todo", "doing", "done"]).optional(), size: z.enum(["small", "large"]).optional() }),
@@ -88,19 +89,13 @@ describe("the Fast slot shows only what it is sure of", () => {
   });
 });
 
-describe("no call for what all fits", () => {
-  it("offers three candidates or fewer as they are, asking no model", async () => {
+describe("the AI section's own suggestion", () => {
+  it("is still ranked where three or fewer fit, so the hover chip has a confidence to judge by", async () => {
+    // The Suggested rows skip the call for three or fewer (`useSuggested`); the AI section and the chip share this one, which ranks.
     const { calls, fast } = unsure(0.9);
-    // The notes: their list drawn as a panel, and the one note to open — all there is.
     const result = await suggestHere({ fast }, { store: make(), target: { on: "list", kind: "note" }, principal: me });
-    expect(calls.n).toBe(0);
-    expect(result.offers.map((offer) => offer.id)).toEqual(["panel:note:list", "record:n-1"]);
-    expect(result.interaction.usage).toEqual([]);
-    // No confidence: nothing was ranked.
-    expect(result.interaction.offered.every((one) => one.confidence === undefined)).toBe(true);
-    // More than fit the rows: asked.
-    await suggestHere({ fast }, { store: make(), target, principal: me });
     expect(calls.n).toBe(1);
+    expect(result.interaction.offered[0]?.confidence).toBe(0.9);
   });
 
   it("still says AI is not on where there is no model at all", async () => {

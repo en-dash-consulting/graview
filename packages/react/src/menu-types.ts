@@ -108,10 +108,10 @@ export interface MenuSection {
    * rested on it, the keyboard is on it, a finger is down on it (FR-186).
    * Fetch what the section draws or opens, so the menu draws complete in
    * its first frame. Never a change: nothing is shown. `why` says how near
-   * the menu is (`MenuReadying`): a model is asked ahead only on `"rest"`
-   * where the host let a hover ask (`HostAi.prefetchOnRest`), and on
-   * `"open"`, the right-click or the long press itself, by what the menu
-   * draws as it opens.
+   * the menu is (`MenuReadying`): `"open"` is the right-click's press or a
+   * finger held on its way to a long press, before the menu draws. A model
+   * is asked from here only on `"rest"`, where the host let a hover ask
+   * (`HostAi.prefetchOnRest`).
    */
   readonly prepare?: (why?: MenuReadying) => void;
   /**

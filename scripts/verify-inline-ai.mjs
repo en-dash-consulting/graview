@@ -479,16 +479,15 @@ try {
   await rested.hover('[data-graview-pick="t-deposit"]');
   await rested.waitForTimeout(500);
   const restedFrame = await firstFrame("t-deposit");
-  // Suggested's one Fast call, answered.
-  await rested.waitForFunction(() => window.__calls.fast >= 1, undefined, { timeout: 10_000 }).catch(() => undefined);
-  await rested.waitForTimeout(300);
+  // Suggested holds three or fewer here, all shown as they are: the Fast slot is not asked for them (Roadmap f-jev-fast-polish).
+  await rested.waitForTimeout(800);
   const afterOpen = await calls();
   await putAway(rested);
   report.checks.aRestedOnMenuDrawsCompleteInItsFirstFrame = {
     cards,
     afterHover,
     restedFrame,
-    ok: cards.length > 1 && afterHover.fast === 0 && afterHover.thinking === 0 && restedFrame.menu && restedFrame.acts > 0 && restedFrame.section && restedFrame.ask && !restedFrame.missing && afterOpen.fast === 1,
+    ok: cards.length > 1 && afterHover.fast === 0 && afterHover.thinking === 0 && restedFrame.menu && restedFrame.acts > 0 && restedFrame.section && restedFrame.ask && !restedFrame.missing && restedFrame.offers > 0 && afterOpen.fast === 0,
   };
 
   reach("aReopenedMenuAsksNothingUntilTheRecordChanges");
@@ -499,7 +498,7 @@ try {
   report.checks.aReopenedMenuAsksNothingUntilTheRecordChanges = {
     reopened,
     afterReopen,
-    ok: reopened.menu && reopened.offers > 0 && !reopened.thinking && afterReopen.fast === 1,
+    ok: reopened.menu && reopened.offers > 0 && !reopened.thinking && afterReopen.fast === 0,
   };
 
   reach("onlyAThinkingSlotAsksWhenSuggestIsPressed");
@@ -588,20 +587,24 @@ try {
         const drawn = await new Promise((done) => {
           const look = () => {
             const section = document.querySelector('[data-testid="context-menu"] [data-menu-section="suggested"]');
-            if (window.__answeredAt > start && performance.now() > window.__answeredAt && section?.querySelector('[data-menu-item^="suggested-"]')) return done(performance.now() - start);
+            // Answered, or — three suggestions or fewer, all shown as they are — never asked (Roadmap f-jev-fast-polish).
+            const settled = window.__calls.fast === before || (window.__answeredAt > start && performance.now() > window.__answeredAt);
+            if (settled && section?.querySelector('[data-menu-item^="suggested-"]')) return done(performance.now() - start);
             if (performance.now() - start > 5000) return done(null);
             requestAnimationFrame(look);
           };
           look();
         });
         const asked = window.__calls.fast - before;
+        // A moment to read it before Escape, as a person takes (the open that asks nothing draws in its first frame; Escape within that frame is its own finding).
+        await new Promise((done) => setTimeout(done, 300));
         document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
         card.dispatchEvent(new PointerEvent("pointerout", { bubbles: true, pointerType: "mouse", relatedTarget: document.body }));
         await new Promise((done) => setTimeout(done, 150));
         return { id, ms: drawn === null ? null : Math.round(drawn), asked };
       }, id);
-      // Only an open that asked the model is a measure of filling in; one already kept is drawn in its first frame.
-      if (sample && sample.asked > 0) samples.push(sample);
+      // Every open is a measure of filling in: one that asked the model, and one that had nothing to ask it.
+      if (sample) samples.push(sample);
     }
   }
   const times = samples.map((one) => (one.ms === null ? Infinity : one.ms)).sort((a, b) => a - b);

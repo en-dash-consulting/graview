@@ -1149,7 +1149,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
       ) : null}
 
       {atPointer && words === "" && suggestedOpening.room > 0 ? (
-        <div data-menu-section="suggested" role="group" aria-label="Suggested" style={{ display: "grid", gap: 2, borderTop: "1px solid var(--graview-edge)", paddingTop: 5, minHeight: suggestedOpening.room * 31 + 22 }}>
+        <div data-menu-section="suggested" {...(suggested.length > 0 ? { role: "group", "aria-label": "Suggested" } : { "aria-hidden": true })} style={{ display: "grid", gap: 2, borderTop: "1px solid var(--graview-edge)", paddingTop: 5, minHeight: suggestedOpening.room * 31 + 22 }}>
           {suggested.length > 0 ? <span aria-hidden="true" style={GROUP_HEAD}>Suggested</span> : null}
           {suggested.map((one, at) => (
             <button key={one.key} type="button" data-menu-item={`suggested-${at}`} data-suggested-mode={one.mode} onClick={() => takeSuggested(one)} style={{ ...ROW_STYLE, display: "flex", gap: 8, alignItems: "baseline", minWidth: 0 }}>

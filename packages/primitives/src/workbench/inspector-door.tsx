@@ -198,6 +198,8 @@ function useMenuReady(aimAt: (element: Element) => MenuTarget | null): void {
     };
     const down = (event: PointerEvent) => {
       letGo();
+      // A new press is a new opening: the contextmenu after this one is the same, a later right-click another.
+      opening = null;
       const element = at(event);
       if (!element) return;
       // A right-click pressed: the menu opens with its release (or at once), and what it asks starts now.

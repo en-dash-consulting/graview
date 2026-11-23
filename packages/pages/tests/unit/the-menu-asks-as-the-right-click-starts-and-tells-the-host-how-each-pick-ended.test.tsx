@@ -175,6 +175,22 @@ describe("each pick the menu showed is told to the host as taken or left", () =>
     expect(heard[0]).toMatchObject({ where: "suggested", outcome: "accepted", record: "book" });
   });
 
+  it("the AI section's suggestions too, each with how sure the model was and which model ranked it", async () => {
+    const heard: PickOutcome[] = [];
+    const { fast } = counted();
+    const { host } = await rendered({ ai: { fast, onPickOutcome: (outcome) => void heard.push(outcome) } });
+    await rightClick(row(host, "book"));
+    const more = menu()?.querySelector<HTMLButtonElement>('[data-menu-item="more"]');
+    if (more) await act(async () => more.click());
+    await until(() => (menu()?.querySelectorAll("[data-ai-offer]").length ?? 0) > 0);
+    const shown = menu()!.querySelectorAll("[data-ai-offer]").length;
+    expect(shown).toBeGreaterThan(0);
+    await close();
+    const fromTheSection = heard.filter((one) => one.where === "menu");
+    expect(fromTheSection).toHaveLength(shown);
+    expect(fromTheSection[0]).toMatchObject({ outcome: "dismissed", model: "stub-fast", record: "book", confidence: expect.any(Number), interaction: expect.stringMatching(/^ai-/) });
+  });
+
   it("a host's ear that throws is never the menu's failure", async () => {
     const { fast } = counted();
     const { host } = await rendered({ ai: { fast, onPickOutcome: () => { throw new Error("the host's own fault"); } } });

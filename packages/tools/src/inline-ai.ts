@@ -307,15 +307,6 @@ export async function suggestHere<S extends AnySchema>(ai: HostAi, ask: InlineAs
   const fast = fastOf(ai);
   const thinking = thinkingOf(ai);
   if (!fast && !thinking) return failedResult(asked, said, "suggest", NO_MODEL);
-  /*
-   * NO CALL FOR WHAT ALL FITS (Roadmap f-jev-fast-polish): where every
-   * candidate one press takes fits in the rows the menu has, a model could
-   * only reorder them — they are offered as the catalog has them, at once,
-   * and nothing is asked. With no confidence, no hover chip says one.
-   */
-  if (choices.length <= most) {
-    return { interaction: { ...asked.entry, ask: { kind: "suggest", said }, offered: choices.map((candidate) => offeredOf(candidate)), outcome: "offered", usage: [] }, offers: choices };
-  }
   let picked: { candidate: AiCandidate; confidence?: number }[] = [];
   try {
     if (fast) {
