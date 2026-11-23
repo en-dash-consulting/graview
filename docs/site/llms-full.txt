@@ -2978,6 +2978,8 @@ A guest is handed what it is drawn over and the edges among those records. With 
 
 Its props carry `theme`, a `GuestTheme`: the scheme, the accent, ground, panel, ink, muted ink and edge colors, the body, display and mono fonts and the radius, read off the element the frame is drawn in; and the brand's `name` and `logo` (FR-127). The logo is a `data:` image the host made from the brand's inline SVG, or from an address on the page's own origin it fetched (another origin's logo is not handed), so the guest loads nothing; its policy needs `img-src data:` to show it. The scheme is the app's own (the embed's `data-graview-scheme`), not the system's, and the host pushes again when the app's toggle or brand changes. `mountGuestView` takes `reads`, `theme`, `brand` and `places` too.
 
+The app's reel reaches a frame as it reaches a worker view: `reel` on `mountGuestView` (and, for `guestView`, the reel the provider, the Shell or the routed face was handed) puts its facts in `props.theme.reel` — `{ name, caption, type, duration, poster, playable, width, height, aspect }` — and never its address, its poster's or its captions'. They are pushed again when the host hands another, and are gone when it hands none. A frame is another origin, so it places no player of the host's: it reads what the reel is, and says so in its own words.
+
 The faces the brand lends its views (`brand.views.fonts`) are lent to a frame as well: the host reads each file — the app's own where `asset` serves it, or one on an origin `fonts.origins` lists — at most 2 MB, the last lent winning a shared name, and hands it as a `data:` font the client puts in the frame's document. A guest names the family (`font-family: "Rock Face", serif`) and loads nothing; its policy needs `font-src data:`. Frames in one brand share one reading of its faces. The frame says it has drawn once they are read, or after two seconds, saying which did not come. What is not lent is said to the host's `{ onProblem }` (`guestView` says it in the console).
 
 `title` names the frame for assistive technology. Registered with the same title, the guest is a place on both faces: listed by `placesOf`, at `/places/the-price-sheet` on the routed face and `#view=the-price-sheet` in the scene. `props.places` lists the app's places, and `guest.navigate({ place: "the-packages" })` goes to one.
@@ -3180,7 +3182,7 @@ A video plays as a hero background (Roadmap f-video-hero) where the view asks fo
 
 ##### The app's reel
 
-A host that keeps one video for the whole app — the reel its share preview plays — hands it as `reel` (an `AppVideo`: `href`, `poster`, `duration`, `playable`, and optionally `type`, `name`, `caption`, `captions`, `width`, `height`) to `mountWorkerView`, `GraviewProvider`, the Shell, the routed face, `mount` or `<Embed>`, and to a headless run. A view plays it without naming any address:
+A host that keeps one video for the whole app — the reel its share preview plays — hands it as `reel` (an `AppVideo`: `href`, `poster`, `duration`, `playable`, and optionally `type`, `name`, `caption`, `captions`, `width`, `height`) to `mountWorkerView`, `GraviewProvider`, the Shell, the routed face, `mount` or `<Embed>`, and to a headless run; `mountGuestView` takes it too, for a frame guest's facts alone. A view plays it without naming any address:
 
 ```html
 <graview-video data-app="reel" autoplay cover></graview-video>

@@ -915,6 +915,8 @@ export function GraviewProvider<S extends AnySchema>({
 }: GraviewProviderProps<S>) {
   // A provider inside another (the pages under an embed) keeps the host's menu sections when it was given none.
   const around = useContext(GraviewContext);
+  /* The app's reel a provider around this one was handed (HQ f-reel-mount-tests-and-frames): kept where this one was handed none. */
+  const reelAround = useContext(HostReelContext);
   const hostSections = menuSections ?? around?.menuSections;
   const hostItems = menuItems ?? around?.menuItems;
   const hostLink = menuLink ?? around?.menuLink;
@@ -1473,7 +1475,8 @@ export function GraviewProvider<S extends AnySchema>({
   const assetsHeld = assetsAt ? <HostAssetsContext.Provider value={assetsAt}>{children}</HostAssetsContext.Provider> : children;
   const filesHeld = files ? <HostFilesContext.Provider value={files}>{assetsHeld}</HostFilesContext.Provider> : assetsHeld;
   const stateHeld = viewerState ? <HostViewerStateContext.Provider value={viewerState}>{filesHeld}</HostViewerStateContext.Provider> : filesHeld;
-  const filed = reel ? <HostReelContext.Provider value={reel}>{stateHeld}</HostReelContext.Provider> : stateHeld;
+  /* Always held, so a reel handed, changed or taken away moves only the value: the views under it are pushed again, never mounted afresh. */
+  const filed = <HostReelContext.Provider value={reel ?? reelAround}>{stateHeld}</HostReelContext.Provider>;
   return (
     <GraviewContext.Provider value={value as unknown as GraviewContextValue<AnySchema>}>
       <PlaybackContext.Provider value={playback as unknown as Playback}>

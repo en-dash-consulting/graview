@@ -1,6 +1,6 @@
 import type { ViewProblemSaid } from "./problems.js";
 import type { AnySchema } from "@graview/core";
-import { useGoTo, useGraview, useHostAssets, useHostFiles, type ViewComponent, type ViewProps } from "@graview/react/provider";
+import { useGoTo, useGraview, useHostAssets, useHostFiles, useHostReel, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { useEffect, useRef } from "react";
 import { frameChunk, untilItArrives, workerChunk } from "./arrive.js";
 import type { GuestFrame } from "./frame.js";
@@ -97,6 +97,10 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
     hostAssets.current = assetsNow;
     const branded = useRef(brand);
     branded.current = brand;
+    /* The app's own video (HQ f-reel-mount-tests-and-frames): a frame is handed its facts, never its address. */
+    const reelNow = useHostReel();
+    const reeled = useRef(reelNow);
+    reeled.current = reelNow;
     const goTo = useGoTo();
     const going = useRef(goTo);
     going.current = goTo;
@@ -168,6 +172,7 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
             : {}),
           places: () => views.places(),
           brand: () => branded.current,
+          reel: () => reeled.current,
           /* A record, a place or a kind's list — narrowed and to a section — where the face goes; what goes nowhere is said in the console and to `onProblem`, as `link-goes-nowhere`. */
           goTo: () => going.current,
           ...(options.limits ? { limits: options.limits } : {}),
@@ -181,7 +186,9 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
         frame.current = null;
       };
     }, [store, principal, setSelection, views]);
-    useEffect(() => frame.current?.update(), [props, brand]);
+    /* The reel by what it says, so a host that hands a new object each render with the same facts pushes nothing more. */
+    const reelSaid = reelNow ? JSON.stringify(reelNow) : "";
+    useEffect(() => frame.current?.update(), [props, brand, reelSaid]);
     // A frame's holder is busy until the frame's host has drawn the frame in it, and the frame is until the guest has drawn (FR-188).
     return <div ref={holder} data-guest={options.name} aria-busy={options.url ? true : undefined} />;
   }
