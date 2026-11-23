@@ -27,7 +27,12 @@
  * already there). Only a barrel every page that fetches the door has drawn
  * first: the embed's faces and a guest's host are fetched by pages that
  * never load `@graview/embed`'s or `@graview/guest/host`'s whole barrel, and
- * a door tied to one of those carried it in.
+ * a door tied to one of those carried it in. So with a field's own controls
+ * (`@graview/primitives/form`: a file, a linked record, a repeat, a day and
+ * a time): a visitor's form fetches them and never draws this barrel, and
+ * tied here they put about 41 KB of what only the frame's files use into
+ * its first load, from the modules both reach. They are tied to
+ * `@graview/react/provider`, which every page that draws a form drew first.
  * `a-hosted-page-keeps-to-its-budget` counts the chunks.
  */
 /* The sheet without the scene's own rules: the scene face draws those (`sceneCss`, from `./scene`) — FR-104. */
