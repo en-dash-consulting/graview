@@ -28,6 +28,7 @@ import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
 import { portFor } from "./lib/ports.mjs";
+import { settled as pageSettled } from "./lib/settled.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -447,7 +448,7 @@ for (const { app, port, states, chosen = [], ground = [], record, focused = [], 
       await page
         .waitForFunction(() => document.querySelector("[data-graview-stage]") !== null, null, { timeout: 30_000 })
         .catch(() => {});
-      await page.waitForTimeout(1600);
+      await pageSettled(page, { most: 1600 });
 
       const still = await page.evaluate(MEASURE);
       report.faults.push(...faults(still, where));
@@ -470,14 +471,14 @@ for (const { app, port, states, chosen = [], ground = [], record, focused = [], 
         return found.length;
       });
       if (scrollers > 0) {
-        await page.waitForTimeout(700);
+        await pageSettled(page, { most: 700 });
         report.faults.push(...faults(await page.evaluate(MEASURE), `${where}, scrolled`));
         report.scrolled = (report.scrolled ?? 0) + scrollers;
       }
 
       /* And a reshape, which moves everything without touching the graph. */
       await page.setViewportSize({ width: 1080, height: 820 });
-      await page.waitForTimeout(900);
+      await pageSettled(page, { most: 900 });
       report.faults.push(...faults(await settled(page), `${where}, reshaped`));
 
       await page.close();
@@ -487,19 +488,19 @@ for (const { app, port, states, chosen = [], ground = [], record, focused = [], 
       const page = await browser.newPage({ viewport: { width, height } });
       await page.goto(`${served.url}/?theme=${theme}`, { waitUntil: "load" });
       await page.waitForFunction(() => document.querySelector("[data-graview-stage]") !== null, null, { timeout: 30_000 }).catch(() => {});
-      await page.waitForTimeout(1600);
+      await pageSettled(page, { most: 1600 });
       const tab = page.getByRole("link", { name: place, exact: true }).first();
       if (!(await tab.isVisible().catch(() => false))) {
         // A narrow bar folds its places into a menu.
         await page.locator('[data-testid="app-places-open"]:visible').first().click({ timeout: 4000 }).catch(() => {});
-        await page.waitForTimeout(400);
+        await pageSettled(page, { most: 400 });
       }
       const press = (locator) => locator.first().click({ timeout: 4000 }).then(() => true, () => false);
       const opened =
         (await press(page.getByRole("link", { name: place, exact: true }))) ||
         (await press(page.getByRole("menuitem", { name: place, exact: true }))) ||
         (await press(page.getByText(place, { exact: true })));
-      await page.waitForTimeout(2200);
+      await pageSettled(page, { most: 2200 });
       const count = () => page.evaluate(GROUND_LINES);
       const rest = await count();
       if (!opened) report.faults.push(`${where}: the place could not be opened`);
@@ -507,7 +508,7 @@ for (const { app, port, states, chosen = [], ground = [], record, focused = [], 
       if (rest.lines > 0) report.faults.push(`${where}: ${rest.lines} record-level connectors are drawn with nothing chosen`);
       const record = page.locator("[data-graview-pick]:visible").first();
       await record.click({ timeout: 4000 }).catch(() => {});
-      await page.waitForTimeout(1600);
+      await pageSettled(page, { most: 1600 });
       const chosenNow = await count();
       report.groundChosen = (report.groundChosen ?? 0) + chosenNow.lines;
       if (chosenNow.lines !== chosenNow.said) report.faults.push(`${where}: ${chosenNow.lines} lines are drawn for the chosen record but ${chosenNow.said} links are said`);
@@ -515,7 +516,7 @@ for (const { app, port, states, chosen = [], ground = [], record, focused = [], 
       if (chosenNow.loose > 0) report.faults.push(`${where}: ${chosenNow.loose} lines end where nothing is drawn`);
       // Back out and in again: the lines are a function of the choice, so none is left standing.
       await page.keyboard.press("Escape");
-      await page.waitForTimeout(1200);
+      await pageSettled(page, { most: 1200 });
       const after = await count();
       if (after.lines > 0) report.faults.push(`${where}: ${after.lines} lines stay drawn after the record is put down`);
       await page.close();
@@ -524,7 +525,7 @@ for (const { app, port, states, chosen = [], ground = [], record, focused = [], 
       const page = await browser.newPage({ viewport: { width, height } });
       await page.goto(`${served.url}${path}`, { waitUntil: "load" });
       await page.waitForFunction(() => document.querySelector("[data-graview-stage]") !== null, null, { timeout: 30_000 }).catch(() => {});
-      await page.waitForTimeout(2400);
+      await pageSettled(page, { most: 2400 });
       for (const link of await page.evaluate(RECORD_LINKS)) {
         report.recordLinks += 1;
         if (!link.onTarget) report.faults.push(`${app} ${what}: a ${link.edge} link ends where nothing is drawn (${link.end ? `${Math.round(link.end.x)},${Math.round(link.end.y)}` : "no end"})`);
@@ -538,7 +539,7 @@ for (const { app, port, states, chosen = [], ground = [], record, focused = [], 
       const open = async (hash) => {
         await page.goto(`${served.url}/?theme=light${hash}`, { waitUntil: "load" });
         await page.waitForFunction(() => "__graviewReady" in window && document.querySelector("[data-graview-stage]") !== null, null, { timeout: 60_000 }).catch(() => {});
-        await page.waitForTimeout(2200);
+        await pageSettled(page, { most: 2200 });
       };
       report.ground = report.ground ?? { lines: 0, ties: 0, asked: 0 };
       const judge = async (when) => {
@@ -564,7 +565,7 @@ for (const { app, port, states, chosen = [], ground = [], record, focused = [], 
         const target = page.locator(selector).first();
         if (!(await target.isVisible().catch(() => false))) continue;
         await target.hover({ timeout: 4000 }).catch(() => {});
-        await page.waitForTimeout(500);
+        await pageSettled(page, { most: 500 });
         const shot = await judge(which);
         const asked = shot.lines.filter((line) => line.from === record.id || line.to === record.id).length;
         report.ground.asked += asked;
@@ -583,17 +584,17 @@ for (const { app, port, states, chosen = [], ground = [], record, focused = [], 
       const chosenBox = await chips.nth(0).boundingBox();
       if (chosenBox) {
         await page.mouse.click(chosenBox.x + 12, chosenBox.y + chosenBox.height / 2);
-        await page.waitForTimeout(900);
+        await pageSettled(page, { most: 900 });
       }
       const other = (await chips.count()) > 1 ? chips.nth(1) : null;
       const otherId = other ? await other.getAttribute("data-graview-view") : null;
       const otherBox = other ? await (other.locator("> *").first()).boundingBox() : null;
       if (otherId && otherBox) {
         await page.mouse.move(otherBox.x + otherBox.width / 2, otherBox.y + otherBox.height / 2, { steps: 8 });
-        await page.waitForTimeout(500);
+        await pageSettled(page, { most: 500 });
         await judge("pointed at by the mouse with another chosen");
         const drawn = await tieFor(otherId);
-        await page.waitForTimeout(1200);
+        await pageSettled(page, { most: 1200 });
         const kept = await tieFor(otherId);
         report.pointer = [...(report.pointer ?? []), { where, otherId, drawn, kept }];
         if (drawn === 0) report.faults.push(`${where}: the mouse on ${otherId} does not draw its tie while another record is chosen`);
@@ -601,7 +602,7 @@ for (const { app, port, states, chosen = [], ground = [], record, focused = [], 
       } else report.faults.push(`${where}: no second chip of the band to point at`);
       /* The keyboard: Tab until a chip of the band or of the card has it. */
       await page.mouse.move(4, height - 4);
-      await page.waitForTimeout(400);
+      await pageSettled(page, { most: 400 });
       const resting = (await page.evaluate(WHOLE, record.id)).lines.filter((line) => [line.from, line.to].includes(record.id)).length;
       let tabbed = null;
       for (let press = 0; press < 60 && tabbed === null; press++) {
@@ -614,7 +615,7 @@ for (const { app, port, states, chosen = [], ground = [], record, focused = [], 
           return pick ? pick.getAttribute("data-graview-pick") : null;
         }, record.id);
       }
-      await page.waitForTimeout(500);
+      await pageSettled(page, { most: 500 });
       const keyed = tabbed ? (await page.evaluate(WHOLE, record.id)).lines.filter((line) => [line.from, line.to].includes(record.id)).length : 0;
       report.keyboard = [...(report.keyboard ?? []), { where, tabbed, resting, ties: keyed }];
       if (!tabbed) report.faults.push(`${where}: Tab never reaches a chip of the band or the card`);
@@ -631,11 +632,11 @@ for (const { app, port, states, chosen = [], ground = [], record, focused = [], 
           await page.mouse.move(x + step * 4, y + step * 3);
           await page.waitForTimeout(30);
         }
-        await page.waitForTimeout(300);
+        await pageSettled(page, { most: 300 });
         const held = await judge("while the card is held");
         report.held = [...(report.held ?? []), { where, lines: held.lines.length }];
         await page.mouse.up();
-        await page.waitForTimeout(800);
+        await pageSettled(page, { most: 800 });
       }
 
       /* Up from it, every way: Up, the zoom-out control, ctrl+wheel, an address, and Back. */
@@ -649,17 +650,17 @@ for (const { app, port, states, chosen = [], ground = [], record, focused = [], 
       };
       await open(`#focus=${encodeURIComponent(record.id)}`);
       await page.locator('[data-testid="overview"]').click({ timeout: 4000 }).catch(() => {});
-      await page.waitForTimeout(1600);
+      await pageSettled(page, { most: 1600 });
       await risen("Up");
       for (let press = 0; press < 2; press++) {
         await page.locator('[data-testid="zoom-out"]').click({ timeout: 4000 }).catch(() => {});
-        await page.waitForTimeout(400);
+        await pageSettled(page, { most: 400 });
       }
-      await page.waitForTimeout(800);
+      await pageSettled(page, { most: 800 });
       await risen("the zoom-out control");
       /* And down again: the ground, with the card. */
       await page.locator('[data-testid="overview"]').click({ timeout: 4000 }).catch(() => {});
-      await page.waitForTimeout(1600);
+      await pageSettled(page, { most: 1600 });
       const down = await page.evaluate((id) => ({ hash: location.hash, card: document.querySelector(`[data-graview-stage] [data-graview-view="${CSS.escape(id)}"]`) !== null }), record.id);
       report.descended = [...(report.descended ?? []), { where, ...down }];
       if (/overview=1/.test(down.hash) || !down.card) report.faults.push(`${where}: closing the map does not return to the ground with the record's card (${down.hash})`);
@@ -671,14 +672,14 @@ for (const { app, port, states, chosen = [], ground = [], record, focused = [], 
         await page.waitForTimeout(60);
       }
       await page.keyboard.up("Control");
-      await page.waitForTimeout(1600);
+      await pageSettled(page, { most: 1600 });
       await risen("ctrl+wheel");
       await open(`#focus=${encodeURIComponent(record.id)}&overview=1`);
       await risen("an address");
       await page.locator('[data-testid="record-panel-go"]').click({ timeout: 4000 }).catch(() => {});
-      await page.waitForTimeout(1600);
+      await pageSettled(page, { most: 1600 });
       await page.goBack();
-      await page.waitForTimeout(1800);
+      await pageSettled(page, { most: 1800 });
       await risen("Back");
       await page.close();
     }
@@ -688,10 +689,10 @@ for (const { app, port, states, chosen = [], ground = [], record, focused = [], 
         const page = await browser.newPage({ viewport: { width, height } });
         await page.goto(`${served.url}/?theme=light#focus=${encodeURIComponent(id)}${choose ? `&sel=${encodeURIComponent(id)}` : ""}`, { waitUntil: "load" });
         await page.waitForFunction(() => "__graviewReady" in window && document.querySelector("[data-graview-stage]") !== null, null, { timeout: 60_000 }).catch(() => {});
-        await page.waitForTimeout(2200);
+        await pageSettled(page, { most: 2200 });
         // Held by the keyboard, every tie of a chosen record is reached at once: the state whose words floated free.
         if (choose) await page.locator(`[data-graview-view="${id}"]`).first().focus({ timeout: 4000 }).catch(() => {});
-        await page.waitForTimeout(700);
+        await pageSettled(page, { most: 700 });
         const seen = await page.evaluate(WORDS);
         report.words = [...(report.words ?? []), { where, ...seen }];
         for (const one of seen.onCards) report.faults.push(`${where}: the words ${one}`);
@@ -712,7 +713,7 @@ for (const { app, port, states, chosen = [], ground = [], record, focused = [], 
         const page = await browser.newPage({ viewport: { width, height } });
         await page.goto(`${served.url}${plots}`, { waitUntil: "load" });
         await page.waitForFunction(() => document.querySelector("[data-graview-plot]") !== null, null, { timeout: 60_000 }).catch(() => {});
-        await page.waitForTimeout(2000);
+        await pageSettled(page, { most: 2000 });
         const seen = await page.evaluate(RESTS);
         report.rests = [...(report.rests ?? []), { where: `${app} from altitude at ${width}`, ...seen }];
         for (const [plot, count] of Object.entries(seen.plots)) if (count > 1) report.faults.push(`${app} from altitude at ${width}: ${plot} says what it has no room for ${count} times`);

@@ -166,6 +166,7 @@ import { vacant } from "./lib/serve.mjs";
 import { partPath } from "./lib/parts.mjs";
 import { closeAppMenu, faceShown, openAppMenu, toFace } from "./lib/bar.mjs";
 import { arrangeByKeyboard, endClearsTheFoot, FIRST_RECORD_WITHIN, listHead } from "./lib/arranging-line.mjs";
+import { settled, until } from "./lib/settled.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const asked = process.argv.find((arg) => arg.startsWith("--engine="))?.slice("--engine=".length);
@@ -501,7 +502,7 @@ try {
         page.on("pageerror", (error) => errors.push(`${engine} ${scheme} ${query}: ${error.message}`));
         await page.goto(`${at("quiet-host")}/?${query}`, { waitUntil: "load" });
         await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
-        await page.waitForTimeout(1200);
+        await settled(page, { most: 1200 });
         return { page, close: () => context.close() };
       };
       /** A place's address on the Pages face, read from its own link on the home. */
@@ -590,7 +591,7 @@ try {
             const seen = [];
             for (const width of [1920, 1024, 1280, 1920]) {
               await page.setViewportSize({ width, height: 800 });
-              await page.waitForTimeout(400);
+              await settled(page, { most: 400 });
               seen.push({ width, ...(await page.evaluate(theRow)) });
             }
             results.standingResized.push({ engine, scheme, face, seen });
@@ -610,7 +611,7 @@ try {
             }));
           const before = await row();
           await page.evaluate((author) => window.__handle.store.apply({ name: "add-decision", args: { name: "Meet on Thursdays" } }, { author }), OWNER);
-          await page.waitForTimeout(800);
+          await settled(page, { most: 800 });
           results.emptyKinds.push({ engine, before, after: await row() });
           await close();
           for (const face of ["pages", "graview"]) {
@@ -836,7 +837,7 @@ try {
       for (const font of ["", "wide"]) {
         const { page, close } = await open(`doc=org&face=graview${font ? `&font=${font}` : ""}`, DESK);
         await page.evaluate(() => document.fonts?.ready);
-        await page.waitForTimeout(600);
+        await settled(page, { most: 600 });
         const marquees = await page.evaluate(() => {
           const box = (el) => {
             const b = el.getBoundingClientRect();
@@ -1799,7 +1800,7 @@ async function sceneAndBack(page) {
   const face = () => page.evaluate(() => document.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed"));
   const shown = () => faceShown(page, { within }).catch(() => null);
   const heading = () => page.locator("main h2, [data-embed-content] h2").first().textContent().catch(() => "").then((text) => (text ?? "").trim().toLowerCase());
-  const settle = () => page.waitForTimeout(1200);
+  const settle = () => settled(page, { most: 1200 });
   await pressPlace(page, '[data-testid="app-place-kind:vendor"]');
   await settle();
   const toList = (await face()) === "pages" && (await heading()) === "vendors";
@@ -1928,7 +1929,7 @@ async function everyPlaceInTwoPresses(page, shot, scene = false) {
   keyboard.went = await page
     .waitForFunction((label) => document.querySelector('[data-testid="app-place-current"]')?.textContent.trim() === label, target.label, { timeout: 4000 })
     .then(() => true, () => false);
-  await page.waitForTimeout(300);
+  await settled(page, { most: 300 });
   keyboard.onBody = (await active()) === "<body>";
   return { listed: entries.length, groups, snug, reached, missed, keyboard, ...(scene ? { inView } : {}) };
 }
@@ -2053,7 +2054,7 @@ async function noticesFloat(page, face, engine, shot) {
   await page.evaluate((name) => {
     window.__handle.store.apply({ name: "add-vendor", args: { name } }, { author: { kind: "human", id: "u:owner", roles: ["owner"] } });
   }, LONG_VENDOR);
-  await page.waitForTimeout(1500);
+  await settled(page, { most: 1500 });
   const before = await page.evaluate(() => {
     const dock = document.querySelector('[data-testid="face-undo-dock"]');
     if (dock) {
@@ -2119,7 +2120,7 @@ async function noticesFloat(page, face, engine, shot) {
     const toasts = document.querySelector('[data-testid="notices-toasts"]');
     if (toasts && window.__toastsDisplay !== undefined) toasts.style.display = window.__toastsDisplay;
   }, LONG_VENDOR);
-  await page.waitForTimeout(700);
+  await settled(page, { most: 700 });
   if (SHOTS) {
     mkdirSync(SHOTS, { recursive: true });
     await page.screenshot({ path: join(SHOTS, `notices-${engine}-${shot}.png`) });
@@ -2255,7 +2256,7 @@ async function actOnIt(page, name) {
     return window.__handle.store.batches().at(-1).id;
   }, { name, owner: OWNER });
   // The way back is fetched with the first change.
-  await page.waitForTimeout(900);
+  await settled(page, { most: 900 });
   return batch;
 }
 function takenBack(page, batch) {
@@ -2294,31 +2295,31 @@ async function theWayBackOnPages(page) {
   const reached = await page.evaluate(() => document.activeElement?.getAttribute("data-testid") === "page-undo-dismiss" && document.activeElement.tagName === "BUTTON");
   const named = await page.evaluate(() => /^Dismiss: Take back “.+”$/.test(document.querySelector('[data-testid="page-undo-dismiss"]')?.getAttribute("aria-label") ?? ""));
   await page.keyboard.press("Enter");
-  await page.waitForTimeout(300);
+  await settled(page, { most: 300 });
   const close = { reached, named, closed: (await dockSays(page)) === null, kept: !(await takenBack(page, batch)), keyboardOnThePage: await page.evaluate(() => document.activeElement !== null && document.activeElement !== document.body) };
   /* Leaves after its time; Ctrl+Z, from inside the face, still takes it back. */
   batch = await actOnIt(page, "Way back two");
   const shown = (await dockSays(page)) !== null;
-  await page.waitForTimeout(WAY_BACK_MS + 700);
+  await until(async () => (await dockSays(page)) === null, { most: WAY_BACK_MS + 700 });
   const gone = (await dockSays(page)) === null;
   await page.evaluate(() => document.querySelector("[data-embed-content] a[href], [data-embed-content] button")?.focus());
   await ctrlZ(page);
-  await page.waitForTimeout(300);
+  await settled(page, { most: 300 });
   const leaves = { shown, gone, keyTookItBack: await takenBack(page, batch) };
   /* Stands while the pointer is on it. */
   await actOnIt(page, "Way back three");
   await page.locator('[data-testid="face-undo-dock"] [data-testid="page-undo"]').hover();
-  await page.waitForTimeout(WAY_BACK_MS + 1500);
+  await page.waitForTimeout(WAY_BACK_MS + 1500); // Measured on purpose: it stands past its whole time while the pointer is on it.
   const stood = (await dockSays(page)) !== null;
   await park(page);
-  await page.waitForTimeout(WAY_BACK_MS + 700);
+  await until(async () => (await dockSays(page)) === null, { most: WAY_BACK_MS + 700 });
   const held = { stood, goneAfter: (await dockSays(page)) === null };
   /* Goes with a move to another page — one of the person's own, a while after the act. */
   await actOnIt(page, "Way back four");
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(1500); // Measured on purpose: the move is "a while after the act".
   const before = (await dockSays(page)) !== null;
   await pressPlace(page, '[data-testid="app-place-kind:vendor"]');
-  await page.waitForTimeout(800);
+  await settled(page, { most: 800 });
   const move = { before, gone: (await dockSays(page)) === null };
   return { comes, close, leaves, held, move };
 }
@@ -2340,14 +2341,14 @@ async function activityReaches(page, name) {
   await button.click();
   const tab = page.locator('[data-testid="inbox-tab-activity"]').first();
   if ((await tab.getAttribute("aria-selected", { timeout: 3_000 }).catch(() => null)) !== "true") await tab.click().catch(() => undefined);
-  await page.waitForTimeout(400);
+  await settled(page, { most: 400 });
   const seen = await page.evaluate((name) => {
     const pane = document.querySelector('[data-testid="activity"]');
     return { opens: pane !== null && pane.getBoundingClientRect().height > 1, listsTheChange: (pane?.textContent ?? "").includes(name), offersItsUndo: Boolean(pane?.querySelector('[data-testid="undo-turn"]')) };
   }, name);
   // Closed as it was opened, by its bell (Escape on the scene also backs the picture out to home).
   await button.click();
-  await page.waitForTimeout(300);
+  await settled(page, { most: 300 });
   await park(page);
   return { inTheBar, ...seen };
 }
@@ -2357,7 +2358,7 @@ async function pressTakeBack(page) {
   const take = page.locator('[data-testid="notices-toasts"] [data-testid="notice-action"]', { hasText: "Take back" }).first();
   if (!(await take.isVisible().catch(() => false))) return false;
   await take.click();
-  await page.waitForTimeout(300);
+  await settled(page, { most: 300 });
   await park(page);
   return true;
 }
@@ -2376,7 +2377,7 @@ async function theWayBackOnTheScene(page) {
   /* At altitude. */
   if (!(await up())) {
     await overview.click();
-    await page.waitForTimeout(1500);
+    await settled(page, { most: 1500 });
   }
   let batch = await actOnIt(page, "Scene way one");
   const offeredUp = await offerSays(page);
@@ -2385,13 +2386,13 @@ async function theWayBackOnTheScene(page) {
   const altitude = { there: await up(), offered: (offeredUp?.says ?? "").includes("Scene way one"), closeNamed: offeredUp?.closeNamed === true, activity: activityUp, byControl: pressedUp && (await takenBack(page, batch)) };
   /* Down in a district. */
   await overview.click();
-  await page.waitForTimeout(1800);
+  await settled(page, { most: 1800 });
   batch = await actOnIt(page, "Scene way two");
   const offeredDown = await offerSays(page);
   const activityDown = await activityReaches(page, "Scene way two");
   await overview.focus();
   await ctrlZ(page);
-  await page.waitForTimeout(400);
+  await settled(page, { most: 400 });
   const byKey = await takenBack(page, batch);
   const offerWent = (await offerSays(page)) === null;
   batch = await actOnIt(page, "Scene way three");
@@ -2400,15 +2401,15 @@ async function theWayBackOnTheScene(page) {
   /* Goes after its time. */
   await actOnIt(page, "Scene way four");
   const shown = (await offerSays(page)) !== null;
-  await page.waitForTimeout(WAY_BACK_MS + 700);
+  await until(async () => (await offerSays(page)) === null, { most: WAY_BACK_MS + 700 });
   const leaves = { shown, gone: (await offerSays(page)) === null };
   /* Stands while the pointer is on it; its time come while held, it stands its whole time again. */
   await actOnIt(page, "Scene way five");
   await page.locator('[data-testid="notices-toasts"] [data-testid="notice"]').first().hover();
-  await page.waitForTimeout(WAY_BACK_MS + 1500);
+  await page.waitForTimeout(WAY_BACK_MS + 1500); // Measured on purpose: it stands past its whole time while the pointer is on it.
   const stood = (await offerSays(page)) !== null;
   await park(page);
-  await page.waitForTimeout(2 * WAY_BACK_MS + 700);
+  await until(async () => (await offerSays(page)) === null, { most: 2 * WAY_BACK_MS + 700 });
   const held = { stood, goneAfter: (await offerSays(page)) === null };
   return { altitude, down, leaves, held };
 }
@@ -2426,7 +2427,7 @@ async function goToPlace(page, title) {
   }, as);
   // The pointer off the bar, so no tab is drawn hovered in a screenshot.
   await page.mouse.move(2, (page.viewportSize()?.height ?? 800) - 2);
-  await page.waitForTimeout(1500);
+  await settled(page, { most: 1500 });
 }
 
 /** The first strength row's badge and progress label, and whether each is drawn whole. */

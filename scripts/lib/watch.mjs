@@ -57,6 +57,7 @@ import { fileURLToPath } from "node:url";
 import { recordUrl } from "./coverage.mjs";
 import { namedPorts } from "./ports.mjs";
 import { noteWait } from "./timing.mjs";
+import { trackRequests } from "./settled.mjs";
 import { acknowledgedBy } from "./watch-acknowledged.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
@@ -222,6 +223,21 @@ export function authorsOf(store) {
 
 function watchInPage() {
   if (window.__graviewWatch) return;
+  /*
+   * THE LOOKS STILL TO TAKE: a scan queued after a change, a second look at
+   * a control found crowded or covered, the keyboard's look after a press.
+   * A harness waiting for the page to settle (settled.mjs) waits for these
+   * as well, so a state it moves on from has been judged as fully as the
+   * fixed wait it replaced let it be.
+   */
+  let looks = 0;
+  const later = (then, ms) => {
+    looks += 1;
+    setTimeout(() => {
+      looks -= 1;
+      then();
+    }, ms);
+  };
   const seen = new Set();
   const where = () => `${location.pathname.split("/").pop() || "/"}${location.search}${location.hash}`.slice(0, 160);
   const report = (rule, detail, key) => {
@@ -378,7 +394,7 @@ function watchInPage() {
       if (!again.has(el)) continue;
       report("target-too-small", `${describe(el)} is ${Math.round(own.width)}×${Math.round(own.height)} pixels at ${document.documentElement.clientWidth} wide, within 12 pixels of ${describe(crowded.el)}`, `${location.pathname}|${describe(el)}|${document.documentElement.clientWidth}`);
     }
-    if (!again && found.size > 0) setTimeout(() => small(found), 700);
+    if (!again && found.size > 0) later(() => small(found), 700);
   };
   /*
    * NOTHING STANDS OVER A CONTROL (layout-collision-or-overflow). The class
@@ -526,7 +542,7 @@ function watchInPage() {
     const now = new Set(found.map(({ el, cover }) => `${describe(el)}|${describe(cover)}`));
     for (const pair of [...moved.keys()]) if (!now.has(pair)) moved.delete(pair);
     if (found.length === 0) return;
-    setTimeout(() => {
+    later(() => {
       let moving = false;
       for (const { el, cover, boxes } of found) {
         if (!el.isConnected || !pressable(el) || coveredAt(el) !== cover) continue;
@@ -541,7 +557,7 @@ function watchInPage() {
         moved.delete(pair);
         report("control-covered", `${describe(el)} is covered by ${describe(cover)} at ${width} wide${stirring ? ", and both keep moving" : ""} — a press there lands on the other`, `${location.pathname}|${describe(el)}|${describe(cover)}|${width}`);
       }
-      if (moving) setTimeout(schedule, 500);
+      if (moving) later(schedule, 500);
     }, 700);
   };
   /*
@@ -626,7 +642,7 @@ function watchInPage() {
      * has (a few times, for a scene that never stops).
      */
     if (document.querySelector(".graview-ground:not([data-graview-settled])")) {
-      if (unsettled++ < 12) setTimeout(schedule, 500);
+      if (unsettled++ < 12) later(schedule, 500);
     } else {
       unsettled = 0;
       covered();
@@ -691,10 +707,12 @@ function watchInPage() {
   const schedule = () => {
     if (queued) return;
     queued = true;
-    setTimeout(scan, 400);
+    later(scan, 400);
   };
 
   window.__graviewWatch = {
+    /** How many looks are still to be taken (`later`). */
+    looking: () => looks,
     learn({ ids: learned, words: said, unsaid: plain = [], kinds: declaredKinds = [] }) {
       for (const id of learned) ids.add(id);
       for (const kind of declaredKinds) kinds.add(kind);
@@ -761,7 +779,7 @@ function watchInPage() {
 
   // Judged once the scene has settled: a transition takes the old card away
   // at its end (about half a second), and the keyboard lands after it.
-  const settle = (then) => setTimeout(() => requestAnimationFrame(() => requestAnimationFrame(then)), 800);
+  const settle = (then) => later(() => requestAnimationFrame(() => requestAnimationFrame(then)), 800);
   /*
    * AND ASKED AGAIN BEFORE IT IS SAID. Under a loaded machine the keyboard
    * can land a few hundred milliseconds late, and a violation that is there
@@ -770,7 +788,7 @@ function watchInPage() {
    * keyboard is still on nothing a second and a half later.
    */
   const stillNowhere = (then) => settle(() => {
-    if (nowhere()) setTimeout(() => nowhere() && then(), 1500);
+    if (nowhere()) later(() => nowhere() && then(), 1500);
   });
   const TEXT_ENTRY = "input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]):not([type=reset]),textarea,[contenteditable='true'],[contenteditable='']";
   const KEYS = { Enter: "Enter", " ": "Space", Escape: "Escape", Delete: "Delete", Backspace: "Backspace" };
@@ -932,6 +950,7 @@ export function watched(browser, engine) {
   const listen = (page) => {
     if (listening.has(page)) return;
     listening.add(page);
+    trackRequests(page);
     /*
      * GRAVIEW_SLOW=4: every page as slow as the nightly's runner. The first
      * nightlies failed on what only a two-core runner shows — a dead end

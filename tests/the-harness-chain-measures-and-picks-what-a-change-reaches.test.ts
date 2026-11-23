@@ -15,6 +15,8 @@ import { claimBlocks, defaultJobs, lockBlock, longestFirst, nextFor, runPool } f
 import { falseClaims } from "../scripts/lib/on-github.mjs";
 // @ts-expect-error — as above.
 import { mergeParts, partPath, splitUnit, unitsOf } from "../scripts/lib/parts.mjs";
+// @ts-expect-error — as above.
+import { settled, until } from "../scripts/lib/settled.mjs";
 
 /**
  * THE HARNESS CHAIN SAYS WHAT EACH HARNESS COST, RUNS SIDE BY SIDE ON PORTS
@@ -78,6 +80,35 @@ describe("what a harness cost", () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe("a wait on what it means", () => {
+  /** A page that answers the looks it is asked, one after another, the last one from then on. */
+  const pageSaying = (looks: { quietFor: number; busy: boolean }[]) => {
+    let at = 0;
+    return { on: () => undefined, isClosed: () => false, evaluate: async () => looks[Math.min(at++, looks.length - 1)] };
+  };
+
+  it("ends once the page has been still and nothing is on its way, well before the wait it replaced", async () => {
+    const began = Date.now();
+    expect(await settled(pageSaying([{ quietFor: 0, busy: true }, { quietFor: 50, busy: false }, { quietFor: 250, busy: false }]), { most: 5_000 })).toBe(true);
+    expect(Date.now() - began).toBeLessThan(1_000);
+  });
+
+  it("never waits longer than the wait it replaced, on a page that never stops", async () => {
+    const began = Date.now();
+    expect(await settled(pageSaying([{ quietFor: 0, busy: true }]), { most: 300 })).toBe(false);
+    const took = Date.now() - began;
+    expect(took).toBeGreaterThanOrEqual(290);
+    expect(took).toBeLessThan(800);
+  });
+
+  it("asks a claim that goes in its own time until it has gone, and no longer than its time", async () => {
+    let asked = 0;
+    expect(await until(() => ++asked >= 3, { most: 5_000 })).toBe(true);
+    expect(asked).toBe(3);
+    expect(await until(() => false, { most: 150 })).toBe(false);
   });
 });
 

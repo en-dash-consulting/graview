@@ -51,6 +51,7 @@ import { launchEngine } from "./lib/engine.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { serving } from "./lib/serve.mjs";
 import { serveRich } from "./lib/one-face-rich-host.mjs";
+import { settled } from "./lib/settled.mjs";
 import { document as deepTime, seed as deepTimeSeed } from "./fixtures/one-face-rich/deep-time.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -73,7 +74,7 @@ const seen = { titleSplits: [], switch: [], button: [], node: [], lines: [], vie
 
 const ready = async (page) => {
   await page.waitForSelector("[data-graview-one-place]", { timeout: 60_000 });
-  await page.waitForTimeout(600);
+  await settled(page, { most: 600 });
   await still(page);
 };
 /**
@@ -878,7 +879,7 @@ async function chosenRecord(page, where) {
   await ready(page);
   await press(page, '[data-testid="altitude-stop-1"]');
   await restAt(page, 1);
-  await page.waitForTimeout(500);
+  await settled(page, { most: 500 });
   const read = await page.evaluate(() => {
     const city = document.querySelector('[data-testid="one-place-city"]');
     const roofOf = (building) => getComputedStyle(building.querySelector(".graview-iso-roof")).fill;
@@ -926,7 +927,7 @@ async function offSight(page, where) {
   await ready(page);
   await press(page, '[data-testid="altitude-stop-1"]');
   await restAt(page, 1);
-  await page.waitForTimeout(400);
+  await settled(page, { most: 400 });
   const small = await page.evaluate(() => {
     const lines = [...document.querySelectorAll("[data-graview-line]")];
     const r = document.querySelector('[data-graview-building="t-book"]')?.getBoundingClientRect();
@@ -1245,7 +1246,7 @@ async function linesOfEveryView(page, where) {
     await ready(page);
     await press(page, '[data-testid="altitude-stop-1"]');
     await restAt(page, 1);
-    await page.waitForTimeout(400);
+    await settled(page, { most: 400 });
     const seenHere = await page.evaluate(() => {
       const sheet = document.querySelector("[data-graview-one-place]");
       const port = sheet.getBoundingClientRect();
@@ -1941,7 +1942,7 @@ async function rich(browser, device) {
     await ready(page);
     await page.keyboard.press("2");
     await restAt(page, 1, 15_000);
-    await page.waitForTimeout(700);
+    await settled(page, { most: 700 });
     await page.mouse.move(2, Math.round(device.height / 2));
     await page.screenshot({ path: resolve(STRIPS, `rich-${device.width}-home-nearby.png`) });
     const home = await readRich(page);
@@ -2055,7 +2056,7 @@ async function rich(browser, device) {
       await ready(page);
       await page.keyboard.press(String(level + 1));
       await restAt(page, level, 15_000);
-      await page.waitForTimeout(700);
+      await settled(page, { most: 700 });
       const pick = () =>
         page.evaluate((level) => {
           // Beside the page, only what stands over the city: never under the page.
@@ -2122,7 +2123,7 @@ async function rich(browser, device) {
       await ready(page);
       await page.keyboard.press("2");
       await restAt(page, 1, 15_000);
-      await page.waitForTimeout(500);
+      await settled(page, { most: 500 });
       await page.mouse.move(300, 420);
       await page.mouse.down();
       for (let i = 1; i <= 12; i++) await page.mouse.move(300 + i * 40, 420 - i * 22);
@@ -2141,7 +2142,7 @@ async function rich(browser, device) {
         await ready(page);
         await page.keyboard.press(String(from + 1));
         await restAt(page, from, 15_000);
-        await page.waitForTimeout(500);
+        await settled(page, { most: 500 });
         const chip = page.locator('[data-graview-district-problems="specimen"]');
         const there = await chip.isVisible().catch(() => false);
         if (there) {
@@ -2278,7 +2279,7 @@ async function richPhoneLines(browser, device) {
     await ready(page);
     await page.keyboard.press("2");
     await restAt(page, 1, 15_000);
-    await page.waitForTimeout(900);
+    await settled(page, { most: 900 });
     await page.screenshot({ path: resolve(STRIPS, `rich-${device.width}-period-nearby.png`) });
     const read = await page.evaluate(() => {
       const sheet = document.querySelector("[data-graview-one-place]");
@@ -2442,7 +2443,7 @@ async function recordInPlace(browser) {
       await ready(page);
       await page.keyboard.press("2");
       await restAt(page, 1, 15_000);
-      await page.waitForTimeout(700);
+      await settled(page, { most: 700 });
     };
     await nearby(`/species/${RECORD_FROM}`);
     // A building of another species, pressed where it stands: one nothing else stands over, beside the page.
@@ -2632,7 +2633,7 @@ async function nearbyByHand(page, where) {
   await ready(page);
   await press(page, '[data-testid="altitude-stop-1"]');
   await restAt(page, 1);
-  await page.waitForTimeout(400);
+  await settled(page, { most: 400 });
   const box = await sheetBox(page);
   const city = { x: Math.round(box.x / 2), y: Math.round(box.y + box.height * 0.5) };
   const framed = { zoom: await cameraZoom(page), district: await districtAt(page) };
@@ -2747,7 +2748,7 @@ async function phoneCityByHand(page, where) {
   await ready(page);
   await press(page, '[data-testid="altitude-stop-1"]');
   await restAt(page, 1);
-  await page.waitForTimeout(400);
+  await settled(page, { most: 400 });
   const box = await sheetBox(page);
   const bar = await page.evaluate(() => Math.round(document.querySelector('[data-testid="one-place-bar"]').getBoundingClientRect().bottom));
   const dock = await page.evaluate(() => Math.round(document.querySelector("[data-graview-one-face-dock]")?.getBoundingClientRect().top ?? innerHeight));
@@ -2921,7 +2922,7 @@ async function panStill(page, where, { level, phone }) {
   await ready(page);
   await press(page, `[data-testid="altitude-stop-${level}"]`);
   await restAt(page, level, 15_000);
-  await page.waitForTimeout(700);
+  await settled(page, { most: 700 });
   const bar = await page.evaluate(() => Math.round(document.querySelector('[data-testid="one-place-bar"]')?.getBoundingClientRect().bottom ?? 0));
   /** Bare ground of the city, clear of the page, the boards, the names and the control. */
   const bare = () =>
@@ -3300,14 +3301,14 @@ async function homeReads(browser, device, app) {
     await ready(page);
     await page.keyboard.press("2");
     await restAt(page, 1, 15_000);
-    await page.waitForTimeout(700);
+    await settled(page, { most: 700 });
     await page.mouse.move(2, Math.round(device.height / 2));
     await page.screenshot({ path: resolve(STRIPS, `rich-${app}-${device.width}-home-nearby.png`) });
     const nearby = await readRich(page);
     const zoom = await page.evaluate(() => Number(document.querySelector('[data-testid="one-place-city"]')?.getAttribute("data-graview-camera-zoom") ?? 0));
     await page.keyboard.press("3");
     await restAt(page, 2, 15_000);
-    await page.waitForTimeout(500);
+    await settled(page, { most: 500 });
     const map = await readRich(page);
     // Each district's plot beside the page against the Map's.
     const sizes = Object.entries(nearby.district).filter(([kind]) => map.district[kind]).map(([kind, tile]) => ({ kind, nearby: Math.round(tile.width), map: Math.round(map.district[kind].width), times: Number((tile.width / map.district[kind].width).toFixed(2)) }));
@@ -3445,7 +3446,7 @@ async function pinchAndPan(page, where, { level }) {
   await ready(page);
   await press(page, `[data-testid="altitude-stop-${level}"]`);
   await restAt(page, level, 15_000);
-  await page.waitForTimeout(700);
+  await settled(page, { most: 700 });
   const cdp = await page.context().newCDPSession(page);
   const touch = (type, touchPoints) => cdp.send("Input.dispatchTouchEvent", { type, touchPoints });
   const now = () => page.evaluate(() => performance.now());
@@ -3513,7 +3514,7 @@ async function pinchAndPan(page, where, { level }) {
     // Back where the level frames it, for the next.
     await press(page, `[data-testid="altitude-stop-${level}"]`);
     await restAt(page, level, 15_000).catch(() => {});
-    await page.waitForTimeout(600);
+    await settled(page, { most: 600 });
   };
   const two = (a, b) => [{ ...a, id: 1 }, { ...b, id: 2 }];
   const pair = (s, gap, dx, dy) => two({ x: s.x - gap + dx, y: s.y + dy }, { x: s.x + gap + dx, y: s.y + dy });

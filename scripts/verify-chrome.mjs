@@ -48,6 +48,7 @@ import { graviewSources } from "./lib/graview-sources.mjs";
 import { serving, vacant } from "./lib/serve.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { unfold } from "./lib/menu-more.mjs";
+import { settled } from "./lib/settled.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -454,6 +455,7 @@ async function everyPopoverOn(page, where, size, seen) {
      * the box it was in for a moment (`useTheKeyboardLandsSomewhere`), which
      * would open its list again; the press away is made once that is over.
      */
+    // Measured on purpose: the Shell's moment of giving the keyboard back is a timer of its own, and the press away is made once it has run out.
     if (entry.focus !== "into") await page.waitForTimeout(2700);
     if (await openOne(page, entry)) {
       const ground = await bareGround(page);
@@ -569,7 +571,7 @@ async function thePictureKeepsItsWidth(newPage, readyOf) {
   const visit = async (page, url, ready) => {
     await page.goto(url, { waitUntil: "load" });
     await ready(page);
-    await page.waitForTimeout(900);
+    await settled(page, { most: 900 });
   };
   for (const [where, url, ready] of [
     ["the embed's Graview", `${at("chrome-host")}/?face=graview`, readyOf.embed],
@@ -667,8 +669,8 @@ async function theHostsNotices(page) {
   await page.waitForTimeout(250);
   said.overTheProfile = await toastOverThePopover(page, "profile");
   await page.keyboard.press("Escape");
-  /* A toast goes by itself; a banner stays, and changes in place. */
-  await page.waitForTimeout(6500);
+  /* A toast goes by itself; a banner stays, and changes in place. Waited for until it goes, no longer than the time it was given before; the banner is asked of once it has. */
+  await page.waitForFunction(() => document.querySelector('[data-testid="notices-toasts"] [data-testid="notice"]') === null, null, { timeout: 6_500 }).catch(() => {});
   said.toastGone = await page.evaluate(() => document.querySelector('[data-testid="notices-toasts"] [data-testid="notice"]') === null);
   said.bannerStays = await page.evaluate(() => document.querySelector('[data-testid="notices-banners"] [data-testid="notice"]') !== null);
   await page.evaluate(() => window.__newer.update({ sentence: "Offline — changes will be sent when you reconnect.", tone: "warn" }));
@@ -707,7 +709,7 @@ try {
     for (const place of places) {
       await page.goto(place.url, { waitUntil: "load" });
       await place.ready();
-      await page.waitForTimeout(900);
+      await settled(page, { most: 900 });
       const askBox = await anAskBox(page);
       faces[`${place.where} ${size.width}×${size.height}`] = { askBox, popovers: await everyPopoverOn(page, place.where, size, seen) };
       /* ---- FR-72: the host's actions, by keyboard, in both schemes */
@@ -1270,7 +1272,7 @@ try {
       });
       // Pressed as a keyboard presses it.
       await page.keyboard.press("Enter");
-      await page.waitForTimeout(300);
+      await settled(page, { most: 300 });
       const after = await page.evaluate(() => {
         const store = window.__handle.store;
         const key = Object.keys(localStorage).find((one) => one.startsWith("graview:not-now:"));
@@ -1415,7 +1417,7 @@ try {
         page.on("pageerror", (error) => errors.push(error.message));
         await page.goto(`${at("chrome-host")}/?face=graview`, { waitUntil: "load" });
         await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
-        await page.waitForTimeout(900);
+        await settled(page, { most: 900 });
         const said = await theHostsNotices(page);
         await page.close();
         const drawn = (one) => one !== null && one.topLayer && one.onTop && one.inTheViewport && one.floatingPanel && one.contrast >= 4.5;
@@ -1451,14 +1453,14 @@ try {
       page.on("pageerror", (error) => errors.push(error.message));
       await page.goto(`${at("chrome-host")}/?face=pages&path=/tasks&refuse=1&report=1`, { waitUntil: "load" });
       await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
-      await page.waitForTimeout(600);
+      await settled(page, { most: 600 });
       /* The host's banner and a toast of every tone, beside the framework's own error toast. */
       await page.evaluate(() => {
         window.__handle.notify({ kind: "banner", tone: "warn", sentence: "Offline — changes will be sent when you reconnect.", action: { label: "Retry", onSelect: () => {} } });
         for (const tone of ["info", "good", "warn", "bad"]) window.__handle.notify({ kind: "toast", tone, sentence: `A ${tone} toast from the host.`, timeout: false });
       });
       const raised = await refused(page);
-      await page.waitForTimeout(300);
+      await settled(page, { most: 300 });
       /* FR-236: no element in a toast or a banner has a border on its left wider than its other sides. */
       const sides = await page.evaluate(() => {
         const cards = [...document.querySelectorAll('[data-testid="notice"]')];
@@ -1481,13 +1483,15 @@ try {
         const drawn = await button.first().waitFor({ timeout: 5_000 }).then(() => true, () => false);
         const named = drawn ? await button.first().evaluate((one) => ({ tag: one.tagName, label: one.getAttribute("aria-label"), text: one.textContent })) : null;
         if (drawn) await button.first().focus();
+        // Measured on purpose: the claim is that the toast outlasts its time while it has focus, so the whole time is waited out.
         await page.waitForTimeout(7_500);
         const held = await page.evaluate(() => document.querySelector('[data-testid="notice-report"]') !== null && document.activeElement?.getAttribute("data-testid") === "notice-report");
         if (drawn) await page.keyboard.press("Enter");
         await page.waitForTimeout(200);
         const handed = await page.evaluate(() => ({ reports: window.__reports ?? [], version: window.__version, stillThere: document.querySelector('[data-testid="notice-report"]') !== null }));
         await page.evaluate(() => document.querySelector('[data-testid="profile-button"]')?.focus());
-        await page.waitForTimeout(7_500);
+        // Gone once its time runs out: waited for, no longer than the time it was given before.
+        await page.waitForFunction(() => document.querySelector('[data-testid="notice-report"]') === null, null, { timeout: 7_500 }).catch(() => {});
         const gone = await page.evaluate(() => document.querySelector('[data-testid="notice-report"]') === null);
         const report0 = handed.reports[0] ?? null;
         reporting.withTheHook = {
@@ -1503,9 +1507,9 @@ try {
       page.on("pageerror", (error) => errors.push(error.message));
       await page.goto(`${at("chrome-host")}/?face=pages&path=/tasks&refuse=1`, { waitUntil: "load" });
       await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
-      await page.waitForTimeout(600);
+      await settled(page, { most: 600 });
       const raised = await refused(page);
-      await page.waitForTimeout(300);
+      await settled(page, { most: 300 });
       const without = await page.evaluate(() => ({ toasts: document.querySelectorAll('[data-testid="notices-toasts"] [data-testid="notice"]').length, buttons: document.querySelectorAll('[data-testid="notice-report"]').length }));
       reporting.withoutTheHook = { ...raised, ...without, ok: raised.offered && raised.said && without.toasts >= 1 && without.buttons === 0 };
       await page.close();
@@ -1549,11 +1553,11 @@ try {
         page.on("pageerror", (error) => errors.push(error.message));
         await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
         await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
-        await page.waitForTimeout(900);
+        await settled(page, { most: 900 });
         const shell = await readBar(page);
         await page.goto(`${at("chrome-host")}/?face=graview`, { waitUntil: "load" });
         await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
-        await page.waitForTimeout(900);
+        await settled(page, { most: 900 });
         const embed = await readBar(page);
         await page.close();
         // The places are each app's registry's (the Shell's todo registers its own lenses), so they are said, not compared.
@@ -1647,9 +1651,10 @@ try {
           page.on("pageerror", (error) => errors.push(error.message));
           await page.goto(place.url, { waitUntil: "load" });
           await place.ready(page);
-          await page.waitForTimeout(1200);
+          await settled(page, { most: 1200 });
           /* The bar holds still: drawn the same a moment later, one row of at most 48 px, nothing over anything, nothing past its end. */
           const first = await geometry(page);
+          // Measured on purpose: "holds still" is the same geometry read twice, a moment apart.
           await page.waitForTimeout(700);
           const again = await geometry(page);
           stillness[key] = {
@@ -1663,7 +1668,7 @@ try {
             let opened = null;
             if (folded && first?.magnifier) {
               await page.locator('[data-testid="app-find-open"]:visible').first().click();
-              await page.waitForTimeout(300);
+              await settled(page, { most: 300 });
               opened = await page.evaluate(() => ({
                 finding: document.querySelector('[data-testid="app-bar"]')?.hasAttribute("data-finding") ?? false,
                 typing: document.activeElement?.tagName === "INPUT",
@@ -1673,7 +1678,7 @@ try {
               opened.overlaps = over?.overlaps ?? null;
               await page.keyboard.press("Escape");
               await page.keyboard.press("Escape");
-              await page.waitForTimeout(300);
+              await settled(page, { most: 300 });
               opened.back = await page.evaluate(() => document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName);
               opened.closed = await page.evaluate(() => !document.querySelector('[data-testid="app-bar"]')?.hasAttribute("data-finding"));
             }
@@ -1739,7 +1744,7 @@ try {
               if (!(await page.locator('[data-testid="app-menu"]:not([hidden])').count())) await page.locator('[data-testid="app-menu-open"]').click();
               await page.waitForSelector(`[data-testid="app-face-${other}"]`, { timeout: 10_000 }).catch(() => {});
               await page.locator(`[data-testid="app-face-${other}"]`).click().catch(() => {});
-              await page.waitForTimeout(1500);
+              await settled(page, { most: 1500 });
               await page.locator('[data-testid="app-menu-open"]').click();
               await page.waitForSelector(`[data-testid="app-face-${other}"]`, { timeout: 10_000 }).catch(() => {});
               switched = await page.evaluate((one) => document.querySelector(`[data-testid="app-face-${one}"]`)?.getAttribute("aria-pressed") === "true", other);
@@ -1761,7 +1766,7 @@ try {
               // Back where the rest of this place's claims were read.
               await page.goto(place.url, { waitUntil: "load" });
               await place.ready(page);
-              await page.waitForTimeout(1200);
+              await settled(page, { most: 1200 });
             }
             /* One inbox: one bell, one count, three tabs, landing on what waits for you — the host's notification and the suggestion. */
             const inbox = await page.evaluate(async () => {
@@ -1880,7 +1885,7 @@ try {
         page.on("pageerror", (error) => errors.push(error.message));
         await page.goto(`${at("chrome-host")}/?face=${face}`, { waitUntil: "load" });
         await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
-        await page.waitForTimeout(900);
+        await settled(page, { most: 900 });
         const drawn = await page.evaluate(() => {
           const bar = document.querySelector('[data-testid="app-bar"]');
           const row = bar.getBoundingClientRect();
@@ -1934,13 +1939,13 @@ try {
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
     await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
-    await page.waitForTimeout(900);
+    await settled(page, { most: 900 });
     await page.click('[data-testid="inbox-button"]');
     await page.waitForSelector('[data-testid="problems"]', { timeout: 10_000 });
-    await page.waitForTimeout(400);
+    await settled(page, { most: 400 });
     const problems = await page.evaluate(() => document.querySelector('[data-testid="problems"]')?.innerText ?? "");
     await page.goto(`${at("todo")}/pages/tasks/t-deposit?today=2026-09-01`, { waitUntil: "load" });
-    await page.waitForTimeout(1200);
+    await settled(page, { most: 1200 });
     const record = await page.evaluate(() => {
       const main = document.querySelector("main") ?? document.body;
       // What is read, not what is edited: the values as drawn, outside any edit control.
