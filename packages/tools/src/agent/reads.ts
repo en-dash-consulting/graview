@@ -1,5 +1,6 @@
 import { archivedFrom, isArchived, labelOf, PERSON_SEAT, type AnySchema, type SearchResult, type Store, type Violation } from "@graview/core";
 import { computedValues } from "@graview/core/blocks";
+import { changedOnce } from "@graview/core/words";
 import { READ_CHARS, READ_LINKS, READ_PAGE, READ_PROBLEMS, READ_TEXT } from "./bounds.js";
 import type { Authorship, UntrustedText } from "./untrusted.js";
 
@@ -139,8 +140,29 @@ export function searchRead(found: SearchResult, marked: SearchResult): unknown {
   return found.total > shown ? { ...answer, more: `and ${found.total - shown} more records match: narrow the words, or add kind:<kind>.` } : answer;
 }
 
-/** `get_graph`: a page of records, the edges out of them, the total and how to read the next page. */
-export function graphRead<S extends AnySchema>(seen: Store<S>, by: Authorship, args: Record<string, unknown>): { readonly data: unknown; readonly reads: readonly string[] } {
+/** Who a record says changed it, as a model is told it (`touchesSaid`), and the moment its "3 days ago" is counted from. */
+export interface ChangedTold {
+  readonly said: <N extends object>(node: N) => N;
+  readonly now?: string | number | Date;
+}
+
+/**
+ * A record of a page, its four said once (`changedOnce`): `changed: "3 days
+ * ago by Ann"`, the person named as this seat sees them, else "someone".
+ * The name is a record's label, said unmarked as `authoredBy` says one: a
+ * mark of its own on every record would cost more than the four it replaces.
+ */
+function changedOnPage<S extends AnySchema, N extends { id: string; kind: string }>(seen: Store<S>, told: ChangedTold | undefined, node: N): N {
+  if (!told) return node;
+  const name = (who: string): string | undefined => {
+    const person = seen.graph.getNode(who);
+    return person ? labelOf(seen.schema.tryDefinition(person.kind), person) : undefined;
+  };
+  return changedOnce(told.said(node), { ...(told.now !== undefined ? { now: told.now } : {}), name });
+}
+
+/** `get_graph`: a page of records, each saying when and by whom it was last changed once, the edges out of them, the total and how to read the next page. */
+export function graphRead<S extends AnySchema>(seen: Store<S>, by: Authorship, args: Record<string, unknown>, told?: ChangedTold): { readonly data: unknown; readonly reads: readonly string[] } {
   // The live records, unless asked for the archived ones (FR-173): `archived: true` or `"all"`.
   const archived = archivedFrom(args["archived"]);
   const snapshot = { nodes: seen.graph.allNodes({ archived }), edges: seen.graph.allEdges({ archived: "all" }) };
@@ -152,7 +174,7 @@ export function graphRead<S extends AnySchema>(seen: Store<S>, by: Authorship, a
     const more = moreSaid(total, offset, nodes.length, "get_graph", "nodes");
     // A link out of a record on the page, to one the read reaches.
     const reaches = (id: string) => reached.has(id) || (archived === "all" ? seen.graph.has(id) : seen.graph.has(id) && isArchived(seen.graph.getNode(id)) === archived);
-    return { ...markGraph({ nodes: nodes.map(clipped), edges: snapshot.edges.filter((edge) => on.has(edge.from) && reaches(edge.to)) }, by), total, ...(more ? { more } : {}) };
+    return { ...markGraph({ nodes: nodes.map((node) => changedOnPage(seen, told, clipped(node))), edges: snapshot.edges.filter((edge) => on.has(edge.from) && reaches(edge.to)) }, by), total, ...(more ? { more } : {}) };
   });
   return { data: answer, reads: page.map((node) => node.id) };
 }

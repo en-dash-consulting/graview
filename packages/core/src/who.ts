@@ -57,11 +57,11 @@ export function nameOfAuthor(
     // A profile's own person, to whoever is told the account (the seat itself, the host): "Mia (Nick)", as below.
     if (!profile || label !== profile.name) return label;
   }
-  /* WHO AT THE SCREEN: "Mia (Nick)"; on an account nothing here names, just "Mia". */
+  /* WHO AT THE SCREEN: "Mia (Nick)"; on an account nothing here names, or one named as the profile is, just "Mia". */
   if (profile) {
     const { profile: _said, ...account } = author;
     const named = nameOfAuthor(account, where);
-    return named === "somebody" ? profile.name : `${profile.name} (${named})`;
+    return named === "somebody" || named === profile.name ? profile.name : `${profile.name} (${named})`;
   }
   // A kind a newer build wrote reads as the app itself (`authorKindOf`).
   const kind = authorKindOf(author);
