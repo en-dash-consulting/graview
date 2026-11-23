@@ -1,4 +1,5 @@
 import { humanizeField, labelOf, PERSON_SEAT, touchesSaid, type AnySchema, type Principal, type Store } from "@graview/core";
+import { changedOnce } from "@graview/core/words";
 
 /**
  * WHAT IS TRUE OF THE RECORDS, AS THE SEAT SEES THEM (Roadmap
@@ -29,8 +30,8 @@ export function factsOf<S extends AnySchema>(store: Store<S>, principal: Princip
   return ids.slice(0, limit).flatMap((id) => {
     const held = seen.getNode(id) as (Record<string, unknown> & { id: string; kind: string }) | undefined;
     if (!held) return [];
-    // Who made or touched it, as a model is told it: the person, never the account (`touchesSaid`).
-    const node = said(held);
+    // Who made or touched it, as a model is told it: the person, never the account (`touchesSaid`) — and said once, `changed: "3 days ago by Ann"` (`changedOnce`).
+    const node = changedOnce(said(held), { name });
     const fields = Object.fromEntries(
       Object.entries(node)
         .filter(([key, value]) => !["id", "kind", "label", PERSON_SEAT].includes(key) && !key.startsWith("_") && value !== undefined && value !== null && (typeof value !== "object" || Array.isArray(value)) && JSON.stringify(value).length <= 200)

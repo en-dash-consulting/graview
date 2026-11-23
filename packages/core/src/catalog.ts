@@ -38,6 +38,7 @@ import type { Principal } from "./permissions/types.js";
 import { fieldWords, humanizeField, labelOf, nounOf, pluralOf } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
 import { seatOf } from "./seat-of.js";
+import { changedWords } from "./changed-once.js";
 import { jobIsFor, type AppPurpose } from "./job-shape.js";
 import type { Store } from "./store.js";
 export { planEdits } from "./plan-edits.js";
@@ -604,7 +605,8 @@ export interface SchemaDigest {
 /** What the target is, as the state says it. */
 export interface AiTargetState {
   readonly on: AiTarget["on"];
-  readonly record?: AiRecordBrief & { readonly fields: Readonly<Record<string, unknown>> };
+  /** The record, its fields, and when and by whom it was last changed, said once: `changed: "3 days ago by Ann"` (`changedWords`), where the viewer is told it. */
+  readonly record?: AiRecordBrief & { readonly fields: Readonly<Record<string, unknown>>; readonly changed?: string };
   readonly field?: string;
   readonly kind?: string;
   readonly place?: string;
@@ -744,9 +746,14 @@ export function aiContextOf<S extends AnySchema>(given: Store<S>, target: AiTarg
   const fields = record
     ? Object.fromEntries(Object.keys(shapeOf(schema, record.kind)).filter((field) => !hiddenFields(schema, record.kind).has(field) && record[field] !== undefined && field !== "label").map((field) => [field, record[field]]))
     : {};
+  // When and by whom the record was last changed, once, the person as this viewer may see them, else "someone".
+  const changedOf = (node: Node): { readonly changed?: string } => {
+    const changed = changedWords(node, { name: (who) => { const person = nodeOf(who); return person ? nameOf(schema, person) : undefined; } });
+    return changed !== undefined ? { changed } : {};
+  };
   const targetState: AiTargetState = {
     on: target.on,
-    ...(record ? { record: { ...brief(record), fields } } : {}),
+    ...(record ? { record: { ...brief(record), fields, ...changedOf(record) } } : {}),
     ...(target.on === "field" && record ? { field: target.field } : {}),
     ...(target.on === "list" && visible.has(target.kind) ? { kind: target.kind } : {}),
     ...(target.on === "lens" ? { place: target.place, ...(target.kind && visible.has(target.kind) ? { kind: target.kind } : {}) } : {}),

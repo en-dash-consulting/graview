@@ -1,15 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { BIND_PERSON, createSchema, defineNode, Store, touchedOf, type AnySchema, type Policy, type Principal } from "@graview/core";
-import { bindPerson, hostSeat } from "@graview/core/binding";
+import { bindPerson, hostSeat, unbindPerson } from "@graview/core/binding";
 import { exportBundle } from "../../src/export.js";
 
 /**
  * AN EXPORT KEEPS WHO TOUCHED A RECORD AS THE STORE DOES (Graview HQ
  * feature:f-record-last-touched): its records, and the checkpoint it begins
  * at, keep when each was made and last touched, and who as the store keeps
- * it, the acting seat, as each op's author is kept; whom each seat was bound
- * to stays in the installation. Restored from its snapshot and log, from its
+ * it, the acting seat, as each op's author is kept; no record carries the
+ * mark that binds a person, and the person each such seat is, is said once
+ * beside them (`seatPeople`, below). Restored from its snapshot and log, from its
  * log alone or from its checkpoint and log, a record says the same four.
  */
 const clock = (start = Date.UTC(2026, 10, 20, 12, 0)) => {
@@ -63,5 +64,61 @@ describe("an export", () => {
     const compacted = bundleOf(store);
     const fromCheckpoint = new Store<AnySchema>({ schema: family, policy: rules, log: compacted.log, epochs: [compacted.checkpoint] } as never);
     for (const restored of [fromSnapshot, fromLog, fromCheckpoint]) expect(touchedOf(restored.graph.getNode("gift:kite"))).toEqual(kept);
+  });
+});
+
+/**
+ * A BACKUP SAYS WHO CHANGED A RECORD AS THE PERSON (Graview HQ
+ * feature:f-system-backup-touched-by-seat-ids). Beside the seat each
+ * record's `createdBy` and `updatedBy` keep, the bundle says, once for each
+ * such seat, the record of the people kind it is or was last bound to
+ * (`seatPeople`); a restore reads the four as it did, the seat as kept.
+ */
+describe("an export's people", () => {
+  const peopleOf = (bundle: object) => (bundle as { seatPeople?: Readonly<Record<string, string>> }).seatPeople;
+
+  it("names the person each seat that touched a record is bound to, once for each seat", () => {
+    const bundle = bundleOf(touchedByBud());
+    expect(peopleOf(bundle)).toEqual({ "acct-bud": "participant:bud" });
+    expect(kiteIn(bundle.snapshot.nodes).updatedBy).toBe("acct-bud");
+  });
+
+  it("still names the person once the binding ended, and none for a seat bound to nobody", () => {
+    const store = touchedByBud();
+    store.apply({ name: "edit-gift", args: { id: "gift:kite", title: "Blue" } }, { author: { kind: "human", id: "acct-cy", roles: ["member"] } as Principal });
+    store.apply({ name: "edit-gift", args: { id: "gift:kite", title: "Green" } }, { author: bud });
+    unbindPerson(store, bud, { author: host });
+    expect(peopleOf(bundleOf(store))).toEqual({ "acct-bud": "participant:bud" });
+  });
+
+  it("names them for a compacted store, whose checkpoint keeps the seat", () => {
+    const store = touchedByBud();
+    store.compact(store.checkpoint({ seq: store.log.length })!);
+    const bundle = bundleOf(store);
+    expect(kiteIn(bundle.checkpoint!.base.nodes).updatedBy).toBe("acct-bud");
+    expect(peopleOf(bundle)).toEqual({ "acct-bud": "participant:bud" });
+  });
+
+  it("names the person of a seat only a removed record's removal names", () => {
+    const store = touchedByBud();
+    store.applyPrimitives([{ op: "remove-node", node: store.graph.getNode("gift:kite") }] as never, { author: host });
+    const bundle = bundleOf(store);
+    expect(bundle.snapshot.nodes.some((node) => node.id === "gift:kite")).toBe(false);
+    expect(peopleOf(bundle)).toEqual({ "acct-bud": "participant:bud" });
+  });
+
+  it("says nothing where no record was touched by a seat bound to a person", () => {
+    const store = new Store<AnySchema>({ schema: family, policy: rules, now: clock() } as never);
+    store.applyPrimitives([{ op: "add-node", node: { id: "gift:kite", kind: "gift", title: "A kite" } }] as never, { author: host });
+    expect(Object.hasOwn(bundleOf(store), "seatPeople")).toBe(false);
+  });
+
+  it("is read by no restore: a record restored from it says the four the store kept", () => {
+    const store = touchedByBud();
+    const kept = touchedOf(store.graph.getNode("gift:kite"));
+    const whole = bundleOf(store);
+    const restored = new Store<AnySchema>({ schema: family, policy: rules, snapshot: whole.snapshot, log: whole.log } as never);
+    expect(touchedOf(restored.graph.getNode("gift:kite"))).toEqual(kept);
+    expect(touchedOf(restored.graph.getNode("gift:kite")).updatedBy).toBe("acct-bud");
   });
 });
