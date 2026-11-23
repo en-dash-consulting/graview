@@ -1,6 +1,6 @@
 ---
 name: graview-shipped-lens
-description: Declare one of the lenses Graview ships — a calendar, a status board, a coverage, a timeline, a board, a plan, a blocks place — as a titled place with its bindings and options, and read what graview check and add-lens refuse (an option the lens does not take, a lens that cannot draw, a title taken) rather than drawing a lens that quietly ignores a key.
+description: Declare one of the lenses Graview ships — a calendar, a status board, a coverage, a timeline, a board, a plan, a map, a blocks place — as a titled place with its bindings and options, and read what graview check and add-lens refuse (an option the lens does not take, a lens that cannot draw, a title taken) rather than drawing a lens that quietly ignores a key.
 ---
 
 # Declare a shipped lens
@@ -34,6 +34,7 @@ rather than guessing a key:
 | `coverage` | entities | `rows`, `columns`, `link` | `rowRef`, `rowGroup`, `groupOrder`, `requiredGroups`, `requiredVia`, `badge`, `columnGroup`, `sort`, `columnSort`, `search`, `filters` |
 | `board` | entities | `slots`, `x`, `y`, `fill` | `fillFrom`, `slotCode`, `zones`, `aspect`, `emptyLabel`, `pickTarget`, `arranging`, `arrange` |
 | `plan` | entities | `regions`, `outline` | `hues`, `aspect`, `undrawnLabel`, `strayLabel`, `draw`, `place`, `help` |
+| `map` | fields | — | `search`, `filters`, `arranging` |
 | `reach` | nothing | — | — |
 | `blocks` | nothing | — | `blocks` |
 
@@ -66,6 +67,7 @@ when the bindings do not (reach; a coverage over its columns).
   `label` the name, held to the kind. A coverage with no columns, or no
   link over its relation, says so ("No genres yet: link songs to
   genres.") and lists no rows.
+- **A map** pins each record where it is: `bindings: { trip: { place: "where" } }`, a place field (bound to nothing, the kind's first place field), or `{ stop: { lat: "lat", lng: "lng" } }`, two number fields. The framework never looks a place up: the host keeps the point it found beside the words, `"whereGeo": { "lat": 51.4787, "lng": -0.2956 }`, through the kind's edit act; no form asks for it, a worker view reads it, and a sight that hides the place hides it. Nothing is fetched: the ground is drawn in Web Mercator with lines of latitude and longitude, and a host may hand tiles (`MapTilesContext`). Each pin is a link to its record (pins at one spot are set out around it); Find and the chips arrange its first bound kind; records with no point are said ("2 trips have no place yet"). Over a kind with neither it does not draw: `lens-no-coordinates`. In code, declare the point beside the place: `whereGeo: placeGeoField()`.
 - **A blocks place** is drawn from the closed block set (headline,
   figure, list — `graview-view-specs`), each record by its own row or card:
   `{ name: "blocks", title: "What we heard", on: "signal", options: {
@@ -101,6 +103,7 @@ not draw and what it ignores:
   sent as a JSON patch or a whole document is judged by
   `lensOptionsRefused(stored, proposed)` (`@graview/core/document`): an
   error for each such key the same lens did not already carry.
+- `lens-no-coordinates` — a map over a kind with no place field and no latitude and longitude; `add-lens` refuses it.
 - `lens-cannot-draw` — it binds no kind, its board's column field is not a
   choice, its timeline has no columns or binds a field that is not a
   number (its fix names the bindings a timeline takes, and the calendar), its calendar's `today` is not a

@@ -12,7 +12,7 @@ import type { ShippedLensName } from "./places.js";
  * A plan draws outlines, the reach draws the policy and a blocks place its
  * own words, so none of them has a list to write.
  */
-export const LENSES_THAT_LIST: readonly ShippedLensName[] = ["timeline", "calendar", "coverage", "board", "columns"];
+export const LENSES_THAT_LIST: readonly ShippedLensName[] = ["timeline", "calendar", "coverage", "board", "columns", "map"];
 
 /** Whether a lens lists records: one of `LENSES_THAT_LIST`. */
 export const listsRecords = (name: string): boolean => (LENSES_THAT_LIST as readonly string[]).includes(name);

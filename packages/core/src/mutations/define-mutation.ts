@@ -1,4 +1,5 @@
 import { InvalidArguments } from "./invalid-arguments.js";
+import { nodeRefKinds } from "./node-ref.js";
 import { ActRefusal } from "../refused.js";
 import type { z } from "zod";
 import { ARCHIVED, isArchived } from "../graph/archived.js";
@@ -110,6 +111,20 @@ export function numbersSpelled(input: unknown, given: unknown): unknown {
     read[key] = number;
   }
   return read ?? given;
+}
+
+/**
+ * A RECORD LEFT EMPTY IS NO RECORD (HQ f-forms-and-downloads-follow-ups).
+ * An agent hands `""` for a record argument it chose to leave empty, as a
+ * form's empty choice reads; for an argument the act may be handed or not,
+ * that is no value, and the act goes on without it rather than refusing an
+ * empty reference. A record the act must be handed is still refused.
+ */
+export function emptyRecordsLeftOut(input: unknown, given: unknown): unknown {
+  const shape = (input as { shape?: Record<string, { safeParse?(value: unknown): { success: boolean } }> } | undefined)?.shape;
+  if (!shape || typeof given !== "object" || given === null || Array.isArray(given)) return given;
+  const empty = Object.keys(given as Record<string, unknown>).filter((key) => (given as Record<string, unknown>)[key] === "" && nodeRefKinds(shape[key]) !== undefined && shape[key]?.safeParse?.(undefined).success === true);
+  return empty.length === 0 ? given : Object.fromEntries(Object.entries(given as Record<string, unknown>).filter(([key]) => !empty.includes(key)));
 }
 
 /**
@@ -300,7 +315,7 @@ export function compileMutation<S extends AnySchema>(
    * its next call, needs exactly the id it asked for or an honest no.
    */
   const requested = takesAnId(definition) ? requestedId(rawArgs, options.hostsOwn) : undefined;
-  const given = numbersSpelled(definition.input, requested === undefined ? rawArgs : withoutId(rawArgs as Record<string, unknown>));
+  const given = emptyRecordsLeftOut(definition.input, numbersSpelled(definition.input, requested === undefined ? rawArgs : withoutId(rawArgs as Record<string, unknown>)));
   /*
    * AN ARGUMENT THE ACT DOES NOT TAKE IS REFUSED, by every act (FR-121; a
    * derived edit since FR-110). A plain `z.object` strips what it does not

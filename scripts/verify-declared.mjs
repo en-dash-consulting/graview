@@ -130,6 +130,9 @@ const LAYOUT_SEED = resolve(repoRoot, "packages/core/tests/document/fixtures/blo
 /** The Beatles' discography (Oct 15): its lenses told a horizon and an order, and a home listing every song by writer. */
 const BEATLES = resolve(repoRoot, "packages/core/tests/document/fixtures/beatles.gdd.json");
 const BEATLES_SEED = resolve(repoRoot, "packages/core/tests/document/fixtures/beatles.seed.json");
+/** A school's field trips (Graview HQ feature:f-map-lens): a map over a place field whose points the host found, two trips without one. */
+const TRIPS = resolve(repoRoot, "packages/core/tests/document/fixtures/field-trips.gdd.json");
+const TRIPS_SEED = resolve(repoRoot, "packages/core/tests/document/fixtures/field-trips.seed.json");
 const MONEY_SEED = {
   nodes: [
     { id: "d1", kind: "deal", name: "Acme rebrand", amount: 10000, margin: 0.125, effort: 90, weight: 12.5, fee: 1250.5, stage: "won" },
@@ -205,6 +208,9 @@ async function buildHost() {
         import beatles from ${JSON.stringify(BEATLES)};
         import beatlesSeed from ${JSON.stringify(BEATLES_SEED)};
         const fab = asked.get("doc") === "beatles";
+        import trips from ${JSON.stringify(TRIPS)};
+        import tripsSeed from ${JSON.stringify(TRIPS_SEED)};
+        const tripped = asked.get("doc") === "trips";
         const discography = {
           ...beatles,
           views: { home: [{ headline: "The songs" }, { list: "all('song')", sort: "name", as: "row", group: "writtenBy" }] },
@@ -234,15 +240,15 @@ async function buildHost() {
         const dollars = asked.get("doc") === "money";
         /* A document as a store that sorts its keys keeps it: the deal's fields alphabetical, its name among them. */
         const kept = asked.get("sorted") === "1" ? { ...money, kinds: { ...money.kinds, deal: { ...money.kinds.deal, fields: Object.fromEntries(Object.entries(money.kinds.deal.fields).sort(([a], [b]) => a.localeCompare(b))) } } } : money;
-        const compiled = compileDocumentWithoutCheck(working ? jobbed : fab ? discography : laidOut ? layout : proposal ? lifelogics : board ? tasks : org ? strengths : changed ? changes : dollars ? kept : reviewed ? review : hall, { today: () => "2026-09-01" });
+        const compiled = compileDocumentWithoutCheck(working ? jobbed : tripped ? trips : fab ? discography : laidOut ? layout : proposal ? lifelogics : board ? tasks : org ? strengths : changed ? changes : dollars ? kept : reviewed ? review : hall, { today: () => "2026-09-01" });
         if (!compiled.ok) throw new Error("the document did not compile");
         window.__handle = mount(document.getElementById("app"), {
           app: compiled.app,
-          seed: working ? ${JSON.stringify(JOBS_SEED)} : fab ? beatlesSeed : laidOut ? layoutSeed : proposal ? lifelogicsSeed : board ? ${JSON.stringify(TASKS_SEED)} : org ? strengthsSeed : changed ? ${JSON.stringify(CHANGES_SEED)} : dollars ? ${JSON.stringify(MONEY_SEED)} : reviewed ? reviewSeed : ${JSON.stringify(SEED)},
+          seed: working ? ${JSON.stringify(JOBS_SEED)} : tripped ? tripsSeed : fab ? beatlesSeed : laidOut ? layoutSeed : proposal ? lifelogicsSeed : board ? ${JSON.stringify(TASKS_SEED)} : org ? strengthsSeed : changed ? ${JSON.stringify(CHANGES_SEED)} : dollars ? ${JSON.stringify(MONEY_SEED)} : reviewed ? reviewSeed : ${JSON.stringify(SEED)},
           /* "none": the app's to choose — its home view, else the scene (FR-136). */
           ...(asked.get("face") === "none" ? {} : { face: asked.get("face") ?? "scene" }),
           ...(asked.get("path") ? { path: asked.get("path") } : {}),
-          principal: proposal || org || changed || dollars || reviewed || laidOut || fab
+          principal: proposal || org || changed || dollars || reviewed || laidOut || fab || tripped
             ? { kind: "human", id: "u:owner", roles: ["owner"] }
             : board || working
               ? asked.get("as") === "viewer" ? { kind: "human", id: "p2", roles: ["viewer"] } : { kind: "human", id: "p1", roles: ["owner"] }
@@ -1026,6 +1032,54 @@ try {
       before,
       after,
       ok: before.listed === 100 && before.button === "Show 58 more" && after.listed === 158 && !after.button && after.headings.join() === "Harrison,Lennon,McCartney,Starkey",
+    };
+  }
+
+  /* ---- A map (Graview HQ feature:f-map-lens): a pin per trip the host found a point for, the rest said, a pin opened by a press and by Enter, at a desk and a phone */
+  {
+    const PINNED = ["trip-greenwich", "trip-kew", "trip-museum", "trip-science", "trip-zoo"];
+    const seen = {};
+    const opened = {};
+    for (const size of SIZES) {
+      const at = `${size.width}x${size.height}`;
+      const page = await open(`doc=trips&face=pages&path=${encodeURIComponent("/places/where-we-go")}`, size);
+      await page.waitForSelector("[data-map-pin]", { timeout: 20_000 }).catch(() => {});
+      seen[at] = await page.evaluate(() => {
+        const map = document.querySelector(".graview-map");
+        const box = map?.getBoundingClientRect();
+        const pins = [...document.querySelectorAll("[data-map-pin]")].map((pin) => {
+          const r = pin.getBoundingClientRect();
+          return { id: pin.getAttribute("data-map-pin"), name: pin.getAttribute("aria-label"), link: pin.tagName === "A" && pin.hasAttribute("href"), box: [r.left, r.top, r.right, r.bottom], inside: !!box && r.left + r.width / 2 >= box.left && r.right - r.width / 2 <= box.right && r.top + r.height / 2 >= box.top && r.bottom - r.height / 2 <= box.bottom };
+        });
+        const apart = pins.every((one, i) => pins.every((other, j) => j <= i || one.box[2] <= other.box[0] || other.box[2] <= one.box[0] || one.box[3] <= other.box[1] || other.box[3] <= one.box[1]));
+        return { pins, apart, said: document.querySelector('[data-testid="map-unplaced"]')?.textContent ?? null, images: document.querySelectorAll(".graview-map image").length, width: box?.width ?? 0, page: document.documentElement.scrollWidth <= window.innerWidth };
+      });
+      // A press on Kew opens Kew's page.
+      await page.click('[data-map-pin="trip-kew"]').catch(() => {});
+      await page.waitForFunction(() => window.__handle.where().path === "/trips/trip-kew", null, { timeout: 10_000 }).catch(() => {});
+      const pressed = await page.evaluate(() => ({ path: window.__handle.where().path ?? null, heading: document.querySelector("[data-graview-embed] h1")?.textContent?.trim() ?? null }));
+      await page.close();
+      // Enter on the zoo's pin, reached by the keyboard, opens the zoo's page.
+      const keyed = await open(`doc=trips&face=pages&path=${encodeURIComponent("/places/where-we-go")}`, size);
+      await keyed.waitForSelector("[data-map-pin]", { timeout: 20_000 }).catch(() => {});
+      await keyed.focus('[data-map-pin="trip-zoo"]').catch(() => {});
+      const focused = await keyed.evaluate(() => document.activeElement?.getAttribute("data-map-pin") ?? null);
+      await keyed.keyboard.press("Enter");
+      await keyed.waitForFunction(() => window.__handle.where().path === "/trips/trip-zoo", null, { timeout: 10_000 }).catch(() => {});
+      const entered = await keyed.evaluate(() => ({ path: window.__handle.where().path ?? null, heading: document.querySelector("[data-graview-embed] h1")?.textContent?.trim() ?? null }));
+      await keyed.close();
+      opened[at] = { pressed, focused, entered };
+    }
+    report.checks.aMapPinsEachTripTheHostFoundAPointForAsANamedLink = {
+      seen,
+      ok: Object.values(seen).every((one) => one.pins.map((pin) => pin.id).sort().join() === PINNED.join() && one.pins.every((pin) => pin.link && pin.name && pin.inside) && one.page),
+    };
+    report.checks.noPinCoversAnotherEvenAtOneDoor = { apart: Object.fromEntries(Object.entries(seen).map(([at, one]) => [at, one.apart])), ok: Object.values(seen).every((one) => one.apart) };
+    report.checks.aMapSaysTheTripsItHasNoPlaceFor = { said: Object.fromEntries(Object.entries(seen).map(([at, one]) => [at, one.said])), ok: Object.values(seen).every((one) => one.said === "2 trips have no place yet.") };
+    report.checks.aMapLoadsNoTilesItWasNotHanded = { images: Object.fromEntries(Object.entries(seen).map(([at, one]) => [at, one.images])), ok: Object.values(seen).every((one) => one.images === 0) };
+    report.checks.aPinOpensItsTripOnAPressAndOnEnter = {
+      opened,
+      ok: Object.values(opened).every((one) => one.pressed.path === "/trips/trip-kew" && one.focused === "trip-zoo" && one.entered.path === "/trips/trip-zoo"),
     };
   }
 

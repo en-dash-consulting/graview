@@ -6,6 +6,7 @@ import { WorkflowSpec } from "../document/workflow-spec.js";
 import { ActSpec, DocumentSpec, FieldSpec, KindSpec, RecordArgSpec, RuleSpec } from "../document/schema.js";
 import { BLOCK_KEYS, FIGURE_EMPHASES, FIGURE_FORMATS, LIST_AS, MAX_LIST_LIMIT, MAX_TEXT_LINES, VIEW_FIELD_FORMATS, VIEW_SLOTS, VIEW_TONES } from "../document/views.js";
 import { SHIPPED_LENSES, SHIPPED_LENS_NAMES } from "../places.js";
+import { fileShape } from "../schema/files.js";
 
 /*
  * THE DECLARATION DOCUMENT AS JSON SCHEMA, one per version, from the shape
@@ -73,6 +74,7 @@ export function documentJsonSchema(version: string): Json {
         json["oneOf"] = [{ required: ["require"], not: { required: ["covers"] } }, { required: ["covers"], not: { required: ["require"] }, properties: { over: { not: { const: "graph" } } } }];
       }
       if (zodSchema === fieldSpec) {
+        Object.assign(at(json, "properties", "type"), { description: FIELD_TYPE_SAID });
         json["allOf"] = [
           // An enum lists its options, and only an enum has them.
           { if: { properties: { type: { const: "enum" } } }, then: { required: ["options"] }, else: { not: { required: ["options"] } } },
@@ -125,7 +127,7 @@ export function documentJsonSchema(version: string): Json {
     propertyNames: { pattern: "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$" },
     additionalProperties: workflow,
   };
-  rest["$defs"] = { ...((rest["$defs"] as Json | undefined) ?? {}), ...blockDefs() };
+  rest["$defs"] = { ...((rest["$defs"] as Json | undefined) ?? {}), ...blockDefs(), FileValue: fileValueSchema() };
   return {
     $schema,
     $id: documentSchemaUrl(version),
@@ -134,6 +136,37 @@ export function documentJsonSchema(version: string): Json {
       'A whole Graview app as one JSON object: its kinds, fields, relations, acts, rules, roles, views and brand. `graview check --document <file>` compiles it and says what is wrong in words; this schema is the same shape, for an editor. Name it in a document\'s "$schema".',
     ...rest,
   };
+}
+
+/** What a field's type holds, where a document's own words do not say it: what the host hands for a file. */
+const FIELD_TYPE_SAID =
+  'What the field holds. An `image`, `video` or `file` field (and a `list` of one) holds what the host stored: a `FileValue` (`#/$defs/FileValue`), never the bytes. `phone` and `place` are words drawn as a link to call and to a map, `duration` a whole number of minutes, and `time` a time of day kept as "15:00".';
+
+/** What every key of a stored file says, by key: the host's upload answers it, and a record keeps it. */
+const FILE_VALUE_SAID: Readonly<Record<string, string>> = {
+  href: "A path on the host, under its base (`/graview/files/3f9a….pdf`): never a scheme, another host, a backslash or a path that climbs.",
+  name: "What it was called when it was put on the record: `porch.jpg`.",
+  type: "Its media type: `image/jpeg`, `application/pdf`.",
+  bytes: "Its size in bytes.",
+  width: "A picture's or a video's width in pixels, where the host knows it.",
+  height: "A picture's or a video's height in pixels, where the host knows it.",
+  caption: "What it shows, in words: at most 500 characters.",
+  poster: "A video's picture drawn before it plays: a path on the host.",
+  duration: "A video's length in seconds.",
+  captions: "A video's captions: a WebVTT file, a path on the host.",
+  at: "When the file was made, as the host read it from the file: an ISO date and time with an offset or Z.",
+  focus: "Where a picture's subject is: `x` from its left and `y` from its top, each from 0 to 1.",
+  cutout: "Whether a picture is drawn on no ground of its own, so a view draws it whole.",
+  preview:
+    "A picture of a document its host made — a PDF's first page — drawn where a picture of the record is: its card, its row, its page and a view that asks for pictures. `src` is the picture, `thumb` a smaller one for a card or a row, each a path on the host; `width` and `height` are `src`'s in pixels. A new file is a new value with its own preview.",
+};
+
+/** A stored file, as JSON Schema: the shape a store keeps (`fileShape`), each key said. */
+function fileValueSchema(): Json {
+  const { $schema: _file, ...file } = z.toJSONSchema(z.object(fileShape()) as z.ZodMiniType, { io: "input", unrepresentable: "any" }) as Json;
+  const properties = at(file, "properties");
+  for (const [key, said] of Object.entries(FILE_VALUE_SAID)) Object.assign(at(properties, key), { description: said });
+  return { ...file, description: "A file a record keeps: what the host's upload answered (FR-162). The host hands it to an act that sets an `image`, `video` or `file` field." };
 }
 
 /** What an act's `args` says, for an editor and an agent reading the schema (Roadmap f-authoring-schemas-args-workflows). */

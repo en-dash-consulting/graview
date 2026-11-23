@@ -63,7 +63,7 @@ describe("a record's PDF (FR-234)", () => {
     const open = line.querySelector<HTMLAnchorElement>("a[target=_blank]")!;
     const download = line.querySelector<HTMLAnchorElement>("a[download]")!;
     expect([open.textContent, open.getAttribute("href"), open.getAttribute("rel")]).toEqual(["Open", "/files/a0c2.pdf", "noopener"]);
-    expect([download.textContent, download.getAttribute("href"), download.getAttribute("download")]).toEqual(["Download", "/files/a0c2.pdf", "week44.pdf"]);
+    expect([download.textContent, download.getAttribute("href"), download.getAttribute("download")]).toEqual(["Download", "/files/a0c2.pdf?download=1", "week44.pdf"]);
     // Nothing of the fallback is inside the box, and the box is not sized while nothing is in it.
     expect(words(object)).toBe("");
     expect(object.getAttribute("data-graview-pdf")).toBe("waiting");

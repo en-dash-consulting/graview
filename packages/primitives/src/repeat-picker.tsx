@@ -2,7 +2,7 @@ import { isRepeat, repeatKey, WEEKDAYS, weekdayName, type AnySchema, type Repeat
 import { repeatAsRead } from "@graview/core/words";
 import { useEditableFields } from "@graview/react/drawing";
 import { useId, useState, type CSSProperties, type ReactNode } from "react";
-import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
+import "@graview/react/provider"; // A door: one a form fetches, tied to what every page that draws a form drew first, which a visitor's form is too: never to `./frame.js`, which a visitor's form never draws (TIED DOORS, packages/primitives/src/frame.ts).
 
 /*
  * HOW A DATE REPEATS, ASKED FOR (`repeat.ts` in core): none, every day,

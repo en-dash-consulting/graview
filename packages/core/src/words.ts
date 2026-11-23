@@ -46,4 +46,7 @@ export { endAfterStartMoved, namesInstant, startAndEndOf, storedOfWall, wallNow,
 export type { WallTime } from "./wall-time.js";
 // The other system a record is kept in step with, as its page says it: "Kept in step with Notion · Tasks", linked there.
 export { keptInStepWith } from "./document/kept-in-step-with.js";
+// When and by whom a record was last changed, said once where many records are read at once: `changed: "3 days ago by Ann"`.
+export { CHANGED, changedOnce, changedWords } from "./changed-once.js";
+export type { ChangedOptions } from "./changed-once.js";
 export type { KeptInStepWith } from "./document/kept-in-step-with.js";

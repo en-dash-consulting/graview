@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 6243,
+  "gzipped": 2637,
+  "changeset": "the-0-2-12-batch-holds-together.md",
+  "note": "Raised when the 0.2.12 batch's branches were merged (a person moved carrying every link, a record's last change said once and a backup naming its people, a file's preview, the several bar judging on one rehearsal, the forms' edges, a workflow step that publishes, the map lens, and a visitor's form loading none of the frame): together they come to 6143 bytes minified and 2137 gzipped over the budget, raised by 100 more minified and 500 more gzipped for the spread CI measures from build to build. Measured on CI at 668,280 / 232,772 B against 662,137 / 230,635 B."
+}

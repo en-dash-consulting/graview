@@ -856,9 +856,11 @@ export function namedAuthors(store: Judged, lens: Pick<SeatLens, "shows" | "serv
       const whom = bound.shown ? { ...rest, id: bound.id, ...((said ?? own) !== undefined ? { name: said ?? own } : {}) } : { kind: rest.kind, id: SOMEONE.id, name: SOMEONE.name };
       out = { ...out, author: author.onBehalfOf ? { ...author, onBehalfOf: whom } : whom };
     } else if (seat !== undefined && (graph.personBoundTo?.(seat) ?? everBound(store).get(seat)) !== undefined) {
-      // The seat itself, or the host: its own account, named as its record.
+      // The seat itself, or the host: its own account, named as its record — a profile's record is the profile's person, so its name is the profile's, never the account's: "Mia (Sam)", bound or once bound alike.
       said = nameOf((graph.personBoundTo?.(seat) ?? everBound(store).get(seat))!);
-      if (said !== undefined && person.name !== said) out = { ...out, author: author.onBehalfOf ? { ...author, onBehalfOf: { ...person, name: said } } : { ...person, name: said } };
+      const profile = seat === account ? undefined : profileOf(person);
+      const named = said === undefined ? person : profile ? (profile.name === said ? person : { ...person, profile: { ...person.profile!, name: said } }) : person.name === said ? person : { ...person, name: said };
+      if (named !== person) out = { ...out, author: author.onBehalfOf ? { ...author, onBehalfOf: named } : named };
     }
     // Who proposed it, and who voted for it: never an account this reader may not be told.
     const lineage = op.lineage;

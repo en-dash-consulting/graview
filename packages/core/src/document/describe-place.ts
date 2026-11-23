@@ -1,3 +1,4 @@
+import { mapPointOf } from "../map-point.js";
 import { lowerFirst } from "../capital.js";
 import type { GraviewApp } from "../app.js";
 import type { AnyGraphNode, GraphReader } from "../graph/types.js";
@@ -338,6 +339,17 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
         for (const node of members) for (const move of columnMoves(store, principal, node as never, field, columns)) by.set(move.to, (by.get(move.to) ?? new Set()).add(`"${move.title}"`));
         const ways = columns.filter((column) => column.value !== null && by.has(column.value)).map((column) => `to ${column.label} by ${[...by.get(column.value!)!].join(" or ")}`);
         parts.push({ t: "text", text: ways.length > 0 ? `Moves: ${ways.join("; ")}.` : "Moves: none for this seat." });
+      }
+    } else if (lens?.lens === "map") {
+      // A map (HQ feature:f-map-lens) in words: the records it pins, by name, and how many it has no point for — said, never dropped.
+      drawnBy = "lens:map";
+      const bindings = (lens.options["bindings"] ?? {}) as Readonly<Record<string, Parameters<typeof mapPointOf>[1]>>;
+      for (const kind of Object.keys(bindings)) {
+        const members = graph.nodesOfKind(kind).filter((node) => isCurrent(schema.tryDefinition(kind), node));
+        const pinned = members.filter((node) => mapPointOf(node, bindings[kind]) !== undefined);
+        const missing = members.length - pinned.length;
+        parts.push({ t: "text", text: `A map of ${pinned.length} ${kindWord(schema, kind, pinned.length)}${missing > 0 ? `; ${missing} ${kindWord(schema, kind, missing)} ${missing === 1 ? "has" : "have"} no place yet` : ""}.` });
+        parts.push({ t: "list", as: "name", columns: 1, groups: [{ items: pinned.map((node) => item(node, "name", 1)) }] });
       }
     } else if (lens?.lens === "coverage") {
       // A coverage grid (FR-112): each row's columns and through what, each column's count, and who has none.

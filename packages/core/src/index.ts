@@ -27,8 +27,8 @@ export type { ZodDef } from "./schema/zod.js";
 // Schema — the single declaration everything else derives from.
 export { defineNode, isCurrent, labelOf } from "./schema/define-node.js";
 // A picture or a document on a record (FR-162), and the host that stores them (FR-163).
-export { fileAt, fileKindOf, fileSrc, filesOf, isFileValue, isFocus, isImage, isVideo, safeFileHref, videoWords } from "./schema/files.js";
-export type { FileKind, FileValue, HostFiles } from "./schema/files.js";
+export { fileAt, fileKindOf, fileSrc, filesOf, isFilePreview, isFileValue, isFocus, isImage, isPictured, isVideo, previewOf, safeFileHref, videoWords } from "./schema/files.js";
+export type { FileKind, FilePreview, FileValue, HostFiles } from "./schema/files.js";
 export type { ViewerState, ViewerStateAnswer } from "./viewer-state.js";
 export { fileField, imageField, videoField } from "./schema/file-field.js";
 // A link to another app (FR-171): its address on a record, and the host that says what it is called.
@@ -45,6 +45,12 @@ export type { LinkedReads } from "./schema/linked-reads.js";
 export { dateOn, isRepeat, isRepeatField, nextOccurrence, occurrences, repeatedBy, repeatKey, validRepeat, WEEKDAYS } from "./repeat.js";
 export type { Repeat, Weekday } from "./repeat.js";
 export { repeatField } from "./schema/repeat-field.js";
+// Where a place is, as the host found it: kept beside the place's words as `<field>Geo`, pinned by the map lens.
+// A record's point as a map reads it (`geoOf`, `mapPointOf`) is `@graview/core/describe`'s: a page that draws no map carries none of it.
+export { geoKey, geoOfField, isPlacePoint, validGeo } from "./geo.js";
+export { withPlacePoints } from "./place-points.js";
+export type { Geo } from "./geo.js";
+export { placeGeoField } from "./schema/geo-field.js";
 export { markdownField } from "./schema/markdown-field.js";
 // A phone, a place and a length of time: a tel: link, a link to the reader's maps app, minutes said "1 h 30 min".
 export type { TypedField } from "./schema/typed-fields.js";
@@ -413,6 +419,9 @@ export type { Tick } from "./clock.js";
 // The views a person tidies from the place menu (Roadmap f-place-menu-views): the host's seam and a memory keeper; the registry as it leaves it is `useTidiedViews` on `@graview/react`.
 export { memoryViews, withMemoryRevisions, NO_KEPT_VIEWS, placeTidying, REMOVED_VIEW_DAYS, removedLensName } from "./views/kept.js";
 export type { ForkedPage, KeptViews, KeptViewsMay, KeptViewsState, LensTidyEdit, MemoryViewsOptions, RemovedView, ViewForkKept, ViewReviseAnswer, ViewRevisionKept } from "./views/kept.js";
+// A worker view's relations it reads and is never handed (HQ f-view-problem-key-follow-ups): one check, for a view proposed and a template's views alike.
+export { farKindKey, farKindsRefused, unhandedEdgeProblems, unhandedEdges } from "./views/far-kinds.js";
+export type { EdgesOf, ViewReads } from "./views/far-kinds.js";
 export type { DisplayChoice, DisplayChoiceHeard, DisplayOptionOffer, DisplayOptionsAsked, DisplayOptionsHost } from "./views/display-options.js";
 export { createViewRegistry, FIDELITIES, kindPath, offeredPlaces, onePerPicture, placeLabel, placePath, placeSlug, recordPath, samePicture, sharesItsName } from "./views/types.js";
 // Declared lenses that draw (FR-79), the arrangement (FR-80) and every place an app has.
@@ -440,7 +449,7 @@ export {
 // A place's address under a host's base path, and back (FR-106).
 export { addressOf, basePathOf, pathWithin } from "./address.js";
 // Every place an app has (`placesOf`, `placesFrom`) is `@graview/core/seat`'s, and judging the arrangement (`arrangementFindings`) `@graview/core/check`'s (FR-179).
-export type { ArrangedEntry, DeclaredLenses, DrawnLens, Opening, PlaceFinding, ShippedLensName, UndrawnLens } from "./places.js";
+export type { ArrangedEntry, DeclaredLenses, DrawnLens, MapCoordinates, Opening, PlaceFinding, ShippedLensName, UndrawnLens } from "./places.js";
 export type { AppPlace } from "./app-places.js";
 export type {
   Cardinality,

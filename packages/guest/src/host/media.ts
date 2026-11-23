@@ -1,5 +1,5 @@
 import type { ViewProblemSaid } from "./problems.js";
-import { isFileValue, isImage, isVideo, videoWords, type FileValue } from "@graview/core";
+import { isFileValue, isImage, isVideo, previewOf, videoWords, type FileValue } from "@graview/core";
 import { videoClock } from "@graview/core/blocks";
 import type { GuestNode, GuestProps } from "../protocol.js";
 
@@ -79,7 +79,8 @@ export function namedFile(element: Element, shown: GuestProps | undefined, as: "
   const label = on.label ? `"${on.label}"` : "a record";
   if (!field) return { why: `names no field of ${label} (data-field)` };
   if (!file) return { why: files.length === 0 ? `names "${field}" on ${label}, which holds no file it was shown` : `names file ${element.getAttribute("data-index")} of "${field}" on ${label}, which holds ${files.length}` };
-  if (as === "video" ? !isVideo(file) : !isVideo(file) && !isImage(file)) return { why: `names "${file.name}" on ${label}, which is not ${as === "video" ? "a video" : "a picture or a video"}` };
+  /* A document is opened by the preview its host made (HQ f-file-values-carry-a-preview), as a picture is. */
+  if (as === "video" ? !isVideo(file) : !isVideo(file) && !isImage(file) && !previewOf(file)) return { why: `names "${file.name}" on ${label}, which is not ${as === "video" ? "a video" : "a picture, a video or a document with a preview"}` };
   return { file, on };
 }
 
@@ -242,7 +243,7 @@ export function createGuestMedia(window: Window & typeof globalThis, options: Gu
         refused("full-screen viewer", named.why);
         return false;
       }
-      const src = at(named.file.href);
+      const src = at(previewOf(named.file)?.src ?? named.file.href);
       if (!src) {
         refused("full-screen viewer", `names "${named.file.name}", which this host does not say it serves on this page`);
         return false;

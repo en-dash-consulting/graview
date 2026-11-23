@@ -1,5 +1,22 @@
 # @graview/ship
 
+## 0.2.12
+
+### Patch Changes
+
+- b8d9cc1: Where a model reads many records at once, each says when and by whom it was last changed once, a backup says who changed a record as the person, and a profile is named once. Since 0.2.10 every record keeps `createdAt`, `createdBy`, `updatedAt` and `updatedBy`, about 155 characters on each record of a page an agent reads. From this version the agent's page of the graph (`get_graph`) and the facts an inline ask is told (`factsOf`) say one entry in their place, `changed: "3 days ago by Ann"`, the person by name where the reader may see them and "someone" where not, and the record `aiContextOf` is about says the same beside its fields (`target.record.changed`); a page of 50 records grows by under 40 characters a record against 0.2.9. `get_node`, the whole record, keeps all four. A host builds the same entry for a page of its own with `changedOnce` and `changedWords` on `@graview/core/words` (`CHANGED` is its key). An export (`exportBundle`) now says, once for each seat a record's `createdBy` or `updatedBy` names, the record of the people kind that seat is bound to or was last bound to, in the snapshot, the checkpoint or a record the log adds or removes, as `seatPeople` (`{ "acct-bud": "participant:bud" }`); the records keep the seat, so a restore says the four the store kept, as before. And a profile is named once to the host and to its own seat: a profile whose person shares its name reads "Kiddo", where it read "Kiddo (Kiddo)", and "Kiddo (Sam)" on an account with a name of its own; a profile whose person has another name reads as that person, "Mia", or "Mia (Sam)" beside a named account, with its binding in place or ended alike, where an ended binding read "Kiddo (Mia)". Anybody else reads the person, as before. Held by new unit tests of core (`a-records-last-change-is-said-once-to-a-model`, `a-profile-whose-binding-ended-is-named-once`), of tools (`a-page-of-records-says-each-change-once`) and of ship (`an-export-keeps-who-touched-a-record-as-the-store-does`).
+  
+  Compatibility: derived tool names and input schemas — names and input schemas unchanged; what `get_graph` answers changes: each record says `changed` in place of `createdAt`, `createdBy`, `updatedAt` and `updatedBy`, and a record whose kind keeps a field named `changed` says the four as before. Stored formats — additive: a bundle may carry `seatPeople`, which no restore reads; its snapshot, log and checkpoint are unchanged, and a bundle without it imports as before. The JavaScript API — additive: `CHANGED`, `changedOnce`, `changedWords` and `ChangedOptions` on `@graview/core/words`, `AiTargetState.record.changed`, `AppBundle.seatPeople`; `factsOf`'s fields say `changed` in place of the four; `nameOfAuthor` says a profile alone where its account is named as the profile is, and the host's and the seat's own log (`namedAuthors`) name a bound profile's author by its person's name on the profile, never on the account. Ops and primitives, the wire, and the declaration and check finding codes — unchanged. What Graview Cloud does: say `changed` in place of the four on the records of its `find` page with `changedOnce` (`get_node` keeps the four), read `seatPeople` from a system backup where it says who changed a record as the person, and nothing for the profile's name.
+- Updated dependencies [d4458d8]
+- Updated dependencies [38a66ee]
+- Updated dependencies [d790010]
+- Updated dependencies [b8d9cc1]
+- Updated dependencies [a46f7e9]
+- Updated dependencies [f541f61]
+- Updated dependencies [a46f7e9]
+- Updated dependencies [17512ec]
+  - @graview/core@0.2.12
+
 ## 0.2.11
 
 ### Patch Changes

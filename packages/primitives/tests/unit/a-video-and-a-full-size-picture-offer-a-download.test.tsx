@@ -94,3 +94,22 @@ describe("the full-size picture dialog", () => {
     pressable(close);
   });
 });
+
+describe("a document's line", () => {
+  const minutes: FileValue = { href: "/graview/files/9d.pdf", name: "minutes.pdf", type: "application/pdf", bytes: 48_000 };
+  const budget: FileValue = { href: "/graview/files/b2.xlsx", name: "budget.xlsx", type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", bytes: 12_000 };
+
+  it("asks for a PDF as an attachment from its own Download, and opens it as it is", async () => {
+    const host = await draw(<Files as="field" read nodeId="meet" field="files" label="Files" files={[minutes]} />, { ...cloud, kinds: ["*/*"] });
+    const line = await arrives(() => host.querySelector("[data-graview-file-line]"));
+    const links = [...line.querySelectorAll<HTMLAnchorElement>("a")];
+    expect(links.find((link) => link.textContent === "Download")?.getAttribute("href")).toBe("/a/studio/graview/files/9d.pdf?download=1");
+    expect(links.find((link) => link.textContent === "Open")?.getAttribute("href")).toBe("/a/studio/graview/files/9d.pdf");
+  });
+
+  it("asks for any other document as an attachment from the name that downloads it", async () => {
+    const host = await draw(<Files as="field" read nodeId="meet" field="files" label="Files" files={[budget]} />, { ...cloud, kinds: ["*/*"] });
+    const documents = await arrives(() => host.querySelector("[data-graview-documents]"));
+    expect(documents.querySelector<HTMLAnchorElement>("a[download]")?.getAttribute("href")).toBe("/a/studio/graview/files/b2.xlsx?download=1");
+  });
+});

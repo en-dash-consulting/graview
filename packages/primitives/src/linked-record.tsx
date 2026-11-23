@@ -1,8 +1,7 @@
 import { LOCAL_LAYERS, linkedValue, safeFileHref, type LinkedRecord, type LinkedRecordAnswer, type LinkedRecordRef, type LinkedRelation, type LinkedViewer } from "@graview/core";
 import { useEditableFields } from "@graview/react/drawing";
-import { useGraviewIfAny } from "@graview/react/provider";
+import { useGraviewIfAny } from "@graview/react/provider"; // A door a form fetches, tied by this import to what every page that draws a form drew first, which a visitor's form is too: never to `./frame.js`, which a visitor's form never draws (TIED DOORS, packages/primitives/src/frame.ts).
 import { useEffect, useId, useState, type CSSProperties, type ReactNode } from "react";
-import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /*
  * A RECORD IN ANOTHER APP, ON A RECORD (FR-171).

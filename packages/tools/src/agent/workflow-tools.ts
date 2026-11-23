@@ -40,7 +40,7 @@ export const runWorkflowTool = (names: readonly string[]): ToolDefinition => ({
   name: "run_workflow",
   title: "Run a workflow now",
   description:
-    "Run one of the app's workflows now, by hand, as the app's own actor: its steps make, change, set aside or suggest what they say, as its approve setting says. With dryRun: true nothing is kept and the answer says what it would do. The first run after a workflow is added or changed is a dry run whatever you ask; run it again to keep it. A paused workflow only dry-runs. Returns the run: its outcome, what it made, changed, archived and suggested, what it held back and why.",
+    "Run one of the app's workflows now, by hand, as the app's own actor: its steps make, change, set aside or suggest what they say, as its approve setting says. With dryRun: true nothing is kept and the answer says what it would do. The first run after a workflow is added or changed is a dry run whatever you ask; run it again to keep it. A paused workflow only dry-runs. Returns the run: its outcome, what it made, changed, archived, published and suggested, what it held back and why.",
   inputSchema: {
     type: "object",
     properties: { name: nameArg(names), dryRun: { type: "boolean", description: "Keep nothing; say what it would do. False when unsaid." } },
@@ -85,6 +85,7 @@ function runAnswer(run: WorkflowRun) {
     suggested: run.suggested,
     heldBack: run.heldBack,
     notes: run.notes,
+    ...(run.published ? { published: run.published } : {}),
   };
 }
 

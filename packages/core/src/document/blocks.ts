@@ -14,7 +14,7 @@ import { fieldSpecOf } from "./field-spec.js";
 import { linkedRefsOf, type LinkedRecordRef, type LinkedRelation } from "../schema/linked.js";
 import { FIGURE_EMPHASES, FIGURE_FORMATS, groupRelationOf, LIST_AS, LIST_PAGE, MAX_LIST_LIMIT, VIEW_FIELD_FORMATS, VIEW_TONES, type FigureEmphasis, type FigureFormat, type ViewBlock, type ViewTone } from "./views.js";
 import { capitalize } from "../capital.js";
-import { filesOf, isImage, isVideo, type FileValue } from "../schema/files.js";
+import { filesOf, isImage, isVideo, previewOf, type FileValue } from "../schema/files.js";
 import { fileSaid } from "../schema/file-fields.js";
 import { momentAsRead, numberAsRead } from "../days.js";
 import { fieldSays, typedHref, typedWords, workedOutAmount } from "../schema/field-words.js";
@@ -539,7 +539,7 @@ function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Unkeye
     case "image": {
       // About no one record there are no files: the check says so of the home's blocks.
       const all = filesOf(ctx.node && Object.hasOwn(ctx.node, block.field) ? ctx.node[block.field] : null);
-      const files = block.as === "gallery" ? all : all.filter((file) => isImage(file) || isVideo(file)).slice(0, 1);
+      const files = block.as === "gallery" ? all : [all.find((file) => isImage(file) || isVideo(file)) ?? all.find((file) => previewOf(file) !== undefined)].filter((file): file is FileValue => file !== undefined);
       return { t: "image", field: block.field, label: block.label ?? fieldWords(ctx.definition, block.field), as: block.as, files, text: files.map(fileSaid).join(", ") || NOTHING };
     }
     case "progress": {

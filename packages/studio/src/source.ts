@@ -269,6 +269,12 @@ export function kindLines(
     uses.repeatField = true;
     lines.push(`    ${key(`${field.name}Repeat`)}: repeatField(),`);
   }
+  // A place keeps where the host found it beside it: the framework's own field, `<place>Geo`.
+  for (const field of fields) {
+    if (field.type !== "place") continue;
+    uses.placeGeoField = true;
+    lines.push(`    ${key(`${field.name}Geo`)}: placeGeoField(),`);
+  }
   lines.push(`  }),`);
   if (edges.length > 0) {
     lines.push(`  edges: {`);

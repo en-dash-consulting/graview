@@ -67,6 +67,27 @@ export interface FileValue {
    * otherwise.
    */
   readonly cutout?: boolean;
+  /**
+   * A PICTURE OF A DOCUMENT (HQ f-file-values-carry-a-preview), where the
+   * host made one: a PDF's first page, say. Drawn where a picture of the
+   * record is drawn — a card's, a row's, a record page's, a view's — for a
+   * file that is neither a picture nor a video, which are their own.
+   */
+  readonly preview?: FilePreview;
+}
+
+/**
+ * A DOCUMENT'S PREVIEW, as its host made it: `src`, the picture, a path on
+ * the host as `href` is; `thumb`, a smaller one for a card or a row, where
+ * the host made one (`src` stands in for it otherwise); and `src`'s size
+ * in pixels, where the host knows it. The host makes it again when the file
+ * is replaced, as it stores a new file: a new value, with its own paths.
+ */
+export interface FilePreview {
+  readonly src: string;
+  readonly thumb?: string;
+  readonly width?: number;
+  readonly height?: number;
 }
 
 /**
@@ -145,9 +166,23 @@ export function isFileValue(value: unknown): value is FileValue {
     (v.duration === undefined || (typeof v.duration === "number" && Number.isFinite(v.duration) && v.duration > 0)) &&
     (v.at === undefined || fileAt(v.at) !== undefined) &&
     (v.focus === undefined || isFocus(v.focus)) &&
-    (v.cutout === undefined || typeof v.cutout === "boolean")
+    (v.cutout === undefined || typeof v.cutout === "boolean") &&
+    (v.preview === undefined || isFilePreview(v.preview))
   );
 }
+
+/** Whether a value is a document's preview: `src` and any `thumb` paths on the host, a size in pixels where it is said, and nothing else. */
+export function isFilePreview(preview: unknown): preview is FilePreview {
+  if (typeof preview !== "object" || preview === null || Array.isArray(preview)) return false;
+  const { src, thumb, width, height, ...rest } = preview as Record<string, unknown>;
+  return safeFileHref(src) && (thumb === undefined || safeFileHref(thumb)) && count(width) && count(height) && Object.keys(rest).length === 0;
+}
+
+/** A document's preview, where it has one: never a picture's or a video's, which are drawn as themselves. */
+export const previewOf = (file: FileValue): FilePreview | undefined => (!isImage(file) && !isVideo(file) && isFilePreview(file.preview) ? file.preview : undefined);
+
+/** Whether a file is drawn as a picture where a record's picture is: a picture, a video (by its poster), or a document with a preview. */
+export const isPictured = (file: FileValue): boolean => isImage(file) || isVideo(file) || previewOf(file) !== undefined;
 
 /** A file's `at` as the host said it, where it is an ISO date and time (an offset or a Z) a page can read; undefined where it is not. */
 export function fileAt(at: unknown): string | undefined {
@@ -215,6 +250,7 @@ export const fileShape = () => ({
   at: z.optional(z.string()),
   focus: z.optional(z.object({ x: z.number().check(z.gte(0), z.lte(1)), y: z.number().check(z.gte(0), z.lte(1)) })),
   cutout: z.optional(z.boolean()),
+  preview: z.optional(z.object({ src: z.string(), thumb: z.optional(z.string()), width: z.optional(z.number()), height: z.optional(z.number()) })),
 });
 
 /** A document's `image`, `video` or `file` field, in zod/mini. */

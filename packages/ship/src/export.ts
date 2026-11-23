@@ -1,4 +1,4 @@
-import { assertReadable, bareOp, formatStamp, unseatedOp, unseatedSnapshot, type AnySchema, type Epoch, type FormatStamp, type GraviewApp, type LogArchive, type Operation, type Store } from "@graview/core";
+import { assertReadable, bareOp, CREATED_BY, formatStamp, UPDATED_BY, unseatedOp, unseatedSnapshot, type AnySchema, type Epoch, type FormatStamp, type GraviewApp, type LogArchive, type Operation, type Store } from "@graview/core";
 import type { GraphSnapshot } from "./snapshot.js";
 
 /**
@@ -34,6 +34,17 @@ export interface AppBundle {
    * opened on it: `log`, with this as its one epoch.
    */
   readonly checkpoint?: Epoch;
+  /**
+   * WHO CHANGED EACH RECORD, AS THE PERSON (Graview HQ
+   * feature:f-system-backup-touched-by-seat-ids): for each seat a record's
+   * `createdBy` or `updatedBy` names, in the snapshot, the checkpoint or a
+   * record the log adds or removes, the record of the people kind it is
+   * bound to, or was last bound to — `{ "acct-bud": "participant:bud" }`,
+   * which may be a record since removed. The records keep the seat, so a
+   * restore says the four the store kept; no restore reads this. Absent
+   * where no such seat is bound to anybody.
+   */
+  readonly seatPeople?: Readonly<Record<string, string>>;
 }
 
 export interface ExportOptions {
@@ -93,23 +104,32 @@ export function exportBundle<S extends AnySchema>(
   // The persisted log when the caller has one (it holds migration runs and
   // prior sessions); the in-memory log otherwise.
   const log = options.log ?? store.log.all();
-  // Who made or touched each record as the store keeps it, the seat, as an op's author is kept; and nothing of whom each seat was bound to, which stays in the installation (`Epoch.bound`).
+  // Who made or touched each record as the store keeps it, the seat, as an op's author is kept; the checkpoint's own map of bindings (`Epoch.bound`) stays in the installation, and the person each such seat is, is said once, as `seatPeople`.
   const withoutBindings = ({ bound: _bound, ...epoch }: Epoch): Epoch => epoch;
-  const bundle = (log: readonly Operation[], horizon: number, checkpoint?: Epoch): AppBundle => ({
-    format: "graview-bundle",
-    bundleVersion: 1,
-    app: app.name,
-    version: app.version ?? 1,
-    exportedAt: (options.now ?? (() => new Date().toISOString()))(),
-    // Snapshot format 2 when the checkpoint it begins at lies past what stood published (FR-31).
-    ...formatStamp(horizon > 0 && checkpoint?.seq === horizon ? checkpoint : undefined),
-    // Never whose record a person is: bindings and account ids stay in the installation that made them (Roadmap f-invite-binds-existing-person).
-    snapshot: unseatedSnapshot(store.snapshot() as GraphSnapshot, { touched: "kept" }),
-    // Stamped op format 2, and so written: a persisted or archived op from format 1 goes without an inverse its primitives already say.
-    log: log.map((op) => unseatedOp(bareOp(op))),
-    ...(horizon > 0 ? { horizon } : {}),
-    ...(horizon > 0 && checkpoint?.seq === horizon ? { checkpoint: { ...withoutBindings(checkpoint), base: unseatedSnapshot(checkpoint.base, { touched: "kept" }) } } : {}),
-  });
+  const bundle = (log: readonly Operation[], horizon: number, checkpoint?: Epoch): AppBundle => {
+    // No record says whose a person is: the mark that binds one stays in the installation (Roadmap f-invite-binds-existing-person).
+    const snapshot = unseatedSnapshot(store.snapshot() as GraphSnapshot, { touched: "kept" });
+    const begins = horizon > 0 && checkpoint?.seq === horizon ? checkpoint : undefined;
+    const base = begins ? unseatedSnapshot(begins.base, { touched: "kept" }) : undefined;
+    // Who made or changed each record, said once a seat as the person it is (`seatPeople`).
+    const kept = log.flatMap((op) => op.primitives.flatMap((primitive) => (primitive.op === "add-node" || primitive.op === "remove-node" ? [primitive.node as object] : [])));
+    const people = seatPeopleOf(store, [...snapshot.nodes, ...(base?.nodes ?? []), ...kept]);
+    return {
+      format: "graview-bundle",
+      bundleVersion: 1,
+      app: app.name,
+      version: app.version ?? 1,
+      exportedAt: (options.now ?? (() => new Date().toISOString()))(),
+      // Snapshot format 2 when the checkpoint it begins at lies past what stood published (FR-31).
+      ...formatStamp(begins),
+      snapshot,
+      // Stamped op format 2, and so written: a persisted or archived op from format 1 goes without an inverse its primitives already say.
+      log: log.map((op) => unseatedOp(bareOp(op))),
+      ...(horizon > 0 ? { horizon } : {}),
+      ...(begins && base ? { checkpoint: { ...withoutBindings(begins), base } } : {}),
+      ...(people ? { seatPeople: people } : {}),
+    };
+  };
   const horizon = log[0]?.seq ?? store.log.horizon;
   const own = store.log.epochs().find((epoch) => epoch.horizon && epoch.seq === horizon);
   if (!options.full) return bundle(log, horizon, own);
@@ -124,6 +144,22 @@ export function exportBundle<S extends AnySchema>(
     const begins = beginningOf(archived, horizon);
     return begins.checkpoint ? bundle([...begins.ops, ...log], begins.checkpoint.seq, begins.checkpoint) : bundle([...begins.ops, ...log], 0);
   });
+}
+
+/** Each seat the records name as who made or last changed them, and the person it is or was last bound to (`AppBundle.seatPeople`); none where nobody is. */
+function seatPeopleOf<S extends AnySchema>(store: Store<S>, nodes: readonly object[]): Readonly<Record<string, string>> | undefined {
+  const graph = store.graph as { personSaidFor?(seat: string): string | undefined };
+  const people: Record<string, string> = {};
+  for (const node of nodes) {
+    for (const field of [CREATED_BY, UPDATED_BY]) {
+      const seat = (node as Record<string, unknown>)[field];
+      if (typeof seat !== "string" || Object.hasOwn(people, seat)) continue;
+      const person = graph.personSaidFor?.(seat);
+      // "someone": a profile of an account that is somebody's record, or an account one of whose profiles is — no record to name.
+      if (person !== undefined && person !== "someone" && person !== seat) people[seat] = person;
+    }
+  }
+  return Object.keys(people).length > 0 ? people : undefined;
 }
 
 /** Refuses a bundle for a different app or a newer format, plainly. */

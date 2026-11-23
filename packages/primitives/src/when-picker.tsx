@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
+import "@graview/react/provider"; // A door: one a form fetches, tied to what every page that draws a form drew first, which a visitor's form is too: never to `./frame.js`, which a visitor's form never draws (TIED DOORS, packages/primitives/src/frame.ts).
 
 /*
  * A MONTH TO PICK A DAY FROM (Roadmap f-date-inputs), opened beside a date's

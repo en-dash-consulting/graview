@@ -1,10 +1,9 @@
-import { fieldWords, fileSrc, filesOf, isFileValue, isImage, isVideo, LOCAL_LAYERS, videoWords, type FileValue, type HostFiles } from "@graview/core";
+import { fieldWords, fileSrc, filesOf, isFileValue, isImage, isPictured, isVideo, LOCAL_LAYERS, previewOf, videoWords, type FileValue, type HostFiles } from "@graview/core";
 import { fileFieldsOf, fileWords, videoClock } from "@graview/core/blocks";
 import { useEditableFields } from "@graview/react/drawing";
-import { useGraview, useHostFiles, useNode, usePlayback } from "@graview/react/provider";
+import { useGraview, useHostFiles, useNode, usePlayback } from "@graview/react/provider"; // A door a form fetches, tied by this import to what every page that draws a form drew first, which a visitor's form is too: never to `./frame.js`, which a visitor's form never draws (TIED DOORS, packages/primitives/src/frame.ts).
 import { useEffect, useId, useRef, useState, type ClipboardEvent, type CSSProperties, type DragEvent, type ReactNode } from "react";
 import { resample } from "./resample.js";
-import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /*
  * A RECORD'S PICTURES AND DOCUMENTS, DRAWN AND PUT THERE (FR-162, FR-163).
@@ -212,10 +211,13 @@ function FileThumb({ file, size = 56, style }: { readonly file: FileValue; reado
   const [gone, failed] = useRemovedLater(file);
   if (gone) return <RemovedLater file={file} style={{ width: size, height: size, flex: "none", ...style }} />;
   if (isVideo(file)) return <VideoThumb file={file} size={size} {...(style ? { style } : {})} onError={failed} />;
+  /* A document is drawn by the preview its host made (HQ f-file-values-carry-a-preview), its smaller picture where there is one. */
+  const preview = previewOf(file);
   return (
     <img
       onError={failed}
-      src={fileSrc(host, file.href)}
+      src={fileSrc(host, preview ? (preview.thumb ?? preview.src) : file.href)}
+      {...(preview ? { "data-graview-preview": "" } : {})}
       alt={fileWords(file)}
       width={size}
       height={size}
@@ -325,19 +327,24 @@ function useLessMotion(): boolean {
 /** A press a thumb can make (Roadmap f-download-control-video-picture): at least 44 px each way. */
 const THUMB: CSSProperties = { display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: 44, minHeight: 44, boxSizing: "border-box" };
 
+/** A file's address asking the host for it as an attachment: `?download=1`, joined to what it already asks, before any `#`. */
+function asAttachment(src: string): string {
+  const [address = "", fragment] = src.split(/(?=#)/);
+  return `${address}${address.includes("?") ? "&" : "?"}download=1${fragment ?? ""}`;
+}
+
 /**
  * A FILE'S DOWNLOAD (Roadmap f-download-control-video-picture): a link to
  * the file where the host serves it, asking for it as an attachment
  * (`?download=1`, which Graview Cloud answers with one), named for the
  * file — "Download render.mp4" — and as big as a thumb's press. A video's
  * figure and a picture opened full size each carry one; a document's line
- * already did.
+ * asks the same of its own Download (`asAttachment`).
  */
 function DownloadLink({ file }: { readonly file: FileValue }) {
   const host = useHostFiles();
-  const [address = "", fragment] = fileSrc(host, file.href).split(/(?=#)/);
   return (
-    <a data-graview-download={file.href} href={`${address}${address.includes("?") ? "&" : "?"}download=1${fragment ?? ""}`} download={file.name} aria-label={`Download ${file.name}`} style={{ ...THUMB, padding: "0 6px", color: "var(--graview-accent, inherit)" }}>
+    <a data-graview-download={file.href} href={asAttachment(fileSrc(host, file.href))} download={file.name} aria-label={`Download ${file.name}`} style={{ ...THUMB, padding: "0 6px", color: "var(--graview-accent, inherit)" }}>
       Download
     </a>
   );
@@ -445,6 +452,34 @@ function PdfBox({ src, file }: { readonly src: string; readonly file: FileValue 
 }
 
 /**
+ * A DOCUMENT'S PREVIEW ON ITS RECORD'S PAGE (HQ f-file-values-carry-a-preview):
+ * the picture its host made — a PDF's first page — drawn as a picture field's
+ * is, and pressed to open the document itself in a tab. It stands where a
+ * PDF's box would, so a phone that draws no PDF inline still shows its page;
+ * the file's own line stands under it, as it does under the box.
+ */
+function DocumentPreview({ file, src }: { readonly file: FileValue; readonly src: string }) {
+  const host = useHostFiles();
+  const [gone, failed] = useRemovedLater(file);
+  const preview = previewOf(file)!;
+  if (gone) return <RemovedLater file={file} style={{ width: 160, aspectRatio: "3 / 4" }} />;
+  const aspect = preview.width && preview.height ? `${preview.width} / ${preview.height}` : undefined;
+  return (
+    <a href={src} target="_blank" rel="noopener" aria-label={`Open ${fileWords(file)}`} data-graview-preview={file.href} style={{ display: "block", width: "min(100%, 240px)", borderRadius: ROUND }}>
+      <img
+        src={fileSrc(host, preview.src)}
+        alt={`${fileWords(file)}, its first page`}
+        {...(preview.width && preview.height ? { width: preview.width, height: preview.height } : {})}
+        loading="lazy"
+        decoding="async"
+        onError={failed}
+        style={{ width: "100%", height: "auto", ...(aspect ? { aspectRatio: aspect } : {}), objectFit: "contain", display: "block", borderRadius: ROUND, border: "1px solid var(--graview-edge)", background: "var(--graview-panel, #fff)" }}
+      />
+    </a>
+  );
+}
+
+/**
  * A RECORD'S FILES, AS ITS PAGE SHOWS THEM: its pictures in a gallery, each
  * opening full size in a dialog that gives the keyboard back to it; its
  * documents by name, type and size — a PDF inline, the rest a download.
@@ -495,7 +530,7 @@ function FilesShown({ files, label, autoplay, cover }: { readonly files: readonl
         <ul data-graview-documents="" style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 10 }}>
           {documents.map((file) => (
             <li key={file.href} data-graview-document={file.type} style={{ display: "grid", gap: 6, minWidth: 0 }}>
-              {file.type === "application/pdf" ? <PdfBox src={at(file)} file={file} /> : null}
+              {previewOf(file) ? <DocumentPreview file={file} src={at(file)} /> : file.type === "application/pdf" ? <PdfBox src={at(file)} file={file} /> : null}
               {file.type === "application/pdf" ? (
                 /*
                  * THE PDF'S ONE LINE (FR-234), outside the box: its name, its
@@ -512,13 +547,13 @@ function FilesShown({ files, label, autoplay, cover }: { readonly files: readonl
                   <span style={QUIET} aria-hidden="true">
                     /
                   </span>{" "}
-                  <a href={at(file)} download={file.name}>
+                  <a href={asAttachment(at(file))} download={file.name}>
                     Download
                   </a>
                 </span>
               ) : (
                 <span style={{ display: "flex", flexWrap: "wrap", gap: "2px 10px", alignItems: "baseline", minWidth: 0, overflowWrap: "anywhere" }}>
-                  <a href={at(file)} download={file.name}>
+                  <a href={asAttachment(at(file))} download={file.name}>
                     {file.name}
                   </a>
                   <span style={QUIET}>
@@ -707,7 +742,7 @@ export function FilesEditor({ value, onChange, several, image, video = false, la
         <ul ref={list} style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 6 }}>
           {value.map((file, index) => (
             <li key={`${index}:${file.href}`} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", minWidth: 0 }}>
-              {thumbs && (isImage(file) || isVideo(file)) ? <FileThumb file={file} size={40} /> : null}
+              {thumbs && isPictured(file) ? <FileThumb file={file} size={40} /> : null}
               <span style={{ flex: "1 1 8rem", minWidth: 0, overflowWrap: "anywhere" }}>{file.name}</span>
               <CaptionInput file={file} onCaption={(caption) => change(value.map((one, at) => (at === index ? withCaption(one, caption) : one)), caption ? `${file.name} now says “${caption}”.` : `${file.name} says its name again.`)} />
               {several && index > 0 ? (

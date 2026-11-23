@@ -1,3 +1,4 @@
+import { agoWords } from "../ago-words.js";
 import type { GraviewApp } from "../app.js";
 import { subjectKindsOf } from "../mutations/derive-edits.js";
 import type { AppWorkflows } from "../workflow-shape.js";
@@ -133,16 +134,7 @@ export interface RunSaid {
 /** How many a count says: the number, or how many ids it holds. Anything else is none. */
 export const runCount = (count: RunCount | undefined): number => (typeof count === "number" ? (Number.isFinite(count) && count > 0 ? Math.floor(count) : 0) : Array.isArray(count) ? count.length : 0);
 
-/** "just now", "5 minutes ago", "2 hours ago", "yesterday", "3 days ago": how long before `now` a moment was. */
-export function agoWords(at: string | number | Date, now: string | number | Date = Date.now()): string {
-  const minutes = Math.floor((new Date(now).getTime() - new Date(at).getTime()) / 60_000);
-  if (!Number.isFinite(minutes) || minutes < 1) return "just now";
-  if (minutes < 60) return minutes === 1 ? "a minute ago" : `${minutes} minutes ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return hours === 1 ? "an hour ago" : `${hours} hours ago`;
-  const days = Math.floor(hours / 24);
-  return days === 1 ? "yesterday" : `${days} days ago`;
-}
+export { agoWords };
 
 /**
  * HOW THE LAST RUN WENT, in words a person reads under a workflow on the

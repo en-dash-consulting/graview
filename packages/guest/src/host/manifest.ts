@@ -1,4 +1,6 @@
-import { isSystem, isoToday, localeFor, profileOf, timeZoneFor, type AnySchema, type FileKind, type Principal, type Store } from "@graview/core";
+import { farKindsRefused, isSystem, isoToday, localeFor, profileOf, timeZoneFor, unhandedEdgeProblems, unhandedEdges, type AnySchema, type FileKind, type Principal, type Store } from "@graview/core";
+// What names one standing fault of a view, core's, which a template's views are judged by too.
+export { farKindKey } from "@graview/core";
 import { fileFieldKind } from "./marks.js";
 import type { GuestAct, GuestEdge, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
 import type { GuestPictures } from "./pictures.js";
@@ -95,11 +97,14 @@ export interface WorkerViewManifest {
   /**
    * The pictures on the records it is handed (FR-175): `true`, or
    * `{ width }`, the widest it draws a picture in CSS pixels (1 200 by
-   * default). Each file a record holds is then handed as a `GuestFile` —
-   * a picture with `src`, an address the host made from the bytes, made
-   * smaller where it is wider than `width`; a document by its name, type
-   * and size — never as the host's path to it. Left out, a file is handed
-   * as the record keeps it. It may choose which pictures it draws
+   * default). Each picture a record holds is then handed as a `GuestFile`
+   * with `src`, an address the host made from the bytes, made smaller
+   * where it is wider than `width`, never as the host's path to it, and a
+   * video by its facts. A document comes as the record keeps it, `href`
+   * and all, as it does where `pictures` is left out; one with a preview
+   * its host made (HQ f-file-values-carry-a-preview) carries the preview's
+   * `src` beside, as a picture does. Left out, a file is handed as the
+   * record keeps it. It may choose which pictures it draws
    * (FR-220): the kinds, `["circuit"]`, or the fields by kind beside
    * `width`, `{ circuit: "photo" }`; a picture it did not choose is handed
    * by its facts alone, never fetched nor reckoned against its budget.
@@ -396,21 +401,11 @@ export function ownKindRelations<S extends AnySchema>(store: Pick<Store<S>, "sch
  * `reads.kinds` — so no link of it ever reaches the view, and nothing said
  * why its links were missing. Each with the kinds that would hand it; none,
  * where it goes to any kind (`to: "*"`) and a view of one is handed only its
- * own record, since which kinds it links to is the author's to say.
+ * own record, since which kinds it links to is the author's to say. Core's
+ * check (`unhandedEdges`), which a template's views are judged by too.
  */
 export function edgesReadWithoutTheirKinds<S extends AnySchema>(store: Pick<Store<S>, "schema">, manifest: Pick<WorkerViewManifest, "attach" | "cardinality" | "reads">): readonly { readonly edge: string; readonly kinds: readonly string[] }[] {
-  const handed = new Set([...(manifest.attach === "home" ? [] : [manifest.attach]), ...(manifest.reads?.kinds ?? [])]);
-  const out: { edge: string; kinds: string[] }[] = [];
-  for (const name of manifest.reads?.edges ?? []) {
-    const edge = store.schema.edge(name);
-    if (!edge) continue;
-    const from = edge.from.some((kind) => handed.has(kind)) ? [] : edge.from;
-    const to = edge.to === "*" || edge.to.some((kind) => handed.has(kind)) ? [] : edge.to;
-    const kinds = [...new Set([...from, ...to])];
-    if (kinds.length > 0) out.push({ edge: name, kinds });
-    else if (edge.to === "*" && manifest.attach !== "home" && manifest.cardinality === "one" && (manifest.reads?.kinds ?? []).length === 0) out.push({ edge: name, kinds: [] });
-  }
-  return out;
+  return unhandedEdges(store.schema, manifest);
 }
 
 /** Each relation a view reads and is never handed, said with what to add to `reads.kinds`; empty when every one can reach it. */
@@ -418,31 +413,9 @@ export function edgesReadWithoutTheirKindsSaid<S extends AnySchema>(store: Pick<
   return edgesReadWithoutTheirKindsProblems(store, manifest).map((one) => one.says);
 }
 
-/**
- * WHAT NAMES ONE STANDING FAULT OF A VIEW, THE SAME IN EVERY VERSION
- * (HQ f-view-check-refuses-unread-relation-kind): the view's name, the
- * relation and the kinds any one of which would hand it, sorted and joined
- * by `|` (`*` where it goes to any kind and the author is to say which),
- * never the sentence, which may be reworded. A host that files what a page
- * reports files it once by this, however often the view is opened and
- * whichever version of the app it is opened in, while the relation joins
- * the same kinds: `far-kind-not-handed:phase-board:inPhase:chunk`.
- */
-export function farKindKey(view: string, edge: string, kinds: readonly string[]): string {
-  return `far-kind-not-handed:${view}:${edge}:${kinds.length === 0 ? "*" : [...kinds].sort().join("|")}`;
-}
-
 /** Each relation a view reads and is never handed, said, with the key a host files it by (`farKindKey`). */
 export function edgesReadWithoutTheirKindsProblems<S extends AnySchema>(store: Pick<Store<S>, "schema">, manifest: Pick<WorkerViewManifest, "name" | "attach" | "cardinality" | "reads">): readonly { readonly edge: string; readonly kinds: readonly string[]; readonly says: string; readonly key: string }[] {
-  return edgesReadWithoutTheirKinds(store, manifest).map(({ edge, kinds }) => {
-    const info = store.schema.edge(edge)!;
-    const ends = `${info.from.join(" or ")} to ${info.to === "*" ? "any kind" : info.to.join(" or ")}`;
-    const says =
-      kinds.length === 0
-        ? `"${manifest.name}" reads the relation "${edge}", from ${ends}, and is handed no other kind, so no link of it reaches the view: name the kinds it links to in its manifest's reads.kinds.`
-        : `"${manifest.name}" reads the relation "${edge}", from ${ends}, and is handed no ${kinds.join(" or ")}, so no link of it reaches the view: add ${kinds.map((kind) => `"${kind}"`).join(" or ")} to its manifest's reads.kinds.`;
-    return { edge, kinds, says, key: farKindKey(manifest.name, edge, kinds) };
-  });
+  return unhandedEdgeProblems(store.schema, manifest);
 }
 
 /**
@@ -460,7 +433,7 @@ export function edgesReadWithoutTheirKindsProblems<S extends AnySchema>(store: P
 export function checkProposedManifest<S extends AnySchema>(manifest: WorkerViewManifest, store: Store<S>): readonly string[] {
   const findings = checkManifest(manifest, store);
   if (findings.length > 0) return findings;
-  return edgesReadWithoutTheirKindsProblems(store, manifest).flatMap((one) => (one.kinds.length > 0 ? [one.says] : []));
+  return farKindsRefused(store.schema, manifest);
 }
 
 export interface WorkerViewPropsInput {

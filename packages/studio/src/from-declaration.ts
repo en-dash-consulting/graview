@@ -1,4 +1,4 @@
-import { bindsOf, isRepeatField, linkedRelationOf, nodeRefArgs, placeSlug, repeatedBy, repeatKey, requiredRolesOf, type LensDeclaration } from "@graview/core";
+import { bindsOf, isPlacePoint, isRepeatField, linkedRelationOf, nodeRefArgs, placeSlug, repeatedBy, repeatKey, requiredRolesOf, type LensDeclaration } from "@graview/core";
 import { computedOf, documentOf } from "@graview/core/document";
 import { fieldSpecOf } from "@graview/core/blocks";
 import { isMarkdownField } from "@graview/core/words";
@@ -112,6 +112,8 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
       // How a date repeats is the date's `repeats`, not a field of its own.
       const repeated = isRepeatField(type) ? repeatedBy(name) : undefined;
       if (repeated && fields[repeated]) continue;
+      // Where a place is, kept beside it by the host, is the place field's own, not a field of its own.
+      if (isPlacePoint(fields, name)) continue;
       // A link to another app's record (FR-171) is kept in a field, and is a relation: its far end named, not tied.
       const far = linkedRelationOf(type);
       if (far) {

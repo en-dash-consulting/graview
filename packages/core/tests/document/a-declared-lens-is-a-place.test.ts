@@ -36,6 +36,7 @@ describe("a document declaring one lens of each shipped type", () => {
       ["reach", "Who may do what", ["member"]],
       ["blocks", "Who keeps the hall", ["member"]],
       ["columns", "By day", ["shift"]],
+      ["map", "Where they are", ["shift"]],
     ]);
     expect(new Set(drawn.map((lens) => lens.lens))).toEqual(new Set(SHIPPED_LENS_NAMES));
   });
@@ -150,6 +151,7 @@ describe("placesOf lists every place an app has", () => {
       ["the-month", "shift", "/places/the-month"],
       ["who-covers-what", "shift", "/places/who-covers-what"],
       ["by-day", "shift", "/places/by-day"],
+      ["where-they-are", "shift", "/places/where-they-are"],
       ["the-building", "room", "/places/the-building"],
       ["who-may-do-what", "member", "/places/who-may-do-what"],
       ["who-keeps-the-hall", "member", "/places/who-keeps-the-hall"],

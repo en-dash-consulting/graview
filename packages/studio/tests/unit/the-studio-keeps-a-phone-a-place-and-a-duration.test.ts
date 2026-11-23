@@ -1,4 +1,4 @@
-import { createSchema, defineApp, defineNode, durationField, phoneField, placeField } from "@graview/core";
+import { createSchema, defineApp, defineNode, durationField, isPlacePoint, phoneField, placeField, placeGeoField } from "@graview/core";
 import { typedFieldOf } from "@graview/core/words";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
@@ -45,5 +45,18 @@ describe("the studio's phone, place and duration", () => {
     expect(schemaTs).toMatch(/^import \{ [^}]*durationField, [^}]*phoneField, placeField, [^}]*\} from "@graview\/core";/m);
     const shape = shapeOf(studio.declaration() as typeof app);
     expect([shape["mobile"], shape["hall"], shape["warmup"], shape["contact"], shape["length"]].map(typedFieldOf)).toEqual(["phone", "place", "duration", "phone", "duration"]);
+  });
+
+  it("keep a place's point beside it (`<place>Geo`) through the studio and back, never as a field of its own", () => {
+    const pointed = defineApp({ name: "Rehearsals", schema: createSchema([defineNode("rehearsal", { fields: z.object({ label: z.string(), venue: placeField().optional(), venueGeo: placeGeoField() }), label: (node) => node.label })]) });
+    expect(declarationToGraph(pointed).nodes.some((node) => node.id === "field:rehearsal.venueGeo")).toBe(false);
+    const studio = createStudio(pointed);
+    studio.store.apply({ name: "add-field", args: { kind: "declared:rehearsal", label: "hall", type: "place", required: false } } as never);
+    const schemaTs = (studio.files({ schemaVar: "schema" }) as readonly { path: string; contents: string }[]).find((file) => file.path.endsWith("schema.ts"))!.contents;
+    for (const line of ["venueGeo: placeGeoField(),", "hallGeo: placeGeoField(),"]) expect(schemaTs).toContain(line);
+    expect(schemaTs).toMatch(/^import \{ [^}]*placeGeoField, [^}]*\} from "@graview\/core";/m);
+    const shape = shapeOf(studio.declaration() as typeof app);
+    expect(isPlacePoint(shape, "venueGeo") && isPlacePoint(shape, "hallGeo")).toBe(true);
+    expect(shape["hallGeo"]).toBeDefined();
   });
 });

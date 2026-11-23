@@ -7,6 +7,7 @@ import { agentStep } from "./step-agent.js";
 import { generateStep } from "./step-generate.js";
 import { archiveStep } from "./step-archive.js";
 import { classifyStep } from "./step-classify.js";
+import { publishStep } from "./step-publish.js";
 import type { WorkflowWorld } from "./world.js";
 import type { FarAppResolver } from "./far.js";
 
@@ -92,6 +93,7 @@ export const STEP_KINDS = {
   generate: generateStep,
   archive: archiveStep,
   classify: classifyStep,
+  publish: publishStep,
 } as const satisfies Readonly<Record<string, StepKind<never>>>;
 
 export type StepKindKey = keyof typeof STEP_KINDS;

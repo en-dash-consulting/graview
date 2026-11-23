@@ -4,6 +4,7 @@ import type { Operation } from "../ops/types.js";
 import { actingAs, grantsTo, isSystem, ownsId } from "./policy.js";
 import type { SeatLens } from "../ops/withheld.js";
 import type { Policy, Principal, Sight } from "./types.js";
+import type { AnySchema } from "../schema/schema.js";
 
 /** What a store reads to judge a seat's sight: its policy, its graph and its log. */
 export interface Judged {
@@ -50,6 +51,8 @@ export const FIELD_SIGHT: {
   lens?: (lens: SeatLens, store: Judged, principal: Principal) => SeatLens;
   /** The fields one seat may not see, record by record; undefined when it sees every one. */
   keptFrom?: (store: Judged, principal: Principal) => FieldsKept | undefined;
+  /** A policy whose sights name a place field, widened to name its point with it (`place-points.ts`). */
+  points?: <P extends Policy>(policy: P | undefined, schema: AnySchema) => P | undefined;
 } = { served: new WeakSet() };
 
 /** Whether a sight shows only some fields: an allow list, or fields it hides. */

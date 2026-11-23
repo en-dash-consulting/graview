@@ -3,7 +3,9 @@ import { withArticle } from "../schema/define-node.js";
 import { farEnd } from "./far-end.js";
 import { error, warning, type Finding } from "./findings.js";
 import { outsideRange } from "./range.js";
-import type { ActSpec, GraviewDocument } from "./schema.js";
+import { effectsOf } from "./compile.js";
+import { refName } from "./compiled.js";
+import { isFieldArg, type ActSpec, type GraviewDocument } from "./schema.js";
 
 /*
  * WHAT A DOCUMENT SAYS OF ITS RANGES AND OF THE OTHER END OF ITS LINKS
@@ -232,9 +234,35 @@ function clearsFindings(name: string, act: ActSpec, document: GraviewDocument): 
   return out;
 }
 
+/** Every `$name` an effect reads, anywhere in it. */
+function refsRead(value: unknown, into: Set<string>): Set<string> {
+  const name = refName(value);
+  if (name !== undefined) into.add(name);
+  else if (Array.isArray(value)) for (const one of value) refsRead(one, into);
+  else if (value && typeof value === "object") for (const one of Object.values(value)) refsRead(one, into);
+  return into;
+}
+
+/**
+ * AN ARGUMENT NAMING NOTHING (HQ f-forms-and-downloads-follow-ups): one
+ * declared with no type is a record an effect links, its kinds the
+ * relation's; read by no effect, it has no relation to take them from, and
+ * is asked as a choice of any record of any kind, which nothing then uses.
+ */
+function unreadArgFindings(name: string, act: ActSpec, document: GraviewDocument): Finding[] {
+  const untyped = Object.entries(act.args ?? {}).filter(([, arg]) => !isFieldArg(arg));
+  if (untyped.length === 0) return [];
+  const read = refsRead(effectsOf(act, document), new Set());
+  return untyped
+    .filter(([arg]) => !read.has(arg))
+    .map(([arg]) =>
+      warning("act-arg-unread", `acts.${name}.args.${arg}`, `"${name}" declares "${arg}" with no type, and no effect links it, so it is asked as a choice of any record of any kind`, `link it in an effect, like {"connect": <relation>, "from": "$new", "to": "$${arg}"}, or give it a "type" where it is a value`),
+    );
+}
+
 /** Every range, other-end and `$me` finding of a document, in its order: fields, then acts. */
 export function actFindings(document: GraviewDocument): Finding[] {
-  return [...rangeFindings(document), ...neverArchivedFindings(document), ...neverTidiedFindings(document), ...Object.entries(document.acts ?? {}).flatMap(([name, act]) => [...otherEndFindings(name, act, document), ...linkedFindings(name, act, document), ...meFindings(name, act, document), ...clearsFindings(name, act, document)])];
+  return [...rangeFindings(document), ...neverArchivedFindings(document), ...neverTidiedFindings(document), ...Object.entries(document.acts ?? {}).flatMap(([name, act]) => [...otherEndFindings(name, act, document), ...linkedFindings(name, act, document), ...meFindings(name, act, document), ...clearsFindings(name, act, document), ...unreadArgFindings(name, act, document)])];
 }
 
 /**

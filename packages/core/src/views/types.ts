@@ -167,6 +167,10 @@ export interface HostView {
   readonly cardinality?: "one" | "many";
   /** Kept off the lists by the host. */
   readonly hidden?: boolean;
+  /** What it reads beyond its own kind: its place says `reads.kinds` (`Place.reads`). */
+  readonly reads?: { readonly kinds?: readonly string[] };
+  /** The acts it may ask for, by name or as `{ act }`: its place says their names (`Place.acts`). */
+  readonly acts?: readonly (string | { readonly act: string })[];
 }
 
 /** How the arrangement names a host's view: `view:<its manifest name>`. */

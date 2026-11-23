@@ -1,4 +1,4 @@
-import { filesOf, fileKindOf, isImage, isVideo, videoWords, type FileValue } from "./files.js";
+import { filesOf, fileKindOf, isImage, isVideo, previewOf, videoWords, type FileValue } from "./files.js";
 import { defOf } from "./zod.js";
 
 /*
@@ -34,11 +34,14 @@ export function fileFieldsOf(definition: { readonly fields?: unknown } | undefin
   });
 }
 
-/** A record's first picture — or video, drawn by its poster (0.1.37) — in its kind's declared order: what a card or a row shows small. */
+/**
+ * A record's first picture — or video, drawn by its poster (0.1.37) — in its
+ * kind's declared order: what a card or a row shows small. Where it holds
+ * none, its first document with a preview its host made (HQ
+ * f-file-values-carry-a-preview): a photograph is the record's picture
+ * before a PDF's first page is.
+ */
 export function firstPicture(node: Readonly<Record<string, unknown>>, definition: { readonly fields?: unknown } | undefined): FileValue | undefined {
-  for (const key of fileFieldsOf(definition)) {
-    const found = filesOf(node[key]).find((file) => isImage(file) || isVideo(file));
-    if (found) return found;
-  }
-  return undefined;
+  const files = fileFieldsOf(definition).flatMap((key) => filesOf(node[key]));
+  return files.find((file) => isImage(file) || isVideo(file)) ?? files.find((file) => previewOf(file) !== undefined);
 }

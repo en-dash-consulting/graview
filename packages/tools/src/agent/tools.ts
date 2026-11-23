@@ -1120,7 +1120,8 @@ export function createToolRuntime<S extends AnySchema>(
 
         case "get_graph": {
           /* A page of records, the edges out of them, and how many more (FR-167): the whole graph was one answer of 28,000 tokens. */
-          return { ok: true, ...(await reads()).graphRead(seen, authorship(seen, principal), args) };
+          // Each record says when and by whom it was last changed once (`changed`), not in four values: `get_node` keeps the four.
+          return { ok: true, ...(await reads()).graphRead(seen, authorship(seen, principal), args, { said: touchesSaid(store as never) }) };
         }
 
         case "get_node": {

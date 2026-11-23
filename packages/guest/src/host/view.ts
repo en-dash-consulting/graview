@@ -691,7 +691,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
    * fetched here as the reader, made into `blob:` URLs of this page, and
    * pushed again as each is ready. What is left out is said in its console
    * and to the host. The worker starts once their host has arrived, so the
-   * view is never handed a record's path to a file.
+   * view is never handed a record's path to a picture.
    */
   let pictures: GuestPictureHand | undefined;
   /* Its records' computed values, beside their fields (Roadmap f-computed-in-views): the worker starts once they can be worked out. */

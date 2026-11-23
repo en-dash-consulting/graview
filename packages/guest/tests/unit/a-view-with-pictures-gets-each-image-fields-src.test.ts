@@ -100,6 +100,6 @@ describe("a view with pictures: true", () => {
     expect(step(result.props).src).toBe(PICTURE_STAND_IN);
     // An SVG is a document to a view: no src, headless as live.
     expect(result.description.text).toContain("plan.svg has no src");
-    expect(JSON.stringify(result.props)).not.toContain("/graview/files/");
+    for (const path of [FILES.porch, FILES.step, FILES.plan]) expect(JSON.stringify(result.props)).not.toContain(path);
   });
 });

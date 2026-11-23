@@ -21,7 +21,7 @@ import type {
   InvariantDefinition,
   Violation,
 } from "./invariants/types.js";
-import { compileMutation, mintPersonId } from "./mutations/define-mutation.js";
+import { compileMutation, emptyRecordsLeftOut, mintPersonId } from "./mutations/define-mutation.js";
 import { wouldRun } from "./mutations/would-run.js";
 import { actSpelledAs, nearestAct } from "./mutations/act-spelling.js";
 import { InvalidArguments } from "./mutations/invalid-arguments.js";
@@ -46,7 +46,7 @@ import { MOST_PROPOSED, PROPOSE_CHANGES, proposeChangesMutation } from "./mutati
 import { namesUnseen, redact } from "./ops/withheld.js";
 import { writersBehind } from "./ops/writers.js";
 import { nounOf, withArticle } from "./schema/define-node.js";
-import { behind, fieldsJudged, mayKeepField, partialSight, recordsOf, sees } from "./permissions/sight.js";
+import { behind, FIELD_SIGHT, fieldsJudged, mayKeepField, partialSight, recordsOf, sees } from "./permissions/sight.js";
 import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
 import { checkUndo, UndoBlockedError, undoneInverses, undoPrimitives, type UndoCheck } from "./ops/undo.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
@@ -725,7 +725,8 @@ export class Store<S extends AnySchema> {
     this.appTimeZone = options.appTimeZone === null ? undefined : (options.appTimeZone ?? options.timeZone);
     // A store that knows its app's zone begins on the day there, so the first turn of the day says what it moved.
     if (this.dayTimeZone) this.ticked = { day: isoToday(this.dayTimeZone), on: isoToday(this.dayTimeZone) };
-    this.policy = options.policy;
+    // Who sees a place sees its point, and no one else (`place-points.ts`, taught to the store by field sight).
+    this.policy = FIELD_SIGHT.points?.(options.policy, options.schema) ?? options.policy;
     this.publishing = options.publishing;
     this.tidying = options.tidying;
     this.votes = options.votes;
@@ -1070,7 +1071,10 @@ export class Store<S extends AnySchema> {
   /** A call with its act's name as the store spells it, so the log and every check read the one name. */
   private spelledCall(call: MutationCall): MutationCall {
     const name = this.spelled(call.name);
-    return name === call.name ? call : { ...call, name };
+    // A record argument the act may go without, sent as "", is no value: never a record looked for (`emptyRecordsLeftOut`).
+    const input = this.mutations.get(name)?.input;
+    const args = input ? (emptyRecordsLeftOut(input, call.args) as MutationCall["args"]) : call.args;
+    return name === call.name && args === call.args ? call : { ...call, name, args };
   }
 
   /** Off by module, or a derived act of a kind the workspace has off. */
@@ -1161,13 +1165,41 @@ export class Store<S extends AnySchema> {
      * `$me` will be, so it is rehearsed: nothing is kept, and asking makes nobody.
      */
     if (verdict.ok && this.personFor(principal) && this.policy?.grants.some((grant) => grant.ownEnd)) {
-      try {
-        this.rehearsal().applying([call], { author: principal });
-      } catch (error) {
-        if (error instanceof PermissionDeniedError) return { ok: false, refusal: error.refusal } as ReturnType<typeof permits>;
-      }
+      const refusal = this.refusedOncePersonMade(call, principal);
+      if (refusal) return { ok: false, refusal } as ReturnType<typeof permits>;
     }
     return verdict;
+  }
+
+  /**
+   * WHAT `apply` REFUSES OF A CALL FOR WHO MAY ONCE A PROFILE'S PERSON IS
+   * MADE, telling nobody. Judged on the copy `wouldDo` keeps with the person
+   * made (`withPersonMade`), one for every call asked while this store's
+   * `version` stands: the several bar asks it of every chosen record for
+   * every act, and a copy each was thousands of copies. `apply` asks who may
+   * and what an agent was declared able to do again once the person is
+   * there, and nothing else it refuses for who may reads that person, so the
+   * copy answers as a rehearsal of the call would. The rest is rehearsed
+   * whole, as before: a call naming a record made in its own change, a
+   * proposal (its calls judged with what they make resolved), the app's own
+   * actor (what people said it may not do is judged as its call compiles),
+   * and a profile `apply` would not take as given.
+   */
+  private refusedOncePersonMade(call: MutationCall, principal: Principal): Refusal | undefined {
+    const as = withValidProfile(principal) as Principal;
+    try {
+      const proposing = this.proposer !== undefined && this.mutations.get(this.spelled(call.name)) === this.proposer;
+      if (namesMade(call) || proposing || isAutomated(as) || !this.personFor(as)) this.rehearsal().applying([call], { author: principal });
+      else {
+        const twin = this.withPersonMade(as);
+        const spelled = twin.spelledCall(call);
+        twin.permittedTo(spelled, as);
+        twin.declaredTo(spelled, as);
+      }
+    } catch (error) {
+      if (error instanceof PermissionDeniedError) return error.refusal;
+    }
+    return undefined;
   }
 
   /** What `permits` answers from the grants alone; on an undo, a call already made, so it asks no record of who took it back. */
@@ -2316,7 +2348,7 @@ export class Store<S extends AnySchema> {
         if (named || decided || person) (permitted(call, as), declared(call, as));
         const definition = this.mutation(call.name);
         if (definition === this.publisher) {
-          const op = PUBLISHING.op!(this, { id: this.nextId(), at: this.now() }, call, batch, as as Principal, options);
+          const op = PUBLISHING.op!(this, { id: this.nextId(), at: this.now() }, call, batch, as as Principal, { ...options, ...given("lineage", lined) });
           ops.push(op);
           intents.push(op.intent);
           continue;
