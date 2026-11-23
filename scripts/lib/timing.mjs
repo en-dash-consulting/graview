@@ -37,19 +37,55 @@ export function noteTiming(entry) {
 
 /*
  * FIXED WAITS, summed: every `page.waitForTimeout` a watched page made
- * (watch.mjs), written once when the process ends.
+ * (watch.mjs), written once when the process ends — with the line of the
+ * harness that asked for each, so the run's record says which waits cost
+ * the time and a build replacing them knows where to start.
  */
 let waited = 0;
 let waits = 0;
 let wiredWaits = false;
+const waitedAt = new Map();
 export function noteWait(ms) {
   if (!process.env[TIMING_ENV]) return;
-  waited += Number(ms) || 0;
+  const spent = Number(ms) || 0;
+  waited += spent;
   waits += 1;
+  const at = waitSite(new Error().stack);
+  const site = waitedAt.get(at) ?? { at, ms: 0, count: 0 };
+  site.ms += spent;
+  site.count += 1;
+  waitedAt.set(at, site);
   if (!wiredWaits) {
     wiredWaits = true;
-    process.on("exit", () => noteTiming({ kind: "waited", ms: waited, count: waits }));
+    process.on("exit", () => noteTiming({ kind: "waited", ms: waited, count: waits, sites: [...waitedAt.values()] }));
   }
+}
+
+/**
+ * The harness line a wait was asked for at, from a stack: the first frame
+ * under scripts/ that is not the watch or this module, as `file:line`
+ * relative to scripts/ (never a home directory), or "elsewhere".
+ */
+export function waitSite(stack) {
+  for (const line of String(stack ?? "").split("\n").slice(1)) {
+    const found = /scripts\/((?:[\w.-]+\/)*[\w.-]+\.m?[jt]s):(\d+)/.exec(line);
+    if (!found) continue;
+    if (found[1] === "lib/watch.mjs" || found[1] === "lib/timing.mjs") continue;
+    return `${found[1]}:${found[2]}`;
+  }
+  return "elsewhere";
+}
+
+/** The waits of every process, by the line that asked: the costliest twelve, most first. */
+function waitSites(waitedLines) {
+  const byAt = new Map();
+  for (const site of waitedLines.flatMap((one) => one.sites ?? [])) {
+    const kept = byAt.get(site.at) ?? { at: site.at, ms: 0, count: 0 };
+    kept.ms += site.ms;
+    kept.count += site.count;
+    byAt.set(site.at, kept);
+  }
+  return [...byAt.values()].sort((a, b) => b.ms - a.ms).slice(0, 12);
 }
 
 /** The lines of a timing file, or none. */
@@ -91,6 +127,7 @@ export function summarizeTiming(lines, { harnessPid } = {}) {
     browserLaunch: launches.reduce((sum, one) => sum + one.ms, 0),
     fixedWaits: waitedLines.reduce((sum, one) => sum + one.ms, 0),
     fixedWaitCount: waitedLines.reduce((sum, one) => sum + (one.count ?? 0), 0),
+    fixedWaitSites: waitSites(waitedLines),
   };
 }
 

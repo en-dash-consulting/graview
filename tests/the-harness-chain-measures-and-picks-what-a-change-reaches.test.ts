@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 // @ts-expect-error — plain modules of the harness, with no types of their own.
-import { cpuOf, stampVerdicts, summarizeTiming } from "../scripts/lib/timing.mjs";
+import { cpuOf, stampVerdicts, summarizeTiming, waitSite } from "../scripts/lib/timing.mjs";
 // @ts-expect-error — as above.
 import { byHarness, mergeCoverage, normalized, PREVIEW, withHook, withoutHook } from "../scripts/lib/coverage.mjs";
 // @ts-expect-error — as above.
@@ -47,6 +47,20 @@ describe("what a harness cost", () => {
     );
     expect(timing).toMatchObject({ serverStartup: 2400, beforeFirstBrowser: 3400, browsers: 2, browserLaunch: 1500, fixedWaits: 12000, fixedWaitCount: 40 });
     expect(timing.servers).toHaveLength(2);
+  });
+
+  it("names the harness line each fixed wait was asked for at, costliest first, across its processes", () => {
+    const timing = summarizeTiming([
+      { kind: "waited", ms: 900, count: 3, sites: [{ at: "verify-menu.mjs:40", ms: 600, count: 2 }, { at: "lib/journeys.mjs:12", ms: 300, count: 1 }], pid: 1, sinceStart: 10 },
+      { kind: "waited", ms: 500, count: 1, sites: [{ at: "lib/journeys.mjs:12", ms: 500, count: 1 }], pid: 2, sinceStart: 20 },
+    ]);
+    expect(timing.fixedWaitSites).toEqual([
+      { at: "lib/journeys.mjs:12", ms: 800, count: 2 },
+      { at: "verify-menu.mjs:40", ms: 600, count: 2 },
+    ]);
+    const stack = ["Error", "    at noteWait (/home/x/repo/scripts/lib/timing.mjs:50:3)", "    at page.waitForTimeout (/home/x/repo/scripts/lib/watch.mjs:954:9)", "    at async look (/home/x/repo/scripts/verify-site.mjs:120:5)"].join("\n");
+    expect(waitSite(stack)).toBe("verify-site.mjs:120");
+    expect(waitSite("Error\n    at somewhere (node:internal/x:1:1)")).toBe("elsewhere");
   });
 
   it("is kept in the verdict beside its claims, and adds no claim that reads as failed", () => {
