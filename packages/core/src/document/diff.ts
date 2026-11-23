@@ -9,9 +9,9 @@ import { formatWords } from "./format-words.js";
 import { respellDocument } from "./respell.js";
 import type { GraviewDocument } from "./schema.js";
 import { homeOf, VIEW_SLOTS, viewsOf } from "./views.js";
-import { capitalize, lowerFirst } from "../capital.js";
+import { capitalize, listed, lowerFirst } from "../capital.js";
 import { kindListWords, sortTypeOfDocumentField } from "../kind-list.js";
-import type { KindList } from "../views/types.js";
+import type { HostView, KindList } from "../views/types.js";
 import { FIRST_GRANT, FIRST_SIGHT, grantGone, grantSentence, NO_GRANT_LEFT, NO_SIGHT_LEFT, appTidyingSentence, archivesSentence, tidyingSentence, peopleSentence, sightGone, sightSentence, whoWords } from "./policy-words.js";
 
 /*
@@ -35,7 +35,33 @@ export interface DocumentDiff {
   readonly newlyRequired: readonly { readonly kind: string; readonly field: string }[];
   /** Number fields whose range no longer takes a value it took (FR-114): records outside it are cleared. */
   readonly narrowedRanges: readonly { readonly kind: string; readonly field: string }[];
+  /**
+   * The kept views handed in (`views`) whose manifests read a name the stored
+   * document declares and the proposed one does not: each would no longer
+   * fit the app (HQ feature:f-rename-carries-kept-views). Empty where none
+   * was handed, or each was carried (`editDocument`'s `views`).
+   */
+  readonly brokenViews: readonly BrokenView[];
   readonly unchanged: boolean;
+}
+
+/** A kept view a change leaves reading what is no longer there: its name, its title, and each name it reads that the change takes away. */
+export interface BrokenView {
+  readonly name: string;
+  readonly title?: string;
+  /** Kinds by name, fields as "<kind>'s <field>", relations and declared acts by name. */
+  readonly reads: readonly string[];
+}
+
+/** What a diff is told beyond the two documents. */
+export interface DiffOptions {
+  /**
+   * The views the host keeps, as they will stand after the change: the
+   * manifests `editDocument` carried (`EditOutcome.views`) where the host
+   * keeps them in the same change, else the ones it keeps now. A view
+   * reading a name the change takes away makes the change breaking.
+   */
+  readonly views?: readonly HostView[];
 }
 
 const keys = <T extends object>(o: T | undefined) => Object.keys(o ?? {});
@@ -57,7 +83,7 @@ export function derivesSentence(kind: string, derives: { readonly from: string; 
   return `Each ${words(kind)} follows its ${words(derives.from)} through "${derives.via}": ${fields.length > 1 ? `${fields.slice(0, -1).join(", ")} and ${fields.at(-1)}` : fields[0]} kept in step.`;
 }
 
-export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument): DocumentDiff {
+export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument, options: DiffOptions = {}): DocumentDiff {
   // A key renamed within the format is not a change (FR-134): both are read as this build spells them.
   const before = respellDocument(stored).document;
   const after = respellDocument(proposed).document;
@@ -214,8 +240,46 @@ export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument
   sentences.push(...workflowSentences(before.workflows, after.workflows));
   for (const k of ["modules", "settings"] as const) if (!same(before[k], after[k])) sentences.push(`The app's ${k} change.`);
 
-  const breaking = removedKinds.length + removedFields.length + retypedFields.length + droppedOptions.length + removedEdges.length + newlyRequired.length + narrowedRanges.length > 0;
-  return { sentences, breaking, removedKinds, removedFields, retypedFields, droppedOptions, removedEdges, newlyRequired, narrowedRanges, unchanged: sentences.length === 0 };
+  const brokenViews = (options.views ?? []).flatMap((view) => {
+    const reads = viewReadsTakenAway(view, before, after);
+    return reads.length > 0 ? [{ name: view.name, ...(view.title !== undefined ? { title: view.title } : {}), reads }] : [];
+  });
+  for (const view of brokenViews) sentences.push(`The view "${view.title ?? view.name}" reads ${listed(view.reads)}, which this change takes away: its manifest would no longer fit the app.`);
+
+  const breaking = removedKinds.length + removedFields.length + retypedFields.length + droppedOptions.length + removedEdges.length + newlyRequired.length + narrowedRanges.length + brokenViews.length > 0;
+  return { sentences, breaking, removedKinds, removedFields, retypedFields, droppedOptions, removedEdges, newlyRequired, narrowedRanges, brokenViews, unchanged: sentences.length === 0 };
+}
+
+/**
+ * WHAT A KEPT VIEW READS THAT A CHANGE TAKES AWAY: each kind, field,
+ * relation and declared act its manifest names that the stored document
+ * declares and the proposed one does not. What the stored document never
+ * had — another app's kind, a derived act, a name already wrong — is not
+ * this change's to answer for.
+ */
+function viewReadsTakenAway(view: HostView, before: GraviewDocument, after: GraviewDocument): string[] {
+  const out: string[] = [];
+  const add = (name: string) => {
+    if (!out.includes(name)) out.push(name);
+  };
+  const hasEdge = (doc: GraviewDocument, edge: string) => Object.values(doc.kinds).some((spec) => spec.edges?.[edge] !== undefined);
+  const pictures = view.pictures;
+  const pictureKinds = Array.isArray(pictures) ? pictures.filter((kind): kind is string => typeof kind === "string") : pictures && typeof pictures === "object" ? Object.keys(pictures).filter((key) => !["width", "records", "most", "thumb"].includes(key)) : [];
+  const kinds = [...(view.attach === "home" ? [] : [view.attach]), ...(view.reads?.kinds ?? []), ...(view.accepts ?? []).map((accept) => accept.kind), ...pictureKinds];
+  for (const kind of kinds) if (before.kinds[kind] && !after.kinds[kind]) add(kind);
+  const fields: [string, string][] = [...(view.accepts ?? []).map((accept): [string, string] => [accept.kind, accept.field])];
+  if (pictures && typeof pictures === "object" && !Array.isArray(pictures))
+    for (const kind of pictureKinds) {
+      const chosen = (pictures as Record<string, unknown>)[kind];
+      for (const field of typeof chosen === "string" ? [chosen] : Array.isArray(chosen) ? chosen : []) if (typeof field === "string") fields.push([kind, field]);
+    }
+  for (const [kind, field] of fields) if (before.kinds[kind]?.fields[field] && !after.kinds[kind]?.fields[field]) add(`${kind}'s ${field}`);
+  for (const edge of view.reads?.edges ?? []) if (hasEdge(before, edge) && !hasEdge(after, edge)) add(edge);
+  for (const one of view.acts ?? []) {
+    const act = typeof one === "string" ? one : one.act;
+    if (before.acts?.[act] && !after.acts?.[act]) add(act);
+  }
+  return out;
 }
 
 type Brand = NonNullable<GraviewDocument["brand"]>;

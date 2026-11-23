@@ -167,10 +167,20 @@ export interface HostView {
   readonly cardinality?: "one" | "many";
   /** Kept off the lists by the host. */
   readonly hidden?: boolean;
-  /** What it reads beyond its own kind: its place says `reads.kinds` (`Place.reads`). */
-  readonly reads?: { readonly kinds?: readonly string[] };
+  /** What it reads beyond its own kind: its place says `reads.kinds` (`Place.reads`); a rename carries both (`editDocument`). */
+  readonly reads?: { readonly kinds?: readonly string[]; readonly edges?: readonly string[] };
   /** The acts it may ask for, by name or as `{ act }`: its place says their names (`Place.acts`). */
   readonly acts?: readonly (string | { readonly act: string })[];
+  /** The fields files dropped on it go in, each a kind and its field: a rename of either carries them. */
+  readonly accepts?: readonly { readonly kind: string; readonly field: string }[];
+  /** The pictures it draws: the kinds, or the fields by kind (`GuestPictures`); a rename of a kind or a field carries them. */
+  readonly pictures?: unknown;
+  /**
+   * Its script, where the host hands it to `editDocument`: a rename then
+   * says whether the source still names the old key, since a manifest is
+   * carried and a script is not (HQ feature:f-rename-carries-kept-views).
+   */
+  readonly source?: string;
 }
 
 /** How the arrangement names a host's view: `view:<its manifest name>`. */

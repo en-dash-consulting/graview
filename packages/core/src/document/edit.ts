@@ -111,8 +111,38 @@ export interface Fill {
 }
 
 export type EditOutcome =
-  | { readonly ok: true; readonly document: GraviewDocument; readonly said: readonly string[]; readonly fills: readonly Fill[] }
+  | {
+      readonly ok: true;
+      readonly document: GraviewDocument;
+      readonly said: readonly string[];
+      readonly fills: readonly Fill[];
+      /**
+       * Where the host handed its views (`EditOptions.views`): every one of
+       * them as it stands after the change — a manifest that read a name the
+       * change renamed reads the new one, the rest as they were, none with
+       * its `source` — for the host to keep in the same change as the
+       * document, so one undo takes both back (HQ
+       * feature:f-rename-carries-kept-views).
+       */
+      readonly views?: readonly HostView[];
+      /** Each of those views whose manifest the change carried, with what it read and what its source still names. */
+      readonly carried?: readonly CarriedView[];
+    }
   | { readonly ok: false; readonly findings: readonly Finding[] };
+
+/** A kept view whose manifest a rename carried: what it read, what it reads now, and the old names its source still says. */
+export interface CarriedView {
+  readonly name: string;
+  readonly title?: string;
+  /** Its manifest as the host kept it (without its source). */
+  readonly was: HostView;
+  /** Its manifest as the change leaves it. */
+  readonly manifest: HostView;
+  /** Each name it read that the change renamed, and the name it reads now, in the change's order. */
+  readonly moved: readonly { readonly from: string; readonly to: string }[];
+  /** The old names its source still says, where the host handed the source: the script is the host's to change, never the edit's. */
+  readonly sourceNames: readonly string[];
+}
 
 /** What an edit is judged against beyond the document itself. */
 export interface EditOptions {
@@ -122,7 +152,10 @@ export interface EditOptions {
    * The views the host keeps (`HostView`; a script view's manifest is one):
    * what `arrange-pages` may name in `order`, `first` and `primary` — by
    * its manifest name or its title, written as `view:<name>`. Unsaid, only
-   * `view:<name>` names one, taken on the host's word.
+   * `view:<name>` names one, taken on the host's word. A rename of a kind,
+   * a field, a relation or an act carries each manifest that reads it
+   * (`EditOutcome.views`, `EditOutcome.carried`), and says which views'
+   * sources, where handed, still name the old key.
    */
   readonly views?: readonly HostView[];
   /**
@@ -717,6 +750,8 @@ class Editor {
   private readonly edgeOrigin = new Map<string, string | undefined>();
   /** A lens drawn anew under another title: its title's address word now, and the one it had in the base document. */
   private readonly lensOrigin = new Map<string, string>();
+  /** Each name this change moved, in order: what a kept view's manifest reads follows it (HQ feature:f-rename-carries-kept-views). */
+  readonly moves: Move[] = [];
 
   constructor(
     readonly doc: Doc,
@@ -2615,11 +2650,19 @@ class Editor {
     if (this.doc.kinds[e.to]) return this.fail(i, "to", `there is already a kind "${e.to}"`);
     const from: string = e.kind;
     const to: string = e.to;
+    this.moves.push({ t: "kind", from, to });
     const touched = this.rewriteAll({ t: "kind", from, to });
     // The acts the framework derives for every kind are named for it, so they move with it.
-    for (const act of DERIVED_ACTS) this.toolsMoved.add(`${act}-${from} is now ${act}-${to}`);
+    for (const act of DERIVED_ACTS) {
+      this.toolsMoved.add(`${act}-${from} is now ${act}-${to}`);
+      this.moves.push({ t: "act", from: `${act}-${from}`, to: `${act}-${to}` });
+    }
     // And so are each of its relations' connect and disconnect.
-    for (const relation of documentRelations({ [from]: spec })[0]![1]) for (const act of RELATION_ACTS) this.toolsMoved.add(`${relationActName(act, from, relation)} is now ${relationActName(act, to, relation)}`);
+    for (const relation of documentRelations({ [from]: spec })[0]![1])
+      for (const act of RELATION_ACTS) {
+        this.toolsMoved.add(`${relationActName(act, from, relation)} is now ${relationActName(act, to, relation)}`);
+        this.moves.push({ t: "act", from: relationActName(act, from, relation), to: relationActName(act, to, relation) });
+      }
     // The kind itself, in order, continuing its records.
     const kinds: Doc = {};
     for (const [k, v] of Object.entries(this.doc.kinds)) kinds[k === from ? to : k] = v;
@@ -2832,6 +2875,7 @@ class Editor {
     if (to === field) return;
     if (!this.freeName(i, kind, to, "field")) return;
     const r: Rename = { t: "field", kind, from: field, to };
+    this.moves.push({ t: "field", kind, from: field, to });
     const touched = this.rewriteAll(r);
     // An act's arguments are named for the fields it writes: the derived edit, and any act that writes this one.
     this.toolsMoved.add(`edit-${kind} asks for ${to} where it asked for ${field}`);
@@ -3114,9 +3158,15 @@ class Editor {
     const holders = [...(sources(this.doc, relation) as Set<string>)];
     for (const k of holders) if (!this.freeName(i, k, to, "relation")) return;
     if (Object.values(this.doc.kinds).some((s: Doc) => s.edges?.[to])) return this.fail(i, "to", `another kind already has a relation called "${to}"`);
+    this.moves.push({ t: "edge", from: relation, to });
     const touched = this.rewriteAll({ t: "edge", from: relation, to });
     // Its connect and disconnect are named for it, so they move with it.
-    for (const [k, held] of documentRelations(this.doc.kinds)) if (held.includes(relation)) for (const act of RELATION_ACTS) this.toolsMoved.add(`${relationActName(act, k, relation)} is now ${relationActName(act, k, to)}`);
+    for (const [k, held] of documentRelations(this.doc.kinds))
+      if (held.includes(relation))
+        for (const act of RELATION_ACTS) {
+          this.toolsMoved.add(`${relationActName(act, k, relation)} is now ${relationActName(act, k, to)}`);
+          this.moves.push({ t: "act", from: relationActName(act, k, relation), to: relationActName(act, k, to) });
+        }
     // A sight via it names it too.
     for (const sight of this.doc.policy?.sees ?? []) if (sight.via === relation) sight.via = to;
     for (const k of holders) {
@@ -3236,6 +3286,7 @@ class Editor {
   /** An act gets a new name, and every grant and repair that named it follows. */
   private renameAct(from: string, to: string) {
     this.toolsMoved.add(`${from} is now ${to}`);
+    this.moves.push({ t: "act", from, to });
     const acts: Doc = {};
     for (const [k, v] of Object.entries(this.doc.acts)) acts[k === from ? to : k] = v;
     this.doc.acts = acts;
@@ -4127,7 +4178,122 @@ export function editDocument(document: GraviewDocument, edits: readonly unknown[
   if (editor.toolsMoved.size > 0) {
     editor.said.push(`The tools an agent is offered change: ${listOf([...editor.toolsMoved])}. A conversation that listed them before should list them again.`);
   }
-  return { ok: true, document: editor.doc as GraviewDocument, said: editor.said, fills: editor.fills };
+  if (!options.views) return { ok: true, document: editor.doc as GraviewDocument, said: editor.said, fills: editor.fills };
+  /*
+   * THE KEPT VIEWS FOLLOW THE RENAME (HQ feature:f-rename-carries-kept-views).
+   * A view's manifest names the kinds, relations, fields and acts it reads,
+   * and a rename that left them behind left every such view no longer
+   * fitting the app. Each is carried here, to be kept in the same change;
+   * its script is the host's, so what it still says is said, never changed.
+   */
+  const views: HostView[] = [];
+  const carried: CarriedView[] = [];
+  for (const view of options.views) {
+    const one = carryView(view, editor.moves);
+    views.push(one.manifest);
+    if (one.moved.length === 0) continue;
+    const { source: _source, ...was } = view;
+    carried.push({ name: view.name, ...(view.title !== undefined ? { title: view.title } : {}), was, manifest: one.manifest, moved: one.moved, sourceNames: one.sourceNames });
+    const called = `The view "${view.title ?? view.name}"`;
+    editor.said.push(`${called} read ${listOf([...new Set(one.moved.map((move) => move.from))])}; its manifest now reads ${listOf([...new Set(one.moved.map((move) => move.to))])}.`);
+    if (one.sourceNames.length > 0) editor.said.push(`${called}'s source still names ${listOf(one.sourceNames)}: change it there too, or the view reads nothing by ${one.sourceNames.length === 1 ? "that name" : "those names"}.`);
+  }
+  return { ok: true, document: editor.doc as GraviewDocument, said: editor.said, fills: editor.fills, views, carried };
+}
+
+/** A name a change moved: a kind, one kind's field, a relation (one name across the app), or an act. */
+type Move =
+  | { readonly t: "kind"; readonly from: string; readonly to: string }
+  | { readonly t: "field"; readonly kind: string; readonly from: string; readonly to: string }
+  | { readonly t: "edge"; readonly from: string; readonly to: string }
+  | { readonly t: "act"; readonly from: string; readonly to: string };
+
+/** What a view's `pictures` keeps besides the kinds it chooses (`GuestPictures`). */
+const PICTURE_KEYS = new Set(["width", "records", "most", "thumb"]);
+
+/** Whether a script says a name whole, never as part of a longer one. */
+function namedIn(source: string, name: string): boolean {
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(?<![\\w$-])${escaped}(?![\\w$-])`).test(source);
+}
+
+/**
+ * One kept view's manifest with each move applied, in order: the kind it is
+ * attached to, the kinds and relations it reads, the fields files dropped on
+ * it go in, the pictures it chooses and the acts it may ask for. Its other
+ * keys stay as the host wrote them; its source is left out of the manifest
+ * and read for the old names it still says.
+ */
+function carryView(view: HostView, moves: readonly Move[]): { manifest: HostView; moved: { from: string; to: string }[]; sourceNames: string[] } {
+  const { source, ...rest } = view;
+  const m: Doc = clone(rest);
+  const moved: { from: string; to: string }[] = [];
+  const say = (from: string, to: string) => {
+    if (!moved.some((one) => one.from === from && one.to === to)) moved.push({ from, to });
+  };
+  const swap = (list: readonly unknown[], from: string, to: string): unknown[] => list.map((x) => (x === from ? to : x));
+  for (const move of moves) {
+    let hit = false;
+    if (move.t === "kind") {
+      if (m.attach === move.from) {
+        m.attach = move.to;
+        hit = true;
+      }
+      if (Array.isArray(m.reads?.kinds) && m.reads.kinds.includes(move.from)) {
+        m.reads.kinds = swap(m.reads.kinds, move.from, move.to);
+        hit = true;
+      }
+      for (const accept of m.accepts ?? [])
+        if (accept.kind === move.from) {
+          accept.kind = move.to;
+          hit = true;
+        }
+      if (Array.isArray(m.pictures) && m.pictures.includes(move.from)) {
+        m.pictures = swap(m.pictures, move.from, move.to);
+        hit = true;
+      } else if (isObject(m.pictures) && move.from in m.pictures && !PICTURE_KEYS.has(move.from)) {
+        m.pictures = Object.fromEntries(Object.entries(m.pictures).map(([key, value]) => [key === move.from ? move.to : key, value]));
+        hit = true;
+      }
+    } else if (move.t === "field") {
+      for (const accept of m.accepts ?? [])
+        if (accept.kind === move.kind && accept.field === move.from) {
+          accept.field = move.to;
+          hit = true;
+        }
+      if (isObject(m.pictures) && !PICTURE_KEYS.has(move.kind)) {
+        const chosen = m.pictures[move.kind];
+        if (chosen === move.from) {
+          m.pictures[move.kind] = move.to;
+          hit = true;
+        } else if (Array.isArray(chosen) && chosen.includes(move.from)) {
+          m.pictures[move.kind] = swap(chosen, move.from, move.to);
+          hit = true;
+        }
+      }
+    } else if (move.t === "edge") {
+      if (Array.isArray(m.reads?.edges) && m.reads.edges.includes(move.from)) {
+        m.reads.edges = swap(m.reads.edges, move.from, move.to);
+        hit = true;
+      }
+    } else if (Array.isArray(m.acts)) {
+      m.acts = m.acts.map((act: unknown) => {
+        if (act === move.from) {
+          hit = true;
+          return move.to;
+        }
+        if (isObject(act) && act["act"] === move.from) {
+          hit = true;
+          return { ...act, act: move.to };
+        }
+        return act;
+      });
+    }
+    if (hit) say(move.from, move.to);
+  }
+  // An old name is still said only where nothing the change moved is now called by it.
+  const sourceNames = typeof source === "string" ? [...new Set(moved.map((one) => one.from))].filter((from) => !moved.some((one) => one.to === from) && namedIn(source, from)) : [];
+  return { manifest: m as HostView, moved, sourceNames };
 }
 
 /** What a document's places are made of, as one string: its kinds and their words, its lenses, its jobs and its arrangement. */
