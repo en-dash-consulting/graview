@@ -110,8 +110,8 @@ export type SuggestedAnswer = { readonly said: string; readonly order: readonly 
  */
 const ANSWERS = /* @__PURE__ */ new WeakMap<object, Map<string, SuggestedAnswer>>();
 const answered = (depends: object | undefined, said: string) => (depends ? ANSWERS.get(depends)?.get(said) : undefined);
-/** What an answer is kept under: the suggestions, and the question they were asked in — what the menu is on by name, and whether a part lends Better UI. */
-const keyOf = (asked: { readonly name: string; readonly better: boolean }, said: string) => `${asked.better ? "better" : "chat"}\u0002${asked.name}\u0002${said}`;
+/** What an answer is kept under: the suggestions, and whether a part lends Better UI (the question then asks of each how it reads). The name it was asked about only words the question: the press and the menu may name one thing two ways, and are asked once between them. */
+const keyOf = (asked: { readonly better: boolean }, said: string) => `${asked.better ? "better" : "chat"}\u0002${said}`;
 
 /** The first order, before the Fast slot answers: a nudge first where there is one, then what worked before, then the acts. */
 function firstOrder(candidates: readonly MenuSuggestion[]): MenuSuggestion[] {

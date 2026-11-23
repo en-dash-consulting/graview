@@ -119,6 +119,19 @@ describe("the Suggested rows' Fast call", () => {
     expect(calls.suggested).toBe(1);
   });
 
+  it("is asked once on a list's own ground too, where the menu is headed with the list's name and the press knows none", async () => {
+    const { calls, fast } = counted();
+    const { host } = await rendered({ fast }, [looks]);
+    const ground = host.querySelector<HTMLElement>("main h1") ?? host.querySelector<HTMLElement>("main")!;
+    await act(async () => void ground.dispatchEvent(pointer("pointerdown", { button: 2, clientX: 40, clientY: 20 })));
+    await until(() => calls.suggested > 0, 40);
+    await rightClick(ground);
+    await until(() => suggestedRows().length > 0);
+    await wait(200);
+    expect(suggestedRows().length).toBeGreaterThan(0);
+    expect(calls.suggested).toBe(1);
+  });
+
   it("holds the rows' height as the Fast slot answers sure of fewer than were first drawn", async () => {
     // Sure of the first alone: the answer shows one row where three were drawn first.
     let answered = false;
