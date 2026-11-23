@@ -2347,7 +2347,7 @@ export class Store<S extends AnySchema> {
         if (named || decided || person) (permitted(call, as), declared(call, as));
         const definition = this.mutation(call.name);
         if (definition === this.publisher) {
-          const op = PUBLISHING.op!(this, { id: this.nextId(), at: this.now() }, call, batch, as as Principal, options);
+          const op = PUBLISHING.op!(this, { id: this.nextId(), at: this.now() }, call, batch, as as Principal, { ...options, ...given("lineage", lined) });
           ops.push(op);
           intents.push(op.intent);
           continue;

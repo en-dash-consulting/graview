@@ -4,6 +4,7 @@ import type { GraviewDocument } from "../document/schema.js";
 import { jobWorldOfApp, jobWorldOfDocument, type JobWorld } from "../job-findings.js";
 import { deriveMutations } from "../mutations/derive-edits.js";
 import { derivedActOf, givenWhenNeverArchived } from "../mutations/derived-names.js";
+import { onPublish, type Publishing } from "../publish.js";
 import { nounOf } from "../schema/define-node.js";
 import type { AnySchema } from "../schema/schema.js";
 
@@ -29,6 +30,8 @@ export interface WorkflowWorld extends JobWorld {
   readonly connections: ReadonlyMap<string, WorkflowConnection>;
   /** A kind as a person reads it: the noun its declaration says. */
   noun(kind: string): string;
+  /** The app publishes (`publishing: { mode: "on-publish" }`): readers are served what was last published, so there is something to publish. */
+  readonly publishes: boolean;
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
@@ -59,6 +62,7 @@ export function workflowWorldOfDocument(document: GraviewDocument): WorkflowWorl
     },
     connections: connectionsOf(document.connections),
     noun: (kind) => nounOf(document.kinds[kind] as { noun?: string } | undefined, kind),
+    publishes: onPublish(document.publishing as Publishing | undefined),
   };
 }
 
@@ -76,5 +80,6 @@ export function workflowWorldOfApp<S extends AnySchema>(app: GraviewApp<S>): Wor
     },
     connections: connectionsOf(app.connections as Readonly<Record<string, unknown>> | undefined),
     noun: (kind) => nounOf(app.schema.tryDefinition(kind) as { noun?: string } | undefined, kind),
+    publishes: onPublish(app.publishing),
   };
 }
