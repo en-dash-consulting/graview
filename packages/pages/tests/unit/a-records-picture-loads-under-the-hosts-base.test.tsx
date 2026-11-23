@@ -43,7 +43,7 @@ describe("a record's page under the host's base", () => {
     expect(pictures).toContain(`/a/jobs${FILES.step}`);
     expect(pictures.filter((src) => src.startsWith("/graview/"))).toEqual([]);
     const papers = [...host.querySelectorAll<HTMLAnchorElement>("a[download]")].map((a) => a.getAttribute("href"));
-    expect(papers).toContain(`/a/jobs${FILES.quote}`);
+    expect(papers).toContain(`/a/jobs${FILES.quote}?download=1`);
     expect(papers.filter((href) => href?.startsWith("/graview/"))).toEqual([]);
     await act(async () => root.unmount());
     host.remove();
