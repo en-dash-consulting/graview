@@ -1161,13 +1161,41 @@ export class Store<S extends AnySchema> {
      * `$me` will be, so it is rehearsed: nothing is kept, and asking makes nobody.
      */
     if (verdict.ok && this.personFor(principal) && this.policy?.grants.some((grant) => grant.ownEnd)) {
-      try {
-        this.rehearsal().applying([call], { author: principal });
-      } catch (error) {
-        if (error instanceof PermissionDeniedError) return { ok: false, refusal: error.refusal } as ReturnType<typeof permits>;
-      }
+      const refusal = this.refusedOncePersonMade(call, principal);
+      if (refusal) return { ok: false, refusal } as ReturnType<typeof permits>;
     }
     return verdict;
+  }
+
+  /**
+   * WHAT `apply` REFUSES OF A CALL FOR WHO MAY ONCE A PROFILE'S PERSON IS
+   * MADE, telling nobody. Judged on the copy `wouldDo` keeps with the person
+   * made (`withPersonMade`), one for every call asked while this store's
+   * `version` stands: the several bar asks it of every chosen record for
+   * every act, and a copy each was thousands of copies. `apply` asks who may
+   * and what an agent was declared able to do again once the person is
+   * there, and nothing else it refuses for who may reads that person, so the
+   * copy answers as a rehearsal of the call would. The rest is rehearsed
+   * whole, as before: a call naming a record made in its own change, a
+   * proposal (its calls judged with what they make resolved), the app's own
+   * actor (what people said it may not do is judged as its call compiles),
+   * and a profile `apply` would not take as given.
+   */
+  private refusedOncePersonMade(call: MutationCall, principal: Principal): Refusal | undefined {
+    const as = withValidProfile(principal) as Principal;
+    try {
+      const proposing = this.proposer !== undefined && this.mutations.get(this.spelled(call.name)) === this.proposer;
+      if (namesMade(call) || proposing || isAutomated(as) || !this.personFor(as)) this.rehearsal().applying([call], { author: principal });
+      else {
+        const twin = this.withPersonMade(as);
+        const spelled = twin.spelledCall(call);
+        twin.permittedTo(spelled, as);
+        twin.declaredTo(spelled, as);
+      }
+    } catch (error) {
+      if (error instanceof PermissionDeniedError) return error.refusal;
+    }
+    return undefined;
   }
 
   /** What `permits` answers from the grants alone; on an undo, a call already made, so it asks no record of who took it back. */
