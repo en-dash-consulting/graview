@@ -103,6 +103,38 @@ export function publishedSeqOf(log: Published): number | undefined {
   return seq;
 }
 
+/** What a publish through `through` would publish: how many changes (batches that stand), and the first and last seq among them. */
+export interface Drafts {
+  readonly changes: number;
+  readonly first?: number;
+  readonly last?: number;
+}
+
+/**
+ * THE DRAFTS A PUBLISH THROUGH `through` WOULD PUBLISH: every change that
+ * stands — a batch not undone — with an op from what stands published (or
+ * the horizon) up to `through`, publish ops aside. What a publish says
+ * ("Publish 3 changes") and what a workflow's publish step says it
+ * published (Roadmap f-workflow-step-publishes).
+ */
+export function draftsOf(log: Pick<OperationLog, "all" | "undoneIds" | "epochs" | "batches" | "horizon">, through: number): Drafts {
+  const was = publishedSeqOf(log) ?? log.horizon;
+  let changes = 0;
+  let first: number | undefined;
+  let last: number | undefined;
+  for (const one of log.batches()) {
+    if (one.undone) continue;
+    const drafts = one.ops.filter((op) => op.seq >= was && op.seq < through && op.publishedThrough === undefined);
+    if (drafts.length === 0) continue;
+    changes++;
+    for (const op of drafts) {
+      first = first === undefined ? op.seq : Math.min(first, op.seq);
+      last = last === undefined ? op.seq : Math.max(last, op.seq);
+    }
+  }
+  return { changes, ...(first !== undefined ? { first } : {}), ...(last !== undefined ? { last } : {}) };
+}
+
 /** Who may publish: a refusal in a sentence when this principal may not — whoever holds none of `publishers` (else `working`), the system aside. */
 export function publishRefusal(publishing: Publishing | undefined, principal: Principal): Refusal | undefined {
   if (!publishes(publishing)) return { mutation: NAME, message: "this app is live: every edit reaches its readers as it is made, so there is nothing to publish.", wouldNeed: [] };
@@ -125,7 +157,7 @@ const publishOp: NonNullable<typeof PUBLISHING.op> = (held, made, call, batch, a
   }
   const through = (asked as number | undefined) ?? seq + 1;
   const was = publishedSeqOf(log) ?? log.horizon;
-  const changes = log.batches().filter((one) => !one.undone && one.ops.some((op) => op.seq >= was && op.seq < through && op.publishedThrough === undefined)).length;
+  const changes = draftsOf(log, through).changes;
   const op = {
     id: made.id,
     seq,
@@ -139,6 +171,8 @@ const publishOp: NonNullable<typeof PUBLISHING.op> = (held, made, call, batch, a
     writes: [],
     at: made.at,
     ...(options.via !== undefined ? { via: options.via as never } : {}),
+    // Why, where a caller said: a workflow's run names itself on what it publishes, as on every op it makes.
+    ...(options.lineage !== undefined ? { lineage: options.lineage as never } : {}),
     publishedThrough: through,
   } as Operation;
   log.append(op);

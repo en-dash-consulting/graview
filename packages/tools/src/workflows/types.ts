@@ -98,6 +98,27 @@ export interface WorkflowRun {
    * refused there — naming the app. Absent when no step reached one.
    */
   readonly far?: readonly FarWrite[];
+  /**
+   * WHAT IT PUBLISHED, OR WOULD PUBLISH (Roadmap f-workflow-step-publishes):
+   * each publish step's publish — how many changes, the seqs they span and
+   * how far readers are served — previewed in a dry run, published, or put
+   * to a person. Absent when no step published.
+   */
+  readonly published?: readonly WorkflowPublished[];
+}
+
+/** One publish a run made, or would make: which step, how many changes and the seqs they span, through what, and what became of it. */
+export interface WorkflowPublished {
+  readonly step: number;
+  /** Changes that stand (batches not undone) it publishes. */
+  readonly changes: number;
+  /** The first and last seq among them. */
+  readonly from: number;
+  readonly to: number;
+  /** Readers are served every op before this seq once it stands. */
+  readonly through: number;
+  /** Previewed (a dry run: nothing published), published, or suggested for a person to approve. */
+  readonly as: "previewed" | "published" | "suggested";
 }
 
 /** One act a run ran, or would run, in another app: which step, which app, which act with what, and what became of it there. */
@@ -300,6 +321,8 @@ export interface StepContext<S extends AnySchema = AnySchema> {
   readonly follows: readonly WorkflowPolicy[];
   /** The ops from the last good run's `through` on: what was made and changed since it. */
   readonly since: readonly Operation[];
+  /** The seq the run read up to as it began: every op before it (the run's own `through`). */
+  readonly reached: number;
   /**
    * THE ONE DOOR: a change made, previewed (a dry run), suggested or let
    * go by `approve` and its confidence, with the run's lineage, and what it
@@ -312,7 +335,9 @@ export interface StepContext<S extends AnySchema = AnySchema> {
   note(said: string): void;
   /** The step did not run, and the run is `partial` for it. */
   skipped(why: string): void;
-  /** What a model call of this step spent, counted on the run's `spent`. */
+  /** What this step published, or would publish, kept on the run's `published` and said in its notes. */
+  published(what: Omit<WorkflowPublished, "step">): void;
+    /** What a model call of this step spent, counted on the run's `spent`. */
   spent(usage: SpendSaid): void;
   /** Another app, reached through the host's `FarApps` as the run's actor — or why it cannot be, in words. Asked once a run for each app. */
   otherApp(address: string): Promise<FarApp | { readonly refused: string }>;

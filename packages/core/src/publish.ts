@@ -71,7 +71,7 @@ export interface PublishingServed {
   };
   /** The `publish` act's input, made with the page's own zod — so the module a page fetches brings none. */
   input?: () => unknown;
-  op?: (store: object, made: { readonly id: string; readonly at: string }, call: { readonly name: string; readonly args: Record<string, unknown> }, batch: string, author: Principal, options: { readonly intent?: string; readonly via?: unknown }) => Operation;
+  op?: (store: object, made: { readonly id: string; readonly at: string }, call: { readonly name: string; readonly args: Record<string, unknown> }, batch: string, author: Principal, options: { readonly intent?: string; readonly via?: unknown; readonly lineage?: unknown }) => Operation;
 }
 /*
  * One object for the store, the seat view and `@graview/core/publishing`,

@@ -5,7 +5,7 @@ import { declaredWorkflows, policiesOf, resolveWorkflow, workflowAuthor, workflo
 import { routeOf } from "../tidy/policy.js";
 import { askedOf } from "./ask.js";
 import { stepRunnerOf } from "./steps.js";
-import { MOST_CHAIN, type ChangeOutcome, type FarActAnswer, type FarApp, type FarOrigin, type FarStepChange, type FarWrite, type RunWorkflowOptions, type SpendSaid, type StepChange, type StepContext, type StepSpend, type WorkflowOutcome, type WorkflowRun, type WorkflowSpend } from "./types.js";
+import { MOST_CHAIN, type ChangeOutcome, type FarActAnswer, type FarApp, type FarOrigin, type FarStepChange, type FarWrite, type RunWorkflowOptions, type SpendSaid, type StepChange, type StepContext, type StepSpend, type WorkflowOutcome, type WorkflowPublished, type WorkflowRun, type WorkflowSpend } from "./types.js";
 
 /*
  * RUNNING ONE WORKFLOW (Roadmap f-jobs-declared, f-job-idempotency,
@@ -107,6 +107,7 @@ export async function runWorkflow<S extends AnySchema>(options: RunWorkflowOptio
   let refused = false;
   const spends = new Map<number, { calls: number; inputTokens: number; outputTokens: number; costUsd?: number; model?: string }>();
   const far: FarWrite[] = [];
+  const published: WorkflowPublished[] = [];
   const reached = new Map<string, Promise<FarApp | { readonly refused: string }>>();
 
   // The chain behind a run another workflow's change started: the starting run's own, and it.
@@ -123,7 +124,7 @@ export async function runWorkflow<S extends AnySchema>(options: RunWorkflowOptio
   };
 
   const finish = (outcome: WorkflowOutcome, dry: boolean, through: number): WorkflowRun => {
-    const run: WorkflowRun = { id, workflow: workflow.name, trigger, started, finished: new Date(options.now === undefined ? Math.max(now, Date.now()) : now).toISOString(), outcome, dry, made: [...made], changed: [...changed], archived: [...archived], suggested, heldBack, through, specHash, notes, spent: spentOf(), chain, ...(far.length > 0 ? { far } : {}) };
+    const run: WorkflowRun = { id, workflow: workflow.name, trigger, started, finished: new Date(options.now === undefined ? Math.max(now, Date.now()) : now).toISOString(), outcome, dry, made: [...made], changed: [...changed], archived: [...archived], suggested, heldBack, through, specHash, notes, spent: spentOf(), chain, ...(far.length > 0 ? { far } : {}), ...(published.length > 0 ? { published } : {}) };
     options.log.add(run);
     return run;
   };
@@ -193,6 +194,7 @@ export async function runWorkflow<S extends AnySchema>(options: RunWorkflowOptio
         ...(options.ai ? { ai: options.ai } : {}),
         follows,
         since,
+        reached: through,
         change(change: StepChange): ChangeOutcome {
           const lineage = {
             basis: change.basis.slice(0, 500),
@@ -298,6 +300,7 @@ export async function runWorkflow<S extends AnySchema>(options: RunWorkflowOptio
           });
           return answer;
         },
+        published: (what) => void published.push({ step: index, ...what }),
         spent(usage: SpendSaid) {
           const one = spends.get(index) ?? { calls: 0, inputTokens: 0, outputTokens: 0 };
           const count = (value: number | undefined) => (value !== undefined && Number.isFinite(value) && value > 0 ? value : 0);
@@ -320,7 +323,7 @@ export async function runWorkflow<S extends AnySchema>(options: RunWorkflowOptio
 
   notes.push(...farNotes(far));
   if (!outcome) {
-    const didSomething = made.size + changed.size + archived.size + suggested.length + far.filter((one) => one.as !== "refused").length > 0;
+    const didSomething = made.size + changed.size + archived.size + suggested.length + far.filter((one) => one.as !== "refused").length + published.length > 0;
     outcome = skipped || refused ? "partial" : didSomething ? "ok" : "nothing-new";
     if (outcome === "nothing-new") notes.push("Nothing new: everything it would do was done already.");
   }

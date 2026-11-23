@@ -31,7 +31,7 @@ both on the brand's `timeZone`; `{ "made": "<kind>", "where"? }`,
 `{ "byHand": true }`. A step is one of a closed set: `act` (run an act,
 once or `over` the records a rule picks), `agent` (a model proposes acts
 from a list), `generate` (dated records from a pattern), `archive` (set
-aside by a rule). Every key is in `@graview/core/dist/document.schema.json`
+aside by a rule), `publish` (publish the drafts). Every key is in `@graview/core/dist/document.schema.json`
 under `workflows`; a trigger that is none of these (`[{}]`) is refused
 naming them.
 
@@ -93,6 +93,13 @@ then a dry run, then the real one.
    suggestion, and a person approves it before anything leaves the app.
    Say `"approve": "apply"` only when the person asked for it unattended;
    the checker then warns `workflow-sends-out-unasked` — allowed, but said.
+
+5. **"Sync, then publish."** In an app that publishes (`"publishing":
+   { "mode": "on-publish", … }`), end the steps with `{ "publish": "head" }`:
+   every draft, as the step reaches it, under the same `approve`.
+   `"run"` publishes only through what the run read and made. The dry run
+   says "It would publish 3 changes (seqs 0 to 2)", and `run.published`
+   names the count and the seqs. In a live app it is `workflow-publish-live`.
 
 **What its changes become.** `apply` makes them. `suggest` makes what it
 is sure enough of and puts the rest in the Suggested tray. `ask` gathers a

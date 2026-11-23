@@ -30,6 +30,7 @@ import type { FarAppResolver } from "./far.js";
  *   workflow-far-reference        a name beginning "@" that names no kind or act of another app (error)
  *   workflow-far-app-unknown      another app the host's resolver does not know (error; only with `resolveFarApp`)
  *   workflow-far-args             what an act step hands another app's act that it does not take, or leaves out what it requires (error; only with `resolveFarApp`)
+ *   workflow-publish-live         a publish step in an app that is live, with nothing to publish (error)
  *   workflow-shape                anything else not shaped as a workflow (error)
  *
  * Another app's kind or act a step names (`@<address>/<name>`, `./far.ts`)

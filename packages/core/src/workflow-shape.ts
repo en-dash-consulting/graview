@@ -181,8 +181,21 @@ export interface ClassifyStep {
   readonly approve?: WorkflowApproval;
 }
 
+/**
+ * PUBLISH THE APP'S DRAFTS (Roadmap f-workflow-step-publishes), in an app
+ * that publishes (`publishing: { mode: "on-publish" }`): the built-in
+ * `publish` act, run as the workflow's own actor, moves what readers are
+ * served — to the head as the step reaches it (`"head"`), or through what
+ * this run read and made (`"run"`), leaving a change someone else made
+ * meanwhile a draft. Nothing new to publish, it publishes nothing.
+ */
+export interface PublishStep {
+  readonly publish: "head" | "run";
+  readonly approve?: WorkflowApproval;
+}
+
 /** One step of a workflow: one of `STEP_KINDS`, told apart by its one discriminating key. */
-export type WorkflowStep = ActStep | AgentStep | GenerateStep | ArchiveStep | ClassifyStep;
+export type WorkflowStep = ActStep | AgentStep | GenerateStep | ArchiveStep | ClassifyStep | PublishStep;
 
 /** A workflow as it is declared. */
 export interface WorkflowDeclaration {

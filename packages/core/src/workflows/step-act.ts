@@ -48,8 +48,8 @@ export const actStep: StepKind<ActStep> = {
         severity: "error",
         path: `${at}.act`,
         message: `${said} runs "${step.act}", which is not an act of this app.`,
-        fix: near ? `Did you mean "${near}"?` : "Name one of the app's acts, declared or derived (add-…, edit-<kind>, archive-<kind>).",
-        ...(near ? { edits: [{ op: "set-workflow", name: check.workflow, workflow: { ...check.declared, steps: steps.map((one, i) => (i === index ? { ...one, act: near } : one)) } }] } : {}),
+        fix: step.act === "publish" ? `Publishing is a step of its own: { "publish": "head" } publishes every draft${world.publishes ? "" : ", in an app that publishes"}.` : near ? `Did you mean "${near}"?` : "Name one of the app's acts, declared or derived (add-…, edit-<kind>, archive-<kind>).",
+        ...(near && step.act !== "publish" ? { edits: [{ op: "set-workflow", name: check.workflow, workflow: { ...check.declared, steps: steps.map((one, i) => (i === index ? { ...one, act: near } : one)) } }] } : {}),
       });
     }
     if (step.over) {
