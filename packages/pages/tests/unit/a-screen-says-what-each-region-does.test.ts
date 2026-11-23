@@ -99,8 +99,7 @@ describe("the tap map", () => {
     store.apply({ name: "rename-chore", args: { id: "c-hall", label: "Sweep the hall and the stairs" } }, { author: doer });
     expect(choreScreen(store as never, doer).renderId).toBe(drawn.renderId);
     const done = drawn.taps.find((tap) => "act" in tap.does)!;
-    expect(resolveTap(store, chores, done, { viewer: doer, renderId: drawn.renderId }).ok).toBe(true);
-    expect((store.graph.getNode("c-bins") as unknown as { done: boolean }).done).toBe(true);
+    expect(resolveTap(store, chores, done, { viewer: doer, renderId: drawn.renderId })).toMatchObject({ ok: true, does: "act", act: "finish-chore", args: { id: "c-bins" } });
   });
 
   it("offers an act only to a seat that may run it with every argument bound; one that needs a typed argument is not offered", () => {
@@ -117,14 +116,15 @@ describe("the tap map", () => {
     expect(choreScreen(store as never, reader).taps.some((tap) => "act" in tap.does)).toBe(false);
   });
 
-  it("runs an act tapped on the screen the app still draws, as the seat that tapped it", () => {
+  it("answers an act tapped on the screen the app still draws as the call to apply, and applies nothing itself", () => {
     const store = choreStore();
     const drawn = choreScreen(store as never, doer);
     const done = drawn.taps.find((tap) => "act" in tap.does)!;
+    const ops = store.log.all().length;
     const outcome = resolveTap(store, chores, done, { viewer: doer, renderId: drawn.renderId });
-    expect(outcome).toEqual({ ok: true, does: "act", said: "Mark it done: done.", place: "/chores/c-bins", page: 0 });
-    expect((store.graph.getNode("c-bins") as unknown as { done: boolean }).done).toBe(true);
-    expect(store.log.all().at(-1)?.author).toMatchObject({ id: "pat" });
+    expect(outcome).toEqual({ ok: true, does: "act", act: "finish-chore", args: { id: "c-bins" }, label: "Mark it done", said: "Mark it done: done.", place: "/chores/c-bins", page: 0 });
+    expect(store.log.all().length).toBe(ops);
+    expect((store.graph.getNode("c-bins") as unknown as { done: boolean }).done).toBe(false);
   });
 
   it("re-judges a tap resolved against a newer store, refuses it in words, and never runs it", () => {
