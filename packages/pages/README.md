@@ -81,7 +81,10 @@ this package serves lists, records, forms, problems and history as ordinary link
   title, found }` — a list, a record, a declared place or the home as one self-contained
   document in the app's look, with no script, under the viewer's sight, printable (each
   section of a place a page of its own). It imports no React, so a Worker re-renders a fixed
-  link — a schedule as a PDF — on each change. `staticCss` is its sheet alone. See
+  link — a schedule as a PDF — on each change. `staticCss` is its sheet alone. A record's
+  pictures, videos and documents are drawn, at the address the host's `files.src` answers.
+  `renderSite(store, declaration, { viewer })` writes the whole app as one file — every place
+  and record page the viewer may see, each link one within the file. See
   `docs/static-pages.md`.
 
 - **A place on a fixed screen, and what each part of it does.** `@graview/pages/device`'s

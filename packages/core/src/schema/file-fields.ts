@@ -15,6 +15,22 @@ export const fileWords = (file: FileValue): string => file.caption?.trim() || fi
 /** What a file is said as to somebody listening: its words, and for a video how long it is (0.1.37): "beach.mov, a 45-second video". */
 export const fileSaid = (file: FileValue): string => (isVideo(file) ? `${fileWords(file)}, ${videoWords(file)}` : fileWords(file));
 
+/** A size as a person reads it: "820 bytes", "120 KB", "3.4 MB". */
+export function sizeWords(bytes: number): string {
+  if (bytes < 1000) return `${bytes} bytes`;
+  if (bytes < 1_000_000) return `${Math.round(bytes / 1000)} KB`;
+  return `${(bytes / 1_000_000).toFixed(bytes < 10_000_000 ? 1 : 0)} MB`;
+}
+
+/** A file's type as a person says it: "PDF", "JPEG", "DOCX" — its name's ending, else the type's. */
+export function typeWords(file: { readonly type: string; readonly name?: string }): string {
+  if (file.type === "application/pdf") return "PDF";
+  const ending = /\.([a-z0-9]{2,5})$/i.exec(file.name ?? "")?.[1];
+  if (ending) return ending.toUpperCase();
+  const sub = file.type.split("/")[1] ?? file.type;
+  return sub.replace(/^x-|^vnd\./, "").split(/[.+-]/)[0]!.toUpperCase();
+}
+
 /** A video's length as a player's clock says it (0.1.37): "0:45", "2:05", "1:02:05". */
 export function videoClock(duration: number): string {
   const total = Math.max(0, Math.round(duration));

@@ -26,16 +26,19 @@
 // A reader of an app that publishes is printed the last publish (Roadmap f-publishing-lifecycle).
 import "@graview/core/publishing";
 import {
+  fileSrc,
   humanizeField,
   isCurrent,
+  isImage,
+  isVideo,
   labelOf,
   sayingIn,
   emojiMark,
   logoOf,
-
   logoScheme,
   markHref,
   pluralOf,
+  previewOf,
   recordPath,
   SCHEMES,
   shapeOf,
@@ -44,16 +47,20 @@ import {
   type AnySchema,
   type AppPlace,
   type Brand,
+  type FileValue,
   type GraviewApp,
+  type HostFiles,
   type Principal,
   type Scheme,
   type Store,
   type ThemeTokens,
 } from "@graview/core";
+import { fileWords, firstPicture, sizeWords, typeWords, videoClock } from "@graview/core/blocks";
 import { describeNode } from "@graview/core/words";
 import type { DescribedItem, DescribedPart, PlaceDescription } from "@graview/core/describe";
 import { markdownHtml } from "@graview/core/markdown";
-import { esc, glanced, readPlace, relationsOf, slugOf } from "./static-read.js";
+import { placesOf } from "@graview/core/seat";
+import { esc, glanced, readPlace, relationsOf, sightOf, slugOf } from "./static-read.js";
 
 /** How the page looks: the app's brand (its own, unsaid) in one of its two schemes. */
 export interface StaticLook {
@@ -103,7 +110,18 @@ export interface RenderPlaceOptions {
    * `undefined` leaves the derived page in place.
    */
   readonly design?: StaticDesign;
+  /**
+   * WHERE THE HOST SERVES A FILE A RECORD HOLDS — the `files` the hosted
+   * page is handed, or only its `src` (`HostFiles.src`, 0.1.36). A record's
+   * pictures, videos and documents are drawn at the address it answers for
+   * each `href`, as the hosted page draws them; unsaid, at the `href` the
+   * record keeps.
+   */
+  readonly files?: StaticFiles;
 }
+
+/** What the static page asks of the host's files: only where it serves each one. */
+export type StaticFiles = Pick<HostFiles, "src">;
 
 /** A record as a design reads it: what this seat may see of it, and the way to what it relates to. */
 export interface StaticRecord {
@@ -185,19 +203,134 @@ export function renderPlace<S extends AnySchema>(
   options: RenderPlaceOptions = {},
 ): RenderedPlace {
   const timeZone = options.look?.brand?.timeZone ?? declaration.brand?.timeZone;
-  return sayingIn({ readerTimeZone: options.timeZone, appTimeZone: timeZone }, () => placeRendered(store, declaration, place, options));
+  return sayingIn({ readerTimeZone: options.timeZone, appTimeZone: timeZone }, () => {
+    const base = baseOf(options.base);
+    const page = pageOf(store, declaration, place, options, (path) => `${base}${path}`);
+    const { head, lang, scheme, css, masthead, main, found, record, site } = page;
+    const html = options.design?.document
+      ? options.design.document({ title: head, lang, scheme, css, masthead, main, found, ...(record ? { record } : {}), site })
+      : documentOf({ title: head, lang, scheme, css, body: `${masthead}\n<main>\n${main}\n</main>` });
+    return { html, css, title: head, found };
+  });
 }
 
-function placeRendered<S extends AnySchema>(store: Store<S>, declaration: GraviewApp<S>, place: string | AppPlace, options: RenderPlaceOptions): RenderedPlace {
+/** What `renderSite` is asked: a page's options, with a design's record pages but not its document — the file is one document, the framework's. */
+export interface RenderSiteOptions extends Omit<RenderPlaceOptions, "design"> {
+  readonly design?: Pick<StaticDesign, "records">;
+}
+
+/** One page of a site's file: where it lives on the routed face, what it is called, and the id its in-file links go to. */
+export interface SitePage {
+  readonly address: string;
+  readonly title: string;
+  readonly anchor: string;
+}
+
+export interface RenderedSite {
+  /** The whole file: `<!doctype html>`, the CSS once in its `<style>`, each page an `<article>` with its own id, no `<script>`. */
+  readonly html: string;
+  readonly css: string;
+  /** The file's title: the app's name. */
+  readonly title: string;
+  /** Every page it holds, in the order it holds them: the places as `placesOf` orders them, then each record the seat may see. */
+  readonly pages: readonly SitePage[];
+}
+
+/**
+ * RENDER THE WHOLE APP TO ONE STATIC HTML FILE: every place this seat may
+ * see and every record's page it may see, one after the other in one
+ * document — the app's look inlined once, a contents of its places at the
+ * top, and every link a link within the file (`#page/tasks/task-1`), so a
+ * host that exports the app as one file, or prints it, rewrites no address.
+ * A link to a page the file does not hold is no link: its words stay. In
+ * print each page begins a sheet of its own (`staticCss`).
+ *
+ * `base` is put before no link, since each goes within the file; it is put
+ * before a path-only mark, as `renderPlace` puts it. A design's record
+ * writers write their records' pages, and `site.href(path)` answers the
+ * in-file link.
+ */
+export function renderSite<S extends AnySchema>(store: Store<S>, declaration: GraviewApp<S>, options: RenderSiteOptions = {}): RenderedSite {
+  const timeZone = options.look?.brand?.timeZone ?? declaration.brand?.timeZone;
+  return sayingIn({ readerTimeZone: options.timeZone, appTimeZone: timeZone }, () => siteRendered(store, declaration, options));
+}
+
+/** A page's id in a site's file, from its address on the routed face: `/tasks/task-1` is `page/tasks/task-1`, the home `page/`. */
+export const pageAnchor = (address: string): string => `page${address.split(/[?#]/)[0]}`;
+
+/* A link written before the file knows which pages it holds: a number between two marks no text holds, said once every page is written. */
+const HELD = /\u0001(\d+)\u0002/g;
+
+function siteRendered<S extends AnySchema>(store: Store<S>, declaration: GraviewApp<S>, options: RenderSiteOptions): RenderedSite {
+  const viewer: Principal = options.viewer ?? { kind: "human" };
+  const { seen, kept } = sightOf(store, viewer);
+  const schema = seen.schema as AnySchema;
+  const linked: string[] = [];
+  const link = (path: string) => `\u0001${linked.push(path.split(/[?#]/)[0]!) - 1}\u0002`;
+  const written = new Map<string, { readonly title: string; readonly main: string; readonly place: boolean }>();
+  const tried = new Set<string>();
+  const write = (place: string | AppPlace, address: string, isPlace: boolean) => {
+    if (tried.has(address)) return;
+    tried.add(address);
+    const page = pageOf(store, declaration, place, { ...options, viewer }, link);
+    if (page.found) written.set(address, { title: page.title, main: page.main, place: isPlace });
+  };
+  // The places, in the order the routed face lists them; then every record this seat may see, kind by kind.
+  for (const place of placesOf(declaration)) write(place, place.address, true);
+  for (const kind of schema.kinds as readonly string[]) {
+    if (kept.has(kind)) continue;
+    for (const node of seen.graph.nodesOfKind(kind)) {
+      const address = recordPath(schema, kind, node.id);
+      write(address, address, false);
+    }
+  }
+  // An address a page links that is none of those — a record set aside that a relation still reaches, say — is written too, where the seat may see it.
+  for (let at = 0; at < linked.length; at++) write(linked[at]!, linked[at]!, false);
+
+  const frame = pageOf(store, declaration, "home", { ...options, viewer }, link);
+  const pages: SitePage[] = [...written].map(([address, page]) => ({ address, title: page.title, anchor: pageAnchor(address) }));
+  const contents = pages.filter((page) => written.get(page.address)!.place);
+  const nav = contents.length > 1 ? `<nav class="gv-contents" aria-label="Pages"><ul class="gv-names">${contents.map((page) => `<li><a href="#${esc(page.anchor)}">${esc(page.title)}</a></li>`).join("")}</ul></nav>\n` : "";
+  const articles = pages.map((page) => `<article class="gv-site-page" id="${esc(page.anchor)}">\n${written.get(page.address)!.main}\n</article>`).join("\n");
+  const said = documentOf({ title: frame.appName, lang: frame.lang, scheme: frame.scheme, css: frame.css, body: `${frame.masthead}\n${nav}<main>\n${articles}\n</main>`, site: true });
+  // Each link as the file's own: to a page it holds, or, to one it does not, no link at all.
+  const html = said
+    .replace(/ href="\u0001(\d+)\u0002"/g, (_, n: string) => (written.has(linked[Number(n)]!) ? ` href="#${esc(pageAnchor(linked[Number(n)]!))}"` : ""))
+    .replace(HELD, (_, n: string) => `#${esc(pageAnchor(linked[Number(n)]!))}`);
+  return { html, css: frame.css, title: frame.appName, pages };
+}
+
+/** A host's base as a prefix: no trailing slash. */
+const baseOf = (base: string | undefined): string => (base ?? "").replace(/\/$/, "");
+
+/** The document around what a page — or a site — says: the look inlined, nothing fetched to draw it, no script. */
+function documentOf({ title, lang, scheme, css, body, site = false }: { title: string; lang: string; scheme: Scheme; css: string; body: string; site?: boolean }): string {
+  return (
+    `<!doctype html>\n<html lang="${esc(lang)}" data-graview-static=""${site ? ' data-graview-site=""' : ""} data-scheme="${scheme}">\n<head>\n<meta charset="utf-8">\n` +
+    `<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>${esc(title)}</title>\n<style>\n${css}\n</style>\n</head>\n` +
+    `<body>\n<div class="gv-page">\n${body}\n</div>\n</body>\n</html>\n`
+  );
+}
+
+/** One page, written: what it says and what goes around it, every address it names put through `link`. */
+function pageOf<S extends AnySchema>(store: Store<S>, declaration: GraviewApp<S>, place: string | AppPlace, options: RenderPlaceOptions, link: (path: string) => string) {
   // What the place holds for this seat, read as the device's screen reads it (`./static-read.ts`).
   const { brand, locale, seen, kept, described, there } = readPlace(store, declaration, place, { viewer: options.viewer, brand: options.look?.brand, locale: options.locale, today: options.today });
   const scheme: Scheme = options.look?.scheme ?? (brand.scheme === "dark" || brand.scheme === "light" ? brand.scheme : "light");
   const css = staticCss(brand, scheme);
   const appName = brand.name || declaration.name;
-  const base = (options.base ?? "").replace(/\/$/, "");
-
-  const write = new Writer(base, seen.schema as AnySchema);
-  const site = staticSite(seen as unknown as Store<AnySchema>, kept, base);
+  const base = baseOf(options.base);
+  const store_ = seen as unknown as Store<AnySchema>;
+  const specs = (declaration.viewSpecs ?? {}) as Readonly<Record<string, { card?: unknown; row?: unknown } | undefined>>;
+  // A record's first picture, small, where its kind's card or row is the derived one — a declared one draws its own `image` blocks.
+  const pictureOf = (item: DescribedItem, as: "card" | "row"): FileValue | undefined => {
+    if (specs[item.kind]?.[as]) return undefined;
+    const node = seen.graph.getNode(item.id);
+    const picture = node ? firstPicture(node as Record<string, unknown>, seen.schema.tryDefinition(item.kind)) : undefined;
+    return picture && pictured(picture) ? picture : undefined;
+  };
+  const write = new Writer(link, seen.schema as AnySchema, options.files, pictureOf);
+  const site = staticSite(store_, kept, link);
   let title: string;
   let record: StaticRecord | undefined;
   if (!described.ok || !there) {
@@ -209,20 +342,13 @@ function placeRendered<S extends AnySchema>(store: Store<S>, declaration: Gravie
     record = d.drawnBy === "record" ? site.record(d.place.slug) : undefined;
     const designed = record ? options.design?.records?.[record.kind]?.(record, site) : undefined;
     if (designed !== undefined) write.raw(designed);
-    else if (d.drawnBy === "record") writeRecord(write, seen as unknown as Store<AnySchema>, d, kept);
-    else if (d.place.kind !== null && d.drawnBy === "derived") writeList(write, seen as unknown as Store<AnySchema>, d, locale);
+    else if (d.drawnBy === "record") writeRecord(write, store_, d, kept);
+    else if (d.place.kind !== null && d.drawnBy === "derived") writeList(write, store_, d, locale);
     else writePlace(write, d);
   }
-  const found = there;
   const head = title === appName ? title : `${title} — ${appName}`;
-  const masthead = writeMasthead(brand, appName, base);
-  const main = write.out();
-  const html = options.design?.document
-    ? options.design.document({ title: head, lang: locale, scheme, css, masthead, main, found, ...(record ? { record } : {}), site })
-    : `<!doctype html>\n<html lang="${esc(locale)}" data-graview-static="" data-scheme="${scheme}">\n<head>\n<meta charset="utf-8">\n` +
-      `<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>${esc(head)}</title>\n<style>\n${css}\n</style>\n</head>\n` +
-      `<body>\n<div class="gv-page">\n${masthead}\n<main>\n${main}\n</main>\n</div>\n</body>\n</html>\n`;
-  return { html, css, title: head, found };
+  const masthead = writeMasthead(brand, appName, base, link);
+  return { title, head, appName, lang: locale, scheme, css, masthead, main: write.out(), found: there, record, site };
 }
 
 /**
@@ -230,7 +356,7 @@ function placeRendered<S extends AnySchema>(store: Store<S>, declaration: Gravie
  * kinds kept from it gone — a record of one is answered as no record, and a
  * relation to one is not there.
  */
-function staticSite(seen: Store<AnySchema>, kept: ReadonlySet<string>, base: string): StaticSite {
+function staticSite(seen: Store<AnySchema>, kept: ReadonlySet<string>, link: (path: string) => string): StaticSite {
   const made = new Map<string, StaticRecord>();
   const recordOf = (id: string): StaticRecord | undefined => {
     const known = made.get(id);
@@ -255,7 +381,7 @@ function staticSite(seen: Store<AnySchema>, kept: ReadonlySet<string>, base: str
   return {
     records: (kind) => (kept.has(kind) ? [] : seen.graph.nodesOfKind(kind).map((node) => recordOf(node.id)).filter((one): one is StaticRecord => one !== undefined)),
     record: recordOf,
-    href: (path) => `${base}${path}`,
+    href: link,
   };
 }
 
@@ -344,7 +470,7 @@ function writePlace(write: Writer, d: PlaceDescription): void {
 }
 
 /** The app's name and its mark, at the head of every page. */
-function writeMasthead(brand: Brand, name: string, base: string): string {
+function writeMasthead(brand: Brand, name: string, base: string, link: (path: string) => string): string {
   const emoji = emojiMark(brand);
   const given = logoOf(brand);
   const image = (logo: string | undefined, more = "") => {
@@ -356,7 +482,7 @@ function writeMasthead(brand: Brand, name: string, base: string): string {
   const light = image(given?.light, given?.dark ? ' data-graview-scheme-only="light"' : given?.darkFallback === "invert" ? ' data-graview-logo-fallback="invert"' : "");
   // A dark one beside the light one, each hidden by the sheet of the other scheme (`staticCss`).
   const logo = emoji ? `<span class="gv-mark" aria-hidden="true">${esc(emoji)}</span>` : light && given?.dark ? light + image(given.dark, ' data-graview-scheme-only="dark"') : light;
-  return `<header class="gv-masthead"><a href="${attr(`${base}/`)}">${logo}<span>${esc(name)}</span></a></header>`;
+  return `<header class="gv-masthead"><a href="${attr(link("/"))}">${logo}<span>${esc(name)}</span></a></header>`;
 }
 
 /* ----------------------------------------------------------- the markup */
@@ -364,8 +490,10 @@ function writeMasthead(brand: Brand, name: string, base: string): string {
 class Writer {
   private readonly lines: string[] = [];
   constructor(
-    private readonly base: string,
+    private readonly link: (path: string) => string,
     private readonly schema: AnySchema,
+    private readonly files: StaticFiles | undefined,
+    private readonly pictureOf: (item: DescribedItem, as: "card" | "row") => FileValue | undefined,
   ) {}
   raw(text: string): void {
     this.lines.push(text);
@@ -374,20 +502,32 @@ class Writer {
     return this.lines.join("\n");
   }
   href(path: string): string {
-    return attr(`${this.base}${path}`);
+    return attr(this.link(path));
   }
 
-  /** Parts as the faces draw them: headings, lines, badges, facts as a list of terms, figures, lists of cards or rows. */
-  parts(parts: readonly DescribedPart[], depth: number): void {
-    let fields: { label: string; text: string; long?: true; markdown?: true }[] = [];
+  /**
+   * Parts as the faces draw them: headings, lines, badges, facts as a list of terms, figures, lists of cards or rows.
+   * `small`: a card's or a row's, where a field's pictures are drawn as its first, small, as the routed list draws them.
+   */
+  parts(parts: readonly DescribedPart[], depth: number, small = false): void {
+    let fields: { label: string; text: string; long?: true; markdown?: true; files?: readonly FileValue[] }[] = [];
     const flush = () => {
       if (fields.length === 0) return;
-      // Prose the record's width, its lines kept; Markdown drawn as prose (FR-180), its headings under the page's, no HTML of its own.
-      const value = (field: (typeof fields)[number]) => (field.markdown ? `<dd class="gv-md">${markdownHtml(field.text, { headingsFrom: depth + 1 })}</dd>` : `<dd>${esc(field.text)}</dd>`);
-      this.raw(`<dl class="gv-fields">${fields.map((field) => `<div${field.long || field.markdown ? ' class="gv-long"' : ""}><dt>${esc(field.label)}</dt>${value(field)}</div>`).join("")}</dl>`);
+      // Prose the record's width, its lines kept; Markdown drawn as prose (FR-180), its headings under the page's, no HTML of its own; files drawn (FR-162).
+      const value = (field: (typeof fields)[number]) =>
+        field.files ? `<dd class="gv-files">${this.filesShown(field.files, field.label)}</dd>` : field.markdown ? `<dd class="gv-md">${markdownHtml(field.text, { headingsFrom: depth + 1 })}</dd>` : `<dd>${esc(field.text)}</dd>`;
+      this.raw(`<dl class="gv-fields">${fields.map((field) => `<div${field.long || field.markdown || field.files ? ' class="gv-long"' : ""}><dt>${esc(field.label)}</dt>${value(field)}</div>`).join("")}</dl>`);
       fields = [];
     };
     for (const part of parts) {
+      if (part.t === "field" && part.files && small) {
+        const picture = part.files.find(pictured);
+        if (picture) {
+          flush();
+          this.raw(`<p class="gv-thumbs">${this.thumb(picture, 72)}</p>`);
+          continue;
+        }
+      }
       if (part.t === "field" || part.t === "progress") {
         fields.push(part);
         continue;
@@ -429,17 +569,22 @@ class Writer {
         this.raw(`<div class="gv-cards">`);
         for (const item of group.items) {
           this.raw(`<article class="gv-card"><h${Math.min(6, depth + 2)} class="gv-card-title">${this.named(item)}</h${Math.min(6, depth + 2)}>`);
-          this.parts(item.parts, depth + 2);
+          // Its first picture, small, above its facts (FR-162), where the card is the derived one.
+          const picture = this.pictureOf(item, "card");
+          if (picture) this.raw(`<p class="gv-thumbs">${this.thumb(picture, 64)}</p>`);
+          this.parts(item.parts, depth + 2, true);
           this.raw(`</article>`);
         }
         this.raw(`</div>`);
       } else {
         this.raw(`<ul class="${part.as === "row" ? "gv-rows" : "gv-names"}">`);
         for (const item of group.items) {
-          this.raw(`<li>${this.named(item)}`);
+          // Its first picture, small, beside its name, where the row is the derived one.
+          const picture = part.as === "row" ? this.pictureOf(item, "row") : undefined;
+          this.raw(picture ? `<li><span class="gv-pictured">${this.thumb(picture, 56)}${this.named(item)}</span>` : `<li>${this.named(item)}`);
           if (item.parts.length > 0) {
             this.raw(`<div class="gv-glance">`);
-            this.parts(item.parts, depth + 2);
+            this.parts(item.parts, depth + 2, true);
             this.raw(`</div>`);
           }
           this.raw(`</li>`);
@@ -454,6 +599,71 @@ class Writer {
   private named(item: DescribedItem): string {
     return `<a href="${this.href(recordPath(this.schema, item.kind, item.id))}">${esc(item.title)}</a>`;
   }
+
+  /* ------------------------------------------------------ a record's files */
+
+  /** Where the host serves a path a record keeps (`HostFiles.src`), as an attribute. */
+  private src(href: string): string {
+    return attr(fileSrc(this.files as HostFiles | undefined, href));
+  }
+
+  /** One picture, small: a picture, a video by its poster, a document by the picture its host made of it. A video with no poster is not drawn small. */
+  private thumb(file: FileValue, size: number): string {
+    const preview = previewOf(file);
+    const at = isVideo(file) ? file.poster : preview ? (preview.thumb ?? preview.src) : file.href;
+    if (!at) return "";
+    const said = isVideo(file) ? `${fileWords(file)}, a video` : fileWords(file);
+    return `<img class="gv-thumb" src="${this.src(at)}" alt="${attr(said)}" width="${size}" height="${size}" loading="lazy" decoding="async"${framing(file)}>`;
+  }
+
+  /**
+   * A FIELD'S FILES, AS THE RECORD'S PAGE SHOWS THEM (FR-162): its pictures
+   * in a gallery, each a link to itself full size; its videos played by the
+   * browser's own controls from their posters — what a printed page shows
+   * of one; its documents by the picture their host made of them, where it
+   * made one, then by name, type and size, linked.
+   */
+  private filesShown(files: readonly FileValue[], label: string): string {
+    const pictures = files.filter(isImage);
+    const videos = files.filter(isVideo);
+    const documents = files.filter((file) => !isImage(file) && !isVideo(file));
+    const out: string[] = [];
+    if (pictures.length > 0) {
+      out.push(`<ul class="gv-gallery" aria-label="${attr(label)}">`);
+      for (const file of pictures) {
+        const sized = file.width && file.height ? ` width="${file.width}" height="${file.height}"` : "";
+        out.push(`<li><a href="${this.src(file.href)}"><img src="${this.src(file.href)}" alt="${attr(fileWords(file))}"${sized} loading="lazy" decoding="async"${framing(file)}></a>${file.caption ? `<span class="gv-quiet">${esc(file.caption)}</span>` : ""}</li>`);
+      }
+      out.push(`</ul>`);
+    }
+    for (const file of videos) {
+      const sized = file.width && file.height ? ` width="${file.width}" height="${file.height}"` : "";
+      const clock = file.duration !== undefined ? ` · ${videoClock(file.duration)}` : "";
+      out.push(
+        `<figure class="gv-video"><video src="${this.src(file.href)}"${file.poster ? ` poster="${this.src(file.poster)}"` : ""} controls preload="metadata" playsinline${sized} aria-label="${attr(fileWords(file))}">` +
+          `${file.captions ? `<track kind="captions" src="${this.src(file.captions)}" srclang="en" label="Captions" default>` : ""}</video>` +
+          `<figcaption class="gv-quiet">${esc(file.caption ?? file.name)}${clock} — <a href="${this.src(file.href)}">${esc(file.name)}</a></figcaption></figure>`,
+      );
+    }
+    for (const file of documents) {
+      const preview = previewOf(file);
+      const sized = preview?.width && preview.height ? ` width="${preview.width}" height="${preview.height}"` : "";
+      out.push(
+        `<p class="gv-document">${preview ? `<a class="gv-preview" href="${this.src(file.href)}"><img src="${this.src(preview.src)}" alt="${attr(`${fileWords(file)}, its first page`)}"${sized} loading="lazy" decoding="async"></a>` : ""}` +
+          `<a href="${this.src(file.href)}">${esc(file.name)}</a> <span class="gv-quiet">${esc(typeWords(file))} · ${esc(sizeWords(file.bytes))}</span>${file.caption ? ` <span class="gv-quiet">${esc(file.caption)}</span>` : ""}</p>`,
+      );
+    }
+    return out.join("");
+  }
+}
+
+/** Whether a file is drawn as a picture where a record's is drawn small: a picture, a video with a poster, a document with a preview. */
+const pictured = (file: FileValue): boolean => isImage(file) || (isVideo(file) && file.poster !== undefined) || previewOf(file) !== undefined;
+
+/** A picture cut around its subject (`focus`), or drawn whole where it is a cutout. */
+function framing(file: FileValue): string {
+  if (file.cutout) return ' style="object-fit: contain"';
+  return file.focus ? ` style="object-position: ${Math.round(file.focus.x * 100)}% ${Math.round(file.focus.y * 100)}%"` : "";
 }
 
 function attr(text: string): string {
@@ -541,9 +751,25 @@ a { color: var(--graview-accent); text-decoration-thickness: 1px; text-underline
 .gv-glance { color: var(--graview-ink-muted); font-size: 0.833rem; }
 .gv-glance > .gv-text, .gv-glance > p { display: inline; margin: 0; }
 .gv-glance > .gv-text:not(:last-child)::after, .gv-glance > p:not(:last-child)::after { content: " · "; }
+img, video { max-width: 100%; }
+.gv-files { display: grid; gap: 10px; min-width: 0; }
+.gv-gallery { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+.gv-gallery li { display: grid; gap: 4px; min-width: 0; break-inside: avoid; }
+.gv-gallery img { width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; display: block; border-radius: var(--graview-radius); background: var(--graview-edge); }
+.gv-video { margin: 0; display: grid; gap: 4px; break-inside: avoid; }
+.gv-video video { display: block; width: 100%; height: auto; max-height: 80vh; border-radius: var(--graview-radius); background: #000; }
+.gv-document { margin: 0; display: grid; gap: 6px; justify-items: start; break-inside: avoid; }
+.gv-preview img { display: block; width: min(100%, 240px); height: auto; object-fit: contain; border: 1px solid var(--graview-edge); border-radius: var(--graview-radius); background: var(--graview-panel); }
+.gv-thumbs { margin: 0 0 6px; }
+.gv-thumb { display: block; flex: none; object-fit: cover; border-radius: var(--graview-radius); background: var(--graview-edge); }
+.gv-pictured { display: inline-flex; align-items: center; gap: 14px; min-width: 0; }
+.gv-contents { margin: 12px 0 0; }
+.gv-site-page { border-top: 1px solid var(--graview-edge); margin-top: 32px; padding-top: 8px; }
+@page { margin: 16mm; }
 @media print {
   .gv-page { max-width: none; padding: 0; }
   .gv-section + .gv-section { break-before: page; border-top: 0; }
+  .gv-site-page { break-before: page; border-top: 0; margin-top: 0; }
   a { text-decoration: none; color: inherit; }
 }`;
 }

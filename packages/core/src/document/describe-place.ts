@@ -170,8 +170,11 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
           out.push({ t: "badge", text: block.text });
           return;
         case "field":
-        case "image":
           out.push({ t: "field", label: block.label, text: block.text });
+          return;
+        case "image":
+          // What it holds, beside its words: a page that draws the place draws the pictures themselves.
+          out.push({ t: "field", label: block.label, text: block.text, ...(block.files.length > 0 ? { files: block.files } : {}) });
           return;
         case "progress":
           out.push({ t: "progress", label: block.label, text: block.text });
@@ -239,7 +242,7 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
       // In the order and the groups its page declares (FR-148), each value as stored: a draft's paragraphs kept (FR-146).
       for (const section of pageSections(definition, readableFields(read as Record<string, unknown>, definition, { said: [title], locale: app.brand?.locale, timeZone: app.brand?.timeZone }))) {
         if (section.title) parts.push({ t: "heading", level: 2, text: section.title });
-        for (const field of section.fields) parts.push({ t: "field", label: field.label, text: field.value, ...(field.long ? { long: true as const } : {}), ...(field.markdown ? { markdown: true as const } : {}) });
+        for (const field of section.fields) parts.push({ t: "field", label: field.label, text: field.value, ...(field.long ? { long: true as const } : {}), ...(field.markdown ? { markdown: true as const } : {}), ...(field.files && field.files.length > 0 ? { files: field.files } : {}) });
       }
     }
   } else {
