@@ -1,5 +1,6 @@
 schema: "rex/v2"
 items:
   "9d61af23-db75-42cf-ac7c-f8764e1a1dda":
-    status: "pending"
-    lastModified: "2026-11-23T15:15:00.000Z"
+    status: "in_progress"
+    startedAt: "2026-11-23T15:16:00.000Z"
+    lastModified: "2026-11-23T16:00:00.000Z"
