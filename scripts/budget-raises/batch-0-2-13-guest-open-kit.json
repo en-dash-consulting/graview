@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 2197,
+  "gzipped": 1277,
+  "note": "Raised when the 0.2.13 batch's branches were merged (a rename carrying the kept views that read it, a device drawn as its seat with its host applying what it taps, a view playing the app's reel, a static page drawing a record's pictures and a whole app as one file, and the Fast slot showing only what it is sure of): together they come to 2097 bytes minified and 777 gzipped over the budget, raised by 100 more minified and 500 more gzipped for the spread CI measures from build to build. Measured on CI at 312,280 / 120,478 B against 310,183 / 119,701 B."
+}

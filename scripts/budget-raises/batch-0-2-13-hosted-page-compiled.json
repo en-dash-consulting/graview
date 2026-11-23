@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 722,
+  "gzipped": 500,
+  "changeset": "the-0-2-13-batch-holds-together.md",
+  "note": "Raised when the 0.2.13 batch's branches were merged (a rename carrying the kept views that read it, a device drawn as its seat with its host applying what it taps, a view playing the app's reel, a static page drawing a record's pictures and a whole app as one file, and the Fast slot showing only what it is sure of): together they come to 622 bytes minified and 0 gzipped over the budget, raised by 100 more minified and 500 more gzipped for the spread CI measures from build to build. Measured on CI at 669,002 / 233,074 B against 668,380 / 233,272 B."
+}
