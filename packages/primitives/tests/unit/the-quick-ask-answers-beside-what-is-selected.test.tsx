@@ -4,7 +4,7 @@
 import { bindSchema, createSchema, defineNode, nodeRef, Store } from "@graview/core";
 import { EMPTY_VIEW } from "@graview/layout";
 import { createViews, GraviewProvider, useGraview, type AiDesk } from "@graview/react";
-import type { HostAi } from "@graview/tools";
+import type { FastProvider, HostAi } from "@graview/tools";
 import { stubFast, stubThinking } from "@graview/tools/inline-ai";
 import { act, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
@@ -191,5 +191,69 @@ describe("the quick ask", () => {
     await act(async () => ask!.click());
     await until(() => document.querySelector('[data-testid="quick-answer-asked"]') !== null);
     expect(document.querySelector('[data-testid="quick-answer-asked"]')!.textContent).toBe("“what is late”");
+  });
+});
+
+/** A Fast slot sure of nothing: every choice spread evenly, so no pick clears the floor. */
+const unsure: FastProvider = {
+  model: "jev-latest",
+  decide: async (_state, questions) => ({
+    answers: Object.fromEntries(
+      Object.entries(questions).flatMap(([key, question]) => {
+        if (question.type !== "choice") return [];
+        const names = Object.keys(question.criteria);
+        const even = 1 / names.length;
+        return [[key, { type: "choice" as const, choice: names[0]!, confidence: Math.min(even, 0.1), probabilities: Object.fromEntries(names.map((name) => [name, Math.min(even, 0.1)])) }]];
+      }),
+    ),
+    usage: { inputTokens: 1, outputTokens: 0 },
+  }),
+};
+
+describe("a quick ask only the Fast slot is there to answer (Roadmap f-jev-fast-polish)", () => {
+  it("says what it can do, and offers Find for the words and the host's chat, never “These fit”", async () => {
+    const chats: [string, string][] = [];
+    const ai: HostAi = { fast: unsure, chat: { label: "Ask in chat", open: (said, about) => void chats.push([said, about]) } };
+    await mount(
+      <GraviewProvider store={store()} views={views()} initialView={EMPTY_VIEW} initialSelection={["t1"]} ai={ai}>
+        <FindBox />
+        <QuickAskDoor face="scene" on />
+      </GraviewProvider>,
+    );
+    await chord();
+    await until(() => card() !== null);
+    await type("why is this one late?");
+    await press("Enter");
+    await until(() => document.querySelector('[data-testid="quick-ask-find"]') !== null);
+    const said = document.querySelector('[data-testid="quick-answer-text"]')!.textContent ?? "";
+    expect(said).toMatch(/^I can't answer that in words here\./);
+    expect(said).not.toMatch(/These fit|had no answer/);
+    expect(document.querySelector('[data-testid="quick-ask-find"]')!.textContent).toBe("Find “why is this one late?”");
+    expect(document.querySelector('[data-testid="quick-ask-chat"]')!.textContent).toBe("Ask in chat");
+    // Find: the card goes, and Find has the words, the keyboard in it.
+    await act(async () => document.querySelector<HTMLButtonElement>('[data-testid="quick-ask-find"]')!.click());
+    await until(() => card() === null);
+    await settle();
+    const box = document.querySelector<HTMLInputElement>('[data-testid="find-box"]')!;
+    expect(box.value).toBe("why is this one late?");
+    expect(document.activeElement).toBe(box);
+    // Asked again, the host's chat is handed the words and what they were about.
+    await chord();
+    await until(() => card() !== null);
+    await type("why is this one late?");
+    await press("Enter");
+    await until(() => document.querySelector('[data-testid="quick-ask-chat"]') !== null);
+    await act(async () => document.querySelector<HTMLButtonElement>('[data-testid="quick-ask-chat"]')!.click());
+    expect(chats).toEqual([["why is this one late?", "Pay the deposit"]]);
+  });
+
+  it("offers no chat where the host connects none", async () => {
+    await mount(app({ fast: unsure }));
+    await chord();
+    await until(() => card() !== null);
+    await type("why is this one late?");
+    await press("Enter");
+    await until(() => document.querySelector('[data-testid="quick-ask-find"]') !== null);
+    expect(document.querySelector('[data-testid="quick-ask-chat"]')).toBeNull();
   });
 });

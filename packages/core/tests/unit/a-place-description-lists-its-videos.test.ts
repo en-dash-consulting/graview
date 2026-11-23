@@ -29,6 +29,11 @@ describe("a place description's videos", () => {
     expect(text).toContain("- IMG_4410.MOV (clip of moment:noon): video/quicktime, no poster; plays with the browser's controls; not playable: its source is video/quicktime, which not every browser plays, and it has no poster.");
   });
 
+  it("says the app's own video as the app's reel, not as a record's field (HQ f-view-names-app-video)", () => {
+    const reel: DescribedVideo = { app: "reel", text: "Our summer", name: "reel", source: "video/mp4", duration: 30, poster: true, autoplay: false, cover: false, playable: true };
+    expect(placeText({ ...base, videos: [reel] })).toContain("Videos:\n- Our summer (the app's reel): video/mp4, 30 s, with a poster; plays with the browser's controls; playable.");
+  });
+
   it("says nothing of videos where a place has none", () => {
     expect(placeText(base)).not.toContain("Videos:");
     expect(placeText({ ...base, videos: [] })).not.toContain("Videos:");

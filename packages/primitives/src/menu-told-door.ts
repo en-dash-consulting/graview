@@ -22,13 +22,66 @@ type MenuTold = typeof import("./told-ui.js");
 let fetched: Promise<MenuTold> | undefined;
 const fetchMenuTold = (): Promise<MenuTold> => (fetched ??= import("./told-ui.js").catch((error: unknown) => ((fetched = undefined), Promise.reject(error))));
 
+type Read = { readonly tellings: readonly Telling[]; readonly module: MenuTold };
+
+/*
+ * READ AHEAD, AS THE MENU IS GOT READY (Roadmap f-jev-fast-polish): the
+ * pointer resting on a record, or a right-click pressed on it, reads what
+ * worked here before, so the menu that opens has its Suggested rows whole
+ * in its first frame and asks the Fast slot once — not again when the
+ * tellings arrive. A read is good for a moment (`AHEAD_MS`); a menu opened
+ * later reads them again.
+ */
+interface Ahead {
+  readonly store: Store<AnySchema>;
+  readonly principal: string | undefined;
+  readonly at: number;
+  readonly reading: Promise<Read>;
+  done?: Read;
+}
+const AHEAD = /* @__PURE__ */ new WeakMap<object, Ahead>();
+const AHEAD_MS = 10_000;
+
+const aheadFor = (told: object | undefined, store: Store<AnySchema>, principal: Principal): Ahead | undefined => {
+  const ahead = told ? AHEAD.get(told) : undefined;
+  return ahead && ahead.store === store && ahead.principal === principal.id && Date.now() - ahead.at < AHEAD_MS ? ahead : undefined;
+};
+
+/** Reads what worked here before, ahead of a menu that may open: only where the host keeps tellings, and once a moment. */
+export function prepareTold(ai: HostAi | undefined, store: Store<AnySchema>, principal: Principal): void {
+  const told = ai && !ai.off ? ai.told : undefined;
+  if (!told || aheadFor(told, store, principal)) return;
+  const ahead: Ahead = {
+    store,
+    principal: principal.id,
+    at: Date.now(),
+    reading: fetchMenuTold().then(async (module) => ({ tellings: await module.readToldHere(told, store, principal), module })),
+  };
+  AHEAD.set(told, ahead);
+  ahead.reading.then(
+    (read) => void (ahead.done = read),
+    () => void (AHEAD.get(told) === ahead && AHEAD.delete(told)),
+  );
+}
+
 /** The tellings like the words typed in the menu that worked, re-aimed here: at most `most`, before the Fast slot re-ranks them. */
 export function useToldSuggestions(ai: HostAi | undefined, store: Store<AnySchema>, principal: Principal, words: string, on: string | undefined, opened: unknown, most = 4): readonly ToldSuggestion[] {
   const told = ai && !ai.off ? ai.told : undefined;
   const typing = words.trim() !== "";
-  const [read, setRead] = useState<{ readonly tellings: readonly Telling[]; readonly module: MenuTold } | null>(null);
-  // Each menu reads them again: what was told since the last one is suggested in the next.
-  useEffect(() => setRead(null), [opened]);
+  const [read, setRead] = useState<Read | null>(() => aheadFor(told, store, principal)?.done ?? null);
+  // Each menu reads them again — what was told since the last one is suggested in the next — unless they were read just now, as it was got ready.
+  useEffect(() => setRead(aheadFor(told, store, principal)?.done ?? null), [opened]);
+  /* Read ahead and on its way: the menu takes it as it arrives, not at the next idle moment. */
+  useEffect(() => {
+    if (read || opened === null || opened === undefined) return;
+    const ahead = aheadFor(told, store, principal);
+    if (!ahead || ahead.done) return;
+    let live = true;
+    void ahead.reading.then((arrived) => live && setRead(arrived), () => undefined);
+    return () => {
+      live = false;
+    };
+  }, [opened, read, told, store, principal]);
   /* Fetched on the first key, or when the page is idle with a menu open: never before the menu filters. */
   const [wanted, setWanted] = useState(false);
   useEffect(() => {

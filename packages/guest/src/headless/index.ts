@@ -24,7 +24,7 @@
  * manifest, its drawing drawn by the open kit's own renderer into a tree of
  * plain objects, and said as a place is said.
  */
-import { HOME_SLUG, OVERVIEW_SLUG, type AnySchema, type BrandViews, type GraviewApp, type Principal, type Store } from "@graview/core";
+import { HOME_SLUG, OVERVIEW_SLUG, type AnySchema, type AppVideo, type BrandViews, type GraviewApp, type Principal, type Store } from "@graview/core";
 import type { PlaceDescription } from "@graview/core/describe";
 // Static, not fetched: the headless run is itself fetched where a page presses a draft, and a door to the seat's file from there split the page's first chunk.
 import { placesFrom, placesOf, viewPlaceOf } from "@graview/core/seat";
@@ -39,6 +39,7 @@ import type { TreeElement } from "./tree.js";
 import { checkViewSource } from "../host/view-source.js";
 import type { WorkerViewLimits } from "../host/view.js";
 import type { GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
+import { reelFacts } from "../host/theme.js";
 import { judgeTranscript } from "./judge.js";
 import { judgeHeadlessPress, type HeadlessPress } from "./press.js";
 import type { PressCheck, PressCheckContext } from "./presses.js";
@@ -90,6 +91,12 @@ export interface HeadlessPayload {
  */
 export type HeadlessRun = (payload: HeadlessPayload) => Promise<string>;
 
+/** The look a run hands the view, with the app's reel's facts where one was handed (HQ f-view-names-app-video). */
+function withReel(theme: GuestTheme, reel: AppVideo | undefined): GuestTheme {
+  const facts = reelFacts(reel);
+  return facts ? { ...theme, reel: facts } : theme;
+}
+
 /** The script a host's isolate runs for a view's source: the headless runtime, then the view, as a function handed to it at once. */
 export function headlessScript(source: string): string {
   return `${HEADLESS_RUNTIME}\n;${HEADLESS_VIEW}(function (graview) {\n"use strict";\n${source}\n});\n`;
@@ -114,6 +121,13 @@ export interface RunWorkerViewHeadlessOptions<S extends AnySchema> {
   readonly input?: GuestViewInput;
   /** The app's look. A light one in the framework's own colors by default. */
   readonly theme?: GuestTheme;
+  /**
+   * The app's own video (HQ f-view-names-app-video), as the live host is
+   * handed it: its facts reach the view in `props.theme.reel`, and each
+   * `<graview-video data-app="reel">` it places is listed in `videos`. None
+   * handed, such an element is said among the run's problems.
+   */
+  readonly reel?: AppVideo;
   /**
    * What every view of the app inherits (`Brand.views`, Roadmap
    * f-app-wide-view-theme), as the live host takes it: its stylesheet is
@@ -401,7 +415,7 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
   /* A record's computed values beside its fields, as the page hands them (Roadmap f-computed-in-views). */
   const computed = readsComputed(store, manifest) ? (await import("../host/computed.js")).computedOn(store.schema, { timeZone: store.appTimeZone, today: () => store.today() }) : undefined;
   /* What a view keeps for somebody is theirs: a headless run, told to an agent or a check, is handed none of it. */
-  const shown = { ...workerViewProps(store, principal, { manifest, ...(options.input ? { input: options.input } : {}), theme: options.theme ?? HEADLESS_THEME, places: guestPlacesOf(places), ...(computed ? { computed } : {}) }), mine: {} };
+  const shown = { ...workerViewProps(store, principal, { manifest, ...(options.input ? { input: options.input } : {}), theme: withReel(options.theme ?? HEADLESS_THEME, options.reel), places: guestPlacesOf(places), ...(computed ? { computed } : {}) }), mine: {} };
   /*
    * A view that asks for pictures (FR-175) is handed each picture without
    * the host's path (a document's preview among them). Headless, no bytes are fetched, so a picture comes with a

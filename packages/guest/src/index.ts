@@ -15,6 +15,7 @@ export type {
   GuestPlace,
   GuestPressed,
   GuestProps,
+  GuestReel,
   GuestTheme,
   GuestUnseen,
   GuestWhere,

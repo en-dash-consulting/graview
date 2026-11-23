@@ -22,6 +22,7 @@ import { existsSync } from "node:fs";
 import { chromium, firefox, webkit } from "playwright";
 import { watched } from "./watch.mjs";
 import { withServeKeys } from "./serve-key.mjs";
+import { noteTiming } from "./timing.mjs";
 
 /** The one place the Canary path is written. GRAVIEW_BROWSER overrides it. */
 const CANARY =
@@ -50,7 +51,11 @@ export function engineName(argv = process.argv) {
 export async function launchEngine(name, options = {}) {
   // Every page every harness opens is held to the rules that hold everywhere (watch.mjs).
   // And let into every served store and preview the harness admitted (serve-key.mjs).
-  return watched(forcedRenderer(withServeKeys(await launch(name, options))), name);
+  // What a launch cost, said to the chain (timing.mjs): one browser per launch, not per page.
+  const began = Date.now();
+  const browser = await launch(name, options);
+  noteTiming({ kind: "browser", engine: name, ms: Date.now() - began });
+  return watched(forcedRenderer(withServeKeys(browser)), name);
 }
 
 /**
@@ -157,11 +162,14 @@ async function launch(name, { headless = true, firefoxUserPrefs, args } = {}) {
  * the harnesses that also need WebGPU switches.
  */
 export async function launchCanaryGpu({ headless = true, extraArgs = [] } = {}) {
-  return watched(forcedRenderer(await chromium.launch({
+  const began = Date.now();
+  const browser = await chromium.launch({
     executablePath: CANARY,
     headless,
     args: ["--enable-blink-features=CanvasDrawElement", ...extraArgs],
-  })), "chromium");
+  });
+  noteTiming({ kind: "browser", engine: "canary", ms: Date.now() - began });
+  return watched(forcedRenderer(browser), "chromium");
 }
 
 /** Google's webfont hosts, which the apps' pages ask for their faces. */

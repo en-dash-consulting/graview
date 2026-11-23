@@ -7,7 +7,7 @@ import { pluralSlug } from "./registry.js";
 import { Suspense, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { HrefOfContext } from "./href-of.js";
 import { aggregateId } from "@graview/layout/view";
-import { GoToContext, GraviewProvider, lazyPart, hasLanded, HostAssetsContext, HostFilesContext, HostViewerStateContext, markLanded, PlaybackContext, useGraviewIfAny, useOwnPlayback, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type FieldTyping, type GoTo, type GoToAlso, type GoToTarget, type GraviewContextValue, type Playback } from "@graview/react/provider";
+import { GoToContext, GraviewProvider, lazyPart, hasLanded, HostAssetsContext, HostFilesContext, HostReelContext, HostViewerStateContext, markLanded, PlaybackContext, useGraviewIfAny, useOwnPlayback, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type FieldTyping, type GoTo, type GoToAlso, type GoToTarget, type GraviewContextValue, type Playback } from "@graview/react/provider";
 import { PageQuickAsk } from "./quick-ask.js";
 /* A view the seat drew, as a page: fetched when one is first shown here. */
 const DraftPage = lazyPart(() => import("./page-draft.js").then((module) => ({ default: module.DraftPage })));
@@ -836,7 +836,8 @@ export function PagesApp<S extends AnySchema>({
   const timed = <PlaybackContext.Provider value={playback as unknown as Playback}>{inner}</PlaybackContext.Provider>;
   const assetsHeld = context.assetsAt ? <HostAssetsContext.Provider value={context.assetsAt}>{timed}</HostAssetsContext.Provider> : timed;
   const filesHeld = context.files ? <HostFilesContext.Provider value={context.files}>{assetsHeld}</HostFilesContext.Provider> : assetsHeld;
-  const hosted = context.viewerState ? <HostViewerStateContext.Provider value={context.viewerState}>{filesHeld}</HostViewerStateContext.Provider> : filesHeld;
+  const stateHeld = context.viewerState ? <HostViewerStateContext.Provider value={context.viewerState}>{filesHeld}</HostViewerStateContext.Provider> : filesHeld;
+  const hosted = context.reel ? <HostReelContext.Provider value={context.reel}>{stateHeld}</HostReelContext.Provider> : stateHeld;
   const filed = hrefOf === undefined ? hosted : <HrefOfContext.Provider value={hrefOf}>{hosted}</HrefOfContext.Provider>;
   if (initialPath !== undefined) {
     /*

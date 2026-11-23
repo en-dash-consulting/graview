@@ -55,6 +55,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { ENGINES, launchEngine } from "./lib/engine.mjs";
+import { partPath } from "./lib/parts.mjs";
 import { graviewSources } from "./lib/graview-sources.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { vacant } from "./lib/serve.mjs";
@@ -690,7 +691,8 @@ report.checks.noPageErrors = { errors, ok: errors.length === 0 };
 
 const failed = Object.entries(report.checks).filter(([, check]) => !check.ok).map(([name]) => name);
 report.ok = failed.length === 0;
-writeFileSync(resolve(repoRoot, "docs/drawn-once.json"), `${JSON.stringify(report, null, 2)}\n`);
+// One engine, run as a part of the chain (lib/parts.mjs), writes beside the whole verdict, which the chain makes from the parts.
+writeFileSync(partPath(resolve(repoRoot, "docs/drawn-once.json")), `${JSON.stringify(report, null, 2)}\n`);
 for (const [name, check] of Object.entries(report.checks)) process.stdout.write(`${check.ok ? "✓" : "✗"} ${name}\n`);
 process.stdout.write("wrote docs/drawn-once.json\n");
 if (failed.length > 0) {

@@ -51,7 +51,7 @@ export interface ReadPlaceOptions {
 export function readPlace<S extends AnySchema>(store: Store<S>, declaration: GraviewApp<S>, place: string | AppPlace, options: ReadPlaceOptions = {}): PlaceRead {
   const viewer: Principal = options.viewer ?? { kind: "human" };
   const brand = options.brand ?? declaration.brand ?? { name: declaration.name, schemes: SCHEMES };
-  const seen = store.seenBy(viewer) as unknown as Store<AnySchema>;
+  const { seen, kept } = sightOf(store, viewer);
   const asked = typeof place === "string" ? recordOfAddress(seen, place) ?? place : place;
   // Said in the reader's locale, else the brand's the page wears: the describer reads it off the app's brand, as every face does.
   const locale = localeFor(options.locale ?? brand.locale ?? declaration.brand?.locale);
@@ -60,15 +60,19 @@ export function readPlace<S extends AnySchema>(store: Store<S>, declaration: Gra
     ...(options.today ? { today: options.today } : {}),
     ...(options.width ? { width: options.width } : {}),
   });
+  const there = described.ok && !(described.description.place.kind !== null && kept.has(described.description.place.kind));
+  return { viewer, brand, locale, seen, kept, described, there };
+}
+
+/** What one seat may see of the app: the graph it is served, and the kinds kept from it. */
+export function sightOf<S extends AnySchema>(store: Store<S>, viewer: Principal): { readonly seen: Store<AnySchema>; readonly kept: ReadonlySet<string> } {
   /*
    * A KIND KEPT FROM THIS SEAT IS NOT THERE: an administered module's kinds
    * for a seat that does not administer it, a kind it sees none of, a
    * disabled module's — the routed face lists none of them, so a record, a
    * list or a picture of one is answered as nothing at all.
    */
-  const kept = new Set<string>([...store.kindsKeptFrom(viewer), ...store.modules.disabledKinds]);
-  const there = described.ok && !(described.description.place.kind !== null && kept.has(described.description.place.kind));
-  return { viewer, brand, locale, seen, kept, described, there };
+  return { seen: store.seenBy(viewer) as unknown as Store<AnySchema>, kept: new Set<string>([...store.kindsKeptFrom(viewer), ...store.modules.disabledKinds]) };
 }
 
 /** A record's address on the routed face, `/<plural>/<id>`, as the record's id; anything else is left to `describePlace`. */

@@ -1,11 +1,11 @@
 export { GraviewProvider, hasLanded, markLanded, matchWith, openingView, PLACE_MENU_EVENT, ROBOT_REST_MS, useFound, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useTheWatchKnowsWhatIsUnseen, useViewMode, useWhereIs, ViewModeProvider } from "./context.js";
 export { GoToContext, useGoTo } from "./go.js";
 export { HostMenuItems, MenuSections, useMenuPrepare, useMenuSections } from "./menu-sections.js";
-export type { HostMenuAt, HostMenuItem, MenuColumn, MenuItem, MenuMode, MenuPage, MenuSection, MenuSectionSource, MenuTarget } from "./menu-types.js";
+export type { HostMenuAt, HostMenuItem, MenuColumn, MenuItem, MenuMode, MenuPage, MenuReadying, MenuSection, MenuSectionSource, MenuTarget } from "./menu-types.js";
 export { alsoWhenSectionsArrive, partsWanted, sectionsArrive, sectionsWanted, sectionUnderNow, setViewPlace, viewPlaceOf } from "./view-places.js";
 export type { MenuViewSection, ViewPlaceDraft, ViewPlaceDrawing, ViewPlaceHandle, ViewPresses } from "./view-places.js";
 export { BesideTheMap } from "./beside-the-map.js";
-export { HostAssetsContext, HostFilesContext, HostViewerStateContext, useHostAssets, useHostFiles, useHostViewerState } from "./files.js";
+export { HostAssetsContext, HostFilesContext, HostReelContext, HostViewerStateContext, useHostAssets, useHostFiles, useHostReel, useHostViewerState } from "./files.js";
 export type { GoTo, GoToAlso, GoToTarget } from "./go.js";
 export { Figure, Occupants, PersonFigure } from "./occupants.js";
 export { TypingContext } from "./typing.js";

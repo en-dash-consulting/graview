@@ -170,6 +170,33 @@ export interface GuestTheme {
    * on another origin.
    */
   readonly logo?: string;
+  /**
+   * THE APP'S OWN VIDEO (HQ f-view-names-app-video): the reel its host
+   * keeps for the whole app, by its facts — never its address. The view
+   * places it with `<graview-video data-app="reel">` and the host draws the
+   * player. Absent when the host handed no reel: the element then draws
+   * nothing, and the host's problems say why.
+   */
+  readonly reel?: GuestReel;
+}
+
+/** The app's reel, as a view is handed it: what it is, how long, whether it has a poster and whether it plays (HQ f-view-names-app-video). */
+export interface GuestReel {
+  /** What it is called: its caption where the host gave one, else its name. */
+  readonly name: string;
+  readonly caption?: string;
+  /** Its media type: `video/mp4`. */
+  readonly type: string;
+  /** Its length in seconds, where the host knows it. */
+  readonly duration?: number;
+  /** Whether it has a poster; the poster itself stays the host's. */
+  readonly poster?: true;
+  /** Whether it plays in every browser: as the host judged it, else an MP4, WebM or Ogg source with a poster. */
+  readonly playable: boolean;
+  /** Its size in pixels, and its width over its height to four places, where the host knows them. */
+  readonly width?: number;
+  readonly height?: number;
+  readonly aspect?: number;
 }
 
 /**

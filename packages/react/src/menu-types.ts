@@ -85,6 +85,14 @@ export interface MenuItem {
  * one — are both sections, drawn by the one menu: rows from `items`, or what
  * `render` draws, handed the way to close the menu.
  */
+/**
+ * HOW NEAR A MENU IS, AS IT IS GOT READY: the pointer rested on the target
+ * (`"rest"`), the keyboard landed on it (`"keyboard"`), a finger went down
+ * on it (`"touch"`), or the menu is opening — a right-click pressed, a
+ * finger held, the menu key (`"open"`).
+ */
+export type MenuReadying = "rest" | "keyboard" | "touch" | "open";
+
 export interface MenuSection {
   /** Unique in the menu; carried as `data-menu-section`. */
   readonly id: string;
@@ -99,9 +107,13 @@ export interface MenuSection {
    * GET READY: the menu may be about to open on this target — the pointer
    * rested on it, the keyboard is on it, a finger is down on it (FR-186).
    * Fetch what the section draws or opens, so the menu draws complete in
-   * its first frame. Never a model call, nor a change: nothing is shown.
+   * its first frame. Never a change: nothing is shown. `why` says how near
+   * the menu is (`MenuReadying`): `"open"` is the right-click's press or a
+   * finger held on its way to a long press, before the menu draws. A model
+   * is asked from here only on `"rest"`, where the host let a hover ask
+   * (`HostAi.prefetchOnRest`).
    */
-  readonly prepare?: () => void;
+  readonly prepare?: (why?: MenuReadying) => void;
   /**
    * A WAY TO ASK, beside Chat under the menu's field (Roadmap
    * f-make-any-page-better): ✨ Better UI on a part of a page. A section

@@ -13,6 +13,9 @@ import { SIGN_IN_ROW } from "../sign-in-row.js";
 import { menuMatches } from "../menu-words.js";
 import { MENU_RANK_FLOOR, MENU_RANK_REST_MS, useFastRank } from "../menu-rank.js";
 import { TOLD_SUGGESTED_MOST, useToldSuggestions } from "../menu-told-door.js";
+import { tellPickOutcome } from "@graview/tools/frame";
+/** Reads what worked here before, ahead of the menu (Roadmap f-jev-fast-polish): the door calls it as it gets the menu ready. */
+export { prepareTold } from "../menu-told-door.js";
 import { openQuickAsk, preloadQuickAsk, useQuickAskDrawn, whereMenuStands } from "../quick-ask-desk.js";
 import { filledActs, notARow, useSuggested, type MenuSuggestion } from "../menu-suggested.js";
 import type { InspectorPlacement } from "./inspector-door.js";
@@ -390,6 +393,36 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
   const dependsOn = useMemo(() => (menuAt?.on !== undefined ? (store.graph.getNode(menuAt.on) as object | undefined) : undefined) ?? graphStamp(store), [menuAt, store, affordances]);
   const suggested = useSuggested(ai, suggestCandidates, { name: menuAt?.title ?? (selection.length === 1 ? nameOf(store, selection[0]!) : "this"), opened: menuAt, better: better !== undefined, depends: dependsOn }, onRow);
   /*
+   * THE SUGGESTED ROWS' ROOM, HELD WHILE THE MENU IS OPEN (Roadmap
+   * f-jev-fast-polish): the most it has shown since it opened, so a
+   * suggestion the Fast slot was not sure enough of leaves its row empty
+   * rather than moving every row under it.
+   */
+  const suggestedOpening = useMemo(() => ({ room: 0, shown: [] as readonly MenuSuggestion[], taken: null as string | null }), [menuAt]);
+  const suggestedNow = menuAt !== null && typed.trim() === "" ? suggested : [];
+  suggestedOpening.room = Math.max(suggestedOpening.room, suggestedNow.length);
+  /* What the menu showed when it closed, and which was taken: each told to the host (`HostAi.onPickOutcome`). */
+  useLayoutEffect(() => {
+    if (typed.trim() === "") suggestedOpening.shown = suggested;
+  }, [suggestedOpening, suggested, typed]);
+  useEffect(
+    () => () => {
+      for (const one of suggestedOpening.shown)
+        tellPickOutcome(ai, {
+          where: "suggested",
+          pick: one.key,
+          label: one.label,
+          outcome: one.key === suggestedOpening.taken ? "accepted" : "dismissed",
+          ...(one.confidence !== undefined ? { confidence: one.confidence } : {}),
+          ...(one.model ? { model: one.model } : {}),
+          ...(menuAt?.on !== undefined ? { record: menuAt.on } : {}),
+        });
+    },
+    // Told once per opening, as it closes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [suggestedOpening],
+  );
+  /*
    * A REFUSAL IS A RESULT, said where the button was pressed.
    *
    * A mutation that throws — a validation failure, a guard's own sentence —
@@ -699,6 +732,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
   };
   /** A suggestion taken: through its way's card, previewed there before anything lands. */
   const takeSuggested = (one: MenuSuggestion) => {
+    suggestedOpening.taken = one.key;
     const told = one.source === "told" ? toldLike.find((each) => each.key === one.key) : undefined;
     if (told && one.mode === "chat") return takeTold(told);
     runMode(one.mode === "better" && better ? "better" : "chat", one.label);
@@ -1114,9 +1148,9 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
         </div>
       ) : null}
 
-      {atPointer && words === "" && suggested.length > 0 ? (
-        <div data-menu-section="suggested" role="group" aria-label="Suggested" style={{ display: "grid", gap: 2, borderTop: "1px solid var(--graview-edge)", paddingTop: 5, minHeight: suggested.length * 31 + 22 }}>
-          <span aria-hidden="true" style={GROUP_HEAD}>Suggested</span>
+      {atPointer && words === "" && suggestedOpening.room > 0 ? (
+        <div data-menu-section="suggested" {...(suggested.length > 0 ? { role: "group", "aria-label": "Suggested" } : { "aria-hidden": true })} style={{ display: "grid", gap: 2, borderTop: "1px solid var(--graview-edge)", paddingTop: 5, minHeight: suggestedOpening.room * 31 + 22 }}>
+          {suggested.length > 0 ? <span aria-hidden="true" style={GROUP_HEAD}>Suggested</span> : null}
           {suggested.map((one, at) => (
             <button key={one.key} type="button" data-menu-item={`suggested-${at}`} data-suggested-mode={one.mode} onClick={() => takeSuggested(one)} style={{ ...ROW_STYLE, display: "flex", gap: 8, alignItems: "baseline", minWidth: 0 }}>
               <span aria-hidden="true" style={{ color: "var(--graview-accent)" }}>✦</span>

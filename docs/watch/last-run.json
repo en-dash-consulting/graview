@@ -1,11 +1,2664 @@
 {
-  "at": "2026-11-14T18:22:06.477Z",
+  "at": "2026-11-23T07:52:33.998Z",
+  "run": {
+    "wall": 1921,
+    "harnessTime": 14511,
+    "workers": 12,
+    "quick": false,
+    "servers": [
+      {
+        "worker": 0,
+        "app": "gauntlet",
+        "ms": 776
+      },
+      {
+        "worker": 7,
+        "app": "discography",
+        "ms": 1348
+      },
+      {
+        "worker": 2,
+        "app": "todo",
+        "ms": 1520
+      },
+      {
+        "worker": 8,
+        "app": "todo",
+        "ms": 1731
+      },
+      {
+        "worker": 8,
+        "app": "gauntlet",
+        "ms": 1126
+      },
+      {
+        "worker": 11,
+        "app": "todo",
+        "ms": 2682
+      },
+      {
+        "worker": 6,
+        "app": "todo",
+        "ms": 3353
+      },
+      {
+        "worker": 6,
+        "app": "seedbed",
+        "ms": 3455
+      },
+      {
+        "worker": 6,
+        "app": "discography",
+        "ms": 3729
+      },
+      {
+        "worker": 6,
+        "app": "gauntlet",
+        "ms": 3552
+      },
+      {
+        "worker": 3,
+        "app": "todo",
+        "ms": 5115
+      },
+      {
+        "worker": 3,
+        "app": "seedbed",
+        "ms": 4397
+      },
+      {
+        "worker": 3,
+        "app": "gauntlet",
+        "ms": 6116
+      },
+      {
+        "worker": 3,
+        "app": "discography",
+        "ms": 5272
+      },
+      {
+        "worker": 3,
+        "app": "rota",
+        "ms": 4682
+      },
+      {
+        "worker": 1,
+        "app": "todo",
+        "ms": 1478
+      },
+      {
+        "worker": 11,
+        "app": "rota",
+        "ms": 1227
+      },
+      {
+        "worker": 11,
+        "app": "seedbed",
+        "ms": 1137
+      },
+      {
+        "worker": 9,
+        "app": "todo",
+        "ms": 570
+      },
+      {
+        "worker": 11,
+        "app": "launcher",
+        "ms": 707
+      },
+      {
+        "worker": 0,
+        "app": "todo",
+        "ms": 1586
+      },
+      {
+        "worker": 4,
+        "app": "rota",
+        "ms": 2447
+      },
+      {
+        "worker": 1,
+        "app": "seedbed",
+        "ms": 2469
+      },
+      {
+        "worker": 1,
+        "app": "rota",
+        "ms": 610
+      },
+      {
+        "worker": 7,
+        "app": "todo",
+        "ms": 2771
+      },
+      {
+        "worker": 10,
+        "app": "rota",
+        "ms": 2050
+      },
+      {
+        "worker": 10,
+        "app": "launcher",
+        "ms": 2339
+      },
+      {
+        "worker": 0,
+        "app": "rota",
+        "ms": 1877
+      },
+      {
+        "worker": 10,
+        "app": "todo",
+        "ms": 1372
+      },
+      {
+        "worker": 10,
+        "app": "seedbed",
+        "ms": 926
+      },
+      {
+        "worker": 4,
+        "app": "todo",
+        "ms": 3583
+      }
+    ],
+    "slowest": [
+      {
+        "name": "journeys",
+        "wall": 742,
+        "cpu": 2555.5,
+        "serverStartup": 7534,
+        "fixedWaits": 952480
+      },
+      {
+        "name": "gauntlet",
+        "wall": 719,
+        "cpu": 559.2,
+        "serverStartup": 0,
+        "fixedWaits": 527760
+      },
+      {
+        "name": "one-face",
+        "wall": 717,
+        "cpu": 484.8,
+        "serverStartup": 0,
+        "fixedWaits": 194526
+      },
+      {
+        "name": "quiet.firefox-rest",
+        "wall": 568,
+        "cpu": 277.4,
+        "serverStartup": 0,
+        "fixedWaits": 196260
+      },
+      {
+        "name": "site",
+        "wall": 531,
+        "cpu": 254,
+        "serverStartup": 0,
+        "fixedWaits": 418500
+      },
+      {
+        "name": "create",
+        "wall": 470,
+        "cpu": 208.1,
+        "serverStartup": 0,
+        "fixedWaits": 22500
+      },
+      {
+        "name": "quiet.webkit-rest",
+        "wall": 397,
+        "cpu": 30.4,
+        "serverStartup": 0,
+        "fixedWaits": 196260
+      },
+      {
+        "name": "long-text",
+        "wall": 388,
+        "cpu": 103.8,
+        "serverStartup": 0,
+        "fixedWaits": 160800
+      },
+      {
+        "name": "a11y",
+        "wall": 373,
+        "cpu": 192.5,
+        "serverStartup": 6473,
+        "fixedWaits": 137200
+      },
+      {
+        "name": "scene-hands.webkit",
+        "wall": 372,
+        "cpu": 23.1,
+        "serverStartup": 0,
+        "fixedWaits": 114868
+      },
+      {
+        "name": "guest",
+        "wall": 361,
+        "cpu": 228.6,
+        "serverStartup": 0,
+        "fixedWaits": 0
+      },
+      {
+        "name": "chrome",
+        "wall": 359,
+        "cpu": 145.1,
+        "serverStartup": 0,
+        "fixedWaits": 213150
+      }
+    ]
+  },
   "results": [
     {
-      "name": "one-face",
+      "name": "watch",
+      "file": "verify-watch.mjs",
       "code": 0,
-      "took": 475,
-      "verdict": "held"
+      "took": 97,
+      "began": "2026-11-23T07:38:29.740Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 97,
+        "cpu": 7.1,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 510,
+        "browsers": 3,
+        "browserLaunch": 1917,
+        "fixedWaits": 88600,
+        "fixedWaitCount": 25,
+        "worker": 9
+      }
+    },
+    {
+      "name": "hosted",
+      "file": "verify-hosted-page.mjs",
+      "code": 0,
+      "took": 5,
+      "began": "2026-11-23T07:41:41.672Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 5,
+        "cpu": 0.8,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": null,
+        "browsers": 0,
+        "browserLaunch": 0,
+        "fixedWaits": 0,
+        "fixedWaitCount": 0,
+        "worker": 11
+      }
+    },
+    {
+      "name": "device",
+      "file": "verify-device.mjs",
+      "code": 0,
+      "took": 19,
+      "began": "2026-11-23T07:41:31.802Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 19,
+        "cpu": 3.2,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 1241,
+        "browsers": 1,
+        "browserLaunch": 289,
+        "fixedWaits": 14000,
+        "fixedWaitCount": 14,
+        "worker": 0
+      }
+    },
+    {
+      "name": "guest",
+      "file": "guest-sandbox.mjs",
+      "code": 0,
+      "took": 361,
+      "began": "2026-11-23T07:42:15.829Z",
+      "verdict": "flaky",
+      "timing": {
+        "wall": 361,
+        "cpu": 228.6,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": null,
+        "browsers": 0,
+        "browserLaunch": 0,
+        "fixedWaits": 0,
+        "fixedWaitCount": 0,
+        "worker": 3,
+        "look": "second"
+      },
+      "firstTiming": {
+        "wall": 763,
+        "cpu": 304.4,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": null,
+        "browsers": 0,
+        "browserLaunch": 0,
+        "fixedWaits": 0,
+        "fixedWaitCount": 0,
+        "worker": 5
+      },
+      "gist": "ok   55 of 55 runs hold",
+      "missed": []
+    },
+    {
+      "name": "site",
+      "file": "verify-site.mjs",
+      "code": 0,
+      "took": 531,
+      "began": "2026-11-23T07:42:15.826Z",
+      "verdict": "flaky",
+      "timing": {
+        "wall": 531,
+        "cpu": 254,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 144,
+        "browsers": 1,
+        "browserLaunch": 233,
+        "fixedWaits": 418500,
+        "fixedWaitCount": 1664,
+        "worker": 2,
+        "look": "second"
+      },
+      "firstTiming": {
+        "wall": 602,
+        "cpu": 304,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 260,
+        "browsers": 1,
+        "browserLaunch": 302,
+        "fixedWaits": 418500,
+        "fixedWaitCount": 1664,
+        "worker": 4
+      },
+      "gist": "the page holds up",
+      "missed": []
+    },
+    {
+      "name": "a11y",
+      "file": "verify-a11y.mjs",
+      "code": 0,
+      "took": 373,
+      "began": "2026-11-23T07:20:32.635Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 373,
+        "cpu": 192.5,
+        "serverStartup": 6473,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 6903,
+            "ms": 1676,
+            "borrowed": false
+          },
+          {
+            "name": "seedbed",
+            "port": 6904,
+            "ms": 2160,
+            "borrowed": false
+          },
+          {
+            "name": "rota",
+            "port": 6905,
+            "ms": 949,
+            "borrowed": false
+          },
+          {
+            "name": "discography",
+            "port": 6907,
+            "ms": 1113,
+            "borrowed": false
+          },
+          {
+            "name": "launcher",
+            "port": 6909,
+            "ms": 575,
+            "borrowed": false
+          }
+        ],
+        "beforeFirstBrowser": 8462,
+        "browsers": 1,
+        "browserLaunch": 157,
+        "fixedWaits": 137200,
+        "fixedWaitCount": 176,
+        "worker": 10
+      }
+    },
+    {
+      "name": "screen-reader",
+      "file": "verify-screen-reader.mjs",
+      "code": 0,
+      "took": 87,
+      "began": "2026-11-23T07:47:03.693Z",
+      "verdict": "flaky",
+      "timing": {
+        "wall": 87,
+        "cpu": 18,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 5703,
+            "ms": 171,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 553,
+        "browsers": 2,
+        "browserLaunch": 292,
+        "fixedWaits": 43700,
+        "fixedWaitCount": 44,
+        "worker": 0,
+        "look": "second"
+      },
+      "firstTiming": {
+        "wall": 3,
+        "cpu": 1.1,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 6603,
+            "ms": 465,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 2303,
+        "browsers": 1,
+        "browserLaunch": 275,
+        "fixedWaits": 0,
+        "fixedWaitCount": 0,
+        "worker": 7
+      },
+      "gist": "67 of 67 claims hold — docs/screen-reader.json, docs/screen-reader-walk.",
+      "missed": []
+    },
+    {
+      "name": "gauntlet",
+      "file": "verify-gauntlet.mjs",
+      "code": 0,
+      "took": 719,
+      "began": "2026-11-23T07:20:33.403Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 719,
+        "cpu": 559.2,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "gauntlet",
+            "port": 5701,
+            "ms": 425,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 849,
+        "browsers": 1,
+        "browserLaunch": 140,
+        "fixedWaits": 527760,
+        "fixedWaitCount": 387,
+        "worker": 0
+      }
+    },
+    {
+      "name": "lines",
+      "file": "verify-lines.mjs",
+      "code": 0,
+      "took": 293,
+      "began": "2026-11-23T07:28:48.043Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 293,
+        "cpu": 113,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 6203,
+            "ms": 1083,
+            "borrowed": true
+          },
+          {
+            "name": "seedbed",
+            "port": 6204,
+            "ms": 1058,
+            "borrowed": true
+          },
+          {
+            "name": "gauntlet",
+            "port": 6201,
+            "ms": 2124,
+            "borrowed": true
+          },
+          {
+            "name": "discography",
+            "port": 6207,
+            "ms": 1578,
+            "borrowed": true
+          },
+          {
+            "name": "rota",
+            "port": 6205,
+            "ms": 270,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 3153,
+        "browsers": 5,
+        "browserLaunch": 2718,
+        "fixedWaits": 136820,
+        "fixedWaitCount": 144,
+        "worker": 3
+      }
+    },
+    {
+      "name": "shrunk",
+      "file": "verify-shrunk.mjs",
+      "code": 0,
+      "took": 16,
+      "began": "2026-11-23T07:41:37.137Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 16,
+        "cpu": 13.9,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 6003,
+            "ms": 513,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 773,
+        "browsers": 1,
+        "browserLaunch": 1395,
+        "fixedWaits": 7000,
+        "fixedWaitCount": 14,
+        "worker": 1
+      }
+    },
+    {
+      "name": "navigation",
+      "file": "verify-navigation.mjs",
+      "code": 0,
+      "took": 106,
+      "began": "2026-11-23T07:37:52.959Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 106,
+        "cpu": 71,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 7103,
+            "ms": 411,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 961,
+        "browsers": 1,
+        "browserLaunch": 261,
+        "fixedWaits": 72094,
+        "fixedWaitCount": 213,
+        "worker": 11
+      }
+    },
+    {
+      "name": "kind-stop",
+      "file": "verify-kind-stop.mjs",
+      "code": 0,
+      "took": 114,
+      "began": "2026-11-23T07:35:22.207Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 114,
+        "cpu": 106.7,
+        "serverStartup": 1030,
+        "servers": [
+          {
+            "name": "gauntlet",
+            "port": 6501,
+            "ms": 292,
+            "borrowed": true
+          },
+          {
+            "name": "todo",
+            "port": 6503,
+            "ms": 408,
+            "borrowed": true
+          },
+          {
+            "name": "seedbed",
+            "port": 6504,
+            "ms": 249,
+            "borrowed": true
+          },
+          {
+            "name": "rota",
+            "port": 6505,
+            "ms": 1030,
+            "borrowed": false
+          },
+          {
+            "name": "discography",
+            "port": 6507,
+            "ms": 254,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 2440,
+        "browsers": 1,
+        "browserLaunch": 131,
+        "fixedWaits": 61700,
+        "fixedWaitCount": 88,
+        "worker": 6
+      }
+    },
+    {
+      "name": "menu",
+      "file": "verify-menu.mjs",
+      "code": 0,
+      "took": 171,
+      "began": "2026-11-23T07:32:55.687Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 171,
+        "cpu": 114.3,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 6003,
+            "ms": 237,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 488,
+        "browsers": 1,
+        "browserLaunch": 117,
+        "fixedWaits": 81620,
+        "fixedWaitCount": 288,
+        "worker": 1
+      }
+    },
+    {
+      "name": "section",
+      "file": "verify-section.mjs",
+      "code": 0,
+      "took": 6,
+      "began": "2026-11-23T07:48:16.855Z",
+      "verdict": "flaky",
+      "timing": {
+        "wall": 6,
+        "cpu": 4.6,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 411,
+        "browsers": 1,
+        "browserLaunch": 144,
+        "fixedWaits": 0,
+        "fixedWaitCount": 0,
+        "worker": 3,
+        "look": "second"
+      },
+      "firstTiming": {
+        "wall": 10,
+        "cpu": 5.4,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 2628,
+        "browsers": 1,
+        "browserLaunch": 118,
+        "fixedWaits": 0,
+        "fixedWaitCount": 0,
+        "worker": 6
+      },
+      "gist": "wrote docs/section.json",
+      "missed": [
+        "offered"
+      ]
+    },
+    {
+      "name": "page-better",
+      "file": "verify-page-better.mjs",
+      "code": 0,
+      "took": 118,
+      "began": "2026-11-23T07:37:57.788Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 118,
+        "cpu": 59.4,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 5703,
+            "ms": 761,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 1890,
+        "browsers": 1,
+        "browserLaunch": 179,
+        "fixedWaits": 22580,
+        "fixedWaitCount": 82,
+        "worker": 0
+      }
+    },
+    {
+      "name": "scene-menu",
+      "file": "verify-scene-menu.mjs",
+      "code": 0,
+      "took": 52,
+      "began": "2026-11-23T07:40:29.804Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 52,
+        "cpu": 23.5,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 6503,
+            "ms": 361,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 1315,
+        "browsers": 4,
+        "browserLaunch": 3248,
+        "fixedWaits": 12800,
+        "fixedWaitCount": 25,
+        "worker": 6
+      }
+    },
+    {
+      "name": "inline-ai",
+      "file": "verify-inline-ai.mjs",
+      "code": 0,
+      "took": 56,
+      "began": "2026-11-23T07:40:06.437Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 56,
+        "cpu": 30.6,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 6803,
+            "ms": 224,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 683,
+        "browsers": 1,
+        "browserLaunch": 148,
+        "fixedWaits": 24150,
+        "fixedWaitCount": 65,
+        "worker": 9
+      }
+    },
+    {
+      "name": "notify",
+      "file": "verify-notify.mjs",
+      "code": 0,
+      "took": 14,
+      "began": "2026-11-23T07:41:39.591Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 14,
+        "cpu": 9.7,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 6103,
+            "ms": 331,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 1154,
+        "browsers": 1,
+        "browserLaunch": 150,
+        "fixedWaits": 6380,
+        "fixedWaitCount": 17,
+        "worker": 2
+      }
+    },
+    {
+      "name": "quick-ask",
+      "file": "verify-quick-ask.mjs",
+      "code": 0,
+      "took": 70,
+      "began": "2026-11-23T07:34:27.102Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 70,
+        "cpu": 40.9,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 6803,
+            "ms": 200,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 351,
+        "browsers": 3,
+        "browserLaunch": 778,
+        "fixedWaits": 40530,
+        "fixedWaitCount": 84,
+        "worker": 9
+      }
+    },
+    {
+      "name": "told",
+      "file": "verify-told.mjs",
+      "code": 0,
+      "took": 31,
+      "began": "2026-11-23T07:41:11.045Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 31,
+        "cpu": 18.6,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 7103,
+            "ms": 805,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 2042,
+        "browsers": 1,
+        "browserLaunch": 176,
+        "fixedWaits": 15310,
+        "fixedWaitCount": 32,
+        "worker": 11
+      }
+    },
+    {
+      "name": "seat",
+      "file": "verify-seat.mjs",
+      "code": 0,
+      "took": 63,
+      "began": "2026-11-23T07:40:04.624Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 63,
+        "cpu": 20.1,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 6903,
+            "ms": 1073,
+            "borrowed": true
+          },
+          {
+            "name": "todo",
+            "port": 6903,
+            "ms": 340,
+            "borrowed": true
+          },
+          {
+            "name": "seedbed",
+            "port": 6904,
+            "ms": 632,
+            "borrowed": true
+          },
+          {
+            "name": "todo",
+            "port": 6903,
+            "ms": 945,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 206,
+        "browsers": 1,
+        "browserLaunch": 202,
+        "fixedWaits": 17850,
+        "fixedWaitCount": 22,
+        "worker": 10
+      }
+    },
+    {
+      "name": "who",
+      "file": "verify-who.mjs",
+      "code": 0,
+      "took": 40,
+      "began": "2026-11-23T07:41:07.475Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 40,
+        "cpu": 21.9,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 6903,
+            "ms": 881,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 3417,
+        "browsers": 1,
+        "browserLaunch": 166,
+        "fixedWaits": 26750,
+        "fixedWaitCount": 48,
+        "worker": 10
+      }
+    },
+    {
+      "name": "calendar",
+      "file": "verify-calendar.mjs",
+      "code": 0,
+      "took": 71,
+      "began": "2026-11-23T07:38:01.908Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 71,
+        "cpu": 60.9,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 6003,
+            "ms": 544,
+            "borrowed": true
+          },
+          {
+            "name": "seedbed",
+            "port": 6004,
+            "ms": 436,
+            "borrowed": true
+          },
+          {
+            "name": "rota",
+            "port": 6005,
+            "ms": 688,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 1958,
+        "browsers": 1,
+        "browserLaunch": 199,
+        "fixedWaits": 35300,
+        "fixedWaitCount": 42,
+        "worker": 1
+      }
+    },
+    {
+      "name": "desk",
+      "file": "verify-desk.mjs",
+      "code": 0,
+      "took": 84,
+      "began": "2026-11-23T07:38:38.809Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 84,
+        "cpu": 75.7,
+        "serverStartup": 3920,
+        "servers": [
+          {
+            "name": "launcher",
+            "port": 6909,
+            "ms": 542,
+            "borrowed": true
+          },
+          {
+            "name": "rota",
+            "port": 6905,
+            "ms": 370,
+            "borrowed": true
+          },
+          {
+            "name": "todo",
+            "port": 6903,
+            "ms": 1656,
+            "borrowed": false
+          },
+          {
+            "name": "seedbed",
+            "port": 6904,
+            "ms": 2264,
+            "borrowed": false
+          }
+        ],
+        "beforeFirstBrowser": 6423,
+        "browsers": 1,
+        "browserLaunch": 183,
+        "fixedWaits": 35200,
+        "fixedWaitCount": 34,
+        "worker": 10
+      }
+    },
+    {
+      "name": "rota",
+      "file": "verify-rota.mjs",
+      "code": 0,
+      "took": 77,
+      "began": "2026-11-23T07:38:00.585Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 77,
+        "cpu": 64.2,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "rota",
+            "port": 6305,
+            "ms": 271,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 954,
+        "browsers": 1,
+        "browserLaunch": 115,
+        "fixedWaits": 28400,
+        "fixedWaitCount": 61,
+        "worker": 4
+      }
+    },
+    {
+      "name": "studio",
+      "file": "verify-studio.mjs",
+      "code": 0,
+      "took": 41,
+      "began": "2026-11-23T07:41:12.853Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 41,
+        "cpu": 21.4,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 6303,
+            "ms": 1382,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 2704,
+        "browsers": 1,
+        "browserLaunch": 328,
+        "fixedWaits": 24500,
+        "fixedWaitCount": 43,
+        "worker": 4
+      }
+    },
+    {
+      "name": "chrome",
+      "file": "verify-chrome.mjs",
+      "code": 0,
+      "took": 359,
+      "began": "2026-11-23T07:27:03.773Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 359,
+        "cpu": 145.1,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 7103,
+            "ms": 448,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 2517,
+        "browsers": 1,
+        "browserLaunch": 192,
+        "fixedWaits": 213150,
+        "fixedWaitCount": 569,
+        "worker": 11
+      }
+    },
+    {
+      "name": "offline",
+      "file": "verify-offline.mjs",
+      "code": 0,
+      "took": 35,
+      "began": "2026-11-23T07:41:23.715Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 35,
+        "cpu": 12.7,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 1591,
+        "browsers": 3,
+        "browserLaunch": 2159,
+        "fixedWaits": 16200,
+        "fixedWaitCount": 30,
+        "worker": 5
+      }
+    },
+    {
+      "name": "quiet.chromium-steady",
+      "file": "verify-chrome-quiet.mjs",
+      "code": 0,
+      "took": 224,
+      "began": "2026-11-23T07:31:59.345Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 224,
+        "cpu": 200.6,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 2294,
+        "browsers": 1,
+        "browserLaunch": 356,
+        "fixedWaits": 9600,
+        "fixedWaitCount": 8,
+        "worker": 7
+      }
+    },
+    {
+      "name": "quiet.chromium-standing",
+      "file": "verify-chrome-quiet.mjs",
+      "code": 0,
+      "took": 108,
+      "began": "2026-11-23T07:38:41.672Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 108,
+        "cpu": 46.8,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 1298,
+        "browsers": 1,
+        "browserLaunch": 156,
+        "fixedWaits": 70800,
+        "fixedWaitCount": 126,
+        "worker": 6
+      }
+    },
+    {
+      "name": "quiet.chromium-picks",
+      "file": "verify-chrome-quiet.mjs",
+      "code": 0,
+      "took": 31,
+      "began": "2026-11-23T07:40:38.504Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 31,
+        "cpu": 14.3,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 2219,
+        "browsers": 1,
+        "browserLaunch": 276,
+        "fixedWaits": 12000,
+        "fixedWaitCount": 10,
+        "worker": 4
+      }
+    },
+    {
+      "name": "quiet.chromium-boxes",
+      "file": "verify-chrome-quiet.mjs",
+      "code": 0,
+      "took": 165,
+      "began": "2026-11-23T07:35:43.588Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 165,
+        "cpu": 56.2,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 1326,
+        "browsers": 1,
+        "browserLaunch": 149,
+        "fixedWaits": 116920,
+        "fixedWaitCount": 590,
+        "worker": 7
+      }
+    },
+    {
+      "name": "quiet.chromium-notices",
+      "file": "verify-chrome-quiet.mjs",
+      "code": 0,
+      "took": 130,
+      "began": "2026-11-23T07:35:48.253Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 130,
+        "cpu": 15.6,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 854,
+        "browsers": 1,
+        "browserLaunch": 137,
+        "fixedWaits": 121400,
+        "fixedWaitCount": 61,
+        "worker": 4
+      }
+    },
+    {
+      "name": "quiet.chromium-rest",
+      "file": "verify-chrome-quiet.mjs",
+      "code": 0,
+      "took": 314,
+      "began": "2026-11-23T07:30:34.634Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 314,
+        "cpu": 117.6,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 4687,
+        "browsers": 1,
+        "browserLaunch": 637,
+        "fixedWaits": 196260,
+        "fixedWaitCount": 220,
+        "worker": 4
+      }
+    },
+    {
+      "name": "quiet.webkit-steady",
+      "file": "verify-chrome-quiet.mjs",
+      "code": 0,
+      "took": 81,
+      "began": "2026-11-23T07:39:17.208Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 81,
+        "cpu": 7.8,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 1211,
+        "browsers": 1,
+        "browserLaunch": 236,
+        "fixedWaits": 9600,
+        "fixedWaitCount": 8,
+        "worker": 4
+      }
+    },
+    {
+      "name": "quiet.webkit-standing",
+      "file": "verify-chrome-quiet.mjs",
+      "code": 0,
+      "took": 120,
+      "began": "2026-11-23T07:38:33.957Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 120,
+        "cpu": 10.1,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 846,
+        "browsers": 1,
+        "browserLaunch": 273,
+        "fixedWaits": 70800,
+        "fixedWaitCount": 126,
+        "worker": 7
+      }
+    },
+    {
+      "name": "quiet.webkit-picks",
+      "file": "verify-chrome-quiet.mjs",
+      "code": 0,
+      "took": 35,
+      "began": "2026-11-23T07:40:48.682Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 35,
+        "cpu": 3.4,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 2586,
+        "browsers": 1,
+        "browserLaunch": 230,
+        "fixedWaits": 12000,
+        "fixedWaitCount": 10,
+        "worker": 5
+      }
+    },
+    {
+      "name": "quiet.webkit-boxes",
+      "file": "verify-chrome-quiet.mjs",
+      "code": 0,
+      "took": 172,
+      "began": "2026-11-23T07:35:37.270Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 172,
+        "cpu": 12,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 721,
+        "browsers": 1,
+        "browserLaunch": 192,
+        "fixedWaits": 116400,
+        "fixedWaitCount": 577,
+        "worker": 9
+      }
+    },
+    {
+      "name": "quiet.webkit-notices",
+      "file": "verify-chrome-quiet.mjs",
+      "code": 0,
+      "took": 129,
+      "began": "2026-11-23T07:45:43.835Z",
+      "verdict": "flaky",
+      "timing": {
+        "wall": 129,
+        "cpu": 3.1,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 437,
+        "browsers": 1,
+        "browserLaunch": 150,
+        "fixedWaits": 121400,
+        "fixedWaitCount": 61,
+        "worker": 1,
+        "look": "second"
+      },
+      "firstTiming": {
+        "wall": 132,
+        "cpu": 3.6,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 1353,
+        "browsers": 1,
+        "browserLaunch": 186,
+        "fixedWaits": 121400,
+        "fixedWaitCount": 61,
+        "worker": 2
+      },
+      "gist": "wrote docs/chrome-quiet.json",
+      "missed": []
+    },
+    {
+      "name": "quiet.webkit-rest",
+      "file": "verify-chrome-quiet.mjs",
+      "code": 0,
+      "took": 397,
+      "began": "2026-11-23T07:25:05.861Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 397,
+        "cpu": 30.4,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 2301,
+        "browsers": 1,
+        "browserLaunch": 291,
+        "fixedWaits": 196260,
+        "fixedWaitCount": 220,
+        "worker": 8
+      }
+    },
+    {
+      "name": "quiet.firefox-steady",
+      "file": "verify-chrome-quiet.mjs",
+      "code": 0,
+      "took": 144,
+      "began": "2026-11-23T07:39:12.920Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 144,
+        "cpu": 84,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 1187,
+        "browsers": 1,
+        "browserLaunch": 1177,
+        "fixedWaits": 9600,
+        "fixedWaitCount": 8,
+        "worker": 1
+      }
+    },
+    {
+      "name": "quiet.firefox-standing",
+      "file": "verify-chrome-quiet.mjs",
+      "code": 0,
+      "took": 200,
+      "began": "2026-11-23T07:38:19.505Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 200,
+        "cpu": 97.7,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 890,
+        "browsers": 1,
+        "browserLaunch": 586,
+        "fixedWaits": 70800,
+        "fixedWaitCount": 126,
+        "worker": 2
+      }
+    },
+    {
+      "name": "quiet.firefox-picks",
+      "file": "verify-chrome-quiet.mjs",
+      "code": 0,
+      "took": 90,
+      "began": "2026-11-23T07:40:20.409Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 90,
+        "cpu": 34.9,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 1400,
+        "browsers": 1,
+        "browserLaunch": 1425,
+        "fixedWaits": 12000,
+        "fixedWaitCount": 10,
+        "worker": 3
+      }
+    },
+    {
+      "name": "quiet.firefox-boxes",
+      "file": "verify-chrome-quiet.mjs",
+      "code": 0,
+      "took": 211,
+      "began": "2026-11-23T07:35:36.865Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 211,
+        "cpu": 119.1,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 640,
+        "browsers": 1,
+        "browserLaunch": 895,
+        "fixedWaits": 115000,
+        "fixedWaitCount": 542,
+        "worker": 8
+      }
+    },
+    {
+      "name": "quiet.firefox-notices",
+      "file": "verify-chrome-quiet.mjs",
+      "code": 0,
+      "took": 140,
+      "began": "2026-11-23T07:36:14.220Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 140,
+        "cpu": 33.9,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 850,
+        "browsers": 1,
+        "browserLaunch": 612,
+        "fixedWaits": 121400,
+        "fixedWaitCount": 61,
+        "worker": 10
+      }
+    },
+    {
+      "name": "quiet.firefox-rest",
+      "file": "verify-chrome-quiet.mjs",
+      "code": 0,
+      "took": 568,
+      "began": "2026-11-23T07:26:45.963Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 568,
+        "cpu": 277.4,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 955,
+        "browsers": 1,
+        "browserLaunch": 1696,
+        "fixedWaits": 196260,
+        "fixedWaitCount": 220,
+        "worker": 10
+      }
+    },
+    {
+      "name": "brand",
+      "file": "verify-brand.mjs",
+      "code": 0,
+      "took": 153,
+      "began": "2026-11-23T07:32:49.031Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 153,
+        "cpu": 73.6,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 1141,
+        "browsers": 3,
+        "browserLaunch": 1456,
+        "fixedWaits": 81600,
+        "fixedWaitCount": 102,
+        "worker": 6
+      }
+    },
+    {
+      "name": "declared",
+      "file": "verify-declared.mjs",
+      "code": 0,
+      "took": 304,
+      "began": "2026-11-23T07:27:11.272Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 304,
+        "cpu": 111.2,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 2166,
+        "browsers": 1,
+        "browserLaunch": 251,
+        "fixedWaits": 185100,
+        "fixedWaitCount": 184,
+        "worker": 9
+      }
+    },
+    {
+      "name": "preview",
+      "file": "verify-preview.mjs",
+      "code": 0,
+      "took": 48,
+      "began": "2026-11-23T07:38:51.653Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 48,
+        "cpu": 26.3,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 1310,
+        "browsers": 1,
+        "browserLaunch": 202,
+        "fixedWaits": 8000,
+        "fixedWaitCount": 12,
+        "worker": 5
+      }
+    },
+    {
+      "name": "face-recipe",
+      "file": "verify-face-recipe.mjs",
+      "code": 0,
+      "took": 19,
+      "began": "2026-11-23T07:41:21.790Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 19,
+        "cpu": 7.1,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 10930,
+        "browsers": 1,
+        "browserLaunch": 133,
+        "fixedWaits": 500,
+        "fixedWaitCount": 1,
+        "worker": 6
+      }
+    },
+    {
+      "name": "date-inputs",
+      "file": "verify-date-inputs.mjs",
+      "code": 0,
+      "took": 19,
+      "began": "2026-11-23T07:41:32.513Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 19,
+        "cpu": 6,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 3243,
+        "browsers": 1,
+        "browserLaunch": 294,
+        "fixedWaits": 8300,
+        "fixedWaitCount": 21,
+        "worker": 9
+      }
+    },
+    {
+      "name": "drawn-once.chromium",
+      "file": "verify-drawn-once.mjs",
+      "code": 0,
+      "took": 123,
+      "began": "2026-11-23T07:36:48.418Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 123,
+        "cpu": 37.4,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 564,
+        "browsers": 1,
+        "browserLaunch": 152,
+        "fixedWaits": 96000,
+        "fixedWaitCount": 102,
+        "worker": 5
+      }
+    },
+    {
+      "name": "drawn-once.webkit",
+      "file": "verify-drawn-once.mjs",
+      "code": 0,
+      "took": 128,
+      "began": "2026-11-23T07:35:47.868Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 128,
+        "cpu": 8.9,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 785,
+        "browsers": 1,
+        "browserLaunch": 239,
+        "fixedWaits": 96000,
+        "fixedWaitCount": 102,
+        "worker": 0
+      }
+    },
+    {
+      "name": "drawn-once.firefox",
+      "file": "verify-drawn-once.mjs",
+      "code": 0,
+      "took": 147,
+      "began": "2026-11-23T07:32:30.862Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 147,
+        "cpu": 76.5,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 746,
+        "browsers": 1,
+        "browserLaunch": 867,
+        "fixedWaits": 96000,
+        "fixedWaitCount": 102,
+        "worker": 2
+      }
+    },
+    {
+      "name": "drawn",
+      "file": "verify-drawn.mjs",
+      "code": 0,
+      "took": 288,
+      "began": "2026-11-23T07:42:15.823Z",
+      "verdict": "flaky",
+      "timing": {
+        "wall": 288,
+        "cpu": 94.2,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 630,
+        "browsers": 3,
+        "browserLaunch": 707,
+        "fixedWaits": 19080,
+        "fixedWaitCount": 30,
+        "worker": 0,
+        "look": "second"
+      },
+      "firstTiming": {
+        "wall": 399,
+        "cpu": 128,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 1007,
+        "browsers": 3,
+        "browserLaunch": 3367,
+        "fixedWaits": 19080,
+        "fixedWaitCount": 30,
+        "worker": 9
+      },
+      "gist": "wrote docs/drawn.json",
+      "missed": []
+    },
+    {
+      "name": "long-text",
+      "file": "verify-long-text.mjs",
+      "code": 0,
+      "took": 388,
+      "began": "2026-11-23T07:20:32.636Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 388,
+        "cpu": 103.8,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 1122,
+        "browsers": 3,
+        "browserLaunch": 3323,
+        "fixedWaits": 160800,
+        "fixedWaitCount": 126,
+        "worker": 11
+      }
+    },
+    {
+      "name": "typed-together",
+      "file": "verify-typed-together.mjs",
+      "code": 0,
+      "took": 17,
+      "began": "2026-11-23T07:41:35.583Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 17,
+        "cpu": 11.9,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 3892,
+        "browsers": 2,
+        "browserLaunch": 313,
+        "fixedWaits": 0,
+        "fixedWaitCount": 0,
+        "worker": 7
+      }
+    },
+    {
+      "name": "growing",
+      "file": "verify-growing.mjs",
+      "code": 0,
+      "took": 213,
+      "began": "2026-11-23T07:33:15.347Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 213,
+        "cpu": 99.1,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 616,
+        "browsers": 3,
+        "browserLaunch": 1236,
+        "fixedWaits": 107400,
+        "fixedWaitCount": 162,
+        "worker": 5
+      }
+    },
+    {
+      "name": "files",
+      "file": "verify-files.mjs",
+      "code": 0,
+      "took": 131,
+      "began": "2026-11-23T07:32:15.131Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 131,
+        "cpu": 54.3,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 2192,
+        "browsers": 3,
+        "browserLaunch": 1197,
+        "fixedWaits": 78900,
+        "fixedWaitCount": 411,
+        "worker": 9
+      }
+    },
+    {
+      "name": "playback",
+      "file": "verify-playback.mjs",
+      "code": 1,
+      "took": 89,
+      "began": "2026-11-23T07:48:22.827Z",
+      "verdict": "failed",
+      "timing": {
+        "wall": 89,
+        "cpu": 71.8,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 6203,
+            "ms": 174,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 308,
+        "browsers": 3,
+        "browserLaunch": 678,
+        "fixedWaits": 58800,
+        "fixedWaitCount": 147,
+        "worker": 3,
+        "look": "second"
+      },
+      "firstTiming": {
+        "wall": 172,
+        "cpu": 83.9,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 6703,
+            "ms": 730,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 1035,
+        "browsers": 3,
+        "browserLaunch": 2457,
+        "fixedWaits": 58800,
+        "fixedWaitCount": 147,
+        "worker": 8
+      },
+      "gist": "wrote docs/playback.json",
+      "missed": []
+    },
+    {
+      "name": "app-links",
+      "file": "verify-app-links.mjs",
+      "code": 0,
+      "took": 70,
+      "began": "2026-11-23T07:34:57.521Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 70,
+        "cpu": 55.1,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 479,
+        "browsers": 3,
+        "browserLaunch": 1202,
+        "fixedWaits": 11100,
+        "fixedWaitCount": 111,
+        "worker": 2
+      }
+    },
+    {
+      "name": "repeats",
+      "file": "verify-repeats.mjs",
+      "code": 0,
+      "took": 31,
+      "began": "2026-11-23T07:41:00.393Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 31,
+        "cpu": 16.2,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 2140,
+        "browsers": 3,
+        "browserLaunch": 2823,
+        "fixedWaits": 0,
+        "fixedWaitCount": 0,
+        "worker": 0
+      }
+    },
+    {
+      "name": "workflows",
+      "file": "verify-workflows.mjs",
+      "code": 0,
+      "took": 23,
+      "began": "2026-11-23T07:41:12.759Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 23,
+        "cpu": 10.1,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 2390,
+        "browsers": 3,
+        "browserLaunch": 1948,
+        "fixedWaits": 5400,
+        "fixedWaitCount": 6,
+        "worker": 7
+      }
+    },
+    {
+      "name": "field-types",
+      "file": "verify-field-types.mjs",
+      "code": 0,
+      "took": 50,
+      "began": "2026-11-23T07:39:30.196Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 50,
+        "cpu": 35.1,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 1506,
+        "browsers": 3,
+        "browserLaunch": 2268,
+        "fixedWaits": 1700,
+        "fixedWaitCount": 11,
+        "worker": 3
+      }
+    },
+    {
+      "name": "blank-facts",
+      "file": "verify-blank-facts.mjs",
+      "code": 0,
+      "took": 30,
+      "began": "2026-11-23T07:41:02.523Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 30,
+        "cpu": 13.8,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 2273,
+        "browsers": 3,
+        "browserLaunch": 2814,
+        "fixedWaits": 1500,
+        "fixedWaitCount": 3,
+        "worker": 9
+      }
+    },
+    {
+      "name": "facts",
+      "file": "verify-facts.mjs",
+      "code": 0,
+      "took": 270,
+      "began": "2026-11-23T07:20:35.485Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 270,
+        "cpu": 148.9,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 6703,
+            "ms": 609,
+            "borrowed": true
+          },
+          {
+            "name": "gauntlet",
+            "port": 6701,
+            "ms": 223,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 1371,
+        "browsers": 3,
+        "browserLaunch": 2956,
+        "fixedWaits": 16000,
+        "fixedWaitCount": 58,
+        "worker": 8
+      }
+    },
+    {
+      "name": "address.chromium",
+      "file": "verify-address.mjs",
+      "code": 0,
+      "took": 195,
+      "began": "2026-11-23T07:32:32.565Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 195,
+        "cpu": 78.4,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 784,
+        "browsers": 1,
+        "browserLaunch": 118,
+        "fixedWaits": 135160,
+        "fixedWaitCount": 284,
+        "worker": 0
+      }
+    },
+    {
+      "name": "address.webkit",
+      "file": "verify-address.mjs",
+      "code": 0,
+      "took": 234,
+      "began": "2026-11-23T07:31:42.945Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 234,
+        "cpu": 21.6,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 1931,
+        "browsers": 1,
+        "browserLaunch": 364,
+        "fixedWaits": 135160,
+        "fixedWaitCount": 284,
+        "worker": 8
+      }
+    },
+    {
+      "name": "address.firefox",
+      "file": "verify-address.mjs",
+      "code": 0,
+      "took": 208,
+      "began": "2026-11-23T07:42:15.825Z",
+      "verdict": "flaky",
+      "timing": {
+        "wall": 208,
+        "cpu": 171.7,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 647,
+        "browsers": 1,
+        "browserLaunch": 562,
+        "fixedWaits": 135160,
+        "fixedWaitCount": 284,
+        "worker": 1,
+        "look": "second"
+      },
+      "firstTiming": {
+        "wall": 406,
+        "cpu": 222.3,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 963,
+        "browsers": 1,
+        "browserLaunch": 1087,
+        "fixedWaits": 135160,
+        "fixedWaitCount": 284,
+        "worker": 6
+      },
+      "gist": "wrote docs/address.json",
+      "missed": [
+        "theOverviewsTabIsAStepBackUndoes",
+        "aCustomPageViewsHeadingIsSaidOnce"
+      ]
+    },
+    {
+      "name": "viewport",
+      "file": "verify-viewport.mjs",
+      "code": 0,
+      "took": 132,
+      "began": "2026-11-23T07:35:46.617Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 132,
+        "cpu": 22.6,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 6003,
+            "ms": 280,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 1306,
+        "browsers": 2,
+        "browserLaunch": 302,
+        "fixedWaits": 65700,
+        "fixedWaitCount": 73,
+        "worker": 1
+      }
+    },
+    {
+      "name": "drive-in",
+      "file": "verify-drive-in.mjs",
+      "code": 0,
+      "took": 86,
+      "began": "2026-11-23T07:37:15.761Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 86,
+        "cpu": 43.4,
+        "serverStartup": 708,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 6503,
+            "ms": 355,
+            "borrowed": true
+          },
+          {
+            "name": "discography",
+            "port": 6507,
+            "ms": 307,
+            "borrowed": true
+          },
+          {
+            "name": "rota",
+            "port": 6505,
+            "ms": 708,
+            "borrowed": false
+          }
+        ],
+        "beforeFirstBrowser": 2236,
+        "browsers": 3,
+        "browserLaunch": 638,
+        "fixedWaits": 37200,
+        "fixedWaitCount": 93,
+        "worker": 6
+      }
+    },
+    {
+      "name": "scene-hands.chromium",
+      "file": "verify-scene-hands.mjs",
+      "code": 0,
+      "took": 313,
+      "began": "2026-11-23T07:26:46.248Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 313,
+        "cpu": 134.5,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "discography",
+            "port": 6607,
+            "ms": 743,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 1192,
+        "browsers": 1,
+        "browserLaunch": 309,
+        "fixedWaits": 112180,
+        "fixedWaitCount": 230,
+        "worker": 7
+      }
+    },
+    {
+      "name": "scene-hands.webkit",
+      "file": "verify-scene-hands.mjs",
+      "code": 0,
+      "took": 372,
+      "began": "2026-11-23T07:20:33.976Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 372,
+        "cpu": 23.1,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "discography",
+            "port": 6607,
+            "ms": 332,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 776,
+        "browsers": 1,
+        "browserLaunch": 282,
+        "fixedWaits": 114868,
+        "fixedWaitCount": 302,
+        "worker": 7
+      }
+    },
+    {
+      "name": "one-face",
+      "file": "verify-one-face.mjs",
+      "code": 0,
+      "took": 717,
+      "began": "2026-11-23T07:20:34.147Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 717,
+        "cpu": 484.8,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 6103,
+            "ms": 268,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 1109,
+        "browsers": 1,
+        "browserLaunch": 155,
+        "fixedWaits": 194526,
+        "fixedWaitCount": 692,
+        "worker": 2
+      }
+    },
+    {
+      "name": "embed-one-face",
+      "file": "verify-embed-one-face.mjs",
+      "code": 0,
+      "took": 33,
+      "began": "2026-11-23T07:47:53.150Z",
+      "verdict": "flaky",
+      "timing": {
+        "wall": 33,
+        "cpu": 20.2,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 479,
+        "browsers": 1,
+        "browserLaunch": 117,
+        "fixedWaits": 13500,
+        "fixedWaitCount": 42,
+        "worker": 1,
+        "look": "second"
+      },
+      "firstTiming": {
+        "wall": 39,
+        "cpu": 23.9,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 1240,
+        "browsers": 1,
+        "browserLaunch": 229,
+        "fixedWaits": 13500,
+        "fixedWaitCount": 42,
+        "worker": 7
+      },
+      "gist": "ok   noPageThrew",
+      "missed": []
+    },
+    {
+      "name": "frame-lines",
+      "file": "verify-frame-lines.mjs",
+      "code": 0,
+      "took": 69,
+      "began": "2026-11-23T07:39:39.617Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 69,
+        "cpu": 38.8,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 1158,
+        "browsers": 1,
+        "browserLaunch": 353,
+        "fixedWaits": 30200,
+        "fixedWaitCount": 132,
+        "worker": 5
+      }
+    },
+    {
+      "name": "rehearsal",
+      "file": "rehearse-studio.mjs",
+      "code": 0,
+      "took": 39,
+      "began": "2026-11-23T07:39:38.819Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 39,
+        "cpu": 33.3,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 3805,
+        "browsers": 1,
+        "browserLaunch": 356,
+        "fixedWaits": 4200,
+        "fixedWaitCount": 4,
+        "worker": 11
+      }
+    },
+    {
+      "name": "remember",
+      "file": "verify-remember.mjs",
+      "code": 0,
+      "took": 53,
+      "began": "2026-11-23T07:40:18.091Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 53,
+        "cpu": 37.8,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 7103,
+            "ms": 436,
+            "borrowed": true
+          },
+          {
+            "name": "seedbed",
+            "port": 7104,
+            "ms": 405,
+            "borrowed": true
+          },
+          {
+            "name": "launcher",
+            "port": 7109,
+            "ms": 269,
+            "borrowed": true
+          },
+          {
+            "name": "todo",
+            "port": 7103,
+            "ms": 712,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 924,
+        "browsers": 1,
+        "browserLaunch": 420,
+        "fixedWaits": 27900,
+        "fixedWaitCount": 47,
+        "worker": 11
+      }
+    },
+    {
+      "name": "pages",
+      "file": "verify-pages.mjs",
+      "code": 0,
+      "took": 316,
+      "began": "2026-11-23T07:27:32.829Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 316,
+        "cpu": 255.2,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 6503,
+            "ms": 869,
+            "borrowed": true
+          },
+          {
+            "name": "seedbed",
+            "port": 6504,
+            "ms": 1127,
+            "borrowed": true
+          },
+          {
+            "name": "discography",
+            "port": 6507,
+            "ms": 444,
+            "borrowed": true
+          },
+          {
+            "name": "gauntlet",
+            "port": 6501,
+            "ms": 446,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 2041,
+        "browsers": 3,
+        "browserLaunch": 1796,
+        "fixedWaits": 57100,
+        "fixedWaitCount": 154,
+        "worker": 6
+      }
+    },
+    {
+      "name": "journeys",
+      "file": "verify-journeys.mjs",
+      "code": 0,
+      "took": 742,
+      "began": "2026-11-23T07:20:32.629Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 742,
+        "cpu": 2555.5,
+        "serverStartup": 7534,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 6003,
+            "ms": 1375,
+            "borrowed": false
+          },
+          {
+            "name": "seedbed",
+            "port": 6004,
+            "ms": 1688,
+            "borrowed": false
+          },
+          {
+            "name": "rota",
+            "port": 6005,
+            "ms": 1471,
+            "borrowed": false
+          },
+          {
+            "name": "discography",
+            "port": 6007,
+            "ms": 1947,
+            "borrowed": false
+          },
+          {
+            "name": "discography",
+            "port": 6007,
+            "ms": 781,
+            "borrowed": true
+          },
+          {
+            "name": "gauntlet",
+            "port": 6001,
+            "ms": 1053,
+            "borrowed": false
+          }
+        ],
+        "beforeFirstBrowser": 233,
+        "browsers": 49,
+        "browserLaunch": 22265,
+        "fixedWaits": 952480,
+        "fixedWaitCount": 3263,
+        "worker": 1
+      }
+    },
+    {
+      "name": "panning",
+      "file": "verify-panning.mjs",
+      "code": 0,
+      "took": 62,
+      "began": "2026-11-23T07:39:57.955Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 62,
+        "cpu": 74.1,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 5703,
+            "ms": 481,
+            "borrowed": true
+          },
+          {
+            "name": "rota",
+            "port": 5705,
+            "ms": 476,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 639,
+        "browsers": 1,
+        "browserLaunch": 162,
+        "fixedWaits": 23000,
+        "fixedWaitCount": 22,
+        "worker": 0
+      }
+    },
+    {
+      "name": "first-load",
+      "file": "verify-first-load.mjs",
+      "code": 0,
+      "took": 170,
+      "began": "2026-11-23T07:33:40.762Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 170,
+        "cpu": 115.6,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": null,
+        "browsers": 0,
+        "browserLaunch": 0,
+        "fixedWaits": 0,
+        "fixedWaitCount": 0,
+        "worker": 3
+      }
+    },
+    {
+      "name": "scale",
+      "file": "verify-scale.mjs",
+      "code": 0,
+      "took": 87,
+      "began": "2026-11-23T07:51:06.368Z",
+      "verdict": "flaky",
+      "timing": {
+        "wall": 87,
+        "cpu": 142.4,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 5436,
+        "browsers": 2,
+        "browserLaunch": 659,
+        "fixedWaits": 52556,
+        "fixedWaitCount": 252,
+        "worker": 0,
+        "look": "second"
+      },
+      "firstTiming": {
+        "wall": 91,
+        "cpu": 144.7,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 6938,
+        "browsers": 2,
+        "browserLaunch": 768,
+        "fixedWaits": 52556,
+        "fixedWaitCount": 252,
+        "worker": 3
+      },
+      "gist": "wrote docs/scale.json",
+      "missed": [
+        "aTransitionHolds60"
+      ]
+    },
+    {
+      "name": "scene-at-scale",
+      "file": "verify-scene-at-scale.mjs",
+      "code": 0,
+      "took": 28,
+      "began": "2026-11-23T07:41:47.576Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 28,
+        "cpu": 23.4,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 2462,
+        "browsers": 1,
+        "browserLaunch": 201,
+        "fixedWaits": 19820,
+        "fixedWaitCount": 136,
+        "worker": 10
+      }
+    },
+    {
+      "name": "renderer",
+      "file": "verify-renderer.mjs",
+      "code": 0,
+      "took": 89,
+      "began": "2026-11-23T07:38:01.286Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 89,
+        "cpu": 93,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 6203,
+            "ms": 194,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 66051,
+        "browsers": 2,
+        "browserLaunch": 2005,
+        "fixedWaits": 56000,
+        "fixedWaitCount": 53,
+        "worker": 3
+      }
+    },
+    {
+      "name": "survey",
+      "file": "survey-ui.mjs",
+      "code": 0,
+      "took": 130,
+      "began": "2026-11-23T07:35:42.975Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 130,
+        "cpu": 90.3,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 7103,
+            "ms": 271,
+            "borrowed": true
+          },
+          {
+            "name": "launcher",
+            "port": 7109,
+            "ms": 299,
+            "borrowed": true
+          },
+          {
+            "name": "seedbed",
+            "port": 7104,
+            "ms": 261,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 157,
+        "browsers": 1,
+        "browserLaunch": 207,
+        "fixedWaits": 88200,
+        "fixedWaitCount": 98,
+        "worker": 11
+      }
+    },
+    {
+      "name": "audit",
+      "file": "audit-ui.mjs",
+      "code": 0,
+      "took": 157,
+      "began": "2026-11-23T07:33:05.283Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 157,
+        "cpu": 101.1,
+        "serverStartup": 0,
+        "servers": [
+          {
+            "name": "todo",
+            "port": 7103,
+            "ms": 335,
+            "borrowed": true
+          },
+          {
+            "name": "rota",
+            "port": 7105,
+            "ms": 190,
+            "borrowed": true
+          },
+          {
+            "name": "seedbed",
+            "port": 7104,
+            "ms": 429,
+            "borrowed": true
+          }
+        ],
+        "beforeFirstBrowser": 198,
+        "browsers": 1,
+        "browserLaunch": 145,
+        "fixedWaits": 115250,
+        "fixedWaitCount": 126,
+        "worker": 11
+      }
+    },
+    {
+      "name": "create",
+      "file": "smoke-create.mjs",
+      "code": 0,
+      "took": 470,
+      "began": "2026-11-23T07:20:32.630Z",
+      "verdict": "held",
+      "timing": {
+        "wall": 470,
+        "cpu": 208.1,
+        "serverStartup": 0,
+        "servers": [],
+        "beforeFirstBrowser": 112735,
+        "browsers": 2,
+        "browserLaunch": 538,
+        "fixedWaits": 22500,
+        "fixedWaitCount": 48,
+        "worker": 3
+      }
     }
   ]
 }

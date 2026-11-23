@@ -4,6 +4,7 @@
  * of their own, so what says one kind of part — a coverage grid in words —
  * reads them without importing the describer that calls it.
  */
+import type { FileValue } from "../schema/files.js";
 
 /** One record in a list, as its card or row says it. */
 export interface DescribedItem {
@@ -18,8 +19,12 @@ export type DescribedPart =
   | { readonly t: "heading"; readonly level: number; readonly text: string }
   | { readonly t: "text"; readonly text: string; readonly tone?: string }
   | { readonly t: "badge"; readonly text: string }
-  /** `long`: prose, drawn the record's width with its lines kept (FR-147); `markdown`: written in Markdown, drawn as prose (FR-180). */
-  | { readonly t: "field"; readonly label: string; readonly text: string; readonly long?: true; readonly markdown?: true }
+  /**
+   * `long`: prose, drawn the record's width with its lines kept (FR-147); `markdown`: written in Markdown, drawn as prose (FR-180);
+   * `files`: the pictures, videos or documents the field holds (FR-162), where it holds any. `text` says them by name; a page that
+   * draws (`@graview/pages/static`) draws them from these, each `href` a path on the host as the record keeps it.
+   */
+  | { readonly t: "field"; readonly label: string; readonly text: string; readonly long?: true; readonly markdown?: true; readonly files?: readonly FileValue[] }
   | { readonly t: "figure"; readonly text: string; readonly label?: string }
   | { readonly t: "progress"; readonly label: string; readonly text: string }
   | {
@@ -134,7 +139,8 @@ export interface DescribedForm {
 
 /**
  * A VIDEO A WORKER VIEW PLACES (Roadmap f-video-hero), as a headless run
- * says it: which record's field it is, what the browser is handed, and
+ * says it: which record's field it is (or the app's reel, HQ
+ * f-view-names-app-video), what the browser is handed, and
  * whether it will play — so an agent that wrote a hero can confirm the
  * video plays without opening a browser. `playable` is a source a browser
  * plays (MP4, WebM or Ogg: what a host's upload transcodes to) with a
@@ -142,8 +148,11 @@ export interface DescribedForm {
  * what is missing when it is not.
  */
 export interface DescribedVideo {
-  readonly record: string;
-  readonly field: string;
+  /** The record whose field holds it, for `<graview-video data-record data-field>`; absent for the app's own video. */
+  readonly record?: string;
+  readonly field?: string;
+  /** The app's own video it names (`<graview-video data-app="reel">`, HQ f-view-names-app-video): `"reel"`. */
+  readonly app?: "reel";
   /** What it shows: its caption, else its name. */
   readonly text: string;
   readonly name: string;

@@ -1,6 +1,6 @@
 import type { ViewProblemSaid } from "./problems.js";
 import type { AnySchema, KindOfSchema, PagesArrangement, Principal, Store } from "@graview/core";
-import { DefaultDrawnElsewhere, HomeFallsBack, isDefaultView, markBleeds, markPreviews, markReplacesPage, useGoTo, useGraviewIfAny, useHostAssets, useHostFiles, useHostViewerState, usePlayback, ViewContentHeight, type GoTo, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
+import { DefaultDrawnElsewhere, HomeFallsBack, isDefaultView, markBleeds, markPreviews, markReplacesPage, useGoTo, useGraviewIfAny, useHostAssets, useHostFiles, useHostReel, useHostViewerState, usePlayback, ViewContentHeight, type GoTo, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { setViewPlace } from "@graview/react/drawing";
 import { useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ComponentType, type ReactNode } from "react";
 import type { GuestPlace } from "../protocol.js";
@@ -158,14 +158,16 @@ function WorkerViewMount({ definition: given, store, principal, input, goTo, pla
   /* Where the app's own images are served (Roadmap f-brand-marks-under-app-base): the definition's word, else the page's host's. */
   const hostAssets = useHostAssets();
   const viewerState = useHostViewerState();
+  /* The app's own video (HQ f-view-names-app-video): its facts pushed in the theme, played where the view places data-app="reel". */
+  const reel = useHostReel();
   /* Where the face that holds the view to a box hears how tall it drew (the Scene's preview): the host measures, the view never says. */
   const told = useContext(ViewContentHeight);
   // The logo a view is handed is fetched from the page's origin: a path under /graview/assets/ is fetched where the host serves it.
   const served = useMemo(() => brandUnder(brand, hostAssets), [brand, hostAssets]);
   /* The host's way in for a visitor (FR-183): drawn in the view's place where everything it reads is kept from the seat. */
   const signIn = useGraviewIfAny<AnySchema>()?.signIn;
-  const latest = useRef({ input, goTo, places, arrangement, onFailure, brand: served, hostFiles, hostAssets, viewerState, told, signIn });
-  latest.current = { input, goTo, places, arrangement, onFailure, brand: served, hostFiles, hostAssets, viewerState, told, signIn };
+  const latest = useRef({ input, goTo, places, arrangement, onFailure, brand: served, reel, hostFiles, hostAssets, viewerState, told, signIn });
+  latest.current = { input, goTo, places, arrangement, onFailure, brand: served, reel, hostFiles, hostAssets, viewerState, told, signIn };
   useEffect(() => {
     const element = holder.current;
     if (!element) return;
@@ -185,6 +187,7 @@ function WorkerViewMount({ definition: given, store, principal, input, goTo, pla
         places: () => latest.current.places?.() ?? [],
         arrangement: () => latest.current.arrangement?.(),
         brand: () => latest.current.brand,
+        reel: () => latest.current.reel,
         onFailure: (reason, detail) => latest.current.onFailure(reason, detail),
         ...(drawsItsOwn ? { fallback: false as const } : {}),
         ...(definition.limits ? { limits: definition.limits } : {}),
@@ -215,7 +218,9 @@ function WorkerViewMount({ definition: given, store, principal, input, goTo, pla
       mounted.current = null;
     };
   }, [definition, store, principal]);
-  useEffect(() => mounted.current?.update(), [scheme, served, tick]);
+  /* The reel by what it says, so a host that hands a new object each render with the same facts pushes nothing. */
+  const reelSaid = reel ? JSON.stringify(reel) : "";
+  useEffect(() => mounted.current?.update(), [scheme, served, reelSaid, tick]);
   /* Never wider than what holds it (Roadmap f-view-place-min-width): a grid item at its content's min-content width took a phone's page past its edge. */
   const place = <div ref={holder} data-worker-view-place={definition.manifest.name} style={{ minWidth: 0 }} />;
   if (!definition.draft) return place;

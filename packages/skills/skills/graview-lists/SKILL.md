@@ -86,8 +86,9 @@ own actor tidying are `graview-tidying`.
    grays (the host quantizes the picture to its panel), a long list on
    pages, with `taps` — each region's rectangle and what it does (`go`,
    `open`, `act`, `page`, `refresh`) — and a `renderId`; `resolveTap`
-   answers a tap with a place to render (never a URL), and runs an act
-   only while the screen still shows it. Say
+   answers a tap with a place to render (never a URL), or an act
+   (`{ act, args }`) the host applies as its seat, only while the
+   screen still shows it; `notice` says how it went on the next one. Say
    the strip along its foot with `devices: { screens: [{ place: "tasks",
    label: "Tasks" }] }`, at most 4, each word 12 characters at most;
    `graview check` says a place it lacks (`device-screen-place`).

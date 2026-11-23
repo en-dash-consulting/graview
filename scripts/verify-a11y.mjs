@@ -271,6 +271,8 @@ const hintNow = (page) =>
       find: '[data-testid="app-find"], [data-testid="app-find-open"]',
       profile: '[data-testid="profile-button"]',
       home: '[data-testid="app-home"]',
+      // The menu on a record (Roadmap f-jev-fast-polish): beside the first record drawn.
+      menu: "[data-graview-record], [data-graview-pick], [data-graview-view][tabindex]",
     }[anchor];
     const control = [...document.querySelectorAll(found)].find((one) => one.getBoundingClientRect().width > 1);
     const h = hint.getBoundingClientRect();

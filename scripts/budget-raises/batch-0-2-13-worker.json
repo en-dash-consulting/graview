@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 13840,
+  "note": "Raised when the 0.2.13 batch's branches were merged (a rename carrying the kept views that read it, a device drawn as its seat with its host applying what it taps, a view playing the app's reel, a static page drawing a record's pictures and a whole app as one file, and the Fast slot showing only what it is sure of): together they come to 13340 bytes over the budget, raised by 13840 for the spread a split build gzips to from build to build. Measured on CI at 2_852_357 against 2_839_017."
+}

@@ -1,8 +1,9 @@
 import { retryingImport } from "@graview/core/retry";
-import { lazyModule, useAiDeskState, useGraview, type MenuSectionSource, type MenuTarget } from "@graview/react/provider";
-import { inlineAiOn } from "@graview/tools/frame";
+import { lazyModule, useAiDeskState, useGraview, type MenuReadying, type MenuSectionSource, type MenuTarget } from "@graview/react/provider";
+import { inlineAiOn, prefetchesOnRest, suggestsOnOpen } from "@graview/tools/frame";
 import { MenuSections } from "@graview/react/drawing";
-import { Suspense, useMemo, type ComponentType, type ReactNode } from "react";
+import { Suspense, useMemo, type ComponentType, type CSSProperties, type ReactNode } from "react";
+import { useInlineEnvLater } from "./inline-ai-env.js";
 import type { InlineAiMenuProps } from "./inline-ai-menu.js";
 
 /**
@@ -37,6 +38,9 @@ export interface GhostDoorProps {
 export function useInlineAiSection(): MenuSectionSource | null {
   const { ai } = useGraview();
   const on = inlineAiOn(ai);
+  const ahead = prefetchesOnRest(ai);
+  const rows = suggestsOnOpen(ai) ? SUGGESTION_ROWS : 0;
+  const envLater = useInlineEnvLater();
   return useMemo<MenuSectionSource | null>(
     () =>
       on
@@ -44,15 +48,42 @@ export function useInlineAiSection(): MenuSectionSource | null {
             id: "inline-ai",
             heading: "AI",
             render: (close: () => void) => (
-              <Suspense fallback={null}>
+              // Its rows' room held while it is fetched: nothing under it moves as it arrives (Roadmap f-jev-fast-polish).
+              <Suspense fallback={<Reserved rows={rows} />}>
                 <Menu target={target} close={close} />
               </Suspense>
             ),
-            // Fetched while the pointer rests, so the section draws with the menu's first frame; nothing is asked of a model (FR-186).
-            prepare: () => menuModule.prefetch(),
+            /*
+             * Fetched while the pointer rests, so the section draws with the menu's first frame (FR-186). A model is
+             * asked from here only where the host let a rest ask ahead (`HostAi.prefetchOnRest`): what the section would
+             * suggest, once per record, so it is drawn with the section (Roadmap f-jev-fast-polish).
+             */
+            prepare: (why?: MenuReadying) => {
+              menuModule.prefetch();
+              if (why !== "rest" || !ahead) return;
+              const env = envLater();
+              if (env) void menuModule.load().then((module) => module.suggestAhead(env, target), () => undefined);
+            },
           })
         : null,
-    [on],
+    [on, ahead, rows, envLater],
+  );
+}
+
+/** How many suggestion rows the section holds as it opens, where it asks as it opens. */
+const SUGGESTION_ROWS = 3;
+const HELD: CSSProperties = { padding: "5px 10px", fontSize: "0.875rem", borderWidth: 1, borderStyle: "solid", borderColor: "transparent", visibility: "hidden" };
+
+/** The section's room while it is fetched: its suggestions' rows and the one to tell Graview, each a row's height, nothing in them. */
+function Reserved({ rows }: { readonly rows: number }) {
+  return (
+    <div data-testid="inline-ai-reserved" aria-hidden="true" style={{ display: "grid", gap: 2 }}>
+      {Array.from({ length: rows + 1 }, (_, at) => (
+        <div key={at} style={HELD}>
+          &nbsp;
+        </div>
+      ))}
+    </div>
   );
 }
 

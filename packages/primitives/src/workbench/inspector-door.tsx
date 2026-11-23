@@ -1,7 +1,7 @@
 import { retryingImport } from "@graview/core/retry";
 import type { AnySchema } from "@graview/core";
 import { useMenuPrepare } from "@graview/react/drawing";
-import { afterFirstDraw, firstDrawn, lazyModule, useGraview, useSelection, type MenuTarget } from "@graview/react/provider";
+import { afterFirstDraw, firstDrawn, lazyModule, useGraview, useSelection, type MenuReadying, type MenuTarget } from "@graview/react/provider";
 import { hoverChipsOn } from "@graview/tools/frame";
 import { Suspense, useEffect, useRef, useState } from "react";
 
@@ -73,6 +73,9 @@ function whenIdle(then: () => void): () => void {
 /** How long the pointer rests on a thing before its menu is got ready: a pass-over, across a list, readies nothing. */
 const MENU_DWELL_MS = 150;
 
+/** How long a finger is held on a thing before its menu is taken to be opening: well before the long press (500 ms) opens it. */
+const HOLD_OPENING_MS = 200;
+
 /** What a menu can be opened on: a record, a card, a row, a kind, an act, a value, a link. */
 const READIED = "[data-graview-pick], [data-graview-view], [data-graview-record], [data-graview-act], [data-graview-field], a[href]";
 
@@ -94,14 +97,23 @@ function sceneAim(element: Element): MenuTarget | null {
  * page's first load carries none of it; a pass-over readies nothing; and no
  * model is asked from here — save the one hover chip, where the host asked
  * for chips (`ai.hoverChips`) and the reader did not turn them off: the same
- * dwell tells it where the pointer rests (`hover-chips.tsx`).
+ * dwell tells it where the pointer rests (`hover-chips.tsx`), and the AI
+ * section's own ask, where the host let a rest ask ahead
+ * (`ai.prefetchOnRest`).
+ *
+ * THE MENU IS OPENING (Roadmap f-jev-fast-polish): a right-click's press, a
+ * finger held for `HOLD_OPENING_MS` on its way to a long press, and the
+ * contextmenu itself tell every section `"open"` before the menu draws, and
+ * read what worked here before (`prepareTold`), so the Suggested rows are
+ * whole in the menu's first frame and the Fast slot is asked once, as it
+ * opens.
  */
 function useMenuReady(aimAt: (element: Element) => MenuTarget | null): void {
   const { store, principal, providers, ai } = useGraview<AnySchema>();
   const prepareSections = useMenuPrepare();
   const chipsOn = hoverChipsOn(ai);
-  const latest = useRef({ aimAt, store, principal, providers, prepareSections, chipsOn });
-  latest.current = { aimAt, store, principal, providers, prepareSections, chipsOn };
+  const latest = useRef({ aimAt, store, principal, providers, prepareSections, chipsOn, ai });
+  latest.current = { aimAt, store, principal, providers, prepareSections, chipsOn, ai };
   useEffect(() => {
     if (typeof document === "undefined") return;
     let resting: { readonly element: Element; readonly timer: ReturnType<typeof setTimeout> } | null = null;
@@ -124,19 +136,39 @@ function useMenuReady(aimAt: (element: Element) => MenuTarget | null): void {
       if (resting) clearTimeout(resting.timer);
       resting = null;
     };
-    const ready = (element: Element) => {
+    /* The menu that is opening, readied for it once: a right-click's press and its contextmenu are one opening. */
+    let opening: string | null = null;
+    const ready = (element: Element, why: MenuReadying) => {
       const now = latest.current;
       const target = now.aimAt(element);
       if (!target) return;
       // Readied once until the graph moves: resting again on the same thing does nothing more.
       const key = JSON.stringify([target.face, target.on, target.about, target.field, target.place, target.act, now.store.log.length]);
-      if (key === readied) return;
-      readied = key;
-      now.prepareSections(target);
+      if (why === "open") {
+        // THE MENU IS OPENING (Roadmap f-jev-fast-polish): each section is told so at the press, before the menu draws, even where it was readied before.
+        if (key === opening) return;
+        opening = key;
+        readied = key;
+        now.prepareSections(target, "open");
+      } else {
+        if (key === readied) return;
+        readied = key;
+        now.prepareSections(target, why);
+      }
       void pane.load().then(
-        (module) => module.prepareActs(now.store, target, { principal: now.principal, providers: now.providers }),
+        (module) => {
+          module.prepareActs(now.store, target, { principal: now.principal, providers: now.providers });
+          // What worked before, read now: the menu's Suggested rows are whole in its first frame, and asked of the Fast slot once.
+          module.prepareTold(now.ai, now.store, now.principal);
+        },
         () => undefined,
       );
+    };
+    /* A finger held on a record: the menu is opening before the long press is done. */
+    let holding: ReturnType<typeof setTimeout> | null = null;
+    const letGo = () => {
+      if (holding !== null) clearTimeout(holding);
+      holding = null;
     };
     const at = (event: Event): Element | null => (event.target instanceof Element ? event.target.closest(READIED) : null);
     const over = (event: PointerEvent) => {
@@ -149,7 +181,7 @@ function useMenuReady(aimAt: (element: Element) => MenuTarget | null): void {
         element,
         timer: setTimeout(() => {
           resting = null;
-          ready(element);
+          ready(element, "rest");
           chipOn(element);
         }, MENU_DWELL_MS),
       };
@@ -165,25 +197,50 @@ function useMenuReady(aimAt: (element: Element) => MenuTarget | null): void {
       cancel();
     };
     const down = (event: PointerEvent) => {
-      if (event.pointerType === "mouse") return;
+      letGo();
+      // A new press is a new opening: the contextmenu after this one is the same, a later right-click another.
+      opening = null;
       const element = at(event);
-      if (element) ready(element);
+      if (!element) return;
+      // A right-click pressed: the menu opens with its release (or at once), and what it asks starts now.
+      if (event.pointerType === "mouse") {
+        if (event.button === 2) ready(element, "open");
+        return;
+      }
+      ready(element, "touch");
+      // Still held a moment on: a long press is on its way, and the menu with it.
+      holding = setTimeout(() => {
+        holding = null;
+        ready(element, "open");
+      }, HOLD_OPENING_MS);
+    };
+    const opened = (event: MouseEvent) => {
+      letGo();
+      const element = at(event);
+      if (element) ready(element, "open");
     };
     const focused = (event: FocusEvent) => {
       // The keyboard put on the page as it first draws is no person's reach: nothing is got ready for it (FR-194).
       if (!firstDrawn()) return;
       const element = at(event);
-      if (element) ready(element);
+      if (element) ready(element, "keyboard");
     };
     document.addEventListener("pointerover", over, { passive: true });
     document.addEventListener("pointerout", out, { passive: true });
     document.addEventListener("pointerdown", down, { capture: true, passive: true });
+    document.addEventListener("pointerup", letGo, { capture: true, passive: true });
+    document.addEventListener("pointercancel", letGo, { capture: true, passive: true });
+    document.addEventListener("contextmenu", opened, { capture: true, passive: true });
     document.addEventListener("focusin", focused);
     return () => {
       cancel();
+      letGo();
       document.removeEventListener("pointerover", over);
       document.removeEventListener("pointerout", out);
       document.removeEventListener("pointerdown", down, { capture: true });
+      document.removeEventListener("pointerup", letGo, { capture: true });
+      document.removeEventListener("pointercancel", letGo, { capture: true });
+      document.removeEventListener("contextmenu", opened, { capture: true });
       document.removeEventListener("focusin", focused);
     };
   }, []);

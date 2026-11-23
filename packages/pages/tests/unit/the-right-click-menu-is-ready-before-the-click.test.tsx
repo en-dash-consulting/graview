@@ -89,10 +89,6 @@ async function rendered(also: { ai?: HostAi; menuSections?: readonly MenuSection
 }
 
 const wait = (ms: number) => act(async () => new Promise((done) => setTimeout(done, ms)));
-/** Waits, a little at a time, for something to be true: a chunk fetched cold takes what it takes. */
-async function until(ready: () => boolean, turns = 60) {
-  for (let turn = 0; turn < turns && !ready(); turn += 1) await wait(50);
-}
 const pointer = (type: string, init: MouseEventInit = {}, pointerType = "mouse") => Object.assign(new MouseEvent(type, { bubbles: true, cancelable: true, ...init }), { pointerType, isPrimary: true });
 const row = (host: HTMLElement, id: string) => host.querySelector<HTMLElement>(`[data-graview-record="${id}"]`)!;
 /** The pointer comes to rest on an element, for `ms`. */
@@ -164,35 +160,27 @@ describe("the right-click menu is ready before the click", () => {
     expect(calls).toEqual({ fast: 0, thinking: 0 });
   });
 
-  it("a reopened menu makes no new AI call until the record changes, and draws what was suggested in its first frame", async () => {
+  it("a reopened menu draws what was suggested in its first frame, and asks no model for what all fits its rows", async () => {
+    // Each record here has two suggestions at most: shown as they are (Roadmap f-jev-fast-polish), so no menu asks the Fast slot.
     const { calls, fast } = counted();
     const { host, store } = await rendered({ ai: { fast } });
     rightClickFirstFrame(row(host, "deposit"));
-    await until(() => offers() > 0);
-    expect(calls.fast).toBe(1);
     const first = offers();
     expect(first).toBeGreaterThan(0);
+    expect(menu()!.querySelector('[data-testid="inline-ai-thinking"]')).toBeNull();
+    await wait(200);
+    expect(calls.fast).toBe(0);
     await close();
 
     rightClickFirstFrame(row(host, "deposit"));
     expect(offers()).toBe(first);
-    expect(menu()!.querySelector('[data-testid="inline-ai-thinking"]')).toBeNull();
-    await wait(200);
-    expect(calls.fast).toBe(1);
     await close();
 
-    // Another record is its own ask.
-    rightClickFirstFrame(row(host, "cake"));
-    await until(() => calls.fast >= 2);
-    await wait(100);
-    expect(calls.fast).toBe(2);
-    await close();
-
-    // The record changes: the next menu on it asks again.
+    // The record changes: what is suggested follows it, still asking nothing.
     await act(async () => void store.apply({ name: "finish", args: { taskId: "deposit" } }));
     rightClickFirstFrame(row(host, "deposit"));
-    await until(() => calls.fast >= 3);
-    await wait(100);
-    expect(calls.fast).toBe(3);
+    expect(offers()).toBeGreaterThan(0);
+    await wait(200);
+    expect(calls.fast).toBe(0);
   });
 });

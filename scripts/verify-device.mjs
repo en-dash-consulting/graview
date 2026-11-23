@@ -79,6 +79,9 @@ async function renderScreens() {
               screens.push({ app: one.name, what, place, page: screen.page, found: screen.found, html: screen.html, taps: screen.taps, renderId: screen.renderId });
             }
           }
+          // A record's screen with how a tap went said over its head: drawn, measured and judged as every other screen is.
+          const noticed = renderScreen(one.store, one.app, record.id, { profile: "eink", viewport: ${JSON.stringify(VIEWPORT)}, viewer: one.viewer, notice: "Marked done" });
+          screens.push({ app: one.name, what: "record with a notice", place: record.id, page: noticed.page, found: noticed.found, html: noticed.html, taps: noticed.taps, renderId: noticed.renderId });
         }
       `,
       resolveDir: repoRoot,
@@ -130,7 +133,7 @@ let browser;
 try {
   const screens = await renderScreens();
   browser = await launchEngine("chromium");
-  const seen = { fits: [], gray: [], ramp: [], regions: [], targets: [], settled: [], fetched: [], paged: [] };
+  const seen = { fits: [], gray: [], ramp: [], regions: [], targets: [], settled: [], fetched: [], paged: [], notice: [] };
   const errors = [];
   /*
    * WHAT A PAGE COMPUTES, against the ramp: every color, background and
@@ -181,8 +184,22 @@ try {
         outside: boxes.filter((box) => box.right > window.innerWidth + 0.5 || box.bottom > window.innerHeight + 0.5).length,
         taps,
         off: [...new Set(off)].slice(0, 10),
+        notice: (() => {
+          const band = document.querySelector(".gv-notice");
+          const title = document.querySelector(".gv-title")?.getBoundingClientRect();
+          if (!band) return null;
+          const box = band.getBoundingClientRect();
+          return { x: box.x, y: box.y, width: box.width, height: box.height, text: band.textContent, clearOfTitle: !title || title.top >= box.bottom - 0.5 };
+        })(),
       };
     }, RAMP);
+    if (screen.what === "record with a notice") {
+      // Said over the head, clear of the title, and every press where the same screen without it has it.
+      const plain = screens.find((one) => one.app === screen.app && one.what === "record" && one.page.index === screen.page.index);
+      const same = JSON.stringify(plain?.taps) === JSON.stringify(screen.taps);
+      const band = measured.notice;
+      seen.notice.push({ screen: name, band, samePresses: same, ok: same && !!band && band.text === "Marked done" && band.y === 0 && band.width === VIEWPORT.width && band.clearOfTitle });
+    }
     seen.fits.push({ screen: name, scrollWidth: measured.scrollWidth, scrollHeight: measured.scrollHeight, scrolled: measured.scrolled, outside: measured.outside, ok: measured.scrollWidth <= VIEWPORT.width && measured.scrollHeight <= VIEWPORT.height && measured.scrolled === 0 && measured.outside === 0 });
     seen.ramp.push({ screen: name, off: measured.off, ok: measured.off.length === 0 });
 
@@ -215,6 +232,7 @@ try {
   report.checks.everyPressIsAtLeast64PxEachWay = { held: seen.targets, ok: every(seen.targets) };
   report.checks.thePictureIsTheSameWithAndWithoutWaiting = { held: seen.settled, ok: every(seen.settled) };
   report.checks.thePageFetchesNothing = { held: seen.fetched, ok: every(seen.fetched) };
+  report.checks.aNoticeIsSaidOverTheHeadAndMovesNoPress = { held: seen.notice, ok: every(seen.notice) };
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
   report.passed = Object.values(report.checks).every((check) => check.ok);
 } catch (error) {

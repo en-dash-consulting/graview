@@ -123,7 +123,9 @@ pnpm install && pnpm build     # the framework; apps typecheck against dist/
 pnpm test                      # vitest, headless: no GPU, no browser
 pnpm typecheck                 # packages, apps, and every package's tests (tsconfig.tests.json)
 pnpm check                     # graview check against every app's declaration
-pnpm verify                    # every browser harness, 3 side by side then the timing ones alone (~10 min)
+pnpm verify                    # on main, a batch or CI: every browser harness; on any other branch: --changed
+pnpm verify --all              # every browser harness, wherever it runs: a pool a worker a core wide (up to sixteen), each worker on ports of its own
+pnpm verify --changed          # only the harnesses this branch's change can reach (docs/watch/coverage.json), and a smoke set; --dry-run says which and why
 pnpm verify <name> [<name>]    # only these harnesses (pnpm verify --list)
 pnpm verify --failed           # only what failed last time
 pnpm verify --quick            # fewer widths, schemes and seats where a harness sweeps them
@@ -159,7 +161,7 @@ outside 5190–5289 by setting `GRAVIEW_PORT_BASE` (5600 puts todo on 5603:
 every port moves to base + (port − 5190), through `scripts/lib/ports.mjs`,
 and no harness writes a port of its own; the apps' vite configs move
 with it, and the desk links to and probes the moved ports), and a harness only borrows a
-server whose process runs in its own checkout's app directory (`scripts/lib/serve.mjs`); when another directory's server holds one of its ports, `pnpm verify` moves the whole run onto a free hundred and says so, stopping nothing. Each writes its verdict to `docs/*.json` as named claims; when one
+server whose process runs in its own checkout's app directory (`scripts/lib/serve.mjs`); when another directory's server holds one of its ports, `pnpm verify` moves the whole run onto a free hundred and says so, stopping nothing. Within a chain, `pnpm verify` runs a pool of workers (`--jobs=N`, `GRAVIEW_VERIFY_JOBS`; a worker a core by default, up to sixteen, `--serial` for one): the first on the run's own block, each other on a free hundred from 6000 up, locked for the run (`scripts/lib/pool.mjs`), each keeping its own dev servers warm for the run; the seven that time frames or a time-to-live run beside the rest but never two at once, and the longest run in parts side by side (`scripts/lib/parts.mjs`: `quiet` an engine and a section a part, `address`, `drawn-once` and `scene-hands` an engine a part; `pnpm verify quiet.firefox-boxes` runs one). A run records each harness's wall time, CPU, server start-up, set-up before its first browser and fixed waits in its verdict (`timing`) and in `docs/watch/last-run.json`, slowest first, and what each read in `docs/watch/coverage.json`, which `--changed` reads (`scripts/lib/changed.mjs`). Each writes its verdict to `docs/*.json` as named claims; when one
 fails it names the claim that stopped being true. Every page every harness
 opens is also judged by the watch (`scripts/lib/watch.mjs`) — the keyboard
 never left on `<body>`, no declared id shown to a person, no act offered
@@ -203,7 +205,7 @@ pinned at 1.49.1 on purpose.
   entries listed there (core's `./document`, `./compiled`, `./retry`, `./check`, `./scene`, `./city`, `./provenance`, `./history`, `./past`, `./linked`, `./tidying`, `./catalog`, `./jobs`, `./devices`, `./workflows`, `./compose`, `./composer`, `./traits`, `./subscriptions`, `./friction`, `./learn`, `./told`, `./revisions`, `./head`, `./record-boxes`,
   `./figures`, `./blocks`, `./describe`, `./arrange`, `./shown`, `./csv`, `./navigate`, `./forms`, `./json-schema`, `./search`, `./words`, `./markdown`, `./field-sight`, `./publishing`, `./binding`, `./typing`, `./seat`, `./typed`, `./sync`, `./import`, `./snapshot`, `./conformance`, `./scaffold`,
   `./lines`, `./testing` and the `./document.schema.json` the build writes; layout's `./view`, `./sizes` and `./view-moves`; guest's `./host/frame`; react's `./provider` and `./drawing`;
-  tools' `./frame`, `./edit`, `./suggest`, `./derive`, `./go`, `./draft`, `./keep`, `./turn`, `./several`, `./inline-ai`, `./reshape` (a seat's words read as a change to the app) and `./tidy` (the app's own actor's judges and `dream`, on no page); embed's `./pages`, `./form` (a visitor's form alone) and `./first-draw` (what a face's first draw opens, for a host's build); pages' `./static` (a place as static HTML, no React), `./device` (a place on a fixed e-ink screen with what each region does, no React) and `./visitor-form`;
+  tools' `./frame`, `./edit`, `./suggest`, `./derive`, `./go`, `./draft`, `./keep`, `./turn`, `./several`, `./inline-ai`, `./reshape` (a seat's words read as a change to the app) and `./tidy` (the app's own actor's judges and `dream`, on no page); embed's `./pages`, `./form` (a visitor's form alone) and `./first-draw` (what a face's first draw opens, for a host's build); pages' `./static` (a place, or the whole app as one file, as static HTML, no React), `./device` (a place on a fixed e-ink screen with what each region does, no React) and `./visitor-form`;
   `./cli`, `./browser`, `./dev`, `./gpu`, `./sqlite` and the rest). `files` is an allowlist and
   `scripts/inspect-pack.mjs` asserts against the real tarball.
 - **Node 22.** Top-level await in the scaffolded app, and the engines field
@@ -296,7 +298,7 @@ License: Elastic License 2.0, at the root and in every tarball.
 | `packages/core/src/cli/` | `check`, `create`, `types`, `doctor`, `docs`, `describe`, `lens`, `figure` |
 | `packages/core/src/scaffold/` | What `graview create` writes; `project.ts` holds the manifest and the package lists |
 | `packages/skills/skills/*/SKILL.md` | The authoring skills a product installs |
-| `scripts/verify-all.mjs` | The harness chain, cheapest first |
+| `scripts/verify-all.mjs` | The harness chain: the pool (`lib/pool.mjs`), what each cost (`lib/timing.mjs`), what a change reaches (`lib/changed.mjs`, `lib/coverage.mjs`) |
 | `scripts/lib/tarballs.mjs` | Pack and pin the workspace as a stranger would receive it |
 | `docs/site/` | The docs site, rendered from the records of `apps/site/app.json` by `scripts/site-docs.mjs` (never edited by hand); `docs/site/chapters.js` is built from `apps/seedbed` |
 | `docs/walkthrough.md` | The stage-by-stage walk from `graview create` to a seamless app, with findings |

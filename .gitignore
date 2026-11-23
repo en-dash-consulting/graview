@@ -61,3 +61,7 @@ docs/first-look/
 
 # Each engine's own harness reports (scripts/verify-engines.mjs), uploaded by the Nightly's engines job, never committed.
 docs/engines/
+
+# A harness run in parts (scripts/lib/parts.mjs) writes a verdict and a watch report per part, merged into the whole by the chain: never committed.
+docs/*.part-*.json
+docs/watch/*.part-*.json

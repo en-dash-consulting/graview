@@ -147,7 +147,11 @@
  *   node scripts/verify-chrome-quiet.mjs [--engine=chromium|webkit|firefox] [--shots=<dir>] [--quick] [--notices] [--steady]
  *
  * `--notices` measures only the notices (FR-133) and the way back (FR-152, FR-153), for iterating on them;
- * `--steady` only the bar held still at every width.
+ * `--steady` only the bar held still at every width. `--rest` everything
+ * none of `--steady`, `--standing`, `--picks`, `--boxes` and `--notices`
+ * runs: the four screens, the workshop's list and what follows them. The
+ * chain runs each engine as those six parts side by side (lib/parts.mjs),
+ * and makes the verdict whole from them.
  */
 import { createServer } from "node:http";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -159,6 +163,7 @@ import { ENGINES, launchEngine } from "./lib/engine.mjs";
 import { graviewSources } from "./lib/graview-sources.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { vacant } from "./lib/serve.mjs";
+import { partPath } from "./lib/parts.mjs";
 import { closeAppMenu, faceShown, openAppMenu, toFace } from "./lib/bar.mjs";
 import { arrangeByKeyboard, endClearsTheFoot, FIRST_RECORD_WITHIN, listHead } from "./lib/arranging-line.mjs";
 
@@ -181,6 +186,8 @@ const ONLY_PICKS = process.argv.includes("--picks");
 const ONLY_STANDING = process.argv.includes("--standing");
 /** `--steady`: only the bar held still at every width (the row never flickers between two drawings). */
 const ONLY_STEADY = process.argv.includes("--steady");
+/** `--rest`: what no other `--<section>` flag runs, for the sections to run beside it as parts of their own. */
+const REST = process.argv.includes("--rest");
 /* The bar held still: a name as long as Cloud's, the widths swept up and back down, and how long each is watched once settled. */
 const STEADY_NAME = "En Dash Social Media Playbook";
 const STEADY_FROM = 900;
@@ -518,7 +525,7 @@ try {
        * name, on the scene with its thirty places and on Pages, swept from 900 to 2100 px and back down; at each width,
        * once settled, the bar is watched frame by frame. In the first scheme.
        */
-      if (scheme === SCHEMES[0] && (ONLY_STEADY || (!ONLY_NOTICES && !ONLY_BOXES && !ONLY_PICKS && !ONLY_STANDING))) {
+      if (scheme === SCHEMES[0] && !REST && (ONLY_STEADY || (!ONLY_NOTICES && !ONLY_BOXES && !ONLY_PICKS && !ONLY_STANDING))) {
         const up = [];
         for (let width = STEADY_FROM; width <= STEADY_TO; width += steadyStep(engine)) up.push(width);
         /* Back down between the widths the way up met, so a width is reached from either side. */
@@ -546,7 +553,7 @@ try {
        * ---- FR-144, FR-145: the places in the bar, on both faces, at whole pages and in boxes; the same after a resize;
        * every place in two presses, and on the scene a picture from the bar moves `in.view`.
        */
-      if (!ONLY_NOTICES && !ONLY_BOXES && !ONLY_PICKS) {
+      if (!REST && !ONLY_NOTICES && !ONLY_BOXES && !ONLY_PICKS) {
         const sizes = [...STANDING_PAGES.map((width) => ({ box: 0, viewport: width < 640 ? PHONE : { width, height: 800 } })), ...STANDING_BOXES.map((box) => ({ box, viewport: BOX_DESK }))];
         for (const face of ["pages", "graview"]) {
           const query = `doc=workshop&face=${face}&heading=1${face === "pages" ? `&path=${encodeURIComponent("/places/email-to-todd")}` : ""}`;
@@ -649,7 +656,7 @@ try {
       }
       if (ONLY_STANDING) continue;
 
-      if (scheme === SCHEMES[0] && !ONLY_NOTICES && !ONLY_BOXES) {
+      if (scheme === SCHEMES[0] && !REST && !ONLY_NOTICES && !ONLY_BOXES) {
         for (let trial = 0; trial < PICK_PAGES; trial++) {
           const { page, close } = await open("doc=vendors&face=graview", DESK);
           results.quickPicks.push({ engine, trial, first: true, ...(await pickAtOnce(page, "kind:vendor", "Vendors")) });
@@ -661,7 +668,7 @@ try {
       if (ONLY_PICKS) continue;
 
       /* ---- The bar fits its box: in boxes on a desk, and on whole pages, both faces, a long name and a short one */
-      if (!ONLY_NOTICES) {
+      if (!REST && !ONLY_NOTICES) {
         /* The workshop with thirty places, on a picture's page whose name is as long as a sentence. */
         const longPlace = "/places/what-the-room-said-about-the-budget-part-1";
         const sizes = [...BOXES.map((box) => ({ box, viewport: BOX_DESK })), ...BOX_PAGES.map((width) => ({ box: 0, viewport: width < 640 ? PHONE : { width, height: 800 } }))];
@@ -721,7 +728,7 @@ try {
       if (ONLY_BOXES) continue;
 
       /* ---- FR-133: notices float over the page and never move it */
-      for (const face of ["pages", "graview"]) {
+      for (const face of REST ? [] : ["pages", "graview"]) {
         for (const viewport of [PHONE, DESK]) {
           const { page, close } = await open(`doc=vendors&face=${face}`, viewport);
           results.notices.push({ engine, scheme, face, viewport: `${viewport.width}×${viewport.height}`, ...(await noticesFloat(page, face, engine, `${face}-${viewport.width}-${scheme}`)) });
@@ -729,7 +736,7 @@ try {
         }
       }
       /* ---- FR-152, FR-153: the way back leaves, on both faces, and the scene has one — on a desk, in the first scheme */
-      if (scheme === SCHEMES[0]) {
+      if (scheme === SCHEMES[0] && !REST) {
         for (const face of ["pages", "graview"]) {
           const { page, close } = await open(`doc=vendors&face=${face}`, DESK);
           results.wayBack.push({ engine, face, ...(await (face === "pages" ? theWayBackOnPages(page) : theWayBackOnTheScene(page))) });
@@ -1300,6 +1307,17 @@ try {
   };
   if (ONLY_STEADY) {
     for (const name of Object.keys(report.checks)) if (!name.startsWith("theBarHoldsStill") && !name.startsWith("theNameIsOnTwoLines")) delete report.checks[name];
+  }
+  /* The sweep is `--steady`'s alone: a section run by itself did not sweep, and holds nothing of it. */
+  if (ONLY_NOTICES || ONLY_BOXES || ONLY_PICKS) {
+    delete report.checks.theBarHoldsStillAtEveryWidthUpAndDown;
+    delete report.checks.theNameIsOnTwoLinesBesideStandingPlacesOnlyWhenOneLineIsWiderThanItsRoom;
+  }
+  /* What the sections run beside it hold, left to them. */
+  if (REST) {
+    for (const name of Object.keys(report.checks)) {
+      if (name in STANDING_CHECKS || name in BOX_CHECKS || /Notice|WayBack/.test(name) || name === "aPickMadeTheMomentTheListOpensGoesToItsPlace" || name.startsWith("theBarHoldsStill") || name.startsWith("theNameIsOnTwoLines")) delete report.checks[name];
+    }
   }
   if (ONLY_STANDING) {
     for (const name of Object.keys(report.checks)) if (!(name in STANDING_CHECKS)) delete report.checks[name];
@@ -2437,7 +2455,8 @@ async function skillRow(page) {
 }
 
 mkdirSync(resolve(repoRoot, "docs"), { recursive: true });
-writeFileSync(resolve(repoRoot, "docs/chrome-quiet.json"), `${JSON.stringify(report, null, 2)}\n`);
+// One engine of three, run as a part of the chain (lib/parts.mjs), writes beside the whole verdict, which the chain makes from the parts.
+writeFileSync(partPath(resolve(repoRoot, "docs/chrome-quiet.json")), `${JSON.stringify(report, null, 2)}\n`);
 for (const [name, check] of Object.entries(report.checks)) process.stdout.write(`${check.ok ? "ok  " : "FAIL"} ${name}\n`);
 if (report.error) process.stdout.write(`${report.error}\n`);
 process.stdout.write("wrote docs/chrome-quiet.json\n");

@@ -23,8 +23,17 @@
  * `deriveAffordances`'s, as every face's strip; the strip of screens is
  * `deviceScreensOf`'s. This module only lays that answer out in rows.
  *
+ * AS ITS SEAT, AND APPLYING NOTHING (f-display-framework-follow-ups). A
+ * screen is paired at a seat, often a reader's: it is drawn what that seat
+ * is served — its sight, and in an app that publishes the last publish — as
+ * the printed page is. A tap is resolved to what it would do; an act is
+ * answered, never applied, so the host applies it under its own seat and
+ * draws the next screen with a `notice` of how that went.
+ *
  * Runs in Node and a Worker: no DOM, no React, no global read at import.
  */
+// A reader of an app that publishes is drawn the last publish, as a printed page is (Roadmap f-publishing-lifecycle).
+import "@graview/core/publishing";
 import { humanizeField, isCurrent, labelOf, pluralOf, recordPath, sayingIn, violationsTouching, type AnySchema, type AppPlace, type GraviewApp, type Principal, type Store } from "@graview/core";
 import { describeNode } from "@graview/core/words";
 import { answerJob, jobsFor, jobsOf } from "@graview/core/jobs";
@@ -45,7 +54,11 @@ export interface DeviceViewport {
 export interface RenderScreenOptions {
   readonly profile: DeviceProfile;
   readonly viewport: DeviceViewport;
-  /** Who is looking: the screen holds only what this seat may see, and offers only what it may do. An anonymous person when unsaid. */
+  /**
+   * Who is looking — the seat the device is paired at: the screen holds only what this seat is served (its
+   * sight; in an app that publishes, a reader's last publish) and offers only what it may do. An anonymous
+   * person when unsaid.
+   */
   readonly viewer?: Principal;
   /** Which page of a place too long for one screen, from 0. Past the last is the last. */
   readonly page?: number;
@@ -57,6 +70,11 @@ export interface RenderScreenOptions {
   readonly today?: string;
   /** Put before every address a link on the screen names, as `renderPlace` does. */
   readonly base?: string;
+  /**
+   * A line said over the head of the screen, one line cut short: how the last tap went ("Marked done", a
+   * refusal's words). It covers the app's name and moves no press; empty or unsaid, nothing is drawn.
+   */
+  readonly notice?: string;
 }
 
 /** What pressing a region does: exactly one of these. */
@@ -126,6 +144,10 @@ const PAPER = "#ffffff";
 const HEIGHT = { head: 112, heading: 64, text: 56, field: 80, item: 104, link: 88, act: 96, pager: 80, strip: 112 } as const;
 /** The gutter at each side of a row's words. */
 const GUTTER = 24;
+/** The notice's band: over the app's name at the top of the head, clear of the title under it. */
+const NOTICE_HEIGHT = 44;
+/** The most of a notice a screen keeps: more than its one line shows at any viewport the profile lays out. */
+const MOST_NOTICE = 200;
 /** The most acts a record's screen offers: the ones the derivation puts first. */
 const MOST_ACTS = 3;
 /** The smallest screen the profile lays out: a strip, a page turn and one row under the head. */
@@ -156,6 +178,7 @@ body { font: 400 24px/1.25 "Helvetica Neue", Helvetica, Arial, sans-serif; -webk
 .gv-press { font-size: 22px; line-height: 109px; text-align: center; padding: 0 8px; border-top: 3px solid ${INK}; font-weight: 700; }
 .gv-press + .gv-press { border-left: 1px solid ${RULE}; }
 .gv-here { background: ${INK}; color: ${PAPER}; }
+.gv-notice { background: ${INK}; color: ${PAPER}; font-size: 24px; line-height: ${NOTICE_HEIGHT}px; font-weight: 700; }
 img, svg { filter: grayscale(1); }`;
 }
 
@@ -288,9 +311,14 @@ function listRows(rows: Rows, seen: Store<AnySchema>, d: PlaceDescription): void
  * it, that this seat may run, that change something, that ask nothing more
  * — every argument already bound, none a typed answer — that lose nothing a
  * person made, and that name only records this seat may see.
+ *
+ * Derived over what the seat is served (`seen`), so a press's words — a
+ * repair's label quoting a record — are said from the picture, never from a
+ * head a reader of an app that publishes is not shown; judged and rehearsed
+ * on the store, where the host applies it.
  */
-function screenActs<S extends AnySchema>(store: Store<S>, id: string, viewer: Principal): { label: string; act: string; args: Readonly<Record<string, unknown>> }[] {
-  const derived = deriveAffordances(store, [id], { principal: viewer, focus: id });
+function screenActs<S extends AnySchema>(store: Store<S>, seen: Store<AnySchema>, id: string, viewer: Principal): { label: string; act: string; args: Readonly<Record<string, unknown>> }[] {
+  const derived = deriveAffordances(seen, [id], { principal: viewer, focus: id });
   const out: { label: string; act: string; args: Readonly<Record<string, unknown>> }[] = [];
   for (const affordance of derived.affordances) {
     if (out.length >= MOST_ACTS) break;
@@ -298,7 +326,8 @@ function screenActs<S extends AnySchema>(store: Store<S>, id: string, viewer: Pr
     if (out.some((one) => one.act === affordance.mutation && JSON.stringify(one.args) === JSON.stringify(affordance.args))) continue;
     const call = { name: affordance.mutation, args: { ...affordance.args } };
     const named = Object.values(affordance.args).filter((value): value is string => typeof value === "string" && store.graph.getNode(value) !== undefined);
-    if (named.some((other) => !store.sees(viewer, other))) continue;
+    // Every record it names is one the screen could show: seen by the seat, and served to it.
+    if (named.some((other) => !store.sees(viewer, other) || seen.graph.getNode(other) === undefined)) continue;
     if (!store.permits(call, viewer).ok) continue;
     // Rehearsed as the seat: an act its own rule refuses, or one that changes nothing this seat can see, is not a press it could make.
     if (store.wouldDo([call], viewer)[0] !== "changes") continue;
@@ -318,7 +347,7 @@ function recordRows<S extends AnySchema>(rows: Rows, store: Store<S>, seen: Stor
   const said = definition?.describe && node ? describeNode(definition, node) : null;
   if (said && said !== d.place.title) rows.rows.push({ t: "text", text: said, quiet: true });
   for (const problem of violationsTouching(seen.violations(), [id])) rows.rows.push({ t: "text", text: `${problem.label} — ${problem.message}` });
-  for (const act of screenActs(store, id, viewer)) rows.rows.push({ t: "act", text: act.label, act: act.act, args: act.args });
+  for (const act of screenActs(store, seen, id, viewer)) rows.rows.push({ t: "act", text: act.label, act: act.act, args: act.args });
   if (d.parts.length > 0) {
     rows.rows.push({ t: "heading", text: "The facts" });
     rows.parts(d.parts);
@@ -481,6 +510,10 @@ function screenRendered<S extends AnySchema>(store: Store<S>, declaration: Gravi
   const taps: TapRegion[] = [];
   const body: string[] = [];
   body.push(at({ x: 0, y: 0, width, height: HEIGHT.head }, "gv-head", line("gv-app", content.appName) + `<h1 class="gv-line gv-title">${esc(content.title)}</h1>`));
+  // THE NOTICE: how the last tap went, over the app's name, pressing nothing.
+  // One line is all it shows; what is past the most it could show is not carried in the id either.
+  const notice = (options.notice ?? "").replace(/\s+/g, " ").trim().slice(0, MOST_NOTICE);
+  if (notice) body.push(`<div class="gv-at gv-notice" role="status" style="left:0px;top:0px;width:${width}px;height:${NOTICE_HEIGHT}px">${line("", notice)}</div>`);
   body.push(...drawRows(pages[index]!, HEIGHT.head, width, taps));
 
   // THE PAGE TURN, over the strip: back, where it is, on.
@@ -520,7 +553,7 @@ function screenRendered<S extends AnySchema>(store: Store<S>, declaration: Gravi
     `<body>\n<div class="gv-screen" style="width:${width}px;height:${height}px">\n${body.join("\n")}\n</div>\n</body>\n</html>\n`;
 
   const asked = typeof place === "string" ? place : place.address;
-  const params: ScreenParams = { place: asked, width, height, page: index, ...(options.today ? { today: options.today } : {}), ...(options.locale ? { locale: options.locale } : {}), ...(options.timeZone ? { timeZone: options.timeZone } : {}), ...(options.base ? { base: options.base } : {}) };
+  const params: ScreenParams = { place: asked, width, height, page: index, ...(options.today ? { today: options.today } : {}), ...(options.locale ? { locale: options.locale } : {}), ...(options.timeZone ? { timeZone: options.timeZone } : {}), ...(options.base ? { base: options.base } : {}), ...(notice ? { notice } : {}) };
   const renderId = `eink.${encodeParams(params)}.${hash(`${html}\u0000${JSON.stringify(taps)}`)}`;
   return { html, css, title: head, found: content.found, renderId, page: { index, count: pages.length }, taps };
 }
@@ -542,6 +575,7 @@ interface ScreenParams {
   readonly locale?: string;
   readonly timeZone?: string;
   readonly base?: string;
+  readonly notice?: string;
 }
 
 function encodeParams(params: ScreenParams): string {
@@ -582,14 +616,31 @@ function hash(text: string): string {
 /* -------------------------------------------------------------- the taps */
 
 /**
- * What a tap does now: a screen to draw, an act done, or a refusal in words —
- * each with the screen to draw next. `place` is a place to hand back to
- * `renderScreen` (an address such as `/tasks`, a record's address, or
+ * What a tap does now: a screen to draw, an act to apply, or a refusal in
+ * words — each with the screen to draw next. `place` is a place to hand back
+ * to `renderScreen` (an address such as `/tasks`, a record's address, or
  * `job:<name>`), never a URL to follow: it is not checked as one.
+ *
+ * AN ACT IS ANSWERED, NOT APPLIED: `act` and `args` are the call the host
+ * applies under its own seat (`store.apply({ name: act, args }, { author,
+ * via: "device", intent: label })`), `said` the words to put on the next
+ * screen as its `notice` once it is done, and a refusal from that apply is
+ * the host's to say there instead.
  */
 export type TapOutcome =
   | { readonly ok: true; readonly does: "go" | "open" | "page" | "refresh"; readonly place: string; readonly page: number }
-  | { readonly ok: true; readonly does: "act"; readonly said: string; readonly place: string; readonly page: number }
+  | {
+      readonly ok: true;
+      readonly does: "act";
+      readonly act: string;
+      readonly args: Readonly<Record<string, unknown>>;
+      /** The words on the press, which the act's op may carry as its intent. */
+      readonly label: string;
+      /** What to say once the host has applied it. */
+      readonly said: string;
+      readonly place: string;
+      readonly page: number;
+    }
   | { readonly ok: false; readonly refused: string; readonly place: string; readonly page: number };
 
 export interface ResolveTapOptions {
@@ -615,8 +666,9 @@ function sortedDeep(value: unknown): unknown {
  * is run only when the screen it was pressed on is the screen the app draws
  * now for this seat — the same `renderId` — and the act is on it, with the
  * same arguments; when what the screen shows has changed since, the act is
- * judged again as the seat now stands and refused in words, never run on a
- * state the picture did not show.
+ * judged again as the seat now stands and refused in words, never answered
+ * on a state the picture did not show. Nothing is applied here: an act that
+ * holds is answered as the call to apply, and the host applies it.
  */
 export function resolveTap<S extends AnySchema>(store: Store<S>, declaration: GraviewApp<S>, region: Pick<TapRegion, "label" | "does">, options: ResolveTapOptions): TapOutcome {
   const viewer: Principal = options.viewer ?? { kind: "human" };
@@ -644,6 +696,7 @@ export function resolveTap<S extends AnySchema>(store: Store<S>, declaration: Gr
       ...(params.locale ? { locale: params.locale } : {}),
       ...(params.timeZone ? { timeZone: params.timeZone } : {}),
       ...(params.base ? { base: params.base } : {}),
+      ...(typeof params.notice === "string" ? { notice: params.notice } : {}),
     });
   } catch {
     // A reading no screen could be drawn in — a time zone or a locale nobody has — is no screen this app drew.
@@ -674,11 +727,7 @@ export function resolveTap<S extends AnySchema>(store: Store<S>, declaration: Gr
         : `The app changed since this screen was drawn, so “${region.label}” was not done.`;
     return { ok: false, refused: `${why} The screen is drawn again; look, and tap it there if it still is.`, ...here };
   }
-  if (!shown) return { ok: false, refused: `“${region.label}” is not on this screen, so it was not done.`, ...here };
-  try {
-    store.apply({ name: act, args: { ...args } }, { author: viewer, via: "device", intent: region.label });
-  } catch (error) {
-    return { ok: false, refused: `“${region.label}” was not done: ${error instanceof Error ? error.message : String(error)}`, ...here };
-  }
-  return { ok: true, does: "act", said: `${region.label}: done.`, ...here };
+  if (!shown || !("act" in shown.does)) return { ok: false, refused: `“${region.label}” is not on this screen, so it was not done.`, ...here };
+  // The call as the screen drew it, not as the tap handed it in: the same, by `sameDoes`, and owned by nobody else.
+  return { ok: true, does: "act", act: shown.does.act, args: { ...shown.does.args }, label: shown.label, said: `${shown.label}: done.`, ...here };
 }

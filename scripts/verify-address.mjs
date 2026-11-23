@@ -97,6 +97,7 @@
  *   node scripts/verify-address.mjs [--engine=chromium|webkit|firefox]   (all three by default)
  */
 import { unfold } from "./lib/menu-more.mjs";
+import { partPath } from "./lib/parts.mjs";
 import { createServer } from "node:http";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -2076,7 +2077,8 @@ try {
 }
 
 mkdirSync(resolve(repoRoot, "docs"), { recursive: true });
-writeFileSync(resolve(repoRoot, "docs/address.json"), `${JSON.stringify(report, null, 2)}\n`);
+// One engine, run as a part of the chain (lib/parts.mjs), writes beside the whole verdict, which the chain makes from the parts.
+writeFileSync(partPath(resolve(repoRoot, "docs/address.json")), `${JSON.stringify(report, null, 2)}\n`);
 for (const [name, check] of Object.entries(report.checks)) process.stdout.write(`${check.ok ? "ok  " : "FAIL"} ${name}\n`);
 if (report.error) process.stdout.write(`${report.error}\n`);
 process.stdout.write("wrote docs/address.json\n");

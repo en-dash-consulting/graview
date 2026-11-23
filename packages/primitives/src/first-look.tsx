@@ -1,4 +1,5 @@
-import { POPOVER_STYLE, useTopLayer } from "@graview/react/provider";
+import { POPOVER_STYLE, useGraviewIfAny, useTopLayer } from "@graview/react/provider";
+import { hoverChipsOn, inlineAiOn, type HostAi } from "@graview/tools/frame";
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { FirstLookAnchor, FirstLookEnd, FirstLookHintsProps, FirstLookStep } from "./first-look-door.js";
 
@@ -21,6 +22,8 @@ const FOUND: Record<FirstLookAnchor, string> = {
   find: '[data-testid="app-find"], [data-testid="app-find-open"]',
   profile: '[data-testid="profile-button"]',
   home: '[data-testid="app-home"]',
+  // The menu has no control of its own: its hint stands by the first record drawn, a row on the pages or a card in the scene.
+  menu: "[data-graview-record], [data-graview-pick], [data-graview-view][tabindex]",
 };
 
 /**
@@ -46,7 +49,7 @@ export function firstLookAnchor(root: Element | null, anchor: FirstLookAnchor): 
 }
 
 /** The framework's own hints, in the words of the app they are drawn in. */
-function frameworkSteps(root: Element): FirstLookStep[] {
+function frameworkSteps(root: Element, ai: HostAi | undefined): FirstLookStep[] {
   const said = (selector: string, attribute: string, otherwise: string) => root.querySelector(selector)?.getAttribute(attribute)?.trim() || otherwise;
   const scene = said('[data-testid="app-menu-open"]', "data-scene", "Scene");
   const pages = said('[data-testid="app-menu-open"]', "data-pages", "Pages");
@@ -54,8 +57,23 @@ function frameworkSteps(root: Element): FirstLookStep[] {
     { anchor: "faces", title: `${scene} or ${pages}`, words: `One app, two ways to see it, in the app menu: ${scene} draws every record as one picture, ${pages} as lists and pages to read and change.` },
     { anchor: "problems", title: "Whether all is in order", words: "The dot is green while every rule holds. When one is broken the bell counts it, and says what is wrong and how to fix it." },
     { anchor: "activity", title: "Inbox", words: "What waits for you, what has happened here and who did it — each change with its way back — and what you asked." },
+    ...(inlineAiOn(ai) ? [menuStep(ai)] : []),
     { anchor: "ask", title: "Tell Graview", words: "Press ⌘K (Ctrl+K) to tell Graview what to do about what you have selected, or right-click it and type. The answer stands beside it, and a change it proposes waits for you to accept it." },
   ];
+}
+
+/**
+ * THE MENU ON A RECORD, WHERE THE HOST GAVE THE APP AI (Roadmap
+ * f-jev-fast-polish): the quick AI is met there — a right-click, or a long
+ * press on a touch screen — and, where the host offers it, in the quiet chip
+ * beside a record the pointer rests on. Said for the hand this screen has.
+ */
+function menuStep(ai: HostAi | undefined): FirstLookStep {
+  const touch = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
+  const chip = hoverChipsOn(ai) && !touch ? " Rest the pointer on one, and when the AI is sure of something worth doing there, it stands beside it as a quiet suggestion." : "";
+  return touch
+    ? { anchor: "menu", title: "Press and hold a record", words: "Press and hold any record for what you can do with it, with the AI's suggestions first." }
+    : { anchor: "menu", title: "Right-click a record", words: `Right-click any record — or press and hold it on a touch screen — for what you can do with it, with the AI's suggestions first.${chip}` };
 }
 
 /** How long the page is left to settle before the first hint, and the longest it is waited for. */
@@ -63,12 +81,16 @@ const QUIET_MS = 300;
 const SETTLE_MS = 1200;
 const GIVE_UP_MS = 15000;
 
-export function FirstLookHints({ root, steps, onEnd }: FirstLookHintsProps) {
+export function FirstLookHints({ root, steps, onEnd, ai }: FirstLookHintsProps) {
   const [run, setRun] = useState<{ readonly list: readonly FirstLookStep[]; readonly at: number } | null>(null);
   const returnTo = useRef<Element | null>(null);
   const ended = useRef(false);
   const told = useRef(onEnd);
   told.current = onEnd;
+  // The host's AI, as the app draws: the menu's hint is shown only where there is AI to meet in it.
+  const given = useGraviewIfAny();
+  const aiHere = useRef(ai ?? given?.ai);
+  aiHere.current = ai ?? given?.ai;
 
   /*
    * WAITING FOR THE APP TO DRAW: its bar, then a moment with nothing new
@@ -88,14 +110,16 @@ export function FirstLookHints({ root, steps, onEnd }: FirstLookHintsProps) {
       if (at?.querySelector('[data-testid="app-bar"]')) {
         barSeen ??= now;
         if (now - quiet >= QUIET_MS || now - barSeen >= SETTLE_MS) {
-          const list = [...frameworkSteps(at), ...steps].filter((step) => firstLookAnchor(at, step.anchor) !== null);
-          if (list.length === 0) {
+          // The records may still be arriving as the bar settles (a scene's picture is drawn after it): the menu's hint waits for its turn, and is skipped then if none is drawn.
+          const list = [...frameworkSteps(at, aiHere.current), ...steps].filter((step) => step.anchor === "menu" || firstLookAnchor(at, step.anchor) !== null);
+          const first = list.findIndex((step) => firstLookAnchor(at, step.anchor) !== null);
+          if (first < 0) {
             ended.current = true;
             told.current(null);
             return;
           }
           returnTo.current = document.activeElement;
-          setRun({ list, at: 0 });
+          setRun({ list, at: first });
           return;
         }
       } else if (now - begun >= GIVE_UP_MS) {

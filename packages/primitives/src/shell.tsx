@@ -1,5 +1,5 @@
-import { assetSrc, faviconHref, pagesTitle, sceneTitle, type AnySchema, type HostFiles, type ViewerState, type KeptViews, type ResolveApp } from "@graview/core";
-import { BesideTheMap, HostAssetsContext, HostMenuItems, HostFilesContext, HostViewerStateContext, KeptViewsProvider, PanFree, Scene, useGraview, useHostAssets, useNavigation, UrlSync, useTheKeyboardLandsSomewhere, type HostMenuItem, type Scheme, type SceneProps } from "@graview/react";
+import { assetSrc, faviconHref, pagesTitle, sceneTitle, type AnySchema, type AppVideo, type HostFiles, type ViewerState, type KeptViews, type ResolveApp } from "@graview/core";
+import { BesideTheMap, HostAssetsContext, HostMenuItems, HostFilesContext, HostReelContext, HostViewerStateContext, KeptViewsProvider, PanFree, Scene, useGraview, useHostAssets, useNavigation, UrlSync, useTheKeyboardLandsSomewhere, type HostMenuItem, type Scheme, type SceneProps } from "@graview/react";
 import type { ToolCall } from "@graview/tools";
 import { useCallback, useMemo, useState, type ReactNode, useRef } from "react";
 import { withOverview } from "@graview/layout/view";
@@ -134,6 +134,8 @@ export interface ShellProps {
   readonly files?: HostFiles;
   /** Where what a worker view keeps for its viewer goes (`graview.mine`). Unsaid, for the visit. */
   readonly viewerState?: ViewerState;
+  /** The app's own video (HQ f-view-names-app-video), when the provider around the shell was not handed it: what `<graview-video data-app="reel">` plays. */
+  readonly reel?: AppVideo;
   /**
    * WHERE THE HOST SERVES THE APP'S OWN IMAGES (Roadmap
    * f-brand-marks-under-app-base), when the provider around the shell was
@@ -213,6 +215,7 @@ function ShellFace<S extends AnySchema>({
   notices,
   files,
   viewerState,
+  reel,
   assetsAt: ownAssetsAt,
   resolveApp,
   firstLook,
@@ -387,5 +390,6 @@ function ShellFace<S extends AnySchema>({
   const resolved = resolveApp ? <ResolveAppContext.Provider value={resolveApp}>{drawn}</ResolveAppContext.Provider> : drawn;
   const assetsHeld = ownAssetsAt ? <HostAssetsContext.Provider value={ownAssetsAt}>{resolved}</HostAssetsContext.Provider> : resolved;
   const filed = files ? <HostFilesContext.Provider value={files}>{assetsHeld}</HostFilesContext.Provider> : assetsHeld;
-  return viewerState ? <HostViewerStateContext.Provider value={viewerState}>{filed}</HostViewerStateContext.Provider> : filed;
+  const stateHeld = viewerState ? <HostViewerStateContext.Provider value={viewerState}>{filed}</HostViewerStateContext.Provider> : filed;
+  return reel ? <HostReelContext.Provider value={reel}>{stateHeld}</HostReelContext.Provider> : stateHeld;
 }

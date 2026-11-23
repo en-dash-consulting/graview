@@ -21,7 +21,10 @@ What is specific to Claude Code:
   for `/p/<id>/...`; that is a connection problem to fix, not a missing tool.
 - **Harnesses in a session.** They hold ports; run one chain at a time per
   checkout. Iterate with `pnpm verify <name>`, `--failed` and `--quick`;
-  the whole chain is for the end of a piece of work. A subagent runs the
+  on a branch `pnpm verify` runs only what the change reaches
+  (`--changed`, `--dry-run` to see which and why), and `--all` is the
+  whole chain, for the end of a piece of work. A chain's extra workers take
+  hundreds from 6000 up, so keep 6000–8999 free of anything else. A subagent runs the
   unit tests and `pnpm verify <name> --quick` locally, and every full
   harness with `pnpm verify:github <names>` (push the branch first): it
   runs on GitHub's runners, downloads the verdicts into `docs/` and

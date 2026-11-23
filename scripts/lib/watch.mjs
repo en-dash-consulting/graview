@@ -54,6 +54,9 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { basename, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { recordUrl } from "./coverage.mjs";
+import { namedPorts } from "./ports.mjs";
+import { noteWait } from "./timing.mjs";
 import { acknowledgedBy } from "./watch-acknowledged.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
@@ -61,9 +64,13 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 /** The harness this process is: its script's name. */
 export const harnessName = () => basename(process.argv[1] ?? "harness").replace(/\.mjs$/, "");
 
-/** Where a harness's watch report is written, per engine. */
-export const watchFile = (script, engine = "chromium") =>
-  resolve(repoRoot, "docs/watch", `${script}${engine === "chromium" ? "" : `.${engine}`}.json`);
+/**
+ * Where a harness's watch report is written, per engine, and per part when
+ * the chain runs it in parts (GRAVIEW_PART, lib/parts.mjs): six parts of one
+ * engine side by side would otherwise each write over the others' report.
+ */
+export const watchFile = (script, engine = "chromium", part = process.env["GRAVIEW_PART"] ?? "") =>
+  resolve(repoRoot, "docs/watch", `${script}${engine === "chromium" ? "" : `.${engine}`}${part ? `.part-${part}` : ""}.json`);
 
 /* ------------------------------------------------------------------ */
 /* What the watch learns from a store. Plain functions with no closure */
@@ -889,6 +896,17 @@ const writeReport = () => {
   }
 };
 
+/** The app a dev server on this port serves, by its directory, or null: what a page's `/src/…` is relative to. */
+let appRoots = null;
+const appRootOf = (url) => {
+  try {
+    appRoots ??= new Map(namedPorts().filter((one) => one.app).map((one) => [one.port, one.app]));
+    return appRoots.get(Number(new URL(url).port)) ?? null;
+  } catch {
+    return null;
+  }
+};
+
 /**
  * A browser whose every context and page is watched. Used by launchEngine
  * and launchCanaryGpu, so no harness has to ask.
@@ -923,6 +941,19 @@ export function watched(browser, engine) {
     const slow = Number(process.env["GRAVIEW_SLOW"] ?? 0);
     if (slow > 1 && engineSeen === "chromium") {
       page.context().newCDPSession(page).then((cdp) => cdp.send("Emulation.setCPUThrottlingRate", { rate: slow })).catch(() => {});
+    }
+    /*
+     * WHAT THE PAGE ASKED FOR, for `pnpm verify --changed` (coverage.mjs):
+     * each module a dev server served it, resolved against that server's app.
+     * And each fixed wait it sat through, for the run's record (timing.mjs).
+     */
+    if (process.env["GRAVIEW_COVERAGE_FILE"]) page.on("request", (request) => recordUrl(request.url(), { appRoot: appRootOf(request.url()) }));
+    if (process.env["GRAVIEW_TIMING_FILE"] && typeof page.waitForTimeout === "function") {
+      const wait = page.waitForTimeout.bind(page);
+      page.waitForTimeout = (ms) => {
+        noteWait(ms);
+        return wait(ms);
+      };
     }
     page.on("pageerror", (error) => record({ rule: "page-error", detail: String(error?.message ?? error).split("\n")[0].slice(0, 200), at: page.url().split("/").pop()?.slice(0, 160) ?? "" }));
   };
