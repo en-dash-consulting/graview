@@ -68,15 +68,27 @@ import { renderScreen, resolveTap, tapAt } from "@graview/pages/device";
 const screen = renderScreen(store, app, "/tasks", {
   profile: "eink",                        // the one profile there is
   viewport: { width: 758, height: 1024 }, // a Kindle Paperwhite 3, upright, in CSS pixels
-  viewer,
+  viewer,                                 // the seat the device is paired at: drawn what it is served
   page: 0,                                // a long place is on pages; `screen.page` says which of how many
 });
 // screen.html → the host's browser at 758 × 1024 → a PNG for the device.
 // Later, a tap at (x, y) on that picture:
 const region = tapAt(screen.taps, x, y);
 const next = region && resolveTap(store, app, region, { viewer, renderId: screen.renderId });
-// next: { ok: true, does: "go" | "open" | "page" | "refresh" | "act", place, page } or { ok: false, refused, place, page }
+// next: { ok: true, does: "go" | "open" | "page" | "refresh", place, page },
+//       { ok: true, does: "act", act, args, label, said, place, page } or { ok: false, refused, place, page }
 // `place` is a place to hand back to renderScreen, never a URL to follow.
+// An act is answered, never applied: the host applies it under its own seat, and says how it went.
+let notice = next && !next.ok ? next.refused : undefined;
+if (next?.ok && next.does === "act") {
+  try {
+    store.apply({ name: next.act, args: { ...next.args } }, { author: viewer, via: "device", intent: next.label });
+    notice = next.said;
+  } catch (error) {
+    notice = `“${next.label}” was not done: ${(error as Error).message}`;
+  }
+}
+const after = next && renderScreen(store, app, next.place, { profile: "eink", viewport: { width: 758, height: 1024 }, viewer, page: next.page, notice });
 ```
 
 - **A fixed layout, worked out here.** Every row has a height the profile
@@ -103,7 +115,18 @@ const next = region && resolveTap(store, app, region, { viewer, renderId: screen
   id is the same and the act is on it with the same arguments; when what
   the screen shows has changed, it judges the act again and refuses it in
   words. `place` in its answer is a place to hand back to `renderScreen`,
-  never a URL to follow.
+  never a URL to follow. An act that holds is answered as the call to
+  apply (`act`, `args`, the press's `label`, and `said` for once it is
+  done); `resolveTap` applies nothing, so the host applies it as the seat
+  it serves and owns what that apply refuses.
+- **As its seat.** A screen holds what `viewer` is served: the records and
+  fields its sight shows, and in an app that publishes, a reader's last
+  publish — so a device can be paired at a reader's seat, not the owner's.
+- **A notice.** `notice` is one line said over the head of the screen (how
+  the last tap went: "Marked done", a refusal's words), over the app's name.
+  It moves no press, and it is part of the picture and its `renderId`.
+  A reader's act lands on the head, as every reader's write does: the
+  screen it is served shows it with the next publish.
 - **The strip** along the foot is the app's `devices.screens` (at most 4,
   each word at most 12 characters as a reader counts them, a full-width one
   as two, `graview check` says one it cannot
