@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.2.12`](https://graview.dev/docs/releases.html#v0-2-12)
 - [`0.2.11`](https://graview.dev/docs/releases.html#v0-2-11)
 - [`0.2.10`](https://graview.dev/docs/releases.html#v0-2-10)
 - [`0.2.9`](https://graview.dev/docs/releases.html#v0-2-9)
@@ -88,9 +89,27 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
+## 0.2.12
+
+Published November 23, 2026 · the current version
+
+A map lens pins records where they are, a file is drawn by its first page, a workflow can publish, and a person moved carries every link they made.
+
+- **A map lens.** `map` pins a kind’s records by a place field’s point or a lat/lng pair, on a ground drawn inline with nothing fetched, each pin a named link that opens its record; records with no place yet are said, not dropped. The host finds a place’s point and keeps it beside the place as `<field>Geo`.
+- **A file is drawn by its first page.** A file value may carry a `preview` its host made; cards, rows, a record page and a view’s pictures draw a document by it, and a view that asks for pictures keeps each document’s `href`.
+- **A workflow step can publish an app’s drafts** (`{ "publish": "head" | "run" }`), under the same approval as any step; a dry run says what it would publish and the run says what it did.
+- **A person moved or merged carries every link they made as themselves**, older than the log too, and a profile’s own person can be merged.
+- **A record’s last change is said once** where a model reads many records (`changed: "3 days ago by Ann"`); `get_node` keeps all four. A backup says the person behind each seat it names, and a profile is named once.
+- **The edges of forms and views:** an empty choice of an optional record is no value; a view’s place says its acts on every path; `graview check` warns of an argument that names nothing; a document’s Download is an attachment; a view problem is known by its key; a template’s view that reads a relation without its far kind is refused.
+- **Faster:** the several bar judges a seat whose person is not made yet on one copy of the store, and a visitor’s form loads 40 KB less up front.
+
+**Before you upgrade:** Breaks: a template whose curated view reads a relation whose far kind it is never handed is now refused by `graview check`, as a proposed view already was; hand that kind in the view’s `reads.kinds`. A kind may no longer declare a field named `<place>Geo` beside a place field (`geo-clash`). `get_graph`’s records say `changed` in place of `createdAt`, `createdBy`, `updatedAt` and `updatedBy` (`get_node` keeps them). A view handed a document under `pictures` now also gets its `href` and the rest of its value. A call that sent `""` for an optional record argument is applied without it, where it was refused. Gains: the `map` lens and `<field>Geo` on a kind’s `edit-<kind>`; `preview` on a stored file value; the `publish` workflow step and `run.published`; an optional `archived` for `rebindPerson` and `mergePerson`; `seatPeople` on an export bundle; `changedOnce` on `@graview/core/words`; new findings `lens-no-coordinates`, `geo-clash`, `workflow-publish-live` and `act-arg-unread`. Stored formats only gain optional parts; the wire and derived tool names are unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.2.12) · [The full changelog for 0.2.12](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0212)
+
 ## 0.2.11
 
-Published November 22, 2026 · the current version
+Published November 22, 2026
 
 The one face keeps its moves whole on a slow machine, what a model is told of recent changes names each author as a person, and an add keeps only the record times its own op stamps.
 

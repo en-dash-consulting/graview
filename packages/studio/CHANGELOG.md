@@ -1,5 +1,31 @@
 # @graview/studio
 
+## 0.2.12
+
+### Patch Changes
+
+- 38a66ee: A map lens pins a kind's records where they are, HQ feature:f-map-lens. An app with nineteen field trips and a place field could only list them; `map` is now one of the shipped lenses, beside the calendar, the status board, the coverage, the timeline, the board, the plan and blocks. It is bound to a place field, `"bindings": { "trip": { "place": "where" } }`, or to two number fields, `{ "stop": { "lat": "latitude", "lng": "longitude" } }`, and bound to nothing it takes the kind's first place field. Nothing is fetched from anywhere: its ground is drawn in Web Mercator, fitted to the pins and widened to the picture's shape rather than stretched, with lines of latitude and longitude at a round step said in degrees. A React host that has tiles of its own hands them with `MapTilesContext` (`{ url, attribution }`, cut in Web Mercator), and they lie under the same pins. Each pin is a named link to its record, and a press or Enter opens it; pins that share a spot are set out around it with a line to their point, so none covers another. Its first bound kind takes Find, the filters chips and Export CSV, as a calendar's does, and records it has no point for are said under the map ("2 trips have no place yet"), never dropped, as `describe_place` says them to an agent. `graview check` warns that a map over a kind with no place field and no latitude and longitude cannot draw (`lens-no-coordinates`), as it warns of any lens that cannot, and `add-lens` refuses one in the same code, naming what it would take. Asking the inline AI for "a map" offers it.
+  
+  The geocoding is the host's. The framework never looks a place up: a host that finds a place's point keeps it on the record beside the place's words, under the field's name and `Geo` — `{ "where": "Kew Gardens", "whereGeo": { "lat": 51.4787, "lng": -0.2956 } }` — written through the kind's own edit act (`edit-trip` with `whereGeo`), which refuses a point out of range. No form asks a person for it, a worker view reads it on the record (`node.whereGeo.lat`), and a sight that hides or lists the place hides or lists its point with it, in a document and in a declaration in code alike. A declaration in code says `whereGeo: placeGeoField()` beside the place. `geoKey`, `isPlacePoint`, `validGeo` and `withPlacePoints` are on `@graview/core`, `geoOf` and `mapPointOf` on `@graview/core/describe`, and `createMapLens` and the projection on `@graview/primitives`. Held by unit tests of core (`a-map-lens-pins-a-kind-by-its-coordinates`), primitives (`a-map-pins-each-record-and-a-pin-opens-it`) the guest (`a-view-reads-the-point-a-host-found-for-a-place`) and the studio, which writes a place's point back as `placeGeoField()`, and by `verify-declared`'s `aMapPinsEachTripTheHostFoundAPointForAsANamedLink`, `aMapSaysTheTripsItHasNoPlaceFor`, `aMapLoadsNoTilesItWasNotHanded`, `noPinCoversAnotherEvenAtOneDoor` and `aPinOpensItsTripOnAPressAndOnEnter`, at a desk and a phone, over the new `field-trips` fixture. The `graview-shipped-lens` skill says how.
+  
+  Compatibility: the declaration — a new shipped lens, `map`; a document's place field keeps its point beside it as `<field>Geo`, and a kind may no longer declare a field of that name beside a place field (`geo-clash`). Check finding codes — `lens-no-coordinates` and `geo-clash` are new. Stored formats — a record may keep `<field>Geo: { lat, lng }` beside a place field; nothing stored changes. Derived tool names and input schemas — a kind with a place field's derived `edit-<kind>` also takes `<field>Geo`, a point. The JavaScript API is additive. Ops and primitives, and the wire — unchanged. What a host does: to put a place on the map, write its point with the kind's edit act once it has found it.
+- Updated dependencies [d4458d8]
+- Updated dependencies [38a66ee]
+- Updated dependencies [d790010]
+- Updated dependencies [b8d9cc1]
+- Updated dependencies [a46f7e9]
+- Updated dependencies [fae6bfc]
+- Updated dependencies [f541f61]
+- Updated dependencies [a46f7e9]
+- Updated dependencies [17512ec]
+  - @graview/core@0.2.12
+  - @graview/primitives@0.2.12
+  - @graview/tools@0.2.12
+  - @graview/ship@0.2.12
+  - @graview/layout@0.2.12
+  - @graview/pages@0.2.12
+  - @graview/react@0.2.12
+
 ## 0.2.11
 
 ### Patch Changes
