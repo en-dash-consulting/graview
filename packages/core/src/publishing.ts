@@ -112,8 +112,8 @@ export interface Drafts {
 
 /**
  * THE DRAFTS A PUBLISH THROUGH `through` WOULD PUBLISH: every change that
- * stands — a batch not undone — with an op from what stands published (or
- * the horizon) up to `through`, publish ops aside. What a publish says
+ * stands — a batch not undone — with an op that changed the app from what
+ * stands published (or the horizon) up to `through`. What a publish says
  * ("Publish 3 changes") and what a workflow's publish step says it
  * published (Roadmap f-workflow-step-publishes).
  */
@@ -124,7 +124,8 @@ export function draftsOf(log: Pick<OperationLog, "all" | "undoneIds" | "epochs" 
   let last: number | undefined;
   for (const one of log.batches()) {
     if (one.undone) continue;
-    const drafts = one.ops.filter((op) => op.seq >= was && op.seq < through && op.publishedThrough === undefined);
+    // What changed the app: a suggestion, a vote or a publish waiting beside the drafts changes no record.
+    const drafts = one.ops.filter((op) => op.seq >= was && op.seq < through && op.publishedThrough === undefined && op.primitives.length > 0);
     if (drafts.length === 0) continue;
     changes++;
     for (const op of drafts) {

@@ -38,20 +38,26 @@ export const runPublishStep: StepRunner<PublishStep> = {
     }
     const { changes, first, last } = drafts;
     const basis = `Publish ${changesSaid(changes)}, in “${context.workflow.title}”`.slice(0, 500);
-    // To the head: published as the head stands when it is kept, so a person's yes to it publishes the drafts as they then are.
-    const outcome = context.change({ calls: [{ name: PUBLISH, args: step.publish === "run" ? { through } : {} }], basis, confidence: 1 });
+    /*
+     * To the head: published as the head stands when it is kept. Asked, it
+     * is so under "run" too: a person's yes to the run's changes and the
+     * publish with them publishes them, and never takes back what somebody
+     * published while the question waited.
+     */
+    const fixed = step.publish === "run" && context.approve !== "ask";
+    const outcome = context.change({ calls: [{ name: PUBLISH, args: fixed ? { through } : {} }], basis, confidence: 1 });
     const range = seqsSaid(first, last);
+    const said = (ops: readonly { readonly publishedThrough?: number }[]) => ops.find((op) => op.publishedThrough !== undefined)?.publishedThrough ?? through;
     if (outcome.as === "previewed") {
-      context.published({ changes, from: first, to: last, through, as: "previewed" });
+      context.published({ changes, from: first, to: last, through: said(outcome.ops), as: "previewed" });
       const before = context.index > 0 ? ", and with them what the steps before it would change" : "";
       context.note(`It would publish ${changesSaid(changes)} (${range})${before}; nothing was published.`);
     } else if (outcome.as === "applied") {
-      const kept = outcome.ops.find((op) => op.publishedThrough !== undefined)?.publishedThrough ?? through;
-      context.published({ changes, from: first, to: last, through: kept, as: "published" });
+      context.published({ changes, from: first, to: last, through: said(outcome.ops), as: "published" });
       context.note(`Published ${changesSaid(changes)} (${range}): readers are served them now.`);
     } else if (outcome.as === "suggested") {
-      context.published({ changes, from: first, to: last, through, as: "suggested" });
-      context.note(`Asked a person to publish ${changesSaid(changes)} (${range}).`);
+      context.published({ changes, from: first, to: last, as: "suggested" });
+      context.note(`Asked a person to publish ${changesSaid(changes)} (${range}); a yes publishes the drafts as they stand then, including what is asked with it.`);
     }
   },
 };

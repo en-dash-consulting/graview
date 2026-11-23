@@ -323,7 +323,7 @@ export async function runWorkflow<S extends AnySchema>(options: RunWorkflowOptio
 
   notes.push(...farNotes(far));
   if (!outcome) {
-    const didSomething = made.size + changed.size + archived.size + suggested.length + far.filter((one) => one.as !== "refused").length + published.length > 0;
+    const didSomething = made.size + changed.size + archived.size + suggested.length + far.filter((one) => one.as !== "refused").length + published.filter((one) => one.as !== "suggested").length > 0;
     outcome = skipped || refused ? "partial" : didSomething ? "ok" : "nothing-new";
     if (outcome === "nothing-new") notes.push("Nothing new: everything it would do was done already.");
   }

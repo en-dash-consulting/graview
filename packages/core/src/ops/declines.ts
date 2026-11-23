@@ -1,6 +1,7 @@
 import { spellingOf } from "../mutations/act-spelling.js";
 import { derivedActOf } from "../mutations/derived-names.js";
 import type { MutationCall } from "../mutations/types.js";
+import { PUBLISH } from "../publish.js";
 import { undoneIn } from "./log.js";
 import { isStopOp, type ActMeanings, type Decline, type KeptDecline, type KeptStop } from "./tidying.js";
 import type { Operation } from "./types.js";
@@ -123,6 +124,9 @@ export function stoppedIn(ops: readonly Operation[], calls: readonly MutationCal
  *    it again;
  *  - a suggestion declined as a kind (`Lineage.stopsKind`), which declines
  *    the kind of each of its calls too (`suggestionKind`).
+ * A publish is never one: undoing it takes readers back, and declining an
+ * asked one says no to that publish, not to every later one (Roadmap
+ * f-workflow-step-publishes), so a workflow that publishes each morning goes on.
  * `kept` is what a checkpoint kept of the declines behind it
  * (`Epoch.declines`), read first; one whose op is undone in the log no
  * longer stands.
@@ -144,8 +148,8 @@ export function declinesIn(ops: readonly Operation[], meanings?: ActMeanings, ke
     const target = op.undoes !== undefined && live ? byId.get(op.undoes) : undefined;
     // A suggestion its own maker took back was withdrawn, not declined: nobody said no to it (`withdrawSuggestion`).
     if (target?.suggests && target.author.kind === op.author.kind && target.author.id === op.author.id) continue;
-    const taken = target?.mutation && target.undoes === undefined && (target.lineage || op.undoneLineage || person);
-    const calls = target?.suggests ? target.suggests.filter((_, at) => !took.get(target.id)?.includes(at)) : taken ? [target.mutation!] : [];
+    const taken = target?.mutation && target.undoes === undefined && target.publishedThrough === undefined && (target.lineage || op.undoneLineage || person);
+    const calls = target?.suggests ? target.suggests.filter((call, at) => call.name !== PUBLISH && !took.get(target.id)?.includes(at)) : taken ? [target.mutation!] : [];
     if (calls.length > 0) for (const asked of [calls, ...calls.map((call) => [call])]) declines.set(meaningKey(asked, meanings), op);
     if (target?.suggests && live && isStopOp(op, target)) for (const call of calls) declines.set(suggestionKind(call, meanings), op);
     // A link a person broke is declined; one a person made again is not.

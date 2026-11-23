@@ -1,5 +1,5 @@
-import { bindSchema, createSchema, defineApp, defineNode, Store, type AnySchema, type GraviewApp, type Principal, type Publishing } from "@graview/core";
-import { acceptSuggestion, suggestions } from "@graview/core/tidying";
+import { bindSchema, createSchema, defineApp, defineNode, PUBLISH, Store, type AnySchema, type GraviewApp, type Principal, type Publishing } from "@graview/core";
+import { acceptSuggestion, declineSuggestion, suggestions } from "@graview/core/tidying";
 import type { WorkflowDeclaration } from "@graview/core/workflows";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
@@ -50,7 +50,7 @@ describe("a workflow publishes the app's drafts", () => {
     expect(store.publishedSeq).toBeUndefined();
     expect(store.log.length).toBe(head);
     expect(readerSees(store)).toEqual([]);
-    expect(run.published).toEqual([{ step: 0, changes: 3, from: 0, to: 2, through: head, as: "previewed" }]);
+    expect(run.published).toEqual([{ step: 0, changes: 3, from: 0, to: 2, through: head + 1, as: "previewed" }]);
     expect(run.notes).toContain("It would publish 3 changes (seqs 0 to 2); nothing was published.");
   });
 
@@ -106,13 +106,52 @@ describe("a workflow publishes the app's drafts", () => {
     await runWorkflow({ app, store, workflow: "morning", log });
     const run = await runWorkflow({ app, store, workflow: "morning", log });
     expect(run.published).toEqual([expect.objectContaining({ changes: 3, as: "suggested" })]);
-    expect(run.notes).toContain("Asked a person to publish 3 changes (seqs 0 to 2).");
+    expect(run.notes).toContain("Asked a person to publish 3 changes (seqs 0 to 2); a yes publishes the drafts as they stand then, including what is asked with it.");
     expect(store.publishedSeq).toBeUndefined();
     const [waiting] = suggestions(store);
     expect(waiting?.id).toBe(run.suggested[0]);
     acceptSuggestion(store, waiting!.id, { author: editor });
     expect(store.publishedSeq).toBeDefined();
     expect(readerSees(store)).toEqual(["One", "Three", "Two"]);
+    expect(suggestions(store)).toEqual([]);
+  });
+
+  it("asked under \"run\", publishes what the person says yes to with it, never taking back what was published since", async () => {
+    const store = drafted();
+    const log = memoryWorkflowLog();
+    const app = appWith({ sync: { title: "Sync and publish", when: [{ byHand: true }], approve: "ask", steps: [{ act: "add-story", args: { label: "Synced" } }, { publish: "run" }] } as WorkflowDeclaration });
+    await runWorkflow({ app, store, workflow: "sync", log });
+    await runWorkflow({ app, store, workflow: "sync", log });
+    // Somebody publishes further before the yes.
+    store.apply({ name: "add-story", args: { label: "Late" } }, { author: editor });
+    store.apply({ name: PUBLISH, args: {} }, { author: editor });
+    const published = store.publishedSeq!;
+    acceptSuggestion(store, suggestions(store)[0]!.id, { author: editor });
+    expect(store.publishedSeq).toBeGreaterThan(published);
+    expect(readerSees(store)).toEqual(["Late", "One", "Synced", "Three", "Two"]);
+  });
+
+  it("publishes again after a person undid a publish or declined an asked one: neither is a no to every later publish", async () => {
+    const store = drafted();
+    store.undo(store.apply({ name: PUBLISH, args: {} }, { author: editor }).ops[0]!.batch, { author: editor });
+    expect(store.publishedSeq).toBeUndefined();
+    const log = memoryWorkflowLog();
+    const app = appWith({ morning: publishEach });
+    await runWorkflow({ app, store, workflow: "morning", log });
+    const run = await runWorkflow({ app, store, workflow: "morning", log });
+    expect(run.published?.[0]?.as).toBe("published");
+    expect(run.heldBack).toEqual([]);
+
+    const asking = appWith({ morning: { ...publishEach, approve: "ask" } as WorkflowDeclaration });
+    const other = drafted();
+    const asked = memoryWorkflowLog();
+    await runWorkflow({ app: asking, store: other, workflow: "morning", log: asked });
+    await runWorkflow({ app: asking, store: other, workflow: "morning", log: asked });
+    declineSuggestion(other, suggestions(other)[0]!.id, { author: editor });
+    other.apply({ name: "add-story", args: { label: "Four" } }, { author: editor });
+    const next = await runWorkflow({ app: asking, store: other, workflow: "morning", log: asked });
+    expect(next.published?.[0]).toMatchObject({ changes: 4, as: "suggested" });
+    expect(suggestions(other)).toHaveLength(1);
   });
 
   it("is skipped, in words, in an app that is live", async () => {

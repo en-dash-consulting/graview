@@ -115,8 +115,8 @@ export interface WorkflowPublished {
   /** The first and last seq among them. */
   readonly from: number;
   readonly to: number;
-  /** Readers are served every op before this seq once it stands. */
-  readonly through: number;
+  /** Readers are served every op before this seq once it stands; absent when suggested, where a person's yes decides it. */
+  readonly through?: number;
   /** Previewed (a dry run: nothing published), published, or suggested for a person to approve. */
   readonly as: "previewed" | "published" | "suggested";
 }
@@ -337,7 +337,7 @@ export interface StepContext<S extends AnySchema = AnySchema> {
   skipped(why: string): void;
   /** What this step published, or would publish, kept on the run's `published` and said in its notes. */
   published(what: Omit<WorkflowPublished, "step">): void;
-    /** What a model call of this step spent, counted on the run's `spent`. */
+  /** What a model call of this step spent, counted on the run's `spent`. */
   spent(usage: SpendSaid): void;
   /** Another app, reached through the host's `FarApps` as the run's actor — or why it cannot be, in words. Asked once a run for each app. */
   otherApp(address: string): Promise<FarApp | { readonly refused: string }>;

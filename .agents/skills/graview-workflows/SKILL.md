@@ -97,7 +97,8 @@ then a dry run, then the real one.
 5. **"Sync, then publish."** In an app that publishes (`"publishing":
    { "mode": "on-publish", … }`), end the steps with `{ "publish": "head" }`:
    every draft, as the step reaches it, under the same `approve`.
-   `"run"` publishes only through what the run read and made. The dry run
+   `"run"` publishes only through what the run read and made; asked, a
+   yes publishes the drafts as they stand then. The dry run
    says "It would publish 3 changes (seqs 0 to 2)", and `run.published`
    names the count and the seqs. In a live app it is `workflow-publish-live`.
 
