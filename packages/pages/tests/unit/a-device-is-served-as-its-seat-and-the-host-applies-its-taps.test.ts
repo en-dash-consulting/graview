@@ -1,6 +1,6 @@
 // A host that serves seats loads the field-sight judge where its store is (graview-sight).
 import "@graview/core/field-sight";
-import { createSchema, defineApp, defineMutation, defineNode, nodeRef, PUBLISH, Store, z, type Policy, type Principal } from "@graview/core";
+import { createSchema, defineApp, defineInvariant, defineMutation, defineNode, nodeRef, PUBLISH, Store, z, type Policy, type Principal } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { renderScreen, resolveTap } from "@graview/pages/device";
 import { coach, MUTATIONS as ROSTER_MUTATIONS, parent, policy as rosterPolicy, schema as rosterSchema, world } from "../../../core/tests/support/hidden-phones.js";
@@ -91,6 +91,25 @@ describe("a screen paired at a reader's seat", () => {
     const draft = (store.graph.nodesOfKind("post") as readonly { id: string }[]).find((one) => one.id !== id)!;
     const list = screen(store as never, "/posts", reader);
     expect(resolveTap(store, app, { label: "Party on Friday", does: { open: draft.id } }, { viewer: reader, renderId: list.renderId }).ok).toBe(false);
+  });
+  it("says no press in words worked out from a head the reader is not served", () => {
+    // A rule whose repair quotes the post's title: on a reader's screen it quotes the published one.
+    const unread = defineInvariant("a-post-is-read", {
+      scope: { kind: "post" },
+      evaluate: ({ subject }) => {
+        const one = subject as unknown as { id: string; label: string; read: boolean };
+        return one.read ? [] : [{ invariant: "a-post-is-read", label: "A post is read", message: `${one.label} is unread`, subjectId: one.id, nodeIds: [one.id], repairs: [{ mutation: "mark-read", args: { id: one.id }, label: `Read “${one.label}”` }] }];
+      },
+    });
+    const store = new Store({ schema, mutations, invariants: [unread] as never, policy, publishing: app.publishing! });
+    store.apply({ name: "write-post", args: { label: "Bins out on Tuesday" } }, { author: editor });
+    store.apply({ name: PUBLISH, args: {} }, { author: editor });
+    const id = (store.graph.nodesOfKind("post") as readonly { id: string }[])[0]!.id;
+    store.apply({ name: "retitle-post", args: { id, label: "Bins out on Wednesday" } }, { author: editor });
+    const withRule = defineApp({ name: "noticeboard", schema, mutations, invariants: [unread] as never, policy, publishing: app.publishing! });
+    const drawn = renderScreen(store as never, withRule as never, `/posts/${encodeURIComponent(id)}`, { profile: "eink", viewport: PW3, viewer: reader });
+    expect(drawn.html).not.toContain("Wednesday");
+    expect(drawn.taps.map((tap) => tap.label).join(" ")).not.toContain("Wednesday");
   });
 });
 

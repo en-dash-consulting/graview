@@ -146,6 +146,8 @@ const HEIGHT = { head: 112, heading: 64, text: 56, field: 80, item: 104, link: 8
 const GUTTER = 24;
 /** The notice's band: over the app's name at the top of the head, clear of the title under it. */
 const NOTICE_HEIGHT = 44;
+/** The most of a notice a screen keeps: more than its one line shows at any viewport the profile lays out. */
+const MOST_NOTICE = 200;
 /** The most acts a record's screen offers: the ones the derivation puts first. */
 const MOST_ACTS = 3;
 /** The smallest screen the profile lays out: a strip, a page turn and one row under the head. */
@@ -309,9 +311,14 @@ function listRows(rows: Rows, seen: Store<AnySchema>, d: PlaceDescription): void
  * it, that this seat may run, that change something, that ask nothing more
  * — every argument already bound, none a typed answer — that lose nothing a
  * person made, and that name only records this seat may see.
+ *
+ * Derived over what the seat is served (`seen`), so a press's words — a
+ * repair's label quoting a record — are said from the picture, never from a
+ * head a reader of an app that publishes is not shown; judged and rehearsed
+ * on the store, where the host applies it.
  */
-function screenActs<S extends AnySchema>(store: Store<S>, id: string, viewer: Principal): { label: string; act: string; args: Readonly<Record<string, unknown>> }[] {
-  const derived = deriveAffordances(store, [id], { principal: viewer, focus: id });
+function screenActs<S extends AnySchema>(store: Store<S>, seen: Store<AnySchema>, id: string, viewer: Principal): { label: string; act: string; args: Readonly<Record<string, unknown>> }[] {
+  const derived = deriveAffordances(seen, [id], { principal: viewer, focus: id });
   const out: { label: string; act: string; args: Readonly<Record<string, unknown>> }[] = [];
   for (const affordance of derived.affordances) {
     if (out.length >= MOST_ACTS) break;
@@ -319,7 +326,8 @@ function screenActs<S extends AnySchema>(store: Store<S>, id: string, viewer: Pr
     if (out.some((one) => one.act === affordance.mutation && JSON.stringify(one.args) === JSON.stringify(affordance.args))) continue;
     const call = { name: affordance.mutation, args: { ...affordance.args } };
     const named = Object.values(affordance.args).filter((value): value is string => typeof value === "string" && store.graph.getNode(value) !== undefined);
-    if (named.some((other) => !store.sees(viewer, other))) continue;
+    // Every record it names is one the screen could show: seen by the seat, and served to it.
+    if (named.some((other) => !store.sees(viewer, other) || seen.graph.getNode(other) === undefined)) continue;
     if (!store.permits(call, viewer).ok) continue;
     // Rehearsed as the seat: an act its own rule refuses, or one that changes nothing this seat can see, is not a press it could make.
     if (store.wouldDo([call], viewer)[0] !== "changes") continue;
@@ -339,7 +347,7 @@ function recordRows<S extends AnySchema>(rows: Rows, store: Store<S>, seen: Stor
   const said = definition?.describe && node ? describeNode(definition, node) : null;
   if (said && said !== d.place.title) rows.rows.push({ t: "text", text: said, quiet: true });
   for (const problem of violationsTouching(seen.violations(), [id])) rows.rows.push({ t: "text", text: `${problem.label} — ${problem.message}` });
-  for (const act of screenActs(store, id, viewer)) rows.rows.push({ t: "act", text: act.label, act: act.act, args: act.args });
+  for (const act of screenActs(store, seen, id, viewer)) rows.rows.push({ t: "act", text: act.label, act: act.act, args: act.args });
   if (d.parts.length > 0) {
     rows.rows.push({ t: "heading", text: "The facts" });
     rows.parts(d.parts);
@@ -503,7 +511,8 @@ function screenRendered<S extends AnySchema>(store: Store<S>, declaration: Gravi
   const body: string[] = [];
   body.push(at({ x: 0, y: 0, width, height: HEIGHT.head }, "gv-head", line("gv-app", content.appName) + `<h1 class="gv-line gv-title">${esc(content.title)}</h1>`));
   // THE NOTICE: how the last tap went, over the app's name, pressing nothing.
-  const notice = (options.notice ?? "").replace(/\s+/g, " ").trim();
+  // One line is all it shows; what is past the most it could show is not carried in the id either.
+  const notice = (options.notice ?? "").replace(/\s+/g, " ").trim().slice(0, MOST_NOTICE);
   if (notice) body.push(`<div class="gv-at gv-notice" role="status" style="left:0px;top:0px;width:${width}px;height:${NOTICE_HEIGHT}px">${line("", notice)}</div>`);
   body.push(...drawRows(pages[index]!, HEIGHT.head, width, taps));
 

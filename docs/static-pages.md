@@ -125,6 +125,8 @@ const after = next && renderScreen(store, app, next.place, { profile: "eink", vi
 - **A notice.** `notice` is one line said over the head of the screen (how
   the last tap went: "Marked done", a refusal's words), over the app's name.
   It moves no press, and it is part of the picture and its `renderId`.
+  A reader's act lands on the head, as every reader's write does: the
+  screen it is served shows it with the next publish.
 - **The strip** along the foot is the app's `devices.screens` (at most 4,
   each word at most 12 characters as a reader counts them, a full-width one
   as two, `graview check` says one it cannot
