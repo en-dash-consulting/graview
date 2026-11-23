@@ -125,12 +125,12 @@ export type EditOutcome =
        * feature:f-rename-carries-kept-views).
        */
       readonly views?: readonly HostView[];
-      /** Each of those views whose manifest the change carried, with what it read and what its source still names. */
+      /** Each of those views the change reaches: its manifest carried (`moved`), its source still naming an old key (`sourceNames`), or both. */
       readonly carried?: readonly CarriedView[];
     }
   | { readonly ok: false; readonly findings: readonly Finding[] };
 
-/** A kept view whose manifest a rename carried: what it read, what it reads now, and the old names its source still says. */
+/** A kept view a rename reaches: what its manifest read and reads now (none where only its source names an old key), and the old names its source still says. */
 export interface CarriedView {
   readonly name: string;
   readonly title?: string;
@@ -4193,8 +4193,9 @@ export function editDocument(document: GraviewDocument, edits: readonly unknown[
    */
   const views: HostView[] = [];
   const carried: CarriedView[] = [];
+  const declaring = (relation: string): string[] => Object.entries(editor.doc.kinds as Record<string, Doc>).flatMap(([kind, spec]) => (spec.edges?.[relation] ? [kind] : []));
   for (const view of options.views) {
-    const one = carryView(view, editor.moves);
+    const one = carryView(view, editor.moves, declaring);
     // A view renamed in the same change (`rename-view`) is handed back by the name the arrangement now says.
     const name = editor.viewNameNow(view.name);
     const manifest = name === view.name ? one.manifest : { ...one.manifest, name };
@@ -4203,7 +4204,7 @@ export function editDocument(document: GraviewDocument, edits: readonly unknown[
     const { source: _source, ...was } = view;
     carried.push({ name: view.name, ...(view.title !== undefined ? { title: view.title } : {}), was, manifest, moved: one.moved, sourceNames: one.sourceNames });
     const called = `The view "${view.title ?? view.name}"`;
-    if (one.moved.length > 0) editor.said.push(`${called} read ${listOf(one.moved.map((move) => move.from))}; its manifest now reads ${listOf(one.moved.map((move) => move.to))}.`);
+    if (one.moved.length > 0) editor.said.push(`${called} read ${listOf([...new Set(one.moved.map((move) => move.from))])}; its manifest now reads ${listOf([...new Set(one.moved.map((move) => move.to))])}.`);
     if (one.sourceNames.length > 0) editor.said.push(`${called}'s source still names ${listOf(one.sourceNames)}: change it there too, or the view reads nothing by ${one.sourceNames.length === 1 ? "that name" : "those names"}.`);
   }
   return { ok: true, document: editor.doc as GraviewDocument, said: editor.said, fills: editor.fills, views, carried };
@@ -4229,15 +4230,23 @@ function namedIn(source: string, name: string): boolean {
   return new RegExp(`(?<![\\w$-])${escaped}(?![\\w$-])`).test(source);
 }
 
+/** What a name is, so a kind, a field, a relation and an act of one spelling are never one name. */
+type NameSpace = "kind" | "edge" | "act" | `field:${string}`;
+
 /** Names followed through a change, each from what it was first called to what it is called last; a name moved and moved back is none. */
 class NetMoves {
-  private readonly now = new Map<string, string>();
-  move(from: string, to: string) {
-    const first = [...this.now].find(([, current]) => current === from)?.[0] ?? from;
-    this.now.set(first, to);
+  private readonly held: { readonly ns: NameSpace; readonly from: string; to: string }[] = [];
+  move(ns: NameSpace, from: string, to: string) {
+    const entry = this.held.find((one) => one.ns === ns && one.to === from);
+    if (entry) entry.to = to;
+    else this.held.push({ ns, from, to });
   }
-  pairs(): { from: string; to: string }[] {
-    return [...this.now].filter(([from, to]) => from !== to).map(([from, to]) => ({ from, to }));
+  /** What a name called `now` was first called, in this name space. */
+  firstOf(ns: NameSpace, now: string): string {
+    return this.held.find((one) => one.ns === ns && one.to === now)?.from ?? now;
+  }
+  pairs(keep: (one: { readonly ns: NameSpace; readonly from: string; readonly to: string }) => boolean = () => true): { from: string; to: string }[] {
+    return this.held.filter((one) => one.from !== one.to && keep(one)).map(({ from, to }) => ({ from, to }));
   }
 }
 
@@ -4247,21 +4256,27 @@ class NetMoves {
  * it go in, the pictures it chooses and the acts it may ask for. Its other
  * keys stay as the host wrote them; its source is left out of the manifest.
  * What it read is said net — a name moved and moved back is not moved — and
- * its source is read for every old name the change reaches it with: any
- * kind, relation or act, and a field of a kind it is handed, named in its
- * manifest or not, since most views read their fields only in their script.
+ * its source is read for each old name the change reaches it with: what its
+ * manifest named, a field of a kind it is handed, and a relation a kind it
+ * is handed declares (`declaring`, over the document as the change leaves
+ * it), named in its manifest or not, since most views read those only in
+ * their script. A name it is never handed is not its to change, whatever
+ * words its script says.
  */
-function carryView(view: HostView, moves: readonly Move[]): { manifest: HostView; moved: { from: string; to: string }[]; sourceNames: string[] } {
+function carryView(view: HostView, moves: readonly Move[], declaring: (relation: string) => readonly string[]): { manifest: HostView; moved: { from: string; to: string }[]; sourceNames: string[] } {
   const { source, ...rest } = view;
   const m: Doc = clone(rest);
   const read = new NetMoves();
   const reached = new NetMoves();
+  // Every kind's names through the change, the view's or not: a field is followed by the kind it was first a field of.
+  const kinds = new NetMoves();
   const swap = (list: readonly unknown[], from: string, to: string): unknown[] => list.map((x) => (x === from ? to : x));
   const handed = (): Set<string> => new Set([m.attach, ...(m.reads?.kinds ?? []), ...(m.accepts ?? []).map((accept: Doc) => accept.kind)]);
   for (const move of moves) {
     let hit = false;
+    let ns: NameSpace = move.t === "field" ? `field:${kinds.firstOf("kind", move.kind)}` : move.t;
     if (move.t === "kind") {
-      reached.move(move.from, move.to);
+      kinds.move("kind", move.from, move.to);
       if (m.attach === move.from) {
         m.attach = move.to;
         hit = true;
@@ -4284,7 +4299,7 @@ function carryView(view: HostView, moves: readonly Move[]): { manifest: HostView
       }
     } else if (move.t === "field") {
       const pictured = isObject(m.pictures) && move.kind in m.pictures && !pictureOption(move.kind, m.pictures[move.kind]);
-      if (handed().has(move.kind) || pictured) reached.move(move.from, move.to);
+      if (handed().has(move.kind) || pictured) reached.move(ns, move.from, move.to);
       for (const accept of m.accepts ?? [])
         if (accept.kind === move.kind && accept.field === move.from) {
           accept.field = move.to;
@@ -4301,29 +4316,32 @@ function carryView(view: HostView, moves: readonly Move[]): { manifest: HostView
         }
       }
     } else if (move.t === "edge") {
-      reached.move(move.from, move.to);
+      // Which kinds declare it is judged once the change is whole, by the name it ends with.
+      reached.move(ns, move.from, move.to);
       if (Array.isArray(m.reads?.edges) && m.reads.edges.includes(move.from)) {
         m.reads.edges = swap(m.reads.edges, move.from, move.to);
         hit = true;
       }
-    } else {
-      reached.move(move.from, move.to);
-      if (Array.isArray(m.acts))
-        m.acts = m.acts.map((act: unknown) => {
-          if (act === move.from) {
-            hit = true;
-            return move.to;
-          }
-          if (isObject(act) && act["act"] === move.from) {
-            hit = true;
-            return { ...act, act: move.to };
-          }
-          return act;
-        });
+    } else if (Array.isArray(m.acts)) {
+      ns = "act";
+      m.acts = m.acts.map((act: unknown) => {
+        if (act === move.from) {
+          hit = true;
+          return move.to;
+        }
+        if (isObject(act) && act["act"] === move.from) {
+          hit = true;
+          return { ...act, act: move.to };
+        }
+        return act;
+      });
     }
-    if (hit) read.move(move.from, move.to);
+    if (hit) read.move(ns, move.from, move.to);
   }
-  const sourceNames = typeof source === "string" ? [...new Set(reached.pairs().map((pair) => pair.from))].filter((from) => namedIn(source, from)) : [];
+  const kindsNow = handed();
+  const reaches = (one: { readonly ns: NameSpace; readonly to: string }) => one.ns !== "edge" || declaring(one.to).some((kind) => kindsNow.has(kind));
+  const names = [...read.pairs(), ...reached.pairs(reaches)].map((pair) => pair.from);
+  const sourceNames = typeof source === "string" ? [...new Set(names)].filter((from) => namedIn(source, from)) : [];
   return { manifest: m as HostView, moved: read.pairs(), sourceNames };
 }
 

@@ -182,4 +182,27 @@ describe("a rename and the kept views that read the renamed key", () => {
     if (!edited.ok) throw new Error(JSON.stringify(edited.findings));
     expect(edited.carried).toEqual([]);
   });
+
+  it("leaves out a view handed nothing the rename reaches, whatever words its script says", () => {
+    const signups: Kept = { name: "signups", attach: "site", cardinality: "many", source: "h('<p>No person signed up yet</p>')" };
+    const edited = editDocument(tracker(), [{ op: "rename-kind", kind: "person", to: "member" }], { views: [signups] });
+    if (!edited.ok) throw new Error(JSON.stringify(edited.findings));
+    expect(edited.carried).toEqual([]);
+  });
+
+  it("keeps a field of one kind apart from another kind's field it is renamed to", () => {
+    const doc = tracker();
+    (doc.kinds["site"]!.fields as Record<string, unknown>)["picture"] = { type: "image" };
+    const both: Kept = { name: "both", attach: "check", cardinality: "many", reads: { kinds: ["site"] }, source: "c.photo; s.picture" };
+    const edited = editDocument(
+      doc,
+      [
+        { op: "rename-field", kind: "check", field: "photo", to: "picture" },
+        { op: "rename-field", kind: "site", field: "picture", to: "image" },
+      ],
+      { views: [both] },
+    );
+    if (!edited.ok) throw new Error(JSON.stringify(edited.findings));
+    expect(edited.carried?.[0]?.sourceNames).toEqual(["photo", "picture"]);
+  });
 });
