@@ -110,7 +110,7 @@ export function mergeParts(parts) {
  * the run took only some of the parts and they are left for another to
  * merge (a shard on GitHub; verify-on-github.mjs merges them there).
  */
-export function writeMerged(repoRoot, name, { whole = false, since = 0 } = {}) {
+export function writeMerged(repoRoot, name, { whole = false, since = 0, only = null } = {}) {
   const spec = PARTS[name];
   if (!spec) return null;
   // A part file older than `since` is an earlier run's, and is no verdict of this one.
@@ -121,7 +121,8 @@ export function writeMerged(repoRoot, name, { whole = false, since = 0 } = {}) {
       return false;
     }
   };
-  const files = spec.parts.map(({ part }) => ({ part, path: resolve(repoRoot, partPath(spec.verdict, part)) }));
+  // `only`: the parts a run took by design (--quick takes one engine's), the verdict made from those alone.
+  const files = spec.parts.filter(({ part }) => !only || only.includes(part)).map(({ part }) => ({ part, path: resolve(repoRoot, partPath(spec.verdict, part)) }));
   if (!whole && !files.every((one) => fresh(one.path))) return null;
   const parts = files.map(({ part, path }) => {
     if (!fresh(path)) return { part, verdict: null };

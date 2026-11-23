@@ -572,7 +572,15 @@ const runOne = async (unit, worker, again = false) => {
         done({ code: code ?? 1, output, cpu: cpuOf(times) });
       };
       child.once("close", finish);
-      setTimeout(finish, 3_000).unref();
+      setTimeout(() => {
+        // Whatever it left holding its output is stopped with its group, so the worker's ports are free for the next.
+        try {
+          process.kill(-child.pid, "SIGKILL");
+        } catch {
+          // Gone.
+        }
+        finish();
+      }, 3_000).unref();
     });
   });
   const took = Math.round((Date.now() - began) / 1000);
@@ -661,7 +669,9 @@ for (const name of Object.keys(PARTS)) {
   const ran = results.filter((one) => one.harness === name);
   if (ran.length === 0) continue;
   const whole = PARTS[name].parts.every(({ part }) => units.includes(`${name}.${part}`));
-  const path = writeMerged(repoRoot, name, { whole, since: started });
+  // --quick took one engine's parts on purpose: its verdict is made from those, so docs/<name>.json says what this run held.
+  const byDesign = quick && !asked.some((one) => splitUnit(one).part);
+  const path = writeMerged(repoRoot, name, { whole: whole || byDesign, since: started, only: byDesign ? ran.map((one) => splitUnit(one.name).part) : null });
   if (path) stampVerdicts(repoRoot, [path], { wall: ran.reduce((sum, one) => sum + (one.timing?.wall ?? 0), 0), cpu: ran.reduce((sum, one) => sum + (one.timing?.cpu ?? 0), 0), parts: Object.fromEntries(ran.map((one) => [splitUnit(one.name).part, one.timing])) });
 }
 for (const servers of warm) for (const server of servers.values()) server?.stop();

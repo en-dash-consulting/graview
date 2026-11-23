@@ -124,6 +124,8 @@ export function selectHarnesses(changes, { chain, kept = readCoverage(), movedSi
   const readersOf = (file) => {
     const said = (kept.files[file] ?? []).map((index) => kept.harnesses[index]?.name).filter(Boolean);
     if (said.length > 0) return said;
+    // A test no harness runs reaches nobody; a module nobody read yet (main added it) stands for what of its home they read.
+    if (/(^|\/)tests?\/|\.test\.[a-z]+$/.test(file)) return [];
     const home = homeOf(file);
     return home ? kept.harnesses.filter((one) => [...files.get(one.name)].some((read) => read.startsWith(home))).map((one) => one.name) : [];
   };

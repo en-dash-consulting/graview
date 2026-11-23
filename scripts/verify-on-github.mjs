@@ -152,6 +152,7 @@ for (;;) {
 
 // THE VERDICTS, into docs/, each shard's summary read.
 const into = mkdtempSync(join(tmpdir(), "graview-verify-on-github-"));
+const downloaded = Date.now();
 const harnesses = [];
 try {
   try {
@@ -181,7 +182,8 @@ try {
   }
   // A harness run in parts on several runners, made whole here once every part came back (lib/parts.mjs).
   for (const name of Object.keys(PARTS)) {
-    const merged = writeMerged(repoRoot, name);
+    // Only part files this download brought: a local one from an earlier run is no part of this run.
+    const merged = writeMerged(repoRoot, name, { since: downloaded });
     if (merged) say(`merged ${merged} from its parts`);
   }
   say(`\nbrought ${brought.length} file${brought.length === 1 ? "" : "s"} into docs/ from ${view.headSha?.slice(0, 8) ?? run.headSha.slice(0, 8)}\n`);
