@@ -86,7 +86,6 @@ function sceneAim(pressed: Element): MenuTarget | null {
   // A card a worker view drew for a record, as its host judged it (`recordInView`).
   const viewed = pressed === element ? undefined : recordInView(pressed);
   if (viewed) return { face: "scene", on: viewed.id, about: [viewed.id] };
-  if (element.closest("[data-graview-face='pages'], [data-graview-popover]")) return null;
   const on = element.closest("[data-graview-pick]")?.getAttribute("data-graview-pick") ?? element.closest("[data-graview-view]")?.getAttribute("data-graview-view");
   return on ? { face: "scene", on, about: [on] } : null;
 }
@@ -216,6 +215,31 @@ function useMenuReady(aimAt: (element: Element) => MenuTarget | null): void {
       if (to instanceof Node && resting.element.contains(to)) return;
       cancel();
     };
+    /*
+     * FROM CARD TO CARD INSIDE A VIEW (Graview HQ
+     * feature:f-view-menu-suggests-under-pointer). Over and out between two
+     * elements of one shadow root never reach the document — both ends are
+     * the view's region there — so inside a view the pointer's moves say
+     * where it is: a new card under it rests anew, and the chip of the card
+     * it left goes.
+     */
+    let inView: Element | null = null;
+    const moved = (event: PointerEvent) => {
+      if (event.pointerType === "touch") return;
+      const inner = event.composedPath?.()[0];
+      if (!(inner instanceof Element) || inner === event.target || !(event.target instanceof Element) || event.target.shadowRoot === null) {
+        inView = null;
+        return;
+      }
+      const element = at(event);
+      if (element === inView) return;
+      inView = element;
+      if (chipped !== null && element !== chipped) {
+        chipped = null;
+        chips.current?.leaveRest();
+      }
+      over(event);
+    };
     const down = (event: PointerEvent) => {
       letGo();
       // A new press is a new opening: the contextmenu after this one is the same, a later right-click another.
@@ -246,6 +270,7 @@ function useMenuReady(aimAt: (element: Element) => MenuTarget | null): void {
       if (element) ready(element, "keyboard");
     };
     document.addEventListener("pointerover", over, { passive: true });
+    document.addEventListener("pointermove", moved, { passive: true });
     document.addEventListener("pointerout", out, { passive: true });
     document.addEventListener("pointerdown", down, { capture: true, passive: true });
     document.addEventListener("pointerup", letGo, { capture: true, passive: true });
@@ -256,6 +281,7 @@ function useMenuReady(aimAt: (element: Element) => MenuTarget | null): void {
       cancel();
       letGo();
       document.removeEventListener("pointerover", over);
+      document.removeEventListener("pointermove", moved);
       document.removeEventListener("pointerout", out);
       document.removeEventListener("pointerdown", down, { capture: true });
       document.removeEventListener("pointerup", letGo, { capture: true });

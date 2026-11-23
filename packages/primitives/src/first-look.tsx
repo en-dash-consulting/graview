@@ -205,14 +205,14 @@ export function FirstLookHints({ root, steps, onEnd, ai }: FirstLookHintsProps) 
   if (!run) return null;
   const step = run.list[run.at]!;
   const last = nextDrawn(run.list, run.at + 1) < 0;
-  /* "N of M" counts the hints shown: none skipped for want of its control, nor the menu's while no record is drawn (Graview HQ feature:f-menu-first-frames-follow-ups). */
+  /* "N of M" counts the hints shown: none skipped for want of its control, nor one still to come whose control is not drawn (the menu's, while no record is) (Graview HQ feature:f-menu-first-frames-follow-ups). */
   return (
     <Hint
       key={run.at}
       root={root}
       step={step}
       position={run.at + 1 - run.skipped}
-      total={run.list.length - run.skipped - run.list.slice(run.at + 1).filter((one) => one.anchor === "menu" && firstLookAnchor(root(), "menu") === null).length}
+      total={run.list.length - run.skipped - run.list.slice(run.at + 1).filter((one) => firstLookAnchor(root(), one.anchor) === null).length}
       last={last}
       onNext={next}
       onEnd={end}

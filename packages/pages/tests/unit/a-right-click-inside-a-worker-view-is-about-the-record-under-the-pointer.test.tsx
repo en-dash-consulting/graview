@@ -188,13 +188,22 @@ describe("the hover chip over a worker view", () => {
   const chips = () => document.querySelectorAll('[data-testid="hover-chip"]');
   const chipOn = (id: string) => chips().length === 1 && (chips()[0]!.getAttribute("data-ai-offer") ?? "").includes(id);
 
-  it("is about the record the pointer rests on, and moves with it from card to card", async () => {
+  /* Inside one shadow root a browser sends the document no over or out between two of its elements (both ends are the region there): only the moves. */
+  const move = (element: Element, x: number, y: number) => act(async () => void element.dispatchEvent(new PointerEvent("pointermove", { bubbles: true, composed: true, pointerType: "mouse", clientX: x, clientY: y } as PointerEventInit)));
+
+  it("is about the record the pointer rests on, and moves with it from card to card by the pointer's moves alone", async () => {
     const { shadow } = await rendered({ ai: { fast, hoverChips: true } });
+    // Into the view, onto the first card: the one over the document hears.
     await over(shadow.querySelector('[data-record="deposit"] h3')!, 40, 20);
     await until(() => chipOn("deposit"));
     expect(chipOn("deposit")).toBe(true);
-    await over(shadow.querySelector('[data-record="book"] h3')!, 40, 120);
+    // To the next card inside the view, by moves only.
+    await move(shadow.querySelector('[data-record="book"] h3')!, 40, 120);
     await until(() => chipOn("book"));
     expect(chipOn("book")).toBe(true);
+    // To the view's own ground: the chip goes.
+    await move(shadow.querySelector(".ground")!, 40, 75);
+    await until(() => chips().length === 0);
+    expect(chips().length).toBe(0);
   });
 });

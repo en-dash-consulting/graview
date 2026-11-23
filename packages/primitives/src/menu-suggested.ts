@@ -110,6 +110,8 @@ export type SuggestedAnswer = { readonly said: string; readonly order: readonly 
  */
 const ANSWERS = /* @__PURE__ */ new WeakMap<object, Map<string, SuggestedAnswer>>();
 const answered = (depends: object | undefined, said: string) => (depends ? ANSWERS.get(depends)?.get(said) : undefined);
+/** What an answer is kept under: the suggestions, and the question they were asked in — what the menu is on by name, and whether a part lends Better UI. */
+const keyOf = (asked: { readonly name: string; readonly better: boolean }, said: string) => `${asked.better ? "better" : "chat"}\u0002${asked.name}\u0002${said}`;
 
 /** The first order, before the Fast slot answers: a nudge first where there is one, then what worked before, then the acts. */
 function firstOrder(candidates: readonly MenuSuggestion[]): MenuSuggestion[] {
@@ -151,9 +153,10 @@ export function askSuggested(ai: HostAi | undefined, candidates: readonly MenuSu
    */
   if (!fast || candidates.length <= SUGGESTED_MOST) return undefined;
   const said = saidOf(candidates);
-  const kept = answered(asked.depends, said);
+  const keptAs = keyOf(asked, said);
+  const kept = answered(asked.depends, keptAs);
   if (kept) return Promise.resolve(kept);
-  const going = asked.depends ? ASKING.get(asked.depends)?.get(said) : undefined;
+  const going = asked.depends ? ASKING.get(asked.depends)?.get(keptAs) : undefined;
   if (going) return going;
   const keyed = new Map(candidates.map((one, at) => [`s${at + 1}`, one]));
   const questions: Record<string, unknown> = {
@@ -185,7 +188,7 @@ export function askSuggested(ai: HostAi | undefined, candidates: readonly MenuSu
       const one: SuggestedAnswer = { said, order, modes, chances, model: fast.model };
       if (asked.depends) {
         const answers = ANSWERS.get(asked.depends) ?? new Map<string, SuggestedAnswer>();
-        answers.set(said, one);
+        answers.set(keptAs, one);
         ANSWERS.set(asked.depends, answers);
       }
       return one;
@@ -194,9 +197,9 @@ export function askSuggested(ai: HostAi | undefined, candidates: readonly MenuSu
   if (asked.depends) {
     const depends = asked.depends;
     const calls = ASKING.get(depends) ?? new Map<string, Promise<SuggestedAnswer | null>>();
-    calls.set(said, asking);
+    calls.set(keptAs, asking);
     ASKING.set(depends, calls);
-    void asking.then(() => void ASKING.get(depends)?.delete(said));
+    void asking.then(() => void ASKING.get(depends)?.delete(keptAs));
   }
   return asking;
 }
@@ -210,9 +213,9 @@ export function useSuggested(ai: HostAi | undefined, candidates: readonly MenuSu
   const fast = fastOf(ai);
   const said = saidOf(candidates);
   const [fresh, setAnswer] = useState<SuggestedAnswer | null>(null);
-  const answer = answered(asked.depends, said) ?? fresh;
+  const answer = answered(asked.depends, keyOf(asked, said)) ?? fresh;
   useEffect(() => {
-    if (answered(asked.depends, said)) return;
+    if (answered(asked.depends, keyOf(asked, said))) return;
     setAnswer(null);
     if (asked.opened === null || asked.opened === undefined) return;
     // The call the press started, where it asked this; else asked now.
