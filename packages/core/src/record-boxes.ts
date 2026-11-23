@@ -126,3 +126,19 @@ export function judgeRecordIds(said: unknown, sees: (id: string) => boolean, mos
   }
   return [...kept];
 }
+
+/**
+ * THE RECORD UNDER A POINT (Graview HQ feature:f-view-menu-suggests-under-pointer):
+ * of the boxes an element's host judged, the one the point is in — the
+ * smallest, where a card is drawn inside another — or none. The point is in
+ * the element's own CSS pixels, as the boxes are.
+ */
+export function recordBoxAt(boxes: readonly RecordBox[], x: number, y: number): RecordBox | undefined {
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return undefined;
+  let found: RecordBox | undefined;
+  for (const box of boxes) {
+    if (x < box.x || y < box.y || x > box.x + box.width || y > box.y + box.height) continue;
+    if (!found || box.width * box.height < found.width * found.height) found = box;
+  }
+  return found;
+}

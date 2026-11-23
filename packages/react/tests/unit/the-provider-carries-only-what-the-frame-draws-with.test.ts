@@ -28,6 +28,9 @@ const DRAWN_ONLY = [
   "partsWanted",
   "sectionsWanted",
   "sectionUnderNow",
+  // The record a view drew under a press, and the element a face reads in its place (Graview HQ feature:f-view-menu-suggests-under-pointer).
+  "recordInView",
+  "outOfViews",
   "setViewPlace",
   "viewPlaceOf",
   "useActivity",

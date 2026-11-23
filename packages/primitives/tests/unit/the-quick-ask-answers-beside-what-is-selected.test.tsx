@@ -248,12 +248,25 @@ describe("a quick ask only the Fast slot is there to answer (Roadmap f-jev-fast-
   });
 
   it("offers no chat where the host connects none", async () => {
-    await mount(app({ fast: unsure }));
+    await mount(app({ fast: unsure }, <FindBox />));
     await chord();
     await until(() => card() !== null);
     await type("why is this one late?");
     await press("Enter");
     await until(() => document.querySelector('[data-testid="quick-ask-find"]') !== null);
     expect(document.querySelector('[data-testid="quick-ask-chat"]')).toBeNull();
+  });
+
+  it("offers no Find, and says it cannot look, on a page with no Find box (Graview HQ feature:f-menu-first-frames-follow-ups)", async () => {
+    await mount(app({ fast: unsure, chat: { label: "Ask in chat", open: () => undefined } }));
+    await chord();
+    await until(() => card() !== null);
+    await type("why is this one late?");
+    await press("Enter");
+    await until(() => document.querySelector('[data-testid="quick-ask-chat"]') !== null);
+    const said = document.querySelector('[data-testid="quick-answer-text"]')!.textContent ?? "";
+    expect(said).toMatch(/^I can't answer that in words here\./);
+    expect(said).not.toContain("Find");
+    expect(document.querySelector('[data-testid="quick-ask-find"]')).toBeNull();
   });
 });

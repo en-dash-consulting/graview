@@ -73,7 +73,7 @@ export function fastOf(ai: HostAi): FastProvider | undefined {
 }
 
 /** Whether a menu asks for suggestions as it opens (FR-185): `ai.ts`'s, here too for the runner. */
-export { HOVER_CHIP_CONFIDENCE, suggestsOnOpen } from "./ai.js";
+export { FIND_CAN_LOOK, HOVER_CHIP_CONFIDENCE, suggestsOnOpen } from "./ai.js";
 
 /** The Thinking slot as the host filled it, else its `complete` (or its `turn`, with no tools) behind it. */
 export function thinkingOf(ai: HostAi): ThinkingProvider | undefined {

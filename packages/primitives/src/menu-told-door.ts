@@ -64,6 +64,15 @@ export function prepareTold(ai: HostAi | undefined, store: Store<AnySchema>, pri
   );
 }
 
+/** What worked here before as a menu opened on `on` would first offer it, read ahead (`prepareTold`): undefined where the host keeps no tellings. */
+export function toldAhead(ai: HostAi | undefined, store: Store<AnySchema>, principal: Principal, on: string | undefined): Promise<readonly ToldSuggestion[]> | undefined {
+  const told = ai && !ai.off ? ai.told : undefined;
+  if (!told) return undefined;
+  prepareTold(ai, store, principal);
+  const ahead = aheadFor(told, store, principal);
+  return ahead?.reading.then((read) => read.module.toldForHere(read.tellings, store, principal, on, 3));
+}
+
 /** The tellings like the words typed in the menu that worked, re-aimed here: at most `most`, before the Fast slot re-ranks them. */
 export function useToldSuggestions(ai: HostAi | undefined, store: Store<AnySchema>, principal: Principal, words: string, on: string | undefined, opened: unknown, most = 4): readonly ToldSuggestion[] {
   const told = ai && !ai.off ? ai.told : undefined;
