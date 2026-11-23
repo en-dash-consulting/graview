@@ -77,6 +77,39 @@ export interface FileValue {
 }
 
 /**
+ * THE APP'S OWN VIDEO (HQ f-view-names-app-video): the reel a host keeps
+ * for the whole app — the video its share preview plays — handed to
+ * `mount`, `<Embed>`, `GraviewProvider`, the Shell or the routed face as
+ * `reel`, and to a headless run as its `reel`. A worker view places it with
+ * `<graview-video data-app="reel">` and reads its facts in `props.theme.reel`
+ * (duration, whether it has a poster, whether it plays); the host draws the
+ * player, so the view never holds `href` or `poster`. It is the host's own
+ * fact, never filled from a record's field a person wrote. Captions on
+ * another origin load only where that origin allows them (CORS).
+ */
+export interface AppVideo {
+  /** Where the page fetches the video: a path, fetched where the host serves files, or an `https:` address. Anything else is no reel. */
+  readonly href: string;
+  /** The picture drawn before it plays, and where a person asked for less motion: an address as `href` is. */
+  readonly poster?: string;
+  /** Its length in seconds, where the host knows it. */
+  readonly duration?: number;
+  /** Whether the host judged it plays in every browser. Unsaid: an MP4, WebM or Ogg source with a poster. */
+  readonly playable?: boolean;
+  /** Its media type: `video/mp4` by default. */
+  readonly type?: string;
+  /** What it is called, said where it has no caption: "reel" by default. */
+  readonly name?: string;
+  /** What it shows, in words: what a person who cannot see it is told. */
+  readonly caption?: string;
+  /** Its captions, a WebVTT file: an address as `href` is. */
+  readonly captions?: string;
+  /** Its size in pixels, where the host knows it: the player's shape. */
+  readonly width?: number;
+  readonly height?: number;
+}
+
+/**
  * A DOCUMENT'S PREVIEW, as its host made it: `src`, the picture, a path on
  * the host as `href` is; `thumb`, a smaller one for a card or a row, where
  * the host made one (`src` stands in for it otherwise); and `src`'s size

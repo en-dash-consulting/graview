@@ -28,7 +28,7 @@ export type { ZodDef } from "./schema/zod.js";
 export { defineNode, isCurrent, labelOf } from "./schema/define-node.js";
 // A picture or a document on a record (FR-162), and the host that stores them (FR-163).
 export { fileAt, fileKindOf, fileSrc, filesOf, isFilePreview, isFileValue, isFocus, isImage, isPictured, isVideo, previewOf, safeFileHref, videoWords } from "./schema/files.js";
-export type { FileKind, FilePreview, FileValue, HostFiles } from "./schema/files.js";
+export type { AppVideo, FileKind, FilePreview, FileValue, HostFiles } from "./schema/files.js";
 export type { ViewerState, ViewerStateAnswer } from "./viewer-state.js";
 export { fileField, imageField, videoField } from "./schema/file-field.js";
 // A link to another app (FR-171): its address on a record, and the host that says what it is called.

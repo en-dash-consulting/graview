@@ -488,7 +488,7 @@ export function placeText(description: Omit<PlaceDescription, "text">): string {
 /** A placed video in one line: what it shows, where it is, what the browser is handed, how it plays, and whether it will. */
 export function videoLine(video: DescribedVideo): string {
   const how = video.autoplay ? "plays as a background, muted and looping, with no controls" : "plays with the browser's controls";
-  return `${video.text} (${video.field} of ${video.record}): ${video.source}${video.duration !== undefined ? `, ${Math.round(video.duration)} s` : ""}, ${video.poster ? "with a poster" : "no poster"}; ${how}${video.cover ? ", filling its box" : ""}; ${video.playable ? "playable" : `not playable: ${video.why ?? "it is not a video a browser plays"}`}.`;
+  return `${video.text} (${video.app ? `the app's ${video.app}` : `${video.field} of ${video.record}`}): ${video.source}${video.duration !== undefined ? `, ${Math.round(video.duration)} s` : ""}, ${video.poster ? "with a poster" : "no poster"}; ${how}${video.cover ? ", filling its box" : ""}; ${video.playable ? "playable" : `not playable: ${video.why ?? "it is not a video a browser plays"}`}.`;
 }
 
 /** A line of facts as its face draws it: a chip a space from what is beside it, two runs of words a dot apart. */

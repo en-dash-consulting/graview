@@ -48,14 +48,16 @@ export interface DescribedDrawing {
 const PLAYED = new Set(["video/mp4", "video/webm", "video/ogg"]);
 
 /** A placed video as an agent confirms it: playable when its source is one every browser plays and it has a poster to stand at. */
-export function describeVideo(file: { readonly name: string; readonly type: string; readonly caption?: unknown; readonly duration?: unknown; readonly poster?: unknown }, on: { readonly record: string; readonly field: string; readonly autoplay: boolean; readonly cover: boolean }): DescribedVideo {
+export function describeVideo(file: { readonly name: string; readonly type: string; readonly caption?: unknown; readonly duration?: unknown; readonly poster?: unknown; readonly playable?: unknown }, on: ({ readonly record: string; readonly field: string } | { readonly app: "reel" }) & { readonly autoplay: boolean; readonly cover: boolean }): DescribedVideo {
   /* The host's path on the record itself, or the fact alone as a view is handed it (`guestFileOf`). */
   const poster = file.poster === true || (typeof file.poster === "string" && file.poster.length > 0);
   const plays = PLAYED.has(file.type.toLowerCase());
-  const why = !plays && !poster ? `its source is ${file.type}, which not every browser plays, and it has no poster` : !plays ? `its source is ${file.type}, which not every browser plays` : !poster ? "it has no poster, so nothing stands before it plays or where a person asked for less motion" : undefined;
+  const judged = plays && poster;
+  /* The app's reel plays as its host judged it, where the host said (HQ f-view-names-app-video). */
+  const playable = "app" in on && typeof file.playable === "boolean" ? file.playable : judged;
+  const why = playable ? undefined : !plays && !poster ? `its source is ${file.type}, which not every browser plays, and it has no poster` : !plays ? `its source is ${file.type}, which not every browser plays` : !poster ? "it has no poster, so nothing stands before it plays or where a person asked for less motion" : "its host says it does not play in every browser";
   return {
-    record: on.record,
-    field: on.field,
+    ...("app" in on ? { app: on.app } : { record: on.record, field: on.field }),
     text: typeof file.caption === "string" && file.caption.trim() ? file.caption.trim() : file.name,
     name: file.name,
     source: file.type,
@@ -63,7 +65,7 @@ export function describeVideo(file: { readonly name: string; readonly type: stri
     poster,
     autoplay: on.autoplay,
     cover: on.cover,
-    playable: plays && poster,
+    playable,
     ...(why ? { why } : {}),
   };
 }
@@ -416,6 +418,19 @@ export function describeDrawing(root: TreeElement, context: DescribeDrawingConte
       }
       /* A record's video the host plays (0.1.37): said by what it shows and how long it is, from the record the view was shown. */
       case "graview-video": {
+        /* The app's own video (HQ f-view-names-app-video): said from the facts the view was handed, never a record's. */
+        if (element.getAttribute("data-app") !== null) {
+          const app = element.getAttribute("data-app") ?? "";
+          const reel = context.props.theme?.reel;
+          if (app !== "reel" || !reel) {
+            problems.push({ at: `drawing <graview-video data-app="${app.slice(0, 80)}">`, says: app !== "reel" ? `It names "${app.slice(0, 80)}", which is no video of the app: the host draws no player there. The app's own video is data-app="reel".` : "It names the app's reel, which this host did not hand: the host draws no player there. A host hands the app's reel as reel." });
+            return [];
+          }
+          const video = describeVideo(reel, { app: "reel", autoplay: element.getAttribute("autoplay") !== null, cover: element.getAttribute("cover") !== null });
+          videos.push(video);
+          const how = video.autoplay ? `, playing as a background, muted and looping${video.cover ? ", filling its box" : ""}` : "";
+          return [{ t: "text", text: `${video.text}, ${videoWords(video.duration !== undefined ? { duration: video.duration } : {})}${how}`, tone: "picture" }];
+        }
         const field = element.getAttribute("data-field") ?? "";
         const record = element.getAttribute("data-record") ?? "";
         const node = shown.get(record) as Record<string, unknown> | undefined;

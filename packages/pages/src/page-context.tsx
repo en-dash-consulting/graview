@@ -1,6 +1,6 @@
 import type { HistoryHost } from "@graview/core/history";
 import type { DisplayOptionsHost } from "@graview/core";
-import { freshAddress, sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ViewerState, type ResolveApp, type LinkedRecords, type Person, type Principal, type Scheme, type Store, type PresenceChannel, type SettingDeclaration, type SignIn, type SubscriptionStore, type DismissalStore, type KeptViews } from "@graview/core";
+import { freshAddress, sceneTitle, type AnySchema, type Brand, type GraviewApp, type AppVideo, type HostFiles, type ViewerState, type ResolveApp, type LinkedRecords, type Person, type Principal, type Scheme, type Store, type PresenceChannel, type SettingDeclaration, type SignIn, type SubscriptionStore, type DismissalStore, type KeptViews } from "@graview/core";
 import { useCallback, useRef, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import type { AwaySummary, FieldTyping, KeepLensHost, ProposeChangeHost, ComposeChangeHost, DraftChangeHost, HostMenuItem, MenuSectionSource, OnExport, ReactViewRegistry } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
@@ -249,6 +249,8 @@ export interface PageContext<S extends AnySchema> {
   readonly files?: HostFiles;
   /** Where what a worker view keeps for its viewer goes (`graview.mine`), by the view's name. Unsaid, for the visit. */
   readonly viewerState?: ViewerState;
+  /** The app's own video (HQ f-view-names-app-video): what a worker view's `<graview-video data-app="reel">` plays. Unsaid, the provider around these pages says. */
+  readonly reel?: AppVideo;
   /**
    * WHERE THE HOST SERVES THE APP'S OWN IMAGES (Roadmap
    * f-brand-marks-under-app-base): `assetsAt(path)` for a path under
