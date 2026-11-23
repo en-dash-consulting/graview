@@ -46,7 +46,7 @@ import { MOST_PROPOSED, PROPOSE_CHANGES, proposeChangesMutation } from "./mutati
 import { namesUnseen, redact } from "./ops/withheld.js";
 import { writersBehind } from "./ops/writers.js";
 import { nounOf, withArticle } from "./schema/define-node.js";
-import { behind, fieldsJudged, mayKeepField, partialSight, recordsOf, sees } from "./permissions/sight.js";
+import { behind, FIELD_SIGHT, fieldsJudged, mayKeepField, partialSight, recordsOf, sees } from "./permissions/sight.js";
 import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
 import { checkUndo, UndoBlockedError, undoneInverses, undoPrimitives, type UndoCheck } from "./ops/undo.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
@@ -725,7 +725,8 @@ export class Store<S extends AnySchema> {
     this.appTimeZone = options.appTimeZone === null ? undefined : (options.appTimeZone ?? options.timeZone);
     // A store that knows its app's zone begins on the day there, so the first turn of the day says what it moved.
     if (this.dayTimeZone) this.ticked = { day: isoToday(this.dayTimeZone), on: isoToday(this.dayTimeZone) };
-    this.policy = options.policy;
+    // Who sees a place sees its point, and no one else (`place-points.ts`, taught to the store by field sight).
+    this.policy = FIELD_SIGHT.points?.(options.policy, options.schema) ?? options.policy;
     this.publishing = options.publishing;
     this.tidying = options.tidying;
     this.votes = options.votes;

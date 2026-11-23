@@ -53,7 +53,8 @@ import {
   type FieldType,
   type GraviewDocument,
 } from "./schema.js";
-import { SHIPPED_LENSES, isShippedLens, SHIPPED_LENS_NAMES, TIMELINE_AXIS_ROLES, timelineBindingsWords, unknownLensOption, viewReference } from "../places.js";
+import { mapBindingsWords, mapProblemOf, mapProblemWords } from "../map-words.js";
+import { SHIPPED_LENSES, isShippedLens, mapCoordinatesOf, SHIPPED_LENS_NAMES, TIMELINE_AXIS_ROLES, timelineBindingsWords, unknownLensOption, viewReference } from "../places.js";
 import { LENSES_THAT_LIST, listsRecords } from "../lenses-that-list.js";
 import { placeSlug, VIEW_REFERENCE, type HostView, type KindList } from "../views/types.js";
 import { documentListFields, kindListFindings, kindListWords, listGroup, listSort, sortTypeOfDocumentField } from "../kind-list.js";
@@ -1665,6 +1666,7 @@ class Editor {
     }
     if (name === "columns" && !(this.columnsHold(i, e.bindings) && this.boardOptionsHold(i, e.bindings as Doc, e.options))) return;
     if (name === "timeline" && !this.timelineHolds(i, e.bindings, e.options)) return;
+    if (name === "map" && !this.mapHolds(i, e.bindings)) return;
     if (was) lenses[at] = lens;
     else lenses.splice(e.at === undefined ? lenses.length : Math.min(e.at, lenses.length), 0, lens);
     const index = was ? at : lenses.indexOf(lens);
@@ -1768,6 +1770,33 @@ class Editor {
       if (column !== undefined && fields[column]?.["type"] === "enum") columns = true;
     }
     if (!columns) return refuse("options.columns", "it has no columns — no option names them and no `column` role is bound to a choice field", Object.keys(bindings)[0]!);
+    return true;
+  }
+
+  /**
+   * A MAP THAT WOULD PIN SOMETHING, held before it is added (Graview HQ
+   * feature:f-map-lens): each kind it binds is a kind, and has what a map
+   * pins it by — the place field its bindings name, two number fields, or
+   * one place field of its own. A map over a kind with no coordinates is
+   * refused in the checker's words (`lens-no-coordinates`), naming the
+   * place field a host finds a point for and the numbers it could bind.
+   */
+  private mapHolds(i: number, bindings: unknown): boolean {
+    if (!isObject(bindings) || Object.keys(bindings).length === 0) return (this.failAs("lens-cannot-draw", i, "bindings", "a map here would not draw: it binds no kind", mapBindingsWords("<kind>")), false);
+    for (const [kind, roles] of Object.entries(bindings)) {
+      if (!isObject(this.doc.kinds[kind])) return (this.fail(i, `bindings.${kind}`, `"${kind}" is not a kind this app has; it has ${Object.keys(this.doc.kinds).join(", ")}`), false);
+      const fields = this.doc.kinds[kind].fields as Record<string, Doc>;
+      if (!isObject(roles)) return (this.failAs("lens-cannot-draw", i, `bindings.${kind}`, `a map here would not draw: it does not say what of ${kind} it pins by`, mapBindingsWords(kind)), false);
+      const said = roles;
+      const stray = ["place", "lat", "lng"].map((role) => said[role]).find((field) => field !== undefined && !(typeof field === "string" && field in fields));
+      if (stray !== undefined) return (this.fail(i, `bindings.${kind}`, `${kind} has no field ${JSON.stringify(stray)}; it has ${Object.keys(fields).join(", ")}`), false);
+      const types = Object.fromEntries(Object.entries(fields).map(([field, spec]) => [field, spec["type"] === "place" ? "place" : spec["type"] === "number" || spec["type"] === "integer" ? "number" : "other"] as const));
+      const found = mapCoordinatesOf(said, types);
+      if (found === false) {
+        const words = mapProblemWords(kind, said, mapProblemOf(said, types));
+        return (this.failAs(words.code, i, words.path, `a map here would not draw: ${words.message}`, words.fix), false);
+      }
+    }
     return true;
   }
 

@@ -1,0 +1,15 @@
+{
+  "nodes": [
+    { "id": "trip-museum", "kind": "trip", "name": "Natural History Museum", "where": "Natural History Museum, London", "whereGeo": { "lat": 51.4967, "lng": -0.1764 }, "on": "2026-10-02", "year": "year 3" },
+    { "id": "trip-science", "kind": "trip", "name": "Science Museum", "where": "Science Museum, London", "whereGeo": { "lat": 51.4978, "lng": -0.1745 }, "on": "2026-10-16", "year": "year 4" },
+    { "id": "trip-kew", "kind": "trip", "name": "Kew Gardens", "where": "Kew Gardens", "whereGeo": { "lat": 51.4787, "lng": -0.2956 }, "on": "2026-11-06", "year": "year 3" },
+    { "id": "trip-greenwich", "kind": "trip", "name": "Royal Observatory", "where": "Royal Observatory, Greenwich", "whereGeo": { "lat": 51.4769, "lng": -0.0005 }, "on": "2026-11-20", "year": "year 5" },
+    { "id": "trip-zoo", "kind": "trip", "name": "London Zoo", "where": "London Zoo", "whereGeo": { "lat": 51.5353, "lng": -0.1534 }, "on": "2027-01-15", "year": "year 4" },
+    { "id": "trip-farm", "kind": "trip", "name": "Mudchute Farm", "where": "Mudchute Farm", "on": "2027-02-05", "year": "year 3" },
+    { "id": "trip-tbc", "kind": "trip", "name": "Summer outing", "on": "2027-06-25", "year": "year 5" },
+    { "id": "stop-school", "kind": "stop", "name": "School gate", "latitude": 51.5072, "longitude": -0.1276 },
+    { "id": "stop-depot", "kind": "stop", "name": "Coach depot", "latitude": 51.5155, "longitude": -0.0922 },
+    { "id": "teacher-ada", "kind": "teacher", "name": "Ms Ada" }
+  ],
+  "edges": []
+}

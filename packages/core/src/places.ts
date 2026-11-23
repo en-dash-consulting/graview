@@ -2,6 +2,7 @@ import type { GraviewApp, LensDeclaration } from "./app.js";
 import { parseArrangement } from "./arrangement-words.js";
 import { defOf } from "./schema/zod.js";
 import { gridSortProblem } from "./grid-sort.js";
+import { fieldSays } from "./schema/field-words.js";
 import type { AnySchema } from "./schema/schema.js";
 import { kindPath, placeSlug, VIEW_REFERENCE, type PagesArrangement, type Place } from "./views/types.js";
 
@@ -48,6 +49,16 @@ export const SHIPPED_LENSES = {
    * its newest cards, with the way to the rest.
    */
   columns: { binds: "fields", requiredRoles: ["column"], options: ["sort", "search", "filters", "move", "collapsed", "cap", "hidden"] },
+  /**
+   * A MAP (Graview HQ feature:f-map-lens): a kind's records pinned where they
+   * are — by a place field whose point the host kept beside it (`geo.ts`),
+   * `bindings: { trip: { place: "where" } }`, or by two number fields,
+   * `{ trip: { lat: "latitude", lng: "longitude" } }` — drawn on a plain
+   * ground fitted to its pins, and each pin a link to its record. A kind
+   * with neither has nothing to pin, and does not draw (`lens-no-coordinates`).
+   * Nothing is fetched from outside: a host may hand it tiles of its own.
+   */
+  map: { binds: "fields", requiredRoles: [], options: ["search", "filters", "arranging"] },
 } as const satisfies Record<string, { binds: "fields" | "entities" | "nothing"; requiredRoles: readonly string[]; options: readonly string[] }>;
 
 export type ShippedLensName = keyof typeof SHIPPED_LENSES;
@@ -163,6 +174,37 @@ function isNumberField(schema: AnySchema, kind: string, field: string): boolean 
  */
 export const timelineBindingsWords = (kind: string, start = "start", end = "end"): string =>
   `A timeline lays out spans by number — minutes of a day, 0 to 1440 — across columns: "bindings": { "${kind}": { "start": "<a number field>", "end": "<a number field>", "column": "<a choice field, like a weekday>" } }, or "options": { "columns": ["mon", "tue", …] }. For spans of dates, draw a calendar: "lens": "calendar", "bindings": { "${kind}": { "start": "${start}", "end": "${end}" } }, "options": { "range": "month" }.`;
+
+/** What a map pins a kind's records by: a place field whose point the host keeps beside it, or two number fields. */
+export type MapCoordinates = { readonly place: string } | { readonly lat: string; readonly lng: string };
+
+/**
+ * WHAT A MAP PINS ONE KIND BY: the place field its bindings name, else
+ * their latitude and longitude, else — bound to nothing — the kind's first
+ * place field; `false` where it has nothing to pin by. Read over the kind's
+ * fields as a type each (`place`, `number`, or anything else). A binding
+ * that names no field of the kind is the binding check's to say:
+ * undefined. Why it cannot, in words, is `mapProblemOf` (`map-words.ts`),
+ * which the checker and `add-lens` say and a page never loads.
+ */
+export function mapCoordinatesOf(roles: Readonly<Record<string, unknown>>, types: Readonly<Record<string, string>>): MapCoordinates | false | undefined {
+  const { place, lat, lng } = roles as Record<string, string | undefined>;
+  for (const field of [place, lat, lng]) if (field !== undefined && !(typeof field === "string" && Object.hasOwn(types, field))) return undefined;
+  if (place !== undefined) return types[place] === "place" && { place };
+  if (lat === undefined && lng === undefined) {
+    const found = Object.keys(types).find((field) => types[field] === "place");
+    return found !== undefined && { place: found };
+  }
+  return types[lat!] === "number" && types[lng!] === "number" && { lat: lat!, lng: lng! };
+}
+
+/** A kind's fields as a map reads them: a place, a number, or anything else. */
+export function mapTypesOf(schema: AnySchema, kind: string): Record<string, string> {
+  const definition = schema.tryDefinition(kind);
+  const types: Record<string, string> = {};
+  for (const field in (definition?.fields.shape as object | undefined) ?? {}) types[field] = fieldSays(definition, field) === "place" ? "place" : isNumberField(schema, kind, field) ? "number" : "";
+  return types;
+}
 
 function enumValues(schema: AnySchema, kind: string, field: string): readonly string[] {
   const shape = schema.tryDefinition(kind)?.fields.shape as Record<string, unknown> | undefined;
@@ -296,6 +338,23 @@ export function declaredLenses<S extends AnySchema>(app: GraviewApp<S>): Declare
         if (typeof options["move"] !== "boolean") delete options["move"];
         if (!(Number.isInteger(options["cap"]) && (options["cap"] as number) >= 1 && (options["cap"] as number) <= 500)) delete options["cap"];
         for (const key of ["collapsed", "hidden"]) keepListed(options, key, (one) => values.has(one));
+      }
+      if (lens.name === "map") {
+        /*
+         * WHAT EACH BOUND KIND IS PINNED BY, resolved once here: its place
+         * field, or its latitude and longitude. A kind with neither has
+         * nothing to pin, so the map does not draw and says why, rather
+         * than standing as an empty ground.
+         */
+        const pinned: Record<string, MapCoordinates> = {};
+        for (const kind of bound) {
+          const found = mapCoordinatesOf(bindings[kind] as Record<string, unknown>, mapTypesOf(app.schema, kind));
+          if (found === undefined) return; // the binding check says so, as an error
+          // Said in words by the checker (`checkDeclaredLenses`), which a page never loads.
+          if (!found) return skip(`it has nothing to pin ${kind} by`);
+          pinned[kind] = found;
+        }
+        options["bindings"] = pinned;
       }
       if (lens.name === "calendar" && options["today"] !== undefined && !(typeof options["today"] === "string" && /^\d{4}-\d{2}-\d{2}$/.test(options["today"]))) {
         return bad(`${at}.options.today`, "its today is not a date", `Write it as "YYYY-MM-DD", or leave it out and the calendar opens on the day it is drawn.`);

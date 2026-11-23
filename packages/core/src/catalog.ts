@@ -467,7 +467,8 @@ export interface ExistingViewOptions {
 /** The words that ask for each shipped lens; a view somebody wrote is asked for by its title. */
 const LENS_WORDS: Readonly<Record<string, readonly string[]>> = {
   columns: ["board", "kanban", "column", "lane", "pipeline", "stage", "funnel"],
-  board: ["board", "map", "floor", "layout", "seat", "slot"],
+  board: ["board", "floor", "layout", "seat", "slot"],
+  map: ["map", "location", "pin", "geography"],
   calendar: ["calendar", "schedule", "date", "due", "month", "week", "agenda", "deadline", "day"],
   timeline: ["timeline", "gantt", "schedule", "roadmap", "span"],
   coverage: ["coverage", "matrix", "grid", "gap"],

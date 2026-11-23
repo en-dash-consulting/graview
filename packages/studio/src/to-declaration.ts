@@ -17,6 +17,8 @@ import {
   timeField,
   repeatField,
   repeatKey,
+  geoKey,
+  placeGeoField,
   type AnyMutationDefinition,
   kindPath,
   type AnySchema,
@@ -320,6 +322,8 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
       shape[field.name] = same ? own! : zodFor(field.type, field.required, field.options, field.markdown, field.multiple);
       // A date that repeats keeps how beside it, as the framework's own field.
       if (field.repeats && (field.type === "date" || field.type === "datetime")) shape[repeatKey(field.name)] = repeatField();
+      // A place keeps where the host found it beside it, as the framework's own field.
+      if (field.type === "place") shape[geoKey(field.name)] = placeGeoField();
     }
     const edges: Record<string, EdgeDeclaration> = {};
     for (const edge of read.in(kind.id, "from-kind")) {

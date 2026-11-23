@@ -1,6 +1,6 @@
 # @graview/primitives
 
-A rich primitive set, six lenses, the workbench and the visual system.
+A rich primitive set, seven lenses, the workbench and the visual system.
 
 **Primitives** — `Panel`, `Chip`, `Roster`, `Grid`, `Axis`, `Connector`,
 `Aggregate`, `Fields`. Enough that a new node kind renders sensibly at all

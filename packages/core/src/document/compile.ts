@@ -383,6 +383,9 @@ function validate(document: GraviewDocument): Finding[] {
       // How a date repeats is kept beside it, as `<field>Repeat`: nothing else of the kind may have that name.
       const kept = `${field}Repeat`;
       if (f.repeats && (spec.fields[kept] || spec.edges?.[kept] || spec.computed?.[kept])) findings.push(error("repeat-clash", `${at}.fields.${field}.repeats`, `${kind} already has "${kept}", where how ${field} repeats is kept`));
+      // Where a place is, as the host found it, is kept beside it as `<field>Geo` (`geo.ts`): nothing else of the kind may have that name.
+      const point = `${field}Geo`;
+      if (f.type === "place" && (spec.fields[point] || spec.edges?.[point] || spec.computed?.[point])) findings.push(error("geo-clash", `${at}.fields.${field}`, `${kind} already has "${point}", where the point of ${field} is kept`, `rename "${point}": a host keeps the place's latitude and longitude there`));
     }
   }
 

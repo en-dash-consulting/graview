@@ -1,6 +1,6 @@
 # graview-shipped-lens
 
-`graview-shipped-lens` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Declare one of the lenses Graview ships — a calendar, a status board, a coverage, a timeline, a board, a plan, a blocks place — as a titled place with its bindings and options, and read what graview check and add-lens refuse (an option the lens does not take, a lens that cannot draw, a title taken) rather than drawing a lens that quietly ignores a key.
+`graview-shipped-lens` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Declare one of the lenses Graview ships — a calendar, a status board, a coverage, a timeline, a board, a plan, a map, a blocks place — as a titled place with its bindings and options, and read what graview check and add-lens refuse (an option the lens does not take, a lens that cannot draw, a title taken) rather than drawing a lens that quietly ignores a key.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -31,6 +31,7 @@ Writing a lens of your own, one that binds roles so another domain can reuse it,
 | `coverage` | entities | `rows`, `columns`, `link` | `rowRef`, `rowGroup`, `groupOrder`, `requiredGroups`, `requiredVia`, `badge`, `columnGroup`, `sort`, `columnSort`, `search`, `filters` |
 | `board` | entities | `slots`, `x`, `y`, `fill` | `fillFrom`, `slotCode`, `zones`, `aspect`, `emptyLabel`, `pickTarget`, `arranging`, `arrange` |
 | `plan` | entities | `regions`, `outline` | `hues`, `aspect`, `undrawnLabel`, `strayLabel`, `draw`, `place`, `help` |
+| `map` | fields | — | `search`, `filters`, `arranging` |
 | `reach` | nothing | — | — |
 | `blocks` | nothing | — | `blocks` |
 
@@ -40,6 +41,7 @@ A **fields** lens binds a kind's own fields onto its roles (`bindings: { task: {
 - **A calendar** opens at `range` — `day`, `week`, `month`, `quarter`, `year`, `years` or `agenda` — on `today` (`"YYYY-MM-DD"`, else the day it is drawn). `range: "years"` with `horizon: { years: 30, title: "The career" }` spans its records, first to last, as well as `years` from `today`; `from` and `to` (years: 1962, 2023) pin its ends.
 - **A timeline** lays out spans by number — minutes of a day, 0 to 1440 — so `start` and `end` are number fields, and it needs columns: named in `columns`, or read from the choices of the field its `column` role is bound to. Over dates it draws nothing, and `add-lens` refuses it (`lens-cannot-draw`); spans of dates are a calendar's, `{ start, end }`.
 - **A coverage**'s `sort` orders its rows and `columnSort` its columns; a status board's `sort` orders its cards: a field or `{ by, direction }`, `label` the name, held to the kind. A coverage with no columns, or no link over its relation, says so ("No genres yet: link songs to genres.") and lists no rows.
+- **A map** pins each record where it is: `bindings: { trip: { place: "where" } }`, a place field (bound to nothing, the kind's first place field), or `{ stop: { lat: "lat", lng: "lng" } }`, two number fields. The framework never looks a place up: the host keeps the point it found beside the words, `"whereGeo": { "lat": 51.4787, "lng": -0.2956 }`, through the kind's edit act; no form asks for it, a worker view reads it, and a sight that hides the place hides it. Nothing is fetched: the ground is drawn in Web Mercator with lines of latitude and longitude, and a host may hand tiles (`MapTilesContext`). Each pin is a link to its record (pins at one spot are set out around it); Find and the chips arrange its first bound kind; records with no point are said ("2 trips have no place yet"). Over a kind with neither it does not draw: `lens-no-coordinates`. In code, declare the point beside the place: `whereGeo: placeGeoField()`.
 - **A blocks place** is drawn from the closed block set (headline, figure, list — `graview-view-specs`), each record by its own row or card: `{ name: "blocks", title: "What we heard", on: "signal", options: { blocks: [{ list: "all('signal')", group: "type", as: "row" }] } }`. Nothing in it runs; a chat can write it. Write code only for what blocks cannot say: a grid of cells, positions. Its page already has a header: the place's title, then a line (how many it holds), then "All … as a list →". Do not open with a headline repeating either. A first `headline` becomes that line, in place of the count, and is not drawn again; open with `text` for an intro. Groups head with label and count, rows sit on the title's edge, and a row's `{status} · {type} · on {date}` draws its choices as chips.
 
 Any titled place may say `create: false` when it is read, not written (its page drops the forms that add one), `hidden: true` to keep it off the lists while it stays a link target, and `arrangedBy` in the grammar (`{ group: "held-at" }`) for how it opens, held to the bound kind.
@@ -53,6 +55,7 @@ pnpm build && npx graview check ./dist/domain/app.js
 The checker holds every titled lens and says, at its path, what it will not draw and what it ignores:
 
 - `lens-option-unknown` — a key the lens does not take, in one sentence and its fix: "The columns lens takes no option "shade", so "Work" ignores it." / "Use one of: sort, search, filters, move, collapsed, cap, hidden." A declaration carrying one still compiles, with the warning; **`add-lens` refuses it** at `edits.<i>.options.<key>`, and a change sent as a JSON patch or a whole document is judged by `lensOptionsRefused(stored, proposed)` (`@graview/core/document`): an error for each such key the same lens did not already carry.
+- `lens-no-coordinates` — a map over a kind with no place field and no latitude and longitude; `add-lens` refuses it.
 - `lens-cannot-draw` — it binds no kind, its board's column field is not a choice, its timeline has no columns or binds a field that is not a number (its fix names the bindings a timeline takes, and the calendar), its calendar's `today` is not a date or its `range` not one it opens at, it stands on what is not a kind, or its title has nothing to make an address of.
 - `lens-not-shipped` — a title on a lens the framework does not draw; `lens-title-taken` — two pictures on one kind under one title. `add-lens` names the lens that holds the title, hidden or not (hiding frees no title); `"replace": "<that title>"` draws yours in its place, kept off the lists if that one was, until set-lens-hidden shows it; `lens-options-not-an-object`, `lens-sort`, `lens-horizon`, `lens-create` and `lens-hidden-untitled` say the rest.
 - The bindings themselves: `lens-role-unbound`, `lens-binding-missing-field` and `lens-binding-undeclared-kind`.
@@ -83,6 +86,6 @@ A host adds options and hears the choice with `displayOptions`: `offers(asked)` 
 
 ---
 
-Declare one of the lenses Graview ships — a calendar, a status board, a coverage, a timeline, a board, a plan, a blocks place — as a titled place with its bindings and options, and read what graview check and add-lens refuse (an option the lens does not take, a lens that cannot draw, a title taken) rather than drawing a lens that quietly ignores a key.
+Declare one of the lenses Graview ships — a calendar, a status board, a coverage, a timeline, a board, a plan, a map, a blocks place — as a titled place with its bindings and options, and read what graview check and add-lens refuse (an option the lens does not take, a lens that cannot draw, a title taken) rather than drawing a lens that quietly ignores a key.
 
 The page: https://graview.dev/docs/skills/graview-shipped-lens.html · Every Graview docs page, for a model: https://graview.dev/llms.txt

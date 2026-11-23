@@ -12,7 +12,8 @@
         "day": { "type": "enum", "options": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"], "default": "mon", "required": true },
         "from": { "type": "integer", "description": "minutes into the day it starts" },
         "until": { "type": "integer", "description": "minutes into the day it ends" },
-        "on": { "type": "date" }
+        "on": { "type": "date" },
+        "at": { "type": "place" }
       },
       "edges": {
         "covered-by": { "to": ["volunteer"], "cardinality": "many", "description": "who covers it", "inverse": "shifts they cover" }
@@ -73,7 +74,8 @@
     { "name": "plan", "title": "The building", "bindings": { "regions": { "kind": "room" }, "outline": { "field": "outline", "on": "regions" } } },
     { "name": "reach", "title": "Who may do what", "on": "member" },
     { "name": "blocks", "title": "Who keeps the hall", "on": "member", "options": { "blocks": [{ "headline": "{count(all('member')) | words} {count(all('member')) | plural: 'member'}" }, { "list": "all('member')", "sort": "label", "as": "row", "empty": "Nobody yet." }] } },
-    { "name": "columns", "title": "By day", "bindings": { "shift": { "column": "day" } } }
+    { "name": "columns", "title": "By day", "bindings": { "shift": { "column": "day" } } },
+    { "name": "map", "title": "Where they are", "bindings": { "shift": { "place": "at" } } }
   ],
   "pages": { "order": ["volunteer", "seat", "shift"], "hide": ["room"], "first": "The floor" }
 }

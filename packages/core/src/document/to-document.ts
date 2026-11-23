@@ -7,6 +7,7 @@ import { documentOf } from "./remembered.js";
 import { fieldOf } from "./field-spec.js";
 import { linkedRelationOf } from "../schema/linked.js";
 import { isRepeatField, repeatedBy, repeatKey } from "../repeat.js";
+import { isPlacePoint } from "../geo.js";
 import { FORMAT, FORMAT_VERSION, type ComputedSpec, type FieldSpec, type GraviewDocument, type KindSpec, type RuleSpec } from "./schema.js";
 
 /**
@@ -84,6 +85,8 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
       // How a date repeats is the date's `repeats` in a document, not a field of its own.
       const repeated = isRepeatField(field) ? repeatedBy(name) : undefined;
       if (repeated && definition?.fields?.shape?.[repeated]) continue;
+      // Where a place is kept beside it is a document place field's own, not a field of its own.
+      if (isPlacePoint(definition?.fields?.shape ?? {}, name)) continue;
       const read = fieldOf(field);
       if ("spec" in read && isRepeatField(definition?.fields?.shape?.[repeatKey(name)]) && (read.spec.type === "date" || read.spec.type === "datetime")) (read.spec as { repeats?: boolean }).repeats = true;
       const beside = definition?.defaults?.[name];
