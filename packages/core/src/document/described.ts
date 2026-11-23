@@ -4,6 +4,7 @@
  * of their own, so what says one kind of part — a coverage grid in words —
  * reads them without importing the describer that calls it.
  */
+import type { FileValue } from "../schema/files.js";
 
 /** One record in a list, as its card or row says it. */
 export interface DescribedItem {
@@ -18,8 +19,12 @@ export type DescribedPart =
   | { readonly t: "heading"; readonly level: number; readonly text: string }
   | { readonly t: "text"; readonly text: string; readonly tone?: string }
   | { readonly t: "badge"; readonly text: string }
-  /** `long`: prose, drawn the record's width with its lines kept (FR-147); `markdown`: written in Markdown, drawn as prose (FR-180). */
-  | { readonly t: "field"; readonly label: string; readonly text: string; readonly long?: true; readonly markdown?: true }
+  /**
+   * `long`: prose, drawn the record's width with its lines kept (FR-147); `markdown`: written in Markdown, drawn as prose (FR-180);
+   * `files`: the pictures, videos or documents the field holds (FR-162), where it holds any. `text` says them by name; a page that
+   * draws (`@graview/pages/static`) draws them from these, each `href` a path on the host as the record keeps it.
+   */
+  | { readonly t: "field"; readonly label: string; readonly text: string; readonly long?: true; readonly markdown?: true; readonly files?: readonly FileValue[] }
   | { readonly t: "figure"; readonly text: string; readonly label?: string }
   | { readonly t: "progress"; readonly label: string; readonly text: string }
   | {

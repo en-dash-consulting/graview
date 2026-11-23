@@ -50,12 +50,72 @@ markup. It is not a second reading of the declaration.
 - **Printable.** Under `@media print` each section of a place — a heading of
   the place's own, a board's column, a grouped list's group — starts a new
   page; a card, a row and a fact never split across one.
-- **No DOM, no React.** The entry imports only `@graview/core` and two of its
+- **No DOM, no React.** The entry imports only `@graview/core` and a few of its
   entries. A test bundles it and renders in a bare context with no `window`,
   `document`, `process` or `require` (`packages/pages/tests/unit/a-place-is-rendered-to-static-html.test.ts`).
-  Bundled for a Worker it is about 83 KB minified, 31 KB gzipped, most of it
-  zod. Nothing on a hosted page imports it, so a page's up-front weight is
+  Bundled for a Worker, most of what it weighs is zod. Nothing on a hosted page imports it, so a page's up-front weight is
   unchanged.
+
+## A record's pictures
+
+A kind's picture, video and document fields (`imageField()`, `videoField()`,
+`fileField()`) are drawn, not said by their names: a record's page shows its
+pictures in a gallery (each a link to itself full size, cut around its
+`focus`), its videos with the browser's own controls from their posters, and
+its documents by the page their host made of them (`preview`) and by name,
+type and size. A list's derived row and card show the record's first picture
+small, as the routed list does; a declared card or row draws its `image`
+blocks. Each file is drawn at the address the host serves it at — the same
+`files` the hosted page is handed, or only its `src`:
+
+```ts
+renderPlace(store, app, "/houses/h1", { files: { src: (href) => `/a/houses${href}` } });
+```
+
+Unsaid, at the `href` the record keeps. The page is still static: a video's
+controls are the browser's, and nothing runs.
+
+## The whole app as one file
+
+```ts
+import { renderSite } from "@graview/pages/static";
+
+const { html, pages } = renderSite(store, app, { viewer, files });
+```
+
+`renderSite` writes every place the viewer may see (in `placesOf` order) and
+every record's page they may see into one document: the look inlined once, a
+contents of the places at the top, each page an `<article>` whose id is
+`pageAnchor(address)` (`/tasks/task-1` is `page/tasks/task-1`), and every link
+one within the file — so a host that exports the app as one file rewrites no
+address. A link to a page the file does not hold (a record the viewer may not
+see) is no link; its words stay. `pages` lists what the file holds, in order.
+A design's `records` writers write their records' pages, and `site.href(path)`
+answers the in-file link; a design's `document` is not used, since the file is
+one document. `base` is put before no link, only before a path-only mark.
+
+## A PDF
+
+A PDF is the static page printed, and printing is the host's: the framework
+runs no browser and carries no PDF writer. The sheet is written for it — under
+`@media print` each page of a site and each section of a place starts a new
+sheet, a card, a row, a fact and a picture never split across one, links lose
+their color, the ground prints (`print-color-adjust: exact`), and `@page` sets
+a 16 mm margin. A host with a browser engine prints the HTML as it is, and the
+in-file links stay links within the PDF:
+
+```ts
+// Playwright on a server, or a browser-rendering service from a Worker.
+await page.setContent(renderSite(store, app, { viewer, files }).html, { waitUntil: "networkidle" });
+const pdf = await page.pdf({ format: "A4", printBackground: true });
+```
+
+`waitUntil: "networkidle"` lets the pictures load first, since each is fetched
+from where the host serves it. A page set as content, or a file opened from a
+disk, has no address of its own for a path to resolve against: for a file that
+leaves the host, `files.src` answers whole addresses
+(`(href) => \`https://app.example${href}\``), or the host puts a `<base>` in
+the document.
 
 ## A fixed screen: an e-ink reader (Roadmap f-eink-display-profile)
 

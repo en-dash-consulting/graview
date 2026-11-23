@@ -1,5 +1,5 @@
 import { fieldWords, fileSrc, filesOf, isFileValue, isImage, isPictured, isVideo, LOCAL_LAYERS, previewOf, videoWords, type FileValue, type HostFiles } from "@graview/core";
-import { fileFieldsOf, fileWords, videoClock } from "@graview/core/blocks";
+import { fileFieldsOf, fileWords, sizeWords, typeWords, videoClock } from "@graview/core/blocks";
 import { useEditableFields } from "@graview/react/drawing";
 import { useGraview, useHostFiles, useNode, usePlayback } from "@graview/react/provider"; // A door a form fetches, tied by this import to what every page that draws a form drew first, which a visitor's form is too: never to `./frame.js`, which a visitor's form never draws (TIED DOORS, packages/primitives/src/frame.ts).
 import { useEffect, useId, useRef, useState, type ClipboardEvent, type CSSProperties, type DragEvent, type ReactNode } from "react";
@@ -30,21 +30,8 @@ import { resample } from "./resample.js";
 export const SEND_EDGE = 2048;
 const SEND_QUALITY = 0.85;
 
-/** A size as a person reads it: "820 bytes", "120 KB", "3.4 MB". */
-export function sizeWords(bytes: number): string {
-  if (bytes < 1000) return `${bytes} bytes`;
-  if (bytes < 1_000_000) return `${Math.round(bytes / 1000)} KB`;
-  return `${(bytes / 1_000_000).toFixed(bytes < 10_000_000 ? 1 : 0)} MB`;
-}
-
-/** A file's type as a person says it: "PDF", "JPEG", "DOCX" — its name's ending, else the type's. */
-export function typeWords(file: { readonly type: string; readonly name?: string }): string {
-  if (file.type === "application/pdf") return "PDF";
-  const ending = /\.([a-z0-9]{2,5})$/i.exec(file.name ?? "")?.[1];
-  if (ending) return ending.toUpperCase();
-  const sub = file.type.split("/")[1] ?? file.type;
-  return sub.replace(/^x-|^vnd\./, "").split(/[.+-]/)[0]!.toUpperCase();
-}
+// A file's size and type as a person reads them: said alike on the static page (`@graview/pages/static`), which draws without React.
+export { sizeWords, typeWords };
 
 /** The kinds a host takes, in words: "pictures and PDF files". */
 export function kindsWords(kinds: readonly string[]): string {
