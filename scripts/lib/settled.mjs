@@ -20,6 +20,8 @@
  * means.
  */
 
+import { noteSettled } from "./timing.mjs";
+
 /** What counts as nothing having changed, in ms: the embed's own `QUIET_MS`. */
 export const QUIET_MS = 200;
 const EVERY_MS = 50;
@@ -91,20 +93,31 @@ const look = () => {
  */
 export async function settled(page, { most = 1_500, quiet = QUIET_MS } = {}) {
   trackRequests(page);
-  const until = Date.now() + most;
-  for (;;) {
-    let state;
-    try {
-      state = await page.evaluate(look);
-    } catch {
-      // Mid-navigation: the new document has its own watch, installed on the next look.
-      state = { quietFor: 0, busy: true };
-      if (page.isClosed?.()) return false;
+  const began = Date.now();
+  const until = began + most;
+  try {
+    for (;;) {
+      let state;
+      try {
+        state = await page.evaluate(look);
+      } catch {
+        // Mid-navigation: the new document has its own watch, installed on the next look.
+        state = { quietFor: 0, busy: true };
+        if (page.isClosed?.()) return false;
+      }
+      /*
+       * Quiet since the wait began as well as since the last change: what was
+       * just pressed may change the page a task or a frame later, and a page
+       * that was still before the press is not yet the page after it.
+       */
+      const quietFor = Math.min(state.quietFor, Date.now() - began);
+      if (!state.busy && quietFor >= quiet && requestsOnTheirWay(page) === 0) return true;
+      const left = until - Date.now();
+      if (left <= 0) return false;
+      await new Promise((resolve) => setTimeout(resolve, Math.min(EVERY_MS, left)));
     }
-    if (!state.busy && state.quietFor >= quiet && requestsOnTheirWay(page) === 0) return true;
-    const left = until - Date.now();
-    if (left <= 0) return false;
-    await new Promise((resolve) => setTimeout(resolve, Math.min(EVERY_MS, left)));
+  } finally {
+    noteSettled(Date.now() - began);
   }
 }
 
@@ -115,12 +128,17 @@ export async function settled(page, { most = 1_500, quiet = QUIET_MS } = {}) {
  * held is the claim's to read again; this only stops waiting once it has.
  */
 export async function until(check, { most }) {
-  const end = Date.now() + most;
-  for (;;) {
-    if (await Promise.resolve(check()).catch(() => false)) return true;
-    const left = end - Date.now();
-    if (left <= 0) return false;
-    await new Promise((resolve) => setTimeout(resolve, Math.min(100, left)));
+  const began = Date.now();
+  const end = began + most;
+  try {
+    for (;;) {
+      if (await Promise.resolve(check()).catch(() => false)) return true;
+      const left = end - Date.now();
+      if (left <= 0) return false;
+      await new Promise((resolve) => setTimeout(resolve, Math.min(100, left)));
+    }
+  } finally {
+    noteSettled(Date.now() - began);
   }
 }
 

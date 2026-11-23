@@ -669,9 +669,12 @@ async function theHostsNotices(page) {
   await page.waitForTimeout(250);
   said.overTheProfile = await toastOverThePopover(page, "profile");
   await page.keyboard.press("Escape");
-  /* A toast goes by itself; a banner stays, and changes in place. Waited for until it goes, no longer than the time it was given before; the banner is asked of once it has. */
+  /* A toast goes by itself; a banner stays, and changes in place. The toast is waited for until it goes, no longer than the time it was given before. */
+  const toastFrom = Date.now();
   await page.waitForFunction(() => document.querySelector('[data-testid="notices-toasts"] [data-testid="notice"]') === null, null, { timeout: 6_500 }).catch(() => {});
   said.toastGone = await page.evaluate(() => document.querySelector('[data-testid="notices-toasts"] [data-testid="notice"]') === null);
+  // Measured on purpose: the banner "stays" past the whole time the toast was given, so the rest of it is waited out.
+  await page.waitForTimeout(Math.max(0, 6_500 - (Date.now() - toastFrom)));
   said.bannerStays = await page.evaluate(() => document.querySelector('[data-testid="notices-banners"] [data-testid="notice"]') !== null);
   await page.evaluate(() => window.__newer.update({ sentence: "Offline — changes will be sent when you reconnect.", tone: "warn" }));
   await page.waitForTimeout(200);

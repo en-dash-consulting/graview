@@ -594,7 +594,7 @@ for (const { app, port, states, chosen = [], ground = [], record, focused = [], 
         await pageSettled(page, { most: 500 });
         await judge("pointed at by the mouse with another chosen");
         const drawn = await tieFor(otherId);
-        await pageSettled(page, { most: 1200 });
+        await page.waitForTimeout(1200); // Measured on purpose: "keeps it while it stays" is the tie read again a while later.
         const kept = await tieFor(otherId);
         report.pointer = [...(report.pointer ?? []), { where, otherId, drawn, kept }];
         if (drawn === 0) report.faults.push(`${where}: the mouse on ${otherId} does not draw its tie while another record is chosen`);
