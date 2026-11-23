@@ -102,6 +102,17 @@ describe("graview check of a template", () => {
     expect(templateFindings(twice).map((f) => f.message)).toEqual(['two views are called "thanksgiving-home"']);
   });
 
+  it("refuses a view that reads a relation whose far kind its reads.kinds never hands, as a proposed view is refused", () => {
+    const t = copy();
+    t.views.push({ name: "dish-list", attach: "dish", cardinality: "many", reads: { edges: ["broughtBy"] } });
+    expect(templateFindings(t).map((f) => [f.path, f.message])).toEqual([
+      ["views.2.reads.edges", '"dish-list" reads the relation "broughtBy", from dish to household, and is handed no household, so no link of it reaches the view: add "household" to its manifest\'s reads.kinds.'],
+    ]);
+    const handed = copy();
+    handed.views.push({ name: "dish-list", attach: "dish", cardinality: "many", reads: { kinds: ["household"], edges: ["broughtBy"] } });
+    expect(templateFindings(handed)).toEqual([]);
+  });
+
   it("is what graview check says of a template file, and exits 1 on it", async () => {
     const scratch = mkdtempSync(join(tmpdir(), "graview-check-template-"));
     try {

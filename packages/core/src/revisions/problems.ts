@@ -6,7 +6,7 @@
  * the app before and after a change — the store's `violations()`, a
  * headless run's problems — hands both sets here and is told what is new,
  * each keyed as it will be keyed next time (a rule's problem by
- * `violationKey`, a view's by its view, where and words), in words, and with
+ * `violationKey`, a view's by its own key, or its view, where and words), in words, and with
  * the act a rule names to repair it, so an answer can carry "this change
  * broke: …" and how to mend it rather than leave it to a later look.
  */
@@ -19,6 +19,8 @@ export interface ViewProblem {
   readonly view: string;
   readonly at?: string;
   readonly says: string;
+  /** What names this one fault whatever `says` says, where it has one (`DescribedProblem.key`): compared by it, a reworded sentence is the same problem. */
+  readonly key?: string;
 }
 
 /** What was judged at one moment: the rules' problems and the views'. */
@@ -53,8 +55,8 @@ export interface ProblemsMade {
   readonly text: string;
 }
 
-/** A view problem's key: its view, where, and its words. */
-export const viewProblemKey = (problem: ViewProblem): string => `view:${problem.view}|${problem.at ?? ""}|${problem.says}`;
+/** A view problem's key: its view and its own key where it has one, so a reworded sentence is the same problem; its view, where, and its words otherwise. */
+export const viewProblemKey = (problem: ViewProblem): string => (problem.key !== undefined ? `view:${problem.view}|key:${problem.key}` : `view:${problem.view}|${problem.at ?? ""}|${problem.says}`);
 
 /** Only a rule that judged and failed is broken: one that could not judge (`could-not-judge`, `over-budget`) is not said as made. */
 const failed = (v: Violation) => v.status === undefined || v.status === "violated";

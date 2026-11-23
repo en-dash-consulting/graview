@@ -96,7 +96,7 @@ describe("a record's files, drawn", () => {
     const pdf = await arrives(() => host.querySelector<HTMLObjectElement>('object[type="application/pdf"]'));
     expect(pdf.getAttribute("data")).toBe("/files/a0c2.pdf");
     const links = [...host.querySelectorAll<HTMLAnchorElement>("a[download]")].map((a) => [a.getAttribute("href"), a.getAttribute("download")]);
-    expect(links).toContainEqual(["/files/b1.txt", "notes.txt"]);
+    expect(links).toContainEqual(["/files/b1.txt?download=1", "notes.txt"]);
     expect(host.textContent).toContain("TXT · 820 bytes");
     expect(host.textContent).toContain("PDF · 40 KB");
   });

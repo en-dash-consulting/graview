@@ -21,7 +21,7 @@ import type {
   InvariantDefinition,
   Violation,
 } from "./invariants/types.js";
-import { compileMutation, mintPersonId } from "./mutations/define-mutation.js";
+import { compileMutation, emptyRecordsLeftOut, mintPersonId } from "./mutations/define-mutation.js";
 import { wouldRun } from "./mutations/would-run.js";
 import { actSpelledAs, nearestAct } from "./mutations/act-spelling.js";
 import { InvalidArguments } from "./mutations/invalid-arguments.js";
@@ -1070,7 +1070,10 @@ export class Store<S extends AnySchema> {
   /** A call with its act's name as the store spells it, so the log and every check read the one name. */
   private spelledCall(call: MutationCall): MutationCall {
     const name = this.spelled(call.name);
-    return name === call.name ? call : { ...call, name };
+    // A record argument the act may go without, sent as "", is no value: never a record looked for (`emptyRecordsLeftOut`).
+    const input = this.mutations.get(name)?.input;
+    const args = input ? (emptyRecordsLeftOut(input, call.args) as MutationCall["args"]) : call.args;
+    return name === call.name && args === call.args ? call : { ...call, name, args };
   }
 
   /** Off by module, or a derived act of a kind the workspace has off. */

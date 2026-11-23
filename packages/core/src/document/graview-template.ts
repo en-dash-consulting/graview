@@ -9,6 +9,7 @@ import { evaluateExpr, ExprEvalError, type Value } from "./expr/evaluate.js";
 import { ExprSyntaxError, parseExpr } from "./expr/parse.js";
 import { error, type Finding } from "./findings.js";
 import { parseTimeOfDay } from "../time-typed.js";
+import { farKindsRefused } from "../views/far-kinds.js";
 import type { GraviewDocument } from "./schema.js";
 
 /*
@@ -374,6 +375,8 @@ function checkViews(template: GraviewTemplate, compiled: CompiledDocument): Find
     if (Array.isArray(kinds)) kinds.forEach((kind, k) => typeof kind === "string" && !isKind(kind) && findings.push(error("view", `${at}.reads.kinds.${k}`, `"${kind}" is not a kind of this template's document`)));
     if (Array.isArray(edges)) edges.forEach((edge, k) => typeof edge === "string" && !schema.edge(edge) && findings.push(error("view", `${at}.reads.edges.${k}`, `"${edge}" is not a relation of this template's document`)));
   };
+  const strings = (list: unknown) => (Array.isArray(list) ? list.filter((one): one is string => typeof one === "string") : undefined);
+  const readsOf = (read: unknown) => (read && typeof read === "object" ? { kinds: strings((read as { kinds?: unknown }).kinds), edges: strings((read as { edges?: unknown }).edges) } : undefined);
   (template.frameViews ?? []).forEach((view, i) => {
     const at = `frameViews.${i}`;
     if (!isKind(view.kind)) findings.push(error("view", `${at}.kind`, `"${view.kind}" is not a kind of this template's document`));
@@ -381,10 +384,13 @@ function checkViews(template: GraviewTemplate, compiled: CompiledDocument): Find
   });
   (template.views ?? []).forEach((view, i) => {
     const at = `views.${i}`;
+    const before = findings.length;
     if (view.attach === "home" ? view.cardinality !== "many" : !isKind(view.attach)) {
       findings.push(error("view", `${at}.attach`, view.attach === "home" ? 'a view of the home is a view of many: "cardinality": "many"' : `"${view.attach}" is not a kind of this template's document, nor "home"`));
     }
     reads(at, view["reads"]);
+    // A relation read whose far kind the view is never handed is refused as a view proposed is (`checkProposedManifest`), in its words.
+    if (findings.length === before) findings.push(...farKindsRefused(schema, { ...view, reads: readsOf(view["reads"]) }).map((says) => error("view", `${at}.reads.edges`, says)));
     const asked = view["acts"];
     if (Array.isArray(asked)) {
       asked.forEach((entry, k) => {
