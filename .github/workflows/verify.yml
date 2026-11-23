@@ -42,9 +42,9 @@ on:
         options: [dom, gpu]
         default: dom
       shards:
-        description: "At most this many runners"
+        description: "At most this many runners (up to 32): the whole chain wants about 24, a harness run in parts a runner or less per part"
         type: string
-        default: "8"
+        default: "24"
       request:
         description: "A token in the run's name, so whoever dispatched it can find it (verify-on-github.mjs sets it)"
         type: string
@@ -141,7 +141,7 @@ jobs:
           NAMES: ${{ matrix.names }}
           QUICK: ${{ inputs.quick && '--quick' || '' }}
           SLOW: ${{ inputs.slow }}
-          GRAVIEW_JOURNEYS_PARALLEL: "2"
+          GRAVIEW_JOURNEYS_PARALLEL: "4"
           GRAVIEW_RENDERER: ${{ inputs.renderer }}
         run: |
           if [ -n "$SLOW" ]; then

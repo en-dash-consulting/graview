@@ -16,6 +16,8 @@ import { execFileSync, spawn } from "node:child_process";
 import { existsSync, readlinkSync, realpathSync } from "node:fs";
 import { connect } from "node:net";
 import { isAbsolute, resolve } from "node:path";
+import { COVERAGE_NO_FS_ENV } from "./coverage.mjs";
+import { noteTiming } from "./timing.mjs";
 
 /** Whether anything accepts a connection on `port` at `address`. */
 const accepts = (port, address) =>
@@ -184,10 +186,12 @@ const stopOnTerm = () => {
  * @param {string} app  directory under `apps/`, or an absolute path to an app beside the checkout
  * @param {number} port the port to serve it on: `portFor(app)` (lib/ports.mjs), moved onto GRAVIEW_PORT_BASE
  * @param {string} repoRoot
+ * @param {{ env?: Record<string, string> }} [options] more of the server's environment: the chain's warm servers count what they serve (coverage.mjs)
  * @returns {Promise<{ url: string, borrowed: boolean, stop: () => void }>}
  */
-export async function serving(app, port, repoRoot) {
+export async function serving(app, port, repoRoot, { env: more = {} } = {}) {
   const url = `http://localhost:${port}`;
+  const began = Date.now();
   const dir = appDir(app, repoRoot);
   /*
    * A SERVER THIS PROCESS JUST STOPPED IS GONE FIRST. A stop only sends the
@@ -211,6 +215,7 @@ export async function serving(app, port, repoRoot) {
     if (!isOurs(holder, dir)) {
       throw new Error(`port ${port} is held by ${described(holder)}, not this checkout's ${isAbsolute(app) ? app : `apps/${app}`}; ${REMEDY}`);
     }
+    noteTiming({ kind: "server", name: app, port, ms: Date.now() - began, borrowed: true });
     return { url, borrowed: true, stop: () => {} };
   }
 
@@ -219,7 +224,8 @@ export async function serving(app, port, repoRoot) {
     cwd: dir,
     // No model key, and no key for Jev: what a harness sees must not depend on a model's answer (the seat says how to turn one on instead).
     // No model in a harness: every key the dev server's doors read is emptied, whichever provider it names.
-    env: { ...process.env, ANTHROPIC_API_KEY: "", XAI_API_KEY: "", OPENAI_API_KEY: "", TYPESAFE_API_KEY: "", JEV_API_KEY: "" },
+    // A dev server's own reads (its dependency scan reads the whole app) are not what a harness read: what it serves is (watch.mjs, coverage.mjs).
+    env: { ...process.env, ANTHROPIC_API_KEY: "", XAI_API_KEY: "", OPENAI_API_KEY: "", TYPESAFE_API_KEY: "", JEV_API_KEY: "", [COVERAGE_NO_FS_ENV]: "1", ...more },
     stdio: ["ignore", "pipe", "pipe"],
     detached: true,
   });
@@ -251,5 +257,6 @@ export async function serving(app, port, repoRoot) {
       fail(new Error(`vite for ${app} exited with ${code}`));
     });
   });
+  noteTiming({ kind: "server", name: app, port, ms: Date.now() - began, borrowed: false });
   return { url, borrowed: false, stop };
 }

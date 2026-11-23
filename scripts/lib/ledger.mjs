@@ -39,7 +39,13 @@ export function updateLedger(repoRoot, { since, ran }) {
   const seen = new Map();
   for (const name of existsSync(dir) ? readdirSync(dir) : []) {
     if (!name.endsWith(".json") || name === "ledger.json") continue;
-    const report = JSON.parse(readFileSync(resolve(dir, name), "utf8"));
+    let report;
+    try {
+      report = JSON.parse(readFileSync(resolve(dir, name), "utf8"));
+    } catch {
+      // A report its harness was stopped while writing says nothing: the harness itself failed by name.
+      continue;
+    }
     if (!report.at || Date.parse(report.at) < since) continue;
     for (const violation of report.violations ?? []) {
       if (violation.acknowledged) continue;

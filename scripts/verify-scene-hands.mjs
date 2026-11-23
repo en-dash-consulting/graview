@@ -43,6 +43,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { devices } from "playwright";
 import { arriveWithoutWebfonts, launchEngine } from "./lib/engine.mjs";
+import { partPath } from "./lib/parts.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { serving } from "./lib/serve.mjs";
 
@@ -713,7 +714,8 @@ try {
 }
 
 mkdirSync(resolve(repoRoot, "docs"), { recursive: true });
-writeFileSync(resolve(repoRoot, "docs/scene-hands.json"), `${JSON.stringify(report, null, 2)}\n`);
+// One engine, run as a part of the chain (lib/parts.mjs), writes beside the whole verdict, which the chain makes from the parts.
+writeFileSync(partPath(resolve(repoRoot, "docs/scene-hands.json")), `${JSON.stringify(report, null, 2)}\n`);
 for (const [name, check] of Object.entries(report.checks)) process.stdout.write(`${check.ok ? "ok  " : "FAIL"} ${name}\n`);
 if (report.error) process.stdout.write(`${report.error}\n`);
 process.stdout.write("wrote docs/scene-hands.json\n");
