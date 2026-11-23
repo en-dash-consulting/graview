@@ -1,10 +1,9 @@
 import { fieldWords, fileSrc, filesOf, isFileValue, isImage, isPictured, isVideo, LOCAL_LAYERS, previewOf, videoWords, type FileValue, type HostFiles } from "@graview/core";
 import { fileFieldsOf, fileWords, videoClock } from "@graview/core/blocks";
 import { useEditableFields } from "@graview/react/drawing";
-import { useGraview, useHostFiles, useNode, usePlayback } from "@graview/react/provider";
+import { useGraview, useHostFiles, useNode, usePlayback } from "@graview/react/provider"; // A door a form fetches, tied by this import to what every page that draws a form drew first, which a visitor's form is too: never to `./frame.js`, which a visitor's form never draws (TIED DOORS, packages/primitives/src/frame.ts).
 import { useEffect, useId, useRef, useState, type ClipboardEvent, type CSSProperties, type DragEvent, type ReactNode } from "react";
 import { resample } from "./resample.js";
-import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /*
  * A RECORD'S PICTURES AND DOCUMENTS, DRAWN AND PUT THERE (FR-162, FR-163).
