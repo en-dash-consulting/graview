@@ -1,5 +1,5 @@
 import type { ViewProblemSaid } from "./problems.js";
-import { isFocus, type FileValue } from "@graview/core";
+import { isFocus, previewOf, type FileValue } from "@graview/core";
 import type { GuestFile, GuestNode, GuestProps } from "../protocol.js";
 import { cropAround, isThumbShape, thumbIsSound, thumbRefusal, thumbShapeOf, type ThumbShape } from "./picture-thumb.js";
 
@@ -180,7 +180,33 @@ export const PICTURE_FETCH_BYTES = 40_000_000;
 /** Whether a file is a picture a guest is handed an address for: an image, not an SVG, which could act. */
 export const isGuestPicture = (file: { readonly type: string }): boolean => /^image\//i.test(file.type) && !/^image\/svg/i.test(file.type);
 
-/** A file as a guest is handed it, before the host has its bytes: no path, and for a picture its facts. */
+/** The bytes a preview is reckoned at against a view's budget, where its host said none: a first page drawn small. */
+export const PREVIEW_BYTES = 250_000;
+/** The type a document's preview is taken at before its bytes say theirs: a picture, which the host's answer must then be. */
+const PREVIEW_TYPE = "image/*";
+
+/**
+ * THE PICTURE A GUEST IS HANDED FOR A FILE, where it is handed one: a
+ * picture is its own, and a document with a preview its host made (HQ
+ * f-file-values-carry-a-preview) is handed that, as a picture field's is —
+ * fetched, reckoned, made smaller and thumbed alike, under the preview's
+ * path. A video, an SVG and a document with none have no picture.
+ */
+export function pictureOf(file: FileValue): FileValue | undefined {
+  if (isGuestPicture(file)) return file;
+  const preview = previewOf(file);
+  if (!preview) return undefined;
+  return {
+    href: preview.src,
+    name: file.name,
+    type: PREVIEW_TYPE,
+    bytes: PREVIEW_BYTES,
+    ...(preview.width !== undefined ? { width: preview.width } : {}),
+    ...(preview.height !== undefined ? { height: preview.height } : {}),
+    ...(file.caption !== undefined ? { caption: file.caption } : {}),
+  };
+}
+
 /** What the host read of a picture's pixels: its size, and whether it is a cutout (`cutoutOf`). */
 export interface PictureLook {
   readonly width: number;
@@ -204,7 +230,13 @@ function shapeOf(file: FileValue, look: PictureLook | undefined): Pick<GuestFile
   };
 }
 
-export function guestFileOf(file: FileValue, more: { readonly src?: string; readonly thumb?: string; readonly left?: string; readonly look?: PictureLook } = {}): GuestFile {
+/**
+ * A file as a guest is handed it: a picture by its facts and, where the view
+ * is handed one (`pictured`), the address the host made (`src`, `thumb`) or
+ * why it never will (`left`); a video by its facts; a document as the record
+ * keeps it.
+ */
+export function guestFileOf(file: FileValue, more: { readonly pictured?: true; readonly src?: string; readonly thumb?: string; readonly left?: string; readonly look?: PictureLook } = {}): GuestFile {
   const base = { name: file.name, type: file.type, bytes: file.bytes };
   /* A video (0.1.37) is handed its facts, never an address: the host plays it where the view places `<graview-video>` (media.ts). Whether it has a poster is a fact (f-video-hero); the poster's path is not. */
   if (/^video\//i.test(file.type)) {
@@ -217,6 +249,21 @@ export function guestFileOf(file: FileValue, more: { readonly src?: string; read
       ...(file.duration !== undefined ? { duration: file.duration } : {}),
       ...(file.poster ? { poster: true } : {}),
     };
+  }
+  /*
+   * A DOCUMENT (HQ f-file-values-carry-a-preview) comes as the record keeps
+   * it — its `href`, name, type, size, caption and `at` — as it does to a
+   * view that asks for no pictures:
+   * asking for pictures takes nothing from a PDF in another field. Where its
+   * host made a preview the view draws, it carries the preview's address
+   * and shape beside, as a picture does; the preview's own path stays the
+   * host's.
+   */
+  if (!/^image\//i.test(file.type)) {
+    const kept = { href: file.href, name: file.name, type: file.type, bytes: file.bytes, ...(file.caption !== undefined ? { caption: file.caption } : {}), ...(file.at !== undefined ? { at: file.at } : {}) };
+    const picture = more.pictured ? pictureOf(file) : undefined;
+    if (!picture) return kept;
+    return { ...kept, ...shapeOf(picture, more.look), ...(more.src !== undefined ? { src: more.src } : {}), ...(more.thumb !== undefined ? { thumb: more.thumb } : {}), ...(more.left !== undefined ? { left: more.left } : {}) };
   }
   if (!isGuestPicture(file)) return base;
   return {
@@ -242,7 +289,7 @@ const isFile = (value: unknown): value is FileValue => {
  * holds one, or a list of them — in the order a reader meets them: the
  * view's own record, then the others. Nothing else is changed.
  */
-export function handFiles(props: GuestProps, hand: (file: FileValue, on: GuestNode, field: string) => GuestFile): GuestProps {
+export function handFiles(props: GuestProps, hand: (file: FileValue, on: GuestNode, field: string) => GuestFile | FileValue): GuestProps {
   const node = (one: GuestNode): GuestNode => {
     let changed: Record<string, unknown> | undefined;
     for (const [key, value] of Object.entries(one)) {
@@ -310,7 +357,7 @@ type Entry =
 const said = (n: number) => n.toLocaleString("en-US");
 
 /** The picture, as a sentence about it names it. */
-const namedPicture = (file: FileValue, on: GuestNode) => `The picture "${file.name}" on ${on.label ? `"${on.label}"` : "a record"}`;
+const namedPicture = (file: FileValue, on: GuestNode) => `${file.type === PREVIEW_TYPE ? "The preview of" : "The picture"} "${file.name}" on ${on.label ? `"${on.label}"` : "a record"}`;
 
 /**
  * HOW MANY BYTES A VIEW'S PICTURES COME TO, BEFORE ANY IS FETCHED: the
@@ -376,18 +423,19 @@ export function standInPictures(props: GuestProps, options: { readonly view: str
   let total = 0;
   let count = 0;
   const handed = handFiles(props, (file, on, field) => {
-    if (!isGuestPicture(file) || !chosen(on.kind, field) || !records(on.id)) return guestFileOf(file);
+    const picture = pictureOf(file);
+    if (!picture || !chosen(on.kind, field) || !records(on.id)) return guestFileOf(file);
     const leave = (said: string) => {
       if (!left.includes(said)) left.push(said);
-      return guestFileOf(file, { left: said });
+      return guestFileOf(file, { pictured: true, left: said });
     };
-    if (file.bytes > PICTURE_FETCH_BYTES) return leave(tooHeavyToFetch(file, on));
+    if (picture.bytes > PICTURE_FETCH_BYTES) return leave(tooHeavyToFetch(picture, on));
     if (count >= most) return leave(pastTheMost(options.view, most));
-    const bytes = reckon(file);
-    if (total + bytes > perView) return leave(pastTheViewsBudget(file, on, options.view, perView));
+    const bytes = reckon(picture);
+    if (total + bytes > perView) return leave(pastTheViewsBudget(picture, on, options.view, perView));
     total += bytes;
     count += 1;
-    return guestFileOf(file, { src: options.standIn, ...(thumbNeed !== undefined && !thumbIsSrc(file) ? { thumb: options.standIn } : {}) });
+    return guestFileOf(file, { pictured: true, src: options.standIn, ...(thumbNeed !== undefined && !thumbIsSrc(picture) ? { thumb: options.standIn } : {}) });
   });
   return { props: handed, left };
 }
@@ -568,9 +616,11 @@ export function createGuestPictures(window: Window & typeof globalThis, options:
       const held = new Set<string>();
       /* The records whose pictures it draws, read off what it is handed now: its subject moves with it (Roadmap f-view-pictures-by-record). */
       const records = pictureRecordsOf(options.pictures, props);
-      const handed = handFiles(props, (file, on, field) => {
-        /* A picture the view did not choose — its kind, its field or its record — is handed by its facts alone, never fetched (FR-220). */
-        if (!isGuestPicture(file) || !chosen(on.kind, field) || !records(on.id)) return guestFileOf(file);
+      const handed = handFiles(props, (record, on, field) => {
+        /* The picture it is handed for the file: its own, or its preview's (HQ f-file-values-carry-a-preview). */
+        const file = pictureOf(record);
+        /* A picture the view did not choose — its kind, its field or its record — is handed by its facts alone, never fetched (FR-220); a document, as the record keeps it. */
+        if (!file || !chosen(on.kind, field) || !records(on.id)) return guestFileOf(record);
         /*
          * IN THE ORDER A HEADLESS RUN TAKES THEM (`standInPictures`): too heavy
          * to fetch, then past the most it said it is handed, then past the
@@ -581,27 +631,27 @@ export function createGuestPictures(window: Window & typeof globalThis, options:
         if (file.bytes > PICTURE_FETCH_BYTES) {
           const left = tooHeavyToFetch(file, on);
           tell(left);
-          return guestFileOf(file, { left });
+          return guestFileOf(record, { pictured: true, left });
         }
         if (count >= most) {
           const left = pastTheMost(options.view, most);
           tell(left);
-          return guestFileOf(file, { left });
+          return guestFileOf(record, { pictured: true, left });
         }
         /* Reckoned as the record says it, whatever a fetch came to: which pictures fit is the same on every push (FR-220). */
         const bytes = reckon(file);
         if (total + bytes > perView) {
           const left = pastTheViewsBudget(file, on, options.view, perView);
           tell(left);
-          return guestFileOf(file, { left });
+          return guestFileOf(record, { pictured: true, left });
         }
         total += bytes;
         count += 1;
         held.add(file.href);
         const entry = entries.get(file.href);
-        if (entry?.state === "left") return guestFileOf(file, { left: entry.said });
+        if (entry?.state === "left") return guestFileOf(record, { pictured: true, left: entry.said });
         if (!entry) start(file, on);
-        return guestFileOf(file, entry?.state === "ready" ? { src: entry.url, ...(entry.thumb ? { thumb: entry.thumb.url } : {}), ...(entry.look ? { look: entry.look } : {}) } : {});
+        return guestFileOf(record, entry?.state === "ready" ? { pictured: true, src: entry.url, ...(entry.thumb ? { thumb: entry.thumb.url } : {}), ...(entry.look ? { look: entry.look } : {}) } : { pictured: true });
       });
       /* What no record handed holds any more is let go: its address, and a fetch still on its way. */
       for (const [href, entry] of entries) {

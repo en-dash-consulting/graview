@@ -403,8 +403,8 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
   /* What a view keeps for somebody is theirs: a headless run, told to an agent or a check, is handed none of it. */
   const shown = { ...workerViewProps(store, principal, { manifest, ...(options.input ? { input: options.input } : {}), theme: options.theme ?? HEADLESS_THEME, places: guestPlacesOf(places), ...(computed ? { computed } : {}) }), mine: {} };
   /*
-   * A view that asks for pictures (FR-175) is handed each file without the
-   * host's path. Headless, no bytes are fetched, so a picture comes with a
+   * A view that asks for pictures (FR-175) is handed each picture without
+   * the host's path (a document's preview among them). Headless, no bytes are fetched, so a picture comes with a
    * stand-in `src` — a blank image — as it comes once the host has made it
    * on the page: the view's `<img>` is drawn and judged as it will be there.
    * A picture the page would leave out before fetching it — heavier than

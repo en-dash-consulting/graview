@@ -109,7 +109,8 @@ to it, or kept in step with a Google calendar is `graview-sync`.
    standing and dangling edges — poll it per deployment, curl it self-hosted.
 
    **Files are yours to store.** An `image`/`file` field keeps a `FileValue`;
-   its `href` is your path. Hand `mount` `files: { upload, maxBytes, kinds }`
+   its `href` is your path; a document's `preview: { src }`, a
+   picture of it. Hand `mount` `files: { upload, maxBytes, kinds }`
    (dev: `devFiles()`; under a base, `filesAt(base + "/graview/files")`).
    Serve each as its bytes' type, `nosniff`, a `sandbox` CSP on all but a
    PDF (an SVG runs script otherwise), only to a seat that `seesId` a record

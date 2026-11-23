@@ -942,6 +942,15 @@ view's budget for its pictures, as `limits` says them — comes with
 no `src` and the page's sentence in `left`, said among the problems at
 `pictures` (FR-192).
 
+A document's preview is a picture too (HQ f-file-values-carry-a-preview).
+Where the host made one and keeps it on the file's value (`preview: { src,
+thumb?, width?, height? }`, paths on the host), a view that asks for
+`pictures` is handed the document with `src` (and `thumb`) made from the
+preview's bytes, and its shape, as a picture field's is. Asking for
+pictures takes nothing from a document: a file that is not an image or a
+video comes as the record keeps it, `href` included, so a view can still
+hand it to an act; the preview's own path stays the host's.
+
 A picture says its shape, so a view crops it well (HQ f-view-picture-shape).
 Each `GuestFile` that is a picture carries `width` and `height`, as the
 record says them or as the host measured the picture it hands, and `aspect`,
