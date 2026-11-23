@@ -5,7 +5,7 @@ import { fastOf, HOVER_CHIP_CONFIDENCE, type InlineResult } from "@graview/tools
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { HoverRest } from "./hover-chips.js";
 import { useInlineEnv } from "./inline-ai-env.js";
-import { heldSuggestion, suggestOnce, takeOffer } from "./inline-ai-menu.js";
+import { heldSuggestion, suggestOnce, takeOffer, tellOffers } from "./inline-ai-menu.js";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /*
@@ -58,6 +58,18 @@ export function HoverChip({ rest, hold, leave }: HoverChipProps) {
   const sure = asks ? sureOf(result) : null;
   const shown = sure?.offer.id ?? null;
   const chip = useRef<HTMLButtonElement | null>(null);
+  /* The chip shown, and whether it was taken: told to the host as it goes (`HostAi.onPickOutcome`). */
+  const taken = useRef(false);
+  const showing = useRef<{ readonly env: typeof env; readonly result: InlineResult; readonly offer: AiCandidate } | null>(null);
+  showing.current = sure && result ? { env, result, offer: sure.offer } : null;
+  useEffect(() => {
+    if (shown === null) return;
+    taken.current = false;
+    const was = showing.current;
+    return () => {
+      if (was) tellOffers(was.env, was.result, [was.offer], taken.current ? was.offer.id : null, "chip");
+    };
+  }, [shown, key]);
 
   /* Put away by a press anywhere else, the wheel, or the window moving: a chip never stands over what moved under it. */
   useEffect(() => {
@@ -115,6 +127,7 @@ export function HoverChip({ rest, hold, leave }: HoverChipProps) {
       onPointerEnter={hold}
       onPointerLeave={() => leave()}
       onClick={() => {
+        taken.current = true;
         // The keyboard goes back to the record the chip was about, never <body>, as the chip goes.
         const home = rest.element.closest<HTMLElement>("[tabindex], a[href], button");
         home?.focus({ preventScroll: true });

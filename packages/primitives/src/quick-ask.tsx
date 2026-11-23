@@ -24,6 +24,22 @@ import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, pa
  */
 const toldCard = /* @__PURE__ */ lazyModule(retryingImport(() => import("./told-ui.js")));
 const Rate = /* @__PURE__ */ toldCard.part((module, props: { readonly told: ToldStore; readonly telling: Telling }) => <module.RateTelling {...props} />, { quiet: true });
+/**
+ * FIND, ASKED FOR THESE WORDS: the face's own Find box — the scene's, or the
+ * pages' — given the words as if typed, so it answers them its own way, the
+ * keyboard in it. False where no Find box is drawn.
+ */
+function findIn(within: ParentNode, words: string): boolean {
+  const box = within.querySelector<HTMLInputElement>('[data-testid="find-box"], [data-testid="nav-find"]');
+  if (!box) return false;
+  // A phone's bar keeps the box put away until it is asked for.
+  if (box.getClientRects().length === 0) box.closest<HTMLElement>("[data-graview-app-bar]")?.querySelector<HTMLButtonElement>('[data-testid="app-find-open"]')?.click();
+  Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(box, words);
+  box.dispatchEvent(new Event("input", { bubbles: true }));
+  box.focus({ preventScroll: true });
+  return true;
+}
+
 /** After the next paint: what is kept never holds up what is drawn. */
 const afterPaint = (run: () => void): void => {
   if (typeof requestAnimationFrame === "function") requestAnimationFrame(() => setTimeout(run, 0));
@@ -623,6 +639,44 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
                 </li>
               ))}
             </ul>
+          ) : null}
+          {result?.findInstead ? (
+            /* Beyond the Fast slot alone (Roadmap f-jev-fast-polish): Find, for the same words, and a chat the host connects. */
+            <div data-testid="quick-ask-instead" style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              <button
+                type="button"
+                data-testid="quick-ask-find"
+                onClick={() => {
+                  const asked = result.findInstead!;
+                  const within = pane.current?.closest("[data-graview-embed]") ?? document;
+                  close();
+                  requestAnimationFrame(() => {
+                    if (!findIn(within, asked)) putAway();
+                  });
+                }}
+                style={OFFER}
+              >
+                Find “{result.findInstead}”
+              </button>
+              {env.ai.chat ? (
+                <button
+                  type="button"
+                  data-testid="quick-ask-chat"
+                  onClick={() => {
+                    const chat = env.ai.chat!;
+                    putAway();
+                    try {
+                      chat.open(result.findInstead!, about);
+                    } catch {
+                      // The host's chat that could not open is never the card's failure.
+                    }
+                  }}
+                  style={OFFER}
+                >
+                  {env.ai.chat.label}
+                </button>
+              ) : null}
+            </div>
           ) : null}
           {held?.onCard && held.ghost.interaction === result?.interaction.id ? <GhostTray placement="card" /> : null}
           {result && telling && env.ai.told && telling.interaction === result.interaction.id ? <Rate told={env.ai.told} telling={telling} /> : null}

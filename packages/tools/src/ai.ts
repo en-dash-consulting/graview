@@ -191,7 +191,81 @@ export interface HostAi {
    * asked as it was.
    */
   readonly couldNotFind?: boolean | ((missed: CouldNotFind) => void);
+  /**
+   * HOW SURE THE FAST SLOT MUST BE OF A PICK OR A FILL FOR IT TO BE SHOWN
+   * (Roadmap f-jev-fast-polish): a menu's suggestion, a value it would fill
+   * in, the selection bar's act, the quick ask's pick. One under it is not
+   * shown at all — a menu with fewer suggestions, or none, rather than a
+   * guess said as a suggestion. Between 0 and 1; unsaid, `PICK_FLOOR`.
+   * Only the Fast slot's: a Thinking slot's pick says no confidence.
+   */
+  readonly pickFloor?: number;
+  /**
+   * WHETHER A RESTING POINTER ASKS AHEAD (Roadmap f-jev-fast-polish): the
+   * pointer resting on a record for as long as it takes the menu to get
+   * ready asks the Fast slot for what the menu's AI section would suggest
+   * there, so the answer is drawn with the menu. Once per record until it
+   * changes, as the menu's own ask is, and never on a pointer passing over.
+   * Off unless the host says `true`: like a hover chip, it is a call the
+   * reader did not ask for.
+   */
+  readonly prefetchOnRest?: boolean;
+  /**
+   * A CHAT THE HOST CONNECTS (its own assistant, or a model it reaches
+   * elsewhere): offered on the quick ask's card, beside Find, where the Fast
+   * slot alone could not answer the words — `label` is the button's words
+   * ("Ask in chat"), and `open` is handed the words asked and what they
+   * were about. Unsaid, the card offers Find alone.
+   */
+  readonly chat?: { readonly label: string; readonly open: (said: string, about: string) => void };
+  /**
+   * TOLD HOW EACH PICK A MENU SHOWED ENDED (Roadmap f-jev-fast-polish): taken
+   * (`accepted`) or left (`dismissed`: the menu or the chip put away with it
+   * unpressed), once per showing, with how sure the model was and which
+   * model ranked it — none where no model was asked, as for three
+   * candidates or fewer. For a host that measures the quick AI's quality.
+   * Never shown to a reader; a throw here is ignored.
+   */
+  readonly onPickOutcome?: (outcome: PickOutcome) => void;
 }
+
+/** One pick a menu showed, and how it ended (`HostAi.onPickOutcome`). */
+export interface PickOutcome {
+  /** Where it was shown: the menu's Suggested rows, the menu's AI section, or the hover chip. */
+  readonly where: "suggested" | "menu" | "chip";
+  /** The candidate or the suggestion it was, by its id or key. */
+  readonly pick: string;
+  /** What the row said. */
+  readonly label: string;
+  readonly outcome: "accepted" | "dismissed";
+  /** How sure the model was of it, where a model ranked it. */
+  readonly confidence?: number;
+  /** The model that ranked it; none where no model was asked. */
+  readonly model?: string;
+  /** The interaction it was offered in, where it has one (`AiInteraction.id`). */
+  readonly interaction?: string;
+  /** The record the menu was on, where it was on one. */
+  readonly record?: string;
+}
+
+/** Tells the host how a pick ended, where it asked; its throw is never the menu's. */
+export function tellPickOutcome(ai: HostAi | undefined, outcome: PickOutcome): void {
+  if (!ai?.onPickOutcome || ai.off) return;
+  try {
+    ai.onPickOutcome(outcome);
+  } catch {
+    // The host's ear is never why a menu fails.
+  }
+}
+
+/** How sure the Fast slot must be of a pick or a fill to be shown, where the host did not say (`HostAi.pickFloor`). */
+export const PICK_FLOOR = 0.2;
+
+/** The floor a pick or a fill is held to here. */
+export const pickFloorOf = (ai: HostAi | undefined): number => {
+  const floor = ai?.pickFloor;
+  return typeof floor === "number" && Number.isFinite(floor) ? Math.min(1, Math.max(0, floor)) : PICK_FLOOR;
+};
 
 /** What a quick ask could not find, as `HostAi.couldNotFind` is told it. */
 export interface CouldNotFind {
@@ -353,6 +427,20 @@ export const aiTalks = (ai: HostAi): boolean => !aiOff(ai) && (ai.complete !== u
 
 /** Said, once, when an ask needs a model and the host gave none. */
 export const NO_AI_SAID = "I can answer about what's in this app. Open questions need AI, which isn't on here.";
+
+/** Whether a resting pointer asks ahead for the menu's suggestions (`HostAi.prefetchOnRest: true`), with a Fast slot that asks as a menu opens. */
+export const prefetchesOnRest = (ai: HostAi | undefined): boolean => ai?.prefetchOnRest === true && suggestsOnOpen(ai);
+
+/**
+ * Said where only the Fast slot was given and it could not answer the words
+ * (Roadmap f-jev-fast-polish): what it can do instead — never "These fit",
+ * nor that the AI had no answer. The card offers Find beside it, and a chat
+ * the host connects (`HostAi.chat`).
+ */
+export const FAST_ONLY_SAID = "I can't answer that in words here. I can do things with what is here: change a record, fill one in, or take you to a place. Find can look for it.";
+
+/** The same, where the Fast slot found something here that acts on the words. */
+export const FAST_ONLY_PICKED = "I can't answer that in words here, but these act on it. Find can look for it.";
 
 /** The quiet note under an answer a model gave. Nothing is said under one the graph gave. */
 export const ANSWERED_WITH_AI = "Answered with AI";

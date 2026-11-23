@@ -52,7 +52,7 @@ import {
   type PanelCandidate,
   type PlanNeed,
 } from "@graview/core/catalog";
-import type { AiPrice, AnswerProvider, AnswerReply, FastProvider, HostAi, ThinkingProvider } from "./ai.js";
+import { FAST_ONLY_PICKED, FAST_ONLY_SAID, pickFloorOf, type AiPrice, type AnswerProvider, type AnswerReply, type FastProvider, type HostAi, type ThinkingProvider } from "./ai.js";
 import { firstJsonObject } from "./intelligence.js";
 import { COULD_NOT_WORK_OUT, forThePerson } from "./sentences.js";
 import { factsOf, todayWords } from "./facts.js";
@@ -166,6 +166,13 @@ export interface InlineResult {
   readonly reading?: Reading;
   /** A person said as a pronoun, and whom it was taken as ("her" as Nora): the card says it, so a reply can correct it. */
   readonly taken?: { readonly said: string; readonly as: string };
+  /**
+   * WORDS THE FAST SLOT ALONE COULD NOT ANSWER (Roadmap f-jev-fast-polish):
+   * with no Answer, Thinking or `turn` slot, a question in words is said to
+   * be beyond it (`FAST_ONLY_SAID`), and these are the words Find is offered
+   * to look for — beside a chat the host connects, where it gave one.
+   */
+  readonly findInstead?: string;
 }
 
 /** What an answer found the app lacks — the need, named — and what would finish the ask. */
@@ -265,15 +272,15 @@ function choiceAmong(candidates: readonly AiCandidate[], instructions: string): 
   };
 }
 
-/** The candidates a choice's probabilities rank, best first. */
-function ranked(answer: Answer | undefined, of: (key: string) => AiCandidate | undefined, most: number): { readonly candidate: AiCandidate; readonly confidence: number }[] {
+/** The candidates a choice's probabilities rank, best first; none the model was less sure of than `floor` (`HostAi.pickFloor`). */
+function ranked(answer: Answer | undefined, of: (key: string) => AiCandidate | undefined, most: number, floor = 0): { readonly candidate: AiCandidate; readonly confidence: number }[] {
   if (answer?.type !== "choice") return [];
   const choice = answer as ChoiceAnswer;
   const order = Object.entries(choice.probabilities).sort((a, b) => b[1] - a[1]);
   if (!order.some(([key]) => key === choice.choice)) order.unshift([choice.choice, choice.confidence]);
   return order.flatMap(([key, confidence]) => {
     const candidate = of(key);
-    return candidate ? [{ candidate, confidence }] : [];
+    return candidate && confidence >= floor ? [{ candidate, confidence }] : [];
   }).slice(0, most);
 }
 
@@ -299,12 +306,14 @@ export async function suggestHere<S extends AnySchema>(ai: HostAi, ask: InlineAs
   if (choices.length === 0) return { interaction: { ...asked.entry, ask: { kind: "suggest", said }, offered: [], outcome: "offered", usage: [] }, offers: [] };
   const fast = fastOf(ai);
   const thinking = thinkingOf(ai);
+  if (!fast && !thinking) return failedResult(asked, said, "suggest", NO_MODEL);
   let picked: { candidate: AiCandidate; confidence?: number }[] = [];
   try {
     if (fast) {
       const { question, of } = choiceAmong(choices, "Which of these would the person most likely want to do next, here?");
       const answers = await decided(fast, { ...asked.state, candidates: choices.map((candidate) => ({ id: candidate.id, type: candidate.type, says: candidate.description })) }, { next: question }, asked.meter);
-      picked = ranked(answers["next"], of, most);
+      // Only what the model was sure enough of: fewer suggestions, or none, rather than a guess said as one.
+      picked = ranked(answers["next"], of, most, pickFloorOf(ai));
     } else if (thinking) {
       const parsed = (await thought(
         thinking,
@@ -315,7 +324,7 @@ export async function suggestHere<S extends AnySchema>(ai: HostAi, ask: InlineAs
       )) as { pick?: unknown } | undefined;
       const ids = Array.isArray(parsed?.pick) ? parsed.pick.filter((one): one is string => typeof one === "string") : [];
       picked = ids.flatMap((id) => choices.filter((candidate) => candidate.id === id)).slice(0, most).map((candidate) => ({ candidate }));
-    } else return failedResult(asked, said, "suggest", NO_MODEL);
+    }
   } catch (error) {
     return failedResult(asked, said, "suggest", error instanceof Error ? error.message : String(error));
   }
@@ -365,7 +374,7 @@ export async function suggestForSeveral<S extends AnySchema>(ai: HostAi, ask: Se
     const { question, of } = choiceAmong(choices, `Which of these would the person most likely want to do next with the ${count} records they chose together?`);
     const answers = await decided(fast, { ...asked.state, candidates: choices.map((candidate) => ({ id: candidate.id, type: candidate.type, says: candidate.description })) }, { next: question }, asked.meter);
     // The first always; another only where the model gave it a fair chance — the bar is no place for a long shot.
-    picked = ranked(answers["next"], of, most).filter((pick, at) => at === 0 || pick.confidence >= SEVERAL_SECOND);
+    picked = ranked(answers["next"], of, most, pickFloorOf(ai)).filter((pick, at) => at === 0 || pick.confidence >= SEVERAL_SECOND);
   } catch (error) {
     return failedResult(asked, said, "suggest", error instanceof Error ? error.message : String(error));
   }
@@ -403,7 +412,8 @@ export async function fillHere<S extends AnySchema>(ai: HostAi, ask: InlineAsk<S
       for (const one of asking) {
         // A relation that holds many may take more than one: the likely ones, the first always.
         const many = !isField(ask.store, ask.target, one.field) && cardinalityOf(ask.store, ask.target, one.field) !== "one";
-        chosen.push(...ranked(answers[one.key], one.of, many ? 3 : 1).filter((pick, at) => at === 0 || pick.confidence >= 0.4));
+        // A value the model was not sure enough of is not proposed at all (`HostAi.pickFloor`).
+        chosen.push(...ranked(answers[one.key], one.of, many ? 3 : 1, pickFloorOf(ai)).filter((pick, at) => at === 0 || pick.confidence >= 0.4));
       }
     } else if (thinking) {
       const parsed = (await thought(
@@ -685,6 +695,8 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
   // What the model was told, kept to ask it again.
   let promptOf: string | undefined;
   let text = "";
+  // The words Find is offered for, where the Fast slot alone could not answer them.
+  let findInstead: string | undefined;
   let picked: { candidate: AiCandidate; confidence?: number }[] = [];
   const pickedOf = (ids: readonly unknown[]) => ids.flatMap((id) => choices.filter((candidate) => candidate.id === id)).slice(0, 3).map((candidate) => ({ candidate }));
   try {
@@ -776,11 +788,20 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
           ...(typeof parsed.value === "string" || typeof parsed.value === "number" ? { value: String(parsed.value) } : {}),
         };
       }
-    } else if (fast && choices.length > 0) {
-      const { question, of } = choiceAmong(choices, `Which of these best answers, or acts on: ${said}`);
-      const answers = await decided(fast, { ...asked.state, asked: said, candidates: choices.map((candidate) => ({ id: candidate.id, type: candidate.type, says: candidate.description })) }, { answer: question }, asked.meter);
-      picked = ranked(answers["answer"], of, 3);
-      text = picked.length > 0 ? `These fit “${said}”.` : "";
+    } else if (fast) {
+      /*
+       * THE FAST SLOT ALONE (Roadmap f-jev-fast-polish): it picks among what
+       * can be done here, and cannot write an answer in words. Said so —
+       * what it can do instead, and Find offered for the words — never
+       * "These fit" over a pick, nor that the AI had no answer.
+       */
+      if (choices.length > 0) {
+        const { question, of } = choiceAmong(choices, `Which of these best answers, or acts on: ${said}`);
+        const answers = await decided(fast, { ...asked.state, asked: said, candidates: choices.map((candidate) => ({ id: candidate.id, type: candidate.type, says: candidate.description })) }, { answer: question }, asked.meter);
+        picked = ranked(answers["answer"], of, 3, pickFloorOf(ai));
+      }
+      findInstead = said;
+      text = picked.length > 0 ? FAST_ONLY_PICKED : FAST_ONLY_SAID;
     } else return failedResult(asked, said, "ask", NO_MODEL);
   } catch (error) {
     return failedResult(asked, said, "ask", error instanceof Error ? error.message : String(error));
@@ -807,7 +828,14 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
     missing = undefined;
     each = undefined;
     picked = [];
+    findInstead = undefined;
     text = outsideWords(ask.store, said, ask.target.on === "record" ? ask.target.id : undefined);
+  }
+  // Beyond the Fast slot alone, and nothing here acts on it: the seat could not answer, kept as such (Roadmap f-friction-log).
+  if (findInstead !== undefined && picked.length === 0) {
+    const place = ask.target.on === "place" || ask.target.on === "lens" ? ask.target.place : undefined;
+    const kind = ask.target.on === "list" ? ask.target.kind : ask.target.on === "lens" ? ask.target.kind : undefined;
+    recordFriction(ask.store, { type: "unanswered", question: said, ...(place ? { place } : {}), ...(kind ? { kind } : {}) }, ask.principal);
   }
   // What the app lacks, where the host asked to hear it (`HostAi.couldNotFind`): kept in the friction log with the words, and told to the host.
   if (missing && ai.couldNotFind) {
@@ -892,6 +920,8 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
     ...(missing ? { missing: missing.need && reading && "link" in missing.need ? { ...missing, need: { link: { ...missing.need.link, on: reading.kind } } } : missing } : {}),
     ...(reading ? { reading } : {}),
     ...(taken ? { taken } : {}),
+    // A change proposed is an answer the card has: Find is offered only where nothing was.
+    ...(findInstead !== undefined && !(ghost && ghost.proposals.length > 0) ? { findInstead } : {}),
   };
 }
 

@@ -3,6 +3,7 @@ import { aiTargetOf, catalogOf, existingViewsOf, recordsOfTarget, type AiCandida
 import { useAiDeskState, useGraview, useLiveStore, type MenuTarget } from "@graview/react/provider";
 import { deriveAffordances } from "@graview/tools/derive";
 import { acceptedEntry, acceptGhost, dismissedEntry, fillHere, ghostOf, interactionId, panelHere, proposalOf, recordHere, suggestHere, suggestsOnOpen, thinkingOf, type InlineAsk, type InlineResult } from "@graview/tools/inline-ai";
+import { tellPickOutcome } from "@graview/tools/frame";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useInlineEnv, type InlineEnv } from "./inline-ai-env.js";
 import { openQuickAsk, whereMenuStands } from "./quick-ask-desk.js";
@@ -209,6 +210,38 @@ export function suggestOnce(env: InlineEnv, target: AiTarget, asker?: SuggestAsk
 }
 
 /**
+ * ASKED AHEAD (Roadmap f-jev-fast-polish): what the menu's AI section would
+ * suggest on what the pointer rests on, asked now through the same keeping
+ * (`suggestOnce`), so the section opened there draws it at once. Only where
+ * the section would ask as it opens; once per target until it changes.
+ */
+export function suggestAhead(env: InlineEnv, menu: MenuTarget): void {
+  if (!suggestsOnOpen(env.ai)) return;
+  const target = aiTargetOf(menu, (id) => env.store.graph.has(id));
+  if (heldSuggestion(env, target) !== undefined) return;
+  void suggestOnce(env, target);
+}
+
+/** Each offer a showing put before the person, told to the host as taken or left (`HostAi.onPickOutcome`). */
+export function tellOffers(env: InlineEnv, result: InlineResult, offers: readonly AiCandidate[], taken: string | null, where: "menu" | "chip"): void {
+  const model = result.interaction.usage?.at(-1)?.model;
+  const record = result.interaction.target.on === "record" || result.interaction.target.on === "field" ? result.interaction.target.id : undefined;
+  for (const offer of offers) {
+    const confidence = result.interaction.offered.find((one) => one.id === offer.id)?.confidence;
+    tellPickOutcome(env.ai, {
+      where,
+      pick: offer.id,
+      label: offer.label,
+      outcome: offer.id === taken ? "accepted" : "dismissed",
+      interaction: result.interaction.id,
+      ...(confidence !== undefined ? { confidence } : {}),
+      ...(model ? { model } : {}),
+      ...(record ? { record } : {}),
+    });
+  }
+}
+
+/**
  * TAKE ONE OF A SUGGESTION'S OFFERS: a change waits as a ghost; a panel is
  * drawn; a place or a record is gone to — each the way the face it was
  * asked on goes. Its entry is kept; a failure is answered in a sentence,
@@ -332,6 +365,22 @@ export function InlineAiMenu({ target: menu, close }: InlineAiMenuProps) {
   /* The suggestions and the views it has share the three rows the suggestions had: a place offered already is not offered again. */
   const offers = (suggested?.offers ?? []).filter((offer) => !(offer.type === "place" && existing.some((view) => view.place === offer.place))).slice(0, Math.max(0, 3 - existing.length));
   const failed = suggested?.interaction.outcome === "failed" ? (suggested.interaction.failed ?? "The AI could not suggest anything here.") : null;
+  /* What this showing put before the person, and which they took: told to the host as the section goes (`HostAi.onPickOutcome`). */
+  const showing = useRef<{ env: InlineEnv; result: InlineResult | null; offers: readonly AiCandidate[]; taken: string | null }>({ env, result: null, offers: [], taken: null });
+  useLayoutEffect(() => {
+    showing.current.env = env;
+    if (suggested && suggested.interaction.outcome !== "failed") {
+      showing.current.result = suggested;
+      showing.current.offers = offers;
+    }
+  });
+  useEffect(
+    () => () => {
+      const shown = showing.current;
+      if (shown.result && shown.offers.length > 0) tellOffers(shown.env, shown.result, shown.offers, shown.taken, "menu");
+    },
+    [],
+  );
   /* "Suggest…" pressed from the keyboard and gone with the answer: the keyboard goes to the first row after it — never <body>. */
   const keyboardOnSuggest = useRef(false);
   const section = useRef<HTMLDivElement | null>(null);
@@ -424,7 +473,10 @@ export function InlineAiMenu({ target: menu, close }: InlineAiMenuProps) {
         {offers.map((offer) => (
           <li key={offer.id}>
             {/* One line, whatever its words: a suggestion two lines tall would push the rows under it down. */}
-            <button type="button" data-menu-item={`ai-offer:${offer.id}`} data-ai-offer={offer.id} data-ai-offer-type={offer.type} title={offer.label} onClick={() => run((landing) => takeOffer(env, suggested!, offer, landing))} style={{ ...ROW, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <button type="button" data-menu-item={`ai-offer:${offer.id}`} data-ai-offer={offer.id} data-ai-offer-type={offer.type} title={offer.label} onClick={() => {
+                showing.current.taken = offer.id;
+                run((landing) => takeOffer(env, suggested!, offer, landing));
+              }} style={{ ...ROW, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {offer.label}
               <span style={{ color: "var(--graview-ink-faint)" }}> · {offer.type === "panel" ? "a panel" : offer.type === "place" ? "go there" : offer.type === "record" ? "open it" : "suggested"}</span>
             </button>

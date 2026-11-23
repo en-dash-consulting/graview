@@ -654,7 +654,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
         where={() => (shown === "pages" ? placeOfPath(pageAt) : shown === "picture" ? { place: "picture" } : sceneReportWhere(spot.view?.focusId))}
       />
       {/* A first look at the app's own controls, once, over whichever face is drawn. */}
-      <FrameFirstLook rootRef={rootRef} firstLook={props.firstLook} app={appKeyOf(brand ?? { name: app.name }, app.schema)} />
+      <FrameFirstLook rootRef={rootRef} firstLook={props.firstLook} app={appKeyOf(brand ?? { name: app.name }, app.schema)} ai={props.ai} />
       <FaceBoundary module="@graview/react" report={report} content>
       <PartsWatchContext.Provider value={parts}>
       <GraviewProvider store={store} views={views} initialView={initialView} scheme={scheme} {...providerProps(props, presence, brand)} menuLink={menuLink} {...(props.onSeat ? { onSeat: props.onSeat } : {})}>

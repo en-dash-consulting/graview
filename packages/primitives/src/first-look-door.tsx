@@ -1,5 +1,6 @@
 import { retryingImport } from "@graview/core/retry";
 import { lazyModule } from "@graview/react/provider";
+import type { HostAi } from "@graview/tools/frame";
 import { Suspense, useCallback, useRef, useState, type ComponentType } from "react";
 
 /**
@@ -32,8 +33,9 @@ import { Suspense, useCallback, useRef, useState, type ComponentType } from "rea
  * - `find` — Find
  * - `profile` — who you are, and your own settings
  * - `home` — the app's name, the way home
+ * - `menu` — the menu on a record: a right-click, a long press, and the hover chip; pointed at beside the first record drawn; the framework's own hint for it is shown only where the host gave the app AI
  */
-export const FIRST_LOOK_ANCHORS = ["faces", "problems", "activity", "ask", "find", "profile", "home"] as const;
+export const FIRST_LOOK_ANCHORS = ["faces", "problems", "activity", "ask", "find", "profile", "home", "menu"] as const;
 export type FirstLookAnchor = (typeof FIRST_LOOK_ANCHORS)[number];
 
 /** One hint: the control it points at, what it is called, and what it is for. */
@@ -101,6 +103,8 @@ export interface FirstLookHintsProps {
   readonly steps: readonly FirstLookStep[];
   /** Told how it ended, or null when there was nothing drawn to point at. */
   readonly onEnd: (how: FirstLookEnd | null) => void;
+  /** The host's AI, where the door is drawn outside the provider that holds it: the menu's hint is shown only where there is AI to meet in it. */
+  readonly ai?: HostAi;
 }
 
 const hintsModule = /* @__PURE__ */ lazyModule(retryingImport(() => import("./first-look.js")));
@@ -119,13 +123,15 @@ export interface FirstLookDoorProps {
   readonly root: () => Element | null;
   /** The app the browser remembers it for (`appKeyOf`). */
   readonly app: string;
+  /** The host's AI, where the door is drawn outside the provider that holds it (an embed's frame). Unsaid, the provider's. */
+  readonly ai?: HostAi;
 }
 
 /**
  * THE DOOR: nothing at all once it has been seen, or when nobody turned it
  * on; else the hints, fetched as they are first shown.
  */
-export function FirstLookDoor({ firstLook, root, app }: FirstLookDoorProps) {
+export function FirstLookDoor({ firstLook, root, app, ai }: FirstLookDoorProps) {
   const options = useRef<FirstLookOptions | null>(null);
   options.current = firstLook === true ? {} : firstLook ? firstLook : null;
   const [showing, setShowing] = useState(() => options.current !== null && typeof window !== "undefined" && !seenBefore(options.current, app));
@@ -143,7 +149,7 @@ export function FirstLookDoor({ firstLook, root, app }: FirstLookDoorProps) {
   if (!showing || options.current === null) return null;
   return (
     <Suspense fallback={null}>
-      <Hints root={root} steps={options.current.steps ?? []} onEnd={end} />
+      <Hints root={root} steps={options.current.steps ?? []} onEnd={end} {...(ai ? { ai } : {})} />
     </Suspense>
   );
 }

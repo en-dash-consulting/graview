@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
 import { kindsOf } from "@graview/layout/view";
 import { useGraviewIfAny } from "./context.js";
-import type { HostMenuAt, HostMenuItem, MenuSection, MenuSectionSource, MenuTarget } from "./menu-types.js";
+import type { HostMenuAt, HostMenuItem, MenuReadying, MenuSection, MenuSectionSource, MenuTarget } from "./menu-types.js";
 
 const MenuSectionsContext = createContext<readonly MenuSectionSource[]>([]);
 
@@ -110,13 +110,13 @@ function useSources(): readonly MenuSectionSource[] {
  * the pointer rests on a record, a card, a row or a kind, the keyboard
  * lands on one, or a finger goes down on one — each section's `prepare`.
  */
-export function useMenuPrepare(): (target: MenuTarget) => void {
+export function useMenuPrepare(): (target: MenuTarget, why?: MenuReadying) => void {
   const sources = useSources();
   return useCallback(
-    (target: MenuTarget) => {
+    (target: MenuTarget, why?: MenuReadying) => {
       for (const source of sources) {
         try {
-          source(target)?.prepare?.();
+          source(target)?.prepare?.(why);
         } catch {
           // A host's section that throws is left out, never the menu.
         }

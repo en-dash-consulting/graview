@@ -38,6 +38,11 @@
  * marked on the thing itself and its answer a card beside it whose change
  * is accepted and taken back; and with AI off the field only filters.
  *
+ * And Jev's quick AI in the menu (Roadmap f-jev-fast-polish): Suggested
+ * asks the Fast slot nothing for three rows or fewer, a resting pointer
+ * asks ahead only where the host lets it, and the first look points at the
+ * menu on a record.
+ *
  *   node scripts/verify-menu.mjs [--engine=chromium|webkit|firefox]
  */
 import { unfold } from "./lib/menu-more.mjs";
@@ -156,7 +161,10 @@ async function serveMenuHost() {
           routing: "address",
           basePath: "${MENU_BASE}/",
           // A host's own row below the AI's, as Homeflow's "Send feedback" is: the row the jumpy menu moved.
-          ai: window.__todoAi,
+          // ?prefetch=1: a host that lets a resting pointer ask ahead (Roadmap f-jev-fast-polish).
+          ai: window.__todoAi && new URLSearchParams(location.search).get("prefetch") === "1" ? { ...window.__todoAi, prefetchOnRest: true } : window.__todoAi,
+          // ?firstLook=1: the first look, as Cloud turns it on for a new app.
+          ...(new URLSearchParams(location.search).get("firstLook") === "1" ? { firstLook: { seen: false } } : {}),
           menuSections: [() => ({ id: "host", items: [{ id: "send-feedback", label: "Send feedback", run: () => (window.__feedback = (window.__feedback ?? 0) + 1) }] })],
           // And Cloud's own row, after every row of the framework's (Roadmap f-host-context-menu-items).
           menuItems: [{ id: "own-ai", label: "Make changes in your own AI", run: (at) => (window.__ownAi = (window.__ownAi ?? []).concat([at])) }],
@@ -2214,6 +2222,133 @@ try {
     report.checks.labelsAtOneSpotAreSaidTogetherNeverOverEachOther = {
       ...labels,
       ok: labels.said.some((text) => /Nora's agent/.test(text) && /Graview/.test(text) && text.includes(" · ")) && labels.said.includes("Nora") && labels.over.length === 0,
+    };
+    await context.close();
+  }
+
+  /*
+   * JEV'S QUICK AI IN THE MENU (Roadmap f-jev-fast-polish), on the pages of
+   * an app mounted as Cloud mounts one, its Fast slot the fake host's,
+   * every call it is asked kept with what it was asked:
+   *
+   *  - the Suggested rows are drawn in the menu's first frame and, three or
+   *    fewer, ask the Fast slot nothing (`pick` is their question);
+   *  - with a host that lets a resting pointer ask ahead, the pointer
+   *    resting on a row asks once for the AI section's suggestions (`next`),
+   *    and the section opened there draws them at once, with no Thinking…;
+   *  - the first look points at the menu on a record: a right-click, a long
+   *    press, beside the first record drawn.
+   */
+  const COUNT_THE_FAST_SLOT = () => {
+    window.__fastAsked = [];
+    const counting = () => {
+      const ai = window.__todoAi;
+      if (!ai?.fast || ai.fast.__counted) return;
+      const decide = ai.fast.decide;
+      ai.fast = { ...ai.fast, __counted: true, decide: (state, questions) => (window.__fastAsked.push({ at: performance.now(), asked: Object.keys(questions) }), decide(state, questions)) };
+    };
+    counting();
+    // The fake host AI is set by another init script; counted once it is there.
+    const wait = setInterval(() => (counting(), window.__todoAi?.fast?.__counted && clearInterval(wait)), 5);
+  };
+  const askedOf = (on, question) => on.evaluate((question) => (window.__fastAsked ?? []).filter((one) => one.asked.includes(question)).length, question);
+  reach("theMenuAsksJevNothingForWhatFitsItsRows");
+  {
+    const context = await browser.newContext({ viewport: { width: 1560, height: 940 } });
+    await context.addInitScript(FAKE_AI);
+    await context.addInitScript(COUNT_THE_FAST_SLOT);
+    const on = await context.newPage();
+    on.on("pageerror", (error) => errors.push(`fits: ${error.message}`));
+    if (!menuHost) menuHost = await serveMenuHost();
+    await on.goto(`http://localhost:${portFor("menu-host")}${MENU_BASE}/tasks`, { waitUntil: "load" });
+    await on.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+    await on.waitForSelector('[data-graview-record="t1"]', { timeout: 30_000 });
+    await on.click('[data-graview-record="t1"]', { button: "right" });
+    await on.waitForSelector(MENU, { timeout: 10_000 });
+    const suggestedAtOnce = await on.evaluate(() => document.querySelectorAll('[data-testid="context-menu"] [data-menu-section="suggested"] [data-menu-item]').length);
+    await on.waitForTimeout(800);
+    const suggestedAfter = await on.evaluate(() => document.querySelectorAll('[data-testid="context-menu"] [data-menu-section="suggested"] [data-menu-item]').length);
+    const picksAsked = await askedOf(on, "pick");
+    report.checks.theMenuAsksJevNothingForWhatFitsItsRows = {
+      suggestedAtOnce,
+      suggestedAfter,
+      picksAsked,
+      ok: suggestedAtOnce > 0 && suggestedAtOnce <= 3 && suggestedAfter === suggestedAtOnce && picksAsked === 0,
+    };
+    await context.close();
+  }
+
+  reach("aRestingPointerAsksAheadWhereTheHostLetsIt");
+  {
+    const said = {};
+    for (const leg of ["ahead", "not"]) {
+      const context = await browser.newContext({ viewport: { width: 1560, height: 940 } });
+      await context.addInitScript(FAKE_AI);
+      await context.addInitScript(COUNT_THE_FAST_SLOT);
+      const on = await context.newPage();
+      on.on("pageerror", (error) => errors.push(`ahead ${leg}: ${error.message}`));
+      await on.goto(`http://localhost:${portFor("menu-host")}${MENU_BASE}/tasks${leg === "ahead" ? "?prefetch=1" : ""}`, { waitUntil: "load" });
+      await on.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+      await on.waitForSelector('[data-graview-record="t1"]', { timeout: 30_000 });
+      await on.hover('[data-graview-record="t1"]');
+      // The fake Fast slot takes two seconds over its suggestions, as a real one may: asked on the rest, answered before the click.
+      await on.waitForTimeout(3200);
+      const askedOnRest = await askedOf(on, "next");
+      await on.click('[data-graview-record="t1"]', { button: "right" });
+      await on.waitForSelector(MENU, { timeout: 10_000 });
+      await unfold(on);
+      const drawnAtOnce = await on.evaluate(() => ({
+        offers: document.querySelectorAll('[data-testid="context-menu"] [data-ai-offer]').length,
+        thinking: Boolean(document.querySelector('[data-testid="context-menu"] [data-testid="inline-ai-thinking"]')),
+      }));
+      said[leg] = { askedOnRest, ...drawnAtOnce, askedAfter: await askedOf(on, "next") };
+      await context.close();
+    }
+    report.checks.aRestingPointerAsksAheadWhereTheHostLetsIt = {
+      ...said,
+      ok: said.ahead.askedOnRest === 1 && said.ahead.offers > 0 && !said.ahead.thinking && said.ahead.askedAfter === 1 && said.not.askedOnRest === 0,
+    };
+  }
+
+  reach("theFirstLookPointsAtTheMenuOnARecord");
+  {
+    const context = await browser.newContext({ viewport: { width: 1560, height: 940 } });
+    await context.addInitScript(FAKE_AI);
+    const on = await context.newPage();
+    on.on("pageerror", (error) => errors.push(`first look: ${error.message}`));
+    await on.goto(`http://localhost:${portFor("menu-host")}${MENU_BASE}/tasks?firstLook=1`, { waitUntil: "load" });
+    await on.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+    const seen = [];
+    for (let turn = 0; turn < 8; turn++) {
+      const hint = await on.waitForSelector('[data-testid="first-look"]', { timeout: 15_000 }).catch(() => null);
+      if (!hint) break;
+      seen.push(
+        await on.evaluate(() => {
+          const shown = document.querySelector('[data-testid="first-look"]');
+          const box = shown.getBoundingClientRect();
+          const record = [...document.querySelectorAll("[data-graview-record], [data-graview-pick], [data-graview-view][tabindex]")].find((one) => one.getBoundingClientRect().width > 1)?.getBoundingClientRect();
+          return {
+            anchor: shown.getAttribute("data-first-look-anchor"),
+            title: shown.querySelector('[data-testid="first-look-title"]')?.textContent ?? "",
+            words: shown.querySelector('[data-testid="first-look-words"]')?.textContent ?? "",
+            covers: record ? box.left < record.right && box.right > record.left && box.top < record.bottom && box.bottom > record.top : null,
+          };
+        }),
+      );
+      const done = await on.evaluate(() => {
+        const button = document.querySelector('[data-testid="first-look-next"], [data-testid="first-look-done"]');
+        const last = button?.getAttribute("data-testid") === "first-look-done";
+        button?.click();
+        return last;
+      });
+      await on.waitForTimeout(200);
+      if (done) break;
+    }
+    const menuHint = seen.find((one) => one.anchor === "menu");
+    report.checks.theFirstLookPointsAtTheMenuOnARecord = {
+      seen: seen.map((one) => one.anchor),
+      menuHint,
+      ok: menuHint !== undefined && /Right-click/.test(menuHint.title) && /press and hold/i.test(menuHint.words) && menuHint.covers === false,
     };
     await context.close();
   }
