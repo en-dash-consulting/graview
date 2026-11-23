@@ -6,6 +6,7 @@ import type { CalendarOptions } from "./lens/calendar-options.js";
 import { createCalendarLens } from "./lens/calendar-view.js";
 import { createColumnsLens, type ColumnsOptions } from "./lens/columns.js";
 import { createCoverageLens, type CoverageOptions } from "./lens/coverage.js";
+import { createMapLens, type MapOptions } from "./lens/map.js";
 import { createPlanLens } from "./lens/plan-lens.js";
 import type { PlanLensOptions } from "./lens/plan-state.js";
 import { reachLens } from "./lens/reach.js";
@@ -59,6 +60,8 @@ function made(lens: DrawnLens): ViewComponent<AnySchema> {
       return reachLens.View as ViewComponent<AnySchema>;
     case "columns":
       return createColumnsLens<AnySchema>(options as unknown as ColumnsOptions).View as ViewComponent<AnySchema>;
+    case "map":
+      return createMapLens<AnySchema>(options as unknown as MapOptions).View as ViewComponent<AnySchema>;
     case "blocks":
       return blocksLens(compileBlocks(Array.isArray(options["blocks"]) ? (options["blocks"] as readonly unknown[]) : []), lens.as);
   }

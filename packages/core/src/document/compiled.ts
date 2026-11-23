@@ -35,6 +35,7 @@ import { appLinkSchema } from "../schema/app-link.js";
 import { linkedEdges, localEdges, type LinkedReader } from "../schema/linked.js";
 import { linkedSchema } from "../schema/linked-schema.js";
 import { repeatKey, repeatSchema } from "../repeat.js";
+import { geoKey, geoSchema } from "../geo.js";
 import { markTyped, PHONE } from "../schema/typed-fields.js";
 import { evaluateExpr, ExprBudgetError, ExprEvalError, GRAPH_FACTS, unreadSaid, type KindShape, type UnreadLink, type Value } from "./expr/evaluate.js";
 import type { Expr } from "./expr/parse.js";
@@ -463,6 +464,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
       shape[field] = fieldSchema(f, !f.required, money);
       // How a date repeats, kept beside it (`repeat.ts`); none (null) when it no longer does.
       if (f.repeats) shape[repeatKey(field)] = z.optional(repeatSchema());
+      // Where a place is, as the host found it (`geo.ts`): kept beside its words, never typed.
+      if (f.type === "place") shape[geoKey(field)] = z.optional(geoSchema());
     }
     /*
      * A RELATION TO ANOTHER APP'S KINDS (FR-171) is kept on the record that

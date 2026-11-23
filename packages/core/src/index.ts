@@ -45,6 +45,12 @@ export type { LinkedReads } from "./schema/linked-reads.js";
 export { dateOn, isRepeat, isRepeatField, nextOccurrence, occurrences, repeatedBy, repeatKey, validRepeat, WEEKDAYS } from "./repeat.js";
 export type { Repeat, Weekday } from "./repeat.js";
 export { repeatField } from "./schema/repeat-field.js";
+// Where a place is, as the host found it: kept beside the place's words as `<field>Geo`, pinned by the map lens.
+// A record's point as a map reads it (`geoOf`, `mapPointOf`) is `@graview/core/describe`'s: a page that draws no map carries none of it.
+export { geoKey, geoOfField, isPlacePoint, validGeo } from "./geo.js";
+export { withPlacePoints } from "./place-points.js";
+export type { Geo } from "./geo.js";
+export { placeGeoField } from "./schema/geo-field.js";
 export { markdownField } from "./schema/markdown-field.js";
 // A phone, a place and a length of time: a tel: link, a link to the reader's maps app, minutes said "1 h 30 min".
 export type { TypedField } from "./schema/typed-fields.js";
@@ -443,7 +449,7 @@ export {
 // A place's address under a host's base path, and back (FR-106).
 export { addressOf, basePathOf, pathWithin } from "./address.js";
 // Every place an app has (`placesOf`, `placesFrom`) is `@graview/core/seat`'s, and judging the arrangement (`arrangementFindings`) `@graview/core/check`'s (FR-179).
-export type { ArrangedEntry, DeclaredLenses, DrawnLens, Opening, PlaceFinding, ShippedLensName, UndrawnLens } from "./places.js";
+export type { ArrangedEntry, DeclaredLenses, DrawnLens, MapCoordinates, Opening, PlaceFinding, ShippedLensName, UndrawnLens } from "./places.js";
 export type { AppPlace } from "./app-places.js";
 export type {
   Cardinality,

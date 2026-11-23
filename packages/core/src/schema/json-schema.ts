@@ -5,6 +5,7 @@ import { nodeRefArgs } from "../mutations/node-ref.js";
 import { isAppLinkField } from "./app-link.js";
 import { linkedRelationOf } from "./linked.js";
 import { EVERY, isRepeatField, WEEKDAYS } from "../repeat.js";
+import { GEO_MARK } from "../geo.js";
 import { isMarkdownField } from "./markdown.js";
 import { typedFieldOf } from "./typed-field-of.js";
 import { amountOf } from "./amount-mark.js";
@@ -20,6 +21,21 @@ export type { JsonSchema };
  * validation, TypeScript inference, and the JSON Schema an agent tool
  * definition needs. Nothing is written twice, so nothing drifts.
  */
+/** Whether a schema is a place's point (`geoSchema`), under optional and nullable. */
+const isPoint = (schema: unknown): boolean => {
+  const def = z.defOf(schema) as { readonly innerType?: unknown; readonly [GEO_MARK]?: 1 } | undefined;
+  return !!def && (def[GEO_MARK] === 1 || isPoint(def.innerType));
+};
+
+/** A point as JSON Schema says it, for a tool's caller. */
+const GEO_JSON = {
+  type: "object",
+  description: "Where the place beside it is, as the host found it: degrees of latitude and longitude.",
+  properties: { lat: { type: "number", minimum: -90, maximum: 90 }, lng: { type: "number", minimum: -180, maximum: 180 } },
+  required: ["lat", "lng"],
+  additionalProperties: false,
+} as const;
+
 export function toJsonSchema(schema: unknown): JsonSchema {
   return writeJsonSchema(schema, formatsByName);
 }
@@ -66,6 +82,8 @@ export function formatsByName(ctx: { readonly zodSchema: unknown; readonly jsonS
     ctx.jsonSchema["x-graview-repeat"] = true;
     if (!ctx.jsonSchema["type"] && !ctx.jsonSchema["anyOf"] && !ctx.jsonSchema["oneOf"]) Object.assign(ctx.jsonSchema, repeatJson());
   }
+  // Where a place is, kept beside it as `<place>Geo`: a point, as the host found it.
+  if (isPoint(ctx.zodSchema)) Object.assign(ctx.jsonSchema, structuredClone(GEO_JSON));
   // Prose in Markdown (FR-180): a caller writes Markdown, and it is kept as written.
   if (isMarkdownField(ctx.zodSchema)) {
     ctx.jsonSchema["contentMediaType"] = "text/markdown";

@@ -277,6 +277,11 @@ export {
   PLAN_REQUIRED_ROLES,
 } from "./lens/plan.js";
 export type { PlanLens, PlanLensOptions, PlanLensState, PlanViewProps } from "./lens/plan.js";
+// The map: records pinned where they are, on a ground drawn here; a host may hand tiles of its own.
+export { createMapLens, MapTilesContext, unplacedWords } from "./lens/map.js";
+export type { MapLens, MapOptions, MapTiles } from "./lens/map.js";
+export { fanOut, frameOf, graticuleOf, inFrame, mercator, pinsOf, pointOf, tilesFor } from "./lens/map-ground.js";
+export type { LaidPin, LaidTile, MapFrame, MapPin, Pinned } from "./lens/map-ground.js";
 export { withMore } from "./lens/more.js";
 export { withNaturalTime } from "./lens/natural-time.js";
 export { fetchFrameworkViews, frameworkViewDoors, registerFrameworkViews } from "./view-doors.js";

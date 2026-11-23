@@ -4,6 +4,7 @@ import { fileKindOf } from "../schema/files.js";
 import { isAppLinkField } from "../schema/app-link.js";
 import { linkedRelationOf, type LinkedRelation } from "../schema/linked.js";
 import { isRepeatField, repeatedBy } from "../repeat.js";
+import { isPlacePoint } from "../geo.js";
 import { isMarkdownField } from "../schema/markdown.js";
 import { parseDuration } from "../schema/field-words.js";
 import { parseTimeOfDay } from "../time-typed.js";
@@ -212,7 +213,8 @@ export function formField(name: string, schema: unknown): FormField {
 export function formFields(input: z.ZodType | unknown): readonly FormField[] {
   const shape = (input as ZodLike).shape;
   if (!shape) return [];
-  return Object.entries(shape).map(([name, schema]) => formField(name, schema));
+  // Where a place is (`<place>Geo`) is the host's to find, never a person's to type: no form asks for it, and an act still takes it.
+  return Object.entries(shape).filter(([name]) => !isPlacePoint(shape, name)).map(([name, schema]) => formField(name, schema));
 }
 
 /** True when every control in the tree is renderable — nothing opaque. */

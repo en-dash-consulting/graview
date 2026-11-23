@@ -21,6 +21,7 @@
  * it up front.
  */
 import { MARKS } from "./graph/archived.js";
+import { withPlacePoints } from "./place-points.js";
 import { isUnset, type Primitive } from "./graph/primitives.js";
 import type { AnyGraphNode, GraphNodeBase, GraphReader } from "./graph/types.js";
 import { nameKey, refusalFor, type RefResolution } from "./labels.js";
@@ -318,6 +319,7 @@ function resolvedFor(store: Store<AnySchema>, arg: Pick<NodeRefArg, "name" | "ki
 FIELD_SIGHT.on = true;
 FIELD_SIGHT.lens = fieldLens;
 FIELD_SIGHT.keptFrom = keptFrom;
+FIELD_SIGHT.points = withPlacePoints;
 const store = Store.prototype as unknown as {
   sighted(author: Principal | undefined): Compiling;
   resolveRef(arg: Pick<NodeRefArg, "name" | "kinds">, given: string, principal?: Principal): RefResolution;

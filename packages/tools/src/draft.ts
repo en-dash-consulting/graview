@@ -580,7 +580,7 @@ function filtersFrom(info: KindInfo, text: string): { expr: string; says: string
 
 // ── a recipe, drawn ──────────────────────────────────────────────────────────
 
-const LENS_WORDS: Record<ShippedLensName, string> = { columns: "A board", calendar: "A calendar", timeline: "A timeline", coverage: "A grid", board: "A layout", plan: "A plan", blocks: "A list", reach: "A picture" };
+const LENS_WORDS: Record<ShippedLensName, string> = { columns: "A board", calendar: "A calendar", timeline: "A timeline", coverage: "A grid", board: "A layout", plan: "A plan", blocks: "A list", reach: "A picture", map: "A map" };
 
 function titled(recipe: DraftRecipe, reading: Reading): { title: string; detail: string } {
   const info = reading.info(recipe.kind)!;

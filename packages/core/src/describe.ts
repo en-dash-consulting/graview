@@ -9,6 +9,8 @@
  * the seat does.
  */
 export { describePlace, placeText, shadowedPageSlots } from "./document/describe-place.js";
+// A record's point as a map reads it (HQ feature:f-map-lens): the point the host kept beside a place, or a latitude and a longitude.
+export { geoOf, mapPointOf } from "./map-point.js";
 /*
  * A status board's columns and the moves a seat's acts make between them
  * (FR-97): what the board shows one seat, here for the same reason — only

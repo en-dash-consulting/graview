@@ -14,7 +14,8 @@ import type { AnySchema } from "../../schema/schema.js";
  * and never a failure.
  */
 import type { CheckContext } from "./context.js";
-import { bindsOf, declaredLenses, isShippedLens, requiredRolesOf } from "../../places.js";
+import { bindsOf, declaredLenses, isShippedLens, mapCoordinatesOf, mapTypesOf, requiredRolesOf } from "../../places.js";
+import { mapProblemOf, mapProblemWords } from "../../map-words.js";
 import { arrangementFindings } from "../../app-places.js";
 import { arrangeable, listFieldsOf, throughEdges } from "../../arrangement.js";
 import { kindListFindings } from "../../kind-list.js";
@@ -303,6 +304,22 @@ export function checkDeclaredLenses<S extends AnySchema>(ctx: CheckContext<S>): 
   const declared = declaredLenses(ctx.app);
   for (const finding of declared.findings) {
     ctx.add({ severity: finding.severity, code: finding.code, where: finding.path, message: finding.message, fix: finding.fix, ...(finding.edits ? { edits: finding.edits } : {}) });
+  }
+  /*
+   * A MAP WITH NOTHING TO PIN (HQ feature:f-map-lens), in words: `declaredLenses`
+   * only decides it does not draw, so a page carries none of these sentences.
+   */
+  for (const undrawn of declared.undrawn) {
+    const lens = ctx.app.lenses?.[undrawn.index];
+    if (lens?.name !== "map" || !undrawn.title) continue;
+    for (const [kind, roles] of Object.entries((lens.bindings ?? {}) as Record<string, unknown>)) {
+      if (typeof roles !== "object" || roles === null || !ctx.app.schema.tryDefinition(kind)) continue;
+      const types = mapTypesOf(ctx.app.schema, kind);
+      if (mapCoordinatesOf(roles as Record<string, unknown>, types) !== false) continue;
+      const words = mapProblemWords(kind, roles as Record<string, unknown>, mapProblemOf(roles as Record<string, unknown>, types));
+      ctx.add({ severity: "warning", code: words.code, where: `lenses.${undrawn.index}.${words.path}`, message: `"${undrawn.title}" cannot draw: ${words.message}.`, fix: words.fix });
+      break;
+    }
   }
   /*
    * WHAT A LENS SHOWS OF ITSELF, AND WHAT IT LEFT OUT (Roadmap

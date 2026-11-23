@@ -1,0 +1,45 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "Field trips",
+  "description": "A school's field trips: where each goes, when, and which class.",
+  "kinds": {
+    "trip": {
+      "noun": "trip",
+      "plural": "trips",
+      "label": "{name}",
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "where": { "type": "place" },
+        "on": { "type": "date" },
+        "year": { "type": "enum", "options": ["year 3", "year 4", "year 5"] }
+      }
+    },
+    "stop": {
+      "noun": "stop",
+      "plural": "stops",
+      "label": "{name}",
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "latitude": { "type": "number" },
+        "longitude": { "type": "number" }
+      }
+    },
+    "teacher": {
+      "noun": "teacher",
+      "plural": "teachers",
+      "label": "{name}",
+      "fields": { "name": { "type": "string", "required": true } }
+    }
+  },
+  "acts": {
+    "add-trip": { "title": "Plan a trip", "creates": "trip", "description": "A trip a class takes." },
+    "add-stop": { "title": "Add a stop", "creates": "stop", "description": "Somewhere the coach stops." },
+    "add-teacher": { "title": "Add a teacher", "creates": "teacher", "description": "Someone who leads trips." }
+  },
+  "lenses": [
+    { "name": "map", "title": "Where we go", "bindings": { "trip": { "place": "where" } }, "options": { "filters": ["year"] } },
+    { "name": "map", "title": "Coach stops", "bindings": { "stop": { "lat": "latitude", "lng": "longitude" } } }
+  ],
+  "pages": { "order": ["trip", "stop", "teacher"] }
+}
