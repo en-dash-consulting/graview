@@ -1,5 +1,5 @@
-import { svgProblem, type BrandLogo, type BrandViews } from "@graview/core";
-import type { GuestTheme } from "../protocol.js";
+import { svgProblem, type AppVideo, type BrandLogo, type BrandViews } from "@graview/core";
+import type { GuestReel, GuestTheme } from "../protocol.js";
 
 /*
  * THE APP'S LOOK, AS A GUEST IS HANDED IT (FR-86, FR-91, FR-127): read off
@@ -11,7 +11,7 @@ import type { GuestTheme } from "../protocol.js";
  * carries this and nothing of the open kit.
  */
 
-const TOKENS: readonly (readonly [Exclude<keyof GuestTheme, "scheme" | "name" | "logo">, string])[] = [
+const TOKENS: readonly (readonly [Exclude<keyof GuestTheme, "scheme" | "name" | "logo" | "reel">, string])[] = [
   ["accent", "--graview-accent"],
   ["ground", "--graview-ground"],
   ["panel", "--graview-panel"],
@@ -76,13 +76,47 @@ export interface GuestBrand {
  * The look and the brand together: the tokens read, then the brand's name
  * and its logo as `logo` hands it. What a host mounting a guest pushes.
  */
-export function themeWithBrand(read: () => GuestTheme, brand: (() => GuestBrand | undefined) | undefined, logo: GuestLogo): GuestTheme {
+export function themeWithBrand(read: () => GuestTheme, brand: (() => GuestBrand | undefined) | undefined, logo: GuestLogo, reel?: () => AppVideo | undefined): GuestTheme {
   const given = brand?.();
   const look = read();
   // The logo the guest's scheme draws: a dark one in the dark, where the brand has one.
   const mark = given?.logo;
   const url = logo.url(typeof mark === "string" || mark === undefined ? mark : look.scheme === "dark" && mark.dark ? mark.dark : mark.light);
-  return { ...look, ...(given?.name ? { name: given.name } : {}), ...(url ? { logo: url } : {}) };
+  const facts = reelFacts(reel?.());
+  return { ...look, ...(given?.name ? { name: given.name } : {}), ...(url ? { logo: url } : {}), ...(facts ? { reel: facts } : {}) };
+}
+
+/** The sources every browser plays (what a host's upload transcodes to). */
+const PLAYED = new Set(["video/mp4", "video/webm", "video/ogg"]);
+
+/** The media type of the app's reel: as the host said it, else MP4. */
+export const reelType = (reel: AppVideo): string => (typeof reel.type === "string" && /^video\/[\w.+-]{1,60}$/i.test(reel.type) ? reel.type : "video/mp4");
+
+/**
+ * THE APP'S REEL, AS A VIEW IS HANDED IT (HQ f-view-names-app-video): its
+ * facts — what it is, how long, whether it has a poster and whether it
+ * plays — and never `href`, `poster` or `captions`, which the host plays
+ * where the view places `<graview-video data-app="reel">`. Undefined where
+ * the host handed none, or one with no address.
+ */
+export function reelFacts(reel: AppVideo | undefined): GuestReel | undefined {
+  if (!reel || typeof reel.href !== "string" || reel.href.trim() === "") return undefined;
+  const type = reelType(reel);
+  const poster = typeof reel.poster === "string" && reel.poster.trim() !== "";
+  const caption = typeof reel.caption === "string" && reel.caption.trim() ? reel.caption.trim() : undefined;
+  const count = (value: unknown) => (typeof value === "number" && Number.isFinite(value) && value > 0 ? value : undefined);
+  const duration = count(reel.duration);
+  const width = count(reel.width);
+  const height = count(reel.height);
+  return {
+    name: typeof reel.name === "string" && reel.name.trim() ? reel.name.trim().slice(0, 255) : "reel",
+    ...(caption ? { caption } : {}),
+    type,
+    ...(duration !== undefined ? { duration } : {}),
+    ...(poster ? { poster: true as const } : {}),
+    playable: typeof reel.playable === "boolean" ? reel.playable : PLAYED.has(type.toLowerCase()) && poster,
+    ...(width !== undefined && height !== undefined ? { width, height, aspect: Math.round((width / height) * 10_000) / 10_000 } : {}),
+  };
 }
 
 /** The logo a guest is handed, kept up as the brand changes. */

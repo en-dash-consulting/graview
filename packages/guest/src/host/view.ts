@@ -2,7 +2,7 @@ import type { ViewProblem, ViewProblemSaid } from "./problems.js";
 import { imageRefusedWords } from "./open-judge.js";
 import { keepClicked } from "./clicked.js";
 import { guestPlacesOf } from "./links-words.js";
-import { actingAs, seatPersonOf, type AnySchema, type FileValue, type HostFiles, type PagesArrangement, type Principal, type SignIn, type Store, type ViewerState } from "@graview/core";
+import { actingAs, seatPersonOf, type AnySchema, type AppVideo, type FileValue, type HostFiles, type PagesArrangement, type Principal, type SignIn, type Store, type ViewerState } from "@graview/core";
 import { readsOnlyUnseen, unseenOf, viewKinds } from "./unseen.js";
 import { createMine, keptForTheVisit, visitOf } from "./mine.js";
 import { storedFilesOf } from "./marks.js";
@@ -203,6 +203,14 @@ export interface MountWorkerViewOptions<S extends AnySchema> {
    * policy refuses `blob:` images. Pushed again when it changes (`update`).
    */
   readonly brand?: () => GuestBrand | undefined;
+  /**
+   * THE APP'S OWN VIDEO (HQ f-view-names-app-video): the reel the host
+   * keeps for the whole app. Its facts reach the view in `props.theme.reel`
+   * — never its address — and the host plays it where the view places
+   * `<graview-video data-app="reel">`. Unhanded, that element draws nothing
+   * and `onProblem` says why. Read at each push (`update`).
+   */
+  readonly reel?: () => AppVideo | undefined;
   readonly limits?: WorkerViewLimits;
   /** The view is not going to be shown, and why: the reason, and a sentence saying it. */
   readonly onFailure?: (reason: WorkerViewFailure, detail?: string) => void;
@@ -591,7 +599,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
    * system's preference, and pushes when the look it reads has changed.
    */
   const logo = createGuestLogo(window, () => looked(), "blob");
-  const theme = () => themeWithBrand(() => options.theme?.() ?? readTheme(region), options.brand, logo);
+  const theme = () => themeWithBrand(() => options.theme?.() ?? readTheme(region), options.brand, logo, options.reel);
   /*
    * ONE THEME FOR EVERY VIEW (Roadmap f-app-wide-view-theme): the brand's
    * stylesheet for its views and its fade between records, drawn by the
@@ -862,6 +870,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
           view: `"${manifest.title ?? manifest.name}"`,
           pictures: manifest.pictures !== undefined,
           shown: () => lastProps,
+          ...(options.reel ? { reel: options.reel } : {}),
           ...(options.file ? { file: options.file } : {}),
           onProblem: (said, problem) => {
             port?.postMessage({ type: "notice", text: said });

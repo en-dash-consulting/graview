@@ -134,7 +134,8 @@ export interface DescribedForm {
 
 /**
  * A VIDEO A WORKER VIEW PLACES (Roadmap f-video-hero), as a headless run
- * says it: which record's field it is, what the browser is handed, and
+ * says it: which record's field it is (or the app's reel, HQ
+ * f-view-names-app-video), what the browser is handed, and
  * whether it will play — so an agent that wrote a hero can confirm the
  * video plays without opening a browser. `playable` is a source a browser
  * plays (MP4, WebM or Ogg: what a host's upload transcodes to) with a
@@ -142,8 +143,11 @@ export interface DescribedForm {
  * what is missing when it is not.
  */
 export interface DescribedVideo {
-  readonly record: string;
-  readonly field: string;
+  /** The record whose field holds it, for `<graview-video data-record data-field>`; absent for the app's own video. */
+  readonly record?: string;
+  readonly field?: string;
+  /** The app's own video it names (`<graview-video data-app="reel">`, HQ f-view-names-app-video): `"reel"`. */
+  readonly app?: "reel";
   /** What it shows: its caption, else its name. */
   readonly text: string;
   readonly name: string;

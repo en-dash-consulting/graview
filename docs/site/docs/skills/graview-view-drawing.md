@@ -1,6 +1,6 @@
 # graview-view-drawing
 
-`graview-view-drawing` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.
+`graview-view-drawing` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video or the app's reel the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -50,15 +50,16 @@ const photos = (job.photos || []).map((photo) => photo.src
 
 Without `pictures`, a record's file comes as the record keeps it: its `href` draws only where it is the app's own image (`/graview/assets/…`).
 
-### A record's video, and the full-screen viewer
+### A video, and the full-screen viewer
 
-A view names it and **the host draws it**, for a manifest that says `pictures`:
+A view names it and **the host draws it**:
 
-- **`<graview-video data-record="${node.id}" data-field="clip">`** (and `data-index` in a list): the host plays that record's video in it — poster first, the browser's own controls, captions where the value has them. Size the box in your stylesheet (`graview-video { width: 100% }`); nothing inside it is yours to style or hear. The video comes to the view as its facts — `{ name, type, bytes, width, height, caption, duration, poster }` — never a `src`.
-- **`<graview-video autoplay cover …>`**: a hero background — muted, looping, no controls, `cover` filling the box you sized; still at its poster where the person asked for less motion. A headless run lists each video with its source and whether it is playable (MP4 or WebM, with a poster): confirm it there.
+- **`<graview-video data-record="${node.id}" data-field="clip">`** (and `data-index` in a list), for a manifest that says `pictures`: the host plays that record's video in it — poster first, the browser's controls, captions where the value has them. Size the box in your stylesheet (`graview-video { width: 100% }`); nothing inside it is yours to style or hear. The video comes as its facts — `{ name, type, bytes, width, height, caption, duration, poster }` — never a `src`.
+- **`<graview-video data-app="reel">`**: the app's own video, the reel its host keeps (no `pictures` needed). Its facts are in `props.theme.reel` — `{ name, caption, type, duration, poster, playable }`, never an address; absent, the host handed none, so draw without it.
+- **`autoplay cover`** on either: a hero background — muted, looping, no controls, filling the box you sized; still at its poster under reduced motion. A headless run lists each video and whether it is playable (MP4 or WebM, with a poster): confirm it there.
 - **`<button data-lightbox data-record="${node.id}" data-field="photos" data-index="0">`**: the viewer's press opens the host's full-screen viewer for that picture or video over the app; Escape closes it and the keyboard comes back to the button. Your code cannot open it.
 
-A record the view was not shown, a field with no video, or a view without `pictures` draws nothing, and says why.
+A record the view was not shown, a field with no video, a view without `pictures`, or a reel the host did not hand draws nothing, and says why.
 
 ### Files a person drops on it
 
@@ -90,6 +91,6 @@ graview.on("drop", "[data-drop]", (event) => {
 
 ---
 
-Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.
+Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video or the app's reel the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.
 
 The page: https://graview.dev/docs/skills/graview-view-drawing.html · Every Graview docs page, for a model: https://graview.dev/llms.txt

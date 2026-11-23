@@ -1,4 +1,4 @@
-import type { HostFiles, ViewerState } from "@graview/core";
+import type { AppVideo, HostFiles, ViewerState } from "@graview/core";
 import { createContext, useContext } from "react";
 
 /**
@@ -28,3 +28,12 @@ export const useHostAssets = (): ((path: string) => string) | undefined => useCo
 /** Where a worker view's `graview.mine` is kept (the host's `viewerState`). Without one, for the visit. */
 export const HostViewerStateContext = createContext<ViewerState | undefined>(undefined);
 export const useHostViewerState = (): ViewerState | undefined => useContext(HostViewerStateContext);
+
+/**
+ * THE APP'S OWN VIDEO (HQ f-view-names-app-video): the reel a host keeps for
+ * the whole app, set by `GraviewProvider`, the Shell and the routed face
+ * from the `reel` a host handed `mount` or `<Embed>`. A worker view plays it
+ * with `<graview-video data-app="reel">`. Unset, the app has no reel.
+ */
+export const HostReelContext = createContext<AppVideo | undefined>(undefined);
+export const useHostReel = (): AppVideo | undefined => useContext(HostReelContext);

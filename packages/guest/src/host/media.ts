@@ -1,7 +1,8 @@
 import type { ViewProblemSaid } from "./problems.js";
-import { isFileValue, isImage, isVideo, previewOf, videoWords, type FileValue } from "@graview/core";
+import { isFileValue, isImage, isVideo, previewOf, videoWords, type AppVideo, type FileValue } from "@graview/core";
 import { videoClock } from "@graview/core/blocks";
 import type { GuestNode, GuestProps } from "../protocol.js";
+import { reelFacts, reelType } from "./theme.js";
 
 /*
  * A RECORD'S VIDEO IN A WORKER VIEW, AND A FULL-SCREEN VIEWER (0.1.37).
@@ -34,6 +35,14 @@ import type { GuestNode, GuestProps } from "../protocol.js";
  *       its poster, fetching no more than its metadata, and is let go or
  *       held again as the setting changes.
  *
+ *   <graview-video data-app="reel">
+ *       the app's own video (HQ f-view-names-app-video): the reel the host
+ *       keeps for the whole app and handed as `reel`, played as a record's
+ *       is, `autoplay` and `cover` alike. It is the app's, not a record's,
+ *       so a view whose manifest asks for no pictures places it too; the
+ *       view is handed its facts (`props.theme.reel`) and never its
+ *       address. With no reel handed, it draws nothing and says why.
+ *
  * `data-index` picks one file of a list (0 by default). Both are for a view
  * whose manifest asks for `pictures`; the file comes from where the host
  * serves it (`file`, else the href against the page). A record the view was
@@ -53,8 +62,30 @@ export interface GuestMediaOptions {
   readonly shown: () => GuestProps | undefined;
   /** Where the page fetches a record's file (`FileValue.href`); undefined leaves it out. The href itself by default. */
   readonly file?: (href: string) => string | undefined;
+  /** The app's own video (HQ f-view-names-app-video), where the host keeps one: what `data-app="reel"` plays. */
+  readonly reel?: () => AppVideo | undefined;
   /** Something asked for was not drawn, and why, said once. */
   readonly onProblem?: ViewProblemSaid;
+}
+
+/** The app's own video a `<graview-video data-app>` names, as the player draws it; or why it names none. */
+export function namedAppVideo(element: Element, reel: AppVideo | undefined): { readonly file: FileValue } | { readonly why: string } {
+  const app = element.getAttribute("data-app") ?? "";
+  if (app !== "reel") return { why: `names the app's "${app.slice(0, 80)}", which is no video of the app: the app's own video is data-app="reel"` };
+  const facts = reelFacts(reel);
+  if (!reel || !facts) return { why: "names the app's reel, which this host did not hand it: a host hands the app's reel as reel (mount, <Embed>, GraviewProvider, the Shell or the routed face)" };
+  const file: FileValue = {
+    href: reel.href.trim(),
+    name: facts.name,
+    type: reelType(reel),
+    bytes: 0,
+    ...(facts.caption ? { caption: facts.caption } : {}),
+    ...(facts.duration !== undefined ? { duration: facts.duration } : {}),
+    ...(facts.width !== undefined && facts.height !== undefined ? { width: facts.width, height: facts.height } : {}),
+    ...(facts.poster && reel.poster ? { poster: reel.poster.trim() } : {}),
+    ...(typeof reel.captions === "string" && reel.captions.trim() ? { captions: reel.captions.trim() } : {}),
+  };
+  return { file };
 }
 
 export interface GuestMedia {
@@ -199,19 +230,35 @@ export function createGuestMedia(window: Window & typeof globalThis, options: Gu
   };
 
   const refused = (what: string, why: string) => say(`The ${what} in the view ${options.view} was not drawn: it ${why}.`);
+  /**
+   * Where the app's reel is fetched: the host handed the address, so an
+   * `https:` one on another origin is played as given; a path is fetched
+   * where the host serves files, as a record's is.
+   */
+  const reelAt = (href: string): string | undefined => {
+    if (!/^[a-z][a-z0-9+.-]*:/i.test(href.trim())) return at(href);
+    try {
+      const url = new window.URL(href.trim());
+      return url.protocol === "https:" || (url.protocol === "http:" && url.origin === window.location.origin) ? url.href : undefined;
+    } catch {
+      return undefined;
+    }
+  };
 
   return {
     refresh(root) {
       const shown = options.shown();
       for (const element of Array.from(root.querySelectorAll("graview-video"))) {
         const shadow = element.shadowRoot ?? element.attachShadow({ mode: "open" });
-        if (!options.pictures) {
+        const app = element.hasAttribute("data-app");
+        if (!app && !options.pictures) {
           drawn.delete(element);
           shadow.replaceChildren();
           refused("video", 'asks for no pictures: a view places a record\'s video where its manifest says "pictures": true');
           continue;
         }
-        const named = namedFile(element, shown, "video");
+        const named = app ? namedAppVideo(element, options.reel?.()) : namedFile(element, shown, "video");
+        const fetchedAt = app ? reelAt : at;
         const way: PlayerWay = { autoplay: element.hasAttribute("autoplay"), cover: element.hasAttribute("cover"), still: lessMotion?.matches === true };
         const key = "file" in named ? JSON.stringify([named.file, way.autoplay, way.cover]) : "";
         if (drawn.get(element) === key && shadow.childNodes.length > 0) continue;
@@ -221,15 +268,15 @@ export function createGuestMedia(window: Window & typeof globalThis, options: Gu
           refused("video", named.why);
           continue;
         }
-        const src = at(named.file.href);
+        const src = fetchedAt(named.file.href);
         if (!src) {
-          refused("video", `names "${named.file.name}", which this host does not say it serves on this page`);
+          refused("video", app ? "names the app's reel, whose address this host does not serve on this page" : `names "${named.file.name}", which this host does not say it serves on this page`);
           continue;
         }
         const style = document.createElement("style");
         style.textContent = ":host { display: block; min-width: 0; }";
         shadow.appendChild(style);
-        const video = drawPlayer(document, shadow, named.file, at, src, way);
+        const video = drawPlayer(document, shadow, named.file, fetchedAt, src, way);
         if (way.autoplay) backgrounds.add(video);
       }
     },

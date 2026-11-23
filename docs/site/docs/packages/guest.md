@@ -263,6 +263,16 @@ A video plays as a hero background (Roadmap f-video-hero) where the view asks fo
 
 `autoplay` is muted, looping, inline and without controls — autoplay without muted never plays, so the one word means all of it — and `cover` fills the box the view sized (`object-fit: cover`; the view's stylesheet rounds and clips the box). Where the person asked for less motion (`prefers-reduced-motion: reduce`) the background stands still at its poster, fetching only its metadata, and is let go when they stop asking. The source, the poster and the controls stay the host's: `src`, `poster`, `controls`, `loop` and `muted` on a `<graview-video>` are refused. A headless run's description carries `videos`, one per placed `<graview-video>` — the record and field, what it shows, its `source` (the media type), its `duration`, whether it has a `poster`, `autoplay` and `cover`, and `playable`: a source every browser plays (MP4, WebM or Ogg, what a host's upload transcodes to) with a poster to stand at, with `why` when it is not — so an agent confirms a hero plays without opening a browser; `placeText` says each in one line under "Videos:".
 
+##### The app's reel
+
+A host that keeps one video for the whole app — the reel its share preview plays — hands it as `reel` (an `AppVideo`: `href`, `poster`, `duration`, `playable`, and optionally `type`, `name`, `caption`, `captions`, `width`, `height`) to `mountWorkerView`, `GraviewProvider`, the Shell, the routed face, `mount` or `<Embed>`, and to a headless run. A view plays it without naming any address:
+
+```html
+<graview-video data-app="reel" autoplay cover></graview-video>
+```
+
+The view reads its facts in `props.theme.reel` — `{ name, caption, type, duration, poster, playable, width, height, aspect }`, never `href`, `poster` or `captions` — and they are pushed again when the host hands another. It is the app's, not a record's, so a view whose manifest asks for no pictures places it too. With no reel handed, the element draws nothing and `onProblem` says why; a headless run says the same among its problems, and lists a reel it plays in `videos` with `app: "reel"` in place of `record` and `field`.
+
 #### Files a person drops on it
 
 A worker view takes files a person drops on what it drew (FR-193). Its manifest says which fields files become, and it marks the element:

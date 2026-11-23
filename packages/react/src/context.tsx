@@ -1,5 +1,6 @@
 import type {
   AnySchema,
+  AppVideo,
   Brand,
   GraviewApp,
   HostFiles,
@@ -42,7 +43,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPointerStore, type PointerStore, type ScenePoint } from "./pointer.js";
-import { HostAssetsContext, HostFilesContext, HostViewerStateContext } from "./files.js";
+import { HostAssetsContext, HostFilesContext, HostReelContext, HostViewerStateContext } from "./files.js";
 import { useLinkedReads } from "./linked-reads.js";
 import type { HostMenuItem, MenuColumn, MenuPage, MenuSectionSource } from "./menu-types.js";
 import type { MenuViewSection } from "./view-places.js";
@@ -669,6 +670,15 @@ export interface GraviewProviderProps<S extends AnySchema> {
   /** WHERE WHAT A WORKER VIEW KEEPS FOR ITS VIEWER GOES (`graview.mine`): the host's, by the view's name. Unsaid, for the visit, in this page's memory. */
   readonly viewerState?: ViewerState | undefined;
   /**
+   * THE APP'S OWN VIDEO (HQ f-view-names-app-video): the reel the host keeps
+   * for the whole app — `{ href, poster, duration, playable }` and the rest
+   * of `AppVideo`. A worker view places it with `<graview-video
+   * data-app="reel">` and reads its facts in `props.theme.reel`; the view is
+   * never handed its address. Unsaid, such an element draws nothing and the
+   * host's problems say why.
+   */
+  readonly reel?: AppVideo | undefined;
+  /**
    * WHERE THE HOST SERVES AN APP'S OWN IMAGES (Roadmap
    * f-brand-marks-under-app-base): `assetsAt(path)` for a path under
    * `/graview/assets/` — a host serving each app under a base
@@ -882,6 +892,7 @@ export function GraviewProvider<S extends AnySchema>({
   ai: handedAi,
   files,
   viewerState,
+  reel,
   assetsAt,
   resolveApp,
   history,
@@ -1461,7 +1472,8 @@ export function GraviewProvider<S extends AnySchema>({
   const live = useMemo(() => (typing ? { typing, sayCaret, who: others } : null), [typing, sayCaret, others]);
   const assetsHeld = assetsAt ? <HostAssetsContext.Provider value={assetsAt}>{children}</HostAssetsContext.Provider> : children;
   const filesHeld = files ? <HostFilesContext.Provider value={files}>{assetsHeld}</HostFilesContext.Provider> : assetsHeld;
-  const filed = viewerState ? <HostViewerStateContext.Provider value={viewerState}>{filesHeld}</HostViewerStateContext.Provider> : filesHeld;
+  const stateHeld = viewerState ? <HostViewerStateContext.Provider value={viewerState}>{filesHeld}</HostViewerStateContext.Provider> : filesHeld;
+  const filed = reel ? <HostReelContext.Provider value={reel}>{stateHeld}</HostReelContext.Provider> : stateHeld;
   return (
     <GraviewContext.Provider value={value as unknown as GraviewContextValue<AnySchema>}>
       <PlaybackContext.Provider value={playback as unknown as Playback}>

@@ -1,6 +1,6 @@
 import type { HistoryHost } from "@graview/core/history";
 import type { DisplayOptionsHost } from "@graview/core";
-import { assetSrc, faviconHref, type Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type KeptViews, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal, type SignIn, type ViewerState, type SubscriptionStore, type DismissalStore } from "@graview/core";
+import { assetSrc, faviconHref, type Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type KeptViews, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal, type SignIn, type ViewerState, type AppVideo, type SubscriptionStore, type DismissalStore } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
 import { AppBar, appKeyOf, barPlaceAt, barPlaces, FirstLookDoor, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useThemeColor, useViewportHeight, type AppMenuRow, type BarAction, type BarFaces, type BarFind, type BarGo, type BarScheme, type BarShare, type BarStatus, type FirstLook, type HostAction, type NoticeBoard, type NoticeReport, type NoticeReporting } from "@graview/primitives/frame";
 import { layerViews, useGraph, useTidiedViews, useGraview, useTheKeyboardLandsSomewhere, type AwaySummary, type ErrorReport, type FieldTyping, type KeepLensHost, type ProposeChangeHost, type ComposeChangeHost, type DraftChangeHost, type HostMenuItem, type MenuSectionSource, type OnExport, type HostNotification, type ReactViewRegistry, type ReaderMemory, type Scheme, type WorkflowRuns } from "@graview/react/provider";
@@ -422,6 +422,15 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    * Unsaid, values are kept for the visit, in this page's memory.
    */
   readonly viewerState?: ViewerState;
+  /**
+   * THE APP'S OWN VIDEO (HQ f-view-names-app-video): the reel the host keeps
+   * for the whole app — `{ href, poster, duration, playable }` and the rest
+   * of `AppVideo`. A worker view places it with `<graview-video
+   * data-app="reel">` and reads its facts in `props.theme.reel`, never its
+   * address. Unsaid, such an element draws nothing and the host's problems
+   * say why.
+   */
+  readonly reel?: AppVideo;
   /**
    * WHERE THE HOST SERVES THE APP'S OWN IMAGES (Roadmap
    * f-brand-marks-under-app-base): `assetsAt(path)` for a path under
@@ -860,6 +869,7 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
     ai: props.ai,
     files: props.files,
     viewerState: props.viewerState,
+    reel: props.reel,
     assetsAt: props.assetsAt,
     resolveApp: props.resolveApp,
     history: props.history,

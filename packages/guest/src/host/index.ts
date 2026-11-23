@@ -23,7 +23,7 @@ export type { GuestViewOptions } from "./react.js";
  * what it may be handed, ask and run — is `@graview/guest/host/views`, so a
  * page that draws only frames carries none of it.
  */
-export type { GuestFile, GuestFont, GuestPlace, GuestProps, GuestTheme, GuestUnseen } from "../protocol.js";
+export type { GuestFile, GuestFont, GuestPlace, GuestProps, GuestReel, GuestTheme, GuestUnseen } from "../protocol.js";
 /*
  * What a view's host says went wrong, by a code that stays when the words
  * change (HQ f-view-problem-codes): the types here, the list itself

@@ -659,6 +659,28 @@ Ogg, what a host's upload transcodes to) with a poster to stand at, with
 `why` when it is not — so an agent confirms a hero plays without opening
 a browser; `placeText` says each in one line under "Videos:".
 
+#### The app's reel
+
+A host that keeps one video for the whole app — the reel its share
+preview plays — hands it as `reel` (an `AppVideo`: `href`, `poster`,
+`duration`, `playable`, and optionally `type`, `name`, `caption`,
+`captions`, `width`, `height`) to `mountWorkerView`, `GraviewProvider`,
+the Shell, the routed face, `mount` or `<Embed>`, and to a headless run.
+A view plays it without naming any address:
+
+```html
+<graview-video data-app="reel" autoplay cover></graview-video>
+```
+
+The view reads its facts in `props.theme.reel` — `{ name, caption, type,
+duration, poster, playable, width, height, aspect }`, never `href`,
+`poster` or `captions` — and they are pushed again when the host hands
+another. It is the app's, not a record's, so a view whose manifest asks
+for no pictures places it too. With no reel handed, the element draws
+nothing and `onProblem` says why; a headless run says the same among its
+problems, and lists a reel it plays in `videos` with `app: "reel"` in
+place of `record` and `field`.
+
 ### Files a person drops on it
 
 A worker view takes files a person drops on what it drew (FR-193). Its
