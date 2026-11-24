@@ -1,5 +1,10 @@
 schema: "rex/v2"
 items:
   "73bcb5fb-3708-4cc1-bb6a-61c959914b6f":
-    status: "in_progress"
-    lastModified: "2026-11-23T21:25:00.000Z"
+    status: "completed"
+    startedAt: "2026-11-23T20:55:00.000Z"
+    completedAt: "2026-11-24T19:32:05.000Z"
+    endedAt: "2026-11-24T19:32:05.000Z"
+    resolutionType: "code-change"
+    resolutionDetail: "PR #698 (fixed waits cut by about 63%; three races kept as commented waits), released in 0.2.14 by batch #700"
+    lastModified: "2026-11-24T19:32:05.000Z"
