@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.2.15`](https://graview.dev/docs/releases.html#v0-2-15)
 - [`0.2.14`](https://graview.dev/docs/releases.html#v0-2-14)
 - [`0.2.13`](https://graview.dev/docs/releases.html#v0-2-13)
 - [`0.2.12`](https://graview.dev/docs/releases.html#v0-2-12)
@@ -91,9 +92,22 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
-## 0.2.14
+## 0.2.15
 
 Published November 24, 2026 · the current version
+
+A toast stays clear of the page as it fills in, and a view’s link to the Scene works the moment it is drawn.
+
+- **A toast follows the foot of its picture as the picture grows.** On a page whose height follows its content, a toast raised while the page was still drawing stood where the foot first was, over the content that arrived under it, and took its clicks. It now moves down with the foot.
+- **A view’s link to the Scene works from its first draw.** On the one face, `<a data-place="overview">` in a worker view has its address from the moment it is drawn, and a press before the Scene’s part has arrived opens the Map once it comes, unless the reader has gone elsewhere meanwhile. Before, the link had no address until then and a press did nothing.
+
+**Before you upgrade:** Breaks: nothing. A toast over an embed whose height follows its content moves down as the content arrives, where it stayed at the foot it was first placed at. On the one face, a view’s `<a data-place="overview">` has its `href` from its first draw, and a press before the one face has come lands on the Map once it comes. Host APIs, the wire, stored formats, ops, derived tool names and the declaration’s finding codes are unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.2.15) · [The full changelog for 0.2.15](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0215)
+
+## 0.2.14
+
+Published November 24, 2026
 
 A right-click inside a custom view is about the card under the pointer, the hover chip stands beside the card it is about, and a view keeps its place when the app’s reel comes or goes.
 

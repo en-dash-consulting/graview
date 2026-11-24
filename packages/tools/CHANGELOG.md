@@ -1,5 +1,12 @@
 # @graview/tools
 
+## 0.2.15
+
+### Patch Changes
+
+- @graview/core@0.2.15
+  - @graview/ship@0.2.15
+
 ## 0.2.14
 
 ### Patch Changes

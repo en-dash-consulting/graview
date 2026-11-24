@@ -2,6 +2,14 @@
   "about": "The release records of graview.dev: one per version in packages/core/CHANGELOG.md, newest first, written with the Version packages pull request. A version npm never got says which version carried it (shippedIn) and is said inside that version's section. The date is the day npm published it (UTC). tests/the-releases-page-says-what-each-version-brought.test.ts fails while a version in the changelog has no record here.",
   "releases": [
     {
+      "version": "0.2.15",
+      "date": "2026-11-24",
+      "headline": "A toast stays clear of the page as it fills in, and a view’s link to the Scene works the moment it is drawn.",
+      "summary": "- **A toast follows the foot of its picture as the picture grows.** On a page whose height follows its content, a toast raised while the page was still drawing stood where the foot first was, over the content that arrived under it, and took its clicks. It now moves down with the foot.\n- **A view’s link to the Scene works from its first draw.** On the one face, `<a data-place=\"overview\">` in a worker view has its address from the moment it is drawn, and a press before the Scene’s part has arrived opens the Map once it comes, unless the reader has gone elsewhere meanwhile. Before, the link had no address until then and a press did nothing.",
+      "compatibility": "Breaks: nothing. A toast over an embed whose height follows its content moves down as the content arrives, where it stayed at the foot it was first placed at. On the one face, a view’s `<a data-place=\"overview\">` has its `href` from its first draw, and a press before the one face has come lands on the Map once it comes. Host APIs, the wire, stored formats, ops, derived tool names and the declaration’s finding codes are unchanged.",
+      "published": true
+    },
+    {
       "version": "0.2.14",
       "date": "2026-11-24",
       "headline": "A right-click inside a custom view is about the card under the pointer, the hover chip stands beside the card it is about, and a view keeps its place when the app’s reel comes or goes.",

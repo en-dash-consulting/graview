@@ -420,6 +420,33 @@ function GoesByAddress<S extends AnySchema>({ context, children }: { readonly co
   const oneFace = useOneFace();
   const face = useRef(oneFace);
   face.current = oneFace;
+  /*
+   * THE ONE FACE ON ITS WAY. The page is drawn before the one face's part
+   * arrives (`OneFacePage`), and a view in it is wired then: its
+   * `<a data-place="overview">` was given no address, and a press on it
+   * before the part came went nowhere — the page had no scene to rise to and
+   * no address to go to, and said nothing. Its address is the Scene's from
+   * the first, and a press meanwhile rises to the city once the face is here
+   * — from the page it was pressed on: a reader who has gone elsewhere since,
+   * by any link, Back or Forward, is left where they went.
+   */
+  const coming = useRef(false);
+  coming.current = useOneFaceComing();
+  const { key: here } = useLocation();
+  const at = useRef(here);
+  at.current = here;
+  /* The page a press before the face came was made on, or none. */
+  const risesFrom = useRef<string | null>(null);
+  useEffect(() => {
+    if (risesFrom.current === null) return;
+    if (risesFrom.current !== here) {
+      risesFrom.current = null;
+      return;
+    }
+    if (!oneFace) return;
+    risesFrom.current = null;
+    oneFace.goLevel(2);
+  }, [oneFace, here]);
   const goTo = useMemo<GoTo>(() => {
     /** The face's path for a destination, basename-relative; none for one it does not have. */
     const pathOf = (to: GoToTarget, also?: GoToAlso): string | undefined => {
@@ -448,11 +475,15 @@ function GoesByAddress<S extends AnySchema>({ context, children }: { readonly co
      */
     const toOverview = () => {
       if (face.current) return face.current.goLevel(2);
+      if (coming.current) {
+        risesFrom.current = at.current;
+        return;
+      }
       if (context.overview) return context.overview();
       if (!context.embedded) window.location.assign(context.sceneHref ?? "/");
     };
     const overviewHref = (): string | undefined => {
-      if (face.current) return hostHref === false ? undefined : hostHref ? hostHref(OVERVIEW_PATH) : `${base}${OVERVIEW_PATH}`;
+      if (face.current || coming.current) return hostHref === false ? undefined : hostHref ? hostHref(OVERVIEW_PATH) : `${base}${OVERVIEW_PATH}`;
       if (context.overview) return hostHref === false ? undefined : hostHref ? hostHref(OVERVIEW_PATH) : `${base}${OVERVIEW_PATH}`;
       return context.embedded ? undefined : (context.sceneHref ?? "/");
     };

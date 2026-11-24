@@ -1,5 +1,19 @@
 # @graview/pages
 
+## 0.2.15
+
+### Patch Changes
+
+- ec6581e: A view's link to the Scene works from the moment it is drawn, before the one face has come. On the one face (`sceneUnderPages`) the page is drawn before the one face's part arrives, and a worker view in it was wired then: its `<a data-place="overview">` was given no address, and was never given one after, and a press on it before the part came went nowhere — the page had no Scene to rise to yet and said nothing. On a slow network that is the first seconds of every page; on Graview Cloud's hosted page a home view's "The whole wedding at once", pressed as soon as it showed, stayed on the home. While the one face is on its way the link now carries the Scene's address, as it does once the face is here, and a press in that time rises to the Map as soon as the face arrives — unless the reader has gone somewhere else first. Held by `pnpm verify growing` ("aViewsLinkToTheOverviewPressedBeforeTheOneFaceHasComeCarriesItsAddressAndRisesToTheMap", the one face's part held back and the link pressed the moment it is drawn).
+  
+  Compatibility: Host APIs — unchanged. Behavior a host may notice — on the one face, a view's `<a data-place="overview">` has its `href` from its first draw, where it had none, and a press before the one face has come lands on the Map once it comes, where it did nothing. The wire, stored formats, ops and primitives, derived tool names and input schemas, and the declaration and check finding codes — unchanged. What Graview Cloud does: nothing.
+- Updated dependencies [c56add2]
+  - @graview/primitives@0.2.15
+  - @graview/core@0.2.15
+  - @graview/layout@0.2.15
+  - @graview/react@0.2.15
+  - @graview/tools@0.2.15
+
 ## 0.2.14
 
 ### Patch Changes

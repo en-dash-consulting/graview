@@ -197,3 +197,56 @@ describe("a banner", () => {
     expect(px(stack.style.left)).toBe(400);
   });
 });
+
+/*
+ * A TOAST GOES DOWN WITH THE PICTURE AS IT GROWS (Graview Cloud's
+ * e2e-views, on 0.2.14). A hosted page whose embed is as tall as what it
+ * drew raised its toast while only the bar and the first lines of the home
+ * view were drawn: the toast stood at that short picture's foot, over the
+ * view's own link, and stayed there as the rest of the page arrived under
+ * it, since nothing it watched had moved. It took the link's press for as
+ * long as a click was retried. Its picture growing places it again.
+ */
+describe("a toast over a picture that grows", () => {
+  const watching = new Map<Element, Set<ResizeObserverCallback>>();
+  const realObserver = globalThis.ResizeObserver;
+  beforeEach(() => {
+    watching.clear();
+    globalThis.ResizeObserver = class {
+      private readonly seen = new Set<Element>();
+      constructor(private readonly told: ResizeObserverCallback) {}
+      observe(element: Element) {
+        this.seen.add(element);
+        (watching.get(element) ?? watching.set(element, new Set()).get(element)!).add(this.told);
+      }
+      unobserve(element: Element) {
+        this.seen.delete(element);
+        watching.get(element)?.delete(this.told);
+      }
+      disconnect() {
+        for (const element of this.seen) watching.get(element)?.delete(this.told);
+        this.seen.clear();
+      }
+    } as unknown as typeof ResizeObserver;
+  });
+  afterEach(() => {
+    globalThis.ResizeObserver = realObserver;
+  });
+  /** What a browser does when an element's size changes: each observer watching it is told. */
+  const resized = (element: Element) => act(async () => {
+    for (const told of [...(watching.get(element) ?? [])]) told([], {} as ResizeObserver);
+  });
+
+  it("stands at the picture's new foot once the picture has grown under it", async () => {
+    screen(1280, 800);
+    // The bar and the home view's first lines: the picture ends at 248 px.
+    boxes.set(picture, { left: 0, top: 0, width: 1280, height: 248 });
+    sized.set("notices-toasts", { width: 560, height: 63 });
+    const { stack } = await toast("Your workspace has 2 of the 2 private apps Free keeps.");
+    expect(lift(stack())).toBe(800 - 248 + 16);
+    // The rest of the page arrives: the picture ends at 602 px, and nothing else moved.
+    boxes.set(picture, { left: 0, top: 0, width: 1280, height: 602 });
+    await resized(picture);
+    expect(lift(stack())).toBe(800 - 602 + 16);
+  });
+});
