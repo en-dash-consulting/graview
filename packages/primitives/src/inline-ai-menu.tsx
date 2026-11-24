@@ -222,6 +222,43 @@ export function suggestAhead(env: InlineEnv, menu: MenuTarget): void {
   void suggestOnce(env, target);
 }
 
+/** What a showing of the AI section put before the person, and which they took. */
+interface Showing {
+  env: InlineEnv;
+  result: InlineResult | null;
+  offers: readonly AiCandidate[];
+  taken: string | null;
+}
+
+/*
+ * ONE SHOWING, HOWEVER OFTEN WORDS HIDE IT (Graview HQ
+ * feature:f-menu-first-frames-follow-ups). Words typed in the menu stand the
+ * AI section down, and clearing them draws it again: each time it went its
+ * picks were told to the host as left, and told again when the menu closed,
+ * as a new showing. A section hidden while its menu stays open is held here
+ * by its interaction, and told once — when the menu goes — unless it is
+ * drawn again in the same menu first, which takes it back.
+ */
+const HIDDEN_WHILE_TYPED = /* @__PURE__ */ new Map<string, { readonly showing: Showing; readonly menu: Element; watch: MutationObserver | null }>();
+
+function holdWhileTyped(showing: Showing, menu: Element): void {
+  const id = showing.result!.interaction.id;
+  const tell = () => {
+    const held = HIDDEN_WHILE_TYPED.get(id);
+    if (held?.showing !== showing) return;
+    HIDDEN_WHILE_TYPED.delete(id);
+    held.watch?.disconnect();
+    tellOffers(showing.env, showing.result!, showing.offers, showing.taken, "menu");
+  };
+  const held = { showing, menu, watch: null as MutationObserver | null };
+  HIDDEN_WHILE_TYPED.set(id, held);
+  if (typeof MutationObserver === "undefined") return tell();
+  held.watch = new MutationObserver(() => {
+    if (!menu.isConnected) tell();
+  });
+  held.watch.observe(menu.ownerDocument.body, { childList: true, subtree: true });
+}
+
 /** Each offer a showing put before the person, told to the host as taken or left (`HostAi.onPickOutcome`). */
 export function tellOffers(env: InlineEnv, result: InlineResult, offers: readonly AiCandidate[], taken: string | null, where: "menu" | "chip"): void {
   const model = result.interaction.usage?.at(-1)?.model;
@@ -366,10 +403,21 @@ export function InlineAiMenu({ target: menu, close }: InlineAiMenuProps) {
   const offers = (suggested?.offers ?? []).filter((offer) => !(offer.type === "place" && existing.some((view) => view.place === offer.place))).slice(0, Math.max(0, 3 - existing.length));
   const failed = suggested?.interaction.outcome === "failed" ? (suggested.interaction.failed ?? "The AI could not suggest anything here.") : null;
   /* What this showing put before the person, and which they took: told to the host as the section goes (`HostAi.onPickOutcome`). */
-  const showing = useRef<{ env: InlineEnv; result: InlineResult | null; offers: readonly AiCandidate[]; taken: string | null }>({ env, result: null, offers: [], taken: null });
+  const showing = useRef<Showing>({ env, result: null, offers: [], taken: null });
+  const section = useRef<HTMLDivElement | null>(null);
+  /* The menu this section is drawn in: where it is still open after the section goes, words typed hid the section, and the showing goes on. */
+  const inMenu = useRef<Element | null>(null);
   useLayoutEffect(() => {
     showing.current.env = env;
+    inMenu.current = section.current?.closest('[data-testid="context-menu"]') ?? inMenu.current;
     if (suggested && suggested.interaction.outcome !== "failed") {
+      // Drawn again in the same menu once the words are cleared: the same showing, not a new one (Graview HQ feature:f-menu-first-frames-follow-ups).
+      const hidden = HIDDEN_WHILE_TYPED.get(suggested.interaction.id);
+      if (hidden && hidden.menu === inMenu.current) {
+        HIDDEN_WHILE_TYPED.delete(suggested.interaction.id);
+        hidden.watch?.disconnect();
+        showing.current.taken ??= hidden.showing.taken;
+      }
       showing.current.result = suggested;
       showing.current.offers = offers;
     }
@@ -377,13 +425,16 @@ export function InlineAiMenu({ target: menu, close }: InlineAiMenuProps) {
   useEffect(
     () => () => {
       const shown = showing.current;
-      if (shown.result && shown.offers.length > 0) tellOffers(shown.env, shown.result, shown.offers, shown.taken, "menu");
+      if (!shown.result || shown.offers.length === 0) return;
+      const menu = inMenu.current;
+      // Hidden by words typed, the menu still open: told once the menu goes, unless it is drawn again in it before then.
+      if (menu?.isConnected) return holdWhileTyped(shown, menu);
+      tellOffers(shown.env, shown.result, shown.offers, shown.taken, "menu");
     },
     [],
   );
   /* "Suggest…" pressed from the keyboard and gone with the answer: the keyboard goes to the first row after it — never <body>. */
   const keyboardOnSuggest = useRef(false);
-  const section = useRef<HTMLDivElement | null>(null);
   useLayoutEffect(() => {
     if (suggested === null || !keyboardOnSuggest.current) return;
     keyboardOnSuggest.current = false;

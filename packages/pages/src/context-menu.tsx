@@ -2,7 +2,7 @@ import { argumentsTaken, fieldWords, humanizeField, layer, nounOf, pluralLabel, 
 import { narrowedPath } from "@graview/core/navigate";
 import { aggregateId } from "@graview/layout/view";
 import { GhostDoor, Inspector, NotifyDoor, SectionBetterDoor, useBoardMoveSection, useDisplayOptionsSection, useInlineAiSection, useNotifySection, useSectionBetterSection, useViewTidyingSection } from "@graview/primitives/pages";
-import { HostMenuItems, MenuSections, partsWanted, sectionsArrive, sectionsWanted, sectionUnderNow } from "@graview/react/drawing";
+import { HostMenuItems, MenuSections, outOfViews, partsWanted, recordInView, sectionsArrive, sectionsWanted, sectionUnderNow } from "@graview/react/drawing";
 import { PLACE_MENU_EVENT, useGraview, useGraviewIfAny, type MenuColumn, type MenuItem, type MenuSectionSource, type MenuTarget, type PointerMenu } from "@graview/react/provider";
 import { useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { useHref, useLocation, useNavigate } from "react-router";
@@ -206,9 +206,19 @@ function Menu<S extends AnySchema>({ context, root, registry, children }: { read
   /** What the page itself is about: its record, its kind's list, its place — or nothing, with Find. */
   const aimAtPage = useCallback((): Aimed => aimAtPath(pathname, search) ?? { face: "pages", about: [] }, [aimAtPath, pathname, search]);
 
-  /** What a press at this element is about. */
+  /** What a press at this element is about; `point`, where the pointer was, finds the record under it inside a view. */
   const aimAt = useCallback(
-    (element: Element): Aimed => {
+    (pressed: Element, point?: { readonly x: number; readonly y: number }): Aimed => {
+      /*
+       * A RECORD A WORKER VIEW DREW, UNDER THE PRESS (Graview HQ
+       * feature:f-view-menu-suggests-under-pointer): the one its host judged
+       * is drawn there (`recordInView`), so the menu is about the card, not
+       * the whole view. Elsewhere in the view, the view's own ground.
+       */
+      const viewed = recordInView(pressed, point);
+      const drawn = viewed ? store.graph.getNode(viewed.id) : undefined;
+      if (drawn) return { face: "pages", on: drawn.id, about: [drawn.id], href: `${base}${recordPath(schema, drawn.kind, drawn.id)}` };
+      const element = outOfViews(pressed);
       const page = aimAtPage();
       // A value on the record's page: changed where it stands, beside the record's acts.
       const field = element.closest("[data-graview-field]")?.getAttribute("data-graview-field");
@@ -263,7 +273,7 @@ function Menu<S extends AnySchema>({ context, root, registry, children }: { read
   const readyAt = useCallback(
     (element: Element): MenuTarget | null => {
       const face = root.current;
-      if (face === null || !face.contains(element) || typingIn(element) || element.closest("[data-graview-popover]")) return null;
+      if (face === null || !face.contains(outOfViews(element)) || typingIn(element) || element.closest("[data-graview-popover]")) return null;
       const aimed = aimAt(element);
       return { face: "pages", on: aimed.on, about: aimed.about ?? [], field: aimed.field, place: aimed.place, href: aimed.href, act: aimed.act, column: columnAt(element, aimed), element: homeOf(element) };
     },
@@ -277,21 +287,22 @@ function Menu<S extends AnySchema>({ context, root, registry, children }: { read
 
   /** Opens the menu about what is at `element`, at a point; `inner` is what was under it inside a worker view. */
   const open = useCallback(
-    (element: Element, x: number, y: number, inner: Element = element, waited = false): void => {
+    (element: Element, x: number, y: number, inner: Element = element, waited = false, pointed = true): void => {
       /* The first right-click inside a view fetches what finds its section, and the menu opens once it is here (without one, should it not arrive). */
       if (!waited && (sectionsWanted(inner) || partsWanted())) {
-        const then = () => open(element, x, y, inner, true);
+        const then = () => open(element, x, y, inner, true, pointed);
         void sectionsArrive().then(then, then);
         return;
       }
-      const aimed = aimAt(element);
+      const aimed = aimAt(inner, pointed ? { x, y } : undefined);
       const column = columnAt(inner, aimed);
-      /* A section of a worker view under the cursor names the menu ("This week") and is outlined while it is open. */
+      /* A section of a worker view under the cursor names the menu ("This week") and is outlined while it is open — unless a record the view drew there is what it is about, which names it. */
       const section = sectionUnderNow(inner);
+      const onRecord = aimed.on !== undefined && recordInView(inner, pointed ? { x, y } : undefined)?.id === aimed.on;
       selection.current = selectedIn(root.current);
       /* Else the page's own part under it — the page, its list, a group — which "Make “Tasks” better" names (Roadmap f-make-any-page-better). */
       const page = aimAtPage();
-      const menu: PointerMenu = { ...aimed, ...(column ? { column } : {}), ...(section ? { section, title: section.name } : { page: { on: page.on, about: page.about, place: page.place, home: pathname === "/", at: inner } }), x: Math.round(x), y: Math.round(y), returnTo: homeOf(element) };
+      const menu: PointerMenu = { ...aimed, ...(column ? { column } : {}), ...(section ? { section, ...(onRecord ? {} : { title: section.name }) } : { page: { on: page.on, about: page.about, place: page.place, home: pathname === "/", at: inner } }), x: Math.round(x), y: Math.round(y), returnTo: homeOf(onRecord ? inner : element) };
       last.current = menu;
       setMenuAt(menu);
     },
@@ -307,11 +318,11 @@ function Menu<S extends AnySchema>({ context, root, registry, children }: { read
   }, [said]);
   const say = useCallback((sentence: string) => setSaid({ sentence, at: Date.now() }), []);
 
-  /** Opens it at an element, as the keyboard does: at the element's start, under its first line. */
+  /** Opens it at an element, as the keyboard does: at the element's start, under its first line — at `inner`, what has the keyboard inside a worker view, where it is in one. */
   const openAt = useCallback(
-    (element: HTMLElement) => {
-      const box = element.getBoundingClientRect();
-      open(element, box.left + Math.min(16, box.width / 2), Math.min(box.bottom, box.top + 36));
+    (element: HTMLElement, inner: Element = element) => {
+      const box = inner.getBoundingClientRect();
+      open(element, box.left + Math.min(16, box.width / 2), Math.min(box.bottom, box.top + 36), inner, false, false);
     },
     [open],
   );
@@ -356,7 +367,9 @@ function Menu<S extends AnySchema>({ context, root, registry, children }: { read
       event.preventDefault();
       openedBy.current = Date.now();
       const at = here && target instanceof HTMLElement ? target : (face?.querySelector<HTMLElement>("[data-graview-page-title], main h1, main") ?? null);
-      if (at) openAt(at);
+      // Inside a worker view, what has the keyboard there: a card bound to a record opens the menu about it.
+      const inner = here ? event.composedPath?.()[0] : undefined;
+      if (at) openAt(at, inner instanceof Element ? inner : at);
     };
     document.addEventListener("keydown", key);
     return () => document.removeEventListener("keydown", key);

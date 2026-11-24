@@ -1,7 +1,7 @@
 import { retryingImport } from "@graview/core/retry";
 import type { AnySchema } from "@graview/core";
-import { useMenuPrepare } from "@graview/react/drawing";
-import { afterFirstDraw, firstDrawn, lazyModule, useGraview, useSelection, type MenuReadying, type MenuTarget } from "@graview/react/provider";
+import { outOfViews, recordInView, useMenuPrepare } from "@graview/react/drawing";
+import { afterFirstDraw, firstDrawn, lazyModule, useGraview, useSelection, type MenuReadying, type MenuSection, type MenuTarget } from "@graview/react/provider";
 import { hoverChipsOn } from "@graview/tools/frame";
 import { Suspense, useEffect, useRef, useState } from "react";
 
@@ -80,8 +80,12 @@ const HOLD_OPENING_MS = 200;
 const READIED = "[data-graview-pick], [data-graview-view], [data-graview-record], [data-graview-act], [data-graview-field], a[href]";
 
 /** What the scene's menu would be about at an element: the pick or the card under it, as a right-click there says it. Nothing on a routed face, or in a menu. */
-function sceneAim(element: Element): MenuTarget | null {
+function sceneAim(pressed: Element): MenuTarget | null {
+  const element = outOfViews(pressed);
   if (element.closest("[data-graview-face='pages'], [data-graview-popover]")) return null;
+  // A card a worker view drew for a record, as its host judged it (`recordInView`).
+  const viewed = pressed === element ? undefined : recordInView(pressed);
+  if (viewed) return { face: "scene", on: viewed.id, about: [viewed.id] };
   const on = element.closest("[data-graview-pick]")?.getAttribute("data-graview-pick") ?? element.closest("[data-graview-view]")?.getAttribute("data-graview-view");
   return on ? { face: "scene", on, about: [on] } : null;
 }
@@ -109,11 +113,11 @@ function sceneAim(element: Element): MenuTarget | null {
  * opens.
  */
 function useMenuReady(aimAt: (element: Element) => MenuTarget | null): void {
-  const { store, principal, providers, ai } = useGraview<AnySchema>();
+  const { store, principal, providers, ai, aiDesk } = useGraview<AnySchema>();
   const prepareSections = useMenuPrepare();
   const chipsOn = hoverChipsOn(ai);
-  const latest = useRef({ aimAt, store, principal, providers, prepareSections, chipsOn, ai });
-  latest.current = { aimAt, store, principal, providers, prepareSections, chipsOn, ai };
+  const latest = useRef({ aimAt, store, principal, providers, prepareSections, chipsOn, ai, aiDesk });
+  latest.current = { aimAt, store, principal, providers, prepareSections, chipsOn, ai, aiDesk };
   useEffect(() => {
     if (typeof document === "undefined") return;
     let resting: { readonly element: Element; readonly timer: ReturnType<typeof setTimeout> } | null = null;
@@ -144,22 +148,25 @@ function useMenuReady(aimAt: (element: Element) => MenuTarget | null): void {
       if (!target) return;
       // Readied once until the graph moves: resting again on the same thing does nothing more.
       const key = JSON.stringify([target.face, target.on, target.about, target.field, target.place, target.act, now.store.log.length]);
+      let sections: readonly MenuSection[];
       if (why === "open") {
         // THE MENU IS OPENING (Roadmap f-jev-fast-polish): each section is told so at the press, before the menu draws, even where it was readied before.
         if (key === opening) return;
         opening = key;
         readied = key;
-        now.prepareSections(target, "open");
+        sections = now.prepareSections(target, "open");
       } else {
         if (key === readied) return;
         readied = key;
-        now.prepareSections(target, why);
+        sections = now.prepareSections(target, why);
       }
       void pane.load().then(
         (module) => {
           module.prepareActs(now.store, target, { principal: now.principal, providers: now.providers });
           // What worked before, read now: the menu's Suggested rows are whole in its first frame, and asked of the Fast slot once.
           module.prepareTold(now.ai, now.store, now.principal);
+          // The menu is opening: its Suggested rows worked out now, and the Fast slot asked for their order at the press, not as the menu draws (Graview HQ feature:f-menu-first-frames-follow-ups).
+          if (why === "open") module.prepareSuggested(now.ai, now.aiDesk, now.store, target, { principal: now.principal, providers: now.providers, sections });
         },
         () => undefined,
       );
@@ -170,7 +177,19 @@ function useMenuReady(aimAt: (element: Element) => MenuTarget | null): void {
       if (holding !== null) clearTimeout(holding);
       holding = null;
     };
-    const at = (event: Event): Element | null => (event.target instanceof Element ? event.target.closest(READIED) : null);
+    /*
+     * Inside a worker view the event was retargeted to its region: the card
+     * under the pointer there, bound to a record its host judged it drew
+     * (`recordInView`), is what a menu or a chip is about — each card its
+     * own rest — and the region only where it is on no record.
+     */
+    const at = (event: Event): Element | null => {
+      const inner = event.composedPath?.()[0];
+      const mouse = event as MouseEvent;
+      const viewed = inner instanceof Element && inner !== event.target ? recordInView(inner, typeof mouse.clientX === "number" && event.type !== "focusin" ? { x: mouse.clientX, y: mouse.clientY } : undefined) : undefined;
+      if (viewed) return viewed.element;
+      return event.target instanceof Element ? event.target.closest(READIED) : null;
+    };
     const over = (event: PointerEvent) => {
       if (event.pointerType === "touch") return;
       const element = at(event);
@@ -195,6 +214,31 @@ function useMenuReady(aimAt: (element: Element) => MenuTarget | null): void {
       if (resting === null) return;
       if (to instanceof Node && resting.element.contains(to)) return;
       cancel();
+    };
+    /*
+     * FROM CARD TO CARD INSIDE A VIEW (Graview HQ
+     * feature:f-view-menu-suggests-under-pointer). Over and out between two
+     * elements of one shadow root never reach the document — both ends are
+     * the view's region there — so inside a view the pointer's moves say
+     * where it is: a new card under it rests anew, and the chip of the card
+     * it left goes.
+     */
+    let inView: Element | null = null;
+    const moved = (event: PointerEvent) => {
+      if (event.pointerType === "touch") return;
+      const inner = event.composedPath?.()[0];
+      if (!(inner instanceof Element) || inner === event.target || !(event.target instanceof Element) || event.target.shadowRoot === null) {
+        inView = null;
+        return;
+      }
+      const element = at(event);
+      if (element === inView) return;
+      inView = element;
+      if (chipped !== null && element !== chipped) {
+        chipped = null;
+        chips.current?.leaveRest();
+      }
+      over(event);
     };
     const down = (event: PointerEvent) => {
       letGo();
@@ -226,6 +270,7 @@ function useMenuReady(aimAt: (element: Element) => MenuTarget | null): void {
       if (element) ready(element, "keyboard");
     };
     document.addEventListener("pointerover", over, { passive: true });
+    document.addEventListener("pointermove", moved, { passive: true });
     document.addEventListener("pointerout", out, { passive: true });
     document.addEventListener("pointerdown", down, { capture: true, passive: true });
     document.addEventListener("pointerup", letGo, { capture: true, passive: true });
@@ -236,6 +281,7 @@ function useMenuReady(aimAt: (element: Element) => MenuTarget | null): void {
       cancel();
       letGo();
       document.removeEventListener("pointerover", over);
+      document.removeEventListener("pointermove", moved);
       document.removeEventListener("pointerout", out);
       document.removeEventListener("pointerdown", down, { capture: true });
       document.removeEventListener("pointerup", letGo, { capture: true });

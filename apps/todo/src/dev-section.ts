@@ -22,36 +22,109 @@ import { registerWorkerView, type WorkerViewDefinition } from "@graview/guest/ho
 
 const SOURCE = `// Things at a glance: what is due this week, what is still open, and the lists.
 graview.style(\`
-  .tg-home { display: grid; gap: 20px; }
-  .tg-week { display: grid; gap: 8px; }
-  .tg-days { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
-  .tg-day { border: 1px solid var(--graview-edge); border-radius: var(--graview-radius); padding: 8px; background: var(--graview-panel); min-height: 64px; }
-  .tg-day h3 { margin: 0 0 4px; font-size: 0.8125rem; color: var(--graview-ink-muted); }
-  .tg-day ul { margin: 0; padding-left: 16px; font-size: 0.875rem; }
-  .tg-open ul { margin: 0; padding-left: 18px; }
-  .tg-lists ul { margin: 0; padding-left: 18px; }
-  .tg-count { color: var(--graview-ink-muted); }
+  .tg { display: grid; gap: 28px; font-family: var(--graview-font-body); color: var(--graview-ink); }
+  .tg h2 { margin: 0 0 10px; font-family: var(--graview-font-display); font-size: 1.0625rem; font-weight: 600; letter-spacing: -0.005em; display: flex; align-items: baseline; gap: 8px; }
+  .tg h2 .tg-n { font-family: var(--graview-font-body); font-size: 0.8125rem; font-weight: 500; color: var(--graview-ink-muted); }
+  .tg-sum { margin: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .tg-stat { border: 1px solid var(--graview-edge); border-radius: 999px; padding: 3px 11px; font-size: 0.8125rem; color: var(--graview-ink-muted); background: var(--graview-panel); }
+  .tg-stat b { color: var(--graview-ink); font-weight: 600; }
+  .tg-stat[data-tone="late"] b { color: var(--graview-warn, #b45309); }
+  .tg-none { margin: 0; padding: 12px 14px; border: 1px dashed var(--graview-edge); border-radius: var(--graview-radius); color: var(--graview-ink-muted); font-size: 0.875rem; }
+  .tg-days { display: grid; gap: 14px; }
+  .tg-day h3 { margin: 0 0 6px; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--graview-ink-muted); }
+  .tg-rows { list-style: none; margin: 0; padding: 0; border: 1px solid var(--graview-edge); border-radius: var(--graview-radius); background: var(--graview-panel); overflow: hidden; }
+  .tg-task { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 14px; min-height: 44px; box-sizing: border-box; }
+  .tg-task + .tg-task { border-top: 1px solid var(--graview-edge); }
+  .tg-task:hover { background: color-mix(in srgb, var(--graview-accent) 6%, transparent); }
+  .tg-tick { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--graview-ink-muted); box-sizing: border-box; }
+  .tg-task[data-done="yes"] .tg-tick { border-color: var(--graview-accent); background: var(--graview-accent); }
+  .tg-main { display: grid; gap: 1px; min-width: 0; }
+  .tg-name { color: var(--graview-ink); text-decoration: none; font-size: 0.9375rem; overflow-wrap: anywhere; }
+  .tg-task[data-done="yes"] .tg-name { color: var(--graview-ink-muted); text-decoration: line-through; }
+  .tg-list-of { font-size: 0.75rem; color: var(--graview-ink-muted); }
+  .tg-due { font-size: 0.8125rem; color: var(--graview-ink-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .tg-due[data-tone="late"] { color: var(--graview-warn, #b45309); font-weight: 500; }
+  .tg-lists { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+  .tg-list { border: 1px solid var(--graview-edge); border-radius: var(--graview-radius); background: var(--graview-panel); padding: 12px 14px; display: grid; gap: 8px; }
+  .tg-list:hover { border-color: color-mix(in srgb, var(--graview-accent) 45%, var(--graview-edge)); }
+  .tg-list a { color: var(--graview-ink); text-decoration: none; font-weight: 600; }
+  .tg-list-n { font-size: 0.8125rem; color: var(--graview-ink-muted); }
+  .tg-bar { height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--graview-ink-muted) 18%, transparent); overflow: hidden; }
+  .tg-bar span { display: block; height: 100%; background: var(--graview-accent); border-radius: 2px; }
+  @media (max-width: 480px) { .tg-task { padding: 10px 12px; gap: 10px; } }
 \`);
-const DAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const iso = (date) => date.toISOString().slice(0, 10);
+const DAY_MS = 86400000;
+const dayOf = (iso) => Date.parse(iso + "T00:00:00Z");
+const between = (from, to) => Math.round((dayOf(to) - dayOf(from)) / DAY_MS);
 graview.onProps((props) => {
+  const today = graview.today || props.today;
+  const short = new Intl.DateTimeFormat(props.locale, { month: "short", day: "numeric", timeZone: "UTC" });
+  const weekday = new Intl.DateTimeFormat(props.locale, { weekday: "long", month: "short", day: "numeric", timeZone: "UTC" });
   const tasks = props.nodes.filter((node) => node.kind === "task");
-  const lists = props.nodes.filter((node) => node.kind === "list");
-  const start = new Date();
-  const days = Array.from({ length: 7 }, (_, at) => {
-    const date = new Date(start.getFullYear(), start.getMonth(), start.getDate() + at);
-    return { key: iso(date), name: at === 0 ? "Today" : DAY[date.getDay()], tasks: tasks.filter((task) => task.due === iso(date) && !task.done) };
+  const lists = props.nodes.filter((node) => node.kind === "list").sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  const holds = (props.edges || []).filter((edge) => edge.kind === "holds");
+  const listOf = new Map(holds.map((edge) => [edge.to, lists.find((list) => list.id === edge.from)]));
+  const away = (task) => (task.due && today ? between(today, task.due) : undefined);
+  const dueSaid = (task) => {
+    const days = away(task);
+    if (days === undefined) return { said: "No date", tone: "" };
+    if (days < 0) return { said: "Overdue · " + short.format(dayOf(task.due)), tone: "late" };
+    if (days === 0) return { said: "Today", tone: "" };
+    if (days === 1) return { said: "Tomorrow", tone: "" };
+    return { said: short.format(dayOf(task.due)), tone: "" };
+  };
+  const row = (task, showDue) => {
+    const due = dueSaid(task);
+    const list = listOf.get(task.id);
+    return graview.html\`<li class="tg-task" data-key="\${task.id}" data-record="\${task.id}" data-done="\${task.done ? "yes" : "no"}">
+      <span class="tg-tick" aria-hidden="true"></span>
+      <span class="tg-main"><a class="tg-name" data-record="\${task.id}">\${task.label}</a><span class="tg-list-of">\${task.done ? "Done" : ""}\${task.done && list ? " · " : ""}\${list ? list.label : task.done ? "" : "On no list"}</span></span>
+      \${showDue ? graview.html\`<span class="tg-due" data-tone="\${due.tone}">\${due.said}</span>\` : ""}
+    </li>\`;
+  };
+  // The week: only the days that have something due, from today.
+  const week = [];
+  for (let at = 0; at < 7 && today; at += 1) {
+    const due = tasks.filter((task) => away(task) === at);
+    if (due.length === 0) continue;
+    const iso = new Date(dayOf(today) + at * DAY_MS).toISOString().slice(0, 10);
+    week.push({ key: iso, name: at === 0 ? "Today" : at === 1 ? "Tomorrow" : weekday.format(dayOf(iso)), tasks: due });
+  }
+  // Still open: what is overdue first, oldest first; then what is dated, soonest first; then what has no date.
+  const open = tasks.filter((task) => !task.done).sort((a, b) => {
+    const x = away(a), y = away(b);
+    if (x === undefined && y === undefined) return 0;
+    if (x === undefined) return 1;
+    if (y === undefined) return -1;
+    return x - y;
   });
-  const open = tasks.filter((task) => !task.done);
-  graview.render(graview.html\`<div class="tg-home">
-    <section class="tg-week" aria-labelledby="tg-week-h"><h2 id="tg-week-h">This week</h2>
-      <div class="tg-days">\${days.map((day) => graview.html\`<div class="tg-day" data-key="\${day.key}"><h3>\${day.name}</h3><ul>\${day.tasks.map((task) => graview.html\`<li data-key="\${task.id}"><a data-record="\${task.id}">\${task.label}</a></li>\`)}</ul></div>\`)}</div>
+  const late = open.filter((task) => (away(task) ?? 0) < 0).length;
+  const dueThisWeek = week.reduce((sum, day) => sum + day.tasks.filter((task) => !task.done).length, 0);
+  graview.render(graview.html\`<div class="tg">
+    <p class="tg-sum">
+      <span class="tg-stat"><b>\${open.length}</b> open</span>
+      <span class="tg-stat" data-tone="\${late > 0 ? "late" : ""}"><b>\${late}</b> overdue</span>
+      <span class="tg-stat"><b>\${dueThisWeek}</b> due this week</span>
+    </p>
+    <section aria-labelledby="tg-week-h"><h2 id="tg-week-h">This week</h2>
+      \${week.length === 0
+        ? graview.html\`<p class="tg-none">Nothing due this week.</p>\`
+        : graview.html\`<div class="tg-days">\${week.map((day) => graview.html\`<div class="tg-day" data-key="\${day.key}"><h3>\${day.name}</h3><ul class="tg-rows">\${day.tasks.map((task) => row(task, false))}</ul></div>\`)}</div>\`}
     </section>
-    <section class="tg-open" aria-labelledby="tg-open-h"><h2 id="tg-open-h">Still open</h2>
-      <ul>\${open.map((task) => graview.html\`<li data-key="\${task.id}"><a data-record="\${task.id}">\${task.label}</a></li>\`)}</ul>
+    <section aria-labelledby="tg-open-h"><h2 id="tg-open-h">Still open <span class="tg-n">\${open.length}</span></h2>
+      \${open.length === 0 ? graview.html\`<p class="tg-none">Everything is done.</p>\` : graview.html\`<ul class="tg-rows">\${open.map((task) => row(task, true))}</ul>\`}
     </section>
-    <section class="tg-lists" aria-labelledby="tg-lists-h"><h2 id="tg-lists-h">Lists</h2>
-      <ul>\${lists.map((list) => graview.html\`<li data-key="\${list.id}"><a data-record="\${list.id}">\${list.label}</a></li>\`)}</ul>
+    <section aria-labelledby="tg-lists-h"><h2 id="tg-lists-h">Lists</h2>
+      <ul class="tg-lists">\${lists.map((list) => {
+        const held = holds.filter((edge) => edge.from === list.id).map((edge) => tasks.find((task) => task.id === edge.to)).filter(Boolean);
+        const left = held.filter((task) => !task.done).length;
+        const share = held.length === 0 ? 0 : Math.round(((held.length - left) / held.length) * 100);
+        return graview.html\`<li class="tg-list" data-key="\${list.id}" data-record="\${list.id}">
+          <a data-record="\${list.id}">\${list.label}</a>
+          <span class="tg-list-n">\${held.length === 0 ? "Empty" : left === 0 ? "All done" : left + " open of " + held.length}</span>
+          <span class="tg-bar" aria-hidden="true"><span style="width: \${share}%"></span></span>
+        </li>\`;
+      })}</ul>
     </section>
   </div>\`);
 });
@@ -59,7 +132,7 @@ graview.onProps((props) => {
 
 /** The view, as the dev page registers it. */
 export const AT_A_GLANCE: WorkerViewDefinition = {
-  manifest: { name: "at-a-glance", title: "At a glance", attach: "task", cardinality: "many", reads: { kinds: ["list"] } },
+  manifest: { name: "at-a-glance", title: "At a glance", attach: "task", cardinality: "many", reads: { kinds: ["list"], edges: ["holds"] } },
   worker: { source: SOURCE },
 };
 

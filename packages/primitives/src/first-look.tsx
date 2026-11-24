@@ -82,7 +82,7 @@ const SETTLE_MS = 1200;
 const GIVE_UP_MS = 15000;
 
 export function FirstLookHints({ root, steps, onEnd, ai }: FirstLookHintsProps) {
-  const [run, setRun] = useState<{ readonly list: readonly FirstLookStep[]; readonly at: number } | null>(null);
+  const [run, setRun] = useState<{ readonly list: readonly FirstLookStep[]; readonly at: number; readonly skipped: number } | null>(null);
   const returnTo = useRef<Element | null>(null);
   const ended = useRef(false);
   const told = useRef(onEnd);
@@ -119,7 +119,7 @@ export function FirstLookHints({ root, steps, onEnd, ai }: FirstLookHintsProps) 
             return;
           }
           returnTo.current = document.activeElement;
-          setRun({ list, at: first });
+          setRun({ list, at: first, skipped: first });
           return;
         }
       } else if (now - begun >= GIVE_UP_MS) {
@@ -179,7 +179,7 @@ export function FirstLookHints({ root, steps, onEnd, ai }: FirstLookHintsProps) 
     if (!run) return;
     const index = nextDrawn(run.list, run.at + 1);
     if (index < 0) end("finished", true);
-    else setRun({ list: run.list, at: index });
+    else setRun({ list: run.list, at: index, skipped: run.skipped + (index - run.at - 1) });
   }, [run, nextDrawn, end]);
 
   /* A hint whose control went — a face changed under it — gives way to the next one drawn. */
@@ -205,13 +205,14 @@ export function FirstLookHints({ root, steps, onEnd, ai }: FirstLookHintsProps) 
   if (!run) return null;
   const step = run.list[run.at]!;
   const last = nextDrawn(run.list, run.at + 1) < 0;
+  /* "N of M" counts the hints shown: none skipped for want of its control, nor one still to come whose control is not drawn (the menu's, while no record is) (Graview HQ feature:f-menu-first-frames-follow-ups). */
   return (
     <Hint
       key={run.at}
       root={root}
       step={step}
-      position={run.at + 1}
-      total={run.list.length}
+      position={run.at + 1 - run.skipped}
+      total={run.list.length - run.skipped - run.list.slice(run.at + 1).filter((one) => firstLookAnchor(root(), one.anchor) === null).length}
       last={last}
       onNext={next}
       onEnd={end}
