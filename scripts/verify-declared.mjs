@@ -74,6 +74,7 @@ import { graviewSources } from "./lib/graview-sources.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { vacant } from "./lib/serve.mjs";
 import { faceShown } from "./lib/bar.mjs";
+import { settled } from "./lib/settled.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -300,7 +301,7 @@ try {
     page.on("pageerror", (error) => errors.push(`${query}: ${error.message}`));
     await page.goto(`${at("declared-host")}/?${query}`, { waitUntil: "load" });
     await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
-    await page.waitForTimeout(1200);
+    await settled(page, { most: 1200 });
     return page;
   };
   /** The pictures among the bar's places on Pages (FR-138): standing on the row, or in the list "More" or the place control opens (FR-145). */
@@ -309,7 +310,7 @@ try {
   /** The scene sent to a place's stop, the way a link to it does: a picture in the place list is its page (FR-138). */
   const toPlace = async (page, as) => {
     await page.evaluate((stop) => window.__handle.setStop(stop), `#view=${as}`);
-    await page.waitForTimeout(1200);
+    await settled(page, { most: 1200 });
   };
 
   /* ---- FR-79: every lens a picture in the place list, and a drive-in from altitude on the Graview face */
@@ -386,7 +387,7 @@ try {
     const opened = await page.evaluate(() => document.querySelector("[data-graview-page-title]")?.textContent?.trim() ?? null);
     report.checks.thePagesFaceOpensOnTheFirstPlace = { opened, ok: opened?.includes("The floor") === true };
     await page.click('[data-testid="app-home"]');
-    await page.waitForTimeout(600);
+    await settled(page, { most: 600 });
     const home = await page.evaluate(() => ({
       kinds: [...document.querySelectorAll('[data-testid="kinds"] li a')].map((link) => link.getAttribute("href")),
       /* Every place the bar offers, standing or in the list (FR-145): on the home, the first stand and the rest follow in the order. */
@@ -494,7 +495,7 @@ try {
     const page = await open("doc=lifelogics&face=pages", SIZES[0]);
     await page.waitForSelector('[data-graview-listed="pkg-start"] .graview-spec-item-link', { timeout: 15_000 });
     await page.click('[data-graview-listed="pkg-start"] .graview-spec-item-link');
-    await page.waitForTimeout(500);
+    await settled(page, { most: 500 });
     const followed = await page.evaluate(() => document.querySelector("[data-graview-page-title]")?.textContent?.trim() ?? null);
     await page.close();
     report.checks.aListedRecordOnTheFrontPageIsALinkToItsPage = { followed, ok: followed === "The small start" };
@@ -602,14 +603,14 @@ try {
             await page.waitForTimeout(150);
             const carried = await page.evaluate((selector) => document.querySelector(`${selector} [data-testid="columns-announce"]`)?.textContent ?? "", within);
             await page.keyboard.press(" ");
-            await page.waitForTimeout(400);
+            await settled(page, { most: 400 });
             const after = await columnsOf(page, within);
             const kept = await page.evaluate(() => document.activeElement?.closest("[data-graview-listed]")?.getAttribute("data-graview-listed") ?? document.activeElement?.tagName ?? null);
             const said = await page.evaluate((selector) => document.querySelector(`${selector} [data-testid="columns-said"]`)?.textContent ?? "", within);
             // Undo, by the keyboard too: the board's own Undo, focused and pressed.
             await page.locator(`${within} [data-testid="columns-undo"]`).focus();
             await page.keyboard.press("Enter");
-            await page.waitForTimeout(400);
+            await settled(page, { most: 400 });
             const undone = await columnsOf(page, within);
             keyboard = { reached: true, pickedUp, carried, after: after.columns, kept, said, undone: undone.columns };
           }
@@ -656,7 +657,7 @@ try {
     let dragged = { tried: false };
     try {
       await page.dragAndDrop(`${within} [data-graview-listed="t3"]`, `${within} [data-graview-column="done"]`);
-      await page.waitForTimeout(400);
+      await settled(page, { most: 400 });
       dragged = { tried: true, ...(await columnsOf(page, within)) };
     } catch (error) {
       dragged = { tried: true, error: String(error) };
@@ -700,7 +701,7 @@ try {
         }
         const joins = JSON.parse((await cell.getAttribute("data-graview-joins")) ?? "[]");
         await cell.click();
-        await page.waitForTimeout(900);
+        await settled(page, { most: 900 });
         chosen[at] = await page.evaluate(({ selector, joins }) => {
           const root = document.querySelector(selector);
           const shape = root?.querySelector("[data-coverage-shape]")?.getAttribute("data-coverage-shape") ?? null;
@@ -804,7 +805,7 @@ try {
 
     const scene = await open("doc=money&face=scene", { width: 1440, height: 900 });
     await scene.evaluate(() => window.__handle.setStop("#focus=d1"));
-    await scene.waitForTimeout(1200);
+    await settled(scene, { most: 1200 });
     const sceneText = await scene.evaluate(() => document.querySelector("[data-graview-embed]")?.textContent ?? "");
     await scene.close();
     report.checks.aMoneyFieldIsSaidAsMoneyInTheScenesRecord = { dollars: sceneText.includes("$10,000"), bare: bare.test(sceneText), ok: sceneText.includes("$10,000") && !bare.test(sceneText) };
@@ -856,7 +857,7 @@ try {
     const page = await open("doc=review&face=none", { width: 1280, height: 900 });
     const landed = await page.evaluate(() => window.__handle.where());
     await page.click('[data-testid="app-home"]');
-    await page.waitForTimeout(1200);
+    await settled(page, { most: 1200 });
     const home = await page.evaluate(() => ({
       where: window.__handle.where(),
       headline: document.querySelector("[data-graview-embed] .graview-spec-headline")?.textContent?.trim() ?? null,
@@ -1020,7 +1021,7 @@ try {
     const home = await text("/", "[data-graview-show-more]");
     const before = await home.evaluate(() => ({ listed: document.querySelectorAll("[data-graview-listed]").length, button: document.querySelector("[data-graview-show-more]")?.textContent ?? null }));
     await home.click("[data-graview-show-more]").catch(() => {});
-    await home.waitForTimeout(600);
+    await settled(home, { most: 600 });
     const after = await home.evaluate(() => ({
       listed: document.querySelectorAll("[data-graview-listed]").length,
       button: document.querySelector("[data-graview-show-more]") !== null,
@@ -1133,7 +1134,7 @@ try {
         await shoot(page, `jobs-home-${size.width}-${scheme}`);
         // And what follows the jobs: the standing in a line, the places smaller.
         await page.evaluate(() => document.querySelector('[data-testid="after-the-jobs"]')?.scrollIntoView({ block: "start" }));
-        await page.waitForTimeout(800);
+        await settled(page, { most: 800 });
         await shoot(page, `jobs-home-${size.width}-${scheme}-after`);
         await page.close();
       }
@@ -1164,7 +1165,7 @@ try {
     await page.waitForSelector('[data-testid="form-set-status"]', { timeout: 10_000 });
     await page.selectOption('[data-testid="form-set-status"] select', "done").catch(() => {});
     await page.click('[data-testid="form-set-status"] button[type="submit"]');
-    await page.waitForTimeout(600);
+    await settled(page, { most: 600 });
     const acted = await page.evaluate(() => ({
       count: document.querySelector('[data-job="late"] [data-testid="job-count"]')?.textContent?.trim() ?? null,
       first: document.querySelector('[data-job="late"] [data-testid="job-row"]')?.getAttribute("data-graview-record") ?? null,

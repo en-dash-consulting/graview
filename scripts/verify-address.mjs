@@ -109,6 +109,7 @@ import { graviewSources } from "./lib/graview-sources.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { vacant } from "./lib/serve.mjs";
 import { faceShown, toFace } from "./lib/bar.mjs";
+import { settled as pageSettled } from "./lib/settled.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const asked = process.argv.find((arg) => arg.startsWith("--engine="))?.slice("--engine=".length);
@@ -518,7 +519,7 @@ try {
       tab.on("pageerror", (error) => errors.push(`${where}: ${error.message}`));
       const ready = async () => {
         await tab.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
-        await tab.waitForTimeout(500);
+        await pageSettled(tab, { most: 500 });
       };
       const go = async (path) => {
         await tab.goto(`${at("address-host")}${path}`, { waitUntil: "load" });
@@ -541,7 +542,7 @@ try {
         scenePressed: (await faceShown(tab, { timeout: 3_000 }).catch(() => null)) === "scene",
       });
       const settled = async () => {
-        await tab.waitForTimeout(600);
+        await pageSettled(tab, { most: 600 });
         return state();
       };
       /*
@@ -669,15 +670,15 @@ try {
             up: await tab.evaluate(() => document.querySelector('[data-testid="overview"]')?.getAttribute("aria-pressed") === "true"),
           });
           await go(`${BASE}/places/overview#overview=1`);
-          await tab.waitForTimeout(600);
+          await pageSettled(tab, { most: 600 });
           one.lensUp = await scene();
           // A district's showings come up when it is reached for: the keyboard reaches it here, as a hand's hover does.
           await tab.focus('[data-testid="showing-the-board"]', { timeout: 10_000 });
           await tab.dblclick('[data-testid="showing-the-board"]', { timeout: 10_000 });
-          await tab.waitForTimeout(1200);
+          await pageSettled(tab, { most: 1200 });
           one.lensDown = await scene();
           await tab.goBack();
-          await tab.waitForTimeout(1200);
+          await pageSettled(tab, { most: 1200 });
           one.lensBack = await scene();
         } catch (error) {
           one.lensError = String(error?.message ?? error);
@@ -736,14 +737,14 @@ try {
               },
               [selector, x, y],
             );
-            await tab.waitForTimeout(800);
+            await tab.waitForTimeout(800); // Measured on purpose: the finger is held past the long press, a timer of the page's own.
             await tab.evaluate((at) => document.querySelector(at).dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerType: "touch", isPrimary: true })), selector);
             if (!(await tab.locator('[data-testid="context-menu"]').isVisible().catch(() => false))) throw new Error(`no menu after resting on ${selector} (under the finger: ${under})`);
           } else {
             await tab.click(selector, { button: "right", position: { x: 12, y: 8 } });
           }
           await tab.waitForSelector('[data-testid="context-menu"]', { timeout: 10_000 });
-          await tab.waitForTimeout(400);
+          await pageSettled(tab, { most: 400 });
           // Open in a new tab and Move to… wait behind More…, as a person would find them.
           await unfold(tab);
           return tab.evaluate(() => {
@@ -773,7 +774,7 @@ try {
         await menuOf(card("t1"));
         await tab.click('[data-testid="context-menu"] [data-menu-item="move-to"]');
         await tab.click('[data-testid="context-menu"] [data-move-to="done"]', { timeout: 10_000 });
-        await tab.waitForTimeout(600);
+        await pageSettled(tab, { most: 600 });
         boardCard.movedTo = await tab.evaluate(() => document.querySelector('[data-graview-listed="t1"]')?.closest("[data-graview-column]")?.getAttribute("data-graview-column") ?? null);
         one.boardCard = boardCard;
         await go(`${CARDS_BASE}/places/by-status`);
@@ -807,7 +808,7 @@ try {
         await tab.waitForFunction(() => Boolean(document.querySelector('[data-worker-view="to-do"]')?.shadowRoot?.querySelector(".to-do li")), null, { timeout: 20_000 }).catch(() => null);
         const drawn = await tab.evaluate(() => [...(document.querySelector('[data-worker-view="to-do"]')?.shadowRoot?.querySelectorAll(".to-do li") ?? [])].map((li) => li.textContent));
         if (await tab.locator('[data-testid="app-places-open"]').isVisible().catch(() => false)) await tab.click('[data-testid="app-places-open"]');
-        await tab.waitForTimeout(300);
+        await pageSettled(tab, { most: 300 });
         one.keptView = { opened, drawn, frame: await placeFrame('[data-worker-view="to-do"]'), places: await places() };
         await tab.keyboard.press("Escape");
         await go(`${VIEWS_BASE}/people`);
@@ -884,7 +885,7 @@ try {
         const drawnOnScene = (name) => tab.waitForFunction((name) => Number(document.querySelector(`[data-graview-preview="${name}"] [data-worker-view]`)?.getAttribute("data-graview-content-height") ?? 0) > 0, name, { timeout: 20_000 });
         await go(`${VIEWS_BASE}/places/overview#focus=aggregate%3Atask&in.view=the-log`);
         await drawnOnScene("the-log");
-        await tab.waitForTimeout(400);
+        await pageSettled(tab, { most: 400 });
         const log = await preview("the-log");
         await tab.click('[data-graview-preview="the-log"] [data-graview-preview-open]');
         const landed = await settled();
@@ -894,14 +895,14 @@ try {
         /* FR-231: More, at the card's foot, lands where Open does. */
         await go(`${VIEWS_BASE}/places/overview#focus=aggregate%3Atask&in.view=the-log`);
         await drawnOnScene("the-log");
-        await tab.waitForTimeout(400);
+        await pageSettled(tab, { most: 400 });
         await tab.click('[data-graview-preview="the-log"] [data-graview-preview-more]');
         const byMore = await settled();
         await tab.waitForFunction(() => Boolean(document.querySelector('[data-worker-view="the-log"]')?.shadowRoot?.querySelector(".log li")), null, { timeout: 20_000 }).catch(() => null);
         const byMoreEntries = await tab.evaluate(() => document.querySelector('[data-worker-view="the-log"]')?.shadowRoot?.querySelectorAll(".log li").length ?? 0);
         await go(`${VIEWS_BASE}/places/overview#focus=aggregate%3Atask&in.view=the-map`);
         await drawnOnScene("the-map");
-        await tab.waitForTimeout(400);
+        await pageSettled(tab, { most: 400 });
         const map = await preview("the-map");
         await go(`${VIEWS_BASE}/places/the-map`);
         await tab.waitForFunction(() => Boolean(document.querySelector('[data-worker-view="the-map"]')?.shadowRoot?.querySelector(".map")), null, { timeout: 20_000 }).catch(() => null);
@@ -961,7 +962,7 @@ try {
         const drawnOnScene = (name) => tab.waitForFunction((name) => Number(document.querySelector(`[data-graview-preview="${name}"] [data-worker-view]`)?.getAttribute("data-graview-content-height") ?? 0) > 0, name, { timeout: 20_000 });
         await go(`${VIEWS_BASE}/places/overview#focus=t1&sel=t1`);
         await drawnOnScene("t1");
-        await tab.waitForTimeout(400);
+        await pageSettled(tab, { most: 400 });
         const notes = await card("t1");
         await tab.click('[data-graview-preview="t1"] [data-graview-preview-open]');
         const landed = await settled();
@@ -970,13 +971,13 @@ try {
         /* The Shell, with no Pages: Expand, then Collapse. */
         await go(`${SHELL_BASE}/`);
         await drawnOnScene("t1");
-        await tab.waitForTimeout(400);
+        await pageSettled(tab, { most: 400 });
         const before = await card("t1");
         await tab.click('[data-graview-preview="t1"] [data-graview-preview-expand]');
-        await tab.waitForTimeout(400);
+        await pageSettled(tab, { most: 400 });
         const grown = await card("t1");
         await tab.click('[data-graview-preview="t1"] [data-graview-preview-expand]');
-        await tab.waitForTimeout(400);
+        await pageSettled(tab, { most: 400 });
         const back = await card("t1");
         one.recordCard = { notes, landed: { ...landed, entries }, shell: { before, grown, back } };
       } catch (error) {
@@ -1121,7 +1122,7 @@ try {
         });
         await go(`${FITTED_BASE}/places/the-broken`);
         await tab.waitForSelector("[data-graview-bleed] > [data-worker-view-fallback]", { timeout: 20_000 });
-        await tab.waitForTimeout(300);
+        await pageSettled(tab, { most: 300 });
         const fallback = await tab.evaluate(() => {
           const slot = document.querySelector("[data-graview-bleed]");
           const main = slot?.closest("[data-graview-page-main]");
@@ -1256,7 +1257,7 @@ try {
             };
           });
         const band = (name) => tab.waitForFunction((view) => Boolean(document.querySelector(`[data-worker-view="${view}"]`)?.shadowRoot?.querySelector(".band")), name, { timeout: 20_000 });
-        const settled = () => tab.waitForTimeout(300);
+        const settled = () => pageSettled(tab, { most: 300 });
         for (const width of widths) {
           if (width !== viewport.width) await tab.setViewportSize({ width, height: viewport.height });
           const measured = {};
@@ -1339,7 +1340,7 @@ try {
       try {
         await go(`${HOMES_BASE}/`);
         await tab.waitForFunction(() => Boolean(document.querySelector("[data-worker-view]")?.shadowRoot?.querySelector("p")), null, { timeout: 20_000 }).catch(() => null);
-        await tab.waitForTimeout(400);
+        await pageSettled(tab, { most: 400 });
         one.homes = await tab.evaluate(() => ({
           drawn: [...document.querySelectorAll("[data-worker-view]")].map((view) => view.getAttribute("data-worker-view")),
           says: [...document.querySelectorAll("[data-worker-view]")].map((view) => view.shadowRoot?.textContent?.trim() ?? ""),
@@ -1351,7 +1352,7 @@ try {
       try {
         await go(`${HOMES_BASE}/people`);
         await tab.waitForFunction(() => Boolean(document.querySelector("[data-worker-view]")?.shadowRoot?.querySelector("p")), null, { timeout: 20_000 }).catch(() => null);
-        await tab.waitForTimeout(400);
+        await pageSettled(tab, { most: 400 });
         one.replacingList = await tab.evaluate(() => ({
           drawn: [...document.querySelectorAll("[data-worker-view]")].map((view) => view.getAttribute("data-worker-view")),
           says: [...document.querySelectorAll("[data-worker-view]")].map((view) => view.shadowRoot?.textContent?.trim() ?? ""),
@@ -1378,7 +1379,7 @@ try {
           form.noValidate = true;
           form.requestSubmit();
         });
-        await tab.waitForTimeout(300);
+        await pageSettled(tab, { most: 300 });
         const refused = { said: (await tab.textContent('[data-testid="refused"]').catch(() => null))?.trim() ?? null, guests: await guests() };
         await tab.fill('[data-graview-embed="form"] input[name="email"]', "ada@example.com");
         await tab.click('[data-graview-embed="form"] [data-graview-part="submit"]');
@@ -1410,24 +1411,24 @@ try {
       try {
         await reader.goto(`${at("address-host")}/article.html?from=somewhere#the-picture`, { waitUntil: "load" });
         await reader.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
-        await reader.waitForTimeout(500);
+        await pageSettled(reader, { most: 500 });
         const where = () => reader.evaluate(() => ({ href: location.href, length: history.length, writes: window.__writes.length, heading: (document.querySelector("[data-graview-face=pages] [data-graview-page-title]") ?? document.querySelector("[data-graview-face=pages] :is(h1, h2, h3, h4)"))?.textContent?.trim() ?? null }));
         quiet.before = await where();
         await reader.click('[data-graview-face=pages] a[href="/tasks"]', { timeout: 10_000 });
-        await reader.waitForTimeout(400);
+        await pageSettled(reader, { most: 400 });
         await reader.click('[data-graview-face=pages] a[href="/tasks/t1"]', { timeout: 10_000 });
-        await reader.waitForTimeout(400);
+        await pageSettled(reader, { most: 400 });
         quiet.onRecord = await where();
         await toFace(reader, "scene");
-        await reader.waitForTimeout(800);
+        await pageSettled(reader, { most: 800 });
         await reader.click('[data-testid="app-home"]');
-        await reader.waitForTimeout(600);
+        await pageSettled(reader, { most: 600 });
         quiet.after = await where();
         // A seat change on the scene, in the article: still the article's history, never written.
         await toFace(reader, "scene");
-        await reader.waitForTimeout(800);
+        await pageSettled(reader, { most: 800 });
         await reader.evaluate(() => window.__handle.setSeat({ kind: "human", id: "p9", roles: ["viewer"] }));
-        await reader.waitForTimeout(600);
+        await pageSettled(reader, { most: 600 });
         quiet.reseated = await where();
         quiet.writes = await reader.evaluate(() => window.__writes);
       } catch (error) {
@@ -1473,12 +1474,12 @@ try {
       const open = async (address) => {
         await tab.goto(`${at("address-host")}${address}`, { waitUntil: "load" });
         await tab.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
-        await tab.waitForTimeout(600);
+        await pageSettled(tab, { most: 600 });
         return look();
       };
       const change = async (which) => {
         await tab.evaluate((name) => window.__swap(name), which);
-        await tab.waitForTimeout(800);
+        await pageSettled(tab, { most: 800 });
         return look();
       };
       const pair = async (address, which) => {
@@ -1514,7 +1515,7 @@ try {
         const before = await called();
         await tab.evaluate(() => (window.__sameDocument = true));
         await tab.evaluate((name) => window.__swap(name), "renamed");
-        await tab.waitForTimeout(800);
+        await pageSettled(tab, { most: 800 });
         swapped[key] = { before, after: await called() };
       }
       await context.close();

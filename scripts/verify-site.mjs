@@ -21,6 +21,7 @@ import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
+import { frames, settled } from "./lib/settled.mjs";
 
 const require = createRequire(import.meta.url);
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -117,7 +118,7 @@ try {
         if (message.type() === "error") errors.push(`console: ${message.text().slice(0, 90)}`);
       });
       await arrive(page, pageAt(sheet.file));
-      await page.waitForTimeout(700);
+      await settled(page, { most: 700 });
       /*
        * The chapters mount as the reader comes near them. The whole page is
        * under test, so every one of them is brought near, and the page is
@@ -130,6 +131,7 @@ try {
         // One step per call, as a reader scrolls: a whole sweep inside one
         // script call starves the frames the chapters mount on.
         await page.evaluate((to) => window.scrollTo(0, to), y);
+        // Measured on purpose: a reader's pace. Two frames a step left two chapters of the long version unmounted at a phone's width.
         await page.waitForTimeout(150);
       }
       await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
@@ -148,7 +150,7 @@ try {
           )
           .catch(() => {});
       }
-      await page.waitForTimeout(150);
+      await frames(page, 2);
       await page.evaluate(() => window.scrollTo(0, 0));
       /*
        * WAIT FOR THIS PAGE'S OWN COUNT, which is the thing that was
@@ -166,7 +168,7 @@ try {
           { timeout: 30_000 },
         ).catch(() => {});
       }
-      await page.waitForTimeout(900);
+      await settled(page, { most: 900 });
       await page.addScriptTag({ path: AXE });
 
       const violations = await page.evaluate(async () => {
@@ -263,12 +265,12 @@ try {
   for (const sheet of PAGES) {
     const one = await browser.newPage({ viewport: { width: 1280, height: 900 } });
     await arrive(one, pageAt(sheet.file));
-    await one.waitForTimeout(600);
+    await settled(one, { most: 600 });
     await one.keyboard.press("Tab");
     report.criteria[`theFirstStopIsTheWayPastTheNavigationOn_${sheet.file}`] =
       (await one.evaluate(() => document.activeElement?.className)) === "skip";
     await one.keyboard.press("Enter");
-    await one.waitForTimeout(300);
+    await settled(one, { most: 300 });
     report.criteria[`theSkipLinkReachesTheContentOn_${sheet.file}`] =
       (await one.evaluate(() => location.hash)) === sheet.skip;
     report.criteria[`focusIsVisibleOn_${sheet.file}`] = await one.evaluate(() => {
@@ -278,7 +280,7 @@ try {
       return style.outlineStyle === "solid" && parseFloat(style.outlineWidth) >= 2;
     });
     await one.addStyleTag({ content: "html { font-size: 200% }" });
-    await one.waitForTimeout(400);
+    await settled(one, { most: 400 });
     report.criteria[`textZoomToTwoHundredDoesNotScrollSidewaysOn_${sheet.file}`] = await one.evaluate(
       () => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
     );
@@ -310,7 +312,7 @@ try {
   /* And the tabs are tabs: an arrow key moves, and only one panel is shown. */
   await stepper.focus("#step-tab-5");
   await stepper.keyboard.press("ArrowRight");
-  await stepper.waitForTimeout(300);
+  await settled(stepper, { most: 300 });
   report.criteria.theStepsAreReachableFromTheKeyboard = await stepper.evaluate(
     () =>
       document.activeElement?.id === "step-tab-9" &&
@@ -422,13 +424,13 @@ try {
   /* The long version is where the chapters and the kit went. */
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await arrive(page, pageAt("progression.html"));
-  await page.waitForTimeout(600);
+  await settled(page, { most: 600 });
   /* A chapter goes from its overview to a page on the page itself: the picture is the app, its home one press away on the bar (FR-132). */
   await page.locator('#chapter-1 [data-graview-chapter="1"]').scrollIntoViewIfNeeded();
   await page.waitForFunction(() => document.querySelector('#chapter-1 [data-graview-chapter="1"] [data-graview-embed]') !== null, null, { timeout: 20_000 }).catch(() => {});
   const faceBefore = await page.locator('#chapter-1 [data-graview-chapter="1"] [data-graview-embed]').getAttribute("data-graview-embed").catch(() => null);
   await page.locator('#chapter-1 [data-graview-chapter="1"] [data-testid="app-home"]').click().catch(() => {});
-  await page.waitForTimeout(500);
+  await settled(page, { most: 500 });
   const faceAfter = await page.locator('#chapter-1 [data-graview-chapter="1"] [data-graview-embed]').getAttribute("data-graview-embed").catch(() => null);
   report.criteria.aChapterSwitchesFaceOnThePage = faceBefore !== null && faceBefore !== "pages" && faceAfter === "pages";
 
@@ -462,7 +464,7 @@ try {
   await settledPath(curved);
   const elbowed = await kitPath();
   await page.locator('#kit-form input[name="tended-visible"]').uncheck().catch(() => {});
-  await page.waitForTimeout(400);
+  await settled(page, { most: 400 });
   const quiet = await kitPath();
   const declared = await page.evaluate(() => document.getElementById("kit-decl")?.textContent ?? "");
   /* Each half of the claim on its own, so a failure says which half. */
@@ -477,14 +479,14 @@ try {
   await page.locator('#kit-form input[name="tended-visible"]').check().catch(() => {});
   await page.locator('#kit-form input[name="tended-painted"]').check().catch(() => {});
   await page.locator('#kit-form input[name="tended-color"]').fill("#f4f4f4").catch(() => {});
-  await page.waitForTimeout(300);
+  await settled(page, { most: 300 });
   report.criteria.theKitsVerdictIsTheCheckers = await page.evaluate(() => document.getElementById("kit-verdict")?.textContent?.includes("kit-contrast-below-aa") ?? false);
 
   await page.close();
 
   const reduced = await browser.newPage({ viewport: { width: 1280, height: 900 }, reducedMotion: "reduce" });
   await arrive(reduced, pageAt("index.html"));
-  await reduced.waitForTimeout(400);
+  await settled(reduced, { most: 400 });
   // The opener's own Graview is on screen at load, so its cards are the
   // thing to ask: under reduced motion the theme turns their transitions off.
   await reduced.waitForFunction(() => document.querySelector("[data-graview-view]") !== null, null, { timeout: 20_000 }).catch(() => {});
@@ -500,7 +502,7 @@ try {
 
   const forced = await browser.newPage({ viewport: { width: 1280, height: 900 }, forcedColors: "active" });
   await arrive(forced, pageAt("index.html"));
-  await forced.waitForTimeout(400);
+  await settled(forced, { most: 400 });
   report.criteria.forcedColorsKeepTheMeaningfulMarks = await forced.evaluate(
     () => {
       // The ask the season is drawn from is marked by its edge alone, so it keeps that mark in system colors.

@@ -776,7 +776,7 @@ writeFileSync(TIMES, `${JSON.stringify(Object.fromEntries(Object.entries(recorde
 // The file is committed: a path of this machine's said in a harness's last line is not.
 const scrubbed = (text) => [repoRoot, homedir(), tmpdir(), realpathSync(tmpdir())].reduce((said, path) => said.split(path).join(path === repoRoot ? "." : "~"), String(text ?? ""));
 const spent = results.reduce((sum, one) => sum + one.took, 0);
-const slowest = [...results].sort((a, b) => (b.timing?.wall ?? 0) - (a.timing?.wall ?? 0)).slice(0, 12).map((one) => ({ name: one.name, wall: one.timing?.wall ?? one.took, cpu: one.timing?.cpu ?? null, serverStartup: one.timing?.serverStartup ?? 0, fixedWaits: one.timing?.fixedWaits ?? 0 }));
+const slowest = [...results].sort((a, b) => (b.timing?.wall ?? 0) - (a.timing?.wall ?? 0)).slice(0, 12).map((one) => ({ name: one.name, wall: one.timing?.wall ?? one.took, cpu: one.timing?.cpu ?? null, serverStartup: one.timing?.serverStartup ?? 0, fixedWaits: one.timing?.fixedWaits ?? 0, settledWaits: one.timing?.settledWaits ?? 0 }));
 writeFileSync(
   LAST_RUN,
   `${JSON.stringify(

@@ -25,6 +25,7 @@ import { createRequire } from "node:module";
 import { existsSync } from "node:fs";
 import { basename, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { settled } from "./settled.mjs";
 
 /* ------------------------------------------------------------------ */
 /* The declaration, read in Node                                       */
@@ -442,8 +443,9 @@ export class Person {
     this.log = [];
   }
 
+  /** Until what the last press asked for has settled (settled.mjs), never longer than `ms`. */
   async settle(ms = 140) {
-    await this.page.waitForTimeout(ms);
+    await settled(this.page, { most: ms });
   }
 
   async key(key) {
