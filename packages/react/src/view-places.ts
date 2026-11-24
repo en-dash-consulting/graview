@@ -196,6 +196,35 @@ export function recordInView(inner: Element | null | undefined, point?: { readon
   return undefined;
 }
 
+/** A box in the window's pixels. */
+export interface BoxOnPage {
+  readonly left: number;
+  readonly top: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+/**
+ * WHERE THE RECORDS A VIEW DREW STAND ON THE PAGE: the boxes its host
+ * judged, found from `element` (inside the view's shadow root, or the
+ * region itself) up to the element that holds them, each in the window's
+ * pixels — the region's own pixels scaled as the page is and moved to where
+ * the region stands now, so a scroll or a level's scale is allowed for.
+ * Undefined outside a view.
+ */
+export function recordBoxesOnPage(element: Element): readonly (BoxOnPage & { readonly id: string })[] | undefined {
+  for (let at: Element | null = element; at; at = upFrom(at)) {
+    if (!at.hasAttribute(RECORD_BOXES_ATTRIBUTE)) continue;
+    const held = recordBoxesOf(at);
+    if (!held) return undefined;
+    const box = at.getBoundingClientRect();
+    const wide = (at as HTMLElement).offsetWidth;
+    const scale = wide > 0 && box.width > 0 ? box.width / wide : 1;
+    return held.boxes().map((one) => ({ id: one.id, left: box.left + one.x * scale, top: box.top + one.y * scale, width: one.width * scale, height: one.height * scale }));
+  }
+  return undefined;
+}
+
 /** The element a face's own reading sees for this one: itself, or the host of the shadow root it is drawn in (a worker view's region), outward. */
 export function outOfViews(element: Element): Element {
   let at = element;

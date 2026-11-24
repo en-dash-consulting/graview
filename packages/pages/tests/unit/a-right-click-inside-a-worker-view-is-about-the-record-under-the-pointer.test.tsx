@@ -49,19 +49,20 @@ const TASKS = [
   { id: "buy", kind: "task", label: "Buy the cake", done: false },
 ];
 
-/** A Fast slot that picks the first option, sure of it. */
-const fast: FastProvider = {
+/** A Fast slot that picks the first option, as sure of it as it is told. */
+const fastAt = (sure: number): FastProvider => ({
   model: "fake-fast",
   decide: async (_state, questions) => ({
     answers: Object.fromEntries(
       Object.entries(questions).map(([key, question]) => {
         const names = Object.keys((question as { criteria: Record<string, string> }).criteria);
-        return [key, { type: "choice", choice: names[0]!, confidence: 0.9, probabilities: Object.fromEntries(names.map((name, at) => [name, at === 0 ? 0.9 : 0.01])) }];
+        return [key, { type: "choice", choice: names[0]!, confidence: sure, probabilities: Object.fromEntries(names.map((name, at) => [name, at === 0 ? sure : 0.01])) }];
       }),
     ) as never,
     usage: { inputTokens: 10, outputTokens: 0 },
   }),
-};
+});
+const fast = fastAt(0.9);
 
 /** A host's section that keeps what each menu it is drawn in is about. */
 function aims() {
@@ -197,13 +198,31 @@ describe("the hover chip over a worker view", () => {
     await over(shadow.querySelector('[data-record="deposit"] h3')!, 40, 20);
     await until(() => chipOn("deposit"));
     expect(chipOn("deposit")).toBe(true);
+    // Beside the box its host judged for the record (0,0 200×50 here): to its right, level with its top — not over the card, nor above it.
+    const placed = () => chips()[0] as HTMLElement;
+    expect(placed().style.left).toBe("206px");
+    expect(placed().style.top).toBe("6px");
     // To the next card inside the view, by moves only.
     await move(shadow.querySelector('[data-record="book"] h3')!, 40, 120);
     await until(() => chipOn("book"));
     expect(chipOn("book")).toBe(true);
+    // And it follows: beside "book" (0,100 200×50).
+    expect(placed().style.left).toBe("206px");
+    expect(placed().style.top).toBe("106px");
     // To the view's own ground: the chip goes.
     await move(shadow.querySelector(".ground")!, 40, 75);
     await until(() => chips().length === 0);
     expect(chips().length).toBe(0);
+  });
+
+  it("where the Fast slot is not sure enough of anything, says so quietly and shows no pick", async () => {
+    const { shadow } = await rendered({ ai: { fast: fastAt(0.3), hoverChips: true } });
+    await over(shadow.querySelector('[data-record="deposit"] h3')!, 40, 20);
+    const unsure = () => document.querySelector<HTMLElement>('[data-testid="hover-chip-unsure"]');
+    await until(() => unsure() !== null);
+    expect(unsure()?.textContent).toContain("Nothing sure here");
+    expect(unsure()?.getAttribute("aria-hidden")).toBe("true");
+    expect(chips().length).toBe(0);
+    expect(unsure()!.style.left).toBe("206px");
   });
 });

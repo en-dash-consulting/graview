@@ -126,7 +126,7 @@ async function stubbedAi(): Promise<HostAi> {
 const dev = (import.meta as { env?: { DEV?: boolean } }).env?.DEV === true;
 const ai =
   (window as unknown as { __todoAi?: HostAi }).__todoAi ??
-  (askedAi === "off" ? { off: true } : dev && askedAi === "stub" ? await stubbedAi() : dev ? await aiThroughDevServer() : undefined);
+  (askedAi === "off" ? { off: true } : dev && askedAi === "stub" ? await stubbedAi() : dev ? { ...(await aiThroughDevServer()), hoverChips: true } : undefined);
 
 /*
  * WHERE A TASK'S ATTACHMENTS GO (FR-163). In development, the dev server's
