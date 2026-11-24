@@ -48,7 +48,26 @@ function Stack({ notices, at, anchor, board, report }: { readonly notices: reado
         // The toast rung holds it over every rail where the top layer is not there.
       }
     }
-    const place = () => (at === "top" ? placeAtTheTop : placeAtTheFoot)(element, anchor());
+    /*
+     * THE PICTURE WATCHED AS WELL AS THE STACK. A page as tall as what it
+     * drew grows under a toast raised while it was short (Graview Cloud's
+     * hosted page: the bar and a view's first lines, then the rest): placed
+     * at that first foot, the toast stood over the view's own links until
+     * something else happened to move it. The picture's size changing places
+     * it again, and a picture that is a new element is watched in its stead.
+     */
+    let watched: HTMLElement | null = null;
+    const place = () => {
+      const picture = anchor();
+      if (picture !== watched) {
+        if (watched) grows?.unobserve(watched);
+        watched = picture;
+        if (picture) grows?.observe(picture);
+      }
+      (at === "top" ? placeAtTheTop : placeAtTheFoot)(element, picture);
+    };
+    const grows = typeof ResizeObserver === "function" ? new ResizeObserver(() => place()) : null;
+    grows?.observe(element);
     place();
     // Held while pointed at or in the keyboard's hands: no toast goes from under either (FR-152), nor from under a Report this that has focus (FR-237).
     if (at === "foot") board.hold?.(() => element.matches(":hover") || element.contains(document.activeElement));
@@ -57,8 +76,6 @@ function Stack({ notices, at, anchor, board, report }: { readonly notices: reado
     addEventListener("scroll", place, true);
     // Placed again when what stands at the foot comes, moves or goes, and when a notice joins the stack.
     if (at === "foot") addEventListener(FOOT_MOVED, place);
-    const grows = typeof ResizeObserver === "function" ? new ResizeObserver(place) : null;
-    grows?.observe(element);
     return () => {
       unraise();
       grows?.disconnect();
