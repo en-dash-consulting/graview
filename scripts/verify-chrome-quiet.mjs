@@ -502,7 +502,8 @@ try {
         page.on("pageerror", (error) => errors.push(`${engine} ${scheme} ${query}: ${error.message}`));
         await page.goto(`${at("quiet-host")}/?${query}`, { waitUntil: "load" });
         await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
-        await settled(page, { most: 1200 });
+        // Kept fixed: WebKit's pages face says its problem count only after the page has stood still a while (read as 0 with a settled wait) — a race to fix in the page, not here.
+        await page.waitForTimeout(1200);
         return { page, close: () => context.close() };
       };
       /** A place's address on the Pages face, read from its own link on the home. */

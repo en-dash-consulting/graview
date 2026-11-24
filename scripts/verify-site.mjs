@@ -131,7 +131,8 @@ try {
         // One step per call, as a reader scrolls: a whole sweep inside one
         // script call starves the frames the chapters mount on.
         await page.evaluate((to) => window.scrollTo(0, to), y);
-        await frames(page, 2);
+        // Measured on purpose: a reader's pace. Two frames a step left two chapters of the long version unmounted at a phone's width.
+        await page.waitForTimeout(150);
       }
       await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
       /*

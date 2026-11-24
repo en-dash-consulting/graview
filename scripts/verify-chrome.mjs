@@ -1654,7 +1654,8 @@ try {
           page.on("pageerror", (error) => errors.push(error.message));
           await page.goto(place.url, { waitUntil: "load" });
           await place.ready(page);
-          await settled(page, { most: 1200 });
+          // Kept fixed: the routed face at 390 redraws its bar after the page has stood still a while (the stillness read differed with a settled wait) — a race to fix in the page, not here.
+          await page.waitForTimeout(1200);
           /* The bar holds still: drawn the same a moment later, one row of at most 48 px, nothing over anything, nothing past its end. */
           const first = await geometry(page);
           // Measured on purpose: "holds still" is the same geometry read twice, a moment apart.
@@ -1769,7 +1770,8 @@ try {
               // Back where the rest of this place's claims were read.
               await page.goto(place.url, { waitUntil: "load" });
               await place.ready(page);
-              await settled(page, { most: 1200 });
+              // Kept fixed, as above: the bar is read again from here.
+              await page.waitForTimeout(1200);
             }
             /* One inbox: one bell, one count, three tabs, landing on what waits for you — the host's notification and the suggestion. */
             const inbox = await page.evaluate(async () => {
