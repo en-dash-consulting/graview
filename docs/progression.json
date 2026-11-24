@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-24T14:28:32.655Z",
+  "at": "2026-10-13T12:31:59.330Z",
   "engine": "chromium",
   "chapters": [
     {
@@ -31,15 +31,15 @@
       "errors": [],
       "offTheMachine": [],
       "picture": {
-        "width": 640,
-        "height": 334
+        "width": 828,
+        "height": 429
       },
       "saw": {
         "standing": "Every rule holds",
         "districts": [
           "Plots2open ▾Plot 1Plot 2"
         ],
-        "trail": "Skip to the pictureGraviewEverythingEverythingGraviewNothing here is called “”.↑↓ move↵ open→ actionsesc close⌘KNKeeping this appStudio",
+        "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -81,8 +81,8 @@
       "errors": [],
       "offTheMachine": [],
       "picture": {
-        "width": 756,
-        "height": 578
+        "width": 958,
+        "height": 637
       },
       "saw": {
         "standing": "Every rule holds",
@@ -90,7 +90,7 @@
           "Gardeners2open ▾",
           "Plots2"
         ],
-        "trail": "Skip to the pictureGraviewPlot 1EverythingGraviewNothing here is called “”.↑↓ move↵ open→ actionsesc close⌘KNKeeping this appStudio",
+        "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -136,21 +136,21 @@
       "errors": [],
       "offTheMachine": [],
       "picture": {
-        "width": 978,
-        "height": 599
+        "width": 1254,
+        "height": 663
       },
       "saw": {
-        "standing": "Inbox — 1 needs you: 1 rule broken",
+        "standing": "1 rule broken — open what is broken, and what would fix it",
         "districts": [
           "Gardeners2open ▾",
           "Plots2⚠ 1open ▾",
           "Rules1open ▾Every plot has a caretaker"
         ],
-        "trail": "Skip to the pictureSkip to the rule that is brokenGraviewEverythingEverythingGraviewNothing here is called “”.↑↓ move↵ open→ actionsesc close⌘K1InboxFor you1Act",
+        "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
         "withheld": null,
         "activity": [],
         "remembered": null,
-        "problems": "Nobody tends Plot 2June takes on Plot 2Ravi takes on Plot 2",
+        "problems": "Nobody tends Plot 2Every plot has a caretaker · 2 ways to fix",
         "wordmark": "Graview",
         "focused": null
       }
@@ -195,8 +195,8 @@
       "errors": [],
       "offTheMachine": [],
       "picture": {
-        "width": 640,
-        "height": 538
+        "width": 949,
+        "height": 608
       },
       "saw": {
         "standing": "Every rule holds",
@@ -206,7 +206,7 @@
           "Plots2open ▾",
           "Rules1open ▾"
         ],
-        "trail": "Skip to the pictureGraviewEverythingThe yearThe seasonEverythingThe yearThe seasonMoreGraviewNothing here is called “”.↑↓ move↵ open→ actionsesc close⌘KNKeeping",
+        "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -259,23 +259,23 @@
       "errors": [],
       "offTheMachine": [],
       "picture": {
-        "width": 872,
-        "height": 540
+        "width": 1216,
+        "height": 663
       },
       "saw": {
-        "standing": "Inbox — 1 needs you: 1 rule broken",
+        "standing": "1 rule broken — open what is broken, and what would fix it",
         "districts": [
           "Gardeners1open ▾",
           "Plantingsnone yet",
           "Plots1⚠ 1open ▾",
           "Rules1open ▾"
         ],
-        "trail": "Skip to the pictureSkip to the rule that is brokenGraviewEverythingEverythingGraviewNothing here is called “”.↑↓ move↵ open→ actionsesc close⌘K1InboxFor you1Act",
+        "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
         "withheld": null,
         "activity": [
-          "starter Adopt: every plot has a caretakerAs it wasUndoEvery plot has a caretaker",
-          "starter Stake out First plot (1 beds)As it wasUndoFirst plot",
-          "starter Welcome First gardenerAs it wasUndoFirst gardener"
+          "starter Adopt: every plot has a caretakerundoEvery plot has a caretaker",
+          "starter Stake out First plot (1 beds)undoFirst plot",
+          "starter Welcome First gardenerundoFirst gardener"
         ],
         "remembered": null,
         "problems": null,
@@ -327,8 +327,8 @@
       "errors": [],
       "offTheMachine": [],
       "picture": {
-        "width": 872,
-        "height": 540
+        "width": 1216,
+        "height": 663
       },
       "saw": {
         "standing": "Every rule holds",
@@ -338,7 +338,7 @@
           "Plots2open ▾",
           "Rules1open ▾"
         ],
-        "trail": "Skip to the pictureGraviewEverythingEverythingGraviewNothing here is called “”.↑↓ move↵ open→ actionsesc close⌘KInboxFor youActivityYour asksThe agent's seatThe",
+        "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
         "withheld": null,
         "activity": [],
         "remembered": "Remembered in this browserStart fresh",
@@ -391,8 +391,8 @@
       "errors": [],
       "offTheMachine": [],
       "picture": {
-        "width": 640,
-        "height": 538
+        "width": 788,
+        "height": 608
       },
       "saw": {
         "standing": "Every rule holds",
@@ -402,7 +402,7 @@
           "Plots2close ▴",
           "Rules1open ▾"
         ],
-        "trail": "Skip to PlotsSkip to the pictureGraviewEverythingEverythingGraviewNothing here is called “”.↑↓ move↵ open→ actionsesc close⌘KPlant a starter gardenNot yours to ",
+        "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
         "withheld": "Stake out a plotNot permitted: “Stake out a plot” — a coordinator can. The coordinator keeps the map.",
         "activity": [],
         "remembered": null,
@@ -414,7 +414,7 @@
         "offered": [
           "Take on a plot …"
         ],
-        "withheld": "Change the gardenerNot permitted: “Change the gardener” on a gardener — a coordinator can. The coordinator keeps the map.Archive the gardenerNot permitted: “Archive the gardener” on a gardener — a coordinator can. The coordinator keeps the map.Leave this one aloneNot permitted: “Leave this one alone” on a gardener — a coordinator can. The coordinator keeps the map.Merge into another gardenerNot permitted: “Merge into another gardener” on a gardener — a coordinator can. The coordinator keeps the map.Remove the gardenerNot permitted: “Remove the gardener” on a gardener — a coordinator can. The coordinator keeps the map."
+        "withheld": "Change the gardenerNot permitted: “Change the gardener” on a gardener — a coordinator can. The coordinator keeps the map.Archive the gardenerNot permitted: “Archive the gardener” on a gardener — a coordinator can. The coordinator keeps the map.Merge into another gardenerNot permitted: “Merge into another gardener” on a gardener — a coordinator can. The coordinator keeps the map.Remove the gardenerNot permitted: “Remove the gardener” on a gardener — a coordinator can. The coordinator keeps the map."
       }
     },
     {
@@ -460,8 +460,8 @@
       "errors": [],
       "offTheMachine": [],
       "picture": {
-        "width": 640,
-        "height": 538
+        "width": 949,
+        "height": 608
       },
       "saw": {
         "standing": "Every rule holds",
@@ -471,7 +471,7 @@
           "Plots2open ▾",
           "Rules1open ▾"
         ],
-        "trail": "Skip to the pictureSeedbedEverythingEverythingSeedbedNothing here is called “”.↑↓ move↵ open→ actionsesc close⌘KThe garden is plantedJKeeping this appStudio",
+        "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -483,7 +483,6 @@
         "offered": [
           "Change the gardener …",
           "Archive the gardener",
-          "Leave this one alone",
           "Merge into another gardener …",
           "Take on a plot …",
           "Remove the gardener"
@@ -537,13 +536,13 @@
       "offTheMachine": [],
       "picture": {
         "width": 390,
-        "height": 1400,
+        "height": 844,
         "phone": true
       },
       "saw": {
         "standing": null,
         "districts": [],
-        "page": "The garden›PlotsPlot 2Plot 23 beds, looked after by Ravi. Nothing is growing.See it in the scene ↗Sow something here form:where([data-graview-part=\"form\"]) { /* A grid item of the section above it and a grid container for the fields below: ",
+        "page": "A plot in the gardenPlot 23 beds, looked after by Ravi. Nothing is growing.See it in the scene ↗Sow something here form:where([data-graview-part=\"form\"]) { /* A grid item of the section above it and a grid container for the fields below: bo",
         "custom": true,
         "design": false,
         "fitsAPhone": true
@@ -594,31 +593,29 @@
       "offTheMachine": [],
       "picture": {
         "width": 1132,
-        "height": 593
+        "height": 634
       },
       "saw": {
-        "standing": "Inbox — 1 needs you: 1 rule broken",
+        "standing": "1 rule broken — open what is broken, and what would fix it",
         "districts": [
           "Gardeners2◆",
           "Plantings1+1 pastopen ▾",
-          "Plots2⚠ 1open ▾",
+          "Plots⚠ 2open ▾",
           "Rules1open ▾"
         ],
-        "trail": "Skip to the pictureSkip to the rule that is brokenSeedbedEverythingWho tends whatEverythingWho tends whatMoreSeedbedNothing here is called “”.↑↓ move↵ open→ act",
+        "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
         "withheld": null,
         "activity": [],
         "remembered": null,
         "problems": null,
         "wordmark": "Seedbed",
-        "focused": "FilterFind↓CSVWho tends what1 gardener with no plot · 1 plot on no gardenerPlot 1⚠ Plot 2June⚠Not covered: Ravi"
+        "focused": "Who tends what1 gardener with no plot · 1 plot on no gardenerPlot 1⚠ Plot 2JuneRavi"
       },
       "seatSees": {
         "offered": [
           "Change the plot …",
           "Archive the plot",
-          "Leave this one alone",
           "Merge into another plot …",
-          "Link a planting …",
           "Name a caretaker …",
           "Sow something …",
           "Remove the plot"
@@ -672,7 +669,7 @@
       "offTheMachine": [],
       "picture": {
         "width": 1132,
-        "height": 593
+        "height": 634
       },
       "saw": {
         "standing": "Every rule holds",
@@ -682,7 +679,7 @@
           "Plots3◆",
           "Rules1open ▾"
         ],
-        "trail": "Skip to the pictureSeedbedEverythingWhat grows whereWho tends whatEverythingWhat grows whereWho tends whatMoreSeedbedNothing here is called “”.↑↓ move↵ open→ ac",
+        "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -695,9 +692,7 @@
           "Harvest it …",
           "Change the planting …",
           "Archive the planting",
-          "Leave this one alone",
           "Merge into another planting …",
-          "Link a plot …",
           "Remove the planting"
         ],
         "withheld": ""
@@ -747,8 +742,8 @@
       "errors": [],
       "offTheMachine": [],
       "picture": {
-        "width": 872,
-        "height": 540
+        "width": 1216,
+        "height": 663
       },
       "saw": {
         "standing": "Every rule holds",
@@ -758,10 +753,10 @@
           "Plots2open ▾What grows where",
           "Rules1open ▾"
         ],
-        "trail": "Skip to the pictureSeedbedEverythingWhat grows whereWho tends whatEverythingWhat grows whereWho tends whatMoreSeedbedNothing here is called “”.↑↓ move↵ open→ ac",
+        "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
         "withheld": null,
         "activity": [
-          "the upgrade migration 1→2: Every garden adopts the agreementAs it wasUndo 1 changesEvery plot has a caretaker"
+          "the upgrade migration 1→2: Every garden adopts the agreementundo +0Every plot has a caretaker"
         ],
         "remembered": "Remembered in this browserStart fresh",
         "problems": null,
@@ -772,7 +767,6 @@
         "offered": [
           "Change the gardener …",
           "Archive the gardener",
-          "Leave this one alone",
           "Merge into another gardener …",
           "Take on a plot …",
           "Remove the gardener"
@@ -876,7 +870,6 @@
         "errors": 0,
         "warnings": 0,
         "findings": [
-          "brand-hues-crowded",
           "label-unbounded",
           "label-unbounded",
           "label-unbounded",
@@ -890,8 +883,8 @@
       "errors": [],
       "offTheMachine": [],
       "picture": {
-        "width": 696,
-        "height": 543
+        "width": 988,
+        "height": 614
       },
       "saw": {
         "standing": "Every rule holds",
@@ -903,7 +896,7 @@
           "Rules1open ▾",
           "People2open ▾2 activeWho may do what"
         ],
-        "trail": "Skip to the pictureSeedbedEverythingWhat grows whereWho may do whatWho tends whatEverythingWhat grows whereWho may do whatWho tends whatMoreSeedbedNothing here ",
+        "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -915,7 +908,6 @@
         "offered": [
           "Change the gardener …",
           "Archive the gardener",
-          "Leave this one alone",
           "Merge into another gardener …",
           "Take on a plot …",
           "Remove the gardener"
@@ -944,8 +936,7 @@
         "grant",
         "sight",
         "lens",
-        "brand",
-        "screen"
+        "brand"
       ],
       "mutations": [
         "add-kind",
@@ -956,8 +947,6 @@
         "remove-field",
         "retype-field",
         "set-required",
-        "set-repeats",
-        "set-multiple",
         "set-options",
         "describe-field",
         "add-edge",
@@ -975,13 +964,7 @@
         "add-sight",
         "change-sight",
         "remove-sight",
-        "remove-lens",
-        "set-lens-hidden",
-        "set-lens-export",
-        "add-edge-to-another-app",
-        "add-screen",
-        "move-screen",
-        "remove-screen"
+        "remove-lens"
       ],
       "invariants": [],
       "check": {
@@ -990,20 +973,15 @@
         "warnings": 0,
         "findings": [
           "blank-graph-unreachable",
-          "brand-hues-crowded",
+          "label-unbounded",
+          "glance-unchosen",
+          "label-unbounded",
+          "label-unbounded",
           "label-unbounded",
           "glance-unchosen",
           "label-unbounded",
           "glance-unchosen",
           "label-unbounded",
-          "glance-unchosen",
-          "label-unbounded",
-          "glance-unchosen",
-          "label-unbounded",
-          "glance-unchosen",
-          "label-unbounded",
-          "label-unbounded",
-          "glance-unchosen",
           "label-unbounded",
           "glance-unchosen",
           "label-unbounded"
@@ -1016,8 +994,8 @@
       "errors": [],
       "offTheMachine": [],
       "picture": {
-        "width": 960,
-        "height": 553
+        "width": 1063,
+        "height": 624
       },
       "saw": {
         "standing": "Every rule holds",
@@ -1032,10 +1010,9 @@
           "lenses2open ▾",
           "roles2open ▾",
           "rules1open ▾",
-          "screensnone yet",
           "sightsnone yet"
         ],
-        "trail": "Skip to the pictureGraviewEverythingWhat the checker saysEverythingWhat the checker saysMoreGraviewNothing here is called “”.↑↓ move↵ open→ actionsesc close⌘KPl",
+        "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -1087,7 +1064,6 @@
         "errors": 0,
         "warnings": 0,
         "findings": [
-          "brand-hues-crowded",
           "label-unbounded",
           "label-unbounded",
           "label-unbounded",
@@ -1101,8 +1077,8 @@
       "errors": [],
       "offTheMachine": [],
       "picture": {
-        "width": 1111,
-        "height": 593
+        "width": 1132,
+        "height": 634
       },
       "saw": {
         "standing": "Every rule holds",
@@ -1113,124 +1089,26 @@
           "Rotations8◆",
           "Rules1open ▾"
         ],
-        "trail": "Skip to the pictureSeedbedEverythingWhat grows whereThe yearThe seasonThe rotationWho tends whatEverythingWhat grows whereThe yearThe seasonThe rotationWho tend",
+        "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
         "withheld": null,
         "activity": [],
         "remembered": null,
         "problems": null,
         "wordmark": "Seedbed",
-        "focused": "The rotationThe rotation · 2026–2029‹Today›dayweekmonthquarteryearThe rotationagenda2026202720282029FilterFind↓CSVJan 26Feb 26Mar 262Brassicas · Plot 1Legumes · Plot 2Apr 262 May 262Brassicas · Plot 1Legumes · Plot 2Jun 262 Jul 262 Aug 262 Sep 262Brassicas · Plot 1Legumes · Plot 2Oct 262 Nov 26Dec 26Jan 27Feb 27Mar 272Legumes · Plot 1Roots · Plot 2Apr 272 May 272Legumes · Plot 1Roots · Plot 2Jun 2"
+        "focused": "The rotationThe rotation · 2026–2029‹Today›dayweekmonthquarteryearThe rotationagenda2026202720282029 .graview-arrange{container-type:inline-size;box-sizing:border-box;width:100%;min-width:0;max-width:100%} .graview-arrange-line{display:flex;flex-wrap:wrap;align-items:center;gap:2px 6px;min-width:0;font-size:.875rem;line-height:1.35;color:var(--graview-ink-muted)} .graview-arrange-count{margin-righ"
       },
       "seatSees": {
         "offered": [
           "Change the rotation …",
           "Archive the rotation",
-          "Leave this one alone",
           "Merge into another rotation …",
-          "Link a planting …",
-          "Set the plot …",
           "Remove the rotation"
         ],
         "withheld": ""
       }
     }
   ],
-  "recipes": [
-    {
-      "slug": "docs",
-      "check": {
-        "ok": true,
-        "said": "✓ the document compiles and checks clean"
-      },
-      "pictures": {
-        "light": "docs/progression/recipe-docs-light.png",
-        "dark": "docs/progression/recipe-docs-dark.png"
-      },
-      "errors": [],
-      "offTheMachine": [],
-      "saw": {
-        "mounted": true,
-        "districts": [
-          "decision records14open ▾29 accepted3",
-          "docs17⚠ 1open ▾",
-          "modules16⚠ 10open ▾",
-          "people7open ▾"
-        ],
-        "standing": "Inbox — 11 need you: 4 rules broken in 11 places"
-      }
-    },
-    {
-      "slug": "decisions",
-      "check": {
-        "ok": true,
-        "said": "· rules.proposal-not-left-open: Rule \"proposal-not-left-open\" reads the clock (today(), now(), a computed field that does, or a kind whose records retire on a date), so the day turning breaks or mends it with nothing changed. A store judges it again only when its host ticks it. — Host it with @graview/ship (openStore, serve and openRemote tick at each midnight: the app's, in brand.timeZone, else UTC's), or call store.tick(now) when the day turns — once a day from a host's own alarm, untilTheDayTurns(now, brand.timeZone) ahead — and its subscribers hear what appeared and cleared."
-      },
-      "pictures": {
-        "light": "docs/progression/recipe-decisions-light.png",
-        "dark": "docs/progression/recipe-decisions-dark.png"
-      },
-      "errors": [],
-      "offTheMachine": [],
-      "saw": {
-        "mounted": true,
-        "districts": [
-          "decisions14⚠ 2open ▾29 accepted3",
-          "modules16open ▾"
-        ],
-        "standing": "Inbox — 2 need you: 1 rule broken in 2 places"
-      }
-    },
-    {
-      "slug": "dependencies",
-      "check": {
-        "ok": true,
-        "said": "✓ the document compiles and checks clean"
-      },
-      "pictures": {
-        "light": "docs/progression/recipe-dependencies-light.png",
-        "dark": "docs/progression/recipe-dependencies-dark.png"
-      },
-      "errors": [],
-      "offTheMachine": [],
-      "saw": {
-        "mounted": true,
-        "districts": [
-          "decisions14open ▾29 accepted3",
-          "dependencies49open ▾",
-          "modules17open ▾",
-          "packages35⚠ 27open ▾",
-          "people7open ▾"
-        ],
-        "standing": "Inbox — 27 need you: 2 rules broken in 27 places"
-      }
-    },
-    {
-      "slug": "architecture",
-      "check": {
-        "ok": true,
-        "said": "✓ the document compiles and checks clean"
-      },
-      "pictures": {
-        "light": "docs/progression/recipe-architecture-light.png",
-        "dark": "docs/progression/recipe-architecture-dark.png"
-      },
-      "errors": [],
-      "offTheMachine": [],
-      "saw": {
-        "mounted": true,
-        "districts": [
-          "modules16⚠ 2open ▾",
-          "people7open ▾",
-          "zones7⚠ 1open ▾"
-        ],
-        "standing": "Inbox — 3 need you: 2 rules broken in 3 places"
-      }
-    }
-  ],
   "verdict": {
-    "everyRecipeChecksClean": true,
-    "everyRecipeRunsOnItsPage": true,
-    "everyRecipeSaysWhatItsRulesFound": true,
     "everyChapterChecksClean": true,
     "everyChapterRenderedWithoutErrors": true,
     "noChapterAsksTheNetwork": true,
@@ -1249,6 +1127,5 @@
     "theDeclarationIsAGraphInChapterFifteen": true,
     "theGardenWearsItsOwnFaceInChapterThirteen": true
   },
-  "why": {},
   "passed": true
 }
