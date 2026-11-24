@@ -237,7 +237,8 @@ describe("a hosted page", () => {
     // A byte ceiling, raised on the batch: over on a pull request that is not a batch, a warning (GRAVIEW_BUDGET=warn).
     // 1172 KB with the whole 0.2.12 batch together (2026-11-23): a person moved carrying every link, a record's last change said once, a file's preview, the several bar's one rehearsal, the forms' edges, a workflow step that publishes and the map lens, measured against main: the scene face measured 1_198_788 B, 4_805 over the 1166 KB ceiling before it.
     // 1175 KB with the whole 0.2.13 batch together (2026-11-23): a rename carrying the kept views that read it, a device drawn as its seat, a view playing the app's reel, a static page drawing a record's pictures and the Fast slot showing only what it is sure of, measured against main: the scene face measured 1_202_124 B, 1_997 over the 1172 KB ceiling before it.
-    for (const [face, one] of Object.entries(measured.beforeDrawn)) expect(holdBytes({ name: `a hosted page before its ${face} face draws`, minified: one.minified, budget: { minified: 1175 * 1024 - 1 } })).toEqual([]);
+    // 1179 KB with the whole 0.2.14 batch together (2026-11-24): a view kept mounted when the reel starts or stops, a framed guest handed the reel, and a right-click and the hover chip inside a view about the record under the pointer, measured against main: the scene face measured 1_206_118 B, 2_919 over the 1175 KB ceiling before it.
+    for (const [face, one] of Object.entries(measured.beforeDrawn)) expect(holdBytes({ name: `a hosted page before its ${face} face draws`, minified: one.minified, budget: { minified: 1179 * 1024 - 1 } })).toEqual([]);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {
