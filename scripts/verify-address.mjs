@@ -737,7 +737,7 @@ try {
               },
               [selector, x, y],
             );
-            await pageSettled(tab, { most: 800 });
+            await tab.waitForTimeout(800); // Measured on purpose: the finger is held past the long press, a timer of the page's own.
             await tab.evaluate((at) => document.querySelector(at).dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerType: "touch", isPrimary: true })), selector);
             if (!(await tab.locator('[data-testid="context-menu"]').isVisible().catch(() => false))) throw new Error(`no menu after resting on ${selector} (under the finger: ${under})`);
           } else {
