@@ -1,5 +1,10 @@
 schema: "rex/v2"
 items:
   "431e6ad4-a67a-4603-82a5-8bb75e053216":
-    status: "in_progress"
-    lastModified: "2026-11-23T21:40:00.000Z"
+    status: "completed"
+    startedAt: "2026-11-23T20:55:00.000Z"
+    completedAt: "2026-11-24T19:32:05.000Z"
+    endedAt: "2026-11-24T19:32:05.000Z"
+    resolutionType: "code-change"
+    resolutionDetail: "PR #699 (the menu, its Suggested rows and the hover chip inside a worker view are about the record under the pointer; Nick tried it locally before the publish), released in 0.2.14 by batch #700"
+    lastModified: "2026-11-24T19:32:05.000Z"
