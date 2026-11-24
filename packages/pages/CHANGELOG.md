@@ -1,5 +1,34 @@
 # @graview/pages
 
+## 0.2.14
+
+### Patch Changes
+
+- 71f197c: A right-click or a long press inside a worker view opens the menu about the record under the pointer, and the menu's first frames give the keyboard back, ask the Fast slot at the press and tell each showing once. A worker view draws in a shadow root, so a face saw only the view's region under a press: the menu, its Suggested rows, its AI section and the hover chip were about the whole view wherever the pointer was.
+  
+  - The record under a press inside a worker view is found from the boxes the view's host measured and judged of it (`@graview/core/record-boxes`: each a record the view was handed that this seat may see), with `recordBoxAt` and, on `@graview/react/drawing`, `recordInView` and `outOfViews`. A right-click, a long press, Shift+F10 on a card, a resting pointer and the hover chip (followed from card to card by the pointer's moves, since over and out inside one shadow root never reach the page) are about that record on the pages face and the scene, and the menu is headed with its name; a press on the view's own ground stays about the place. A card the view marks for a record its host did not judge it drew is not taken on the view's word.
+  - The hover chip stands beside the record the pointer rests on: to its right, level with it, where the window has room, else just below it, else just above it, and off the other records the view drew beside it (`chipPlace`). Inside a worker view it is placed by the box the view's host judged for the record, allowing for the page's scroll and scale (`recordBoxesOnPage` on `@graview/react/drawing`). It stood above the record's right edge, over the heading drawn above it.
+  - Where the Fast slot was asked on a rest and was not sure enough of anything for a chip, a faint, unpressable "Nothing sure here · right-click for more" stands there instead, so a rest is never met by nothing; no pick under the chip's confidence is shown.
+  - Escape pressed as a menu opens on a pick inside a card (a task on a day's clock) gives the keyboard back to the pick, never `<body>`.
+  - The Suggested rows are worked out at the right button's press, or a finger held on its way to a long press, and the Fast slot is asked for their order then (`prepareSuggested`, `askSuggested`); the menu takes that call up as it draws rather than asking again. `useMenuPrepare` returns the sections it got ready.
+  - Words typed in the menu, which stand the AI section down, no longer make its picks a second showing told to the host (`HostAi.onPickOutcome`): a section hidden while its menu stays open is told once, as the menu goes.
+  - A Fast-only quick ask offers Find, and says Find can look (`FIND_CAN_LOOK`), only on a page with a Find box.
+  - The first look's "N of M" counts the hints it shows: the menu's hint is not counted where no record is drawn.
+  
+  Held by unit tests of the pages (`a-right-click-inside-a-worker-view-is-about-the-record-under-the-pointer`, `the-suggested-rows-are-asked-at-the-press-and-each-showing-is-told-once`), the primitives (`a-hover-chip-stands-beside-the-record-it-is-about`, `escape-in-the-menus-first-frame-gives-the-keyboard-back`, `the-quick-ask-answers-beside-what-is-selected`) and the embed (`a-first-look-points-at-the-apps-own-controls-once`), by the `guest` harness's taps transport (a right-click on a threat card in a worker view, and a long press on one on a phone, open the menu about that threat) and by the `inline-ai` harness (`escapeInTheMenusFirstFrameGivesTheKeyboardBack`, with no wait before Escape).
+  
+  Compatibility: Host APIs — additive: `recordBoxAt` on `@graview/core/record-boxes`, `recordInView`, `recordBoxesOnPage`, `outOfViews`, `RecordInView` and `BoxOnPage` on `@graview/react` and `@graview/react/drawing`, and `FIND_CAN_LOOK` on `@graview/tools` and `@graview/tools/inline-ai`; `useMenuPrepare`'s function now returns the sections it got ready, where it returned nothing. Behavior a host may notice — a menu opened inside a worker view is about the card under the pointer, its `MenuTarget.on` that record's id and its heading the record's name, where it was about the view's place; the Suggested rows' Fast call starts at the press; a Fast-only answer on a page with no Find box says nothing of Find; the hover chip stands beside its record rather than above it, and a rest the Fast slot was unsure of shows a faint sign (`data-testid="hover-chip-unsure"`) where it showed nothing. The wire, stored formats, ops and primitives, derived tool names and input schemas, and the declaration and check finding codes — unchanged. What Graview Cloud does: nothing; a custom view whose cards are bound with `data-record` gets the menu about each card.
+- 71f197c: The app's reel reaches every view the framework mounts, and frame guests too. A reel handed to `GraviewProvider`, the Shell or the routed face (`PagesApp`'s context) now reaches each worker view drawn under it, and follows it: where a host started or stopped handing a reel, every view under it — and the whole app with it — was drawn afresh. Each now holds the reel the same way whether one is handed or not, so a change moves the value alone and the views already drawn are pushed again; a Shell or a routed face handed no reel keeps the one the provider around it was handed. A frame guest (`mountGuestView` on `@graview/guest/host/frame`, and `guestView` with a `url`) is now handed the reel as a worker view is: its facts in `props.theme.reel` (`name`, `caption`, `type`, `duration`, `poster`, `playable`, `width`, `height`, `aspect`), never its address, its poster's or its captions', pushed again when the host hands another and gone when it hands none. `mountGuestView` takes `reel`, and `guestView` reads the one its page was handed. A frame places no player of the host's: it is another origin. Held by unit tests of the guest (`a-view-the-framework-mounts-is-handed-the-apps-reel`, `a-frame-guest-is-handed-the-apps-reel`).
+  
+  Compatibility: the wire — additive: a frame guest's `props.theme` carries `reel` where the host handed one, as a worker view's already did; a guest that reads none of it is drawn as before. Ops and primitives, stored formats, derived tool names and input schemas, and the declaration and check finding codes — unchanged. What Graview Cloud does: nothing new where it already hands `reel` to `mount` or `<Embed>`; a frame guest it mounts by hand with `mountGuestView` is handed the reel with `reel`.
+- Updated dependencies [71f197c]
+- Updated dependencies [71f197c]
+  - @graview/core@0.2.14
+  - @graview/react@0.2.14
+  - @graview/primitives@0.2.14
+  - @graview/tools@0.2.14
+  - @graview/layout@0.2.14
+
 ## 0.2.13
 
 ### Patch Changes
