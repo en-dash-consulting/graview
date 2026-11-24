@@ -135,10 +135,13 @@ describe("the Suggested rows' Fast call", () => {
   it("holds the rows' height as the Fast slot answers sure of fewer than were first drawn", async () => {
     // Sure of the first alone: the answer shows one row where three were drawn first.
     let answered = false;
+    // The answer waits for the test to let it go: the first frame is read before it, however slow the runner.
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((done) => (release = done));
     const fast: FastProvider = {
       model: "fake-fast",
       decide: async (_state, questions) => {
-        await new Promise((done) => setTimeout(done, 80));
+        await gate;
         answered = true;
         return {
           answers: Object.fromEntries(
@@ -157,6 +160,7 @@ describe("the Suggested rows' Fast call", () => {
     const section = () => menu()!.querySelector<HTMLElement>('[data-menu-section="suggested"]')!;
     const first = { rows: suggestedRows().length, height: section().style.minHeight };
     expect(first.rows).toBe(3);
+    release();
     await until(() => answered && suggestedRows().length === 1);
     expect(suggestedRows()).toHaveLength(1);
     // The room the first three took is kept: nothing under them moves up.
