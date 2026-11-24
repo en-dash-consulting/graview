@@ -54,6 +54,7 @@ import { appsNamed, DeadEnd, frictionOf, inStore, JOBS, keyboardChecks, Person, 
 import { portFor } from "./lib/ports.mjs";
 import { serving } from "./lib/serve.mjs";
 import { takeViolations } from "./lib/watch.mjs";
+import { settled } from "./lib/settled.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -127,7 +128,7 @@ async function ready(page) {
     null,
     { timeout: 60_000 },
   );
-  await page.waitForTimeout(600);
+  await settled(page, { most: 600 });
   /*
    * THE PAGE THAT STAYS. Where the routed face stands over the city, the
    * one face's part arrives after the app says it is ready and the page is
@@ -211,8 +212,8 @@ async function runVariant({ setupFile, variant, out }) {
       } catch (error) {
         result = { done: false, presses: 0, ms: 0, deadEnd: `the harness could not start it: ${String(error?.message ?? error).split("\n")[0].slice(0, 160)}`, harness: true };
       }
-      // The watch judges a press a moment after it lands; give the last one its moment.
-      await page.waitForTimeout(450).catch(() => {});
+      // The watch judges a press a moment after it lands: until it has taken its looks (settled.mjs), as long as it was given before at most.
+      await settled(page, { most: 450 }).catch(() => {});
       await context.close().catch(() => {});
       results[job.id] = { ...result, violations: takeViolations().map(({ rule, detail, at }) => ({ rule, detail, at })) };
     }
@@ -264,7 +265,7 @@ async function setUp(browser, entry, declaration) {
     const seats = (await profile.isVisible().catch(() => false))
       ? await (async () => {
           await profile.click();
-          await page.waitForTimeout(300);
+          await settled(page, { most: 300 });
           return page.$$eval('button[data-testid^="seat-"][title^="Sit down as"]', (els) => els.map((el) => ({ id: el.dataset.testid.slice("seat-".length), label: el.textContent.trim() })));
         })()
       : [];

@@ -1,10 +1,10 @@
-import { choiceWords, InvalidArguments, isLeftAlone, layer, nounOf, pluralLabel, signInInstead, withArticle, type AnySchema, type Store } from "@graview/core";
+import { choiceWords, InvalidArguments, isLeftAlone, layer, nounOf, pluralLabel, signInInstead, withArticle, type AnySchema, type Principal, type Store } from "@graview/core";
 import { edgeWords } from "@graview/core/words";
 import { failureWords } from "@graview/core/words";
 import { linkProvenance, provenanceWords } from "@graview/core/provenance";
 import { edgeOfSelection, kindsOf } from "@graview/layout/view";
-import { POPOVER_STYLE, prepareAffordances, useAffordances, useApplyAffordance, useGraview, useMenuSections, usePopover, useSelection, type AffordancesAsked, type MenuSection, type MenuTarget } from "@graview/react";
-import { loadPins, togglePin, type Affordance, type PinOverrides } from "@graview/tools";
+import { POPOVER_STYLE, prepareAffordances, useAffordances, useApplyAffordance, useGraview, useMenuSections, usePopover, useSelection, type AffordancesAsked, type AiDesk, type MenuSection, type MenuTarget } from "@graview/react";
+import { loadPins, togglePin, type Affordance, type HostAi, type PinOverrides } from "@graview/tools";
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { AnswerArgs, nameOf } from "./answer-args.js";
 import { VISUALLY_HIDDEN } from "../primitives/index.js";
@@ -12,12 +12,12 @@ import { ROVING_ITEM, useRoving } from "../roving.js";
 import { SIGN_IN_ROW } from "../sign-in-row.js";
 import { menuMatches } from "../menu-words.js";
 import { MENU_RANK_FLOOR, MENU_RANK_REST_MS, useFastRank } from "../menu-rank.js";
-import { TOLD_SUGGESTED_MOST, useToldSuggestions } from "../menu-told-door.js";
+import { TOLD_SUGGESTED_MOST, toldAhead, useToldSuggestions } from "../menu-told-door.js";
 import { tellPickOutcome } from "@graview/tools/frame";
 /** Reads what worked here before, ahead of the menu (Roadmap f-jev-fast-polish): the door calls it as it gets the menu ready. */
 export { prepareTold } from "../menu-told-door.js";
-import { openQuickAsk, preloadQuickAsk, useQuickAskDrawn, whereMenuStands } from "../quick-ask-desk.js";
-import { filledActs, notARow, useSuggested, type MenuSuggestion } from "../menu-suggested.js";
+import { heldOf, openQuickAsk, preloadQuickAsk, useQuickAskDrawn, whereMenuStands } from "../quick-ask-desk.js";
+import { askSuggested, filledActs, suggestionCandidates, useSuggested, type MenuSuggestion } from "../menu-suggested.js";
 import type { InspectorPlacement } from "./inspector-door.js";
 import "../frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
@@ -381,16 +381,10 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
   /* SUGGESTED: two or three things worth doing here, each tagged by its way, picked by the Fast slot once it answers. */
   const suggestCandidates = useMemo((): MenuSuggestion[] => {
     if (menuAt === null || modes.length === 0) return [];
-    const nudges = (better?.nudges?.() ?? []).map((label, at): MenuSuggestion => ({ key: `nudge:${at}`, label, mode: "better", source: "nudge" }));
-    const told = toldLike.slice(0, 2).map((one): MenuSuggestion => ({ key: one.key, label: one.label, mode: "chat", source: "told" }));
-    // An act with its answer filled in, never the bare act a row below already offers.
-    const on = menuAt.on ?? (selection.length === 1 ? selection[0] : undefined);
-    const record = on !== undefined ? (store.graph.getNode(on) as (Record<string, unknown> & { kind: string }) | undefined) : undefined;
-    const acts = filledActs(affordances, record, record ? choiceWords(store.schema, [record.kind])[record.kind] : undefined, record ? nameOf(store, record.id as string) : undefined).slice(0, 2);
-    return notARow(asks ? [...nudges, ...told, ...acts] : nudges, [...affordances, ...struck].map((one) => one.label));
+    return candidatesHere(store, menuAt.on ?? (selection.length === 1 ? selection[0] : undefined), affordances, struck, better?.nudges?.() ?? [], toldLike, asks);
   }, [menuAt, modes.length, better, toldLike, affordances, struck, asks, store, selection]);
   /* What the answer depends on: the record the menu is on (a new object whenever it changes), else the graph as it stands. */
-  const dependsOn = useMemo(() => (menuAt?.on !== undefined ? (store.graph.getNode(menuAt.on) as object | undefined) : undefined) ?? graphStamp(store), [menuAt, store, affordances]);
+  const dependsOn = useMemo(() => dependsHere(store, menuAt?.on), [menuAt, store, affordances]);
   const suggested = useSuggested(ai, suggestCandidates, { name: menuAt?.title ?? (selection.length === 1 ? nameOf(store, selection[0]!) : "this"), opened: menuAt, better: better !== undefined, depends: dependsOn }, onRow);
   /*
    * THE SUGGESTED ROWS' ROOM, HELD WHILE THE MENU IS OPEN (Roadmap
@@ -561,7 +555,17 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
       const back = pointAt.current?.returnTo;
       if (back?.isConnected) return back;
       const on = pointAt.current?.on;
-      return on ? document.querySelector<HTMLElement>(`[data-graview-view="${CSS.escape(on)}"]`) : null;
+      if (!on) return null;
+      /*
+       * A pick inside a card (a task on a day's clock) is no card of its own:
+       * the keyboard goes back to the pick where it takes one, else the card
+       * it is drawn in — never <body>, which an Escape in the menu's first
+       * frames left it on (Graview HQ feature:f-menu-first-frames-follow-ups).
+       */
+      const card = document.querySelector<HTMLElement>(`[data-graview-view="${CSS.escape(on)}"]`);
+      if (card) return card;
+      const pick = document.querySelector<HTMLElement>(`[data-graview-pick="${CSS.escape(on)}"]`);
+      return pick ? (pick.closest<HTMLElement>('[tabindex]:not([tabindex="-1"]), a[href], button') ?? pick.closest<HTMLElement>("[data-graview-view]")) : null;
     },
     align: "start",
   });
@@ -1736,6 +1740,43 @@ const ROW_STYLE = { padding: "5px 10px", fontSize: "0.875rem", borderRadius: 8, 
 const LIT_STYLE = { background: "var(--graview-panel-muted)" } as const;
 /** One object for the graph as it stands, a new one once anything is applied: what a list's Suggested is asked again by. */
 const STAMPS = /* @__PURE__ */ new WeakMap<object, { readonly length: number; readonly stamp: object }>();
+/** The Suggested rows' candidates on what a menu is on (`suggestionCandidates`): an act filled in, never the bare act a row below already offers. */
+function candidatesHere(store: Store<AnySchema>, on: string | undefined, affordances: readonly Affordance[], struck: readonly { readonly label: string }[], nudges: readonly string[], told: readonly { readonly key: string; readonly label: string }[], asks: boolean): MenuSuggestion[] {
+  const record = on !== undefined ? (store.graph.getNode(on) as (Record<string, unknown> & { kind: string }) | undefined) : undefined;
+  const acts = filledActs(affordances, record, record ? choiceWords(store.schema, [record.kind])[record.kind] : undefined, record ? nameOf(store, record.id as string) : undefined);
+  return suggestionCandidates({ nudges, told, acts, asks, rows: [...affordances, ...struck].map((one) => one.label) });
+}
+
+/** What the Fast slot's answer depends on: the record the menu is on (a new object whenever it changes), else the graph as it stands. */
+const dependsHere = (store: Store<AnySchema>, on: string | undefined): object => (on !== undefined ? (store.graph.getNode(on) as object | undefined) : undefined) ?? graphStamp(store);
+
+/**
+ * THE SUGGESTED ROWS ASKED FOR AT THE PRESS (Graview HQ
+ * feature:f-menu-first-frames-follow-ups): the right button's press, or a
+ * finger held on its way to a long press, works out the candidates the menu
+ * will show — the acts derived for what it is on, what worked here before
+ * as it was read ahead, a part's nudges — and starts the Fast slot's call
+ * then, which the menu takes up as it draws (`askSuggested`), rather than
+ * starting it as it renders.
+ */
+export function prepareSuggested(ai: HostAi | undefined, desk: AiDesk | undefined, store: Store<AnySchema>, target: Pick<MenuTarget, "on" | "about">, asked: AffordancesAsked<AnySchema> & { readonly principal: Principal; readonly sections: readonly MenuSection[]; readonly name?: string }): void {
+  const better = asked.sections.find((section) => section.mode)?.mode;
+  // Where the quick ask is drawn, as `useQuickAskDrawn` says it.
+  const asks = desk !== undefined && heldOf(desk).drawn > 0;
+  // Nothing to suggest where the menu has neither the quick ask nor a part to make better (its modes).
+  if (!asks && !better) return;
+  const focus = target.on ?? target.about[target.about.length - 1];
+  const { affordances, withheld } = prepareAffordances(store, target.about, { principal: asked.principal, ...(asked.providers ? { providers: asked.providers } : {}), pins: loadPins(), ...(focus === undefined ? {} : { focus }) });
+  const on = target.on ?? (target.about.length === 1 ? target.about[0] : undefined);
+  const ask = (told: readonly { readonly key: string; readonly label: string }[]) => {
+    const candidates = candidatesHere(store, on, affordances, withheld, better?.nudges?.() ?? [], told, asks);
+    void askSuggested(ai, candidates, { name: asked.name ?? (on !== undefined ? nameOf(store, on) : "this"), better: better !== undefined, depends: dependsHere(store, target.on) });
+  };
+  const told = asks ? toldAhead(ai, store, asked.principal, target.on) : undefined;
+  if (told) void told.then(ask, () => ask([]));
+  else ask([]);
+}
+
 function graphStamp(store: { readonly log: { all(): readonly unknown[] } }): object {
   const length = store.log.all().length;
   const held = STAMPS.get(store);

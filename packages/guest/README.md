@@ -115,6 +115,15 @@ its policy needs `img-src data:` to show it. The scheme is the app's own
 again when the app's toggle or brand changes. `mountGuestView` takes
 `reads`, `theme`, `brand` and `places` too.
 
+The app's reel reaches a frame as it reaches a worker view: `reel` on
+`mountGuestView` (and, for `guestView`, the reel the provider, the Shell
+or the routed face was handed) puts its facts in `props.theme.reel` —
+`{ name, caption, type, duration, poster, playable, width, height,
+aspect }` — and never its address, its poster's or its captions'. They
+are pushed again when the host hands another, and are gone when it hands
+none. A frame is another origin, so it places no player of the host's: it
+reads what the reel is, and says so in its own words.
+
 The faces the brand lends its views (`brand.views.fonts`) are lent to a
 frame as well: the host reads each file — the app's own where `asset`
 serves it, or one on an origin `fonts.origins` lists — at most 2 MB, the
@@ -665,7 +674,8 @@ A host that keeps one video for the whole app — the reel its share
 preview plays — hands it as `reel` (an `AppVideo`: `href`, `poster`,
 `duration`, `playable`, and optionally `type`, `name`, `caption`,
 `captions`, `width`, `height`) to `mountWorkerView`, `GraviewProvider`,
-the Shell, the routed face, `mount` or `<Embed>`, and to a headless run.
+the Shell, the routed face, `mount` or `<Embed>`, and to a headless run;
+`mountGuestView` takes it too, for a frame guest's facts alone.
 A view plays it without naming any address:
 
 ```html

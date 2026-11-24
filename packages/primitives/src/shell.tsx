@@ -1,5 +1,5 @@
 import { assetSrc, faviconHref, pagesTitle, sceneTitle, type AnySchema, type AppVideo, type HostFiles, type ViewerState, type KeptViews, type ResolveApp } from "@graview/core";
-import { BesideTheMap, HostAssetsContext, HostMenuItems, HostFilesContext, HostReelContext, HostViewerStateContext, KeptViewsProvider, PanFree, Scene, useGraview, useHostAssets, useNavigation, UrlSync, useTheKeyboardLandsSomewhere, type HostMenuItem, type Scheme, type SceneProps } from "@graview/react";
+import { BesideTheMap, HostAssetsContext, HostMenuItems, HostFilesContext, HostReelContext, HostViewerStateContext, KeptViewsProvider, PanFree, Scene, useGraview, useHostAssets, useHostReel, useNavigation, UrlSync, useTheKeyboardLandsSomewhere, type HostMenuItem, type Scheme, type SceneProps } from "@graview/react";
 import type { ToolCall } from "@graview/tools";
 import { useCallback, useMemo, useState, type ReactNode, useRef } from "react";
 import { withOverview } from "@graview/layout/view";
@@ -234,6 +234,8 @@ function ShellFace<S extends AnySchema>({
   const report = useMemo<NoticeReporting | undefined>(() => (onReport ? { tell: onReport, where: () => sceneReportWhere(spot.current.focusId) } : undefined), [onReport]);
   // The Shell owns the whole page, so the page wears the brand's icon (FR-124) where the host serves it, and its colors.
   const providedAssetsAt = useHostAssets();
+  /* The reel the provider around the Shell was handed, where the Shell was handed none (HQ f-reel-mount-tests-and-frames). */
+  const providedReel = useHostReel();
   const assetsAt = ownAssetsAt ?? providedAssetsAt;
   useFavicon(assetSrc(assetsAt, faviconHref(brand)));
   useThemeColor(brand);
@@ -391,5 +393,6 @@ function ShellFace<S extends AnySchema>({
   const assetsHeld = ownAssetsAt ? <HostAssetsContext.Provider value={ownAssetsAt}>{resolved}</HostAssetsContext.Provider> : resolved;
   const filed = files ? <HostFilesContext.Provider value={files}>{assetsHeld}</HostFilesContext.Provider> : assetsHeld;
   const stateHeld = viewerState ? <HostViewerStateContext.Provider value={viewerState}>{filed}</HostViewerStateContext.Provider> : filed;
-  return reel ? <HostReelContext.Provider value={reel}>{stateHeld}</HostReelContext.Provider> : stateHeld;
+  /* Always held, so a reel handed, changed or taken away moves only the value: the views under it are pushed again, never mounted afresh. */
+  return <HostReelContext.Provider value={reel ?? providedReel}>{stateHeld}</HostReelContext.Provider>;
 }

@@ -431,16 +431,19 @@ export const NO_AI_SAID = "I can answer about what's in this app. Open questions
 /** Whether a resting pointer asks ahead for the menu's suggestions (`HostAi.prefetchOnRest: true`), with a Fast slot that asks as a menu opens. */
 export const prefetchesOnRest = (ai: HostAi | undefined): boolean => ai?.prefetchOnRest === true && suggestsOnOpen(ai);
 
+/** The sentence that ends the two below, pointing at Find: a page with no Find box drops it, and offers no Find (Graview HQ feature:f-menu-first-frames-follow-ups). */
+export const FIND_CAN_LOOK = "Find can look for it.";
+
 /**
  * Said where only the Fast slot was given and it could not answer the words
  * (Roadmap f-jev-fast-polish): what it can do instead — never "These fit",
- * nor that the AI had no answer. The card offers Find beside it, and a chat
- * the host connects (`HostAi.chat`).
+ * nor that the AI had no answer. The card offers Find beside it where the
+ * page has a Find box, and a chat the host connects (`HostAi.chat`).
  */
-export const FAST_ONLY_SAID = "I can't answer that in words here. I can do things with what is here: change a record, fill one in, or take you to a place. Find can look for it.";
+export const FAST_ONLY_SAID = `I can't answer that in words here. I can do things with what is here: change a record, fill one in, or take you to a place. ${FIND_CAN_LOOK}`;
 
 /** The same, where the Fast slot found something here that acts on the words. */
-export const FAST_ONLY_PICKED = "I can't answer that in words here, but these act on it. Find can look for it.";
+export const FAST_ONLY_PICKED = `I can't answer that in words here, but these act on it. ${FIND_CAN_LOOK}`;
 
 /** The quiet note under an answer a model gave. Nothing is said under one the graph gave. */
 export const ANSWERED_WITH_AI = "Answered with AI";

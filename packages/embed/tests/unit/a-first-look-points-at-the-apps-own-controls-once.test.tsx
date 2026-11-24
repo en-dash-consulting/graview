@@ -196,6 +196,24 @@ describe("a first look points at the app's own controls, once", { timeout: 60_00
     await lively.done();
   });
 
+  it("counts N of M as the hints it shows: with AI on and no record drawn, the menu's hint is not counted (Graview HQ feature:f-menu-first-frames-follow-ups)", async () => {
+    const empty = new Store({ schema, mutations: [addNote], invariants: [], snapshot: { nodes: [], edges: [] } as never });
+    const shown = await embed({ store: empty, face: "pages", quickAsk: false, ai: { fast: stubFast() }, firstLook: { seen: false } } as never);
+    const counts: string[] = [];
+    const anchors: string[] = [];
+    for (let turn = 0; turn < 10; turn++) {
+      const one = await hintArrives(shown.host);
+      if (!one) break;
+      counts.push(one.querySelector('[data-testid="first-look-count"]')?.textContent ?? "");
+      anchors.push(one.getAttribute("data-first-look-anchor")!);
+      await act(async () => one.querySelector<HTMLButtonElement>('[data-testid="first-look-next"], [data-testid="first-look-done"]')!.click());
+    }
+    await shown.done();
+    expect(anchors).not.toContain("menu");
+    expect(counts.length).toBeGreaterThan(0);
+    expect(counts).toEqual(anchors.map((_, at) => `${at + 1} of ${anchors.length}`));
+  });
+
   it("points at the menu on a record — a right-click, a long press and the hover chip — only where the host gave the app AI", async () => {
     const said = async (options: Partial<EmbedOptions>) => {
       const shown = await embed({ firstLook: { seen: false }, ...options });

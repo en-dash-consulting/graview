@@ -71,6 +71,7 @@ import { ENGINES, launchEngine } from "./lib/engine.mjs";
 import { graviewSources } from "./lib/graview-sources.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { vacant } from "./lib/serve.mjs";
+import { settled } from "./lib/settled.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const asked = process.argv.find((arg) => arg.startsWith("--engine="))?.slice("--engine=".length);
@@ -353,7 +354,7 @@ try {
         await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
         const failed = await page.evaluate(() => window.__failed ?? null);
         if (failed) errors.push(`${engine} ${scheme} ${path}?${query}: the document did not compile: ${failed}`);
-        await page.waitForTimeout(1500);
+        await settled(page, { most: 1500 });
         return { page, failed, close: () => context.close() };
       };
       for (const screen of SCREENS) {
@@ -392,7 +393,7 @@ try {
               await area.press("Enter");
               await area.pressSequentially(ADDED);
               await area.press("Control+Enter");
-              await page.waitForTimeout(600);
+              await settled(page, { most: 600 });
               edit.stored = await page.evaluate((id) => window.__handle.store.graph.getNode(id)?.draft ?? null, EMAIL.id);
               edit.paragraphsAfter = (await page.evaluate(measure, { face: screen.face, recordId: EMAIL.id })).paragraphs;
               await shot(page, "edited");
@@ -450,7 +451,7 @@ try {
             void dialog.dismiss();
           });
           await drawn(page);
-          await page.waitForTimeout(500);
+          await settled(page, { most: 500 });
           seen.hostile.push({ engine, scheme, width: screen.width, dialogs, ...(await page.evaluate(measureHostile)) });
           await shot(page, "record-hostile");
           await close();

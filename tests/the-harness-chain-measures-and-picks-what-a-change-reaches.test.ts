@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 // @ts-expect-error — plain modules of the harness, with no types of their own.
-import { cpuOf, stampVerdicts, summarizeTiming } from "../scripts/lib/timing.mjs";
+import { cpuOf, stampVerdicts, summarizeTiming, waitSite } from "../scripts/lib/timing.mjs";
 // @ts-expect-error — as above.
 import { byHarness, mergeCoverage, normalized, PREVIEW, withHook, withoutHook } from "../scripts/lib/coverage.mjs";
 // @ts-expect-error — as above.
@@ -15,6 +15,8 @@ import { claimBlocks, defaultJobs, lockBlock, longestFirst, nextFor, runPool } f
 import { falseClaims } from "../scripts/lib/on-github.mjs";
 // @ts-expect-error — as above.
 import { mergeParts, partPath, splitUnit, unitsOf } from "../scripts/lib/parts.mjs";
+// @ts-expect-error — as above.
+import { settled, until } from "../scripts/lib/settled.mjs";
 
 /**
  * THE HARNESS CHAIN SAYS WHAT EACH HARNESS COST, RUNS SIDE BY SIDE ON PORTS
@@ -49,6 +51,20 @@ describe("what a harness cost", () => {
     expect(timing.servers).toHaveLength(2);
   });
 
+  it("names the harness line each fixed wait was asked for at, costliest first, across its processes", () => {
+    const timing = summarizeTiming([
+      { kind: "waited", ms: 900, count: 3, sites: [{ at: "verify-menu.mjs:40", ms: 600, count: 2 }, { at: "lib/journeys.mjs:12", ms: 300, count: 1 }], pid: 1, sinceStart: 10 },
+      { kind: "waited", ms: 500, count: 1, sites: [{ at: "lib/journeys.mjs:12", ms: 500, count: 1 }], pid: 2, sinceStart: 20 },
+    ]);
+    expect(timing.fixedWaitSites).toEqual([
+      { at: "lib/journeys.mjs:12", ms: 800, count: 2 },
+      { at: "verify-menu.mjs:40", ms: 600, count: 2 },
+    ]);
+    const stack = ["Error", "    at noteWait (/home/x/repo/scripts/lib/timing.mjs:50:3)", "    at page.waitForTimeout (/home/x/repo/scripts/lib/watch.mjs:954:9)", "    at async look (/home/x/repo/scripts/verify-site.mjs:120:5)"].join("\n");
+    expect(waitSite(stack)).toBe("verify-site.mjs:120");
+    expect(waitSite("Error\n    at somewhere (node:internal/x:1:1)")).toBe("elsewhere");
+  });
+
   it("is kept in the verdict beside its claims, and adds no claim that reads as failed", () => {
     const dir = mkdtempSync(join(tmpdir(), "timing-"));
     try {
@@ -64,6 +80,35 @@ describe("what a harness cost", () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe("a wait on what it means", () => {
+  /** A page that answers the looks it is asked, one after another, the last one from then on. */
+  const pageSaying = (looks: { quietFor: number; busy: boolean }[]) => {
+    let at = 0;
+    return { on: () => undefined, isClosed: () => false, evaluate: async () => looks[Math.min(at++, looks.length - 1)] };
+  };
+
+  it("ends once the page has been still and nothing is on its way, well before the wait it replaced", async () => {
+    const began = Date.now();
+    expect(await settled(pageSaying([{ quietFor: 0, busy: true }, { quietFor: 50, busy: false }, { quietFor: 250, busy: false }]), { most: 5_000 })).toBe(true);
+    expect(Date.now() - began).toBeLessThan(1_000);
+  });
+
+  it("never waits longer than the wait it replaced, on a page that never stops", async () => {
+    const began = Date.now();
+    expect(await settled(pageSaying([{ quietFor: 0, busy: true }]), { most: 300 })).toBe(false);
+    const took = Date.now() - began;
+    expect(took).toBeGreaterThanOrEqual(290);
+    expect(took).toBeLessThan(800);
+  });
+
+  it("asks a claim that goes in its own time until it has gone, and no longer than its time", async () => {
+    let asked = 0;
+    expect(await until(() => ++asked >= 3, { most: 5_000 })).toBe(true);
+    expect(asked).toBe(3);
+    expect(await until(() => false, { most: 150 })).toBe(false);
   });
 });
 

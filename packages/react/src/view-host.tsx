@@ -14,7 +14,7 @@ import { useGraview } from "./context.js";
 import { joinedFrom, pickedFrom, usePickTargets } from "./picking.js";
 import { kindTagOutset, useCapturedOutset, type TagAt } from "./captured-outset.js";
 import { holderFrom } from "./picked.js";
-import { sectionsArrive, sectionsWanted, sectionUnderNow, type MenuViewSection } from "./view-places.js";
+import { recordInView, sectionsArrive, sectionsWanted, sectionUnderNow, type MenuViewSection } from "./view-places.js";
 import { WHO } from "./where-drawn.js";
 import { cssTransform, planeShadow } from "./scene-helpers.js";
 import type { SceneNode } from "./scene-node.js";
@@ -555,7 +555,11 @@ export function SceneViewHost({
          */
         // On a picture of many (the lists), beside its targets: the record the part around the pointer is about (a list's column), else the picture's own. A record's own card stays about the record.
         const holder = (picked && picked !== node.id) || !node.aggregate ? null : holderFrom(event.target, event.currentTarget, (from, to) => hostStore.graph.neighbors(from).some((one) => one.id === to), node.id);
-        const on = picked && picked !== node.id ? picked : (holder ?? node.id);
+        // Inside a worker view drawn here, the card under the pointer, bound to a record its host judged it drew (Graview HQ feature:f-view-menu-suggests-under-pointer).
+        const pressedIn = event.nativeEvent.composedPath?.()[0];
+        const viewed = pressedIn instanceof Element && pressedIn !== event.target ? recordInView(pressedIn, { x: event.clientX, y: event.clientY }) : undefined;
+        const inView = viewed && hostStore.graph.getNode(viewed.id) ? viewed.id : undefined;
+        const on = inView ?? (picked && picked !== node.id ? picked : (holder ?? node.id));
         onPick(on, false, (on === picked ? joinedFrom(event.target) : null) ?? undefined);
         /*
          * The menu is about THIS, and says so. Without the name the
@@ -568,7 +572,7 @@ export function SceneViewHost({
         const { clientX: x, clientY: y } = event;
         const opened = () => {
           const section = sectionUnderNow(inner);
-          onMenu({ x, y, on, ...(section ? { section, title: section.name } : {}) });
+          onMenu({ x, y, on, ...(section ? { section, ...(inView ? {} : { title: section.name }) } : {}) });
         };
         /* The first right-click inside a view fetches what finds its section, and the menu opens once it is here. */
         if (sectionsWanted(inner)) void sectionsArrive().then(opened, opened);

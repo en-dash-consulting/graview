@@ -43,6 +43,39 @@ import { graviewSources } from "./graview-sources.mjs";
 
 const PHISHING = "threat:phishing";
 const VPN = "threat:vpn";
+const MENU = '[data-testid="context-menu"]';
+
+/** What the open menu says: its heading, its acts, and where the reader is. Null with no menu open. */
+const menuSaid = (on) =>
+  on.evaluate((menu) => {
+    const open = document.querySelector(menu);
+    return open ? { title: open.querySelector("strong")?.textContent?.trim() ?? null, acts: [...open.querySelectorAll("[data-affordance]")].map((one) => one.textContent?.trim() ?? ""), path: window.__path() } : null;
+  }, MENU);
+
+/** A finger resting at a point for longer than a long press: a real touch where the engine has one to send (Chromium), else the pointer events a finger makes, sent to what is under it inside the view. */
+async function longPress(context, on, { x, y }) {
+  if (context.browser()?.browserType().name() === "chromium") {
+    const cdp = await context.newCDPSession(on);
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
+    await on.waitForTimeout(800);
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await on.waitForTimeout(300);
+    return "touch";
+  }
+  const send = (type) =>
+    on.evaluate(
+      ({ type, x, y }) => {
+        const under = window.__view()?.elementFromPoint(x, y) ?? document.elementFromPoint(x, y);
+        under?.dispatchEvent(new PointerEvent(type, { bubbles: true, composed: true, cancelable: true, pointerType: "touch", isPrimary: true, clientX: x, clientY: y }));
+      },
+      { type, x, y },
+    );
+  await send("pointerdown");
+  await on.waitForTimeout(800);
+  await send("pointerup");
+  await on.waitForTimeout(300);
+  return "pointer events";
+}
 
 export async function tapsSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, engine }) {
   const out = mkdtempSync(join(tmpdir(), "graview-guest-taps-"));
@@ -141,6 +174,26 @@ window.__node = (id) => window.__handle.store.graph.getNode(id);
     await tab.keyboard.press("Enter");
     const entered = await settled(tab);
     claim("on a desk, Enter on a threat card opens the threat's page", opened(entered), entered);
+    /*
+     * THE MENU ABOUT WHAT THE POINTER IS ON (Graview HQ
+     * feature:f-view-menu-suggests-under-pointer): a right-click on a card the
+     * view bound to a record opens the menu about that record — headed with
+     * its name, its acts — not about the whole view; on the view's own ground
+     * it stays about the place.
+     */
+    await open(tab);
+    const threatName = await tab.evaluate((id) => window.__card(id).querySelector("h3").textContent.trim(), PHISHING);
+    await tab.locator(inView(`.card[data-record="${PHISHING}"] [data-badge]`)).click({ button: "right" });
+    await tab.waitForSelector(`${MENU} [data-menu-item], ${MENU} [data-affordance]`, { timeout: 5_000 }).catch(() => {});
+    const onCard = await menuSaid(tab);
+    claim("on a desk, a right-click on a threat card in the worker view — on a badge inside it — opens the menu about that threat: headed with its name, its acts offered, and the page not left", onCard !== null && onCard.title === threatName && onCard.acts.some((one) => one.includes("Acknowledge")) && onCard.path === "/", { threatName, ...onCard });
+    await tab.keyboard.press("Escape");
+    await tab.waitForSelector(MENU, { state: "detached", timeout: 3_000 }).catch(() => {});
+    await tab.locator(inView(".triage h2")).click({ button: "right" });
+    await tab.waitForSelector(`${MENU} [data-menu-item], ${MENU} [data-affordance]`, { timeout: 5_000 }).catch(() => {});
+    const onGround = await menuSaid(tab);
+    claim("on a desk, a right-click on the worker view's own ground, on no card, opens the menu about the place, not about a threat", onGround !== null && onGround.title !== threatName && !onGround.acts.some((one) => one.includes("Acknowledge")), onGround);
+    await tab.keyboard.press("Escape");
     /* A PRESS THAT IS NO BUTTON. */
     await open(tab);
     const press = await tab.evaluate((id) => {
@@ -391,6 +444,14 @@ window.__node = (id) => window.__handle.store.graph.getNode(id);
       await hand.locator(inView(`.card[data-record="${PHISHING}"] [data-badge]`)).tap();
       const badge = await settled(hand);
       claim("on a phone, a tap on a badge inside the card opens the threat's page too: the press is the card's, from whatever inside it the finger lands on", opened(badge), badge);
+      /* A finger resting on a card: the menu about that threat, and the press that opened it follows no link (Graview HQ feature:f-view-menu-suggests-under-pointer). */
+      await open(hand);
+      const heading = await hand.locator(inView(`.card[data-record="${PHISHING}"] h3`)).boundingBox();
+      const how = await longPress(phone, hand, { x: heading.x + heading.width / 2, y: heading.y + heading.height / 2 });
+      await hand.waitForSelector(`${MENU} [data-menu-item], ${MENU} [data-affordance]`, { timeout: 5_000 }).catch(() => {});
+      const held = await menuSaid(hand);
+      const heldName = await hand.evaluate((id) => window.__card(id).querySelector("h3").textContent.trim(), PHISHING);
+      claim("on a phone, a long press on a threat card in the worker view opens the menu about that threat, and opens nothing", held !== null && held.title === heldName && held.acts.some((one) => one.includes("Acknowledge")) && held.path === "/", { how, heldName, ...held });
       await open(hand);
       await hand.locator(inView(`[data-more="${PHISHING}"]`)).tap();
       await hand.waitForFunction((id) => window.__card(id)?.querySelector("[data-summary]") != null, PHISHING, { timeout: 5_000 }).catch(() => {});

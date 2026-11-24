@@ -1,3 +1,5 @@
+import { RECORD_BOXES_ATTRIBUTE, recordBoxAt, recordBoxesOf } from "@graview/core/record-boxes";
+
 /*
  * A SECTION OF A VIEW, UNDER THE CURSOR (Roadmap f-make-this-section-better).
  *
@@ -127,3 +129,105 @@ export const partsWanted = (): boolean => finding === undefined && besides.size 
 
 /** Whether a right-click at this element must wait for the finder before the menu opens. */
 export const sectionsWanted = (element: Element | null | undefined): boolean => finding === undefined && (element?.getRootNode() as { host?: Element } | undefined)?.host?.hasAttribute("data-worker-view") === true;
+
+/*
+ * THE RECORD UNDER THE POINTER, INSIDE A VIEW (Graview HQ
+ * feature:f-view-menu-suggests-under-pointer). A press inside a worker view
+ * reaches a face as a press on the view's region — its shadow root is
+ * retargeted away — so the menu, its Suggested rows, its AI section and the
+ * hover chip were about the whole view wherever in it the pointer was. The
+ * record is found here from what the view's host already measured and
+ * judged of it: the boxes it holds on the region (`@graview/core/record-boxes`),
+ * each a record the view was handed that this seat may see. What the view
+ * wrote is never taken on its word; a point on no such box is the view's
+ * own ground, and the menu stays about the view's place.
+ */
+
+/** A record a view drew, under a press. */
+export interface RecordInView {
+  /** The record, as the view's host judged it. */
+  readonly id: string;
+  /** What it is drawn as under the press: the nearest element marked for it, else what was pressed. */
+  readonly element: Element;
+  /** The element the view is drawn in, which holds its records' boxes. */
+  readonly view: Element;
+}
+
+/** An element's parent, out through a shadow root to its host. */
+const upFrom = (element: Element): Element | null => element.parentElement ?? (element.getRootNode() as { host?: Element }).host ?? null;
+
+/** The middle of an element, in the window's pixels. */
+const middleOf = (element: Element) => {
+  const box = element.getBoundingClientRect();
+  return { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+};
+
+/**
+ * The record a view drew at a point (in the window's pixels), found from
+ * `inner` — what was under the press, inside the view's shadow root — up to
+ * the element that holds the view's record boxes. Without a point, the
+ * middle of what is marked there (the keyboard's press, a resting pointer).
+ */
+export function recordInView(inner: Element | null | undefined, point?: { readonly x: number; readonly y: number }): RecordInView | undefined {
+  if (!inner) return undefined;
+  let marked: Element | null = null;
+  for (let at: Element | null = inner; at; at = upFrom(at)) {
+    if (at.hasAttribute(RECORD_BOXES_ATTRIBUTE)) {
+      // A press on the region itself, not on what the view drew in it, is on none of its records.
+      if (at === inner) return undefined;
+      const held = recordBoxesOf(at);
+      if (!held) return undefined;
+      const box = at.getBoundingClientRect();
+      const wide = (at as HTMLElement).offsetWidth;
+      // The page may be scaled as it moves a level: the boxes are in the region's own pixels.
+      const scale = wide > 0 && box.width > 0 ? box.width / wide : 1;
+      const under = marked ?? inner;
+      const boxes = held.boxes();
+      // No point (the keyboard, a rest): the record marked there, where its host judged it drawn — else what is drawn at its middle.
+      const own = point ? undefined : marked?.getAttribute("data-record");
+      const named = own ? boxes.find((one) => one.id === own) : undefined;
+      if (named) return { id: named.id, element: under, view: at };
+      const from = point ?? middleOf(under);
+      const found = recordBoxAt(boxes, (from.x - box.left) / scale, (from.y - box.top) / scale);
+      return found ? { id: found.id, element: under, view: at } : undefined;
+    }
+    if (marked === null && at.hasAttribute("data-record")) marked = at;
+  }
+  return undefined;
+}
+
+/** A box in the window's pixels. */
+export interface BoxOnPage {
+  readonly left: number;
+  readonly top: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+/**
+ * WHERE THE RECORDS A VIEW DREW STAND ON THE PAGE: the boxes its host
+ * judged, found from `element` (inside the view's shadow root, or the
+ * region itself) up to the element that holds them, each in the window's
+ * pixels — the region's own pixels scaled as the page is and moved to where
+ * the region stands now, so a scroll or a level's scale is allowed for.
+ * Undefined outside a view.
+ */
+export function recordBoxesOnPage(element: Element): readonly (BoxOnPage & { readonly id: string })[] | undefined {
+  for (let at: Element | null = element; at; at = upFrom(at)) {
+    if (!at.hasAttribute(RECORD_BOXES_ATTRIBUTE)) continue;
+    const held = recordBoxesOf(at);
+    if (!held) return undefined;
+    const box = at.getBoundingClientRect();
+    const wide = (at as HTMLElement).offsetWidth;
+    const scale = wide > 0 && box.width > 0 ? box.width / wide : 1;
+    return held.boxes().map((one) => ({ id: one.id, left: box.left + one.x * scale, top: box.top + one.y * scale, width: one.width * scale, height: one.height * scale }));
+  }
+  return undefined;
+}
+
+/** The element a face's own reading sees for this one: itself, or the host of the shadow root it is drawn in (a worker view's region), outward. */
+export function outOfViews(element: Element): Element {
+  let at = element;
+  for (let host = (at.getRootNode() as { host?: Element }).host; host; host = (at.getRootNode() as { host?: Element }).host) at = host;
+  return at;
+}

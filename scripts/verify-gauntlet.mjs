@@ -31,6 +31,7 @@ import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { openActivity } from "./lib/bar.mjs";
+import { settled } from "./lib/settled.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -160,7 +161,7 @@ async function open(page, path, { scheme, seat, hash = "" }) {
   const url = `${BASE}${pathname}?${query}${extra ? `&${extra}` : ""}${hash}`;
   await page.goto(url, { waitUntil: "load", timeout: 120_000 });
   await page.waitForFunction(() => "__graviewReady" in window, undefined, { timeout: 120_000 });
-  await page.waitForTimeout(1500);
+  await settled(page, { most: 1500 });
 }
 
 const count = (page, selector) => page.evaluate((s) => document.querySelectorAll(s).length, selector);
@@ -169,7 +170,7 @@ const go = async (page, hash, settle = 1500) => {
   await page.evaluate((next) => {
     window.location.hash = next;
   }, hash);
-  await page.waitForTimeout(settle);
+  await settled(page, { most: settle });
 };
 /**
  * A record's acts: the menu the acts key opens on its card, at any width —
@@ -185,7 +186,7 @@ const showActs = async (page, id) => {
   }, id);
   if (card) await page.keyboard.press("a");
   await page.waitForSelector('[data-testid="context-menu"]', { timeout: 5000 }).catch(() => {});
-  await page.waitForTimeout(300);
+  await settled(page, { most: 300 });
 };
 /**
  * Every place the bar offers, by what it is called (in the bar on a desk, on
@@ -206,7 +207,7 @@ const rise = async (page) => {
   const up = await page.evaluate(() => document.querySelector('[data-testid="overview"]')?.getAttribute("aria-pressed") === "true");
   if (!up) {
     await page.click('[data-testid="overview"]');
-    await page.waitForTimeout(1200);
+    await settled(page, { most: 1200 });
   }
 };
 
@@ -242,7 +243,7 @@ async function landings(browser) {
   const narrow = await newPage(browser, 320, "light");
   await open(narrow, "/pages", { scheme: "light", seat: SEATS[0].id });
   await narrow.evaluate(() => { document.documentElement.style.fontSize = "32px"; });
-  await narrow.waitForTimeout(1200);
+  await settled(narrow, { most: 1200 });
   await narrow.close();
 }
 
@@ -267,17 +268,17 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
       // The district chosen before is put down first: on a phone its sheet stands over the city.
       if ((await page.locator("[data-graview-map-panel]").count()) > 0) {
         await page.locator('[data-testid="map-panel-close"]').first().click();
-        await page.waitForTimeout(400);
+        await settled(page, { most: 400 });
       }
       const control = page.locator(`[data-testid="open-${kind}"]`).first();
       // On a phone a district can stand past the edge of the ground; its sign brings it in, as a person would press it.
       const sign = page.locator(`[data-graview-past-edge="kind:${kind}"]`).first();
       if ((await sign.count()) > 0) {
         await sign.click();
-        await page.waitForTimeout(800);
+        await settled(page, { most: 800 });
       }
       await control.click();
-      await page.waitForTimeout(1200);
+      await settled(page, { most: 1200 });
       return { reached: (await control.getAttribute("aria-expanded")) === "true", detail: await count(page, '[data-testid="district-panel"] [data-graview-record]') };
     });
   }
@@ -319,7 +320,7 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
     await showActs(page, RECORDS.submittedTalk);
     const more = page.locator('[data-testid="withheld-more"]');
     if (await more.count()) await more.first().click();
-    await page.waitForTimeout(400);
+    await settled(page, { most: 400 });
     const offered = await count(page, '[data-testid="affordances"] [data-affordance]');
     const withheld = await count(page, '[data-testid="withheld"] [data-affordance]');
     return { reached: offered + withheld > 0, detail: { offered, withheld } };
@@ -347,7 +348,7 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
     if ((await problem.count()) === 0) return { reached: false, detail: `the problem is not listed: bell ${await standing.getAttribute("aria-label")}, inbox ${await page.locator('[data-testid="inbox"]').count()}, rows ${JSON.stringify(await page.locator('[data-testid="problems"] button').allTextContents())}` };
     await problem.click();
     await page.waitForSelector('[data-testid="context-menu"]', { timeout: 10_000 }).catch(() => {});
-    await page.waitForTimeout(800);
+    await settled(page, { most: 800 });
     const chosen = await page.evaluate(() => decodeURIComponent(location.hash));
     const wanted = [RECORDS.clashingWorkshop, ...RECORDS.clashingTalks];
     const offered = await page.evaluate(() => [...document.querySelectorAll('[data-testid="affordances"] [data-affordance]:not([disabled])')].map((one) => one.textContent?.trim() ?? ""));
@@ -359,20 +360,20 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
       if ((await repair.count()) > 0) {
         await repair.focus();
         await page.keyboard.press("Enter");
-        await page.waitForTimeout(1200);
+        await settled(page, { most: 1200 });
         repaired = !(await page.locator('[data-testid="problems"] button', { hasText: "leads Hands-on: Planning the Next Ten Years" }).count());
         // Taken back, so the walk after it meets the seed as it was.
         await openActivity(page);
-        await page.waitForTimeout(800);
+        await settled(page, { most: 800 });
         const undo = page.locator('[data-testid="undo-turn"]');
         if ((await undo.count()) > 0) await undo.first().click();
-        await page.waitForTimeout(800);
+        await settled(page, { most: 800 });
         await page.keyboard.press("Escape");
-        await page.waitForTimeout(400);
+        await settled(page, { most: 400 });
       } else repaired = false;
     }
     await page.keyboard.press("Escape");
-    await page.waitForTimeout(400);
+    await settled(page, { most: 400 });
     // Back on the talk the next steps open their acts over.
     await go(page, focusHash(RECORDS.submittedTalk), 2000);
     return {
@@ -399,10 +400,10 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
     if (!(await asks.first().isVisible().catch(() => false))) await unfold(page);
     await asks.first().focus();
     await page.keyboard.press("Enter");
-    await page.waitForTimeout(900);
+    await settled(page, { most: 900 });
     const asked = await has(page, "[data-graview-asking]");
     await page.keyboard.press("Escape");
-    await page.waitForTimeout(600);
+    await settled(page, { most: 600 });
     return { reached: asked && !(await has(page, "[data-graview-asking]")), detail: { asked } };
   });
 
@@ -410,10 +411,10 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
     await openFind(page);
     await page.fill('[data-testid="find-box"]', "");
     await page.keyboard.type("Opening Remarks", { delay: 20 });
-    await page.waitForTimeout(1500);
+    await settled(page, { most: 1500 });
     const hits = await count(page, '[data-testid="find-strip"] [data-testid="find-hit"]');
     await page.keyboard.press("Escape");
-    await page.waitForTimeout(500);
+    await settled(page, { most: 500 });
     return { reached: hits > 1, detail: { hits } };
   });
 
@@ -429,10 +430,10 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
     await openFind(page);
     await page.fill('[data-testid="find-box"]', "");
     await page.keyboard.type("Плинов", { delay: 20 });
-    await page.waitForTimeout(1500);
+    await settled(page, { most: 1500 });
     const hits = await count(page, '[data-testid="find-strip"] [data-testid="find-hit"]');
     await page.keyboard.press("Escape");
-    await page.waitForTimeout(500);
+    await settled(page, { most: 500 });
     return { reached: hits > 0, detail: { hits } };
   });
 
@@ -443,7 +444,7 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
 
   await reach(page, where, "the timetable paged a week on", async () => {
     await page.locator('[data-testid="calendar"] button[aria-label="Next"]').first().click();
-    await page.waitForTimeout(1200);
+    await settled(page, { most: 1200 });
     return has(page, '[data-testid="calendar"]');
   });
 
@@ -452,7 +453,7 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
     const button = page.locator('[data-testid="calendar-range-years"]');
     if ((await button.count()) > 0) await button.first().click();
     else await page.locator('select[data-testid="calendar-ranges"]').first().selectOption("years");
-    await page.waitForTimeout(2000);
+    await settled(page, { most: 2000 });
     return { reached: await has(page, '[data-testid="calendar"]'), detail: await page.evaluate(() => location.hash) };
   });
 
@@ -486,14 +487,14 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
     if ((await button.count()) === 0) return { reached: false, detail: `${who} is offered no ${act[1]}` };
     await button.first().focus();
     await page.keyboard.press("Enter");
-    await page.waitForTimeout(1200);
+    await settled(page, { most: 1200 });
     // An act that still asks: answer each question with its first offer, by the keyboard.
     for (let step = 0; step < 3 && (await has(page, "[data-graview-asking]")); step++) {
       const choice = page.locator("[data-graview-asking] button:not([disabled])").first();
       if ((await choice.count()) === 0) break;
       await choice.focus();
       await page.keyboard.press("Enter");
-      await page.waitForTimeout(800);
+      await settled(page, { most: 800 });
     }
     if (await has(page, "[data-graview-asking]")) {
       await page.keyboard.press("Escape");
@@ -505,17 +506,17 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
 
   if (act) await reach(page, where, "the turn taken back from the activity", async () => {
     await openActivity(page);
-    await page.waitForTimeout(800);
+    await settled(page, { most: 800 });
     const undo = page.locator('[data-testid="undo-turn"]');
     if (!pressed || (await undo.count()) === 0) {
       await page.keyboard.press("Escape");
       return { reached: false, detail: pressed ? "no turn to take back" : "nothing was pressed" };
     }
     await undo.first().click();
-    await page.waitForTimeout(1000);
+    await settled(page, { most: 1000 });
     const refused = await page.evaluate(() => document.querySelector('[data-testid="undo-refused"]')?.textContent ?? null);
     await page.keyboard.press("Escape");
-    await page.waitForTimeout(400);
+    await settled(page, { most: 400 });
     return { reached: refused === null, detail: refused ?? undefined };
   });
 
@@ -524,30 +525,30 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
     await page.evaluate(() => document.activeElement?.blur?.());
     for (let i = 0; i < 12; i++) await page.keyboard.press("Tab");
     await page.keyboard.press("Escape");
-    await page.waitForTimeout(400);
+    await settled(page, { most: 400 });
     return { reached: true, detail: await page.evaluate(() => document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName ?? null) };
   });
 
   await reach(page, where, "the profile opened and the seats listed", async () => {
     await page.click('[data-testid="profile-button"]');
-    await page.waitForTimeout(500);
+    await settled(page, { most: 500 });
     // The seats the person's menu lists, not the ask field at the picture's foot.
     const seats = await count(page, '[data-testid="profile"] [data-testid^="seat-"]');
     await page.keyboard.press("Escape");
-    await page.waitForTimeout(300);
+    await settled(page, { most: 300 });
     return { reached: seats === ALL_SEATS.length, detail: { seats } };
   });
 
   if (who === "chair") {
     await reach(page, where, "the studio opened over the declaration", async () => {
       await page.click('[data-testid="profile-button"]');
-      await page.waitForTimeout(400);
+      await settled(page, { most: 400 });
       await page.click('[data-testid="studio-place"]');
       await page.waitForSelector('[data-testid="studio"]', { timeout: 30_000 });
-      await page.waitForTimeout(1200);
+      await settled(page, { most: 1200 });
       const shown = await has(page, '[data-testid="studio"]');
       await page.goBack();
-      await page.waitForTimeout(1000);
+      await settled(page, { most: 1000 });
       return shown;
     });
   }
@@ -562,6 +563,8 @@ async function pagesWalk(browser, { width, scheme, seat, who }) {
   const visit = (name, path, selector) =>
     reach(page, where, name, async () => {
       await open(page, path, { scheme, seat });
+      // Waited for by what the place is known by: a page can stand still for a moment before it draws it (a dozen workshops' "See all" did).
+      await page.locator(selector).first().waitFor({ state: "attached", timeout: 10_000 }).catch(() => {});
       return { reached: await has(page, selector), detail: { wide: await page.evaluate(() => document.documentElement.scrollWidth) } };
     });
 
@@ -586,7 +589,7 @@ async function pagesWalk(browser, { width, scheme, seat, who }) {
     await page.waitForSelector('[data-testid="record-fields"]', { timeout: 30_000 });
     const page_ = await page.evaluate(() => document.body.innerText);
     await open(page, "/pages/search?q=Canada", { scheme, seat });
-    await page.waitForTimeout(500);
+    await settled(page, { most: 500 });
     const found = await page.locator('[data-testid="search-hit"]').count();
     const shown = page_.includes("Canada");
     return { reached: seesCountry(seat) ? shown && found > 0 : !shown && found === 0, detail: { shown, found } };
@@ -618,10 +621,10 @@ async function pagesWalk(browser, { width, scheme, seat, who }) {
     const button = (await wanted.count()) > 0 ? wanted.first() : actions.first();
     await button.focus();
     await page.keyboard.press("Enter");
-    await page.waitForTimeout(800);
+    await settled(page, { most: 800 });
     const form = await has(page, 'form[data-testid^="form-"]');
     await page.keyboard.press("Escape");
-    await page.waitForTimeout(400);
+    await settled(page, { most: 400 });
     return { reached: form, detail: { form, expanded: await button.getAttribute("aria-expanded") } };
   });
 

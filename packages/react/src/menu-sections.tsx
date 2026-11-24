@@ -110,17 +110,23 @@ function useSources(): readonly MenuSectionSource[] {
  * the pointer rests on a record, a card, a row or a kind, the keyboard
  * lands on one, or a finger goes down on one — each section's `prepare`.
  */
-export function useMenuPrepare(): (target: MenuTarget, why?: MenuReadying) => void {
+export function useMenuPrepare(): (target: MenuTarget, why?: MenuReadying) => readonly MenuSection[] {
   const sources = useSources();
   return useCallback(
     (target: MenuTarget, why?: MenuReadying) => {
+      // The sections themselves, too: what the menu will offer there, for what is worked out at the press (its Suggested rows).
+      const sections: MenuSection[] = [];
       for (const source of sources) {
         try {
-          source(target)?.prepare?.(why);
+          const section = source(target);
+          if (!section) continue;
+          sections.push(section);
+          section.prepare?.(why);
         } catch {
           // A host's section that throws is left out, never the menu.
         }
       }
+      return sections;
     },
     [sources],
   );

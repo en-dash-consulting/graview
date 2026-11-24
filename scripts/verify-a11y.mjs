@@ -63,6 +63,7 @@ import { launchEngine } from "./lib/engine.mjs";
 import { graviewSources } from "./lib/graview-sources.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { serving, vacant } from "./lib/serve.mjs";
+import { settled } from "./lib/settled.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const QUICK = process.argv.includes("--quick") || process.env["GRAVIEW_QUICK"] === "1";
@@ -254,7 +255,7 @@ async function ready(page, screen) {
     { timeout: 60_000 },
   );
   await page.waitForLoadState("networkidle").catch(() => undefined);
-  await page.waitForTimeout(1200);
+  await settled(page, { most: 1200 });
 }
 
 /** The hint open now, and where it stands against its control and the screen; null when none is open. */
@@ -349,10 +350,10 @@ async function boardMoves(page) {
   steps.carried = / \d+ of \d+\.$/.test(await said()) && (await page.locator('[data-testid="columns-slot"]').count()) > 0;
   scans.push(...(await scan(page)));
   await page.keyboard.press(" ");
-  await page.waitForTimeout(500);
+  await settled(page, { most: 500 });
   steps.dropped = (await said()).includes("dropped in");
   await page.keyboard.press("Shift+F10");
-  await page.waitForTimeout(800);
+  await settled(page, { most: 800 });
   const row = page.locator('[data-testid="context-menu"] [data-menu-item="move-to"]');
   if ((await row.count()) > 0) {
     await row.click();
@@ -360,7 +361,7 @@ async function boardMoves(page) {
     steps.menu = (await page.locator('[data-testid="context-menu"] [data-move-to]').count()) > 0;
     scans.push(...(await scan(page)));
     await page.keyboard.press("Escape");
-    await page.waitForTimeout(300);
+    await settled(page, { most: 300 });
   }
   const drag = await page.evaluate((selector) => {
     const first = document.querySelector(selector);
@@ -371,7 +372,7 @@ async function boardMoves(page) {
   if (drag) {
     const before = await page.evaluate(() => document.querySelector('[data-testid="columns-said"]')?.textContent ?? "");
     await page.dragAndDrop(`#graview-app [data-graview-listed="${drag.id}"]`, `#graview-app [data-graview-column="${drag.to}"]`).catch(() => {});
-    await page.waitForTimeout(500);
+    await settled(page, { most: 500 });
     const after = await page.evaluate(() => document.querySelector('[data-testid="columns-said"]')?.textContent ?? "");
     steps.dragged = after.startsWith("Moved") && after !== before;
     scans.push(...(await scan(page)));
@@ -408,7 +409,7 @@ async function tabWalk(page, host) {
 /** A worker view audited where it is drawn: its drawing, the framework's markup around it, its frame, and Tab through it. */
 async function auditTheView(page, view) {
   await page.waitForFunction((host) => Boolean(document.querySelector(host)?.shadowRoot?.querySelector("[data-graview-view-root] *")), view.host, { timeout: 30_000 });
-  await page.waitForTimeout(300);
+  await settled(page, { most: 300 });
   const drawing = await page.evaluate(([host, clicked]) => window.__audit(host, { clicked }), [view.host, view.clicked]);
   /* And not handed what it hears a click on: the host kept it on the region, as the view's runtime said it (0.1.48). */
   const learned = await page.evaluate((host) => window.__audit(host), view.host);
@@ -586,7 +587,7 @@ try {
         await ready(page, screen);
         if (await firstHint(page)) {
           await page.keyboard.press("Escape");
-          await page.waitForTimeout(300);
+          await settled(page, { most: 300 });
           escapes.push({
             screen: label,
             ...(await page.evaluate(() => ({

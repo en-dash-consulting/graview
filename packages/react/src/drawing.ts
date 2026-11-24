@@ -24,7 +24,7 @@ export { ViewBoundary } from "./view-boundary.js";
 // A face's own sections of the context menu, beside the host's: drawn only once a menu is.
 export { HostMenuItems, MenuSections, useMenuPrepare, useMenuSections } from "./menu-sections.js";
 // A section of a view under the cursor, and what the view's place lends its revision (Roadmap f-make-this-section-better): read only once a menu is opened in a drawn view.
-export { alsoWhenSectionsArrive, partsWanted, sectionsArrive, sectionsWanted, sectionUnderNow, setViewPlace, viewPlaceOf } from "./view-places.js";
-export type { MenuViewSection, ViewPlaceDraft, ViewPlaceDrawing, ViewPlaceHandle, ViewPresses } from "./view-places.js";
+export { alsoWhenSectionsArrive, outOfViews, partsWanted, recordBoxesOnPage, recordInView, sectionsArrive, sectionsWanted, sectionUnderNow, setViewPlace, viewPlaceOf } from "./view-places.js";
+export type { BoxOnPage, MenuViewSection, RecordInView, ViewPlaceDraft, ViewPlaceDrawing, ViewPlaceHandle, ViewPresses } from "./view-places.js";
 export type { HostMenuAt, HostMenuItem, MenuColumn, MenuItem, MenuReadying, MenuSection, MenuSectionSource, MenuTarget } from "./menu-types.js";
 export type { ViewBoundaryProps } from "./view-boundary.js";

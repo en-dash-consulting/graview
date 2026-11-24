@@ -1,5 +1,5 @@
 import type { ViewProblemSaid } from "./problems.js";
-import type { AnySchema, Principal, Store } from "@graview/core";
+import type { AnySchema, AppVideo, Principal, Store } from "@graview/core";
 import { holdRecordBoxes, judgeRecordBoxes, judgeRecordIds, MOST_RECORD_BOXES, recordBoxesMoved } from "@graview/core/record-boxes";
 import { GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN, isGuestReady, type GuestFont, type GuestPlace, type GuestTheme, type HostHello, type HostMessage } from "../protocol.js";
 import { mintNonce } from "./nonce.js";
@@ -62,6 +62,14 @@ export interface MountGuestViewOptions<S extends AnySchema> {
    * again when it changes (`update`).
    */
   readonly brand?: () => GuestBrand | undefined;
+  /**
+   * THE APP'S OWN VIDEO (HQ f-reel-mount-tests-and-frames): the reel the
+   * host keeps for the whole app, as a worker view is handed it. The frame
+   * is pushed its facts in `props.theme.reel` — what it is, how long,
+   * whether it has a poster and whether it plays — and never its address,
+   * its poster's or its captions'; pushed again when it changes (`update`).
+   */
+  readonly reel?: () => AppVideo | undefined;
   /**
    * The pictures on the records the guest is handed (FR-175): `true`, or
    * `{ width }`, the widest it draws one in CSS pixels. Each file a record
@@ -171,7 +179,7 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
 
   /* The app's look, kept up (FR-86): pushed again when what the frame would be handed has changed. */
   const logo = createGuestLogo(window as Window & typeof globalThis, () => push(), "data");
-  const theme = () => themeWithBrand(() => options.theme?.() ?? readTheme(element), options.brand, logo);
+  const theme = () => themeWithBrand(() => options.theme?.() ?? readTheme(element), options.brand, logo, options.reel);
   /*
    * THE FACES THE APP LENDS ITS VIEWS, LENT TO THE FRAME (Roadmap
    * f-faces-lent-to-frames): read by the host as the brand lends them, once a

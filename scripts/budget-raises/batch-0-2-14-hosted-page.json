@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 147,
+  "gzipped": 500,
+  "changeset": "the-0-2-14-batch-holds-together.md",
+  "note": "Raised when the 0.2.14 batch's branches were merged (a view kept mounted when the app's reel starts or stops and a framed guest handed the reel, the harnesses waiting on what they wait for, and a right-click and the hover chip inside a view about the record under the pointer): together they come to 47 bytes minified and 0 gzipped over the budget, raised by 100 more minified and 500 more gzipped for the spread CI measures from build to build. Measured at 731,217 / 254,265 B against 731,170 / 254,889 B."
+}

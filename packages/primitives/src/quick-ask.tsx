@@ -3,7 +3,7 @@ import { aiTargetOf, catalogOf, existingViewsOf, recordsOfTarget, type AiCandida
 import { search } from "@graview/core/search";
 import { useAiDeskState, useGraview } from "@graview/react/provider";
 import { applyAffordance, deriveAffordances, previewAffordance } from "@graview/tools/derive";
-import { answerHere, plainly, targetWords, type InlineResult } from "@graview/tools/inline-ai";
+import { answerHere, FIND_CAN_LOOK, plainly, targetWords, type InlineResult } from "@graview/tools/inline-ai";
 import type { Affordance } from "@graview/tools/frame";
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { askOf, drawPanel, GhostTray, takeOffer } from "./inline-ai-menu.js";
@@ -29,8 +29,9 @@ const Rate = /* @__PURE__ */ toldCard.part((module, props: { readonly told: Told
  * pages' — given the words as if typed, so it answers them its own way, the
  * keyboard in it. False where no Find box is drawn.
  */
+const FIND_BOX = '[data-testid="find-box"], [data-testid="nav-find"]';
 function findIn(within: ParentNode, words: string): boolean {
-  const box = within.querySelector<HTMLInputElement>('[data-testid="find-box"], [data-testid="nav-find"]');
+  const box = within.querySelector<HTMLInputElement>(FIND_BOX);
   if (!box) return false;
   // A phone's bar keeps the box put away until it is asked for.
   if (box.getClientRects().length === 0) box.closest<HTMLElement>("[data-graview-app-bar]")?.querySelector<HTMLButtonElement>('[data-testid="app-find-open"]')?.click();
@@ -518,6 +519,12 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
 
   const result = answering?.result ?? null;
   const lit = rows[active];
+  /* Whether this page draws a Find box (the scene's, the pages'): only then does a Fast-only answer offer Find, or say it can look. */
+  const [findHere, setFindHere] = useState(false);
+  useLayoutEffect(() => {
+    if (result?.findInstead === undefined) return;
+    setFindHere(((pane.current?.closest("[data-graview-embed]") ?? document) as ParentNode).querySelector(FIND_BOX) !== null);
+  }, [result]);
   return (
     <section
       ref={pane}
@@ -564,7 +571,10 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
                       ? "question" in answering.plan
                         ? answering.plan.question
                         : answering.plan.refused
-                      : result.answer,
+                      : result.findInstead !== undefined && !findHere
+                        ? // No Find box on this page: the card promises none (Graview HQ feature:f-menu-first-frames-follow-ups).
+                          result.answer?.replace(` ${FIND_CAN_LOOK}`, "")
+                        : result.answer,
                     result.ghost && result.ghost.proposals.length > 0 ? "Here is what I would change." : result.offers.length > 0 ? "These may help." : undefined,
                   )}
           </p>
@@ -640,9 +650,10 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
               ))}
             </ul>
           ) : null}
-          {result?.findInstead ? (
-            /* Beyond the Fast slot alone (Roadmap f-jev-fast-polish): Find, for the same words, and a chat the host connects. */
+          {result?.findInstead && (findHere || env.ai.chat) ? (
+            /* Beyond the Fast slot alone (Roadmap f-jev-fast-polish): Find, for the same words, where the page has a Find box, and a chat the host connects. */
             <div data-testid="quick-ask-instead" style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {findHere ? (
               <button
                 type="button"
                 data-testid="quick-ask-find"
@@ -658,6 +669,7 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
               >
                 Find “{result.findInstead}”
               </button>
+              ) : null}
               {env.ai.chat ? (
                 <button
                   type="button"

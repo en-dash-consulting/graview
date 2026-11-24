@@ -37,19 +37,64 @@ export function noteTiming(entry) {
 
 /*
  * FIXED WAITS, summed: every `page.waitForTimeout` a watched page made
- * (watch.mjs), written once when the process ends.
+ * (watch.mjs), written once when the process ends — with the line of the
+ * harness that asked for each, so the run's record says which waits cost
+ * the time and a build replacing them knows where to start.
+ *
+ * And, as `settledWaits`, the time spent in waits on a condition
+ * (settled.mjs: `settled`, `until`), so a wait that became one is still
+ * counted for what it really took rather than dropping out of the record.
  */
-let waited = 0;
-let waits = 0;
+const tallies = { waited: { ms: 0, count: 0, at: new Map() }, settled: { ms: 0, count: 0, at: new Map() } };
 let wiredWaits = false;
-export function noteWait(ms) {
+function tally(kind, ms) {
   if (!process.env[TIMING_ENV]) return;
-  waited += Number(ms) || 0;
-  waits += 1;
+  const spent = Number(ms) || 0;
+  const one = tallies[kind];
+  one.ms += spent;
+  one.count += 1;
+  const at = waitSite(new Error().stack);
+  const site = one.at.get(at) ?? { at, ms: 0, count: 0 };
+  site.ms += spent;
+  site.count += 1;
+  one.at.set(at, site);
   if (!wiredWaits) {
     wiredWaits = true;
-    process.on("exit", () => noteTiming({ kind: "waited", ms: waited, count: waits }));
+    process.on("exit", () => {
+      for (const [name, { ms: total, count, at: sites }] of Object.entries(tallies)) if (count > 0) noteTiming({ kind: name, ms: total, count, sites: [...sites.values()] });
+    });
   }
+}
+/** A fixed wait a watched page sat through. */
+export const noteWait = (ms) => tally("waited", ms);
+/** A wait on a condition, and what it took. */
+export const noteSettled = (ms) => tally("settled", ms);
+
+/**
+ * The harness line a wait was asked for at, from a stack: the first frame
+ * under scripts/ that is not the watch or this module, as `file:line`
+ * relative to scripts/ (never a home directory), or "elsewhere".
+ */
+export function waitSite(stack) {
+  for (const line of String(stack ?? "").split("\n").slice(1)) {
+    const found = /scripts\/((?:[\w.-]+\/)*[\w.-]+\.m?[jt]s):(\d+)/.exec(line);
+    if (!found) continue;
+    if (found[1] === "lib/watch.mjs" || found[1] === "lib/timing.mjs" || found[1] === "lib/settled.mjs") continue;
+    return `${found[1]}:${found[2]}`;
+  }
+  return "elsewhere";
+}
+
+/** The waits of every process, by the line that asked: the costliest twelve, most first. */
+function waitSites(waitedLines) {
+  const byAt = new Map();
+  for (const site of waitedLines.flatMap((one) => one.sites ?? [])) {
+    const kept = byAt.get(site.at) ?? { at: site.at, ms: 0, count: 0 };
+    kept.ms += site.ms;
+    kept.count += site.count;
+    byAt.set(site.at, kept);
+  }
+  return [...byAt.values()].sort((a, b) => b.ms - a.ms).slice(0, 12);
 }
 
 /** The lines of a timing file, or none. */
@@ -83,6 +128,7 @@ export function summarizeTiming(lines, { harnessPid } = {}) {
   const own = harnessPid ? launches.filter((one) => one.pid === harnessPid) : launches;
   const first = (own.length > 0 ? own : launches).reduce((least, one) => (least === null || one.sinceStart - one.ms < least ? one.sinceStart - one.ms : least), null);
   const waitedLines = lines.filter((one) => one.kind === "waited");
+  const settledLines = lines.filter((one) => one.kind === "settled");
   return {
     serverStartup: servers.filter((one) => !one.borrowed).reduce((sum, one) => sum + one.ms, 0),
     servers,
@@ -91,6 +137,10 @@ export function summarizeTiming(lines, { harnessPid } = {}) {
     browserLaunch: launches.reduce((sum, one) => sum + one.ms, 0),
     fixedWaits: waitedLines.reduce((sum, one) => sum + one.ms, 0),
     fixedWaitCount: waitedLines.reduce((sum, one) => sum + (one.count ?? 0), 0),
+    fixedWaitSites: waitSites(waitedLines),
+    settledWaits: settledLines.reduce((sum, one) => sum + one.ms, 0),
+    settledWaitCount: settledLines.reduce((sum, one) => sum + (one.count ?? 0), 0),
+    settledWaitSites: waitSites(settledLines),
   };
 }
 

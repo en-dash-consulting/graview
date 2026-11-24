@@ -596,12 +596,13 @@ try {
           look();
         });
         const asked = window.__calls.fast - before;
-        // A moment to read it before Escape, as a person takes (the open that asks nothing draws in its first frame; Escape within that frame is its own finding).
-        await new Promise((done) => setTimeout(done, 300));
-        document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+        // Put away at once, in the frame it filled in: Escape there gives the keyboard back to the task, never <body> (Graview HQ feature:f-menu-first-frames-follow-ups).
+        const inMenu = document.activeElement?.closest('[data-testid="context-menu"]') != null;
+        (document.activeElement ?? document).dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
         card.dispatchEvent(new PointerEvent("pointerout", { bubbles: true, pointerType: "mouse", relatedTarget: document.body }));
         await new Promise((done) => setTimeout(done, 150));
-        return { id, ms: drawn === null ? null : Math.round(drawn), asked };
+        const landed = document.activeElement === null || document.activeElement === document.body ? "body" : (document.activeElement.getAttribute("data-graview-pick") ?? document.activeElement.getAttribute("data-testid") ?? document.activeElement.tagName);
+        return { id, ms: drawn === null ? null : Math.round(drawn), asked, inMenu, landed };
       }, id);
       // Every open is a measure of filling in: one that asked the model, and one that had nothing to ask it.
       if (sample) samples.push(sample);
@@ -616,6 +617,14 @@ try {
     p95: p95 === Infinity ? "never drawn" : p95,
     slowest: samples.slice().sort((a, b) => (b.ms ?? Infinity) - (a.ms ?? Infinity)).slice(0, 3),
     ok: samples.length >= OPENS && p95 !== null && p95 < 400,
+  };
+  /* Escape in the frame the menu filled in, with no wait before it: the keyboard back on the task it was opened on, never <body> (Graview HQ feature:f-menu-first-frames-follow-ups). */
+  const fromTheMenu = samples.filter((one) => one.inMenu);
+  report.checks.escapeInTheMenusFirstFrameGivesTheKeyboardBack = {
+    escapes: fromTheMenu.length,
+    onBody: fromTheMenu.filter((one) => one.landed === "body").map((one) => one.id),
+    landed: [...new Set(fromTheMenu.map((one) => one.landed))].slice(0, 5),
+    ok: fromTheMenu.length > 0 && fromTheMenu.every((one) => one.landed !== "body"),
   };
 
   /* ------------------------------------------- one quiet hover chip */
