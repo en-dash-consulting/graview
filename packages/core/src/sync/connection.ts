@@ -6,9 +6,10 @@ import type { FieldSpec } from "../document/schema.js";
 import { guestsInField, guestsViaRelation, notionSourcesOf, type ConnectionSpec, type GoogleCalendarConnectionSpec, type NotionConnectionSpec, type NotionSourceSpec, type TodoistConnectionSpec } from "../document/connection-spec.js";
 import { humanizeField } from "../schema/humanize.js";
 import { GOOGLE_COLORS, MADE_BY_GRAVIEW, inConnectionFilter, tagPattern } from "./connection-filter.js";
+import { isArchived } from "../graph/archived.js";
 import type { EdgeDeclaration } from "../schema/types.js";
 import { relationActName } from "../mutations/derived-names.js";
-import type { AnyMutationDefinition } from "../mutations/types.js";
+import type { AnyMutationDefinition, MutationCall } from "../mutations/types.js";
 import { creatingActFor } from "./creating-act.js";
 import { SyncEngine, type GuestLeftOut, type SharedLinks, type SyncGuests, type SyncOptions } from "./engine.js";
 import { googleCalendar, type Fetcher, type GoogleTokenRequest } from "./google-calendar.js";
@@ -617,6 +618,8 @@ export function todoistMapping(app: GraviewApp, declaration: TodoistConnectionSp
     encode,
     decode,
     normalize,
+    // A task set aside here is never deleted there: a delete takes every subtask and cannot be undone.
+    aside: "keep",
     ...computedMapped(app, kind, Object.values(parts)),
     ...(declaration.direction === "read" ? { readonly: true, because: `Each ${kind} comes from a Todoist project this app only reads: change it there.` } : {}),
   };
@@ -887,12 +890,40 @@ function todoistConnection<S extends AnySchema>(run: ConnectionRun<S>, declarati
     token: () => run.token(),
     ...(run.secretName ? { secretName: run.secretName } : {}),
     ...(run.fetch ? { fetch: run.fetch } : {}),
+    // The tasks of the records set aside here: left as they are, and never deleted with what is above them.
+    aside: () =>
+      Object.entries(engine?.snapshot.links ?? {}).flatMap(([localId, link]) => {
+        const node = store.graph.getNode(localId) as unknown as Record<string, unknown> | undefined;
+        if (!isArchived(node)) return [];
+        const parent = declaration.fields.parent ? (link.fields[declaration.fields.parent] as string[] | null | undefined)?.[0] : undefined;
+        return [{ id: link.id, localId, label: String(node![declaration.fields.content] ?? link.id), ...(parent ? { parent } : {}), ...(completed !== undefined ? { completed: link.fields[completed] === true } : {}) }];
+      }),
+    /*
+     * And every other record's set aside, a subtask's parent being one
+     * another connection may keep: by what any connection here linked, and
+     * by its name where none running did (a connection that is paused).
+     */
+    asideElsewhere: () =>
+      (store.graph.allNodes({ archived: true }) as unknown as Record<string, unknown>[]).flatMap((node) => {
+        const id = run.links?.remoteId(String(node["id"])) ?? /-([A-Za-z0-9]{6,})(?:-\d+)?$/.exec(String(node["id"]))?.[1];
+        return id === undefined ? [] : [id];
+      }),
+    keptElsewhere: (id) => run.links?.localId(id) !== undefined,
+    isAside: (localId) => isArchived(store.graph.getNode(localId)),
+    // A subtask another connection keeps, whose own pass moves it out from under a task removed here.
+    movedElsewhere: (id) => {
+      const other = run.links?.localId(id);
+      const node = other === undefined ? undefined : (store.graph.getNode(other) as unknown as Record<string, unknown> | undefined);
+      if (!node || isArchived(node) || node["kind"] === kind) return false;
+      return Object.values(app.connections ?? {}).some((one) => one.system === "todoist" && one.kind === node["kind"] && one.direction === "both" && !one.paused && one.fields.parent !== undefined);
+    },
     // The tasks linked when the pass began, and which are completed: a whole read lists only the others.
-    known: () => Object.values(engine?.snapshot.links ?? {}).map((link) => ({ id: link.id, completed: completed !== undefined && link.fields[completed] === true })),
+    known: () => Object.entries(engine?.snapshot.links ?? {}).map(([localId, link]) => ({ id: link.id, completed: completed !== undefined && link.fields[completed] === true, removed: store.graph.getNode(localId) === undefined })),
     ...(run.say ? { say: run.say } : {}),
   });
   const creates = creatingAct(app as GraviewApp, kind, Object.keys(resource.fields).filter((field) => !resource.computed?.includes(field)));
   const decoded = decodedBy(resource);
+  const relations = relationActs(store, kind);
   // What the kind fills in where the act that makes a record is told nothing.
   const filledIn = new Set(Object.keys((app.schema.tryDefinition(kind) as { defaults?: Readonly<Record<string, unknown>> } | undefined)?.defaults ?? {}));
   engine = new SyncEngine<S>(
@@ -901,7 +932,19 @@ function todoistConnection<S extends AnySchema>(run: ConnectionRun<S>, declarati
       mapping,
       remote,
       ...(run.links ? { links: run.links } : {}),
-      ...relationActs(store, kind),
+      ...relations,
+      // A link to a record set aside is taken away with it brought back for the moment, in the one batch: an act does not reach one that is aside.
+      disconnectInbound: (call) => {
+        const act = relations.disconnectInbound?.(call) ?? null;
+        const target = store.graph.getNode(call.to) as unknown as Record<string, unknown> | undefined;
+        if (!act || Array.isArray(act) || !isArchived(target)) return act;
+        const of = String(target!["kind"]);
+        return [{ name: `unarchive-${of}`, args: { id: call.to } }, act as MutationCall, { name: `archive-${of}`, args: { id: call.to } }];
+      },
+      holdExisting: {
+        send: declaration.sendExisting === true,
+        say: (count: number) => `${count} ${count === 1 ? "record was" : "records were"} here before this connection and ${count === 1 ? "is" : "are"} not sent to Todoist: each goes when it is changed, or all of them with "sendExisting": true`,
+      },
       ...(run.now ? { now: run.now } : {}),
       conflicts: declaration.conflicts ?? "report",
       applyInbound: ({ localId, fields }) => ({ name: `edit-${kind}`, args: { id: localId, ...fields } }),

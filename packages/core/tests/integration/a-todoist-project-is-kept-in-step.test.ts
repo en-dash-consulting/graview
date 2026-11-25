@@ -20,7 +20,7 @@ const TOKEN = "0123456789abcdef0123456789abcdef01234567";
 
 const FIELDS = { content: "name", description: "notes", due: "due", deadline: "deadline", priority: "priority", labels: "labels", section: "section", assignee: "assignee", parent: "parent", completed: "done" };
 
-const project = (extra: Record<string, unknown> = {}) => ({ system: "todoist", project: { env: "HOME_PROJECT" }, kind: "task", fields: FIELDS, direction: "both", ...extra });
+const project = (extra: Record<string, unknown> = {}) => ({ system: "todoist", project: { env: "HOME_PROJECT" }, kind: "task", fields: FIELDS, direction: "both", sendExisting: true, ...extra });
 
 const doc = (connections: Record<string, unknown>, fields: Record<string, unknown> = {}) => ({
   format: "graview-document",
@@ -629,6 +629,371 @@ describe("what is never lost", () => {
   it("refuses two connections that would each send the other's tasks on", () => {
     expect(codes(doc({ home: project(), work: project({ project: "Work" }) }))).toEqual(["connection-kind connections.work.kind"]);
     expect(codes(doc({ home: project({ direction: "read" }), work: project({ project: "Work", direction: "read" }) }))).toEqual([]);
+  });
+});
+
+describe("a record set aside", () => {
+  it("leaves its task as it is, sends nothing for it, says so once, and is the same task's again when brought back", async () => {
+    const { stub, home, engine, node, run, act } = opened();
+    act("add-task", { id: "task:milk", name: "Milk" });
+    await engine.run();
+    const id = String(stub.tasks(home)[0]!["id"]);
+    act("archive-task", { id: "task:milk" });
+    stub.commands.length = 0;
+    const first = await engine.run();
+    expect(first.said?.filter((line) => /set aside/.test(line))).toHaveLength(1);
+    expect((await engine.run()).said ?? []).toEqual([]);
+    expect([stub.commands, stub.task(id)!["is_deleted"]]).toEqual([[], false]);
+    // What changes there is taken while it is aside, and a restart in between changes nothing.
+    stub.edit(id, { description: "Whole" });
+    const { engine: again } = run(engine.snapshot);
+    expect((await again.run()).said ?? []).toEqual([]);
+    expect(node("task:milk")["notes"]).toBe("Whole");
+    expect(stub.commands).toEqual([]);
+    const { engine: later } = run(again.snapshot);
+    act("unarchive-task", { id: "task:milk" });
+    await later.run();
+    expect(stub.commands).toEqual([]);
+    act("edit-task", { id: "task:milk", name: "Oat milk" });
+    await later.run();
+    expect(stub.task(id)!["content"]).toBe("Oat milk");
+    expect(stub.tasks(home)).toHaveLength(1);
+    // Only removing it deletes its task, aside or not.
+    act("archive-task", { id: "task:milk" });
+    await later.run();
+    act("remove-task", { id: "task:milk" });
+    await later.run();
+    expect(stub.task(id)!["is_deleted"]).toBe(true);
+  });
+
+  it("holds what changed on both sides while it was aside", async () => {
+    const { stub, home, engine, node, act } = opened();
+    act("add-task", { id: "task:milk", name: "Milk" });
+    await engine.run();
+    const id = String(stub.tasks(home)[0]!["id"]);
+    act("edit-task", { id: "task:milk", name: "Ours" });
+    act("archive-task", { id: "task:milk" });
+    stub.edit(id, { content: "Theirs" });
+    await engine.run();
+    act("unarchive-task", { id: "task:milk" });
+    expect((await engine.run()).conflicts).toEqual([expect.objectContaining({ field: "name", ours: "Ours", theirs: "Theirs" })]);
+    expect([node("task:milk")["name"], stub.task(id)!["content"]]).toEqual(["Ours", "Theirs"]);
+  });
+
+  it("is not deleted with a parent removed here, however far above it the parent is", async () => {
+    const { stub, home, engine, run, named, act, said } = opened();
+    const party = String(stub.add(home, { content: "Party" })["id"]);
+    const food = String(stub.add(home, { content: "Food", parent_id: party })["id"]);
+    const cake = String(stub.add(home, { content: "Cake", parent_id: food })["id"]);
+    await engine.run();
+    const cakes = String(named("Cake")["id"]);
+    act("archive-task", { id: cakes });
+    await engine.run();
+    const { engine: again } = run(engine.snapshot);
+    act("remove-task", { id: String(named("Food")["id"]) });
+    await again.run();
+    await again.run();
+    expect([stub.task(food)!["is_deleted"], stub.task(cake)!["is_deleted"]]).toEqual([false, false]);
+    expect(said.filter((line) => /set aside is under it/.test(line))).toHaveLength(1);
+    act("unarchive-task", { id: cakes });
+    for (let pass = 0; pass < 3; pass += 1) await again.run();
+    expect([stub.task(food)!["is_deleted"], stub.task(cake)!["is_deleted"]]).toEqual([true, false]);
+  });
+
+  it("is not deleted with a parent removed here when it was completed, nor when the parent is the subtask's of a connection that maps none", async () => {
+    const { stub, home, engine, run, named, act } = opened({ declared: project({ fields: { content: "name", completed: "done" } }) });
+    const party = String(stub.add(home, { content: "Party" })["id"]);
+    const cake = String(stub.add(home, { content: "Cake", parent_id: party })["id"]);
+    await engine.run();
+    stub.complete(cake);
+    await engine.run();
+    act("archive-task", { id: String(named("Cake")["id"]) });
+    await engine.run();
+    const { engine: again } = run(engine.snapshot);
+    act("remove-task", { id: String(named("Party")["id"]) });
+    await again.run();
+    expect([stub.task(party)!["is_deleted"], stub.task(cake)!["is_deleted"]]).toEqual([false, false]);
+    // Brought back with nothing here to move it out by: the delete waits still.
+    act("unarchive-task", { id: `task:home-${cake}` });
+    for (let pass = 0; pass < 2; pass += 1) await again.run();
+    expect([stub.task(party)!["is_deleted"], stub.task(cake)!["is_deleted"]]).toEqual([false, false]);
+  });
+
+  it("brought back and settled, is under its parent like any other", async () => {
+    const { stub, home, engine, named, act } = opened({ declared: project({ fields: { content: "name", completed: "done" } }) });
+    const party = String(stub.add(home, { content: "Party" })["id"]);
+    stub.add(home, { content: "Cake", parent_id: party });
+    await engine.run();
+    const cakes = String(named("Cake")["id"]);
+    act("archive-task", { id: cakes });
+    await engine.run();
+    act("unarchive-task", { id: cakes });
+    await engine.run();
+    act("remove-task", { id: String(named("Party")["id"]) });
+    await engine.run();
+    expect(stub.task(party)!["is_deleted"]).toBe(true);
+  });
+
+  it("keeps a parent set aside as its subtasks' parent", async () => {
+    const { stub, home, engine, named, act } = opened();
+    const party = String(stub.add(home, { content: "Party" })["id"]);
+    const cake = String(stub.add(home, { content: "Cake", parent_id: party })["id"]);
+    await engine.run();
+    act("archive-task", { id: String(named("Party")["id"]) });
+    await engine.run();
+    act("edit-task", { id: String(named("Cake")["id"]), name: "Big cake" });
+    await engine.run();
+    expect(stub.task(cake)).toMatchObject({ content: "Big cake", parent_id: party });
+    expect(stub.task(party)!["is_deleted"]).toBe(false);
+  });
+
+  it("by a merge leaves both tasks, and the one that stays takes the subtasks", async () => {
+    const { stub, home, engine, named, act } = opened();
+    const one = String(stub.add(home, { content: "Party" })["id"]);
+    const two = String(stub.add(home, { content: "Party again" })["id"]);
+    const cake = String(stub.add(home, { content: "Cake", parent_id: two })["id"]);
+    await engine.run();
+    act("merge-task", { id: String(named("Party again")["id"]), into: String(named("Party")["id"]) });
+    await engine.run();
+    expect([stub.task(one)!["is_deleted"], stub.task(two)!["is_deleted"]]).toEqual([false, false]);
+    expect(stub.task(cake)!["parent_id"]).toBe(one);
+    expect((await engine.run()).pushed).toEqual([]);
+  });
+});
+
+describe("a record set aside, and what reaches it", () => {
+  /** Two connections of one project: lists by their label, and tasks by theirs, a task's parent being a list. */
+  function two() {
+    const raw = doc({
+      lists: { system: "todoist", project: { env: "P" }, label: "list", kind: "list", fields: { content: "name", completed: "done" }, direction: "both" },
+      tasks: { system: "todoist", project: { env: "P" }, label: "task", kind: "task", fields: { content: "name", completed: "done", parent: "parent" }, direction: "both" },
+    });
+    (raw.kinds as Record<string, unknown>)["list"] = { fields: { name: { type: "string", required: true }, done: { type: "boolean" } } };
+    raw.kinds.task.edges.parent.to = ["list"];
+    (raw.acts as Record<string, unknown>)["add-list"] = { creates: "list" };
+    const compiled = compileDocument(raw);
+    if (!compiled.ok) throw new Error(JSON.stringify(compiled.findings));
+    const app = compiled.app as GraviewApp<AnySchema>;
+    const store = new Store<AnySchema>({ schema: app.schema, mutations: app.mutations ?? [], snapshot: { nodes: [], edges: [] } });
+    const stub = scriptedTodoist({ token: TOKEN });
+    const home = stub.project("Home");
+    const links = sharedLinks();
+    const [lists, tasks] = ["lists", "tasks"].map((name) => connection({ name, declaration: app.connections![name]!, app, store, projectId: home, token: () => TOKEN, fetch: stub.fetch, links }).engine);
+    const party = String(stub.add(home, { content: "Party", labels: ["list"] })["id"]);
+    const cake = String(stub.add(home, { content: "Cake", labels: ["task"], parent_id: party })["id"]);
+    const act = (name: string, args: Record<string, unknown>) => store.apply({ name, args }, { author: { kind: "human", id: "nick" }, intent: "by hand" });
+    return { lists: lists!, tasks: tasks!, stub, party, cake, act, pass: async () => (await lists!.run(), await tasks!.run()) };
+  }
+
+  it("is not deleted with a parent another connection keeps, and a live one is moved out from under it first", async () => {
+    const aside = two();
+    await aside.pass();
+    await aside.pass();
+    aside.act("archive-task", { id: `task:tasks-${aside.cake}` });
+    await aside.pass();
+    aside.act("remove-list", { id: `list:lists-${aside.party}` });
+    await aside.pass();
+    await aside.pass();
+    expect([aside.stub.task(aside.party)!["is_deleted"], aside.stub.task(aside.cake)!["is_deleted"]]).toEqual([false, false]);
+
+    const live = two();
+    await live.pass();
+    await live.pass();
+    live.act("remove-list", { id: `list:lists-${live.party}` });
+    await live.pass();
+    await live.pass();
+    expect(live.stub.task(live.cake)).toMatchObject({ is_deleted: false, parent_id: null });
+    expect(live.stub.task(live.party)!["is_deleted"]).toBe(true);
+  });
+
+  it("as a parent, takes a subtask moved out of it there with everything else that changed", async () => {
+    const { stub, home, engine, named, store, act } = opened();
+    const party = String(stub.add(home, { content: "Party" })["id"]);
+    const cake = String(stub.add(home, { content: "Cake", parent_id: party })["id"]);
+    await engine.run();
+    const parties = String(named("Party")["id"]);
+    act("archive-task", { id: parties });
+    await engine.run();
+    stub.edit(cake, { project_id: home, content: "Theirs" });
+    expect((await engine.run()).refused).toEqual([]);
+    expect(store.graph.out(String(named("Theirs")["id"]), "parent", { archived: "all" })).toEqual([]);
+    expect(store.graph.getNode(parties)).toMatchObject({ $archived: true });
+    expect((await engine.run()).pushed).toEqual([]);
+  });
+
+  it("is the same task's when its answer was lost, and one that repeats moves on once", async () => {
+    const made = opened();
+    made.act("add-task", { id: "task:m", name: "Milk" });
+    made.stub.loseAnswers(3);
+    await made.engine.run();
+    made.act("archive-task", { id: "task:m" });
+    for (let pass = 0; pass < 3; pass += 1) await made.engine.run();
+    made.act("unarchive-task", { id: "task:m" });
+    for (let pass = 0; pass < 2; pass += 1) await made.engine.run();
+    expect([made.stub.tasks(made.home).length, made.nodes().length]).toEqual([1, 1]);
+
+    // One that never arrived is not taken for somebody else's of the same words.
+    const never = opened();
+    never.act("add-task", { id: "task:m", name: "Milk" });
+    never.stub.dropWrites("item_add", 3);
+    await never.engine.run();
+    never.act("archive-task", { id: "task:m" });
+    await never.engine.run();
+    never.stub.add(never.home, { content: "Milk", description: "Theirs" });
+    await never.engine.run();
+    expect(never.nodes().map((one) => one["notes"])).toEqual(["Theirs"]);
+
+    const { stub, home, engine, named, act } = opened({ fields: { due: { type: "date", repeats: true } } });
+    stub.add(home, { content: "Water", due: { date: "2026-11-02", string: "every day", is_recurring: true, lang: "en" } });
+    await engine.run();
+    const id = String(named("Water")["id"]);
+    act("edit-task", { id, done: true });
+    stub.loseAnswers(3);
+    await engine.run();
+    act("archive-task", { id });
+    for (let pass = 0; pass < 2; pass += 1) await engine.run();
+    act("unarchive-task", { id });
+    for (let pass = 0; pass < 3; pass += 1) await engine.run();
+    expect(named("Water")).toMatchObject({ due: "2026-11-03", done: false });
+  }, 20_000);
+
+  it("that leaves the connection's label is judged when brought back, and never releases what waits above it", async () => {
+    const { stub, home, engine, nodes, named, act } = opened({ declared: project({ label: "house", fields: { content: "name", labels: "labels", completed: "done" } }) });
+    const party = String(stub.add(home, { content: "Party", labels: ["house"] })["id"]);
+    const cake = String(stub.add(home, { content: "Cake", labels: ["house"], parent_id: party })["id"]);
+    await engine.run();
+    const cakes = String(named("Cake")["id"]);
+    act("archive-task", { id: cakes });
+    await engine.run();
+    act("remove-task", { id: String(named("Party")["id"]) });
+    stub.edit(cake, { labels: [] });
+    await engine.run();
+    await engine.run();
+    expect([stub.task(party)!["is_deleted"], stub.task(cake)!["is_deleted"]]).toEqual([false, false]);
+    act("unarchive-task", { id: cakes });
+    expect((await engine.run()).gone).toEqual([cakes]);
+    expect(nodes()).toEqual([]);
+    await engine.run();
+    expect([stub.task(party)!["is_deleted"], stub.task(cake)!["is_deleted"]]).toEqual([false, false]);
+    stub.edit(cake, { project_id: home });
+    await engine.run();
+    expect([stub.task(party)!["is_deleted"], stub.task(cake)!["is_deleted"]]).toEqual([true, false]);
+  });
+
+  it("is not completed with a task above it, nor reopened with one under it", async () => {
+    const { stub, home, engine, named, act } = opened();
+    const party = String(stub.add(home, { content: "Party" })["id"]);
+    const cake = String(stub.add(home, { content: "Cake", parent_id: party })["id"]);
+    await engine.run();
+    const [parties, cakes] = [String(named("Party")["id"]), String(named("Cake")["id"])];
+    act("archive-task", { id: cakes });
+    act("edit-task", { id: parties, done: true });
+    const report = await engine.run();
+    expect(report.refused).toEqual([expect.objectContaining({ localId: parties, error: expect.stringMatching(/held unsent.*set aside under it/) })]);
+    expect([stub.task(party)!["checked"], stub.task(cake)!["checked"]]).toEqual([false, false]);
+    act("unarchive-task", { id: cakes });
+    await engine.run();
+    expect([stub.task(party)!["checked"], stub.task(cake)!["checked"]]).toEqual([true, true]);
+    await engine.run();
+    act("archive-task", { id: parties });
+    act("edit-task", { id: cakes, done: false });
+    expect((await engine.run()).refused).toEqual([expect.objectContaining({ localId: cakes, error: expect.stringMatching(/set aside above it/) })]);
+    expect(stub.task(party)!["checked"]).toBe(true);
+  });
+});
+
+describe("the first run", () => {
+  const quiet = project({ sendExisting: undefined });
+
+  it("sends nothing of what was here before it, says how many, and sends what is made or changed after", async () => {
+    const { stub, home, engine, run, act } = opened({ declared: quiet });
+    act("add-task", { id: "task:a", name: "A" });
+    act("add-task", { id: "task:b", name: "B" });
+    act("archive-task", { id: "task:b" });
+    act("add-task", { id: "task:c", name: "C" });
+    const first = await engine.run();
+    expect([first.pushed, first.queued, stub.commands]).toEqual([[], [], []]);
+    expect(first.said).toEqual([expect.stringMatching(/^3 .*here before.*sendExisting/)]);
+    const { engine: again } = run(engine.snapshot);
+    const second = await again.run();
+    expect([second.pushed, second.said ?? []]).toEqual([[], []]);
+    act("unarchive-task", { id: "task:b" });
+    act("add-task", { id: "task:new", name: "New" });
+    act("edit-task", { id: "task:a", name: "A changed" });
+    await again.run();
+    expect(stub.tasks(home).map((task) => task["content"]).sort()).toEqual(["A changed", "New"]);
+    // A parent sent is no change of the child under it.
+    act("connect-task-parent", { id: "task:b", to: "task:c" });
+    await again.run();
+    expect(stub.tasks(home).map((task) => task["content"]).sort()).toEqual(["A changed", "B", "New"]);
+  });
+
+  it("is still the first after a pass that did not reach Todoist, and after the engine's state is lost", async () => {
+    const { stub, home, engine, run, act, setToken } = opened({ declared: quiet });
+    act("add-task", { id: "task:a", name: "A" });
+    setToken("f".repeat(40));
+    expect((await engine.run()).offline).toBe(true);
+    act("add-task", { id: "task:b", name: "B" });
+    setToken(TOKEN);
+    await engine.run();
+    expect(stub.tasks(home).map((task) => task["content"])).toEqual(["B"]);
+    const { engine: lost } = run();
+    expect((await lost.run()).pushed).toEqual([]);
+    expect(stub.tasks(home)).toHaveLength(1);
+  });
+
+  it("holds them still when more is mapped, or one is removed and put back, and holds nothing already owed", async () => {
+    const { app, store, stub, home, engine, act } = opened({ declared: quiet });
+    act("add-task", { id: "task:a", name: "A" });
+    act("add-task", { id: "task:b", name: "B" });
+    const opening = (declared: Record<string, unknown>, state: SyncState) => connection({ name: "home", declaration: { ...app.connections!["home"]!, ...declared } as never, app, store, projectId: home, token: () => TOKEN, fetch: stub.fetch, state }).engine;
+    const few = opening({ fields: { content: "name", completed: "done" } }, { links: {}, outbox: [] });
+    await few.run();
+    const more = opening({}, few.snapshot);
+    expect((await more.run()).pushed).toEqual([]);
+    const removed = act("remove-task", { id: "task:a" });
+    await more.run();
+    store.undo(removed.batch);
+    await more.run();
+    expect(stub.tasks(home)).toEqual([]);
+
+    act("remove-task", { id: "task:a" });
+    act("remove-task", { id: "task:b" });
+    const all = opening({ sendExisting: true }, engine.snapshot);
+    await all.run();
+    act("add-task", { id: "task:owed", name: "Owed" });
+    stub.refuseRequests(1);
+    await all.run();
+    await opening({ sendExisting: undefined }, all.snapshot).run();
+    expect(stub.tasks(home).map((task) => task["content"])).toEqual(["Owed"]);
+  });
+
+  it("is the first that may write: a time of only reading is not it, nor one that failed before sending them", async () => {
+    const { app, store, stub, home, act } = opened({ declared: quiet });
+    const opening = (declared: Record<string, unknown>, state?: SyncState) => connection({ name: "home", declaration: { ...app.connections!["home"]!, ...declared } as never, app, store, projectId: home, token: () => TOKEN, fetch: stub.fetch, ...(state ? { state } : {}) });
+    act("add-task", { id: "task:a", name: "A" });
+    const read = opening({ direction: "read" });
+    await read.engine.run();
+    read.unguard?.();
+    const both = opening({}, read.engine.snapshot);
+    const report = await both.engine.run();
+    expect([report.pushed, report.said?.length]).toEqual([[], 1]);
+
+    const eager = opening({ sendExisting: true });
+    stub.failReads(1);
+    await eager.engine.run();
+    await opening({}, eager.engine.snapshot).engine.run();
+    expect(stub.tasks(home)).toEqual([]);
+  });
+
+  it("sends them where the declaration says sendExisting, then or later", async () => {
+    const { app, store, stub, home, engine, act } = opened({ declared: quiet });
+    act("add-task", { id: "task:a", name: "A" });
+    await engine.run();
+    const declaration = { ...app.connections!["home"]!, sendExisting: true } as never;
+    const later = connection({ name: "home", declaration, app, store, projectId: home, token: () => TOKEN, fetch: stub.fetch, state: engine.snapshot });
+    await later.engine.run();
+    expect(stub.tasks(home)).toHaveLength(1);
   });
 });
 

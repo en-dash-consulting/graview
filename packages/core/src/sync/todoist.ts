@@ -33,6 +33,9 @@ import type { RemoteAck, RemoteChange, RemoteSystem, RemoteWrite } from "./types
  *   once, so a request whose answer was lost is made again as it was.
  * - THE CONNECTION'S LABEL is put on every task sent and left out of what a
  *   record's labels say.
+ * - A RECORD SET ASIDE leaves its task as it is (`aside`): nothing is sent
+ *   for it, and no task above it is deleted while it is, for a delete takes
+ *   "all its sub-tasks" (sync/tasks.md) and nothing undoes one.
  * - A PART THAT CANNOT BE SENT is held, and said ("held unsent"): a due
  *   date whose repeat there are no words for, a section there is not. The
  *   rest of a task already there goes; one not made yet waits whole. A part
@@ -77,8 +80,18 @@ export interface TodoistOptions {
   readonly secretName?: string;
   readonly fetch?: Fetcher;
   readonly baseUrl?: string;
-  /** The tasks this sync has linked, by Todoist's id, and whether each is completed here. */
-  known?(): readonly { readonly id: string; readonly completed?: boolean }[];
+  /** The tasks this sync has linked, by Todoist's id, whether each is completed here, and whether its record is removed here. */
+  known?(): readonly { readonly id: string; readonly completed?: boolean; readonly removed?: boolean }[];
+  /** The tasks of the records set aside here, with what each is called and, where it is mapped, its parent as last agreed. */
+  aside?(): readonly { readonly id: string; readonly localId: string; readonly label: string; readonly parent?: string; readonly completed?: boolean }[];
+  /** The tasks of every record set aside in the app, whichever connection keeps it. */
+  asideElsewhere?(): readonly string[];
+  /** Whether another connection keeps this task. */
+  keptElsewhere?(id: string): boolean;
+  /** Whether another connection keeps this task and will move it out from under one removed here. */
+  movedElsewhere?(id: string): boolean;
+  /** Whether a record of ours is set aside, linked or not. */
+  isAside?(localId: string): boolean;
   /** The longest a run waits out Todoist's rate limit, in ms (60 seconds by default). */
   readonly maxWait?: number;
   /** A note said once. */
@@ -197,6 +210,14 @@ export function todoist(options: TodoistOptions): RemoteSystem {
   /** Tasks read again as they stand on the next pull. */
   const recheck = new Set<string>();
   let pushed = false;
+  /** Our ids among those that were set aside at the last pull. */
+  let waited = new Set<string>();
+  /** Each subtask's parent, a completed one's too: kept in the cursor, so what is under a task is known whatever a read lists. */
+  let under = new Map<string, string>();
+  /** Subtasks set aside, kept until they are out from under what was above them: bringing one back is not leave to delete it with its parent. */
+  const spared = new Set<string>();
+  /** The records set aside that have been said. */
+  const saidAside = new Set<string>();
   const letGo = (localId: string) => {
     const id = found.get(localId);
     if (id !== undefined) recheck.add(id);
@@ -407,8 +428,10 @@ export function todoist(options: TodoistOptions): RemoteSystem {
       const held = await readAround();
       // Nothing was owed after the last pull, so nothing is taken up: a task like any other.
       if (!pushed) {
-        for (const localId of [...unheard.keys()]) letGo(localId);
-        closing.clear();
+        // Save for a record set aside, or just brought back: what it owes is worked out on the pass after.
+        for (const localId of [...unheard.keys()]) if (!waited.has(localId) && !options.isAside?.(localId)) letGo(localId);
+        const waits = new Set((options.aside?.() ?? []).map((one) => one.id));
+        for (const id of [...closing.keys()]) if (!waits.has(id) && !saidAside.has(id)) closing.delete(id);
       }
       const project = projectId(held);
       const section = options.section ? sectionId(held, options.section) : undefined;
@@ -419,18 +442,20 @@ export function todoist(options: TodoistOptions): RemoteSystem {
       if (kept && kept.scope !== scope) {
         throw new TodoistError("todoist: this connection kept another project, section or label before, and the records it made are of that one: put it back, or keep the new one with a connection of another name", 400);
       }
+      under = new Map(Object.entries(kept?.under ?? {}));
       const read = await itemsSince(kept && kept.names === names ? kept.token : "*");
       const known = new Map((options.known?.() ?? []).map((one) => [one.id, one]));
       if (read.whole) {
         listed.clear();
         // A whole read is of active tasks: what it does not list is completed, deleted, or out of sight.
-        const absent = new Set([...known.values()].filter((one) => !one.completed && !read.items.has(one.id)).map((one) => one.id));
+        const absent = new Set([...known.values()].filter((one) => (!one.completed || !kept) && !read.items.has(one.id)).map((one) => one.id));
         if (absent.size > 0) {
           for (const item of await completedAmong(absent, project)) {
             read.items.set(String(item["id"]), item);
             absent.delete(String(item["id"]));
           }
           for (const id of absent) {
+            if (known.get(id)?.completed) continue;
             const item = await taskNow(id);
             if (item) read.items.set(id, item);
             else note(`Todoist no longer lists the task ${id}, so what it made here is kept as it was`);
@@ -442,6 +467,33 @@ export function todoist(options: TodoistOptions): RemoteSystem {
         if (item) read.items.set(id, item);
       }
       recheck.clear();
+      for (const [id, item] of read.items) {
+        const parent = item["is_deleted"] === true ? null : words(item["parent_id"]);
+        if (parent === null || item["project_id"] !== project) under.delete(id);
+        else under.set(id, parent);
+      }
+      waited = new Set([...unheard.keys()].filter((localId) => options.isAside?.(localId)));
+      const aside = new Map((options.aside?.() ?? []).map((one) => [one.id, one]));
+      for (const id of kept?.spared ?? []) spared.add(id);
+      const asides = asideNow();
+      for (const id of asides.keys()) spared.add(id);
+      // Let go once nothing is above it, or it is brought back with no record above it removed here: a task like any other.
+      for (const id of [...spared]) if (!under.has(id) || (!asides.has(id) && !climb(id).some((one) => known.get(one)?.removed))) spared.delete(id);
+      for (const id of kept?.aside ?? []) saidAside.add(id);
+      for (const id of [...saidAside]) {
+        if (aside.has(id)) continue;
+        saidAside.delete(id);
+        // Brought back: read as it stands, for what was let be while it was aside.
+        const item = read.items.has(id) ? undefined : await taskNow(id);
+        if (item) read.items.set(id, item);
+      }
+      for (const { id, label } of aside.values()) {
+        if (saidAside.has(id)) continue;
+        saidAside.add(id);
+        const line = `${label} is set aside here: its task is left as it is in Todoist, and nothing is sent for it until it is brought back`;
+        fresh.push(line);
+        options.say?.(line);
+      }
       const changes: RemoteChange[] = [];
       for (const [id, item] of read.items) {
         const isKnown = known.has(id);
@@ -449,6 +501,8 @@ export function todoist(options: TodoistOptions): RemoteSystem {
         const inScope = item["project_id"] === project && (section === undefined || item["section_id"] === section) && (options.label === undefined || ((item["labels"] as string[] | undefined) ?? []).includes(options.label));
         if (item["is_deleted"] === true || (!inScope && !(isKnown && checked))) {
           listed.delete(id);
+          // Out of what the connection keeps while its record is aside: judged when the record is brought back.
+          if (item["is_deleted"] !== true && aside.has(id)) continue;
           if (isKnown) changes.push({ resource: "tasks", id, version: "gone", deleted: true });
           continue;
         }
@@ -468,9 +522,11 @@ export function todoist(options: TodoistOptions): RemoteSystem {
       }
       // Only a pull that was answered is one nothing was owed after.
       pushed = false;
+      // What did not turn up by the first pull that was answered was not made.
+      for (const localId of [...unheard.keys()]) if (!found.has(localId)) unheard.delete(localId);
       const said = fresh;
       fresh = [];
-      return { changes, cursor: JSON.stringify({ token: read.token, names, scope }), ...(said.length > 0 ? { said } : {}) };
+      return { changes, cursor: JSON.stringify({ token: read.token, names, scope, ...(under.size > 0 ? { under: Object.fromEntries(under) } : {}), ...(saidAside.size > 0 ? { aside: [...saidAside] } : {}), ...(spared.size > 0 ? { spared: [...spared] } : {}) }), ...(said.length > 0 ? { said } : {}) };
     },
 
     async push(writes) {
@@ -481,9 +537,10 @@ export function todoist(options: TodoistOptions): RemoteSystem {
       pushed = true;
       sent = false;
       const owedNow = new Set(writes.map((write) => write.localId));
-      for (const localId of [...unheard.keys()]) if (!owedNow.has(localId)) letGo(localId);
+      for (const localId of [...unheard.keys()]) if (!owedNow.has(localId) && !options.isAside?.(localId)) letGo(localId);
       const completing = new Set(writes.filter((write) => write.fields?.["completed"] === true && write.changed?.includes("completed")).map((write) => write.id));
-      for (const id of [...closing.keys()]) if (!completing.has(id)) closing.delete(id);
+      const waits = new Set((options.aside?.() ?? []).map((one) => one.id));
+      for (const id of [...closing.keys()]) if (!completing.has(id) && !waits.has(id)) closing.delete(id);
       for (const write of writes) {
         try {
           planned.push(await plan(write, around));
@@ -520,7 +577,15 @@ export function todoist(options: TodoistOptions): RemoteSystem {
       /* A task is deleted with everything under it, so not while a change to something under it is still owed or refused. */
       const deletes = planned.filter((one) => one.write.deleted);
       const open = new Set(writes.flatMap((write) => (write.id && !write.deleted && !clean.has(write.id) && !toClose.some((one) => one.id === write.id) ? [write.id] : [])));
-      const waiting = (id: string) => [...open].some((other) => listed.get(other)?.["parent_id"] === id);
+      /* Nor while the task of a record set aside is under it, however far: that one is not deleted until its record is. */
+      const above = new Set<string>();
+      const asides = asideNow();
+      for (const [id, parent] of asides) for (const at of climb(id, parent)) above.add(at);
+      for (const id of spared) for (const at of climb(id)) above.add(at);
+      const waiting = (id: string) => above.has(id) || [...under].some(([child, parent]) => parent === id && (options.movedElsewhere?.(child) ?? false)) || [...open].some((other) => under.get(other) === id);
+      for (const { write } of deletes) {
+        if (above.has(write.id!)) note(`the task ${write.id} is not deleted in Todoist while the task of a record set aside is under it, or of one that was: bring it back and move it out from under this one, or remove its record`);
+      }
       for (let grew = true; grew; ) {
         grew = false;
         for (const { write } of deletes) {
@@ -604,6 +669,9 @@ export function todoist(options: TodoistOptions): RemoteSystem {
     await part(["due", "repeat"], async () => {
       args["due"] = await dueFor({ ...write, ...(at ? { id: at } : {}) }, changed, around);
     });
+    await part(["completed"], async () => {
+      if (at) await reachesAside(at, fields["completed"] === true);
+    });
     let move: Json | undefined;
     await part(["parent", "section"], async () => (move = await moveFor(at, fields, changed, around)));
 
@@ -613,11 +681,11 @@ export function todoist(options: TodoistOptions): RemoteSystem {
       return { write, commands: [adds], made: adds, close: fields["completed"] === true, partly: false, ack: ackOf(write, {}) };
     }
     const commands: Command[] = [];
-    if (write.id && changed.has("completed") && fields["completed"] !== true) commands.push(command("item_uncomplete", { id: at }));
+    if (write.id && changed.has("completed") && !unsent.has("completed") && fields["completed"] !== true) commands.push(command("item_uncomplete", { id: at }));
     if (Object.keys(args).length > 0) commands.push(command("item_update", { id: at, ...args }));
     // "Only one of parent_id, section_id or project_id must be set" (sync/tasks.md): a subtask is where its parent is.
     if (move) commands.push(command("item_move", { id: at, ...move }));
-    const close = changed.has("completed") && fields["completed"] === true;
+    const close = changed.has("completed") && !unsent.has("completed") && fields["completed"] === true;
     if (unsent.size === 0) return { write, id: at, commands, close, partly: false, ack: ackOf(write, {}) };
     const said = [...new Set(unsent.values())].join("; ");
     const task = await taskNow(at);
@@ -637,6 +705,35 @@ export function todoist(options: TodoistOptions): RemoteSystem {
     });
   }
 
+  /** The tasks of the records set aside, whoever keeps them, each with its parent as last agreed where that is known. */
+  function asideNow(): Map<string, string | undefined> {
+    const all = new Map<string, string | undefined>((options.asideElsewhere?.() ?? []).map((id) => [id, undefined]));
+    for (const { id, parent } of options.aside?.() ?? []) all.set(id, parent);
+    return all;
+  }
+
+  /** What is above a task, nearest first. */
+  function climb(id: string, parent?: string): string[] {
+    const above: string[] = [];
+    for (let at = under.get(id) ?? parent; at !== undefined && !above.includes(at); at = under.get(at)) above.push(at);
+    return above;
+  }
+
+  /** Refuses to complete or reopen a task where Todoist would do it to the task of a record set aside: completing one completes its sub-tasks, and reopening one reopens what is above it (sync/tasks.md). */
+  async function reachesAside(id: string, completing: boolean): Promise<void> {
+    const own = new Map((options.aside?.() ?? []).map((one) => [one.id, one]));
+    const isOpen = async (task: string) => (own.get(task)?.completed !== undefined ? !own.get(task)!.completed : (await taskNow(task))?.["checked"] === false);
+    if (completing) {
+      if (dueOf((await taskNow(id)) ?? {})?.is_recurring) return;
+      for (const [task, parent] of asideNow()) {
+        if (climb(task, parent).includes(id) && (await isOpen(task))) throw new Error("held unsent: completing this task would complete the task of a record set aside under it — bring that one back, or complete it, first");
+      }
+      return;
+    }
+    const aside = asideNow();
+    for (const task of climb(id)) if (aside.has(task) && !(await isOpen(task))) throw new Error("held unsent: reopening this task would reopen the task of a record set aside above it — bring that one back first");
+  }
+
   /** Where a task goes when its parent or its section changed here; a part held in conflict is left where Todoist has it. */
   async function moveFor(id: string | undefined, fields: Json, changed: ReadonlySet<string>, around: Around): Promise<Json | undefined> {
     const own = options.section ? sectionId(around, options.section) : undefined;
@@ -648,7 +745,7 @@ export function todoist(options: TodoistOptions): RemoteSystem {
       if (parent) return { parent_id: parent };
       // A parent this connection no longer keeps is not one somebody here took it out of.
       const was = words(task["parent_id"]);
-      if (was === null || !(options.known?.() ?? []).some((one) => one.id === was)) {
+      if (was === null || !((options.known?.() ?? []).some((one) => one.id === was) || (options.keptElsewhere?.(was) ?? false))) {
         if (!changed.has("section")) return undefined;
       }
     } else if (task["parent_id"]) throw new Error("held unsent: a subtask is in its parent's section, so it is moved by moving its parent, or by taking it out of it");
@@ -781,11 +878,11 @@ function sentenceOf(answer: Json): string {
 /** Whether a read was refused for its sync token, which the documentation does not give a tag: any bad request that names it. */
 const isTokenRefused = (error: unknown): boolean => error instanceof TodoistError && error.status === 400 && /sync.?token/i.test(`${error.tag ?? ""} ${error.message}`);
 
-function readCursor(cursor: string | undefined): { readonly token: string; readonly names: string; readonly scope: string } | undefined {
+function readCursor(cursor: string | undefined): { readonly token: string; readonly names: string; readonly scope: string; readonly under?: Readonly<Record<string, string>>; readonly aside?: readonly string[]; readonly spared?: readonly string[] } | undefined {
   if (!cursor) return undefined;
   try {
-    const parsed = JSON.parse(cursor) as { token?: unknown; names?: unknown; scope?: unknown };
-    return typeof parsed.token === "string" && typeof parsed.names === "string" && typeof parsed.scope === "string" ? { token: parsed.token, names: parsed.names, scope: parsed.scope } : undefined;
+    const parsed = JSON.parse(cursor) as { token?: unknown; names?: unknown; scope?: unknown; under?: Record<string, string>; aside?: string[]; spared?: string[] };
+    return typeof parsed.token === "string" && typeof parsed.names === "string" && typeof parsed.scope === "string" ? { token: parsed.token, names: parsed.names, scope: parsed.scope, ...(parsed.under ? { under: parsed.under } : {}), ...(parsed.aside ? { aside: parsed.aside } : {}), ...(parsed.spared ? { spared: parsed.spared } : {}) } : undefined;
   } catch {
     return undefined;
   }

@@ -5,11 +5,11 @@
  * `@graview/core/sync` is covered against a scripted Todoist; this runs a
  * declared connection (`connections.<name>` with `system: "todoist"`) against
  * a real account and writes what happened to docs/todoist.json as named
- * claims: a first run that sends nothing, a task made there with each part, a
+ * claims: a first run that sends nothing, not even a record here before it, a task made there with each part, a
  * record made here becoming a task, our own write not echoed, an edit each
  * way, a conflict held, a task completed there and here, one a whole read no
  * longer lists kept as completed, a repeat both ways and one that cannot be
- * said held unsent, a subtask linked, a removal each way, a refused token
+ * said held unsent, a subtask linked, a record set aside and brought back, a removal each way, a refused token
  * said, and the token kept nowhere.
  *
  * WHAT TO SET UP, ONCE: a Todoist account of its own for testing, its
@@ -152,8 +152,12 @@ try {
     return last;
   };
 
+  act("add-task", { id: "task:before", name: `Before ${run}` });
   const first = await engine.run();
-  claim("theFirstRunReadsTheProjectAndSendsNothing", !first.offline && first.applied.length === 0 && first.pushed.length === 0, { problem: first.problem ?? null });
+  claim("theFirstRunReadsTheProjectAndSendsNothing", !first.offline && first.applied.length === 0 && first.pushed.length === 0 && !(await named("Before")) && (first.said ?? []).some((line) => /here before/.test(line)), { problem: first.problem ?? null, said: first.said ?? [] });
+  act("edit-task", { id: "task:before", notes: "Changed" });
+  await engine.run();
+  claim("aRecordHereBeforeItGoesWhenItChanges", (await named("Before"))?.description === "Changed");
 
   const paint = await command("item_add", { content: `Paint ${run}`, description: "Two coats", project_id: projectId, section_id: sectionId, priority: 4, labels: ["graview-harness"], due: { date: "2031-03-03" } });
   const took = await until(() => record("Paint"));
@@ -226,6 +230,21 @@ try {
   const child = await command("item_add", { content: `Brush ${run}`, project_id: projectId, parent_id: bins.id });
   await until(() => record("Brush") && store.graph.out(record("Brush").id, "parent").length > 0);
   claim("aSubtaskIsLinkedToItsParent", store.graph.out(record("Brush")?.id ?? "", "parent").map((one) => one.id).join() === "task:bins");
+
+  act("archive-task", { id: record("Brush").id });
+  const brushes = store.graph.allNodes({ archived: true })[0].id;
+  act("remove-task", { id: "task:bins" });
+  const setAside = await engine.run();
+  engine = open(engine.snapshot).engine;
+  await engine.run();
+  await look();
+  claim("aRecordSetAsideKeepsItsTaskAndNothingAboveItIsDeleted", seen.get(child)?.is_deleted !== true && seen.get(bins.id)?.is_deleted !== true && seen.get(child)?.checked !== true, { said: setAside.said ?? [] });
+  act("unarchive-task", { id: brushes });
+  act("edit-task", { id: brushes, notes: "Again" });
+  await engine.run();
+  await engine.run();
+  await look();
+  claim("broughtBackItIsTheSameTaskAndOnlyThenIsTheOneAboveItDeleted", seen.get(child)?.description === "Again" && seen.get(child)?.is_deleted !== true && seen.get(bins.id)?.is_deleted === true);
 
   await command("item_delete", { id: child });
   await until(() => !record("Brush"));

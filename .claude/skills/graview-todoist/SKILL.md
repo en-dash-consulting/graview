@@ -46,10 +46,14 @@ inbound change lands through — is `graview-sync`.
    removes a record; unmapped, it looks open here for good. Completing a
    task that repeats, on either side, moves it to its next date: the field
    clears and the date follows. A task deleted there, or moved out of the
-   project, section or label, is removed here. Removing a record here, or
-   setting it aside, deletes its task, and Todoist deletes every subtask
-   with it, kept here or not; a record linked by a mapped `parent` is moved
-   out from under it first.
+   project, section or label, is removed here. Removing a record here
+   deletes its task, and Todoist deletes every subtask with it, kept here or
+   not; a record linked by a mapped `parent` is moved out from under it
+   first. Setting one aside, or merging it into another, deletes nothing:
+   its task stays as it is, nothing is sent for it, what changes there is
+   still taken, and it is the same task's when brought back. A task above
+   one set aside is not deleted, nor completed over it, until that one is
+   removed, or brought back and out from under it.
 
 4. **Say a repeat with `repeats: true` on the due field.** "every day",
    "every 2 weeks", "every mon, wed" and "every 2, 15" are the repeat beside
@@ -100,8 +104,9 @@ them against the scripted one, which proves the claims and not Todoist.
   without it, a record made from a task stays as it is here and is not sent.
   A declared project, section or label that changes stops the connection,
   and removes nothing.
-- Whether records already here before the connection should be sent: they
-  are made in Todoist on the first pass, as any record not there is. Start
-  with `"direction": "read"` to look first.
+- Whether records already here before the connection should be sent. The
+  first pass sends none and says how many; each goes when it is changed, or
+  all of them with `"sendExisting": true`. A host that lost what it keeps is
+  on its first pass again.
 - Whether an enum's sections are the project's: a section it does not name
   is refused as it arrives.

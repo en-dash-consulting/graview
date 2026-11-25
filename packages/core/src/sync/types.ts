@@ -93,6 +93,13 @@ export interface ResourceMapping {
    * is an echo, not news.
    */
   readonly version?: string;
+  /**
+   * WHAT A RECORD SET ASIDE HERE (archived) IS THERE. Absent: gone, as one
+   * removed is, so its delete is sent. `keep`: left as it is, with nothing
+   * sent for it while it is aside, still linked, and kept in step again
+   * when it is brought back; only a record removed is deleted there.
+   */
+  readonly aside?: "keep";
   /** Our field that holds the remote's id, for those links. Absent: the node's own id. */
   readonly remoteId?: string;
 }
@@ -221,8 +228,21 @@ export interface SyncState {
    * a refusal is said once in the history, and read back by `guestsOf`.
    */
   readonly guests?: Readonly<Record<string, GuestsKept>>;
+  /**
+   * RECORDS HERE BEFORE THE CONNECTION'S FIRST PASS that are not sent
+   * (`SyncOptions.holdExisting`), by our id: what each held then, every
+   * field as a short hash and every link by its other end, so one that has
+   * changed since goes, whatever the connection maps by then.
+   */
+  readonly existing?: Readonly<Record<string, ExistingRecord>>;
   /** The last pass, as `connectionStatus` reads it: when, and what it did. */
   readonly lastPass?: PassKept;
+}
+
+/** What a record here before the first pass held: each field's hash, and the records each relation reached. */
+export interface ExistingRecord {
+  readonly fields: Readonly<Record<string, string>>;
+  readonly links?: Readonly<Record<string, readonly string[]>>;
 }
 
 /** What a connection last did with one record's guests. */

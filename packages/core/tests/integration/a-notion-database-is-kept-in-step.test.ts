@@ -265,6 +265,18 @@ describe("a Notion database, both ways", () => {
     expect(nodes()).toEqual([]);
   });
 
+  it("archives the page of a record set aside here, as it always has, and makes a new one when it is brought back", async () => {
+    const { stub, db, engine, store, as } = opened();
+    store.apply({ name: "add-task", args: { id: "task:mine", name: "Mine" } }, as("nick"));
+    await engine.run();
+    store.apply({ name: "archive-task", args: { id: "task:mine" } }, as("nick"));
+    await engine.run();
+    expect(stub.pages(db)).toHaveLength(0);
+    store.apply({ name: "unarchive-task", args: { id: "task:mine" } }, as("nick"));
+    await engine.run();
+    expect([stub.pages(db).length, stub.pages(db, true).length]).toEqual([1, 2]);
+  });
+
   it("follows every page of a query, and asks only for what was edited since", async () => {
     const { stub, db, engine, nodes } = opened();
     for (let n = 1; n <= 205; n++) stub.add(db, { Name: `Task ${n}` });

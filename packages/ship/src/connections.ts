@@ -168,9 +168,23 @@ export function runConnections<S extends AnySchema>(options: RunConnectionsOptio
   const engines: { name: string; every: number; engine: ReturnType<typeof connection<S>>["engine"] }[] = [];
   const links = sharedLinks();
 
+  /*
+   * A TODOIST CONNECTION NOT RUNNING still says which tasks are whose: its
+   * links are kept with the others', so another of the same project deletes
+   * no task with one of its records' under it.
+   */
+  const notRunning = (name: string, declaration: ConnectionDeclaration) => {
+    const held = Object.entries(declaration.system === "todoist" ? (kept[name]?.links ?? {}) : {});
+    if (held.length === 0) return;
+    const byId = new Map(held.map(([localId, link]) => [link.id, localId]));
+    const byLocal = new Map(held.map(([localId, link]) => [localId, link.id]));
+    links.add({ linkOf: (localId) => byLocal.get(localId), linkedTo: (id) => byId.get(id) });
+  };
+
   for (const [name, declaration] of declared) {
     if (options.paused || declaration.paused) {
       say(`${name}: paused${options.paused ? " (--no-sync)" : " (declared)"}; nothing is synced`);
+      notRunning(name, declaration);
       continue;
     }
     const lookup = lookupFor(declaration, env, options.readFile);
@@ -178,12 +192,14 @@ export function runConnections<S extends AnySchema>(options: RunConnectionsOptio
       const project = options.project?.({ connection: name, declaration }) ?? (typeof declaration.project === "string" ? declaration.project : lookup(declaration.project.env));
       if (!project) {
         say(`${name}: not started: no project in ${typeof declaration.project === "string" ? "the declaration" : declaration.project.env}`);
+        notRunning(name, declaration);
         continue;
       }
       const secretName = `${declaration.auth?.env ?? TODOIST_AUTH_ENV}_TOKEN`;
       const host = options.token;
       const value = host ? undefined : lookup(secretName);
       if (!host && !value) {
+        notRunning(name, declaration);
         say(`${name}: not started: ${secretName} is not set${declaration.auth?.file ? ` in the environment or ${declaration.auth.file}` : " in the environment"}`);
         continue;
       }

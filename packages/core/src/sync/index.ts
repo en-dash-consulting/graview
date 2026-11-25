@@ -38,6 +38,7 @@ export { EMPTY_SYNC_STATE, SYNC_STATE_FORMAT, systemAuthor } from "./types.js";
 export type {
   ConflictPolicy,
   DeletedConflict,
+  ExistingRecord,
   FieldConflict,
   GuestsKept,
   LinkResolver,

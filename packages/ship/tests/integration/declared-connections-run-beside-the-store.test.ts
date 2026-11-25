@@ -274,6 +274,43 @@ describe("a served store's declared Todoist project", () => {
   });
 });
 
+describe("a served store's Todoist connection that is paused", () => {
+  it("still says which tasks are its records', so another of the project deletes none with what was above it", async () => {
+    const todoist = scriptedTodoist();
+    const home = todoist.project("Home");
+    const both = (paused: boolean) => {
+      const raw = tasks() as unknown as { kinds: Record<string, unknown>; acts: Record<string, unknown>; connections: Record<string, unknown> };
+      raw.kinds = { task: { fields: { name: { type: "string", required: true }, done: { type: "boolean" } }, edges: { parent: { to: ["list"], cardinality: "one" } } }, list: { fields: { name: { type: "string", required: true }, done: { type: "boolean" } } } };
+      raw.acts = { "add-task": { creates: "task" }, "add-list": { creates: "list" } };
+      raw.connections = {
+        lists: { system: "todoist", project: home, label: "list", kind: "list", fields: { content: "name", completed: "done" }, direction: "both" },
+        tasks: { system: "todoist", project: home, label: "task", kind: "task", fields: { content: "name", completed: "done", parent: "parent" }, direction: "both", ...(paused ? { paused: true } : {}) },
+      };
+      return raw as never;
+    };
+    const opened = open(both(false));
+    let states = {};
+    const state = { read: () => states, write: (next: object) => void (states = structuredClone(next)) };
+    const env = { TODOIST_TOKEN: todoist.token };
+    const as = { author: { kind: "human" as const, id: "nick" } };
+    const first = runConnections({ ...opened, env, fetch: todoist.fetch, state });
+    await first.firstPass;
+    opened.store.apply({ name: "add-list", args: { id: "list:p", name: "Party" } }, as);
+    opened.store.apply({ name: "add-task", args: { id: "task:c", name: "Cake" } }, as);
+    opened.store.apply({ name: "connect-task-parent", args: { id: "task:c", to: "list:p" } }, as);
+    for (let pass = 0; pass < 3; pass += 1) await first.runNow();
+    await first.stop();
+    const cake = todoist.tasks(home).find((task) => task["content"] === "Cake")!;
+    expect(cake["parent_id"]).toBe(todoist.tasks(home).find((task) => task["content"] === "Party")!["id"]);
+    opened.store.apply({ name: "archive-task", args: { id: "task:c" } }, as);
+    opened.store.apply({ name: "remove-list", args: { id: "list:p" } }, as);
+    const second = runConnections({ ...opened, app: open(both(true)).app, env, fetch: todoist.fetch, state });
+    await second.runNow();
+    await second.stop();
+    expect(todoist.task(String(cake["id"]))!["is_deleted"]).toBe(false);
+  });
+});
+
 /* ------------------------------ several Notion tables joined by a relation (f-notion-several-tables) */
 
 describe("a served store's Notion tables joined by a relation", () => {

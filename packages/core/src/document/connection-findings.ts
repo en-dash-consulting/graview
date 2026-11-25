@@ -73,7 +73,7 @@ function secretIn(value: unknown, at: string): { readonly at: string; readonly s
 const KEYS: Readonly<Record<string, string>> = {
   "google-calendar": "system, calendar, auth, kind, fields, filter, direction, conflicts, every, paused and description",
   notion: "system, database, source, auth, kind, properties, sources, create, direction, conflicts, every, paused and description",
-  todoist: "system, project, section, label, auth, kind, fields, direction, conflicts, every, paused and description",
+  todoist: "system, project, section, label, auth, kind, fields, sendExisting, direction, conflicts, every, paused and description",
 };
 
 /** A shape the connection does not have, at its place: an unknown key, or a value of the wrong kind. */

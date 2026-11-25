@@ -191,6 +191,8 @@ function build() {
       parent: z.optional(edgeName),
       completed: z.optional(fieldName),
     }),
+    /* Whether the records here before the connection's first pass are made in Todoist (false unless said): without it, one goes when it changes, as one made after does. */
+    sendExisting: z.optional(z.boolean()),
     direction,
     conflicts,
     every,
