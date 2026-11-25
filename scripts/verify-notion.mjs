@@ -14,8 +14,11 @@
  * by a dual relation kept as links both ways and converging with nothing
  * sent, a table whose kind other acts make and write — a page landing
  * through the act that fits it, a status a named step moves changed in
- * Notion, a blank row said once and arriving once filled — and everything
- * the run made archived again.
+ * Notion, a blank row said once and arriving once filled — a record set
+ * aside here keeping its page (what changes there landing, the same page's
+ * when brought back, made again once when the page was deleted meanwhile,
+ * and only a removal deleting), what Notion does with a page in the trash
+ * inside a relation — and everything the run made archived again.
  *
  * WHAT TO SET UP, ONCE:
  *
@@ -37,7 +40,8 @@
  * two dates, checkbox, URL, email, phone, people and formula property — so
  * nobody has to build one by hand, and archives it at the end. For the
  * relations it makes two more, "Graview harness <run id> fleet" and
- * "… checks", the second's relation dual to the first, and trashes both.
+ * "… checks", the second's relation dual to the first, and trashes both;
+ * for the records set aside, "… things" and "… notes", trashed the same way.
  * Every page it makes carries the run id in its title, and only those are
  * touched.
  *
@@ -508,6 +512,177 @@ try {
   claim("aBlankPageIsSaidOnceAndArrivesOnceFilled", saidOfBlank === 1 && toys().some((toy) => toy.name === `Spinning top ${run}`) && toyEngine.snapshot.skipped === undefined, { saidOfBlank, arrived: toys().some((toy) => toy.name === `Spinning top ${run}`) });
 
   for (const id of linkedTables.splice(0)) await api("DELETE", `/blocks/${id}`);
+
+  /* ------------------------------------------------ a record set aside here */
+  // Things and the notes about them, a table each: a thing set aside keeps its page, and what becomes of a page in the trash inside a relation is recorded as Notion does it.
+  const thingTable = await table("things", { Name: { title: {} }, Notes: { rich_text: {} } });
+  const thingSource = thingTable.data_sources[0].id;
+  const noteTable = await table("notes", { Name: { title: {} }, About: { relation: { data_source_id: thingSource, type: "single_property", single_property: {} } } });
+  const shelf = compileDocument({
+    format: "graview-document",
+    formatVersion: 1,
+    name: `Notion harness set aside ${run}`,
+    kinds: {
+      thing: { fields: { name: { type: "string", required: true }, notes: { type: "text" } } },
+      note: { fields: { name: { type: "string", required: true } }, edges: { about: { to: ["thing"] } } },
+    },
+    acts: { "add-thing": { creates: "thing" }, "add-note": { creates: "note" } },
+    connections: {
+      things: { system: "notion", database: thingTable.id, kind: "thing", properties: { name: "Name", notes: "Notes" }, direction: "both" },
+      notes: { system: "notion", database: noteTable.id, kind: "note", properties: { name: "Name", about: "About" }, direction: "both" },
+    },
+  });
+  if (!shelf.ok) throw new Error(`the harness's set-aside declaration does not check: ${shelf.findings.map((finding) => finding.message).join("; ")}`);
+  const shelfStore = new Store({ schema: shelf.app.schema, mutations: shelf.app.mutations ?? [], snapshot: { nodes: [], edges: [] } });
+  const shelfAct = (name, args) => shelfStore.apply({ name, args }, as);
+  const shelved = (id) => shelfStore.graph.getNode(id);
+  const aboutHere = (id) => shelfStore.graph.out(id, "about", { archived: "all" }).map((one) => one.id);
+  const shelfWrites = [];
+  const shelfRefused = [];
+  const watched = (url, init) => {
+    const { pathname } = new URL(url);
+    const method = init?.method ?? "GET";
+    if (method === "PATCH" || (method === "POST" && pathname.endsWith("/pages"))) shelfWrites.push(`${method} ${pathname.split("/").at(-1)}`);
+    return fetched(url, init);
+  };
+  /** The two connections, started from what was kept; `whole` drops the cursors, so the next pass reads everything. */
+  const openShelf = (states, whole = false) => {
+    const shared = sharedLinks();
+    return ["things", "notes"].map((name, at) => {
+      const { cursor, ...kept } = states?.[at] ?? {};
+      const state = states ? { ...structuredClone(kept), ...(whole || cursor === undefined ? {} : { cursor }) } : undefined;
+      return connection({ name, declaration: shelf.app.connections[name], app: shelf.app, store: shelfStore, databaseId: shelf.app.connections[name].database, token: () => secret, fetch: watched, links: shared, ...(state ? { state } : {}) }).engine;
+    });
+  };
+  let shelfEngines = openShelf();
+  const restartShelf = (whole = false) => void (shelfEngines = openShelf(shelfEngines.map((one) => one.snapshot), whole));
+  const shelfSaid = [];
+  const shelfPass = async () => {
+    const reports = [];
+    for (const one of shelfEngines) reports.push(await one.run());
+    for (const one of shelfEngines) one.resolveHeld();
+    const away = reports.find((one) => one.offline);
+    if (away) throw new Error(`the set-aside connection could not reach Notion: ${away.problem ?? ""}`);
+    shelfSaid.push(...reports.flatMap((one) => one.said ?? []));
+    shelfRefused.push(...reports.flatMap((one) => one.refused.map((refusal) => refusal.error)));
+    return reports;
+  };
+  /** Whole reads until `check` holds: Notion's query catches up with a write within seconds. */
+  const untilShelf = async (check, tries = stubbed ? 1 : 8) => {
+    for (let at = 0; at < tries; at++) {
+      await settle();
+      restartShelf(true);
+      await shelfPass();
+      if (check()) return;
+    }
+  };
+  const thingsThere = async (name) => (await api("POST", `/data_sources/${thingSource}/query`, { page_size: 100 })).results.filter((page) => !page.in_trash && textOf(page, "Name") === name);
+  const aboutThere = async (id) => ((await api("GET", `/pages/${id}`)).properties.About?.relation ?? []).map((one) => one.id);
+
+  for (const [id, name] of [["lamp", "Lamp"], ["chair", "Chair"]]) shelfAct("add-thing", { id: `thing:${id}`, name: `${name} ${run}` });
+  for (const id of ["lamp", "chair"]) {
+    shelfAct("add-note", { id: `note:${id}`, name: `About the ${id} ${run}` });
+    shelfAct("connect-note-about", { id: `note:${id}`, to: `thing:${id}` });
+  }
+  await shelfPass();
+  await shelfPass();
+  const lampId = shelfEngines[0].linkOf("thing:lamp");
+  const chairId = shelfEngines[0].linkOf("thing:chair");
+  const noteLampId = shelfEngines[1].linkOf("note:lamp");
+  const noteChairId = shelfEngines[1].linkOf("note:chair");
+  if (!lampId || !chairId || !noteLampId || !noteChairId) throw new Error("the records made to be set aside did not become pages");
+  await settle();
+  await shelfPass();
+
+  shelfWrites.length = 0;
+  for (const id of ["lamp", "chair"]) shelfAct("archive-thing", { id: `thing:${id}` });
+  await shelfPass();
+  restartShelf();
+  await shelfPass();
+  const lampKept = await api("GET", `/pages/${lampId}`);
+  const lampNamed = await aboutThere(noteLampId);
+  claim("aRecordSetAsideKeepsItsPageAndItsPlaceInARelation", shelfWrites.length === 0 && lampKept.in_trash !== true && lampNamed.join() === lampId && aboutHere("note:lamp").join() === "thing:lamp", { sent: shelfWrites.length, inTrash: lampKept.in_trash ?? null, relation: lampNamed.length });
+
+  await api("PATCH", `/pages/${lampId}`, { properties: { Notes: notionProperty("rich_text", "Bright") } });
+  for (let at = 0; at < (stubbed ? 1 : 8) && shelved("thing:lamp")?.notes !== "Bright"; at++) {
+    await settle();
+    await shelfPass();
+  }
+  claim("anEditInNotionToThePageOfARecordSetAsideLandsHere", shelved("thing:lamp")?.notes === "Bright" && shelved("thing:lamp")?.$archived === true && shelfWrites.length === 0 && shelfRefused.length === 0, { notes: shelved("thing:lamp")?.notes ?? null, stillAside: shelved("thing:lamp")?.$archived === true, sent: shelfWrites.length, refused: [...shelfRefused] });
+
+  shelfAct("unarchive-thing", { id: "thing:lamp" });
+  restartShelf();
+  await shelfPass();
+  const sentOnReturn = shelfWrites.length;
+  shelfAct("edit-thing", { id: "thing:lamp", notes: "Brighter" });
+  await shelfPass();
+  const lampEdited = await api("GET", `/pages/${lampId}`);
+  claim("aRecordBroughtBackIsTheSamePagesAndAnEditHereGoes", sentOnReturn === 0 && shelfEngines[0].linkOf("thing:lamp") === lampId && textOf(lampEdited, "Notes") === "Brighter", { sentOnReturn, samePage: shelfEngines[0].linkOf("thing:lamp") === lampId });
+
+  await api("PATCH", `/pages/${chairId}`, { in_trash: true });
+  const deletedSaid = () => shelfSaid.filter((line) => /its page was deleted in Notion: it is kept here/.test(line)).length;
+  await untilShelf(() => deletedSaid() > 0);
+  // WHAT NOTION DOES with a page in the trash inside another page's relation: whether it still lists it, and whether it takes it written again.
+  const listedInTrash = await aboutThere(noteChairId);
+  const linkedHere = aboutHere("note:chair");
+  const rewritten = await api("PATCH", `/pages/${noteChairId}`, { properties: { About: notionProperty("relation", [chairId]) } }).then(
+    () => "taken",
+    (error) => `refused: ${error.message}`.replaceAll(chairId, "<page>").replaceAll(chairId.replace(/-/g, ""), "<page>"),
+  );
+  const listedAfterRewrite = await aboutThere(noteChairId);
+  await settle();
+  await shelfPass();
+  // Edited here, the note that links it still goes, whatever Notion makes of the page in the trash.
+  shelfRefused.length = 0;
+  shelfAct("edit-note", { id: "note:chair", name: `About the old chair ${run}` });
+  await shelfPass();
+  const noteEdited = await api("GET", `/pages/${noteChairId}`);
+  claim("aPageInTheTrashInsideARelationHoldsUpNoEditOfThePageThatLinksIt", shelfRefused.length === 0 && textOf(noteEdited, "Name") === `About the old chair ${run}`, {
+    whatNotionDoes: { listsThePageInTheTrash: listedInTrash.includes(chairId), relationLists: listedInTrash.length, writtenAgain: rewritten, listsItAfterThat: listedAfterRewrite.includes(chairId) },
+    linkKeptHere: linkedHere.includes("thing:chair"),
+    linkHereAfterwards: aboutHere("note:chair").includes("thing:chair"),
+    refused: [...shelfRefused],
+  });
+
+  const keptAside = shelved("thing:chair")?.$archived === true;
+  restartShelf(true);
+  await shelfPass();
+  const saidOnce = deletedSaid() === 1;
+  shelfWrites.length = 0;
+  shelfAct("unarchive-thing", { id: "thing:chair" });
+  restartShelf();
+  await shelfPass();
+  const newChairId = shelfEngines[0].linkOf("thing:chair");
+  const madeAgain = shelfWrites.filter((one) => one === "POST pages").length;
+  for (let at = 0; at < (stubbed ? 1 : 4); at++) {
+    await settle();
+    await shelfPass();
+  }
+  const chairsThere = await thingsThere(`Chair ${run}`);
+  const oldChair = await api("GET", `/pages/${chairId}`);
+  claim(
+    "aPageDeletedWhileItsRecordIsAsideIsMadeOnceAgainWhenItIsBroughtBackAndSaid",
+    keptAside && saidOnce && madeAgain === 1 && newChairId !== chairId && chairsThere.length === 1 && chairsThere[0].id === newChairId && oldChair.in_trash === true && shelfSaid.filter((line) => /so a new one was made/.test(line)).length === 1,
+    { keptAside, saidOnce, madeAgain, pagesThere: chairsThere.length, oldInTrash: oldChair.in_trash ?? null, said: shelfSaid.filter((line) => /set aside|brought back/.test(line)).map((line) => line.replaceAll(run, "<run id>")), relationAfterwards: (await aboutThere(noteChairId)).includes(newChairId ?? "-") },
+  );
+
+  shelfAct("archive-thing", { id: "thing:lamp" });
+  await shelfPass();
+  for (const id of ["lamp", "chair"]) {
+    shelfAct("remove-note", { id: `note:${id}` });
+    shelfAct("remove-thing", { id: `thing:${id}` });
+  }
+  shelfRefused.length = 0;
+  await shelfPass();
+  const trashedThings = [];
+  for (const id of [lampId, newChairId, noteLampId, noteChairId]) trashedThings.push(id ? (await api("GET", `/pages/${id}`)).in_trash === true : false);
+  claim("onlyRemovingTheRecordPutsItsPageInTheTrash", trashedThings.every(Boolean) && shelfRefused.length === 0, { inTrash: trashedThings, refused: [...shelfRefused] });
+  claim("theSecretIsKeptNowhereByTheRecordsSetAside", !JSON.stringify([shelfStore.log.all(), shelfEngines.map((one) => one.snapshot), shelfSaid]).includes(secret), {});
+
+  for (const id of [...linkedTables]) {
+    await api("DELETE", `/blocks/${id}`);
+    linkedTables.splice(linkedTables.indexOf(id), 1);
+  }
 
   for (const source of [sourceId, second.id]) {
     for (const page of (await api("POST", `/data_sources/${source}/query`, { page_size: 100 })).results) {

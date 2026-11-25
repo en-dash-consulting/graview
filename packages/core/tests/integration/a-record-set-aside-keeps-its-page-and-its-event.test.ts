@@ -365,9 +365,6 @@ describe("a record set aside, in Notion", () => {
 
 /* ----------------------------------------------------- Google Calendar */
 
-/** Google's own word for an event that is deleted, as its API spells it. */
-const CANCELED = ["cancel", "led"].join("");
-
 type Event = Record<string, unknown> & { id: string; etag: string; seq: number };
 
 /** A Google calendar in memory, every write kept as its method, its event and its `sendUpdates`. */
@@ -398,7 +395,7 @@ function google() {
     if (method === "POST") return answer(200, touch({ id: `evt${(next += 1)}`, ...(JSON.parse(init!.body!) as object) }));
     const was = events.get(id);
     if (!was) return answer(404, {});
-    if (method === "DELETE") return touch({ ...was, status: CANCELED }), answer(204);
+    if (method === "DELETE") return touch({ ...was, status: "cancelled" }), answer(204);
     return answer(200, touch(merge(was, JSON.parse(init!.body!) as Record<string, unknown>)));
   };
   return { fetch, events, writes, touch, change: (id: string, fields: Record<string, unknown>) => touch({ ...events.get(id)!, ...fields }) };
@@ -492,7 +489,7 @@ describe("a record set aside, in a Google calendar", () => {
     await engine.run();
     expect(remote.writes).toEqual([]);
     // One week's exception canceled there is no record here, and the series is not touched by it.
-    remote.touch({ id: "evt1_x", status: CANCELED, recurringEventId: "evt1" });
+    remote.touch({ id: "evt1_x", status: "cancelled", recurringEventId: "evt1" });
     remote.change("evt1", { recurrence: ["RRULE:FREQ=WEEKLY;BYDAY=TU"] });
     expect((await engine.run()).refused).toEqual([]);
     expect(node("event:swim")!["startsRepeat"]).toMatchObject({ every: "week", on: ["tue"] });
@@ -522,7 +519,7 @@ describe("a record set aside, in a Google calendar", () => {
     const first = start();
     await first.run();
     act("archive-event", { id: "event:party" });
-    remote.change("evt1", { status: CANCELED });
+    remote.change("evt1", { status: "cancelled" });
     expect((await first.run()).said).toEqual(["Party is set aside here and its event was deleted in Google Calendar: it is kept here, and a new event is made if it is brought back"]);
     const second = start(first.snapshot);
     expect([(await second.run()).said ?? [], node("event:party")!["$archived"]]).toEqual([[], true]);
@@ -653,7 +650,7 @@ describe("a record set aside, in a Google calendar", () => {
     await engine.run();
     act("archive-event", { id: "event:party" });
     await engine.run();
-    remote.change("evt1", { status: CANCELED });
+    remote.change("evt1", { status: "cancelled" });
     await engine.run();
     remote.writes.length = 0;
     act("unarchive-event", { id: "event:party" });
@@ -668,7 +665,7 @@ describe("a record set aside, in a Google calendar", () => {
     const first = start();
     await first.run();
     act("archive-event", { id: "event:party" });
-    remote.change("evt1", { status: CANCELED });
+    remote.change("evt1", { status: "cancelled" });
     remote.writes.length = 0;
     const second = start({ ...first.snapshot, links: {} });
     for (let pass = 0; pass < 2; pass += 1) expect((await second.run()).said ?? []).toEqual([]);
