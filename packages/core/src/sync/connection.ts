@@ -681,7 +681,7 @@ function relationActs<S extends AnySchema>(store: Store<S>, kind: string): Pick<
 /** What a connection says of a record set aside here whose counterpart is gone there, and of one made there again. */
 const setAsideWords = (thing: string, system: string) => ({
   gone: (label: string) => `${label} is set aside here and its ${thing} was deleted in ${system}: it is kept here, and a new ${thing} is made if it is brought back`,
-  left: (label: string) => `${label} was brought back here, and its ${thing} in ${system} is no longer one this connection keeps: it is kept here, and no longer in step`,
+  left: (label: string) => `${label} was brought back here, and its ${thing} in ${system} is no longer one this connection keeps: it is kept here, and not in step until that one is again`,
   again: (label: string) => `${label} was brought back here with no ${thing} in ${system}, so a new one was made`,
 });
 

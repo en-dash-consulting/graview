@@ -92,9 +92,9 @@ export function guestBook(options: GuestBookOptions): GuestBook {
   const live = (wanted: readonly string[]) => holders(false).find((node) => addressesOf(node[options.emails]).some((one) => wanted.includes(one)));
   /*
    * ONE SET ASIDE IS STILL THE GUEST THEY WERE, and nobody new: known by
-   * every address of theirs and no other, where no live person holds one.
+   * every address of theirs and no other, where one is no live person's.
    */
-  const aside = (key: string) => (live(addressesOfKey(key)) ? undefined : holders(true).find((node) => keyOf(node) === key));
+  const aside = (key: string) => (addressesOfKey(key).every((one) => live([one])) ? undefined : holders(true).find((node) => keyOf(node) === key));
   return {
     keysOf(addresses) {
       const all = addressesOf(addresses);
@@ -108,7 +108,8 @@ export function guestBook(options: GuestBookOptions): GuestBook {
         const key = keyOf(node);
         if (!key) continue;
         const theirs = addressesOfKey(key);
-        if (theirs.every((one) => all.includes(one)) && aside(key) === node) for (const one of theirs) taken.set(one, key);
+        // An address a live person holds is theirs; the rest say the one set aside.
+        if (theirs.every((one) => all.includes(one)) && aside(key) === node) for (const one of theirs) if (!taken.has(one)) taken.set(one, key);
       }
       return all.map((one) => taken.get(one) ?? one);
     },
@@ -119,7 +120,8 @@ export function guestBook(options: GuestBookOptions): GuestBook {
     localId(key) {
       const wanted = addressesOfKey(key);
       if (wanted.length === 0 || !options.graph) return undefined;
-      const found = live(wanted) ?? aside(wanted.join(","));
+      const whole = wanted.join(",");
+      const found = holders(false).find((node) => keyOf(node) === whole) ?? aside(whole) ?? live(wanted);
       return found ? String(found["id"]) : undefined;
     },
   };

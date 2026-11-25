@@ -214,7 +214,7 @@ export interface SyncState {
    * held here is not sent until `resolve` says which side stands.
    */
   readonly conflicts?: readonly SyncConflict[];
-  /** Records the remote deleted that were kept here: no longer linked, and not sent again as new. */
+  /** Records the remote deleted that were kept here: no longer linked, and not sent again as new. One brought back with its counterpart out of what the sync keeps is here, still linked, until that one is in it again. */
   readonly gone?: readonly string[];
   /**
    * LINKS NOT MADE YET: by our id and edge, the remote ids a relation there

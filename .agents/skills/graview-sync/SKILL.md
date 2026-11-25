@@ -76,8 +76,8 @@ a sentence, where that system owns it. Storing and serving the app is
    2. Set `emails` and `inviteMe` on that person's record (`add-field` a
       list of strings and a boolean on the people kind first if it lacks
       them).
-   3. Make sure the synced kind has a relation to the people (`add-relation`
-      if not) and link the records already there (a run's driver → its
+   3. Give the synced kind a relation to the people (`add-relation`)
+      and link the records already there (a run's driver → its
       event's who).
    4. Put `guests: { via: "<relation>" }` on the connection
       (`set-connection`).
@@ -102,19 +102,13 @@ a sentence, where that system owns it. Storing and serving the app is
    share the database with the integration. Title and rich text, number,
    select and status (an `enum`), multi-select (a `list`), date (`date` or
    `datetime`), checkbox, URL, email and phone go both ways; people are
-   read as names; formulas, rollups and files are left alone and said
+   read as names; formulas and rollups are left alone, said
    once. A page archived there is gone here, and one removed here is
-   archived there. A mapped property the source lacks is made on the
+   archived there; one set aside here keeps its page or event
+   (`graview-todoist`). A mapped property the source lacks is made on the
    first pass (`report.said`), never renamed or deleted (`create: false`:
    none). A computed field may be mapped: sent, never read back.
-   `scriptedNotion()` is a Notion in memory to test against.
-
-   Set aside or merged away here, a record keeps its page or event and what
-   changes there still lands (no guest is mailed); only one removed is
-   deleted there. Deleted there while aside, it stays here (unless
-   `"read"`), and is made there anew, said in `report.said`, when brought
-   back, guests invited again under `notify`; so is one an earlier version
-   deleted. Out of the filter by then, it is kept, no longer in step.
+   Test against `scriptedNotion()`.
 
    What a change there lands through, credited to the system: a page or
    event made there becomes a record through `add-<kind>`, or else the
@@ -168,8 +162,8 @@ property's type, a relation property mapped to a field or another type
 mapped to an edge (`connection-relation`), an edge to a kind no Notion
 source keeps (`connection-relation-target`), and two sources for one kind
 (`connection-sources`); it warns a people
-property is only read (`connection-read-only`). Report what it said; a host's line says why it
-could not reach the other side (`report.problem`).
+property is only read (`connection-read-only`). Report what it said; `report.problem` is why
+it could not reach the other side.
 
 Then run the engine against a scripted remote in a test: the first run
 after a projection sends nothing; a field changed on both sides is in the

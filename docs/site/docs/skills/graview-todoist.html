@@ -1825,6 +1825,13 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
 <li><strong>Give the host the token, never the document.</strong> <code>serve</code> and <code>preview</code> read the account's personal API token (Todoist's Settings → Integrations → Developer) from <code>TODOIST_TOKEN</code>, or <code>&lt;auth.env&gt;_TOKEN</code>; a host that keeps it hands <code>runConnections({ token, project })</code>. OAuth is the host's own.</li>
 </ol>
 <p>The transport is <code>packages/core/src/sync/todoist.ts</code>; its first comment says what it relies on in Todoist's documentation.</p>
+<h3>Set aside, in any connection</h3>
+<p>A record set aside or merged away here keeps its Notion page, its Google event (its guests are mailed nothing) or its task, and what changes there still lands. Only one removed is deleted there, and a merge leaves two. In Notion and Google Calendar, kept both ways:</p>
+<ul>
+<li>A page or event deleted there meanwhile leaves the record here, said once. Brought back, it is made there anew, said in <code>report.said</code>, and a connection with <code>notify</code> invites its guests again. So is one an earlier version deleted, with nothing sent until it is brought back.</li>
+<li>One out of the connection's filter or data source when it is brought back leaves the record here, said, and not in step until that one is in again.</li>
+<li>A page or event made anew is a new one: the old one, restored after that, arrives as another record, or is refused where its id is taken.</li>
+</ul>
 <h3>Then find out whether it worked</h3>
 <div class="code" data-scroller><pre><code class="language-sh">npx graview check --document app.json</code></pre></div>
 <p>It refuses a part in a field that cannot hold it (<code>connection-field-type</code>), a field the kind lacks or one named twice (<code>connection-field</code>), a parent that is no relation of one (<code>connection-relation</code>) or reaches a kind no Todoist connection keeps (<code>connection-relation-target</code>), and a token written in the declaration (<code>connection-secret</code>); it warns when nothing holds <code>completed</code> (<code>connection-completed</code>). Report what it said.</p>

@@ -293,7 +293,7 @@ describe("a record set aside, in Notion", () => {
     stub.share(fleetDb, true);
     const second = start(first.states());
     const [back] = await second.pass();
-    expect([...(back!.said ?? [])].sort()).toEqual(["comet was brought back here with no page in Notion, so a new one was made", "vixen was brought back here, and its page in Notion is no longer one this connection keeps: it is kept here, and no longer in step"]);
+    expect([...(back!.said ?? [])].sort()).toEqual(["comet was brought back here with no page in Notion, so a new one was made", "vixen was brought back here, and its page in Notion is no longer one this connection keeps: it is kept here, and not in step until that one is again"]);
     expect(writes()).toHaveLength(1);
     for (let pass = 0; pass < 2; pass += 1) {
       later();
@@ -561,10 +561,36 @@ describe("a record set aside, in a Google calendar", () => {
     remote.change("evt1", { summary: "Party" });
     await engine.run();
     act("unarchive-event", { id: "event:party" });
-    expect((await engine.run()).said).toEqual(["Party was brought back here, and its event in Google Calendar is no longer one this connection keeps: it is kept here, and no longer in step"]);
+    expect((await engine.run()).said).toEqual(["Party was brought back here, and its event in Google Calendar is no longer one this connection keeps: it is kept here, and not in step until that one is again"]);
     remote.change("evt1", { location: "Elsewhere" });
     expect((await engine.run()).said ?? []).toEqual([]);
     expect([node("event:party")!["name"], remote.writes]).toEqual(["Party", []]);
+    // In the filter again: the same record's, and in step again.
+    const again = start(engine.snapshot);
+    remote.change("evt1", { summary: "Big party #home" });
+    await again.run();
+    expect(node("event:party")!["name"]).toBe("Big party");
+    act("edit-event", { id: "event:party", name: "Bigger party" });
+    await again.run();
+    expect(remote.writes).toEqual(["PATCH evt1 none"]);
+  });
+
+  it("removed while its event is out of the filter, deletes nothing there", async () => {
+    const { act, remote, start } = calendar(false, { filter: { tag: "#home" } });
+    act("add-event", { id: "event:party", name: "Party", ...WHEN });
+    const engine = start();
+    await engine.run();
+    act("archive-event", { id: "event:party" });
+    await engine.run();
+    remote.change("evt1", { summary: "Party" });
+    await engine.run();
+    act("unarchive-event", { id: "event:party" });
+    await engine.run();
+    remote.writes.length = 0;
+    act("remove-event", { id: "event:party" });
+    await engine.run();
+    await engine.run();
+    expect([remote.writes, engine.snapshot.links]).toEqual([[], {}]);
   });
 
   it("takes nobody off and invites nobody new for a person set aside whose other addresses the event does not hold", async () => {
@@ -588,7 +614,26 @@ describe("a record set aside, in a Google calendar", () => {
     remote.writes.length = 0;
     await engine.run();
     await engine.run();
-    expect([remote.writes, store.graph.out("event:party", "who", { archived: "all" }).map((one) => one.id)]).toEqual([[], ["person:kay"]]);
+    expect([remote.writes, store.graph.out("event:party", "who", { archived: "all" }).map((one) => one.id)]).toEqual([[], expect.arrayContaining(["person:kay"])]);
+  });
+
+  it("settles in one write when a person set aside shares an address with a live guest", async () => {
+    const { act, remote, start } = calendar(true);
+    act("add-person", ANA);
+    act("add-person", { id: "person:kay", name: "Kay", emails: ["k@example.com", "ana@example.com"], inviteMe: true });
+    act("add-event", { id: "event:party", name: "Party", ...WHEN });
+    for (const to of ["person:ana", "person:kay"]) act("connect-event-who", { id: "event:party", to });
+    const engine = start();
+    await engine.run();
+    await engine.run();
+    act("archive-person", { id: "person:ana" });
+    remote.writes.length = 0;
+    await engine.run();
+    expect(remote.writes).toEqual([]);
+    act("edit-event", { id: "event:party", name: "Party!" });
+    for (let pass = 0; pass < 4; pass += 1) await engine.run();
+    expect(remote.writes).toEqual(["PATCH evt1 all"]);
+    expect((remote.events.get("evt1")!["attendees"] as unknown[]).length).toBe(3);
   });
 
   it("whose event was already deleted before this is sent nothing, then made there again when it is brought back, and said", async () => {

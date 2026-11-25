@@ -30,6 +30,14 @@ A Todoist project is a connection of the document: each of its tasks is a record
 
 The transport is `packages/core/src/sync/todoist.ts`; its first comment says what it relies on in Todoist's documentation.
 
+### Set aside, in any connection
+
+A record set aside or merged away here keeps its Notion page, its Google event (its guests are mailed nothing) or its task, and what changes there still lands. Only one removed is deleted there, and a merge leaves two. In Notion and Google Calendar, kept both ways:
+
+- A page or event deleted there meanwhile leaves the record here, said once. Brought back, it is made there anew, said in `report.said`, and a connection with `notify` invites its guests again. So is one an earlier version deleted, with nothing sent until it is brought back.
+- One out of the connection's filter or data source when it is brought back leaves the record here, said, and not in step until that one is in again.
+- A page or event made anew is a new one: the old one, restored after that, arrives as another record, or is refused where its id is taken.
+
 ### Then find out whether it worked
 
 ```sh

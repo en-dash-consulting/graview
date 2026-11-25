@@ -316,7 +316,7 @@ export interface SyncOptions<S extends AnySchema> {
    * nothing sent for it until it is brought back, when it is made there
    * again: the sentence for each, by its label. Absent: it is removed here,
    * as a live one is. One whose counterpart had left what the sync keeps when
-   * it is brought back stays here, no longer in step (`left`). Read where the mapping says `aside: "keep"`.
+   * it is brought back stays here, not in step while it is out (`left`). Read where the mapping says `aside: "keep"`.
    */
   readonly setAside?: { gone(label: string): string; left(label: string): string; again(label: string): string };
   /** The clock a pass and a sent guest list are stamped with; the runtime's when absent. */
@@ -873,6 +873,8 @@ export class SyncEngine<S extends AnySchema> {
     const wasAside = new Set(this.options.setAside ? (this.state.aside ?? []) : []);
     const back = new Set([...wasAside].filter((id) => !alone.has(id) && this.state.links[id] && this.options.store.graph.getNode(id) && !isArchived(this.options.store.graph.getNode(id))));
     let pulled = false;
+    // No longer among those kept here with nothing sent (`gone`).
+    const returned = new Set<string>();
     const unsent = this.keepExisting();
     let offline = false;
     let problem: string | undefined;
@@ -934,8 +936,12 @@ export class SyncEngine<S extends AnySchema> {
            * said once, and linked as it was, so one restored there before it
            * is brought back is the same record's again.
            */
-          if (!change.deleted) alone.delete(localId);
-          else if (alone.has(localId)) continue;
+          // Out of what the sync keeps as it was brought back, and in it again: in step again.
+          const out = this.state.gone?.includes(localId) === true && !returned.has(localId);
+          if (!change.deleted) {
+            alone.delete(localId);
+            returned.add(localId);
+          } else if (alone.has(localId)) continue;
           else if (!mapping.readonly && this.isAside(localId, mapping)) {
             if (change.left) continue;
             alone.add(localId);
@@ -948,15 +954,13 @@ export class SyncEngine<S extends AnySchema> {
             for (const key of [...held.keys()]) if (held.get(key)!.localId === localId) held.delete(key);
             if (!change.left) {
               alone.add(localId);
+              returned.add(localId);
               continue;
             }
             gone.push(localId);
             goneAside.push({ kind: mapping.kind, sentence: this.options.setAside.left(this.labelOf(localId)) });
-            const { [localId]: _left, ...rest } = links;
-            links = rest;
-            byRemoteId.delete(`${change.resource}:${change.id}`);
             continue;
-          }
+          } else if (out) continue;
         }
 
         /*
@@ -1148,7 +1152,13 @@ export class SyncEngine<S extends AnySchema> {
     }
     // What the inbound pass decided is what the outbound pass sends from.
     const { conflicts: _before, gone: _gone, skipped: _skipped, ...kept } = this.state;
-    const unsynced = [...new Set([...(this.state.gone ?? []), ...gone])].filter((id) => this.options.store.graph.getNode(id));
+    for (const id of this.state.gone ?? []) {
+      if (this.options.store.graph.getNode(id) || !links[id]) continue;
+      // Removed here while out of what the sync keeps: not the sync's to delete.
+      const { [id]: _out, ...rest } = links;
+      links = rest;
+    }
+    const unsynced = [...new Set([...(this.state.gone ?? []).filter((id) => !returned.has(id)), ...gone])].filter((id) => this.options.store.graph.getNode(id));
     this.state = { ...kept, links, ...(this.options.setAside ? { alone: [...alone] } : {}), ...this.heldState(held), ...(unsynced.length > 0 ? { gone: unsynced } : {}), ...(Object.keys(skipped).length > 0 ? { skipped } : {}) };
     // What a relation reached that was not linked yet, linked now that this pull may have made it.
     if (!offline) for (const id of this.resolveHeld(refused)) if (!applied.includes(id)) applied.push(id);
