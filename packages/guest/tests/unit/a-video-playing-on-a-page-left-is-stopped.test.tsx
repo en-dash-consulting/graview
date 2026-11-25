@@ -5,6 +5,8 @@ import { createViews, GraviewProvider, PageOfItsOwn, type ReactViewRegistry, typ
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { EMBED_ORIGINS } from "../../src/host/embeds.js";
+import { viewAhead } from "../../src/host/view-ahead.js";
 import { registerWorkerView } from "../../src/host/worker-react.js";
 import type { WorkerViewManifest } from "../../src/host/manifest.js";
 import { GUEST_PROTOCOL, type HostHello } from "../../src/protocol.js";
@@ -62,6 +64,29 @@ afterEach(async () => {
     host.remove();
   }
   FakeWorker.made = [];
+});
+
+describe("a view that plays a video, fetched ahead of its first visit (f-custom-pages-first-visit)", () => {
+  it("fetches its code and nothing of a provider's: no player, no frame, no address of YouTube's or Vimeo's, no worker", async () => {
+    const store = showroom() as unknown as Store<AnySchema>;
+    const fetched: string[] = [];
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      fetched.push(String(input instanceof Request ? input.url : input));
+      return new Response("/* the view */");
+    });
+    const made = vi.spyOn(document, "createElement");
+    try {
+      viewAhead({ manifest, worker: async () => ({ script: "/* draws a <graview-video data-provider> */" }) }, { store, principal: staff, intent: true });
+      await new Promise((done) => setTimeout(done, 50));
+      expect(made.mock.calls.map(([name]) => String(name).toLowerCase())).not.toContain("iframe");
+      expect(fetched.filter((url) => Object.values(EMBED_ORIGINS).some((origin) => url.startsWith(origin)))).toEqual([]);
+      expect(document.querySelector("iframe, graview-video")).toBeNull();
+      expect(FakeWorker.made).toHaveLength(0);
+    } finally {
+      fetchSpy.mockRestore();
+      made.mockRestore();
+    }
+  });
 });
 
 describe("a video a view plays, on a page that is left and gone back to", () => {
