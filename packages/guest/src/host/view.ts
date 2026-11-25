@@ -332,6 +332,24 @@ export interface WorkerView {
   readonly worker: Worker | undefined;
   /** Push again: the view's input, or the app's look, moved. */
   update(): void;
+  /**
+   * OFF THE PAGE, TO BE GONE BACK TO (Graview HQ f-custom-pages-do-not-flash):
+   * the region is taken out of the document with its worker kept, the view
+   * handed nothing meanwhile, an act it asks for refused and a navigate of
+   * its dropped. False where it has not drawn, failed, or is taking a file:
+   * the host disposes of it as ever. `gone` is called where it shows a record
+   * its seat may no longer see: the host disposes of it then.
+   */
+  rest(gone: () => void): boolean;
+  /**
+   * BACK ON THE PAGE, in this element, as it stood: what a person typed and
+   * where it was scrolled as they were, and, where what it shows has changed,
+   * pushed at once and a press made before that is drawn waiting for it.
+   * Undefined where it stands with something its seat is no longer shown: the
+   * host disposes of it and draws it anew. Else what puts the keyboard back
+   * in the field it was in, for the host to call once its page has arrived.
+   */
+  wake(onto: HTMLElement): (() => void) | undefined;
   readonly stats: Readonly<GuestStats>;
   /** What of the view's drawing and stylesheet was refused. */
   readonly refused: readonly ViewRefusal[];
@@ -419,6 +437,11 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   let started: StartedWorker | undefined;
   let drawing: OpenDrawing | undefined;
   let failed = false;
+  /* Off the page, to be gone back to: what it stood as, and how it is let go of (`rest`). */
+  let resting: { readonly scrolled: readonly (readonly [Element, number, number])[]; readonly field: HTMLElement | undefined; readonly said: string; readonly kept: string } | undefined;
+  /* Back on the page with something changed since: a press waits for the push that answers it (`wake`). */
+  let refreshing = false;
+  let heldPresses: (() => void)[] = [];
   /*
    * WHERE ITS RECORDS ARE (Graview HQ feature:f-one-face-lines-from-frame-views,
    * view-records.ts): each element it drew marked with `data-record`, of a
@@ -469,6 +492,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     const Observer = window.ResizeObserver;
     if (heights || !root || typeof Observer !== "function") return;
     heights = new Observer((entries) => {
+      if (resting) return;
       const box = entries[entries.length - 1]?.borderBoxSize?.[0];
       const height = Math.ceil(box ? box.blockSize : root.offsetHeight);
       if (height === contentHeight) return;
@@ -490,6 +514,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   let timing = 0;
   /* What the person typed into a field saved as it is typed and not yet saved (FR-191, press.ts): saved as the view goes. */
   let flushSaves = () => {};
+  /* The same, with the view staying: its page is being left, to be gone back to (`rest`). */
+  let saveNow = () => {};
   /* This drawing has gone: what it asked the host to keep still lands. */
   let letGoOfMine = () => {};
   /* A jump, what is in sight and a record's file (sections.ts); why a press was refused, beside it (refused-note.ts). */
@@ -686,6 +712,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   };
   let pushed = "";
   const push = () => {
+    if (resting) return;
     pushed = JSON.stringify(theme());
     dress();
     session?.push();
@@ -693,7 +720,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     media?.refresh(shadow);
   };
   const looked = () => {
-    if (session && JSON.stringify(theme()) !== pushed) push();
+    if (session && !resting && JSON.stringify(theme()) !== pushed) push();
   };
   const unwatchTheme = watchTheme(document, looked);
   /*
@@ -862,12 +889,14 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
    */
   let media: GuestMedia | undefined;
   let mediaAsked = false;
+  let mediaTurn = 0;
   const wantMedia = () => {
-    if (mediaAsked) return;
+    if (mediaAsked || resting) return;
     mediaAsked = true;
+    const turn = (mediaTurn += 1);
     void mediaChunk().then(
       ({ createGuestMedia }) => {
-        if (failed) return;
+        if (failed || turn !== mediaTurn) return;
         media = createGuestMedia(window, {
           view: `"${manifest.title ?? manifest.name}"`,
           pictures: manifest.pictures !== undefined,
@@ -990,6 +1019,13 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         return undefined;
       },
     ));
+  /* Its players and its full-screen viewer, let go with its page; drawn again as it is gone back to. */
+  const letGoOfMedia = () => {
+    media?.dispose();
+    media = undefined;
+    mediaAsked = false;
+    mediaTurn += 1;
+  };
   const marksMedia = (element: Element) => {
     if (element.localName === "graview-video") return wantMedia();
     if (!element.hasAttribute("data-lightbox")) return;
@@ -1040,6 +1076,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     });
     const leaving = () => saver.flush();
     window.addEventListener("pagehide", leaving);
+    saveNow = leaving;
     flushSaves = () => {
       window.removeEventListener("pagehide", leaving);
       saver.flush();
@@ -1140,14 +1177,37 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         const press = reader.press(event, at, root);
         if (!press || !session) return;
         event.stopPropagation();
-        notes?.clear(at.closest("[data-act]")!);
+        const bound = at.closest("[data-act]")!;
+        notes?.clear(bound);
         /* Space on a press is the press, never the page scrolling under it. */
         if (event.type === "keydown") event.preventDefault();
+        /*
+         * GONE BACK TO, AND NOT YET UP TO DATE: a press waits until what
+         * changed since has been drawn, and is then read again on what stands
+         * — applied where the control asks exactly what it asked. Where it is
+         * gone, or asks something else (a row drawn over for another record),
+         * the press was for what no longer stands, and does nothing.
+         */
+        if (refreshing) {
+          const meant = JSON.stringify(press);
+          heldPresses.push(() => {
+            if (failed || !session || !bound.isConnected || !at.isConnected) return;
+            const now = reader.press(event, at, root);
+            /* Not what was pressed any more: said beside the control, and nothing done. */
+            if (!now || JSON.stringify(now) !== meant) return acted(bound, { as: press.as, ok: false, reason: "refused", message: "This changed as you pressed it, so nothing was done." });
+            const outcome = session.pressed(judgePress(options.store, manifest, shown, now));
+            tally();
+            const pressed = { as: now.as, ...outcome };
+            const target = drawing?.renderer.idOf(at);
+            if (target !== undefined) send({ type: "dom-event", target, event: event.type, pressed });
+            acted(bound, pressed);
+          });
+          return false;
+        }
         const outcome = session.pressed(judgePress(options.store, manifest, shown, press));
         tally();
         const pressed = { as: press.as, ...outcome };
         /* Told with the click, and then as `acted`, the one event a view hears every act's outcome by. */
-        const bound = at.closest("[data-act]")!;
         queueMicrotask(() => acted(bound, pressed));
         return { pressed };
       },
@@ -1182,6 +1242,14 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     onLate: () => session?.push(),
   });
   letGoOfMine = () => mine.dispose();
+  /* What it is shown now, as its seat sees it: one answer to what the seat is kept from, for its places and what it is told it cannot see (`batch.kept`). */
+  const propsNow = (): GuestProps => {
+    let made: GuestProps | undefined;
+    inOneBatch(() => {
+      made = workerViewProps(options.store, options.principal, { manifest, ...(options.input ? { input: options.input() } : {}), theme: theme(), places: guestPlacesOf(vocabulary()), kept: kept(), ...(computed ? { computed } : {}) });
+    });
+    return { ...made!, mine: mine.values() };
+  };
   const begin = (source: GuestWorkerSource) => (started = startWorker(window, {
     source,
     name: manifest.name,
@@ -1222,12 +1290,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         },
         mine,
         props: () => {
-          /* One answer to what the seat is kept from, for its places and what it is told it cannot see (`batch.kept`). */
-          let made: GuestProps | undefined;
-          inOneBatch(() => {
-            made = workerViewProps(options.store, options.principal, { manifest, ...(options.input ? { input: options.input() } : {}), theme: theme(), places: guestPlacesOf(vocabulary()), kept: kept(), ...(computed ? { computed } : {}) });
-          });
-          const props = { ...made!, mine: mine.values() };
+          const props = propsNow();
           const was = shown;
           shown = new Set([...(props.node ? [props.node.id] : []), ...(props.nodes ?? []).map((node) => node.id)]);
           /* The record it shows changed (Roadmap f-app-wide-view-theme): under the brand's "fade", what is drawn goes before the new one comes. */
@@ -1262,6 +1325,11 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
           if (ms >= limits.pushMs) return fail("slow");
           answered = true;
           mark();
+          /* Brought up to date since its page was gone back to: a press made meanwhile is read now, on what stands now. */
+          if (refreshing && pending.size === 0) {
+            refreshing = false;
+            for (const press of heldPresses.splice(0)) press();
+          }
         },
         /* Past the message allowance, a view is stopped, not read on (FR-94). */
         onFlood: () => fail("flood"),
@@ -1276,7 +1344,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         live.receive(data);
         tally();
         /* Where the view asked to go is the links' to judge, so one that goes nowhere says why (FR-93); one that names no string is refused unsaid. */
-        if (!failed && data?.nonce === nonce && data.type === "navigate") {
+        if (!failed && !resting && data?.nonce === nonce && data.type === "navigate") {
           /* Narrowed and to a section, as it asked: the links hold the filter to the kind's fields. */
           const also = { ...(data.where !== undefined ? { where: data.where } : {}), ...(data.section !== undefined ? { section: data.section } : {}) };
           const to: Destination | false = typeof data.place === "string" ? { place: data.place, ...also } : typeof data.to === "string" && { record: data.to, ...also };
@@ -1331,6 +1399,83 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
 
   return handle();
 
+  /** What its seat is kept from of the app's kinds, as one string. */
+  function keptSaid(): string {
+    return [...keptNow()].sort().join(" ");
+  }
+
+  /** Off the page, to be gone back to: `WorkerView.rest`. */
+  function rest(gone: () => void): boolean {
+    if (failed || resting || !drawing || !session || !answered || waiting.length > 0 || !lastProps || (drops?.waiting ?? 0) > 0 || region.style.display === "none") return false;
+    /* What the person typed into a field saved as it is typed is saved as its page is left, as it was when the view went with it. */
+    saveNow();
+    if (failed || !session) return false;
+    const at = shadow.activeElement;
+    resting = {
+      scrolled: [...shadow.querySelectorAll("*")].flatMap((one) => (one.scrollTop !== 0 || one.scrollLeft !== 0 ? [[one, one.scrollTop, one.scrollLeft] as const] : [])),
+      field: at && /^(input|textarea|select)$/.test(at.localName) ? (at as HTMLElement) : undefined,
+      said: JSON.stringify(lastProps),
+      kept: keptSaid(),
+    };
+    letGoOfMedia();
+    heldPresses = [];
+    const was = resting;
+    session.rest({
+      push: false,
+      /* A record it shows gone from its seat's sight, or a kind kept from the seat: let go at once. */
+      moved: () => {
+        if (keptSaid() === was.kept && [...shown].every(seesNow)) return true;
+        gone();
+        return false;
+      },
+    });
+    unfollowPanel();
+    unfollowPanel = () => {};
+    region.remove();
+    author?.remove();
+    return true;
+  }
+
+  /** Back on the page, in `onto`: `WorkerView.wake`. */
+  function wake(onto: HTMLElement): (() => void) | undefined {
+    const was = resting;
+    if (failed || !was || !session || !lastProps) return undefined;
+    onto.append(region, ...(author ? [author] : []));
+    const now = propsNow();
+    const changed = JSON.stringify(now) !== was.said;
+    /* Anything it stands with that its seat is no longer shown, or text of a record's it was given to edit that may have moved: drawn anew. */
+    if (changed && (keptSaid() !== was.kept || lost(lastProps, now) || (shadow.querySelector("[data-prefill]") && recordsSaid(lastProps) !== recordsSaid(now)))) {
+      region.remove();
+      author?.remove();
+      return undefined;
+    }
+    resting = undefined;
+    session.rest(undefined);
+    unfollowPanel = followInPanel(region, () => shadow.querySelector("[data-graview-view-root]"));
+    /* Where it was scrolled, before the page is painted. */
+    for (const [one, top, left] of was.scrolled) {
+      one.scrollTop = top;
+      one.scrollLeft = left;
+    }
+    /* An entrance it played as it was first drawn is not played again; what runs forever, or with a scroll, runs on. */
+    for (const one of shadow.getAnimations?.() ?? []) {
+      if (one.timeline !== document.timeline || one.effect?.getComputedTiming().endTime === Infinity) continue;
+      one.finish();
+    }
+    for (const one of shadow.querySelectorAll("graview-video, [data-lightbox]")) marksMedia(one);
+    recordsMoved();
+    refreshing = changed || pending.size > 0;
+    options.onContentHeight?.(contentHeight);
+    /* Pushed whether or not its records moved: its pictures, the app's stylesheet and its faces may have (`dress`). */
+    push();
+    return () => {
+      const field = was.field;
+      const on = document.activeElement;
+      /* The keyboard back in the field it was in, unless the person has put it in another since: a page arrived at puts it on its heading. */
+      if (field?.isConnected && (!on || on === document.body || on.getAttribute("tabindex") === "-1")) field.focus({ preventScroll: true });
+    };
+  }
+
   function handle(): WorkerView {
     return {
       element: region,
@@ -1341,6 +1486,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       update: () => {
         if (session) push();
       },
+      rest,
+      wake,
       get stats() {
         tally();
         return stats;
@@ -1369,6 +1516,22 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       },
     };
   }
+}
+
+/** The records a view was shown, as one string. */
+const recordsSaid = (props: GuestProps) => JSON.stringify([props.node, props.nodes]);
+
+/** Whether what a view was shown holds anything it would not be shown now: a record, a field of one, a computed value, a link. */
+function lost(was: GuestProps, now: GuestProps): boolean {
+  if (JSON.stringify(was.unseen) !== JSON.stringify(now.unseen)) return true;
+  const of = (props: GuestProps) => [...(props.node ? [props.node] : []), ...(props.nodes ?? [])];
+  const by = new Map(of(now).map((node) => [node.id, node as unknown as Record<string, unknown>]));
+  const ties = new Set(now.edges?.map((edge) => JSON.stringify(edge)));
+  if (was.edges?.some((edge) => !ties.has(JSON.stringify(edge)))) return true;
+  return of(was).some((node) => {
+    const here = by.get(node.id);
+    return !here || Object.entries(node).some(([field, value]) => value !== undefined && value !== null && here[field] === undefined);
+  });
 }
 
 /** The line drawn where every kind a view reads is kept from its seat: the host's way in, or that nothing here is shown. */

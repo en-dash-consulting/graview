@@ -26,12 +26,12 @@ import { registerWorkerView, workerView } from "../../src/host/worker-react.js";
 type Handed = { readonly reel?: () => AppVideo | undefined; update?: () => void };
 const mounted = vi.hoisted(() => ({ worker: [] as Handed[], frame: [] as Handed[], updates: { worker: 0, frame: 0 } }));
 vi.mock("../../src/host/worker.js", () => ({
-  mountWorkerView: (_element: HTMLElement, options: Handed) => (mounted.worker.push(options), { update: () => void (mounted.updates.worker += 1), dispose() {} }),
+  mountWorkerView: (_element: HTMLElement, options: Handed) => (mounted.worker.push(options), { update: () => void (mounted.updates.worker += 1), rest: () => false, dispose() {} }),
   // What the view's place lends a revision (Roadmap f-make-this-section-better): made with the worker's host, nothing to these claims.
   viewPlaceHandle: () => ({}),
 }));
 vi.mock("../../src/host/frame.js", () => ({
-  mountGuestView: (_element: HTMLElement, options: Handed) => (mounted.frame.push(options), { iframe: document.createElement("iframe"), update: () => void (mounted.updates.frame += 1), dispose() {} }),
+  mountGuestView: (_element: HTMLElement, options: Handed) => (mounted.frame.push(options), { iframe: document.createElement("iframe"), update: () => void (mounted.updates.frame += 1), rest: () => false, dispose() {} }),
 }));
 URL.createObjectURL ??= () => "blob:test";
 URL.revokeObjectURL ??= () => {};

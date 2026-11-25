@@ -875,6 +875,39 @@ timed per push. A view that busies its own worker for just under
 reader's machine for as long as it is shown. That is the worker's thread,
 not the page's; the page stays responsive.
 
+### A page left and gone back to
+
+A view registered with `registerWorkerView`, `workerHome` or `guestView` and
+drawn as a page of its own is kept as its page is left and put back as it
+is gone back to, before the page is painted: no new worker, and nothing
+asked of the host again. What the person typed and where it was scrolled
+are as they were. What changed meanwhile is pushed and drawn in place; a
+press made before that is drawn waits for it, and is applied only where its
+control still asks for the same thing.
+
+The provider keeps at most six, for five minutes after each page was left,
+in memory alone. One is taken back only for the same definition, store and
+seat, and every one is let go as the store, the seat, the registry or being
+signed in changes and as the provider goes. One is let go of by itself
+where it fails and where a record it shows is no longer its seat's to see,
+and a view is drawn anew where anything it stood with would not be handed
+to it now. While its page is away the view is handed nothing (a frame is
+kept up), an act it asks for and a value it would keep are refused, and a navigate of
+its goes nowhere.
+A draft, a preview on the Scene and a view that has not drawn are not kept.
+
+A face says which view is its page's own (`PageOfItsOwn`, the routed face and
+the one face do); a row, a card or a panel is never kept. A frame is kept
+only where its host says it may be (`guestView({ keeps: true })`), since its
+document runs on out of sight and a sound it plays goes on, and where the
+browser can move one without loading it again (`Element.moveBefore`: Chrome
+133, Firefox 144); elsewhere it is loaded again.
+
+A host that mounts views by hand has the same in `rest` and `wake` on what
+`mountWorkerView` and `mountGuestView` answer. A first visit still waits for
+the view's code and, where the host hands `viewerState`, for its `read`: a
+host shortens it by fetching either before the page is opened.
+
 ### What a view's host says went wrong, by a code
 
 Every problem a view's host reports is a sentence for a person and, beside

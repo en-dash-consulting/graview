@@ -163,6 +163,8 @@ const CHAIN = [
   ["embed-one-face", "verify-embed-one-face.mjs"],
   // A view drawn where the page cannot read has its lines to the city: a worker view's cards and a frame guest's rows each a line within 2 px of its box at Nearby, kept on them every frame as the page or the frame scrolls, a record page drawn by a view that names no record still its one line, and Connected not repeating what a frame shows.
   ["frame-lines", "verify-frame-lines.mjs"],
+  // A custom page gone back to: page A to B and back, frame by frame on the routed face and the one face, in three engines — no blank frame and nothing in its stead, what was typed, the scroll and the keyboard as they were, what changed drawn in place, a press made before that waiting for it, and a drawing kept for no other seat.
+  ["view-return", "verify-view-return.mjs"],
   // The studio's whole path, on a scratch copy of seedbed: said, rewritten, written, compiled, migrated.
   ["rehearsal", "rehearse-studio.mjs"],
   ["remember", "verify-remember.mjs"],

@@ -44,6 +44,7 @@ import {
 } from "react";
 import { createPointerStore, type PointerStore, type ScenePoint } from "./pointer.js";
 import { HostAssetsContext, HostFilesContext, HostReelContext, HostViewerStateContext } from "./files.js";
+import { KeptDrawingsContext, useOwnKeptDrawings } from "./kept-drawings.js";
 import { useLinkedReads } from "./linked-reads.js";
 import type { HostMenuItem, MenuColumn, MenuPage, MenuSectionSource } from "./menu-types.js";
 import type { MenuViewSection } from "./view-places.js";
@@ -1472,15 +1473,18 @@ export function GraviewProvider<S extends AnySchema>({
   );
 
   const live = useMemo(() => (typing ? { typing, sayCaret, who: others } : null), [typing, sayCaret, others]);
+  /* What views of the app's own drew on pages left, for going back to them: this store's and this seat's alone, let go as either changes, the registry does, or a person signs in or out. */
+  const keptDrawings = useOwnKeptDrawings(given, store, who, views, signIn !== undefined);
   const assetsHeld = assetsAt ? <HostAssetsContext.Provider value={assetsAt}>{children}</HostAssetsContext.Provider> : children;
   const filesHeld = files ? <HostFilesContext.Provider value={files}>{assetsHeld}</HostFilesContext.Provider> : assetsHeld;
   const stateHeld = viewerState ? <HostViewerStateContext.Provider value={viewerState}>{filesHeld}</HostViewerStateContext.Provider> : filesHeld;
   /* Always held, so a reel handed, changed or taken away moves only the value: the views under it are pushed again, never mounted afresh. */
   const filed = <HostReelContext.Provider value={reel ?? reelAround}>{stateHeld}</HostReelContext.Provider>;
+  const drawn = <KeptDrawingsContext.Provider value={keptDrawings}>{filed}</KeptDrawingsContext.Provider>;
   return (
     <GraviewContext.Provider value={value as unknown as GraviewContextValue<AnySchema>}>
       <PlaybackContext.Provider value={playback as unknown as Playback}>
-        <FoundProvider>{waiting ? null : live ? <TypingContext.Provider value={live}>{filed}</TypingContext.Provider> : filed}</FoundProvider>
+        <FoundProvider>{waiting ? null : live ? <TypingContext.Provider value={live}>{drawn}</TypingContext.Provider> : drawn}</FoundProvider>
       </PlaybackContext.Provider>
     </GraviewContext.Provider>
   );

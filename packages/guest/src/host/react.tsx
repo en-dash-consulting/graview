@@ -1,7 +1,7 @@
 import type { ViewProblemSaid } from "./problems.js";
 import type { AnySchema } from "@graview/core";
-import { useGoTo, useGraview, useHostAssets, useHostFiles, useHostReel, type ViewComponent, type ViewProps } from "@graview/react/provider";
-import { useEffect, useRef } from "react";
+import { PageOfItsOwn, useGoTo, useGraview, useHostAssets, useHostFiles, useHostReel, useKeptDrawings, type KeptDrawing, type ViewComponent, type ViewProps } from "@graview/react/provider";
+import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { frameChunk, untilItArrives, workerChunk } from "./arrive.js";
 import type { GuestFrame } from "./frame.js";
 import type { GuestLimits, GuestReads, GuestViewInput } from "./session.js";
@@ -40,6 +40,15 @@ export interface GuestViewOptions {
   readonly asset?: (path: string) => string | undefined;
   /** The `https:` origins a face lent to a frame guest may be read from by address (`MountGuestViewOptions.fonts`). None by default. */
   readonly fonts?: { readonly origins: readonly string[] };
+  /**
+   * Whether a frame guest drawn as a page of its own is kept as its page is
+   * left, to stand at once when it is gone back to (Graview HQ
+   * f-custom-pages-do-not-flash): its document runs on out of sight, for five
+   * minutes at most, so a guest that plays sound or works on a clock goes on
+   * doing it. Where the browser can move a frame without loading it again
+   * (`Element.moveBefore`); elsewhere it is drawn anew. `false` by default.
+   */
+  readonly keeps?: boolean;
   /** Where the frame first stands before the guest asks for a height. 160px by default. */
   readonly height?: number;
   /**
@@ -73,6 +82,12 @@ const inputOf = (props: ViewProps<AnySchema>): GuestViewInput => ({
   ...(props.flagged ? { flagged: props.flagged } : {}),
 });
 
+/** A frame off its page, kept to be gone back to (Graview HQ f-custom-pages-do-not-flash). */
+interface KeptFrame extends KeptDrawing {
+  readonly frame: GuestFrame;
+  readonly box: { latest: { current: ViewProps<AnySchema> }; going: { current: ReturnType<typeof useGoTo> }; branded: { current: ReturnType<typeof useGraview<AnySchema>>["brand"] }; reeled: { current: ReturnType<typeof useHostReel> }; gone: () => void };
+}
+
 /**
  * A VIEW SOMEBODY ELSE WROTE, registered like any other:
  *
@@ -101,6 +116,9 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
     const reelNow = useHostReel();
     const reeled = useRef(reelNow);
     reeled.current = reelNow;
+    /* The seat's choice moves as a page arrives: read when asked, never a reason to draw the guest anew. */
+    const choose = useRef(setSelection);
+    choose.current = setSelection;
     const goTo = useGoTo();
     const going = useRef(goTo);
     going.current = goTo;
@@ -108,9 +126,51 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
     const frame = useRef<Pick<GuestFrame, "update" | "dispose"> | null>(null);
     const latest = useRef(props);
     latest.current = props;
+    /* A page left and gone back to stands as it did, where the host said it may (`keeps`) and the browser can move a frame without loading it again: kept as a worker view is (worker-react.tsx). */
+    const keeping = useKeptDrawings();
+    const page = useContext(PageOfItsOwn);
+    const held = useRef<KeptFrame | undefined>(undefined);
+    const now = useRef<{ readonly keep: typeof keeping; readonly as: string; readonly of: readonly unknown[] }>(undefined);
+    now.current = { keep: options.keeps && options.url && page !== null && props.mode === "fullscreen" && props.fidelity === "full" ? keeping : null, as: `${page} frame ${options.name} ${props.node?.id ?? ""}`, of: [options, store, principal, views] };
+    const stood = useRef(false);
+    const [anew, setAnew] = useState(0);
+    useLayoutEffect(() => {
+      const element = holder.current;
+      const { keep, as, of } = now.current!;
+      const back = held.current ? undefined : keep?.take<KeptFrame>(as, of);
+      if (element && back) {
+        Object.assign(back.box, { latest, going, branded, reeled });
+        if (back.frame.wake(element)) {
+          held.current = back;
+          frame.current = back.frame;
+        } else back.dispose();
+      }
+      if (stood.current && !held.current) setAnew((was) => was + 1);
+      return () => {
+        const one = held.current;
+        const { keep, as } = now.current!;
+        if (!one || !keep) return;
+        one.box.gone = () => keep.forget(one);
+        if (!one.frame.rest(() => one.box.gone())) return;
+        held.current = undefined;
+        frame.current = null;
+        keep.keep(as, one);
+      };
+    }, []);
     useEffect(() => {
       const element = holder.current;
       if (!element) return;
+      const dispose = () => {
+        held.current?.dispose();
+        held.current = undefined;
+        frame.current = null;
+        stood.current = false;
+      };
+      /* Taken back as the page came. */
+      if (held.current) {
+        stood.current = true;
+        return dispose;
+      }
       const worker = options.worker;
       if (worker) {
         let drawn: { update(): void; dispose(): void } | undefined;
@@ -121,7 +181,7 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
             store,
             principal,
             input: () => inputOf(latest.current),
-            onNavigate: (id) => setSelection([id]),
+            onNavigate: (id) => choose.current([id]),
             ...(options.limits ? { limits: options.limits } : {}),
             ...(options.links ? { links: options.links } : {}),
           });
@@ -138,6 +198,8 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
        * holder keeps the frame's first height meanwhile, so nothing moves
        * when it arrives.
        */
+      const { of } = now.current!;
+      const box: KeptFrame["box"] = { latest, going, branded, reeled, gone: () => undefined };
       element.style.minHeight = `${options.height ?? 160}px`;
       /* Where a record's file is fetched: the view's word, else where the page's host serves its files (0.1.36). */
       const file = options.file ?? (hostFiles.current?.src ? (href: string) => hostFiles.current?.src?.(href) ?? href : undefined);
@@ -150,7 +212,7 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
           ...(options.title ? { title: options.title } : {}),
           store,
           principal,
-          input: () => inputOf(latest.current),
+          input: () => inputOf(box.latest.current),
           ...(options.reads ? { reads: options.reads } : {}),
           ...(options.pictures ? { pictures: options.pictures } : {}),
           ...(file ? { file } : {}),
@@ -171,21 +233,24 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
               }
             : {}),
           places: () => views.places(),
-          brand: () => branded.current,
-          reel: () => reeled.current,
+          brand: () => box.branded.current,
+          reel: () => box.reeled.current,
           /* A record, a place or a kind's list — narrowed and to a section — where the face goes; what goes nowhere is said in the console and to `onProblem`, as `link-goes-nowhere`. */
-          goTo: () => going.current,
+          goTo: () => box.going.current,
           ...(options.limits ? { limits: options.limits } : {}),
         });
         mounted.iframe.style.height = `${options.height ?? 160}px`;
-        frame.current = mounted;
+        const drawn = mounted;
+        held.current = { of, frame: drawn, box, dispose: () => drawn.dispose() };
+        frame.current = drawn;
+        stood.current = true;
       });
       return () => {
         stop();
-        mounted?.dispose();
-        frame.current = null;
+        dispose();
       };
-    }, [store, principal, setSelection, views]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [store, principal, views, anew]);
     /* The reel by what it says, so a host that hands a new object each render with the same facts pushes nothing more. */
     const reelSaid = reelNow ? JSON.stringify(reelNow) : "";
     useEffect(() => frame.current?.update(), [props, brand, reelSaid]);

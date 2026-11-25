@@ -1,5 +1,5 @@
 import { counted as countOf, isCurrent, isWithheld, numberAsRead, type AnySchema, type Operation, type Violation } from "@graview/core";
-import { bleeds, bleedsFull, HomeFallsBack, type ViewProps } from "@graview/react/provider";
+import { PageOfItsOwn, bleeds, bleedsFull, HomeFallsBack, type ViewProps } from "@graview/react/provider";
 import { useCallback, useState, type ComponentType } from "react";
 import { Link, useSearchParams } from "react-router";
 import { HomeLine } from "@graview/primitives/pages";
@@ -178,7 +178,9 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
               {/* A view that throws says so in its own slot, and the slot is the column again: what gives a view the page's width sees it did not draw. */}
               <ViewBoundary kind="home" view="The home's view" said="" reset={[tick, HomeView]}>
                 <HomeFallsBack.Provider value={fallsBack}>
-                  <HomeView cardinality="many" fidelity="full" mode="fullscreen" selected={false} {...(flagged.length > 0 ? { flagged } : {})} />
+                  <PageOfItsOwn.Provider value="home">
+                    <HomeView cardinality="many" fidelity="full" mode="fullscreen" selected={false} {...(flagged.length > 0 ? { flagged } : {})} />
+                  </PageOfItsOwn.Provider>
                 </HomeFallsBack.Provider>
               </ViewBoundary>
             </Bleed>

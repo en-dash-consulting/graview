@@ -199,7 +199,19 @@ export interface GuestStats {
   dropped: number;
 }
 
+/** How a guest off the page is kept: whether it is still handed what changes, and what is asked at each change first (false: it has been let go). */
+export interface GuestRest {
+  readonly push: boolean;
+  readonly moved: () => boolean;
+}
+
 export interface GuestHost {
+  /**
+   * Off the page, to be gone back to (Graview HQ f-custom-pages-do-not-flash),
+   * or on it again (undefined). Off it, an act it asks for is refused, and it
+   * goes nowhere.
+   */
+  rest(how: GuestRest | undefined): void;
   /** Hand the host one message from the frame's port. */
   receive(data: unknown): void;
   /**
@@ -552,8 +564,11 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
    */
   const unanswered = new Set<number>();
   let handed: ReadonlySet<string> = new Set();
+  /* Off the page for now (`rest`). */
+  let resting: GuestRest | undefined;
+  let restedSize: number | undefined;
   const push = () => {
-    if (disposed) return;
+    if (disposed || (resting && !resting.push)) return;
     pushes += 1;
     /* What it is handed now may really be taller: a height asked for after a push is judged afresh. */
     growth.pushed();
@@ -571,6 +586,8 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
     pending = true;
     queueMicrotask(() => {
       pending = false;
+      /* Off the page: what keeps it is asked first, and lets it go where it shows what its seat may no longer see. */
+      if (resting && !disposed && !resting.moved()) return;
       push();
     });
   });
@@ -585,6 +602,7 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
   const run = (name: string, args: Record<string, unknown>, judged?: Judge): Outcome => runAll([{ name, args }], judged);
   /* Several calls are one change, one undo, and one act of the allowance (FR-193). */
   const runAll = (asked: readonly { readonly name: string; readonly args: Record<string, unknown> }[], judged?: Judge, intent?: string): Outcome => {
+    if (resting) return refused("refused", "The page this view is on has been left.");
     if (!limiter.act()) return refused("rate-limited", "Too many acts asked for at once; this one was not applied.");
     const calls: { name: string; args: Record<string, unknown> }[] = [];
     for (let { name, args } of asked) {
@@ -647,12 +665,17 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
         return;
       }
       if (data.type === "act" && (typeof data.id === "string" || typeof data.id === "number")) return act(data.id, data.name, data.args);
+      /* Off the page, it goes nowhere. */
+      if (resting && data.type === "navigate") {
+        stats.dropped += 1;
+        return;
+      }
       if (data.type === "navigate" && options.onArrive && (typeof data.place === "string" || typeof data.to === "string")) {
         const also = { ...(data.where !== undefined ? { where: data.where } : {}), ...(data.section !== undefined ? { section: data.section } : {}) };
         const to: Destination = typeof data.place === "string" ? { place: data.place, ...also } : { record: data.to as string, ...also };
         const arrive = options.onArrive;
         void linksChunk().then(({ judgeDestination, listsOf, placeVocabulary }) => {
-          if (disposed) return;
+          if (disposed || resting) return;
           const kept = new Set([...options.store.kindsKeptFrom(options.principal), ...options.store.modules.disabledKinds]);
           /* The one vocabulary (FR-235): the Scene, the home, each kind's list and each titled place, as a worker view's host and the headless check read them. */
           const judged = judgeDestination(to, { sees: (id) => seen().graph.has(id), places: placeVocabulary(options.store.schema, options.placesShown?.() ?? [], { kept }), lists: listsOf(options.store.schema, kept), schema: options.store.schema, touched: offersTouches(seen()) });
@@ -679,7 +702,8 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
         const told = (answer: { readonly ok: boolean; readonly value?: string | null; readonly sentence?: string }) => {
           if (!disposed) options.send({ type: "mine-answer", id, ...answer });
         };
-        if (data.op === "set") void options.mine.set(data.key, data.value).then(told);
+        if (data.op === "set" && resting) told({ ok: false, sentence: "The page this view is on has been left, so this value was not kept." });
+        else if (data.op === "set") void options.mine.set(data.key, data.value).then(told);
         else if (typeof data.key === "string") void options.mine.get(data.key).then(told);
         else told({ ok: true, value: null });
         return;
@@ -711,12 +735,21 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
       }
       if (data.type === "size" && typeof data.height === "number" && Number.isFinite(data.height)) {
         const height = Math.max(0, Math.min(maxHeight, Math.round(data.height)));
-        if (growth.takes(height)) options.onSize?.(height);
+        /* Off the page: the height it last asked for is judged as it is back on it. */
+        if (resting) restedSize = height;
+        else if (growth.takes(height)) options.onSize?.(height);
         return;
       }
       stats.dropped += 1;
     },
     push,
+    rest(how) {
+      resting = how;
+      const height = restedSize;
+      if (resting || height === undefined) return;
+      restedSize = undefined;
+      if (growth.takes(height)) options.onSize?.(height);
+    },
     get handed() {
       return handed;
     },
