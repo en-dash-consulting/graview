@@ -14,7 +14,7 @@ import { claimBlocks, defaultJobs, lockBlock, longestFirst, nextFor, runPool } f
 // @ts-expect-error — as above.
 import { falseClaims } from "../scripts/lib/on-github.mjs";
 // @ts-expect-error — as above.
-import { chooseSteps, mergeParts, partPath, PARTS, splitUnit, unitsOf } from "../scripts/lib/parts.mjs";
+import { chooseSteps, mergeParts, missedByTheWhole, partPath, PARTS, splitUnit, unitsOf, writeMerged } from "../scripts/lib/parts.mjs";
 // @ts-expect-error — as above.
 import { settled, until } from "../scripts/lib/settled.mjs";
 
@@ -375,6 +375,21 @@ describe("a harness run in parts", () => {
       expect(new Set(whole).size).toBe(whole.length);
     }
   }, 60_000);
+
+  it("fails by name what the whole says and no part did, though every part passed", () => {
+    const root = mkdtempSync(join(tmpdir(), "whole-"));
+    mkdirSync(join(root, "docs"));
+    const write = (unmade: (part: string) => string[]) => {
+      for (const { part } of PARTS.site.parts) writeFileSync(join(root, partPath(PARTS.site.verdict, part)), JSON.stringify({ passed: true, criteria: { [`by-${part}`]: true }, unmade: unmade(part) }));
+      writeMerged(root, "site", { whole: true });
+      return missedByTheWhole(root, "site");
+    };
+    expect(write(() => ["by-page", "everyViewportIsClean"])).toEqual(["everyViewportIsClean"]);
+    expect(write((part) => (part === "page" ? [] : ["by-page"]))).toEqual([]);
+    const verifyAll = readFileSync(resolve(repo, "scripts/verify-all.mjs"), "utf8");
+    expect(verifyAll).toMatch(/const broken = \[.*\.\.\.failedWhole\]/);
+    expect(verifyAll).toMatch(/results: \[\.\.\.results, \.\.\.failedWhole\]/);
+  });
 
   it("compares a job's pointer with its keyboard in one part, so a part alone holds it to twice", () => {
     const faces = PARTS.journeys.parts.flatMap(({ args }: { args: string[] }) => args);

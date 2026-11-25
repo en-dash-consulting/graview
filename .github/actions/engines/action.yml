@@ -35,7 +35,10 @@ runs:
         mkdir -p ~/.cache/playwright-debs
         find ~/.cache/playwright-debs -name '*.deb' -exec sudo cp -t /var/cache/apt/archives {} +
         npx playwright install --with-deps chromium webkit firefox
-        find /var/cache/apt/archives -maxdepth 1 -name '*.deb' -exec cp -u -t ~/.cache/playwright-debs {} +
+        # Not the ones a newer version took the place of.
+        sudo apt-get autoclean -qq
+        find ~/.cache/playwright-debs -name '*.deb' -delete
+        find /var/cache/apt/archives -maxdepth 1 -name '*.deb' -exec cp -t ~/.cache/playwright-debs {} +
     # Saved the moment they are installed: a cache saved after the job is
     # never saved when the job runs out of time, which is when it matters.
     - name: The engines, kept

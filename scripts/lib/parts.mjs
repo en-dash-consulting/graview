@@ -17,7 +17,7 @@
  */
 import { existsSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { mergeJourneys } from "./journeys.mjs";
+import { mergeJourneys } from "./journeys-verdict.mjs";
 
 export const PART_ENV = "GRAVIEW_PART";
 
@@ -162,6 +162,19 @@ export function mergeParts(parts) {
   // What each part said beyond its claims (its counts, its definitions), kept under its own name.
   merged.byPart = Object.fromEntries(wrote.map((one) => [one.part, Object.fromEntries(Object.entries(one.verdict).filter(([key]) => ![...CLAIM_HOLDERS, "at", "passed", "ok", "timing", "unmade"].includes(key)))]));
   return merged;
+}
+
+/**
+ * What a merged verdict says failed that no part said: a claim none of them
+ * made, or one only the whole can judge. The parts all held, so the harness
+ * fails by these, as the one process it was would have.
+ */
+export function missedByTheWhole(repoRoot, name) {
+  const path = resolve(repoRoot, PARTS[name].verdict);
+  const verdict = existsSync(path) ? JSON.parse(readFileSync(path, "utf8")) : null;
+  if (!verdict?.parts || verdict.passed !== false) return [];
+  const missed = CLAIM_HOLDERS.flatMap((holder) => Object.entries(verdict[holder] ?? {}).filter(([, value]) => !held(value)).map(([claim]) => claim));
+  return missed.length > 0 ? missed : ["its parts held and its verdict does not pass"];
 }
 
 /**

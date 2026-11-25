@@ -28,7 +28,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { allHeld, askedHarnesses, SHARD_OWN, shardUnits, terminalLines } from "./lib/on-github.mjs";
-import { PARTS, writeMerged } from "./lib/parts.mjs";
+import { missedByTheWhole, PARTS, splitUnit, writeMerged } from "./lib/parts.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const WORKFLOW = "verify.yml";
@@ -154,6 +154,7 @@ for (;;) {
 const into = mkdtempSync(join(tmpdir(), "graview-verify-on-github-"));
 const downloaded = Date.now();
 const harnesses = [];
+const failedWhole = [];
 try {
   try {
     gh("run", "download", String(run.databaseId), "--pattern", "verdicts-*", "--dir", into);
@@ -185,6 +186,14 @@ try {
     // Only part files this download brought: a local one from an earlier run is no part of this run.
     const merged = writeMerged(repoRoot, name, { since: downloaded });
     if (merged) say(`merged ${merged} from its parts`);
+    // Made whole here, or by the one shard that ran every part: what the whole says and no part did.
+    if (merged || brought.includes(PARTS[name].verdict)) {
+      const parts = harnesses.filter((one) => splitUnit(one.name).name === name);
+      if (parts.every((one) => one.verdict === "held" || one.verdict === "flaky")) {
+        const missed = missedByTheWhole(repoRoot, name);
+        if (missed.length > 0) failedWhole.push({ name, verdict: "failed", took: null, claims: missed, files: [PARTS[name].verdict] });
+      }
+    }
   }
   say(`\nbrought ${brought.length} file${brought.length === 1 ? "" : "s"} into docs/ from ${view.headSha?.slice(0, 8) ?? run.headSha.slice(0, 8)}\n`);
 } finally {
@@ -194,7 +203,7 @@ try {
 // A harness asked for and in no shard's summary did not run: that is not a hold. A harness run in parts is said part by part, as the shards ran it.
 names = shardUnits(names);
 for (const name of names) if (!harnesses.some((one) => one.name === name)) harnesses.push({ name, verdict: "no verdict", took: null, claims: ["no shard said anything of it: read the run"], files: [] });
-const ordered = names.length > 0 ? names.map((name) => harnesses.find((one) => one.name === name)) : harnesses;
+const ordered = [...(names.length > 0 ? names.map((name) => harnesses.find((one) => one.name === name)) : harnesses), ...failedWhole];
 for (const line of terminalLines(ordered)) say(line);
 const held = allHeld(ordered) && view.conclusion === "success";
 const broken = ordered.filter((one) => one.verdict !== "held" && one.verdict !== "flaky").length;

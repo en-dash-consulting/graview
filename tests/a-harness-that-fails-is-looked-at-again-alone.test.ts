@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, mkdirSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -103,10 +103,18 @@ describe("a harness that fails is looked at again, alone", () => {
       writeFileSync(join(root, `docs/one-face.part-${part}.json`), part);
       writeFileSync(join(root, `docs/watch/verify-one-face.part-${part}.json`), part);
     }
-    const kept = (part: string) => keepFirstLook(root, { name: `one-face.${part}`, file: "verify-one-face.mjs", began }).sort();
+    mkdirSync(join(root, "docs/one-face"));
+    mkdirSync(join(root, "docs/first-look/one-face"), { recursive: true });
+    writeFileSync(join(root, "docs/first-look/one-face/earlier.png"), "an earlier run's");
+    utimesSync(join(root, "docs/first-look/one-face/earlier.png"), 1, 1);
+    // A frame of the desk's part, written before the phone's part began.
+    writeFileSync(join(root, "docs/first-look/one-face/desk.png"), "the desk's first look");
+    const kept = (part: string) => keepFirstLook(root, { name: `one-face.${part}`, file: "verify-one-face.mjs", began }, { since: Date.parse(began) }).sort();
     expect(kept("desk")).toEqual(["docs/first-look/one-face.part-desk.json", "docs/first-look/watch/verify-one-face.part-desk.json"]);
     expect(kept("phone")).toEqual(["docs/first-look/one-face.part-phone.json", "docs/first-look/watch/verify-one-face.part-phone.json"]);
     expect(readFileSync(join(root, "docs/first-look/one-face.part-desk.json"), "utf8")).toBe("desk");
+    expect(existsSync(join(root, "docs/first-look/one-face/desk.png"))).toBe(true);
+    expect(existsSync(join(root, "docs/first-look/one-face/earlier.png"))).toBe(false);
   });
 
   it("keeps the first look of a harness whose verdict is named otherwise than its script (pages writes pages-face)", () => {

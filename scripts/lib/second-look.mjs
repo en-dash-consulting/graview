@@ -11,7 +11,7 @@
  * written down by name with the claims it missed so it is fixed rather
  * than forgotten. `--strict` (or GRAVIEW_STRICT=1) takes one look only.
  */
-import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { ownedBy, writtenSince } from "./on-github.mjs";
 import { splitUnit } from "./parts.mjs";
@@ -53,7 +53,7 @@ export const judge = (first, again) => {
 export const FIRST_LOOK = "docs/first-look";
 
 /** The first look's own files copied under docs/first-look/, by path; `first` is runOne's answer (`file`, `began`). */
-export const keepFirstLook = (repoRoot, first) => {
+export const keepFirstLook = (repoRoot, first, { since = 0 } = {}) => {
   const base = first.file.replace(/^verify-/, "").replace(/\.mjs$/, "");
   // A part keeps and clears its own files alone (lib/parts.mjs): another part of the harness may have failed beside it.
   const { part } = splitUnit(first.name ?? "");
@@ -61,7 +61,11 @@ export const keepFirstLook = (repoRoot, first) => {
   const copyOf = (path) => resolve(repoRoot, FIRST_LOOK, path.slice("docs/".length));
   // An earlier run's first look of this harness is not this run's.
   const earlier = writtenSince(repoRoot, 0, FIRST_LOOK).map((file) => `docs/${file.path.slice(FIRST_LOOK.length + 1)}`);
-  for (const path of earlier.filter(own)) rmSync(copyOf(path), { force: true });
+  for (const path of earlier.filter(own)) {
+    // What is no part's own (a frame) may be another part's first look, kept a moment ago: only one kept before this run (`since`) is cleared.
+    if (part && !path.includes(".part-") && existsSync(copyOf(path)) && statSync(copyOf(path)).mtimeMs >= since) continue;
+    rmSync(copyOf(path), { force: true });
+  }
   const kept = writtenSince(repoRoot, Date.parse(first.began))
     .map((file) => file.path)
     .filter((path) => !path.startsWith(`${FIRST_LOOK}/`) && own(path));

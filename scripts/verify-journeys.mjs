@@ -408,6 +408,8 @@ async function main() {
   report.regressions = regressionsOf(previous, counted);
   // The keyboard's claims: at most twice the pointer, or named why not; and a long list skipped into.
   report.checks = keyboardChecks(counted);
+  // A part whose app is not built here walked nothing, so it has no keyboard to judge: the parts that walked do, and the whole is judged on theirs.
+  if (process.argv.some((arg) => arg.startsWith("--steps=")) && Object.values(report.apps).every((app) => app.skipped)) report.checks = {};
   const missed = Object.entries(report.checks).filter(([, check]) => !check.ok);
   report.took = Math.round((Date.now() - began) / 1000);
   report.passed = report.regressions.length === 0 && unbuilt.length === 0 && missed.length === 0;
@@ -450,8 +452,8 @@ async function main() {
   /* The claims, said the way every harness says one: `"name": true`, and what broke it. */
   process.stdout.write("\n");
   for (const [name, check] of Object.entries(report.checks)) process.stdout.write(`  "${name}": ${check.ok},\n`);
-  for (const line of report.checks.theKeyboardCostsAtMostTwiceThePointer.unnamed.slice(0, 10)) process.stdout.write(`  ✗ more than twice the pointer, and nothing says why: ${line}\n`);
-  for (const one of report.checks.theKeyboardSkipsIntoALongList.lists.filter((list) => list.firstBox?.skip !== "records" || list.firstBox.presses > 5)) {
+  for (const line of (report.checks.theKeyboardCostsAtMostTwiceThePointer?.unnamed ?? []).slice(0, 10)) process.stdout.write(`  ✗ more than twice the pointer, and nothing says why: ${line}\n`);
+  for (const one of (report.checks.theKeyboardSkipsIntoALongList?.lists ?? []).filter((list) => list.firstBox?.skip !== "records" || list.firstBox.presses > 5)) {
     process.stdout.write(`  ✗ ${one.app} at ${one.width}: the first box took ${one.firstBox?.presses ?? "?"} presses${one.firstBox?.skip === "records" ? "" : ", not by the list's skip"}\n`);
   }
   process.stdout.write(`\n${report.regressions.length === 0 ? "no regressions" : "regressed"}${missed.length > 0 ? `, ${missed.length} claim${missed.length === 1 ? "" : "s"} missed` : ""} — ${relative(repoRoot, out)} (${report.took}s)\n`);

@@ -48,7 +48,7 @@ import { changedFiles, currentBranch, forkPoint, headSha, mentionsIn, movedBetwe
 import { COVERAGE_ENV, COVERAGE_NO_FS_ENV, mergeCoverage, readCoverage, readRecorded, withHook, withoutHook, writeCoverage } from "./lib/coverage.mjs";
 import { updateLedger } from "./lib/ledger.mjs";
 import { ownedBy, writtenSince } from "./lib/on-github.mjs";
-import { allUnits, PART_ENV, partOf, partPath, PARTS, splitUnit, unitsOf, writeMerged } from "./lib/parts.mjs";
+import { allUnits, missedByTheWhole, PART_ENV, partOf, partPath, PARTS, splitUnit, unitsOf, writeMerged } from "./lib/parts.mjs";
 import { claimBlocks, defaultJobs, lockBlock, longestFirst, POOL_BASES, runPool } from "./lib/pool.mjs";
 import { judge, keepFirstLook, missedClaims, recordFlakes } from "./lib/second-look.mjs";
 import { described, holders, listeners, serving } from "./lib/serve.mjs";
@@ -648,7 +648,7 @@ if (missed.length > 0) say(`\nsecond look, ${lookWidth === 1 ? "alone" : `${look
 const seconds = new Map();
 for (const one of missed) {
   // The first look's verdict and frames, kept under docs/first-look/ before the second writes over them (lib/second-look.mjs).
-  const kept = keepFirstLook(repoRoot, one);
+  const kept = keepFirstLook(repoRoot, one, { since: started });
   if (kept.length > 0) say(`first look of ${one.name} kept: ${kept.join(", ")}\n`);
 }
 const looksAgain = missed.map((one) => one.name);
@@ -666,6 +666,7 @@ for (const unit of units) {
  * written from theirs (lib/parts.mjs), with what each part cost. A run that
  * took only some parts leaves them for whoever runs the rest.
  */
+const failedWhole = [];
 for (const name of Object.keys(PARTS)) {
   const ran = results.filter((one) => one.harness === name && splitUnit(one.name).part);
   if (ran.length === 0) continue;
@@ -673,12 +674,16 @@ for (const name of Object.keys(PARTS)) {
   // --quick took one engine's parts on purpose: its verdict is made from those, so docs/<name>.json says what this run held.
   const byDesign = quick && !asked.some((one) => splitUnit(one).part);
   const path = writeMerged(repoRoot, name, { whole: whole || byDesign, since: started, only: byDesign ? ran.map((one) => splitUnit(one.name).part) : null });
+  // Every part held and the whole does not: a claim no part made, or one only the whole can judge. It fails by the harness's own name.
+  const missed = path && ran.every((one) => one.verdict !== "failed") ? missedByTheWhole(repoRoot, name) : [];
+  if (missed.length > 0)
+    failedWhole.push({ name, harness: name, file: ran[0].file, code: 1, took: 0, began: ran[0].began, verdict: "failed", missed, gist: `made of its parts: ${missed.join(", ")}`, output: missed.map((claim) => `FAIL ${claim}`).join("\n") });
   if (path) stampVerdicts(repoRoot, [path], { wall: ran.reduce((sum, one) => sum + (one.timing?.wall ?? 0), 0), cpu: ran.reduce((sum, one) => sum + (one.timing?.cpu ?? 0), 0), parts: Object.fromEntries(ran.map((one) => [splitUnit(one.name).part, one.timing])) });
 }
 for (const servers of warm) for (const server of servers.values()) server?.stop();
 const wall = Math.round((Date.now() - started) / 1000);
 
-const broken = results.filter((one) => one.verdict === "failed");
+const broken = [...results.filter((one) => one.verdict === "failed"), ...failedWhole];
 const flakes = recordFlakes(repoRoot, results.filter((one) => one.verdict === "flaky"));
 for (const flake of flakes) {
   const claims = flake.missed.length > 0 ? flake.missed.join(", ") : "no claim named";
@@ -786,7 +791,7 @@ writeFileSync(
     {
       at: new Date().toISOString(),
       run: { wall, harnessTime: spent, workers: bases.length, quick, ...(selection ? { changed: { from: selection.from, files: selection.changes, ran: chain.length, of: CHAIN.length } } : {}), servers: serverTimes.map(({ worker, app, ms }) => ({ worker, app, ms })), slowest },
-      results: results.map(({ name, file, code, took, began, verdict, gist: said, missed, output, timing, firstTiming }) => ({
+      results: [...results, ...failedWhole].map(({ name, file, code, took, began, verdict, gist: said, missed, output, timing, firstTiming }) => ({
         name,
         file,
         code,
@@ -806,6 +811,6 @@ for (const release of releases) release();
 rmSync(scratch, { recursive: true, force: true });
 say(`\nslowest: ${slowest.slice(0, 6).map((one) => `${one.name} ${one.wall}s`).join(", ")}\n`);
 say(
-  `\n${results.length - broken.length} of ${results.length} harnesses hold${flakes.length > 0 ? `, ${flakes.length} on a second look` : ""} (${Math.floor(wall / 60)}m${String(wall % 60).padStart(2, "0")}s, ${Math.round(spent / 60)}m of harness time, ${bases.length} at a time)\n`,
+  `\n${results.length - broken.length + failedWhole.length} of ${results.length} harnesses hold${failedWhole.length > 0 ? `, and ${failedWhole.map((one) => one.name).join(", ")} made of its parts does not` : ""}${flakes.length > 0 ? `, ${flakes.length} on a second look` : ""} (${Math.floor(wall / 60)}m${String(wall % 60).padStart(2, "0")}s, ${Math.round(spent / 60)}m of harness time, ${bases.length} at a time)\n`,
 );
 process.exit(broken.length > 0 ? 1 : 0);
