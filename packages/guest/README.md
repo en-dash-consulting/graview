@@ -905,7 +905,7 @@ browser can move one without loading it again (`Element.moveBefore`: Chrome
 
 A host that mounts views by hand has the same in `rest` and `wake` on what
 `mountWorkerView` and `mountGuestView` answer. A first visit still waits for
-the view's code and, where the host hands `viewerState`, for its `read`: a
+the view's code and for what its host keeps for the viewer (`graview.mine`): a
 host shortens it by fetching either before the page is opened.
 
 ### What a view's host says went wrong, by a code
