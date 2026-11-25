@@ -587,7 +587,11 @@ try {
         const all = page.locator('[data-testid="see-all"]', { hasText: "See all" }).first();
         if ((await all.count()) > 0) {
           await all.click();
-          await settle();
+          /*
+           * The address moves with the press, and the list is drawn once its 120 rows are: 0.25 s at full speed, 0.9 s and more
+           * at GRAVIEW_SLOW=4. So what is waited for is the page saying it has drawn the place it went to, not a fixed moment.
+           */
+          await page.waitForSelector('[data-graview-drawn="/features"]', { state: "attached", timeout: 15_000 }).catch(() => {});
           went = { path: await page.evaluate(() => location.pathname), count: (await page.evaluate(listState)).count };
         }
         seen.cards.push({ engine, screen: screen.name, ...measured });

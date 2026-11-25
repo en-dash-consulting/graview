@@ -128,4 +128,35 @@ describe("a part is waited for until it has drawn", () => {
     module.arrive({ rows: "here" });
     expect(await until(() => host!.querySelector('[data-testid="rows"]') !== null)).toBe(true);
   });
+
+  it("draws one with something to stand in meanwhile the moment its module arrives", async () => {
+    const watch = createPartsWatch();
+    const module = controlled<{ readonly rows: string }>();
+    const Bell = lazyModule(module.load).part((m) => <p data-testid="bell">{m.rows}</p>, { quiet: true, meanwhile: <i data-testid="room" /> });
+    const before = partsArriving();
+    draw(watch, Bell);
+    expect(await until(() => host!.querySelector("h1") !== null)).toBe(true);
+    expect(host!.querySelector('[data-testid="room"]'), "its room kept from the first draw").not.toBeNull();
+    expect(partsArriving(), "its fetch is waited for").toBe(before + 1);
+
+    module.arrive({ rows: "3 rules broken" });
+    await tick();
+    // Not held back: what suspended would still be hidden here (the first test above).
+    expect(host!.querySelector('[data-testid="bell"]')?.textContent).toBe("3 rules broken");
+    expect(host!.querySelector('[data-testid="room"]')).toBeNull();
+    expect(partsArriving()).toBe(before);
+    expect(partsWaiting(watch)).toBe(0);
+  });
+
+  it("stands nothing in its place, quietly, when one that stands meanwhile does not arrive", async () => {
+    let fail = true;
+    const part = lazyModule(() => (fail ? Promise.reject(new Error("offline")) : Promise.resolve({ rows: "here" })));
+    const Bell = part.part((m) => <p data-testid="bell">{m.rows}</p>, { quiet: true, meanwhile: <i data-testid="room" /> });
+    draw(createPartsWatch(), Bell);
+    expect(await until(() => host!.querySelector("h1") !== null && host!.querySelector('[data-testid="room"]') === null)).toBe(true);
+    expect(host!.querySelector('[data-testid="bell"]')).toBeNull();
+    fail = false;
+    part.prefetch();
+    expect(await until(() => host!.querySelector('[data-testid="bell"]') !== null)).toBe(true);
+  });
 });
